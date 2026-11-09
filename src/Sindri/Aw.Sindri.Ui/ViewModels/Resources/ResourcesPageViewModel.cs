@@ -11,6 +11,7 @@ namespace Aw.Sindri.Ui.ViewModels.Resources;
 internal sealed class ResourcesPageViewModel : ObservableObject
 {
     private readonly ISindriApi _api;
+    private Uri? _url;
 
     /// <summary>The page over its port.</summary>
     /// <param name="api">The API.</param>
@@ -31,13 +32,29 @@ internal sealed class ResourcesPageViewModel : ObservableObject
     /// <summary>What the last purge said: its refusal's reason, or how many went; empty before any.</summary>
     public string NoteText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>Reads the list.</summary>
+    /// <summary>Reads the list: one row per resource.</summary>
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that ends when the list is shown.</returns>
-    internal Task Refresh(Uri url, CancellationToken cancellationToken)
+    internal async Task Refresh(Uri url, CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        return _api.ListResources(url, owner: null, cancellationToken).ContinueWith(_ => { }, TaskScheduler.Default);   // stub: the answer is not shown yet
+        _url = url;
+        var read = await _api.ListResources(url, owner: null, cancellationToken).ConfigureAwait(true);
+        if (read.IsError)
+        {
+            return;
+        }
+
+        Rows.Clear();
+        foreach (var resource in read.Value.Resources)
+        {
+            Rows.Add(new ResourceRowViewModel(resource, Purge));
+        }
+
+        IsEmpty = Rows.Count == 0;
     }
+
+    // Stub: a purge sends nothing yet and only reads the list again; the refusal is never shown.
+    private Task Purge(string owner, CancellationToken cancellationToken) =>
+        _url is { } url && owner.Length > 0 ? Refresh(url, cancellationToken) : Task.CompletedTask;
 }

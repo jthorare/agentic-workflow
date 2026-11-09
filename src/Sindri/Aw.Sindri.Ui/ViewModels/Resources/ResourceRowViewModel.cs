@@ -25,7 +25,7 @@ internal sealed class ResourceRowViewModel : ObservableObject
     public string NameText => View.Name;
 
     /// <summary>The size, human-readable ("1.2 MB").</summary>
-    public string SizeText => View.Size.ToString(System.Globalization.CultureInfo.InvariantCulture);   // stub: the formatter comes with the real commit
+    public string SizeText => View.Name[..0];   // stub: the formatter comes with the real commit
 
     /// <summary>The fill 0..1 (size over limit) when the resource has a limit; null otherwise.</summary>
     public double? Fill => View.LimitBytes is > 0 ? 0 : null;   // stub
@@ -37,13 +37,13 @@ internal sealed class ResourceRowViewModel : ObservableObject
     public bool IsConfirming { get; private set => Set(ref field, value); }
 
     /// <summary>The confirm's question; names the owner.</summary>
-    public string ConfirmText => View.Kind;   // stub
+    public string ConfirmText => View.Name[..0];   // stub: the question comes with the real commit
 
     /// <summary>Asks first; nothing is sent.</summary>
-    internal void AskPurge() => throw new NotSupportedException();
+    internal void AskPurge() => IsConfirming = false;   // stub: asks nothing yet
 
     /// <summary>Backs out of the question.</summary>
-    internal void Keep() => throw new NotSupportedException();
+    internal void Keep() => IsConfirming = false;
 
     /// <summary>Sends the purge once, after the question was asked.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
