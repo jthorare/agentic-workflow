@@ -1,8 +1,8 @@
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Sandbox.Plan;
 
 namespace Aw.Sindri.Core.Resources;
 
-#pragma warning disable MA0182 // the red commit: the next one registers the doctor row
 /// <summary>The doctor's 'resources' row: how many resources exist, what they hold, and any disk close to its limit.</summary>
 public static class ResourceDoctorRule
 {
@@ -15,8 +15,23 @@ public static class ResourceDoctorRule
     /// <returns>Ok with the count and total size, or Warn naming a disk at 90% of its limit or more.</returns>
     public static DoctorCheck Check(IReadOnlyList<ResourceEntry> entries, IReadOnlyDictionary<string, long> diskLimits)
     {
-        _ = (entries, diskLimits);
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(entries);
+        ArgumentNullException.ThrowIfNull(diskLimits);
+        foreach (var disk in entries.Where(static e => e.Kind == ResourceKind.Disk))
+        {
+            if (diskLimits.TryGetValue(LimitKey(disk.Owner, disk.Name), out var limit) && limit > 0 && disk.SizeBytes >= limit * NearLimit)
+            {
+                return new DoctorCheck("resources", CheckState.Warn, $"disk '{disk.Name}' of {disk.Owner} holds {SandboxUnits.FormatSize(disk.SizeBytes)} of {SandboxUnits.FormatSize(limit)}", "delete files from the disk, or raise its size in the declaration");
+            }
+        }
+
+        if (entries.Count == 0)
+        {
+            return new DoctorCheck("resources", CheckState.Ok, "no resources provisioned", Fix: null);
+        }
+
+        var total = entries.Sum(static e => e.SizeBytes);
+        return new DoctorCheck("resources", CheckState.Ok, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{entries.Count} resources, {SandboxUnits.FormatSize(total)} in all"), Fix: null);
     }
 
     /// <summary>The key a disk's limit is stored under.</summary>
@@ -29,4 +44,3 @@ public static class ResourceDoctorRule
         return $"{owner}/{name}";
     }
 }
-#pragma warning restore MA0182

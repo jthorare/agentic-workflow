@@ -18,6 +18,8 @@ internal sealed class ResourceProvisioner(ResourceStore store, LedgerDatabase da
 
     private const string Select = "SELECT owner, kind, name, path, size_limit FROM resource WHERE owner = $owner ORDER BY kind, name";
 
+    private const string SelectAll = "SELECT owner, kind, name, path, size_limit FROM resource ORDER BY owner, kind, name";
+
     public async ValueTask<Result<ProvisionedResources>> Ensure(ResourceOwner owner, ResourceSpec spec, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(owner);
@@ -58,6 +60,12 @@ internal sealed class ResourceProvisioner(ResourceStore store, LedgerDatabase da
         return RecipeSessions.Read(database, LedgerDatabase.ResourcesVersion, [],
             (session, token) => RecipeSessions.List(session, new SqlStatement(Select, c => c.Bind("$owner", owner.ToString())), ResourceRowMapper.Instance, token), cancellationToken);
     }
+
+    /// <summary>Reads every booked row.</summary>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The rows, by owner, kind and name.</returns>
+    internal ValueTask<Result<IReadOnlyList<ResourceRow>>> BookedAll(CancellationToken cancellationToken) =>
+        RecipeSessions.Read(database, LedgerDatabase.ResourcesVersion, [], (session, token) => RecipeSessions.List(session, new SqlStatement(SelectAll), ResourceRowMapper.Instance, token), cancellationToken);
 
     private ValueTask<Result<int>> Book(ResourceOwner owner, ResourcePlan plan, CancellationToken cancellationToken)
     {
