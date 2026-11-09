@@ -265,7 +265,7 @@ internal static partial class CommandTable
     private static Task<int> ItemOrProject(string[] args, (ControlPlaneClient Client, Output Output, IServiceProvider Services) host, StartCommand start, CancellationToken ct) => args switch
     {
         ["todo", "note", "set" or "stop", ..] => new TodoNoteVerbs(host.Services, host.Output).Run(args, ct),
-        ["todos" or "todo", ..] => new TodoVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
+        ["todos" or "todo", ..] => new TodoVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c), noteKey: c => TodoNoteTargets.Read(host.Services, c)).Run(args, ct),
         ["project" or "projects", ..] => new ProjectVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         ["connection" or "connections", ..] => new ConnectionVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         ["memory" or "memories", ..] => new MemoryVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),

@@ -60,7 +60,7 @@ internal sealed partial class TodoHarness
 
     internal KeepTodoUndoService KeepUndo() => new(Writes(), Converger(), Picks);
 
-    internal PickTodoHoldService PickHold() => new(new TodoHolds(Slice.Store, Slice.Events), Writes(), Converger(), NoteFile, Picks);
+    internal PickTodoHoldService PickHold() => new(new TodoHolds(Slice.Store, Slice.Events), Writes(), Converger(), NoteFile, Picks, new MaskingScrubber());
 
     internal UndoTodoHoldService UndoHold() => new(Writes(), Converger(), Picks);
 
@@ -72,7 +72,11 @@ internal sealed partial class TodoHarness
 
     internal GetTodoService Get() => new(Views.Views, Views.Progress, Slice.Callers);
 
-    internal GetTodoNoteService Note() => new(Views.Progress, Slice.Callers);
+    internal GetTodoNoteService Note() => new(Views.Progress, Slice.Callers, NoteSync, NoteLocator, Slice.Store, Views.Views);
+
+    internal TodoNoteSyncStub NoteSync { get; } = new();
+
+    internal NoteLocatorStub NoteLocator { get; } = new();
 
     internal async Task Lease() => _ = await Slice.HoldLease();
 
