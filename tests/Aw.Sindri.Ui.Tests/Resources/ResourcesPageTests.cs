@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api.Resources;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Resources;
 
 namespace Aw.Sindri.Ui.Tests.Resources;
@@ -85,7 +86,7 @@ public sealed class ResourcesPageTests
         var page = await Shown();
 
         Assert.True(page.IsEmpty);
-        Assert.Equal(Aw.Sindri.Ui.ViewModels.Labels.ResourcesEmpty, page.EmptyText);
+        Assert.Equal(Labels.ResourcesEmpty, page.EmptyText);
         Assert.Empty(page.Rows);
     }
 
