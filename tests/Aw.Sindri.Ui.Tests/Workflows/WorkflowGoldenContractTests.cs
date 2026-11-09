@@ -72,4 +72,46 @@ public sealed class WorkflowGoldenContractTests
         Assert.Equal(("/sindri/workflows", "/sindri/workflows/morning-check", "/sindri/workflows/morning-check/runs", "/sindri/workflow-runs/morning-check%401%3A1"),
             (WorkflowRoutes.List(), WorkflowRoutes.One("morning-check"), WorkflowRoutes.Runs("morning-check"), WorkflowRoutes.Run("morning-check@1:1")));
     }
+
+    [Fact]
+    public void The_write_routes_escape_the_slug()
+    {
+        Assert.Equal(("/sindri/workflows/morning-check/ops", "/sindri/workflows/morning-check/activate", "/sindri/workflows/morning-check/pause", "/sindri/workflows/blocks"),
+            (WorkflowRoutes.Ops("morning-check"), WorkflowRoutes.Activate("morning-check"), WorkflowRoutes.Pause("morning-check"), WorkflowRoutes.Blocks()));
+    }
+
+    [Fact]
+    public void The_app_DTOs_read_the_pause_and_archive_goldens()
+    {
+        var paused = Read<WorkflowPaused>("workflows-slug-pause", "paused");
+        Assert.Equal(("morning-check", 1), (paused.Slug, paused.LatestRevision));
+
+        var archived = Read<WorkflowArchived>("workflows-slug", "archived");
+        Assert.Equal(("morning-check", DateTimeOffset.Parse("2026-01-01T00:00:00Z", System.Globalization.CultureInfo.InvariantCulture)), (archived.Slug, archived.ArchivedAt));
+    }
+
+    [Fact]
+    public void The_write_bodies_send_every_field_even_when_null()
+    {
+        var activate = Encoding.UTF8.GetString(AwJson.Serialize(new ActivateWorkflowBody(Revision: null), SindriApiClient.Json));
+        var ops = Encoding.UTF8.GetString(AwJson.Serialize(new ApplyWorkflowOpsBody(2, JsonDocument.Parse("[{\"op\":\"remove_node\",\"node\":\"a\"}]").RootElement), SindriApiClient.Json));
+
+        Assert.Equal("{\"revision\":null}", activate);
+        Assert.Equal("{\"baseRevision\":2,\"ops\":[{\"op\":\"remove_node\",\"node\":\"a\"}]}", ops);
+    }
+
+    [Fact]
+    public void The_block_list_reads_groups_with_titles_and_config_fields()
+    {
+        const string Served = """{"groups":[{"group":"Triggers","blocks":[{"type":"manual","title":"Manual","isTrigger":true,"config":[],"outputs":{},"branches":["out"],"exampleConfig":null,"exampleSpec":null},{"type":"run_agent","title":"Run an agent","isTrigger":false,"config":[{"name":"prompt","type":"text","required":true}],"outputs":{"text":"text"},"branches":["out"],"exampleConfig":{"prompt":"hi"},"exampleSpec":null}]}]}""";
+
+        var read = AwJson.Deserialize<WorkflowBlockList>(Encoding.UTF8.GetBytes(Served), SindriApiClient.Json);
+
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
+        var group = Assert.Single(read.Value.Groups);
+        Assert.Equal(("Triggers", "Run an agent", true), (group.Group, group.Blocks[1].Title, group.Blocks[0].IsTrigger));
+        Assert.Equal(new WorkflowBlockField("prompt", "text", Required: true), group.Blocks[1].Config[0]);
+        Assert.Equal("hi", group.Blocks[1].ExampleConfig!.Value.GetProperty("prompt").GetString());
+        Assert.Null(group.Blocks[0].ExampleConfig);
+    }
 }

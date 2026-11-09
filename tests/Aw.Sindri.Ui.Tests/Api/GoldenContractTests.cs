@@ -74,6 +74,7 @@ public sealed class GoldenContractTests
         ["jobs-id"] = As<JobView>,   // GET /jobs/{id}: the job sheet; the 404 is ProblemDetails
         ["workflows"] = As<WorkflowList>,   // GET /workflows: the Workflows page's list (#2258 PR 17 part 1); the refusals are ProblemDetails
         ["workflows-slug"] = As<WorkflowView>,   // GET /workflows/{slug}: the runs header; the spec stays raw
+        ["workflows-slug-pause"] = As<WorkflowPaused>,   // POST /workflows/{slug}/pause (the Pause button); the success is paused.json
         ["workflows-slug-runs"] = As<WorkflowRunList>,   // GET /workflows/{slug}/runs: a workflow's runs
         ["workflow-runs-run"] = As<WorkflowRunView>,   // GET /workflow-runs/{run}: a run's detail
         ["workflow-runs-run-cancel"] = As<WorkflowRunCancelled>,   // POST /workflow-runs/{run}/cancel's cancelled body (spec-shaped: the API records only its refusals, bad-id, not-found, already-ended)
@@ -146,6 +147,7 @@ public sealed class GoldenContractTests
         [("connections", "added-oauth")] = As<ConnectionAdded>,
         [("connections-id", "removed")] = As<ConnectionRemoved>,
         [("memories", "created")] = As<MemoryCreated>,
+        [("workflows-slug", "archived")] = As<WorkflowArchived>,   // DELETE /workflows/{slug}'s answer; the folder's found is GET's WorkflowView and archive-not-found, replace-stale and not-found are ProblemDetails
         [("workflows-slug-runs", "started")] = As<WorkflowRunStarted>,   // POST /workflows/{slug}/runs' answers (Run now); the folder's list-* are GET's WorkflowRunList and its refusals are ProblemDetails
         [("workflows-slug-runs", "queued")] = As<WorkflowRunStarted>,
         [("workflows-slug-runs", "skipped")] = As<WorkflowRunStarted>,
@@ -177,7 +179,7 @@ public sealed class GoldenContractTests
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
-        "workflows-validate", "workflows-slug-ops", "workflows-slug-pause", "workflows-slug-activate",   // #2258 PR 8b: the workflow writes are the CLI's and the MCP tools'; the app's editor sends them when it lands (UI lane)
+        "workflows-validate", "workflows-slug-ops", "workflows-slug-activate",   // #2258 PR 8b: ops and activate have only refusal goldens (ProblemDetails), validate is the CLI's; Pause's success is read above
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
 

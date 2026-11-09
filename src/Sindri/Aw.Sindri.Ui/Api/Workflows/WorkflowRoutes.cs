@@ -14,4 +14,12 @@ internal static class WorkflowRoutes
     internal static string Run(string runId) => $"/sindri/workflow-runs/{Uri.EscapeDataString(runId)}";
 
     internal static string Cancel(string runId) => $"{Run(runId)}/cancel";
+
+    internal static string Blocks() => $"{Root}/blocks";
+
+    internal static string Ops(string slug) => throw new NotSupportedException();
+
+    internal static string Activate(string slug) => throw new NotSupportedException();
+
+    internal static string Pause(string slug) => throw new NotSupportedException();
 }
