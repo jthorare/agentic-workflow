@@ -58,5 +58,8 @@ public sealed class RetiredEventsTests : IDisposable
     // why: profile approval is dropped by v2 PR 1, not PR3b; whichever of PR 1 and PR4b lands second moves this row up (engine, 2026-11-08).
     [InlineData("profile.approved")]
     [InlineData("workflowish.started")]
+    [InlineData("workflow.run.started")]
+    [InlineData("workflow.node.failed")]
+    [InlineData("workflow.notify")]
     public void Is_leaves_the_live_kinds_alone(string type) => Assert.False(RetiredEvents.Is(type));
 }
