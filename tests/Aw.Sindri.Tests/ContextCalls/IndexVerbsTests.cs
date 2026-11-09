@@ -217,18 +217,6 @@ public sealed class IndexVerbsTests : IDisposable
         Assert.Contains("terminal", _error.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact, Trait("Lane", "unit")]
-    public async Task Purge_by_a_session_is_refused_at_the_preview_and_exits_1()
-    {
-        var api = new ScriptedApi(Problem(HttpStatusCode.Forbidden, "SND-AUTH-002", "index purge is the owner's"));
-
-        var exit = await Run(api, typed: "yes\n", terminal: true, "purge", "github");
-
-        Assert.Equal(1, exit);
-        _ = Assert.Single(api.Calls);
-        Assert.Contains("SND-AUTH-002", _error.ToString(), StringComparison.Ordinal);
-    }
-
     [Theory, Trait("Lane", "unit")]
     [InlineData("purge")]
     [InlineData("purge", "a", "b")]

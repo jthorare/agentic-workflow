@@ -2,7 +2,7 @@ using Aw.Sindri.Core.Commands;
 
 namespace Aw.Sindri.Features.LinearIssues;
 
-/// <summary>Create a Linear issue (POST /sindri/linear/issues; Linear hub spec 2026-11-04 §3, §5.2): desk class, the owner's, an agent session is refused (SND-AUTH-002). Every id is checked against the team's stored lookups (SND-LINEAR-006) before anything is sent.</summary>
+/// <summary>Create a Linear issue (POST /sindri/linear/issues; Linear hub spec 2026-11-04 §3, §5.2): desk class, the owner's or an agent session's (agent-first PR 2). Every id is checked against the team's stored lookups (SND-LINEAR-006) before anything is sent.</summary>
 /// <param name="ClientId">The app's uuid; a retry sends the same one, so the issue is never created twice.</param>
 /// <param name="Team">The team's key, 'ENG'; it must be one the profile picked (SND-LINEAR-003).</param>
 /// <param name="Title">The title, 1 to 255 characters.</param>

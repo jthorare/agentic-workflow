@@ -80,7 +80,7 @@ public sealed class ApplyWorkflowOpsServiceTests : IDisposable
     public async Task An_unknown_workflow_is_not_found_and_an_archived_one_is_refused()
     {
         await _rig.Seed();
-        var unknown = await _service.Handle(new ApplyWorkflowOpsRequest(Aw.Sindri.Core.Graph.Ids.WorkflowSlug.From("nope"), 1, Rename, "owner"), Token);
+        var unknown = await _service.Handle(new ApplyWorkflowOpsRequest(Core.Graph.Ids.WorkflowSlug.From("nope"), 1, Rename, "owner"), Token);
         _ = (await _rig.Workflows.Archive(Id, Token)).Value;
 
         var archived = await _service.Handle(new ApplyWorkflowOpsRequest(Slug, 1, Rename, "owner"), Token);

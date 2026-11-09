@@ -14,7 +14,8 @@ namespace Aw.Sindri.Infrastructure.Workflow;
 /// </summary>
 /// <param name="handler">What sends the request; a fake in tests. It must not follow redirects itself.</param>
 /// <param name="hosts">Reads the allowlist each time, so a profile edit applies at once.</param>
-internal sealed class GraphHttpClient(HttpMessageHandler handler, Func<CancellationToken, ValueTask<IReadOnlyList<string>>> hosts) : IGraphHttpPort
+/// <param name="budget">How long one request may take; 30 s when null. A test passes a short one.</param>
+internal sealed class GraphHttpClient(HttpMessageHandler handler, Func<CancellationToken, ValueTask<IReadOnlyList<string>>> hosts, TimeSpan? budget = null) : IGraphHttpPort
 {
     /// <summary>The most bytes of an answer that are read.</summary>
     internal const int MaxBodyBytes = 1024 * 1024;
@@ -51,16 +52,19 @@ internal sealed class GraphHttpClient(HttpMessageHandler handler, Func<Cancellat
 
         try
         {
-            using var client = new HttpClient(handler, disposeHandler: false) { Timeout = TimeSpan.FromSeconds(30) };
-            return await Follow(client, request, cancellationToken).ConfigureAwait(false);
+            // why: sends use ResponseHeadersRead, so HttpClient.Timeout stops at the headers; one linked budget over the sends AND the body read keeps a trickling body from holding the node for the activity's hour
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(budget ?? TimeSpan.FromSeconds(30));
+            using var client = new HttpClient(handler, disposeHandler: false) { Timeout = Timeout.InfiniteTimeSpan };
+            return await Follow(client, request, timeout.Token).ConfigureAwait(false);
         }
         catch (HttpRequestException e)   // boundary: the network or the peer failed
         {
             return SindriErrors.GraphHttpFailed.With($"the request to {request.Url.Host} failed: {e.Message}");
         }
-        catch (TaskCanceledException e) when (!cancellationToken.IsCancellationRequested)   // boundary: the client's own 30 s timeout, not a cancel
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)   // boundary: the request budget ran out (headers or body), not a cancel
         {
-            return SindriErrors.GraphHttpFailed.With($"the request to {request.Url.Host} timed out: {e.Message}");
+            return SindriErrors.GraphHttpFailed.With($"the request to {request.Url.Host} timed out after {(budget ?? TimeSpan.FromSeconds(30)).TotalSeconds.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)} s (sending and reading the answer)");
         }
     }
 

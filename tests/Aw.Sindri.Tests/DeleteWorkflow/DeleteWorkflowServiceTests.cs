@@ -41,7 +41,7 @@ public sealed class DeleteWorkflowServiceTests : IDisposable
     public async Task An_unknown_workflow_is_not_found_and_an_archived_one_is_refused()
     {
         await _rig.Seed();
-        var unknown = await _service.Handle(new DeleteWorkflowRequest(Aw.Sindri.Core.Graph.Ids.WorkflowSlug.From("nope"), "owner"), Token);
+        var unknown = await _service.Handle(new DeleteWorkflowRequest(Core.Graph.Ids.WorkflowSlug.From("nope"), "owner"), Token);
         _ = await _service.Handle(new DeleteWorkflowRequest(Slug, "owner"), Token);
 
         var again = await _service.Handle(new DeleteWorkflowRequest(Slug, "owner"), Token);

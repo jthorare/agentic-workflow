@@ -10,7 +10,7 @@ namespace Aw.Sindri.Tests.LaunchedCallers;
 
 /// <summary>
 /// A launched agent (#1002): a request that carries a launch's secret is that launch's session, whatever else it can read (the human
-/// token file sits in its environment), and a session is refused the human-only verbs with SND-AUTH-002.
+/// token file sits in its environment), and since agent-first PR 2 that session may answer a decision like the owner: no SND-AUTH-002.
 /// </summary>
 public sealed class LaunchedCallerTests(LaunchedCallerHost host) : IClassFixture<LaunchedCallerHost>
 {
@@ -29,14 +29,14 @@ public sealed class LaunchedCallerTests(LaunchedCallerHost host) : IClassFixture
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task A_launched_session_is_refused_a_human_only_verb_with_SND_AUTH_002()
+    public async Task A_launched_session_gets_past_the_caller_check_on_a_decision_answer()
     {
         LaunchSecrets.Write(host.App.Services.GetRequiredService<LauncherOptions>().SecretsDirectory, LaunchId.From(Launch), Secret);
         (string Name, string Value)[] session = [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, "cli"), (LaunchHeader, Launch)];
 
         var answer = await host.Http.Ask(Request(session));
 
-        Assert.Equal((HttpStatusCode.Forbidden, "SND-AUTH-002"), (answer.Status, answer.Code));
+        Assert.Equal((HttpStatusCode.ServiceUnavailable, "SND-API-011"), (answer.Status, answer.Code));   // past the caller check: this host runs no engine, so the answer stops there
     }
 
     private static HttpRequestMessage Request((string Name, string Value)[] headers) =>
