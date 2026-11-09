@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
@@ -25,6 +26,31 @@ public sealed class SeatbeltProfileTests
     private static string[] Lines(string profile) => profile.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
     private static void Match(string text, string golden) => Golden.Match(text, typeof(SeatbeltProfileTests).Assembly, "Sandbox/Plan/Golden/" + golden, Normalization.None);
+
+    private static SandboxPlan ProcessPlan(params PlanGroup[] groups) => ProcessSandboxPlanner.Build(
+        SandboxMechanism.Seatbelt,
+        new ProcessSandboxRequest(
+            LaunchId.From("LCH-" + new string('c', 32)),
+            "toolkit:triage",
+            Req.SindriHome + "/toolkits/triage/bin/triage",
+            Req.RunArea,
+            [new ResourceMount("state", Req.SindriHome + "/resources/toolkit/triage/db/state.sqlite")],
+            new Dictionary<string, string>(StringComparer.Ordinal) { [ResourceEnv.Database("state")] = Req.SindriHome + "/resources/toolkit/triage/db/state.sqlite" },
+            groups,
+            new SandboxNetFacts("/run/user/1000/sindri/cd34ab12", 7480, 41235),
+            Req.Host)).Value;
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_process_profile_matches_its_golden() =>
+        Match(SeatbeltProfile.RenderProcess(ProcessPlan(new PlanGroup("github", ["api.github.com"])), Req.RunArea), "seatbelt-process.sb");
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_process_with_no_connection_opens_no_loopback_port()
+    {
+        var lines = Lines(SeatbeltProfile.RenderProcess(ProcessPlan(), Req.RunArea));
+
+        Assert.DoesNotContain(lines, l => l.Contains("remote ip", StringComparison.Ordinal));
+    }
 
     [Fact, Trait("Lane", "unit")]
     public void The_profile_allows_by_default_denies_the_network_and_all_writes_first()

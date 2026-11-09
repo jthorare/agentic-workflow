@@ -39,6 +39,12 @@ public static class SeatbeltProfile
         return sb.ToString();
     }
 
+    /// <summary>Renders the profile of a plain process's plan (a toolkit; built by <see cref="ProcessSandboxPlanner"/> for <see cref="SandboxMechanism.Seatbelt"/>): the plan is rewritten for Seatbelt first.</summary>
+    /// <param name="plan">The process plan.</param>
+    /// <param name="runArea">The process's run area.</param>
+    /// <returns>The profile text.</returns>
+    public static string RenderProcess(SandboxPlan plan, string runArea) => Render(SeatbeltProcessPlan.Rewrite(plan), runArea);
+
     /// <summary>macOS resolves /var, /tmp and /etc to /private/var, /private/tmp and /private/etc, and Seatbelt matches the resolved path.</summary>
     /// <param name="path">An absolute path.</param>
     /// <returns>The path with those three prefixes (the path itself or anything under it, not a longer name such as /variable) rewritten.</returns>
