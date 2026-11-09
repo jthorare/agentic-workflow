@@ -1,17 +1,23 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Launches;
 
 namespace Aw.Sindri.Features.GetWorkflowRun;
 
 /// <summary>One run with its node runs; an unknown run is SND-GRAPH-101. A node payload the store cut short comes back as text, with the node's Truncated flag set.</summary>
 /// <param name="runs">The runs and node runs.</param>
-internal sealed class GetWorkflowRunService(IWorkflowRunStore runs) : IService<GetWorkflowRunRequest, GetWorkflowRunResponse>
+/// <param name="workflows">The revision the run walked: it says which nodes are 'run_agent' nodes.</param>
+/// <param name="files">The per-launch files: the held marker says whether a person holds an agent node.</param>
+internal sealed class GetWorkflowRunService(IWorkflowRunStore runs, IWorkflowStore workflows, ILaunchFiles files) : IService<GetWorkflowRunRequest, GetWorkflowRunResponse>
 {
     public async ValueTask<Result<GetWorkflowRunResponse>> Handle(GetWorkflowRunRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(workflows);   // red stub: the agent field is read from these next
+        ArgumentNullException.ThrowIfNull(files);
         var run = await runs.Get(request.Run, cancellationToken).ConfigureAwait(false);
         if (run.IsError)
         {
