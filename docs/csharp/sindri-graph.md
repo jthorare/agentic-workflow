@@ -78,7 +78,7 @@ Five more blocks, each with an example spec page under `docs/workflows/blocks/`:
 - **`workflow.id`.** A node may read `{{workflow.id}}` (with `name`, `runId` and `revision`). `only_new` keys its memory by it.
 - **Call guards** (`Core/Graph/Guards`). A run is depth 0, the run it calls is 1. `workflow.callDepth` (profile, default 3, 1 to 10): depth 3 is allowed, 4 is `SND-GRAPH-120`. A run may not start its own workflow, nor the workflow named by its trigger's `parentRun`: `SND-GRAPH-121`. The callee's trigger is `{"kind":"workflow_call","payload":...,"callDepth":N,"parentRun":"<run>","by":"workflow:<slug>"}` and its run id's occurrence is a hash of caller run, node and item index (from 100,000,000 up), so a node that runs twice starts one callee run. Seam: `CallDepth.Next(..., launchLineage)` is where PR 7's launch-based self-start check plugs in.
 - **Profile keys.** `workflow.http.hosts` (bare lower-case host names, at most 50; none listed refuses every request) and `workflow.callDepth`; both are approval-relevant (`ProfileDiff`).
-- **Seen memory.** `workflow_seen(workflow_id, key, first_seen_at)` in ledger.db (migration 0013; renumbered at the final main merge). Read only by `only_new`.
+- **Seen memory.** `workflow_seen(workflow_id, key, first_seen_at)` in ledger.db (migration 0014; renumbered at the final main merge). Read only by `only_new`.
 - **Codes.** `SND-GRAPH-120` call too deep, `121` self-start, `122` an http request refused before it was sent, `123` an http request that got no acceptable answer.
 
 ## Schedules
