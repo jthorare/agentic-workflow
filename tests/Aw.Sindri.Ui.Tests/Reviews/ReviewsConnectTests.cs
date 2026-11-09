@@ -42,12 +42,13 @@ public sealed class ReviewsConnectTests
     {
         var page = await Shown("connect-github");
         var links = Requests(page);
+        var pages = 0;
+        page.ConnectionsRequested += (_, _) => pages++;
 
         page.PressConnect();
 
-        // Guess: no add-with-preset link exists yet, so the builder of the green side picks it; it must be a connection link.
-        var link = Assert.Single(links);
-        Assert.Equal(DeepLinkKind.Connection, link.Kind);
+        Assert.Equal(1, pages);   // the plain Connections page: no add-with-preset link exists
+        Assert.Empty(links);
     }
 
     [Fact]

@@ -106,18 +106,8 @@ internal sealed partial class ShellViewModel
         InitReviewFix();
         ReviewPage.BackRequested += (_, _) => CloseReviewPage();
         Reviews.OpenRequested += (_, e) => Navigate(e.Link);
-        Reviews.ConnectRequested += (_, e) =>
-        {
-            // a connection that exists opens its sheet; none yet opens the Connections page, whose Add form starts on GitHub
-            if (Connections.Rows.Any(r => string.Equals(r.Name, e.Link.Subject, StringComparison.Ordinal)))
-            {
-                OpenSheet(e.Link);
-            }
-            else
-            {
-                GoTo(PageId.Connections);
-            }
-        };
+        Reviews.ConnectRequested += (_, e) => Navigate(e.Link);
+        Reviews.ConnectionsRequested += (_, _) => GoTo(PageId.Connections);
         Health.Follow(Reviews.Refresh);   // every read, whichever page is shown: the badge and Home's line need the count
         PropertyChanged += (_, e) =>
         {

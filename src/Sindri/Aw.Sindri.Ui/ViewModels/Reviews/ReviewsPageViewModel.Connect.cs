@@ -14,10 +14,13 @@ internal sealed partial class ReviewsPageViewModel
     /// <summary>The action's words ("Connect GitHub", "Sign in to GitHub again"); empty when there is no action.</summary>
     public string ConnectText => _connect?.Text ?? string.Empty;
 
-    /// <summary>The connect action asked for Connections: the link is 'connection/&lt;name&gt;' ('connection/github' while there is no connection yet).</summary>
+    /// <summary>The action named a connection that needs signing in again: the link is 'connection/&lt;name&gt;', its sheet.</summary>
     internal event EventHandler<ReviewOpenRequestedEventArgs>? ConnectRequested;
 
-    /// <summary>The action was pressed: asks the shell to open the connection, or Connections' add flow when there is none.</summary>
+    /// <summary>The action has no connection to open (GitHub isn't connected yet): the shell shows the Connections page.</summary>
+    internal event EventHandler? ConnectionsRequested;
+
+    /// <summary>The action was pressed.</summary>
     internal void PressConnect()
     {
         if (_connect is not { } connect)
@@ -25,9 +28,13 @@ internal sealed partial class ReviewsPageViewModel
             return;
         }
 
-        if (DeepLink.TryParse("connection/" + (connect.Connection ?? "github"), out var link))
+        if (connect.Connection is { } name && DeepLink.TryParse("connection/" + name, out var link))
         {
             ConnectRequested?.Invoke(this, new ReviewOpenRequestedEventArgs(link));
+        }
+        else
+        {
+            ConnectionsRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
