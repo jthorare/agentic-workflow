@@ -3,7 +3,7 @@
 //   Fs        the file system with Python's semantics (os.listdir order, getmtime's float, realpath, os.walk)
 //   Git       read-only `git -C <repo> ...`, 60 s timeout, failures as (1, the text Python's subprocess gives)
 //   Clock     the local-time stamp in META/stale-build (datetime.fromtimestamp: TZ decides, so tests pin TZ)
-//   Compiler  build_tdd.py --no-copy into a scoped temporary folder (python3 until the TypeScript compiler lands, N6)
+//   Compiler  the compile of a packet with no build: src/compile in-process, --no-copy, into a scoped temporary folder
 //   Agents    write_agents.check(build) in-process (src/agents)
 // The Packet service (the linted packet and the findings sink) is in packet.ts.
 import { lstatSync, mkdtempSync, readdirSync, readlinkSync, rmSync, statSync } from "node:fs";
@@ -11,6 +11,8 @@ import { tmpdir } from "node:os";
 import { Context, Effect, Layer, type Scope } from "effect";
 import * as py from "../py";
 import { check as agentsCheck } from "../agents/write";
+import { compile, isSystemExit, parse_args } from "../compile";
+import { PyError, qualifiedName } from "../py/errors";
 import { pyErrText, repr } from "./pyops";
 
 // ---------------------------------------------------------------------------------------------------------- Fs
@@ -151,18 +153,23 @@ export function gitLive(timeoutS = GIT_TIMEOUT_S, gitBin = "git"): GitApi {
         } catch (e) {
           return [1, enc.encode(pyErrText(withPath(e, gitBin)))] as const;
         }
-        let timedOut = false;
-        const timer = setTimeout(() => {
-          timedOut = true;
-          proc.kill("SIGKILL");
-        }, timeoutS * 1000);
-        const [out, err] = await Promise.all([
+        // subprocess.run(timeout=60): the whole exchange (exit and both pipes) races the clock; on expiry the child is
+        // killed and waited for, and its pipes are not drained (a grandchild may hold them open)
+        const done = Promise.all([
           new Response(proc.stdout as ReadableStream).arrayBuffer(),
           new Response(proc.stderr as ReadableStream).arrayBuffer(),
+          proc.exited,
         ]);
-        const code = await proc.exited;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const clock = new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), timeoutS * 1000); });
+        const r = await Promise.race([done, clock]);
         clearTimeout(timer);
-        if (timedOut) return [1, enc.encode(timeoutText(cmd, timeoutS))] as const;
+        if (r === null) {
+          proc.kill("SIGKILL");
+          await proc.exited;
+          return [1, enc.encode(timeoutText(cmd, timeoutS))] as const;
+        }
+        const [out, err, code] = r;
         return [code, new Uint8Array(code === 0 ? out : err)] as const;
       }),
   };
@@ -192,13 +199,16 @@ export class Clock extends Context.Service<Clock, ClockApi>()("tdd/lint/Clock") 
 export const ClockLive = Layer.succeed(Clock, { localMinute: (s: number) => py.time.formatLocalMinute(s) });
 
 // ---------------------------------------------------------------------------------------------------------- Compiler
-/** A compile of the packet source into a fresh temporary folder, --no-copy: the folder, or the failure's last line. */
-export type CompileResult = { readonly dir: string; readonly error: null } | { readonly dir: string | null; readonly error: string };
+/** One compile of a source into an out folder with --no-copy: null, or how it failed ([exit code, last output line]). */
+export type CompileFailure = readonly [number, string] | null;
+
+/** A compile of the packet source into a fresh scoped temporary folder: the folder, and the failure's last line or null. */
+export type CompileResult = { readonly dir: string; readonly error: string | null };
 
 export interface CompilerApi {
   /** lint_packet.Lint.compile: `build_tdd.py <src> <tmp> --no-copy` in cwd; the folder is removed when the scope closes. */
   readonly compile: (src: string, cwd: string, prefix: string) => Effect.Effect<CompileResult, never, Scope.Scope>;
-  /** Whether build_tdd.py is there to run (a missing python3 is a compile failure, reported with the reason). */
+  /** Whether there is a compiler to run (lint_packet: build_tdd.py beside the script). */
   readonly available: () => boolean;
 }
 
@@ -214,32 +224,76 @@ export const tempDir = (prefix: string) =>
 
 const dec = (b: Uint8Array): string => py.io.universalNewlines(py.io.decodeUtf8(b, "replace"));
 
-/** The last non-empty line of a failed run: (p.stderr or p.stdout).strip().splitlines()[-1:] or [fallback]. */
+/** The last line of a failed run: (p.stderr or p.stdout).strip().splitlines()[-1:] or [fallback]. */
 export function tailLine(stderr: string, stdout: string, fallback: string): string {
   const lines = py.str.splitlines(py.str.strip(stderr || stdout));
   return lines.length ? lines[lines.length - 1]! : fallback;
 }
 
-/** build_tdd.py through python3 -I (the Python linter runs sys.executable; the TypeScript one runs python3). */
+/** build_tdd.py through python3 -I as a subprocess (env adds to the inherited environment). */
+export function pythonCompileOnce(python: string, src: string, cwd: string, out: string, env: Record<string, string> = {}, timeoutS = 0): CompileFailure {
+  const full: Record<string, string> = {};
+  for (const [k, v] of Object.entries({ ...process.env, ...env })) if (v !== undefined) full[k] = v;
+  const r = Bun.spawnSync([python, "-I", py.path.join(SCRIPTS(), "build_tdd.py"), src, out, "--no-copy"],
+    { cwd, env: full, stdin: "ignore", stdout: "pipe", stderr: "pipe", ...(timeoutS ? { timeout: timeoutS * 1000 } : {}) });
+  const code = r.exitCode ?? 1;
+  if (code !== 0 || !py.io.isfile(py.path.join(out, "content.json"))) return [code, tailLine(dec(r.stderr), dec(r.stdout), "")];
+  return null;
+}
+
+/** The TypeScript compiler (src/compile) in-process, run as `build_tdd.py <src> <out> --no-copy` would run in cwd, with
+ * TDD_GENERATED set to `generated` when one is given; cwd and the variable are restored afterwards. A SystemExit is the
+ * Python's sys.exit (its message on stderr, its code); any other error is an uncaught exception (traceback, exit 1). */
+export function tsCompileOnce(src: string, cwd: string, out: string, generated: string | null = null): CompileFailure {
+  const here = process.cwd();
+  const had = Object.hasOwn(process.env, "TDD_GENERATED"), was = process.env["TDD_GENERATED"];
+  try {
+    process.chdir(cwd);
+    if (generated !== null) process.env["TDD_GENERATED"] = generated;
+    compile(parse_args([src, out, "--no-copy"]));
+    return py.io.isfile(py.path.join(out, "content.json")) ? null : [0, ""];
+  } catch (e) {
+    if (isSystemExit(e)) return [typeof e.code === "number" ? e.code : 1, tailLine(e.message, "", "")];
+    if (e instanceof PyError) return [1, tailLine(`${qualifiedName(e.type)}: ${e.message}`, "", "")];
+    const err = e as { name?: string; message?: string };
+    return [1, tailLine(`${err?.name ?? "Error"}: ${err?.message ?? String(e)}`, "", "")];
+  } finally {
+    process.chdir(here);
+    if (generated !== null) {
+      if (had) process.env["TDD_GENERATED"] = was;
+      else delete process.env["TDD_GENERATED"];
+    }
+  }
+}
+
+/** The live Compiler: src/compile in-process (the Python linter runs build_tdd.py; the two compilers agree byte for
+ * byte, which the PARITY rule checks). */
+export const tsCompiler: CompilerApi = {
+  available: () => true,
+  compile: (src, cwd, prefix) =>
+    Effect.gen(function* () {
+      const dir = yield* tempDir(prefix);
+      const f = tsCompileOnce(src, cwd, dir);
+      return { dir, error: f === null ? null : f[1] || "no output" };
+    }),
+};
+
+/** build_tdd.py through python3 as the Compiler (tests, and a fallback while the two compilers are compared). */
 export function pythonCompiler(python = "python3"): CompilerApi {
-  const bt = () => py.path.join(SCRIPTS(), "build_tdd.py");
   return {
-    available: () => py.io.isfile(bt()),
+    available: () => py.io.isfile(py.path.join(SCRIPTS(), "build_tdd.py")),
     compile: (src, cwd, prefix) =>
       Effect.gen(function* () {
         const dir = yield* tempDir(prefix);
-        if (Bun.which(python) === null) return { dir, error: `${python} is not on PATH` } as const;
-        const r = Bun.spawnSync([python, "-I", bt(), src, dir, "--no-copy"], { cwd, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
-        if (r.exitCode !== 0 || !py.io.isfile(py.path.join(dir, "content.json"))) {
-          return { dir, error: tailLine(dec(r.stderr), dec(r.stdout), "no output") } as const;
-        }
-        return { dir, error: null } as const;
+        if (Bun.which(python) === null) return { dir, error: `${python} is not on PATH` };
+        const f = pythonCompileOnce(python, src, cwd, dir);
+        return { dir, error: f === null ? null : f[1] || "no output" };
       }),
   };
 }
 
 export class Compiler extends Context.Service<Compiler, CompilerApi>()("tdd/lint/Compiler") {}
-export const CompilerLive = Layer.succeed(Compiler, pythonCompiler());
+export const CompilerLive = Layer.succeed(Compiler, tsCompiler);
 
 // ---------------------------------------------------------------------------------------------------------- Agents
 export interface AgentsApi {

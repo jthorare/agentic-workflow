@@ -16,13 +16,15 @@ import { refs } from "./rules/refs";
 import { schema } from "./rules/schema";
 import { struct } from "./rules/struct";
 import { xdoc } from "./rules/xdoc";
+import { TsCompiler, TsCompilerLive, parity } from "./rules/parity";
 import { Agents, Clock, Compiler, Fs, Git, ServicesLive } from "./services";
 
-export type Services = Fs | Git | Clock | Compiler | Agents;
+export type Services = Fs | Git | Clock | Compiler | Agents | TsCompiler;
 export type Rule = Effect.Effect<void, never, Packet | Services>;
 
 export const RULE_EFFECTS: Record<(typeof RULES)[number], Rule> = {
   STRUCT: struct, DNUM: dnum, REFS: refs, CITES: cites, DIAG: diag, SCHEMA: schema, FILES: files, META: meta, AGENTS: agents, XDOC: xdoc,
+  PARITY: parity,
 };
 
 /** What a lint run leaves: the packet's state with its findings, notes and citations. */
@@ -67,5 +69,7 @@ export const lintEffect = (opts: LintOptions, rules: readonly RuleId[] = RULES, 
   );
 
 /** Run a lint on the live services. */
-export const runLint = (opts: LintOptions, layer: Layer.Layer<Services> = ServicesLive): Promise<LintResult> =>
+export const AllLive: Layer.Layer<Services> = Layer.mergeAll(ServicesLive, TsCompilerLive);
+
+export const runLint = (opts: LintOptions, layer: Layer.Layer<Services> = AllLive): Promise<LintResult> =>
   Effect.runPromise(Effect.provide(lintEffect(opts), layer));
