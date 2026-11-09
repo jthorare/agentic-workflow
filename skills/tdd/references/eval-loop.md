@@ -8,6 +8,10 @@ written under `<build>/eval/`; nothing leaves the machine unless `--push` is giv
 Run order after an edit: `build_tdd.py` -> `bun run app/build.ts` -> `write_agents.py` -> `eval_packet.py`. The last
 step is part of every build and every review (D18; Who runs it and when, below).
 
+Also available during the overlap period: `tdd rev <packet-dir>` (`cli/bin/tdd.ts`) runs SKILL.md step 5 in this order, the
+eval included, with a journal under `build/.rev/` so a stopped run resumes where it stopped. Without `--push` it runs
+the eval offline (`--skip linear,aws`, no key in the child's environment); with `--push` the eval pushes as above.
+
 ## Setup (once per machine)
 
 ```
