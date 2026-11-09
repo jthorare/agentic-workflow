@@ -203,6 +203,26 @@ public abstract class LedgerReaderContract
         Expect.True(none is null);
     }
 
+    /// <summary>LatestByKeyPrefix reads the newest row whose key starts with the prefix (not a longer-named neighbour's), and null for none, also on a ledger never written.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task LatestByKeyPrefix_reads_the_newest_row_under_that_prefix()
+    {
+        var (lease, ledger) = await Create(Clock, Probe);
+        Expect.True((await Reader().LatestByKeyPrefix("p:a:", Token)).Value is null);
+        var grant = (await lease.Acquire(Probe.Self(), Token)).Value;
+        _ = await ledger.Append(Entry("process.started", "p:a:1"), grant, Token);
+        var newest = (await ledger.Append(Entry("process.started", "p:a:2"), grant, Token)).Value;
+        _ = await ledger.Append(Entry("process.started", "p:ab:3"), grant, Token);
+        var reader = Reader();
+
+        var found = (await reader.LatestByKeyPrefix("p:a:", Token)).Value;
+        var none = (await reader.LatestByKeyPrefix("p:b:", Token)).Value;
+
+        Expect.Equal(newest.Sequence, found?.Sequence);
+        Expect.True(none is null);
+    }
+
     /// <summary>On a ledger nothing was written to, a scan is empty at sequence 0 and creates no file.</summary>
     /// <returns>The test.</returns>
     [Fact]

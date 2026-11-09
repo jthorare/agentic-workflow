@@ -38,6 +38,12 @@ public interface ILedgerReader
     /// <returns>The event, if any; a missing ledger has none.</returns>
     public ValueTask<Result<LedgerEvent?>> ByKey(string idempotencyKey, CancellationToken cancellationToken);
 
+    /// <summary>The newest event (highest sequence) whose idempotency key starts with <paramref name="keyPrefix"/>, or null: the key's unique index bounds the read to the matching rows, the log is not walked.</summary>
+    /// <param name="keyPrefix">The start of the key, not empty.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>The event, if any; a missing ledger has none.</returns>
+    public ValueTask<Result<LedgerEvent?>> LatestByKeyPrefix(string keyPrefix, CancellationToken cancellationToken);
+
     /// <summary>The ledger's head: the last recorded sequence, 0 when the ledger is empty or has no file yet.</summary>
     /// <param name="cancellationToken">Cancels the operation.</param>
     /// <returns>The head.</returns>

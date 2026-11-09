@@ -165,6 +165,15 @@ public sealed class InMemorySindriStore(TimeProvider clock, IProcessProbe probe)
         }
     }
 
+    /// <inheritdoc cref="ILedgerReader.LatestByKeyPrefix"/>
+    public ValueTask<Result<LedgerEvent?>> LatestByKeyPrefix(string keyPrefix, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return ValueTask.FromResult<Result<LedgerEvent?>>(_events.LastOrDefault(e => e.IdempotencyKey.StartsWith(keyPrefix, StringComparison.Ordinal)));
+        }
+    }
+
     /// <inheritdoc cref="ILedgerStore.Head"/>
     public ValueTask<Result<long>> Head(CancellationToken cancellationToken)
     {

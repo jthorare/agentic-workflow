@@ -101,5 +101,8 @@ internal static class LedgerSql
     /// <summary>The row recorded under one idempotency key: the unique index finds it.</summary>
     internal const string SelectEventByKey = "SELECT " + EventColumns + " FROM events WHERE idempotency_key = $key";
 
+    /// <summary>The newest row whose idempotency key starts with $from: a key range on the unique index ($to is $from with its last character raised by one).</summary>
+    internal const string SelectLatestByKeyPrefix = "SELECT " + EventColumns + " FROM events WHERE idempotency_key >= $from AND idempotency_key < $to ORDER BY seq DESC LIMIT 1";
+
     internal const string SelectLatest = "SELECT " + EventColumns + " FROM events WHERE type = $type ORDER BY seq DESC LIMIT 1";
 }

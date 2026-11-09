@@ -41,6 +41,15 @@ internal sealed class SqliteLedgerReader(LedgerDatabase database) : ILedgerReade
         return events.IsError ? events.Error : Results.Success(events.Value.Count == 0 ? null : events.Value[0]);
     }
 
+    public async ValueTask<Result<LedgerEvent?>> LatestByKeyPrefix(string keyPrefix, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(keyPrefix);
+        var upper = string.Concat(keyPrefix.AsSpan(0, keyPrefix.Length - 1), ((char)(keyPrefix[^1] + 1)).ToString());
+        var events = await Read(new SqlStatement(LedgerSql.SelectLatestByKeyPrefix, c => c.Bind("$from", keyPrefix).Bind("$to", upper)), LedgerEventMapper.Instance, cancellationToken)
+            .ConfigureAwait(false);
+        return events.IsError ? events.Error : Results.Success(events.Value.Count == 0 ? null : events.Value[0]);
+    }
+
     public async ValueTask<Result<long>> Head(CancellationToken cancellationToken)
     {
         var head = await Read(new SqlStatement(LedgerSql.SelectHead), (IRowMapper<long>)CountMapper.Instance, cancellationToken).ConfigureAwait(false);

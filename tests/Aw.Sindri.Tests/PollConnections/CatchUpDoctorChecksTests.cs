@@ -1,9 +1,9 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Features.PollConnections;
 using Aw.Sindri.Testing.Connections;
 using Aw.Sindri.Tests.Connections;
@@ -119,6 +119,13 @@ public sealed class CatchUpDoctorChecksTests
         public ValueTask<Result<LedgerEvent?>> Latest(string type, CancellationToken cancellationToken) => inner.Latest(type, cancellationToken);
 
         public ValueTask<Result<LedgerEvent?>> ByKey(string idempotencyKey, CancellationToken cancellationToken) => inner.ByKey(idempotencyKey, cancellationToken);
+
+        public async ValueTask<Result<LedgerEvent?>> LatestByKeyPrefix(string keyPrefix, CancellationToken cancellationToken)
+        {
+            var row = await inner.LatestByKeyPrefix(keyPrefix, cancellationToken);
+            Rows += row.IsSuccess && row.Value is not null ? 1 : 0;
+            return row;
+        }
 
         public ValueTask<Result<long>> Head(CancellationToken cancellationToken) => inner.Head(cancellationToken);
     }
