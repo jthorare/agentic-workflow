@@ -54,7 +54,7 @@ override Aw.Sindri.Toolkit.ToolkitError.GetHashCode() -> int
 Aw.Sindri.Toolkit.ToolkitError.Title.get -> string!
 Aw.Sindri.Toolkit.ToolkitError.Title.init -> void
 override Aw.Sindri.Toolkit.ToolkitError.ToString() -> string!
-Aw.Sindri.Toolkit.ToolkitError.ToolkitError(Aw.Sindri.Toolkit.ToolkitError! original) -> void
+Aw.Sindri.Toolkit.ToolkitError.<Clone>$() -> Aw.Sindri.Toolkit.ToolkitError!
 Aw.Sindri.Toolkit.ToolkitError.ToolkitError(string! Code, string! Title) -> void
 static Aw.Sindri.Toolkit.ToolkitError.operator !=(Aw.Sindri.Toolkit.ToolkitError? left, Aw.Sindri.Toolkit.ToolkitError? right) -> bool
 static Aw.Sindri.Toolkit.ToolkitError.operator ==(Aw.Sindri.Toolkit.ToolkitError? left, Aw.Sindri.Toolkit.ToolkitError? right) -> bool
