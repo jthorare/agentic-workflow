@@ -43,7 +43,7 @@ internal sealed class ConfigFieldViewModel : ObservableObject
     /// <summary>True for a field edited with one line (text and number).</summary>
     public bool IsSingleLine => !IsBoolean && !IsMultiline;
 
-    /// <summary>A boolean field as a check box: checked when the text is "true".</summary>
+    /// <summary>A boolean field as a check box: checked when the text is "true". Unchecking writes "false", so an unset field checked and then unchecked sends false rather than removing the key: the box shows a value, and the value it shows is the one sent.</summary>
     public bool IsOn { get => string.Equals(Text.Trim(), "true", StringComparison.OrdinalIgnoreCase); set => Text = value ? "true" : "false"; }
 
     /// <summary>Why the text can't be sent, or empty.</summary>
