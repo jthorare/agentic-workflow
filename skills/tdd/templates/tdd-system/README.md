@@ -14,7 +14,7 @@ The look and the class vocabulary of every page the `tdd` skill builds. A white 
 Edit `tokens.json`, never the generated blocks, then:
 
 ```bash
-S="$HOME/.claude/skills/system-design"; D="$HOME/.claude/skills/tdd/templates/tdd-system"
+T="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/tdd"; S="${SYSTEM_DESIGN_SKILL:-$T/vendor/system-design}"; D="$T/templates/tdd-system"   # T and S as SKILL.md sets them
 python3 -I "$S/scripts/build_doc.py" --sync-css "$D/tokens.json" "$D/tdd.css"    # rewrite the FONTS and TOKENS blocks from tokens.json
 python3 -I "$S/scripts/build_doc.py" --check-css "$D/tokens.json" "$D/tdd.css"   # exit 1 if the blocks drifted from tokens.json
 ```

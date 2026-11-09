@@ -19,13 +19,20 @@ HYDRATE_LINE = re.compile(r"console errors (\d+) \| console warnings (\d+) \(hyd
 
 
 def artifact_check_path():
+    """Mirror of build_tdd.sd_root(): $SYSTEM_DESIGN_SKILL, the sibling skills/system-design, the provider install,
+    then the skill's own vendor/system-design. The first candidate that has scripts/artifact_check.mjs wins, so
+    upstream's system-design (which has none) falls through to the vendored copy."""
     here = os.path.dirname(os.path.abspath(__file__))
-    sibling = os.path.normpath(os.path.join(here, "..", "..", "..", "system-design"))
-    env = os.environ.get("SYSTEM_DESIGN_SKILL")
-    root = next((c for c in (env, sibling, os.path.expanduser("~/.claude/skills/system-design"))
-                 if c and os.path.isdir(os.path.join(c, "scripts"))), env or sibling)
-    p = os.path.join(root, "scripts", "artifact_check.mjs")
-    return p if os.path.isfile(p) else None
+    skill = os.path.normpath(os.path.join(here, "..", ".."))
+    candidates = (os.environ.get("SYSTEM_DESIGN_SKILL"),
+                  os.path.normpath(os.path.join(skill, "..", "system-design")),
+                  os.path.expanduser("~/.claude/skills/system-design"),
+                  os.path.join(skill, "vendor", "system-design"))
+    for c in candidates:
+        p = os.path.join(c, "scripts", "artifact_check.mjs") if c else None
+        if p and os.path.isfile(p):
+            return p
+    return None
 
 
 def s_page(page):

@@ -1,8 +1,8 @@
 /* House TDD design system: tdd.css
-   The stylesheet for technical design documents built by ~/.claude/skills/tdd/scripts/build_tdd.py and published as
+   The stylesheet for technical design documents built by the tdd skill's scripts/build_tdd.py and published as
    claude.ai HTML artifacts. Layout: one full-width reading column with a floating numbered contents rail on the left
    (a bottom-right toggle on phones). Colour: tokens only; the FONTS and TOKENS blocks are generated from tokens.json
-   (python3 -I ~/.claude/skills/system-design/scripts/build_doc.py --sync-css tokens.json tdd.css). Class names are the
+   (build_doc.py --sync-css tokens.json tdd.css, from the system-design scripts the skill resolves; see README.md). Class names are the
    contract with build_tdd.py and are listed in README.md. */
 /* FONTS:START from tokens.json type.families */
 @import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");

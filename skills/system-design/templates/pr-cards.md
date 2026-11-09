@@ -30,7 +30,7 @@ What changes and why it is safe alone. Rollback: how to undo it.
 Sindri neighbors: callers, readers and writers of each touched symbol.
 
 ## Tests
-What proves it, by name.
+- <test name>: what it proves (one list item per test; each becomes a TP row in doc.md)
 ```
 
 Screenshots of the pages a PR touches: pass `--shots shots.json`, a list of `{"prs": [4], "file": "shots/orders.png", "caption": "...", "page": "...", "route": "..."}` (`file` relative to the manifest). They render above the deep dive.

@@ -1,7 +1,8 @@
 <!-- TEMPLATE (UNTESTED). One poll prompt, two homes: (a) LOCAL, a scheduled task on the always-on Mac every 15
 minutes (cron "*/15 * * * *", local time), which has the watchlist, the packets and the state file; (b) CLOUD, the
 hourly fallback routine in linear-poll.routine.json, which has only the connectors. Set MODE below. Fill every {{...}}.
-Design: ~/.claude/skills/tdd/references/ops-loop.md §2.6. Linear has no webhook trigger here, so this polls. -->
+Design: references/ops-loop.md §2.6 in the tdd skill. Linear has no webhook trigger here, so this polls.
+{{TDD_SKILL}} is the folder the tdd skill is installed in: ${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/tdd with the toolkit, or the link in a provider's skills dir for a symlink install (for example ~/.claude/skills/tdd). -->
 
 # TDD Linear poll
 
@@ -12,7 +13,7 @@ them on the issue, then stop.
 
 ## The TDDs
 
-- LOCAL: read `~/.system-design/ops/watchlist.json` (shape: `~/.claude/skills/tdd/scripts/ops/watchlist.example.json`);
+- LOCAL: read `~/.system-design/ops/watchlist.json` (shape: `{{TDD_SKILL}}/scripts/ops/watchlist.example.json`);
   use entries whose `host` (or `defaults.host`) equals `scutil --get LocalHostName` and that have a `linear` block.
 - CLOUD: this table is the whole list.
 
@@ -47,7 +48,7 @@ them on the issue, then stop.
 4. **Answer.**
    - LOCAL: for each kept comment run one subagent (`Agent`, `model` = the entry's `model`, default `opus`,
      `subagent_type` `general-purpose`) with the responder brief in
-     `~/.claude/skills/tdd/templates/ops/tdd-comment-responder/SKILL.md` step 4, THE THREAD set to the issue's
+     `{{TDD_SKILL}}/templates/ops/tdd-comment-responder/SKILL.md` step 4, THE THREAD set to the issue's
      identifier and title and the comment chain, oldest first. Check its return as in that file's step 5.
    - CLOUD: answer from the issue, its comments, its attachments (linked PRs) and the repo if one is checked out. When
      the answer needs the TDD packet, a database or a design decision, reply in one or two lines that it went to the

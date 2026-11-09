@@ -6,7 +6,7 @@ It runs on Python's standard library under `python3 -I`, and calls git read-only
 into the packet.
 
 ```
-python3 -I ~/.claude/skills/tdd/scripts/lint_packet.py <packet-dir> [--build <dir>] [--strict] [--json <out>] [--skip <ids>] [--compile]
+python3 -I "$T/scripts/lint_packet.py" <packet-dir> [--build <dir>] [--strict] [--json <out>] [--skip <ids>] [--compile]
 ```
 
 | Option | Effect |

@@ -1,6 +1,6 @@
 {
   "_doc": {
-    "what": "The ops loop's watchlist (design: ~/.claude/skills/tdd/references/ops-loop.md). Copy to ~/.system-design/ops/watchlist.json and fill it. Read by the dispatcher session on start and by the local scheduled tasks on every run; none of them ever edits it. Keys starting with _ are notes and are ignored.",
+    "what": "The ops loop's watchlist (design: references/ops-loop.md in the tdd skill). Copy to ~/.system-design/ops/watchlist.json and fill it. Read by the dispatcher session on start and by the local scheduled tasks on every run; none of them ever edits it. Keys starting with _ are notes and are ignored.",
     "version": "Shape version; readers refuse a version they do not know.",
     "defaults": "Merged under every entry; grants merge key by key.",
     "defaults.host": "LocalHostName (scutil --get LocalHostName) of the machine that serves an entry. Exactly one machine serves an artifact, so two dispatchers never answer one thread.",
