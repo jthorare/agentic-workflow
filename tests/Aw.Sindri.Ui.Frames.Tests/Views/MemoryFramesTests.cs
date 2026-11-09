@@ -26,7 +26,7 @@ public sealed class MemoryFramesTests : FrameHost
             "team-notes",
             FakeSindriApi.FactRow("f1", "Deploys go out on Tuesdays", ["deploys"]),
             FakeSindriApi.FactRow("f2", "Deploys need a second reviewer", ["deploys", "review"], new DateTimeOffset(2100, 1, 1, 0, 0, 0, TimeSpan.Zero)));
-        _ = server.SeedMemory("runbooks");
+        _ = server.SeedMemory("wiki");
         var page = new MemoryPageViewModel(server, new FakeTimeProvider(DateTimeOffset.Parse("2026-01-01T00:05:00Z", System.Globalization.CultureInfo.InvariantCulture)));
         page.SetShown(shown: true);
         await page.Refresh(_url, Token);
