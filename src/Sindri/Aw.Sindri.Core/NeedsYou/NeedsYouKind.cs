@@ -34,4 +34,8 @@ public enum NeedsYouKind
     /// <summary>A connection whose token could not be refreshed and has to be signed in again (connections PR 10b).</summary>
     [JsonStringEnumMemberName("connection")]
     Connection,
+
+    /// <summary>A note a graph 'notify' node posted; it clears when its run ends.</summary>
+    [JsonStringEnumMemberName("workflow-notify")]
+    WorkflowNotify,
 }

@@ -132,6 +132,8 @@ internal static class Usage
         "       sindri pack check <dir> [--json]   check a lens pack in-process: schema, files, lens count, then its hash and the pin line to approve (exit 0 pass, 1 findings, 2 error)",
         "       sindri recipe validate <file> [--json] [--skills <dir>]   check a recipe in-process: rule lines, then its hash; --skills reads the skill blocks from <dir> instead of the usual folder (exit 0 pass, 1 fail, 2 error)",
         "       sindri wf validate <file> [--json]   check a workflow graph in-process: findings naming node and field with the fix, or its hash (exit 0 pass, 1 findings, 2 error)",
+        "       sindri wf run <slug> [--payload JSON] [--json]   start a run of the workflow's active revision by hand: started, queued or skipped by its concurrency (exit 0 ok, 1 not running, 2 refused)",
+        "       sindri wf cancel <run> [--json]   ask a run in flight to stop (exit 0 ok, 1 not running, 2 refused)",
         "       sindri recipe eval <file> [--json] [--skills <dir>]       run a recipe's eval cases in-process; --skills as for validate (exit 0 pass, 1 fail, 2 error)",
         "       sindri recipe eval --scaffold <file> [--out <dir>]   print a happy-path eval case for the recipe; a route recipe has a case per path, and --out writes each to <dir>/<case>.jsonl (it refuses to overwrite)",
         "       sindri recipe eval --record <address> --out <file>   an instance's history as an eval case, read from the ledger and the stored facts (no server needed)",

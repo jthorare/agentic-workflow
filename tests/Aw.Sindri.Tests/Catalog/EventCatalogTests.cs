@@ -70,6 +70,23 @@ public sealed class EventCatalogTests
         // why: spec 5.7 names the dispatch refusal outbox.refused (P6); P4 has no effects, so no made-up kind is emitted
         Assert.Throws<NotSupportedException>(() => RecipeWorkflow.TypeOf(WorkflowEventType.EffectRefused));
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("workflow.run.started", "workflow.run.started:<run id>")]
+    [InlineData("workflow.run.finished", "workflow.run.finished:<run id>")]
+    [InlineData("workflow.run.cancelled", "workflow.run.cancelled:<run id>")]
+    [InlineData("workflow.node.started", "workflow.node.started:<run id>:<node id>:<item index>")]
+    [InlineData("workflow.node.finished", "workflow.node.finished:<run id>:<node id>:<item index>")]
+    [InlineData("workflow.node.failed", "workflow.node.failed:<run id>:<node id>:<item index>")]
+    public void Each_graph_run_event_is_catalogued_privately_under_its_name_and_key_shape(string type, string keyShape)
+    {
+        var entry = Assert.Single(EventCatalog.All, e => e.Type == type);
+
+        Assert.False(entry.Public);   // the trigger JSON and error text stay in the ledger; the runs view serves them
+        Assert.Null(entry.PublicPayload);
+        Assert.Equal(keyShape, entry.KeyShape);
+        Assert.Contains(type, typeof(EventTypes).GetFields(BindingFlags.Public | BindingFlags.Static).Select(f => (string)f.GetRawConstantValue()!), StringComparer.Ordinal);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void The_four_project_events_are_public_and_invalidate_only_the_projects_view()
     {

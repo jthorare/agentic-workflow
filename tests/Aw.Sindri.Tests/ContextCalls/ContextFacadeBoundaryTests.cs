@@ -1,9 +1,10 @@
 using System.Reflection;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Models;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
-/// <summary>Sindri reaches the context engine through IContextEngine only (context spec §4): never its store or file ports. IScopeProposals and IContextLinearWrites (the Linear hub's owner-only writes, spec 2026-11-04 §5.1) are the two facades kept apart from it.</summary>
+/// <summary>Sindri reaches the context engine through IContextEngine only (context spec §4): never its store or file ports. IScopeProposals and IContextLinearWrites (the Linear hub's owner-only writes, spec 2026-11-04 §5.1) are the two facades kept apart from it. IModelPort (the routed model port, asked by the graph prompt block through GraphModelPortAdapter) is a model call, not a store or file port.</summary>
 public sealed class ContextFacadeBoundaryTests
 {
     private static readonly Assembly[] _sindri =
@@ -22,7 +23,7 @@ public sealed class ContextFacadeBoundaryTests
             .SelectMany(a => a.GetTypes())
             .SelectMany(t => t.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                 .SelectMany(c => c.GetParameters())
-                .Where(p => Types(p.ParameterType).Any(t => t.IsInterface && t.Assembly == contextCore && t != typeof(IContextEngine) && t != typeof(IScopeProposals) && t != typeof(IContextLinearWrites)))
+                .Where(p => Types(p.ParameterType).Any(t => t.IsInterface && t.Assembly == contextCore && t != typeof(IContextEngine) && t != typeof(IScopeProposals) && t != typeof(IContextLinearWrites) && t != typeof(IModelPort)))
                 .Select(p => $"{t.FullName}({p.ParameterType.Name} {p.Name})"))
             .ToList();
 
