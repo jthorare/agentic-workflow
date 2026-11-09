@@ -1,0 +1,62 @@
+#nullable enable
+Aw.Sindri.Toolkit.ResourceKind
+Aw.Sindri.Toolkit.ResourceKind.Connection = 2 -> Aw.Sindri.Toolkit.ResourceKind
+Aw.Sindri.Toolkit.ResourceKind.Database = 0 -> Aw.Sindri.Toolkit.ResourceKind
+Aw.Sindri.Toolkit.ResourceKind.Disk = 1 -> Aw.Sindri.Toolkit.ResourceKind
+Aw.Sindri.Toolkit.ResourceNeed
+Aw.Sindri.Toolkit.ResourceNeed.<Clone>$() -> Aw.Sindri.Toolkit.ResourceNeed!
+Aw.Sindri.Toolkit.ResourceNeed.Deconstruct(out Aw.Sindri.Toolkit.ResourceKind Kind, out string! Name, out string? Size) -> void
+Aw.Sindri.Toolkit.ResourceNeed.Equals(Aw.Sindri.Toolkit.ResourceNeed? other) -> bool
+Aw.Sindri.Toolkit.ResourceNeed.Kind.get -> Aw.Sindri.Toolkit.ResourceKind
+Aw.Sindri.Toolkit.ResourceNeed.Kind.init -> void
+Aw.Sindri.Toolkit.ResourceNeed.Name.get -> string!
+Aw.Sindri.Toolkit.ResourceNeed.Name.init -> void
+Aw.Sindri.Toolkit.ResourceNeed.ResourceNeed(Aw.Sindri.Toolkit.ResourceKind Kind, string! Name, string? Size) -> void
+Aw.Sindri.Toolkit.ResourceNeed.Size.get -> string?
+Aw.Sindri.Toolkit.ResourceNeed.Size.init -> void
+Aw.Sindri.Toolkit.ResourceNeed.Variable.get -> string!
+Aw.Sindri.Toolkit.Resources
+Aw.Sindri.Toolkit.ToolDefinition
+Aw.Sindri.Toolkit.ToolDefinition.Description.get -> string!
+Aw.Sindri.Toolkit.ToolDefinition.InputSchema.get -> System.Text.Json.Nodes.JsonObject!
+Aw.Sindri.Toolkit.ToolDefinition.Name.get -> string!
+Aw.Sindri.Toolkit.ToolDefinition.OutputSchema.get -> System.Text.Json.Nodes.JsonObject!
+Aw.Sindri.Toolkit.Toolkit
+Aw.Sindri.Toolkit.ToolkitContext
+Aw.Sindri.Toolkit.ToolkitContext.Connection(string! name) -> string!
+Aw.Sindri.Toolkit.ToolkitContext.Database(string! name) -> Microsoft.Data.Sqlite.SqliteConnection!
+Aw.Sindri.Toolkit.ToolkitContext.DiskPath(string! name) -> string!
+Aw.Sindri.Toolkit.ToolkitContext.ToolkitContext(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Toolkit.ResourceNeed!>! needs, System.Func<string!, string?>! environment) -> void
+Aw.Sindri.Toolkit.ToolkitErrors
+Aw.Sindri.Toolkit.ToolkitException
+Aw.Sindri.Toolkit.ToolkitException.Definition.get -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Toolkit.ToolkitException.ToolkitException(Aw.Kernel.ErrorDefinition! definition, string! message) -> void
+Aw.Sindri.Toolkit.ToolkitException.ToolkitException(string! message, System.Exception! innerException) -> void
+Aw.Sindri.Toolkit.ToolkitException.ToolkitException(string! message) -> void
+Aw.Sindri.Toolkit.ToolkitException.ToolkitException() -> void
+Aw.Sindri.Toolkit.ToolkitHost
+Aw.Sindri.Toolkit.Toolkit.Manifest() -> string!
+Aw.Sindri.Toolkit.Toolkit.Name.get -> string!
+Aw.Sindri.Toolkit.Toolkit.Needs(params Aw.Sindri.Toolkit.ResourceNeed![]! needs) -> Aw.Sindri.Toolkit.Toolkit!
+Aw.Sindri.Toolkit.Toolkit.ResourceNeeds.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Toolkit.ResourceNeed!>!
+Aw.Sindri.Toolkit.Toolkit.Tools.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Toolkit.ToolDefinition!>!
+Aw.Sindri.Toolkit.Toolkit.Tool<TRequest, TResponse>(string! name, string! description, System.Func<TRequest, Aw.Sindri.Toolkit.ToolkitContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<TResponse>!>! handler) -> Aw.Sindri.Toolkit.Toolkit!
+Aw.Sindri.Toolkit.Toolkit.UseJson(System.Text.Json.Serialization.JsonSerializerContext! context) -> Aw.Sindri.Toolkit.Toolkit!
+Aw.Sindri.Toolkit.Toolkit.WithVersion(string! version) -> Aw.Sindri.Toolkit.Toolkit!
+override Aw.Sindri.Toolkit.ResourceNeed.Equals(object? obj) -> bool
+override Aw.Sindri.Toolkit.ResourceNeed.GetHashCode() -> int
+override Aw.Sindri.Toolkit.ResourceNeed.ToString() -> string!
+static Aw.Sindri.Toolkit.ResourceNeed.operator !=(Aw.Sindri.Toolkit.ResourceNeed? left, Aw.Sindri.Toolkit.ResourceNeed? right) -> bool
+static Aw.Sindri.Toolkit.ResourceNeed.operator ==(Aw.Sindri.Toolkit.ResourceNeed? left, Aw.Sindri.Toolkit.ResourceNeed? right) -> bool
+static Aw.Sindri.Toolkit.Resources.Connection(string! name) -> Aw.Sindri.Toolkit.ResourceNeed!
+static Aw.Sindri.Toolkit.Resources.Database(string! name) -> Aw.Sindri.Toolkit.ResourceNeed!
+static Aw.Sindri.Toolkit.Resources.Disk(string! name, string! size) -> Aw.Sindri.Toolkit.ResourceNeed!
+static Aw.Sindri.Toolkit.ToolkitErrors.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Kernel.ErrorDefinition!>!
+static Aw.Sindri.Toolkit.ToolkitHost.RunAsync(Aw.Sindri.Toolkit.Toolkit! toolkit, string![]! args, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<int>!
+static Aw.Sindri.Toolkit.ToolkitHost.ServeAsync(Aw.Sindri.Toolkit.Toolkit! toolkit, System.IO.Stream! input, System.IO.Stream! output, System.Func<string!, string?>! environment, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+static Aw.Sindri.Toolkit.Toolkit.Named(string! name) -> Aw.Sindri.Toolkit.Toolkit!
+static readonly Aw.Sindri.Toolkit.ToolkitErrors.InvalidCall -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Toolkit.ToolkitErrors.InvalidDeclaration -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Toolkit.ToolkitErrors.ResourceMissing -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Toolkit.ToolkitErrors.ResourceUnavailable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Toolkit.ToolkitErrors.ToolFailed -> Aw.Kernel.ErrorDefinition!
