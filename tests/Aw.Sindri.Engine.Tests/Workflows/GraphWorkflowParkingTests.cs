@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Infrastructure.Workflows;
+using Temporalio.Client;
 
 namespace Aw.Sindri.Tests.Workflows;
 
@@ -28,8 +29,23 @@ public sealed class GraphWorkflowParkingTests(SindriTimeSkippingServer server) :
         [GraphRig.Node("start", "manual"), GraphRig.Node("ask", "ask_owner", config: Ask(timeout)), GraphRig.Node("yes", "echo"), GraphRig.Node("no", "echo")],
         [GraphRig.Edge("start", "ask"), GraphRig.Edge("ask", "yes", "answered"), GraphRig.Edge("ask", "no", "timeout")]);
 
-    private static async Task<GraphWorkflowResult> Result(GraphRig rig, WorkflowRunId run) =>
-        await rig.Client.GetWorkflowHandle(run.Value).GetResultAsync<GraphWorkflowResult>();
+    // why: a bounded wait, so a run that never ends fails the test with a stack instead of hanging the lane (the PR9b gate hung 45 min)
+    private static async Task<GraphWorkflowResult> Result(GraphRig rig, WorkflowRunId run)
+    {
+        using var limit = Limit();
+        return await rig.Client.GetWorkflowHandle(run.Value).GetResultAsync<GraphWorkflowResult>(rpcOptions: new RpcOptions { CancellationToken = limit.Token });
+    }
+
+    private static CancellationTokenSource Limit()
+    {
+        var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        limit.CancelAfter(TimeSpan.FromSeconds(30));
+        return limit;
+    }
+
+    // why: the limit cancels the update call itself, not only the delay between tries
+    private static Task<string> Answer(WorkflowHandle handle, GraphAnswerInput answer, CancellationToken limit) =>
+        handle.ExecuteUpdateAsync<string>("Answer", [answer], new WorkflowUpdateOptions { Rpc = new RpcOptions { CancellationToken = limit } });
 
     [Fact]
     public async Task A_wait_node_sleeps_on_a_timer_and_the_run_then_goes_on()
@@ -114,14 +130,13 @@ public sealed class GraphWorkflowParkingTests(SindriTimeSkippingServer server) :
         var workflow = await rig.Define(AskSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         var handle = rig.Client.GetWorkflowHandle(started.RunId.Value);
-        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
-        limit.CancelAfter(TimeSpan.FromSeconds(30));
+        using var limit = Limit();
         Temporalio.Exceptions.WorkflowUpdateFailedException? notAChoice = null;
         while (notAChoice is null)
         {
             try
             {
-                _ = await handle.ExecuteUpdateAsync<string>("Answer", [new GraphAnswerInput("ask", "maybe", Choice: null, "owner")]);
+                _ = await Answer(handle, new GraphAnswerInput("ask", "maybe", Choice: null, "owner"), limit.Token);
             }
             catch (Temporalio.Exceptions.WorkflowUpdateFailedException e) when (e.InnerException!.Message.Contains("not one of the choices", StringComparison.Ordinal))
             {
@@ -134,25 +149,24 @@ public sealed class GraphWorkflowParkingTests(SindriTimeSkippingServer server) :
         }
 
         var wrongNode = await Assert.ThrowsAsync<Temporalio.Exceptions.WorkflowUpdateFailedException>(async () =>
-            await handle.ExecuteUpdateAsync<string>("Answer", [new GraphAnswerInput("start", "yes", Choice: null, "owner")]));
+            await Answer(handle, new GraphAnswerInput("start", "yes", Choice: null, "owner"), limit.Token));
 
         Assert.Contains("not one of the choices", notAChoice.InnerException!.Message, StringComparison.Ordinal);
         Assert.Contains("not waiting", wrongNode.InnerException!.Message, StringComparison.Ordinal);
-        _ = await handle.ExecuteUpdateAsync<string>("Answer", [new GraphAnswerInput("ask", "no", Choice: null, "owner")]);   // the node still waits, and a real answer ends it
+        _ = await Answer(handle, new GraphAnswerInput("ask", "no", Choice: null, "owner"), limit.Token);   // the node still waits, and a real answer ends it
         Assert.Equal(WorkflowRunStatus.Succeeded, (await Result(rig, started.RunId)).Status);
     }
 
     // why: the question is posted by the block's activity, a moment before the workflow starts to wait; an answer sent in between is refused, so the test retries
     private static async Task AnswerWhenWaiting(GraphRig rig, WorkflowRunId run, GraphAnswerInput answer)
     {
-        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
-        limit.CancelAfter(TimeSpan.FromSeconds(30));
+        using var limit = Limit();
         var handle = rig.Client.GetWorkflowHandle(run.Value);
         while (true)
         {
             try
             {
-                _ = await handle.ExecuteUpdateAsync<string>("Answer", [answer]);
+                _ = await Answer(handle, answer, limit.Token);
                 return;
             }
             catch (Temporalio.Exceptions.WorkflowUpdateFailedException)
@@ -164,8 +178,7 @@ public sealed class GraphWorkflowParkingTests(SindriTimeSkippingServer server) :
 
     private static async Task WaitUntilRunning(GraphRig rig, WorkflowRunId run, string node)
     {
-        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
-        limit.CancelAfter(TimeSpan.FromSeconds(30));
+        using var limit = Limit();
         while (!(await rig.NodeStatuses(run)).TryGetValue(node, out var status) || status != NodeRunStatus.Running)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
