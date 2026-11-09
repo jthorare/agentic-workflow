@@ -43,6 +43,11 @@ public interface IWorkflowRunStore
     /// <returns>The runs.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> InFlight(WorkflowId workflow, CancellationToken cancellationToken);
 
+    /// <summary>Every run in 'running', over all workflows, oldest first (serve start reads it to find runs whose Temporal workflow was never started).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The runs.</returns>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken);
+
     /// <summary>The highest occurrence among a workflow's runs started by one kind of trigger, over every revision and every status (a schedule reads its last fired tick from it).</summary>
     /// <param name="workflow">The workflow.</param>
     /// <param name="triggerKind">The trigger's 'kind', such as 'schedule'.</param>
