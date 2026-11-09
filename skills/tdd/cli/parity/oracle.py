@@ -6,6 +6,7 @@ Usage: python3 -I -B parity/oracle.py <suite> [--seed N] [--count N] [--out FILE
                                          [--packet DIR [--src FILE.md] [--copy]] [--dir DIR]
 Suites: ucd round repr_float str re html repr json json_errors utf8 path int truthy token sd stamp list
         sd_calls (--packet: every call a compile makes to system-design, recorded) sd_fuzz sd_files (--dir) sd_constants
+        sd_finish (--dir)
 
 It imports system-design's build_doc.py / build_prs.py unchanged from the sibling skills/system-design (or
 $SYSTEM_DESIGN_SKILL) and the tdd Python scripts by path; it never writes beside them (no bytecode). The output is
@@ -501,9 +502,10 @@ def suite_stamp(rng, count):
 
 
 # ----------------------------------------------------------------------------- the D1 surface (PR 10, src/sd)
-# Four suites feed test/sd: sd_calls replays a real compile (every call build_tdd.py makes to the 18 system-design
+# Five suites feed test/sd: sd_calls replays a real compile (every call build_tdd.py makes to the 18 system-design
 # names, recorded at the boundary), sd_fuzz runs markdown-shaped documents through the text functions, sd_files runs
-# img_size / load_json / Assets over files the bun test wrote, and sd_constants dumps the patterns and tables. Values travel as vtag() trees (tuples as lists);
+# img_size / load_json / Assets over files the bun test wrote, sd_finish runs Assets.finish's copying over folders it
+# wrote, and sd_constants dumps the patterns and tables. Values travel as vtag() trees (tuples as lists);
 # an exception travels as [qualified type name, str(e)] and SystemExit as ["SystemExit", code].
 
 ARGS = {"packet": None, "src": None, "copy": False, "dir": None}
@@ -834,6 +836,24 @@ def suite_sd_fuzz(rng, count):
     return {"marks": [[m.pattern, m.flags] for m in marks], "rows": rows}
 
 
+def suite_sd_finish(rng, count):
+    """Assets.finish with copying, per case folder in --dir (sorted): case.json holds {"out", "copy", "refs": [[published,
+    [candidate, ...]], ...]}, paths relative to the case folder. Records ref results, finish's result or exception, and
+    the state; the bun test runs the same cases on a twin tree."""
+    d = ARGS["dir"]
+    if not d:
+        raise SystemExit("--dir <folder> is required")
+    bd = load(os.path.join(sd_root(), "scripts", "build_doc.py"), "build_doc")
+    rows = []
+    for case in sorted(os.listdir(d)):
+        c = os.path.join(d, case)
+        spec = json.load(open(os.path.join(c, "case.json"), encoding="utf-8"))
+        a = bd.Assets(os.path.join(c, spec["out"]), False, spec["copy"])
+        refs = [attempt(a.ref, pub, [os.path.join(c, x) for x in cands]) for pub, cands in spec["refs"]]
+        rows.append({"case": case, "refs": refs, "finish": attempt(a.finish), "state": vtag(assets_state(a))})
+    return {"rows": rows}
+
+
 def suite_sd_constants(rng, count):
     """The data half of the surface: the patterns (source and flags), STATUS_WORDS, GENERIC_TAILS, FILE_LIMIT, BLOCK and
     build_tdd's replacement MARK, so a changed table is caught even where no packet looks it up."""
@@ -845,8 +865,20 @@ def suite_sd_constants(rng, count):
             "FILE_LIMIT": bd.FILE_LIMIT, "BLOCK": bp.BLOCK}
 
 
+def json_depth(v):
+    """The container nesting of a parsed JSON value, without recursion (vtag would hit Python's recursion limit)."""
+    best, stack = 0, [(v, 1)]
+    while stack:
+        x, d = stack.pop()
+        if isinstance(x, (list, dict)):
+            best = max(best, d)
+            stack.extend((y, d + 1) for y in (x.values() if isinstance(x, dict) else x))
+    return best
+
+
 def suite_sd_files(rng, count):
-    """Every file in --dir (sorted) through img_size, svg_size, png_size, published_for, load_json, Assets.ref (embed, inline on)."""
+    """Every file in --dir (sorted) through img_size, svg_size, png_size, published_for, load_json, Assets.ref (embed, inline on).
+    For a file named deep-*, load_json reports the parsed value's nesting depth instead of the value."""
     d = ARGS["dir"]
     if not d:
         raise SystemExit("--dir <folder> is required")
@@ -857,7 +889,8 @@ def suite_sd_files(rng, count):
         p = os.path.join(d, f)
         a = bd.Assets(d, True, False)
         rows.append({"name": f, "img_size": attempt(bd.img_size, p), "svg_size": attempt(bd.svg_size, p), "png_size": attempt(bd.png_size, p),
-                     "load_json": attempt(bd.load_json, p, "--meta"), "embed": attempt(lambda: uri_digest(a.ref("../" + f if f.startswith("x") else f, [None, "", p], embed=True))),
+                     "load_json": attempt(lambda: json_depth(bd.load_json(p, "--meta"))) if f.startswith("deep-") else attempt(bd.load_json, p, "--meta"),
+                     "embed": attempt(lambda: uri_digest(a.ref("../" + f if f.startswith("x") else f, [None, "", p], embed=True))),
                      "state": vtag(assets_state(a))})
     extra = [[p, attempt(bd.load_json, p, "schema/x.json")] for p in ["", None, os.path.join(d, "no-such-file.json"), d, os.path.join(d, "a\x00b")]]
     extra += [[p, attempt(bd.img_size, p)] for p in [os.path.join(d, "no-such.svg"), os.path.join(d, "no-such.PNG"), os.path.join(d, "a\x00b.svg")]]
@@ -868,7 +901,7 @@ def suite_sd_files(rng, count):
 SUITES = {name[6:]: fn for name, fn in globals().items() if name.startswith("suite_")}
 DEFAULT_COUNT = {"round": 100000, "repr_float": 100000, "str": 3000, "re": 300, "html": 3000, "repr": 2000, "json": 1500, "utf8": 5000,
                  "path": 3000, "int": 0, "truthy": 200, "token": 2000, "sd": 2000, "stamp": 200, "ucd": 0, "json_errors": 0, "re_case": 0,
-                 "sd_calls": 0, "sd_fuzz": 10000, "sd_files": 0, "sd_constants": 0}
+                 "sd_calls": 0, "sd_fuzz": 10000, "sd_files": 0, "sd_constants": 0, "sd_finish": 0}
 
 
 def main(argv):

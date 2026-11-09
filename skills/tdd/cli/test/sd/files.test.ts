@@ -63,7 +63,43 @@ function fixed(): [string, Uint8Array][] {
     ["empty.json", new Uint8Array()],
     ["list.json", enc("[1, 2, 3]\n")],
     ["trailing.json", enc('{"a": 1} x')],
+    // CPython's int-digit limit (4,300) and json nesting limit (JSON_MAX_DEPTH), each against what the scanner meets first
+    ["int-4300.json", enc("[" + nines(4300) + "]")],
+    ["int-4301.json", enc(nines(4301))],
+    ["int-neg.json", enc('{"n": -' + nines(5000) + "}")],
+    ["int-dup.json", enc('{"a": ' + nines(5000) + ', "a": 1}')],
+    ["int-before-error.json", enc("[" + nines(5000) + ", ]")],
+    ["int-after-error.json", enc('{"a" ' + nines(5000) + "}")],
+    ["int-extra.json", enc("1 " + nines(5000))],
+    ["int-in-string.json", enc('["' + nines(5000) + '"]')],
+    ["int-float.json", enc(nines(5000) + ".5")],
+    ["int-exp.json", enc("[" + nines(5000) + "e2, 0" + nines(5000) + "]")],
+    ["deep-9998.json", enc("[".repeat(9998) + "]".repeat(9998))],
+    ["deep-9999.json", enc("[".repeat(9999) + "]".repeat(9999))],
+    ["deep-obj-9999.json", enc('{"a":'.repeat(9999) + "1" + "}".repeat(9999))],
+    ["deep-mixed.json", enc(Array.from({ length: 10000 }, (_, i) => (i % 2 ? '{"k":' : "[")).join("") + "0")],
+    ["deep-after-error.json", enc("[1 " + "[".repeat(10000))],
+    ["deep-then-int.json", enc("[".repeat(9999) + nines(5000))],
+    ["deep-int-first.json", enc("[" + nines(5000) + ", " + "[".repeat(9999))],
+    ["deep-huge.json", enc("[".repeat(200000))],
+    ["deep-in-string.json", enc('["' + "[".repeat(20000) + '"]')],
   ];
+}
+
+const nines = (n: number) => "9".repeat(n);
+
+/** The container nesting of a parsed value, iteratively (as the oracle's json_depth). */
+function depth(v: unknown): number {
+  let best = 0;
+  const stack: [unknown, number][] = [[v, 1]];
+  while (stack.length) {
+    const [x, d] = stack.pop()!;
+    if (Array.isArray(x) || x instanceof Map) {
+      best = Math.max(best, d);
+      for (const y of Array.isArray(x) ? x : x.values()) stack.push([y, d + 1]);
+    }
+  }
+  return best;
 }
 
 /** A seeded batch of SVG root tags and PNG headers (mulberry32). */
@@ -122,7 +158,7 @@ describe.skipIf(!hasPython)("img_size, load_json and Assets on written files", (
           img_size: attempt(() => bd.img_size(p)),
           svg_size: attempt(() => bd.svg_size(p)),
           png_size: attempt(() => bd.png_size(p)),
-          load_json: attempt(() => bd.load_json(p, "--meta")),
+          load_json: row.name.startsWith("deep-") ? attempt(() => depth(bd.load_json(p, "--meta"))) : attempt(() => bd.load_json(p, "--meta")),
           embed: attempt(() => uriDigest(a.ref(row.name.startsWith("x") ? "../" + row.name : row.name, [null, "", p], true))),
           state: tagOf({ out_dir: a.out_dir, inline: a.inline, copy: a.copy, files: a.files, missing: a.missing, order: a.order }),
         };

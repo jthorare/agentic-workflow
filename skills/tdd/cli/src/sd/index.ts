@@ -16,6 +16,7 @@ import * as prs from "./prs";
 
 export * from "./assets";
 export * from "./blocks";
+export * from "./errors";
 export * from "./inline";
 export * from "./page";
 export * as prs from "./prs";
