@@ -59,6 +59,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
             .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog
             .AddSingleton<IGraphRunLauncher>(static provider => provider.GetRequiredService<TemporalGraphRunLauncher>())
+            .AddSingleton<IAgentNodeControl>(static provider => new TemporalAgentNodeControl(provider.GetRequiredService<TemporalFrontend>()))
             .AddSingleton<IGraphRunCanceller>(static provider => new TemporalGraphRunCanceller(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<IWorkflowRunStore>()))
             .AddSingleton<IGraphRunAnswerer>(static provider => new TemporalGraphRunAnswerer(provider.GetRequiredService<TemporalFrontend>()))   // the 'Answer' update of an ask_owner node (PR 9)
             .AddSingleton<GraphRunStarter>()
@@ -82,6 +83,8 @@ public static class SindriWorkflowsServiceCollectionExtensions
         .AddSingleton<AgentRecovering>().AddSingleton<SkillStepWatching>().AddSingleton<AgentStepSelection>().AddSingleton<IStepOutputs, DiskStepOutputs>()
         .AddSingleton<UsageFlush>(static provider => (launch, ct) => FlushScoped(provider, launch, ct))
         .AddSingleton<AgentTargetResolver>().AddSingleton<AgentLaunchRecorder>().AddSingleton(AgentRuntimeOptions.Default)
+        .AddSingleton<AgentLaunchEnded>().AddSingleton<AgentNodeLaunching>().AddSingleton<AgentSessionWatch>().AddSingleton<AgentNodeRecovering>().AddSingleton<AgentNodeClosing>()   // PR 7: a 'run_agent' node's runtime
+        .AddSingleton<IAgentNodeRuntime, AgentNodeRuntime>().AddSingleton<AgentNodeActivities>()
         .AddSingleton<WorkerActivities>();
     }
 

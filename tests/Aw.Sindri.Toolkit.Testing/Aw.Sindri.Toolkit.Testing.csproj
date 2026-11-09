@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Sindri.Toolkit.Testing: test support for the toolkit SDK. ToolkitHarness runs a toolkit's MCP host over an in-memory
+       stream pair and hands back a connected client (spec PR 15). Only *.Tests projects reference it. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aw.Sindri.Toolkit.Testing</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj" />
+  </ItemGroup>
+</Project>

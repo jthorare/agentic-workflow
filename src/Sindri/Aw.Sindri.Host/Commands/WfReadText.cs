@@ -3,8 +3,10 @@ using System.Text;
 using System.Text.Json.Nodes;
 using Aw.Sindri.Features.GetWorkflow;
 using Aw.Sindri.Features.GetWorkflowRun;
+using Aw.Sindri.Features.ListWorkflowBlocks;
 using Aw.Sindri.Features.ListWorkflowRuns;
 using Aw.Sindri.Features.ListWorkflows;
+using Aw.Sindri.Features.SearchWorkflowDocs;
 
 namespace Aw.Sindri.Host.Commands;
 
@@ -82,6 +84,45 @@ internal static class WfReadText
         foreach (var node in answer.Nodes)
         {
             _ = text.Append(CultureInfo.InvariantCulture, $"node {node.Node.Value}{(node.ItemIndex == 0 ? string.Empty : "[" + node.ItemIndex.ToString(CultureInfo.InvariantCulture) + "]")}  {node.Status}{(node.Truncated ? "  (cut)" : string.Empty)}{(node.Error is null ? string.Empty : "  " + node.Error)}\n");
+        }
+
+        return text.ToString();
+    }
+
+    internal static string Blocks(ListWorkflowBlocksResponse answer)
+    {
+        ArgumentNullException.ThrowIfNull(answer);
+        var text = new StringBuilder();
+        foreach (var group in answer.Groups)
+        {
+            _ = text.Append(CultureInfo.InvariantCulture, $"{group.Group}\n");
+            foreach (var block in group.Blocks)
+            {
+                var fields = string.Join(", ", block.Config.Select(static f => f.Name + (f.Required ? string.Empty : "?")));
+                _ = text.Append(CultureInfo.InvariantCulture, $"  {block.Type}  {block.Title}  config: {(fields.Length == 0 ? "none" : fields)}  outputs: {(block.Outputs.Count == 0 ? "none" : string.Join(", ", block.Outputs.Keys))}{(block.Branches is [var only] && only == "out" ? string.Empty : "  branches: " + string.Join(", ", block.Branches))}\n");
+            }
+        }
+
+        return text.ToString();
+    }
+
+    internal static string Docs(SearchWorkflowDocsResponse answer)
+    {
+        ArgumentNullException.ThrowIfNull(answer);
+        if (answer.Page is { } page)
+        {
+            return page.Text.EndsWith('\n') ? page.Text : page.Text + "\n";
+        }
+
+        if (answer.Hits.Count == 0)
+        {
+            return "No page matches; try other words, or run 'sindri wf docs' to list the pages.\n";
+        }
+
+        var text = new StringBuilder();
+        foreach (var hit in answer.Hits)
+        {
+            _ = text.Append(CultureInfo.InvariantCulture, $"{hit.Slug}  {hit.Title}\n");
         }
 
         return text.ToString();

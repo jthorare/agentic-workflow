@@ -499,7 +499,7 @@ letters, digits, `.`, `_`, `:` and `-`, starting with a letter or digit.
 (`G J K O A T B Y C R / ?`); `cli-only` only on terminal-bound or `local` rows; no `pending:<phase>` names a shipped
 phase (`CatalogRules.ShippedPhases`, which each phase extends); every non-pending row's route is mapped; every event type
 is in `EventCatalog`, and `command.handled` is flagged non-public there (the stream filters on it from P5). The architecture rules (API spec §2.5) run in `Aw.Sindri.Tests`
-because they need Host internals: `ARCH-CQRS-001` (every GET serves an `IQuery`, every POST an `ICommand`, or an `IIssue`
+because they need Host internals: `ARCH-CQRS-001` (every GET serves an `IQuery`, every PUT and DELETE an `ICommand`, every POST an `ICommand`, or an `IIssue`
 on the four carve-out routes with `issue` rows; queries are GET or QUERY, a command is never a GET or a QUERY and no POST serves a query, with no carve-out list; over the endpoint data source), `ARCH-CQRS-002` (no query handler takes
 `ILedgerStore`, `ILease` or `IApprovals`, also through a handler's own Features helpers, followed one level; `GetStatusService` and `StreamEventsService` are allowlisted until P2's
 `ILedgerReader`; the read-only approvals port is `IApprovedProfile`, which the context query handlers already take) and `ARCH-CQRS-003` (every command and issue has its row; a classified command has variant rows).

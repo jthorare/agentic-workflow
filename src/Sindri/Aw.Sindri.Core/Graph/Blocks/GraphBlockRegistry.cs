@@ -24,7 +24,7 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     /// <inheritdoc />
     public IReadOnlyDictionary<string, IGraphBlockType> Types { get; }
 
-    /// <summary>The blocks of PR 6 (schedule, manual, condition, notify and prompt), PR 11 (connection_event), PR 9 loops (for_each and collect) and any <paramref name="more"/> a later PR adds (PR 9 flow blocks).</summary>
+    /// <summary>The blocks of PR 6 (schedule, manual, condition, notify and prompt), PR 7 (run_agent), PR 11 (connection_event), PR 9 loops (for_each and collect) and any <paramref name="more"/> a later PR adds (PR 9 flow blocks).</summary>
     /// <param name="notify">Where 'notify' writes.</param>
     /// <param name="model">What 'prompt' asks.</param>
     /// <param name="forEachLimits">Where 'for_each' reads its defaults; null takes <see cref="ForEachLimits.Defaults"/>.</param>
@@ -33,7 +33,7 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     public static GraphBlockRegistry Standard(INotifyPort notify, IGraphModelPort model, IForEachLimitSource? forEachLimits = null, IEnumerable<IGraphBlock>? more = null) =>
         new([
             new ScheduleBlock(), new ConnectionEventBlock(), new ManualBlock(), new ConditionBlock(), new NotifyBlock(notify), new PromptBlock(model),
-            new ForEachBlock(forEachLimits ?? new DefaultForEachLimits()), new CollectBlock(),
+            new ForEachBlock(forEachLimits ?? new DefaultForEachLimits()), new CollectBlock(), new RunAgentBlock(),
             .. more ?? [],
         ]);
 

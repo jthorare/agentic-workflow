@@ -12,6 +12,9 @@ public sealed partial class GraphValidator
 {
     private static readonly HashSet<string> _scopeRoots = new(["trigger", "item", "itemIndex", "workflow"], StringComparer.Ordinal);
 
+    // why: the fields Scope.Root("workflow") builds in Aw.Sindri.Workflows/GraphNodeScope.cs; change both together
+    private static readonly string[] _workflowFields = ["id", "name", "revision", "runId"];
+
     private void References(NodeScope scope, List<GraphFinding> found)
     {
         var seen = new HashSet<(string, string)>();
@@ -64,6 +67,11 @@ public sealed partial class GraphValidator
 
         if (_scopeRoots.Contains(root))
         {
+            if (string.Equals(root, "workflow", StringComparison.Ordinal) && reference.Split('.') is [_, var name, ..] && !_workflowFields.Contains(name, StringComparer.Ordinal))
+            {
+                found.Add(Found.At("GRAPH-REF-002", id, field, $"'{reference}' reads '{name}', which a workflow run does not have", $"use one of: {string.Join(", ", _workflowFields)}"));
+            }
+
             return;
         }
 

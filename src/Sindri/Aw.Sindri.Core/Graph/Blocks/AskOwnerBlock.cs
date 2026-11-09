@@ -21,6 +21,12 @@ public sealed class AskOwnerBlock(IQuestionPort questions, TimeProvider clock) :
     public string Type => "ask_owner";
 
     /// <inheritdoc />
+    public string Title => "Ask owner";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Outputs;
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />

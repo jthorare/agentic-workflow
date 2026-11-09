@@ -17,6 +17,12 @@ public sealed class WaitBlock(TimeProvider clock) : IGraphBlock
     public string Type => "wait";
 
     /// <inheritdoc />
+    public string Title => "Wait";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Logic;
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />

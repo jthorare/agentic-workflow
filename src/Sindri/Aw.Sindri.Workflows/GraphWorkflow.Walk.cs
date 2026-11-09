@@ -102,9 +102,16 @@ internal sealed partial class GraphWorkflow
             return new GraphBlockOutcome(NodeRunStatus.Failed, Input: null, Output: null, [], $"{refused.Error.Code}: {refused.Error.Message}");
         }
 
+        if (string.Equals(node.Type, LoopBody.ForEachType, StringComparison.Ordinal) && LoopBody.Find(spec, node.Id) is { IsSuccess: true } loop && LoopBody.AgentRefusal(loop.Value) is { } agentInLoop)
+        {
+            return new GraphBlockOutcome(NodeRunStatus.Failed, Input: null, Output: null, [], $"{LoopBody.AgentInLoopCode}: {agentInLoop}");
+        }
+
         try
         {
-            return await Workflow.ExecuteActivityAsync((GraphBlockActivities a) => a.RunBlockAsync(_run, node.Id, 0), _block).ConfigureAwait(true);
+            return string.Equals(node.Type, "run_agent", StringComparison.Ordinal)
+                ? await RunAgent(node).ConfigureAwait(true)   // why: a session outlives a plain activity and a person may take it over, so the agent loop runs in the workflow (PR 7)
+                : await Workflow.ExecuteActivityAsync((GraphBlockActivities a) => a.RunBlockAsync(_run, node.Id, 0), _block).ConfigureAwait(true);
         }
         catch (ActivityFailureException e) when (!TemporalException.IsCanceledException(e))
         {

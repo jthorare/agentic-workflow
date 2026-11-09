@@ -58,6 +58,8 @@ Host ──► Features ──► Core ◄── Infrastructure
 
 A package under ~1,500 lines may use two projects, `Core` and `App`, with the same direction; split into four past the threshold.
 
+A **toolkit** (`/new-toolkit`) is not a package of this repo: it lives outside it (default `$AW_SINDRI_HOME/toolkits/<name>/`), has no `deps.yaml` node, solution entry or architecture-test registration, and none of the rules in this section apply to it. It carries its own build rails and references the SDK `Aw.Sindri.Toolkit` (`src/Toolkit`, a repo package that Sindri itself never references; Sindri talks to a toolkit over MCP stdio).
+
 | Rule | Check |
 |---|---|
 | Dependency direction above | Project references (the build fails) + ArchUnitNET in `tests/Aw.Architecture.Tests`: `ARCH-DIR-001` (Core depends on nothing else in its package), `ARCH-DIR-002` (Features: Core and Features only), `ARCH-DIR-003` (Infrastructure: Core and Infrastructure only), `ARCH-DIR-004` (another package only through its Core; the one carve-out is a Host's use of a `compose` target, which `ARCH-COMPOSE-001` judges instead: only the target's public static `Add…()` registration methods in its Features and Infrastructure), `ARCH-DIR-005` (Core and Features use `Aw.Kernel` and no other tier-0 package; the tier-0 list is checked against `deps.yaml`); `ARCH-PLACE-001` (every type of a Core, Features or Infrastructure project sits in that project's layer namespace: not the bare root, an unknown folder, another layer's namespace or one outside the root; in a Host or App project anything outside the root counts as Host) |
@@ -239,6 +241,7 @@ they follow the C# contract, not the TS one.
 ## Adding code
 
 - **New package:** `/new-package` (generator `scripts/scaffold/new-package.mjs`; contract `docs/csharp/scaffolds/new-package.md`).
+- **New toolkit:** `/new-toolkit` (generator `scripts/scaffold/new-toolkit.mjs`; contract `docs/csharp/scaffolds/new-toolkit.md`). A toolkit is not a repo package: it lives outside the repo (default `$AW_SINDRI_HOME/toolkits/<name>/`), is not in `deps.yaml` or `AgenticWorkflow.slnx`, carries its own build rails, and gets the SDK (`src/Toolkit`, package `Aw.Sindri.Toolkit`) from the local folder feed `scripts/install-cs.sh` fills.
 - **New use case:** `/new-slice` (generator `scripts/scaffold/new-slice.mjs`; contract `docs/csharp/scaffolds/new-slice.md`).
 - **By hand**, the slice recipe is: (1) the failing test plus request and response records and a parameterless service stub whose `Handle` throws `NotSupportedException`, committed red but compiling; (2) the real assertion and the ports the service needs; (3) the service, with pure decisions on the domain type in `Core`; (4) the endpoint or CLI command in `Host`; (5) the explicit registration and the JSON context entries.
 - Test rules: `.agents/rules/csharp-testing.md`.
