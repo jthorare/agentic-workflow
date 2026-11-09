@@ -62,7 +62,7 @@ not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.m
 | `judge` | object (`providers`, `parallel`) | no | none | Which providers a Judge Step (`step.judge.choose`) may ask (DT-J plan Q8), and how many judge calls the scoping judge Steps run at once. `judge.providers` is a list of `jev`, `claude-cli`, `codex-cli`, `cursor-cli`, `rules`; absent: `jev`, `claude-cli`, `codex-cli`, `cursor-cli`, `rules` (the judge asks Jev first; owner, 2026-11-03). `rules` is always kept, last. A recipe's own `providers` list only narrows this one and never adds `jev`. A name that is not one of the five is refused when you save it (`workflow.judge.providers[i]`). A repo may set its own list under `repos[].workflow.judge.providers`; it wins over the box's. `judge.parallel` is a whole number from 1 to 16 (issue 1440): how many calls `step.scope.relevance-judge` and `step.scope.gap-judge` run at once when their recipe says `parallel: { profile: workflow.judge.parallel }` (the shipped scoping recipe does). Absent: each Step's own width, 8. Read from the live profile; a recipe that gives a number keeps it. Outside 1 to 16 is refused when you save it (`workflow.judge.parallel`, `repos.<name>.workflow.judge.parallel`). A repo may set `repos[].workflow.judge.parallel`; it wins over the box's |
 | `forge` | object | no | none | The forge port's settings: `adapter`, `hosts` and `credential` (see `workflow.forge` below) |
 | `pr` | object | no | none | The PR babysitter's settings (see `workflow.pr` below) |
-| `route` | object (`startable`) | no | none | The router stub's setting (engine P7 plan D8; see `workflow.route` below) |
+| `route` | object (`startable`) | no | none | The router stub's setting (engine P7 plan D8; see `workflow.route` below). The recipe engine is removed (v2 PR 4b), so nothing routes items now |
 | `packs` | object | no | none | The style and lens packs a repo uses and their pins (line spec §5; see `workflow.packs` below) |
 | `line` | object | no | none | How many phases run at once, how many pull requests stay open and how deep a stack goes (line spec §8; see `workflow.line` below) |
 | `plan` | object | no | none | The size classes and the largest phase size (line spec §6.3; see `workflow.plan` below) |
@@ -74,6 +74,7 @@ not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.m
 | `steps` | object (`longMax`) | no | none | The longest a block Step may declare (line spec LN-WF7) |
 | `docs` | object (`globs`, `sync`) | no | none | Where docs sync may write (line spec §7.6) and whether it runs (`workflow.docs.sync`, below) |
 | `scoping` | object (`historyWindow`) | no | none | The scoping recipe's keys (see `workflow.scoping.historyWindow` below) |
+| `poll` | object (`intervalSeconds`, `catchUpPages`) | no | none | How connections are polled for events that start workflows (`connection_event` trigger, `docs/workflows/blocks/poll.md`); see `workflow.poll.intervalSeconds` and `workflow.poll.catchUpPages` below |
 
 ### `workflow.agent` model keys
 
@@ -121,6 +122,8 @@ Line spec Appendix D and LN-WF9. Every key is optional and applies on save. A pr
 | `workflow.review.models` | object (`lens`) | no | profile roles | The agent that runs the review lenses |
 | `workflow.steps.longMax` | duration | no | `2h` | The longest `MaxDuration` a block Step may declare (LN-WF7) |
 | `workflow.scoping.historyWindow` | object (`since`, `before`) | no | none (all history); `profile init` writes `{}` | The window the scoping recipe's `input.context.history` reads (#399): `since` and `before` are RFC 3339 instants or dates (`2026-01-01`), either may be left out; `{}`, or leaving the key out, is all history. The recipe names this key as `window: { profile: workflow.scoping.historyWindow }`, and the input resolves it from the live profile when it fills; a key the profile leaves out reads the open window |
+| `workflow.poll.intervalSeconds` | int | no | `120`, at least `30` | Seconds between two polls of one connection by the built-in `workflow-poll` service (it wakes every 30 seconds and polls the connections that are due). One poll serves every trigger on the same connection and event; a rate-limited answer waits at least its `Retry-After`, and each further failure in a row doubles the wait up to an hour. Below 30 is refused when you save it |
+| `workflow.poll.catchUpPages` | int | no | `20`, `1` to `100` | The most provider calls a catch-up makes for one connection and event before it stops, records `catchup.capped` and keeps the cursor where it stopped. A catch-up runs once after the control plane starts and again after the machine wakes (`docs/workflows/blocks/poll.md`). Outside 1 to 100 is refused when you save it |
 | `workflow.docs.globs` | string[] | no | `docs/**`, `*.md` | The paths docs sync may write (BD5): repo-relative globs with `/` separators and no `..`, as `index.denyPaths` takes them |
 
 `workflow.effects` gains no key of its own: the line's effects (`effect.line.start-phase`, `effect.line.report`, `effect.pr.open`) are entries of the allowlist. Code reads the values with their defaults through `LineProfile` (`Aw.Sindri.Core.Profile`).
@@ -170,7 +173,7 @@ What the router stub does with an item it routes (workflow engine spec §12). Re
 
 | Key | Type | Required | Default | Meaning |
 |---|---|---|---|---|
-| `startable` | `all` or `none` | no | `all` | `all` lets every routed item start; `none` stops them at the router (the gate fails and the item parks). Any other value is refused when you save it (`workflow.route.startable`) |
+| `startable` | `all` or `none` | no | `all` | `all` lets every routed item start; `none` stops them at the router (the gate fails; with the recipe engine removed, nothing reads this key now). Any other value is refused when you save it (`workflow.route.startable`) |
 
 ### `setup`
 

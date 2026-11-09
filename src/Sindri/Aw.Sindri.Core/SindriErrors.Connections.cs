@@ -37,6 +37,18 @@ public static partial class SindriErrors
     /// <summary>SND-CONN-011: the connection is key-based and has no browser sign-in to run again.</summary>
     public static readonly ErrorDefinition ConnectionKindNoSignIn = new("SND-CONN-011", ErrorKind.Invalid, "This connection uses a key, not a browser sign-in");
 
+    /// <summary>SND-CONN-014: the provider answered 429 or 5xx to a poll; the next poll waits.</summary>
+    public static readonly ErrorDefinition ConnectionRateLimited = new("SND-CONN-014", ErrorKind.RateLimited, "The provider is rate limiting this connection");
+
+    /// <summary>SND-CONN-012: the provider's answer is not the shape the poller knows, or a redirect left the preset's host.</summary>
+    public static readonly ErrorDefinition ConnectionProviderChanged = new("SND-CONN-012", ErrorKind.Unavailable, "The provider's answer is not the shape Sindri expects");
+
+    /// <summary>SND-CONN-013: the provider rejected the saved cursor; a full re-read is refused unless the owner asks.</summary>
+    public static readonly ErrorDefinition ConnectionCursorRejected = new("SND-CONN-013", ErrorKind.Conflict, "The provider rejected the saved poll cursor");
+
+    /// <summary>SND-CONN-101: five run ids in a row, from one delivery's occurrence on, are held by runs of other deliveries; the cursor stays and the next poll tries again (a real event is never dropped).</summary>
+    public static readonly ErrorDefinition ConnectionRunIdsHeld = new("SND-CONN-101", ErrorKind.Conflict, "The run ids for a polled event are all held by other events");
+
     /// <summary>SND-CONN-201: the handoff inbox answered something that breaks the contract (the message names the field).</summary>
     public static readonly ErrorDefinition InboxContractViolation = new("SND-CONN-201", ErrorKind.Invalid, "The handoff inbox's answer breaks the inbox contract");
 

@@ -449,7 +449,7 @@ CloseItem:* `ready`). Marked extras, not P3's: `queue/extra-p4-waiting` (a needs
 `queue/extra-p11-running`, `items-id/extra-p4-needs-decision`. In P3 every `primaryAction` is null, `waitingOn` and
 `instance` are null, and `owner` is null (README X61: multiplayer later; the records accept it, no owner UI).
 
-**Owner decisions (2026-10-12).** Four queue groups (API §3.6); a parked item shows in Waiting on you with a "parked"
+**Owner decisions (2026-10-12).** Four queue groups (API §3.6); a parked item (a state only an old ledger could produce; the recipe engine is removed) showed in Waiting on you with a "parked"
 badge from its `state`. The sheet shows `body` (scrubbed, plain text) and `link`. The sheet stays open after Close.
 The destructive confirm reads "<label> <id>?" with Confirm and Keep. Actors (`createdBy`, the timeline's `actor`) are
 opaque strings shown exactly as served; the app maps no fixed set (README X61), and assumes nothing about where an
@@ -527,7 +527,7 @@ The rev-8 contract unit gives the shell its screens' skeleton; the pages fill in
 U3'.
 
 - **Navigation.** The top bar has six tabs, in order: Home, Projects, Work, Context, Agents, System. Settings is
-  not a tab (⌘, opens it). `PageId` names the eight pages (Jobs is reached by G J, the palette and System's link; Projects shows only its heading until its content lands); a page with no screen yet shows a placeholder that says what it
+  not a tab (⌘, opens it). `PageId` names the ten pages (Jobs is reached by G J, the palette and System's link; Workflows, read-only in part 1 of PR 17 (list, a workflow's runs, a run's detail), by G W and the palette, and is not a tab; Projects shows only its heading until its content lands); a page with no screen yet shows a placeholder that says what it
   waits for. The last page is remembered in the preferences.
 - **Chords.** `G`, then a page's key within `ShellViewModel.ChordWait` (1 s): `H` or `N` Home, `D` Home filtered to
   decisions (`HomeFilter.Decisions`), `P` Projects (link `sindri://projects`), `Q` Work, `C` Context, `A` Agents, `.` or `S` System.
@@ -867,3 +867,21 @@ Description and comments are plain text (`LinearText`). Only an http(s) address 
 **Not yet.** Editing an issue, comments, New issue, Settings → Connections → Linear (Connect opens Settings) and ⌘K "Go to issue…". Y has no action on the Linear view.
 
 **Tests.** `tests/Aw.Sindri.Ui.Tests/Linear/` on `FakeSindriApi.Linear.cs`, which answers from the hand-written goldens `tests/Aw.Sindri.Tests/Golden/Api/linear-*` (pending in `ApiGoldenTests` until the routes are served).
+
+## PR 18a: the Connections and Memory pages
+
+Two list pages whose rows and actions are what the `connection_*` and `memory_*` MCP tools return and do: nothing on them that an agent can't do. Toolkits and Resources, the card's other two pages, wait on their API PRs and ship in a later part.
+
+**Navigation.** Connections is a tab, the last one (after Reviews), on `G O`. Memory is not a tab: `G M`, the palette's "Memory", System's "Memory stores" link and a `memory/<name>` link open it, as `G J` opens Jobs. `connection/<name>` opens the connection sheet over the page shown. A `memory/<name>` link opens the page but does not scroll to that store yet (`ShellViewModel.RequestedMemoryStore` is kept for it).
+
+**Connections.** `Views/Connections/ConnectionsPage`: each row is name, kind, the status chip (`connected`, `needs-sign-in`, `error`), last refresh, and Test, "Sign in again" (oauth and mcp only) and Remove (asks first; the row goes only after the API confirms). Add opens a form: a preset (github, linear, google, spotify) or a kind (`rest`, `cli`, `mcp`), then the fields that kind needs. An oauth add or "Sign in again" opens the consent URL through `Platform.ILauncher` and reads the connection every 2 s (`ConnectionActions.PollEvery`) until it is `connected`, reads `error`, answers a `lastSignInFailure` (a connected row whose sign-in again failed: the note names the code and the chip stays connected), or 5 minutes pass (`SignInTimeout`), which ends with a note. A row action (Test, Sign in again, Remove) runs under its owner's open token (`ConnectionActions.Closing`): leaving the page or closing the sheet cancels it, so a browser wait stops there and the row is free again; the next read shows where the sign-in got to. A pasted key goes through `SecretField`: it is sent once in the POST body and cleared after the send or a refusal; it never reaches `Preferences`, view-model state or a frame (`AddConnectionTests.A_pasted_key_is_sent_once_and_never_reaches_preferences_logs_or_view_model_state`). `ConnectionView` has no secret field. The preset list is fixed in `Labels.Connections.cs` because the API serves none.
+
+**Memory.** `Views/Memory/MemoryPage`: the stores with their fact counts, a create form, and per open store a search (a match level and "Show up to" 10, 25 or 50 facts, memory_search's `limit`; 10 is the API's default and is not sent; the chip says `semantic` or `keyword`, with the API's note when it fell back), a write form (text, tags, optional expiry; a past expiry is refused before sending), and forget by fact, by tag, or the expired ones. A forget removes rows only after the API confirms; a forget that deleted nothing keeps the rows and says so. No edit of a fact and no delete of a store: the memory tools have neither.
+
+**Reads.** Both pages read while they are the page shown and again on every event (`Health.Follow`); the connection sheet re-reads on every event while it is open.
+
+**Routes.** `GET|POST /sindri/connections`, `GET|DELETE /sindri/connections/{name}`, `POST /sindri/connections/{name}/test|signin`; `GET|POST /sindri/memories`, `GET /sindri/memories/{name}/search`, `POST|DELETE /sindri/memories/{name}/facts`. Their served goldens are in `tests/Aw.Sindri.Tests/Golden/Api/connections*` and `memories*`. `AddConnectionBody` writes every required field, null ones too (`ConnectionsClientTests.AddConnection_writes_every_required_field_even_when_null`); without them the server answers `SND-CLI-003`.
+
+**Not yet.** The `Connection` Needs-you row's "Sign in again" (no such row kind on main yet), Slack in the preset list, fixture seeding and desktop evidence screens for these pages.
+
+**Tests.** Unit: `tests/Aw.Sindri.Ui.Tests/Connections/` (page, add form, sheet, shell wiring), `Memory/` (page, view), `Api/ConnectionsClientTests`, `Api/MemoryClientTests`. Integration: `Views/ConnectionsFramesTests`, `Views/MemoryFramesTests` (Frames.Tests), `ConnectionsApiGoldenTests`, `MemoriesApiGoldenTests` (Sindri.Tests).

@@ -8,9 +8,14 @@ using Aw.Sindri.Features.CreateMemory;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.ForgetMemoryFact;
+using Aw.Sindri.Features.ImportTodoNote;
+using Aw.Sindri.Features.KeepTodo;
+using Aw.Sindri.Features.KeepTodoUndo;
 using Aw.Sindri.Features.MarkTodo;
+using Aw.Sindri.Features.PickTodoHold;
 using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.TestConnection;
+using Aw.Sindri.Features.UndoTodoHold;
 using Aw.Sindri.Features.WriteMemoryFact;
 
 namespace Aw.Architecture.Tests;
@@ -42,6 +47,12 @@ public sealed class McpSurfaceTests
         typeof(AddTodoRequest).FullName!,
         typeof(ChangeTodoRequest).FullName!,
         typeof(MarkTodoRequest).FullName!,
+        // why: todo spec D2 (rev 5.3, no exceptions): a pick, a hold pick, their Undo and the note import are request class too, and sindri_todo takes them as actions
+        typeof(KeepTodoRequest).FullName!,
+        typeof(KeepTodoUndoRequest).FullName!,
+        typeof(PickTodoHoldRequest).FullName!,
+        typeof(UndoTodoHoldRequest).FullName!,
+        typeof(ImportTodoNoteRequest).FullName!,
     };
 
     private static readonly string[] _launchSecretMarkers = ["LAUNCH_SECRET", "Launch-Secret", "LaunchSecret"];

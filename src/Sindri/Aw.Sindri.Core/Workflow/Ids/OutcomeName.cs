@@ -11,8 +11,8 @@ namespace Aw.Sindri.Core.Workflow.Ids;
 [JsonConverter(typeof(StringIdJsonConverter<OutcomeName>))]
 public readonly partial struct OutcomeName : ITypedId<OutcomeName, string>
 {
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("An outcome name is a camelCase word, for example notStartable, at most 40 characters");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("An outcome name is a camelCase word, for example notStartable, at most 40 characters");
 
     [GeneratedRegex("^[a-z][A-Za-z0-9]*\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

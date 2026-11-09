@@ -56,6 +56,11 @@ public static class EventCatalog
         new(EventTypes.TodoConflicted, Public: false, PublicPayload: null, "todo.conflicted:<todoId>:<noteHash>"),
         new(EventTypes.TodoConflictResolved, Public: false, PublicPayload: null, "todo.conflict.resolved:<todoId>:<ulid>"),
         new(EventTypes.TodoConflictReopened, Public: false, PublicPayload: null, "todo.conflict.reopened:<todoId>:<ulid>"),
+        new(EventTypes.TodoNoteHeld, Public: false, PublicPayload: null, "todo.note.held:<noteHash>"),
+        new(EventTypes.TodoNoteHeldResolved, Public: false, PublicPayload: null, "todo.note.held.resolved:<noteHash>:<ulid>"),
+        new(EventTypes.TodoNoteHeldReopened, Public: false, PublicPayload: null, "todo.note.held.reopened:<noteHash>:<ulid>"),
+        new(EventTypes.TodoNoteImported, Public: false, PublicPayload: null, "todo.note.imported:<vault>:<ulid>"),
+        new(EventTypes.TodoNoteSynced, Public: false, PublicPayload: null, "todo.note.synced:<noteHash>:<ulid>"),
         new(EventTypes.RequestFiled, Public: true, typeof(RequestFiledPublic), "request.filed:<requestId>") { Invalidates = [ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions, ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.DecisionRecorded, Public: true, typeof(DecisionRecordedPublic), "decision.recorded:<decisionId>") { Invalidates = [ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions, ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.WorkflowStarted, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:<run id>:<activity id>[:<content hash>]"),
@@ -107,6 +112,9 @@ public static class EventCatalog
         new(EventTypes.SetupConsentGiven, Public: true, typeof(SetupConsentGiven), "setup.consent.given:<profileHash>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.ConnectionNeedsSignIn, Public: true, typeof(ConnectionNeedsSignIn), "connection.needs-sign-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
         new(EventTypes.ConnectionSignedIn, Public: true, typeof(ConnectionSignedIn), "connection.signed-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
+        new(EventTypes.ConnectionPolled, Public: false, PublicPayload: null, "connection.polled:<name>:<kind>:<atTicks>"),
+        new(EventTypes.WorkflowTriggerSkipped, Public: false, PublicPayload: null, "workflow.trigger.skipped:<workflow>:<deliveryKey>:<reason>"),
+        new(EventTypes.CatchUpCapped, Public: false, PublicPayload: null, "catchup.capped:<name>:<kind>:<atTicks>"),
         new(EventTypes.ViewsRebuilt, Public: false, PublicPayload: null, "views.rebuilt:<commandId>"),
     ];
 }

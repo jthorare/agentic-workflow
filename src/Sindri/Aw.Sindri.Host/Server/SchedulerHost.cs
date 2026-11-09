@@ -26,7 +26,6 @@ internal sealed partial class SchedulerHost(
     IServiceScopeFactory scopes, ScheduleInputs inputs, ServiceRunGuard guard, HeldLease held, ICallerContextAccessor callers, TimeProvider clock, ILogger<SchedulerHost> log)
     : BackgroundService
 {
-    private static readonly TimeSpan _tick = TimeSpan.FromSeconds(1);
     private readonly Dictionary<ServiceName, Task> _running = [];
     private IReadOnlyList<ServiceSchedule> _schedules = [];
     private LoadedProfile? _approved;
@@ -40,6 +39,7 @@ internal sealed partial class SchedulerHost(
     {
         while (!stoppingToken.IsCancellationRequested)
         {
+            AfterSleep();
             await Refresh(stoppingToken).ConfigureAwait(false);
             var grant = held.Current;
             if (grant is not null)

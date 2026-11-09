@@ -1,0 +1,143 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mm="using:Aw.Sindri.Ui.ViewModels.Memory"
+             x:Class="Aw.Sindri.Ui.Views.Memory.MemoryPage"
+             x:DataType="mm:MemoryPageViewModel">
+  <!-- The Memory page: the stores with their fact counts, a create form, and per open store a search (with the mode chip and the API's note), a write form
+       and the forget actions. Only what the memory tools do: no edit of a fact and no delete of a store. Every named line is a Border wrapper (a TextBlock's peer
+       ignores AutomationProperties.Name). -->
+  <StackPanel x:Name="MemoryRoot" Spacing="{StaticResource Size.PanelGap}">
+    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+      <TextBlock Classes="page-title" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
+      <TextBlock x:Name="MemoryHead" Classes="caption subtle" Text="{Binding Head}" VerticalAlignment="Center" />
+    </StackPanel>
+    <Border AutomationProperties.Name="{Binding Purpose}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="body muted" Text="{Binding Purpose}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
+    <TextBlock x:Name="MemoryStale" Classes="caption subtle" Text="{Binding StaleText}" IsVisible="{Binding IsStale}" />
+
+    <Border Classes="panel" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+      <StackPanel Spacing="4">
+        <Border x:Name="MemoryReadingName" Margin="16,8" IsVisible="{Binding IsReading}" AutomationProperties.Name="{Binding ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding ReadingText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="MemoryUnreadableName" Margin="16,8" IsVisible="{Binding IsUnreadable}" AutomationProperties.Name="{Binding UnreadableText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding UnreadableText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <StackPanel x:Name="MemoryFailed" Margin="16,8" Spacing="8" IsVisible="{Binding ShowRetry}">
+          <Border AutomationProperties.Name="{Binding FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="caption quiet" Text="{Binding FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <Button x:Name="MemoryRetry" Content="{Binding RetryText}" Click="OnRetry" HorizontalAlignment="Left" AutomationProperties.Name="{Binding RetryText}" />
+        </StackPanel>
+        <Border x:Name="MemoryEmptyName" Margin="16,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+
+        <ItemsControl x:Name="MemoryStores" ItemsSource="{Binding Stores}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="mm:MemoryStoreRowViewModel">
+              <Border x:Name="MemoryStoreFrame" Classes="item-row" Padding="16,8" AutomationProperties.Name="{Binding RowName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                <StackPanel Spacing="8">
+                  <DockPanel LastChildFill="True">
+                    <Button x:Name="MemoryStoreToggle" DockPanel.Dock="Right" Content="{Binding ToggleText}" Click="OnToggle" AutomationProperties.Name="{Binding ToggleName}" />
+                    <TextBlock x:Name="MemoryStoreFacts" DockPanel.Dock="Right" Classes="caption subtle" Text="{Binding FactsText}" Margin="8,0" VerticalAlignment="Center" />
+                    <StackPanel Spacing="2">
+                      <TextBlock x:Name="MemoryStoreName" Classes="body-strong" Text="{Binding Name}" />
+                      <TextBlock x:Name="MemoryStoreDescription" Classes="caption subtle" Text="{Binding Description}" IsVisible="{Binding HasDescription}" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </DockPanel>
+
+                  <StackPanel x:Name="MemoryStoreBody" Spacing="8" IsVisible="{Binding IsOpen}">
+                    <StackPanel Orientation="Horizontal" Spacing="8" DataContext="{Binding Search}" x:DataType="mm:MemorySearchViewModel">
+                      <TextBox x:Name="MemorySearchBox" Width="260" Text="{Binding Query, Mode=TwoWay}" KeyDown="OnSearchKey" AutomationProperties.Name="{Binding FieldName}" />
+                      <ComboBox x:Name="MemoryLevel" ItemsSource="{Binding LevelChoices}" SelectedItem="{Binding SelectedLevel}" MinWidth="110" AutomationProperties.Name="{Binding LevelName}" />
+                      <ComboBox x:Name="MemoryLimit" ItemsSource="{Binding LimitChoices}" SelectedItem="{Binding SelectedLimit}" MinWidth="70" AutomationProperties.Name="{Binding LimitName}" ToolTip.Tip="{Binding LimitName}" />
+                      <Button x:Name="MemorySearchButton" Content="{Binding ActionText}" Click="OnSearch" AutomationProperties.Name="{Binding ActionText}" />
+                    </StackPanel>
+
+                    <StackPanel DataContext="{Binding Search}" x:DataType="mm:MemorySearchViewModel" Spacing="6">
+                      <Border x:Name="MemorySearchErrorName" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding Error}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                        <TextBlock Classes="caption" Text="{Binding Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                      </Border>
+                      <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasSearched}">
+                        <Border x:Name="MemoryModeChip" AutomationProperties.Name="{Binding ModeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                          <TextBlock Classes="body-strong" Text="{Binding ModeText}" AutomationProperties.AccessibilityView="Raw" />
+                        </Border>
+                        <TextBlock x:Name="MemoryResult" Classes="caption subtle" Text="{Binding ResultText}" VerticalAlignment="Center" />
+                      </StackPanel>
+                      <Border x:Name="MemoryNoteName" IsVisible="{Binding HasNote}" AutomationProperties.Name="{Binding NoteText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                        <TextBlock Classes="caption subtle" Text="{Binding NoteText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                      </Border>
+                      <ItemsControl x:Name="MemoryFacts" ItemsSource="{Binding Rows}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="mm:MemoryFactRowViewModel">
+                            <Border x:Name="MemoryFactFrame" Classes="item-row" Padding="0,6" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                              <DockPanel LastChildFill="True">
+                                <Button x:Name="MemoryFactForget" DockPanel.Dock="Right" Content="{Binding ForgetText}" Click="OnForgetFact" IsEnabled="{Binding CanForget}" VerticalAlignment="Top" AutomationProperties.Name="{Binding ForgetName}" />
+                                <StackPanel Spacing="2">
+                                  <TextBlock x:Name="MemoryFactText" Classes="body" Text="{Binding Text}" TextWrapping="Wrap" />
+                                  <ItemsControl x:Name="MemoryFactTags" ItemsSource="{Binding Tags}" IsVisible="{Binding HasTags}">
+                                    <ItemsControl.ItemsPanel>
+                                      <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                      <DataTemplate x:DataType="mm:MemoryTagViewModel">
+                                        <Button x:Name="MemoryTagForget" Classes="caption" Content="{Binding Tag}" Click="OnForgetTag" IsEnabled="{Binding CanForget}" Margin="0,0,6,0" AutomationProperties.Name="{Binding ForgetText}" />
+                                      </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                  </ItemsControl>
+                                  <TextBlock x:Name="MemoryFactProvenance" Classes="caption subtle" Text="{Binding ProvenanceText}" IsVisible="{Binding HasProvenance}" TextWrapping="Wrap" />
+                                  <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <TextBlock Classes="caption subtle" Text="{Binding RefreshedText}" />
+                                    <TextBlock x:Name="MemoryFactExpires" Classes="caption subtle" Text="{Binding ExpiresText}" IsVisible="{Binding HasExpiry}" />
+                                    <TextBlock x:Name="MemoryFactScore" Classes="caption subtle" Text="{Binding ScoreText}" IsVisible="{Binding HasScore}" />
+                                  </StackPanel>
+                                </StackPanel>
+                              </DockPanel>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+
+                    <Border x:Name="MemoryForgetResultName" IsVisible="{Binding HasForgetResult}" AutomationProperties.Name="{Binding ForgetResult}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                      <TextBlock Classes="caption" Text="{Binding ForgetResult}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                    </Border>
+                    <Button x:Name="MemoryForgetExpired" Content="{Binding ForgetExpiredText}" Click="OnForgetExpired" IsEnabled="{Binding CanForget}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ForgetExpiredText}" />
+
+                    <StackPanel Spacing="6">
+                      <TextBlock Classes="body-strong" Text="{Binding WriteHeading}" />
+                      <TextBox x:Name="MemoryFactBox" Text="{Binding WriteText, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" AutomationProperties.Name="{Binding FactFieldName}" />
+                      <TextBox x:Name="MemoryTagsBox" Text="{Binding WriteTags, Mode=TwoWay}" PlaceholderText="{Binding TagsFieldName}" AutomationProperties.Name="{Binding TagsFieldName}" />
+                      <TextBox x:Name="MemoryExpiresBox" Text="{Binding WriteExpires, Mode=TwoWay}" PlaceholderText="{Binding ExpiresFieldName}" AutomationProperties.Name="{Binding ExpiresFieldName}" />
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="MemoryWriteButton" Content="{Binding WriteActionText}" Click="OnWrite" IsEnabled="{Binding CanWrite}" AutomationProperties.Name="{Binding WriteActionText}" />
+                        <Border x:Name="MemoryWriteResultName" IsVisible="{Binding HasWriteResult}" VerticalAlignment="Center" AutomationProperties.Name="{Binding WriteResult}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                          <TextBlock Classes="caption" Text="{Binding WriteResult}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                        </Border>
+                      </StackPanel>
+                    </StackPanel>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <Border Classes="panel" Padding="16,8">
+      <StackPanel x:Name="MemoryCreateForm" Spacing="6">
+        <TextBlock Classes="body-strong" Text="{Binding CreateHeading}" />
+        <TextBox x:Name="MemoryNewName" Text="{Binding NewName, Mode=TwoWay}" PlaceholderText="{Binding NameFieldName}" AutomationProperties.Name="{Binding NameFieldName}" />
+        <TextBox x:Name="MemoryNewDescription" Text="{Binding NewDescription, Mode=TwoWay}" PlaceholderText="{Binding DescriptionFieldName}" AutomationProperties.Name="{Binding DescriptionFieldName}" />
+        <Button x:Name="MemoryCreateButton" Content="{Binding CreateText}" Click="OnCreate" IsEnabled="{Binding CanCreate}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CreateText}" />
+        <Border x:Name="MemoryCreateErrorName" IsVisible="{Binding HasCreateError}" AutomationProperties.Name="{Binding CreateError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption" Text="{Binding CreateError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

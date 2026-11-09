@@ -91,6 +91,10 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-009` | Consent was denied at the provider. | run the command again and allow access |
 | `SND-CONN-010` | A connection with that name exists. | pick another label, or `sindri connection remove` it first |
 | `SND-CONN-011` | The connection uses a key, so it has no browser sign-in to run again. | `sindri connection remove` it, then add it with a new `--key-env` |
+| `SND-CONN-012` | The provider's answer is not the shape Sindri expects, or a redirect left the preset's host. | run `sindri doctor`; if it repeats, the provider changed its API |
+| `SND-CONN-013` | The provider rejected the saved poll cursor. | ask for a full re-read (the owner's call); Sindri does not re-read on its own |
+| `SND-CONN-014` | The provider is rate limiting this connection (429 or 5xx on a poll). | nothing: the next poll waits for Retry-After, then doubles the wait on each repeat |
+| `SND-CONN-101` | A polled event found its run ids, five in a row, held by runs of other events. | nothing: the cursor stays and the next poll tries again; the event is never dropped |
 | `SND-CONN-201` | The handoff inbox's answer breaks the inbox contract; the message names the field. | fix the inbox so it answers as `schemas/handoff/inbox.openapi.yaml` says (docs/sindri/handoff.md) |
 | `SND-CONN-202` | Another caller claimed the offer first. Informational: nothing starts. | none; the next poll lists what is still open |
 | `SND-CONN-203` | The handoff inbox has no such offer any more (unknown or expired). | none; the offer is gone |

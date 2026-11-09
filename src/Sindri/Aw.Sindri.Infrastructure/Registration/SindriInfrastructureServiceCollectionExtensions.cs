@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Checks;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
+using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.EngineReads;
@@ -38,6 +39,7 @@ using Aw.Sindri.Infrastructure.Auth;
 using Aw.Sindri.Infrastructure.Challenges;
 using Aw.Sindri.Infrastructure.Checks;
 using Aw.Sindri.Infrastructure.Connections;
+using Aw.Sindri.Infrastructure.Connections.Polling;
 using Aw.Sindri.Infrastructure.Control;
 using Aw.Sindri.Infrastructure.Deploy;
 using Aw.Sindri.Infrastructure.Evidence;
@@ -77,7 +79,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     public static IServiceCollection AddSindriInfrastructure(this IServiceCollection services, Func<string, string?> environment)
     {
         var settings = SettingsFromEnvironment.Read(environment);
-        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters().AddSindriMcp(environment).AddSecretInfrastructure().AddProfileEditing(environment).AddLeftoverInfrastructure().AddScopingInfrastructure().AddJudgeInfrastructure(environment).AddScopeWatch().AddSkillBlocks(environment).AddSingleton<Core.Reviews.IReviewSummaries, Reviews.FileReviewSummaries>().AddSingleton<Core.Reviews.IFixTaskFiles, Reviews.FixTaskFiles>().AddSingleton<Core.Reviews.IFixSessions>(sp => new Reviews.GitFixSessions(sp.GetRequiredService<Core.Sessions.ISessionSnapshot>(), new ProcessToolRunner())).AddSingleton<Core.Reviews.IReviewPages, Reviews.FileReviewPages>().AddSingleton<Core.Reviews.IReviewEvidence>(_ => new Reviews.FileReviewEvidence(environment)).AddSingleton<Core.Todos.Note.ITodoNoteDisk, Todos.FileTodoNoteDisk>();
+        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters().AddSindriMcp(environment).AddSecretInfrastructure().AddProfileEditing(environment).AddLeftoverInfrastructure().AddScopingInfrastructure().AddJudgeInfrastructure(environment).AddScopeWatch().AddSkillBlocks(environment).AddSingleton<Core.Reviews.IReviewSummaries, Reviews.FileReviewSummaries>().AddSingleton<Core.Reviews.IFixTaskFiles, Reviews.FixTaskFiles>().AddSingleton<Core.Reviews.IFixSessions>(sp => new Reviews.GitFixSessions(sp.GetRequiredService<Core.Sessions.ISessionSnapshot>(), new ProcessToolRunner())).AddSingleton<Core.Reviews.IReviewPages, Reviews.FileReviewPages>().AddSingleton<Core.Reviews.IReviewEvidence>(_ => new Reviews.FileReviewEvidence(environment)).AddSingleton<Core.Todos.Note.ITodoNoteDisk, Todos.FileTodoNoteDisk>().AddSingleton<Core.Todos.Note.ITodoNoteFiles, Todos.FileTodoNoteFiles>();
     }
 
     /// <summary>SB-3a: what 'session wrap --limits' watches a session's systemd scope through (systemctl --user and the cgroup files).</summary>
@@ -209,7 +211,17 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IMcpConnectionClient>(static _ => new McpConnectionClient(new HttpClient()))
             .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
+            .AddSingleton<IPollCursors, SqlitePollCursors>()   // PR 11: poll cursors in ledger.db
+            .AddSingleton<IEventPoller>(static sp => new GitHubEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<IEventPoller>(static sp => new LinearEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<IEventPoller>(static sp => new SlackEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<IEventPoller>(static sp => new GoogleCalendarPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<ISignInSession>(static sp => new LoopbackSignIn(sp.GetRequiredService<IOAuthClient>(), sp.GetRequiredService<IBrowserOpener>(), TimeSpan.FromMinutes(5), System.Security.Cryptography.RandomNumberGenerator.GetBytes));
+
+    // A poller sends the connection's token, so its client never follows a redirect on its own: the poller refuses one that leaves the preset's host.
+    private static HttpClient NoRedirectClient() => new(_noRedirect, disposeHandler: false);
+
+    private static readonly SocketsHttpHandler _noRedirect = new() { AllowAutoRedirect = false };
 
     private static IServiceCollection AddSecretInfrastructure(this IServiceCollection services)
         => services

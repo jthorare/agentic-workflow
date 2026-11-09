@@ -6,14 +6,17 @@ using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.CodeIndex;
+using Aw.Sindri.Ui.Api.Connections;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.Api.Linear;
+using Aw.Sindri.Ui.Api.Memory;
 using Aw.Sindri.Ui.Api.Projects;
 using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Api.Setup;
 using Aw.Sindri.Ui.Api.Sources;
+using Aw.Sindri.Ui.Api.Workflows;
 using Aw.Sindri.Ui.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Api;
@@ -69,6 +72,10 @@ public sealed class GoldenContractTests
         ["items-id-open"] = As<OpenAcceptedView>,   // POST /items/{id}/open: the accepted answer (the refusals are ProblemDetails)
         ["jobs"] = As<JobList>,   // GET /jobs: the Jobs page's list; the 400 SND-CLI-003 bodies are ProblemDetails
         ["jobs-id"] = As<JobView>,   // GET /jobs/{id}: the job sheet; the 404 is ProblemDetails
+        ["workflows"] = As<WorkflowList>,   // GET /workflows: the Workflows page's list (#2258 PR 17 part 1); the refusals are ProblemDetails
+        ["workflows-slug"] = As<WorkflowView>,   // GET /workflows/{slug}: the runs header; the spec stays raw
+        ["workflows-slug-runs"] = As<WorkflowRunList>,   // GET /workflows/{slug}/runs: a workflow's runs
+        ["workflow-runs-run"] = As<WorkflowRunView>,   // GET /workflow-runs/{run}: a run's detail
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
         ["projects"] = As<ProjectList>,   // GET /projects: the Projects page's three groups (projects page spec §6.2)
         ["reviews"] = As<ReviewList>,   // GET /reviews: the Reviews tab, its badge and Home's waiting line (review page spec §6.1)
@@ -121,12 +128,25 @@ public sealed class GoldenContractTests
         ["todos-note-set"] = As<TodoNoteChangedView>,   // POST /todos/note/set: Start syncing (changed, unchanged); the stale 409 is ProblemDetails
         ["todos-note-stop"] = As<TodoNoteChangedView>,   // POST /todos/note/stop: Stop syncing (changed, unchanged)
         ["todos-note"] = As<TodoNoteView>,   // GET /sindri/todos/note (note, hold); conflict.json is a todo, read as TodoView by _readByScenario
+        ["connections"] = As<ConnectionList>,   // GET /sindri/connections; the added-* scenarios are POST's ConnectionAdded (_readByScenario)
+        ["connections-id"] = As<ConnectionOne>,   // GET /sindri/connections/{name}; removed is DELETE's ConnectionRemoved (_readByScenario)
+        ["connections-id-test"] = As<ConnectionTested>,   // POST /sindri/connections/{name}/test
+        ["connections-id-signin"] = As<ConnectionAdded>,   // POST /sindri/connections/{name}/signin (the Sign in again action)
+        ["memories"] = As<MemoryList>,   // GET /sindri/memories; created is POST's MemoryCreated (_readByScenario)
+        ["memories-id-search"] = As<MemorySearchView>,   // GET /sindri/memories/{name}/search
+        ["memories-id-facts"] = As<MemoryFactWritten>,   // POST /sindri/memories/{name}/facts; the forgot* scenarios are DELETE's MemoryForgotten (_readByScenario)
     };
 
     // A scenario of a slug that holds files of another shape than the rest of its folder (todos-note/conflict.json is the TodoItem GET /todos/{id} serves).
     private static readonly Dictionary<(string Slug, string Scenario), Func<byte[], Result<object>>> _readByScenario = new()
     {
         [("todos-note", "conflict")] = AsShownTodo,   // { asOf, todo }: the app reads the todo inside (the panel takes it from the list, not from this route)
+        [("connections", "added-key")] = As<ConnectionAdded>,
+        [("connections", "added-oauth")] = As<ConnectionAdded>,
+        [("connections-id", "removed")] = As<ConnectionRemoved>,
+        [("memories", "created")] = As<MemoryCreated>,
+        [("memories-id-facts", "forgot")] = As<MemoryForgotten>,
+        [("memories-id-facts", "forgot-tag")] = As<MemoryForgotten>,
     };
 
     // Routes the app never calls yet: stop is Health's (U4), and the
@@ -135,7 +155,8 @@ public sealed class GoldenContractTests
     {
         "stop",
         "todos-id",   // the app never calls GET /sindri/todos/{id}; the CLI's `todo show` does
-        "workflow-instances", "workflow-instance", "workflow-instance-fact", "workflow-status", "workflow-recipe", "workflow-recipes", "workflow-recipes-id-stats", "workflow-instances-start", "workflow-recipes-approve-all",   // v2 PR 4: the app has no Recipes, Workflows or run pages; the routes stay served until the backend PR removes them
+        "todos-keep", "todos-keep-undo", "todos-hold-apply", "todos-hold-undo",   // the picks (todo Ph3b): the conflict and hold rows that call them are ui's Ph4
+        "workflow-instances", "workflow-instance", "workflow-instance-fact", "workflow-status", "workflow-recipe", "workflow-recipes", "workflow-recipes-id-stats", "workflow-instances-start", "workflow-recipes-approve-all",   // the app has no Recipes or workflow-instance pages (the Workflows page reads only workflows, workflows-slug, workflows-slug-runs and workflow-runs-run); these routes stay served until the backend PR removes them
         "workflow-challenges-app",   // q93: the app asks for no challenge any more; the route stays served until api removes it
         "setup-repos",   // POST /setup/repos (Add repo): the app's call and the job's progress are U3's (SO-U3)
         "context-concepts-id-members",   // GET /sindri/context/concepts/{id}/members: the band reads sizes from the concepts answer, never a concept's member list
@@ -151,7 +172,7 @@ public sealed class GoldenContractTests
         "sandbox-status", "sandbox-check", "sandbox-denials", "sandbox-allow",   // SB-6a serves them; the app reads them in SB-6b (Health, Settings, the park card and the item sheet)
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
-        "connections-id-signin",   // POST /connections/{name}/signin (#2349): the CLI's `connection signin` and the MCP tool; the app has no Connections page yet
+        "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
 

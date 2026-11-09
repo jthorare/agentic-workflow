@@ -43,6 +43,17 @@ public sealed class TodoNoteDiskTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public void A_dangling_symlink_at_the_note_and_one_on_a_folder_on_the_way_are_refused()
+    {
+        _ = File.CreateSymbolicLink(Path.Combine(_vault, "dangling.md"), Path.Combine(_vault, "nowhere.md"));
+        _ = File.CreateSymbolicLink(Path.Combine(_vault, "dangling-folder"), Path.Combine(_vault, "nowhere"));
+        var disk = new FileTodoNoteDisk();
+
+        Assert.True(disk.Inspect(_vault, "dangling.md").IsSymlink);
+        Assert.True(disk.Inspect(_vault, "dangling-folder/Todo.md").IsSymlink);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public void The_probe_of_a_writable_folder_says_writable_and_leaves_no_file_behind()
     {
         var facts = new FileTodoNoteDisk().Probe(_vault, "Daily/Todo.md");   // Daily doesn't exist: the vault's own folder is probed
