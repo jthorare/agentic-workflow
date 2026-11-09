@@ -12,7 +12,7 @@ using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox;
 
-/// <summary>'sindri sandbox exec' (sandbox spec §3.6): a human-only CLI verb, not an API route. Usage and refusals exit 2, the command's exit code is the verb's.</summary>
+/// <summary>'sindri sandbox exec' (sandbox spec §3.6): a CLI verb for the owner and agent sessions alike, not an API route. Usage and refusals exit 2, the command's exit code is the verb's.</summary>
 [Collection(ProcessEnvironment.Name)]
 public sealed class SandboxExecCliTests : IDisposable
 {
@@ -72,15 +72,14 @@ public sealed class SandboxExecCliTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task A_session_Sindri_launched_is_refused_and_nothing_runs()
+    public async Task A_session_Sindri_launched_may_run_it()
     {
-        HumanToken();   // a launched session never calls as a human, whatever it can read
+        HumanToken();
 
         var exit = await Run(Environment(launch: Req.WriteScope.Launch.Value), PlanDirectory());
 
-        Assert.Equal(2, exit);
-        Assert.StartsWith("SND-AUTH-002 ", _error.ToString(), StringComparison.Ordinal);
-        Assert.Null(_exec.Command);
+        Assert.Equal(7, exit);
+        Assert.Equal(["/bin/sh"], _exec.Command);
     }
 
     [Fact, Trait("Lane", "integration")]
@@ -96,13 +95,12 @@ public sealed class SandboxExecCliTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task Without_the_per_start_token_it_is_refused()
+    public async Task Without_the_per_start_token_it_still_runs()
     {
         var exit = await Run(Environment(), PlanDirectory());
 
-        Assert.Equal(2, exit);
-        Assert.StartsWith("SND-AUTH-002 ", _error.ToString(), StringComparison.Ordinal);
-        Assert.Null(_exec.Command);
+        Assert.Equal(7, exit);
+        Assert.Equal(["/bin/sh"], _exec.Command);
     }
 
     [Fact, Trait("Lane", "integration")]

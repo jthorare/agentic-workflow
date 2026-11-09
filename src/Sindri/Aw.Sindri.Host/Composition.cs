@@ -16,7 +16,6 @@ using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Registration;
 using Aw.Sindri.Features;
-using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Host.Forge;
 using Aw.Sindri.Host.Models;
 using Aw.Sindri.Host.Registration;

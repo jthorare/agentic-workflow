@@ -10,12 +10,11 @@ namespace Aw.Sindri.Host.Commands;
 /// <summary>
 /// 'sindri sandbox exec &lt;launch|run-area&gt; [--json] [-- &lt;command...&gt;]' (sandbox spec §3.6): the human's way to see what a sandboxed session saw. It runs the command (a shell without one) in a fresh sandbox built from the launch's
 /// stored plan, with the worktree, the run's ref directories and the run directory read-only, a fresh scratch, no launch secret and no GitHub token, in the Steps' slice and counted against the session cap.
-/// Human-only and not an API route: a session Sindri launched, or a CLI with no readable per-start token, is refused (SND-AUTH-002). Exit code: the command's; 2 for usage, a refusal or a sandbox that can't be made.
+/// Not an API route; the owner and an agent session run it alike. Exit code: the command's; 2 for usage, a refusal or a sandbox that can't be made.
 /// </summary>
 /// <param name="output">Where the verb writes.</param>
 /// <param name="services">The container: the exec service.</param>
-/// <param name="caller">Tells a human from a session.</param>
-internal sealed class SandboxExecVerb(Output output, IServiceProvider services, CallerHeaders caller)
+internal sealed class SandboxExecVerb(Output output, IServiceProvider services)
 {
     internal const string Usage = "usage: sindri sandbox exec <launch|run-area> [--json] [-- <command...>]";
 
@@ -30,11 +29,6 @@ internal sealed class SandboxExecVerb(Output output, IServiceProvider services, 
         if (problem is not null)
         {
             return await output.Error(SindriErrors.InvalidInput.With(problem + " (" + Usage + ")")).ConfigureAwait(false);
-        }
-
-        if (await caller.Resolve(ct).ConfigureAwait(false) is { } reason)
-        {
-            return await output.Error(SindriErrors.AuthRefused.With($"sandbox exec is for the person at the keyboard, and this is {reason} (fix: run it from your own terminal)")).ConfigureAwait(false);
         }
 
         if (services.GetService<ISandboxExec>() is not { } exec)

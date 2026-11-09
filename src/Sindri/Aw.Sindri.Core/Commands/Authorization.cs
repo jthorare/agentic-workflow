@@ -4,12 +4,10 @@ namespace Aw.Sindri.Core.Commands;
 
 /// <summary>
 /// The authorization table (API spec §4.2) as data: which caller may run which action class. Pure; the command chain's
-/// AuthorizingService asks it, and the command list renders <see cref="CallersFor(CommandRow)"/>. A human at a terminal, a human in the app
-/// and an agent session may run every class a human may (owner decision q93: no caller is refused a desk, job, decision or protected action). The one exception is a row that still needs a terminal (the line holdout read, which hides scenarios from the agent that implements them): it narrows any class to a human at one. A desk row may name the in-process services it grants ('service:host' →
-/// StopProcess). 'step-report' is a launched session's (its launch secret is checked by the service, API spec §8.1), and 'local' never runs through the API, so it refuses everyone.
-/// A session Sindri itself launched (its caller carries a launch, owner decisions q100 and #1002) is narrower than an owner-started one: it files requests, reports
-/// its own Step, runs jobs and takes the one-time issue rows (its nonce, heartbeat and exit), and is refused every pause, decision, desk and protected action.
-/// The command list still names both kinds of session 'session'.
+/// AuthorizingService asks it, and the command list renders <see cref="CallersFor(CommandRow)"/>. Every caller may run every class except two:
+/// 'step-report' is a session's (its launch secret is checked by the service, API spec §8.1), and 'local' never runs through the API, so it refuses everyone.
+/// A desk row may name the in-process services it grants ('service:host' → StopProcess). A session Sindri launched is no narrower than an owner-started one
+/// (agent-first PR 2); the command list names both kinds of session 'session'. Attribution, not refusal, tells them apart.
 /// </summary>
 public static class Authorization
 {
@@ -21,11 +19,10 @@ public static class Authorization
     {
         [ActionClass.Request] = Who.Terminal | Who.App | Who.Session | Who.Launched | Who.Service,
         [ActionClass.StepReport] = Who.Session | Who.Launched,
-        [ActionClass.Pause] = Who.Terminal | Who.App | Who.Session | Who.Service,
+        [ActionClass.Pause] = Who.Terminal | Who.App | Who.Session | Who.Launched | Who.Service,
         [ActionClass.Job] = Who.Terminal | Who.App | Who.Session | Who.Launched | Who.Service,
-        [ActionClass.Decision] = Who.Terminal | Who.App | Who.Session,
-        [ActionClass.Desk] = Who.Terminal | Who.App | Who.Session,
-        [ActionClass.Protected] = Who.Terminal | Who.App | Who.Session,
+        [ActionClass.Decision] = Who.Terminal | Who.App | Who.Session | Who.Launched,
+        [ActionClass.Desk] = Who.Terminal | Who.App | Who.Session | Who.Launched,
         [ActionClass.Local] = Who.None,
         [ActionClass.Issue] = Who.Terminal | Who.App | Who.Session | Who.Launched,
     };
@@ -50,7 +47,7 @@ public static class Authorization
     {
         ArgumentNullException.ThrowIfNull(row);
         var who = WhoIs(caller);
-        var allowed = ((Allowed(actionClass) & who) != Who.None || Granted(actionClass, caller, row)) && (!row.NeedsTerminal || who == Who.Terminal);
+        var allowed = (Allowed(actionClass) & who) != Who.None || Granted(actionClass, caller, row);
         return new AuthorizationDecision(caller?.Actor ?? "none", allowed ? null : Refusal(row));
     }
 
@@ -73,8 +70,7 @@ public static class Authorization
     public static IReadOnlyList<string> CallersFor(CommandRow row)
     {
         ArgumentNullException.ThrowIfNull(row);
-        var callers = CallersFor(row.Class, row.ServiceGrants);
-        return row.NeedsTerminal ? [.. callers.Where(static c => string.Equals(c, HumanAtTerminal, StringComparison.Ordinal))] : callers;
+        return CallersFor(row.Class, row.ServiceGrants);
     }
 
     private static Who Allowed(ActionClass actionClass) => _table.GetValueOrDefault(actionClass, Who.None);
@@ -98,7 +94,5 @@ public static class Authorization
         && row.ServiceGrants.Contains(actor[ServicePrefix.Length..], StringComparer.Ordinal);
 
     private static Error Refusal(CommandRow row) =>
-        SindriErrors.AuthRefused.With(row.NeedsTerminal
-            ? $"{row.Action.Value} is a human decision. Ask the human to run it in a terminal: {row.Cli.Text}"
-            : $"{row.Action.Value} is not available to this caller: {row.Cli.Text}");
+        SindriErrors.AuthRefused.With($"{row.Action.Value} is not available to this caller: {row.Cli.Text}");
 }

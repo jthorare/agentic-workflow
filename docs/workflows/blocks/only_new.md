@@ -5,7 +5,7 @@ Passes on the items of a list that this workflow has not passed on before.
 | Config | Type | Meaning |
 |---|---|---|
 | `items` | reference to a list | The list, such as `{{search.results}}`. Anything else fails the node. |
-| `key` | text, optional | The field of each item that names it (`id`, or `user.login` for a nested one). Without it the item itself is the key: text or a number as it is, an object as its compact JSON. |
+| `key` | text, optional | The field of each item that names it (`id`, or `user.login` for a nested one). Without it the item itself is the key: text or a number as it is, an object as its compact JSON with keys sorted (so `{"a":1,"b":2}` and `{"b":2,"a":1}` are one key; keys stored before this change were written in source order, so such an item may pass once more: a repeat, never a loss). |
 
 | Output | Type | Meaning |
 |---|---|---|

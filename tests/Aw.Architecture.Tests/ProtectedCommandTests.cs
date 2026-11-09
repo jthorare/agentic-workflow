@@ -8,8 +8,8 @@ namespace Aw.Architecture.Tests;
 
 /// <summary>
 /// The protected commands (engine spec §4.2, §6.2 W22; API spec §4.1), after owner decision q93: protected rows are no longer
-/// terminal-bound and redeem no challenge, so the rules that said so are gone. What still holds: the app's review verbs are desk
-/// verbs, the banned-route set is the protected-only routes, and an MCP type never references the app challenge request.
+/// terminal-bound and redeem no challenge, so the rules that said so are gone, and PR 2 of agent-first removed the class itself. What still holds: the app's review verbs are desk
+/// verbs, and an MCP type never references the app challenge request.
 /// Read from the Sindri host's catalog, the one table the command chain and the API both read.
 /// </summary>
 [Trait("Lane", "integration")]
@@ -41,25 +41,9 @@ public sealed class ProtectedCommandTests
         Assert.True(found.Count == 0, string.Join(Environment.NewLine, found) + ". Fix: the MCP endpoint stamps a session, and a session never confirms (setup-once spec §4)");
     }
 
-    /// <summary>
-    /// The routes only protected rows serve. One route can carry many verbs, class by verb (a desk accept and a protected merge
-    /// share POST /context/map/review, and a GET reads it), so a shared route is not banned from the app: what the app may send on
-    /// it is pinned by Every_verb_the_app_can_send_on_the_shared_review_route_is_a_non_protected_catalog_row (its closed DeskVerb set;
-    /// the type half sees no protected verb here, the app's review body having no ChallengeAnswer).
-    /// </summary>
-    /// <param name="rows">The catalog's rows.</param>
-    /// <returns>The routes no desk or other row serves.</returns>
-    internal static IReadOnlyList<string> ProtectedOnlyRoutes(IEnumerable<CommandRow> rows) =>
-        [.. rows
-            .Where(r => r.Route is not null)
-            .GroupBy(r => r.Route!, StringComparer.Ordinal)
-            .Where(g => g.All(r => r.Class == ActionClass.Protected))
-            .Select(g => g.Key)
-            .Order(StringComparer.Ordinal)];
-
     // One route, class by verb (since owner q93, 2026-10-23, every review verb is desk): the app may only hold verbs that are desk rows.
     // Every verb the app can put in a review request (the members of its DeskVerb enum, by wire name) must be a catalog row on
-    // that route whose class is not Protected.
+    // that route whose class is desk.
     [Fact]
     public void Every_verb_the_app_can_send_on_the_shared_review_route_is_a_non_protected_catalog_row()
     {
@@ -76,17 +60,6 @@ public sealed class ProtectedCommandTests
         // The link: the request the app posts carries its verb as DeskVerb, and no string verb beside it.
         Assert.Equal(desk, request.GetProperty("Verb")!.PropertyType);
         Assert.DoesNotContain(request.GetProperties(), p => p.PropertyType == typeof(string) && p.Name.Contains("Verb", StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public void The_banned_routes_are_the_protected_only_ones_and_the_shared_review_route_is_not_banned()
-    {
-        var all = HostIntrospection.Catalog().Rows.ToList();
-        var banned = ProtectedOnlyRoutes(all);
-
-        Assert.NotEmpty(banned);
-        Assert.DoesNotContain("/sindri/context/map/review", banned, StringComparer.Ordinal);
-        Assert.All(banned, route => Assert.All(all.Where(r => string.Equals(r.Route, route, StringComparison.Ordinal)), r => Assert.Equal(ActionClass.Protected, r.Class)));
     }
 
     /// <summary>The Avalonia app (SindriUi, spec §4a 'UI') and any MCP server: clients that never sit at a terminal.</summary>

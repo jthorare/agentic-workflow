@@ -6,15 +6,18 @@ public static class InboxState
     /// <summary>The state name of an open message.</summary>
     public const string Open = "open";
 
+    /// <summary>The state name of a notice: it asks nothing, so it owes no reply.</summary>
+    public const string Settled = "settled";
+
     /// <summary>Reads a message's state.</summary>
     /// <param name="message">The message.</param>
     /// <param name="owed">Whether a reply obligation is open for it.</param>
     /// <param name="now">The current time, for a deferral still running.</param>
-    /// <returns>open, answered, dismissed or deferred.</returns>
+    /// <returns>open, settled (a notice), answered, dismissed or deferred.</returns>
     public static string Of(InboxMessage message, bool owed, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(message);
-        return message.Resolution?.Kind == MessageResolutionKind.Dismissed ? "dismissed" : IsDeferred(message, now) ? "deferred" : owed ? Open : "answered";
+        return message.Resolution?.Kind == MessageResolutionKind.Dismissed ? "dismissed" : IsDeferred(message, now) ? "deferred" : owed ? Open : NoticeRule.IsNotice(message.Body) ? Settled : "answered";
     }
 
     /// <summary>Whether the message's deferral is still running.</summary>

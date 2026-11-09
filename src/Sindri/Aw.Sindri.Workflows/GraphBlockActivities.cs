@@ -39,13 +39,13 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
 
         // why: a node reads index 0 rows and its own item's rows only, so a loop of N items reads O(N) rows in all, not O(N squared)
         var nodeRuns = GraphFailures.Value(await runs.NodeRunsForItem(run, itemIndex, cancel).ConfigureAwait(false));
-        var (loop, loopFailure) = itemIndex > 0 ? Loop(new Scope(row, spec, nodeRuns, loop: null), spec, node, itemIndex) : (null, null);
+        var (loop, loopFailure) = itemIndex > 0 ? Loop(new GraphNodeScope(row, spec, nodeRuns, loop: null), spec, node, itemIndex) : (null, null);
         if (loopFailure is not null)
         {
             return loopFailure;
         }
 
-        var scope = new Scope(row, spec, nodeRuns, loop);
+        var scope = new GraphNodeScope(row, spec, nodeRuns, loop);
         var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
         if (Cut(scope, config) is { } cutConfig)
         {
@@ -80,7 +80,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
         var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
         var nodeRuns = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
-        var outer = new Scope(row, spec, nodeRuns, loop: null);
+        var outer = new GraphNodeScope(row, spec, nodeRuns, loop: null);
         foreach (var graphNode in spec.Nodes)
         {
             if (blocks.Find(graphNode.Type) is not { } block)
@@ -102,7 +102,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     }
 
     // why: a loop that can't be read again (its list was cut) leaves that item's keys unseen: they come back on the next run (a repeat, never a loss)
-    private static Scope? ItemScope(Scope outer, WorkflowRun row, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns, NodeRun stored)
+    private static GraphNodeScope? ItemScope(GraphNodeScope outer, WorkflowRun row, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns, NodeRun stored)
     {
         if (stored.ItemIndex == 0)
         {
@@ -110,10 +110,10 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         }
 
         var (loop, failure) = Loop(outer, spec, stored.NodeId, stored.ItemIndex);
-        return failure is null && loop is not null ? new Scope(row, spec, nodeRuns, loop) : null;
+        return failure is null && loop is not null ? new GraphNodeScope(row, spec, nodeRuns, loop) : null;
     }
 
-    private static async Task<string?> CommitNode(GraphNode graphNode, NodeRun stored, IGraphBlock block, Scope scope, CancellationToken cancel)
+    private static async Task<string?> CommitNode(GraphNode graphNode, NodeRun stored, IGraphBlock block, GraphNodeScope scope, CancellationToken cancel)
     {
         // why: a cut output is not what the block gave, so committing it would remember the wrong keys; the items stay unseen and come back on the next run (a repeat, never a loss)
         if (stored.Output is null || stored.Truncated)
@@ -134,7 +134,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     }
 
     // why: inside a 'for_each' a reference reads the item and the loop's nodes of the same item; the list is read the way the 'for_each' read it, from outputs that never change
-    private static (LoopContext? Loop, GraphBlockOutcome? Failure) Loop(Scope outer, GraphSpec spec, NodeId node, int itemIndex)
+    private static (GraphLoopContext? Loop, GraphBlockOutcome? Failure) Loop(GraphNodeScope outer, GraphSpec spec, NodeId node, int itemIndex)
     {
         var shape = LoopBody.Enclosing(spec, node) ?? throw new ApplicationFailureException($"node '{node.Value}' is not inside a for_each", nonRetryable: true);
         var config = GraphConfig.Interpolate(shape.ForEach.Config, outer.Lookup);
@@ -144,10 +144,10 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         }
 
         var item = config["items"] is JsonArray items && itemIndex <= items.Count ? items[itemIndex - 1]?.DeepClone() : null;
-        return (new LoopContext(shape, itemIndex, item), null);
+        return (new GraphLoopContext(shape, itemIndex, item), null);
     }
 
-    private static GraphBlockOutcome? Cut(Scope scope, JsonObject config) => scope.Cut is { } cut
+    private static GraphBlockOutcome? Cut(GraphNodeScope scope, JsonObject config) => scope.Cut is { } cut
         ? Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field"))
         : null;
 
@@ -175,57 +175,5 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     {
         var cut = NodeRunLimits.Cap(text, out var truncated);
         return truncated ? cut + "\u2026" : text;
-    }
-
-    /// <summary>The loop a node execution runs in: its shape, the item's position counted from 1 and the item.</summary>
-    private sealed record LoopContext(LoopShape Shape, int ItemIndex, JsonNode? Item);
-
-    /// <summary>What a reference can read in one run: the trigger, the workflow's own facts, the item inside a loop and the outputs of the nodes that succeeded.</summary>
-    private sealed class Scope(WorkflowRun run, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns, LoopContext? loop)
-    {
-        private readonly JsonObject? _trigger = JsonNode.Parse(run.Trigger) as JsonObject;
-
-        /// <summary>The node whose cut output a reference read, or null.</summary>
-        public string? Cut { get; private set; }
-
-        public JsonNode? Lookup(string reference)
-        {
-            var parts = reference.Split('.');
-            var current = Root(parts[0]);
-            foreach (var part in parts.Skip(1))
-            {
-                current = current is JsonObject o && o.TryGetPropertyValue(part, out var next) ? next : null;
-            }
-
-            return current?.DeepClone();
-        }
-
-        private JsonNode? Root(string name) => name switch
-        {
-            "trigger" => _trigger,
-            "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision, ["id"] = run.WorkflowId.Value },
-            "item" => loop?.Item,
-            "itemIndex" => loop is null ? null : JsonValue.Create(loop.ItemIndex),
-            _ => Output(name),
-        };
-
-        private JsonNode? Output(string node)
-        {
-            // why: a node of the loop's body has one row per item and is read at this item's; every other node has its one row at index 0
-            var index = loop is not null && loop.Shape.Body.Any(b => string.Equals(b.Id.Value, node, StringComparison.Ordinal)) ? loop.ItemIndex : 0;
-            var found = nodeRuns.FirstOrDefault(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == index && n.Status == NodeRunStatus.Succeeded);
-            if (found is null)
-            {
-                return null;
-            }
-
-            if (found.Truncated)
-            {
-                Cut ??= node;
-                return null;
-            }
-
-            return found.Output is null ? null : JsonNode.Parse(found.Output);
-        }
     }
 }

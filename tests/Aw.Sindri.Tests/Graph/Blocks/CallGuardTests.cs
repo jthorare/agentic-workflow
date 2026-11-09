@@ -41,6 +41,20 @@ public sealed class CallGuardTests
     }
 
     [Fact]
+    public void A_call_chain_that_loops_back_to_an_ancestor_is_refused_before_the_depth_cap()
+    {
+        // a -> b -> c, and c tries to start a: depth 2 of 10, so only the ancestor check can stop it.
+        var c = new CallOrigin("c@1:3", 2, "b@1:2") { Ancestors = ["a", "b"] };
+
+        var loop = CallDepth.Next(c, "a", max: 10);
+        var fresh = CallDepth.Next(c, "d", max: 10);
+
+        Assert.Equal(SindriErrors.GraphSelfStart.Code, loop.Error.Code);
+        Assert.True(fresh.IsSuccess);
+        Assert.Equal(3, fresh.Value);
+    }
+
+    [Fact]
     public void The_launch_lineage_seam_refuses_a_workflow_the_calling_session_descends_from()
     {
         var refused = CallDepth.Next(new CallOrigin("b@1:1", 0, ParentRun: null), "a", CallDepth.DefaultMax, launchLineage: ["a"]);

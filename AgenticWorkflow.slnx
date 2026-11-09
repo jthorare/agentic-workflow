@@ -6,6 +6,9 @@
     <Project Path="src/Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />
     <Project Path="src/Redaction/Aw.Redaction/Aw.Redaction.csproj" />
   </Folder>
+  <Folder Name="/src/Toolkit/">
+    <Project Path="src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj" />
+  </Folder>
   <Folder Name="/src/Embeddings/">
     <Project Path="src/Embeddings/Aw.Embeddings/Aw.Embeddings.csproj" />
   </Folder>
@@ -119,5 +122,7 @@
     <Project Path="tests/Aw.Connectors.Testing/Aw.Connectors.Testing.csproj" />
     <Project Path="tests/Aw.Embeddings.Tests/Aw.Embeddings.Tests.csproj" />
     <Project Path="tests/Aw.Embeddings.Testing/Aw.Embeddings.Testing.csproj" />
+    <Project Path="tests/Aw.Sindri.Toolkit.Testing/Aw.Sindri.Toolkit.Testing.csproj" />
+    <Project Path="tests/Aw.Sindri.Toolkit.Tests/Aw.Sindri.Toolkit.Tests.csproj" />
   </Folder>
 </Solution>
