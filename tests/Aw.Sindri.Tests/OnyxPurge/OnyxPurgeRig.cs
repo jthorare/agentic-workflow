@@ -44,7 +44,7 @@ internal sealed class OnyxPurgeRig : IDisposable
     {
         Docker.Calls = Calls;
         Keychain.Calls = Calls;
-        var command = new OnyxPurgeCommand(Home, Docker, Keychain, new DiskLeftoverFiles(), new Output(_out, _error, SliceHarness.Json), new StringReader(answer is null ? "" : answer + "\n"), _error, terminal);
+        var command = new OnyxPurgeCommand(Home, Docker, Keychain, new DiskLeftoverFiles(), new Output(_out, _error, SliceHarness.Json), new PurgePrompt(new StringReader(answer is null ? "" : answer + "\n"), _error, terminal));
         return command.Run(TestContext.Current.CancellationToken);
     }
 

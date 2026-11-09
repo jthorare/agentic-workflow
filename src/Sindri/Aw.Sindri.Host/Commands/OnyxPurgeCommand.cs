@@ -17,10 +17,8 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="keychain">Deletes one keychain entry.</param>
 /// <param name="files">Reads state.json, finds and deletes onyx/.</param>
 /// <param name="output">Where the list and answers go.</param>
-/// <param name="input">Where the human's answer is read.</param>
-/// <param name="question">Where the question is asked (standard error).</param>
-/// <param name="terminal">Whether standard input and output are a terminal; the typed yes is asked only there, so a piped "yes" deletes nothing.</param>
-internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeKeychain keychain, ILeftoverFiles files, Output output, TextReader input, TextWriter question, bool terminal)
+/// <param name="prompt">Where the typed yes is asked and read, and whether that is a terminal.</param>
+internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeKeychain keychain, ILeftoverFiles files, Output output, PurgePrompt prompt)
 {
     internal async Task<int> Run(CancellationToken ct)
     {
@@ -35,14 +33,14 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
             return await output.Text("Nothing left from Onyx on this box.\n", 0).ConfigureAwait(false);
         }
 
-        if (!terminal)
+        if (!prompt.Terminal)
         {
             return await output.Error(SindriErrors.InvalidInput.With("onyx down --purge asks for a typed yes, which needs a terminal (fix: run it in one)")).ConfigureAwait(false);
         }
 
         _ = await output.Text(Describe(plan.Value), 0).ConfigureAwait(false);
-        await question.WriteAsync("Delete all of it? This cannot be undone. [y/N] ").ConfigureAwait(false);
-        var answer = await input.ReadLineAsync(ct).ConfigureAwait(false);
+        await prompt.Question.WriteAsync("Delete all of it? This cannot be undone. [y/N] ").ConfigureAwait(false);
+        var answer = await prompt.Input.ReadLineAsync(ct).ConfigureAwait(false);
         if (answer is null || (!answer.Trim().Equals("y", StringComparison.OrdinalIgnoreCase) && !answer.Trim().Equals("yes", StringComparison.OrdinalIgnoreCase)))
         {
             return await output.Text("Nothing deleted.\n", 0).ConfigureAwait(false);
@@ -52,8 +50,8 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
         return done.IsError ? await Failed(done.Error).ConfigureAwait(false) : await output.Text("Onyx's leftovers are gone.\n", 0).ConfigureAwait(false);
     }
 
-    internal static OnyxPurgeCommand Create(IServiceProvider services, Output output, TextReader input, TextWriter question, bool terminal)
-        => new(services.GetRequiredService<ISindriHome>().Path, services.GetRequiredService<IPurgeDocker>(), services.GetRequiredService<IPurgeKeychain>(), services.GetRequiredService<ILeftoverFiles>(), output, input, question, terminal);
+    internal static OnyxPurgeCommand Create(IServiceProvider services, Output output, PurgePrompt prompt)
+        => new(services.GetRequiredService<ISindriHome>().Path, services.GetRequiredService<IPurgeDocker>(), services.GetRequiredService<IPurgeKeychain>(), services.GetRequiredService<ILeftoverFiles>(), output, prompt);
 
     private static string Describe(PurgePlan plan)
     {
