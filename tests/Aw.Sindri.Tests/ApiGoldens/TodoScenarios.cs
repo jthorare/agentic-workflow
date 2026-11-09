@@ -74,6 +74,12 @@ internal static class TodoScenarios
             return await Show(host, human, ct);
         }
 
+        return await List(host, human, ct);
+    }
+
+    // the list golden: six todos across states (one done, one changed, one removed, one from an agent session, one fenced), then GET ?state=all
+    private static async Task<string> List(GoldenHost host, (string Name, string Value)[] human, CancellationToken ct)
+    {
         var cert = await Add(host, human, """{"text":"renew the cert","due":"2025-12-30","clientId":"c-1"}""", string.Empty, ct);
         var offsite = await Add(host, human, """{"text":"reply to Sam","due":"2026-01-02","clientId":"c-2"}""", string.Empty, ct);
         _ = await Add(host, human, """{"text":"rotate the staging key","due":"2025-12-31","links":["acme/api#12","ENG-12"],"clientId":"c-3"}""", string.Empty, ct);
