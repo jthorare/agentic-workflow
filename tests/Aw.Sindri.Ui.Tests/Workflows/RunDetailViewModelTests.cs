@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Testing;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
@@ -138,5 +139,23 @@ public sealed class RunDetailViewModelTests
         Assert.True(page.Run.IsFailed);
         Assert.StartsWith("Couldn't read the run just now.", page.Run.FailedText, StringComparison.Ordinal);
         Assert.Contains("no run 'morning-check@1:9'", page.Run.FailedText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Opening_a_run_after_a_failed_one_does_not_show_the_old_failure_while_reading()
+    {
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+        await page.OpenRun("morning-check@1:9", Token);
+        Assert.True(page.Run.IsFailed);
+        var gate = new TaskCompletionSource();
+        _f.Server.WorkflowRunGates[RunId] = gate;
+
+        var opening = page.OpenRun(RunId, Token);
+
+        Assert.Equal((false, string.Empty, true), (page.Run.IsFailed, page.Run.FailedText, page.Run.IsReading));
+        gate.SetResult();
+        await opening;
+        Assert.Equal((false, "✓ Succeeded"), (page.Run.IsFailed, page.Run.ChipText));
     }
 }

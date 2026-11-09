@@ -166,4 +166,39 @@ public sealed class WorkflowsPageViewModelTests
 
         Assert.True(page.IsList);
     }
+
+    [Fact]
+    public async Task Opening_a_workflow_after_a_failed_one_does_not_show_the_old_failure_while_reading()
+    {
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow("nope", Token);
+        Assert.True(page.Runs.IsFailed);
+        var gate = new TaskCompletionSource();
+        _f.Server.WorkflowGates[Slug] = gate;
+
+        var opening = page.OpenWorkflow(Slug, Token);
+
+        Assert.Equal((false, string.Empty, true), (page.Runs.IsFailed, page.Runs.FailedText, page.Runs.IsReading));
+        gate.SetResult();
+        await opening;
+        Assert.Equal((false, 3), (page.Runs.IsFailed, page.Runs.Rows.Count));
+    }
+
+    [Fact]
+    public async Task Opening_a_workflow_after_one_that_is_off_does_not_show_the_off_line_while_reading()
+    {
+        _f.Server.WorkflowRunsAnswers["weekly-report"] = RouteAnswer.Problem("workflows-slug-runs", "not-active");
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow("weekly-report", Token);
+        Assert.True(page.Runs.IsEmpty);
+        var gate = new TaskCompletionSource();
+        _f.Server.WorkflowGates[Slug] = gate;
+
+        var opening = page.OpenWorkflow(Slug, Token);
+
+        Assert.Equal((false, string.Empty, true), (page.Runs.IsEmpty, page.Runs.EmptyText, page.Runs.IsReading));
+        gate.SetResult();
+        await opening;
+        Assert.Equal((false, 3), (page.Runs.IsEmpty, page.Runs.Rows.Count));
+    }
 }
