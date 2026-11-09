@@ -190,7 +190,7 @@ public sealed class LaneAnchorTests
     [Fact]
     public void Every_deep_link_kind_is_claimed_by_a_lane_or_named_as_later()
     {
-        string[] owned = ["Item", "HomeNeedsYou", "Setup", "ContextItem", "Projects", "Project", "ProjectAdd", "PageSheet", "PinSheet", "AddSeveralPages", "Reviews", "LibrarySheet", "Review", "FixTaskSheet", "Issue"];   // the Reviews tab owns its page link; the Work page's Linear view owns Issue
+        string[] owned = ["Item", "HomeNeedsYou", "Setup", "ContextItem", "Projects", "Project", "ProjectAdd", "PageSheet", "PinSheet", "AddSeveralPages", "Reviews", "LibrarySheet", "Review", "FixTaskSheet", "Issue", "Connection", "Memory"];   // the Reviews tab owns its page link; the Work page's Linear view owns Issue; the Connections page owns Connection and the Memory page Memory (PR 18a)
         string[] later = ["System", "Service", "Job"];
         var claimed = Kinds(SheetPath, "LANE ANCHOR U3'").Concat(Kinds(SheetPath, "LANE ANCHOR U9")).Concat(Kinds(SheetPath, "LANE ANCHOR U11a")).Concat(owned).Concat(later);
 
