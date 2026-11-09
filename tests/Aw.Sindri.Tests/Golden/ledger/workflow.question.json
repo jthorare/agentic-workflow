@@ -1,0 +1,12 @@
+{
+  "run": "nightly@3:12",
+  "node": "ask",
+  "question": "Ship the release?",
+  "choices": [
+    "yes",
+    "no"
+  ],
+  "default": "no",
+  "timeoutAt": "2026-03-07T14:00:00+00:00",
+  "by": "service:workflow"
+}
