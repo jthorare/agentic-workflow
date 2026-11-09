@@ -1,5 +1,8 @@
+using System.Globalization;
+using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.Polling;
+using Aw.Sindri.Core.Graph.Expressions;
 
 namespace Aw.Sindri.Features.PollConnections;
 
@@ -8,16 +11,60 @@ internal static class TriggerMatch
 {
     internal const string Kind = "connection_event";
 
-    /// <summary>Applies a trigger's filter to an event.</summary>
+    /// <summary>Applies a trigger's filter to an event. The condition reads the event's fields as 'trigger.title'; a field the event lacks reads as null. No filter keeps every event; a filter that can't be read keeps none (the validator refuses it when the workflow is saved).</summary>
     /// <param name="filter">The filter text, or null.</param>
     /// <param name="connection">The connection.</param>
     /// <param name="polled">The event.</param>
     /// <returns>True when the trigger takes the event.</returns>
-    internal static bool Wants(string? filter, ConnectionName connection, PolledEvent polled) => throw new NotSupportedException("unbuilt: " + filter + connection + polled);
+    internal static bool Wants(string? filter, ConnectionName connection, PolledEvent polled)
+    {
+        ArgumentNullException.ThrowIfNull(polled);
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            return true;
+        }
 
-    /// <summary>The trigger JSON of a run.</summary>
+        return ConditionExpression.TryParse(filter, out var expression, out _) && expression is not null
+            && expression.Evaluate(name => Resolve(name, connection, polled));
+    }
+
+    /// <summary>The trigger JSON of a run: kind, connection, event, delivery id, time and the event's fields (provider text, untrusted).</summary>
     /// <param name="connection">The connection.</param>
     /// <param name="polled">The event.</param>
     /// <returns>The JSON text.</returns>
-    internal static string Trigger(ConnectionName connection, PolledEvent polled) => throw new NotSupportedException("unbuilt: " + connection + polled);
+    internal static string Trigger(ConnectionName connection, PolledEvent polled)
+    {
+        ArgumentNullException.ThrowIfNull(polled);
+        var json = new JsonObject();
+        foreach (var (name, value) in polled.Fields)
+        {
+            json[name] = value;
+        }
+
+        // why: written last so a provider field named 'event' or 'deliveryId' can't replace the trigger's own
+        json["kind"] = Kind;
+        json["connection"] = connection.ToString();
+        json["event"] = polled.Kind.Key;
+        json["deliveryId"] = polled.DeliveryKey;
+        json["occurredAt"] = polled.OccurredAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
+        return json.ToJsonString();
+    }
+
+    private static JsonNode? Resolve(string name, ConnectionName connection, PolledEvent polled)
+    {
+        const string prefix = "trigger.";
+        if (!name.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        return name[prefix.Length..] switch
+        {
+            "connection" => connection.ToString(),
+            "event" => polled.Kind.Key,
+            "deliveryId" => polled.DeliveryKey,
+            "occurredAt" => polled.OccurredAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture),
+            var field => polled.Fields.TryGetValue(field, out var value) ? value : null,
+        };
+    }
 }
