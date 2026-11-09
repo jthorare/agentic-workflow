@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Tests.ContextCalls;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +28,7 @@ public sealed class SindriHandoffToolTests(SharedMcpWorld shared) : IClassFixtur
         Assert.Equal(item, second.StructuredContent!.Value.GetProperty("itemId").GetString());
         Assert.StartsWith($"handed off as {item} (offer mcp-offer-1)", string.Concat(first.Content.OfType<TextContentBlock>().Select(b => b.Text)), StringComparison.Ordinal);
         var scan = await world.Host.App.Services.GetRequiredService<ILedgerReader>()
-            .Scan(0, 500, new LedgerFilter(TypeFilter.Parse(EventTypes.ItemHandoff).Value, Item: item), ct);
+            .Scan(0, 500, new LedgerFilter(TypeFilter.Parse(EventTypes.ItemHandoff).Value, Item: ItemId.From(item!)), ct);
         var recorded = Assert.Single(scan.Value.Events);
         Assert.Equal("handoff:mcp", recorded.Envelope.Actor);
     }

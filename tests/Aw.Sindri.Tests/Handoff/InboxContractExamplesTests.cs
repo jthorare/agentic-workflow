@@ -55,6 +55,8 @@ public sealed class InboxContractExamplesTests
                 }
 
                 break;
+            default:
+                break;
         }
     }
 
