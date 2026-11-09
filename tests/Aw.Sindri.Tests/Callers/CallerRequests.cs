@@ -20,7 +20,28 @@ internal static class CallerRequests
     public static HttpRequestMessage Query(string path, string? json, params (string Name, string Value)[] headers) =>
         With(new HttpRequestMessage(new HttpMethod("QUERY"), path) { Content = json is null ? null : new StringContent(json, System.Text.Encoding.UTF8, "application/json") }, headers);
 
+    private static readonly AsyncLocal<bool> _humanAsSession = new();
+
+    /// <summary>
+    /// While set (on this async flow), <see cref="Human"/> answers the headers of an owner-started agent session instead of the human's, so a suite written
+    /// for the human re-runs as a session (PR 2: every verb is open to sessions). Set by <see cref="AsSession"/>.
+    /// </summary>
+    public static bool HumanAsSession => _humanAsSession.Value;
+
+    /// <summary>Makes <see cref="Human"/> answer a session's headers until the returned scope is disposed.</summary>
+    public static IDisposable AsSession()
+    {
+        _humanAsSession.Value = true;
+        return new Scope();
+    }
+
+    private sealed class Scope : IDisposable
+    {
+        public void Dispose() => _humanAsSession.Value = false;
+    }
+
     public static (string Name, string Value)[] Human(string? token, string client = "cli") =>
+        _humanAsSession.Value ? [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, client)] :
         token is null
             ? [(SindriHeaders.Caller, "human"), (SindriHeaders.Terminal, "1"), (SindriHeaders.Client, client)]
             : [(SindriHeaders.Caller, "human"), (SindriHeaders.Terminal, "1"), (SindriHeaders.Client, client), (SindriHeaders.Token, token)];
