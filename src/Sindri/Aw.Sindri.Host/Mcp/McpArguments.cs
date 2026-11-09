@@ -107,6 +107,7 @@ internal static class McpArguments
     /// <param name="tool">The tool's name.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="name">The argument's name.</param>
+    /// <param name="max">The greatest value.</param>
     /// <param name="min">The least value.</param>
     /// <returns>The number, null when absent, or the refusal.</returns>
     internal static Result<long?> OptionalLong(string tool, IDictionary<string, JsonElement>? arguments, string name, long min = 0, long max = long.MaxValue)
