@@ -82,7 +82,7 @@ public sealed class LedgerFileTests : IDisposable
 
         Assert.True((await database.Writable(TestContext.Current.CancellationToken)).IsSuccess);
 
-        Assert.Equal(["connection", "events", "lease", "memory", "memory_fact", "outbox_commands", "poll_cursor", "workflow", "workflow_node_run", "workflow_revision", "workflow_run", "workflow_schedule_tick", "workflow_seen"], Tables(ledger));
+        Assert.Equal(["connection", "events", "lease", "memory", "memory_fact", "outbox_commands", "poll_cursor", "resource", "workflow", "workflow_node_run", "workflow_revision", "workflow_run", "workflow_schedule_tick", "workflow_seen"], Tables(ledger));
         Assert.Equal("evt-1", Scalar(ledger, "SELECT id FROM events"));
         Assert.True(File.Exists($"{ledger}.bak-v{(retiring.Version - 1).ToString(CultureInfo.InvariantCulture)}"));
     }
