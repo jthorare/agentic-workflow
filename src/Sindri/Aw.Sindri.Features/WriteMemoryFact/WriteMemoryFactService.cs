@@ -53,12 +53,13 @@ internal sealed class WriteMemoryFactService(IMemoryStore store, IMemoryEmbedder
         var embedded = await _embedder.Embed([text], cancellationToken).ConfigureAwait(false);
         var vector = embedded.Vectors is { Count: 1 } vectors ? vectors[0] : ReadOnlyMemory<float>.Empty;
         var key = "mf_" + _ids.NewId().ToString("N", System.Globalization.CultureInfo.InvariantCulture);
-        var fact = new MemoryFact(key, name.Value, text, tags, request.Provenance ?? MemoryProvenance.None, request.ExpiresAt, now, now, vector, vector.IsEmpty ? null : embedded.Model);
+        var fact = new MemoryFact(key, name.Value, text, tags, request.Provenance ?? MemoryProvenance.None, request.ExpiresAt, now, now, vector, vector.IsEmpty ? null : embedded.Model, Writer);   // why: the writer is the caller, never the request
         // the dedupe decision and the write are one store transaction, so two near-same writes at once add one fact
-        _ = _callers;   // red stub (#2460): WrittenBy is not set yet
         var written = await _store.AddOrRefresh(fact, cancellationToken).ConfigureAwait(false);
         return written.IsError ? written.Error : new WriteMemoryFactResponse(written.Value.Key, written.Value.Refreshed ? "refreshed" : "added");
     }
+
+    private string Writer => _callers.Current?.Actor ?? "service:host";
 
     // Tags are lowercase, trimmed, sorted and without repeats, so the same set is the same identity.
     private string[] Tags(IReadOnlyList<string>? tags) =>

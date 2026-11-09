@@ -20,7 +20,8 @@ internal sealed class MemoryFactMapper : IRowMapper<MemoryFact>
         SqliteRead.GetTimestamp(reader, 10),
         SqliteRead.GetTimestamp(reader, 11),
         reader.IsDBNull(3) ? ReadOnlyMemory<float>.Empty : Decode(SqliteRead.GetBlob(reader, 3), reader.IsDBNull(13) ? 0 : reader.GetInt32(13)),
-        Text(reader, 12));
+        Text(reader, 12),
+        Text(reader, 14));
 
     /// <summary>The stored form of a vector: float32, little-endian, no header (the format of Aw.Embeddings.VectorCodec, which Sindri reaches from the Host only).</summary>
     internal static byte[] Encode(ReadOnlySpan<float> vector)

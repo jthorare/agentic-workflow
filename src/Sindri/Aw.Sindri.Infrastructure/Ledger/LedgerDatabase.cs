@@ -132,6 +132,9 @@ internal sealed class LedgerDatabase : IDisposable
     /// <summary>The first migration with 'poll_cursor' (connections PR 11); reads of an older file find no cursor.</summary>
     internal const int PollCursorsVersion = 13;
 
+    /// <summary>The first migration with 'memory_fact.written_by' (#2460); reads of an older file find no writer.</summary>
+    internal const int MemoryFactWrittenByVersion = 14;
+
     private static IReadOnlyList<Migration> LoadMigrations()
     {
         var own = EmbeddedMigrations.Load(typeof(LedgerDatabase).Assembly, "Aw.Sindri.Infrastructure.Ledger.Migrations.").Value;

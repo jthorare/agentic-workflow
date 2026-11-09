@@ -43,8 +43,8 @@ internal sealed class SignInConnectionService(IConnectionStore store, IConnectio
             return ConnectionFailures.Safe(found.Error);
         }
 
-        _ = _events;   // red stub (#2460): the event is not appended yet
         var row = found.Value;
+        await _events.SignInRequested(name.Value, cancellationToken).ConfigureAwait(false);   // why: the row keeps its creator, so this event is the record of who signed in
         var actor = _callers.Current?.Actor ?? "unknown";
         if (row.Kind == ConnectionKind.OAuth)
         {

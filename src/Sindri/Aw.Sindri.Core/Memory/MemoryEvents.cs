@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
@@ -20,9 +21,15 @@ public sealed class MemoryEvents(HeldLease held, ILedgerStore ledger, EventFacto
     /// <param name="count">How many were deleted.</param>
     /// <param name="cancellationToken">Cancels the append.</param>
     /// <returns>A task that ends when the event is recorded or skipped.</returns>
-    public ValueTask Forgotten(MemoryName memory, string selector, int count, CancellationToken cancellationToken)
+    public async ValueTask Forgotten(MemoryName memory, string selector, int count, CancellationToken cancellationToken)
     {
-        _ = (held, ledger, events, clock, memory, selector, count, cancellationToken);   // red stub (#2460): the event is not appended yet
-        return ValueTask.CompletedTask;
+        if (held.Current is not { } grant)
+        {
+            return;
+        }
+
+        var at = clock.GetUtcNow();
+        var entry = events.Entry(EventTypes.MemoryFactsForgotten, new MemoryFactsForgotten(memory.Value, selector, count, at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.MemoryFactsForgotten}:{memory.Value}:{selector}:{at.UtcTicks}"));
+        _ = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
     }
 }

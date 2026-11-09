@@ -33,8 +33,17 @@ internal sealed class ForgetMemoryFactService(IMemoryStore store, TimeProvider t
         var selector = request.Expired ? FactSelector.Expired(_time.GetUtcNow())
             : !string.IsNullOrWhiteSpace(request.Fact) ? FactSelector.ByKey(request.Fact)
             : FactSelector.ByTag(request.Tag!.Trim().ToLowerInvariant());   // why: exactly one selector was chosen and it is neither the fact nor expired, so the tag is set
-        _ = _events;   // red stub (#2460): the event is not appended yet
         var deleted = await _store.Delete(name.Value, selector, cancellationToken).ConfigureAwait(false);
-        return deleted.IsError ? deleted.Error : new ForgetMemoryFactResponse(deleted.Value);
+        if (deleted.IsError)
+        {
+            return deleted.Error;
+        }
+
+        if (deleted.Value > 0)
+        {
+            await _events.Forgotten(name.Value, request.Expired ? "expired" : !string.IsNullOrWhiteSpace(request.Fact) ? "fact" : "tag", deleted.Value, cancellationToken).ConfigureAwait(false);
+        }
+
+        return new ForgetMemoryFactResponse(deleted.Value);
     }
 }
