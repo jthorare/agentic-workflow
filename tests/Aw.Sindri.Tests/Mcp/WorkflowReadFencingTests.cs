@@ -31,7 +31,7 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         var ct = TestContext.Current.CancellationToken;
-        _host = await GoldenHost.Start(temporary: true, ct);
+        _host = await GoldenHost.Start(temporary: true, ct, SeededMcp.Profile);
         var workflows = Host.App.Services.GetRequiredService<IWorkflowStore>();
         _ = (await workflows.Create(_id, _slug, HostileSpec(), "owner", ct)).Value;
         _ = (await workflows.Activate(_id, 1, ct)).Value;
@@ -136,6 +136,23 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
         Assert.StartsWith(RunFence, output, StringComparison.Ordinal);
         Assert.EndsWith("</untrusted>", output, StringComparison.Ordinal);
         Assert.Contains("xxxxxxxx", output, StringComparison.Ordinal);
+    }
+
+    [Fact(Timeout = 60_000), Trait("Lane", "integration")]
+    public async Task A_launched_agent_session_can_read_the_workflows_over_http_and_through_the_tool()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var session = ItemScenarios.Session("alpha");
+
+        var list = await RequestCalls.Read(Host, "/sindri/workflows", session, ct);
+        var run = await RequestCalls.Read(Host, $"/sindri/workflow-runs/{Uri.EscapeDataString(RunId(1))}", session, ct);
+        await using var mcp = await McpSession.Open(Host, "alpha", ct);
+        var viaTool = await mcp.Call("workflow_list", "{}", ct);
+
+        Assert.Contains("morning-check", list, StringComparison.Ordinal);
+        Assert.Contains(RunId(1), run, StringComparison.Ordinal);
+        Assert.NotEqual(true, viaTool.IsError);
+        Assert.Contains(Leaves(viaTool), l => l.Path == "workflows[0].slug" && l.Text == "morning-check");
     }
 
     private static GraphSpec HostileSpec() =>
