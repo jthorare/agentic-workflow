@@ -41,6 +41,21 @@ public sealed class InMemoryLaneMail(InMemoryMessageStore messages) : ILaneMail
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<Unit>> Settle(IReadOnlyList<long> seqs, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(seqs);
+        for (var i = 0; i < _sent.Count; i++)
+        {
+            if (seqs.Contains(_sent[i].Message.Seq))
+            {
+                _sent[i] = (_sent[i].Message with { Delivered = true }, Settled: true);
+            }
+        }
+
+        return Done.Unit();
+    }
+
+    /// <inheritdoc />
     public async ValueTask<Result<MessageId>> Reply(LaneIdentity identity, string text, DateTimeOffset at, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(identity);

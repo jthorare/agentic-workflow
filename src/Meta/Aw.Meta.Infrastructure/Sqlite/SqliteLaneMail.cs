@@ -50,6 +50,26 @@ internal sealed class SqliteLaneMail(MetaDatabase database) : ILaneMail
             cancellationToken);
     }
 
+    public ValueTask<Result<Unit>> Settle(IReadOnlyList<long> seqs, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(seqs);
+        return database.Write(
+            async work =>
+            {
+                foreach (var seq in seqs)
+                {
+                    var changed = await SqliteQueries.Execute(work, LaneMailSql.SettleSeq(seq, at), cancellationToken).ConfigureAwait(false);
+                    if (changed.IsError)
+                    {
+                        return changed.Error;
+                    }
+                }
+
+                return Results.Ok();
+            },
+            cancellationToken);
+    }
+
     public ValueTask<Result<MessageId>> Reply(LaneIdentity identity, string text, DateTimeOffset at, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(identity);

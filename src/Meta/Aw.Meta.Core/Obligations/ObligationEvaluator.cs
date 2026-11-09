@@ -26,7 +26,7 @@ public static class ObligationEvaluator
 
     private static IEnumerable<Obligation> Replies(ObligationFacts facts) =>
         facts.Messages
-            .Where(m => !IsSetAside(m, facts.Now) && !facts.Outbound.Any(o => o.At > m.At && Recipient.Matches(o.To, m.FromName, m.From)))
+            .Where(m => !IsSetAside(m, facts.Now) && !NoticeRule.IsNotice(m.Body) && !facts.Outbound.Any(o => o.At > m.At && Recipient.Matches(o.To, m.FromName, m.From)))
             .OrderBy(m => m.At)
             .Select(Reply);
 
