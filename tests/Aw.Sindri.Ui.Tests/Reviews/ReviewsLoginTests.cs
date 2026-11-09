@@ -73,7 +73,7 @@ public sealed class ReviewsLoginTests
     public async Task A_session_refusal_shows_its_text()
     {
         var page = await Prompt();
-        _f.Server.ReviewLoginAnswer = RouteAnswer.Problem("reviews-login", "session");
+        _f.Server.ReviewLoginAnswer = RouteAnswer.Refused("review.login is the owner's to set; a session can't change it (fix: use Settings -> Reviews)");
 
         await page.SaveLogin(Token);
 

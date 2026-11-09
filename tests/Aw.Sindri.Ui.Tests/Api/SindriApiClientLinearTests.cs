@@ -180,11 +180,14 @@ public sealed class SindriApiClientLinearTests
     [Fact]
     public async Task A_session_is_refused_the_lookups_and_the_since_strip_with_SND_AUTH_002()
     {
-        var lookups = await Client(new Canned(HttpStatusCode.Forbidden, GoldenFiles.Api("linear-lookups", "session-refused"))).LinearLookups(_api, "ENG", Token);
-        var since = await Client(new Canned(HttpStatusCode.Forbidden, GoldenFiles.Api("linear-since", "session-refused"))).LinearSince(_api, after: null, Token);
+        var lookups = await Client(Refused()).LinearLookups(_api, "ENG", Token);
+        var since = await Client(Refused()).LinearSince(_api, after: null, Token);
 
         Assert.Equal(("SND-AUTH-002", "SND-AUTH-002"), (lookups.Error.Code, since.Error.Code));
     }
+
+    // A served SND-AUTH-002 built here: the server no longer sends one to a session, the app still reads it.
+    private static Canned Refused() { var a = RouteAnswer.Refused(); return new(a.Status, a.Body); }
 
     // A golden as served: a ProblemDetails keeps the status it names, anything else is a 200.
     private static Canned Served(string slug, string scenario)
@@ -293,7 +296,7 @@ public sealed class SindriApiClientLinearTests
     public async Task LinearComment_reads_an_unknown_outcome_with_its_client_id_and_hands_a_session_refusal_back()
     {
         var unknown = await Client(Served("linear-comment", "unknown")).LinearComment(_api, "ENG-12", "c-1", "hi", Token);
-        var refused = await Client(Served("linear-comment", "session-refused")).LinearComment(_api, "ENG-12", "c-1", "hi", Token);
+        var refused = await Client(Refused()).LinearComment(_api, "ENG-12", "c-1", "hi", Token);
 
         Assert.Equal(new LinearWriteUnknown("5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01"), unknown.Value);
         Assert.Equal("SND-AUTH-002", refused.Error.Code);
@@ -319,7 +322,7 @@ public sealed class SindriApiClientLinearTests
     {
         var unknown = await Client(Served("linear-create", "unknown")).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token);
         var bad = await Client(Served("linear-create", "bad-value")).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token);
-        var refused = await Client(Served("linear-create", "session-refused")).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token);
+        var refused = await Client(Refused()).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token);
 
         Assert.Equal(new LinearWriteUnknown("5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01"), unknown.Value);
         Assert.Equal(("SND-LINEAR-006", "SND-AUTH-002"), (bad.Error.Code, refused.Error.Code));
