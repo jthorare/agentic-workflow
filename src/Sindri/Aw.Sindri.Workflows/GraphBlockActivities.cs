@@ -80,17 +80,37 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
         var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
         var nodeRuns = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
-        var scope = new Scope(row, spec, nodeRuns, loop: null);
+        var outer = new Scope(row, spec, nodeRuns, loop: null);
         foreach (var graphNode in spec.Nodes)
         {
-            var stored = nodeRuns.FirstOrDefault(n => n.NodeId == graphNode.Id && n.ItemIndex == 0 && n.Status == NodeRunStatus.Succeeded);
-            if (stored is not null && blocks.Find(graphNode.Type) is { } block && await CommitNode(run, graphNode, stored, block, scope, cancel).ConfigureAwait(false) is { } failure)
+            if (blocks.Find(graphNode.Type) is not { } block)
             {
-                return failure;
+                continue;
+            }
+
+            // why: a node inside a for_each body has one row per item (ItemIndex 1..N); each item's row is committed with that item's scope, as Execute read it
+            foreach (var stored in nodeRuns.Where(n => n.NodeId == graphNode.Id && n.Status == NodeRunStatus.Succeeded))
+            {
+                if (ItemScope(outer, row, spec, nodeRuns, stored) is { } scope && await CommitNode(run, graphNode, stored, block, scope, cancel).ConfigureAwait(false) is { } failure)
+                {
+                    return failure;
+                }
             }
         }
 
         return null;
+    }
+
+    // why: a loop that can't be read again (its list was cut) leaves that item's keys unseen: they come back on the next run (a repeat, never a loss)
+    private static Scope? ItemScope(Scope outer, WorkflowRun row, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns, NodeRun stored)
+    {
+        if (stored.ItemIndex == 0)
+        {
+            return outer;
+        }
+
+        var (loop, failure) = Loop(outer, spec, stored.NodeId, stored.ItemIndex);
+        return failure is null && loop is not null ? new Scope(row, spec, nodeRuns, loop) : null;
     }
 
     private static async Task<string?> CommitNode(WorkflowRunId run, GraphNode graphNode, NodeRun stored, IGraphBlock block, Scope scope, CancellationToken cancel)
