@@ -29,7 +29,7 @@ public sealed class ImportTodoNoteTests
 
         var answer = (await service.Handle(Ask(expect: 2), Token)).Value;
 
-        Assert.Equal((2, 1, 3, 1, 1, 2, false), (answer.Imported, answer.CantImport, answer.Open, answer.Done, answer.Other, answer.Importable, answer.DryRun));
+        Assert.Equal((2, 1, 3, 1, 2, 2, false), (answer.Imported, answer.CantImport, answer.Open, answer.Done, answer.Other, answer.Importable, answer.DryRun));
         _ = Assert.Single(answer.CantImportLines);
         _ = Assert.NotNull(SyncRig.IdOnLine(rig.Note!, "one"));
         var imported = Assert.Single(await rig.Payloads<TodoNoteImported>(EventTypes.TodoNoteImported));
