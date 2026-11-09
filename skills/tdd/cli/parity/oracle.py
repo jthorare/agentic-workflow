@@ -3,7 +3,10 @@
 prints golden JSON that the bun tests compare the TypeScript kernel (src/py) against. Nothing here runs in a build.
 
 Usage: python3 -I -B parity/oracle.py <suite> [--seed N] [--count N] [--out FILE]
+                                         [--packet DIR [--src FILE.md] [--copy]] [--dir DIR]
 Suites: ucd round repr_float str re html repr json json_errors utf8 path int truthy token sd stamp list
+        sd_calls (--packet: every call a compile makes to system-design, recorded) sd_fuzz sd_files (--dir) sd_constants
+        sd_finish (--dir)
 
 It imports system-design's build_doc.py / build_prs.py unchanged from the sibling skills/system-design (or
 $SYSTEM_DESIGN_SKILL) and the tdd Python scripts by path; it never writes beside them (no bytecode). The output is
@@ -498,9 +501,407 @@ def suite_stamp(rng, count):
                                                   f"{datetime.datetime.fromtimestamp(t):%Y-%m-%d %H:%M}"] for t in ts]}
 
 
+# ----------------------------------------------------------------------------- the D1 surface (PR 10, src/sd)
+# Five suites feed test/sd: sd_calls replays a real compile (every call build_tdd.py makes to the 18 system-design
+# names, recorded at the boundary), sd_fuzz runs markdown-shaped documents through the text functions, sd_files runs
+# img_size / load_json / Assets over files the bun test wrote, sd_finish runs Assets.finish's copying over folders it
+# wrote, and sd_constants dumps the patterns and tables. Values travel as vtag() trees (tuples as lists);
+# an exception travels as [qualified type name, str(e)] and SystemExit as ["SystemExit", code].
+
+ARGS = {"packet": None, "src": None, "copy": False, "dir": None}
+
+
+def vtag(v):
+    """tag() with tuples (as lists) and nested containers of any depth."""
+    if isinstance(v, (list, tuple)):
+        return {"t": "l", "v": [vtag(x) for x in v]}
+    if isinstance(v, dict):
+        return {"t": "d", "v": [[k, vtag(x)] for k, x in v.items()]}
+    return tag(v)
+
+
+def exc_name(e):
+    t = type(e)
+    if isinstance(e, SystemExit):
+        return "SystemExit"
+    mod = t.__module__
+    return t.__qualname__ if mod == "builtins" else f"{mod}.{t.__qualname__}"
+
+
+def attempt(fn, *a, **k):
+    """{"r": result} or {"x": [type, message]}; SystemExit is caught too (load_json exits)."""
+    try:
+        return {"r": vtag(fn(*a, **k))}
+    except SystemExit as e:
+        return {"x": ["SystemExit", e.code if isinstance(e.code, (int, str)) or e.code is None else str(e.code)]}
+    except Exception as e:  # noqa: BLE001 - the oracle reports every failure as data
+        return {"x": [exc_name(e), str(e)]}
+
+
+def sd_modules():
+    """build_tdd as the compiler loads it (bd.MARK replaced), plus its bd / bp and the files' sha256."""
+    tdd = load(os.path.join(SCRIPTS, "build_tdd.py"), "build_tdd")
+    root = tdd.sd_root()
+    sha = {name: hashlib.sha256(open(os.path.join(root, "scripts", name), "rb").read()).hexdigest() for name in ("build_doc.py", "build_prs.py")}
+    return tdd, tdd.bd, tdd.bp, root, sha
+
+
+def assets_state(a):
+    return {"out_dir": a.out_dir, "inline": a.inline, "copy": a.copy, "files": a.files, "missing": a.missing, "order": a.order}
+
+
+def uri_digest(r):
+    """Assets.ref's (url, src) with a data: URL cut to its first 64 characters, its length and its sha256."""
+    url, src = r
+    if url.startswith("data:"):
+        return [[url[:64], len(url), hashlib.sha256(url.encode()).hexdigest()], src]
+    return [url, src]
+
+
+class Recorder:
+    """Wraps the names build_tdd reaches through bd / bp (and its esc, slug, strip_tags aliases) and logs each call."""
+
+    def __init__(self, bd, bp):
+        self.bd, self.bp, self.calls, self.next_id = bd, bp, [], 0
+
+    def log(self, f, a, k, fn, obj=None, state=None, ctor=False):
+        entry = {"f": f, "a": [vtag(x) for x in a], "k": {n: vtag(v) for n, v in k.items()}}
+        if obj is not None:
+            entry["o"] = obj
+        try:
+            r = fn(*a, **k)
+        except SystemExit as e:
+            entry["x"] = ["SystemExit", str(e.code)]
+            self.calls.append(entry)
+            raise
+        except Exception as e:
+            entry["x"] = [exc_name(e), str(e)]
+            self.calls.append(entry)
+            raise
+        entry["r"] = vtag(None if ctor else r)
+        if state is not None:
+            entry["s"] = vtag(state(r))
+        self.calls.append(entry)
+        return r
+
+    def fn(self, prefix, mod, name):
+        target = getattr(mod, name)
+        return lambda *a, **k: self.log(f"{prefix}.{name}", a, k, target)
+
+    def inline_cls(self):
+        rec, real = self, self.bd.Inline
+
+        class RecInline:
+            def __init__(self):
+                self._id = rec.next_id
+                rec.next_id += 1
+                self._i = rec.log("bd.Inline", (), {}, real, obj=self._id, state=lambda r: r.anchor_map, ctor=True)
+
+            def __call__(self, *a, **k):
+                return rec.log("bd.Inline.__call__", a, k, self._i, obj=self._id, state=lambda r: self._i.anchor_map)
+
+            def __getattr__(self, n):
+                return getattr(self._i, n)
+        return RecInline
+
+    def assets_cls(self):
+        rec, real = self, self.bd.Assets
+
+        class RecAssets:
+            def __init__(self, *a, **k):
+                self._id = rec.next_id
+                rec.next_id += 1
+                self._a = rec.log("bd.Assets", a, k, real, obj=self._id, state=assets_state, ctor=True)
+
+            def ref(self, *a, **k):
+                return rec.log("bd.Assets.ref", a, k, self._a.ref, obj=self._id, state=lambda r: assets_state(self._a))
+
+            def finish(self, *a, **k):
+                return rec.log("bd.Assets.finish", a, k, self._a.finish, obj=self._id, state=lambda r: assets_state(self._a))
+
+            def __getattr__(self, n):
+                return getattr(self._a, n)
+        return RecAssets
+
+    def status_words(self):
+        rec = self
+
+        class RecDict(dict):
+            def get(self, *a):
+                return rec.log("bd.STATUS_WORDS.get", a, {}, lambda *x: dict.get(self, *x))
+        return RecDict(self.bd.STATUS_WORDS)
+
+    def proxies(self):
+        bd, bp, rec = self.bd, self.bp, self
+        bd_names = {n: self.fn("bd", bd, n) for n in ("parse_blocks", "split_marker", "slug", "strip_tags", "img_size", "published_for",
+                                                     "page_title", "load_json", "esc")}
+        bd_names.update(Inline=self.inline_cls(), Assets=self.assets_cls(), STATUS_WORDS=self.status_words())
+        bp_names = {n: self.fn("bp", bp, n) for n in ("front", "first_sentence", "inline", "markdown")}
+
+        class Proxy:
+            def __init__(self, mod, names, prefix):
+                self._mod, self._names, self._prefix = mod, names, prefix
+
+            def __getattr__(self, n):
+                if n in self._names:
+                    return self._names[n]
+                if n == "FILE_LIMIT":
+                    return rec.log("bd.FILE_LIMIT", (), {}, lambda: self._mod.FILE_LIMIT)
+                if not n.startswith("__"):
+                    raise AttributeError(f"build_tdd reached {self._prefix}.{n}, which the D1 surface does not list")
+                return getattr(self._mod, n)
+        return Proxy(bd, bd_names, "bd"), Proxy(bp, bp_names, "bp")
+
+
+def packet_source():
+    packet = ARGS["packet"]
+    if not packet:
+        raise SystemExit("--packet <dir> is required")
+    packet = os.path.abspath(packet)
+    return packet, os.path.abspath(ARGS["src"] or os.path.join(packet, os.path.basename(packet) + ".md"))
+
+
+def suite_sd_calls(rng, count):
+    """Compile --packet with build_tdd.py (--no-copy unless --copy) into a temporary folder, recording every call it makes
+    to the D1 surface; the folder is removed afterwards. Also every image file under the packet through img_size and
+    through Assets(inline=True).ref(embed=True), the inline branch the compile never takes."""
+    import contextlib, shutil, tempfile
+    packet, src = packet_source()
+    tdd, bd, bp, root, sha = sd_modules()
+    rec = Recorder(bd, bp)
+    real = (tdd.bd, tdd.bp, tdd.esc, tdd.slug, tdd.strip_tags)
+    tdd.bd, tdd.bp = rec.proxies()
+    tdd.esc, tdd.slug, tdd.strip_tags = (rec.fn("bd", bd, n) for n in ("esc", "slug", "strip_tags"))
+    out_dir = tempfile.mkdtemp(prefix="tdd-sd-oracle-")
+    stdout, stderr = io.StringIO(), io.StringIO()
+    cwd = os.getcwd()
+    try:
+        os.chdir(packet)
+        argv = [src, out_dir] + ([] if ARGS["copy"] else ["--no-copy"])
+        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            tdd.Compiler(tdd.parse_args(argv)).build()
+    finally:
+        os.chdir(cwd)
+        tdd.bd, tdd.bp, tdd.esc, tdd.slug, tdd.strip_tags = real
+        shutil.rmtree(out_dir, ignore_errors=True)
+    images = []
+    for d, dirs, files in os.walk(packet):
+        dirs[:] = sorted(x for x in dirs if x not in ("node_modules", ".git"))
+        for f in sorted(files):
+            if os.path.splitext(f)[1].lower() in (".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp"):
+                p = os.path.join(d, f)
+                emb = bd.Assets(out_dir, True, False)
+                images.append([p, attempt(bd.img_size, p), attempt(lambda: uri_digest(emb.ref("x/" + f, [p], embed=True)))])
+    return {"sha256": sha, "root": os.path.relpath(root, TDD), "packet": packet, "src": src, "out": out_dir, "copy": ARGS["copy"],
+            "mark": [bd.MARK.pattern, bd.MARK.flags], "stdout": stdout.getvalue(), "stderr": stderr.getvalue(),
+            "calls": rec.calls, "images": images}
+
+
+# A markdown-shaped document generator: block lines from the subset's grammar, inline runs from its syntax, and a
+# little noise. Every string is valid Unicode (no lone surrogates: the inputs come from UTF-8 files).
+MD_WORDS = ["word", "Word", "the", "Rollback:", "D7", "PR 7", "F3.2", "x", "É", "İstanbul", "ß", "中文", "\U0001F600", "١٢", "x_y", "a*b",
+            "snake_case", "C++", "q?", "end.", "Done!", "why?", "(paren)", "[br]", "{attr}", "#tag", "a|b", "a\\|b", "·", "—", "–", ":", "|",
+            "\xa0", "　", " ", "\x85", "\x1c", "\t", "\x00"]
+# Placeholder look-alikes: Inline and build_prs.inline index their saved spans with them, so a stray one raises
+# IndexError in both implementations; rare, so most documents still render.
+MD_NUL = ["\x00C0\x00", "\x00E0\x00", "\x007\x00", "\x0099\x00", "\x00C٣\x00", "\x00" + "9" * 20 + "\x00"]
+MD_INLINE = ["`code`", "``a ` b``", "`", "` x `", "**bold**", "**", "** x**", "__u__", "_e_", "x_e_x", "*e*", "* x *", "*a*b", "~~d~~",
+             "[l](#Anchor)", "[l](#a \"t\")", "[l](https://x.y/z \"t\")", "[l](http://a)", "[x\ny](z)", "[a](b c)", "<https://x.y/p>",
+             "<http://a&b>", "<ftp://x>", "![i](x.png)", "![a \"q\"](p\"q.png)", "\\*", "\\|", "\\_", "\\\\", "\\`", "\\[", "\\&",
+             "<b>", "</b>", "<a href=\"x\">", "<br/>", "<!-- c -->", "&amp;", "&#39;", "&lt;", "&gt;", "&#x1F600;", "&nbsp", "&nbsp;",
+             "&notit;", "&#0;", "&#xD800;", "\"", "'", "<", ">", "&", "[chip:new text]", "D7.", "PR 12a", "LEG/File.ts:12-40"]
+MD_LANGS = ["", "ts", "python", "c++", "Py-3", "ÉX", "sql", "mermaid", "a b", "{x}"]
+MD_MARKERS = ["diagram", "image", "video", "media", "embedded content", "legend", "reading", "DIAGRAM", "Legend", "dİagram", "note"]
+
+
+def md_inline(rng, lo=1, hi=8):
+    parts = []
+    for _ in range(rng.randint(lo, hi)):
+        k = rng.random()
+        parts.append(rng.choice(MD_NUL) if k < 0.002 else rng.choice(MD_WORDS) if k < 0.5 else rng.choice(MD_INLINE) if k < 0.9
+                     else rand_str(rng, RE_ALPHA, 0, 4))
+    out = ""
+    for p in parts:
+        out += p if not out or rng.random() < 0.15 else " " + p
+    return out
+
+
+def md_block(rng):
+    k = rng.randint(0, 15)
+    ind = rng.choice(["", "", "", " ", "  ", "   ", "    ", "\t"])
+    if k == 0:
+        return [rng.choice(["#", "##", "###", "######", "#######", "#"]) + rng.choice([" ", " ", "  ", "", "\t"]) + md_inline(rng, 0, 4)
+                + rng.choice(["", "", " ##", " #", "#"])]
+    if k == 1:
+        f = rng.choice(["```", "~~~", "````", "``"])
+        body = [md_inline(rng, 0, 5) for _ in range(rng.randint(0, 3))]
+        close = rng.choice([f, f, "```", "  " + f, ""])
+        return [ind + f + rng.choice(["", " "]) + rng.choice(MD_LANGS)] + body + ([close] if close else [])
+    if k in (2, 3):
+        lines, depth = [], 0
+        ordered = rng.random() < 0.4
+        for j in range(rng.randint(1, 6)):
+            depth = max(0, min(3, depth + rng.choice([-1, 0, 0, 1])))
+            pad = " " * (2 * depth) if rng.random() < 0.9 else "\t" * depth
+            mark = (rng.choice(["1.", "2)", "10.", "１.", "٣.", "0."]) if ordered else rng.choice(["-", "*", "+"])) if rng.random() < 0.9 else rng.choice(["-", "1."])
+            box = rng.choice(["", "", "", "[ ] ", "[x] ", "[X] ", "\\[x\\] ", "[y] "])
+            lines.append(pad + mark + rng.choice([" ", " ", "  ", "\t"]) + box + md_inline(rng, 1, 5))
+            r = rng.random()
+            if r < 0.15:
+                lines.append(pad + "  " + md_inline(rng, 1, 4))
+            elif r < 0.25:
+                lines.append("")
+            elif r < 0.3:
+                lines.append(rng.choice(["  ```", "    > q", "    | a |", "  # h"]))
+        return lines
+    if k == 4:
+        lines = []
+        if rng.random() < 0.4:
+            lines.append(rng.choice([">", "> ", " >"]) + rng.choice(["[!NOTE]", "[!tip]", "[!WARNING]", "\\[!caution\\]", "[!constructor]", "[!x y]", "[!]"]))
+        for _ in range(rng.randint(1, 4)):
+            lines.append(rng.choice([">", "> ", ">  ", " > ", ">> ", "> > ", "> - ", "> 1. ", "> ```"]) + md_inline(rng, 0, 5))
+        return lines
+    if k == 5:
+        cols = rng.randint(1, 4)
+        row = lambda: rng.choice(["|", "", " |"]) + "|".join(" " + md_inline(rng, 0, 2) + " " for _ in range(cols)) + rng.choice(["|", "", "\\|", "| "])
+        seps = ["|" + "|".join(rng.choice(["---", ":--", "--:", ":-:", "-", " : ", "--- "]) for _ in range(cols)) + "|",
+                "|".join("---" for _ in range(cols)), "| - |", "|:|", "| --- | ---", "---"]
+        return [row(), rng.choice(seps)] + [row() for _ in range(rng.randint(0, 3))]
+    if k == 6:
+        return [ind + rng.choice(["---", "***", "___", "* * *", "- - -", "-_-", "----------", "--", "_ _ _ _", "**"])]
+    if k == 7:
+        return [ind + rng.choice(["<!-- note -->", "<!-- a --> b", "<!---->", "<!-- x", "<!-- PR-CARDS -->"])]
+    if k == 8:
+        m = rng.choice(MD_MARKERS)
+        arg = rng.choice(["key", "key · Caption", "a | b", "key · Title {fit; #id}", "new = green | old = grey", " ", "x · ", md_inline(rng, 0, 3)])
+        return [ind + rng.choice(["[", "\\[", "["]) + m + rng.choice([":", " :", ": ", ":"]) + arg + rng.choice(["]", "\\]", "] ", ""])]
+    if k == 9:
+        return [rng.choice(["![alt](path.png \"Title\")", "![a](b)", "![a](b c)", "![](x.svg)", "![a](b \"t\") x", "![a](b \"t\"", "![a]](b)"])]
+    if k == 10:
+        return [""] * rng.randint(1, 2)
+    if k == 11:
+        return [rand_str(rng, RE_ALPHA + MD_INLINE, 0, 10)]
+    if k == 12:
+        return ["Rollback: " + md_inline(rng, 1, 4) + rng.choice([". ", ".", ""]) + md_inline(rng, 0, 3)]
+    return [ind + md_inline(rng) for _ in range(rng.randint(1, 3))]
+
+
+def md_doc(rng):
+    lines = []
+    if rng.random() < 0.15:
+        lines += ["---", rng.choice(["title: A · B", "milestone: \"M1 · x\"", "k: v # note", "a:b", "x", ": v", "change: 'y'"]),
+                  rng.choice(["depends_on: [PR 9]", "", "rollback: Delete it. # c"]), "---"]
+    for _ in range(rng.randint(1, 12)):
+        lines += md_block(rng)
+    return "\n".join(lines) + rng.choice(["", "", "\n", "\n\n"])
+
+
+def suite_sd_fuzz(rng, count):
+    """count documents through parse_blocks (half with build_doc's own MARK, half with build_tdd's), Inline (links on and
+    off, the whole document and one line), strip_tags, slug, split_marker, page_title, split_row, is_block_start and
+    build_prs's front, inline, markdown, split_row and first_sentence."""
+    root = sd_root()
+    bd = load(os.path.join(root, "scripts", "build_doc.py"), "build_doc")
+    bp = load(os.path.join(root, "scripts", "build_prs.py"), "build_prs")
+    tdd = load(os.path.join(SCRIPTS, "build_tdd.py"), "build_tdd")
+    marks = [bd.MARK, tdd.bd.MARK]
+    rows = []
+    for n in range(count):
+        doc = md_doc(rng)
+        lines = doc.split("\n")
+        line = rng.choice(lines)
+        bd.MARK = marks[n % 2]
+        inl = bd.Inline()
+        r_inl = attempt(inl, doc)
+        rows.append({
+            "doc": doc, "line": line, "mark": n % 2,
+            "parse_blocks": attempt(bd.parse_blocks, lines),
+            "is_block_start": attempt(bd.is_block_start, line),
+            "Inline": r_inl,
+            "Inline_line": attempt(inl, line, links=False),
+            "strip_tags": attempt(bd.strip_tags, doc),
+            "strip_tags_inline": attempt(bd.strip_tags, r_inl["r"]["v"]) if "r" in r_inl else None,
+            "slug": [attempt(bd.slug, line), attempt(bd.slug, doc)],
+            "split_marker": attempt(bd.split_marker, line),
+            "page_title": attempt(bd.page_title, line),
+            "split_row": attempt(bd.split_row, line),
+            "esc": [attempt(bd.esc, line), attempt(bd.esc, line, quote=False)],
+            "bp.front": attempt(bp.front, doc),
+            "bp.inline": attempt(bp.inline, doc),
+            "bp.markdown": attempt(bp.markdown, doc),
+            "bp.split_row": attempt(bp.split_row, line),
+            "bp.first_sentence": attempt(bp.first_sentence, doc),
+        })
+    bd.MARK = marks[0]
+    return {"marks": [[m.pattern, m.flags] for m in marks], "rows": rows}
+
+
+def suite_sd_finish(rng, count):
+    """Assets.finish with copying, per case folder in --dir (sorted): case.json holds {"out", "copy", "refs": [[published,
+    [candidate, ...]], ...]}, paths relative to the case folder. Records ref results, finish's result or exception, and
+    the state; the bun test runs the same cases on a twin tree."""
+    d = ARGS["dir"]
+    if not d:
+        raise SystemExit("--dir <folder> is required")
+    bd = load(os.path.join(sd_root(), "scripts", "build_doc.py"), "build_doc")
+    rows = []
+    for case in sorted(os.listdir(d)):
+        c = os.path.join(d, case)
+        spec = json.load(open(os.path.join(c, "case.json"), encoding="utf-8"))
+        a = bd.Assets(os.path.join(c, spec["out"]), False, spec["copy"])
+        refs = [attempt(a.ref, pub, [os.path.join(c, x) for x in cands]) for pub, cands in spec["refs"]]
+        rows.append({"case": case, "refs": refs, "finish": attempt(a.finish), "state": vtag(assets_state(a))})
+    return {"rows": rows}
+
+
+def suite_sd_constants(rng, count):
+    """The data half of the surface: the patterns (source and flags), STATUS_WORDS, GENERIC_TAILS, FILE_LIMIT, BLOCK and
+    build_tdd's replacement MARK, so a changed table is caught even where no packet looks it up."""
+    tdd, bd, bp, root, sha = sd_modules()
+    pristine = load(os.path.join(root, "scripts", "build_doc.py"), "build_doc")
+    pat = lambda p: [p.pattern, p.flags]
+    return {"sha256": sha, "patterns": {n: pat(getattr(pristine, n)) for n in ("MARK", "HEAD", "FENCE", "LI", "HR", "TSEP", "COMMENT")},
+            "tdd_mark": pat(bd.MARK), "STATUS_WORDS": vtag(bd.STATUS_WORDS), "GENERIC_TAILS": vtag(bd.GENERIC_TAILS),
+            "FILE_LIMIT": bd.FILE_LIMIT, "BLOCK": bp.BLOCK}
+
+
+def json_depth(v):
+    """The container nesting of a parsed JSON value, without recursion (vtag would hit Python's recursion limit)."""
+    best, stack = 0, [(v, 1)]
+    while stack:
+        x, d = stack.pop()
+        if isinstance(x, (list, dict)):
+            best = max(best, d)
+            stack.extend((y, d + 1) for y in (x.values() if isinstance(x, dict) else x))
+    return best
+
+
+def suite_sd_files(rng, count):
+    """Every file in --dir (sorted) through img_size, svg_size, png_size, published_for, load_json, Assets.ref (embed, inline on).
+    For a file named deep-*, load_json reports the parsed value's nesting depth instead of the value."""
+    d = ARGS["dir"]
+    if not d:
+        raise SystemExit("--dir <folder> is required")
+    root = sd_root()
+    bd = load(os.path.join(root, "scripts", "build_doc.py"), "build_doc")
+    rows = []
+    for f in sorted(os.listdir(d)):
+        p = os.path.join(d, f)
+        a = bd.Assets(d, True, False)
+        rows.append({"name": f, "img_size": attempt(bd.img_size, p), "svg_size": attempt(bd.svg_size, p), "png_size": attempt(bd.png_size, p),
+                     "load_json": attempt(lambda: json_depth(bd.load_json(p, "--meta"))) if f.startswith("deep-") else attempt(bd.load_json, p, "--meta"),
+                     "embed": attempt(lambda: uri_digest(a.ref("../" + f if f.startswith("x") else f, [None, "", p], embed=True))),
+                     "state": vtag(assets_state(a))})
+    extra = [[p, attempt(bd.load_json, p, "schema/x.json")] for p in ["", None, os.path.join(d, "no-such-file.json"), d, os.path.join(d, "a\x00b")]]
+    extra += [[p, attempt(bd.img_size, p)] for p in [os.path.join(d, "no-such.svg"), os.path.join(d, "no-such.PNG"), os.path.join(d, "a\x00b.svg")]]
+    pub = [[p, x, attempt(bd.published_for, p, x)] for p in ["a/b.png", "/abs/c.svg", "../up/d.png", "..x.png", "./e.png", "f", "", "/"] for x in ["images", ""]]
+    return {"rows": rows, "extra": extra, "published_for": pub}
+
+
 SUITES = {name[6:]: fn for name, fn in globals().items() if name.startswith("suite_")}
 DEFAULT_COUNT = {"round": 100000, "repr_float": 100000, "str": 3000, "re": 300, "html": 3000, "repr": 2000, "json": 1500, "utf8": 5000,
-                 "path": 3000, "int": 0, "truthy": 200, "token": 2000, "sd": 2000, "stamp": 200, "ucd": 0, "json_errors": 0, "re_case": 0}
+                 "path": 3000, "int": 0, "truthy": 200, "token": 2000, "sd": 2000, "stamp": 200, "ucd": 0, "json_errors": 0, "re_case": 0,
+                 "sd_calls": 0, "sd_fuzz": 10000, "sd_files": 0, "sd_constants": 0, "sd_finish": 0}
 
 
 def main(argv):
@@ -517,6 +918,10 @@ def main(argv):
             count = int(rest[i + 1]); i += 2
         elif rest[i] == "--out":
             out = rest[i + 1]; i += 2
+        elif rest[i] in ("--packet", "--src", "--dir"):
+            ARGS[rest[i][2:]] = rest[i + 1]; i += 2
+        elif rest[i] == "--copy":
+            ARGS["copy"] = True; i += 1
         else:
             print(f"unknown argument {rest[i]}", file=sys.stderr)
             return 2

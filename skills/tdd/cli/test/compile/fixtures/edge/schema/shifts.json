@@ -1,0 +1,1 @@
+{"state": "new", "summary": "Shifts with `src/a.ts:3` cite", "columns": [{"name": "id", "type": "uuid"}, {"name": "n", "type": "int", "change": "changed"}], "rows": [{"id": 1, "w": 1.0, "x": 1e-05, "y": 50.0}]}

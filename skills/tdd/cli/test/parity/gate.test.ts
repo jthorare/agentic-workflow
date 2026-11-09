@@ -1,4 +1,5 @@
-// The parity gate on real packets ($TDD_PARITY_PACKETS): green for two Python compiles with TDD_GENERATED pinned,
+// The parity gate on real packets ($TDD_PARITY_PACKETS): green for two Python compiles with TDD_GENERATED pinned
+// (Python against TypeScript is test/compile/compile.test.ts),
 // red when the second run is not pinned (so the gate can fail), and py/json reproduces the fresh compiler output
 // (content.json indent 1, content.files.json indent 2, both without a trailing newline) byte for byte.
 import { describe, expect, test } from "bun:test";
@@ -18,7 +19,7 @@ describe.skipIf(PACKETS.length === 0 || !hasPython)("parity gate on real packets
     const name = basename(packet);
 
     test(`${name}: two pinned Python compiles are identical (gate green)`, () => {
-      const r = gate(packet);
+      const r = gate(packet, { b: "python" });
       expect(r.problems).toEqual([]);
       expect(r.green).toBe(true);
       expect(r.summary).toMatch(/^\d+ sections, \d+ diagrams, .* \d+ files \(\d+ missing\)$/);
