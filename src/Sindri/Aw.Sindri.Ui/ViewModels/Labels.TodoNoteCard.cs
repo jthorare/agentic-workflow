@@ -59,6 +59,9 @@ internal static partial class Labels
     /// <summary>The button that saves the key, then imports.</summary>
     internal const string TodoCardImport = "Import and start syncing";
 
+    /// <summary>Stands in for the import buttons while the server has no note import route.</summary>
+    internal const string TodoCardImportLater = "Import comes with note sync. Notes with open tasks can't sync yet.";
+
     /// <summary>The button that drops a check without saving anything.</summary>
     internal const string TodoCardCancel = "Cancel";
 

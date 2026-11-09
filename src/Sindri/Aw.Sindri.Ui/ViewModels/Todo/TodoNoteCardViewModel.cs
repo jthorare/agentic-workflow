@@ -19,7 +19,6 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     private readonly Func<Uri?> _url;
     private readonly ISindriApi _api;
     private readonly TimeProvider _clock;
-    private readonly bool _importServed;
     private TodoNoteCheckView? _check;
     private TodoNoteView? _note;
     private string _checkedVault = string.Empty;
@@ -35,7 +34,7 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     /// <param name="importServed">Whether this Sindri serves note import; defaults to <see cref="TodoNoteImport.Served"/>. Off, a note with open tasks offers no import (and no one-way start, which imports them too).</param>
     internal TodoNoteCardViewModel(Func<Uri?> url, ISindriApi api, TimeProvider clock, bool importServed = TodoNoteImport.Served)
     {
-        (_url, _api, _clock, _importServed) = (url, api, clock, importServed);
+        (_url, _api, _clock, ImportServed) = (url, api, clock, importServed);
     }
 
     /// <summary>Raised when the Library card should be brought into view (the no-vault sentence's button).</summary>
@@ -118,25 +117,25 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
         : string.Empty;
 
     /// <summary>What an import adds ("Import adds ids to 42 lines in Todo.md and adds your 6 Sindri todos after them").</summary>
-    public string CountsText => _check is { Exists: true, Open: > 0 } c && c.CanSwap ? Labels.TodoCardCounts(_checkedNote, c.WillImport, c.SindriOpen) : string.Empty;
+    public string CountsText => !ImportHeld && _check is { Exists: true, Open: > 0 } c && c.CanSwap ? Labels.TodoCardCounts(_checkedNote, c.WillImport, c.SindriOpen) : string.Empty;
 
     /// <summary>True when the counts line is drawn.</summary>
     public bool HasCounts => CountsText.Length > 0;
 
     /// <summary>The tasks that can't be imported, with up to five line numbers.</summary>
-    public string CantImportText => _check is { CantImport.Count: > 0 } c ? Labels.TodoCardCantImport([.. c.CantImport.Select(l => l.Line)]) : string.Empty;
+    public string CantImportText => !ImportHeld && _check is { CantImport.Count: > 0 } c ? Labels.TodoCardCantImport([.. c.CantImport.Select(l => l.Line)]) : string.Empty;
 
     /// <summary>True when the can't-import line is drawn.</summary>
     public bool HasCantImport => CantImportText.Length > 0;
 
     /// <summary>The cap line ("Only 458 will import: 500 open todos is the limit"); empty under the cap.</summary>
-    public string OverCapText => _check is { } c && IsOverCap ? Labels.TodoCardOverCap(c.WillImport, c.Cap) : string.Empty;
+    public string OverCapText => !ImportHeld && _check is { } c && IsOverCap ? Labels.TodoCardOverCap(c.WillImport, c.Cap) : string.Empty;
 
     /// <summary>True when the cap line is drawn.</summary>
     public bool HasOverCap => OverCapText.Length > 0;
 
     /// <summary>The one-way sentence; empty when the disk can swap files.</summary>
-    public string OneWayText => _check is { CanSwap: false } ? Labels.TodoCardOneWay(_checkedNote) : string.Empty;
+    public string OneWayText => !ImportHeld && _check is { CanSwap: false } ? Labels.TodoCardOneWay(_checkedNote) : string.Empty;
 
     /// <summary>True when the one-way sentence is drawn.</summary>
     public bool HasOneWay => OneWayText.Length > 0;
@@ -145,16 +144,16 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     public bool ShowStart => ShowResult && _check is { CanSwap: true } c && (!c.Exists || c.Open == 0);
 
     /// <summary>True when Start syncing (one way) is drawn.</summary>
-    public bool ShowStartOneWay => ShowResult && _check is { CanSwap: false };
+    public bool ShowStartOneWay => ShowResult && !ImportHeld && _check is { CanSwap: false };
 
     /// <summary>True when Import and start syncing is drawn: the note has open tasks and the disk can swap.</summary>
-    public bool ShowImport => ShowResult && _check is { Exists: true, Open: > 0, CanSwap: true };
+    public bool ShowImport => ShowResult && !ImportHeld && _check is { Exists: true, Open: > 0, CanSwap: true };
 
     /// <summary>The line that stands in for the import buttons while the server has no import route; empty otherwise.</summary>
-    public string ImportLaterText => !_importServed && _check is null ? "stub" : string.Empty;
+    public string ImportLaterText => ImportHeld ? Labels.TodoCardImportLater : string.Empty;
 
     /// <summary>True when the import-later line is drawn.</summary>
-    public bool ShowImportLater => !_importServed && _check is null;
+    public bool ShowImportLater => ShowResult && ImportHeld;
 
     /// <summary>True when Cancel is drawn: beside a shown check, or while Change edits a running sync.</summary>
     public bool ShowCancel => ShowResult || (Stage == TodoNoteCardStage.Form && _changing);
@@ -173,6 +172,11 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
 
     /// <summary>True when there is a refusal to show.</summary>
     public bool HasError => ErrorText.Length > 0;
+
+    private bool ImportServed { get; }
+
+    // A note with open tasks can only be started by importing them (one way too), and this Sindri has no import route.
+    private bool ImportHeld => !ImportServed && _check is { Exists: true, Open: > 0 };
 
     private bool IsOverCap => _check is { Exists: true } c && c.WillImport < c.Open - c.CantImport.Count;
 

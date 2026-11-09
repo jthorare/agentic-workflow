@@ -44,6 +44,7 @@
                    AutomationProperties.Name="{Binding OverCapText}" />
         <TextBlock x:Name="TodoNoteOneWay" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding OneWayText}" IsVisible="{Binding HasOneWay}" TextWrapping="Wrap"
                    AutomationProperties.Name="{Binding OneWayText}" />
+        <TextBlock x:Name="TodoNoteImportLater" Classes="caption" Text="{Binding ImportLaterText}" IsVisible="{Binding ShowImportLater}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ImportLaterText}" />
         <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
           <Button x:Name="TodoNoteStart" Classes="command-control primary" Content="{Binding Text.Start}" IsVisible="{Binding ShowStart}" IsEnabled="{Binding !IsBusy}" Click="OnStart" AutomationProperties.Name="{Binding Text.Start}" />
           <Button x:Name="TodoNoteStartOneWay" Classes="command-control primary" Content="{Binding Text.StartOneWay}" IsVisible="{Binding ShowStartOneWay}" IsEnabled="{Binding !IsBusy}" Click="OnStart"
