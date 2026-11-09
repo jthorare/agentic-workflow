@@ -4,11 +4,10 @@
    Classes: dialog.drawer.schema(.expanded), .drawer-head, h2.drawer-name, .drawer-acts, .drawer-expand, .drawer-close,
    .drawer-body, .drawer-sec, .drawer-summary (Details tab); tabs .dg-tabs, .dg-tab(.on), .dg-count, .dg-panel; Data
    preview .dg-bar, .dg-filter, .dg-btn(.on), .dg-bands(.multi) > .dg-band (.dg-band-cap, .dg-band-names) > .dg-grid
-   (.banded; thead tr.dg-head th.h-new|h-changed, .dg-h, .dg-glyph.g-<kind>, tr.dg-hstats, th.rn, tbody tr.hot, td.null,
+   (.banded; thead tr.dg-head th.h-new|h-changed|num, .dg-hc > .dg-h + .dg-sb, .dg-glyph.g-<kind>, th.rn, tbody tr.hot, td.null,
    td.num, td.long, .dg-more), .dg-ghost-box > .dg-ghost (the hidden measuring copy), .dg-cap; stats .dg-mini,
    .dg-meter, .dg-hist, .dg-freq; Columns .schema-legend (.lg), .dg-cols (tr.col-new|changed|dropped; td.cn, .cnote,
-   td.ct, .was, td.rg .dg-range, td.ds); Details .dg-kv, .load-grid, .load-card (.measured,
-   .expected; .k, .u, .src, .none "not measured"), pre.ddl, .mono-list, .drawer-notes, .where; chat .dchat(.off),
+   td.ct, .was, td.rg .dg-range, td.ds); Details .tbrief (TableBrief.tsx, below), .dg-kv, pre.ddl, .mono-list, .drawer-notes, .where; chat .dchat(.off),
    .dchat-off, .dchat-log, .dchat-msg.user|assistant, .dchat-steps, .dchat-note, .dchat-form, .dchat-btn, .dchat-src;
    .hs.has-table::after. */
 
@@ -150,7 +149,7 @@ dialog.drawer.expanded .dg-cap { flex: none; }
 .dg-grid tbody tr:last-child > * { border-bottom: 0; }
 .dg-grid thead th { position: sticky; z-index: 2; background: var(--surface-2); }
 .dg-grid tr.dg-head th, .dg-ghost tr.dg-head th { top: 0; height: 34px; box-sizing: border-box; padding: 0 10px; vertical-align: middle; }
-.dg-grid tr.dg-hstats th, .dg-ghost tr.dg-hstats th { top: 34px; padding: 5px 10px 6px; font: 400 0.66rem/1.3 var(--font-body); color: var(--muted); }
+.dg-grid tr.dg-head th.num, .dg-ghost tr.dg-head th.num { text-align: right; }
 .dg-grid tr.dg-head th.h-new { box-shadow: inset 0 -2px 0 var(--good); }
 .dg-grid tr.dg-head th.h-changed { box-shadow: inset 0 -2px 0 var(--warn); }
 .dg-grid .rn { position: sticky; left: 0; z-index: 1; min-width: 3ch; text-align: right; color: var(--muted); background: var(--surface-2); font-weight: 400; }
@@ -216,6 +215,35 @@ dialog.drawer.expanded .dg-cap { flex: none; }
 .dg-freq i.s3 { background: color-mix(in srgb, var(--accent) 28%, var(--surface)); }
 .dg-freq i.s-rest { background: color-mix(in srgb, var(--muted) 30%, var(--surface)); }
 .dg-st-t { display: block; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* column stats (D30): one badge per header (.dg-sb, a tiny bar-chart glyph; a dot when the column has nulls) and one
+   popover per grid (.dg-spop): hover or focus shows it, a click keeps it open as a dropdown under the header */
+.dg-hc { display: flex; align-items: center; gap: 6px; }
+.dg-head th.num .dg-hc { justify-content: flex-end; }
+.dg-sb {
+  position: relative; flex: none; display: inline-grid; place-items: center; width: 20px; height: 20px; padding: 0; margin: 0;
+  border: 1px solid transparent; border-radius: 5px; background: none; color: var(--muted); cursor: pointer;
+}
+.dg-sb svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+.dg-sb:hover, .dg-sb:focus-visible, .dg-sb.on { color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 35%, var(--surface)); }
+.dg-sb.nulls::after { content: ""; position: absolute; top: 1px; right: 1px; width: 5px; height: 5px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 0 1px var(--surface-2); }
+.dg-spop {
+  position: absolute; z-index: 8; display: none; width: min(280px, 86vw); padding: 10px 12px; box-sizing: border-box;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: 0 10px 30px var(--shadow);
+  font-size: var(--fs-xs); line-height: 1.4; text-align: left;
+}
+.dg-spop.show { display: grid; gap: 6px; }
+.dg-spop.open { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.dg-spop p { margin: 0; max-width: none; }
+.dg-sp-h { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.dg-sp-h code { font: 700 var(--fs-sm)/1.3 var(--font-mono); padding: 0; background: none; border: 0; color: var(--fg); overflow-wrap: anywhere; }
+.dg-sp-h span { color: var(--muted); font-family: var(--font-mono); }
+.dg-sp-n b { font-weight: 650; }
+.dg-sp-r { color: var(--muted); }
+.dg-sp-r code { font-family: var(--font-mono); padding: 0; background: none; border: 0; color: var(--fg); }
+.dg-sp-d { display: block; }
+.dg-sp-d .dg-hist { height: 22px; }
+.dg-sp-d .dg-freq { height: 10px; }
+.dg-sp-note { color: var(--muted); }
 
 /* ---------------------------------------------------------------- Columns: change indicator per row, stats beside the type */
 .schema-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: var(--fs-xs); color: var(--muted); max-width: none; margin: 0; }
@@ -269,30 +297,13 @@ dialog.drawer.expanded .dg-cap { flex: none; }
   .dg-actions { margin-left: 0; }
 }
 
-/* ---------------------------------------------------------------- Details: table facts, load (measured beside expected) */
+/* ---------------------------------------------------------------- Details: the brief (below), then the table facts */
 .dg-details { display: grid; gap: 22px; }
 .dg-kv { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px 16px; }
 .dg-kv > div { display: grid; gap: 2px; min-width: 0; }
 .dg-kv dt { font: 600 var(--fs-xs)/1.3 var(--font-body); text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--muted); }
 .dg-kv dd { margin: 0; font-size: var(--fs-sm); overflow-wrap: anywhere; }
 .dg-kv dd code { background: none; padding: 0; font-weight: 600; }
-.load-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
-.load-card { gap: 10px; border-top-width: 3px; }
-.load-card.measured { border-top-color: var(--accent); }
-.load-card.expected { border-top-color: var(--secondary); }
-.load-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
-.load-h b { font-size: var(--fs-sm); }
-.load-h span { font-size: var(--fs-xs); color: var(--muted); }
-.load-card dl { margin: 0; display: grid; gap: 12px; }
-.load-card .m { display: grid; gap: 2px; min-width: 0; }
-.load-card dt { font: 600 var(--fs-xs)/1.3 var(--font-body); text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--muted); }
-.load-card dd { margin: 0; min-width: 0; }
-.load-card .k { font-size: 1.05rem; font-weight: 650; line-height: 1.3; color: var(--brand); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.load-card .k .u { margin-left: 6px; font-size: var(--fs-sm); font-weight: 400; color: var(--fg); }
-.load-card .none { font-size: var(--fs-sm); }
-.load-card .src { font-size: var(--fs-xs); line-height: 1.45; color: var(--muted); }
-.load-card .src code { font-size: 0.95em; }
-@media (max-width: 560px) { .load-grid { grid-template-columns: 1fr; } }
 
 /* ---------------------------------------------------------------- DDL, indexes, notes, where it appears */
 .drawer-body pre.ddl { max-height: 440px; font-size: 0.74rem; line-height: 1.5; background: var(--code-bg); }
@@ -434,51 +445,103 @@ dialog.drawer.expanded .dg-cap { flex: none; }
 .tn-tag.dropped { color: var(--tn-up-ink); }
 .tn-more { flex: none; height: 1.45em; font: 500 .91em/1.45 var(--font-body); color: var(--tn-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* the sizing strip: rows, cols, cost. Each tile: icon and label, the production value (or "not measured"), then the
-   expected change after the design as a pill showing its value only, never cut (red rises, green falls or stays,
-   grey when the card states no direction; "not estimated" when absent). The unit, source, date and basis are in the
-   tooltip and the hover card. Rows are 1.18em + 1.25em + 1.4em (2.65em when .wrap), padding .4em, borders .125em. */
-.tn-strip { flex: none; margin-top: .3em; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .3em; }
-.tn-tile {
-  display: flex; flex-direction: column; min-width: 0; padding: .2em .34em; border-radius: .35em; cursor: help;
-  background: var(--surface-2); border: .0625em solid color-mix(in srgb, var(--tn-tone) 40%, var(--surface));
+/* the sizing strip (D28): one row of four measures, rows, cols, writes and cost. Each: an icon, the production number
+   ("–" when not measured) and the expected change after the design as a pill (red rises, green falls or stays, grey
+   with no stated direction; no pill when not estimated). No labels or prose in the row: a measure's tooltip and the
+   card's hover card (TableBrief) carry the words. 1.35em tall with its top rule (TableNode.tsx STRIP_EM), a third of
+   the three-row tiles it replaced; .tight drops the icons when four measures do not fit with them. */
+.tn-strip {
+  flex: none; box-sizing: border-box; height: 1.35em; margin: .3em -.65em 0; padding: 0 .65em;
+  display: flex; align-items: center; justify-content: space-between; gap: .5em; white-space: nowrap;
+  border-top: .0625em solid color-mix(in srgb, var(--tn-tone) 40%, var(--surface));
 }
-.tn-tile:hover { border-color: var(--tn-line); }
-.tn-l {
-  display: flex; align-items: center; gap: .35em; height: 1.3em; min-width: 0; white-space: nowrap; overflow: hidden;
-  font: 750 .91em/1 var(--font-body); text-transform: uppercase; letter-spacing: .06em; color: var(--tn-mute);
-}
+.tn-m { display: inline-flex; align-items: center; gap: .25em; min-width: 0; height: 100%; padding: 0 .15em; border-radius: .3em; cursor: help; }
+.tn-m:hover { background: var(--surface-2); }
 .tn-ico { flex: none; width: 1.15em; height: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.tn-t1 { display: flex; align-items: baseline; gap: .3em; height: 1.25em; line-height: 1.25em; min-width: 0; white-space: nowrap; overflow: hidden; }
-.tn-v { flex: none; font: 750 1em/1.25 var(--font-body); color: var(--tn-ink); font-variant-numeric: tabular-nums; }
-.tn-v.none { font-weight: 500; font-style: italic; font-size: .91em; color: var(--tn-mute); padding-right: .2em; }
-.tn-u { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 400 .91em/1.25 var(--font-body); color: var(--tn-mute); }
-.tn-t2 { display: flex; align-items: center; height: 1.4em; min-width: 0; }
-.tn-strip.wrap .tn-t2 { height: 2.65em; align-items: flex-start; }
-.tn-d {
-  flex: none; max-width: 100%; box-sizing: border-box; display: inline-flex; align-items: center; gap: .25em; white-space: nowrap;
-  padding: .1em .45em; border-radius: var(--r-pill); font: 650 1em/1.2 var(--font-body); color: var(--tn-ink);
-  background: color-mix(in srgb, var(--muted) 16%, var(--surface));
+.tn-strip .tn-ico { width: 1em; height: 1em; color: var(--tn-mute); }
+.tn-strip.tight .tn-ico { display: none; }
+.tn-v { flex: none; font: 750 1em/1.2 var(--font-body); color: var(--tn-ink); font-variant-numeric: tabular-nums; }
+.tn-v.none { font-weight: 500; color: var(--tn-mute); }
+.tn-d, .tb-d {
+  flex: none; box-sizing: border-box; display: inline-flex; align-items: center; gap: .25em; white-space: nowrap;
+  padding: .06em .4em; border-radius: var(--r-pill); font: 650 .91em/1.2 var(--font-body); color: var(--tn-ink);
+  background: color-mix(in srgb, var(--muted) 16%, var(--surface)); font-variant-numeric: tabular-nums;
 }
-.tn-strip.wrap .tn-d { white-space: normal; border-radius: .5em; }
-.tn-d b { font-weight: 750; font-variant-numeric: tabular-nums; }
-.tn-d.up { color: var(--tn-up-ink); background: var(--tn-up-bg); }
-.tn-d.down, .tn-d.same { color: var(--tn-down-ink); background: var(--tn-down-bg); }
-.tn-d.none { background: none; padding: 0 .2em 0 0; font-size: .91em; font-weight: 500; font-style: italic; color: var(--tn-mute); }
+.tn-d.up, .tb-d.up { color: var(--tn-up-ink); background: var(--tn-up-bg); }
+.tn-d.down, .tn-d.same, .tb-d.down, .tb-d.same { color: var(--tn-down-ink); background: var(--tn-down-bg); }
 .tn-dir-ico { flex: none; width: .72em; height: .72em; fill: currentColor; stroke: currentColor; stroke-width: 1.2; stroke-linejoin: round; }
-.tn-d.same .tn-dir-ico, .tn-d.unknown .tn-dir-ico { fill: none; stroke-width: 1.5; stroke-linecap: round; }
+.tn-d.same .tn-dir-ico, .tn-d.unknown .tn-dir-ico, .tb-d.same .tn-dir-ico, .tb-d.unknown .tn-dir-ico { fill: none; stroke-width: 1.5; stroke-linecap: round; }
 
-/* the tile tooltip (Overlays.tsx TipPop) and the same lines in the hotspot card of a table card: page-sized text */
+/* a strip measure's tooltip (Overlays.tsx TipPop): page-sized text */
 .tn-tip {
   position: absolute; z-index: 31; display: none; width: min(340px, 86vw); padding: 9px 12px; pointer-events: none;
   background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: var(--r-md);
   box-shadow: 0 10px 30px var(--shadow); font-size: var(--fs-xs); line-height: 1.45; text-align: left;
 }
 .tn-tip.show { display: grid; gap: 3px; }
-.tn-tip b, .hs-tile b { font-size: var(--fs-sm); }
-.tn-tip .k, .hs-sizing .k { color: var(--muted); font-weight: 600; }
-.tn-tip .up, .hs-sizing .up { color: var(--danger); font-weight: 600; }
-.tn-tip .down, .tn-tip .same, .hs-sizing .down, .hs-sizing .same { color: var(--good); font-weight: 600; }
-.hs-pop.has-sizing { width: min(440px, 92vw); }
-.hs-sizing { display: grid; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: var(--fs-xs); line-height: 1.45; }
-.hs-tile { display: grid; gap: 1px; }
+.tn-tip b { font-size: var(--fs-sm); }
+.tn-tip .k { color: var(--muted); font-weight: 600; }
+.tn-tip .up { color: var(--danger); font-weight: 600; }
+.tn-tip .down, .tn-tip .same { color: var(--good); font-weight: 600; }
+
+/* ---------------------------------------------------------------- the table brief (TableBrief.tsx, D28)
+   One shape for a table's detail: the hotspot card of a table box (.tbrief.pop in .hs-pop.has-brief) and the top of
+   the drawer's Details tab (.tbrief.drawer): purpose, a measures table, trade-offs, and a mini diagram (.mm) of the
+   table's place, drawn from the cards' keys. Theme tokens only. */
+.tbrief {
+  --tn-ink: var(--fg); --tn-mute: var(--muted);
+  --tn-up-ink: color-mix(in srgb, var(--danger) 80%, var(--fg));
+  --tn-up-bg: color-mix(in srgb, var(--danger) 11%, var(--surface));
+  --tn-down-ink: color-mix(in srgb, var(--good) 80%, var(--fg));
+  --tn-down-bg: color-mix(in srgb, var(--good) 11%, var(--surface));
+  display: grid; gap: 10px; min-width: 0; color: var(--fg); font-size: var(--fs-sm); line-height: 1.45;
+}
+.hs-pop.has-brief { width: min(620px, 94vw); padding: 12px 14px; }
+.tbrief.drawer { gap: 22px; }
+.tb-title { margin: 0; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tb-title code { font: 700 1rem/1.25 var(--font-mono); padding: 0; background: none; border: 0; color: var(--fg); overflow-wrap: anywhere; }
+.tb-chip { flex: none; font: 650 var(--fs-xs)/1 var(--font-body); padding: 3px 8px; border-radius: var(--r-pill); color: var(--fg); background: var(--surface); border: 1px solid var(--line-strong); }
+.tb-chip.new { color: var(--tn-down-ink); background: var(--tn-down-bg); border-color: color-mix(in srgb, var(--good) 55%, var(--surface)); }
+.tb-chip.changed { color: color-mix(in srgb, var(--warn) 80%, var(--fg)); background: color-mix(in srgb, var(--warn) 13%, var(--surface)); border-color: color-mix(in srgb, var(--warn) 55%, var(--surface)); }
+.tb-purpose { margin: 0; max-width: none; color: var(--fg); }
+.tbrief.pop .tb-purpose { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tbrief h4 { margin: 0 0 4px; font: 700 var(--fs-xs)/1.3 var(--font-body); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.tb-measures { width: 100%; border-collapse: collapse; font-size: var(--fs-xs); line-height: 1.35; font-variant-numeric: tabular-nums; }
+.tb-measures th, .tb-measures td { padding: 4px 10px 4px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.tb-measures th:last-child, .tb-measures td:last-child { padding-right: 0; }
+.tb-measures thead th { font-weight: 600; color: var(--muted); white-space: nowrap; border-bottom-color: var(--line-strong); }
+.tb-measures tbody th { font-weight: 650; white-space: nowrap; color: var(--fg); }
+.tb-measures tbody tr.extra th { font-weight: 500; }
+.tb-measures .none { color: var(--muted); font-style: italic; }
+.tb-measures td.src { color: var(--muted); }
+.tb-measures td.d { white-space: nowrap; }
+.tb-more { margin: 4px 0 0; max-width: none; font-size: var(--fs-xs); color: var(--muted); }
+.tb-basis { display: grid; gap: 3px; margin: 8px 0 0; font-size: var(--fs-xs); line-height: 1.4; color: var(--muted); }
+.tb-basis > div { display: grid; grid-template-columns: 7.5em 1fr; gap: 8px; }
+.tb-basis dt { font-weight: 600; color: var(--fg); }
+.tb-basis dd { margin: 0; }
+.tb-trade ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; }
+.tb-trade li { display: grid; grid-template-columns: 1.1em 1fr; gap: 4px; font-size: var(--fs-xs); line-height: 1.4; }
+.tb-sign { font-weight: 800; text-align: center; }
+.tb-trade li.gain .tb-sign { color: var(--tn-down-ink); }
+.tb-trade li.cost .tb-sign { color: var(--tn-up-ink); }
+.tb-map-box { overflow-x: auto; overscroll-behavior-x: contain; }
+.mm { display: block; width: 100%; min-width: 440px; max-width: 600px; height: auto; }
+.tb-map-key { margin: 4px 0 0; max-width: none; font-size: var(--fs-xs); color: var(--muted); }
+/* borders at 3:1 or more against the panel in both themes (WCAG 1.4.11; measured grey, green, blue: light 3.8-4.4, dark 4.9-7.3) */
+.mm-node rect { fill: var(--surface-2); stroke: color-mix(in srgb, var(--muted) 80%, var(--surface)); stroke-width: 1.2; }
+.mm-node.t-green rect { fill: color-mix(in srgb, var(--good) 12%, var(--surface)); stroke: color-mix(in srgb, var(--good) 85%, var(--surface)); }
+.mm-node.t-blue rect { fill: color-mix(in srgb, var(--accent) 10%, var(--surface)); stroke: color-mix(in srgb, var(--accent) 85%, var(--surface)); }
+.mm-node.t-amber rect { fill: color-mix(in srgb, var(--warn) 12%, var(--surface)); stroke: color-mix(in srgb, var(--warn) 85%, var(--surface)); }
+.mm-node.t-red rect { fill: color-mix(in srgb, var(--danger) 10%, var(--surface)); stroke: color-mix(in srgb, var(--danger) 85%, var(--surface)); }
+.mm-node.t-violet rect { fill: color-mix(in srgb, var(--secondary) 10%, var(--surface)); stroke: color-mix(in srgb, var(--secondary) 85%, var(--surface)); }
+.mm-node.ext rect, .mm-node.t-more rect { fill: var(--surface); stroke-dasharray: 4 3; }
+.mm-node.mid rect { stroke-width: 2.2; }
+.mm-name { font: 600 13.5px var(--font-mono); fill: currentColor; color: var(--fg); }
+.mm-node.mid .mm-name { font-size: 14px; font-weight: 700; }
+.mm-key { font: 500 13px var(--font-mono); fill: currentColor; color: var(--muted); }
+.mm-state { font: 600 12px var(--font-body); fill: currentColor; color: var(--muted); }
+.mm-wlabel { font: 600 12px var(--font-body); fill: currentColor; color: var(--fg); }
+.mm-edge { fill: none; stroke: var(--muted); stroke-width: 1.4; }
+.mm-edge.w { stroke-dasharray: 3 3; }
+.mm-arrow { fill: var(--muted); }

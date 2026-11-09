@@ -28,11 +28,11 @@ what the house view takes from it, the `meta.dataSources` shape, and the capabil
 ## What the house view takes (DataGrid.tsx)
 | Snowsight | House drawer |
 |---|---|
-| Data Preview tab | **Data preview**: row numbers, sticky typed header (glyph + name + D7 change chip), mono cells, `NULL` muted, long JSON or text cut at 40 characters with click to expand, click a header to sort, a filter box, **Copy TSV** (visible rows), caption `N sample rows · synthetic` (the first clause of `sample_source`). A grid wider than the drawer is cut into stacked bands of whole columns with the same row numbers (D26); **Expand** shows it as one band in a 95% landscape modal |
-| Show column stats (header mini graphs) | a stats row under the header, on by default: filled meter, then a histogram (number, date, time) or a frequency bar (everything else); a toggle hides it |
+| Data Preview tab | **Data preview**: row numbers, sticky typed header (glyph + name + D7 change chip), mono cells, `NULL` muted, numbers right-aligned under right-aligned headers (D30), long JSON or text cut at 40 characters with click to expand, click a header to sort, a filter box, **Copy TSV** (visible rows), caption `N sample rows · synthetic` (the first clause of `sample_source`). A grid wider than the drawer is cut into stacked bands of whole columns with the same row numbers (D26); **Expand** shows it as one band in a 95% landscape modal |
+| Show column stats (header mini graphs) | one small stats badge beside each header's name (D30), no stats row and no toggle: muted when the column has no NULL in the sample, with a warning dot when it has some. Hover or focus shows a popover under the header: the column and its type, "x% null · n distinct", min and max where the kind has them (shortest and longest for text, ids and JSON), one small distribution bar (a bin per number, date or time range, else the most frequent values) and "From the N sample rows, not the database." Click, Enter or Space opens the same content as a dropdown that stays until Esc, a click outside or a second click; one is open at a time; touch uses the tap. The badge carries `aria-expanded` and `aria-controls`; Esc closes the dropdown first and leaves the drawer open. Headers and cells keep one column grid. The Columns tab keeps its meter and histogram |
 | Columns tab + inspector statistics | **Columns**: name, D7 chip, note, type (or "not stated"), struck-through `was`, nulls %, distinct count, min/max (shortest/longest for text and JSON), the same mini graph |
-| Table Details + Query Details | **Details**: the summary, the D7 measured and expected load cards ("not measured" / "not estimated" when absent), DDL, indexes, notes, where the table appears on the page |
-| Table Details row count and size | the schema diagram's **table cards** (D26): a sizing strip of rows, cols and cost tiles from `measured.rows`, `measured.columns`, `measured.cost`, each with the expected change after the design (red rises, green falls or stays), and writes in the card's detail (pointer, keyboard focus, tap); details in schema-lane.md |
+| Table Details + Query Details | **Details**: the table's brief (D28: the summary as its purpose, a measures table with "not measured" / "not estimated" cells and each row's basis, trade-offs, place and impact), then the table facts, DDL, indexes, notes, where the table appears on the page |
+| Table Details row count and size | the schema diagram's **table cards** (D26, D28): one row of rows, cols, writes and cost measures from `measured.rows`, `measured.columns`, `measured.writes`, `measured.cost`, each with the expected change after the design as a pill (red rises, green falls or stays); the card's hover card and the top of Details show the table's brief (purpose, measures table, trade-offs, a mini diagram of its place); details in schema-lane.md |
 | Download results | not offered: the page contract forbids download links; Copy TSV covers small sample sets |
 Every statistic is computed at render from `sample_rows`, deterministically, and labelled "from sample rows"; none is a
 measurement of the real table. Glyphs (house choice): `#` number, `Aa` text, `{}` JSON, `[]` array, `id` uuid,
@@ -46,8 +46,8 @@ sideways inside its band), Expand is not offered, and the Columns tab stacks eac
 per month or its share of the database bill, from a billing export or cost dashboard) and `measured.columns` (the live
 table's column count when the file lists only the columns the design names) each take `{value, unit, source, date,
 note?}`; `expected.rows`, `expected.writes`, `expected.cost` take `{value?, unit?, note}`. The drawer's Details tab
-lists them with the other load keys; the diagram's table card turns rows, columns and cost into its three tiles and
-puts writes in its detail. Neither ever computes a
+lists them in the brief's measures table; the diagram's table card turns rows, columns, writes and cost into its one-row
+strip. Neither ever computes a
 measurement: an absent key reads "not measured" or "not estimated".
 
 ## The chat (DataChat.tsx)
