@@ -20,6 +20,9 @@ internal static partial class Labels
     /// <summary>The editor sheet's line when no node is selected, or the selected node has no settings.</summary>
     internal const string WfEditorNoFields = "Select a node on the graph that has settings, then press Edit.";
 
+    /// <summary>The graph edit bar's line while the editor sheet is open: graph edits wait for the sheet to close.</summary>
+    internal const string WfEditSheetOpenNote = "Close the editor sheet to edit steps on the graph.";
+
     /// <summary>The editor sheet's heading.</summary>
     /// <param name="name">The workflow's name.</param>
     /// <param name="revision">The revision the edits are sent on.</param>

@@ -3,6 +3,12 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>The graph edit commands (<see cref="GraphEditViewModel"/>, continued): their words.</summary>
 internal sealed partial class GraphEditViewModel
 {
+    /// <summary>True while the editor sheet is open on this page; set by the page.</summary>
+    internal bool SheetOpen { get; set; }
+
+    /// <summary>The line explaining why graph edits are off while the editor sheet is open; empty otherwise.</summary>
+    public string SheetOpenText => SheetOpen && Editor is null ? Labels.WfEditSheetOpenNote : string.Empty;   // red stub: the green commit shows it while the sheet is open
+
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>The Add step command's words.</summary>
     public string AddText => Labels.WfEditAdd;

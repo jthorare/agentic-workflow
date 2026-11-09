@@ -72,6 +72,11 @@ internal sealed partial class WorkflowsPageViewModel
         await Editor.EditFields(changed, cancellationToken).ConfigureAwait(true);
     }
 
+    /// <summary>Reads the workflow again from the sheet's Reload button.</summary>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>A task that completes when the workflow is read.</returns>
+    internal Task ReloadEditor(CancellationToken cancellationToken) => Editor.Reload(cancellationToken);
+
     /// <summary>Closes the sheet.</summary>
     internal void CloseEditor() => IsEditing = false;
 

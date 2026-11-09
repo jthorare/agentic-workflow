@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
@@ -148,8 +149,7 @@ public sealed class WorkflowsEditorSheetTests
         await page.Edit(Token);
         page.Editor.Fields[0].Text = "Check twice";
 
-        page.Back();
-        await page.OpenWorkflow(other, Token);
+        await page.OpenWorkflow(other, Token);   // straight from the runs level: OpenWorkflow itself closes the sheet
         await page.Save(Token);
 
         Assert.False(page.IsEditing);
@@ -183,5 +183,111 @@ public sealed class WorkflowsEditorSheetTests
 
         Assert.False(page.CanEdit);
         Assert.Contains(nameof(WorkflowsPageViewModel.CanEdit), raised, StringComparer.Ordinal);
+    }
+
+    private JsonNode ServeRevision(int revision)
+    {
+        var newer = Golden("workflows-slug", "found");
+        newer["latestRevision"] = revision;
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newer.ToJsonString());
+        return newer;
+    }
+
+    [Fact]
+    public async Task A_graph_edit_after_a_sheet_save_goes_out_once_on_the_saved_revision_with_no_reload_prompt()
+    {
+        var page = await OnRuns();
+        _ = page.Runs.Graph!.SelectNode("agent");
+        await page.Edit(Token);
+        page.Editor.Fields[0].Text = "Check twice";
+        _ = ServeRevision(3);   // what the save makes Sindri hold
+        await page.Save(Token);
+        Assert.Equal(3, page.Runs.Shown!.LatestRevision);   // the page shows the revision the save made
+
+        await page.GraphEdit.BeginAdd(Token);
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+
+        Assert.Equal(2, _f.Server.AppliedWorkflowOps.Count);
+        Assert.Equal(3, _f.Server.AppliedWorkflowOps[1].BaseRevision);
+        Assert.False(page.Editor.NeedsReload);
+        Assert.Equal(3, page.Runs.Shown!.LatestRevision);
+    }
+
+    [Fact]
+    public async Task The_sheets_Reload_rereads_the_page_too()
+    {
+        var page = await OnRuns();
+        _ = page.Runs.Graph!.SelectNode("agent");
+        await page.Edit(Token);
+        _ = ServeRevision(3);
+
+        await page.ReloadEditor(Token);
+
+        Assert.Equal(3, page.Editor.BaseRevision);
+        Assert.Equal(3, page.Runs.Shown!.LatestRevision);
+    }
+
+    [Fact]
+    public async Task A_failed_workflow_read_leaves_nothing_of_the_old_workflow_to_save()
+    {
+        const string other = "evening-check";
+        _f.Server.WorkflowAnswers[other] = RouteAnswer.Api("workflows-slug", "found");
+        var page = await OnRuns();
+        _ = page.Runs.Graph!.SelectNode("agent");
+        await page.Edit(Token);
+        page.Editor.Fields[0].Text = "Check twice";
+        page.CloseEditor();
+        await page.OpenWorkflow(other, Token);   // the page reads it
+        _ = page.Runs.Graph!.SelectNode("agent");
+        _f.Server.WorkflowAnswers[other] = RouteAnswer.Problem("workflows-slug", "not-found");   // the editor's own read fails
+
+        await page.Edit(Token);
+        if (page.Editor.Fields.Count > 0)
+        {
+            page.Editor.Fields[0].Text = "Check three";
+        }
+
+        await page.Save(Token);
+
+        Assert.Empty(_f.Server.AppliedWorkflowOps);
+        Assert.False(page.CanSave);
+    }
+
+    [Fact]
+    public async Task With_the_sheet_open_graph_edits_are_off_with_a_line_saying_why_and_typed_text_stays()
+    {
+        var page = await OnRuns();
+        _ = page.Runs.Graph!.SelectNode("agent");
+        await page.GraphEdit.BeginAdd(Token);
+        await page.Edit(Token);
+        page.Editor.Fields[0].Text = "Typed, not saved";
+
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+
+        Assert.Empty(_f.Server.AppliedWorkflowOps);
+        Assert.False(page.GraphEdit.CanEdit);
+        Assert.Equal(Labels.WfEditSheetOpenNote, page.GraphEdit.SheetOpenText);
+        Assert.Equal("Typed, not saved", page.Editor.Fields[0].Text);
+        page.CloseEditor();
+        Assert.Equal(string.Empty, page.GraphEdit.SheetOpenText);
+        Assert.True(page.GraphEdit.CanEdit);
+    }
+
+    [Fact]
+    public async Task Save_sends_nothing_once_the_shown_workflow_turns_out_archived()
+    {
+        var page = await OnRuns();
+        _ = page.Runs.Graph!.SelectNode("agent");
+        await page.Edit(Token);
+        page.Editor.Fields[0].Text = "Check twice";
+        var archived = ServeRevision(2);
+        archived["archivedAt"] = "2026-01-01T00:00:00Z";
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, archived.ToJsonString());
+        await page.Runs.Read(Url, Slug, "Morning check", Token);
+
+        await page.Save(Token);
+
+        Assert.Empty(_f.Server.AppliedWorkflowOps);
+        Assert.False(page.CanSave);
     }
 }
