@@ -95,6 +95,17 @@ public sealed partial class CommandPaletteViewModelTests
         Assert.All(_palette.Sections, s => Assert.NotEmpty(s.Entries));
     }
 
+    // a partial phrase with a space ranks the label that starts with it first (#2385)
+    [Fact]
+    public void Typing_stop_sin_ranks_stop_sindri_first()
+    {
+        _palette.Open();
+
+        _palette.Query = "stop sin";
+
+        Assert.Equal("StopProcess", _palette.Entries[0].Id);
+    }
+
     [Fact]
     public void Nothing_matching_leaves_no_sections_and_no_selection()
     {

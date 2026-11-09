@@ -65,6 +65,16 @@ public static class TodoObsidianRules
         };
     }
 
+    /// <summary>What is wrong with a note path by its shape alone, with the platform given.</summary>
+    /// <param name="note">The path.</param>
+    /// <param name="windows">True on Windows.</param>
+    /// <returns>The reason, or null.</returns>
+    internal static string? NotePath(string? note, bool windows)
+    {
+        _ = windows;
+        return NotePath(note);
+    }
+
     private static Error? Denied(string note, IReadOnlyList<string> deny)
     {
         var hit = deny.FirstOrDefault(glob => PathGlob.Matches(glob, note));

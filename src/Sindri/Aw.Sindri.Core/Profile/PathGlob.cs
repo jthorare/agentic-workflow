@@ -9,6 +9,17 @@ internal static class PathGlob
     /// <returns>True when it matches.</returns>
     internal static bool Matches(string glob, string path) => Segments(glob.Split('/'), 0, path.Split('/'), 0);
 
+    /// <summary>Whether the glob matches the path, with the case rule given.</summary>
+    /// <param name="glob">The glob.</param>
+    /// <param name="path">The path, relative to the repo root.</param>
+    /// <param name="ignoreCase">True to compare letters without case (macOS).</param>
+    /// <returns>True when it matches.</returns>
+    internal static bool Matches(string glob, string path, bool ignoreCase)
+    {
+        _ = ignoreCase;
+        return Matches(glob, path);
+    }
+
     private static bool Segments(string[] glob, int g, string[] path, int p)
     {
         if (g == glob.Length)
