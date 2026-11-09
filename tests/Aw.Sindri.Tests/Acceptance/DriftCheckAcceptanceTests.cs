@@ -35,7 +35,7 @@ public sealed class DriftCheckAcceptanceTests : IDisposable
 
     public void Dispose() => _rig.Dispose();
 
-    // why: the runs, the agent that reads the two repos and the pull request it opens need the agent and forge blocks of PR 9; that half moves to a follow-up after PR 9
+    // why: the runs, the agent that reads the two repos and the pull request it opens need the agent and forge blocks of PR 9; that half moves to a follow-up after PR 9 (#2453)
     [Fact]
     public async Task A_launched_session_makes_an_active_workflow_through_the_mcp_tools_and_every_write_names_it()
     {
