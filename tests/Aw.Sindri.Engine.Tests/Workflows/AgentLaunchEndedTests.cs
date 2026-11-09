@@ -63,7 +63,7 @@ public sealed class AgentLaunchEndedTests
         {
             if (state is not { } known)
             {
-                return ValueTask.FromResult(Results.Success<LaunchRow?>(null));
+                return ValueTask.FromResult(Results.Success<LaunchRow?>(value: null));
             }
 
             var row = new LaunchRow(launch, A.FirstItemId, Repo: null, LaunchMode.Open, AgentId.From("claude-code"), "engine", known, DateTimeOffset.UnixEpoch, OutcomeAt: null,
