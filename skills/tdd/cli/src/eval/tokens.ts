@@ -126,7 +126,7 @@ export function evaluate(inp: Input, build: string, meta: Py, sessions: string[]
     else {
       const perMain = sumUsage(mains);
       const perSub = sumUsage(subs);
-      const tot = (per: Map<string, PerModel>, k: keyof PerModel): number | PyFloat => pySum([...per.values()].map((v) => v[k]));
+      const tot = (per: Map<string, PerModel>, k: keyof PerModel): number | bigint | PyFloat => pySum([...per.values()].map((v) => v[k]));
       const both = (k: keyof PerModel): number => n(tot(perMain, k)) + n(tot(perSub, k));
       const usdSum = [tot(perMain, "usd"), tot(perSub, "usd")];
       sessionUsd = pyRound(usdSum.some(isFloat) ? fl(n(usdSum[0]) + n(usdSum[1])) : n(usdSum[0]) + n(usdSum[1]), 4);

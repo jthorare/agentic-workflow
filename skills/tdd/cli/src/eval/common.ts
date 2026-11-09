@@ -45,15 +45,99 @@ export function pyRound(v: unknown, nd: number): number | PyFloat {
   if (isFloat(v)) return fl(py.round(n(v), nd));
   return typeof v === "boolean" ? (v ? 1 : 0) : n(v);
 }
-/** sum(xs): an int unless a float joins in. */
-export function pySum(xs: Iterable<unknown>): number | PyFloat {
-  let t = 0;
-  let float = false;
-  for (const x of xs) {
-    if (isFloat(x)) float = true;
-    t += n(x);
+/**
+ * import(spec) for an optional SDK, as the Python's `try: import x except ImportError`: null when that package is not
+ * installed (ERR_MODULE_NOT_FOUND naming it); any other failure while loading it is thrown, not reported as "not
+ * installed". The specifier is a variable so neither the type checker nor a bundler pulls the SDK in.
+ */
+export async function importOptional(spec: string): Promise<Py | null> {
+  try {
+    return await import(spec);
+  } catch (e) {
+    const err = e as { code?: string; message?: string } | null;
+    if (err?.code === "ERR_MODULE_NOT_FOUND" && String(err.message ?? "").includes(`'${spec}'`)) return null;
+    throw e;
   }
-  return float ? fl(t) : t;
+}
+
+type SumAcc = { int: bigint } | { float: number };
+const LONG_MIN = -(2n ** 63n), LONG_MAX = 2n ** 63n - 1n;
+const fitsLong = (b: bigint): boolean => b >= LONG_MIN && b <= LONG_MAX;
+const intOf = (v: unknown): bigint | null =>
+  typeof v === "boolean" ? (v ? 1n : 0n) : typeof v === "bigint" ? v : typeof v === "number" && Number.isInteger(v) ? BigInt(v) : null;
+const floatOf = (v: unknown): number | null => (v instanceof PyFloat ? v.value : typeof v === "number" && !Number.isInteger(v) ? v : null);
+function intToFloat(b: bigint): number {
+  const f = Number(b); // round half-even, as PyLong_AsDouble
+  if (!Number.isFinite(f)) throw new PyError("OverflowError", "int too large to convert to float");
+  return f;
+}
+/** a + v for an int or float accumulator (PyNumber_Add on numbers). */
+function sumAdd(a: SumAcc, v: unknown): SumAcc {
+  const b = intOf(v), x = floatOf(v);
+  if (b === null && x === null) {
+    const t = typeof v === "string" ? "str" : v === null || v === undefined ? "NoneType" : Array.isArray(v) ? "list" : v instanceof Map ? "dict" : typeof v;
+    throw new PyError("TypeError", `unsupported operand type(s) for +: '${"int" in a ? "int" : "float"}' and '${t}'`);
+  }
+  if ("int" in a && b !== null) return { int: a.int + b };
+  const fa = "int" in a ? intToFloat(a.int) : a.float;
+  return { float: fa + (b !== null ? intToFloat(b) : x!) };
+}
+const sumResult = (a: SumAcc): number | bigint | PyFloat =>
+  "float" in a ? fl(a.float) : a.int >= BigInt(Number.MIN_SAFE_INTEGER) && a.int <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(a.int) : a.int;
+
+/**
+ * sum(xs) as CPython 3.12+ computes it (Python/bltinmodule.c builtin_sum_impl): ints add exactly while the total fits a C
+ * long; from the first float on, floats add with Neumaier's compensated (improved Kahan-Babuska) summation and ints that
+ * fit a C long add uncompensated, and the compensation joins the total at the end when it is finite and non-zero; past
+ * those fast paths every item goes through a plain `+`. An int unless a float joins in. Checked against CPython in
+ * test/eval/units.test.ts (random float, int and mixed lists, signed zeros, infinities, big ints).
+ */
+export function pySum(xs: Iterable<unknown>): number | bigint | PyFloat {
+  const it = xs[Symbol.iterator]();
+  let acc: SumAcc | null = null;
+  let i = 0n;
+  for (;;) {
+    const r = it.next();
+    if (r.done) return sumResult({ int: i });
+    const b = intOf(r.value);
+    if (b !== null && fitsLong(b) && fitsLong(i + b)) {
+      i += b;
+      continue;
+    }
+    acc = sumAdd({ int: i }, r.value);
+    break;
+  }
+  if ("float" in acc) {
+    let f = acc.float;
+    let c = 0;
+    for (;;) {
+      const r = it.next();
+      if (r.done) {
+        if (c && Number.isFinite(c)) f += c;
+        return fl(f);
+      }
+      const x = floatOf(r.value);
+      if (x !== null) {
+        const t = f + x;
+        c += Math.abs(f) >= Math.abs(x) ? f - t + x : x - t + f;
+        f = t;
+        continue;
+      }
+      const b = intOf(r.value);
+      if (b !== null && fitsLong(b)) {
+        f += Number(b);
+        continue;
+      }
+      if (c && Number.isFinite(c)) f += c;
+      acc = sumAdd({ float: f }, r.value);
+      break;
+    }
+  }
+  for (;;) {
+    const r = it.next();
+    if (r.done) return sumResult(acc);
+    acc = sumAdd(acc, r.value);
+  }
 }
 /** f"{x:.nf}" */
 export const fixed = (x: unknown, nd: number): string => formatFixed(n(x), nd);
