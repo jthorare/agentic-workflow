@@ -22,6 +22,9 @@ internal sealed class GraphIterationWorkflow
     private WorkflowRunId _run;
     private GraphNode? _current;
     private int _item;
+    private LoopShape? _shape;
+    private int _last;
+    private List<GraphNode> _left = [];
 
     /// <summary>Runs the batch.</summary>
     /// <param name="input">The batch.</param>
@@ -40,6 +43,8 @@ internal sealed class GraphIterationWorkflow
                 throw new ApplicationFailureException(found.Error.Message, nonRetryable: true);
             }
 
+            _shape = found.Value;
+            _last = input.First + input.Count - 1;
             for (var item = input.First; item < input.First + input.Count; item++)
             {
                 if (await Walk(spec, found.Value, item).ConfigureAwait(true) is { } failure)
@@ -52,11 +57,13 @@ internal sealed class GraphIterationWorkflow
         }
         catch (Exception e) when (TemporalException.IsCanceledException(e))
         {
+            // why: the workflow's token is already cancelled, so every write here is detached, or it would never run and the rows would stay 'running'
             if (_current is { } running)
             {
-                await Record(Row(running, _item, NodeRunStatus.Cancelled)).ConfigureAwait(true);
+                await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(Row(running, _item, NodeRunStatus.Cancelled)), _detached).ConfigureAwait(true);
             }
 
+            await SkipUnfinished().ConfigureAwait(true);
             throw;
         }
     }
@@ -66,6 +73,8 @@ internal sealed class GraphIterationWorkflow
         var decided = new HashSet<NodeId> { shape.ForEach.Id };
         var taken = new Dictionary<NodeId, IReadOnlyList<string>> { [shape.ForEach.Id] = ["out"] };
         var pending = shape.PerItem.ToList();
+        _left = pending;
+        _item = item;
         string? failure = null;
         while (failure is null && pending.Find(n => GraphWalkRules.Ready(spec, n, decided)) is { } node)
         {
@@ -94,6 +103,27 @@ internal sealed class GraphIterationWorkflow
         }
 
         return failure;
+    }
+
+    // why: on a cancel the rest of this item's nodes and every node of the batch's later items never run, so they are 'skipped'
+    private async Task SkipUnfinished()
+    {
+        foreach (var node in _left.ToList())
+        {
+            await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(Row(node, _item, NodeRunStatus.Skipped)), _detached).ConfigureAwait(true);
+            _ = _left.Remove(node);
+        }
+
+        if (_shape is { } shape)
+        {
+            for (var later = _item + 1; later <= _last; later++)
+            {
+                foreach (var node in shape.PerItem)
+                {
+                    await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(Row(node, later, NodeRunStatus.Skipped)), _detached).ConfigureAwait(true);
+                }
+            }
+        }
     }
 
     private async Task<GraphBlockOutcome> Execute(GraphNode node, int item)
