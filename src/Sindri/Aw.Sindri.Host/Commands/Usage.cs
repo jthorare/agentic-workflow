@@ -138,6 +138,8 @@ internal static class Usage
         "       sindri wf runs <slug> [--json]   a workflow's newest 50 runs, newest first, with status and trigger (exit 0 ok, 1 not running, 2 unknown)",
         "       sindri wf run-show <run> [--json]   one run with what each node did (exit 0 ok, 1 not running, 2 unknown)",
         "       sindri wf cancel <run> [--json]   ask a run in flight to stop (exit 0 ok, 1 not running, 2 refused)",
+        "       sindri wf takeover <run> <node> [--item <index>] [--json]   take the run_agent node the run waits on over: its timeout pauses and only you report it (exit 0 ok, 1 not running, 2 refused; an agent session is refused)",
+        "       sindri wf handback <run> <node> [--item <index>] [--json]   hand a taken-over run_agent node back: its timeout resumes with what was left (exit 0 ok, 1 not running, 2 refused)",
         "       sindri workflow takeover <address> [--nonce <n>] [--json]   take the instance over: its timer pauses",
         "       sindri workflow handback <address> [--nonce <n>] [--json]   hand a taken-over instance back: its timer resumes",
         "       sindri takeover <item-or-address> [--nonce <n>] [--json]   short form of 'workflow takeover' (a bare item is its latest attempt)",
