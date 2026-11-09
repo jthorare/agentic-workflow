@@ -18,7 +18,29 @@ internal sealed class WorkflowItemMaker(IServiceScopeFactory scopes) : ICreateIt
     public async ValueTask<Result<string>> Create(ItemToCreate item, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(item);
-        var (run, title, repo, body, linearIssue) = item;
+        var parsed = ToRequest(item);
+        if (parsed.IsError)
+        {
+            return parsed.Error;
+        }
+
+        var request = parsed.Value;
+        var run = item.Run;
+        using var scope = scopes.CreateScope();   // why: the handler is scoped; the run store is a singleton
+        using var entered = scope.ServiceProvider.GetRequiredService<ICallerContextAccessor>().EnterService("workflow");
+        var made = await scope.ServiceProvider.GetRequiredService<CreateItemService>().Handle(request, cancellationToken).ConfigureAwait(false);
+        if (made.IsError)
+        {
+            return made.Error;
+        }
+
+        var linked = await scope.ServiceProvider.GetRequiredService<IWorkflowRunStore>().SetItem(run, made.Value.ItemId, cancellationToken).ConfigureAwait(false);
+        return linked.IsError ? linked.Error : made.Value.ItemId.Value;
+    }
+
+    private static Result<CreateItemRequest> ToRequest(ItemToCreate item)
+    {
+        var (_, title, repo, body, linearIssue) = item;
         RepoName? repoName = null;
         if (repo is not null)
         {
@@ -43,20 +65,6 @@ internal sealed class WorkflowItemMaker(IServiceScopeFactory scopes) : ICreateIt
 
         var request = new CreateItemRequest(title, repoName, body, link);
         var valid = new CreateItemValidator().Validate(request);
-        if (valid.IsError)
-        {
-            return valid.Error;
-        }
-
-        using var scope = scopes.CreateScope();   // why: the handler is scoped; the run store is a singleton
-        using var entered = scope.ServiceProvider.GetRequiredService<ICallerContextAccessor>().EnterService("workflow");
-        var made = await scope.ServiceProvider.GetRequiredService<CreateItemService>().Handle(request, cancellationToken).ConfigureAwait(false);
-        if (made.IsError)
-        {
-            return made.Error;
-        }
-
-        var linked = await scope.ServiceProvider.GetRequiredService<IWorkflowRunStore>().SetItem(run, made.Value.ItemId, cancellationToken).ConfigureAwait(false);
-        return linked.IsError ? linked.Error : made.Value.ItemId.Value;
+        return valid.IsError ? valid.Error : request;
     }
 }
