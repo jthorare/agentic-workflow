@@ -63,7 +63,7 @@ public static class RunAgentLaunches
         // Never plan mode: plan mode runs read-only tools only, so the session couldn't run 'sindri workflow complete'. The node may report, write its own worktree and commit it, nothing else.
         var policy = new StepPolicy([.. _report, .. _mcp, .. _commit], StepPermissionMode.Default, worktree);
         var step = new StepArgs(Model: null, policy, new StepRef(address.Node.Value, "run_agent"), brief);
-        return new LaunchRequest(address.Launch, target.Item, agent, LaunchMode.Open, Attended: false, target.RepoPath, Instance: null, worktree, step, Run: null)
+        return new LaunchRequest(address.Launch(), target.Item, agent, LaunchMode.Open, Attended: false, target.RepoPath, Instance: null, worktree, step, Run: null)
         {
             Node = address,
             Task = new AgentTask(brief, config.Outputs, groups),

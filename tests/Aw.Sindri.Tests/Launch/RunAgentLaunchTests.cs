@@ -22,7 +22,7 @@ public sealed class RunAgentLaunchTests
     [Fact]
     public void The_branch_is_wf_slug_run_and_the_session_name_uses_the_launch_id()
     {
-        var session = LaunchSessionName.For(_address.Launch);
+        var session = LaunchSessionName.For(_address.Launch());
 
         Assert.Equal("wf/walk/1-12-check", _address.Branch);
         Assert.Equal("wf/walk/1-12-check", _address.RefNamespace);   // the session may write its own node's refs and no other branch of the workflow
@@ -45,8 +45,8 @@ public sealed class RunAgentLaunchTests
         var item = NodeRunAddress.Of(WorkflowRunId.From("walk@1:12"), NodeId.From("check"), itemIndex: 2);
         var next = NodeRunAddress.Of(WorkflowRunId.From("walk@1:13"), NodeId.From("check"));
 
-        Assert.Equal(_address.Launch, again.Launch);
-        Assert.Equal(4, new[] { _address.Launch, other.Launch, item.Launch, next.Launch }.Distinct().Count());
+        Assert.Equal(_address.Launch(), again.Launch());
+        Assert.Equal(4, new[] { _address.Launch(), other.Launch(), item.Launch(), next.Launch() }.Distinct().Count());
         Assert.Equal("wf/walk/1-12-check-2", item.Branch);
         Assert.Equal("walk", _address.Workflow.Value);
     }
@@ -57,7 +57,7 @@ public sealed class RunAgentLaunchTests
         var request = RunAgentLaunches.RequestFor(_address, _target, Config(), "the brief", ["github"]);
 
         Assert.Equal(_address, request.Node);
-        Assert.Equal(_address.Launch, request.Launch);
+        Assert.Equal(_address.Launch(), request.Launch);
         Assert.False(request.Attended);
         Assert.Equal(LaunchMode.Open, request.Mode);
         Assert.Null(request.Instance);

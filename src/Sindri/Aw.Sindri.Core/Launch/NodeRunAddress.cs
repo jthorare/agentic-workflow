@@ -8,7 +8,7 @@ namespace Aw.Sindri.Core.Launch;
 /// <summary>
 /// Which node run a launch belongs to (PR 7): the workflow, the run, the node and the item's position inside a 'for_each' (0 for a node that runs once).
 /// It plays the part a Step run's instance and token played. A run id holds '@' and ':', so the session name and the git branch never use it: they come from
-/// <see cref="Launch"/> and <see cref="Branch"/>.
+/// <see cref="Launch()"/> and <see cref="Branch"/>.
 /// </summary>
 /// <param name="Workflow">The workflow's slug.</param>
 /// <param name="Run">The run's id.</param>
@@ -28,13 +28,12 @@ public sealed record NodeRunAddress(WorkflowSlug Workflow, WorkflowRunId Run, No
     }
 
     /// <summary>The launch id: 'LCH-' and the first 32 hex digits of SHA-256 of 'agent-launch:&lt;run&gt;:&lt;node&gt;:&lt;index&gt;'. A retry or a replay can never start a second session.</summary>
-    public LaunchId Launch
+    /// <returns>The launch id.</returns>
+    /// <remarks>A method, not a property: ARCH-ID-002 asks every typed-id property to be required on read, and this one is computed.</remarks>
+    public LaunchId Launch()
     {
-        get
-        {
-            var digest = SHA256.HashData(Encoding.UTF8.GetBytes(string.Create(CultureInfo.InvariantCulture, $"agent-launch:{Run.Value}:{Node.Value}:{ItemIndex}")));
-            return LaunchId.From("LCH-" + Convert.ToHexStringLower(digest)[..32]);
-        }
+        var digest = SHA256.HashData(Encoding.UTF8.GetBytes(string.Create(CultureInfo.InvariantCulture, $"agent-launch:{Run.Value}:{Node.Value}:{ItemIndex}")));
+        return LaunchId.From("LCH-" + Convert.ToHexStringLower(digest)[..32]);
     }
 
     /// <summary>The run's short name inside a branch: '&lt;revision&gt;-&lt;occurrence&gt;-&lt;node&gt;', and '-&lt;index&gt;' after it for an item of a 'for_each'. No ':' and no '@'.</summary>

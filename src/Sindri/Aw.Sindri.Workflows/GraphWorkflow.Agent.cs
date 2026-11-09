@@ -20,7 +20,7 @@ internal sealed partial class GraphWorkflow
     {
         var reference = new AgentNodeRef(_run, node.Id, ItemIndex: 0);
         var address = NodeRunAddress.Of(_run, node.Id);
-        var launch = address.Launch.Value;
+        var launch = address.Launch().Value;
         try
         {
             AgentNodeLaunched started;

@@ -92,7 +92,7 @@ public sealed class GraphAgentTakeoverTests(SindriTimeSkippingServer server) : I
         var held = (await rig.Control.Running(run, Token)).Value;
 
         Assert.Equal(AgentNodeRig.Agent, before!.Node);
-        Assert.Equal(NodeRunAddress.Of(run, AgentNodeRig.Agent).Launch, before.Launch);
+        Assert.Equal(NodeRunAddress.Of(run, AgentNodeRig.Agent).Launch(), before.Launch);
         Assert.False(before.TakenOver);
         Assert.True(held!.TakenOver);
         _ = await rig.Control.Handback(run, AgentNodeRig.Agent, itemIndex: 0, Token);

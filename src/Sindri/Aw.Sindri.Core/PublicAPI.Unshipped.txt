@@ -20604,7 +20604,7 @@ Aw.Sindri.Core.Launch.NodeRunAddress.<Clone>$() -> Aw.Sindri.Core.Launch.NodeRun
 Aw.Sindri.Core.Launch.NodeRunAddress.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Workflow, out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out int ItemIndex) -> void
 Aw.Sindri.Core.Launch.NodeRunAddress.NodeRunAddress(Aw.Sindri.Core.Graph.Ids.WorkflowSlug Workflow, Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, int ItemIndex) -> void
 static Aw.Sindri.Core.Launch.NodeRunAddress.Of(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node, int itemIndex = 0) -> Aw.Sindri.Core.Launch.NodeRunAddress!
-Aw.Sindri.Core.Launch.NodeRunAddress.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
+Aw.Sindri.Core.Launch.NodeRunAddress.Launch() -> Aw.Sindri.Core.Launch.LaunchId
 Aw.Sindri.Core.Launch.NodeRunAddress.ShortRun.get -> string!
 Aw.Sindri.Core.Launch.NodeRunAddress.Branch.get -> string!
 Aw.Sindri.Core.Launch.NodeRunAddress.RefNamespace.get -> string!
