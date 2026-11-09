@@ -24,7 +24,7 @@ public sealed class WorkflowGoldenContractTests
     public void The_app_DTOs_read_every_workflow_golden_Sindri_serves()
     {
         var list = Read<WorkflowList>("workflows", "list-two");
-        Assert.Equal(["morning-check", "weekly-report"], list.Workflows.Select(w => w.Slug));
+        Assert.Equal(["morning-check", "weekly-report"], list.Workflows.Select(w => w.Slug), StringComparer.Ordinal);
         Assert.Equal((1, 1, "owner"), (list.Workflows[0].ActiveRevision, list.Workflows[0].LatestRevision, list.Workflows[0].ChangedBy));
         Assert.Null(list.Workflows[1].ActiveRevision);
         Assert.Empty(Read<WorkflowList>("workflows", "list-empty").Workflows);
@@ -47,7 +47,7 @@ public sealed class WorkflowGoldenContractTests
         Assert.Equal("manual", run.Trigger!.Value.GetProperty("kind").GetString());
         Assert.Equal("no drift", run.Outputs!.Value.GetProperty("summary").GetString());
         Assert.True(run.Error is null && run.ItemId is null);
-        Assert.Equal(["agent", "start"], run.Nodes.Select(n => n.Node));
+        Assert.Equal(["agent", "start"], run.Nodes.Select(n => n.Node), StringComparer.Ordinal);
         Assert.Equal((0, "succeeded", false), (run.Nodes[0].ItemIndex, run.Nodes[0].Status, run.Nodes[0].Truncated));
         Assert.Null(run.Nodes[0].Error);
         Assert.Equal("Look for drift", run.Nodes[0].Input!.Value.GetProperty("prompt").GetString());

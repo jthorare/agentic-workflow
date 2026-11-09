@@ -27,7 +27,7 @@ public sealed class RunDetailViewModelTests
     {
         var run = await _f.OpenedRun(Token);
 
-        Assert.Equal(["agent", "start"], run.Groups.Select(g => g.Node));
+        Assert.Equal(["agent", "start"], run.Groups.Select(g => g.Node), StringComparer.Ordinal);
         var agent = Assert.Single(run.Groups[0].Runs);
         Assert.Equal(("agent", "✓ Succeeded", true, true), (agent.TitleText, agent.ChipText, agent.HasInput, agent.HasOutput));
         Assert.Contains("\"prompt\": \"Look for drift\"", agent.InputText, StringComparison.Ordinal);
@@ -88,7 +88,7 @@ public sealed class RunDetailViewModelTests
 
         var group = run.Groups[0];
         Assert.Equal((2, "agent · 3 items", true), (run.Groups.Count, group.HeaderText, group.IsForEach));
-        Assert.Equal(["Item 1 of 3", "Item 2 of 3", "Item 3 of 3"], group.Runs.Select(r => r.TitleText));
+        Assert.Equal(["Item 1 of 3", "Item 2 of 3", "Item 3 of 3"], group.Runs.Select(r => r.TitleText), StringComparer.Ordinal);
         Assert.Equal("start", run.Groups[1].Node);
     }
 

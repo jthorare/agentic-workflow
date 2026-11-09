@@ -80,9 +80,9 @@ public sealed class WorkflowsPageViewModelTests
 
         Assert.Equal((false, true, false), (page.IsList, page.IsRuns, page.IsRun));
         Assert.Equal(("Morning check", "1 running · 3 runs"), (page.Runs.Title, page.Runs.Head));
-        Assert.Equal(["morning-check@1:3", "morning-check@1:2", "morning-check@1:1"], page.Runs.Rows.Select(r => r.Id));
-        Assert.Equal(["● Running", "✕ Failed", "✓ Succeeded"], page.Runs.Rows.Select(r => r.ChipText));
-        Assert.Equal(["Manual", "Schedule", "Manual"], page.Runs.Rows.Select(r => r.TriggerText));
+        Assert.Equal(["morning-check@1:3", "morning-check@1:2", "morning-check@1:1"], page.Runs.Rows.Select(r => r.Id), StringComparer.Ordinal);
+        Assert.Equal(["● Running", "✕ Failed", "✓ Succeeded"], page.Runs.Rows.Select(r => r.ChipText), StringComparer.Ordinal);
+        Assert.Equal(["Manual", "Schedule", "Manual"], page.Runs.Rows.Select(r => r.TriggerText), StringComparer.Ordinal);
     }
 
     [Fact]
