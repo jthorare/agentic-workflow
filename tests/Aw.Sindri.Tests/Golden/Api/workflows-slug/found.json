@@ -9,7 +9,7 @@
   "createdBy": "owner",
   "changedBy": "session:golden",
   "changedAt": "2026-01-01T00:00:00.0000000Z",
-  "specHash": "<regenerate: AW_GOLDEN_UPDATE=1>",
+  "specHash": "sha256:2980bc3c32d3702aea35ad31d73b4b56c5b7d9e88fb45864e7c0d79ca1837e1e",
   "spec": {
     "version": 1,
     "name": "Morning check",
@@ -36,5 +36,16 @@
       }
     ]
   },
-  "positions": []
+  "positions": [
+    {
+      "node": "start",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "node": "agent",
+      "x": 280,
+      "y": 0
+    }
+  ]
 }
