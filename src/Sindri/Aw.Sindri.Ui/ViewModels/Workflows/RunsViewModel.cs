@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
+using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflows;
 
@@ -111,6 +112,12 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
             return;   // a newer read was asked for since
         }
 
+        Land(detail, runs);
+    }
+
+    // What the two reads said: the line under the name and the graph from the workflow's read, the list (or "off", or the failure) from the runs read.
+    private void Land(Result<WorkflowView> detail, Result<WorkflowRunList> runs)
+    {
         IsReading = false;
         DetailText = detail.IsSuccess ? Detail(detail.Value) : string.Empty;
         (Shown, Graph) = detail.IsSuccess ? (detail.Value, WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(detail.Value))) : (Shown, Graph);

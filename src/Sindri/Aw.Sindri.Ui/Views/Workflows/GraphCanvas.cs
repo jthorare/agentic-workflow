@@ -21,7 +21,7 @@ internal sealed partial class GraphCanvas : Control
     /// <summary>The largest zoom.</summary>
     internal const double MaxZoom = 2;
 
-    private static readonly Point DefaultPan = new(24, 24);
+    private static readonly Point _defaultPan = new(24, 24);
 
     /// <summary>The graph drawn.</summary>
     internal static readonly StyledProperty<WorkflowGraphViewModel?> GraphProperty = AvaloniaProperty.Register<GraphCanvas, WorkflowGraphViewModel?>(nameof(Graph));
@@ -30,7 +30,7 @@ internal sealed partial class GraphCanvas : Control
     internal static readonly StyledProperty<double> ZoomProperty = AvaloniaProperty.Register<GraphCanvas, double>(nameof(Zoom), 1, coerce: (_, v) => Math.Clamp(v, MinZoom, MaxZoom));
 
     /// <summary>Where the world's origin sits in this control.</summary>
-    internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), DefaultPan);
+    internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), _defaultPan);
 
     private const double ViewMargin = 24;
     private const double MinHandle = 40;
@@ -98,14 +98,10 @@ internal sealed partial class GraphCanvas : Control
     /// <summary>How many times the canvas has drawn: a test reads it to see that a theme switch redrew.</summary>
     internal int RenderCount { get; private set; }
 
-    /// <inheritdoc/>
-    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    /// <summary>Initializes a new instance of the <see cref="GraphCanvas"/> class.</summary>
+    public GraphCanvas()
     {
-        base.OnPropertyChanged(change);
-        if (change.Property == ActualThemeVariantProperty)
-        {
-            InvalidateVisual();   // the brushes are looked up while drawing, so a theme switch needs a new pass
-        }
+        ActualThemeVariantChanged += (_, _) => InvalidateVisual();   // the brushes are looked up while drawing, so a theme switch needs a new pass
     }
 
     /// <inheritdoc/>
@@ -227,7 +223,7 @@ internal sealed partial class GraphCanvas : Control
         if (old is null || graph is null || !string.Equals(old.Slug, graph.Slug, StringComparison.Ordinal))
         {
             Zoom = 1;
-            Pan = DefaultPan;
+            Pan = _defaultPan;
         }
 
         _watched = graph;
