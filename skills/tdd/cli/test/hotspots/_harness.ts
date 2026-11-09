@@ -83,6 +83,7 @@ export function copyPacket(src: string, dst: string): void {
  * other exception: "EXC <type>" on stderr, 1). Prints [[code, out, err], ...]. */
 export const pyMainLoop = (script: string): string => String.raw`
 import contextlib, importlib.util, io, json, sys
+sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location("m", ${JSON.stringify(join(SCRIPTS, script))})
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 res = []
