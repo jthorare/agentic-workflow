@@ -21601,3 +21601,19 @@ Aw.Sindri.Core.Resources.ResourceEntry.Owner.get -> Aw.Sindri.Core.Resources.Res
 Aw.Sindri.Core.Resources.ResourceEntry.Path.get -> string!
 Aw.Sindri.Core.Resources.ResourceEntry.ResourceEntry(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceKind kind, string! name, long sizeBytes, string! path) -> void
 Aw.Sindri.Core.Resources.ResourceEntry.SizeBytes.get -> long
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.BoxCap.get -> Aw.Sindri.Core.Resources.ResourceBoxCap?
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.BoxCap.init -> void
+Aw.Sindri.Core.Resources.ResourceBoxCap
+Aw.Sindri.Core.Resources.ResourceBoxCap.<Clone>$() -> Aw.Sindri.Core.Resources.ResourceBoxCap!
+Aw.Sindri.Core.Resources.ResourceBoxCap.Deconstruct(out long MemoryBytes, out System.TimeSpan Wall) -> void
+Aw.Sindri.Core.Resources.ResourceBoxCap.Equals(Aw.Sindri.Core.Resources.ResourceBoxCap? other) -> bool
+Aw.Sindri.Core.Resources.ResourceBoxCap.MemoryBytes.get -> long
+Aw.Sindri.Core.Resources.ResourceBoxCap.MemoryBytes.init -> void
+Aw.Sindri.Core.Resources.ResourceBoxCap.ResourceBoxCap(long MemoryBytes, System.TimeSpan Wall) -> void
+Aw.Sindri.Core.Resources.ResourceBoxCap.Wall.get -> System.TimeSpan
+Aw.Sindri.Core.Resources.ResourceBoxCap.Wall.init -> void
+override Aw.Sindri.Core.Resources.ResourceBoxCap.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.ResourceBoxCap.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.ResourceBoxCap.ToString() -> string!
+static Aw.Sindri.Core.Resources.ResourceBoxCap.operator !=(Aw.Sindri.Core.Resources.ResourceBoxCap? left, Aw.Sindri.Core.Resources.ResourceBoxCap? right) -> bool
+static Aw.Sindri.Core.Resources.ResourceBoxCap.operator ==(Aw.Sindri.Core.Resources.ResourceBoxCap? left, Aw.Sindri.Core.Resources.ResourceBoxCap? right) -> bool
