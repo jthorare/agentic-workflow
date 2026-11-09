@@ -1,7 +1,7 @@
-using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Todos;
+using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Features.GetTodo;
 using Aw.Sindri.Features.GetTodoNote;
 using Aw.Sindri.Features.ListTodos;

@@ -103,9 +103,9 @@ internal static class TodoScenarios
             while (!stop.IsCancellationRequested)
             {
                 clock.Advance(TimeSpan.FromMilliseconds(500));
-                await Task.Delay(5).ConfigureAwait(false);
+                await Task.Delay(5, CancellationToken.None).ConfigureAwait(false);
             }
-        });
+        }, CancellationToken.None);
         try
         {
             return await call().ConfigureAwait(false);

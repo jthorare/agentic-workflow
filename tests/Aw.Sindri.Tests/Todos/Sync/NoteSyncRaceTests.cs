@@ -1,6 +1,7 @@
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Todos;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Todos.Sync;
 
@@ -130,5 +131,5 @@ public sealed class NoteSyncRaceTests
         Assert.Empty(await rig.Events(EventTypes.TodoRemoved));
     }
 
-    private static string FakeName() => Aw.Sindri.Testing.FakeTodoNoteFiles.TmpOf(SyncRig.Path);
+    private static string FakeName() => FakeTodoNoteFiles.TmpOf(SyncRig.Path);
 }

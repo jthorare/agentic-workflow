@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Todos.Note;
 using Aw.Kernel;
+using Aw.Sindri.Core.Todos.Note;
 
 namespace Aw.Sindri.Tests.Todos;
 
