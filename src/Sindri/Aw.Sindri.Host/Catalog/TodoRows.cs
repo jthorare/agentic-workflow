@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.AddTodo;
 using Aw.Sindri.Features.ChangeTodo;
 using Aw.Sindri.Features.CheckTodoNote;
+using Aw.Sindri.Features.ImportTodoNote;
 using Aw.Sindri.Features.KeepTodo;
 using Aw.Sindri.Features.KeepTodoUndo;
 using Aw.Sindri.Features.MarkTodo;
@@ -36,6 +37,9 @@ internal static class TodoRows
         new(ActionId.From("CheckTodoNote"), typeof(CheckTodoNoteRequest), Variant: null, ActionClass.Request, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: true, Destructive: false, ReadsViews: true, Shortcut: null,
             "POST", "/sindri/todos/note/check", ShellRows.Form("sindri todo note set <vault> <note> [--json]"), "ready"),
+        new(ActionId.From("ImportTodoNote"), typeof(ImportTodoNoteRequest), Variant: null, ActionClass.Request, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            "POST", "/sindri/todos/note/import", ShellRows.Form("sindri todo note import [--expect <n>] [--dry-run] [--json]"), "ready"),
         new(ActionId.From("SetTodoNote"), typeof(SetTodoNoteRequest), Variant: null, ActionClass.Request, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/todos/note/set", ShellRows.Form("sindri todo note set <vault> <note> [--json]"), "ready"),

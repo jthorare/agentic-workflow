@@ -1,0 +1,15 @@
+{
+  "imported": 0,
+  "cantImport": 1,
+  "open": 3,
+  "done": 1,
+  "other": 3,
+  "importable": 2,
+  "cantImportLines": [
+    {
+      "line": 4,
+      "reason": "markdown link"
+    }
+  ],
+  "dryRun": true
+}
