@@ -1,0 +1,1 @@
+Happy to. Two things first: what should the toolkit be called (PascalCase, like Contracts), and what is the name and job of its first tool? Does it need a database, a disk or a connection?
