@@ -59,6 +59,7 @@ Read after `_preamble.md`, only when `${AW_PREAMBLE:-on}` is not `off`. Run **Se
 > | `/bugFixOrchestrator` | Bug ticket → rootCause → implementers → proven, judge-checked resolution |
 > | `/new-package` | Scaffold a C# package that passes every check, with one red test |
 > | `/new-slice` | Add one C# use case (slice) to a package, red first |
+> | `/new-toolkit` | Scaffold a Sindri toolkit (a C# MCP server outside the repo), red first |
 > | `/meta` | Meta orchestrator: replies owed, lane map, gate and merge, owner questions, health (aw-meta CLI) |
 > | `/system-design` | System design for a project: persona pages (TDD, product + design), status doc, mockups, tldraw diagrams in the project's tokens |
 > | `/system-design-video` | Whiteboard explainer video of a system design, drawn live, one cut per audience |
