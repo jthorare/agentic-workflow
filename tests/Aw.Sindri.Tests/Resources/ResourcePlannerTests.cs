@@ -56,20 +56,21 @@ public sealed class ResourcePlannerTests
     }
 
     private static PlanLimits Resolve(ResourceLimitOverride? over) =>
-        LimitsResolver.Resolve(new LimitsInput(new SandboxLimits(Memory: "8GiB"), AttendedSettings: null, Attended: false, StepTimeout: TimeSpan.FromHours(4), LongMax: null, RamBytes: 64 * Gib, Cores: 4, Override: over));
+        LimitsResolver.Resolve(new LimitsInput(new SandboxLimits(Memory: "8GiB", Cpu: "25%"), AttendedSettings: null, Attended: false, StepTimeout: TimeSpan.FromHours(4), LongMax: null, RamBytes: 64 * Gib, Cores: 4, Override: over));
 
     [Fact, Trait("Lane", "unit")]
     public void A_sandbox_size_above_the_profile_is_clamped_by_the_resolver_and_one_below_it_is_kept()
     {
         var big = new ResourceSpec([], [], new SandboxResource(Cpu: "50%", Memory: "64GiB", Wall: "45m"), []);
-        var small = new ResourceSpec([], [], new SandboxResource(Cpu: null, Memory: "2GiB", Wall: null), []);
+        var small = new ResourceSpec([], [], new SandboxResource(Cpu: "10%", Memory: "2GiB", Wall: null), []);
 
         var clamped = Resolve(ResourcePlanner.Plan(Owner("workflow:triage"), big, Root).Value.Limits);
         var kept = Resolve(ResourcePlanner.Plan(Owner("workflow:triage"), small, Root).Value.Limits);
 
         Assert.Equal(8 * Gib, clamped.MemoryMaxBytes);
-        Assert.True(clamped.CpuQuotaPercent <= 200);
+        Assert.Equal(100, clamped.CpuQuotaPercent);   // 4 cores x the profile's 25%, not 4 x the declared 50%
         Assert.Equal(2 * Gib, kept.MemoryMaxBytes);
+        Assert.Equal(40, kept.CpuQuotaPercent);
     }
 
     [Fact, Trait("Lane", "unit")]
