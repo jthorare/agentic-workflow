@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Features.CreateItem;
@@ -9,9 +10,12 @@ namespace Aw.Sindri.Features.CreateItem;
 /// is already audited and authorized, and checks the title and body it builds.
 /// </summary>
 /// <param name="service">The create-item handler.</param>
-internal sealed class FixItemMaker(CreateItemService service) : IFixItems
+internal sealed class FixItemMaker(CreateItemService service) : IFixItems, IItemMaker
 {
-    public async ValueTask<Result<ItemId>> Create(string title, RepoName? repo, string body, CancellationToken cancellationToken)
+    ValueTask<Result<ItemId>> IFixItems.Create(string title, RepoName? repo, string body, CancellationToken cancellationToken) =>
+        Create(title, repo, body, cancellationToken);
+
+    public async ValueTask<Result<ItemId>> Create(string title, RepoName? repo, string? body, CancellationToken cancellationToken)
     {
         var request = new CreateItemRequest(title, repo, body);
         var valid = new CreateItemValidator().Validate(request);
