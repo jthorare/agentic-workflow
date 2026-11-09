@@ -141,9 +141,9 @@ internal static class TodoScenarios
     private static async Task<string> Show(GoldenHost host, (string Name, string Value)[] human, CancellationToken ct)
     {
         var made = await Add(host, human, """{"text":"rotate the staging key","due":"2025-12-31","links":["acme/api#12","ENG-12"],"clientId":"c-1"}""", string.Empty, ct);
-        var sindri = new Core.Events.TodoSide("rotate the staging key", new DateOnly(2025, 12, 31), ["acme/api#12", "ENG-12"], Done: false, Removed: false);
+        var sindri = new TodoSide("rotate the staging key", new DateOnly(2025, 12, 31), ["acme/api#12", "ENG-12"], Done: false, Removed: false);
         var obsidian = sindri with { Text = "rotate the prod key" };
-        await ViewScenarios.Append(host, Core.Events.EventTypes.TodoConflicted, new Core.Events.TodoConflicted(Core.Ids.TodoId.From(made), sindri, obsidian, NoteHash: "ab12"), "todo.conflicted:golden", ct);
+        await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(made), sindri, obsidian, NoteHash: "ab12"), "todo.conflicted:golden", ct);
         await ViewScenarios.CatchUp(host, ct);
         return (await host.Http.Ask(Get($"/sindri/todos/{made}", human))).Body;
     }

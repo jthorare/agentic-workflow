@@ -1,6 +1,6 @@
 using Aw.Kernel;
-using Aw.Sindri.Features.KeepTodo;
 using Aw.Sindri.Core.Todos;
+using Aw.Sindri.Features.KeepTodo;
 
 namespace Aw.Sindri.Host.Endpoints;
 
