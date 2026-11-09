@@ -20,6 +20,13 @@ public sealed class CallerContextTests
         Assert.Equal(actor, CallerContext.Http(new HttpCaller(caller, Terminal: false, client, Repo: null), new SequentialIdGenerator()).Actor);
 
     [Theory, Trait("Lane", "unit")]
+    [InlineData(CallerClass.Session, ClientLabel.Cli, "session:launch:LCH-00000000000000000000000000000001")]
+    [InlineData(CallerClass.Session, ClientLabel.Mcp, "session:launch:LCH-00000000000000000000000000000001")]
+    [InlineData(CallerClass.Human, ClientLabel.Cli, "human:cli")]
+    public void Http_names_the_launch_in_the_actor_of_a_launched_session_only(CallerClass caller, ClientLabel client, string actor) =>
+        Assert.Equal(actor, CallerContext.Http(new HttpCaller(caller, Terminal: false, client, Repo: null, LaunchId.From("LCH-00000000000000000000000000000001")), new SequentialIdGenerator()).Actor);
+
+    [Theory, Trait("Lane", "unit")]
     [InlineData(CallerClass.Session, true)]
     [InlineData(CallerClass.Human, false)]
     public void Http_carries_the_launch_only_for_a_session(CallerClass caller, bool kept)

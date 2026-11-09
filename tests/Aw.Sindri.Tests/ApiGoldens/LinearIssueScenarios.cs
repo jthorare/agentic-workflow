@@ -54,14 +54,14 @@ internal static class LinearIssueScenarios
             _ = services.Replace(ServiceDescriptor.Singleton<ILinearWriteGate>(Gate(scenario)));
         });
 
-    /// <summary>The write gate a scenario runs under: a session never writes, 'no-write-key' has no write key, 'team-not-picked' reads a team the profile didn't pick, else writes are on.</summary>
+    /// <summary>The write gate a scenario runs under: a session writes like the owner (agent-first PR 2) unless Context has sessions turned off ('session-write-refused'), 'no-write-key' has no write key, 'team-not-picked' reads a team the profile didn't pick, else writes are on.</summary>
     /// <param name="scenario">The scenario.</param>
     /// <returns>The fake gate.</returns>
     internal static FakeLinearWriteGate Gate(string scenario) => scenario switch
     {
         "no-write-key" => new FakeLinearWriteGate().Off("SND-LINEAR-002"),
         "team-not-picked" => new FakeLinearWriteGate().Off("SND-LINEAR-003"),
-        _ when scenario.StartsWith("session", StringComparison.Ordinal) => new FakeLinearWriteGate().Off("SND-AUTH-002"),
+        "session-write-refused" => new FakeLinearWriteGate().Off("SND-AUTH-002"),   // the one refusal a session still meets: Context has sessions turned off
         _ => new FakeLinearWriteGate(),
     };
 

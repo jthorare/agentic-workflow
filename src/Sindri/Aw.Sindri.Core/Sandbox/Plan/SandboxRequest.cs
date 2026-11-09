@@ -55,6 +55,15 @@ public sealed record SandboxRequest(
     /// <summary>Null for a Step that is not a skill block; else whether the block pushes and the run is not a trial. False leaves the Step without the agent GitHub token (<see cref="GithubCredentialResolver"/>).</summary>
     public bool? SkillPushes { get; init; }
 
+    /// <summary>Null, or the resource folders and files this run may write (PR 14): each becomes a <see cref="PlanMountKind.State"/> mount.</summary>
+    public IReadOnlyList<ResourceMount>? ResourceMounts { get; init; }
+
+    /// <summary>Null, or the block's own per-run limits (PR 14): clamped to the profile's 'sandbox.limits' and the box.</summary>
+    public ResourceLimitOverride? ResourceLimits { get; init; }
+
     /// <summary>True when the owner's approval for this repo covers the Step's <see cref="StepPolicy.Github"/> ask (skill flows spec D7). Nothing sets it yet, so an ask stays scrubbed.</summary>
     public bool GithubPushApproved { get; init; }
+
+    /// <summary>The host groups a graph node adds (<see cref="AgentTask.HostGroups"/>): 'github' for a node that names a repo, and its connections' groups. Null for any other launch.</summary>
+    public IReadOnlyList<string>? AddGroups { get; init; }
 }

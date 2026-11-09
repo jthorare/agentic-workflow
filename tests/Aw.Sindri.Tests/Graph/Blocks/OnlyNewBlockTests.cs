@@ -38,6 +38,18 @@ public sealed class OnlyNewBlockTests
     }
 
     [Fact]
+    public async Task Objects_that_differ_only_in_key_order_count_once_without_a_key()
+    {
+        var block = new OnlyNewBlock(new FlowFakes.MemorySeenStore());
+        JsonArray items = [JsonNode.Parse("{\"a\":1,\"b\":{\"y\":1,\"x\":2}}"), JsonNode.Parse("{\"b\":{\"x\":2,\"y\":1},\"a\":1}"), JsonNode.Parse("[2,1]"), JsonNode.Parse("[1,2]")];
+
+        var result = await Run(block, Context(items, key: null));
+
+        Assert.Equal(3, result.Outputs["count"]!.GetValue<int>());
+        Assert.Equal(1, result.Outputs["skipped"]!.GetValue<int>());
+    }
+
+    [Fact]
     public async Task Execute_alone_does_not_mark_its_items_as_seen()
     {
         var store = new FlowFakes.MemorySeenStore();

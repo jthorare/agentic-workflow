@@ -87,7 +87,7 @@ public sealed class WorkflowDocsTests
         }
     }
 
-    // why: the polling block ('connection_event') is not in this build yet; the same kind of question about the one trigger that is: "run on a timer"
+    // why: a timer question must land on the schedule trigger, not the polling trigger ('connection_event') next to it
     [Fact]
     public void A_question_about_running_on_a_timer_finds_the_schedule_block_page()
         => Assert.Equal("block-schedule", Top("how do I run a workflow every weekday morning on a cron timer"));

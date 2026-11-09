@@ -21,7 +21,7 @@ sindri                                  # start the control plane and open the a
 sindri doctor                           # one line per check: ok / warn / fail with a fix
 ```
 
-Some commands (approvals, starting and answering workflows, map builds, `index connect`) only run from a person's terminal and refuse agent sessions with `SND-AUTH-002`.
+An agent session may run every command. `SND-AUTH-002` now means only "no caller context, or a local-only row". `index purge` and `onyx down --purge` still ask for a typed yes, so they need a terminal.
 
 The full setup, from prerequisites through connecting your sources, agent runtime and MCP to the app, is in **[SETUP.md](SETUP.md)**, and as a guided page with a picture per step: **[`docs/sindri-setup.html`](../sindri-setup.html)** (open it from disk). Operating it from the CLI (the product map, recipes, running the line) is in [OPERATIONS.md](OPERATIONS.md) until those move into the app.
 

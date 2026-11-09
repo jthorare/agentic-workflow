@@ -157,6 +157,24 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
     }
 
     [Fact]
+    public async Task A_run_agent_in_the_loop_body_fails_the_for_each_before_any_item_runs()
+    {
+        await using var rig = GraphRig.Start(server.Environment);
+        var workflow = await rig.Define(GraphRig.Spec("unlimited",
+            [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each()), GraphRig.Node("work", "run_agent", config: new JsonObject { ["repo"] = "app", ["prompt"] = "{{item}}" }), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{work.status}}" })],
+            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "work"), GraphRig.Edge("work", "gather")]));
+
+        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, Trigger(Numbers(2)));
+        var run = await rig.Final(started.RunId);
+        var each = (await rig.ItemRuns(started.RunId, "each"))[0];
+
+        Assert.Equal(WorkflowRunStatus.Failed, run.Status);
+        Assert.Equal(NodeRunStatus.Failed, each.Status);
+        Assert.Contains("GRAPH-LOOP-003", each.Error, StringComparison.Ordinal);
+        Assert.False((await rig.ItemRuns(started.RunId, "work")).ContainsKey(1));
+    }
+
+    [Fact]
     public async Task Cancelling_during_an_item_leaves_no_running_row_and_marks_the_rest_skipped()
     {
         await using var rig = GraphRig.Start(server.Environment);

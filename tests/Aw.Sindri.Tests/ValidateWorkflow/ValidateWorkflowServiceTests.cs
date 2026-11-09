@@ -62,7 +62,7 @@ public sealed class ValidateWorkflowServiceTests : IDisposable
     {
         await _rig.Seed();
 
-        var workflow = await _service.Handle(new ValidateWorkflowRequest(Aw.Sindri.Core.Graph.Ids.WorkflowSlug.From("nope"), Revision: null, Spec: null), Token);
+        var workflow = await _service.Handle(new ValidateWorkflowRequest(Core.Graph.Ids.WorkflowSlug.From("nope"), Revision: null, Spec: null), Token);
         var revision = await _service.Handle(new ValidateWorkflowRequest(Slug, Revision: 9, Spec: null), Token);
 
         Assert.Equal(SindriErrors.GraphNotFound.Code, workflow.Error.Code);

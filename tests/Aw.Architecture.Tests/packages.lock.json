@@ -854,6 +854,13 @@
           "YamlDotNet": "[18.1.0, 18.1.0]"
         }
       },
+      "aw.sindri.toolkit": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Data.Sqlite": "[10.0.12, 10.0.12]",
+          "ModelContextProtocol.Core": "[2.2.0, 2.2.0]"
+        }
+      },
       "aw.sindri.ui": {
         "type": "Project",
         "dependencies": {

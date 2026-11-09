@@ -91,4 +91,36 @@ public sealed class AgentRecoveryTests
 
     [Fact]
     public void A_Step_the_catalog_does_not_know_parks() => Assert.Null(AgentRecovery.Decide(descriptor: null, ["challengeRound"], Folder).Outcome);
+
+    [Fact]
+    public void Outputs_in_sindri_out_complete_the_node_when_the_session_ended_unreported()
+    {
+        var declared = new Dictionary<string, string>(StringComparer.Ordinal) { ["drifted"] = "boolean", ["summary"] = "string", ["notes"] = "string?" };
+
+        var decision = AgentRecovery.DecideNode(declared, ["drifted", "summary", "scratch.md"], Folder);
+
+        Assert.Equal(["drifted", "summary"], decision.Names);   // the files that hold declared outputs; the optional one is not there and is not needed
+        Assert.Null(decision.Reason);
+    }
+
+    [Fact]
+    public void A_node_with_a_declared_output_missing_from_the_folder_parks_naming_the_folder()
+    {
+        var declared = new Dictionary<string, string>(StringComparer.Ordinal) { ["drifted"] = "boolean", ["summary"] = "string" };
+
+        var decision = AgentRecovery.DecideNode(declared, ["drifted"], Folder);
+
+        Assert.Empty(decision.Names);
+        Assert.StartsWith("the agent finished but its result was not recorded: " + Folder, decision.Reason, StringComparison.Ordinal);
+        Assert.Contains("summary", decision.Reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_node_that_declares_no_outputs_proves_nothing_from_the_folder()
+    {
+        var decision = AgentRecovery.DecideNode(new Dictionary<string, string>(StringComparer.Ordinal), ["scratch.md"], Folder);
+
+        Assert.Empty(decision.Names);
+        Assert.NotNull(decision.Reason);
+    }
 }

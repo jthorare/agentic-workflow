@@ -6,4 +6,4 @@ namespace Aw.Sindri.Host.Endpoints;
 /// <param name="Slug">The new workflow's slug.</param>
 /// <param name="Template">A starter template's name, or null.</param>
 /// <param name="Spec">The graph as a JSON object, or null.</param>
-internal sealed record CreateWorkflowBody(string? Slug, string? Template, JsonNode? Spec);
+internal sealed record CreateWorkflowBody(string? Slug = null, string? Template = null, JsonNode? Spec = null);

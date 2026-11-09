@@ -101,17 +101,29 @@ public sealed class WorkflowGoldenContractTests
     }
 
     [Fact]
-    public void The_block_list_reads_groups_with_titles_and_config_fields()
+    public void The_block_list_reads_the_served_groups_titles_and_config_fields()
     {
-        const string Served = """{"groups":[{"group":"Triggers","blocks":[{"type":"manual","title":"Manual","isTrigger":true,"config":[],"outputs":{},"branches":["out"],"exampleConfig":null,"exampleSpec":null},{"type":"run_agent","title":"Run an agent","isTrigger":false,"config":[{"name":"prompt","type":"text","required":true}],"outputs":{"text":"text"},"branches":["out"],"exampleConfig":{"prompt":"hi"},"exampleSpec":null}]}]}""";
+        var read = Read<WorkflowBlockList>("workflows-blocks", "listed");
 
-        var read = AwJson.Deserialize<WorkflowBlockList>(Encoding.UTF8.GetBytes(Served), SindriApiClient.Json);
+        Assert.Equal(["Triggers", "Data", "AI", "Logic", "Outputs"], read.Groups.Select(g => g.Group), StringComparer.Ordinal);
+        var manual = read.Groups[0].Blocks.Single(b => b.Type == "manual");
+        Assert.Equal(("When called", true), (manual.Title, manual.IsTrigger));
+        Assert.Equal("start", manual.ExampleSpec!.Value.GetProperty("nodes")[0].GetProperty("id").GetString());
+        Assert.Equal(["prompt", "run_agent"], read.Groups[2].Blocks.Select(b => b.Type), StringComparer.Ordinal);
+        var prompt = read.Groups[2].Blocks[0];
+        Assert.Equal(new WorkflowBlockField("prompt", "text", Required: true), prompt.Config[0]);
+        Assert.Equal("Summarize {{search.facts}}", prompt.ExampleConfig!.Value.GetProperty("prompt").GetString());
+        Assert.Equal(["collect", "for_each", "condition", "only_new", "run_workflow"], read.Groups[3].Blocks.Select(b => b.Type), StringComparer.Ordinal);
+    }
 
-        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
-        var group = Assert.Single(read.Value.Groups);
-        Assert.Equal(("Triggers", "Run an agent", true), (group.Group, group.Blocks[1].Title, group.Blocks[0].IsTrigger));
-        Assert.Equal(new WorkflowBlockField("prompt", "text", Required: true), group.Blocks[1].Config[0]);
-        Assert.Equal("hi", group.Blocks[1].ExampleConfig!.Value.GetProperty("prompt").GetString());
-        Assert.Null(group.Blocks[0].ExampleConfig);
+    [Fact]
+    public void The_write_answers_read_slug_revision_and_spec_hash()
+    {
+        var applied = Read<WorkflowOpsApplied>("workflows-slug-ops", "ops-applied");
+        var activated = Read<WorkflowActivated>("workflows-slug-activate", "activated");
+
+        Assert.Equal(("morning-check", 2), (applied.Slug, applied.Revision));
+        Assert.StartsWith("sha256:", applied.SpecHash, StringComparison.Ordinal);
+        Assert.Equal(("morning-check", 1), (activated.Slug, activated.Revision));
     }
 }

@@ -122,9 +122,18 @@ public sealed class OnlyNewBlock(IGraphSeenStore seen) : IGraphBlock
         {
             null => SindriErrors.GraphBlockFailed.With($"item {position.ToString(CultureInfo.InvariantCulture)} has no '{path}' to key it by (fix: name a field every item has, or leave 'key' out)"),
             JsonValue v when v.GetValueKind() == JsonValueKind.String => v.GetValue<string>(),
-            _ => value.ToJsonString(),
+            _ => Canonical(value)?.ToJsonString() ?? "null",
         };
     }
+
+    /// <summary>A copy of the node with object keys sorted ordinally, recursively; arrays keep their order.</summary>
+    private static JsonNode? Canonical(JsonNode? node) => node switch
+    {
+        JsonObject obj => new JsonObject(obj.OrderBy(static p => p.Key, StringComparer.Ordinal).Select(static p => KeyValuePair.Create(p.Key, Canonical(p.Value)))),
+        JsonArray arr => new JsonArray([.. arr.Select(static n => Canonical(n))]),
+        null => null,
+        _ => node.DeepClone(),
+    };
 
     private sealed record Keyed(string Key, JsonNode? Item);
 }

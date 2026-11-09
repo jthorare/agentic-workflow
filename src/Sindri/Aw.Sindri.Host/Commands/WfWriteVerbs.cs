@@ -61,7 +61,7 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
             return await output.Error(bad).ConfigureAwait(false);
         }
 
-        if (flags.Slug is not { } slug || !int.TryParse(flags.Value("--base"), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var baseRevision) || baseRevision < 1)
+        if (flags.Slug is not { } slug || !int.TryParse(flags.Value("--base"), NumberStyles.None, CultureInfo.InvariantCulture, out var baseRevision) || baseRevision < 1)
         {
             return await output.Error(SindriErrors.InvalidInput.With("wf edit needs a slug and --base <revision>; 'sindri wf show <slug>' prints the newest revision (" + EditUsage + ")")).ConfigureAwait(false);
         }
@@ -103,7 +103,7 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
         int? revision = null;
         if (flags.Value("--revision") is { } text)
         {
-            if (!int.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var parsed) || parsed < 1)
+            if (!int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed) || parsed < 1)
             {
                 return await output.Error(SindriErrors.InvalidInput.With("--revision is a number of 1 or more (" + ValidateUsage + ")")).ConfigureAwait(false);
             }
@@ -119,7 +119,7 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
         int? revision = null;
         if (flags.Value("--revision") is { } text)
         {
-            if (!int.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var parsed) || parsed < 1)
+            if (!int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed) || parsed < 1)
             {
                 return await output.Error(SindriErrors.InvalidInput.With("--revision is a number of 1 or more (" + ActivateUsage + ")")).ConfigureAwait(false);
             }
