@@ -119,4 +119,17 @@ public sealed class RunDetailTakeoverTests
         var row = page.Run.Groups.Single(g => g.Node == "agent").Runs[0];
         Assert.Equal((true, false), (row.CanTakeOver, row.CanHandBack));
     }
+
+    // The agent can end between the call and the re-read: a row the re-read shows with no agent stays without a button (ideas' review, #2472).
+    [Fact]
+    public async Task A_hand_back_shows_no_button_when_the_re_read_says_the_node_finished()
+    {
+        var (page, node) = await Opened("taken_over");
+        _f.ServeRun("finished");
+
+        await node.HandBack(Token);
+
+        var row = page.Run.Groups.Single(g => g.Node == "agent").Runs[0];
+        Assert.Equal((false, false), (row.CanTakeOver, row.CanHandBack));
+    }
 }
