@@ -28,7 +28,7 @@ internal static class TodoRows
         Mark("reopen", "sindri todo reopen <id> [--version <n>]"),
         Mark("remove", "sindri todo remove <id> [--version <n>]"),
         Mark("restore", "sindri todo restore <id> [--version <n>]"),
-        Row("KeepTodo", typeof(KeepTodoRequest), variant: null, "/sindri/todos/{todoId}/keep", "sindri todo keep <id> sindri|obsidian"),
+        Row("KeepTodo", typeof(KeepTodoRequest), variant: null, "/sindri/todos/{todoId}/keep", "sindri todo keep <id> <side>"),
         Row("KeepTodoUndo", typeof(KeepTodoUndoRequest), variant: null, "/sindri/todos/{todoId}/keep/undo", "sindri todo keep <id> --undo"),
         Hold("apply"),
         Hold("restore"),
