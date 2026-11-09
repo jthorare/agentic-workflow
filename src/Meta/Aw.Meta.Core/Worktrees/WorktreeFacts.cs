@@ -51,7 +51,10 @@ internal sealed record WorktreeFacts
     /// <summary>Whether the tree's pull request merged or closed but GitHub gave no time for it, so "changed since" can't be judged (the tree is kept).</summary>
     public bool EndedAtUnknown { get; init; }
 
-    /// <summary>Whether no removing sweep has been recorded yet, so "changed since the last sweep" has nothing to compare with.</summary>
+    /// <summary>When the last full sweep started (the cutoff a tree with no ended pull request is compared with); null when none has been recorded.</summary>
+    public DateTimeOffset? SweepStartedAt { get; init; }
+
+    /// <summary>Whether no removing sweep has been recorded yet, so "changed since the last full sweep" has nothing to compare with.</summary>
     public bool NoPreviousSweep { get; init; }
 
     /// <summary>The number of the pull request whose head branch this is.</summary>

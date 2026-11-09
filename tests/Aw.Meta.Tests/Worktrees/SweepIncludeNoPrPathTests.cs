@@ -61,6 +61,6 @@ public sealed class SweepIncludeNoPrPathTests
         var swept = await Sweep(includeNoPr: true, touchedAt: 100);
 
         var kept = Assert.Single(swept.Kept, r => string.Equals(r.Path, Loose, StringComparison.Ordinal));
-        Assert.Contains(kept.Reasons, r => r.Contains("changed since the last sweep", StringComparison.Ordinal));
+        Assert.Contains(kept.Reasons, r => r.Contains("changed since the last full sweep", StringComparison.Ordinal));
     }
 }

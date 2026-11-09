@@ -114,6 +114,11 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         }
 
         IsReading = Groups.Count == 0;
+        if (IsReading)
+        {
+            (IsFailed, FailedText) = (false, string.Empty);   // the old failure line hides while this read is on its way
+        }
+
         var run = await api.WorkflowRun(url, runId, cancellationToken).ConfigureAwait(true);
         if (read != _reads)
         {
