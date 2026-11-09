@@ -8,6 +8,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
 {
     private int _reads;
+    private Uri? _url;
 
     /// <summary>The run's id.</summary>
     public string Id { get; private set => Set(ref field, value); } = string.Empty;
@@ -102,6 +103,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     internal async Task Read(Uri url, string runId, CancellationToken cancellationToken)
     {
         var read = ++_reads;
+        _url = url;
         if (!string.Equals(Id, runId, StringComparison.Ordinal))
         {
             Id = runId;
@@ -150,7 +152,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (run.EndedAt ?? run.StartedAt));
         ErrorText = run.Error ?? string.Empty;
         OutputsText = WorkflowJson.Pretty(run.Outputs);
-        Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g]))];
+        Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g], ControlNode))];
         Graph = Shape is { } shape && shape.Revision == run.Revision ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(shape, Statuses(run))) : null;
         Changed();
     }
@@ -164,6 +166,57 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>Marks Cancel's call as on the way, or as done.</summary>
     /// <param name="cancelling">True while the call is on the way.</param>
     internal void SetCancelling(bool cancelling) => IsCancelling = cancelling;
+
+    /// <summary>
+    /// Take over or Hand back on one agent node: sent once (a press while one is on the way does nothing), the note says what Sindri answered, and a success reads the run again.
+    /// A refusal shows the server's text and reads nothing.
+    /// </summary>
+    /// <param name="node">The node run the button belongs to.</param>
+    /// <param name="takeOver">True for Take over, false for Hand back.</param>
+    /// <param name="cancellationToken">Cancels the call and the read.</param>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    private async Task ControlNode(NodeRunViewModel node, bool takeOver, CancellationToken cancellationToken)
+    {
+        if (_url is not { } url || node.IsBusy || !(takeOver ? node.CanTakeOver : node.CanHandBack))
+        {
+            return;
+        }
+
+        var id = Id;
+        node.IsBusy = true;
+        Note(string.Empty);
+        try
+        {
+            var (ok, note) = await Send(url, id, node, takeOver, cancellationToken).ConfigureAwait(true);
+            if (!string.Equals(Id, id, StringComparison.Ordinal))
+            {
+                return;   // another run is open now
+            }
+
+            Note(note);
+            if (ok)
+            {
+                await Read(url, id, cancellationToken).ConfigureAwait(true);
+            }
+        }
+        finally
+        {
+            node.IsBusy = false;
+        }
+    }
+
+    private async Task<(bool Ok, string Note)> Send(Uri url, string id, NodeRunViewModel node, bool takeOver, CancellationToken cancellationToken)
+    {
+        var sent = takeOver
+            ? await api.TakeOverAgentNode(url, id, node.Node, node.ItemIndex, cancellationToken).ConfigureAwait(true)
+            : await api.HandBackAgentNode(url, id, node.Node, node.ItemIndex, cancellationToken).ConfigureAwait(true);
+        if (sent.IsSuccess)
+        {
+            return (true, takeOver ? Labels.WfTakeOverDone : Labels.WfHandBackDone);
+        }
+
+        return (false, takeOver ? Labels.WfTakeOverRefused(sent.Error) : Labels.WfHandBackRefused(sent.Error));
+    }
 
     /// <summary>Shows what Cancel said, in words.</summary>
     /// <param name="text">The note; empty clears it.</param>
