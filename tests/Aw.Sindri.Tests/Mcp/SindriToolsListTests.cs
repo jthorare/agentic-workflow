@@ -15,6 +15,7 @@ public sealed class SindriToolsListTests(PlainMcpHost plain) : IClassFixture<Pla
         "connection_list", "connection_get", "connection_add", "connection_signin", "connection_test", "connection_remove",
         "memory_list", "memory_create", "memory_search", "memory_write", "memory_forget",
         "workflow_list", "workflow_get", "workflow_runs", "workflow_run_get",
+        "toolkit_list", "toolkit_build", "toolkit_start", "toolkit_stop", "toolkit_calls",
     ];
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]

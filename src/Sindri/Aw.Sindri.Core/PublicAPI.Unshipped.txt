@@ -21696,3 +21696,55 @@ Aw.Sindri.Core.Toolkits.IToolkitStore.Find(string! name, System.Threading.Cancel
 Aw.Sindri.Core.Toolkits.IToolkitStore.List(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.Toolkit!>!>!>
 Aw.Sindri.Core.Toolkits.IToolkitStore.Save(Aw.Sindri.Core.Toolkits.Toolkit! toolkit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 static readonly Aw.Sindri.Core.SindriErrors.ToolkitToolFailed -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Blocks.CallToolBlock
+Aw.Sindri.Core.Graph.Blocks.CallToolBlock.CallToolBlock(Aw.Sindri.Core.Toolkits.IRunningToolkits! toolkits, Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort! connections) -> void
+Aw.Sindri.Core.Graph.Blocks.CallToolBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.CallToolBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.CallToolBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CallToolBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.CallToolBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.CallToolBlock.ListConnectionTools(string! connection, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.CallableTool!>!>!>
+Aw.Sindri.Core.Graph.Blocks.CallToolBlock.ListToolkitTools() -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.CallableTool!>!
+Aw.Sindri.Core.Graph.Blocks.CallToolBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.CallToolBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CallableTool
+Aw.Sindri.Core.Graph.Blocks.CallableTool.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.CallableTool!
+Aw.Sindri.Core.Graph.Blocks.CallableTool.CallableTool(string! Tool, string? Connection, string! Description, string! Source) -> void
+Aw.Sindri.Core.Graph.Blocks.CallableTool.Connection.get -> string?
+Aw.Sindri.Core.Graph.Blocks.CallableTool.Connection.init -> void
+Aw.Sindri.Core.Graph.Blocks.CallableTool.Deconstruct(out string! Tool, out string? Connection, out string! Description, out string! Source) -> void
+Aw.Sindri.Core.Graph.Blocks.CallableTool.Description.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CallableTool.Description.init -> void
+Aw.Sindri.Core.Graph.Blocks.CallableTool.Equals(Aw.Sindri.Core.Graph.Blocks.CallableTool? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.CallableTool.Source.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CallableTool.Source.init -> void
+Aw.Sindri.Core.Graph.Blocks.CallableTool.Tool.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CallableTool.Tool.init -> void
+Aw.Sindri.Core.Graph.Blocks.ConnectionTool
+Aw.Sindri.Core.Graph.Blocks.ConnectionTool.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.ConnectionTool!
+Aw.Sindri.Core.Graph.Blocks.ConnectionTool.ConnectionTool(string! Name, string! Description, string! Source) -> void
+Aw.Sindri.Core.Graph.Blocks.ConnectionTool.Deconstruct(out string! Name, out string! Description, out string! Source) -> void
+Aw.Sindri.Core.Graph.Blocks.ConnectionTool.Description.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConnectionTool.Description.init -> void
+Aw.Sindri.Core.Graph.Blocks.ConnectionTool.Equals(Aw.Sindri.Core.Graph.Blocks.ConnectionTool? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.ConnectionTool.Name.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConnectionTool.Name.init -> void
+Aw.Sindri.Core.Graph.Blocks.ConnectionTool.Source.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConnectionTool.Source.init -> void
+Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort
+Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort.Call(string! connection, string! tool, string! argumentsJson, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Graph.Blocks.IConnectionToolPort.ListTools(string! connection, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.ConnectionTool!>!>!>
+Aw.Sindri.Core.Toolkits.IRunningToolkits
+Aw.Sindri.Core.Toolkits.IRunningToolkits.CallTool(string! toolkit, string! tool, string! argumentsJson, string! caller, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Toolkits.IRunningToolkits.Toolkits() -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.Toolkit!>!
+override Aw.Sindri.Core.Graph.Blocks.CallableTool.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.CallableTool.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.CallableTool.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.ConnectionTool.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.ConnectionTool.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.ConnectionTool.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.CallableTool.operator !=(Aw.Sindri.Core.Graph.Blocks.CallableTool? left, Aw.Sindri.Core.Graph.Blocks.CallableTool? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.CallableTool.operator ==(Aw.Sindri.Core.Graph.Blocks.CallableTool? left, Aw.Sindri.Core.Graph.Blocks.CallableTool? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.ConnectionTool.operator !=(Aw.Sindri.Core.Graph.Blocks.ConnectionTool? left, Aw.Sindri.Core.Graph.Blocks.ConnectionTool? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.ConnectionTool.operator ==(Aw.Sindri.Core.Graph.Blocks.ConnectionTool? left, Aw.Sindri.Core.Graph.Blocks.ConnectionTool? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitManagementUnavailable -> Aw.Kernel.ErrorDefinition!
