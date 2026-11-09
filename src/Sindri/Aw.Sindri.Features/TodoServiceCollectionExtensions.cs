@@ -3,6 +3,7 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Todos.Note;
@@ -59,6 +60,8 @@ internal static class TodoServiceCollectionExtensions
             .AddScoped<IValidator<CheckTodoNoteRequest>, AcceptAllValidator<CheckTodoNoteRequest>>().AddCommand<CheckTodoNoteRequest, CheckTodoNoteResponse, CheckTodoNoteService>()
             .AddSingleton<INoteLocator, TodoNoteLocator>()
             .AddNoteSync()
+            .AddScoped<IScheduledService, TodoNoteService>()
+            .AddSingleton(TodoNoteService.BuiltIn)   // runs without a profile entry, so PauseService refuses it
             .AddScoped<TodoNoteProfileEdit>()
             .AddScoped<IValidator<SetTodoNoteRequest>, AcceptAllValidator<SetTodoNoteRequest>>().AddCommand<SetTodoNoteRequest, TodoNoteWritten, SetTodoNoteService>()
             .AddScoped<IValidator<StopTodoNoteRequest>, AcceptAllValidator<StopTodoNoteRequest>>().AddCommand<StopTodoNoteRequest, TodoNoteWritten, StopTodoNoteService>();
