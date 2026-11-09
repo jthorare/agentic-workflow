@@ -229,6 +229,21 @@ public sealed class GraphValidatorTests
     }
 
     [Fact]
+    public void An_onFailure_other_than_stop_or_continue_is_refused_naming_the_field()
+    {
+        var odd = new GraphNode(NodeId.From("tell"), "notify", Title: null, Config: new JsonObject { ["title"] = "hi" }, OnFailure: "retry");
+        var fine = new GraphNode(NodeId.From("tell2"), "notify", Title: null, Config: new JsonObject { ["title"] = "hi" }, OnFailure: "continue");
+        var spec = Spec([Trigger("daily"), odd, fine], [Edge("daily", "tell"), Edge("daily", "tell2")]);
+
+        var result = Validator().Validate(spec, GraphMode.Activate);
+
+        var finding = Assert.Single(result.Findings, f => f.Code == "GRAPH-NODE-003");
+        Assert.Equal(["tell"], finding.Nodes);
+        Assert.Equal("onFailure", finding.Field);
+        Assert.Contains("continue", finding.Fix, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_reference_to_an_output_the_node_does_not_have_is_refused()
     {
         var spec = Spec([Trigger("daily"), Search("a"), Notify("tell", "{{a.nope}}")], [Edge("daily", "a"), Edge("a", "tell")]);

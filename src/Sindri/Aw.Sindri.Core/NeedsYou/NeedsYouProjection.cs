@@ -30,6 +30,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
         EventTypes.RequestFiled, EventTypes.DecisionRecorded, EventTypes.ItemStateChanged, EventTypes.ServiceRan, EventTypes.ProfileChecked,
         EventTypes.WorkflowStarted, EventTypes.WorkflowTransition, EventTypes.WorkflowRefused, EventTypes.WorkflowNotified,
         EventTypes.ConnectionNeedsSignIn, EventTypes.ConnectionSignedIn,
+        EventTypes.WorkflowNotify, EventTypes.WorkflowRunFinished, EventTypes.WorkflowRunCancelled,
     };
 
     /// <inheritdoc />
@@ -47,6 +48,8 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
             EventTypes.ServiceRan => await Ran(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileChecked => await Checked(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ConnectionNeedsSignIn or EventTypes.ConnectionSignedIn => await ConnectionRow(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.WorkflowNotify => await Notified(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.WorkflowRunFinished or EventTypes.WorkflowRunCancelled => await RunEnded(recorded, rows, cancellationToken).ConfigureAwait(false),
             _ => await Engine(recorded, rows, cancellationToken).ConfigureAwait(false),
         };
     }
@@ -91,6 +94,45 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
         return concerned.IsError
             ? concerned.Error
             : await DeleteAll(rows, concerned.Value.Where(static r => r.Row.Kind == NeedsYouKind.Decision), cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<Unit>> Notified(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var note = events.Payload<WorkflowNotifyPayload>(recorded);
+        return note.IsError
+            ? note.Error
+            : await Put(rows, NeedsYouRows.ForWorkflowNotify(note.Value, recorded.Envelope.OccurredAt, scrubber), recorded, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>A run that ended (finished or cancelled) takes its notes with it; other runs' notes stay.</summary>
+    private async ValueTask<Result<Unit>> RunEnded(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        Graph.Ids.WorkflowRunId run;
+        if (string.Equals(recorded.Envelope.Type, EventTypes.WorkflowRunFinished, StringComparison.Ordinal))
+        {
+            var finished = events.Payload<WorkflowRunFinishedPayload>(recorded);
+            if (finished.IsError)
+            {
+                return finished.Error;
+            }
+
+            run = finished.Value.RunId;
+        }
+        else
+        {
+            var cancelled = events.Payload<WorkflowRunCancelledPayload>(recorded);
+            if (cancelled.IsError)
+            {
+                return cancelled.Error;
+            }
+
+            run = cancelled.Value.RunId;
+        }
+
+        var notes = await rows.Where<NeedsYouRowRecord>(ViewNames.NeedsYou, ViewColumn.Kind, "workflow-notify", cancellationToken).ConfigureAwait(false);
+        return notes.IsError
+            ? notes.Error
+            : await DeleteAll(rows, notes.Value.Where(r => r.Row.Subject.Id == NeedsYouRows.RunSubject(run)), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<Unit>> Ran(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)

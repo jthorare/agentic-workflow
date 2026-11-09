@@ -142,6 +142,8 @@ internal static partial class CommandTable
             ["scoping", .. var rest] => await ScopingCommandTable.Run(rest, host with { Desk = desk with { EnsureRunning = static _ => Task.FromResult<Kernel.Error?>(null) } }, ct).ConfigureAwait(false),
             ["design" or "plan" or "line", ..] => await LineCommandTable.Run(args, host with { Desk = desk with { EnsureRunning = static _ => Task.FromResult<Kernel.Error?>(null) } }, ct).ConfigureAwait(false),
             ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
+            ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
+            ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
             ["pack", .. var rest] => await PackCommandTable.Run(rest, services, output, ct).ConfigureAwait(false),
             ["outbox", .. var rest] => await OutboxCommandTable.Run(rest, services, output, ct).ConfigureAwait(false),
             ["docs", .. var rest] => await DocsCommandTable.Run(rest, services, output, desk, ct).ConfigureAwait(false),

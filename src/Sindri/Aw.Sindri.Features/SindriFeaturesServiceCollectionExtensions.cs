@@ -20,6 +20,7 @@ using Aw.Sindri.Features.ApproveAllRecipes;
 using Aw.Sindri.Features.ApproveRecipe;
 using Aw.Sindri.Features.Blocks;
 using Aw.Sindri.Features.CancelJob;
+using Aw.Sindri.Features.CancelWorkflowRun;
 using Aw.Sindri.Features.CheckProfile;
 using Aw.Sindri.Features.CloseItem;
 using Aw.Sindri.Features.Commands;
@@ -80,6 +81,7 @@ using Aw.Sindri.Features.ResumeJob;
 using Aw.Sindri.Features.ResumeService;
 using Aw.Sindri.Features.RevokeRecipe;
 using Aw.Sindri.Features.RunDoctor;
+using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Features.SampleSessionUsage;
 using Aw.Sindri.Features.Scoping;
 using Aw.Sindri.Features.Scrub;
@@ -95,6 +97,7 @@ using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.StreamEvents;
 using Aw.Sindri.Features.SweepLostSessions;
 using Aw.Sindri.Features.ValidateProfile;
+using Aw.Sindri.Features.WorkflowSchedule;
 using Aw.Sindri.Features.WorkflowStats;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -120,6 +123,9 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IItemResolver, ViewItemResolver>()
             .AddScoped<RequestTarget>()
             .AddScoped<IService<StartProcessRequest, StartProcessResponse>, StartProcessService>()
+            .AddScoped<IScheduledService, WorkflowScheduleService>().AddSingleton(WorkflowScheduleService.BuiltIn)   // the built-in 'workflow-schedule' service (#2258, PR 6): runs without a profile entry, every minute
+            .AddScoped<IValidator<RunWorkflowRequest>, AcceptAllValidator<RunWorkflowRequest>>().AddCommand<RunWorkflowRequest, RunWorkflowResponse, RunWorkflowService>()   // 'sindri wf run' and 'wf cancel' (#2258, PR 6): behind the command chain; the slug and payload are checked by the service
+            .AddScoped<IValidator<CancelWorkflowRunRequest>, AcceptAllValidator<CancelWorkflowRunRequest>>().AddCommand<CancelWorkflowRunRequest, CancelWorkflowRunResponse, CancelWorkflowRunService>()
             .AddScoped<IService<RecordHeartbeatRequest, RecordHeartbeatResponse>, RecordHeartbeatService>()
             .AddRecordServiceRun()
             .AddScoped<IService<CheckProfileRequest, CheckProfileResponse>, CheckProfileService>()

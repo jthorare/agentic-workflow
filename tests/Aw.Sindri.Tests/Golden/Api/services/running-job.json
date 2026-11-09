@@ -215,6 +215,18 @@
         "run"
       ],
       "description": "Passes ledger events to the running workflows."
+    },
+    {
+      "name": "workflow-schedule",
+      "every": "1m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Starts a run of each active workflow whose schedule has a tick to fire, once for the latest missed tick."
     }
   ],
   "empty": null,
