@@ -140,7 +140,7 @@ public sealed class GoldenContractTests
     {
         "stop",
         "todos-id",   // the app never calls GET /sindri/todos/{id}; the CLI's `todo show` does
-        "workflow-instances", "workflow-instance", "workflow-instance-fact", "workflow-status", "workflow-recipe", "workflow-recipes", "workflow-recipes-id-stats", "workflow-instances-start", "workflow-recipes-approve-all",   // v2 PR 4: the app has no Recipes, Workflows or run pages; the routes stay served until the backend PR removes them
+        "workflow-instances", "workflow-instance", "workflow-instance-fact", "workflow-status", "workflow-recipe", "workflow-recipes", "workflow-recipes-id-stats", "workflow-instances-start", "workflow-recipes-approve-all",   // the app has no Recipes or workflow-instance pages (the Workflows page reads only workflows, workflows-slug, workflows-slug-runs and workflow-runs-run); these routes stay served until the backend PR removes them
         "workflow-challenges-app",   // q93: the app asks for no challenge any more; the route stays served until api removes it
         "setup-repos",   // POST /setup/repos (Add repo): the app's call and the job's progress are U3's (SO-U3)
         "context-concepts-id-members",   // GET /sindri/context/concepts/{id}/members: the band reads sizes from the concepts answer, never a concept's member list

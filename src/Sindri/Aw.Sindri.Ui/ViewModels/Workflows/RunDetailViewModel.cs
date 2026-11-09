@@ -101,7 +101,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         ChipText = glyph + " " + word;
         TriggerText = Labels.WfStartedBy(KindOf(run.Trigger));
         RevisionText = Labels.WfRunRevision(run.Revision);
-        var live = string.Equals(run.Status, "running", StringComparison.Ordinal) || string.Equals(run.Status, "waiting", StringComparison.Ordinal) || string.Equals(run.Status, "queued", StringComparison.Ordinal);
+        var live = RunStatus.IsLive(run.Status);
         WhenText = live
             ? Labels.JobWhen(running: true, clock.GetUtcNow() - run.StartedAt)
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (run.EndedAt ?? run.StartedAt));

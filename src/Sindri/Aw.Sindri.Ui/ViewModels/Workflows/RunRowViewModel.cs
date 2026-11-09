@@ -12,7 +12,7 @@ internal sealed class RunRowViewModel : ObservableObject
         ChipText = glyph + " " + word;
         TriggerText = Labels.WfTriggerWord(row.Trigger);
         RevisionText = Labels.WfRunRevision(row.Revision);
-        var live = string.Equals(row.Status, "running", StringComparison.Ordinal) || string.Equals(row.Status, "waiting", StringComparison.Ordinal) || string.Equals(row.Status, "queued", StringComparison.Ordinal);
+        var live = RunStatus.IsLive(row.Status);
         WhenText = live
             ? Labels.JobWhen(running: true, clock.GetUtcNow() - row.StartedAt)
             : Labels.JobWhen(running: false, clock.GetUtcNow() - (row.EndedAt ?? row.StartedAt));
