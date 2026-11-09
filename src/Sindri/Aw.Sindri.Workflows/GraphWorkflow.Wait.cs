@@ -128,7 +128,7 @@ internal sealed partial class GraphWorkflow
         // why: an answer that arrived as the timer fired still wins; the update handler ran, so the map has it
         var resolved = _answers.TryGetValue(id, out var given)
             ? AskOwnerBlock.Resolve(config, given.Text ?? given.Choice, given.By)
-            : AskOwnerBlock.Resolve(config, answer: null, answeredBy: null);
+            : AskOwnerBlock.Resolve(config, answer: null, answeredBy: "timeout");
         return outcome with { Output = resolved.Outputs.ToJsonString(), Taken = [resolved.Branch] };
     }
 }

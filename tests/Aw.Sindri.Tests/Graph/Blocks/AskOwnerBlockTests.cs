@@ -60,7 +60,7 @@ public sealed class AskOwnerBlockTests
     [Fact]
     public void An_unanswered_question_takes_the_default_branch_at_its_timeout()
     {
-        var outcome = AskOwnerBlock.Resolve(Config(), answer: null, answeredBy: null);
+        var outcome = AskOwnerBlock.Resolve(Config(), answer: null, answeredBy: "timeout");
 
         Assert.Equal("timeout", outcome.Branch);
         Assert.Equal("no", outcome.Outputs["answer"]!.GetValue<string>());
@@ -83,7 +83,7 @@ public sealed class AskOwnerBlockTests
         var config = Config();
         _ = config.Remove("default");
 
-        var outcome = AskOwnerBlock.Resolve(config, answer: null, answeredBy: null);
+        var outcome = AskOwnerBlock.Resolve(config, answer: null, answeredBy: "timeout");
 
         Assert.Equal("timeout", outcome.Branch);
         Assert.Equal(string.Empty, outcome.Outputs["answer"]!.GetValue<string>());
