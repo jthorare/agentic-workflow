@@ -47,7 +47,7 @@ public sealed class ItemLinksProjectionTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_linked_run_shows_as_a_run_link()
     {
-        var run = RecordKey.From("sindri:run/nightly@1-1");
+        var run = RecordKey.From("sindri:run/nightly-1-1");
         await Link(run, alias: null, sequence: 1);
 
         var row = Assert.Single((await _views.List<ItemLinkRow>(ViewNames.ItemLinks, Token)).Value);
