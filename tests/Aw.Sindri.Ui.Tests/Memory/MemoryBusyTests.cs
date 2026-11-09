@@ -1,5 +1,4 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.ViewModels.Memory;
 
 namespace Aw.Sindri.Ui.Tests.Memory;
 
