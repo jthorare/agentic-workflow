@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Automation.Peers;
 using Avalonia.Controls;
@@ -120,9 +121,7 @@ public sealed class GraphCanvasTests
 
         var (kept, reset, afterNull) = await OnUi(() =>
         {
-            var canvas = new GraphCanvas { Graph = first };
-            canvas.Zoom = 1.5;
-            canvas.Pan = new Point(90, 70);
+            var canvas = new GraphCanvas { Graph = first, Zoom = 1.5, Pan = new Point(90, 70) };
             canvas.Graph = again;
             var kept = (canvas.Zoom, canvas.Pan);
             canvas.Graph = other;
@@ -200,6 +199,6 @@ public sealed class GraphCanvasTests
             }
         });
 
-        Assert.True(after > before, $"drew {before} times before the switch and {after} after");
+        Assert.True(after > before, string.Create(CultureInfo.InvariantCulture, $"drew {before} times before the switch and {after} after"));
     }
 }
