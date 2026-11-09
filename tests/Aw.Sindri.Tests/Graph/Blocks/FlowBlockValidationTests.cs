@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.Graph.Blocks;
 public sealed class FlowBlockValidationTests
 {
     private static GraphValidator Validator() => GraphFixtures.Validator(blocks: GraphBlockRegistry.Standard(
-        new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"),
+        new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more:
         GraphBlockRegistry.FlowBlocks(new FlowFakes.MemorySeenStore(), new FlowFakes.RecordingItemPort(), new FlowFakes.ScriptedCallPort(), new FlowFakes.ScriptedHttpPort())).Types);
 
     private static GraphNode Node(string id, string type, JsonObject config) => new(NodeId.From(id), type, Title: null, config);

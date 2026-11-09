@@ -25,7 +25,7 @@ internal sealed class GraphTestBlocks
 
     /// <summary>The three blocks.</summary>
     /// <returns>Echo, fail and hold.</returns>
-    public IEnumerable<IGraphBlock> All() => [new Echo(this), new Fail(this), new Hold(this), new Big(), new CommitProbe(this)];
+    public IEnumerable<IGraphBlock> All() => [new Echo(this), new Fail(this), new Hold(this), new Big(), new CommitProbe(this), new Pass()];
 
     /// <summary>An in-memory 'workflow_seen' for the real 'only_new' block.</summary>
     internal sealed class MemorySeen : IGraphSeenStore
@@ -85,6 +85,13 @@ internal sealed class GraphTestBlocks
             owner._log.Enqueue($"commit {context.RunId.Value}/{context.Node.Value}");
             return ValueTask.FromResult<Result<Unit>>(context.Config["failCommit"] is JsonValue { } fail && fail.TryGetValue<bool>(out var failed) && failed ? SindriErrors.GraphBlockFailed.With("commit failed") : Unit.Value);
         }
+    }
+
+    // why: hands on its interpolated 'value', so a loop test can see the item a body node was given
+    private sealed class Pass() : Base("pass")
+    {
+        public override ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Result<BlockResult>>(new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["value"] = context.Config["value"]?.DeepClone() }));
     }
 
     private sealed class Big() : Base("big")

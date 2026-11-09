@@ -120,4 +120,11 @@ public interface IWorkflowRunStore
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The node runs.</returns>
     public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRuns(WorkflowRunId id, CancellationToken cancellationToken);
+
+    /// <summary>The rows a node inside a 'for_each' reads: every row at item index 0 (the trigger side, the 'for_each' and the nodes outside the loop) and the rows of one item. Not the other items' rows, so a loop of N items does not read N squared rows.</summary>
+    /// <param name="id">The run.</param>
+    /// <param name="itemIndex">The item's position counted from 1.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The node runs, by node id then item index.</returns>
+    public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRunsForItem(WorkflowRunId id, int itemIndex, CancellationToken cancellationToken);
 }
