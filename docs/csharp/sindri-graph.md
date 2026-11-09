@@ -25,7 +25,7 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 | `GRAPH-TRIGGER-001` / `-002` | more than one trigger (names all) / none |
 | `GRAPH-WIRING-001` | a node no trigger reaches |
 | `GRAPH-CYCLE-001` | a loop, with its path in spec order (`a -> b -> c -> a`) |
-| `GRAPH-REF-001` / `-002` / `-003` / `-004` / `-005` | a reference to a node that is not upstream / to an output name the node does not have / to no node / a `{{` that is never closed (a `{{` inside a string literal of a condition is text, not a reference) / an output whose type does not fit the field it fills |
+| `GRAPH-REF-001` / `-002` / `-003` / `-004` / `-005` | a reference to a node that is not upstream / to an output name the node does not have, or a `{{workflow.<field>}}` a run does not have (`id`, `name`, `runId`, `revision`) / to no node / a `{{` that is never closed (a `{{` inside a string literal of a condition is text, not a reference) / an output whose type does not fit the field it fills |
 | `GRAPH-BLOCK-001`, `GRAPH-CONFIG-001` | unknown block type, config that fails the block's schema |
 | `GRAPH-CRON-001`, `GRAPH-COND-001` | unreadable cron or timezone, unreadable condition |
 | `GRAPH-REPO-001`, `GRAPH-NAME-001` | repo, connection or memory that does not exist (`-002` is the warning when nobody can answer yet) |

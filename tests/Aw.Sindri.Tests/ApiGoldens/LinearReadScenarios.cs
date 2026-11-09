@@ -15,8 +15,8 @@ internal static class LinearReadScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("linear-lookups", "eng"), ("linear-lookups", "not-synced"), ("linear-lookups", "session-refused"),
-        ("linear-since", "three"), ("linear-since", "empty"), ("linear-since", "session-refused"),
+        ("linear-lookups", "eng"), ("linear-lookups", "not-synced"), ("linear-lookups", "session"),
+        ("linear-since", "three"), ("linear-since", "empty"), ("linear-since", "session"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -30,7 +30,7 @@ internal static class LinearReadScenarios
     public static async Task<string> Body(GoldenHost host, string slug, string scenario)
     {
         ArgumentNullException.ThrowIfNull(host);
-        var caller = scenario == "session-refused" ? ItemScenarios.Session("demo") : ItemScenarios.Human(host);
+        var caller = scenario == "session" ? ItemScenarios.Session("demo") : ItemScenarios.Human(host);
         var path = (slug, scenario) switch
         {
             ("linear-lookups", "not-synced") => "/sindri/linear/lookups/OPS",
@@ -44,10 +44,11 @@ internal static class LinearReadScenarios
     /// <summary>
     /// The facts a scenario's host answers with. 'linear-since/three' is Sam Lee's assignment of ENG-31, a mention
     /// on ENG-12 and ENG-12's move from Todo to In Progress; Context keeps no actor for an assignment or a state move, so only the mention has one, as the real adapter answers.
+    /// Each 'session' scenario serves its human twin's facts ('eng', 'three'): since agent-first PR 2 a session reads the same answer.
     /// </summary>
     internal static FakeLinearSideFacts Facts(string slug, string scenario)
     {
-        if ((slug, scenario) is ("linear-lookups", "eng"))
+        if ((slug, scenario) is ("linear-lookups", "eng" or "session"))
         {
             return new FakeLinearSideFacts().WithTeam(Eng());
         }
@@ -58,7 +59,7 @@ internal static class LinearReadScenarios
         }
 
         var sam = new LinearPerson("00000000-0000-4000-8000-0000000000a2", "Sam Lee");
-        return (slug, scenario) is ("linear-since", "three")
+        return (slug, scenario) is ("linear-since", "three" or "session")
             ? new FakeLinearSideFacts().WithItems(
                 new LinearSinceItem("assigned", "ENG-31", "Export limits: cap the CSV at 50k rows", Actor: null, At(22, 10), From: null, To: null),
                 new LinearSinceItem("mentioned", "ENG-12", "Retry budget for the sync worker", sam, At(23, 30), From: null, To: null),

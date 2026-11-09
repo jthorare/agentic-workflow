@@ -155,6 +155,7 @@ internal sealed class GraphWorkflowCaller(IWorkflowStore workflows, IWorkflowRun
         ["payload"] = call.Payload?.DeepClone(),
         ["callDepth"] = call.Depth,
         ["parentRun"] = call.Caller.Value,
+        ["ancestors"] = new JsonArray([.. call.Ancestors.Select(static a => (JsonNode?)JsonValue.Create(a))]),
         ["node"] = call.Node.Value,
         ["index"] = call.Index,
         ["by"] = "workflow:" + CallDepth.SlugOf(call.Caller.Value),

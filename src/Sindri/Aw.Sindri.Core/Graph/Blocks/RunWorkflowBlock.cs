@@ -54,8 +54,12 @@ public sealed class RunWorkflowBlock(IGraphCallPort calls) : IGraphBlock
             return SindriErrors.GraphBlockFailed.With($"'{text}' is not a workflow slug (lowercase letters, digits and '-'; fix: use the name 'sindri workflow list' shows)");
         }
 
-        var origin = new CallOrigin(context.RunId.Value, ConfigValues.Int(context.Resolve("trigger.callDepth")) ?? 0, ConfigValues.Text(context.Resolve("trigger.parentRun")));
-        var depth = CallDepth.Next(origin, target.Value, await calls.MaxDepth(cancellationToken).ConfigureAwait(false));
+        var origin = new CallOrigin(context.RunId.Value, ConfigValues.Int(context.Resolve("trigger.callDepth")) ?? 0, ConfigValues.Text(context.Resolve("trigger.parentRun")))
+        {
+            Ancestors = Ancestors(context.Resolve("trigger.ancestors")),
+        };
+        var max = await calls.MaxDepth(cancellationToken).ConfigureAwait(false);
+        var depth = CallDepth.Next(origin, target.Value, max);
         if (depth.IsError)
         {
             return depth.Error;
@@ -63,7 +67,7 @@ public sealed class RunWorkflowBlock(IGraphCallPort calls) : IGraphBlock
 
         var payload = (context.Config["payload"] as JsonObject)?.DeepClone() as JsonObject;
         var index = ConfigValues.Int(context.Resolve("itemIndex")) ?? 0;
-        var called = await calls.Start(new GraphCall(context.RunId, context.Node, index, target, payload, depth.Value), cancellationToken).ConfigureAwait(false);
+        var called = await calls.Start(new GraphCall(context.RunId, context.Node, index, target, payload, depth.Value) { Ancestors = CallDepth.AncestorsOf(origin, max) }, cancellationToken).ConfigureAwait(false);
         if (called.IsError)
         {
             return called.Error;
@@ -72,6 +76,9 @@ public sealed class RunWorkflowBlock(IGraphCallPort calls) : IGraphBlock
         var waits = ConfigValues.Bool(context.Config["wait"]) == true && !string.Equals(called.Value.Status, "skipped", StringComparison.Ordinal);
         return waits ? await Wait(context, called.Value, cancellationToken).ConfigureAwait(false) : Outputs(called.Value.Run, called.Value.Status, outputs: null);
     }
+
+    private static List<string> Ancestors(JsonNode? node) =>
+        node is JsonArray list ? [.. list.Select(static item => ConfigValues.Text(item)).OfType<string>()] : [];
 
     private async ValueTask<Result<BlockResult>> Wait(BlockContext context, GraphCalled called, CancellationToken cancellationToken)
     {

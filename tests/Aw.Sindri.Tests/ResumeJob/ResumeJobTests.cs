@@ -47,6 +47,20 @@ public sealed class ResumeJobTests
     }
 
     [Fact]
+    public async Task A_launched_session_resumes_a_job_waiting_on_model_limit()
+    {
+        var wait = _waits.Park(_job, "model-limit");
+        using var entered = _h.Callers.Enter(A.Caller().Session().Launched().Build());
+
+        var resumed = await Service().Handle(new ResumeJobRequest(_job), Token);
+
+        Assert.True(resumed.IsSuccess, resumed.IsError ? resumed.Error.ToString() : null);
+        Assert.True(wait.Came.Task.IsCompletedSuccessfully);
+        Assert.False(_waits.IsWaiting(_job, "model-limit"));
+        Assert.Equal(_job, resumed.Value.JobId);
+    }
+
+    [Fact]
     public async Task A_job_that_is_not_waiting_gets_the_not_waiting_refusal()
     {
         using var entered = Human();
@@ -82,14 +96,14 @@ public sealed class ResumeJobTests
     }
 
     [Fact]
-    public void A_session_Sindri_launched_is_refused_with_SND_AUTH_002()
+    public void A_session_Sindri_launched_may_resume_like_the_owner()
     {
         var row = ServiceRows.All.Single(static r => string.Equals(r.Action.Value, "ResumeJob", StringComparison.Ordinal));
 
         var decision = Authorization.Decide(row.Class, A.Caller().Session().Launched().Build(), row);
 
         Assert.Equal(ActionClass.Desk, row.Class);
-        Assert.Equal(SindriErrors.AuthRefused.Code, decision.Refusal?.Code);
+        Assert.Null(decision.Refusal);
     }
 
     [Fact]

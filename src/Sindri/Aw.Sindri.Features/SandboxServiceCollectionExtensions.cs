@@ -56,7 +56,7 @@ internal static class SandboxServiceCollectionExtensions
     internal static IServiceCollection AddAllowDenial(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        return services.AddScoped<IValidator<AllowDenialRequest>, AcceptAllValidator<AllowDenialRequest>>().AddCommand<AllowDenialRequest, AllowDenialResponse, AllowDenialService>();
+        return services.AddScoped<SandboxAllowedRecorder>().AddScoped<IValidator<AllowDenialRequest>, AcceptAllValidator<AllowDenialRequest>>().AddCommand<AllowDenialRequest, AllowDenialResponse, AllowDenialService>();
     }
 
     /// <summary>Adds ListDenials, the query behind 'sindri sandbox denials'.</summary>

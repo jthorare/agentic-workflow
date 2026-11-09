@@ -67,6 +67,7 @@
     <ProjectReference Include="../../src/Connectors/Aw.Connectors.Features/Aw.Connectors.Features.csproj" />
     <ProjectReference Include="../../src/Connectors/Aw.Connectors.Infrastructure/Aw.Connectors.Infrastructure.csproj" />
     <ProjectReference Include="../../src/Embeddings/Aw.Embeddings/Aw.Embeddings.csproj" />
+    <ProjectReference Include="../../src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj" />
   </ItemGroup>
 
   <ItemGroup>
