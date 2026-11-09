@@ -34,6 +34,8 @@ public sealed class WriteAttributionTests
         ["POST /sindri/todos/note/set"] = "edits the live profile file through TodoNoteProfileEdit (SetTodoNoteService.cs:9): writes no ledger event",
         ["POST /sindri/todos/note/stop"] = "edits the live profile file through TodoNoteProfileEdit (StopTodoNoteService.cs:9): writes no ledger event",
         ["POST /sindri/linear/connection/teams"] = "reads the key's Linear teams (ListLinearTeamsService): stores nothing and writes no event",
+        ["POST /sindri/workflow-runs/{run}/nodes/{node}/takeover"] = TakeoverReason,
+        ["POST /sindri/workflow-runs/{run}/nodes/{node}/handback"] = TakeoverReason,
         ["POST /sindri/workflow/challenges/app"] = "refuses every text (IssueAppChallengeService.cs:17, no ports) and its endpoint appends nothing: writes no event",
     };
 
@@ -50,6 +52,8 @@ public sealed class WriteAttributionTests
         ["POST /sindri/connections/{name}/signin"] = AuditOnlyReason,
         ["POST /sindri/handoff"] = "the golden scenarios send it as the human; a launched session's handoff is proven by HandoffEndpointTests.A_launched_session_hands_off_without_the_human_token_and_keeps_its_actor (item.handoff's actor is session:launch:<id>)",
     };
+
+    private const string TakeoverReason = "the human's: an agent session is refused (SND-AUTH-002, AgentNodeControlServiceTests), and the node's held state lives in its Temporal workflow, so the route appends no ledger event (#2472)";
 
     private const string AuditOnlyReason = "only the command.handled audit row carries the caller; the store keeps no actor (#2460)";
 

@@ -55,6 +55,12 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-107: the run already ended, so it can't be cancelled.</summary>
     public static readonly ErrorDefinition GraphRunEnded = new("SND-GRAPH-107", ErrorKind.Conflict, "This run already ended");
 
+    /// <summary>SND-GRAPH-109: the run is not waiting on an agent at that node (the node is not a 'run_agent' node, has not started, or has ended), so there is nothing to take over.</summary>
+    public static readonly ErrorDefinition GraphNodeNotWaiting = new("SND-GRAPH-109", ErrorKind.Conflict, "The run is not waiting on an agent at that node");
+
+    /// <summary>SND-GRAPH-110: nobody holds the 'run_agent' node, so there is nothing to hand back.</summary>
+    public static readonly ErrorDefinition GraphNodeNotTakenOver = new("SND-GRAPH-110", ErrorKind.Conflict, "That agent node is not taken over");
+
     /// <summary>SND-GRAPH-103: a prompt node's answer did not fit its 'output' schema.</summary>
     public static readonly ErrorDefinition GraphPromptAnswer = new("SND-GRAPH-103", ErrorKind.Invalid, "The model's answer does not fit the prompt's output schema");
 
