@@ -9,10 +9,10 @@ namespace Aw.Sindri.Tests.Connections;
 [Lane(TestLane.Unit)]
 public sealed class ConnectionPresetsTests
 {
-    private static readonly string[] _shipped = ["github", "google", "linear", "slack", "spotify"];
+    private static readonly string[] _shipped = ["github", "google", "granola", "linear", "slack", "spotify", "wispr-flow"];
 
     [Fact]
-    public void Every_shipped_preset_parses_and_the_five_are_there()
+    public void Every_shipped_preset_parses_and_the_seven_are_there()
     {
         var presets = new EmbeddedConnectionPresets().List();
 
