@@ -54,7 +54,7 @@ perl -0pi -e 's/        "409":\n          description: Another caller claimed it
 run "$d"; expect_rc "a claim without its 409 fails" 1; expect_out "names it" "claimOffer has no 409 response"
 
 d="$(copy example)"
-perl -0pi -e 's/title: Fix the login timeout\n                        repo: acme\/web\n                        branch: fix\/login-timeout\n                        prompt: Users are logged out after 5 minutes. Make it 30.\n                        links: \[\{ label: Ticket/repo: acme\/web\n                        links: [{ label: Ticket/' "$d/schemas/handoff/inbox.openapi.yaml"
+perl -0pi -e 's/title: Fix the login timeout\n                        repo: web\n                        branch: fix\/login-timeout\n                        prompt: Users are logged out after 5 minutes. Make it 30.\n                        links: \[\{ label: Ticket/repo: web\n                        links: [{ label: Ticket/' "$d/schemas/handoff/inbox.openapi.yaml"
 run "$d"; expect_rc "a spec example that breaks its own schema fails" 1; expect_out "names the example" "example 'twoOffers' is not a valid OfferPage"
 
 d="$(copy docs)"
