@@ -20431,3 +20431,10 @@ Aw.Sindri.Core.Events.WorkflowChangedPayload.Equals(Aw.Sindri.Core.Events.Workfl
 Aw.Sindri.Core.Events.WorkflowChangedPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowChangedPayload!
 Aw.Sindri.Core.Events.WorkflowChangedPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out int Revision, out string? SpecHash, out string! By) -> void
 Aw.Sindri.Core.Events.WorkflowChangedPayload.WorkflowChangedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, int Revision, string? SpecHash, string! By) -> void
+Aw.Sindri.Core.Graph.WorkflowChangeLog
+Aw.Sindri.Core.Graph.WorkflowChangeLog.LeaseProblem() -> Aw.Kernel.Error?
+Aw.Sindri.Core.Graph.WorkflowChangeLog.Record(string! type, Aw.Sindri.Core.Events.WorkflowChangedPayload! payload, string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.WorkflowChangeLog.WorkflowChangeLog(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Events.EventFactory! events) -> void
+Aw.Sindri.Core.Graph.Validation.IWorkflowChecker
+Aw.Sindri.Core.Graph.IWorkflowStore.Pause(Aw.Sindri.Core.Graph.Ids.WorkflowId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.WorkflowRecord!>!>
+Aw.Sindri.Core.Graph.Validation.IWorkflowChecker.Validator(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Graph.Validation.GraphValidator!>

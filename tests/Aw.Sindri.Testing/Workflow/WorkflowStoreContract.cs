@@ -69,6 +69,22 @@ public abstract class WorkflowStoreContract
         Expect.Equal(SindriErrors.GraphSlugTaken.Code, other.Error.Code);
     }
 
+    /// <summary>Pausing clears the active revision and keeps every revision; pausing an unknown workflow is not found.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Pausing_clears_the_active_revision_and_an_unknown_workflow_is_not_found()
+    {
+        var store = Create();
+        _ = (await store.Create(_id, _slug, Spec("one"), "owner", Token)).Value;
+        _ = (await store.Activate(_id, 1, Token)).Value;
+
+        var paused = (await store.Pause(_id, Token)).Value;
+
+        Assert.Null(paused.ActiveRevision);
+        Expect.Equal(1, paused.LatestRevision);
+        Expect.Equal(SindriErrors.GraphNotFound.Code, (await store.Pause(WorkflowId.From("WF-00000000000000000000000000000009"), Token)).Error.Code);
+    }
+
     /// <summary>Activating pins the revision triggers run; an unknown revision is not found.</summary>
     /// <returns>The test.</returns>
     [Fact]

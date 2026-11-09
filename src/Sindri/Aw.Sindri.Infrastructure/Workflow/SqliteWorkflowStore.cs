@@ -92,6 +92,19 @@ internal sealed class SqliteWorkflowStore(LedgerDatabase database, TimeProvider 
             return pinned.IsError ? pinned.Error : await RecordIn(session, id, token).ConfigureAwait(false);
         }, cancellationToken);
 
+    public ValueTask<Result<WorkflowRecord>> Pause(WorkflowId id, CancellationToken cancellationToken) =>
+        RecipeSessions.Write(database, async ValueTask<Result<WorkflowRecord>> (session, token) =>
+        {
+            var record = await RecordIn(session, id, token).ConfigureAwait(false);
+            if (record.IsError)
+            {
+                return record;
+            }
+
+            var unpinned = await RecipeSessions.Execute(session, new SqlStatement(WorkflowSql.Unpin, c => c.Bind("$id", id.Value)), token).ConfigureAwait(false);
+            return unpinned.IsError ? unpinned.Error : await RecordIn(session, id, token).ConfigureAwait(false);
+        }, cancellationToken);
+
     public ValueTask<Result<WorkflowRecord>> Archive(WorkflowId id, CancellationToken cancellationToken) =>
         RecipeSessions.Write(database, async ValueTask<Result<WorkflowRecord>> (session, token) =>
         {

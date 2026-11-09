@@ -110,6 +110,21 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
     }
 
     /// <inheritdoc/>
+    public ValueTask<Result<WorkflowRecord>> Pause(WorkflowId id, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            if (!_workflows.TryGetValue(id, out var entry))
+            {
+                return Done<WorkflowRecord>(NotFound(id));
+            }
+
+            entry.Active = null;
+            return Ok(entry.Record(id));
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<Result<WorkflowRecord>> Archive(WorkflowId id, CancellationToken cancellationToken)
     {
         lock (_gate)
