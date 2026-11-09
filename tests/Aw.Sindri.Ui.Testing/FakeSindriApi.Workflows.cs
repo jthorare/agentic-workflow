@@ -12,6 +12,9 @@ internal sealed partial class FakeSindriApi
     private int _workflowRunCalls;
     private readonly List<string> _startedWorkflows = [];
     private readonly List<string> _cancelledWorkflowRuns = [];
+    private readonly List<string> _activatedWorkflows = [];
+    private readonly List<string> _pausedWorkflows = [];
+    private readonly List<AppliedOps> _appliedOps = [];
 
     /// <summary>POST /sindri/workflows/{slug}/runs's answer: the started body by default (a refusal golden, such as workflows-slug-runs/not-active, to test a refusal).</summary>
     public RouteAnswer StartWorkflowRunAnswer { get; set; } = RouteAnswer.SpecShaped("workflows-slug-runs", "started");
@@ -111,5 +114,70 @@ internal sealed partial class FakeSindriApi
         }
 
         return Task.FromResult(Answer<WorkflowRunCancelled>(api, WorkflowRoutes.Cancel(runId), CancelWorkflowRunAnswer));
+    }
+
+    /// <summary>One POST .../ops the fake got.</summary>
+    /// <param name="Slug">The workflow.</param>
+    /// <param name="BaseRevision">The base revision sent.</param>
+    /// <param name="Ops">The ops, as the JSON array text sent.</param>
+    internal sealed record AppliedOps(string Slug, int BaseRevision, string Ops);
+
+    /// <summary>GET /sindri/workflows/blocks's answer: a refusal until a test serves a block list.</summary>
+    public RouteAnswer WorkflowBlocksAnswer { get; set; } = RouteAnswer.Problem(System.Net.HttpStatusCode.NotFound, "SND-GRAPH-008", "no blocks served");
+
+    /// <summary>POST .../ops's answer.</summary>
+    public RouteAnswer ApplyWorkflowOpsAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"slug":"morning-check","revision":3,"specHash":"sha256:x"}""");
+
+    /// <summary>POST .../activate's answer.</summary>
+    public RouteAnswer ActivateWorkflowAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"slug":"morning-check","revision":2,"specHash":"sha256:x"}""");
+
+    /// <summary>POST .../pause's answer.</summary>
+    public RouteAnswer PauseWorkflowAnswer { get; set; } = RouteAnswer.Api("workflows-slug-pause", "paused");
+
+    /// <summary>Holds POST .../activate and .../pause until a test releases it (the call is recorded first).</summary>
+    public TaskCompletionSource? WorkflowStateGate { get; set; }
+
+    /// <summary>The workflows Activate was sent for, in order.</summary>
+    public IReadOnlyList<string> ActivatedWorkflows { get { lock (_gate) { return [.. _activatedWorkflows]; } } }
+
+    /// <summary>The workflows Pause was sent for, in order.</summary>
+    public IReadOnlyList<string> PausedWorkflows { get { lock (_gate) { return [.. _pausedWorkflows]; } } }
+
+    /// <summary>The ops sent, in order.</summary>
+    internal IReadOnlyList<AppliedOps> AppliedWorkflowOps { get { lock (_gate) { return [.. _appliedOps]; } } }
+
+    public Task<Result<WorkflowBlockList>> WorkflowBlocks(Uri api, CancellationToken cancellationToken) =>
+        Task.FromResult(Answer<WorkflowBlockList>(api, WorkflowRoutes.Blocks(), WorkflowBlocksAnswer));
+
+    public Task<Result<WorkflowOpsApplied>> ApplyWorkflowOps(Uri api, string slug, int baseRevision, string opsJson, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _appliedOps.Add(new AppliedOps(slug, baseRevision, opsJson));
+        }
+
+        return Task.FromResult(Answer<WorkflowOpsApplied>(api, WorkflowRoutes.Ops(slug), ApplyWorkflowOpsAnswer));
+    }
+
+    public async Task<Result<WorkflowActivated>> ActivateWorkflow(Uri api, string slug, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _activatedWorkflows.Add(slug);
+        }
+
+        await WaitFor(WorkflowStateGate, cancellationToken).ConfigureAwait(false);
+        return Answer<WorkflowActivated>(api, WorkflowRoutes.Activate(slug), ActivateWorkflowAnswer);
+    }
+
+    public async Task<Result<WorkflowPaused>> PauseWorkflow(Uri api, string slug, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _pausedWorkflows.Add(slug);
+        }
+
+        await WaitFor(WorkflowStateGate, cancellationToken).ConfigureAwait(false);
+        return Answer<WorkflowPaused>(api, WorkflowRoutes.Pause(slug), PauseWorkflowAnswer);
     }
 }
