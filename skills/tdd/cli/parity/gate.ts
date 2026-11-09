@@ -8,11 +8,13 @@
 // usage: bun run parity/gate.ts <packet-dir> [--src <file.md>] [--a python|ts|<exe>] [--b python|ts|<exe>]
 //        [--out <dir>] [--keep] [--generated <stamp>] [--expect-line <summary>] [--json <report.json>]
 // <exe> is any program taking the compiler's own arguments (<source.md> <out-dir>). The default out path is a new
-// temporary folder, removed afterwards unless --keep; an --out folder must be new, empty, or an earlier build.
+// temporary folder, removed afterwards unless --keep. The gate never deletes a file it did not write: an --out folder
+// must be new, empty, or hold exactly the gate's own earlier output (listed in a ledger under the system temp folder);
+// between the two compiles it removes exactly the paths compiler A wrote, and it leaves compiler B's output in place.
 // Exit 0 when green, 1 when anything differs or a compile fails, 2 on bad usage.
 import { spawnSync } from "bun";
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmdirSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, relative, resolve } from "node:path";
 
@@ -60,16 +62,57 @@ function walk(root: string, dir = root, acc = new Map<string, { sha256: string; 
   return acc;
 }
 
-function clearOut(out: string, created: boolean) {
-  if (!existsSync(out)) return;
-  const entries = readdirSync(out);
-  if (!created && entries.length > 0 && !entries.includes("content.json"))
-    throw new Error(`${out} is not empty and holds no content.json: refusing to clear it (pass a new or empty folder)`);
-  rmSync(out, { recursive: true, force: true });
+/** Every path under root (files and symlinks; folders), relative, without following symlinks. */
+export function tree(root: string, dir = root, acc = { files: [] as string[], dirs: [] as string[] }) {
+  for (const name of readdirSync(dir).sort()) {
+    const p = join(dir, name);
+    if (lstatSync(p).isDirectory()) {
+      acc.dirs.push(relative(root, p));
+      tree(root, p, acc);
+    } else acc.files.push(relative(root, p));
+  }
+  return acc;
 }
 
-export function runCompiler(which: string, packet: string, src: string, out: string, env: Record<string, string>, created: boolean): Snapshot {
-  clearOut(out, created);
+/** Remove the listed paths and nothing else: files first, then the (by then empty) folders, deepest first. */
+function removeWritten(out: string, t: { files: string[]; dirs: string[] }) {
+  for (const f of t.files) unlinkSync(join(out, f));
+  for (const d of [...t.dirs].sort((x, y) => y.length - x.length)) rmdirSync(join(out, d));
+}
+
+const LEDGERS = join(tmpdir(), "tdd-parity-gate");
+const ledger = (out: string) => join(LEDGERS, `${createHash("sha256").update(out).digest("hex").slice(0, 24)}.json`);
+
+/**
+ * Ready an --out folder without touching anything the gate did not write: a missing or empty folder is used as is;
+ * one holding only paths the gate's ledger says it wrote has those removed; anything else is refused.
+ */
+export function prepareOut(out: string): void {
+  if (!existsSync(out)) return;
+  const t = tree(out);
+  if (t.files.length + t.dirs.length === 0) return;
+  let owned = new Set<string>();
+  try {
+    const l = JSON.parse(readFileSync(ledger(out), "utf8")) as { out: string; written: string[] };
+    if (l.out === out) owned = new Set(l.written);
+  } catch {
+    // no ledger: nothing in the folder is the gate's
+  }
+  const foreign = [...t.files, ...t.dirs].filter((p) => !owned.has(p));
+  if (foreign.length)
+    throw new Error(`${out} holds ${foreign.length} path(s) the gate did not write (${foreign.slice(0, 3).join(", ")}${foreign.length > 3 ? ", ..." : ""}): refusing to touch it (pass a new or empty folder)`);
+  removeWritten(out, t);
+}
+
+function recordOut(out: string): void {
+  if (!existsSync(out)) return;
+  const t = tree(out);
+  mkdirSync(LEDGERS, { recursive: true });
+  writeFileSync(ledger(out), JSON.stringify({ out, written: [...t.files, ...t.dirs] }));
+}
+
+/** One compile into `out`, which must be missing or empty (gate() sees to that). */
+export function runCompiler(which: string, packet: string, src: string, out: string, env: Record<string, string>): Snapshot {
   const t0 = performance.now();
   const r = spawnSync(command(which, src, out), { cwd: packet, env: { ...process.env, ...env }, stdout: "pipe", stderr: "pipe" });
   const seconds = (performance.now() - t0) / 1000;
@@ -135,9 +178,12 @@ export function gate(packetDir: string, o: { src?: string; a?: string; b?: strin
   const created = o.out === undefined;
   const out = o.out ? resolve(o.out) : join(mkdtempSync(join(tmpdir(), `tdd-gate-${basename(packet)}-`)), "build");
   const env = { TDD_GENERATED: o.generated ?? "2000-01-01T00:00:00Z", TZ: "UTC" };
+  if (!created) prepareOut(out);
   try {
-    const A = runCompiler(o.a ?? "python", packet, src, out, env, created);
-    const B = runCompiler(o.b ?? "python", packet, src, out, env, true);
+    const A = runCompiler(o.a ?? "python", packet, src, out, env);
+    if (existsSync(out)) removeWritten(out, tree(out)); // exactly what A wrote: the folder was new or empty before it
+    const B = runCompiler(o.b ?? "python", packet, src, out, env);
+    if (!created) recordOut(out);
     const problems = compare(A, B);
     const summary = summaryLine(B.stdout);
     if (o.expectLine !== undefined && summary !== o.expectLine) problems.push(`summary line changed:\n  expected ${o.expectLine}\n  got      ${summary}`);
