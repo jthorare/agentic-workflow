@@ -473,23 +473,7 @@ About 6k lines in about 1000 `src/Sindri` files say profile, plus 4.5k in tests 
 
 ## 9. Questions
 
-1. **Should a change that widens agents' reach give you a heads-up?** Any session can now save, with no approval:
-   - a sandbox host (network access);
-   - a repo (file access);
-   - a connection or library source URL (what Sindri fetches);
-   - a credential reference: `command:argv` runs a command as you, outside the sandbox, and `env:NAME` reads a
-     variable from serve's environment.
-
-   An agent's Edit-tool save shows up as `outside`, so a heads-up would key on any change not made by you, not
-   only on a session's.
-   - My take: yes. The write goes live at once, and Needs-you gets one row per save, such as "<who> opened network
-     access to api.example.com at 14:02", with **Undo**. If you say yes, a follow-up spec designs the row: its words
-     for each kind, Undo's failure states, and how dismissing it is recorded (one new ledger event).
-   - The product review prefers no row for v1, to keep this PR smaller. The change then shows only in Last changed,
-     See changes and the ledger.
-   - Either way, validation already refuses `*`, `*.com`, IP hosts and `localhost`; `/`, `$HOME` and the Sindri
-     home as repos; non-https or credential-bearing URLs; secrets in `command:` arguments; and `command:`
-     references Sindri can't find.
+None open. The heads-up question is settled in §10.
 
 ## 10. Settled
 
@@ -498,4 +482,7 @@ About 6k lines in about 1000 `src/Sindri` files say profile, plus 4.5k in tests 
 - Who may change settings: any session, recorded in the ledger (owner).
 - Recipes: retired by #2356.
 - The optimistic check: none. A file lock orders writes, and the same key's later save wins (§3.2).
-- Open: §9 Q1 (a heads-up row when a session widens agents' reach), for the owner.
+- A change that widens agents' reach (a sandbox host, a repo, a connection or library source URL, a credential
+  reference) gets no Needs-you row: it shows only in Last changed, See changes and the ledger (owner, 2026-11-08).
+  Validation still refuses `*`, `*.com`, IP hosts and `localhost`; `/`, `$HOME` and the Sindri home as repos;
+  non-https or credential-bearing URLs; secrets in `command:` arguments; and `command:` references Sindri can't find.
