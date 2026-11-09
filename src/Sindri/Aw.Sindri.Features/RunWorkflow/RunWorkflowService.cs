@@ -4,6 +4,7 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Features.RunWorkflow;
@@ -15,13 +16,16 @@ namespace Aw.Sindri.Features.RunWorkflow;
 /// <param name="workflows">The workflows and their revisions.</param>
 /// <param name="runs">The runs; the next manual occurrence comes from them.</param>
 /// <param name="starter">Starts, queues or skips the run.</param>
-internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter) : IService<RunWorkflowRequest, RunWorkflowResponse>
+/// <param name="launches">Which run launched a session; the loop guard (SND-GRAPH-109) reads it.</param>
+/// <param name="callers">The caller; its launch is the session the guard looks up.</param>
+internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers) : IService<RunWorkflowRequest, RunWorkflowResponse>
 {
     private const string TriggerKind = "manual";
 
     public async ValueTask<Result<RunWorkflowResponse>> Handle(RunWorkflowRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        _ = (launches, callers); // red: the loop guard comes in the fix commit
         var payload = Payload(request.Payload);
         if (payload.IsError)
         {
