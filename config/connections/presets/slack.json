@@ -9,6 +9,5 @@
   "hostGroup": "slack",
   "loopbackAllowed": false,
   "signInNote": "Slack only accepts https redirect URLs, so the browser sign-in cannot return to this machine. Make a REST connection with a user token instead: sindri connection add slack:work --kind rest --key-env SLACK_TOKEN.",
-  "pollableEvents": [],
   "probeUrl": "https://slack.com/api/auth.test"
 }

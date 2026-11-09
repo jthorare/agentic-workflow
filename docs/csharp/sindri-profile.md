@@ -62,7 +62,7 @@ not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.m
 | `judge` | object (`providers`, `parallel`) | no | none | Which providers a Judge Step (`step.judge.choose`) may ask (DT-J plan Q8), and how many judge calls the scoping judge Steps run at once. `judge.providers` is a list of `jev`, `claude-cli`, `codex-cli`, `cursor-cli`, `rules`; absent: `jev`, `claude-cli`, `codex-cli`, `cursor-cli`, `rules` (the judge asks Jev first; owner, 2026-11-03). `rules` is always kept, last. A recipe's own `providers` list only narrows this one and never adds `jev`. A name that is not one of the five is refused when you save it (`workflow.judge.providers[i]`). A repo may set its own list under `repos[].workflow.judge.providers`; it wins over the box's. `judge.parallel` is a whole number from 1 to 16 (issue 1440): how many calls `step.scope.relevance-judge` and `step.scope.gap-judge` run at once when their recipe says `parallel: { profile: workflow.judge.parallel }` (the shipped scoping recipe does). Absent: each Step's own width, 8. Read from the live profile; a recipe that gives a number keeps it. Outside 1 to 16 is refused when you save it (`workflow.judge.parallel`, `repos.<name>.workflow.judge.parallel`). A repo may set `repos[].workflow.judge.parallel`; it wins over the box's |
 | `forge` | object | no | none | The forge port's settings: `adapter`, `hosts` and `credential` (see `workflow.forge` below) |
 | `pr` | object | no | none | The PR babysitter's settings (see `workflow.pr` below) |
-| `route` | object (`startable`) | no | none | The router stub's setting (engine P7 plan D8; see `workflow.route` below) |
+| `route` | object (`startable`) | no | none | The router stub's setting (engine P7 plan D8; see `workflow.route` below). The recipe engine is removed (v2 PR 4b), so nothing routes items now |
 | `packs` | object | no | none | The style and lens packs a repo uses and their pins (line spec §5; see `workflow.packs` below) |
 | `line` | object | no | none | How many phases run at once, how many pull requests stay open and how deep a stack goes (line spec §8; see `workflow.line` below) |
 | `plan` | object | no | none | The size classes and the largest phase size (line spec §6.3; see `workflow.plan` below) |
@@ -171,7 +171,7 @@ What the router stub does with an item it routes (workflow engine spec §12). Re
 
 | Key | Type | Required | Default | Meaning |
 |---|---|---|---|---|
-| `startable` | `all` or `none` | no | `all` | `all` lets every routed item start; `none` stops them at the router (the gate fails and the item parks). Any other value is refused when you save it (`workflow.route.startable`) |
+| `startable` | `all` or `none` | no | `all` | `all` lets every routed item start; `none` stops them at the router (the gate fails; with the recipe engine removed, nothing reads this key now). Any other value is refused when you save it (`workflow.route.startable`) |
 
 ### `workflow.forEach`
 

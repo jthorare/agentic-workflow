@@ -21,11 +21,17 @@ internal enum PageId
     /// <summary>Dependencies, services and health (screens spec §4.6).</summary>
     System,
 
+    /// <summary>The names workflows and agents sign in by, and their status (PR 18a). A tab, after System; G O and the palette open it.</summary>
+    Connections,
+
     /// <summary>The owner's PRs and the ones waiting on the owner (review page spec §6.1). The seventh tab, after System; G V opens it, its badge is the waiting count.</summary>
     Reviews,
 
     /// <summary>The background jobs Sindri ran (API P6). Not a tab: G J, the palette and System's Jobs link open it.</summary>
     Jobs,
+
+    /// <summary>The memory stores agents read and write (PR 18a). Not a tab: G M, the palette, System's Memory link and a 'memory/&lt;name&gt;' link open it.</summary>
+    Memory,
 
     /// <summary>Local preferences only (⌘,).</summary>
     Settings,

@@ -55,24 +55,6 @@ public static class HealthSummary
         return new HealthReport(word, problems, Sentence(word, problems));
     }
 
-    /// <summary>A report that also counts the workflow instances parked as unavailable: a dependency a Step needs stayed down through its retries (API spec §3.8).</summary>
-    /// <param name="report">The report <see cref="For"/> folded.</param>
-    /// <param name="unavailable">The live instances parked with the reason 'unavailable'.</param>
-    /// <returns>The report; the same one when none are parked.</returns>
-    public static HealthReport WithUnavailable(HealthReport report, int unavailable)
-    {
-        ArgumentNullException.ThrowIfNull(report);
-        if (unavailable <= 0)
-        {
-            return report;
-        }
-
-        var clause = unavailable == 1 ? "1 workflow instance waits on a dependency that is down" : string.Create(CultureInfo.InvariantCulture, $"{unavailable} workflow instances wait on a dependency that is down");
-        var problems = report.Problems.Append(new HealthProblem("SND-ENGINE-003", $"{clause}: fix it, then run each again with `sindri workflow answer <address> --resume`", clause)).ToList();
-        var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
-        return new HealthReport(word, problems, Sentence(word, problems));
-    }
-
     /// <summary>A report that also names a stale build (#1032): the running control plane is not the build 'bin/cs/current' names.</summary>
     /// <param name="report">The report <see cref="For"/> folded.</param>
     /// <param name="running">The stamp this process runs from, or null.</param>
