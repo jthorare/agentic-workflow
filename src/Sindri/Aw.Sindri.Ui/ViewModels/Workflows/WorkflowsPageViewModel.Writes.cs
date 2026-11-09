@@ -4,7 +4,7 @@ using Aw.Sindri.Ui.Api.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
-/// <summary>The Workflows page (<see cref="WorkflowsPageViewModel"/>, continued): its two writes, Run now and Cancel run.</summary>
+/// <summary>The Workflows page (<see cref="WorkflowsPageViewModel"/>, continued): its writes: Run now, Cancel run, Activate and Pause.</summary>
 internal sealed partial class WorkflowsPageViewModel
 {
     /// <summary>
@@ -123,4 +123,37 @@ internal sealed partial class WorkflowsPageViewModel
             Run.SetCancelling(cancelling: false);
         }
     }
+
+    /// <summary>True while Activate's or Pause's call is on the way; a second press does nothing.</summary>
+    public bool IsChangingState { get; private set; }
+
+    /// <summary>What the last Activate or Pause said (refused or unsure), in words; empty otherwise.</summary>
+    public string StateNoticeText { get; private set; } = string.Empty;
+
+    /// <summary>True when there is a note under the Activate or Pause button.</summary>
+    public bool HasStateNotice => StateNoticeText.Length > 0;
+
+    /// <summary>The Activate button's words: "Activate", or "Activating…" while its call is on the way.</summary>
+    public string ActivateText => IsChangingState ? Labels.WfActivateBusy : Labels.WfActivate;
+
+    /// <summary>The Pause button's words: "Pause", or "Pausing…" while its call is on the way.</summary>
+    public string PauseText => IsChangingState ? Labels.WfPauseBusy : Labels.WfPause;
+
+    /// <summary>True when the open workflow is off and no call is on the way: Activate is offered.</summary>
+    public bool CanActivate => IsRuns && !IsChangingState && OpenRow is { IsActive: false };
+
+    /// <summary>True when the open workflow is on and no call is on the way: Pause is offered.</summary>
+    public bool CanPause => IsRuns && !IsChangingState && OpenRow is { IsActive: true };
+
+    private WorkflowRowViewModel? OpenRow => Rows.FirstOrDefault(r => string.Equals(r.Slug, Runs.Slug, StringComparison.Ordinal));
+
+    /// <summary>Activate: turns the open workflow's newest revision on. Sent once; the list and the runs are read again after any answer that reached Sindri.</summary>
+    /// <param name="cancellationToken">Cancels the call and the reads.</param>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal Task Activate(CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <summary>Pause: turns the open workflow off. Sent once; the list and the runs are read again after any answer that reached Sindri.</summary>
+    /// <param name="cancellationToken">Cancels the call and the reads.</param>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal Task Pause(CancellationToken cancellationToken) => throw new NotSupportedException();
 }

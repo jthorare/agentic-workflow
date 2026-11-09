@@ -232,4 +232,31 @@ internal static partial class Labels
     /// <param name="error">The failure.</param>
     /// <returns>The words.</returns>
     internal static string WfCancelRefused(Error error) => "Couldn't cancel the run. " + InstanceRefused(error);
+
+    /// <summary>The button on a workflow that is off: turns its newest revision on.</summary>
+    internal const string WfActivate = "Activate";
+
+    /// <summary>The same button while its call is on the way.</summary>
+    internal const string WfActivateBusy = "Activating…";
+
+    /// <summary>The button on a workflow that is on: turns it off. Its revisions stay saved.</summary>
+    internal const string WfPause = "Pause";
+
+    /// <summary>The same button while its call is on the way.</summary>
+    internal const string WfPauseBusy = "Pausing…";
+
+    /// <summary>The note when Activate was refused or failed: the reason follows.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string WfActivateRefused(Error error) => "Couldn't activate the workflow. " + InstanceRefused(error);
+
+    /// <summary>The note when Pause was refused or failed: the reason follows.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string WfPauseRefused(Error error) => "Couldn't pause the workflow. " + InstanceRefused(error);
+
+    /// <summary>The note when Activate or Pause got no answer from Sindri: it may have applied, so the list is read again.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string WfStateUnsure(Error error) => "Sindri didn't answer, so the change may have applied; check the state before you press again. " + InstanceRefused(error);
 }
