@@ -5,7 +5,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { args, FAKE_ANTHROPIC, FAKE_KEY, journal, makeWorld, outcomes, restoreEnv, runOnce, state, type World } from "./harness";
+import { args, CLI, FAKE_ANTHROPIC, FAKE_KEY, journal, makeWorld, outcomes, restoreEnv, runOnce, state, type World } from "./harness";
 
 const NODE = !!Bun.which("node");
 const AC = NODE ? "ok" : "skipped";
@@ -227,15 +227,37 @@ describe("--from, --only, --reuse", () => {
 });
 
 describe("skips with a reason", () => {
-  test("no eval venv: the eval is not run, named, and the run still exits 0", async () => {
+  test("the eval is tdd eval, a child of this bun, offline; it needs no venv", async () => {
     const w = world();
+    process.env["TDD_EVAL_PYTHON"] = join(w.root, "no-such-python");
+    const { report } = await runOnce(w, args(w));
+    process.env["TDD_EVAL_PYTHON"] = join(w.root, "python");
+    expect(outcomes(report).eval).toBe("ok");
+    const ev = w.spawned.find((s) => s.cmd[2] === "eval")!;
+    expect(ev.cmd).toEqual([process.execPath, join(w.paths.cli, "bin", "tdd.ts"), "eval", w.paths.packet, "--skip", "linear,aws"]);
+    expect(journal(w)[0]!.eval).toBe("tdd eval (src/eval)");
+    expect(report!.exit).toBe(0);
+  });
+
+  test("no tdd eval (bin/eval-packet.ts absent) and no venv: the eval is not run, named, and the run still exits 0", async () => {
+    const base = world();
+    const w: World = { ...base, paths: { ...base.paths, cli: join(base.root, "old-cli") } };
     process.env["TDD_EVAL_PYTHON"] = join(w.root, "no-such-python");
     const { report } = await runOnce(w, args(w));
     process.env["TDD_EVAL_PYTHON"] = join(w.root, "python");
     const ev = report!.rows.find((r) => r.step === "eval")!;
     expect(ev.outcome).toBe("skipped");
-    expect(ev.detail).toContain("not run: the eval venv is absent");
+    expect(ev.detail).toBe("not run: bin/eval-packet.ts is absent");
     expect(report!.exit).toBe(0);
+  });
+
+  test("no tdd eval but the venv: eval_packet.py runs, the fallback named in the journal", async () => {
+    const base = world();
+    const w: World = { ...base, paths: { ...base.paths, cli: join(base.root, "old-cli") } };
+    const { report } = await runOnce(w, args(w));
+    expect(outcomes(report).eval).toBe("ok");
+    expect(w.spawned.find((s) => s.cmd.some((c) => c.endsWith("eval_packet.py")))!.cmd.slice(0, 2)).toEqual([join(w.root, "python"), "-I"]);
+    expect(journal(w)[0]!.eval).toBe("scripts/eval_packet.py (the eval venv); bin/eval-packet.ts is absent");
   });
 
   test("Postgres unreachable: load-db is skipped with the probe's answer", async () => {
@@ -267,7 +289,9 @@ describe("keys", () => {
     MY_SERVICE_TOKEN: "svc-fake-token-0000", SOME_SECRET: "some-fake-secret-0000", DATABASE_URL: "postgres://me:Sup3rSecretPw@localhost/tdd_system_test",
   };
   const secretNames = (env: Record<string, string>) => Object.keys(env).filter((k) => k in KEYS || /(_KEY|_TOKEN|_SECRET)$|^AWS_/.test(k)).sort();
-  const isEval = (cmd: readonly string[]) => cmd.some((c) => c.endsWith("eval_packet.py"));
+  const isEval = (cmd: readonly string[]) => cmd.some((c) => c.endsWith("eval_packet.py")) || cmd[2] === "eval";
+  // the cli has no braintrust package, so a push falls back to the venv's eval_packet.py (named in the journal)
+  const BRAINTRUST_TS = (() => { try { Bun.resolveSync("braintrust", CLI); return true; } catch { return false; } })();
 
   test("without --push: no child gets a key (load-db gets only DATABASE_URL), the eval runs offline, no key in any file", async () => {
     const w = world();
@@ -298,6 +322,10 @@ describe("keys", () => {
     expect(evals[0]!.cmd).not.toContain("--skip");
     expect(secretNames(evals[0]!.env)).toEqual(["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "BRAINTRUST_API_KEY", "GH_TOKEN", "GITHUB_TOKEN", "LINEAR_API_KEY"]);
     expect(evals[0]!.env["BRAINTRUST_API_KEY"]).toBe(FAKE_KEY);
+    if (!BRAINTRUST_TS) {
+      expect(evals[0]!.cmd.some((c) => c.endsWith("eval_packet.py"))).toBe(true);
+      expect(journal(w)[0]!.eval).toBe("scripts/eval_packet.py (the eval venv); the push needs the braintrust package, absent for tdd eval");
+    }
     for (const s of w.spawned.filter((x) => !isEval(x.cmd))) {
       expect(secretNames(s.env)).toEqual(s.cmd.join(" ").includes("load-db") ? ["DATABASE_URL"] : []);
     }

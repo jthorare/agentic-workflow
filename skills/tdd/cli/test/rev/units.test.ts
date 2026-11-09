@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { Redacted } from "effect";
 import { parseArgs } from "../../src/rev/args";
 import { bunEval, evalStep, pythonEval } from "../../src/rev/eval";
-import { fingerprint } from "../../src/rev/hash";
+import { fingerprint, type Part } from "../../src/rev/hash";
 import { freshState, type State, type StepRecord } from "../../src/rev/journal";
 import { artifactCheckPath, findSource, resolvePaths } from "../../src/rev/paths";
 import { plan } from "../../src/rev/run";
@@ -152,15 +152,38 @@ describe("paths", () => {
 });
 
 describe("the eval boundary", () => {
-  test("today the Python eval; the TypeScript one is the one-line swap", () => {
-    expect(evalStep).toBe(pythonEval);
+  test("tdd eval (src/eval) as a child; eval_packet.py only when src/eval lacks what the run needs", () => {
     const p = resolvePaths(join(root, "pk", "my-slug"));
-    expect(bunEval.command(p, ["--no-gh"])).toEqual({ cmd: [process.execPath, join(p.cli, "bin", "tdd.ts"), "eval", p.packet, "--no-gh"] });
     const saved = process.env["TDD_EVAL_PYTHON"];
+    const venv = join(root, "venv-python");
+    writeFileSync(venv, "#!/bin/sh\n");
+    process.env["TDD_EVAL_PYTHON"] = venv;
+    expect(evalStep(p, false)).toBe(bunEval);
+    expect(bunEval.command(p, ["--no-gh"])).toEqual({ cmd: [process.execPath, join(p.cli, "bin", "tdd.ts"), "eval", p.packet, "--no-gh"] });
+    // the cli has no braintrust package: a push takes the venv, named with the reason
+    const braintrust = (() => { try { Bun.resolveSync("braintrust", p.cli); return true; } catch { return false; } })();
+    if (!braintrust) {
+      const fb = evalStep(p, true);
+      expect(fb.name).toBe("scripts/eval_packet.py (the eval venv); the push needs the braintrust package, absent for tdd eval");
+      expect(fb.command(p, ["--push"])).toEqual({ cmd: [venv, "-I", join(p.skill, "scripts", "eval_packet.py"), p.packet, "--push"] });
+    }
+    // no bin/eval-packet.ts (an older skill copy): the venv, when it is there
+    const old = { ...p, cli: join(root, "old-cli") };
+    expect(evalStep(old, false).name).toBe("scripts/eval_packet.py (the eval venv); bin/eval-packet.ts is absent");
+    expect(bunEval.command(old, [])).toEqual({ notRun: "not run: bin/eval-packet.ts is absent" });
     process.env["TDD_EVAL_PYTHON"] = join(root, "absent-python");
+    expect(evalStep(p, true)).toBe(bunEval); // no venv to fall back on: tdd eval runs, and its push names the package
+    expect(evalStep(old, false)).toBe(bunEval);
     expect(pythonEval.command(p, [])).toMatchObject({ notRun: expect.stringContaining("not run: the eval venv is absent") });
     if (saved === undefined) delete process.env["TDD_EVAL_PYTHON"];
     else process.env["TDD_EVAL_PYTHON"] = saved;
+  });
+  test("the eval's fingerprint follows the impl: src/eval for tdd eval, scripts/eval for the Python", () => {
+    const p = resolvePaths(join(root, "pk", "my-slug"));
+    const trees = (parts: readonly Part[]) => parts.map((x) => ("tree" in x ? x.tree : "file" in x ? x.file : x.label));
+    expect(trees(bunEval.code(p))).toContain(join(p.cli, "src", "eval"));
+    expect(trees(bunEval.code(p))).toContain(join(p.skill, "scripts", "lint_packet.py"));
+    expect(trees(pythonEval.code(p))).toContain(join(p.skill, "scripts", "eval"));
   });
   test("offline unless --push", () => {
     const a = { noShots: true, noGh: true } as Parameters<typeof evalArgs>[0];

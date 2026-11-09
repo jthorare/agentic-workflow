@@ -125,7 +125,8 @@ describe("tdd rev with fake keys and no --push", () => {
       const p = Bun.spawn(sandboxed([process.execPath, "--preload", PRELOAD, join(CLI, "bin", "tdd.ts"), "rev", packet, "--no-shots", "--no-gh"]), {
         env: env({
           ...FAKES, ...proxyEnv(rec.port), TDD_NET_LOG: log, DATABASE_URL: TEST_DB, TDD_GENERATED: "2026-01-05T00:00:00Z",
-          TDD_SHIM_LOG: shimLog, TDD_REV_BUN: sh["bun"]!, TDD_EVAL_PYTHON: sh["eval-python"]!, PATH: `${join(root, "shims")}:${process.env["PATH"] ?? ""}`,
+          // TDD_PYTHON: the interpreter tdd eval's lint scorer runs lint_packet.py with
+          TDD_SHIM_LOG: shimLog, TDD_REV_BUN: sh["bun"]!, TDD_EVAL_PYTHON: sh["eval-python"]!, TDD_PYTHON: sh["eval-python"]!, PATH: `${join(root, "shims")}:${process.env["PATH"] ?? ""}`,
         }),
         stdout: "pipe", stderr: "pipe",
       });
@@ -142,6 +143,8 @@ describe("tdd rev with fake keys and no --push", () => {
     expect(by("git").length).toBeGreaterThan(0);
     expect(by("bun").length).toBeGreaterThanOrEqual(3);
     expect(by("eval-python").length + by("python3").length).toBeGreaterThan(0);
+    // tdd eval runs as a child of the shimmed bun, and its own children (node, bun, python, git) go through the shims too
+    expect(by("bun").some((c) => (c[2] ?? "").includes(" eval "))).toBe(true);
     for (const [name, secrets, argv] of children) {
       const loadDb = name === "bun" && (argv ?? "").includes(" load-db ");
       expect([name, (argv ?? "").slice(0, 60), (secrets ?? "").trim()]).toEqual([name, (argv ?? "").slice(0, 60), loadDb ? "DATABASE_URL" : ""]);
@@ -153,14 +156,13 @@ describe("tdd rev with fake keys and no --push", () => {
     expect(steps["push"].reason).toContain("--push not given");
     expect(lines[0].offline).toBe(true);
     expect(lines[0].keys).toEqual(expect.arrayContaining(Object.keys(FAKES)));
-    if (steps["eval"].outcome === "ok") {
-      const cmd: string[] = steps["eval"].cmds[0];
-      expect(cmd).not.toContain("--push");
-      expect(cmd.slice(-3)).toEqual(["--no-gh", "--skip", "linear,aws"]);
-      expect(JSON.parse(readFileSync(join(packet, "build", "eval", "run.json"), "utf8")).pushed).toBe(false);
-    } else {
-      expect(steps["eval"].reason).toContain("not run");
-    }
+    expect(lines[0].eval).toBe("tdd eval (src/eval)");
+    expect(steps["eval"].outcome).toBe("ok");
+    const cmd: string[] = steps["eval"].cmds[0];
+    expect(cmd[2]).toBe("eval");
+    expect(cmd).not.toContain("--push");
+    expect(cmd.slice(-3)).toEqual(["--no-gh", "--skip", "linear,aws"]);
+    expect(JSON.parse(readFileSync(join(packet, "build", "eval", "run.json"), "utf8")).pushed).toBe(false);
     expect(existsSync(join(packet, "build", "eval", "push.json"))).toBe(false);
     for (const s of ["compile", "app-build", "hydrate", "agents", "lint"]) expect(steps[s].outcome).toBe("ok");
     expect(r!.code).toBe(0);
