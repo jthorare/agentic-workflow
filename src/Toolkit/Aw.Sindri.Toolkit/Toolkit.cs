@@ -28,7 +28,7 @@ public sealed class Toolkit
     /// <summary>Starts a declaration.</summary>
     /// <param name="name">Lower-case letters, digits and '-'.</param>
     /// <returns>The toolkit to add to.</returns>
-    public static Toolkit Named(string name) => new(Sindri.Toolkit.Resources.CheckedName(name));
+    public static Toolkit Named(string name) => new(Resources.CheckedName(name));
 
     /// <summary>Sets the version shown in the manifest (default 1.0.0).</summary>
     /// <param name="version">The version text.</param>
@@ -51,7 +51,7 @@ public sealed class Toolkit
     }
 
     /// <summary>Declares resources.</summary>
-    /// <param name="needs">Built with <see cref="Sindri.Toolkit.Resources"/>.</param>
+    /// <param name="needs">Built with <see cref="Resources"/>.</param>
     /// <returns>This toolkit.</returns>
     public Toolkit Needs(params ResourceNeed[] needs)
     {

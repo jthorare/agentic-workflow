@@ -113,9 +113,6 @@ public sealed class HandoffEndpointTests
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]
     public async Task A_launched_session_hands_off_without_the_human_token_and_keeps_its_actor()
     {
-        // Authorization's Desk row has no Launched until #2403, so today this is SND-AUTH-002. Whichever of #2448 and #2403 lands second
-        // removes this line and expects the actor session:launch:<id>.
-        Assert.Skip("#2403 lets launched sessions run desk rows");
         await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
         const string launch = "LCH-00000000000000000000000000000c01";
         LaunchSecrets.Write(host.App.Services.GetRequiredService<LauncherOptions>().SecretsDirectory, LaunchId.From(launch), "proof");
@@ -126,7 +123,7 @@ public sealed class HandoffEndpointTests
         var scan = await host.App.Services.GetRequiredService<ILedgerReader>()
             .Scan(0, 100, new LedgerFilter(TypeFilter.Parse(EventTypes.ItemHandoff).Value, Item: null), TestContext.Current.CancellationToken);
         var recorded = Assert.Single(scan.Value.Events);
-        Assert.Equal("session:cli", recorded.Envelope.Actor);
+        Assert.Equal("session:launch:" + launch, recorded.Envelope.Actor);
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]

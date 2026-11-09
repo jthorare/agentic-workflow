@@ -9,9 +9,9 @@ public sealed class ToolkitSchemaTests
     {
         var schema = SampleToolkit.Create().Tools.Single(t => t.Name == "diff_contracts").InputSchema;
 
-        Assert.Equal<string>(["left", "right"], Required(schema), StringComparer.Ordinal);
+        Assert.Equal(["left", "right"], Required(schema), StringComparer.Ordinal);
         var properties = schema["properties"]!.AsObject().Select(p => p.Key).Order(StringComparer.Ordinal).ToArray();
-        Assert.Equal<string>(["left", "limit", "note", "right"], properties, StringComparer.Ordinal);
+        Assert.Equal(["left", "limit", "note", "right"], properties, StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
