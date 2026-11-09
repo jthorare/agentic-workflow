@@ -35,7 +35,7 @@ mkrepo() {
   printf -- '---\nname: alpha\ndescription: Use when the cart total looks wrong after a bulk order. Not for new features.\n---\nState: ${AW_STATE_DIR:-$HOME/.agentic-workflow}\nMode: ${AW_GIT_MODE:-full}\n' >"$REPO/skills/alpha/SKILL.md"
   printf -- '---\nname: beta\ndescription: >-\n  Use BEFORE shipping a release to check every\n  deploy gate.\n---\nbeta body\n' >"$REPO/skills/beta/SKILL.md"
   printf 'Preamble ${AW_PREAMBLE:-on} and ${AW_RESULT:-0} and ${AW_GIT_MODE:-full}; ${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}\n' >"$REPO/skills/_preamble.md"
-  echo "voice" >"$REPO/config/voice/joi.md"
+  echo "voice" >"$REPO/config/voice/reply.md"
 
   local r="$REPO/evals/alpha/routing" b="$REPO/evals/alpha/behaviour"
   mkdir -p "$r/alpha-natural-1/graders/_selftest" "$r/alpha-near-miss/graders/_selftest" "$b/alpha-forced/graders/_selftest"
@@ -189,7 +189,7 @@ has -F -- 'scaffold_script: _aw-scaffold.sh' "$STAGE_B/evals/alpha/behaviour/alp
 has -F -- 'scaffold_script: _aw-scaffold.sh' "$STAGE_R/evals/alpha/routing/alpha-natural-1/case.yaml" && ok "a prompt-only case gets a case.yaml with the scaffold" || fail "routing case.yaml"
 H="$TMPROOT/h$N"; mkdir -p "$H"
 (cd "$TMPROOT" && env -i PATH="$PATH" HOME="$H" bash "$STAGE_B/evals/alpha/behaviour/alpha-forced/_aw-scaffold.sh")
-[ -f "$H/.agentic-workflow/toolkit/skills/_preamble.md" ] && [ -f "$H/.agentic-workflow/toolkit/skills/_shared/repo-slug.sh" ] && [ -f "$H/.agentic-workflow/toolkit/config/voice/joi.md" ] &&
+[ -f "$H/.agentic-workflow/toolkit/skills/_preamble.md" ] && [ -f "$H/.agentic-workflow/toolkit/skills/_shared/repo-slug.sh" ] && [ -f "$H/.agentic-workflow/toolkit/config/voice/reply.md" ] &&
   [ "$(cat "$H/own-marker")" = own-scaffold-ran ] && ok "the scaffold puts the toolkit at the default path, then chains the case's own" || fail "scaffold run"
 # claude plugin eval denies the agent every read under the stage's evals/ (so it can't see the graders), and a stub there is
 # invisible to its shell: the stubs are staged at the stage root instead.

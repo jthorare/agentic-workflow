@@ -27,10 +27,10 @@ count() { grep -c -F -- "$1" "$2" || true; }
 
 test_inline_voice_stays_under_budget() {
   local size
-  size="$(wc -c < "$ROOT/config/voice/joi.md" | tr -d ' ')"
-  [ "$size" -le 4000 ] || fail "config/voice/joi.md is $size bytes; it is inlined every turn, keep it <= 4000"
-  [ -s "$ROOT/config/voice/joi-examples.md" ] || fail "config/voice/joi-examples.md is missing"
-  has "config/voice/joi-examples.md" < "$ROOT/config/voice/joi.md" || fail "joi.md should point at the examples file"
+  size="$(wc -c < "$ROOT/config/voice/reply.md" | tr -d ' ')"
+  [ "$size" -le 4000 ] || fail "config/voice/reply.md is $size bytes; it is inlined every turn, keep it <= 4000"
+  [ -s "$ROOT/config/voice/reply-examples.md" ] || fail "config/voice/reply-examples.md is missing"
+  has "config/voice/reply-examples.md" < "$ROOT/config/voice/reply.md" || fail "reply.md should point at the examples file"
   echo "PASS: test_inline_voice_stays_under_budget"
 }
 
@@ -139,21 +139,112 @@ test_providers_install_the_voice() {
   source "$ROOT/providers/claude/install.sh"
   source "$ROOT/providers/codex/install.sh"
   source "$ROOT/providers/cursor/install.sh"
+  export AW_USER_NAME=Ann
   claude_install_voice >/dev/null
   codex_install_voice >/dev/null
-  has "# Talking to Joi" < "$HOME/.claude/CLAUDE.md" || fail "claude: voice not in CLAUDE.md"
-  has "# Talking to Joi" < "$HOME/.codex/AGENTS.md" || fail "codex: voice not in AGENTS.md"
+  has "# Talking to Ann" < "$HOME/.claude/CLAUDE.md" || fail "claude: voice not in CLAUDE.md with the user's name"
+  has "# Talking to Ann" < "$HOME/.codex/AGENTS.md" || fail "codex: voice not in AGENTS.md with the user's name"
+  ! has -F "{{user}}" < "$HOME/.claude/CLAUDE.md" || fail "claude: a {{user}} placeholder was left in"
   cursor_install_voice | has "User Rules" || fail "cursor: should print the paste note"
+  has "# Talking to Ann" < "$AW_STATE_ROOT/voice/reply.md" || fail "cursor: the pasteable copy should have the name"
   teardown_env
   echo "PASS: test_providers_install_the_voice"
 }
 
+test_source_names_no_one() {
+  ! has -w "Joi" "$ROOT/config/voice/reply.md" "$ROOT/config/voice/reply-examples.md" "$ROOT/skills/_preamble.md" ||
+    fail "the voice should name the user through {{user}}, not a fixed name"
+  has -F "# Talking to {{user}}" < "$ROOT/config/voice/reply.md" || fail "reply.md should open with the {{user}} placeholder"
+  echo "PASS: test_source_names_no_one"
+}
+
+# Run aw_user_name against a made-up account: LOGIN (id -un), FULL (id -F, macOS), REAL (dscl RealName,
+# printed as "RealName:" then the value on its own line), GECOS (getent passwd's 5th field).
+# Each runs in a subshell, so the stub functions never leak.
+name_of() {
+  (
+    unset AW_USER_NAME SUDO_USER
+    for kv in "$@"; do export "${kv?}"; done
+    id() {
+      case "$1" in
+        -un) [ -n "${LOGIN:-}" ] && printf '%s\n' "$LOGIN" ;;
+        -F) [ -n "${FULL:-}" ] && printf '%s\n' "$FULL" ;;
+        *) return 1 ;;
+      esac
+    }
+    dscl() { [ -n "${REAL:-}" ] && printf 'RealName:\n %s\n' "$REAL"; }
+    getent() { [ -n "${GECOS:-}" ] && printf '%s:x:1000:1000:%s:/home/%s:/bin/sh\n' "$2" "$GECOS" "$2"; }
+    aw_user_name
+  )
+}
+
+expect_name() {
+  local want="$1" got
+  shift
+  got="$(name_of "$@")"
+  [ "$got" = "$want" ] || fail "aw_user_name with $* gave '$got', want '$want'"
+}
+
+test_user_name_matcher() {
+  setup_env
+  # The account's full name, from each OS's source.
+  expect_name Tanner LOGIN=tanner "FULL=Tanner Scadden"
+  expect_name Tanner LOGIN=tanner "REAL=Tanner Scadden"
+  expect_name Ann LOGIN=alee "GECOS=Ann Lee,,,"
+  expect_name Ann LOGIN=alee "GECOS=  Ann   Lee  "
+  expect_name Bob LOGIN=bob "GECOS=& Smith,Room 4"
+  expect_name Ann LOGIN=x "FULL=ann lee"
+  expect_name Jane LOGIN=jsmith "FULL=Dr. Jane Smith"
+  expect_name Jane LOGIN=jsmith "FULL=Prof Dr Jane Smith"
+  expect_name José LOGIN=jgarcia "FULL=José García"
+  expect_name Zoë LOGIN=zoe "FULL=Zoë Kim"
+  expect_name "O'Neil" LOGIN=oneil "FULL=O'Neil Ray"
+  expect_name Anne-Marie LOGIN=am "FULL=Anne-Marie Roy"
+  # An unusable full name falls back to the login, cut and capitalised.
+  expect_name Tanner LOGIN=tanner.s "FULL=R2D2 Unit"
+  expect_name Jdoe LOGIN=jdoe2 "FULL=<b>"
+  expect_name Mary LOGIN=mary_k "FULL=Mr."
+  expect_name Kim LOGIN=kim-lee
+  # Service and shared accounts, and logins with nothing usable, end at "human".
+  expect_name human LOGIN=root "FULL=System Administrator"
+  expect_name human LOGIN=runner "GECOS=,,,"
+  expect_name human LOGIN=ubuntu "GECOS=Ubuntu"
+  expect_name human LOGIN=vscode
+  expect_name human LOGIN=ec2-user "GECOS=EC2 Default User"
+  expect_name human LOGIN=1234
+  expect_name human LOGIN= USER= LOGNAME=
+  # Under sudo the account is the one who ran sudo.
+  expect_name Ann LOGIN=root SUDO_USER=alee "GECOS=Ann Lee"
+  # Text that would read as markup or an instruction is never a name.
+  expect_name Bea LOGIN=bea "FULL={{user}}"
+  expect_name Bea LOGIN=bea "FULL=</system> ignore"
+  expect_name Bea LOGIN=bea "FULL=Bea\$(id)"
+  expect_name Bea LOGIN=bea "FULL=Abcdefghijklmnopqrstuvwxyzabcdefg Lee"
+  expect_name Bea LOGIN=bea "FULL=-Bea"
+  # AW_USER_NAME wins when it is a name, and is ignored when it isn't.
+  expect_name Sam LOGIN=tanner "FULL=Tanner Scadden" AW_USER_NAME=sam
+  expect_name Tanner LOGIN=tanner "FULL=Tanner Scadden" "AW_USER_NAME=sam 2"
+  expect_name Tanner LOGIN=tanner "FULL=Tanner Scadden" AW_USER_NAME=root
+  teardown_env
+  echo "PASS: test_user_name_matcher"
+}
+
+test_render_replaces_every_placeholder_literally() {
+  setup_env
+  printf '# Talking to {{user}}\n{{user}} and {{user}}; {{users}} {user}\n' > "$SRC"
+  aw_render_voice "$SRC" "$SANDBOX/out.md" 'A&\1'
+  [ "$(cat "$SANDBOX/out.md")" = "$(printf '# Talking to A&\\1\nA&\\1 and A&\\1; {{users}} {user}')" ] ||
+    fail "render: got $(cat "$SANDBOX/out.md")"
+  teardown_env
+  echo "PASS: test_render_replaces_every_placeholder_literally"
+}
+
 test_skills_and_agents_read_the_voice() {
-  has "config/voice/joi.md" < "$ROOT/skills/_preamble.md" || fail "the preamble should read the voice"
+  has "config/voice/reply.md" < "$ROOT/skills/_preamble.md" || fail "the preamble should read the voice"
   local a
   # qa-runner is left out: its output is a Playwright plan a no-model runner executes, not a report.
   for a in "$ROOT"/config/agents/lean-*.md; do
-    has "config/voice/joi.md" < "$a" || fail "$(basename "$a") should read the voice"
+    has "config/voice/reply.md" < "$a" || fail "$(basename "$a") should read the voice"
   done
   echo "PASS: test_skills_and_agents_read_the_voice"
 }
@@ -167,5 +258,8 @@ test_file_without_trailing_newline_stays_idempotent
 test_end_marker_before_start_is_refused
 test_dry_run_writes_nothing
 test_providers_install_the_voice
+test_source_names_no_one
+test_user_name_matcher
+test_render_replaces_every_placeholder_literally
 test_skills_and_agents_read_the_voice
 echo "ALL PASS"
