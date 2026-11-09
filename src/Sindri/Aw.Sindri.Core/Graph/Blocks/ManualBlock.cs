@@ -12,6 +12,12 @@ public sealed class ManualBlock : IGraphBlock
     public string Type => "manual";
 
     /// <inheritdoc />
+    public string Title => "When called";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Triggers;
+
+    /// <inheritdoc />
     public bool IsTrigger => true;
 
     /// <inheritdoc/>

@@ -1,6 +1,6 @@
-# Manual
+# When called
 
-Group: Triggers. Type: `manual`. Starts a run by hand, and hands on the payload it was started with.
+Group: Triggers. Type: `manual` (the picker calls it When called; the type name stays `manual`). Starts a run by hand, and hands on the payload it was started with.
 
 ## When to use it
 

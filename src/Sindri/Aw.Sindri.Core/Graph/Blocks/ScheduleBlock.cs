@@ -12,6 +12,12 @@ public sealed class ScheduleBlock : IGraphBlock
     public string Type => "schedule";
 
     /// <inheritdoc />
+    public string Title => "Schedule";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Triggers;
+
+    /// <inheritdoc />
     public bool IsTrigger => true;
 
     /// <inheritdoc/>

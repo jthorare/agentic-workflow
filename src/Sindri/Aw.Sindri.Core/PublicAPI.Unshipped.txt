@@ -20455,3 +20455,37 @@ Aw.Sindri.Core.Graph.Blocks.PromptBlock.Group.get -> string!
 Aw.Sindri.Core.Graph.Blocks.PromptBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Docs.IWorkflowDocs
 Aw.Sindri.Core.Graph.Docs.IWorkflowDocs.Pages.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Triggers = 1 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Data = 2 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.AI = 3 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Logic = 4 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Outputs = 5 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.GraphBlockEntry(Aw.Sindri.Core.Graph.Blocks.IGraphBlockType! block, string? exampleSpec) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.ExampleConfig.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Outputs.get -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.ExampleSpec.get -> string?
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup.GraphBlockGroup(Aw.Sindri.Core.Graph.Blocks.BlockGroup group, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry!>! blocks) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup.Blocks.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry!>!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockListing
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockListing.Group(Aw.Sindri.Core.Graph.Blocks.IGraphBlockCatalog! catalog, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>! pages) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup!>!
