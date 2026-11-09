@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
-using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Core.Setup;
@@ -21,10 +20,9 @@ namespace Aw.Sindri.Features.AllowDenial;
 /// <param name="writer">Edits the live profile.</param>
 /// <param name="approved">The approved profile.</param>
 /// <param name="callers">The caller: the command id and, through the event factory, the actor.</param>
-/// <param name="ledger">Appends 'sandbox.allowed'.</param>
 /// <param name="held">The lease this process holds.</param>
-/// <param name="events">Builds the entry; its actor is the caller's.</param>
-internal sealed class AllowDenialService(IDenialFiles files, ILaunchOwners owners, IProfileSandboxWriter writer, IApprovedProfile approved, ICallerContextAccessor callers, ILedgerStore ledger, HeldLease held, EventFactory events) : IService<AllowDenialRequest, AllowDenialResponse>
+/// <param name="recorder">Appends 'sandbox.allowed'.</param>
+internal sealed class AllowDenialService(IDenialFiles files, ILaunchOwners owners, IProfileSandboxWriter writer, IApprovedProfile approved, ICallerContextAccessor callers, HeldLease held, SandboxAllowedRecorder recorder) : IService<AllowDenialRequest, AllowDenialResponse>
 {
     public async ValueTask<Result<AllowDenialResponse>> Handle(AllowDenialRequest request, CancellationToken cancellationToken)
     {
@@ -58,10 +56,9 @@ internal sealed class AllowDenialService(IDenialFiles files, ILaunchOwners owner
         }
 
         var allowed = new SandboxEntryAllowed(caller.CommandId, request.Launch, RepoName.From(repo.Value), request.Kind.ToString(), written.Value.Entry);
-        var appended = await ledger.Append(events.Entry(EventTypes.SandboxAllowed, allowed, $"{EventTypes.SandboxAllowed}:{caller.CommandId.Value}"), grant, cancellationToken).ConfigureAwait(false);
-        if (appended.IsError)
+        if (await recorder.Record(allowed, grant, cancellationToken).ConfigureAwait(false) is { } failed)
         {
-            return appended.Error;
+            return failed;
         }
 
         var inForce = latest.Value is { } snapshot && SandboxAllowances.Holds(snapshot.Profile, repo.Value, request.Kind, written.Value.Entry);

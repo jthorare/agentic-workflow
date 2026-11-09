@@ -123,7 +123,7 @@ public sealed class LinearWriteAttributionTests
     {
         using var entered = _slice.Callers.Enter(A.Caller().Launched(Launch).InRepo("web").Build());
         var scopes = Scopes();
-        var side = new ContextLinearSideFacts(_profiles, _slice.Callers, OwnerOnlyPickers(), _slice.Clock, scopes);
+        var side = new ContextLinearSideFacts(_profiles, _slice.Callers, OwnerOnlyPickers(), _slice.Clock, scopes.Write);
 
         var picked = await new LinearTeamGate(side).Picked("ENG", Token);
 
@@ -136,7 +136,7 @@ public sealed class LinearWriteAttributionTests
     public async Task An_unmapped_session_is_still_refused_at_the_team_check_not_let_through_as_the_owner()
     {
         using var entered = _slice.Callers.Enter(A.Caller().Launched(Launch).InRepo("elsewhere").Build());
-        var side = new ContextLinearSideFacts(_profiles, _slice.Callers, OwnerOnlyPickers(), _slice.Clock, Scopes());
+        var side = new ContextLinearSideFacts(_profiles, _slice.Callers, OwnerOnlyPickers(), _slice.Clock, Scopes().Write);
 
         var picked = await new LinearTeamGate(side).Picked("ENG", Token);
 

@@ -52,7 +52,7 @@ internal sealed class CommentLinearIssueService(LinearScopes scopes, IContextLin
         }
 
         if (sent.Value is LinearWriteApplied or LinearWriteAppliedNotStored
-            && await recorder.Record(EventTypes.LinearCommentPosted, key.Value.Team, key.Value.ToString(), client.Value.Value, fields: null, cancellationToken).ConfigureAwait(false) is { } failed)
+            && await recorder.Record(new LinearWrite(EventTypes.LinearCommentPosted, key.Value.Team, key.Value.ToString(), client.Value.Value, Fields: null), cancellationToken).ConfigureAwait(false) is { } failed)
         {
             return failed;
         }

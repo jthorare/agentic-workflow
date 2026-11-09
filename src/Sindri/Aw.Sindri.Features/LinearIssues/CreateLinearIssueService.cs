@@ -83,7 +83,7 @@ internal sealed class CreateLinearIssueService(LinearScopes scopes, IContextLine
         }
 
         // why: the write is done in Linear, so it is recorded (under the caller's actor) before the answer is built, whatever the store holds
-        if (await recorder.Record(EventTypes.LinearIssueCreated, lookups.Team.Key, made?.Key.ToString(), client.Value, fields: null, cancellationToken).ConfigureAwait(false) is { } failed)
+        if (await recorder.Record(new LinearWrite(EventTypes.LinearIssueCreated, lookups.Team.Key, made?.Key.ToString(), client.Value, Fields: null), cancellationToken).ConfigureAwait(false) is { } failed)
         {
             return failed;
         }

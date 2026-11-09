@@ -1,8 +1,12 @@
 using Aw.Kernel.Services;
+using Aw.Context.Core.Facade;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Linear;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetLinearLookups;
 using Aw.Sindri.Features.GetLinearSince;
+using Aw.Sindri.Features.LinearIssues;
 using Aw.Sindri.Features.LinearSideFacts;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,6 +24,8 @@ internal static class LinearReadServiceCollectionExtensions
         return services
             .AddScoped<IValidator<GetLinearLookupsRequest>, AcceptAllValidator<GetLinearLookupsRequest>>().AddQuery<GetLinearLookupsRequest, LinearLookupsResponse, GetLinearLookupsService>()
             .AddScoped<IValidator<GetLinearSinceRequest>, AcceptAllValidator<GetLinearSinceRequest>>().AddQuery<GetLinearSinceRequest, LinearSinceResponse, GetLinearSinceService>()
-            .AddScoped<ILinearSideFacts, ContextLinearSideFacts>();
+            .AddScoped<ILinearSideFacts>(static sp => new ContextLinearSideFacts(   // why: the write scope is the Linear issues slice's check, handed over as a delegate so the slices stay apart
+                sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<ICallerContextAccessor>(), sp.GetRequiredService<IContextEngine>(), sp.GetRequiredService<TimeProvider>(),
+                sp.GetRequiredService<LinearScopes>().Write));
     }
 }

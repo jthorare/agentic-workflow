@@ -16,15 +16,16 @@ namespace Aw.Sindri.Features.LinearIssues;
 /// <param name="callers">The caller: the command id.</param>
 internal sealed class LedgerLinearWriteRecorder(ILedgerStore ledger, HeldLease held, EventFactory events, ICallerContextAccessor callers) : ILinearWriteRecorder
 {
-    public async ValueTask<Error?> Record(string type, string team, string? issue, string? clientId, string? fields, CancellationToken cancellationToken)
+    public async ValueTask<Error?> Record(LinearWrite write, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(write);
         if (held.Current is not { } grant)
         {
             return SindriErrors.NotRunning.With("the control plane doesn't hold the lease (fix: sindri)");
         }
 
-        var key = clientId is not null ? $"{type}:{clientId}" : $"{type}:{issue}:{callers.Current?.CommandId.Value}";
-        var appended = await ledger.Append(events.Entry(type, new LinearWriteRecorded(team, issue, fields), key), grant, cancellationToken).ConfigureAwait(false);
+        var key = write.ClientId is not null ? $"{write.Type}:{write.ClientId}" : $"{write.Type}:{write.Issue}:{callers.Current?.CommandId.Value}";
+        var appended = await ledger.Append(events.Entry(write.Type, new LinearWriteRecorded(write.Team, write.Issue, write.Fields), key), grant, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : null;
     }
 }

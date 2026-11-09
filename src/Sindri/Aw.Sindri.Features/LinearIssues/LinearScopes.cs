@@ -29,7 +29,7 @@ internal sealed class LinearScopes(IApprovedProfile approvals, ICallerContextAcc
 
     /// <summary>
     /// The scope a Linear write runs under: always the owner's (the write key is the owner's), but only once the current caller's own scope would let it in. A session is held to what its reads are:
-    /// SND-CONTEXT-020 when the owner turned <c>context.sessions.enabled</c> off, SND-CONTEXT-021 when the call names no repo, SND-CONTEXT-003 when the session's repo is not one the profile maps.
+    /// SND-CONTEXT-020 when the owner turned 'context.sessions.enabled' off, SND-CONTEXT-021 when the call names no repo, SND-CONTEXT-003 when the session's repo is not one the profile maps.
     /// </summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The owner's scope, or the caller's refusal, or the error when no profile yet.</returns>

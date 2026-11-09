@@ -71,7 +71,7 @@ internal sealed class ChangeLinearIssueService(
         }
 
         if (outcome.Value is LinearWriteApplied or LinearWriteAppliedNotStored
-            && await recorder.Record(EventTypes.LinearIssueChanged, key.Team, key.ToString(), clientId: null, fields, cancellationToken).ConfigureAwait(false) is { } failed)
+            && await recorder.Record(new LinearWrite(EventTypes.LinearIssueChanged, key.Team, key.ToString(), ClientId: null, fields), cancellationToken).ConfigureAwait(false) is { } failed)
         {
             return failed;
         }

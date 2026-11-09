@@ -17,11 +17,12 @@ internal sealed class FakeLinearWriteRecorder : ILinearWriteRecorder
     public Error? Failing { get; set; }
 
     /// <inheritdoc/>
-    public ValueTask<Error?> Record(string type, string team, string? issue, string? clientId, string? fields, CancellationToken cancellationToken)
+    public ValueTask<Error?> Record(LinearWrite write, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(write);
         if (Failing is null)
         {
-            _recorded.Add((type, team, issue, clientId, fields));
+            _recorded.Add((write.Type, write.Team, write.Issue, write.ClientId, write.Fields));
         }
 
         return ValueTask.FromResult(Failing);

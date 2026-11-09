@@ -48,7 +48,7 @@ public sealed class AllowDenialTests
     {
         var files = new StubFiles(new DenialFile(_launch, _noon, _entries, []));
         var owners = new StubOwners(_repo is { } repo ? new Dictionary<LaunchId, LaunchOwner> { [_launch] = new(A.FirstItemId, repo) } : []);
-        return new AllowDenialService(files, owners, _writer, _profiles, _slice.Callers, _slice.Store, _slice.Held, _slice.Events);
+        return new AllowDenialService(files, owners, _writer, _profiles, _slice.Callers, _slice.Held, new SandboxAllowedRecorder(_slice.Store, _slice.Events));
     }
 
     [Fact]
