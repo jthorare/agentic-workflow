@@ -394,6 +394,10 @@ A Step on a Mac runs under Seatbelt (`sandbox-exec` with a profile Sindri render
 
 Known gaps: a localhost test server can't run inside a Step, and `/private/tmp` and `/private/var/folders` stay readable apart from the denies above. `sindri open` stays refused on macOS.
 
+## State mounts from resources (agent-first PR 14)
+
+A workflow, node or toolkit that declares a `database` or a `disk` (docs/sindri/resources.md) gets one extra mount in its Step's plan: its own folder under `$AW_SINDRI_HOME/resources/<kind>/<slug>/`, kind `State`, read-write, at the same path inside the sandbox. It is the folder and not the single `.db` file, because SQLite writes `-journal`, `-wal` and `-shm` files beside the database and a lone file mount can't take a write. `SandboxRequest.ResourceMounts` carries the mounts and `PlanMounts` adds them above the masks over Sindri's home, as it does the skill folders. No other path under the resources root is bound, so a Step never sees another owner's folder. A declared `sandbox { cpu, memory, wall }` rides in `SandboxRequest.ResourceLimits`: `LimitsResolver` clamps each value to the profile's `sandbox.limits` and the box, so a declaration can only tighten. The validator refuses a `memory` or `wall` above the box's cap on activation (`SND-RES-005`, the finding names the cap), so the clamp is a second line and never the first. The plan goldens under `tests/Aw.Sindri.Tests/Golden/Sandbox` change only for a request that carries resource mounts.
+
 ## Environment
 
 `AW_SANDBOX_BWRAP`, `AW_SANDBOX_SYSTEMD_RUN` and `AW_SANDBOX_SOCAT` redirect the three host binaries for a test. `AW_SANDBOX_PLAN` is set by the launcher and read only by `sandbox explain`. No variable switches the
