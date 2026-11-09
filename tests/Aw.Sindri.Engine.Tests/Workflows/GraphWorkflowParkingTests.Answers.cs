@@ -67,6 +67,25 @@ public sealed partial class GraphWorkflowParkingTests
         Assert.Empty(rig.Blocks.Log);
     }
 
+    // why: the question is posted by the block's activity, a moment before the workflow parks; an answer sent in that gap waits for the park instead of being refused, so there is no retry here
+    [Fact]
+    public async Task An_answer_sent_as_soon_as_the_question_is_posted_is_accepted_without_a_retry()
+    {
+        await using var rig = GraphRig.Start(server.Environment);
+        var workflow = await rig.Define(AskSpec());
+        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
+        await WaitUntilAsked(rig);
+        using var limit = Limit();
+
+        var by = await Answer(rig.Client.GetWorkflowHandle(started.RunId.Value), new GraphAnswerInput("ask", Text: null, Choice: "yes", "session:early"), limit.Token);
+        var result = await Result(rig, started.RunId);
+
+        Assert.Equal("session:early", by);
+        Assert.Equal(WorkflowRunStatus.Succeeded, result.Status);
+        Assert.Equal(("yes", "session:early"), await AskOutput(rig, started.RunId));
+        Assert.Equal([$"{rig.Slug}@1:1/yes"], rig.Blocks.Log);
+    }
+
     [Fact]
     public async Task A_second_answer_to_the_same_question_is_refused_and_the_first_stands()
     {
