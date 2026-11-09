@@ -29,7 +29,7 @@ internal sealed class TodosProjection(EventFactory events) : IProjection
                 Due = p.ClearDue ? null : p.Due ?? row.Due,
                 Links = p.Links ?? row.Links,
             }, cancellationToken),
-            EventTypes.TodoDone => Edit<TodoDone>(recorded, rows, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with { DoneAt = recorded.Envelope.OccurredAt }, cancellationToken),
+            EventTypes.TodoDone => Edit<TodoDone>(recorded, rows, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with { DoneAt = p.DoneAt ?? recorded.Envelope.OccurredAt }, cancellationToken),
             EventTypes.TodoReopened => Edit<TodoReopened>(recorded, rows, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with { DoneAt = null }, cancellationToken),
             EventTypes.TodoRemoved => Edit<TodoRemoved>(recorded, rows, static p => p.Id, (row, p) => Moved(row, p.Version, p.By, p.Via, recorded) with
             {

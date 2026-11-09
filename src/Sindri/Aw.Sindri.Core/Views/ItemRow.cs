@@ -38,9 +38,4 @@ public sealed record ItemRow(
     string? WaitingOn,
     string? Instance,
     string? Owner,
-    long Sequence)
-{
-    /// <summary>What the row keeps of its root instance (API P11); null for an item no workflow has run on.</summary>
-    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
-    public EngineItemPart? Engine { get; init; }
-}
+    long Sequence);
