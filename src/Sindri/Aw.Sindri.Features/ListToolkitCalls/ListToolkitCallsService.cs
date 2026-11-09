@@ -10,9 +10,12 @@ internal sealed class ListToolkitCallsService(IToolkitCalls calls) : IService<Li
 {
     private readonly IToolkitCalls _calls = calls;
 
-    public ValueTask<Result<ListToolkitCallsResponse>> Handle(ListToolkitCallsRequest request, CancellationToken cancellationToken)
+    internal const int MaxLimit = 500;
+
+    public async ValueTask<Result<ListToolkitCallsResponse>> Handle(ListToolkitCallsRequest request, CancellationToken cancellationToken)
     {
-        _ = _calls;
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(request);
+        var listed = await _calls.List(request.Toolkit, Math.Clamp(request.Limit, 1, MaxLimit), cancellationToken).ConfigureAwait(false);
+        return listed.IsError ? listed.Error : new ListToolkitCallsResponse(listed.Value);
     }
 }

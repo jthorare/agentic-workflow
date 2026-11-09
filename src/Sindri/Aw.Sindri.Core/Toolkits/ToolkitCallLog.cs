@@ -41,9 +41,12 @@ public sealed class ToolkitCallLog(IToolkitCalls calls, ITextScrubber scrubber)
     /// <returns>Unit.</returns>
     public ValueTask<Result<Unit>> Record(ToolkitCallEntry entry, CancellationToken cancellationToken)
     {
-        _ = (entry, cancellationToken);
-        _ = _calls;
-        _ = _scrubber;
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(entry);
+        var input = Cap(Scrub(entry.Input), out var inputCut);
+        var output = Cap(Scrub(entry.Output), out var outputCut);
+        var call = new ToolkitCall(entry.Toolkit, entry.Tool, entry.Caller, input, output, inputCut || outputCut, Scrub(entry.Error), (long)entry.Duration.TotalMilliseconds, entry.StartedAt);
+        return _calls.Add(call, cancellationToken);
     }
+
+    private string? Scrub(string? text) => text is null ? null : _scrubber.Scrub(text);
 }

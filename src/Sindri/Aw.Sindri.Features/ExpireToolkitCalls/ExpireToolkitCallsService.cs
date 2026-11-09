@@ -30,9 +30,9 @@ internal sealed class ExpireToolkitCallsService(IToolkitCalls calls, TimeProvide
     public ServiceName Identity() => ServiceId;
 
     /// <inheritdoc/>
-    public ValueTask<Result<ScheduledResult>> Run(ScheduledRun run, CancellationToken cancellationToken)
+    public async ValueTask<Result<ScheduledResult>> Run(ScheduledRun run, CancellationToken cancellationToken)
     {
-        _ = (_calls, _time);
-        throw new NotSupportedException();
+        var deleted = await _calls.DeleteBefore(_time.GetUtcNow() - Retention, cancellationToken).ConfigureAwait(false);
+        return deleted.IsError ? deleted.Error : deleted.Value > 0 ? ScheduledResult.Worked : ScheduledResult.Quiet;
     }
 }
