@@ -1,6 +1,5 @@
 using Aw.Sindri.Core.Events;
 
-
 namespace Aw.Sindri.Core.Launches;
 
 /// <summary>

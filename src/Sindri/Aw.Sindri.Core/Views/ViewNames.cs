@@ -36,7 +36,6 @@ public static class ViewNames
     /// <summary>The newest built code index per repo (code index spec §8), folded from 'codeindex.built'.</summary>
     public const string CodeIndex = "code-index";
 
-
     /// <summary>How each model has done at each state of each recipe version (model-pick spec §7.2), keyed by ModelHistoryKeys.For.</summary>
     public const string ModelHistory = "model-history";
 

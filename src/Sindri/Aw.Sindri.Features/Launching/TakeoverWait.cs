@@ -12,10 +12,10 @@ namespace Aw.Sindri.Features.Launching;
 /// <param name="timings">The limits.</param>
 internal sealed class TakeoverWait(IProjectorStatus views, ILedgerStore ledger, LaunchTimings timings)
 {
-    /// <summary>Waits until no instance of the request's item runs automation beside the session that is about to open.</summary>
+    /// <summary>Waits until the views have caught up with the request, then again with the ledger head. No automation runs beside a session now, so nothing else is checked.</summary>
     /// <param name="pending">The request.</param>
     /// <param name="cancellationToken">Cancels the wait.</param>
-    /// <returns>True to launch; false to give up quietly (the views weren't ready in time, or the deadline passed: the sweep fails the request); an error when the engine refused.</returns>
+    /// <returns>True to launch; false to give up quietly (the views weren't ready in time, or the deadline passed: the sweep fails the request).</returns>
     public async ValueTask<Result<bool>> Run(PendingLaunch pending, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(pending);
@@ -49,7 +49,7 @@ internal sealed class TakeoverWait(IProjectorStatus views, ILedgerStore ledger, 
         var waited = await views.WaitFor(sequence, Remaining(pending), cancellationToken).ConfigureAwait(false);
         if (waited.IsError)
         {
-            return false;   // the views can't say whether automation runs, so nothing opens
+            return false;   // the views didn't catch up in time, so nothing opens
         }
 
         return true;   // no workflow instance exists to take over; graph runs bring that back (v2 PR 6, 7)
