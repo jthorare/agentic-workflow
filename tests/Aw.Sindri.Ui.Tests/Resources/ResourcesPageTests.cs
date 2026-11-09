@@ -75,7 +75,7 @@ public sealed class ResourcesPageTests
         var page = await Shown();
 
         Assert.Equal(2, page.Rows.Count);
-        Assert.Equal(("1.2 MB of 5.0 MB", 0.24), (page.Rows[0].SizeLine, Math.Round(page.Rows[0].Fill ?? -1, 2, MidpointRounding.AwayFromZero)));
+        Assert.Equal(("1.2 MB of 5 MB", 0.24), (page.Rows[0].SizeLine, Math.Round(page.Rows[0].Fill ?? -1, 2, MidpointRounding.AwayFromZero)));
         Assert.Equal(("1.2 MB", null), (page.Rows[1].SizeLine, page.Rows[1].Fill));
     }
 
