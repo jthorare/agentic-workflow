@@ -7,6 +7,9 @@ namespace Aw.Sindri.Toolkit;
 /// <summary>A tool request's JSON schema, exported from its source-generated type info, with nullable members optional.</summary>
 internal sealed class RequestSchema
 {
+    // why: the root type has no nullability annotation, so the exporter would type it ["object", "null"]; MCP wants an input schema of type "object"
+    private static readonly JsonSchemaExporterOptions _exporter = new() { TreatNullObliviousAsNonNullable = true };
+
     private RequestSchema(JsonObject schema, IReadOnlyList<string> optional)
     {
         Schema = schema;
@@ -33,7 +36,7 @@ internal sealed class RequestSchema
                 $"The JSON context of {typeInfo.Type.Name} must set RespectNullableAnnotations and RespectRequiredConstructorParameters: add them to its [JsonSourceGenerationOptions].");
         }
 
-        if (JsonSchemaExporter.GetJsonSchemaAsNode(typeInfo) is not JsonObject schema)
+        if (JsonSchemaExporter.GetJsonSchemaAsNode(typeInfo, _exporter) is not JsonObject schema)
         {
             throw new ToolkitException(ToolkitErrors.InvalidDeclaration, $"{typeInfo.Type.Name} has no object schema: use a record.");
         }
