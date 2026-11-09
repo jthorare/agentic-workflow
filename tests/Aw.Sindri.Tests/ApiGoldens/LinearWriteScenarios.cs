@@ -45,7 +45,7 @@ internal static class LinearWriteScenarios
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("linear-change", "applied"), ("linear-change", "applied-store-failed"), ("linear-change", "already-applied"), ("linear-change", "conflict"), ("linear-change", "unknown"),
-        ("linear-change", "rate-limited"), ("linear-change", "no-write-key"), ("linear-change", "team-not-picked"), ("linear-change", "bad-value"), ("linear-change", "session-refused"),
+        ("linear-change", "rate-limited"), ("linear-change", "no-write-key"), ("linear-change", "team-not-picked"), ("linear-change", "bad-value"), ("linear-change", "session"),
         ("linear-comment", "applied"), ("linear-comment", "applied-slow"), ("linear-comment", "unknown"), ("linear-comment", "session"),
         ("linear-create", "applied"), ("linear-create", "unknown"), ("linear-create", "bad-value"), ("linear-create", "session"),
     ];

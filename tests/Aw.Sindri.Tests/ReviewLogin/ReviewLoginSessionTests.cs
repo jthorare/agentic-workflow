@@ -23,7 +23,7 @@ public sealed class ReviewLoginSessionTests
 
         Assert.Equal(HttpStatusCode.OK, answer.Status);
         var after = await File.ReadAllTextAsync(file, ct);
-        Assert.NotEqual(before, after);
+        Assert.NotEqual(before, after, StringComparer.Ordinal);
         Assert.Contains("joi-example", after, StringComparison.Ordinal);
         Assert.Equal(approvedBefore, (await host.App.Services.GetRequiredService<IApprovedProfile>().Latest(ct)).Value!.Hash);
     }
