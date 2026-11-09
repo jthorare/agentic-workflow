@@ -19,7 +19,7 @@ internal sealed partial class ShellViewModel
     public SessionSheetViewModel AgentSheet { get; private set; }
 
     // ShellViewModel's constructor calls this one line: both view models exist, then each builder's hook wires its own part.
-    [MemberNotNull(nameof(Agents), nameof(AgentSheet), nameof(Jobs), nameof(JobSheet), nameof(Projects), nameof(ProjectSheet), nameof(ProjectAdd), nameof(Reviews), nameof(ReviewPage), nameof(ReviewFix), nameof(IssueSheet))]
+    [MemberNotNull(nameof(Agents), nameof(AgentSheet), nameof(Jobs), nameof(JobSheet), nameof(Connections), nameof(ConnectionSheet), nameof(MemoryPage), nameof(Workflows), nameof(Projects), nameof(ProjectSheet), nameof(ProjectAdd), nameof(Reviews), nameof(ReviewPage), nameof(ReviewFix), nameof(IssueSheet))]
     private void InitAgents(IClipboard clipboard, ILauncher launcher)
     {
         Agents = new AgentsPageViewModel(_api, clipboard, _clock, Health.Catalog);
@@ -31,6 +31,9 @@ internal sealed partial class ShellViewModel
         WireElsewhere();   // after Reviews exists
         InitProjects(launcher);   // likewise: the Projects page reads while shown
         InitIssueSheet(launcher);
+        InitConnections(launcher);   // Connections and Memory (PR 18a) ride this line for the same reason
+        InitMemory();
+        InitWorkflows();   // likewise: the Workflows page reads while shown
         InitJobs();   // the Jobs page is not an Agents page, but it rides the same constructor line: ShellViewModel.cs is at its size cap
     }
 

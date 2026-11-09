@@ -63,4 +63,13 @@ public sealed class NoteHoldTests
 
         _ = Assert.Single(hold.StillTrue(Doc(L(1, "edited"), L(1, "a copy"))));
     }
+
+    [Fact]
+    public void An_edit_whose_held_line_was_scrubbed_is_still_true_when_the_live_line_scrubs_to_it()
+    {
+        var scrubber = new ReplaceScrubber("sk-canary-0123456789", "[redacted]");
+        var hold = Hold(new HeldChange(Id(1), HeldKind.Edited, scrubber.Scrub(L(1, "pay sk-canary-0123456789"))));
+
+        _ = Assert.Single(hold.StillTrue(Doc(L(1, "pay sk-canary-0123456789")), scrubber));
+    }
 }

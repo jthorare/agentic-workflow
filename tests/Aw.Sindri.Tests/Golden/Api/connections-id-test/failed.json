@@ -1,0 +1,17 @@
+{
+  "connection": {
+    "name": "acme:key",
+    "kind": "rest",
+    "preset": null,
+    "status": "error",
+    "statusReason": "The connection needs a new sign-in (SND-CONN-002)",
+    "config": {
+      "probeUrl": "https://api.acme.example.test/ping"
+    },
+    "lastRefreshedAt": null,
+    "hasSecret": true
+  },
+  "ok": false,
+  "reason": "The connection needs a new sign-in (SND-CONN-002)",
+  "tools": null
+}

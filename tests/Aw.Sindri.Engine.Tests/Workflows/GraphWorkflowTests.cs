@@ -41,7 +41,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
                 }),
                 $"workflow.run.finished workflow.run.finished:{rig.Slug}@1:1",
             ],
-            await rig.Rows());
+            await rig.RowsWith($"workflow.run.finished workflow.run.finished:{rig.Slug}@1:1"));
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
         Assert.Equal(NodeRunStatus.Cancelled, nodes["wait"]);
         Assert.Equal(NodeRunStatus.Skipped, nodes["after"]);
         Assert.DoesNotContain(rig.Blocks.Log, l => string.Equals(l, $"{rig.Slug}@1:1/after", StringComparison.Ordinal));
-        var rows = await rig.Rows();
+        var rows = await rig.RowsWith($"workflow.run.cancelled workflow.run.cancelled:{rig.Slug}@1:1");
         Assert.Contains($"workflow.run.cancelled workflow.run.cancelled:{rig.Slug}@1:1", rows, StringComparer.Ordinal);
         Assert.DoesNotContain(rows, static r => r.StartsWith("workflow.run.finished", StringComparison.Ordinal));
         Assert.Contains($"workflow.node.finished workflow.node.finished:{rig.Slug}@1:1:wait:0", rows, StringComparer.Ordinal);   // 'cancelled' status

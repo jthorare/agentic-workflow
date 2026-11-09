@@ -27,16 +27,21 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
             return new NoteFileFacts(Exists: false, IsSymlink: false, LinkCount: 0, Text: null, Unreadable: null);
         }
 
+        if (Links(path) is not { } links)
+        {
+            return new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: 0, Text: null, Unreadable: "its hard links can't be counted");
+        }
+
         try
         {
             var info = new FileInfo(path);
             return info.Length > MaxBytes
-                ? new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: Links(path), Text: null, Unreadable: "it is over 8 MB")
-                : new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: Links(path), Text: File.ReadAllText(path), Unreadable: null);
+                ? new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: links, Text: null, Unreadable: "it is over 8 MB")
+                : new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: links, Text: File.ReadAllText(path), Unreadable: null);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: Links(path), Text: null, Unreadable: e.Message);
+            return new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: links, Text: null, Unreadable: e.Message);
         }
     }
 
@@ -83,14 +88,14 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
         return folder;
     }
 
-    // the note itself or any folder on the way to it inside the vault
-    private static bool AnySymlink(string vaultRoot, string note)
+    // the note itself or any folder on the way to it inside the vault; a dangling link counts, so there is no exists gate
+    internal static bool AnySymlink(string vaultRoot, string note)
     {
         var at = vaultRoot;
         foreach (var segment in note.Split('/'))
         {
             at = Path.Combine(at, segment);
-            if ((File.Exists(at) || Directory.Exists(at)) && new FileInfo(at).LinkTarget is not null)
+            if (new FileInfo(at).LinkTarget is not null)
             {
                 return true;
             }
@@ -99,11 +104,11 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
         return false;
     }
 
-    // .NET has no link count; stat prints it (GNU: -c %h, BSD and macOS: -f %l). When stat can't answer the file counts as one link.
-    private static int Links(string path)
+    // .NET has no link count; stat prints it (GNU: -c %h, BSD and macOS: -f %l). Null when stat can't answer: the note can't be checked, so it is refused.
+    internal static int? Links(string path)
     {
         var run = new SandboxProcesses().Run("/usr/bin/stat", OperatingSystem.IsMacOS() ? ["-f", "%l", path] : ["-c", "%h", path], TimeSpan.FromSeconds(5));
-        return run.Succeeded && int.TryParse(run.Output.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var links) ? links : 1;
+        return run.Succeeded && int.TryParse(run.Output.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var links) ? links : null;
     }
 
     private static void DeleteQuietly(string path)

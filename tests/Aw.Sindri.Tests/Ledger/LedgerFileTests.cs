@@ -29,10 +29,10 @@ public sealed class LedgerFileTests : IDisposable
         }
 
         // S1-D9 (engine spec §7.2): S1's two files, then the outbox at 3, then Sindri's own files from 4 up.
-        Assert.Equal(["1 events", "2 lease", "3 outbox_commands", "4 recipes", "5 temporal_event_id", "6 workflow_claims", "7 pr_comment_marks", "8 workflows", "9 workflow_runs", "10 connections", "11 memory", "12 retire_recipes", "14 resources"],
+        Assert.Equal(["1 events", "2 lease", "3 outbox_commands", "4 recipes", "5 temporal_event_id", "6 workflow_claims", "7 pr_comment_marks", "8 workflows", "9 workflow_runs", "10 connections", "11 memory", "12 retire_recipes", "13 poll_cursors", "14 resources"],
             LedgerDatabase.Migrations.Select(m => string.Create(CultureInfo.InvariantCulture, $"{m.Version} {m.Name}")), StringComparer.Ordinal);
         Assert.Equal(SqliteOutboxSchema.CreateMigration(3).Checksum, LedgerDatabase.Migrations[2].Checksum);
-        Assert.Equal(["connection", "events", "lease", "memory", "memory_fact", "outbox_commands", "resource", "workflow", "workflow_node_run", "workflow_revision", "workflow_run", "workflow_schedule_tick"], Tables(path));
+        Assert.Equal(["connection", "events", "lease", "memory", "memory_fact", "outbox_commands", "poll_cursor", "resource", "workflow", "workflow_node_run", "workflow_revision", "workflow_run", "workflow_schedule_tick"], Tables(path));
     }
 
     [Fact, Trait("Lane", "integration")]
@@ -58,9 +58,9 @@ public sealed class LedgerFileTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task Migration_0012_drops_the_recipe_tables_and_keeps_events_after_a_backup()
     {
-        // Issue 2258 PR 3: the retiring migration is the last of the set and drops the four recipe-era tables (0004, 0006, 0007).
-        var retiring = LedgerDatabase.Migrations[^1];
-        Assert.Equal("retire_recipes", retiring.Name);
+        // Issue 2258 PR 3: the retiring migration drops the four recipe-era tables (0004, 0006, 0007); later migrations run after it.
+        var retiring = Assert.Single(LedgerDatabase.Migrations, static m => m.Name == "retire_recipes");
+        Assert.Equal(12, retiring.Version);
 
         var previous = Path.Combine(_home.Path, "previous.db");
         var runner = new MigrationRunner(new SqliteConnectionFactory(new SqliteOptions(previous)), new FakeTimeProvider(), backupBeforeUpgrade: false);
@@ -82,7 +82,7 @@ public sealed class LedgerFileTests : IDisposable
 
         Assert.True((await database.Writable(TestContext.Current.CancellationToken)).IsSuccess);
 
-        Assert.Equal(["connection", "events", "lease", "memory", "memory_fact", "outbox_commands", "resource", "workflow", "workflow_node_run", "workflow_revision", "workflow_run", "workflow_schedule_tick"], Tables(ledger));
+        Assert.Equal(["connection", "events", "lease", "memory", "memory_fact", "outbox_commands", "poll_cursor", "resource", "workflow", "workflow_node_run", "workflow_revision", "workflow_run", "workflow_schedule_tick"], Tables(ledger));
         Assert.Equal("evt-1", Scalar(ledger, "SELECT id FROM events"));
         Assert.True(File.Exists($"{ledger}.bak-v{(retiring.Version - 1).ToString(CultureInfo.InvariantCulture)}"));
     }

@@ -1,4 +1,5 @@
 using Aw.Context.Core.Models;
+using Aw.Context.Core.Trust;
 using Aw.Kernel;
 using Aw.Sindri.Core.Graph.Blocks;
 
@@ -11,6 +12,12 @@ internal sealed class GraphModelPortAdapter(IModelPort models) : IGraphModelPort
     private const int MaxTokens = 4096;
 
     private static readonly TimeSpan _budget = TimeSpan.FromMinutes(5);
+
+    public string Untrusted(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return UntrustedFence.Wrap("workflow:trigger", author: null, text);
+    }
 
     public async ValueTask<Result<string>> Ask(string prompt, CancellationToken cancellationToken)
     {

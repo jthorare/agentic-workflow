@@ -4,6 +4,18 @@ namespace Aw.Sindri.Core.Todos.Note;
 
 internal sealed partial class NotePass
 {
+    // the scrubber can turn text a todo may hold into a marker or a link ("ghp_…(x)" becomes "[redacted](x)"): the scrubbed line is read again, so what Sindri would store follows D3 too
+    private NoteBreak BreakOf(NoteTodoLine line)
+    {
+        if (line.Break != NoteBreak.None)
+        {
+            return line.Break;
+        }
+
+        var scrubbed = _options.Scrubber.Scrub(line.Raw);
+        return string.Equals(scrubbed, line.Raw, StringComparison.Ordinal) || !NoteTodoLineReader.IsTaskLine(scrubbed) ? NoteBreak.None : NoteTodoLineReader.Read(line.Number, scrubbed).Break;
+    }
+
     /// <summary>The line for a todo Sindri changed: the owner's own text stays as typed until Sindri changes the text (an adopted `[[link]]` is not escaped by a tick).</summary>
     private static string SindriLine(NoteTodoLine line, SindriTodo todo) =>
         string.Equals(todo.Text, line.Text, StringComparison.Ordinal)

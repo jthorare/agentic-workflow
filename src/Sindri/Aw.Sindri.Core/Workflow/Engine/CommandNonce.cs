@@ -15,8 +15,8 @@ namespace Aw.Sindri.Core.Workflow.Engine;
 [JsonConverter(typeof(StringIdJsonConverter<CommandNonce>))]
 public readonly partial struct CommandNonce : ITypedId<CommandNonce, string>
 {
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A nonce is 32 lower-case hex digits");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A nonce is 32 lower-case hex digits");
 
     [GeneratedRegex("^[0-9a-f]{32}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

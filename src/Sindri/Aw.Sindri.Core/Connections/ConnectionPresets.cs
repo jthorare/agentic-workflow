@@ -46,13 +46,12 @@ public static class ConnectionPresets
 
         var kind = ConnectionWire.ParseKind(text["kind"]);
         var scopes = Strings(root, "defaultScopes");
-        var events = Strings(root, "pollableEvents");
-        if (kind.IsError || scopes is null || events is null || Flag(root, "loopbackAllowed") is not { } loopback)
+        if (kind.IsError || scopes is null || Flag(root, "loopbackAllowed") is not { } loopback)
         {
-            return Bad("'kind', 'defaultScopes', 'pollableEvents' or 'loopbackAllowed' is missing or has the wrong type");
+            return Bad("'kind', 'defaultScopes' or 'loopbackAllowed' is missing or has the wrong type");
         }
 
-        return new ConnectionPreset(text["id"], text["displayName"], kind.Value, text["authorizeUrl"], text["tokenUrl"], optional["revokeUrl"], scopes, text["hostGroup"], loopback, text["signInNote"], events, optional["probeUrl"]);
+        return new ConnectionPreset(text["id"], text["displayName"], kind.Value, text["authorizeUrl"], text["tokenUrl"], optional["revokeUrl"], scopes, text["hostGroup"], loopback, text["signInNote"], [.. PollableEvents.For(text["id"])], optional["probeUrl"]);
     }
 
     private static string? PlainHttp(Dictionary<string, string> text, Dictionary<string, string?> optional) =>
