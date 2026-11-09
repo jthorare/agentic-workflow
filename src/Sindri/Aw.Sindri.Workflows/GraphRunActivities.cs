@@ -129,7 +129,8 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
     {
         ArgumentNullException.ThrowIfNull(finish);
         var cancel = ActivityExecutionContext.Current.CancellationToken;
-        var ended = GraphFailures.Value(await runs.SetStatus(finish.Run, finish.Status, outputs: null, finish.Error, cancel).ConfigureAwait(false));
+        var outputs = finish.Status == WorkflowRunStatus.Succeeded ? await Outputs(finish.Run, cancel).ConfigureAwait(false) : null;
+        var ended = GraphFailures.Value(await runs.SetStatus(finish.Run, finish.Status, outputs, finish.Error, cancel).ConfigureAwait(false));
         if (ended.Status == finish.Status)
         {
             // why: the store refuses to move a run that already ended, so a different status here means another writer ended it first and its event stands; the same status is this
@@ -150,5 +151,25 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         {
             throw new ApplicationFailureException(next.Error.Message, errorType: next.Error.Code);   // why: retried without end while Temporal is unreachable, so a queued run is not left waiting; the starter put the promoted run back to queued, and the retry's status write and events are no-ops (the end is already recorded)
         }
+    }
+
+    /// <summary>
+    /// A succeeded run's outputs as JSON: an object keyed by node id holding what each succeeded node gave. A node that ran once gives its outputs object; a node that ran per item
+    /// (item index above 0) gives an array of them in item order. Null when nothing succeeded or the text would pass <see cref="NodeRunLimits.PayloadBytes"/>.
+    /// </summary>
+    private async Task<string?> Outputs(WorkflowRunId run, CancellationToken cancel)
+    {
+        var rows = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
+        var result = new JsonObject();
+        foreach (var group in rows.Where(static n => n.Status == NodeRunStatus.Succeeded && n.Output is not null && !n.Truncated).GroupBy(static n => n.NodeId))
+        {
+            // why: a cut output is no longer JSON, so that node is left out rather than half-written
+            var parsed = group.OrderBy(static n => n.ItemIndex).Select(static n => JsonNode.Parse(n.Output!)).ToList();
+            result[group.Key.Value] = group.Any(static n => n.ItemIndex > 0) ? new JsonArray([.. parsed]) : parsed[0];
+        }
+
+        var text = result.Count == 0 ? null : result.ToJsonString();
+        // why: like a node's output, the run's is kept only up to 64 KB; a cut JSON text is worse than none, so a larger one is not stored
+        return text is not null && NodeRunLimits.Cap(text, out var truncated) is not null && !truncated ? text : null;
     }
 }

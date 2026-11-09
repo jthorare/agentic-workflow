@@ -21,6 +21,7 @@ using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.EngineReads;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Handoff;
 using Aw.Sindri.Core.Health;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Jobs;
@@ -139,6 +140,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ProjectAttached)), JsonSerializable(typeof(ProjectChanged)), JsonSerializable(typeof(ProjectDetached)), JsonSerializable(typeof(ProjectHidden)), JsonSerializable(typeof(ProjectLedNoted)), JsonSerializable(typeof(ProjectAttachedRow)), JsonSerializable(typeof(ProjectHiddenRow))]   // projects page Ph3: the owner-state events and their views
 [JsonSerializable(typeof(TodoAdded)), JsonSerializable(typeof(TodoChanged)), JsonSerializable(typeof(TodoDone)), JsonSerializable(typeof(TodoReopened)), JsonSerializable(typeof(TodoRemoved)), JsonSerializable(typeof(TodoRestored))]   // the ledger events of the todos spec (§4.1)
 [JsonSerializable(typeof(TodoConflicted)), JsonSerializable(typeof(TodoConflictResolved)), JsonSerializable(typeof(TodoConflictReopened)), JsonSerializable(typeof(TodoSide)), JsonSerializable(typeof(Core.Todos.TodoRow)), JsonSerializable(typeof(Core.Todos.TodoOpenConflict)), JsonSerializable(typeof(TodoHeldChange)), JsonSerializable(typeof(TodoNoteHeld)), JsonSerializable(typeof(TodoNoteHeldResolved)), JsonSerializable(typeof(TodoNoteHeldReopened)), JsonSerializable(typeof(TodoNoteSynced)), JsonSerializable(typeof(TodoNoteImported))]
+[JsonSerializable(typeof(ItemHandoff)), JsonSerializable(typeof(Features.CreateHandoffItem.CreateHandoffItemRequest)), JsonSerializable(typeof(Features.CreateHandoffItem.HandoffItemCreatedResponse))]
 [JsonSerializable(typeof(ItemStateChanged)), JsonSerializable(typeof(ItemLinked)), JsonSerializable(typeof(RequestFiled)), JsonSerializable(typeof(RequestFiledPublic))]
 [JsonSerializable(typeof(DecisionRecorded)), JsonSerializable(typeof(DecisionRecordedPublic)), JsonSerializable(typeof(JobStarted))]
 [JsonSerializable(typeof(JobProgress)), JsonSerializable(typeof(JobFinished)), JsonSerializable(typeof(JobFinishedPublic)), JsonSerializable(typeof(JobCancelled)), JsonSerializable(typeof(JobWaiting)), JsonSerializable(typeof(JobResumed))]
