@@ -127,6 +127,11 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
         }
 
         (Error, _todos, _note) = (string.Empty, Overlaid(list.Value.Todos), note.IsSuccess ? note.Value : Linear.OlderSindri.IsNotServed(note.Error) ? null : _note);
+        if (note.IsSuccess || Linear.OlderSindri.IsNotServed(note.Error))
+        {
+            ShowSync(_note);   // the sync line shows the same read; a failed read leaves the last line
+        }
+
         Show();
         ScheduleMidnight();
     }
@@ -164,6 +169,8 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
         _midnight = null;
         _savingTimer?.Dispose();
         _savingTimer = null;
+        _syncTick?.Dispose();
+        _syncTick = null;
     }
 
     // One shot at the next local midnight; the callback regroups and sets the next one.

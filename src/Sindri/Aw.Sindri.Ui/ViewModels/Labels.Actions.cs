@@ -23,6 +23,7 @@ internal static partial class Labels
         ["AddConnection"] = "Add connection",
         ["RemoveConnection"] = "Remove connection",
         ["TestConnection"] = "Test connection",
+        ["SignInConnection"] = "Sign in to connection",
         ["CreateMemory"] = "Create memory",
         ["WriteMemoryFact"] = "Write memory fact",
         ["ForgetMemoryFact"] = "Forget memory facts",

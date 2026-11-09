@@ -30,4 +30,8 @@ public enum NeedsYouKind
     /// <summary>A changed workflow that waits for its own approval (setup-once spec §5.3, §7.3).</summary>
     [JsonStringEnumMemberName("recipe")]
     Recipe,
+
+    /// <summary>A connection whose token could not be refreshed and has to be signed in again (connections PR 10b).</summary>
+    [JsonStringEnumMemberName("connection")]
+    Connection,
 }
