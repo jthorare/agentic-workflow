@@ -3,7 +3,6 @@
 // asset references), because content.json, content.files.json and the summary line depend on that order.
 // Node dicts are plain objects (their keys are fixed words, so insertion order is kept); every dict whose keys come
 // from the source (defs, glossary, refs families, meta passthrough) is a Map, as Python's dict.
-import { mkdirSync } from "node:fs";
 import * as py from "../py";
 import { PyError } from "../py/errors";
 import { float as floatOf } from "../py/num";
@@ -15,6 +14,7 @@ import * as sd from "../sd";
 import { CITE, LEGEND_TONES, LINK_KEYS, SQL_KW, TOKEN, token_id } from "../vocab";
 import type { Args } from "./args";
 import { parse_attrs, parse_ext, split_title, type Attrs, type Block, type BoxBlock } from "./attrs";
+import { makedirs } from "./errors";
 import { load_prs } from "./prs";
 import { link_refs, type Stats } from "./refs";
 import { sanitize_html } from "./sanitize";
@@ -919,7 +919,7 @@ export class Compiler {
         readingMinutes: Math.max(1, py.roundInt(words / 230)),
       },
     };
-    mkdirSync(this.out_dir, { recursive: true });
+    makedirs(this.out_dir, true);
     const cpath = py.path.join(this.out_dir, "content.json");
     py.io.writeText(cpath, py.json.dumps(content, { indent: 1, ensureAscii: false }));
     const over: string[] = [];

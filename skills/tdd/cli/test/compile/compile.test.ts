@@ -3,7 +3,7 @@
 // sanitizer, a CRLF SVG that dash_proposed rewrites) and on $TDD_PARITY_PACKETS, with --no-copy and --strict too;
 // argv errors (exit code, stdout, stderr); the vocabulary against build_tdd.py's own objects; the sha256 pin.
 import { describe, expect, test } from "bun:test";
-import { chmodSync, cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { spawnSync } from "bun";
@@ -159,6 +159,31 @@ describe.skipIf(!hasPython)("the TypeScript compiler matches build_tdd.py", () =
       expect(noBun.notes).toContain("PARITY: bun is not on PATH; the TypeScript compiler was not compared");
       expect(noBun.findings).toEqual(withBun.findings);
     } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, T);
+
+  test("bad output folders: the same exit code and traceback line as CPython, no bun stack dump", () => {
+    const { dir, packet } = edgeCopy();
+    const ro = join(dir, "ro");
+    try {
+      writeFileSync(join(dir, "afile"), "x");
+      mkdirSync(ro);
+      chmodSync(ro, 0o555);
+      const last = (s: string) => s.trimEnd().split("\n").pop();
+      for (const out of ["afile", "afile/sub", "ro/out", "ro/out/deeper"])
+        for (const flags of [[], ["--no-copy"]]) {
+          const o = join(dir, out);
+          const run = (cmd: string[]) => spawnSync([...cmd, "edge.md", o, ...flags], { cwd: packet, stdout: "pipe", stderr: "pipe" });
+          const py = run(["python3", "-I", "-B", "-W", "ignore", BUILD_TDD]);
+          const ts = run([process.execPath, "--no-install", join(CLI, "bin", "build-tdd.ts")]);
+          const tsErr = ts.stderr.toString();
+          expect({ out, flags, exit: ts.exitCode, last: last(tsErr) }).toEqual({ out, flags, exit: py.exitCode, last: last(py.stderr.toString()) });
+          expect(py.exitCode).toBe(1);
+          expect(/Bun v|\n\s+at /.test(tsErr)).toBe(false);
+        }
+    } finally {
+      chmodSync(ro, 0o755);
       rmSync(dir, { recursive: true, force: true });
     }
   }, T);

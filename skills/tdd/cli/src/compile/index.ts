@@ -5,7 +5,7 @@
 export { DOC, parse_args, type Args } from "./args";
 export { ATTRS, BOX, parse_attrs, parse_ext, split_title, type Attrs, type Block, type BoxBlock } from "./attrs";
 export { Compiler, compile, type Ctx, type Node, type Summary } from "./compiler";
-export { SystemExit, isSystemExit } from "./errors";
+export { PyOSError, SystemExit, isSystemExit, makedirs, osError } from "./errors";
 export { PR_FILE, load_prs, type Pr } from "./prs";
 export { link_refs, type Link, type Stats } from "./refs";
 export { sanitize_html } from "./sanitize";
