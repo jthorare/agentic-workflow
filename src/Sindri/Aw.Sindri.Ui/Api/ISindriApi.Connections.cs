@@ -16,7 +16,7 @@ internal partial interface ISindriApi
     /// <param name="api">The base URL.</param>
     /// <param name="name">The connection.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The connection (wrapped as served), SND-CONN-404, or SND-UI-002/003.</returns>
+    /// <returns>The connection (wrapped as served), SND-CONN-001, or SND-UI-002/003.</returns>
     public Task<Result<ConnectionOne>> GetConnection(Uri api, string name, CancellationToken cancellationToken);
 
     /// <summary>POST /sindri/connections: adds a connection. An oauth one answers with its consent URL.</summary>

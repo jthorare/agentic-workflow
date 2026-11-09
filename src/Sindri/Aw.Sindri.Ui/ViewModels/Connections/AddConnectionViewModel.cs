@@ -7,12 +7,14 @@ namespace Aw.Sindri.Ui.ViewModels.Connections;
 /// 'connected'), a service with a key (rest or cli), or an MCP server (its address). A pasted key or client secret goes into ONE request and is then gone: it is taken out of its
 /// <see cref="SecretField"/> to build the body, never held in a property, a note or an error after that, and never written to the app's preferences.
 /// </summary>
+#pragma warning disable CA1001 // why: the source has no timer and holds no resource; Close disposes it and makes the next
 internal sealed class AddConnectionViewModel : ObservableObject
 {
     private static readonly ConnectionPresetChoice[] _presets = [.. Labels.ConnectionPresets.Select(p => new ConnectionPresetChoice(p.Id, p.Label, p.Kind))];
 
     private readonly ConnectionActions _actions;
     private readonly Func<Task> _changed;
+    private CancellationTokenSource _run = new();
 
     /// <summary>The form over its calls.</summary>
     /// <param name="actions">The calls.</param>
@@ -153,12 +155,16 @@ internal sealed class AddConnectionViewModel : ObservableObject
     {
         DropSecrets();
         IsOpen = false;
-        (StatusText, ErrorText) = (string.Empty, string.Empty);
+        _run.Cancel();   // a wait for the browser stops here, and what it would still say is dropped
+        _run.Dispose();
+        _run = new CancellationTokenSource();
+        (IsWorking, StatusText, ErrorText) = (false, string.Empty, string.Empty);
+        OnChanged(nameof(CanSend));
     }
 
     /// <summary>
     /// Sends the form: one POST, with any pasted secret taken out of its field first. An OAuth connection then opens the consent page and waits until it reads 'connected' or the wait runs out.
-    /// A refusal keeps the name and the other fields, says why, and leaves the secret gone.
+    /// A refusal keeps the name and the other fields, says why, and leaves the secret gone. Closing the form cancels the wait.
     /// </summary>
     /// <param name="cancellationToken">Cancels the wait.</param>
     /// <returns>A task that ends when the form has its answer.</returns>
@@ -169,27 +175,58 @@ internal sealed class AddConnectionViewModel : ObservableObject
             return;
         }
 
-        var body = Body();
+        var name = Name.Trim();
+        var run = _run;
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, run.Token);
         (IsWorking, ErrorText, StatusText) = (true, string.Empty, Labels.ConnectionAdding);
         OnChanged(nameof(CanSend));
         try
         {
-            var added = await _actions.Add(body, cancellationToken).ConfigureAwait(true);
+            // the body, with any pasted secret, lives only as this argument: after the POST the form holds the name and nothing else
+            var added = await _actions.Add(Body(), linked.Token).ConfigureAwait(true);
             if (added.IsError)
             {
                 (ErrorText, StatusText) = (Labels.ConnectionWriteFailed(added.Error), string.Empty);
                 return;
             }
 
-            await _changed().ConfigureAwait(true);   // the new row is on the page while the browser sign-in runs
-            var end = await _actions.Finish(added.Value, said => StatusText = said, cancellationToken).ConfigureAwait(true);
-            await _changed().ConfigureAwait(true);
-            Ended(body.Name, end);
+            await Follow(added.Value, name, run, linked.Token).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException) when (run.IsCancellationRequested)
+        {
+            // the form was closed while it waited: Close already cleared it
         }
         finally
         {
-            IsWorking = false;
-            OnChanged(nameof(CanSend));
+            if (!run.IsCancellationRequested)
+            {
+                IsWorking = false;
+                OnChanged(nameof(CanSend));
+            }
+        }
+    }
+
+    // After the POST: a key connection's row exists already, an OAuth one only once the callback lands. Nothing is written once the form was closed.
+    private async Task Follow(ConnectionAdded added, string name, CancellationTokenSource run, CancellationToken cancellationToken)
+    {
+        if (added.ConsentUrl is null)
+        {
+            await _changed().ConfigureAwait(true);
+        }
+
+        var end = await _actions.Finish(added, said => Say(run, said), cancellationToken).ConfigureAwait(true);
+        await _changed().ConfigureAwait(true);
+        if (!run.IsCancellationRequested)
+        {
+            Ended(name, end);
+        }
+    }
+
+    private void Say(CancellationTokenSource run, string text)
+    {
+        if (!run.IsCancellationRequested)
+        {
+            StatusText = text;
         }
     }
 
@@ -236,3 +273,4 @@ internal sealed class AddConnectionViewModel : ObservableObject
 
     private static string? OrEmpty(string text) => text.Trim() is { Length: > 0 } trimmed ? trimmed : null;
 }
+#pragma warning restore CA1001

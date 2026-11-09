@@ -38,13 +38,28 @@ internal sealed class ConnectionsFixture
         return page;
     }
 
-    /// <summary>Lets a task that waits on the sign-in poll finish: the clock moves one poll at a time until it does.</summary>
-    internal async Task Drive(Task task)
+    /// <summary>
+    /// Lets a task that waits on the sign-in poll finish: the clock moves one poll at a time until it does. With <paramref name="callbackFor"/>, the browser callback of that
+    /// connection lands once the poll has read it <paramref name="afterReads"/> times (reads of a name with no row count too); without it, no callback ever lands.
+    /// </summary>
+    internal async Task Drive(Task task, string? callbackFor = null, int afterReads = 2)
     {
+        var landed = false;
         for (var i = 0; i < 5000 && !task.IsCompleted; i++)
         {
             await Task.Delay(1, Token);
+            if (callbackFor is not null && !landed && Server.ConnectionCallLog.Where(c => string.Equals(c, "get " + callbackFor, StringComparison.Ordinal)).Take(afterReads).Count() >= afterReads)
+            {
+                Server.CompleteSignIn(callbackFor);
+                landed = true;
+            }
+
             Clock.Advance(ConnectionActions.PollEvery);
+        }
+
+        if (!task.IsCompleted)
+        {
+            throw new TimeoutException("the task was still running after 5000 polls");
         }
 
         await task;

@@ -219,6 +219,7 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
             return;
         }
 
+        _reads++;   // a list read already on its way may still hold this row: its answer is not wanted
         _ = _rows.Remove(gone.Name);
         _ = Rows.Remove(gone);
         Head = Labels.ConnectionsHead(Rows.Count, Rows.Count(r => r.IsProblem));
