@@ -1,12 +1,16 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
+using Aw.Sindri.Core.Graph.Interpolation;
 
 namespace Aw.Sindri.Core.Graph.Blocks;
 
 /// <summary>The 'prompt' block: asks the model and checks the answer against the 'output' JSON schema; a bad answer fails the node with the reason.</summary>
 public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
 {
+    private static readonly JsonSerializerOptions _compact = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+
     /// <inheritdoc />
     public string Type => "prompt";
 
@@ -48,10 +52,13 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
     public async ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        if (context.Config["prompt"] is not JsonValue { } promptValue || !promptValue.TryGetValue<string>(out var prompt))
+        // why: the raw config is used because the interpolated one has lost which text came from the trigger
+        if (context.RawConfig["prompt"] is not JsonValue { } promptValue || !promptValue.TryGetValue<string>(out var raw))
         {
             return SindriErrors.GraphBlockFailed.With("prompt needs a 'prompt' text");
         }
+
+        var prompt = Prompt(raw, context);
 
         var schema = context.Config["output"] as JsonObject;
         if (schema is not null && SchemaProblem(schema) is { } unusable)
@@ -78,6 +85,27 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
         }
 
         return new BlockResult(Outputs(schema, fields));
+    }
+
+    private string Prompt(string raw, BlockContext context)
+    {
+        var rendered = Template.Render(raw, reference =>
+        {
+            var node = context.Resolve(reference);
+            if (node is null || !(reference == "trigger" || reference.StartsWith("trigger.", StringComparison.Ordinal)))
+            {
+                return node;
+            }
+
+            var text = node is JsonValue value && value.TryGetValue<string>(out var s) ? s : node.ToJsonString(_compact);
+            return JsonValue.Create(model.Untrusted(text));
+        });
+        return rendered switch
+        {
+            null => string.Empty,
+            JsonValue value when value.TryGetValue<string>(out var s) => s,
+            _ => rendered.ToJsonString(_compact),
+        };
     }
 
     private static Dictionary<string, JsonNode?> Outputs(JsonObject? schema, JsonObject answer)

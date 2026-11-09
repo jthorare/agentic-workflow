@@ -26,7 +26,7 @@ public sealed class ShellNavTests
         var shell = new ShellViewModel(records, server, clock, new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
         await shell.Restore(Token);
         _ = shell.Run(Token);
-        await Until(() => shell.Queue.Total > 0 && shell.Navigation[2].Count.Length > 0);
+        await Until(() => shell.Queue.Total > 0 && shell.Navigation[3].Count.Length > 0);
         shell.GoTo(PageId.Work);
         var tabs = shell.Navigation.ToArray();
         var tab = shell.SelectedNav;
@@ -42,10 +42,10 @@ public sealed class ShellNavTests
         foreach (var view in _views)
         {
             clock.Advance(TimeSpan.FromSeconds(5));
-            var before = shell.Navigation[2].Count;
+            var before = shell.Navigation[3].Count;
             server.QueueView = RouteAnswer.SpecShaped("queue", view);
             await shell.Queue.Refresh(new Uri("http://127.0.0.1:7410/"), Token);   // awaited on the one thread: an event's refresh would race the reads
-            Assert.NotEqual(before, shell.Navigation[2].Count, StringComparer.Ordinal);
+            Assert.NotEqual(before, shell.Navigation[3].Count, StringComparer.Ordinal);
             Assert.Same(tab, shell.SelectedNav);
         }
 

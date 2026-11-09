@@ -9861,8 +9861,8 @@ Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceStart.StartedBy.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceStart.StartedBy.init -> void
 Aw.Sindri.Core.Profile.DocsSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Globs, out string? Sync) -> void
 Aw.Sindri.Core.Profile.DocsSettings.DocsSettings(System.Collections.Generic.IReadOnlyList<string!>? Globs = null, string? Sync = null) -> void
-Aw.Sindri.Core.Profile.WorkflowSettings.Deconstruct(out string? DeskTimeout, out string? EventHold, out System.Collections.Generic.IReadOnlyList<string!>? Effects, out string? DispatchDelay, out Aw.Sindri.Core.Profile.JudgeSettings? Judge, out Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent, out Aw.Sindri.Core.Profile.ForgeSettings? Forge, out Aw.Sindri.Core.Profile.RouteSettings? Route, out Aw.Sindri.Core.Profile.PackSettings? Packs, out Aw.Sindri.Core.Profile.LineSettings? Line, out Aw.Sindri.Core.Profile.PlanSettings? Plan, out Aw.Sindri.Core.Profile.ProveSettings? Prove, out Aw.Sindri.Core.Profile.BuildSettings? Build, out Aw.Sindri.Core.Profile.ShipSettings? Ship, out Aw.Sindri.Core.Profile.DesignSettings? Design, out Aw.Sindri.Core.Profile.ReviewSettings? Review, out Aw.Sindri.Core.Profile.StepsSettings? Steps, out Aw.Sindri.Core.Profile.DocsSettings? Docs, out Aw.Sindri.Core.Profile.PrSettings? Pr, out Aw.Sindri.Core.Profile.ScopingSettings? Scoping) -> void
-Aw.Sindri.Core.Profile.WorkflowSettings.WorkflowSettings(string? DeskTimeout = null, string? EventHold = null, System.Collections.Generic.IReadOnlyList<string!>? Effects = null, string? DispatchDelay = null, Aw.Sindri.Core.Profile.JudgeSettings? Judge = null, Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent = null, Aw.Sindri.Core.Profile.ForgeSettings? Forge = null, Aw.Sindri.Core.Profile.RouteSettings? Route = null, Aw.Sindri.Core.Profile.PackSettings? Packs = null, Aw.Sindri.Core.Profile.LineSettings? Line = null, Aw.Sindri.Core.Profile.PlanSettings? Plan = null, Aw.Sindri.Core.Profile.ProveSettings? Prove = null, Aw.Sindri.Core.Profile.BuildSettings? Build = null, Aw.Sindri.Core.Profile.ShipSettings? Ship = null, Aw.Sindri.Core.Profile.DesignSettings? Design = null, Aw.Sindri.Core.Profile.ReviewSettings? Review = null, Aw.Sindri.Core.Profile.StepsSettings? Steps = null, Aw.Sindri.Core.Profile.DocsSettings? Docs = null, Aw.Sindri.Core.Profile.PrSettings? Pr = null, Aw.Sindri.Core.Profile.ScopingSettings? Scoping = null) -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Deconstruct(out string? DeskTimeout, out string? EventHold, out System.Collections.Generic.IReadOnlyList<string!>? Effects, out string? DispatchDelay, out Aw.Sindri.Core.Profile.JudgeSettings? Judge, out Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent, out Aw.Sindri.Core.Profile.ForgeSettings? Forge, out Aw.Sindri.Core.Profile.RouteSettings? Route, out Aw.Sindri.Core.Profile.PackSettings? Packs, out Aw.Sindri.Core.Profile.LineSettings? Line, out Aw.Sindri.Core.Profile.PlanSettings? Plan, out Aw.Sindri.Core.Profile.ProveSettings? Prove, out Aw.Sindri.Core.Profile.BuildSettings? Build, out Aw.Sindri.Core.Profile.ShipSettings? Ship, out Aw.Sindri.Core.Profile.DesignSettings? Design, out Aw.Sindri.Core.Profile.ReviewSettings? Review, out Aw.Sindri.Core.Profile.StepsSettings? Steps, out Aw.Sindri.Core.Profile.DocsSettings? Docs, out Aw.Sindri.Core.Profile.PrSettings? Pr, out Aw.Sindri.Core.Profile.ScopingSettings? Scoping, out Aw.Sindri.Core.Profile.PollSettings? Poll) -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.WorkflowSettings(string? DeskTimeout = null, string? EventHold = null, System.Collections.Generic.IReadOnlyList<string!>? Effects = null, string? DispatchDelay = null, Aw.Sindri.Core.Profile.JudgeSettings? Judge = null, Aw.Sindri.Core.Profile.WorkflowAgentSettings? Agent = null, Aw.Sindri.Core.Profile.ForgeSettings? Forge = null, Aw.Sindri.Core.Profile.RouteSettings? Route = null, Aw.Sindri.Core.Profile.PackSettings? Packs = null, Aw.Sindri.Core.Profile.LineSettings? Line = null, Aw.Sindri.Core.Profile.PlanSettings? Plan = null, Aw.Sindri.Core.Profile.ProveSettings? Prove = null, Aw.Sindri.Core.Profile.BuildSettings? Build = null, Aw.Sindri.Core.Profile.ShipSettings? Ship = null, Aw.Sindri.Core.Profile.DesignSettings? Design = null, Aw.Sindri.Core.Profile.ReviewSettings? Review = null, Aw.Sindri.Core.Profile.StepsSettings? Steps = null, Aw.Sindri.Core.Profile.DocsSettings? Docs = null, Aw.Sindri.Core.Profile.PrSettings? Pr = null, Aw.Sindri.Core.Profile.ScopingSettings? Scoping = null, Aw.Sindri.Core.Profile.PollSettings? Poll = null) -> void
 Aw.Sindri.Core.Workflow.Engine.Events.WorkflowEventType.Heavy = 8 -> Aw.Sindri.Core.Workflow.Engine.Events.WorkflowEventType
 const Aw.Sindri.Core.Events.EventTypes.WorkflowHeavy = "workflow.heavy" -> string!
 Aw.Sindri.Core.Checks.CheckResult
@@ -19485,6 +19485,7 @@ Aw.Sindri.Core.Graph.Blocks.IGraphBlock
 Aw.Sindri.Core.Graph.Blocks.IGraphBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
 Aw.Sindri.Core.Graph.Blocks.IGraphModelPort
 Aw.Sindri.Core.Graph.Blocks.IGraphModelPort.Ask(string! prompt, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphModelPort.Untrusted(string! text) -> string!
 Aw.Sindri.Core.Graph.Blocks.INotifyPort
 Aw.Sindri.Core.Graph.Blocks.INotifyPort.Post(Aw.Sindri.Core.Graph.Ids.WorkflowRunId runId, Aw.Sindri.Core.Graph.Ids.NodeId node, string! title, string? body, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Blocks.ManualBlock
@@ -20773,7 +20774,7 @@ Aw.Sindri.Core.Todos.TodoNoteImport
 Aw.Sindri.Core.Todos.TodoNoteImport.<Clone>$() -> Aw.Sindri.Core.Todos.TodoNoteImport!
 Aw.Sindri.Core.Todos.TodoNoteImport.Counts.get -> Aw.Sindri.Core.Todos.Note.NoteCounts!
 Aw.Sindri.Core.Todos.TodoNoteImport.Counts.init -> void
-Aw.Sindri.Core.Todos.TodoNoteImport.Deconstruct(out Aw.Sindri.Core.Todos.Note.NoteCounts! Counts, out int Imported, out bool DryRun) -> void
+Aw.Sindri.Core.Todos.TodoNoteImport.Deconstruct(out Aw.Sindri.Core.Todos.Note.NoteCounts! Counts, out int Imported, out bool DryRun, out string? Warning) -> void
 Aw.Sindri.Core.Todos.TodoNoteImport.DryRun.get -> bool
 Aw.Sindri.Core.Todos.TodoNoteImport.DryRun.init -> void
 Aw.Sindri.Core.Todos.TodoNoteImport.Equals(Aw.Sindri.Core.Todos.TodoNoteImport? other) -> bool
@@ -20794,7 +20795,7 @@ Aw.Sindri.Core.Todos.TodoNoteImportRequest.Vault.get -> string!
 Aw.Sindri.Core.Todos.TodoNoteImportRequest.Vault.init -> void
 Aw.Sindri.Core.Todos.TodoNoteImportRequest.Via.get -> string?
 Aw.Sindri.Core.Todos.TodoNoteImportRequest.Via.init -> void
-Aw.Sindri.Core.Todos.TodoNoteImport.TodoNoteImport(Aw.Sindri.Core.Todos.Note.NoteCounts! Counts, int Imported, bool DryRun) -> void
+Aw.Sindri.Core.Todos.TodoNoteImport.TodoNoteImport(Aw.Sindri.Core.Todos.Note.NoteCounts! Counts, int Imported, bool DryRun, string? Warning = null) -> void
 Aw.Sindri.Core.Todos.TodoNoteState
 Aw.Sindri.Core.Todos.TodoNoteState.Busy = 5 -> Aw.Sindri.Core.Todos.TodoNoteState
 Aw.Sindri.Core.Todos.TodoNoteState.CantRead = 3 -> Aw.Sindri.Core.Todos.TodoNoteState
@@ -20945,6 +20946,150 @@ override Aw.Sindri.Core.Graph.Blocks.ItemToCreate.GetHashCode() -> int
 override Aw.Sindri.Core.Graph.Blocks.ItemToCreate.ToString() -> string!
 static Aw.Sindri.Core.Graph.Blocks.ItemToCreate.operator !=(Aw.Sindri.Core.Graph.Blocks.ItemToCreate? left, Aw.Sindri.Core.Graph.Blocks.ItemToCreate? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.ItemToCreate.operator ==(Aw.Sindri.Core.Graph.Blocks.ItemToCreate? left, Aw.Sindri.Core.Graph.Blocks.ItemToCreate? right) -> bool
+Aw.Sindri.Core.Events.ConnectionPolled
+Aw.Sindri.Core.Events.ConnectionPolled.<Clone>$() -> Aw.Sindri.Core.Events.ConnectionPolled!
+Aw.Sindri.Core.Events.ConnectionPolled.Connection.get -> string!
+Aw.Sindri.Core.Events.ConnectionPolled.Connection.init -> void
+Aw.Sindri.Core.Events.ConnectionPolled.Kind.get -> string!
+Aw.Sindri.Core.Events.ConnectionPolled.Kind.init -> void
+Aw.Sindri.Core.Events.ConnectionPolled.Events.get -> int
+Aw.Sindri.Core.Events.ConnectionPolled.Events.init -> void
+Aw.Sindri.Core.Events.ConnectionPolled.Started.get -> int
+Aw.Sindri.Core.Events.ConnectionPolled.Started.init -> void
+Aw.Sindri.Core.Events.ConnectionPolled.Skipped.get -> int
+Aw.Sindri.Core.Events.ConnectionPolled.Skipped.init -> void
+Aw.Sindri.Core.Events.ConnectionPolled.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.ConnectionPolled.At.init -> void
+Aw.Sindri.Core.Events.ConnectionPolled.ConnectionPolled(string! Connection, string! Kind, int Events, int Started, int Skipped, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionPolled.Deconstruct(out string! Connection, out string! Kind, out int Events, out int Started, out int Skipped, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionPolled.Equals(Aw.Sindri.Core.Events.ConnectionPolled? other) -> bool
+override Aw.Sindri.Core.Events.ConnectionPolled.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ConnectionPolled.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ConnectionPolled.ToString() -> string!
+static Aw.Sindri.Core.Events.ConnectionPolled.operator !=(Aw.Sindri.Core.Events.ConnectionPolled? left, Aw.Sindri.Core.Events.ConnectionPolled? right) -> bool
+static Aw.Sindri.Core.Events.ConnectionPolled.operator ==(Aw.Sindri.Core.Events.ConnectionPolled? left, Aw.Sindri.Core.Events.ConnectionPolled? right) -> bool
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowTriggerSkipped!
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.Workflow.get -> string!
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.Workflow.init -> void
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.Connection.get -> string!
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.Connection.init -> void
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.Kind.get -> string!
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.Kind.init -> void
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.DeliveryKey.get -> string!
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.DeliveryKey.init -> void
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.Reason.get -> string!
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.Reason.init -> void
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.At.init -> void
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.WorkflowTriggerSkipped(string! Workflow, string! Connection, string! Kind, string! DeliveryKey, string! Reason, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.Deconstruct(out string! Workflow, out string! Connection, out string! Kind, out string! DeliveryKey, out string! Reason, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.WorkflowTriggerSkipped.Equals(Aw.Sindri.Core.Events.WorkflowTriggerSkipped? other) -> bool
+override Aw.Sindri.Core.Events.WorkflowTriggerSkipped.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowTriggerSkipped.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowTriggerSkipped.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowTriggerSkipped.operator !=(Aw.Sindri.Core.Events.WorkflowTriggerSkipped? left, Aw.Sindri.Core.Events.WorkflowTriggerSkipped? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowTriggerSkipped.operator ==(Aw.Sindri.Core.Events.WorkflowTriggerSkipped? left, Aw.Sindri.Core.Events.WorkflowTriggerSkipped? right) -> bool
+Aw.Sindri.Core.Events.CatchUpCapped
+Aw.Sindri.Core.Events.CatchUpCapped.<Clone>$() -> Aw.Sindri.Core.Events.CatchUpCapped!
+Aw.Sindri.Core.Events.CatchUpCapped.Connection.get -> string!
+Aw.Sindri.Core.Events.CatchUpCapped.Connection.init -> void
+Aw.Sindri.Core.Events.CatchUpCapped.Kind.get -> string!
+Aw.Sindri.Core.Events.CatchUpCapped.Kind.init -> void
+Aw.Sindri.Core.Events.CatchUpCapped.Reason.get -> string!
+Aw.Sindri.Core.Events.CatchUpCapped.Reason.init -> void
+Aw.Sindri.Core.Events.CatchUpCapped.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.CatchUpCapped.At.init -> void
+Aw.Sindri.Core.Events.CatchUpCapped.CatchUpCapped(string! Connection, string! Kind, string! Reason, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.CatchUpCapped.Deconstruct(out string! Connection, out string! Kind, out string! Reason, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.CatchUpCapped.Equals(Aw.Sindri.Core.Events.CatchUpCapped? other) -> bool
+override Aw.Sindri.Core.Events.CatchUpCapped.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.CatchUpCapped.GetHashCode() -> int
+override Aw.Sindri.Core.Events.CatchUpCapped.ToString() -> string!
+static Aw.Sindri.Core.Events.CatchUpCapped.operator !=(Aw.Sindri.Core.Events.CatchUpCapped? left, Aw.Sindri.Core.Events.CatchUpCapped? right) -> bool
+static Aw.Sindri.Core.Events.CatchUpCapped.operator ==(Aw.Sindri.Core.Events.CatchUpCapped? left, Aw.Sindri.Core.Events.CatchUpCapped? right) -> bool
+const Aw.Sindri.Core.Events.EventTypes.ConnectionPolled = "connection.polled" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowTriggerSkipped = "workflow.trigger.skipped" -> string!
+const Aw.Sindri.Core.Events.EventTypes.CatchUpCapped = "catchup.capped" -> string!
+Aw.Sindri.Core.Profile.PollSettings
+Aw.Sindri.Core.Profile.PollSettings.<Clone>$() -> Aw.Sindri.Core.Profile.PollSettings!
+Aw.Sindri.Core.Profile.PollSettings.IntervalSeconds.get -> int?
+Aw.Sindri.Core.Profile.PollSettings.IntervalSeconds.init -> void
+Aw.Sindri.Core.Profile.PollSettings.CatchUpPages.get -> int?
+Aw.Sindri.Core.Profile.PollSettings.CatchUpPages.init -> void
+Aw.Sindri.Core.Profile.PollSettings.PollSettings(int? IntervalSeconds = null, int? CatchUpPages = null) -> void
+Aw.Sindri.Core.Profile.PollSettings.Deconstruct(out int? IntervalSeconds, out int? CatchUpPages) -> void
+Aw.Sindri.Core.Profile.PollSettings.Equals(Aw.Sindri.Core.Profile.PollSettings? other) -> bool
+override Aw.Sindri.Core.Profile.PollSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PollSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PollSettings.ToString() -> string!
+static Aw.Sindri.Core.Profile.PollSettings.operator !=(Aw.Sindri.Core.Profile.PollSettings? left, Aw.Sindri.Core.Profile.PollSettings? right) -> bool
+static Aw.Sindri.Core.Profile.PollSettings.operator ==(Aw.Sindri.Core.Profile.PollSettings? left, Aw.Sindri.Core.Profile.PollSettings? right) -> bool
+const Aw.Sindri.Core.Profile.PollSettings.DefaultIntervalSeconds = 120 -> int
+const Aw.Sindri.Core.Profile.PollSettings.MinIntervalSeconds = 30 -> int
+const Aw.Sindri.Core.Profile.PollSettings.DefaultCatchUpPages = 20 -> int
+const Aw.Sindri.Core.Profile.PollSettings.MaxCatchUpPages = 100 -> int
+static Aw.Sindri.Core.Profile.PollSettings.Interval(Aw.Sindri.Core.Profile.PollSettings? settings) -> System.TimeSpan
+static Aw.Sindri.Core.Profile.PollSettings.Pages(Aw.Sindri.Core.Profile.PollSettings? settings) -> int
+Aw.Sindri.Core.Profile.WorkflowSettings.Poll.get -> Aw.Sindri.Core.Profile.PollSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Poll.init -> void
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.ConnectionEventBlock() -> void
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Type.get -> string!
+Aw.Sindri.Core.Connections.Polling.PollWake
+Aw.Sindri.Core.Connections.Polling.PollWake.PollWake() -> void
+Aw.Sindri.Core.Connections.Polling.PollWake.Request() -> void
+Aw.Sindri.Core.Connections.Polling.PollWake.TryTake() -> bool
+Aw.Sindri.Core.Connections.ConnectionEvents.Polled(Aw.Sindri.Core.Connections.PollCounts! counts, Aw.Sindri.Core.Lease.LeaseGrant? grant, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Connections.PollCounts
+Aw.Sindri.Core.Connections.PollCounts.<Clone>$() -> Aw.Sindri.Core.Connections.PollCounts!
+Aw.Sindri.Core.Connections.PollCounts.Name.get -> Aw.Sindri.Core.Connections.ConnectionName
+Aw.Sindri.Core.Connections.PollCounts.Name.init -> void
+Aw.Sindri.Core.Connections.PollCounts.Kind.get -> string!
+Aw.Sindri.Core.Connections.PollCounts.Kind.init -> void
+Aw.Sindri.Core.Connections.PollCounts.Count.get -> int
+Aw.Sindri.Core.Connections.PollCounts.Count.init -> void
+Aw.Sindri.Core.Connections.PollCounts.Started.get -> int
+Aw.Sindri.Core.Connections.PollCounts.Started.init -> void
+Aw.Sindri.Core.Connections.PollCounts.Skipped.get -> int
+Aw.Sindri.Core.Connections.PollCounts.Skipped.init -> void
+Aw.Sindri.Core.Connections.PollCounts.PollCounts(Aw.Sindri.Core.Connections.ConnectionName Name, string! Kind, int Count, int Started, int Skipped) -> void
+Aw.Sindri.Core.Connections.PollCounts.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionName Name, out string! Kind, out int Count, out int Started, out int Skipped) -> void
+Aw.Sindri.Core.Connections.PollCounts.Equals(Aw.Sindri.Core.Connections.PollCounts? other) -> bool
+override Aw.Sindri.Core.Connections.PollCounts.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.PollCounts.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.PollCounts.ToString() -> string!
+static Aw.Sindri.Core.Connections.PollCounts.operator !=(Aw.Sindri.Core.Connections.PollCounts? left, Aw.Sindri.Core.Connections.PollCounts? right) -> bool
+static Aw.Sindri.Core.Connections.PollCounts.operator ==(Aw.Sindri.Core.Connections.PollCounts? left, Aw.Sindri.Core.Connections.PollCounts? right) -> bool
+Aw.Sindri.Core.Connections.SkippedTrigger
+Aw.Sindri.Core.Connections.SkippedTrigger.<Clone>$() -> Aw.Sindri.Core.Connections.SkippedTrigger!
+Aw.Sindri.Core.Connections.SkippedTrigger.Workflow.get -> string!
+Aw.Sindri.Core.Connections.SkippedTrigger.Workflow.init -> void
+Aw.Sindri.Core.Connections.SkippedTrigger.Name.get -> Aw.Sindri.Core.Connections.ConnectionName
+Aw.Sindri.Core.Connections.SkippedTrigger.Name.init -> void
+Aw.Sindri.Core.Connections.SkippedTrigger.Kind.get -> string!
+Aw.Sindri.Core.Connections.SkippedTrigger.Kind.init -> void
+Aw.Sindri.Core.Connections.SkippedTrigger.DeliveryKey.get -> string!
+Aw.Sindri.Core.Connections.SkippedTrigger.DeliveryKey.init -> void
+Aw.Sindri.Core.Connections.SkippedTrigger.Reason.get -> string!
+Aw.Sindri.Core.Connections.SkippedTrigger.Reason.init -> void
+Aw.Sindri.Core.Connections.SkippedTrigger.SkippedTrigger(string! Workflow, Aw.Sindri.Core.Connections.ConnectionName Name, string! Kind, string! DeliveryKey, string! Reason) -> void
+Aw.Sindri.Core.Connections.SkippedTrigger.Deconstruct(out string! Workflow, out Aw.Sindri.Core.Connections.ConnectionName Name, out string! Kind, out string! DeliveryKey, out string! Reason) -> void
+Aw.Sindri.Core.Connections.SkippedTrigger.Equals(Aw.Sindri.Core.Connections.SkippedTrigger? other) -> bool
+override Aw.Sindri.Core.Connections.SkippedTrigger.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.SkippedTrigger.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.SkippedTrigger.ToString() -> string!
+static Aw.Sindri.Core.Connections.SkippedTrigger.operator !=(Aw.Sindri.Core.Connections.SkippedTrigger? left, Aw.Sindri.Core.Connections.SkippedTrigger? right) -> bool
+static Aw.Sindri.Core.Connections.SkippedTrigger.operator ==(Aw.Sindri.Core.Connections.SkippedTrigger? left, Aw.Sindri.Core.Connections.SkippedTrigger? right) -> bool
+Aw.Sindri.Core.Connections.ConnectionEvents.TriggerSkipped(Aw.Sindri.Core.Connections.SkippedTrigger! skipped, Aw.Sindri.Core.Lease.LeaseGrant? grant, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Connections.ConnectionEvents.CatchUpStopped(Aw.Sindri.Core.Connections.ConnectionName name, string! kind, string! reason, Aw.Sindri.Core.Lease.LeaseGrant? grant, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionRunIdsHeld -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Connections.SignInFailure
 Aw.Sindri.Core.Connections.SignInFailure.<Clone>$() -> Aw.Sindri.Core.Connections.SignInFailure!
 Aw.Sindri.Core.Connections.SignInFailure.At.get -> System.DateTimeOffset
@@ -20977,3 +21122,5 @@ override Aw.Sindri.Core.Connections.SignInTry.GetHashCode() -> int
 override Aw.Sindri.Core.Connections.SignInTry.ToString() -> string!
 static Aw.Sindri.Core.Connections.SignInTry.operator !=(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
 static Aw.Sindri.Core.Connections.SignInTry.operator ==(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
+Aw.Sindri.Core.Todos.TodoNoteImport.Warning.get -> string?
+Aw.Sindri.Core.Todos.TodoNoteImport.Warning.init -> void
