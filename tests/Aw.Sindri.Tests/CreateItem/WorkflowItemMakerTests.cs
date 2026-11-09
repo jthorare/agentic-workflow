@@ -2,6 +2,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
@@ -46,7 +47,7 @@ public sealed class WorkflowItemMakerTests
         await Approve("web");
         await Seed();
 
-        var made = await Maker().Create(_run, "  Fix login  ", "web", "details", "linear:issue/abc-1", Token);
+        var made = await Maker().Create(new ItemToCreate(_run, "  Fix login  ", "web", "details", "linear:issue/abc-1"), Token);
 
         Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
         var recorded = Assert.Single(_h.Store.Events);
@@ -63,8 +64,8 @@ public sealed class WorkflowItemMakerTests
         _ = await _h.HoldLease();
         await Approve("web");
 
-        var unknown = await Maker().Create(_run, "x", "api", body: null, linearIssue: null, Token);
-        var blank = await Maker().Create(_run, "   ", repo: null, body: null, linearIssue: null, Token);
+        var unknown = await Maker().Create(new ItemToCreate(_run, "x", "api", Body: null, LinearIssue: null), Token);
+        var blank = await Maker().Create(new ItemToCreate(_run, "   ", Repo: null, Body: null, LinearIssue: null), Token);
 
         Assert.Equal(SindriErrors.InvalidInput.Code, unknown.Error.Code);
         Assert.Equal(SindriErrors.InvalidInput.Code, blank.Error.Code);
@@ -77,7 +78,7 @@ public sealed class WorkflowItemMakerTests
         _ = await _h.HoldLease();
         await Seed();
 
-        var made = await Maker().Create(_run, "Loose end", repo: null, body: null, linearIssue: null, Token);
+        var made = await Maker().Create(new ItemToCreate(_run, "Loose end", Repo: null, Body: null, LinearIssue: null), Token);
 
         Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
         Assert.Null(_h.Events.Payload<ItemCreated>(Assert.Single(_h.Store.Events)).Value.Repo);

@@ -2,7 +2,6 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph.Blocks;
-using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,9 +15,10 @@ namespace Aw.Sindri.Features.CreateItem;
 /// <param name="scopes">Makes a scope per item; the handler is scoped and the engine's blocks are not.</param>
 internal sealed class WorkflowItemMaker(IServiceScopeFactory scopes) : ICreateItemPort
 {
-    public async ValueTask<Result<string>> Create(WorkflowRunId run, string title, string? repo, string? body, string? linearIssue, CancellationToken cancellationToken)
+    public async ValueTask<Result<string>> Create(ItemToCreate item, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(title);
+        ArgumentNullException.ThrowIfNull(item);
+        var (run, title, repo, body, linearIssue) = item;
         RepoName? repoName = null;
         if (repo is not null)
         {

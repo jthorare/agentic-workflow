@@ -20607,7 +20607,7 @@ Aw.Sindri.Core.Graph.Blocks.HttpBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.HttpBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
 Aw.Sindri.Core.Graph.Blocks.HttpBlock.Type.get -> string!
 Aw.Sindri.Core.Graph.Blocks.ICreateItemPort
-Aw.Sindri.Core.Graph.Blocks.ICreateItemPort.Create(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, string! title, string? repo, string? body, string? linearIssue, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Graph.Blocks.ICreateItemPort.Create(Aw.Sindri.Core.Graph.Blocks.ItemToCreate! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Graph.Blocks.IGraphBlock.Commit(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, Aw.Sindri.Core.Graph.Blocks.BlockResult! result, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Blocks.IGraphCallPort
 Aw.Sindri.Core.Graph.Blocks.IGraphCallPort.MaxDepth(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
@@ -20722,3 +20722,23 @@ Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery
 Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Running(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
 Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.DateTimeOffset startedBefore, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.ItemToCreate!
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Body.get -> string?
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Body.init -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.LinearIssue.get -> string?
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.LinearIssue.init -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Repo.get -> string?
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Repo.init -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Run.init -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Title.init -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out string! Title, out string? Repo, out string? Body, out string? LinearIssue) -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Equals(Aw.Sindri.Core.Graph.Blocks.ItemToCreate? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.ItemToCreate(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, string! Title, string? Repo, string? Body, string? LinearIssue) -> void
+override Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.ItemToCreate.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.ItemToCreate.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.ItemToCreate.operator !=(Aw.Sindri.Core.Graph.Blocks.ItemToCreate? left, Aw.Sindri.Core.Graph.Blocks.ItemToCreate? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.ItemToCreate.operator ==(Aw.Sindri.Core.Graph.Blocks.ItemToCreate? left, Aw.Sindri.Core.Graph.Blocks.ItemToCreate? right) -> bool
