@@ -15,19 +15,20 @@ internal static class TodoScenarios
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged"), ("todos-keep", "sindri"), ("todos-keep-undo", "accepted"), ("todos-hold-apply", "accepted"), ("todos-hold-undo", "accepted")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged"), ("todos-keep", "sindri"), ("todos-keep-undo", "accepted"), ("todos-hold-apply", "accepted"), ("todos-hold-undo", "accepted"), ("todos-note-import", "dry-run"), ("todos-note-import", "imported"), ("todos-note-import", "stale")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
 
     /// <summary>Starts the scenario's host: the item profile, approved by the body.</summary>
-    /// <param name="slug">The route; the note check's host also maps a library vault holding the sample note.</param>
+    /// <param name="slug">The route; the note check's and the import's hosts also map a library vault holding the sample note, and the import's names it in todo.obsidian.</param>
     /// <param name="ct">Cancellation.</param>
     /// <returns>The started host.</returns>
     public static Task<GoldenHost> Start(string slug, CancellationToken ct) =>
         GoldenHost.Start(temporary: true, ct, slug switch
         {
             "todos-note-check" => NoteVaultProfile(),
+            "todos-note-import" => NoteVaultProfile() + "todo:\n  obsidian:\n    vault: notes\n    note: Todo.md\n",
             "todos-note-set" or "todos-note-stop" => ItemScenarios.ProfileYaml + "context:\n  sources:\n    library:\n      vaults:\n        - { name: notes, path: /work/notes }\n",
             _ => ItemScenarios.ProfileYaml,
         });
@@ -49,9 +50,7 @@ internal static class TodoScenarios
         var human = ItemScenarios.Human(host);
         if (slug.StartsWith("todos-note-", StringComparison.Ordinal))
         {
-            return string.Equals(slug, "todos-note-check", StringComparison.Ordinal)
-                ? (await host.Http.Ask(Post("/sindri/todos/note/check", Request(slug, scenario), human))).Body
-                : await NoteWrite(host, slug, scenario, human);
+            return await NoteRoute(host, slug, scenario, human);
         }
 
         if (slug == "todos-add")
@@ -82,6 +81,14 @@ internal static class TodoScenarios
 
         return await List(host, human, ct);
     }
+
+    // the note's routes: check and import post the request file's bytes, set and stop go through NoteWrite
+    private static async Task<string> NoteRoute(GoldenHost host, string slug, string scenario, (string Name, string Value)[] human) => slug switch
+    {
+        "todos-note-check" => (await host.Http.Ask(Post("/sindri/todos/note/check", Request(slug, scenario), human))).Body,
+        "todos-note-import" => (await host.Http.Ask(Post("/sindri/todos/note/import", Request(slug, scenario), human))).Body,
+        _ => await NoteWrite(host, slug, scenario, human),
+    };
 
     // the list golden: six todos across states (one done, one changed, one removed, one from an agent session, one fenced), then GET ?state=all
     private static async Task<string> List(GoldenHost host, (string Name, string Value)[] human, CancellationToken ct)
