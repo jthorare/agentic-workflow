@@ -37,6 +37,7 @@ internal static class Composition
     internal static IServiceCollection Compose(IServiceCollection services, Func<string, string?> environment, TimeProvider clock)
         => services
             .AddSingleton(clock)
+            .AddSingleton<Endpoints.IHandoffPeer, Endpoints.ConnectionHandoffPeer>()   // where POST /sindri/handoff came from (#2258 PR 12)
             .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
             .AddKernelTelemetry(TelemetryOptions.FromEnvironment("sindri", environment, clock))   // JSON lines on stderr (AW_LOG_LEVEL); exports off
             .AddSindriCore()

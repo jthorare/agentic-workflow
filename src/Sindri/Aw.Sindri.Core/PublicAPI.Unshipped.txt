@@ -20216,3 +20216,32 @@ static Aw.Sindri.Core.Todos.TodoItem.operator !=(Aw.Sindri.Core.Todos.TodoItem? 
 static Aw.Sindri.Core.Todos.TodoItem.operator ==(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator !=(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator ==(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
+const Aw.Sindri.Core.Events.EventTypes.ItemHandoff = "item.handoff" -> string!
+Aw.Sindri.Core.Events.ItemHandoff.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out string! Offer, out string! Source, out Aw.Sindri.Core.Ids.RepoName? Repo, out string? Branch, out string? Prompt, out System.Collections.Generic.IReadOnlyList<string!>! Links, out System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
+Aw.Sindri.Core.Events.ItemHandoff.ItemHandoff(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, string! Offer, string! Source, Aw.Sindri.Core.Ids.RepoName? Repo, string? Branch, string? Prompt, System.Collections.Generic.IReadOnlyList<string!>! Links, System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
+Aw.Sindri.Core.Events.ItemHandoff.Offer.get -> string!
+Aw.Sindri.Core.Events.ItemHandoff.Offer.init -> void
+Aw.Sindri.Core.Events.ItemHandoff
+Aw.Sindri.Core.Events.ItemHandoff.<Clone>$() -> Aw.Sindri.Core.Events.ItemHandoff!
+Aw.Sindri.Core.Events.ItemHandoff.Branch.get -> string?
+Aw.Sindri.Core.Events.ItemHandoff.Branch.init -> void
+Aw.Sindri.Core.Events.ItemHandoff.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.ItemHandoff.CommandId.init -> void
+Aw.Sindri.Core.Events.ItemHandoff.Equals(Aw.Sindri.Core.Events.ItemHandoff? other) -> bool
+Aw.Sindri.Core.Events.ItemHandoff.Item.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Events.ItemHandoff.Item.init -> void
+Aw.Sindri.Core.Events.ItemHandoff.Labels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.ItemHandoff.Labels.init -> void
+Aw.Sindri.Core.Events.ItemHandoff.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.ItemHandoff.Links.init -> void
+Aw.Sindri.Core.Events.ItemHandoff.Prompt.get -> string?
+Aw.Sindri.Core.Events.ItemHandoff.Prompt.init -> void
+Aw.Sindri.Core.Events.ItemHandoff.Repo.get -> Aw.Sindri.Core.Ids.RepoName?
+Aw.Sindri.Core.Events.ItemHandoff.Repo.init -> void
+Aw.Sindri.Core.Events.ItemHandoff.Source.get -> string!
+Aw.Sindri.Core.Events.ItemHandoff.Source.init -> void
+override Aw.Sindri.Core.Events.ItemHandoff.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ItemHandoff.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ItemHandoff.ToString() -> string!
+static Aw.Sindri.Core.Events.ItemHandoff.operator !=(Aw.Sindri.Core.Events.ItemHandoff? left, Aw.Sindri.Core.Events.ItemHandoff? right) -> bool
+static Aw.Sindri.Core.Events.ItemHandoff.operator ==(Aw.Sindri.Core.Events.ItemHandoff? left, Aw.Sindri.Core.Events.ItemHandoff? right) -> bool

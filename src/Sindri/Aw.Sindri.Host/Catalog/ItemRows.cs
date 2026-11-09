@@ -1,6 +1,7 @@
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.CloseItem;
+using Aw.Sindri.Features.CreateHandoffItem;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Features.OpenItem;
 
@@ -14,6 +15,9 @@ internal static class ItemRows
         new(ActionId.From("CreateItem"), typeof(CreateItemRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/items", ShellRows.Form("sindri item add <title> [--repo <repo>]"), "ready"),
+        new(ActionId.From("CreateHandoffItem"), typeof(CreateHandoffItemRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            "POST", "/sindri/handoff", ShellRows.Form("sindri handoff send <title> --source <name> [--repo <repo>] [--branch <b>] [--prompt <text>] [--link <url>] [--label <l>]"), "ready"),
         new(ActionId.From("CloseItem:done"), typeof(CloseItemRequest), "done", ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: true, Shortcut: null,
             "POST", "/sindri/items/{itemId}/close", ShellRows.Form("sindri item close <itemId> [--version <n>]"), "ready"),
