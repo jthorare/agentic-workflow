@@ -149,6 +149,8 @@ public sealed class WriteAttributionTests
     }
 
     /// <summary>Each request sent as the launch covers its route when an event by the launch lands between its mark and the next request's, so no request's write can cover another's.</summary>
+    // why: a write that lands after its own response (a job's later events) falls into the next request's window; harmless while every seeding job is
+    // followed by a GET (FetchAfterBuild), which matches no write template; a seeding job followed by an own WRITE call is the gap noted on #2434
     private static void Cover(Sweep sweep, List<Callers.CallerRequests.SentRequest> sent, long[] marks, List<LedgerEvent> events)
     {
         for (var i = 0; i < sent.Count; i++)
