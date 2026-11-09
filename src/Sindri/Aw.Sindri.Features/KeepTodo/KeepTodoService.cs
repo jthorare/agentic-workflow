@@ -8,8 +8,8 @@ namespace Aw.Sindri.Features.KeepTodo;
 
 /// <summary>
 /// Picks a side of an open both-places conflict (todo spec §4.1, D11; request class): refuses an unknown todo (SND-TODO-404), a todo with no conflict or a pick still open (SND-TODO-005), and a 'keep obsidian' whose
-/// note line moved since the conflict was drawn (SND-TODO-409, checked when the note can be read). Appends 'todo.conflict.resolved', then, for Obsidian's version, the ordinary state events that make the todo match it
-/// (by 'obsidian'). Nothing is written to the note: the writer does that when the 10 s Undo window closes.
+/// note line moved since the conflict was drawn (SND-TODO-409, checked when the note can be read). For Obsidian's version it appends the ordinary state events that make the todo match it (by 'obsidian'), then 'todo.conflict.resolved'
+/// (last, so a failed write leaves the conflict open). Nothing is written to the note: the writer does that when the 10 s Undo window closes.
 /// </summary>
 /// <param name="writes">The caller, the todo's row and the appends.</param>
 /// <param name="converger">Appends what Obsidian's version changes.</param>
@@ -66,18 +66,21 @@ internal sealed class KeepTodoService(TodoPickWrites writes, TodoConverger conve
     {
         var conflict = row.Conflict!;   // why: Handle only calls this for a row with an open conflict
         var via = who.Via;
+        var target = request.Side == TodoSideName.Obsidian ? conflict.Obsidian : TodoNoteSides.Of(row);
+
+        // why: converge first and close the conflict last. If the converger fails (a ChangeTodo landed after the view row was read), the conflict stays open and a retry works;
+        // the other order closed the conflict with the kept side never written, and the retry answered SND-TODO-005.
+        var version = await converger.Apply(row, target, "obsidian", who, cancellationToken).ConfigureAwait(false);
+        if (version.IsError)
+        {
+            return version.Error;
+        }
+
         var resolved = new TodoConflictResolved(request.Id, request.Side, baseLine, who.By, via);
         var appended = await writes.Append(who, EventTypes.TodoConflictResolved, resolved, writes.Key($"todo.conflict.resolved:{request.Id.Value}"), cancellationToken).ConfigureAwait(false);
         if (appended.IsError)
         {
             return appended.Error;
-        }
-
-        var target = request.Side == TodoSideName.Obsidian ? conflict.Obsidian : TodoNoteSides.Of(row);
-        var version = await converger.Apply(row, target, "obsidian", who, cancellationToken).ConfigureAwait(false);
-        if (version.IsError)
-        {
-            return version.Error;
         }
 
         window.Remember(request.Id, new TodoPick(who.Now, row, version.Value));
