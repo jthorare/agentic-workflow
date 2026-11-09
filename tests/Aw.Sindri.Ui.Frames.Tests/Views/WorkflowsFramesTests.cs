@@ -84,8 +84,8 @@ public sealed class WorkflowsFramesTests : FrameHost
     [Fact]
     public Task A_running_runs_detail_in_the_light_theme() => OnUi(async () =>
     {
-        Server.WorkflowRunAnswers[RunId] = RouteAnswer.Api("workflow-runs-run", "running");
         var (window, shell) = await OnWorkflows(1440);
+        Server.WorkflowRunAnswers[RunId] = RouteAnswer.Api("workflow-runs-run", "running");   // after OnWorkflows, which serves the finished run
         window.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light;
 
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);

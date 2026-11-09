@@ -1,6 +1,8 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Api.Workflows;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
@@ -15,7 +17,7 @@ public sealed class WorkflowsWritesTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private async Task<Aw.Sindri.Ui.ViewModels.Workflows.WorkflowsPageViewModel> OnRuns()
+    private async Task<WorkflowsPageViewModel> OnRuns()
     {
         var page = await _f.Shown(Token);
         await page.OpenWorkflow(Slug, Token);
@@ -191,7 +193,7 @@ public sealed class WorkflowsWritesTests
     [InlineData("queued", false, false, false)]
     public void A_status_has_a_tone_besides_its_glyph_and_word(string status, bool ok, bool attention, bool error)
     {
-        var row = new Aw.Sindri.Ui.ViewModels.Workflows.RunRowViewModel(new Aw.Sindri.Ui.Api.Workflows.WorkflowRunRowView("a@1:1", 1, status, "manual", Now, EndedAt: null, Error: null), _f.Clock);
+        var row = new RunRowViewModel(new WorkflowRunRowView("a@1:1", 1, status, "manual", Now, EndedAt: null, Error: null), _f.Clock);
 
         Assert.Equal((ok, attention, error), (row.IsOk, row.IsAttention, row.IsError));
         Assert.Contains(" ", row.ChipText, StringComparison.Ordinal);   // a glyph and a word
