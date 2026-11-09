@@ -55,6 +55,8 @@ internal static class SindriHostServiceCollectionExtensions
         .AddHostedService<LostSessionsHost>()
         .AddHostedService<SessionUsageHost>()
         .AddHostedService<ProfileWatch>()
+        .AddSingleton<IFolderWatch, FileFolderWatch>().AddSingleton<NoteFolder>().AddSingleton<NotePasses>().AddSingleton<TodoEventTail>()
+        .AddHostedService<TodoNoteWatch>()
         .AddHostedService<SessionCollectorHost>()
         .AddHostedService<ContextWarmHost>()
         .AddHostedService<LauncherHost>()

@@ -3,14 +3,15 @@ using Aw.Context.Core.Facade;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features.SyncTodoNote;
 
 /// <summary>Resolves the live profile's 'todo.obsidian' to the vault's folder, the way Check note does (todo spec §4.5 "Setting it").</summary>
 /// <param name="live">The live profile.</param>
-/// <param name="context">Reads the library settings.</param>
+/// <param name="scopes">Opens a scope per lookup: the locator is a singleton and the context engine is scoped.</param>
 /// <param name="host">The machine's folders, to expand a vault's '~/'.</param>
-internal sealed class TodoNoteLocator(IProfileSource live, IContextEngine context, LibraryHost host) : INoteLocator
+internal sealed class TodoNoteLocator(IProfileSource live, IServiceScopeFactory scopes, LibraryHost host) : INoteLocator
 {
     public async ValueTask<Result<NotePlace?>> Locate(CancellationToken cancellationToken)
     {
@@ -39,7 +40,8 @@ internal sealed class TodoNoteLocator(IProfileSource live, IContextEngine contex
 
     private Result<string> VaultRoot(SindriProfile profile, string vault)
     {
-        var settings = context.CheckSettings(profile.Context, [.. (profile.Repos ?? []).Select(static r => new ProfileRepoEntry(r.Name, r.Path))]);
+        using var scope = scopes.CreateScope();
+        var settings = scope.ServiceProvider.GetRequiredService<IContextEngine>().CheckSettings(profile.Context, [.. (profile.Repos ?? []).Select(static r => new ProfileRepoEntry(r.Name, r.Path))]);
         if (settings.IsError)
         {
             return settings.Error;
