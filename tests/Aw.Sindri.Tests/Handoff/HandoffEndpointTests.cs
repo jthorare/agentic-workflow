@@ -4,8 +4,8 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Host;
-using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Host.Endpoints;
+using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Tests.ApiGoldens;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -110,9 +110,12 @@ public sealed class HandoffEndpointTests
         Assert.Equal("SND-API-016", answer.Code);
     }
 
-    [Fact(Timeout = 120_000, Skip = "#2403 lets launched sessions run desk rows (Authorization's Desk row has no Launched yet, so this is SND-AUTH-002); unskip it there and expect session:launch:<id>"), Trait("Lane", "integration")]
+    [Fact(Timeout = 120_000), Trait("Lane", "integration")]
     public async Task A_launched_session_hands_off_without_the_human_token_and_keeps_its_actor()
     {
+        // Authorization's Desk row has no Launched until #2403, so today this is SND-AUTH-002. Whichever of #2448 and #2403 lands second
+        // removes this line and expects the actor session:launch:<id>.
+        Assert.Skip("#2403 lets launched sessions run desk rows");
         await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
         const string launch = "LCH-00000000000000000000000000000c01";
         LaunchSecrets.Write(host.App.Services.GetRequiredService<LauncherOptions>().SecretsDirectory, LaunchId.From(launch), "proof");
