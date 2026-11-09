@@ -133,9 +133,10 @@ internal sealed class ConnectionRowViewModel : ObservableObject
             return;
         }
 
+        using var run = Run(cancellationToken);
         try
         {
-            var tested = await _actions.Test(Name, cancellationToken).ConfigureAwait(true);
+            var tested = await _actions.Test(Name, run.Token).ConfigureAwait(true);
             if (tested.IsError)
             {
                 NoteText = Labels.ConnectionWriteFailed(tested.Error);
@@ -144,6 +145,10 @@ internal sealed class ConnectionRowViewModel : ObservableObject
 
             Update(tested.Value.Connection);
             NoteText = tested.Value.Ok ? Labels.ConnectionTestOk(tested.Value.Tools?.Count) : Labels.ConnectionTestFailed(tested.Value.Reason);
+        }
+        catch (OperationCanceledException) when (run.IsClosed)
+        {
+            NoteText = string.Empty;   // the page or sheet closed: nothing is left to say
         }
         finally
         {
@@ -161,9 +166,10 @@ internal sealed class ConnectionRowViewModel : ObservableObject
             return;
         }
 
+        using var run = Run(cancellationToken);
         try
         {
-            var started = await _actions.SignIn(Name, cancellationToken).ConfigureAwait(true);
+            var started = await _actions.SignIn(Name, run.Token).ConfigureAwait(true);
             if (started.IsError)
             {
                 NoteText = Labels.ConnectionWriteFailed(started.Error);
@@ -171,7 +177,7 @@ internal sealed class ConnectionRowViewModel : ObservableObject
             }
 
             Update(started.Value.Connection);
-            var end = await _actions.Finish(started.Value, said => NoteText = said, cancellationToken).ConfigureAwait(true);
+            var end = await _actions.Finish(started.Value, said => NoteText = said, run.Token).ConfigureAwait(true);
             if (end.Connection is { } last)
             {
                 Update(last);
@@ -185,6 +191,10 @@ internal sealed class ConnectionRowViewModel : ObservableObject
                 _ => Labels.ConnectionSignInFailed(end.Detail),
             };
 #pragma warning restore IDE0072
+        }
+        catch (OperationCanceledException) when (run.IsClosed)
+        {
+            NoteText = string.Empty;   // the page or sheet closed: the wait for the browser stops, and the next read shows where the sign-in got to
         }
         finally
         {
@@ -214,15 +224,21 @@ internal sealed class ConnectionRowViewModel : ObservableObject
             return;
         }
 
+        using var run = Run(cancellationToken);
         try
         {
-            var removed = await _actions.Remove(Name, cancellationToken).ConfigureAwait(true);
+            var removed = await _actions.Remove(Name, run.Token).ConfigureAwait(true);
             SetConfirming(confirming: false);
             if (removed.IsError)
             {
                 NoteText = Labels.ConnectionWriteFailed(removed.Error);
                 return;
             }
+        }
+        catch (OperationCanceledException) when (run.IsClosed)
+        {
+            SetConfirming(confirming: false);   // the page or sheet closed before the answer: the next read shows whether it is gone
+            return;
         }
         finally
         {
@@ -231,6 +247,9 @@ internal sealed class ConnectionRowViewModel : ObservableObject
 
         Removed?.Invoke(this, EventArgs.Empty);
     }
+
+    // One action's token: the caller's, and the owner's open token (ConnectionActions.Closing), so closing the page or the sheet stops the action.
+    private ActionRun Run(CancellationToken cancellationToken) => new(_actions.Closing, cancellationToken);
 
     private bool Begin(string note)
     {
@@ -262,4 +281,18 @@ internal sealed class ConnectionRowViewModel : ObservableObject
 
     private string Refreshed() =>
         string.Equals(View.Kind, "oauth", StringComparison.Ordinal) ? Labels.ConnectionRefreshed(View.LastRefreshedAt is { } at ? _clock.GetUtcNow() - at : null) : string.Empty;
+
+    /// <summary>An action's token, linked to the owner's open token; <see cref="IsClosed"/> tells a close from the caller's own cancel.</summary>
+    private sealed class ActionRun(CancellationToken closing, CancellationToken caller) : IDisposable
+    {
+        private readonly CancellationTokenSource _linked = CancellationTokenSource.CreateLinkedTokenSource(closing, caller);
+
+        internal CancellationToken Token => _linked.Token;
+
+        private readonly CancellationToken _closing = closing;
+
+        internal bool IsClosed => _closing.IsCancellationRequested;
+
+        public void Dispose() => _linked.Dispose();
+    }
 }

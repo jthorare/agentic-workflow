@@ -157,6 +157,11 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string ConnectionSignInFailed(string reason) => reason.Length > 0 ? "The sign-in didn't work: " + reason : "The sign-in didn't work.";
 
+    /// <summary>The detail when a sign-in again failed on a connected row, which keeps working on its old sign-in.</summary>
+    /// <param name="code">The failure's code.</param>
+    /// <returns>The words.</returns>
+    internal static string ConnectionSignInFailedKept(string code) => "it still works on its old sign-in · " + code;
+
     /// <summary>A write that Sindri refused.</summary>
     /// <param name="error">The failure.</param>
     /// <returns>The words.</returns>

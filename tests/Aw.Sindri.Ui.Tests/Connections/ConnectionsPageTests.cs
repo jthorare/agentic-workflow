@@ -3,6 +3,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api.Connections;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Connections;
 
 namespace Aw.Sindri.Ui.Tests.Connections;
 
@@ -138,6 +139,25 @@ public sealed class ConnectionsPageTests
     }
 
     [Fact]
+    public async Task Leaving_the_page_stops_a_sign_in_wait_and_frees_the_row()
+    {
+        _f.SeedThree();
+        var page = await _f.Shown();
+        var row = page.Rows[2];
+        var run = row.SignIn(Token);
+        await _f.Drive(Task.Delay(30, Token));   // some polls, no callback
+        Assert.False(run.IsCompleted);
+
+        page.SetShown(shown: false);
+        await run.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);   // real time: the fake clock never runs out on its own
+        var reads = _f.Server.ConnectionCallLog.Count(c => string.Equals(c, "get notes:mcp", StringComparison.Ordinal));
+        _f.Clock.Advance(TimeSpan.FromMinutes(1));
+
+        Assert.Equal((false, string.Empty), (row.IsBusy, row.NoteText));
+        Assert.Equal(reads, _f.Server.ConnectionCallLog.Count(c => string.Equals(c, "get notes:mcp", StringComparison.Ordinal)));
+    }
+
+    [Fact]
     public async Task Signing_in_again_on_a_connected_row_waits_for_a_new_sign_in_not_the_status_it_already_has()
     {
         _f.SeedThree();
@@ -153,6 +173,25 @@ public sealed class ConnectionsPageTests
         await _f.Drive(run);
 
         Assert.Equal(Labels.ConnectionSignedIn, row.NoteText);
+    }
+
+    [Fact]
+    public async Task A_failed_sign_in_again_on_a_connected_row_ends_on_the_failure_without_waiting_out_the_5_minutes()
+    {
+        _f.SeedThree();
+        var page = await _f.Shown();
+        var row = page.Rows[1];   // linear:work reads 'connected' before the sign-in starts
+        var run = row.SignIn(Token);
+        await _f.Drive(Task.Delay(30, Token));
+        Assert.False(run.IsCompleted);
+
+        _f.Server.FailSignIn("linear:work", "SND-CONN-009");
+        var before = _f.Clock.GetUtcNow();
+        await _f.Drive(run);
+
+        Assert.True(_f.Clock.GetUtcNow() - before <= ConnectionActions.PollEvery * 3, "the poll should stop on the failure, not wait out the 5 minutes");
+        Assert.Contains("SND-CONN-009", row.NoteText, StringComparison.Ordinal);
+        Assert.Equal("✓ Connected", row.ChipText);   // the row still works on its old tokens
     }
 
     [Fact]

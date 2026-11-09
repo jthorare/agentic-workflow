@@ -8,6 +8,7 @@ internal sealed partial class FakeSindriApi
 {
     private readonly Dictionary<string, ConnectionView> _connections = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ConnectionView> _pendingSignIns = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ConnectionSignInFailure> _signInFailures = new(StringComparer.Ordinal);
     private int _signIns;
     private readonly List<AddConnectionBody> _addedConnections = [];
     private readonly List<string> _connectionCalls = [];
@@ -69,9 +70,21 @@ internal sealed partial class FakeSindriApi
         lock (_gate)
         {
             var stamp = "signed-in-" + (++_signIns).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            _ = _signInFailures.Remove(name);
             var basis = _pendingSignIns.Remove(name, out var pending) ? pending : _connections[name];
             var config = new Dictionary<string, string>(basis.Config, StringComparer.Ordinal) { ["signedInAt"] = stamp };
             _connections[name] = basis with { Status = "connected", StatusReason = null, Config = config, HasSecret = true };
+        }
+    }
+
+    /// <summary>The browser sign-in of a stored, connected row fails, as the real server serves it: the row stays as it was, and GET carries the failure beside it until the next sign-in.</summary>
+    /// <param name="name">The connection's name.</param>
+    /// <param name="code">The failure's code.</param>
+    public void FailSignIn(string name, string code)
+    {
+        lock (_gate)
+        {
+            _signInFailures[name] = new ConnectionSignInFailure(code, DateTimeOffset.UnixEpoch);
         }
     }
 
@@ -109,7 +122,8 @@ internal sealed partial class FakeSindriApi
                 return Task.FromResult<Result<ConnectionOne>>(NoConnection(name));
             }
 
-            return Task.FromResult<Result<ConnectionOne>>(new ConnectionOne(found));
+            var failure = string.Equals(found.Status, "connected", StringComparison.Ordinal) ? _signInFailures.GetValueOrDefault(name) : null;
+            return Task.FromResult<Result<ConnectionOne>>(new ConnectionOne(found, failure));
         }
     }
 
@@ -171,6 +185,11 @@ internal sealed partial class FakeSindriApi
     public Task<Result<ConnectionAdded>> SignInConnection(Uri api, string name, CancellationToken cancellationToken)
     {
         Record("signin " + name);
+        lock (_gate)
+        {
+            _ = _signInFailures.Remove(name);   // a new sign-in forgets the last one's failure (OAuthSignInFlow.Run)
+        }
+
         if (NotReceived<ConnectionAdded>(api) is { } unanswered)
         {
             return Task.FromResult(unanswered);
