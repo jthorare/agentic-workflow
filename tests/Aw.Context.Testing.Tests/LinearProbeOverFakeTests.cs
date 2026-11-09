@@ -41,6 +41,20 @@ public sealed class LinearProbeOverFakeTests
     }
 
     [Fact]
+    public async Task Read_only_reads_issue_history_newest_first()
+    {
+        await using var linear = await Start(seed => seed.Edited("ENG-1"));
+
+        var run = await Probe(linear, "--url", linear.Url.ToString());
+
+        Assert.True(run.ExitCode == 0, run.Text);
+        Assert.Contains("history.entries: 2\n", run.Stdout, StringComparison.Ordinal);
+        Assert.Contains("history.order: newest-first\n", run.Stdout, StringComparison.Ordinal);
+        Assert.Empty(MutationBodies(linear));
+        NothingSecretIn(run);
+    }
+
+    [Fact]
     public async Task Read_only_with_a_team_counts_the_mention_syntaxes_in_its_comments()
     {
         await using var linear = await Start();

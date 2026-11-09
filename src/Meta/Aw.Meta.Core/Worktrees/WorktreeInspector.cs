@@ -227,6 +227,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             ChangedSinceSweep = git.Changed,
             ChangedSinceEnd = gatePr is null && pull is { State: PrState.Merged or PrState.Closed, EndedAt: { } ended } && !(inspection.Since > ended),
             EndedAtUnknown = gatePr is null && pull is { State: PrState.Merged or PrState.Closed, EndedAt: null },
+            SweepStartedAt = inspection.Since,
             NoPreviousSweep = inspection.Since is null,
             PrNumber = gatePr is null ? pull?.Number : null,
             PrState = pull?.State,
