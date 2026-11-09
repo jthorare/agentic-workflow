@@ -26695,6 +26695,7 @@ Aw.Sindri.Core.Setup.IProfileKeyWriter.PlanTexts(System.Collections.Generic.IRea
 Aw.Sindri.Core.Todos.Note.ITodoNoteDisk
 Aw.Sindri.Core.Todos.Note.ITodoNoteDisk.Inspect(string! vaultRoot, string! note) -> Aw.Sindri.Core.Todos.Note.NoteFileFacts!
 Aw.Sindri.Core.Todos.Note.ITodoNoteDisk.Probe(string! vaultRoot, string! note) -> Aw.Sindri.Core.Todos.Note.NoteFolderFacts!
+Aw.Sindri.Core.Todos.Note.ITodoNoteDisk.VaultExists(string! vaultRoot) -> bool
 Aw.Sindri.Core.Todos.Note.NoteCounter
 Aw.Sindri.Core.Todos.Note.NoteCounts
 Aw.Sindri.Core.Todos.Note.NoteCounts.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteCounts!

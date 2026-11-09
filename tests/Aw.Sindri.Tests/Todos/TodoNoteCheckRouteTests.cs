@@ -175,5 +175,7 @@ public sealed class TodoNoteCheckRouteTests : IDisposable
         public NoteFileFacts Inspect(string vaultRoot, string note) => new(Exists: false, IsSymlink: false, LinkCount: 0, Text: null, Unreadable: null);
 
         public NoteFolderFacts Probe(string vaultRoot, string note) => folder;
+
+        public bool VaultExists(string vaultRoot) => Directory.Exists(vaultRoot);
     }
 }

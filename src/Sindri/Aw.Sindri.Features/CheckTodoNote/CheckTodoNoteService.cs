@@ -79,7 +79,7 @@ internal sealed class CheckTodoNoteService(IProfileSource live, IContextEngine c
 
     private Result<(NoteFileFacts File, NoteFolderFacts Folder)> Look(string root, CheckTodoNoteRequest request)
     {
-        if (!Directory.Exists(root))
+        if (!disk.VaultExists(root))
         {
             return Refused("todo.obsidian.vault", $"the folder of vault '{request.Vault}' isn't there");
         }

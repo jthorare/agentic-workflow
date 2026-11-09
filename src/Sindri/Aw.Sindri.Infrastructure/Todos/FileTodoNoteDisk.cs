@@ -10,6 +10,8 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
 {
     private const long MaxBytes = 8L * 1024 * 1024;
 
+    public bool VaultExists(string vaultRoot) => Directory.Exists(vaultRoot);
+
     public NoteFileFacts Inspect(string vaultRoot, string note)
     {
         ArgumentNullException.ThrowIfNull(vaultRoot);
