@@ -9,7 +9,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// The Workflows page, read-only (#2258 PR 17 part 1): the workflows with their state and who changed them, one workflow's runs, and one run's detail. The three levels
 /// share the page; Back goes up one. The page reads over HTTP only, when it is shown and when a level is opened, and keeps no logic of Sindri's.
 /// </summary>
-internal sealed class WorkflowsPageViewModel : ObservableObject
+internal sealed partial class WorkflowsPageViewModel : ObservableObject
 {
     private enum Level
     {
@@ -17,6 +17,8 @@ internal sealed class WorkflowsPageViewModel : ObservableObject
         Runs,
         Run,
     }
+
+    private const string RunAlreadyEnded = "SND-GRAPH-107";
 
     private readonly TimeProvider _clock;
     private int _reads;
@@ -118,6 +120,16 @@ internal sealed class WorkflowsPageViewModel : ObservableObject
     /// <returns>A task that completes when the list is shown.</returns>
     internal Task Retry(CancellationToken cancellationToken) => _url is { } url ? ReadList(url, cancellationToken) : Task.CompletedTask;
 
+    /// <summary>Reads the open workflow's runs again (the runs level's Try again).</summary>
+    /// <param name="cancellationToken">Cancels the reads.</param>
+    /// <returns>A task that completes when the runs are shown or the failure is.</returns>
+    internal Task RetryRuns(CancellationToken cancellationToken) => _url is { } url ? Runs.Read(url, Runs.Slug, Runs.Title, cancellationToken) : Task.CompletedTask;
+
+    /// <summary>Reads the open run again (the run level's Try again).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>A task that completes when the run is shown or the failure is.</returns>
+    internal Task RetryRun(CancellationToken cancellationToken) => _url is { } url ? Run.Read(url, Run.Id, cancellationToken) : Task.CompletedTask;
+
     /// <summary>The page was left: it returns to its list and a read on its way is not wanted.</summary>
     internal void Leave()
     {
@@ -143,6 +155,7 @@ internal sealed class WorkflowsPageViewModel : ObservableObject
     internal Task OpenRun(string runId, CancellationToken cancellationToken)
     {
         SetLevel(Level.Run);
+        Run.Shape = Runs.Shown;
         return _url is { } url ? Run.Read(url, runId, cancellationToken) : Task.CompletedTask;
     }
 
