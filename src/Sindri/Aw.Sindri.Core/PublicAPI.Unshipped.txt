@@ -20558,6 +20558,8 @@ Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.OutputsFor(System.Text.Json.Nodes.Js
 Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Type.get -> string!
 Aw.Sindri.Core.Graph.Blocks.GraphCall
 Aw.Sindri.Core.Graph.Blocks.GraphCall.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.GraphCall!
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Ancestors.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Ancestors.init -> void
 Aw.Sindri.Core.Graph.Blocks.GraphCall.Caller.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
 Aw.Sindri.Core.Graph.Blocks.GraphCall.Caller.init -> void
 Aw.Sindri.Core.Graph.Blocks.GraphCall.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Caller, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out int Index, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Target, out System.Text.Json.Nodes.JsonObject? Payload, out int Depth) -> void
@@ -20715,6 +20717,8 @@ static readonly Aw.Sindri.Core.SindriErrors.GraphHttpRefused -> Aw.Kernel.ErrorD
 static readonly Aw.Sindri.Core.SindriErrors.GraphSelfStart -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Graph.Guards.CallOrigin
 Aw.Sindri.Core.Graph.Guards.CallOrigin.<Clone>$() -> Aw.Sindri.Core.Graph.Guards.CallOrigin!
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Ancestors.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Ancestors.init -> void
 Aw.Sindri.Core.Graph.Guards.CallOrigin.CallOrigin(string! Run, int Depth, string? ParentRun) -> void
 Aw.Sindri.Core.Graph.Guards.CallOrigin.Deconstruct(out string! Run, out int Depth, out string? ParentRun) -> void
 Aw.Sindri.Core.Graph.Guards.CallOrigin.Depth.get -> int
@@ -20727,6 +20731,7 @@ Aw.Sindri.Core.Graph.Guards.CallOrigin.Run.init -> void
 override Aw.Sindri.Core.Graph.Guards.CallOrigin.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Graph.Guards.CallOrigin.GetHashCode() -> int
 override Aw.Sindri.Core.Graph.Guards.CallOrigin.ToString() -> string!
+static Aw.Sindri.Core.Graph.Guards.CallDepth.AncestorsOf(Aw.Sindri.Core.Graph.Guards.CallOrigin! caller, int max) -> System.Collections.Generic.IReadOnlyList<string!>!
 static Aw.Sindri.Core.Graph.Guards.CallDepth.Next(Aw.Sindri.Core.Graph.Guards.CallOrigin! caller, string! target, int max, System.Collections.Generic.IReadOnlyCollection<string!>? launchLineage = null) -> Aw.Kernel.Result<int>!
 static Aw.Sindri.Core.Graph.Guards.CallOrigin.operator !=(Aw.Sindri.Core.Graph.Guards.CallOrigin? left, Aw.Sindri.Core.Graph.Guards.CallOrigin? right) -> bool
 static Aw.Sindri.Core.Graph.Guards.CallOrigin.operator ==(Aw.Sindri.Core.Graph.Guards.CallOrigin? left, Aw.Sindri.Core.Graph.Guards.CallOrigin? right) -> bool
