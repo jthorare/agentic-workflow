@@ -44,11 +44,7 @@ internal sealed class TemporalGraphRunLauncher(Func<CancellationToken, ValueTask
         {
             return true;
         }
-        catch (RpcException e) when (e.Code == RpcException.StatusCode.Unavailable)   // boundary: the connect failed, nothing ran
-        {
-            return SindriErrors.EngineUnavailable.With(e.Message);
-        }
-        catch (RpcException e)   // boundary: Temporal may have accepted the start before the reply was lost
+        catch (RpcException e)   // boundary: Temporal may have accepted the start before the reply was lost; that includes Unavailable, which a connection reset after the accept also returns
         {
             return await WasStarted(client.Value, run, e).ConfigureAwait(false);
         }
@@ -63,6 +59,11 @@ internal sealed class TemporalGraphRunLauncher(Func<CancellationToken, ValueTask
         }
         catch (RpcException described) when (described.Code == RpcException.StatusCode.NotFound)   // boundary: Temporal has no such workflow
         {
+            return SindriErrors.EngineUnavailable.With(startFailure.Message);
+        }
+        catch (RpcException described) when (described.Code == RpcException.StatusCode.Unavailable && startFailure.Code == RpcException.StatusCode.Unavailable)
+        {
+            // boundary: start and describe both found the server gone, so it most likely never took the start; reading it as launched would leave a StartNow run Running with no walk until the next serve start
             return SindriErrors.EngineUnavailable.With(startFailure.Message);
         }
         catch (RpcException)   // boundary: the describe failed too, so we can't tell

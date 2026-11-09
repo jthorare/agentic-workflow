@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-TODO-409",
+  "status": 409,
+  "detail": "The note has 2 lines to import, not 3. Check the note again.",
+  "traceId": "<trace>"
+}

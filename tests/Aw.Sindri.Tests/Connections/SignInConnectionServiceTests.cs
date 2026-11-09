@@ -119,6 +119,44 @@ public sealed class SignInConnectionServiceTests
     }
 
     [Fact]
+    public async Task A_failed_sign_in_again_on_a_connected_row_keeps_the_row_working_and_get_reports_the_failure_beside_it()
+    {
+        var world = new ConnectionHarness();
+        await world.Hold();
+        var row = ConnectionSamples.Oauth(status: ConnectionStatus.Connected);
+        _ = world.Secrets.Store(row.Name, new TokenSet("old-access", "old-refresh", ExpiresAt: null, ClientSecret: "cs-stored"));
+        _ = await world.Store.Upsert(row, Token);
+        world.SignIn.Fail(SindriErrors.ConnectionConsentDenied.With("denied"));
+
+        var signed = await world.SignInAgain().Handle(new SignInConnectionRequest("linear:work", Wait: true), Token);
+        var got = await world.Get().Handle(new GetConnectionRequest("linear:work"), Token);
+
+        Assert.Equal(SindriErrors.ConnectionConsentDenied.Code, signed.Error.Code);
+        Assert.True(got.IsSuccess);   // the row still works on its old tokens
+        Assert.Equal("connected", got.Value.Connection.Status);
+        Assert.Equal(new SignInFailureView(SindriErrors.ConnectionConsentDenied.Code, world.Clock.GetUtcNow()), got.Value.LastSignInFailure);
+    }
+
+    [Fact]
+    public async Task A_connected_row_whose_last_sign_in_worked_reports_no_failure()
+    {
+        var world = new ConnectionHarness();
+        await world.Hold();
+        var row = ConnectionSamples.Oauth(status: ConnectionStatus.Connected);
+        _ = world.Secrets.Store(row.Name, new TokenSet("old-access", "old-refresh", ExpiresAt: null, ClientSecret: "cs-stored"));
+        _ = await world.Store.Upsert(row, Token);
+        world.SignIn.Fail(SindriErrors.ConnectionConsentDenied.With("denied"));
+        _ = await world.SignInAgain().Handle(new SignInConnectionRequest("linear:work", Wait: true), Token);
+        var second = new FakeSignInSession();   // a sign-in session ends once: the next try is a new one
+        second.Succeed(new TokenSet("new-access", "new-refresh", ExpiresAt: null));
+
+        _ = await world.SignInAgain(second).Handle(new SignInConnectionRequest("linear:work", Wait: true), Token);
+        var got = await world.Get().Handle(new GetConnectionRequest("linear:work"), Token);
+
+        Assert.Null(got.Value.LastSignInFailure);
+    }
+
+    [Fact]
     public async Task Removing_a_connection_that_needs_a_sign_in_clears_its_needs_you_row()
     {
         var (world, _) = await NeedingSignIn();

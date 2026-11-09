@@ -48,7 +48,9 @@ public sealed class ConnectionMemoryGoldenParityTests
                 var shape = others.FirstOrDefault(o => string.Equals(o.Scenario, scenario, StringComparison.Ordinal)).Shape ?? standard;
                 var golden = JsonNode.Parse(body);
                 var expected = Keys(golden, string.Empty);
-                var actual = Names(shape);
+                // why: a null object in one scenario (lastSignInFailure on a row whose sign-in worked) has no keys to compare; another scenario serves it filled
+                var nulls = NullPaths(golden, string.Empty);
+                var actual = Names(shape).Where(n => !nulls.Exists(p => n.StartsWith(p + ".", StringComparison.Ordinal))).ToHashSet(StringComparer.Ordinal);
                 Assert.True(
                     expected.SetEquals(actual),
                     $"{slug}/{scenario} as {shape.Name}: only in the golden [{string.Join(", ", expected.Except(actual, StringComparer.Ordinal))}], only in the app's record [{string.Join(", ", actual.Except(expected, StringComparer.Ordinal))}]");
@@ -58,6 +60,29 @@ public sealed class ConnectionMemoryGoldenParityTests
 
         Assert.True(missing.Count == 0, $"goldens missing for: {string.Join(", ", missing)} ({checkedCount.ToString(System.Globalization.CultureInfo.InvariantCulture)} checked)");
         Assert.True(checkedCount > 0);
+    }
+
+    // The golden's paths whose value is null.
+    private static List<string> NullPaths(JsonNode? node, string prefix)
+    {
+        var paths = new List<string>();
+        if (node is JsonObject obj)
+        {
+            foreach (var (name, child) in obj)
+            {
+                var path = prefix.Length == 0 ? name : prefix + "." + name;
+                if (child is null)
+                {
+                    paths.Add(path);
+                }
+                else
+                {
+                    paths.AddRange(NullPaths(child, path));
+                }
+            }
+        }
+
+        return paths;
     }
 
     private static bool IsProblem(string body) => JsonNode.Parse(body) is JsonObject o && o.ContainsKey("title") && o.ContainsKey("status") && o.ContainsKey("traceId");

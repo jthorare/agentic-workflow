@@ -89,7 +89,7 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
     }
 
     // the note itself or any folder on the way to it inside the vault; a dangling link counts, so there is no exists gate
-    private static bool AnySymlink(string vaultRoot, string note)
+    internal static bool AnySymlink(string vaultRoot, string note)
     {
         var at = vaultRoot;
         foreach (var segment in note.Split('/'))
@@ -105,7 +105,7 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
     }
 
     // .NET has no link count; stat prints it (GNU: -c %h, BSD and macOS: -f %l). Null when stat can't answer: the note can't be checked, so it is refused.
-    private static int? Links(string path)
+    internal static int? Links(string path)
     {
         var run = new SandboxProcesses().Run("/usr/bin/stat", OperatingSystem.IsMacOS() ? ["-f", "%l", path] : ["-c", "%h", path], TimeSpan.FromSeconds(5));
         return run.Succeeded && int.TryParse(run.Output.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var links) ? links : null;

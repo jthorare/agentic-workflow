@@ -43,6 +43,24 @@ public sealed class ConnectionSheetTests
     }
 
     [Fact]
+    public async Task Closing_the_sheet_stops_its_sign_in_wait_and_frees_the_row()
+    {
+        _f.SeedThree();
+        var sheet = Sheet();
+        sheet.Show("notes:mcp");
+        await sheet.Open(ConnectionsFixture.Url, "notes:mcp", Token);
+        var row = sheet.Row!;
+        var run = row.SignIn(Token);
+        await _f.Drive(Task.Delay(30, Token));   // some polls, no callback
+        Assert.False(run.IsCompleted);
+
+        sheet.Close();
+        await run.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);   // real time: the fake clock never runs out on its own
+
+        Assert.Equal((false, string.Empty), (row.IsBusy, row.NoteText));
+    }
+
+    [Fact]
     public async Task Removing_from_the_sheet_closes_it_on_the_API_confirm()
     {
         _f.SeedThree();
