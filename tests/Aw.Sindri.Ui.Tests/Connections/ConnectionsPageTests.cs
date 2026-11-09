@@ -138,6 +138,25 @@ public sealed class ConnectionsPageTests
     }
 
     [Fact]
+    public async Task Leaving_the_page_stops_a_sign_in_wait_and_frees_the_row()
+    {
+        _f.SeedThree();
+        var page = await _f.Shown();
+        var row = page.Rows[2];
+        var run = row.SignIn(Token);
+        await _f.Drive(Task.Delay(30, Token));   // some polls, no callback
+        Assert.False(run.IsCompleted);
+
+        page.SetShown(shown: false);
+        await run.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);   // real time: the fake clock never runs out on its own
+        var reads = _f.Server.ConnectionCallLog.Count(c => string.Equals(c, "get notes:mcp", StringComparison.Ordinal));
+        _f.Clock.Advance(TimeSpan.FromMinutes(1));
+
+        Assert.Equal((false, string.Empty), (row.IsBusy, row.NoteText));
+        Assert.Equal(reads, _f.Server.ConnectionCallLog.Count(c => string.Equals(c, "get notes:mcp", StringComparison.Ordinal)));
+    }
+
+    [Fact]
     public async Task Signing_in_again_on_a_connected_row_waits_for_a_new_sign_in_not_the_status_it_already_has()
     {
         _f.SeedThree();

@@ -128,6 +128,9 @@ internal sealed class ConnectionSheetViewModel : ObservableObject
         return Heading.Length == 0 ? Task.CompletedTask : Read(cancellationToken);
     }
 
+    /// <summary>The sheet was closed: a row action still waiting (a sign-in's browser wait) stops.</summary>
+    internal void Close() => throw new NotSupportedException(Heading);
+
     private async Task Read(CancellationToken cancellationToken)
     {
         if (Heading.Length == 0)

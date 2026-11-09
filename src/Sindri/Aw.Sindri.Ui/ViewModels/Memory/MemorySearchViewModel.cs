@@ -39,10 +39,16 @@ internal sealed class MemorySearchViewModel : ObservableObject
     /// <summary>The match level chosen.</summary>
     public string SelectedLevel { get; set => Set(ref field, value); } = Labels.MemoryDefaultLevel;
 
+    /// <summary>The most facts a search returns.</summary>
+    public int SelectedLimit { get; set => Set(ref field, value); } = Labels.MemoryDefaultLimit;
+
     /// <summary>The levels to choose from.</summary>
     /// <summary>The search box's accessible name.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public IReadOnlyList<string> LevelChoices => Labels.MemoryLevels;
+
+    /// <summary>The limits to choose from.</summary>
+    public IReadOnlyList<int> LimitChoices => Labels.MemoryLimits;
 
     public string FieldName => Labels.MemorySearchField;
 
