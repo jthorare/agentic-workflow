@@ -3,7 +3,7 @@ using Aw.Sindri.Core.Graph.Docs;
 namespace Aw.Sindri.Infrastructure.WorkflowDocs;
 
 /// <summary>The workflow doc pages embedded from docs/workflows/*.md (resource names 'workflow-docs/&lt;slug&gt;.md').</summary>
-public static class EmbeddedWorkflowDocs
+internal static class EmbeddedWorkflowDocs
 {
     private const string Prefix = "workflow-docs/";
     private const string Extension = ".md";

@@ -11,7 +11,7 @@ public static class HostGroups
     private static readonly string[] _packageHosts = ["api.nuget.org", "*.nuget.org", "registry.npmjs.org"];
     private static readonly string[] _githubHosts = ["github.com", "api.github.com"];
 
-    /// <summary>Resolves the groups of one launch: built-in, the profile's, the repo's, minus what the Step removes.</summary>
+    /// <summary>Resolves the groups of one launch: built-in, the profile's, the repo's, a graph node's, minus what the Step removes.</summary>
     /// <param name="input">What the groups depend on.</param>
     /// <returns>The groups.</returns>
     public static IReadOnlyList<PlanGroup> Resolve(GroupsInput input)
@@ -60,6 +60,7 @@ public static class HostGroups
         }
 
         names.AddRange((input.Repo?.Groups ?? []).Where(g => !names.Contains(g, StringComparer.Ordinal) && RepoMayAdd(g, input)));
+        names.AddRange((input.AddGroups ?? []).Distinct(StringComparer.Ordinal).Where(g => !names.Contains(g, StringComparer.Ordinal)));   // a graph node's own: 'github' for its repo and its connections' groups (PR 7), not held to the repo rules above
         return names;
     }
 

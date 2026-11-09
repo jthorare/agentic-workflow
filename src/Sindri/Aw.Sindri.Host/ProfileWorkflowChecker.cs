@@ -4,7 +4,7 @@ using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Core.Profile;
 
-namespace Aw.Sindri.Host.Commands;
+namespace Aw.Sindri.Host;
 
 /// <summary>The validator the workflow write slices use: the block catalog, the repos of the approved profile (when one can be read) and the cron and condition parsers; the same context 'wf validate' builds.</summary>
 /// <param name="profile">The approved profile.</param>
