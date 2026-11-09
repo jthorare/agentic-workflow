@@ -43,7 +43,8 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
     [Fact]
     public async Task Five_hundred_items_stay_under_the_history_budget()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        // why: the profile's cap is the ceiling (a node's maxItems only lowers it), so 500 items need a profile cap of 500
+        await using var rig = GraphRig.Start(server.Environment, new ForEachLimits(500, ForEachLimits.DefaultBatchSize));
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each(maxItems: 500)), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{item}}" })],
             [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "gather")]));

@@ -34,7 +34,7 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly GraphRunStarter _starter;
     private readonly InMemorySindriStore _ledger;
 
-    private GraphRig(WorkflowEnvironment environment)
+    private GraphRig(WorkflowEnvironment environment, ForEachLimits? forEachLimits)
     {
         // why: the test server is shared by the class, and a run id or task queue can be used once on it
         var number = Interlocked.Increment(ref _count).ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -45,7 +45,7 @@ internal sealed class GraphRig : IAsyncDisposable
         Workflows = new InMemoryWorkflowStore(clock);
         Blocks = new GraphTestBlocks();
         Client = environment.Client;
-        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(new DefaultForEachLimits()), new CollectBlock(), .. Blocks.All()]);
+        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), .. Blocks.All()]);
         var probe = new FakeProcessProbe();
         _ledger = new InMemorySindriStore(clock, probe);
         var held = new HeldLease();
@@ -76,7 +76,18 @@ internal sealed class GraphRig : IAsyncDisposable
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public static GraphRig Start(WorkflowEnvironment environment) => new(environment);
+    public static GraphRig Start(WorkflowEnvironment environment) => new(environment, forEachLimits: null);
+
+    /// <summary>A rig whose for_each blocks read <paramref name="forEachLimits"/> as the profile's limits.</summary>
+    /// <param name="environment">The shared Temporal test server.</param>
+    /// <param name="forEachLimits">The profile's item cap and batch size.</param>
+    /// <returns>The started rig.</returns>
+    public static GraphRig Start(WorkflowEnvironment environment, ForEachLimits forEachLimits) => new(environment, forEachLimits);
+
+    private sealed class FixedForEachLimits(ForEachLimits limits) : IForEachLimitSource
+    {
+        public ValueTask<ForEachLimits> Current(CancellationToken cancellationToken) => ValueTask.FromResult(limits);
+    }
 
     public static GraphNode Node(string id, string type, string? onFailure = null, JsonObject? config = null) =>
         new(NodeId.From(id), type, Title: null, config ?? [], onFailure);
