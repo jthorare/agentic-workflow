@@ -6,6 +6,8 @@ import {
   PY_WS, basename, cpFirst, cpLast, cpLen, decodeReplace, dumps, escape, isspace1, lstrip, sha256, sorted, splitWs, strip as pystrip,
   utf8Len, pjoin,
 } from "./_py";
+import { PyError } from "../py/errors";
+import { int } from "../py/num";
 
 export const VERSION = "strip_page/1";
 export const VOID = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"]);
@@ -545,12 +547,14 @@ function pyRstrip(s: string): string {
   return s.replace(new RegExp(`[${PY_WS}]+$`), "");
 }
 
-// KERNEL: replace with src/py/str (int()) at merge
-/** int(s) for a decimal string (surrounding whitespace, sign, underscores between digits); null on ValueError. */
+/** int(s) (src/py/num: Unicode digits and whitespace, sign, underscores between digits); null on ValueError. */
 export function pyInt(s: string): number | null {
-  const t = pystrip(s);
-  if (!/^[+-]?[0-9]+(?:_[0-9]+)*$/.test(t)) return null;
-  return Number(t.replaceAll("_", ""));
+  try {
+    return Number(int(s));
+  } catch (e) {
+    if (e instanceof PyError && e.type === "ValueError") return null;
+    throw e;
+  }
 }
 
 function asNode(x: Node | string): Node {

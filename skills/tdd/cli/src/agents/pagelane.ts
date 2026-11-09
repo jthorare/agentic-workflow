@@ -1,5 +1,6 @@
 // write_agents.py's PageLane: the reduced lane from a built page alone (no content.json).
 import { readFileSync } from "node:fs";
+import * as re from "../py/re";
 import * as sp from "./strip";
 import { type Py, PY_WS, abspath, cpSlice, decodeReplace, dumps, lstrip, pjoin, sha256 } from "./_py";
 import { BUDGET, GENERATOR, PACK, type FileVal, clip, codeExt, comment, decFileName, dumpLines, front, pad2, rel, slugify, tok, writeTokens } from "./lane";
@@ -184,7 +185,7 @@ export class PageLane {
 
   static guess(text: string): string {
     const head = cpSlice(lstrip(text), 0, 200);
-    if (/^(create|alter|select|insert|update|delete|with|drop|begin)(?![\p{L}\p{N}_])/iu.test(head)) return "sql";
+    if (re.match(String.raw`(?i)(create|alter|select|insert|update|delete|with|drop|begin)\b`, head)) return "sql";
     if (/^(\/\/|export |import |interface |type |const |function )/.test(head)) return "ts";
     return "";
   }

@@ -831,7 +831,7 @@ class Compiler:
             body = re.sub(r"^\s*<h2>Summary</h2>\s*", "", body)
             body = re.sub(r"\[([^\]]+)\]\((#[\w.-]+)\)", r'<a href="\2">\1</a>', body)
             body = self.sanitize(re.sub(r"<code>([^<]+)</code>", self.cite_code, body))
-            mentioned = sorted(set(m.group(1) for m in TOKEN.finditer(strip_tags(body))), key=lambda t: (re.match(r"[A-Z]+", t).group(0), float(re.sub(r"[^\d.]", "", t) or 0)))
+            mentioned = sorted(set(m.group(1) for m in TOKEN.finditer(strip_tags(body))), key=lambda t: (re.match(r"[A-Z]+", t).group(0), float(re.sub(r"[^\d.]", "", t) or 0), t))
             paths = sorted(set(c.group(1) for c in (CITE.match(html.unescape(x)) for x in re.findall(r"<code>([^<]+)</code>", bp.markdown(p["body"]))) if c))
             deps_html = ("Depends on " + ", ".join(esc(d) for d in p["depends_on"])) if p["depends_on"] else ""
             groups[-1]["prs"].append({"n": p["n"], "sub": p["sub"], "label": p["label"], "id": pid, "title": self.sanitize(bp.inline(p["title"])), "change": self.sanitize(bp.inline(p["change"])),
@@ -928,7 +928,7 @@ class Compiler:
         files = self.assets.finish()
         self.dash_proposed(files)
         content = {
-            "template": "tdd/1", "generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "source": os.path.basename(a.src),
+            "template": "tdd/1", "generated": os.environ.get("TDD_GENERATED") or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "source": os.path.basename(a.src),
             "title": self.inline(h1), "titleText": self.text_of(h1), "tabTitle": tab_title,
             "meta": {"eyebrow": self.inline(meta.get("eyebrow", "Technical design")), "project": meta.get("project"), "people": meta.get("people", []),
                      "updated": meta.get("updated", ""), "rev": meta.get("rev"), "revNote": meta.get("rev_note", ""), "status": status, "statusTone": tone,

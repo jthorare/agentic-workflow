@@ -4,9 +4,10 @@
 // The argparse surface is reproduced for this parser's options (exact, --opt=value, unique prefixes, --, -h); as in
 // CPython 3.13, an option never takes its value across "--".
 import { mkdirSync, writeFileSync } from "node:fs";
-import { PyError, S, abspath, basename, exists, expanduser, isDir, isFile, join, jsonDumps, jsonLoads, listdir,
+import { PyError, abspath, basename, exists, expanduser, isDir, isFile, join, jsonDumps, jsonLoads, listdir,
   normpath, readText, repr, splitWs, strip, type PyDict, type PyValue } from "../src/hotspots/_py";
 import { traceback } from "../src/hotspots/shapes";
+import * as re from "../src/py/re";
 
 export const DOC = "Create a new TDD packet from the house template.\n\nUsage:\n  new_packet.py <slug> [--title T] [--ticket P-XXX-NNN] [--repo <path>] [--root <dir>]\n\nCreates <root>/<repo-slug>/system-design/<slug>/ with:\n  <slug>.md       templates/tdd-template.md, with the title, ticket, sha and date filled in\n  meta.json       templates/meta.template.json without its _doc block, filled: title (the tab title, from --title the\n                  way build_doc.page_title derives it, else from the slug), project (the ticket), Author (git user.name),\n                  updated (today), rev 1, repo_url (GitHub or GitLab origin only), sha, sha_date, repo_path\n  status.md       the one living doc: artifact_url placeholder, Reference, Surfaces, Counts, Decisions, Open\n                  questions, Lead defaults, Revisions, Tracker\n  prs/ diagrams/ mockups/ schema/ queries/ shots/   empty working folders\n\n<root> is $SYSTEM_DESIGN_OUT, else ~/.system-design. <repo-slug> is derived the way system-design's scripts/env.sh does\nit: owner-repo from the origin remote of --repo (default: the current folder), else the repo root's folder name, else\nthe folder's own name. The sha is origin/HEAD when that ref exists, else HEAD; sha_date is its commit date. Nothing is\nfetched: run `git fetch` first if the remote default branch should be current.\n\nRefuses to write into a packet folder that already has files in it. Standard library only; run with python3 -I.\nExit 0 on success; 1 on bad arguments, an existing packet, or a missing template.";
 
@@ -142,23 +143,21 @@ function webUrl(origin: string | null): string | null {
   return m ? `https://${m[1]}/${m[2]}` : null;
 }
 
-const GENERIC_TAILS: [RegExp, string][] = [
-  [new RegExp(`${S}+technical${S}+spec(ification)?(?=\\n?$)`, "giu"), " Spec"],
-  [new RegExp(`${S}+technical${S}+design(${S}+doc(ument)?)?(?=\\n?$)`, "giu"), " TDD"],
-  [new RegExp(`${S}+design${S}+doc(ument)?(?=\\n?$)`, "giu"), " Design Doc"],
-  [new RegExp(`${S}+system${S}+design(?=\\n?$)`, "giu"), " Design"],
+// Python patterns run through the kernel's re (sre's IGNORECASE: "i" also matches İ and ı, "s" also ſ)
+const GENERIC_TAILS: [string, string][] = [
+  [String.raw`\s+technical\s+spec(ification)?$`, " Spec"], [String.raw`\s+technical\s+design(\s+doc(ument)?)?$`, " TDD"],
+  [String.raw`\s+design\s+doc(ument)?$`, " Design Doc"], [String.raw`\s+system\s+design$`, " Design"],
 ];
-const TITLE_SPLIT = new RegExp(`${S}+[—–|:]${S}+|:${S}+`, "u");
+const TITLE_SPLIT = String.raw`\s+[—–|:]\s+|:\s+`;
 
 /** The browser-tab title: system-design's build_doc.page_title applied to the H1, or the slug's first three words
  * plus TDD when no title was given. */
 function tabTitle(h1: string, slug: string): string {
   if (!h1) return slug.split("-").slice(0, 3).map((w) => (w ? w[0]!.toUpperCase() + w.slice(1).toLowerCase() : w)).join(" ") + " TDD";
-  const m = TITLE_SPLIT.exec(h1);
-  let t = strip(m ? h1.slice(0, m.index) : h1);
+  let t = strip(re.split(TITLE_SPLIT, h1, 1)[0]!);
   if (splitWs(t).length > 4) {
     for (const [pat, rep] of GENERIC_TAILS) {
-      const t2 = t.replace(pat, () => rep);
+      const t2 = re.sub(pat, rep, t, 0, re.I);
       if (t2 !== t) { t = t2; break; }
     }
   }

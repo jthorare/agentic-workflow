@@ -1,9 +1,11 @@
 // annotate_hotspots.py in TypeScript: propose (and with --apply write) href / image / note for the boxes of a packet's
 // diagram hotspot files (D4). Byte-identical to the Python on stdout and on the rewritten files.
 import { SequenceMatcher } from "./difflib";
+import * as re from "../py/re";
+import { lower } from "../py/str";
 import { traceback } from "./shapes";
 import {
-  D, PyError, S, W, WS_CHARS, abspath, asStr, cpLen, cpSlice, formatF, floatRepr, getKey, globSuffix, isDict, isFile, isList,
+  D, PyError, S, WS_CHARS, abspath, asStr, cpLen, cpSlice, formatF, floatRepr, getKey, globSuffix, isDict, isFile, isList,
   join, jsonDumps, jsonLoads, num, padEnd, padStart, pyFloat, pyRound, readText, repr, rstrip, splitWs, strip,
   truthy, writeText, type PyDict, type PyValue,
 } from "./_py";
@@ -13,9 +15,8 @@ export const DOC = "Propose (and with --apply write) href / image / note for the
 const FUZZY_KINDS = new Set(["persona", "fold", "heading", "section", "decision", "row", "pr", "milestone"]);
 const STOP = new Set(["the", "a", "an", "and", "or", "of", "to", "in", "on", "for", "from", "is", "it", "its", "s", "by",
   "with", "at", "as", "one", "up"]);
-// TOKEN = re.compile(r"\b(PR\s?\d{1,2}|[DEFR]\d{1,2})\b", re.I); both ends of a match are word characters, so the
-// \b pair is a lookbehind / lookahead on Python's \w.
-const TOKEN = new RegExp(`(?<!${W})(PR${S}?${D}{1,2}|[DEFR]${D}{1,2})(?!${W})`, "giu");
+// The kernel's re, so re.I folds as sre does (JS's i flag would not match "ı" or "İ" against an "i")
+const TOKEN = re.compile(String.raw`\b(PR\s?\d{1,2}|[DEFR]\d{1,2})\b`, re.I);
 const WS_RUN = new RegExp(`${S}+`, "gu");
 const WS_RUN1 = new RegExp(`${S}+`, "u");
 const BASE_TAIL = new RegExp(`${S}*[(·][^\\n]*(?=\\n?$)`, "gu");
@@ -24,7 +25,7 @@ const LEAD_NUM_DOT = new RegExp(`^${D}+${S}*\\u00b7${S}*`, "u");
 const MOCK = new RegExp(`!\\[([^\\]]*)\\]\\(([^${WS_CHARS})]+)(?:${S}+"([^"]*)")?\\)`, "gu");
 
 export function norm(s: string): string {
-  const t = s.toLowerCase().replaceAll("'", "").replaceAll("’", "").replace(/[^a-z0-9 ]+/gu, " ");
+  const t = lower(s).replaceAll("'", "").replaceAll("’", "").replace(/[^a-z0-9 ]+/gu, " ");
   return strip(t.replace(WS_RUN, " "));
 }
 export function words(s: string): string[] {
@@ -37,10 +38,10 @@ export function words(s: string): string[] {
   return out;
 }
 export function tokId(t: string): string {
-  const u = t.toLowerCase().replace(WS_RUN, "");
+  const u = lower(t).replace(WS_RUN, "");
   return u.startsWith("pr") ? "pr-" + u.slice(2) : u;
 }
-const findTokens = (s: string): string[] => [...s.matchAll(TOKEN)].map((m) => m[1]!);
+const findTokens = (s: string): string[] => TOKEN.findall(s) as string[];
 export function snippet(text: string, n = 160): string {
   const t = strip(text.replace(/<[^>]+>/g, "").replace(WS_RUN, " "));
   if (cpLen(t) <= n) return t;
