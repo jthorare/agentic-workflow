@@ -140,7 +140,7 @@ public sealed class WorktreeUnfinishedWorkTests : IDisposable
         var sweep = await _lab.Cli.Run("worktree-sweep");
 
         Assert.True(Directory.Exists(fresh), sweep.Out);
-        Assert.Contains("changed since the last sweep", sweep.Out, StringComparison.Ordinal);
+        Assert.Contains("changed since the last full sweep", sweep.Out, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]
@@ -197,7 +197,7 @@ public sealed class WorktreeUnfinishedWorkTests : IDisposable
 
         Assert.True(Directory.Exists(tree), sweep.Out);
         using var document = JsonDocument.Parse(sweep.Out);
-        Assert.Contains("changed since the last sweep", document.RootElement.GetProperty("kept").ToString(), StringComparison.Ordinal);
+        Assert.Contains("changed since the last full sweep", document.RootElement.GetProperty("kept").ToString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]
