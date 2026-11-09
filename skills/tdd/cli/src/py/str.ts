@@ -279,3 +279,13 @@ function caseMap(table: ReadonlyArray<readonly [number, string]>, js: (s: string
 export const lower = caseMap(LOWER_X, (s) => s.toLowerCase());
 /** str.upper() as CPython 3.13 maps it. */
 export const upper = caseMap(UPPER_X, (s) => s.toUpperCase());
+
+/** str.ljust(width, fill) / format(s, "<width"): pad on the right to `width` code points. */
+export function ljust(s: string, width: number, fill = " "): string {
+  return s + fill.repeat(Math.max(0, width - cpLen(s)));
+}
+
+/** str.rjust(width, fill) / format(s, ">width"). */
+export function rjust(s: string, width: number, fill = " "): string {
+  return fill.repeat(Math.max(0, width - cpLen(s))) + s;
+}

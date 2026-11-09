@@ -75,3 +75,19 @@ export function unescape(s: string): string {
   if (!s.includes("&")) return s;
   return s.replace(CHARREF, (_m, g: string) => replaceCharref(g));
 }
+
+/** html.entities.html5[name] ("amp;", or a legacy key such as "amp"), or undefined when name is not a key. */
+export function html5(name: string): string | undefined {
+  return lookup(name) ?? undefined;
+}
+
+const ATTR_CHARREF = /&(#[0-9]+|#[xX][0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*)[;=]?/g;
+
+/** html.parser's _unescape_attrvalue (CPython 3.13.6+): numeric references always; named ones only when exact. */
+export function unescapeAttrValue(s: string): string {
+  return s.replace(ATTR_CHARREF, (ref) => {
+    if (ref.startsWith("&#")) return unescape(ref);
+    if (!ref.endsWith("=") && lookup(ref.slice(1)) !== null) return unescape(ref);
+    return ref;
+  });
+}

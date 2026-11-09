@@ -201,3 +201,67 @@ export function int(s: string, base = 10): number | bigint {
   }
   return fromBigInt(neg ? -v : v);
 }
+
+/**
+ * float(v): a str with CPython's rules (Unicode decimal digits and whitespace, one underscore between digits,
+ * inf / infinity / nan in any case, with a sign) and its ValueError text; a number, bigint, PyFloat or bool as itself.
+ */
+export function float(v: string | number | bigint | boolean | PyFloat | null | undefined): number {
+  if (typeof v === "number") return v;
+  if (typeof v === "boolean") return v ? 1 : 0;
+  if (v instanceof PyFloat) return v.value;
+  if (typeof v === "bigint") {
+    const x = Number(v);
+    if (!Number.isFinite(x)) throw new PyError("OverflowError", "int too large to convert to float");
+    return x;
+  }
+  if (v === null || v === undefined) throw new PyError("TypeError", "float() argument must be a string or a real number, not 'NoneType'");
+  const fail = (): never => {
+    throw new PyError("ValueError", `could not convert string to float: ${strReprForInt(v)}`);
+  };
+  let t = "";
+  for (const ch of v) {
+    const cp = ch.codePointAt(0)!;
+    if (cp < 127) t += ch;
+    else if (isSpaceCp(cp)) t += " ";
+    else {
+      const d = decimalValue(cp);
+      if (d < 0) {
+        t += "?";
+        break;
+      }
+      t += String.fromCharCode(48 + d);
+    }
+  }
+  let a = 0;
+  let b = t.length;
+  const asciiSpace = (c: string | undefined) => c === " " || c === "\t" || c === "\n" || c === "\v" || c === "\f" || c === "\r";
+  while (a < b && asciiSpace(t[a])) a++;
+  while (b > a && asciiSpace(t[b - 1])) b--;
+  t = t.slice(a, b);
+  const special = /^([+-]?)(inf|infinity|nan)$/i.exec(t);
+  if (special) return special[2]!.toLowerCase() === "nan" ? NaN : special[1] === "-" ? -Infinity : Infinity;
+  // digitpart = digit (["_"] digit)*
+  if (!/^[+-]?(?:[0-9](?:_?[0-9])*(?:\.(?:[0-9](?:_?[0-9])*)?)?|\.[0-9](?:_?[0-9])*)(?:[eE][+-]?[0-9](?:_?[0-9])*)?$/.test(t)) fail();
+  return Number(t.replaceAll("_", ""));
+}
+
+/** format(x, ".nf") / f"{x:.nf}" for n >= 0: the exact binary value rounded half-even, the sign of -0.0 kept. */
+export function formatFixed(x: number, n: number): string {
+  if (Number.isNaN(x)) return "nan";
+  if (!Number.isFinite(x)) return x < 0 ? "-inf" : "inf";
+  const neg = x < 0 || Object.is(x, -0);
+  let q = 0n;
+  if (x !== 0) {
+    const [m, e] = decompose(Math.abs(x));
+    let num = m * 10n ** BigInt(n);
+    let den = 1n;
+    if (e >= 0) num <<= BigInt(e);
+    else den <<= BigInt(-e);
+    q = num / den;
+    const twice = 2n * (num - q * den);
+    if (twice > den || (twice === den && (q & 1n) === 1n)) q += 1n;
+  }
+  const s = q.toString().padStart(n + 1, "0");
+  return (neg ? "-" : "") + (n ? `${s.slice(0, s.length - n)}.${s.slice(s.length - n)}` : s);
+}

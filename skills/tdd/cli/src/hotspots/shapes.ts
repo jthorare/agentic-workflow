@@ -2,8 +2,8 @@
 // Byte-identical to the Python on stdout and on the written file; see test/hotspots/shapes.test.ts.
 import { HTMLParser, type Attrs } from "./htmlparser";
 import {
-  D, PyError, PyFloat, S, basename, cpLen, cpSlice, getKey, isDict, isFile, isList, jsonDumps, jsonLoads, pyFloat,
-  pyRound, readText, splitext, strip, truthy, typeError, writeText, type PyDict, type PyValue,
+  D, D_CHARS, PyError, PyFloat, S, basename, cpLen, cpSlice, getKey, isDict, isFile, isList, jsonDumps, jsonLoads, pyFloat,
+  pyRound, qualifiedName, readText, splitext, strip, truthy, typeError, writeText, type PyDict, type PyValue,
 } from "./_py";
 
 export const DOC = "List the boxes of a tldraw-exported SVG so they can become hover hotspots on the page (D4) and, for a schema\ndiagram, open a table drawer (D7).\n\nUsage: diagram_hotspots.py <diagrams/key.svg> [--write]\nPrints (or with --write creates or merges diagrams/<key>.hotspots.json) one entry per box: its label (the box's first\nbold line), its text, position and size in viewBox units, the tone read from its stroke colour, and empty href /\nimage / note / table fields for the author to fill. build_tdd.py renders only entries that carry an href, image, note\nor table; the rest are kept so a rerun after a redraw matches them by label and keeps what was filled in.\nExit 0; 1 on a file that is not a tldraw SVG export.";
@@ -19,10 +19,10 @@ export interface Shape {
   text: string[]; strong: string[];
 }
 
-const NUM = `[${D}.\\-]+`;
+const NUM = `[${D_CHARS}.\\-]+`;
 const MATRIX = new RegExp(`^matrix\\(${S}*${NUM},${S}*${NUM},${S}*${NUM},${S}*${NUM},${S}*(${NUM}),${S}*(${NUM})\\)`, "u");
 const PATH_NUM = new RegExp(`-?${D}+(?:\\.${D}+)?`, "gu");
-const VIEWBOX = new RegExp(`viewBox="(${NUM})[ ,]+(${NUM})[ ,]+([${D}.]+)[ ,]+([${D}.]+)"`, "u");
+const VIEWBOX = new RegExp(`viewBox="(${NUM})[ ,]+(${NUM})[ ,]+([${D_CHARS}.]+)[ ,]+([${D_CHARS}.]+)"`, "u");
 
 /** Python's min()/max(): the first of equal items wins. */
 function pyMin(xs: number[]): number { let m = xs[0]!; for (const x of xs.slice(1)) if (x < m) m = x; return m; }
@@ -81,7 +81,7 @@ export class Shapes extends HTMLParser {
     try {
       return [pyFloat(get("x", 0)), pyFloat(get("y", 0)), pyFloat(get("width", 0)), pyFloat(get("height", 0))];
     } catch (e) {
-      if (e instanceof PyError && e.pyType === "ValueError") return null;
+      if (e instanceof PyError && e.type === "ValueError") return null;
       throw e;
     }
   }
@@ -200,6 +200,6 @@ function iterate(v: PyValue): PyValue[] {
 
 /** The last line of the traceback Python would print for an escaped exception. */
 export function traceback(e: unknown): string {
-  if (e instanceof PyError) return `Traceback (most recent call last):\n${e.pyType}${e.message ? ": " + e.message : ""}\n`;
+  if (e instanceof PyError) return `Traceback (most recent call last):\n${qualifiedName(e.type)}${e.message ? ": " + e.message : ""}\n`;
   return `Traceback (most recent call last):\n${e instanceof Error ? e.stack ?? e.message : String(e)}\n`;
 }

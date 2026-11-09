@@ -53,7 +53,7 @@ describe.skipIf(!HAVE_PYTHON)("kernel helpers against CPython", () => {
     for (let i = 0; i < 300; i++) xs.push(Number((Math.random() * 200 - 100).toFixed(1 + (i % 6))) / (1 + (i % 7)));
     const asText = xs.map((x) => (Object.is(x, -0) ? "-0.0" : String(x)));   // JSON would turn 21.0 into the int 21
     const want = pyJson("import json, sys; xs = [float(s) for s in json.load(sys.stdin)]; print(json.dumps([[repr(x), repr(round(x, 1)), repr(round(x, 2))] for x in xs]))", asText) as string[][];
-    expect(xs.map((x) => [floatRepr(x), floatRepr(pyRound(x, 1).v), floatRepr(pyRound(x, 2).v)])).toEqual(want);
+    expect(xs.map((x) => [floatRepr(x), floatRepr(pyRound(x, 1).value), floatRepr(pyRound(x, 2).value)])).toEqual(want);
   });
 
   test("loads() + dumps() reproduce json.dumps(json.loads(s), indent=1, ensure_ascii=False) on every content.json and edge values", () => {

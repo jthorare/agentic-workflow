@@ -1,7 +1,10 @@
 // File I/O with Python's text-mode semantics: strict UTF-8 (CPython's error text), universal newlines on read
 // (\r\n and \r become \n; a BOM is kept as U+FEFF), no translation on write, and shutil.copy2 / sorted listdir.
+import { createHash } from "node:crypto";
 import { chmodSync, copyFileSync, readdirSync, readFileSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { PyError } from "./errors";
+import { join } from "./path";
+import { strRepr } from "./repr";
 import { cmp } from "./str";
 
 export type Errors = "strict" | "ignore" | "replace";
@@ -88,12 +91,17 @@ export function universalNewlines(s: string): string {
 
 /** open(path, encoding="utf-8").read() */
 export function readText(path: string): string {
-  return universalNewlines(decodeUtf8(readFileSync(path)));
+  return universalNewlines(decodeUtf8(readBytes(path)));
 }
 
-/** open(path, "rb").read() */
+/** open(path, "rb").read(); a missing file is CPython's FileNotFoundError. */
 export function readBytes(path: string): Uint8Array {
-  return readFileSync(path);
+  try {
+    return readFileSync(path);
+  } catch (e) {
+    if ((e as { code?: string }).code === "ENOENT") throw new PyError("FileNotFoundError", `[Errno 2] No such file or directory: ${strRepr(path)}`);
+    throw e;
+  }
 }
 
 /** open(path, "w", encoding="utf-8").write(s): no newline translation on POSIX; a lone surrogate is an error. */
@@ -117,6 +125,37 @@ export function copy2(src: string, dst: string): void {
 /** sorted(os.listdir(d)): code point order. */
 export function listdirSorted(d: string): string[] {
   return readdirSync(d).sort(cmp);
+}
+
+/** os.listdir(d), in the file system's order. */
+export function listdir(d: string): string[] {
+  return readdirSync(d);
+}
+
+/** sorted(glob.glob(os.path.join(d, "*" + suffix))): names not starting with "."; [] when d is missing. */
+export function globSorted(d: string, suffix: string): string[] {
+  let names: string[];
+  try {
+    names = readdirSync(d);
+  } catch {
+    return [];
+  }
+  return names.filter((n) => !n.startsWith(".") && n.endsWith(suffix)).sort(cmp).map((n) => join(d, n));
+}
+
+/** hashlib.sha256(b).hexdigest(); a str is hashed as UTF-8. */
+export function sha256Hex(b: Uint8Array | string): string {
+  return createHash("sha256").update(b).digest("hex");
+}
+
+/** len(s.encode("utf-8")); a lone surrogate is CPython's UnicodeEncodeError. */
+export function utf8Len(s: string): number {
+  const lone = s.search(/[\ud800-\udfff]/u);
+  if (lone >= 0) {
+    const pos = [...s.slice(0, lone)].length;
+    throw new PyError("UnicodeEncodeError", `'utf-8' codec can't encode character '\\u${s.charCodeAt(lone).toString(16)}' in position ${pos}: surrogates not allowed`);
+  }
+  return Buffer.byteLength(s, "utf8");
 }
 
 /** os.path.isfile(p) (follows symlinks; false on any error). */

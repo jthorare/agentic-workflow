@@ -3,6 +3,8 @@
 // (Map), "x or y" stays truthiness, f-string interpolation goes through str().
 import { readFileSync, statSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import * as re from "../py/re";
+import { lower } from "../py/str";
 import * as sp from "./strip";
 import {
   type Py, type PyDict, PyFloat, basename, cpLen, cpSlice, dirname as pdirname, dumps, expanduser, get, isdir, isfile, loads,
@@ -70,13 +72,14 @@ export function dumpLines(obj: Py): string {
   return ser(obj, 0) + "\n";
 }
 const YAML_WORDS = new Set(["true", "false", "yes", "no", "on", "off", "null", "y", "n"]);
-const DATE = /^\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}$/u;
-const PLAIN_ID = /^[A-Za-z_][\p{L}\p{N}_.\-]*$/u;   // KERNEL: Python's \w via src/py/re at merge
+// Python's patterns through the kernel's re (\d and \w are CPython's, not the engine's \p{...})
+const DATE = re.compile(String.raw`\d{4}-\d{2}-\d{2}`);
+const PLAIN_ID = re.compile(String.raw`[A-Za-z_][\w.\-]*`);
 /** A YAML scalar: plain when unambiguous (an id, a word, a date), else a JSON-quoted string. */
 export function ys(v: Py): string {
   const s = S(v);
-  if (DATE.test(s)) return s;
-  if (PLAIN_ID.test(s) && !YAML_WORDS.has(s.toLowerCase())) return s;
+  if (DATE.fullmatch(s)) return s;
+  if (PLAIN_ID.fullmatch(s) && !YAML_WORDS.has(lower(s))) return s;
   return yq(s);
 }
 export function front(fields: [string, Py][]): string {
@@ -128,10 +131,10 @@ export function comment(ext: string, text: string): string {
 export function pad2(n: Py): string {
   return S(n).padStart(2, "0");
 }
-const DEC_FILE = /^([A-Za-z]+)-?(\p{Nd}+(?:\.\p{Nd}+)?)(?=\n?$)/u;
+const DEC_FILE = re.compile(String.raw`([A-Za-z]+)-?(\d+(?:\.\d+)?)$`);
 export function decFileName(did: Py): string {
-  const m = DEC_FILE.exec((did || "") as string);
-  return (m ? `${m[1]!.toUpperCase()}-${m[2]}` : slugify(did)) + ".md";
+  const m = DEC_FILE.match((did || "") as string);
+  return (m ? `${m.group(1)!.toUpperCase()}-${m.group(2)}` : slugify(did)) + ".md";
 }
 export function readJson(p: string): Py {
   return loads(readText(p));
@@ -864,11 +867,11 @@ export class Lane {
       const path = "decisions/" + decFileName(did);
       const n = this.decNodes.get(aid);
       const cx: Cx = { mode: "md", file: path, ids: false, record: false, cur: aid, section: get(dc, "section") };
-      const date = /\p{Nd}{4}-\p{Nd}{2}-\p{Nd}{2}/u.exec((or(get(dc, "status"), "")) as string);
+      const date = DATE.search((or(get(dc, "status"), "")) as string);
       const secFile = this.anchorFile.get(aid);
       const referenced = sorted([...(refsBy.get(aid) ?? new Set())].filter((x) => truthy(x) && x !== get(dc, "section")) as string[]);
       const fm: [string, Py][] = [["id", did], ["anchor", aid], ["status", or(get(dc, "status"), "not stated")], ["state", get(dc, "state")],
-        ["date", date ? date[0] : null], ["question", get(dc, "question")], ["section", get(dc, "section")],
+        ["date", date ? date.group(0) : null], ["question", get(dc, "question")], ["section", get(dc, "section")],
         ["section_file", secFile ?? null], ["referenced_from", referenced], ["generated", this.head]];
       const blocks = [`# ${S(did)} \u00b7 ${S(get(dc, "question"))}`,
         `**Status:** ${S(or(get(dc, "status"), "not stated"))} \u00b7 state: ${S(get(dc, "state"))}` +
@@ -876,7 +879,7 @@ export class Lane {
       if (truthy(n)) blocks.push(...this.rNodes(get(n, "blocks"), 2, cx));
       this.emit(path, front(fm) + "\n\n" + blocks.join("\n\n"));
       index.push(new Map<string, Py>([["id", did], ["anchor", aid], ["question", get(dc, "question")], ["status", get(dc, "status")],
-        ["state", get(dc, "state")], ["date", date ? date[0] : null], ["section", get(dc, "section")], ["section_file", secFile ?? null],
+        ["state", get(dc, "state")], ["date", date ? date.group(0) : null], ["section", get(dc, "section")], ["section_file", secFile ?? null],
         ["file", path], ["referenced_from", referenced]]));
     }
     if (index.length) this.emit("decisions/decisions.json", dumpLines(new Map<string, Py>([["_generated", this.head], ["decisions", index]])));
@@ -1071,7 +1074,10 @@ export class Lane {
       let text: string, origin: string;
       if (src && isfile(src)) {
         let raw = readText(src);
-        raw = raw.replace(/\]\(#([\p{L}\p{N}_\-]+)\)/gu, (m0, g1: string) => this.anchorFile.has(g1) ? `](${rel(this.anchorFile.get(g1)!, "prs")}#${g1})` : m0);
+        raw = re.sub(String.raw`\]\(#([\w\-]+)\)`, (m) => {
+          const g1 = m.group(1)!;
+          return this.anchorFile.has(g1) ? `](${rel(this.anchorFile.get(g1)!, "prs")}#${g1})` : m.group(0)!;
+        }, raw);
         const note = `# generated copy of ${fileOr(() => `prs/pr-${pyIntFmt(n)}.md`)} (page links point into sections/) \u00b7 ${this.head}`;
         if (raw.startsWith("---\n")) text = "---\n" + note + "\n" + raw.slice(4);
         else text = `> ${cpSlice(note, 2)}\n\n` + raw;
@@ -1347,7 +1353,7 @@ export class Lane {
   }
 
   fill(tpl: string, values: Map<string, Py>): string {
-    const out = tpl.replace(/\{\{([\p{L}\p{N}_]+)\}\}/gu, (_m, k: string) => S(values.has(k) ? values.get(k) : ""));
+    const out = re.sub(String.raw`\{\{(\w+)\}\}`, (m) => S(values.has(m.group(1)!) ? values.get(m.group(1)!) : ""), tpl);
     return pystrip(out.replace(/\n{3,}/g, "\n\n")) + "\n";
   }
 
@@ -1436,7 +1442,7 @@ function rstripPy(s: string): string {
 
 /** f"{int(n):02d}" (int() of an int or a decimal string). */
 function pyIntFmt(n: Py): string {
-  const v = typeof n === "number" ? Math.trunc(n) : typeof n === "string" ? sp.pyInt(n) : n instanceof PyFloat ? Math.trunc(n.v) : null;
+  const v = typeof n === "number" ? Math.trunc(n) : typeof n === "string" ? sp.pyInt(n) : n instanceof PyFloat ? Math.trunc(n.value) : null;
   if (v === null || Number.isNaN(v)) throw new Error(`invalid literal for int() with base 10: ${repr(n)}`);
   return S(v).padStart(2, "0");
 }

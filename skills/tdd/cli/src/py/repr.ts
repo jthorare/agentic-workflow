@@ -49,3 +49,8 @@ export function repr(v: unknown): string {
   if (typeof v === "object") return `{${Object.entries(v).map(([k, x]) => `${repr(k)}: ${repr(x)}`).join(", ")}}`;
   return String(v);
 }
+
+/** str(v): a str as itself, everything else as repr() (int, float, bool, None, list and dict all print their repr). */
+export function pyStr(v: unknown): string {
+  return typeof v === "string" ? v : repr(v);
+}

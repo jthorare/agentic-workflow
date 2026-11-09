@@ -1,8 +1,9 @@
 // write_agents.py's write() and check(): run a lane into --out, and verify a lane is current.
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmdirSync, unlinkSync, writeFileSync, existsSync, lstatSync } from "node:fs";
 import { Lane, BUDGET, GENERATOR, readJson, rel } from "./lane";
+import * as re from "../py/re";
 import { PageLane } from "./pagelane";
-import { type Py, PY_WS, abspath, dirname, isdir, isfile, pjoin, readText, sha256, get, or, str as S, strip as pystrip } from "./_py";
+import { type Py, abspath, dirname, isdir, isfile, pjoin, readText, sha256, get, or, str as S, strip as pystrip } from "./_py";
 
 export class SystemExit extends Error {
   constructor(readonly code: number, msg = "") {
@@ -112,8 +113,8 @@ export function check(buildDir: string, out: string | null = null): string[] {
   for (const w of want) {
     if (!first.includes(w)) {
       const key = w.split(" ")[0]!;
-      const found = new RegExp(reEscape(key) + ` ([^${PY_WS}]+)`).exec(first);
-      problems.push(`agents/ is stale: README header has '${key} ${found ? found[1] : "?"}', the build has '${pystrip(w)}'; rerun write_agents.py ${build}`);
+      const found = re.search(re.escape(key) + String.raw` (\S+)`, first);
+      problems.push(`agents/ is stale: README header has '${key} ${found ? found.group(1) : "?"}', the build has '${pystrip(w)}'; rerun write_agents.py ${build}`);
     }
   }
   if (!first.includes(GENERATOR)) problems.push(`agents/ was written by another generator version (want ${GENERATOR}); rerun write_agents.py`);
@@ -136,7 +137,3 @@ export function check(buildDir: string, out: string | null = null): string[] {
   return problems;
 }
 
-// KERNEL: replace with src/py/re (escape) at merge
-function reEscape(s: string): string {
-  return s.replace(/[^\p{L}\p{N}_]/gu, (c) => "\\" + c);
-}

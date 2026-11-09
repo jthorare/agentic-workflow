@@ -29,7 +29,8 @@ function findRun(runs: Uint32Array, cp: number): number {
 }
 
 function classBody(runs: Uint32Array): string {
-  const hex = (c: number) => `\\u{${c.toString(16)}}`;
+  // \uXXXX where it can be (so a class of BMP members, such as \s, also works in a regex without the u flag)
+  const hex = (c: number) => (c <= 0xffff ? `\\u${c.toString(16).padStart(4, "0")}` : `\\u{${c.toString(16)}}`);
   let out = "";
   for (let i = 0; i < runs.length; i += 2) {
     const a = runs[i]!;
@@ -67,7 +68,10 @@ export function decimalValue(cp: number): number {
   return i < 0 ? -1 : (cp - D[2 * i]!) % 10;
 }
 
-/** Bodies for a regex character class under the u flag: [${WORD_CLASS}] matches Python's \w. */
+/**
+ * Bodies for a regex character class under the u flag: [${WORD_CLASS}] matches Python's \w. SPACE_CLASS (Python's \s
+ * and str.isspace(), all in the BMP) is written with \uXXXX escapes only, so it also works without the u flag.
+ */
 export const WORD_CLASS = classBody(W);
 export const DECIMAL_CLASS = classBody(D);
 export const SPACE_CLASS = classBody(S);
