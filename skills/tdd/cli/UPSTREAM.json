@@ -1,0 +1,33 @@
+{
+  "about": "The system-design files src/sd/ reimplements (research/bun-port-2026.md section 1.2, D1 option A, PR 10). test/sd/upstream.test.ts fails when a file's sha256 differs: re-run the oracle suites (test/sd), port the change, then update the hashes here. Each range's sha256 is over its lines, newline-terminated, so the failure says which ported part moved.",
+  "source": "skills/tdd/vendor/system-design/scripts",
+  "verified": "2026-11-09",
+  "python": "3.13",
+  "lines_ported": 372,
+  "files": {
+    "build_doc.py": {
+      "sha256": "93ce4ffb2a39a3863e7d622f350f91f751d8c05e48814cb05ecd9f5663ecb925",
+      "lines": 1290,
+      "ranges": [
+        {"lines": [26, 27], "names": ["FILE_LIMIT", "esc"], "port": "src/sd/assets.ts, src/sd/inline.ts", "sha256": "533240ec36da6b13b09fbf11fa46171152b03a7e662c2f029a6cd7700b1f7465"},
+        {"lines": [193, 356], "names": ["MARK", "HEAD", "FENCE", "LI", "HR", "TSEP", "COMMENT", "is_block_start", "split_row", "indent_of", "parse_list", "parse_blocks", "split_marker", "slug"], "port": "src/sd/blocks.ts", "sha256": "cb25ee50859dd4a399dca6037fbf5a290b79082dba3c1cdd99f5b8f992e5c1e2"},
+        {"lines": [360, 399], "names": ["Inline", "strip_tags"], "port": "src/sd/inline.ts", "sha256": "5223431078d56509ca810070dc6f22a8b6acfe4e9e7f86f9395b40c19b1cd45a"},
+        {"lines": [410, 483], "names": ["svg_size", "png_size", "img_size", "Assets", "published_for"], "port": "src/sd/assets.ts", "sha256": "5ac76e1959582e078ed6e1b73ea1b176106576ca37e1f849f61af243265782c3"},
+        {"lines": [487, 490], "names": ["STATUS_WORDS"], "port": "src/sd/page.ts", "sha256": "0ffb6088f12288c1ce491756660e03afee6fe1d08387ea7a750230250bc99eaa"},
+        {"lines": [496, 516], "names": ["GENERIC_TAILS", "page_title", "load_json"], "port": "src/sd/page.ts", "sha256": "abdcf72f1f36794d7c84ac3716611fd3fba5f88f495ce867b81e407c78c0157c"}
+      ]
+    },
+    "build_prs.py": {
+      "sha256": "40b503686b8d50c7b71fda20601b478b483a6d1519ff3b2693e4870c3e46b6d7",
+      "lines": 187,
+      "ranges": [
+        {"lines": [12, 13], "names": ["BLOCK", "esc"], "port": "src/sd/prs.ts", "sha256": "b69a04381f49c8055552c3e2ce65e61624628a7a6769a5e77f9da84c7daf7d4b"},
+        {"lines": [15, 24], "names": ["front"], "port": "src/sd/prs.ts", "sha256": "cfe690a9d4927e906ce5254baddbf4bce8d0fadad52fb4642ab48e60b00b64e4"},
+        {"lines": [26, 35], "names": ["inline"], "port": "src/sd/prs.ts", "sha256": "1e4ab71108cfc3e12036c854c1484682dc7f181a6c8329f7f62486612efca8ee"},
+        {"lines": [37, 38], "names": ["split_row"], "port": "src/sd/prs.ts", "sha256": "206a22ee14d4273e7743bbaa923f357ab6932184076a7664b07c286f473ca133"},
+        {"lines": [40, 79], "names": ["markdown"], "port": "src/sd/prs.ts", "sha256": "33f71934b9adae112bf347e467a742a69feb854f15f8b860353b198356ddb855"},
+        {"lines": [81, 83], "names": ["first_sentence"], "port": "src/sd/prs.ts", "sha256": "1fd7c82b492f6c53086a20274c2914d89f0e7c6aa4e6f715d58f1610c1dfeca1"}
+      ]
+    }
+  }
+}
