@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Aw.Sindri.Tests.Sandbox;
 
-/// <summary>'sindri sandbox login' (sandbox spec SB-8): a human-only CLI verb, not an API route. Usage and refusals exit 2, the sign-in's exit code is the verb's.</summary>
+/// <summary>'sindri sandbox login' (sandbox spec SB-8): a CLI verb for the owner and agent sessions alike, not an API route. Usage and refusals exit 2, the sign-in's exit code is the verb's.</summary>
 [Collection(ProcessEnvironment.Name), Trait("Lane", "integration")]
 public sealed class SandboxLoginCliTests : IDisposable
 {
@@ -76,15 +76,14 @@ public sealed class SandboxLoginCliTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task A_session_Sindri_launched_is_refused_and_nothing_runs()
+    public async Task A_session_Sindri_launched_may_run_it()
     {
-        HumanToken();   // a launched session never calls as a human, whatever it can read
+        HumanToken();
 
         var exit = await Run(Environment(launch: "LCH-" + new string('a', 32)), "claude-code");
 
-        Assert.Equal(2, exit);
-        Assert.StartsWith("SND-AUTH-002 ", _error.ToString(), StringComparison.Ordinal);
-        Assert.Null(_login.Target);
+        Assert.Equal(5, exit);
+        Assert.Equal(AgentId.From("claude-code"), _login.Target);
     }
 
     [Fact, Trait("Lane", "integration")]
@@ -100,13 +99,12 @@ public sealed class SandboxLoginCliTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task Without_the_per_start_token_it_is_refused()
+    public async Task Without_the_per_start_token_it_still_runs()
     {
         var exit = await Run(Environment(), "codex");
 
-        Assert.Equal(2, exit);
-        Assert.StartsWith("SND-AUTH-002 ", _error.ToString(), StringComparison.Ordinal);
-        Assert.Null(_login.Target);
+        Assert.Equal(5, exit);
+        Assert.Equal(AgentId.From("codex"), _login.Target);
     }
 
     [Theory, Trait("Lane", "integration")]

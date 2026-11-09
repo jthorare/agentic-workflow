@@ -22,17 +22,13 @@ public enum ActionClass
     [JsonStringEnumMemberName("job")]
     Job,
 
-    /// <summary>A non-protected human decision.</summary>
+    /// <summary>A human decision.</summary>
     [JsonStringEnumMemberName("decision")]
     Decision,
 
     /// <summary>A human action that changes item or process state.</summary>
     [JsonStringEnumMemberName("desk")]
     Desk,
-
-    /// <summary>The approval tier: a typed confirmation, bound to the content, at a terminal.</summary>
-    [JsonStringEnumMemberName("protected")]
-    Protected,
 
     /// <summary>Runs in the CLI, never through the API (doctor, profile validate).</summary>
     [JsonStringEnumMemberName("local")]
