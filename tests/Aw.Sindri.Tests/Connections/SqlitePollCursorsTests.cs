@@ -80,7 +80,7 @@ public sealed class SqlitePollCursorsTests : IDisposable
 
     [Fact]
     public void The_migration_that_makes_the_table_is_named_poll_cursors()
-        => Assert.Contains(LedgerDatabase.Migrations, static m => m.Version == 10 && m.Name.Contains("poll_cursors", StringComparison.Ordinal));
+        => Assert.Contains(LedgerDatabase.Migrations, static m => m.Version == LedgerDatabase.PollCursorsVersion && m.Name.Contains("poll_cursors", StringComparison.Ordinal));
 
     private static PollCursor Row(string service, EventKind kind, string value) => new(
         ConnectionSamples.Name(service, "work"),

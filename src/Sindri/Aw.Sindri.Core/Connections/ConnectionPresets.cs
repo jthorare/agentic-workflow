@@ -51,7 +51,7 @@ public static class ConnectionPresets
             return Bad("'kind', 'defaultScopes' or 'loopbackAllowed' is missing or has the wrong type");
         }
 
-        return new ConnectionPreset(text["id"], text["displayName"], kind.Value, text["authorizeUrl"], text["tokenUrl"], optional["revokeUrl"], scopes, text["hostGroup"], loopback, text["signInNote"], [.. Polling.PollCatalog.For(text["id"]).Select(static k => k.Key)], optional["probeUrl"]);
+        return new ConnectionPreset(text["id"], text["displayName"], kind.Value, text["authorizeUrl"], text["tokenUrl"], optional["revokeUrl"], scopes, text["hostGroup"], loopback, text["signInNote"], [.. PollableEvents.For(text["id"])], optional["probeUrl"]);
     }
 
     private static string? PlainHttp(Dictionary<string, string> text, Dictionary<string, string?> optional) =>

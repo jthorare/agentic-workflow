@@ -58,9 +58,9 @@ public sealed class LedgerFileTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task Migration_0012_drops_the_recipe_tables_and_keeps_events_after_a_backup()
     {
-        // Issue 2258 PR 3: the retiring migration is the last of the set and drops the four recipe-era tables (0004, 0006, 0007).
-        var retiring = LedgerDatabase.Migrations[^1];
-        Assert.Equal("retire_recipes", retiring.Name);
+        // Issue 2258 PR 3: the retiring migration drops the four recipe-era tables (0004, 0006, 0007); later migrations run after it.
+        var retiring = Assert.Single(LedgerDatabase.Migrations, static m => m.Name == "retire_recipes");
+        Assert.Equal(12, retiring.Version);
 
         var previous = Path.Combine(_home.Path, "previous.db");
         var runner = new MigrationRunner(new SqliteConnectionFactory(new SqliteOptions(previous)), new FakeTimeProvider(), backupBeforeUpgrade: false);

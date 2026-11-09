@@ -14,7 +14,7 @@ namespace Aw.Sindri.Core.Connections;
 /// <param name="HostGroup">The network host group the provider's API lives in (for the sandbox allowlist).</param>
 /// <param name="LoopbackAllowed">Whether the provider accepts a plain-http 127.0.0.1 redirect; when false the sign-in note says how to sign in instead.</param>
 /// <param name="SignInNote">A line shown with the consent URL.</param>
-/// <param name="PollableEvents">Events a Connection event block (connection_event) can watch: the preset's entry in <see cref="Polling.PollCatalog"/>, the one list.</param>
+/// <param name="PollableEvents">Events a Connection event block (connection_event) can watch: the preset's entry in <see cref="PollableEvents"/>, the one list.</param>
 /// <param name="ProbeUrl">A cheap authenticated GET that proves the token works, or null.</param>
 public sealed record ConnectionPreset(
     string Key,
