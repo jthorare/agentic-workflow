@@ -69,11 +69,13 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         private set => Set(ref _selectedId, value);
     }
 
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     /// <summary>The graph's accessible name.</summary>
     public string Name => Labels.WfGraphName;
 
     /// <summary>The words shown over an empty graph.</summary>
     public string EmptyText => Labels.WfGraphEmpty;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>Gets a value indicating whether the workflow has no nodes.</summary>
     public bool IsEmpty => Nodes.Count == 0;
