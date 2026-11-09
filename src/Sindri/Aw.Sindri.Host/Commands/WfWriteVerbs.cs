@@ -20,6 +20,8 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="output">Where the verbs write.</param>
 internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
 {
+    private static readonly string[] _sources = ["--ops", "--ops-file", "--file"];
+
     internal const string CreateUsage = "usage: sindri wf create <slug> (--template <name> | --file <spec.json>) [--json]";
     internal const string EditUsage = "usage: sindri wf edit <slug> --base <revision> (--ops <json> | --ops-file <file> | --file <spec.json>) [--json]";
     internal const string ActivateUsage = "usage: sindri wf activate <slug> [--revision <n>] [--json]";
@@ -63,7 +65,7 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
             return await output.Error(SindriErrors.InvalidInput.With("wf edit needs a slug and --base <revision>; 'sindri wf show <slug>' prints the newest revision (" + EditUsage + ")")).ConfigureAwait(false);
         }
 
-        var given = new[] { "--ops", "--ops-file", "--file" }.Count(f => flags.Value(f) is not null);
+        var given = _sources.Count(f => flags.Value(f) is not null);
         if (given != 1)
         {
             return await output.Error(SindriErrors.InvalidInput.With("give exactly one of --ops, --ops-file and --file (" + EditUsage + ")")).ConfigureAwait(false);
