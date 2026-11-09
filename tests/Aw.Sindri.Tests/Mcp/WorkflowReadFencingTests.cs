@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
@@ -58,7 +59,7 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
     public async Task Workflow_get_fences_a_nodes_config_and_title_and_the_description()
     {
         var ct = TestContext.Current.CancellationToken;
-        await using var mcp = await McpSession.Open(Host, null, ct);
+        await using var mcp = await McpSession.Open(Host, repo: null, ct);
 
         var result = await mcp.Call("workflow_get", "{\"slug\":\"morning-check\"}", ct);
 
@@ -77,7 +78,7 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
     public async Task Workflow_list_fences_the_name()
     {
         var ct = TestContext.Current.CancellationToken;
-        await using var mcp = await McpSession.Open(Host, null, ct);
+        await using var mcp = await McpSession.Open(Host, repo: null, ct);
 
         var result = await mcp.Call("workflow_list", "{}", ct);
 
@@ -91,7 +92,7 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
     public async Task Workflow_runs_fences_a_runs_failure_text()
     {
         var ct = TestContext.Current.CancellationToken;
-        await using var mcp = await McpSession.Open(Host, null, ct);
+        await using var mcp = await McpSession.Open(Host, repo: null, ct);
 
         var result = await mcp.Call("workflow_runs", "{\"slug\":\"morning-check\"}", ct);
 
@@ -105,7 +106,7 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
     public async Task Workflow_run_get_fences_the_trigger_payload_the_outputs_and_each_node_runs_input_output_and_error()
     {
         var ct = TestContext.Current.CancellationToken;
-        await using var mcp = await McpSession.Open(Host, null, ct);
+        await using var mcp = await McpSession.Open(Host, repo: null, ct);
 
         var result = await mcp.Call("workflow_run_get", $"{{\"run\":\"{RunId(1)}\"}}", ct);
 
@@ -115,9 +116,9 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
         AssertFenced(leaves, "trigger.payload", RunFence);
         AssertFenced(leaves, "outputs", RunFence);
         var agent = NodeIndex(result, "agent");
-        AssertFenced(leaves, $"nodes[{agent}].input", RunFence);
-        AssertFenced(leaves, $"nodes[{agent}].output", RunFence);
-        AssertFenced(leaves, $"nodes[{agent}].error", RunFence);
+        AssertFenced(leaves, $"nodes[{agent.ToString(CultureInfo.InvariantCulture)}].input", RunFence);
+        AssertFenced(leaves, $"nodes[{agent.ToString(CultureInfo.InvariantCulture)}].output", RunFence);
+        AssertFenced(leaves, $"nodes[{agent.ToString(CultureInfo.InvariantCulture)}].error", RunFence);
         AssertEverywhereFenced(leaves);
     }
 
@@ -125,7 +126,7 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
     public async Task A_payload_Sindri_cut_short_comes_back_flagged_and_still_fenced()
     {
         var ct = TestContext.Current.CancellationToken;
-        await using var mcp = await McpSession.Open(Host, null, ct);
+        await using var mcp = await McpSession.Open(Host, repo: null, ct);
 
         var result = await mcp.Call("workflow_run_get", $"{{\"run\":\"{RunId(1)}\"}}", ct);
 
@@ -202,13 +203,18 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
                 var index = 0;
                 foreach (var item in element.EnumerateArray())
                 {
-                    Walk(item, $"{path}[{index++}]", found);
+                    Walk(item, $"{path}[{(index++).ToString(CultureInfo.InvariantCulture)}]", found);
                 }
 
                 break;
             case JsonValueKind.String:
                 found.Add((path, element.GetString()!));
                 break;
+            case JsonValueKind.Undefined:
+            case JsonValueKind.Number:
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+            case JsonValueKind.Null:
             default:
                 break;
         }
