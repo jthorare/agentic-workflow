@@ -85,7 +85,7 @@ internal sealed class SeatbeltSandbox(SeatbeltOptions options, ISandboxProcesses
             OwnerOnly.WriteAtomically(profile, Encoding.UTF8.GetBytes(SeatbeltProfile.RenderProcess(plan, area)));
             var rewritten = SeatbeltProcessPlan.Rewrite(plan);
             List<string> env = [Env, "-i", .. rewritten.Environment.Where(e => e.Value is not null).Select(e => $"{e.Name}={e.Value}")];
-            return Results.Success<IReadOnlyList<string>>([.. env, options.SandboxExec, "-f", profile, "--", .. argv]);
+            return Results.Success<IReadOnlyList<string>>([.. env, options.SandboxExec, "-f", profile, .. argv]);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

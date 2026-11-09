@@ -52,7 +52,7 @@ public sealed class SeatbeltProcessTests : IDisposable
         var argv = Sandbox().WrapProcess(plan, ["/x/triage", "--serve"]).Value;
 
         var profile = _root + "/area/seatbelt.sb";
-        Assert.Equal(["sandbox-exec", "-f", profile, "--", "/x/triage", "--serve"], argv.TakeLast(6), StringComparer.Ordinal);   // no /bin/sh wrapper: the pipes are the caller's
+        Assert.Equal(["sandbox-exec", "-f", profile, "/x/triage", "--serve"], argv.TakeLast(5), StringComparer.Ordinal);   // no /bin/sh wrapper: the pipes are the caller's
         Assert.Equal(["/usr/bin/env", "-i"], argv.Take(2), StringComparer.Ordinal);
         Assert.True(File.Exists(profile));
         Assert.DoesNotContain(argv, a => a.Contains("AW_SINDRI_LAUNCH_SECRET", StringComparison.Ordinal) || a.Contains("GH_TOKEN", StringComparison.Ordinal) || a.Contains("GITHUB_TOKEN", StringComparison.Ordinal));

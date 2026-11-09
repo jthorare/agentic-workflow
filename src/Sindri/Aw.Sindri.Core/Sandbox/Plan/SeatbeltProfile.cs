@@ -44,8 +44,9 @@ public static class SeatbeltProfile
     /// <summary>Renders the profile of a plain process's plan (a toolkit; built by <see cref="ProcessSandboxPlanner"/> for <see cref="SandboxMechanism.Seatbelt"/>): the plan is rewritten for Seatbelt first.</summary>
     /// <param name="plan">The process plan.</param>
     /// <param name="runArea">The process's run area.</param>
+    /// <param name="canonical">Maps a path to the one Seatbelt matches; null uses <see cref="MacOsCanonical"/>, as <see cref="Render"/> does.</param>
     /// <returns>The profile text.</returns>
-    public static string RenderProcess(SandboxPlan plan, string runArea) => RenderCore(SeatbeltProcessPlan.Rewrite(plan), runArea, canonical: null, process: true);
+    public static string RenderProcess(SandboxPlan plan, string runArea, Func<string, string>? canonical = null) => RenderCore(SeatbeltProcessPlan.Rewrite(plan), runArea, canonical, process: true);
 
     /// <summary>macOS resolves /var, /tmp and /etc to /private/var, /private/tmp and /private/etc, and Seatbelt matches the resolved path.</summary>
     /// <param name="path">An absolute path.</param>
