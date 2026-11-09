@@ -20216,3 +20216,4 @@ static Aw.Sindri.Core.Todos.TodoItem.operator !=(Aw.Sindri.Core.Todos.TodoItem? 
 static Aw.Sindri.Core.Todos.TodoItem.operator ==(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator !=(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator ==(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
+Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Recent(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
