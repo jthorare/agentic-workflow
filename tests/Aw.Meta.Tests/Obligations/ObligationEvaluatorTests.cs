@@ -19,7 +19,7 @@ public sealed class ObligationEvaluatorTests
     {
         var facts = A.Facts() with { Messages = [A.Inbox("m1", name: "t1-api", body: "ready #190 079c2541")] };
 
-        var open = Assert.Single(ObligationEvaluator.Evaluate(facts));
+        var open = Assert.Single(ObligationEvaluator.Evaluate(facts), o => o.Kind == ObligationKind.Reply);
 
         Assert.Equal((ObligationKind.Reply, "m1"), (open.Kind, open.Key));
         Assert.Contains("inbox-dismiss m1", open.NextCommand, StringComparison.Ordinal);
@@ -52,7 +52,7 @@ public sealed class ObligationEvaluatorTests
 
         var open = ObligationEvaluator.Evaluate(A.Facts() with { Messages = [dismissed, deferred, due] });
 
-        Assert.Equal(["m3"], open.Select(o => o.Key), StringComparer.Ordinal);
+        Assert.Equal(["m3", "watch"], open.Select(o => o.Key), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -60,7 +60,7 @@ public sealed class ObligationEvaluatorTests
     {
         var facts = A.Facts() with { Messages = [A.Inbox("late", name: "x", minute: 9), A.Inbox("early", name: "y", minute: 2)] };
 
-        Assert.Equal(["early", "late"], ObligationEvaluator.Evaluate(facts).Select(o => o.Key), StringComparer.Ordinal);
+        Assert.Equal(["early", "late", "watch"], ObligationEvaluator.Evaluate(facts).Select(o => o.Key), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

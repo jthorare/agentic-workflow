@@ -2,6 +2,7 @@ using Aw.Meta.Core;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Lanes;
+using Aw.Meta.Core.Obligations;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Features.LaneSend;
 using Aw.Meta.Testing;
@@ -48,7 +49,7 @@ public sealed class LaneSendTests
         await Heartbeat("api", stopped: false);
         _world.Transcripts.Write(MetaWorld.Transcript, MetaWorld.PeerLine("m1", "t1-api", "need a rebase"));
         _ = await _world.Sync.Run(MetaWorld.Transcript, CancellationToken.None);
-        _ = Assert.Single(await _world.Open());
+        _ = Assert.Single(await _world.Open(), o => o.Kind == ObligationKind.Reply);
 
         var response = await Send("api");
 

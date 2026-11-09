@@ -313,8 +313,9 @@ echo $$ > "$1"; exec sleep 60
 EOF
 for sig in INT TERM; do
   reset
-  # perl resets SIGINT: a background job of a non-interactive shell would otherwise start with INT ignored
-  perl -e '$SIG{INT}="DEFAULT"; exec @ARGV' bash "$HEAVY" --expensive bash "$WORK/job.sh" "$WORK/job.pid" > /dev/null 2> "$WORK/sig.err" &
+  # perl resets SIGINT and SIGTERM: a background job of a non-interactive shell would otherwise start with INT ignored,
+  # and a suite started with TERM ignored would hand that on too (#2377)
+  perl -e '$SIG{INT}="DEFAULT"; $SIG{TERM}="DEFAULT"; exec @ARGV' bash "$HEAVY" --expensive bash "$WORK/job.sh" "$WORK/job.pid" > /dev/null 2> "$WORK/sig.err" &
   hp=$!; bgpids+=("$hp")
   wait_file "$WORK/job.pid" || echo "  (job did not start)"
   jp="$(cat "$WORK/job.pid" 2> /dev/null)"

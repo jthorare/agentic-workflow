@@ -99,7 +99,7 @@ public sealed class StopCheckTests
 
         var response = await Check();
 
-        var reply = Assert.Single(response.Open);
+        var reply = Assert.Single(response.Open, o => o.Kind == ObligationKind.Reply);
         Assert.True(response.Blocked);
         Assert.Equal((ObligationKind.Reply, "m1"), (reply.Kind, reply.Key));
         Assert.Contains("aw-meta inbox-dismiss m1", reply.NextCommand, StringComparison.Ordinal);
@@ -133,7 +133,7 @@ public sealed class StopCheckTests
         var due = await Check();
 
         Assert.False(snoozed.Blocked);
-        Assert.Equal(["m2"], due.Open.Select(o => o.Key), StringComparer.Ordinal);
+        Assert.Equal(["m2", "watch"], due.Open.Select(o => o.Key), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

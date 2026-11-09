@@ -171,7 +171,7 @@ scripts/skills-toolkit-rewrite.sh [--dry-run]   # The scripted fix for that drif
 # its SERIAL list, the timing-sensitive ones, one at a time afterwards; --serial prints them with reasons)
 bash scripts/ci/bash-tests.sh   # each suite runs with its own fresh temp HOME and AW_STATE_DIR and without the lane environment (AW_META_LANE*, AW_SINDRI_CHILD, TMUX, ...) (tools keep working through GIT_CONFIG_GLOBAL, DOTNET_ROOT, NUGET_PACKAGES, npm_config_cache)
 bash providers/tests/install.test.sh
-bash providers/tests/voice.test.sh       # the aw:voice block in ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md: created, appended, replaced in place, an unclosed block refused, dry run, joi.md <= 4000 bytes
+bash providers/tests/voice.test.sh       # the aw:voice block in ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md: created, appended, replaced in place, an unclosed block refused, dry run, reply.md <= 4000 bytes, {{user}} filled with the account's first name (fallback "human")
 bash providers/tests/install-hooks-target.test.sh   # --target-dir on providers/{claude,codex}/install-hooks.sh: files and hook command paths rooted at DIR, the real home untouched, usage exit 2, idempotent (SB-8)
 bash providers/tests/install-skills-target.test.sh  # providers/install-skills.sh --target-dir DIR: DIR/skills/<name> links into the toolkit (the managed set from setup.sh, plus bootstrap), the real home untouched, usage exit 2, idempotent, dry run links nothing (SB-8)
 bash scripts/tests/sync-rules.test.sh
@@ -245,6 +245,7 @@ bash scripts/tests/sindri-open-runs.test.sh     # the open agent runs guard inst
 bash scripts/tests/sindri-pod.test.sh      # scripts/sindri-pod.sh (connect, profile edit, repo add, doctor) with a fake kubectl, sindri-ui and EDITOR: --pod/--release, the dry run, the mirror home and its modes, the container wait and its state, restart and forward retry, refusals, the per-verb exit codes, --onyx (the pod's port, override warning, Onyx off, --adopt), profile edit (init, unchanged, valid, invalid then fixed or aborted, conflict), the thin verbs' exit-code passthrough
 bash scripts/tests/readiness-baseline.test.sh
 bash scripts/tests/agent-token.test.sh
+bash scripts/tests/signal-suites-ignored-hup.test.sh   # agent-token.test.sh and formal-verify-tlc.test.sh started with SIGHUP ignored (a `nohup` gate) both pass: each wrapper resets every signal it sends (#2377)
 bash scripts/tests/ci-changed-areas.test.sh
 bash scripts/tests/ci-bash-tests.test.sh
 bash scripts/tests/ci-lane-budgets.test.sh

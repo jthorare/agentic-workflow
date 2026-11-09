@@ -76,6 +76,8 @@ Aw.Meta.Features.Health.HealthResponse.Attention.get -> bool
 Aw.Meta.Features.Health.HealthResponse.Attention.init -> void
 Aw.Meta.Features.Health.HealthResponse.Builders.get -> Aw.Meta.Core.Health.BuilderAdvice?
 Aw.Meta.Features.Health.HealthResponse.Builders.init -> void
+Aw.Meta.Features.Health.HealthResponse.Consumer.get -> string?
+Aw.Meta.Features.Health.HealthResponse.Consumer.init -> void
 Aw.Meta.Features.Health.HealthResponse.Duplicates.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Health.DuplicateServer!>!
 Aw.Meta.Features.Health.HealthResponse.Duplicates.init -> void
 Aw.Meta.Features.Health.HealthResponse.Equals(Aw.Meta.Features.Health.HealthResponse? other) -> bool
@@ -1137,3 +1139,5 @@ Aw.Meta.Features.Routing.RouteRequest.Deconstruct(out bool Apply, out string? La
 Aw.Meta.Features.Routing.RouteRequest.Force.get -> bool
 Aw.Meta.Features.Routing.RouteRequest.Force.init -> void
 Aw.Meta.Features.Routing.RouteRequest.RouteRequest(bool Apply = false, string? Lane = null, bool Force = false) -> void
+Aw.Meta.Features.Status.StatusResponse.Consumer.get -> string?
+Aw.Meta.Features.Status.StatusResponse.Consumer.init -> void
