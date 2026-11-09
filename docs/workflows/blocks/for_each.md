@@ -5,7 +5,7 @@ Runs the nodes after it once for every item of a list, in order, until the match
 | Config | Type | Required | Meaning |
 |---|---|---|---|
 | `items` | reference | yes | The list, usually one whole reference such as `{{search.results}}`. Anything that is not a list fails the node |
-| `maxItems` | number | no | The most items taken, 1 to 10,000. Default: the profile's `workflow.forEach.maxItems`, then 200. A longer list fails the node before any item runs |
+| `maxItems` | number | no | The most items taken, 1 to 10,000. Default: the profile's `workflow.forEach.maxItems`, then 200. The profile value is the cap: a node can lower it and never raise it (the smaller of the two applies). A longer list fails the node before any item runs |
 | `batchSize` | number | no | How many items one child workflow runs, 1 to 100. Default: the profile's `workflow.forEach.batchSize`, then 20 |
 
 Outputs: `count` (number of items) and `batchSize`.

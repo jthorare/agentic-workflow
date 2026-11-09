@@ -44,9 +44,32 @@ public sealed class ForEachBlockTests
     }
 
     [Fact]
-    public async Task A_node_maxItems_beats_the_profile_cap()
+    public async Task A_node_maxItems_below_the_profile_cap_lowers_the_cap()
+    {
+        var config = new JsonObject { ["items"] = Items(6), ["maxItems"] = 3, ["batchSize"] = 4 };
+
+        var result = await Block(maxItems: 5).Execute(BlockFakes.Context(config), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        Assert.Contains("maxItems 3", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_node_maxItems_above_the_profile_cap_is_clamped_to_the_profile_cap()
     {
         var config = new JsonObject { ["items"] = Items(6), ["maxItems"] = 10, ["batchSize"] = 4 };
+
+        var result = await Block(maxItems: 5).Execute(BlockFakes.Context(config), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        Assert.Contains("maxItems 5", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("profile", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_node_maxItems_inside_the_profile_cap_passes()
+    {
+        var config = new JsonObject { ["items"] = Items(4), ["maxItems"] = 4, ["batchSize"] = 4 };
 
         var result = await Block(maxItems: 5).Execute(BlockFakes.Context(config), TestContext.Current.CancellationToken);
 

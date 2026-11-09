@@ -39,11 +39,12 @@ public sealed class ForEachBlock(IForEachLimitSource limits) : IGraphBlock
         }
 
         var defaults = await limits.Current(cancellationToken).ConfigureAwait(false);
-        var maxItems = Whole(context.Config["maxItems"]) ?? defaults.MaxItems;
+        var asked = Whole(context.Config["maxItems"]);
+        var maxItems = asked is { } own && own >= 1 ? Math.Min(own, defaults.MaxItems) : asked ?? defaults.MaxItems;   // why: the profile's maxItems is the cap; a node may lower it, never raise it
         var batchSize = Whole(context.Config["batchSize"]) ?? defaults.BatchSize;
-        if (maxItems is < 1 or > ForEachLimits.MaxItemsCeiling)
+        if (maxItems < 1 || asked > ForEachLimits.MaxItemsCeiling)
         {
-            return Failed($"'maxItems' must be from 1 to {ForEachLimits.MaxItemsCeiling.ToString(CultureInfo.InvariantCulture)}, not {maxItems.ToString(CultureInfo.InvariantCulture)}");
+            return Failed($"'maxItems' must be from 1 to {ForEachLimits.MaxItemsCeiling.ToString(CultureInfo.InvariantCulture)}, not {(asked ?? maxItems).ToString(CultureInfo.InvariantCulture)}");
         }
 
         if (batchSize is < 1 or > ForEachLimits.BatchSizeCeiling)
@@ -53,7 +54,8 @@ public sealed class ForEachBlock(IForEachLimitSource limits) : IGraphBlock
 
         if (items.Count > maxItems)
         {
-            return Failed($"the list has {items.Count.ToString(CultureInfo.InvariantCulture)} items, more than maxItems {maxItems.ToString(CultureInfo.InvariantCulture)}; filter it first or raise maxItems");
+            var raised = asked > defaults.MaxItems ? $" (the profile's workflow.forEach.maxItems {defaults.MaxItems.ToString(CultureInfo.InvariantCulture)} caps it; a node can lower it, not raise it)" : string.Empty;
+            return Failed($"the list has {items.Count.ToString(CultureInfo.InvariantCulture)} items, more than maxItems {maxItems.ToString(CultureInfo.InvariantCulture)}{raised}; filter the list first");
         }
 
         return new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal)
