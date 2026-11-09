@@ -21,7 +21,7 @@ internal sealed partial class FakeSindriApi
     public RouteAnswer SandboxDenialsAnswer { get; set; } = RouteAnswer.SpecShaped("sandbox-denials", "some");
 
     /// <summary>POST /sindri/sandbox/allow's answer: needs your approval by default.</summary>
-    public RouteAnswer SandboxAllowAnswer { get; set; } = RouteAnswer.SpecShaped("sandbox-allow", "needs-approval");
+    public RouteAnswer SandboxAllowAnswer { get; set; } = RouteAnswer.SpecShaped("sandbox-allow", "allowed");
 
     /// <summary>Held open until set: a Check again received while it was set waits for it.</summary>
     public TaskCompletionSource? SandboxCheckGate { get; set; }

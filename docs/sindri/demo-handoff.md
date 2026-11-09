@@ -14,7 +14,6 @@ All names are placeholders: `<work-repo>` is the repo name the owner picks for S
 
 | Owner decisions | Why |
 |---|---|
-| `sindri profile approve <hash>`, then the typed line `approve profile <first 6 of hash>` | profile approval |
 | `sindri context map import <file>`, then `import map <first 6>`; `sindri context map promote` and its typed line | map import and promotion |
 | `sindri recipe approve <id>@<hash12>`, then the typed line `approve <id> <version>` | recipe approval |
 | `sindri workflow start ...`, `sindri workflow complete ...`, `workflow answer`, `workflow command`, `workflow cancel`, `takeover`, `handback` | instance control |
@@ -59,11 +58,11 @@ workflow:
 
 `workflow.agent.target` is any agent id by pattern; `claude-code` is the built-in entry. Its model and policy forms are already set in `config/launcher/builtins.json` (`claude-flag`, `claude-settings-file`), so the demo needs **no `launcher.json` edit**. Only an entry you add yourself must set `model` and `policy`; one without a policy form parks its Steps with `SND-LAUNCH-013` (a Step never launches unrestricted). See `docs/csharp/sindri-launcher.md`. Setting the target alone switches agents on. Optional: `api: { port: <n> }` to pin the port. The full key list is in `docs/csharp/sindri-profile.md`.
 
-1. Agent: `sindri profile validate`. Expect `Profile valid ... hash <64 hex>, not approved`.
+1. Agent: `sindri profile validate`. Expect `Profile valid ... hash <64 hex>`.
 2. Agent: start the control plane: `sindri` (opens the app) or `sindri --headless` (no app, about 3 s). An agent session may start it (`--headless`, or `serve`; the lease refuses a second one).
-3. **Owner types:** `sindri profile approve <hash>`, then `approve profile <first 6 of hash>`. After this `sindri status` shows the `context-docs-refresh` service and `health healthy`.
+3. Nothing to approve: the profile applies on save. `sindri status` shows the `context-docs-refresh` service and `health healthy`.
 
-Important: the approval holds while the profile file is unchanged. Edit the file and the owner must approve again.
+Important: edits to the profile file apply on save; there is no approval step.
 
 ## 4. Connect the agent session over MCP
 
@@ -172,7 +171,7 @@ The record index (GitHub issues and PRs, Slack threads, Linear) is optional. The
 
 **Main path: agents run the line (P8, #405).**
 
-1. Profile: `workflow.agent.target: claude-code` (section 3). The owner re-approves the profile (`sindri profile approve`, typed line) after adding it.
+1. Profile: `workflow.agent.target: claude-code` (section 3). It applies on save.
 2. Re-approve the recipes `sindri recipe list --stale` lists. Four Step descriptors moved (`step.produce` is now `Runtime: agent`; `step.build.red`, `step.build.green` and `step.prove.holdout` gained `WriteScope`), so expect `workflow.step`, `workflow.build`, `workflow.prove`, `workflow.implement`, plus recipes that use `step.produce`, then their parents (`workflow.phase`, `workflow.line`). Children first. **Owner types** each: `sindri recipe approve <file|id@hash>` and the typed line. Until then, reports on instances of those recipes are refused with `SND-RECIPE-006`. Before that, approve `workflow.idea-to-brief` first, then `workflow.scoping` (else `RCP-CHILD-001`).
 3. Start `workflow.line` (**owner types**) with a `fact:item` that carries `{id, repo, spec}` (`spec` is optional; without a repo: `SND-CONTEXT-045`). `sindri recipe show workflow.line` lists the inputs (`fact:scopeInput`, `fact:lineContext`); `SND-CLI-003` names any missing one.
 4. Watch the scoping child's agent Steps (`draft`, then `questions`) run: the Workflows instance frame (the states band advances, events read `via agent · tokens N`, `sindri workflow status <address>` shows `run agent LCH-...`) and the Agents page (`G A`), where the launched session appears.
@@ -239,7 +238,7 @@ Do this twice: once now, once the morning of the demo after the 08:00 pull. The 
 
 | # | Who | Action | Expect | App page to show |
 |---|---|---|---|---|
-| 1 | Owner | `sindri` (bare) | the app opens, control plane running | Home: health strip `Running`, profile approved, services |
+| 1 | Owner | `sindri` (bare) | the app opens, control plane running | Home: health strip `Running`, profile loaded, services |
 | 2 | Agent | `sindri status`; `sindri context sources status`; `sindri context map status` | healthy; `repo-docs ... ok`; `map vN current` | Home (the health strip opens Health) |
 | 3 | Agent, new session in `<path>` | the prompt below | the session calls the Sindri tools in order and returns a cited plan | none (the terminal) |
 | 4 | Agent | `sindri item add "<project title>" --repo <work-repo>` | an `ITM-...` id | Home (Queued) |
@@ -404,7 +403,7 @@ Everything else below is manual only because the automation is not built:
 
 The app is a client of Sindri's HTTP API with no logic of its own. Today it reads almost everything but sends only eight things (rebuild views, item create/close/open, decide, start workflow, file a request, a map-review decision), and two of those have no screen: no screen files a request, and the map-review panel is a placeholder. The command catalog grid (`tests/Aw.Sindri.Tests/Golden/Api/commands/catalog.json`) can run only `RebuildViews`; every other row shows its CLI line to copy.
 
-**By design these stay copy-only in the app** (typed confirmation at a terminal, UI spec §7): profile approve, recipe approve/revoke, the grant and accept answers, map promote/import/merge/add/delete/apply. Everything else in the table is meant to be a button.
+**By design these stay copy-only in the app** (typed confirmation at a terminal, UI spec §7): recipe approve/revoke, the grant and accept answers, map promote/import/merge/add/delete/apply. Everything else in the table is meant to be a button.
 
 | Capability | Today in the app | Spec | HTTP endpoint |
 |---|---|---|---|

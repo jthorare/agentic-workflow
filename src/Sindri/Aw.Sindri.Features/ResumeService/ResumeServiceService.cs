@@ -11,10 +11,10 @@ using Aw.Sindri.Core.Scheduling;
 namespace Aw.Sindri.Features.ResumeService;
 
 /// <summary>
-/// Resumes a service (API P6 unit D; desk): SND-SVC-404 unless the approved profile names it (owner answer Q4), then one 'service.resumed' keyed by service
+/// Resumes a service (API P6 unit D; desk): SND-SVC-404 unless the profile names it (owner answer Q4), then one 'service.resumed' keyed by service
 /// and command. A service that is already resumed is resumed again and answered the same (Q5): the fold is idempotent and the ledger keeps the human's intent.
 /// </summary>
-/// <param name="approvals">The approved profile, which names the services.</param>
+/// <param name="approvals">The profile, which names the services.</param>
 /// <param name="ledger">Appends the event.</param>
 /// <param name="held">The lease this process holds.</param>
 /// <param name="events">Builds the entry.</param>
@@ -47,7 +47,7 @@ internal sealed class ResumeServiceService(IApprovedProfile approvals, ILedgerSt
         {
             return SindriErrors.ServiceNotFound.With(BuiltInService.Is(request.Name, namedByProfile: false, builtIns)
                 ? $"{request.Name.Value} is a built-in service and can't be paused or resumed."
-                : $"The approved profile has no service '{request.Name.Value}' (fix: sindri services)");
+                : $"The profile has no service '{request.Name.Value}' (fix: sindri services)");
         }
 
         var entry = events.Entry(EventTypes.ServiceResumed, new ServiceResumed(caller.CommandId, request.Name), $"{EventTypes.ServiceResumed}:{request.Name.Value}:{caller.CommandId.Value}");

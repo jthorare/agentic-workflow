@@ -856,15 +856,6 @@ Aw.Sindri.Core.Events.RecipeEvents.LatestApproval(Aw.Sindri.Core.Workflow.Ids.Re
 Aw.Sindri.Core.Events.RecipeEvents.RecipeEvents(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Lease.HeldLease! held) -> void
 Aw.Sindri.Core.Events.RecipeEvents.Registered(Aw.Sindri.Core.Workflow.Registry.RegisteredRecipe! recipe, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ledger.LedgerAppend!>!>
 Aw.Sindri.Core.Events.RecipeEvents.Revoked(Aw.Sindri.Core.Workflow.Registry.RecipeRevocation! revocation, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ledger.LedgerAppend!>!>
-Aw.Sindri.Core.Events.RecordedApproval
-Aw.Sindri.Core.Events.RecordedApproval.<Clone>$() -> Aw.Sindri.Core.Events.RecordedApproval!
-Aw.Sindri.Core.Events.RecordedApproval.Deconstruct(out Aw.Sindri.Core.Ids.ProfileHash Hash, out long Sequence) -> void
-Aw.Sindri.Core.Events.RecordedApproval.Equals(Aw.Sindri.Core.Events.RecordedApproval? other) -> bool
-Aw.Sindri.Core.Events.RecordedApproval.Hash.get -> Aw.Sindri.Core.Ids.ProfileHash
-Aw.Sindri.Core.Events.RecordedApproval.Hash.init -> void
-Aw.Sindri.Core.Events.RecordedApproval.RecordedApproval(Aw.Sindri.Core.Ids.ProfileHash Hash, long Sequence) -> void
-Aw.Sindri.Core.Events.RecordedApproval.Sequence.get -> long
-Aw.Sindri.Core.Events.RecordedApproval.Sequence.init -> void
 Aw.Sindri.Core.Events.RequestFiled
 Aw.Sindri.Core.Events.RequestFiled.<Clone>$() -> Aw.Sindri.Core.Events.RequestFiled!
 Aw.Sindri.Core.Events.RequestFiled.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
@@ -1922,8 +1913,6 @@ Aw.Sindri.Core.Profile.ForgeSettings.Equals(Aw.Sindri.Core.Profile.ForgeSettings
 Aw.Sindri.Core.Profile.ForgeSettings.ForgeSettings(string? Adapter = null, System.Collections.Generic.IReadOnlyList<string!>? Hosts = null, string? Credential = null) -> void
 Aw.Sindri.Core.Profile.ForgeSettings.Hosts.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Profile.ForgeSettings.Hosts.init -> void
-Aw.Sindri.Core.Profile.IApprovals
-Aw.Sindri.Core.Profile.IApprovals.Save(Aw.Sindri.Core.Profile.LoadedProfile! profile, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Profile.IApprovedProfile
 Aw.Sindri.Core.Profile.IApprovedProfile.Latest(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile?>!>
 Aw.Sindri.Core.Profile.IProfileSource
@@ -6150,9 +6139,6 @@ override Aw.Sindri.Core.Events.ProfileChecked.ToString() -> string!
 override Aw.Sindri.Core.Events.PublicEvent.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.PublicEvent.GetHashCode() -> int
 override Aw.Sindri.Core.Events.PublicEvent.ToString() -> string!
-override Aw.Sindri.Core.Events.RecordedApproval.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Events.RecordedApproval.GetHashCode() -> int
-override Aw.Sindri.Core.Events.RecordedApproval.ToString() -> string!
 override Aw.Sindri.Core.Events.RequestFiled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.RequestFiled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.RequestFiled.ToString() -> string!
@@ -7180,7 +7166,6 @@ static Aw.Sindri.Core.Auth.HumanToken.operator ==(Aw.Sindri.Core.Auth.HumanToken
 static Aw.Sindri.Core.Auth.ProverLabel.operator !=(Aw.Sindri.Core.Auth.ProverLabel? left, Aw.Sindri.Core.Auth.ProverLabel? right) -> bool
 static Aw.Sindri.Core.Auth.ProverLabel.operator ==(Aw.Sindri.Core.Auth.ProverLabel? left, Aw.Sindri.Core.Auth.ProverLabel? right) -> bool
 static Aw.Sindri.Core.Challenges.ChallengeAction.Approve(Aw.Sindri.Core.Workflow.Ids.RecipeId id, int version) -> Aw.Sindri.Core.Challenges.ChallengeAction!
-static Aw.Sindri.Core.Challenges.ChallengeAction.ApproveProfile(Aw.Sindri.Core.Ids.ProfileHash hash) -> Aw.Sindri.Core.Challenges.ChallengeAction!
 static Aw.Sindri.Core.Challenges.ChallengeAction.Revoke(Aw.Sindri.Core.Workflow.Ids.RecipeId id, Aw.Sindri.Core.Workflow.Ids.RecipeHash hash) -> Aw.Sindri.Core.Challenges.ChallengeAction!
 static Aw.Sindri.Core.Challenges.ChallengeAction.operator !=(Aw.Sindri.Core.Challenges.ChallengeAction? left, Aw.Sindri.Core.Challenges.ChallengeAction? right) -> bool
 static Aw.Sindri.Core.Challenges.ChallengeAction.operator ==(Aw.Sindri.Core.Challenges.ChallengeAction? left, Aw.Sindri.Core.Challenges.ChallengeAction? right) -> bool
@@ -7194,7 +7179,6 @@ static Aw.Sindri.Core.Challenges.ChallengeId.TryParse(string? s, System.IFormatP
 static Aw.Sindri.Core.Challenges.ChallengeId.operator !=(Aw.Sindri.Core.Challenges.ChallengeId left, Aw.Sindri.Core.Challenges.ChallengeId right) -> bool
 static Aw.Sindri.Core.Challenges.ChallengeId.operator ==(Aw.Sindri.Core.Challenges.ChallengeId left, Aw.Sindri.Core.Challenges.ChallengeId right) -> bool
 static Aw.Sindri.Core.Challenges.ChallengeSubject.ForInstance(Aw.Sindri.Core.Launch.WorkflowInstanceId instance, long version) -> Aw.Sindri.Core.Challenges.ChallengeSubject!
-static Aw.Sindri.Core.Challenges.ChallengeSubject.ForProfile(Aw.Sindri.Core.Ids.ProfileHash hash) -> Aw.Sindri.Core.Challenges.ChallengeSubject!
 static Aw.Sindri.Core.Challenges.ChallengeSubject.ForRecipe(Aw.Sindri.Core.Workflow.Ids.RecipeHash hash, int version, string? pinsDigest) -> Aw.Sindri.Core.Challenges.ChallengeSubject!
 static Aw.Sindri.Core.Challenges.ChallengeSubject.operator !=(Aw.Sindri.Core.Challenges.ChallengeSubject? left, Aw.Sindri.Core.Challenges.ChallengeSubject? right) -> bool
 static Aw.Sindri.Core.Challenges.ChallengeSubject.operator ==(Aw.Sindri.Core.Challenges.ChallengeSubject? left, Aw.Sindri.Core.Challenges.ChallengeSubject? right) -> bool
@@ -7239,7 +7223,6 @@ static Aw.Sindri.Core.Doctor.DoctorRules.Api(Aw.Kernel.Result<(Aw.Sindri.Core.Co
 static Aw.Sindri.Core.Doctor.DoctorRules.ExitCode(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Doctor.DoctorCheck!>! checks) -> int
 static Aw.Sindri.Core.Doctor.DoctorRules.Lease(Aw.Sindri.Core.Lease.LeaseRow? row, System.DateTimeOffset now, Aw.Sindri.Core.Lease.HolderLiveness liveness) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Doctor.DoctorRules.Ledger(Aw.Kernel.Result<Aw.Sindri.Core.Ledger.SchemaStatus!>! schema) -> Aw.Sindri.Core.Doctor.DoctorCheck!
-static Aw.Sindri.Core.Doctor.DoctorRules.Profile(Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile!>! live, Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile?>! approved, Aw.Kernel.Result<Aw.Sindri.Core.Events.RecordedApproval?>! recorded) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Doctor.DoctorRules.Temporal(Aw.Sindri.Core.Control.TemporalFacts! facts) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Doctor.DoctorRules.Views(Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState?>! state, Aw.Kernel.Result<long>! head) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Events.ApiViews.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -7311,9 +7294,6 @@ static Aw.Sindri.Core.Events.ProfileChecked.operator ==(Aw.Sindri.Core.Events.Pr
 static Aw.Sindri.Core.Events.PublicEvent.operator !=(Aw.Sindri.Core.Events.PublicEvent? left, Aw.Sindri.Core.Events.PublicEvent? right) -> bool
 static Aw.Sindri.Core.Events.PublicEvent.operator ==(Aw.Sindri.Core.Events.PublicEvent? left, Aw.Sindri.Core.Events.PublicEvent? right) -> bool
 static Aw.Sindri.Core.Events.PublicEvents.For(Aw.Sindri.Core.Ledger.LedgerEvent! row, System.Text.Json.JsonSerializerOptions! options, Aw.Sindri.Core.Text.ITextScrubber! scrubber, bool includeNonPublic) -> Aw.Kernel.Result<Aw.Sindri.Core.Events.PublicEvent?>!
-static Aw.Sindri.Core.Events.RecordedApproval.From(Aw.Kernel.Result<Aw.Sindri.Core.Ledger.LedgerEvent?>! latest, Aw.Sindri.Core.Events.EventFactory! events) -> Aw.Kernel.Result<Aw.Sindri.Core.Events.RecordedApproval?>!
-static Aw.Sindri.Core.Events.RecordedApproval.operator !=(Aw.Sindri.Core.Events.RecordedApproval? left, Aw.Sindri.Core.Events.RecordedApproval? right) -> bool
-static Aw.Sindri.Core.Events.RecordedApproval.operator ==(Aw.Sindri.Core.Events.RecordedApproval? left, Aw.Sindri.Core.Events.RecordedApproval? right) -> bool
 static Aw.Sindri.Core.Events.RequestFiled.operator !=(Aw.Sindri.Core.Events.RequestFiled? left, Aw.Sindri.Core.Events.RequestFiled? right) -> bool
 static Aw.Sindri.Core.Events.RequestFiled.operator ==(Aw.Sindri.Core.Events.RequestFiled? left, Aw.Sindri.Core.Events.RequestFiled? right) -> bool
 static Aw.Sindri.Core.Events.RequestFiledPublic.operator !=(Aw.Sindri.Core.Events.RequestFiledPublic? left, Aw.Sindri.Core.Events.RequestFiledPublic? right) -> bool
@@ -7588,7 +7568,6 @@ static Aw.Sindri.Core.Mcp.McpScopeFinding.operator !=(Aw.Sindri.Core.Mcp.McpScop
 static Aw.Sindri.Core.Mcp.McpScopeFinding.operator ==(Aw.Sindri.Core.Mcp.McpScopeFinding? left, Aw.Sindri.Core.Mcp.McpScopeFinding? right) -> bool
 static Aw.Sindri.Core.Mcp.ProviderFileRead.operator !=(Aw.Sindri.Core.Mcp.ProviderFileRead? left, Aw.Sindri.Core.Mcp.ProviderFileRead? right) -> bool
 static Aw.Sindri.Core.Mcp.ProviderFileRead.operator ==(Aw.Sindri.Core.Mcp.ProviderFileRead? left, Aw.Sindri.Core.Mcp.ProviderFileRead? right) -> bool
-static Aw.Sindri.Core.NeedsYou.NeedsYouClearing.AfterCheck(Aw.Sindri.Core.NeedsYou.NeedsYouRow? existing, Aw.Sindri.Core.Views.ProfileRow! profile, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow?>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouClearing.AfterRun(Aw.Sindri.Core.NeedsYou.NeedsYouRow? existing, Aw.Sindri.Core.Views.ServiceRow! service, Aw.Sindri.Core.Text.ITextScrubber! scrubber, bool builtIn = false) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow?>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouClearing.FailureStands(Aw.Sindri.Core.NeedsYou.NeedsYouRow! failure, Aw.Sindri.Core.Views.ProfileRow! profile, System.Collections.Generic.IReadOnlyCollection<Aw.Sindri.Core.Ids.ServiceName>? builtIns = null) -> bool
 static Aw.Sindri.Core.NeedsYou.NeedsYouOrder.Compare(Aw.Sindri.Core.NeedsYou.NeedsYouRow! left, Aw.Sindri.Core.NeedsYou.NeedsYouRow! right) -> int
@@ -7599,7 +7578,6 @@ static Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.operator !=(Aw.Sindri.Core.Need
 static Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.operator ==(Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord? left, Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord? right) -> bool
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForDecision(Aw.Sindri.Core.Views.HumanDecisionRow! decision, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForFailure(Aw.Sindri.Core.Views.ServiceRow! service, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber, bool builtIn = false) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
-static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForProfile(Aw.Sindri.Core.Views.ProfileRow! profile, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow?>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouSubject.operator !=(Aw.Sindri.Core.NeedsYou.NeedsYouSubject? left, Aw.Sindri.Core.NeedsYou.NeedsYouSubject? right) -> bool
 static Aw.Sindri.Core.NeedsYou.NeedsYouSubject.operator ==(Aw.Sindri.Core.NeedsYou.NeedsYouSubject? left, Aw.Sindri.Core.NeedsYou.NeedsYouSubject? right) -> bool
 static Aw.Sindri.Core.Profile.ApiSettings.operator !=(Aw.Sindri.Core.Profile.ApiSettings? left, Aw.Sindri.Core.Profile.ApiSettings? right) -> bool
@@ -7623,8 +7601,6 @@ static Aw.Sindri.Core.Profile.ProfileCheck.Decide(Aw.Sindri.Core.Events.ProfileC
 static Aw.Sindri.Core.Profile.ProfileDiff.Between(Aw.Sindri.Core.Profile.SindriProfile? approved, Aw.Sindri.Core.Profile.SindriProfile! live) -> System.Collections.Generic.IReadOnlyList<string!>!
 static Aw.Sindri.Core.Profile.ProfileHashing.Of(System.ReadOnlySpan<byte> canonicalJson) -> Aw.Sindri.Core.Ids.ProfileHash
 static Aw.Sindri.Core.Profile.ProfileRules.Check(Aw.Sindri.Core.Profile.SindriProfile! profile) -> Aw.Kernel.Result<Aw.Sindri.Core.Profile.SindriProfile!>!
-static Aw.Sindri.Core.Profile.ProfileRules.IsApproved(Aw.Sindri.Core.Ids.ProfileHash? saved, Aw.Sindri.Core.Ids.ProfileHash? recorded, Aw.Sindri.Core.Ids.ProfileHash live) -> bool
-static Aw.Sindri.Core.Profile.ProfileRules.NeedsApproval(Aw.Sindri.Core.Ids.ProfileHash? saved, Aw.Sindri.Core.Ids.ProfileHash? recorded, Aw.Sindri.Core.Ids.ProfileHash? live) -> bool
 static Aw.Sindri.Core.Profile.RepoDenyGlobs.Entries(Aw.Sindri.Core.Profile.SindriProfile! profile) -> System.Collections.Generic.IReadOnlyList<(string! Name, string! Path, System.Collections.Generic.IReadOnlyList<string!>? DenyPaths)>!
 static Aw.Sindri.Core.Profile.RepoDenyGlobs.For(Aw.Sindri.Core.Profile.SindriProfile! profile, Aw.Sindri.Core.Profile.RepoEntry! repo) -> System.Collections.Generic.IReadOnlyList<string!>?
 static Aw.Sindri.Core.Profile.RepoEntry.operator !=(Aw.Sindri.Core.Profile.RepoEntry? left, Aw.Sindri.Core.Profile.RepoEntry? right) -> bool
@@ -8368,7 +8344,6 @@ static readonly Aw.Sindri.Core.Profile.Cadence.Min -> System.TimeSpan
 static readonly Aw.Sindri.Core.SindriErrors.ApiInternal -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ApiNoCode -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ApiTimeout -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.ApprovalsUnavailable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AuthRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.AuthTokenRequired -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.CallerUnknown -> Aw.Kernel.ErrorDefinition!
@@ -8396,7 +8371,6 @@ static readonly Aw.Sindri.Core.SindriErrors.PortInUse -> Aw.Kernel.ErrorDefiniti
 static readonly Aw.Sindri.Core.SindriErrors.ProfileHashMismatch -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ProfileInvalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ProfileMissing -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.ProfileNotApproved -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.RequestInvalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.RequestsRateLimited -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.SecretFileUnsafe -> Aw.Kernel.ErrorDefinition!
@@ -12778,10 +12752,7 @@ Aw.Sindri.Core.Setup.ProfileFact.Presence.get -> Aw.Sindri.Core.Setup.ProfilePre
 Aw.Sindri.Core.Setup.ProfileFact.Presence.init -> void
 Aw.Sindri.Core.Setup.ProfileFact.ProfileFact(Aw.Sindri.Core.Setup.ProfilePresence Presence) -> void
 Aw.Sindri.Core.Setup.ProfilePresence
-Aw.Sindri.Core.Setup.ProfilePresence.Approved = 3 -> Aw.Sindri.Core.Setup.ProfilePresence
-Aw.Sindri.Core.Setup.ProfilePresence.Drifted = 2 -> Aw.Sindri.Core.Setup.ProfilePresence
 Aw.Sindri.Core.Setup.ProfilePresence.Missing = 0 -> Aw.Sindri.Core.Setup.ProfilePresence
-Aw.Sindri.Core.Setup.ProfilePresence.Unapproved = 1 -> Aw.Sindri.Core.Setup.ProfilePresence
 Aw.Sindri.Core.Setup.RecipesFact
 Aw.Sindri.Core.Setup.RecipesFact.<Clone>$() -> Aw.Sindri.Core.Setup.RecipesFact!
 Aw.Sindri.Core.Setup.RecipesFact.Approved.get -> int
@@ -12852,7 +12823,6 @@ Aw.Sindri.Core.Setup.SetupStepId.Repo = 0 -> Aw.Sindri.Core.Setup.SetupStepId
 Aw.Sindri.Core.Setup.SetupSteps
 const Aw.Sindri.Core.Setup.SetupActions.AddRepo = "AddRepo" -> string!
 const Aw.Sindri.Core.Setup.SetupActions.ApproveAllRecipes = "ApproveAllRecipes" -> string!
-const Aw.Sindri.Core.Setup.SetupActions.ApproveProfile = "ApproveProfile" -> string!
 const Aw.Sindri.Core.Setup.SetupActions.RegisterMcp = "RegisterMcp" -> string!
 override Aw.Sindri.Core.Setup.MapFact.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Setup.MapFact.GetHashCode() -> int
@@ -13375,7 +13345,6 @@ Aw.Sindri.Core.Workflow.ApproveAll.ApproveAllSkipped.Deconstruct(out Aw.Sindri.C
 Aw.Sindri.Core.Workflow.ApproveAll.OwnApprovalRow.Id.init -> void
 Aw.Sindri.Core.Workflow.ApproveAll.PlanChangeWords
 Aw.Sindri.Core.Workflow.ApproveAll.ApproveAllRow.Version.get -> int
-static readonly Aw.Sindri.Core.SindriErrors.SetupProfileNotApproved -> Aw.Kernel.ErrorDefinition!
 override Aw.Sindri.Core.Workflow.ApproveAll.ApproveAllRefused.ToString() -> string!
 Aw.Sindri.Core.Workflow.ApproveAll.OwnApprovalReason.GainsCapability = 1 -> Aw.Sindri.Core.Workflow.ApproveAll.OwnApprovalReason
 Aw.Sindri.Core.Workflow.ApproveAll.ApproveAllRefused.Cli.get -> string?
@@ -15735,7 +15704,6 @@ Aw.Sindri.Core.Setup.McpEvents.Registered(Aw.Sindri.Core.Ids.RepoName repo, int 
 Aw.Sindri.Core.Events.EventFactory.CurrentCommandId() -> Aw.Sindri.Core.Ids.CommandId?
 Aw.Sindri.Core.Setup.IMcpAutoSwitch
 Aw.Sindri.Core.Setup.IMcpAutoSwitch.Off.get -> bool
-Aw.Sindri.Core.Setup.McpEvents.ConsentGiven(Aw.Sindri.Core.Ids.ProfileHash profile, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 Aw.Sindri.Core.Setup.McpEvents.ConsentOnHumanPress(Aw.Sindri.Core.Ids.ProfileHash profile, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForSetupMcp(string! sentence, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber, string! headline = "Connect your agents") -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForTurnOnMcp(System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
@@ -17841,11 +17809,7 @@ static Aw.Sindri.Core.Workflow.Engine.Runtime.Reruns.Action.get -> Aw.Sindri.Cor
 static Aw.Sindri.Core.Workflow.Engine.Runtime.Reruns.Of(Aw.Sindri.Core.Workflow.Engine.Runtime.InstanceView! view) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>!
 static Aw.Sindri.Core.Workflow.Views.DeskRecommendation.operator !=(Aw.Sindri.Core.Workflow.Views.DeskRecommendation? left, Aw.Sindri.Core.Workflow.Views.DeskRecommendation? right) -> bool
 static Aw.Sindri.Core.Workflow.Views.DeskRecommendation.operator ==(Aw.Sindri.Core.Workflow.Views.DeskRecommendation? left, Aw.Sindri.Core.Workflow.Views.DeskRecommendation? right) -> bool
-static Aw.Sindri.Core.Health.HealthSummary.For(bool running, Aw.Sindri.Core.Views.ViewsStatus! views, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Views.ServiceRow!>? services, Aw.Sindri.Core.Health.ProfileApproval profile, Aw.Sindri.Core.Health.HealthContext? context = null) -> Aw.Sindri.Core.Health.HealthReport!
-Aw.Sindri.Core.Health.ProfileApproval
-Aw.Sindri.Core.Health.ProfileApproval.Approved = 0 -> Aw.Sindri.Core.Health.ProfileApproval
-Aw.Sindri.Core.Health.ProfileApproval.Changed = 1 -> Aw.Sindri.Core.Health.ProfileApproval
-Aw.Sindri.Core.Health.ProfileApproval.NeedsApproval = 2 -> Aw.Sindri.Core.Health.ProfileApproval
+static Aw.Sindri.Core.Health.HealthSummary.For(bool running, Aw.Sindri.Core.Views.ViewsStatus! views, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Views.ServiceRow!>? services, Aw.Sindri.Core.Health.HealthContext? context = null) -> Aw.Sindri.Core.Health.HealthReport!
 Aw.Sindri.Core.Health.ICodeIndexHealth
 Aw.Sindri.Core.Health.ICodeIndexHealth.Problems(Aw.Sindri.Core.Profile.LoadedProfile? approved, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Health.HealthProblem!>!>
 Aw.Sindri.Core.Workflow.Engine.Effects.LinkedPhaseReports
@@ -23632,7 +23596,6 @@ static readonly Aw.Sindri.Core.SindriErrors.LinearNothingStored -> Aw.Kernel.Err
 static readonly Aw.Sindri.Core.SindriErrors.LinearTeamNotPicked -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.LinearNoAnswer -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.LinearNoKeychain -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.LinearUrlNotApproved -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.LinearWriteKeySameAsRead -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Reviews.IFixTaskFiles
 Aw.Sindri.Core.Reviews.IFixTaskFiles.Add(string! head, Aw.Sindri.Core.Ids.ItemId item, int pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
@@ -24509,9 +24472,6 @@ Aw.Sindri.Core.Secrets.ILinearWriteTokenWriter
 Aw.Sindri.Core.Secrets.ILinearWriteTokenWriter.RemoveWriteToken(string! source) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearWriteTokenWriter.SetWriteToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ISecretWriter.StoreInKeychain(string! service, string! account, string! secret) -> Aw.Kernel.Result<Aw.Sindri.Core.Secrets.SecretPointer!>!
-Aw.Sindri.Core.Profile.ProfileChangeApproval
-Aw.Sindri.Core.Profile.ProfileChangeApproval.ProfileChangeApproval(Aw.Sindri.Core.Profile.IApprovals! approvals, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Lease.HeldLease! held) -> void
-Aw.Sindri.Core.Profile.ProfileChangeApproval.Settle(Aw.Sindri.Core.Profile.LoadedProfile! live, System.Func<Aw.Sindri.Core.Profile.LoadedProfile!, bool>! isOnlyChange, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Sindri.Core.Secrets.ISecretWriter.DeleteFromKeychain(string! service, string! account) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
 Aw.Sindri.Core.Linear.ILinearCheckStore
 Aw.Sindri.Core.Linear.ILinearCheckStore.ClearWrite(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
@@ -26001,6 +25961,23 @@ Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckRemoveWriteToken(string! sou
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetTeams(string! source, System.Collections.Generic.IReadOnlyList<string!>! teams) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Secrets.ILinearProfileEditCheck.CheckSetWriteToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
+Aw.Sindri.Core.Events.ProfileApprovalsRemoved
+Aw.Sindri.Core.Events.ProfileApprovalsRemoved.<Clone>$() -> Aw.Sindri.Core.Events.ProfileApprovalsRemoved!
+Aw.Sindri.Core.Events.ProfileApprovalsRemoved.Deconstruct(out string! Directory) -> void
+Aw.Sindri.Core.Events.ProfileApprovalsRemoved.Directory.get -> string!
+Aw.Sindri.Core.Events.ProfileApprovalsRemoved.Directory.init -> void
+Aw.Sindri.Core.Events.ProfileApprovalsRemoved.Equals(Aw.Sindri.Core.Events.ProfileApprovalsRemoved? other) -> bool
+Aw.Sindri.Core.Events.ProfileApprovalsRemoved.ProfileApprovalsRemoved(string! Directory) -> void
+Aw.Sindri.Core.Setup.McpEvents.ConsentGiven(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
+Aw.Sindri.Core.Setup.ProfilePresence.Present = 1 -> Aw.Sindri.Core.Setup.ProfilePresence
+const Aw.Sindri.Core.Events.EventTypes.ProfileApprovalsRemoved = "profile.approvals.removed" -> string!
+override Aw.Sindri.Core.Events.ProfileApprovalsRemoved.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ProfileApprovalsRemoved.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ProfileApprovalsRemoved.ToString() -> string!
+static Aw.Sindri.Core.Doctor.DoctorRules.Profile(Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile!>! live) -> Aw.Sindri.Core.Doctor.DoctorCheck!
+static Aw.Sindri.Core.Events.ProfileApprovalsRemoved.operator !=(Aw.Sindri.Core.Events.ProfileApprovalsRemoved? left, Aw.Sindri.Core.Events.ProfileApprovalsRemoved? right) -> bool
+static Aw.Sindri.Core.Events.ProfileApprovalsRemoved.operator ==(Aw.Sindri.Core.Events.ProfileApprovalsRemoved? left, Aw.Sindri.Core.Events.ProfileApprovalsRemoved? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.RouteRemoved -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Memory.FactSelector
 Aw.Sindri.Core.Memory.FactSelector.<Clone>$() -> Aw.Sindri.Core.Memory.FactSelector!
 Aw.Sindri.Core.Memory.FactSelector.Deconstruct(out string? Key, out string? Tag, out System.DateTimeOffset? ExpiredAt) -> void
@@ -26863,6 +26840,10 @@ Aw.Sindri.Core.Graph.Blocks.PromptBlock.CheckConfig(System.Text.Json.Nodes.JsonO
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.MarkTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.DateTimeOffset tick, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LastTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 static Aw.Sindri.Core.Graph.Runs.WorkflowRun.TriggerProblem(string! trigger) -> string?
+Aw.Sindri.Core.Profile.IOldApprovalsCleanup
+Aw.Sindri.Core.Profile.IOldApprovalsCleanup.Run(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Profile.IProfileCache
+Aw.Sindri.Core.Profile.IProfileCache.Invalidate() -> void
 Aw.Sindri.Core.Connections.ConnectionEvents
 Aw.Sindri.Core.Connections.ConnectionEvents.ConnectionEvents(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.TimeProvider! clock) -> void
 Aw.Sindri.Core.Connections.ConnectionEvents.Now.get -> System.DateTimeOffset

@@ -93,22 +93,7 @@ public sealed class ShellSetupTests
 
         shell.Setup.Continue();
 
-        Assert.Equal((PageId.Settings, "profile"), (shell.CurrentPage, at));
-    }, Token);
-
-    [Fact]
-    public Task The_profile_button_stays_in_the_app_under_Homes_decisions_filter() => UiThread.Run(async () =>
-    {
-        _server.Catalog = SetupFixture.CatalogAnswer("extra-approve-all-ready", "ApproveProfile");   // listed cli-only: the row has no Approve button of its own, the app opens the Needs you row
-        _server.SetupAnswer = SetupFixture.Answer("profile-needs-approval");
-        _server.NeedsYouView = RouteAnswer.Api("needs-you", "fixture");
-        var shell = await Connected();
-        await ShellWait.Until(shell, () => shell.Setup.Steps.Single(s => s.Id == "profile").Action?.IsInApp == true, Token);
-
-        _ = shell.PressKey("G");
-        _ = shell.PressKey("D");   // the Decisions filter trims the rows Home lists, not what Needs you holds
-
-        Assert.True(shell.Setup.Steps.Single(s => s.Id == "profile").Action?.IsInApp);
+        Assert.Equal((PageId.Settings, "mcp"), (shell.CurrentPage, at));
     }, Token);
 
     [Fact]

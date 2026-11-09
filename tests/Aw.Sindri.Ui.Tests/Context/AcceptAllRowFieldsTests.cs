@@ -18,7 +18,7 @@ public sealed class AcceptAllRowFieldsTests
 
     private static async Task<(AddSeveralPagesViewModel Sheet, FakePageWrites Writes)> Opened()
     {
-        var writes = new FakePageWrites { Profile = new ProfileWaiting("live-1", [], "file-1") };
+        var writes = new FakePageWrites { Profile = new ProfileHashes("live-1", "file-1") };
         writes.Add(Key, new PageDraft(Id: null, "Week", "web", Key, Owner: false,
             [new PageActionDraft(Id: null, "Submit", "action:Week.submit", ["approval"]), new PageActionDraft(Id: null, "Copy", "action:Week.copy", ["billing"])]));
         var sheet = AddSeveralPagesViewModel.AcceptAll(writes, concept: null, [Key], _known);

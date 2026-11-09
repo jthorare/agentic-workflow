@@ -3,23 +3,23 @@
     {
       "group": "waitingOnYou",
       "items": [],
-      "empty": "Rebuilding views (cursor 9 of 9)…"
+      "empty": "Rebuilding views (cursor 5 of 5)…"
     },
     {
       "group": "withYou",
       "items": [],
-      "empty": "Rebuilding views (cursor 9 of 9)…"
+      "empty": "Rebuilding views (cursor 5 of 5)…"
     },
     {
       "group": "running",
       "items": [],
-      "empty": "Rebuilding views (cursor 9 of 9)…"
+      "empty": "Rebuilding views (cursor 5 of 5)…"
     },
     {
       "group": "queued",
       "items": [
         {
-          "id": "ITM-0000000000000000000000000000000f",
+          "id": "ITM-00000000000000000000000000000006",
           "title": "Item 1",
           "repo": "demo",
           "state": "new",
@@ -33,7 +33,7 @@
           "owner": null
         },
         {
-          "id": "ITM-00000000000000000000000000000014",
+          "id": "ITM-0000000000000000000000000000000b",
           "title": "Item 2",
           "repo": "demo",
           "state": "new",
@@ -47,13 +47,13 @@
           "owner": null
         }
       ],
-      "empty": "Rebuilding views (cursor 9 of 9)…"
+      "empty": "Rebuilding views (cursor 5 of 5)…"
     }
   ],
-  "empty": "Rebuilding views (cursor 9 of 9)…",
+  "empty": "Rebuilding views (cursor 5 of 5)…",
   "asOf": {
-    "cursor": 9,
-    "ledgerHead": 9,
+    "cursor": 5,
+    "ledgerHead": 5,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": true,
     "stalled": false

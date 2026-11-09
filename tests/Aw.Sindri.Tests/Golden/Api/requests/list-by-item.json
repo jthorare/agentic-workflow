@@ -1,21 +1,21 @@
 {
   "requests": [
     {
-      "id": "REQ-00000000000000000000000000000016",
+      "id": "REQ-0000000000000000000000000000000d",
       "kind": "rescope",
-      "item": "ITM-0000000000000000000000000000000f",
+      "item": "ITM-00000000000000000000000000000006",
       "repo": "demo",
       "text": "About the item.",
       "actor": "session:cli",
       "state": "open",
-      "decisionId": "DEC-00000000000000000000000000000017",
+      "decisionId": "DEC-0000000000000000000000000000000e",
       "filedAt": "2026-01-01T00:00:00.0000000Z"
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 11,
-    "ledgerHead": 11,
+    "cursor": 7,
+    "ledgerHead": 7,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

@@ -19,7 +19,7 @@ public sealed class ShellItemsTests
 {
     private readonly InMemoryEndpointRecords _records = new();
     // P3 serves no waitingOnYou rows; the P4 extra adds the needs-decision row (a pending Decide) these behaviours need.
-    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting"), NeedsYouView = RouteAnswer.Api("needs-you", "empty") };
+    private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), QueueView = RouteAnswer.SpecShaped("queue", "extra-p4-waiting"), NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-nothing") };
     private readonly FakeTimeProvider _clock = new(A.Noon);
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;

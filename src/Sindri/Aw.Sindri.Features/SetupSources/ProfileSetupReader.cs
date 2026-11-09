@@ -6,13 +6,12 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Features.SetupSources;
 
 /// <summary>
-/// What the setup list reads of the profile: the repos the live file names, and where it stands against its approval (a missing file is "no profile", a file with a mistake
-/// is an error the list shows as that step's failure). The live file is judged as `sindri status` judges it, against the approved hash.
+/// What the setup list reads of the profile: the repos the live file names, and whether it is there (a missing file is "no profile", a file with a mistake
+/// is an error the list shows as that step's failure).
 /// </summary>
 /// <param name="live">The live profile file.</param>
-/// <param name="approvals">The approved profile.</param>
 /// <param name="git">The repos' git facts, kept 30 seconds, so reading the list runs no git per request.</param>
-internal sealed class ProfileSetupReader(IProfileSource live, IApprovedProfile approvals, RepoGitCache git)
+internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git)
 {
     internal async ValueTask<Result<RepoFact>> Repos(CancellationToken cancellationToken)
     {
@@ -44,26 +43,13 @@ internal sealed class ProfileSetupReader(IProfileSource live, IApprovedProfile a
 
     internal async ValueTask<Result<ProfileFact>> Presence(CancellationToken cancellationToken)
     {
-        var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
-        if (approved.IsError)
-        {
-            return approved.Error;
-        }
-
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
         if (loaded.IsError)
         {
-            // like status: a live file that doesn't load is judged by the saved approval; a file with a mistake is the step's failure
-            return loaded.Error.Code != SindriErrors.ProfileMissing.Code ? loaded.Error : new ProfileFact(approved.Value is null ? ProfilePresence.Missing : ProfilePresence.Approved);
+            // a missing file is "no profile"; a file with a mistake is the step's failure
+            return loaded.Error.Code != SindriErrors.ProfileMissing.Code ? loaded.Error : new ProfileFact(ProfilePresence.Missing);
         }
 
-        var preview = ProfilePreview.Lines(loaded.Value.Profile);
-        if (approved.Value is not { } saved)
-        {
-            return new ProfileFact(ProfilePresence.Unapproved) { Preview = preview };
-        }
-
-        var same = string.Equals(saved.Hash.Value, loaded.Value.Hash.Value, StringComparison.Ordinal);
-        return new ProfileFact(same ? ProfilePresence.Approved : ProfilePresence.Drifted) { Preview = preview };
+        return new ProfileFact(ProfilePresence.Present) { Preview = ProfilePreview.Lines(loaded.Value.Profile) };
     }
 }

@@ -12,7 +12,7 @@ namespace Aw.Sindri.Features.Scoping;
 /// <summary>
 /// 'step.scope.read-change', on the block runtime (scoping spec §4, §8.2): reads the PR or branch the scope input names from the item's repo checkout through the change port
 /// (<see cref="IChangeSource"/>: the diff against the merge base at most 2 MiB with hunks under denied paths dropped, the commit messages and the PR body), scrubs its text, asks the
-/// context engine's text shape for the anchors, then runs <c language="text">ScopingSteps.ReadChange</c>'s code. An item with no repo in the approved profile has no checkout to read from, so the Step fails.
+/// context engine's text shape for the anchors, then runs <c language="text">ScopingSteps.ReadChange</c>'s code. An item with no repo in the profile has no checkout to read from, so the Step fails.
 /// </summary>
 /// <param name="changes">The change port.</param>
 /// <param name="checkouts">Where the repo's checkout is.</param>
@@ -36,7 +36,7 @@ internal sealed class ScopeReadChangeStep(IChangeSource changes, IRepoCheckouts 
 
         if (context.Repo is not { } repo)
         {
-            return SindriErrors.InvalidInput.With("the item has no repo, so there is no checkout to read the change from (fix: add the repo to the profile and approve it)");
+            return SindriErrors.InvalidInput.With("the item has no repo, so there is no checkout to read the change from (fix: add the repo to the profile)");
         }
 
         var root = await checkouts.Of(repo, cancellationToken).ConfigureAwait(false);

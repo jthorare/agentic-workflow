@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.Commands;
 internal sealed class RoutedApi : HttpMessageHandler
 {
     internal static readonly GetStatusResponse StatusAtHead7 = new(Running: true, Pid: 42, Epoch: 3, LeaseExpiresAt: null,
-        new ProfileStatus(Approved: null, Live: null, ChangedSinceApproval: false, Problem: null, Source: null, NeedsApproval: false), [])
+        new ProfileStatus(Live: null, Problem: null, Source: null), [])
     {
         ApiVersion = 1,
         Views = new ViewsStatus(Cursor: 3, LedgerHead: 7, ProjectedAt: KnownInstants.Epoch, Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null),

@@ -12,7 +12,7 @@
 #            its CLI's real usage-limit answer while <home>/model-limit/limited-<harness> exists (both do at first), and otherwise a well-formed
 #            answer (labels "Fake feature <id>", cleanup keeps all, no decisions). Every call is one line in <home>/model-limit/calls.log.
 #         3. scripts/context-first-run.sh up --stop-after 5 on that home and port, with `context.models.default.harnesses: [claude-code, codex]`
-#            in the profile: preflight, profile, the approval stop (exit 3: approve, then run `up` again), serve, the first code index build.
+#            in the profile: preflight, profile, serve, the first code index build.
 #         4. `sindri context map refresh --detach --json`, then `sindri jobs show <job> --json` until the job is waiting on model-limit.
 #         5. The Sindri app on the scratch home, and what to look for on its Jobs page.
 # resume  claude-code comes back (codex stays limited), the job is resumed (by you in the app, or `sindri jobs resume <job>` with --cli),
@@ -32,7 +32,7 @@
 #   MODEL_LIMIT_JOB_TIMEOUT      seconds `resume` waits for the job to end; default 1800
 #   SINDRI, AW_SINDRI_UI, FIRST_RUN_REPO_PATH, FIRST_RUN_REPO_NAME   as for scripts/context-first-run.sh
 #
-# Exit: 0 ok; 1 a step failed (the message names it); 2 usage or a refused setup; 3 stopped for you to approve the profile.
+# Exit: 0 ok; 1 a step failed (the message names it); 2 usage or a refused setup; 3 stopped for you to approve a recipe.
 # Covers steps 1 and 2 of #2112. Step 3 (a source sync's decisions) needs a record feed with a real token and step 4 a Jev key: those stay
 # the owner's run on the real box. Bash 3.2 compatible (macOS /bin/bash).
 set -uo pipefail
@@ -202,7 +202,7 @@ make_home() {
 }
 
 setup() {
-  step "context-first-run.sh up --stop-after 5 on the scratch home (profile, approval, serve, code index), PATH=$fakes:\$PATH so serve finds the fakes"
+  step "context-first-run.sh up --stop-after 5 on the scratch home (profile, serve, code index), PATH=$fakes:\$PATH so serve finds the fakes"
   local extra
   extra="$(printf '  models:\n    default: { harnesses: [claude-code, codex] }')"
   if [ "$dry" = 1 ]; then echo "  (FIRST_RUN_CONTEXT_EXTRA adds to the profile's context: section:)"; printf '%s\n' "$extra" | sed 's/^/    | /'; fi

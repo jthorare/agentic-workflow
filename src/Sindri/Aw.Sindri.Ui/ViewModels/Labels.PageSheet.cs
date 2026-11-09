@@ -5,9 +5,6 @@ namespace Aw.Sindri.Ui.ViewModels;
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the page sheet (pages spec §3.6, §5).</summary>
 internal static partial class Labels
 {
-    /// <summary>The mark of a page named in the profile and not approved yet.</summary>
-    internal const string ContextPagesWaiting = "Waiting for approval";
-
     /// <summary>A suggested page's button.</summary>
     internal const string ContextPagesNameThis = "Name this page";
 
@@ -90,10 +87,7 @@ internal static partial class Labels
     /// <summary>A page with no map page behind it.</summary>
     internal const string PageSheetNoMapPage = "No map page: it is yours alone.";
 
-    /// <summary>The save button when only this page's change waits.</summary>
-    internal const string PageSheetSaveAndApprove = "Save and approve";
-
-    /// <summary>The save button when other changes wait, or the profile can't be read.</summary>
+    /// <summary>The save button.</summary>
     internal const string PageSheetSave = "Save";
 
     /// <summary>The save button while the write is in flight.</summary>

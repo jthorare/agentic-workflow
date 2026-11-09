@@ -15,18 +15,18 @@ internal sealed class RunDoctorService(
         var read = await lease.Read(cancellationToken).ConfigureAwait(false);
         var row = read.IsSuccess ? read.Value : null;
         var (views, head) = await ledger.Views(cancellationToken).ConfigureAwait(false);
-        var (live, saved, recorded) = await profile.Read(cancellationToken).ConfigureAwait(false);
+        var live = await profile.Read(cancellationToken).ConfigureAwait(false);
         var liveness = row is null ? HolderLiveness.Unknown : LeaseDecision.Liveness(row.Holder, probe.Self(), probe.Facts(row.Holder.Pid));
         DoctorCheck[] checks =
         [
             read.IsError ? new DoctorCheck("lease", CheckState.Fail, read.Error.Message, "check the ledger file") : DoctorRules.Lease(row, now, liveness),
             DoctorRules.Ledger(await ledger.Schema(cancellationToken).ConfigureAwait(false)),
             DoctorRules.Views(views, head),
-            DoctorRules.Profile(live, saved, recorded),
+            DoctorRules.Profile(live),
             DoctorRules.Api(await runtime.Api(cancellationToken).ConfigureAwait(false), row, now),
             DoctorRules.Temporal(await runtime.Temporal(cancellationToken).ConfigureAwait(false)),
             .. runtime.BuildChecks(),
-            .. await profile.Context(saved.IsSuccess ? saved.Value : null, cancellationToken).ConfigureAwait(false),
+            .. await profile.Context(live.IsSuccess ? live.Value : null, cancellationToken).ConfigureAwait(false),
         ];
         return new RunDoctorResponse(checks, DoctorRules.ExitCode(checks));
     }

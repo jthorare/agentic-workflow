@@ -35,8 +35,11 @@ public static class EventTypes
     /// <summary>The Step inputs of a run filled its injection plan: the sections' names, sizes and digests, never their text (Step inputs plan, S4).</summary>
     public const string WorkflowInjection = "workflow.injection";
 
-    /// <summary>A human approved a profile hash.</summary>
+    /// <summary>A human approved a profile hash (history: profile edits apply on save now, #2258 PR 1).</summary>
     public const string ProfileApproved = "profile.approved";
+
+    /// <summary>The first start without approvals removed the old approved-snapshot folder (#2258 PR 1).</summary>
+    public const string ProfileApprovalsRemoved = "profile.approvals.removed";
 
     /// <summary>A recipe was registered by hash (engine spec §4.1).</summary>
     public const string RecipeRegistered = "recipe.registered";

@@ -10,7 +10,7 @@ namespace Aw.Sindri.Core.NeedsYou;
 
 /// <summary>
 /// Folds the events that make the human's list into the 'needs_you' view (API spec §3.6, P4 plan Unit C): a filed request is a decision
-/// row until it is decided or its item is closed, a failed service run is a failure row until a run succeeds or an approved profile no
+/// row until it is decided or its item is closed, a failed service run is a failure row until a run succeeds or a profile no
 /// longer names the service, and a drifted live profile is a profile row until it reverts or is approved. Each row is stored as a
 /// <see cref="NeedsYouRowRecord"/>, keyed by the row's id; the pure rules are <see cref="NeedsYouRows"/> and <see cref="NeedsYouClearing"/>.
 /// </summary>
@@ -27,7 +27,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
 
     private static readonly HashSet<string> _handled = new(StringComparer.Ordinal)
     {
-        EventTypes.RequestFiled, EventTypes.DecisionRecorded, EventTypes.ItemStateChanged, EventTypes.ServiceRan, EventTypes.ProfileChecked, EventTypes.ProfileApproved,
+        EventTypes.RequestFiled, EventTypes.DecisionRecorded, EventTypes.ItemStateChanged, EventTypes.ServiceRan, EventTypes.ProfileChecked,
         EventTypes.WorkflowStarted, EventTypes.WorkflowTransition, EventTypes.WorkflowRefused, EventTypes.WorkflowNotified,
         EventTypes.ConnectionNeedsSignIn, EventTypes.ConnectionSignedIn,
         EventTypes.WorkflowNotify, EventTypes.WorkflowRunFinished, EventTypes.WorkflowRunCancelled,
@@ -47,7 +47,6 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
             EventTypes.ItemStateChanged => await Closed(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ServiceRan => await Ran(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileChecked => await Checked(recorded, rows, cancellationToken).ConfigureAwait(false),
-            EventTypes.ProfileApproved => await Approved(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ConnectionNeedsSignIn or EventTypes.ConnectionSignedIn => await ConnectionRow(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.WorkflowNotify => await Notified(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.WorkflowRunFinished or EventTypes.WorkflowRunCancelled => await RunEnded(recorded, rows, cancellationToken).ConfigureAwait(false),
@@ -171,14 +170,8 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
             return check.Error;
         }
 
-        var existing = await rows.Get<NeedsYouRowRecord>(ViewNames.NeedsYou, DriftKey, cancellationToken).ConfigureAwait(false);
-        if (existing.IsError)
-        {
-            return existing.Error;
-        }
-
         var profile = ProfileProjection.Fold(row: null, check.Value, recorded);
-        var drift = await Replace(rows, DriftKey, NeedsYouClearing.AfterCheck(existing.Value?.Row, profile, scrubber), recorded, cancellationToken).ConfigureAwait(false);
+        var drift = await rows.Delete(ViewNames.NeedsYou, DriftKey, cancellationToken).ConfigureAwait(false);   // #2258 PR 1: no drift row any more; drops one an older build stored
         if (drift.IsError)
         {
             return drift;
@@ -188,26 +181,6 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
         return failures.IsError
             ? failures.Error
             : await DeleteAll(rows, failures.Value.Where(r => !NeedsYouClearing.FailureStands(r.Row, profile, [.. BuiltIns.Select(static b => b.Name)])), cancellationToken).ConfigureAwait(false);
-    }
-
-    private async ValueTask<Result<Unit>> Approved(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
-    {
-        var approved = events.Payload<ProfileApproved>(recorded);
-        if (approved.IsError)
-        {
-            return approved.Error;
-        }
-
-        var drift = await rows.Get<NeedsYouRowRecord>(ViewNames.NeedsYou, DriftKey, cancellationToken).ConfigureAwait(false);
-        if (drift.IsError)
-        {
-            return drift.Error;
-        }
-
-        // Approving the hash the row names settles it without waiting for the next check.
-        return drift.Value is { } row && string.Equals(row.Row.Subject.Id.Value, approved.Value.Hash.Value, StringComparison.Ordinal)
-            ? await rows.Delete(ViewNames.NeedsYou, DriftKey, cancellationToken).ConfigureAwait(false)
-            : Unit.Value;
     }
 
     private static async ValueTask<Result<Unit>> Put(IViewRows rows, Result<NeedsYouRow> row, LedgerEvent recorded, CancellationToken cancellationToken) =>

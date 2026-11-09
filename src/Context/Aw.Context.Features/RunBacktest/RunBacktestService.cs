@@ -27,7 +27,7 @@ internal sealed class RunBacktestService(CorpusLoader corpus, SampleScorer score
         if (repos.IsError || scrubbers.IsError || repos.Value.Count == 0)
         {
             return repos.IsError ? repos.Error : scrubbers.IsError ? scrubbers.Error
-                : ContextErrors.SettingsInvalid.With("context.repos: the profile maps no repo to test against (fix: add a repo to the profile and approve it)");
+                : ContextErrors.SettingsInvalid.With("context.repos: the profile maps no repo to test against (fix: add a repo to the profile)");
         }
 
         var slot = await heavy.Take(request.Progress, cancellationToken).ConfigureAwait(false);

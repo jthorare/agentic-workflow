@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Context.Testing.Engine;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Events;
@@ -12,7 +11,6 @@ using Aw.Sindri.Core.Workflow.Engine.Instances;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Views;
-using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.Launching;
 using Aw.Sindri.Features.ListInstances;
@@ -122,13 +120,12 @@ public sealed class StalledAgentReadSideCheckTests
         var approved = SliceHarness.Profile("5s");
         h.Profiles.Live = approved;
         _ = await h.HoldLease();
-        _ = await new ApproveProfileService(h.Profiles, h.Profiles, h.Held, h.Store, h.Events, new ProfileChecks(FakeContextEngine.Instance, new FixedAgentCatalog())).Handle(new ApproveProfileRequest(approved.Hash, h.Confirm(approved.Hash)), Token);
         await _v.Item(repo: null);
         await _v.Request(A.FirstLaunchId);
         await _v.Start(A.FirstLaunchId, instance: _address, state: "draft", attempt: 1);
         await _v.End(SessionEndReason.Idle, A.FirstLaunchId);
         _v.Publish(stalledAt: null);   // no per-launch marker files, and the launch is no longer live: only the launches view remembers it
-        var service = new GetStatusService(h.Held, new ProfileReads(h.Profiles, h.Profiles), h.Store, h.Events, _v.Progress, new HealthServiceRows(_v.Views, []), new InMemorySessionSnapshot());
+        var service = new GetStatusService(h.Held, new ProfileReads(h.Profiles, h.Profiles), h.Store, _v.Progress, new HealthServiceRows(_v.Views, []), new InMemorySessionSnapshot());
 
         var health = (await service.Handle(new GetStatusRequest(), Token)).Value.Health!;
 

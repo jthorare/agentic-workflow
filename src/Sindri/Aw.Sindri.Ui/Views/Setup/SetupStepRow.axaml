@@ -66,9 +66,6 @@
       <Panel IsVisible="{Binding Repo, Converter={x:Static ObjectConverters.IsNotNull}}">
         <sw:SetupRepoForm x:Name="SetupStepRepoForm" DataContext="{Binding Repo}" />
       </Panel>
-      <Panel IsVisible="{Binding ShowsProfile}">
-        <sw:SetupProfileConfirmView x:Name="SetupStepProfileConfirm" DataContext="{Binding Profile}" />
-      </Panel>
       <Border x:Name="SetupStepNote" IsVisible="{Binding HasNote}" AutomationProperties.Name="{Binding Note}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption subtle" Text="{Binding Note}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>

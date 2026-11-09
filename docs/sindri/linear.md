@@ -56,7 +56,6 @@ At your own terminal:
 
 ```bash
 $SINDRI index connect linear
-$SINDRI profile approve
 ```
 
 It asks for the key once (not shown) and checks it can read every team in `teams` (with no team listed, at least one)
@@ -71,8 +70,7 @@ To point at a key you stored yourself instead, write the pointer by hand: `keych
 pointer is refused (`SND-CONTEXT-002`) without repeating it; rotate a key that was ever written into a profile.
 
 ```bash
-$SINDRI profile validate          # prints the profile's hash; exit 1 means valid but not approved yet
-$SINDRI profile approve <hash>    # type the challenge it shows
+$SINDRI profile validate          # prints the profile's hash; exit 0 means valid (edits apply on save)
 ```
 
 Validate checks the pointer's scheme and the url; it does not resolve the pointer. Doctor does.

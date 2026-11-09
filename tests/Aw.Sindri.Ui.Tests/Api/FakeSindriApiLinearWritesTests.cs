@@ -59,7 +59,7 @@ public sealed class FakeSindriApiLinearWritesTests
         var saved = await fake.LinearConnect(_api, "read", "k", ["ENG"], Token);
         var removed = await fake.LinearDisconnectWrite(_api, Token);
 
-        Assert.Equal((2, 2, true, true), (connection.Value.Teams.Count, teams.Value.Teams.Count, saved.Value.Approved, removed.Value.Removed));
+        Assert.Equal((2, 2, true, true), (connection.Value.Teams.Count, teams.Value.Teams.Count, saved.Value.Saved, removed.Value.Removed));
         Assert.Equal(["k"], fake.LinearTeamKeys, StringComparer.Ordinal);
         Assert.Equal(new LinearConnectBody("read", "k", ["ENG"]).Kind, Assert.Single(fake.LinearConnects).Kind);
         Assert.Equal(1, fake.LinearDisconnects);

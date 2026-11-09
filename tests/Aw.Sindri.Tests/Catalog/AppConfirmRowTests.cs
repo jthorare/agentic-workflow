@@ -8,10 +8,10 @@ using Table = Aw.Sindri.Core.Commands.Authorization;
 
 namespace Aw.Sindri.Tests.Catalog;
 
-/// <summary>The three rows the app confirms (setup-once spec §4 item 7, §7.4), after owner decision q93: no row carries the flag or a confirm value, and the table lets the app, the terminal and a session run them.</summary>
+/// <summary>The rows the app confirms (the profile one went with the approval) (setup-once spec §4 item 7, §7.4), after owner decision q93: no row carries the flag or a confirm value, and the table lets the app, the terminal and a session run them.</summary>
 public sealed class AppConfirmRowTests
 {
-    private static readonly string[] _formerlyConfirmable = ["ApproveProfile", "ApproveRecipe", "ApproveAllRecipes"];
+    private static readonly string[] _formerlyConfirmable = ["ApproveRecipe", "ApproveAllRecipes"];
 
     private static IReadOnlyList<CommandRow> Rows { get; } = new CommandCatalog().Rows;
 
@@ -30,7 +30,7 @@ public sealed class AppConfirmRowTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_three_former_rows_are_ready_in_the_app() =>
+    public void The_two_former_rows_are_ready_in_the_app() =>
         Assert.All(_formerlyConfirmable, a => Assert.Equal("ready", Assert.Single(Rows, r => r.Action.Value == a).Ui));
 
     [Fact, Trait("Lane", "unit")]
@@ -43,7 +43,6 @@ public sealed class AppConfirmRowTests
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("ApproveProfile")]
     [InlineData("ApproveRecipe")]
     [InlineData("ApproveAllRecipes")]
     public void The_app_the_terminal_and_a_session_pass_and_no_caller_is_refused(string action)

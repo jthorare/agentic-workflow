@@ -26,11 +26,11 @@ public sealed class SetupServedStatesTests
     }
 
     [Fact]
-    public async Task A_profile_that_waits_for_approval_needs_you_and_its_row_is_open()
+    public async Task A_saved_profile_is_done_with_its_row_closed_and_no_button()
     {
         var profile = await StepOf("profile-needs-approval", "profile");
 
-        Assert.Equal(("Needs you", true), (profile.ChipWord, profile.IsOpen));
+        Assert.Equal(("Done", false, false), (profile.ChipWord, profile.IsOpen, profile.HasAction));
     }
 
 

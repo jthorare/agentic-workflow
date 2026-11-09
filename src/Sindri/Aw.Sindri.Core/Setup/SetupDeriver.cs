@@ -21,7 +21,7 @@ public sealed class SetupDeriver(ISetupFacts facts, Action<string, Exception>? s
         var mcp = await Read("mcp", facts.Mcp, cancellationToken).ConfigureAwait(false);
         var map = await Read("map", facts.Map, cancellationToken).ConfigureAwait(false);
         var sources = await Read("sources", facts.Sources, cancellationToken).ConfigureAwait(false);
-        var profileApproved = profile.IsSuccess && profile.Value.Presence is ProfilePresence.Approved or ProfilePresence.Drifted;
+        var profileApproved = profile.IsSuccess && profile.Value.Presence is ProfilePresence.Present;
         return
         [
             Step(SetupStepId.Repo, repo, SetupSteps.Repo),

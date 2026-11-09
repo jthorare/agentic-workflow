@@ -149,7 +149,7 @@ public sealed class IndexSliceTests
         var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
 
         Assert.True(view.IsError);
-        Assert.Equal(SindriErrors.ProfileNotApproved.Code, view.Error.Code);
+        Assert.Equal(SindriErrors.ProfileMissing.Code, view.Error.Code);
     }
 
     [Fact, Trait("Lane", "unit")]

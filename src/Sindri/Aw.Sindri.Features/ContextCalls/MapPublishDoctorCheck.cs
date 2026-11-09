@@ -21,7 +21,7 @@ internal sealed class MapPublishDoctorCheck(MapPublishStatusReader publish, Time
     {
         if (ScopeOf(approved) is not { } scope)
         {
-            return new DoctorCheck(PublishName, CheckState.Ok, "no approved profile, so no map to publish", Fix: null);
+            return new DoctorCheck(PublishName, CheckState.Ok, "no profile, so no map to publish", Fix: null);
         }
 
         var status = await publish.Read(scope, cancellationToken).ConfigureAwait(false);
@@ -48,7 +48,7 @@ internal sealed class MapPublishDoctorCheck(MapPublishStatusReader publish, Time
 
     private static string FirstLine(MapPublishStatusView view) => view.Lines.Count > 0 ? view.Lines[0] : view.Word;
 
-    // The approved profile's scope as a service reads it (the deny globs apply); null while no profile is approved.
+    // The profile's scope as a service reads it (the deny globs apply); null while no profile yet.
     private static ContextScope? ScopeOf(LoadedProfile? approved) => approved is null
         ? null
         : new ContextScope(approved.Profile.Context, ScopeRules.Usable(ContextScopes.Entries(approved.Profile)), new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service));

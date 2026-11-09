@@ -11,7 +11,7 @@ using Aw.Sindri.Tests.Workflow.Blocks.Contracts;
 
 namespace Aw.Sindri.Tests.Workflow.Blocks.Input;
 
-/// <summary>A Step input's '{ profile: key }' argument is resolved inside the fill against the approved profile (#399); a key no input can read fails the fill with SND-WF-021, and no approved profile is an unavailable section (SND-PROFILE-005).</summary>
+/// <summary>A Step input's '{ profile: key }' argument is resolved inside the fill against the approved profile (#399); a key no input can read fails the fill with SND-WF-021, and no approved profile is an unavailable section (SND-PROFILE-001).</summary>
 [Lane(TestLane.Unit)]
 public sealed class ContextInputProfileTests
 {
@@ -83,14 +83,14 @@ public sealed class ContextInputProfileTests
     }
 
     [Fact]
-    public async Task No_approved_profile_is_an_unavailable_section_naming_SND_PROFILE_005()
+    public async Task No_profile_is_an_unavailable_section_naming_SND_PROFILE_001()
     {
         var history = new ContextHistoryInputTests.StubHistory(() => ContextHistoryTextTests.View());
 
         var filled = await Input(history, profile: null).Fill(Context(), TestContext.Current.CancellationToken);
 
         Assert.False(filled.IsError);
-        Assert.Contains("SND-PROFILE-005", filled.Value.Sections["history"], StringComparison.Ordinal);
+        Assert.Contains("SND-PROFILE-001", filled.Value.Sections["history"], StringComparison.Ordinal);
         Assert.Empty(history.Calls);
     }
 }

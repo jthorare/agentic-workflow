@@ -109,17 +109,6 @@ public sealed class HealthViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task A_pending_profile_fix_says_what_needs_you_even_when_health_is_healthy()
-    {
-        _records.Write(A.Record());
-        _server.Current = A.Status(profile: A.ChangedProfile()) with { Health = new HealthView("healthy", []) };
-        Start();
-
-        await Eventually(() => _vm.HasProfileFix, "profile fix");
-        await Eventually(() => _vm.Sentence == "The profile needs your approval.", "the sentence");
-    }
-
-    [Fact]
     public async Task A_degraded_service_names_what_needs_a_look()
     {
         _records.Write(A.Record());
@@ -231,9 +220,8 @@ public sealed class HealthViewModelTests : IDisposable
         await Eventually(() => _vm.Headline == "Running", "headline");
         Assert.True(_vm.IsRunning);
         Assert.Equal("pid 4242 · epoch 7", _vm.Lease);
-        Assert.Equal("approved", _vm.ProfileState);
+        Assert.Equal("live", _vm.ProfileState);
         Assert.Equal("hash ab12cd · /home/profile.yaml", _vm.ProfileDetail);
-        Assert.Equal("", _vm.ProfileFix);
         Assert.Equal([new ServiceRow("heartbeat", "every 5s", "last run " + Local(A.Noon))], _vm.Services);
         Assert.Equal("127.0.0.1:7410", _vm.Api);
     }
@@ -242,11 +230,11 @@ public sealed class HealthViewModelTests : IDisposable
     public async Task The_health_line_words_the_status_in_4_8s_order()
     {
         _records.Write(A.Record());
-        _server.Current = A.Status(profile: A.ChangedProfile(), services: [A.Heartbeat(), A.Heartbeat()]) with { ApiVersion = 1 };
+        _server.Current = A.Status(profile: A.Live(), services: [A.Heartbeat(), A.Heartbeat()]) with { ApiVersion = 1 };
         Start();
 
         await Eventually(() => _vm.Headline == "Running", "headline");
-        Assert.Equal("Running · pid 4242 · epoch 7 · API v1 · 2 services · profile changed since approval", _vm.HealthLine);
+        Assert.Equal("Running · pid 4242 · epoch 7 · API v1 · 2 services · profile live", _vm.HealthLine);
     }
 
     [Fact]
@@ -256,7 +244,7 @@ public sealed class HealthViewModelTests : IDisposable
         Start();
 
         await Eventually(() => _vm.Headline == "Running", "headline");
-        Assert.Equal("Running · pid 4242 · epoch 7 · 1 service · profile approved", _vm.HealthLine);
+        Assert.Equal("Running · pid 4242 · epoch 7 · 1 service · profile live", _vm.HealthLine);
     }
 
     [Fact]
@@ -266,41 +254,6 @@ public sealed class HealthViewModelTests : IDisposable
 
         await Eventually(() => _vm.Headline == "Not running", "headline");
         Assert.Equal("Not running", _vm.HealthLine);
-    }
-
-    [Fact]
-    public async Task A_profile_changed_since_approval_names_the_approve_fix()
-    {
-        _records.Write(A.Record());
-        _server.Current = A.Status(profile: A.ChangedProfile());
-        Start();
-
-        await Eventually(() => _vm.ProfileState == "changed since approval", "profile state");
-        Assert.Equal("running with approved ab12cd; /home/profile.yaml is now ff00ee", _vm.ProfileDetail);
-        Assert.Equal("sindri profile approve", _vm.ProfileFix);
-    }
-
-    [Fact]
-    public async Task An_unapproved_profile_names_the_approve_fix()
-    {
-        _records.Write(A.Record());
-        _server.Current = A.Status(profile: A.Unapproved());
-        Start();
-
-        await Eventually(() => _vm.ProfileState == "not approved", "profile state");
-        Assert.Equal("sindri profile approve", _vm.ProfileFix);
-    }
-
-    [Fact]
-    public async Task The_approve_fix_follows_sindris_verdict_not_the_hashes()
-    {
-        _records.Write(A.Record());
-        _server.Current = A.Status(profile: A.Approved() with { NeedsApproval = true });
-        Start();
-
-        await Eventually(() => _vm.Headline == "Running", "running");
-        Assert.Equal("sindri profile approve", _vm.ProfileFix);
-        Assert.True(_vm.HasProfileFix);
     }
 
     [Fact]
@@ -518,26 +471,13 @@ public sealed class HealthViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task A_profile_sindri_says_needs_approval_never_reads_as_approved()
+    public async Task An_unreadable_live_profile_reads_unreadable_with_its_problem()
     {
         _records.Write(A.Record());
-        _server.Current = A.Status(profile: A.Approved() with { NeedsApproval = true });
-        Start();
-
-        await Eventually(() => _vm.Headline == "Running", "running");
-        Assert.Equal("needs approval", _vm.ProfileState);
-        Assert.Equal("sindri profile approve", _vm.ProfileFix);
-    }
-
-    [Fact]
-    public async Task An_unreadable_live_profile_offers_no_approve_fix_because_approving_it_cant_work()
-    {
-        _records.Write(A.Record());
-        _server.Current = A.Status(profile: new(Approved: null, Live: null, ChangedSinceApproval: false, Problem: "SND-PROFILE-002 bad key", Source: null, NeedsApproval: true));
+        _server.Current = A.Status(profile: new(Live: null, Problem: "SND-PROFILE-002 bad key", Source: null));
         Start();
 
         await Eventually(() => _vm.ProfileState == "unreadable", "profile state");
-        Assert.Equal("", _vm.ProfileFix);
         Assert.Equal("SND-PROFILE-002 bad key", _vm.ProfileDetail);
     }
 
@@ -642,7 +582,7 @@ public sealed class HealthViewModelTests : IDisposable
     public async Task The_health_strip_is_labelled_cells_in_the_health_lines_order()
     {
         _records.Write(A.Record());
-        _server.Current = A.Status(profile: A.ChangedProfile()) with { ApiVersion = 1 };
+        _server.Current = A.Status(profile: A.Live()) with { ApiVersion = 1 };
         Start();
 
         await Eventually(() => _vm.Headline == "Running", "headline");
@@ -652,7 +592,7 @@ public sealed class HealthViewModelTests : IDisposable
                 new HealthCell("Epoch · lease", "7 · held"),
                 new HealthCell("API", "v1"),
                 new HealthCell("Services", "1 service"),
-                new HealthCell("Profile", "changed since approval", StateGlyph.Profile),
+                new HealthCell("Profile", "live", StateGlyph.Ok),
             ],
             _vm.Detail.Strip);
     }
@@ -665,7 +605,7 @@ public sealed class HealthViewModelTests : IDisposable
 
         await Eventually(() => _vm.Headline == "Running", "headline");
         Assert.DoesNotContain(_vm.Detail.Strip, c => c.Label == "API");
-        Assert.Equal(new HealthCell("Profile", "approved", StateGlyph.Ok), _vm.Detail.Strip[^1]);
+        Assert.Equal(new HealthCell("Profile", "live", StateGlyph.Ok), _vm.Detail.Strip[^1]);
     }
 
     // I5 (§4.8): the Health page is label/value rows; times are local, and the home directory is ~.
@@ -675,7 +615,7 @@ public sealed class HealthViewModelTests : IDisposable
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var source = Path.Combine(home, ".sindri", "profile.yaml");
         _records.Write(A.Record());
-        _server.Current = A.Status(profile: A.ChangedProfile(source)) with { ApiVersion = 1 };
+        _server.Current = A.Status(profile: A.Live(source)) with { ApiVersion = 1 };
         Start();
 
         await Eventually(() => _vm.Headline == "Running", "headline");
@@ -686,11 +626,10 @@ public sealed class HealthViewModelTests : IDisposable
                 new HealthCell("API", "127.0.0.1:7410 · v1"),
             ],
             _vm.Detail.Process);
-        Assert.Equal(("changed since approval", StateGlyph.Profile), (_vm.Detail.ProfileHead, _vm.Detail.ProfileGlyph));
+        Assert.Equal(("live", StateGlyph.Ok), (_vm.Detail.ProfileHead, _vm.Detail.ProfileGlyph));
         Assert.Equal(
             [
-                new HealthCell("approved", "ab12cd"),
-                new HealthCell("live", "ff00ee"),
+                new HealthCell("live", "ab12cd"),
                 new HealthCell("file", "~/.sindri/profile.yaml", IsPath: true),
             ],
             _vm.Detail.Profile);
@@ -703,7 +642,7 @@ public sealed class HealthViewModelTests : IDisposable
     {
         var source = "/srv/agentic/workspaces/team-alpha/projects/sindri-control-plane/profiles/default/profile.yaml";
         _records.Write(A.Record());
-        _server.Current = A.Status(profile: A.ChangedProfile(source));
+        _server.Current = A.Status(profile: A.Live(source));
         Start();
 
         await Eventually(() => _vm.Headline == "Running", "headline");

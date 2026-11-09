@@ -17,12 +17,12 @@ internal sealed class PinSeveralFixtures
 
     private static readonly MapRebuildView _idle = new("idle", Progress: null, RetryAt: null, Stale: false, Failed: null);
 
-    internal PinSeveralFixtures(IReadOnlyList<PinView>? pins = null, params string[] waiting)
+    internal PinSeveralFixtures(IReadOnlyList<PinView>? pins = null)
     {
         Pins = pins ?? [];
         Api = new FakeSindriApi
         {
-            ProfileAnswer = Profile("h1", waiting),
+            ProfileAnswer = Profile("h1"),
             PinConceptsAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"accepted":{"commandId":"00000000-0000-0000-0000-000000000009","sequence":12},"jobId":"{{JobId}}"}"""),
             ContextPinsAnswer = _ => Served(new PinsView(1, "api", FileHash, "v1", Pins, _idle)),
             ContextPinSuggestAnswer = Suggest,
@@ -59,7 +59,7 @@ internal sealed class PinSeveralFixtures
     internal static ConceptTileViewModel Card(string id, string name) =>
         new(id, name, summary: string.Empty, new ConceptSize(1, 1, 1, 1), setByPerson: false, terms: null, _ => { });
 
-    internal static PinView Pin(string id, string name, params string[] aliases) => new(id, name, Summary: null, aliases, [], FolderRules: 0, SetIn: "profile", PinStates.Approved, Change: null);
+    internal static PinView Pin(string id, string name, params string[] aliases) => new(id, name, Summary: null, aliases, [], FolderRules: 0, SetIn: "profile", "approved", Change: null);
 
     internal static RouteAnswer Profile(string live, params string[] changed) =>
         new(HttpStatusCode.OK, $$"""{"approved":"h0","live":"{{live}}","changed":true,"changedPaths":[{{string.Join(',', changed.Select(c => $"\"{c}\""))}}]}""");
@@ -85,7 +85,7 @@ internal sealed class PinSeveralFixtures
     internal async Task<PinSeveralViewModel> Read(string list, Action? close = null)
     {
         var sheet = Sheet(close);
-        await sheet.StartAsync(Token);
+        sheet.Start();
         sheet.Text = list;
         await sheet.ReadListAsync(Token);
         return sheet;

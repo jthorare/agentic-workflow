@@ -56,6 +56,8 @@ public sealed class CodeIndexMainMoveServiceTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_repo_added_to_the_live_profile_only_is_built_on_the_next_tick_owner_q102_CIX_L59()
     {
+        await _rig.Approve(Ct);   // seeds the clock and the profile; the live edit below replaces it, so Run must not seed again
+        _grant = await _rig.Harness.HoldLease();
         var live = new SindriProfile(1, "thor", Repos: [new RepoEntry("demo", "/work/demo"), new RepoEntry("fresh", "/work/fresh")]);
         _rig.Harness.Profiles.Live = new LoadedProfile(live, ProfileHash.From(new string('a', 64)), "/home/profile.yaml");
         _ = _rig.Heads.With(CodeIndexJobsRig.Fresh, CodeIndexJobsRig.New, onDefaultBranch: true);

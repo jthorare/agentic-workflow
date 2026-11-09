@@ -58,24 +58,6 @@ public sealed class ActionCommandTests
     }
 
     [Fact]
-    public void An_optional_group_whose_placeholder_is_filled_loses_its_brackets()
-    {
-        var (cli, hint) = For("ApproveProfile", new NeedsYouSubject(NeedsYouKinds.Profile, "932d"), item: null);
-
-        Assert.Equal(CatalogCli("ApproveProfile").Replace("[<hash>]", "932d", StringComparison.Ordinal), cli);
-        Assert.Empty(hint);
-    }
-
-    [Fact]
-    public void An_optional_group_whose_placeholder_is_not_filled_is_shown_as_served()
-    {
-        var (cli, hint) = For("ApproveProfile", subject: null, item: null);
-
-        Assert.Equal(CatalogCli("ApproveProfile"), cli);
-        Assert.Empty(hint);
-    }
-
-    [Fact]
     public void The_hint_names_every_open_placeholder_once_in_the_order_they_appear()
     {
         var (_, hint) = For("Decide", subject: null, item: null);

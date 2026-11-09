@@ -45,7 +45,7 @@ internal sealed class IndexConnectVerbs(IServiceProvider services, Output output
 
         return await output.Text(
             $"slack connected: the token reads all {connected.Value.Channels.ToString(System.Globalization.CultureInfo.InvariantCulture)} listed channels and is stored at {connected.Value.Pointer}; the profile points to it.\n"
-            + "Run `sindri profile approve` to start using it.\n", 0).ConfigureAwait(false);
+            + "It is live now: edits apply on save.\n", 0).ConfigureAwait(false);
     }
 
     private async Task<int> Linear(CancellationToken ct)
@@ -66,7 +66,7 @@ internal sealed class IndexConnectVerbs(IServiceProvider services, Output output
 
         return await output.Text(
             $"linear connected: the key reads all {connected.Value.Teams.ToString(System.Globalization.CultureInfo.InvariantCulture)} checked teams and is stored at {connected.Value.Pointer}; the profile points to it{Listed(connected.Value.Added)}.\n"
-            + "Run `sindri profile approve` to start using it.\n", 0).ConfigureAwait(false);
+            + "It is live now: edits apply on save.\n", 0).ConfigureAwait(false);
     }
 
     private static string Listed(IReadOnlyList<string> added) =>
@@ -90,6 +90,6 @@ internal sealed class IndexConnectVerbs(IServiceProvider services, Output output
 
         return await output.Text(
             $"github connected: the token reads all {connected.Value.Repos.ToString(System.Globalization.CultureInfo.InvariantCulture)} listed repos and is stored at {connected.Value.Pointer}; the profile points to it.\n"
-            + "Run `sindri profile approve` to start using it.\n", 0).ConfigureAwait(false);
+            + "It is live now: edits apply on save.\n", 0).ConfigureAwait(false);
     }
 }

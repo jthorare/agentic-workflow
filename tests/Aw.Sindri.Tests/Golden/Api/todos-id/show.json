@@ -1,13 +1,13 @@
 {
   "asOf": {
-    "cursor": 8,
-    "ledgerHead": 8,
+    "cursor": 4,
+    "ledgerHead": 4,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
   },
   "todo": {
-    "id": "td_0000000000000000000000000h",
+    "id": "td_00000000000000000000000008",
     "text": "rotate the staging key",
     "due": "2025-12-31",
     "links": [

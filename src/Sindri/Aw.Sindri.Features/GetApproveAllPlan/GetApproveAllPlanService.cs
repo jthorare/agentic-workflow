@@ -5,8 +5,8 @@ using Aw.Sindri.Core.Workflow.ApproveAll;
 
 namespace Aw.Sindri.Features.GetApproveAllPlan;
 
-/// <summary>The approve-all plan (setup-once spec §5.3, §7.2): the engine's plan for the shipped recipes with the views' freshness, once a profile is approved.</summary>
-/// <param name="plans">Reads the engine's plan, refusing before a profile is approved.</param>
+/// <summary>The approve-all plan (setup-once spec §5.3, §7.2): the engine's plan for the shipped recipes with the views' freshness, once there is a profile.</summary>
+/// <param name="plans">Reads the engine's plan, refusing when there is no profile.</param>
 /// <param name="views">Where the views stand.</param>
 internal sealed class GetApproveAllPlanService(ApproveAllPlanReader plans, IProjectorStatus views) : IService<GetApproveAllPlanRequest, ApproveAllPlan>
 {

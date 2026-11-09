@@ -39,12 +39,12 @@ public abstract partial class SindriApiContract
     [Fact]
     public async Task Status_answers_the_lease_profile_and_services()
     {
-        var server = new FakeSindriApi { Current = A.Status(pid: 5, epoch: 2, A.ChangedProfile(), A.Heartbeat(A.Noon, "7s")) };
+        var server = new FakeSindriApi { Current = A.Status(pid: 5, epoch: 2, A.Live(), A.Heartbeat(A.Noon, "7s")) };
 
         var status = (await Reach(server).Status(_api, Token)).Value;
 
         Expect.Equal((5, 2L), (status.Pid, status.Epoch));
-        Expect.Equal(A.ChangedProfile(), status.Profile);
+        Expect.Equal(A.Live(), status.Profile);
         Expect.Sequence([A.Heartbeat(A.Noon, "7s")], status.Services);
     }
 
@@ -117,9 +117,9 @@ public abstract partial class SindriApiContract
     {
         var catalog = (await Reach(new FakeSindriApi()).Commands(_api, Token)).Value;
 
-        Expect.Equal(113, catalog.Rows.Count);
+        Expect.Equal(112, catalog.Rows.Count);
         Expect.Equal("ready", catalog.Rows.Single(r => r.Action == "RebuildViews").Ui);
-        Expect.Equal("sindri profile approve [<hash>]", catalog.Rows.Single(r => r.Action == "ApproveProfile").Cli);
+        Expect.True(catalog.Rows.All(r => r.Action != "ApproveProfile"));
     }
 
     // GET /sindri/services (API P2, spec-shaped): U1 reads the view's EmptyText sentence and its asOf.

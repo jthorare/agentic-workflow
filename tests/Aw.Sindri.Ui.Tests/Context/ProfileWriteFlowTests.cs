@@ -7,7 +7,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Context;
 
-/// <summary>The write-then-approve flow the page and pin sheets share (concept pins spec §3.6): the job's hash is approved only when the live profile is still that hash and nothing but the caller's paths waits.</summary>
+/// <summary>The write flow the page and pin sheets share (concept pins spec §3.6): a job that succeeded is applied, with no approval after it.</summary>
 [Lane(TestLane.Unit)]
 public sealed class ProfileWriteFlowTests
 {
@@ -15,15 +15,13 @@ public sealed class ProfileWriteFlowTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static bool Mine(string path) => path.EndsWith(".pages.schedule-week", StringComparison.Ordinal);
-
     private static ProfileWriteFlow Flow(FakeSindriApi api, TimeProvider? clock = null) => new(api, () => new Uri("http://127.0.0.1:1/"), clock ?? new FakeTimeProvider(A.Noon));
 
-    private static Task<ProfileWritten> Run(ProfileWriteFlow flow, FakeSindriApi api, bool approve = true) =>
-        flow.Run((url, token) => api.SetContextPages(url, new PagesSetBody(IfHash: "h0"), token), Mine, approve, Token);
+    private static Task<ProfileWritten> Run(ProfileWriteFlow flow, FakeSindriApi api) =>
+        flow.Run((url, token) => api.SetContextPages(url, new PagesSetBody(IfHash: "h0"), token), Token);
 
-    private static RouteAnswer Profile(string live, params string[] changed) =>
-        new(HttpStatusCode.OK, $$"""{"approved":"h0","live":"{{live}}","changed":true,"changedPaths":[{{string.Join(',', changed.Select(c => $"\"{c}\""))}}]}""");
+    private static RouteAnswer Profile(string live) =>
+        new(HttpStatusCode.OK, $$"""{"live":"{{live}}"}""");
 
     private static FakeSindriApi Server(RouteAnswer profile, string state = "succeeded", string? code = null, string? summary = null, string hash = "h1")
     {
@@ -42,84 +40,38 @@ public sealed class ProfileWriteFlowTests
     private static string Quoted(string? text) => text is null ? "null" : $"\"{text}\"";
 
     [Fact]
-    public async Task Approves_when_only_these_paths_wait()
+    public async Task A_succeeded_job_is_applied_with_the_jobs_hash_and_no_approval()
     {
-        var api = Server(Profile("h1", "index.pages.schedule-week"));
+        var api = Server(Profile("h7"), hash: "h7");
 
         var written = await Run(Flow(api), api);
 
-        Assert.Equal(ProfileWriteState.Approved, written.State);
+        Assert.Equal(ProfileWriteState.Applied, written.State);
+        Assert.Equal("h7", written.Hash);
         Assert.Equal("h0", Assert.Single(api.PagesSet).IfHash);
     }
 
     [Fact]
-    public async Task Approves_the_hash_the_write_job_returned()
+    public async Task A_job_result_with_no_hash_is_still_applied()
     {
-        var api = Server(Profile("h7", "index.pages.schedule-week"), hash: "h7");
+        var api = Server(Profile("h1"));
+        api.JobAnswers[JobId] = new RouteAnswer(HttpStatusCode.OK, Job("succeeded", code: null, summary: null, hash: "h1").Replace("\"hash\":\"h1\",", string.Empty, StringComparison.Ordinal));
 
         var written = await Run(Flow(api), api);
 
-        Assert.Equal(ProfileWriteState.Approved, written.State);
-        Assert.Equal("h7", Assert.Single(api.ProfileApprovals).Hash);
-    }
-
-    [Fact]
-    public async Task Leaves_it_waiting_when_another_change_waits()
-    {
-        var api = Server(Profile("h1", "index.pages.schedule-week", "index.concepts.approval"));
-
-        var written = await Run(Flow(api), api);
-
-        Assert.Equal(ProfileWriteState.Waiting, written.State);
-        Assert.Empty(api.ProfileApprovals);
-    }
-
-    [Fact]
-    public async Task Leaves_it_waiting_when_the_live_hash_moved_past_the_jobs()
-    {
-        var api = Server(Profile("h9", "index.pages.schedule-week"), hash: "h1");
-
-        var written = await Run(Flow(api), api);
-
-        Assert.Equal(ProfileWriteState.Waiting, written.State);
-        Assert.Empty(api.ProfileApprovals);
-    }
-
-    [Fact]
-    public async Task A_stale_approve_leaves_it_waiting()
-    {
-        var api = Server(Profile("h1", "index.pages.schedule-week"));
-        api.ApproveProfileAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-PROFILE-003", "The profile moved.");
-
-        var written = await Run(Flow(api), api);
-
-        Assert.Equal(ProfileWriteState.Waiting, written.State);
-    }
-
-    [Fact]
-    public async Task An_approve_that_errors_after_the_job_landed_leaves_it_waiting_with_the_jobs_hash()
-    {
-        var api = Server(Profile("h2", "index.pages.schedule-week"), hash: "h2");
-        api.ApproveProfileAnswer = RouteAnswer.Problem(HttpStatusCode.ServiceUnavailable, "SND-API-001", "The control plane is restarting.");
-
-        var written = await Run(Flow(api), api);
-
-        Assert.Equal(ProfileWriteState.Waiting, written.State);
-        Assert.Equal("h2", written.Hash);
-        Assert.Equal("SND-API-001", written.Code);
-        Assert.Equal("The control plane is restarting.", written.Message);
+        Assert.Equal(ProfileWriteState.Applied, written.State);
+        Assert.Null(written.Hash);
     }
 
     [Fact]
     public async Task A_failed_job_poll_is_still_running_not_failed()
     {
-        var api = Server(Profile("h1", "index.pages.schedule-week"));
+        var api = Server(Profile("h1"));
         api.JobAnswers[JobId] = RouteAnswer.Problem(HttpStatusCode.ServiceUnavailable, "SND-API-001", "The control plane is restarting.");
 
         var written = await Run(Flow(api), api);
 
         Assert.Equal(ProfileWriteFlow.TimedOut, written.Code);
-        Assert.Empty(api.ProfileApprovals);
     }
 
     [Fact]
@@ -130,30 +82,6 @@ public sealed class ProfileWriteFlowTests
         var written = await Run(Flow(api), api);
 
         Assert.Equal(ProfileWriteState.Clash, written.State);
-        Assert.Empty(api.ProfileApprovals);
-    }
-
-    [Fact]
-    public async Task Without_approve_it_never_approves()
-    {
-        var api = Server(Profile("h1", "index.pages.schedule-week"));
-
-        var written = await Run(Flow(api), api, approve: false);
-
-        Assert.Equal(ProfileWriteState.Waiting, written.State);
-        Assert.Empty(api.ProfileApprovals);
-    }
-
-    [Fact]
-    public async Task A_job_result_with_no_hash_leaves_it_waiting()
-    {
-        var api = Server(Profile("h1", "index.pages.schedule-week"));
-        api.JobAnswers[JobId] = new RouteAnswer(HttpStatusCode.OK, Job("succeeded", code: null, summary: null, hash: "h1").Replace("\"hash\":\"h1\",", string.Empty, StringComparison.Ordinal));
-
-        var written = await Run(Flow(api), api);
-
-        Assert.Equal(ProfileWriteState.Waiting, written.State);
-        Assert.Empty(api.ProfileApprovals);
     }
 
     [Fact]
@@ -166,7 +94,6 @@ public sealed class ProfileWriteFlowTests
 
         Assert.Equal(ProfileWriteState.Clash, written.State);
         Assert.Equal(0, api.JobCalls);
-        Assert.Empty(api.ProfileApprovals);
     }
 
     [Fact]
@@ -209,7 +136,7 @@ public sealed class ProfileWriteFlowTests
     public async Task A_job_that_runs_past_30_seconds_fails()
     {
         var clock = new FakeTimeProvider(A.Noon);
-        var api = Server(Profile("h1", "index.pages.schedule-week"), state: "running");
+        var api = Server(Profile("h1"), state: "running");
         var run = Run(Flow(api, clock), api);
 
         while (!run.IsCompleted)
@@ -220,7 +147,6 @@ public sealed class ProfileWriteFlowTests
 
         var written = await run;
         Assert.Equal(ProfileWriteState.Failed, written.State);
-        Assert.Empty(api.ProfileApprovals);
         _ = Assert.Single(api.PagesSet);
     }
 
@@ -228,8 +154,8 @@ public sealed class ProfileWriteFlowTests
     public async Task Sends_the_write_once_and_polls_while_the_job_runs()
     {
         var clock = new FakeTimeProvider(A.Noon);
-        var api = Server(Profile("h1", "index.pages.schedule-week"), state: "running");
-        var run = Run(Flow(api, clock), api, approve: false);
+        var api = Server(Profile("h1"), state: "running");
+        var run = Run(Flow(api, clock), api);
 
         while (api.JobCalls < 2)
         {
@@ -244,7 +170,7 @@ public sealed class ProfileWriteFlowTests
             await Task.Yield();
         }
 
-        Assert.Equal(ProfileWriteState.Waiting, (await run).State);
+        Assert.Equal(ProfileWriteState.Applied, (await run).State);
         _ = Assert.Single(api.PagesSet);
     }
 
@@ -253,7 +179,7 @@ public sealed class ProfileWriteFlowTests
     public async Task A_job_not_found_right_after_the_start_is_read_again()
     {
         var clock = new FakeTimeProvider(A.Noon);
-        var api = Server(Profile("h1", "index.pages.schedule-week"));
+        var api = Server(Profile("h1"));
         api.JobAnswers[JobId] = RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-JOB-404", "No such job (fix: run `sindri jobs` to list them)");
         var run = Run(Flow(api, clock), api);
 
@@ -271,7 +197,7 @@ public sealed class ProfileWriteFlowTests
         }
 
         var written = await run;
-        Assert.Equal(ProfileWriteState.Approved, written.State);
+        Assert.Equal(ProfileWriteState.Applied, written.State);
         Assert.Equal("h1", written.Hash);
     }
 
@@ -281,7 +207,7 @@ public sealed class ProfileWriteFlowTests
     {
         const string Sentence = "No such job (fix: run `sindri jobs` to list them)";
         var clock = new FakeTimeProvider(A.Noon);
-        var api = Server(Profile("h1", "index.pages.schedule-week"));
+        var api = Server(Profile("h1"));
         api.JobAnswers[JobId] = RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-JOB-404", Sentence);
         var run = Run(Flow(api, clock), api);
 
@@ -302,8 +228,8 @@ public sealed class ProfileWriteFlowTests
     public async Task Keeps_polling_a_job_parked_on_a_signal()
     {
         var clock = new FakeTimeProvider(A.Noon);
-        var api = Server(Profile("h1", "index.pages.schedule-week"), state: "waiting");
-        var run = Run(Flow(api, clock), api, approve: false);
+        var api = Server(Profile("h1"), state: "waiting");
+        var run = Run(Flow(api, clock), api);
 
         while (api.JobCalls < 2)
         {
@@ -319,42 +245,35 @@ public sealed class ProfileWriteFlowTests
             await Task.Yield();
         }
 
-        Assert.Equal(ProfileWriteState.Waiting, (await run).State);
+        Assert.Equal(ProfileWriteState.Applied, (await run).State);
     }
 
     [Fact]
-    public async Task Waiting_reads_the_live_hash_and_changed_paths()
+    public async Task Hashes_reads_the_live_hash()
     {
-        var waiting = await Flow(new FakeSindriApi { ProfileAnswer = Profile("h1", "index.pages.x") }).Waiting(Token);
+        var hashes = await Flow(new FakeSindriApi { ProfileAnswer = Profile("h1") }).Hashes(Token);
 
-        Assert.NotNull(waiting);
-        Assert.Equal("h1", waiting.LiveHash);
-        Assert.Equal(["index.pages.x"], waiting.ChangedPaths);
+        Assert.NotNull(hashes);
+        Assert.Equal("h1", hashes.LiveHash);
     }
 
     [Fact]
-    public async Task Waiting_reads_the_file_hash_beside_the_live_one()
+    public async Task Hashes_reads_the_file_hash_beside_the_live_one()
     {
-        var answer = new RouteAnswer(HttpStatusCode.OK, """{"approved":"h0","live":"h1","fileHash":"h2","changed":true,"changedPaths":[]}""");
+        var answer = new RouteAnswer(HttpStatusCode.OK, """{"live":"h1","fileHash":"h2"}""");
 
-        var waiting = await Flow(new FakeSindriApi { ProfileAnswer = answer }).Waiting(Token);
+        var hashes = await Flow(new FakeSindriApi { ProfileAnswer = answer }).Hashes(Token);
 
-        Assert.NotNull(waiting);
-        Assert.Equal(("h1", "h2"), (waiting.LiveHash, waiting.FileHash));
+        Assert.NotNull(hashes);
+        Assert.Equal(("h1", "h2"), (hashes.LiveHash, hashes.FileHash));
     }
 
     [Fact]
-    public async Task Waiting_from_a_server_before_the_file_hash_reads_it_as_null()
+    public async Task Hashes_from_a_server_before_the_file_hash_reads_it_as_null()
     {
-        var waiting = await Flow(new FakeSindriApi { ProfileAnswer = Profile("h1") }).Waiting(Token);
+        var hashes = await Flow(new FakeSindriApi { ProfileAnswer = Profile("h1") }).Hashes(Token);
 
-        Assert.NotNull(waiting);
-        Assert.Null(waiting.FileHash);
+        Assert.NotNull(hashes);
+        Assert.Null(hashes.FileHash);
     }
-
-    [Theory]
-    [InlineData("index.pages.a", true)]
-    [InlineData("index.concepts.a", false)]
-    public void OnlyMine_holds_when_every_waiting_path_matches(string path, bool only) =>
-        Assert.Equal(only, new ProfileWaiting("h1", [path]).OnlyMine(p => p.Contains(".pages.", StringComparison.Ordinal)));
 }

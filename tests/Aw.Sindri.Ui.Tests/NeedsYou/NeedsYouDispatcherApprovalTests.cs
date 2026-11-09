@@ -1,4 +1,3 @@
-using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
@@ -15,29 +14,6 @@ public sealed class NeedsYouDispatcherApprovalTests
 
     private NeedsYouDispatcher Dispatcher() =>
         new(_server, () => _api);
-
-    [Fact]
-    public async Task A_home_profile_row_posts_the_full_hash_once()
-    {
-        var row = NeedsYouRows.ProfileReady();
-
-        var result = await Dispatcher().Run(row, row.Actions[0]);
-
-        Assert.Equal(NeedsYouRows.ProfileHash, Assert.Single(_server.ProfileApprovals).Hash);
-        Assert.Equal(DispatchOutcome.Sent, result.Outcome);
-    }
-
-    [Fact]
-    public async Task A_profile_approval_that_did_not_go_through_is_refused_in_words()
-    {
-        _server.ApproveProfileAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-PROFILE-009", "The settings changed again.");
-        var row = NeedsYouRows.ProfileReady();
-
-        var result = await Dispatcher().Run(row, row.Actions[0]);
-
-        Assert.Equal(DispatchOutcome.Refused, result.Outcome);
-        Assert.Contains("SND-PROFILE-009", result.Message, StringComparison.Ordinal);
-    }
 
     [Fact]
     public async Task An_action_with_no_send_is_still_said_on_the_row()

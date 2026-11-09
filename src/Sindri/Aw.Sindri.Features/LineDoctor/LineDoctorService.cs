@@ -9,7 +9,7 @@ using Aw.Sindri.Core.Profile;
 namespace Aw.Sindri.Features.LineDoctor;
 
 /// <summary>
-/// 'sindri line doctor &lt;repo&gt;' (line spec Appendix D): places the directory in the approved profile and runs <see cref="LineDoctorRules"/> over it with the box's heavy-slot cap read now.
+/// 'sindri line doctor &lt;repo&gt;' (line spec Appendix D): places the directory in the profile and runs <see cref="LineDoctorRules"/> over it with the box's heavy-slot cap read now.
 /// A directory outside git is an invalid input; a repo the profile does not name is one failing row, since nothing else can be checked without its profile.
 /// </summary>
 internal sealed class LineDoctorService(IApprovedProfile approvals, IRepoLocator locator, IBoxLimitsSource box, ILineSetupProbe probe) : IService<LineDoctorRequest, LineDoctorResponse>
@@ -31,7 +31,7 @@ internal sealed class LineDoctorService(IApprovedProfile approvals, IRepoLocator
 
         if (approved.Value is not { } loaded || placed.Repo is not { } repo)
         {
-            return new LineDoctorResponse(Repo: null, [new DoctorCheck("repo", CheckState.Fail, $"{placed.Path} is not in the approved profile", "sindri repo onboard " + placed.Path)]);
+            return new LineDoctorResponse(Repo: null, [new DoctorCheck("repo", CheckState.Fail, $"{placed.Path} is not in the profile", "sindri repo onboard " + placed.Path)]);
         }
 
         var facts = await probe.Read(placed.Path, LineDoctorRules.CredentialVariable(loaded.Profile), cancellationToken).ConfigureAwait(false);

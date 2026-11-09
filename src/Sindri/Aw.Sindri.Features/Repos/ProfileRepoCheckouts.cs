@@ -6,8 +6,8 @@ using Aw.Sindri.Core.Scoping;
 
 namespace Aw.Sindri.Features.Repos;
 
-/// <summary><see cref="IRepoCheckouts"/> over the approved profile's repos.</summary>
-/// <param name="approvals">The approved profiles.</param>
+/// <summary><see cref="IRepoCheckouts"/> over the profile's repos.</summary>
+/// <param name="approvals">The profiles.</param>
 internal sealed class ProfileRepoCheckouts(IApprovedProfile approvals) : IRepoCheckouts
 {
     /// <inheritdoc/>
@@ -21,6 +21,6 @@ internal sealed class ProfileRepoCheckouts(IApprovedProfile approvals) : IRepoCh
 
         return approved.Value?.Profile.Repos?.FirstOrDefault(r => string.Equals(r.Name, repo.Value, StringComparison.Ordinal)) is { } found
             ? found.Path
-            : SindriErrors.InvalidInput.With($"the repo {repo.Value} is not in the approved profile, so it has no checkout (fix: add the repo to the profile and approve it)");
+            : SindriErrors.InvalidInput.With($"the repo {repo.Value} is not in the profile, so it has no checkout (fix: add the repo to the profile)");
     }
 }

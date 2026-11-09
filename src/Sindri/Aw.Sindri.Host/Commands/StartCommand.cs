@@ -38,11 +38,11 @@ internal sealed class StartCommand(IControlPlaneProbe probe, IControlPlaneLaunch
         return await Report(status.Value.Value, found.Value.Endpoint).ConfigureAwait(false);
     }
 
-    /// <summary>Opens the app (unless headless) and prints the summary; the exit code follows only the profile.</summary>
+    /// <summary>Opens the app (unless headless) and prints the summary; the exit code is 1 when the profile has a problem.</summary>
     internal Task<int> Report(GetStatusResponse status, ControlEndpoint endpoint)
     {
         var ui = openUi?.Invoke();
-        return output.Text(SummaryText.Render(status, endpoint, ui), status.Profile.NeedsApproval ? 1 : 0);
+        return output.Text(SummaryText.Render(status, endpoint, ui), status.Profile.Problem is null ? 0 : 1);
     }
 
     /// <summary>

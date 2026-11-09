@@ -67,32 +67,16 @@ public sealed class BlockedListViewModelTests
     }
 
     [Fact]
-    public async Task Allow_sends_the_launch_kind_and_target_once_and_says_the_approval_is_needed()
+    public async Task Allow_sends_the_launch_kind_and_target_once_and_says_Allowed()
     {
         var list = await Read("some");
-        ApprovalRequestedEventArgs? requested = null;
-        list.ApprovalRequested += (_, e) => requested = e;
         var row = list.Rows[0];
 
         await row.Allow(Token);
 
         Assert.Equal([new AllowRequest(Launch, "network", "registry.example.org")], _server.Allowed);
-        Assert.Equal((AllowState.NeedsApproval, "Allow", "Needs your approval: open the approval to allow registry.example.org"), (row.State, row.AllowText, list.Voice.Announcement));
+        Assert.Equal((AllowState.Allowed, "Allowed", "Allowed"), (row.State, row.AllowText, list.Voice.Announcement));
         Assert.True(list.Voice.IsAnnouncing);
-        Assert.Equal("registry.example.org", requested?.Target);
-    }
-
-    [Fact]
-    public async Task An_entry_the_approved_profile_already_has_says_Allowed_without_asking_for_an_approval()
-    {
-        var list = await Read("some");
-        _server.SandboxAllowAnswer = RouteAnswer.SpecShaped("sandbox-allow", "allowed");
-        var opened = 0;
-        list.ApprovalRequested += (_, _) => opened++;
-
-        await list.Rows[0].Allow(Token);
-
-        Assert.Equal((AllowState.Allowed, "Allowed", "Allowed", 0), (list.Rows[0].State, list.Rows[0].AllowText, list.Voice.Announcement, opened));
     }
 
     [Fact]
@@ -120,49 +104,7 @@ public sealed class BlockedListViewModelTests
         _server.SandboxAllowGate.SetResult();
         await first;
 
-        Assert.Equal(AllowState.NeedsApproval, row.State);
-    }
-
-    [Fact]
-    public async Task Pressing_Allow_again_while_the_approval_is_open_asks_to_open_it_again_without_a_second_request()
-    {
-        var list = await Read("some");
-        var opened = 0;
-        list.ApprovalRequested += (_, _) => opened++;
-
-        await list.Rows[0].Allow(Token);
-        await list.Rows[0].Allow(Token);
-
-        Assert.Equal((2, 1), (opened, _server.Allowed.Count));
-    }
-
-    [Fact]
-    public async Task A_refusal_says_Refused_with_the_served_reason_and_a_session_refusal_the_same()
-    {
-        var list = await Read("some");
-        _server.SandboxAllowAnswer = RouteAnswer.Problem("sandbox-allow", "refused");
-        var row = list.Rows[1];
-
-        await row.Allow(Token);
-
-        Assert.Equal((AllowState.Refused, "Refused", "Refused"), (row.State, row.AllowText, list.Voice.Announcement));
-        Assert.Contains("never shared with a session", row.Refusal, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task Once_the_profile_is_approved_the_row_says_Allowed()
-    {
-        var list = await Read("some");
-        _server.ProfileAnswer = RouteAnswer.Api("profile", "unapproved");
-        await list.Rows[0].Allow(Token);
-
-        await list.Read(_api, Item, Token);
-        Assert.Equal(AllowState.NeedsApproval, list.Rows[0].State);
-
-        _server.ProfileAnswer = RouteAnswer.Api("profile", "approved");
-        await list.Read(_api, Item, Token);
-
-        Assert.Equal((AllowState.Allowed, "Allowed", "Allowed"), (list.Rows[0].State, list.Rows[0].AllowText, list.Voice.Announcement));
+        Assert.Equal(AllowState.Allowed, row.State);
     }
 
     [Fact]
@@ -198,24 +140,6 @@ public sealed class BlockedListViewModelTests
     }
 
     [Fact]
-    public async Task A_draft_that_was_discarded_leaves_the_row_waiting_until_the_approved_profile_changes()
-    {
-        var list = await Read("some");
-        _server.ProfileAnswer = Profile("hash-1");
-        await list.Rows[0].Allow(Token);
-
-        // The draft was discarded: nothing is left to approve, but the approved hash is the one read as the edit landed.
-        await list.Read(_api, Item, Token);
-        await list.Read(_api, Item, Token);
-        Assert.Equal(AllowState.NeedsApproval, list.Rows[0].State);
-
-        _server.ProfileAnswer = Profile("hash-2");
-        await list.Read(_api, Item, Token);
-
-        Assert.Equal((AllowState.Allowed, "Allowed"), (list.Rows[0].State, list.Voice.Announcement));
-    }
-
-    [Fact]
     public async Task The_same_host_denied_in_two_repos_is_two_rows_and_each_Allow_sends_its_own_launch()
     {
         _server.SandboxDenialsAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"launches":[{{LaunchIn("LCH-00000000000000000000000000000001", "api")}},{{LaunchIn("LCH-00000000000000000000000000000002", "web")}}]}""");
@@ -231,7 +155,6 @@ public sealed class BlockedListViewModelTests
         Assert.Equal(2, list.Rows.Count);
     }
 
-    private static RouteAnswer Profile(string approved) => new(HttpStatusCode.OK, $$"""{"summary":null,"approved":"{{approved}}"}""");
 
     private static string LaunchIn(string launch, string repo) =>
         $$"""{"launchId":"{{launch}}","updatedAt":"2026-10-28T09:00:00.0000000Z","entries":[{"kind":"network","target":"registry.example.org","rule":"net.not-allowed","count":1,"first":"2026-10-28T08:00:00.0000000Z","last":"2026-10-28T08:20:00.0000000Z","fix":"allow"}],"overflow":[],"repo":"{{repo}}"}""";

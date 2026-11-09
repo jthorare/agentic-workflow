@@ -40,9 +40,6 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
     /// <summary>The one polite live region of the list and its Allow buttons.</summary>
     public LiveAnnouncer Voice { get; } = new(Labels.AllowResting);
 
-    /// <summary>Raised when an Allow wants the owner to open the profile approval.</summary>
-    internal event EventHandler<ApprovalRequestedEventArgs>? ApprovalRequested;
-
     /// <summary>Shows every target.</summary>
     internal void ShowAll()
     {
@@ -59,7 +56,7 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
         Draw();
     }
 
-    /// <summary>Reads the item's denials; first checks whether an open approval was answered.</summary>
+    /// <summary>Reads the item's denials.</summary>
     /// <param name="url">The API.</param>
     /// <param name="itemId">The item.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
@@ -73,7 +70,6 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
         }
 
         _url = url;
-        await SettleApproved(url, cancellationToken).ConfigureAwait(true);
         var answer = await api.SandboxDenials(url, itemId, cancellationToken).ConfigureAwait(true);
         if (answer.IsError || !string.Equals(_item, itemId, StringComparison.Ordinal))
         {
@@ -82,30 +78,6 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
 
         (_targets, _read) = (Targets(answer.Value), true);
         Draw();
-    }
-
-    // why: an Allow is a draft profile edit until the owner approves the profile. A row settles only when nothing is left to approve AND the
-    // approved hash moved past the one read as the edit landed: a discarded or reverted draft also leaves nothing to approve, but keeps the
-    // old approved hash, so the host stays "needs approval" instead of reading "Allowed" while it is still blocked.
-    private async Task SettleApproved(Uri url, CancellationToken cancellationToken)
-    {
-        var waiting = _known.Values.Where(r => r.IsWaitingForApproval).ToList();
-        if (waiting.Count == 0)
-        {
-            return;
-        }
-
-        var profile = await api.ProfileSummary(url, cancellationToken).ConfigureAwait(true);
-        if (profile.IsSuccess && profile.Value.Summary is null)
-        {
-            waiting.Where(r => !string.Equals(r.ApprovedWhenAsked, profile.Value.Approved, StringComparison.Ordinal)).ToList().ForEach(static r => r.Settle());
-        }
-    }
-
-    private async Task<string?> ApprovedNow(CancellationToken cancellationToken)
-    {
-        var profile = _url is { } url ? await api.ProfileSummary(url, cancellationToken).ConfigureAwait(true) : null;
-        return profile is { IsSuccess: true } ? profile.Value.Approved : null;
     }
 
     private static List<BlockedTarget> Targets(DenialsView view)
@@ -166,6 +138,6 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
             return row;
         }
 
-        return _known[target.Key] = new BlockedRowViewModel(target, (request, token) => api.SandboxAllow(_url ?? throw new InvalidOperationException("a row exists only after a read"), request, token), Voice, args => ApprovalRequested?.Invoke(this, args), ApprovedNow);
+        return _known[target.Key] = new BlockedRowViewModel(target, (request, token) => api.SandboxAllow(_url ?? throw new InvalidOperationException("a row exists only after a read"), request, token), Voice);
     }
 }

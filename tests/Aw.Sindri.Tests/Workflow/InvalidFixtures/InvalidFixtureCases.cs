@@ -80,7 +80,7 @@ internal static class InvalidFixtureCases
             []),
         ["RCP-EFFECT-001"] = new(
             FixtureSetup.EffectAllowlist,
-            "RCP-EFFECT-001: effect 'effect.notify.desk' isn't on the profile's effect allowlist at RCP-EFFECT-001.yaml:16:83 (transitions[0].effects[0].use); add it to workflow.effects and approve the profile, or remove it",
+            "RCP-EFFECT-001: effect 'effect.notify.desk' isn't on the profile's effect allowlist at RCP-EFFECT-001.yaml:16:83 (transitions[0].effects[0].use); add it to workflow.effects, or remove it",
             []),
         ["RCP-HUMAN-001"] = new(
             FixtureSetup.HumanTrigger,

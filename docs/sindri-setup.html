@@ -287,7 +287,7 @@ SND-API-001 not running: … <span class="dim">(expected: step 4 starts it)</spa
 <section class="step" data-slug="profile" data-n="3" data-title="Profile" data-k="3">
   <p class="kicker">Step 3</p>
   <h1 tabindex="-1">Write and approve the profile</h1>
-  <p class="lede">The profile names your repos and what Sindri may read. Sindri runs only the version you approved.</p>
+  <p class="lede">The profile names your repos and what Sindri may read. Sindri reads the file as you save it.</p>
   <figure class="sys"></figure>
   <div class="cmd file"><div class="head"><span class="chip file">FILE</span><span class="what"><code>~/.agentic-workflow/sindri-app/profile/profile.yaml</code></span></div>
   <pre><code>schemaVersion: 1
@@ -302,8 +302,6 @@ context:
   repos: [my-app]
   docs: { globs: ["AGENTS.md", "README.md", "docs/**/*.md"] }
   sessions: { enabled: true }</code></pre></div>
-  <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">Shows the hash; run it again with the hash and type <code>approve profile &lt;6 digits&gt;</code></span></div>
-  <pre><code>sindri profile approve</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
   <div class="see"><p class="lbl">You should see (<code>sindri profile validate</code>)</p>
 <pre class="term">Profile valid: ~/.agentic-workflow/sindri-app/profile/profile.yaml
 hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
@@ -311,12 +309,12 @@ hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
     <li><code>denyPaths</code>: files Sindri never reads for the map, on top of the built-in secret globs.</li>
     <li><code>context-docs-refresh</code>: indexes the repo's docs every 5 minutes; nothing is indexed without it.</li>
     <li><code>sessions.enabled</code>: lets agent sessions read context over MCP.</li>
-    <li>Step 5 adds the <code>context.sources</code> section for you. Every change needs another approval; until then Sindri keeps the last approved one.</li>
+    <li>Step 5 adds the <code>context.sources</code> section for you. Every valid change applies on save.</li>
   </ul></div></details>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
     <li><code>SND-PROFILE-002</code>: a typo or unknown key; the message names the key path.</li>
-    <li><code>SND-PROFILE-003</code>: the file changed since you copied the hash; run the preview again.</li>
-    <li><code>SND-PROFILE-006</code>: the approved snapshots can't be read or written; check permissions and disk.</li>
+    <li><code>SND-PROFILE-003</code>: the file changed since you read it (<code>--if-hash</code>); read it again and retry.</li>
+    <li><code>SND-PROFILE-006</code>: the profile file can't be read or written; check permissions and disk.</li>
   </ul></div></details>
 </section>
 
@@ -349,16 +347,14 @@ hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
 <section class="step" data-slug="sources" data-n="5" data-title="Sources" data-k="5">
   <p class="kicker">Step 5</p>
   <h1 tabindex="-1">Connect your sources</h1>
-  <p class="lede">Sindri keeps its own record index and reads GitHub and Slack itself (Linear has its own setup, <code>docs/sindri/linear.md</code>). You list the repos and channels in the profile, connect a read-only token, approve, and it syncs.</p>
+  <p class="lede">Sindri keeps its own record index and reads GitHub and Slack itself (Linear has its own setup, <code>docs/sindri/linear.md</code>). You list the repos and channels in the profile, connect a read-only token, and it syncs.</p>
   <figure class="sys"></figure>
   <div class="strip" role="group" aria-label="What connecting a source does, in order">
-    <span class="you">you: list sources in the profile</span><b aria-hidden="true">→</b><span class="you">you: paste a token</span><b aria-hidden="true">→</b><span>token and every repo or channel checked</span><b aria-hidden="true">→</b><span>token saved in the keychain</span><b aria-hidden="true">→</b><span class="you">you: approve profile</span><b aria-hidden="true">→</b><span>sync</span>
+    <span class="you">you: list sources in the profile</span><b aria-hidden="true">→</b><span class="you">you: paste a token</span><b aria-hidden="true">→</b><span>token and every repo or channel checked</span><b aria-hidden="true">→</b><span>token saved in the keychain</span><b aria-hidden="true">→</b><span>sync</span>
   </div>
   <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">Asks for the token once; checks it and every listed repo or channel before saving anything</span></div>
   <pre><code>sindri index connect github
 sindri index connect slack</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
-  <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">The token pointer changed the profile, so approve it again</span></div>
-  <pre><code>sindri profile approve</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
   <div class="cmd agent"><div class="head"><span class="chip agent">AGENT OK</span><span class="what">One line per source: usable, complete, waiting, needs token, needs access or error</span></div>
   <pre><code>sindri index sync
 sindri index status</code></pre></div>
@@ -377,7 +373,7 @@ sindri index status</code></pre></div>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
     <li><code>SND-INDEX-009</code>: the token pointer doesn't resolve, or the token was refused.</li>
     <li><code>SND-INDEX-010</code>: a listed repo can't be read; fix the token's access or the name.</li>
-    <li><code>SND-INDEX-011</code> / <code>SND-INDEX-013</code>: that source isn't in the approved profile; add it and approve.</li>
+    <li><code>SND-INDEX-011</code> / <code>SND-INDEX-013</code>: that source isn't in the profile; add it.</li>
     <li>Sindri used to read these through Onyx. If this box once ran that, run <code>sindri onyx down --purge</code> once to remove what it left.</li>
   </ul></div></details>
 </section>
@@ -389,7 +385,7 @@ sindri index status</code></pre></div>
   <figure class="sys"></figure>
   <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">Finds your terminal and writes <code>~/.agentic-workflow/launcher.json</code> (your call: Sindri doesn't refuse an agent here)</span></div>
   <pre><code>sindri launch init</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
-  <div class="cmd file"><div class="head"><span class="chip file">PROFILE</span><span class="what">Add to the profile, then approve it again (step 3)</span></div>
+  <div class="cmd file"><div class="head"><span class="chip file">PROFILE</span><span class="what">Add to the profile (it applies on save)</span></div>
   <pre><code>workflow:
   agent: { target: claude-code }</code></pre></div>
   <div class="see"><p class="lbl">You should see (<code>sindri launch show</code>, agent OK)</p>

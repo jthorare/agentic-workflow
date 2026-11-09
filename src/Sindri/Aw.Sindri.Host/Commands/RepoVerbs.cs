@@ -55,7 +55,7 @@ internal sealed class RepoVerbs(ControlPlaneClient client, Output output, JobFol
         }
 
         var read = output.Read<AddedRepo>(System.Text.Encoding.UTF8.GetBytes(result.GetRawText()));
-        return read.IsSuccess ? $"added {read.Value.Repo.Value}; your profile waits for your approval: sindri profile approve\n" : null;
+        return read.IsSuccess ? $"added {read.Value.Repo.Value}; it is live now\n" : null;
     }
 
     /// <summary>The final onboard job's lines: the repo is onboarded, and what the hook step said (never a silent green), then the sandbox blockers, the offered toolchain entries and the YAML snippet; nothing when the result isn't there or doesn't read.</summary>
@@ -85,7 +85,7 @@ internal sealed class RepoVerbs(ControlPlaneClient client, Output output, JobFol
             _ = text.Append("offered   ").Append(line).Append('\n');
         }
 
-        _ = onboarded.Snippet is { } snippet ? text.Append("Paste this into your profile and approve it (onboarding never edits the profile):\n").Append(snippet) : text;
+        _ = onboarded.Snippet is { } snippet ? text.Append("Paste this into your profile (onboarding never edits the profile):\n").Append(snippet) : text;
         return text.ToString();
     }
 
