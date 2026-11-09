@@ -121,7 +121,7 @@ stdout line, `warning:` lines and exit codes. Modules: `args.ts` (argv and the u
 verbatim), `attrs.ts` (`{attrs}`, `:::` containers, `split_title`), `refs.ts` (reference and glossary linking),
 `sanitize.ts` (the HTML guard), `prs.ts` (`prs/pr-NN.md`), `compiler.ts` (the `Compiler`: ids and definitions,
 inline and citations, schema, figures and hotspots, blocks, containers, PR cards, the page). It reads the system-design
-surface from `src/sd` (`import * as sd from "../sd"`, the Python names) and the vocabulary from `src/vocab.ts`, the one
+surface from `src/sd` (`import * as sd from "../sd"`: `parseBlocks(lines, MARK)` with the tdd MARK passed explicitly, never `bd.MARK =`) and the vocabulary from `src/vocab.ts`, the one
 copy of `TOKEN`, `token_id`, `CITE`, `LEGEND_TONES`, `LINK_KEYS`, `SKIP_TAGS`, the tdd `MARK` and `SQL_KW` (checked
 against `build_tdd.py` and `eval/ev_common.py` in `test/compile`). `BUILD_TDD_SHA256` pins the Python file the port
 reproduces: a change to `build_tdd.py` lands with the same change here and a new pin (the twin rule).

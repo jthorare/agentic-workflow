@@ -30,7 +30,7 @@ export function load_prs(prs_dir: string): Pr[] {
     const m = PR_FILE.fullmatch(f);
     if (!m) continue;
     const raw = py.io.readText(py.path.join(prs_dir, f));
-    const [meta, body] = sd.front(raw);
+    const [meta, body] = sd.prs.front(raw);
     const n = py.int(m.group(1)!);
     const sub = m.group(2)!;
     const label = `${py.repr(n)}${sub}`;
@@ -49,7 +49,7 @@ export function load_prs(prs_dir: string): Pr[] {
     deps = deps.map((d) => (py.upper(d).startsWith("PR") ? d : `PR ${d}`));
     prs.push({
       n, sub, label, title, ms, ms_note: meta.get("milestone_note") ?? "", body: re.sub(String.raw`\A# .*\n`, "", py.str.lstrip(body)),
-      change: meta.get("change") || sd.first_sentence(summ), rollback: meta.get("rollback") || (rb ? rb.group(1)! : "not stated"),
+      change: meta.get("change") || sd.prs.firstSentence(summ), rollback: meta.get("rollback") || (rb ? rb.group(1)! : "not stated"),
       depends_on: deps, file: `prs/${f}`,
     });
   }

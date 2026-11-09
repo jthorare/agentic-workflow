@@ -20,7 +20,7 @@ import { link_refs, type Stats } from "./refs";
 import { sanitize_html } from "./sanitize";
 
 const re = py.re;
-const { esc, slug, strip_tags } = sd;
+const { esc, slug, stripTags: strip_tags } = sd;
 const strip = (s: string, chars?: string) => py.str.strip(s, chars);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -89,7 +89,7 @@ export class Compiler {
   readonly warn: string[] = [];
   readonly md_dir: string;
   readonly out_dir: string;
-  readonly inline0 = new sd.Inline();
+  readonly inline0 = sd.Inline();
   readonly assets: sd.Assets;
   readonly meta: PyDict;
   readonly diagram_dir: string | null;
@@ -117,7 +117,7 @@ export class Compiler {
     this.assets = new sd.Assets(this.out_dir, false, !a.no_copy);
     const metaJson = py.path.join(this.md_dir, "meta.json");
     const meta_path = truthy(a.meta) ? a.meta : py.io.isfile(metaJson) ? metaJson : null;
-    this.meta = meta_path ? dictOf(sd.load_json(meta_path, "--meta")) : new Map();
+    this.meta = meta_path ? dictOf(sd.loadJson(meta_path, "--meta")) : new Map();
     const proj = this.meta.get("project");
     if (proj instanceof Map && typeof proj.get("label") === "string") {
       const m = re.match(String.raw`\s*\[([^\]]+)\]\(([^)]+)\)\s*$`, proj.get("label") as string);
@@ -176,7 +176,7 @@ export class Compiler {
   }
 
   inline(s: string, links = true): string {
-    let h = this.sanitize(this.inline0.call(s, links));
+    let h = this.sanitize(this.inline0(s, links));
     h = CHIP.sub((m) => {
       const k = py.lower(m.group(1)!);
       return `<span class="chip${k !== "plain" ? " " + esc(k) : ""}">${m.group(2)}</span>`;
@@ -223,7 +223,7 @@ export class Compiler {
     if (!this.schema_dir) return tables;
     for (const f of py.io.listdirSorted(this.schema_dir)) {
       if (!f.endsWith(".json")) continue;
-      const t = dictOf(sd.load_json(py.path.join(this.schema_dir, f), `schema/${f}`));
+      const t = dictOf(sd.loadJson(py.path.join(this.schema_dir, f), `schema/${f}`));
       if (!t.has("table")) t.set("table", py.path.splitext(f)[0]);
       if (!t.has("state")) t.set("state", "existing");
       const tid = this.uid("tbl-" + slug(strOf(t.get("table"), "lower")));
@@ -273,7 +273,7 @@ export class Compiler {
       this.warn.push(`diagram ${key}: no ${published} in ${this.diagram_dir || "diagrams/"}`);
       return { type: "placeholder", id: fid, html: `Diagram ${esc(key)} is missing: ${this.inline(title)}` };
     }
-    const size = sd.img_size(src) ?? [0, 0];
+    const size = sd.imgSize(src) ?? [0, 0];
     const alt = aget(attrs, "alt", null);
     const fit = aget(attrs, "fit", null);
     const node: Node = {
@@ -304,7 +304,7 @@ export class Compiler {
   hotspots(key: string, src: string, size: [number, number]): Node[] {
     const path = py.path.join(py.path.dirname(src), key + ".hotspots.json");
     if (!py.io.isfile(path)) return [];
-    const spec = dictOf(sd.load_json(path, "hotspots"));
+    const spec = dictOf(sd.loadJson(path, "hotspots"));
     let vb: PyValue = get(spec, "viewBox");
     if (!truthy(vb)) {
       const head = py.io.decodeUtf8(py.io.readBytes(src).subarray(0, 4096), "ignore");
@@ -338,7 +338,7 @@ export class Compiler {
       }
       if (truthy(get(b, "image"))) {
         const image = strOf(b.get("image"), "startswith");
-        const published = sd.published_for(image, "images");
+        const published = sd.publishedFor(image, "images");
         const [url, s] = this.assets.ref(published, [py.path.join(this.md_dir, image), py.path.join(this.out_dir, published)]);
         if (!s) this.warn.push(`hotspot image ${image} (${key}): not found`);
         hs.image = url;
@@ -351,11 +351,11 @@ export class Compiler {
   }
 
   node_shot(b: Shot, size_mode: string): Node {
-    const published = sd.published_for(b.src, "images");
+    const published = sd.publishedFor(b.src, "images");
     const cands = [py.path.join(this.md_dir, b.src), py.path.join(this.out_dir, published), ...(py.path.isabs(b.src) ? [b.src] : [])];
     const [url, s] = this.assets.ref(published, cands);
     if (!s) this.warn.push(`image ${b.src}: not found`);
-    const size = sd.img_size(s) ?? Compiler.jpeg_size(s) ?? [0, 0];
+    const size = sd.imgSize(s) ?? Compiler.jpeg_size(s) ?? [0, 0];
     let cls = size_mode;
     if (cls === "auto") {
       const [w, h] = size;
@@ -398,7 +398,7 @@ export class Compiler {
     while (i < blocks.length) {
       const b = blocks[i]!;
       if (b.t === "marker" && b.kind === "diagram") {
-        const [key, title0] = sd.split_marker(b.arg);
+        const [key, title0] = sd.splitMarker(b.arg);
         const [title, attrs] = parse_attrs(title0);
         let legend: string | null = null;
         let reading: string | null = null;
@@ -768,19 +768,19 @@ export class Compiler {
         groups.push({ ms: esc(p.ms), id: mid, note: esc(p.ms_note || ""), prs: [] });
       }
       const pid = this.uid(`pr-${p.label}`);
-      let body = py.replace(py.replace(sd.markdown(p.body), "<table>", '<div class="tbl"><table>'), "</table>", "</table></div>");
+      let body = py.replace(py.replace(sd.prs.markdown(p.body), "<table>", '<div class="tbl"><table>'), "</table>", "</table></div>");
       body = re.sub(String.raw`^\s*<h2>Summary</h2>\s*`, "", body);
       body = re.sub(String.raw`\[([^\]]+)\]\((#[\w.-]+)\)`, String.raw`<a href="\2">\1</a>`, body);
       body = this.sanitize(CODE.sub((m) => this.cite_code(m), body));
       const mentioned = sortTokens(new Set([...TOKEN.finditer(strip_tags(body))].map((m) => m.group(1)!)));
       const paths = py.sorted(new Set(
-        (re.findall("<code>([^<]+)</code>", sd.markdown(p.body)) as string[]).map((x) => CITE.match(py.html.unescape(x))).filter((c) => c).map((c) => c!.group(1)!),
+        (re.findall("<code>([^<]+)</code>", sd.prs.markdown(p.body)) as string[]).map((x) => CITE.match(py.html.unescape(x))).filter((c) => c).map((c) => c!.group(1)!),
       ));
       const deps_html = p.depends_on.length ? "Depends on " + p.depends_on.map((d) => esc(d)).join(", ") : "";
       groups[groups.length - 1]!.prs.push({
-        n: p.n, sub: p.sub, label: p.label, id: pid, title: this.sanitize(sd.inline(p.title)), change: this.sanitize(sd.inline(p.change)),
+        n: p.n, sub: p.sub, label: p.label, id: pid, title: this.sanitize(sd.prs.inline(p.title)), change: this.sanitize(sd.prs.inline(p.change)),
         dependsOn: p.depends_on, deps: deps_html, decisions: mentioned.filter((t) => t.startsWith("D")), tokens: mentioned, paths,
-        rollback: p.rollback && p.rollback !== "not stated" ? this.sanitize(sd.inline(p.rollback)) : "", bodyHtml: body, file: p.file,
+        rollback: p.rollback && p.rollback !== "not stated" ? this.sanitize(sd.prs.inline(p.rollback)) : "", bodyHtml: body, file: p.file,
       });
       this.define(pid, "pr", `PR ${p.label} · ${p.title}`, p.change);
     }
@@ -845,7 +845,7 @@ export class Compiler {
     const h1v = get(meta, "h1");
     const h1 = (truthy(h1v) ? h1v : title || py.path.splitext(py.path.basename(a.src))[0]) as string;
     const tt = get(meta, "title");
-    const tab_title = (truthy(tt) ? tt : sd.page_title(this.text_of(h1))) as string;
+    const tab_title = (truthy(tt) ? tt : sd.pageTitle(this.text_of(h1))) as string;
     const out_sections: Node[] = [];
     for (const s of sections) {
       this.cur_section = s;

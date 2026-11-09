@@ -47,7 +47,7 @@ export function parse_ext(lines: string[]): Block[] {
   const n = lines.length;
   const flush = () => {
     if (run.length) {
-      out.push(...sd.parse_blocks(run, MARK));
+      out.push(...sd.parseBlocks(run, MARK));
       run.length = 0;
     }
   };
