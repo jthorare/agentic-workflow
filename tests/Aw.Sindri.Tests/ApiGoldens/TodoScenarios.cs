@@ -2,6 +2,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
 namespace Aw.Sindri.Tests.ApiGoldens;
@@ -86,9 +88,34 @@ internal static class TodoScenarios
     private static async Task<string> NoteRoute(GoldenHost host, string slug, string scenario, (string Name, string Value)[] human) => slug switch
     {
         "todos-note-check" => (await host.Http.Ask(Post("/sindri/todos/note/check", Request(slug, scenario), human))).Body,
-        "todos-note-import" => (await host.Http.Ask(Post("/sindri/todos/note/import", Request(slug, scenario), human))).Body,
+        "todos-note-import" => await WithClockRunning(host, async () => (await host.Http.Ask(Post("/sindri/todos/note/import", Request(slug, scenario), human))).Body),
         _ => await NoteWrite(host, slug, scenario, human),
     };
+
+    // why: the golden host's clock is a FakeTimeProvider that stands still, and the write pass waits for the note to be quiet (Task.Delay on that clock, SyncPass.cs _quiet 2 s),
+    // which never ends on a frozen clock; tick it while the call is in flight
+    private static async Task<string> WithClockRunning(GoldenHost host, Func<Task<string>> call)
+    {
+        var clock = (FakeTimeProvider)host.App.Services.GetRequiredService<TimeProvider>();
+        using var stop = new CancellationTokenSource();
+        var ticker = Task.Run(async () =>
+        {
+            while (!stop.IsCancellationRequested)
+            {
+                clock.Advance(TimeSpan.FromMilliseconds(500));
+                await Task.Delay(5).ConfigureAwait(false);
+            }
+        });
+        try
+        {
+            return await call().ConfigureAwait(false);
+        }
+        finally
+        {
+            await stop.CancelAsync().ConfigureAwait(false);
+            await ticker.ConfigureAwait(false);
+        }
+    }
 
     // the list golden: six todos across states (one done, one changed, one removed, one from an agent session, one fenced), then GET ?state=all
     private static async Task<string> List(GoldenHost host, (string Name, string Value)[] human, CancellationToken ct)
