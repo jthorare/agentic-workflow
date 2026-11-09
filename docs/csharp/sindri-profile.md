@@ -74,6 +74,7 @@ not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.m
 | `steps` | object (`longMax`) | no | none | The longest a block Step may declare (line spec LN-WF7) |
 | `docs` | object (`globs`, `sync`) | no | none | Where docs sync may write (line spec §7.6) and whether it runs (`workflow.docs.sync`, below) |
 | `scoping` | object (`historyWindow`) | no | none | The scoping recipe's keys (see `workflow.scoping.historyWindow` below) |
+| `forEach` | object (`maxItems`, `batchSize`) | no | none | The defaults of the `for_each` workflow block (`workflow.forEach`, below) |
 
 ### `workflow.agent` model keys
 
@@ -171,6 +172,15 @@ What the router stub does with an item it routes (workflow engine spec §12). Re
 | Key | Type | Required | Default | Meaning |
 |---|---|---|---|---|
 | `startable` | `all` or `none` | no | `all` | `all` lets every routed item start; `none` stops them at the router (the gate fails and the item parks). Any other value is refused when you save it (`workflow.route.startable`) |
+
+### `workflow.forEach`
+
+The defaults of the `for_each` block (`docs/csharp/sindri-graph.md`, "Loops"). A node's own `maxItems` or `batchSize` wins over these. Read from the live profile each time a `for_each` runs.
+
+| Key | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `maxItems` | whole number, 1 to 10,000 | no | `200` | The most items one `for_each` takes. A longer list fails the node before any item runs |
+| `batchSize` | whole number, 1 to 100 | no | `20` | How many items one child workflow runs. Outside the range is refused when you save it (`workflow.forEach.maxItems`, `workflow.forEach.batchSize`) |
 
 ### `setup`
 

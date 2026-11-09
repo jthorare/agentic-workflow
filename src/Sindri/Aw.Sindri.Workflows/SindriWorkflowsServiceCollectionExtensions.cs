@@ -52,7 +52,8 @@ public static class SindriWorkflowsServiceCollectionExtensions
     {
         return services
             .AddSingleton<GraphMirror>()
-            .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>()))
+            .AddSingleton<IForEachLimitSource, ProfileForEachLimits>()
+            .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>(), provider.GetRequiredService<IForEachLimitSource>()))
             .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
             .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog
             .AddSingleton<IGraphRunLauncher>(static provider => provider.GetRequiredService<TemporalGraphRunLauncher>())
