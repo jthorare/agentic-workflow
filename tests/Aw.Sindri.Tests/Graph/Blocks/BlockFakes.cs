@@ -43,6 +43,8 @@ internal static class BlockFakes
     {
         public List<string> Prompts { get; } = [];
 
+        public string Untrusted(string text) => $"<untrusted>{text}</untrusted>";
+
         public ValueTask<Result<string>> Ask(string prompt, CancellationToken cancellationToken)
         {
             Prompts.Add(prompt);

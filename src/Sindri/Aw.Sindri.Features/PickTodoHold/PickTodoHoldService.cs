@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Todos.Note;
 
@@ -18,7 +19,8 @@ namespace Aw.Sindri.Features.PickTodoHold;
 /// <param name="converger">Appends what Apply changes.</param>
 /// <param name="note">Re-reads the note.</param>
 /// <param name="window">Remembers the pick for its Undo.</param>
-internal sealed class PickTodoHoldService(TodoHolds holds, TodoPickWrites writes, TodoConverger converger, ITodoNoteSource note, TodoPickWindow window)
+/// <param name="scrubber">Scrubs the re-read lines as the sync scrubbed the held ones.</param>
+internal sealed class PickTodoHoldService(TodoHolds holds, TodoPickWrites writes, TodoConverger converger, ITodoNoteSource note, TodoPickWindow window, ITextScrubber scrubber)
     : IService<PickTodoHoldRequest, PickTodoHoldResponse>
 {
     public async ValueTask<Result<PickTodoHoldResponse>> Handle(PickTodoHoldRequest request, CancellationToken cancellationToken)
@@ -60,7 +62,7 @@ internal sealed class PickTodoHoldService(TodoHolds holds, TodoPickWrites writes
         }
 
         // why: with no note service yet (todo Ph3b's sync PR) there is nothing to re-read, so the hash the ledger holds is the check
-        var still = seen.Value is { } snapshot ? new NoteHold(hold.Changes).StillTrue(snapshot.Document).Count : hold.Changes.Count;
+        var still = seen.Value is { } snapshot ? new NoteHold(hold.Changes).StillTrue(snapshot.Document, scrubber).Count : hold.Changes.Count;
         return still == hold.Changes.Count ? null : SindriErrors.TodoConflict.With($"The note changed again: now {still.ToString(CultureInfo.InvariantCulture)}. Check and pick again.");
     }
 

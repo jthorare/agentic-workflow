@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Connections.OAuth;
 using Aw.Sindri.Testing.Connections;
@@ -24,7 +25,7 @@ internal static class ConnectionScenarios
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("connections", "list"), ("connections", "added-key"), ("connections", "added-oauth"), ("connections", "refused"),
-        ("connections-id", "one"), ("connections-id", "not-found"), ("connections-id", "removed"),
+        ("connections-id", "one"), ("connections-id", "not-found"), ("connections-id", "removed"), ("connections-id", "signin-failed"),
         ("connections-id-test", "ok"), ("connections-id-test", "failed"),
     ];
 
@@ -47,6 +48,13 @@ internal static class ConnectionScenarios
             _ = services.Replace(ServiceDescriptor.Singleton<IConnectionSecrets>(secrets));
             _ = services.Replace(ServiceDescriptor.Singleton<IConnectionPresetCatalog>(new FakeConnectionPresets(ConnectionHarness.Linear)));
             _ = services.Replace(ServiceDescriptor.Singleton<ISignInSession>(new FakeSignInSession()));
+            var outcomes = new SignInOutcomes();
+            if (scenario == "signin-failed")
+            {
+                outcomes.Failed(outcomes.Begin(Linear), SindriErrors.ConnectionConsentDenied.With("the consent was denied"), KnownInstants.Epoch.AddHours(1));   // a sign-in again that failed on a connected row
+            }
+
+            _ = services.Replace(ServiceDescriptor.Singleton(outcomes));
             _ = services.Replace(ServiceDescriptor.Singleton<IConnectionProbe>(new FakeConnectionProbe { Refuses = scenario == "failed" }));
         });
 
@@ -62,7 +70,7 @@ internal static class ConnectionScenarios
             ("connections", "added-key") => Post("/sindri/connections", """{"name":"acme:key","preset":null,"kind":"rest","client":null,"keyEnv":null,"scopes":[],"wait":false,"key":"sk-golden-0001"}""", owner),
             ("connections", "added-oauth") => Post("/sindri/connections", """{"name":"linear:work","preset":"linear","kind":null,"client":"client-123","keyEnv":null,"scopes":[],"wait":false}""", owner),
             ("connections", "refused") => Post("/sindri/connections", """{"name":"linear:work","preset":"linear","kind":null,"client":null,"keyEnv":null,"scopes":[],"wait":false}""", owner),
-            ("connections-id", "one") => Get($"/sindri/connections/{Uri.EscapeDataString(Linear)}", owner),
+            ("connections-id", "one" or "signin-failed") => Get($"/sindri/connections/{Uri.EscapeDataString(Linear)}", owner),
             ("connections-id", "not-found") => Get($"/sindri/connections/{Uri.EscapeDataString("acme:nobody")}", owner),
             ("connections-id", "removed") => Delete($"/sindri/connections/{Uri.EscapeDataString(Linear)}", owner),
             ("connections-id-test", _) => Post($"/sindri/connections/{Uri.EscapeDataString(Acme)}/test", json: null, owner),
@@ -77,7 +85,7 @@ internal static class ConnectionScenarios
     private static List<Connection> Seeded(string slug, string scenario) => (slug, scenario) switch
     {
         ("connections", "list") => [Linear0(), Acme0(ConnectionStatus.Error)],
-        ("connections-id", "one" or "removed") => [Linear0()],
+        ("connections-id", "one" or "removed" or "signin-failed") => [Linear0()],
         ("connections-id-test", _) => [Acme0(ConnectionStatus.NeedsSignIn)],
         _ => [],
     };

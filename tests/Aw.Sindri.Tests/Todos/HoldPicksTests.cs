@@ -185,6 +185,53 @@ public sealed class HoldPicksTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Put_them_back_while_the_views_lag_the_failed_apply_never_answers_restored_for_a_todo_it_did_not_revert()
+    {
+        await Held();
+        using var cli = _h.Cli();
+        var foreign = new TodoChanged(_second, 2, "call the dentist today", Due: null, ClearDue: false, Links: null, "human:ui");
+        await _h.Record(EventTypes.TodoChanged, foreign, TodoWrite.VersionKey(_second, 2));
+        var failed = await _h.PickHold().Handle(new PickTodoHoldRequest(Restore: false, Hash), Token);
+        Assert.Equal("SND-TODO-409", failed.Error.Code);
+
+        // the views have not folded the failed try's removal of the first todo (the row is still at version 1), so the todo can't be told apart from one that moved since
+        var lagging = await _h.PickHold().Handle(new PickTodoHoldRequest(Restore: true, Hash), Token);
+
+        Assert.True(lagging.IsError, "restore answered success while the first todo was never put back");
+        Assert.DoesNotContain(_h.Slice.Store.Events, e => e.Envelope.Type == "todo.note.held.resolved");
+
+        // once the views catch up, the same restore puts the first todo back
+        await _h.FoldAt(EventTypes.TodoRemoved, new TodoRemoved(_first, 2, "obsidian"), 0);
+        await _h.FoldAt(EventTypes.TodoChanged, foreign, 0);
+        var restored = await _h.PickHold().Handle(new PickTodoHoldRequest(Restore: true, Hash), Token);
+        Assert.True(restored.IsSuccess, restored.IsError ? restored.Error.ToString() : null);
+        Assert.Contains(_h.Slice.Store.Events, e => e.Envelope.Type == "todo.restored");
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Undo_while_the_views_lag_the_apply_is_SND_API_011_and_reopens_nothing_until_they_catch_up()
+    {
+        await Held();
+        using var cli = _h.Cli();
+        _ = await _h.PickHold().Handle(new PickTodoHoldRequest(Restore: false, Hash), Token);
+
+        // the views have not folded the apply (both rows still at version 1), so Undo can't tell "not folded yet" from "moved since"
+        var lagging = await _h.UndoHold().Handle(new UndoTodoHoldRequest(), Token);
+
+        Assert.Equal("SND-API-011", lagging.Error.Code);
+        Assert.DoesNotContain(_h.Slice.Store.Events, e => string.Equals(e.Envelope.Type, "todo.note.held.reopened", StringComparison.Ordinal) || string.Equals(e.Envelope.Type, "todo.restored", StringComparison.Ordinal));
+
+        // once the views catch up, the same Undo reverses the apply and reopens the hold
+        await _h.FoldAt(EventTypes.TodoRemoved, new TodoRemoved(_first, 2, "obsidian"), 0);
+        await _h.FoldAt(EventTypes.TodoChanged, new TodoChanged(_second, 2, "call the dentist about the crown", Due: null, ClearDue: false, Links: null, "obsidian"), 0);
+        var undone = await _h.UndoHold().Handle(new UndoTodoHoldRequest(), Token);
+
+        Assert.True(undone.IsSuccess, undone.IsError ? undone.Error.ToString() : null);
+        var types = _h.Slice.Store.Events.Select(e => e.Envelope.Type).TakeLast(3).ToList();
+        Assert.Equal(["todo.restored", "todo.changed", "todo.note.held.reopened"], types, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_todo_changed_in_sindri_after_the_hold_is_conflicted_not_overwritten_and_the_others_apply()
     {
         await Held();

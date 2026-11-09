@@ -57,6 +57,7 @@ internal static class EndpointTable
         _ = queries.MapListLinearProjects();
         _ = queries.MapGetProject();
         _ = queries.MapTodoReads();
+        _ = queries.MapWorkflowReads();
         _ = queries.MapGetProjects();
         _ = queries.MapGetLinearLookups();
         _ = queries.MapGetLinearSince();
@@ -129,7 +130,7 @@ internal static class EndpointTable
         _ = commands.MapRunService();
         _ = commands.MapContextJobs();
         _ = commands.MapLaunchTargetJob();
-        _ = commands.MapCreateItem();
+        _ = commands.MapCreateItem().MapHandoff();
         _ = commands.MapDecide();
         _ = commands.MapFileRequest();
         _ = commands.MapRebuildViews();

@@ -19,12 +19,13 @@ internal static class WorkflowRunScenarios
     private static readonly WorkflowRunId _ended = WorkflowRunId.Of(_slug, 1, 1);
     private const string AnswerSlug = "workflow-runs-run-nodes-node-answer";
     private const string AnswerBody = "{\"text\":\"yes\"}";
+    private static readonly WorkflowRunId _queued = WorkflowRunId.Of(_slug, 1, 2);
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("workflows-slug-runs", "unknown-workflow"), ("workflows-slug-runs", "bad-slug"), ("workflows-slug-runs", "not-active"), ("workflows-slug-runs", "bad-payload"),
-        ("workflow-runs-run-cancel", "not-found"), ("workflow-runs-run-cancel", "bad-id"), ("workflow-runs-run-cancel", "already-ended"),
+        ("workflow-runs-run-cancel", "not-found"), ("workflow-runs-run-cancel", "bad-id"), ("workflow-runs-run-cancel", "already-ended"), ("workflow-runs-run-cancel", "cancelled"),
         (AnswerSlug, "not-found"), (AnswerSlug, "bad-id"), (AnswerSlug, "already-ended"), (AnswerSlug, "answered"),
     ];
 
@@ -65,6 +66,10 @@ internal static class WorkflowRunScenarios
             case ("workflow-runs-run-cancel", "already-ended"):
                 await EndedRun(host, ct);
                 return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/cancel", json: null, human));
+            case ("workflow-runs-run-cancel", "cancelled"):
+                // why: a queued run is cancelled in the store with its workflow.run.cancelled event, so no Temporal worker is needed
+                await QueuedRun(host, ct);
+                return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_queued.Value)}/cancel", json: null, human));
             default:
                 return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/cancel", json: null, human));
         }
@@ -103,6 +108,12 @@ internal static class WorkflowRunScenarios
         {
             _ = (await workflows.Activate(_id, 1, ct)).Value;
         }
+    }
+
+    private static async Task QueuedRun(GoldenHost host, CancellationToken ct)
+    {
+        var run = new WorkflowRun(_queued, _id, 1, "{\"kind\":\"manual\"}", WorkflowRunStatus.Queued, Outputs: null, Error: null, ItemId: null, host.Now(), EndedAt: null);
+        _ = (await host.App.Services.GetRequiredService<IWorkflowRunStore>().Insert(run, ct)).Value;
     }
 
     private static async Task EndedRun(GoldenHost host, CancellationToken ct)

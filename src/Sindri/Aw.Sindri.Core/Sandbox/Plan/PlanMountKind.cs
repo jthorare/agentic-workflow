@@ -26,4 +26,7 @@ public enum PlanMountKind
 
     /// <summary>A symbolic link the run-area preparer makes at the path, to the target in <see cref="PlanMount.Source"/> (Seatbelt only: it has no bind mounts, so what the agent expects at a fixed path is a link to the real one).</summary>
     Link,
+
+    /// <summary>A resource's folder or file (PR 14), bound read-write at its own path; it outlives the run.</summary>
+    State,
 }

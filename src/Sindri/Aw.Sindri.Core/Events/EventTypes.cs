@@ -113,6 +113,9 @@ public static partial class EventTypes
     /// <summary>A human created a work item.</summary>
     public const string ItemCreated = "item.created";
 
+    /// <summary>A handoff (an outside offer or a local script) made an item and left its whole payload (not public).</summary>
+    public const string ItemHandoff = "item.handoff";
+
     /// <summary>An item moved from one state to another.</summary>
     public const string ItemStateChanged = "item.state-changed";
 
@@ -133,6 +136,15 @@ public static partial class EventTypes
 
     /// <summary>The owner wrote or cleared the notes on a Linear project they lead.</summary>
     public const string ProjectLedNoted = "project.led.noted";
+
+    /// <summary>A caller created a Linear issue through Sindri.</summary>
+    public const string LinearIssueCreated = "linear.issue.created";
+
+    /// <summary>A caller posted a comment on a Linear issue through Sindri.</summary>
+    public const string LinearCommentPosted = "linear.comment.posted";
+
+    /// <summary>A caller changed fields of a Linear issue through Sindri.</summary>
+    public const string LinearIssueChanged = "linear.issue.changed";
 
     /// <summary>A session or a human filed a request; a decision was created with it.</summary>
     public const string RequestFiled = "request.filed";
@@ -209,6 +221,12 @@ public static partial class EventTypes
     /// <summary>A sandbox limit was reached without ending the session: pids, memory high or disk growth (sandbox spec §8).</summary>
     public const string SandboxLimitHit = "sandbox.limit-hit";
 
+    /// <summary>A caller saved 'review.login' in the live profile (PR review page spec); the actor says who.</summary>
+    public const string ReviewLoginSet = "review.login-set";
+
+    /// <summary>A caller allowed a blocked host or home path for a run's repo in the live profile (sandbox spec §3.6); the actor says who.</summary>
+    public const string SandboxAllowed = "sandbox.allowed";
+
     /// <summary>The owner ended network learn mode early, for one repo or every repo (sandbox spec §3.6).</summary>
     public const string SandboxLearnEnded = "sandbox.learn-ended";
 
@@ -247,6 +265,15 @@ public static partial class EventTypes
 
     /// <summary>A connection that needed a new sign-in is connected again (connections PR 10b); it clears the connection's needs-you row.</summary>
     public const string ConnectionSignedIn = "connection.signed-in";
+
+    /// <summary>A poll of a connection for one event kind returned events (#2258, PR 11). Counts only. Not public.</summary>
+    public const string ConnectionPolled = "connection.polled";
+
+    /// <summary>A polled event matched a workflow's trigger but started no run: a run is in flight, or the delivery already had its run (#2258, PR 11). Not public.</summary>
+    public const string WorkflowTriggerSkipped = "workflow.trigger.skipped";
+
+    /// <summary>A catch-up hit its page cap, so older events were skipped (#2258, PR 11). Not public.</summary>
+    public const string CatchUpCapped = "catchup.capped";
 
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>

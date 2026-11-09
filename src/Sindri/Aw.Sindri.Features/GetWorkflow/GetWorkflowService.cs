@@ -1,0 +1,48 @@
+using System.Text.Json.Nodes;
+using Aw.Kernel;
+using Aw.Kernel.Services;
+using Aw.Sindri.Core;
+using Aw.Sindri.Core.Graph;
+
+namespace Aw.Sindri.Features.GetWorkflow;
+
+/// <summary>
+/// One workflow by slug, an archived one too: the revision it runs (the newest when it is off), the graph, the hash and who saved the newest revision. Node positions come from
+/// <see cref="WorkflowPositions"/>. An unknown slug is SND-GRAPH-008.
+/// </summary>
+/// <param name="workflows">The workflows and their revisions.</param>
+internal sealed class GetWorkflowService(IWorkflowStore workflows) : IService<GetWorkflowRequest, GetWorkflowResponse>
+{
+    public async ValueTask<Result<GetWorkflowResponse>> Handle(GetWorkflowRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var listed = await workflows.List(includeArchived: true, cancellationToken).ConfigureAwait(false);
+        if (listed.IsError)
+        {
+            return listed.Error;
+        }
+
+        var record = listed.Value.FirstOrDefault(r => r.Slug == request.Slug);
+        if (record is null)
+        {
+            return SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'; list the workflows to see what exists");
+        }
+
+        var shown = await workflows.GetRevision(record.Id, record.ActiveRevision ?? record.LatestRevision, cancellationToken).ConfigureAwait(false);
+        if (shown.IsError)
+        {
+            return shown.Error;
+        }
+
+        var newest = shown.Value.Revision == record.LatestRevision ? shown : await workflows.GetRevision(record.Id, record.LatestRevision, cancellationToken).ConfigureAwait(false);
+        if (newest.IsError)
+        {
+            return newest.Error;
+        }
+
+        // why: GraphJson.Write always writes a JSON object, so Parse never answers null
+        var spec = JsonNode.Parse(GraphJson.Write(shown.Value.Spec))!;
+        return new GetWorkflowResponse(record.Id, record.Slug, record.Name, shown.Value.Revision, record.ActiveRevision, record.LatestRevision, record.ArchivedAt, record.CreatedBy,
+            newest.Value.CreatedBy, newest.Value.CreatedAt, shown.Value.SpecHash, spec, WorkflowPositions.Of(shown.Value.Spec));
+    }
+}

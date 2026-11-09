@@ -369,11 +369,29 @@
       "action": "ConnectIndexSource",
       "class": "local",
       "allowedCallers": [],
-      "terminal": true,
+      "terminal": false,
       "method": null,
       "route": null,
       "cli": "sindri index connect <source>",
       "ui": "cli-only:local",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "CreateHandoffItem",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/handoff",
+      "cli": "sindri handoff send <title> [--source <name>] [--repo <repo>] [--branch <b>] [--prompt <text>] [--link <url>] [--label <l>]",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -581,7 +599,7 @@
     },
     {
       "action": "ImportContextMap",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
         "human+terminal",
         "human",
@@ -591,6 +609,25 @@
       "method": "POST",
       "route": "/sindri/context/map/import",
       "cli": "sindri context map import <file>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ImportTodoNote",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/note/import",
+      "cli": "sindri todo note import [--expect <n>] [--dry-run] [--json]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -1034,9 +1071,11 @@
       "action": "PurgeIndexSource",
       "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/index/purge",
       "cli": "sindri index purge <source>",

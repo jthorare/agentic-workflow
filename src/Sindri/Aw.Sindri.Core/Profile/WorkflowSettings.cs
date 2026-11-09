@@ -27,6 +27,9 @@ namespace Aw.Sindri.Core.Profile;
 /// <param name="Docs">The 'docs:' section (line spec §7.6; PB spec W27): whether docs sync runs and where it may write.</param>
 /// <param name="Pr">The 'pr:' section (PB spec W27): the PR babysitter's bots, caps, cadence and merge settings (<see cref="PrSettings"/>).</param>
 /// <param name="Scoping">The 'scoping:' section (#399): the scoping recipe's history window (<see cref="ScopingSettings"/>).</param>
+/// <param name="Poll">The 'poll:' section (#2258, PR 11): the poll interval and the catch-up page cap (<see cref="PollSettings"/>).</param>
+/// <param name="ForEach">The 'forEach:' section (PR 9): the item cap a 'for_each' node may lower but never raise, and its default batch size (<see cref="ForEachSettings"/>).</param>
+/// <remarks>'Http' and 'CallDepth' (agent-first PR 9) are init properties, not constructor parameters, so a later block's keys don't each rewrite the constructor.</remarks>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record WorkflowSettings(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? DeskTimeout = null,
@@ -48,4 +51,15 @@ public sealed record WorkflowSettings(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] StepsSettings? Steps = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] DocsSettings? Docs = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] PrSettings? Pr = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ScopingSettings? Scoping = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ScopingSettings? Scoping = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] PollSettings? Poll = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ForEachSettings? ForEach = null)
+{
+    /// <summary>The 'http:' section (agent-first PR 9): the hosts a workflow 'http' node may reach (<see cref="HttpSettings"/>).</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public HttpSettings? Http { get; init; }
+
+    /// <summary>How many calls deep one workflow may start another through 'run_workflow' (1 to 10; default <see cref="Graph.Guards.CallDepth.DefaultMax"/>, 3).</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? CallDepth { get; init; }
+}

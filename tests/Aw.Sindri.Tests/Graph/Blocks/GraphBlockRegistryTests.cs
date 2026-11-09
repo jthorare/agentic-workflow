@@ -7,15 +7,16 @@ namespace Aw.Sindri.Tests.Graph.Blocks;
 [Lane(TestLane.Unit)]
 public sealed class GraphBlockRegistryTests
 {
-    private static GraphBlockRegistry Standard() => GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider());
+    private static GraphBlockRegistry Standard() => GraphBlockRegistry.Standard(
+        new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more: GraphBlockRegistry.ParkingBlocks(new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider()));
 
     [Fact]
     public void The_standard_registry_lists_its_block_types()
     {
         var registry = Standard();
 
-        Assert.Equal(["ask_owner", "condition", "manual", "notify", "prompt", "schedule", "wait"], registry.Types.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
-        Assert.Equal(["manual", "schedule"], registry.Types.Values.Where(t => t.IsTrigger).Select(t => t.Type).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["ask_owner", "collect", "condition", "connection_event", "for_each", "manual", "notify", "prompt", "schedule", "wait"], registry.Types.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["connection_event", "manual", "schedule"], registry.Types.Values.Where(t => t.IsTrigger).Select(t => t.Type).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -41,6 +42,32 @@ public sealed class GraphBlockRegistryTests
     public void Every_blocks_example_is_a_config_its_own_schema_accepts()
     {
         foreach (var block in Standard().Types.Values)
+        {
+            var example = System.Text.Json.Nodes.JsonNode.Parse(block.Example)!.AsObject();
+
+            Assert.Empty(block.Config.Check(example));
+        }
+    }
+
+    private static GraphBlockRegistry WithFlowBlocks() => GraphBlockRegistry.Standard(
+        new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), more:
+        GraphBlockRegistry.FlowBlocks(new FlowFakes.MemorySeenStore(), new FlowFakes.RecordingItemPort(), new FlowFakes.ScriptedCallPort(), new FlowFakes.ScriptedHttpPort()));
+
+    [Fact]
+    public void The_flow_blocks_register_beside_the_standard_eight_and_workflow_call_is_a_trigger()
+    {
+        var registry = WithFlowBlocks();
+
+        Assert.Equal(
+            ["collect", "condition", "connection_event", "create_item", "for_each", "http", "manual", "notify", "only_new", "prompt", "run_workflow", "schedule", "workflow_call"],
+            registry.Types.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["connection_event", "manual", "schedule", "workflow_call"], registry.Types.Values.Where(t => t.IsTrigger).Select(t => t.Type).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void Every_flow_blocks_example_is_a_config_its_own_schema_accepts()
+    {
+        foreach (var block in GraphBlockRegistry.FlowBlocks(new FlowFakes.MemorySeenStore(), new FlowFakes.RecordingItemPort(), new FlowFakes.ScriptedCallPort(), new FlowFakes.ScriptedHttpPort()))
         {
             var example = System.Text.Json.Nodes.JsonNode.Parse(block.Example)!.AsObject();
 

@@ -17,7 +17,7 @@ internal static class NeedsYouMapper
     {
         ArgumentNullException.ThrowIfNull(list);
         ArgumentNullException.ThrowIfNull(catalog);
-        var readiness = catalog.Rows.ToDictionary(r => r.Action, r => (r.Cli, Protected: string.Equals(r.Class, "protected", StringComparison.Ordinal)), StringComparer.Ordinal);
+        var readiness = catalog.Rows.ToDictionary(r => r.Action, r => r.Cli, StringComparer.Ordinal);
         var read = catalog.Rows.Count > 0;
         return new NeedsYouFeed([.. list.Rows.Where(row => !NeedsYouKinds.Retired.Contains(row.Kind, StringComparer.Ordinal) && !string.Equals(row.Id, NeedsYouKinds.RetiredRecipesRowId, StringComparison.Ordinal)).Select(row => Entry(row, readiness, decisions, read))], list.Empty ?? string.Empty)
         {
@@ -27,7 +27,7 @@ internal static class NeedsYouMapper
         };
     }
 
-    private static NeedsYouEntry Entry(NeedsYouRowView row, Dictionary<string, (string Cli, bool Protected)> readiness, DecisionList? decisions, bool read)
+    private static NeedsYouEntry Entry(NeedsYouRowView row, Dictionary<string, string> readiness, DecisionList? decisions, bool read)
     {
         var subject = row.Subject is { } s ? new NeedsYouSubject(s.Kind, s.Id) : null;
         var pending = PendingDecision(subject?.DecisionId, decisions);
@@ -65,20 +65,20 @@ internal static class NeedsYouMapper
         decisionId is null ? null : decisions?.Decisions.FirstOrDefault(d => string.Equals(d.Id, decisionId, StringComparison.Ordinal));
 
     // A Decide on a decision row is one button per option the pending list offers; every other action is one button with its own catalog command.
-    private static IEnumerable<NeedsYouAction> Actions(NeedsYouRowView row, NeedsYouSubject? subject, string id, Dictionary<string, (string Cli, bool Protected)> readiness, DecisionList? decisions)
+    private static IEnumerable<NeedsYouAction> Actions(NeedsYouRowView row, NeedsYouSubject? subject, string id, Dictionary<string, string> readiness, DecisionList? decisions)
     {
-        var (ready, catalogCli, isProtected) = readiness.TryGetValue(id, out var listed) ? (ActionReadiness.Ready, listed.Cli, listed.Protected) : (ActionReadiness.Pending, "", false);
+        var (ready, catalogCli) = readiness.TryGetValue(id, out var listed) ? (ActionReadiness.Ready, listed) : (ActionReadiness.Pending, "");
         var decision = string.Equals(id, Decide, StringComparison.Ordinal) ? PendingDecision(subject?.DecisionId, decisions) : null;
         if (decision is null)
         {
             var (cli, hint) = ActionCommand.For(catalogCli, string.Equals(id, row.PrimaryAction, StringComparison.Ordinal), row.Cli, subject, row.Item);
-            yield return new NeedsYouAction(id, Labels.Action(id), ready, cli, RejectLike: false) { FillInHint = hint, IsProtected = isProtected };
+            yield return new NeedsYouAction(id, Labels.Action(id), ready, cli, RejectLike: false) { FillInHint = hint };
             yield break;
         }
 
         foreach (var option in decision.Options)
         {
-            yield return new NeedsYouAction(id, option.Label, ready, option.Cli, option.RejectLike) { IsProtected = isProtected, OptionId = option.Id, Recommended = string.Equals(option.Id, decision.Recommended, StringComparison.Ordinal) };
+            yield return new NeedsYouAction(id, option.Label, ready, option.Cli, option.RejectLike) { OptionId = option.Id, Recommended = string.Equals(option.Id, decision.Recommended, StringComparison.Ordinal) };
         }
     }
 

@@ -3,7 +3,7 @@ namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 /// <summary>
 /// The Needs-you list's keys (U3' T3): J and K move, A runs the primary, X turns a decision down, Y copies the command,
 /// Enter opens the sheet and Esc closes it. The keys raise events; the shell runs the action as a button press would.
-/// A key never runs a protected or pending action, and nothing is taken for <see cref="KeyQuiet"/> after the selection
+/// A key never runs a row's disabled primary control, and nothing is taken for <see cref="KeyQuiet"/> after the selection
 /// moved on its own, so a row clearing under the user's hand can't turn the next key into an action on another row.
 /// </summary>
 internal sealed partial class NeedsYouViewModel
@@ -111,11 +111,11 @@ internal sealed partial class NeedsYouViewModel
     }
 
     // A runs the row's primary control when the app may: ready, not behind a rebuild, and for a decision only with its sheet
-    // open (the sheet shows what is being accepted). A protected or pending primary is never run.
+    // open (the sheet shows what is being accepted). A disabled primary is never run.
     private bool RunPrimary(NeedsYouRowViewModel row)
     {
         var decision = row.Entry.DecisionId is not null;
-        var primary = row.Controls.FirstOrDefault(c => c.IsPrimary && c.IsEnabled && !c.Action.IsProtected);   // a protected action is a click, never a key
+        var primary = row.Controls.FirstOrDefault(c => c.IsPrimary && c.IsEnabled);
         return primary is not null && (!decision || (primary.Action.OptionId.Length > 0 && string.Equals(SheetRowId, row.Id, StringComparison.Ordinal))) && Act(row, primary.Action);
     }
 

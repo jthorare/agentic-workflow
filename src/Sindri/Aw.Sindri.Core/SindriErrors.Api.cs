@@ -18,4 +18,10 @@ public static partial class SindriErrors
 
     /// <summary>SND-API-014: a route that was removed (answered with 410 for one release; #2258 PR 1: POST /sindri/profile/approve, since edits apply on save).</summary>
     public static readonly ErrorDefinition RouteRemoved = new("SND-API-014", ErrorKind.NotFound, "That route was removed");
+
+    /// <summary>SND-API-015: a handoff body over 64 KB (#2258 PR 12).</summary>
+    public static readonly ErrorDefinition HandoffTooLarge = new("SND-API-015", ErrorKind.Invalid, "A handoff body is at most 65,536 bytes");
+
+    /// <summary>SND-API-016: more handoffs than the local endpoint takes in a minute (#2258 PR 12).</summary>
+    public static readonly ErrorDefinition HandoffRateLimited = new("SND-API-016", ErrorKind.RateLimited, "Too many handoffs in a minute; retry shortly");
 }

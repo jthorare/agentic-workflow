@@ -1,0 +1,1 @@
+{ "claimId": "c-1", "succeeded": true, "markdown": "Made the timeout 30 minutes.", "links": [{ "label": "PR", "url": "https://github.example.test/acme/web/pull/7" }] }

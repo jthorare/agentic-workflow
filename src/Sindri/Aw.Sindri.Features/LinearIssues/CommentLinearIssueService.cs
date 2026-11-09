@@ -3,11 +3,12 @@ using Aw.Context.Core.Linear;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 
 namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
-/// Posts a comment as the owner (Linear hub spec §5.3; desk). In order: a session is refused (SND-AUTH-002); the key and client id are read (SND-CLI-003); the issue's team must be a picked one (SND-LINEAR-003); Context posts it with the client id,
+/// Posts a comment as the owner (Linear hub spec §5.3; desk). In order (an agent session may post too, agent-first PR 2): the key and client id are read (SND-CLI-003); the issue's team must be a picked one (SND-LINEAR-003); Context posts it with the client id,
 /// so a retry never posts twice. The answer is the comment as the issue now holds it, read back through <see cref="GetLinearIssueService"/>; when the store missed it (SND-LINEAR-013) the answer carries the text just sent.
 /// A write that Linear never confirmed is SND-LINEAR-011 with the client id to retry with.
 /// </summary>
@@ -16,7 +17,8 @@ namespace Aw.Sindri.Features.LinearIssues;
 /// <param name="teams">The picked-team check.</param>
 /// <param name="issues">The issue read the answer is taken from.</param>
 /// <param name="clock">Stamps a comment the store did not return.</param>
-internal sealed class CommentLinearIssueService(LinearScopes scopes, IContextLinearWrites engine, LinearTeamGate teams, IService<GetLinearIssueRequest, GetLinearIssueResponse> issues, TimeProvider clock)
+/// <param name="recorder">Records the write under the caller's actor.</param>
+internal sealed class CommentLinearIssueService(LinearScopes scopes, IContextLinearWrites engine, LinearTeamGate teams, IService<GetLinearIssueRequest, GetLinearIssueResponse> issues, TimeProvider clock, ILinearWriteRecorder recorder)
     : IService<CommentLinearIssueRequest, CommentLinearIssueResponse>
 {
     private const string NotStored = "SND-LINEAR-013";
@@ -24,11 +26,6 @@ internal sealed class CommentLinearIssueService(LinearScopes scopes, IContextLin
     public async ValueTask<Result<CommentLinearIssueResponse>> Handle(CommentLinearIssueRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (scopes.IsSession())
-        {
-            return SindriErrors.AuthRefused.With(LinearWriteFailures.Refusal);
-        }
-
         var key = LinearIssueKey.Parse(request.Key);
         var client = LinearClientId.Parse(request.ClientId);
         if (key.IsError || client.IsError)
@@ -36,17 +33,28 @@ internal sealed class CommentLinearIssueService(LinearScopes scopes, IContextLin
             return SindriErrors.InvalidInput.With((key.IsError ? key.Error : client.Error).Message);
         }
 
-        var team = await teams.Picked(key.Value.Team, cancellationToken).ConfigureAwait(false);
-        var scope = await scopes.Read(owner: true, cancellationToken).ConfigureAwait(false);
-        if (team.IsError || scope.IsError)
+        var scope = await scopes.Write(cancellationToken).ConfigureAwait(false);
+        if (scope.IsError)
         {
-            return team.IsError ? team.Error : scope.Error;
+            return scope.Error;
+        }
+
+        var team = await teams.Picked(key.Value.Team, cancellationToken).ConfigureAwait(false);
+        if (team.IsError)
+        {
+            return team.Error;
         }
 
         var sent = await engine.Comment(key.Value, request.Body, client.Value, scope.Value, cancellationToken).ConfigureAwait(false);
         if (sent.IsError)
         {
             return sent.Error.Code == LinearHubErrors.NoAnswer.Code ? Unconfirmed(key.Value, client.Value) : LinearWriteFailures.Of(sent.Error);
+        }
+
+        if (sent.Value is LinearWriteApplied or LinearWriteAppliedNotStored
+            && await recorder.Record(new LinearWrite(EventTypes.LinearCommentPosted, key.Value.Team, key.Value.ToString(), client.Value.Value, Fields: null), cancellationToken).ConfigureAwait(false) is { } failed)
+        {
+            return failed;
         }
 
         return sent.Value switch

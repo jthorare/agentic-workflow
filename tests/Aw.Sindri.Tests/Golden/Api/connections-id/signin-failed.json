@@ -1,0 +1,19 @@
+{
+  "connection": {
+    "name": "linear:work",
+    "kind": "oauth",
+    "preset": "linear",
+    "status": "connected",
+    "statusReason": null,
+    "config": {
+      "clientId": "client-123",
+      "scopes": "read write"
+    },
+    "lastRefreshedAt": "2026-01-01T00:30:00.0000000Z",
+    "hasSecret": true
+  },
+  "lastSignInFailure": {
+    "code": "SND-CONN-009",
+    "at": "2026-01-01T01:00:00.0000000Z"
+  }
+}

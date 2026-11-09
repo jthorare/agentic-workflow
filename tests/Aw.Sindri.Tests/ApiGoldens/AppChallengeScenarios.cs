@@ -17,7 +17,7 @@ internal static class AppChallengeScenarios
     /// <summary>The scenario's body: the answer to the app's challenge request.</summary>
     public static async Task<string> Body(GoldenHost host, string scenario, CancellationToken ct)
     {
-        (string Name, string Value)[] app = [(SindriHeaders.Caller, "human"), (SindriHeaders.Client, "ui"), (SindriHeaders.Token, host.Token.Value)];
+        (string Name, string Value)[] app = [.. Human(host.Token.Value, client: "ui").Where(static h => h.Name != SindriHeaders.Terminal)];   // the app's headers; a session's under a session run
         var action = scenario switch
         {
             "profile" => "approve profile " + (await host.LiveHash(ct)).Value[..6],

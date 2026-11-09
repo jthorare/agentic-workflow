@@ -3,13 +3,19 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AddTodo;
 using Aw.Sindri.Features.ChangeTodo;
+using Aw.Sindri.Features.CreateHandoffItem;
 using Aw.Sindri.Features.CreateMemory;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.ForgetMemoryFact;
+using Aw.Sindri.Features.ImportTodoNote;
+using Aw.Sindri.Features.KeepTodo;
+using Aw.Sindri.Features.KeepTodoUndo;
 using Aw.Sindri.Features.MarkTodo;
+using Aw.Sindri.Features.PickTodoHold;
 using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.TestConnection;
+using Aw.Sindri.Features.UndoTodoHold;
 using Aw.Sindri.Features.WriteMemoryFact;
 
 namespace Aw.Architecture.Tests;
@@ -29,6 +35,7 @@ public sealed class McpSurfaceTests
     private static readonly HashSet<string> _allowed = new(StringComparer.Ordinal)
     {
         typeof(FileRequestRequest).FullName!,
+        typeof(CreateHandoffItemRequest).FullName!,   // sindri_handoff (#2258 PR 12): hands work to this machine's Sindri, the same item POST /sindri/handoff makes; Desk class, a non-launched session may run it
         typeof(AddConnectionRequest).FullName!,
         typeof(TestConnectionRequest).FullName!,
         typeof(RemoveConnectionRequest).FullName!,
@@ -42,6 +49,12 @@ public sealed class McpSurfaceTests
         typeof(MarkTodoRequest).FullName!,
         // why: agent-first spec D2 (design.md, PR 9): any caller may answer a waiting ask_owner question, attributed `session:<id>`, so workflow_answer reaches the AnswerQuestion command
         "Aw.Sindri.Features.AnswerQuestion.AnswerQuestionRequest",   // internal to Features, so named by its full name
+        // why: todo spec D2 (rev 5.3, no exceptions): a pick, a hold pick, their Undo and the note import are request class too, and sindri_todo takes them as actions
+        typeof(KeepTodoRequest).FullName!,
+        typeof(KeepTodoUndoRequest).FullName!,
+        typeof(PickTodoHoldRequest).FullName!,
+        typeof(UndoTodoHoldRequest).FullName!,
+        typeof(ImportTodoNoteRequest).FullName!,
     };
 
     private static readonly string[] _launchSecretMarkers = ["LAUNCH_SECRET", "Launch-Secret", "LaunchSecret"];

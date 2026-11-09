@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Testing.Workflow;
 
@@ -105,6 +106,21 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int offset, int limit, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<WorkflowRun> recent = [.. _runs
+                .Where(r => r.WorkflowId == workflow)
+                .OrderByDescending(static r => r.StartedAt)
+                .ThenByDescending(static r => r.Id.Occurrence)
+                .Skip(Math.Max(offset, 0))
+                .Take(Math.Max(limit, 1))];
+            return Ok(recent);
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken)
     {
         lock (_gate)
@@ -154,6 +170,22 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
         Move(id, status, outputs, error, from => status == WorkflowRunStatus.Queued ? from == WorkflowRunStatus.Running : !IsFinal(from));
+
+    /// <inheritdoc/>
+    public ValueTask<Result<WorkflowRun>> SetItem(WorkflowRunId id, ItemId item, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var at = _runs.FindIndex(r => r.Id == id);
+            if (at < 0)
+            {
+                return Done<WorkflowRun>(NotFound(id));
+            }
+
+            _runs[at] = _runs[at] with { ItemId = item };
+            return Done<WorkflowRun>(_runs[at]);
+        }
+    }
 
     /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> CancelQueued(WorkflowRunId id, string? error, CancellationToken cancellationToken) =>
@@ -215,6 +247,19 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
         {
             IReadOnlyList<NodeRun> rows = [.. _nodeRuns.Values
                 .Where(n => n.RunId == id)
+                .OrderBy(static n => n.NodeId.Value, StringComparer.Ordinal)
+                .ThenBy(static n => n.ItemIndex)];
+            return Ok(rows);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRunsForItem(WorkflowRunId id, int itemIndex, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<NodeRun> rows = [.. _nodeRuns.Values
+                .Where(n => n.RunId == id && (n.ItemIndex == 0 || n.ItemIndex == itemIndex))
                 .OrderBy(static n => n.NodeId.Value, StringComparer.Ordinal)
                 .ThenBy(static n => n.ItemIndex)];
             return Ok(rows);

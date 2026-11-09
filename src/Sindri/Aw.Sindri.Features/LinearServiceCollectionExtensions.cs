@@ -31,6 +31,7 @@ internal static class LinearServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddScoped<IValidator<ChangeLinearIssueRequest>, AcceptAllValidator<ChangeLinearIssueRequest>>().AddCommand<ChangeLinearIssueRequest, LinearChangeResult, ChangeLinearIssueService>()
-            .AddScoped<ILinearWriteScope, ContextLinearWriteScope>();
+            .AddScoped<ILinearWriteScope, ContextLinearWriteScope>()
+            .AddScoped<ILinearWriteRecorder, LedgerLinearWriteRecorder>();
     }
 }

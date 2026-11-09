@@ -59,6 +59,16 @@ public sealed class FakeLinearSeed
         return this;
     }
 
+    /// <summary>Marks a seeded issue as changed after it was created: its updatedAt moves to the fake's next tick, so its history has two entries.</summary>
+    /// <param name="issueIdentifier">The issue's identifier ('ENG-1').</param>
+    /// <returns>This seed.</returns>
+    public FakeLinearSeed Edited(string issueIdentifier)
+    {
+        var issue = Store.FindIssue(issueIdentifier) ?? throw new ArgumentException($"Seed the issue '{issueIdentifier}' before editing it.", nameof(issueIdentifier));
+        Store.Issues[Store.Issues.IndexOf(issue)] = issue with { UpdatedAt = Store.Now() };
+        return this;
+    }
+
     /// <summary>Adds a cycle.</summary>
     /// <param name="name">The cycle name.</param>
     /// <param name="teamKey">The team the cycle belongs to; null makes a cycle every team has.</param>
