@@ -113,6 +113,9 @@ public static partial class EventTypes
     /// <summary>A human created a work item.</summary>
     public const string ItemCreated = "item.created";
 
+    /// <summary>A handoff (an outside offer or a local script) made an item and left its whole payload (not public).</summary>
+    public const string ItemHandoff = "item.handoff";
+
     /// <summary>An item moved from one state to another.</summary>
     public const string ItemStateChanged = "item.state-changed";
 
