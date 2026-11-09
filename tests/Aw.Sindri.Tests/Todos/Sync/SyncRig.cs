@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Features.SyncTodoNote;
@@ -16,12 +17,12 @@ internal sealed class SyncRig
     internal const string NoteName = "Todo.md";
     internal const string Path = "/vault/Todo.md";
 
-    private SyncRig(TodoHarness harness)
+    private SyncRig(TodoHarness harness, ITextScrubber scrubber)
     {
         Harness = harness;
         Sync = new TodoNoteSync(new SyncDeps(
             Files, Locator, Disk, harness.Slice.Store, harness.Slice.Held, harness.Slice.Events, harness.Views.Views,
-            new TodoHolds(harness.Slice.Store, harness.Slice.Events), harness.Picks, new PassThroughScrubber(), harness.Slice.Clock, harness.Slice.Ids, NullLogger.Instance));
+            new TodoHolds(harness.Slice.Store, harness.Slice.Events), harness.Picks, scrubber, harness.Slice.Clock, harness.Slice.Ids, NullLogger.Instance));
     }
 
     internal TodoHarness Harness { get; }
@@ -35,11 +36,11 @@ internal sealed class SyncRig
     internal TodoNoteSync Sync { get; }
 
     /// <summary>A rig with the lease held.</summary>
-    internal static async Task<SyncRig> Start()
+    internal static async Task<SyncRig> Start(ITextScrubber? scrubber = null)
     {
         var harness = new TodoHarness();
         await harness.Lease();
-        return new SyncRig(harness);
+        return new SyncRig(harness, scrubber ?? new PassThroughScrubber());
     }
 
     /// <summary>The note's text now, or null when it is missing.</summary>
