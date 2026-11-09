@@ -13,7 +13,7 @@ namespace Aw.Sindri.Features.PollConnections;
 /// One provider call for one (connection, event kind) and what follows it: the events fan out to the triggers that watch the group, each trigger starts a run whose occurrence is the delivery id,
 /// and only then is the cursor saved. A start that fails for a reason other than "this delivery already has its run" (a Temporal outage, a store error) stops the round with the cursor where it was,
 /// so the next poll reads the same events again after the backoff; the runs that did start are refused there as duplicates. A launch that fails for any other reason keeps its failed run under the delivery's id
-/// (<c>GraphRunStarter</c>), so that event is a duplicate on the next poll and cannot hold the group back. A rate-limited answer, a poller error or a failed start saves the backoff and keeps the cursor value.
+/// (<c language="text">GraphRunStarter</c>), so that event is a duplicate on the next poll and cannot hold the group back. A rate-limited answer, a poller error or a failed start saves the backoff and keeps the cursor value.
 /// </summary>
 /// <param name="starter">Starts, queues or skips a run.</param>
 /// <param name="cursors">Where cursors are saved.</param>

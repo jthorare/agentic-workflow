@@ -49,19 +49,12 @@ internal sealed partial class PollConnectionsService(
             return groups.Error;
         }
 
-        var list = await cursors.List(cancellationToken).ConfigureAwait(false);
+        var now = clock.GetUtcNow();
+        var list = await Saved(groups.Value, now, cancellationToken).ConfigureAwait(false);
         if (list.IsError)
         {
             RequestAgain(catchUp);
             return list.Error;
-        }
-
-        var now = clock.GetUtcNow();
-        var forgot = await Forget(groups.Value, list.Value, now, cancellationToken).ConfigureAwait(false);
-        if (forgot.IsError)
-        {
-            RequestAgain(catchUp);
-            return forgot.Error;
         }
 
         if (groups.Value.Count == 0)
@@ -87,6 +80,19 @@ internal sealed partial class PollConnectionsService(
 
     // why: a cursor whose group has no active trigger left would, once a trigger watches it again, read forward from where the last one stopped and start runs for every event since
     // (an archived workflow, a revision without the trigger, then a new one). Its value is dropped, so the next poll of the group is a baseline that starts nothing; the backoff stays.
+    // The saved cursors, after the ones no group watches lost their value.
+    private async ValueTask<Result<IReadOnlyList<PollCursor>>> Saved(IReadOnlyList<PollGroup> groups, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var list = await cursors.List(cancellationToken).ConfigureAwait(false);
+        if (list.IsError)
+        {
+            return list.Error;
+        }
+
+        var forgot = await Forget(groups, list.Value, now, cancellationToken).ConfigureAwait(false);
+        return forgot.IsError ? forgot.Error : list;
+    }
+
     private async ValueTask<Result<Unit>> Forget(IReadOnlyList<PollGroup> groups, IReadOnlyList<PollCursor> saved, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var watched = groups.Select(static g => (g.Connection, g.Kind.Key)).ToHashSet();
