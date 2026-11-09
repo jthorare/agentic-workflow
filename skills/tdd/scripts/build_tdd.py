@@ -38,10 +38,11 @@ def sd_root():
     """The system-design skill: $SYSTEM_DESIGN_SKILL, else the sibling skills/system-design, else ~/.claude/skills."""
     env = os.environ.get("SYSTEM_DESIGN_SKILL")
     sibling = os.path.normpath(os.path.join(SKILL, "..", "system-design"))
-    for cand in (env, sibling, os.path.expanduser("~/.claude/skills/system-design")):
-        if cand and os.path.isdir(os.path.join(cand, "scripts")):
+    vendor = os.path.join(SKILL, "vendor", "system-design")
+    for cand in (env, sibling, os.path.expanduser("~/.claude/skills/system-design"), vendor):
+        if cand and os.path.isfile(os.path.join(cand, "scripts", "build_doc.py")):
             return cand
-    return env or sibling
+    return env or vendor
 
 def _load_sd(name):
     path = os.path.join(sd_root(), "scripts", name)
@@ -163,6 +164,7 @@ def link_refs(html_body, ids, families, glossary, stats, seen=None):
                 return g
             seen.add(g)
         stats["linked"] += 1
+        stats.setdefault("links", []).append({"token": g, "family": "glossary", "section": stats.get("section"), "anchor": glossary[g], "linked": True})
         return f'<a class="ref ref-abbr" href="#{glossary[g]}" data-ref="{glossary[g]}">{g}</a>'
     def repl_text(text):
         text = TOKEN.sub(tok, text)
@@ -236,6 +238,51 @@ def load_prs(prs_dir):
                         depends_on=deps, file=f"prs/{f}"))
     return sorted(prs, key=lambda q: (q["n"], q["sub"]))
 
+
+# -- HTML guard. Author-supplied inline HTML goes through Raw (dangerouslySetInnerHTML) in the page, so every tag is
+# rebuilt attribute by attribute: event handlers are dropped wherever they sit (including right after a closing quote,
+# where HTML still parses them), URL attributes are allowed by scheme (http, https, mailto, a fragment or a relative
+# path) after control characters, whitespace and entities are stripped, and every value is re-quoted with " escaped.
+_SCRIPT_TAG = re.compile(r"<\s*/?\s*(script|iframe|object|embed|base|meta|link|style|template)\b[^>]*>", re.I)
+_TAG = re.compile(r"<([a-zA-Z][\w:-]*)((?:[^>\"']|\"[^\"]*\"|'[^']*')*)>")
+_ATTR = re.compile(r"([^\s=>/\"']+)(?:\s*=\s*(\"[^\"]*\"|'[^']*'|[^\s>]+))?")
+_URL_ATTRS = {"href", "src", "action", "formaction", "xlink:href", "poster", "data", "srcset", "cite", "longdesc", "background"}
+_CTRL = re.compile(r"[\x00-\x20\x7f]+")
+_OK_SCHEME = re.compile(r"^(https?|mailto):", re.I)
+
+def _safe_url(v):
+    raw = html.unescape(v)
+    flat = _CTRL.sub("", raw)
+    if ":" in flat.split("/", 1)[0].split("#", 1)[0].split("?", 1)[0]:
+        return raw if _OK_SCHEME.match(flat) else "#blocked:"
+    return raw
+
+def _rebuild_tag(m):
+    name, attrs = m.group(1), m.group(2) or ""
+    out = [name]
+    close = attrs.rstrip().endswith("/")
+    for a in _ATTR.finditer(attrs):
+        key, val = a.group(1), a.group(2)
+        k = key.lower()
+        if k == "/" or k.startswith("on") or k in ("style", "srcdoc"):
+            continue
+        if val is None:
+            out.append(key)
+            continue
+        if val[:1] in "\"'" and val[-1:] == val[:1]:
+            val = val[1:-1]
+        if k in _URL_ATTRS:
+            val = _safe_url(val)
+        out.append(f'{key}="{val.replace("&", "&amp;").replace(chr(34), "&quot;") if "&" not in val or ";" not in val else val.replace(chr(34), "&quot;")}"')
+    return "<" + " ".join(out) + (" /" if close else "") + ">"
+
+def sanitize_html(h):
+    if not h or "<" not in h:
+        return h
+    h = _SCRIPT_TAG.sub("", h)
+    return _TAG.sub(_rebuild_tag, h)
+
+
 class Compiler:
     def __init__(self, a):
         self.a = a
@@ -289,17 +336,9 @@ class Compiler:
             self._measuring = False
 
     # -- inline
-    SCRIPT_TAG = re.compile(r"<\s*/?\s*(script|iframe|object|embed)\b[^>]*>", re.I)
-    ON_ATTR = re.compile(r"\s+on[a-z]+\s*=\s*(\"[^\"]*\"|'[^']*'|[^\s>]+)", re.I)
-    JS_URL = re.compile(r"(\b(?:href|src)\s*=\s*[\"']?)\s*(javascript|data:text/html|vbscript)\s*:", re.I)
-
     def sanitize(self, h):
         """The source author is trusted, but a stray <script>, on* handler or javascript: URL must never reach a viewer."""
-        if "<" not in h:
-            return h
-        h = self.SCRIPT_TAG.sub("", h)
-        h = self.ON_ATTR.sub("", h)
-        return self.JS_URL.sub(r"\1#blocked:", h)
+        return sanitize_html(h)
 
     def inline(self, s, links=True):
         h = self.sanitize(self.inline0(s, links=links))
@@ -797,7 +836,7 @@ class Compiler:
             deps_html = ("Depends on " + ", ".join(esc(d) for d in p["depends_on"])) if p["depends_on"] else ""
             groups[-1]["prs"].append({"n": p["n"], "sub": p["sub"], "label": p["label"], "id": pid, "title": self.sanitize(bp.inline(p["title"])), "change": self.sanitize(bp.inline(p["change"])),
                                       "dependsOn": p["depends_on"], "deps": deps_html, "decisions": [t for t in mentioned if t.startswith("D")], "tokens": mentioned, "paths": paths,
-                                      "rollback": bp.inline(p["rollback"]) if p.get("rollback") and p["rollback"] != "not stated" else "", "bodyHtml": body, "file": p["file"]})
+                                      "rollback": self.sanitize(bp.inline(p["rollback"])) if p.get("rollback") and p["rollback"] != "not stated" else "", "bodyHtml": body, "file": p["file"]})
             self.define(pid, "pr", f"PR {p['label']} · {p['title']}", p["change"])
         self.pr_count = len(prs)
         return {"type": "prs", "groups": groups}
