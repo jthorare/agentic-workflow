@@ -52,6 +52,7 @@ internal static partial class Labels
         ["PickTodoHold:restore"] = "Put held note changes back",
         ["UndoTodoHold"] = "Undo the held-changes pick",
         ["CheckTodoNote"] = "Check todo note",
+        ["ImportTodoNote"] = "Import the todo note",
         ["SetTodoNote"] = "Set the todo note",
         ["StopTodoNote"] = "Stop syncing the todo note",
         ["EmbedCodeIndex"] = "Embed code index",

@@ -6639,3 +6639,47 @@ override Aw.Sindri.Features.AddConnection.SignInConnectionRequest.GetHashCode() 
 override Aw.Sindri.Features.AddConnection.SignInConnectionRequest.ToString() -> string!
 static Aw.Sindri.Features.AddConnection.SignInConnectionRequest.operator !=(Aw.Sindri.Features.AddConnection.SignInConnectionRequest? left, Aw.Sindri.Features.AddConnection.SignInConnectionRequest? right) -> bool
 static Aw.Sindri.Features.AddConnection.SignInConnectionRequest.operator ==(Aw.Sindri.Features.AddConnection.SignInConnectionRequest? left, Aw.Sindri.Features.AddConnection.SignInConnectionRequest? right) -> bool
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.<Clone>$() -> Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest!
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.Deconstruct(out string! Vault, out string! Note, out int? ExpectOpen, out bool Piped) -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.Equals(Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest? other) -> bool
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.ExpectOpen.get -> int?
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.ExpectOpen.init -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.ImportTodoNoteRequest(string! Vault, string! Note, int? ExpectOpen, bool Piped = false) -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.Note.get -> string!
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.Note.init -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.Piped.get -> bool
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.Piped.init -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.Vault.get -> string!
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.Vault.init -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.<Clone>$() -> Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse!
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.CantImport.get -> int
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.CantImport.init -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.CantImportLines.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>!
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.CantImportLines.init -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Deconstruct(out int Imported, out int CantImport, out int Open, out int Done, out int Other, out int Importable, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>! CantImportLines, out bool DryRun) -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Done.get -> int
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Done.init -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.DryRun.get -> bool
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.DryRun.init -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Equals(Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse? other) -> bool
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.ImportTodoNoteResponse(int Imported, int CantImport, int Open, int Done, int Other, int Importable, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>! CantImportLines, bool DryRun) -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Importable.get -> int
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Importable.init -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Imported.get -> int
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Imported.init -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Open.get -> int
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Open.init -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Other.get -> int
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Other.init -> void
+override Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.ToString() -> string!
+override Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.ToString() -> string!
+static Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.operator !=(Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest? left, Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest? right) -> bool
+static Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.operator ==(Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest? left, Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest? right) -> bool
+static Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.operator !=(Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse? left, Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse? right) -> bool
+static Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.operator ==(Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse? left, Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse? right) -> bool
