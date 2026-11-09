@@ -115,21 +115,16 @@ export async function checkToolkit(journal, t, rel, log) {
   const testsCsproj = path.join(`${t.name}.Toolkit.Tests`, `${t.name}.Toolkit.Tests.csproj`);
   journal.watch(path.join(rel, "packages.lock.json"));
   journal.watch(path.join(rel, `${t.name}.Toolkit.Tests`, "packages.lock.json"));
-  const ci = process.env.CI;
-  delete process.env.CI;   // a new project has no lock file yet and locked mode would refuse its first restore
-  try {
-    for (const proj of [toolkitCsproj, testsCsproj]) {
-      await mustPass(t.dir, "NT-RESTORE", "dotnet", ["restore", proj, "--force"], "the SDK package must be in the feed (scripts/install-cs.sh) and every other package pinned in Directory.Packages.props", log);
-    }
-    const files = journal.touched().filter((f) => f.endsWith(".cs")).map((f) => path.relative(rel, f));
-    const scope = { testProjects: [testsCsproj], formatProjects: [testsCsproj, toolkitCsproj], files };
-    await build(t.dir, scope, log);
-    const lane = await expectOnlyRed(t.dir, scope, `${t.toolPascal}Tests.${t.toolPascal}_answers_the_subject_it_was_given`, log);
-    await formatClean(t.dir, scope, log);
-    return lane;
-  } finally {
-    if (ci !== undefined) process.env.CI = ci;
+  // -p:RestoreLockedMode=false: a new project has no lock file yet, and locked mode (CI) would refuse its first restore.
+  for (const proj of [toolkitCsproj, testsCsproj]) {
+    await mustPass(t.dir, "NT-RESTORE", "dotnet", ["restore", proj, "--force", "-p:RestoreLockedMode=false"], "the SDK package must be in the feed (scripts/install-cs.sh) and every other package pinned in Directory.Packages.props", log);
   }
+  const files = journal.touched().filter((f) => f.endsWith(".cs")).map((f) => path.relative(rel, f));
+  const scope = { testProjects: [testsCsproj], formatProjects: [testsCsproj, toolkitCsproj], files };
+  await build(t.dir, scope, log);
+  const lane = await expectOnlyRed(t.dir, scope, `${t.toolPascal}Tests.${t.toolPascal}_answers_the_subject_it_was_given`, log);
+  await formatClean(t.dir, scope, log);
+  return lane;
 }
 
 export async function main(argv, { log = (line) => console.error(line), out = (line) => console.log(line) } = {}) {
