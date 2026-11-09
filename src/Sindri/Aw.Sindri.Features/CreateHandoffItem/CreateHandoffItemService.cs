@@ -4,6 +4,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Handoff;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
@@ -39,7 +40,7 @@ internal sealed class CreateHandoffItemService(IItemMaker items, HeldLease held,
         }
 
         var key = request.OfferKey is null ? null : $"{EventTypes.ItemHandoff}:{request.Source}:{request.OfferKey}";
-        var earlier = key is null ? Results.Success<HandoffItemCreatedResponse?>(null) : await Earlier(key, caller, cancellationToken).ConfigureAwait(false);
+        var earlier = key is null ? Results.Success<HandoffItemCreatedResponse?>(value: null) : await Earlier(key, caller, cancellationToken).ConfigureAwait(false);
         return earlier switch
         {
             { IsError: true } => earlier.Error,
@@ -59,8 +60,7 @@ internal sealed class CreateHandoffItemService(IItemMaker items, HeldLease held,
         }
 
         var item = made.Value;
-        var offer = request.OfferKey ?? item.Value;
-        var payload = new ItemHandoff(caller.CommandId, item, offer, request.Source, request.Repo ?? caller.Repo, request.Branch, request.Prompt, request.Links ?? [], request.Labels ?? []);
+        var payload = Payload(request, caller, item);
         using var _ = callers.Enter(caller with { Actor = caller.Launch is not null ? caller.Actor : "handoff:" + request.Source });
         var entry = events.Entry(EventTypes.ItemHandoff, payload, key ?? $"{EventTypes.ItemHandoff}:{item.Value}", item.Value);
         var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
@@ -69,11 +69,20 @@ internal sealed class CreateHandoffItemService(IItemMaker items, HeldLease held,
             return appended.Error;
         }
 
-        // Lost a race for the same key: the earlier handoff wins (the item made above stays unlinked).
-        var winner = appended.Value.AlreadyRecorded && key is not null ? await Earlier(key, caller, cancellationToken).ConfigureAwait(false) : default;
+        return await Winner(appended.Value, payload, caller, key, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>The 'item.handoff' payload: the offer key defaults to the item id, the repo to the caller's.</summary>
+    private static ItemHandoff Payload(CreateHandoffItemRequest request, CallerContext caller, ItemId item) =>
+        new(caller.CommandId, item, request.OfferKey ?? item.Value, request.Source, request.Repo ?? caller.Repo, request.Branch, request.Prompt, request.Links ?? [], request.Labels ?? []);
+
+    /// <summary>Lost a race for the same key: the earlier handoff wins (the item made by this call stays unlinked).</summary>
+    private async ValueTask<Result<HandoffItemCreatedResponse>> Winner(LedgerAppend appended, ItemHandoff payload, CallerContext caller, string? key, CancellationToken cancellationToken)
+    {
+        var winner = appended.AlreadyRecorded && key is not null ? await Earlier(key, caller, cancellationToken).ConfigureAwait(false) : default;
         return winner is { IsError: false, Value: { } first }
             ? first
-            : new HandoffItemCreatedResponse(new CommandAccepted(caller.CommandId, appended.Value.Sequence), item, offer);
+            : new HandoffItemCreatedResponse(new CommandAccepted(caller.CommandId, appended.Sequence), payload.Item, payload.OfferKey);
     }
 
     private async ValueTask<Result<HandoffItemCreatedResponse?>> Earlier(string key, CallerContext caller, CancellationToken cancellationToken)
