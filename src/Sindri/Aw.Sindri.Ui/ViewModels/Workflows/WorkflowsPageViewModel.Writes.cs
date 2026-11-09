@@ -125,10 +125,10 @@ internal sealed partial class WorkflowsPageViewModel
     }
 
     /// <summary>True while Activate's or Pause's call is on the way; a second press does nothing.</summary>
-    public bool IsChangingState { get; private set; }
+    public bool IsChangingState { get; private set { Set(ref field, value); OnChanged(nameof(ActivateText)); OnChanged(nameof(PauseText)); NotifyStateButtons(); } }
 
     /// <summary>What the last Activate or Pause said (refused or unsure), in words; empty otherwise.</summary>
-    public string StateNoticeText { get; private set; } = string.Empty;
+    public string StateNoticeText { get; private set { Set(ref field, value); OnChanged(nameof(HasStateNotice)); } } = string.Empty;
 
     /// <summary>True when there is a note under the Activate or Pause button.</summary>
     public bool HasStateNotice => StateNoticeText.Length > 0;
@@ -150,10 +150,72 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>Activate: turns the open workflow's newest revision on. Sent once; the list and the runs are read again after any answer that reached Sindri.</summary>
     /// <param name="cancellationToken">Cancels the call and the reads.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task Activate(CancellationToken cancellationToken) => throw new NotSupportedException();
+    internal Task Activate(CancellationToken cancellationToken) => ChangeState(CanActivate, ActivateCall, Labels.WfActivateRefused, cancellationToken);
 
     /// <summary>Pause: turns the open workflow off. Sent once; the list and the runs are read again after any answer that reached Sindri.</summary>
     /// <param name="cancellationToken">Cancels the call and the reads.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
-    internal Task Pause(CancellationToken cancellationToken) => throw new NotSupportedException();
+    internal Task Pause(CancellationToken cancellationToken) => ChangeState(CanPause, PauseCall, Labels.WfPauseRefused, cancellationToken);
+
+    private async Task<Error?> ActivateCall(Uri url, string slug, CancellationToken cancellationToken)
+    {
+        var activated = await Api.ActivateWorkflow(url, slug, cancellationToken).ConfigureAwait(true);
+        return activated.IsError ? activated.Error : null;
+    }
+
+    private async Task<Error?> PauseCall(Uri url, string slug, CancellationToken cancellationToken)
+    {
+        var paused = await Api.PauseWorkflow(url, slug, cancellationToken).ConfigureAwait(true);
+        return paused.IsError ? paused.Error : null;
+    }
+
+    // One call, never retried. A refusal says why and changes nothing; an answer that reached Sindri, or no answer (the change may have applied), reads the list and the runs again.
+    private async Task ChangeState(bool allowed, Func<Uri, string, CancellationToken, Task<Error?>> send, Func<Error, string> refused, CancellationToken cancellationToken)
+    {
+        if (_url is not { } url || !allowed || Runs.Slug.Length == 0)
+        {
+            return;
+        }
+
+        var slug = Runs.Slug;
+        StateNoticeText = string.Empty;
+        IsChangingState = true;
+        try
+        {
+            var error = await send(url, slug, cancellationToken).ConfigureAwait(true);
+            var here = string.Equals(Runs.Slug, slug, StringComparison.Ordinal);
+            var unsure = error is not null && string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
+            if (here && error is not null)
+            {
+                StateNoticeText = unsure ? Labels.WfStateUnsure(error) : refused(error);
+            }
+
+            if (error is null || unsure)
+            {
+                await ReadList(url, cancellationToken).ConfigureAwait(true);
+                if (here)
+                {
+                    await Runs.Read(url, slug, Runs.Title, cancellationToken).ConfigureAwait(true);
+                }
+            }
+        }
+        finally
+        {
+            IsChangingState = false;
+        }
+    }
+
+    // the buttons depend on the open workflow, the level and the rows: tell the view when any of them moved
+    private void NotifyStateButtons()
+    {
+        OnChanged(nameof(CanActivate));
+        OnChanged(nameof(CanPause));
+    }
+
+    // another workflow was opened: the old one's note is not about it
+    private void ForgetStateNote()
+    {
+        StateNoticeText = string.Empty;
+        NotifyStateButtons();
+    }
 }
