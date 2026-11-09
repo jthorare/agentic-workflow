@@ -124,6 +124,7 @@ internal static partial class CommandTable
             ["sandbox", ..] => await Sandbox(args, client, output, services, (ct, Headers(session, services))).ConfigureAwait(false),
             ["mcp", .. var rest] => await new McpVerbs(services, output).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await ContextOrPin(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
+            ["answer", .. var rest] => await WfAnswerCommand.Run(rest, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), output, ct).ConfigureAwait(false),
             ["workflow" or "wf" or "takeover" or "handback", ..] => await Workflows(args, services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), ct).ConfigureAwait(false),
             ["help" or "--help" or "-h"] => await output.Text(Usage.Text + "\n", 0).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),

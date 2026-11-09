@@ -131,6 +131,7 @@ internal static class Usage
         "       sindri wf validate <file> [--json]   check a workflow graph in-process: findings naming node and field with the fix, or its hash (exit 0 pass, 1 findings, 2 error)",
         "       sindri wf run <slug> [--payload JSON] [--json]   start a run of the workflow's active revision by hand: started, queued or skipped by its concurrency (exit 0 ok, 1 not running, 2 refused)",
         "       sindri wf cancel <run> [--json]   ask a run in flight to stop (exit 0 ok, 1 not running, 2 refused)",
+        "       sindri answer <run>/<node> (--text T | --choice C) [--json]   answer the question an ask_owner node waits on, as yourself (the timeline shows 'owner' or 'session:<id>'); the node must be waiting and a choice must be one it offers (exit 0 answered, 1 not running, 2 refused)",
         "       sindri workflow takeover <address> [--nonce <n>] [--json]   take the instance over: its timer pauses",
         "       sindri workflow handback <address> [--nonce <n>] [--json]   hand a taken-over instance back: its timer resumes",
         "       sindri takeover <item-or-address> [--nonce <n>] [--json]   short form of 'workflow takeover' (a bare item is its latest attempt)",

@@ -1,0 +1,8 @@
+namespace Aw.Sindri.Infrastructure.Workflows;
+
+/// <summary>What the 'Answer' update of a <see cref="GraphWorkflow"/> carries: the answer to one 'ask_owner' node.</summary>
+/// <param name="Node">The node's id.</param>
+/// <param name="Text">A free-text answer, or null.</param>
+/// <param name="Choice">A picked choice, or null.</param>
+/// <param name="By">Who answers: 'owner' or 'session:&lt;id&gt;'.</param>
+internal sealed record GraphAnswerInput(string Node, string? Text, string? Choice, string By);

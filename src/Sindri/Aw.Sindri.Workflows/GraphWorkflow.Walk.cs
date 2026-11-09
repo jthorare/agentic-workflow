@@ -54,7 +54,7 @@ internal sealed partial class GraphWorkflow
     {
         _current = node;
         await Record(Row(node, NodeRunStatus.Running), _write).ConfigureAwait(true);
-        var outcome = await RunBlock(node).ConfigureAwait(true);
+        var outcome = await Park(node, await RunBlock(node).ConfigureAwait(true)).ConfigureAwait(true);   // a wait or ask_owner node sleeps here, still running
 
         // why: once the block has answered, the node's result is decided; clearing _current first and writing detached means a cancel now cannot overwrite 'succeeded' with 'cancelled'
         _current = null;

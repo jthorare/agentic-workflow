@@ -48,6 +48,7 @@ using Aw.Sindri.Features.AddRepo;
 using Aw.Sindri.Features.AllowDenial;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.CancelJob;
+using Aw.Sindri.Features.AnswerQuestion;
 using Aw.Sindri.Features.CancelWorkflowRun;
 using Aw.Sindri.Features.CheckSandbox;
 using Aw.Sindri.Features.CloseItem;
@@ -199,6 +200,7 @@ namespace Aw.Sindri.Host;
 
 [JsonSerializable(typeof(CompleteStepRequest))]
 [JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse))]
+[JsonSerializable(typeof(WorkflowQuestionPayload)), JsonSerializable(typeof(WorkflowAnsweredPayload)), JsonSerializable(typeof(AnswerQuestionBody)), JsonSerializable(typeof(AnswerQuestionResponse))]   // agent-first PR 9: ask_owner and 'sindri answer'
 [JsonSerializable(typeof(RecipeRegistered)), JsonSerializable(typeof(RecipeApproved)), JsonSerializable(typeof(RecipeRevoked))]
 
 [JsonSerializable(typeof(RegisterMcpJobRequest))]   // setup-once §5.4: register Sindri in a repo from the app

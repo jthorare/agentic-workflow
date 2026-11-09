@@ -19582,7 +19582,7 @@ static Aw.Sindri.Core.Graph.Blocks.BlockContext.operator !=(Aw.Sindri.Core.Graph
 static Aw.Sindri.Core.Graph.Blocks.BlockContext.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockContext? left, Aw.Sindri.Core.Graph.Blocks.BlockContext? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.BlockResult.operator !=(Aw.Sindri.Core.Graph.Blocks.BlockResult? left, Aw.Sindri.Core.Graph.Blocks.BlockResult? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.BlockResult.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockResult? left, Aw.Sindri.Core.Graph.Blocks.BlockResult? right) -> bool
-static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Standard(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model, Aw.Sindri.Core.Graph.Blocks.IQuestionPort! questions) -> Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry!
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Standard(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model, Aw.Sindri.Core.Graph.Blocks.IQuestionPort! questions, System.TimeProvider! clock) -> Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry!
 Aw.Sindri.Core.Graph.Runs.GraphConcurrency
 Aw.Sindri.Core.Graph.Runs.GraphConcurrency.OnePerWorkflow = 1 -> Aw.Sindri.Core.Graph.Runs.GraphConcurrency
 Aw.Sindri.Core.Graph.Runs.GraphConcurrency.Queue = 2 -> Aw.Sindri.Core.Graph.Runs.GraphConcurrency
@@ -20249,7 +20249,7 @@ Aw.Sindri.Core.Events.WorkflowQuestionPayload.TimeoutAt.get -> System.DateTimeOf
 Aw.Sindri.Core.Events.WorkflowQuestionPayload.TimeoutAt.init -> void
 Aw.Sindri.Core.Events.WorkflowQuestionPayload.WorkflowQuestionPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Question, System.Collections.Generic.IReadOnlyList<string!>! Choices, string? Default, System.DateTimeOffset? TimeoutAt, string! By) -> void
 Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock
-Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.AskOwnerBlock(Aw.Sindri.Core.Graph.Blocks.IQuestionPort! questions, System.TimeProvider? clock = null) -> void
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.AskOwnerBlock(Aw.Sindri.Core.Graph.Blocks.IQuestionPort! questions, System.TimeProvider! clock) -> void
 Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
 Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Example.get -> string!
 Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
@@ -20274,7 +20274,7 @@ Aw.Sindri.Core.Graph.Blocks.WaitBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockC
 Aw.Sindri.Core.Graph.Blocks.WaitBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.WaitBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
 Aw.Sindri.Core.Graph.Blocks.WaitBlock.Type.get -> string!
-Aw.Sindri.Core.Graph.Blocks.WaitBlock.WaitBlock(System.TimeProvider? clock = null) -> void
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.WaitBlock(System.TimeProvider! clock) -> void
 Aw.Sindri.Core.Graph.Blocks.WaitSchedule
 Aw.Sindri.Core.Graph.Runs.IGraphRunAnswerer
 Aw.Sindri.Core.NeedsYou.NeedsYouKind.Question = 8 -> Aw.Sindri.Core.NeedsYou.NeedsYouKind
@@ -20349,3 +20349,5 @@ static Aw.Sindri.Core.Graph.Blocks.QuestionAsk.operator !=(Aw.Sindri.Core.Graph.
 static Aw.Sindri.Core.Graph.Blocks.QuestionAsk.operator ==(Aw.Sindri.Core.Graph.Blocks.QuestionAsk? left, Aw.Sindri.Core.Graph.Blocks.QuestionAsk? right) -> bool
 static Aw.Sindri.Core.Graph.Runs.GraphAnswer.operator !=(Aw.Sindri.Core.Graph.Runs.GraphAnswer? left, Aw.Sindri.Core.Graph.Runs.GraphAnswer? right) -> bool
 static Aw.Sindri.Core.Graph.Runs.GraphAnswer.operator ==(Aw.Sindri.Core.Graph.Runs.GraphAnswer? left, Aw.Sindri.Core.Graph.Runs.GraphAnswer? right) -> bool
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!

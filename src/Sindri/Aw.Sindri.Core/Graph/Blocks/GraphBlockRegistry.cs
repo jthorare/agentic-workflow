@@ -28,10 +28,11 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     /// <param name="notify">Where 'notify' writes.</param>
     /// <param name="model">What 'prompt' asks.</param>
     /// <param name="questions">Where 'ask_owner' writes.</param>
+    /// <param name="clock">The clock 'wait' and 'ask_owner' read.</param>
     /// <returns>The registry.</returns>
-    public static GraphBlockRegistry Standard(INotifyPort notify, IGraphModelPort model, IQuestionPort questions) =>
+    public static GraphBlockRegistry Standard(INotifyPort notify, IGraphModelPort model, IQuestionPort questions, TimeProvider clock) =>
         new([new ScheduleBlock(), new ManualBlock(), new ConditionBlock(), new NotifyBlock(notify), new PromptBlock(model),
-            new WaitBlock(), new AskOwnerBlock(questions)]);
+            new WaitBlock(clock), new AskOwnerBlock(questions, clock)]);
 
     /// <summary>Finds the block of a type.</summary>
     /// <param name="type">The type name, such as 'condition'.</param>
