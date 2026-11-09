@@ -21,12 +21,22 @@ public sealed class TodoConverger(ILedgerStore ledger, EventFactory events, Todo
     /// <param name="who">The caller, its 'via' and its lease grant.</param>
     /// <param name="cancellationToken">Cancels the appends.</param>
     /// <returns>The version the todo is at after the events, or the first error.</returns>
-    public async ValueTask<Result<long>> Apply(TodoRow row, TodoSide target, string by, TodoPickCaller who, CancellationToken cancellationToken)
+    public ValueTask<Result<long>> Apply(TodoRow row, TodoSide target, string by, TodoPickCaller who, CancellationToken cancellationToken)
+        => Apply(row, new TodoConvergeTarget(target, by, DoneAt: null), who, cancellationToken);
+
+    /// <summary>Appends the events that take <paramref name="row"/> to <paramref name="to"/>'s side, keeping its done time.</summary>
+    /// <param name="row">The todo as it is.</param>
+    /// <param name="to">What it should be, the 'by' of each event and the done time a 'todo.done' step keeps (an Undo passes the one the todo had before; null for the time of the event).</param>
+    /// <param name="who">The caller, its 'via' and its lease grant.</param>
+    /// <param name="cancellationToken">Cancels the appends.</param>
+    /// <returns>The version the todo is at after the events, or the first error.</returns>
+    public async ValueTask<Result<long>> Apply(TodoRow row, TodoConvergeTarget to, TodoPickCaller who, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(row);
-        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(to);
         ArgumentNullException.ThrowIfNull(who);
-        var planned = Steps(row, target);
+        var (target, by, doneAt) = to;
+        var planned = Steps(row, target, doneAt);
         if (planned.IsError)
         {
             return planned.Error;
@@ -46,7 +56,7 @@ public sealed class TodoConverger(ILedgerStore ledger, EventFactory events, Todo
         return version;
     }
 
-    /// <summary>The row as the events of <see cref="Apply"/> leave it, for an answer that can't wait for the views.</summary>
+    /// <summary>The row as the events of <see cref="Apply(TodoRow, TodoConvergeTarget, TodoPickCaller, CancellationToken)"/> leave it, for an answer that can't wait for the views.</summary>
     /// <param name="row">The todo before.</param>
     /// <param name="target">What it was taken to.</param>
     /// <param name="version">The version after the events.</param>
@@ -68,7 +78,7 @@ public sealed class TodoConverger(ILedgerStore ledger, EventFactory events, Todo
             : moved with { Removed = false, RemovedAt = null, RemovedBy = null, Text = target.Text ?? row.Text, Due = target.Due, Links = target.Links, DoneAt = target.Done ? row.DoneAt ?? now : null };
     }
 
-    private Result<IReadOnlyList<Func<long, string, string?, LedgerEntry>>> Steps(TodoRow row, TodoSide target)
+    private Result<IReadOnlyList<Func<long, string, string?, LedgerEntry>>> Steps(TodoRow row, TodoSide target, DateTimeOffset? doneAt)
     {
         var steps = new List<Func<long, string, string?, LedgerEntry>>();
         if (target.Removed)
@@ -85,7 +95,7 @@ public sealed class TodoConverger(ILedgerStore ledger, EventFactory events, Todo
         }
 
         steps.AddRange(fields.Value);
-        steps.AddRange(Done(row, target));
+        steps.AddRange(Done(row, target, doneAt));
         return steps;
     }
 
@@ -114,11 +124,11 @@ public sealed class TodoConverger(ILedgerStore ledger, EventFactory events, Todo
         return text is not null || dueChanged || linksChanged ? new List<Func<long, string, string?, LedgerEntry>> { Change } : [];
     }
 
-    private IEnumerable<Func<long, string, string?, LedgerEntry>> Done(TodoRow row, TodoSide target)
+    private IEnumerable<Func<long, string, string?, LedgerEntry>> Done(TodoRow row, TodoSide target, DateTimeOffset? doneAt)
     {
         if (target.Done && row.DoneAt is null)
         {
-            yield return (v, by, via) => Entry(row, EventTypes.TodoDone, v, new TodoDone(row.Id, v, by, via));
+            yield return (v, by, via) => Entry(row, EventTypes.TodoDone, v, new TodoDone(row.Id, v, by, via, doneAt));
         }
         else if (!target.Done && row.DoneAt is not null)
         {
