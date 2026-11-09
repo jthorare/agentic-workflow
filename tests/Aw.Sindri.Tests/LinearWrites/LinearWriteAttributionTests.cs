@@ -1,13 +1,18 @@
 using System.Text.Json;
+using Aw.Context.Core;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sources;
+using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Linear;
+using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.LinearIssues;
+using Aw.Sindri.Features.LinearSideFacts;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.LinearReads;
 using static Aw.Sindri.Tests.LinearIssues.LinearIssueRows;
@@ -106,6 +111,36 @@ public sealed class LinearWriteAttributionTests
         Expect.Equal("SND-CONTEXT-003", result.Error.Code);
         Assert.Empty(_writes.Calls);
         Assert.Empty(_slice.Store.Events);
+    }
+
+    // why: this engine answers the pickers as Context's IssueReads does: a session-kind scope is refused SND-CONTEXT-020, the owner's gets the team. FakeLinearSideFacts can't show the difference.
+    private static FakeContextEngine OwnerOnlyPickers() => FakeContextEngine.WithLookups(static (team, scope) => scope.Caller.Kind == ContextCallerKind.Session
+        ? ContextErrors.SessionsDisabled.With("the pickers' lists are the owner's, not an agent session's")
+        : Results.Success<LinearTeamLookups?>(new LinearTeamLookups(ExternalId.From(EngId), team, [], [], [], [], "Engineering", SyncedAt: null)));
+
+    [Fact]
+    public async Task A_mapped_session_gets_past_the_team_check_because_the_write_reads_the_pickers_as_the_owner()
+    {
+        using var entered = _slice.Callers.Enter(A.Caller().Launched(Launch).InRepo("web").Build());
+        var scopes = Scopes();
+        var side = new ContextLinearSideFacts(_profiles, _slice.Callers, OwnerOnlyPickers(), _slice.Clock, scopes);
+
+        var picked = await new LinearTeamGate(side).Picked("ENG", Token);
+
+        Assert.True(picked.IsSuccess, picked.IsError ? picked.Error.ToString() : null);
+        var plain = await side.Lookups("ENG", Token);   // why: the pickers' own read keeps refusing a session; only the write path reads as the owner
+        Expect.Equal(ContextErrors.SessionsDisabled.Code, plain.Error.Code);
+    }
+
+    [Fact]
+    public async Task An_unmapped_session_is_still_refused_at_the_team_check_not_let_through_as_the_owner()
+    {
+        using var entered = _slice.Callers.Enter(A.Caller().Launched(Launch).InRepo("elsewhere").Build());
+        var side = new ContextLinearSideFacts(_profiles, _slice.Callers, OwnerOnlyPickers(), _slice.Clock, Scopes());
+
+        var picked = await new LinearTeamGate(side).Picked("ENG", Token);
+
+        Assert.NotNull(picked.Error);
     }
 
     private (string Team, string? Issue, string? ClientId) PayloadOf(Aw.Sindri.Core.Ledger.LedgerEvent recorded)

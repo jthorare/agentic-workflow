@@ -20560,3 +20560,4 @@ static Aw.Sindri.Core.Events.LinearWriteRecorded.operator ==(Aw.Sindri.Core.Even
 const Aw.Sindri.Core.Events.EventTypes.LinearIssueCreated = "linear.issue.created" -> string!
 const Aw.Sindri.Core.Events.EventTypes.LinearCommentPosted = "linear.comment.posted" -> string!
 const Aw.Sindri.Core.Events.EventTypes.LinearIssueChanged = "linear.issue.changed" -> string!
+Aw.Sindri.Core.Linear.ILinearSideFacts.LookupsForWrite(string! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Linear.LinearLookupsResponse?>>

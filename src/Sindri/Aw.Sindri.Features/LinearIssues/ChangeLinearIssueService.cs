@@ -143,7 +143,7 @@ internal sealed class ChangeLinearIssueService(
     // why: the ids the owner sends come from the lookups the app read; one that is not in them is a stale sheet or a typo, and Linear's own refusal would say less about which
     private async ValueTask<Result<ExternalId?>> Checked(LinearIssueKey key, IReadOnlyList<KeyValuePair<string, object?>> set, CancellationToken cancellationToken)
     {
-        var team = await lookups.Lookups(key.Team, cancellationToken).ConfigureAwait(false);
+        var team = await lookups.LookupsForWrite(key.Team, cancellationToken).ConfigureAwait(false);
         if (team.IsError || team.Value is not { } found)
         {
             return team.IsError ? team.Error : LinearWriteRefusals.TeamNotPicked(key.Team);
@@ -207,7 +207,7 @@ internal sealed class ChangeLinearIssueService(
     private async ValueTask<Result<LinearChangeResult>> Conflict(LinearIssueKey key, LinearIssueView live, List<LinearFieldConflict> fields, CancellationToken cancellationToken)
     {
         var stored = await reread.Handle(new GetLinearIssueRequest(key.ToString()), cancellationToken).ConfigureAwait(false);
-        var team = await lookups.Lookups(key.Team, cancellationToken).ConfigureAwait(false);
+        var team = await lookups.LookupsForWrite(key.Team, cancellationToken).ConfigureAwait(false);
         if (stored.IsError || team.IsError)
         {
             return stored.IsError ? stored.Error : team.Error;

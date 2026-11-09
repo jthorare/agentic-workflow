@@ -9,6 +9,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Features.LinearIssues;
 
 namespace Aw.Sindri.Features.LinearSideFacts;
 
@@ -20,17 +21,25 @@ namespace Aw.Sindri.Features.LinearSideFacts;
 /// <param name="callers">The current caller.</param>
 /// <param name="engine">Context's facade.</param>
 /// <param name="clock">Decides which cycle is running.</param>
-internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine, TimeProvider clock) : ILinearSideFacts
+/// <param name="writeScopes">The scope a write runs under, for <see cref="LookupsForWrite"/>.</param>
+internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine, TimeProvider clock, LinearScopes writeScopes) : ILinearSideFacts
 {
     public async ValueTask<Result<LinearLookupsResponse?>> Lookups(string team, CancellationToken cancellationToken)
     {
         var scope = await Scope(cancellationToken).ConfigureAwait(false);
-        if (scope.IsError)
-        {
-            return scope.Error;
-        }
+        return scope.IsError ? scope.Error : await LookupsUnder(team, scope.Value, cancellationToken).ConfigureAwait(false);
+    }
 
-        var found = await engine.IssueLookups(team, scope.Value, cancellationToken).ConfigureAwait(false);
+    // why: a write checks the caller first, then reads the pickers as the owner (the pickers' read is owner-only in Context, which is why a session's own scope can't be used here)
+    public async ValueTask<Result<LinearLookupsResponse?>> LookupsForWrite(string team, CancellationToken cancellationToken)
+    {
+        var scope = await writeScopes.Write(cancellationToken).ConfigureAwait(false);
+        return scope.IsError ? scope.Error : await LookupsUnder(team, scope.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<LinearLookupsResponse?>> LookupsUnder(string team, ContextScope scope, CancellationToken cancellationToken)
+    {
+        var found = await engine.IssueLookups(team, scope, cancellationToken).ConfigureAwait(false);
         if (found.IsError)
         {
             return found.Error;

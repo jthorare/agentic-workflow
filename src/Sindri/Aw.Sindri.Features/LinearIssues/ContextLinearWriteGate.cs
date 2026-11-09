@@ -34,7 +34,7 @@ internal sealed class ContextLinearWriteGate(LinearScopes scopes, IContextLinear
             return LinearWriteRefusals.NoWriteKey();
         }
 
-        var lookups = await teams.Lookups(teamKey, cancellationToken).ConfigureAwait(false);
+        var lookups = await teams.LookupsForWrite(teamKey, cancellationToken).ConfigureAwait(false);
         return lookups.IsError ? lookups.Error : lookups.Value is null ? LinearWriteRefusals.TeamNotPicked(teamKey) : null;
     }
 }
