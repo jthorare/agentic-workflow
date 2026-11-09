@@ -285,8 +285,8 @@ public sealed class FixtureTests
         Assert.Equal(root, (Scope.Of(["Aw.Sindri"]) with { Unshaped = ["Aw.Sindri.Ui", "Aw.Sindri.Ui.Desktop"] }).RootOf(ns));
 
     [Fact]
-    public void The_real_ui_assemblies_are_unshaped_and_keep_the_global_rules() =>
-        Assert.Equal(["Aw.Sindri.Ui", "Aw.Sindri.Ui.Desktop", "Aw.UiDriver.Avalonia", "Aw.UiDriver.Cli"], Production.Scope.Unshaped);
+    public void The_real_ui_assemblies_and_the_toolkit_sdk_are_unshaped_and_keep_the_global_rules() =>
+        Assert.Equal(["Aw.Sindri.Ui", "Aw.Sindri.Ui.Desktop", "Aw.UiDriver.Avalonia", "Aw.UiDriver.Cli", "Aw.Sindri.Toolkit"], Production.Scope.Unshaped);
 
     [Fact]
     public void Ui_rule_reports_avalonia_in_view_models_and_views_in_heads() =>
