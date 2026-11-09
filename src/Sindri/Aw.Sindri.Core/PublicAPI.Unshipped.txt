@@ -26937,9 +26937,12 @@ Aw.Sindri.Core.Todos.TodoPickWindow.Find(Aw.Sindri.Core.Ids.TodoId id, System.Da
 Aw.Sindri.Core.Todos.TodoPickWindow.FindHold(System.DateTimeOffset now) -> Aw.Sindri.Core.Todos.TodoHoldPick?
 Aw.Sindri.Core.Todos.TodoPickWindow.Forget(Aw.Sindri.Core.Ids.TodoId id) -> void
 Aw.Sindri.Core.Todos.TodoPickWindow.ForgetHold() -> void
+Aw.Sindri.Core.Todos.TodoPickWindow.ForgetPartial() -> void
 Aw.Sindri.Core.Todos.TodoPickWindow.Open(System.DateTimeOffset now) -> (System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.TodoId>! Todos, bool Hold)
+Aw.Sindri.Core.Todos.TodoPickWindow.Partial(string! noteHash) -> System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>!
 Aw.Sindri.Core.Todos.TodoPickWindow.Remember(Aw.Sindri.Core.Ids.TodoId id, Aw.Sindri.Core.Todos.TodoPick! pick) -> void
 Aw.Sindri.Core.Todos.TodoPickWindow.RememberHold(Aw.Sindri.Core.Todos.TodoHoldPick! pick) -> void
+Aw.Sindri.Core.Todos.TodoPickWindow.RememberPartial(string! noteHash, System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>! priors) -> void
 Aw.Sindri.Core.Todos.TodoPickWindow.TodoPickWindow() -> void
 Aw.Sindri.Core.Todos.UnsetTodoNoteSource
 Aw.Sindri.Core.Todos.UnsetTodoNoteSource.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoNoteSnapshot?>!>

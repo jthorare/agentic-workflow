@@ -131,6 +131,34 @@ public sealed class HoldPicksTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_failed_apply_then_its_retry_then_Undo_puts_every_todo_back_as_it_was_before_the_first_try()
+    {
+        await Held();
+        using var cli = _h.Cli();
+        // the second todo's v2 is already in the ledger (the view hasn't caught up), so the first try removes the first todo and is refused on the second
+        var foreign = new TodoChanged(_second, 2, "call the dentist today", Due: null, ClearDue: false, Links: null, "human:ui");
+        await _h.Record(EventTypes.TodoChanged, foreign, TodoWrite.VersionKey(_second, 2));
+
+        var failed = await _h.PickHold().Handle(new PickTodoHoldRequest(Restore: false, Hash), Token);
+
+        Assert.Equal("SND-TODO-409", failed.Error.Code);
+        Assert.DoesNotContain(_h.Slice.Store.Events, e => e.Envelope.Type == "todo.note.held.resolved");
+
+        // the view catches up with both writes; the retry skips the removed todo and applies the second
+        await _h.Fold(EventTypes.TodoRemoved, new TodoRemoved(_first, 2, "obsidian"));
+        await _h.Fold(EventTypes.TodoChanged, foreign);
+        var retried = await _h.PickHold().Handle(new PickTodoHoldRequest(Restore: false, Hash), Token);
+        Assert.True(retried.IsSuccess, retried.IsError ? retried.Error.ToString() : null);
+        await _h.Fold(EventTypes.TodoChanged, new TodoChanged(_second, 3, "call the dentist about the crown", Due: null, ClearDue: false, Links: null, "obsidian"));
+
+        var undone = await _h.UndoHold().Handle(new UndoTodoHoldRequest(), Token);
+
+        Assert.True(undone.IsSuccess, undone.IsError ? undone.Error.ToString() : null);
+        var undoTypes = _h.Slice.Store.Events.Select(e => e.Envelope.Type).TakeLast(3).ToList();
+        Assert.Equal(["todo.restored", "todo.changed", "todo.note.held.reopened"], undoTypes, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Undo_after_the_window_or_with_nothing_picked_is_SND_TODO_005()
     {
         await Held();

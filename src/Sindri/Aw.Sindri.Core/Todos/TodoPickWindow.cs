@@ -14,6 +14,7 @@ public sealed class TodoPickWindow
 
     private readonly ConcurrentDictionary<TodoId, TodoPick> _picks = new();
     private TodoHoldPick? _hold;
+    private PartialApply? _partial;
 
     /// <summary>When a pick made at <paramref name="at"/> stops being undoable.</summary>
     /// <param name="at">When it was made.</param>
@@ -55,9 +56,30 @@ public sealed class TodoPickWindow
     /// <summary>Forgets the hold pick.</summary>
     public void ForgetHold() => Volatile.Write(ref _hold, null);
 
+    /// <summary>Remembers the todos an Apply changed before one of its writes failed, so the retry's Undo can still put them back to what they were before the first try.</summary>
+    /// <param name="noteHash">The hash of the hold that was being applied.</param>
+    /// <param name="priors">Each todo changed so far: its row before, and the version Apply left it at.</param>
+    public void RememberPartial(string noteHash, IReadOnlyList<(TodoRow Prior, long VersionAfter)> priors)
+    {
+        ArgumentNullException.ThrowIfNull(noteHash);
+        ArgumentNullException.ThrowIfNull(priors);
+        Volatile.Write(ref _partial, new PartialApply(noteHash, priors));
+    }
+
+    /// <summary>What a failed Apply of the hold with <paramref name="noteHash"/> had already changed.</summary>
+    /// <param name="noteHash">The hold's note hash.</param>
+    /// <returns>The earlier priors, empty for none or for another hold's.</returns>
+    public IReadOnlyList<(TodoRow Prior, long VersionAfter)> Partial(string noteHash) =>
+        Volatile.Read(ref _partial) is { } partial && string.Equals(partial.NoteHash, noteHash, StringComparison.Ordinal) ? partial.Priors : [];
+
+    /// <summary>Forgets what a failed Apply had changed (the retry finished).</summary>
+    public void ForgetPartial() => Volatile.Write(ref _partial, null);
+
     /// <summary>The todos whose conflict pick is still inside its window, and whether the hold pick is.</summary>
     /// <param name="now">The time now.</param>
     /// <returns>The todo ids with an open pick, and whether a hold pick is open.</returns>
     public (IReadOnlyList<TodoId> Todos, bool Hold) Open(DateTimeOffset now) =>
         ([.. _picks.Where(p => now < Until(p.Value.At)).Select(static p => p.Key).OrderBy(static k => k.Value, StringComparer.Ordinal)], FindHold(now) is not null);
+
+    private sealed record PartialApply(string NoteHash, IReadOnlyList<(TodoRow Prior, long VersionAfter)> Priors);
 }

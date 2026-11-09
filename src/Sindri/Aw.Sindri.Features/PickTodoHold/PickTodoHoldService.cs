@@ -67,7 +67,8 @@ internal sealed class PickTodoHoldService(TodoHolds holds, TodoPickWrites writes
     private async ValueTask<Result<PickTodoHoldResponse>> Pick(PickTodoHoldRequest request, TodoPickCaller who, TodoOpenHold hold, CancellationToken cancellationToken)
     {
         var via = who.Via;
-        var priors = new List<(TodoRow Prior, long VersionAfter)>();
+        // why: a retry after a failed Apply starts from what the failed try changed, so Undo puts those todos back to before the first try, not to the state the first try left them in
+        var priors = new List<(TodoRow Prior, long VersionAfter)>(window.Partial(hold.NoteHash));
         if (!request.Restore && await Apply(hold, who, priors, cancellationToken).ConfigureAwait(false) is { } failed)
         {
             return failed;
@@ -81,6 +82,7 @@ internal sealed class PickTodoHoldService(TodoHolds holds, TodoPickWrites writes
             return appended.Error;
         }
 
+        window.ForgetPartial();
         window.RememberHold(new TodoHoldPick(who.Now, kept, priors));
         return new PickTodoHoldResponse(kept, hold.Changes.Count, TodoPickWindow.Until(who.Now));
     }
@@ -89,6 +91,12 @@ internal sealed class PickTodoHoldService(TodoHolds holds, TodoPickWrites writes
     {
         foreach (var change in hold.Changes)
         {
+            if (priors.Exists(p => p.Prior.Id == change.Id))
+            {
+                // changed by the try that failed: already at the held version
+                continue;
+            }
+
             var read = await writes.Row(change.Id, cancellationToken).ConfigureAwait(false);
             if (read.IsError)
             {
@@ -102,6 +110,7 @@ internal sealed class PickTodoHoldService(TodoHolds holds, TodoPickWrites writes
             var version = await converger.Apply(read.Value, target, "obsidian", who, cancellationToken).ConfigureAwait(false);
             if (version.IsError)
             {
+                window.RememberPartial(hold.NoteHash, priors);
                 return version.Error;
             }
 
