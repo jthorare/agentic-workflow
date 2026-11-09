@@ -8,42 +8,15 @@ public static class GraphTemplates
         (
             "weekday-check",
             "Every weekday at 7:00 ask the model a question and send a notification only when its answer is flagged.",
-            """
-            {"version":1,"name":"Weekday check","nodes":[
-              {"id":"weekdays","type":"schedule","title":"Every weekday at 7:00","config":{"cron":"0 7 * * 1-5","timezone":"America/Los_Angeles"}},
-              {"id":"check","type":"prompt","title":"Check","config":{"prompt":"Check whether anything needs attention today. Set flagged to true when it does, and summarize why.","output":{"type":"object","required":["flagged","summary"],"properties":{"flagged":{"type":"boolean"},"summary":{"type":"string"}}}}},
-              {"id":"gate","type":"condition","title":"Flagged?","config":{"when":"check.flagged"}},
-              {"id":"tell","type":"notify","title":"Tell me","config":{"title":"Needs attention","body":"{{check.summary}}"}}
-            ],"edges":[
-              {"from":"weekdays","to":"check"},
-              {"from":"check","to":"gate"},
-              {"from":"gate","output":"true","to":"tell"}
-            ]}
-            """),
+            """{"version":1,"name":"Weekday check","nodes":[ {"id":"weekdays","type":"schedule","title":"Every weekday at 7:00","config":{"cron":"0 7 * * 1-5","timezone":"America/Los_Angeles"}}, {"id":"check","type":"prompt","title":"Check","config":{"prompt":"Check whether anything needs attention today. Set flagged to true when it does, and summarize why.","output":{"type":"object","required":["flagged","summary"],"properties":{"flagged":{"type":"boolean"},"summary":{"type":"string"}}}}}, {"id":"gate","type":"condition","title":"Flagged?","config":{"when":"check.flagged"}}, {"id":"tell","type":"notify","title":"Tell me","config":{"title":"Needs attention","body":"{{check.summary}}"}} ],"edges":[ {"from":"weekdays","to":"check"}, {"from":"check","to":"gate"}, {"from":"gate","output":"true","to":"tell"} ]}"""),
         (
             "daily-digest",
             "Every day at 9:00 ask the model for a summary and send it as a notification.",
-            """
-            {"version":1,"name":"Daily digest","nodes":[
-              {"id":"daily","type":"schedule","title":"Every day at 9:00","config":{"cron":"0 9 * * *","timezone":"America/Los_Angeles"}},
-              {"id":"digest","type":"prompt","title":"Write the digest","config":{"prompt":"Write a short summary of what to look at today.","output":{"type":"object","required":["summary"],"properties":{"summary":{"type":"string"}}}}},
-              {"id":"tell","type":"notify","title":"Send it","config":{"title":"Daily digest","body":"{{digest.summary}}"}}
-            ],"edges":[
-              {"from":"daily","to":"digest"},
-              {"from":"digest","to":"tell"}
-            ]}
-            """),
+            """{"version":1,"name":"Daily digest","nodes":[ {"id":"daily","type":"schedule","title":"Every day at 9:00","config":{"cron":"0 9 * * *","timezone":"America/Los_Angeles"}}, {"id":"digest","type":"prompt","title":"Write the digest","config":{"prompt":"Write a short summary of what to look at today.","output":{"type":"object","required":["summary"],"properties":{"summary":{"type":"string"}}}}}, {"id":"tell","type":"notify","title":"Send it","config":{"title":"Daily digest","body":"{{digest.summary}}"}} ],"edges":[ {"from":"daily","to":"digest"}, {"from":"digest","to":"tell"} ]}"""),
         (
             "manual-notify",
             "A button you press: it sends one notification. The smallest workflow to start from.",
-            """
-            {"version":1,"name":"Manual notify","nodes":[
-              {"id":"start","type":"manual","title":"Run now","config":{}},
-              {"id":"tell","type":"notify","title":"Tell me","config":{"title":"Hello from a workflow"}}
-            ],"edges":[
-              {"from":"start","to":"tell"}
-            ]}
-            """),
+            """{"version":1,"name":"Manual notify","nodes":[ {"id":"start","type":"manual","title":"Run now","config":{}}, {"id":"tell","type":"notify","title":"Tell me","config":{"title":"Hello from a workflow"}} ],"edges":[ {"from":"start","to":"tell"} ]}"""),
     ];
 
     /// <summary>Every template, in the order they are listed.</summary>
