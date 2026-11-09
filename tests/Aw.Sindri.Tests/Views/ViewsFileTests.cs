@@ -62,7 +62,7 @@ public sealed class ViewsFileTests : IDisposable
         Assert.Equal(["key", "row_json", "seq", "item", "state", "repo"], Columns(path, "view_decisions"));
         Assert.Equal(["key", "row_json", "seq", "item", "repo", "kind"], Columns(path, "view_needs_you"));
         Assert.Equal(["key", "row_json", "seq", "state", "kind", "repo"], Columns(path, "view_jobs"));
-        Assert.Equal(["key", "row_json", "seq", "item", "state", "repo"], Columns(path, "view_launches"));
+        Assert.Equal(["key", "row_json", "seq", "item", "state", "repo", "run_id", "node_id"], Columns(path, "view_launches"));
     }
 
     [Fact, Trait("Lane", "unit")]
