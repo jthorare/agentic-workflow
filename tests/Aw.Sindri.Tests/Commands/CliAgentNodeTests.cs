@@ -110,12 +110,12 @@ public sealed class CliAgentNodeTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task A_refusal_prints_its_code_and_exits_2()
     {
-        var problem = """{"type":"about:blank","title":"SND-GRAPH-110","status":409,"detail":"node 'agent' is not taken over, so there is nothing to hand back"}""";
+        var problem = """{"type":"about:blank","title":"SND-GRAPH-111","status":409,"detail":"node 'agent' is not taken over, so there is nothing to hand back"}""";
 
         var code = await Run(new Recorder(HttpStatusCode.Conflict, problem), ensure: null, c => WfAgentNodeCommand.HandBack([_run.Value, "agent"], c.Desk, c.Output, Token));
 
         Assert.Equal(2, code);
-        Assert.StartsWith("SND-GRAPH-110 ", _error.ToString(), StringComparison.Ordinal);
+        Assert.StartsWith("SND-GRAPH-111 ", _error.ToString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
