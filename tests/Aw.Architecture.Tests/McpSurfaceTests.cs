@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AddTodo;
 using Aw.Sindri.Features.ChangeTodo;
+using Aw.Sindri.Features.CreateHandoffItem;
 using Aw.Sindri.Features.CreateMemory;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Features.FileRequest;
@@ -29,6 +30,7 @@ public sealed class McpSurfaceTests
     private static readonly HashSet<string> _allowed = new(StringComparer.Ordinal)
     {
         typeof(FileRequestRequest).FullName!,
+        typeof(CreateHandoffItemRequest).FullName!,   // sindri_handoff (#2258 PR 12): hands work to this machine's Sindri, the same item POST /sindri/handoff makes; Desk class, a non-launched session may run it
         typeof(AddConnectionRequest).FullName!,
         typeof(TestConnectionRequest).FullName!,
         typeof(RemoveConnectionRequest).FullName!,
