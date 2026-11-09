@@ -128,8 +128,15 @@ public sealed class AskOwnerBlock(IQuestionPort questions, TimeProvider clock) :
             return bad.Error;
         }
 
+        // why: a 'default' written as a reference had no value when the config was checked
+        var choices = ChoicesOf(context.Config);
+        if (Text(context.Config["default"]) is { } fallback && choices.Count > 0 && !choices.Contains(fallback, StringComparer.Ordinal))
+        {
+            return SindriErrors.GraphBlockFailed.With($"'default' is '{fallback}', which is not one of the choices ({string.Join(", ", choices)}); change it");
+        }
+
         var timeoutAt = TimeoutOf(context.Config) is { } wait ? clock.GetUtcNow() + wait : (DateTimeOffset?)null;
-        var posted = await questions.Post(new QuestionAsk(context.RunId, context.Node, question, ChoicesOf(context.Config), Text(context.Config["default"]), timeoutAt), cancellationToken).ConfigureAwait(false);
+        var posted = await questions.Post(new QuestionAsk(context.RunId, context.Node, question, choices, Text(context.Config["default"]), timeoutAt), cancellationToken).ConfigureAwait(false);
         return posted.IsError ? posted.Error : new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal));
     }
 

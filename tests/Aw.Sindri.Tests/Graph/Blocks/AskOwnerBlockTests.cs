@@ -44,6 +44,20 @@ public sealed class AskOwnerBlockTests
     }
 
     [Fact]
+    public async Task A_default_that_a_reference_resolved_outside_the_choices_fails_the_node_and_posts_nothing()
+    {
+        var port = new BlockFakes.RecordingQuestionPort();
+        var config = Config();
+        config["default"] = "maybe";   // why: the config reaches Execute with its '{{...}}' already replaced
+
+        var result = await new AskOwnerBlock(port, new FakeTimeProvider(_now)).Execute(BlockFakes.Context(config), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        Assert.Contains("maybe", result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(port.Posted);
+    }
+
+    [Fact]
     public void An_unanswered_question_takes_the_default_branch_at_its_timeout()
     {
         var outcome = AskOwnerBlock.Resolve(Config(), answer: null, answeredBy: null);
