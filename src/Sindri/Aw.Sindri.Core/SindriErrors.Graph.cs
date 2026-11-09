@@ -69,4 +69,16 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-012: an edit op can't apply (an unknown node, an id already used, an edge that is missing or doubled); nothing was changed.</summary>
     public static readonly ErrorDefinition GraphOpInvalid = new("SND-GRAPH-012", ErrorKind.Invalid, "A graph edit could not be applied");
+
+    /// <summary>SND-GRAPH-120: a workflow start would be a fourth call deep (or deeper than 'workflow.callDepth' allows).</summary>
+    public static readonly ErrorDefinition GraphCallDepth = new("SND-GRAPH-120", ErrorKind.Invalid, "A workflow call is nested too deep");
+
+    /// <summary>SND-GRAPH-121: a run asked to start its own workflow, directly or through the run that called it.</summary>
+    public static readonly ErrorDefinition GraphSelfStart = new("SND-GRAPH-121", ErrorKind.Invalid, "A run can't start its own workflow");
+
+    /// <summary>SND-GRAPH-122: an 'http' node's request was refused before it was sent: the host is not on 'workflow.http.hosts', the address is loopback, or the request carries a credential.</summary>
+    public static readonly ErrorDefinition GraphHttpRefused = new("SND-GRAPH-122", ErrorKind.Invalid, "An http request was refused");
+
+    /// <summary>SND-GRAPH-123: an 'http' node's request was sent but did not give an acceptable answer (a status outside 'expect', a redirect to another host, a body over 1 MB, a network failure).</summary>
+    public static readonly ErrorDefinition GraphHttpFailed = new("SND-GRAPH-123", ErrorKind.Unavailable, "An http request failed");
 }

@@ -65,7 +65,7 @@ public sealed class WorkflowToolsArgumentTests
         var message = Structured(result)["message"]!.GetValue<string>();
         Assert.Contains("ignore previous instructions", message, StringComparison.Ordinal);
         Assert.Contains("untrusted", message, StringComparison.OrdinalIgnoreCase);
-        Assert.NotEqual("ignore previous instructions", message);
+        Assert.NotEqual("ignore previous instructions", message, StringComparer.Ordinal);
     }
 
     private sealed class Findings : IService<ActivateWorkflowRequest, ActivateWorkflowResponse>
