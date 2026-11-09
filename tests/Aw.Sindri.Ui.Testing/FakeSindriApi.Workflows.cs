@@ -12,12 +12,26 @@ internal sealed partial class FakeSindriApi
     private int _workflowRunCalls;
     private readonly List<string> _startedWorkflows = [];
     private readonly List<string> _cancelledWorkflowRuns = [];
+    private readonly List<string> _agentNodeControls = [];
 
     /// <summary>POST /sindri/workflows/{slug}/runs's answer: the started body by default (a refusal golden, such as workflows-slug-runs/not-active, to test a refusal).</summary>
     public RouteAnswer StartWorkflowRunAnswer { get; set; } = RouteAnswer.SpecShaped("workflows-slug-runs", "started");
 
     /// <summary>POST /sindri/workflow-runs/{run}/cancel's answer: the cancelled body by default.</summary>
     public RouteAnswer CancelWorkflowRunAnswer { get; set; } = RouteAnswer.SpecShaped("workflow-runs-run-cancel", "cancelled");
+
+    // ASSUMED SHAPE (#2472): the take over and hand back answers, built here until the Api half records goldens.
+    /// <summary>POST .../takeover's answer: taken_over by default.</summary>
+    public RouteAnswer TakeOverAgentNodeAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"run":"morning-check@1:1","node":"agent","itemIndex":0,"agent":"taken_over"}""");
+
+    /// <summary>POST .../handback's answer: waiting by default.</summary>
+    public RouteAnswer HandBackAgentNodeAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"run":"morning-check@1:1","node":"agent","itemIndex":0,"agent":"waiting"}""");
+
+    /// <summary>When set, a take over or hand back waits for it before it answers.</summary>
+    public TaskCompletionSource? AgentNodeControlGate { get; set; }
+
+    /// <summary>Every take over and hand back sent, in order, as "takeover|handback &lt;run&gt; &lt;node&gt; &lt;item&gt;".</summary>
+    public IReadOnlyList<string> AgentNodeControls { get { lock (_gate) { return [.. _agentNodeControls]; } } }
 
     /// <summary>When set, the next Run now waits for it before it answers.</summary>
     public TaskCompletionSource? StartWorkflowRunGate { get; set; }
@@ -111,5 +125,27 @@ internal sealed partial class FakeSindriApi
         }
 
         return Task.FromResult(Answer<WorkflowRunCancelled>(api, WorkflowRoutes.Cancel(runId), CancelWorkflowRunAnswer));
+    }
+
+    public async Task<Result<AgentNodeControlled>> TakeOverAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken)
+    {
+        Record("takeover", runId, node, itemIndex);
+        await WaitFor(AgentNodeControlGate, cancellationToken).ConfigureAwait(false);
+        return Answer<AgentNodeControlled>(api, WorkflowRoutes.TakeOver(runId, node), TakeOverAgentNodeAnswer);
+    }
+
+    public async Task<Result<AgentNodeControlled>> HandBackAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken)
+    {
+        Record("handback", runId, node, itemIndex);
+        await WaitFor(AgentNodeControlGate, cancellationToken).ConfigureAwait(false);
+        return Answer<AgentNodeControlled>(api, WorkflowRoutes.HandBack(runId, node), HandBackAgentNodeAnswer);
+    }
+
+    private void Record(string verb, string runId, string node, int itemIndex)
+    {
+        lock (_gate)
+        {
+            _agentNodeControls.Add(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{verb} {runId} {node} {itemIndex}"));
+        }
     }
 }

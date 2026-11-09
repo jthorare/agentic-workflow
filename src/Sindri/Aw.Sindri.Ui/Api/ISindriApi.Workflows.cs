@@ -46,4 +46,23 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The run, SND-GRAPH-107 for one that already ended, SND-GRAPH-101 for an unknown one, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowRunCancelled>> CancelWorkflowRun(Uri api, string runId, CancellationToken cancellationToken);
+
+    // ASSUMED SHAPE (#2472): both calls, until the Api half of the issue lands.
+    /// <summary>POST /sindri/workflow-runs/{run}/nodes/{node}/takeover: the human takes a waiting agent node's agent over. Sent once, never retried.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="runId">The run.</param>
+    /// <param name="node">The node.</param>
+    /// <param name="itemIndex">The item, 0 for a node that runs once.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The node's new agent state, a refusal as served, or SND-UI-002/003.</returns>
+    public Task<Result<AgentNodeControlled>> TakeOverAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflow-runs/{run}/nodes/{node}/handback: the human hands a taken-over agent node back. Sent once, never retried.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="runId">The run.</param>
+    /// <param name="node">The node.</param>
+    /// <param name="itemIndex">The item, 0 for a node that runs once.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The node's new agent state, a refusal as served, or SND-UI-002/003.</returns>
+    public Task<Result<AgentNodeControlled>> HandBackAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken);
 }

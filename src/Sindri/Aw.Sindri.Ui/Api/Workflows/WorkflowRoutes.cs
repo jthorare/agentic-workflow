@@ -14,4 +14,9 @@ internal static class WorkflowRoutes
     internal static string Run(string runId) => $"/sindri/workflow-runs/{Uri.EscapeDataString(runId)}";
 
     internal static string Cancel(string runId) => $"{Run(runId)}/cancel";
+
+    // ASSUMED SHAPE (#2472): the two routes the Api half adds.
+    internal static string TakeOver(string runId, string node) => $"{Run(runId)}/nodes/{Uri.EscapeDataString(node)}/takeover";
+
+    internal static string HandBack(string runId, string node) => $"{Run(runId)}/nodes/{Uri.EscapeDataString(node)}/handback";
 }
