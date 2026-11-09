@@ -427,6 +427,14 @@ error. The earlier `sandbox.agentHome` key is retired.
 
 `sandbox.attended`: `wall` is `off` (default) or a duration, a wall-clock ceiling for sessions you open yourself.
 
+### `todo`
+
+| Key | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `obsidian` | `{ vault, note }` | no | none | The one Obsidian note the todos sync with. Absent: no sync. `sindri todo note set` writes it and `sindri todo note stop` removes it, live at once. |
+| `vault` | string | no | none | Under `todo.obsidian`: the name of a vault in `context.sources.library.vaults`. |
+| `note` | string | no | none | Under `todo.obsidian`: the note's path inside that vault, such as `Todo.md`. |
+
 ## Approvals across builds (#1143)
 
 An approval is the canonical JSON of the build that approved it, stored under the sha256 of those bytes. A later build checks the bytes against that
