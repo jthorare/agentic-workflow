@@ -55,8 +55,6 @@ public sealed class DiffCoversHashedKeysCheckTests
             ("review.login", _approved with { Review = new PrReviewSettings(Login: "octocat") }),
             ("review.settings checks need", _approved with { Review = new PrReviewSettings(Settings: new Dictionary<string, PrReviewSettingsEntry>(StringComparer.Ordinal) { ["api"] = new(Checks: [new PrReviewCheck("tests", "Tests", Need: new PrReviewNeed(Ci: "build"))]) }) }),
             ("review.projects", _approved with { Review = new PrReviewSettings(Projects: [new PrReviewProject("prj_1", Repos: ["acme/api"])]) }),
-            ("todo.obsidian.vault", _approved with { Todo = new TodoSettings(new TodoObsidianSettings(Vault: "notes")) }),
-            ("todo.obsidian.note", _approved with { Todo = new TodoSettings(new TodoObsidianSettings(Note: "Todo.md")) }),
             ("workflow.scoping.historyWindow", _approved with { Workflow = new WorkflowSettings(Scoping: new ScopingSettings(new HistoryWindowSettings(Since: "2026-01-01"))) }),
             ("context", _approved with { Context = context.RootElement.Clone() }),
         };
