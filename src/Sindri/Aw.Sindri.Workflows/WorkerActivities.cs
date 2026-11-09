@@ -8,4 +8,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Engine">EvaluateGates and ReleaseClaim (engine P7).</param>
 /// <param name="Inputs">The Step input activity: FillInput, and the local DropInjection.</param>
 /// <param name="Agents">LaunchAgentStep, WatchAgentStep and CloseAgentStep (engine P8).</param>
-internal sealed record WorkerActivities(RunStepActivities Steps, RecordEventActivities Events, FactReadActivities Items, EffectActivities Effects, EngineActivities Engine, StepInputActivities Inputs, AgentStepActivities Agents);
+/// <param name="Graph">The graph workflow's activities (issue 2258, PR 6).</param>
+internal sealed record WorkerActivities(RunStepActivities Steps, RecordEventActivities Events, FactReadActivities Items, EffectActivities Effects, EngineActivities Engine, StepInputActivities Inputs, AgentStepActivities Agents, GraphActivities Graph);
