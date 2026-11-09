@@ -186,9 +186,11 @@ export const tools = (t) => {
 namespace Toolkits.${t.name};
 
 /// <summary>The input of ${t.tool}. A nullable property is optional in the tool's input schema.</summary>
+/// <param name="Subject">What ${t.tool} works on.</param>
 public sealed record ${R}(string Subject);
 
 /// <summary>The output of ${t.tool}.</summary>
+/// <param name="Result">What ${t.tool} returns.</param>
 public sealed record ${S}(string Result);
 
 /// <summary>The ${t.kebab} toolkit: its needs and its tools.</summary>
@@ -201,6 +203,11 @@ public static class ${t.name}Tools
             .Tool<${R}, ${S}>(${cs(t.tool)}, "TODO: one line on what ${t.tool} does", ${t.toolPascal});
 
     /// <summary>The ${t.tool} tool. Red until ${t.toolPascal}Tests passes (see ${t.name}.Toolkit.Tests).</summary>
+    /// <param name="request">The tool's input.</param>
+    /// <param name="ctx">The toolkit's needs for this call.</param>
+    /// <param name="ct">Cancels the call.</param>
+    /// <returns>The tool's output.</returns>
+    /// <exception cref="NotSupportedException">Until the tool is written.</exception>
     public static Task<${S}> ${t.toolPascal}(${R} request, ToolkitContext ctx, CancellationToken ct)
         => throw new NotSupportedException("${t.toolPascal}: make ${t.toolPascal}Tests pass");
 }
