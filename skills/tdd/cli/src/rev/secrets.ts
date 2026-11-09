@@ -33,7 +33,8 @@ export function makeSecrets(values: ReadonlyMap<string, Redacted.Redacted<string
   const pairs: [string, string][] = [];
   for (const [name, r] of values) {
     const v = Redacted.value(r);
-    if (v.length >= 4) pairs.push([name, v]);
+    // a value this short is not a key (a flag such as "true"); scrubbing it would garble every line it appears in
+    if (v.length >= 8) pairs.push([name, v]);
     if (name === "DATABASE_URL") {
       try {
         const pw = decodeURIComponent(new URL(v).password);
