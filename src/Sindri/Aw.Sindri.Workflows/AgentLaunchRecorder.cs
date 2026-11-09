@@ -37,6 +37,8 @@ internal sealed class AgentLaunchRecorder(ILedgerStore ledger, HeldLease lease, 
             request.Instance, request.Step?.Ref.State, request.Run?.Number, Sandbox: started.Sandbox, Model: request.Step?.Model, Skill: SkillOf(request, started))
         {
             PrHead = started.PrHead,
+            Run = request.Node?.Run.Value,
+            Node = request.Node?.Node.Value,
         };
         var appended = await Append(events.Entry(EventTypes.LaunchStarted, payload, Key(request.Launch), request.Item.Value), cancellationToken).ConfigureAwait(false);
         if (!appended.AlreadyRecorded)

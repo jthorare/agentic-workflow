@@ -42,7 +42,7 @@ internal sealed class SessionHarness
     }
 
     /// <summary>Holds the lease and starts <paramref name="launch"/> of the first item on <paramref name="target"/>, open in the files.</summary>
-    public async Task Started(LaunchId? launch = null, string target = "claude-code", InstanceAddress? instance = null)
+    public async Task Started(LaunchId? launch = null, string target = "claude-code", InstanceAddress? instance = null, string? run = null, string? node = null)
     {
         var id = launch ?? A.FirstLaunchId;
         if (Views.Slice.Held.Current is null)
@@ -52,7 +52,7 @@ internal sealed class SessionHarness
         }
 
         await Views.Request(id, AgentId.From(target));
-        await Views.Start(id, target: AgentId.From(target), instance: instance);
+        await Views.Start(id, target: AgentId.From(target), instance: instance, run: run, node: node);
         Files.Open(id);
     }
 }

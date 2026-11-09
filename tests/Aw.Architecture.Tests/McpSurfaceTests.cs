@@ -21,8 +21,8 @@ using Aw.Sindri.Features.WriteMemoryFact;
 namespace Aw.Architecture.Tests;
 
 /// <summary>
-/// The MCP surface (API spec §8, engine spec §4.2): the sindri_* and context_* tools reach queries and the one request
-/// command (and, todos excepted, the six todo writes: todo spec D2), so the endpoint can't even attempt a decision, a desk, protected or job action, and it never carries a
+/// The MCP surface (API spec §8, engine spec §4.2): the sindri_* and context_* tools reach queries, sindri_request, and the Desk + SessionOk writes listed in
+/// _allowed (the connection, memory and todo writes, and the workflow writes of issue 2258 Part 1), so the endpoint can't even attempt a decision, any other desk, protected or job action, and it never carries a
 /// challenge answer or the launch secret. Read from the Sindri host's catalog, the one table the command chain reads.
 /// </summary>
 [Trait("Lane", "integration")]
@@ -53,6 +53,16 @@ public sealed class McpSurfaceTests
         typeof(PickTodoHoldRequest).FullName!,
         typeof(UndoTodoHoldRequest).FullName!,
         typeof(ImportTodoNoteRequest).FullName!,
+        // why: issue 2258 Part 1 (every verb for agents): an agent session builds, edits, validates, activates, pauses, archives, runs and cancels workflows through the workflow_* tools; each write is desk class and names the launch as its actor (WriteAttributionTests); the requests are internal to Features, so they're named by full name
+        "Aw.Sindri.Features.ActivateWorkflow.ActivateWorkflowRequest",
+        "Aw.Sindri.Features.ApplyWorkflowOps.ApplyWorkflowOpsRequest",
+        "Aw.Sindri.Features.CancelWorkflowRun.CancelWorkflowRunRequest",
+        "Aw.Sindri.Features.CreateWorkflow.CreateWorkflowRequest",
+        "Aw.Sindri.Features.DeleteWorkflow.DeleteWorkflowRequest",
+        "Aw.Sindri.Features.PauseWorkflow.PauseWorkflowRequest",
+        "Aw.Sindri.Features.ReplaceWorkflow.ReplaceWorkflowRequest",
+        "Aw.Sindri.Features.RunWorkflow.RunWorkflowRequest",
+        "Aw.Sindri.Features.ValidateWorkflow.ValidateWorkflowRequest",
     };
 
     private static readonly string[] _launchSecretMarkers = ["LAUNCH_SECRET", "Launch-Secret", "LaunchSecret"];
