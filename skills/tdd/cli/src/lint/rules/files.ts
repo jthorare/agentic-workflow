@@ -1,20 +1,74 @@
-// FILES: the publish manifest (nothing missing, nothing over 15 MB, the page under 16 MB), no orphan media, and every
-// prs/pr-NN.md loaded onto the page (lint_packet.Lint.r_files).
+// FILES: the publish manifest (nothing missing, nothing over 15 MB, the page under 16 MB), no orphan media, every
+// prs/pr-NN.md loaded onto the page, and no scaffold placeholder left (lint_packet.Lint.r_files and .placeholders).
 import { Effect } from "effect";
 import * as py from "../../py";
 import { formatFixed } from "../../py/num";
-import { Packet } from "../packet";
-import { FILE_LIMIT, MEDIA_EXT, PAGE_LIMIT } from "../patterns";
-import { type PyValue, dget, get, isDict, isOsOrValueError, items, iter, or, str, truthy } from "../pyops";
+import { Packet, type LintPacket } from "../packet";
+import { COMMENT, FILE_LIMIT, MEDIA_EXT, PAGE_LIMIT, PLACEHOLDER, PLACEHOLDER_DATE, PLACEHOLDER_MARK } from "../patterns";
+import { type PyValue, dget, get, isDict, isOSError, isOsOrValueError, items, iter, or, str, truthy } from "../pyops";
 
 const re = py.re;
-const { join, basename } = py.path;
+const { join, basename, relpath } = py.path;
 const PR_FILE = re.compile(String.raw`pr-\d+[a-z]?\.md`);
 const mb = (n: number): string => formatFixed(n / 1048576, 1);
+const MARK_BYTES = Buffer.from(PLACEHOLDER_MARK, "utf8");
+
+/** data.count(b"\n", 0, end) */
+function newlinesBefore(data: Uint8Array, end: number): number {
+  let n = 0;
+  for (let i = 0; i < end; i++) if (data[i] === 0x0a) n++;
+  return n;
+}
+
+/**
+ * lint_packet.Lint.placeholders: FILES/placeholder (a file the page publishes, from the manifest's files, still carries
+ * the scaffold's marker) and FILES/placeholder-text (a line of the source or of status.md, one-line comments aside,
+ * still carries a scaffold placeholder). The text check needs no manifest.
+ */
+function placeholders(p: LintPacket, man: PyValue | null): void {
+  for (const [pub, src] of man !== null ? items(or(dget(man, "files"), new Map())) : []) {
+    if (!truthy(src) || !p.fs.isfile(str(src))) continue;
+    let data: Uint8Array;
+    try {
+      data = p.fs.readBytes(str(src));
+    } catch (e) {
+      if (!isOSError(e)) throw e;
+      continue;
+    }
+    const at = Buffer.from(data.buffer, data.byteOffset, data.byteLength).indexOf(MARK_BYTES);
+    if (at >= 0) {
+      // the build writes resolved paths: name the file relative to the packet even when its path goes through a link
+      const real = p.fs.realpath(str(src));
+      const root = p.fs.realpath(p.root);
+      const where = real.startsWith(root + "/") ? relpath(real, root) : p.rel(str(src));
+      p.add("FILES", "placeholder", "error", `${pub} is still the scaffold's placeholder image (it says "${PLACEHOLDER_MARK}"): replace it with the real diagram or shot before publishing`,
+        where, newlinesBefore(data, at) + 1);
+    }
+  }
+  for (const path of [...(p.src ? [p.src] : []), join(p.root, "status.md")]) {
+    if (!p.fs.isfile(path)) continue;
+    const lines = p.lines(path);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]!;
+      if (COMMENT.match(line)) continue;
+      const found: string[] = [];
+      for (const m of PLACEHOLDER.finditer(line)) {
+        const t = m.group(0)!;
+        if (!found.includes(t)) found.push(t);
+      }
+      if (found.length) {
+        const names = found.map((t) => `"${t}"`).join(", ");
+        p.add("FILES", "placeholder-text", "error", `scaffold placeholder left in the text: ${names}; write the real text (or delete the line) before publishing. ` +
+          `The scaffold's placeholders are the "${PLACEHOLDER_MARK}" marker, the ${PLACEHOLDER_DATE} date and the template's <angle-bracket> prompts`, p.rel(path), i + 1);
+      }
+    }
+  }
+}
 
 export const files = Effect.gen(function* () {
   const p = yield* Packet;
   const man = p.manifest;
+  placeholders(p, man);
   if (man === null) return;
   const mrel = !p.compiled ? "build/content.files.json" : "(compiled) content.files.json";
   const filesMap = or(dget(man, "files"), new Map());
