@@ -29,6 +29,10 @@ internal sealed partial class GraphWorkflow
     // why: one attempt, because a block may have side effects (notify); a failure is the node's failure
     private static readonly ActivityOptions _block = new() { StartToCloseTimeout = TimeSpan.FromHours(1), RetryPolicy = new RetryPolicy { MaximumAttempts = 1 } };
 
+    // why: a launch hands back after its slice when the session cap is full, and the workflow asks again; the one-shot reads and the close are retried without end like the writes
+    private static readonly ActivityOptions _agentLaunch = new() { StartToCloseTimeout = TimeSpan.FromMinutes(10), RetryPolicy = _unbounded };
+    private static readonly ActivityOptions _agentRead = new() { StartToCloseTimeout = TimeSpan.FromMinutes(5), RetryPolicy = _unbounded };
+
     private WorkflowRunId _run;
 
     /// <summary>Walks the run's spec.</summary>
