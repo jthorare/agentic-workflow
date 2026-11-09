@@ -65,7 +65,7 @@ public sealed class WorkflowGraphViewModelTests
     }
 
     [Fact]
-    public async Task A_node_without_a_position_is_not_drawn_nor_are_its_edges_and_it_is_counted()
+    public async Task A_node_without_a_position_is_not_drawn_and_is_named()
     {
         var graph = await GraphOf(
             _f,
@@ -76,7 +76,7 @@ public sealed class WorkflowGraphViewModelTests
         Assert.Equal(["a", "c"], graph.Nodes.Select(n => n.Id));
         Assert.Equal(["b"], graph.Unplaced);
         Assert.Equal([("a", "c")], graph.Edges.Select(e => (e.From, e.To)));
-        Assert.Equal("1 node has no position, so it is not drawn.", graph.UnplacedText);
+        Assert.Equal("1 node has no position: b", graph.UnplacedText);
         Assert.False(graph.SelectNode("b"));
     }
 

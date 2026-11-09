@@ -16,9 +16,9 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfGraphNodeName(string title, string type, string word) => word.Length == 0 ? title + ", " + type : title + ", " + type + ", " + word;
 
-    /// <summary>The note over a graph whose nodes lack positions.</summary>
-    /// <param name="count">Nodes not drawn.</param>
+    /// <summary>The note over a graph whose nodes lack positions: "2 nodes have no position: a, b".</summary>
+    /// <param name="ids">The ids of the nodes not drawn, in spec order.</param>
     /// <returns>The words.</returns>
-    internal static string WfGraphUnplaced(int count) =>
-        string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{count} {(count == 1 ? "node has" : "nodes have")} no position, so {(count == 1 ? "it is" : "they are")} not drawn.");
+    internal static string WfGraphUnplaced(IReadOnlyList<string> ids) =>
+        string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{ids.Count} {(ids.Count == 1 ? "node has" : "nodes have")} no position: {string.Join(", ", ids)}");
 }

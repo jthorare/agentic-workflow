@@ -51,11 +51,11 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>Raised with the node's id when a node is selected or activated.</summary>
     internal event EventHandler<string>? NodeSelected;
 
-    /// <summary>The ids of nodes with no served position: not drawn, so the page can say how many.</summary>
+    /// <summary>The ids of nodes with no served position, in spec order: not drawn, so the page can name them.</summary>
     public IReadOnlyList<string> Unplaced { get; }
 
     /// <summary>The words for <see cref="Unplaced"/>, or empty when every node has a position.</summary>
-    public string UnplacedText => Unplaced.Count == 0 ? string.Empty : Labels.WfGraphUnplaced(Unplaced.Count);
+    public string UnplacedText => Unplaced.Count == 0 ? string.Empty : Labels.WfGraphUnplaced(Unplaced);
 
     /// <summary>The nodes with a position, in the order the spec lists them.</summary>
     public IReadOnlyList<GraphNodeViewModel> Nodes { get; }

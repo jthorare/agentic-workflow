@@ -229,7 +229,7 @@ internal sealed class GraphCanvas : Control
             graph.PropertyChanged += OnGraphProperty;
         }
 
-        AutomationProperties.SetName(this, graph?.Name);
+        AutomationProperties.SetName(this, graph?.Name ?? string.Empty);
         InvalidateVisual();
     }
 
