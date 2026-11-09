@@ -69,7 +69,35 @@
             "event": "github.pr.merged",
             "filter": "trigger.repo == \"acme/api\""
           },
-          "exampleSpec": null
+          "exampleSpec": {
+            "version": 1,
+            "name": "Tell me when an API pull request merges",
+            "nodes": [
+              {
+                "id": "merged",
+                "type": "connection_event",
+                "config": {
+                  "connection": "github:work",
+                  "event": "github.pr.merged",
+                  "filter": "trigger.repo == \"acme/api\""
+                }
+              },
+              {
+                "id": "hello",
+                "type": "notify",
+                "config": {
+                  "title": "Merged",
+                  "body": "{{merged.title}} ({{merged.url}})"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "merged",
+                "to": "hello"
+              }
+            ]
+          }
         },
         {
           "type": "schedule",
@@ -309,6 +337,116 @@
               }
             ]
           }
+        },
+        {
+          "type": "run_agent",
+          "title": "Run agent",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "repo",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "prompt",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "readOnlyRepos",
+              "type": "text list",
+              "required": false
+            },
+            {
+              "name": "agent",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "outputs",
+              "type": "object",
+              "required": false
+            },
+            {
+              "name": "timeout",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "connections",
+              "type": "text list",
+              "required": false
+            },
+            {
+              "name": "resources",
+              "type": "object",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "drifted": "boolean",
+            "summary": "string",
+            "status": "string",
+            "branch": "string",
+            "commit": "string",
+            "sessionId": "string?",
+            "usage": "object"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "repo": "web",
+            "prompt": "Check {{trigger.ref}} for contract drift and fix what you can",
+            "outputs": {
+              "drifted": "boolean",
+              "summary": "string"
+            },
+            "timeout": "45m"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Check a branch for contract drift",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "check",
+                "type": "run_agent",
+                "config": {
+                  "repo": "web",
+                  "prompt": "Check {{trigger.payload}} for contract drift and fix what you can",
+                  "outputs": {
+                    "drifted": "boolean",
+                    "summary": "string"
+                  },
+                  "timeout": "45m"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Drift check",
+                  "body": "{{check.summary}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "check"
+              },
+              {
+                "from": "check",
+                "to": "tell"
+              }
+            ]
+          }
         }
       ]
     },
@@ -336,7 +474,76 @@
           "exampleConfig": {
             "value": "{{summarize.text}}"
           },
-          "exampleSpec": null
+          "exampleSpec": {
+            "version": 1,
+            "name": "Summarize new issues",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "each",
+                "type": "for_each",
+                "config": {
+                  "items": "{{trigger.payload}}",
+                  "maxItems": 50
+                }
+              },
+              {
+                "id": "summary",
+                "type": "prompt",
+                "config": {
+                  "prompt": "Summarize in one line: {{item}}",
+                  "output": {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "line"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "gather",
+                "type": "collect",
+                "config": {
+                  "value": "{{summary.line}}"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Issues",
+                  "body": "{{gather.items}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "each"
+              },
+              {
+                "from": "each",
+                "to": "summary"
+              },
+              {
+                "from": "summary",
+                "to": "gather"
+              },
+              {
+                "from": "gather",
+                "to": "tell"
+              }
+            ]
+          }
         },
         {
           "type": "for_each",
@@ -370,7 +577,76 @@
             "items": "{{search.results}}",
             "maxItems": 100
           },
-          "exampleSpec": null
+          "exampleSpec": {
+            "version": 1,
+            "name": "Summarize new issues",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "each",
+                "type": "for_each",
+                "config": {
+                  "items": "{{trigger.payload}}",
+                  "maxItems": 50
+                }
+              },
+              {
+                "id": "summary",
+                "type": "prompt",
+                "config": {
+                  "prompt": "Summarize in one line: {{item}}",
+                  "output": {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "line"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "gather",
+                "type": "collect",
+                "config": {
+                  "value": "{{summary.line}}"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Issues",
+                  "body": "{{gather.items}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "each"
+              },
+              {
+                "from": "each",
+                "to": "summary"
+              },
+              {
+                "from": "summary",
+                "to": "gather"
+              },
+              {
+                "from": "gather",
+                "to": "tell"
+              }
+            ]
+          }
         },
         {
           "type": "condition",
