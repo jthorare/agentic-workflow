@@ -58,6 +58,9 @@ public sealed class GoldenContractTests
         ["context-concepts-glossary"] = As<ConceptGlossaryView>,   // GET /sindri/context/concepts/glossary: the concept cards' top terms (ui #1036); no-map-030 is a ProblemDetails
         ["context-pins"] = As<PinsView>,   // GET /sindri/context/pins: the live pins against the approved profile and the map, and the rebuild state
         ["context-pins-suggest"] = As<PinSuggestView>,   // GET /sindri/context/pins/suggest: the "Pin this" and "Add several" suggestions; invalid-179 is a ProblemDetails
+        ["workflows-blocks"] = As<WorkflowBlockList>,   // GET /sindri/workflows/blocks: the editor's block form (#2258 PR 17 part 2b)
+        ["workflows-slug-ops"] = As<WorkflowOpsApplied>,   // POST /workflows/{slug}/ops: ops-applied; ops-stale and ops-missing-fields are ProblemDetails
+        ["workflows-slug-activate"] = As<WorkflowActivated>,   // POST /workflows/{slug}/activate: activated; not-found is a ProblemDetails
         ["context-whole"] = As<WholeMapView>,   // GET /context/map/whole (whole-map spec §2.1); the refusals (006, 030, 044, 045, 120, 200) are ProblemDetails
         ["context-filemap"] = As<FileMapView>,
         ["context-code"] = As<CodeView>,   // GET /sindri/context/code: the code lens' callers and callees (S-9)
@@ -74,6 +77,7 @@ public sealed class GoldenContractTests
         ["jobs-id"] = As<JobView>,   // GET /jobs/{id}: the job sheet; the 404 is ProblemDetails
         ["workflows"] = As<WorkflowList>,   // GET /workflows: the Workflows page's list (#2258 PR 17 part 1); the refusals are ProblemDetails
         ["workflows-slug"] = As<WorkflowView>,   // GET /workflows/{slug}: the runs header; the spec stays raw
+        ["workflows-slug-pause"] = As<WorkflowPaused>,   // POST /workflows/{slug}/pause (the Pause button); the success is paused.json
         ["workflows-slug-runs"] = As<WorkflowRunList>,   // GET /workflows/{slug}/runs: a workflow's runs
         ["workflow-runs-run"] = As<WorkflowRunView>,   // GET /workflow-runs/{run}: a run's detail
         ["workflow-runs-run-cancel"] = As<WorkflowRunCancelled>,   // POST /workflow-runs/{run}/cancel's cancelled body (the API golden cancels a queued run)
@@ -146,6 +150,7 @@ public sealed class GoldenContractTests
         [("connections", "added-oauth")] = As<ConnectionAdded>,
         [("connections-id", "removed")] = As<ConnectionRemoved>,
         [("memories", "created")] = As<MemoryCreated>,
+        [("workflows-slug", "archived")] = As<WorkflowArchived>,   // DELETE /workflows/{slug}'s answer; the folder's found is GET's WorkflowView and archive-not-found, replace-stale and not-found are ProblemDetails
         [("workflows-slug-runs", "started")] = As<WorkflowRunStarted>,   // POST /workflows/{slug}/runs' answers (Run now); the folder's list-* are GET's WorkflowRunList and its refusals are ProblemDetails
         [("workflows-slug-runs", "queued")] = As<WorkflowRunStarted>,
         [("workflows-slug-runs", "skipped")] = As<WorkflowRunStarted>,
@@ -181,7 +186,7 @@ public sealed class GoldenContractTests
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
-        "workflows-validate", "workflows-slug-ops", "workflows-slug-pause", "workflows-slug-activate", "workflows-blocks",   // #2258 PR 8b: the workflow writes are the CLI's and the MCP tools'; the app's editor sends them when it lands (UI lane)
+        "workflows-validate",   // #2258 PR 8b: validate is the CLI's; ops and activate are read above
         "resources", "resources-purge",   // #2258 PR14 part 2: GET /sindri/resources and POST /sindri/resources/purge; the Resources page (PR18b, UI lane) reads them with its own views
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
