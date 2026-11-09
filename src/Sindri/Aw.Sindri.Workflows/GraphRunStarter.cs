@@ -18,13 +18,19 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="mirror">Appends the events of a run whose launch failed.</param>
 /// <param name="clock">The clock the run's start time comes from.</param>
 /// <param name="logger">Where a skipped trigger is logged.</param>
-internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunLauncher launcher, GraphMirror mirror, TimeProvider clock, ILogger<GraphRunStarter> logger) : IGraphRunStarter, IGraphQueueAdvance
+internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunLauncher launcher, GraphMirror mirror, TimeProvider clock, ILogger<GraphRunStarter> logger) : IGraphRunStarter, IGraphQueueAdvance, IDisposable
 {
     private readonly IWorkflowRunStore _runs = runs;
     private readonly IGraphRunLauncher _launcher = launcher;
     private readonly GraphMirror _mirror = mirror;
     private readonly TimeProvider _clock = clock;
     private readonly ILogger<GraphRunStarter> _logger = logger;
+
+    // why: recovery must tell a run this process is launching from one the previous process left behind. A run is recorded here under the same gate as the store write that makes it
+    // 'running', and recovery reads 'running' under that gate, so it sees a run as running only when it is already listed here. Ids are never removed: a run this process started is never
+    // an orphan of the last one, a launch that is still in flight is covered the same way, and a few strings per run cost nothing against a process's life.
+    private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly HashSet<string> _startedHere = new(StringComparer.Ordinal);
 
     /// <summary>Starts, queues or skips one run.</summary>
     /// <param name="request">The trigger.</param>
@@ -37,7 +43,7 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         var run = new WorkflowRun(id, request.Workflow, request.Revision, request.Trigger, WorkflowRunStatus.Running,
             Outputs: null, Error: null, ItemId: null, _clock.GetUtcNow(), EndedAt: null);
         // why: the in-flight check and the insert are one store call, so concurrent triggers cannot both start.
-        var admitted = await _runs.Admit(run, request.Concurrency, cancellationToken).ConfigureAwait(false);
+        var admitted = await Admit(run, request.Concurrency, cancellationToken).ConfigureAwait(false);
         if (admitted.IsError)
         {
             return admitted.Error;
@@ -74,7 +80,7 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         while (true)
         {
             // why: one store call checks that nothing of the workflow is in flight and starts the oldest queued run, so two runs ending together cannot both promote one
-            var promoted = await _runs.PromoteOldestQueued(workflow, cancellationToken).ConfigureAwait(false);
+            var promoted = await Promote(workflow, cancellationToken).ConfigureAwait(false);
             if (promoted.IsError)
             {
                 return promoted.Error;
@@ -100,8 +106,64 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         }
     }
 
+    /// <summary>Releases the gate.</summary>
+    public void Dispose() => _gate.Dispose();
+
     /// <inheritdoc />
-    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> RunningBeforeThisProcess(CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async ValueTask<Result<IReadOnlyList<WorkflowRun>>> RunningBeforeThisProcess(CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var running = await _runs.Running(cancellationToken).ConfigureAwait(false);
+            return running.Map(list => (IReadOnlyList<WorkflowRun>)[.. list.Where(r => !_startedHere.Contains(r.Id.Value))]);
+        }
+        finally
+        {
+            _ = _gate.Release();
+        }
+    }
+
+    /// <summary>The store's admit, with the run recorded as started here before the write can be seen and forgotten again when it did not become a running run.</summary>
+    private async ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var added = _startedHere.Add(run.Id.Value);
+            var admitted = await _runs.Admit(run, mode, cancellationToken).ConfigureAwait(false);
+            if (added && (admitted.IsError || admitted.Value != GraphStartKind.Started))
+            {
+                _ = _startedHere.Remove(run.Id.Value);
+            }
+
+            return admitted;
+        }
+        finally
+        {
+            _ = _gate.Release();
+        }
+    }
+
+    /// <summary>The store's promote, with the promoted run recorded as started here under the same gate as the write.</summary>
+    private async ValueTask<Result<WorkflowRun?>> Promote(WorkflowId workflow, CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var promoted = await _runs.PromoteOldestQueued(workflow, cancellationToken).ConfigureAwait(false);
+            if (promoted.IsSuccess && promoted.Value is { } run)
+            {
+                _ = _startedHere.Add(run.Id.Value);
+            }
+
+            return promoted;
+        }
+        finally
+        {
+            _ = _gate.Release();
+        }
+    }
 
     private static bool Unreachable(Error error) =>
         string.Equals(error.Code, SindriErrors.EngineUnavailable.Code, StringComparison.Ordinal) || string.Equals(error.Code, SindriErrors.NotRunning.Code, StringComparison.Ordinal);

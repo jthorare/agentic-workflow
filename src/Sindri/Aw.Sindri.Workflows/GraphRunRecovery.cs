@@ -27,6 +27,9 @@ internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRun
     private readonly IGraphQueueAdvance _queue = queue;
     private readonly ILogger<GraphRunRecovery> _logger = logger;
 
+    // why: a run already Failed is no longer 'running', so a retry never meets it again; when its events could not be appended they wait here for the next pass
+    private readonly List<WorkflowRun> _unrecorded = [];
+
     /// <summary>Ends every running run Temporal has no workflow for.</summary>
     /// <param name="cancellationToken">Cancels the pass.</param>
     /// <returns>How many runs it ended, or the reason it could not finish.</returns>
@@ -38,14 +41,17 @@ internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRun
     /// <returns>How many runs it ended, or the reason it could not finish.</returns>
     public async ValueTask<Result<int>> Run(DateTimeOffset startedBefore, CancellationToken cancellationToken)
     {
-        var running = await _runs.Running(cancellationToken).ConfigureAwait(false);
+        // why: a run this process admitted or promoted may still be launching, so it is never an orphan; the starter lists only runs from before this process
+        var running = await _queue.RunningBeforeThisProcess(cancellationToken).ConfigureAwait(false);
         if (running.IsError)
         {
             return running.Error;
         }
 
+        var pending = await RecordPending(cancellationToken).ConfigureAwait(false);
         var workflows = new List<WorkflowId>();
         var (ended, failure) = await EndLost(running.Value.Where(r => r.StartedAt < startedBefore), workflows, cancellationToken).ConfigureAwait(false);
+        failure ??= pending;
         // why: rows already failed are no longer 'running', so a retry never sees them; their queues advance now, even when the pass stopped on an error
         var advanced = await AdvanceQueues(workflows, cancellationToken).ConfigureAwait(false);
         return failure ?? advanced ?? (Result<int>)ended;
@@ -74,10 +80,39 @@ internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRun
                 workflows.Add(run.WorkflowId);
             }
 
-            failure ??= await Record(failed, cancellationToken).ConfigureAwait(false);
+            var recorded = await Record(failed, cancellationToken).ConfigureAwait(false);
+            failure ??= recorded;
         }
 
         return (ended, failure);
+    }
+
+    /// <summary>Appends the events of runs an earlier pass failed but could not record.</summary>
+    private async ValueTask<Error?> RecordPending(CancellationToken cancellationToken)
+    {
+        WorkflowRun[] waiting;
+        lock (_unrecorded)
+        {
+            waiting = [.. _unrecorded];
+            _unrecorded.Clear();
+        }
+
+        Error? failure = null;
+        foreach (var run in waiting)
+        {
+            var recorded = await Record(run, cancellationToken).ConfigureAwait(false);   // why: a failed append keeps the run waiting again
+            failure ??= recorded;
+        }
+
+        return failure;
+    }
+
+    private void Keep(WorkflowRun run)
+    {
+        lock (_unrecorded)
+        {
+            _unrecorded.Add(run);
+        }
     }
 
     private async ValueTask<Error?> AdvanceQueues(List<WorkflowId> workflows, CancellationToken cancellationToken)
@@ -135,6 +170,7 @@ internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRun
         }
         catch (InvalidOperationException e)   // boundary: GraphMirror throws when the lease is gone or the append fails; the queue still advances, the pass reports the error
         {
+            Keep(failed);
             return SindriErrors.NotRunning.With(e.Message);
         }
     }
