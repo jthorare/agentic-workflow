@@ -200,6 +200,6 @@ function iterate(v: PyValue): PyValue[] {
 
 /** The last line of the traceback Python would print for an escaped exception. */
 export function traceback(e: unknown): string {
-  if (e instanceof PyError) return `Traceback (most recent call last):\n${e.pyType}: ${e.message}\n`;
+  if (e instanceof PyError) return `Traceback (most recent call last):\n${e.pyType}${e.message ? ": " + e.message : ""}\n`;
   return `Traceback (most recent call last):\n${e instanceof Error ? e.stack ?? e.message : String(e)}\n`;
 }

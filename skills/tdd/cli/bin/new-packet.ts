@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 // tdd new: new_packet.py in TypeScript. Scaffolds <root>/<repo-slug>/system-design/<slug>/ from skills/tdd/templates
 // with the same files, bytes, stdout and exit codes as the Python; TDD_TODAY (YYYY-MM-DD) pins the date in both.
-// The argparse surface is reproduced for this parser's options (exact, --opt=value, unique prefixes, --, -h).
+// The argparse surface is reproduced for this parser's options (exact, --opt=value, unique prefixes, --, -h); as in
+// CPython 3.13, an option never takes its value across "--".
 import { mkdirSync, writeFileSync } from "node:fs";
 import { PyError, S, abspath, basename, exists, expanduser, isDir, isFile, join, jsonDumps, jsonLoads, listdir,
   normpath, readText, repr, splitWs, strip, type PyDict, type PyValue } from "../src/hotspots/_py";
@@ -101,7 +102,6 @@ function parseArgs(argv: string[]): Args {
     let value: string;
     if (t.explicit !== null) value = t.explicit;
     else if (kinds[i + 1] === "A") value = argv[++i]!;
-    else if (kinds[i + 1] === "-" && kinds[i + 2] === "A" && !removedDD) { removedDD = true; i += 2; value = argv[i]!; }
     else throw argError(`argument ${ACTION_NAME[dest]}: expected one argument`);
     a[dest] = value;
   }

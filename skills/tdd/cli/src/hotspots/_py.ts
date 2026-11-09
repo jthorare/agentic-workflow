@@ -84,16 +84,20 @@ function decimalValue(cp: number): number {
 export function pyFloat(v: string | number | null | undefined): number {
   if (typeof v === "number") return v;
   if (v === null || v === undefined) throw typeError("float() argument must be a string or a real number, not 'NoneType'");
+  // _PyUnicode_TransformDecimalAndSpaceToASCII: ASCII kept as is, other whitespace to ' ', other decimals to ASCII;
+  // then only ASCII whitespace is stripped.
   let t = "";
   for (const ch of v) {
     const cp = ch.codePointAt(0)!;
-    if (isSpace(ch)) t += " ";
+    if (cp < 127) t += ch;
+    else if (isSpace(ch)) t += " ";
     else {
       const d = decimalValue(cp);
-      t += d >= 0 ? String(d) : cp < 128 ? ch : "?";
+      if (d < 0) { t += "?"; break; }
+      t += String(d);
     }
   }
-  t = t.replace(/^ +/, "").replace(/ +$/, "");
+  t = t.replace(/^[ \t\n\r\v\f]+/, "").replace(/[ \t\n\r\v\f]+$/, "");
   let u = "", prev = "";
   const bad = () => valueError(`could not convert string to float: ${repr(v)}`);
   for (const c of t) {
