@@ -11,6 +11,7 @@
         xmlns:jv="using:Aw.Sindri.Ui.Views.Jobs"
         xmlns:cxv="using:Aw.Sindri.Ui.Views.Connections"
         xmlns:mmv="using:Aw.Sindri.Ui.Views.Memory"
+        xmlns:wfv="using:Aw.Sindri.Ui.Views.Workflows"
         xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
         xmlns:lnv="using:Aw.Sindri.Ui.Views.Linear"
         xmlns:rwv="using:Aw.Sindri.Ui.Views.Reviews"
@@ -262,6 +263,13 @@
                   <controls:Deferred DataContext="{Binding Jobs}">
                     <controls:Deferred.Template>
                       <DataTemplate><jv:JobsPage x:Name="JobsPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </Panel>
+                <Panel IsVisible="{Binding IsWorkflows}">
+                  <controls:Deferred DataContext="{Binding Workflows}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><wfv:WorkflowsPage x:Name="WorkflowsPage" /></DataTemplate>
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </Panel>
