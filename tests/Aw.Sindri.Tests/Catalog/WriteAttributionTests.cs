@@ -51,6 +51,8 @@ public sealed class WriteAttributionTests
         Assert.True(broken.IsEmpty, "these scenarios threw as a launched session:\n" + string.Join('\n', broken.Order(StringComparer.Ordinal)));
         Assert.True(strays.IsEmpty, $"these events were written during a launched session's calls without 'session:launch:{Launch}' as actor:\n" + string.Join('\n', strays.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)));
         Assert.True(silent.Count == 0, "these write routes appended no event by the launched session in any scenario (no event, or another actor; a route that writes no event goes in _notSwept with its reason):\n" + string.Join('\n', silent));
+        var staleSkips = _notSwept.Keys.Where(slug => !catalogRows.Contains(slug)).Order(StringComparer.Ordinal).ToList();
+        Assert.True(staleSkips.Count == 0, "these _notSwept keys name no catalog write route (misspelt, or the route is gone):\n" + string.Join('\n', staleSkips));
         Assert.True(noScenario.Count == 0, "these catalog write routes have no API golden scenario to run (add one, or list the route in _notSwept with its reason):\n" + string.Join('\n', noScenario));
     }
 
@@ -90,7 +92,9 @@ public sealed class WriteAttributionTests
         await using var host = await GoldenHost.Start(temporary: true, ct);
         return host.App.Services.GetRequiredService<ICommandCatalog>().Rows
             .Where(IsWrite)
-            .Select(static row => ApiGolden.Slug(row.Route))
+            .Select(static row => row.Route)
+            .OfType<string>()
+            .Select(ApiGolden.Slug)
             .ToHashSet(StringComparer.Ordinal);
     }
 
