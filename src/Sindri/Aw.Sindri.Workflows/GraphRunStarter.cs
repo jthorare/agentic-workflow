@@ -100,6 +100,9 @@ internal sealed partial class GraphRunStarter(IWorkflowRunStore runs, IGraphRunL
         }
     }
 
+    /// <inheritdoc />
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> RunningBeforeThisProcess(CancellationToken cancellationToken) => throw new NotSupportedException();
+
     private static bool Unreachable(Error error) =>
         string.Equals(error.Code, SindriErrors.EngineUnavailable.Code, StringComparison.Ordinal) || string.Equals(error.Code, SindriErrors.NotRunning.Code, StringComparison.Ordinal);
 

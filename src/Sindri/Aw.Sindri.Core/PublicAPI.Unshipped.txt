@@ -19796,6 +19796,7 @@ Aw.Sindri.Core.Graph.GraphNode.OnFailure.get -> string?
 Aw.Sindri.Core.Graph.GraphNode.OnFailure.init -> void
 Aw.Sindri.Core.Graph.Runs.IGraphQueueAdvance
 Aw.Sindri.Core.Graph.Runs.IGraphQueueAdvance.StartNextQueued(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Ids.WorkflowRunId?>!>
+Aw.Sindri.Core.Graph.Runs.IGraphQueueAdvance.RunningBeforeThisProcess(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
 Aw.Sindri.Core.Graph.Runs.IGraphRunCanceller
 Aw.Sindri.Core.Graph.Runs.IGraphRunCanceller.Cancel(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotActive -> Aw.Kernel.ErrorDefinition!

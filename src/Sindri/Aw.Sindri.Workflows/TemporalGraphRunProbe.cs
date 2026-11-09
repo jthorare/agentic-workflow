@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Temporalio.Api.Enums.V1;
 using Temporalio.Client;
 using Temporalio.Exceptions;
 
@@ -17,6 +18,11 @@ internal sealed class TemporalGraphRunProbe(Func<CancellationToken, ValueTask<Re
         : this(ct => (frontend ?? throw new ArgumentNullException(nameof(frontend))).Connect(flag: null, ct))
     {
     }
+
+    /// <summary>Whether a workflow in this status can still run: a closed one (completed, failed, canceled, terminated, timed out) cannot.</summary>
+    /// <param name="status">The status Temporal describes.</param>
+    /// <returns>False for a closed workflow.</returns>
+    internal static bool IsOpen(WorkflowExecutionStatus status) => throw new NotSupportedException();
 
     /// <inheritdoc />
     public async ValueTask<Result<bool>> Exists(WorkflowRunId run, CancellationToken cancellationToken)
