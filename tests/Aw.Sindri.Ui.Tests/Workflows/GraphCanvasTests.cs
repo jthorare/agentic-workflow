@@ -57,7 +57,7 @@ public sealed class GraphCanvasTests
             rects.Select(r => r!.Value));
 
         // Both labels sit between the cards they join: right of the source card's edge, left of the target's.
-        Assert.Equal(["true", "false"], labels.Select(l => l.Label));
+        Assert.Equal(["true", "false"], labels.Select(l => l.Label), StringComparer.Ordinal);
         Assert.All(labels, l => Assert.InRange(l.Item2.X, Margin + 200, Margin + 300));
         Assert.True(labels[0].Item2.Y < labels[1].Item2.Y, "the true branch leaves upward, the false one downward");
     }

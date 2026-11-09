@@ -20,5 +20,5 @@ internal static partial class Labels
     /// <param name="ids">The ids of the nodes not drawn, in spec order.</param>
     /// <returns>The words.</returns>
     internal static string WfGraphUnplaced(IReadOnlyList<string> ids) =>
-        string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{ids.Count} {(ids.Count == 1 ? "node has" : "nodes have")} no position: {string.Join(", ", ids)}");
+        string.Create(global::System.Globalization.CultureInfo.InvariantCulture, $"{ids.Count} {(ids.Count == 1 ? "node has" : "nodes have")} no position: {string.Join(", ", ids)}");
 }

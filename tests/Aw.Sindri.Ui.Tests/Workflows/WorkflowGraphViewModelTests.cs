@@ -49,7 +49,8 @@ public sealed class WorkflowGraphViewModelTests
             [("start", "start", "manual", 0d, 0d), ("agent", "Check the repos", "run_agent", 280d, 0d)],
             graph.Nodes.Select(n => (n.Id, n.Title, n.Type, n.X, n.Y)));
         var edge = Assert.Single(graph.Edges);
-        Assert.Equal(("start", "agent", (string?)null), (edge.From, edge.To, edge.Label));
+        Assert.Equal(("start", "agent"), (edge.From, edge.To));
+        Assert.Null(edge.Label);
         Assert.Equal((new GraphPoint(200, 32), new GraphPoint(280, 32)), (edge.Start, edge.End));
     }
 
@@ -73,7 +74,7 @@ public sealed class WorkflowGraphViewModelTests
             """[{"from":"a","to":"b"},{"from":"a","to":"c"}]""",
             """[{"node":"a","x":100,"y":40},{"node":"c","x":400,"y":40}]""");
 
-        Assert.Equal(["a", "c"], graph.Nodes.Select(n => n.Id));
+        Assert.Equal(["a", "c"], graph.Nodes.Select(n => n.Id), StringComparer.Ordinal);
         Assert.Equal(["b"], graph.Unplaced);
         Assert.Equal([("a", "c")], graph.Edges.Select(e => (e.From, e.To)));
         Assert.Equal("1 node has no position: b", graph.UnplacedText);
@@ -89,7 +90,7 @@ public sealed class WorkflowGraphViewModelTests
             "[]",
             """[{"node":"a","x":300,"y":0},{"node":"b","x":0,"y":100},{"node":"c","x":0,"y":0}]""");
         var raised = new List<string>();
-        graph.NodeSelected += (_, id) => raised.Add(id);
+        graph.NodeSelected += (_, e) => raised.Add(e.Value);
 
         Assert.True(graph.SelectNext());   // nothing selected yet: the first
         Assert.True(graph.SelectNext());
@@ -100,7 +101,7 @@ public sealed class WorkflowGraphViewModelTests
 
         Assert.Equal(["c", "b", "a", "b", "b"], raised);
         Assert.Equal("b", graph.SelectedId);
-        Assert.Equal(["b"], graph.Nodes.Where(n => n.IsSelected).Select(n => n.Id));
+        Assert.Equal(["b"], graph.Nodes.Where(n => n.IsSelected).Select(n => n.Id), StringComparer.Ordinal);
         Assert.False(graph.SelectNode("nope"));
     }
 
@@ -112,7 +113,7 @@ public sealed class WorkflowGraphViewModelTests
             """[{"id":"a","type":"x","config":{}},{"id":"b","type":"x","config":{}},{"id":"c","type":"x","config":{}}]""",
             "[]",
             """[{"node":"a","x":0,"y":0},{"node":"b","x":300,"y":0},{"node":"c","x":600,"y":0}]""",
-            new Dictionary<string, string> { ["a"] = "succeeded", ["b"] = "failed" });
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["a"] = "succeeded", ["b"] = "failed" });
 
         Assert.Equal(
             [("✓", "Succeeded", GraphTone.Success), ("✕", "Failed", GraphTone.Error), ("", "", GraphTone.None)],

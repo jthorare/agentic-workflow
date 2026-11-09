@@ -3,8 +3,6 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>One step of the graph: where it sits, its words and, when a run is shown, its status.</summary>
 internal sealed class GraphNodeViewModel : ObservableObject
 {
-    private bool _isSelected;
-
     internal GraphNodeViewModel(string id, string title, string type, double x, double y, string? status)
     {
         Id = id;
@@ -55,9 +53,5 @@ internal sealed class GraphNodeViewModel : ObservableObject
     public string Name { get; }
 
     /// <summary>Gets a value indicating whether this is the selected node.</summary>
-    public bool IsSelected
-    {
-        get => _isSelected;
-        internal set => Set(ref _isSelected, value);
-    }
+    public bool IsSelected { get; internal set => Set(ref field, value); }
 }

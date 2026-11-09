@@ -15,8 +15,6 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>A node card's height in the world.</summary>
     internal const double CardHeight = 64;
 
-    private string? _selectedId;
-
     /// <summary>Builds the graph.</summary>
     /// <param name="workflow">The workflow as served.</param>
     /// <param name="statuses">The latest run's status word (as served) per node id, or null when no run is shown.</param>
@@ -49,7 +47,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     }
 
     /// <summary>Raised with the node's id when a node is selected or activated.</summary>
-    internal event EventHandler<string>? NodeSelected;
+    internal event EventHandler<ValueEventArgs<string>>? NodeSelected;
 
     /// <summary>The ids of nodes with no served position, in spec order: not drawn, so the page can name them.</summary>
     public IReadOnlyList<string> Unplaced { get; }
@@ -64,11 +62,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     public IReadOnlyList<GraphEdgeViewModel> Edges { get; }
 
     /// <summary>Gets the id of the selected node, or null.</summary>
-    public string? SelectedId
-    {
-        get => _selectedId;
-        private set => Set(ref _selectedId, value);
-    }
+    public string? SelectedId { get; private set => Set(ref field, value); }
 
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     /// <summary>The graph's accessible name.</summary>
@@ -103,7 +97,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
             node.IsSelected = string.Equals(node.Id, id, StringComparison.Ordinal);
         }
 
-        NodeSelected?.Invoke(this, id);
+        NodeSelected?.Invoke(this, new ValueEventArgs<string>(id));
         return true;
     }
 
@@ -124,7 +118,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
             return false;
         }
 
-        NodeSelected?.Invoke(this, id);
+        NodeSelected?.Invoke(this, new ValueEventArgs<string>(id));
         return true;
     }
 
