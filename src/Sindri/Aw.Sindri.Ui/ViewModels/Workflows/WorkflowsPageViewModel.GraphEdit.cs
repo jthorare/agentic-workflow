@@ -4,5 +4,5 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 internal sealed partial class WorkflowsPageViewModel
 {
     /// <summary>The graph edits (Add step, Remove, Connect) of the open workflow.</summary>
-    public GraphEditViewModel GraphEdit => field ??= new GraphEditViewModel(Editor, Runs, () => _url);
+    public GraphEditViewModel GraphEdit { get; }
 }
