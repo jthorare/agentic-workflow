@@ -9,7 +9,7 @@ using Aw.Sindri.Tests.Profile;
 
 namespace Aw.Sindri.Tests.Todos;
 
-/// <summary>Issue 2385 items 1 and 2: the todo note's '--if-hash' guard checks the text the write replaces, and 'todo.obsidian' is live (no approval), so setting it is no approval drift.</summary>
+/// <summary>Issue 2385 item 1: the todo note's '--if-hash' guard checks the text the write replaces, and 'todo:' stays in the profile hash so a second write on a stale hash is refused.</summary>
 [Lane(TestLane.Unit)]
 public sealed class TodoNoteProfileEditGuardTests : IDisposable
 {
@@ -54,23 +54,20 @@ public sealed class TodoNoteProfileEditGuardTests : IDisposable
     }
 
     [Fact]
-    public async Task Setting_the_note_leaves_the_profile_hash_and_the_approval_diff_alone_while_another_drifted_key_still_shows()
+    public async Task A_second_note_set_with_the_same_ifHash_is_refused_and_the_first_note_stays()
     {
         _files.Write(Base);
-        var approved = (await _files.Source.Load(Token)).Value;
+        var seen = (await _files.Source.Load(Token)).Value.Hash.Value;
 
-        var set = await Edit().Set("notes", "Todo.md", ifHash: null, Token);
-        var afterSet = (await _files.Source.Load(Token)).Value;
+        var first = await Edit().Set("notes", "First.md", seen, Token);
+        var afterFirst = await File.ReadAllTextAsync(_files.Settings.ProfilePath, Token);
+        var second = await Edit().Set("notes", "Second.md", seen, Token);
 
-        Assert.True(set.IsSuccess);
-        Assert.Equal(approved.Hash, afterSet.Hash);
-        Assert.Empty(ProfileDiff.Between(approved.Profile, afterSet.Profile));
-
-        _files.Write((await File.ReadAllTextAsync(_files.Settings.ProfilePath, Token)).Replace("user: golden", "user: someone-else", StringComparison.Ordinal));
-        var drifted = (await _files.Source.Load(Token)).Value;
-
-        Assert.NotEqual(approved.Hash, drifted.Hash);
-        Assert.Equal(["user"], ProfileDiff.Between(approved.Profile, drifted.Profile));
+        Assert.True(first.IsSuccess);
+        Assert.True(second.IsError);
+        Assert.Equal(SindriErrors.TodoConflict.Code, second.Error.Code);
+        Assert.Equal(afterFirst, await File.ReadAllTextAsync(_files.Settings.ProfilePath, Token));
+        Assert.Contains("First.md", afterFirst, StringComparison.Ordinal);
     }
 
     private sealed class NoCache : IProfileCache

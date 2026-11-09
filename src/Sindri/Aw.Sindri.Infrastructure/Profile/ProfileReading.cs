@@ -54,12 +54,12 @@ internal static class ProfileReading
         return new LoadedProfile(checkedProfile.Value, ProfileHashing.Of(canonical), source);
     }
 
-    /// <summary>The canonical JSON of a checked profile: what the hash covers and what an approval snapshot stores. It leaves out 'todo:', which is live and needs no approval (todo spec D1, #2385).</summary>
+    /// <summary>The canonical JSON of a checked profile: what the hash covers and what an approval snapshot stores.</summary>
     /// <param name="profile">The checked profile.</param>
     /// <param name="options">The package's AwJson options.</param>
     /// <returns>The UTF-8 JSON.</returns>
     internal static byte[] Canonical(SindriProfile profile, JsonSerializerOptions options) =>
-        AwJson.Serialize(profile.Context is { } context ? profile with { Context = Sorted(context), Todo = null } : profile with { Todo = null }, options);
+        AwJson.Serialize(profile.Context is { } context ? profile with { Context = Sorted(context) } : profile, options);
 
     /// <summary>
     /// The 'context:' section with every object's keys in ordinal order, so the hash doesn't depend on how the section
