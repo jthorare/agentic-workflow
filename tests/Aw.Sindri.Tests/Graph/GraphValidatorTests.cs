@@ -28,6 +28,33 @@ public sealed class GraphValidatorTests
     }
 
     [Fact]
+    public void A_workflow_reference_with_a_misspelled_field_is_refused_naming_the_field()
+    {
+        var spec = Spec([Trigger("daily"), Search("a", "for {{workflow.nmae}}")], [Edge("daily", "a")]);
+
+        var result = Validator().Validate(spec, GraphMode.Activate);
+
+        var finding = Assert.Single(result.Findings, f => f.Code == "GRAPH-REF-002");
+        Assert.Equal("config.query", finding.Field);
+        Assert.Contains("nmae", finding.ToString(), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("workflow.name")]
+    [InlineData("workflow.runId")]
+    [InlineData("workflow.revision")]
+    [InlineData("workflow.id")]
+    [InlineData("workflow")]
+    public void A_workflow_reference_to_a_field_a_run_has_passes(string reference)
+    {
+        var spec = Spec([Trigger("daily"), Search("a", "for {{" + reference + "}}")], [Edge("daily", "a")]);
+
+        var result = Validator().Validate(spec, GraphMode.Activate);
+
+        Assert.DoesNotContain(result.Findings, f => f.Code.StartsWith("GRAPH-REF-", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void A_reference_to_a_node_that_is_not_upstream_is_refused()
     {
         // daily -> a -> c, and daily -> b: b is a sibling branch of c, and c is downstream of a
