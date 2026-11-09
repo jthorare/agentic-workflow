@@ -3,6 +3,7 @@ using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Views.Workflows;
@@ -169,5 +170,36 @@ public sealed class GraphCanvasTests
 
         Assert.Equal(new Point(Margin, Margin), before);
         Assert.True(card.Left >= 0 && card.Right <= size.Width && card.Top >= 0 && card.Bottom <= size.Height, $"the card {card} is inside {size}");
+    }
+
+    [Fact]
+    public async Task A_theme_switch_redraws_the_canvas()
+    {
+        var graph = await WorkflowGraphViewModelTests.GraphOf(
+            new WorkflowsFixture(),
+            """[{"id":"a","type":"x","config":{}}]""",
+            "[]",
+            """[{"node":"a","x":0,"y":0}]""");
+
+        var (before, after) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 800, Height = 500, RequestedThemeVariant = ThemeVariant.Dark };
+            window.Show();
+            Settle(window);
+            try
+            {
+                var before = canvas.RenderCount;
+                window.RequestedThemeVariant = ThemeVariant.Light;
+                Settle(window);
+                return (before, canvas.RenderCount);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.True(after > before, $"drew {before} times before the switch and {after} after");
     }
 }

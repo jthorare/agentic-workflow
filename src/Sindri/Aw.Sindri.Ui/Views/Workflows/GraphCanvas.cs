@@ -95,6 +95,19 @@ internal sealed partial class GraphCanvas : Control
         return Graph?.Nodes.LastOrDefault(n => WorldRect(n).Contains(world))?.Id;
     }
 
+    /// <summary>How many times the canvas has drawn: a test reads it to see that a theme switch redrew.</summary>
+    internal int RenderCount { get; private set; }
+
+    /// <inheritdoc/>
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == ActualThemeVariantProperty)
+        {
+            InvalidateVisual();   // the brushes are looked up while drawing, so a theme switch needs a new pass
+        }
+    }
+
     /// <inheritdoc/>
     protected override AutomationPeer OnCreateAutomationPeer() => new GraphCanvasAutomationPeer(this);
 
