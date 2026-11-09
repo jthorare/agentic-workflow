@@ -4,8 +4,10 @@ using Aw.Context.Testing.Engine;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Features.SyncTodoNote;
 using Aw.Sindri.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.Todos.Sync;
 
@@ -14,12 +16,17 @@ public sealed class TodoNoteLocatorTests : IDisposable
 {
     private readonly string _home = Directory.CreateTempSubdirectory("aw-locator-").FullName;
     private readonly InMemoryProfiles _profiles = new();
+    private readonly ServiceProvider _services = new ServiceCollection().AddScoped<IContextEngine>(static _ => FakeContextEngine.Instance).BuildServiceProvider();
 
-    public void Dispose() => Directory.Delete(_home, recursive: true);
+    public void Dispose()
+    {
+        _services.Dispose();
+        Directory.Delete(_home, recursive: true);
+    }
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private TodoNoteLocator Locator() => new(_profiles, FakeContextEngine.Instance, new LibraryHost { Home = _home, StateDefault = Path.Combine(_home, ".agentic-workflow") });
+    private TodoNoteLocator Locator() => new(_profiles, _services.GetRequiredService<IServiceScopeFactory>(), new LibraryHost { Home = _home, StateDefault = Path.Combine(_home, ".agentic-workflow") });
 
     private void Profile(string? vault, string? note, string vaultPath)
     {
