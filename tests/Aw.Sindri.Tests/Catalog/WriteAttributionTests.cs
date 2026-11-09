@@ -108,7 +108,8 @@ public sealed class WriteAttributionTests
     /// caller there is the wrapper of the route's own launch, proven by that launch's secret (X-Sindri-Launch-Secret), never another launched session.
     /// </summary>
     private static bool IsNotASessionCall((string Slug, string Scenario) row) =>
-        row.Slug is "sessions-id-heartbeat" or "sessions-id-exit"
+        string.Equals(row.Slug, "sessions-id-heartbeat", StringComparison.Ordinal)
+        || string.Equals(row.Slug, "sessions-id-exit", StringComparison.Ordinal)
         || row.Scenario.StartsWith("human-", StringComparison.Ordinal)
         || row.Scenario.StartsWith("prover-", StringComparison.Ordinal)
         || row.Scenario.StartsWith("unknown-caller", StringComparison.Ordinal)
