@@ -125,7 +125,7 @@ public sealed class WorkflowsEditorSheetTests
     [Fact]
     public async Task Edit_is_off_for_an_archived_workflow_and_when_no_workflow_is_open()
     {
-        var golden = Golden(Slug, "found");
+        var golden = Golden("workflows-slug", "found");
         golden["archivedAt"] = "2026-01-01T00:00:00Z";
         _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, golden.ToJsonString());
         var page = await OnRuns();
