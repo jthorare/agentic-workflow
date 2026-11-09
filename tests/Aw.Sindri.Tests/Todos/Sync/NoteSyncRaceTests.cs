@@ -86,6 +86,23 @@ public sealed class NoteSyncRaceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task The_edit_made_during_the_swap_that_ends_busy_is_kept_and_lands_on_the_next_pass()
+    {
+        var rig = await WithNote();
+        var n = 0;
+        rig.Files.AfterSwap = tmp => rig.Files.Files[tmp] += string.Create(System.Globalization.CultureInfo.InvariantCulture, $"- [ ] edit {++n}\n");
+        _ = await rig.Pass();
+        rig.Files.AfterSwap = null;
+
+        var status = await rig.Pass();
+
+        Assert.Equal(TodoNoteState.Syncing, status.State);
+        Assert.Contains(await rig.Payloads<TodoAdded>(EventTypes.TodoAdded), a => a.Text == "edit 3");
+        _ = Assert.NotNull(SyncRig.IdOnLine(rig.Note!, "edit 3"));
+        Assert.DoesNotContain(rig.Files.Files.Keys, k => k.Contains("sindri-tmp", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_note_that_is_gone_while_the_base_has_lines_is_cant_read_and_nothing_is_removed()
     {
         var rig = await WithNote();
