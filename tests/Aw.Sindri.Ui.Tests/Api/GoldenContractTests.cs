@@ -153,6 +153,7 @@ public sealed class GoldenContractTests
         [("memories-id-facts", "forgot-tag")] = As<MemoryForgotten>,
         [("workflows", "created")] = AsJsonObject,   // POST /workflows: { id, slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowList
         [("workflows-slug", "replaced")] = AsJsonObject,   // PUT /workflows/{slug}: { slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowView
+        [("workflows-slug", "archived")] = AsJsonObject,   // DELETE /workflows/{slug}: { slug, archivedAt }, the CLI's and the MCP tools' answer; not a WorkflowView
     };
 
     // Routes the app never calls yet: stop is Health's (U4), and the
