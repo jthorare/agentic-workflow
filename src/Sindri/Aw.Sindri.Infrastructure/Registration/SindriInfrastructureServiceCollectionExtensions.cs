@@ -23,6 +23,7 @@ using Aw.Sindri.Core.Leftovers;
 using Aw.Sindri.Core.Locks;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Memory;
+using Aw.Sindri.Core.Toolkits;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
@@ -53,6 +54,7 @@ using Aw.Sindri.Infrastructure.Leftovers;
 using Aw.Sindri.Infrastructure.Locks;
 using Aw.Sindri.Infrastructure.Mcp;
 using Aw.Sindri.Infrastructure.Memory;
+using Aw.Sindri.Infrastructure.Toolkits;
 using Aw.Sindri.Infrastructure.Notifications;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Profile;
@@ -130,6 +132,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IWorkflowRunStore, SqliteWorkflowRunStore>()    // workflow runs and node runs (#2258, PR 6): workflow_run and workflow_node_run in ledger.db
             .AddSingleton<IGraphBlockCatalog, EmptyGraphBlockCatalog>() // no graph blocks until PR 6 and 9
             .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
+            .AddSingleton<IToolkitCalls, SqliteToolkitCalls>()       // toolkit call log (agent-first PR 16): toolkit_call in ledger.db
+            .AddSingleton<ToolkitCallLog>()
             .AddSingleton<IGraphSeenStore, SqliteSeenStore>()      // what 'only_new' nodes have passed on (agent-first PR 9): workflow_seen in ledger.db
             .AddSingleton<IGraphHttpPort>(static sp => new GraphHttpClient(GraphHttpHandler.Create(), ct => GraphHttpClient.HostsOf(sp.GetRequiredService<IApprovedProfile>(), ct)))   // the 'http' block's client: only 'workflow.http.hosts'
             .AddConnections();

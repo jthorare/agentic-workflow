@@ -5413,3 +5413,30 @@ static Aw.Sindri.Features.StopToolkit.StopToolkitRequest.operator !=(Aw.Sindri.F
 static Aw.Sindri.Features.StopToolkit.StopToolkitRequest.operator ==(Aw.Sindri.Features.StopToolkit.StopToolkitRequest? left, Aw.Sindri.Features.StopToolkit.StopToolkitRequest? right) -> bool
 static Aw.Sindri.Features.StopToolkit.StopToolkitResponse.operator !=(Aw.Sindri.Features.StopToolkit.StopToolkitResponse? left, Aw.Sindri.Features.StopToolkit.StopToolkitResponse? right) -> bool
 static Aw.Sindri.Features.StopToolkit.StopToolkitResponse.operator ==(Aw.Sindri.Features.StopToolkit.StopToolkitResponse? left, Aw.Sindri.Features.StopToolkit.StopToolkitResponse? right) -> bool
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.<Clone>$() -> Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest!
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.Deconstruct(out string? Toolkit, out int Limit) -> void
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.Equals(Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest? other) -> bool
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.Limit.get -> int
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.Limit.init -> void
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.ListToolkitCallsRequest(string? Toolkit = null, int Limit = 50) -> void
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.Toolkit.get -> string?
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.Toolkit.init -> void
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse.<Clone>$() -> Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse!
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse.Calls.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitCall!>!
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse.Calls.init -> void
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitCall!>! Calls) -> void
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse.Equals(Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse? other) -> bool
+Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse.ListToolkitCallsResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitCall!>! Calls) -> void
+const Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.DefaultLimit = 50 -> int
+override Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.ToString() -> string!
+override Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse.ToString() -> string!
+static Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.operator !=(Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest? left, Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest? right) -> bool
+static Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest.operator ==(Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest? left, Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsRequest? right) -> bool
+static Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse.operator !=(Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse? left, Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse? right) -> bool
+static Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse.operator ==(Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse? left, Aw.Sindri.Features.ListToolkitCalls.ListToolkitCallsResponse? right) -> bool

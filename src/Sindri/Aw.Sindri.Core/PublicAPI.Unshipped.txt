@@ -21766,3 +21766,66 @@ override Aw.Sindri.Core.Connections.McpToolInfo.GetHashCode() -> int
 override Aw.Sindri.Core.Connections.McpToolInfo.ToString() -> string!
 static Aw.Sindri.Core.Connections.McpToolInfo.operator !=(Aw.Sindri.Core.Connections.McpToolInfo? left, Aw.Sindri.Core.Connections.McpToolInfo? right) -> bool
 static Aw.Sindri.Core.Connections.McpToolInfo.operator ==(Aw.Sindri.Core.Connections.McpToolInfo? left, Aw.Sindri.Core.Connections.McpToolInfo? right) -> bool
+Aw.Sindri.Core.Toolkits.IToolkitCalls
+Aw.Sindri.Core.Toolkits.IToolkitCalls.Add(Aw.Sindri.Core.Toolkits.ToolkitCall! call, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Toolkits.IToolkitCalls.DeleteBefore(System.DateTimeOffset before, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Toolkits.IToolkitCalls.List(string? toolkit, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitCall!>!>!>
+Aw.Sindri.Core.Toolkits.ToolkitCall
+Aw.Sindri.Core.Toolkits.ToolkitCall.<Clone>$() -> Aw.Sindri.Core.Toolkits.ToolkitCall!
+Aw.Sindri.Core.Toolkits.ToolkitCall.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Toolkits.ToolkitCall.At.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCall.Caller.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitCall.Caller.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCall.Deconstruct(out string! Toolkit, out string! Tool, out string! Caller, out string? Input, out string? Output, out bool Truncated, out string? Error, out long DurationMs, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Toolkits.ToolkitCall.DurationMs.get -> long
+Aw.Sindri.Core.Toolkits.ToolkitCall.DurationMs.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCall.Equals(Aw.Sindri.Core.Toolkits.ToolkitCall? other) -> bool
+Aw.Sindri.Core.Toolkits.ToolkitCall.Error.get -> string?
+Aw.Sindri.Core.Toolkits.ToolkitCall.Error.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCall.Input.get -> string?
+Aw.Sindri.Core.Toolkits.ToolkitCall.Input.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCall.Output.get -> string?
+Aw.Sindri.Core.Toolkits.ToolkitCall.Output.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCall.Tool.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitCall.Tool.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCall.Toolkit.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitCall.Toolkit.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCall.ToolkitCall(string! Toolkit, string! Tool, string! Caller, string? Input, string? Output, bool Truncated, string? Error, long DurationMs, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Toolkits.ToolkitCall.Truncated.get -> bool
+Aw.Sindri.Core.Toolkits.ToolkitCall.Truncated.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCallLog
+Aw.Sindri.Core.Toolkits.ToolkitCallLog.ToolkitCallLog(Aw.Sindri.Core.Toolkits.IToolkitCalls! calls, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> void
+const Aw.Sindri.Core.Toolkits.ToolkitCallLog.MaxPayloadChars = 16384 -> int
+override Aw.Sindri.Core.Toolkits.ToolkitCall.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Toolkits.ToolkitCall.GetHashCode() -> int
+override Aw.Sindri.Core.Toolkits.ToolkitCall.ToString() -> string!
+static Aw.Sindri.Core.Toolkits.ToolkitCall.operator !=(Aw.Sindri.Core.Toolkits.ToolkitCall? left, Aw.Sindri.Core.Toolkits.ToolkitCall? right) -> bool
+static Aw.Sindri.Core.Toolkits.ToolkitCall.operator ==(Aw.Sindri.Core.Toolkits.ToolkitCall? left, Aw.Sindri.Core.Toolkits.ToolkitCall? right) -> bool
+static Aw.Sindri.Core.Toolkits.ToolkitCallLog.Cap(string? text, out bool truncated) -> string?
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.<Clone>$() -> Aw.Sindri.Core.Toolkits.ToolkitCallEntry!
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Caller.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Caller.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Deconstruct(out string! Toolkit, out string! Tool, out string! Caller, out string? Input, out string? Output, out string? Error, out System.TimeSpan Duration, out System.DateTimeOffset StartedAt) -> void
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Duration.get -> System.TimeSpan
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Duration.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Equals(Aw.Sindri.Core.Toolkits.ToolkitCallEntry? other) -> bool
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Error.get -> string?
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Error.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Input.get -> string?
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Input.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Output.get -> string?
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Output.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.StartedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.StartedAt.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Tool.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Tool.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Toolkit.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Toolkit.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCallEntry.ToolkitCallEntry(string! Toolkit, string! Tool, string! Caller, string? Input, string? Output, string? Error, System.TimeSpan Duration, System.DateTimeOffset StartedAt) -> void
+Aw.Sindri.Core.Toolkits.ToolkitCallLog.Record(Aw.Sindri.Core.Toolkits.ToolkitCallEntry! entry, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+override Aw.Sindri.Core.Toolkits.ToolkitCallEntry.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Toolkits.ToolkitCallEntry.GetHashCode() -> int
+override Aw.Sindri.Core.Toolkits.ToolkitCallEntry.ToString() -> string!
+static Aw.Sindri.Core.Toolkits.ToolkitCallEntry.operator !=(Aw.Sindri.Core.Toolkits.ToolkitCallEntry? left, Aw.Sindri.Core.Toolkits.ToolkitCallEntry? right) -> bool
+static Aw.Sindri.Core.Toolkits.ToolkitCallEntry.operator ==(Aw.Sindri.Core.Toolkits.ToolkitCallEntry? left, Aw.Sindri.Core.Toolkits.ToolkitCallEntry? right) -> bool
