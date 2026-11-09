@@ -1,5 +1,7 @@
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core;
 using Aw.Sindri.Features.CreateHandoffItem;
+using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Handoff;
@@ -11,7 +13,8 @@ public sealed class HandoffItemTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static CreateHandoffItemService Service() => new();
+    private CreateHandoffItemService Service() =>
+        new(new FixItemMaker(new CreateItemService(_h.Profiles, _h.Held, _h.Store, _h.Events, _h.Ids, _h.Callers)), _h.Held, _h.Store, _h.Events, _h.Callers);
 
     [Fact, Trait("Lane", "unit")]
     public async Task The_offer_payload_is_kept_in_item_handoff_even_when_the_prompt_exceeds_the_body_limit()
@@ -52,5 +55,37 @@ public sealed class HandoffItemTests
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         Assert.Equal(result.Value.ItemId.Value, result.Value.Offer);
         Assert.Equal(result.Value.ItemId.Value, _h.Events.Payload<ItemHandoff>(_h.Store.Events[1]).Value.Offer);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("Upper")]
+    [InlineData("has space")]
+    [InlineData("")]
+    public void A_source_outside_a_to_z_digits_dot_underscore_and_dash_is_invalid(string source)
+    {
+        var result = new CreateHandoffItemValidator().Validate(new CreateHandoffItemRequest("Title", source));
+
+        Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_prompt_over_65536_characters_is_invalid_and_a_plain_handoff_is_not()
+    {
+        var validator = new CreateHandoffItemValidator();
+
+        Assert.True(validator.Validate(new CreateHandoffItemRequest("Title", "ci-bot", Prompt: new string('p', 65_536))).IsSuccess);
+        Assert.Equal(SindriErrors.InvalidInput.Code, validator.Validate(new CreateHandoffItemRequest("Title", "ci-bot", Prompt: new string('p', 65_537))).Error.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_blank_title_records_nothing()
+    {
+        _ = await _h.HoldLease();
+        using var entered = _h.Callers.Enter(A.Caller().Human().Build());
+
+        var result = await Service().Handle(new CreateHandoffItemRequest(" ", "ci-bot"), Token);
+
+        Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
+        Assert.Empty(_h.Store.Events);
     }
 }

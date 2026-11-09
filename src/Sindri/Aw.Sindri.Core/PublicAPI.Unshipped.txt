@@ -20245,3 +20245,5 @@ override Aw.Sindri.Core.Events.ItemHandoff.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ItemHandoff.ToString() -> string!
 static Aw.Sindri.Core.Events.ItemHandoff.operator !=(Aw.Sindri.Core.Events.ItemHandoff? left, Aw.Sindri.Core.Events.ItemHandoff? right) -> bool
 static Aw.Sindri.Core.Events.ItemHandoff.operator ==(Aw.Sindri.Core.Events.ItemHandoff? left, Aw.Sindri.Core.Events.ItemHandoff? right) -> bool
+Aw.Sindri.Core.Items.IItemMaker
+Aw.Sindri.Core.Items.IItemMaker.Create(string! title, Aw.Sindri.Core.Ids.RepoName? repo, string? body, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ids.ItemId>!>
