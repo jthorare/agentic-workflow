@@ -69,9 +69,9 @@ public sealed class ProjectorRetiredKindsTests
     public async Task A_rebuild_over_an_old_ledger_through_every_registered_projection_ends_with_no_stall()
     {
         var head = await AppendOldLedger();
-        using var provider = Compose().BuildServiceProvider();
+        await using var provider = Compose().BuildServiceProvider();
         var progress = new ProjectorProgress(_h.Clock);
-        var projector = new Projector(new CountingLedgerReader(_h.Store), _views, provider.GetServices<IProjection>().ToList(), progress, _h.Callers, _h.Clock, _log);
+        var projector = new Projector(new CountingLedgerReader(_h.Store), _views, [.. provider.GetServices<IProjection>()], progress, _h.Callers, _h.Clock, _log);
 
         progress.RequestRebuild();
         var pass = await projector.CatchUp(Token);
@@ -95,14 +95,14 @@ public sealed class ProjectorRetiredKindsTests
         var hash = "sha256:" + new string('a', 64);
         (string Type, string Json)[] rows =
         [
-            (EventTypes.WorkflowStarted, Row("", "produce", "start", null)),
-            (EventTypes.WorkflowTransition, Row("produce", "review", "report", null)),
-            (EventTypes.WorkflowRefused, Row("produce", "produce", "report", null)),
-            (EventTypes.WorkflowNotified, Row("review", "review", "notify", null)),
-            (EventTypes.WorkflowShifted, Row("review", "review", "shift", null)),
+            (EventTypes.WorkflowStarted, Row("", "produce", "start", outcome: null)),
+            (EventTypes.WorkflowTransition, Row("produce", "review", "report", outcome: null)),
+            (EventTypes.WorkflowRefused, Row("produce", "produce", "report", outcome: null)),
+            (EventTypes.WorkflowNotified, Row("review", "review", "notify", outcome: null)),
+            (EventTypes.WorkflowShifted, Row("review", "review", "shift", outcome: null)),
             (EventTypes.WorkflowExpired, Row("review", "expired", "timer", "expired")),
-            (EventTypes.WorkflowHeavy, Row("review", "review", "heavy", null)),
-            (EventTypes.WorkflowInjection, Row("review", "review", "injection", null)),
+            (EventTypes.WorkflowHeavy, Row("review", "review", "heavy", outcome: null)),
+            (EventTypes.WorkflowInjection, Row("review", "review", "injection", outcome: null)),
             (EventTypes.WorkflowRetired, Row("review", "retired", "retire", "retired")),
             (EventTypes.WorkflowRetireDone, Row("retired", "retired", "retire.done", "retired")),
             (EventTypes.RecipeRegistered, "{\"id\":\"workflow.step\",\"version\":1,\"hash\":\"" + hash + "\"}"),
