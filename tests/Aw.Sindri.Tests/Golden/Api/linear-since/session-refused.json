@@ -1,7 +1,5 @@
 {
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
-  "title": "SND-AUTH-002",
-  "status": 403,
-  "detail": "what changed on the owner's Linear issues is the owner's to read (fix: use the app)",
-  "traceId": "<trace>"
+  "marker": "lin_0000000000000000",
+  "count": 0,
+  "items": []
 }

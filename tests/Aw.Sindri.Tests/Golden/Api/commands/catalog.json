@@ -351,7 +351,7 @@
       "action": "ConnectIndexSource",
       "class": "local",
       "allowedCallers": [],
-      "terminal": true,
+      "terminal": false,
       "method": null,
       "route": null,
       "cli": "sindri index connect <source>",
@@ -563,7 +563,7 @@
     },
     {
       "action": "ImportContextMap",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
         "human+terminal",
         "human",
@@ -940,9 +940,11 @@
       "action": "PurgeIndexSource",
       "class": "desk",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
       "route": "/sindri/index/purge",
       "cli": "sindri index purge <source>",
