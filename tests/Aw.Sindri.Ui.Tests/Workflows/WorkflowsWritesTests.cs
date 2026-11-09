@@ -13,6 +13,8 @@ public sealed class WorkflowsWritesTests
 {
     private const string NewRun = "morning-check@1:4";
 
+    private const string Other = "weekly-report";
+
     private readonly WorkflowsFixture _f = new();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -50,7 +52,55 @@ public sealed class WorkflowsWritesTests
         Assert.Equal((true, string.Empty), (page.IsRuns, page.Run.Id));
         Assert.StartsWith("Couldn't start a run. 'morning-check' has no active revision; activate one first", page.Runs.NoticeText, StringComparison.Ordinal);
         Assert.True(page.Runs.HasNotice);
-        Assert.False(page.Runs.IsStarting);
+        Assert.Equal((false, false), (page.Runs.IsStarting, page.Runs.CanPressRunNow));   // Sindri said it is off: Run now turns off too
+    }
+
+    [Fact]
+    public async Task A_refusal_that_lands_after_another_workflow_opened_shows_nothing_under_it()
+    {
+        _f.Server.WorkflowRunsAnswers[Other] = RouteAnswer.Api("workflows-slug-runs", "list-empty");
+        var page = await OnRuns();
+        _f.Server.StartWorkflowRunGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _f.Server.StartWorkflowRunAnswer = RouteAnswer.Problem("workflows-slug-runs", "not-active");
+
+        var pressing = page.RunNow(Token);
+        await page.OpenWorkflow(Other, Token);
+        _f.Server.StartWorkflowRunGate.SetResult();
+        await pressing;
+
+        Assert.Equal((Other, string.Empty, false), (page.Runs.Slug, page.Runs.NoticeText, page.Runs.HasNotice));
+        Assert.True(page.Runs.CanPressRunNow);   // the other workflow's refusal doesn't turn this one's Run now off
+    }
+
+    [Fact]
+    public async Task Run_now_stays_off_until_the_runs_read_lands()
+    {
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _f.Server.WorkflowGates[Slug] = gate;
+        var page = await _f.Shown(Token);
+
+        var opening = page.OpenWorkflow(Slug, Token);
+        Assert.False(page.Runs.CanPressRunNow);
+        await page.RunNow(Token);
+        gate.SetResult();
+        await opening;
+
+        Assert.Empty(_f.Server.StartedWorkflows);
+        Assert.True(page.Runs.CanPressRunNow);
+    }
+
+    [Fact]
+    public async Task When_Sindri_does_not_answer_Run_now_says_the_run_may_have_started_and_reads_the_runs_again()
+    {
+        var page = await OnRuns();
+        var reads = _f.Server.WorkflowRunsCalls;
+        _f.Server.GoDown();
+
+        await page.RunNow(Token);
+
+        Assert.StartsWith("Sindri didn't answer, so the run may have started; check the list before you press Run now again.", page.Runs.NoticeText, StringComparison.Ordinal);
+        Assert.Equal(reads + 1, _f.Server.WorkflowRunsCalls);
+        Assert.Equal((true, false), (page.IsRuns, page.Runs.IsStarting));
     }
 
     [Theory]

@@ -146,7 +146,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         ErrorText = run.Error ?? string.Empty;
         OutputsText = WorkflowJson.Pretty(run.Outputs);
         Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g]))];
-        Graph = Shape is { } shape && shape.Revision == run.Revision ? new WorkflowGraphViewModel(shape, Statuses(run)) : null;
+        Graph = Shape is { } shape && shape.Revision == run.Revision ? WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(shape, Statuses(run))) : null;
         Changed();
     }
 

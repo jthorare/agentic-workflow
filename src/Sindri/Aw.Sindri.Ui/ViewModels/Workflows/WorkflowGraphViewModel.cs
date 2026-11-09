@@ -84,6 +84,20 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>The world's size: the far corner of the farthest card.</summary>
     internal GraphPoint Extent => Nodes.Count == 0 ? default : new GraphPoint(Nodes.Max(n => n.X) + CardWidth, Nodes.Max(n => n.Y) + CardHeight);
 
+    /// <summary>A graph read again keeps the node that was selected (by id), so a live refresh doesn't drop the keyboard's place.</summary>
+    /// <param name="before">The graph shown until now, or null.</param>
+    /// <param name="after">The graph just built.</param>
+    /// <returns><paramref name="after"/>, with the same node selected when it still has one by that id.</returns>
+    internal static WorkflowGraphViewModel Keeping(WorkflowGraphViewModel? before, WorkflowGraphViewModel after)
+    {
+        if (before?.SelectedId is { } id)
+        {
+            _ = after.SelectNode(id);
+        }
+
+        return after;
+    }
+
     /// <summary>Selects a node and raises <see cref="NodeSelected"/>.</summary>
     /// <param name="id">The node's id.</param>
     /// <returns>False when no node has that id.</returns>

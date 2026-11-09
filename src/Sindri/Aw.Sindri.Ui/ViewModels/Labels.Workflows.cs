@@ -201,6 +201,11 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfRunNowRefused(Error error) => "Couldn't start a run. " + InstanceRefused(error);
 
+    /// <summary>The runs level's note when Run now got no answer from Sindri: the run may have started, so the list is read again.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string WfRunNowUnsure(Error error) => "Sindri didn't answer, so the run may have started; check the list before you press Run now again. " + InstanceRefused(error);
+
     /// <summary>The note when a manual run was queued behind another.</summary>
     /// <param name="reason">Why, as served, or null.</param>
     /// <returns>The words.</returns>

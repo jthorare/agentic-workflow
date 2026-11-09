@@ -1,3 +1,5 @@
+using Aw.Kernel;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
@@ -24,15 +26,15 @@ internal sealed partial class WorkflowsPageViewModel
         try
         {
             var started = await Api.StartWorkflowRun(url, slug, cancellationToken).ConfigureAwait(true);
-            if (started.IsError)
-            {
-                Runs.Note(Labels.WfRunNowRefused(started.Error));
-                return;
-            }
-
             if (!string.Equals(Runs.Slug, slug, StringComparison.Ordinal))
             {
                 return;   // the page moved to another workflow meanwhile: its note and list are not this answer's
+            }
+
+            if (started.IsError)
+            {
+                await Refused(url, slug, started.Error, cancellationToken).ConfigureAwait(true);
+                return;
             }
 
             await Runs.Read(url, slug, Runs.Title, cancellationToken).ConfigureAwait(true);
@@ -42,6 +44,25 @@ internal sealed partial class WorkflowsPageViewModel
         {
             Runs.SetStarting(starting: false);
         }
+    }
+
+    // A refusal says why; one that says the workflow is off turns Run now off. When Sindri didn't answer, the run may have started, so the runs are read
+    // again and the note says so: a second press could start a second run.
+    private async Task Refused(Uri url, string slug, Error error, CancellationToken cancellationToken)
+    {
+        if (string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal))
+        {
+            Runs.Note(Labels.WfRunNowUnsure(error));
+            await Runs.Read(url, slug, Runs.Title, cancellationToken).ConfigureAwait(true);
+            return;
+        }
+
+        if (string.Equals(error.Code, RunsViewModel.NotActive, StringComparison.Ordinal))
+        {
+            Runs.TurnOff();
+        }
+
+        Runs.Note(Labels.WfRunNowRefused(error));
     }
 
     // a started run is opened (when the runs are still shown); a queued or skipped one says why under the button

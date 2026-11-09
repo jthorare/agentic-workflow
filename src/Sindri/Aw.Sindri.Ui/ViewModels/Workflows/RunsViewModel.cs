@@ -11,7 +11,8 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// </summary>
 internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
 {
-    private const string NotActive = "SND-GRAPH-105";
+    /// <summary>The refusal code for a workflow with no active revision.</summary>
+    internal const string NotActive = "SND-GRAPH-105";
     private int _reads;
 
     /// <summary>The workflow's slug.</summary>
@@ -49,8 +50,8 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>True while Run now's call is on the way; a second press does nothing.</summary>
     public bool IsStarting { get; private set { Set(ref field, value); OnChanged(nameof(RunNowText)); OnChanged(nameof(CanPressRunNow)); } }
 
-    /// <summary>True when the workflow has an active revision to run: false once the runs read said it is off.</summary>
-    public bool CanRun { get; private set { Set(ref field, value); OnChanged(nameof(CanPressRunNow)); } } = true;
+    /// <summary>True when the workflow has an active revision to run: false until the runs read lands, and once it or Run now said the workflow is off.</summary>
+    public bool CanRun { get; private set { Set(ref field, value); OnChanged(nameof(CanPressRunNow)); } }
 
     /// <summary>True when Run now can be pressed: the workflow is on and no call is on the way.</summary>
     public bool CanPressRunNow => CanRun && !IsStarting;
@@ -90,7 +91,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
             Rows.Clear();   // another workflow: none of the old runs stay
             (Head, DetailText) = (string.Empty, string.Empty);
             (IsFailed, FailedText, IsEmpty, EmptyText) = (false, string.Empty, false, string.Empty);   // nor does the old one's failure or "off" line
-            (CanRun, NoticeText) = (true, string.Empty);
+            (CanRun, NoticeText) = (false, string.Empty);   // until this one's runs read says it is on
             (Graph, Shown) = (null, null);
         }
 
@@ -107,9 +108,10 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
 
         IsReading = false;
         DetailText = detail.IsSuccess ? Detail(detail.Value) : string.Empty;
-        (Shown, Graph) = detail.IsSuccess ? (detail.Value, new WorkflowGraphViewModel(detail.Value)) : (Shown, Graph);
+        (Shown, Graph) = detail.IsSuccess ? (detail.Value, WorkflowGraphViewModel.Keeping(Graph, new WorkflowGraphViewModel(detail.Value))) : (Shown, Graph);
         if (runs.IsSuccess)
         {
+            CanRun = true;
             Show(runs.Value);
         }
         else if (string.Equals(runs.Error.Code, NotActive, StringComparison.Ordinal))
@@ -123,6 +125,9 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
             (IsFailed, FailedText, IsEmpty, EmptyText) = (true, Labels.WfRunsFailed(runs.Error), false, string.Empty);
         }
     }
+
+    /// <summary>Turns Run now off: Sindri said the workflow has no active revision.</summary>
+    internal void TurnOff() => CanRun = false;
 
     /// <summary>Marks Run now's call as on the way, or as done.</summary>
     /// <param name="starting">True while the call is on the way.</param>
