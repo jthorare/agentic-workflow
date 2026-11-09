@@ -144,6 +144,9 @@ internal static partial class Labels
     /// <summary>The note when the sign-in did not finish in time.</summary>
     internal const string ConnectionSignInTimedOut = "The browser sign-in didn't finish in time. Press Sign in again to try once more.";
 
+    /// <summary>The note when Sindri gave an address this app won't open (not http or https).</summary>
+    internal const string ConnectionBadConsent = "Sindri gave a sign-in address this app won't open.";
+
     /// <summary>The note when the system refused to open the browser.</summary>
     /// <param name="url">The consent address.</param>
     /// <returns>The words.</returns>
@@ -190,7 +193,7 @@ internal static partial class Labels
     internal const string ConnectionAddSend = "Add";
 
     /// <summary>The form's close button.</summary>
-    internal const string ConnectionAddCancel = "Cancel";
+    internal const string ConnectionAddCancel = "Close";
 
     /// <summary>The form's note while it sends.</summary>
     internal const string ConnectionAdding = "Adding…";

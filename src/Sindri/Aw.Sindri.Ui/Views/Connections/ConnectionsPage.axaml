@@ -1,0 +1,58 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:cb="using:Aw.Sindri.Ui.ViewModels.Connections"
+             xmlns:cv="using:Aw.Sindri.Ui.Views.Connections"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             x:Class="Aw.Sindri.Ui.Views.Connections.ConnectionsPage"
+             x:DataType="cb:ConnectionsPageViewModel">
+  <!-- The Connections page (PR 18a): the title with the count, one line saying what a connection is, the Add connection form, then the rows as the API orders them with their status
+       chips and actions. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
+  <StackPanel x:Name="ConnectionsRoot" Spacing="{StaticResource Size.PanelGap}">
+    <Grid x:Name="ConnectionsHeadRegion" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+      <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+        <TextBlock Classes="page-title" Text="{Binding Text.Title}" AutomationProperties.Name="{Binding Text.Title}" />
+        <Border x:Name="ConnectionsHeadName" AutomationProperties.Name="{Binding HeadName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
+          <TextBlock x:Name="ConnectionsHead" Classes="caption subtle" Text="{Binding Head}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </StackPanel>
+      <Button x:Name="ConnectionsAdd" Grid.Column="2" Content="{Binding Text.Add}" Click="OnAdd" AutomationProperties.Name="{Binding Text.Add}" />
+    </Grid>
+    <Border x:Name="ConnectionsPurposeName" AutomationProperties.Name="{Binding Text.Purpose}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="body muted" Text="{Binding Text.Purpose}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
+    <cv:AddConnectionForm x:Name="ConnectionsAddForm" DataContext="{Binding Add}" />
+
+    <StackPanel x:Name="ConnectionsStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsStale}">
+      <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
+      <TextBlock Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
+    </StackPanel>
+
+    <Border x:Name="ConnectionsPanel" Classes="panel" AutomationProperties.Name="{Binding Text.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+      <StackPanel>
+        <Border x:Name="ConnectionsReadingName" Margin="16,8" IsVisible="{Binding IsReading}" AutomationProperties.Name="{Binding Text.Reading}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding Text.Reading}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="ConnectionsUnreadableName" Margin="16,8" IsVisible="{Binding IsUnreadable}" AutomationProperties.Name="{Binding Text.Unreadable}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding Text.Unreadable}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <StackPanel x:Name="ConnectionsFailed" Margin="16,8" Spacing="8" IsVisible="{Binding ShowRetry}">
+          <Border x:Name="ConnectionsFailedName" AutomationProperties.Name="{Binding FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="caption quiet" Text="{Binding FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <Button x:Name="ConnectionsRetry" Content="{Binding Text.TryAgain}" Click="OnRetry" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.TryAgain}" />
+        </StackPanel>
+        <Border x:Name="ConnectionsEmptyName" Margin="16,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock x:Name="ConnectionsEmpty" Classes="caption quiet" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <ItemsControl x:Name="ConnectionRows" ItemsSource="{Binding Rows}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="cb:ConnectionRowViewModel">
+              <cv:ConnectionRow />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>
