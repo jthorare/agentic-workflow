@@ -1,13 +1,13 @@
 using Aw.Kernel;
+using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
-using Aw.Kernel.Testing;
 
 namespace Aw.Sindri.Tests.Workflows;
 
