@@ -44,6 +44,7 @@ internal sealed partial class TodoVerbs
         _ = import.DryRun
             ? text.Append(CultureInfo.InvariantCulture, $"dry run, nothing written; import with: sindri todo note import --expect {import.Importable}\n")
             : text.Append(CultureInfo.InvariantCulture, $"imported {import.Imported} lines; {import.CantImport} stay as text\n");
+        _ = import.Warning is { } warning ? text.Append(CultureInfo.InvariantCulture, $"warning: {warning}\n") : text;
         return text.ToString();
     }
 }
