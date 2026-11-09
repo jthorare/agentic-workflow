@@ -1,7 +1,10 @@
 using System.Net;
 using System.Text.Json;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Host;
+using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Tests.ApiGoldens;
 using Microsoft.AspNetCore.Http;
@@ -105,5 +108,31 @@ public sealed class HandoffEndpointTests
 
         Assert.Equal(HttpStatusCode.TooManyRequests, answer.Status);
         Assert.Equal("SND-API-016", answer.Code);
+    }
+
+    [Fact(Timeout = 120_000), Trait("Lane", "integration")]
+    public async Task A_launched_session_hands_off_without_the_human_token_and_keeps_its_actor()
+    {
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
+        const string launch = "LCH-00000000000000000000000000000c01";
+        LaunchSecrets.Write(host.App.Services.GetRequiredService<LauncherOptions>().SecretsDirectory, LaunchId.From(launch), "proof");
+
+        var answer = await host.Http.Ask(Post("/sindri/handoff", Body, (SindriHeaders.Caller, "session"), (SindriHeaders.Client, "cli"), (SindriHeaders.Launch, launch)));
+
+        Assert.Equal(HttpStatusCode.OK, answer.Status);
+        var scan = await host.App.Services.GetRequiredService<ILedgerReader>()
+            .Scan(0, 100, new LedgerFilter(TypeFilter.Parse(EventTypes.ItemHandoff).Value, Item: null), TestContext.Current.CancellationToken);
+        var recorded = Assert.Single(scan.Value.Events);
+        Assert.Equal("session:cli", recorded.Envelope.Actor);
+    }
+
+    [Fact(Timeout = 120_000), Trait("Lane", "integration")]
+    public async Task A_session_that_is_not_launched_still_needs_the_token()
+    {
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
+
+        var answer = await host.Http.Ask(Post("/sindri/handoff", Body, (SindriHeaders.Caller, "session"), (SindriHeaders.Client, "cli")));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, answer.Status);
     }
 }

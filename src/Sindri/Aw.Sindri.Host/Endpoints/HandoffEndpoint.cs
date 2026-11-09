@@ -5,13 +5,14 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Kernel;
 using Aw.Sindri.Core.Auth;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Features.CreateHandoffItem;
 
 namespace Aw.Sindri.Host.Endpoints;
 
 /// <summary>
 /// POST /sindri/handoff (#2258 PR 12): a local app or script hands Sindri work, and the same item a claimed inbox offer makes comes out. Loopback peers only (403), the per-start
-/// token in X-Sindri-Token (401), at most 30 a minute (429, counted after the token is checked) and a body of at most 64 KB (413). Send 'X-Sindri-Caller: human' with the token.
+/// token in X-Sindri-Token (401; a session Sindri launched, which the caller middleware already checked, needs no token), at most 30 a minute (429, counted after the token is checked) and a body of at most 64 KB (413). Send 'X-Sindri-Caller: human' with the token.
 /// </summary>
 internal static class HandoffEndpoint
 {
@@ -20,10 +21,10 @@ internal static class HandoffEndpoint
 
     internal static RouteGroupBuilder MapHandoff(this RouteGroupBuilder group)
     {
-        _ = group.MapPost("/handoff", static async (HttpRequest http, IHandoffPeer peer, HeldHumanToken token, HandoffRateLimit limit, JsonSerializerOptions json,
+        _ = group.MapPost("/handoff", static async (HttpRequest http, IHandoffPeer peer, HeldHumanToken token, HandoffRateLimit limit, ICallerContextAccessor callers, JsonSerializerOptions json,
             IService<CreateHandoffItemRequest, HandoffItemCreatedResponse> service, CancellationToken ct) =>
         {
-            if (Refusal(http, peer, token, limit) is { } refused)
+            if (Refusal(http, peer, token, limit, callers.Current?.Launch is not null) is { } refused)
             {
                 return refused;
             }
@@ -41,7 +42,7 @@ internal static class HandoffEndpoint
         return group;
     }
 
-    private static Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult? Refusal(HttpRequest http, IHandoffPeer peer, HeldHumanToken token, HandoffRateLimit limit)
+    private static Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult? Refusal(HttpRequest http, IHandoffPeer peer, HeldHumanToken token, HandoffRateLimit limit, bool launched)
     {
         if (peer.Of(http.HttpContext) is not { } address || !IPAddress.IsLoopback(address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address))
         {
@@ -49,7 +50,7 @@ internal static class HandoffEndpoint
         }
 
         var presented = http.Headers.TryGetValue(TokenHeader, out var values) ? values.ToString() : null;
-        if (token.Current is not { } held || !held.Matches(presented))
+        if (!launched && (token.Current is not { } held || !held.Matches(presented)))
         {
             return Problem(SindriErrors.AuthTokenRequired, StatusCodes.Status401Unauthorized, "send this start's token in X-Sindri-Token (fix: restart the app or rerun the command)");
         }

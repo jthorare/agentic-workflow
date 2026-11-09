@@ -35,6 +35,7 @@ internal static class ItemScenarios
         ("items-id-timeline", "fixture"), ("items-id-timeline", "page-2"), ("items-id-timeline", "closed"), ("items-id-timeline", "not-found"),
         ("items-id-close", "accepted"), ("items-id-close", "stale-version"), ("items-id-close", "accepted-cancelled"), ("items-id-close", "already-closed"), ("items-id-close", "not-found"),
         ("items-id-close", "while-stalled"), ("items-id-close", "while-rebuilding"),
+        ("handoff", "created"), ("handoff", "duplicate"), ("handoff", "refused"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -51,6 +52,7 @@ internal static class ItemScenarios
             "items" => await CreateBody(host, scenario),
             "items-id" => await DetailBody(host, scenario, ct),
             "items-id-timeline" => await TimelineBody(host, scenario, ct),
+            "handoff" => await HandoffBody(host, scenario),
             _ => await CloseBody(host, scenario, ct),
         };
     }
@@ -137,6 +139,23 @@ internal static class ItemScenarios
             "refused-origin" => await Send(host, Post("/sindri/items", """{"title":"Try the queue"}""", [.. human, ("Origin", "http://localhost:3000")])),
             _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, "no such items scenario"),
         };
+    }
+
+    private const string HandoffJson = """{"title":"Fix the login timeout","source":"ci-bot","offerKey":"offer-7","prompt":"Run the suite twice."}""";
+
+    /// <summary>POST /sindri/handoff: a new item, the same offer sent twice (one item, the earlier answer), and a call without the per-start token.</summary>
+    private static async Task<string> HandoffBody(GoldenHost host, string scenario)
+    {
+        switch (scenario)
+        {
+            case "created":
+                return await Send(host, Post("/sindri/handoff", HandoffJson, Human(host)));
+            case "duplicate":
+                _ = await Send(host, Post("/sindri/handoff", HandoffJson, Human(host)));
+                return await Send(host, Post("/sindri/handoff", HandoffJson, Human(host)));
+            default:
+                return await Send(host, Post("/sindri/handoff", HandoffJson));   // 'refused': no token
+        }
     }
 
     private static async Task<string> DetailBody(GoldenHost host, string scenario, CancellationToken ct)

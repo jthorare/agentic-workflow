@@ -15,7 +15,7 @@ public sealed class HandoffItemTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private CreateHandoffItemService Service() =>
-        new(new FixItemMaker(new CreateItemService(_h.Profiles, _h.Held, _h.Store, _h.Events, _h.Ids, _h.Callers)), _h.Held, _h.Store, _h.Events, _h.Callers);
+        new(new FixItemMaker(new CreateItemService(_h.Profiles, _h.Held, _h.Store, _h.Events, _h.Ids, _h.Callers)), _h.Held, _h.Store, _h.Store, _h.Events, _h.Callers);
 
     [Fact, Trait("Lane", "unit")]
     public async Task The_offer_payload_is_kept_in_item_handoff_even_when_the_prompt_exceeds_the_body_limit()
@@ -99,5 +99,50 @@ public sealed class HandoffItemTests
 
         Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
         Assert.Empty(_h.Store.Events);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_same_source_and_offer_key_twice_makes_one_item()
+    {
+        _ = await _h.HoldLease();
+        using var entered = _h.Callers.Enter(A.Caller().Human().Build());
+        var request = new CreateHandoffItemRequest("Fix the login timeout", "ci-bot", OfferKey: "offer-7");
+
+        var first = await Service().Handle(request, Token);
+        var second = await Service().Handle(request, Token);
+
+        Assert.True(first.IsSuccess && second.IsSuccess);
+        Assert.Equal(first.Value.ItemId, second.Value.ItemId);
+        Assert.Equal("offer-7", second.Value.OfferKey);
+        Assert.Equal(first.Value.Accepted.Sequence, second.Value.Accepted.Sequence);
+        Assert.Equal(1, _h.Store.Events.Count(e => e.Envelope.Type == EventTypes.ItemCreated));
+        Assert.Equal(1, _h.Store.Events.Count(e => e.Envelope.Type == EventTypes.ItemHandoff));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_same_offer_key_from_another_source_is_a_new_item()
+    {
+        _ = await _h.HoldLease();
+        using var entered = _h.Callers.Enter(A.Caller().Human().Build());
+
+        var first = await Service().Handle(new CreateHandoffItemRequest("One", "ci-bot", OfferKey: "offer-7"), Token);
+        var second = await Service().Handle(new CreateHandoffItemRequest("Two", "other-bot", OfferKey: "offer-7"), Token);
+
+        Assert.NotEqual(first.Value.ItemId, second.Value.ItemId);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_launched_session_keeps_its_own_actor_and_the_source_stays_in_the_payload()
+    {
+        _ = await _h.HoldLease();
+        var session = A.Caller().Session().Launched().Build();
+        using var entered = _h.Callers.Enter(session);
+
+        var result = await Service().Handle(new CreateHandoffItemRequest("From a session", "ci-bot"), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        var handoff = _h.Store.Events.Single(e => e.Envelope.Type == EventTypes.ItemHandoff);
+        Assert.Equal(session.Actor, handoff.Envelope.Actor);
+        Assert.Equal("ci-bot", _h.Events.Payload<ItemHandoff>(handoff).Value.Source);
     }
 }
