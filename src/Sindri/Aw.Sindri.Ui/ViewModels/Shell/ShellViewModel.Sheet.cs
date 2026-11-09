@@ -58,6 +58,7 @@ internal sealed partial class ShellViewModel
         DeepLinkKind.NeedsYou => Labels.EdgeTabNeedsYou,
         DeepLinkKind.Decision => Labels.EdgeTabDecision,
         DeepLinkKind.Job => Labels.EdgeTabJob,
+        DeepLinkKind.Connection => Labels.EdgeTabConnection,
         DeepLinkKind.Project => ProjectSheet.Heading.Length > 0 ? ProjectSheet.Heading : Labels.EdgeTabProject,
         DeepLinkKind.Session => Labels.EdgeTabSession,
         DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages => NamedSubject,
@@ -82,6 +83,7 @@ internal sealed partial class ShellViewModel
         // LANE ANCHOR U11a: one `DeepLinkKind.X or … => false` arm claims the kinds (kinds: Session), U11a's session sheet (collector spec CU-3); the arm is written by the sheet's builder (T4), not by the contract. Insert immediately below this marker, never between the markers.
         DeepLinkKind.Session => false,
         DeepLinkKind.Job => false,
+        DeepLinkKind.Connection => false,
         DeepLinkKind.Project => false,
         DeepLinkKind.ProjectAdd => false,
         DeepLinkKind.PageSheet => false,
@@ -134,6 +136,7 @@ internal sealed partial class ShellViewModel
 
         (IsSheetOpen, OpenerRow, OpenerSession) = (true, null, null);
         OnJobSheetReopened();
+        OnConnectionSheetReopened();
         OnProjectSheetReopened();
         Changed(nameof(IsSheetOpen), nameof(IsSheetShown), nameof(IsEdgeTabShown));
     }

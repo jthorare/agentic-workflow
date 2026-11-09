@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:cb="using:Aw.Sindri.Ui.ViewModels.Connections"
+             xmlns:cv="using:Aw.Sindri.Ui.Views.Connections"
+             x:Class="Aw.Sindri.Ui.Views.Connections.ConnectionSheetView"
+             x:DataType="cb:ConnectionSheetViewModel">
+  <!-- The connection sheet (connection_get), inside the shell's sheet: the connection in words (kind, status, why), the settings Sindri keeps and whether a secret is stored (never the
+       secret), and the same actions as its row. Every named line is a Border the screen reader reads as one text; the TextBlocks inside are Raw. -->
+  <StackPanel x:Name="ConnectionSheet" Spacing="{StaticResource Space.MD}">
+    <Border x:Name="ConnectionLoading" IsVisible="{Binding IsLoading}" AutomationProperties.Name="{Binding Text.ReadingOne}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="body muted" Text="{Binding Text.ReadingOne}" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+    <Border x:Name="ConnectionProblem" IsVisible="{Binding IsProblem}" AutomationProperties.Name="{Binding ProblemText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="body" Text="{Binding ProblemText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+    <Border x:Name="ConnectionNote" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Note}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="body muted" Text="{Binding Note}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
+    <StackPanel x:Name="ConnectionBody" Spacing="{StaticResource Space.MD}" IsVisible="{Binding IsShown}">
+      <StackPanel Spacing="4" DataContext="{Binding Row}" x:DataType="cb:ConnectionRowViewModel">
+        <Border x:Name="ConnectionHeading" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body-strong mono" Text="{Binding Name}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="ConnectionState" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body mono" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="ConnectionReason" IsVisible="{Binding HasReason}" AutomationProperties.Name="{Binding ReasonText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body" Text="{Binding ReasonText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="ConnectionRefreshed" IsVisible="{Binding HasRefreshed}" AutomationProperties.Name="{Binding RefreshedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption subtle" Text="{Binding RefreshedText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <cv:ConnectionActionsBar x:Name="ConnectionSheetActions" HorizontalAlignment="Left" Margin="0,4,0,0" />
+        <Border x:Name="ConnectionActionNote" IsVisible="{Binding HasNote}" AutomationProperties.Name="{Binding NoteText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body" Text="{Binding NoteText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </StackPanel>
+      <Border x:Name="ConnectionKind" AutomationProperties.Name="{Binding KindLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption subtle" Text="{Binding KindLine}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Border x:Name="ConnectionSecret" AutomationProperties.Name="{Binding SecretLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption subtle" Text="{Binding SecretLine}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <StackPanel x:Name="ConnectionSettings" Spacing="2" IsVisible="{Binding HasSettings}">
+        <TextBlock Classes="caption subtle" Text="{Binding Text.Settings}" />
+        <ItemsControl ItemsSource="{Binding SettingLines}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <TextBlock Classes="caption mono" Text="{Binding}" TextWrapping="Wrap" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </StackPanel>
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,23 @@
+{
+  "facts": [
+    {
+      "id": "mf_00000000000000000000000000000009",
+      "text": "Deploys go out on Tuesdays",
+      "tags": [
+        "deploys"
+      ],
+      "provenance": {
+        "workflow": null,
+        "run": null,
+        "item": null,
+        "session": null
+      },
+      "expiresAt": null,
+      "refreshedAt": "2026-01-01T00:00:00.0000000Z",
+      "score": 1
+    }
+  ],
+  "count": 1,
+  "mode": "semantic",
+  "note": null
+}

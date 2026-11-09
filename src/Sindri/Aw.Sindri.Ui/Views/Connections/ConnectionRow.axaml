@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:cb="using:Aw.Sindri.Ui.ViewModels.Connections"
+             xmlns:cv="using:Aw.Sindri.Ui.Views.Connections"
+             x:Class="Aw.Sindri.Ui.Views.Connections.ConnectionRow"
+             x:DataType="cb:ConnectionRowViewModel">
+  <!-- One connection on the Connections page: its name (a button: it opens the sheet) and kind, the status as a word with its glyph, when its token was last refreshed, and its
+       actions. A second line says why it is not connected, and what the last action said. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
+  <UserControl.Styles>
+    <Style Selector="TextBlock.conn-chip.ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="TextBlock.conn-chip.attention"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+    <Style Selector="TextBlock.conn-chip.error"><Setter Property="Foreground" Value="{DynamicResource Brush.Error}" /></Style>
+  </UserControl.Styles>
+  <Border x:Name="ConnectionRowFrame" Classes="item-row" Focusable="True"
+          AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+    <Grid ColumnDefinitions="1.4*,140,170,Auto" RowDefinitions="Auto,Auto" VerticalAlignment="Center" MinHeight="36">
+      <DockPanel LastChildFill="True" Margin="0,0,8,0" VerticalAlignment="Center">
+        <Button x:Name="ConnectionRowOpen" DockPanel.Dock="Left" Classes="row-title" Click="OnOpen" HorizontalAlignment="Left" AutomationProperties.Name="{Binding AccessibleName}">
+          <TextBlock Classes="body-strong mono" Text="{Binding Name}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+        </Button>
+        <TextBlock Classes="caption subtle" Text="{Binding KindText}" Margin="8,0,0,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+      </DockPanel>
+      <Border x:Name="ConnectionRowChip" Grid.Column="1" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body-strong mono conn-chip" Classes.ok="{Binding IsConnected}" Classes.attention="{Binding NeedsSignIn}" Classes.error="{Binding IsError}" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Border x:Name="ConnectionRowRefreshed" Grid.Column="2" Margin="0,0,8,0" VerticalAlignment="Center" IsVisible="{Binding HasRefreshed}" AutomationProperties.Name="{Binding RefreshedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption subtle" Text="{Binding RefreshedText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <cv:ConnectionActionsBar x:Name="ConnectionRowActions" Grid.Column="3" VerticalAlignment="Center" />
+      <StackPanel Grid.Row="1" Grid.ColumnSpan="4" Spacing="2" Margin="0,2,0,6">
+        <Border x:Name="ConnectionRowReason" IsVisible="{Binding HasReason}" AutomationProperties.Name="{Binding ReasonText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption subtle" Text="{Binding ReasonText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Border x:Name="ConnectionRowNote" IsVisible="{Binding HasNote}" AutomationProperties.Name="{Binding NoteText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption" Text="{Binding NoteText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </StackPanel>
+    </Grid>
+  </Border>
+</UserControl>
