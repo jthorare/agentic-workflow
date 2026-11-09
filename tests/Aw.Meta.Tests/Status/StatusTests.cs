@@ -179,7 +179,7 @@ public sealed class StatusTests
 
         var status = await Status();
 
-        Assert.Equal([(ObligationKind.Reply, "m1")], status.Obligations.Select(o => (o.Kind, o.Key)));
+        Assert.Equal([(ObligationKind.Reply, "m1"), (ObligationKind.RearmWatch, "watch")], status.Obligations.Select(o => (o.Kind, o.Key)));
         Assert.Equal("which db?", Assert.Single(status.OwnerQueue).Text);
     }
 
