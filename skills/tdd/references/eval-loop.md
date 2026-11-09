@@ -36,7 +36,8 @@ During the bun port's overlap period the same command also runs as TypeScript: `
 equal to the Python's on the real packets, PR 15). Its optional SDKs (`@anthropic-ai/sdk`, `autoevals`, `braintrust`,
 `@aws-sdk/client-cloudwatch-logs`, `@aws-sdk/client-cloudwatch`) are not dependencies of the cli package: add one with
 `bun add --no-save <pkg>` in `$T/cli` when a flag needs it. Keys come from the environment only, as above, and AWS
-credentials only from the `AWS_*` variables (no shared credentials file). The Python script stays the documented path,
+credentials only from the `AWS_*` variables (no shared credentials file). Where the Python uses its own interpreter
+(lint, pytest), the TypeScript uses `$TDD_PYTHON`, else the venv's python above, else `python3` on PATH. The Python script stays the documented path,
 and the first TypeScript `--push` waits for the owner (D10, D18).
 
 Files written to `<build>/eval/`: `input.json`, `output.{artifact,packet,implementation,qa,bugs,tokens}.json`,

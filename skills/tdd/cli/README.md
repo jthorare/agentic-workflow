@@ -199,7 +199,8 @@ The research's gate (section 4.4) is met: the linter, the eval and the revision 
 `--json`, exit codes, files under `<build>/eval/` and history line. Modules: `common.ts` (paths, numbers, content walks),
 `score.ts` (records, outputs, and `settle`: every scorer is an Effect settled to `scored | not_run(reason) |
 failed(error)` under its own time limit, so a throw or a hang in one never touches another), `tools.ts` (the `Tools`
-service: subprocesses with a kill on timeout or interruption), `config.ts` (keys as `Config.Redacted` from the
+service: each command in its own process group, killed whole at its timeout or on interruption, returning at the
+deadline as subprocess.run does), `config.ts` (keys as `Config.Redacted` from the
 environment only), `capture.ts` (input.json and its digest), `artifact.ts`, `packet.ts`, `probe.ts`, `judge.ts`,
 `impl.ts`, `bugs.ts`, `tokens.ts` (the six outputs), `llm.ts` (costs and the model call), `plan.ts` (run.json),
 `push.ts` (Braintrust), `sources/linear.ts`, `sources/aws.ts` and `run.ts` (the program, `LIMITS`, the table).
@@ -216,5 +217,12 @@ environment only), `capture.ts` (input.json and its digest), `artifact.ts`, `pac
   checks the constants, prompts, schemas and helpers against the Python; `network.test.ts` runs with a fake
   `BRAINTRUST_API_KEY` under `no-network.ts` (fetch, sockets, TLS, DNS trapped) and asserts nothing was attempted;
   `isolation.test.ts` makes one scorer throw and one hang and checks the rest. No test pushes or calls a model.
-- The lint scorer runs `scripts/lint_packet.py` with `$TDD_PYTHON` (default `python3`) where the Python uses its own
-  interpreter.
+- Where the Python uses its own `sys.executable` (the lint scorer's `lint_packet.py`, a repo's `python -m pytest`),
+  `python()` picks the interpreter the Python eval would run under: `$TDD_PYTHON`, else the tdd-skill venv's python
+  (`~/.local/share/tdd-skill/venv/bin/python`), else `python3` on PATH, as an absolute path.
+- `sum()` follows CPython 3.12+ (Neumaier-compensated floats) so cost lines match to the last printed digit.
+- Children inherit the environment, keys included, as `subprocess.run` without `env=` does in the Python: under
+  `--run-tests` the repo's test command sees them.
+- `test/eval/tools.test.ts` checks `Tools.run` against `ev_common.run` and that a command's sleeping grandchild is
+  killed at the deadline, on a scorer's limit and on SIGTERM / SIGINT; `TDD_EVAL_SLOW=1` adds a 4-minute
+  `--run-tests` run against the 120 s cap. Test temp folders are removed at exit (`TDD_EVAL_KEEP=1` keeps them).
