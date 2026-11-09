@@ -37,6 +37,7 @@ case "$opname" in
   Introspect) cp "$fix/Introspect.json" "$out"; printf 200; exit 0 ;;
   KeyScope) cp "$fix/KeyScope.json" "$out"; printf 200; exit 0 ;;
   Comments) cp "$fix/Comments.json" "$out"; printf 200; exit 0 ;;
+  History) reply '{"data":{"issues":{"nodes":[{"history":{"nodes":[{"createdAt":"2026-11-09T10:00:00.000Z"},{"createdAt":"2026-11-08T10:00:00.000Z"},{"createdAt":"2026-11-07T10:00:00.000Z"}]}}]}}}' ;;
   Ping) reply '{"data":{"viewer":{"id":"u1"}}}' ;;
   TeamId) reply '{"data":{"teams":{"nodes":[{"id":"team-1"}]}}}' ;;
   ProbeLabel) if [ -f "$st/label" ]; then reply '{"data":{"issueLabels":{"nodes":[{"id":"label-1"}]}}}'; else reply '{"data":{"issueLabels":{"nodes":[]}}}'; fi ;;

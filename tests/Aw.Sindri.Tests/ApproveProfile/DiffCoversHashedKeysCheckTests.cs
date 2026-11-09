@@ -58,6 +58,8 @@ public sealed class DiffCoversHashedKeysCheckTests
             ("todo.obsidian.vault", _approved with { Todo = new TodoSettings(new TodoObsidianSettings(Vault: "notes")) }),
             ("todo.obsidian.note", _approved with { Todo = new TodoSettings(new TodoObsidianSettings(Note: "Todo.md")) }),
             ("workflow.scoping.historyWindow", _approved with { Workflow = new WorkflowSettings(Scoping: new ScopingSettings(new HistoryWindowSettings(Since: "2026-01-01"))) }),
+            ("workflow.poll.intervalSeconds", _approved with { Workflow = new WorkflowSettings(Poll: new PollSettings(IntervalSeconds: 60)) }),
+            ("workflow.poll.catchUpPages", _approved with { Workflow = new WorkflowSettings(Poll: new PollSettings(CatchUpPages: 5)) }),
             ("context", _approved with { Context = context.RootElement.Clone() }),
         };
 
