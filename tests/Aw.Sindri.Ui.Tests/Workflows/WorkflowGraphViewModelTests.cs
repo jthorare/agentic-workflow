@@ -16,7 +16,7 @@ public sealed class WorkflowGraphViewModelTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     /// <summary>The golden workflow with its graph replaced.</summary>
-    internal static async Task<WorkflowGraphViewModel> GraphOf(WorkflowsFixture f, string nodes, string edges, string positions, IReadOnlyDictionary<string, string>? statuses = null)
+    internal static async Task<WorkflowGraphViewModel> GraphOf(WorkflowsFixture f, string nodes, string edges, string positions, IReadOnlyDictionary<string, string>? statuses = null, string? slug = null)
     {
         var json = Golden("workflows-slug", "found");
         json["spec"]!["nodes"] = JsonNode.Parse(nodes);
@@ -24,7 +24,7 @@ public sealed class WorkflowGraphViewModelTests
         json["positions"] = JsonNode.Parse(positions);
         f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, json.ToJsonString());
         var served = await f.Server.Workflow(Url, Slug, Token);
-        return new WorkflowGraphViewModel(served.Value, statuses);
+        return new WorkflowGraphViewModel(slug is null ? served.Value : served.Value with { Slug = slug }, statuses);
     }
 
     private const string Branching = """

@@ -21,6 +21,8 @@ internal sealed partial class GraphCanvas : Control
     /// <summary>The largest zoom.</summary>
     internal const double MaxZoom = 2;
 
+    private static readonly Point DefaultPan = new(24, 24);
+
     /// <summary>The graph drawn.</summary>
     internal static readonly StyledProperty<WorkflowGraphViewModel?> GraphProperty = AvaloniaProperty.Register<GraphCanvas, WorkflowGraphViewModel?>(nameof(Graph));
 
@@ -28,7 +30,7 @@ internal sealed partial class GraphCanvas : Control
     internal static readonly StyledProperty<double> ZoomProperty = AvaloniaProperty.Register<GraphCanvas, double>(nameof(Zoom), 1, coerce: (_, v) => Math.Clamp(v, MinZoom, MaxZoom));
 
     /// <summary>Where the world's origin sits in this control.</summary>
-    internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), new Point(24, 24));
+    internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), DefaultPan);
 
     private const double MinHandle = 40;
     private const double ZoomStep = 1.1;
@@ -187,6 +189,13 @@ internal sealed partial class GraphCanvas : Control
     private void OnGraphChanged(WorkflowGraphViewModel? old, WorkflowGraphViewModel? graph)
     {
         old?.PropertyChanged -= OnGraphProperty;
+
+        // A live refresh reads the same workflow again and keeps the view; another workflow (or one after none) starts at the corner, unzoomed.
+        if (old is null || graph is null || !string.Equals(old.Slug, graph.Slug, StringComparison.Ordinal))
+        {
+            Zoom = 1;
+            Pan = DefaultPan;
+        }
 
         _watched = graph;
         graph?.PropertyChanged += OnGraphProperty;

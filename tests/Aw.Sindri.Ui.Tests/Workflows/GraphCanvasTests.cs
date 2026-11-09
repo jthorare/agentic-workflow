@@ -105,4 +105,35 @@ public sealed class GraphCanvasTests
         Assert.Equal(graph.Nodes.Select(n => n.Name), names, StringComparer.Ordinal);
         Assert.Equal(2, names.Length);
     }
+
+    [Fact]
+    public async Task Pan_and_zoom_reset_for_another_workflow_and_stay_when_the_same_one_is_read_again()
+    {
+        const string Nodes = """[{"id":"a","type":"x","config":{}}]""";
+        const string Positions = """[{"node":"a","x":0,"y":0}]""";
+        var f = new WorkflowsFixture();
+        var first = await WorkflowGraphViewModelTests.GraphOf(f, Nodes, "[]", Positions, slug: "one");
+        var again = await WorkflowGraphViewModelTests.GraphOf(f, Nodes, "[]", Positions, slug: "one");
+        var other = await WorkflowGraphViewModelTests.GraphOf(f, Nodes, "[]", Positions, slug: "two");
+
+        var (kept, reset, afterNull) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = first };
+            canvas.Zoom = 1.5;
+            canvas.Pan = new Point(90, 70);
+            canvas.Graph = again;
+            var kept = (canvas.Zoom, canvas.Pan);
+            canvas.Graph = other;
+            var reset = (canvas.Zoom, canvas.Pan);
+            canvas.Zoom = 2;
+            canvas.Pan = new Point(5, 5);
+            canvas.Graph = null;
+            canvas.Graph = other;
+            return (kept, reset, (canvas.Zoom, canvas.Pan));
+        });
+
+        Assert.Equal((1.5, new Point(90, 70)), kept);
+        Assert.Equal((1d, new Point(Margin, Margin)), reset);
+        Assert.Equal((1d, new Point(Margin, Margin)), afterNull);
+    }
 }

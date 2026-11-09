@@ -20,6 +20,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <param name="statuses">The latest run's status word (as served) per node id, or null when no run is shown.</param>
     internal WorkflowGraphViewModel(WorkflowView workflow, IReadOnlyDictionary<string, string>? statuses = null)
     {
+        Slug = workflow.Slug;
         var positions = new Dictionary<string, GraphPoint>(StringComparer.Ordinal);
         foreach (var p in workflow.Positions)
         {
@@ -48,6 +49,9 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
 
     /// <summary>Raised with the node's id when a node is selected or activated.</summary>
     internal event EventHandler<ValueEventArgs<string>>? NodeSelected;
+
+    /// <summary>The workflow's slug: a canvas keeps its pan and zoom while the slug stays the same.</summary>
+    internal string Slug { get; }
 
     /// <summary>The ids of nodes with no served position, in spec order: not drawn, so the page can name them.</summary>
     public IReadOnlyList<string> Unplaced { get; }
