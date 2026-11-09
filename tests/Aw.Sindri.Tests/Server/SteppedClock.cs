@@ -12,6 +12,9 @@ internal sealed class SteppedClock(FakeTimeProvider fake) : TimeProvider
     private int _timers;
     private int _seen;
 
+    /// <summary>Gets how many waits the loop has armed so far.</summary>
+    internal int Arms => Volatile.Read(ref _timers);
+
     public override TimeZoneInfo LocalTimeZone => fake.LocalTimeZone;
 
     public override long TimestampFrequency => fake.TimestampFrequency;
