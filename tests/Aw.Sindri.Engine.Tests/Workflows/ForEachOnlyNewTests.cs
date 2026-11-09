@@ -9,6 +9,9 @@ namespace Aw.Sindri.Tests.Workflows;
 [Lane(TestLane.Integration)]
 public sealed class ForEachOnlyNewTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
 {
+    private static readonly int[] _firstCounts = [2, 1];
+    private static readonly int[] _secondCounts = [0, 0];
+
     [Fact]
     public async Task An_only_new_inside_for_each_records_every_items_keys_so_the_next_run_passes_none()
     {
@@ -18,8 +21,9 @@ public sealed class ForEachOnlyNewTests(SindriTimeSkippingServer server) : IClas
                 GraphRig.Node("start", "manual"),
                 GraphRig.Node("each", "for_each", config: new JsonObject { ["items"] = "{{trigger.repos}}" }),
                 GraphRig.Node("fresh", "only_new", config: new JsonObject { ["items"] = "{{item.issues}}", ["key"] = "id" }),
+                GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{fresh.count}}" }),
             ],
-            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "fresh")]));
+            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "fresh"), GraphRig.Edge("fresh", "gather")]));
         var trigger = """{"kind":"manual","repos":[{"issues":[{"id":1},{"id":2}]},{"issues":[{"id":3}]}]}""";
 
         var first = await rig.Final((await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, trigger)).RunId, TimeSpan.FromMinutes(2));
@@ -28,8 +32,8 @@ public sealed class ForEachOnlyNewTests(SindriTimeSkippingServer server) : IClas
         Assert.Equal(WorkflowRunStatus.Succeeded, first.Status);
         Assert.Equal(WorkflowRunStatus.Succeeded, second.Status);
         Assert.Equal(3, rig.Seen.Count);
-        Assert.Equal([2, 1], await Counts(rig, first.Id));
-        Assert.Equal([0, 0], await Counts(rig, second.Id));
+        Assert.Equal(_firstCounts, await Counts(rig, first.Id));
+        Assert.Equal(_secondCounts, await Counts(rig, second.Id));
     }
 
     private static async Task<int[]> Counts(GraphRig rig, WorkflowRunId run)
