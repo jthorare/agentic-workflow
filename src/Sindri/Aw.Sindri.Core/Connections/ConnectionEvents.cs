@@ -56,15 +56,11 @@ public sealed class ConnectionEvents(HeldLease held, ILedgerStore ledger, EventF
         _ = await ledger.Append(entry, lease, cancellationToken).ConfigureAwait(false);
     }
     /// <summary>Appends 'connection.polled' (counts only) for a poll that returned events. Skipped when no lease is held; a failed append is ignored: the runs already started.</summary>
-    /// <param name="name">The connection.</param>
-    /// <param name="kind">The event kind.</param>
-    /// <param name="count">How many events came back.</param>
-    /// <param name="started">How many runs started or queued.</param>
-    /// <param name="skipped">How many triggers were skipped.</param>
+    /// <param name="counts">The connection, the event kind and the counts.</param>
     /// <param name="grant">The lease to append under; null uses the one this process holds.</param>
     /// <param name="cancellationToken">Cancels the append.</param>
     /// <returns>A task that ends when the event is recorded or skipped.</returns>
-    public async ValueTask Polled(ConnectionName name, EventKind kind, int count, int started, int skipped, LeaseGrant? grant, CancellationToken cancellationToken)
+    public async ValueTask Polled(PollCounts counts, LeaseGrant? grant, CancellationToken cancellationToken)
     {
         if ((grant ?? held.Current) is not { } lease)
         {
@@ -72,27 +68,23 @@ public sealed class ConnectionEvents(HeldLease held, ILedgerStore ledger, EventF
         }
 
         var at = Now;
-        var entry = events.Entry(EventTypes.ConnectionPolled, new ConnectionPolled(name.ToString(), kind.Key, count, started, skipped, at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionPolled}:{name}:{kind.Key}:{at.UtcTicks}"));
+        var entry = events.Entry(EventTypes.ConnectionPolled, new ConnectionPolled(counts.Name.ToString(), counts.Kind.Key, counts.Count, counts.Started, counts.Skipped, at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionPolled}:{counts.Name}:{counts.Kind.Key}:{at.UtcTicks}"));
         _ = await ledger.Append(entry, lease, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Appends 'workflow.trigger.skipped' for a polled event that started no run. The key holds the workflow, the delivery id and the reason, so a repeat of the same skip writes one event.</summary>
-    /// <param name="workflow">The workflow's slug.</param>
-    /// <param name="name">The connection.</param>
-    /// <param name="kind">The event kind.</param>
-    /// <param name="deliveryKey">The event's delivery id.</param>
-    /// <param name="reason">'concurrency' or 'duplicate'.</param>
+    /// <param name="skipped">The workflow, the connection, the event kind, the delivery id and the reason.</param>
     /// <param name="grant">The lease to append under; null uses the one this process holds.</param>
     /// <param name="cancellationToken">Cancels the append.</param>
     /// <returns>A task that ends when the event is recorded or skipped.</returns>
-    public async ValueTask TriggerSkipped(string workflow, ConnectionName name, EventKind kind, string deliveryKey, string reason, LeaseGrant? grant, CancellationToken cancellationToken)
+    public async ValueTask TriggerSkipped(SkippedTrigger skipped, LeaseGrant? grant, CancellationToken cancellationToken)
     {
         if ((grant ?? held.Current) is not { } lease)
         {
             return;
         }
 
-        var entry = events.Entry(EventTypes.WorkflowTriggerSkipped, new WorkflowTriggerSkipped(workflow, name.ToString(), kind.Key, deliveryKey, reason, Now), $"{EventTypes.WorkflowTriggerSkipped}:{workflow}:{deliveryKey}:{reason}");
+        var entry = events.Entry(EventTypes.WorkflowTriggerSkipped, new WorkflowTriggerSkipped(skipped.Workflow, skipped.Name.ToString(), skipped.Kind.Key, skipped.DeliveryKey, skipped.Reason, Now), $"{EventTypes.WorkflowTriggerSkipped}:{skipped.Workflow}:{skipped.DeliveryKey}:{skipped.Reason}");
         _ = await ledger.Append(entry, lease, cancellationToken).ConfigureAwait(false);
     }
 

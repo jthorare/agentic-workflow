@@ -189,7 +189,9 @@ public static class ProfileRules
             : null;
     }
 
-    private static Error? Workflow(SindriProfile profile) => DurationsAndAgent(profile.Workflow) ?? Effects(profile.Workflow) ?? Judges(profile) ?? ForgeRules.Check(profile.Workflow?.Forge) ?? PrRules.Check(profile.Workflow?.Pr, profile.Workflow?.Docs) ?? Route(profile.Workflow?.Route) ?? Poll(profile.Workflow?.Poll);
+    private static Error? Workflow(SindriProfile profile) => DurationsAndAgent(profile.Workflow) ?? Effects(profile.Workflow) ?? Judges(profile) ?? ForgeRules.Check(profile.Workflow?.Forge) ?? PrRules.Check(profile.Workflow?.Pr, profile.Workflow?.Docs) ?? RouteAndPoll(profile.Workflow);
+
+    private static Error? RouteAndPoll(WorkflowSettings? workflow) => Route(workflow?.Route) ?? Poll(workflow?.Poll);
 
     private static Error? DurationsAndAgent(WorkflowSettings? workflow) => Durations(workflow) ?? ModelKeyRules.Shape(workflow?.Agent);
 

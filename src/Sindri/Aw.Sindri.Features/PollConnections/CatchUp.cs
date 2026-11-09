@@ -66,7 +66,7 @@ internal sealed class CatchUp(PollRound round, ConnectionEvents events)
 
         if (seen.Count > 0)
         {
-            await events.Polled(group.Connection, group.Kind, seen.Count, started, skipped, grant, cancellationToken).ConfigureAwait(false);
+            await events.Polled(new PollCounts(group.Connection, group.Kind, seen.Count, started, skipped), grant, cancellationToken).ConfigureAwait(false);
         }
 
         if (capped)
