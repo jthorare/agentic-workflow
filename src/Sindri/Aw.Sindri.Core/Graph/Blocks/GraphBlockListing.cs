@@ -13,9 +13,16 @@ public static class GraphBlockListing
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(pages);
-        var examples = pages
-            .Where(static p => p.BlockType is not null)
-            .ToDictionary(static p => p.BlockType!, static p => p.JsonExamples().FirstOrDefault(), StringComparer.Ordinal);
+        var examples = new Dictionary<string, string?>(StringComparer.Ordinal);
+        foreach (var page in pages)
+        {
+            if (page.BlockType is { } type)
+            {
+                var json = page.JsonExamples();
+                examples[type] = json.Count > 0 ? json[0] : null;
+            }
+        }
+
         return
         [
             .. catalog.Types.Values

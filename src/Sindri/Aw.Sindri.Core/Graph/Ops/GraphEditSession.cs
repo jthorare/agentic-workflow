@@ -7,6 +7,8 @@ namespace Aw.Sindri.Core.Graph.Ops;
 /// <summary>The working copy of a graph while a batch of ops applies: each op changes it or returns why it can't.</summary>
 internal sealed class GraphEditSession(GraphSpec spec)
 {
+    private const string DefaultOutput = "out";
+
     private readonly List<GraphNode> _nodes = [.. spec.Nodes.Select(static n => n with { Config = (JsonObject)n.Config.DeepClone() })];
     private readonly List<GraphEdge> _edges = [.. spec.Edges];
     private string _name = spec.Name;

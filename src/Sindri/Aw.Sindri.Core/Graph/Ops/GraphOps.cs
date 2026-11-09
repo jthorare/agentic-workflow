@@ -8,8 +8,6 @@ namespace Aw.Sindri.Core.Graph.Ops;
 /// <summary>Applies a batch of <see cref="GraphOp"/>s to a workflow graph.</summary>
 public static class GraphOps
 {
-    private const string DefaultOutput = "out";
-
     /// <summary>
     /// Applies <paramref name="ops"/> in order to a copy of <paramref name="spec"/>: all of them or none. A <paramref name="baseRevision"/> that is not
     /// <paramref name="currentRevision"/> is SND-GRAPH-007 naming the current revision; an op that can't apply is SND-GRAPH-012 naming the op's number;

@@ -46,5 +46,5 @@ public sealed class WorkflowChangeLog(ILedgerStore ledger, HeldLease held, Event
 
     // why: a workflow is made and archived once, so its id keys those; a revision, an activation or a pause can repeat, so the command that asked keys them
     private static string Key(string type, WorkflowChangedPayload payload, CallerContext caller) =>
-        type is EventTypes.WorkflowCreated or EventTypes.WorkflowArchived ? $"{type}:{payload.WorkflowId.Value}" : $"{type}:{caller.CommandId.Value.ToString("N", CultureInfo.InvariantCulture)}";
+        string.Equals(type, EventTypes.WorkflowCreated, StringComparison.Ordinal) || string.Equals(type, EventTypes.WorkflowArchived, StringComparison.Ordinal) ? $"{type}:{payload.WorkflowId.Value}" : $"{type}:{caller.CommandId.Value.ToString("N", CultureInfo.InvariantCulture)}";
 }

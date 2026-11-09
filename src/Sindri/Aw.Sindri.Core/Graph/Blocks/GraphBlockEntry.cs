@@ -49,11 +49,11 @@ public sealed class GraphBlockEntry
     {
         try
         {
-            return JsonNode.Parse(json) as JsonObject ?? new JsonObject();
+            return JsonNode.Parse(json) as JsonObject ?? [];
         }
         catch (System.Text.Json.JsonException)
         {
-            return new JsonObject();
+            return [];
         }
     }
 }
