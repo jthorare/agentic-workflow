@@ -1,6 +1,6 @@
-# `for_each`
+# For each
 
-Runs the nodes after it once for every item of a list, in order, until the matching [`collect`](collect.md).
+Group: Logic. Type: `for_each`. Runs the nodes after it once for every item of a list, in order, until the matching [`collect`](block-collect.md).
 
 | Config | Type | Required | Meaning |
 |---|---|---|---|
@@ -17,17 +17,17 @@ Inside the loop:
 - Every node of the loop has one run per item (`workflow_run_get` lists them with their `itemIndex`). `for_each` and `collect` themselves have one run each, at index 0.
 - A node that fails and says `stop` (the default) ends the loop: no later item runs, the `collect` fails with `node '<id>' failed on item N: <why>`, and the run follows the `collect`'s `onFailure`. Say `continue` on a node to let the loop go on without it.
 
-The loop is what lies between the `for_each` and its one `collect`. Loops don't nest (start another workflow with `run_workflow`), and a node of the loop may be fed only from the loop. `sindri wf validate` reports both as `GRAPH-LOOP-001`.
+The loop is what lies between the `for_each` and its one `collect`. Loops don't nest (start another workflow with `run_workflow`), and a node of the loop may be fed only from the loop. `sindri wf validate` reports both as `GRAPH-LOOP-001`. A `run_agent` node can't sit in the loop (an agent session doesn't run once per item): that is `GRAPH-LOOP-003`, and a run that reaches such a `for_each` fails it before any item runs. Run the agent in another workflow with `run_workflow`.
 
 ## Example
 
 ```json
 { "version": 1, "name": "Summarize new issues",
   "nodes": [
-    { "id": "daily", "type": "schedule", "config": { "cron": "0 7 * * 1-5" } },
-    { "id": "each", "type": "for_each", "config": { "items": "{{trigger.issues}}", "maxItems": 50 } },
+    { "id": "start", "type": "manual", "config": {} },
+    { "id": "each", "type": "for_each", "config": { "items": "{{trigger.payload}}", "maxItems": 50 } },
     { "id": "summary", "type": "prompt", "config": { "prompt": "Summarize in one line: {{item}}", "output": { "type": "object", "properties": { "line": { "type": "string" } }, "required": ["line"] } } },
     { "id": "gather", "type": "collect", "config": { "value": "{{summary.line}}" } },
     { "id": "tell", "type": "notify", "config": { "title": "Issues", "body": "{{gather.items}}" } } ],
-  "edges": [ { "from": "daily", "to": "each" }, { "from": "each", "to": "summary" }, { "from": "summary", "to": "gather" }, { "from": "gather", "to": "tell" } ] }
+  "edges": [ { "from": "start", "to": "each" }, { "from": "each", "to": "summary" }, { "from": "summary", "to": "gather" }, { "from": "gather", "to": "tell" } ] }
 ```

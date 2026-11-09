@@ -41,6 +41,21 @@ internal sealed class SqliteLedgerReader(LedgerDatabase database) : ILedgerReade
         return events.IsError ? events.Error : Results.Success(events.Value.Count == 0 ? null : events.Value[0]);
     }
 
+    public async ValueTask<Result<LedgerEvent?>> LatestByKeyPrefix(string keyPrefix, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(keyPrefix);
+        // why: the exclusive upper bound raises the last char by one; SQLite orders keys by UTF-8 bytes and .NET by UTF-16, which agree only for ASCII (#2480)
+        if (keyPrefix[^1] >= 0x7F)
+        {
+            throw new ArgumentException("the key prefix must end in an ASCII character", nameof(keyPrefix));
+        }
+
+        var upper = string.Concat(keyPrefix.AsSpan(0, keyPrefix.Length - 1), ((char)(keyPrefix[^1] + 1)).ToString());
+        var events = await Read(new SqlStatement(LedgerSql.SelectLatestByKeyPrefix, c => c.Bind("$from", keyPrefix).Bind("$to", upper)), LedgerEventMapper.Instance, cancellationToken)
+            .ConfigureAwait(false);
+        return events.IsError ? events.Error : Results.Success(events.Value.Count == 0 ? null : events.Value[0]);
+    }
+
     public async ValueTask<Result<long>> Head(CancellationToken cancellationToken)
     {
         var head = await Read(new SqlStatement(LedgerSql.SelectHead), (IRowMapper<long>)CountMapper.Instance, cancellationToken).ConfigureAwait(false);

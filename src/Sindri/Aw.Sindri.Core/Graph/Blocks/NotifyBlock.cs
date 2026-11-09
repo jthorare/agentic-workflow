@@ -13,6 +13,12 @@ public sealed class NotifyBlock(INotifyPort notify) : IGraphBlock
     public string Type => "notify";
 
     /// <inheritdoc />
+    public string Title => "Send notification";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Outputs;
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />

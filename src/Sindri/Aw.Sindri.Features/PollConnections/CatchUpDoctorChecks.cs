@@ -21,62 +21,64 @@ internal sealed class CatchUpDoctorChecks(ILedgerReader ledger, EventFactory eve
 
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
     {
-        var capped = await Rows(EventTypes.CatchUpCapped, cancellationToken).ConfigureAwait(false);
-        var polled = await Rows(EventTypes.ConnectionPolled, cancellationToken).ConfigureAwait(false);
-        if (capped.IsError || polled.IsError)
+        var capped = await Capped(cancellationToken).ConfigureAwait(false);
+        if (capped.IsError)
         {
-            var error = capped.IsError ? capped.Error : polled.Error;
-            return [new DoctorCheck(Name, CheckState.Warn, $"{error.Code}: {error.Message}", Fix: null)];
+            return [new DoctorCheck(Name, CheckState.Warn, $"{capped.Error.Code}: {capped.Error.Message}", Fix: null)];
         }
 
-        var open = Open(capped.Value, LastPolls(polled.Value));
+        // why: only the (rare) capped pairs are looked at; each gets one index seek for its newest poll (the key ends in fixed-width UtcTicks, so the greatest key is the newest), so the cost never grows with the polls in the ledger (#2480).
+        // A ':' inside a connection name can make a longer-named neighbour's polls match the prefix: that gives a false warn at worst, never a missed one.
+        var open = new List<CatchUpCapped>();
+        foreach (var (cap, sequence) in capped.Value.Values.OrderBy(static c => c.Cap.Connection, StringComparer.Ordinal).ThenBy(static c => c.Cap.Kind, StringComparer.Ordinal))
+        {
+            var latest = await ledger.LatestByKeyPrefix($"{EventTypes.ConnectionPolled}:{cap.Connection}:{cap.Kind}:", cancellationToken).ConfigureAwait(false);
+            if (latest.IsError)
+            {
+                return [new DoctorCheck(Name, CheckState.Warn, $"{latest.Error.Code}: {latest.Error.Message}", Fix: null)];
+            }
+
+            if (!Cleared(latest.Value, cap, sequence))
+            {
+                open.Add(cap);
+            }
+        }
+
         if (open.Count == 0)
         {
             return [new DoctorCheck(Name, CheckState.Ok, "no capped or gapped read", Fix: null)];
         }
 
-        var detail = string.Join("; ", open.Values.OrderBy(static c => c.Connection, StringComparer.Ordinal).ThenBy(static c => c.Kind, StringComparer.Ordinal)
+        var detail = string.Join("; ", open
             .Select(static c => string.Create(CultureInfo.InvariantCulture, $"{c.Connection} {c.Kind}: {c.Reason} ({c.At.UtcDateTime:yyyy-MM-dd HH:mm}Z)")));
         return [new DoctorCheck(Name, CheckState.Warn, "capped read: " + detail, Fix)];
     }
 
-    private Dictionary<(string, string), long> LastPolls(List<LedgerEvent> polled)
+    /// <summary>True when the pair's newest poll came after its newest cap (the key prefix is checked against the payload, since a name or kind holding ':' could blur it).</summary>
+    private bool Cleared(LedgerEvent? latestPoll, CatchUpCapped cap, long capSequence) =>
+        latestPoll is { } row && row.Sequence > capSequence
+            && events.Payload<ConnectionPolled>(row) is { IsSuccess: true, Value: var p }
+            && string.Equals(p.Connection, cap.Connection, StringComparison.Ordinal) && string.Equals(p.Kind, cap.Kind, StringComparison.Ordinal);
+
+    /// <summary>The newest capped read of each (connection, kind) with its sequence.</summary>
+    private async ValueTask<Result<Dictionary<(string, string), (CatchUpCapped Cap, long Sequence)>>> Capped(CancellationToken cancellationToken)
     {
-        var lastPoll = new Dictionary<(string, string), long>();
-        foreach (var row in polled)
+        var rows = await Rows(EventTypes.CatchUpCapped, cancellationToken).ConfigureAwait(false);
+        if (rows.IsError)
         {
-            if (events.Payload<ConnectionPolled>(row) is { IsSuccess: true, Value: var p })
+            return rows.Error;
+        }
+
+        var newest = new Dictionary<(string, string), (CatchUpCapped, long)>();
+        foreach (var row in rows.Value)
+        {
+            if (events.Payload<CatchUpCapped>(row) is { IsSuccess: true, Value: var c })
             {
-                lastPoll[(p.Connection, p.Kind)] = row.Sequence;
+                newest[(c.Connection, c.Kind)] = (c, row.Sequence);
             }
         }
 
-        return lastPoll;
-    }
-
-    /// <summary>The newest capped read of each pair that no later poll of the pair followed.</summary>
-    private Dictionary<(string, string), CatchUpCapped> Open(List<LedgerEvent> capped, Dictionary<(string, string), long> lastPoll)
-    {
-        var open = new Dictionary<(string, string), CatchUpCapped>();
-        foreach (var row in capped)
-        {
-            if (events.Payload<CatchUpCapped>(row) is not { IsSuccess: true, Value: var c })
-            {
-                continue;
-            }
-
-            var key = (c.Connection, c.Kind);
-            if (lastPoll.TryGetValue(key, out var polledAt) && polledAt > row.Sequence)
-            {
-                _ = open.Remove(key);
-            }
-            else
-            {
-                open[key] = c;
-            }
-        }
-
-        return open;
+        return newest;
     }
 
     private async ValueTask<Result<List<LedgerEvent>>> Rows(string type, CancellationToken cancellationToken)

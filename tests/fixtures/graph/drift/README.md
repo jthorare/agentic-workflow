@@ -1,0 +1,1 @@
+Made-up repos for the drift-check acceptance test (issue 2258, PR 8b): `api-repo/openapi.json` is the contract; `client-repo/in-sync/api.ts` matches it and `client-repo/drifted/api.ts` is missing `currency`.

@@ -17,6 +17,7 @@ internal static class SindriWorker
             .AddWorkflow<GraphWorkflow>()
             .AddWorkflow<GraphIterationWorkflow>()
             .AddAllActivities(activities.Agents)
+            .AddAllActivities(activities.Nodes)
             .AddAllActivities(activities.Graph.Runs)
             .AddAllActivities(activities.Graph.Blocks);
 }

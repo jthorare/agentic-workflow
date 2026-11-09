@@ -55,6 +55,28 @@ internal static class AgentRecovery
             : AgentRecoveryDecision.Park(reason + " (fix: read the outputs there and report with 'sindri workflow complete')");
     }
 
+    /// <summary>Decides what to do with a 'run_agent' node run whose session ended without a report (PR 7): the same rule, with the outcomes gone. The node completes only when every declared output it must report is in the output folder.</summary>
+    /// <param name="declared">The node's declared outputs, by name with their types ('?' marks an optional one).</param>
+    /// <param name="files">The names of the files in the output folder.</param>
+    /// <param name="folder">The output folder's path, for the reason.</param>
+    /// <returns>Complete with the files that hold the node's outputs, else a park whose reason names the folder.</returns>
+    public static AgentNodeRecovery DecideNode(IReadOnlyDictionary<string, string> declared, IReadOnlyCollection<string> files, string folder)
+    {
+        ArgumentNullException.ThrowIfNull(declared);
+        ArgumentNullException.ThrowIfNull(files);
+        var reason = $"the agent finished but its result was not recorded: {folder}";
+        var present = declared.Keys.Where(name => files.Contains(name, StringComparer.Ordinal)).Order(StringComparer.Ordinal).ToList();
+        var missing = declared.Where(d => !d.Value.EndsWith('?') && !present.Contains(d.Key, StringComparer.Ordinal)).Select(static d => d.Key).Order(StringComparer.Ordinal).ToList();
+        if (present.Count == 0)
+        {
+            return AgentNodeRecovery.Park(reason + " (fix: read the outputs there and report with 'sindri workflow complete')");
+        }
+
+        return missing.Count == 0
+            ? AgentNodeRecovery.Complete(present)
+            : AgentNodeRecovery.Park($"{reason} (missing the declared output{(missing.Count == 1 ? string.Empty : "s")} {string.Join(", ", missing)}; fix: read the outputs there and report with 'sindri workflow complete')");
+    }
+
     /// <summary>The file an agent writes a fact to: the fact's name without its 'fact:' prefix.</summary>
     /// <param name="fact">The fact.</param>
     /// <returns>The file name.</returns>

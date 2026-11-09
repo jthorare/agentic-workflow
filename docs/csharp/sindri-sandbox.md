@@ -17,10 +17,11 @@ mistakes, not a deliberate escape (spec §2).
 | **Plan** | The data the pure builder produces for one launch: mounts (read-only, read-write, denied), network rules, environment allowlist, limits, credentials. Written to `<launch dir>/areas/<id>/sandbox-plan.json`; hashed; summarised on `StartedLaunch`. |
 | **`planHash`** | The hash of the plan, including the resolved login source. Two launches with the same hash were confined the same way. |
 | **Park** | A run waiting for the owner. A **`launch` park** (`-015`, `-016`) resumes into a **new run** (new token, launch id and worktree). A sandbox-marked **NoRuntime park** (`-014`, `-017`) resumes into a new agent run that tries the launch again. |
-| **Step failure** | `step.failed(launch)` (`-018`, `-021`) or `step.failed(limit)` (`-019`): the Step ends, the owner retries or uses the desk twin; never auto-retried in the same run. |
+| **Step failure** | `step.failed(launch)` (`-018`, `-021`) or `step.failed(limit)` (`-019`): the Step ends, the owner retries or uses the desk twin; never auto-retried in the same run. For a graph node run (PR 7) the same codes end the node: its error starts with the launch code (`launch: SND-LAUNCH-…`) or with `limit`, and the run follows the node's `onFailure`. |
 | **Resource wait** | `-020`: a queue condition, not a fault. The launch activity retries until the Step's state timeout. |
 | **Check again** | The button and the `sindri sandbox check` command: re-runs the box probe, the form check and the login check, shows every blocker on one card and lists the parked Steps it would resume (oldest first, up to the free session slots). |
 | **Credential source** | The adapter behind `IModelCredentialSource` that supplies the model login: `owner-copy` (the default) or `separate-login`. |
+| **Node run** | One `run_agent` node of a graph run (`docs/csharp/sindri-graph.md`): it plays a Step run's part. Its launch has a `NodeRunAddress` instead of an instance and run token, its worktree sits on `wf/<slug>/<short run>/work`, the session may write refs under `wf/<slug>/<short run>/` only, and the plan adds the host group `github` (and its connections' groups from PR 10) through `GroupsInput.AddGroups`. |
 | **Attended session** | A session the owner opens with `sindri open` (no Step run). Sandboxed from SB-5b on. |
 
 ## Types (`Aw.Sindri.Core`)
@@ -126,6 +127,8 @@ The sandbox puts `dotnet`, `npm` and `npx` shims first on `PATH`. Each calls `he
 | `npx` | every other | `heavy --light` |
 
 ## What works inside a Step
+
+A graph node run (PR 7) gets the same sandbox as a Step run: read this section with "node run" for "Step". A node's run directory is `$AW_SINDRI_HOME/workflow/nodes/<launch>/`, and a node a person has taken over keeps its session and loses its timeout clock (the idle sweep leaves it alone). The first unattended run on macOS (SB-10) is closed by the owner's macOS acceptance run of a `run_agent` node on a fixture repo pair; this PR does not record it.
 
 Rows marked "probe" are confirmed by the spike (SB-S1 item 9) before SB-2 merges.
 
