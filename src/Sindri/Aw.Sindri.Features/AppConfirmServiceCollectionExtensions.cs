@@ -14,7 +14,7 @@ internal static class AppConfirmServiceCollectionExtensions
     internal static IServiceCollection AddAppConfirm(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        return services.AddScoped<IssueChallengeService>().AddScoped<IValidator<IssueAppChallengeRequest>, AcceptAllValidator<IssueAppChallengeRequest>>()
+        return services.AddScoped<IValidator<IssueAppChallengeRequest>, AcceptAllValidator<IssueAppChallengeRequest>>()
             .AddCommand<IssueAppChallengeRequest, IssueChallengeResponse, IssueAppChallengeService>();
     }
 }

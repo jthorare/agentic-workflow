@@ -42,7 +42,7 @@
 #   AW_SINDRI_UI              the sindri-ui binary; default $AW_STATE_DIR/bin/cs/current/sindri-ui
 # It exports AW_SINDRI_APP_NO_MCP=1 for every Sindri it starts, so the scratch plane never registers a 'sindri' MCP server in ~/.claude.json.
 #
-# Exit: 0 ok; 1 a step failed (the message names it); 2 usage or a refused setup; 3 stopped for you to approve a recipe.
+# Exit: 0 ok; 1 a step failed (the message names it); 2 usage or a refused setup.
 # Bash 3.2 compatible (macOS /bin/bash).
 set -uo pipefail
 
