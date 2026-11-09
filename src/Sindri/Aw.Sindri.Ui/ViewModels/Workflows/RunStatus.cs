@@ -8,4 +8,21 @@ internal static class RunStatus
     /// <returns>True when the run is live.</returns>
     internal static bool IsLive(string status) =>
         string.Equals(status, "running", StringComparison.Ordinal) || string.Equals(status, "waiting", StringComparison.Ordinal) || string.Equals(status, "queued", StringComparison.Ordinal);
+
+    /// <summary>True while a cancel can be asked for: the run is running or waiting.</summary>
+    /// <param name="status">The served status.</param>
+    /// <returns>True when Cancel run shows.</returns>
+    internal static bool CanCancel(string status) =>
+        string.Equals(status, "running", StringComparison.Ordinal) || string.Equals(status, "waiting", StringComparison.Ordinal);
+
+    /// <summary>The look of a status chip. The glyph and the word say it too, so colour is never the only signal.</summary>
+    /// <param name="status">The served status.</param>
+    /// <returns>Ok for succeeded and running, Attn for waiting, Fail for failed, else Neutral (queued, cancelled, skipped, and a status this build does not know).</returns>
+    internal static Api.ChipTone Tone(string status) => status switch
+    {
+        "succeeded" or "running" => Api.ChipTone.Ok,
+        "waiting" => Api.ChipTone.Attn,
+        "failed" => Api.ChipTone.Fail,
+        _ => Api.ChipTone.Neutral,
+    };
 }

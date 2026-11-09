@@ -10,6 +10,23 @@ internal sealed partial class FakeSindriApi
     private int _workflowCalls;
     private int _workflowRunsCalls;
     private int _workflowRunCalls;
+    private readonly List<string> _startedWorkflows = [];
+    private readonly List<string> _cancelledWorkflowRuns = [];
+
+    /// <summary>POST /sindri/workflows/{slug}/runs's answer: the started body by default (a refusal golden, such as workflows-slug-runs/not-active, to test a refusal).</summary>
+    public RouteAnswer StartWorkflowRunAnswer { get; set; } = RouteAnswer.SpecShaped("workflows-slug-runs", "started");
+
+    /// <summary>POST /sindri/workflow-runs/{run}/cancel's answer: the cancelled body by default.</summary>
+    public RouteAnswer CancelWorkflowRunAnswer { get; set; } = RouteAnswer.SpecShaped("workflow-runs-run-cancel", "cancelled");
+
+    /// <summary>When set, the next Run now waits for it before it answers.</summary>
+    public TaskCompletionSource? StartWorkflowRunGate { get; set; }
+
+    /// <summary>Every workflow a run was started for, in order.</summary>
+    public IReadOnlyList<string> StartedWorkflows { get { lock (_gate) { return [.. _startedWorkflows]; } } }
+
+    /// <summary>Every run a cancel was sent for, in order.</summary>
+    public IReadOnlyList<string> CancelledWorkflowRuns { get { lock (_gate) { return [.. _cancelledWorkflowRuns]; } } }
 
     /// <summary>GET /sindri/workflows's answer: the two-workflow golden by default.</summary>
     public RouteAnswer WorkflowsAnswer { get; set; } = RouteAnswer.Api("workflows", "list-two");
@@ -73,5 +90,26 @@ internal sealed partial class FakeSindriApi
         await WaitFor(WorkflowRunGates.GetValueOrDefault(runId), cancellationToken).ConfigureAwait(false);
         var answer = WorkflowRunAnswers.TryGetValue(runId, out var own) ? own : RouteAnswer.Problem("workflow-runs-run", "not-found");
         return Answer<WorkflowRunView>(api, WorkflowRoutes.Run(runId), answer);
+    }
+
+    public async Task<Result<WorkflowRunStarted>> StartWorkflowRun(Uri api, string slug, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _startedWorkflows.Add(slug);
+        }
+
+        await WaitFor(StartWorkflowRunGate, cancellationToken).ConfigureAwait(false);
+        return Answer<WorkflowRunStarted>(api, WorkflowRoutes.Runs(slug), StartWorkflowRunAnswer);
+    }
+
+    public Task<Result<WorkflowRunCancelled>> CancelWorkflowRun(Uri api, string runId, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _cancelledWorkflowRuns.Add(runId);
+        }
+
+        return Task.FromResult(Answer<WorkflowRunCancelled>(api, WorkflowRoutes.Cancel(runId), CancelWorkflowRunAnswer));
     }
 }
