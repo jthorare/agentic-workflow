@@ -51,18 +51,15 @@ internal static class ReviewScenarios
                 _ = services.Replace(ServiceDescriptor.Singleton<IReviewProjects>(new FakeReviewProjects().With(SindriProject, "Sindri")));
                 _ = services.Replace(ServiceDescriptor.Singleton<IProjectPages>(new OneProjectPage()));   // the setup approval checks 'review.projects' against the Projects page (SND-REVIEW-002)
                 _ = services.Replace(ServiceDescriptor.Singleton<IPullRequests>(new FakePullRequests(["github.com"]) { SelfLogin = "joi-example" }));
-                if (Account(scenario) is { } account)
-                {
-                    _ = services.Replace(ServiceDescriptor.Singleton<IGitHubAccount>(account));   // #2499: the Reviews tab reads the GitHub connection
-                }
+                _ = services.Replace(ServiceDescriptor.Singleton<IGitHubAccount>(Account(scenario)));   // #2499: the Reviews tab reads the GitHub connection
             });
 
-    /// <summary>The GitHub account of the connection rows (#2499); null for the rows that predate the connection.</summary>
-    private static FakeGitHubAccount? Account(string scenario) => scenario switch
+    /// <summary>The GitHub account of a row (#2499): connected as "github:work" with login "joi-example"; 'no-login' is connected but /user gave no login; 'connect-github' has no connection.</summary>
+    internal static FakeGitHubAccount Account(string scenario) => scenario switch
     {
-        "login-from-connection" or "sign-in-again" => new FakeGitHubAccount { State = GitHubAccountState.Connected, Connection = "github:work", Login = "joi-example" },
+        "no-login" => new FakeGitHubAccount { State = GitHubAccountState.Connected, Connection = "github:work", Login = null },
         "connect-github" => new FakeGitHubAccount { State = GitHubAccountState.Missing },
-        _ => null,
+        _ => new FakeGitHubAccount { State = GitHubAccountState.Connected, Connection = "github:work", Login = "joi-example" },
     };
 
     /// <summary>The rows with no stored PR records.</summary>
