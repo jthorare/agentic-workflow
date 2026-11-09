@@ -449,7 +449,7 @@ CloseItem:* `ready`). Marked extras, not P3's: `queue/extra-p4-waiting` (a needs
 `queue/extra-p11-running`, `items-id/extra-p4-needs-decision`. In P3 every `primaryAction` is null, `waitingOn` and
 `instance` are null, and `owner` is null (README X61: multiplayer later; the records accept it, no owner UI).
 
-**Owner decisions (2026-10-12).** Four queue groups (API §3.6); a parked item shows in Waiting on you with a "parked"
+**Owner decisions (2026-10-12).** Four queue groups (API §3.6); a parked item (a state only an old ledger could produce; the recipe engine is removed) showed in Waiting on you with a "parked"
 badge from its `state`. The sheet shows `body` (scrubbed, plain text) and `link`. The sheet stays open after Close.
 The destructive confirm reads "<label> <id>?" with Confirm and Keep. Actors (`createdBy`, the timeline's `actor`) are
 opaque strings shown exactly as served; the app maps no fixed set (README X61), and assumes nothing about where an

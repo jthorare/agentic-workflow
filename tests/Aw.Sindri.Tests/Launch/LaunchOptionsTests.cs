@@ -6,7 +6,6 @@ using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.Engine.Instances;
 
 namespace Aw.Sindri.Tests.Launch;
 
@@ -18,10 +17,8 @@ public sealed class LaunchOptionsTests
     private static readonly ItemId _item = ItemId.From("ITM-" + new string('1', 32));
     private static readonly SessionId _session = SessionId.From("0b1c2d3e-0000-4000-8000-000000000001");
 
-    private static ItemRow Item(ItemState state = ItemState.Running, EngineItemPart? engine = null) =>
-        new(_item, "Ship it", RepoName.From("web"), state, Step: null, Version: 1, "human:cli", _now, _now, _now, Link: null, Alias: null, Body: null, WaitingOn: null, Instance: null, Owner: null, Sequence: 1) { Engine = engine };
-
-    private static EngineItemPart Engine(SuspensionKind? suspension = null) => new("WFI-1", "work", RunOpen: false, Runtime: null, suspension, Ended: false, Cancelled: false);
+    private static ItemRow Item(ItemState state = ItemState.Running) =>
+        new(_item, "Ship it", RepoName.From("web"), state, Step: null, Version: 1, "human:cli", _now, _now, _now, Link: null, Alias: null, Body: null, WaitingOn: null, Instance: null, Owner: null, Sequence: 1);
 
     private static LaunchRow Row(int n, LaunchState state, bool live = false, SessionId? reported = null, string? code = null, TimeSpan? age = null) =>
         new(LaunchId.From("LCH-" + n.ToString("x32", System.Globalization.CultureInfo.InvariantCulture)), _item, RepoName.From("web"), LaunchMode.Open, AgentId.From("claude-code"), "click", state,
@@ -52,20 +49,18 @@ public sealed class LaunchOptionsTests
     }
 
     [Fact]
-    public void Resume_needs_handback_and_a_session_id()
+    public void Resume_needs_an_ended_session_with_a_session_id()
     {
         var ended = Row(1, LaunchState.Started, live: false, reported: _session);
 
-        Assert.DoesNotContain(LaunchMode.Resume, For(Item(), ended).Modes);                                   // no engine instance: nothing to hand back
-        Assert.DoesNotContain(LaunchMode.Resume, For(Item(engine: Engine(SuspensionKind.Takeover)), ended).Modes);   // still taken over
-        Assert.DoesNotContain(LaunchMode.Resume, For(Item(engine: Engine()), Row(1, LaunchState.Started, live: false)).Modes);   // no session id
-        Assert.Contains(LaunchMode.Resume, For(Item(engine: Engine()), ended).Modes);
+        Assert.DoesNotContain(LaunchMode.Resume, For(Item(), Row(1, LaunchState.Started, live: false)).Modes);   // no session id
+        Assert.Contains(LaunchMode.Resume, For(Item(), ended).Modes);
     }
 
     [Fact]
     public void Resumable_reads_session_reported_after_rebuild()
     {
-        var launch = For(Item(engine: Engine()), Row(1, LaunchState.Started, live: false, reported: _session));
+        var launch = For(Item(), Row(1, LaunchState.Started, live: false, reported: _session));
 
         Assert.Equal(_session, launch.Resumable?.SessionId);
     }
@@ -78,14 +73,12 @@ public sealed class LaunchOptionsTests
         var timedOut = For(Item(), Row(1, LaunchState.Failed, code: SindriErrors.LaunchTimedOut.Code));
         var refused = For(Item(), Row(1, LaunchState.Failed, code: SindriErrors.LaunchAgentMissing.Code));
         var old = For(Item(), Row(1, LaunchState.Started, live: false, age: TimeSpan.FromHours(3)));
-        var takenOver = For(Item(engine: Engine(SuspensionKind.Takeover)), Row(1, LaunchState.Started, live: false));
 
         Assert.NotNull(started.Confirm);
         Assert.NotNull(interrupted.Confirm);
         Assert.NotNull(timedOut.Confirm);
         Assert.Null(refused.Confirm);
         Assert.Null(old.Confirm);
-        Assert.Null(takenOver.Confirm);
     }
 
     private static LaunchRow Attached(int n, LaunchState state = LaunchState.Started, SessionId? session = null, TimeSpan? age = null) =>
@@ -96,7 +89,7 @@ public sealed class LaunchOptionsTests
     {
         var open = Row(1, LaunchState.Started, live: true) with { SessionId = _session };
 
-        var launch = For(Item(engine: Engine()), Attached(2), open);
+        var launch = For(Item(), Attached(2), open);
 
         Assert.Equal([LaunchMode.Open, LaunchMode.Attach], launch.Modes);   // attach to the running session; never a second agent on it
         Assert.Null(launch.Resumable);
@@ -108,7 +101,7 @@ public sealed class LaunchOptionsTests
         var ended = Row(1, LaunchState.Started, live: false, reported: _session, age: TimeSpan.FromMinutes(40));
         var running = Row(2, LaunchState.Started, live: true);
 
-        var launch = For(Item(engine: Engine()), running, ended);
+        var launch = For(Item(), running, ended);
 
         Assert.DoesNotContain(LaunchMode.Resume, launch.Modes);
         Assert.Null(launch.Resumable);
