@@ -45,7 +45,7 @@ internal sealed class GraphRig : IAsyncDisposable
         Workflows = new InMemoryWorkflowStore(clock);
         Blocks = new GraphTestBlocks();
         Client = environment.Client;
-        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), .. Blocks.All()]);
+        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(new DefaultForEachLimits()), new CollectBlock(), .. Blocks.All()]);
         var probe = new FakeProcessProbe();
         _ledger = new InMemorySindriStore(clock, probe);
         var held = new HeldLease();
@@ -57,6 +57,7 @@ internal sealed class GraphRig : IAsyncDisposable
         _starter = starter;
         var options = new TemporalWorkerOptions(_taskQueue)
             .AddWorkflow<GraphWorkflow>()
+            .AddWorkflow<GraphIterationWorkflow>()
             .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror))
             .AddAllActivities(new GraphBlockActivities(registry, Runs, Workflows));
         _worker = new TemporalWorker(Client, options);
@@ -99,10 +100,10 @@ internal sealed class GraphRig : IAsyncDisposable
         (await _starter.Start(new GraphStartRequest(workflow.Id, workflow.Slug, Revision: 1, occurrence, trigger, mode), Token)).Value;
 
     /// <summary>Waits until the run has a final status.</summary>
-    public async Task<WorkflowRun> Final(WorkflowRunId id)
+    public async Task<WorkflowRun> Final(WorkflowRunId id, TimeSpan? patience = null)
     {
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
-        limit.CancelAfter(_patience);
+        limit.CancelAfter(patience ?? _patience);
         while (true)
         {
             var run = (await Runs.Get(id, limit.Token)).Value;
@@ -117,6 +118,10 @@ internal sealed class GraphRig : IAsyncDisposable
 
     public async Task<IReadOnlyDictionary<string, NodeRunStatus>> NodeStatuses(WorkflowRunId id) =>
         (await Runs.NodeRuns(id, Token)).Value.ToDictionary(static n => n.NodeId.Value, static n => n.Status, StringComparer.Ordinal);
+
+    /// <summary>Every row of one node, by item index (0 is the node's own row).</summary>
+    public async Task<IReadOnlyDictionary<int, NodeRun>> ItemRuns(WorkflowRunId id, string node) =>
+        (await Runs.NodeRuns(id, Token)).Value.Where(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal)).ToDictionary(static n => n.ItemIndex);
 
     /// <summary>The ledger rows the run wrote, as '&lt;type&gt; &lt;idempotency key&gt;', oldest first.</summary>
     public async Task<IReadOnlyList<string>> Rows()

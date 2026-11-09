@@ -27,6 +27,7 @@ namespace Aw.Sindri.Core.Profile;
 /// <param name="Docs">The 'docs:' section (line spec §7.6; PB spec W27): whether docs sync runs and where it may write.</param>
 /// <param name="Pr">The 'pr:' section (PB spec W27): the PR babysitter's bots, caps, cadence and merge settings (<see cref="PrSettings"/>).</param>
 /// <param name="Scoping">The 'scoping:' section (#399): the scoping recipe's history window (<see cref="ScopingSettings"/>).</param>
+/// <param name="ForEach">The 'forEach:' section (PR 9): the item cap and batch size a 'for_each' block takes by default (<see cref="ForEachSettings"/>).</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record WorkflowSettings(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? DeskTimeout = null,
@@ -48,4 +49,5 @@ public sealed record WorkflowSettings(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] StepsSettings? Steps = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] DocsSettings? Docs = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] PrSettings? Pr = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ScopingSettings? Scoping = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ScopingSettings? Scoping = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ForEachSettings? ForEach = null);
