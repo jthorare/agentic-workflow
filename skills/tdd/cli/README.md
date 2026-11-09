@@ -186,6 +186,93 @@ One Python behaviour cannot be matched. DNUM/none sorts the D-numbers by their d
 (`D2` and `D-2`), Python breaks the tie in set order, which depends on the hash seed and so varies from run to run.
 The TypeScript keeps the first-seen order. The corpus avoids this tie.
 
+## The revision runner (`src/rev`, PR 16 part one, Effect)
+
+`bin/rev.ts` (also `tdd rev <packet> [--no-shots] [--no-gh] [--push] [--published <surface> <url>] [--from <step>]
+[--only <step>] [--reuse] [--json]`) runs SKILL.md step 5 as one Effect program, from the same folders the documented
+commands use: `compile` (src/compile in-process, the same stdout line as `tdd build`), `app-build` (`bun run build.ts`
+in app/, output passed through), `hydrate` (`bun run check_hydrate.ts`), `agents` (src/agents in-process), `lint`
+(src/lint in-process, writing `build/lint.json`), `artifact-check` (`node <system-design>/scripts/artifact_check.mjs
+build/tdd.html shots`, looked up like `build_tdd.py`'s `sd_root()`), `eval` (after artifact-check, so it scores this
+run's screenshots), `load-db` (`tdd load-db` after lint) and `push`. The cutover itself (SKILL.md switching to bun, the
+Python leaving `scripts/`) is a later, human-gated step. Modules:
+- `steps.ts`: the step names in order and the outcome type: `ok(detail)`, `skipped(reason)` (a `Skip` failure) or
+  `failed(error, stderr tail)` (a `Fail` failure); a defect in a step becomes `failed`, never a crash of the run.
+- `args.ts` (argv and the usage text), `paths.ts` (the packet, `build/.rev`, the source markdown as `lint_packet.py`
+  finds it, the skill's folders, `artifactCheckPath`), `context.ts` (`RevPaths`, `RevOpts`).
+- `services.ts`: `Out` (the steps' output; under `--json` it goes to stderr so stdout is the JSON), `Proc` (a child with
+  its output passed through and kept, a timeout, SIGTERM then SIGKILL on timeout or interrupt), `Tools` (tdd build,
+  agents and lint in-process, their writes captured; lint's git goes through a wrapper, below), `Db` (a `SELECT 1`
+  probe with a 5 s limit that tells "nothing answered" from "a server answered with an error").
+- `secrets.ts`: keys only from the environment (`Config.Redacted`), snapshotted when the run starts. A secret is any
+  of `BRAINTRUST_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `LINEAR_API_KEY`, `GH_TOKEN`, `GITHUB_TOKEN`,
+  `DATABASE_URL`, `AWS_*`, or a name ending in `_KEY`, `_TOKEN`, `_SECRET` or `_PASSWORD`. `childEnv` gives each child
+  the environment without them: `load-db` gets `DATABASE_URL` back, and with `--push` the eval alone gets
+  `BRAINTRUST_API_KEY`, `LINEAR_API_KEY`, `AWS_*` and (unless `--no-gh`) `GH_TOKEN` and `GITHUB_TOKEN`. For the
+  in-process tools the run also deletes the secrets from `process.env` and restores them at the end. That is not enough
+  for `Bun.spawn` without an `env`, which uses the environment the process started with: so lint's `git` is a
+  temporary `#!/bin/sh` wrapper (`env -u NAME ... git "$@"`) written to the system temp folder and removed with the
+  run. `scrub` removes every key value (8 characters and up) and a database url's password from the journal, the
+  state, the progress notes and the table.
+- `eval.ts`: the one eval boundary, `evalStep(paths, push)`, which picks an `EvalImpl` (its name, its command and the
+  code its fingerprint covers) per run. The eval is `bunEval`: `tdd eval` (src/eval) as a child of this bun
+  (`$TDD_REV_BUN` overrides it, for tests), not in-process, so that src/eval's own children (git, node, bun, python),
+  which it spawns with `Bun.spawn` and no `env`, inherit the stripped environment of that child rather than this
+  process's startup environment with the keys. Its fingerprint covers `src/eval`, `src/py`, `bin/eval-packet.ts`,
+  `scripts/lint_packet.py` and the interpreter its lint scorer uses. `pythonEval` (`eval_packet.py` in the eval
+  venv, `$TDD_EVAL_PYTHON` overrides the interpreter) is the fallback, taken only when `bin/eval-packet.ts` is absent
+  or a push finds no `braintrust` package next to src/eval, and only when the venv exists; the journal's `run-start`
+  names the eval and the reason. Without `--push` the eval runs offline (`--skip linear,aws`); with `--push` and the
+  key it pushes itself, and the `push` step reads that result (with `--only push` it runs the eval with `--push`).
+  `--push` without the key fails the push step and runs the eval offline.
+- `stepdefs.ts`: each step's command, its outcome rules (lint: ok whenever the linter ran and wrote `lint.json`, its
+  error and warning counts in the detail and in the row's `data`; findings are measured here, not a gate; the eval: ok
+  on exit 0, or exit 1 with a fresh `run.json` when only the push failed; load-db: skipped when nothing answers,
+  failed when a server answers with an error such as a missing database or an unknown role) and what it reads and
+  writes, as fingerprint parts (`hash.ts`; the parts include the tool's own code, the interpreter's path and the
+  database the url names).
+- `journal.ts`: `build/.rev/journal.jsonl` (append-only: `run-start` with the flags and the names of the keys present,
+  `step-start`, `step` with outcome, seconds, detail or reason or error and stderr tail, the child commands and the
+  fingerprints, `run-end` with the exit code) and `build/.rev/state.json` (Schema-checked; each step's last record and
+  its last ok, renamed into place after every step), a lock (a second run on the same build is refused while the
+  first one's pid lives) and a `.gitignore` of `*`, so a packet repo that commits `build/` never picks the folder up.
+  The state is bound to its packet folder (a hash of the folder's real path): a `build/.rev` copied from another folder
+  is renamed to `*.foreign-<run>.*`, and the run starts fresh with a note.
+- `run.ts`: the plan and the loop. With neither `--from` nor `--only`, a run resumes at the first step not done in the
+  current cycle (missing, failed or from an older cycle), or earlier when a done step before it (reused ones
+  included) read something that changed since it ran, or wrote something that is gone or was edited since; an edit
+  to the source, the meta, a diagram, the schema or the hotspots therefore reruns from compile. Once every step is
+  done, the next run starts a new cycle at compile. `--from` and `--only` run inside the current cycle. The run stops
+  at the first failed step (the rest are "not reached"). SIGINT and SIGTERM interrupt the program: the running step
+  is recorded as failed ("interrupted by SIGTERM"), its child is stopped, the lock released, and the next run resumes
+  there. `--reuse` skips a step only when its latest record did not fail and its inputs and outputs fingerprints both
+  equal those of its last ok (noted as `reused` in the journal); the push is never reused. `report.ts` prints the
+  table (step, outcome, seconds, detail, and up to 8 lines of a failed step's stderr tail; steps from an earlier run
+  of the cycle in parentheses) or the JSON (with `stderr_tail` and `data`). Exit 0 when every step that ran is ok or
+  skipped, 1 on a failure or a held lock, 2 on bad usage, 130 / 143 on SIGINT / SIGTERM.
+
+Tests (`test/rev`): `runner.test.ts` drives the program on a scripted world (Tools and Proc that write what the tools
+write and record each command and environment, a Db that answers as told, the real journal), including a reuse that
+fails later and is followed by a source edit, a copied `build/.rev`, and the child environment per step with and
+without `--push`; `units.test.ts` covers argv, the plan, scrubbing, the child environment, fingerprints and the
+lookups; `network.test.ts` runs `tdd rev` on the demo fixture with fake keys of every kind under a trap preload
+(`no-network.ts`), a loopback proxy recorder and, on macOS, `sandbox-exec` with outbound traffic denied except
+loopback, with logging shims for `git`, `node`, `bun` and the eval's python that record which secret names each child
+received; `packets.test.ts` runs it on `$TDD_PARITY_PACKETS` and compares `content.json`, `agents/` and `lint.json`
+with SKILL.md's Python steps at the same path.
+
+Known limits: the compile, agents and lint calls are synchronous, so an interrupt during one takes effect when it
+returns (the step is then recorded as interrupted and rerun). A SIGKILL of the runner leaves a `step-start` with no
+outcome, and the next run resumes at that step; it also leaves the running child (an eval, say) alive and writing,
+since the lock holds only the runner's pid, and it leaves the git wrapper in the temp folder: wait for the orphan to
+exit before the next run. The eval's scorer writes `build/.artifact-check-*` while it runs; fingerprints ignore those
+files. load-db writes the database `$DATABASE_URL` names, else `postgres://localhost/tdd_system`, the real one: its
+upsert repoints the packet's row (`packet_path`), so a run on a scratch copy should set `DATABASE_URL` to a scratch
+database. The compile's fingerprint leaves out `shots/` (artifact_check writes there), so with `--reuse` a changed
+screenshot that the source embeds from `shots/` does not rerun the compile. `artifact_check` (the step and the eval's
+scorer) renders the page in Chromium, which requests the page's Google Fonts; those requests carry no packet data and
+no key, and they are the only outbound connections a run without `--push` and with `--no-gh` makes.
+
 ## Effect smoke
 
 `test/smoke/effect.test.ts` (a `Context.Service` provided by a `Layer.effect` whose scoped resource is released when the

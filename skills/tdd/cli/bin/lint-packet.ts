@@ -6,7 +6,8 @@ import { LINT_PACKET_DOC as DOC } from "../src/lint/doc";
 import { pyException } from "../src/lint/pyops";
 import { PyError, qualifiedName } from "../src/py/errors";
 import { exitCode, lintJson, report } from "../src/lint/report";
-import { runLint } from "../src/lint/run";
+import { runLint, type Services } from "../src/lint/run";
+import type { Layer } from "effect";
 
 export interface LintArgs {
   packet: string;
@@ -53,14 +54,15 @@ export function parseArgs(argv: readonly string[]): Parsed {
   };
 }
 
-/** Run the linter: [exit code, stdout, stderr]; writes lint.json when --json is given. */
-export async function lintMain(argv: readonly string[]): Promise<{ code: number; out: string; err: string }> {
+/** Run the linter: [exit code, stdout, stderr]; writes lint.json when --json is given. `layer` replaces the live
+ *  services (tdd rev passes one whose git runs without the environment's keys). */
+export async function lintMain(argv: readonly string[], layer?: Layer.Layer<Services>): Promise<{ code: number; out: string; err: string }> {
   const parsed = parseArgs(argv);
   if ("code" in parsed) return parsed;
   const a = parsed.args;
   let out = "";
   try {
-    const r = await runLint({ packet: a.packet, build: a.build, compile: a.compile, skip: a.skip });
+    const r = await runLint({ packet: a.packet, build: a.build, compile: a.compile, skip: a.skip }, layer);
     out = report(r);
     if (a.json) py.io.writeText(a.json, lintJson(r));
     return { code: exitCode(r, a.strict), out, err: "" };
