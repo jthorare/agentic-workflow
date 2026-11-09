@@ -1,0 +1,7 @@
+{
+  "offers": [
+    { "id": "o-1", "title": "Fix the login timeout", "repo": "acme/web", "branch": "fix/login-timeout", "prompt": "Make it 30.", "links": [], "labels": ["bug"] },
+    { "id": "o-2", "title": "Add a CSV export", "repo": "acme/web", "branch": null, "prompt": null, "links": [], "labels": [] }
+  ],
+  "nextPageToken": "t-2"
+}
