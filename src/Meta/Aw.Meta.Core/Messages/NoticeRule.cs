@@ -26,7 +26,7 @@ public static partial class NoticeRule
         ArgumentNullException.ThrowIfNull(body);
         var text = StripSender(body.Trim());
         var line = FirstLine(text);
-        if (IsProtected(line, text))
+        if (IsProtected(line, text) || Asks(body))
         {
             return false;
         }
@@ -39,6 +39,9 @@ public static partial class NoticeRule
     private static bool IsProtected(string line, string text) =>
         _protectedPrefixes.Any(p => line.StartsWith(p, StringComparison.OrdinalIgnoreCase))
         || MessageClassifier.Classify(text).Kind is MessageKind.Ready or MessageKind.OwnerQuestion;
+
+    // A "please" anywhere is an ask, even inside an ack or an FYI ("Ack: ... please lane-recycle me", meta.db replay, #2498).
+    private static bool Asks(string body) => body.Contains("please", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsLaneMap(string line) =>
         line.StartsWith("LANE MAP v", StringComparison.OrdinalIgnoreCase) && line.Length > 10 && char.IsAsciiDigit(line[10]);
