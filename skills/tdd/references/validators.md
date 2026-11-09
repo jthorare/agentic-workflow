@@ -174,6 +174,30 @@ file and the dashed SVGs, stdout and stderr.
 | `PARITY/content` | error | `content.json` from the TypeScript compiler is byte-identical to the build's (or to a fresh `build_tdd.py` compile when the build is stale), and the TypeScript compiler does not fail where the Python succeeds. | Fix `cli/src/compile`: `build_tdd.py` is the reference until the cutover. A change to `build_tdd.py` lands with the same change in TypeScript (the twin rule). |
 | `PARITY/manifest` | warn | `content.files.json`: the same `files` paths, `missing` list and `warnings`, in order. | As above. |
 
+## The TypeScript linter (`tdd lint`, D19, the overlap period)
+`cli/bin/lint-packet.ts` (also `bun cli/bin/tdd.ts lint`) is this linter in TypeScript, with Effect (`cli/src/lint`).
+It takes the same arguments, prints the same report, writes the same `--json` file byte for byte and exits with the
+same codes. The Python stays the documented path until the cutover.
+
+```
+bun "$T/cli/bin/tdd.ts" lint <packet-dir> [--build <dir>] [--strict] [--json <out>] [--skip <ids>] [--compile]
+```
+
+Three things differ by design:
+- **The compile runs in-process.** A packet with no build, or `--compile`, is compiled by the TypeScript compiler
+  (`cli/src/compile`) into a temporary folder. The Python linter runs `build_tdd.py` there.
+- **PARITY is reversed.** The TypeScript compiler runs in-process. `python3` with `build_tdd.py` is the external
+  compiler, used for the fresh compile that a differing build (or a compiled lint) calls for. Every finding and note
+  is the Python rule's text, so `lint.json` stays identical. Only the skip note differs: `python3 is not on PATH` or
+  `build_tdd.py is absent`, where the Python says `bun` or `cli/`.
+- **A rule that fails does not end the run.** A defect inside one rule becomes `<RULE>/check-failed` (error), and the
+  other rules still run. The Python linter stops with a traceback there, so this id never appears in its output.
+  `AGENTS/check-failed` (an exception raised by `write_agents.check`) is the same in both linters.
+
+`cli/test/lint` proves the parity. It runs both linters on the packets in `$TDD_PARITY_PACKETS` (on the build and with
+`--compile`). It also runs a mutation corpus: a small neutral packet with a git repository, mutated 84 ways plus 7 usage
+cases, so that every check id this file lists fires at least once in both linters.
+
 ## Notes, not findings
 - The source was compiled to a temporary folder because the packet had no build.
 - PARITY was skipped (no `bun`, no `cli/`, no `cli/node_modules`), passed, or found the build stale.

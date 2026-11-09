@@ -142,6 +142,40 @@ linted source with this compiler too. `test/compile` runs the gate on an edge-ca
 every container, hotspot variants, PNG / JPEG / SVG sizing, a CRLF SVG that the dash rewrites, sub-PRs, aliases, the
 sanitizer), with `--no-copy` and `--strict`, on `$TDD_PARITY_PACKETS`, and on argv errors.
 
+## The linter (`src/lint`, PR 14, Effect)
+
+`bin/lint-packet.ts` (also `tdd lint`) is `lint_packet.py` in TypeScript with Effect 4 (D27): the same argv and usage
+text (the Python docstring verbatim, `src/lint/doc.ts`), report, `lint.json` (indent 1, `ensure_ascii` off) and exit
+codes. Modules:
+- `finding.ts`: the `Finding` schema (`Schema.Class`: rule, check, severity, file, line, message, in lint.json order).
+- `services.ts`: `Fs` (os.listdir order, CPython's `getmtime` float, `posixpath.realpath`, `os.walk`), `Git`
+  (read-only `git -C`, 60 s, with the Python's timeout and OSError text), `Clock` (the local time in META/stale-build:
+  TZ decides), `Compiler` (src/compile in-process, into a scoped temporary folder) and `Agents` (src/agents `check`).
+- `packet.ts`: the `Packet` service (Lint's state and plumbing: source, meta, PR files, build or compile, ids, house
+  slots, cached lines, `locate*`, and the findings sink with `--skip`).
+- `rules/*.ts`: one Effect per rule family (`struct`, `dnum`, `refs`, `cites`, `diag`, `schema`, `files`, `meta`,
+  `agents`, `xdoc`, `parity`), each in Python's order. CITES counts lines with `git show` eight at a time and reads
+  the counts back in Python's order. DIAG reads labels through src/hotspots `Shapes`. PARITY is reversed: in-process
+  TypeScript against `python3 build_tdd.py`.
+- `run.ts`: the rules in `RULES` order, each isolated (a rule that dies is `RULE/check-failed`, the run goes on). The
+  compile folder lives in the run's scope. `report.ts`: the text report, `lint.json` and the exit code.
+- `pyops.ts`: what the rules need on top of the kernel (dict access, `==`, iteration, `str()`, the content walkers,
+  surrogateescape, Python's exception names for a thrown error).
+
+Tests (`test/lint`):
+- `corpus.test.ts`: 84 mutations of a neutral base packet (`fixtures/base`, `fixtures/mutations.ts`) with a git
+  repository built per run (`fixtures/repo`), and 7 usage cases. Each runs both linters from the same cwd with `TZ` and
+  `TDD_GENERATED` pinned. Exit code, stdout, stderr and lint.json must be identical, and every check id that
+  `lint_packet.py` declares (read from its source, 69 today) must fire at least once.
+  `TDD_LINT_COVERAGE_OUT=<file>` writes, for each check id, the cases that fired it.
+- `packets.test.ts`: `$TDD_PARITY_PACKETS`, on the build and with `--compile`.
+- `units.test.ts`: the Git, realpath, getmtime, surrogateescape and first_diff texts against CPython; rule isolation;
+  services swapped by layer (a Git answering from a table, a raising Agents check, an absent Compiler).
+
+One Python behaviour cannot be matched. DNUM/none sorts the D-numbers by their digits. When two tokens share a number
+(`D2` and `D-2`), Python breaks the tie in set order, which depends on the hash seed and so varies from run to run.
+The TypeScript keeps the first-seen order. The corpus avoids this tie.
+
 ## Effect smoke
 
 `test/smoke/effect.test.ts` (a `Context.Service` provided by a `Layer.effect` whose scoped resource is released when the
