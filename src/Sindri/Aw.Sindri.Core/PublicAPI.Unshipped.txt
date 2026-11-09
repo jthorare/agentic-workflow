@@ -9637,7 +9637,6 @@ static Aw.Sindri.Core.Challenges.IssuedChallenge.MinHoldMs.get -> int
 static Aw.Sindri.Core.Commands.Authorization.CallersFor(Aw.Sindri.Core.Commands.CommandRow! row) -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Challenges.ChallengeConfirmation
 static Aw.Sindri.Core.Challenges.ChallengeConfirmation.Refusal(Aw.Sindri.Core.Challenges.IssuedChallenge! issued, Aw.Sindri.Core.Challenges.ChallengeAnswer! answer, System.DateTimeOffset now) -> Aw.Kernel.Error?
-static Aw.Sindri.Core.Commands.CallerContext.AnsweredBy(Aw.Sindri.Core.Commands.CallerContext? caller) -> string!
 static Aw.Sindri.Core.Commands.CallerContext.ActorOf(Aw.Sindri.Core.Commands.CallerClass caller, Aw.Sindri.Core.Commands.ClientLabel client) -> string!
 Aw.Sindri.Core.Control.IRepoLocator.Place(string! directory, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>! repos, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Control.RepoPlacement?>
 Aw.Sindri.Core.Control.RepoPlacement

@@ -24,7 +24,7 @@ internal static class AnswerQuestionEndpoint
                 return ((Result<AnswerQuestionResponse>)SindriErrors.InvalidInput.With($"'{node}' is not a node id (a lowercase letter, then lowercase letters, digits and '_')")).ToHttpResult();
             }
 
-            var by = CallerContext.AnsweredBy(callers.Current);
+            var by = callers.Current?.Actor ?? "owner";
             return (await service.Handle(new AnswerQuestionRequest(parsedRun, parsedNode, body?.Text, body?.Choice, by), ct).ConfigureAwait(false)).ToHttpResult();
         });
         return group;
