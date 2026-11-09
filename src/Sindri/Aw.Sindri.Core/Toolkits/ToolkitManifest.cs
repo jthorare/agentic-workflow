@@ -38,6 +38,57 @@ public sealed record ToolkitManifest(string Name, string Version, IReadOnlyList<
         }
     }
 
+    /// <summary>Writes the manifest as the JSON <see cref="Parse"/> reads, so the store can keep it as text.</summary>
+    /// <returns>The JSON text.</returns>
+    public string ToJson()
+    {
+        var buffer = new System.Buffers.ArrayBufferWriter<byte>();
+        using (var w = new Utf8JsonWriter(buffer))
+        {
+            w.WriteStartObject();
+            w.WriteString("name", Name);
+            w.WriteString("version", Version);
+            w.WriteStartArray("resources");
+            foreach (var r in Resources)
+            {
+                w.WriteStartObject();
+                w.WriteString("kind", r.Kind);
+                w.WriteString("name", r.Name);
+                if (r.Size is not null)
+                {
+                    w.WriteString("size", r.Size);
+                }
+
+                w.WriteString("variable", r.Variable);
+                w.WriteEndObject();
+            }
+
+            w.WriteEndArray();
+            WriteTools(w);
+            w.WriteEndObject();
+        }
+
+        return System.Text.Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
+    private void WriteTools(Utf8JsonWriter w)
+    {
+        w.WriteStartArray("tools");
+        foreach (var t in Tools)
+        {
+            w.WriteStartObject();
+            w.WriteString("name", t.Name);
+            w.WriteString("description", t.Description);
+            w.WritePropertyName("inputSchema");
+            w.WriteRawValue(t.InputSchema);
+            w.WritePropertyName("outputSchema");
+            w.WriteRawValue(t.OutputSchema);
+            w.WriteEndObject();
+        }
+
+        w.WriteEndArray();
+    }
+
     private static Result<IReadOnlyList<ToolkitResource>> ReadResources(JsonElement resources)
     {
         List<ToolkitResource> parsed = [];

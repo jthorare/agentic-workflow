@@ -21674,9 +21674,6 @@ Aw.Sindri.Core.Toolkits.IToolkitRuntime
 Aw.Sindri.Core.Toolkits.IToolkitRuntime.Start(Aw.Sindri.Core.Toolkits.Toolkit! toolkit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Toolkits.IToolkitRuntime.Stop(string! name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Toolkits.IToolkitStore
-Aw.Sindri.Core.Toolkits.IToolkitStore.Find(string! name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Toolkits.Toolkit?>
-Aw.Sindri.Core.Toolkits.IToolkitStore.List(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.Toolkit!>!>
-Aw.Sindri.Core.Toolkits.IToolkitStore.Save(Aw.Sindri.Core.Toolkits.Toolkit! toolkit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace.ReadManifest(string! dir, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace.SourceHash(string! dir, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
@@ -21694,3 +21691,7 @@ override Aw.Sindri.Core.Toolkits.ToolkitCommandResult.GetHashCode() -> int
 override Aw.Sindri.Core.Toolkits.ToolkitCommandResult.ToString() -> string!
 static Aw.Sindri.Core.Toolkits.ToolkitCommandResult.operator !=(Aw.Sindri.Core.Toolkits.ToolkitCommandResult? left, Aw.Sindri.Core.Toolkits.ToolkitCommandResult? right) -> bool
 static Aw.Sindri.Core.Toolkits.ToolkitCommandResult.operator ==(Aw.Sindri.Core.Toolkits.ToolkitCommandResult? left, Aw.Sindri.Core.Toolkits.ToolkitCommandResult? right) -> bool
+Aw.Sindri.Core.Toolkits.ToolkitManifest.ToJson() -> string!
+Aw.Sindri.Core.Toolkits.IToolkitStore.Find(string! name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Toolkits.Toolkit?>!>
+Aw.Sindri.Core.Toolkits.IToolkitStore.List(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.Toolkit!>!>!>
+Aw.Sindri.Core.Toolkits.IToolkitStore.Save(Aw.Sindri.Core.Toolkits.Toolkit! toolkit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>

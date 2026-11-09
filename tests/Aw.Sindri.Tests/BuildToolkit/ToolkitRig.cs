@@ -51,14 +51,14 @@ internal sealed class ToolkitRig : IDisposable
     {
         internal Dictionary<string, Toolkit> Items { get; } = new(StringComparer.Ordinal);
 
-        public ValueTask<Toolkit?> Find(string name, CancellationToken cancellationToken) => ValueTask.FromResult(Items.GetValueOrDefault(name));
+        public ValueTask<Result<Toolkit?>> Find(string name, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(Items.GetValueOrDefault(name)));
 
-        public ValueTask<IReadOnlyList<Toolkit>> List(CancellationToken cancellationToken) => ValueTask.FromResult<IReadOnlyList<Toolkit>>([.. Items.Values.OrderBy(static t => t.Name, StringComparer.Ordinal)]);
+        public ValueTask<Result<IReadOnlyList<Toolkit>>> List(CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<IReadOnlyList<Toolkit>>([.. Items.Values.OrderBy(static t => t.Name, StringComparer.Ordinal)]));
 
-        public ValueTask Save(Toolkit toolkit, CancellationToken cancellationToken)
+        public ValueTask<Result<Unit>> Save(Toolkit toolkit, CancellationToken cancellationToken)
         {
             Items[toolkit.Name] = toolkit;
-            return ValueTask.CompletedTask;
+            return ValueTask.FromResult<Result<Unit>>(default(Unit));
         }
     }
 
