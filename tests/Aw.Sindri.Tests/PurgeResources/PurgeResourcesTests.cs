@@ -77,7 +77,7 @@ public sealed class PurgeResourcesTests : IDisposable
         Assert.Equal(0, none.Value.Removed);
     }
 
-    private static PurgeResourcesService Build() => new();
+    private PurgeResourcesService Build() => new(new ResourceFiles(Root), _workflows, _runs);
 
     private async Task CreateWorkflow() =>
         _ = (await _workflows.Create(_id, _slug, new GraphSpec(Version: 1, "Triage", Description: null, Concurrency: null, Resources: null, Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, [])], Edges: []), "owner", Token)).Value;

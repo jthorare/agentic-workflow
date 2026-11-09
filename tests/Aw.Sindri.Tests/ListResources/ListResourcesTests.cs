@@ -66,7 +66,7 @@ public sealed class ListResourcesTests : IDisposable
         Assert.Empty(none.Value.Resources);
     }
 
-    private static ListResourcesService Build() => new();
+    private ListResourcesService Build() => new(new ResourceFiles(Root));
 
     private void Provision(string owner)
     {
