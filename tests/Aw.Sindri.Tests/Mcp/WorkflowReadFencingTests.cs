@@ -190,33 +190,24 @@ public sealed class WorkflowReadFencingTests : IAsyncLifetime
 
     private static void Walk(JsonElement element, string path, List<(string, string)> found)
     {
-        switch (element.ValueKind)
+        if (element.ValueKind == JsonValueKind.Object)
         {
-            case JsonValueKind.Object:
-                foreach (var member in element.EnumerateObject())
-                {
-                    Walk(member.Value, path.Length == 0 ? member.Name : $"{path}.{member.Name}", found);
-                }
-
-                break;
-            case JsonValueKind.Array:
-                var index = 0;
-                foreach (var item in element.EnumerateArray())
-                {
-                    Walk(item, $"{path}[{(index++).ToString(CultureInfo.InvariantCulture)}]", found);
-                }
-
-                break;
-            case JsonValueKind.String:
-                found.Add((path, element.GetString()!));
-                break;
-            case JsonValueKind.Undefined:
-            case JsonValueKind.Number:
-            case JsonValueKind.True:
-            case JsonValueKind.False:
-            case JsonValueKind.Null:
-            default:
-                break;
+            foreach (var member in element.EnumerateObject())
+            {
+                Walk(member.Value, path.Length == 0 ? member.Name : $"{path}.{member.Name}", found);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            var index = 0;
+            foreach (var item in element.EnumerateArray())
+            {
+                Walk(item, $"{path}[{index++.ToString(CultureInfo.InvariantCulture)}]", found);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.String)
+        {
+            found.Add((path, element.GetString()!));
         }
     }
 
