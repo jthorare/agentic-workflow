@@ -27,7 +27,7 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
     private JsonNode? Root(string name) => name switch
     {
         "trigger" => _trigger,
-        "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision },
+        "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision, ["id"] = run.WorkflowId.Value },
         "item" => loop?.Item,
         "itemIndex" => loop is null ? null : JsonValue.Create(loop.ItemIndex),
         _ => Output(name),

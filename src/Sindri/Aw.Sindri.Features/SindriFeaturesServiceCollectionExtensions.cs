@@ -5,6 +5,7 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;
@@ -154,7 +155,15 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IValidator<SessionHeartbeatRequest>, AcceptAllValidator<SessionHeartbeatRequest>>().AddIssue<SessionHeartbeatRequest, SessionHeartbeatResponse, SessionHeartbeatService>().AddScoped<IValidator<SessionExitRequest>, AcceptAllValidator<SessionExitRequest>>().AddIssue<SessionExitRequest, SessionExitResponse, SessionExitService>();
         _ = services.AddScoped<IValidator<DecideRequest>, DecideValidator>().AddCommand<DecideRequest, CommandAccepted, DecideService>();
         _ = services.AddScoped<IValidator<FileRequestRequest>, FileRequestValidator>().AddCommand<FileRequestRequest, RequestFiledResponse, FileRequestService>();
-        _ = services.AddProjectCommands().AddConnectionSlices().AddMemorySlices().AddTodoSlices().AddLinearReads().AddLinearConnection().AddReviewCommands().AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>().AddScoped<IItemMaker, FixItemMaker>().AddScoped<IValidator<CreateHandoffItemRequest>, CreateHandoffItemValidator>().AddCommand<CreateHandoffItemRequest, HandoffItemCreatedResponse, CreateHandoffItemService>();
+        _ = services.AddProjectCommands().AddConnectionSlices().AddMemorySlices().AddTodoSlices().AddLinearReads().AddLinearConnection().AddReviewCommands().AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>().AddScoped<IItemMaker, FixItemMaker>().AddScoped<IValidator<CreateHandoffItemRequest>, CreateHandoffItemValidator>().AddCommand<CreateHandoffItemRequest, HandoffItemCreatedResponse, CreateHandoffItemService>().AddScoped<WorkflowItemMaker>()
+            .AddSingleton<ICreateItemPort>(static sp => new ScopedCreateItemPort(async (item, ct) =>
+            {
+                var scope = sp.CreateAsyncScope();   // why: the engine's blocks are singletons, the create-item handler is scoped
+                await using (scope.ConfigureAwait(false))
+                {
+                    return await scope.ServiceProvider.GetRequiredService<WorkflowItemMaker>().Create(item, ct).ConfigureAwait(false);
+                }
+            }));
         _ = services.AddScoped<IValidator<RebuildViewsRequest>, AcceptAllValidator<RebuildViewsRequest>>().AddCommand<RebuildViewsRequest, CommandAccepted, RebuildViewsService>();
         _ = services.AddScoped<IValidator<ImportContextMapRequest>, AcceptAllValidator<ImportContextMapRequest>>().AddCommand<ImportContextMapRequest, ImportContextMapResponse, ImportContextMapService>();
         _ = services.AddScoped<Core.Profile.ModelKeyChecks>();

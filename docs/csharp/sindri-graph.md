@@ -82,6 +82,17 @@ One node run is one agent session on the existing launcher and agent runtime. Co
 
 **Report.** The agent reports with `sindri workflow complete <run id> --run <token> --outcome done --output fact:<field>=<file>...` (the exact line is in its brief); the token is `<node position>.<item index + 1>` (`RunAgentWire`). `CompleteStepService` finds the node, decides who may report it (`AgentReportAuthority.DecideNode`: the launched session with its launch secret, or the human of a taken-over node; a wrong secret is `SND-AUTH-003`), checks the report against the declared outputs (`RunAgentReport`: a missing, undeclared or mistyped field is refused and named, and the agent may report again; a string output is the file's text, any other type is JSON) and sends the values to the run's workflow (`agent-report` update). A session that ended unreported completes the node from `.sindri-out` only when every declared output (except optional ones) is there (`AgentRecovery.DecideNode`).
 
+## Flow blocks (agent-first PR 9, part C)
+
+Five more blocks, each with an example spec page under `docs/workflows/blocks/`: [`only_new`](../workflows/blocks/only_new.md), [`create_item`](../workflows/blocks/create_item.md), [`run_workflow`](../workflows/blocks/run_workflow.md), the [`workflow_call`](../workflows/blocks/workflow_call.md) trigger and [`http`](../workflows/blocks/http.md). Registered by `GraphBlockRegistry.FlowBlocks`.
+
+- **After-success hook.** `IGraphBlock.Commit` runs after a node's `Execute` succeeded (in `GraphBlockActivities`); a failure there fails the node. `only_new` records its keys there, so a node that fails leaves its items unseen. It runs at the node, not at the end of the run: a later node that fails does not give the items back.
+- **`workflow.id`.** A node may read `{{workflow.id}}` (with `name`, `runId` and `revision`). `only_new` keys its memory by it.
+- **Call guards** (`Core/Graph/Guards`). A run is depth 0, the run it calls is 1. `workflow.callDepth` (profile, default 3, 1 to 10): depth 3 is allowed, 4 is `SND-GRAPH-120`. A run may not start its own workflow, nor the workflow named by its trigger's `parentRun`: `SND-GRAPH-121`. The callee's trigger is `{"kind":"workflow_call","payload":...,"callDepth":N,"parentRun":"<run>","by":"workflow:<slug>"}` and its run id's occurrence is a hash of caller run, node and item index (from 100,000,000 up), so a node that runs twice starts one callee run. Seam: `CallDepth.Next(..., launchLineage)` is where PR 7's launch-based self-start check plugs in.
+- **Profile keys.** `workflow.http.hosts` (bare lower-case host names, at most 50; none listed refuses every request) and `workflow.callDepth`; both are approval-relevant (`ProfileDiff`).
+- **Seen memory.** `workflow_seen(workflow_id, key, first_seen_at)` in ledger.db (migration 0014; renumbered at the final main merge). Read only by `only_new`.
+- **Codes.** `SND-GRAPH-120` call too deep, `121` self-start, `122` an http request refused before it was sent, `123` an http request that got no acceptable answer.
+
 ## Reading workflows and runs (PR 8a)
 
 Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkflowRuns`, `GetWorkflowRun`) behind an HTTP route, an MCP tool and a `sindri wf` verb. They read the routes and never start the control plane; any caller may use them.
