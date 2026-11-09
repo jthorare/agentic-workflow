@@ -61,7 +61,7 @@ public sealed partial class CommandPaletteViewModelTests
     public async Task A_second_copy_inside_the_window_is_spoken_again_by_the_palette()
     {
         _palette.Open();
-        _palette.Query = "show line holdout";
+        _palette.Query = "set profile key";
         var entry = _palette.Selected;
         var spoken = Spoken();
 
@@ -75,7 +75,7 @@ public sealed partial class CommandPaletteViewModelTests
     [Fact]
     public async Task A_second_copy_inside_the_window_is_spoken_again_by_the_control()
     {
-        var control = _controls.For("ShowLineHoldout")!;
+        var control = _controls.For("SetProfileKey")!;
         var said = new List<string>();
         control.PropertyChanged += (_, e) =>
         {
@@ -249,7 +249,7 @@ public sealed partial class CommandPaletteViewModelTests
     public async Task A_palette_copy_is_spoken_by_the_palette_while_its_control_is_muted_until_copied_clears()
     {
         _palette.Open();
-        _palette.Query = "show line holdout";
+        _palette.Query = "set profile key";
         var entry = _palette.Selected!;
         var control = entry.Control!;
         var controlSpoke = false;

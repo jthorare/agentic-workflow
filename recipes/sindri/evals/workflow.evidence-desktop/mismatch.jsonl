@@ -1,3 +1,0 @@
-{"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:built":"https://example.test/diff/1"}}}
-{"trigger":{"kind":"step.completed","outcome":"passed","outputs":{"fact:evidenceSummary":"all screens within limit"}},"expect":{"state":"review"}}
-{"trigger":{"kind":"step.completed","outcome":"mismatch","outputs":{"fact:desktopMismatches":"home: missing the need-you band"}},"expect":{"state":"failed","outcome":"unresolved"}}

@@ -14,7 +14,7 @@ namespace Aw.Sindri.Testing.Connections;
 /// </summary>
 public sealed class FakeOAuthServer : IDisposable
 {
-    private readonly HttpListener _listener = new();
+    private readonly HttpListener _listener;
     private readonly Lock _gate = new();
     private readonly Dictionary<string, string> _challengeByCode = new(StringComparer.Ordinal);
     private readonly List<OAuthServerRequest> _requests = [];
@@ -24,13 +24,9 @@ public sealed class FakeOAuthServer : IDisposable
     /// <summary>Starts the server on a free loopback port.</summary>
     public FakeOAuthServer()
     {
-        using var probe = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
-        probe.Start();
-        var port = ((IPEndPoint)probe.LocalEndpoint).Port;
-        probe.Stop();
-        Url = "http://127.0.0.1:" + port.ToString(CultureInfo.InvariantCulture);
-        _listener.Prefixes.Add(Url + "/");
-        _listener.Start();
+        var (listener, baseUri) = LoopbackListener.Start();
+        _listener = listener;
+        Url = baseUri.AbsoluteUri.TrimEnd('/');
         _ = Serve();
     }
 

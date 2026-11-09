@@ -1,0 +1,17 @@
+{
+  "connection": {
+    "name": "acme:key",
+    "kind": "rest",
+    "preset": null,
+    "status": "connected",
+    "statusReason": null,
+    "config": {
+      "probeUrl": "https://api.acme.example.test/ping"
+    },
+    "lastRefreshedAt": null,
+    "hasSecret": true
+  },
+  "ok": true,
+  "reason": null,
+  "tools": null
+}

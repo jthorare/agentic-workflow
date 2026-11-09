@@ -81,17 +81,11 @@ internal sealed partial class Launcher
         return prior;
     }
 
-    /// <summary>LN-WF5: the Step's pack, in its directory before the session starts (an attended launch has none); an error when the pack is refused.</summary>
-    private Error? WriteBundle(LaunchRequest request, string workDir) =>
-        request is { Attended: false, Step.Bundle: { } bundle }
-            ? PackBundleFiles.Write(StepEnvironment.For(request, parts.Options.SindriHome).GetValueOrDefault(StepEnvironment.RunDirectory, workDir), bundle)
-            : null;
-
-    /// <summary>The Step's pack and its declared read facts, in its run directory before the session starts; the first refusal, else null.</summary>
+    /// <summary>The Step's declared read facts, in its run directory before the session starts; the first refusal, else null.</summary>
     private async ValueTask<Error?> WriteStepFiles(LaunchRequest request, string workDir, CancellationToken cancellationToken)
     {
         MakeRunDirectory(request);
-        return WriteBundle(request, workDir) ?? await WriteFacts(request, workDir, cancellationToken).ConfigureAwait(false) ?? await WriteOutputFolder(request, workDir, cancellationToken).ConfigureAwait(false);
+        return await WriteFacts(request, workDir, cancellationToken).ConfigureAwait(false) ?? await WriteOutputFolder(request, workDir, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>SB17: the Step's own run directory under Sindri's home (0700), made before its files and before the sandbox checks that it exists; nothing without a home (the run directory is then the worktree).</summary>

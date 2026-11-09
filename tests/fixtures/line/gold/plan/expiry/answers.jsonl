@@ -1,1 +1,0 @@
-{"batch":1,"actor":"owner","at":"2026-10-16T11:00:00Z","stop":"after-design","recordedAs":"decision","answers":[{"decision":"D1","pick":"D1.a"},{"decision":"D2","pick":"D2.a"},{"decision":"D3","pick":"D3.a"}],"note":"The recommended path: every pick equals the assumption, so settle reports assumed."}

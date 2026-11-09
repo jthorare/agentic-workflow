@@ -1,7 +1,0 @@
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
-  "title": "SND-WF-012",
-  "status": 409,
-  "detail": "T-3/step/1 is still live (fix: finish it, or sindri workflow cancel T-3/step/1, then start --attempt next)",
-  "traceId": "<trace>"
-}

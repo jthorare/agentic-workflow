@@ -1,5 +1,0 @@
-T-3/step/1  workflow.step@4ca37bf46333  v4  parked: spec-conflict (revoked)  since 11:56 (4m)
-  next      workflow.step was revoked.
-            Cancel, then start a new attempt from an approved version.
-  answer    none (revoked): sindri workflow cancel T-3/step/1, then start a new attempt with --attempt next
-  commands  cancel

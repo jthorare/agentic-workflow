@@ -277,11 +277,12 @@ public static partial class SindriErrors
         NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound, InvalidQuery, RouteRemoved,
         ScrubStagedSecrets, ScrubForeignHook, ScrubNotARepo, ScrubGitFailed,
         ProjectAlreadyOnPage, ProjectFactsUnavailable, ProjectNotSynced, ProjectInvalid, ProjectNotFound, ProjectConflict,
-        GraphInvalid, GraphFindings, GraphUnknownBlock, GraphBadReference, GraphBadExpression, GraphBadCron, GraphStaleRevision, GraphNotFound, GraphSlugTaken, GraphIdTaken, GraphArchived, GraphRunIdTaken, GraphRunNotFound, GraphBlockFailed, GraphPromptAnswer, GraphNotActive, GraphBadPayload, GraphRunEnded, GraphOutputTruncated,
+        GraphInvalid, GraphFindings, GraphUnknownBlock, GraphBadReference, GraphBadExpression, GraphBadCron, GraphStaleRevision, GraphNotFound, GraphSlugTaken, GraphIdTaken, GraphArchived, GraphRunIdTaken, GraphRunNotFound, GraphBlockFailed, GraphPromptAnswer, GraphRunControlsPending, GraphNotActive, GraphBadPayload, GraphRunEnded, GraphOutputTruncated,
         SkillResultUnreadable, SkillResultWrongSkill, SkillVerdictUnmapped, SkillOutputInvalid, SkillRequirementMissing, SkillPrInputInvalid, SkillAgentCopyDiffers, SkillPrFetchFailed,
         ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewNotSynced, ReviewFixNotPosted, ReviewRepoUnsynced, ReviewNoLogin, ReviewPrNotFound, ReviewOfflineUncached,
         LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain,
         ConnectionNotFound, ConnectionNeedsSignIn, ConnectionSignInTimeout, ConnectionStateMismatch, ConnectionRefreshFailed, ConnectionSecretUnavailable, ConnectionNeedsClientId, ConnectionNameInvalid, ConnectionConsentDenied, ConnectionExists, ConnectionKindNoSignIn,
+        ConnectionRateLimited, ConnectionProviderChanged, ConnectionCursorRejected,
         MemoryNotFound, MemoryNameTaken, MemoryFactInvalid, MemoryEmbedUnavailable, MemoryMatchLevelInvalid, MemoryNameInvalid, MemoryExpiryPast,
         .. EveryTodo(),
     ];

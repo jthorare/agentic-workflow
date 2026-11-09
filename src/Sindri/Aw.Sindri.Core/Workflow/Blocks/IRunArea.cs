@@ -4,7 +4,7 @@ namespace Aw.Sindri.Core.Workflow.Blocks;
 
 /// <summary>
 /// An instance's run area, $AW_SINDRI_HOME/workflow/runs/&lt;WFI-id&gt;/ (scoping spec §8.3): the files a Step keeps for the instance beside its facts, such as the
-/// scoping station's rounds.jsonl and its candidate packet. A Step names the instance by its address ('T-1/scoping/1', <see cref="StepContext.Address"/>) and a file by a
+/// scoping station's rounds.jsonl and its candidate packet. A Step names the instance by its address ('T-1/scoping/1', Address) and a file by a
 /// bounded relative name (<see cref="RunAreaNames"/>); a write that cannot be made is an error, never a dropped line.
 /// </summary>
 public interface IRunArea

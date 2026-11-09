@@ -50,11 +50,32 @@ public sealed class KeepTodoTests
         var kept = await _h.Keep().Handle(new KeepTodoRequest(_id, TodoSideName.Obsidian, Piped: true), Token);
 
         Assert.True(kept.IsSuccess, kept.IsError ? kept.Error.ToString() : null);
-        Assert.Equal(["todo.conflict.resolved", "todo.changed"], _h.Slice.Store.Events.Select(e => e.Envelope.Type), StringComparer.Ordinal);
-        var changed = _h.Payload<TodoChanged>(_h.Slice.Store.Events[1]);
+        Assert.Equal(["todo.changed", "todo.conflict.resolved"], _h.Slice.Store.Events.Select(e => e.Envelope.Type), StringComparer.Ordinal);
+        var changed = _h.Payload<TodoChanged>(_h.Slice.Store.Events[0]);
         Assert.Equal((2L, "call the dentist about the crown", new DateOnly(2026, 1, 5), "obsidian", "pipe"), (changed.Version, changed.Text, changed.Due, changed.By, changed.Via));
         Assert.Equal(("call the dentist about the crown", 2L), (kept.Value.Todo.Text, kept.Value.Todo.Version));
-        Assert.Equal("pipe", _h.Payload<TodoConflictResolved>(_h.Slice.Store.Events[0]).Via);
+        Assert.Equal("pipe", _h.Payload<TodoConflictResolved>(_h.Slice.Store.Events[1]).Via);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Keep_obsidian_whose_write_is_refused_leaves_the_conflict_open_and_a_retry_works()
+    {
+        await Conflicted();
+        using var cli = _h.Cli();
+        // a ChangeTodo landed in the ledger after the view row was read: the converger's todo:X:v2 append is refused
+        await _h.Record(EventTypes.TodoChanged, new TodoChanged(_id, 2, "call the dentist today", Due: null, ClearDue: false, Links: null, "human:ui"), TodoWrite.VersionKey(_id, 2));
+
+        var refused = await _h.Keep().Handle(new KeepTodoRequest(_id, TodoSideName.Obsidian), Token);
+
+        Assert.Equal("SND-TODO-409", refused.Error.Code);
+        Assert.DoesNotContain(_h.Slice.Store.Events, e => e.Envelope.Type == "todo.conflict.resolved");
+
+        // the view catches up; the retry is a normal pick, not SND-TODO-005
+        await _h.Fold(EventTypes.TodoChanged, new TodoChanged(_id, 2, "call the dentist today", Due: null, ClearDue: false, Links: null, "human:ui"));
+        var retried = await _h.Keep().Handle(new KeepTodoRequest(_id, TodoSideName.Obsidian), Token);
+
+        Assert.True(retried.IsSuccess, retried.IsError ? retried.Error.ToString() : null);
+        Assert.Contains(_h.Slice.Store.Events, e => e.Envelope.Type == "todo.conflict.resolved");
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -66,7 +87,7 @@ public sealed class KeepTodoTests
         var kept = await _h.Keep().Handle(new KeepTodoRequest(_id, TodoSideName.Obsidian), Token);
 
         Assert.True(kept.IsSuccess, kept.IsError ? kept.Error.ToString() : null);
-        Assert.Equal(["todo.conflict.resolved", "todo.removed"], _h.Slice.Store.Events.Select(e => e.Envelope.Type), StringComparer.Ordinal);
+        Assert.Equal(["todo.removed", "todo.conflict.resolved"], _h.Slice.Store.Events.Select(e => e.Envelope.Type), StringComparer.Ordinal);
         Assert.True(kept.Value.Todo.Removed);
     }
 
@@ -129,7 +150,7 @@ public sealed class KeepTodoTests
         var kept = await _h.Keep().Handle(new KeepTodoRequest(_id, TodoSideName.Obsidian), Token);
 
         Assert.True(kept.IsSuccess, kept.IsError ? kept.Error.ToString() : null);
-        Assert.StartsWith("- [ ] call the dentist about the crown", _h.Payload<TodoConflictResolved>(_h.Slice.Store.Events[0]).BaseLine, StringComparison.Ordinal);
+        Assert.StartsWith("- [ ] call the dentist about the crown", _h.Payload<TodoConflictResolved>(_h.Slice.Store.Events[1]).BaseLine, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -145,7 +166,7 @@ public sealed class KeepTodoTests
         var undone = await _h.KeepUndo().Handle(new KeepTodoUndoRequest(_id), Token);
 
         Assert.True(undone.IsSuccess, undone.IsError ? undone.Error.ToString() : null);
-        Assert.Equal(["todo.conflict.resolved", "todo.changed", "todo.changed", "todo.conflict.reopened"], _h.Slice.Store.Events.Select(e => e.Envelope.Type), StringComparer.Ordinal);
+        Assert.Equal(["todo.changed", "todo.conflict.resolved", "todo.changed", "todo.conflict.reopened"], _h.Slice.Store.Events.Select(e => e.Envelope.Type), StringComparer.Ordinal);
         var back = _h.Payload<TodoChanged>(_h.Slice.Store.Events[2]);
         Assert.Equal((3L, "call the dentist", true), (back.Version, back.Text, back.ClearDue));
         Assert.Equal("human:cli", _h.Payload<TodoConflictReopened>(_h.Slice.Store.Events[3]).By);

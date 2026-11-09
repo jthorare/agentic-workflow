@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Infrastructure.Connections;
 
 namespace Aw.Sindri.Tests.Connections;
@@ -46,7 +47,7 @@ public sealed class ConnectionPresetsTests
             Assert.NotEmpty(preset.DefaultScopes);
             Assert.NotEmpty(preset.HostGroup);
             Assert.NotEmpty(preset.SignInNote);
-            Assert.Empty(preset.PollableEvents);
+            Assert.Equal(PollCatalog.For(preset.Key).Select(static k => k.Key), preset.PollableEvents, StringComparer.Ordinal);   // one list, not a copy in the JSON
         }
     }
 

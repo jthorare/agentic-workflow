@@ -13,8 +13,6 @@
 !context
 !config/launcher
 !config/packs
-!schemas/scoping
-!recipes/sindri
 !src/Aw.Kernel
 !src/Aw.Kernel.Data
 !src/Aw.Kernel.Telemetry

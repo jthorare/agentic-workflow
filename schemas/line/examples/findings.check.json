@@ -1,9 +1,0 @@
-[
-  {
-    "rule": "PLN-SIZE-001",
-    "item": "p2",
-    "message": "Phase p2 is size L.",
-    "fix": "Split p2.",
-    "severity": "error"
-  }
-]

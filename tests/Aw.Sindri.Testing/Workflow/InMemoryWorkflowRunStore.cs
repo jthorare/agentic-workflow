@@ -105,6 +105,19 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<WorkflowRun> running = [.. _runs
+                .Where(static r => r.Status == WorkflowRunStatus.Running)
+                .OrderBy(static r => r.StartedAt)
+                .ThenBy(static r => r.Id.Value, StringComparer.Ordinal)];
+            return Ok(running);
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<Result<int?>> LatestOccurrence(WorkflowId workflow, string triggerKind, CancellationToken cancellationToken)
     {
         lock (_gate)

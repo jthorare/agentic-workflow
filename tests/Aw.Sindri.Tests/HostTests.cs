@@ -56,6 +56,7 @@ public sealed class HostTests
         _ = Assert.Single(hosted.OfType<LauncherHost>());
         _ = Assert.Single(hosted.OfType<LeaseRenewer>());
         _ = Assert.Single(hosted.OfType<JobRecoveryHost>());
+        _ = Assert.Single(hosted.OfType<GraphRunRecoveryHost>());
         _ = Assert.Single(hosted.OfType<ContextWarmHost>());
     }
 

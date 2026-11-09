@@ -1,4 +1,0 @@
-{"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:built":"https://example.test/diff/1"}}}
-{"trigger":{"kind":"step.completed","outcome":"broken","outputs":{"fact:evidenceSummary":"app did not start"}},"expect":{"state":"run"}}
-{"trigger":{"kind":"step.completed","outcome":"passed","outputs":{"fact:evidenceSummary":"all screens within limit after the repair"}},"expect":{"state":"review"}}
-{"trigger":{"kind":"step.completed","outcome":"match"},"expect":{"state":"passed","outcome":"resolved"}}
