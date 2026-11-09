@@ -20672,6 +20672,7 @@ static Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.operator !=(Aw.Sindri.Core.
 static Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.operator ==(Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse? left, Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse? right) -> bool
 static Aw.Sindri.Core.Graph.Guards.CallDepth.SlugOf(string! run) -> string!
 static Aw.Sindri.Core.Graph.Guards.CallOccurrence.Of(string! caller, string! node, int index) -> int
+static Aw.Sindri.Core.Graph.Guards.CallOccurrence.Of(string! caller, string! node, int index, int attempt) -> int
 static Aw.Sindri.Core.Profile.HttpSettings.operator !=(Aw.Sindri.Core.Profile.HttpSettings? left, Aw.Sindri.Core.Profile.HttpSettings? right) -> bool
 static Aw.Sindri.Core.Profile.HttpSettings.operator ==(Aw.Sindri.Core.Profile.HttpSettings? left, Aw.Sindri.Core.Profile.HttpSettings? right) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.GraphCallDepth -> Aw.Kernel.ErrorDefinition!

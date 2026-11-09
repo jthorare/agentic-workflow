@@ -108,7 +108,7 @@ public sealed class GraphWorkflowCallerTests
         // why: a retried node must land on the same salted id it took before
         var again = (await w.Caller.Start(Call(), Token)).Value;
         Assert.Equal(called.Value.Run, again.Run);
-        Assert.Single(w.Launcher.Launched);
+        _ = Assert.Single(w.Launcher.Launched);
     }
 
     [Fact, Trait("Lane", "unit")]
