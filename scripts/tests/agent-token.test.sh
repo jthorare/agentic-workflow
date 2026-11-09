@@ -263,12 +263,14 @@ exec "$REAL_CURL" "\$@"
 STUB
 chmod +x "$WORK/curlpid/curl"
 ms() { python3 -c 'import time; print(int(time.time() * 1000))'; }
-# `python3 -c "$DFL" CMD...` execs CMD with SIGINT and SIGQUIT back at their
-# default disposition. A plain background `&` in this non-interactive shell
-# would start the script with both ignored, so INT and QUIT could not be tested
-# that way. It's a direct command, not a function, so `$!` is the script's pid.
+# `python3 -c "$DFL" CMD...` execs CMD with every signal this suite sends back
+# at its default disposition. A plain background `&` in this non-interactive
+# shell would start the script with INT and QUIT ignored, and a suite started
+# under `nohup` hands it HUP ignored too (#2377); an ignored-at-start signal
+# can't be trapped. It's a direct command, not a function, so `$!` is the
+# script's pid.
 DFL='import os, signal, sys
-for s in (signal.SIGINT, signal.SIGQUIT):
+for s in (signal.SIGINT, signal.SIGQUIT, signal.SIGHUP, signal.SIGTERM, signal.SIGPROF, signal.SIGUSR1, signal.SIGALRM):
     signal.signal(s, signal.SIG_DFL)
 os.execvp(sys.argv[1], sys.argv[1:])'
 # signal_mid_request "SIG [SIG2 ...]" WANT [kill]: send the signals back to back
