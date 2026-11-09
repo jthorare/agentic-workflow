@@ -41,8 +41,8 @@ public readonly partial struct RecipeHash : ITypedId<RecipeHash, string>
     public bool MatchesPrefix(string prefix) =>
         IsPrefix(prefix) && Digest.StartsWith(prefix.StartsWith(Scheme, StringComparison.Ordinal) ? prefix[Scheme.Length..] : prefix, StringComparison.Ordinal);
 
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A recipe hash is 'sha256:' and 64 lower-case hex digits");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A recipe hash is 'sha256:' and 64 lower-case hex digits");
 
     [GeneratedRegex("^sha256:[0-9a-f]{64}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

@@ -113,6 +113,10 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
         RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
             (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.Recent, c => c.Bind("$workflow", workflow.Value).Bind("$limit", Math.Max(limit, 1))), WorkflowRunMapper.Instance, token), cancellationToken);
 
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken) =>
+        RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
+            (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.Running, static _ => { }), WorkflowRunMapper.Instance, token), cancellationToken);
+
     public async ValueTask<Result<int?>> LatestOccurrence(WorkflowId workflow, string triggerKind, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(triggerKind);
