@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Todos;
 
 namespace Aw.Sindri.Tests.Todos.Sync;
@@ -6,7 +7,7 @@ namespace Aw.Sindri.Tests.Todos.Sync;
 /// <summary>TP-10: the sync raises a conflict when both places changed a todo, keeps its hands off the todo until the owner picks, closes it when the two agree, and honours a pick.</summary>
 public sealed class NoteConflictSyncTests
 {
-    private static readonly Aw.Sindri.Core.Ids.TodoId _first = TodoHarness.First;
+    private static readonly TodoId _first = TodoHarness.First;
 
     // one todo, synced; then Sindri says "today" and the note says "later"; the pass raises the conflict and the view carries it
     private static async Task<SyncRig> WithOpenConflict()
