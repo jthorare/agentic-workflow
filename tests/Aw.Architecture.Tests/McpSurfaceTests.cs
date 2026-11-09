@@ -28,14 +28,14 @@ public sealed class McpSurfaceTests
     public void Mcp_tools_reference_only_queries_and_the_request_command()
     {
         var catalog = HostIntrospection.Catalog().Rows;
-        // why: PR13 (G8): agents write memory, so the memory_* tools reach the three memory commands; each is Desk class with SessionOk, the owner's own sessions included
-        // why: connections PR 10a (owner decision D2): agents get every connection verb, so the connection_* tools reach the three connection commands; each is Desk class with SessionOk
+        // why: agents get every connection verb (connections PR 10a, D2) and write memory (PR13, G8): the connection_* and memory_* tools reach those commands; each is Desk class with SessionOk
         var allowed = new HashSet<string>(StringComparer.Ordinal)
         {
             typeof(FileRequestRequest).FullName!,
             typeof(AddConnectionRequest).FullName!,
             typeof(TestConnectionRequest).FullName!,
             typeof(RemoveConnectionRequest).FullName!,
+            typeof(SignInConnectionRequest).FullName!,
             typeof(CreateMemoryRequest).FullName!,
             typeof(WriteMemoryFactRequest).FullName!,
             typeof(ForgetMemoryFactRequest).FullName!,

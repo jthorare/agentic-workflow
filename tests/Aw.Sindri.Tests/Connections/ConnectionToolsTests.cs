@@ -94,9 +94,9 @@ public sealed class ConnectionToolsTests
     }
 
     [Fact]
-    public void The_five_tools_are_named_and_agents_may_use_every_one()
+    public void The_six_tools_are_named_and_agents_may_use_every_one()
     {
-        Assert.Equal(["connection_list", "connection_get", "connection_add", "connection_test", "connection_remove"], ConnectionTools.All.Select(static t => t.Name), StringComparer.Ordinal);
+        Assert.Equal(["connection_list", "connection_get", "connection_add", "connection_signin", "connection_test", "connection_remove"], ConnectionTools.All.Select(static t => t.Name), StringComparer.Ordinal);
         Assert.True(ConnectionTools.All.Single(static t => t.Name == "connection_get").Annotations!.ReadOnlyHint);
         Assert.True(ConnectionTools.All.Single(static t => t.Name == "connection_remove").Annotations!.DestructiveHint);
         Assert.All(ConnectionTools.All, static t => Assert.DoesNotContain("token", t.InputSchema.GetRawText(), StringComparison.OrdinalIgnoreCase));
