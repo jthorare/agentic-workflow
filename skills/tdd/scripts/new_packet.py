@@ -110,7 +110,7 @@ def main(argv):
     sha = full[:10] if full else None
     sha_date = git(repo, "show", "-s", "--format=%cs", full) if full else None
     author = git(repo, "config", "user.name")
-    today = datetime.date.today().isoformat()
+    today = os.environ.get("TDD_TODAY") or datetime.date.today().isoformat()
     title = (a.title or "").strip() or "<Title: the finding, not the topic>"
     ticket = (a.ticket or "").strip()
 
