@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.4",
+  "title": "SND-ENGINE-001",
+  "status": 503,
+  "detail": "the Temporal server is not reachable",
+  "traceId": "<trace>"
+}

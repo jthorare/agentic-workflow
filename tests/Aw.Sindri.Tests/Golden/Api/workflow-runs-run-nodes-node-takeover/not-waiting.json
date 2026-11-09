@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-GRAPH-109",
+  "status": 409,
+  "detail": "the run 'morning-check@1:2' is not waiting on an agent at node 'agent' item 0",
+  "traceId": "<trace>"
+}
