@@ -16,6 +16,7 @@ public sealed class FakeLaunchFiles : ILaunchFiles
     private readonly Dictionary<LaunchId, DateTimeOffset> _failed = [];
     private readonly Dictionary<LaunchId, DateTimeOffset> _nudged = [];
     private readonly HashSet<LaunchId> _tools = [];
+    private readonly HashSet<LaunchId> _held = [];
     private readonly List<LaunchId> _forgotten = [];
     private readonly List<LaunchId> _swept = [];
     private readonly HashSet<LaunchId> _homes = [];
@@ -74,6 +75,12 @@ public sealed class FakeLaunchFiles : ILaunchFiles
     public void MarkNudged(LaunchId launch, DateTimeOffset at) => _nudged[launch] = at;
 
     /// <inheritdoc/>
+    public bool TakenOver(LaunchId launch) => _held.Contains(launch);
+
+    /// <inheritdoc/>
+    public void MarkTakenOver(LaunchId launch, bool taken) => _ = taken ? _held.Add(launch) : _held.Remove(launch);
+
+    /// <inheritdoc/>
     public Result<Unit> Verify(LaunchId launch, LaunchSecret secret) =>
         _open.TryGetValue(launch, out var proof) && string.Equals(proof, secret.Value, StringComparison.Ordinal)
             ? Unit.Value
@@ -86,6 +93,7 @@ public sealed class FakeLaunchFiles : ILaunchFiles
         _ = _turns.Remove(launch);
         _ = _failed.Remove(launch);
         _ = _nudged.Remove(launch);
+        _ = _held.Remove(launch);
         _ = _tools.Remove(launch);
         _forgotten.Add(launch);
     }

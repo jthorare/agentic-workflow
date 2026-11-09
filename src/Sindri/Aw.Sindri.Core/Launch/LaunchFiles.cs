@@ -56,4 +56,12 @@ public static class LaunchFiles
     /// <param name="launch">The launch.</param>
     /// <returns>'&lt;id&gt;.prompted'.</returns>
     public static string PromptedName(LaunchId launch) => launch.Value + PromptedSuffix;
+
+    /// <summary>The end of the name of the file the engine touches while a person holds a graph node's session (PR 7), so the idle sweep leaves it alone.</summary>
+    public const string TakenOverSuffix = ".taken-over";
+
+    /// <summary>The file that marks <paramref name="launch"/>'s session as held by a person.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <returns>'&lt;id&gt;.taken-over'.</returns>
+    public static string TakenOverName(LaunchId launch) => launch.Value + TakenOverSuffix;
 }

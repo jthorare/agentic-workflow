@@ -34,7 +34,7 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly GraphRunStarter _starter;
     private readonly InMemorySindriStore _ledger;
 
-    private GraphRig(WorkflowEnvironment environment, ForEachLimits? forEachLimits)
+    private GraphRig(WorkflowEnvironment environment, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
     {
         // why: the test server is shared by the class, and a run id or task queue can be used once on it
         var number = Interlocked.Increment(ref _count).ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -63,6 +63,12 @@ internal sealed class GraphRig : IAsyncDisposable
             .AddWorkflow<GraphIterationWorkflow>()
             .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror))
             .AddAllActivities(new GraphBlockActivities(registry, Runs, Workflows));
+        if (agents is not null)
+        {
+            _ = options.AddAllActivities(new AgentNodeActivities(agents));
+        }
+
+        Control = new TemporalAgentNodeControl(_ => ValueTask.FromResult(Results.Success(Client)));
         _worker = new TemporalWorker(Client, options);
         _loop = _worker.ExecuteAsync(_stop.Token);
     }
@@ -80,15 +86,18 @@ internal sealed class GraphRig : IAsyncDisposable
 
     public ITemporalClient Client { get; }
 
+    /// <summary>The takeover, handback and report of the run's agent node, over the real Temporal adapter.</summary>
+    internal TemporalAgentNodeControl Control { get; }
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public static GraphRig Start(WorkflowEnvironment environment) => new(environment, forEachLimits: null);
+    public static GraphRig Start(WorkflowEnvironment environment, IAgentNodeRuntime? agents = null) => new(environment, agents, forEachLimits: null);
 
     /// <summary>A rig whose for_each blocks read <paramref name="forEachLimits"/> as the profile's limits.</summary>
     /// <param name="environment">The shared Temporal test server.</param>
     /// <param name="forEachLimits">The profile's item cap and batch size.</param>
     /// <returns>The started rig.</returns>
-    public static GraphRig Start(WorkflowEnvironment environment, ForEachLimits forEachLimits) => new(environment, forEachLimits);
+    public static GraphRig Start(WorkflowEnvironment environment, ForEachLimits forEachLimits) => new(environment, agents: null, forEachLimits);
 
     private sealed class FixedForEachLimits(ForEachLimits limits) : IForEachLimitSource
     {
