@@ -17,7 +17,7 @@ namespace Aw.Sindri.Core.NeedsYou;
 /// <param name="events">Reads the payloads through the package's AwJson options.</param>
 /// <param name="scrubber">Scrubs secrets out of the text a row stores.</param>
 /// <param name="builtIns">The services the build runs without a profile entry: a failure row of one offers RunService only and outlives a profile check.</param>
-internal sealed class NeedsYouProjection(EventFactory events, ITextScrubber scrubber, IEnumerable<BuiltInService> builtIns) : IProjection
+internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrubber scrubber, IEnumerable<BuiltInService> builtIns) : IProjection
 {
     private IReadOnlyList<BuiltInService> BuiltIns { get; } = [.. builtIns];
 
@@ -25,13 +25,14 @@ internal sealed class NeedsYouProjection(EventFactory events, ITextScrubber scru
 
     public IReadOnlyList<string> Views => [ViewNames.NeedsYou];
 
-    public bool Handles(string eventType) =>
-        string.Equals(eventType, EventTypes.RequestFiled, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.DecisionRecorded, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ItemStateChanged, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ServiceRan, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ProfileChecked, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ProfileApproved, StringComparison.Ordinal);
+    private static readonly HashSet<string> _handled = new(StringComparer.Ordinal)
+    {
+        EventTypes.RequestFiled, EventTypes.DecisionRecorded, EventTypes.ItemStateChanged, EventTypes.ServiceRan, EventTypes.ProfileChecked, EventTypes.ProfileApproved,
+        EventTypes.ConnectionNeedsSignIn, EventTypes.ConnectionSignedIn,
+    };
+
+    /// <inheritdoc />
+    public bool Handles(string eventType) => _handled.Contains(eventType);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
@@ -45,6 +46,7 @@ internal sealed class NeedsYouProjection(EventFactory events, ITextScrubber scru
             EventTypes.ServiceRan => await Ran(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileChecked => await Checked(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileApproved => await Approved(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.ConnectionNeedsSignIn or EventTypes.ConnectionSignedIn => await ConnectionRow(recorded, rows, cancellationToken).ConfigureAwait(false),
             _ => Results.Success(Unit.Value),
         };
     }

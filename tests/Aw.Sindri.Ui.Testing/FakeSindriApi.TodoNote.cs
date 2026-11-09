@@ -26,8 +26,16 @@ internal sealed partial class FakeSindriApi
     /// <summary>Every pick and Undo received, in order: the route and the body (null for an Undo).</summary>
     public IReadOnlyList<TodoPickSent> TodoPicks { get { lock (_gate) { return [.. _todoPicks]; } } }
 
+    /// <summary>Makes the note read throw this (a bug in the app's own code, not a refusal); null answers as <see cref="TodoNoteAnswer"/> says.</summary>
+    public Exception? TodoNoteReadFailure { get; set; }
+
     public Task<Result<TodoNoteView>> TodoNote(Uri api, CancellationToken cancellationToken)
     {
+        if (TodoNoteReadFailure is { } failure)
+        {
+            throw failure;
+        }
+
         _ = Interlocked.Increment(ref _todoNoteCalls);
         return Task.FromResult(Answer<TodoNoteView>(api, TodoRoutes.Note, TodoNoteAnswer));
     }

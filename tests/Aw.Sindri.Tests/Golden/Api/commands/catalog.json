@@ -11,7 +11,7 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/connections",
-      "cli": "sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>]",
+      "cli": "sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>] [--url <address>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -1502,6 +1502,24 @@
       "method": "POST",
       "route": "/sindri/reviews/login",
       "cli": "sindri profile set <key> <value>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "SignInConnection",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/connections/{name}/signin",
+      "cli": "sindri connection signin <name>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
