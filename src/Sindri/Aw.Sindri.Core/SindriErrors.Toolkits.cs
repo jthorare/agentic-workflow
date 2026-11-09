@@ -33,4 +33,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-TK-010: a toolkit or tool name is malformed or too long for a client.</summary>
     public static readonly ErrorDefinition ToolkitNameInvalid = new("SND-TK-010", ErrorKind.Invalid, "A toolkit or tool name isn't valid");
+
+    /// <summary>SND-TK-011: the toolkit's tool ran and answered with an error.</summary>
+    public static readonly ErrorDefinition ToolkitToolFailed = new("SND-TK-011", ErrorKind.Unavailable, "The toolkit tool returned an error");
 }
