@@ -8,7 +8,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Ledger;
 
-/// <summary>'workflow_seen' in ledger.db (migration 13) on a fresh file.</summary>
+/// <summary>'workflow_seen' in ledger.db (migration 14) on a fresh file.</summary>
 [Lane(TestLane.Integration)]
 public sealed class SqliteSeenStoreTests : IDisposable
 {
@@ -34,10 +34,10 @@ public sealed class SqliteSeenStoreTests : IDisposable
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
-    public void The_migration_that_makes_the_table_is_number_13_named_workflow_seen_and_reads_start_there()
+    public void The_migration_that_makes_the_table_is_number_14_named_workflow_seen_and_reads_start_there()
     {
-        Assert.Contains(LedgerDatabase.Migrations, static m => m.Version == 13 && m.Name.Contains("workflow_seen", StringComparison.Ordinal));
-        Assert.Equal(13, LedgerDatabase.WorkflowSeenVersion);
+        Assert.Contains(LedgerDatabase.Migrations, static m => m.Version == 14 && m.Name.Contains("workflow_seen", StringComparison.Ordinal));
+        Assert.Equal(14, LedgerDatabase.WorkflowSeenVersion);
     }
 
     [Fact]

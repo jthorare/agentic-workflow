@@ -10,6 +10,8 @@ internal static class WorkflowRunSql
 
     internal const string InFlight = SelectRun + " WHERE workflow_id = $workflow AND status IN ('queued', 'running', 'waiting') ORDER BY started_at, id";
 
+    internal const string Running = SelectRun + " WHERE status = 'running' ORDER BY started_at, id";
+
     internal const string LatestOfKind = SelectRun + " WHERE workflow_id = $workflow AND json_extract(trigger, '$.kind') = $kind ORDER BY CAST(substr(id, instr(id, ':') + 1) AS INTEGER) DESC LIMIT 1";
 
     internal const string InsertRun =

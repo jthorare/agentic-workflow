@@ -89,6 +89,23 @@ public abstract class WorkflowRunStoreContract
         Expect.Sequence([Run(2).Id, Run(3).Id], inFlight.Select(static r => r.Id));
     }
 
+    /// <summary>Only running runs are listed, over every workflow, oldest first.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Running_lists_only_running_runs_oldest_first()
+    {
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var store = Create(clock);
+        _ = (await store.Insert(Run(1, WorkflowRunStatus.Succeeded), Token)).Value;
+        _ = (await store.Insert(Run(2), Token)).Value;
+        _ = (await store.Insert(Run(3, WorkflowRunStatus.Queued), Token)).Value;
+        _ = (await store.Insert(Run(4), Token)).Value;
+
+        var running = (await store.Running(Token)).Value;
+
+        Expect.Sequence([Run(2).Id, Run(4).Id], running.Select(static r => r.Id));
+    }
+
     /// <summary>A final status sets the end time from the clock and keeps the outputs and the error given.</summary>
     /// <returns>The test.</returns>
     [Fact]
