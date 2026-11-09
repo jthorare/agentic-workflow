@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Todos.Note;
@@ -77,6 +78,20 @@ internal sealed class SyncRig
     internal static string WithoutLines(string note, int from, int to) =>
         string.Join('\n', note.Split('\n').Where((_, i) => i < from || i >= to));
 
+    private readonly HashSet<TodoId> _folded = [];
+
+    /// <summary>Shows the todos the sync added to the ledger in the todo view, as the projector would.</summary>
+    internal async Task FoldAdded()
+    {
+        foreach (var added in await Payloads<TodoAdded>(EventTypes.TodoAdded))
+        {
+            if (_folded.Add(added.Id))
+            {
+                await Harness.Fold(EventTypes.TodoAdded, added);
+            }
+        }
+    }
+
     /// <summary>The id of a note line, by its text.</summary>
     internal static TodoId? IdOnLine(string note, string text) =>
         NoteParser.Parse(note).Todos.FirstOrDefault(t => t.Text == text)?.Id;
@@ -85,7 +100,11 @@ internal sealed class SyncRig
     {
         internal NotePlace? Place { get; set; } = place;
 
-        public ValueTask<Result<NotePlace?>> Locate(CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(Place));
+        /// <summary>Gets or sets an error every Locate answers instead of the place.</summary>
+        internal Error? Error { get; set; }
+
+        public ValueTask<Result<NotePlace?>> Locate(CancellationToken cancellationToken) =>
+            ValueTask.FromResult(Error is { } error ? (Result<NotePlace?>)error : Results.Success(Place));
     }
 
     internal sealed class FakeNoteDisk : ITodoNoteDisk
