@@ -125,7 +125,8 @@ public sealed class OnlyNewBlock(IGraphSeenStore seen) : IGraphBlock
     {
         JsonObject obj => new JsonObject(obj.OrderBy(static p => p.Key, StringComparer.Ordinal).Select(static p => KeyValuePair.Create(p.Key, Canonical(p.Value)))),
         JsonArray arr => new JsonArray([.. arr.Select(static n => Canonical(n))]),
-        _ => node?.DeepClone(),
+        null => null,
+        _ => node.DeepClone(),
     };
 
     private sealed record Keyed(string Key, JsonNode? Item);
