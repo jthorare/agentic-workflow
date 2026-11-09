@@ -2,17 +2,25 @@
 name: tdd
 description: "Write a technical design document (TDD) in the house template: a markdown source compiled to content.json and rendered by a React app into one claude.ai HTML artifact (the source of truth), with mocks from the project's real components, tldraw diagrams with hover hotspots, a schema lane with sample rows and measured load, an agents/ lane for subagents, a linter, one living status doc, and owner decisions recorded one at a time. Use for 'write a TDD', 'technical design doc', 'design doc for <ticket>', 'rebuild this TDD in the house template'. Not a bug investigation or a PR review."
 argument-hint: "<slug> [--title T] [--ticket P-XXX-NNN] [--repo <path>]"
-allowed-tools: Bash(T=*), Bash(S=*), Bash(SD=*), Bash(git *), Bash(python3 *), Bash(node *), Bash(bun *), Bash(cd *), Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion, Agent
+allowed-tools: Bash(T=*), Bash(S=*), Bash(SD=*), Bash(SHARED_DIR=*), Bash(source *), Bash(git *), Bash(python3 *), Bash(node *), Bash(bun *), Bash(cd *), Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion, Agent
 ---
+
+<!-- preamble -->
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 # TDD (house template)
 
-One run turns a ticket into a **packet**: `<slug>.md` (the editable source), `meta.json`, diagrams, mocks, PR deep dives, schema cards, one `status.md`, and the built page `build/tdd.html`, published as a private claude.ai artifact. **The published artifact is the source of truth**; Notion mirrors it. This skill sits beside `system-design` (D1 of the tdd-system packet) and calls its scripts for drawing, checking and the repo slug; it never edits them.
+One run turns a ticket into a **packet**: `<slug>.md` (the editable source), `meta.json`, diagrams, mocks, PR deep dives, schema cards, one `status.md`, and the built page `build/tdd.html`, published as a private claude.ai artifact. **The published artifact is the source of truth**; Notion mirrors it. This skill sits beside `system-design` (D1 of the tdd-system packet) and uses system-design's scripts for drawing, checking and the repo slug, from its own copy in `vendor/system-design/`; it never edits `skills/system-design`.
 
 ```bash
-T="$HOME/.claude/skills/tdd"; S="$HOME/.claude/skills/system-design"
+T="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/tdd"   # this skill's folder
+S="${SYSTEM_DESIGN_SKILL:-$T/vendor/system-design}"              # the system-design scripts the skill resolves (see sd_root in scripts/build_tdd.py)
 SD="<the packet path new_packet.py printed>"     # shell state does not persist: repeat these lines in every block
 ```
+
+`T` is this skill's folder. If that path does not exist (the skill was linked into a provider's skills dir without the toolkit, for example a symlink at `~/.claude/skills/tdd`), set `T` to the folder that holds this SKILL.md. `S` is the system-design scripts the skill resolves (see `sd_root` in `scripts/build_tdd.py`): `$SYSTEM_DESIGN_SKILL` when it is set, else the copy in `vendor/system-design/` (its README says where it came from). The repo's own `skills/system-design` is a different variant (no `build_doc.py`, `artifact_check.mjs`, `doctor.sh` or `svg_to_png.mjs`, and its `draw_diagrams.mjs` draws dark by default), so never point `S` at it.
+
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
 ## Rules
 
@@ -109,6 +117,13 @@ Read `build/tdd.html` in full, then publish it with the Artifact tool as a priva
 
 Every published change bumps `rev` by one, sets `updated` to today and says what changed in `rev_note` (a line under Revisions in `status.md`, and the Notion row's last-change summary). Rebuild, lint green, `artifact_check` clean, eval run, republish, refresh the mirror. Finish with a typed return: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | NEEDS_HUMAN`, the artifact URL, the packet paths (`<slug>.md`, `status.md`, `build/tdd.html`, the agents lane), the eval summary line and the scorers that moved (a reviewer: the score diff), what is unverified, and the open questions waiting on the owner.
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref; that includes the `gh pr comment` and `gh pr edit` calls in the ops-loop templates (`templates/ops/`). Write, build, lint, check and eval the packet as the skill describes (the packet lives outside the code repo), and print each git or gh command you would have run under a `Would run:` heading.
+
 ## References
 
 | File | What it holds |
@@ -129,3 +144,18 @@ Every published change bumps `rev` by one, sets `updated` to today and says what
 ## Trust model (read before letting anyone but the owner edit a source)
 
 The compiler trusts the source author: markdown becomes inline HTML that the page renders as written. The compiler strips `<script>`, `<iframe>`, `on*=` handlers and `javascript:` URLs as a guard against accidents, but it is not a sanitizer for hostile input. A published artifact is private to its owner by default; before a source can be edited from outside (the ops loop's edit grant, a shared packet, a PR from a stranger), review the diff as you would code, and never let comment text or issue text flow into the source unreviewed.
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+f="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"; [ -f "$f" ] && . "$f" 2>/dev/null; echo "AW_DIR=${AW_DIR:-}"
+[ "${AW_RESULT:-0}" = 1 ] && [ -z "${AW_DIR:-}" ] && echo "AW_DIR is empty: source skills/_shared/repo-slug.sh, then write the result file; never skip it" || true
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/tdd-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then open your final reply (the message after the last tool call) with the same JSON as a fenced `aw-result` block, before any prose and before the typed return of step 8.
+
+Keys: `skill` (`tdd`), `artifacts` (absolute paths: the packet's `<slug>.md`, `meta.json`, `status.md`, `build/content.json`, `build/tdd.html` and the agents lane folder; `[]` when nothing was written), `summary` (one line),
+plus `slug` (the packet slug); `packet_dir` (absolute path of the packet directory, or `null` when step 0 did not make one); `artifact_url` (the published artifact's URL, or `null` when it was not published); `status` (the typed return: `DONE`, `DONE_WITH_CONCERNS`, `NEEDS_CONTEXT`, `BLOCKED` or `NEEDS_HUMAN`); `eval_summary` (the `scored N · metrics N · not run N · errors N` line, or `null` when the eval did not run).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

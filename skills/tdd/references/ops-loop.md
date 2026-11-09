@@ -126,7 +126,7 @@ never answered (loop guard). Cursor: `~/.system-design/ops/state.json` locally, 
 | host | the Mac mini (this Mac while you are at it) | the work machine, with agentic-workflow installed (`setup.sh`) |
 | signal in | wake, scheduled task, routines | the same; plus Prism: the session-start hook loads `session_load_context` for the repo slug (it must equal the Prism project name), and each responder brief carries that context |
 | result out | reply, resolve, Ops log, run log | the same; plus `session_save_handoff` after each handled signal; messages to the lead go by `SendMessage`, which judge's send-gate may batch into `judge/outbox/<sid>.jsonl` until the next urgent send |
-| PR review comments | the responder | review findings route to `/addressReview` (its source of truth is `~/.agentic-workflow/<repo-slug>/reviews/<pr>.json`), not to a second responder |
+| PR review comments | the responder | review findings route to `/addressReview` (its source of truth is `$AW_DIR/reviews/<pr>.json`, `AW_DIR` set by `skills/_shared/repo-slug.sh`), not to a second responder |
 | later | (none) | Sindri's standing workflows (webhooks as signal-with-start; README X59(b): planned, not built) replace the routines and mirror every transition into Sindri's ledger; Sindri's own Linear source is read-only, so writes stay with the responder |
 | guards | the usage ceiling, memctl | the same, plus agentic-workflow's hooks (`block-destructive`, `block-push-main`, `detect-secrets`), which apply to the responder too |
 

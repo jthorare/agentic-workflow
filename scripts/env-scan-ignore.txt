@@ -22,6 +22,7 @@ WAYLAND_DISPLAY # the Wayland session sets it; --init-launcher uses it to tell a
 NODE_OPTIONS # Node's own option variable; sindri doctor checks it for --use-env-proxy
 NODE_USE_ENV_PROXY # Node's own proxy switch; sindri doctor reports it
 GIT_CONFIG_GLOBAL # git's own variable; sindri onboard forwards it to the git it runs
+NODE_ENV # React's build switch, owned by the bundler: skills/tdd/app/build.ts and harness/render.tsx define process.env.NODE_ENV as "production" in the page bundle; no code reads it from the environment
 
 # Set by the host (Claude Code, Cursor) when it runs our hooks or installers.
 CLAUDECODE # set by Claude Code inside its sessions; the installer skips shell edits there, and sindri's CLI classes itself as a session
