@@ -126,6 +126,7 @@ internal sealed partial class ShellViewModel
         "J" => (PageId.Jobs, HomeFilter.All),
         "O" => (PageId.Connections, HomeFilter.All),
         "M" => (PageId.Memory, HomeFilter.All),
+        "W" => (PageId.Workflows, HomeFilter.All),
         "U" => (PageId.Settings, HomeFilter.All),   // Settings, at the setup checklist (ShowPage reveals it)
         _ => null,
     };

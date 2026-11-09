@@ -138,6 +138,56 @@ public sealed class SignInConnectionServiceTests
     }
 
     [Fact]
+    public async Task A_stale_sign_in_try_that_fails_after_a_newer_one_started_leaves_no_failure_beside_a_connected_row()
+    {
+        var world = new ConnectionHarness();
+        await world.Hold();
+        var row = ConnectionSamples.Oauth(status: ConnectionStatus.Connected);
+        _ = world.Secrets.Store(row.Name, new TokenSet("old-access", "old-refresh", ExpiresAt: null, ClientSecret: "cs-stored"));
+        _ = await world.Store.Upsert(row, Token);
+        var a = new FakeSignInSession();
+        var b = new FakeSignInSession();
+        _ = await world.SignInAgain(a).Handle(new SignInConnectionRequest("linear:work"), Token);
+        _ = await world.SignInAgain(b).Handle(new SignInConnectionRequest("linear:work"), Token);
+
+        a.Fail(SindriErrors.ConnectionSignInTimeout.With("timed out"));
+        for (var i = 0; i < 100 && world.Logs.Lines.Count == 0; i++)
+        {
+            await Task.Delay(20, Token);
+        }
+        _ = Assert.Single(world.Logs.Lines);   // the stale try's failure is still logged
+        var got = await world.Get().Handle(new GetConnectionRequest("linear:work"), Token);
+
+        Assert.True(got.IsSuccess);
+        Assert.Null(got.Value.LastSignInFailure);
+    }
+
+    [Fact]
+    public async Task A_stale_sign_in_try_that_fails_after_a_newer_one_started_does_not_end_the_newer_try_on_a_row_that_is_not_connected()
+    {
+        var world = new ConnectionHarness();
+        await world.Hold();
+        var row = ConnectionSamples.Oauth(status: ConnectionStatus.NeedsSignIn);
+        _ = world.Secrets.Store(row.Name, new TokenSet("old-access", "old-refresh", ExpiresAt: null, ClientSecret: "cs-stored"));
+        _ = await world.Store.Upsert(row, Token);
+        var a = new FakeSignInSession();
+        var b = new FakeSignInSession();
+        _ = await world.SignInAgain(a).Handle(new SignInConnectionRequest("linear:work"), Token);
+        _ = await world.SignInAgain(b).Handle(new SignInConnectionRequest("linear:work"), Token);
+
+        a.Fail(SindriErrors.ConnectionSignInTimeout.With("timed out"));
+        for (var i = 0; i < 100 && world.Logs.Lines.Count == 0; i++)
+        {
+            await Task.Delay(20, Token);
+        }
+        _ = Assert.Single(world.Logs.Lines);   // the stale try's failure is still logged
+        var got = await world.Get().Handle(new GetConnectionRequest("linear:work"), Token);
+
+        Assert.True(got.IsSuccess);   // the row, not the stale try's SND-CONN-003
+        Assert.Equal("needs-sign-in", got.Value.Connection.Status);
+    }
+
+    [Fact]
     public async Task A_connected_row_whose_last_sign_in_worked_reports_no_failure()
     {
         var world = new ConnectionHarness();

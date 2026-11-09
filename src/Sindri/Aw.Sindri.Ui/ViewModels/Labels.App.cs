@@ -66,6 +66,7 @@ internal static partial class Labels
         PageId.Connections => ConnectionsPage,
         PageId.Jobs => JobsPage,
         PageId.Memory => MemoryPageName,
+        PageId.Workflows => Workflows,
         PageId.Settings => Settings,
         _ => throw new ArgumentOutOfRangeException(nameof(page), page, message: null),
     };
@@ -83,7 +84,7 @@ internal static partial class Labels
     {
         PageId.Work => ArrivesWork,
         PageId.Context => ArrivesContext,
-        PageId.Home or PageId.Projects or PageId.Agents or PageId.System or PageId.Reviews or PageId.Connections or PageId.Jobs or PageId.Memory or PageId.Settings => null,
+        PageId.Home or PageId.Projects or PageId.Agents or PageId.System or PageId.Reviews or PageId.Connections or PageId.Jobs or PageId.Memory or PageId.Workflows or PageId.Settings => null,
         _ => throw new ArgumentOutOfRangeException(nameof(page), page, message: null),
     };
 
