@@ -40,15 +40,17 @@ public static partial class NoticeRule
         _protectedPrefixes.Any(p => line.StartsWith(p, StringComparison.OrdinalIgnoreCase))
         || MessageClassifier.Classify(text).Kind is MessageKind.Ready or MessageKind.OwnerQuestion;
 
-    // A "please" anywhere is an ask, even inside an ack or an FYI ("Ack: ... please lane-recycle me", meta.db replay, #2498).
-    private static bool Asks(string body) => body.Contains("please", StringComparison.OrdinalIgnoreCase);
+    // A "please" or a "?" anywhere is an ask, even inside an ack, an FYI or a "main moved" line ("Ack: ... please lane-recycle me",
+    // meta.db replay; "main moved ... can you merge main?", #2498).
+    private static bool Asks(string body) =>
+        body.Contains("please", StringComparison.OrdinalIgnoreCase) || body.Contains('?', StringComparison.Ordinal);
 
     private static bool IsLaneMap(string line) =>
         line.StartsWith("LANE MAP v", StringComparison.OrdinalIgnoreCase) && line.Length > 10 && char.IsAsciiDigit(line[10]);
 
     private static bool IsBareAck(string line, string body)
     {
-        if (body.Contains('?', StringComparison.Ordinal) || Encoding.UTF8.GetByteCount(body) >= AckMaxBytes)
+        if (Encoding.UTF8.GetByteCount(body) >= AckMaxBytes)
         {
             return false;
         }

@@ -32,7 +32,11 @@ owner answer owes the asking lane the answer. **While any obligation is open, th
 it prints what you owe and the command that settles it. Settle it, don't argue with it:
 
 - **Reply**: **Message a running agent**: the sender (the name the inbox shows). The outbox hook records the send and closes
-  the obligation. Send one reply per message, even when it's only "on it, gate running".
+  the obligation. A message that needs no answer is a notice (below): don't reply to it.
+- **Notices** open no reply and never block a lane's stop; `inbox --all` shows them `settled`. A message is a notice when
+  its first line starts `FYI:`, `NOTICE:`, `main moved` or `LANE MAP v<N>`, or it is a bare ack (`ack`, `thanks`,
+  `noted`, `got it`, `roger`) under 240 bytes. It is never a notice when it is a `ready`, `OK #`, `NOT OK #`, `DIGEST
+  READY` or owner line, or holds `please` or `?` anywhere. To send one that needs no answer, start it `FYI:` or `NOTICE:`.
 - **Reply to a non-Claude lane** (the lane map marks a lane that runs Codex, Cursor or another agent): those lanes have no
   cross-session messages, so send with `aw-meta lane-send --lane <lane> --text "<message>"` (or `--file <f>`), never with
   the message tool. It stores the message in the lane's inbox, records the send (which closes your reply obligation, as
