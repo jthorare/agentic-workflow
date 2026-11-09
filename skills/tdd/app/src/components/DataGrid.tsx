@@ -1,11 +1,13 @@
 // DataGrid: the D7 table card drawn the Snowsight way (D14a). Three tabs: "Data preview" (a compact mono grid with row
 // numbers, a sticky typed header carrying each column's D7 change chip, a stats row, sort, filter and Copy TSV),
 // "Columns" (one row per column: name, change, note, type with the struck-through `was`, and statistics), "Details"
-// (the D7 measured and expected load cards, DDL, indexes, notes, where the table appears). Every statistic is computed
-// here from sample_rows, deterministically, and labelled "from sample rows"; none is a measurement. Rendered only in
-// the browser (the drawer is empty on the server), but render stays pure: no Date, random or window during render.
-// The Snowsight reading behind this is in references/data-view.md.
-import { Fragment, useMemo, useRef, useState } from "react";
+// (the summary, the D7 measured and expected load cards, DDL, indexes, notes, where the table appears). The tab bar sits
+// in the drawer head beside the table name (D26); a grid wider than the drawer is laid out in stacked bands of columns
+// (same row numbers, sticky, on every band), and the drawer's Expand view shows it as one band that scrolls sideways.
+// Every statistic is computed here from sample_rows, deterministically, and labelled "from sample rows"; none is a
+// measurement. Rendered only in the browser (the drawer is empty on the server), but render stays pure: no Date,
+// random or window during render. The Snowsight reading behind this is in references/data-view.md.
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject } from "react";
 import { cx } from "../lib/raw";
 import type { Column, Measure, SchemaTable } from "../types";
@@ -225,14 +227,44 @@ function ChangeChip({ c, all }: { c?: Column; all: boolean }) {
 
 /* ------------------------------------------------------------------------------------------------ the tabs */
 
-/** The tab bar (fixed under the drawer head) and the scrolling drawer body holding `lead` and the active panel. */
-export function DataGrid({ t, where, onWhere, bodyRef, lead }: {
-  t: SchemaTable; where: { list: Where[]; more: number }; onWhere: () => void;
-  bodyRef: RefObject<HTMLDivElement | null>; lead?: ReactNode;
-}) {
-  const [tab, setTab] = useState<TabKey>("preview");
+export const TAB_ORDER: TabKey[] = ["preview", "columns", "details"];
+const TAB_NAMES: Record<TabKey, string> = { preview: "Data preview", columns: "Columns", details: "Details" };
+
+/** The tab bar. It sits in the drawer head beside the table name (D26: one row); the drawer owns the active tab. */
+export function TabBar({ t, tab, go }: { t: SchemaTable; tab: TabKey; go: (k: TabKey) => void }) {
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
-  const rows = t.sample_rows || [];
+  const counts: Record<TabKey, string> = { preview: String((t.sample_rows || []).length), columns: String((t.columns || []).length), details: "" };
+  const onKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const i = TAB_ORDER.indexOf(tab);
+    let j = -1;
+    if (e.key === "ArrowRight") j = (i + 1) % TAB_ORDER.length;
+    else if (e.key === "ArrowLeft") j = (i + TAB_ORDER.length - 1) % TAB_ORDER.length;
+    else if (e.key === "Home") j = 0;
+    else if (e.key === "End") j = TAB_ORDER.length - 1;
+    if (j < 0) return;
+    e.preventDefault();
+    go(TAB_ORDER[j]);
+    tabs.current[j]?.focus();
+  };
+  return (
+    <div className="dg-tabs" role="tablist" aria-label={`${t.table} views`} onKeyDown={onKey}>
+      {TAB_ORDER.map((k, i) => (
+        <button key={k} type="button" role="tab" id={`dg-tab-${k}`} aria-controls={`dg-panel-${k}`} aria-selected={tab === k}
+          tabIndex={tab === k ? 0 : -1} className={cx("dg-tab", tab === k && "on")} onClick={() => go(k)}
+          ref={(el) => { tabs.current[i] = el; }}>
+          {TAB_NAMES[k]}{counts[k] ? <span className="dg-count">{counts[k]}</span> : null}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** The scrolling drawer body holding the three tab panels. `mode` "drawer" lays a wide grid out in stacked bands;
+ *  "modal" (the Expand view, D26) keeps one band that scrolls sideways. `onBands` hears the band count. */
+export function DataGrid({ t, tab, where, onWhere, bodyRef, mode, onBands }: {
+  t: SchemaTable; tab: TabKey; where: { list: Where[]; more: number }; onWhere: () => void;
+  bodyRef: RefObject<HTMLDivElement | null>; mode: GridMode; onBands?: (n: number) => void;
+}) {
   const keys = useMemo(() => gridKeys(t), [t]);
   const byName = useMemo(() => new Map((t.columns || []).map((c) => [c.name, c])), [t]);
   const stats = useMemo(() => {
@@ -240,55 +272,26 @@ export function DataGrid({ t, where, onWhere, bodyRef, lead }: {
     for (const k of keys) m.set(k, colStat(k, t.sample_rows || [], kindOfType(byName.get(k)?.type)));
     return m;
   }, [keys, t, byName]);
-  const order: TabKey[] = ["preview", "columns", "details"];
-  const names: Record<TabKey, string> = { preview: "Data preview", columns: "Columns", details: "Details" };
-  const counts: Record<TabKey, string> = { preview: String(rows.length), columns: String((t.columns || []).length), details: "" };
-  const go = (k: TabKey) => {
-    setTab(k);
-    if (bodyRef.current) bodyRef.current.scrollTop = 0;
-  };
-  const onKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    const i = order.indexOf(tab);
-    let j = -1;
-    if (e.key === "ArrowRight") j = (i + 1) % order.length;
-    else if (e.key === "ArrowLeft") j = (i + order.length - 1) % order.length;
-    else if (e.key === "Home") j = 0;
-    else if (e.key === "End") j = order.length - 1;
-    if (j < 0) return;
-    e.preventDefault();
-    go(order[j]);
-    tabs.current[j]?.focus();
-  };
   return (
-    <>
-      <div className="dg-tabs" role="tablist" aria-label={`${t.table} views`} onKeyDown={onKey}>
-        {order.map((k, i) => (
-          <button key={k} type="button" role="tab" id={`dg-tab-${k}`} aria-controls={`dg-panel-${k}`} aria-selected={tab === k}
-            tabIndex={tab === k ? 0 : -1} className={cx("dg-tab", tab === k && "on")} onClick={() => go(k)}
-            ref={(el) => { tabs.current[i] = el; }}>
-            {names[k]}{counts[k] ? <span className="dg-count">{counts[k]}</span> : null}
-          </button>
-        ))}
+    <div className="drawer-body" ref={bodyRef}>
+      <div role="tabpanel" id="dg-panel-preview" aria-labelledby="dg-tab-preview" hidden={tab !== "preview"} className="dg-panel">
+        <Preview t={t} keys={keys} byName={byName} stats={stats} mode={mode} onBands={onBands} />
       </div>
-      <div className="drawer-body" ref={bodyRef}>
-        {lead}
-        <div role="tabpanel" id="dg-panel-preview" aria-labelledby="dg-tab-preview" hidden={tab !== "preview"} className="dg-panel">
-          <Preview t={t} keys={keys} byName={byName} stats={stats} />
-        </div>
-        <div role="tabpanel" id="dg-panel-columns" aria-labelledby="dg-tab-columns" hidden={tab !== "columns"} className="dg-panel">
-          <Columns t={t} stats={stats} />
-        </div>
-        <div role="tabpanel" id="dg-panel-details" aria-labelledby="dg-tab-details" hidden={tab !== "details"} className="dg-panel">
-          <Details t={t} where={where} onWhere={onWhere} />
-        </div>
+      <div role="tabpanel" id="dg-panel-columns" aria-labelledby="dg-tab-columns" hidden={tab !== "columns"} className="dg-panel">
+        <Columns t={t} stats={stats} />
       </div>
-    </>
+      <div role="tabpanel" id="dg-panel-details" aria-labelledby="dg-tab-details" hidden={tab !== "details"} className="dg-panel">
+        <Details t={t} where={where} onWhere={onWhere} />
+      </div>
+    </div>
   );
 }
 
 /* ------------------------------------------------------------------------------------------------ Data preview */
 
+export type GridMode = "drawer" | "modal";
 type Sort = { key: string; dir: 1 | -1 } | null;
+type RowRef = { r: Record<string, any>; i: number };
 
 function cmp(a: unknown, b: unknown) {
   const an = a === null || a === undefined, bn = b === null || b === undefined;
@@ -298,22 +301,68 @@ function cmp(a: unknown, b: unknown) {
   return x < y ? -1 : x > y ? 1 : 0;
 }
 
-function Preview({ t, keys, byName, stats }: { t: SchemaTable; keys: string[]; byName: Map<string, Column>; stats: Map<string, ColStat> }) {
+/** Band starts for column widths `ws` (natural, in px) in `avail` px with a row-number column of `rn` px: greedy, in
+ *  column order, at least one column per band. [0] means the whole grid fits in one band. */
+export function bandCuts(ws: number[], rn: number, avail: number): number[] {
+  const cuts = [0];
+  let acc = rn;
+  ws.forEach((w, i) => {
+    if (i > cuts[cuts.length - 1] && acc + w > avail) { cuts.push(i); acc = rn; }
+    acc += w;
+  });
+  return cuts;
+}
+
+const sameCuts = (a: number[] | null, b: number[]) => !!a && a.length === b.length && a.every((x, i) => x === b[i]);
+
+function Preview({ t, keys, byName, stats, mode, onBands }: {
+  t: SchemaTable; keys: string[]; byName: Map<string, Column>; stats: Map<string, ColStat>; mode: GridMode; onBands?: (n: number) => void;
+}) {
   const rows = t.sample_rows || [];
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<Sort>(null);
   const [open, setOpen] = useState<Set<string>>(() => new Set());
   const [showStats, setShowStats] = useState(true);
   const [copied, setCopied] = useState("");
-  const allNew = t.state === "new";
+  const [cuts, setCuts] = useState<number[] | null>(null);
+  const [hot, setHot] = useState(-1);
+  const wrap = useRef<HTMLDivElement>(null);
+  const ghost = useRef<HTMLTableElement>(null);
+  const banded = mode === "drawer";
 
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    let list = rows.map((r, i) => ({ r: r || {}, i }));
+    let list: RowRef[] = rows.map((r, i) => ({ r: r || {}, i }));
     if (needle) list = list.filter(({ r }) => keys.some((k) => text(r[k]).toLowerCase().includes(needle)));
     if (sort) list = [...list].sort((a, b) => sort.dir * cmp(a.r[sort.key], b.r[sort.key]) || a.i - b.i);
     return list;
   }, [rows, keys, q, sort]);
+
+  // D26 bands: a hidden copy of the whole grid (.dg-ghost) gives every column's natural width; the visible grid is cut
+  // into bands that fit the drawer's width. Re-measured when the drawer resizes, fonts land, or the rows change.
+  useLayoutEffect(() => {
+    if (!banded) return;
+    const w = wrap.current, g = ghost.current;
+    if (!w || !g) return;
+    const measure = () => {
+      const avail = w.clientWidth - 2;
+      const head = g.querySelector("tr.dg-head");
+      if (avail <= 0 || !head) return; // the panel is hidden or the dialog is closed: keep the last cut
+      const cells = [...head.children] as HTMLElement[];
+      const ws = cells.map((c) => c.getBoundingClientRect().width);
+      const next = bandCuts(ws.slice(1), ws[0] || 0, avail);
+      setCuts((prev) => (sameCuts(prev, next) ? prev : next));
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(w);
+    ro.observe(g);
+    return () => ro.disconnect();
+  }, [banded, keys, shown, showStats, open]);
+
+  const bands = banded && cuts && cuts.length > 1 ? cuts.map((s, i) => ({ s, keys: keys.slice(s, cuts[i + 1] ?? keys.length) })) : [{ s: 0, keys }];
+  useEffect(() => { if (banded) onBands?.(bands.length); }, [banded, bands.length, onBands]);
 
   const toggleSort = (k: string) => setSort((s) => (!s || s.key !== k ? { key: k, dir: 1 } : s.dir === 1 ? { key: k, dir: -1 } : null));
   const toggleOpen = (id: string) => setOpen((o) => { const n = new Set(o); if (n.has(id)) n.delete(id); else n.add(id); return n; });
@@ -335,6 +384,7 @@ function Preview({ t, keys, byName, stats }: { t: SchemaTable; keys: string[]; b
   };
 
   if (!rows.length) return <p className="none">No sample rows in schema/{t.table}.json.</p>;
+  const grid = { t, byName, stats, shown, sort, toggleSort, open, toggleOpen, showStats, q, hot, setHot };
   return (
     <section className="dg-preview" aria-label="Data preview">
       <div className="dg-bar">
@@ -342,58 +392,33 @@ function Preview({ t, keys, byName, stats }: { t: SchemaTable; keys: string[]; b
           <span className="sr-only">Filter rows</span>
           <input type="search" placeholder="Filter rows" value={q} onChange={(e) => setQ(e.target.value)} spellCheck={false} autoComplete="off" />
         </label>
-        <span className="dg-shown">{q.trim() ? `${shown.length} of ${rows.length} rows` : `${rows.length} ${rows.length === 1 ? "row" : "rows"} · ${keys.length} columns`}</span>
+        <span className="dg-shown">{q.trim() ? `${shown.length} of ${rows.length} rows` : `${rows.length} ${rows.length === 1 ? "row" : "rows"} · ${keys.length} columns`}{bands.length > 1 ? ` · ${bands.length} bands` : ""}</span>
         <span className="dg-actions">
           <button type="button" className={cx("dg-btn", showStats && "on")} aria-pressed={showStats} onClick={() => setShowStats((v) => !v)}>Column stats</button>
           <button type="button" className="dg-btn" onClick={copy} disabled={!shown.length}>Copy TSV</button>
         </span>
         {copied ? <span className="dg-toast" role="status">{copied}</span> : null}
       </div>
-      <div className="dg-grid" tabIndex={0} role="region" aria-label={`${t.table} sample rows; scrolls sideways`}>
-        <table>
-          <thead>
-            <tr className="dg-head">
-              <th className="rn" scope="col"><span className="sr-only">Row</span></th>
-              {keys.map((k) => {
-                const c = byName.get(k);
-                const sorted = sort?.key === k ? (sort.dir === 1 ? "ascending" : "descending") : "none";
-                return (
-                  <th key={k} scope="col" aria-sort={sorted} className={cx(c && c.change !== "unchanged" && !allNew && `h-${c.change}`)}>
-                    <button type="button" className="dg-h" onClick={() => toggleSort(k)} title={`${k}: ${c?.type || "type not stated"}. Click to sort.`}>
-                      <Glyph kind={kindOfType(c?.type)} />
-                      <span className="nm">{k}</span>
-                      <ChangeChip c={c} all={allNew} />
-                      {sorted !== "none" ? <span className="dg-sort" aria-hidden="true">{sorted === "ascending" ? "▲" : "▼"}</span> : null}
-                    </button>
-                  </th>
-                );
-              })}
-            </tr>
-            {showStats ? (
-              <tr className="dg-hstats">
-                <th className="rn" scope="row"><span className="sr-only">Column stats from sample rows</span></th>
-                {keys.map((k) => {
-                  const s = stats.get(k)!;
-                  return (
-                    <th key={k} className="st">
-                      <MiniStat s={s} />
-                      <span className="dg-st-t">{pct(s.nulls, s.n)}% null · {s.distinct} distinct</span>
-                    </th>
-                  );
-                })}
-              </tr>
+      <div className={cx("dg-bands", bands.length > 1 && "multi")} ref={wrap}>
+        {bands.map((b, bi) => (
+          <div className="dg-band" key={b.s}>
+            {bands.length > 1 ? (
+              <p className="dg-band-cap">
+                <b>{b.keys.length === 1 ? `Column ${b.s + 1}` : `Columns ${b.s + 1}–${b.s + b.keys.length}`}</b> of {keys.length}
+                <span className="dg-band-names"> · {b.keys[0]}{b.keys.length > 1 ? ` … ${b.keys[b.keys.length - 1]}` : ""}</span>
+              </p>
             ) : null}
-          </thead>
-          <tbody>
-            {shown.map(({ r, i }) => (
-              <tr key={i}>
-                <th className="rn" scope="row" title={`row ${i + 1} in schema/${t.table}.json`}>{i + 1}</th>
-                {keys.map((k) => <Cell key={k} v={r[k]} id={`${i}:${k}`} open={open.has(`${i}:${k}`)} toggle={toggleOpen} />)}
-              </tr>
-            ))}
-            {!shown.length ? <tr><td className="dg-empty" colSpan={keys.length + 1}>No sample row matches “{q.trim()}”.</td></tr> : null}
-          </tbody>
-        </table>
+            <div className={cx("dg-grid", bands.length > 1 && "banded")} tabIndex={0} role="region"
+              aria-label={bands.length > 1 ? `${t.table} sample rows, columns ${b.s + 1} to ${b.s + b.keys.length} of ${keys.length}` : `${t.table} sample rows; scrolls sideways`}>
+              <GridTable {...grid} keys={b.keys} band={bi} />
+            </div>
+          </div>
+        ))}
+        {banded ? (
+          <div className="dg-ghost-box" aria-hidden="true">
+            <div className="dg-ghost"><GridTable {...grid} keys={keys} band={-1} tref={ghost} /></div>
+          </div>
+        ) : null}
       </div>
       <p className="dg-cap">
         <b>{rows.length} sample {rows.length === 1 ? "row" : "rows"} · {sourceTag(t.sample_source)}</b>
@@ -403,7 +428,65 @@ function Preview({ t, keys, byName, stats }: { t: SchemaTable; keys: string[]; b
   );
 }
 
-function Cell({ v, id, open, toggle }: { v: unknown; id: string; open: boolean; toggle: (id: string) => void }) {
+/** One band of the preview grid (band -1 is the hidden measuring copy): sticky typed header, stats row, rows. */
+function GridTable({ t, keys, byName, stats, shown, sort, toggleSort, open, toggleOpen, showStats, q, hot, setHot, band, tref }: {
+  t: SchemaTable; keys: string[]; byName: Map<string, Column>; stats: Map<string, ColStat>; shown: RowRef[]; sort: Sort;
+  toggleSort: (k: string) => void; open: Set<string>; toggleOpen: (id: string) => void; showStats: boolean; q: string;
+  hot: number; setHot: (i: number) => void; band: number; tref?: RefObject<HTMLTableElement | null>;
+}) {
+  const allNew = t.state === "new";
+  const live = band >= 0;
+  return (
+    <table ref={tref}>
+      <thead>
+        <tr className="dg-head">
+          <th className="rn" scope="col"><span className="sr-only">Row</span></th>
+          {keys.map((k) => {
+            const c = byName.get(k);
+            const sorted = sort?.key === k ? (sort.dir === 1 ? "ascending" : "descending") : "none";
+            return (
+              <th key={k} scope="col" aria-sort={live ? sorted : undefined} className={cx(c && c.change !== "unchanged" && !allNew && `h-${c.change}`)}>
+                <button type="button" className="dg-h" onClick={live ? () => toggleSort(k) : undefined} tabIndex={live ? undefined : -1}
+                  title={live ? `${k}: ${c?.type || "type not stated"}. Click to sort.` : undefined}>
+                  <Glyph kind={kindOfType(c?.type)} />
+                  <span className="nm">{k}</span>
+                  <ChangeChip c={c} all={allNew} />
+                  {sorted !== "none" ? <span className="dg-sort" aria-hidden="true">{sorted === "ascending" ? "▲" : "▼"}</span> : null}
+                </button>
+              </th>
+            );
+          })}
+        </tr>
+        {showStats ? (
+          <tr className="dg-hstats">
+            <th className="rn" scope="row"><span className="sr-only">Column stats from sample rows</span></th>
+            {keys.map((k) => {
+              const s = stats.get(k)!;
+              return (
+                <th key={k} className="st">
+                  <MiniStat s={s} />
+                  <span className="dg-st-t">{pct(s.nulls, s.n)}% null · {s.distinct} distinct</span>
+                </th>
+              );
+            })}
+          </tr>
+        ) : null}
+      </thead>
+      <tbody>
+        {shown.map(({ r, i }) => (
+          <tr key={i} className={cx(live && hot === i && "hot")}
+            onPointerEnter={live ? () => setHot(i) : undefined} onPointerLeave={live ? () => setHot(-1) : undefined}>
+            <th className="rn" scope="row" title={live ? `row ${i + 1} in schema/${t.table}.json` : undefined}>{i + 1}</th>
+            {keys.map((k) => <Cell key={k} v={r[k]} id={`${i}:${k}`} open={open.has(`${i}:${k}`)} toggle={toggleOpen} live={live} />)}
+          </tr>
+        ))}
+        {!shown.length && band === 0 ? <tr><td className="dg-empty" colSpan={keys.length + 1}>No sample row matches “{q.trim()}”.</td></tr> : null}
+      </tbody>
+    </table>
+  );
+}
+
+function Cell({ v, id, open, toggle, live }: { v: unknown; id: string; open: boolean; toggle: (id: string) => void; live: boolean }) {
   if (v === null || v === undefined) return <td className="null">NULL</td>;
   const obj = typeof v === "object";
   const s = text(v);
@@ -411,7 +494,8 @@ function Cell({ v, id, open, toggle }: { v: unknown; id: string; open: boolean; 
   if (s.length <= TRUNC) return <td className={cx(num && "num", obj && "js")}>{s}</td>;
   return (
     <td className={cx("long", obj && "js", open && "open")}>
-      <button type="button" className="dg-more" aria-expanded={open} onClick={() => toggle(id)} title={open ? "Collapse" : "Show the whole value"}>
+      <button type="button" className="dg-more" aria-expanded={live ? open : undefined} onClick={live ? () => toggle(id) : undefined}
+        tabIndex={live ? undefined : -1} title={live ? (open ? "Collapse" : "Show the whole value") : undefined}>
         {open ? <pre>{obj ? JSON.stringify(v, null, 2) : s}</pre> : <span>{s.slice(0, TRUNC - 1)}<span className="ell">…</span></span>}
       </button>
     </td>
@@ -498,6 +582,7 @@ function Details({ t, where, onWhere }: { t: SchemaTable; where: { list: Where[]
   const n = (t.sample_rows || []).length;
   return (
     <div className="dg-details">
+      {t.summary ? <p className="drawer-summary"><Ticks text={t.summary} /></p> : null}
       <section className="drawer-sec">
         <h3>Table</h3>
         <dl className="dg-kv">

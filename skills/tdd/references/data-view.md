@@ -28,16 +28,27 @@ what the house view takes from it, the `meta.dataSources` shape, and the capabil
 ## What the house view takes (DataGrid.tsx)
 | Snowsight | House drawer |
 |---|---|
-| Data Preview tab | **Data preview**: row numbers, sticky typed header (glyph + name + D7 change chip), mono cells, `NULL` muted, long JSON or text cut at 40 characters with click to expand, click a header to sort, a filter box, **Copy TSV** (visible rows), caption `N sample rows · synthetic` (the first clause of `sample_source`) |
+| Data Preview tab | **Data preview**: row numbers, sticky typed header (glyph + name + D7 change chip), mono cells, `NULL` muted, long JSON or text cut at 40 characters with click to expand, click a header to sort, a filter box, **Copy TSV** (visible rows), caption `N sample rows · synthetic` (the first clause of `sample_source`). A grid wider than the drawer is cut into stacked bands of whole columns with the same row numbers (D26); **Expand** shows it as one band in a 95% landscape modal |
 | Show column stats (header mini graphs) | a stats row under the header, on by default: filled meter, then a histogram (number, date, time) or a frequency bar (everything else); a toggle hides it |
 | Columns tab + inspector statistics | **Columns**: name, D7 chip, note, type (or "not stated"), struck-through `was`, nulls %, distinct count, min/max (shortest/longest for text and JSON), the same mini graph |
-| Table Details + Query Details | **Details**: the D7 measured and expected load cards ("not measured" / "not estimated" when absent), DDL, indexes, notes, where the table appears on the page |
+| Table Details + Query Details | **Details**: the summary, the D7 measured and expected load cards ("not measured" / "not estimated" when absent), DDL, indexes, notes, where the table appears on the page |
+| Table Details row count and size | the schema diagram's **table cards** (D26): a sizing strip of rows, cols and cost tiles from `measured.rows`, `measured.columns`, `measured.cost`, each with the expected change after the design (red rises, green falls or stays), and writes in the card's detail (pointer, keyboard focus, tap); details in schema-lane.md |
 | Download results | not offered: the page contract forbids download links; Copy TSV covers small sample sets |
 Every statistic is computed at render from `sample_rows`, deterministically, and labelled "from sample rows"; none is a
 measurement of the real table. Glyphs (house choice): `#` number, `Aa` text, `{}` JSON, `[]` array, `id` uuid,
 `01` boolean, a calendar for date and time, `?` when the JSON states no type. Light and dark come from the tdd.css
-tokens only. At phone width the tabs stay in one row, the grid scrolls sideways inside its own box, and the
-Columns tab stacks each column as a card.
+tokens only. The tabs share the drawer's head row with the table name, Expand and Close (D26). At phone width the head
+wraps (name and Close, then the tabs), the grid is drawn in bands (a single column wider than the drawer still scrolls
+sideways inside its band), Expand is not offered, and the Columns tab stacks each column as a card.
+
+## Sizing keys the cards read (D26)
+`measured.rows`, `measured.writes` and the optional `measured.cost` (what the table costs in production: storage USD
+per month or its share of the database bill, from a billing export or cost dashboard) and `measured.columns` (the live
+table's column count when the file lists only the columns the design names) each take `{value, unit, source, date,
+note?}`; `expected.rows`, `expected.writes`, `expected.cost` take `{value?, unit?, note}`. The drawer's Details tab
+lists them with the other load keys; the diagram's table card turns rows, columns and cost into its three tiles and
+puts writes in its detail. Neither ever computes a
+measurement: an absent key reads "not measured" or "not estimated".
 
 ## The chat (DataChat.tsx)
 - Docked at the drawer's foot, labelled "Ask about this table". Nothing is called on load. `claude.use("sample")` is

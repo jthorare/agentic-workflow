@@ -31,6 +31,9 @@ tables to `content.json` as `schema[]`. A box whose `table` has no file is a war
 | `sample_rows[]` | a few rows keyed by column name | synthetic and shaped like the DDL unless a reviewed, scrubbed export says otherwise; never personal data |
 | `sample_source` | where the rows came from | e.g. "synthetic, shaped like the DDL; not production data" |
 | `measured{key}` | `{value, unit, source, date, note?, label?}` | recorded facts only (below) |
+| `measured.rows`, `measured.writes` | production row count and write rate | the diagram card's rows tile shows the row count; writes is in the card's hover detail |
+| `measured.cost` | optional: what the table costs in production (storage USD per month, its share of the database bill) | from a billing export or cost dashboard, with `source` and `date`; the card's cost tile shows it, `expected.cost` beside it |
+| `measured.columns` | optional: the live table's column count, when the file lists only the columns the design names | the card's cols tile shows it; without it the tile counts the file's columns (dropped ones left out) |
 | `expected{key}` | `{value?, unit?, note, label?}` | the design's own reasoning, with the basis quoted in `note` |
 | `ddl` | the CREATE or ALTER statements | verbatim from the design; say in a comment when you had to render a stated change as SQL |
 | `indexes[]` | keys, indexes and constraints | one string each |
@@ -64,24 +67,61 @@ but no figure, keep the key with only a `note`: the drawer prints "not estimated
 `app/src/components/SchemaDrawer.tsx` (styles in `app/src/schema.css`) is a right-side `<dialog class="drawer schema">`,
 up to 720px wide and full height, full width on phones, opened by the bus event `table {id}`. The App emits it when a
 diagram box with a table (`[data-hs][data-table]`) or a link to a `table` anchor is clicked; a `#tbl-…` hash opens it
-too. Esc, the Close button and a click on the scrim close it.
+too. Esc, the Close button and a click on the scrim close it; Close takes focus on open.
 
-1. Header: the table name in mono, the state chip, Close.
-2. Summary.
-3. Sample rows (first for a new table): a horizontal-scroll mono table, NULL in muted italics, with a caption giving
-   the row and column count and `sample_source`.
-4. Columns (first for a changed or existing table): a legend for the change kinds present, then one row per column.
-   New rows are tinted good, changed rows warn with the old definition struck through, dropped rows danger with the
-   name struck through; each with a 3px bar on the left and a chip. In a new table every column is new, so the legend
-   says so and the per-row chips are left out. On phones each column becomes a stacked card.
-5. Load: a Measured card beside an Expected card. Reads, writes, rows and storage always appear, then any other key in
-   file order. A measured value shows `value unit`, then `source · date`, then the note; an absent one reads "not
-   measured". An expected value shows `value unit` and its basis; an absent one reads "not estimated".
-6. DDL, indexes and constraints, notes.
-7. Where it appears: every anchored block on the page whose own content names the table, as `a.ref` links.
+1. Head, one row (D26): the table name in mono and the state chip, the tabs Data preview, Columns and Details, then
+   Expand (only when the grid is banded) and Close. On phones it wraps: name and Close, then the tabs.
+2. Sample rows (Data preview): a mono grid with row numbers, NULL in muted italics, with a caption giving the row and
+   column count and `sample_source`. When the columns do not fit the drawer's width the grid is drawn in stacked bands
+   of whole columns (columns 1–k, then k+1–n, each band captioned "Columns a–b of n" and carrying the same row numbers
+   in a sticky first column; the hovered row lights on every band). Phones keep the banded, full-width drawer.
+3. Expand turns the same dialog into a landscape modal at 95% of the page's width and height holding only the tabs,
+   the grid as one band that scrolls sideways under its sticky header, and the chat dock; the filter, sort, tab and
+   chat carry over. Esc, a click outside and its Close button return to the drawer.
+4. Columns: a legend for the change kinds present, then one row per column. New rows are tinted good, changed rows
+   warn with the old definition struck through, dropped rows danger with the name struck through; each with a 3px bar
+   on the left and a chip. In a new table every column is new, so the legend says so and the per-row chips are left
+   out. On phones each column becomes a stacked card.
+5. Details: the summary, then Load: a Measured card beside an Expected card. Reads, writes, rows and storage always
+   appear, then any other key in file order. A measured value shows `value unit`, then `source · date`, then the note;
+   an absent one reads "not measured". An expected value shows `value unit` and its basis; an absent one reads "not
+   estimated". Then DDL, indexes and constraints, notes, and where it appears: every anchored block on the page whose
+   own content names the table, as `a.ref` links.
 
-On the schema diagram, every box with a table carries a small "rows" badge in its top-right corner, visible without
-hover, so a reader can see which boxes open the drawer.
+## Table cards on the schema diagram (D26)
+
+Every diagram box whose `table` has a schema file is drawn as that table's card (`app/src/components/TableNode.tsx`),
+positioned exactly over the box (the SVG box stays underneath, covered) and server-rendered, so it reads the same with
+JavaScript off. The card is the hotspot: hover shows the hotspot card, a click opens the drawer, Tab reaches it.
+Its colours are the theme tokens, so it is light in the light theme and dark in the dark one; the box's tone (green,
+grey, blue, amber, red, violet) tints its frame and head.
+
+- Head: the table name, the state chip, and the text after " · " in the box's label.
+- Columns: primary and foreign keys first and set larger, badged `PK` / `FK`, with `→ table` when the column's note
+  (`→ name`), type (`REFERENCES name`) or an `indexes[]` line (`FOREIGN KEY … (cols) → name`, `PRIMARY KEY (cols)`)
+  names one; then changed columns in their change colours with a `new` / `changed` / `dropped` tag (not in a new
+  table, where every column is new); then the rest, as many as the box holds, in table order, and "+N more columns".
+- Sizing strip, on every card that has room: three tiles, rows, cols and cost. Each shows an icon and label, the
+  production value from `measured.rows`, `measured.columns` (else the file's column count), `measured.cost`, and under
+  it the expected change after the design from `expected.rows`, the column change flags (`+new −dropped`),
+  `expected.cost`, as a pill holding the value only (the unit and the words are in the detail), never cut: a long
+  value wraps to a second line. The change is red when it rises, green when it falls or stays, grey when the file
+  states no direction: a leading `+` or `−`, a word (no change, none, grows, fewer…), a comparison with the measured
+  number in the same unit, or, for a new table, any figure (a rise from nothing). An absent value reads "not measured"
+  or "not estimated" in muted type, never a zero. Writes (`measured.writes`, `expected.writes`) is in the detail only.
+- Detail, by every input: pointing at a tile shows its lines (the value with its unit, the source and date, the change
+  and its basis note); a focused card's hover card lists the lines of all four (rows, cols, cost, writes), so the
+  keyboard reads them; on a touch screen a tap on a tile shows its lines and a second tap, or a tap elsewhere, hides
+  them (a tap elsewhere on the card opens the drawer). The card's `aria-describedby` names a hidden text with every
+  line, and without JavaScript each tile keeps a native `title`.
+- Size: column names and tile numbers are about 11.5 to 12 px when the page fits the drawing to a 1440 px window
+  (keys 1.15 times that, labels at least 10 px), and grow with Actual size. A box that cannot hold a column line at
+  that size may go down to 11 px; below that the card drops column lines (the count moves into the head as "+N cols"),
+  then its strip, and keeps its size: a compact card shows the name, the chip, the key lines that fit and the count.
+  Only a box too short for the head itself shrinks the type. The head and the strip need about 7.6 ems of box height,
+  each column line about 1.45 (a key line 1.6). Draw table boxes tall enough for their keys and the strip (a box of
+  about 280 drawing px in a 2400 px wide drawing shows three key lines and the strip); at phone width the whole
+  drawing is scaled to the column, so read it with Actual size.
 
 ## Proof and preview
 
@@ -93,10 +133,17 @@ bun harness/render.tsx <packet>/build <scratch>/schema-harness.html [--extra ../
 node harness/shoot.mjs <scratch>/schema-harness.html <png dir> <table> [<table> ...]
 ```
 
-The harness renders the packet's schema diagram and the real drawer (server-rendered closed, hydrated, opened by a
-real click on the box), then writes `schema-drawer-<table>-<1440|390>-<light|dark>.png` at the drawer's full height
-and prints checks as JSON: opened by click, Esc closes, scrim click closes, `#tbl-…` opens, drawer width, no
-horizontal overflow, absent measures read as words, zero hydration and console errors. `--extra` previews a schema
-file that is not in a packet yet.
+The harness renders the packet's schema diagram (with its table cards) and the real drawer (server-rendered closed,
+hydrated, opened by a real click on the card), then writes `schema-drawer-<table>-<1440|390>-<light|dark>.png` at the
+drawer's full height and prints checks as JSON: opened by click, Close focused, Esc closes, scrim click closes, `#tbl-…`
+opens, drawer width, bands or a sideways-scrolling grid on phones, no horizontal overflow, absent measures read as
+words, zero hydration and console errors. `--extra` previews a schema file that is not in a packet yet.
+
+`node harness/shoot-d26.mjs <build>/tdd.html <png dir>` checks the built page itself: the one-row head, the bands of
+the widest table, the Expand view (95% of the page, one band, Esc and Close return to the drawer), the table cards
+(three tiles or a compact card, nothing clipped, no delta or name cut, focusable and described; at 1440 names and
+numbers of at least 11 px and labels of at least 10 px; a tile tooltip under the pointer; a focused card's hover card
+with every sizing line; a tap on a tile toggles its lines on a touch screen without opening the drawer; a click opens
+the drawer), and writes `d26-{drawer,bands,modal,diagram,diagram-tip,diagram-focus,diagram-touch}-…png`.
 
 The drawer's data preview, column statistics and the in-page chat are described in `references/data-view.md` (D14).

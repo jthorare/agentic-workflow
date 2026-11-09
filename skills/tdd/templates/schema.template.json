@@ -9,6 +9,8 @@
     "sample_rows": "a few rows keyed by column name, shaped like the DDL. Synthetic unless a reviewed, scrubbed export says otherwise; never personal data",
     "sample_source": "says where the rows came from, e.g. 'synthetic, shaped like the DDL; not production data'",
     "measured": "recorded facts only: each { value, unit, source, date, note?, label? }. source names the query, dashboard, research file or document section; date is when it was measured (the source's date when it gives none, and say so in note). Leave a key out when nothing was measured: the drawer prints 'not measured'. reads, writes, rows and storage always show; any other key is added after them",
+    "measured.cost": "optional: what the table costs in production, { value, unit, source, date, note? } (for example storage in USD per month, or its share of the database bill), from a billing export or a cost dashboard, never estimated; the schema diagram's table card shows it in its cost tile, with expected.cost under it as the change after the design. Absent, the tile reads 'not measured'",
+    "measured.columns": "optional: the live table's column count, { value, source, date }, when this file lists only the columns the design names; the card's cols tile shows it (else the count of this file's columns, dropped ones left out) with the design's change (+new, −dropped) under it",
     "expected": "the design's own reasoning about load after the change: each { value?, unit?, note, label? }. note quotes or cites the basis. A key with a note and no value prints 'not estimated' plus the note",
     "ddl": "the CREATE or ALTER statements, verbatim from the design",
     "indexes": "keys, indexes and constraints, one string each",
