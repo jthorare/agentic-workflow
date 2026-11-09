@@ -20,7 +20,7 @@ public sealed class GraphCutTests
         var text = new string('a', 1000);
 
         Assert.Equal(text, GraphBlockActivities.Fit(text));
-        Assert.Null(GraphBlockActivities.Fit(null));
+        Assert.Null(GraphBlockActivities.Fit(text: null));
     }
 
     [Fact]
