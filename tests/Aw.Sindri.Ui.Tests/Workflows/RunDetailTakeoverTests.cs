@@ -16,7 +16,7 @@ public sealed class RunDetailTakeoverTests
 
     private async Task<(WorkflowsPageViewModel Page, NodeRunViewModel Node)> Opened(string? agent)
     {
-        _f.ServeRun(agent switch { "waiting" => "agent-waiting", "taken_over" => "agent-taken-over", _ => "running" });
+        _f.ServeRun(agent switch { "waiting" => "agent-waiting", "taken_over" => "agent-taken-over", _ => "finished" });
         var page = await _f.Shown(Token);
         await page.OpenWorkflow(Slug, Token);
         await page.OpenRun(RunId, Token);
