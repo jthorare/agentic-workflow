@@ -1,5 +1,9 @@
-// Proof that nothing leaves the machine without --push. `tdd rev` runs end to end on a copy of the demo fixture packet
-// with fake keys in the environment (BRAINTRUST_API_KEY, ANTHROPIC_API_KEY, LINEAR_API_KEY), and is watched three ways:
+// Proof that nothing leaves the machine without --push, and that no child gets a key. `tdd rev` runs end to end on a
+// copy of the demo fixture packet with fake keys of every kind in the environment it starts with (the model and push
+// keys, Linear, gh, AWS, a database url with a password, and arbitrary *_TOKEN / *_SECRET / *_KEY names). Every child
+// is a logging shim (git, node, python3 and bun on PATH, the eval's python, the runner's bun) that records the secret
+// names in its environment before it runs the real program: none may have one, except load-db's bun (DATABASE_URL).
+// The run is also watched three ways for the network:
 //   1. a preload traps fetch, sockets, TLS, DNS and Bun.connect in the runner's own process (loopback allowed);
 //   2. every proxy variable points at a local recorder, so any child's HTTP client (Python's urllib, requests, httpx,
 //      boto3) that tries to connect is counted there;
@@ -9,7 +13,7 @@
 // Then: the recorder and the trap saw nothing, the push was skipped as not asked, the eval ran offline without
 // --push, no push.json exists, run.json says pushed: false, and no fake key is in any written file or output.
 import { afterAll, describe, expect, test } from "bun:test";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -18,8 +22,14 @@ const PRELOAD = join(import.meta.dir, "no-network.ts");
 const DEMO = join(CLI, "test", "lint", "fixtures", "base", "demo-packet");
 const SANDBOX = process.platform === "darwin" && existsSync("/usr/bin/sandbox-exec");
 const PROFILE = '(version 1)(allow default)(deny network-outbound)(allow network-outbound (remote ip "localhost:*"))(allow network-outbound (remote unix-socket))';
-const FAKES = { BRAINTRUST_API_KEY: "bt-fake-key-0000-not-a-real-key", ANTHROPIC_API_KEY: "sk-ant-fake-0000-not-a-real-key", LINEAR_API_KEY: "lin_api_fake_0000_not_a_real_key" };
+const FAKES = {
+  BRAINTRUST_API_KEY: "bt-fake-key-0000-not-a-real-key", ANTHROPIC_API_KEY: "sk-ant-fake-0000-not-a-real-key",
+  OPENAI_API_KEY: "sk-fake-openai-0000-not-real", LINEAR_API_KEY: "lin_api_fake_0000_not_a_real_key", GH_TOKEN: "ghp_fake0000notarealtoken",
+  GITHUB_TOKEN: "ghs_fake0000notarealtoken", AWS_ACCESS_KEY_ID: "AKIAFAKE0000NOTREAL", AWS_SECRET_ACCESS_KEY: "aws-fake-secret-0000-not-real",
+  MY_SERVICE_TOKEN: "svc-fake-token-0000-not-real", SOME_SECRET: "some-fake-secret-0000-not-real", ANY_SIGNING_KEY: "fake-signing-key-0000-not-real",
+};
 const TEST_DB = process.env["TDD_TEST_DATABASE_URL"] ?? "postgres://localhost/tdd_system_test";
+const VENV_PY = join(process.env["HOME"] ?? "", ".local", "share", "tdd-skill", "venv", "bin", "python");
 
 const root = mkdtempSync(join(tmpdir(), "tdd-rev-net-"));
 afterAll(() => rmSync(root, { recursive: true, force: true }));
@@ -39,6 +49,29 @@ function recorder() {
     },
   });
   return { hits, port: server.port, stop: () => server.stop(true) };
+}
+
+/** Shims that log "<name>\t<secret names in its environment>\t<argv>" to $TDD_SHIM_LOG, then run the real program. */
+function shims(dir: string): Record<string, string> {
+  mkdirSync(dir, { recursive: true });
+  const real: Record<string, string> = {
+    git: Bun.which("git") ?? "/usr/bin/git", node: Bun.which("node") ?? "node", python3: Bun.which("python3") ?? "python3",
+    bun: process.execPath, "eval-python": existsSync(VENV_PY) ? VENV_PY : (Bun.which("python3") ?? "python3"),
+  };
+  const out: Record<string, string> = {};
+  for (const [name, target] of Object.entries(real)) {
+    const p = join(dir, name);
+    writeFileSync(p, [
+      "#!/bin/sh",
+      "names=$(/usr/bin/env | /usr/bin/sed -n 's/^\\([A-Za-z_][A-Za-z0-9_]*\\)=.*/\\1/p' | /usr/bin/grep -E '^AWS_|_KEY$|_TOKEN$|_SECRET$|_PASSWORD$|^DATABASE_URL$' | /usr/bin/sort | /usr/bin/tr '\\n' ' ')",
+      `printf '%s\\t%s\\t%s\\n' '${name}' "$names" "$*" >> "$TDD_SHIM_LOG"`,
+      `exec '${target}' "$@"`,
+      "",
+    ].join("\n"));
+    chmodSync(p, 0o755);
+    out[name] = p;
+  }
+  return out;
 }
 
 function env(extra: Record<string, string>): Record<string, string> {
@@ -78,16 +111,22 @@ describe("the watchers work", () => {
 });
 
 describe("tdd rev with fake keys and no --push", () => {
-  test("nothing connects, nothing is pushed, no key is written or printed", async () => {
+  test("nothing connects, nothing is pushed, no child gets a key, no key is written or printed", async () => {
     const packet = join(root, "house", "system-design", "demo-packet");
     mkdirSync(join(root, "house", "system-design"), { recursive: true });
     cpSync(DEMO, packet, { recursive: true });
     const log = join(root, "net.log");
+    const shimLog = join(root, "shims.log");
+    const sh = shims(join(root, "shims"));
     const rec = recorder();
     let r: { code: number; out: string; err: string };
     try {
-      const p = Bun.spawn(sandboxed(["bun", "--preload", PRELOAD, join(CLI, "bin", "tdd.ts"), "rev", packet, "--no-shots", "--no-gh"]), {
-        env: env({ ...FAKES, ...proxyEnv(rec.port), TDD_NET_LOG: log, DATABASE_URL: TEST_DB, TDD_GENERATED: "2026-01-05T00:00:00Z" }),
+      // the runner itself is started with the real bun, its children through the shims
+      const p = Bun.spawn(sandboxed([process.execPath, "--preload", PRELOAD, join(CLI, "bin", "tdd.ts"), "rev", packet, "--no-shots", "--no-gh"]), {
+        env: env({
+          ...FAKES, ...proxyEnv(rec.port), TDD_NET_LOG: log, DATABASE_URL: TEST_DB, TDD_GENERATED: "2026-01-05T00:00:00Z",
+          TDD_SHIM_LOG: shimLog, TDD_REV_BUN: sh["bun"]!, TDD_EVAL_PYTHON: sh["eval-python"]!, PATH: `${join(root, "shims")}:${process.env["PATH"] ?? ""}`,
+        }),
         stdout: "pipe", stderr: "pipe",
       });
       const [out, err] = await Promise.all([new Response(p.stdout).text(), new Response(p.stderr).text()]);
@@ -96,6 +135,17 @@ describe("tdd rev with fake keys and no --push", () => {
       rec.stop();
     }
     expect(rec.hits).toEqual([]);
+    // every child, the in-process lint's git included: no secret, except DATABASE_URL for load-db's bun
+    const children = readFileSync(shimLog, "utf8").trim().split("\n").map((l) => l.split("\t"));
+    if (process.env["TDD_REV_SHIM_LOG_OUT"]) writeFileSync(process.env["TDD_REV_SHIM_LOG_OUT"], readFileSync(shimLog, "utf8"));
+    const by = (name: string) => children.filter((c) => c[0] === name);
+    expect(by("git").length).toBeGreaterThan(0);
+    expect(by("bun").length).toBeGreaterThanOrEqual(3);
+    expect(by("eval-python").length + by("python3").length).toBeGreaterThan(0);
+    for (const [name, secrets, argv] of children) {
+      const loadDb = name === "bun" && (argv ?? "").includes(" load-db ");
+      expect([name, (argv ?? "").slice(0, 60), (secrets ?? "").trim()]).toEqual([name, (argv ?? "").slice(0, 60), loadDb ? "DATABASE_URL" : ""]);
+    }
     expect(existsSync(log) ? readFileSync(log, "utf8") : "").toBe("");
     const lines = readFileSync(join(packet, "build", ".rev", "journal.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l));
     const steps = Object.fromEntries(lines.filter((e) => e.event === "step").map((e) => [e.step, e]));

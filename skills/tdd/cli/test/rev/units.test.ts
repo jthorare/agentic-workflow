@@ -11,7 +11,7 @@ import { fingerprint } from "../../src/rev/hash";
 import { freshState, type State, type StepRecord } from "../../src/rev/journal";
 import { artifactCheckPath, findSource, resolvePaths } from "../../src/rev/paths";
 import { plan } from "../../src/rev/run";
-import { makeSecrets } from "../../src/rev/secrets";
+import { evalPushKeys, isSecretName, makeSecrets, withdrawSecrets } from "../../src/rev/secrets";
 import { evalArgs } from "../../src/rev/stepdefs";
 import { STEPS, stepName, type StepName } from "../../src/rev/steps";
 
@@ -49,7 +49,7 @@ describe("plan", () => {
     expect(plan(freshState("p", "t"), { from: null, only: null }, never)).toMatchObject({ mode: "fresh", cycle: 1, newCycle: true, steps: [...STEPS] });
     expect(plan(freshState("p", "t"), { from: null, only: "lint" }, never)).toMatchObject({ mode: "only", cycle: 1, steps: ["lint"] });
     const s = withSteps(3, { compile: rec(3, "ok") });
-    expect(plan(s, { from: "eval", only: null }, never)).toMatchObject({ mode: "from", cycle: 3, newCycle: false, steps: ["eval", "load-db", "push", "artifact-check"] });
+    expect(plan(s, { from: "eval", only: null }, never)).toMatchObject({ mode: "from", cycle: 3, newCycle: false, steps: ["eval", "load-db", "push"] });
   });
   test("resume at the first step not done in this cycle (missing, failed, or from an older cycle)", () => {
     expect(plan(withSteps(2, { compile: rec(2, "ok"), "app-build": rec(2, "ok"), hydrate: rec(2, "failed") }), { from: null, only: null }, never).steps[0]).toBe("hydrate");
@@ -73,7 +73,11 @@ describe("secrets", () => {
     ["BRAINTRUST_API_KEY", Redacted.make("bt-secret-123456")],
     ["DATABASE_URL", Redacted.make("postgres://me:p%40ssw0rd@db.local:5432/tdd")],
   ]);
-  const s = makeSecrets(values, { PATH: "/bin", BRAINTRUST_API_KEY: "bt-secret-123456", LINEAR_API_KEY: "lin-123456", OPENAI_API_KEY: "sk-1234", OTHER: "x" });
+  const s = makeSecrets(values, {
+    PATH: "/bin", BRAINTRUST_API_KEY: "bt-secret-123456", LINEAR_API_KEY: "lin-123456", OPENAI_API_KEY: "sk-1234", OTHER: "x",
+    AWS_REGION: "us-east-1", GH_TOKEN: "ghp_x", MY_TOKEN: "t", X_SECRET: "s", SOME_KEY: "k", DB_PASSWORD: "p",
+    DATABASE_URL: "postgres://me:p%40ssw0rd@db.local:5432/tdd",
+  });
   test("scrub replaces every key value and a database url's password", () => {
     expect(s.scrub("a bt-secret-123456 b bt-secret-123456")).toBe("a <redacted:BRAINTRUST_API_KEY> b <redacted:BRAINTRUST_API_KEY>");
     expect(s.scrub("url postgres://me:p%40ssw0rd@db.local:5432/tdd")).toBe("url <redacted:DATABASE_URL>");
@@ -81,9 +85,21 @@ describe("secrets", () => {
     expect(String(values.get("BRAINTRUST_API_KEY"))).not.toContain("bt-secret");
     expect(s.present).toEqual(["BRAINTRUST_API_KEY", "DATABASE_URL"]);
   });
-  test("children get no push, model or Linear key unless --push (then only the push key)", () => {
-    expect(s.childEnv(false)).toEqual({ PATH: "/bin", OTHER: "x" });
-    expect(s.childEnv(true)).toEqual({ PATH: "/bin", OTHER: "x", BRAINTRUST_API_KEY: "bt-secret-123456" });
+  test("a child gets no secret (named keys, AWS_*, *_KEY, *_TOKEN, *_SECRET, *_PASSWORD, DATABASE_URL) unless passed by name", () => {
+    expect(s.childEnv()).toEqual({ PATH: "/bin", OTHER: "x" });
+    expect(s.childEnv(evalPushKeys(true))).toEqual({ PATH: "/bin", OTHER: "x", BRAINTRUST_API_KEY: "bt-secret-123456", LINEAR_API_KEY: "lin-123456", AWS_REGION: "us-east-1" });
+    expect(s.childEnv(evalPushKeys(false))).toMatchObject({ GH_TOKEN: "ghp_x" });
+    expect(s.childEnv(evalPushKeys(false))).not.toHaveProperty("OPENAI_API_KEY");
+    for (const n of ["GITHUB_TOKEN", "AWS_SESSION_TOKEN", "FOO_API_KEY", "A_SECRET", "PGPASSWORD_X_PASSWORD", "DATABASE_URL"]) expect(isSecretName(n)).toBe(true);
+    for (const n of ["PATH", "HOME", "TDD_GENERATED", "KEYCHAIN", "TOKENS_DIR"]) expect(isSecretName(n)).toBe(false);
+  });
+  test("withdrawSecrets takes them out of process.env and puts them back", () => {
+    process.env["N9_TEST_TOKEN"] = "abc";
+    const restore = withdrawSecrets();
+    expect(process.env["N9_TEST_TOKEN"]).toBeUndefined();
+    restore();
+    expect(process.env["N9_TEST_TOKEN"]).toBe("abc");
+    delete process.env["N9_TEST_TOKEN"];
   });
 });
 

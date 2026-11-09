@@ -12,7 +12,7 @@ import { JournalLive } from "../../src/rev/journal";
 import type { Paths } from "../../src/rev/paths";
 import { revProgram, type Interrupt, type Report } from "../../src/rev/run";
 import { makeSecrets, Secrets } from "../../src/rev/secrets";
-import { Db, Out, Proc, Tools, type Captured, type ProcResult, type ProcSpec } from "../../src/rev/services";
+import { Db, Out, Proc, Tools, type Captured, type Probe, type ProcResult, type ProcSpec } from "../../src/rev/services";
 
 export const CLI = join(import.meta.dir, "..", "..");
 export const FAKE_KEY = "bt-fake-key-0000-not-a-real-key";
@@ -27,7 +27,10 @@ export interface World {
   readonly called: [string, string[]][];
   /** Script: what a command returns (by a substring of its argv); default ok. */
   hydrate: "ok" | "fail" | "hang";
-  probe: string | null;
+  artifactCheck: "ok" | "fail";
+  probe: Probe;
+  /** Appended to the compile's summary line (a tool that prints a key). */
+  leak: string;
   evalCode: number;
   readonly out: string[];
   readonly err: string[];
@@ -63,7 +66,7 @@ export function makeWorld(slug = "demo-packet"): World {
   process.env["TDD_EVAL_PYTHON"] = join(root, "python");
   const build = join(packet, "build");
   const paths: Paths = { packet, build, rev: join(build, ".rev"), slug, source: `${slug}.md`, skill, cli: CLI, app: join(skill, "app") };
-  return { root, paths, spawned: [], called: [], hydrate: "ok", probe: null, evalCode: 0, out: [], err: [] };
+  return { root, paths, spawned: [], called: [], hydrate: "ok", artifactCheck: "ok", probe: { ok: true }, leak: "", evalCode: 0, out: [], err: [] };
 }
 
 const ok = (out: string, code = 0): ProcResult => ({ code, out, err: "", timedOut: false });
@@ -94,7 +97,10 @@ function procFor(w: World) {
         return Effect.succeed(ok(text, w.evalCode));
       }
       if (cmd.includes("load-db")) return Effect.succeed(ok("tdd load-db house/demo-packet rev 1 -> localhost/tdd_system_test: packet 1\n"));
-      if (cmd.includes("artifact_check.mjs")) return Effect.succeed(ok("artifact_check: ok (6 renders, 0 warning(s)); screenshots in shots\n"));
+      if (cmd.includes("artifact_check.mjs")) {
+        return Effect.succeed(w.artifactCheck === "ok" ? ok("artifact_check: ok (6 renders, 0 warning(s)); screenshots in shots\n")
+          : { code: 1, out: "artifact_check: 1 failure(s)\n", err: "FAIL: contract\n", timedOut: false });
+      }
       return Effect.succeed(ok("", 0));
     },
   };
@@ -109,7 +115,7 @@ function toolsFor(w: World) {
       mkdirSync(b, { recursive: true });
       writeFileSync(join(b, "content.json"), JSON.stringify({ generated: "2026-11-08T12:00:00Z", source: `${w.paths.slug}.md` }));
       writeFileSync(join(b, "content.files.json"), JSON.stringify({ files: {} }));
-      return done(`wrote ${b}/content.json: 1 sections\n`);
+      return done(`wrote ${b}/content.json: 1 sections${w.leak ? " " + w.leak : ""}\n`);
     },
     agents: (argv: readonly string[]) => {
       w.called.push(["agents", [...argv]]);
