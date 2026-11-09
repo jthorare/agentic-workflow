@@ -10,5 +10,5 @@ namespace Aw.Sindri.Ui.Api.Workflows;
 /// <param name="Output">What the block produced, or null.</param>
 /// <param name="Truncated">True when Sindri cut the input or the output to fit its size limit.</param>
 /// <param name="Error">Why it failed, or null.</param>
-/// <param name="Agent">ASSUMED SHAPE (#2472): null for a node that is not a run_agent waiting on an agent, else "waiting" or "taken_over".</param>
+/// <param name="Agent">Null for a node that is not a run_agent waiting on an agent, else "waiting" or "taken_over".</param>
 internal sealed record NodeRunView(string Node, int ItemIndex, string Status, JsonElement? Input, JsonElement? Output, bool Truncated, string? Error, string? Agent = null);

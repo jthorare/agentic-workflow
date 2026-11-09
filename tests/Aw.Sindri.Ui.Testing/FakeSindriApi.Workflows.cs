@@ -20,12 +20,11 @@ internal sealed partial class FakeSindriApi
     /// <summary>POST /sindri/workflow-runs/{run}/cancel's answer: the cancelled body by default.</summary>
     public RouteAnswer CancelWorkflowRunAnswer { get; set; } = RouteAnswer.SpecShaped("workflow-runs-run-cancel", "cancelled");
 
-    // ASSUMED SHAPE (#2472): the take over and hand back answers, built here until the Api half records goldens.
     /// <summary>POST .../takeover's answer: taken_over by default.</summary>
-    public RouteAnswer TakeOverAgentNodeAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"run":"morning-check@1:1","node":"agent","itemIndex":0,"agent":"taken_over"}""");
+    public RouteAnswer TakeOverAgentNodeAnswer { get; set; } = RouteAnswer.Api("workflow-runs-run-nodes-node-takeover", "taken-over");
 
     /// <summary>POST .../handback's answer: waiting by default.</summary>
-    public RouteAnswer HandBackAgentNodeAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"run":"morning-check@1:1","node":"agent","itemIndex":0,"agent":"waiting"}""");
+    public RouteAnswer HandBackAgentNodeAnswer { get; set; } = RouteAnswer.Api("workflow-runs-run-nodes-node-handback", "handed-back");
 
     /// <summary>When set, a take over or hand back waits for it before it answers.</summary>
     public TaskCompletionSource? AgentNodeControlGate { get; set; }

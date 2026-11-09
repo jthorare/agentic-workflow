@@ -1,4 +1,3 @@
-using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
@@ -15,16 +14,9 @@ public sealed class RunDetailTakeoverTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    // ASSUMED SHAPE (#2472): the run view's node row carries "agent"; this is the one place the tests set it.
     private async Task<(WorkflowsPageViewModel Page, NodeRunViewModel Node)> Opened(string? agent)
     {
-        var served = Golden("workflow-runs-run", "running");
-        if (agent is not null)
-        {
-            served["nodes"]![0]!["agent"] = agent;
-        }
-
-        _f.ServeRun(served);
+        _f.ServeRun(agent switch { "waiting" => "agent-waiting", "taken_over" => "agent-taken-over", _ => "running" });
         var page = await _f.Shown(Token);
         await page.OpenWorkflow(Slug, Token);
         await page.OpenRun(RunId, Token);
@@ -84,11 +76,11 @@ public sealed class RunDetailTakeoverTests
     {
         var (page, node) = await Opened("waiting");
         var reads = _f.Server.WorkflowRunCalls;
-        _f.Server.TakeOverAgentNodeAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-GRAPH-300", "that agent is not waiting");
+        _f.Server.TakeOverAgentNodeAnswer = RouteAnswer.Problem("workflow-runs-run-nodes-node-takeover", "not-waiting");
 
         await node.TakeOver(Token);
 
-        Assert.StartsWith("Couldn't take over the agent. that agent is not waiting", page.Run.NoticeText, StringComparison.Ordinal);
+        Assert.StartsWith("Couldn't take over the agent. the run 'morning-check@1:2' is not waiting on an agent", page.Run.NoticeText, StringComparison.Ordinal);
         Assert.Equal((reads, false), (_f.Server.WorkflowRunCalls, node.IsBusy));
     }
 
