@@ -21592,3 +21592,13 @@ static Aw.Sindri.Core.Connections.SignInTry.operator !=(Aw.Sindri.Core.Connectio
 static Aw.Sindri.Core.Connections.SignInTry.operator ==(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.get -> string?
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.init -> void
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.Title.get -> string!

@@ -18,6 +18,12 @@ public sealed class OnlyNewBlock(IGraphSeenStore seen) : IGraphBlock
     public string Type => "only_new";
 
     /// <inheritdoc />
+    public string Title => "Only new";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Logic;
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />
