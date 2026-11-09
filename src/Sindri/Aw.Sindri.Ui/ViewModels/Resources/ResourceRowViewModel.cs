@@ -6,7 +6,6 @@ namespace Aw.Sindri.Ui.ViewModels.Resources;
 internal sealed class ResourceRowViewModel : ObservableObject
 {
     private readonly Func<string, CancellationToken, Task> _purge;
-    private bool _busy;
 
     internal ResourceRowViewModel(ResourceView view, Func<string, CancellationToken, Task> purge)
     {
@@ -31,8 +30,8 @@ internal sealed class ResourceRowViewModel : ObservableObject
     /// <summary>The fill 0..1 (size over limit) when the resource has a limit; null otherwise.</summary>
     public double? Fill => View.LimitBytes is > 0 ? Math.Clamp((double)View.Size / View.LimitBytes.Value, 0, 1) : null;
 
-    /// <summary>The size line: "1.2 MB of 5.0 MB" with a limit, the size alone without.</summary>
-    public string SizeLine => View.LimitBytes is { } limit ? Labels.ResourceSizeOf(SizeText, ByteSize.Format(limit)) : SizeText;
+    /// <summary>The size line: "1.2 MB of 5 MB" with a limit, the size alone without.</summary>
+    public string SizeLine => View.LimitBytes is > 0 ? Labels.ResourceSizeOf(SizeText, ByteSize.Format(View.LimitBytes.Value)) : SizeText;
 
     /// <summary>True while the row asks "Purge?" and waits for the answer.</summary>
     public bool IsConfirming
@@ -81,29 +80,27 @@ internal sealed class ResourceRowViewModel : ObservableObject
     public string ConfirmText => Labels.ResourcePurgeAsk(View.Owner);
 
     /// <summary>Asks first, naming the owner; nothing is sent.</summary>
-    internal void AskPurge() => IsConfirming = !_busy;
+    internal void AskPurge() => IsConfirming = true;
 
     /// <summary>Backs out of the question.</summary>
     internal void Keep() => IsConfirming = false;
 
-    /// <summary>Sends the purge once, after the question was asked. A second call while one is in flight sends nothing.</summary>
+    /// <summary>Sends the purge after the question was asked. The page sends one purge per owner at a time, so a second call while one is in flight sends nothing.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>A task that ends when the answer is shown.</returns>
     internal async Task ConfirmPurge(CancellationToken cancellationToken)
     {
-        if (!IsConfirming || _busy)
+        if (!IsConfirming)
         {
             return;
         }
 
-        _busy = true;
         try
         {
             await _purge(View.Owner, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
-            _busy = false;
             IsConfirming = false;
         }
     }

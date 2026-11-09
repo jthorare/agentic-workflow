@@ -21,6 +21,14 @@ internal sealed partial class ResourcesPage : UserControl
     private void OnKeep(object? sender, RoutedEventArgs e) => Row(sender)?.Keep();
 
 #pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
+    private async void OnRetry(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is ResourcesPageViewModel page)
+        {
+            await page.Retry(CancellationToken.None).ConfigureAwait(true);
+        }
+    }
+
     private async void OnConfirm(object? sender, RoutedEventArgs e)
     {
         if (Row(sender) is { } row)

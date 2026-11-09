@@ -14,7 +14,7 @@ internal static class ByteSize
     {
         double value = Math.Max(bytes, 0);
         var unit = 0;
-        while (value >= 1024 && unit < _units.Length - 1)
+        while (Math.Round(value, 1, MidpointRounding.AwayFromZero) >= 1024 && unit < _units.Length - 1)   // rounds first: 1_048_575 is "1 MB", not "1024 KB"
         {
             value /= 1024;
             unit++;

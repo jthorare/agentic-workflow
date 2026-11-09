@@ -9,7 +9,7 @@ namespace Aw.Sindri.Ui.Tests.Resources;
 
 /// <summary>The Resources page (PR 18b): the rows in words, Purge that asks first and names the owner, the refusal's reason, and the empty sentence.</summary>
 [Lane(TestLane.Unit)]
-public sealed class ResourcesPageTests
+public sealed class ResourcesPageViewModelTests
 {
     private static readonly Uri _url = new("http://127.0.0.1:7410/");
 
@@ -164,6 +164,16 @@ public sealed class ResourcesPageTests
         Assert.Contains("Couldn't read the resources", page.FailedText, StringComparison.Ordinal);
         Assert.DoesNotContain("Purged", page.NoteText, StringComparison.Ordinal);
         _ = Assert.Single(page.Rows);   // the old rows stay under the failed text
+    }
+
+    [Fact]
+    public async Task A_cap_of_zero_shows_the_size_only_and_no_bar()
+    {
+        _server.SeedResources(new ResourceView("workflow:docs", "disk", "scratch", 2048, "/state/docs", LimitBytes: 0));
+
+        var row = Assert.Single((await Shown()).Rows);
+
+        Assert.Equal(("2 KB", null, false), (row.SizeLine, row.Fill, row.HasFill));
     }
 
     private async Task<ResourcesPageViewModel> Shown()

@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Api.Resources;
 
 namespace Aw.Sindri.Ui.ViewModels.Resources;
 
@@ -10,6 +12,7 @@ namespace Aw.Sindri.Ui.ViewModels.Resources;
 internal sealed class ResourcesPageViewModel : ObservableObject
 {
     private readonly ISindriApi _api;
+    private readonly HashSet<string> _purging = new(StringComparer.Ordinal);
     private Uri? _url;
 
     /// <summary>The page over its port.</summary>
@@ -51,12 +54,7 @@ internal sealed class ResourcesPageViewModel : ObservableObject
     /// <summary>Reads again after a failed read.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that ends when the list is shown.</returns>
-    internal Task Retry(CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        _ = _url;   // stub: the fix commit reads again
-        return Task.CompletedTask;
-    }
+    internal Task Retry(CancellationToken cancellationToken) => _url is { } url ? Refresh(url, cancellationToken) : Task.CompletedTask;
 
     /// <summary>True when there is a note.</summary>
     public bool HasNote => NoteText.Length > 0;
@@ -67,6 +65,9 @@ internal sealed class ResourcesPageViewModel : ObservableObject
 
     /// <summary>What the page is for, in one line.</summary>
     public string Purpose => Labels.ResourcesPurpose;
+
+    /// <summary>The Try again button's words.</summary>
+    public string RetryText => Labels.TryAgain;
 
     /// <summary>"Reading resources…" until the first answer.</summary>
     public string ReadingText => Labels.ReadingResources;
@@ -117,9 +118,12 @@ internal sealed class ResourcesPageViewModel : ObservableObject
         IsReading = false;
         if (read.IsError)
         {
-            NoteText = Labels.ResourcesFailed(read.Error);
+            // the last good rows stay under the failed text; an earlier purge's "Purged 2" is not left standing over them
+            (IsFailed, FailedText, ShowRetry, NoteText) = (Rows.Count == 0, Labels.ResourcesFailed(read.Error), true, string.Empty);
             return;
         }
+
+        (IsFailed, FailedText, ShowRetry) = (false, string.Empty, false);
 
         Rows.Clear();
         foreach (var resource in read.Value.Resources)
@@ -140,8 +144,22 @@ internal sealed class ResourcesPageViewModel : ObservableObject
             return;
         }
 
+        if (!_purging.Add(owner))
+        {
+            return;   // this owner's purge is already on its way
+        }
+
         NoteText = string.Empty;
-        var purged = await _api.PurgeResources(url, owner, cancellationToken).ConfigureAwait(true);
+        Result<PurgeResourcesResult> purged;
+        try
+        {
+            purged = await _api.PurgeResources(url, owner, cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            _ = _purging.Remove(owner);
+        }
+
         if (purged.IsError)
         {
             NoteText = Labels.ResourcePurgeFailed(purged.Error);
