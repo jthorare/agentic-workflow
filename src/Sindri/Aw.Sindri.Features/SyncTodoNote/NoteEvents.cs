@@ -82,7 +82,7 @@ internal sealed class NoteEvents(SyncDeps d, IReadOnlyDictionary<TodoId, long> v
         Result<bool> put = false;
         if (merged.Hold is NoteHoldOutcome.Opened or NoteHoldOutcome.Replaced && merged.HoldNow is { } now)
         {
-            var changes = now.Changes.Select(static c => new TodoHeldChange(c.Id, Kind(c.Kind), c.NoteLine)).ToList();
+            var changes = now.Changes.Select(c => new TodoHeldChange(c.Id, Kind(c.Kind), c.NoteLine is null ? null : d.Scrubber.Scrub(c.NoteLine))).ToList();
             put = await Put(EventTypes.TodoNoteHeld, new TodoNoteHeld(changes, noteHash, Service), $"todo.note.held:{noteHash}", versioned: false, cancellationToken).ConfigureAwait(false);
         }
         else if (merged.Hold == NoteHoldOutcome.Dissolved && open is not null)
@@ -170,6 +170,7 @@ internal sealed class NoteEvents(SyncDeps d, IReadOnlyDictionary<TodoId, long> v
     private async ValueTask<Result<Unit>> Settle(TodoId id, NoteDocument note, CancellationToken cancellationToken)
     {
         var line = note.Todos.FirstOrDefault(t => id.Equals(t.Id))?.Raw ?? string.Empty;
+        line = d.Scrubber.Scrub(line);   // the ledger never sees what the pass scrubs on the way to the base (REQ-W2)
         var settled = new TodoConflictResolved(id, TodoSideName.Sindri, line, Service);
         var put = await Put(EventTypes.TodoConflictResolved, settled, $"todo.conflict.resolved:{id.Value}:{d.Ids.NewId():N}", versioned: false, cancellationToken).ConfigureAwait(false);
         return put.IsError ? put.Error : Unit.Value;
