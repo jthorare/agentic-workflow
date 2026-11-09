@@ -23,8 +23,19 @@ VECTORS = [
     '<p>ok</p><script>alert(1)</script><iframe src="x"></iframe>',         # tags
     '<b style="background:url(javascript:1)">x</b>',                       # style attribute
     '<a href="vbscript:msgbox(1)">b</a>',
+    # split tags (review of 2026-11-09, P1): stripping the inner tag once reassembled the outer one
+    '<ifr<script>ame src="https://evil.example/"></iframe>',
+    '<ba<script>se href="https://evil.example/">',
+    '<sty<script>le>body{display:none}</style>',
+    '<me<script>ta http-equiv=refresh content="0;url=https://evil.example">',
+    '<emb<script>ed src="https://evil.example/x.swf">',
+    '<ifr<scr<script>ipt>ame src="https://evil.example/">',
+    '<sc<script>ript>alert(1)</sc</script>ript>',
+    '<obj</iframe>ect data="https://evil.example/x">',
+    '<li<style>nk rel=stylesheet href="https://evil.example/x.css">',
+    '<tem<base>plate><img src=x></template>',
 ]
-bad = re.compile(r"\bon[a-z]+\s*=|javascript:|vbscript:|data:text/html|<\s*(script|iframe|object|embed)", re.I)
+bad = re.compile(r"\bon[a-z]+\s*=|javascript:|vbscript:|data:text/html|<\s*/?\s*(script|iframe|object|embed|base|meta|link|style|template)\b", re.I)
 fails = []
 for v in VECTORS:
     out = S(v)
