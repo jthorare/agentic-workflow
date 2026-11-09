@@ -1,9 +1,12 @@
+using System.Text.Json;
 using Aw.Context.Core;
 using Aw.Context.Core.Linear;
 using Aw.Context.Testing.Linear;
+using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Linear;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.LinearIssues;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.LinearConnection;
@@ -21,6 +24,13 @@ public sealed class ContextLinearWriteGateTests
     private readonly FakeLinearSideFacts _facts = new FakeLinearSideFacts().WithTeam(new LinearLookupsResponse(new LinearTeamRef("t1", "ENG", "Engineering"), SyncedAt: null, [], [], [], []));
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
+
+    // why: the profile the session rows need: its repos, and the context section the owner's settings live in (sessions on or off)
+    private void Use(string context, params string[] repos)
+    {
+        var profile = new SindriProfile(1, "thor", Repos: [.. repos.Select(static r => new RepoEntry(r, "/work/" + r))], Context: JsonDocument.Parse(context).RootElement.Clone());
+        _profiles.Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
+    }
 
     private ContextLinearWriteGate Gate()
     {
@@ -40,14 +50,62 @@ public sealed class ContextLinearWriteGateTests
     }
 
     [Fact]
-    public async Task A_session_with_a_resolving_key_and_a_picked_team_is_allowed_like_the_owner()
+    public async Task A_session_in_a_mapped_repo_with_sessions_on_is_allowed_like_the_owner()
     {
-        using var entered = _slice.Callers.Enter(A.Caller().Build());   // why: the builder's default caller is an agent session
+        Use("{}", "web");
+        using var entered = _slice.Callers.Enter(A.Caller().InRepo("web").Build());   // why: the builder's default caller is an agent session
 
         var refusal = await Gate().Refusal("ENG", Token);
 
         Assert.Null(refusal);
         Expect.Sequence(["ENG"], _facts.AskedTeams);
+    }
+
+    [Fact]
+    public async Task A_session_is_refused_SND_CONTEXT_020_when_the_owner_turned_sessions_off_and_nothing_is_asked()
+    {
+        Use("""{"sessions":{"enabled":false}}""", "web");
+        using var entered = _slice.Callers.Enter(A.Caller().InRepo("web").Build());
+
+        var refusal = await Gate().Refusal("ENG", Token);
+
+        Assert.NotNull(refusal);
+        Expect.Equal(ContextErrors.SessionsDisabled.Code, refusal.Code);
+        Assert.Empty(_facts.AskedTeams);
+    }
+
+    [Fact]
+    public async Task The_owner_still_writes_when_sessions_are_off()
+    {
+        Use("""{"sessions":{"enabled":false}}""", "web");
+        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+
+        Assert.Null(await Gate().Refusal("ENG", Token));
+    }
+
+    [Fact]
+    public async Task A_session_in_a_repo_the_profile_does_not_map_is_refused_SND_CONTEXT_003()
+    {
+        Use("""{"repos":["web"]}""", "web", "api");
+        using var entered = _slice.Callers.Enter(A.Caller().InRepo("api").Build());
+
+        var refusal = await Gate().Refusal("ENG", Token);
+
+        Assert.NotNull(refusal);
+        Expect.Equal(ContextErrors.UnknownAnchor.Code, refusal.Code);
+        Assert.Empty(_facts.AskedTeams);
+    }
+
+    [Fact]
+    public async Task A_session_that_names_no_repo_is_refused_SND_CONTEXT_021()
+    {
+        Use("{}", "web");
+        using var entered = _slice.Callers.Enter(A.Caller().Build());
+
+        var refusal = await Gate().Refusal("ENG", Token);
+
+        Assert.NotNull(refusal);
+        Expect.Equal(ContextErrors.McpRepoMissing.Code, refusal.Code);
     }
 
     [Fact]
