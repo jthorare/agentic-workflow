@@ -21,6 +21,10 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
     /// <summary>How long the poll waits: Sindri's own listener gives up after 5 minutes.</summary>
     internal static readonly TimeSpan SignInTimeout = TimeSpan.FromMinutes(5);
 
+    // The Config key a finished sign-in stamps (OAuthSignInFlow.SignedInAt), and the code of "no connection has that name" (SND-CONN-001): the app reads both by name.
+    private const string SignedInAt = "signedInAt";
+    private const string ConnectionNotFound = "SND-CONN-001";
+
     // The consent page goes through the one launch helper, so the system's answer is kept.
     private readonly LinkLaunch _launch = new(launcher);
 
@@ -55,8 +59,10 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
     internal Task<Result<ConnectionRemoved>> Remove(string name, CancellationToken cancellationToken) => With(u => api.RemoveConnection(u, name, cancellationToken));
 
     /// <summary>
-    /// Follows a started sign-in to its end: opens the consent page and reads the connection every <see cref="PollEvery"/> until it is connected, reads 'error', can't be read, or
-    /// <see cref="SignInTimeout"/> passes. A key connection has no consent page, so it ends at once on what it reads.
+    /// Follows a started sign-in to its end: opens the consent page and reads the connection every <see cref="PollEvery"/> until it is 'connected' with a 'signedInAt' other than the one
+    /// it had when the sign-in started, the API answers an error, or <see cref="SignInTimeout"/> passes. The server writes no row for a new connection until the browser callback lands, so
+    /// SND-CONN-001 means "still waiting", and so does a call that did not answer (SND-UI-002); a row that already exists keeps its status until the callback, so its status alone proves nothing.
+    /// A key connection has no consent page, so it ends at once on what it reads.
     /// </summary>
     /// <param name="added">What the add or the sign-in answered.</param>
     /// <param name="say">Told what the app is waiting on (the note shown while it waits).</param>
@@ -78,24 +84,36 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
         var opened = await _launch.Open(consent, cancellationToken).ConfigureAwait(true);
         say(opened ? Labels.ConnectionWaitingBrowser : Labels.ConnectionBrowserRefused(added.ConsentUrl));
         var (last, deadline) = (added.Connection, clock.GetUtcNow() + SignInTimeout);
+        var before = last.Config.GetValueOrDefault(SignedInAt);
         while (clock.GetUtcNow() < deadline)
         {
             await Task.Delay(PollEvery, clock, cancellationToken).ConfigureAwait(true);
-            var read = await Get(name, cancellationToken).ConfigureAwait(true);
-            if (read.IsError)
+            (var end, last) = await Poll(name, before, last, cancellationToken).ConfigureAwait(true);
+            if (end is not null)
             {
-                return new SignInEnd(SignInState.Failed, last, Labels.InstanceRefused(read.Error));
-            }
-
-            last = read.Value.Connection;
-            if (!string.Equals(last.Status, "needs-sign-in", StringComparison.Ordinal))
-            {
-                return Ended(last);
+                return end;
             }
         }
 
         return new SignInEnd(SignInState.TimedOut, last, string.Empty);
     }
+
+    // One read of the connection: how the sign-in ended, or null while it is still waiting; and the connection as last read.
+    private async Task<(SignInEnd? End, ConnectionView Last)> Poll(string name, string? before, ConnectionView last, CancellationToken cancellationToken)
+    {
+        var read = await Get(name, cancellationToken).ConfigureAwait(true);
+        if (read.IsError)
+        {
+            return (StillWaiting(read.Error) ? null : new SignInEnd(SignInState.Failed, last, Labels.InstanceRefused(read.Error)), last);
+        }
+
+        var view = read.Value.Connection;
+        var landed = string.Equals(view.Status, "connected", StringComparison.Ordinal) && view.Config.GetValueOrDefault(SignedInAt) is { } at && !string.Equals(at, before, StringComparison.Ordinal);
+        return (landed ? Ended(view) : null, view);
+    }
+
+    private static bool StillWaiting(Error error) =>
+        string.Equals(error.Code, ConnectionNotFound, StringComparison.Ordinal) || string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
 
     private static SignInEnd Ended(ConnectionView view) =>
         string.Equals(view.Status, "connected", StringComparison.Ordinal)
