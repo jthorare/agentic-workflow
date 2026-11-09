@@ -1,2 +1,0 @@
-{"start":{"inputs":{"fact:issue":"Export button does nothing.","fact:rootCause":"The click handler is never bound."}}}
-{"trigger":{"kind":"step.completed","outcome":"uncertain","outputs":{"fact:decision":{"reason":"below-threshold","confidenceKind":"probability","probabilities":{"uiCheck":0.55,"testCheck":0.4}}}},"expect":{"state":"test-check"}}

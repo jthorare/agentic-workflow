@@ -1,7 +1,0 @@
-T-3/step/1  workflow.step@4ca37bf46333  v4  parked: budget (child)  since 11:50 (10m)
-  next      Parked (budget) in T-3/step/1/step.4: the child used 50k of 50k tokens.
-            Grant tokens at a terminal, or cancel.
-  child     T-3/step/1/step.2  done
-            T-3/step/1/step.4  parked: budget
-  answer    sindri workflow answer T-3/step/1/step.4 --grant-tokens <n>     (at a terminal; once per park; the child's own; T-3/step/1 forwards it)
-  commands  takeover, cancel

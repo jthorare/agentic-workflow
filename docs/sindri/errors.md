@@ -144,6 +144,7 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-101` | No such workflow run |
 | `SND-GRAPH-102` | A block could not finish |
 | `SND-GRAPH-103` | The model's answer does not fit the prompt's output schema |
+| `SND-GRAPH-104` | `sindri workflow takeover` and `handback` are refused until graph run controls land |
 | `SND-GRAPH-105` | This workflow is not active; activate a revision to run it |
 | `SND-GRAPH-106` | A manual run's payload must be a JSON object |
 | `SND-GRAPH-107` | This run already ended |

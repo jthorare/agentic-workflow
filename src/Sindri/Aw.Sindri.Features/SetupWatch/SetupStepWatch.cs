@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace Aw.Sindri.Features.SetupWatch;
 
 /// <summary>
-/// The 'setup' service's step watch (setup-once spec §6, §7.5): each tick it derives the six steps from their live inputs, the way GET /setup does, and records 'setup.step.changed' for each whose state differs from its last event.
+/// The 'setup' service's step watch (setup-once spec §6, §7.5): each tick it derives the five steps from their live inputs, the way GET /setup does, and records 'setup.step.changed' for each whose state differs from its last event.
 /// It keeps no step state of its own beyond the ledger's events; a tick that can't record (no lease, an unreadable ledger) leaves the next tick to try again.
 /// </summary>
 /// <param name="facts">The sources.</param>

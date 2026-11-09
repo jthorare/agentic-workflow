@@ -1,7 +1,0 @@
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "SND-CLI-003",
-  "status": 400,
-  "detail": "workflow.step needs input fact:spec (fix: --fact fact:spec=<file>)",
-  "traceId": "<trace>"
-}

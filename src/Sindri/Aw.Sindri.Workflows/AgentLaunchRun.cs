@@ -1,7 +1,6 @@
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Core.Workflow.Recipes;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
@@ -13,7 +12,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Subject">The Step's 'subject' parameter, which says which lens loop's pack a 'lenses' bundle holds; null for none.</param>
 /// <param name="LensQueue">The instance's stored 'fact:lensQueue', whose head lens's prompt a 'lenses' bundle holds; null when it has none.</param>
 /// <param name="Facts">The instance's stored facts; the launch writes those the Step declares as inputs into its run directory.</param>
-/// <param name="Payloads">The payload facts the Step writes under its recipe (<see cref="PayloadFacts.OutputsOf"/>), whose shape its brief states; null for none.</param>
+/// <param name="Payloads">The payload facts the Step writes under its recipe (OutputsOf), whose shape its brief states; null for none.</param>
 /// <param name="Model">The Step's 'model' parameter, a model id; null runs the agent's default.</param>
 /// <param name="Previous">For an escalation: the run that failed (spec 5); null for a first run.</param>
 /// <param name="Escalation">0 for the first run, 1 for its one retry on a stronger model (spec 7.1).</param>

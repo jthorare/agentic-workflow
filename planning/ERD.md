@@ -9,7 +9,7 @@ with the TypeScript packages at the switch, and no TS state is migrated.
 |-------|------|-------|---------------------|
 | Sindri ledger | `$AW_SINDRI_HOME/ledger.db` | `Aw.Sindri.Infrastructure` | `events`, `lease`, `outbox_commands`; Sindri is the only writer, hooks append to spool files instead (`docs/csharp/sindri.md` "State") |
 | Sindri views | `$AW_SINDRI_HOME/views.db` | the projector | `projector_state` and one `view_<name>(key, row_json, seq)` table per view; derived, rebuilt from the ledger by `sindri views rebuild` (`docs/csharp/sindri.md`) |
-| Temporal dev server | `$AW_SINDRI_HOME/temporal.db` | the pinned `temporal` binary | Not ours; the workflow engine's history (`docs/csharp/sindri-workflow.md`) |
+| Temporal dev server | `$AW_SINDRI_HOME/temporal.db` | the pinned `temporal` binary | Not ours; the workflow engine's history (`docs/csharp/sindri-graph.md`) |
 | Code index | per repo, under the Sindri home | `src/CodeIndex` | Symbols, callers and callees; derived data (`docs/csharp/code-index.md`) |
 | Context store | `$AW_SINDRI_HOME/context/context.db` | `Aw.Context.Infrastructure` | The graph, the intent layer, repo docs and the record store below; migrations `Store/Migrations/NNNN_*.sql` (spec `docs/superpowers/specs/2026-10-27-sindri-owned-index-design.md` §4) |
 | Judge decisions | `$AW_STATE_DIR/judge/decisions.sqlite` | `Aw.Judge.Infrastructure` | `decisions`, `decision_details`, `failures`, `briefs` (`docs/csharp/judge.md` "State") |

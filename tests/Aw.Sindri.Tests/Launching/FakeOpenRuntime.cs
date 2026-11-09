@@ -38,7 +38,7 @@ internal sealed class FakeOpenRuntime : IInstanceRuntime
         }
 
         _ = _takenOver.Add(address.Value);
-        var view = new InstanceView(address, _recipe, "taken-over", Detail: null, DateTimeOffset.FromUnixTimeMilliseconds(1_000), string.Empty, [], Question: null, Task: null, Run: null, Children: [], Outcome: null)
+        var view = new InstanceView(address, _recipe, "taken-over", DateTimeOffset.FromUnixTimeMilliseconds(1_000))
         { Id = WorkflowInstanceId.Of(address), Version = 1 };
         return new CommandResult(view, "taken over");
     }

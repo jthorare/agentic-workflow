@@ -1,6 +1,0 @@
-{"start":{"inputs":{"fact:scopePacket":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fact:designPacket":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}}}
-{"trigger":{"kind":"step.completed","outcome":"loaded","outputs":{"fact:anchors":["feature:sharing"],"fact:design":{"sections":[]},"fact:plan":{"phases":[]},"fact:findings":[],"fact:questions":[],"fact:answers":[],"fact:answerLog":[],"fact:holdoutSets":[]}},"expect":{"state":"graph"}}
-{"trigger":{"kind":"step.completed","outcome":"drafted","outputs":{"fact:plan":{"phases":[{"id":"P1","items":["AC-1"]}]}}},"expect":{"state":"check"}}
-{"trigger":{"kind":"step.completed","outcome":"pass"},"expect":{"state":"exec-review"}}
-{"trigger":{"kind":"step.completed","outcome":"objections","outputs":{"fact:findings":[{"phase":"P1","question":"files","objection":"allowed files miss the test","change":"add tests/x"}]}},"expect":{"state":"graph"}}
-{"trigger":{"kind":"step.completed","outcome":"drafted","outputs":{"fact:plan":{"phases":[{"id":"P1","items":["AC-1"]}]}}},"expect":{"state":"check"}}

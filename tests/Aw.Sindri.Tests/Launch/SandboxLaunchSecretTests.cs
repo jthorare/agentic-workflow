@@ -179,7 +179,7 @@ public sealed class SandboxLaunchSecretTests : IDisposable
         _ = await launcher.Launch(request, TestContext.Current.CancellationToken);
         var secret = new LaunchSecret(Registry.For(request.Launch)[SecretVariable]);   // what bubblewrap sets in the agent's environment, which CompleteCommand sends as X-Sindri-Launch-Secret
         var address = InstanceAddress.From("T-9/step/1");
-        var view = new InstanceView(address, new RecipeVersion(RecipeId.From("workflow.step"), 1, RecipeHash.From("sha256:" + new string('a', 64))), "produce", Detail: null, KnownInstants.Epoch, string.Empty, [], Question: null, Task: null, RunToken.For(1, 1), Children: [], Outcome: null)
+        var view = new InstanceView(address, new RecipeVersion(RecipeId.From("workflow.step"), 1, RecipeHash.From("sha256:" + new string('a', 64))), "produce", KnownInstants.Epoch)
         {
             Id = WorkflowInstanceId.Of(address),
             AgentRun = new OpenRun(RunToken.For(1, 1), StepRuntime.Agent, request.Launch.Value, Task: null),

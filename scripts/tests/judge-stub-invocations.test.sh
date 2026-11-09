@@ -57,7 +57,7 @@ list() { # list <pathspec>...
 }
 in_root() { while IFS= read -r f; do [ -f "$ROOT/$f" ] && printf '%s\n' "$ROOT/$f"; done; }
 
-shell_files=$(list config/hooks config/lib scripts skills recipes src/Sindri | grep -E '\.(sh|bash|md|ya?ml|json)$|^config/(hooks|lib)/[^.]*$' | in_root || true)
+shell_files=$(list config/hooks config/lib scripts skills src/Sindri | grep -E '\.(sh|bash|md|ya?ml|json)$|^config/(hooks|lib)/[^.]*$' | in_root || true)
 cs_files=$(list src/Evidence src/BugFix src/Sindri | grep -E '\.cs$' | in_root || true)
 bad=""
 if [ -n "$shell_files" ]; then

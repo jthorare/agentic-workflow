@@ -1,3 +1,0 @@
-{"start":{"inputs":{"fact:item":"T-1"}}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Draft: reply to the reporter and close the item."}},"expect":{"state":"answer"}}
-{"trigger":{"kind":"answer","variant":"text","outputs":{"fact:answer":"Accepted."}},"expect":{"state":"done","outcome":"resolved"}}

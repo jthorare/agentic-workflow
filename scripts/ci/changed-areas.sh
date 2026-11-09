@@ -63,16 +63,12 @@ classify_changes() {
       schemas/packets/*) ;;  # the packet schemas belong to Aw.Packets (its golden test, the dotnet area above)
       # Aw.Evidence's lock interop tests source it: the C# lock adapter and the shell tools share one lock format
       config/lib/locks.sh|config/lib/heavy-config.sh) dotnet=true ;;
-      # recipes/ is embedded in the Sindri tests (ShippedRecipes) and read by the schema check (check-scoping-schemas.mjs)
-      recipes/*) dotnet=true; bash=true ;;
       schemas/*|rules/*) bash=true ;;  # check-deps and check-rules (and their suites) read these
       # scripts/tests/ci-lane-budgets.test.sh checks lane-budgets.mjs against these numbers
       tests/Aw.Kernel.Testing/Lanes.cs) bash=true ;;
       # the launcher checks (check-launcher.mjs, check-profile-doc.mjs) read these; they sit under src/ and tests/ (dotnet) or docs/ (neither)
       src/Sindri/Aw.Sindri.Core/Profile/*) dotnet=true; bash=true ;;
       tests/fixtures/launcher/*|config/launcher/*|schemas/launcher.schema.json) bash=true ;;
-      # scripts/tests/scoping-fixture.test.sh and line-fixture.test.sh build their fixture's history and run its self-check (dotnet comes from tests/*)
-      tests/fixtures/scoping/*|tests/fixtures/line/*) dotnet=true; bash=true ;;
       # scripts/tests/code-index-fixture.test.sh runs the code-index fixture checks (dotnet comes from tests/*)
       tests/fixtures/code-index/*) bash=true ;;
       docs/csharp/sindri-profile.md|docs/csharp/sindri-launcher.md) bash=true ;;

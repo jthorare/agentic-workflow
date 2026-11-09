@@ -26,7 +26,7 @@ check "doctor's sandbox:limits, sandbox:hooks and sandbox:inner rows are dropped
 check "doctor's launcher:adoption line is kept (it is pinned)" "ok    launcher:adoption no opens in the last 30 days" "ok    launcher:adoption no opens in the last 30 days"
 check "this host's name is HOST" "  lease     held by $(hostname -s)/4242 since 2026-10-14T12:00:00Z (epoch 1)" "  lease     held by HOST/PID since TIME (epoch 1)"
 check "a full hash is HASH before its 6-digit form" "hash $(printf 'a%.0s' $(seq 64)) (approve profile abcdef)" "hash HASH (approve profile HASH6)"
-check "the repo root is ROOT" "## sindri recipe validate /tmp/smoke-root/recipes/sindri/workflow.step.yaml" "## sindri recipe validate ROOT/recipes/sindri/workflow.step.yaml"
+check "the repo root is ROOT" "## sindri profile validate /tmp/smoke-root/profile/profile.yaml" "## sindri profile validate ROOT/profile/profile.yaml"
 check "status's views line keeps its words and drops the numbers" "  views     cursor 7 of 9 (rebuilding: cursor 3 of 9)" "  views     cursor N of M (rebuilding: cursor N of M)"
 check "doctor's views line keeps 'head'" "ok    views             cursor 12 of head 12" "ok    views             cursor N of head M"
 check "a rebuild's sequence is SEQ" "views rebuild requested (sequence 31)" "views rebuild requested (sequence SEQ)"

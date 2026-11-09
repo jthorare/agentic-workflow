@@ -77,7 +77,7 @@ run up --dry-run
 expect "up --dry-run walks home, fakes, first run to step 5, refresh, the pause and the app (exit 0)" 0 \
   "sindri-app-firstrun-modellimit (port 7482)" "fake-bin/claude" "harnesses: [claude-code, codex]" "stopped after step 5" \
   "context map refresh --detach --json" "jobs show <job> --json" '.waitingOn == "model-limit"' "Check 1 (#2112 step 1)"
-case "$OUT" in *"context map status --json"*|*"recipe list"*) fail "up --dry-run stops the first run before its map and recipe steps" ;; *) ok "up --dry-run stops the first run before its map and recipe steps" ;; esac
+case "$OUT" in *"context map status --json"*|*"item add"*) fail "up --dry-run stops the first run before its map and item steps" ;; *) ok "up --dry-run stops the first run before its map and item steps" ;; esac
 run resume --cli --dry-run
 expect "resume --cli --dry-run brings claude-code back, resumes and waits for success" 0 "rm $HOME_DIR/model-limit/limited-claude-code" "jobs resume <job>" '.state == "succeeded"'
 run resume --dry-run
@@ -149,7 +149,7 @@ else
   echo "model-limit-check: pause, resume, down"
   run up --no-embeddings --no-graph --no-ui
   expect "a second up finds the job paused on model-limit again (exit 0)" 0 "JOB-0001 is waiting on model-limit" "Check 1 (#2112 step 1)"
-  if logged '--headless' && logged 'services run code-index-main-move' && logged 'context map refresh --detach --json' && ! logged 'recipe list'; then ok "serve, the index and the refresh ran; nothing past step 5 of the first run"; else fail "serve, the index and the refresh ran; nothing past step 5 of the first run"; sed 's/^/       | /' "$STUB_LOG"; fi
+  if logged '--headless' && logged 'services run code-index-main-move' && logged 'context map refresh --detach --json' && ! logged 'item add'; then ok "serve, the index and the refresh ran; nothing past step 5 of the first run"; else fail "serve, the index and the refresh ran; nothing past step 5 of the first run"; sed 's/^/       | /' "$STUB_LOG"; fi
   if [ "$(cat "$L/job.id")" = JOB-0001 ]; then ok "the job id is kept"; else fail "the job id is kept"; fi
   run resume --cli
   expect "resume --cli brings claude-code back, resumes, and the job succeeds with a labeling answer (exit 0)" 0 "Check 2 (#2112 step 2)" "the fake claude answered 1 call(s)"

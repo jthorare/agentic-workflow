@@ -27,11 +27,4 @@ public static class TestBlocks
     public static BlockDescriptor Gate(string id) => new(
         BlockId.From(id), BlockKind.Gate, Version: 1, Inputs: [], Outputs: [], Outcomes: [], Capability.None, Parameters: [],
         Rung.Deterministic, DeskCapable: false);
-
-    /// <summary>An item-routed event descriptor with the given outcomes.</summary>
-    /// <param name="kind">The event's kind.</param>
-    /// <param name="outcomes">Its outcomes.</param>
-    /// <returns>The descriptor.</returns>
-    public static EventDescriptor Event(string kind, params string[] outcomes) => new(
-        EventKind.From(kind), "router.stub", EventRoute.Item, [.. outcomes.Select(OutcomeName.From)], []);
 }

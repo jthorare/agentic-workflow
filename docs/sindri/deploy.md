@@ -9,7 +9,7 @@ The `Dockerfile` at the repo root has three stages, every `FROM` pinned by diges
 
 | Stage | Does |
 |---|---|
-| build | Publishes the Sindri host the way `scripts/install-cs.sh` does (framework-dependent, the shipped recipes embedded through `AwRecipesDir`), then `judge` and `aw-packets` NativeAOT for the target platform, then runs `sindri recipe eval --shipped` and fails the build if an eval fails or the embedded recipe count differs from `recipes/sindri/*.yaml`. `sindri-ui` is not built: the image has no desktop |
+| build | Publishes the Sindri host the way `scripts/install-cs.sh` does (framework-dependent), then `judge` and `aw-packets` NativeAOT for the target platform. `sindri-ui` is not built: the image has no desktop |
 | tools | The `temporal` CLI from `binaries.lock` (downloaded and sha256-checked by `scripts/binaries-lock.sh fetch temporal`), and graphify in a hash-pinned venv at `context/code-index.lock`'s pin (`uv`, the same install `scripts/install-deps.sh` does) |
 | runtime | `aspnet` plus `git`, `bubblewrap`, `tini`, `curl` (the chart's exec probes) and `procps` (the Temporal dev server is found and signalled with `ps` and `kill`); uid 1000; everything Sindri ships under `/opt/sindri` |
 
@@ -27,7 +27,7 @@ All set by the image; override with `docker run -e` or the chart's values.
 | `AW_STATE_DIR` | `/data/state` | State root; Temporal's binary is seeded under `cache/bin/` |
 | `AW_SINDRI_HOME` | `/data/state/sindri-app` | Ledger, views, approvals, endpoint record, token |
 | `HOME`, `XDG_CACHE_HOME`, `UV_CACHE_DIR` | under `/data/home` | The git, uv and graphify caches; a read-only root with uid 1000 has no other writable home |
-| `AW_SINDRI_JUDGE`, `AW_PACKETS_BIN` | `/opt/sindri/judge`, `/opt/sindri/aw-packets` | The NativeAOT tools the recipes run |
+| `AW_SINDRI_JUDGE`, `AW_PACKETS_BIN` | `/opt/sindri/judge`, `/opt/sindri/aw-packets` | The NativeAOT tools Sindri runs |
 | `AW_CODEINDEX_GRAPHIFY`, `AW_CODE_INDEX_LOCK` | `/opt/sindri/graphify/bin/graphify`, `/opt/sindri/context/code-index.lock` | The code index's graphify and its pin file |
 
 ## Volume layout

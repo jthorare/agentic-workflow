@@ -1,2 +1,0 @@
-{"start":{"inputs":{"fact:scopeInput":"fact:scopeInput for the scaffold","fact:lineContext":"fact:lineContext for the scaffold"}}}
-{"trigger":{"kind":"wait.satisfied","outcome":"unresolved","outputs":{}},"expect":{"state":"dropped","outcome":"unresolved"}}
