@@ -165,7 +165,7 @@ public sealed class CatalogFramesTests : IDisposable
         Assert.Contains("Copy: Run doctor", copies, StringComparer.Ordinal);
         Assert.All(page.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "TerminalGlyph"), g => Assert.Equal(AccessibilityView.Raw, AutomationProperties.GetAccessibilityView(g)));
         var blocks = page.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "CliText" && t.IsEffectivelyVisible).Select(t => t.Text).ToList();
-        Assert.All(["sindri profile init", "sindri launch init [--viewer <name>] [--force] [--stdout]", "sindri launch show [<id>] [--json]", "sindri doctor", "sindri line holdout show <line> <phase>", "sindri profile validate"], cli => Assert.Contains(cli, blocks, StringComparer.Ordinal));   // every row the app has no form for is a block, the cli-only ones among them
+        Assert.All(["sindri profile init", "sindri launch init [--viewer <name>] [--force] [--stdout]", "sindri launch show [<id>] [--json]", "sindri doctor", "sindri profile validate"], cli => Assert.Contains(cli, blocks, StringComparer.Ordinal));   // every row the app has no form for is a block, the cli-only ones among them
         Frame(window, "health-controls");
     });
 
