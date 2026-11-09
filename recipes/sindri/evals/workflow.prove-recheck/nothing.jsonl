@@ -1,3 +1,0 @@
-{"start":{"inputs":{"fact:handoff":{"head":"abc123"},"fact:phasePacket":{"phase":"1"},"fact:workspace":"/work/phase-1","fact:prState":{"head":"abc123"}}}}
-{"trigger":{"kind":"step.completed","outcome":"nothing"},"expect":{"state":"log"}}
-{"trigger":{"kind":"step.completed","outcome":"nothing","outputs":{"fact:recheck":{"result":"nothing"}}},"expect":{"state":"nothing","outcome":"alreadySatisfied"}}

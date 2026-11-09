@@ -12,9 +12,6 @@ public sealed class InMemorySetupFacts : ISetupFacts
     /// <summary>Gets or sets the profile's answer.</summary>
     public Result<ProfileFact> ProfileAnswer { get; set; } = new ProfileFact(ProfilePresence.Missing);
 
-    /// <summary>Gets or sets the recipes' answer.</summary>
-    public Result<RecipesFact> RecipesAnswer { get; set; } = new RecipesFact(0, 0);
-
     /// <summary>Gets or sets the MCP registration's answer.</summary>
     public Result<McpFact> McpAnswer { get; set; } = new McpFact(0, 0, "Claude Code");
 
@@ -27,13 +24,12 @@ public sealed class InMemorySetupFacts : ISetupFacts
     /// <summary>The profile names one repo, demo.</summary>
     public static RepoFact OneRepo { get; } = new(1) { Items = new SetupItems([new SetupItem("demo", SetupState.Done, Detail: null)]) };
 
-    /// <summary>Everything done: a repo, an approved profile, every recipe approved, the registration made, the map built and every named source connected.</summary>
+    /// <summary>Everything done: a repo, an approved profile, the registration made, the map built and every named source connected.</summary>
     /// <returns>The fake.</returns>
     public static InMemorySetupFacts AllDone() => new()
     {
         RepoAnswer = OneRepo,
         ProfileAnswer = new ProfileFact(ProfilePresence.Present),
-        RecipesAnswer = new RecipesFact(26, 26),
         McpAnswer = new McpFact(1, 1, "Claude Code") { Items = new SetupItems([new SetupItem("demo", SetupState.Done, "Claude Code") { Providers = [new McpProviderState("claude", McpConnection.Connected)] }]) },
         MapAnswer = new MapFact(MapPhase.Built) { Items = new SetupItems([new SetupItem("demo", SetupState.Done, Detail: null)]) },
         SourcesAnswer = NamedSources(("github", true), ("slack", true)),
@@ -54,8 +50,6 @@ public sealed class InMemorySetupFacts : ISetupFacts
     public ValueTask<Result<ProfileFact>> Profile(CancellationToken cancellationToken) => ValueTask.FromResult(ProfileAnswer);
 
     /// <inheritdoc/>
-    public ValueTask<Result<RecipesFact>> Recipes(CancellationToken cancellationToken) => ValueTask.FromResult(RecipesAnswer);
-
     /// <inheritdoc/>
     public ValueTask<Result<McpFact>> Mcp(CancellationToken cancellationToken) => ValueTask.FromResult(McpAnswer);
 

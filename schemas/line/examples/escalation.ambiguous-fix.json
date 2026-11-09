@@ -1,1 +1,0 @@
-{"kind":"ambiguousFix","question":"Cache the result or recompute it on each request?","options":["cache","recompute"],"lens":"correctness","finding":"f1"}

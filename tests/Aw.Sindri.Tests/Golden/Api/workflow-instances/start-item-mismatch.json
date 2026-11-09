@@ -1,7 +1,0 @@
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "SND-WF-014",
-  "status": 400,
-  "detail": "--item is T-5 but fact:item (item.json) names T-9 (fix: use the same id in both)",
-  "traceId": "<trace>"
-}

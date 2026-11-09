@@ -28,7 +28,6 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
     private static readonly HashSet<string> _handled = new(StringComparer.Ordinal)
     {
         EventTypes.RequestFiled, EventTypes.DecisionRecorded, EventTypes.ItemStateChanged, EventTypes.ServiceRan, EventTypes.ProfileChecked,
-        EventTypes.WorkflowStarted, EventTypes.WorkflowTransition, EventTypes.WorkflowRefused, EventTypes.WorkflowNotified,
         EventTypes.ConnectionNeedsSignIn, EventTypes.ConnectionSignedIn,
         EventTypes.WorkflowNotify, EventTypes.WorkflowRunFinished, EventTypes.WorkflowRunCancelled,
     };
@@ -50,7 +49,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
             EventTypes.ConnectionNeedsSignIn or EventTypes.ConnectionSignedIn => await ConnectionRow(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.WorkflowNotify => await Notified(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.WorkflowRunFinished or EventTypes.WorkflowRunCancelled => await RunEnded(recorded, rows, cancellationToken).ConfigureAwait(false),
-            _ => await Engine(recorded, rows, cancellationToken).ConfigureAwait(false),
+            _ => Results.Success(Unit.Value),
         };
     }
 

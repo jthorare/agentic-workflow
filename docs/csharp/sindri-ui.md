@@ -793,8 +793,7 @@ each gets a test.
 
 **Fixture and mockups.** `scripts/sindri-ui-fixture.sh sandbox <state>` seeds the states. `blocked` and `clear` restart the control plane (after
 `sessions up`) with `AW_SANDBOX_BWRAP=/nonexistent` or with it unset, because `/sindri/sandbox/status` and `/check` need a live answer that ledger rows
-can't fake (`clear` needs a working bubblewrap); `blocked` also starts the agent-run recipe so a Step parks on `SND-LAUNCH-014` (run it twice for two
-parked Steps). `denials`, `denials-many`, `waiting`, `limit-memory`, `limit-wall`, `learning`, `takeover` and `attended` write ledger rows on an
+can't fake (`clear` needs a working bubblewrap); `blocked` starts no run. `denials`, `denials-many`, `waiting`, `limit-memory`, `limit-wall`, `learning`, `takeover` and `attended` write ledger rows on an
 existing item and instance,. The mockups are `sandbox-park.html`, `sandbox-sheet.html` and `sandbox-health.html` in the
 screens mockups folder, with matching entries in `docs/sindri/ui-evidence/screens.json`.
 

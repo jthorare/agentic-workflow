@@ -5,21 +5,19 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.ApproveAll;
 
 namespace Aw.Sindri.Features.GetNeedsYou;
 
 /// <summary>
 /// The setup rows the needs-you list adds to the views' (setup-once spec §7.3). 'setup:repo' stands while the profile names no repo and the last AddRepo job failed; it is cleared when a new AddRepo job runs
-/// or succeeds. The sentence is the job's own, the fix in it. 'setup:recipes' and 'recipe:' come from the approve-all plan.
+/// or succeeds. The sentence is the job's own, the fix in it.
 /// </summary>
 /// <param name="jobs">The jobs view.</param>
 /// <param name="live">The live profile: a repo in it means the step is done.</param>
-/// <param name="plans">The approve-all plan, which the 'setup:recipes' and 'recipe:' rows are read from; a plan that can't be read drops those rows only.</param>
 /// <param name="scrubber">Scrubs the text.</param>
-/// <param name="clock">Stamps the recipe rows.</param>
+/// <param name="clock">Stamps the rows.</param>
 /// <param name="mcp">Says whether the owner is to be asked once to turn the automatic registration on.</param>
-internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveAllPlanReader plans, ITextScrubber scrubber, TimeProvider clock, McpAutoGate mcp)
+internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ITextScrubber scrubber, TimeProvider clock, McpAutoGate mcp)
 {
     private static readonly JobKind _addRepo = JobKind.From("AddRepo");
     private static readonly JobKind _registerMcp = JobKind.From("RegisterMcp");
@@ -46,29 +44,6 @@ internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveA
 
         var row = NeedsYouRows.ForSetupMcp(failed.Summary ?? "Sindri could not register itself with your agents. Press Connect again.", failed.EndedAt ?? failed.StartedAt, scrubber);
         return row.IsSuccess ? row.Value : null;
-    }
-
-    // The approve-all plan's rows (setup-once spec §7.3): read at request time from the registry and the approvals, and absent when the plan can't be read
-    // (no profile yet, or the read failed): the list never fails for them.
-    internal async ValueTask<IReadOnlyList<NeedsYouRow>> Recipes(CancellationToken cancellationToken)
-    {
-        try
-        {
-            var plan = await plans.Read(cancellationToken).ConfigureAwait(false);
-            if (plan.IsError)
-            {
-                return [];
-            }
-
-            var rows = NeedsYouRows.ForRecipes(plan.Value, clock.GetUtcNow(), scrubber);
-            return rows.IsSuccess ? rows.Value : [];
-        }
-#pragma warning disable CA1031 // boundary: a registry that throws drops these rows, never the list
-        catch (Exception e) when (e is not OperationCanceledException)
-#pragma warning restore CA1031
-        {
-            return [];
-        }
     }
 
     // The newest job of a kind when it failed and none of that kind is running now; else null.

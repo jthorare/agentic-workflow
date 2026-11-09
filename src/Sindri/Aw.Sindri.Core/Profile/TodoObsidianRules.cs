@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Aw.Kernel;
-using Aw.Sindri.Core.LensPacks;
 
 namespace Aw.Sindri.Core.Profile;
 

@@ -53,17 +53,4 @@
 + AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 <sindri-ui: $AW_SINDRI_UI, else <T>/state/bin/cs/current/sindri-ui> > <T>/state/sindri-app-firstrun/logs/ui.log 2>&1 &
   check: the process is alive 2 s later; its pid is kept in <T>/state/sindri-app-firstrun/first-run/ui.pid
 
-== 8. the scoping recipe must be approved (yours, at a terminal)
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri recipe list
-+ (stop here unless a 'workflow.scoping@… approved' line shows) print:
-    AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 sindri recipe approve-all
-  and exit 3; after you approve, 'scripts/context-first-run.sh continue' resumes at step 9
-
-== 9. an item and the scoping recipe on it
-+ write <T>/state/sindri-app-firstrun/first-run/scope-input.json: {"kind":"brief","repo":"agentic-workflow","path":"docs/sindri/README.md"}
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri item add "First context run: scope docs/sindri/README.md" --repo agentic-workflow --no-start
-  check: prints 'ITM-… created (sequence N)'; the id is kept in <T>/state/sindri-app-firstrun/first-run/item.id
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri workflow start workflow.scoping --item <ITM-id> --fact fact:scopeInput=<T>/state/sindri-app-firstrun/first-run/scope-input.json
-  check: prints the instance's status header; then: workflow status <ITM-id>
-
 context-first-run up: done. Look at the app, then clean up with: scripts/context-first-run.sh down

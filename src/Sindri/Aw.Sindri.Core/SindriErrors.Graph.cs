@@ -58,6 +58,9 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-103: a prompt node's answer did not fit its 'output' schema.</summary>
     public static readonly ErrorDefinition GraphPromptAnswer = new("SND-GRAPH-103", ErrorKind.Invalid, "The model's answer does not fit the prompt's output schema");
 
+    /// <summary>SND-GRAPH-104: run controls (complete a Step, take over, hand back) are not available until the graph engine runs agents.</summary>
+    public static readonly ErrorDefinition GraphRunControlsPending = new("SND-GRAPH-104", ErrorKind.Unavailable, "This run control returns with the graph engine's agent blocks");
+
     /// <summary>SND-GRAPH-108: a reference read the output of a node that the store cut at 64 KB.</summary>
     public static readonly ErrorDefinition GraphOutputTruncated = new("SND-GRAPH-108", ErrorKind.Invalid, "A referenced node output was cut at 64 KB");
 }

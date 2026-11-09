@@ -1,6 +1,4 @@
-using System.Text.Json;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Host.Commands.Scoping;
 using Aw.Sindri.Infrastructure.Launch;
 
 namespace Aw.Sindri.Tests.Launch;
@@ -44,16 +42,5 @@ public sealed class StepFactWriterTests : IDisposable
         Assert.NotNull(problem);
         Assert.Contains(name, problem.Message, StringComparison.Ordinal);
         Assert.Empty(Directory.EnumerateFileSystemEntries(_run));
-    }
-
-    [Fact]
-    public async Task The_scoping_fact_reader_finds_what_the_launch_wrote_with_the_shape_docs_check_expects()
-    {
-        _ = await StepFactWriter.Write(_run, new Dictionary<string, string>(StringComparer.Ordinal) { ["workspace.json"] = "\"/work/docs\"", ["docsScope.json"] = """{"base":"abc"}""" }, CancellationToken.None);
-
-        var read = await ScopingFactDirectory.Read(_run, CancellationToken.None);
-
-        Assert.Equal("/work/docs", JsonSerializer.Deserialize<string>(read.Value["workspace"]));
-        Assert.Equal("abc", JsonDocument.Parse(read.Value["docsScope"]).RootElement.GetProperty("base").GetString());
     }
 }

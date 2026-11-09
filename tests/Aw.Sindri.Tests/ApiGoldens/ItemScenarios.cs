@@ -38,16 +38,11 @@ internal static class ItemScenarios
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
-    public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario)) || ItemScopeScenarios.Handles(slug, scenario);
+    public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
 
     /// <summary>Runs the scenario against <paramref name="host"/> (started on <see cref="ProfileYaml"/>) and returns the body to compare.</summary>
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
     {
-        if (ItemScopeScenarios.Handles(slug, scenario))
-        {
-            return await ItemScopeScenarios.Body(host, scenario, ct);
-        }
-
         await ViewScenarios.Approve(host, ct);
         return slug switch
         {

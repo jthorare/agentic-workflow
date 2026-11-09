@@ -20,19 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The scoping station's fact schemas (SC-K): the draft check validates a model's facts against their $defs/fact directly. -->
-    <ScopingSchema Include="../../../schemas/scoping/*.json" />
-    <EmbeddedResource Include="@(ScopingSchema)" LogicalName="scoping-schemas/%(Filename)%(Extension)" />
-  </ItemGroup>
-
-  <ItemGroup>
     <InternalsVisibleTo Include="Aw.Sindri.Tests" />
     <InternalsVisibleTo Include="Aw.Sindri.Engine.Tests" />
     <InternalsVisibleTo Include="Aw.Sindri.Testing" />
     <InternalsVisibleTo Include="sindri" />
   </ItemGroup>
-  <!-- An empty glob embeds nothing and the scoping Steps throw at run time (a publish copy tree without schemas/scoping did): make it a build error. -->
-  <Target Name="RequireScopingSchemas" BeforeTargets="PrepareForBuild">
-    <Error Condition="'@(ScopingSchema)' == ''" Text="No scoping schema to embed: ../../../schemas/scoping/*.json matched nothing. A publish copy tree must carry schemas/scoping (scripts/lib/sindri-build-inputs.sh)." />
-  </Target>
 </Project>

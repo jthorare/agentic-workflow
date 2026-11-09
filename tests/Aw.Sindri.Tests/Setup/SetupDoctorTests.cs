@@ -12,7 +12,7 @@ public sealed class SetupDoctorTests
 
     private static async Task<DoctorCheck> Run(InMemorySetupFacts facts) => (await All(facts)).Single(static c => c.Name == SetupDoctor.Name);
 
-    private static async Task<IReadOnlyList<DoctorCheck>> All(InMemorySetupFacts facts, FakeRecipeBuild? build = null) => await new SetupDoctor(facts, build).Run(Token);
+    private static async Task<IReadOnlyList<DoctorCheck>> All(InMemorySetupFacts facts) => await new SetupDoctor(facts).Run(Token);
 
     [Fact, Trait("Lane", "unit")]
     public async Task Every_step_done_is_ok()
@@ -71,33 +71,4 @@ public sealed class SetupDoctorTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_box_without_a_repo_has_no_hook_row() =>
         Assert.DoesNotContain(await All(new InMemorySetupFacts()), static c => c.Name == "setup:repo-hook");
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task An_embedded_recipe_set_that_differs_from_the_checkouts_head_warns_with_both_hashes()
-    {
-        var check = (await All(InMemorySetupFacts.AllDone(), new FakeRecipeBuild(new RecipeTrees("aaaa111", "bbbb222")))).Single(static c => c.Name == "setup:recipes-tree");
-
-        Assert.Equal(CheckState.Warn, check.State);
-        Assert.Contains("aaaa111", check.Detail, StringComparison.Ordinal);
-        Assert.Contains("bbbb222", check.Detail, StringComparison.Ordinal);
-        Assert.Contains("scripts/install-cs.sh --rebuild", check.Fix, StringComparison.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task An_embedded_recipe_set_that_matches_head_is_ok()
-    {
-        var check = (await All(InMemorySetupFacts.AllDone(), new FakeRecipeBuild(new RecipeTrees("aaaa111", "aaaa111")))).Single(static c => c.Name == "setup:recipes-tree");
-
-        Assert.Equal(CheckState.Ok, check.State);
-    }
-
-    [Theory, Trait("Lane", "unit")]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task Without_a_build_stamp_or_a_checkout_there_is_no_recipes_row(bool stampOnly)
-    {
-        var build = new FakeRecipeBuild(stampOnly ? new RecipeTrees("aaaa111", Head: null) : null);
-
-        Assert.DoesNotContain(await All(InMemorySetupFacts.AllDone(), build), static c => c.Name == "setup:recipes-tree");
-    }
 }

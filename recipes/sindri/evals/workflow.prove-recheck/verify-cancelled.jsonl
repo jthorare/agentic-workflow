@@ -1,5 +1,0 @@
-{"start":{"inputs":{"fact:handoff":{"head":"abc123"},"fact:phasePacket":{"phase":"1"},"fact:workspace":"/work/phase-1","fact:prState":{"head":"abc123"}}}}
-{"trigger":{"kind":"step.completed","outcome":"planned","outputs":{"fact:recheckPlan":{"journeys":["j1"],"scripts":["s1"]}}},"expect":{"state":"slot"}}
-{"trigger":{"kind":"wait.satisfied"},"expect":{"state":"verify"}}
-{"trigger":{"kind":"wait.satisfied","outcome":"cancelled"},"expect":{"state":"log"}}
-{"trigger":{"kind":"step.completed","outcome":"broken","outputs":{"fact:recheck":{"result":"broken"}}},"expect":{"state":"broken","outcome":"unresolved"}}
