@@ -91,7 +91,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             // why: a node inside a for_each body has one row per item (ItemIndex 1..N); each item's row is committed with that item's scope, as Execute read it
             foreach (var stored in nodeRuns.Where(n => n.NodeId == graphNode.Id && n.Status == NodeRunStatus.Succeeded))
             {
-                if (ItemScope(outer, row, spec, nodeRuns, stored) is { } scope && await CommitNode(run, graphNode, stored, block, scope, cancel).ConfigureAwait(false) is { } failure)
+                if (ItemScope(outer, row, spec, nodeRuns, stored) is { } scope && await CommitNode(graphNode, stored, block, scope, cancel).ConfigureAwait(false) is { } failure)
                 {
                     return failure;
                 }
@@ -113,7 +113,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         return failure is null && loop is not null ? new Scope(row, spec, nodeRuns, loop) : null;
     }
 
-    private static async Task<string?> CommitNode(WorkflowRunId run, GraphNode graphNode, NodeRun stored, IGraphBlock block, Scope scope, CancellationToken cancel)
+    private static async Task<string?> CommitNode(GraphNode graphNode, NodeRun stored, IGraphBlock block, Scope scope, CancellationToken cancel)
     {
         // why: a cut output is not what the block gave, so committing it would remember the wrong keys; the items stay unseen and come back on the next run (a repeat, never a loss)
         if (stored.Output is null || stored.Truncated)
@@ -128,7 +128,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         }
 
         var result = new BlockResult(output.ToDictionary(static p => p.Key, static p => p.Value?.DeepClone(), StringComparer.Ordinal), Branches: null);
-        var context = new BlockContext(run, graphNode.Id, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup);
+        var context = new BlockContext(stored.RunId, graphNode.Id, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup);
         var committed = await block.Commit(context, result, cancel).ConfigureAwait(false);
         return committed.IsError ? $"node '{graphNode.Id.Value}' could not record what it passed on: {committed.Error.Code}: {committed.Error.Message}" : null;
     }
