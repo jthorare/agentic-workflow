@@ -1,5 +1,6 @@
 using Aw.Meta.Core;
 using Aw.Meta.Core.Ids;
+using Aw.Meta.Core.Messages;
 using Aw.Meta.Features.Inbox;
 using Aw.Meta.Features.InboxDefer;
 using Aw.Meta.Features.InboxDismiss;
@@ -127,4 +128,17 @@ public sealed class InboxTests
     [InlineData("+30m", "")]
     public void A_deferral_needs_a_reason_and_a_time_that_can_be_read(string until, string reason) =>
         Assert.True(new DeferInboxValidator().Validate(new DeferInboxRequest(MessageId.From("m1"), reason, until)).IsError);
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_notice_is_still_listed_but_is_not_marked_as_owing_a_reply()
+    {
+        await _world.Ready();
+        await Receive(("m1", "t1-api", "ack, thanks"));
+
+        var all = await Items(all: true);
+
+        var item = Assert.Single(all);
+        Assert.NotEqual(InboxState.Open, item.State, StringComparer.Ordinal);
+        Assert.Empty(await Items(all: false));
+    }
 }
