@@ -208,7 +208,7 @@ public sealed class SindriApiClientLinearTests
     [InlineData("session-write-refused", false, "SND-AUTH-002")]
     [InlineData("full", true, null)]
     [InlineData("removed", false, null)]
-    [InlineData("session", false, "SND-AUTH-002")]
+    [InlineData("session", true, null)]
     public async Task The_issue_goldens_carry_whether_the_sheet_may_write(string scenario, bool allowed, string? code)
     {
         var issue = (await Client(Ok("linear-issue", scenario)).LinearIssue(_api, "ENG-12", Token)).Value;
@@ -233,6 +233,7 @@ public sealed class SindriApiClientLinearTests
     [InlineData("applied", null, null)]
     [InlineData("applied-store-failed", "SND-LINEAR-013", null)]
     [InlineData("already-applied", null, true)]
+    [InlineData("session", null, null)]
     public async Task LinearChange_reads_an_applied_edit_with_the_re_read_issue(string scenario, string? warning, bool? already)
     {
         var result = await Client(Served("linear-change", scenario)).LinearChange(_api, "ENG-12", _noFields, _noFields, Token);
@@ -267,7 +268,6 @@ public sealed class SindriApiClientLinearTests
     [InlineData("no-write-key", "SND-LINEAR-002")]
     [InlineData("team-not-picked", "SND-LINEAR-003")]
     [InlineData("bad-value", "SND-LINEAR-006")]
-    [InlineData("session-refused", "SND-AUTH-002")]
     public async Task LinearChange_hands_any_other_refusal_back_as_the_error(string scenario, string code)
     {
         var result = await Client(Served("linear-change", scenario)).LinearChange(_api, "ENG-12", _noFields, _noFields, Token);
