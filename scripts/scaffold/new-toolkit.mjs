@@ -105,7 +105,7 @@ export function writeToolkit(journal, t, rel) {
   journal.create(at(`${t.name}.Toolkit.csproj`), T.toolkitCsproj(t));
   journal.create(at("Program.cs"), T.program(t));
   journal.create(at(`${t.name}Tools.cs`), T.tools(t));
-  journal.create(at(`${t.name}JsonContext.cs`), T.jsonContext(t));
+  journal.create(at(`${t.name}Json.cs`), T.jsonContext(t));
   journal.create(at(tests, `${tests}.csproj`), T.testsCsproj(t));
   journal.create(at(tests, `${t.toolPascal}Tests.cs`), T.sampleTest(t));
 }

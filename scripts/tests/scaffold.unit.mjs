@@ -735,18 +735,18 @@ t("new-toolkit writes the project, a test project with one sample test and its o
   const dir = path.join(home, "toolkits", "contracts");
   const r = toolkit(tkArgs(dir, { needs: "database:cache,disk:1g,connection:github:me" }));
   assert.equal(r.code, 0, r.out);
-  for (const f of ["global.json", "nuget.config", "Directory.Build.props", "Directory.Packages.props", ".editorconfig", "Contracts.Toolkit.csproj", "Program.cs", "ContractsTools.cs", "ContractsJsonContext.cs", "Contracts.Toolkit.Tests/Contracts.Toolkit.Tests.csproj", "Contracts.Toolkit.Tests/DiffContractsTests.cs"]) {
+  for (const f of ["global.json", "nuget.config", "Directory.Build.props", "Directory.Packages.props", ".editorconfig", "Contracts.Toolkit.csproj", "Program.cs", "ContractsTools.cs", "ContractsJson.cs", "Contracts.Toolkit.Tests/Contracts.Toolkit.Tests.csproj", "Contracts.Toolkit.Tests/DiffContractsTests.cs"]) {
     assert.ok(fs.existsSync(path.join(dir, f)), `missing ${f}`);
   }
   const tools = fs.readFileSync(path.join(dir, "ContractsTools.cs"), "utf8");
   assert.match(tools, /Toolkit\.Named\("contracts"\)/);
   assert.match(tools, /Resources\.Database\("cache"\)/);
-  assert.match(tools, /Resources\.Disk\("data", "1g"\)/);
+  assert.match(tools, /Resources\.Disk\("data", "1GiB"\)/);
   assert.match(tools, /Resources\.Connection\("me"\) \/\* github \*\//);
   assert.match(tools, /\.Tool<DiffContractsRequest, DiffContractsResponse>\("diff_contracts", "[^"]+", DiffContracts\)/);
-  assert.ok(tools.indexOf(".UseJson(ContractsJsonContext.Default)") > 0 && tools.indexOf(".UseJson(") < tools.indexOf(".Tool<"), "UseJson comes before Tool");
+  assert.ok(tools.indexOf(".UseJson(ContractsJson.Default)") > 0 && tools.indexOf(".UseJson(") < tools.indexOf(".Tool<"), "UseJson comes before Tool");
   assert.match(tools, /Task<DiffContractsResponse> DiffContracts\(DiffContractsRequest request, ToolkitContext ctx, CancellationToken ct\)/);
-  const ctx = fs.readFileSync(path.join(dir, "ContractsJsonContext.cs"), "utf8");
+  const ctx = fs.readFileSync(path.join(dir, "ContractsJson.cs"), "utf8");
   assert.match(ctx, /RespectNullableAnnotations = true/);
   assert.match(ctx, /RespectRequiredConstructorParameters = true/);
   assert.match(fs.readFileSync(path.join(dir, "Program.cs"), "utf8"), /ToolkitHost\.RunAsync\(ContractsTools\.Build\(\), args, CancellationToken\.None\)/);

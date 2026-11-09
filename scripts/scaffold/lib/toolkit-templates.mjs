@@ -2,16 +2,22 @@
 // `t` is the resolved input: { name, kebab, tool, toolPascal, needs: [{ kind, ... }], dir, feed, sdkVersion, sdk: pins }.
 // A toolkit lives outside the repo, so it carries its own build rails: Directory.Build.props, .editorconfig,
 // global.json, Directory.Packages.props and nuget.config. Layout:
-//   <dir>/<Name>.Toolkit.csproj, Program.cs, <Name>Tools.cs, <Name>JsonContext.cs
+//   <dir>/<Name>.Toolkit.csproj, Program.cs, <Name>Tools.cs, <Name>Json.cs
 //   <dir>/<Name>.Toolkit.Tests/<Name>.Toolkit.Tests.csproj, <Tool>Tests.cs
 
 const xml = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const cs = (s) => JSON.stringify(s);
 
+/** "1g" -> "1GiB", "500m" -> "500MiB", "2gib" -> "2GiB": the SDK's size text. */
+export const sdkSize = (size) => {
+  const m = /^([1-9][0-9]*)([kmgt])(i?b)?$/i.exec(size);
+  return `${m[1]}${m[2].toUpperCase()}iB`;
+};
+
 /** The C# expression that declares one need through the SDK's Resources factory (the one place that knows its shape). */
 export const needExpr = (n) => {
   if (n.kind === "database") return `Resources.Database(${cs(n.name)})`;
-  if (n.kind === "disk") return `Resources.Disk(${cs(n.name)}, ${cs(n.size)})`;
+  if (n.kind === "disk") return `Resources.Disk(${cs(n.name)}, ${cs(sdkSize(n.size))})`;
   return `Resources.Connection(${cs(n.name)})${n.service ? ` /* ${n.service} */` : ""}`;
 };
 
@@ -159,7 +165,7 @@ namespace Toolkits.${t.name};
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, RespectNullableAnnotations = true, RespectRequiredConstructorParameters = true)]
 [JsonSerializable(typeof(${t.toolPascal}Request))]
 [JsonSerializable(typeof(${t.toolPascal}Response))]
-internal sealed partial class ${t.name}JsonContext : JsonSerializerContext;
+internal sealed partial class ${t.name}Json : JsonSerializerContext;
 `;
 
 export const tools = (t) => {
@@ -182,7 +188,7 @@ public static class ${t.name}Tools
     /// <summary>Declares the toolkit. Add a tool with one more .Tool call; its schema comes from the request record.</summary>
     public static Toolkit Build() => Toolkit.Named(${cs(t.kebab)})
             .WithVersion("0.1.0")${needs ? `\n            ${needs}` : ""}
-            .UseJson(${t.name}JsonContext.Default)
+            .UseJson(${t.name}Json.Default)
             .Tool<${R}, ${S}>(${cs(t.tool)}, "TODO: one line on what ${t.tool} does", ${t.toolPascal});
 
     /// <summary>The ${t.tool} tool. Red until ${t.toolPascal}Tests passes (see ${t.name}.Toolkit.Tests).</summary>
