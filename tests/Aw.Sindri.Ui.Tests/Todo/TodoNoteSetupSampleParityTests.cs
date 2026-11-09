@@ -19,7 +19,7 @@ public sealed class TodoNoteSetupSampleParityTests
         var golden = Keys(GoldenFiles.Node("todos-note-check", "counts"));
         var sample = Keys(JsonNode.Parse(TodoNoteSetupSample.Check(cantImport: [4]))!);
 
-        Assert.Equal(_checkOnlyInGolden, golden.Except(sample, StringComparer.Ordinal).Order(StringComparer.Ordinal));
+        Assert.Equal(_checkOnlyInGolden, golden.Except(sample, StringComparer.Ordinal).Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.Empty(sample.Except(golden, StringComparer.Ordinal));
     }
 
@@ -33,7 +33,7 @@ public sealed class TodoNoteSetupSampleParityTests
         var golden = Keys(GoldenFiles.Node(slug, scenario));
         var sample = Keys(JsonNode.Parse(TodoNoteSetupSample.ChangedTo(new string('0', 64)))!);
 
-        Assert.Equal(golden.Order(StringComparer.Ordinal), sample.Order(StringComparer.Ordinal));
+        Assert.Equal(golden.Order(StringComparer.Ordinal), sample.Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     // Every key path in the document: "a", "a.b", and "a[].b" for the objects inside an array.
@@ -61,6 +61,8 @@ public sealed class TodoNoteSetupSampleParityTests
                 }
 
                 break;
+            default:
+                break;   // a value has no keys
         }
 
         return [.. keys.Distinct(StringComparer.Ordinal)];
