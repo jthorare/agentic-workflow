@@ -4,6 +4,7 @@ using Aw.Kernel.Data;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Infrastructure.Ledger;
 
 namespace Aw.Sindri.Infrastructure.Workflow;
@@ -140,6 +141,9 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
 
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
         Move(id, new Change(status, outputs, error, status == WorkflowRunStatus.Queued ? WorkflowRunSql.Requeue : WorkflowRunSql.SetStatus), cancellationToken);
+
+    public ValueTask<Result<WorkflowRun>> SetItem(WorkflowRunId id, ItemId item, CancellationToken cancellationToken) =>
+        throw new NotSupportedException("SetItem is not written yet");
 
     public ValueTask<Result<WorkflowRun>> CancelQueued(WorkflowRunId id, string? error, CancellationToken cancellationToken) =>
         Move(id, new Change(WorkflowRunStatus.Cancelled, Outputs: null, error, WorkflowRunSql.FromQueued), cancellationToken);

@@ -48,7 +48,7 @@ public sealed class CreateItemBlock(ICreateItemPort items) : IGraphBlock
         }
 
         var repo = ConfigValues.Text(context.Config["repo"]);
-        var made = await items.Create(title, string.IsNullOrWhiteSpace(repo) ? null : repo.Trim(), ConfigValues.Text(context.Config["body"]), link.Value, cancellationToken).ConfigureAwait(false);
+        var made = await items.Create(context.RunId, title, string.IsNullOrWhiteSpace(repo) ? null : repo.Trim(), ConfigValues.Text(context.Config["body"]), link.Value, cancellationToken).ConfigureAwait(false);
         return made.IsError ? made.Error : new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["itemId"] = made.Value });
     }
 

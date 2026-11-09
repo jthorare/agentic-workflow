@@ -23,6 +23,7 @@ public sealed class CreateItemBlockTests
         var (title, repo, body, link) = Assert.Single(port.Created);
         Assert.Equal(("Fix login", "web", "details"), (title, repo, body));
         Assert.Null(link);
+        Assert.Equal(["wf@1:1"], port.Runs, StringComparer.Ordinal);
     }
 
     [Fact]

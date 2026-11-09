@@ -48,8 +48,11 @@ internal static class FlowFakes
 
         public Error? Fail { get; init; }
 
-        public ValueTask<Result<string>> Create(string title, string? repo, string? body, string? linearIssue, CancellationToken cancellationToken)
+        public List<string> Runs { get; } = [];
+
+        public ValueTask<Result<string>> Create(WorkflowRunId run, string title, string? repo, string? body, string? linearIssue, CancellationToken cancellationToken)
         {
+            Runs.Add(run.Value);
             Created.Add((title, repo, body, linearIssue));
             return ValueTask.FromResult<Result<string>>(Fail is { } error ? error : string.Create(System.Globalization.CultureInfo.InvariantCulture, $"itm_{Created.Count}"));
         }
