@@ -14,6 +14,7 @@ using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Api.Setup;
 using Aw.Sindri.Ui.Api.Sources;
+using Aw.Sindri.Ui.Api.Workflows;
 using Aw.Sindri.Ui.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Api;
@@ -69,6 +70,10 @@ public sealed class GoldenContractTests
         ["items-id-open"] = As<OpenAcceptedView>,   // POST /items/{id}/open: the accepted answer (the refusals are ProblemDetails)
         ["jobs"] = As<JobList>,   // GET /jobs: the Jobs page's list; the 400 SND-CLI-003 bodies are ProblemDetails
         ["jobs-id"] = As<JobView>,   // GET /jobs/{id}: the job sheet; the 404 is ProblemDetails
+        ["workflows"] = As<WorkflowList>,   // GET /workflows: the Workflows page's list (#2258 PR 17 part 1); the refusals are ProblemDetails
+        ["workflows-slug"] = As<WorkflowView>,   // GET /workflows/{slug}: the runs header; the spec stays raw
+        ["workflows-slug-runs"] = As<WorkflowRunList>,   // GET /workflows/{slug}/runs: a workflow's runs
+        ["workflow-runs-run"] = As<WorkflowRunView>,   // GET /workflow-runs/{run}: a run's detail
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
         ["projects"] = As<ProjectList>,   // GET /projects: the Projects page's three groups (projects page spec §6.2)
         ["reviews"] = As<ReviewList>,   // GET /reviews: the Reviews tab, its badge and Home's waiting line (review page spec §6.1)
@@ -152,7 +157,6 @@ public sealed class GoldenContractTests
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
         "connections-id-signin",   // POST /connections/{name}/signin (#2349): the CLI's `connection signin` and the MCP tool; the app has no Connections page yet
-        "workflows", "workflows-slug", "workflows-slug-runs", "workflow-runs-run",   // #2258 PR 8a: the workflow reads are the CLI's and the MCP tools'; the app's workflow pages read them when they land (UI lane)
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
 

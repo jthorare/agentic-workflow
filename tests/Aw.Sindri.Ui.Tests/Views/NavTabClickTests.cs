@@ -153,6 +153,7 @@ public sealed class NavTabClickTests : IDisposable
         PageId.System => "HealthPage",
         PageId.Reviews => "ReviewsPage",
         PageId.Jobs => "JobsPage",
+        PageId.Workflows => "WorkflowsPage",
         PageId.Settings => throw new ArgumentOutOfRangeException(nameof(page), page, message: null),
         _ => throw new ArgumentOutOfRangeException(nameof(page), page, message: null),
     };

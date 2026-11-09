@@ -27,6 +27,9 @@ internal enum PageId
     /// <summary>The background jobs Sindri ran (API P6). Not a tab: G J, the palette and System's Jobs link open it.</summary>
     Jobs,
 
+    /// <summary>The workflows, their runs and a run's detail, read-only (#2258 PR 17 part 1). Not a tab: G W and the palette open it.</summary>
+    Workflows,
+
     /// <summary>Local preferences only (⌘,).</summary>
     Settings,
 }
