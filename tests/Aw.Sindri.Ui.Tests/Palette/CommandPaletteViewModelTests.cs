@@ -74,7 +74,7 @@ public sealed partial class CommandPaletteViewModelTests
         _palette.Open();
 
         Assert.Equal(
-            ["Home G H", "Todo G T", "Projects G P", "Work G Q", "Context G C", "Agents G A", "System G .", "Reviews G V", "Jobs G J", "Connections G O", "Memory G M", "Settings ⌘,"],
+            ["Home G H", "Todo G T", "Projects G P", "Work G Q", "Context G C", "Agents G A", "System G .", "Reviews G V", "Jobs G J", "Connections G O", "Memory G M", "Workflows G W", "Settings ⌘,"],
             _palette.Sections[1].Entries.Select(e => e.Label + " " + e.Key),
             StringComparer.Ordinal);
     }

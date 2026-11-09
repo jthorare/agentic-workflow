@@ -51,7 +51,7 @@ internal static class ConnectionScenarios
             var outcomes = new SignInOutcomes();
             if (scenario == "signin-failed")
             {
-                outcomes.Failed(Linear, SindriErrors.ConnectionConsentDenied.With("the consent was denied"), KnownInstants.Epoch.AddHours(1));   // a sign-in again that failed on a connected row
+                outcomes.Failed(outcomes.Begin(Linear), SindriErrors.ConnectionConsentDenied.With("the consent was denied"), KnownInstants.Epoch.AddHours(1));   // a sign-in again that failed on a connected row
             }
 
             _ = services.Replace(ServiceDescriptor.Singleton(outcomes));
