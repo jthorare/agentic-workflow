@@ -2,26 +2,45 @@ using Aw.Sindri.Ui.Api.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
-/// <summary>One run on a workflow's runs list. Red stub.</summary>
+/// <summary>One run on a workflow's runs list: status as a glyph and a word, trigger, revision, when, and why it failed.</summary>
 internal sealed class RunRowViewModel : ObservableObject
 {
     internal RunRowViewModel(WorkflowRunRowView row, TimeProvider clock)
     {
+        Id = row.Id;
+        var (glyph, word) = Labels.WfChip(row.Status);
+        ChipText = glyph + " " + word;
+        TriggerText = Labels.WfTriggerWord(row.Trigger);
+        RevisionText = Labels.WfRunRevision(row.Revision);
+        var live = string.Equals(row.Status, "running", StringComparison.Ordinal) || string.Equals(row.Status, "waiting", StringComparison.Ordinal) || string.Equals(row.Status, "queued", StringComparison.Ordinal);
+        WhenText = live
+            ? Labels.JobWhen(running: true, clock.GetUtcNow() - row.StartedAt)
+            : Labels.JobWhen(running: false, clock.GetUtcNow() - (row.EndedAt ?? row.StartedAt));
+        ErrorText = row.Error ?? string.Empty;
+        Name = Labels.WfRunRowName(Id, word.ToLowerInvariant(), TriggerText.ToLowerInvariant(), WhenText, ErrorText);
     }
 
-    public string Id => throw new NotSupportedException();
+    /// <summary>The run's id.</summary>
+    public string Id { get; }
 
-    public string ChipText => throw new NotSupportedException();
+    /// <summary>The status: glyph and word.</summary>
+    public string ChipText { get; }
 
-    public string TriggerText => throw new NotSupportedException();
+    /// <summary>"Manual", "Schedule".</summary>
+    public string TriggerText { get; }
 
-    public string RevisionText => throw new NotSupportedException();
+    /// <summary>"Revision 1".</summary>
+    public string RevisionText { get; }
 
-    public string WhenText => throw new NotSupportedException();
+    /// <summary>"Started 2m ago" while it is live, "Ended 5m ago" after.</summary>
+    public string WhenText { get; }
 
-    public string ErrorText => throw new NotSupportedException();
+    /// <summary>Why it failed, as served; empty otherwise.</summary>
+    public string ErrorText { get; }
 
-    public bool HasError => throw new NotSupportedException();
+    /// <summary>True when the run has an error.</summary>
+    public bool HasError => ErrorText.Length > 0;
 
-    public string Name => throw new NotSupportedException();
+    /// <summary>The row's accessible name.</summary>
+    public string Name { get; }
 }
