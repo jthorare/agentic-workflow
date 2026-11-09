@@ -6,7 +6,8 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 
 /// <summary>
 /// The Workflows page in the shell (<see cref="ShellViewModel"/>, continued; #2258 PR 17 part 1): it reads when it becomes the page shown (and once on connect when it
-/// was shown before Sindri answered) and returns to its list when left. Part 1 has no live refresh. The page is not a tab: G W and the palette open it.
+/// was shown before Sindri answered), returns to its list when left, and while shown reads again (the list and the level open) after a 'workflow.run.*' or 'workflow.node.*' event,
+/// at the follower's pace (one re-read per 250 ms burst). A tab after Projects; G W and the palette open it too.
 /// </summary>
 internal sealed partial class ShellViewModel
 {
@@ -20,7 +21,14 @@ internal sealed partial class ShellViewModel
     private void InitWorkflows()
     {
         Workflows = new WorkflowsPageViewModel(_api, _clock);
-        Health.Follow((url, token) => IsWorkflows && Workflows.IsReading ? Workflows.Show(url, token) : Task.CompletedTask);   // shown before connect: its first read
+        var seen = 0L;
+        Health.Follow((url, token) =>
+        {
+            var heard = Health.WorkflowEvents;
+            var moved = heard != seen;
+            seen = heard;
+            return IsWorkflows && (Workflows.IsReading || moved) ? Workflows.Show(url, token) : Task.CompletedTask;   // shown before connect: its first read; shown and a run moved: read again
+        });
         PropertyChanged += (_, e) =>
         {
             if (!string.Equals(e.PropertyName, nameof(IsWorkflows), StringComparison.Ordinal))
