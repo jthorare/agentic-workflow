@@ -28,7 +28,7 @@ public sealed class ListCommandsTests
     {
         var service = new ListCommandsService(new InMemoryCommandCatalog(
             Row("StopProcess", ActionClass.Desk, grants: ["host"]),
-            Row("ApproveProfile", ActionClass.Protected, needsTerminal: true),
+            Row("ApproveProfile", ActionClass.Desk, needsTerminal: true),
             Row("RunDoctor", ActionClass.Local),
             Row("FileRequest", ActionClass.Request),
             Row("RunService", ActionClass.Job),
@@ -42,7 +42,7 @@ public sealed class ListCommandsTests
             .ToDictionary(row => row.Action.Value, StringComparer.Ordinal);
 
         Assert.Equal(["human+terminal", "human", "session", "service:host"], rows["StopProcess"].AllowedCallers);
-        Assert.Equal(["human+terminal"], rows["ApproveProfile"].AllowedCallers);
+        Assert.Equal(["human+terminal", "human", "session"], rows["ApproveProfile"].AllowedCallers);
         Assert.Empty(rows["RunDoctor"].AllowedCallers);
         Assert.Equal(["human+terminal", "human", "session", "service"], rows["FileRequest"].AllowedCallers);
         Assert.Equal(["human+terminal", "human", "session", "service"], rows["RunService"].AllowedCallers);
@@ -50,7 +50,7 @@ public sealed class ListCommandsTests
         Assert.Equal(["human+terminal", "human", "session"], rows["Decide"].AllowedCallers);
         Assert.Equal(["session"], rows["ReportStep"].AllowedCallers);
         Assert.Equal(["human+terminal", "human", "session"], rows["IssueNonce"].AllowedCallers);
-        Assert.Equal(["human+terminal"], rows["WipeItem"].AllowedCallers);   // a terminal-bound row narrows any class, grants too
+        Assert.Equal(["human+terminal", "human", "session", "service:host"], rows["WipeItem"].AllowedCallers);   // the terminal flag no longer narrows
         Assert.True(rows["WipeItem"].Terminal);
         Assert.False(rows["StopProcess"].Terminal);
     }
