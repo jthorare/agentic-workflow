@@ -18,11 +18,6 @@ public interface ISetupFacts
     /// <returns>The fact, or the error that stopped the read.</returns>
     public ValueTask<Result<ProfileFact>> Profile(CancellationToken cancellationToken);
 
-    /// <summary>Where the registered recipes stand.</summary>
-    /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The fact, or the error that stopped the read.</returns>
-    public ValueTask<Result<RecipesFact>> Recipes(CancellationToken cancellationToken);
-
     /// <summary>Where the per-repo MCP registration stands.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The fact, or the error that stopped the read.</returns>

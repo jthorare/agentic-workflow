@@ -1,5 +1,0 @@
-T-3/step/1  workflow.step@4ca37bf46333  v4  escalated: child  since 11:45 (15m)
-  next      Escalated in T-3/step/1/step.4: the child's gate escalated
-  child     T-3/step/1/step.4  escalated: gate
-  answer    sindri workflow answer T-3/step/1 <the child's answer>     (forwarded to T-3/step/1/step.4)
-  commands  takeover, cancel

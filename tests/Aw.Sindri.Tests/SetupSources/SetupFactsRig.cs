@@ -11,8 +11,6 @@ using Aw.Sindri.Features.SetupSources;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Testing;
-using Aw.Sindri.Tests.ApproveRecipe;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.SetupSources;
 
@@ -21,19 +19,14 @@ internal sealed class SetupFactsRig : IAsyncDisposable
 {
     internal const string Checkout = "/work/demo";
 
-    private readonly AsyncServiceScope _scope;
     private int _jobs;
 
     internal SetupFactsRig(FakeProviderHost? host = null)
     {
         Host = host ?? new FakeProviderHost().WithoutProvider(Core.Mcp.ProviderFile.Codex).WithoutProvider(Core.Mcp.ProviderFile.Cursor);
         Engine = MapEngineProxy.Create();
-        Registry = new RegistryHarness();
-        _scope = Registry.Services.CreateAsyncScope();
         Facts = new SetupFacts(
             new ProfileSetupReader(Profiles, new Core.Setup.RepoGitCache(Inspector, Clock)),
-            _scope.ServiceProvider.GetRequiredService<Core.Workflow.Registry.RecipeRegistryReader>(),
-            new Testing.Workflow.ApproveAll.FakeShippedRecipes([]),
             new SourcesSetupReader(Profiles, FakeContextEngine.Instance, new PointerSecrets(name => Env.GetValueOrDefault(name), new FakeToolRunner(ToolRun.Missing))),
             new McpSetupReader(Profiles, Host, Jobs, Queue),
             new MapSetupReader(Profiles, Engine.Proxy, Jobs));
@@ -57,8 +50,6 @@ internal sealed class SetupFactsRig : IAsyncDisposable
     internal Features.SetupWatch.SetupJobQueue Queue { get; } = new(() => 0);
 
     internal MapEngineProxy Engine { get; }
-
-    internal RegistryHarness Registry { get; }
 
     internal SetupFacts Facts { get; }
 
@@ -132,10 +123,9 @@ internal sealed class SetupFactsRig : IAsyncDisposable
     internal static MapStatusView CurrentMap() =>
         new(new MapVersion(1, ContextRepoName.From("demo"), Commit: null, KeyVersion: 1, new DateTimeOffset(2026, 10, 19, 9, 0, 0, TimeSpan.Zero), MapVersionStatus.Current), new MapCounts(10, 5, 2, 1, 0), Orphaned: 0, Retained: 0, ScopedTo: null);
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         Queue.Dispose();
-        await _scope.DisposeAsync();
-        await Registry.DisposeAsync();
+        return ValueTask.CompletedTask;
     }
 }

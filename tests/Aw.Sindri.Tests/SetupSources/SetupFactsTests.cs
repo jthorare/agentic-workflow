@@ -263,21 +263,6 @@ public sealed class SetupFactsTests
         Assert.Equal(ContextErrors.SettingsInvalid.Code, (await rig.Facts.Map(Token)).Error.Code);
     }
 
-    [Fact, Trait("Lane", "unit")]
-    public async Task Recipes_count_each_recipe_once_and_approval_moves_it_to_approved()
-    {
-        await using var rig = new SetupFactsRig();
-        _ = await rig.Registry.H.HoldLease();
-        var empty = (await rig.Facts.Recipes(Token)).Value;
-        var step = await rig.Registry.Shipped("sindri/workflow.step.yaml");
-        var registered = (await rig.Facts.Recipes(Token)).Value;
-        _ = (await rig.Registry.Approve(step)).Value;
-
-        var approved = (await rig.Facts.Recipes(Token)).Value;
-
-        Assert.Equal([(0, 0), (1, 0), (1, 1)], [(empty.Total, empty.Approved), (registered.Total, registered.Approved), (approved.Total, approved.Approved)]);
-    }
-
     private const string BothSources = """{"sources":{"github":{"repos":["owner/name"],"token":"env:GH_KEY"},"slack":{"channels":[{"id":"C0001GEN","name":"eng"}],"token":"env:SLACK_KEY"}}}""";
 
     [Fact, Trait("Lane", "unit")]

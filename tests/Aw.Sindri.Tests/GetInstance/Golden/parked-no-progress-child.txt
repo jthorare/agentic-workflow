@@ -1,6 +1,0 @@
-T-3/step/1  workflow.step@4ca37bf46333  v4  parked: no-progress (child)  since 11:48 (12m)
-  next      Parked (no-progress) in T-3/step/1/step.4: checks failed twice with the same findings.
-            Grant more rounds at a terminal, or cancel.
-  child     T-3/step/1/step.4  parked: no-progress
-  answer    sindri workflow answer T-3/step/1 --grant 1     (at a terminal; forwarded to the child)
-  commands  answer (forwarded), takeover, cancel

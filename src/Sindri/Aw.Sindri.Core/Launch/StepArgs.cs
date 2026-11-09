@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Aw.Sindri.Core.LensPacks;
 
 namespace Aw.Sindri.Core.Launch;
 
@@ -11,6 +10,5 @@ namespace Aw.Sindri.Core.Launch;
 /// <param name="Policy">The Step's policy, or null for none.</param>
 /// <param name="Ref">The Step whose seed prompt the session gets.</param>
 /// <param name="Brief">Null, or the text appended to the seed that says how to finish the Step (engine P8 F13). Written only when set.</param>
-/// <param name="Bundle">Null, or the resolved pack the launcher copies into the Step directory before the session starts (line spec §5.1, §5.2, LN-WF5). Never serialized: it is resolved at launch, so a retry resolves it again.</param>
 /// <param name="Facts">Null, or the Step's declared read facts as files the launcher writes into the run directory before the session starts: file name ('workspace.json') to its content. Never serialized: it is read, scrubbed and shaped at launch, so a retry does it again.</param>
-public sealed record StepArgs(string? Model, StepPolicy? Policy, StepRef Ref, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Brief = null, [property: JsonIgnore] PackBundle? Bundle = null, [property: JsonIgnore] IReadOnlyDictionary<string, string>? Facts = null);
+public sealed record StepArgs(string? Model, StepPolicy? Policy, StepRef Ref, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Brief = null, [property: JsonIgnore] IReadOnlyDictionary<string, string>? Facts = null);

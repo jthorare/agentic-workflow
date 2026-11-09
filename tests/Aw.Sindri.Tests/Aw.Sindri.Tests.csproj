@@ -45,54 +45,12 @@
 
   <ItemGroup>
     <!-- Helpers the suites moved to Aw.Sindri.Engine.Tests still share with this project, compiled into both. -->
-    <Compile Include="../Aw.Sindri.Engine.Tests/ApplyCommand/Served.cs" Link="Shared/ApplyCommand/Served.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/CompleteStep/CliRun.cs" Link="Shared/CompleteStep/CliRun.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/CompleteStep/DevServer.cs" Link="Shared/CompleteStep/DevServer.cs" />
     <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/PinnedTemporal.cs" Link="Shared/Workflows/PinnedTemporal.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/AsyncCompletionProbeWorkflow.cs" Link="Shared/Workflows/Spike/AsyncCompletionProbeWorkflow.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/ChildProbeWorkflow.cs" Link="Shared/Workflows/Spike/ChildProbeWorkflow.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/CountingRecorder.cs" Link="Shared/Workflows/Spike/CountingRecorder.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/DelayProbeWorkflow.cs" Link="Shared/Workflows/Spike/DelayProbeWorkflow.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/DeskTasks.cs" Link="Shared/Workflows/Spike/DeskTasks.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/LocalServer.cs" Link="Shared/Workflows/Spike/LocalServer.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/ParentProbeWorkflow.cs" Link="Shared/Workflows/Spike/ParentProbeWorkflow.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/PinnedBinaries.cs" Link="Shared/Workflows/Spike/PinnedBinaries.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/ProbeActivities.cs" Link="Shared/Workflows/Spike/ProbeActivities.cs" />
     <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/ServerGuard.cs" Link="Shared/Workflows/Spike/ServerGuard.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/ServerKind.cs" Link="Shared/Workflows/Spike/ServerKind.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SignalProbeWorkflow.cs" Link="Shared/Workflows/Spike/SignalProbeWorkflow.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeDecision.cs" Link="Shared/Workflows/Spike/SpikeDecision.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeDesk.cs" Link="Shared/Workflows/Spike/SpikeDesk.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeDeskActivities.cs" Link="Shared/Workflows/Spike/SpikeDeskActivities.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeEvalLine.cs" Link="Shared/Workflows/Spike/SpikeEvalLine.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeEvals.cs" Link="Shared/Workflows/Spike/SpikeEvals.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeLedger.cs" Link="Shared/Workflows/Spike/SpikeLedger.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeLog.cs" Link="Shared/Workflows/Spike/SpikeLog.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeRecipe.cs" Link="Shared/Workflows/Spike/SpikeRecipe.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeReport.cs" Link="Shared/Workflows/Spike/SpikeReport.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeRun.cs" Link="Shared/Workflows/Spike/SpikeRun.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeState.cs" Link="Shared/Workflows/Spike/SpikeState.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeStepRun.cs" Link="Shared/Workflows/Spike/SpikeStepRun.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeStepWorkflow.cs" Link="Shared/Workflows/Spike/SpikeStepWorkflow.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeTransition.cs" Link="Shared/Workflows/Spike/SpikeTransition.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeVerdict.cs" Link="Shared/Workflows/Spike/SpikeVerdict.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeView.cs" Link="Shared/Workflows/Spike/SpikeView.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/SpikeWorker.cs" Link="Shared/Workflows/Spike/SpikeWorker.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/TemporalServerFixture.cs" Link="Shared/Workflows/Spike/TemporalServerFixture.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/TemporalProbes.cs" Link="Shared/Workflows/Spike/TemporalProbes.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/TimeSkippingServer.cs" Link="Shared/Workflows/Spike/TimeSkippingServer.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/Spike/UpdateProbeWorkflow.cs" Link="Shared/Workflows/Spike/UpdateProbeWorkflow.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/WorkflowsHarness.cs" Link="Shared/Workflows/WorkflowsHarness.cs" />
-    <Compile Include="../Aw.Sindri.Engine.Tests/Workflows/RetryOncePlaneProbe.cs" Link="Shared/Workflows/RetryOncePlaneProbe.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- A small recipe set embedded under the prefix the Host reads (aw-recipes/sindri/), so ManifestEmbeddedRecipesTests exercises the real adapter against a real assembly. -->
-    <EmbeddedResource Include="Shipped/Embedded/**/*.yaml;Shipped/Embedded/**/*.jsonl;Shipped/Embedded/README.md" LogicalName="aw-recipes/sindri/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

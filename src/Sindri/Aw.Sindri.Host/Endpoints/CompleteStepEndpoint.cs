@@ -15,7 +15,7 @@ internal static class CompleteStepEndpoint
     {
         _ = group.MapPost("/workflow/instances/{instanceId}/runs/{run}/complete", static async (string instanceId, string run, CompleteStepRequest request, HttpRequest http,
                 IService<CompleteStepRequest, CompleteStepResponse> service, CancellationToken ct)
-            => (await service.Handle(request with { Instance = InstanceRoute.Id(instanceId), Run = RunToken.From(run), LaunchSecret = Secret(http) }, ct).ConfigureAwait(false)).ToHttpResult());
+            => (await service.Handle(request with { Instance = instanceId, Run = RunToken.From(run), LaunchSecret = Secret(http) }, ct).ConfigureAwait(false)).ToHttpResult());
         return group;
     }
 

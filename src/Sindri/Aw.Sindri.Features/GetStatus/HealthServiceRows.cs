@@ -12,11 +12,10 @@ namespace Aw.Sindri.Features.GetStatus;
 /// <param name="views">Reads the services view.</param>
 /// <param name="builtIns">The build's built-in services.</param>
 /// <param name="codeIndex">The code index's health rows; none when the build has no index.</param>
-/// <param name="stuck">The engine's stuck instances (API P13); none when this build has no engine read side.</param>
 /// <param name="stalled">The agent runs idle past their launch's idle time (issue #1000); none when this build has no launcher.</param>
 /// <param name="builds">The running and installed build stamps; none outside an install.</param>
 /// <param name="clock">Now, for how long a stalled launch still counts; none counts them all.</param>
-internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInService> builtIns, ICodeIndexHealth? codeIndex = null, StuckInstanceCount? stuck = null, IStalledAgentRuns? stalled = null,
+internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInService> builtIns, ICodeIndexHealth? codeIndex = null, IStalledAgentRuns? stalled = null,
     IBuildStamps? builds = null, TimeProvider? clock = null)
 {
     /// <summary>What the health reads besides the views and the services: the code index's problems and now (for how long ago a service failed).</summary>
@@ -28,11 +27,6 @@ internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInSe
     /// <param name="report">The report so far.</param>
     /// <returns>The report; the same one outside an install.</returns>
     public HealthReport WithStaleBuild(HealthReport report) => builds is null ? report : HealthSummary.WithStaleBuild(report, builds.Running(), builds.Installed());
-
-    /// <summary>How many workflow instances are stuck on a signal or update (API spec §3.8, E-30).</summary>
-    /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The count; 0 when the engine doesn't answer.</returns>
-    public ValueTask<int> Stuck(CancellationToken cancellationToken) => stuck is null ? ValueTask.FromResult(0) : stuck.Current(cancellationToken);
 
     /// <summary>How many agent runs ended their turn without reporting and are still not ended (issue #1000).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>

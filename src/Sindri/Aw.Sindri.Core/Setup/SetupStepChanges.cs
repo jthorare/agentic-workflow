@@ -6,7 +6,7 @@ public static class SetupStepChanges
     /// <summary>The changes to record now, in step order.</summary>
     /// <param name="steps">The derived steps.</param>
     /// <param name="recorded">The last recorded change of each step that has one.</param>
-    /// <returns>Zero to six changes.</returns>
+    /// <returns>Zero to five changes.</returns>
     public static IReadOnlyList<StepChange> Plan(IReadOnlyList<SetupStep> steps, IReadOnlyDictionary<SetupStepId, RecordedStep> recorded)
     {
         ArgumentNullException.ThrowIfNull(steps);
@@ -51,12 +51,11 @@ public static class SetupStepChanges
 
     /// <summary>A step in the event's fixed words.</summary>
     /// <param name="id">The step.</param>
-    /// <returns>'repo', 'profile', 'recipes', 'mcp', 'map' or 'sources'.</returns>
+    /// <returns>'repo', 'profile', 'mcp', 'map' or 'sources'.</returns>
     public static string Word(SetupStepId id) => id switch
     {
         SetupStepId.Repo => "repo",
         SetupStepId.Profile => "profile",
-        SetupStepId.Recipes => "recipes",
         SetupStepId.Mcp => "mcp",
         SetupStepId.Map => "map",
         SetupStepId.Sources => "sources",

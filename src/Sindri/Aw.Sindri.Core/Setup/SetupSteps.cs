@@ -10,7 +10,6 @@ public static class SetupSteps
 {
     private const string RepoTitle = "Add your repo";
     private const string ProfileTitle = "Save the profile";
-    private const string RecipesTitle = "Approve the workflows";
     private const string McpTitle = "Connect your agents";
     private const string MapTitle = "Build the map";
     private const string SourcesTitle = "Connect your sources";
@@ -46,31 +45,6 @@ public static class SetupSteps
             _ => throw new ArgumentOutOfRangeException(nameof(fact), fact.Presence, "Not a profile presence"),
         };
         return step with { Preview = fact.Preview };
-    }
-
-    /// <summary>The recipes step: it waits for a profile, then done when every recipe is approved, the human's while some wait.</summary>
-    /// <param name="fact">Where the recipes stand.</param>
-    /// <param name="profileApproved">Whether a profile is saved.</param>
-    /// <returns>The step.</returns>
-    public static SetupStep Recipes(RecipesFact fact, bool profileApproved)
-    {
-        ArgumentNullException.ThrowIfNull(fact);
-        if (fact.Total == 0)
-        {
-            return new SetupStep(SetupStepId.Recipes, RecipesTitle, SetupState.Todo, "No workflows are registered yet. Sindri registers them when it starts.", Detail: null, Error: null, Action: null, Progress: null);
-        }
-
-        if (!profileApproved)
-        {
-            return new SetupStep(SetupStepId.Recipes, RecipesTitle, SetupState.Todo, "After the profile is saved.", Counted(fact.Total, "workflow", "workflows") + " registered.", Error: null, Action: null, Progress: null);
-        }
-
-        var progress = new SetupProgress(fact.Approved, fact.Total, "workflows");
-        var waiting = fact.Total - fact.Approved;
-        return waiting <= 0
-            ? new SetupStep(SetupStepId.Recipes, RecipesTitle, SetupState.Done, "Every workflow that ships with Sindri is approved.", Counted(fact.Total, "workflow", "workflows") + ".", Error: null, Action: null, progress)
-            : new SetupStep(SetupStepId.Recipes, RecipesTitle, SetupState.NeedsYou, Counted(waiting, "workflow", "workflows") + (waiting == 1 ? " waits" : " wait") + " for your approval.",
-                string.Create(CultureInfo.InvariantCulture, $"Approved {fact.Approved} of {fact.Total}."), Error: null, SetupActions.ApproveAllRecipes, progress);
     }
 
     /// <summary>The MCP step: it needs an installed provider and a profile with a repo, then done when every repo is registered.</summary>
@@ -150,7 +124,6 @@ public static class SetupSteps
         {
             SetupStepId.Repo => (RepoTitle, "Sindri couldn't read your profile, so it can't tell which repositories are added."),
             SetupStepId.Profile => (ProfileTitle, "Sindri couldn't read your profile."),
-            SetupStepId.Recipes => (RecipesTitle, "Sindri couldn't read the list of workflows."),
             SetupStepId.Mcp => (McpTitle, "Sindri couldn't check whether your agent knows where it is."),
             SetupStepId.Map => (MapTitle, "Sindri couldn't read the state of the map."),
             SetupStepId.Sources => (SourcesTitle, "Sindri couldn't read which sources your profile names."),

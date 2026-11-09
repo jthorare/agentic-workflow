@@ -1,8 +1,6 @@
 using System.Reflection;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Workflow.Engine.Events;
-using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Catalog;
@@ -48,27 +46,6 @@ public sealed class EventCatalogTests
     [Fact, Trait("Lane", "unit")]
     public void A_progress_line_invalidates_the_job_and_the_jobs_list_that_serves_its_line_count() =>
         Expect.Sequence([ApiViews.Job, ApiViews.Jobs], Assert.Single(EventCatalog.All, e => e.Type == EventTypes.JobProgress).Invalidates);
-
-    [Theory, Trait("Lane", "unit")]
-    [InlineData(WorkflowEventType.Started, "workflow.started")]
-    [InlineData(WorkflowEventType.Transition, "workflow.transition")]
-    [InlineData(WorkflowEventType.Refused, "workflow.refused")]
-    [InlineData(WorkflowEventType.Shifted, "workflow.shifted")]
-    [InlineData(WorkflowEventType.Notified, "workflow.notified")]
-    [InlineData(WorkflowEventType.Expired, "workflow.expired")]
-    [InlineData(WorkflowEventType.Heavy, "workflow.heavy")]
-    public void Every_type_the_interpreter_mirrors_is_catalogued_under_the_engines_name(WorkflowEventType type, string name)
-    {
-        var mirrored = RecipeWorkflow.TypeOf(type);
-
-        Assert.Equal(name, mirrored);
-        Assert.Contains(mirrored, EventCatalog.All.Select(e => e.Type), StringComparer.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void An_effect_refusal_is_not_mirrored_before_the_effect_phase() =>
-        // why: spec 5.7 names the dispatch refusal outbox.refused (P6); P4 has no effects, so no made-up kind is emitted
-        Assert.Throws<NotSupportedException>(() => RecipeWorkflow.TypeOf(WorkflowEventType.EffectRefused));
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("workflow.run.started", "workflow.run.started:<run id>")]

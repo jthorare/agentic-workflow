@@ -1,2 +1,0 @@
-{"start":{"inputs":{"fact:request":"Export the weekly summary."}}}
-{"trigger":{"kind":"wait.satisfied","outcome":"unresolved"},"expect":{"state":"dropped","outcome":"unresolved"}}

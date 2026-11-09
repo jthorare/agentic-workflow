@@ -8,6 +8,7 @@ using Aw.Context.Core.Trust;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
+#pragma warning disable MA0182 // used by Host's verbs through InternalsVisibleTo; MA0182 only looks inside this assembly
 /// <summary>Plain text for 'context code': every status is a word ('suggested', 'unavailable', 'capped'), never colour. A human's answer carries clean labels beside their trust, so the text fences the untrusted ones itself.</summary>
 internal static class ContextCodeText
 {
@@ -124,3 +125,4 @@ internal static class ContextCodeText
     private static string Fenced(string label, Trust trust, bool fence) =>
         fence && trust == Trust.Untrusted ? UntrustedFence.Wrap("map", author: null, label) : label;
 }
+#pragma warning restore MA0182
