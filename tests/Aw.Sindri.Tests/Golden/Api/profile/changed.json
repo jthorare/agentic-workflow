@@ -1,45 +1,17 @@
 {
-  "approved": "70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261",
-  "approvedAt": "2026-01-01T00:00:00.0000000Z",
+  "approved": "41ee0e48957faa05f7b197cd4c10724cb14c3b9d30d23250bd8453fa9148a823",
+  "approvedAt": null,
   "live": "41ee0e48957faa05f7b197cd4c10724cb14c3b9d30d23250bd8453fa9148a823",
   "fileHash": "41ee0e48957faa05f7b197cd4c10724cb14c3b9d30d23250bd8453fa9148a823",
   "checkedAt": "2026-01-01T00:00:00.0000000Z",
-  "changed": true,
-  "changedPaths": [
-    "services.scorer.every"
-  ],
+  "changed": false,
+  "changedPaths": [],
   "asOf": {
-    "cursor": 6,
-    "ledgerHead": 6,
+    "cursor": 2,
+    "ledgerHead": 2,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
   },
-  "packs": [
-    {
-      "kind": "lenses.design",
-      "id": "design-five",
-      "source": "built-in",
-      "hash": "sha256:e879e404ea4cd241eeea00fbbfc56d3ce3723aa309a5734cc10ced343c633f8c",
-      "pin": "built-in",
-      "status": "ok"
-    },
-    {
-      "kind": "lenses.review",
-      "id": "code-review",
-      "source": "built-in",
-      "hash": "sha256:7de3b885d80450ba24683bafdffc5d966c90e5f3e402309c1d06a4ff4e45704c",
-      "pin": "built-in",
-      "status": "ok"
-    }
-  ],
-  "summary": {
-    "repos": [],
-    "services": [
-      "Sindri will run the scorer service every 1 hour"
-    ],
-    "allowance": [],
-    "connections": [],
-    "humanOnly": []
-  }
+  "summary": null
 }

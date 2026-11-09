@@ -10,22 +10,25 @@ namespace Aw.Sindri.Features.TestConnection;
 /// Tests a connection: reads its secret and calls the probe URL (the connection's Config 'probeUrl', else its preset's). An unknown name is SND-CONN-001.
 /// A rejected credential sets status 'error' (or 'needs-sign-in' for an oauth connection) and a reason; the answer is Ok false, not a failed call.
 /// The reason is the failure's code and fixed title: a provider's refusal text is never shown, because it can repeat the token.
+/// The secret read and the probe run outside the command gate (the command is registered with AddUngatedCommand); only the status write takes it (#2349).
 /// </summary>
 /// <param name="store">The connections.</param>
 /// <param name="secrets">Reads the tokens.</param>
 /// <param name="presets">The shipped presets.</param>
 /// <param name="probe">Calls the probe URL.</param>
-/// <param name="time">The clock.</param>
+/// <param name="writer">Records the status under the command gate.</param>
 /// <param name="logger">Where a refused test is reported (code only); null logs nothing.</param>
-internal sealed partial class TestConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, IConnectionProbe probe, TimeProvider time, ILogger<TestConnectionService>? logger = null)
+/// <param name="mcp">Lists an mcp server's tools (the test of an mcp connection); the host always supplies it.</param>
+internal sealed partial class TestConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, IConnectionProbe probe, ConnectionStatusWriter writer, ILogger<TestConnectionService>? logger = null, IMcpConnectionClient? mcp = null)
     : IService<TestConnectionRequest, TestConnectionResponse>
 {
     private readonly IConnectionStore _store = store;
     private readonly IConnectionSecrets _secrets = secrets;
     private readonly IConnectionPresetCatalog _presets = presets;
     private readonly IConnectionProbe _probe = probe;
-    private readonly TimeProvider _time = time;
+    private readonly ConnectionStatusWriter _writer = writer;
     private readonly ILogger? _logger = logger;
+    private readonly IMcpConnectionClient? _mcp = mcp;
 
     public async ValueTask<Result<TestConnectionResponse>> Handle(TestConnectionRequest request, CancellationToken cancellationToken)
     {
@@ -42,7 +45,13 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
             return ConnectionFailures.Safe(found.Error);
         }
 
-        var connection = found.Value;
+        return found.Value.Kind == ConnectionKind.Mcp
+            ? await TestMcp(found.Value, cancellationToken).ConfigureAwait(false)
+            : await TestKeyed(found.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<TestConnectionResponse>> TestKeyed(Connection connection, CancellationToken cancellationToken)
+    {
         if (connection.SecretPointer is null)
         {
             return await Record(connection, ConnectionStatus.NeedsSignIn, "no secret is stored yet (the sign-in did not finish)", cancellationToken).ConfigureAwait(false);
@@ -66,6 +75,35 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
             : await Record(connection, ConnectionStatus.Connected, reason: null, cancellationToken, ok: true).ConfigureAwait(false);
     }
 
+    // An mcp connection: read the secret, connect to its 'serverUrl' and list the tools (Ok true, Tools set), or Ok false with the SND code as the reason.
+    private async ValueTask<Result<TestConnectionResponse>> TestMcp(Connection connection, CancellationToken cancellationToken)
+    {
+        if (connection.SecretPointer is null)
+        {
+            return await Record(connection, ConnectionStatus.NeedsSignIn, "no secret is stored yet (the sign-in did not finish)", cancellationToken).ConfigureAwait(false);
+        }
+
+        var tokens = _secrets.Read(connection.SecretPointer);
+        if (tokens.IsError)
+        {
+            return await Failed(connection, tokens.Error, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (_mcp is null || !connection.Config.TryGetValue("serverUrl", out var url) || !Uri.TryCreate(url, UriKind.Absolute, out var server))
+        {
+            return await Failed(connection, SindriErrors.InvalidInput.With("the connection has no usable server URL"), cancellationToken).ConfigureAwait(false);
+        }
+
+        var tools = await _mcp.ListTools(server, tokens.Value, cancellationToken).ConfigureAwait(false);
+        if (tools.IsError)
+        {
+            return await Failed(connection, tools.Error, cancellationToken).ConfigureAwait(false);
+        }
+
+        var recorded = await Record(connection, ConnectionStatus.Connected, reason: null, cancellationToken, ok: true).ConfigureAwait(false);
+        return recorded.IsError ? recorded : recorded.Value with { Tools = tools.Value };
+    }
+
     private async ValueTask<Result<TestConnectionResponse>> Failed(Connection connection, Error error, CancellationToken cancellationToken)
     {
         if (_logger is not null)
@@ -73,20 +111,14 @@ internal sealed partial class TestConnectionService(IConnectionStore store, ICon
             LogRefused(_logger, connection.Name, error.Code);
         }
 
-        var status = connection.Kind == ConnectionKind.OAuth && error.Code == SindriErrors.ConnectionNeedsSignIn.Code ? ConnectionStatus.NeedsSignIn : ConnectionStatus.Error;
+        var status = connection.Kind is ConnectionKind.OAuth or ConnectionKind.Mcp && error.Code == SindriErrors.ConnectionNeedsSignIn.Code ? ConnectionStatus.NeedsSignIn : ConnectionStatus.Error;
         return await Record(connection, status, ConnectionFailures.Reason(error), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<TestConnectionResponse>> Record(Connection connection, ConnectionStatus status, string? reason, CancellationToken cancellationToken, bool ok = false)
     {
-        var updated = connection with { Status = status, StatusReason = ok ? null : reason, UpdatedAt = _time.GetUtcNow() };
-        var written = await _store.Upsert(updated, cancellationToken).ConfigureAwait(false);
-        if (written.IsError)
-        {
-            return ConnectionFailures.Safe(written.Error);
-        }
-
-        return new TestConnectionResponse(ConnectionView.From(updated), ok, reason);
+        var written = await _writer.Record(connection, status, reason, grant: null, cancellationToken).ConfigureAwait(false);
+        return written.IsError ? written.Error : new TestConnectionResponse(ConnectionView.From(written.Value), ok, reason);
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "The test of connection {Name} was refused ({Code})")]

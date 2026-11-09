@@ -14,7 +14,7 @@ namespace Aw.Sindri.Testing.Connections;
 /// </summary>
 public sealed class FakeOAuthServer : IDisposable
 {
-    private readonly HttpListener _listener = new();
+    private readonly HttpListener _listener;
     private readonly Lock _gate = new();
     private readonly Dictionary<string, string> _challengeByCode = new(StringComparer.Ordinal);
     private readonly List<OAuthServerRequest> _requests = [];
@@ -24,13 +24,9 @@ public sealed class FakeOAuthServer : IDisposable
     /// <summary>Starts the server on a free loopback port.</summary>
     public FakeOAuthServer()
     {
-        using var probe = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
-        probe.Start();
-        var port = ((IPEndPoint)probe.LocalEndpoint).Port;
-        probe.Stop();
-        Url = "http://127.0.0.1:" + port.ToString(CultureInfo.InvariantCulture);
-        _listener.Prefixes.Add(Url + "/");
-        _listener.Start();
+        var (listener, baseUri) = LoopbackListener.Start();
+        _listener = listener;
+        Url = baseUri.AbsoluteUri.TrimEnd('/');
         _ = Serve();
     }
 
@@ -45,6 +41,9 @@ public sealed class FakeOAuthServer : IDisposable
 
     /// <summary>Gets or sets a value indicating whether /token refuses every refresh with invalid_grant (the provider revoked the grant).</summary>
     public bool RevokeRefresh { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether /token answers every refresh with 503 and 'temporarily_unavailable' (the provider is busy; the grant is not shown bad).</summary>
+    public bool BusyRefresh { get; set; }
 
     /// <summary>Gets or sets a value indicating whether a refresh hands out a new refresh token.</summary>
     public bool RotateRefresh { get; set; }
@@ -185,9 +184,9 @@ public sealed class FakeOAuthServer : IDisposable
 
         if (grant == "refresh_token")
         {
-            if (RevokeRefresh)
+            if (RevokeRefresh || BusyRefresh)
             {
-                Reply(context, 400, """{"error":"invalid_grant","error_description":"the grant was revoked"}""");
+                Reply(context, RevokeRefresh ? 400 : 503, RevokeRefresh ? """{"error":"invalid_grant","error_description":"the grant was revoked"}""" : """{"error":"temporarily_unavailable"}""");
                 return;
             }
 

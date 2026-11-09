@@ -20,7 +20,6 @@ internal static class EndpointTable
     private static RouteGroupBuilder MapQueries(RouteGroupBuilder queries)
     {
         // ---- queries: one line per slice, sorted ----
-        _ = queries.MapGetApproveAllPlan();
         _ = queries.MapGetEventCatalog();
         _ = queries.MapGetItem();
         _ = queries.MapGetJob();
@@ -29,7 +28,6 @@ internal static class EndpointTable
         _ = MapSandboxQueries(queries);
         _ = queries.MapListJobs();
         _ = queries.MapGetItemTimeline();
-        _ = queries.MapGetItemScope();
         _ = MapProjectQueries(queries);
         _ = queries.MapGetQueue().MapGetReviews().MapGetReviewPage().MapGetLibrary().MapGetLibraryDoc().MapListLinearIssues().MapGetLinearIssue();
         _ = queries.MapGetSession();
@@ -37,25 +35,17 @@ internal static class EndpointTable
         _ = queries.MapGetNeedsYou();
         _ = queries.MapListDecisions();
         _ = queries.MapListRequests();
-        _ = queries.MapGetPacketFile();
-        _ = queries.MapReadInjection();
         _ = queries.MapGetProfile();
         _ = queries.MapGetSetup();
         _ = queries.MapGetStatus();
         _ = queries.MapListCommands();
         _ = queries.MapListItems();
-        _ = queries.MapListOutbox();
         _ = queries.MapListServices();
         _ = queries.MapListSessions();
-        _ = queries.MapListRecipes();
         _ = queries.MapPingProcess();
         _ = queries.MapReadLedger();
-        _ = queries.MapShowRecipe();
-        _ = queries.MapGetRecipeStats();
         _ = queries.MapGetLaunchPicks();
         _ = queries.MapStreamEvents();
-        _ = MapEngineQueries(queries);
-        _ = MapInstanceQueries(queries);
         _ = MapCodeIndexQueries(queries);
         return MapContextQueries(queries);
     }
@@ -63,8 +53,10 @@ internal static class EndpointTable
     private static RouteGroupBuilder MapProjectQueries(RouteGroupBuilder queries)
     {
         _ = queries.MapConnectionReads();
+        _ = queries.MapMemoryReads();
         _ = queries.MapListLinearProjects();
         _ = queries.MapGetProject();
+        _ = queries.MapTodoReads();
         _ = queries.MapGetProjects();
         _ = queries.MapGetLinearLookups();
         _ = queries.MapGetLinearSince();
@@ -78,26 +70,6 @@ internal static class EndpointTable
         _ = queries.MapGetSandboxStatus();
         _ = queries.MapGetSkills();
         _ = queries.MapListDenials();
-        return queries;
-    }
-
-    private static RouteGroupBuilder MapEngineQueries(RouteGroupBuilder queries)
-    {
-        _ = queries.MapGetEngine();
-        _ = queries.MapGetEngineHistory();
-        _ = queries.MapListEngineInstances();
-        return queries;
-    }
-
-    private static RouteGroupBuilder MapInstanceQueries(RouteGroupBuilder queries)
-    {
-        _ = queries.MapGetInstance();
-        _ = queries.MapGetInstanceEvents();
-        _ = queries.MapGetInstanceFact();
-        _ = queries.MapGetInstanceScoping();
-        _ = queries.MapGetInstanceDesignStop();
-        _ = queries.MapGetInstanceLine();
-        _ = queries.MapListInstances();
         return queries;
     }
 
@@ -146,9 +118,9 @@ internal static class EndpointTable
     {
         // ---- commands: one line per slice, sorted ----
         _ = commands.MapApproveProfile();
-        _ = commands.MapCancelJob();
+        _ = commands.MapCancelJob().MapRunWorkflow().MapCancelWorkflowRun();
         _ = commands.MapResumeJob();
-        _ = commands.MapCloseItem().MapProjectWrites().MapConnectionWrites().MapChangeLinearIssue();
+        _ = commands.MapCloseItem().MapProjectWrites().MapConnectionWrites().MapMemoryWrites().MapChangeLinearIssue().MapTodoWrites();
         _ = commands.MapEndLearnMode().MapAllowDenial();
         _ = commands.MapOpenItem();
         _ = commands.MapPauseService();
@@ -165,21 +137,13 @@ internal static class EndpointTable
         _ = commands.MapPromoteContextMap().MapCheckContextMapStructure().MapPurgeIndexSource();
         _ = commands.MapProposeContextMap();
         _ = commands.MapReviewContextMap();
-        _ = commands.MapShowLineHoldout();
         _ = commands.MapStopProcess();
-        _ = commands.MapApproveAllRecipes();
         _ = commands.MapAddRepo();
         _ = commands.MapRegisterMcp();
         _ = commands.MapOnboardRepo();
-        _ = commands.MapApproveRecipe();
-        _ = commands.MapRevokeRecipe();
-        _ = commands.MapIssueChallenge();
         _ = commands.MapIssueAppChallenge();
-        _ = commands.MapRegisterRecipe();
-        _ = commands.MapStartInstance().MapStartSkillRun();
-        _ = commands.MapIssueNonce();
-        _ = commands.MapApplyCommand().MapLinearCommentCreate();
-        _ = commands.MapCompleteStep();
+        _ = commands.MapIssueChallenge();
+        _ = commands.MapCompleteStep().MapLinearCommentCreate();
         _ = commands.MapSessionHeartbeat();
         _ = commands.MapSessionExit().MapRecordLimitHit();   // the wrap's calls, proven by the launch secret
         return commands;

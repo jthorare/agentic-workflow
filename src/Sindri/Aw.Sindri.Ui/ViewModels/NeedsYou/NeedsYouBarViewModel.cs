@@ -3,7 +3,7 @@ namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 /// <summary>
 /// The action bar under the inbox's request card (F3 needs-you spec §3, §5). It follows the card's row and decides, per kind of
 /// request, what the primary action and send back are: a decision
-/// goes to the shell as its option, and an approval is one plain click through <see cref="NeedsYouConfirm"/>. A, D and Ctrl+Enter reach the same methods the buttons do. This file holds the state and what the bar
+/// goes to the shell as its option. A, D and Ctrl+Enter reach the same methods the buttons do. This file holds the state and what the bar
 /// shows for a request; the words are in NeedsYouBarViewModel.Look.cs and the presses in NeedsYouBarViewModel.Actions.cs.
 /// </summary>
 internal sealed partial class NeedsYouBarViewModel : ObservableObject
@@ -11,20 +11,12 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
     private static readonly string[] _all =
     [
         nameof(Mode), nameof(IsPending), nameof(IsSendingBack), nameof(IsApproved), nameof(ShowsActions), nameof(ApproveWord), nameof(ApproveName), nameof(IsAsking), nameof(ShowsPrimary), nameof(PrimaryEnabled),
-        nameof(ShowsSendBack), nameof(SendBackEnabled), nameof(SendBackWord), nameof(SendBackName), nameof(SendBackTooltip),
+        nameof(ShowsSendBack), nameof(SendBackEnabled), nameof(SendBackWord), nameof(SendBackName),
         nameof(ShowsRowControls), nameof(Hint), nameof(HasHint), nameof(HintIsAttention), nameof(Refusal), nameof(HasRefusal), nameof(ReasonRequired), nameof(ReasonPlaceholder), nameof(CanSend),
-        nameof(SendWord), nameof(IsSending), nameof(DoneTitle), nameof(DoneBody), nameof(HasBar), nameof(MoreName), nameof(BarName), nameof(ConfirmEnabled),
+        nameof(SendWord), nameof(IsSending), nameof(DoneTitle), nameof(DoneBody), nameof(HasBar), nameof(MoreName), nameof(BarName),
     ];
 
-    private readonly NeedsYouConfirm? _confirm;
     private NeedsYouRowViewModel? _row;
-
-    /// <param name="confirm">The approvals the app does with one click; null offers none.</param>
-    internal NeedsYouBarViewModel(NeedsYouConfirm? confirm = null)
-    {
-        _confirm = confirm;
-        _confirm?.Changed += OnConfirmChanged;
-    }
 
     /// <summary>Raised when the bar asks to answer a decision: the shell sends it as the decision sheet would.</summary>
     internal event EventHandler<NeedsYouDecisionEventArgs>? DecisionRequested;
@@ -94,7 +86,6 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
     {
         None,
         Decision,
-        Settings,
     }
 
     private string Subject => _row?.Title ?? "";
@@ -102,8 +93,7 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
     private BarKind Kind => _row is null ? BarKind.None : NeedsYouGrouping.KindOf(_row.Entry) switch
     {
         NeedsYouGroupKind.Decisions => BarKind.Decision,
-        NeedsYouGroupKind.Settings => BarKind.Settings,
-        NeedsYouGroupKind.Failures or NeedsYouGroupKind.Other => NeedsYouConfirm.IsApproval(_row.Entry) ? BarKind.Settings : BarKind.None,
+        NeedsYouGroupKind.Settings or NeedsYouGroupKind.Failures or NeedsYouGroupKind.Other => BarKind.None,
         _ => throw new InvalidOperationException("a group the app doesn't know"),
     };
 
@@ -128,7 +118,7 @@ internal sealed partial class NeedsYouBarViewModel : ObservableObject
         _row = row;
         IsSending = false;
         (Mode, ReasonText, Refusal, ReadToEnd) = (NeedsYouBarMode.Pending, "", "", false);
-        Loaded = _confirm?.Show(row) ?? Task.CompletedTask;
+        Loaded = Task.CompletedTask;
         Refresh();
     }
 

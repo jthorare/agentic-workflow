@@ -3,12 +3,12 @@
 # UI phase is proven against in a guarded temp home, through scripts/sindri-prove.sh only (its guard runs before
 # anything is written, so the owner's real home is never touched).
 #
-#   sindri-ui-fixture.sh up        write the live profile (a heartbeat service, port 0), approve it as the owner and
+#   sindri-ui-fixture.sh up        write the live profile (a heartbeat service, port 0), validate it and
 #                                  start the control plane (sindri --headless, through sindri-prove.sh human)
 #   sindri-ui-fixture.sh stall     insert one row of a registered event type with an unparseable payload into
 #                                  <home>/ledger.db: the projection throws and the views stall (the stalled banner)
 #   sindri-ui-fixture.sh unstall   delete that row again (then Rebuild views recovers)
-#   sindri-ui-fixture.sh drift     edit the live profile so it no longer matches the approval (a profile row)
+#   sindri-ui-fixture.sh drift     edit the live profile (edits apply on save)
 #   sindri-ui-fixture.sh down      stop the control plane (sindri stop, as the owner)
 #   sindri-ui-fixture.sh items [--large]
 #                                  add the default fixture's 4 items (sindri item add, as the owner; U2, API P3);
@@ -20,11 +20,16 @@
 #   sindri-ui-fixture.sh request [--item ID] [--repo R] <text>
 #                                  file a request as a session (a POST to /sindri/requests with no caller header, so the
 #                                  API reads a session; --repo sends X-Sindri-Repo): a decision lands in Needs you (U3')
+#   sindri-ui-fixture.sh todos     (run after 'up')
+#                                  the todo panel's data (todo spec §10 Ph2): 11 todos added at the CLI as the owner (sindri todo add, through the
+#                                  real routes): one overdue, two due today, three upcoming (tomorrow twice, a weekday, a MM-dd), three with no
+#                                  date, links on four (one with a PR and a Linear issue), and the last one marked done. Each add carries a fixed
+#                                  --client-id (ui-fixture-todo-NN), so a repeat adds nothing and marks nothing done twice
 #   sindri-ui-fixture.sh decide <DEC-id> <choice>
 #                                  decide at the CLI (sindri decide, as the owner): with the app open on the same
 #                                  decision, the app's own Decide is then refused (SND-ITEM-409)
-#   sindri-ui-fixture.sh fail      add a service the build cannot run to the live profile and approve it (a failure row)
-#   sindri-ui-fixture.sh unfail    remove it again and approve (the row clears)
+#   sindri-ui-fixture.sh fail      add a service the build cannot run to the live profile (a failure row)
+#   sindri-ui-fixture.sh unfail    remove it again (the row clears)
 #                                  (items --large also files 12 requests, in FIXTURE_REPO when set, else with no repo)
 #   sindri-ui-fixture.sh hide-item <ITM-id>
 #                                  delete the item's row from <home>/views.db (view_items): the control plane stays up and the run
@@ -33,14 +38,13 @@
 #   sindri-ui-fixture.sh context up|draft|down
 #                                  the Context page's data (U9; run after 'up'): up writes a git repo, aw-split-panes, under
 #                                  <home>/ui-fixture-context (the tabs repo of tests/Aw.Context.Testing/Fixtures/MapTabsRepo.cs),
-#                                  adds it to the live profile's repos and approves that, then imports the tabs map
+#                                  adds it to the live profile's repos, then imports the tabs map
 #                                  (map-tabs.json) as the owner, typing 'import map <hash6>', and prints the repo name
 #                                  (the app's repo= argument); draft runs 'context map build' as the owner (a draft to
 #                                  review; a missing graphify is a degraded line, not a failure); down removes the repo, the
-#                                  map copy and the profile entry (and approves again). Idempotent: a repeat up imports the map
+#                                  map copy and the profile entry. Idempotent: a repeat up imports the map
 #                                  only when the store has no map or the map file changed (the imported version stays in
-#                                  context.db through down, so the next draft's number depends on earlier runs); up and down
-#                                  approve whenever the profile is not approved
+#                                  context.db through down, so the next draft's number depends on earlier runs)
 #
 #   sindri-ui-fixture.sh context whole over|under|concepts|pages
 #                                  the whole-map fixture (whole-map spec 8; run after 'context up'): over imports a generated map of 12
@@ -86,7 +90,7 @@
 #                                  'source_identity' row (Sam Rivera: "Linear says you're Sam Rivera"); and both Linear sources' cursor rows
 #                                  (phase incremental), so the page is past its first read and not counting. It adds
 #                                  context.sources.linear.teams [SPL] and context.sources.github.repos [acme/api, acme/web] (no token) to the
-#                                  live profile (a human reads only the profile's teams) and approves that. Three open GitHub PRs
+#                                  live profile (a human reads only the profile's teams). Three open GitHub PRs
 #                                  (github:pr/acme/api/41, acme/api/42, acme/web/17, audience linear:SPL) are each linked 'relates' from a Checkout
 #                                  rewrite issue, so that card shows 3 open PRs and the repos acme/api, acme/web. Then, as the owner: attaches Billing migration, adds a hand-made project (Hiring loop) and
 #                                  hides Search relevance v2 (a project the viewer leads: Hide acts only on a project on the page), each once (the markers <home>/ui-fixture-projects-owner-attach|add|hide; the store rows are rewritten
@@ -98,7 +102,7 @@
 #                                  a review page that opens on a fixture PR, for sending a fix from its fix sheet end to end
 #                                  (POST /sindri/reviews/acme/api/<N>/fix; PR review page spec 8.2). up adds what projects adds to the live
 #                                  profile (the SPL team, github repos acme/api and acme/web), review.login fx-viewer and workflow.forge
-#                                  (adapter file, hosts github.com), and approves that. It builds a file-backed forge world inside the home,
+#                                  (adapter file, hosts github.com), It builds a file-backed forge world inside the home,
 #                                  <home>/ui-fixture-forge/state/forge/file (never the owner's $AW_STATE_DIR), with ONE open PR on
 #                                  github.com/acme/api (branch feat/retry-budget, authored by fx-viewer so the fix posts a sindri.fix thread):
 #                                  the changed file src/Sync.cs (3 added lines at 41-43), three check runs (lint failing) and one open thread
@@ -130,19 +134,6 @@
 #                                  removes the copy. Every restart re-exports the four variables while the copy exists, and
 #                                  down never restarts. Needs jq.
 #
-#   sindri-ui-fixture.sh agent-run
-#                                  one workflow instance on a live agent Step (recipes/dev/workflow.dev-agent-hold.yaml; run after
-#                                  'sessions up'), for the Attach control: Watch the agent, and Take over in its chevron menu. It adds
-#                                  a git repo, agent-fixture, under <home>/ui-fixture-agent to the live profile with
-#                                  workflow.agent.target claude-code and approves that, points launcher.json (the sessions copy's)
-#                                  at a stub claude-code (a script that only sleeps, so no model and no network), registers and
-#                                  approves the recipe as the owner, restarts the control plane (CLAUDE_CONFIG_DIR inside the home, so
-#                                  the launcher's trust mark never touches the real ~/.claude.json) and starts the recipe on a new item.
-#                                  The launch is real: a tmux session on Sindri's own socket, a worktree under the repo and a
-#                                  'session wrap' heartbeat; it waits (FIXTURE_AGENT_WAIT s, default 120) for launch.started in the ledger, then prints the item
-#                                  id on stdout (progress goes to stderr). The Step takes a slot of the box's heavy lock first, so a
-#                                  busy lock delays the launch. Exit 1 when no launch started in time; needs jq and git.
-#
 #   sindri-ui-fixture.sh model-calls fell-back|no-answer|paused|none
 #                                  a job with model calls for the Jobs page and the job sheet (context model routing spec 8.2, #1567),
 #                                  written as ledger rows the jobs view folds (job.started, job.progress, context.model.called and,
@@ -159,10 +150,8 @@
 #                                  ledger rows can't fake, so they restart serve (as 'sessions up' does) with AW_SANDBOX_BWRAP=/nonexistent
 #                                  (blocked: no bubblewrap, the Health row, the Settings section and the park card show the first blocker) or
 #                                  with it unset (clear: needs a working bwrap, nothing blocks). The setting is remembered in
-#                                  <home>/ui-fixture-sandbox/bwrap, so every later restart keeps it. blocked then starts the agent-run
-#                                  recipe and waits (FIXTURE_AGENT_WAIT s) for its launch.failed: that Step is parked on SND-LAUNCH-014 no-bwrap;
-#                                  run blocked twice for two parked Steps, then clear for the resume list (one Step may be closed first, so the
-#                                  list shows "has moved on"). Run after 'sessions up'; needs jq and git.
+#                                  <home>/ui-fixture-sandbox/bwrap, so every later restart keeps it. blocked starts no run: it only
+#                                  turns the blocker on. Run after 'sessions up'; needs jq.
 #                                  The other states are ledger rows on a launch of an existing item (see 'items'), written as ledger rows (fixed ids, INSERT OR IGNORE, a rerun adds nothing): every one starts with the
 #                                  launch.started row of events/launch-started-sandbox.json (all but waiting). denials: sandbox.denied x10 for github.com
 #                                  (some) and one blocked path; denials-many: the overflow row too (top 5 of n, with a fix of every kind);
@@ -174,7 +163,6 @@
 #                                  control plane serves from the launch's plan file, not from these rows.
 #
 # FIXTURE_REPO names the items' repo (default: none, so the API's default applies).
-# FIXTURE_AGENT_WAIT is how many seconds agent-run waits for launch.started (default 120; a saturated box needs more).
 # Environment: AW_SINDRI_HOME (required: sindri-prove.sh's guard, a temp or proof folder), SINDRI (the built C# CLI,
 # as sindri-prove.sh reads it), STALL_TYPE (the stalled row's type; default service.ran, a type the projector reads),
 # SINDRI_UI_FIXTURE_SQL=python (use python3's sqlite3 module even when the sqlite3 CLI is installed; without the CLI it is
@@ -249,12 +237,11 @@ YAML
   "$PROVE" human --headless
 }
 
-# Validates the live profile and approves its hash as the owner, typing the first six characters.
+# Validates the live profile. Edits apply on save: there is no approval step.
 approve() {
   local hash
   hash="$("$PROVE" profile validate --json | jq -r '.hash // empty')"
   [ -n "$hash" ] || die "profile validate gave no hash"
-  printf 'approve profile %s\n' "${hash:0:6}" | "$PROVE" human profile approve "$hash"
 }
 
 # A service the build has no code for: the scheduler reports its failure, and Needs you shows a failure row.
@@ -325,7 +312,7 @@ unstall() {
   ledger "DELETE FROM events WHERE idempotency_key = '$STALL_KEY'; SELECT changes() || ' row(s) removed';"
 }
 
-# A changed cadence changes the profile's hash (comments and key order don't), so the approval no longer matches.
+# A changed cadence changes the profile's hash (comments and key order don't), so the live profile differs from the one the app loaded.
 drift() {
   local profile
   profile="$(profile_path)"
@@ -353,7 +340,7 @@ items() {
   for title in "${ITEMS[@]}"; do add "$title" || return; done
   [ "${1:-}" = "--large" ] || return 0
   for n in $(seq 1 30); do add "Large fixture item $n" || return; done
-  # 12 requests (U3's large Needs-you list), filed as a session. The API refuses a repo the approved profile lacks and the
+  # 12 requests (U3's large Needs-you list), filed as a session. The API refuses a repo the profile lacks and the
   # fixture's profile has none, so they name FIXTURE_REPO when it is set (a repo the profile has) and no repo otherwise.
   for n in $(seq 1 12); do
     if [ -n "${FIXTURE_REPO:-}" ]; then
@@ -364,61 +351,49 @@ items() {
   done
 }
 
+# The todo panel's 11 todos: "client id|text|due word or date|links, comma-separated" (a past date is overdue for any run).
+TODOS=(
+  "01|renew the staging cert|2020-01-01|"
+  "02|reply to Sam about the offsite|today|"
+  "03|check the flaky sync test|today|"
+  "04|rotate the staging key|tomorrow|acme/api#12,ENG-12"
+  "05|answer the review comments|mon|acme/web#40"
+  "06|book the offsite room|12-20|"
+  "07|call the dentist||"
+  "08|read the sandbox spec||"
+  "09|plan next week||ENG-34"
+  "10|file the expense report|tomorrow|"
+  "11|update the runbook|2020-01-02|"
+)
+
+# Add one todo through the real CLI route. The client id makes a repeat a no-op; prints the todo id.
+todo_add() { # $1 client id, $2 text, $3 due, $4 links
+  local args=(todo add "$2" --client-id "ui-fixture-todo-$1" --json) link
+  [ -z "$3" ] || args+=(--due "$3")
+  if [ -n "$4" ]; then
+    IFS=',' read -ra links <<< "$4"
+    for link in "${links[@]}"; do args+=(--link "$link"); done
+  fi
+  "$PROVE" human "${args[@]}" | jq -r '.id'
+}
+
+todos() {
+  local row id cid text due links done_id=""
+  for row in "${TODOS[@]}"; do
+    IFS='|' read -r cid text due links <<< "$row"
+    id="$(todo_add "$cid" "$text" "$due" "$links")" || return
+    [ -n "$id" ] && [ "$id" != null ] || die "todo add printed no todo id for '$text'"
+    [ "$cid" = 11 ] && done_id="$id"
+  done
+  # The last one is the done one; marking it twice would fail, so it's marked only while it is still open.
+  if "$PROVE" human todos --json --no-fence | jq -e --arg id "$done_id" '.todos[] | select(.id == $id)' >/dev/null; then
+    "$PROVE" human todo done "$done_id" || return
+  fi
+}
+
 close() {
   [[ "$1" =~ ^[A-Za-z]+-[A-Za-z0-9]+$ ]] || die "close: '$1' is not an item id"
   if [ "${2:-}" = "--cancelled" ]; then "$PROVE" human item close "$1" --cancelled; else "$PROVE" human item close "$1"; fi
-}
-
-# A new item, its id printed (the id is the first ITM- token sindri item add prints).
-new_item() {
-  local out id
-  out="$(add "$1")" || return
-  id="$(printf '%s\n' "$out" | grep -o 'ITM-[A-Za-z0-9]*' | head -1)"
-  [ -n "$id" ] || die "item add printed no item id: $out"
-  printf '%s\n' "$id"
-}
-
-# The inputs the dev recipes declare: triage-three-state takes fact:item (JSON naming the item) and fact:scope (text, its name), desk-round-trip takes
-# fact:request (text). The files live in the guarded home, one folder for all of them.
-fact_args() { # $1 recipe, $2 item, $3 title; prints the --fact arguments, one for each line
-  local dir="$AW_SINDRI_HOME/ui-fixture-facts"
-  mkdir -p "$dir" || return
-  case "$1" in
-    *triage-three-state)
-      jq -nc --arg id "$2" '{id: $id}' > "$dir/$2.item.json" || return
-      printf 'Fixture scope for %s\n' "$3" > "$dir/$2.scope.txt" || return
-      printf '%s\n%s\n%s\n%s\n' --fact "fact:item=$dir/$2.item.json" --fact "fact:scope=$dir/$2.scope.txt" ;;
-    *dev-agent-hold | *dev-agent-pick)
-      # ItemFact is positional and AwJson requires every constructor parameter, so the item names its spec too (#1134).
-      jq -nc --arg id "$2" --arg repo "$AGENT_REPO" --arg spec "Fixture spec for $3" '{id: $id, repo: $repo, spec: $spec}' > "$dir/$2.item.json" || return
-      printf '%s\n%s\n' --fact "fact:item=$dir/$2.item.json" ;;
-    *desk-round-trip)
-      printf 'Fixture request for %s\n' "$3" > "$dir/$2.request.txt" || return
-      printf '%s\n%s\n' --fact "fact:request=$dir/$2.request.txt" ;;
-  esac
-}
-
-# The dev recipes aren't embedded (the host ships recipes/sindri only), so a start needs its recipe approved first, which registers it (#1343).
-# Approves recipes/dev's recipe with id $1 as the owner, typing "approve <id> <version>"; a recipe outside recipes/dev is left alone.
-approve_dev_recipe() { # $1 recipe id
-  local file out
-  file="$(grep -lx "id: $1" "$ROOT"/recipes/dev/*.yaml 2>/dev/null | head -1)"
-  [ -n "$file" ] || return 0
-  out="$(printf 'approve %s %s\n' "$1" "$(sed -n 's/^version: *//p' "$file" | head -1)" | "$PROVE" human recipe approve "$file" 2>&1)" \
-    || die "the recipe $1 was not approved: $out"
-}
-
-start_on_new_item() { # $1 recipe, $2 item title; prints the item
-  local item facts=() line out
-  need jq
-  item="$(new_item "$2")" || return
-  while IFS= read -r line; do facts+=("$line"); done < <(fact_args "$1" "$item" "$2")
-  # The pty the owner's verbs run under joins stderr into stdout, so the output is kept to show on a refusal.
-  if ! out="$("$PROVE" human workflow start "$1" --item "$item" ${facts[@]+"${facts[@]}"} 2>&1)"; then
-    die "workflow start $1 on $item was refused: $out"
-  fi
-  printf 'started %s on %s\n' "$1" "$item" >&2
-  printf '%s\n' "$item"
 }
 
 hide_item() {
@@ -471,8 +446,7 @@ context_up() {
   if ! grep -q "name: $CONTEXT_REPO" "$profile"; then
     context_profile_add "$profile" "$dir" || die "context up: can't add the repo to $profile"
   fi
-  # Approve whenever the profile isn't approved (not only after this run's edit): a failed approve is retried here.
-  if needs_approval; then approve >&2 || return; fi
+  approve >&2 || return
   map="$(context_dir)/tabs-map.json"
   cp "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" "$map" || die "context up: can't copy the tabs map"
   context_import "$map" || return
@@ -555,9 +529,6 @@ context_whole() {
 
 context_draft() { "$PROVE" human context map build; }
 
-# True when the live profile isn't the approved one (or validate can't say).
-needs_approval() { [ "$("$PROVE" profile validate --json 2>/dev/null | jq -r '.approved // false')" != true ]; }
-
 context_down() {
   local dir profile
   dir="$(context_dir)"
@@ -567,10 +538,6 @@ context_down() {
   if [ -f "$profile" ] && grep -q "name: $CONTEXT_REPO" "$profile"; then
     grep -v "name: $CONTEXT_REPO" "$profile" | awk '{l[NR]=$0} END {for (i=1;i<=NR;i++) if (!(l[i]=="repos:" && (i==NR || l[i+1] !~ /^  /))) print l[i]}' > "$profile.new" \
       && mv "$profile.new" "$profile"
-  fi
-  # Whether or not this run edited the profile: an approve that failed on an earlier down is tried again.
-  if [ -f "$profile" ] && needs_approval; then
-    (approve >&2) || echo "context down: the profile is not approved; run 'context down' again or approve it (sindri profile approve)" >&2
   fi
   return 0
 }
@@ -717,8 +684,7 @@ projects_profile() {
     awk -v e="    github: { repos: [$PROJECTS_GH_REPOS] }" '{print} /teams: \[/ && !done {print e; done=1}' "$profile" > "$profile.new" && mv "$profile.new" "$profile" \
       || die "projects: can't add the GitHub repos to $profile"
   fi
-  # Approve whenever the profile isn't approved (a failed approve is retried here).
-  if needs_approval; then approve >&2 || return; fi
+  approve >&2 || return
 }
 
 # One stored project and its 'led-by' link, appended to $projects_sql. $1 id, $2 name, $3 state, $4 state_raw, $5 health or '', $6 due in days or '',
@@ -863,7 +829,7 @@ reviews_profile() {
     fi && mv "$profile.new" "$profile" || die "reviews: can't add workflow.forge to $profile"
     reviews_mark forge
   fi
-  if needs_approval; then approve >&2 || return; fi
+  approve >&2 || return
 }
 
 # The aw-forge-fake command line in REVIEWS_CMD: AW_FORGE_FAKE, else a dotnet build of the one project into <home>/ui-fixture-forge/bin.
@@ -966,9 +932,6 @@ reviews_down() {
     grep -Ev "$drop" "$profile" \
       | awk '{l[NR]=$0} END {for (i=1;i<=NR;i++) if (!(l[i]=="workflow:" && (i==NR || l[i+1] !~ /^  /))) print l[i]}' > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't edit $profile"
   fi
-  if [ -f "$profile" ] && needs_approval; then
-    (approve >&2) || echo "reviews: the profile is not approved; run 'reviews down' again or approve it (sindri profile approve)" >&2
-  fi
   rm -f -- "$(reviews_marker)"
   # The dir is gone, so the restart no longer points AW_STATE_DIR at it.
   if [ -f "$AW_SINDRI_HOME/control.json" ]; then sessions_restart >&2 || return; fi
@@ -1008,7 +971,7 @@ context_sources() {
   sql_on "$db" "INSERT OR REPLACE INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
       VALUES ('linear:issue/$SOURCES_TICKET_UUID', 'linear', 'issue', NULL, 'linear:$PROJECTS_TEAM', 'Roll out staffing', '$SOURCES_TICKET_URL', '$PROJECTS_VIEWER_NAME', 'open', 'In Progress', $(projects_ts '-10 days'), $(projects_ts '-1 days'), NULL, 'fixture', 'fixture-sources-1', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
     UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "context sources: can't write the ticket record to $db"
-  # A map built over the import (a refresh under the approved profile) has no $SOURCES_DOC_NODE: fail here, not later as a panel error.
+  # A map built over the import (a refresh under the profile) has no $SOURCES_DOC_NODE: fail here, not later as a panel error.
   local shown
   shown="$("$PROVE" human context show "$SOURCES_DOC_NODE" 2>&1)" || die "context sources: the imported map was replaced, $SOURCES_DOC_NODE is gone: $shown"
   printf '%s\n%s\n%s\n' "$CONTEXT_REPO" "$SOURCES_DOC_NODE" "$SOURCES_TICKET_NODE"
@@ -1022,8 +985,6 @@ sessions_export() {
   local d
   d="$(sessions_dir)"
   export AW_SESSIONS_PROC_ROOT="$d/proc" AW_SESSIONS_CLAUDE_DIR="$d/claude-sessions" AW_FLEET_DIR="$d/fleet" AW_LAUNCHER_CONFIG="$d/launcher.json"
-  # agent-run's launches mark their worktree trusted in Claude Code's config: keep that file inside the home.
-  if [ -d "$(agent_dir)/claude-config" ]; then export CLAUDE_CONFIG_DIR="$(agent_dir)/claude-config"; fi
   # 'sandbox blocked|clear' keeps AW_SANDBOX_BWRAP across restarts.
   if [ -s "$(sandbox_dir)/bwrap" ]; then export AW_SANDBOX_BWRAP="$(cat "$(sandbox_dir)/bwrap")"; else unset AW_SANDBOX_BWRAP; fi
   # 'reviews up' keeps serve on its forge world (acting as the viewer, as the world's PR was opened) while <home>/ui-fixture-forge exists.
@@ -1130,81 +1091,6 @@ sessions() {
   esac
 }
 
-# --- agent-run: an instance on a live agent Step (the Attach control; issue #1004) ---
-AGENT_REPO="agent-fixture"
-AGENT_RECIPE="workflow.dev-agent-hold"
-
-agent_dir() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-agent"; }
-
-# A git repo with one commit, the stub agent (sleeps, ignores the flags the launcher adds) and Claude Code's config folder.
-agent_files() {
-  local dir="$1" repo="$1/repo" g
-  mkdir -p "$dir/claude-config" "$repo" || return
-  if [ ! -d "$repo/.git" ]; then
-    g=(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_AUTHOR_NAME="Fixture Author" GIT_AUTHOR_EMAIL=fixture@example.invalid
-       GIT_COMMITTER_NAME="Fixture Author" GIT_COMMITTER_EMAIL=fixture@example.invalid git -C "$repo")
-    printf '# Agent fixture\n' > "$repo/README.md"
-    "${g[@]}" init -q -b main && "${g[@]}" config core.hooksPath "$repo/.no-hooks" && "${g[@]}" add -A \
-      && "${g[@]}" commit -q --no-gpg-sign -m "Agent fixture" || die "agent-run: can't build the repo in $repo"
-  fi
-  # Named claude: the argv hash keeps only bin's base name, so a stub with another name is not a bin-only override (#1134).
-  mkdir -p "$dir/stub-bin" || return
-  printf '#!/bin/sh\nexec sleep 86400\n' > "$dir/stub-bin/claude" && chmod 755 "$dir/stub-bin/claude"
-}
-
-# The live profile gets the repo and workflow.agent.target (a workflow: block after user: when there is none).
-agent_profile_add() {
-  local profile="$1" repo="$2"
-  if ! grep -q "name: $AGENT_REPO" "$profile"; then
-    if grep -q '^repos:' "$profile"; then
-      awk -v e="  - { name: $AGENT_REPO, path: $repo }" '{print} /^repos:/ {print e}' "$profile" > "$profile.new"
-    else
-      awk -v e="repos:\n  - { name: $AGENT_REPO, path: $repo }" '{print} /^user:/ {print e}' "$profile" > "$profile.new"
-    fi && mv "$profile.new" "$profile" || return
-  fi
-  if ! grep -q '^  agent:' "$profile"; then
-    if grep -q '^workflow:' "$profile"; then
-      awk '{print} /^workflow:/ {print "  agent: { target: claude-code }"}' "$profile" > "$profile.new"
-    else
-      awk '{print} /^user:/ {print "workflow:\n  agent: { target: claude-code }"}' "$profile" > "$profile.new"
-    fi && mv "$profile.new" "$profile" || return
-  fi
-}
-
-agent_run() {
-  need jq
-  need git
-  sessions_need_copy
-  local dir profile launcher item out
-  dir="$(agent_dir)"
-  profile="$(profile_path)"
-  launcher="$(sessions_dir)/launcher.json"
-  [ -f "$profile" ] || die "no live profile at $profile: run 'up' first"
-  agent_files "$dir" || return
-  agent_profile_add "$profile" "$dir/repo" || die "agent-run: can't edit $profile"
-  if needs_approval; then approve >&2 || return; fi
-  # A bin-only override of the built-in claude-code needs no stepArgvHash; the stub ignores the --settings and the other flags a Step adds.
-  jq --arg bin "$dir/stub-bin/claude" '.agents["claude-code"] = {override: true, bin: $bin}' "$launcher" > "$launcher.new" && mv -f "$launcher.new" "$launcher" \
-    || die "agent-run: can't update $launcher"
-  unset TMUX   # the control plane starts its own tmux server on its own socket; it must not inherit the caller's
-  sessions_restart >&2 || return
-  approve_dev_recipe "$AGENT_RECIPE" || return
-  item="$(FIXTURE_REPO="$AGENT_REPO" start_on_new_item "$AGENT_RECIPE" "Fixture agent run")" || return
-  local wait="${FIXTURE_AGENT_WAIT:-120}"
-  [[ "$wait" =~ ^[0-9]+$ ]] || die "agent-run: FIXTURE_AGENT_WAIT '$wait' is not a number of seconds"
-  local deadline=$((SECONDS + wait))
-  while [ "$SECONDS" -lt "$deadline" ]; do
-    if "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | grep -q "${FIXTURE_AGENT_WANT:-launch.started}"; then
-      printf '%s\n' "$item"
-      return 0
-    fi
-    sleep 1
-  done
-  echo "sindri-ui-fixture: agent-run: no ${FIXTURE_AGENT_WANT:-launch.started} for $item in $wait s; the ledger says:" >&2
-  "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | tail -15 >&2
-  return 1
-}
-
 # --- model-calls: a job's model calls on the Jobs page and the job sheet (context model routing spec 8.2, #1567 R-4) ---
 
 # $1 key, $2 type, $3 payload JSON. A fixed id and idempotency key, so a rerun adds nothing (see publish_event).
@@ -1302,8 +1188,7 @@ sandbox() { # $1 state, $2 item, $3 instance
   local state="$1" item="${2:-}" instance="${3:-}" l
   case "$state" in
     blocked)
-      sandbox_bwrap /nonexistent || return
-      FIXTURE_AGENT_WANT=launch.failed agent_run; return ;;
+      sandbox_bwrap /nonexistent; return ;;
     clear)
       sandbox_bwrap ""; return ;;
     *)
@@ -1346,6 +1231,7 @@ case "$verb" in
   items) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--large" ]; } || die "usage: items [--large]" ;;
   close) [ "$#" -eq 2 ] || { [ "$#" -eq 3 ] && [ "$3" = "--cancelled" ]; } || die "usage: close <item> [--cancelled]" ;;
   projects) [ "$#" -eq 1 ] || die "'projects' takes no arguments" ;;
+  todos) [ "$#" -eq 1 ] || die "'todos' takes no arguments" ;;
   reviews) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: reviews up|down" ;;
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
   context)
@@ -1364,7 +1250,6 @@ case "$verb" in
       *) die "usage: sessions up|ask <pid>|end <pid>|back <pid>|disable|enable|down" ;;
     esac ;;
   hide-item) { [ "$#" -eq 2 ] && case "$2" in ITM-*[!0-9a-f]* | ITM-) false ;; ITM-*) true ;; *) false ;; esac; } || die "usage: hide-item <ITM-id>" ;;
-  agent-run) [ "$#" -eq 1 ] || die "'agent-run' takes no arguments" ;;
   model-calls)
     [ "$#" -eq 2 ] || die "usage: model-calls fell-back|no-answer|paused|none"
     case "$2" in fell-back | no-answer | paused | none) ;; *) die "model-calls: '$2' is not a state (fell-back, no-answer, paused, none)" ;; esac ;;

@@ -3,6 +3,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Profile;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Profile;
 
 namespace Aw.Sindri.Tests.AddRepo;
@@ -27,7 +28,7 @@ public sealed class YamlProfileRepoWriterTests : IDisposable
         }
     }
 
-    private YamlProfileRepoWriter Writer() => new(new SindriSettings(_dir, ProfilePath));
+    private YamlProfileRepoWriter Writer() => new(new SindriSettings(_dir, ProfilePath), NoProfileCache.Instance);
 
     private string Put(string text)
     {
@@ -147,7 +148,7 @@ public sealed class YamlProfileRepoWriterTests : IDisposable
     public async Task A_file_that_changes_between_the_read_and_the_write_is_read_again_and_a_second_change_says_to_try_again()
     {
         _ = Put("schemaVersion: 1\nuser: thor\n");
-        var writer = new YamlProfileRepoWriter(new SindriSettings(_dir, ProfilePath)) { BeforeWrite = static (path, attempt) => File.AppendAllText(path, string.Create(CultureInfo.InvariantCulture, $"# changed {attempt}\n")) };
+        var writer = new YamlProfileRepoWriter(new SindriSettings(_dir, ProfilePath), NoProfileCache.Instance) { BeforeWrite = static (path, attempt) => File.AppendAllText(path, string.Create(CultureInfo.InvariantCulture, $"# changed {attempt}\n")) };
 
         var done = await writer.Append(new RepoEntry("demo", "/work/demo"), _effects, Token);
 
@@ -160,7 +161,7 @@ public sealed class YamlProfileRepoWriterTests : IDisposable
     public async Task A_file_that_changes_once_is_read_again_and_the_write_lands()
     {
         _ = Put("schemaVersion: 1\nuser: thor\n");
-        var writer = new YamlProfileRepoWriter(new SindriSettings(_dir, ProfilePath)) { BeforeWrite = static (path, attempt) => { if (attempt == 0) { File.AppendAllText(path, "# changed\n"); } } };
+        var writer = new YamlProfileRepoWriter(new SindriSettings(_dir, ProfilePath), NoProfileCache.Instance) { BeforeWrite = static (path, attempt) => { if (attempt == 0) { File.AppendAllText(path, "# changed\n"); } } };
 
         var done = await writer.Append(new RepoEntry("demo", "/work/demo"), _effects, Token);
 

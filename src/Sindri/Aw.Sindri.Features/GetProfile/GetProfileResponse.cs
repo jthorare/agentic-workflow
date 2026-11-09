@@ -12,7 +12,6 @@ namespace Aw.Sindri.Features.GetProfile;
 /// <param name="Changed">True when the live profile differs from the approved one.</param>
 /// <param name="ChangedPaths">The key paths that differ.</param>
 /// <param name="AsOf">How fresh the answer is.</param>
-/// <param name="Packs">The lens packs the profile resolves (line spec LN-API8), one per kind and id.</param>
 /// <param name="Summary">What approving the live profile would let Sindri do, in plain words; null when the profile is approved and unchanged, or the live one asks for nothing new.</param>
 public sealed record GetProfileResponse(ProfileHash? Approved, DateTimeOffset? ApprovedAt, ProfileHash? Live, ProfileHash? FileHash, DateTimeOffset? CheckedAt,
-    bool Changed, IReadOnlyList<string> ChangedPaths, AsOf AsOf, IReadOnlyList<ProfilePack> Packs, ProfileSummary? Summary = null);
+    bool Changed, IReadOnlyList<string> ChangedPaths, AsOf AsOf, ProfileSummary? Summary = null);

@@ -41,4 +41,8 @@ public enum ModelPurpose
     /// <summary>Jev's decision on product-surface candidate groups (context.models.productSurfaces); no CLI harness serves it.</summary>
     [JsonStringEnumMemberName("product-surfaces")]
     ProductSurfaces,
+
+    /// <summary>A workflow 'prompt' node's model call (context.models.workflowPrompt).</summary>
+    [JsonStringEnumMemberName("workflow-prompt")]
+    WorkflowPrompt,
 }

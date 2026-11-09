@@ -1,7 +1,4 @@
 using System.Globalization;
-using System.Text;
-using System.Text.RegularExpressions;
-using Aw.Evidence.Core;
 using Aw.Evidence.Core.Files;
 using Aw.Evidence.Core.Guard;
 using Aw.Evidence.Core.Settings;
@@ -18,7 +15,7 @@ namespace Aw.Evidence.Features.Doctor;
 /// slot N serves the web app on 3000 + step * N and the API on the API port + step * N, its database is the {slot}-templated name,
 /// and both ports must be served from that worktree.
 /// </summary>
-internal sealed partial class DoctorService(IStackProbe probe, IEvidenceSettings settings, IRunFiles files) : IService<DoctorRequest, DoctorResponse>
+internal sealed class DoctorService(IStackProbe probe, IEvidenceSettings settings, IRunFiles files) : IService<DoctorRequest, DoctorResponse>
 {
     private const int MainWebPort = 3000;
 
@@ -99,60 +96,17 @@ internal sealed partial class DoctorService(IStackProbe probe, IEvidenceSettings
 
     private async ValueTask<Target> SlotTargetAsync(string worktree, CancellationToken cancellationToken)
     {
-        if (settings.Slots is not { } slots)
-        {
-            return Target.Refuse($"{worktree} was named but no worktree slots are configured (set UI_EVIDENCE_SLOT_FILE; see SKILL.md \"Worktree stacks\")");
-        }
-
-        var path = $"{worktree}/{slots.FileName}";
-        var read = await files.ReadAsync(path, cancellationToken).ConfigureAwait(false);
+        var read = await WorktreeSlot.ReadAsync(settings.Slots, files, worktree, cancellationToken).ConfigureAwait(false);
         if (read.IsError)
         {
-            return Target.Refuse(read.Error.Code == EvidenceErrors.FileNotFound.Code
-                ? $"{path} does not exist: claim a stack slot there first"
-                : $"{path} can't be read: {read.Error.Message}");
+            return Target.Refuse(read.Error.Message);
         }
 
-        if (SlotNumber(Encoding.UTF8.GetString(read.Value), slots.Key) is not { } number || number > slots.Count)
-        {
-            return Target.Refuse($"{path} has no {slots.Key} between 1 and {slots.Count}");
-        }
-
-        string? database = null;
-        if (slots.Database is { } template)
-        {
-            database = template.Replace("{slot}", number.ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
-            if (!DatabaseName.IsMatch(database))
-            {
-                return Target.Refuse("UI_EVIDENCE_SLOT_DATABASE must name a database of letters, digits and _ (with {slot})");   // it goes into a SQL literal
-            }
-        }
-
-        var web = MainWebPort + (slots.PortStep * number);
-        int? api = settings.ApiPort is { } main ? main + (slots.PortStep * number) : null;
-        return new Target(new DoctorSlot(number, worktree, string.Create(CultureInfo.InvariantCulture, $"http://localhost:{web}"), database), web, api, Refusal: null);
+        var slot = read.Value;
+        var web = slot.PortFor(MainWebPort);
+        int? api = settings.ApiPort is { } main ? slot.PortFor(main) : null;
+        return new Target(new DoctorSlot(slot.Number, worktree, string.Create(CultureInfo.InvariantCulture, $"http://localhost:{web}"), slot.Database), web, api, Refusal: null);
     }
-
-    // The first KEY=<digits> line, as doctor.sh's sed read it; 0 and anything not a number are no slot.
-    private static int? SlotNumber(string content, string key)
-    {
-        foreach (var line in content.Split('\n'))
-        {
-            var text = line.TrimEnd('\r');
-            if (text.StartsWith(key + "=", StringComparison.Ordinal) && DigitsOnly.IsMatch(text[(key.Length + 1)..]))
-            {
-                return int.TryParse(text[(key.Length + 1)..], NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number >= 1 ? number : null;
-            }
-        }
-
-        return null;
-    }
-
-    [GeneratedRegex("^[A-Za-z0-9_]+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 100)]
-    private static partial Regex DatabaseName { get; }
-
-    [GeneratedRegex("^[0-9]+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 100)]
-    private static partial Regex DigitsOnly { get; }
 
     private sealed record Target(DoctorSlot? Slot, int WebPort, int? ApiPort, string? Refusal)
     {

@@ -157,6 +157,7 @@ public sealed partial class SindriApp : Application, IDisposable
         {
             Library = shell.LibraryRoots,
             LinearConnection = shell.LinearConnection,
+            TodoNoteCard = shell.TodoNoteCard,
         };
         try
         {

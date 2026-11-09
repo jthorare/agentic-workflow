@@ -59,8 +59,8 @@ public sealed class ShellSetupCountTests
         var shell = await Connected(s => s.Setup.IsHomeLineShown);
 
         Assert.Equal("mcp", shell.Setup.HomeStepId);
-        Assert.Equal((3, 3), (shell.NeedsYou.Count, shell.NeedsYou.Rows.Count));   // setup:mcp is the line's; setup:recipes never shows
-        Assert.StartsWith("3 need you", shell.Attention.SummaryLine, StringComparison.Ordinal);
+        Assert.Equal((2, 2), (shell.NeedsYou.Count, shell.NeedsYou.Rows.Count));   // the decision and the failure: both setup:mcp rows (the fixture's and the extra) are the line's; setup:recipes never shows
+        Assert.StartsWith("2 need you", shell.Attention.SummaryLine, StringComparison.Ordinal);
     }, Token);
 
     [Fact]

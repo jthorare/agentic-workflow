@@ -1,3 +1,0 @@
-{"start":{"inputs":{"fact:change":"Rename the export button.","fact:diff":"https://example.test/diff/1"}}}
-{"trigger":{"kind":"step.completed","outcome":"none"},"expect":{"state":"evidence-none"}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"proof for none"}},"expect":{"state":"proven","outcome":"resolved"}}

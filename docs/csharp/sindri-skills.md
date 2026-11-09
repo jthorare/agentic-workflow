@@ -59,11 +59,8 @@ a `block.yaml`. Exit 0 ok, 1 findings (one `file: reason` each), 2 when Ajv or `
 
 1. Edit `skills/<name>/block.yaml` (and the Result block).
 2. `node scripts/check-skill-blocks.mjs`.
-3. `sindri skill run <id> --skills ./skills --input k=v --follow`. It prints the outcome, each fact and the manifest hash it
-   ran. A `--skills` trial seeds the session by path (`Read <dir>/<name>/SKILL.md and follow it with arguments: ...`) and
-   skips the SND-SKILL-007 sha check, since the folder is not the installed one.
+3. Restart serve and run `sindri skills` to see the block loaded (or the reason it did not).
 4. Repeat 1-3 until it's right.
-5. Restart serve to load it for chains, then `sindri recipe approve` any recipe that uses it.
 
 `sindri skills [--json]` lists the loaded blocks, the path each came from and the reason for any that didn't load. The
 skills folder is, in order: `--skills <dir>` on the in-process verbs, `AW_SINDRI_SKILLS_DIR`, the checkout's `skills/`

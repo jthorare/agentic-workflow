@@ -4,8 +4,6 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Health;
-using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.RebuildViews;
@@ -44,9 +42,9 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
             : await output.Text(SummaryText.Render(status.Value.Value, found.Value.Endpoint, ui: null), code).ConfigureAwait(false);
     }
 
-    /// <summary>The 'sindri status' exit code: 1 unless the health is healthy (a server without health: unless the profile is approved).</summary>
+    /// <summary>The 'sindri status' exit code: 1 unless the health is healthy (a server without health: 0).</summary>
     internal static int StatusExitCode(GetStatusResponse status) =>
-        status.Health is { } health ? (health.Word == HealthWord.Healthy ? 0 : 1) : (status.Profile.NeedsApproval ? 1 : 0);
+        status.Health is { } health ? (health.Word == HealthWord.Healthy ? 0 : 1) : 0;
 
     internal async Task<int> Stop(CancellationToken ct)
     {
@@ -79,13 +77,12 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
             return await output.Error(valid.Error).ConfigureAwait(false);
         }
 
-        var state = valid.Value.Approved ? "approved" : "not approved (fix: sindri profile approve)";
         return json
-            ? await output.Json(valid.Value, valid.Value.Approved ? 0 : 1).ConfigureAwait(false)
-            : await output.Text($"Profile valid: {valid.Value.Source}\nhash {valid.Value.Hash.Value}, {state}\n{string.Concat((valid.Value.Matches ?? []).Select(static l => l + "\n"))}{string.Concat((valid.Value.Warnings ?? []).Select(static l => "warning: " + l + "\n"))}", valid.Value.Approved ? 0 : 1).ConfigureAwait(false);
+            ? await output.Json(valid.Value, 0).ConfigureAwait(false)
+            : await output.Text($"Profile valid: {valid.Value.Source}\nhash {valid.Value.Hash.Value}\n{string.Concat((valid.Value.Matches ?? []).Select(static l => l + "\n"))}{string.Concat((valid.Value.Warnings ?? []).Select(static l => "warning: " + l + "\n"))}", 0).ConfigureAwait(false);
     }
 
-    /// <summary>'profile init [--json]': writes the default profile when none exists and says what comes next; local, like validate. It never approves and never replaces a file.</summary>
+    /// <summary>'profile init [--json]': writes the default profile when none exists and says what comes next; local, like validate. It never replaces a file.</summary>
     internal async Task<int> InitProfile(bool json, CancellationToken ct)
     {
         var written = await scope.GetRequiredService<IService<InitProfileRequest, InitProfileResponse>>().Handle(new InitProfileRequest(), ct).ConfigureAwait(false);
@@ -96,11 +93,11 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
 
         return json
             ? await output.Json(written.Value, 0).ConfigureAwait(false)
-            : await output.Text($"Profile written: {written.Value.Path}\nnext: sindri repo add <path>, then sindri profile approve\n", 0).ConfigureAwait(false);
+            : await output.Text($"Profile written: {written.Value.Path}\nnext: sindri repo add <path>\n", 0).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// 'profile set &lt;key&gt; &lt;value&gt; [--json]': sets one scalar key of the live profile in place and says to approve it; local, like init. A CLI with no readable per-start human token, or a session Sindri launched, is refused (SND-AUTH-002, like 'sandbox login'). It never approves.
+    /// 'profile set &lt;key&gt; &lt;value&gt; [--json]': sets one scalar key of the live profile in place; the edit is live at once; local, like init. A CLI with no readable per-start human token, or a session Sindri launched, is refused (SND-AUTH-002, like 'sandbox login'). 
     /// Exit 0 set or unchanged, 1 an invalid key or value or a layout it won't edit (nothing written), 2 refused or the file can't be read or written.
     /// </summary>
     internal async Task<int> SetProfileKey(string key, string value, bool json, CallerHeaders caller, CancellationToken ct)
@@ -121,7 +118,7 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
         return json
             ? await output.Json(done, 0).ConfigureAwait(false)
             : await output.Text(done.Changed
-                ? $"set {done.Key} = {done.Value} in {done.Path}. Approve it with: sindri profile approve\n"
+                ? $"set {done.Key} = {done.Value} in {done.Path}\n"
                 : $"{done.Key} is already {done.Value} in {done.Path}: unchanged\n", 0).ConfigureAwait(false);
     }
 
@@ -143,48 +140,12 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
         return await output.Text(string.Join('\n', lines) + "\n", report.ExitCode).ConfigureAwait(false);
     }
 
+    /// <summary>'profile approve [&lt;hash&gt;]' after approval is gone (#2258 PR 1): says so and exits 0, so an old script keeps going; needs no control plane.</summary>
     internal async Task<int> Approve(string? hashText, CancellationToken ct)
     {
-        ProfileHash? hash = hashText is not null && ProfileHash.TryFrom(hashText, out var parsed) ? parsed : null;
-        if (Precheck(hashText, hash) is { } refused)
-        {
-            return await output.Error(refused).ConfigureAwait(false);
-        }
-
-        var down = await StartIfAllowed(ct).ConfigureAwait(false);
-        if (down is not null)
-        {
-            return await output.Error(down).ConfigureAwait(false);
-        }
-
-        var approved = await client.Post<ApproveProfileRequest, ApproveProfileResponse>("/sindri/profile/approve", new ApproveProfileRequest(hash), ct).ConfigureAwait(false);
-        return approved.IsError ? await output.Error(approved.Error).ConfigureAwait(false) : await output.Text(ApprovalText(approved.Value.Value, hash is null), approved.Value.Value.Approved ? 0 : 1).ConfigureAwait(false);
+        _ = (hashText, ct);
+        return await output.Text("removed: edits apply on save (nothing to approve; `sindri profile set`, `repo add` and the app write the live profile)\n", 0).ConfigureAwait(false);
     }
-
-    /// <summary>A malformed hash: refused before any call, and before starting anything.</summary>
-    private static Kernel.Error? Precheck(string? hashText, ProfileHash? hash) => (hashText, hash) switch
-    {
-        ({ } text, null) => SindriErrors.InvalidInput.With($"'{text}' is not a profile hash (64 hex digits)"),
-        _ => null,
-    };
-
-    /// <summary>Starts the control plane if this CLI may (API spec §7); no typed challenge follows (owner decision q93).</summary>
-    private async Task<Kernel.Error?> StartIfAllowed(CancellationToken ct) => ensureRunning is null ? null : await ensureRunning(ct).ConfigureAwait(false);
-
-    private static string ApprovalText(ApproveProfileResponse a, bool preview) => (preview, a.Approved) switch
-    {
-        (_, true) when preview => $"Approved already: {a.Hash.Value}\n",
-        (true, _) => $"hash {a.Hash.Value}\n{(a.Unreadable is null ? string.Empty : $"the stored approval can't be read by this build ({a.Unreadable}); approving the hash below replaces it\n")}changed since the last approval: {(a.Changes.Count == 0 ? (a.UnlistedChange ? "no listed key, yet the hash differs (this build may write the profile differently from the one that approved it; if not, a key is missing from this list: report it)" : "nothing") : string.Join(", ", a.Changes))}\n{RoleCountsText(a)}{StepArgvText(a)}{(a.Notice is null ? string.Empty : a.Notice + "\n")}to approve: sindri profile approve {a.Hash.Value}\n",
-        _ => $"Approved {a.Hash.Value}\n",
-    };
-
-    /// <summary>One line per changed role key: the files it matches on the repo's HEAD, or that the count is unavailable (#1148).</summary>
-    private static string RoleCountsText(ApproveProfileResponse a) => string.Concat((a.RoleCounts ?? []).Select(static line => line + "\n"));
-
-    /// <summary>One line per step hash: the entry on this box that has it, or that none does (launcher L-16).</summary>
-    private static string StepArgvText(ApproveProfileResponse a) => string.Concat(a.StepArgv.Select(static line => line.Entry is { } entry
-        ? $"steps on {line.Agent} may run {entry.Bin} {string.Join(' ', entry.Open)}{(entry.Resume is null ? string.Empty : " (resume: " + string.Join(' ', entry.Resume) + ")")} [{line.Hash}, {entry.Source.ToString().ToLowerInvariant()}]\n"
-        : $"steps on {line.Agent}: no entry on this box has the hash {line.Hash}\n"));
 
     private static string Word(CheckState state) => state switch
     {

@@ -45,7 +45,7 @@ internal static partial class Labels
     internal static IReadOnlyList<(string Keys, string Action)> FixedKeys { get; } =
     [
         ("⌘K / Ctrl+K", Palette),
-        ("G then H N D P Q C A . S V J U", "Go to a page: H or N Home, D Decisions on Home, P Projects, Q Work, C Context, A Agents, . or S System, V Reviews, J Jobs, U Settings"),
+        ("G then H N D T P Q C A . S V J U", "Go to a page: H or N Home, D Decisions on Home, T Todo on Home, P Projects, Q Work, C Context, A Agents, . or S System, V Reviews, J Jobs, U Settings"),
         ("J / K", "Next / previous row"),
         ("Enter / Esc", "Open the details panel / close the top layer"),
         ("O", "Open the linked page"),
@@ -57,6 +57,10 @@ internal static partial class Labels
         ("/", "Filter this list"),
         ("?", "Shortcuts sheet"),
         ("⌘, / Ctrl+,", Settings),
+        ("N", "New todo"),
+        ("⌘⇧N / Ctrl+Shift+N", "New todo from anywhere"),
+        ("⌘Z / Ctrl+Z", "Undo the last action"),
         ("F6 / Shift+F6", "Next / previous area"),
+        .. TodoPanelKeys,
     ];
 }

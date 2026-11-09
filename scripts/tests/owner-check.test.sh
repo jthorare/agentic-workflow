@@ -55,9 +55,7 @@ case "$*" in
 s=socket.socket(); s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1); s.bind(("127.0.0.1", int(sys.argv[1]))); s.listen(); time.sleep(600)' "$AW_SINDRI_PORT" >/dev/null 2>&1 &
     echo "$!" > "$OWNER_CHECK_TEST_PID"
     for _ in $(seq 1 50); do (exec 3<>"/dev/tcp/127.0.0.1/$AW_SINDRI_PORT") 2>/dev/null && break; sleep 0.1; done
-    echo "profile needs approval"; exit 1 ;;
-  "profile validate --json") printf '{"valid":true,"approved":false,"hash":"%s"}\n' "$(printf 'a%.0s' $(seq 1 64))"; exit 1 ;;
-  "profile approve "*) exit 0 ;;
+    echo "running"; exit 0 ;;
   "context map import "*) [ -f "${@: -1}" ] || exit 2; exit 0 ;;
   stop) [ ! -f "$OWNER_CHECK_TEST_PID" ] || { kill "$(cat "$OWNER_CHECK_TEST_PID")" 2>/dev/null; rm -f "$OWNER_CHECK_TEST_PID"; }; exit 0 ;;
   *) exit 2 ;;
@@ -132,7 +130,7 @@ expect "the owner-check home is never the real home" 2 "AW_SINDRI_HOME"
 mkdir -p "$OC_HOME"; echo stale > "$OC_HOME/leftover"
 : > "$T/calls.log"
 SINDRI_MAIN="$T/main-sindri" run s-x up --seed --session --services context-sync --repo work-repo
-expect "up builds, makes a fresh home, seeds, edits the profile, starts and approves" 0 "$OC_SCRATCH/bin/sindri" "$OC_HOME" "AW_SINDRI_PORT=$PORT" "--strict-mcp-config" "owner-check.sh s-x down"
+expect "up builds, makes a fresh home, seeds, edits the profile, starts" 0 "$OC_SCRATCH/bin/sindri" "$OC_HOME" "AW_SINDRI_PORT=$PORT" "--strict-mcp-config" "owner-check.sh s-x down"
 check "the build output is copied whole (binary and SQLite library)" '[ -x "$OC_SCRATCH/bin/sindri" ] && [ -f "$OC_SCRATCH/bin/libe_sqlite3.dylib" ]'
 check "the home is created fresh (a leftover file is gone) and is 0700" '[ ! -e "$OC_HOME/leftover" ] && [ "$(stat -c %a "$OC_HOME" 2>/dev/null || stat -f %Lp "$OC_HOME")" = 700 ]'
 check "the seed is exported by the merged build from the real home (the profile's), with no port" 'grep -qx "main home=$REAL_HOME port=unset args=context map export $OC_HOME/seed.json" "$T/calls.log" && [ -f "$OC_HOME/seed.json" ]'
@@ -141,9 +139,9 @@ check "the real profile is copied in and left unchanged" '[ -f "$P" ] && cmp -s 
 check "the named engine service is kept, the others removed, other services kept" 'grep -q "^  context-sync:" "$P" && grep -q "^    every: 15m" "$P" && ! grep -q "context-purge\|context-docs-refresh" "$P" && grep -q "^  heartbeat:" "$P"'
 check "labeling is off unless the check names it; its other keys stay" 'awk "/^  labeling:/{f=1;next} f&&/^    enabled:/{print \$2; exit}" "$P" | has -x false && grep -q "^    maxTokens: 20000" "$P"'
 check "sessions are on when the check uses a session" 'awk "/^  sessions:/{f=1;next} f&&/^    enabled:/{print \$2; exit}" "$P" | has -x true'
-check "start, approve and import run against the scratch home and port, in order" '
+check "start and import run against the scratch home and port, in order" '
   [ "$(grep -v "^main" "$T/calls.log" | sed "s/ args=.*//" | sort -u)" = "home=$OC_HOME port=$PORT" ] &&
-  [ "$(grep -v "^main" "$T/calls.log" | sed "s/.* args=//" | tr "\n" "|")" = "--headless|profile validate --json|profile approve $(printf "a%.0s" $(seq 1 64))|context map import $OC_HOME/seed.json|" ]'
+  [ "$(grep -v "^main" "$T/calls.log" | sed "s/.* args=//" | tr "\n" "|")" = "--headless|context map import $OC_HOME/seed.json|" ]'
 check "the scratch instance runs with AW_SINDRI_APP_NO_MCP=1 (no MCP registration in ~/.claude.json)" '[ -s "$T/calls.log.mcp" ] && [ "$(sort -u "$T/calls.log.mcp")" = 1 ]'
 check "the MCP config names only sindri-ownercheck on the check's port, with the repo header" '
   grep -q "\"sindri-ownercheck\"" "$OC_SCRATCH/mcp.json" && grep -q "127.0.0.1:$PORT/sindri/mcp" "$OC_SCRATCH/mcp.json" &&

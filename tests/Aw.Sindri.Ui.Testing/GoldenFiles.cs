@@ -12,7 +12,7 @@ internal static class GoldenFiles
 
     /// <summary>An API golden recorded by Sindri's tests.</summary>
     /// <param name="slug">The route slug ('commands', 'status', 'views-rebuild').</param>
-    /// <param name="scenario">The scenario ('catalog', 'running-approved').</param>
+    /// <param name="scenario">The scenario ('catalog', 'running-unapproved').</param>
     /// <returns>The body as served.</returns>
     internal static string Api(string slug, string scenario) => File.ReadAllText(Path.Combine(Root, "Api", slug, scenario + ".json"));
 

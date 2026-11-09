@@ -1,10 +1,10 @@
 using System.Globalization;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Workflow.Engine.Instances;
-using Aw.Sindri.Core.Workflow.Recipes;
 
 namespace Aw.Sindri.Core.Launches;
 
@@ -124,7 +124,7 @@ public static class LaunchOptions
         var blockers = new List<LaunchBlocker>();
         if (inputs.RepoPath is null)
         {
-            blockers.Add(new LaunchBlocker(SindriErrors.LaunchRepoMissing.Code, "the item's repo has no path in the approved profile (fix: add it to repos and approve)"));
+            blockers.Add(new LaunchBlocker(SindriErrors.LaunchRepoMissing.Code, "the item's repo has no path in the profile (fix: add it to repos)"));
         }
 
         if (inputs.Probe is not { Probed: true } probe)

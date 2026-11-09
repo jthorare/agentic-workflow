@@ -1,0 +1,59 @@
+{
+  "asOf": {
+    "cursor": 4,
+    "ledgerHead": 4,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "todo": {
+    "id": "td_00000000000000000000000008",
+    "text": "rotate the staging key",
+    "due": "2025-12-31",
+    "links": [
+      {
+        "kind": "pr",
+        "ref": "acme/api#12",
+        "href": "sindri://reviews/acme/api/12"
+      },
+      {
+        "kind": "linear",
+        "ref": "ENG-12",
+        "href": "sindri://linear/ENG-12"
+      }
+    ],
+    "addedAt": "2026-01-01T00:00:00.0000000Z",
+    "addedBy": "human:cli",
+    "addedVia": null,
+    "doneAt": null,
+    "removed": false,
+    "removedAt": null,
+    "removedBy": null,
+    "version": 1,
+    "lastBy": "human:cli",
+    "lastVia": null,
+    "conflict": {
+      "sindri": {
+        "text": "rotate the staging key",
+        "due": "2025-12-31",
+        "links": [
+          "acme/api#12",
+          "ENG-12"
+        ],
+        "done": false,
+        "removed": false
+      },
+      "obsidian": {
+        "text": "rotate the prod key",
+        "due": "2025-12-31",
+        "links": [
+          "acme/api#12",
+          "ENG-12"
+        ],
+        "done": false,
+        "removed": false
+      },
+      "noteHash": "ab12"
+    }
+  }
+}

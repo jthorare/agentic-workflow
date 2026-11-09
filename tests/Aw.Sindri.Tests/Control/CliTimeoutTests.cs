@@ -174,7 +174,7 @@ public sealed class CliTimeoutTests
             Called = true;
             _ = Started.TrySetResult();
             await Task.Delay(delay, clock, cancellationToken);
-            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(FollowRig.Status(needsApproval: false)) };
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(FollowRig.Status(withProblem: false)) };
         }
     }
 

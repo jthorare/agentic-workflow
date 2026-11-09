@@ -9,16 +9,13 @@ using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
-using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
-using Aw.Sindri.Core.Workflow.Registry;
-using Aw.Sindri.Core.Workflow.Validation;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Core.Registration;
@@ -42,12 +39,9 @@ public static class SindriCoreServiceCollectionExtensions
             .AddSingleton<IJobContextAccessor, AsyncLocalJobContextAccessor>()
             .AddSingleton<HeldLease>()
             .AddSingleton<LiveSchedule>()
-            .AddSingleton<EndedInstanceViews>()
             .AddSingleton<TemporalRuntime>()
             .AddSingleton<HeldHumanToken>()
             .AddSingleton<BlockCatalog>()
-            .AddSingleton<BlockStepRuntimes>()
-            .AddSingleton<StepInputRuntimes>()
             .AddSingleton<ILedgerSignal, LedgerSignal>()
             .AddSingleton<IStreamSlots, StreamSlots>()
             .AddScoped<CallerEventView>()
@@ -62,14 +56,6 @@ public static class SindriCoreServiceCollectionExtensions
             .AddSingleton<UsageSamples>()
             .AddScoped<ReportedIdAdmission>()
             .AddScoped<LaunchSessionEvents>()
-            .AddScoped<RecipeApprovalPlanner>()
-            .AddScoped<Workflow.ApproveAll.ShippedApprovalPlans>()
-            .AddScoped<RecipeRevokePlanner>()
-            .AddScoped<IRecipeProfileFacts, ApprovedRecipeProfileFacts>()
-            .AddScoped<RecipeRegistryReader>()
-            .AddSingleton<RecipeEvents>()
-            .AddSingleton<IPinRenewals, PinRenewals>()
-            .AddSingleton<IApprovedRecipes, RegistryApprovedRecipes>()
             .AddSandboxCore();
 
     /// <summary>The views' projections, in the order the projector folds them.</summary>
@@ -87,7 +73,9 @@ public static class SindriCoreServiceCollectionExtensions
             .AddSingleton<IProjection, RecipeStatsProjection>()
             .AddSingleton<IProjection, ModelHistoryProjection>()
             .AddSingleton<IProjection, CodeIndexProjection>()
-            .AddSingleton<IProjection, ProjectsProjection>();
+            .AddSingleton<IProjection, ProjectsProjection>()
+            .AddSingleton<IProjection, RunsProjection>()
+            .AddSingleton<IProjection, TodosProjection>();
 
     /// <summary>
     /// The sandbox port and the credential registry (sandbox spec SB12, SB18). The product registers only <see cref="UnavailableSandbox"/> until SB-5a; test hosts replace it

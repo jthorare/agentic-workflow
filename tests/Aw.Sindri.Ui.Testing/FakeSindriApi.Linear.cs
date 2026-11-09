@@ -114,8 +114,8 @@ internal sealed partial class FakeSindriApi
     /// <summary>POST /sindri/linear/connection/teams' answer: the "two-teams" golden by default.</summary>
     public RouteAnswer LinearConnectionTeamsAnswer { get; set; } = RouteAnswer.Api("linear-connection-teams", "two-teams");
 
-    /// <summary>POST /sindri/linear/connection's answer: the "read-saved-approved" golden by default.</summary>
-    public RouteAnswer LinearConnectAnswer { get; set; } = RouteAnswer.Api("linear-connect", "read-saved-approved");
+    /// <summary>POST /sindri/linear/connection's answer: the "read-saved" golden by default.</summary>
+    public RouteAnswer LinearConnectAnswer { get; set; } = RouteAnswer.Api("linear-connect", "read-saved");
 
     /// <summary>DELETE /sindri/linear/connection/write's answer: the "removed" golden by default.</summary>
     public RouteAnswer LinearDisconnectWriteAnswer { get; set; } = RouteAnswer.Api("linear-disconnect-write", "removed");

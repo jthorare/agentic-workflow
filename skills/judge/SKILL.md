@@ -39,7 +39,7 @@ check that never reproduced the bug is `unresolved` without a model call; an emp
 No one labels data by hand. Labels come from what happened next and from a stronger model:
 
 1. `judge label import [--question q] [--since 14d]` turns stored decisions into eval items.
-2. `judge label outcomes` (free) labels `ask-check` items from Joi's next real prompt in the session transcript.
+2. `judge label outcomes` (free) labels `ask-check` items from the user's next real prompt in the session transcript.
 3. `judge adjudicate <question> --limit 60` (costs Opus tokens: about 3 runs x 3k tokens per item) asks
    `claude -p --model opus --effort high` three times per item and stores a label only on a 2-of-3
    in-enum majority. It never sees the judge's own decision. Run it in the background; labels are

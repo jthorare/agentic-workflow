@@ -34,8 +34,11 @@ public static partial class SindriErrors
     /// <summary>SND-CONN-010: a connection with that name exists.</summary>
     public static readonly ErrorDefinition ConnectionExists = new("SND-CONN-010", ErrorKind.Conflict, "A connection with that name already exists");
 
-    /// <summary>SND-CONN-011: the provider answered 429 or 5xx to a poll; the next poll waits.</summary>
-    public static readonly ErrorDefinition ConnectionRateLimited = new("SND-CONN-011", ErrorKind.RateLimited, "The provider is rate limiting this connection");
+    /// <summary>SND-CONN-011: the connection is key-based and has no browser sign-in to run again.</summary>
+    public static readonly ErrorDefinition ConnectionKindNoSignIn = new("SND-CONN-011", ErrorKind.Invalid, "This connection uses a key, not a browser sign-in");
+
+    /// <summary>SND-CONN-014: the provider answered 429 or 5xx to a poll; the next poll waits.</summary>
+    public static readonly ErrorDefinition ConnectionRateLimited = new("SND-CONN-014", ErrorKind.RateLimited, "The provider is rate limiting this connection");
 
     /// <summary>SND-CONN-012: the provider's answer is not the shape the poller knows, or a redirect left the preset's host.</summary>
     public static readonly ErrorDefinition ConnectionProviderChanged = new("SND-CONN-012", ErrorKind.Unavailable, "The provider's answer is not the shape Sindri expects");

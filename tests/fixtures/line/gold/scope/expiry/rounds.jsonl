@@ -1,3 +1,0 @@
-{"round":1,"trigger":"first","added":["AC-1","AC-2","AC-3","AC-5","AC-7","AC-8","AC-9","AC-10"],"removed":[],"changed":[],"cause":"first draft from the brief and the lens results"}
-{"round":2,"trigger":"found","added":["AC-4"],"removed":[],"changed":[],"cause":"challenge round 1 reported the missing item"}
-{"round":3,"trigger":"rescope","added":["AC-6"],"removed":[],"changed":[],"cause":"the owner's 'other' answer added the digest email","addsSurfaces":["surface:api/weekly-digest-email","surface:job/nightly"]}

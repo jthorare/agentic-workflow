@@ -5,8 +5,9 @@ namespace Aw.Sindri.Core.Connections.OAuth;
 /// <param name="Client">The OAuth client id (not secret).</param>
 /// <param name="Code">The code from the callback.</param>
 /// <param name="RedirectUri">The redirect used in the consent request.</param>
+/// <param name="ClientSecret">The OAuth client secret for a provider that wants one at the token endpoint, or null. Secret: the record's text hides it.</param>
 /// <param name="Verifier">The PKCE verifier. Secret: the record's text hides it.</param>
-public sealed record CodeExchange(ConnectionPreset Preset, string Client, string Code, string RedirectUri, string Verifier)
+public sealed record CodeExchange(ConnectionPreset Preset, string Client, string Code, string RedirectUri, string Verifier, string? ClientSecret = null)
 {
     /// <summary>A fixed text: the code and the verifier are not in it.</summary>
     /// <returns>'CodeExchange(redacted)'.</returns>

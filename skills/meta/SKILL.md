@@ -106,9 +106,12 @@ request, nothing unpushed, no process inside). Give each team its own `worktrees
    anything else maps from the lane's announcement ("API lane: …").
 3. `aw-meta lanes --announce` and **send the printed text to every lane** (the `broadcast-lanes` obligation stays open
    until each mapped lane got it).
-4. **Watch in the background**: `aw-meta watch --for 29m`. When it prints `WATCH EXPIRING`, start it
-   again; if you forget, the Stop hook opens `rearm-watch`. Act on `DISK LOW` and `MEMORY LOW` as described in
-   "Resources and adaptation".
+4. **Watch for mail**, by provider. Claude: run `aw-meta watch --for 29m` with Monitor in the background; when it prints
+   `WATCH EXPIRING`, start it again. Codex or Cursor: run `aw-meta watch --until-mail --for 29m` in the **foreground**
+   (no Monitor tool), handle the mail it prints, then run it again (see docs/csharp/meta.md "Codex or Cursor meta"). If
+   you forget, the Stop hook opens `rearm-watch`, and `aw-meta status` and `aw-meta health` print a `consumer:` line that
+   says "no active coordinator consumer" while mail waits and no watch beats. Act on `DISK LOW` and `MEMORY LOW` as
+   described in "Resources and adaptation".
 5. `aw-meta status` and `aw-meta health`.
 
 ## A lane says `ready #N`

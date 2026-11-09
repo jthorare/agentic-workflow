@@ -12,7 +12,7 @@ public sealed class StatusSessionsTests
     private readonly ViewsHarness _v = new();
     private readonly InMemorySessionSnapshot _snapshot = new();
 
-    private GetStatusService Service() => new(_v.Slice.Held, new ProfileReads(_v.Slice.Profiles, _v.Slice.Profiles), _v.Slice.Store, _v.Slice.Events, _v.Progress, new HealthServiceRows(_v.Views, []), _snapshot);
+    private GetStatusService Service() => new(_v.Slice.Held, new ProfileReads(_v.Slice.Profiles, _v.Slice.Profiles), _v.Slice.Store, _v.Progress, new HealthServiceRows(_v.Views, []), _snapshot);
 
     [Fact, Trait("Lane", "unit")]
     public async Task Status_counts_the_live_asking_and_problem_sessions_of_the_last_pass()

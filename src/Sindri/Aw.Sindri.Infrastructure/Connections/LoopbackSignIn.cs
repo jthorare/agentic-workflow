@@ -26,25 +26,52 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
     private readonly TimeSpan _timeout = timeout;
     private readonly Func<int, byte[]> _randomBytes = randomBytes;
 
-    public ValueTask<Result<SignInStarted>> Start(ConnectionPreset preset, string clientId, IReadOnlyList<string> scopes, CancellationToken cancellationToken)
+    public ValueTask<Result<SignInStarted>> Start(ConnectionPreset preset, string clientId, IReadOnlyList<string> scopes, string? clientSecret, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(preset);
         ArgumentNullException.ThrowIfNull(scopes);
 #pragma warning disable CA2000 // the listener's owner is Complete, which closes it on every way out
         var listener = Listen(out var port);
 #pragma warning restore CA2000
+        return ValueTask.FromResult(listener is null
+            ? NoPort()
+            : Begin(listener, Redirect(port), new SignInTarget(preset, clientId, clientSecret), scopes, cancellationToken));
+    }
+
+    public async ValueTask<Result<SignInStarted>> StartMcp(Uri server, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(server);
+#pragma warning disable CA2000 // the listener's owner is Complete, which closes it on every way out
+        var listener = Listen(out var port);
+#pragma warning restore CA2000
         if (listener is null)
         {
-            return ValueTask.FromResult<Result<SignInStarted>>(SindriErrors.ConnectionSecretUnavailable.With("no free loopback port to listen on for the sign-in callback"));
+            return NoPort();
         }
 
-        var redirect = $"http://127.0.0.1:{port.ToString(CultureInfo.InvariantCulture)}{CallbackPath}";
+        var redirect = Redirect(port);
+        var target = await _oauth.RegisterMcpClient(server, redirect, cancellationToken).ConfigureAwait(false);
+        if (target.IsError)
+        {
+            listener.Close();
+            return target.Error;
+        }
+
+        return Begin(listener, redirect, new SignInTarget(target.Value.Preset, target.Value.Client, target.Value.ClientSecret), [], cancellationToken);
+    }
+
+    private static Result<SignInStarted> NoPort() => SindriErrors.ConnectionSecretUnavailable.With("no free loopback port to listen on for the sign-in callback");
+
+    private static string Redirect(int port) => $"http://127.0.0.1:{port.ToString(CultureInfo.InvariantCulture)}{CallbackPath}";
+
+    private Result<SignInStarted> Begin(HttpListener listener, string redirect, SignInTarget target, IReadOnlyList<string> scopes, CancellationToken cancellationToken)
+    {
         var pkce = PkceChallenge.Create(_randomBytes);
-        var request = new AuthorizationRequest(preset, clientId, redirect, scopes.Count > 0 ? scopes : preset.DefaultScopes, pkce);
+        var request = new AuthorizationRequest(target.Preset, target.Client, redirect, scopes.Count > 0 ? scopes : target.Preset.DefaultScopes, pkce);
         var url = request.ToUrl();
-        var completion = Complete(listener, new SignIn(preset, clientId, redirect, pkce), cancellationToken);
+        var completion = Complete(listener, new SignIn(target.Preset, target.Client, redirect, pkce, target.ClientSecret), cancellationToken);
         _ = _browser.Open(url);
-        return ValueTask.FromResult<Result<SignInStarted>>(new SignInStarted(url, completion));
+        return new SignInStarted(url, completion);
     }
 
     private static HttpListener? Listen(out int port)
@@ -79,26 +106,7 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
         try
         {
             var callback = await WaitForCallback(listener, limit.Token).ConfigureAwait(false);
-            if (!sign.Pkce.Verify(callback.Query["state"]))
-            {
-                await Reply(callback, 400, "Sindri: this sign-in did not match. Close this tab and run the command again.").ConfigureAwait(false);
-                return SindriErrors.ConnectionStateMismatch.With("the callback's state is not the one this sign-in made");
-            }
-
-            if (callback.Query["error"] is { Length: > 0 })
-            {
-                await Reply(callback, 200, "Sindri: consent was denied. You can close this tab.").ConfigureAwait(false);
-                return SindriErrors.ConnectionConsentDenied.With($"{sign.Preset.DisplayName} did not get consent");
-            }
-
-            if (callback.Query["code"] is not { Length: > 0 } code)
-            {
-                await Reply(callback, 400, "Sindri: the callback had no code.").ConfigureAwait(false);
-                return SindriErrors.ConnectionConsentDenied.With($"{sign.Preset.DisplayName} sent the callback without a code");
-            }
-
-            await Reply(callback, 200, "Sindri: signed in. You can close this tab.").ConfigureAwait(false);
-            return await _oauth.ExchangeCode(new CodeExchange(sign.Preset, sign.Client, code, sign.Redirect, sign.Pkce.Verifier), limit.Token).ConfigureAwait(false);
+            return await Answer(callback, sign, limit.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -108,10 +116,40 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
         {
             return SindriErrors.ConnectionSignInTimeout.With("nobody finished the sign-in in " + _timeout.TotalMinutes.ToString("0.##", CultureInfo.InvariantCulture) + " minutes");
         }
+        catch (Exception e) when (e is HttpListenerException or ObjectDisposedException or InvalidOperationException)
+        {
+            return SindriErrors.ConnectionSecretUnavailable.With("the sign-in listener failed (" + e.GetType().Name + ")");   // the completion must always end with a result, never a thrown task
+        }
         finally
         {
             listener.Close();
         }
+    }
+
+    // The callback's state is checked before anything else, and the page says "signed in" only after the code was traded for tokens.
+    private async Task<Result<TokenSet>> Answer(Callback callback, SignIn sign, CancellationToken cancellationToken)
+    {
+        if (!sign.Pkce.Verify(callback.Query["state"]))
+        {
+            await Reply(callback, 400, "Sindri: this sign-in did not match. Close this tab and run the command again.").ConfigureAwait(false);
+            return SindriErrors.ConnectionStateMismatch.With("the callback's state is not the one this sign-in made");
+        }
+
+        if (callback.Query["error"] is { Length: > 0 })
+        {
+            await Reply(callback, 200, "Sindri: consent was denied. You can close this tab.").ConfigureAwait(false);
+            return SindriErrors.ConnectionConsentDenied.With($"{sign.Preset.DisplayName} did not get consent");
+        }
+
+        if (callback.Query["code"] is not { Length: > 0 } code)
+        {
+            await Reply(callback, 400, "Sindri: the callback had no code.").ConfigureAwait(false);
+            return SindriErrors.ConnectionConsentDenied.With($"{sign.Preset.DisplayName} sent the callback without a code");
+        }
+
+        var exchanged = await _oauth.ExchangeCode(new CodeExchange(sign.Preset, sign.Client, code, sign.Redirect, sign.Pkce.Verifier, sign.ClientSecret), cancellationToken).ConfigureAwait(false);
+        await Reply(callback, exchanged.IsSuccess ? 200 : 502, exchanged.IsSuccess ? "Sindri: signed in. You can close this tab." : "Sindri: the sign-in did not finish. Go back to the terminal for the reason.").ConfigureAwait(false);
+        return exchanged;
     }
 
     // Takes requests until one hits the callback path; anything else (a favicon) gets a 404.
@@ -146,7 +184,9 @@ internal sealed class LoopbackSignIn(IOAuthClient oauth, IBrowserOpener browser,
         }
     }
 
-    private sealed record SignIn(ConnectionPreset Preset, string Client, string Redirect, PkceChallenge Pkce);
+    private sealed record SignInTarget(ConnectionPreset Preset, string Client, string? ClientSecret);
+
+    private sealed record SignIn(ConnectionPreset Preset, string Client, string Redirect, PkceChallenge Pkce, string? ClientSecret);
 
     private sealed record Callback(HttpListenerContext Context, System.Collections.Specialized.NameValueCollection Query);
 }

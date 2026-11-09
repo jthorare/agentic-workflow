@@ -105,12 +105,11 @@ public sealed class GoldenContractTests
         ["launch-picks"] = As<LaunchPicksView>,   // GET /launch/picks: the model picks of the runs (model-pick spec §6.1)
         ["launches-id"] = As<LaunchView>,   // GET /launches/{id}: the launch an Open started (Attach, the run line)
         ["profile"] = As<ProfileRead>,   // GET /profile: the approval's plain-words summary is the part the Setup profile step reads (api #782)
-        ["profile-approve"] = As<ProfileApproved>,   // POST /profile/approve's approved and preview answers (needs-you slice 3: the typed approve on a drifted-profile row); the refusals are ProblemDetails
         ["workflow-complete"] = As<ApplyCommandAccepted>,   // POST /workflow/instances/{id}/commands' accepted answer (the takeover; spec-shaped, the engine has no golden for it)
         ["sandbox-status"] = As<Ui.Api.Sandbox.SandboxStatusView>,   // GET /sandbox/status: Health and Settings (SB-6; spec-shaped until the server's golden is recorded)
         ["sandbox-check"] = As<Ui.Api.Sandbox.SandboxCheckView>,   // GET /sandbox/check: Check again and the resume list (SB-6, spec-shaped)
         ["sandbox-denials"] = As<Ui.Api.Sandbox.DenialsView>,   // GET /sandbox/denials?item=: the item sheet's Blocked list (SB-6, spec-shaped)
-        ["sandbox-allow"] = As<Ui.Api.Sandbox.AllowView>,   // POST /sandbox/allow's needs-approval answer; the refusals are ProblemDetails (SB-6, spec-shaped)
+        ["sandbox-allow"] = As<Ui.Api.Sandbox.AllowView>,   // POST /sandbox/allow's allowed answer (it applies on save); the refusals are ProblemDetails (SB-6, spec-shaped)
         ["todos"] = As<TodoListView>,   // GET /todos: the todo panel's list (todo spec Ph2)
         ["todos-add"] = As<TodoAcceptedView>,   // POST /todos' 200 (api Ph1a records it); the refusals are ProblemDetails
         ["todos-change"] = As<TodoAcceptedView>,   // POST /todos/{id}/change's 200, e.g. clear-due (api Ph1a)
@@ -118,6 +117,16 @@ public sealed class GoldenContractTests
         ["todos-reopen"] = As<TodoAcceptedView>,   // POST /todos/{id}/reopen's 200 (api Ph1a)
         ["todos-remove"] = As<TodoAcceptedView>,   // POST /todos/{id}/remove's 200 (api Ph1a)
         ["todos-restore"] = As<TodoAcceptedView>,   // POST /todos/{id}/restore's 200 (api Ph1a)
+        ["todos-note-check"] = As<TodoNoteCheckView>,   // POST /todos/note/check: the Settings card's Check note (todo Ph3b); a bad key is ProblemDetails
+        ["todos-note-set"] = As<TodoNoteChangedView>,   // POST /todos/note/set: Start syncing (changed, unchanged); the stale 409 is ProblemDetails
+        ["todos-note-stop"] = As<TodoNoteChangedView>,   // POST /todos/note/stop: Stop syncing (changed, unchanged)
+        ["todos-note"] = As<TodoNoteView>,   // GET /sindri/todos/note (note, hold); conflict.json is a todo, read as TodoView by _readByScenario
+    };
+
+    // A scenario of a slug that holds files of another shape than the rest of its folder (todos-note/conflict.json is the TodoItem GET /todos/{id} serves).
+    private static readonly Dictionary<(string Slug, string Scenario), Func<byte[], Result<object>>> _readByScenario = new()
+    {
+        [("todos-note", "conflict")] = AsShownTodo,   // { asOf, todo }: the app reads the todo inside (the panel takes it from the list, not from this route)
     };
 
     // Routes the app never calls yet: stop is Health's (U4), and the
@@ -125,6 +134,7 @@ public sealed class GoldenContractTests
     private static readonly HashSet<string> _notRead = new(StringComparer.Ordinal)
     {
         "stop",
+        "todos-id",   // the app never calls GET /sindri/todos/{id}; the CLI's `todo show` does
         "workflow-instances", "workflow-instance", "workflow-instance-fact", "workflow-status", "workflow-recipe", "workflow-recipes", "workflow-recipes-id-stats", "workflow-instances-start", "workflow-recipes-approve-all",   // v2 PR 4: the app has no Recipes, Workflows or run pages; the routes stay served until the backend PR removes them
         "workflow-challenges-app",   // q93: the app asks for no challenge any more; the route stays served until api removes it
         "setup-repos",   // POST /setup/repos (Add repo): the app's call and the job's progress are U3's (SO-U3)
@@ -141,6 +151,7 @@ public sealed class GoldenContractTests
         "sandbox-status", "sandbox-check", "sandbox-denials", "sandbox-allow",   // SB-6a serves them; the app reads them in SB-6b (Health, Settings, the park card and the item sheet)
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
+        "connections-id-signin",   // POST /connections/{name}/signin (#2349): the CLI's `connection signin` and the MCP tool; the app has no Connections page yet
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
 
@@ -168,8 +179,9 @@ public sealed class GoldenContractTests
                 continue;
             }
 
-            Assert.True(_read.TryGetValue(slug, out var read), $"{kind}/{slug}/{scenario}: a route the app doesn't place (read it or list it as not read)");
-            var value = read(bytes);
+            var placed = _readByScenario.TryGetValue((slug, scenario), out var read) || _read.TryGetValue(slug, out read);
+            Assert.True(placed, $"{kind}/{slug}/{scenario}: a route the app doesn't place (read it or list it as not read)");
+            var value = read!(bytes);
             Assert.True(value.IsSuccess, $"{kind}/{slug}/{scenario}: {(value.IsError ? value.Error.Message : string.Empty)}");
         }
     }
@@ -201,16 +213,16 @@ public sealed class GoldenContractTests
     [Fact]
     public void The_status_goldens_carry_every_field_the_health_page_reads()
     {
-        var approved = Read<StatusView>("status", "running-approved");
-        var unapproved = Read<StatusView>("status", "running-unapproved");
+        // The one running scenario keeps its pre-#2258 name 'running-unapproved'; with no approval its profile is just the live file.
+        var running = Read<StatusView>("status", "running-unapproved");
 
-        Assert.Equal((true, 4242, 1L, 1), (approved.Running, approved.Pid, approved.Epoch, approved.ApiVersion));
-        _ = Assert.NotNull(approved.LeaseExpiresAt);
-        Assert.Equal((false, false, approved.Profile.Approved), (approved.Profile.NeedsApproval, approved.Profile.ChangedSinceApproval, approved.Profile.Live));
-        Assert.EndsWith("profile.yaml", approved.Profile.Source, StringComparison.Ordinal);
-        Assert.Equal(("heartbeat", "5s"), (approved.Services[0].Name, approved.Services[0].Every));
-        Assert.Equal((null, true), (unapproved.Profile.Approved, unapproved.Profile.NeedsApproval));
-        Assert.Empty(unapproved.Services);
+        Assert.Equal((true, 4242, 1L, 1), (running.Running, running.Pid, running.Epoch, running.ApiVersion));
+        _ = Assert.NotNull(running.LeaseExpiresAt);
+        Assert.NotNull(running.Profile.Live);
+        Assert.Null(running.Profile.Problem);
+        Assert.EndsWith("profile.yaml", running.Profile.Source, StringComparison.Ordinal);
+        Assert.Equal(("heartbeat", "5s"), (running.Services[0].Name, running.Services[0].Every));
+        Assert.Equal("healthy", running.Health?.Word);
     }
 
     [Fact]
@@ -247,7 +259,7 @@ public sealed class GoldenContractTests
     [Fact]
     public void The_fake_handler_writes_the_goldens_status_ping_and_event_shapes()
     {
-        foreach (var scenario in (string[])["running-approved", "running-unapproved"])
+        foreach (var scenario in (string[])["running-unapproved"])
         {
             var golden = GoldenFiles.Api("status", scenario);
             Assert.True(JsonNode.DeepEquals(JsonNode.Parse(golden), JsonNode.Parse(FakeSindriHandler.Status(Read<StatusView>("status", scenario)))), scenario);
@@ -328,7 +340,6 @@ public sealed class GoldenContractTests
         Assert.Equal(("desk", "ready", "sindri views rebuild", false, false), (rebuild.Class, rebuild.Ui, rebuild.Cli, rebuild.Destructive, rebuild.ReadsViews));
         var stop = Assert.Single(catalog.Rows, r => r.Action == "StopProcess");
         Assert.Equal(("ready", true), (stop.Ui, stop.Destructive));
-        Assert.Equal("ready", Assert.Single(catalog.Rows, r => r.Action == "ApproveProfile").Ui);
     }
 
     [Fact]
@@ -387,6 +398,13 @@ public sealed class GoldenContractTests
         }
 
         return frames;
+    }
+
+    // GET /todos/{id}'s shape: { asOf, todo }; the todo is read as the app reads one from the list.
+    private static Result<object> AsShownTodo(byte[] body)
+    {
+        var todo = (JsonNode.Parse(body) as JsonObject)?["todo"];
+        return todo is null ? new Error("TEST-001", ErrorKind.Invalid, "no todo in the answer") : As<TodoView>(Encoding.UTF8.GetBytes(todo.ToJsonString()));
     }
 
     private static Result<object> As<T>(byte[] body)

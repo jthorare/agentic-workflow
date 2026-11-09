@@ -1,6 +1,24 @@
 {
   "rows": [
     {
+      "action": "AddConnection",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/connections",
+      "cli": "sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>] [--url <address>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "AddRepo",
       "class": "job",
       "allowedCallers": [
@@ -20,6 +38,25 @@
       "confirm": null
     },
     {
+      "action": "AddTodo",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos",
+      "cli": "sindri todo add <text> [--due <day>] [--link <ref>] [--client-id <id>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "AllowDenial",
       "class": "desk",
       "allowedCallers": [
@@ -31,260 +68,6 @@
       "method": "POST",
       "route": "/sindri/sandbox/allow",
       "cli": "sindri sandbox allow <launch> <target>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApplyCommand:answer-accept",
-      "class": "protected",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/commands",
-      "cli": "sindri workflow answer <address> --accept",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApplyCommand:answer-grant",
-      "class": "protected",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/commands",
-      "cli": "sindri workflow answer <address> --grant <rounds>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApplyCommand:answer-grant-tokens",
-      "class": "protected",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/commands",
-      "cli": "sindri workflow answer <address> --grant-tokens <tokens>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApplyCommand:answer-reject",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/commands",
-      "cli": "sindri workflow answer <address> --reject",
-      "ui": "ready",
-      "destructive": true,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApplyCommand:answer-resume",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/commands",
-      "cli": "sindri workflow answer <address> --resume",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApplyCommand:answer-text",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/commands",
-      "cli": "sindri workflow answer <address> --text <text>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApplyCommand:cancel",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/commands",
-      "cli": "sindri workflow cancel <address>",
-      "ui": "ready",
-      "destructive": true,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApplyCommand:command",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/commands",
-      "cli": "sindri workflow command <address> <verb>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApplyCommand:handback",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/commands",
-      "cli": "sindri workflow handback <address>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApplyCommand:rewind",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/commands",
-      "cli": "sindri workflow rewind <address> --to <state>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApplyCommand:takeover",
-      "class": "pause",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session",
-        "service"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/commands",
-      "cli": "sindri workflow takeover <address>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApproveAllRecipes",
-      "class": "job",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session",
-        "service"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/recipes/approve-all",
-      "cli": "sindri recipe approve-all",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApproveProfile",
-      "class": "protected",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/profile/approve",
-      "cli": "sindri profile approve [<hash>]",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApproveRecipe",
-      "class": "protected",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/recipes/{id}@{hash}/approve",
-      "cli": "sindri recipe approve <recipe>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -367,6 +150,24 @@
       "confirm": null
     },
     {
+      "action": "CancelWorkflowRun",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow-runs/{run}/cancel",
+      "cli": "sindri wf cancel <run>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ChangeLinearIssue",
       "class": "desk",
       "allowedCallers": [
@@ -403,6 +204,25 @@
       "confirm": null
     },
     {
+      "action": "ChangeTodo",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/{todoId}/change",
+      "cli": "sindri todo edit <id> [--text <text>] [--due <day>] [--no-due] [--link <ref>] [--no-links] [--version <n>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "CheckContextMapStructure",
       "class": "desk",
       "allowedCallers": [
@@ -417,6 +237,25 @@
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "CheckTodoNote",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/note/check",
+      "cli": "sindri todo note set <vault> <note> [--json]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
       "shortcut": null,
       "confirm": null
     },
@@ -559,6 +398,24 @@
       "confirm": null
     },
     {
+      "action": "CreateMemory",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/memories",
+      "cli": "sindri memory create <name> [--description <text>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "Decide",
       "class": "decision",
       "allowedCallers": [
@@ -669,6 +526,24 @@
       "confirm": null
     },
     {
+      "action": "ForgetMemoryFact",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "DELETE",
+      "route": "/sindri/memories/{name}/facts",
+      "cli": "sindri memory forget <name> [--fact <id>] [--tag <tag>] [--expired]",
+      "ui": "ready",
+      "destructive": true,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "HideProject",
       "class": "desk",
       "allowedCallers": [
@@ -729,7 +604,7 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow/challenges/app",
-      "cli": "sindri recipe approve <recipe>",
+      "cli": "sindri profile approve <hash>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -747,25 +622,7 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow/challenges",
-      "cli": "sindri recipe approve <recipe>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "IssueNonce",
-      "class": "issue",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/nonce",
-      "cli": "sindri workflow command <address> <verb>",
+      "cli": "sindri profile approve <hash>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -815,6 +672,82 @@
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MarkTodo:done",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/{todoId}/done",
+      "cli": "sindri todo done <id> [--version <n>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MarkTodo:remove",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/{todoId}/remove",
+      "cli": "sindri todo remove <id> [--version <n>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MarkTodo:reopen",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/{todoId}/reopen",
+      "cli": "sindri todo reopen <id> [--version <n>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "MarkTodo:restore",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/{todoId}/restore",
+      "cli": "sindri todo restore <id> [--version <n>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
       "shortcut": null,
       "confirm": null
     },
@@ -1094,24 +1027,6 @@
       "confirm": null
     },
     {
-      "action": "RegisterRecipe",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/recipes",
-      "cli": "sindri recipe register <file>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
       "action": "RelinkPinAliases",
       "class": "job",
       "allowedCallers": [
@@ -1131,6 +1046,24 @@
       "confirm": null
     },
     {
+      "action": "RemoveConnection",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "DELETE",
+      "route": "/sindri/connections/{name}",
+      "cli": "sindri connection remove <name>",
+      "ui": "ready",
+      "destructive": true,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "RemoveLinearWriteKey",
       "class": "desk",
       "allowedCallers": [
@@ -1144,24 +1077,6 @@
       "cli": "sindri profile set <key> <value>",
       "ui": "ready",
       "destructive": true,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "RerunInstance",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/instances/{instanceId}/rerun",
-      "cli": "sindri workflow start <recipe> --item <itemId> --attempt next",
-      "ui": "ready",
-      "destructive": false,
       "readsViews": false,
       "shortcut": null,
       "confirm": null
@@ -1419,24 +1334,6 @@
       "confirm": null
     },
     {
-      "action": "RevokeRecipe",
-      "class": "protected",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/workflow/recipes/{id}@{hash}/revoke",
-      "cli": "sindri recipe revoke <recipe>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
       "action": "RunContextBacktest",
       "class": "job",
       "allowedCallers": [
@@ -1482,6 +1379,24 @@
       "method": "POST",
       "route": "/sindri/services/{name}/run",
       "cli": "sindri services run <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "RunWorkflow",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflows/{slug}/runs",
+      "cli": "sindri wf run <slug> [--payload <json>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -1631,23 +1546,26 @@
       "confirm": null
     },
     {
-      "action": "ShowLineHoldout",
-      "class": "protected",
+      "action": "SetTodoNote",
+      "class": "request",
       "allowedCallers": [
-        "human+terminal"
+        "human+terminal",
+        "human",
+        "session",
+        "service"
       ],
-      "terminal": true,
+      "terminal": false,
       "method": "POST",
-      "route": "/sindri/line/holdout/show",
-      "cli": "sindri line holdout show <line> <phase>",
-      "ui": "cli-only:typed-confirmation",
+      "route": "/sindri/todos/note/set",
+      "cli": "sindri todo note set <vault> <note> [--json]",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
       "confirm": null
     },
     {
-      "action": "StartInstance",
+      "action": "SignInConnection",
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
@@ -1656,29 +1574,11 @@
       ],
       "terminal": false,
       "method": "POST",
-      "route": "/sindri/workflow/instances",
-      "cli": "sindri workflow start <recipe> --item <itemId>",
+      "route": "/sindri/connections/{name}/signin",
+      "cli": "sindri connection signin <name>",
       "ui": "ready",
       "destructive": false,
-      "readsViews": true,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "StartSkillRun",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/skills/{id}/runs",
-      "cli": "sindri skill run <block> [--input <input>]",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": true,
+      "readsViews": false,
       "shortcut": null,
       "confirm": null
     },
@@ -1697,6 +1597,25 @@
       "cli": "sindri stop",
       "ui": "ready",
       "destructive": true,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "StopTodoNote",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/note/stop",
+      "cli": "sindri todo note stop [--json]",
+      "ui": "ready",
+      "destructive": false,
       "readsViews": false,
       "shortcut": null,
       "confirm": null
@@ -1740,6 +1659,24 @@
       "confirm": null
     },
     {
+      "action": "TestConnection",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/connections/{name}/test",
+      "cli": "sindri connection test <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ValidateProfile",
       "class": "local",
       "allowedCallers": [],
@@ -1748,6 +1685,24 @@
       "route": null,
       "cli": "sindri profile validate",
       "ui": "cli-only:local",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "WriteMemoryFact",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/memories/{name}/facts",
+      "cli": "sindri memory write <name> <text> [--tag <tag>] [--expires-at <time>]",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,

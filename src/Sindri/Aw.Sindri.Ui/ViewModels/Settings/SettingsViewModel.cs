@@ -3,6 +3,7 @@ using Aw.Sindri.Ui.ViewModels.Linear;
 using Aw.Sindri.Ui.ViewModels.Reviews;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
 using Aw.Sindri.Ui.ViewModels.Setup;
+using Aw.Sindri.Ui.ViewModels.Todo;
 
 namespace Aw.Sindri.Ui.ViewModels.Settings;
 
@@ -69,6 +70,15 @@ internal sealed class SettingsViewModel : ObservableObject, IDisposable
 
     /// <summary>True when the page has the Linear card.</summary>
     public bool HasLinearConnection => LinearConnection is not null;
+
+    /// <summary>The Connections → Obsidian todo note card, below the Linear card; null when this host has none.</summary>
+    public TodoNoteCardViewModel? TodoNoteCard { get; init; }
+
+    /// <summary>True when the page has the Obsidian todo note card.</summary>
+    public bool HasTodoNoteCard => TodoNoteCard is not null;
+
+    /// <summary>True when the Connections group has a card to draw.</summary>
+    public bool HasConnections => HasLinearConnection || HasTodoNoteCard;
 
     /// <summary>True when the page has the Library card.</summary>
     public bool HasLibrary => Library is not null;

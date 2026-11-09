@@ -8,7 +8,6 @@ using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Skills;
-using Aw.Sindri.Core.Workflow.Recipes;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Skills;
 
@@ -188,7 +187,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
     private static ValueTask<Result<PolicyFiles>> Done(PolicyFiles files) => ValueTask.FromResult(Results.Success(files));
 
     private static TimeSpan? LongMax(SindriProfile? loaded) =>
-        loaded is not null && RecipeDuration.TryFrom(LineProfile.LongMax(loaded), out var duration) ? duration.Span : null;
+        loaded is not null && RecipeDuration.TryFrom(loaded.Workflow?.Steps?.LongMax ?? "2h", out var duration) ? duration.Span : null;
 
     private static RepoName RepoNameOf(SindriProfile? loaded, string repoPath) =>
         RepoName.From(loaded?.Repos?.FirstOrDefault(r => string.Equals(r.Path.TrimEnd('/'), repoPath.TrimEnd('/'), StringComparison.Ordinal))?.Name ?? Path.GetFileName(repoPath.TrimEnd('/')));

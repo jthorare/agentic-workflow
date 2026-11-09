@@ -89,4 +89,26 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("state.name", Mark: false), new("assignee.name", Mark: false), new("project.name", Mark: false), new("cycle.name", Mark: false), new("labels[].name", Mark: false),
         new("comments[].author.name"), new("comments[].body"),
     ]);
+
+    /// <summary>memory_search: each recalled fact's text and tags and where it came from (an agent wrote them, perhaps from a connection), and the note.</summary>
+    internal static FencePlan MemoryFacts { get; } = new("sindri:memory",
+    [
+        new("facts[].text"), new("facts[].tags[]"), new("facts[].provenance.workflow"), new("facts[].provenance.run"),
+        new("facts[].provenance.item"), new("facts[].provenance.session"),
+    ]);
+
+    /// <summary>memory_list: each store's description (whoever made it wrote it).</summary>
+    internal static FencePlan MemoryStores { get; } = new("sindri:memory", [new("memories[].description")]);
+
+    /// <summary>memory_create: the new store's description.</summary>
+    internal static FencePlan MemoryStore { get; } = new("sindri:memory", [new("store.description")]);
+
+    /// <summary>GET /sindri/todos for a fenced caller: each todo's text (by its last writer) and the two texts of an open conflict.</summary>
+    internal static FencePlan Todos { get; } = new("sindri:todo", [new("todos[].text", "lastBy"), new("todos[].conflict.sindri.text"), new("todos[].conflict.obsidian.text")]);
+
+    /// <summary>GET /sindri/todos/{id} for a fenced caller: the todo's text and the two texts of an open conflict.</summary>
+    internal static FencePlan OneTodo { get; } = new("sindri:todo", [new("todo.text", "lastBy"), new("todo.conflict.sindri.text"), new("todo.conflict.obsidian.text")]);
+
+    /// <summary>sindri_todo's answer: the accepted write holds ids, numbers and a date, so this fences the one field an echoed todo would carry (todo spec §4.4).</summary>
+    internal static FencePlan TodoWrite { get; } = new("sindri:todo", [new("text", "by")]);
 }

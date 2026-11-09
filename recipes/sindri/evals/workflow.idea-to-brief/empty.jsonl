@@ -1,5 +1,0 @@
-{"start":{"inputs":{"fact:idea":{"kind":"idea","repo":"acme/web","text":"Let invitations expire."}}}}
-{"trigger":{"kind":"step.completed","outcome":"seeded","outputs":{"fact:answers":[],"fact:answerLog":[]}},"expect":{"state":"ask"}}
-{"trigger":{"kind":"step.completed","outcome":"ready","outputs":{"fact:interviewClosed":true}},"expect":{"state":"record"}}
-{"trigger":{"kind":"step.completed","outcome":"recorded","outputs":{"fact:answerLog":[{"id":"A1","question":"Q1"}]}},"expect":{"state":"write"}}
-{"trigger":{"kind":"step.completed","outcome":"empty"},"expect":{"state":"dropped","outcome":"unresolved"}}

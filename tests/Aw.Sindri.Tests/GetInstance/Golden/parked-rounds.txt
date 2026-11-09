@@ -1,5 +1,0 @@
-T-3/step/1  workflow.step@4ca37bf46333  v4  parked: rounds  since 11:30 (30m)
-  next      Parked (rounds): revisions used 3 of 3 rounds.
-            Grant more rounds at a terminal, or cancel.
-  answer    sindri workflow answer T-3/step/1 --grant 1     (at a terminal)
-  commands  answer, takeover, cancel

@@ -5,7 +5,7 @@ using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.ViewModels.Reviews;
 
-/// <summary>Settings' "Add a folder" form (review page spec §6.3): a name, a folder to type or Browse for, the patterns not to read, and Save and approve. A 400 SND-LIB-001 says its detail under the field it names.</summary>
+/// <summary>Settings' "Add a folder" form (review page spec §6.3): a name, a folder to type or Browse for, the patterns not to read, and Save. A 400 SND-LIB-001 says its detail under the field it names.</summary>
 internal sealed class LibraryRootFormViewModel : ObservableObject
 {
     private const string LibraryRefusal = "SND-LIB-001";
@@ -156,7 +156,7 @@ internal sealed class LibraryRootFormViewModel : ObservableObject
         }
     }
 
-    /// <summary>True when Save and approve can be pressed: a name and a folder, and no save in flight.</summary>
+    /// <summary>True when Save can be pressed: a name and a folder, and no save in flight.</summary>
     public bool CanSave => !IsSending && Name.Trim().Length > 0 && Path.Trim().Length > 0;
 
     /// <summary>True when Cancel can be pressed: not while the save is on its way, so its answer can't land on a closed or new form.</summary>

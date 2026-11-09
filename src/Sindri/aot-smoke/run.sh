@@ -7,12 +7,11 @@
 # framework-dependent and carries the Temporal SDK with its native bridge, then drives the published apphost 'sindri'
 # (DOTNET_ROOT set from the 'dotnet' on PATH when unset) through the S1 and API P1 journeys against a temp home (serve
 # brings up the pinned Temporal dev server, so the temporal CLI must be installed: scripts/binaries-lock.sh fetch
-# temporal): doctor with nothing running, start headless with an unapproved profile, a second serve refused by the lease,
-# the approve preview, a session's approve and the human's approve (no typed challenge, owner decision q93), status (text and --json's apiVersion), /sindri/mcp's initialize and tools/list as a stateless MCP client, then the 12 tools' calls (sindri_queue, sindri_request filed as session:mcp, sindri_item refused, sindri_decide absent),
+# temporal): doctor with nothing running, start headless with a live profile, a second serve refused by the lease,
+# the removed `profile approve` (a human's and a session's both print the removal line, exit 0), status (text and --json's apiVersion), /sindri/mcp's initialize and tools/list as a stateless MCP client, then the 12 tools' calls (sindri_queue, sindri_request filed as session:mcp, sindri_item refused, sindri_decide absent),
 # the views rebuild requested by a session and by the human, status's views and health lines, the item verbs (API P3: a human's item add, the queue and the item list, a session's item add, the human's item close, the done list and the queue again), the request verbs (API P4: a session's request, the needs-you list, a session's decide, the list again and the accepted requests), the ledger read (API P5: the human's lists command.handled, a session's doesn't, one item's events, and GET /events/catalog), QUERY /context/subgraph with a JSON body on the published host (POST is 405), the service and job verbs (API P6: the services list as JSON, a manual run of heartbeat followed to its end, a session's run, jobs show and the jobs list, pause and resume with a session's pause, and the services list after each), a session's stop, status and doctor again (doctor with HOME on an empty scratch dir, so its
 # context:mcp-scope row never reads the real provider files);
-# then recipe validate on the shipped recipes (their hashes; workflow.item reads its child beside it) and on an invalid
-# fixture (RCP-REACH-001, exit 1). The normalized output (pids, ports, hashes, times, the host name and the temp path
+# The normalized output (pids, ports, hashes, times, the host name and the temp path
 # masked) must equal expected.txt.
 # The apphost, not 'dotnet sindri.dll': start re-launches its own executable as 'serve' (Environment.ProcessPath), which
 # under 'dotnet sindri.dll' is the dotnet muxer.
@@ -158,7 +157,7 @@ export AW_SINDRI_HOME="$work/home" AW_SINDRI_PORT=0 AW_SINDRI_APP_NO_MCP=1   # n
 export AW_SINDRI_SKILLS_DIR="$work/no-skills"   # a folder that does not exist: the doctor's skills row says so the same way wherever the smoke runs, not by the checkout or toolkit it happens to find
 mkdir -p "$AW_SINDRI_HOME/profile"
 : >"$AW_SINDRI_HOME/.prover-scratch"   # the smoke runs as the prover in a home it created (setup-once spec §4 item 6): the marker lets it confirm, as sindri-prove.sh does
-mkdir -p "$work/repo"   # the repo 'smoke' the mcp() helper names in X-Sindri-Repo (sindri_request files against an approved profile's repo)
+mkdir -p "$work/repo"   # the repo 'smoke' the mcp() helper names in X-Sindri-Repo (sindri_request files against the profile's repo)
 printf 'schemaVersion: 1\nuser: smoke\nrepos:\n  - { name: smoke, path: %s }\nservices:\n  heartbeat: { every: 5s }\n' "$work/repo" >"$AW_SINDRI_HOME/profile/profile.yaml"
 
 run() { # the human, no terminal
@@ -214,11 +213,8 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   remember_servers
   run serve
   remember_servers
-  human profile approve </dev/null
-  hash="$({ bounded "$bin" profile validate --json </dev/null || true; } | sed -E 's/.*"hash":"([0-9a-f]{64})".*/\1/')"
-  run profile approve "$hash"
-  printf '%s\n' "approve profile ${hash:0:6}" | session_tty profile approve "$hash"
-  printf '%s\n' "approve profile ${hash:0:6}" | human profile approve "$hash"
+  human profile approve </dev/null   # removed: edits apply on save (exit 0)
+  session_tty profile approve </dev/null
   settle
   run status
   echo "## sindri status --json | jq '{running, apiVersion}'"
@@ -284,11 +280,6 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   session stop
   run status
   doctor
-  run recipe validate "$root/recipes/sindri/workflow.step.yaml"
-  run recipe validate "$root/recipes/sindri/workflow.item.yaml"
-  run recipe validate "$root/recipes/sindri/workflow.review-loop.yaml"
-  run recipe validate "$root/recipes/sindri/workflow.evidence.yaml"
-  run recipe validate "$root/tests/Aw.Sindri.Testing/Workflow/Recipes/invalid/RCP-REACH-001.yaml"
 } >"$out/actual.raw"
 
 bash "$here/normalize.sh" "$work" "$root" <"$out/actual.raw" >"$out/actual.txt"

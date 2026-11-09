@@ -4,14 +4,10 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Workflow.Engine;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
-using Aw.Sindri.Core.Workflow.Views;
 using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Host.Commands;
-using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Commands;
-using Aw.Sindri.Tests.Layout;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 
@@ -58,11 +54,9 @@ public sealed class CompleteWaitsOutRestartCheckTests : IDisposable
 
     private static RoutedApi Api()
     {
-        var instance = InstanceSummaries.Of(DevInstances.All[0].View, new InstanceSummaryContext(DevInstances.AsOf));
-        var answered = new CompleteStepResponse(new CommandResult(DevInstances.All[0].View, "-> checks"), CommandNonce.From(new string('a', 32)), AlreadyApplied: false);
+        var answered = new CompleteStepResponse("-> checks", CommandNonce.From(new string('a', 32)), AlreadyApplied: false);
         return new RoutedApi()
-            .On("/sindri/workflow/instances", HttpStatusCode.OK, new InstanceList([instance], new ListCounts(1, 0, 0, 0, 0), Empty: null, DevInstances.AsOf))
-            .OnPost($"/sindri/workflow/instances/{instance.Id.Value}/runs/{InstanceRoute.Segment("1.1")}/complete", HttpStatusCode.OK, answered);
+            .OnPost($"/sindri/workflow/instances/{Uri.EscapeDataString("ITM-1/step/1")}/runs/{Uri.EscapeDataString("1.1")}/complete", HttpStatusCode.OK, answered);
     }
 
     // The start rule of a session: it never starts the control plane, it only finds it down until the fake time says it is back.
@@ -82,7 +76,7 @@ public sealed class CompleteWaitsOutRestartCheckTests : IDisposable
         var desk = new RecipeDesk(client, TextReader.Null, Ensure,
             launched ? static name => name == "AW_SINDRI_LAUNCH_SECRET" ? "a-secret" : null : null);
         await using var services = new ServiceCollection().AddSingleton<TimeProvider>(_clock).BuildServiceProvider();
-        var run = Host.Commands.CompleteCommand.Run(Args(), desk, services, new Output(_out, _errorShared, SliceHarness.Json), Token);
+        var run = CompleteCommand.Run(Args(), desk, services, new Output(_out, _errorShared, SliceHarness.Json), Token);
         await Drive(run, started);
         return await run.WaitAsync(_realBound, TimeProvider.System, Token);   // why: a real bound; the fake clock stops moving once the drive ends
     }

@@ -1,7 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Testing;
-using Aw.Sindri.Ui.Tests.Context.Whole;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.Tests.Context;
@@ -18,7 +17,7 @@ public sealed class PageSheetTests
         Id: "schedule-week", Name: "Schedule week", Repo: "web", Surface: WeekKey, Owner: false,
         Actions: [new PageActionDraft(Id: null, Name: "Submit schedule", Action: "action:submit", Concepts: ["self-scheduling"]), new PageActionDraft(Id: null, Name: "Copy last week", Action: "action:copy", Concepts: [])]);
 
-    private static async Task<(PageSheetViewModel Sheet, FakePageWrites Writes)> Opened(PageDraft? page = null, ProfileWaiting? profile = null, IReadOnlyList<string>? others = null)
+    private static async Task<(PageSheetViewModel Sheet, FakePageWrites Writes)> Opened(PageDraft? page = null, ProfileHashes? profile = null, IReadOnlyList<string>? others = null)
     {
         var writes = new FakePageWrites();
         if (profile is not null)
@@ -45,7 +44,7 @@ public sealed class PageSheetTests
         Expect.Equal("Relates to Self scheduling", sheet.Actions[0].Ticks[0].AccessibleName);
         Expect.Equal("Action 1 of 2, Submit schedule, relates to 1 concept", sheet.Actions[0].RowName);
         Expect.Equal("From the map: week", sheet.FromMap);
-        Expect.Equal("Save and approve", sheet.SaveText);
+        Expect.Equal("Save", sheet.SaveText);
         Expect.True(!sheet.HasChanges, "what the map prefilled is no change to discard");
     }
 
@@ -64,7 +63,6 @@ public sealed class PageSheetTests
         Expect.Sequence(["self-scheduling", "approval-workflow"], call.Save.Set[0].Actions[0].Concepts);
         Expect.Sequence([], call.Save.Set[0].Actions[1].Concepts);
         Expect.Equal("hash-1", call.IfHash);
-        Expect.True(call.Approve, "only this page waits, so the app approves");
         Expect.True(closed, "a saved page closes the sheet");
         Expect.Equal("schedule-week", sheet.SavedId);
     }
@@ -97,7 +95,7 @@ public sealed class PageSheetTests
     [Fact]
     public async Task New_page_sends_no_id_and_never_overwrites()
     {
-        var writes = new FakePageWrites { Profile = new ProfileWaiting("h", ["index.pages.time-off"]) };
+        var writes = new FakePageWrites { Profile = new ProfileHashes("h") };
         var sheet = new PageSheetViewModel(writes, [], [], openConcept: null);
         await sheet.OpenNew(TestContext.Current.CancellationToken);
         sheet.Name = "Time off";
@@ -106,25 +104,6 @@ public sealed class PageSheetTests
 
         var call = Assert.Single(writes.Saves);
         Expect.True(call.Save.Set[0].Id is null, "the draft carries no id, so no existing page is replaced");
-        Expect.Sequence(["index.pages.time-off"], call.Save.Before);
-        Expect.True(!call.Approve, "another page already waits, so a new page is only saved");
-    }
-
-    [Fact]
-    public async Task The_button_reads_Save_when_another_change_waits()
-    {
-        var (mine, _) = await Opened(profile: new ProfileWaiting("h", ["index.pages.schedule-week"]));
-        var (other, otherWrites) = await Opened(profile: new ProfileWaiting("h", ["index.pages.schedule-week", "repos.web.index.pages.other"]));
-        var unreadable = new FakePageWrites { Profile = null };
-        unreadable.Add(WeekKey, Week());
-        var blind = new PageSheetViewModel(unreadable, [], [], openConcept: null);
-        await blind.OpenPage(WeekKey, TestContext.Current.CancellationToken);
-
-        Expect.Equal("Save and approve", mine.SaveText);
-        Expect.Equal("Save", other.SaveText);
-        Expect.Equal("Save", blind.SaveText);
-        await other.Save(TestContext.Current.CancellationToken);
-        Expect.True(!otherWrites.Saves[0].Approve, "a write beside other waiting changes is not approved");
     }
 
     [Fact]
@@ -134,7 +113,7 @@ public sealed class PageSheetTests
         sheet.Name = "Week schedule";
         sheet.Actions[1].Name = "Copy";
         writes.Answer(new PageSaved(PageSavedState.Clash, "SND-PROFILE-003"));
-        writes.Profile = new ProfileWaiting("hash-2", []);
+        writes.Profile = new ProfileHashes("hash-2");
         var closed = false;
         sheet.Closed += (_, _) => closed = true;
 
@@ -152,7 +131,7 @@ public sealed class PageSheetTests
     [Fact]
     public async Task A_hand_edit_before_the_sheet_opened_saves_on_the_file_hash()
     {
-        var (sheet, writes) = await Opened(profile: new ProfileWaiting("live-old", [], FileHash: "file-new"));
+        var (sheet, writes) = await Opened(profile: new ProfileHashes("live-old", FileHash: "file-new"));
         sheet.Name = "Week schedule";
 
         await sheet.Save(TestContext.Current.CancellationToken);
@@ -163,9 +142,9 @@ public sealed class PageSheetTests
     [Fact]
     public async Task A_hand_edit_after_the_sheet_opened_sends_the_hash_read_at_open()
     {
-        var (sheet, writes) = await Opened(profile: new ProfileWaiting("live-old", [], FileHash: "file-new"));
+        var (sheet, writes) = await Opened(profile: new ProfileHashes("live-old", FileHash: "file-new"));
         sheet.Name = "Week schedule";
-        writes.Profile = new ProfileWaiting("live-old", [], FileHash: "file-newer");
+        writes.Profile = new ProfileHashes("live-old", FileHash: "file-newer");
 
         await sheet.Save(TestContext.Current.CancellationToken);
 
@@ -252,20 +231,6 @@ public sealed class PageSheetTests
     }
 
     [Fact]
-    public async Task A_failed_approve_after_the_write_landed_closes_as_waiting()
-    {
-        var (sheet, writes) = await Opened();
-        writes.Answer(new PageSaved(PageSavedState.Waiting, "SND-API-001", "The control plane is restarting."));
-        var closed = false;
-        sheet.Closed += (_, _) => closed = true;
-
-        await sheet.Save(TestContext.Current.CancellationToken);
-
-        Expect.True(closed, "the write landed: the sheet closes and the row waits for approval");
-        Expect.Equal(string.Empty, sheet.Note);
-    }
-
-    [Fact]
     public async Task A_refused_concept_shows_under_its_action()
     {
         var (sheet, writes) = await Opened();
@@ -313,7 +278,6 @@ public sealed class PageSheetTests
         var call = Assert.Single(writes.Saves);
         Expect.Equal(0, call.Save.Set.Count);
         Expect.Sequence(["schedule-week"], call.Save.Remove);
-        Expect.True(call.Approve, "the approve rule holds for a removal too");
 
         var (suggested, _) = await Opened();
         Expect.True(!suggested.ShowRemovePage, "a suggested page has nothing to remove");
@@ -377,19 +341,4 @@ public sealed class PageSheetTests
         Expect.Equal(1, writes.Saves.Count);
     }
 
-    [Fact]
-    public void A_saved_row_wears_Waiting_for_approval_once_the_profile_says_it_waits()
-    {
-        var writes = new FakePageWrites { Profile = new ProfileWaiting("h", ["index.pages.schedule-week"]) };
-        var section = new PagesSectionViewModel { Writes = writes };
-        section.Remember(WeekKey, "schedule-week");
-
-        section.Show(PagesSectionTests.Scheduling());
-
-        var week = section.Rows.Single(r => r.Key == WeekKey);
-        Expect.Sequence(["Suggested", "Code found", "Waiting for approval"], week.Marks);
-        Expect.True(week.CanWrite && !section.Rows[0].Marks.Contains("Waiting for approval", StringComparer.Ordinal), "only the saved row waits");
-        Expect.Equal("Name this page", week.ButtonText);
-        Expect.Equal("Edit page", section.Rows[0].ButtonText);
-    }
 }

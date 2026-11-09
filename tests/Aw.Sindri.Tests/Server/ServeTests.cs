@@ -64,27 +64,6 @@ public sealed class ServeTests : IDisposable
         await app.StopAsync(ct);
     }
 
-    [Theory(Timeout = Deadline), Trait("Lane", "integration")]
-    [InlineData("""{"hash":"nope"}""")]
-    [InlineData("""{"hash":""")]
-    public async Task A_bad_approve_body_is_a_400_problem_with_SND_CLI_003_and_no_stack_trace(string json)
-    {
-        var ct = TestContext.Current.CancellationToken;
-        await using var app = LoopbackBinding.Build([], n => n switch { "AW_SINDRI_HOME" => _home.Path, _ => null }, TimeProvider.System, NoTemporal.Use);
-        _ = Pipeline.Configure(app);
-        await app.StartAsync(Token);
-        using var http = new HttpClient { BaseAddress = new Uri(app.Urls.First()), Timeout = TimeSpan.FromSeconds(10) };
-
-        using var body = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-        var answer = await http.PostAsync(new Uri("/sindri/profile/approve", UriKind.Relative), body, Token);
-        var text = await answer.Content.ReadAsStringAsync(Token);
-
-        Assert.Equal(HttpStatusCode.BadRequest, answer.StatusCode);
-        Assert.Equal("SND-CLI-003", System.Text.Json.JsonDocument.Parse(text).RootElement.GetProperty("title").GetString());
-        Assert.DoesNotContain("   at ", text, StringComparison.Ordinal);
-        await app.StopAsync(ct);
-    }
-
     private static async Task<string> FirstEventLines(HttpClient http)
     {
         using var cut = CancellationTokenSource.CreateLinkedTokenSource(Token);
@@ -150,33 +129,4 @@ public sealed class ServeTests : IDisposable
         Assert.False(File.Exists(Path.Combine(_home.Path, "ledger.db")));
     }
 
-    [Fact(Timeout = Deadline), Trait("Lane", "integration")]
-    public async Task Approving_a_stale_hash_through_the_api_is_409_with_SND_PROFILE_003()
-    {
-        var ct = TestContext.Current.CancellationToken;
-        _ = Directory.CreateDirectory(Path.Combine(_home.Path, "profile"));
-        await File.WriteAllTextAsync(Path.Combine(_home.Path, "profile", "profile.yaml"), "schemaVersion: 1\nuser: thor\n", ct);
-        await using var app = LoopbackBinding.Build([], n => n switch { "AW_SINDRI_HOME" => _home.Path, _ => null }, TimeProvider.System, NoTemporal.Use);
-        _ = Pipeline.Configure(app);
-        await using (var scope = app.Services.CreateAsyncScope())
-        {
-            Assert.True((await scope.ServiceProvider.GetRequiredService<IService<StartProcessRequest, StartProcessResponse>>().Handle(new StartProcessRequest(), ct)).IsSuccess);
-        }
-
-        app.Services.GetRequiredService<HeldHumanToken>().Hold(new HumanToken("token-of-this-start"));
-        await app.StartAsync(ct);
-        using var http = new HttpClient { BaseAddress = new Uri(app.Urls.First()), Timeout = TimeSpan.FromSeconds(10) };
-        var stale = SliceHarness.Profile("9s").Hash;
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/sindri/profile/approve")
-        {
-            Content = new StringContent($$"""{"hash":"{{stale.Value}}"}""", System.Text.Encoding.UTF8, "application/json"),
-        }.AsHuman(app);
-
-        using var answer = await http.SendAsync(request, ct);
-        var text = await answer.Content.ReadAsStringAsync(ct);
-
-        Assert.Equal(HttpStatusCode.Conflict, answer.StatusCode);
-        Assert.Equal("SND-PROFILE-003", System.Text.Json.JsonDocument.Parse(text).RootElement.GetProperty("title").GetString());
-        await app.StopAsync(ct);
-    }
 }

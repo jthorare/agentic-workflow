@@ -25,6 +25,18 @@
       "description": "Starts a code-index update for each repo whose main branch moved."
     },
     {
+      "name": "connection-refresh",
+      "every": "5m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Refreshes the tokens of connections that expire within 10 minutes."
+    },
+    {
       "name": "context-concept-scan",
       "every": "1m",
       "paused": false,
@@ -122,8 +134,8 @@
       "description": "Pulls new records from each source into the index."
     },
     {
-      "name": "pr-watch",
-      "every": "5s",
+      "name": "memory-expire",
+      "every": "1h",
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
@@ -131,19 +143,7 @@
       "actions": [
         "run"
       ],
-      "description": "Watches the pull requests that wait on the forge."
-    },
-    {
-      "name": "router-stub",
-      "every": "5s",
-      "paused": false,
-      "lastRun": null,
-      "nextSlot": null,
-      "job": null,
-      "actions": [
-        "run"
-      ],
-      "description": "Routes each started item to its workflow."
+      "description": "Deletes memory facts whose expiry has passed."
     },
     {
       "name": "setup",
@@ -158,8 +158,8 @@
       "description": "Keeps the setup checklist in step with the profile."
     },
     {
-      "name": "workflow-events",
-      "every": "5s",
+      "name": "workflow-schedule",
+      "every": "1m",
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
@@ -167,13 +167,13 @@
       "actions": [
         "run"
       ],
-      "description": "Passes ledger events to the running workflows."
+      "description": "Starts a run of each active workflow whose schedule has a tick to fire, once for the latest missed tick."
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 5,
-    "ledgerHead": 5,
+    "cursor": 1,
+    "ledgerHead": 1,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

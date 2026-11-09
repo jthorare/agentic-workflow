@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-TODO-409",
+  "status": 409,
+  "detail": "the profile changed since you read it (fix: reload the settings and try again)",
+  "traceId": "<trace>"
+}

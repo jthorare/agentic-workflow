@@ -30,6 +30,9 @@ public static class TriggerNames
     /// <summary>'workflow cancel', the tracker, or a cancelled parent.</summary>
     public const string Cancel = "cancel";
 
+    /// <summary>The note the retire pass writes for a recipe-era instance (#2258): it ends the instance and cancels its item.</summary>
+    public const string Retire = "retire";
+
     /// <summary>The 'rewind' trigger: re-enter an earlier state, keeping every fact.</summary>
     public const string Rewind = "rewind";
 

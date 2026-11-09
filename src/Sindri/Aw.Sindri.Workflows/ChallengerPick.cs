@@ -13,7 +13,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// </summary>
 /// <param name="catalog">The agent catalog.</param>
 /// <param name="launches">The launches view, for the drafter's agent and model.</param>
-/// <param name="approved">The approved profile, for the argv hashes approved for Steps.</param>
+/// <param name="approved">The profile, for the argv hashes approved for Steps.</param>
 internal sealed class ChallengerPick(IAgentCatalog catalog, ILaunchViews launches, IApprovedProfile approved)
 {
     /// <summary>The agent the contrast Step runs on, and the drafter it differs from.</summary>
@@ -39,7 +39,7 @@ internal sealed class ChallengerPick(IAgentCatalog catalog, ILaunchViews launche
         var agent = rows.Value.FirstOrDefault(r => r.Id == ask.Launch)?.Target ?? Choose(ask.Default, drafter?.Target, usable.Value);
         return agent is { } chosen
             ? new ChallengerChoice(chosen, drafter is null ? null : new DrafterModel(chosen.Equals(drafter.Target), drafter.Model))
-            : SindriErrors.LaunchNoUsableAgent.With("no agent in the catalog may run a Step, so the second opinion has nowhere to run (fix: run `sindri launch show`, put an agent's argvHash under agents.<id>.stepArgvHash, then approve the profile)");
+            : SindriErrors.LaunchNoUsableAgent.With("no agent in the catalog may run a Step, so the second opinion has nowhere to run (fix: run `sindri launch show`, put an agent's argvHash under agents.<id>.stepArgvHash)");
     }
 
     // The catalog's agents an unattended Step may use (SL8), in catalog order.

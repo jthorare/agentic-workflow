@@ -122,6 +122,10 @@ public static class ObligationEvaluator
                 string.Create(CultureInfo.InvariantCulture, $"owner answer q{a.Question} not relayed to {a.AskedBy}"),
                 string.Create(CultureInfo.InvariantCulture, $"SendMessage \"OWNER ANSWER q{a.Question}: {a.Text}\" to {a.AskedBy}")));
 
+    /// <summary>The rearm hint per provider (#2370): a Claude meta keeps a plain watch running under Monitor, because --until-mail exits on its first
+    /// poll whenever mail waits; a Codex or Cursor meta runs --until-mail in the foreground and rearms after each exit.</summary>
+    internal const string WatchCommand = "Claude: aw-meta watch --for 29m (with Monitor, persistent); Codex/Cursor: aw-meta watch --until-mail --for 29m in the foreground, rearm after each exit";
+
     private static IEnumerable<Obligation> Rearm(ObligationFacts facts)
     {
         if (facts.Heartbeat is { } beat && facts.Now - beat > facts.WatchInterval * 2)
@@ -129,8 +133,16 @@ public static class ObligationEvaluator
             yield return new Obligation(
                 ObligationKind.RearmWatch,
                 "watch",
-                string.Create(CultureInfo.InvariantCulture, $"the watch last beat at {beat:HH:mm}, over two intervals ago"),
-                "aw-meta watch (run it with Monitor, persistent)");
+                string.Create(CultureInfo.InvariantCulture, $"the watch last beat at {beat:HH:mm} UTC, over two intervals ago"),
+                WatchCommand);
+        }
+        else if (facts.Heartbeat is null && Replies(facts).Count() is var waiting and > 0)
+        {
+            yield return new Obligation(
+                ObligationKind.RearmWatch,
+                "watch",
+                string.Create(CultureInfo.InvariantCulture, $"no active coordinator consumer: watch last beat never, {waiting} waiting"),
+                WatchCommand);
         }
     }
 }

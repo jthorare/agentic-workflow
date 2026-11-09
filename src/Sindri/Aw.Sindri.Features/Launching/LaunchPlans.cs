@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.Launching;
 
 /// <summary>Turns a request into the launcher's input (UI spec E-1): the attended launch of the request's agent in the item's repo checkout.</summary>
 /// <param name="reader">Reads the item.</param>
-/// <param name="profile">The approved profile, which names each repo's path and each agent's daily budget.</param>
+/// <param name="profile">The profile, which names each repo's path and each agent's daily budget.</param>
 /// <param name="spend">What each agent has spent today, for the budget re-check (screens spec E-28).</param>
 /// <param name="launches">The 'launches' view, for the session a resume addresses.</param>
 internal sealed class LaunchPlans(IViewReader reader, IApprovedProfile profile, ILaunchSpend spend, ILaunchViews launches)
@@ -27,7 +27,7 @@ internal sealed class LaunchPlans(IViewReader reader, IApprovedProfile profile, 
     /// <summary>Builds the launch.</summary>
     /// <param name="pending">The request.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The launch, or SND-LAUNCH-004 when the item's repo has no path in the approved profile.</returns>
+    /// <returns>The launch, or SND-LAUNCH-004 when the item's repo has no path in the profile.</returns>
     public async ValueTask<Result<LaunchRequest>> Build(PendingLaunch pending, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(pending);
@@ -52,7 +52,7 @@ internal sealed class LaunchPlans(IViewReader reader, IApprovedProfile profile, 
         var path = RepoPath(item.Value?.Repo, approved.Value?.Profile.Repos);
         if (path is null)
         {
-            return SindriErrors.LaunchRepoMissing.With($"{request.Item.Value} has no repo with a path in the approved profile (fix: add the repo to repos and approve)");
+            return SindriErrors.LaunchRepoMissing.With($"{request.Item.Value} has no repo with a path in the profile (fix: add the repo to repos)");
         }
 
         var resume = await ResumeFor(request, cancellationToken).ConfigureAwait(false);

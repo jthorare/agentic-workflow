@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CLI-003",
+  "status": 400,
+  "detail": "'Not_A_Slug' is not a workflow slug (lowercase letters, digits and '-')",
+  "traceId": "<trace>"
+}

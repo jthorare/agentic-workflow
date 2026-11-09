@@ -15,8 +15,17 @@ public sealed class FakeSignInSession : ISignInSession
     /// <summary>Gets the clients the sign-ins were started for.</summary>
     public IList<string> Clients { get; } = [];
 
+    /// <summary>Gets the cancellation token the last start was given (a background sign-in must get CancellationToken.None).</summary>
+    public CancellationToken LastToken { get; private set; }
+
+    /// <summary>Gets the client secret the last start was given, or null.</summary>
+    public string? LastClientSecret { get; private set; }
+
     /// <summary>Gets the scopes of the last start.</summary>
     public IReadOnlyList<string> LastScopes { get; private set; } = [];
+
+    /// <summary>Gets the MCP servers the sign-ins were started for.</summary>
+    public IList<Uri> McpServers { get; } = [];
 
     /// <summary>Ends the sign-in with these tokens.</summary>
     /// <param name="tokens">The tokens.</param>
@@ -27,10 +36,19 @@ public sealed class FakeSignInSession : ISignInSession
     public void Fail(Error error) => _completion.SetResult(error);
 
     /// <inheritdoc />
-    public ValueTask<Result<SignInStarted>> Start(ConnectionPreset preset, string client, IReadOnlyList<string> scopes, CancellationToken cancellationToken)
+    public ValueTask<Result<SignInStarted>> Start(ConnectionPreset preset, string client, IReadOnlyList<string> scopes, string? clientSecret, CancellationToken cancellationToken)
     {
         Clients.Add(client);
         LastScopes = scopes;
+        LastClientSecret = clientSecret;
+        LastToken = cancellationToken;
+        return ValueTask.FromResult<Result<SignInStarted>>(new SignInStarted(ConsentUrl, _completion.Task));
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<SignInStarted>> StartMcp(Uri server, CancellationToken cancellationToken)
+    {
+        McpServers.Add(server);
         return ValueTask.FromResult<Result<SignInStarted>>(new SignInStarted(ConsentUrl, _completion.Task));
     }
 }

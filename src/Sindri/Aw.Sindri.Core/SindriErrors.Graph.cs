@@ -36,4 +36,31 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-011: an archived workflow can't be activated.</summary>
     public static readonly ErrorDefinition GraphArchived = new("SND-GRAPH-011", ErrorKind.Conflict, "This workflow is archived; it can't be activated");
+
+    /// <summary>SND-GRAPH-100: a run with that id exists (a re-delivered trigger or a catch-up overlap).</summary>
+    public static readonly ErrorDefinition GraphRunIdTaken = new("SND-GRAPH-100", ErrorKind.Conflict, "A run with that id already exists");
+
+    /// <summary>SND-GRAPH-101: no such run.</summary>
+    public static readonly ErrorDefinition GraphRunNotFound = new("SND-GRAPH-101", ErrorKind.NotFound, "No such workflow run");
+
+    /// <summary>SND-GRAPH-102: a block could not finish; the message says why.</summary>
+    public static readonly ErrorDefinition GraphBlockFailed = new("SND-GRAPH-102", ErrorKind.Invalid, "A block could not finish");
+
+    /// <summary>SND-GRAPH-105: the workflow has no active revision, so a trigger can't start it.</summary>
+    public static readonly ErrorDefinition GraphNotActive = new("SND-GRAPH-105", ErrorKind.Conflict, "This workflow is not active; activate a revision to run it");
+
+    /// <summary>SND-GRAPH-106: a manual run's payload is not a JSON object.</summary>
+    public static readonly ErrorDefinition GraphBadPayload = new("SND-GRAPH-106", ErrorKind.Invalid, "A manual run's payload must be a JSON object");
+
+    /// <summary>SND-GRAPH-107: the run already ended, so it can't be cancelled.</summary>
+    public static readonly ErrorDefinition GraphRunEnded = new("SND-GRAPH-107", ErrorKind.Conflict, "This run already ended");
+
+    /// <summary>SND-GRAPH-103: a prompt node's answer did not fit its 'output' schema.</summary>
+    public static readonly ErrorDefinition GraphPromptAnswer = new("SND-GRAPH-103", ErrorKind.Invalid, "The model's answer does not fit the prompt's output schema");
+
+    /// <summary>SND-GRAPH-104: run controls (complete a Step, take over, hand back) are not available until the graph engine runs agents.</summary>
+    public static readonly ErrorDefinition GraphRunControlsPending = new("SND-GRAPH-104", ErrorKind.Unavailable, "This run control returns with the graph engine's agent blocks");
+
+    /// <summary>SND-GRAPH-108: a reference read the output of a node that the store cut at 64 KB.</summary>
+    public static readonly ErrorDefinition GraphOutputTruncated = new("SND-GRAPH-108", ErrorKind.Invalid, "A referenced node output was cut at 64 KB");
 }

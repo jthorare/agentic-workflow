@@ -229,6 +229,21 @@ public sealed class GraphValidatorTests
     }
 
     [Fact]
+    public void An_onFailure_other_than_stop_or_continue_is_refused_naming_the_field()
+    {
+        var odd = new GraphNode(NodeId.From("tell"), "notify", Title: null, Config: new JsonObject { ["title"] = "hi" }, OnFailure: "retry");
+        var fine = new GraphNode(NodeId.From("tell2"), "notify", Title: null, Config: new JsonObject { ["title"] = "hi" }, OnFailure: "continue");
+        var spec = Spec([Trigger("daily"), odd, fine], [Edge("daily", "tell"), Edge("daily", "tell2")]);
+
+        var result = Validator().Validate(spec, GraphMode.Activate);
+
+        var finding = Assert.Single(result.Findings, f => f.Code == "GRAPH-NODE-003");
+        Assert.Equal(["tell"], finding.Nodes);
+        Assert.Equal("onFailure", finding.Field);
+        Assert.Contains("continue", finding.Fix, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_reference_to_an_output_the_node_does_not_have_is_refused()
     {
         var spec = Spec([Trigger("daily"), Search("a"), Notify("tell", "{{a.nope}}")], [Edge("daily", "a"), Edge("a", "tell")]);
@@ -276,6 +291,19 @@ public sealed class GraphValidatorTests
         Assert.False(result.Passed);
     }
 
+    [Theory]
+    [InlineData("agent.drifted == \"use {{ for references\"", false)]
+    [InlineData("agent.drifted == \"a \\\" {{ b\"", false)]
+    [InlineData("agent.drifted == \"x\" and {{agent.drifted", true)]
+    public void A_double_brace_inside_a_condition_string_literal_is_text_not_an_unclosed_reference(string when, bool refused)
+    {
+        var spec = Spec([Trigger("daily"), Agent("agent", "web"), Condition("check", when)], [Edge("daily", "agent"), Edge("agent", "check")]);
+
+        var result = Validator().Validate(spec, GraphMode.Activate);
+
+        Assert.Equal(refused, result.Findings.Any(f => f.Code == "GRAPH-REF-004"));
+    }
+
     [Fact]
     public void A_repo_the_profile_does_not_have_is_refused_and_one_it_cannot_check_yet_is_a_warning()
     {
@@ -318,4 +346,79 @@ public sealed class GraphValidatorTests
         _ = Assert.Single(badZone.Findings, f => f.Code == "GRAPH-CRON-001");
         Assert.DoesNotContain(good.Findings, f => f.Code == "GRAPH-CRON-001");
     }
+
+    // Carried from the PR 5 review (#2270).
+    [Fact]
+    public void A_reference_whose_output_type_does_not_fit_the_field_is_refused()
+    {
+        // run_agent outputs 'drifted' (boolean); limit.count takes a number, limit.enabled takes a boolean
+        var spec = Spec(
+            [Trigger("daily"), Agent("agent", "aw"), Limit("cap", new JsonObject { ["count"] = "{{agent.drifted}}", ["enabled"] = "{{agent.drifted}}" })],
+            [Edge("daily", "agent"), Edge("agent", "cap")]);
+
+        var result = Validator().Validate(spec, GraphMode.Activate);
+
+        var finding = Assert.Single(result.Findings, f => f.Code == "GRAPH-REF-005");
+        Assert.Equal(["cap"], finding.Nodes);
+        Assert.Equal("config.count", finding.Field);
+        Assert.Contains("'agent.drifted'", finding.ToString(), StringComparison.Ordinal);
+        Assert.Contains("boolean", finding.Message, StringComparison.Ordinal);
+        Assert.False(string.IsNullOrWhiteSpace(finding.Fix));
+    }
+
+    [Fact]
+    public void A_reference_inside_text_or_into_a_text_field_has_no_type_to_check()
+    {
+        var spec = Spec(
+            [Trigger("daily"), Agent("agent", "aw"), Limit("cap", new JsonObject { ["count"] = "{{agent.drifted}} items" }), Notify("tell", "{{agent.drifted}}")],
+            [Edge("daily", "agent"), Edge("agent", "cap"), Edge("cap", "tell")]);
+
+        var result = Validator().Validate(spec, GraphMode.Activate);
+
+        Assert.DoesNotContain(result.Findings, f => f.Code == "GRAPH-REF-005");
+    }
+
+    [Fact]
+    public void A_trigger_reference_is_checked_against_the_trigger_blocks_outputs()
+    {
+        var spec = Spec(
+            [Trigger("daily"), Notify("good", "at {{trigger.scheduledFor}}"), Notify("bad", "at {{trigger.firedAt}}")],
+            [Edge("daily", "good"), Edge("good", "bad")]);
+
+        var result = Validator().Validate(spec, GraphMode.Activate);
+
+        var finding = Assert.Single(result.Findings, f => f.Code == "GRAPH-REF-002");
+        Assert.Equal(["bad"], finding.Nodes);
+        Assert.Contains("'trigger.firedAt'", finding.ToString(), StringComparison.Ordinal);
+        Assert.Contains("scheduledFor", finding.Fix, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_reference_inside_a_string_literal_of_a_condition_is_not_a_reference()
+    {
+        var spec = Spec(
+            [Trigger("daily"), Search("s"), Condition("check", "s.facts == \"{{y.z}}\"")],
+            [Edge("daily", "s"), Edge("s", "check")]);
+
+        var result = Validator(condition: ParseCondition).Validate(spec, GraphMode.Activate);
+
+        Assert.DoesNotContain(result.Findings, f => string.Equals(f.Code, "GRAPH-REF-003", StringComparison.Ordinal) || string.Equals(f.Code, "GRAPH-REF-001", StringComparison.Ordinal));
+        Assert.True(result.Passed);
+    }
+
+    [Fact]
+    public void A_real_reference_in_a_condition_is_still_checked()
+    {
+        var spec = Spec(
+            [Trigger("daily"), Search("s"), Condition("check", "s.facts == \"{{y.z}}\" and ghost.value")],
+            [Edge("daily", "s"), Edge("s", "check")]);
+
+        var result = Validator(condition: ParseCondition).Validate(spec, GraphMode.Activate);
+
+        var finding = Assert.Single(result.Findings, f => f.Code == "GRAPH-REF-003");
+        Assert.Contains("'ghost'", finding.ToString(), StringComparison.Ordinal);
+    }
+
+    private static ConditionParse ParseCondition(string text) =>
+        ConditionExpression.TryParse(text, out var expression, out var error) ? new ConditionParse(Error: null, expression!.References) : new ConditionParse(error, []);
 }

@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -315,6 +316,10 @@ public sealed class QueueFocusTests : IDisposable
     [Fact]
     public Task J_on_home_focuses_the_compact_rows_it_draws() => OnUi(async () =>
     {
+        // The "empty" golden carries the setup:mcp row since the profile applies on save (fd26e2052d); J walks Needs you first, so serve no rows at all.
+        var noRows = JsonNode.Parse(GoldenFiles.Api("needs-you", "empty"))!;
+        noRows["rows"] = new JsonArray();
+        _server.NeedsYouView = new RouteAnswer(System.Net.HttpStatusCode.OK, noRows.ToJsonString());
         var (window, shell) = await Connected();
         Settle(window);
 

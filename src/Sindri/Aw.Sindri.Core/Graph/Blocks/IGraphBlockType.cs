@@ -24,4 +24,9 @@ public interface IGraphBlockType
     /// <param name="config">The node's config.</param>
     /// <returns>The fields and branches.</returns>
     public BlockOutputs OutputsFor(JsonObject config);
+
+    /// <summary>Problems in the config that the field types in <see cref="Config"/> can't express (a 'prompt' block's 'output' schema). None by default.</summary>
+    /// <param name="config">The node's config.</param>
+    /// <returns>One problem per field: the field's name and what to change.</returns>
+    public IReadOnlyList<(string Field, string Problem)> CheckConfig(JsonObject config) => [];
 }

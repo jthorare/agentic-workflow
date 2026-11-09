@@ -9,6 +9,11 @@ public sealed partial class GraphValidator
     private void Node(GraphNode node, List<GraphFinding> found)
     {
         var id = node.Id.Value;
+        if (node.OnFailure is { } onFailure && !string.Equals(onFailure, "stop", StringComparison.Ordinal) && !string.Equals(onFailure, "continue", StringComparison.Ordinal))
+        {
+            found.Add(Found.At("GRAPH-NODE-003", id, "onFailure", $"'{onFailure}' is not an 'onFailure' value", "write 'stop' (halt the run when this node fails, the default) or 'continue' (keep walking)"));
+        }
+
         if (!context.Blocks.TryGetValue(node.Type, out var block))
         {
             found.Add(Found.At("GRAPH-BLOCK-001", id, "type", $"there is no block type '{node.Type}'", $"use one of: {string.Join(", ", context.Blocks.Keys.Order(StringComparer.Ordinal))}"));
@@ -16,6 +21,11 @@ public sealed partial class GraphValidator
         }
 
         foreach (var (field, problem) in block.Config.Check(node.Config))
+        {
+            found.Add(Found.At("GRAPH-CONFIG-001", id, "config." + field, $"'{field}' {problem}", $"fix it as the {node.Type} block's example shows: {block.Example}"));
+        }
+
+        foreach (var (field, problem) in block.CheckConfig(node.Config))
         {
             found.Add(Found.At("GRAPH-CONFIG-001", id, "config." + field, $"'{field}' {problem}", $"fix it as the {node.Type} block's example shows: {block.Example}"));
         }

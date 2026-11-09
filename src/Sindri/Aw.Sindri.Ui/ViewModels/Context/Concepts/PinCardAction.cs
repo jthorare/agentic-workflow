@@ -6,9 +6,6 @@ internal enum PinCardAction
     /// <summary>No button.</summary>
     None,
 
-    /// <summary>Review and approve: the needs-you review the setup step uses.</summary>
-    ReviewAndApprove,
-
     /// <summary>Open review: the Context page's held-map review.</summary>
     OpenReview,
 

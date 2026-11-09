@@ -7,6 +7,7 @@ using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Palette;
 using Aw.Sindri.Ui.ViewModels.Queue;
 using Aw.Sindri.Ui.ViewModels.Setup;
+using Aw.Sindri.Ui.ViewModels.Todo;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
@@ -57,7 +58,8 @@ internal sealed partial class ShellViewModel : ObservableObject
         Health.Pill.PropertyChanged += OnPillChanged;
         CommandOutcome = new CommandOutcomeRegion(control => Health.Banner.HasRebuild && ReferenceEquals(Health.Banner.Rebuild, control));
         Create = new CreateItemViewModel(Health.Catalog, () => Health.ApiUrl(), api);
-        Palette = new CommandPaletteViewModel(Health.Catalog, GoTo, RememberRun, CommandOutcome, () => Create.Open());
+        QuickAdd = new QuickAddViewModel(api, () => Health.ApiUrl(), clock);
+        Palette = new CommandPaletteViewModel(Health.Catalog, GoTo, RememberRun, CommandOutcome, () => Create.Open(), openTodo: OpenTodo, newTodo: () => OpenQuickAdd());
         Shortcuts = new ShortcutsViewModel(Health.Catalog);
         Queue = new QueueViewModel(api, Health.Catalog, clock);
         Queue.PageShown(RowScopeOf(CurrentPage));
@@ -71,7 +73,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         Inbox = InitInbox(api, clipboard, (window ?? WindowPorts.None).Launcher);
         InitSandbox();
         window ??= WindowPorts.None;
-        (Setup, LibraryRoots, LinearConnection) = (new SetupViewModel(api, Health.Catalog, clock, OpensInApp, window.Folders, () => Health.LiveProfile), InitLibraryRoots(api, window), InitLinearConnection(api));
+        (Setup, LibraryRoots, LinearConnection) = (new SetupViewModel(api, Health.Catalog, clock, OpensInApp, window.Folders), InitLibraryRoots(api, window), InitLinearConnection(api));
         InitSetup();
         InitSheetNames();
         InitAgents(clipboard, window.Launcher);
@@ -83,10 +85,13 @@ internal sealed partial class ShellViewModel : ObservableObject
     }
 
     // The views the control plane's follower re-reads on connect and after every event.
-    [MemberNotNull(nameof(Linear), nameof(NewIssue), nameof(Todo))]
+    [MemberNotNull(nameof(Linear), nameof(NewIssue), nameof(Todo), nameof(Elsewhere), nameof(Toast))]
     private void FollowViews()
     {
         InitTodo();
+        InitElsewhere();
+        InitToast();
+        WireQuickAddToasts();
         InitLinear();
         Health.Follow(Queue.Refresh);
         Health.Follow(Item.Refresh);
@@ -227,6 +232,7 @@ internal sealed partial class ShellViewModel : ObservableObject
             ReadLibraryRoots();
             Setup.RevealChecklist();   // every way into Settings (the rail, ⌘,, G U, the setup link, Home's line) shows the checklist, its first section
             ReadLinearConnection();   // after the checklist's reveal, so a Connect that asked for the Linear card is the last scroll
+            ReadTodoNoteCard();
         }
 
         if (page == PageId.Context)

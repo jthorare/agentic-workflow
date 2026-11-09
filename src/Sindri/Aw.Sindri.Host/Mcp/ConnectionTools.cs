@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -31,6 +32,9 @@ internal static class ConnectionTools
     /// <summary>connection_test's name.</summary>
     internal const string Test = "connection_test";
 
+    /// <summary>connection_signin's name.</summary>
+    internal const string SignIn = "connection_signin";
+
     /// <summary>connection_remove's name.</summary>
     internal const string Remove = "connection_remove";
 
@@ -55,14 +59,16 @@ internal static class ConnectionTools
     private static Tool AddTool { get; } = new()
     {
         Name = Add,
-        Description = "Add a connection. An oauth connection returns a consent URL to hand to the owner and finishes when they sign in; a rest or cli connection reads the named environment variable once and stores it as the secret.",
+        Description = "Add a connection. An oauth connection returns a consent URL to hand to the owner and finishes when they sign in; a rest, cli or mcp connection with keyEnv reads the named environment variable once and stores it as the secret; an mcp connection also needs url.",
         InputSchema = ContextTools.Schema(new JsonObject
         {
             ["name"] = ContextTools.Property("string", "The connection name, e.g. linear:work"),
             ["preset"] = ContextTools.Property("string", "A shipped preset: github, linear, slack, google or spotify"),
             ["kind"] = ContextTools.Property("string", "oauth, mcp, rest or cli; the preset's kind when left out", bounds: new ContextTools.PropertyBounds(Allowed: ["oauth", "mcp", "rest", "cli"])),
             ["clientId"] = ContextTools.Property("string", "The OAuth client id (not secret); presets ship none"),
-            ["keyEnv"] = ContextTools.Property("string", "The environment variable that holds the key of a rest or cli connection"),
+            ["keyEnv"] = ContextTools.Property("string", "The NAME of an environment variable in the environment of the running sindri serve (not your shell) that holds the key of a rest or cli connection; the error says when serve has no such variable"),
+            ["clientSecretEnv"] = ContextTools.Property("string", "The NAME of an environment variable in the running sindri serve's environment that holds the OAuth client secret, for providers that want one (the github and google presets)"),
+            ["url"] = ContextTools.Property("string", "The MCP server's address, for kind mcp (https, or http on this machine). With keyEnv it connects with that key; without one it starts the server's own sign-in and returns a consent URL"),
         }, required: ["name"]),
         Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = false, IdempotentHint = false, OpenWorldHint = true },
     };
@@ -75,6 +81,14 @@ internal static class ConnectionTools
         Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = false, IdempotentHint = true, OpenWorldHint = true },
     };
 
+    private static Tool SignInTool => new()
+    {
+        Name = SignIn,
+        Description = "Sign a stored oauth or mcp connection in again (its refresh lapsed or its grant was revoked) without removing it. Returns a consent URL to hand to the owner; the connection keeps its name and settings and finishes when they sign in. A key-based connection is refused (SND-CONN-011).",
+        InputSchema = ContextTools.Schema(new JsonObject { ["name"] = ContextTools.Property("string", "The connection name") }, required: ["name"]),
+        Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = false, IdempotentHint = false, OpenWorldHint = true },
+    };
+
     private static Tool RemoveTool { get; } = new()
     {
         Name = Remove,
@@ -83,8 +97,25 @@ internal static class ConnectionTools
         Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = true, IdempotentHint = true, OpenWorldHint = false },
     };
 
-    /// <summary>The five tools.</summary>
-    internal static IReadOnlyList<Tool> All { get; } = [ListTool, GetTool, AddTool, TestTool, RemoveTool];
+    /// <summary>The six tools.</summary>
+    internal static IReadOnlyList<Tool> All { get; } = [ListTool, GetTool, AddTool, SignInTool, TestTool, RemoveTool];
+
+    /// <summary>Runs the connection_* tool named <paramref name="tool"/>.</summary>
+    /// <param name="tool">The tool's name (one of the six constants).</param>
+    /// <param name="services">The request's services.</param>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <param name="ct">Cancels the call.</param>
+    /// <returns>The tool result.</returns>
+    internal static ValueTask<CallToolResult> Call(string tool, IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct) => tool switch
+    {
+        List => CallList(services, arguments, ct),
+        Get => CallGet(services, arguments, ct),
+        Add => CallAdd(services, arguments, ct),
+        SignIn => CallSignIn(services, arguments, ct),
+        Test => CallTest(services, arguments, ct),
+        Remove => CallRemove(services, arguments, ct),
+        _ => throw new UnreachableException($"ConnectionTools has no handler for '{tool}'"),
+    };
 
     /// <summary>Runs connection_list.</summary>
     /// <param name="services">The request's services.</param>
@@ -132,28 +163,32 @@ internal static class ConnectionTools
     /// <returns>The tool result.</returns>
     internal static async ValueTask<CallToolResult> CallAdd(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
-        if (McpArguments.Only(Add, arguments, "name", "preset", "kind", "clientId", "keyEnv") is { } refused)
+        var request = BindAdd(arguments);
+        if (request.IsError)
         {
-            return McpResults.Failure(services, refused);
+            return McpResults.Failure(services, request.Error);
         }
 
-        var name = McpArguments.RequiredString(Add, arguments, "name", "linear:work");
-        var preset = McpArguments.OptionalString(Add, arguments, "preset");
-        var kind = McpArguments.OptionalString(Add, arguments, "kind");
-        var client = McpArguments.OptionalString(Add, arguments, "clientId");
-        var keyEnv = McpArguments.OptionalString(Add, arguments, "keyEnv");
-        foreach (var bad in new[] { name.IsError ? name.Error : null, preset.IsError ? preset.Error : null, kind.IsError ? kind.Error : null, client.IsError ? client.Error : null, keyEnv.IsError ? keyEnv.Error : null })
-        {
-            if (bad is not null)
-            {
-                return McpResults.Failure(services, bad);
-            }
-        }
-
-        // why: an agent cannot wait minutes for a browser; it gets the consent URL at once and the sign-in finishes in the background
-        var request = new AddConnectionRequest(name.Value, preset.Value, kind.Value, client.Value, keyEnv.Value, [], Wait: false);
-        var answer = await services.GetRequiredService<IService<AddConnectionRequest, AddConnectionResponse>>().Handle(request, ct).ConfigureAwait(false);
+        var answer = await services.GetRequiredService<IService<AddConnectionRequest, AddConnectionResponse>>().Handle(request.Value, ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static added => added.ConsentUrl is null ? Summary(added.Connection) : "Sign-in started. Give the consentUrl to the owner; the connection finishes when they sign in.");
+    }
+
+    /// <summary>Runs connection_signin.</summary>
+    /// <param name="services">The request's services.</param>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <param name="ct">Cancels the call.</param>
+    /// <returns>The tool result.</returns>
+    internal static async ValueTask<CallToolResult> CallSignIn(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var name = Name(SignIn, arguments);
+        if (name.IsError)
+        {
+            return McpResults.Failure(services, name.Error);
+        }
+
+        // why: an agent cannot wait minutes for a browser, so Wait is false: it gets the consent URL at once and the sign-in finishes in the background
+        var answer = await services.GetRequiredService<IService<SignInConnectionRequest, AddConnectionResponse>>().Handle(new SignInConnectionRequest(name.Value, Wait: false), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static started => "Sign-in started. Give the consentUrl to the owner; the connection is connected again when they sign in.");
     }
 
     /// <summary>Runs connection_test.</summary>
@@ -188,6 +223,33 @@ internal static class ConnectionTools
 
         var answer = await services.GetRequiredService<IService<RemoveConnectionRequest, RemoveConnectionResponse>>().Handle(new RemoveConnectionRequest(name.Value), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static removed => removed.SecretDeleted ? "Removed the connection and its secret." : "Removed the connection (it had no stored secret).");
+    }
+
+    private static readonly string[] _optionalAdd = ["preset", "kind", "clientId", "keyEnv", "clientSecretEnv", "url"];
+
+    // why: an agent cannot wait minutes for a browser, so Wait is false: it gets the consent URL at once and the sign-in finishes in the background. The key and the client secret are
+    // NAMES of variables read from the running sindri serve's environment: an MCP call has no shell of its own.
+    private static Result<AddConnectionRequest> BindAdd(IDictionary<string, JsonElement>? arguments)
+    {
+        if (McpArguments.Only(Add, arguments, "name", "preset", "kind", "clientId", "keyEnv", "clientSecretEnv", "url") is { } refused)
+        {
+            return refused;
+        }
+
+        var name = McpArguments.RequiredString(Add, arguments, "name", "linear:work");
+        var optional = _optionalAdd.Select(n => McpArguments.OptionalString(Add, arguments, n)).ToList();
+        if (name.IsError)
+        {
+            return name.Error;
+        }
+
+        var bad = optional.FirstOrDefault(static o => o.IsError);
+        if (bad is not null)
+        {
+            return bad.Error;
+        }
+
+        return new AddConnectionRequest(name.Value, optional[0].Value, optional[1].Value, optional[2].Value, optional[3].Value, [], Wait: false, ClientSecretEnv: optional[4].Value, Url: optional[5].Value);
     }
 
     private static Result<string> Name(string tool, IDictionary<string, JsonElement>? arguments) =>

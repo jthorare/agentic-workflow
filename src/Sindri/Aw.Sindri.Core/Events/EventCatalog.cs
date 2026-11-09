@@ -1,5 +1,4 @@
 using Aw.Sindri.Core.Launch;
-using Aw.Sindri.Core.Workflow.Registry;
 
 namespace Aw.Sindri.Core.Events;
 
@@ -13,6 +12,7 @@ public static class EventCatalog
         new(EventTypes.ProcessStarted, Public: true, typeof(ProcessStarted), "process.started:<epoch>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ProcessStopped, Public: true, typeof(ProcessStopped), "process.stopped:<epoch>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ProfileApproved, Public: true, typeof(ProfileApproved), "profile.approved:<hash>:after:<seq>") { Invalidates = [ApiViews.Status, ApiViews.Profile, ApiViews.Services, ApiViews.NeedsYou] },
+        new(EventTypes.ProfileApprovalsRemoved, Public: false, PublicPayload: null, "profile.approvals.removed"),
         new("service.heartbeat", Public: true, typeof(Heartbeat), "service.heartbeat:<epoch>:<slot>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ContextSourcesSynced, Public: true, typeof(ContextSourcesSynced), "context.sources.synced:<epoch>:<source>:<slot>"),
         new(EventTypes.ContextMapImported, Public: true, typeof(ContextMapImported), "context.map.imported:<hash>:v<version>"),
@@ -27,6 +27,13 @@ public static class EventCatalog
         new(EventTypes.ScopingEscape, Public: true, typeof(ScopingEscape), "scoping.escape:<packetHash>:<station>:<reference>"),
         new(EventTypes.ContextMapProposed, Public: true, typeof(ContextMapProposed), "context.map.proposed:<run>:<rows hash16>"),
         new(EventTypes.ContextMapBuilt, Public: true, typeof(ContextMapBuilt), "context.map.built:<epoch>:<slot>"),
+        new(EventTypes.WorkflowRunStarted, Public: false, PublicPayload: null, "workflow.run.started:<run id>"),
+        new(EventTypes.WorkflowRunFinished, Public: false, PublicPayload: null, "workflow.run.finished:<run id>"),
+        new(EventTypes.WorkflowRunCancelled, Public: false, PublicPayload: null, "workflow.run.cancelled:<run id>"),
+        new(EventTypes.WorkflowNodeStarted, Public: false, PublicPayload: null, "workflow.node.started:<run id>:<node id>:<item index>"),
+        new(EventTypes.WorkflowNodeFinished, Public: false, PublicPayload: null, "workflow.node.finished:<run id>:<node id>:<item index>"),
+        new(EventTypes.WorkflowNodeFailed, Public: false, PublicPayload: null, "workflow.node.failed:<run id>:<node id>:<item index>"),
+        new(EventTypes.WorkflowNotify, Public: false, PublicPayload: null, "workflow.notify:<run id>:<node id>"),
         new(EventTypes.CommandHandled, Public: false, PublicPayload: null, "command.handled:<commandId>"),
         new(EventTypes.RecipeRegistered, Public: true, typeof(RecipeRegistered), "recipe.registered:<hash>"),
         new(EventTypes.RecipeApproved, Public: true, typeof(RecipeApproved), "recipe.approved:<hash>:after:<seq>"),
@@ -39,6 +46,15 @@ public static class EventCatalog
         new(EventTypes.ProjectDetached, Public: true, typeof(ProjectDetached), "project.detached:<projectId>:v<version>") { Invalidates = [ApiViews.Projects] },
         new(EventTypes.ProjectHidden, Public: true, typeof(ProjectHidden), "project.hidden:<linear>:v<version>") { Invalidates = [ApiViews.Projects] },
         new(EventTypes.ProjectLedNoted, Public: true, typeof(ProjectLedNoted), "project.led.noted:<linear>:v<version>") { Invalidates = [ApiViews.Projects] },
+        new(EventTypes.TodoAdded, Public: false, PublicPayload: null, "todo.added:<by>:client:<clientId> | todo.added:<todoId>"),
+        new(EventTypes.TodoChanged, Public: false, PublicPayload: null, "todo:<todoId>:v<version>"),
+        new(EventTypes.TodoDone, Public: false, PublicPayload: null, "todo:<todoId>:v<version>"),
+        new(EventTypes.TodoReopened, Public: false, PublicPayload: null, "todo:<todoId>:v<version>"),
+        new(EventTypes.TodoRemoved, Public: false, PublicPayload: null, "todo:<todoId>:v<version>"),
+        new(EventTypes.TodoRestored, Public: false, PublicPayload: null, "todo:<todoId>:v<version>"),
+        new(EventTypes.TodoConflicted, Public: false, PublicPayload: null, "todo.conflicted:<todoId>:<noteHash>"),
+        new(EventTypes.TodoConflictResolved, Public: false, PublicPayload: null, "todo.conflict.resolved:<todoId>:<ulid>"),
+        new(EventTypes.TodoConflictReopened, Public: false, PublicPayload: null, "todo.conflict.reopened:<todoId>:<ulid>"),
         new(EventTypes.RequestFiled, Public: true, typeof(RequestFiledPublic), "request.filed:<requestId>") { Invalidates = [ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions, ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.DecisionRecorded, Public: true, typeof(DecisionRecordedPublic), "decision.recorded:<decisionId>") { Invalidates = [ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions, ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.WorkflowStarted, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:<run id>:<activity id>[:<content hash>]"),
@@ -49,6 +65,8 @@ public static class EventCatalog
         new(EventTypes.WorkflowExpired, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:<run id>:<activity id>[:<content hash>]"),
         new(EventTypes.WorkflowHeavy, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:<run id>:<activity id>[:<content hash>]"),
         new(EventTypes.WorkflowInjection, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:<run id>:<activity id>[:<content hash>]"),
+        new(EventTypes.WorkflowRetired, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:retired"),
+        new(EventTypes.WorkflowRetireDone, Public: false, PublicPayload: null, "workflow:retire-pass:done"),
         new(EventTypes.ServiceRan, Public: true, typeof(ServiceRan), "service.ran:<name>:<epoch>:<slot> | service.ran:<name>:manual:<jobId>") { Invalidates = [ApiViews.Status, ApiViews.Services, ApiViews.NeedsYou] },
         new(EventTypes.JobStarted, Public: true, typeof(JobStarted), "job.started:<jobId>") { Invalidates = [ApiViews.Job, ApiViews.Jobs, ApiViews.Services, ApiViews.ContextLenses, ApiViews.ContextHistory] },
         new(EventTypes.JobProgress, Public: true, typeof(JobProgress), "job.progress:<jobId>:<n>") { Invalidates = [ApiViews.Job, ApiViews.Jobs] },
@@ -86,6 +104,8 @@ public static class EventCatalog
         new(EventTypes.RecipeRegistrationCompleted, Public: true, typeof(RecipeRegistrationCompleted), "recipe.registration.completed:<epoch>") { Invalidates = [ApiViews.Setup, ApiViews.Recipes] },
         new(EventTypes.McpRegistered, Public: true, typeof(McpRegistered), "mcp.registered:<commandId>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.SetupConsentGiven, Public: true, typeof(SetupConsentGiven), "setup.consent.given:<profileHash>") { Invalidates = [ApiViews.Setup] },
+        new(EventTypes.ConnectionNeedsSignIn, Public: true, typeof(ConnectionNeedsSignIn), "connection.needs-sign-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
+        new(EventTypes.ConnectionSignedIn, Public: true, typeof(ConnectionSignedIn), "connection.signed-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
         new(EventTypes.ViewsRebuilt, Public: false, PublicPayload: null, "views.rebuilt:<commandId>"),
     ];
 }

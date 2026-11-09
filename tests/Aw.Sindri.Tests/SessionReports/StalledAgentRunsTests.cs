@@ -33,7 +33,7 @@ public sealed class StalledAgentRunsTests
             }
 
             var recipe = new RecipeVersion(RecipeId.From("workflow.step"), 1, RecipeHash.From("sha256:" + new string('a', 64)));
-            return ValueTask.FromResult<Result<InstanceView>>(new InstanceView(address, recipe, "produce", Detail: null, KnownInstants.Epoch, string.Empty, [], Question: null, Task: null, Run: null, Children: [], Outcome: null)
+            return ValueTask.FromResult<Result<InstanceView>>(new InstanceView(address, recipe, "produce", KnownInstants.Epoch)
             {
                 Id = WorkflowInstanceId.Of(address),
                 TakenOverBy = TakenOverBy,

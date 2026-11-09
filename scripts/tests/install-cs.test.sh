@@ -6,7 +6,7 @@
 # current and does not publish; the verify step runs each binary in a scratch AW_STATE_DIR; a failed publish and a build that
 # does not answer leave nothing behind; --link needs a build for this source, switches `current`, writes the six wrappers over
 # an existing TS wrapper, and the sindri wrapper exports the three binary paths (AW_UI_EVIDENCE_BIN among them) as resolved
-# paths; the shipped recipes are staged from HEAD and gated by their evals (a count mismatch, a git archive failure and a non-git tree fail); pruning keeps the newest two, `current` and the build a running serve executes; --rebuild of that build is declined.
+# paths; a non-git tree fails; pruning keeps the newest two, `current` and the build a running serve executes; --rebuild of that build is declined.
 # Run: bash scripts/tests/install-cs.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -28,10 +28,10 @@ export AW_STATE_DIR="$WORK/state" CLAUDE_LOCAL_BIN="$WORK/localbin" TMPDIR="$WOR
 export DOTNET_ROOT="$WORK/dotnet-root" AW_SINDRI_HOME="$WORK/sindri-home"
 unset AW_SINDRI_JUDGE AW_PACKETS_BIN AW_UI_EVIDENCE_BIN AW_JUDGE_PROVIDERS
 mkdir -p "$TMPDIR" "$CLAUDE_LOCAL_BIN" "$WORK/fakebin" "$DOTNET_ROOT"
-export FAKE_SDK="10.0.100" FAKE_LOG="$WORK/publishes.log" FAKE_CALLS="$WORK/calls.log" FAKE_STAGED="$WORK/staged.log" FAKE_BIN="$WORK/fake-bin.sh"
+export FAKE_SDK="10.0.100" FAKE_LOG="$WORK/publishes.log" FAKE_CALLS="$WORK/calls.log" FAKE_BIN="$WORK/fake-bin.sh"
 : > "$FAKE_LOG"; : > "$FAKE_CALLS"
 
-# What every published fake binary does (the generated stubs set FAKE_NAME, FAKE_REV, FAKE_RECIPES and FAKE_SELF, then run this).
+# What every published fake binary does (the generated stubs set FAKE_NAME, FAKE_REV and FAKE_SELF, then run this).
 cat > "$FAKE_BIN" <<'FB'
 #!/usr/bin/env bash
 echo "$FAKE_NAME state=${AW_STATE_DIR:-} args=$*" >> "$FAKE_CALLS"
@@ -39,15 +39,6 @@ case "$FAKE_NAME" in
   sindri)
     case "${1:-}" in
       help) echo "usage: sindri <verb>" ;;
-      recipe)
-        if [ "$2" = manifest ]; then echo "{\"digest\":\"sha256:$(find "$3" -type f | LC_ALL=C sort | xargs cat | cksum | tr -d ' ')\"}"
-        else
-          echo "eval-call" >> "$FAKE_CALLS"
-          if [ "${EVAL_FAIL:-}" = 1 ]; then echo "workflow.a@1: happy fail"; exit 1; fi
-          list="" i=0   # no seq: BSD seq differs from GNU (-s, count-down on an empty range)
-          while [ "$i" -lt $((FAKE_RECIPES + ${EVAL_COUNT_DELTA:-0})) ]; do i=$((i + 1)); list="${list:+$list,}$i"; done
-          echo "{\"recipes\":[$list]}"
-        fi ;;
       agents) if [ -n "${FAKE_OPEN_RUNS:-}" ]; then echo '{"sessions":[{"ref":"claude/abc","state":"running","launch":{"instance":"ITM-1/line/3/scoping.1","state":"challenge","attempt":1}}]}'; else echo '{"sessions":[]}'; fi ;;
       profile) echo "${FAKE_PROFILE_OUT:-}"; exit "${FAKE_PROFILE_RC:-0}" ;;
       env) echo "judge=$AW_SINDRI_JUDGE packets=$AW_PACKETS_BIN evidence=$AW_UI_EVIDENCE_BIN dir=$(cd "$(dirname "$FAKE_SELF")" && pwd -P) droot=$DOTNET_ROOT" ;;
@@ -69,12 +60,11 @@ case "${1:-}" in
   *) exit 0 ;;
 esac
 proj="$2"; shift 2
-out="" rev="" recipes=""
+out="" rev=""
 while [ $# -gt 0 ]; do
   case "$1" in
     -o) out="$2"; shift ;;
     -p:SourceRevisionId=*) rev="${1#*=}" ;;
-    -p:AwRecipesDir=*) recipes="${1#*=}" ;;
   esac
   shift
 done
@@ -84,13 +74,9 @@ case "$proj" in
   *Aw.Readiness.App*) name=aw-readiness ;; *) exit 3 ;;
 esac
 echo "$name rev=$rev" >> "$FAKE_LOG"
-if [ "$name" = sindri ]; then   # what the build copy's recipes are, for the staging test
-  { echo "recipes=$(cd "$recipes" && find . -type f | LC_ALL=C sort | tr '\n' ' ')"; echo "recipe_one=$(cat "$recipes/one.yaml")"; } > "$FAKE_STAGED"
-fi
 [ "${FAKE_FAIL:-}" != "$name" ] || { echo "boom publishing $name" >&2; exit 1; }
 mkdir -p "$out"
-n=0; [ -z "$recipes" ] || n="$(find "$recipes" -name '*.yaml' | wc -l | tr -d ' ')"
-printf '#!/usr/bin/env bash\nFAKE_SELF="$0" FAKE_NAME=%s FAKE_REV=%s FAKE_RECIPES=%s FAKE_CALLS="%s" FAKE_BAD_VERSION="%s" exec bash "%s" "$@"\n' "$name" "$rev" "$n" "$FAKE_CALLS" "${FAKE_BAD_VERSION:-}" "$FAKE_BIN" > "$out/$name"
+printf '#!/usr/bin/env bash\nFAKE_SELF="$0" FAKE_NAME=%s FAKE_REV=%s FAKE_CALLS="%s" FAKE_BAD_VERSION="%s" exec bash "%s" "$@"\n' "$name" "$rev" "$FAKE_CALLS" "${FAKE_BAD_VERSION:-}" "$FAKE_BIN" > "$out/$name"
 chmod +x "$out/$name"
 [ "$name" != judge ] || : > "$out/libe_sqlite3.so"
 # Microsoft.Playwright puts its driver (node + the playwright package) in a dot folder beside the binary.
@@ -110,18 +96,17 @@ FR
 chmod +x "$WORK/fakebin/readelf"
 export PATH="$WORK/fakebin:$PATH"
 
-# A miniature checkout: the script, its inputs list, a pinned SDK, some sources and two shipped recipes.
+# A miniature checkout: the script, its inputs list, a pinned SDK, some sources.
 REPO="$WORK/repo"
-mkdir -p "$REPO/scripts/lib" "$REPO/skills/formal-verify/scripts" "$REPO/src/Sindri/Aw.Sindri.Host" "$REPO/src/Judge" "$REPO/recipes/sindri"
+mkdir -p "$REPO/scripts/lib" "$REPO/skills/formal-verify/scripts" "$REPO/src/Sindri/Aw.Sindri.Host" "$REPO/src/Judge"
 cp "$DIR/install-cs.sh" "$REPO/scripts/"
 cp "$DIR/lib/sindri-build-inputs.sh" "$DIR/lib/sindri-open-runs.sh" "$REPO/scripts/lib/"
 printf '#!/usr/bin/env bash\n[ "${1:-}" = --expensive ] && shift\nexec "$@"\n' > "$REPO/scripts/heavy.sh"; chmod +x "$REPO/scripts/heavy.sh"
 printf '#!/bin/sh\necho "reserve-stub $*"\n' > "$REPO/scripts/meta-gate-reserve.sh"; chmod +x "$REPO/scripts/meta-gate-reserve.sh"
 printf '{"sdk":{"version":"%s"}}\n' "$FAKE_SDK" > "$REPO/global.json"
 echo a > "$REPO/src/Sindri/Aw.Sindri.Host/a.cs"; echo b > "$REPO/src/Judge/b.cs"
-echo "runner" > "$REPO/scripts/tlc-check.sh"; echo "tlc" > "$REPO/skills/formal-verify/scripts/tlc.sh"; echo "lock" > "$REPO/skills/formal-verify/tla2tools.lock"
-echo "name: one" > "$REPO/recipes/sindri/one.yaml"; echo "name: two" > "$REPO/recipes/sindri/two.yaml"
 g() { git -C "$REPO" -c user.name=t -c user.email=t@example.invalid "$@"; }
+ccommit() { g commit -q "$@" > /dev/null 2>&1; }
 g init -q -b main && g add -A && g commit -q -m base
 INSTALL="$REPO/scripts/install-cs.sh"
 B="$AW_STATE_DIR/bin/cs"
@@ -138,7 +123,6 @@ bash "$INSTALL" --publish --link > /dev/null 2>&1; check "--publish with --link 
 out="$(bash "$INSTALL" --dry-run 2>&1)"; rc=$?
 check "dry run exits 0" "$rc" "0"
 has "dry run says what it would do" "$out" "install-cs: [dry-run] would"
-has "dry run prints the model-check copy" "$out" "would copy the model-check runner"
 check "dry run writes no state" "$([ -e "$AW_STATE_DIR" ] && echo yes || echo no)" "no"
 check "dry run publishes nothing" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "0"
 has "dry run says it would link heavy through current" "$out" "[dry-run] would link $AW_STATE_DIR/bin-r1b/heavy -> $AW_STATE_DIR/bin/cs/current/heavy"
@@ -160,7 +144,6 @@ for f in sindri sindri-ui judge aw-packets bugfix-state ui-evidence aw-readiness
   check "build has $f" "$([ -e "$B/$S1/$f" ] && echo yes || echo no)" "yes"
 done
 check "the build keeps ui-evidence's Playwright driver (a dot folder)" "$(cat "$B/$S1/.playwright/package/cli.js" 2>/dev/null)" "driver"
-check "the model-check runner is copied at its repo layout" "$(cat "$B/$S1/tlc/scripts/tlc-check.sh" "$B/$S1/tlc/skills/formal-verify/scripts/tlc.sh" "$B/$S1/tlc/skills/formal-verify/tla2tools.lock" | tr '\n' ' ')" "runner tlc lock "
 check "seven publishes, each stamped with the commit" "$(grep -c "rev=$(g rev-parse HEAD)$" "$FAKE_LOG")" "7"
 check "the build carries heavy, executable" "$([ -x "$B/$S1/heavy" ] && echo yes || echo no)" "yes"
 check "the build's heavy is scripts/heavy.sh" "$(cmp -s "$B/$S1/heavy" "$REPO/scripts/heavy.sh" && echo same || echo differs)" "same"
@@ -170,7 +153,7 @@ check "--publish leaves the meta-gate-reserve link alone" "$([ -e "$AW_STATE_DIR
 check "--publish leaves the heavy link alone" "$([ -e "$AW_STATE_DIR/bin-r1b/heavy" ] || [ -L "$AW_STATE_DIR/bin-r1b/heavy" ] && echo yes || echo no)" "no"
 check "--publish leaves current alone" "$([ -e "$B/current" ] && echo yes || echo no)" "no"
 check "--publish writes no wrapper" "$(ls "$CLAUDE_LOCAL_BIN" | wc -l | tr -d ' ')" "0"
-has "the recipe evals ran" "$(cat "$FAKE_CALLS")" "sindri state="
+has "the verify step ran sindri help" "$(cat "$FAKE_CALLS")" "sindri state="
 has "the verify step ran judge health" "$(cat "$FAKE_CALLS")" "args=health"
 check "every verify call used a scratch AW_STATE_DIR" "$(grep -c "state=$AW_STATE_DIR/cache/install-cs/verify\." "$FAKE_CALLS")" "$(grep -c 'args=\(health\|version\|help\|$\)' "$FAKE_CALLS")"
 check "the real state dir was never a verify state" "$(grep -c "state=$AW_STATE_DIR " "$FAKE_CALLS")" "0"
@@ -274,7 +257,6 @@ fi
 
 # --- prune: newest two, current, and the build a running serve executes ---
 out="$(bash "$INSTALL" --publish 2>&1)"; check "publish of the changed source" "$?" "0"
-has "unchanged recipes skip the evals" "$out" "evals skipped"
 S2="$(others "$S1")"
 age "$S1" "$S2"; bump two; bash "$INSTALL" --publish > /dev/null 2>&1
 S3="$(others "$S1" "$S2")"
@@ -323,62 +305,13 @@ sleep 0.3
 bash "$INSTALL" --publish --rebuild > /dev/null 2>&1; check "--rebuild with no serve exits 0" "$?" "0"
 check "and publishes the seven binaries again" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "7"
 
-# --- the shipped recipes: staged from HEAD, and the eval gate ---
-ccommit() { g commit -q "$@" > /dev/null 2>&1; }
-echo "name: one-edited" > "$REPO/recipes/sindri/one.yaml"; echo "name: x" > "$REPO/recipes/sindri/x.yaml"
-out="$(bash "$INSTALL" --publish --rebuild 2>&1)"; rc=$?
-check "staging: the rebuild exits 0" "$rc" "0"
-check "staging: the build copy holds HEAD's recipe files only" "$(grep '^recipes=' "$FAKE_STAGED")" "recipes=./one.yaml ./two.yaml "
-check "staging: the edited recipe is HEAD's content" "$(grep '^recipe_one=' "$FAKE_STAGED")" "recipe_one=name: one"
-check "staging: the working tree is untouched" "$(cat "$REPO/recipes/sindri/one.yaml"):$([ -f "$REPO/recipes/sindri/x.yaml" ] && echo kept)" "name: one-edited:kept"
-g checkout -q -- recipes/sindri/one.yaml; rm -f "$REPO/recipes/sindri/x.yaml"
-
-cur_before="$(readlink "$B/current")"; DG="$B/recipes-digest"; D_BEFORE="$(cat "$DG")"
-echo "name: one-v3" > "$REPO/recipes/sindri/one.yaml"; g add -A; ccommit -m "recipe 3"
-: > "$FAKE_CALLS"
-out="$(EVAL_FAIL=1 bash "$INSTALL" --publish 2>&1)"; rc=$?
-check "eval: a failing eval fails the publish" "$rc" "1"
-has "eval: the sentence" "$out" "recipe evals failed"
-has "eval: the eval's own output" "$out" "workflow.a@1: happy fail"
-check "eval: the digest is as it was, no stage or lock left" "$([ "$(cat "$DG")" = "$D_BEFORE" ] && echo same):$(find "$B" -mindepth 1 -maxdepth 1 -name '.*' | wc -l | tr -d ' ')" "same:0"
-check "eval: current unchanged" "$(readlink "$B/current")" "$cur_before"
-
-: > "$FAKE_CALLS"
-bash "$INSTALL" --publish > /dev/null 2>&1; rc=$?
-check "eval: the same source publishes when the evals pass, running them once" "$rc:$(grep -c '^eval-call$' "$FAKE_CALLS")" "0:1"
-check "eval: the new digest is recorded" "$([ "$(cat "$DG")" != "$D_BEFORE" ] && echo recorded)" "recorded"
-
-ccommit --allow-empty -m "empty"
-: > "$FAKE_CALLS"
-EVAL_FAIL=1 bash "$INSTALL" --publish > /dev/null 2>&1; rc=$?
-check "eval: an unchanged digest skips the evals, the build still publishes" "$rc:$(grep -c '^eval-call$' "$FAKE_CALLS")" "0:0"
-
-echo "name: three" > "$REPO/recipes/sindri/three.yaml"; g add -A; ccommit -m "recipe three"
-D_BEFORE="$(cat "$DG")"
-out="$(EVAL_COUNT_DELTA=1 bash "$INSTALL" --publish 2>&1)"; rc=$?
-check "eval: an embedded count that differs from the staged yaml count fails" "$rc" "1"
-has "eval: names both counts" "$out" "embeds 4 recipes but recipes/sindri has 3"
-check "eval: a count failure records no digest" "$([ "$(cat "$DG")" = "$D_BEFORE" ] && echo same)" "same"
-
-# A profile approval this build can't read (#1143) or that isn't there: --link says the one command and still exits 0.
-bash "$INSTALL" --publish > /dev/null 2>&1   # the count failure above left this source unbuilt; --link needs a build to link
-out="$(FAKE_PROFILE_RC=2 FAKE_PROFILE_OUT="SND-PROFILE-005 x/profile.json doesn't match its approval hash" bash "$INSTALL" --link 2>&1)"; rc=$?
-check "an unreadable approval: --link still exits 0" "$rc" "0"
-has "an unreadable approval: the hint names the command" "$out" "run \`sindri profile approve\` to see the live hash"
-out="$(FAKE_PROFILE_RC=1 FAKE_PROFILE_OUT="valid, not approved" bash "$INSTALL" --link 2>&1)"; rc=$?
-has "an unapproved profile: the hint" "$out" "the profile isn't approved by this build; run \`sindri profile approve\`"
+# A profile this build can't validate: --link says the one command and still exits 0.
+bash "$INSTALL" --publish > /dev/null 2>&1   # --link needs a build to link
+out="$(FAKE_PROFILE_RC=2 FAKE_PROFILE_OUT="SND-PROFILE-001 x/profile.yaml: unknown key" bash "$INSTALL" --link 2>&1)"; rc=$?
+check "an invalid profile: --link still exits 0" "$rc" "0"
+has "an invalid profile: the hint names the command" "$out" "run \`sindri profile validate\` to see why"
 out="$(bash "$INSTALL" --link 2>&1)"
-check "an approved profile: no hint" "$(printf '%s' "$out" | grep -c 'profile approve')" "0"
-
-# A failed `git archive` fails the publish: nothing is published and no empty recipes set is embedded.
-mkdir -p "$WORK/gitfail"
-printf '#!/usr/bin/env bash\nfor a in "$@"; do [ "$a" = archive ] && { echo "fatal: archive boom" >&2; exit 128; }; done\nexec "%s" "$@"\n' "$(command -v git)" > "$WORK/gitfail/git"
-chmod +x "$WORK/gitfail/git"
-: > "$FAKE_LOG"
-out="$(PATH="$WORK/gitfail:$PATH" bash "$INSTALL" --publish --rebuild 2>&1)"; rc=$?
-check "archive failure: exit 1" "$rc" "1"
-has "archive failure: the sentence" "$out" "could not stage recipes/sindri from HEAD (git archive failed)"
-check "archive failure: nothing is published" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "0"
+check "a valid profile: no hint, and no word of approving it" "$(printf '%s' "$out" | grep -c 'profile approve\|to see why')" "0"
 
 # A tree that is not a git checkout cannot be published.
 NG="$WORK/nogit"; mkdir -p "$NG/scripts/lib" "$NG/src/Sindri/Aw.Sindri.Host"

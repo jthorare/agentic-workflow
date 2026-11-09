@@ -16,7 +16,7 @@ internal sealed record SindriSettings(string Home, string ProfilePath)
     /// <summary>The views database (derived from the ledger; deleting it rebuilds it).</summary>
     public string ViewsPath => Path.Combine(Home, "views.db");
 
-    /// <summary>Approved profile snapshots, one directory per hash.</summary>
+    /// <summary>The old approved-profile snapshots (gone since #2258 PR 1; only the cleanup class reads this path, to remove it once).</summary>
     public string ApprovalsDirectory => Path.Combine(Home, "approved");
 
     /// <summary>The control plane's endpoint record.</summary>

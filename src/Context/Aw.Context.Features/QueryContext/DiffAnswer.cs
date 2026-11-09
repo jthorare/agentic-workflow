@@ -57,6 +57,6 @@ internal sealed class DiffAnswer(MapReader graphs, IRepoReader repos)
 
         return name is null && inScope.Value.Count > 1
             ? ContextErrors.QueryInvalid.With($"name the repo the range belongs to (repos: {string.Join(", ", inScope.Value.Select(r => r.Name.Value))})")
-            : ContextErrors.RepoOutsideScope.With("that repo isn't one this caller can read (fix: name a repo of the approved profile; a session names its own X-Sindri-Repo)");
+            : ContextErrors.RepoOutsideScope.With("that repo isn't one this caller can read (fix: name a repo of the profile; a session names its own X-Sindri-Repo)");
     }
 }

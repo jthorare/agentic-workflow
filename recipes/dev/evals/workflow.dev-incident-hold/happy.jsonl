@@ -1,2 +1,0 @@
-{"start":{"inputs":{}}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Incident report: the queue was restarted and drained."}},"expect":{"state":"done","outcome":"resolved"}}

@@ -38,7 +38,9 @@ public sealed class CompleteRetryTests : IDisposable
         return await _clock.Drive(CompleteCommand.Run(_args, desk, services, new Output(_out, _error, SliceHarness.Json), Token));
     }
 
-    private static RoutedApi NoSuchInstance() => new RoutedApi().OnRaw("/sindri/workflow/instances", HttpStatusCode.NotFound,
+    private static string CompletePath => $"/sindri/workflow/instances/{Uri.EscapeDataString("ITM-1/step/1")}/runs/{Uri.EscapeDataString("1.1")}/complete";
+
+    private static RoutedApi NoSuchInstance() => new RoutedApi().OnRaw(CompletePath, HttpStatusCode.NotFound,
         """{"type":"about:blank","title":"SND-WF-001","status":404,"detail":"'ITM-1/step/1' names no one instance"}""");
 
     [Fact]
@@ -51,7 +53,7 @@ public sealed class CompleteRetryTests : IDisposable
         Assert.Equal(2, code);   // the refusal after it came back
         Assert.Equal(3, _ensured);
         Assert.Equal(2, _error.ToString().Split('\n').Count(static l => l.StartsWith("SND-API-001 ", StringComparison.Ordinal) && l.Contains("retrying in", StringComparison.Ordinal)));
-        _ = Assert.Single(api.Calls, static c => c.Path == "/sindri/workflow/instances");   // a refusal is asked once
+        _ = Assert.Single(api.Calls, static c => c.Path == CompletePath);   // a refusal is asked once
         Assert.Contains("SND-WF-001", _error.ToString(), StringComparison.Ordinal);
     }
 

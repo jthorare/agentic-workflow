@@ -11,7 +11,7 @@ using Microsoft.Data.Sqlite;
 namespace Aw.Sindri.Infrastructure.Connections;
 
 /// <summary>
-/// IConnectionStore over the 'connection' table of ledger.db (migration 8): non-secret config as JSON and the secret pointer's text.
+/// IConnectionStore over the 'connection' table of ledger.db (migration 9): non-secret config as JSON and the secret pointer's text.
 /// A read never creates or migrates the file and finds no connection on a file older than the table.
 /// </summary>
 /// <param name="database">The ledger file.</param>
@@ -24,6 +24,13 @@ internal sealed class SqliteConnectionStore(LedgerDatabase database) : IConnecti
         "ON CONFLICT(name) DO UPDATE SET kind = excluded.kind, preset = excluded.preset, config_json = excluded.config_json, secret_pointer = excluded.secret_pointer, " +
         "status = excluded.status, status_reason = excluded.status_reason, created_by = excluded.created_by, created_at = excluded.created_at, " +
         "updated_at = excluded.updated_at, last_refreshed_at = excluded.last_refreshed_at";
+
+    private const string InsertSql =
+        "INSERT INTO connection (" + Columns + ") VALUES ($name, $kind, $preset, $config, $pointer, $status, $reason, $createdBy, $createdAt, $updatedAt, $refreshedAt) ON CONFLICT(name) DO NOTHING";
+
+    private const string UpdateSql =
+        "UPDATE connection SET kind = $kind, preset = $preset, config_json = $config, secret_pointer = $pointer, status = $status, status_reason = $reason, " +
+        "created_by = $createdBy, created_at = $createdAt, updated_at = $updatedAt, last_refreshed_at = $refreshedAt WHERE name = $name";
 
     public async ValueTask<Result<Connection>> Get(ConnectionName name, CancellationToken cancellationToken)
     {
@@ -51,6 +58,36 @@ internal sealed class SqliteConnectionStore(LedgerDatabase database) : IConnecti
             var statement = new SqlStatement(UpsertSql, c => Bound(c, connection), "connection " + connection.Name);
             var written = await RecipeSessions.Execute(session, statement, token).ConfigureAwait(false);
             return written.IsError ? written.Error : Unit.Value;
+        }, cancellationToken);
+    }
+
+    public ValueTask<Result<Unit>> Insert(Connection connection, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        return RecipeSessions.Write(database, async ValueTask<Result<Unit>> (session, token) =>
+        {
+            var written = await RecipeSessions.Execute(session, new SqlStatement(InsertSql, c => Bound(c, connection), "connection " + connection.Name), token).ConfigureAwait(false);
+            if (written.IsError)
+            {
+                return written.Error;
+            }
+
+            return written.Value > 0 ? Unit.Value : SindriErrors.ConnectionExists.With($"a connection named {connection.Name} already exists");
+        }, cancellationToken);
+    }
+
+    public ValueTask<Result<Unit>> Update(Connection connection, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+        return RecipeSessions.Write(database, async ValueTask<Result<Unit>> (session, token) =>
+        {
+            var written = await RecipeSessions.Execute(session, new SqlStatement(UpdateSql, c => Bound(c, connection), "connection " + connection.Name), token).ConfigureAwait(false);
+            if (written.IsError)
+            {
+                return written.Error;
+            }
+
+            return written.Value > 0 ? Unit.Value : SindriErrors.ConnectionNotFound.With($"no connection named {connection.Name}");
         }, cancellationToken);
     }
 

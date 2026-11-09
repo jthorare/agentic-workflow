@@ -13,9 +13,9 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// Doctor's rows for the Sindri-owned record index (owned index spec, Part of #1394), so one 'sindri doctor' says what is missing before the index runs:
 /// 'context:index-store' (the record store answers), 'context:index-github', 'context:index-linear' and 'context:index-slack' (the source's token pointer
 /// resolves; never its value), 'context:index-linear-projects' (the stored projects and whose Linear key it is), 'context:index-ollama' (the records embedder's server answers with its model) and 'context:index-sync' (each source's last sync,
-/// as 'sindri index status' shows it). With no approved profile, or a source the profile doesn't name, a row is 'ok ... not configured'. No call reaches GitHub, Linear or Slack.
+/// as 'sindri index status' shows it). With no profile, or a source the profile doesn't name, a row is 'ok ... not configured'. No call reaches GitHub, Linear or Slack.
 /// </summary>
-/// <param name="approvals">The approved profile.</param>
+/// <param name="approvals">The profile.</param>
 /// <param name="scopes">The engine's scope for the store and sync reads.</param>
 /// <param name="engine">The context engine (settings check and feed progress).</param>
 /// <param name="secrets">Resolves a token pointer, as the Host does for the engine.</param>
@@ -31,7 +31,7 @@ internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScope
     internal const string OllamaName = "context:index-ollama";
     internal const string SyncName = "context:index-sync";
 
-    private const string NoProfile = "not configured (no profile is approved)";
+    private const string NoProfile = "not configured (no profile yet)";
 
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
     {
@@ -83,7 +83,7 @@ internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScope
     {
         if (!AnySource(settings))
         {
-            return new DoctorCheck(StoreName, CheckState.Ok, "not configured (the approved profile names no github, linear or slack source)", Fix: null);
+            return new DoctorCheck(StoreName, CheckState.Ok, "not configured (the profile names no github, linear or slack source)", Fix: null);
         }
 
         return progress.IsError
@@ -95,7 +95,7 @@ internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScope
     {
         if (!named)
         {
-            return new DoctorCheck(name, CheckState.Ok, $"not configured (the approved profile names no context.sources.{source})", Fix: null);
+            return new DoctorCheck(name, CheckState.Ok, $"not configured (the profile names no context.sources.{source})", Fix: null);
         }
 
         if (SourceTokens.Look(pointer, secrets) is not { } resolved)
@@ -113,7 +113,7 @@ internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScope
     {
         if (settings.Linear is null)
         {
-            return new DoctorCheck(LinearProjectsName, CheckState.Ok, "not configured (the approved profile names no context.sources.linear)", Fix: null);
+            return new DoctorCheck(LinearProjectsName, CheckState.Ok, "not configured (the profile names no context.sources.linear)", Fix: null);
         }
 
         return LinearProjectsRules.Judge(scope.IsError ? scope.Error : await engine.Projects(new ProjectFactsRequest([]), scope.Value, cancellationToken).ConfigureAwait(false));

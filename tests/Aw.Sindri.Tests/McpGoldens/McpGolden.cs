@@ -30,6 +30,15 @@ internal static class McpGolden
             new("request", "REQ-[0-9a-f]{32}", "REQ-<id>"),
             new("decision", "DEC-[0-9a-f]{32}", "DEC-<id>"),
         ];
+        // why: a todo's id, the command that wrote it and where the views stand depend on how many ids and events the pump drew while the call waited
+        NormalizationRule[] todo =
+        [
+            new("command", "\"commandId\": \"[0-9a-f-]+\"", "\"commandId\": \"<command>\""),
+            new("sequence", "\"sequence\": [0-9]+", "\"sequence\": \"<n>\""),
+            new("cursor", "\"cursor\": [0-9]+", "\"cursor\": \"<n>\""),
+            new("ledgerHead", "\"ledgerHead\": [0-9]+", "\"ledgerHead\": \"<n>\""),
+            new("todo", "td_[0-9a-z]{26}", "td_<id>"),
+        ];
         Golden.Match(
             ApiGolden.Reindent(json.ToJsonString()),
             typeof(McpGolden).Assembly,
@@ -39,6 +48,7 @@ internal static class McpGolden
                 new NormalizationRule("port", "port [0-9]+", "port <port>"),
                 new NormalizationRule("build", "sindri [^,\"]+, port", "sindri <build>, port"),
                 .. string.Equals(tool, "sindri_request", StringComparison.Ordinal) ? filed : [],
+                .. tool.StartsWith("sindri_todo", StringComparison.Ordinal) ? todo : [],
             ]));
     }
 }

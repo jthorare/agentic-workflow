@@ -34,8 +34,11 @@ public sealed class SqliteConnectionStoreContractTests : ConnectionStoreContract
     }
 
     [Fact]
-    public void The_migration_that_makes_the_table_is_the_next_one_after_the_pr_comment_marks()
-        => Assert.Contains(LedgerDatabase.Migrations, static m => m.Version == 8);
+    public void The_migration_that_makes_the_table_is_number_10_named_connections_and_reads_start_there()
+    {
+        Assert.Contains(LedgerDatabase.Migrations, static m => m.Version == 10 && m.Name.Contains("connections", StringComparison.Ordinal));
+        Assert.Equal(10, LedgerDatabase.ConnectionsVersion);   // why: the constant the store's reads wait for is the migration that makes the table
+    }
 
     [Fact]
     public async Task The_row_holds_the_pointer_and_no_token_column()

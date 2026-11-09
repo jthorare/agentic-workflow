@@ -1,7 +1,7 @@
 {
   "decisions": [
     {
-      "id": "DEC-00000000000000000000000000000012",
+      "id": "DEC-00000000000000000000000000000009",
       "kind": "accept-request",
       "class": "decision",
       "label": "decision · re-scope",
@@ -14,13 +14,13 @@
           "id": "accept",
           "label": "Accept",
           "rejectLike": false,
-          "cli": "sindri decide DEC-00000000000000000000000000000012 accept"
+          "cli": "sindri decide DEC-00000000000000000000000000000009 accept"
         },
         {
           "id": "decline",
           "label": "Decline",
           "rejectLike": true,
-          "cli": "sindri decide DEC-00000000000000000000000000000012 decline"
+          "cli": "sindri decide DEC-00000000000000000000000000000009 decline"
         }
       ],
       "recommended": "accept",
@@ -36,14 +36,14 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000012 accept",
+      "cli": "sindri decide DEC-00000000000000000000000000000009 accept",
       "cleared": null
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 7,
-    "ledgerHead": 7,
+    "cursor": 3,
+    "ledgerHead": 3,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

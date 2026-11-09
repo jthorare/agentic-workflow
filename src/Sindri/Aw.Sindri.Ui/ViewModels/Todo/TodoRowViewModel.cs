@@ -18,6 +18,11 @@ internal sealed class TodoRowViewModel : ObservableObject
     /// <summary>The todo's "td_…" id.</summary>
     public string Id { get; }
 
+    /// <summary>The checkbox's name ("Done"); the row's sentence carries the rest.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string DoneBoxName => Labels.TodoDoneBoxName;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>The text.</summary>
     public string Text { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -48,6 +53,27 @@ internal sealed class TodoRowViewModel : ObservableObject
     /// <summary>True while a both-places conflict is open on it.</summary>
     public bool HasConflict { get; private set => Set(ref field, value); }
 
+    /// <summary>"Couldn't save: " and the reason, after a key's write failed; empty otherwise.</summary>
+    public string Notice { get; internal set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The edit open on this row, or null. It is the panel's to set; a read never touches it, so the fields keep what was typed.</summary>
+    public TodoEditViewModel? Edit
+    {
+        get;
+        internal set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(IsEditing));
+            OnChanged(nameof(IsReading));
+        }
+    }
+
+    /// <summary>True while the row is an edit.</summary>
+    public bool IsEditing => Edit is not null;
+
+    /// <summary>True while the row shows its todo (not an edit).</summary>
+    public bool IsReading => Edit is null;
+
     /// <summary>The sentence a screen reader gets for the row.</summary>
     public string AccessibleName { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -57,6 +83,11 @@ internal sealed class TodoRowViewModel : ObservableObject
     internal void Update(TodoView todo, DateOnly today)
     {
         var facts = Facts.Of(todo, today);
+        if (todo.Version != Version)
+        {
+            Notice = string.Empty;   // the todo moved on (a later write, an edit from elsewhere): the old failure no longer holds
+        }
+
         Text = todo.Text;
         Version = todo.Version;
         Chips = [.. todo.Links.Take(ChipsDrawn).Select(l => l.Ref)];

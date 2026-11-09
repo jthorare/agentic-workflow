@@ -12,7 +12,7 @@ public sealed class CliStatusFollowTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_reprints_when_status_changes()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true), FollowRig.Status(needsApproval: false));
+        var api = new FollowApi(FollowRig.Status(withProblem: true), FollowRig.Status(withProblem: false));
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -22,8 +22,8 @@ public sealed class CliStatusFollowTests : IDisposable
 
         Assert.Equal(0, await FollowRig.Finished(run));
         var text = _rig.Out.ToString().ReplaceLineEndings("\n");
-        Assert.Contains("the profile needs your approval", text, StringComparison.Ordinal);
-        Assert.Contains("(approved, hash", text, StringComparison.Ordinal);
+        Assert.Contains("the live profile file has a problem", text, StringComparison.Ordinal);
+        Assert.Contains("(hash", text, StringComparison.Ordinal);
         Assert.Contains("\n\n  profile", text, StringComparison.Ordinal);   // a blank line between the two summaries
         Assert.Equal("?after=0", api.StreamQuery);
         Assert.Equal("2", api.LastAfterHeader);
@@ -32,7 +32,7 @@ public sealed class CliStatusFollowTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_ignores_pings_and_unchanged_reads()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true));
+        var api = new FollowApi(FollowRig.Status(withProblem: true));
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -49,7 +49,7 @@ public sealed class CliStatusFollowTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Two_frames_in_one_debounce_make_one_read_that_reflects_the_later_one()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true), FollowRig.Status(needsApproval: false));
+        var api = new FollowApi(FollowRig.Status(withProblem: true), FollowRig.Status(withProblem: false));
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -67,7 +67,7 @@ public sealed class CliStatusFollowTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_exits_1_when_the_stream_ends()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true));
+        var api = new FollowApi(FollowRig.Status(withProblem: true));
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -80,7 +80,7 @@ public sealed class CliStatusFollowTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_falls_back_to_polling_on_429()
     {
-        var api = new FollowApi(FollowRig.Status(needsApproval: true), FollowRig.Status(needsApproval: false)) { StreamsFull = true };
+        var api = new FollowApi(FollowRig.Status(withProblem: true), FollowRig.Status(withProblem: false)) { StreamsFull = true };
         var run = _rig.Start(api, json: false);
         await FollowRig.WaitUntil(() => api.Streams == 1);
 
@@ -88,15 +88,15 @@ public sealed class CliStatusFollowTests : IDisposable
         await _rig.Interrupt();
 
         Assert.Equal(0, await FollowRig.Finished(run));
-        Assert.Contains("(approved, hash", _rig.Out.ToString(), StringComparison.Ordinal);
+        Assert.Contains("(hash", _rig.Out.ToString(), StringComparison.Ordinal);
         Assert.Equal(1, api.Streams);   // it didn't ask for another stream
     }
 
     [Fact, Trait("Lane", "unit")]
     public async Task Follow_json_prints_one_body_per_line()
     {
-        var first = FollowRig.Status(needsApproval: true);
-        var second = FollowRig.Status(needsApproval: false);
+        var first = FollowRig.Status(withProblem: true);
+        var second = FollowRig.Status(withProblem: false);
         var api = new FollowApi(first, second);
         var run = _rig.Start(api, json: true);
         await FollowRig.WaitUntil(() => api.Streams == 1);

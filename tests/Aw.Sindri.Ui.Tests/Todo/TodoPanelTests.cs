@@ -130,7 +130,8 @@ public sealed class TodoPanelTests
         var panel = await _f.Read(Token);
 
         Assert.Equal("2 open · 1 overdue · 1 to sort out", panel.CountLine);
-        Assert.True(panel.Rows.Single(r => r.Id == "td_01jc5a8xq0n4w7ms2t9r3vbk6e").HasConflict);
+        Assert.Equal("td_01jc5a8xq0n4w7ms2t9r3vbk6e", panel.Attention?.Id);   // the conflict replaces that todo's row (spec §3.1)
+        Assert.DoesNotContain(panel.Rows, r => string.Equals(r.Id, "td_01jc5a8xq0n4w7ms2t9r3vbk6e", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -187,7 +188,7 @@ public sealed class TodoPanelTests
         _f.Server.TodosAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.ServiceUnavailable, "SND-API-011", "The views are behind.");
         var panel = _f.Panel();
         await panel.Refresh(Url, Token);
-        _f.Server.TodosAnswer = RouteAnswer.Api("todos", "list");
+        _f.Server.TodosAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, TodoSample.List);
 
         await panel.Refresh(Url, Token);
 

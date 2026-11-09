@@ -39,8 +39,14 @@ internal static class ProfileReading
         var checkedProfile = ProfileRules.Check(profile, box);
         if (checkedProfile.IsError)
         {
-            // why: a leftover Onyx section keeps its own code (owned-index spec §12.3) so the fix reads as Onyx's, not a generic shape error.
-            var definition = string.Equals(checkedProfile.Error.Code, SindriErrors.IndexOnyxInProfile.Code, StringComparison.Ordinal) ? SindriErrors.IndexOnyxInProfile : SindriErrors.ProfileInvalid;
+            // why: a leftover Onyx section (owned-index spec §12.3) and a bad todo note (todo spec §6, SND-TODO-002) keep their own codes, so the fix reads as theirs, not a generic shape error.
+            var code = checkedProfile.Error.Code;
+            var definition = true switch
+            {
+                _ when string.Equals(code, SindriErrors.IndexOnyxInProfile.Code, StringComparison.Ordinal) => SindriErrors.IndexOnyxInProfile,
+                _ when string.Equals(code, SindriErrors.TodoNoteKey.Code, StringComparison.Ordinal) => SindriErrors.TodoNoteKey,
+                _ => SindriErrors.ProfileInvalid,
+            };
             return definition.With($"{source}: {checkedProfile.Error.Message} ({Fix})");
         }
 

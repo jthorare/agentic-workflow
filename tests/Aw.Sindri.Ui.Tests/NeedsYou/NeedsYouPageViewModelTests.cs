@@ -12,18 +12,15 @@ public sealed class NeedsYouPageViewModelTests
 {
     private readonly FakeTimeProvider _clock = new(A.Noon);
     private readonly FakeClipboard _clipboard = new();
-    private readonly FakeSindriApi _server = new();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private Task<(NeedsYouViewModel List, NeedsYouPageViewModel Page)> Page(params NeedsYouEntry[] rows) => Page(confirm: null, rows);
-
-    private async Task<(NeedsYouViewModel List, NeedsYouPageViewModel Page)> Page(NeedsYouConfirm? confirm, params NeedsYouEntry[] rows)
+    private async Task<(NeedsYouViewModel List, NeedsYouPageViewModel Page)> Page(params NeedsYouEntry[] rows)
     {
         var list = new NeedsYouViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _clock);
         await list.Restore(Token);
         list.Update(new NeedsYouFeed(rows, rows.Length == 0 ? "Nothing needs you. 1 running, 2 queued." : ""));
-        return (list, new NeedsYouPageViewModel(list, _clock, _clipboard, new FakeLauncher(), confirm));
+        return (list, new NeedsYouPageViewModel(list, _clock, _clipboard, new FakeLauncher()));
     }
 
     [Fact]
@@ -203,32 +200,5 @@ public sealed class NeedsYouPageViewModelTests
         _ = page.Move(1);
 
         Assert.Equal((NeedsYouBarMode.Pending, false, "Approve"), (page.Bar.Mode, page.Bar.ReadToEnd, page.Bar.ApproveWord));
-    }
-
-    [Fact]
-    public async Task Approving_replaces_the_card_with_the_done_card_until_the_user_moves_on()
-    {
-        var (list, page) = await Page(new NeedsYouConfirm(() => new Uri("http://127.0.0.1:7410/"), _server), NeedsYouRows.ProfileReady(), NeedsYouRows.Decision());
-        list.Select(NeedsYouRows.ProfileReady().Id);
-        await page.Bar.Loaded;
-
-        await page.Bar.PressApprove();
-
-        Assert.Equal((true, false, Labels.NeedsYouApprovedTitle(NeedsYouRows.ProfileReady().Title)), (page.IsDone, page.ShowsRequest, page.Bar.DoneTitle));
-        _ = page.Move(-1);   // the decisions group is listed before the settings one, so the approved profile is the last row and the other way is up
-        Assert.Equal((false, true), (page.IsDone, page.ShowsRequest));
-    }
-
-    [Fact]
-    public async Task A_request_that_left_the_list_keeps_its_card_and_quiets_the_bar()
-    {
-        var (list, page) = await Page(new NeedsYouConfirm(() => new Uri("http://127.0.0.1:7410/"), _server), NeedsYouRows.ProfileReady(), NeedsYouRows.Decision());
-        list.Select(NeedsYouRows.ProfileReady().Id);
-        await page.Bar.Loaded;
-
-        list.Update(new NeedsYouFeed([NeedsYouRows.Decision()], ""));
-
-        Assert.True(page.IsCleared);
-        Assert.False(page.Bar.PrimaryEnabled);
     }
 }

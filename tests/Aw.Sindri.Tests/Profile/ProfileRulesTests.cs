@@ -1,5 +1,4 @@
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Tests.Profile;
@@ -74,24 +73,4 @@ public sealed class ProfileRulesTests
         Assert.Empty(ProfileDiff.Between(live, live));
         Assert.Equal(["api.port", "schemaVersion", "services.heartbeat.every", "tenant", "user"], ProfileDiff.Between(approved: null, live));
     }
-
-    [Theory, Trait("Lane", "unit")]
-    [InlineData(null, null, null, true)]
-    [InlineData(null, null, "a", true)]
-    [InlineData("a", "a", "a", false)]
-    [InlineData("a", "a", "b", true)]
-    [InlineData("a", "a", null, false)]
-    [InlineData("a", null, "a", true)]    // saved, but its event never reached the ledger
-    [InlineData("a", "b", "a", true)]     // B's event recorded, its save failed, the file edited back to A
-    [InlineData("a", "b", null, true)]    // the same with a live file that doesn't read
-    public void A_profile_needs_approval_unless_it_is_saved_and_the_latest_recorded_approval(string? saved, string? recorded, string? live, bool needs)
-    {
-        Assert.Equal(needs, ProfileRules.NeedsApproval(Hash(saved), Hash(recorded), Hash(live)));
-        if (Hash(live) is { } judged)
-        {
-            Assert.Equal(!needs, ProfileRules.IsApproved(Hash(saved), Hash(recorded), judged));
-        }
-    }
-
-    private static ProfileHash? Hash(string? which) => which is null ? null : ProfileHash.From(new string(which[0], 64));
 }

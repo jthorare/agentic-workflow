@@ -1,3 +1,0 @@
-{"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:lineContext":{"base":"origin/main","run":"line-1"}}}}
-{"trigger":{"kind":"step.completed","outcome":"seeded","outputs":{"fact:buildNotes":{},"fact:workspace":"/work/phase-1","fact:built":{},"fact:change":{},"fact:redTests":{}}},"expect":{"state":"build"}}
-{"trigger":{"kind":"wait.satisfied","outcome":"cancelled"},"expect":{"state":"dropped","outcome":"unresolved"}}

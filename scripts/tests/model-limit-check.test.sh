@@ -43,9 +43,9 @@ s="$AW_SINDRI_HOME/stub"; mkdir -p "$s"
 flag() { [ -e "$s/$1" ]; }
 case "$*" in
   "profile init") printf 'schemaVersion: 1\nuser: "thor"\n' > "$AW_SINDRI_HOME/profile/profile.yaml" ;;
-  "profile validate --json") printf '{"valid":true,"hash":"%s"}\n' "$(printf 'ab%.0s' $(seq 1 32))"; flag approved && exit 0; exit 1 ;;
+  "profile validate --json") printf '{"valid":true,"hash":"%s"}\n' "$(printf 'ab%.0s' $(seq 1 32))" ;;
   "--headless") touch "$s/serving" ;;
-  "status --json") if flag serving; then echo '{"running":true,"profile":{"needsApproval":false}}'; else echo '{"running":false}'; fi; exit 1 ;;
+  "status --json") if flag serving; then echo '{"running":true}'; else echo '{"running":false}'; fi; exit 1 ;;
   "status") echo "running" ;;
   "code-index status --repo agentic-workflow --json") flag indexed && { echo '{"repos":[{"state":"ok"}]}'; exit 0; }; exit 1 ;;
   "services run code-index-main-move") touch "$s/indexed" ;;
@@ -77,7 +77,7 @@ run up --dry-run
 expect "up --dry-run walks home, fakes, first run to step 5, refresh, the pause and the app (exit 0)" 0 \
   "sindri-app-firstrun-modellimit (port 7482)" "fake-bin/claude" "harnesses: [claude-code, codex]" "stopped after step 5" \
   "context map refresh --detach --json" "jobs show <job> --json" '.waitingOn == "model-limit"' "Check 1 (#2112 step 1)"
-case "$OUT" in *"context map status --json"*|*"recipe list"*) fail "up --dry-run stops the first run before its map and recipe steps" ;; *) ok "up --dry-run stops the first run before its map and recipe steps" ;; esac
+case "$OUT" in *"context map status --json"*|*"item add"*) fail "up --dry-run stops the first run before its map and item steps" ;; *) ok "up --dry-run stops the first run before its map and item steps" ;; esac
 run resume --cli --dry-run
 expect "resume --cli --dry-run brings claude-code back, resumes and waits for success" 0 "rm $HOME_DIR/model-limit/limited-claude-code" "jobs resume <job>" '.state == "succeeded"'
 run resume --dry-run
@@ -116,13 +116,15 @@ if ! command -v jq >/dev/null 2>&1; then
   echo "  skip the real-run cases: jq isn't installed"
 else
   mkdir -p "$STATE/cache/bin/temporal-1.9.1"
-  echo "model-limit-check: up stops for approval, with the fakes in place"
+  echo "model-limit-check: up has no approval stop, with the fakes in place"
   run up --no-embeddings --no-graph --no-ui
-  expect "up writes the profile, then stops for approval and names its own continue (exit 3)" 3 "profile approve abababab" "Then run:  scripts/model-limit-check.sh up"
+  expect "up writes the profile and runs on to the model-limit pause, asking for no profile approval (exit 0)" 0 "JOB-0001 is waiting on model-limit"
   P="$HOME_DIR/profile/profile.yaml"
   if grep -q '^  models:' "$P" && grep -q 'default: { harnesses: \[claude-code, codex\] }' "$P"; then ok "the profile routes every kind to claude-code, then codex"; else fail "the profile routes every kind to claude-code, then codex"; sed 's/^/       | /' "$P"; fi
   if logged "home=sindri-app-firstrun-modellimit port=7482" && ! logged "port=7481" && ! logged "port=7410"; then ok "every call used the check's home and port 7482"; else fail "every call used the check's home and port 7482"; fi
 
+  if [ "$(cut -d' ' -f2- "$HOME_DIR/model-limit/calls.log" | tr '\n' '|')" = "claude-code limit|codex limit|" ]; then ok "the refresh reached both fakes through the PATH the script gave sindri"; else fail "the refresh reached both fakes through the PATH"; sed 's/^/       | /' "$HOME_DIR/model-limit/calls.log"; fi
+  : > "$HOME_DIR/model-limit/calls.log"
   echo "model-limit-check: the fakes"
   F="$HOME_DIR/fake-bin"; L="$HOME_DIR/model-limit"
   if [ -x "$F/claude" ] && [ -x "$F/codex" ] && [ -e "$L/limited-claude-code" ] && [ -e "$L/limited-codex" ]; then ok "both fakes are written, both at their limit"; else fail "both fakes are written, both at their limit"; ls -la "$F" "$L" 2>&1 | sed 's/^/       | /'; fi
@@ -144,13 +146,10 @@ else
   expect "limit puts a fake back at its limit" 0 "limited: claude-code, codex"
   : > "$L/calls.log"
 
-  echo "model-limit-check: approve, pause, resume, down"
-  mkdir -p "$HOME_DIR/stub"; : > "$HOME_DIR/stub/approved"
-  : > "$STUB_LOG"
+  echo "model-limit-check: pause, resume, down"
   run up --no-embeddings --no-graph --no-ui
-  expect "after approval, up serves, indexes, refreshes and waits until the job pauses on model-limit (exit 0)" 0 "JOB-0001 is waiting on model-limit" "Check 1 (#2112 step 1)"
-  if logged '--headless' && logged 'services run code-index-main-move' && logged 'context map refresh --detach --json' && ! logged 'recipe list'; then ok "serve, the index and the refresh ran; nothing past step 5 of the first run"; else fail "serve, the index and the refresh ran; nothing past step 5 of the first run"; sed 's/^/       | /' "$STUB_LOG"; fi
-  if [ "$(cut -d' ' -f2- "$L/calls.log" | tr '\n' '|')" = "claude-code limit|codex limit|" ]; then ok "the refresh reached both fakes through the PATH the script gave sindri"; else fail "the refresh reached both fakes through the PATH"; sed 's/^/       | /' "$L/calls.log"; fi
+  expect "a second up finds the job paused on model-limit again (exit 0)" 0 "JOB-0001 is waiting on model-limit" "Check 1 (#2112 step 1)"
+  if logged '--headless' && logged 'services run code-index-main-move' && logged 'context map refresh --detach --json' && ! logged 'item add'; then ok "serve, the index and the refresh ran; nothing past step 5 of the first run"; else fail "serve, the index and the refresh ran; nothing past step 5 of the first run"; sed 's/^/       | /' "$STUB_LOG"; fi
   if [ "$(cat "$L/job.id")" = JOB-0001 ]; then ok "the job id is kept"; else fail "the job id is kept"; fi
   run resume --cli
   expect "resume --cli brings claude-code back, resumes, and the job succeeds with a labeling answer (exit 0)" 0 "Check 2 (#2112 step 2)" "the fake claude answered 1 call(s)"
