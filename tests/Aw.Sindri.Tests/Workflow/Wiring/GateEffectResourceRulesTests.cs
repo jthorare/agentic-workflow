@@ -66,7 +66,7 @@ public sealed class GateEffectResourceRulesTests
         var findings = CheckBlocks(recipe, new Located("RCP-EFFECT-001.yaml", [("transitions[0].effects[0]", 16, 83)], Profile: profile));
 
         Assert.Equal(
-            ["RCP-EFFECT-001: effect 'effect.notify.desk' isn't on the profile's effect allowlist at RCP-EFFECT-001.yaml:16:83 (transitions[0].effects[0].use); add it to workflow.effects and approve the profile, or remove it"],
+            ["RCP-EFFECT-001: effect 'effect.notify.desk' isn't on the profile's effect allowlist at RCP-EFFECT-001.yaml:16:83 (transitions[0].effects[0].use); add it to workflow.effects, or remove it"],
             findings.Lines());
         Assert.Equal(FindingSeverity.Error, Assert.Single(findings).Severity);
     }

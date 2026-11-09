@@ -54,7 +54,7 @@ internal sealed partial class ReviewSettingsViewModel
             return;
         }
 
-        (Note, Announcement) = answer.Value.Approved ? (string.Empty, Labels.ReviewSettingsSavedApproved) : (Labels.ReviewSettingsPending(answer.Value.PendingCount), string.Empty);
+        (Note, Announcement) = (string.Empty, Labels.ReviewSettingsSaved);
         _snapshot = null;   // saved: the read below replaces every edit
         if (!await Read(request.Project, discard: true, cancellationToken).ConfigureAwait(true))
         {

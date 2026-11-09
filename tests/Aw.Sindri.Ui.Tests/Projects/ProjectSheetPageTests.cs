@@ -10,8 +10,8 @@ namespace Aw.Sindri.Ui.Tests.Projects;
 [Lane(TestLane.Unit)]
 public sealed class ProjectSheetPageTests
 {
-    private const string Kitchen = "prj_0000000000000000000000000R";
-    private const string Mobile = "prj_0000000000000000000000000H";
+    private const string Kitchen = "prj_0000000000000000000000000F";
+    private const string Mobile = "prj_00000000000000000000000008";
     private const string Checkout = "linear:project/00000000-0000-4000-8000-000000000001";
 
     private readonly ProjectsFixture _f = new();

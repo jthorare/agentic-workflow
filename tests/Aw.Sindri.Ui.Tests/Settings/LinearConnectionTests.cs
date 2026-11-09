@@ -96,36 +96,8 @@ public sealed class LinearConnectionTests
         var sent = Assert.Single(_server.LinearConnects);
         Assert.Equal(("read", "lin_api_secret"), (sent.Kind, sent.Key));
         Assert.Equal(["OPS"], sent.Teams, StringComparer.Ordinal);
-        Assert.Equal((string.Empty, "Reading ENG, OPS · read-only", false, true, false), (card.ReadKey, card.Summary, card.HasError, card.ShowReadSet, card.HasWaiting));
+        Assert.Equal((string.Empty, "Reading ENG, OPS · read-only", false, true), (card.ReadKey, card.Summary, card.HasError, card.ShowReadSet));
         Assert.Equal($"Read access: connected · checked {CheckedAt}", card.ReadAccessText);
-    }
-
-    [Fact]
-    public async Task A_save_that_waits_behind_other_profile_changes_says_so_and_offers_Review_changes()
-    {
-        var card = await Listed();
-        card.Teams[0].IsTicked = true;
-        _server.LinearConnectAnswer = RouteAnswer.Api("linear-connect", "read-saved-waiting");
-        var reviews = 0;
-        card.ReviewRequested += (_, _) => reviews++;
-
-        await card.SaveRead(Token);
-        card.RequestReview();
-
-        Assert.Equal((true, Labels.LinearConnWaitingRead, 1), (card.HasWaiting, card.AttentionText, reviews));
-    }
-
-    [Fact]
-    public async Task A_refreshed_read_forgets_a_waiting_line_the_owner_has_since_cleared()
-    {
-        var card = await Listed();
-        card.Teams[0].IsTicked = true;
-        _server.LinearConnectAnswer = RouteAnswer.Api("linear-connect", "read-saved-waiting");
-        await card.SaveRead(Token);
-
-        await card.Refresh(_api, Token);
-
-        Assert.Equal((false, string.Empty), (card.HasWaiting, card.AttentionText));
     }
 
     [Fact]
@@ -304,28 +276,6 @@ public sealed class LinearConnectionTests
     private static RouteAnswer Connection(string read, string write, bool pending, params string[] teams) =>
         new(HttpStatusCode.OK,
             $$"""{"read":{"state":"{{read}}","checkedAt":"2026-01-01T09:58:00.0000000Z"},"write":{"state":"{{write}}","checkedAt":"2026-01-01T09:58:00.0000000Z"},"teams":[{{string.Join(',', teams.Select(k => $$"""{"id":"00000000-0000-4000-8000-0000000000e1","key":"{{k}}","name":"{{k}}"}"""))}}],"pending":{{(pending ? "true" : "false")}}}""");
-
-    [Fact]
-    public async Task A_first_read_that_is_pending_with_no_save_here_says_the_change_waits_not_that_it_was_saved()
-    {
-        var card = await Shown("pending");
-
-        Assert.Equal((true, Labels.LinearConnPending), (card.HasWaiting, card.AttentionText));
-    }
-
-    [Fact]
-    public async Task A_save_that_waits_keeps_its_own_line_through_the_refresh_its_own_profile_event_causes()
-    {
-        var card = await Listed();
-        card.Teams[0].IsTicked = true;
-        _server.LinearConnectAnswer = RouteAnswer.Api("linear-connect", "read-saved-waiting");
-        _server.LinearConnectionAnswer = RouteAnswer.Api("linear-connection", "pending");
-        await card.SaveRead(Token);
-
-        await card.Refresh(_api, Token);
-
-        Assert.Equal((true, Labels.LinearConnWaitingRead), (card.HasWaiting, card.AttentionText));
-    }
 
     [Fact]
     public async Task Listing_after_Replace_key_ticks_the_teams_already_stored()

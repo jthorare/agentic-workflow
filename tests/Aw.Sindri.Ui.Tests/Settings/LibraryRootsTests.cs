@@ -207,30 +207,6 @@ public sealed class LibraryRootsTests
         Assert.Empty(Assert.Single(_server.LibraryRootAdds).Deny);
     }
 
-    [Fact]
-    public async Task A_save_that_waits_for_the_profile_approval_says_so_and_closes_the_form()
-    {
-        var card = await Filled();
-        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "added-pending-others");
-
-        await card.Form.Save(Token);
-
-        Assert.Equal((Labels.ReviewsLoginPending, true, false), (card.Note, card.HasNote, card.Form.IsOpen));
-    }
-
-    [Fact]
-    public async Task A_later_approved_change_clears_the_waiting_line()
-    {
-        var card = await Filled();
-        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "added-pending-others");
-        await card.Form.Save(Token);
-        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "removed");
-
-        await card.Remove(Row(card, "work"), Token);
-
-        Assert.Equal((string.Empty, false), (card.Note, card.HasNote));
-    }
-
     [Theory]
     [InlineData("bad-name", "name")]
     [InlineData("duplicate-name", "name")]
@@ -352,17 +328,6 @@ public sealed class LibraryRootsTests
         await card.TurnAw(on: true, Token);
 
         Assert.Equal([(false, true), (true, true)], _server.LibraryAwSwitches.Select(s => (s.On, s.Approve)));
-    }
-
-    [Fact]
-    public async Task A_turn_off_that_waits_for_the_approval_says_so()
-    {
-        var card = await Shown();
-        _server.LibraryRootAnswer = RouteAnswer.Api("library-roots", "added-pending-others");
-
-        await card.TurnAw(on: false, Token);
-
-        Assert.Equal(Labels.ReviewsLoginPending, card.Note);
     }
 
     [Fact]

@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Setup;
-using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.RunDoctor;
@@ -37,15 +36,14 @@ public sealed class StaleBuildCheckTests
         var approved = SliceHarness.Profile("5s");
         H.Profiles.Live = approved;
         _ = await H.HoldLease();
-        _ = await new ApproveProfileService(H.Profiles, H.Profiles, H.Held, H.Store, H.Events, new ProfileChecks(FakeContextEngine.Instance, new FixedAgentCatalog())).Handle(new ApproveProfileRequest(approved.Hash, H.Confirm(approved.Hash)), Token);
-        var service = new GetStatusService(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, H.Events, _v.Progress, new HealthServiceRows(_v.Views, [], builds: stamps), new InMemorySessionSnapshot());
+        var service = new GetStatusService(H.Held, new ProfileReads(H.Profiles, H.Profiles), H.Store, _v.Progress, new HealthServiceRows(_v.Views, [], builds: stamps), new InMemorySessionSnapshot());
         return (await service.Handle(new GetStatusRequest(), Token)).Value;
     }
 
     private async Task<IReadOnlyList<DoctorCheck>> Doctor(IBuildStamps stamps)
     {
         var views = new InMemoryViewStore(SliceHarness.Json);
-        var service = new RunDoctorService(H.Store, H.Probe, new LedgerFacts(H.Store, views), new ProfileFacts(H.Profiles, H.Profiles, H.Store, H.Events,
+        var service = new RunDoctorService(H.Store, H.Probe, new LedgerFacts(H.Store, views), new ProfileFacts(H.Profiles,
             new ContextEngineChecks(FakeContextEngine.Instance, new MapPublishDoctorCheck(new MapPublishStatusReader(FakeContextEngine.Instance, new NoIndexOutlooks(), H.Store, H.Clock), H.Clock), new LinearDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))), new Features.CodeIndexJobs.CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins(), H.Clock, H.Profiles))),
             new RuntimeFacts(new FakeControlPlaneProbe(), new FakeTemporalServer(), stamps), H.Clock);
         return (await service.Handle(new RunDoctorRequest(), Token)).Value.Checks;

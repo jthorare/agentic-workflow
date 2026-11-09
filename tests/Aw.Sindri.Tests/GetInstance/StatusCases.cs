@@ -77,7 +77,7 @@ internal static class StatusCases
         "parked-revoked" => Case(Park(ParkReason.SpecConflict, ParkKind.Revoked, "workflow.step was revoked."), Ago(4)),
         "parked-dispatch-no-runtime" => Case(DispatchPark("effect.claim.ref can't run: repo 'x' isn't in the approved profile (SND-WF-010). Fix that, then resume to send it again."), Ago(4)),
         "parked-dispatch-effect-failed" => Case(DispatchPark("effect.claim.ref can't run: the ref could not be created. Fix that, then resume to send it again."), Ago(4)),
-        "parked-dispatch-allowlist" => Case(DispatchPark("effect.claim.ref isn't on the profile's effect allowlist. Add it and approve the profile, then resume to send it again."), Ago(4)),
+        "parked-dispatch-allowlist" => Case(DispatchPark("effect.claim.ref isn't on the profile's effect allowlist. Add it, then resume to send it again."), Ago(4)),
         "parked-drift" => Case(Park(ParkReason.SpecConflict, ParkKind.Drift, "step.produce"), Ago(4)),
         "parked-no-runtime" => Case(Park(ParkReason.NoRuntime, kind: null, "step.test.agent"), Ago(2)),
         "parked-rounds-with-drift" => Case(Park(ParkReason.Rounds, ParkKind.Loop, "revisions used 3 of 3 rounds") with { PendingPark = Suspended(ParkReason.SpecConflict, ParkKind.Drift, "step.produce") }, Ago(30)),

@@ -21,18 +21,6 @@ internal static partial class Labels
     /// <summary>The layer head's button for a list of pins.</summary>
     internal const string PinAddSeveral = "Add several";
 
-    /// <summary>A written pin the approval hasn't covered.</summary>
-    internal const string PinNotApproved = "Pinned, not approved yet";
-
-    /// <summary>A removal the approval hasn't covered.</summary>
-    internal const string PinUnpinNotApproved = "Unpinned, not approved yet";
-
-    /// <summary>Why a written pin waits.</summary>
-    internal const string PinOtherChangesWaiting = "Other changes are waiting, so this needs your review.";
-
-    /// <summary>The button that opens the needs-you review.</summary>
-    internal const string PinReviewAndApprove = "Review and approve";
-
     /// <summary>The button that opens the held map's review.</summary>
     internal const string PinOpenReview = "Open review";
 

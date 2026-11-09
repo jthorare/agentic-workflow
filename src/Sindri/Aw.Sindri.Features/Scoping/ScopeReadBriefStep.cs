@@ -9,7 +9,7 @@ namespace Aw.Sindri.Features.Scoping;
 /// <summary>
 /// 'step.scope.read-brief', on the block runtime (scoping spec §7, §8.2): reads the brief file the scope input names from the item's repo checkout
 /// (<see cref="IBriefFiles"/>: inside the repo, never a secret, never through a link that leaves it), asks the context engine's text shape for its anchors, then runs
-/// <c language="text">ScopingSteps.ReadBrief</c>'s code. An item with no repo in the approved profile has no checkout to read from, so the Step fails and the instance parks.
+/// <c language="text">ScopingSteps.ReadBrief</c>'s code. An item with no repo in the profile has no checkout to read from, so the Step fails and the instance parks.
 /// </summary>
 /// <param name="files">Reads the brief.</param>
 /// <param name="checkouts">Where the repo's checkout is.</param>
@@ -34,7 +34,7 @@ internal sealed class ScopeReadBriefStep(IBriefFiles files, IRepoCheckouts check
 
         if (context.Repo is not { } repo)
         {
-            return SindriErrors.InvalidInput.With("the item has no repo, so there is no checkout to read the brief from (fix: add the repo to the profile and approve it)");
+            return SindriErrors.InvalidInput.With("the item has no repo, so there is no checkout to read the brief from (fix: add the repo to the profile)");
         }
 
         var root = await checkouts.Of(repo, cancellationToken).ConfigureAwait(false);

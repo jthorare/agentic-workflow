@@ -2,6 +2,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Profile;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.IndexSources;
 
@@ -23,7 +24,7 @@ public sealed class YamlSourceTokenProfileWriterTests : IDisposable
 
     private string ProfilePath => Path.Combine(_dir, "profile", "profile.yaml");
 
-    private YamlSourceTokenProfileWriter Writer() => new(new SindriSettings(_dir, ProfilePath));
+    private YamlSourceTokenProfileWriter Writer() => new(new SindriSettings(_dir, ProfilePath), NoProfileCache.Instance);
 
     private void Write(string yaml)
     {

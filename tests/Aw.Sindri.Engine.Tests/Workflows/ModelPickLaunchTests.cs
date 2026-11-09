@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel;
-using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Judge;
@@ -469,7 +468,7 @@ public sealed class ModelPickLaunchTests : IDisposable
         await WorkflowsHarness.HoldLease(sindri, ct);
         var declared = new SindriProfile(SindriProfile.CurrentSchemaVersion, "tester", Repos: [new RepoEntry(Repo, Path.Combine(_harness.Home, "checkout"))], Workflow: new WorkflowSettings(Agent: new WorkflowAgentSettings(_claude)));
         var profile = ProfileRules.Check(declared).Value;
-        var saved = await sindri.GetRequiredService<IApprovals>().Save(new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml"), ct);
+        var saved = await LiveProfileFile.Write(sindri, profile, ct);
         Assert.False(saved.IsError, saved.IsError ? saved.Error.Message : null);
         var item = _harness.Fact(JsonSerializer.Serialize(new { id = Item, repo = Repo, spec = (string?)null }));
         return new PickRig(sindri, item, launcher, judge);

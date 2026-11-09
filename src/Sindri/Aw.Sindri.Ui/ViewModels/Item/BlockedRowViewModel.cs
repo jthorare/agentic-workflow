@@ -14,14 +14,11 @@ internal sealed class BlockedRowViewModel : ObservableObject
 
     private readonly Func<AllowRequest, CancellationToken, Task<Result<AllowView>>> _send;
     private readonly LiveAnnouncer _voice;
-    private readonly Action<ApprovalRequestedEventArgs> _approval;
-    private readonly Func<CancellationToken, Task<string?>> _approvedNow;
     private BlockedTarget _target;
 
-    internal BlockedRowViewModel(BlockedTarget target, Func<AllowRequest, CancellationToken, Task<Result<AllowView>>> send, LiveAnnouncer voice, Action<ApprovalRequestedEventArgs> approval, Func<CancellationToken, Task<string?>>? approvedNow = null)
+    internal BlockedRowViewModel(BlockedTarget target, Func<AllowRequest, CancellationToken, Task<Result<AllowView>>> send, LiveAnnouncer voice)
     {
-        (_target, _send, _voice, _approval) = (target, send, voice, approval);
-        _approvedNow = approvedNow ?? (static _ => Task.FromResult<string?>(null));
+        (_target, _send, _voice) = (target, send, voice);
         Draw();
     }
 
@@ -39,7 +36,7 @@ internal sealed class BlockedRowViewModel : ObservableObject
     {
         AllowState.Allowed => Labels.AllowDone,
         AllowState.Refused => Labels.AllowRefused,
-        AllowState.Idle or AllowState.Sending or AllowState.NeedsApproval => Labels.AllowButton,
+        AllowState.Idle or AllowState.Sending => Labels.AllowButton,
         _ => throw new InvalidOperationException("an Allow state the row doesn't word"),
     };
 
@@ -72,36 +69,13 @@ internal sealed class BlockedRowViewModel : ObservableObject
         Draw();
     }
 
-    /// <summary>The owner approved the profile: the allowance is in force.</summary>
-    internal void Settle()
-    {
-        if (State == AllowState.NeedsApproval)
-        {
-            State = AllowState.Allowed;
-            _voice.Say(Labels.AllowDone);
-        }
-    }
-
-    /// <summary>The approved profile's hash read when the Allow became a draft edit; null when none was approved or it couldn't be read.</summary>
-    internal string? ApprovedWhenAsked { get; private set; }
-
-    /// <summary>True while the approval is open and not yet answered.</summary>
-    internal bool IsWaitingForApproval => State == AllowState.NeedsApproval;
-
-    /// <summary>Presses Allow; a second press while sending does nothing, and one while the approval is open opens it again.</summary>
+    /// <summary>Presses Allow; a second press while sending does nothing.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>A task that ends when the answer was drawn.</returns>
     internal async Task Allow(CancellationToken cancellationToken)
     {
         if (!HasAllow || State is AllowState.Sending or AllowState.Allowed)
         {
-            return;
-        }
-
-        if (State == AllowState.NeedsApproval)
-        {
-            _voice.Say(Labels.AllowNeedsApproval(_target.Target));
-            _approval(new ApprovalRequestedEventArgs(_target.Target));
             return;
         }
 
@@ -115,18 +89,8 @@ internal sealed class BlockedRowViewModel : ObservableObject
             return;
         }
 
-        if (string.Equals(answer.Value.State, "allowed", StringComparison.Ordinal))
-        {
-            State = AllowState.Allowed;   // the approved profile already has it
-            _voice.Say(Labels.AllowDone);
-            return;
-        }
-
-        // The approved profile's hash as the edit lands: the row is allowed only once the approved hash moves past it.
-        ApprovedWhenAsked = await _approvedNow(cancellationToken).ConfigureAwait(true);
-        State = AllowState.NeedsApproval;
-        _voice.Say(Labels.AllowNeedsApproval(_target.Target));
-        _approval(new ApprovalRequestedEventArgs(_target.Target));
+        State = AllowState.Allowed;   // the live profile has it as soon as it is written
+        _voice.Say(Labels.AllowDone);
     }
 
     private void Draw()

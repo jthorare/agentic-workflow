@@ -30,10 +30,9 @@ internal sealed partial class SetupViewModel
             ? string.Equals(step.State, "failed", StringComparison.Ordinal) ? MapRefresh : null
             : step.Action is { Length: > 0 } served && !HasForm(step, served) ? served : null;
 
-    // The profile row confirms in the row (typed, or held) when the catalog lets the app; otherwise they keep the terminal copy of the action.
+    // The repo form is in the row when the catalog lets the app send what it sends; otherwise the step keeps the terminal copy of the action.
     private bool HasForm(SetupStepView step, string action) =>
-        Ready(action) && (string.Equals(step.Id, "repo", StringComparison.Ordinal)
-            || (string.Equals(step.Id, ProfileStep, StringComparison.Ordinal) && string.Equals(action, ProfileAction, StringComparison.Ordinal)));
+        Ready(action) && string.Equals(step.Id, "repo", StringComparison.Ordinal);
 
     private bool Ready(string action) => _catalog.IsReady(action);
 
@@ -64,10 +63,6 @@ internal sealed partial class SetupViewModel
             row.Repo = new SetupRepoFormViewModel(() => _url, _api, _folders, () => Ready("AddRepo"), note => Started(row, note));
             row.Repo.Update(row.Step);
         }
-        else if (string.Equals(row.Id, ProfileStep, StringComparison.Ordinal))
-        {
-            row.Profile = new SetupProfileConfirmViewModel(() => _url, _profileHash, _api, () => _catalog.Row("ApproveProfile")?.Cli ?? "");
-        }
     }
 
     private void Started(SetupStepViewModel row, string note)
@@ -77,13 +72,4 @@ internal sealed partial class SetupViewModel
     }
 
     private bool Knows(string action, bool inApp) => inApp || _catalog.Row(action) is not null || Labels.SetupCli(action).Length > 0;
-
-    // The confirmation in the profile row follows their step: asked for while it needs the person, dropped when it does not. An approval under way is left to finish.
-    private static void Confirm(SetupStepViewModel row)
-    {
-        if (row.Profile is { } profile)
-        {
-            _ = profile.Follow(row.NeedsYou);
-        }
-    }
 }

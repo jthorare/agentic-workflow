@@ -3,13 +3,13 @@ using Aw.Kernel;
 namespace Aw.Sindri.Core.Profile;
 
 /// <summary>
-/// The read-only half of <see cref="IApprovals"/>: the latest approved profile. Query handlers take this, never the
-/// write port (ARCH-CQRS-002).
+/// The profile runtime reads (#2258 PR 1: edits apply on save, so this is the live profile, validated). The name stays for one
+/// release so the injection sites don't all change at once.
 /// </summary>
 public interface IApprovedProfile
 {
-    /// <summary>The most recently approved profile, or null when none was approved.</summary>
+    /// <summary>The live profile, or null when there is no profile file.</summary>
     /// <param name="cancellationToken">Cancels the operation.</param>
-    /// <returns>The snapshot.</returns>
+    /// <returns>The profile.</returns>
     public ValueTask<Result<LoadedProfile?>> Latest(CancellationToken cancellationToken);
 }

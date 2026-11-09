@@ -3,7 +3,7 @@
              xmlns:pvm="using:Aw.Sindri.Ui.ViewModels.Projects"
              x:Class="Aw.Sindri.Ui.Views.Projects.ReviewSettingsSection"
              x:DataType="pvm:ReviewSettingsViewModel">
-  <!-- The project sheet's Review settings (review page spec §7, Ph9): the settings entry, where each key comes from, an editor per key with Reset to default, the project's repos and Save and approve.
+  <!-- The project sheet's Review settings (review page spec §7, Ph9): the settings entry, where each key comes from, an editor per key with Reset to default, the project's repos and Save.
        Every named line is a Border the screen reader reads as one text (a TextBlock's peer ignores a Name); every field has its own name, rows say which row they are. -->
   <StackPanel x:Name="ReviewSettings" Spacing="{StaticResource Space.MD}" IsVisible="{Binding IsShown}">
     <TextBlock Classes="eyebrow" Text="{Binding Words.Heading}" AutomationProperties.AccessibilityView="Raw" />

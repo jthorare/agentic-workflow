@@ -48,16 +48,11 @@ public sealed class LibraryRootsGoldenTests
     }
 
     [Theory]
-    [InlineData("added", true, 0)]
-    [InlineData("added-pending-others", false, 2)]
-    [InlineData("removed", true, 0)]
-    [InlineData("aw-off", true, 0)]
-    public void Each_write_answers_approved_and_how_many_changes_still_wait(string scenario, bool approved, int pending)
-    {
-        var read = Kernel.Json.AwJson.Deserialize<LibraryRootChanged>(System.Text.Encoding.UTF8.GetBytes(GoldenFiles.Api("library-roots", scenario)), SindriApiClient.Json).Value;
-
-        Assert.Equal((approved, pending), (read.Approved, read.PendingCount));
-    }
+    [InlineData("added")]
+    [InlineData("removed")]
+    [InlineData("aw-off")]
+    public void Each_write_answer_reads_as_the_record(string scenario) =>
+        Assert.NotNull(Kernel.Json.AwJson.Deserialize<LibraryRootChanged>(System.Text.Encoding.UTF8.GetBytes(GoldenFiles.Api("library-roots", scenario)), SindriApiClient.Json).Value);
 
     [Theory]
     [InlineData("bad-name", "name")]
@@ -108,7 +103,7 @@ public sealed class LibraryRootsGoldenTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             (Method, Target) = (request.Method.Method, request.RequestUri!.PathAndQuery);
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"approved":true,"pendingCount":0}""") });
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{}""") });
         }
     }
 }

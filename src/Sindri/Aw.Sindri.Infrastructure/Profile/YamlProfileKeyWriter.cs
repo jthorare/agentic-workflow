@@ -6,7 +6,8 @@ namespace Aw.Sindri.Infrastructure.Profile;
 
 /// <summary><see cref="IProfileKeyWriter"/> over the live profile file: <see cref="ProfileKeyText"/> edits the text and the file is replaced atomically with its mode kept.</summary>
 /// <param name="settings">Where the profile is.</param>
-internal sealed class YamlProfileKeyWriter(SindriSettings settings) : IProfileKeyWriter
+/// <param name="cache">Told right after a write, so the next read parses the file.</param>
+internal sealed class YamlProfileKeyWriter(SindriSettings settings, Core.Profile.IProfileCache cache) : IProfileKeyWriter
 {
     public Result<ProfileKeyEdit> Plan(string keyPath, string value) => Plan(keyPath, value, asString: false);
 
@@ -74,6 +75,7 @@ internal sealed class YamlProfileKeyWriter(SindriSettings settings) : IProfileKe
         try
         {
             YamlProfileLines.WriteKeepingMode(edit.Path, edit.Text);
+            cache.Invalidate();
             return edit.Path;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)

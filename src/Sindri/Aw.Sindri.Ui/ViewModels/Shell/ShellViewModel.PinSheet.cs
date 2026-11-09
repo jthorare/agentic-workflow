@@ -46,7 +46,7 @@ internal sealed partial class ShellViewModel
         (ActivePinSheet, PinSheetContent) = (null, several);
         OpenSheet(DeepLink.PinSheet);
         Changed(nameof(ActivePinSheet), nameof(PinSheetContent));
-        _ = several.StartAsync(CancellationToken.None);
+        several.Start();
     }
 
     // Esc closes Add several through its own close action: that close wrote nothing.

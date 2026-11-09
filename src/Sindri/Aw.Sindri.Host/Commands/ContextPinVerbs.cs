@@ -14,7 +14,7 @@ namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
 /// 'sindri context pin set|remove|list' (concept pins spec §3.6, "CLI and agents"). 'set' and 'remove' start the PinConcepts job and follow it as 'repo add' does (Ctrl-C cancels the job, a second Ctrl-C leaves; --detach prints
-/// the job id and returns); a human starts the control plane unless --no-start, a session never does. They only write the profile and never approve: the last line names the hash to approve. 'list' reads the live profile
+/// the job id and returns); a human starts the control plane unless --no-start, a session never does. They only write the profile and save without a separate approval: the last line names the saved profile hash. 'list' reads the live profile
 /// in process, like 'profile validate', so it works with the control plane down. Exit 0 written, 1 the job failed, Sindri is not running or a session was refused, 2 invalid input.
 /// </summary>
 /// <param name="client">The API client.</param>
@@ -140,7 +140,7 @@ internal sealed class ContextPinVerbs(ControlPlaneClient client, Output output, 
         return Kernel.Results.Success(sets);
     }
 
-    /// <summary>The final job's lines: what was pinned or unpinned, then the hash to approve; nothing when the result isn't there or doesn't read.</summary>
+    /// <summary>The final job's lines: what was pinned or unpinned, then the saved profile hash; nothing when the result isn't there or doesn't read.</summary>
     private string? Describe(JobView job)
     {
         if (job.Result is not { } result)
@@ -155,7 +155,7 @@ internal sealed class ContextPinVerbs(ControlPlaneClient client, Output output, 
     internal static string Text(PinConceptsResult done)
     {
         ArgumentNullException.ThrowIfNull(done);
-        var wait = $" (waiting for your approval: sindri profile approve {done.Hash.Value})\n";
+        var wait = $" (saved, profile hash {done.Hash.Value})\n";
         var text = new StringBuilder();
         var pinned = done.Pins.Where(static p => !string.Equals(p.Action, "removed", StringComparison.Ordinal)).Select(static p => p.Id.Value).ToList();
         var removed = done.Pins.Where(static p => string.Equals(p.Action, "removed", StringComparison.Ordinal)).Select(static p => p.Id.Value).ToList();

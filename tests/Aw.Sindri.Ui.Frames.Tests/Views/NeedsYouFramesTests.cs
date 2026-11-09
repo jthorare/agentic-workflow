@@ -19,6 +19,8 @@ namespace Aw.Sindri.Ui.Frames.Tests.Views;
 [Lane(TestLane.Integration)]
 public sealed class NeedsYouFramesTests : FrameHost
 {
+    private static System.Text.Json.Nodes.JsonNode Nothing() => System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.SpecShaped("needs-you", "extra-nothing"))!;
+
     private static List<NeedsYouRow> Rows(Window window) =>
         [.. Named<Control>(window, "NeedsYouPanel").GetVisualDescendants().OfType<NeedsYouRow>().Where(r => r.IsEffectivelyVisible)];
 
@@ -61,7 +63,7 @@ public sealed class NeedsYouFramesTests : FrameHost
     {
         var catalog = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.Api("commands", "catalog"))!;   // an action the catalog does not list is what disables a control
         var rows = catalog["rows"]!.AsArray();
-        _ = rows.Remove(rows.Single(r => (string?)r!["action"] == "ApproveProfile"));
+        _ = rows.Remove(rows.Single(r => (string?)r!["action"] == "RegisterMcp"));   // the fixture's setup:mcp row
         Server.Catalog = new RouteAnswer(System.Net.HttpStatusCode.OK, catalog.ToJsonString());
         var (window, _) = await Connected(s => s.NeedsYou.Count > 0);
 
@@ -95,10 +97,10 @@ public sealed class NeedsYouFramesTests : FrameHost
     [Fact]
     public Task An_empty_list_shows_the_served_sentence() => OnUi(async () =>
     {
-        Server.NeedsYouView = RouteAnswer.Api("needs-you", "empty");
+        Server.NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-nothing");   // the API's empty golden holds the setup:mcp row now
         var (window, _) = await Connected();
 
-        Assert.Equal((true, (string)GoldenFiles.Node("needs-you", "empty")["empty"]!), (Visible(window, "NeedsYouEmpty"), Named<TextBlock>(window, "NeedsYouEmpty").Text));
+        Assert.Equal((true, (string)Nothing()["empty"]!), (Visible(window, "NeedsYouEmpty"), Named<TextBlock>(window, "NeedsYouEmpty").Text));
         Assert.Empty(Rows(window));
         Frame(window, "needs-you-empty");
     });
@@ -252,12 +254,12 @@ public sealed class NeedsYouFramesTests : FrameHost
     [Fact]
     public Task An_empty_inbox_says_the_served_sentence_in_the_detail_column() => OnUi(async () =>
     {
-        Server.NeedsYouView = RouteAnswer.Api("needs-you", "empty");
+        Server.NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-nothing");
         var (window, shell) = await Connected();
         shell.OpenNeedsYouInbox();
         Settle(window);
 
-        Assert.Equal((string)GoldenFiles.Node("needs-you", "empty")["empty"]!, Named<TextBlock>(window, "NeedsYouInboxEmpty").Text);
+        Assert.Equal((string)Nothing()["empty"]!, Named<TextBlock>(window, "NeedsYouInboxEmpty").Text);
         Assert.False(Visible(window, "NeedsYouCard"));
     });
 

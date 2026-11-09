@@ -25,7 +25,7 @@ public sealed class LinearDoctorTests
     {
         var check = await new LinearDoctor(FakeContextEngine.Instance, _noSecrets).Check(approved: null, Token);
 
-        Assert.Equal(new DoctorCheck("context:linear", CheckState.Ok, "not configured (no profile is approved)", Fix: null), check);
+        Assert.Equal(new DoctorCheck("context:linear", CheckState.Ok, "not configured (no profile yet)", Fix: null), check);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -33,7 +33,7 @@ public sealed class LinearDoctorTests
     {
         var check = await new LinearDoctor(FakeContextEngine.Instance, _noSecrets).Check(With("{}", _repos), Token);
 
-        Assert.Equal((CheckState.Ok, "not configured (the approved profile names no context.sources.linear.token)"), (check.State, check.Detail));
+        Assert.Equal((CheckState.Ok, "not configured (the profile names no context.sources.linear.token)"), (check.State, check.Detail));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -41,7 +41,7 @@ public sealed class LinearDoctorTests
     {
         var check = await new LinearDoctor(FakeContextEngine.Instance, _keyed).Check(With(Named), Token);
 
-        Assert.Equal((CheckState.Warn, "the approved profile maps no repo, so no context source runs, linear included"), (check.State, check.Detail));
+        Assert.Equal((CheckState.Warn, "the profile maps no repo, so no context source runs, linear included"), (check.State, check.Detail));
     }
 
     [Fact, Trait("Lane", "unit")]

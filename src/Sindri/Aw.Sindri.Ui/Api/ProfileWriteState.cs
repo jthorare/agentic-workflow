@@ -3,11 +3,8 @@ namespace Aw.Sindri.Ui.Api;
 /// <summary>How a <see cref="ProfileWriteFlow.Run"/> ended.</summary>
 internal enum ProfileWriteState
 {
-    /// <summary>Written and approved.</summary>
-    Approved,
-
-    /// <summary>Written, not approved: it waits for Review and approve.</summary>
-    Waiting,
+    /// <summary>Written: a save is the whole story, the profile applies the moment it lands.</summary>
+    Applied,
 
     /// <summary>The profile moved since the sheet read it (SND-PROFILE-003): nothing written.</summary>
     Clash,

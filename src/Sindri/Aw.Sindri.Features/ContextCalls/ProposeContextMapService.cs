@@ -70,7 +70,7 @@ internal sealed class ProposeContextMapService(ContextScopes scopes, IScopePropo
 
         return ContextRepoName.TryFrom(request.Repo, out var repo)
             ? new ScopeProposal(request.Run, repo, request.Surfaces ?? [])
-            : ContextErrors.RepoOutsideScope.With($"'{request.Repo}' is not a repo this scope can see (fix: name a repo of the approved profile)");
+            : ContextErrors.RepoOutsideScope.With($"'{request.Repo}' is not a repo this scope can see (fix: name a repo of the profile)");
     }
 
     private async ValueTask<Result<ProposeContextMapResponse>> Record(ScopeProposal proposal, ProposeResult result, IReadOnlyList<GraphStatus> surfaces, LeaseGrant grant, CancellationToken cancellationToken)

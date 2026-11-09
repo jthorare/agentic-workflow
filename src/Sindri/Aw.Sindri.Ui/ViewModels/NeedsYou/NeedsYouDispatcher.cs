@@ -4,7 +4,7 @@ using Aw.Sindri.Ui.Api;
 namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 
 /// <summary>
-/// Runs a ready action of a Home Needs-you row that is not a decision or approve-all: a service pause, resume or run, or a profile approval.
+/// Runs a ready action of a Home Needs-you row that is not a decision or approve-all: a service pause, resume or run.
 /// One send per action, once per press, never retried; an action it has no send for says so (<see cref="DispatchOutcome.Unhandled"/>).
 /// </summary>
 internal sealed class NeedsYouDispatcher
@@ -13,12 +13,10 @@ internal sealed class NeedsYouDispatcher
     private const string PauseAction = "PauseService";
     private const string ResumeServiceAction = "ResumeService";
     private const string RunAction = "RunService";
-    private const string ApproveProfileAction = "ApproveProfile";
 
     private readonly ISindriApi _api;
     private readonly Func<Uri?> _apiUrl;
     private readonly HashSet<string> _services = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _approvals = new(StringComparer.Ordinal);
 
     internal NeedsYouDispatcher(ISindriApi api, Func<Uri?> apiUrl)
     {
@@ -41,31 +39,7 @@ internal sealed class NeedsYouDispatcher
             return Service(id, service);
         }
 
-        return Approval(entry, action);
-    }
-
-    // The changed settings, approved with the same send the inbox bar uses; any other action is said as not available.
-    private Task<NeedsYouDispatch> Approval(NeedsYouEntry entry, NeedsYouAction action) =>
-        string.Equals(action.CatalogId, ApproveProfileAction, StringComparison.Ordinal) && SubjectOf(entry, NeedsYouKinds.Profile) is { } hash
-            ? Approve(ApproveProfileAction + hash, entry.Cli, url => NeedsYouConfirm.SendProfile(_api, url, hash))
-            : Task.FromResult(new NeedsYouDispatch(DispatchOutcome.Unhandled, Labels.RowNotAvailable(action.Cli)));
-
-    private async Task<NeedsYouDispatch> Approve(string key, string cli, Func<Uri, Task<(Error? Refused, bool Approved)>> send)
-    {
-        if (_apiUrl() is not { } url || !_approvals.Add(key))
-        {
-            return Busy();
-        }
-
-        try
-        {
-            var (refused, approved) = await send(url).ConfigureAwait(true);
-            return approved ? new NeedsYouDispatch(DispatchOutcome.Sent, Labels.RowApprovalSent) : new NeedsYouDispatch(DispatchOutcome.Refused, NeedsYouConfirm.RefusalText(refused, cli));
-        }
-        finally
-        {
-            _ = _approvals.Remove(key);
-        }
+        return Task.FromResult(new NeedsYouDispatch(DispatchOutcome.Unhandled, Labels.RowNotAvailable(action.Cli)));
     }
 
     private static string? SubjectOf(NeedsYouEntry entry, string kind) =>

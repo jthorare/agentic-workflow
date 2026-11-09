@@ -184,9 +184,9 @@ public sealed class McpAutoRegisterTests : IDisposable
             _ = await Events().ConsentOnHumanPress(approved.Hash, Token);
         }
 
-        Assert.False(await Events().ConsentGiven(approved.Hash, Token));
+        Assert.False(await Events().ConsentGiven(Token));
         await Consent(approved);
-        Assert.True(await Events().ConsentGiven(approved.Hash, Token));
+        Assert.True(await Events().ConsentGiven(Token));
     }
 
     private McpAutoGate Gate() => new(_slice.Profiles, Events(), _switch, _jobs);

@@ -8,7 +8,7 @@ namespace Aw.Sindri.Testing;
 [SuppressMessage("Design", "MA0182:Avoid unused internal types", Justification = "Internal because the port is; Aw.Sindri.Tests uses it through InternalsVisibleTo, which MA0182 can not see.")]
 internal sealed class FakeLinearConnectionFacts : ILinearConnectionFacts
 {
-    private Result<LinearConnectionView> _answer = new LinearConnectionView(new LinearKeyStateView("notSet", CheckedAt: null), new LinearKeyStateView("notSet", CheckedAt: null), [], Pending: false);
+    private Result<LinearConnectionView> _answer = new LinearConnectionView(new LinearKeyStateView("notSet", CheckedAt: null), new LinearKeyStateView("notSet", CheckedAt: null), []);
 
     /// <summary>Gets how many times the connection was read.</summary>
     public int Reads { get; private set; }

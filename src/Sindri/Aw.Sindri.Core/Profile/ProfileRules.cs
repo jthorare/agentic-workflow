@@ -55,7 +55,7 @@ public static class ProfileRules
     private static Error? OnyxLeftover(JsonElement? context) =>
         context is { ValueKind: JsonValueKind.Object } c && c.TryGetProperty("sources", out var sources)
         && sources.ValueKind == JsonValueKind.Object && sources.TryGetProperty("onyx", out _)
-            ? SindriErrors.IndexOnyxInProfile.With("context.sources.onyx: Sindri no longer runs or reads Onyx. Remove the 'onyx' entry under context.sources in profile.yaml, then run sindri profile approve")
+            ? SindriErrors.IndexOnyxInProfile.With("context.sources.onyx: Sindri no longer runs or reads Onyx. Remove the 'onyx' entry under context.sources in profile.yaml. Edits apply on save; there is no approve step")
             : null;
 
     /// <summary>The 'setup:' block (setup-once spec §7.1): 'setup.mcp' is auto or off.</summary>
@@ -123,30 +123,6 @@ public static class ProfileRules
     }
 
     internal static string? GlobProblem(string glob) => ProfileGlobRules.GlobProblem(glob);
-
-    /// <summary>
-    /// Whether the profile with hash <paramref name="live"/> is approved: it is the saved approval and the latest recorded
-    /// 'profile.approved' event names it. A saved approval whose event is missing or isn't the latest (its save failed after
-    /// a later approval was recorded) doesn't count, so approving again records it. Every surface judges by this one rule:
-    /// profile validate, approve's preview, the status ('needsApproval') and the startup summary, and doctor's profile check.
-    /// </summary>
-    /// <param name="saved">The latest saved approval's hash, or null.</param>
-    /// <param name="recorded">The hash the latest recorded approval names, or null.</param>
-    /// <param name="live">The hash judged.</param>
-    /// <returns>True when approved.</returns>
-    public static bool IsApproved(ProfileHash? saved, ProfileHash? recorded, ProfileHash live) => saved == live && recorded == live;
-
-    /// <summary>
-    /// Whether the profile needs a (new) approval: the live profile isn't approved (<see cref="IsApproved"/>). A live profile
-    /// that doesn't read is judged by the saved approval instead (its error is reported on its own), so it needs approval
-    /// only when nothing is saved or the saved approval isn't the latest recorded one.
-    /// </summary>
-    /// <param name="saved">The latest saved approval's hash, or null.</param>
-    /// <param name="recorded">The hash the latest recorded approval names, or null.</param>
-    /// <param name="live">The live profile's hash, or null when it doesn't read.</param>
-    /// <returns>True when approving is needed.</returns>
-    public static bool NeedsApproval(ProfileHash? saved, ProfileHash? recorded, ProfileHash? live) =>
-        (live ?? saved) is not { } judged || !IsApproved(saved, recorded, judged);
 
     private static SindriProfile Canonical(SindriProfile profile) => profile with
     {

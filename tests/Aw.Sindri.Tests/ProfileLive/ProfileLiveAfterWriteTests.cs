@@ -57,18 +57,6 @@ public sealed class ProfileLiveAfterWriteTests : IDisposable
         return body.RootElement.TryGetProperty("live", out var live) && live.ValueKind == JsonValueKind.String ? live.GetString() : null;
     }
 
-    // The profile view's changedPaths after the ledger reached <paramref name="after"/>.
-    private static async Task<string[]> ViewChangedPaths(GoldenHost host, long after)
-    {
-        await ViewScenarios.CatchUp(host, Token);
-        var answer = await host.Http.Ask(Get("/sindri/profile", [.. Human(host.Token.Value), ("X-Sindri-After", after.ToString(CultureInfo.InvariantCulture))]));
-        Assert.Equal(HttpStatusCode.OK, answer.Status);
-        using var body = JsonDocument.Parse(answer.Body);
-        return body.RootElement.TryGetProperty("changedPaths", out var paths) && paths.ValueKind == JsonValueKind.Array
-            ? [.. paths.EnumerateArray().Select(static p => p.GetString()!)]
-            : [];
-    }
-
     // Starts a job the way the app does and waits for it; returns its result and the ledger head once it settled.
     private static async Task<(JsonElement Result, long Settled)> RunJob(GoldenHost host, string route, string json)
     {
@@ -146,23 +134,5 @@ public sealed class ProfileLiveAfterWriteTests : IDisposable
 
         Assert.NotEqual(before, (await host.LiveHash(Token)).Value, StringComparer.Ordinal);   // the file changed
         Assert.Equal(before, await ViewLive(host));   // the view waits for the watch
-    }
-
-    [Fact(Timeout = 120_000), Trait("Lane", "integration")]
-    public async Task A_sindri_write_after_a_hand_edit_lists_both_changes_so_the_hand_edit_is_never_approved_unseen()
-    {
-        TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
-        await using var host = await Fresh();
-        var path = Path.Combine(host.Home, "profile", "profile.yaml");
-        await File.AppendAllTextAsync(path, "services:\n  heartbeat: { every: 5s }\n", Token);
-        var before = (await host.LiveHash(Token)).Value;   // what the app sends as ifHash: the file as it is now
-
-        var (result, settled) = await RunJob(host, "/sindri/context/pages", $$"""{"set":[{"name":"Week","id":"week"}],"ifHash":"{{before}}"}""");
-
-        var hash = result.GetProperty("hash").GetString();
-        Assert.Equal(hash, await ViewLive(host, settled), StringComparer.Ordinal);
-        var paths = await ViewChangedPaths(host, settled);
-        Assert.Contains(paths, static p => p.StartsWith("services", StringComparison.Ordinal));
-        Assert.Contains(paths, static p => p.Contains("pages", StringComparison.Ordinal));
     }
 }

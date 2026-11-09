@@ -128,7 +128,7 @@ internal sealed class JobApi : HttpMessageHandler
         return Down
             ? throw new HttpRequestException("connection refused")
             : uri.AbsolutePath == "/sindri/status"
-                ? Answer(new Reply(HttpStatusCode.OK, FollowRig.Status(needsApproval: false)))
+                ? Answer(new Reply(HttpStatusCode.OK, FollowRig.Status(withProblem: false)))
                 : _replies.TryGetValue(key, out var replies) ? Answer(Next(key, replies)) : Problem(HttpStatusCode.NotFound, "SND-TEST-404");
     }
 

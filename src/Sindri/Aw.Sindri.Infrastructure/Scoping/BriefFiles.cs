@@ -19,7 +19,7 @@ internal sealed class BriefFiles : IBriefFiles
         ArgumentNullException.ThrowIfNull(roots);
         if (roots.Count == 0)
         {
-            return SindriErrors.InvalidInput.With("read-brief needs a directory the brief's path is inside (fix: map the item to a repo of the approved profile, or pass --repo-root <dir>)");
+            return SindriErrors.InvalidInput.With("read-brief needs a directory the brief's path is inside (fix: map the item to a repo of the profile, or pass --repo-root <dir>)");
         }
 
         if (Resolve(path, roots) is not { } resolved)

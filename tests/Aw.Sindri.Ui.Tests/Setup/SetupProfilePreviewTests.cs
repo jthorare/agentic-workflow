@@ -3,7 +3,7 @@ using static Aw.Sindri.Ui.Tests.Setup.SetupFixture;
 
 namespace Aw.Sindri.Ui.Tests.Setup;
 
-/// <summary>The profile row shows what the profile allows in the API's own plain words, before it is approved.</summary>
+/// <summary>The profile row shows what the profile allows in the API's own plain words, once it is saved.</summary>
 [Lane(TestLane.Unit)]
 public sealed class SetupProfilePreviewTests
 {
@@ -14,7 +14,7 @@ public sealed class SetupProfilePreviewTests
     [Fact]
     public async Task The_profile_step_lists_the_served_preview_lines_in_order()
     {
-        _f.Serve("profile-preview");
+        _f.Serve(With("profile-preview", "profile", "needs-you"));   // a step that is not finished draws the lines it was served
 
         var step = (await _f.Read(Token)).Steps.Single(s => s.Id == "profile");
 
@@ -25,7 +25,7 @@ public sealed class SetupProfilePreviewTests
     }
 
     [Fact]
-    public async Task A_step_without_a_preview_and_an_approved_profile_show_none()
+    public async Task A_step_without_a_preview_and_a_saved_profile_show_none()
     {
         _f.Serve("profile-preview");
         var setup = await _f.Read(Token);

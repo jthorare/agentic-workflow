@@ -9,10 +9,7 @@ internal enum AllowState
     /// <summary>The request is on its way.</summary>
     Sending,
 
-    /// <summary>The draft edit waits for the owner's approval.</summary>
-    NeedsApproval,
-
-    /// <summary>The approval went through.</summary>
+    /// <summary>The allowance is in force.</summary>
     Allowed,
 
     /// <summary>The server refused.</summary>

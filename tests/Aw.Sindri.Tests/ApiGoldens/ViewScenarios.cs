@@ -170,14 +170,12 @@ internal static class ViewScenarios
         await CatchUp(host, ct);
     }
 
-    internal static async Task Approve(GoldenHost host, CancellationToken ct)
+    /// <summary>Kept so the scenarios read the same: the host's profile file is live from the start (#2258 PR 1), so there is nothing to approve.</summary>
+    internal static Task Approve(GoldenHost host, CancellationToken ct)
     {
-        var hash = (await host.LiveHash(ct)).Value;
-        var setup = await host.Http.Ask(Post("/sindri/profile/approve", await ApiScenarios.Confirmed(host, hash), Human(host.Token.Value)));
-        if (setup.Status != System.Net.HttpStatusCode.OK)
-        {
-            throw new InvalidOperationException($"the setup approval failed: {setup.Status} {setup.Body}");
-        }
+        ArgumentNullException.ThrowIfNull(host);
+        ct.ThrowIfCancellationRequested();
+        return Task.CompletedTask;
     }
 
     internal static async Task CatchUp(GoldenHost host, CancellationToken ct) =>

@@ -9,7 +9,7 @@ namespace Aw.Sindri.Host.Models;
 /// The doctor's 'context:models' row (context model routing spec §8.4): what will run (one line per distinct route) when ok, and a warning with its fixes for a listed harness that is not installed, a list of one harness,
 /// a Codex model that Codex's own list does not hold and a harness whose only login the minimal environment drops (§4 "Environment"). Claude has no list command and Cursor's reader is not here yet, so neither is checked.
 /// </summary>
-/// <param name="models">'context.models' of the approved profile.</param>
+/// <param name="models">'context.models' of the profile.</param>
 /// <param name="catalog">The models each agent offers (Codex's list).</param>
 /// <param name="installed">The harnesses found on PATH, in the default order.</param>
 /// <param name="logins">Whether each harness on a route still has a login under the minimal environment.</param>
@@ -34,7 +34,7 @@ internal sealed class ModelRoutingDoctorChecks(IApprovedModels models, IModelCat
     {
         if (!await models.IsApproved(cancellationToken).ConfigureAwait(false))
         {
-            return [new DoctorCheck(Name, CheckState.Ok, "not configured (no profile is approved)", Fix: null)];   // the defaults fill in only once a profile is approved; PATH is not read
+            return [new DoctorCheck(Name, CheckState.Ok, "not configured (no profile yet)", Fix: null)];   // the defaults fill in only once a profile is approved; PATH is not read
         }
 
         var settings = await models.Current(cancellationToken).ConfigureAwait(false);

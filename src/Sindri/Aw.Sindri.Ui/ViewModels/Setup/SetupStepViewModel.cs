@@ -66,11 +66,11 @@ internal sealed partial class SetupStepViewModel : ObservableObject
     /// <summary>One line per repo.</summary>
     public IReadOnlyList<SetupItemViewModel> Items { get; private set; } = [];
 
-    /// <summary>What the profile allows in plain words (the profile step before it is approved); empty otherwise.</summary>
+    /// <summary>What the profile allows in plain words (the profile step); empty otherwise.</summary>
     public IReadOnlyList<SetupPreviewLineViewModel> Preview { get; private set; } = [];
 
-    /// <summary>True when there is a preview to show; the profile's own summary (the consent, setup-once spec §5.2) takes its place while there is one.</summary>
-    public bool HasPreview => Preview.Count > 0 && Profile?.Summary.HasSummary != true;
+    /// <summary>True when there is a preview to show.</summary>
+    public bool HasPreview => Preview.Count > 0;
 
     /// <summary>The action, or null.</summary>
     public SetupActionViewModel? Action { get; private set; }
@@ -78,21 +78,6 @@ internal sealed partial class SetupStepViewModel : ObservableObject
     /// <summary>The repo form of the repo step; null for every other step.</summary>
     public SetupRepoFormViewModel? Repo { get; set; }
 
-    /// <summary>Asked when a form in this step needs focus on the step heading.</summary>
-    internal event EventHandler<SetupFocusEventArgs>? FocusRequested;
-
-    /// <summary>The typed approval of the profile step; null for every other step.</summary>
-    public SetupProfileConfirmViewModel? Profile
-    {
-        get;
-        set
-        {
-            field = value;
-            value?.Summary.PropertyChanged += (_, _) => OnChanged(nameof(HasPreview));
-            value?.FocusRequested += (_, e) => FocusRequested?.Invoke(this, e);
-            value?.PropertyChanged += (_, _) => OnChanged(nameof(ShowsProfile));
-        }
-    }
 
     /// <summary>One line per coding agent for the agents step; empty for every other step.</summary>
     public IReadOnlyList<SetupAgentViewModel> Agents { get; private set; } = [];

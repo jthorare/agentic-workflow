@@ -44,7 +44,7 @@ internal sealed partial class PinSheetViewModel
             return;
         }
 
-        (UnpinQuestion, SubmitError) = (Labels.PinSheetUnpinQuestion(pin.Name, _neverApproved, _folderRules), string.Empty);
+        (UnpinQuestion, SubmitError) = (Labels.PinSheetUnpinQuestion(pin.Name, _folderRules), string.Empty);
         IsConfirmingUnpin = true;
         OnChanged(nameof(HasSubmitError));
         KeepPinFocusRequested?.Invoke(this, EventArgs.Empty);
@@ -124,7 +124,7 @@ internal sealed partial class PinSheetViewModel
         ProfileWritten written;
         try
         {
-            written = await Ports.Flow.Run((url, token) => Ports.Api.PinConcepts(url, body, token), path => Mine(path) || removed.Exists(id => path.EndsWith(".concepts." + id, StringComparison.Ordinal)), _approve, cancellationToken).ConfigureAwait(true);
+            written = await Ports.Flow.Run((url, token) => Ports.Api.PinConcepts(url, body, token), cancellationToken).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
         {
@@ -136,7 +136,7 @@ internal sealed partial class PinSheetViewModel
         }
 
         Wrote();
-        if (written.State is ProfileWriteState.Approved or ProfileWriteState.Waiting)
+        if (written.State is ProfileWriteState.Applied)
         {
             Close(written: true);
             return;
@@ -159,7 +159,6 @@ internal sealed partial class PinSheetViewModel
             (_ifHash, _pins) = (read.Value.FileHash, read.Value.Pins);
             NoteChange();
             Rejudge();
-            await ReadRule(cancellationToken).ConfigureAwait(true);
         }
         else
         {
@@ -200,7 +199,7 @@ internal sealed partial class PinSheetViewModel
     {
         if (written.State == ProfileWriteState.Clash)
         {
-            return Labels.PinSheetClash(Labels.PinSheetSubmit(IsEdit, _approve));
+            return Labels.PinSheetClash(Labels.PinSheetSubmit(IsEdit));
         }
 
         return string.Equals(written.Code, ProfileWriteFlow.TimedOut, StringComparison.Ordinal) ? Labels.PinSheetTimedOut : written.Message ?? Labels.PinSheetFailed;

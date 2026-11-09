@@ -16,7 +16,7 @@ namespace Aw.Sindri.Host.CodeIndexHost;
 /// <summary>
 /// Context's <see cref="ICodeSymbolSource"/> over the code index facade (code-index spec §7.2, §7.3). The block's state words (the index file's state and its graph layer) become <see cref="CodeIndexState"/>;
 /// <see cref="CodeIndexReading.Head"/> then compares the index's commit with the map's ('asOf') at read time, so a mismatch reads stale with both commits and clears itself when the index for the map's commit lands.
-/// A repo outside the scope (no approved profile entry, or another session's repo) is not-configured, one with no index or a damaged one is an answer with no rows, and only a failed read is an error.
+/// A repo outside the scope (no profile entry, or another session's repo) is not-configured, one with no index or a damaged one is an answer with no rows, and only a failed read is an error.
 /// Context names a symbol 'path#name'; the index names it '&lt;repo&gt;:path#name'.
 /// </summary>
 internal sealed class CodeIndexSymbolSource(ICodeIndex index, ICodeIndexScopeSource scopes) : ICodeSymbolSource
@@ -123,7 +123,7 @@ internal sealed class CodeIndexSymbolSource(ICodeIndex index, ICodeIndexScopeSou
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
         if (scope.IsError)
         {
-            return scope.Error.Code == "SND-PROFILE-005" ? new Reading(NotConfigured(), Scope: null, name) : scope.Error;
+            return scope.Error.Code == "SND-PROFILE-001" ? new Reading(NotConfigured(), Scope: null, name) : scope.Error;
         }
 
         if (scope.Value.Repos.All(r => r.Name != name))

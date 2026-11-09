@@ -16,31 +16,15 @@ public sealed class ApproveAllRoutesTests
 
     private static string Code(Answer answer) => answer.Code ?? string.Empty;
 
-    private static async Task<GoldenHost> Started(FakeShippedRecipes shipped, CancellationToken ct, bool approveProfile = true)
+    private static async Task<GoldenHost> Started(FakeShippedRecipes shipped, CancellationToken ct)
     {
         var host = await Start(shipped, ct);
-        if (approveProfile)
-        {
-            await ViewScenarios.Approve(host, ct);
-        }
-
+        await ViewScenarios.Approve(host, ct);
         return host;
     }
 
     private static async Task<JsonElement> Job(GoldenHost host, string job) =>
         JsonDocument.Parse((await JobHost.Read(host, "/sindri/jobs/" + job)).Body).RootElement;
-
-    [Fact(Timeout = 30_000), Trait("Lane", "integration")]
-    public async Task Before_a_profile_is_approved_the_plan_and_the_hold_are_conflicts()
-    {
-        await using var host = await Started(new FakeShippedRecipes(ApproveAllFixtures.StepAndItem()), TestContext.Current.CancellationToken, approveProfile: false);
-
-        var plan = await host.Http.Ask(Get(PlanRoute, Human(Terminal(host))));
-        var challenge = await host.Http.Ask(Post("/sindri/workflow/challenges", """{"action":"approve-all c41e07"}""", Human(Terminal(host))));
-        var post = await host.Http.Ask(Post(PlanRoute, """{"challenge":"CHL-00000000000000000000000000000000","typed":"approve-all c41e07"}""", Human(Terminal(host))));
-
-        Assert.Equal([(HttpStatusCode.Conflict, "SND-SETUP-007")], new[] { plan, challenge, post }.Select(static a => (a.Status, Code(a))).Distinct().ToArray());
-    }
 
     [Fact(Timeout = 30_000), Trait("Lane", "integration")]
     public async Task One_hold_starts_a_job_that_approves_the_plan_and_the_plan_is_then_empty()

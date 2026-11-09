@@ -2,55 +2,7 @@
   "events": [
     {
       "sequence": 3,
-      "id": "00000000-0000-0000-0000-00000000000a",
-      "type": "profile.approved",
-      "schemaVersion": 1,
-      "occurredAt": "2026-01-01T00:00:00.0000000Z",
-      "actor": "human:cli",
-      "tenant": "local",
-      "ring": 0,
-      "item": null,
-      "correlationId": "00000000-0000-0000-0000-000000000009",
-      "causationId": null,
-      "traceId": null,
-      "payload": {
-        "hash": "221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd",
-        "changes": [
-          "api.port",
-          "repos.demo",
-          "repos.other",
-          "schemaVersion",
-          "services.heartbeat.every",
-          "tenant",
-          "user"
-        ]
-      }
-    },
-    {
-      "sequence": 4,
-      "id": "00000000-0000-0000-0000-00000000000b",
-      "type": "setup.consent.given",
-      "schemaVersion": 1,
-      "occurredAt": "2026-01-01T00:00:00.0000000Z",
-      "actor": "human:cli",
-      "tenant": "local",
-      "ring": 0,
-      "item": null,
-      "correlationId": "00000000-0000-0000-0000-000000000009",
-      "causationId": null,
-      "traceId": null,
-      "payload": {
-        "commandId": "00000000-0000-0000-0000-000000000008",
-        "steps": [
-          "mcp",
-          "map"
-        ],
-        "profileHash": "221c8f3e6a76b02c68be447e853eae6439aa46a53e13a7939d313d95bd4817bd"
-      }
-    },
-    {
-      "sequence": 5,
-      "id": "00000000-0000-0000-0000-00000000000c",
+      "id": "00000000-0000-0000-0000-000000000008",
       "type": "command.handled",
       "schemaVersion": 1,
       "occurredAt": "2026-01-01T00:00:00.0000000Z",
@@ -58,13 +10,58 @@
       "tenant": "local",
       "ring": 0,
       "item": null,
-      "correlationId": "00000000-0000-0000-0000-000000000009",
+      "correlationId": "00000000-0000-0000-0000-000000000005",
       "causationId": null,
       "traceId": null,
       "payload": {
-        "commandId": "00000000-0000-0000-0000-000000000008",
-        "command": "ApproveProfile",
-        "class": "protected",
+        "commandId": "00000000-0000-0000-0000-000000000004",
+        "command": "CreateItem",
+        "class": "desk",
+        "caller": "human:cli",
+        "outcome": "accepted",
+        "code": null
+      }
+    },
+    {
+      "sequence": 4,
+      "id": "00000000-0000-0000-0000-00000000000c",
+      "type": "item.created",
+      "schemaVersion": 1,
+      "occurredAt": "2026-01-01T00:00:00.0000000Z",
+      "actor": "human:cli",
+      "tenant": "local",
+      "ring": 0,
+      "item": "ITM-0000000000000000000000000000000b",
+      "correlationId": "00000000-0000-0000-0000-00000000000a",
+      "causationId": null,
+      "traceId": null,
+      "payload": {
+        "commandId": "00000000-0000-0000-0000-000000000009",
+        "item": "ITM-0000000000000000000000000000000b",
+        "title": "In other",
+        "repo": "other",
+        "link": null,
+        "body": null,
+        "owner": null
+      }
+    },
+    {
+      "sequence": 5,
+      "id": "00000000-0000-0000-0000-00000000000d",
+      "type": "command.handled",
+      "schemaVersion": 1,
+      "occurredAt": "2026-01-01T00:00:00.0000000Z",
+      "actor": "human:cli",
+      "tenant": "local",
+      "ring": 0,
+      "item": null,
+      "correlationId": "00000000-0000-0000-0000-00000000000a",
+      "causationId": null,
+      "traceId": null,
+      "payload": {
+        "commandId": "00000000-0000-0000-0000-000000000009",
+        "command": "CreateItem",
+        "class": "desk",
         "caller": "human:cli",
         "outcome": "accepted",
         "code": null

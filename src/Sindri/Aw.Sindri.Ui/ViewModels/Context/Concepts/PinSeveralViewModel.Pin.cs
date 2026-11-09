@@ -3,7 +3,7 @@ using Aw.Sindri.Ui.Api.Context;
 
 namespace Aw.Sindri.Ui.ViewModels.Context.Concepts;
 
-/// <summary>The Add several sheet's write (concept pins spec §3.6 "The write", "Sheet states"): every ticked row in ONE PinConcepts job, then the shared approve flow.</summary>
+/// <summary>The Add several sheet's write (concept pins spec §3.6 "The write", "Sheet states"): every ticked row in ONE PinConcepts job, then the shared write flow.</summary>
 #pragma warning disable MA0182 // Q7b: the shell sheet mounts it
 internal sealed partial class PinSeveralViewModel
 {
@@ -25,9 +25,7 @@ internal sealed partial class PinSeveralViewModel
         try
         {
             var body = new PinConceptsBody(Set: [.. rows.Select(Body)], IfHash: _ifHash);
-            var kept = rows.Where(r => r.Updates is not null).Select(IdOf).ToList();
-            var derived = rows.Where(r => r.Updates is null).Select(IdOf).ToList();
-            var written = await _writes.Run((url, token) => _api.PinConcepts(url, body, token), path => PinSeveralIds.Mine(path, kept, derived), _approve, cancellationToken).ConfigureAwait(true);
+            var written = await _writes.Run((url, token) => _api.PinConcepts(url, body, token), cancellationToken).ConfigureAwait(true);
             await Settle(written, button, cancellationToken).ConfigureAwait(true);
         }
         finally
@@ -49,7 +47,7 @@ internal sealed partial class PinSeveralViewModel
 
     private async Task Settle(ProfileWritten written, string button, CancellationToken cancellationToken)
     {
-        if (written.State is ProfileWriteState.Approved or ProfileWriteState.Waiting)
+        if (written.State is ProfileWriteState.Applied)
         {
             _close();
             return;

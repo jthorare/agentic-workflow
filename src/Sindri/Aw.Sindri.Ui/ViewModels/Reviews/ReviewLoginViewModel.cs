@@ -52,7 +52,7 @@ internal sealed class ReviewLoginViewModel(ISindriApi api) : ObservableObject
             return false;
         }
 
-        (Error, Note) = (string.Empty, saved.Value.Approved ? string.Empty : Labels.ReviewsLoginPending);
-        return saved.Value.Approved;
+        (Error, Note) = (string.Empty, string.Empty);
+        return true;
     }
 }

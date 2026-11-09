@@ -6,7 +6,7 @@ namespace Aw.Sindri.Features.OnboardRepo;
 internal interface IRepoHooks
 {
     /// <summary>Installs the repo's hooks.</summary>
-    /// <param name="repo">The approved profile's entry.</param>
+    /// <param name="repo">The profile's entry.</param>
     /// <param name="cancellationToken">Cancels the install.</param>
     /// <returns>One sentence saying what was done, shown in the job's result and the doctor line.</returns>
     public ValueTask<string> Install(RepoEntry repo, CancellationToken cancellationToken);

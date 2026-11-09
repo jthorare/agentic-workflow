@@ -117,7 +117,7 @@ public sealed class MapNotReadyTests
         page.RequestBuildJob();
         none.RequestBuildJob();
 
-        Assert.Equal(new DeepLink(DeepLinkKind.Job, "JOB-00000000000000000000000000000011"), Assert.Single(jobs).Link);
+        Assert.Equal(new DeepLink(DeepLinkKind.Job, "JOB-00000000000000000000000000000008"), Assert.Single(jobs).Link);
         Assert.Empty(noJobs);
     }
 
