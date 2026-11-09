@@ -31,7 +31,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     private static readonly string[] _pageProperties =
     [
         nameof(CurrentPage), nameof(PageName), nameof(SelectedNav), nameof(IsHome), nameof(IsProjects), nameof(IsWork), nameof(IsContext),
-        nameof(IsAgents), nameof(IsSystem), nameof(IsReviews), nameof(IsConnections), nameof(IsJobs), nameof(IsMemory), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown),
+        nameof(IsAgents), nameof(IsSystem), nameof(IsReviews), nameof(IsConnections), nameof(IsJobs), nameof(IsMemory), nameof(IsWorkflows), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown),
     ];
 
     private readonly Preferences _store;
