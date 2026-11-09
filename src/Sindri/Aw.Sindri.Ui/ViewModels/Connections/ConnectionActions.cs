@@ -124,6 +124,12 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
         }
 
         var view = read.Value.Connection;
+        // why: a connected row keeps its status and signedInAt when a sign-in again fails, so only the failure beside it says the try is over
+        if (read.Value.LastSignInFailure is { } failed)
+        {
+            return (new SignInEnd(SignInState.Failed, view, Labels.ConnectionSignInFailedKept(failed.Code)), view);
+        }
+
         var landed = string.Equals(view.Status, "connected", StringComparison.Ordinal) && view.Config.GetValueOrDefault(SignedInAt) is { } at && !string.Equals(at, before, StringComparison.Ordinal);
         return (landed ? Ended(view) : null, view);
     }
