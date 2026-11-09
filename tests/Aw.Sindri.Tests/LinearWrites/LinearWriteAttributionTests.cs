@@ -46,7 +46,7 @@ public sealed class LinearWriteAttributionTests
         return new LinearScopes(_profiles, _slice.Callers);
     }
 
-    private ILinearWriteRecorder Recorder() => new LedgerLinearWriteRecorder(_slice.Store, _slice.Held, _slice.Events, _slice.Callers);
+    private LedgerLinearWriteRecorder Recorder() => new LedgerLinearWriteRecorder(_slice.Store, _slice.Held, _slice.Events, _slice.Callers);
 
     private CommentLinearIssueService Comments() => new(Scopes(), _writes, new LinearTeamGate(_side), new GetLinearIssueService(_facts, new FakeLinearItemLinks(), _gate), _slice.Clock, Recorder());
 

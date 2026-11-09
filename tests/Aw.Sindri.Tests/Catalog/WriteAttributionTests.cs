@@ -42,35 +42,7 @@ public sealed class WriteAttributionTests
 
         // why: each case starts its own host with file watchers; two at a time keeps the run under the box's inotify limit (128 per user)
         await Parallel.ForEachAsync(scenarios, new ParallelOptions { MaxDegreeOfParallelism = 2, CancellationToken = ct }, async (row, token) =>
-        {
-            await using var host = await ApiScenarios.Start(row.Slug, row.Scenario, token);
-            var ledger = host.App.Services.GetRequiredService<ILedgerStore>();
-            LaunchSecrets.Write(host.App.Services.GetRequiredService<LauncherOptions>().SecretsDirectory, LaunchId.From(Launch), "proof");
-            var before = (await ledger.ReadAfter(0, 100_000, token)).Value.Count;
-            try
-            {
-                using (Callers.CallerRequests.AsLaunchedSession(Launch))   // the scenario's own call, with the seeding it does through Human(), as the launched session
-                {
-                    _ = await ApiScenarios.Body(host, row.Slug, row.Scenario, token);
-                }
-            }
-            catch (Exception e) when (e is not OperationCanceledException)   // why: one run lists every broken case, not just the first
-            {
-                broken.Add($"{row.Slug}/{row.Scenario}: {e.GetType().Name}: {e.Message.ReplaceLineEndings(" ")}");
-                return;
-            }
-
-            var written = (await ledger.ReadAfter(0, 100_000, token)).Value.Skip(before).Select(e => e.Envelope).ToList();
-            if (written.Any(e => IsByLaunch(e.Actor)))
-            {
-                launched[row.Slug] = true;
-            }
-
-            foreach (var envelope in written.Where(e => IsWrongActor(e.Actor)))
-            {
-                strays.Add($"{row.Slug}/{row.Scenario}: {envelope.Type} by {envelope.Actor}");
-            }
-        });
+            await RunAsLaunchedSession(row, launched, strays, broken, token));
 
         var silent = scenarios.Select(r => r.Slug).Distinct(StringComparer.Ordinal).Where(slug => !launched.ContainsKey(slug)).Order(StringComparer.Ordinal).ToList();
         var noScenario = catalogRows.Where(slug => !_notSwept.ContainsKey(slug) && !ApiScenarios.All.Any(r => string.Equals(r.Slug, slug, StringComparison.Ordinal))).Order(StringComparer.Ordinal).ToList();
@@ -80,6 +52,37 @@ public sealed class WriteAttributionTests
         Assert.True(strays.IsEmpty, $"these events were written during a launched session's calls without 'session:launch:{Launch}' as actor:\n" + string.Join('\n', strays.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)));
         Assert.True(silent.Count == 0, "these write routes appended no event by the launched session in any scenario (no event, or another actor; a route that writes no event goes in _notSwept with its reason):\n" + string.Join('\n', silent));
         Assert.True(noScenario.Count == 0, "these catalog write routes have no API golden scenario to run (add one, or list the route in _notSwept with its reason):\n" + string.Join('\n', noScenario));
+    }
+
+    private static async Task RunAsLaunchedSession((string Slug, string Scenario) row, ConcurrentDictionary<string, bool> launched, ConcurrentBag<string> strays, ConcurrentBag<string> broken, CancellationToken token)
+    {
+        await using var host = await ApiScenarios.Start(row.Slug, row.Scenario, token);
+        var ledger = host.App.Services.GetRequiredService<ILedgerStore>();
+        LaunchSecrets.Write(host.App.Services.GetRequiredService<LauncherOptions>().SecretsDirectory, LaunchId.From(Launch), "proof");
+        var before = (await ledger.ReadAfter(0, 100_000, token)).Value.Count;
+        try
+        {
+            using (Callers.CallerRequests.AsLaunchedSession(Launch))   // the scenario's own call, with the seeding it does through Human(), as the launched session
+            {
+                _ = await ApiScenarios.Body(host, row.Slug, row.Scenario, token);
+            }
+        }
+        catch (Exception e) when (e is not OperationCanceledException)   // why: one run lists every broken case, not just the first
+        {
+            broken.Add($"{row.Slug}/{row.Scenario}: {e.GetType().Name}: {e.Message.ReplaceLineEndings(" ")}");
+            return;
+        }
+
+        var written = (await ledger.ReadAfter(0, 100_000, token)).Value.Skip(before).Select(e => e.Envelope).ToList();
+        if (written.Exists(e => IsByLaunch(e.Actor)))
+        {
+            launched[row.Slug] = true;
+        }
+
+        foreach (var envelope in written.Where(e => IsWrongActor(e.Actor)))
+        {
+            strays.Add($"{row.Slug}/{row.Scenario}: {envelope.Type} by {envelope.Actor}");
+        }
     }
 
     private static async Task<HashSet<string>> CatalogWriteSlugs(CancellationToken ct)
