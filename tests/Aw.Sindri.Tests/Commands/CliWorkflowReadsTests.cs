@@ -151,7 +151,8 @@ public sealed class CliWorkflowReadsTests : IDisposable
             await Verbs(new FakeControlPlaneProbe(), api).RunShow(["morning-check@1:1"], Token),
         };
 
-        Assert.Equal(([1, 1, 1, 1], 0), (codes, api.Calls));
+        Assert.Equal([1, 1, 1, 1], codes);
+        Assert.Equal(0, api.Calls);
         Assert.StartsWith("SND-API-001 ", _error.ToString(), StringComparison.Ordinal);
     }
 
