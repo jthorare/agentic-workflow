@@ -1,0 +1,17 @@
+{
+  "title": "Demo Queue",
+  "eyebrow": "Technical design",
+  "people": [
+    { "role": "Author", "name": "A. Writer" }
+  ],
+  "updated": "2026-01-04",
+  "rev": 1,
+  "rev_note": "first draft",
+  "status": "Draft for review",
+  "repo_url": "https://example.com/demo/queue",
+  "sha": "@SHA@",
+  "sha_date": "2026-01-02",
+  "repo_path": "@REPO@",
+  "path_aliases": { "SRC": "src" },
+  "refs": {}
+}
