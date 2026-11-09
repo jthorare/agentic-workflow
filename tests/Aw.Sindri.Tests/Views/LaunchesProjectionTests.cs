@@ -163,6 +163,20 @@ public sealed class LaunchesProjectionTests
     }
 
     [Fact]
+    public async Task A_node_launch_folds_its_run_and_node_and_leaves_them_out_of_the_row_when_there_are_none()
+    {
+        await _v.Item(_repo);
+        await _v.Request();
+        await _v.Start(state: "check", run: "walk@1:2", node: "check");
+
+        var step = (await Row())!.Step;
+
+        Expect.Equal((null, "check", "walk@1:2", "check"), (step.Instance?.Value, step.State, step.Run, step.Node));
+        Assert.Contains("\"run\":\"walk@1:2\"", System.Text.Json.JsonSerializer.Serialize(step, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)), StringComparison.Ordinal);
+        Assert.DoesNotContain("run", System.Text.Json.JsonSerializer.Serialize(LaunchStep.None, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Old_launch_event_folds_to_null_fields()
     {
         await _v.Item(_repo);

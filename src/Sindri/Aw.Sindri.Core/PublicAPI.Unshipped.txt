@@ -1434,11 +1434,15 @@ Aw.Sindri.Core.Launch.LaunchStep
 Aw.Sindri.Core.Launch.LaunchStep.<Clone>$() -> Aw.Sindri.Core.Launch.LaunchStep!
 Aw.Sindri.Core.Launch.LaunchStep.Attempt.get -> int?
 Aw.Sindri.Core.Launch.LaunchStep.Attempt.init -> void
-Aw.Sindri.Core.Launch.LaunchStep.Deconstruct(out Aw.Sindri.Core.Launch.InstanceAddress? Instance, out string? State, out int? Attempt) -> void
+Aw.Sindri.Core.Launch.LaunchStep.Deconstruct(out Aw.Sindri.Core.Launch.InstanceAddress? Instance, out string? State, out int? Attempt, out string? Run, out string? Node) -> void
 Aw.Sindri.Core.Launch.LaunchStep.Equals(Aw.Sindri.Core.Launch.LaunchStep? other) -> bool
 Aw.Sindri.Core.Launch.LaunchStep.Instance.get -> Aw.Sindri.Core.Launch.InstanceAddress?
 Aw.Sindri.Core.Launch.LaunchStep.Instance.init -> void
-Aw.Sindri.Core.Launch.LaunchStep.LaunchStep(Aw.Sindri.Core.Launch.InstanceAddress? Instance = null, string? State = null, int? Attempt = null) -> void
+Aw.Sindri.Core.Launch.LaunchStep.LaunchStep(Aw.Sindri.Core.Launch.InstanceAddress? Instance = null, string? State = null, int? Attempt = null, string? Run = null, string? Node = null) -> void
+Aw.Sindri.Core.Launch.LaunchStep.Run.get -> string?
+Aw.Sindri.Core.Launch.LaunchStep.Run.init -> void
+Aw.Sindri.Core.Launch.LaunchStep.Node.get -> string?
+Aw.Sindri.Core.Launch.LaunchStep.Node.init -> void
 Aw.Sindri.Core.Launch.LaunchStep.State.get -> string?
 Aw.Sindri.Core.Launch.LaunchStep.State.init -> void
 Aw.Sindri.Core.Launches.LaunchRow.Step.get -> Aw.Sindri.Core.Launch.LaunchStep!
@@ -11514,15 +11518,15 @@ static Aw.Sindri.Core.Health.HealthSummary.WithStalledAgents(Aw.Sindri.Core.Heal
 static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepBrief.Needed(Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! descriptor, Aw.Sindri.Core.Workflow.Ids.OutcomeName outcome) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Ids.FactKey>!
 Aw.Sindri.Core.Launches.StalledAgentRun
 Aw.Sindri.Core.Launches.StalledAgentRun.<Clone>$() -> Aw.Sindri.Core.Launches.StalledAgentRun!
-Aw.Sindri.Core.Launches.StalledAgentRun.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.InstanceAddress Instance, out System.DateTimeOffset TurnEndedAt) -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.InstanceAddress? Instance, out System.DateTimeOffset TurnEndedAt) -> void
 Aw.Sindri.Core.Launches.StalledAgentRun.Equals(Aw.Sindri.Core.Launches.StalledAgentRun? other) -> bool
-Aw.Sindri.Core.Launches.StalledAgentRun.Instance.get -> Aw.Sindri.Core.Launch.InstanceAddress
+Aw.Sindri.Core.Launches.StalledAgentRun.Instance.get -> Aw.Sindri.Core.Launch.InstanceAddress?
 Aw.Sindri.Core.Launches.StalledAgentRun.Instance.init -> void
 Aw.Sindri.Core.Launches.StalledAgentRun.Item.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Core.Launches.StalledAgentRun.Item.init -> void
 Aw.Sindri.Core.Launches.StalledAgentRun.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
 Aw.Sindri.Core.Launches.StalledAgentRun.Launch.init -> void
-Aw.Sindri.Core.Launches.StalledAgentRun.StalledAgentRun(Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.InstanceAddress Instance, System.DateTimeOffset TurnEndedAt) -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.StalledAgentRun(Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.InstanceAddress? Instance, System.DateTimeOffset TurnEndedAt) -> void
 Aw.Sindri.Core.Launches.StalledAgentRun.TurnEndedAt.get -> System.DateTimeOffset
 Aw.Sindri.Core.Launches.StalledAgentRun.TurnEndedAt.init -> void
 override Aw.Sindri.Core.Launches.StalledAgentRun.Equals(object? obj) -> bool
@@ -13993,7 +13997,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 29 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 30 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -20583,3 +20587,15 @@ Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.Threading.CancellationTok
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Running(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
 Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.DateTimeOffset startedBefore, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Launch.NodeRunAddress.WorkBranch.get -> string!
+Aw.Sindri.Core.Events.LaunchStarted.Run.get -> string?
+Aw.Sindri.Core.Events.LaunchStarted.Run.init -> void
+Aw.Sindri.Core.Events.LaunchStarted.Node.get -> string?
+Aw.Sindri.Core.Events.LaunchStarted.Node.init -> void
+Aw.Sindri.Core.Events.LaunchStartedPublic.Run.get -> string?
+Aw.Sindri.Core.Events.LaunchStartedPublic.Run.init -> void
+Aw.Sindri.Core.Events.LaunchStartedPublic.Node.get -> string?
+Aw.Sindri.Core.Events.LaunchStartedPublic.Node.init -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Run.get -> string?
+Aw.Sindri.Core.Launches.StalledAgentRun.Run.init -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Node.get -> string?
+Aw.Sindri.Core.Launches.StalledAgentRun.Node.init -> void
