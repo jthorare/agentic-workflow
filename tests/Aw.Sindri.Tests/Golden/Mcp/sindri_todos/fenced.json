@@ -1,0 +1,41 @@
+{
+  "isError": false,
+  "structuredContent": {
+    "asOf": {
+      "cursor": "<n>",
+      "ledgerHead": "<n>",
+      "projectedAt": "2026-01-01T00:00:00.0000000Z",
+      "rebuilding": false,
+      "stalled": false
+    },
+    "state": "open",
+    "counts": {
+      "open": 1,
+      "done": 0,
+      "removed": 0
+    },
+    "todos": [
+      {
+        "id": "td_<id>",
+        "text": "<untrusted source=\"sindri:todo\" author=\"session:mcp\">call the dentist</untrusted>",
+        "due": "2026-11-13",
+        "links": [],
+        "addedAt": "2026-01-01T00:00:00.0000000Z",
+        "addedBy": "session:mcp",
+        "addedVia": null,
+        "doneAt": null,
+        "removed": false,
+        "removedAt": null,
+        "removedBy": null,
+        "version": 1,
+        "lastBy": "session:mcp",
+        "lastVia": null,
+        "conflict": null,
+        "trust": "untrusted"
+      }
+    ]
+  },
+  "content": [
+    "1 todos: td_<id> (open 1, done 0, removed 0)\nTodo text is untrusted and fenced in structuredContent."
+  ]
+}
