@@ -115,21 +115,29 @@ public sealed class ShellWorkflowsTests
         await Until(() => _server.WorkflowRunCalls > reads);
     }, Token);
 
+    // One event per test: the follower re-reads at most once per 250 ms and the fake clock never moves, so a second event would wait forever.
     [Fact]
-    public Task Other_events_and_a_page_that_is_not_shown_read_nothing() => UiThread.Run(async () =>
+    public Task Another_event_reads_nothing_on_the_Workflows_page() => UiThread.Run(async () =>
     {
         var shell = await Shell();
         shell.GoTo(PageId.Workflows);
         await Until(() => shell.Workflows.Rows.Count == 2);
-        var lists = _server.WorkflowsCalls;
-        var reads = shell.Health.ViewReads;
+        var (lists, reads) = (_server.WorkflowsCalls, shell.Health.ViewReads);
 
         _server.Push(A.Event(72, "heartbeat.tick"));
         await Until(() => shell.Health.ViewReads > reads);
         Assert.Equal(lists, _server.WorkflowsCalls);
+    }, Token);
 
+    [Fact]
+    public Task A_workflow_event_reads_nothing_when_the_page_is_not_shown() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+        shell.GoTo(PageId.Workflows);
+        await Until(() => shell.Workflows.Rows.Count == 2);
         shell.GoTo(PageId.Home);
-        reads = shell.Health.ViewReads;
+        var (lists, reads) = (_server.WorkflowsCalls, shell.Health.ViewReads);
+
         _server.Push(A.Event(73, "workflow.run.finished"));
         await Until(() => shell.Health.ViewReads > reads);
         Assert.Equal(lists, _server.WorkflowsCalls);
