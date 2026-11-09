@@ -244,9 +244,10 @@ broken file and no last good settings runs nothing, as today.
   - `SND-SETTINGS-409`: "Another change is being saved. Try again in a moment." with **Try again**, which sends the
     same save. Focus moves to **Try again**.
   - `SND-SETTINGS-410`: "The settings file changed on disk while you were saving. Nothing was saved." The sheet then
-    re-reads its item and shows **Try again**, as for 409. Once the second PR adds the stale banner (below), the
-    banner replaces this message when the outside edit touched the item, so a retry never overwrites an edit the
-    person hasn't seen.
+    re-reads its item. When the item on disk now differs from the values the sheet opened with, the outside edit
+    touched it: the message becomes "This <kind> changed on disk. Reload to see it." with **Reload** only, which
+    fills the sheet with the saved values, so a retry never overwrites an edit the person hasn't seen. Otherwise
+    **Try again** shows, as for 409. The second PR replaces the Reload message with the stale banner (below).
 
   The codes show only in the CLI's `--json` output and the logs.
 - **Refusals on a field.** A rule refusal shows under the field it names (`aria-invalid`, linked by
@@ -333,9 +334,19 @@ then to `settings.yaml`, each by temp file (0600) and rename, then one line `by:
 with the defaults at 14:02"). Serve's start runs it before it serves anything, and every read and write runs it
 through `Run` or step 1, so no caller ever sees a home without settings. This is why there is no "no file" code.
 
-`settings init` stays as the CLI verb for scripts that want the file before anything else runs: the same step,
-with the same `created` line. It refuses when
-`settings.yaml` exists, as `profile init` does today. A custom `AW_SINDRI_PROFILE`
+A deleted file never loses the person's settings. When `settings.yaml` is missing but `.last-saved.yaml` exists (a
+hand `rm` after a save, or a sync tool that moved the file), `RunLocked` first:
+1. appends a `by: outside` line whose `changes[]` removes every path in `.last-saved.yaml`, so the ledger shows a
+   deletion, not a fresh home;
+2. renames `.last-saved.yaml` to `settings/.before-defaults-<ulid>.yaml` (0600);
+3. then writes the defaults and the `created` line as above.
+
+`sindri doctor`'s `settings` row and the Health "Settings" row then warn: "Your settings file was deleted, so Sindri
+started from the defaults. Your last settings are in <path>: copy it back to settings.yaml to use them." The warning
+lasts until that backup file is gone. A fresh home has no `.last-saved.yaml`, so it gets no backup and no warning.
+
+`settings init` stays as the CLI verb for scripts that want the file before anything else runs: the same step, with
+the same `created` line. It refuses when `settings.yaml` exists, as `profile init` does today. A custom `AW_SINDRI_PROFILE`
 path outside the home isn't migrated: set `AW_SINDRI_SETTINGS` to it, or copy it to `settings/settings.yaml`.
 
 When both `profile/` and `settings/` exist, `settings/` wins. `sindri doctor`'s `settings` row and the Health
@@ -443,6 +454,9 @@ keep the old words). Known today, by group:
   - Run twice: no second copy and no second `migrated` line.
   - A crash between the copy and the `migrated` line is finished by the next run, with one `migrated` line.
   - Deleting `settings.yaml` after the migration gives the defaults with a `created` line, never the old profile.
+  - Deleting `settings.yaml` after a save gives, in order, an `outside` line removing every path, the backup
+    `.before-defaults-<ulid>.yaml` holding the last saved text, and the `created` line; doctor and Health name the
+    backup until it is removed.
   - A fresh `settings init` writes no `migrated` line.
   - With both folders, `settings/` wins and doctor warns.
   - The folder is 0700 and the files 0600.
@@ -453,10 +467,11 @@ keep the old words). Known today, by group:
 - UI (Frames tests), first PR: Setup without the profile step; the Health "Settings" row with its broken-file,
   leftover and missing-checkout warnings; the loading and can't-reach states; Last changed reading "Created with the
   defaults" on a fresh home, and after the person's own save, with a day when not today; both busy messages keeping
-  typed values; a field refusal with focus on the field; and a sheet on a broken file, with its save coming back
+  typed values; a 410 on an item the outside edit touched showing Reload with no Try again; a field refusal with
+  focus on the field; and a sheet on a broken file, with its save coming back
   once the file is fixed.
 - UI (Frames tests), second PR: See changes with its empty and error states; a 410 on an item the outside edit
-  touched showing the banner; and the stale-sheet banner for a change, a removal, Keep mine leaving the other
+  touched showing the banner instead of Reload; and the stale-sheet banner for a change, a removal, Keep mine leaving the other
   writer's field alone, a reconnect, and the sheet's own save showing nothing.
 - aot-smoke: its `profile/profile.yaml` lines move to `settings/settings.yaml`, and expected.txt is re-pinned.
 - The closing grep returns only the migration and tombstone code, their tests, and this spec:
