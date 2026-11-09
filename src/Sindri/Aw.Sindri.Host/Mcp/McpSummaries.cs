@@ -9,6 +9,7 @@ using Aw.Sindri.Core.Decisions;
 using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Requests;
+using Aw.Sindri.Features.CreateHandoffItem;
 using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.GetItem;
 using Aw.Sindri.Features.GetItemTimeline;
@@ -207,6 +208,13 @@ internal static class McpSummaries
     /// <returns>The text.</returns>
     internal static string Request(RequestFiledResponse filed, RequestKind kind, bool viewsCaughtUp) =>
         $"filed {filed.RequestId.Value} ({KindWord(kind)}) as {filed.DecisionId.Value}; a human settles it{(viewsCaughtUp ? string.Empty : " (views catching up: sindri_pending_decisions may not list it yet)")}";
+
+    /// <summary>sindri_handoff's summary: the item and the offer; a note when the views were slow to hold it.</summary>
+    /// <param name="made">The answer.</param>
+    /// <param name="viewsCaughtUp">Whether the views reached the item in time.</param>
+    /// <returns>The text.</returns>
+    internal static string Handoff(HandoffItemCreatedResponse made, bool viewsCaughtUp) =>
+        $"handed off as {made.ItemId.Value} (offer {made.OfferKey}){(viewsCaughtUp ? string.Empty : " (views catching up: sindri_item may not show it yet)")}";
 
     /// <summary>A job state as the API writes it (kebab-case, the JSON name), not the enum member's name.</summary>
     /// <param name="state">The state.</param>
