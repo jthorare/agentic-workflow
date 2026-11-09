@@ -14,7 +14,7 @@ namespace Aw.Context.Infrastructure.Docs;
 /// (<see cref="LibraryRootReader"/>). A root that can't be listed fails nothing but itself: its stored docs stay and its report says why; the pull fails only when no root could be listed. What each pass found is left
 /// in <see cref="ILibraryStatus"/> for the doctor row and <see cref="Core.Facade.IContextLibrary.Roots"/>.
 /// </summary>
-internal sealed class LibraryFeed(LibrarySetup setup, IRecordStore store, Scrubbers scrubbers, ILibraryStatus status, TimeProvider clock) : RecordFeed(LibrarySource.Id)
+internal sealed class LibraryFeed(LibrarySetup setup, IRecordStore store, Scrubbers scrubbers, ILibraryStatus status, TimeProvider clock, ILibrarySkips? skips = null) : RecordFeed(LibrarySource.Id)
 {
     private const string Format = "lib1";
 
@@ -31,6 +31,8 @@ internal sealed class LibraryFeed(LibrarySetup setup, IRecordStore store, Scrubb
         var reports = new List<LibraryRootReport>();
         foreach (var root in setup.Roots)
         {
+            _ = skips is null ? null : await skips.In(root.Name, cancellationToken).ConfigureAwait(false);   // why: red stub, the next commit passes them to the reader
+            _ = skips is null ? null : await skips.In(root.Name, cancellationToken).ConfigureAwait(false);   // why: red stub, the next commit passes them to the reader
             var last = before.GetValueOrDefault(root.Name);
             var trusted = last is { Problem: null } ? known.GetValueOrDefault(root.Name) : null;   // the "nothing changed" shortcut needs a good last report to copy: after a failed pass or a lost status file the root is diffed again
             var pass = await _reader.Run(root, trusted, Math.Max(pull.Limit, 1) - items.Count, cancellationToken).ConfigureAwait(false);
