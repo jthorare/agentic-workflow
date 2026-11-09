@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Automation;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Aw.Sindri.Ui.ViewModels.Workflows;
@@ -90,6 +91,9 @@ internal sealed partial class GraphCanvas : Control
         var world = ToWorld(point);
         return Graph?.Nodes.LastOrDefault(n => WorldRect(n).Contains(world))?.Id;
     }
+
+    /// <inheritdoc/>
+    protected override AutomationPeer OnCreateAutomationPeer() => new GraphCanvasAutomationPeer(this);
 
     /// <inheritdoc/>
     protected override Size MeasureOverride(Size availableSize) =>
@@ -188,6 +192,7 @@ internal sealed partial class GraphCanvas : Control
         graph?.PropertyChanged += OnGraphProperty;
 
         AutomationProperties.SetName(this, graph?.Name ?? string.Empty);
+        (ControlAutomationPeer.FromElement(this) as GraphCanvasAutomationPeer)?.Refresh();
         InvalidateVisual();
     }
 

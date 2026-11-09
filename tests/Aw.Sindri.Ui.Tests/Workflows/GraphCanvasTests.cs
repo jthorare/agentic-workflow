@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Threading;
@@ -74,5 +75,34 @@ public sealed class GraphCanvasTests
         });
 
         Assert.Equal((2d, 0.5d), zooms);
+    }
+
+    [Fact]
+    public async Task The_canvas_peer_has_one_child_per_node_named_by_its_name()
+    {
+        var graph = await WorkflowGraphViewModelTests.GraphOf(
+            new WorkflowsFixture(),
+            """[{"id":"check","type":"branch","config":{}},{"id":"yes","type":"run_agent","title":"Say yes","config":{}}]""",
+            """[{"from":"check","to":"yes","output":"true"}]""",
+            """[{"node":"check","x":0,"y":100},{"node":"yes","x":300,"y":0}]""");
+
+        var names = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 800, Height = 500 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                return ControlAutomationPeer.CreatePeerForElement(canvas).GetChildren().Select(c => c.GetName()).ToArray();
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.Equal(graph.Nodes.Select(n => n.Name), names, StringComparer.Ordinal);
+        Assert.Equal(2, names.Length);
     }
 }
