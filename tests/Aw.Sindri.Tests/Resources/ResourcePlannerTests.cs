@@ -14,14 +14,14 @@ public sealed class ResourcePlannerTests
     [Fact, Trait("Lane", "unit")]
     public void A_spec_with_a_database_and_a_disk_yields_env_names_and_two_rw_mounts()
     {
-        var spec = new ResourceSpec([new DatabaseResource("state")], [new DiskResource("scratch-pad", "512MiB")], null, []);
+        var spec = new ResourceSpec([new DatabaseResource("state")], [new DiskResource("scratch-pad", "512MiB")], Sandbox: null, []);
 
         var plan = ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root).Value;
 
         Assert.Equal($"{Root}/workflow/triage/state.db", plan.Env[ResourceEnv.Database("state")]);
         Assert.Equal($"{Root}/workflow/triage/scratch-pad", plan.Env["SINDRI_DISK_SCRATCH_PAD"]);
         Assert.Equal([new ResourceMount("state", $"{Root}/workflow/triage/state.db"), new ResourceMount("scratch-pad", $"{Root}/workflow/triage/scratch-pad")], plan.Mounts);
-        Assert.Equal([new PlannedResource(ResourceKind.Database, "state", $"{Root}/workflow/triage/state.db", null), new PlannedResource(ResourceKind.Disk, "scratch-pad", $"{Root}/workflow/triage/scratch-pad", 512L << 20)], plan.Create);
+        Assert.Equal([new PlannedResource(ResourceKind.Database, "state", $"{Root}/workflow/triage/state.db", SizeLimit: null), new PlannedResource(ResourceKind.Disk, "scratch-pad", $"{Root}/workflow/triage/scratch-pad", SizeLimit: 512L << 20)], plan.Create);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -36,7 +36,7 @@ public sealed class ResourcePlannerTests
     [Fact, Trait("Lane", "unit")]
     public void A_connection_adds_its_name_to_the_env_and_no_mount()
     {
-        var spec = new ResourceSpec([], [], null, [new ConnectionResource("github")]);
+        var spec = new ResourceSpec([], [], Sandbox: null, [new ConnectionResource("github")]);
 
         var plan = ResourcePlanner.Plan(Owner("toolkit:forge"), spec, Root).Value;
 
@@ -48,7 +48,7 @@ public sealed class ResourcePlannerTests
     [Fact, Trait("Lane", "unit")]
     public void A_node_owner_gets_its_own_folder()
     {
-        var spec = new ResourceSpec([new DatabaseResource("state")], [], null, []);
+        var spec = new ResourceSpec([new DatabaseResource("state")], [], Sandbox: null, []);
 
         var plan = ResourcePlanner.Plan(Owner("node:triage/fetch"), spec, Root).Value;
 
@@ -80,15 +80,12 @@ public sealed class ResourcePlannerTests
 
         var limits = ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root).Value.Limits;
 
-        Assert.Equal(new ResourceLimitOverride(null, null, TimeSpan.FromMinutes(45)), limits);
-        Assert.True(Resolve(limits).Wall < Resolve(null).Wall);
+        Assert.Equal(new ResourceLimitOverride(StepTimeout: TimeSpan.FromMinutes(45)), limits);
+        Assert.True(Resolve(limits).Wall < Resolve(over: null).Wall);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void No_sandbox_declared_overrides_nothing()
-    {
-        Assert.Null(ResourcePlanner.Plan(Owner("workflow:triage"), ResourceSpec.Empty, Root).Value.Limits);
-    }
+    public void No_sandbox_declared_overrides_nothing() => Assert.Null(ResourcePlanner.Plan(Owner("workflow:triage"), ResourceSpec.Empty, Root).Value.Limits);
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("4g")]
@@ -104,7 +101,7 @@ public sealed class ResourcePlannerTests
     [Fact, Trait("Lane", "unit")]
     public void Two_databases_with_one_name_are_a_name_clash()
     {
-        var spec = new ResourceSpec([new DatabaseResource("state"), new DatabaseResource("state")], [], null, []);
+        var spec = new ResourceSpec([new DatabaseResource("state"), new DatabaseResource("state")], [], Sandbox: null, []);
 
         var result = ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root);
 
@@ -118,7 +115,7 @@ public sealed class ResourcePlannerTests
     [InlineData("")]
     public void A_name_that_is_not_lowercase_letters_digits_and_dashes_is_invalid(string name)
     {
-        var spec = new ResourceSpec([new DatabaseResource(name)], [], null, []);
+        var spec = new ResourceSpec([new DatabaseResource(name)], [], Sandbox: null, []);
 
         Assert.Equal("SND-RES-006", ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root).Error.Code);
     }
@@ -126,7 +123,7 @@ public sealed class ResourcePlannerTests
     [Fact, Trait("Lane", "unit")]
     public void A_disk_size_that_is_not_a_size_is_invalid()
     {
-        var spec = new ResourceSpec([], [new DiskResource("scratch", "lots")], null, []);
+        var spec = new ResourceSpec([], [new DiskResource("scratch", "lots")], Sandbox: null, []);
 
         Assert.Equal("SND-RES-006", ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root).Error.Code);
     }
@@ -137,8 +134,5 @@ public sealed class ResourcePlannerTests
     [InlineData("workflow:a/b")]
     [InlineData("thing:x")]
     [InlineData("nocolon")]
-    public void An_owner_that_could_leave_the_resources_root_does_not_parse(string text)
-    {
-        Assert.Equal("SND-RES-006", ResourceOwner.Parse(text).Error.Code);
-    }
+    public void An_owner_that_could_leave_the_resources_root_does_not_parse(string text) => Assert.Equal("SND-RES-006", ResourceOwner.Parse(text).Error.Code);
 }

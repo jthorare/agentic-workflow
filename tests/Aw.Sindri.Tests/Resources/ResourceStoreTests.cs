@@ -15,7 +15,7 @@ public sealed class ResourceStoreTests : IDisposable
 
     private ResourcePlan Plan() => ResourcePlanner.Plan(
         ResourceOwner.Parse("workflow:triage").Value,
-        new ResourceSpec([new DatabaseResource("state")], [new DiskResource("scratch", "1MiB")], null, []),
+        new ResourceSpec([new DatabaseResource("state")], [new DiskResource("scratch", "1MiB")], Sandbox: null, []),
         Root).Value;
 
     [Fact, Trait("Lane", "unit")]

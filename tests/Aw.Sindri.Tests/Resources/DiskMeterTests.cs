@@ -45,8 +45,8 @@ public sealed class DiskMeterTests : IDisposable
         var folder = Path.Combine(_home.Path, "disk");
         _ = Directory.CreateDirectory(folder);
         File.WriteAllBytes(Path.Combine(folder, "a.bin"), new byte[100]);
-        File.CreateSymbolicLink(Path.Combine(folder, "dir-link"), outside);
-        File.CreateSymbolicLink(Path.Combine(folder, "file-link"), Path.Combine(outside, "huge.bin"));
+        _ = File.CreateSymbolicLink(Path.Combine(folder, "dir-link"), outside);
+        _ = File.CreateSymbolicLink(Path.Combine(folder, "file-link"), Path.Combine(outside, "huge.bin"));
 
         var result = DiskMeter.Check("scratch", folder, 1 << 20);
 
