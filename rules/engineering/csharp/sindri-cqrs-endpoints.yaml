@@ -2,7 +2,7 @@ schemaVersion: 1
 id: engineering.csharp.sindri-cqrs-endpoints
 kind: engineering
 section: "4b.2"
-text: "Every Sindri query endpoint is a GET or a QUERY (the HTTP method for a safe read with a body, an IETF draft) and resolves an IService whose request is an IQuery; every POST resolves one whose request is an ICommand, and a command is never a GET or a QUERY. An IIssue is allowed only on the four carve-out routes (the workflow nonce and challenge, the session heartbeat and exit), with catalog rows of class 'issue'. There is no carve-out list for queries."
+text: "Every Sindri query endpoint is a GET or a QUERY (the HTTP method for a safe read with a body, an IETF draft) and resolves an IService whose request is an IQuery; every POST, PUT and DELETE resolves one whose request is an ICommand, and a command is never a GET or a QUERY. An IIssue is allowed only on the four carve-out routes (the workflow nonce and challenge, the session heartbeat and exit), with catalog rows of class 'issue'. There is no carve-out list for queries."
 why: "Reads never change state and every state change runs through the command chain, so it is gated, authorized, validated and audited."
 select:
   languages: [csharp]

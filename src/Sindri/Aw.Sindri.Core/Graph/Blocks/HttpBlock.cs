@@ -24,6 +24,12 @@ public sealed class HttpBlock(IGraphHttpPort http) : IGraphBlock
     public string Type => "http";
 
     /// <inheritdoc />
+    public string Title => "HTTP request";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Data;
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />

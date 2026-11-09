@@ -151,6 +151,9 @@ public sealed class GoldenContractTests
         [("workflows-slug-runs", "skipped")] = As<WorkflowRunStarted>,
         [("memories-id-facts", "forgot")] = As<MemoryForgotten>,
         [("memories-id-facts", "forgot-tag")] = As<MemoryForgotten>,
+        [("workflows", "created")] = AsJsonObject,   // POST /workflows: { id, slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowList
+        [("workflows-slug", "replaced")] = AsJsonObject,   // PUT /workflows/{slug}: { slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowView
+        [("workflows-slug", "archived")] = AsJsonObject,   // DELETE /workflows/{slug}: { slug, archivedAt }, the CLI's and the MCP tools' answer; not a WorkflowView
     };
 
     // Routes the app never calls yet: stop is Health's (U4), and the
@@ -178,6 +181,7 @@ public sealed class GoldenContractTests
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
+        "workflows-validate", "workflows-slug-ops", "workflows-slug-pause", "workflows-slug-activate", "workflows-blocks",   // #2258 PR 8b: the workflow writes are the CLI's and the MCP tools'; the app's editor sends them when it lands (UI lane)
         "resources", "resources-purge",   // #2258 PR14 part 2: GET /sindri/resources and POST /sindri/resources/purge; the Resources page (PR18b, UI lane) reads them with its own views
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
@@ -433,6 +437,9 @@ public sealed class GoldenContractTests
         var todo = (JsonNode.Parse(body) as JsonObject)?["todo"];
         return todo is null ? new Error("TEST-001", ErrorKind.Invalid, "no todo in the answer") : As<TodoView>(Encoding.UTF8.GetBytes(todo.ToJsonString()));
     }
+
+    private static Result<object> AsJsonObject(byte[] body) =>
+        JsonNode.Parse(body) is JsonObject node ? node : new Error("TEST-001", ErrorKind.Invalid, "the answer is not a JSON object");
 
     private static Result<object> As<T>(byte[] body)
         where T : class

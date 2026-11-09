@@ -28,6 +28,12 @@ public sealed class RunWorkflowBlock(IGraphCallPort calls) : IGraphBlock
     public string Type => "run_workflow";
 
     /// <inheritdoc />
+    public string Title => "Run workflow";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Logic;
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />
