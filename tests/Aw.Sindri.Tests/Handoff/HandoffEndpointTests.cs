@@ -14,7 +14,7 @@ namespace Aw.Sindri.Tests.Handoff;
 /// <summary>POST /sindri/handoff (#2258 PR 12): loopback only, the per-start token, and an item with its 'item.handoff'.</summary>
 public sealed class HandoffEndpointTests
 {
-    private const string Body = """{"title":"Fix the login timeout","source":"ci-bot","prompt":"Run the suite twice.","links":["https://example.test/t/7"]}""";
+    private const string Body = """{"title":"Fix the login timeout","source":"ci-bot","prompt":"Run the suite twice.","links":[{"label":"Ticket","url":"https://example.test/t/7"}]}""";
 
     private sealed class FarPeer : IHandoffPeer
     {

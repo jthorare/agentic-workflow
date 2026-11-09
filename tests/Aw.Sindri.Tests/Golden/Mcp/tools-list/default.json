@@ -593,15 +593,27 @@
           "description": "The full prompt",
           "maxLength": 65536
         },
-        "offer": {
+        "offerKey": {
           "type": "string",
           "description": "Your id for this offer; left out, the item id stands in"
         },
         "links": {
           "type": "array",
-          "description": "Links, at most 50",
+          "description": "Links, at most 50, each {label, url} with an http or https url",
           "items": {
-            "type": "string"
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "url"
+            ]
           }
         },
         "labels": {

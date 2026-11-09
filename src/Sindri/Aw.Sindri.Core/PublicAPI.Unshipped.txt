@@ -20624,10 +20624,10 @@ static readonly Aw.Sindri.Core.SindriErrors.InboxOfferGone -> Aw.Kernel.ErrorDef
 static readonly Aw.Sindri.Core.SindriErrors.InboxSubmitFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.InboxUnavailable -> Aw.Kernel.ErrorDefinition!
 const Aw.Sindri.Core.Events.EventTypes.ItemHandoff = "item.handoff" -> string!
-Aw.Sindri.Core.Events.ItemHandoff.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out string! Offer, out string! Source, out Aw.Sindri.Core.Ids.RepoName? Repo, out string? Branch, out string? Prompt, out System.Collections.Generic.IReadOnlyList<string!>! Links, out System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
-Aw.Sindri.Core.Events.ItemHandoff.ItemHandoff(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, string! Offer, string! Source, Aw.Sindri.Core.Ids.RepoName? Repo, string? Branch, string? Prompt, System.Collections.Generic.IReadOnlyList<string!>! Links, System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
-Aw.Sindri.Core.Events.ItemHandoff.Offer.get -> string!
-Aw.Sindri.Core.Events.ItemHandoff.Offer.init -> void
+Aw.Sindri.Core.Events.ItemHandoff.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out string! OfferKey, out string! Source, out Aw.Sindri.Core.Ids.RepoName? Repo, out string? Branch, out string? Prompt, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>! Links, out System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
+Aw.Sindri.Core.Events.ItemHandoff.ItemHandoff(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.ItemId Item, string! OfferKey, string! Source, Aw.Sindri.Core.Ids.RepoName? Repo, string? Branch, string? Prompt, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>! Links, System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
+Aw.Sindri.Core.Events.ItemHandoff.OfferKey.get -> string!
+Aw.Sindri.Core.Events.ItemHandoff.OfferKey.init -> void
 Aw.Sindri.Core.Events.ItemHandoff
 Aw.Sindri.Core.Events.ItemHandoff.<Clone>$() -> Aw.Sindri.Core.Events.ItemHandoff!
 Aw.Sindri.Core.Events.ItemHandoff.Branch.get -> string?
@@ -20639,7 +20639,7 @@ Aw.Sindri.Core.Events.ItemHandoff.Item.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Core.Events.ItemHandoff.Item.init -> void
 Aw.Sindri.Core.Events.ItemHandoff.Labels.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Events.ItemHandoff.Labels.init -> void
-Aw.Sindri.Core.Events.ItemHandoff.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.ItemHandoff.Links.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>!
 Aw.Sindri.Core.Events.ItemHandoff.Links.init -> void
 Aw.Sindri.Core.Events.ItemHandoff.Prompt.get -> string?
 Aw.Sindri.Core.Events.ItemHandoff.Prompt.init -> void

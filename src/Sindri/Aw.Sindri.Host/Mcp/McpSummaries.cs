@@ -214,7 +214,7 @@ internal static class McpSummaries
     /// <param name="viewsCaughtUp">Whether the views reached the item in time.</param>
     /// <returns>The text.</returns>
     internal static string Handoff(HandoffItemCreatedResponse made, bool viewsCaughtUp) =>
-        $"handed off as {made.ItemId.Value} (offer {made.Offer}){(viewsCaughtUp ? string.Empty : " (views catching up: sindri_item may not show it yet)")}";
+        $"handed off as {made.ItemId.Value} (offer {made.OfferKey}){(viewsCaughtUp ? string.Empty : " (views catching up: sindri_item may not show it yet)")}";
 
     /// <summary>A job state as the API writes it (kebab-case, the JSON name), not the enum member's name.</summary>
     /// <param name="state">The state.</param>

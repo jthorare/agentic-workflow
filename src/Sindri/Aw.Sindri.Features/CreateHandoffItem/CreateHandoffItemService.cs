@@ -44,7 +44,7 @@ internal sealed class CreateHandoffItemService(IItemMaker items, HeldLease held,
         }
 
         var item = made.Value;
-        var offer = request.Offer ?? item.Value;
+        var offer = request.OfferKey ?? item.Value;
         var payload = new ItemHandoff(caller.CommandId, item, offer, request.Source, request.Repo ?? caller.Repo, request.Branch, request.Prompt, request.Links ?? [], request.Labels ?? []);
         using var _ = callers.Enter(caller with { Actor = "handoff:" + request.Source });   // the sender is the actor of its own fact
         var entry = events.Entry(EventTypes.ItemHandoff, payload, $"{EventTypes.ItemHandoff}:{item.Value}", item.Value);

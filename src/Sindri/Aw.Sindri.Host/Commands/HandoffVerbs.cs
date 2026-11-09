@@ -1,13 +1,14 @@
 using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Handoff;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.CreateHandoffItem;
 
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri handoff send &lt;title&gt; [--source S] [--repo R] [--branch B] [--prompt T | --prompt-file F] [--offer ID] [--link URL]... [--label L]... [--json] [--no-start]'
+/// 'sindri handoff send &lt;title&gt; [--source S] [--repo R] [--branch B] [--prompt T | --prompt-file F] [--offer ID] [--link URL | --link LABEL=URL]... [--label L]... [--json] [--no-start]'
 /// (#2258 PR 12): a client of POST /sindri/handoff that makes an item with its handoff payload. Exit 0 made, 1 the control plane isn't running, 2 refused or invalid.
 /// </summary>
 /// <param name="client">The API client.</param>
@@ -15,7 +16,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="ensureRunning">Starts the control plane (true: this verb may launch it) or names why not.</param>
 internal sealed class HandoffVerbs(ControlPlaneClient client, Output output, Func<bool, CancellationToken, Task<Error?>> ensureRunning)
 {
-    internal const string Usage = "handoff send <title> [--source S] [--repo R] [--branch B] [--prompt T | --prompt-file F] [--offer ID] [--link URL]... [--label L]... [--json] [--no-start]";
+    internal const string Usage = "handoff send <title> [--source S] [--repo R] [--branch B] [--prompt T | --prompt-file F] [--offer ID] [--link URL | --link LABEL=URL]... [--label L]... [--json] [--no-start]";
 
     internal async Task<int> Run(string[] args, CancellationToken ct)
     {
@@ -40,7 +41,7 @@ internal sealed class HandoffVerbs(ControlPlaneClient client, Output output, Fun
         var response = made.Value.Value;
         return json
             ? await output.Raw(made.Value.Body, 0).ConfigureAwait(false)
-            : await output.Text(string.Create(CultureInfo.InvariantCulture, $"{response.ItemId.Value} handed off (offer {response.Offer}, sequence {response.Accepted.Sequence})\n"), 0).ConfigureAwait(false);
+            : await output.Text(string.Create(CultureInfo.InvariantCulture, $"{response.ItemId.Value} handed off (offer {response.OfferKey}, sequence {response.Accepted.Sequence})\n"), 0).ConfigureAwait(false);
     }
 
     private static async Task<Result<(CreateHandoffItemRequest Request, bool Json, bool NoStart)>> Parse(string[] args, CancellationToken ct)
@@ -70,7 +71,7 @@ internal sealed class HandoffVerbs(ControlPlaneClient client, Output output, Fun
         }
 
         var request = new CreateHandoffItemRequest(string.Join(' ', flags.Title), flags.Values.GetValueOrDefault("--source", "local"), flags.Values.GetValueOrDefault("--offer"), repo.Value,
-            flags.Values.GetValueOrDefault("--branch"), prompt.Value, flags.Links.Count == 0 ? null : flags.Links, flags.Labels.Count == 0 ? null : flags.Labels);
+            flags.Values.GetValueOrDefault("--branch"), prompt.Value, flags.Links.Count == 0 ? null : flags.Links.ConvertAll(LinkOf), flags.Labels.Count == 0 ? null : flags.Labels);
         return (request, flags.Json, flags.NoStart);
     }
 
@@ -104,6 +105,14 @@ internal sealed class HandoffVerbs(ControlPlaneClient client, Output output, Fun
         return flags.Values.ContainsKey("--prompt") && flags.Values.ContainsKey("--prompt-file")
             ? SindriErrors.InvalidInput.With("give --prompt or --prompt-file, not both")
             : flags;
+    }
+
+    // why: a bare URL is its own label; "Ticket=https://..." splits at the first '=' before "://" so a URL's own query '=' never splits it
+    private static HandoffLink LinkOf(string text)
+    {
+        var scheme = text.IndexOf("://", StringComparison.Ordinal);
+        var equals = text.IndexOf('=', StringComparison.Ordinal);
+        return equals > 0 && (scheme < 0 || equals < scheme) ? new HandoffLink(text[..equals], text[(equals + 1)..]) : new HandoffLink(text, text);
     }
 
     private static Result<RepoName?> RepoOf(string text) =>

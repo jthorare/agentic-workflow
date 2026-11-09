@@ -1,5 +1,6 @@
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Handoff;
 using Aw.Sindri.Features.CreateHandoffItem;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Testing;
@@ -22,8 +23,8 @@ public sealed class HandoffItemTests
         _ = await _h.HoldLease();
         using var entered = _h.Callers.Enter(A.Caller().Human().Build());
         var prompt = new string('p', 10_000);
-        var request = new CreateHandoffItemRequest("Fix the login timeout", "ci-bot", Offer: "offer-7", Branch: "fix/login", Prompt: prompt,
-            Links: ["https://example.test/t/7"], Labels: ["bug"]);
+        var request = new CreateHandoffItemRequest("Fix the login timeout", "ci-bot", OfferKey: "offer-7", Branch: "fix/login", Prompt: prompt,
+            Links: [new HandoffLink("Ticket", "https://example.test/t/7")], Labels: ["bug"]);
 
         var result = await Service().Handle(request, Token);
 
@@ -39,8 +40,8 @@ public sealed class HandoffItemTests
         Assert.Equal(handoff.Sequence, result.Value.Accepted.Sequence);
         var payload = _h.Events.Payload<ItemHandoff>(handoff).Value;
         Assert.Equal(prompt, payload.Prompt);
-        Assert.Equal(("offer-7", "ci-bot", "fix/login", result.Value.ItemId), (payload.Offer, payload.Source, payload.Branch, payload.Item));
-        Assert.Equal(["https://example.test/t/7"], payload.Links);
+        Assert.Equal(("offer-7", "ci-bot", "fix/login", result.Value.ItemId), (payload.OfferKey, payload.Source, payload.Branch, payload.Item));
+        Assert.Equal([new HandoffLink("Ticket", "https://example.test/t/7")], payload.Links);
         Assert.Equal(["bug"], payload.Labels);
     }
 
@@ -53,8 +54,8 @@ public sealed class HandoffItemTests
         var result = await Service().Handle(new CreateHandoffItemRequest("Try it", "local"), Token);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
-        Assert.Equal(result.Value.ItemId.Value, result.Value.Offer);
-        Assert.Equal(result.Value.ItemId.Value, _h.Events.Payload<ItemHandoff>(_h.Store.Events[1]).Value.Offer);
+        Assert.Equal(result.Value.ItemId.Value, result.Value.OfferKey);
+        Assert.Equal(result.Value.ItemId.Value, _h.Events.Payload<ItemHandoff>(_h.Store.Events[1]).Value.OfferKey);
     }
 
     [Theory, Trait("Lane", "unit")]
@@ -75,6 +76,17 @@ public sealed class HandoffItemTests
 
         Assert.True(validator.Validate(new CreateHandoffItemRequest("Title", "ci-bot", Prompt: new string('p', 65_536))).IsSuccess);
         Assert.Equal(SindriErrors.InvalidInput.Code, validator.Validate(new CreateHandoffItemRequest("Title", "ci-bot", Prompt: new string('p', 65_537))).Error.Code);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("Ticket", "ftp://example.test/t/7")]
+    [InlineData("Ticket", "/t/7")]
+    [InlineData("", "https://example.test/t/7")]
+    public void A_link_without_a_label_or_an_http_url_is_invalid(string label, string url)
+    {
+        var result = new CreateHandoffItemValidator().Validate(new CreateHandoffItemRequest("Title", "ci-bot", Links: [new HandoffLink(label, url)]));
+
+        Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -21,8 +21,18 @@ internal static partial class SindriTools
             ["repo"] = ContextTools.Property("string", "A repo of the profile; left out, the repo of this registration"),
             ["branch"] = ContextTools.Property("string", "The branch it names"),
             ["prompt"] = ContextTools.Property("string", "The full prompt", bounds: new ContextTools.PropertyBounds(MaxLength: 65_536)),
-            ["offer"] = ContextTools.Property("string", "Your id for this offer; left out, the item id stands in"),
-            ["links"] = new JsonObject { ["type"] = "array", ["description"] = "Links, at most 50", ["items"] = new JsonObject { ["type"] = "string" } },
+            ["offerKey"] = ContextTools.Property("string", "Your id for this offer; left out, the item id stands in"),
+            ["links"] = new JsonObject
+            {
+                ["type"] = "array",
+                ["description"] = "Links, at most 50, each {label, url} with an http or https url",
+                ["items"] = new JsonObject
+                {
+                    ["type"] = "object",
+                    ["properties"] = new JsonObject { ["label"] = new JsonObject { ["type"] = "string" }, ["url"] = new JsonObject { ["type"] = "string" } },
+                    ["required"] = new JsonArray("label", "url"),
+                },
+            },
             ["labels"] = new JsonObject { ["type"] = "array", ["description"] = "Labels, at most 20", ["items"] = new JsonObject { ["type"] = "string" } },
         }, required: ["title"]),
         Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = false, IdempotentHint = false, OpenWorldHint = false },

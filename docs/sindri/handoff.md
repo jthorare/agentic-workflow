@@ -103,6 +103,16 @@ Everything an offer carries is text another system wrote. Sindri fences it where
 | `SND-CONN-205` | The inbox is out of reach, too slow, or kept answering `429` or `5xx` |
 | `SND-CONN-206` | The host is not allowed, or the URL is plain http for a non-loopback host |
 
+## Handing off from this machine
+
+A script or app on the same machine skips the inbox and hands work over directly. All three ways make the same item a claimed offer makes:
+
+- `sindri handoff send <title> [--source S] [--repo R] [--branch B] [--prompt T | --prompt-file F] [--offer ID] [--link URL | --link LABEL=URL]... [--label L]...`. A bare `--link URL` uses the URL as its label.
+- `POST 127.0.0.1:<port>/sindri/handoff` with the start's token in `X-Sindri-Token` and `X-Sindri-Caller: human`. The body is `{"title", "source", "offerKey"?, "repo"?, "branch"?, "prompt"?, "links"?, "labels"?}`; `links` has the offer's `{label, url}` shape. Callers off this machine get `403`, a missing or wrong token `401`, a body over 64 KB `413`, more than 30 calls a minute `429`.
+- The `sindri_handoff` MCP tool, with the same fields.
+
+`offerKey` is your id for the work; left out, the item id stands in. The prompt may be 65,536 characters. The item body keeps the first 4,000, and the `item.handoff` event keeps all of it.
+
 ## Checking your implementation
 
 - `tests/fixtures/handoff/fake-inbox/` holds conformance examples: valid and invalid offers, pages, claims and results, each with the verdict it must get (`manifest.json`). Run your own validator over them.

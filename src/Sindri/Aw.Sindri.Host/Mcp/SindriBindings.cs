@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Aw.Context.Core;
 using Aw.Kernel;
+using Aw.Sindri.Core.Handoff;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Requests;
 using Aw.Sindri.Features.CreateHandoffItem;
@@ -32,18 +33,18 @@ internal static class SindriBindings
     internal static Result<CreateHandoffItemRequest> Handoff(IDictionary<string, JsonElement>? arguments)
     {
         const string tool = SindriTools.Handoff;
-        if (McpArguments.Only(tool, arguments, ["title", "source", "repo", "branch", "prompt", "offer", "links", "labels"]) is { } refused)
+        if (McpArguments.Only(tool, arguments, ["title", "source", "repo", "branch", "prompt", "offerKey", "links", "labels"]) is { } refused)
         {
             return refused;
         }
 
-        var lists = Strings(tool, arguments, "links").Bind(links => Strings(tool, arguments, "labels").Map(labels => (links, labels)));
+        var lists = Links(tool, arguments).Bind(links => Strings(tool, arguments, "labels").Map(labels => (links, labels)));
         var repo = McpArguments.OptionalString(tool, arguments, "repo").Bind(RepoOf);
         return McpArguments.RequiredString(tool, arguments, "title", "Fix the login timeout").Bind(title =>
             McpArguments.OptionalString(tool, arguments, "source").Bind(source =>
             McpArguments.OptionalString(tool, arguments, "branch").Bind(branch =>
             McpArguments.OptionalString(tool, arguments, "prompt").Bind(prompt =>
-            McpArguments.OptionalString(tool, arguments, "offer").Bind(offer =>
+            McpArguments.OptionalString(tool, arguments, "offerKey").Bind(offer =>
             repo.Bind(named => lists.Map(l => new CreateHandoffItemRequest(title, source ?? "mcp", offer, named, branch, prompt, l.links, l.labels))))))));
     }
 
@@ -56,6 +57,29 @@ internal static class SindriBindings
 
         return RepoName.TryFrom(text, out var name) ? name : ContextErrors.McpArgumentsInvalid.With($"'{text}' isn't a repo name (fix: name a repo of the profile)");
     }
+
+    // why: the inbox offer's link shape ({label, url}); the validator checks the url, this checks only that both are strings
+    private static Result<HandoffLink[]?> Links(string tool, IDictionary<string, JsonElement>? arguments)
+    {
+        if (arguments is null || !arguments.TryGetValue("links", out var raw) || raw.ValueKind == JsonValueKind.Null)
+        {
+            return (HandoffLink[]?)null;
+        }
+
+        if (raw.ValueKind != JsonValueKind.Array || raw.EnumerateArray().Any(static e => !IsLink(e)))
+        {
+            return ContextErrors.McpArgumentsInvalid.With($"'links' must be an array of {{label, url}} objects (fix: see {tool}'s input schema)");
+        }
+
+        HandoffLink[] links = [.. raw.EnumerateArray().Select(static e => new HandoffLink(e.GetProperty("label").GetString()!, e.GetProperty("url").GetString()!))];   // why: IsLink checked both
+        return links;
+    }
+
+    private static bool IsLink(JsonElement e) =>
+        e.ValueKind == JsonValueKind.Object
+        && e.TryGetProperty("label", out var label) && label.ValueKind == JsonValueKind.String
+        && e.TryGetProperty("url", out var url) && url.ValueKind == JsonValueKind.String
+        && e.EnumerateObject().Take(3).Count() == 2;
 
     private static Result<string[]?> Strings(string tool, IDictionary<string, JsonElement>? arguments, string name)
     {
