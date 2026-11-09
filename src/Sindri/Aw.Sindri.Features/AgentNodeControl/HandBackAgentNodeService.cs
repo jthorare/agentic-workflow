@@ -7,7 +7,7 @@ using Aw.Sindri.Core.Graph.Runs;
 namespace Aw.Sindri.Features.AgentNodeControl;
 
 /// <summary>
-/// The human hands the 'run_agent' node back: its timeout resumes with what was left. Refused for an agent session, an unknown or ended run, a node the run is not waiting on and a node nobody holds (SND-GRAPH-110).
+/// A person or an agent session hands the 'run_agent' node back: its timeout resumes with what was left. Refused for a request with no caller, an unknown or ended run, a node the run is not waiting on and a node nobody holds (SND-GRAPH-110).
 /// </summary>
 /// <param name="runs">The runs.</param>
 /// <param name="control">Asks the run which node it waits on and hands it back.</param>

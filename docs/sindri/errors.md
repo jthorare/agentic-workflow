@@ -161,11 +161,13 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-101` | No such workflow run |
 | `SND-GRAPH-102` | A block could not finish |
 | `SND-GRAPH-103` | The model's answer does not fit the prompt's output schema |
-| `SND-GRAPH-104` | `sindri workflow takeover` and `handback` are refused until graph run controls land |
+| `SND-GRAPH-104` | Run controls that come back with the graph engine (`sindri workflow takeover` and `handback` of an instance); a `run_agent` node uses `sindri wf takeover` and `wf handback` |
 | `SND-GRAPH-105` | This workflow is not active; activate a revision to run it |
 | `SND-GRAPH-106` | A manual run's payload must be a JSON object |
 | `SND-GRAPH-107` | This run already ended |
 | `SND-GRAPH-108` | A referenced node output was cut at 64 KB |
+| `SND-GRAPH-109` | The run is not waiting on an agent at that node, so there is nothing to take over |
+| `SND-GRAPH-110` | That agent node is not taken over, so there is nothing to hand back |
 | `SND-GRAPH-120` | A workflow call is nested too deep: the call would be past `workflow.callDepth` (default 3) |
 | `SND-GRAPH-121` | A run can't start its own workflow, or the workflow that called it |
 | `SND-GRAPH-122` | An `http` node's request was refused before it was sent: host not on `workflow.http.hosts`, an address that is this machine, plain http, or a credential header |

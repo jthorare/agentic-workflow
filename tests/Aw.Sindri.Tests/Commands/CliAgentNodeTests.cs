@@ -5,12 +5,14 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Features.AgentNodeControl;
+using Aw.Sindri.Host;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.Commands;
 
-/// <summary>'sindri wf takeover|handback &lt;run&gt; &lt;node&gt; [--item N] [--json]' (#2472): posts to the node's route through the control plane and prints where the node stands; a refusal prints its code.</summary>
+/// <summary>'sindri wf takeover|handback &lt;run&gt; &lt;node&gt; [--item N] [--json]' and their short forms (#2472): posts to the node's route through the control plane and prints where the node stands; a refusal prints its code.</summary>
 public sealed class CliAgentNodeTests : IDisposable
 {
     private static readonly FakeControlPlaneProbe _up = FakeControlPlaneProbe.For(new ControlEndpoint(new Uri("http://127.0.0.1:7410"), 42, 3), new Ping(42, 3));
@@ -52,6 +54,46 @@ public sealed class CliAgentNodeTests : IDisposable
         Assert.Equal(0, code);
         Assert.Equal($"{_run.Value} agent handed back\n", Text);
         Assert.Equal((_route + "/handback", "{\"itemIndex\":2}"), api.Sent.Single());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_session_that_runs_wf_takeover_reaches_the_service()
+    {
+        var api = new Recorder(HttpStatusCode.OK, Answer("taken_over", 0));
+
+        var code = await Run(api, ensure: null, c => WfAgentNodeCommand.TakeOver([_run.Value, "agent"], c.Desk, c.Output, Token), human: false);
+
+        Assert.Equal(0, code);
+        Assert.Equal(_route + "/takeover", api.Sent.Single().Path);
+        Assert.Equal("session", api.Callers.Single());
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("takeover", "taken over")]
+    [InlineData("handback", "handed back")]
+    public async Task The_short_form_with_a_run_and_a_node_goes_to_the_same_route(string verb, string said)
+    {
+        var api = new Recorder(HttpStatusCode.OK, Answer("waiting", 0));
+
+        var code = await Run(api, ensure: null, c => WorkflowCommandTable.RunShort([verb, _run.Value, "agent"], new ServiceCollection().BuildServiceProvider(), c.Output, c.Desk, Token));
+
+        Assert.Equal(0, code);
+        Assert.Equal($"{_run.Value} agent {said}\n", Text);
+        Assert.Equal(_route + "/" + verb, api.Sent.Single().Path);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("takeover")]
+    [InlineData("handback")]
+    public async Task The_short_form_with_one_argument_still_refuses_an_instance_and_names_the_wf_verb(string verb)
+    {
+        var api = new Recorder(HttpStatusCode.OK, Answer("waiting", 0));
+
+        var code = await Run(api, ensure: null, c => WorkflowCommandTable.RunShort([verb, "ITM-1"], new ServiceCollection().BuildServiceProvider(), c.Output, c.Desk, Token));
+
+        Assert.Equal(2, code);
+        Assert.Contains($"sindri wf {verb} <run> <node>", _error.ToString(), StringComparison.Ordinal);
+        Assert.Empty(api.Sent);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -123,10 +165,10 @@ public sealed class CliAgentNodeTests : IDisposable
     private static string Answer(string agent, int item) =>
         Encoding.UTF8.GetString(AwJson.Serialize(new AgentNodeControlled(_run, NodeId.From("agent"), item, agent), SliceHarness.Json));
 
-    private async Task<int> Run(Recorder api, Aw.Kernel.Error? ensure, Func<(RecipeDesk Desk, Output Output), Task<int>> call)
+    private async Task<int> Run(Recorder api, Aw.Kernel.Error? ensure, Func<(RecipeDesk Desk, Output Output), Task<int>> call, bool human = true)
     {
         var client = new ControlPlaneClient(_up, SliceHarness.Json,
-            CallerHeaders.For(new AgentSession(Terminal: true, Prover: false), InMemoryHumanTokenStore.WithToken(), _ => ValueTask.FromResult((Core.Ids.RepoName?)null)), handler: api);
+            CallerHeaders.For(new AgentSession(Terminal: true, Prover: false), human ? InMemoryHumanTokenStore.WithToken() : new InMemoryHumanTokenStore(), _ => ValueTask.FromResult((Core.Ids.RepoName?)null)), handler: api);
         var desk = new RecipeDesk(client, TextReader.Null, _ => Task.FromResult(ensure));
         return await call((desk, new Output(_out, _error, SliceHarness.Json)));
     }
@@ -134,6 +176,9 @@ public sealed class CliAgentNodeTests : IDisposable
     private sealed class Recorder(HttpStatusCode status, string body) : HttpMessageHandler
     {
         private readonly List<(string Path, string Body)> _sent = [];
+        private readonly List<string> _callers = [];
+
+        public IReadOnlyList<string> Callers => _callers;
 
         public IReadOnlyList<(string Path, string Body)> Sent => _sent;
 
@@ -141,6 +186,7 @@ public sealed class CliAgentNodeTests : IDisposable
         {
             var text = request.Content is { } content ? await content.ReadAsStringAsync(cancellationToken) : string.Empty;
             _sent.Add((request.RequestUri!.AbsolutePath, text));
+            _callers.Add(request.Headers.TryGetValues(SindriHeaders.Caller, out var caller) ? string.Join(',', caller) : string.Empty);
             var contentType = (int)status >= 400 ? "application/problem+json" : "application/json";
             return new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, contentType) };
         }
