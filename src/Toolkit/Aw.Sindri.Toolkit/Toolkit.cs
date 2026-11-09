@@ -10,7 +10,6 @@ public sealed class Toolkit
     private readonly List<ResourceNeed> _needs = [];
     private readonly List<ToolDefinition> _tools = [];
     private JsonSerializerContext? _json;
-    private string _version = "1.0.0";
 
     private Toolkit(string name)
     {
@@ -37,7 +36,7 @@ public sealed class Toolkit
     public Toolkit WithVersion(string version)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
-        _version = version;
+        Version = version;
         return this;
     }
 
@@ -71,10 +70,29 @@ public sealed class Toolkit
     public Toolkit Tool<TRequest, TResponse>(string name, string description, Func<TRequest, ToolkitContext, CancellationToken, Task<TResponse>> handler)
     {
         ArgumentNullException.ThrowIfNull(handler);
-        return _json is null || name.Length == 0 || description.Length == 0 ? this : throw new NotSupportedException();
+        ArgumentException.ThrowIfNullOrWhiteSpace(description);
+        var json = _json ?? throw new ToolkitException(ToolkitErrors.InvalidDeclaration, $"Call UseJson(<your JsonSerializerContext>) before adding tool '{name}'.");
+        if (!IsToolName(name))
+        {
+            throw new ToolkitException(ToolkitErrors.InvalidDeclaration, $"'{name}' is not a tool name: use lower-case letters, digits and '_', starting with a letter.");
+        }
+
+        if (_tools.Exists(t => string.Equals(t.Name, name, StringComparison.Ordinal)))
+        {
+            throw new ToolkitException(ToolkitErrors.InvalidDeclaration, $"The toolkit already has a tool named '{name}'.");
+        }
+
+        _tools.Add(ToolFactory.Create(json, name, description, handler));
+        return this;
     }
 
     /// <summary>The manifest, toolkit.json, as indented JSON.</summary>
     /// <returns>The JSON text.</returns>
-    public string Manifest() => _version.Length > 0 ? throw new NotSupportedException() : Name;
+    public string Manifest() => ManifestWriter.Write(Name, Version, _needs, _tools);
+
+    /// <summary>The version shown in the manifest and to MCP clients.</summary>
+    internal string Version { get; private set; } = "1.0.0";
+
+    private static bool IsToolName(string name) =>
+        !string.IsNullOrEmpty(name) && name[0] is >= 'a' and <= 'z' && name.All(c => c is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '_');
 }
