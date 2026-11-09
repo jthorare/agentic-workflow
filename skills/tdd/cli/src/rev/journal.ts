@@ -1,11 +1,13 @@
 // The run's memory under build/.rev/: journal.jsonl (append-only, one JSON object per event: run-start, step-start,
 // step, note, run-end) and state.json (each step's last outcome in the current cycle, written whole and renamed into
 // place after every step, so a stop at any moment leaves the last complete state). Every string is scrubbed of keys
-// before it is written. A lock file keeps two runs off the same build.
-import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+// before it is written. A lock file keeps two runs off the same build. The state is bound to its packet folder (the
+// sha256 of its real path): a build/.rev copied from another folder is set aside with a note and the run starts fresh.
+import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Context, Effect, Layer, Schema } from "effect";
 import { RevPaths } from "./context";
+import { homeRel } from "./paths";
 import { Secrets } from "./secrets";
 import { STEPS } from "./steps";
 
@@ -29,6 +31,8 @@ export const StepRecord = Schema.Struct({
   stderr_tail: Schema.optionalKey(Schema.String),
   inputs: Schema.optionalKey(Schema.String),
   outputs: Schema.optionalKey(Schema.String),
+  data: Schema.optionalKey(Schema.Record(Schema.String, Schema.Number)),
+  reused: Schema.optionalKey(Schema.Boolean),
   last_ok: Schema.optionalKey(OkRef),
 });
 export type StepRecord = typeof StepRecord.Type;
@@ -36,6 +40,8 @@ export type StepRecord = typeof StepRecord.Type;
 export const State = Schema.Struct({
   version: Schema.Literal(1),
   packet: Schema.String,
+  /** sha256 of the packet folder's real path: the state belongs to that folder only. */
+  packet_key: Schema.String,
   cycle: Schema.Number,
   cycle_started: Schema.String,
   last_run: Schema.NullOr(Schema.String),
@@ -43,12 +49,19 @@ export const State = Schema.Struct({
 });
 export type State = typeof State.Type;
 
-export const freshState = (packet: string, at: string): State =>
-  ({ version: 1, packet, cycle: 0, cycle_started: at, last_run: null, steps: {} });
+export const freshState = (packet: string, at: string, key = ""): State =>
+  ({ version: 1, packet, packet_key: key, cycle: 0, cycle_started: at, last_run: null, steps: {} });
+
+/** The packet folder's binding key: sha256 of its real path. */
+export function packetKey(packet: string): string {
+  let real = packet;
+  try { real = realpathSync(packet); } catch { /* not there yet: the path itself */ }
+  return new Bun.CryptoHasher("sha256").update(real).digest("hex");
+}
 
 export interface JournalApi {
   /** The saved state, or a fresh one (with a note saying why when a state.json was there but unreadable). */
-  readonly load: Effect.Effect<{ readonly state: State; readonly note: string | null }>;
+  readonly load: (run: string) => Effect.Effect<{ readonly state: State; readonly note: string | null }>;
   readonly save: (s: State) => Effect.Effect<void>;
   /** Append one event: `at` is added, keys are scrubbed. */
   readonly append: (entry: Record<string, unknown>) => Effect.Effect<void>;
@@ -70,6 +83,8 @@ export const JournalLive = Layer.effect(
   Effect.gen(function* () {
     const p = yield* RevPaths;
     const secrets = yield* Secrets;
+    const key = packetKey(p.packet);
+    const fresh = () => freshState(homeRel(p.packet), nowIso(), key);
     const dir = p.rev, statePath = join(dir, "state.json"), journalPath = join(dir, "journal.jsonl"), lockPath = join(dir, "lock");
     const ensure = () => {
       mkdirSync(dir, { recursive: true });
@@ -79,16 +94,26 @@ export const JournalLive = Layer.effect(
     };
     const scrubbed = (v: unknown) => secrets.scrub(JSON.stringify(v));
     return {
-      load: Effect.gen(function* () {
-        if (!existsSync(statePath)) return { state: freshState(p.packet, nowIso()), note: null };
+      load: (run) => Effect.gen(function* () {
+        if (!existsSync(statePath)) return { state: fresh(), note: null };
         let raw: unknown;
         try { raw = JSON.parse(readFileSync(statePath, "utf8")); } catch (e) {
-          return { state: freshState(p.packet, nowIso()), note: `build/.rev/state.json is not JSON (${(e as Error).message}); starting a new cycle` };
+          return { state: fresh(), note: `build/.rev/state.json is not JSON (${(e as Error).message}); starting a new cycle` };
         }
-        return yield* decodeState(raw).pipe(
-          Effect.map((s) => ({ state: { ...s, steps: Object.fromEntries(Object.entries(s.steps).filter(([k]) => (STEPS as readonly string[]).includes(k))) }, note: null as string | null })),
-          Effect.orElseSucceed(() => ({ state: freshState(p.packet, nowIso()), note: "build/.rev/state.json does not match the state schema; starting a new cycle" })),
-        );
+        const decoded = yield* decodeState(raw).pipe(Effect.orElseSucceed(() => null));
+        if (!decoded) return { state: fresh(), note: "build/.rev/state.json does not match the state schema; starting a new cycle" };
+        if (decoded.packet_key !== key) {
+          // a build/.rev copied from another folder: its outcomes say nothing about this packet's files
+          const aside = (f: string) => { if (existsSync(f)) renameSync(f, f.replace(/\.(json|jsonl)$/, `.foreign-${run}.$1`)); };
+          aside(statePath);
+          aside(journalPath);
+          return {
+            state: fresh(),
+            note: `build/.rev came from another packet folder (${decoded.packet}); set aside as *.foreign-${run}.*, this run starts fresh`,
+          };
+        }
+        const steps = Object.fromEntries(Object.entries(decoded.steps).filter(([k]) => (STEPS as readonly string[]).includes(k)));
+        return { state: { ...decoded, steps }, note: null as string | null };
       }),
       save: (s) =>
         Effect.sync(() => {

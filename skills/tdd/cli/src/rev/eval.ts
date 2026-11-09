@@ -5,6 +5,7 @@
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import type { Part } from "./hash";
 import type { Paths } from "./paths";
 import { homeRel } from "./paths";
 
@@ -12,6 +13,8 @@ export interface EvalImpl {
   readonly name: string;
   /** The child's argv for `args` (eval_packet.py's flags after the packet), or why it cannot run on this machine. */
   readonly command: (p: Paths, args: readonly string[]) => { readonly cmd: readonly string[] } | { readonly notRun: string };
+  /** The eval's own code, part of the eval step's fingerprint (so the swap below also moves --reuse and the guard). */
+  readonly code: (p: Paths) => readonly Part[];
 }
 
 /** The eval venv's Python ($TDD_EVAL_PYTHON overrides it, for tests). */
@@ -27,11 +30,19 @@ export const pythonEval: EvalImpl = {
     if (!existsSync(script)) return { notRun: "not run: scripts/eval_packet.py is absent" };
     return { cmd: [py, "-I", script, p.packet, ...args] };
   },
+  code: (p) => [
+    { tree: join(p.skill, "scripts", "eval") }, { file: join(p.skill, "scripts", "eval_packet.py") },
+    { file: join(p.skill, "scripts", "lint_packet.py") }, { label: "python", value: evalPython() },
+  ],
 };
 
 export const bunEval: EvalImpl = {
   name: "tdd eval (src/eval)",
   command: (p, args) => ({ cmd: [process.execPath, join(p.cli, "bin", "tdd.ts"), "eval", p.packet, ...args] }),
+  code: (p) => [
+    { tree: join(p.cli, "src", "eval") }, { file: join(p.cli, "bin", "eval-packet.ts") }, { tree: join(p.cli, "src", "lint") },
+    { tree: join(p.cli, "src", "py") },
+  ],
 };
 
 /** The eval the runner runs. Lane N8's merge changes this line to `bunEval`. */

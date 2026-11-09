@@ -10,7 +10,7 @@ import { RevOpts, RevPaths } from "./context";
 import { evalStep } from "./eval";
 import type { Part } from "./hash";
 import { artifactCheckPath, type Paths } from "./paths";
-import { Secrets } from "./secrets";
+import { evalPushKeys, Secrets, type SecretsApi } from "./secrets";
 import { Db, Proc, Tools, type ProcResult } from "./services";
 import { Fail, lastLine, Skip, tail, type Done, type StepName } from "./steps";
 
@@ -32,15 +32,21 @@ export type StepEnv = RevPaths | RevOpts | Secrets | Proc | Tools | Db | RunMemo
 export interface StepDef {
   readonly name: StepName;
   /** What the step reads; null: never reused, never guarded (the push). */
-  readonly inputs: ((p: Paths, a: RevArgs) => readonly Part[]) | null;
+  // `s`: the run's environment snapshot (the runner withdraws the keys from process.env while it runs)
+  readonly inputs: ((p: Paths, a: RevArgs, s: Pick<SecretsApi, "databaseUrl">) => readonly Part[]) | null;
   /** What the step writes, checked unchanged before a reuse (empty: nothing to check). */
   readonly outputs: (p: Paths) => readonly Part[];
   readonly run: Effect.Effect<Done, Skip | Fail, StepEnv>;
 }
 
-const BUN = process.execPath;
+/** The bun that runs app/build.ts, check_hydrate.ts and tdd load-db: this one ($TDD_REV_BUN overrides it, for tests). */
+const BUN = (): string => process.env["TDD_REV_BUN"] || process.execPath;
 const MIN = 60_000;
-const SKIP_DIRS = ["shots", ".git", ".claude"];
+/** Never inputs: version control and the agent's own folders. */
+const VCS = [".git", ".claude"];
+/** What the compile reads from the packet: everything but the build, artifact_check's shots, the run logs of a DAG
+ *  and status.md (build_tdd.py reads none of them). An edit to any other file reruns the compile. */
+const COMPILE_SKIPS = ["build", "shots", "dag-runs", "status.md", ...VCS];
 
 const failed = (what: string, r: ProcResult): Fail =>
   new Fail({ error: r.timedOut ? `${what} timed out` : `${what} exited ${r.code}`, tail: tail(r.err || r.out) });
@@ -75,7 +81,8 @@ const runEval = (push: boolean): Effect.Effect<EvalRun, Skip | Fail, StepEnv> =>
     const c = evalStep.command(p, evalArgs(a, push));
     if ("notRun" in c) return yield* new Skip({ reason: c.notRun });
     const started = Date.now();
-    const r = yield* proc.run({ cmd: c.cmd, cwd: p.packet, env: secrets.childEnv(push), timeoutMs: 30 * MIN });
+    const env = secrets.childEnv(push ? evalPushKeys(a.noGh) : []);
+    const r = yield* proc.run({ cmd: c.cmd, cwd: p.packet, env, timeoutMs: 30 * MIN });
     const run: EvalRun = { push, code: r.code, out: r.out, err: r.err, started };
     memo.eval = run;
     if (r.timedOut) return yield* failed("eval", r);
@@ -89,7 +96,7 @@ export const STEP_DEFS: readonly StepDef[] = [
   {
     name: "compile",
     inputs: (p) => [
-      { tree: p.packet, exclude: ["build", ...SKIP_DIRS] },
+      { tree: p.packet, exclude: COMPILE_SKIPS },
       ...cliTrees(p, "src/compile", "src/sd", "src/py", "src/vocab.ts"),
       { label: "TDD_GENERATED", value: process.env["TDD_GENERATED"] ?? "" },
     ],
@@ -116,7 +123,7 @@ export const STEP_DEFS: readonly StepDef[] = [
         return yield* new Fail({ error: "app/node_modules is absent: run `bun install` in the skill's app folder once (SKILL.md step 5)", tail: "" });
       }
       if (!existsSync(join(p.build, "content.json"))) return yield* new Fail({ error: "build/content.json is absent: the compile step has not run", tail: "" });
-      const r = yield* proc.run({ cmd: [BUN, "run", "build.ts", p.build], cwd: p.app, env: secrets.childEnv(false), timeoutMs: 5 * MIN });
+      const r = yield* proc.run({ cmd: [BUN(), "run", "build.ts", p.build], cwd: p.app, env: secrets.childEnv(), timeoutMs: 5 * MIN });
       if (r.code !== 0) return yield* failed("app/build.ts", r);
       const first = r.out.split("\n").find((l) => l.startsWith("wrote ")) ?? lastLine(r.out);
       return { detail: first.split(p.build + "/").join("build/") };
@@ -128,7 +135,7 @@ export const STEP_DEFS: readonly StepDef[] = [
     outputs: () => [],
     run: Effect.gen(function* () {
       const p = yield* RevPaths, proc = yield* Proc, secrets = yield* Secrets;
-      const r = yield* proc.run({ cmd: [BUN, "run", "check_hydrate.ts", join(p.build, "tdd.html")], cwd: p.app, env: secrets.childEnv(false), timeoutMs: 5 * MIN });
+      const r = yield* proc.run({ cmd: [BUN(), "run", "check_hydrate.ts", join(p.build, "tdd.html")], cwd: p.app, env: secrets.childEnv(), timeoutMs: 5 * MIN });
       const line = /console errors \d+ \| console warnings \d+ \(hydration \d+\) \| failed steps \d+/.exec(r.out)?.[0];
       if (r.code !== 0) {
         const f = failed("app/check_hydrate.ts", r);
@@ -155,7 +162,7 @@ export const STEP_DEFS: readonly StepDef[] = [
   {
     name: "lint",
     inputs: (p) => [
-      { tree: p.packet, exclude: ["build/lint.json", "build/eval", "build/.rev", ...SKIP_DIRS] },
+      { tree: p.packet, exclude: ["build/lint.json", "build/eval", "build/.rev", "shots", ...VCS] },
       ...cliTrees(p, "src/lint", "src/compile", "src/agents", "src/hotspots", "src/sd", "src/py", "src/vocab.ts"),
       { file: join(p.skill, "scripts", "build_tdd.py") },
     ],
@@ -168,7 +175,10 @@ export const STEP_DEFS: readonly StepDef[] = [
       if ((r.code === 0 || r.code === 1) && existsSync(json)) {
         let counts: { errors?: unknown; warnings?: unknown } = {};
         try { counts = (JSON.parse(readFileSync(json, "utf8")) as { counts?: typeof counts }).counts ?? {}; } catch { /* reported below */ }
-        return { detail: `${String(counts.errors)} error(s), ${String(counts.warnings)} warning(s) -> build/lint.json` };
+        const data: Record<string, number> = {};
+        if (typeof counts.errors === "number") data["lint_errors"] = counts.errors;
+        if (typeof counts.warnings === "number") data["lint_warnings"] = counts.warnings;
+        return { detail: `${String(counts.errors)} error(s), ${String(counts.warnings)} warning(s) -> build/lint.json`, data };
       }
       return yield* new Fail({ error: `tdd lint exited ${r.code}${existsSync(json) ? "" : " and wrote no build/lint.json"}`, tail: tail(r.err || r.out) });
     }),
@@ -176,9 +186,9 @@ export const STEP_DEFS: readonly StepDef[] = [
   {
     name: "eval",
     inputs: (p, a) => [
-      { tree: p.packet, exclude: ["build/eval", "build/.rev", ...SKIP_DIRS] },
-      { tree: join(p.skill, "scripts", "eval") }, { file: join(p.skill, "scripts", "eval_packet.py") },
-      { file: join(p.skill, "scripts", "lint_packet.py") },
+      // shots/ included: the eval captures the screenshots artifact-check just wrote
+      { tree: p.packet, exclude: ["build/eval", "build/.rev", ...VCS] },
+      ...evalStep.code(p),
       { label: "eval", value: `${evalStep.name} ${evalArgs(a, a.push).join(" ")}` },
     ],
     outputs: (p) => [{ file: join(p.build, "eval", "run.json") }],
@@ -195,22 +205,25 @@ export const STEP_DEFS: readonly StepDef[] = [
   },
   {
     name: "load-db",
-    inputs: (p, a) => [
+    inputs: (p, a, s) => [
       { file: join(p.packet, "meta.json") }, { file: join(p.build, "content.json") }, { file: join(p.build, "lint.json") },
       { tree: join(p.build, "eval"), exclude: ["shots", "history.jsonl"] }, ...cliTrees(p, "src/db", "sql"),
-      { label: "database", value: dbTarget(Option.fromNullishOr(process.env["DATABASE_URL"] ? Redacted.make(process.env["DATABASE_URL"]) : undefined)).label },
+      { label: "database", value: dbTarget(s.databaseUrl).label },
       { label: "published", value: JSON.stringify(a.published) },
     ],
     outputs: () => [],
     run: Effect.gen(function* () {
       const p = yield* RevPaths, a = yield* RevOpts, proc = yield* Proc, secrets = yield* Secrets, db = yield* Db;
       const { url, label } = dbTarget(secrets.databaseUrl);
-      const why = yield* db.probe(url);
-      if (why !== null) return yield* new Skip({ reason: `not run: Postgres is unreachable at ${label} (${why})` });
+      const probe = yield* db.probe(url);
+      if (!probe.ok && !probe.answered) return yield* new Skip({ reason: `not run: Postgres is unreachable at ${label} (${probe.reason})` });
+      if (!probe.ok) {
+        return yield* new Fail({ error: `Postgres at ${label} refused the connection: ${probe.reason}; check $DATABASE_URL`, tail: "" });
+      }
       const pub = a.published ? ["--published", a.published.surface, a.published.url] : [];
       const r = yield* proc.run({
-        cmd: [BUN, join(p.cli, "bin", "tdd.ts"), "load-db", p.packet, ...pub], cwd: p.packet,
-        env: { ...secrets.childEnv(false), DATABASE_URL: url }, timeoutMs: 5 * MIN,
+        cmd: [BUN(), join(p.cli, "bin", "tdd.ts"), "load-db", p.packet, ...pub], cwd: p.packet,
+        env: { ...secrets.childEnv(), DATABASE_URL: url }, timeoutMs: 5 * MIN,
       });
       if (r.code !== 0) return yield* failed("tdd load-db", r);
       return { detail: lastLine(r.out) };
@@ -241,6 +254,7 @@ export const STEP_DEFS: readonly StepDef[] = [
     inputs: (p, a) => [
       { file: join(p.build, "tdd.html") }, { label: "artifact_check", value: artifactCheckPath(p.skill) ?? "" },
       ...(artifactCheckPath(p.skill) ? [{ file: artifactCheckPath(p.skill)! }] : []), { label: "no-shots", value: String(a.noShots) },
+      { label: "node", value: Bun.which("node") ?? "" },
     ],
     outputs: () => [],
     run: Effect.gen(function* () {
@@ -252,7 +266,7 @@ export const STEP_DEFS: readonly StepDef[] = [
       if (!existsSync(join(p.build, "tdd.html"))) return yield* new Fail({ error: "build/tdd.html is absent: the app-build step has not run", tail: "" });
       const r = yield* proc.run({
         cmd: [node, mjs, "build/tdd.html", "shots", ...(a.noShots ? ["--no-shots"] : [])], cwd: p.packet,
-        env: secrets.childEnv(false), timeoutMs: 10 * MIN,
+        env: secrets.childEnv(), timeoutMs: 10 * MIN,
       });
       if (r.code === 1) return yield* new Fail({ error: "artifact_check found contract failures (exit 1)", tail: tail(r.err || r.out) });
       if (r.code !== 0) return yield* failed("artifact_check.mjs", r);

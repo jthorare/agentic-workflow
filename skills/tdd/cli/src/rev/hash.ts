@@ -10,8 +10,10 @@ export type Part =
   | { readonly tree: string; readonly exclude?: readonly string[] }
   | { readonly label: string; readonly value: string };
 
-/** Names that never count, wherever they are: the Finder's folder files and Python's caches. */
+/** Names that never count, wherever they are: the Finder's folder files, Python's caches, and the page copy
+ *  artifact_check writes beside the page while it runs (`.artifact-check-<page>-<pid>.html`). */
 const NOISE = new Set([".DS_Store", "__pycache__"]);
+const isNoise = (name: string): boolean => NOISE.has(name) || name.startsWith(".artifact-check-");
 
 function fileDigest(p: string): string {
   try {
@@ -28,7 +30,7 @@ function walk(root: string, rel: string, exclude: readonly string[], out: [strin
   let names: string[];
   try { names = readdirSync(join(root, rel)); } catch { return; }
   for (const name of names.sort()) {
-    if (NOISE.has(name)) continue;
+    if (isNoise(name)) continue;
     const r = rel ? `${rel}/${name}` : name;
     if (exclude.some((x) => r === x || r.startsWith(x + "/"))) continue;
     const p = join(root, r);

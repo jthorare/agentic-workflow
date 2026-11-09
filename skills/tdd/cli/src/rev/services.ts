@@ -2,14 +2,22 @@
 // tests swap in recording or scripted ones.
 //   Out     where output goes: the steps' own output (stdout, or stderr under --json), progress, the final table
 //   Proc    a child process with the parent's output passed through, a timeout, and a kill on interrupt
-//   Tools   the in-process programs: tdd build, tdd agents and tdd lint, with their stdout and stderr captured
-//   Db      whether Postgres answers at a url (load-db is skipped with the reason when it does not)
+//   Tools   the in-process programs: tdd build, tdd agents and tdd lint, with their stdout and stderr captured; lint's
+//           git runs through a wrapper that unsets every secret (Bun.spawn's default environment is the one the
+//           process started with, whatever process.env says later)
+//   Db      whether Postgres answers at a url (load-db is skipped when nothing answers, fails when a server refuses)
 import { SQL } from "bun";
-import { constants } from "node:os";
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { constants, tmpdir } from "node:os";
+import { join } from "node:path";
 import { Context, Effect, Layer } from "effect";
 import { main as buildMain } from "../../bin/build-tdd";
 import { lintMain } from "../../bin/lint-packet";
 import { main as agentsMain } from "../../bin/write-agents";
+import { TsCompilerLive } from "../lint/rules/parity";
+import type { Services as LintServices } from "../lint/run";
+import { AgentsLive, ClockLive, CompilerLive, FsLive, GIT_TIMEOUT_S, Git, gitLive } from "../lint/services";
+import { isSecretName } from "./secrets";
 import { Fail } from "./steps";
 
 // ------------------------------------------------------------------------------------------------------------ Out
@@ -156,13 +164,13 @@ async function captured(fn: () => Promise<number>, out: OutApi): Promise<Capture
   }
 }
 
-export function toolsLive(out: OutApi): ToolsApi {
+export function toolsLive(out: OutApi, lintLayer?: Layer.Layer<LintServices>): ToolsApi {
   return {
     compile: (argv) => Effect.promise(() => captured(() => buildMain([...argv]), out)),
     agents: (argv) => Effect.promise(() => captured(() => agentsMain([...argv]), out)),
     lint: (argv) =>
       Effect.promise(async () => {
-        const r = await lintMain(argv);
+        const r = await lintMain(argv, lintLayer);
         if (r.out) out.child(r.out);
         if (r.err) out.childErr(r.err);
         return r;
@@ -170,27 +178,57 @@ export function toolsLive(out: OutApi): ToolsApi {
   };
 }
 
-export const ToolsLive = Layer.effect(Tools, Effect.gen(function* () { return toolsLive(yield* Out); }));
+/** A `git` for lint that unsets every secret in the environment and runs the real git: a script in a temporary folder
+ *  that lives as long as the run (null when there is no git, or no secret to unset). */
+const gitWithoutSecrets = Effect.acquireRelease(
+  Effect.sync((): { dir: string; git: string } | null => {
+    const real = Bun.which("git");
+    const names = Object.keys(process.env).filter(isSecretName);
+    if (!real || names.length === 0) return null;
+    const dir = mkdtempSync(join(tmpdir(), "tdd-rev-git-"));
+    const q = (s: string) => `'${s.split("'").join(`'\\''`)}'`;
+    const git = join(dir, "git");
+    writeFileSync(git, `#!/bin/sh\nexec /usr/bin/env ${names.map((n) => `-u ${q(n)}`).join(" ")} ${q(real)} "$@"\n`);
+    chmodSync(git, 0o755);
+    return { dir, git };
+  }),
+  (made) => Effect.sync(() => { if (made) rmSync(made.dir, { recursive: true, force: true }); }),
+);
+
+export const ToolsLive = Layer.effect(Tools, Effect.gen(function* () {
+  const out = yield* Out;
+  const made = yield* gitWithoutSecrets;
+  const lintLayer = made
+    ? Layer.mergeAll(FsLive, Layer.succeed(Git, gitLive(GIT_TIMEOUT_S, made.git)), ClockLive, CompilerLive, AgentsLive, TsCompilerLive)
+    : undefined;
+  return toolsLive(out, lintLayer);
+}));
 
 // ------------------------------------------------------------------------------------------------------------- Db
+/** A probe's answer: the server took `SELECT 1`; or it did not, either because nothing answered (unreachable: load-db
+ *  is skipped) or because a server answered with an error (a missing database, an unknown role, a bad password: a
+ *  misconfigured $DATABASE_URL, which fails the step rather than silently dropping the load). */
+export type Probe = { readonly ok: true } | { readonly ok: false; readonly answered: boolean; readonly reason: string };
 export interface DbApi {
-  /** null when Postgres answers `SELECT 1` at the url within the timeout, else why not (one line). */
-  readonly probe: (url: string, timeoutMs?: number) => Effect.Effect<string | null>;
+  readonly probe: (url: string, timeoutMs?: number) => Effect.Effect<Probe>;
 }
 export class Db extends Context.Service<Db, DbApi>()("tdd/rev/Db") {}
 
 export const DbLive = Layer.succeed(Db, {
   probe: (url, timeoutMs = 5000) =>
-    Effect.promise(async () => {
+    Effect.promise(async (): Promise<Probe> => {
       let db: SQL | null = null;
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
         db = new SQL({ url, max: 1, connectionTimeout: Math.ceil(timeoutMs / 1000) });
         const timeout = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(`no answer in ${timeoutMs} ms`)), timeoutMs); });
         await Promise.race([db`SELECT 1`, timeout]);
-        return null;
+        return { ok: true };
       } catch (e) {
-        return ((e as Error).message || String(e)).split("\n")[0]!;
+        const x = e as { code?: unknown; errno?: unknown; message?: unknown };
+        const reason = (typeof x.message === "string" && x.message ? x.message : String(e)).split("\n")[0]!;
+        const answered = x.code === "ERR_POSTGRES_SERVER_ERROR";
+        return { ok: false, answered, reason: answered && typeof x.errno === "string" ? `${reason} (SQLSTATE ${x.errno})` : reason };
       } finally {
         if (timer) clearTimeout(timer);
         if (db) await db.close({ timeout: 1 }).catch(() => undefined);

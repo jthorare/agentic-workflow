@@ -9,7 +9,7 @@ import { evalStep } from "./eval";
 import { fingerprint } from "./hash";
 import { Journal, nowIso, type State, type StepRecord } from "./journal";
 import { homeRel } from "./paths";
-import { Secrets } from "./secrets";
+import { Secrets, withdrawSecrets } from "./secrets";
 import { Out, Proc, type ProcApi } from "./services";
 import { RunMemo, STEP_DEFS, stepDef, type MemoApi, type StepDef, type StepEnv } from "./stepdefs";
 import { STEPS, stepIndex, type Outcome, type StepName } from "./steps";
@@ -45,9 +45,10 @@ export function plan(state: State, a: Pick<RevArgs, "from" | "only">, changed: (
   if (fresh) return { mode: "fresh", cycle: 1, newCycle: true, steps: [...STEPS], notes: [] };
   const frontier = STEPS.findIndex((s) => !isDone(state, s));
   if (frontier === -1) return { mode: "new-cycle", cycle: state.cycle + 1, newCycle: true, steps: [...STEPS], notes: [] };
+  // every done step is checked, the reused ones included (a reuse records the fingerprints it matched)
   for (let i = 0; i < frontier; i++) {
     const s = STEPS[i]!, r = state.steps[s]!;
-    if (r.outcome === "ok" && changed(s, r)) {
+    if ((r.inputs !== undefined || r.outputs !== undefined) && changed(s, r)) {
       return {
         mode: "resume", cycle, newCycle: false, steps: STEPS.slice(i),
         notes: [`what ${s} read or wrote changed since it ran (run ${r.run}): resuming at ${s}, not at ${STEPS[frontier]}`],
@@ -67,6 +68,10 @@ export interface Row {
   readonly detail: string;
   /** The run that recorded the outcome. */
   readonly run: string | null;
+  /** A failed step's last lines of stderr (or stdout). */
+  readonly stderr_tail?: string;
+  /** Numbers to gate on (lint_errors, lint_warnings). */
+  readonly data?: Readonly<Record<string, number>>;
 }
 
 export interface Report {
@@ -111,24 +116,26 @@ export const revProgram = (interrupt: Interrupt): Effect.Effect<Report, Refused,
       const held = yield* j.lock(run);
       if (held) return yield* Effect.fail(new Refused(held));
       yield* Effect.addFinalizer(() => j.unlock);
+      // no secret in process.env while the run lasts: the in-process tools' children (lint's git) inherit it
+      yield* Effect.acquireRelease(Effect.sync(withdrawSecrets), (restore) => Effect.sync(restore));
       // SKILL.md runs step 5 from the packet folder; the in-process compile and agents take paths relative to it.
       const cwd = yield* Effect.acquireRelease(
         Effect.sync(() => { const old = process.cwd(); process.chdir(p.packet); return old; }),
         (old) => Effect.sync(() => process.chdir(old)),
       );
       void cwd;
-      const loaded = yield* j.load;
+      const loaded = yield* j.load(run);
       const S: { state: State } = { state: loaded.state };
       // A done step must be redone when what it read changed, or what it wrote is gone or was changed since.
       const changed = (s: StepName, r: StepRecord) => {
         const def = stepDef(s);
-        if (def.inputs && fingerprint(def.inputs(p, a)) !== r.inputs) return true;
+        if (r.inputs !== undefined && def.inputs && fingerprint(def.inputs(p, a, secrets)) !== r.inputs) return true;
         const outs = def.outputs(p);
         return r.outputs !== undefined && outs.length > 0 && fingerprint(outs) !== r.outputs;
       };
       const pl = plan(S.state, a, changed);
       if (pl.newCycle) S.state = { ...S.state, packet: homeRel(p.packet), cycle: pl.cycle, cycle_started: nowIso() };
-      const notes = [...(loaded.note ? [loaded.note] : []), ...pl.notes];
+      const notes = [...(loaded.note ? [loaded.note] : []), ...pl.notes].map(secrets.scrub);
       const online = a.push && Option.isSome(secrets.braintrust);
       yield* j.append({
         event: "run-start", run, cycle: pl.cycle, mode: pl.mode, steps: pl.steps, packet: homeRel(p.packet),
@@ -156,11 +163,14 @@ export const revProgram = (interrupt: Interrupt): Effect.Effect<Report, Refused,
       yield* j.append({ event: "run-end", run, cycle: pl.cycle, exit, seconds: secondsSince(t0) });
       const rows: Row[] = STEPS.map((s) => {
         const r = results.get(s);
-        if (r) return { step: s, outcome: r.outcome, ran: true, seconds: r.seconds, detail: detailOf(r), run };
+        const extra = (x: StepRecord) => ({
+          ...(x.outcome === "failed" && x.stderr_tail ? { stderr_tail: x.stderr_tail } : {}), ...(x.data ? { data: x.data } : {}),
+        });
+        if (r) return { step: s, outcome: r.outcome, ran: true, seconds: r.seconds, detail: detailOf(r), run, ...extra(r) };
         const old = S.state.steps[s];
         if (pl.steps.includes(s)) return { step: s, outcome: "not reached", ran: false, seconds: null, detail: "after a failed step", run: null };
         if (old && old.cycle === S.state.cycle) {
-          return { step: s, outcome: old.outcome, ran: false, seconds: old.seconds, detail: `earlier, run ${old.run}: ${detailOf(old)}`, run: old.run };
+          return { step: s, outcome: old.outcome, ran: false, seconds: old.seconds, detail: `earlier, run ${old.run}: ${detailOf(old)}`, run: old.run, ...extra(old) };
         }
         return { step: s, outcome: "not run", ran: false, seconds: null, detail: "", run: null };
       });
@@ -181,12 +191,12 @@ interface StepCtx {
  *  read and wrote, and save the state and the journal entry, also when it is interrupted. */
 const runOne = (def: StepDef, c: StepCtx): Effect.Effect<StepRecord, never, StepEnv | Journal | Out> =>
   Effect.gen(function* () {
-    const p = yield* RevPaths, a = yield* RevOpts, j = yield* Journal, out = yield* Out, base = yield* Proc;
+    const p = yield* RevPaths, a = yield* RevOpts, j = yield* Journal, out = yield* Out, base = yield* Proc, secrets = yield* Secrets;
     const prev = c.S.state.steps[def.name];
     const t0 = performance.now();
     out.note(`tdd rev: ${def.name} (${c.index + 1}/${c.total})`);
     yield* j.append({ event: "step-start", run: c.run, cycle: c.cycle, step: def.name });
-    const inputs = def.inputs ? fingerprint(def.inputs(p, a)) : undefined;
+    const inputs = def.inputs ? fingerprint(def.inputs(p, a, secrets)) : undefined;
     const outputsNow = () => {
       const parts = def.outputs(p);
       return parts.length ? fingerprint(parts) : undefined;
@@ -194,22 +204,25 @@ const runOne = (def: StepDef, c: StepCtx): Effect.Effect<StepRecord, never, Step
     const cmds: string[][] = [];
     const recording: ProcApi = { run: (spec) => { cmds.push(spec.cmd.map(homeRel)); return base.run(spec); } };
 
-    // Paths in what the tools print are shown relative to the packet (or with ~), never as the user's absolute path.
-    const rel = (t: string): string => homeRel(t.split(p.packet + "/").join("").split(p.packet).join("."));
+    // Paths in what the tools print are shown relative to the packet (or with ~), never as the user's absolute path;
+    // a key a tool printed is scrubbed here, so the table, the progress line, the journal and the state agree.
+    const rel = (t: string): string => secrets.scrub(homeRel(t.split(p.packet + "/").join("").split(p.packet).join(".")));
     const finish = (raw: Outcome, opts: { reused?: boolean } = {}) =>
       Effect.gen(function* () {
-        const o: Outcome = raw.outcome === "ok" ? { outcome: "ok", detail: rel(raw.detail) }
+        const o: Outcome = raw.outcome === "ok" ? { outcome: "ok", detail: rel(raw.detail), ...(raw.data ? { data: raw.data } : {}) }
           : raw.outcome === "skipped" ? { outcome: "skipped", reason: rel(raw.reason) }
           : { outcome: "failed", error: rel(raw.error), stderr_tail: rel(raw.stderr_tail) };
         const seconds = secondsSince(t0);
         const at = nowIso();
-        const outputs = o.outcome === "ok" ? outputsNow() : undefined;
+        const outputs = o.outcome === "ok" || opts.reused ? outputsNow() : undefined;
         const lastOk = o.outcome === "ok"
           ? { run: c.run, at, cycle: c.cycle, ...(inputs !== undefined ? { inputs } : {}), ...(outputs !== undefined ? { outputs } : {}) }
           : prev?.last_ok;
         const rec: StepRecord = {
           cycle: c.cycle, run: c.run, at, seconds, outcome: o.outcome,
           ...(o.outcome === "ok" ? { detail: o.detail } : o.outcome === "skipped" ? { reason: o.reason } : { error: o.error, stderr_tail: o.stderr_tail }),
+          ...(o.outcome === "ok" && o.data ? { data: o.data } : {}),
+          ...(opts.reused ? { reused: true } : {}),
           ...(inputs !== undefined ? { inputs } : {}),
           ...(outputs !== undefined ? { outputs } : {}),
           ...(lastOk ? { last_ok: lastOk } : {}),
@@ -219,6 +232,7 @@ const runOne = (def: StepDef, c: StepCtx): Effect.Effect<StepRecord, never, Step
         yield* j.append({
           event: "step", run: c.run, cycle: c.cycle, step: def.name, outcome: o.outcome, seconds,
           ...(o.outcome === "ok" ? { detail: o.detail } : o.outcome === "skipped" ? { reason: o.reason } : { error: o.error, stderr_tail: o.stderr_tail }),
+          ...(o.outcome === "ok" && o.data ? { data: o.data } : {}),
           ...(opts.reused ? { reused: true } : {}),
           ...(cmds.length ? { cmds } : {}),
           ...(inputs !== undefined ? { inputs } : {}), ...(outputs !== undefined ? { outputs } : {}),
@@ -228,16 +242,21 @@ const runOne = (def: StepDef, c: StepCtx): Effect.Effect<StepRecord, never, Step
         return rec;
       });
 
-    if (a.reuse && inputs !== undefined && prev?.last_ok?.inputs === inputs && prev.last_ok.outputs === outputsNow()) {
+    // --reuse: only when the step's latest record did not fail, and its last ok read these inputs and left these outputs
+    // (a step that writes nothing is matched on its inputs)
+    const lastOk = prev?.last_ok;
+    const writes = def.outputs(p).length > 0;
+    if (a.reuse && inputs !== undefined && prev && prev.outcome !== "failed" && lastOk && lastOk.inputs === inputs &&
+      (!writes || (lastOk.outputs !== undefined && lastOk.outputs === outputsNow()))) {
       return yield* finish(
-        { outcome: "skipped", reason: `reused: inputs and outputs unchanged since its ok in run ${prev.last_ok.run} (${prev.last_ok.at})` },
+        { outcome: "skipped", reason: `reused: inputs and outputs unchanged since its ok in run ${lastOk.run} (${lastOk.at})` },
         { reused: true },
       );
     }
 
     const outcome: Outcome = yield* def.run.pipe(
       Effect.provideService(Proc, recording),
-      Effect.map((d): Outcome => ({ outcome: "ok", detail: d.detail })),
+      Effect.map((d): Outcome => ({ outcome: "ok", detail: d.detail, ...(d.data ? { data: d.data } : {}) })),
       Effect.catchTags({
         Skip: (s) => Effect.succeed<Outcome>({ outcome: "skipped", reason: s.reason }),
         Fail: (f) => Effect.succeed<Outcome>({ outcome: "failed", error: f.error, stderr_tail: f.tail }),

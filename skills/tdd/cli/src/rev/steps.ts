@@ -1,9 +1,10 @@
-// The revision runner's steps, in SKILL.md's order (step 5, "Build and check"), and the typed outcome each one ends
-// with. A step is an Effect that succeeds with Done (ok) or fails with Skip (skipped, with the reason) or Fail (failed,
+// The revision runner's steps, in SKILL.md's order (step 5, "Build and check": artifact_check before the eval, so the
+// eval scores this run's screenshots; load-db after the eval, whose scores it loads), and the typed outcome each one
+// ends with. A step is an Effect that succeeds with Done (ok) or fails with Skip (skipped, with the reason) or Fail (failed,
 // with the error and the tail of its stderr); run.ts recovers both into an Outcome and journals it.
 import { Data } from "effect";
 
-export const STEPS = ["compile", "app-build", "hydrate", "agents", "lint", "eval", "load-db", "push", "artifact-check"] as const;
+export const STEPS = ["compile", "app-build", "hydrate", "agents", "lint", "artifact-check", "eval", "load-db", "push"] as const;
 export type StepName = (typeof STEPS)[number];
 
 const ALIASES: Record<string, StepName> = {
@@ -27,10 +28,12 @@ export class Fail extends Data.TaggedError("Fail")<{ readonly error: string; rea
 /** A step that ran and succeeded: a one-line summary (the tool's own summary line where it prints one). */
 export interface Done {
   readonly detail: string;
+  /** Numbers an agent may gate on (lint: errors, warnings), also in the journal, the state and --json. */
+  readonly data?: Readonly<Record<string, number>>;
 }
 
 export type Outcome =
-  | { readonly outcome: "ok"; readonly detail: string }
+  | { readonly outcome: "ok"; readonly detail: string; readonly data?: Readonly<Record<string, number>> }
   | { readonly outcome: "skipped"; readonly reason: string }
   | { readonly outcome: "failed"; readonly error: string; readonly stderr_tail: string };
 

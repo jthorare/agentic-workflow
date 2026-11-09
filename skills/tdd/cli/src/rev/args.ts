@@ -26,28 +26,36 @@ export const USAGE = `usage: tdd rev <packet-dir> [--no-shots] [--no-gh] [--push
     agents          src/agents in-process -> build/agents/
     lint            src/lint in-process -> build/lint.json (findings are measured here; the step fails only when
                     the linter cannot run)
-    eval            the eval lane -> build/eval/ (today eval_packet.py in the eval venv; not run when it is absent)
-    load-db         tdd load-db after lint; skipped when Postgres is unreachable ($DATABASE_URL, else
-                    postgres://localhost/tdd_system)
-    push            only with --push: the eval's Braintrust push (BRAINTRUST_API_KEY from the environment)
-    artifact-check  node <system-design>/scripts/artifact_check.mjs build/tdd.html shots
+    artifact-check  node <system-design>/scripts/artifact_check.mjs build/tdd.html shots (skipped when absent)
+    eval            the eval lane -> build/eval/, scoring this run's shots (today eval_packet.py in the eval venv;
+                    not run when it is absent)
+    load-db         tdd load-db after lint; skipped when Postgres is unreachable, failed when it answers but refuses
+                    ($DATABASE_URL, else postgres://localhost/tdd_system, the real database)
+    push            only with --push: the eval's Braintrust push
   Every step appends to build/.rev/journal.jsonl and records its outcome (ok, skipped with a reason, or failed with
-  the error and its stderr tail) in build/.rev/state.json. With neither --from nor --only, a run resumes at the
-  first step not done in the current cycle, or at an earlier step whose inputs changed (or whose outputs are gone)
-  since it ran; once every step is done, the next run starts a new cycle at compile.
+  the error and its stderr tail) in build/.rev/state.json. The state is bound to this packet folder (a build/.rev
+  copied from another folder is set aside and the run starts fresh) and records a hash of each step's inputs and
+  outputs. With neither --from nor --only, a run resumes at the first step not done in the current cycle, or at an
+  earlier step whose inputs or outputs changed since it ran (so an edit to the source re-runs from compile); once
+  every step is done, the next run starts a new cycle at compile.
 
   --from <step>   run that step and every step after it
   --only <step>   run that one step
-  --reuse         skip a step whose inputs and outputs are unchanged since its last ok (noted in the journal)
+  --reuse         skip a step whose recorded input and output hashes both still match and whose latest run did not
+                  fail (noted in the journal)
   --no-shots      contract checks only, no screenshots (passed to the eval and to artifact-check)
   --no-gh         the eval does not call gh
-  --push          let the eval push to Braintrust. Without it no key reaches a child process and the eval runs
-                  with --skip linear,aws; with --no-gh as well, nothing connects beyond the local database.
+  --push          let the eval push. Without it the eval runs with --skip linear,aws and every child process (git,
+                  bun, node, python) starts without BRAINTRUST_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY,
+                  LINEAR_API_KEY, GH_TOKEN, GITHUB_TOKEN, AWS_* or any other variable ending in _KEY, _TOKEN,
+                  _SECRET or _PASSWORD; DATABASE_URL reaches load-db only. With --push the eval alone also gets
+                  BRAINTRUST_API_KEY, LINEAR_API_KEY, AWS_* and, unless --no-gh, GH_TOKEN and GITHUB_TOKEN.
   --published     record that this build was published on that surface (passed to load-db)
   --json          print the final table as JSON on stdout; the steps' own output goes to stderr
   Steps: ${STEPS.join(", ")}.
-  Keys come only from the environment and never reach the journal. Exit 0 when every step that ran is ok or
-  skipped, 1 when one failed, 2 on bad usage, 130 or 143 when interrupted (the next run resumes at that step).`;
+  Keys come only from the environment and are scrubbed from the journal, the notes and the table. Exit 0 when every
+  step that ran is ok or skipped, 1 when one failed, 2 on bad usage, 130 or 143 when interrupted (the next run
+  resumes at that step).`;
 
 /** Parse argv: the arguments, or a usage message (exit 2), or "help" (exit 0). */
 export function parseArgs(argv: readonly string[]): RevArgs | { error: string } | "help" {
