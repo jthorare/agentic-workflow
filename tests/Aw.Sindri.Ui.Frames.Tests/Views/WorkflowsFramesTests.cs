@@ -90,7 +90,7 @@ public sealed class WorkflowsFramesTests : FrameHost
     public Task A_workflows_runs_in_the_light_theme() => OnUi(async () =>
     {
         var (window, shell) = await OnWorkflows(1440);
-        window.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light;
+        window.RequestedThemeVariant = ThemeVariant.Light;
 
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
         await Until(window, () => shell.Workflows.Runs.Rows.Count > 0, "the runs never showed");
@@ -108,7 +108,7 @@ public sealed class WorkflowsFramesTests : FrameHost
     {
         var (window, shell) = await OnWorkflows(1440);
         Server.WorkflowRunAnswers[RunId] = RouteAnswer.Api("workflow-runs-run", "running");   // after OnWorkflows, which serves the finished run
-        window.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light;
+        window.RequestedThemeVariant = ThemeVariant.Light;
 
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
         await shell.Workflows.OpenRun(RunId, CancellationToken.None);
