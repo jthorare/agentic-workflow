@@ -6,10 +6,12 @@
 // Iteration (finditer, sub, split, findall) follows CPython 3.7+: after an empty match at p, the next match may not be
 // empty at p but may be a longer match starting at p (JS would skip to p + 1).
 // Positions (Match.start/end/span, search pos) are UTF-16 offsets into the JS string, so they slice it directly;
-// `str.cpLen(s.slice(0, i))` turns one into Python's index. Unsupported (throws re.error): atomic groups, possessive
-// quantifiers, conditionals, \N{...}, the L flag.
+// `str.cpLen(s.slice(0, i))` turns one into Python's index. IGNORECASE never reaches JS's i flag (Unicode case folding):
+// each cased literal and class becomes the explicit set sre matches (caseless.ts). Unsupported (throws re.error):
+// atomic groups, possessive quantifiers, conditionals, \N{...}, the L flag, backreferences under IGNORECASE.
+import { classBody, classSet, complement, fromRuns, literalSet, type Ranges, union } from "./caseless";
 import { PyError } from "./errors";
-import { DECIMAL_CLASS, SPACE_CLASS, WORD_CLASS } from "./uni";
+import { D as D_RUNS, DECIMAL_CLASS, S as S_RUNS, SPACE_CLASS, W as W_RUNS, WORD_CLASS } from "./uni";
 
 export const ASCII = 256;
 export const A = ASCII;
@@ -30,7 +32,6 @@ interface Translation {
   source: string;
   groups: number;
   names: Map<string, number>;
-  ignoreCase: boolean;
   canConsume: boolean;
 }
 
@@ -64,9 +65,22 @@ const SIMPLE: Record<string, number> = { a: 7, f: 12, n: 10, r: 13, t: 9, v: 11,
 
 type Esc =
   | { k: "char"; cp: number }
-  | { k: "cat"; body: string; neg: boolean }
+  | { k: "cat"; c: "w" | "d" | "s"; body: string; neg: boolean }
   | { k: "raw"; src: string }
   | { k: "ref"; n: number };
+
+const catSets = new Map<string, Ranges>();
+/** \w \d \s as code point sets (CPython's Unicode tables, or ASCII under re.ASCII), for case-insensitive classes. */
+function catSet(c: "w" | "d" | "s", asc: boolean): Ranges {
+  const key = c + (asc ? "a" : "u");
+  let r = catSets.get(key);
+  if (!r) {
+    if (asc) r = c === "w" ? [0x30, 0x39, 0x41, 0x5a, 0x5f, 0x5f, 0x61, 0x7a] : c === "d" ? [0x30, 0x39] : [0x09, 0x0d, 0x20, 0x20];
+    else r = fromRuns(c === "w" ? W_RUNS : c === "d" ? D_RUNS : S_RUNS);
+    catSets.set(key, r);
+  }
+  return r;
+}
 
 function translate(pattern: string, flags0: number, offset: number): Translation {
   let flags = flags0;
@@ -82,7 +96,6 @@ function translate(pattern: string, flags0: number, offset: number): Translation
     }
     i += m[0].length;
   }
-  const ignoreCase = (flags & IGNORECASE) !== 0;
   let groups = 0;
   const names = new Map<string, number>();
   let canConsume = false;
@@ -98,6 +111,12 @@ function translate(pattern: string, flags0: number, offset: number): Translation
     if (c === "d") return asc ? "0-9" : DECIMAL_CLASS;
     return asc ? "\\t\\n\\v\\f\\r " : SPACE_CLASS;
   };
+  const caseless = () => (flags & IGNORECASE) !== 0;
+  /** A literal outside a class: under IGNORECASE a cased one becomes the class of what sre matches. */
+  const lit = (v: number): string => {
+    const set = caseless() ? literalSet(v, (flags & ASCII) !== 0) : null;
+    return set ? `[${classBody(set)}]` : litOut(v);
+  };
   const cp = (j: number) => p.codePointAt(j)!;
   const w = (j: number) => (cp(j) > 0xffff ? 2 : 1);
 
@@ -109,8 +128,11 @@ function translate(pattern: string, flags0: number, offset: number): Translation
     const c = p[i]!;
     const cc = cp(i);
     i += w(i);
-    if (c === "w" || c === "d" || c === "s") return { k: "cat", body: cat(c), neg: false };
-    if (c === "W" || c === "D" || c === "S") return { k: "cat", body: cat(c.toLowerCase()), neg: true };
+    if (c === "w" || c === "d" || c === "s") return { k: "cat", c, body: cat(c), neg: false };
+    if (c === "W" || c === "D" || c === "S") {
+      const l = c.toLowerCase() as "w" | "d" | "s";
+      return { k: "cat", c: l, body: cat(l), neg: true };
+    }
     if (c in SIMPLE) return { k: "char", cp: SIMPLE[c]! };
     if (c === "x" || c === "u" || c === "U") {
       const n = c === "x" ? 2 : c === "u" ? 4 : 8;
@@ -176,8 +198,9 @@ function translate(pattern: string, flags0: number, offset: number): Translation
       negate = true;
       i++;
     }
-    let pos = "";
-    const negs: string[] = [];
+    const lits: number[] = [];
+    const ranges: number[] = [];
+    const cats: { c: "w" | "d" | "s"; body: string; neg: boolean }[] = [];
     let first = true;
     for (;;) {
       if (i >= p.length) fail("unterminated character set", at);
@@ -190,8 +213,7 @@ function translate(pattern: string, flags0: number, offset: number): Translation
       if (p[i] === "\\") {
         const e = readEscape(true);
         if (e.k === "cat") {
-          if (e.neg) negs.push(e.body);
-          else pos += e.body;
+          cats.push(e);
           if (p[i] === "-" && p[i + 1] !== "]" && i + 1 < p.length) fail("bad character range", i);
           continue;
         }
@@ -213,10 +235,27 @@ function translate(pattern: string, flags0: number, offset: number): Translation
           i += w(i);
         }
         if (hi < lo) fail("bad character range", i);
-        pos += `${litIn(lo)}-${litIn(hi)}`;
-      } else pos += litIn(lo);
+        ranges.push(lo, hi);
+      } else lits.push(lo);
     }
     canConsume ||= look === 0;
+    if (caseless()) {
+      const asc = (flags & ASCII) !== 0;
+      const uniq = [...new Set(lits)];
+      let set: Ranges | null;
+      if (uniq.length === 1 && ranges.length === 0 && cats.length === 0) {
+        // sre_parse turns a one-literal class into LITERAL / NOT_LITERAL
+        set = literalSet(uniq[0]!, asc) ?? [uniq[0]!, uniq[0]!];
+      } else set = classSet(lits, ranges, union(...cats.map((k) => (k.neg ? complement(catSet(k.c, asc)) : catSet(k.c, asc)))), asc);
+      if (set) return `[${negate ? "^" : ""}${classBody(set)}]`;
+    }
+    let pos = lits.map(litIn).join("");
+    for (let k = 0; k < ranges.length; k += 2) pos += `${litIn(ranges[k]!)}-${litIn(ranges[k + 1]!)}`;
+    const negs: string[] = [];
+    for (const k of cats) {
+      if (k.neg) negs.push(k.body);
+      else pos += k.body;
+    }
     if (negs.length === 0) return `[${negate ? "^" : ""}${pos}]`;
     const alts = [...(pos ? [`[${pos}]`] : []), ...negs.map((b) => `[^${b}]`)];
     return negate ? `(?:(?!${alts.join("|")})[\\s\\S])` : `(?:${alts.join("|")})`;
@@ -236,14 +275,16 @@ function translate(pattern: string, flags0: number, offset: number): Translation
     }
     const atomStart = out.length;
     if (c === "\\") {
+      const escAt = i;
       const e = readEscape(false);
       if (e.k === "char") {
-        out += litOut(e.cp);
+        out += lit(e.cp);
         canConsume ||= look === 0;
       } else if (e.k === "cat") {
         out += `[${e.neg ? "^" : ""}${e.body}]`;
         canConsume ||= look === 0;
       } else if (e.k === "ref") {
+        if (caseless()) fail("backreferences under IGNORECASE are not supported by the kernel", escAt);
         out += `(?:\\${e.n + offset})`;
         canConsume ||= look === 0;
       } else out += e.src;
@@ -311,6 +352,7 @@ function translate(pattern: string, flags0: number, offset: number): Translation
         if (end < 0) fail("missing ), unterminated name", i);
         const name = p.slice(i + 2, end);
         if (!names.has(name)) fail(`unknown group name '${name}'`, i + 2);
+        if (caseless()) fail("backreferences under IGNORECASE are not supported by the kernel", at);
         i = end + 1;
         out += `(?:\\k<${name}>)`;
         canConsume ||= look === 0;
@@ -336,19 +378,15 @@ function translate(pattern: string, flags0: number, offset: number): Translation
         if (!m) fail("unknown extension ?" + d, at + 1);
         if (m![3] === ")") fail("global flags not at the start of the expression", at);
         let f = flags;
-        let js = "";
+        if (/a/.test(m![1]!) && /u/.test(m![1]!)) fail("bad inline flags: flags 'a', 'u' and 'L' are incompatible", i);
+        if (/[au]/.test(m![1]!)) f &= ~(ASCII | UNICODE); // a scoped type flag replaces the outer one (_combine_flags)
         for (const ch of m![1]!) {
           if (ch === "L") fail("bad inline flags: cannot use 'L' flag with a str pattern", i);
           f |= FLAG_LETTERS[ch]!;
-          if (ch === "i") js += "i";
         }
-        let off = "";
-        for (const ch of m![2] ?? "") {
-          f &= ~FLAG_LETTERS[ch]!;
-          if (ch === "i") off += "i";
-        }
+        for (const ch of m![2] ?? "") f &= ~FLAG_LETTERS[ch]!;
         i += m![0].length;
-        out += js || off ? `(?${js}${off ? "-" + off : ""}:` : "(?:";
+        out += "(?:"; // every flag is applied by the translation itself
         stack.push({ flags, look: false, at: atomStart });
         flags = f;
       } else if (d === ">" || d === "(") {
@@ -401,12 +439,12 @@ function translate(pattern: string, flags0: number, offset: number): Translation
     // a literal character
     const v = cp(i);
     i += w(i);
-    out += litOut(v);
+    out += lit(v);
     canConsume ||= look === 0;
     lastAtom = atomStart;
   }
   if (stack.length) fail("missing ), unterminated subpattern", p.length);
-  return { source: out, groups, names, ignoreCase, canConsume };
+  return { source: out, groups, names, canConsume };
 }
 
 export class Match {
@@ -480,7 +518,7 @@ export class Pattern {
   readonly flags: number;
   readonly groups: number;
   readonly groupindex: ReadonlyMap<string, number>;
-  /** The translated JS source (u flag; plus i when the pattern ignores case). */
+  /** The translated JS source (d and u flags only). */
   readonly source: string;
   private readonly rx: RegExp;
   private readonly sticky: RegExp;
@@ -496,7 +534,7 @@ export class Pattern {
     this.groupindex = t.names;
     this.source = t.source;
     this.canConsume = t.canConsume;
-    const f = `${t.ignoreCase ? "i" : ""}du`;
+    const f = "du";
     try {
       this.rx = new RegExp(t.source, "g" + f);
       this.sticky = new RegExp(t.source, "y" + f);
@@ -530,7 +568,7 @@ export class Pattern {
     if (!this.canConsume) return null;
     if (!this.advance) {
       const t = translate(this.pattern, this.flags, 1);
-      this.advance = new RegExp(`(?<=^([\\s\\S]*))(?:${t.source})(?<!^\\1)`, `y${this.rx.flags.includes("i") ? "i" : ""}du`);
+      this.advance = new RegExp(`(?<=^([\\s\\S]*))(?:${t.source})(?<!^\\1)`, "ydu");
     }
     this.advance.lastIndex = p;
     const e = this.advance.exec(s);

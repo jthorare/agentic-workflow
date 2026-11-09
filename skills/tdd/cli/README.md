@@ -52,9 +52,15 @@ Plain TypeScript, no Effect. CPython 3.13 is the specification: every module has
    `strip()`, string length and slicing count UTF-16 units (`cpLen`, `cpSlice`), `<` on strings compares UTF-16 units
    (`py.cmp`), `JSON.stringify` drops `1.0` to `1` and `JSON.parse` reorders integer-like keys (`py.json`).
 
-Known limits: `re` rejects atomic groups, possessive quantifiers, conditionals and `\N{...}` (none occur in the
-scripts); `(?i)` uses JS's simple case folding; `expanduser("~name")` resolves only the current user; `json.loads` ignores CPython's 4,300-digit limit on int
-literals (`py.int` enforces it); `copy2` keeps mtime to the microsecond.
+`re.IGNORECASE` follows sre, not JS's `i` flag: sre lowers with its simple map and adds `re._casefix`, so `i`
+matches `İ` and `ı`, `s` matches `ſ` and `k` the Kelvin sign, while under `re.ASCII` only A-Z fold. Each cased
+literal and class is compiled to the explicit set sre matches (`src/py/caseless.ts`); `test/py/re.test.ts` checks
+77 patterns against CPython over every code point.
+
+Known limits: `re` rejects atomic groups, possessive quantifiers, conditionals, `\N{...}` and backreferences under
+`IGNORECASE` (sre compares their lower forms, which JS cannot express); none occur in the scripts.
+`expanduser("~name")` resolves only the current user. `json.loads` ignores CPython's 4,300-digit limit on int
+literals (`py.int` enforces it). `copy2` keeps mtime to the microsecond.
 
 ## Parity harness (`parity/`)
 

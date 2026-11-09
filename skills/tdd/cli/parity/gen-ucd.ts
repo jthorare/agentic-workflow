@@ -11,6 +11,7 @@ if (r.exitCode !== 0) throw new Error(`oracle ucd failed: ${r.stderr.toString()}
 const g = JSON.parse(r.stdout.toString()) as {
   unicode: string; python: string; w: Runs; d: Runs; s: Runs; isspace: Runs; isdecimal: Runs; printable: Runs;
   linebreak: Runs; split_ws: Runs; strip_ws: Runs; lower: Record<string, string>; upper: Record<string, string>;
+  sre_lower: Record<string, number>; sre_upper: Record<string, number>; sre_iscased: Runs; casefix: Record<string, number[]>;
 };
 const same = (a: Runs, b: Runs) => JSON.stringify(a) === JSON.stringify(b);
 for (const [k, v] of [["isspace", g.isspace], ["split_ws", g.split_ws], ["strip_ws", g.strip_ws]] as const)
@@ -67,6 +68,21 @@ export const LOWER_X: ReadonlyArray<readonly [number, string]> = [${pairs(lx)}];
 
 /** Code points where CPython's upper() differs from this engine's String.prototype.toUpperCase. */
 export const UPPER_X: ReadonlyArray<readonly [number, string]> = [${pairs(ux)}];
+
+/** re.IGNORECASE: sre's simple lower-case map (_sre.unicode_tolower) as "cp:lower" hex pairs, where it moves. */
+export const SRE_LOWER =
+  ${wrap(Object.entries(g.sre_lower).map(([c, l]) => `${Number(c).toString(16)}:${l.toString(16)}`).join(","))};
+
+/** re.IGNORECASE: sre's simple upper-case map (_sre.unicode_toupper), for ranges that reach past the BMP. */
+export const SRE_UPPER =
+  ${wrap(Object.entries(g.sre_upper).map(([c, u]) => `${Number(c).toString(16)}:${u.toString(16)}`).join(","))};
+
+/** re.IGNORECASE: the code points sre counts as cased (_sre.unicode_iscased). */
+export const SRE_CASED_RUNS =
+  ${wrap(enc(g.sre_iscased))};
+
+/** re.IGNORECASE: re._casefix._EXTRA_CASES, lower-case code point -> the others sre treats as the same letter. */
+export const SRE_CASEFIX: ReadonlyArray<readonly [number, readonly number[]]> = [${Object.entries(g.casefix).map(([k, v]) => `[0x${Number(k).toString(16)}, [${v.map((x) => "0x" + x.toString(16)).join(", ")}]]`).join(", ")}];
 `;
 await Bun.write(`${here}../src/py/ucd.ts`, src);
 console.log(`wrote src/py/ucd.ts: Unicode ${g.unicode}, \\w ${g.w.length} runs, \\d ${g.d.length}, printable ${g.printable.length}, lower x${lx.length}, upper x${ux.length}`);

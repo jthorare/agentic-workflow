@@ -12,7 +12,8 @@ import sys
 
 sys.dont_write_bytecode = True
 
-import hashlib, html, html.entities, importlib.util, io, json, os, posixpath, random, re, struct, unicodedata
+import _sre, hashlib, html, html.entities, importlib.util, io, json, os, posixpath, random, re, struct, unicodedata
+import re._casefix as _casefix
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TDD = os.path.normpath(os.path.join(HERE, "..", ".."))
@@ -20,8 +21,8 @@ SCRIPTS = os.path.join(TDD, "scripts")
 
 
 def sd_root():
-    env = os.environ.get("SYSTEM_DESIGN_SKILL")
-    return env if env and os.path.isdir(os.path.join(env, "scripts")) else os.path.normpath(os.path.join(TDD, "..", "system-design"))
+    """The system-design copy build_tdd.py itself loads (its own sd_root(): env, sibling, ~/.claude/skills, vendor)."""
+    return load(os.path.join(SCRIPTS, "build_tdd.py"), "build_tdd").sd_root()
 
 
 def load(path, name):
@@ -130,6 +131,16 @@ def rand_value(rng, depth=0):
 
 # ----------------------------------------------------------------------------- suites
 
+def sre_upper(c, _f=[]):
+    """sre_upper_unicode: CPython's _PyUnicode_ToUppercase (the first code point of a multi-character mapping)."""
+    if not _f:
+        import ctypes
+        f = ctypes.pythonapi._PyUnicode_ToUppercase
+        f.argtypes, f.restype = [ctypes.c_uint32], ctypes.c_uint32
+        _f.append(f)
+    return _f[0](c)
+
+
 def suite_ucd(rng, count):
     w, d, s = re.compile(r"\w"), re.compile(r"\d"), re.compile(r"\s")
     lower, upper = {}, {}
@@ -153,6 +164,11 @@ def suite_ucd(rng, count):
         "strip_ws": runs(lambda c: (chr(c) + "x" + chr(c)).strip() == "x"),
         "lower": lower,
         "upper": upper,
+        # re.IGNORECASE: sre's simple lower-case map, its "cased" test and the extra equivalences of re._casefix
+        "sre_lower": {str(c): _sre.unicode_tolower(c) for c in range(0x110000) if _sre.unicode_tolower(c) != c},
+        "sre_upper": {str(c): sre_upper(c) for c in range(0x110000) if sre_upper(c) != c},
+        "sre_iscased": runs(lambda c: _sre.unicode_iscased(c)),
+        "casefix": {str(k): list(v) for k, v in _casefix._EXTRA_CASES.items()},
     }
 
 
@@ -236,10 +252,27 @@ RE_CASES = [
     [r"[^a-z0-9]+", 0], [r"&lt;(https?://[^\s&]+)&gt;", 0], [r"{x}", 0], [r"a{2}b{1,}c{0,1}", 0], [r"(?m)^", 0], [r"(?m)$", 0],
     [r"\A\w", 0], [r"(a)|(x)", 0], [r"[\w-]+", re.A], [r"\w", re.A], [r"(?a)\d+", 0], [r"[a-c\]]+", 0], [r"\$\d", 0],
     [r"(?s)```.*?```|\]\([^)]*\)|[`*_#|\[\]()>{}-]", 0], [r"[A-Za-z0-9'’]+", 0], [r"^pr(\d)", 0], [r"\b", 0],
+    # re.IGNORECASE as sre does it (simple lower map plus re._casefix), never Unicode case folding
+    [r"(?i)diagram|ſ+", 0], [r"k+", re.I], [r"[^k\W]+", re.I], [r"[ia-c]+", re.I], [r"\w+", re.I], [r"(?i:s)(?-i:s)", 0],
+    [r"[\u0370-\u03ff]+", re.I], [r"\u212a|\u0130|\u0345", re.I], [r"(?a)[k-s]+", re.I], [r"[\U00010400-\U0001044f]+", re.I],
 ]
 RE_ALPHA = ["a", "b", "c", "x", "k", "D7", "D-7", "PR 7", "PR7", "OS-01", "F3.2", "NULL", "null", "é", "ß", "٣", "中", "\U0001D400",
             "\u1c89", "\u0663", "_", "#", "/", ".", "-", " ", "  ", "\n", "\r", "\u2028", "`", "``", "*", "\\", "[", "]", "{", "}", ":", "·",
-            "=", "a=a", "k=k", "## ", "```", "&lt;", "&gt;", "http://x", "$1", "'", "’", "(", ")", "|", "!", "ÿ", "\xa0", "\u3000", "\x1c"]
+            "=", "a=a", "k=k", "## ", "```", "&lt;", "&gt;", "http://x", "$1", "'", "’", "(", ")", "|", "!", "ÿ", "\xa0", "\u3000", "\x1c",
+            "I", "S", "K", "\u0130", "\u0131", "\u017f", "\u212a", "\u0345", "\u03b9", "\u03d0", "\u00b5", "\u1e9e", "\u03c2", "\U00010400", "\U00010428"]
+
+# Single-code-point patterns under re.IGNORECASE: the oracle reports, for each, every code point it matches
+RE_CASE = [[p, re.I] for p in [
+    "i", "I", "\u0130", "\u0131", "s", "S", "\u017f", "k", "K", "\u212a", "\u0345", "\u03b9", "\u0399", "\u1fbe", "\u03b2", "\u03d0", "\u00b5",
+    "\u03bc", "\u2126", "\u03c9", "\u1e9e", "\u00df", "\u03c3", "\u03c2", "\U00010400", "\U00010428", "a", "1", "_", "\u01c5", "\u0398",
+    "[a-z]", "[A-Z]", "[^a-z]", "[i]", "[^i]", "[k-l]", "[\\w]", "[\\w\u0345]", "[a\\W]", "[^a\\W]", "[s\\d]", "[\u0100-\u017f]", "[\u0370-\u03ff]",
+    "[\U00010400-\U0001044f]", "[x\U00010400-\U00010402]", "[\U00010400x]", "[\U0001d400a]", "[\U0001d400-\U0001d405]", "[A-\U00010400]",
+    "[^\U00010428-\U0001042fA]", "[\u00df-\u00ff]", "[\u1e00-\u1eff]", "[\\s\u212a]", "[^\\s\u212a]", "[\\D\u0130]", "[ia]", "[aa]", "[a-aa]",
+    "\\w", "\\W", "[^\\W\\d]", "(?i:i)", "(?-i:k)", "(?a:k)", "(?a:[\\w\u212a])", ".",
+]] + [[p, re.I | re.A] for p in [
+    "i", "k", "\u212a", "\u0130", "[a-z]", "[^k]", "[\\w\u212a]", "[\U00010428-\U0001042f]", "[\U00010400\u0130]", "(?u:k)",
+]]
+
 
 
 def suite_re(rng, count):
@@ -264,6 +297,20 @@ def suite_re(rng, count):
         cases.append({"pattern": pat, "flags": flags, "results": res})
     esc_in = [rand_str(rng, STR_ALPHABET + list("()[]{}?*+-|^$\\.&~# \t\n\r\x0b\x0c_:=!,;%@`"), 0, 10) for _ in range(300)]
     return {"strings": strings, "cases": cases, "escape": [[s, re.escape(s)] for s in esc_in]}
+
+
+def suite_re_case(rng, count):
+    """re.IGNORECASE: the code points each single-code-point pattern matches, as inclusive runs over U+0000..U+10FFFF."""
+    every = "".join(map(chr, range(0x110000)))  # index == code point
+    rows = []
+    for pat, flags in RE_CASE:
+        rx = re.compile(f"(?:{pat})+", flags)
+        rows.append({"pattern": pat, "flags": flags, "runs": [[m.start(), m.end() - 1] for m in rx.finditer(every)]})
+    refused = []
+    for pat, flags in [(r"(a)\1", re.I), (r"(?P<n>a)(?P=n)", re.I), (r"(a)(?i:\1)", 0)]:
+        rx = re.compile(pat, flags)  # CPython compares lower(a) with lower(b); the kernel refuses these
+        refused.append({"pattern": pat, "flags": flags, "full": [s for s in ["aa", "aA", "Aa", "a\u0130", "\u017fs"] if rx.fullmatch(s)]})
+    return {"rows": rows, "refused": refused}
 
 
 def suite_html(rng, count):
@@ -453,7 +500,7 @@ def suite_stamp(rng, count):
 
 SUITES = {name[6:]: fn for name, fn in globals().items() if name.startswith("suite_")}
 DEFAULT_COUNT = {"round": 100000, "repr_float": 100000, "str": 3000, "re": 300, "html": 3000, "repr": 2000, "json": 1500, "utf8": 5000,
-                 "path": 3000, "int": 0, "truthy": 200, "token": 2000, "sd": 2000, "stamp": 200, "ucd": 0, "json_errors": 0}
+                 "path": 3000, "int": 0, "truthy": 200, "token": 2000, "sd": 2000, "stamp": 200, "ucd": 0, "json_errors": 0, "re_case": 0}
 
 
 def main(argv):
