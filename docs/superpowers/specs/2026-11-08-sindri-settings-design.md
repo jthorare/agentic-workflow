@@ -342,7 +342,7 @@ hand `rm` after a save, or a sync tool that moved the file), `RunLocked` first:
 3. then writes the defaults and the `created` line as above.
 
 `sindri doctor`'s `settings` row and the Health "Settings" row then warn: "Your settings file was deleted, so Sindri
-started from the defaults. Your last settings are in <path>: copy it back to settings.yaml to use them." The warning
+started from the defaults. Your last settings are in <path>: move it back to settings.yaml to use them." The warning
 lasts until that backup file is gone. A fresh home has no `.last-saved.yaml`, so it gets no backup and no warning.
 
 `settings init` stays as the CLI verb for scripts that want the file before anything else runs: the same step, with
