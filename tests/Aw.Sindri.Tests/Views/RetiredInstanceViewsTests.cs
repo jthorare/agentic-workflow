@@ -27,6 +27,9 @@ public sealed class RetiredInstanceViewsTests : IDisposable
     private static readonly ItemId _deskItem = ItemId.From("ITM-" + new string('2', 32));
     private static readonly string _parked = _parkedItem.Value + "/step/1";
     private static readonly string _desk = _deskItem.Value + "/step/1";
+    private static readonly ItemId _doneItem = ItemId.From("ITM-" + new string('3', 32));
+    private static readonly ItemId _cancelledItem = ItemId.From("ITM-" + new string('4', 32));
+    private static readonly ItemId _scrubbedItem = ItemId.From("ITM-" + new string('5', 32));
 
     private readonly TempHome _home = new();
     private readonly SliceHarness _slice = new();
@@ -48,6 +51,24 @@ public sealed class RetiredInstanceViewsTests : IDisposable
         }
 
         Assert.Equal(incremental.Items.Values.Select(static r => (r.Id, r.State)), rebuilt.Items.Values.Select(static r => (r.Id, r.State)));
+    }
+
+    [Fact(Timeout = 60_000)]
+    public async Task Recipe_era_instances_that_ended_read_done_and_cancelled_and_stay_out_of_the_queue_incrementally_and_after_a_rebuild()
+    {
+        var (incremental, rebuilt) = await Both(EndedLedger(), TestContext.Current.CancellationToken);
+
+        foreach (var items in new[] { incremental.Items, rebuilt.Items })
+        {
+            Assert.Equal(ItemState.Done, items[_doneItem.Value].State);
+            Assert.Equal(ItemState.Cancelled, items[_cancelledItem.Value].State);
+            Assert.Equal(ItemState.Cancelled, items[_scrubbedItem.Value].State);
+            Assert.Equal(ItemState.New, items[_parkedItem.Value].State);
+            Assert.All(new[] { _doneItem, _cancelledItem, _scrubbedItem }, id => Assert.Null(QueueGroups.GroupOf(items[id.Value].State)));
+        }
+
+        Assert.Empty(incremental.NeedsYou);
+        Assert.Empty(rebuilt.NeedsYou);
     }
 
     private async Task<(Folded Incremental, Folded Rebuilt)> Both(List<LedgerEvent> ledger, CancellationToken ct)
@@ -107,9 +128,37 @@ public sealed class RetiredInstanceViewsTests : IDisposable
         return rows;
     }
 
-    private static WorkflowEventPayload Row(string address, string to, string trigger, FrameSummary? frame, SuspensionSummary? suspension)
+    /// <summary>
+    /// Three items whose root instance ended before the recipe engine went: one done, one cancelled, one cancelled by a row stored without its detail
+    /// (the scrub's fallback); and a parked one whose earlier root ended and whose second root is still open.
+    /// </summary>
+    private List<LedgerEvent> EndedLedger()
     {
-        var delta = new WorkflowEventDelta(frame, suspension, PendingPark: null, Loops: null, TokensSpent: null, TokensGranted: null, Facts: null, Outcome: null);
+        var repo = RepoName.From("agentic-workflow");
+        var produce = new FrameSummary("produce", 1, "1.1", Child: null, StepRuntime.Agent);
+        var sequence = 0L;
+        LedgerEvent Next<TPayload>(string type, TPayload payload, ItemId item) => Recorded.Of(_slice.Events, type, payload, ++sequence, item);
+        LedgerEvent Created(ItemId item) => Next(EventTypes.ItemCreated, new ItemCreated(_slice.Ids.New<CommandId>(), item, "old", repo, Link: null, Body: "b", Owner: null), item);
+        string At(ItemId item, int attempt) => item.Value + "/step/" + attempt.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return
+        [
+            Created(_doneItem), Created(_cancelledItem), Created(_scrubbedItem), Created(_parkedItem),
+            Next(EventTypes.WorkflowStarted, Row(At(_doneItem, 1), "produce", "start", produce, suspension: null), _doneItem),
+            Next(EventTypes.WorkflowTransition, Row(At(_doneItem, 1), "done", "step.completed", frame: null, suspension: null, outcome: "done"), _doneItem),
+            Next(EventTypes.WorkflowStarted, Row(At(_cancelledItem, 1), "produce", "start", produce, suspension: null), _cancelledItem),
+            Next(EventTypes.WorkflowTransition, Row(At(_cancelledItem, 1), "cancelled", "cancel", frame: null, suspension: null, outcome: "cancelled"), _cancelledItem),
+            Next(EventTypes.WorkflowStarted, Row(At(_scrubbedItem, 1), "produce", "start", produce, suspension: null), _scrubbedItem),
+            Next(EventTypes.WorkflowTransition, new WorkflowEventPayload(At(_scrubbedItem, 1), "produce", "cancelled", "cancel", Outcome: "cancelled", Run: null), _scrubbedItem),
+            Next(EventTypes.WorkflowStarted, Row(At(_parkedItem, 1), "produce", "start", produce, suspension: null), _parkedItem),
+            Next(EventTypes.WorkflowTransition, Row(At(_parkedItem, 1), "done", "step.completed", frame: null, suspension: null, outcome: "done"), _parkedItem),
+            Next(EventTypes.WorkflowStarted, Row(At(_parkedItem, 2), "produce", "start", produce, suspension: null), _parkedItem),
+            Next(EventTypes.WorkflowRetired, new WorkflowEventPayload(At(_parkedItem, 2), "", "retired", "retire", Outcome: "retired", Run: null), _parkedItem),
+        ];
+    }
+
+    private static WorkflowEventPayload Row(string address, string to, string trigger, FrameSummary? frame, SuspensionSummary? suspension, string? outcome = null)
+    {
+        var delta = new WorkflowEventDelta(frame, suspension, PendingPark: null, Loops: null, TokensSpent: null, TokensGranted: null, Facts: null, Outcome: outcome);
         var detail = new WorkflowEventDetail(TriggerKey.For(WorkflowInstanceId.From("WFI-" + new string('a', 32)), "t"), "human:cli", SourceSequence: null, ArgumentsSha256: null, ReportSha256: null,
             Answer: null, Amount: null, Reason: null, [], [], Grant: null, Override: null, Refusal: null, [], delta);
         return new WorkflowEventPayload(address, "from", to, trigger, Outcome: null, Run: null, detail);
