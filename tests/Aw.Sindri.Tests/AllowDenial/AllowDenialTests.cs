@@ -38,11 +38,8 @@ public sealed class AllowDenialTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private async Task<IDisposable> AsHuman()
-    {
-        _ = await _slice.HoldLease();
-        return _slice.Callers.Enter(A.Caller().Human().Build());
-    }
+    // why: the caller lives in an AsyncLocal, so it is entered synchronously in the test itself; one entered inside an awaited helper is gone when the helper returns
+    private IDisposable AsHuman() => _slice.Callers.Enter(A.Caller().Human().Build());
 
     private AllowDenialService Service()
     {
@@ -54,7 +51,8 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task Allowing_a_host_edits_the_live_profile_under_the_runs_repo_and_waits_for_approval()
     {
-        using var entered = await AsHuman();
+        _ = await _slice.HoldLease();
+        using var entered = AsHuman();
         var result = await Service().Handle(new AllowDenialRequest(_launch, DenialKind.Network, "github.com"), Token);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
@@ -65,7 +63,8 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task Allowing_a_home_path_writes_it_as_the_profile_holds_it()
     {
-        using var entered = await AsHuman();
+        _ = await _slice.HoldLease();
+        using var entered = AsHuman();
         _writer.Stored = ".cache/tool";
 
         var result = await Service().Handle(new AllowDenialRequest(_launch, DenialKind.Path, "/home/o/.cache/tool"), Token);
@@ -77,7 +76,8 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task An_entry_the_approved_profile_already_holds_is_allowed()
     {
-        using var entered = await AsHuman();
+        _ = await _slice.HoldLease();
+        using var entered = AsHuman();
         var approved = new SindriProfile(1, "o", Sandbox: new SandboxSettings(Repos: new Dictionary<string, SandboxRepoSettings>(StringComparer.Ordinal) { ["web"] = new(Hosts: ["github.com"]) }));
         _ = await _profiles.Save(new LoadedProfile(approved, ProfileHashing.Of(AwJson.Serialize(approved, SliceHarness.Json)), "/home/profile.yaml"), Token);
 
@@ -90,7 +90,8 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task Allowing_twice_asks_for_approval_twice_and_writes_one_entry()
     {
-        using var entered = await AsHuman();
+        _ = await _slice.HoldLease();
+        using var entered = AsHuman();
         _ = await Service().Handle(new AllowDenialRequest(_launch, DenialKind.Network, "github.com"), Token);
         _writer.Added = false;   // the live profile already held it
 
@@ -106,7 +107,8 @@ public sealed class AllowDenialTests
     [InlineData(DenialKind.Network, "never-blocked.example")]
     public async Task What_cannot_be_allowed_is_refused_and_the_profile_is_untouched(DenialKind kind, string target)
     {
-        using var entered = await AsHuman();
+        _ = await _slice.HoldLease();
+        using var entered = AsHuman();
         var result = await Service().Handle(new AllowDenialRequest(_launch, kind, target), Token);
 
         Assert.True(result.IsError);
@@ -117,7 +119,8 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task An_unknown_launch_is_refused()
     {
-        using var entered = await AsHuman();
+        _ = await _slice.HoldLease();
+        using var entered = AsHuman();
         var result = await Service().Handle(new AllowDenialRequest(LaunchId.From(DenialsRendererTests.LaunchTwo), DenialKind.Network, "github.com"), Token);
 
         Assert.True(result.IsError);
@@ -128,7 +131,8 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task A_run_whose_item_has_no_repo_is_refused()
     {
-        using var entered = await AsHuman();
+        _ = await _slice.HoldLease();
+        using var entered = AsHuman();
         _repo = null;
 
         var result = await Service().Handle(new AllowDenialRequest(_launch, DenialKind.Network, "github.com"), Token);
@@ -157,7 +161,8 @@ public sealed class AllowDenialTests
     [Fact]
     public async Task A_refusal_records_no_event()
     {
-        using var entered = await AsHuman();
+        _ = await _slice.HoldLease();
+        using var entered = AsHuman();
 
         _ = await Service().Handle(new AllowDenialRequest(_launch, DenialKind.Policy, "git push"), Token);
 

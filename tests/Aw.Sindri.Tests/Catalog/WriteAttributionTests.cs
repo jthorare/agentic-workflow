@@ -100,11 +100,17 @@ public sealed class WriteAttributionTests
             ("these _noGolden and _onlyRefusals entries do not name #2434:",
                 Sorted(_noGolden.Concat(_onlyRefusals).Where(e => !e.Value.Contains("#2434", StringComparison.Ordinal)).Select(e => e.Key))),
             ("_onlyRefusals guard: these entries are not a catalog write, no scenario sends them, or a scenario now covers them; move them into the sweep or _noGolden:",
-                Sorted(_onlyRefusals.Keys.Where(k => !catalog.Contains(k) || !sweep.Sent.ContainsKey(k) || sweep.Covered.ContainsKey(k)))),
+                Sorted(_onlyRefusals.Keys.Select(k => (k, Why: OnlyRefusalBroken(k, catalog, sweep))).Where(e => e.Why is not null).Select(e => $"{e.k}: {e.Why}"))),
         };
 
         return [.. sections.Where(s => s.Items.Count > 0).Select(s => s.Heading + "\n" + string.Join('\n', s.Items))];
     }
+
+    private static string? OnlyRefusalBroken(string key, HashSet<string> catalog, Sweep sweep) =>
+        !catalog.Contains(key) ? "not a catalog write"
+        : !sweep.Sent.ContainsKey(key) ? "no scenario sent it as the launch"
+        : sweep.Covered.TryGetValue(key, out var by) ? "covered by " + by
+        : null;
 
     private static List<string> Sorted(IEnumerable<string> items) => [.. items.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
@@ -138,7 +144,7 @@ public sealed class WriteAttributionTests
 
         var marks = await Task.WhenAll(sent.Select(r => r.HeadBefore));
         var events = (await ledger.ReadAfter(0, 100_000, token)).Value.Skip(before).ToList();
-        Cover(sweep, [.. sent], marks, events);
+        Cover(sweep, row, [.. sent], marks, events);
 
         // why: setup the human does before the session's first call (a typed-confirmation import) is not the session's; from that call on, every event must be the launch's
         var from = marks.Length == 0 ? long.MaxValue : marks[0];
@@ -151,14 +157,14 @@ public sealed class WriteAttributionTests
     /// <summary>Each request sent as the launch covers its route when an event by the launch lands between its mark and the next request's, so no request's write can cover another's.</summary>
     // why: a write that lands after its own response (a job's later events) falls into the next request's window; harmless while every seeding job is
     // followed by a GET (FetchAfterBuild), which matches no write template; a seeding job followed by an own WRITE call is the gap noted on #2434
-    private static void Cover(Sweep sweep, List<Callers.CallerRequests.SentRequest> sent, long[] marks, List<LedgerEvent> events)
+    private static void Cover(Sweep sweep, (string Slug, string Scenario) row, List<Callers.CallerRequests.SentRequest> sent, long[] marks, List<LedgerEvent> events)
     {
         for (var i = 0; i < sent.Count; i++)
         {
             var (start, end) = (marks[i], i + 1 < marks.Length ? marks[i + 1] : long.MaxValue);
-            if (MatchTemplate(sweep.Templates, sent[i].Method, sent[i].Path) is { } key && events.Exists(e => e.Sequence > start && e.Sequence <= end && IsByLaunch(e.Envelope.Actor)))
+            if (MatchTemplate(sweep.Templates, sent[i].Method, sent[i].Path) is { } key && events.Find(e => e.Sequence > start && e.Sequence <= end && IsByLaunch(e.Envelope.Actor)) is { } by)
             {
-                sweep.Covered[key] = true;
+                sweep.Covered[key] = $"{row.Slug}/{row.Scenario} ({by.Envelope.Type})";
             }
         }
     }
@@ -209,8 +215,8 @@ public sealed class WriteAttributionTests
         /// <summary>Catalog write keys some scenario sent, whether or not the call appended an event.</summary>
         public ConcurrentDictionary<string, bool> Sent { get; } = new(StringComparer.Ordinal);
 
-        /// <summary>Catalog write keys sent by a scenario whose calls appended an event by the launch.</summary>
-        public ConcurrentDictionary<string, bool> Covered { get; } = new(StringComparer.Ordinal);
+        /// <summary>Catalog write keys sent by a scenario whose calls appended an event by the launch; the value names one such scenario and the event type.</summary>
+        public ConcurrentDictionary<string, string> Covered { get; } = new(StringComparer.Ordinal);
 
         public ConcurrentBag<string> Strays { get; } = [];
 
