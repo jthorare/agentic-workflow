@@ -38,4 +38,10 @@ public static partial class EventTypes
 
     /// <summary>A hold pick was undone, so the hold is open again.</summary>
     public const string TodoNoteHeldReopened = "todo.note.held.reopened";
+
+    /// <summary>The owner confirmed the note's first import.</summary>
+    public const string TodoNoteImported = "todo.note.imported";
+
+    /// <summary>A sync pass changed something in the note or in Sindri.</summary>
+    public const string TodoNoteSynced = "todo.note.synced";
 }
