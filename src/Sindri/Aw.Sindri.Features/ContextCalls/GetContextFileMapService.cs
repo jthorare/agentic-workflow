@@ -14,7 +14,7 @@ internal sealed class GetContextFileMapService(ContextScopes scopes, IContextEng
     {
         if (!ContextRepoName.TryFrom(request.Repo, out var repo))
         {
-            return ContextErrors.RepoOutsideScope.With($"'{request.Repo}' is not a repo this scope can see (fix: name a repo of the approved profile)");
+            return ContextErrors.RepoOutsideScope.With($"'{request.Repo}' is not a repo this scope can see (fix: name a repo of the profile)");
         }
 
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);

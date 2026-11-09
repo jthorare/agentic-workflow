@@ -13,6 +13,7 @@ public static class EventCatalog
         new(EventTypes.ProcessStarted, Public: true, typeof(ProcessStarted), "process.started:<epoch>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ProcessStopped, Public: true, typeof(ProcessStopped), "process.stopped:<epoch>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ProfileApproved, Public: true, typeof(ProfileApproved), "profile.approved:<hash>:after:<seq>") { Invalidates = [ApiViews.Status, ApiViews.Profile, ApiViews.Services, ApiViews.NeedsYou] },
+        new(EventTypes.ProfileApprovalsRemoved, Public: false, PublicPayload: null, "profile.approvals.removed"),
         new("service.heartbeat", Public: true, typeof(Heartbeat), "service.heartbeat:<epoch>:<slot>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ContextSourcesSynced, Public: true, typeof(ContextSourcesSynced), "context.sources.synced:<epoch>:<source>:<slot>"),
         new(EventTypes.ContextMapImported, Public: true, typeof(ContextMapImported), "context.map.imported:<hash>:v<version>"),
@@ -98,6 +99,8 @@ public static class EventCatalog
         new(EventTypes.RecipeRegistrationCompleted, Public: true, typeof(RecipeRegistrationCompleted), "recipe.registration.completed:<epoch>") { Invalidates = [ApiViews.Setup, ApiViews.Recipes] },
         new(EventTypes.McpRegistered, Public: true, typeof(McpRegistered), "mcp.registered:<commandId>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.SetupConsentGiven, Public: true, typeof(SetupConsentGiven), "setup.consent.given:<profileHash>") { Invalidates = [ApiViews.Setup] },
+        new(EventTypes.ConnectionNeedsSignIn, Public: true, typeof(ConnectionNeedsSignIn), "connection.needs-sign-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
+        new(EventTypes.ConnectionSignedIn, Public: true, typeof(ConnectionSignedIn), "connection.signed-in:<name>:<atTicks>") { Invalidates = [ApiViews.NeedsYou] },
         new(EventTypes.ViewsRebuilt, Public: false, PublicPayload: null, "views.rebuilt:<commandId>"),
     ];
 }

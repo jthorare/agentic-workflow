@@ -17,7 +17,7 @@ public sealed class IssueApproveAllChallengeTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private IssueChallengeService Service() =>
-        new(null!, null!, _slice.Challenges, null!, null!, null!, new ApproveAllPlanReader(_slice.Profiles, _shipped));   // why: this form reads only the plan and the challenges
+        new(null!, null!, _slice.Challenges, null!, null!, new ApproveAllPlanReader(_slice.Profiles, _shipped));   // why: this form reads only the plan and the challenges
 
     private async Task Approved() => _ = await _slice.Profiles.Save(SliceHarness.Profile(), Token);
 
@@ -39,11 +39,11 @@ public sealed class IssueApproveAllChallengeTests
     }
 
     [Fact]
-    public async Task Before_a_profile_is_approved_there_is_no_challenge()
+    public async Task With_no_profile_there_is_no_challenge()
     {
         var issued = await Service().Handle(new IssueChallengeRequest("approve-all " + await Digest()), Token);
 
-        Assert.Equal("SND-SETUP-007", issued.Error.Code);
+        Assert.Equal("SND-PROFILE-001", issued.Error.Code);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public sealed class IssueApproveAllChallengeTests
         await Approved();
         var shipped = new FakeShippedRecipes([]);
         shipped.OwnApproval.Add(ShipNeedsItsOwn());
-        var service = new IssueChallengeService(null!, null!, _slice.Challenges, null!, null!, null!, new ApproveAllPlanReader(_slice.Profiles, shipped));
+        var service = new IssueChallengeService(null!, null!, _slice.Challenges, null!, null!, new ApproveAllPlanReader(_slice.Profiles, shipped));
 
         var issued = await service.Handle(new IssueChallengeRequest("approve-all 000000"), Token);
 
@@ -73,7 +73,7 @@ public sealed class IssueApproveAllChallengeTests
     public async Task A_plan_with_nothing_in_it_has_no_challenge()
     {
         await Approved();
-        var empty = new IssueChallengeService(null!, null!, _slice.Challenges, null!, null!, null!, new ApproveAllPlanReader(_slice.Profiles, new FakeShippedRecipes([])));
+        var empty = new IssueChallengeService(null!, null!, _slice.Challenges, null!, null!, new ApproveAllPlanReader(_slice.Profiles, new FakeShippedRecipes([])));
 
         var issued = await empty.Handle(new IssueChallengeRequest("approve-all 000000"), Token);
 

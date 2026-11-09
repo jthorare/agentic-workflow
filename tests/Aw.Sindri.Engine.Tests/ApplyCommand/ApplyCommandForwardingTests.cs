@@ -77,7 +77,7 @@ public sealed class ApplyCommandForwardingTests
     [Fact(Timeout = 30_000)]
     public async Task The_challenge_issued_for_a_mirroring_parent_names_the_child_and_redeems_on_the_forwarded_answer()
     {
-        var issuer = new IssueChallengeService(null!, null!, _challenges, null!, _instance, _instance);   // why: a protected answer's issue path reads only the directory, the runtime and the challenges
+        var issuer = new IssueChallengeService(null!, null!, _challenges, _instance, _instance);   // why: a protected answer's issue path reads only the directory, the runtime and the challenges
 
         var issued = await issuer.Handle(new IssueChallengeRequest("grant 1 " + _instance.Address.Value), TestContext.Current.CancellationToken);
         Assert.False(issued.IsError, issued.IsError ? issued.Error.Message : null);

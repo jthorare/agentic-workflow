@@ -16,11 +16,9 @@ public static partial class NeedsYouRows
 {
     private const int TitleMax = 120;
     private const int ReasonMax = 300;
-    private const int PathsShown = 3;
     private static readonly ActionId _decide = ActionId.From("Decide");
     private static readonly ActionId _runService = ActionId.From("RunService");
     private static readonly ActionId _pauseService = ActionId.From("PauseService");
-    private static readonly ActionId _approveProfile = ActionId.From("ApproveProfile");
 
     /// <summary>The row for a pending decision.</summary>
     /// <param name="decision">The decision.</param>
@@ -101,46 +99,6 @@ public static partial class NeedsYouRows
             new NeedsYouOpen(NeedsYouRoutes.Service(name), "Open the service"));
     }
 
-    /// <summary>The row for a live profile that drifted from the approved one.</summary>
-    /// <param name="profile">The profile row.</param>
-    /// <param name="since">When it started to drift.</param>
-    /// <param name="scrubber">Scrubs the text.</param>
-    /// <returns>The row, or null when the profile hasn't drifted or its live hash is unknown.</returns>
-    public static Result<NeedsYouRow?> ForProfile(ProfileRow profile, DateTimeOffset since, ITextScrubber scrubber)
-    {
-        ArgumentNullException.ThrowIfNull(profile);
-        ArgumentNullException.ThrowIfNull(scrubber);
-        if (!profile.Changed || profile.Live is not { } live)
-        {
-            return Results.Success<NeedsYouRow?>(value: null);
-        }
-
-        var cli = Cli("sindri profile approve <hash>", "hash", live);
-        if (cli.IsError)
-        {
-            return cli.Error;
-        }
-
-        return Results.Success<NeedsYouRow?>(new NeedsYouRow(
-            NeedsYouRowId.From("profile:drift"),
-            NeedsYouKind.Profile,
-            "profile · drifted",
-            new NeedsYouSubject(SubjectKind.Profile, SubjectId.From(live.Value)),
-            Item: null,
-            "The profile changed since approval",
-            PathsReason(profile.ChangedPaths, scrubber),
-            Repo: null,
-            Urgency.Calm,
-            since,
-            RecordedOnly: false,
-            Notice: null,
-            AnswerKind: null,
-            _approveProfile,
-            [_approveProfile],
-            cli.Value.Text,
-            new NeedsYouOpen(NeedsYouRoutes.Row(NeedsYouRowId.From("profile:drift")), "Approve the profile")));
-    }
-
     private static Result<CliForm> Cli<TId>(string form, string placeholder, TId id)
         where TId : struct, Kernel.Ids.ITypedId<TId, string> =>
         CliForm.Parse(form).Bind(parsed => parsed.Fill(placeholder, id));
@@ -157,13 +115,5 @@ public static partial class NeedsYouRows
 
         var known = SindriErrors.All.FirstOrDefault(e => string.Equals(e.Code, code, StringComparison.Ordinal));
         return SafeText.Clean(scrubber, known is null ? code : $"{code}: {known.Title}", ReasonMax);
-    }
-
-    private static string PathsReason(IReadOnlyList<string> paths, ITextScrubber scrubber)
-    {
-        var count = paths.Count;
-        var shown = string.Join(", ", paths.Take(PathsShown).Select(p => SafeText.Clean(scrubber, p, ReasonMax)));
-        var noun = count == 1 ? "key path" : "key paths";
-        return string.Create(CultureInfo.InvariantCulture, $"{count} {noun} changed: {shown}");
     }
 }

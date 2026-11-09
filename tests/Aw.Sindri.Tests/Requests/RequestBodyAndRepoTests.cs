@@ -45,6 +45,6 @@ public sealed class RequestBodyAndRepoTests
         Assert.Equal(HttpStatusCode.BadRequest, answer.Status);
         using var json = JsonDocument.Parse(answer.Body);
         Assert.Equal("SND-CLI-003", json.RootElement.GetProperty("title").GetString());
-        Assert.Contains("'gamma' isn't a repo of the approved profile", answer.Body, StringComparison.Ordinal);
+        Assert.Contains("'gamma' isn't a repo of the profile", answer.Body, StringComparison.Ordinal);
     }
 }

@@ -137,7 +137,7 @@ internal sealed class ProposeFromScopeService(IGraphStore store, IProposalRuns r
         }
 
         return addressed.IsError || !addressed.Value.Any(r => r.Name == proposal.Repo)
-            ? ContextErrors.RepoOutsideScope.With("that repo isn't one this caller can address (fix: name a repo of the approved profile; a session names its own X-Sindri-Repo)")
+            ? ContextErrors.RepoOutsideScope.With("that repo isn't one this caller can address (fix: name a repo of the profile; a session names its own X-Sindri-Repo)")
             : null;
     }
 }

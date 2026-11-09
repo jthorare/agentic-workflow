@@ -15,11 +15,11 @@ internal sealed class PinSheetFixtures
     internal const string JobId = "JOB-00000000000000000000000000000007";
     internal const string FileHash = "file-h0";
 
-    internal PinSheetFixtures(params string[] waiting)
+    internal PinSheetFixtures()
     {
         Api = new FakeSindriApi
         {
-            ProfileAnswer = Profile("h1", waiting),
+            ProfileAnswer = Profile("h1"),
             PinConceptsAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"accepted":{"commandId":"00000000-0000-0000-0000-000000000009","sequence":12},"jobId":"{{JobId}}"}"""),
             ContextPinsAnswer = _ => Served(new PinsView(1, "api", FileHash, "v1", [], _idle)),
         };
@@ -39,15 +39,15 @@ internal sealed class PinSheetFixtures
 
     internal static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    internal static RouteAnswer Profile(string live, params string[] changed) =>
-        new(HttpStatusCode.OK, $$"""{"approved":"h0","live":"{{live}}","changed":true,"changedPaths":[{{string.Join(',', changed.Select(c => $"\"{c}\""))}}]}""");
+    internal static RouteAnswer Profile(string live) =>
+        new(HttpStatusCode.OK, $$"""{"live":"{{live}}"}""");
 
     internal static RouteAnswer Served(PinsView view) => new(HttpStatusCode.OK, Encoding.UTF8.GetString(AwJson.Serialize(view, SindriApiClient.Json)));
 
     internal static ConceptTileViewModel Card(string id = "billing", string name = "Billing", string summary = "How we take money", params string[] terms) =>
         new(id, name, summary, new ConceptSize(2, 3, 1, 40), setByPerson: false, terms, _ => { });
 
-    internal static PinView Pin(string id, string name, string[]? aliases = null, string[]? features = null, int folderRules = 0, string state = PinStates.Approved) =>
+    internal static PinView Pin(string id, string name, string[]? aliases = null, string[]? features = null, int folderRules = 0, string state = "approved") =>
         new(id, name, Summary: null, aliases ?? [], features ?? [], folderRules, "profile", state, Change: null);
 
     internal PinSheetViewModel Sheet() => new(Ports);
@@ -58,7 +58,7 @@ internal sealed class PinSheetFixtures
     internal void Suggests(IReadOnlyList<PinSuggestTerm>? terms, IReadOnlyList<PinSuggestFeature>? features) =>
         Api.ContextPinSuggestAnswer = _ => AConcepts.Served(new PinSuggestView(1, "api", "v1", terms, features, Matches: null));
 
-    /// <summary>The write's job ends well, with the hash the app approves.</summary>
+    /// <summary>The write's job ends well, with a hash.</summary>
     internal void Succeeds() => Api.JobAnswers[JobId] = new RouteAnswer(HttpStatusCode.OK, Job("succeeded", code: null, summary: null));
 
     /// <summary>The write's job ends with a server code.</summary>

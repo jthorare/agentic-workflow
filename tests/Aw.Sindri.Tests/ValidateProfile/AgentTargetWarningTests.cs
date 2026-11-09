@@ -43,7 +43,7 @@ public sealed class AgentTargetWarningTests
     {
         var h = new SliceHarness();
         h.Profiles.Live = Loaded("cursor");
-        var service = new ValidateProfileService(h.Profiles, h.Profiles, h.Store, h.Events, FakeContextEngine.Instance, agents: _catalog);
+        var service = new ValidateProfileService(h.Profiles, FakeContextEngine.Instance, agents: _catalog);
 
         var validated = await service.Handle(new ValidateProfileRequest(), Token);
 
@@ -57,7 +57,7 @@ public sealed class AgentTargetWarningTests
     {
         var h = new SliceHarness();
         h.Profiles.Live = Loaded("claude-code");
-        var service = new ValidateProfileService(h.Profiles, h.Profiles, h.Store, h.Events, FakeContextEngine.Instance, agents: _catalog);
+        var service = new ValidateProfileService(h.Profiles, FakeContextEngine.Instance, agents: _catalog);
 
         Assert.Null((await service.Handle(new ValidateProfileRequest(), Token)).Value.Warnings);
     }

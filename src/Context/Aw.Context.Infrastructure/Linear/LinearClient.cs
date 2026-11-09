@@ -22,7 +22,7 @@ internal sealed class LinearClient(LinearSettings settings, LinearSourceParts pa
     private const string TokenKey = "context.sources.linear.token";
     private const int PageSize = 250;
     private readonly LinearReadKey _key = new(settings.Token, parts.Environment);
-    private readonly LinearCalls _calls = new(settings, parts.Logger, $"Create a read-only personal API key, store it behind {TokenKey} and approve the profile again (spec §8.8).");
+    private readonly LinearCalls _calls = new(settings, parts.Logger, $"Create a read-only personal API key, store it behind {TokenKey} and save the profile again (spec §8.8).");
 
     /// <summary>The checked settings.</summary>
     public LinearSettings Settings { get; } = settings;

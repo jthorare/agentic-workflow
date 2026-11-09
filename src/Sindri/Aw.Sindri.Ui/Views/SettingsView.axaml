@@ -5,6 +5,7 @@
              xmlns:sandbox="using:Aw.Sindri.Ui.Views.Sandbox"
              xmlns:reviews="using:Aw.Sindri.Ui.Views.Reviews"
              xmlns:linear="using:Aw.Sindri.Ui.Views.Linear"
+             xmlns:todo="using:Aw.Sindri.Ui.Views.Todo"
              x:Class="Aw.Sindri.Ui.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
   <!-- Settings (UI spec §3.3 ⌘,, §11.4, §14.2; setup spec §2.4): the setup checklist first, then this app's own preferences. The shell hosts it as its Settings page, inside
@@ -78,7 +79,7 @@
     </StackPanel>
 
     <!-- The Connections group (Linear hub spec §3): Settings → Connections → Linear, the keys and the teams. An agent session is refused the connection and sees none of it. -->
-    <StackPanel x:Name="ConnectionsSettingsSlot" IsVisible="{Binding HasLinearConnection}">
+    <StackPanel x:Name="ConnectionsSettingsSlot" IsVisible="{Binding HasConnections}" Spacing="{StaticResource Space.MD}">
       <StackPanel x:Name="LinearSettingsSlot" DataContext="{Binding LinearConnection}" x:DataType="lvm:LinearConnectionViewModel" IsVisible="{Binding IsAvailable}" Spacing="{StaticResource Space.XS}">
         <Border AutomationProperties.Name="{Binding Text.ConnectionsHeading}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
           <TextBlock x:Name="ConnectionsTitle" Classes="detail-title" Text="{Binding Text.ConnectionsHeading}" AutomationProperties.AccessibilityView="Raw" />
@@ -87,6 +88,10 @@
           <TextBlock x:Name="ConnectionsIntro" Classes="caption subtle" Text="{Binding Text.ConnectionsIntro}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <linear:LinearConnectionSection x:Name="LinearConnectionSettings" />
+      </StackPanel>
+      <!-- The Obsidian todo note card (todo spec §3.4 "Settings card"): beside the Linear card. -->
+      <StackPanel x:Name="TodoNoteSettingsSlot" IsVisible="{Binding HasTodoNoteCard}">
+        <todo:TodoNoteCardSection x:Name="TodoNoteSettings" DataContext="{Binding TodoNoteCard}" />
       </StackPanel>
     </StackPanel>
 

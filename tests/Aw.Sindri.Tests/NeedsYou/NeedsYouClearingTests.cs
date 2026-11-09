@@ -48,26 +48,6 @@ public sealed class NeedsYouClearingTests
         Expect.True(NeedsYouClearing.AfterRun(existing: null, Run(ServiceOutcome.Ok, _t), _plain).Value is null);
 
     [Fact]
-    public void Drift_adds_profile_row_and_revert_clears_it()
-    {
-        var drifted = NeedsYouClearing.AfterCheck(existing: null, Profile(drifted: true, approved: [_service]), _plain).Value!;
-        var again = NeedsYouClearing.AfterCheck(drifted, Profile(drifted: true, approved: [_service], at: _t.AddMinutes(5)), _plain).Value!;
-        var reverted = NeedsYouClearing.AfterCheck(again, Profile(drifted: false, approved: [_service], at: _t.AddMinutes(9)), _plain);
-
-        Expect.Equal((NeedsYouRowId.From("profile:drift"), _t), (drifted.Id, drifted.Since));
-        Expect.Equal(drifted.Since, again.Since);   // since stays the first drift's
-        Expect.True(reverted.Value is null);
-    }
-
-    [Fact]
-    public void Approving_the_drift_clears_the_row()
-    {
-        var drifted = NeedsYouClearing.AfterCheck(existing: null, Profile(drifted: true, approved: [_service]), _plain).Value;
-
-        Expect.True(NeedsYouClearing.AfterCheck(drifted, Profile(drifted: false, approved: [_service]) with { Approved = _live }, _plain).Value is null);
-    }
-
-    [Fact]
     public void Approved_profile_without_the_service_clears_failure()
     {
         var failing = NeedsYouClearing.AfterRun(existing: null, Run(ServiceOutcome.Failed, _t), _plain).Value!;

@@ -181,9 +181,6 @@ public sealed class ContextSyncTests : IDisposable
             + $"    linear: {{ url: \"{linear.Url}\", token: \"env:{KeyVariable}\", teams: [SPL] }}\n"
             + (services ? "services:\n  context-sync: { every: 15m }\n" : string.Empty);
         var host = await GoldenHost.Start(temporary: true, ct, yaml, new Dictionary<string, string>(StringComparer.Ordinal) { [KeyVariable] = linear.Token });
-        var hash = (await host.LiveHash(ct)).Value;
-        var approved = await host.Http.Ask(Post("/sindri/profile/approve", await ApiScenarios.Confirmed(host, hash), Human(host.Token.Value)));
-        Assert.Equal(HttpStatusCode.OK, approved.Status);
         await ContextMapApiTests.Import(host);
         return host;
     }

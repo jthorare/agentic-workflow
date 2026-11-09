@@ -232,6 +232,6 @@ internal sealed class EffectActivities(
         null => null,
         _ when code == WorkflowErrors.RecipeRevoked.Code => $"{recheck.Recipe.Id.Value}@{recheck.Recipe.Hash.Display} was revoked within the dispatch delay",
         _ when code == WorkflowErrors.RecipePinDrift.Code => $"a block pinned by {recheck.Recipe.Id.Value}@{recheck.Recipe.Hash.Display} changed since it was approved",
-        _ => $"{recheck.Kind.Value} isn't on the approved profile's effect allowlist (workflow.effects)",
+        _ => $"{recheck.Kind.Value} isn't on the profile's effect allowlist (workflow.effects)",
     });
 }

@@ -4,5 +4,4 @@ namespace Aw.Sindri.Ui.Api.Linear;
 /// <param name="Read">The read key.</param>
 /// <param name="Write">The write key.</param>
 /// <param name="Teams">The profile's teams.</param>
-/// <param name="Pending">True when the live profile differs from the approved one in this source's keys.</param>
-internal sealed record LinearConnection(LinearKeyState Read, LinearKeyState Write, IReadOnlyList<LinearTeam> Teams, bool Pending);
+internal sealed record LinearConnection(LinearKeyState Read, LinearKeyState Write, IReadOnlyList<LinearTeam> Teams);

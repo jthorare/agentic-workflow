@@ -11,7 +11,7 @@ namespace Aw.Sindri.Infrastructure.Forge;
 /// ('https://github.com/owner/name.git', 'git@github.com:owner/name.git').
 /// </summary>
 /// <param name="runner">Runs git.</param>
-/// <param name="profile">The approved profile: only its 'workflow.forge.hosts' are named.</param>
+/// <param name="profile">The profile: only its 'workflow.forge.hosts' are named.</param>
 internal sealed class GitForgeRepos(IToolRunner runner, IApprovedProfile profile) : IForgeRepos
 {
     private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(15);
@@ -34,7 +34,7 @@ internal sealed class GitForgeRepos(IToolRunner runner, IApprovedProfile profile
         var hosts = approved.Value?.Profile.Workflow?.Forge?.Hosts ?? [];
         return hosts.Contains(repo.Host, StringComparer.OrdinalIgnoreCase)
             ? repo
-            : SindriErrors.ForgeRefused.With($"{repo.Host} is not on the profile's workflow.forge.hosts (fix: add it and approve the profile)");
+            : SindriErrors.ForgeRefused.With($"{repo.Host} is not on the profile's workflow.forge.hosts (fix: add it)");
     }
 
     /// <summary>The repository a remote url names; null for a url that isn't host/owner/name.</summary>

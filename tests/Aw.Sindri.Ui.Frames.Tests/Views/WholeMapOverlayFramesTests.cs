@@ -40,7 +40,7 @@ public sealed class WholeMapOverlayFramesTests : FrameHost
 
         shell.Context.RequestBuildJob();
 
-        Assert.Equal(new DeepLink(DeepLinkKind.Job, "JOB-00000000000000000000000000000011"), shell.SheetLink);
+        Assert.Equal(new DeepLink(DeepLinkKind.Job, "JOB-00000000000000000000000000000008"), shell.SheetLink);
     });
 
     [Fact]

@@ -25,7 +25,7 @@ public sealed class ServePortTests : IDisposable
     public async Task Without_the_variable_serve_listens_on_the_approved_api_port()
     {
         var free = FreePort();
-        await Approve($"api: {{ port: {free} }}\n");
+        Approve($"api: {{ port: {free} }}\n");
 
         Assert.Equal(new Uri($"http://127.0.0.1:{free}"), await Listening(fromEnvironment: null));
     }
@@ -34,7 +34,7 @@ public sealed class ServePortTests : IDisposable
     public async Task AW_SINDRI_PORT_wins_over_the_approved_port()
     {
         var free = FreePort();
-        await Approve("api: { port: 1 }\n".Replace("1", FreePort(), StringComparison.Ordinal));
+        Approve("api: { port: 1 }\n".Replace("1", FreePort(), StringComparison.Ordinal));
 
         Assert.Equal(new Uri($"http://127.0.0.1:{free}"), await Listening(fromEnvironment: free));
     }
@@ -63,11 +63,7 @@ public sealed class ServePortTests : IDisposable
         Assert.Empty(app.Urls);
     }
 
-    private async Task Approve(string api)
-    {
-        _files.Write("schemaVersion: 1\nuser: thor\n" + api);
-        _ = await _files.Approvals.Save((await _files.Source.Load(Token)).Value, Token);
-    }
+    private void Approve(string api) => _files.Write("schemaVersion: 1\nuser: thor\n" + api);   // edits apply on save: writing the file is the whole step
 
     private async Task<Uri> Listening(string? fromEnvironment)
     {

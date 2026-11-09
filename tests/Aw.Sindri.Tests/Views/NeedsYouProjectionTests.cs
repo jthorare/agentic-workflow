@@ -16,7 +16,6 @@ public sealed class NeedsYouProjectionTests
     private static readonly ServiceName _index = ServiceName.From("index");
     private static readonly ProfileHash _approved = ProfileHash.From(new string('a', 64));
     private static readonly ProfileHash _live = ProfileHash.From(new string('b', 64));
-    private static readonly NeedsYouRowId _drift = NeedsYouRowId.From("profile:drift");
     private static readonly NeedsYouRowId _failure = NeedsYouRowId.From("failure:service:heartbeat");
     private readonly ViewsHarness _v = new();
 
@@ -120,46 +119,6 @@ public sealed class NeedsYouProjectionTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Drift_adds_profile_row_and_revert_clears_it_in_the_view()
-    {
-        await Check(drifted: true, "services.heartbeat.every");
-        var first = H.Clock.GetUtcNow();
-        var added = Assert.Single(await Rows());
-        H.Clock.Advance(TimeSpan.FromSeconds(30));
-
-        await Check(drifted: true, "services.heartbeat.every", "services.index");
-        var again = Assert.Single(await Rows());
-
-        H.Clock.Advance(TimeSpan.FromSeconds(30));
-        await Check(drifted: false);
-
-        Assert.Equal((_drift, NeedsYouKind.Profile, Urgency.Calm, SubjectKind.Profile, _live.Value), (added.Row.Id, added.Row.Kind, added.Row.Urgency, added.Row.Subject.Kind, added.Row.Subject.Id.Value));
-        Assert.Equal((first, "1 key path changed: services.heartbeat.every"), (added.Row.Since, added.Row.Reason));
-        Assert.Equal((first, "2 key paths changed: services.heartbeat.every, services.index"), (again.Row.Since, again.Row.Reason));
-        Assert.Empty(await Rows());
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Approving_the_live_hash_clears_the_profile_row()
-    {
-        await Check(drifted: true, "services.index");
-
-        await _v.Fold(EventTypes.ProfileApproved, new ProfileApproved(_live, ["services.index"]));
-
-        Assert.Empty(await Rows());
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Approving_some_other_hash_leaves_the_profile_row()
-    {
-        await Check(drifted: true, "services.index");
-
-        await _v.Fold(EventTypes.ProfileApproved, new ProfileApproved(_approved, []));
-
-        Assert.Equal([_drift.Value], (await Rows()).Select(r => r.Row.Id.Value), StringComparer.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public async Task Approved_profile_without_the_service_clears_failure_in_the_view()
     {
         await Ran(_heartbeat, ServiceOutcome.Failed, "SND-SCHED-001");
@@ -171,13 +130,13 @@ public sealed class NeedsYouProjectionTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_failure_stays_while_the_removal_is_only_a_drift()
+    public async Task A_failure_stays_when_a_check_reports_a_changed_profile()
     {
         await Ran(_heartbeat, ServiceOutcome.Failed, "SND-SCHED-001");
 
         await Check(drifted: true, approvedServices: [_heartbeat], paths: "services.heartbeat");
 
-        Assert.Equal([_failure.Value, _drift.Value], (await Rows()).Select(r => r.Row.Id.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal([_failure.Value], (await Rows()).Select(r => r.Row.Id.Value), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -200,8 +159,6 @@ public sealed class NeedsYouProjectionTests
 
     private Task Ran(ServiceName service, ServiceOutcome outcome, string? code = null) =>
         _v.Fold(EventTypes.ServiceRan, new ServiceRan(H.Ids.New<CommandId>(), service, H.Clock.GetUtcNow(), outcome, code));
-
-    private Task Check(bool drifted, params string[] paths) => Check(drifted, [_heartbeat, _index], paths);
 
     private Task Check(bool drifted, ServiceName[] approvedServices, params string[] paths) =>
         _v.Fold(EventTypes.ProfileChecked, new ProfileChecked(H.Ids.New<CommandId>(), _approved, _live, drifted, paths, approvedServices));

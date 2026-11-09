@@ -25,6 +25,18 @@
       "description": "Starts a code-index update for each repo whose main branch moved."
     },
     {
+      "name": "connection-refresh",
+      "every": "5m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Refreshes the tokens of connections that expire within 10 minutes."
+    },
+    {
       "name": "context-concept-scan",
       "every": "1m",
       "paused": false,
@@ -210,8 +222,8 @@
   ],
   "empty": null,
   "asOf": {
-    "cursor": 7,
-    "ledgerHead": 7,
+    "cursor": 3,
+    "ledgerHead": 3,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

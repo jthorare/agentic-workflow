@@ -49,8 +49,6 @@ public sealed class ContextJobsApiTests : IDisposable
             + "context:\n  docs: { globs: [\"docs/**/*.md\"] }\n  sources:\n"
             + $"    linear: {{ url: \"{linear.Url}\", token: \"env:{KeyVariable}\", teams: [SPL] }}\n";
         var host = await GoldenHost.Start(temporary: true, Token, yaml, new Dictionary<string, string>(StringComparer.Ordinal) { [KeyVariable] = linear.Token }, extra);
-        var hash = (await host.LiveHash(Token)).Value;
-        Assert.Equal(HttpStatusCode.OK, (await host.Http.Ask(Post("/sindri/profile/approve", await ApiScenarios.Confirmed(host, hash), Human(host.Token.Value)))).Status);
         await ContextMapApiTests.Import(host);
         return host;
     }

@@ -69,7 +69,7 @@ public sealed class ContextProjectFactsTests
         var read = await Facts().Read([], Ct);
 
         Assert.Equal(SindriErrors.ProjectFactsUnavailable.Code, read.Error.Code);
-        Assert.StartsWith(SindriErrors.ProfileNotApproved.Code, read.Error.Message, StringComparison.Ordinal);
+        Assert.StartsWith(SindriErrors.ProfileMissing.Code, read.Error.Message, StringComparison.Ordinal);
         Assert.Null(_context.Asked);
     }
 

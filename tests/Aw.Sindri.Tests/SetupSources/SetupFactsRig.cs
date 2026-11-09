@@ -31,7 +31,7 @@ internal sealed class SetupFactsRig : IAsyncDisposable
         Registry = new RegistryHarness();
         _scope = Registry.Services.CreateAsyncScope();
         Facts = new SetupFacts(
-            new ProfileSetupReader(Profiles, Profiles, new Core.Setup.RepoGitCache(Inspector, Clock)),
+            new ProfileSetupReader(Profiles, new Core.Setup.RepoGitCache(Inspector, Clock)),
             _scope.ServiceProvider.GetRequiredService<Core.Workflow.Registry.RecipeRegistryReader>(),
             new Testing.Workflow.ApproveAll.FakeShippedRecipes([]),
             new SourcesSetupReader(Profiles, FakeContextEngine.Instance, new PointerSecrets(name => Env.GetValueOrDefault(name), new FakeToolRunner(ToolRun.Missing))),

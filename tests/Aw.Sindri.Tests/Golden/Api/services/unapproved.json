@@ -25,6 +25,18 @@
       "description": "Starts a code-index update for each repo whose main branch moved."
     },
     {
+      "name": "connection-refresh",
+      "every": "5m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Refreshes the tokens of connections that expire within 10 minutes."
+    },
+    {
       "name": "context-concept-scan",
       "every": "1m",
       "paused": false,
@@ -71,6 +83,19 @@
         "run"
       ],
       "description": "Checkpoints context.db's log and refreshes its query stats."
+    },
+    {
+      "name": "heartbeat",
+      "every": "5s",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run",
+        "pause"
+      ],
+      "description": "Records that Sindri is alive."
     },
     {
       "name": "index-decisions",

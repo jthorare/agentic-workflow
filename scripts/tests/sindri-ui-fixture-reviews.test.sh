@@ -53,11 +53,7 @@ cat > "$STUB" <<'EOF'
 echo "$* [state=$AW_STATE_DIR]" >> "$STUB_LOG"
 case "$*" in
   "profile validate --json")
-    ok=false; [ "$(cat "$STUB_LOG.approved" 2>/dev/null)" = "$(cksum < "$AW_SINDRI_HOME/profile/profile.yaml")" ] && ok=true
-    echo "{\"valid\":true,\"hash\":\"abcdef0123456789\",\"approved\":$ok}" ;;
-  "profile approve abcdef0123456789")
-    IFS= read -r line; echo "typed=$line" >> "$STUB_LOG"
-    cksum < "$AW_SINDRI_HOME/profile/profile.yaml" > "$STUB_LOG.approved" ;;
+    echo "{\"valid\":true,\"hash\":\"abcdef0123456789\"}" ;;
 esac
 exit 0
 EOF
@@ -99,7 +95,7 @@ contains "the profile has review.login" "$profile" "review:
   login: fx-viewer"
 contains "the profile has the file forge on github.com" "$profile" "forge: { adapter: file, hosts: [github.com] }"
 contains "the profile lists acme/api under github repos" "$profile" "acme/api"
-contains "the profile was approved" "$(cat "$STUB_LOG")" "typed=approve profile abcdef"
+lacks "no profile approve is run (edits apply on save)" "$(cat "$STUB_LOG")" "profile approve"
 
 STATE="$PJ/ui-fixture-forge/state"
 calls="$(cat "$FORGE_LOG")"

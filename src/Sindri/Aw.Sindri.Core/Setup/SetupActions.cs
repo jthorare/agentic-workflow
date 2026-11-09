@@ -6,9 +6,6 @@ public static class SetupActions
     /// <summary>Add a repo to the profile.</summary>
     public const string AddRepo = "AddRepo";
 
-    /// <summary>Approve the profile (protected: the human's).</summary>
-    public const string ApproveProfile = "ApproveProfile";
-
     /// <summary>Approve every registered recipe, children first (protected: the human's).</summary>
     public const string ApproveAllRecipes = "ApproveAllRecipes";
 

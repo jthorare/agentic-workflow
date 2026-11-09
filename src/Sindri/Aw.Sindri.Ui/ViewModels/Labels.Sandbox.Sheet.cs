@@ -85,11 +85,6 @@ internal static partial class Labels
     /// <summary>What the live region says while Allow is on its way.</summary>
     internal const string AllowSending = "Sending";
 
-    /// <summary>What the live region says once the approval is open.</summary>
-    /// <param name="target">The target.</param>
-    /// <returns>The sentence.</returns>
-    internal static string AllowNeedsApproval(string target) => "Needs your approval: open the approval to allow " + target;
-
     /// <summary>Allow went through.</summary>
     internal const string AllowDone = "Allowed";
 

@@ -1,9 +1,8 @@
-using System.Globalization;
 using Aw.Sindri.Ui.Api.Context;
 
 namespace Aw.Sindri.Ui.ViewModels.Context.Concepts;
 
-/// <summary>The sheet's opening (<see cref="PinSheetViewModel"/>, continued): the fields fill at once from the card or the pin, then the button's rule, the terms and the features arrive.</summary>
+/// <summary>The sheet's opening (<see cref="PinSheetViewModel"/>, continued): the fields fill at once from the card or the pin, then the terms and the features arrive.</summary>
 internal sealed partial class PinSheetViewModel
 {
     /// <summary>Fills the sheet from what opened it and reads the rest: whether anything else waits, the concept's terms and the map's features.</summary>
@@ -21,7 +20,7 @@ internal sealed partial class PinSheetViewModel
 
         try
         {
-            await Task.WhenAll(ReadRule(cancellationToken), ReadTerms(cancellationToken), ReadFeatures(string.Empty, cancellationToken)).ConfigureAwait(true);
+            await Task.WhenAll(ReadTerms(cancellationToken), ReadFeatures(string.Empty, cancellationToken)).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
         {
@@ -69,7 +68,7 @@ internal sealed partial class PinSheetViewModel
 
     private void FillPin(PinView pin)
     {
-        (_self, _neverApproved, _folderRules) = (pin.Id, string.Equals(pin.State, PinStates.Waiting, StringComparison.Ordinal), pin.FolderRules);
+        (_self, _folderRules) = (pin.Id, pin.FolderRules);
         (Name, Definition) = (pin.Name, pin.Summary ?? string.Empty);
         foreach (var alias in pin.Aliases)
         {
@@ -139,15 +138,6 @@ internal sealed partial class PinSheetViewModel
         OnChanged(nameof(HasEmptyNote));
     }
 
-    // "Pin and approve" when nothing else waits for approval (only this pin, or nothing), else "Pin"; an unreadable profile reads as something waiting.
-    private async Task ReadRule(CancellationToken cancellationToken)
-    {
-        var waiting = await Ports.Flow.Waiting(cancellationToken).ConfigureAwait(true);
-        _approve = waiting is not null && waiting.OnlyMine(Mine);
-        OnChanged(nameof(SubmitText));
-        OnChanged(nameof(UnpinConfirmText));
-    }
-
     private async Task ReadTerms(CancellationToken cancellationToken)
     {
         if (_open?.Card is not { } card || Ports.ApiUrl() is not { } url)
@@ -208,30 +198,5 @@ internal sealed partial class PinSheetViewModel
         }
 
         OnWordsChanged();
-    }
-
-    // The write's key paths: this pin's, by the ids it may get (Edit keeps its id; a card's or a name's derived one).
-    private bool Mine(string path) => Ids().Any(id => path.EndsWith(".concepts." + id, StringComparison.Ordinal));
-
-    private IEnumerable<string> Ids()
-    {
-        if (_open?.Pin is { } pin)
-        {
-            return [pin.Id];
-        }
-
-        return _open?.Card is { } card ? [card.Id, Slug(Name)] : [Slug(Name)];
-    }
-
-    // The id the server derives from a name (lower case, runs of other characters as one dash); a different one only means the pin waits for Review and approve.
-    private static string Slug(string name)
-    {
-        var slug = new System.Text.StringBuilder();
-        foreach (var c in name.Trim().ToLower(CultureInfo.InvariantCulture))
-        {
-            _ = char.IsLetterOrDigit(c) ? slug.Append(c) : slug.Length > 0 && slug[^1] != '-' ? slug.Append('-') : slug;
-        }
-
-        return slug.ToString().Trim('-');
     }
 }

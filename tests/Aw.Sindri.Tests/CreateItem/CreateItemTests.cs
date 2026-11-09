@@ -103,7 +103,7 @@ public sealed class CreateItemTests
         var result = await Service().Handle(A.CreateItemRequest().WithRepo(null).Build(), Token);
 
         Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
-        Assert.Contains("this checkout, checkout, isn't a repo of the approved profile (fix: pass --repo <name>, or add it to the profile and approve it)", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("this checkout, checkout, isn't a repo of the profile (fix: pass --repo <name>, or add it to the profile)", result.Error.Message, StringComparison.Ordinal);
         Assert.Empty(_h.Store.Events);
     }
 

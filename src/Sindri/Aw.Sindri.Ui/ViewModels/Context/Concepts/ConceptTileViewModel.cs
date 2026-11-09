@@ -98,13 +98,12 @@ internal sealed class ConceptTileViewModel
     /// <summary>Whether the card has a footer.</summary>
     public bool HasFooter => Card.Lines.Count > 0;
 
-    /// <summary>Whether the footer's button needs the owner (Review and approve, Open review): the card stands out.</summary>
-    public bool NeedsYou => Card.Action is PinCardAction.ReviewAndApprove or PinCardAction.OpenReview;
+    /// <summary>Whether the footer's button needs the owner (Open review): the card stands out.</summary>
+    public bool NeedsYou => Card.Action is PinCardAction.OpenReview;
 
     /// <summary>The footer button's words; empty when it has none.</summary>
     public string ActionText => Card.Action switch
     {
-        PinCardAction.ReviewAndApprove => Labels.PinReviewAndApprove,
         PinCardAction.OpenReview => Labels.PinOpenReview,
         PinCardAction.TryAgain => Labels.PinTryAgain,
         PinCardAction.None => string.Empty,

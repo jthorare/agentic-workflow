@@ -140,8 +140,8 @@ internal sealed partial class HealthViewModel
     private void ShowSystemState()
     {
         var look = NeedsLook();
-        Sentence = SentenceFor(new SentenceInputs(State, _health is not null, Pill.IsHealthy, Pill.Problems, HasProfileFix, _health?.Sentence, look));
-        (ToneWarn, ToneError) = ToneFor(State, _health?.Word, HasProfileFix || look.Length > 0);
+        Sentence = SentenceFor(new SentenceInputs(State, _health is not null, Pill.IsHealthy, Pill.Problems, _health?.Sentence, look));
+        (ToneWarn, ToneError) = ToneFor(State, _health?.Word, look.Length > 0);
         ProblemLines = [.. (_health?.Problems ?? []).Select(p => HealthProblemLine.From(p, _health?.Word))];
         OnChanged(nameof(HasProblemLines));
         ShowAgentsCard();

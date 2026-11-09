@@ -74,7 +74,7 @@ internal sealed partial class ShellViewModel
     private NeedsYouPageViewModel InitInbox(ISindriApi api, IClipboard clipboard, ILauncher launcher)
     {
         _dispatcher = new NeedsYouDispatcher(api, Health.ApiUrl);
-        var inbox = new NeedsYouPageViewModel(NeedsYou, _clock, clipboard, launcher, new NeedsYouConfirm(Health.ApiUrl, api));
+        var inbox = new NeedsYouPageViewModel(NeedsYou, _clock, clipboard, launcher);
         inbox.LeaveRequested += (_, _) => LeaveNeedsYouInbox();
         inbox.Bar.DecisionRequested += (_, e) => e.Settled = AnswerDecision(e.RowId, e.OptionId, e.Note);
         inbox.PrRequested += (_, e) =>

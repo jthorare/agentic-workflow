@@ -25,6 +25,18 @@
       "description": "Starts a code-index update for each repo whose main branch moved."
     },
     {
+      "name": "connection-refresh",
+      "every": "5m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Refreshes the tokens of connections that expire within 10 minutes."
+    },
+    {
       "name": "context-concept-scan",
       "every": "1m",
       "paused": false,
@@ -182,10 +194,10 @@
       "description": "Passes ledger events to the running workflows."
     }
   ],
-  "empty": "Rebuilding views (cursor 5 of 5)…",
+  "empty": "Rebuilding views (cursor 1 of 1)…",
   "asOf": {
-    "cursor": 5,
-    "ledgerHead": 5,
+    "cursor": 1,
+    "ledgerHead": 1,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": true,
     "stalled": false

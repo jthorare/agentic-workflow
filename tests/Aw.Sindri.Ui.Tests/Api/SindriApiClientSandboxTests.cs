@@ -67,7 +67,7 @@ public sealed class SindriApiClientSandboxTests
         var seen = Assert.Single(handler.Requests);
         Assert.Equal(("POST", "/sindri/sandbox/allow", string.Empty), (seen.Method, seen.Path, seen.Query));
         Assert.Equal(("human", "ui"), (seen.Caller, seen.Client));
-        Assert.Equal("needs-approval", allowed.Value.State);
+        Assert.Equal("allowed", allowed.Value.State);
         Assert.Equal(request, Assert.Single(server.Allowed));
     }
 }

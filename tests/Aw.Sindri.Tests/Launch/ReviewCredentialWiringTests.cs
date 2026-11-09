@@ -23,7 +23,7 @@ public sealed class ReviewCredentialWiringTests
 
     private static Result<LoadedProfile> LiveOf(PrReviewSettings? review) => Of(review);
 
-    private static Result<LoadedProfile?> UnreadableApproved() => Core.SindriErrors.ApprovalsUnavailable.With("unreadable");
+    private static Result<LoadedProfile?> UnreadableApproved() => Core.SindriErrors.ServiceFailed.With("unreadable");
 
     private static Result<LoadedProfile> UnreadableLive() => Core.SindriErrors.ProfileInvalid.With("unreadable");
 

@@ -191,10 +191,10 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IJobViews, SqliteJobViews>().AddSingleton<IServicePauses, ViewServicePauses>()
             .AddScoped<IRecipeStateCatalog, RecipeStateCatalog>()
             .AddSingleton<IProfileSource>(sp => new YamlProfileSource(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)))
-            .AddSingleton<IApprovals, FileApprovals>()
+            .AddSingleton<IOldApprovalsCleanup, ApprovalsDirectoryCleanup>()   // #2258 PR 1: run once at start by serve
             .AddSingleton<IBoxLimitsSource>(sp => new HeavyCapSource(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton<ILineSetupProbe>(new FileLineSetupProbe(environment))   // 'line doctor' (LN-L)
-            .AddSingleton<IApprovedProfile>(static sp => sp.GetRequiredService<IApprovals>())
+            .AddSingleton(static sp => new LiveApprovedProfile(sp.GetRequiredService<IProfileSource>(), sp.GetRequiredService<SindriSettings>().ProfilePath)).AddSingleton<IApprovedProfile>(static sp => sp.GetRequiredService<LiveApprovedProfile>()).AddSingleton<IProfileCache>(static sp => sp.GetRequiredService<LiveApprovedProfile>())
             .AddSingleton<IEndpointFile, FileEndpoint>()
             .AddSingleton<IControlPlaneProbe, HttpControlPlaneProbe>()
             .AddSingleton<IControlPlaneLauncher, ServeLauncher>()
@@ -205,7 +205,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IRecipeBuild, BuildInfoRecipeBuild>()   // setup-once §5.3: doctor compares the embedded recipe set's tree hash with HEAD's
             .AddSingleton<IBuildStamps>(static _ => new InstalledBuildStamps(AppContext.BaseDirectory))   // #1032: status and doctor compare the running build with bin/cs/current
             .AddSingleton<IProcessAncestry, PosixProcessAncestry>()
-            .AddSingleton<IRepoLocator, GitRepoLocator>().AddSingleton<IRepoInspector, GitRepoInspector>().AddSingleton<IProfileRepoWriter, YamlProfileRepoWriter>().AddSingleton<IProfileIndexWriter>(sp => new YamlProfileIndexWriter(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))).AddSingleton<IProfileSandboxWriter, YamlProfileSandboxWriter>().AddSingleton<IProfileInitializer, FileProfileInitializer>()   // setup-once §5.1: AddRepo's folder checks and the profile's repos[] appender
+            .AddSingleton<IRepoLocator, GitRepoLocator>().AddSingleton<IRepoInspector, GitRepoInspector>().AddSingleton<IProfileRepoWriter, YamlProfileRepoWriter>().AddSingleton<IProfileIndexWriter>(sp => new YamlProfileIndexWriter(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<IProfileCache>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))).AddSingleton<IProfileSandboxWriter, YamlProfileSandboxWriter>().AddSingleton<IProfileInitializer, FileProfileInitializer>()   // setup-once §5.1: AddRepo's folder checks and the profile's repos[] appender
             .AddSingleton<ICommandOrigins, LedgerCommandOrigins>()   // engine P4 unit (d): the bridge's causation route
             .AddRecipeAdapters(environment)
             .AddSingleton<IChallenges, ProcessChallenges>()
@@ -257,6 +257,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IEnvironmentReader, ProcessEnvironmentReader>()
             .AddSingleton<IConnectionProbe>(static _ => new HttpConnectionProbe(new HttpClient()))
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<IMcpConnectionClient>(static _ => new McpConnectionClient(new HttpClient()))
             .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
             .AddSingleton<ISignInSession>(static sp => new LoopbackSignIn(sp.GetRequiredService<IOAuthClient>(), sp.GetRequiredService<IBrowserOpener>(), TimeSpan.FromMinutes(5), System.Security.Cryptography.RandomNumberGenerator.GetBytes));
 

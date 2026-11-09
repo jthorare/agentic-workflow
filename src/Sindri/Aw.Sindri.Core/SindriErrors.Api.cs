@@ -15,4 +15,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-API-013: a query parameter outside its set: a stats or list window that isn't 7d, 30d or 90d, or a hash that isn't a recipe hash (API spec §3.8, E-24, E-25).</summary>
     public static readonly ErrorDefinition InvalidQuery = new("SND-API-013", ErrorKind.Invalid, "A query parameter is outside its set");
+
+    /// <summary>SND-API-014: a route that was removed (answered with 410 for one release; #2258 PR 1: POST /sindri/profile/approve, since edits apply on save).</summary>
+    public static readonly ErrorDefinition RouteRemoved = new("SND-API-014", ErrorKind.NotFound, "That route was removed");
 }

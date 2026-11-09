@@ -66,7 +66,7 @@ public sealed class SyncInboxTests
         _ = await _store.RecordOutbound(A.Sent("t1-api", "done", 99), CancellationToken.None);
         var answered = ObligationEvaluator.Evaluate(A.Facts() with { Messages = (await _store.Messages(CancellationToken.None)).Value, Outbound = (await _store.Sent(CancellationToken.None)).Value });
 
-        Assert.Equal([(ObligationKind.Reply, "m1")], open.Select(o => (o.Kind, o.Key)));
+        Assert.Equal([(ObligationKind.Reply, "m1"), (ObligationKind.RearmWatch, "watch")], open.Select(o => (o.Kind, o.Key)));
         Assert.Empty(answered);
     }
 

@@ -139,7 +139,7 @@ public static class MapAccess
         return mapped.IsError || mapped.Value.Any(r => string.Equals(r.Name.Value, repo.Value, StringComparison.Ordinal))
             ? (mapped.IsError ? mapped.Error : null)
             : ContextErrors.MapFileInvalid.With(
-                $"repo: '{repo.Value}' isn't a repo the approved profile maps ({string.Join(", ", mapped.Value.Select(r => r.Name.Value))}); nothing was written (fix: name one of them, or add the repo to the profile and approve it)");
+                $"repo: '{repo.Value}' isn't a repo the profile maps ({string.Join(", ", mapped.Value.Select(r => r.Name.Value))}); nothing was written (fix: name one of them, or add the repo to the profile)");
     }
 
     /// <summary>
