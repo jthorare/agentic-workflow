@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Infrastructure.Sandbox;
@@ -20,11 +21,11 @@ public sealed class SandboxPlanGoldenTests
         public string Resolve(string path) => path;
     }
 
-    private static readonly ResourceMount[] _resources =
-    [
-        new("notes", Req.SindriHome + "/resources/workflow/web/notes.db"),
-        new("scratch", Req.SindriHome + "/resources/workflow/web/scratch"),
-    ];
+    // the planner's own mounts for a workflow with a database and a disk: one read-write mount of the owner's folder
+    private static readonly IReadOnlyList<ResourceMount> _resources = ResourcePlanner.Plan(
+        ResourceOwner.Parse("workflow:web").Value,
+        new ResourceSpec([new DatabaseResource("notes")], [new DiskResource("scratch", "1GiB")], Sandbox: null, []),
+        Req.SindriHome + "/resources").Value.Mounts;
 
     private static SandboxPlan Plan(SandboxMechanism mechanism)
     {
@@ -50,5 +51,6 @@ public sealed class SandboxPlanGoldenTests
 
         Assert.Equal(_resources.Select(r => r.HostPath), plan.Mounts.Where(m => m.Kind == PlanMountKind.State).Select(m => m.Path), StringComparer.Ordinal);
         Assert.All(_resources, r => Assert.Contains(r.HostPath, plan.Writable, StringComparer.Ordinal));
+        Assert.Equal([Req.SindriHome + "/resources/workflow/web"], _resources.Select(r => r.HostPath), StringComparer.Ordinal);   // the folder, so notes.db-wal and -shm are writable too
     }
 }

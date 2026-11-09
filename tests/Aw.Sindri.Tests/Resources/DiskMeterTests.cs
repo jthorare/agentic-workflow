@@ -52,4 +52,22 @@ public sealed class DiskMeterTests : IDisposable
 
         Assert.Equal(100, result.Value);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_walk_the_cap_stops_under_the_limit_fails_with_the_count_and_the_bytes_so_far()
+    {
+        var folder = Path.Combine(_home.Path, "disk");
+        _ = Directory.CreateDirectory(Path.Combine(folder, "a", "b"));   // folders count toward the cap too
+        for (var i = 0; i < 4; i++)
+        {
+            File.WriteAllBytes(Path.Combine(folder, $"f{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}.bin"), new byte[10]);
+        }
+
+        var result = DiskMeter.Check("scratch", folder, 1 << 20, entryCap: 5);
+
+        Assert.Equal("SND-RES-007", result.Error.Code);
+        Assert.Contains("more than 5 files and folders", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("scratch", result.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(40, DiskMeter.Check("scratch", folder, 1 << 20, entryCap: 6).Value);   // a, a/b and the four files: six entries fit a cap of six
+    }
 }

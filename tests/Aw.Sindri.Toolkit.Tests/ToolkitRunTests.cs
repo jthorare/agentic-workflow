@@ -1,5 +1,6 @@
 using System.IO.Pipes;
 using ModelContextProtocol.Client;
+using ModelContextProtocol.Protocol;
 
 namespace Aw.Sindri.Toolkit.Tests;
 
@@ -27,7 +28,7 @@ public sealed class ToolkitRunTests
         using var stderr = new StringWriter();
         var realOut = Console.Out;
 
-        var serving = Task.Run(() => ToolkitHost.RunAsync(toolkit, [], () => serverInput, () => fromServer, stdout, stderr, ct), ct);
+        var serving = Task.Run(() => ToolkitHost.RunAsync(toolkit, [], new StandardStreams(() => serverInput, () => fromServer, stdout, stderr), ct), ct);
         var client = await McpClient.CreateAsync(new StreamClientTransport(toServer, clientInput), cancellationToken: ct);
         var result = await client.CallToolAsync("chat", _arguments, cancellationToken: ct);
         await client.DisposeAsync();
@@ -48,7 +49,7 @@ public sealed class ToolkitRunTests
         using var stderr = new StringWriter();
         var toolkit = SampleToolkit.Create();
 
-        var exit = await ToolkitHost.RunAsync(toolkit, ["--manifest"], () => throw new InvalidOperationException(), () => throw new InvalidOperationException(), stdout, stderr, TestContext.Current.CancellationToken);
+        var exit = await ToolkitHost.RunAsync(toolkit, ["--manifest"], new StandardStreams(() => throw new InvalidOperationException(), () => throw new InvalidOperationException(), stdout, stderr), TestContext.Current.CancellationToken);
 
         Assert.Equal(0, exit);
         Assert.Equal(toolkit.Manifest(), stdout.ToString());
@@ -61,7 +62,7 @@ public sealed class ToolkitRunTests
         using var stdout = new StringWriter();
         using var stderr = new StringWriter();
 
-        var exit = await ToolkitHost.RunAsync(SampleToolkit.Create(), ["--nope"], () => throw new InvalidOperationException(), () => throw new InvalidOperationException(), stdout, stderr, TestContext.Current.CancellationToken);
+        var exit = await ToolkitHost.RunAsync(SampleToolkit.Create(), ["--nope"], new StandardStreams(() => throw new InvalidOperationException(), () => throw new InvalidOperationException(), stdout, stderr), TestContext.Current.CancellationToken);
 
         Assert.Equal(2, exit);
         Assert.Contains("usage: contracts", stderr.ToString(), StringComparison.Ordinal);

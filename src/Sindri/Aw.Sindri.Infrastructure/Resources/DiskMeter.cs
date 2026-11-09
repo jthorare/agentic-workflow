@@ -10,24 +10,31 @@ namespace Aw.Sindri.Infrastructure.Resources;
 /// <summary>Measures a disk folder with a bounded walk.</summary>
 internal static class DiskMeter
 {
-    /// <summary>Largest number of files one walk visits.</summary>
+    /// <summary>Largest number of files and folders one walk visits.</summary>
     internal const int FileCap = 100_000;
 
-    /// <summary>Measures <paramref name="folder"/> and checks it against <paramref name="limitBytes"/>. Symlinks are neither followed nor counted; the walk stops once the total passes the limit.</summary>
+    /// <summary>Measures <paramref name="folder"/> and checks it against <paramref name="limitBytes"/>. Symlinks are neither followed nor counted; the walk stops once the total passes the limit or <paramref name="entryCap"/> files and folders were seen.</summary>
     /// <param name="name">The disk's name, for the message.</param>
     /// <param name="folder">The disk folder.</param>
     /// <param name="limitBytes">The limit.</param>
-    /// <returns>The bytes used, or SND-RES-001 naming used and limit.</returns>
-    internal static Result<long> Check(string name, string folder, long limitBytes)
+    /// <param name="entryCap">Largest number of files and folders one walk visits (<see cref="FileCap"/>; tests pass a small one).</param>
+    /// <returns>The bytes used, SND-RES-001 naming used and limit, or SND-RES-007 when the cap stopped the walk under the limit.</returns>
+    internal static Result<long> Check(string name, string folder, long limitBytes, int entryCap = FileCap)
     {
-        var used = Measure(folder, limitBytes);
-        return used > limitBytes
-            ? SindriErrors.ResourceDiskOverSize.With(string.Create(CultureInfo.InvariantCulture, $"Disk '{name}' holds {used} bytes ({SandboxUnits.FormatSize(used)}), more than its limit of {limitBytes} bytes ({SandboxUnits.FormatSize(limitBytes)})."))
+        var (used, seen, capped) = Measure(folder, limitBytes, entryCap);
+        if (used > limitBytes)
+        {
+            return SindriErrors.ResourceDiskOverSize.With(string.Create(CultureInfo.InvariantCulture, $"Disk '{name}' holds {used} bytes ({SandboxUnits.FormatSize(used)}), more than its limit of {limitBytes} bytes ({SandboxUnits.FormatSize(limitBytes)})."));
+        }
+
+        // why: a stopped walk's total is a floor, not a measurement; passing it would let a disk over its limit through
+        return capped
+            ? SindriErrors.ResourceDiskUnmeasured.With(string.Create(CultureInfo.InvariantCulture, $"Disk '{name}' holds more than {seen} files and folders, so it can't be measured; {used} bytes ({SandboxUnits.FormatSize(used)}) were counted before the walk stopped. Delete files you don't need from it."))
             : used;
     }
 
-    /// <summary>Sums file sizes under <paramref name="folder"/> until the total passes <paramref name="limitBytes"/> or <see cref="FileCap"/> files were seen.</summary>
-    private static long Measure(string folder, long limitBytes)
+    /// <summary>Sums file sizes under <paramref name="folder"/> until the total passes <paramref name="limitBytes"/> or <paramref name="entryCap"/> entries were seen.</summary>
+    private static (long Used, int Seen, bool Capped) Measure(string folder, long limitBytes, int entryCap)
     {
         long used = 0;
         var seen = 0;
@@ -37,26 +44,30 @@ internal static class DiskMeter
             pending.Push(folder);
         }
 
-        while (pending.Count > 0 && used <= limitBytes && seen < FileCap)
+        while (pending.Count > 0)
         {
             foreach (var entry in Entries(pending.Pop()))
             {
+                if (++seen > entryCap)
+                {
+                    return (used, entryCap, true);
+                }
+
                 if (entry is DirectoryInfo)
                 {
                     pending.Push(entry.FullName);
                     continue;
                 }
 
-                seen++;
                 used += ((FileInfo)entry).Length;
-                if (used > limitBytes || seen >= FileCap)
+                if (used > limitBytes)
                 {
-                    break;
+                    return (used, seen, false);
                 }
             }
         }
 
-        return used;
+        return (used, seen, false);
     }
 
     /// <summary>The folder's entries without symlinks; a folder that can't be read counts as empty (the next run measures it again).</summary>

@@ -4,6 +4,7 @@ using Aw.Kernel.Data;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Infrastructure.Ledger;
 
 namespace Aw.Sindri.Infrastructure.Workflow;
@@ -148,6 +149,25 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
 
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
         Move(id, new Change(status, outputs, error, status == WorkflowRunStatus.Queued ? WorkflowRunSql.Requeue : WorkflowRunSql.SetStatus), cancellationToken);
+
+    public ValueTask<Result<WorkflowRun>> SetItem(WorkflowRunId id, ItemId item, CancellationToken cancellationToken) =>
+        RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>
+        {
+            var existing = await FindRun(session, id, token).ConfigureAwait(false);
+            if (existing.IsError || existing.Value is null)
+            {
+                return existing.IsError ? existing.Error : NotFound(id);
+            }
+
+            var linked = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.SetItem, c => c.Bind("$id", id.Value).Bind("$item", item.Value)), token).ConfigureAwait(false);
+            if (linked.IsError)
+            {
+                return linked.Error;
+            }
+
+            var after = await FindRun(session, id, token).ConfigureAwait(false);
+            return after.IsError ? after.Error : after.Value ?? (Result<WorkflowRun>)NotFound(id);
+        }, cancellationToken);
 
     public ValueTask<Result<WorkflowRun>> CancelQueued(WorkflowRunId id, string? error, CancellationToken cancellationToken) =>
         Move(id, new Change(WorkflowRunStatus.Cancelled, Outputs: null, error, WorkflowRunSql.FromQueued), cancellationToken);
