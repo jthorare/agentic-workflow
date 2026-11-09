@@ -12,5 +12,5 @@ public sealed record ResourceSpec(
     IReadOnlyList<ConnectionResource> Connections)
 {
     /// <summary>Gets a spec that declares nothing.</summary>
-    public static ResourceSpec Empty { get; } = new([], [], null, []);
+    public static ResourceSpec Empty { get; } = new([], [], Sandbox: null, []);
 }

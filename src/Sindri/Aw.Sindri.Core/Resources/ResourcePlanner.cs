@@ -11,7 +11,7 @@ public static partial class ResourcePlanner
     /// <summary>Plans an owner's resources.</summary>
     /// <param name="owner">The owner.</param>
     /// <param name="spec">What it declares.</param>
-    /// <param name="resourcesRoot">The resources root, <c>$AW_SINDRI_HOME/resources</c>.</param>
+    /// <param name="resourcesRoot">The resources root, <c lang="text">$AW_SINDRI_HOME/resources</c>.</param>
     /// <returns>The plan, or SND-RES-002 for a name used twice, SND-RES-006 for a bad name or size.</returns>
     public static Result<ResourcePlan> Plan(ResourceOwner owner, ResourceSpec spec, string resourcesRoot)
     {
@@ -23,6 +23,18 @@ public static partial class ResourcePlanner
         var env = new Dictionary<string, string>(StringComparer.Ordinal);
         var mounts = new List<ResourceMount>();
 
+        var bad = AddDatabases(spec, home, create, env, mounts) ?? AddDisks(spec, home, create, env, mounts) ?? AddConnections(spec, env);
+        if (bad is not null)
+        {
+            return bad;
+        }
+
+        var limits = Limits(spec.Sandbox);
+        return limits.IsError ? limits.Error : new ResourcePlan(create, env, mounts, limits.Value);
+    }
+
+    private static Error? AddDatabases(ResourceSpec spec, string home, List<PlannedResource> create, Dictionary<string, string> env, List<ResourceMount> mounts)
+    {
         foreach (var name in spec.Databases.Select(static d => d.Name))
         {
             if (Check(name, "database", create, ResourceKind.Database) is { } bad)
@@ -31,11 +43,16 @@ public static partial class ResourcePlanner
             }
 
             var path = $"{home}/{name}.db";
-            create.Add(new PlannedResource(ResourceKind.Database, name, path, null));
+            create.Add(new PlannedResource(ResourceKind.Database, name, path, SizeLimit: null));
             env[ResourceEnv.Database(name)] = path;
             mounts.Add(new ResourceMount(name, path));
         }
 
+        return null;
+    }
+
+    private static Error? AddDisks(ResourceSpec spec, string home, List<PlannedResource> create, Dictionary<string, string> env, List<ResourceMount> mounts)
+    {
         foreach (var disk in spec.Disks)
         {
             if (Check(disk.Name, "disk", create, ResourceKind.Disk) is { } bad)
@@ -54,24 +71,28 @@ public static partial class ResourcePlanner
             mounts.Add(new ResourceMount(disk.Name, path));
         }
 
+        return null;
+    }
+
+    private static Error? AddConnections(ResourceSpec spec, Dictionary<string, string> env)
+    {
         var connections = new HashSet<string>(StringComparer.Ordinal);
         foreach (var connection in spec.Connections)
         {
-            if (!NameShape.IsMatch(connection.Name ?? string.Empty))
+            if (connection.Name is not { } name || !NameShape.IsMatch(name))
             {
                 return NameInvalid("connection");
             }
 
-            if (!connections.Add(connection.Name!))
+            if (!connections.Add(name))
             {
-                return SindriErrors.ResourceNameClash.With($"Two connections are named '{connection.Name}'.");
+                return SindriErrors.ResourceNameClash.With($"Two connections are named '{name}'.");
             }
 
-            env[ResourceEnv.Connection(connection.Name!)] = connection.Name!;
+            env[ResourceEnv.Connection(name)] = name;
         }
 
-        var limits = Limits(spec.Sandbox);
-        return limits.IsError ? limits.Error : new ResourcePlan(create, env, mounts, limits.Value);
+        return null;
     }
 
     private static Error? Check(string? name, string what, List<PlannedResource> made, ResourceKind kind)
@@ -81,7 +102,7 @@ public static partial class ResourcePlanner
             return NameInvalid(what);
         }
 
-        return made.Any(m => m.Kind == kind && string.Equals(m.Name, name, StringComparison.Ordinal))
+        return made.Exists(m => m.Kind == kind && string.Equals(m.Name, name, StringComparison.Ordinal))
             ? SindriErrors.ResourceNameClash.With($"Two {what}s are named '{name}'.")
             : null;
     }
@@ -110,7 +131,7 @@ public static partial class ResourcePlanner
         TimeSpan? wall = null;
         if (sandbox.Wall is not null)
         {
-            if (!RecipeDuration.TryParse(sandbox.Wall, null, out var duration))
+            if (!RecipeDuration.TryParse(sandbox.Wall, provider: null, out var duration))
             {
                 return SindriErrors.ResourceInvalid.With("A sandbox wall is a whole number and m, h or d, such as 45m.");
             }

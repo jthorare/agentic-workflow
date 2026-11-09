@@ -20959,3 +20959,148 @@ static Aw.Sindri.Core.Connections.SignInTry.operator !=(Aw.Sindri.Core.Connectio
 static Aw.Sindri.Core.Connections.SignInTry.operator ==(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.get -> string?
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.init -> void
+Aw.Sindri.Core.Resources.ConnectionResource
+Aw.Sindri.Core.Resources.ConnectionResource.<Clone>$() -> Aw.Sindri.Core.Resources.ConnectionResource!
+Aw.Sindri.Core.Resources.ConnectionResource.ConnectionResource(string! Name) -> void
+Aw.Sindri.Core.Resources.ConnectionResource.Deconstruct(out string! Name) -> void
+Aw.Sindri.Core.Resources.ConnectionResource.Equals(Aw.Sindri.Core.Resources.ConnectionResource? other) -> bool
+Aw.Sindri.Core.Resources.ConnectionResource.Name.get -> string!
+Aw.Sindri.Core.Resources.ConnectionResource.Name.init -> void
+Aw.Sindri.Core.Resources.DatabaseResource
+Aw.Sindri.Core.Resources.DatabaseResource.<Clone>$() -> Aw.Sindri.Core.Resources.DatabaseResource!
+Aw.Sindri.Core.Resources.DatabaseResource.DatabaseResource(string! Name) -> void
+Aw.Sindri.Core.Resources.DatabaseResource.Deconstruct(out string! Name) -> void
+Aw.Sindri.Core.Resources.DatabaseResource.Equals(Aw.Sindri.Core.Resources.DatabaseResource? other) -> bool
+Aw.Sindri.Core.Resources.DatabaseResource.Name.get -> string!
+Aw.Sindri.Core.Resources.DatabaseResource.Name.init -> void
+Aw.Sindri.Core.Resources.DiskResource
+Aw.Sindri.Core.Resources.DiskResource.<Clone>$() -> Aw.Sindri.Core.Resources.DiskResource!
+Aw.Sindri.Core.Resources.DiskResource.Deconstruct(out string! Name, out string! Size) -> void
+Aw.Sindri.Core.Resources.DiskResource.DiskResource(string! Name, string! Size) -> void
+Aw.Sindri.Core.Resources.DiskResource.Equals(Aw.Sindri.Core.Resources.DiskResource? other) -> bool
+Aw.Sindri.Core.Resources.DiskResource.Name.get -> string!
+Aw.Sindri.Core.Resources.DiskResource.Name.init -> void
+Aw.Sindri.Core.Resources.DiskResource.Size.get -> string!
+Aw.Sindri.Core.Resources.DiskResource.Size.init -> void
+Aw.Sindri.Core.Resources.PlannedResource
+Aw.Sindri.Core.Resources.PlannedResource.<Clone>$() -> Aw.Sindri.Core.Resources.PlannedResource!
+Aw.Sindri.Core.Resources.PlannedResource.Deconstruct(out Aw.Sindri.Core.Resources.ResourceKind Kind, out string! Name, out string! Path, out long? SizeLimit) -> void
+Aw.Sindri.Core.Resources.PlannedResource.Equals(Aw.Sindri.Core.Resources.PlannedResource? other) -> bool
+Aw.Sindri.Core.Resources.PlannedResource.Kind.get -> Aw.Sindri.Core.Resources.ResourceKind
+Aw.Sindri.Core.Resources.PlannedResource.Kind.init -> void
+Aw.Sindri.Core.Resources.PlannedResource.Name.get -> string!
+Aw.Sindri.Core.Resources.PlannedResource.Name.init -> void
+Aw.Sindri.Core.Resources.PlannedResource.Path.get -> string!
+Aw.Sindri.Core.Resources.PlannedResource.Path.init -> void
+Aw.Sindri.Core.Resources.PlannedResource.PlannedResource(Aw.Sindri.Core.Resources.ResourceKind Kind, string! Name, string! Path, long? SizeLimit) -> void
+Aw.Sindri.Core.Resources.PlannedResource.SizeLimit.get -> long?
+Aw.Sindri.Core.Resources.PlannedResource.SizeLimit.init -> void
+Aw.Sindri.Core.Resources.ResourceEnv
+Aw.Sindri.Core.Resources.ResourceKind
+Aw.Sindri.Core.Resources.ResourceKind.Database = 1 -> Aw.Sindri.Core.Resources.ResourceKind
+Aw.Sindri.Core.Resources.ResourceKind.Disk = 2 -> Aw.Sindri.Core.Resources.ResourceKind
+Aw.Sindri.Core.Resources.ResourceOwner
+Aw.Sindri.Core.Resources.ResourceOwner.<Clone>$() -> Aw.Sindri.Core.Resources.ResourceOwner!
+Aw.Sindri.Core.Resources.ResourceOwner.Equals(Aw.Sindri.Core.Resources.ResourceOwner? other) -> bool
+Aw.Sindri.Core.Resources.ResourceOwner.Folder.get -> string!
+Aw.Sindri.Core.Resources.ResourceOwner.Key.get -> string!
+Aw.Sindri.Core.Resources.ResourceOwner.Kind.get -> Aw.Sindri.Core.Resources.ResourceOwnerKind
+Aw.Sindri.Core.Resources.ResourceOwnerKind
+Aw.Sindri.Core.Resources.ResourceOwnerKind.Node = 2 -> Aw.Sindri.Core.Resources.ResourceOwnerKind
+Aw.Sindri.Core.Resources.ResourceOwnerKind.Toolkit = 3 -> Aw.Sindri.Core.Resources.ResourceOwnerKind
+Aw.Sindri.Core.Resources.ResourceOwnerKind.Workflow = 1 -> Aw.Sindri.Core.Resources.ResourceOwnerKind
+Aw.Sindri.Core.Resources.ResourcePlan
+Aw.Sindri.Core.Resources.ResourcePlan.<Clone>$() -> Aw.Sindri.Core.Resources.ResourcePlan!
+Aw.Sindri.Core.Resources.ResourcePlan.Create.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.PlannedResource!>!
+Aw.Sindri.Core.Resources.ResourcePlan.Create.init -> void
+Aw.Sindri.Core.Resources.ResourcePlan.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.PlannedResource!>! Create, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! Mounts, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Resources.ResourcePlan.Env.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Resources.ResourcePlan.Env.init -> void
+Aw.Sindri.Core.Resources.ResourcePlan.Equals(Aw.Sindri.Core.Resources.ResourcePlan? other) -> bool
+Aw.Sindri.Core.Resources.ResourcePlan.Limits.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Resources.ResourcePlan.Limits.init -> void
+Aw.Sindri.Core.Resources.ResourcePlan.Mounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>!
+Aw.Sindri.Core.Resources.ResourcePlan.Mounts.init -> void
+Aw.Sindri.Core.Resources.ResourcePlan.ResourcePlan(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.PlannedResource!>! Create, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! Mounts, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Resources.ResourcePlanner
+Aw.Sindri.Core.Resources.ResourceSizes
+Aw.Sindri.Core.Resources.ResourceSpec
+Aw.Sindri.Core.Resources.ResourceSpec.<Clone>$() -> Aw.Sindri.Core.Resources.ResourceSpec!
+Aw.Sindri.Core.Resources.ResourceSpec.Connections.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ConnectionResource!>!
+Aw.Sindri.Core.Resources.ResourceSpec.Connections.init -> void
+Aw.Sindri.Core.Resources.ResourceSpec.Databases.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DatabaseResource!>!
+Aw.Sindri.Core.Resources.ResourceSpec.Databases.init -> void
+Aw.Sindri.Core.Resources.ResourceSpec.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DatabaseResource!>! Databases, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DiskResource!>! Disks, out Aw.Sindri.Core.Resources.SandboxResource? Sandbox, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ConnectionResource!>! Connections) -> void
+Aw.Sindri.Core.Resources.ResourceSpec.Disks.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DiskResource!>!
+Aw.Sindri.Core.Resources.ResourceSpec.Disks.init -> void
+Aw.Sindri.Core.Resources.ResourceSpec.Equals(Aw.Sindri.Core.Resources.ResourceSpec? other) -> bool
+Aw.Sindri.Core.Resources.ResourceSpec.ResourceSpec(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DatabaseResource!>! Databases, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DiskResource!>! Disks, Aw.Sindri.Core.Resources.SandboxResource? Sandbox, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ConnectionResource!>! Connections) -> void
+Aw.Sindri.Core.Resources.ResourceSpec.Sandbox.get -> Aw.Sindri.Core.Resources.SandboxResource?
+Aw.Sindri.Core.Resources.ResourceSpec.Sandbox.init -> void
+Aw.Sindri.Core.Resources.SandboxResource
+Aw.Sindri.Core.Resources.SandboxResource.<Clone>$() -> Aw.Sindri.Core.Resources.SandboxResource!
+Aw.Sindri.Core.Resources.SandboxResource.Cpu.get -> string?
+Aw.Sindri.Core.Resources.SandboxResource.Cpu.init -> void
+Aw.Sindri.Core.Resources.SandboxResource.Deconstruct(out string? Cpu, out string? Memory, out string? Wall) -> void
+Aw.Sindri.Core.Resources.SandboxResource.Equals(Aw.Sindri.Core.Resources.SandboxResource? other) -> bool
+Aw.Sindri.Core.Resources.SandboxResource.Memory.get -> string?
+Aw.Sindri.Core.Resources.SandboxResource.Memory.init -> void
+Aw.Sindri.Core.Resources.SandboxResource.SandboxResource(string? Cpu = null, string? Memory = null, string? Wall = null) -> void
+Aw.Sindri.Core.Resources.SandboxResource.Wall.get -> string?
+Aw.Sindri.Core.Resources.SandboxResource.Wall.init -> void
+const Aw.Sindri.Core.Resources.ResourceEnv.ConnectionPrefix = "SINDRI_CONNECTION_" -> string!
+const Aw.Sindri.Core.Resources.ResourceEnv.DatabasePrefix = "SINDRI_DB_" -> string!
+const Aw.Sindri.Core.Resources.ResourceEnv.DiskPrefix = "SINDRI_DISK_" -> string!
+override Aw.Sindri.Core.Resources.ConnectionResource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.ConnectionResource.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.ConnectionResource.ToString() -> string!
+override Aw.Sindri.Core.Resources.DatabaseResource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.DatabaseResource.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.DatabaseResource.ToString() -> string!
+override Aw.Sindri.Core.Resources.DiskResource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.DiskResource.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.DiskResource.ToString() -> string!
+override Aw.Sindri.Core.Resources.PlannedResource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.PlannedResource.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.PlannedResource.ToString() -> string!
+override Aw.Sindri.Core.Resources.ResourceOwner.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.ResourceOwner.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.ResourceOwner.ToString() -> string!
+override Aw.Sindri.Core.Resources.ResourcePlan.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.ResourcePlan.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.ResourcePlan.ToString() -> string!
+override Aw.Sindri.Core.Resources.ResourceSpec.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.ResourceSpec.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.ResourceSpec.ToString() -> string!
+override Aw.Sindri.Core.Resources.SandboxResource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.SandboxResource.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.SandboxResource.ToString() -> string!
+static Aw.Sindri.Core.Resources.ConnectionResource.operator !=(Aw.Sindri.Core.Resources.ConnectionResource? left, Aw.Sindri.Core.Resources.ConnectionResource? right) -> bool
+static Aw.Sindri.Core.Resources.ConnectionResource.operator ==(Aw.Sindri.Core.Resources.ConnectionResource? left, Aw.Sindri.Core.Resources.ConnectionResource? right) -> bool
+static Aw.Sindri.Core.Resources.DatabaseResource.operator !=(Aw.Sindri.Core.Resources.DatabaseResource? left, Aw.Sindri.Core.Resources.DatabaseResource? right) -> bool
+static Aw.Sindri.Core.Resources.DatabaseResource.operator ==(Aw.Sindri.Core.Resources.DatabaseResource? left, Aw.Sindri.Core.Resources.DatabaseResource? right) -> bool
+static Aw.Sindri.Core.Resources.DiskResource.operator !=(Aw.Sindri.Core.Resources.DiskResource? left, Aw.Sindri.Core.Resources.DiskResource? right) -> bool
+static Aw.Sindri.Core.Resources.DiskResource.operator ==(Aw.Sindri.Core.Resources.DiskResource? left, Aw.Sindri.Core.Resources.DiskResource? right) -> bool
+static Aw.Sindri.Core.Resources.PlannedResource.operator !=(Aw.Sindri.Core.Resources.PlannedResource? left, Aw.Sindri.Core.Resources.PlannedResource? right) -> bool
+static Aw.Sindri.Core.Resources.PlannedResource.operator ==(Aw.Sindri.Core.Resources.PlannedResource? left, Aw.Sindri.Core.Resources.PlannedResource? right) -> bool
+static Aw.Sindri.Core.Resources.ResourceEnv.Connection(string! name) -> string!
+static Aw.Sindri.Core.Resources.ResourceEnv.Database(string! name) -> string!
+static Aw.Sindri.Core.Resources.ResourceEnv.Disk(string! name) -> string!
+static Aw.Sindri.Core.Resources.ResourceOwner.Parse(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Resources.ResourceOwner!>!
+static Aw.Sindri.Core.Resources.ResourceOwner.operator !=(Aw.Sindri.Core.Resources.ResourceOwner? left, Aw.Sindri.Core.Resources.ResourceOwner? right) -> bool
+static Aw.Sindri.Core.Resources.ResourceOwner.operator ==(Aw.Sindri.Core.Resources.ResourceOwner? left, Aw.Sindri.Core.Resources.ResourceOwner? right) -> bool
+static Aw.Sindri.Core.Resources.ResourcePlan.operator !=(Aw.Sindri.Core.Resources.ResourcePlan? left, Aw.Sindri.Core.Resources.ResourcePlan? right) -> bool
+static Aw.Sindri.Core.Resources.ResourcePlan.operator ==(Aw.Sindri.Core.Resources.ResourcePlan? left, Aw.Sindri.Core.Resources.ResourcePlan? right) -> bool
+static Aw.Sindri.Core.Resources.ResourcePlanner.Plan(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceSpec! spec, string! resourcesRoot) -> Aw.Kernel.Result<Aw.Sindri.Core.Resources.ResourcePlan!>!
+static Aw.Sindri.Core.Resources.ResourceSizes.TryParse(string? text, out long bytes) -> bool
+static Aw.Sindri.Core.Resources.ResourceSpec.Empty.get -> Aw.Sindri.Core.Resources.ResourceSpec!
+static Aw.Sindri.Core.Resources.ResourceSpec.operator !=(Aw.Sindri.Core.Resources.ResourceSpec? left, Aw.Sindri.Core.Resources.ResourceSpec? right) -> bool
+static Aw.Sindri.Core.Resources.ResourceSpec.operator ==(Aw.Sindri.Core.Resources.ResourceSpec? left, Aw.Sindri.Core.Resources.ResourceSpec? right) -> bool
+static Aw.Sindri.Core.Resources.SandboxResource.operator !=(Aw.Sindri.Core.Resources.SandboxResource? left, Aw.Sindri.Core.Resources.SandboxResource? right) -> bool
+static Aw.Sindri.Core.Resources.SandboxResource.operator ==(Aw.Sindri.Core.Resources.SandboxResource? left, Aw.Sindri.Core.Resources.SandboxResource? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ResourceDiskOverSize -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourceInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourceNameClash -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourcePathEscapes -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourcePurgeRefused -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourceSandboxOverCap -> Aw.Kernel.ErrorDefinition!

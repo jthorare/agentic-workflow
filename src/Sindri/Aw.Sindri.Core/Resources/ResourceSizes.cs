@@ -18,17 +18,17 @@ public static partial class ResourceSizes
             return false;
         }
 
-        var unit = match.Groups[2].Value switch
+        var unit = match.Groups["unit"].Value switch
         {
             "KiB" or "k" => 1L << 10,
             "MiB" or "m" => 1L << 20,
             "GiB" or "g" => 1L << 30,
             _ => 1L << 40,
         };
-        bytes = long.Parse(match.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture) * unit;
+        bytes = long.Parse(match.Groups["number"].Value, NumberStyles.None, CultureInfo.InvariantCulture) * unit;
         return true;
     }
 
-    [GeneratedRegex("^([1-9][0-9]{0,6})(KiB|MiB|GiB|TiB|k|m|g|t)\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^(?<number>[1-9][0-9]{0,6})(?<unit>KiB|MiB|GiB|TiB|k|m|g|t)\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
 }
