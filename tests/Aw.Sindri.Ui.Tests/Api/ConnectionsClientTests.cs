@@ -58,6 +58,21 @@ public sealed class ConnectionsClientTests
     }
 
     [Fact]
+    public async Task AddConnection_writes_every_required_field_even_when_null()
+    {
+        // Sindri binds with RespectRequiredConstructorParameters: a body without preset, kind, client, keyEnv, scopes or wait is refused (SND-CLI-003).
+        var canned = new Canned($$"""{"connection":{{Row}},"consentUrl":null}""");
+
+        _ = await Client(canned).AddConnection(_api, Body("s3cret-key"), Token);
+
+        var sent = canned.Seen[0].Body;
+        foreach (var field in (string[])["\"preset\":null", "\"kind\":\"rest\"", "\"client\":null", "\"keyEnv\":null", "\"scopes\":[]", "\"wait\":false"])
+        {
+            Assert.Contains(field, sent, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
     public async Task A_slash_in_a_name_stays_inside_one_segment()
     {
         var canned = new Canned("""{"name":"a/b","secretDeleted":false}""");
