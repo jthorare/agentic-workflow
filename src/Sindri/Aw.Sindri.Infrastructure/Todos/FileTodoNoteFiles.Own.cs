@@ -4,8 +4,6 @@ using Aw.Sindri.Core.Todos.Note;
 
 namespace Aw.Sindri.Infrastructure.Todos;
 
-#pragma warning disable MA0182 // until the todo sync registers it
-
 /// <summary>Sindri's own side of the note files: the intent file ('writing') and the base files ('note-base-&lt;hash&gt;.md'), in the todo folder.</summary>
 internal sealed partial class FileTodoNoteFiles
 {
@@ -126,4 +124,3 @@ internal sealed partial class FileTodoNoteFiles
     }
 }
 
-#pragma warning restore MA0182

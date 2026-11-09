@@ -8,8 +8,6 @@ using Aw.Sindri.Infrastructure.Locks;
 
 namespace Aw.Sindri.Infrastructure.Todos;
 
-#pragma warning disable MA0182 // until the todo sync registers it
-
 /// <summary>
 /// The note sync's files on disk (todo spec §4.5 Writing steps 1-5, "The base", Limits): the note read with its limits, the quiet wait, the tmp-file swap,
 /// and Sindri's own folder '$AW_SINDRI_HOME/todo/' (mode 0700) holding the intent file and the base files (0600). This part is the note side; the other is in
@@ -182,4 +180,3 @@ internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider c
     private static string Hash(byte[] bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
 }
 
-#pragma warning restore MA0182
