@@ -124,6 +124,11 @@ internal sealed partial class SyncPass(SyncDeps d, NotePlace place, PassMode mod
             leave.UnionWith(hold.Changes.Select(static c => c.Id));
         }
 
+        if (holdPick)
+        {
+            leave.UnionWith(picked.Held);
+        }
+
         var open = rows.Count(TodoDecisions.IsOpen);
         var room = NoteCounter.WillImport(NoteCounter.MaxOpen, open);
         return new NoteMergeOptions(_minter, d.Scrubber)

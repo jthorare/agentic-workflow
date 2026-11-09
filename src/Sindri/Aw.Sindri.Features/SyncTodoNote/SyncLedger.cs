@@ -50,7 +50,7 @@ internal sealed class SyncLedger(SyncDeps d)
     public async ValueTask<Result<IReadOnlyList<TodoRow>>> Rows(CancellationToken cancellationToken) =>
         await d.Views.List<TodoRow>(ViewNames.Todo, cancellationToken).ConfigureAwait(false);
 
-    /// <summary>The conflict picks recorded after <paramref name="sequence"/>; an Undo (a reopened conflict) cancels its pick.</summary>
+    /// <summary>The conflict picks recorded after <paramref name="sequence"/>, and a "Put them back" of the hold; an Undo (a reopened conflict or hold) cancels its pick.</summary>
     /// <param name="sequence">The last sync's sequence.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The picks.</returns>
@@ -58,6 +58,7 @@ internal sealed class SyncLedger(SyncDeps d)
     {
         var bases = new Dictionary<TodoId, string>();
         var removed = new HashSet<TodoId>();
+        string? restored = null;
         var cursor = sequence;
         while (true)
         {
@@ -70,7 +71,7 @@ internal sealed class SyncLedger(SyncDeps d)
             foreach (var recorded in page.Value)
             {
                 cursor = recorded.Sequence;
-                var seen = Fold(recorded, bases, removed);
+                var seen = Fold(recorded, bases, removed, ref restored);
                 if (seen.IsError)
                 {
                     return seen.Error;
@@ -79,12 +80,66 @@ internal sealed class SyncLedger(SyncDeps d)
 
             if (page.Value.Count < Page)
             {
-                return new PickedLines(bases, removed);
+                return await Restore(new PickedLines(bases, removed), restored, cancellationToken).ConfigureAwait(false);
             }
         }
     }
 
-    private Result<Unit> Fold(Core.Ledger.LedgerEvent recorded, Dictionary<TodoId, string> bases, HashSet<TodoId> removed)
+    // a "Put them back" is a pick for Sindri on every change of the hold it closed: a removal's line comes back, an edit or un-tick is written over from Sindri
+    private async ValueTask<Result<PickedLines>> Restore(PickedLines picked, string? noteHash, CancellationToken cancellationToken)
+    {
+        if (noteHash is null)
+        {
+            return picked;
+        }
+
+        var latest = await d.Ledger.Latest(EventTypes.TodoNoteHeld, cancellationToken).ConfigureAwait(false);
+        if (latest.IsError || latest.Value is not { } recorded)
+        {
+            return latest.IsError ? latest.Error : picked;
+        }
+
+        var held = d.Events.Payload<TodoNoteHeld>(recorded);
+        if (held.IsError)
+        {
+            return held.Error;
+        }
+
+        if (!string.Equals(held.Value.NoteHash, noteHash, StringComparison.Ordinal))
+        {
+            return picked;
+        }
+
+        var bases = new Dictionary<TodoId, string>(picked.Bases);
+        var removed = new HashSet<TodoId>(picked.Removed);
+        foreach (var change in held.Value.Changes)
+        {
+            _ = change.NoteLine is { } line ? bases.TryAdd(change.Id, line) : removed.Add(change.Id);
+        }
+
+        return new PickedLines(bases, removed) { Held = [.. held.Value.Changes.Select(static c => c.Id)] };
+    }
+
+    private Result<Unit> Fold(Core.Ledger.LedgerEvent recorded, Dictionary<TodoId, string> bases, HashSet<TodoId> removed, ref string? restored)
+    {
+        var type = recorded.Envelope.Type;
+        if (string.Equals(type, EventTypes.TodoNoteHeldResolved, StringComparison.Ordinal))
+        {
+            var closed = d.Events.Payload<TodoNoteHeldResolved>(recorded);
+            restored = closed.IsSuccess && string.Equals(closed.Value.Kept, "restored", StringComparison.Ordinal) ? closed.Value.NoteHash : null;
+            return closed.IsError ? closed.Error : Unit.Value;
+        }
+
+        if (string.Equals(type, EventTypes.TodoNoteHeldReopened, StringComparison.Ordinal))
+        {
+            restored = null;
+            return Unit.Value;
+        }
+
+        return FoldConflict(recorded, bases, removed);
+    }
+
+    private Result<Unit> FoldConflict(Core.Ledger.LedgerEvent recorded, Dictionary<TodoId, string> bases, HashSet<TodoId> removed)
     {
         if (string.Equals(recorded.Envelope.Type, EventTypes.TodoConflictResolved, StringComparison.Ordinal))
         {
