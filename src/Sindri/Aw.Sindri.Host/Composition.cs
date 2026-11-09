@@ -60,6 +60,7 @@ internal static class Composition
             .AddSingleton<IModelPort>(sp => new RoutedModelPort(sp.GetRequiredService<JudgeCatalog>().Get,
                 sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJobContextAccessor>(), sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IGraphModelPort, GraphModelPortAdapter>().AddSingleton<INotifyPort, LedgerNotifyPort>()   // the prompt and notify blocks of the graph engine (#2258, PR 6): the routed model port and a 'workflow.notify' event
+            .AddSingleton<IQuestionPort, LedgerQuestionPort>()   // the ask_owner block (#2258, PR 9): a 'workflow.question' event
             .AddChoicePort(environment)   // the Jev label pick: IChoicePort over the judge's batch classifier, and the route's prompt budget (model routing spec §6.7)
             .AddScoped<IDoctorChecks>(sp => new ModelPickDoctorChecks(sp.GetRequiredService<IModelPickSettings>(), environment))   // the 'model:pick' row (model-pick spec 8)
             .AddScoped<IDoctorChecks>(sp => new ModelRoutingDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IModelCatalog>(), () => RoutedModelPort.InstalledHarnesses(sp.GetRequiredService<JudgeCatalog>().Get()), HarnessLogins.Of(environment)))   // the 'context:models' row (model routing spec 8.4)

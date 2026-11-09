@@ -19582,7 +19582,7 @@ static Aw.Sindri.Core.Graph.Blocks.BlockContext.operator !=(Aw.Sindri.Core.Graph
 static Aw.Sindri.Core.Graph.Blocks.BlockContext.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockContext? left, Aw.Sindri.Core.Graph.Blocks.BlockContext? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.BlockResult.operator !=(Aw.Sindri.Core.Graph.Blocks.BlockResult? left, Aw.Sindri.Core.Graph.Blocks.BlockResult? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.BlockResult.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockResult? left, Aw.Sindri.Core.Graph.Blocks.BlockResult? right) -> bool
-static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Standard(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model) -> Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry!
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Standard(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model, Aw.Sindri.Core.Graph.Blocks.IQuestionPort! questions) -> Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry!
 Aw.Sindri.Core.Graph.Runs.GraphConcurrency
 Aw.Sindri.Core.Graph.Runs.GraphConcurrency.OnePerWorkflow = 1 -> Aw.Sindri.Core.Graph.Runs.GraphConcurrency
 Aw.Sindri.Core.Graph.Runs.GraphConcurrency.Queue = 2 -> Aw.Sindri.Core.Graph.Runs.GraphConcurrency
@@ -20216,3 +20216,136 @@ static Aw.Sindri.Core.Todos.TodoItem.operator !=(Aw.Sindri.Core.Todos.TodoItem? 
 static Aw.Sindri.Core.Todos.TodoItem.operator ==(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator !=(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator ==(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowAnsweredPayload!
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Answer.get -> string!
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Answer.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.By.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Answer, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Equals(Aw.Sindri.Core.Events.WorkflowAnsweredPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Node.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Run.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.WorkflowAnsweredPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Answer, string! By) -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowQuestionPayload!
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.By.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Choices.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Choices.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Question, out System.Collections.Generic.IReadOnlyList<string!>! Choices, out string? Default, out System.DateTimeOffset? TimeoutAt, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Default.get -> string?
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Default.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Equals(Aw.Sindri.Core.Events.WorkflowQuestionPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Node.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Question.get -> string!
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Question.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Run.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.TimeoutAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.TimeoutAt.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.WorkflowQuestionPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Question, System.Collections.Generic.IReadOnlyList<string!>! Choices, string? Default, System.DateTimeOffset? TimeoutAt, string! By) -> void
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.AskOwnerBlock(Aw.Sindri.Core.Graph.Blocks.IQuestionPort! questions, System.TimeProvider? clock = null) -> void
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.AskOwnerOutcome(System.Text.Json.Nodes.JsonObject! Outputs, string! Branch) -> void
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Branch.get -> string!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Branch.init -> void
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Deconstruct(out System.Text.Json.Nodes.JsonObject! Outputs, out string! Branch) -> void
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Equals(Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Outputs.get -> System.Text.Json.Nodes.JsonObject!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Outputs.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockDuration
+Aw.Sindri.Core.Graph.Blocks.IQuestionPort
+Aw.Sindri.Core.Graph.Blocks.WaitBlock
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.WaitBlock(System.TimeProvider? clock = null) -> void
+Aw.Sindri.Core.Graph.Blocks.WaitSchedule
+Aw.Sindri.Core.Graph.Runs.IGraphRunAnswerer
+Aw.Sindri.Core.NeedsYou.NeedsYouKind.Question = 8 -> Aw.Sindri.Core.NeedsYou.NeedsYouKind
+const Aw.Sindri.Core.Events.EventTypes.WorkflowAnswered = "workflow.answered" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowQuestion = "workflow.question" -> string!
+override Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowAnsweredPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowAnsweredPayload.ToString() -> string!
+override Aw.Sindri.Core.Events.WorkflowQuestionPayload.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowQuestionPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowQuestionPayload.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowAnsweredPayload.operator !=(Aw.Sindri.Core.Events.WorkflowAnsweredPayload? left, Aw.Sindri.Core.Events.WorkflowAnsweredPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowAnsweredPayload.operator ==(Aw.Sindri.Core.Events.WorkflowAnsweredPayload? left, Aw.Sindri.Core.Events.WorkflowAnsweredPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowQuestionPayload.operator !=(Aw.Sindri.Core.Events.WorkflowQuestionPayload? left, Aw.Sindri.Core.Events.WorkflowQuestionPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowQuestionPayload.operator ==(Aw.Sindri.Core.Events.WorkflowQuestionPayload? left, Aw.Sindri.Core.Events.WorkflowQuestionPayload? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.CheckAnswer(System.Collections.Generic.IReadOnlyList<string!>! choices, string? text, string? choice) -> string?
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.ChoicesOf(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Resolve(System.Text.Json.Nodes.JsonObject! config, string? answer, string? answeredBy) -> Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome!
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.TimeoutOf(System.Text.Json.Nodes.JsonObject! config) -> System.TimeSpan?
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.operator !=(Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? left, Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.operator ==(Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? left, Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockDuration.Parse(string! text) -> Aw.Kernel.Result<System.TimeSpan>!
+static Aw.Sindri.Core.Graph.Blocks.WaitSchedule.Check(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+static Aw.Sindri.Core.Graph.Blocks.WaitSchedule.WakeAt(System.Text.Json.Nodes.JsonObject! config, System.DateTimeOffset now) -> Aw.Kernel.Result<System.DateTimeOffset>!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRowIds.WorkflowQuestion(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node) -> Aw.Sindri.Core.Ids.NeedsYouRowId
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForWorkflowQuestion(Aw.Sindri.Core.Events.WorkflowQuestionPayload! question, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
+static readonly Aw.Sindri.Core.SindriErrors.GraphNotWaiting -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Blocks.IQuestionPort.Post(Aw.Sindri.Core.Graph.Blocks.QuestionAsk! ask, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.QuestionAsk!
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Choices.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Choices.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Question, out System.Collections.Generic.IReadOnlyList<string!>! Choices, out string? Default, out System.DateTimeOffset? TimeoutAt) -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Default.get -> string?
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Default.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Equals(Aw.Sindri.Core.Graph.Blocks.QuestionAsk? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Node.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Question.get -> string!
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Question.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.QuestionAsk(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Question, System.Collections.Generic.IReadOnlyList<string!>! Choices, string? Default, System.DateTimeOffset? TimeoutAt) -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Run.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.TimeoutAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.TimeoutAt.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.<Clone>$() -> Aw.Sindri.Core.Graph.Runs.GraphAnswer!
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.By.get -> string!
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.By.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Choice.get -> string?
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Choice.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string? Text, out string? Choice, out string! By) -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Equals(Aw.Sindri.Core.Graph.Runs.GraphAnswer? other) -> bool
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.GraphAnswer(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string? Text, string? Choice, string! By) -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Node.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Run.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Text.get -> string?
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Text.init -> void
+Aw.Sindri.Core.Graph.Runs.IGraphRunAnswerer.Answer(Aw.Sindri.Core.Graph.Runs.GraphAnswer! answer, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+override Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.QuestionAsk.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.QuestionAsk.ToString() -> string!
+override Aw.Sindri.Core.Graph.Runs.GraphAnswer.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Runs.GraphAnswer.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Runs.GraphAnswer.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.QuestionAsk.operator !=(Aw.Sindri.Core.Graph.Blocks.QuestionAsk? left, Aw.Sindri.Core.Graph.Blocks.QuestionAsk? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.QuestionAsk.operator ==(Aw.Sindri.Core.Graph.Blocks.QuestionAsk? left, Aw.Sindri.Core.Graph.Blocks.QuestionAsk? right) -> bool
+static Aw.Sindri.Core.Graph.Runs.GraphAnswer.operator !=(Aw.Sindri.Core.Graph.Runs.GraphAnswer? left, Aw.Sindri.Core.Graph.Runs.GraphAnswer? right) -> bool
+static Aw.Sindri.Core.Graph.Runs.GraphAnswer.operator ==(Aw.Sindri.Core.Graph.Runs.GraphAnswer? left, Aw.Sindri.Core.Graph.Runs.GraphAnswer? right) -> bool

@@ -63,4 +63,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-108: a reference read the output of a node that the store cut at 64 KB.</summary>
     public static readonly ErrorDefinition GraphOutputTruncated = new("SND-GRAPH-108", ErrorKind.Invalid, "A referenced node output was cut at 64 KB");
+
+    /// <summary>SND-GRAPH-130: no 'ask_owner' node of the run waits for an answer now.</summary>
+    public static readonly ErrorDefinition GraphNotWaiting = new("SND-GRAPH-130", ErrorKind.Conflict, "No question waits at that node");
 }

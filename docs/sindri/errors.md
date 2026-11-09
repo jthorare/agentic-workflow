@@ -149,3 +149,4 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-106` | A manual run's payload must be a JSON object |
 | `SND-GRAPH-107` | This run already ended |
 | `SND-GRAPH-108` | A referenced node output was cut at 64 KB |
+| `SND-GRAPH-130` | No question waits at that node |

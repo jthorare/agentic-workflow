@@ -1,0 +1,92 @@
+using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.NeedsYou;
+using Aw.Sindri.Core.Views;
+using Aw.Sindri.Tests.Views;
+
+namespace Aw.Sindri.Tests.NeedsYou;
+
+/// <summary>The needs-you row of an 'ask_owner' question: it waits for an answer and clears when the question is answered, its node ends or its run ends.</summary>
+[Lane(TestLane.Unit)]
+public sealed class WorkflowQuestionRowsTests
+{
+    private static readonly WorkflowRunId _run = WorkflowRunId.From("nightly@3:12");
+    private static readonly WorkflowRunId _other = WorkflowRunId.From("nightly@3:13");
+    private static readonly NodeId _ask = NodeId.From("ask");
+    private readonly ViewsHarness _v = new();
+    private long _sequence;
+
+    private static CancellationToken Token => TestContext.Current.CancellationToken;
+
+    private LedgerEvent Event<TPayload>(string type, TPayload payload) => Recorded.Of(_v.Slice.Events, type, payload, ++_sequence);
+
+    private LedgerEvent Question(WorkflowRunId run, IReadOnlyList<string>? choices = null) =>
+        Event(EventTypes.WorkflowQuestion, new WorkflowQuestionPayload(run, _ask, "Ship the release?", choices ?? [], Default: "no", TimeoutAt: null, "service:workflow"));
+
+    private async Task<IReadOnlyList<NeedsYouRowRecord>> Rows() => (await _v.Views.List<NeedsYouRowRecord>(ViewNames.NeedsYou, Token)).Value;
+
+    [Fact]
+    public async Task A_question_is_a_needs_you_row_naming_its_run_and_node_with_the_way_to_answer()
+    {
+        var asked = Question(_run, ["yes", "no"]);
+        await _v.Apply([asked]);
+
+        var row = Assert.Single(await Rows());
+
+        Assert.Equal("question:nightly@3:12:ask", row.Row.Id.Value);
+        Assert.Equal(NeedsYouKind.Question, row.Row.Kind);
+        Assert.Equal(AnswerKind.Text, row.Row.AnswerKind);
+        Assert.Equal(new NeedsYouSubject(SubjectKind.WorkflowRun, SubjectId.From("nightly.3:12")), row.Row.Subject);
+        Assert.Equal("Ship the release?", row.Row.Title);
+        Assert.Contains("yes", row.Row.Reason, StringComparison.Ordinal);
+        Assert.Contains("sindri answer", row.Row.Cli, StringComparison.Ordinal);
+        Assert.Equal(asked.Sequence, row.Sequence);
+    }
+
+    [Fact]
+    public async Task Answering_clears_only_that_question()
+    {
+        await _v.Apply([Question(_run), Question(_other), Event(EventTypes.WorkflowAnswered, new WorkflowAnsweredPayload(_run, _ask, "yes", "owner"))]);
+
+        var row = Assert.Single(await Rows());
+
+        Assert.Equal("question:nightly@3:13:ask", row.Row.Id.Value);
+    }
+
+    [Fact]
+    public async Task The_row_clears_when_its_node_ends_by_timeout_or_failure()
+    {
+        await _v.Apply([Question(_run), Event(EventTypes.WorkflowNodeFinished, new WorkflowNodeFinishedPayload(_run, _ask, 0, "succeeded", Truncated: false, "service:workflow"))]);
+
+        Assert.Empty(await Rows());
+    }
+
+    [Theory]
+    [InlineData("finished")]
+    [InlineData("cancelled")]
+    public async Task The_row_clears_when_its_run_ends(string how)
+    {
+        var end = how == "finished"
+            ? Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "failed", Error: "boom", "service:workflow"))
+            : Event(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human"));
+        await _v.Apply([Question(_run), Question(_other), end]);
+
+        var row = Assert.Single(await Rows());
+
+        Assert.Equal("question:nightly@3:13:ask", row.Row.Id.Value);
+    }
+
+    [Fact]
+    public async Task A_question_does_not_clear_a_note_of_the_same_run()
+    {
+        var note = Event(EventTypes.WorkflowNotify, new WorkflowNotifyPayload(_run, NodeId.From("notify"), "Drifted", Body: null, "service:workflow"));
+        await _v.Apply([note, Question(_run), Event(EventTypes.WorkflowAnswered, new WorkflowAnsweredPayload(_run, _ask, "yes", "owner"))]);
+
+        var row = Assert.Single(await Rows());
+
+        Assert.Equal(NeedsYouKind.WorkflowNotify, row.Row.Kind);
+    }
+}

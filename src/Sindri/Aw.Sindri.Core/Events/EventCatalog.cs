@@ -34,6 +34,8 @@ public static class EventCatalog
         new(EventTypes.WorkflowNodeFinished, Public: false, PublicPayload: null, "workflow.node.finished:<run id>:<node id>:<item index>"),
         new(EventTypes.WorkflowNodeFailed, Public: false, PublicPayload: null, "workflow.node.failed:<run id>:<node id>:<item index>"),
         new(EventTypes.WorkflowNotify, Public: false, PublicPayload: null, "workflow.notify:<run id>:<node id>"),
+        new(EventTypes.WorkflowQuestion, Public: false, PublicPayload: null, "workflow.question:<run id>:<node id>"),
+        new(EventTypes.WorkflowAnswered, Public: false, PublicPayload: null, "workflow.answered:<run id>:<node id>"),
         new(EventTypes.CommandHandled, Public: false, PublicPayload: null, "command.handled:<commandId>"),
         new(EventTypes.RecipeRegistered, Public: true, typeof(RecipeRegistered), "recipe.registered:<hash>"),
         new(EventTypes.RecipeApproved, Public: true, typeof(RecipeApproved), "recipe.approved:<hash>:after:<seq>"),

@@ -6,14 +6,14 @@ namespace Aw.Sindri.Tests.Graph.Blocks;
 [Lane(TestLane.Unit)]
 public sealed class GraphBlockRegistryTests
 {
-    private static GraphBlockRegistry Standard() => GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"));
+    private static GraphBlockRegistry Standard() => GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"), new BlockFakes.RecordingQuestionPort());
 
     [Fact]
-    public void The_standard_registry_lists_the_five_block_types()
+    public void The_standard_registry_lists_its_block_types()
     {
         var registry = Standard();
 
-        Assert.Equal(["condition", "manual", "notify", "prompt", "schedule"], registry.Types.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["ask_owner", "condition", "manual", "notify", "prompt", "schedule", "wait"], registry.Types.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.Equal(["manual", "schedule"], registry.Types.Values.Where(t => t.IsTrigger).Select(t => t.Type).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
