@@ -57,4 +57,19 @@ public sealed class CatchUpDoctorChecksTests
 
         Assert.Equal(CheckState.Ok, row.State);
     }
+
+    // why: CatchUp.Record writes a pass's polled row BEFORE its capped row; that pass's own poll must not clear its own cap
+    [Fact]
+    public async Task A_poll_written_before_the_cap_in_the_same_pass_still_warns()
+    {
+        var name = ConnectionSamples.Name();
+        await _h.Hold();
+        await _h.Events().Polled(new PollCounts(name, "linear.issue.labeled", 1, 1, 0), grant: null, Token);
+        await _h.Events().CatchUpStopped(name, "linear.issue.labeled", "history order", grant: null, Token);
+
+        var row = Assert.Single(await Rows());
+
+        Assert.Equal(CheckState.Warn, row.State);
+        Assert.Contains("history order", row.Detail, StringComparison.Ordinal);
+    }
 }
