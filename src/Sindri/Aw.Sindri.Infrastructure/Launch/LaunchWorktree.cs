@@ -26,7 +26,7 @@ internal static class LaunchWorktree
             string[] start = IsTrial(request) && await DefaultBranch(request.RepoPath, cancellationToken).ConfigureAwait(false) is { } trunk ? [trunk] : [];   // a skill trial starts from the repo's default branch, not whatever HEAD is
             if (request.Node is { } node)
             {
-                if (await NodeWorktree(request.RepoPath, worktree, node.Branch, cancellationToken).ConfigureAwait(false))
+                if (await NodeWorktree(request.RepoPath, worktree, node.WorkBranch, cancellationToken).ConfigureAwait(false))
                 {
                     return null;
                 }

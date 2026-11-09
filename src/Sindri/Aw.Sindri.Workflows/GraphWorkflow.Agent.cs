@@ -79,7 +79,7 @@ internal sealed partial class GraphWorkflow
         }
 
         var values = ((JsonObject?)JsonNode.Parse(ending.Outputs ?? "{}") ?? []).ToDictionary(static p => p.Key, static p => p.Value?.DeepClone(), StringComparer.Ordinal);
-        var result = RunAgentOutput.Compose(values, new AgentNodeEnd(address.Branch, closed.Commit, closed.AgentSession, closed.Tokens, closed.EmptyDiff));
+        var result = RunAgentOutput.Compose(values, new AgentNodeEnd(address.WorkBranch, closed.Commit, closed.AgentSession, closed.Tokens, closed.EmptyDiff));
         var output = new JsonObject();
         foreach (var (name, value) in result.Outputs)
         {

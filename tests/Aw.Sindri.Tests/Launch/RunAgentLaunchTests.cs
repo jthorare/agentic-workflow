@@ -25,9 +25,12 @@ public sealed class RunAgentLaunchTests
         var session = LaunchSessionName.For(_address.Launch);
 
         Assert.Equal("wf/walk/1-12-check", _address.Branch);
-        Assert.Equal("wf/walk", _address.RefNamespace);
+        Assert.Equal("wf/walk/1-12-check", _address.RefNamespace);   // the session may write its own node's refs and no other branch of the workflow
+        Assert.Equal("wf/walk/1-12-check/work", _address.WorkBranch);
+        Assert.StartsWith(_address.RefNamespace + "/", _address.WorkBranch, StringComparison.Ordinal);
+        Assert.NotEqual(NodeRunAddress.Of(WorkflowRunId.From("walk@1:12"), NodeId.From("fix")).RefNamespace, _address.RefNamespace);
         Assert.StartsWith("snd-LCH-", session, StringComparison.Ordinal);
-        foreach (var name in new[] { _address.Branch, session, _address.ShortRun, RunAgentLaunches.WorktreeFor(_address, "/work/web") })
+        foreach (var name in new[] { _address.Branch, _address.WorkBranch, session, _address.ShortRun, RunAgentLaunches.WorktreeFor(_address, "/work/web") })
         {
             Assert.DoesNotContain(':', name);
             Assert.DoesNotContain('@', name);

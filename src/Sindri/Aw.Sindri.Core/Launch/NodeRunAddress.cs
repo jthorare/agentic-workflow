@@ -49,9 +49,12 @@ public sealed record NodeRunAddress(WorkflowSlug Workflow, WorkflowRunId Run, No
         }
     }
 
-    /// <summary>The branch the node's worktree is made on: 'wf/&lt;slug&gt;/&lt;short run&gt;'.</summary>
+    /// <summary>The node's own branch name: 'wf/&lt;slug&gt;/&lt;short run&gt;'. The sandbox lets the session write refs under it and nowhere else.</summary>
     public string Branch => $"wf/{Workflow.Value}/{ShortRun}";
 
-    /// <summary>The branch namespace the session may write refs in: 'wf/&lt;slug&gt;'. <see cref="Branch"/> sits inside it.</summary>
-    public string RefNamespace => $"wf/{Workflow.Value}";
+    /// <summary>The branch namespace the session may write refs in: the node's own <see cref="Branch"/>. The sandbox makes it a ref directory, so the checked-out branch is <see cref="WorkBranch"/>, one level inside it (as an attended open's is).</summary>
+    public string RefNamespace => Branch;
+
+    /// <summary>The branch the node's worktree is made on: '&lt;branch&gt;/work'. Another node's, another run's and the workflow's other branches are outside the session's reach.</summary>
+    public string WorkBranch => Branch + "/work";
 }

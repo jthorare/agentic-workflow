@@ -20582,3 +20582,4 @@ Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery
 Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Running(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
 Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.DateTimeOffset startedBefore, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Launch.NodeRunAddress.WorkBranch.get -> string!

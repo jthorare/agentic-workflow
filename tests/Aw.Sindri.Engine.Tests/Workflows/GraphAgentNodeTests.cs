@@ -31,7 +31,7 @@ public sealed class GraphAgentNodeTests(SindriTimeSkippingServer server) : IClas
         var output = JsonNode.Parse(row.Output!)!;
         Assert.True(output["drifted"]!.GetValue<bool>());
         Assert.Equal("succeeded", output["status"]!.GetValue<string>());
-        Assert.Equal($"wf/{rig.Slug}/1-1-agent", output["branch"]!.GetValue<string>());
+        Assert.Equal($"wf/{rig.Slug}/1-1-agent/work", output["branch"]!.GetValue<string>());
         Assert.Equal("def4567", output["commit"]!.GetValue<string>());
         Assert.Equal("agent-session-1", output["sessionId"]!.GetValue<string>());
         Assert.Equal(100, output["usage"]!["tokens"]!.GetValue<int>());
