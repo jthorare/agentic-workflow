@@ -6,3 +6,5 @@ Aw.Sindri.Infrastructure.Sandbox.BubblewrapServiceCollectionExtensions
 static Aw.Sindri.Infrastructure.Sandbox.BubblewrapServiceCollectionExtensions.AddSindriBubblewrapSandbox(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 Aw.Sindri.Infrastructure.Sandbox.Launch.PlatformSandboxServiceCollectionExtensions
 static Aw.Sindri.Infrastructure.Sandbox.Launch.PlatformSandboxServiceCollectionExtensions.AddSindriPlatformSandbox(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+Aw.Sindri.Infrastructure.WorkflowDocs.EmbeddedWorkflowDocs
+static Aw.Sindri.Infrastructure.WorkflowDocs.EmbeddedWorkflowDocs.Load() -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>!
