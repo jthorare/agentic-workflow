@@ -2,7 +2,6 @@ using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AddTodo;
-using Aw.Sindri.Features.AnswerQuestion;
 using Aw.Sindri.Features.ChangeTodo;
 using Aw.Sindri.Features.CreateMemory;
 using Aw.Sindri.Features.Decide;
@@ -42,7 +41,7 @@ public sealed class McpSurfaceTests
         typeof(ChangeTodoRequest).FullName!,
         typeof(MarkTodoRequest).FullName!,
         // why: agent-first spec D2 (design.md, PR 9): any caller may answer a waiting ask_owner question, attributed `session:<id>`, so workflow_answer reaches the AnswerQuestion command
-        typeof(AnswerQuestionRequest).FullName!,
+        "Aw.Sindri.Features.AnswerQuestion.AnswerQuestionRequest",   // internal to Features, so named by its full name
     };
 
     private static readonly string[] _launchSecretMarkers = ["LAUNCH_SECRET", "Launch-Secret", "LaunchSecret"];
