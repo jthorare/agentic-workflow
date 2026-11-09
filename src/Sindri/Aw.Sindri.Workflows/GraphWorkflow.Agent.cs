@@ -213,7 +213,7 @@ internal sealed partial class GraphWorkflow
     {
         StartToCloseTimeout = TimeSpan.FromDays(30),
         HeartbeatTimeout = TimeSpan.FromMinutes(1),
-        RetryPolicy = _unbounded,
+        RetryPolicy = GraphActivityOptions.Unbounded,
         CancellationToken = stop,
         CancellationType = ActivityCancellationType.TryCancel,
     };

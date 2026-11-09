@@ -1,12 +1,8 @@
 using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph;
-using Aw.Sindri.Core.Graph.Loops;
 using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
-
-/// <summary>The loop a node execution runs in: its shape, the item's position counted from 1 and the item.</summary>
-internal sealed record GraphLoopContext(LoopShape Shape, int ItemIndex, JsonNode? Item);
 
 /// <summary>What a reference can read in one run: the trigger, the workflow's own facts, the item inside a loop and the outputs of the nodes that succeeded.</summary>
 internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns, GraphLoopContext? loop = null)
