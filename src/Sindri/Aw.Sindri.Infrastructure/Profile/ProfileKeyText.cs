@@ -7,7 +7,7 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// The text edit behind 'profile set': one scalar key of a profile's YAML, every other byte as it was. An existing scalar line is replaced where it stands (a trailing comment stays), a missing key is appended at the end of its parent's block and missing parents are
 /// created in block style with two-space indents. A flow-style parent, a value that isn't a plain or quoted scalar and a key that holds a map or list are layouts Sindri won't edit (the same rule as <see cref="YamlSourceTokenProfileWriter"/>).
 /// </summary>
-internal static class ProfileKeyText
+internal static partial class ProfileKeyText
 {
     private static readonly HashSet<string> _booleanWords = new(StringComparer.Ordinal) { "true", "false", "yes", "no", "y", "n" };
 

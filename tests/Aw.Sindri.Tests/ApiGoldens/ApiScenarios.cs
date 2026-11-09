@@ -98,7 +98,7 @@ internal static class ApiScenarios
 
     /// <summary>The host of a Projects-group or Todos-group scenario.</summary>
     private static Task<GoldenHost> StartProjectOrTodo(string slug, string scenario, CancellationToken ct) =>
-        TodoScenarios.Handles(slug, scenario) ? TodoScenarios.Start(ct) : ProjectScenarios.Start(slug, scenario, ct);
+        TodoScenarios.Handles(slug, scenario) ? TodoScenarios.Start(slug, ct) : ProjectScenarios.Start(slug, scenario, ct);
 
     /// <summary>Whether the scenario belongs to the Linear hub's reads (the issue list and sheet, the lookups and the strip).</summary>
     private static bool IsLinear(string slug, string scenario) => LinearIssueScenarios.Handles(slug, scenario) || LinearReadScenarios.Handles(slug, scenario) || LinearWriteScenarios.Handles(slug, scenario) || LinearConnectionScenarios.Handles(slug, scenario);
