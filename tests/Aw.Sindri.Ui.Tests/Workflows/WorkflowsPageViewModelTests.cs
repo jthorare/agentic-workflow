@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Testing;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
@@ -111,7 +112,7 @@ public sealed class WorkflowsPageViewModelTests
     [Fact]
     public async Task A_workflow_that_is_off_says_it_has_no_runs_instead_of_an_error()
     {
-        _f.Server.WorkflowRunsAnswers[Slug] = Aw.Sindri.Ui.Testing.RouteAnswer.Problem("workflows-slug-runs", "not-active");
+        _f.Server.WorkflowRunsAnswers[Slug] = RouteAnswer.Problem("workflows-slug-runs", "not-active");
         var page = await _f.Shown(Token);
 
         await page.OpenWorkflow(Slug, Token);
