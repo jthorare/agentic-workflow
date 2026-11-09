@@ -46,6 +46,9 @@ public sealed class FakeOAuthServer : IDisposable
     /// <summary>Gets or sets a value indicating whether /token refuses every refresh with invalid_grant (the provider revoked the grant).</summary>
     public bool RevokeRefresh { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether /token answers every refresh with 503 and 'temporarily_unavailable' (the provider is busy; the grant is not shown bad).</summary>
+    public bool BusyRefresh { get; set; }
+
     /// <summary>Gets or sets a value indicating whether a refresh hands out a new refresh token.</summary>
     public bool RotateRefresh { get; set; }
 
@@ -185,9 +188,9 @@ public sealed class FakeOAuthServer : IDisposable
 
         if (grant == "refresh_token")
         {
-            if (RevokeRefresh)
+            if (RevokeRefresh || BusyRefresh)
             {
-                Reply(context, 400, """{"error":"invalid_grant","error_description":"the grant was revoked"}""");
+                Reply(context, RevokeRefresh ? 400 : 503, RevokeRefresh ? """{"error":"invalid_grant","error_description":"the grant was revoked"}""" : """{"error":"temporarily_unavailable"}""");
                 return;
             }
 

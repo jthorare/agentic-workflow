@@ -105,7 +105,7 @@ public sealed class ImportMapTests : IDisposable
         var imported = await _world.Map.ImportMap("/maps/elsewhere.yaml", new string('0', 64), MapWorld.Human, MapWorld.None);
 
         Assert.Equal(ContextErrors.MapFileInvalid.Code, preview.Error.Code);
-        Assert.Contains("repo: 'elsewhere' isn't a repo the approved profile maps (aw-split-panes, other)", preview.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("repo: 'elsewhere' isn't a repo the profile maps (aw-split-panes, other)", preview.Error.Message, StringComparison.Ordinal);
         Assert.Equal(ContextErrors.MapFileInvalid.Code, imported.Error.Code);
         Assert.Empty((await _world.Store.Versions(MapWorld.None)).Value);
     }

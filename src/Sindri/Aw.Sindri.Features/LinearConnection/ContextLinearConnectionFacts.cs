@@ -8,20 +8,18 @@ using Aw.Sindri.Core.Profile;
 namespace Aw.Sindri.Features.LinearConnection;
 
 /// <summary>
-/// The connection's facts over the live profile (not the approved one: a key just pasted shows at once, with `pending` saying it still waits for an approval). A read of the connection resolves no key and sends nothing to Linear: it runs on
+/// The connection's facts over the live profile (a key just pasted shows at once: edits apply on save). A read of the connection resolves no key and sends nothing to Linear: it runs on
 /// every app event while Settings is open, and a resolve spawns a keychain or 1Password process. Each key's state is what the last save found (kept in <see cref="ILinearCheckStore"/>), trusted only while the profile still holds the pointer
 /// that was checked; the checks that need no process (no pointer, the write pointer equals the read pointer, an env or file write pointer against a non-loopback Linear) are made on the profile at once. The teams are the live profile's,
 /// named from what Context has stored.
 /// </summary>
 /// <param name="live">The live profile.</param>
-/// <param name="approvals">The approved profiles.</param>
 /// <param name="engine">Checks the context settings.</param>
 /// <param name="side">The stored teams.</param>
 /// <param name="log">The last save-time check of each key.</param>
-internal sealed class ContextLinearConnectionFacts(IProfileSource live, IApprovedProfile approvals, IContextEngine engine, ILinearSideFacts side, ILinearCheckStore log)
+internal sealed class ContextLinearConnectionFacts(IProfileSource live, IContextEngine engine, ILinearSideFacts side, ILinearCheckStore log)
     : ILinearConnectionFacts
 {
-    private const string Linear = "context.sources.linear";
     private const string Unchecked = "unchecked";
 
     private static readonly LinearKeyStateView _notSet = new("notSet", CheckedAt: null);
@@ -30,10 +28,9 @@ internal sealed class ContextLinearConnectionFacts(IProfileSource live, IApprove
     public async ValueTask<Result<LinearConnectionView>> Read(CancellationToken cancellationToken)
     {
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
-        var latest = await approvals.Latest(cancellationToken).ConfigureAwait(false);
-        if (loaded.IsError || latest.IsError)
+        if (loaded.IsError)
         {
-            return loaded.IsError ? loaded.Error : latest.Error;
+            return loaded.Error;
         }
 
         var profile = loaded.Value.Profile;
@@ -48,8 +45,7 @@ internal sealed class ContextLinearConnectionFacts(IProfileSource live, IApprove
         return new LinearConnectionView(
             ReadState(settings.Value.Linear, stored.Value.Read),
             WriteState(settings.Value.Linear, stored.Value.Write),
-            await Teams(settings.Value.LinearTeams, cancellationToken).ConfigureAwait(false),
-            ProfileDiff.Between(latest.Value?.Profile, profile).Any(static k => k == Linear || k.StartsWith(Linear + ".", StringComparison.Ordinal)));
+            await Teams(settings.Value.LinearTeams, cancellationToken).ConfigureAwait(false));
     }
 
     private static LinearKeyStateView ReadState(LinearSettings? linear, LinearStoredCheck? stored) =>

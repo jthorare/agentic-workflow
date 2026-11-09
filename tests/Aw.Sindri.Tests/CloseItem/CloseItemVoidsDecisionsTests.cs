@@ -26,18 +26,22 @@ public sealed class CloseItemVoidsDecisionsTests
     private static async Task<JsonElement> Read(GoldenHost host, string route) =>
         JsonDocument.Parse(await RequestCalls.Read(host, route, ItemScenarios.Human(host), Token)).RootElement.Clone();
 
+    /// <summary>The needs-you rows about decisions: the profile names repos and nobody has pressed "Turn on for your repos", so a setup row is there too (#2258 PR 1).</summary>
+    private static async Task<int> DecisionRows(GoldenHost host) =>
+        (await Read(host, "/sindri/needs-you")).GetProperty("rows").EnumerateArray().Count(static r => r.GetProperty("kind").GetString() == "decision");
+
     [Fact, Trait("Lane", "integration")]
     public async Task Closing_an_item_voids_its_pending_decision_and_clears_the_needs_you_row()
     {
         var (host, item, decision) = await Pending();
         await using var scope = host;
-        Assert.Equal(1, (await Read(host, "/sindri/needs-you")).GetProperty("rows").GetArrayLength());
+        Assert.Equal(1, await DecisionRows(host));
 
         var closed = await host.Http.Ask(CallerRequests.Post($"/sindri/items/{item}/close", """{"reason":"done","itemVersion":1}""", ItemScenarios.Human(host)));
         Assert.Equal(HttpStatusCode.OK, closed.Status);
         await ViewScenarios.CatchUp(host, Token);
 
-        Assert.Equal(0, (await Read(host, "/sindri/needs-you")).GetProperty("rows").GetArrayLength());
+        Assert.Equal(0, await DecisionRows(host));
         var voided = (await Read(host, "/sindri/decisions?pending=false")).GetProperty("decisions")[0];
         Assert.Equal(decision, voided.GetProperty("id").GetString());
         Assert.Equal("voided", voided.GetProperty("state").GetString());

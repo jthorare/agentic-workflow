@@ -12,7 +12,6 @@ internal static partial class Labels
     private static readonly FrozenDictionary<string, (string First, string Again)> _setupActions = new Dictionary<string, (string First, string Again)>(StringComparer.Ordinal)
     {
         ["AddRepo"] = ("Add a repo", "Add another repo"),
-        ["ApproveProfile"] = ("Review and approve", "Review and approve"),
         ["ApproveAllRecipes"] = ("Approve all workflows", "Approve again"),
         ["RegisterMcp"] = ("Connect your agents", "Connect again"),
         ["RefreshContextMap"] = ("Retry", "Retry"),
@@ -22,7 +21,7 @@ internal static partial class Labels
     private static readonly FrozenDictionary<string, string> _setupTitles = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["repo"] = "Add your repository",
-        ["profile"] = "Approve your settings",
+        ["profile"] = "Your settings",
         ["recipes"] = "Approve the workflows",
         ["mcp"] = "Connect your coding agents",
         ["map"] = "Build the product map",
@@ -175,7 +174,6 @@ internal static partial class Labels
     internal static string SetupCli(string action) => action switch
     {
         "AddRepo" => "sindri repo add <path>",
-        "ApproveProfile" => "sindri profile approve <hash>",
         "ApproveAllRecipes" => "sindri recipe approve-all",
         "RegisterMcp" => "sindri mcp register --apply",
         "RefreshContextMap" => "sindri context map refresh",

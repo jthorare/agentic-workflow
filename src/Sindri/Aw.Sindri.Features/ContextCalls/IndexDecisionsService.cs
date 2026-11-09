@@ -11,7 +11,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 
 /// <summary>
 /// The 'index-decisions' background service (#1597): every 15 minutes while serve runs it asks Context to read the records already pulled into the index for decisions, through
-/// <see cref="IContextEngine"/> only. It is apart from 'index-sync' so a slow model never holds a pull. A source with a code is a row in the run's summary, never a failed run; a missing or unapproved profile is a quiet run.
+/// <see cref="IContextEngine"/> only. It is apart from 'index-sync' so a slow model never holds a pull. A source with a code is a row in the run's summary, never a failed run; a missing or unprofile is a quiet run.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
 /// <param name="engine">Context's facade: its decision member is Decide.</param>
@@ -33,7 +33,7 @@ internal sealed class IndexDecisionsService(ContextScopes scopes, IContextEngine
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
         if (scope.IsError || scope.Value.Settings is null)
         {
-            return scope.IsError && scope.Error.Code != SindriErrors.ProfileNotApproved.Code ? scope.Error : ScheduledResult.Quiet;
+            return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
         }
 
         var report = await engine.Decide(scope.Value, cancellationToken).ConfigureAwait(false);

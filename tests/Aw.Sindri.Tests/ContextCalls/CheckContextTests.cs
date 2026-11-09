@@ -70,7 +70,7 @@ public sealed class CheckContextTests
     }
 
     [Fact]
-    public async Task The_checks_read_the_approved_profile_and_every_provider_file()
+    public async Task The_checks_read_the_live_profile_and_every_provider_file()
     {
         var harness = new SliceHarness();
         var checks = new ContextDoctorChecks(new ContextScopes(harness.Profiles, harness.Callers), FakeContextEngine.Instance,
@@ -79,7 +79,7 @@ public sealed class CheckContextTests
         var none = await checks.Run(TestContext.Current.CancellationToken);
 
         Assert.Equal([ContextChecks.SourcesName, ContextChecks.SyncName, ContextChecks.McpScopeName], none.Select(c => c.Name), StringComparer.Ordinal);
-        Assert.StartsWith("SND-PROFILE-005", none[0].Detail, StringComparison.Ordinal);   // why: nothing is approved yet
+        Assert.StartsWith("SND-PROFILE-001", none[0].Detail, StringComparison.Ordinal);   // why: no profile yet
         Assert.Equal(CheckState.Warn, none[2].State);
     }
 

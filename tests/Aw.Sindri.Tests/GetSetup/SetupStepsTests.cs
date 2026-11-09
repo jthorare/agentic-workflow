@@ -22,21 +22,18 @@ public sealed class SetupStepsTests
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData(ProfilePresence.Missing, SetupState.Todo, null)]
-    [InlineData(ProfilePresence.Unapproved, SetupState.NeedsYou, SetupActions.ApproveProfile)]
-    [InlineData(ProfilePresence.Drifted, SetupState.NeedsYou, SetupActions.ApproveProfile)]
-    [InlineData(ProfilePresence.Approved, SetupState.Done, null)]
-    public void Profile_asks_the_human_when_it_is_waiting_or_has_changed(ProfilePresence presence, SetupState state, string? action)
+    [InlineData(ProfilePresence.Missing, SetupState.Todo)]
+    [InlineData(ProfilePresence.Present, SetupState.Done)]
+    public void Profile_is_done_once_the_file_is_there(ProfilePresence presence, SetupState state)
     {
         var step = SetupSteps.Profile(new ProfileFact(presence), Repos("demo"));
 
-        Assert.Equal((state, action), (step.State, step.Action));
+        Assert.Equal((state, null), (step.State, step.Action));
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData(ProfilePresence.Unapproved)]
-    [InlineData(ProfilePresence.Approved)]
-    [InlineData(ProfilePresence.Drifted)]
+    [InlineData(ProfilePresence.Present)]
+    [InlineData(ProfilePresence.Missing)]
     public void Profile_waits_for_a_first_repo_whatever_the_file_says(ProfilePresence presence)
     {
         var step = SetupSteps.Profile(new ProfileFact(presence), new RepoFact(0));
@@ -45,19 +42,11 @@ public sealed class SetupStepsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Profile_names_the_repo_the_owner_added_when_it_waits_for_approval()
-    {
-        var step = SetupSteps.Profile(new ProfileFact(ProfilePresence.Unapproved), Repos("demo"));
-
-        Assert.StartsWith("You added demo. ", step.Why, StringComparison.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public void Profile_carries_the_preview_it_was_given_and_none_without_one()
     {
         SetupPreviewLine[] lines = [new("repo", "Works in demo (/work/demo).")];
 
-        var with = SetupSteps.Profile(new ProfileFact(ProfilePresence.Unapproved) { Preview = lines }, Repos("demo"));
+        var with = SetupSteps.Profile(new ProfileFact(ProfilePresence.Present) { Preview = lines }, Repos("demo"));
         var without = SetupSteps.Profile(new ProfileFact(ProfilePresence.Missing), Repos("demo"));
 
         Assert.Equal(lines, with.Preview);
@@ -65,7 +54,7 @@ public sealed class SetupStepsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Recipes_wait_for_an_approved_profile_then_count_what_waits()
+    public void Recipes_wait_for_a_saved_profile_then_count_what_waits()
     {
         var none = SetupSteps.Recipes(new RecipesFact(0, 0), profileApproved: true);
         var early = SetupSteps.Recipes(new RecipesFact(26, 0), profileApproved: false);
@@ -73,7 +62,7 @@ public sealed class SetupStepsTests
         var done = SetupSteps.Recipes(new RecipesFact(26, 26), profileApproved: true);
 
         Assert.Equal((SetupState.Todo, null), (none.State, none.Action));
-        Assert.Equal((SetupState.Todo, null, null, "After the profile is approved.", "26 workflows registered."), (early.State, early.Action, early.Progress, early.Why, early.Detail));
+        Assert.Equal((SetupState.Todo, null, null, "After the profile is saved.", "26 workflows registered."), (early.State, early.Action, early.Progress, early.Why, early.Detail));
         Assert.Equal((SetupState.NeedsYou, SetupActions.ApproveAllRecipes, new SetupProgress(20, 26, "workflows"), "6 workflows wait for your approval."), (waiting.State, waiting.Action, waiting.Progress, waiting.Why));
         Assert.Equal((SetupState.Done, null, new SetupProgress(26, 26, "workflows")), (done.State, done.Action, done.Progress));
         Assert.Equal("1 workflow waits for your approval.", SetupSteps.Recipes(new RecipesFact(3, 2), profileApproved: true).Why);
@@ -89,7 +78,7 @@ public sealed class SetupStepsTests
         var done = SetupSteps.Mcp(new McpFact(3, 3, "Claude Code, Codex"));
 
         Assert.Equal((SetupState.Todo, null, "Install Claude Code, Codex or Cursor."), (noProvider.State, noProvider.Action, noProvider.Why));
-        Assert.Equal((SetupState.Todo, null, "Waits for an approved profile with a repo."), (waiting.State, waiting.Action, waiting.Why));
+        Assert.Equal((SetupState.Todo, null, "Waits for a profile with a repo."), (waiting.State, waiting.Action, waiting.Why));
         Assert.Equal((SetupState.Todo, SetupActions.RegisterMcp, null), (todo.State, todo.Action, todo.Progress));
         Assert.Equal((SetupState.Todo, SetupActions.RegisterMcp, new SetupProgress(1, 3, "repos")), (some.State, some.Action, some.Progress));
         Assert.Equal((SetupState.Done, null), (done.State, done.Action));
@@ -114,7 +103,7 @@ public sealed class SetupStepsTests
         Assert.Equal(new SetupProgress(40, 100, "files"), steps[3].Progress);
         Assert.Equal("40 of 100 done.", steps[3].Detail);
         Assert.Equal("Sindri is mapping demo.", steps[2].Why);
-        Assert.Equal("Waits for an approved profile with a repo.", steps[0].Why);
+        Assert.Equal("Waits for a profile with a repo.", steps[0].Why);
         Assert.Equal(["demo"], steps[2].Items.Select(static i => i.Repo), StringComparer.Ordinal);
         Assert.Equal("SND-CONTEXT-040", steps[4].Error?.Code);
     }

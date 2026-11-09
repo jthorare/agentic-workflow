@@ -23,7 +23,7 @@ namespace Aw.Sindri.Features.CodeIndexJobs;
 /// <param name="embedder">Probed for reachability and the model digest: a live check, never a build.</param>
 /// <param name="pins">Reads the lock file and compares it with the build's pins.</param>
 /// <param name="clock">Dates the retry words.</param>
-/// <param name="liveProfile">The live profile file: its repos the approved profile doesn't name are checked too (owner q102, CIX-L59).</param>
+/// <param name="liveProfile">The live profile file: its repos the profile doesn't name are checked too (owner q102, CIX-L59).</param>
 internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobViews jobs, IEmbedder embedder, ICodeIndexPins pins, TimeProvider clock, IProfileSource liveProfile) : ICodeIndexChecks
 {
     private const string GraphCheck = "code-index:graphify";
@@ -32,14 +32,14 @@ internal sealed class CodeIndexDoctor(ICodeIndex index, IRepoHeads heads, IJobVi
     private const string Setup = "./setup.sh";
 
     /// <summary>The checks, in the order doctor prints them.</summary>
-    /// <param name="approved">The approved profile, or null.</param>
+    /// <param name="approved">The profile, or null.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The repo rows, then graphify, ollama and the lock.</returns>
     public async ValueTask<DoctorCheck[]> Check(LoadedProfile? approved, CancellationToken cancellationToken)
     {
         if (approved is null)
         {
-            return [new DoctorCheck("code-index", CheckState.Ok, "not configured: no approved profile", Fix: null)];
+            return [new DoctorCheck("code-index", CheckState.Ok, "not configured: no profile", Fix: null)];
         }
 
         var file = await liveProfile.Load(cancellationToken).ConfigureAwait(false);

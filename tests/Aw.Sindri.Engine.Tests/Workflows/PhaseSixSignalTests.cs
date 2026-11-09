@@ -74,16 +74,14 @@ public sealed class PhaseSixSignalTests(SindriTimeSkippingServer server) : IClas
         }, Token);
     }
 
-    /// <summary>Writes the shipped dev profile as the home's profile and approves it, as 'profile approve' leaves it.</summary>
+    /// <summary>Writes the shipped dev profile as the home's profile (live on save).</summary>
     private async Task ApproveDevProfile(IServiceProvider sindri)
     {
         var file = Path.Combine(_harness.Home, "profile", "profile.yaml");
         _ = Directory.CreateDirectory(Path.GetDirectoryName(file)!);   // why: the path has a directory
         await File.WriteAllTextAsync(file, WorkflowsHarness.Shipped("dev/profile.yaml"), Token);
-        var loaded = await sindri.GetRequiredService<IProfileSource>().Load(Token);
+        var loaded = await sindri.GetRequiredService<IProfileSource>().Load(Token);   // the file is live as written
         Assert.False(loaded.IsError, loaded.IsError ? loaded.Error.Message : null);
-        var saved = await sindri.GetRequiredService<IApprovals>().Save(loaded.Value, Token);
-        Assert.False(saved.IsError, saved.IsError ? saved.Error.Message : null);
     }
 
     /// <summary>'outbox list' (filtered to <paramref name="state"/>), as the CLI's slice answers it.</summary>

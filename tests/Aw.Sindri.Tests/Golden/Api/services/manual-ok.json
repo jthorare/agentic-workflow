@@ -25,6 +25,18 @@
       "description": "Starts a code-index update for each repo whose main branch moved."
     },
     {
+      "name": "connection-refresh",
+      "every": "5m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Refreshes the tokens of connections that expire within 10 minutes."
+    },
+    {
       "name": "context-concept-scan",
       "every": "1m",
       "paused": false,
@@ -127,6 +139,18 @@
       "description": "Pulls new records from each source into the index."
     },
     {
+      "name": "memory-expire",
+      "every": "1h",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Deletes memory facts whose expiry has passed."
+    },
+    {
       "name": "phantom",
       "every": "5s",
       "paused": false,
@@ -201,8 +225,8 @@
   ],
   "empty": null,
   "asOf": {
-    "cursor": 12,
-    "ledgerHead": 12,
+    "cursor": 8,
+    "ledgerHead": 8,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

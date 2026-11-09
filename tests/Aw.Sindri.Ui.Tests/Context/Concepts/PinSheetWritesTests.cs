@@ -26,10 +26,9 @@ public sealed class PinSheetWritesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Pin_and_approve_writes_the_ticked_fields_with_the_file_hash_approves_and_closes()
+    public async Task Pin_writes_the_ticked_fields_with_the_file_hash_and_closes()
     {
         var kit = Billing();
-        kit.Api.ProfileAnswer = Profile("h1", "index.concepts.billing");
         var (sheet, closed) = await Opened(kit, PinThis());
         sheet.Definition = "Money in";
 
@@ -41,23 +40,8 @@ public sealed class PinSheetWritesTests
         Assert.Equal(("Billing", null, "Money in"), (set.Name, set.Id, set.Summary));
         Assert.Equal(["payments"], set.Aliases);
         Assert.Equal(["feature:billing.charges"], set.Features);
-        Assert.Equal("h1", Assert.Single(kit.Api.ProfileApprovals).Hash);
         Assert.True(Assert.Single(closed).Written);
         Assert.False(sheet.HasSubmitError);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Pin_leaves_the_pin_waiting_and_closes_when_something_else_waits()
-    {
-        var kit = Billing();
-        kit.Api.ProfileAnswer = Profile("h1", "index.pages.schedule-week", "index.concepts.billing");
-        var (sheet, closed) = await Opened(kit, PinThis());
-        Assert.Equal("Pin", sheet.SubmitText);
-
-        await sheet.Submit(Token);
-
-        Assert.Empty(kit.Api.ProfileApprovals);
-        Assert.True(Assert.Single(closed).Written);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -88,8 +72,8 @@ public sealed class PinSheetWritesTests
         await sheet.Submit(Token);
 
         Assert.Empty(closed);
-        Assert.Equal("The settings changed while you were editing. Your changes are still here. Press Pin and approve again.", sheet.SubmitError);
-        Assert.Equal(("Payments & billing", "Pin and approve", true), (sheet.Name, sheet.SubmitText, sheet.CanSubmit));
+        Assert.Equal("The settings changed while you were editing. Your changes are still here. Press Pin again.", sheet.SubmitError);
+        Assert.Equal(("Payments & billing", "Pin", true), (sheet.Name, sheet.SubmitText, sheet.CanSubmit));
         Assert.Equal(["payments"], [.. sheet.Words.Where(w => w.Ticked).Select(w => w.Word)], StringComparer.Ordinal);
     }
 
@@ -108,7 +92,7 @@ public sealed class PinSheetWritesTests
 
         Assert.Equal("h1", Assert.Single(kit.Api.PinnedConcepts).IfHash);
         Assert.Empty(closed);
-        Assert.Equal("The settings changed while you were editing. Your changes are still here. Press Pin and approve again.", sheet.SubmitError);
+        Assert.Equal("The settings changed while you were editing. Your changes are still here. Press Pin again.", sheet.SubmitError);
         Assert.Equal(("Billing", "Money in"), (sheet.Name, sheet.Definition));
         Assert.Equal(["payments", "ledger"], [.. sheet.Words.Where(w => w.Ticked).Select(w => w.Word)], StringComparer.Ordinal);
     }
@@ -174,7 +158,7 @@ public sealed class PinSheetWritesTests
         var set = Assert.Single(Assert.Single(kit.Api.PinnedConcepts).Set!);
         Assert.Equal(("Payments", "billing"), (set.Name, set.Id));
         _ = Assert.Single(closed);
-        Assert.Equal("Save and approve", sheet.SubmitText);
+        Assert.Equal("Save", sheet.SubmitText);
     }
 
     [Fact, Trait("Lane", "unit")]

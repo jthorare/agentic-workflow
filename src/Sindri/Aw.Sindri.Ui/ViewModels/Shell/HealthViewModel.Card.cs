@@ -14,7 +14,7 @@ internal sealed partial class HealthViewModel
     public string Sentence { get; private set => Set(ref field, value); } = Labels.Connecting;
 
     // One sentence for how Sindri is, by the shell's state; it lives here because Labels doesn't depend on the Shell namespace.
-    private readonly record struct SentenceInputs(ShellState State, bool HasHealth, bool Healthy, string Problems, bool ProfileFix, string? Served, string Look);
+    private readonly record struct SentenceInputs(ShellState State, bool HasHealth, bool Healthy, string Problems, string? Served, string Look);
 
     private static string SentenceFor(SentenceInputs h) => h.State switch
     {
@@ -36,8 +36,7 @@ internal sealed partial class HealthViewModel
 
         if (h.Healthy)
         {
-            return h.ProfileFix ? Labels.ProfileNeedsApproval
-                : h.Look.Length > 0 ? Labels.NeedsALook(h.Look)   // the server says healthy, a card says otherwise
+            return h.Look.Length > 0 ? Labels.NeedsALook(h.Look)   // the server says healthy, a card says otherwise
                 : Labels.AllRunning;
         }
 
@@ -69,20 +68,6 @@ internal sealed partial class HealthViewModel
 
     /// <summary>The profile's hash and file.</summary>
     public string ProfileDetail { get; private set => Set(ref field, value); } = string.Empty;
-
-    /// <summary>The command that fixes the profile's state, or empty.</summary>
-    public string ProfileFix
-    {
-        get;
-        private set
-        {
-            Set(ref field, value);
-            OnChanged(nameof(HasProfileFix));
-        }
-    } = string.Empty;
-
-    /// <summary>True when the profile needs a command.</summary>
-    public bool HasProfileFix => ProfileFix.Length > 0;
 
     /// <summary>The scheduled services.</summary>
     public IReadOnlyList<ServiceRow> Services

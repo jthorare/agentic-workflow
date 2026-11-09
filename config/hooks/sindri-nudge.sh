@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # aw:sindri-nudge — SessionStart hook. Prints one line when the session's repo is not in the
-# approved sindri profile ("run: sindri repo onboard"). Silent outside git, when sindri isn't
-# installed, when no profile is approved yet, when the repo is onboarded, and in child sessions
+# sindri profile ("run: sindri repo onboard"). Silent outside git, when sindri isn't
+# installed, when there is no profile yet, when the repo is onboarded, and in child sessions
 # (AW_JUDGE_CHILD, AW_SINDRI_CHILD). Fails open: always exits 0, and the CLI is killed after
-# AW_SINDRI_NUDGE_BUDGET_MS (default 4000). The CLI reads the approved profile read-only: it never
+# AW_SINDRI_NUDGE_BUDGET_MS (default 4000). The CLI reads the live profile read-only: it never
 # migrates or writes the ledger and takes no lock.
 [ -n "${AW_JUDGE_CHILD:-}${AW_SINDRI_CHILD:-}" ] && exit 0
 # HOOK-FAILOPEN: record why this hook printed nothing (config/lib/failopen.sh, installed at <hooks>/lib/failopen.sh).

@@ -16,7 +16,7 @@ namespace Aw.Sindri.Features.LinearSideFacts;
 /// The side-facts port over Context's IContextIssues (Linear hub spec 2026-11-04 §4.2, §4.3), under the current caller's scope (mapped as ContextProjectFacts maps it; slices don't share types). Reads stored data only.
 /// The strip's viewer is the owner of the Linear key, as Context's project facts name it; actor and state names come from the team's stored lookups, the title from the stored issue.
 /// </summary>
-/// <param name="approvals">The approved profiles.</param>
+/// <param name="approvals">The profile.</param>
 /// <param name="callers">The current caller.</param>
 /// <param name="engine">Context's facade.</param>
 /// <param name="clock">Decides which cycle is running.</param>
@@ -57,7 +57,7 @@ internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICaller
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         if (approved.IsError || approved.Value is not { } loaded)
         {
-            return approved.IsError ? approved.Error : SindriErrors.ProfileNotApproved.With("no profile is approved (fix: sindri profile approve)");
+            return approved.IsError ? approved.Error : SindriErrors.ProfileMissing.With("no profile yet (fix: sindri repo add <path>)");
         }
 
         ProfileRepoEntry[] repos = [.. (loaded.Profile.Repos ?? []).Select(static r => new ProfileRepoEntry(r.Name, r.Path))];
@@ -191,7 +191,7 @@ internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICaller
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         if (approved.IsError || approved.Value is not { } loaded)
         {
-            return approved.IsError ? approved.Error : SindriErrors.ProfileNotApproved.With("no profile is approved (fix: sindri profile approve)");
+            return approved.IsError ? approved.Error : SindriErrors.ProfileMissing.With("no profile yet (fix: sindri repo add <path>)");
         }
 
         ProfileRepoEntry[] repos = [.. (loaded.Profile.Repos ?? []).Select(static r => new ProfileRepoEntry(r.Name, r.Path))];

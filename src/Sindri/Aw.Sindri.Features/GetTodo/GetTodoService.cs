@@ -27,6 +27,6 @@ internal sealed class GetTodoService(IViewReader views, IProjectorStatus status,
             return row.Error;
         }
 
-        return row.Value is { } found ? new GetTodoResponse(status.Current.AsOf, found) : SindriErrors.TodoNotFound.With($"No todo {request.Id.Value}.");
+        return row.Value is { } found ? new GetTodoResponse(status.Current.AsOf, TodoItem.From(found)) : SindriErrors.TodoNotFound.With($"No todo {request.Id.Value}.");
     }
 }

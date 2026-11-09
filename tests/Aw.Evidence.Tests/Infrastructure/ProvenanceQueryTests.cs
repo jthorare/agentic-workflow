@@ -18,7 +18,7 @@ public sealed class ProvenanceQueryTests : IDisposable
         var pattern = "x'; DROP TABLE profile; --%";
         var query = new DockerPsqlProvenance(Recorder("printf 'seed-admin-1@example.com\\nseed-admin-2@example.com\\n'"), _db);
 
-        var emails = await query.EmailsLikeAsync(pattern, TestContext.Current.CancellationToken);
+        var emails = await query.EmailsLikeAsync(pattern, database: null, TestContext.Current.CancellationToken);
 
         Assert.Equal(["seed-admin-1@example.com", "seed-admin-2@example.com"], emails.Value);
         Assert.Equal(
@@ -29,11 +29,25 @@ public sealed class ProvenanceQueryTests : IDisposable
     }
 
     [Fact]
+    public async Task A_worktree_slots_database_goes_to_psql_as_d_and_without_one_psql_keeps_its_default()
+    {
+        var query = new DockerPsqlProvenance(Recorder("echo seed-admin-1@example.com"), _db);
+
+        _ = await query.EmailsLikeAsync("seed-admin-%@example.com", "wt_1", TestContext.Current.CancellationToken);
+        var slot = await File.ReadAllLinesAsync(_root.Combine("args"), TestContext.Current.CancellationToken);
+        _ = await query.AllEmailsAsync(database: null, TestContext.Current.CancellationToken);
+        var main = await File.ReadAllLinesAsync(_root.Combine("args"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(["exec", "-i", "db_1", "psql", "-U", "app", "-d", "wt_1", "-At", "-v", "ON_ERROR_STOP=1", "-v", "pattern=seed-admin-%@example.com"], slot);
+        Assert.Equal(["exec", "-i", "db_1", "psql", "-U", "app", "-At", "-v", "ON_ERROR_STOP=1"], main);
+    }
+
+    [Fact]
     public async Task Every_email_is_read_without_variables()
     {
         var query = new DockerPsqlProvenance(Recorder("echo a@example.com"), _db);
 
-        Assert.Equal(["a@example.com"], (await query.AllEmailsAsync(TestContext.Current.CancellationToken)).Value);
+        Assert.Equal(["a@example.com"], (await query.AllEmailsAsync(database: null, TestContext.Current.CancellationToken)).Value);
         Assert.Equal("SELECT coalesce(email, '') FROM public.users;\n", await File.ReadAllTextAsync(_root.Combine("stdin"), TestContext.Current.CancellationToken));
     }
 
@@ -42,7 +56,7 @@ public sealed class ProvenanceQueryTests : IDisposable
     {
         var query = new DockerPsqlProvenance(Recorder("echo 'relation \"public.users\" does not exist' >&2; exit 3"), _db);
 
-        var emails = await query.AllEmailsAsync(TestContext.Current.CancellationToken);
+        var emails = await query.AllEmailsAsync(database: null, TestContext.Current.CancellationToken);
 
         Assert.Equal(EvidenceErrors.ProbeFailed.Code, emails.Error.Code);
         Assert.Contains("does not exist", emails.Error.Message, StringComparison.Ordinal);
@@ -55,7 +69,7 @@ public sealed class ProvenanceQueryTests : IDisposable
     {
         var query = new DockerPsqlProvenance(_root.Combine("no-such-docker"), new DatabaseSettings(Container: container, User: "app", SeedTable: table));
 
-        var emails = await query.AllEmailsAsync(TestContext.Current.CancellationToken);
+        var emails = await query.AllEmailsAsync(database: null, TestContext.Current.CancellationToken);
 
         Assert.Equal(EvidenceErrors.ProbeFailed.Code, emails.Error.Code);
         Assert.Contains(message, emails.Error.Message, StringComparison.Ordinal);

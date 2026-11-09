@@ -24,17 +24,15 @@
     | context:
     |   publish: { waitForIndexMinutes: 15 }
 + AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri profile validate --json
-  check: profile validate gives a hash (exit 0 approved, 1 not approved yet, 2 invalid)
+  check: profile validate gives a hash (exit 0 valid, 2 invalid)
 
-== 3. profile approval (yours, at a terminal)
-+ (stop here unless 'profile validate' exits 0) print:
-    AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 sindri profile approve <hash>
-  and exit 3; after you approve, 'scripts/context-first-run.sh continue' resumes at step 4
+== 3. profile (edits apply on save; nothing to approve)
++ nothing to approve: the profile written in step 2 is the live one
 
 == 4. start the control plane
 + AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri --headless
 + AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri status --json
-  check: status --json has running true and profile.needsApproval false (its exit code is 1 while health isn't healthy; that's fine)
+  check: status --json has running true (its exit code is 1 while health isn't healthy; that's fine)
 
 == 5. first code index build for agentic-workflow
 + AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri code-index status --repo agentic-workflow --json

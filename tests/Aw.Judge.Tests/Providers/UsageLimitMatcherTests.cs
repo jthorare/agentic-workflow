@@ -26,6 +26,44 @@ public sealed class UsageLimitMatcherTests
     [InlineData("You've hit a snag")]
     public void Other_text_is_not_a_limit(string message) => Assert.Null(UsageLimitMatcher.Match(message));
 
+    [Theory]
+    [InlineData("You've reached your usage limit.")]
+    [InlineData("You have reached your monthly limit for this plan")]
+    [InlineData("YOU'VE EXCEEDED YOUR USAGE LIMIT")]
+    [InlineData("You've run out of premium requests. Upgrade to continue.")]
+    [InlineData("⎿ You’ve reached the usage limit for your plan")]
+    [InlineData("You've hit your premium request limit")]
+    public void Cursor_wordings_match_loosely(string message) => Assert.NotNull(UsageLimitMatcher.MatchCursor(message));
+
+    [Fact]
+    public void Every_cursor_string_is_caught() => Assert.All(UsageLimitStrings.Cursor, message => Assert.NotNull(UsageLimitMatcher.MatchCursor(message)));
+
+    public static TheoryData<string> CursorReal => [.. UsageLimitStrings.Cursor];
+
+    [Theory]
+    [MemberData(nameof(CursorReal))]
+    public void A_cursor_string_in_the_middle_or_on_a_later_line_is_not_a_limit(string message)
+    {
+        Assert.Null(UsageLimitMatcher.MatchCursor($"Failed on the prompt: please summarise /repo/docs/{message}"));
+        Assert.Null(UsageLimitMatcher.MatchCursor($"Something else went wrong\n{message}"));
+    }
+
+    [Theory]
+    [InlineData("You've reached the end of the file")]
+    [InlineData("You've exceeded the maximum line length")]
+    [InlineData("You've run out of patience")]
+    [InlineData("You have exceeded the rate limit")]
+    [InlineData("You've reached the context window limit")]
+    public void Cursor_patterns_do_not_catch_other_errors(string message) => Assert.Null(UsageLimitMatcher.MatchCursor(message));
+
+    [Theory]
+    [InlineData("You've reached your usage limit.")]
+    [InlineData("You have reached your monthly limit for this plan")]
+    [InlineData("You've run out of premium requests.")]
+    [InlineData("You have exceeded the rate limit")]
+    [InlineData("You've reached the context window limit")]
+    public void The_shared_matcher_does_not_know_cursor_wording(string message) => Assert.Null(UsageLimitMatcher.Match(message));
+
     [Fact]
     public void Null_is_not_a_limit() => Assert.Null(UsageLimitMatcher.Match(message: null));
 

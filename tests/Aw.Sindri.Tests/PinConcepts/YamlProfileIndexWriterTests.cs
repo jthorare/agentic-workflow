@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Profile;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Profile;
 
 namespace Aw.Sindri.Tests.PinConcepts;
@@ -29,7 +30,7 @@ public sealed class YamlProfileIndexWriterTests : IDisposable
         }
     }
 
-    private YamlProfileIndexWriter Writer() => new(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options);
+    private YamlProfileIndexWriter Writer() => new(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options, NoProfileCache.Instance);
 
     private void Put(string text)
     {
@@ -273,7 +274,7 @@ public sealed class YamlProfileIndexWriterTests : IDisposable
     public async Task A_file_that_changes_once_between_the_read_and_the_write_is_read_again_and_lands()
     {
         Put(Head + Block);
-        var writer = new YamlProfileIndexWriter(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options) { BeforeWrite = static (path, attempt) => { if (attempt == 0) { File.AppendAllText(path, "# changed\n"); } } };
+        var writer = new YamlProfileIndexWriter(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options, NoProfileCache.Instance) { BeforeWrite = static (path, attempt) => { if (attempt == 0) { File.AppendAllText(path, "# changed\n"); } } };
 
         var done = await writer.Write([Set("tabs", "Tabs")], ifHash: null, Token);
 
@@ -286,7 +287,7 @@ public sealed class YamlProfileIndexWriterTests : IDisposable
     public async Task A_file_that_changes_twice_is_SND_PROFILE_002_and_the_entry_is_not_written()
     {
         Put(Head + Block);
-        var writer = new YamlProfileIndexWriter(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options) { BeforeWrite = static (path, attempt) => File.AppendAllText(path, string.Create(CultureInfo.InvariantCulture, $"# changed {attempt}\n")) };
+        var writer = new YamlProfileIndexWriter(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options, NoProfileCache.Instance) { BeforeWrite = static (path, attempt) => File.AppendAllText(path, string.Create(CultureInfo.InvariantCulture, $"# changed {attempt}\n")) };
 
         var done = await writer.Write([Set("tabs", "Tabs")], ifHash: null, Token);
 

@@ -7,7 +7,7 @@ internal sealed partial class LinearConnectionViewModel
     /// <param name="url">The API's base URL.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that completes when the card is up to date.</returns>
-    internal Task Refresh(Uri url, CancellationToken cancellationToken) => Read(url, settled: false, cancellationToken);
+    internal Task Refresh(Uri url, CancellationToken cancellationToken) => Read(url, cancellationToken);
 
     /// <summary>Asks for the card to be shown and focused; done as soon as the next read is in (at once when the API is not known).</summary>
     internal void Reveal()
@@ -28,10 +28,7 @@ internal sealed partial class LinearConnectionViewModel
         }
     }
 
-    /// <summary>Review changes was pressed.</summary>
-    internal void RequestReview() => ReviewRequested?.Invoke(this, EventArgs.Empty);
-
-    private async Task Read(Uri url, bool settled, CancellationToken cancellationToken)
+    private async Task Read(Uri url, CancellationToken cancellationToken)
     {
         var generation = ++_generation;
         var read = await _api.LinearConnection(url, cancellationToken).ConfigureAwait(true);
@@ -48,10 +45,6 @@ internal sealed partial class LinearConnectionViewModel
         else
         {
             (_connection, IsAvailable, _readError) = (read.Value, true, string.Empty);
-            if (!settled && !read.Value.Pending)
-            {
-                _waiting = string.Empty;   // nothing waits any more (approved elsewhere): the click's line would lie
-            }
         }
 
         Changed();

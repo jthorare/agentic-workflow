@@ -49,18 +49,6 @@ public sealed class SindriApiClientNeedsYouTests
     }
 
     [Fact]
-    public async Task NeedsYou_reads_a_profile_row_with_a_null_subject()
-    {
-        var (client, server, _) = Reach();
-        server.NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-profile-null-subject");
-
-        var profile = (await client.NeedsYou(_api, Token)).Value.Rows[2];
-
-        Assert.Equal(("profile:drift", "calm", "ApproveProfile"), (profile.Id, profile.Urgency, profile.PrimaryAction));
-        Assert.Null(profile.Subject);
-    }
-
-    [Fact]
     public async Task NeedsYou_reads_a_failure_row_whose_primary_action_is_null()
     {
         var (client, server, _) = Reach();
@@ -75,14 +63,14 @@ public sealed class SindriApiClientNeedsYouTests
     }
 
     [Fact]
-    public async Task NeedsYou_reads_a_profile_row_with_a_profile_subject()
+    public async Task NeedsYou_reads_a_setup_row_with_a_setup_subject()
     {
         var (client, _, _) = Reach();
 
-        var profile = (await client.NeedsYou(_api, Token)).Value.Rows[2];
+        var setup = (await client.NeedsYou(_api, Token)).Value.Rows[2];
 
         var served = GoldenFiles.Node("needs-you", "fixture")["rows"]![2]!["subject"]!;
-        Assert.Equal(new SubjectRefView("profile", (string)served["id"]!), profile.Subject);
+        Assert.Equal(new SubjectRefView("setup", (string)served["id"]!), setup.Subject);
     }
 
     [Fact]

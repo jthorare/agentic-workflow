@@ -2391,3 +2391,5 @@ Aw.Meta.Core.Routing.RouteSuggestion.Deconstruct(out string! Lane, out string! F
 Aw.Meta.Core.Routing.RouteSuggestion.RouteSuggestion(string! Lane, string! FromAgent, string! FromModel, string! ToAgent, string! ToModel, string! Reason, bool TargetKnown = true) -> void
 Aw.Meta.Core.Routing.RouteSuggestion.TargetKnown.get -> bool
 Aw.Meta.Core.Routing.RouteSuggestion.TargetKnown.init -> void
+Aw.Meta.Core.Coordination.ConsumerState
+static Aw.Meta.Core.Coordination.ConsumerState.Read(Aw.Meta.Core.Ports.IKeyValueStore! values, int? waiting, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(string! Line, bool Missing)>!>

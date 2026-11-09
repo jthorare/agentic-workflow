@@ -24,6 +24,9 @@ public sealed class ReviewSettingsTests
         return (await _f.Opened(ProjectSheetFixture.Attached, Token)).ReviewSettings;
     }
 
+    /// <summary>The project the review-settings goldens answer for; a save sends the project it read, not the sheet's id.</summary>
+    private const string ReadProject = "prj_0000000000000000000000000H";
+
     private ReviewSettingsSave OnlySave() => Assert.Single(_f.Server.ReviewSettingsSaves);
 
     [Fact]
@@ -123,7 +126,7 @@ public sealed class ReviewSettingsTests
         await settings.Save(Token);
 
         var save = OnlySave();
-        Assert.Equal((ProjectSheetFixture.Attached, "default", true), (save.Project, save.Settings, save.Approve));
+        Assert.Equal((ReadProject, "default", true), (save.Project, save.Settings, save.Approve));
         Assert.Equal(["jthorare/agentic-workflow"], save.Repos, StringComparer.Ordinal);
     }
 
@@ -338,20 +341,8 @@ public sealed class ReviewSettingsTests
 
         await settings.Save(Token);
 
-        Assert.Equal((Labels.ReviewSettingsSavedApproved, string.Empty, false), (settings.Announcement, settings.Note, settings.HasChanges));
+        Assert.Equal((Labels.ReviewSettingsSaved, string.Empty, false), (settings.Announcement, settings.Note, settings.HasChanges));
         Assert.Equal(2, _f.Server.ReviewSettingsReads.Count);
-    }
-
-    [Fact]
-    public async Task A_save_that_waits_for_other_profile_changes_says_to_approve_in_Settings()
-    {
-        _f.Server.ReviewSettingsSaveAnswer = RouteAnswer.Api("review-settings-save", "pending-others");
-        var settings = await Opened();
-
-        await settings.Save(Token);
-
-        Assert.Equal((Labels.ReviewSettingsPending(2), string.Empty), (settings.Note, settings.Announcement));
-        Assert.Contains(Labels.ReviewsLoginPending, settings.Note, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -526,7 +517,7 @@ public sealed class ReviewSettingsTests
 
         _f.Server.ReviewSettingsGate.SetResult();
         await saving;
-        Assert.Equal((true, false, Labels.ReviewSettingsSaveApprove), (settings.CanEdit, settings.IsSaving, settings.SaveText));
+        Assert.Equal((true, false, Labels.ReviewSettingsSaveButton), (settings.CanEdit, settings.IsSaving, settings.SaveText));
     }
 
     [Fact]

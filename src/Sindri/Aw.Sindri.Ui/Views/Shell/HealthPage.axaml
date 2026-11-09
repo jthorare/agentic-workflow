@@ -68,15 +68,6 @@
         </StackPanel>
       </Border>
 
-      <!-- What the person must act on stays up front: the profile's approve command, and the problems with their codes. -->
-      <Border Classes="panel" IsVisible="{Binding HasProfileFix}">
-        <Border Classes="section last" IsVisible="{Binding HasProfileFix}">
-          <Border Classes="command" IsVisible="{Binding HasProfileFix}">
-            <TextBlock x:Name="ProfileFixText" Classes="mono" Text="{Binding ProfileFix}"
-                       AutomationProperties.Name="{Binding ProfileFix}" />
-          </Border>
-        </Border>
-      </Border>
       <!-- Code index spec 6.4 (F1P-c): the Context map card. The state is a glyph and a word, never colour alone; the sentences under it are Sindri's.
            It shows once the map's publish state has been read (a map exists), and stays up front: whether a map waits for the code index is what the person looks for. -->
       <Border x:Name="ContextMapPanel" Classes="panel" IsVisible="{Binding ContextMap.IsVisible}" AutomationProperties.Name="{Binding ContextMap.Name}">

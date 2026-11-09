@@ -3,12 +3,12 @@
 # UI phase is proven against in a guarded temp home, through scripts/sindri-prove.sh only (its guard runs before
 # anything is written, so the owner's real home is never touched).
 #
-#   sindri-ui-fixture.sh up        write the live profile (a heartbeat service, port 0), approve it as the owner and
+#   sindri-ui-fixture.sh up        write the live profile (a heartbeat service, port 0), validate it and
 #                                  start the control plane (sindri --headless, through sindri-prove.sh human)
 #   sindri-ui-fixture.sh stall     insert one row of a registered event type with an unparseable payload into
 #                                  <home>/ledger.db: the projection throws and the views stall (the stalled banner)
 #   sindri-ui-fixture.sh unstall   delete that row again (then Rebuild views recovers)
-#   sindri-ui-fixture.sh drift     edit the live profile so it no longer matches the approval (a profile row)
+#   sindri-ui-fixture.sh drift     edit the live profile (edits apply on save)
 #   sindri-ui-fixture.sh down      stop the control plane (sindri stop, as the owner)
 #   sindri-ui-fixture.sh items [--large]
 #                                  add the default fixture's 4 items (sindri item add, as the owner; U2, API P3);
@@ -20,11 +20,16 @@
 #   sindri-ui-fixture.sh request [--item ID] [--repo R] <text>
 #                                  file a request as a session (a POST to /sindri/requests with no caller header, so the
 #                                  API reads a session; --repo sends X-Sindri-Repo): a decision lands in Needs you (U3')
+#   sindri-ui-fixture.sh todos     (run after 'up')
+#                                  the todo panel's data (todo spec §10 Ph2): 11 todos added at the CLI as the owner (sindri todo add, through the
+#                                  real routes): one overdue, two due today, three upcoming (tomorrow twice, a weekday, a MM-dd), three with no
+#                                  date, links on four (one with a PR and a Linear issue), and the last one marked done. Each add carries a fixed
+#                                  --client-id (ui-fixture-todo-NN), so a repeat adds nothing and marks nothing done twice
 #   sindri-ui-fixture.sh decide <DEC-id> <choice>
 #                                  decide at the CLI (sindri decide, as the owner): with the app open on the same
 #                                  decision, the app's own Decide is then refused (SND-ITEM-409)
-#   sindri-ui-fixture.sh fail      add a service the build cannot run to the live profile and approve it (a failure row)
-#   sindri-ui-fixture.sh unfail    remove it again and approve (the row clears)
+#   sindri-ui-fixture.sh fail      add a service the build cannot run to the live profile (a failure row)
+#   sindri-ui-fixture.sh unfail    remove it again (the row clears)
 #                                  (items --large also files 12 requests, in FIXTURE_REPO when set, else with no repo)
 #   sindri-ui-fixture.sh hide-item <ITM-id>
 #                                  delete the item's row from <home>/views.db (view_items): the control plane stays up and the run
@@ -33,14 +38,13 @@
 #   sindri-ui-fixture.sh context up|draft|down
 #                                  the Context page's data (U9; run after 'up'): up writes a git repo, aw-split-panes, under
 #                                  <home>/ui-fixture-context (the tabs repo of tests/Aw.Context.Testing/Fixtures/MapTabsRepo.cs),
-#                                  adds it to the live profile's repos and approves that, then imports the tabs map
+#                                  adds it to the live profile's repos, then imports the tabs map
 #                                  (map-tabs.json) as the owner, typing 'import map <hash6>', and prints the repo name
 #                                  (the app's repo= argument); draft runs 'context map build' as the owner (a draft to
 #                                  review; a missing graphify is a degraded line, not a failure); down removes the repo, the
-#                                  map copy and the profile entry (and approves again). Idempotent: a repeat up imports the map
+#                                  map copy and the profile entry. Idempotent: a repeat up imports the map
 #                                  only when the store has no map or the map file changed (the imported version stays in
-#                                  context.db through down, so the next draft's number depends on earlier runs); up and down
-#                                  approve whenever the profile is not approved
+#                                  context.db through down, so the next draft's number depends on earlier runs)
 #
 #   sindri-ui-fixture.sh context whole over|under|concepts|pages
 #                                  the whole-map fixture (whole-map spec 8; run after 'context up'): over imports a generated map of 12
@@ -86,7 +90,7 @@
 #                                  'source_identity' row (Sam Rivera: "Linear says you're Sam Rivera"); and both Linear sources' cursor rows
 #                                  (phase incremental), so the page is past its first read and not counting. It adds
 #                                  context.sources.linear.teams [SPL] and context.sources.github.repos [acme/api, acme/web] (no token) to the
-#                                  live profile (a human reads only the profile's teams) and approves that. Three open GitHub PRs
+#                                  live profile (a human reads only the profile's teams). Three open GitHub PRs
 #                                  (github:pr/acme/api/41, acme/api/42, acme/web/17, audience linear:SPL) are each linked 'relates' from a Checkout
 #                                  rewrite issue, so that card shows 3 open PRs and the repos acme/api, acme/web. Then, as the owner: attaches Billing migration, adds a hand-made project (Hiring loop) and
 #                                  hides Search relevance v2 (a project the viewer leads: Hide acts only on a project on the page), each once (the markers <home>/ui-fixture-projects-owner-attach|add|hide; the store rows are rewritten
@@ -98,7 +102,7 @@
 #                                  a review page that opens on a fixture PR, for sending a fix from its fix sheet end to end
 #                                  (POST /sindri/reviews/acme/api/<N>/fix; PR review page spec 8.2). up adds what projects adds to the live
 #                                  profile (the SPL team, github repos acme/api and acme/web), review.login fx-viewer and workflow.forge
-#                                  (adapter file, hosts github.com), and approves that. It builds a file-backed forge world inside the home,
+#                                  (adapter file, hosts github.com), It builds a file-backed forge world inside the home,
 #                                  <home>/ui-fixture-forge/state/forge/file (never the owner's $AW_STATE_DIR), with ONE open PR on
 #                                  github.com/acme/api (branch feat/retry-budget, authored by fx-viewer so the fix posts a sindri.fix thread):
 #                                  the changed file src/Sync.cs (3 added lines at 41-43), three check runs (lint failing) and one open thread
@@ -249,12 +253,11 @@ YAML
   "$PROVE" human --headless
 }
 
-# Validates the live profile and approves its hash as the owner, typing the first six characters.
+# Validates the live profile. Edits apply on save: there is no approval step.
 approve() {
   local hash
   hash="$("$PROVE" profile validate --json | jq -r '.hash // empty')"
   [ -n "$hash" ] || die "profile validate gave no hash"
-  printf 'approve profile %s\n' "${hash:0:6}" | "$PROVE" human profile approve "$hash"
 }
 
 # A service the build has no code for: the scheduler reports its failure, and Needs you shows a failure row.
@@ -325,7 +328,7 @@ unstall() {
   ledger "DELETE FROM events WHERE idempotency_key = '$STALL_KEY'; SELECT changes() || ' row(s) removed';"
 }
 
-# A changed cadence changes the profile's hash (comments and key order don't), so the approval no longer matches.
+# A changed cadence changes the profile's hash (comments and key order don't), so the live profile differs from the one the app loaded.
 drift() {
   local profile
   profile="$(profile_path)"
@@ -353,7 +356,7 @@ items() {
   for title in "${ITEMS[@]}"; do add "$title" || return; done
   [ "${1:-}" = "--large" ] || return 0
   for n in $(seq 1 30); do add "Large fixture item $n" || return; done
-  # 12 requests (U3's large Needs-you list), filed as a session. The API refuses a repo the approved profile lacks and the
+  # 12 requests (U3's large Needs-you list), filed as a session. The API refuses a repo the profile lacks and the
   # fixture's profile has none, so they name FIXTURE_REPO when it is set (a repo the profile has) and no repo otherwise.
   for n in $(seq 1 12); do
     if [ -n "${FIXTURE_REPO:-}" ]; then
@@ -362,6 +365,46 @@ items() {
       request "Large fixture request $n" || return
     fi
   done
+}
+
+# The todo panel's 11 todos: "client id|text|due word or date|links, comma-separated" (a past date is overdue for any run).
+TODOS=(
+  "01|renew the staging cert|2020-01-01|"
+  "02|reply to Sam about the offsite|today|"
+  "03|check the flaky sync test|today|"
+  "04|rotate the staging key|tomorrow|acme/api#12,ENG-12"
+  "05|answer the review comments|mon|acme/web#40"
+  "06|book the offsite room|12-20|"
+  "07|call the dentist||"
+  "08|read the sandbox spec||"
+  "09|plan next week||ENG-34"
+  "10|file the expense report|tomorrow|"
+  "11|update the runbook|2020-01-02|"
+)
+
+# Add one todo through the real CLI route. The client id makes a repeat a no-op; prints the todo id.
+todo_add() { # $1 client id, $2 text, $3 due, $4 links
+  local args=(todo add "$2" --client-id "ui-fixture-todo-$1" --json) link
+  [ -z "$3" ] || args+=(--due "$3")
+  if [ -n "$4" ]; then
+    IFS=',' read -ra links <<< "$4"
+    for link in "${links[@]}"; do args+=(--link "$link"); done
+  fi
+  "$PROVE" human "${args[@]}" | jq -r '.id'
+}
+
+todos() {
+  local row id cid text due links done_id=""
+  for row in "${TODOS[@]}"; do
+    IFS='|' read -r cid text due links <<< "$row"
+    id="$(todo_add "$cid" "$text" "$due" "$links")" || return
+    [ -n "$id" ] && [ "$id" != null ] || die "todo add printed no todo id for '$text'"
+    [ "$cid" = 11 ] && done_id="$id"
+  done
+  # The last one is the done one; marking it twice would fail, so it's marked only while it is still open.
+  if "$PROVE" human todos --json --no-fence | jq -e --arg id "$done_id" '.todos[] | select(.id == $id)' >/dev/null; then
+    "$PROVE" human todo done "$done_id" || return
+  fi
 }
 
 close() {
@@ -471,8 +514,7 @@ context_up() {
   if ! grep -q "name: $CONTEXT_REPO" "$profile"; then
     context_profile_add "$profile" "$dir" || die "context up: can't add the repo to $profile"
   fi
-  # Approve whenever the profile isn't approved (not only after this run's edit): a failed approve is retried here.
-  if needs_approval; then approve >&2 || return; fi
+  approve >&2 || return
   map="$(context_dir)/tabs-map.json"
   cp "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" "$map" || die "context up: can't copy the tabs map"
   context_import "$map" || return
@@ -555,9 +597,6 @@ context_whole() {
 
 context_draft() { "$PROVE" human context map build; }
 
-# True when the live profile isn't the approved one (or validate can't say).
-needs_approval() { [ "$("$PROVE" profile validate --json 2>/dev/null | jq -r '.approved // false')" != true ]; }
-
 context_down() {
   local dir profile
   dir="$(context_dir)"
@@ -567,10 +606,6 @@ context_down() {
   if [ -f "$profile" ] && grep -q "name: $CONTEXT_REPO" "$profile"; then
     grep -v "name: $CONTEXT_REPO" "$profile" | awk '{l[NR]=$0} END {for (i=1;i<=NR;i++) if (!(l[i]=="repos:" && (i==NR || l[i+1] !~ /^  /))) print l[i]}' > "$profile.new" \
       && mv "$profile.new" "$profile"
-  fi
-  # Whether or not this run edited the profile: an approve that failed on an earlier down is tried again.
-  if [ -f "$profile" ] && needs_approval; then
-    (approve >&2) || echo "context down: the profile is not approved; run 'context down' again or approve it (sindri profile approve)" >&2
   fi
   return 0
 }
@@ -717,8 +752,7 @@ projects_profile() {
     awk -v e="    github: { repos: [$PROJECTS_GH_REPOS] }" '{print} /teams: \[/ && !done {print e; done=1}' "$profile" > "$profile.new" && mv "$profile.new" "$profile" \
       || die "projects: can't add the GitHub repos to $profile"
   fi
-  # Approve whenever the profile isn't approved (a failed approve is retried here).
-  if needs_approval; then approve >&2 || return; fi
+  approve >&2 || return
 }
 
 # One stored project and its 'led-by' link, appended to $projects_sql. $1 id, $2 name, $3 state, $4 state_raw, $5 health or '', $6 due in days or '',
@@ -863,7 +897,7 @@ reviews_profile() {
     fi && mv "$profile.new" "$profile" || die "reviews: can't add workflow.forge to $profile"
     reviews_mark forge
   fi
-  if needs_approval; then approve >&2 || return; fi
+  approve >&2 || return
 }
 
 # The aw-forge-fake command line in REVIEWS_CMD: AW_FORGE_FAKE, else a dotnet build of the one project into <home>/ui-fixture-forge/bin.
@@ -966,9 +1000,6 @@ reviews_down() {
     grep -Ev "$drop" "$profile" \
       | awk '{l[NR]=$0} END {for (i=1;i<=NR;i++) if (!(l[i]=="workflow:" && (i==NR || l[i+1] !~ /^  /))) print l[i]}' > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't edit $profile"
   fi
-  if [ -f "$profile" ] && needs_approval; then
-    (approve >&2) || echo "reviews: the profile is not approved; run 'reviews down' again or approve it (sindri profile approve)" >&2
-  fi
   rm -f -- "$(reviews_marker)"
   # The dir is gone, so the restart no longer points AW_STATE_DIR at it.
   if [ -f "$AW_SINDRI_HOME/control.json" ]; then sessions_restart >&2 || return; fi
@@ -1008,7 +1039,7 @@ context_sources() {
   sql_on "$db" "INSERT OR REPLACE INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
       VALUES ('linear:issue/$SOURCES_TICKET_UUID', 'linear', 'issue', NULL, 'linear:$PROJECTS_TEAM', 'Roll out staffing', '$SOURCES_TICKET_URL', '$PROJECTS_VIEWER_NAME', 'open', 'In Progress', $(projects_ts '-10 days'), $(projects_ts '-1 days'), NULL, 'fixture', 'fixture-sources-1', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
     UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "context sources: can't write the ticket record to $db"
-  # A map built over the import (a refresh under the approved profile) has no $SOURCES_DOC_NODE: fail here, not later as a panel error.
+  # A map built over the import (a refresh under the profile) has no $SOURCES_DOC_NODE: fail here, not later as a panel error.
   local shown
   shown="$("$PROVE" human context show "$SOURCES_DOC_NODE" 2>&1)" || die "context sources: the imported map was replaced, $SOURCES_DOC_NODE is gone: $shown"
   printf '%s\n%s\n%s\n' "$CONTEXT_REPO" "$SOURCES_DOC_NODE" "$SOURCES_TICKET_NODE"
@@ -1182,7 +1213,7 @@ agent_run() {
   [ -f "$profile" ] || die "no live profile at $profile: run 'up' first"
   agent_files "$dir" || return
   agent_profile_add "$profile" "$dir/repo" || die "agent-run: can't edit $profile"
-  if needs_approval; then approve >&2 || return; fi
+  approve >&2 || return
   # A bin-only override of the built-in claude-code needs no stepArgvHash; the stub ignores the --settings and the other flags a Step adds.
   jq --arg bin "$dir/stub-bin/claude" '.agents["claude-code"] = {override: true, bin: $bin}' "$launcher" > "$launcher.new" && mv -f "$launcher.new" "$launcher" \
     || die "agent-run: can't update $launcher"
@@ -1346,6 +1377,7 @@ case "$verb" in
   items) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--large" ]; } || die "usage: items [--large]" ;;
   close) [ "$#" -eq 2 ] || { [ "$#" -eq 3 ] && [ "$3" = "--cancelled" ]; } || die "usage: close <item> [--cancelled]" ;;
   projects) [ "$#" -eq 1 ] || die "'projects' takes no arguments" ;;
+  todos) [ "$#" -eq 1 ] || die "'todos' takes no arguments" ;;
   reviews) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: reviews up|down" ;;
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
   context)

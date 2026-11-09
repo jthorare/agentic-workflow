@@ -119,7 +119,19 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
             return;
         }
 
-        (Error, _todos) = (string.Empty, Overlaid(list.Value.Todos));
+        // The note: an older Sindri (a bare 404) means no attention rows; any other failure keeps the last note, so an open form stays. Neither shows an error line.
+        var note = await _api.TodoNote(url, cancellationToken).ConfigureAwait(true);
+        if (read != _reads)
+        {
+            return;
+        }
+
+        (Error, _todos, _note) = (string.Empty, Overlaid(list.Value.Todos), note.IsSuccess ? note.Value : Linear.OlderSindri.IsNotServed(note.Error) ? null : _note);
+        if (note.IsSuccess || Linear.OlderSindri.IsNotServed(note.Error))
+        {
+            ShowSync(_note);   // the sync line shows the same read; a failed read leaves the last line
+        }
+
         Show();
         ScheduleMidnight();
     }
@@ -157,6 +169,8 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
         _midnight = null;
         _savingTimer?.Dispose();
         _savingTimer = null;
+        _syncTick?.Dispose();
+        _syncTick = null;
     }
 
     // One shot at the next local midnight; the callback regroups and sets the next one.
@@ -183,7 +197,11 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
         }
 
         var today = DateOnly.FromDateTime(_clock.GetLocalNow().DateTime);
-        var split = Split.Of(todos, today, _clock.GetUtcNow());
+        var queue = AttentionQueue(todos);
+        var conflicted = new HashSet<string>(queue.Where(r => r.IsConflict).Select(r => r.Id), StringComparer.Ordinal);
+        var all = Split.Of(todos, today, _clock.GetUtcNow());
+        var split = conflicted.Count == 0 ? all : Split.Of([.. todos.Where(t => !conflicted.Contains(t.Id))], today, _clock.GetUtcNow());   // a conflict replaces that todo's row (§3.1)
+        var slots = SlotsFor(queue.Count);
         var showsDone = IsExpanded && ShowsDone;
         var wanted = new HashSet<string>(split.Open.Select(t => t.Id), StringComparer.Ordinal);
         if (showsDone)
@@ -197,7 +215,7 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
             Editing = string.Equals(Editing?.Id, gone, StringComparison.Ordinal) ? null : Editing;   // the todo went elsewhere: its edit goes with it
         }
 
-        Patch.To(Rows, [.. split.Overdue.Concat(split.Due).Concat(split.Upcoming).Concat(split.Undated).Take(CollapsedRows).Select(t => Row(t, today))]);
+        Patch.To(Rows, [.. split.Overdue.Concat(split.Due).Concat(split.Upcoming).Concat(split.Undated).Take(CollapsedRows - slots).Select(t => Row(t, today))]);
         var groups = new List<TodoGroupViewModel>();
         AddGroup(groups, Labels.TodoGroupOverdue, split.Overdue, today);
         AddGroup(groups, Labels.TodoGroupToday, split.Due, today);
@@ -210,10 +228,11 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
         }
 
         Patch.To(Groups, groups);
-        ShowSummary(split, todos);
+        ShowAttention(queue);
+        ShowSummary(all, split, slots, todos);
     }
 
-    private void ShowSummary(Split split, IReadOnlyList<TodoView> todos)
+    private void ShowSummary(Split split, Split shown, int slots, IReadOnlyList<TodoView> todos)
     {
         var open = split.Open.Count;
         var listed = split.Done.Count + split.Removed.Count;
@@ -221,7 +240,7 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
         (OverdueCount, ToSortOutCount) = (split.Overdue.Count, toSortOut);
         CountLine = Labels.TodoCountLine(open, split.Overdue.Count, toSortOut);
         (IsEmpty, EmptyText) = (open == 0, open == 0 ? Labels.TodoEmpty : string.Empty);
-        (ShowsShowAll, ShowAllText) = (!IsExpanded && open > CollapsedRows, Labels.TodoShowAll(open));
+        (ShowsShowAll, ShowAllText) = (!IsExpanded && shown.Open.Count > CollapsedRows - slots, Labels.TodoShowAll(open));
         DoneToggleText = ShowsDone ? Labels.TodoHideDone : Labels.TodoShowDone;
         DoneToggleName = Labels.TodoShowDoneName(listed);
         DoneEmptyText = IsExpanded && ShowsDone && listed == 0 ? Labels.TodoNothingDone : string.Empty;

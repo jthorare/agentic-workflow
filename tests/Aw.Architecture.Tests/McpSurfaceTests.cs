@@ -3,11 +3,14 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AddTodo;
 using Aw.Sindri.Features.ChangeTodo;
+using Aw.Sindri.Features.CreateMemory;
 using Aw.Sindri.Features.Decide;
 using Aw.Sindri.Features.FileRequest;
+using Aw.Sindri.Features.ForgetMemoryFact;
 using Aw.Sindri.Features.MarkTodo;
 using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.TestConnection;
+using Aw.Sindri.Features.WriteMemoryFact;
 
 namespace Aw.Architecture.Tests;
 
@@ -28,13 +31,17 @@ public sealed class McpSurfaceTests
     public void Mcp_tools_reference_only_queries_and_the_request_command()
     {
         var catalog = HostIntrospection.Catalog().Rows;
-        // why: connections PR 10a (owner decision D2): agents get every connection verb, so the connection_* tools reach the three connection commands; each is Desk class with SessionOk
+        // why: agents get every connection verb (connections PR 10a, D2) and write memory (PR13, G8): the connection_* and memory_* tools reach those commands; each is Desk class with SessionOk
         var allowed = new HashSet<string>(StringComparer.Ordinal)
         {
             typeof(FileRequestRequest).FullName!,
             typeof(AddConnectionRequest).FullName!,
             typeof(TestConnectionRequest).FullName!,
             typeof(RemoveConnectionRequest).FullName!,
+            typeof(SignInConnectionRequest).FullName!,
+            typeof(CreateMemoryRequest).FullName!,
+            typeof(WriteMemoryFactRequest).FullName!,
+            typeof(ForgetMemoryFactRequest).FullName!,
             // why: todo spec D2 (Ph1b): a todo list can't change anything outside Sindri, so agents get the six todo writes (add, change, done, reopen, remove, restore), all request class; MarkTodoRequest carries the last four
             typeof(AddTodoRequest).FullName!,
             typeof(ChangeTodoRequest).FullName!,

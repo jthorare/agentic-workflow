@@ -8,15 +8,13 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Features.SetReviewLogin;
 
 /// <summary>
-/// Saves 'review.login' the way 'sindri profile set' does (comments and order kept, the edited text read and checked before the atomic write), then settles the approval
-/// (<see cref="LoginApproval"/>). The owner's own action: a launched session is refused (SND-AUTH-002).
+/// Saves 'review.login' the way 'sindri profile set' does (comments and order kept, the edited text read and checked before the atomic write). The owner's own action: a launched session is refused (SND-AUTH-002).
 /// </summary>
 /// <param name="callers">The caller.</param>
 /// <param name="writer">Plans and writes the edit.</param>
 /// <param name="parser">Reads the edited text.</param>
 /// <param name="live">The live profile after the write.</param>
-/// <param name="approval">Approves when the login is the only waiting change.</param>
-internal sealed class SetReviewLoginService(ICallerContextAccessor callers, IProfileKeyWriter writer, IProfileTextParser parser, IProfileSource live, LoginApproval approval)
+internal sealed class SetReviewLoginService(ICallerContextAccessor callers, IProfileKeyWriter writer, IProfileTextParser parser, IProfileSource live)
     : IService<SetReviewLoginRequest, SetReviewLoginResponse>
 {
     private const string Key = "review.login";
@@ -51,8 +49,7 @@ internal sealed class SetReviewLoginService(ICallerContextAccessor callers, IPro
             return loaded.Error;
         }
 
-        var approved = await approval.Settle(loaded.Value, request.Login, cancellationToken).ConfigureAwait(false);
-        return approved.IsError ? approved.Error : new SetReviewLoginResponse(request.Login, approved.Value);
+        return new SetReviewLoginResponse(request.Login);
     }
 
     // Plans the edit, has the edited text read and checked (nothing is written on a refusal), then saves it atomically.

@@ -22,6 +22,7 @@ namespace Aw.Sindri.Features.AddConnection;
 /// <param name="ClientSecretEnv">The name of the environment variable that holds the OAuth client secret, for a provider that wants one at the token endpoint (read from serve's environment when 'ClientSecret' is null).</param>
 /// <param name="Key">The key itself, read by the CLI from its own environment. Secret.</param>
 /// <param name="ClientSecret">The OAuth client secret itself, read by the CLI from its own environment. Secret.</param>
+/// <param name="Url">The MCP server's URL; an mcp connection needs it (stored as the connection's 'serverUrl').</param>
 public sealed record AddConnectionRequest(
     string Name,
     string? Preset,
@@ -32,7 +33,8 @@ public sealed record AddConnectionRequest(
     bool Wait,
     string? ClientSecretEnv = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Key = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ClientSecret = null) : ICommand<AddConnectionResponse>
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ClientSecret = null,
+    string? Url = null) : ICommand<AddConnectionResponse>
 {
     /// <summary>A fixed text with the name only: the key and the client secret are not in it.</summary>
     /// <returns>'AddConnectionRequest(&lt;name&gt;)'.</returns>

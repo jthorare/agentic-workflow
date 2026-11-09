@@ -66,13 +66,6 @@ internal sealed class RequestQueryHarness
         await Views.Fold(EventTypes.ServiceRan, new ServiceRan(Views.Slice.Ids.New<CommandId>(), ServiceName.From(service), Views.Slice.Clock.GetUtcNow(), outcome, code));
     }
 
-    public async Task Drift()
-    {
-        Views.Slice.Clock.Advance(TimeSpan.FromMinutes(1));
-        await Views.Fold(EventTypes.ProfileChecked, new ProfileChecked(Views.Slice.Ids.New<CommandId>(), ProfileHash.From(new string('a', 64)), ProfileHash.From(new string('b', 64)),
-            Drifted: true, ["services.index"], [ServiceName.From("heartbeat")]));
-    }
-
     public async Task Start(ItemId item)
     {
         Views.Slice.Clock.Advance(TimeSpan.FromMinutes(1));

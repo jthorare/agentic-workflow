@@ -65,10 +65,7 @@ internal static partial class Labels
     /// <summary>A block that would replace a page the owner already named.</summary>
     internal const string AddSeveralPagesReplaces = "Replaces a page you already named";
 
-    /// <summary>The save button when only these pages wait.</summary>
-    internal const string AddSeveralPagesSaveAllAndApprove = "Save all and approve";
-
-    /// <summary>The save button when other changes wait, or the profile can't be read.</summary>
+    /// <summary>The save button.</summary>
     internal const string AddSeveralPagesSaveAll = "Save all";
 
     /// <summary>The cancel button and close affordance.</summary>

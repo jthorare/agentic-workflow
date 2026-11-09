@@ -90,6 +90,19 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("comments[].author.name"), new("comments[].body"),
     ]);
 
+    /// <summary>memory_search: each recalled fact's text and tags and where it came from (an agent wrote them, perhaps from a connection), and the note.</summary>
+    internal static FencePlan MemoryFacts { get; } = new("sindri:memory",
+    [
+        new("facts[].text"), new("facts[].tags[]"), new("facts[].provenance.workflow"), new("facts[].provenance.run"),
+        new("facts[].provenance.item"), new("facts[].provenance.session"),
+    ]);
+
+    /// <summary>memory_list: each store's description (whoever made it wrote it).</summary>
+    internal static FencePlan MemoryStores { get; } = new("sindri:memory", [new("memories[].description")]);
+
+    /// <summary>memory_create: the new store's description.</summary>
+    internal static FencePlan MemoryStore { get; } = new("sindri:memory", [new("store.description")]);
+
     /// <summary>GET /sindri/todos for a fenced caller: each todo's text (by its last writer) and the two texts of an open conflict.</summary>
     internal static FencePlan Todos { get; } = new("sindri:todo", [new("todos[].text", "lastBy"), new("todos[].conflict.sindri.text"), new("todos[].conflict.obsidian.text")]);
 

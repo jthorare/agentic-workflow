@@ -4,7 +4,7 @@ using Aw.Sindri.Ui.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Context.Concepts;
 
-/// <summary>Add several's write (concept pins spec §3.6 "The write", "Sheet states"): one PinConcepts job for every ticked row, then the shared approve flow.</summary>
+/// <summary>Add several's write (concept pins spec §3.6 "The write", "Sheet states"): one PinConcepts job for every ticked row, then the shared write flow.</summary>
 public sealed class PinSeveralWriteTests
 {
     private static async Task<(PinSeveralFixtures Fixtures, PinSeveralViewModelBox Box)> Ready(string list, PinSeveralFixtures? given = null)
@@ -18,18 +18,6 @@ public sealed class PinSeveralWriteTests
 
     private static string Show(PinSetBody pin) =>
         string.Join('|', pin.Name, pin.Id ?? "-", pin.Summary ?? "-", pin.Aliases is null ? "-" : string.Join(',', pin.Aliases), pin.Features is null ? "-" : string.Join(',', pin.Features));
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task The_button_says_pin_all_and_approve_when_nothing_else_waits_and_pin_all_when_something_does()
-    {
-        var (_, free) = await Ready("Payments");
-        var waiting = new PinSeveralFixtures(pins: null, "repos.api.index.concepts.auth");
-        var other = waiting.Sheet();
-        await other.StartAsync(PinSeveralFixtures.Token);
-
-        Assert.Equal("Pin all and approve", free.Sheet!.SubmitText);
-        Assert.Equal("Pin all", other.SubmitText);
-    }
 
     [Fact, Trait("Lane", "unit")]
     public async Task With_no_row_ticked_the_button_is_disabled_and_says_to_tick_one()
@@ -87,29 +75,14 @@ public sealed class PinSeveralWriteTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_write_that_lands_and_is_approved_closes_the_sheet_and_approves_the_jobs_hash()
+    public async Task A_write_that_lands_closes_the_sheet()
     {
         var fixtures = new PinSeveralFixtures();
         var (_, box) = await Ready("Payments\nRefunds", fixtures);
-        fixtures.Api.ProfileAnswer = PinSeveralFixtures.Profile("h1", "index.concepts.payments", "repos.api.index.concepts.refunds");   // the write's own paths show up only after the sheet opened with nothing waiting
 
         await box.Sheet!.PinAllAsync(PinSeveralFixtures.Token);
 
         Assert.Equal(1, box.Closed);
-        Assert.Equal("h1", Assert.Single(fixtures.Api.ProfileApprovals).Hash);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_write_that_lands_beside_other_waiting_changes_closes_without_approving()
-    {
-        var fixtures = new PinSeveralFixtures(pins: null, "index.pages.schedule-week");
-        fixtures.Api.ProfileAnswer = PinSeveralFixtures.Profile("h1", "index.pages.schedule-week", "index.concepts.payments");
-        var (_, box) = await Ready("Payments", fixtures);
-
-        await box.Sheet!.PinAllAsync(PinSeveralFixtures.Token);
-
-        Assert.Equal(1, box.Closed);
-        Assert.Empty(fixtures.Api.ProfileApprovals);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -123,7 +96,7 @@ public sealed class PinSeveralWriteTests
 
         await box.Sheet.PinAllAsync(PinSeveralFixtures.Token);
 
-        Assert.Equal("The settings changed while you were editing. Your changes are still here. Press Pin all and approve again.", box.Sheet.Message);
+        Assert.Equal("The settings changed while you were editing. Your changes are still here. Press Pin all again.", box.Sheet.Message);
         Assert.Equal(0, box.Closed);
         Assert.Equal("typed since", box.Sheet.Rows[0].Definition);
         Assert.False(box.Sheet.Rows[1].Ticked);
@@ -143,7 +116,7 @@ public sealed class PinSeveralWriteTests
         await box.Sheet.PinAllAsync(PinSeveralFixtures.Token);
 
         Assert.Equal("h1", Assert.Single(fixtures.Api.PinnedConcepts).IfHash);
-        Assert.Equal("The settings changed while you were editing. Your changes are still here. Press Pin all and approve again.", box.Sheet.Message);
+        Assert.Equal("The settings changed while you were editing. Your changes are still here. Press Pin all again.", box.Sheet.Message);
         Assert.Equal(0, box.Closed);
         Assert.Equal("Card payments", box.Sheet.Rows[0].Name);
         Assert.Equal("typed since", box.Sheet.Rows[1].Definition);

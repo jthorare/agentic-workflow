@@ -12,14 +12,7 @@ internal sealed partial class NeedsYouBarViewModel
             return;
         }
 
-        if (Kind == BarKind.Settings)
-        {
-            if (PrimaryEnabled && _confirm is { } confirm)
-            {
-                await confirm.Approve().ConfigureAwait(true);
-            }
-        }
-        else if (Kind == BarKind.Decision)
+        if (Kind == BarKind.Decision)
         {
             await AcceptDecision().ConfigureAwait(true);
         }
@@ -64,7 +57,7 @@ internal sealed partial class NeedsYouBarViewModel
         Refresh();
     }
 
-    /// <summary>D, or the send back button: opens the reason box. A settings request has no send back, so D does nothing there.</summary>
+    /// <summary>D, or the send back button: opens the reason box.</summary>
     /// <returns>A task that completes when the press was handled.</returns>
     internal Task PressSendBack()
     {

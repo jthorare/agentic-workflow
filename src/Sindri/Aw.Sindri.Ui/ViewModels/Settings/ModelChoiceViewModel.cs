@@ -34,8 +34,8 @@ internal sealed class ModelChoiceViewModel : ObservableObject
     /// <summary>The line in words; the off words until the first status.</summary>
     public string Line { get; private set => Set(ref field, value); } = Labels.ModelChoiceOff;
 
-    /// <summary>The three lines Copy puts on the clipboard.</summary>
-    public string CopyText { get; private set => Set(ref field, value); } = Labels.ModelChoiceValidate + "\n" + Labels.ModelChoiceApprove;
+    /// <summary>The lines Copy puts on the clipboard.</summary>
+    public string CopyText { get; private set => Set(ref field, value); } = Labels.ModelChoiceValidate;
 
     /// <summary>"Copy", or "Copied" for 1.5 s after a copy.</summary>
     public string CopyLabel
@@ -56,8 +56,8 @@ internal sealed class ModelChoiceViewModel : ObservableObject
     internal void Show(ProfileView profile)
     {
         ArgumentNullException.ThrowIfNull(profile);
-        Line = profile.NeedsApproval ? Labels.ModelChoiceWaiting : string.Equals(profile.ModelPick, "on", StringComparison.Ordinal) ? Labels.ModelChoiceOn : Labels.ModelChoiceOff;
-        CopyText = string.Join('\n', new[] { profile.Source, Labels.ModelChoiceValidate, Labels.ModelChoiceApprove }.Where(static l => !string.IsNullOrEmpty(l)));
+        Line = string.Equals(profile.ModelPick, "on", StringComparison.Ordinal) ? Labels.ModelChoiceOn : Labels.ModelChoiceOff;
+        CopyText = string.Join('\n', new[] { profile.Source, Labels.ModelChoiceValidate }.Where(static l => !string.IsNullOrEmpty(l)));
     }
 
     /// <summary>Copies the three lines: "Copied" for 1.5 s.</summary>

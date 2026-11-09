@@ -51,7 +51,7 @@ internal static partial class Labels
     internal const string PinSeveralPicker = "Matches the map's concept";
 
     /// <summary>The button that writes every ticked row.</summary>
-    internal static string PinSeveralSubmit(bool approve) => approve ? "Pin all and approve" : "Pin all";
+    internal static string PinSeveralSubmit = "Pin all";
 
     /// <summary>The button while the write runs.</summary>
     internal static string PinSeveralSubmitting(int count) => string.Create(CultureInfo.InvariantCulture, $"Pinning {count}…");

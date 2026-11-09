@@ -20,7 +20,6 @@ internal sealed partial class ShellViewModel
         Context = new ContextPageViewModel(new ContextPorts(api, Health.ApiUrl, clipboard, _clock, Health.Catalog, Health.Follow, launcher, new PageWrites(writes, api, Health.ApiUrl), writes, OpenPinSheet, Prefs: _store));
         WirePageSheet();
         WireAddSeveralPages();
-        Context.ReviewAndApproveRequested += (_, _) => Navigate(LinkOf(ProfileDriftRow));   // a pinned card's Review and approve: the needs-you review the setup step uses
         PinSheetClosed += (_, e) => _ = Context.PinSheetClosed(e.Written, CancellationToken.None);   // a written pin shows its new state, and focus goes back to the button that opened the sheet
         Context.JobRequested += (_, e) => Navigate(e.Link);   // the Building overlay's "View build job"
     }

@@ -7,8 +7,7 @@ port. Nothing in it is installed or pulled for you: it tells you what is missing
 
 ```
 scripts/context-first-run.sh up --dry-run     # read this first: every command it would run, nothing run
-scripts/context-first-run.sh up               # steps 0 to 3, then it stops for your approval
-scripts/context-first-run.sh continue         # after you approve: steps 4 to 8, then it may stop once more
+scripts/context-first-run.sh up               # steps 0 to 8, then it stops for the recipes
 scripts/context-first-run.sh continue         # after you approve the recipes: step 9
 scripts/context-first-run.sh status           # read only
 scripts/context-first-run.sh down             # stop, close the app, delete the scratch home
@@ -16,7 +15,7 @@ scripts/context-first-run.sh down             # stop, close the app, delete the 
 
 `up` and `continue` are the same command. Every step first checks whether its outcome already holds and skips itself if it
 does, so you can run it again after any stop or failure. Exit codes: 0 done, 1 a step failed (the message names the step),
-2 a usage error or a refused setup, 3 stopped for you to approve something.
+2 a usage error or a refused setup, 3 stopped for you to approve a recipe.
 
 ## Before you start
 
@@ -53,19 +52,11 @@ the one repo, the `context-docs-refresh` service, an `index:` section (embedding
 `$AW_SINDRI_HOME/profile/profile.yaml` first if you want something else (`docs/csharp/sindri-profile.md` has every key).
 It then runs `profile validate --json` to get the hash.
 
-**3. Your approval.** Approving a profile is human-only: a session is refused with `SND-AUTH-002`. The script prints the
-exact command and exits 3:
-
-```
-AW_SINDRI_HOME=<home> AW_SINDRI_PORT=7481 <sindri> profile approve <hash>
-```
-
-Type it at your own terminal. It shows what changed and asks you to type `approve profile <first six characters>`. Then run
-`scripts/context-first-run.sh continue`. What to check: the key paths it lists are the repo, the service, `index` and
-`context`, and nothing else.
+**3. Nothing to approve.** Edits apply on save, so the profile written in step 2 is already the live one. The script prints
+that and goes on to step 4.
 
 **4. Serve.** `sindri --headless` starts the control plane and its Temporal dev server without opening the app, then
-`sindri status --json` must say `running` with the profile approved. Logs are in `<home>/logs/serve.log`. `status` exits 1
+`sindri status --json` must say `running`. Logs are in `<home>/logs/serve.log`. `status` exits 1
 while health isn't `healthy`; the script reads the `running` field, not the exit code.
 
 **5. First code index build.** There is no build command by design (the build follows `main` by itself every minute).

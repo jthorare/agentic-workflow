@@ -1,12 +1,12 @@
 {
   "rows": [
     {
-      "id": "decision:DEC-00000000000000000000000000000012",
+      "id": "decision:DEC-00000000000000000000000000000009",
       "kind": "decision",
       "label": "decision · re-scope",
       "subject": {
         "kind": "decision",
-        "id": "DEC-00000000000000000000000000000012"
+        "id": "DEC-00000000000000000000000000000009"
       },
       "item": null,
       "title": "Split the checkout work into two items.",
@@ -21,17 +21,44 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000012 accept",
+      "cli": "sindri decide DEC-00000000000000000000000000000009 accept",
       "open": {
-        "route": "decision/DEC-00000000000000000000000000000012",
+        "route": "decision/DEC-00000000000000000000000000000009",
         "label": "Review and decide"
+      }
+    },
+    {
+      "id": "setup:mcp",
+      "kind": "setup",
+      "label": "setup · connect your agents",
+      "subject": {
+        "kind": "setup",
+        "id": "mcp"
+      },
+      "item": null,
+      "title": "Turn on for your repos",
+      "reason": "Sindri can connect your agents to itself in each of your repos, and keep that up to date. Turn it on once and it does it for you.",
+      "repo": null,
+      "urgency": "colour",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "RegisterMcp",
+      "actions": [
+        "RegisterMcp"
+      ],
+      "cli": "sindri mcp register --apply",
+      "open": {
+        "route": "setup",
+        "label": "Open setup"
       }
     }
   ],
-  "empty": "Rebuilding views (cursor 7 of 7)…",
+  "empty": "Rebuilding views (cursor 3 of 3)…",
   "asOf": {
-    "cursor": 7,
-    "ledgerHead": 7,
+    "cursor": 3,
+    "ledgerHead": 3,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": true,
     "stalled": false

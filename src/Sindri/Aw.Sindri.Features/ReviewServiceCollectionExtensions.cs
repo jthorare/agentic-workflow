@@ -24,7 +24,6 @@ internal static class ReviewServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddScoped<IValidator<SetReviewLoginRequest>, AcceptAllValidator<SetReviewLoginRequest>>().AddCommand<SetReviewLoginRequest, SetReviewLoginResponse, SetReviewLoginService>()
-            .AddScoped<LoginApproval>()
             .AddScoped<IValidator<SendReviewFixRequest>, SendReviewFixValidator>().AddCommand<SendReviewFixRequest, SendReviewFixResponse, SendReviewFixService>()
             .AddScoped<FixThreadPoster>().AddScoped<FixRoute>().AddScoped<FixSentRecorder>().AddScoped<FixTargets>()
             .AddScoped<IFixItems, FixItemMaker>().AddScoped<IReviewRepos, ContextReviewRepos>();

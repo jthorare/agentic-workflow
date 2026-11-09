@@ -7,10 +7,10 @@ using Aw.Sindri.Core.Profile;
 namespace Aw.Sindri.Features.RegisterMcp;
 
 /// <summary>
-/// The cheap check a RegisterMcp start makes inside the gate (setup-once spec §5.4): the repo is named by the approved profile snapshot, never the live file (SND-SETUP-004 otherwise), so the code is a real
+/// The cheap check a RegisterMcp start makes inside the gate (setup-once spec §5.4): the repo is named by the profile snapshot, never the live file (SND-SETUP-004 otherwise), so the code is a real
 /// HTTP error before any job is claimed. It keeps the repo it resolved for the job key and the work, keyed by the request itself.
 /// </summary>
-/// <param name="approvals">The approved profile snapshot.</param>
+/// <param name="approvals">The profile snapshot.</param>
 /// <param name="resolved">Keeps what was worked out for the job key and the work (the singleton the job registration shares).</param>
 internal sealed class RegisterMcpAdmission(IApprovedProfile approvals, ResolvedMcpRepos? resolved = null) : IJobAdmission<RegisterMcpJobRequest>
 {
@@ -32,8 +32,8 @@ internal sealed class RegisterMcpAdmission(IApprovedProfile approvals, ResolvedM
         if (entry is null || !RepoName.TryFrom(entry.Name, out var name))
         {
             return SindriErrors.SetupRepoNotInProfile.With(request.Repo is { } asked
-                ? $"'{asked}' is not a repo the approved profile names (fix: add the repo, approve the profile, then try again)"
-                : "name the repo (fix: pass repo, the approved profile names none or several)");
+                ? $"'{asked}' is not a repo the profile names (fix: add the repo, then try again)"
+                : "name the repo (fix: pass repo, the profile names none or several)");
         }
 
         _resolved.Keep(request, name);

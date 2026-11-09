@@ -33,7 +33,7 @@ internal sealed class SyncIndexSourceService(ContextScopes scopes, IContextEngin
 
         if (scope.Value.Settings is null)
         {
-            return SindriErrors.InvalidInput.With("the approved profile has no 'context:' section, so no source is synced (fix: sindri profile edit)");
+            return SindriErrors.InvalidInput.With("the profile has no 'context:' section, so no source is synced (fix: sindri profile edit)");
         }
 
         jobs.Current?.Progress.Report($"syncing {source.Value}");

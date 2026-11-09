@@ -5,18 +5,19 @@ using Aw.Sindri.Tests.ContextCalls;
 
 namespace Aw.Sindri.Tests.Mcp;
 
-/// <summary>/sindri/mcp tools/list after API P8: the seven context tools first, then the ten sindri_* tools (API spec §8; sindri_projects from the Projects page spec §6.2; sindri_todos and sindri_todo from the todo spec §4.4), then the five connection_* tools (connections PR 10a).</summary>
+/// <summary>/sindri/mcp tools/list after API P8: the seven context tools first, then the ten sindri_* tools (API spec §8; sindri_projects from the Projects page spec §6.2; sindri_todos and sindri_todo from the todo spec §4.4), then the six connection_* tools (connections PR 10a), then the five memory_* tools (agent-first PR 13).</summary>
 public sealed class SindriToolsListTests(PlainMcpHost plain) : IClassFixture<PlainMcpHost>
 {
     private static readonly string[] _expected =
     [
         "context_query", "context_sources", "context_lenses", "context_concepts", "context_pages", "context_node", "context_neighbors",
         "sindri_status", "sindri_queue", "sindri_item", "sindri_item_timeline", "sindri_pending_decisions", "sindri_job", "sindri_projects", "sindri_request", "sindri_todos", "sindri_todo",
-        "connection_list", "connection_get", "connection_add", "connection_test", "connection_remove",
+        "connection_list", "connection_get", "connection_add", "connection_signin", "connection_test", "connection_remove",
+        "memory_list", "memory_create", "memory_search", "memory_write", "memory_forget",
     ];
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Tools_list_names_the_context_tools_first_then_the_ten_sindri_tools_then_the_five_connection_tools()
+    public async Task Tools_list_names_the_context_tools_first_then_the_ten_sindri_tools_then_the_six_connection_tools()
     {
         var ct = TestContext.Current.CancellationToken;
         var host = plain.Host;

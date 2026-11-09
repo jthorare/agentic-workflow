@@ -196,7 +196,7 @@
               </StackPanel>
             </Button>
             <Button x:Name="NeedsYouSendBack" Classes="bar-button" IsVisible="{Binding Bar.ShowsSendBack}" IsEnabled="{Binding Bar.SendBackEnabled}" Click="OnSendBack"
-                    ToolTip.Tip="{Binding Bar.SendBackTooltip}" ToolTip.ShowOnDisabled="True" AutomationProperties.Name="{Binding Bar.SendBackName}" AutomationProperties.HelpText="{Binding Bar.SendBackTooltip}">
+                    AutomationProperties.Name="{Binding Bar.SendBackName}">
               <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
                 <TextBlock Text="{Binding Bar.SendBackWord}" VerticalAlignment="Center" />
                 <Border Classes="kbd"><TextBlock Classes="kbd" Text="D" /></Border>

@@ -25,18 +25,12 @@ public sealed class AppConfirmRoutesTests
     private static (string Name, string Value)[] App(GoldenHost host) =>
         [(SindriHeaders.Caller, "human"), (SindriHeaders.Client, "ui"), (SindriHeaders.Token, host.Token.Value)];
 
-    private static (string Name, string Value)[] Session => [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, "cli")];
-
     private static void After(GoldenHost host, TimeSpan time) => ((FakeTimeProvider)host.App.Services.GetRequiredService<TimeProvider>()).Advance(time);
 
-    private static async Task<GoldenHost> Started(FakeShippedRecipes? shipped = null, bool approved = true)
+    private static async Task<GoldenHost> Started(FakeShippedRecipes? shipped = null)
     {
         var host = await Start(shipped ?? new FakeShippedRecipes(ApproveAllFixtures.StepAndItem()), Token);
-        if (approved)
-        {
-            await ViewScenarios.Approve(host, Token);
-        }
-
+        await ViewScenarios.Approve(host, Token);
         return host;
     }
 
@@ -48,32 +42,14 @@ public sealed class AppConfirmRoutesTests
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task The_app_approves_the_profile_with_a_typed_challenge()
+    public async Task The_app_starts_approve_all_with_no_body()
     {
-        await using var host = await Started(approved: false);
-        var hash = (await host.LiveHash(Token)).Value;
-        var action = "approve profile " + hash[..6];
-        var issued = await Issue(host, action);
-        After(host, IssuedChallenge.EarliestAnswer);
+        await using var host = await Started();
 
-        var approved = await host.Http.Ask(Post("/sindri/profile/approve",
-            $$$"""{"hash":"{{{hash}}}","answer":{"challenge":"{{{issued.GetProperty("challenge").GetString()}}}","typed":"{{{action}}}"}}""", App(host)));
-
-        Assert.Equal(("typed", HttpStatusCode.OK), (issued.GetProperty("confirm").GetString(), approved.Status));
-        Assert.True(JsonDocument.Parse(approved.Body).RootElement.GetProperty("approved").GetBoolean());
-    }
-
-    [Fact, Trait("Lane", "integration")]
-    public async Task The_app_starts_approve_all_with_no_body_and_a_session_approves_the_profile_with_no_challenge()
-    {
-        await using var host = await Started(approved: false);
-        var hash = (await host.LiveHash(Token)).Value;
-
-        var profile = await host.Http.Ask(Post("/sindri/profile/approve", $$"""{"hash":"{{hash}}"}""", Session));
         var started = await host.Http.Ask(Post(PlanRoute, json: null, App(host)));
         await JobHost.Settle(host, Token);
 
-        Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (profile.Status, started.Status));
+        Assert.Equal(HttpStatusCode.OK, started.Status);
         var again = await host.Http.Ask(Get(PlanRoute, Human(host.Token.Value)));
         Assert.Empty(JsonDocument.Parse(again.Body).RootElement.GetProperty("recipes").EnumerateArray());
     }
@@ -101,15 +77,4 @@ public sealed class AppConfirmRoutesTests
 
         Assert.Equal([(HttpStatusCode.Forbidden, "SND-AUTH-002")], new[] { revoke, stop }.Select(static a => (a.Status, a.Code)).Distinct().ToArray());
     }
-
-    [Fact, Trait("Lane", "integration")]
-    public async Task Approve_all_before_a_profile_is_approved_has_no_app_challenge()
-    {
-        await using var host = await Started(approved: false);
-
-        var challenge = await host.Http.Ask(Post(AppChallenge, """{"action":"approve-all c41e07"}""", App(host)));
-
-        Assert.Equal((HttpStatusCode.Conflict, "SND-SETUP-007"), (challenge.Status, challenge.Code));
-    }
-
 }

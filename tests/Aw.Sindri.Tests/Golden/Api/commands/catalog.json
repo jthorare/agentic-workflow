@@ -11,7 +11,7 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/connections",
-      "cli": "sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>]",
+      "cli": "sindri connection add <name> [--preset <preset>] [--kind <kind>] [--client-id <id>] [--client-secret-env <name>] [--key-env <name>] [--url <address>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -286,24 +286,6 @@
       "method": "POST",
       "route": "/sindri/workflow/recipes/approve-all",
       "cli": "sindri recipe approve-all",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "ApproveProfile",
-      "class": "protected",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/profile/approve",
-      "cli": "sindri profile approve [<hash>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -615,6 +597,24 @@
       "confirm": null
     },
     {
+      "action": "CreateMemory",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/memories",
+      "cli": "sindri memory create <name> [--description <text>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "Decide",
       "class": "decision",
       "allowedCallers": [
@@ -720,6 +720,24 @@
       "cli": "sindri agents focus <ref>",
       "ui": "pending:CO-4a",
       "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ForgetMemoryFact",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "DELETE",
+      "route": "/sindri/memories/{name}/facts",
+      "cli": "sindri memory forget <name> [--fact <id>] [--tag <tag>] [--expired]",
+      "ui": "ready",
+      "destructive": true,
       "readsViews": false,
       "shortcut": null,
       "confirm": null
@@ -1797,6 +1815,24 @@
       "confirm": null
     },
     {
+      "action": "SignInConnection",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/connections/{name}/signin",
+      "cli": "sindri connection signin <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "StartInstance",
       "class": "desk",
       "allowedCallers": [
@@ -1916,6 +1952,24 @@
       "route": null,
       "cli": "sindri profile validate",
       "ui": "cli-only:local",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "WriteMemoryFact",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/memories/{name}/facts",
+      "cli": "sindri memory write <name> <text> [--tag <tag>] [--expires-at <time>]",
+      "ui": "ready",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,

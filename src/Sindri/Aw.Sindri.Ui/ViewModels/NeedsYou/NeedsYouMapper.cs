@@ -95,7 +95,6 @@ internal static class NeedsYouMapper
     {
         NeedsYouKinds.Decision => new StateChip("DECISION", ChipTone.Attn),
         NeedsYouKinds.Failure => new StateChip("FAILED", ChipTone.Fail),
-        NeedsYouKinds.Profile => new StateChip("PROFILE", ChipTone.Attn),
         _ => new StateChip(kind.ToUpperInvariant(), ChipTone.Attn),
     };
 }
