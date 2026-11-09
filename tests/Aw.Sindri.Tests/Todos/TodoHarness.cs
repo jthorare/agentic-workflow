@@ -72,7 +72,7 @@ internal sealed partial class TodoHarness
 
     internal GetTodoService Get() => new(Views.Views, Views.Progress, Slice.Callers);
 
-    internal GetTodoNoteService Note() => new(Views.Progress, Slice.Callers, NoteSync, NoteLocator, Slice.Store, Views.Views);
+    internal GetTodoNoteService Note() => new(Views.Progress, Slice.Callers, NoteSync, NoteLocator, Slice.Store, Views.Views, new TodoNoteReads(Picks, new TodoHolds(Slice.Store, Slice.Events), NoteFile, Slice.Store, Slice.Clock));
 
     internal TodoNoteSyncStub NoteSync { get; } = new();
 

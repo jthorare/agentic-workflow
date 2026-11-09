@@ -21151,3 +21151,5 @@ static Aw.Sindri.Core.Connections.SignInTry.operator !=(Aw.Sindri.Core.Connectio
 static Aw.Sindri.Core.Connections.SignInTry.operator ==(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.get -> string?
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.init -> void
+Aw.Sindri.Core.Todos.Note.NoteBrokenLines
+static Aw.Sindri.Core.Todos.Note.NoteBrokenLines.Of(Aw.Sindri.Core.Todos.Note.NoteDocument! document) -> System.Collections.Generic.IReadOnlyList<(int Line, string! Reason)>!

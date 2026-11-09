@@ -17,7 +17,8 @@ namespace Aw.Sindri.Features.GetTodoNote;
 /// <param name="locator">Finds the note the profile names.</param>
 /// <param name="ledger">Reads the last sync.</param>
 /// <param name="views">The todos.</param>
-internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContextAccessor callers, ITodoNoteSync note, INoteLocator locator, ILedgerReader ledger, IViewReader views) : IService<GetTodoNoteRequest, GetTodoNoteResponse>
+/// <param name="reads">The hold, the picks and the lines that can't sync.</param>
+internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContextAccessor callers, ITodoNoteSync note, INoteLocator locator, ILedgerReader ledger, IViewReader views, TodoNoteReads reads) : IService<GetTodoNoteRequest, GetTodoNoteResponse>
 {
     public async ValueTask<Result<GetTodoNoteResponse>> Handle(GetTodoNoteRequest request, CancellationToken cancellationToken)
     {
@@ -43,7 +44,15 @@ internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContext
 
         var synced = await ledger.Latest(EventTypes.TodoNoteSynced, cancellationToken).ConfigureAwait(false);
         var conflicts = rows.Value.Where(static r => r.Conflict is not null).OrderBy(static r => r.Sequence).Select(static r => r.Id.Value).ToList();
-        return Answer(asOf, located, current, synced.IsSuccess ? synced.Value?.Envelope.OccurredAt : null, conflicts);
+        var hold = await reads.Hold(rows.Value, cancellationToken).ConfigureAwait(false);
+        if (hold.IsError)
+        {
+            return hold.Error;
+        }
+
+        var cantSync = await reads.CantSync(cancellationToken).ConfigureAwait(false);
+        var answer = Answer(asOf, located, current, synced.IsSuccess ? synced.Value?.Envelope.OccurredAt : null, conflicts);
+        return answer with { Hold = hold.Value, Picks = reads.Picks(), CantSync = cantSync };
     }
 
     private static GetTodoNoteResponse Answer(AsOf asOf, Result<NotePlace?> located, TodoNoteStatus current, DateTimeOffset? lastSync, List<string> conflicts)

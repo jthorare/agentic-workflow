@@ -46,6 +46,7 @@ internal static class TodoServiceCollectionExtensions
             .AddSingleton<TodoPickWindow>()
             .AddSingleton<ITodoNoteSource, TodoNoteSource>()
             .AddScoped<TodoHolds>()
+            .AddScoped<TodoNoteReads>()
             .AddScoped<TodoConverger>()
             .AddScoped<TodoPickWrites>()
             .AddScoped<TodoAdds>()
