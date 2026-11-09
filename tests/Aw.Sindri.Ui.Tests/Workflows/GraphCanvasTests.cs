@@ -24,6 +24,7 @@ public sealed class GraphCanvasTests
     {
         Dispatcher.UIThread.RunJobs();
         window.UpdateLayout();
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick();   // an InvalidateVisual draws only on a render tick, which headless never fires by itself
         Dispatcher.UIThread.RunJobs();
     }
 
