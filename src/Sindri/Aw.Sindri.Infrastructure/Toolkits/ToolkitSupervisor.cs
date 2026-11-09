@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Toolkits;
 
 namespace Aw.Sindri.Infrastructure.Toolkits;
@@ -18,7 +20,7 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
     /// <summary>The window the crashes are counted in.</summary>
     internal static readonly TimeSpan Window = TimeSpan.FromMinutes(10);
 
-    private readonly Dictionary<string, Running> _running = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Running> _running = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     public async ValueTask<Result<Unit>> Start(Toolkit toolkit, CancellationToken cancellationToken)
@@ -38,7 +40,7 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
                 return launched.Error;
             }
 
-            var running = new Running(launched.Value);
+            var running = new Running(launched.Value, toolkit);
             running.Watcher = Task.Run(() => Watch(toolkit, running), CancellationToken.None);
             _running[toolkit.Name] = running;
             return Unit.Value;
@@ -56,7 +58,7 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (!_running.Remove(name, out running))
+            if (!_running.TryRemove(name, out running))
             {
                 return Unit.Value;   // not running is already stopped
             }
@@ -68,6 +70,30 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
 
         await End(running).ConfigureAwait(false);
         return Unit.Value;
+    }
+
+    /// <summary>The toolkits that have a live process right now, as 'running'; one waiting out a restart backoff or given up on has none.</summary>
+    /// <returns>The toolkits in name order.</returns>
+    internal IReadOnlyList<Toolkit> RunningNow() =>
+        [.. _running.Values.Where(static r => r.Process is not null).Select(static r => r.Toolkit with { State = ToolkitState.Running }).OrderBy(static t => t.Name, StringComparer.Ordinal)];
+
+    /// <summary>Calls one tool of a running toolkit.</summary>
+    /// <param name="name">The toolkit name.</param>
+    /// <param name="tool">The tool name.</param>
+    /// <param name="argumentsJson">The arguments as a JSON object.</param>
+    /// <param name="timeout">How long to wait for the answer.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The tool's answer, SND-TK-001 when the toolkit isn't running, or what the process answers (SND-TK-004, -006, -007, -011).</returns>
+    internal ValueTask<Result<string>> Call(string name, string tool, string argumentsJson, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        if (!_running.TryGetValue(name, out var running))
+        {
+            return ValueTask.FromResult<Result<string>>(SindriErrors.ToolkitNotBuilt.With($"Toolkit '{name}' isn't running (fix: toolkit_start)"));
+        }
+
+        return running.Process is { } process
+            ? process.Call(tool, argumentsJson, timeout, cancellationToken)
+            : ValueTask.FromResult<Result<string>>(SindriErrors.ToolkitProcessDied.With($"Toolkit '{name}' is restarting after a crash (fix: try again in a few seconds)"));
     }
 
     public async ValueTask DisposeAsync()
@@ -143,8 +169,10 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         }
     }
 
-    private sealed class Running(IToolkitProcess first)
+    private sealed class Running(IToolkitProcess first, Toolkit toolkit)
     {
+        internal Toolkit Toolkit { get; } = toolkit;
+
         internal IToolkitProcess? Process { get; set; } = first;
 
         internal Task Watcher { get; set; } = Task.CompletedTask;
