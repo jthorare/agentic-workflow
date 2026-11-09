@@ -91,6 +91,12 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-009` | Consent was denied at the provider. | run the command again and allow access |
 | `SND-CONN-010` | A connection with that name exists. | pick another label, or `sindri connection remove` it first |
 | `SND-CONN-011` | The connection uses a key, so it has no browser sign-in to run again. | `sindri connection remove` it, then add it with a new `--key-env` |
+| `SND-CONN-201` | The handoff inbox's answer breaks the inbox contract; the message names the field. | fix the inbox so it answers as `schemas/handoff/inbox.openapi.yaml` says (docs/sindri/handoff.md) |
+| `SND-CONN-202` | Another caller claimed the offer first. Informational: nothing starts. | none; the next poll lists what is still open |
+| `SND-CONN-203` | The handoff inbox has no such offer any more (unknown or expired). | none; the offer is gone |
+| `SND-CONN-204` | The handoff inbox did not take the result. | check the inbox is up and the claim id is the one the claim returned; the submit is retried |
+| `SND-CONN-205` | The handoff inbox is out of reach, did not answer in 30 seconds, or kept answering 429 or 5xx. | check the connection's base URL and that the inbox is up; list is tried again on the next poll |
+| `SND-CONN-206` | The handoff inbox's host is not on the allowlist, or its URL is not https (http is allowed for loopback only). | use the inbox's https URL and add its host to the allowlist |
 | `SND-MEM-001` | No memory has that name. | `sindri memory list` shows the names |
 | `SND-MEM-002` | A memory with that name exists. | pick another name |
 | `SND-MEM-003` | A fact is empty or longer than 2,000 characters. | shorten the text |

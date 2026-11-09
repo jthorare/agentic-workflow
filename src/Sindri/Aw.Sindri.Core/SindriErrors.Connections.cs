@@ -36,4 +36,22 @@ public static partial class SindriErrors
 
     /// <summary>SND-CONN-011: the connection is key-based and has no browser sign-in to run again.</summary>
     public static readonly ErrorDefinition ConnectionKindNoSignIn = new("SND-CONN-011", ErrorKind.Invalid, "This connection uses a key, not a browser sign-in");
+
+    /// <summary>SND-CONN-201: the handoff inbox answered something that breaks the contract (the message names the field).</summary>
+    public static readonly ErrorDefinition InboxContractViolation = new("SND-CONN-201", ErrorKind.Invalid, "The handoff inbox's answer breaks the inbox contract");
+
+    /// <summary>SND-CONN-202: another caller claimed the offer first. Informational: nothing starts.</summary>
+    public static readonly ErrorDefinition InboxClaimLost = new("SND-CONN-202", ErrorKind.Conflict, "Another caller claimed the offer first");
+
+    /// <summary>SND-CONN-203: the offer is not there any more (unknown or expired).</summary>
+    public static readonly ErrorDefinition InboxOfferGone = new("SND-CONN-203", ErrorKind.NotFound, "The handoff inbox has no such offer any more");
+
+    /// <summary>SND-CONN-204: the handoff inbox did not take the result.</summary>
+    public static readonly ErrorDefinition InboxSubmitFailed = new("SND-CONN-204", ErrorKind.Unavailable, "The handoff inbox did not take the result");
+
+    /// <summary>SND-CONN-205: the handoff inbox is out of reach or did not answer in time.</summary>
+    public static readonly ErrorDefinition InboxUnavailable = new("SND-CONN-205", ErrorKind.Unavailable, "The handoff inbox is out of reach");
+
+    /// <summary>SND-CONN-206: the inbox's host is not on the allowlist, or its URL is not https (http is allowed for loopback only).</summary>
+    public static readonly ErrorDefinition InboxHostNotAllowed = new("SND-CONN-206", ErrorKind.Forbidden, "The handoff inbox's host is not allowed");
 }

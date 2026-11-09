@@ -20216,3 +20216,113 @@ static Aw.Sindri.Core.Todos.TodoItem.operator !=(Aw.Sindri.Core.Todos.TodoItem? 
 static Aw.Sindri.Core.Todos.TodoItem.operator ==(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator !=(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator ==(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
+Aw.Sindri.Core.Handoff.ClaimResult
+Aw.Sindri.Core.Handoff.ClaimResult.<Clone>$() -> Aw.Sindri.Core.Handoff.ClaimResult!
+Aw.Sindri.Core.Handoff.ClaimResult.ClaimKey.get -> string!
+Aw.Sindri.Core.Handoff.ClaimResult.ClaimKey.init -> void
+Aw.Sindri.Core.Handoff.ClaimResult.ClaimResult(string! ClaimKey, Aw.Sindri.Core.Handoff.Offer! Offer) -> void
+Aw.Sindri.Core.Handoff.ClaimResult.Deconstruct(out string! ClaimKey, out Aw.Sindri.Core.Handoff.Offer! Offer) -> void
+Aw.Sindri.Core.Handoff.ClaimResult.Equals(Aw.Sindri.Core.Handoff.ClaimResult? other) -> bool
+Aw.Sindri.Core.Handoff.ClaimResult.Offer.get -> Aw.Sindri.Core.Handoff.Offer!
+Aw.Sindri.Core.Handoff.ClaimResult.Offer.init -> void
+Aw.Sindri.Core.Handoff.HandoffLink
+Aw.Sindri.Core.Handoff.HandoffLink.<Clone>$() -> Aw.Sindri.Core.Handoff.HandoffLink!
+Aw.Sindri.Core.Handoff.HandoffLink.Deconstruct(out string! Label, out string! Url) -> void
+Aw.Sindri.Core.Handoff.HandoffLink.Equals(Aw.Sindri.Core.Handoff.HandoffLink? other) -> bool
+Aw.Sindri.Core.Handoff.HandoffLink.HandoffLink(string! Label, string! Url) -> void
+Aw.Sindri.Core.Handoff.HandoffLink.Label.get -> string!
+Aw.Sindri.Core.Handoff.HandoffLink.Label.init -> void
+Aw.Sindri.Core.Handoff.HandoffLink.Url.get -> string!
+Aw.Sindri.Core.Handoff.HandoffLink.Url.init -> void
+Aw.Sindri.Core.Handoff.IInboxClient
+Aw.Sindri.Core.Handoff.IInboxClient.Claim(Aw.Sindri.Core.Handoff.InboxTarget! target, string! offerKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Handoff.ClaimResult!>!>
+Aw.Sindri.Core.Handoff.IInboxClient.ListOffers(Aw.Sindri.Core.Handoff.InboxTarget! target, string? pageToken, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Handoff.OfferPage!>!>
+Aw.Sindri.Core.Handoff.IInboxClient.Submit(Aw.Sindri.Core.Handoff.InboxTarget! target, string! offerKey, Aw.Sindri.Core.Handoff.InboxResult! result, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Handoff.InboxResult
+Aw.Sindri.Core.Handoff.InboxResult.<Clone>$() -> Aw.Sindri.Core.Handoff.InboxResult!
+Aw.Sindri.Core.Handoff.InboxResult.ClaimKey.get -> string!
+Aw.Sindri.Core.Handoff.InboxResult.ClaimKey.init -> void
+Aw.Sindri.Core.Handoff.InboxResult.Deconstruct(out string! ClaimKey, out bool Succeeded, out string! Markdown, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>! Links) -> void
+Aw.Sindri.Core.Handoff.InboxResult.Equals(Aw.Sindri.Core.Handoff.InboxResult? other) -> bool
+Aw.Sindri.Core.Handoff.InboxResult.InboxResult(string! ClaimKey, bool Succeeded, string! Markdown, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>! Links) -> void
+Aw.Sindri.Core.Handoff.InboxResult.Links.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>!
+Aw.Sindri.Core.Handoff.InboxResult.Links.init -> void
+Aw.Sindri.Core.Handoff.InboxResult.Markdown.get -> string!
+Aw.Sindri.Core.Handoff.InboxResult.Markdown.init -> void
+Aw.Sindri.Core.Handoff.InboxResult.Succeeded.get -> bool
+Aw.Sindri.Core.Handoff.InboxResult.Succeeded.init -> void
+Aw.Sindri.Core.Handoff.InboxTarget
+Aw.Sindri.Core.Handoff.InboxTarget.<Clone>$() -> Aw.Sindri.Core.Handoff.InboxTarget!
+Aw.Sindri.Core.Handoff.InboxTarget.BaseUrl.get -> System.Uri!
+Aw.Sindri.Core.Handoff.InboxTarget.BaseUrl.init -> void
+Aw.Sindri.Core.Handoff.InboxTarget.Credential.get -> Aw.Sindri.Core.Connections.TokenSet!
+Aw.Sindri.Core.Handoff.InboxTarget.Credential.init -> void
+Aw.Sindri.Core.Handoff.InboxTarget.Deconstruct(out System.Uri! BaseUrl, out Aw.Sindri.Core.Connections.TokenSet! Credential, out string! Owner) -> void
+Aw.Sindri.Core.Handoff.InboxTarget.Equals(Aw.Sindri.Core.Handoff.InboxTarget? other) -> bool
+Aw.Sindri.Core.Handoff.InboxTarget.InboxTarget(System.Uri! BaseUrl, Aw.Sindri.Core.Connections.TokenSet! Credential, string! Owner) -> void
+Aw.Sindri.Core.Handoff.InboxTarget.Owner.get -> string!
+Aw.Sindri.Core.Handoff.InboxTarget.Owner.init -> void
+Aw.Sindri.Core.Handoff.Offer
+Aw.Sindri.Core.Handoff.Offer.<Clone>$() -> Aw.Sindri.Core.Handoff.Offer!
+Aw.Sindri.Core.Handoff.Offer.Branch.get -> string?
+Aw.Sindri.Core.Handoff.Offer.Branch.init -> void
+Aw.Sindri.Core.Handoff.Offer.Deconstruct(out string! Key, out string! Title, out string! Repo, out string? Branch, out string? Prompt, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>! Links, out System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
+Aw.Sindri.Core.Handoff.Offer.Equals(Aw.Sindri.Core.Handoff.Offer? other) -> bool
+Aw.Sindri.Core.Handoff.Offer.Key.get -> string!
+Aw.Sindri.Core.Handoff.Offer.Key.init -> void
+Aw.Sindri.Core.Handoff.Offer.Labels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Handoff.Offer.Labels.init -> void
+Aw.Sindri.Core.Handoff.Offer.Links.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>!
+Aw.Sindri.Core.Handoff.Offer.Links.init -> void
+Aw.Sindri.Core.Handoff.Offer.Offer(string! Key, string! Title, string! Repo, string? Branch, string? Prompt, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>! Links, System.Collections.Generic.IReadOnlyList<string!>! Labels) -> void
+Aw.Sindri.Core.Handoff.Offer.Prompt.get -> string?
+Aw.Sindri.Core.Handoff.Offer.Prompt.init -> void
+Aw.Sindri.Core.Handoff.Offer.Repo.get -> string!
+Aw.Sindri.Core.Handoff.Offer.Repo.init -> void
+Aw.Sindri.Core.Handoff.Offer.Title.get -> string!
+Aw.Sindri.Core.Handoff.Offer.Title.init -> void
+Aw.Sindri.Core.Handoff.OfferPage
+Aw.Sindri.Core.Handoff.OfferPage.<Clone>$() -> Aw.Sindri.Core.Handoff.OfferPage!
+Aw.Sindri.Core.Handoff.OfferPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.Offer!>! Offers, out string? NextPageToken) -> void
+Aw.Sindri.Core.Handoff.OfferPage.Equals(Aw.Sindri.Core.Handoff.OfferPage? other) -> bool
+Aw.Sindri.Core.Handoff.OfferPage.NextPageToken.get -> string?
+Aw.Sindri.Core.Handoff.OfferPage.NextPageToken.init -> void
+Aw.Sindri.Core.Handoff.OfferPage.OfferPage(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.Offer!>! Offers, string? NextPageToken) -> void
+Aw.Sindri.Core.Handoff.OfferPage.Offers.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.Offer!>!
+Aw.Sindri.Core.Handoff.OfferPage.Offers.init -> void
+override Aw.Sindri.Core.Handoff.ClaimResult.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Handoff.ClaimResult.GetHashCode() -> int
+override Aw.Sindri.Core.Handoff.ClaimResult.ToString() -> string!
+override Aw.Sindri.Core.Handoff.HandoffLink.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Handoff.HandoffLink.GetHashCode() -> int
+override Aw.Sindri.Core.Handoff.HandoffLink.ToString() -> string!
+override Aw.Sindri.Core.Handoff.InboxResult.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Handoff.InboxResult.GetHashCode() -> int
+override Aw.Sindri.Core.Handoff.InboxResult.ToString() -> string!
+override Aw.Sindri.Core.Handoff.InboxTarget.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Handoff.InboxTarget.GetHashCode() -> int
+override Aw.Sindri.Core.Handoff.InboxTarget.ToString() -> string!
+override Aw.Sindri.Core.Handoff.Offer.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Handoff.Offer.GetHashCode() -> int
+override Aw.Sindri.Core.Handoff.Offer.ToString() -> string!
+override Aw.Sindri.Core.Handoff.OfferPage.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Handoff.OfferPage.GetHashCode() -> int
+override Aw.Sindri.Core.Handoff.OfferPage.ToString() -> string!
+static Aw.Sindri.Core.Handoff.ClaimResult.operator !=(Aw.Sindri.Core.Handoff.ClaimResult? left, Aw.Sindri.Core.Handoff.ClaimResult? right) -> bool
+static Aw.Sindri.Core.Handoff.ClaimResult.operator ==(Aw.Sindri.Core.Handoff.ClaimResult? left, Aw.Sindri.Core.Handoff.ClaimResult? right) -> bool
+static Aw.Sindri.Core.Handoff.HandoffLink.operator !=(Aw.Sindri.Core.Handoff.HandoffLink? left, Aw.Sindri.Core.Handoff.HandoffLink? right) -> bool
+static Aw.Sindri.Core.Handoff.HandoffLink.operator ==(Aw.Sindri.Core.Handoff.HandoffLink? left, Aw.Sindri.Core.Handoff.HandoffLink? right) -> bool
+static Aw.Sindri.Core.Handoff.InboxResult.operator !=(Aw.Sindri.Core.Handoff.InboxResult? left, Aw.Sindri.Core.Handoff.InboxResult? right) -> bool
+static Aw.Sindri.Core.Handoff.InboxResult.operator ==(Aw.Sindri.Core.Handoff.InboxResult? left, Aw.Sindri.Core.Handoff.InboxResult? right) -> bool
+static Aw.Sindri.Core.Handoff.InboxTarget.operator !=(Aw.Sindri.Core.Handoff.InboxTarget? left, Aw.Sindri.Core.Handoff.InboxTarget? right) -> bool
+static Aw.Sindri.Core.Handoff.InboxTarget.operator ==(Aw.Sindri.Core.Handoff.InboxTarget? left, Aw.Sindri.Core.Handoff.InboxTarget? right) -> bool
+static Aw.Sindri.Core.Handoff.Offer.operator !=(Aw.Sindri.Core.Handoff.Offer? left, Aw.Sindri.Core.Handoff.Offer? right) -> bool
+static Aw.Sindri.Core.Handoff.Offer.operator ==(Aw.Sindri.Core.Handoff.Offer? left, Aw.Sindri.Core.Handoff.Offer? right) -> bool
+static Aw.Sindri.Core.Handoff.OfferPage.operator !=(Aw.Sindri.Core.Handoff.OfferPage? left, Aw.Sindri.Core.Handoff.OfferPage? right) -> bool
+static Aw.Sindri.Core.Handoff.OfferPage.operator ==(Aw.Sindri.Core.Handoff.OfferPage? left, Aw.Sindri.Core.Handoff.OfferPage? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.InboxClaimLost -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.InboxContractViolation -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.InboxHostNotAllowed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.InboxOfferGone -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.InboxSubmitFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.InboxUnavailable -> Aw.Kernel.ErrorDefinition!
