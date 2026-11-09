@@ -7,5 +7,5 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Slug">Its slug.</param>
 /// <param name="Revision">The revision the change made, activated or left active; for a pause or an archive, the latest revision.</param>
 /// <param name="SpecHash">The revision's spec hash, or null for a pause or an archive.</param>
-/// <param name="By">Who did it: 'owner' or 'session:&lt;id&gt;'.</param>
+/// <param name="By">Who did it: the caller's actor, as the command context carries it.</param>
 public sealed record WorkflowChangedPayload(WorkflowId WorkflowId, WorkflowSlug Slug, int Revision, string? SpecHash, string By);

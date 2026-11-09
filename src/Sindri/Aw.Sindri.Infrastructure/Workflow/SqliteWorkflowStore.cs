@@ -47,6 +47,12 @@ internal sealed class SqliteWorkflowStore(LedgerDatabase database, TimeProvider 
                 return record.Error;
             }
 
+            // why: the service read the record in an earlier transaction, so a delete can land in between; the archived check is repeated here
+            if (record.Value.ArchivedAt is not null)
+            {
+                return SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec under another slug (an archived slug stays reserved)");
+            }
+
             if (record.Value.LatestRevision != baseRevision)
             {
                 return SindriErrors.GraphStaleRevision.With(string.Create(CultureInfo.InvariantCulture, $"you edited revision {baseRevision}, but the latest is {record.Value.LatestRevision}. Read it again and retry"));
@@ -85,7 +91,7 @@ internal sealed class SqliteWorkflowStore(LedgerDatabase database, TimeProvider 
             var record = await RecordIn(session, id, token).ConfigureAwait(false);
             if (record.IsError || record.Value.ArchivedAt is not null)
             {
-                return record.IsError ? record.Error : SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec to run it again");
+                return record.IsError ? record.Error : SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec under another slug (an archived slug stays reserved) to run it again");
             }
 
             var pinned = await RecipeSessions.Execute(session, new SqlStatement(WorkflowSql.Pin, c => c.Bind("$id", id.Value).Bind("$revision", revision)), token).ConfigureAwait(false);

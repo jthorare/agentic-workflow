@@ -151,6 +151,21 @@ public abstract class WorkflowStoreContract
         Expect.True((await store.Get(_id, Token)).Value.ActiveRevision is null);
     }
 
+    /// <summary>A save on an archived workflow is refused and adds no revision (a delete can land between a service's read and its save).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Save_on_an_archived_workflow_is_refused_and_adds_no_revision()
+    {
+        var store = Create();
+        _ = (await store.Create(_id, _slug, Spec("one"), "owner", Token)).Value;
+        _ = (await store.Archive(_id, Token)).Value;
+
+        var saved = await store.Save(_id, 1, Spec("two"), "owner", Token);
+
+        Expect.Equal(SindriErrors.GraphArchived.Code, saved.Error.Code);
+        Expect.Equal(1, (await store.Get(_id, Token)).Value.LatestRevision);
+    }
+
     /// <summary>A workflow nobody created is not found.</summary>
     /// <returns>The test.</returns>
     [Fact]

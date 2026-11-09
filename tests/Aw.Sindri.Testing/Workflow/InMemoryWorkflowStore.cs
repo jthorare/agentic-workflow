@@ -46,6 +46,11 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
                 return Done<WorkflowRevision>(NotFound(id));
             }
 
+            if (entry.ArchivedAt is not null)
+            {
+                return Done<WorkflowRevision>(Archived(id));
+            }
+
             if (entry.Revisions.Count != baseRevision)
             {
                 return Done<WorkflowRevision>(SindriErrors.GraphStaleRevision.With(string.Create(CultureInfo.InvariantCulture, $"you edited revision {baseRevision}, but the latest is {entry.Revisions.Count}. Read it again and retry")));
@@ -142,7 +147,7 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
 
     private static Error IdTaken(WorkflowId id) => SindriErrors.GraphIdTaken.With($"the id '{id.Value}' belongs to another workflow; read it or pick a new id");
 
-    private static Error Archived(WorkflowId id) => SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec to run it again");
+    private static Error Archived(WorkflowId id) => SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec under another slug (an archived slug stays reserved) to run it again");
 
     private static Error NotFound(WorkflowId id) => SindriErrors.GraphNotFound.With($"no workflow or revision for '{id.Value}'; list the workflows to see what exists");
 

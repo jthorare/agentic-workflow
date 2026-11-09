@@ -57,7 +57,7 @@ internal sealed class ActivateWorkflowService(IWorkflowStore workflows, IWorkflo
         }
 
         return record.ArchivedAt is not null
-            ? SindriErrors.GraphArchived.With($"'{slug.Value}' is archived; create a new workflow from its spec to run it again")
+            ? SindriErrors.GraphArchived.With($"'{slug.Value}' is archived; create a new workflow from its spec under another slug (an archived slug stays reserved) to run it again")
             : record;
     }
 
