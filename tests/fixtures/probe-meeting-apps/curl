@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Stub curl for probe-meeting-apps.test.sh. A url with "granola" answers MCP, one with "wispr" answers REST only (a GET is 200, a POST 404);
+# STUB_FAIL=<text in the url> exits 22 for that url.
+out="" data="" url=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -o) out="$2"; shift 2 ;; --data) data="$2"; shift 2 ;; -K|-w|--max-time|-X) shift 2 ;;
+    http*) url="$1"; shift ;; *) shift ;;
+  esac
+done
+echo "curl ran url=$url data=$data" >> "$STUB_LOG"
+if [ -n "${STUB_FAIL:-}" ] && [[ "$url" == *"$STUB_FAIL"* ]]; then exit 22; fi
+write() { if [ "$out" != /dev/null ]; then printf '%s' "$1" > "$out"; fi; }
+case "$url" in
+  *granola*)
+    case "$data" in
+      *'"initialize"'*) write 'data: {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{}}}'; printf 200 ;;
+      *'"tools/list"'*) write '{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"list_meetings"},{"name":"get_meeting_notes"}]}}'; printf 200 ;;
+      *) write '{}'; printf 200 ;;
+    esac ;;
+  *wispr*)
+    case "$data" in
+      '') write '[{"title":"SECRET-MEETING-TITLE"}]'; printf 200 ;;
+      *) write 'not found'; printf 404 ;;
+    esac ;;
+  *) write ''; printf 404 ;;
+esac
