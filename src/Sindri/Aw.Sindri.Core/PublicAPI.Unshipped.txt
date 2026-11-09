@@ -20628,6 +20628,8 @@ static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Parse(System.Text.Json.Nodes.J
 static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Problems(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
 static Aw.Sindri.Core.Graph.Blocks.RunAgentBrief.Render(Aw.Sindri.Core.Launch.NodeRunAddress! address, Aw.Sindri.Core.Launch.RunToken token, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig! config) -> string!
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
 static Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Standard.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!

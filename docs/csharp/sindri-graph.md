@@ -152,7 +152,7 @@ The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every min
 
 ## Loops (`for_each`, `collect`; PR 9)
 
-Pages: `docs/workflows/blocks/for_each.md` and `collect.md`. A `for_each` node and the one `collect` it reaches bound a loop; the loop is every node between them (`LoopBody.Find`).
+Pages: `docs/workflows/block-for_each.md` and `block-collect.md` (top level, so they are embedded and searched like the other `block-*` pages). A `for_each` node and the one `collect` it reaches bound a loop; the loop is every node between them (`LoopBody.Find`).
 
 How it runs, in order:
 
