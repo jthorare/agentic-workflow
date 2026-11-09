@@ -651,6 +651,10 @@ class Lint:
             return nlines[path]
         checked = 0
         wt_hits = []
+        self.citations = getattr(self, "citations", [])
+        def rec(x, path, how):
+            self.citations.append({"path": path, "from": x.get("from"), "to": x.get("to"), "section": x.get("section"), "resolved": how,
+                                   "checked_sha": ref if how in ("sha", "head") else None})
         for text, x in uniq.items():
             path, a, b = x.get("path") or "", x.get("from"), x.get("to")
             f, l = self.locate("`" + text + "`")
@@ -661,15 +665,19 @@ class Lint:
                 local = os.path.expanduser(path)
             if local:
                 n = len(open(local, "rb").read().split(b"\n"))
+                rec(x, path, "packet")
             elif path in files:
                 n = count(path)
                 checked += 1
+                rec(x, path, "sha" if verified else "head")
             elif not verified and os.path.isfile(os.path.join(repo, path)):
                 # untracked or newer than HEAD: check the working tree and say so once
                 n = len(open(os.path.join(repo, path), "rb").read().split(b"\n"))
                 checked += 1
                 wt_hits.append(path)
+                rec(x, path, "working_tree")
             else:
+                rec(x, path, "missing")
                 suffix = sorted(p for p in by_base.get(path.rsplit("/", 1)[-1], []) if p.endswith("/" + path))
                 if suffix:
                     # a short form of a real file: the link the compiler builds (repo_url/blob/sha/<short>) is dead at any commit
@@ -1141,7 +1149,7 @@ def main(argv):
     if opts["json"]:
         with open(opts["json"], "w", encoding="utf-8") as fh:
             json.dump({"packet": lint.root, "build": None if lint.compiled else lint.build, "compiled": lint.compiled, "findings": lint.findings,
-                       "notes": lint.notes, "counts": {"errors": errs, "warnings": warns,
+                       "notes": lint.notes, "citations": getattr(lint, "citations", []), "counts": {"errors": errs, "warnings": warns,
                        "by_rule": {r: sum(1 for f in lint.findings if f["rule"] == r) for r in RULES}}}, fh, indent=1, ensure_ascii=False)
     return 1 if errs or (opts["strict"] and warns) else 0
 

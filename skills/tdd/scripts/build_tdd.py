@@ -143,14 +143,18 @@ def link_refs(html_body, ids, families, glossary, stats, seen=None):
     def tok(m):
         raw = m.group(1)
         tid = token_id(raw)
+        fam = re.match(r"[A-Z]+", raw).group(0)
+        links = stats.setdefault("links", [])
         if tid in ids:
             stats["linked"] += 1
+            links.append({"token": raw, "family": fam, "section": stats.get("section"), "anchor": tid, "linked": True})
             return f'<a class="ref" href="#{tid}" data-ref="{tid}">{raw}</a>'
-        fam = re.match(r"[A-Z]+", raw).group(0)
         if fam in families:
             stats["linked"] += 1
+            links.append({"token": raw, "family": fam, "section": stats.get("section"), "anchor": families[fam].lstrip("#"), "linked": True})
             return f'<a class="ref ref-family" href="{families[fam]}" data-ref="{families[fam].lstrip("#")}">{raw}</a>'
         stats["unlinked"].append(raw)
+        links.append({"token": raw, "family": fam, "section": stats.get("section"), "anchor": None, "linked": False})
         return f'<span class="ref-missing" data-ref="{tid}">{raw}</span>'
     def ab(m):
         g = m.group(1)
@@ -725,9 +729,16 @@ class Compiler:
                 state = "held"
         anchor = self.uid(attrs.get("id") or token_id(did))
         body = self.nodes(blocks, dict(ctx, p_class=""))
-        first_p = next((strip_tags(n["html"]) for n in body if n["type"] == "p"), "")
+        paras = [html.unescape(strip_tags(n["html"])) for n in body if n["type"] == "p"]
+        first_p = paras[0] if paras else ""
+        reading = next((t for t in paras if t.lower().startswith("read as")), "")
+        quote = first_p if first_p != reading else ""
+        status_text = self.text_of(status)
+        m_date = re.search(r"\d{4}-\d{2}-\d{2}", status_text)
+        by = re.split(r"[,·]", status_text, 1)[0].strip() if status_text else ""
         self.define(anchor, "decision", f"{did} · {question}", first_p)
-        self.decisions.append({"id": did, "anchor": anchor, "question": self.text_of(question), "status": self.text_of(status), "state": state, "section": self.cur_section["id"] if self.cur_section else None})
+        self.decisions.append({"id": did, "anchor": anchor, "question": self.text_of(question), "status": status_text, "state": state, "section": self.cur_section["id"] if self.cur_section else None,
+                               "quote": quote, "reading": reading, "decidedBy": by, "decidedOn": m_date.group(0) if m_date else None})
         self.nav_sub(anchor, f"{did} · {self.text_of(question)}", attrs)
         return {"type": "decision", "id": anchor, "did": did, "question": self.inline(question), "status": self.inline(status), "state": state, "wide": bool(attrs.get("wide")), "blocks": body}
 
@@ -867,8 +878,10 @@ class Compiler:
             if href.startswith("#") and href[1:] not in self.ids:
                 self.warn.append(f"refs family {fam} points at {href}, which is not an anchor on the page")
         for sec in out_sections:
+            stats["section"] = sec.get("id")
             self.link_tree(sec, families, stats, seen=set())
         lede = [self.para(b["text"], {"p_class": ""}, "lead") for b in pre if b["t"] == "p"]
+        stats["section"] = "lede"
         self.link_tree(lede, families, stats, seen=set())
         words = len(re.findall(r"[A-Za-z0-9'’]+", re.sub(r"```.*?```|\]\([^)]*\)|[`*_#|\[\]()>{}-]", " ", src_text, flags=re.S)))
         for u in sorted(set(stats["unlinked"])):
@@ -886,7 +899,7 @@ class Compiler:
             "lede": lede,
             "nav": [{"id": s["id"], "num": s["num"], "title": s["titleText"], "subs": s["subs"]} for s in out_sections],
             "sections": out_sections, "defs": self.defs, "anchors": self.anchors, "decisions": self.decisions, "cites": self.cites,
-            "glossary": self.glossary, "schema": self.schema, "refs": {"linked": stats["linked"], "unlinked": sorted(set(stats["unlinked"]))},
+            "glossary": self.glossary, "schema": self.schema, "refs": {"linked": stats["linked"], "unlinked": sorted(set(stats["unlinked"])), "links": stats.get("links", [])},
             "stats": {"sections": len(out_sections), "diagrams": self.fig_no, "prs": self.pr_count, "decisions": len(self.decisions), "words": words, "readingMinutes": max(1, round(words / 230))},
         }
         os.makedirs(self.out_dir, exist_ok=True)
