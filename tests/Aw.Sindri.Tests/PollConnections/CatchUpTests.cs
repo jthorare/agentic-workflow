@@ -19,7 +19,11 @@ public sealed class CatchUpTests
 
     private async Task<ReadOutcome> Read(ScriptedEventPoller poller, int pages, string? cursor)
     {
-        await _world.Connect();
+        if (_world.Connections.Held.Current is null)
+        {
+            await _world.Connect();
+        }
+
         var run = await _world.Connections.Tick();
         var connection = (await _world.Connections.Store.Get(PollWorld.Name, PollWorld.Token)).Value;
         var saved = cursor is null ? null : new PollCursor(PollWorld.Name, PollWorld.Kind, cursor, null, null, null, 0);
@@ -88,5 +92,24 @@ public sealed class CatchUpTests
         Assert.True(read.Capped);
         Assert.Equal("c9", await SavedCursor());
         Assert.Equal(1, _world.Recorded().Count(static t => t == EventTypes.CatchUpCapped));
+    }
+
+    [Fact]
+    public async Task Two_different_deliveries_on_the_same_occurrence_both_start_a_run_and_a_repeat_is_still_a_duplicate()
+    {
+        _world.Occurrence = static _ => 123_456_789;   // force a hash collision
+        var poller = new ScriptedEventPoller("linear", (_, _) => PollWorld.Page("c1", PollWorld.Event("linear:h-1"), PollWorld.Event("linear:h-2")));
+
+        _ = await Read(poller, pages: 1, cursor: "c0");
+
+        Assert.Equal(2, _world.Starter.Requests.Count);
+        Assert.Equal([123_456_789, 123_456_790], _world.Starter.Requests.Select(static r => r.Occurrence));
+        Assert.DoesNotContain(EventTypes.WorkflowTriggerSkipped, _world.Recorded());
+
+        // the same two events again: each finds its own run, so neither starts a second one
+        _ = await Read(poller, pages: 1, cursor: "c0");
+
+        Assert.Equal(2, _world.Starter.Requests.Count);
+        Assert.Equal(2, _world.Recorded().Count(static t => t == EventTypes.WorkflowTriggerSkipped));
     }
 }

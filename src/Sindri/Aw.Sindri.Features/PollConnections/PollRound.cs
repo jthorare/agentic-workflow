@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
@@ -28,10 +29,15 @@ internal sealed record RoundOutcome(PollCursor Cursor, IReadOnlyList<string> Key
 /// <param name="cursors">Where cursors are saved.</param>
 /// <param name="events">Records the skipped triggers.</param>
 /// <param name="clock">The time.</param>
-internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, ConnectionEvents events, TimeProvider clock)
+/// <param name="runs">Reads an existing run, to tell an exact repeat of a delivery from another delivery that hashed to the same occurrence.</param>
+/// <param name="occurrenceOf">The delivery id to occurrence function; <see cref="DeliveryOccurrence.Of"/> when null (a test forces a collision).</param>
+internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, ConnectionEvents events, TimeProvider clock, IWorkflowRunStore runs, Func<string, int>? occurrenceOf = null)
 {
     private const string Concurrency = "concurrency";
     private const string Duplicate = "duplicate";
+    private const int Probes = 5;
+    private const int Last = 999_999_999;
+    private const int First = 100_000_000;
 
     internal async ValueTask<Result<RoundOutcome>> Run(PollGroup group, Connection connection, IEventPoller poller, PollCursor? saved, LeaseGrant grant, CancellationToken cancellationToken)
     {
@@ -84,27 +90,59 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
     }
 
     // True when a run started or queued; false when the trigger was skipped (and recorded). Any other failure is the round's error.
+    // why: the occurrence is a hash, so two deliveries can share one. SND-GRAPH-100 is a duplicate only when the run that holds the id carries THIS delivery id; otherwise the next occurrence number is tried.
     private async ValueTask<Result<bool>> Start(PollGroup group, PollTrigger trigger, PolledEvent polled, LeaseGrant grant, CancellationToken cancellationToken)
     {
-        var request = new GraphStartRequest(trigger.Workflow, trigger.Slug, trigger.Revision, DeliveryOccurrence.Of(polled.DeliveryKey), TriggerMatch.Trigger(group.Connection, polled), trigger.Concurrency);
-        var begun = await starter.Start(request, cancellationToken).ConfigureAwait(false);
-        if (begun.IsError && string.Equals(begun.Error.Code, SindriErrors.GraphRunIdTaken.Code, StringComparison.Ordinal))
+        var json = TriggerMatch.Trigger(group.Connection, polled);
+        var occurrence = (occurrenceOf ?? DeliveryOccurrence.Of)(polled.DeliveryKey);
+        for (var probe = 0; probe < Probes; probe++)
         {
-            await events.TriggerSkipped(trigger.Slug.Value, group.Connection, group.Kind, polled.DeliveryKey, Duplicate, grant, cancellationToken).ConfigureAwait(false);
-            return false;
+            var request = new GraphStartRequest(trigger.Workflow, trigger.Slug, trigger.Revision, occurrence, json, trigger.Concurrency);
+            var begun = await starter.Start(request, cancellationToken).ConfigureAwait(false);
+            if (begun.IsError && string.Equals(begun.Error.Code, SindriErrors.GraphRunIdTaken.Code, StringComparison.Ordinal))
+            {
+                var holder = await runs.Get(WorkflowRunId.Of(trigger.Slug, trigger.Revision, occurrence), cancellationToken).ConfigureAwait(false);
+                if (holder.IsError)
+                {
+                    return holder.Error;
+                }
+
+                if (string.Equals(DeliveryOf(holder.Value.Trigger), polled.DeliveryKey, StringComparison.Ordinal))
+                {
+                    await events.TriggerSkipped(trigger.Slug.Value, group.Connection, group.Kind, polled.DeliveryKey, Duplicate, grant, cancellationToken).ConfigureAwait(false);
+                    return false;
+                }
+
+                occurrence = occurrence >= Last ? First : occurrence + 1;
+                continue;
+            }
+
+            if (begun.IsError)
+            {
+                return begun.Error;
+            }
+
+            if (begun.Value.Kind == GraphStartKind.Skipped)
+            {
+                await events.TriggerSkipped(trigger.Slug.Value, group.Connection, group.Kind, polled.DeliveryKey, Concurrency, grant, cancellationToken).ConfigureAwait(false);
+                return false;
+            }
+
+            return true;
         }
 
-        if (begun.IsError)
-        {
-            return begun.Error;
-        }
+        return SindriErrors.GraphRunIdTaken.With($"{Probes} run ids in a row are held by other deliveries; the cursor stays and the next poll tries again");   // why: never drop a real event silently
+    }
 
-        if (begun.Value.Kind == GraphStartKind.Skipped)
+    private static string? DeliveryOf(string trigger)
+    {
+        try
         {
-            await events.TriggerSkipped(trigger.Slug.Value, group.Connection, group.Kind, polled.DeliveryKey, Concurrency, grant, cancellationToken).ConfigureAwait(false);
-            return false;
+            return JsonNode.Parse(trigger) is JsonObject json && json["deliveryId"] is JsonValue value && value.TryGetValue<string>(out var id) ? id : null;
         }
-
-        return true;
+        catch (System.Text.Json.JsonException)   // boundary: a trigger that is not JSON is not this delivery's
+        {
+            return null;
+        }
     }
 }

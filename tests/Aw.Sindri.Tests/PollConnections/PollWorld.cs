@@ -75,7 +75,9 @@ internal sealed class PollWorld
 
     public static Result<PollResult> Page(string? next, params PolledEvent[] events) => new PollResult(events, next, RateLimited: false, RetryAfter: null);
 
-    public PollRound Round() => new(Starter, Cursors, Connections.Events(), Connections.Clock);
+    public Func<string, int>? Occurrence { get; set; }
+
+    public PollRound Round() => new(Starter, Cursors, Connections.Events(), Connections.Clock, Runs, Occurrence);
 
     public CatchUp CatchUp() => new(Round(), Connections.Events());
 
