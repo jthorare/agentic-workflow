@@ -12,7 +12,7 @@ public sealed partial class GraphValidator
 {
     private static readonly HashSet<string> _scopeRoots = new(["trigger", "item", "itemIndex", "workflow"], StringComparer.Ordinal);
 
-    // why: the fields Scope.Root("workflow") builds in Aw.Sindri.Workflows/GraphBlockActivities.cs; change both together
+    // why: the fields Scope.Root("workflow") builds in Aw.Sindri.Workflows/GraphNodeScope.cs; change both together
     private static readonly string[] _workflowFields = ["id", "name", "revision", "runId"];
 
     private void References(NodeScope scope, List<GraphFinding> found)
