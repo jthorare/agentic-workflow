@@ -13,7 +13,7 @@ Do not use "shall", legal phrases or filler. Say "to" where you would say "in or
 - Do not use vague verbs: "handle", "manage", "deal with", "process" alone. Say the action: "refuses", "retries", "writes".
 - Put steps in a numbered list, one action per step. Put a set of things that are not steps in a bullet list.
 
-These rules set structure, not tone. Write a reply to the owner in their casual voice (`config/voice/joi.md`).
+These rules set structure, not tone. Write a reply to the owner in their casual voice (`config/voice/reply.md`).
 
 ## Diagrams
 

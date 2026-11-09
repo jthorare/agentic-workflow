@@ -15,6 +15,7 @@ internal static class SindriWorker
     public static TemporalWorkerOptions Options(TemporalSettings settings, WorkerActivities activities) =>
         new TemporalWorkerOptions(settings.TaskQueue)
             .AddWorkflow<RecipeWorkflow>()
+            .AddWorkflow<GraphWorkflow>()
             .AddAllActivities(activities.Steps)
             .AddAllActivities(activities.Events)
             .AddAllActivities(activities.Items)
@@ -26,5 +27,7 @@ internal static class SindriWorker
             .AddAllActivities(activities.Engine.Literals)
             .AddAllActivities(activities.Engine.Linked)
             .AddAllActivities(activities.Inputs)
-            .AddAllActivities(activities.Agents);
+            .AddAllActivities(activities.Agents)
+            .AddAllActivities(activities.Graph.Runs)
+            .AddAllActivities(activities.Graph.Blocks);
 }

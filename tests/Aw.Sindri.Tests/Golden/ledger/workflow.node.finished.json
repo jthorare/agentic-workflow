@@ -1,0 +1,8 @@
+{
+  "runId": "nightly@3:12",
+  "nodeId": "fetch",
+  "itemIndex": 2,
+  "status": "succeeded",
+  "truncated": true,
+  "by": "service:workflow"
+}

@@ -1,0 +1,108 @@
+using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
+using Temporalio.Activities;
+using Temporalio.Exceptions;
+
+namespace Aw.Sindri.Infrastructure.Workflows;
+
+/// <summary>
+/// The activities that read and write a run (issue 2258, PR 6): load its spec, mark it running, record each node run and mirror it into the ledger,
+/// and end it (which also starts the next queued run of a 'queue' workflow). Every ledger row is keyed by its fact, so a retried activity records it once.
+/// </summary>
+/// <param name="runs">Where runs and node runs live.</param>
+/// <param name="workflows">Where the revisions live.</param>
+/// <param name="queue">Starts the next queued run when one ends.</param>
+/// <param name="mirror">Appends the events to the ledger.</param>
+internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore workflows, IGraphQueueAdvance queue, GraphMirror mirror)
+{
+    /// <summary>Reads the spec of the revision the run walks.</summary>
+    /// <param name="run">The run.</param>
+    /// <returns>The spec.</returns>
+    [Activity("GraphLoad")]
+    public async Task<GraphSpec> LoadAsync(WorkflowRunId run)
+    {
+        var cancel = ActivityExecutionContext.Current.CancellationToken;
+        var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
+        return GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+    }
+
+    /// <summary>Marks the run running and mirrors it as started.</summary>
+    /// <param name="run">The run.</param>
+    /// <returns>Completes when both are written.</returns>
+    [Activity("GraphBegin")]
+    public async Task BeginAsync(WorkflowRunId run)
+    {
+        var cancel = ActivityExecutionContext.Current.CancellationToken;
+        var row = GraphFailures.Value(await runs.SetStatus(run, WorkflowRunStatus.Running, outputs: null, error: null, cancel).ConfigureAwait(false));
+        if (row.Status != WorkflowRunStatus.Running)
+        {
+            return;   // why: the run already ended (the store refuses a move out of a final status), so there is nothing to start and no event to write
+        }
+
+        await mirror.AppendStarted(row, cancel).ConfigureAwait(false);
+    }
+
+    /// <summary>Writes one node run row and mirrors it as started, finished or failed ('skipped' and 'cancelled' are finished rows with that status).</summary>
+    /// <param name="nodeRun">The node run.</param>
+    /// <returns>Completes when both are written.</returns>
+    [Activity("GraphRecordNode")]
+    public async Task RecordNodeAsync(NodeRun nodeRun)
+    {
+        ArgumentNullException.ThrowIfNull(nodeRun);
+        var cancel = ActivityExecutionContext.Current.CancellationToken;
+        // why: the node row keeps the block's input and error, which can carry prompt or trigger text; they are scrubbed like the ledger payloads. The output stays as it is: later nodes read it.
+        var scrubbed = nodeRun with { Input = mirror.Clean(nodeRun.Input), Error = mirror.Clean(nodeRun.Error) };
+        var stored = GraphFailures.Value(await runs.RecordNodeRun(scrubbed, cancel).ConfigureAwait(false));
+        var item = GraphFailures.Value(await runs.Get(nodeRun.RunId, cancel).ConfigureAwait(false)).ItemId?.Value;
+        var prefix = $"{stored.RunId.Value}:{stored.NodeId.Value}:{stored.ItemIndex.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        switch (stored.Status)
+        {
+            case NodeRunStatus.Running:
+                await mirror.Append(EventTypes.WorkflowNodeStarted, new WorkflowNodeStartedPayload(stored.RunId, stored.NodeId, stored.ItemIndex, GraphMirror.By), $"{EventTypes.WorkflowNodeStarted}:{prefix}", item, cancel).ConfigureAwait(false);
+                break;
+            case NodeRunStatus.Failed:
+                await mirror.Append(EventTypes.WorkflowNodeFailed, new WorkflowNodeFailedPayload(stored.RunId, stored.NodeId, stored.ItemIndex, mirror.Clean(stored.Error) ?? string.Empty, GraphMirror.By), $"{EventTypes.WorkflowNodeFailed}:{prefix}", item, cancel).ConfigureAwait(false);
+                break;
+            case NodeRunStatus.Waiting:
+            case NodeRunStatus.Succeeded:
+            case NodeRunStatus.Skipped:
+            case NodeRunStatus.Cancelled:
+            default:
+                await mirror.Append(EventTypes.WorkflowNodeFinished, new WorkflowNodeFinishedPayload(stored.RunId, stored.NodeId, stored.ItemIndex, GraphMirror.Name(stored.Status), stored.Truncated, GraphMirror.By), $"{EventTypes.WorkflowNodeFinished}:{prefix}", item, cancel).ConfigureAwait(false);
+                break;
+        }
+    }
+
+    /// <summary>Gives the run its final status, mirrors it, then starts the oldest queued run of the same workflow.</summary>
+    /// <param name="finish">How the run ended.</param>
+    /// <returns>Completes when the status is written, mirrored, and the next queued run is started.</returns>
+    [Activity("GraphFinish")]
+    public async Task FinishAsync(GraphFinish finish)
+    {
+        ArgumentNullException.ThrowIfNull(finish);
+        var cancel = ActivityExecutionContext.Current.CancellationToken;
+        var ended = GraphFailures.Value(await runs.SetStatus(finish.Run, finish.Status, outputs: null, finish.Error, cancel).ConfigureAwait(false));
+        if (ended.Status == finish.Status)
+        {
+            // why: the store refuses to move a run that already ended, so a different status here means another writer ended it first and its event stands; the same status is this
+            // activity's own retry, and the keyed events are recorded once. The start is appended too (same key as the begin step) for a run cancelled before it began.
+            await mirror.AppendStarted(ended, cancel).ConfigureAwait(false);
+            if (finish.Status == WorkflowRunStatus.Cancelled)
+            {
+                await mirror.Append(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(finish.Run, mirror.Clean(finish.Error), GraphMirror.By), $"{EventTypes.WorkflowRunCancelled}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
+            }
+            else
+            {
+                await mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(finish.Run, GraphMirror.Name(finish.Status), mirror.Clean(finish.Error), GraphMirror.By), $"{EventTypes.WorkflowRunFinished}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
+            }
+        }
+
+        var next = await queue.StartNextQueued(ended.WorkflowId, cancel).ConfigureAwait(false);
+        if (next.IsError)
+        {
+            throw new ApplicationFailureException(next.Error.Message, errorType: next.Error.Code);   // why: retried without end while Temporal is unreachable, so a queued run is not left waiting; the starter put the promoted run back to queued, and the retry's status write and events are no-ops (the end is already recorded)
+        }
+    }
+}

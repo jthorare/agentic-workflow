@@ -48,6 +48,7 @@ internal static class ApiScenarios
         ["LinearWrite"] = LinearWriteScenarios.All,
         ["LinearConnection"] = LinearConnectionScenarios.All,
         ["ConnectionSignIn"] = ConnectionSignInScenarios.All,
+        ["WorkflowRuns"] = WorkflowRunScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -98,7 +99,7 @@ internal static class ApiScenarios
 
     /// <summary>The host of a Projects-group or Todos-group scenario.</summary>
     private static Task<GoldenHost> StartProjectOrTodo(string slug, string scenario, CancellationToken ct) =>
-        TodoScenarios.Handles(slug, scenario) ? TodoScenarios.Start(ct) : ProjectScenarios.Start(slug, scenario, ct);
+        TodoScenarios.Handles(slug, scenario) ? TodoScenarios.Start(slug, ct) : ProjectScenarios.Start(slug, scenario, ct);
 
     /// <summary>Whether the scenario belongs to the Linear hub's reads (the issue list and sheet, the lookups and the strip).</summary>
     private static bool IsLinear(string slug, string scenario) => LinearIssueScenarios.Handles(slug, scenario) || LinearReadScenarios.Handles(slug, scenario) || LinearWriteScenarios.Handles(slug, scenario) || LinearConnectionScenarios.Handles(slug, scenario);
@@ -153,7 +154,7 @@ internal static class ApiScenarios
         }
 
         var token = host.Token.Value;
-        if (Delegated(host, slug, scenario, ct) is { } delegated)
+        if (DelegatedOrWorkflow(host, slug, scenario, ct) is { } delegated)
         {
             return await delegated();
         }
@@ -175,6 +176,10 @@ internal static class ApiScenarios
             _ => await ApproveScenario(host, scenario, ct),
         };
     }
+
+    /// <summary>The scenario's body when the workflow-run class owns it, else <see cref="Delegated"/>'s.</summary>
+    private static Func<Task<string>>? DelegatedOrWorkflow(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
+        WorkflowRunScenarios.Handles(slug, scenario) ? () => WorkflowRunScenarios.Body(host, slug, scenario, ct) : Delegated(host, slug, scenario, ct);
 
     /// <summary>The scenario's body when one of the scenario classes owns it, else null.</summary>
     private static Func<Task<string>>? Delegated(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
