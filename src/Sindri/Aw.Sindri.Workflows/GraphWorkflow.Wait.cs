@@ -17,29 +17,55 @@ internal sealed partial class GraphWorkflow
     private string? _asking;
     private IReadOnlyList<string> _choices = [];
 
-    /// <summary>Takes the answer to the 'ask_owner' node now waiting; the validator has already checked it.</summary>
+    /// <summary>
+    /// Takes the answer to the 'ask_owner' node now waiting. A node whose question is posted but whose wait has not started yet (the block activity is still returning) gets a short bounded wait first,
+    /// so an agent that saw the question can answer it at once.
+    /// </summary>
     /// <param name="input">The answer.</param>
     /// <returns>Who answered.</returns>
     [WorkflowUpdate("Answer")]
-    public Task<string> AnswerAsync(GraphAnswerInput input)
+    public async Task<string> AnswerAsync(GraphAnswerInput input)
     {
         ArgumentNullException.ThrowIfNull(input);
+        if (!string.Equals(_asking, input.Node, StringComparison.Ordinal))
+        {
+            _ = await Workflow.WaitConditionAsync(() => string.Equals(_asking, input.Node, StringComparison.Ordinal), AskingGrace).ConfigureAwait(true);
+        }
+
+        Refuse(input);   // why: the state may have moved while the update waited
         _answers[input.Node] = input;
-        return Task.FromResult(input.By);
+        return input.By;
     }
 
-    /// <summary>Refuses an answer when no question waits at that node, it was answered already, or the answer is not one the node takes.</summary>
+    /// <summary>Refuses an answer when no question waits or can soon wait at that node, it was answered already, or (once the node is waiting) the answer is not one it takes.</summary>
     /// <param name="input">The answer.</param>
     [WorkflowUpdateValidator(nameof(AnswerAsync))]
     public void CheckAnswer(GraphAnswerInput input)
     {
         ArgumentNullException.ThrowIfNull(input);
-        if (!string.Equals(_asking, input.Node, StringComparison.Ordinal) || _answers.ContainsKey(input.Node))
+        var starting = _current is { Type: "ask_owner" } current && string.Equals(current.Id.Value, input.Node, StringComparison.Ordinal);
+        if (!starting && !string.Equals(_asking, input.Node, StringComparison.Ordinal))
         {
-            throw new ApplicationFailureException($"'{input.Node}' is not waiting for an answer", errorType: AnswerRefusal.NotWaiting, nonRetryable: true);
+            throw NotWaiting(input.Node);
         }
 
-        if (AskOwnerBlock.CheckAnswer(_choices, input.Text, input.Choice) is { } problem)
+        Refuse(input, requireAsking: false);
+    }
+
+    private static readonly TimeSpan AskingGrace = TimeSpan.FromSeconds(5);
+
+    private static ApplicationFailureException NotWaiting(string node) => new($"'{node}' is not waiting for an answer", errorType: AnswerRefusal.NotWaiting, nonRetryable: true);
+
+    // why: the choices are known only once the node waits, so a node that has not started waiting yet is checked again by the handler
+    private void Refuse(GraphAnswerInput input, bool requireAsking = true)
+    {
+        var waiting = string.Equals(_asking, input.Node, StringComparison.Ordinal);
+        if (_answers.ContainsKey(input.Node) || (requireAsking && !waiting))
+        {
+            throw NotWaiting(input.Node);
+        }
+
+        if (waiting && AskOwnerBlock.CheckAnswer(_choices, input.Text, input.Choice) is { } problem)
         {
             throw new ApplicationFailureException(problem, errorType: AnswerRefusal.BadAnswer, nonRetryable: true);
         }
@@ -61,12 +87,17 @@ internal sealed partial class GraphWorkflow
         };
     }
 
+    // why: the wait ends at 'wakeAt' as the node promised, not a fixed number of seconds after the activity's result reached the workflow
     private static async Task<GraphBlockOutcome> Sleep(GraphBlockOutcome outcome)
     {
-        var seconds = JsonNode.Parse(outcome.Output ?? "{}")?["waitedSeconds"] is JsonValue v && v.TryGetValue<double>(out var wait) ? wait : 0;
-        if (seconds > 0)
+        var text = JsonNode.Parse(outcome.Output ?? "{}")?["wakeAt"] is JsonValue v && v.TryGetValue<string>(out var at) ? at : null;
+        if (text is not null && DateTimeOffset.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var wakeAt))
         {
-            await Workflow.DelayAsync(TimeSpan.FromSeconds(seconds)).ConfigureAwait(true);
+            var remaining = wakeAt - Workflow.UtcNow;
+            if (remaining > TimeSpan.Zero)
+            {
+                await Workflow.DelayAsync(remaining).ConfigureAwait(true);
+            }
         }
 
         return outcome;
