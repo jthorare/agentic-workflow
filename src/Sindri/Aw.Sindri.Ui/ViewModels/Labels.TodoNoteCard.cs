@@ -149,10 +149,24 @@ internal static partial class Labels
     /// <returns>"Stop syncing with Todo.md? The note stays as it is.".</returns>
     internal static string TodoCardStopAsk(string note) => $"Stop syncing with {NoteFile(note)}? The note stays as it is.";
 
-    /// <summary>A refusal inside the card: the reason first, the key path (if the server named one) last, as served.</summary>
+    /// <summary>A refusal inside the card, by its code: a fixed sentence, never the server's own text (which can hold a path on the owner's disk).</summary>
     /// <param name="error">The failure.</param>
-    /// <returns>The reason.</returns>
-    internal static string TodoCardError(Kernel.Error error) => error.Message;
+    /// <returns>The sentence; a code this build doesn't know gets a generic one that names the code.</returns>
+    internal static string TodoCardError(Kernel.Error error) => error.Code switch
+    {
+        "SND-TODO-002" => "That vault or note path isn't valid. Pick a note inside the vault.",
+        "SND-TODO-007" => "That note path has a character Sindri can't use.",
+        "SND-TODO-008" => "The note has nothing to import.",
+        "SND-TODO-409" => "The note changed while Sindri was reading it. Check it again.",
+        "SND-PROFILE-001" => "Sindri couldn't read its settings. Run `sindri doctor` to see why.",
+        _ => $"Sindri refused that ({error.Code}). Run `sindri doctor` for details.",
+    };
+
+    /// <summary>The import was refused after the key was saved and the key could not be taken back out.</summary>
+    internal const string TodoCardTakeBackFailed = "Sync is on, but nothing was imported. Stop syncing to undo it.";
+
+    /// <summary>A click or a read failed in the app's own code.</summary>
+    internal const string TodoCardUnexpected = "Something went wrong in the app. Try again.";
 
     private static string NoteFile(string note) => note[(note.LastIndexOf('/') + 1)..];
 
@@ -176,10 +190,8 @@ internal static partial class Labels
     internal static string TodoSyncCantSync(IReadOnlyList<Api.TodoCantSyncView> lines) =>
         lines.Count == 1 ? string.Create(CultureInfo.InvariantCulture, $"Line {lines[0].Line} can't sync: {lines[0].Reason}") : string.Create(CultureInfo.InvariantCulture, $"{lines.Count} lines can't sync");
 
-    /// <summary>The sync line when the note can't be read.</summary>
-    /// <param name="reason">The failure's reason, or null.</param>
-    /// <returns>"Obsidian note: can't read, Todo.md is missing".</returns>
-    internal static string TodoSyncCantRead(string? reason) => string.IsNullOrEmpty(reason) ? "Obsidian note: can't read" : $"Obsidian note: can't read, {reason}";
+    /// <summary>The sync line when the note can't be read: "Obsidian note: can't read. Run `sindri doctor` to see why." The server's own reason can hold a path, so it is not shown.</summary>
+    internal const string TodoSyncCantRead = "Obsidian note: can't read. Run `sindri doctor` to see why.";
 
     /// <summary>The sync line while a pick's Undo window runs.</summary>
     /// <param name="seconds">The seconds left.</param>

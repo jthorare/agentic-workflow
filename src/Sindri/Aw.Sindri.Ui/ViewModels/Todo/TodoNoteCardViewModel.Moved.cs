@@ -17,23 +17,31 @@ internal sealed partial class TodoNoteCardViewModel
             return true;
         }
 
-        await TakeBack(url, keyChanged).ConfigureAwait(true);
+        var restored = await TakeBack(url, keyChanged).ConfigureAwait(true);
         await Refused(url, vault, note, imported.Error, cancellationToken).ConfigureAwait(true);
+        if (!restored)
+        {
+            // The key is still on: show the running sync (it has Stop syncing) and say what happened.
+            await Settle(url, cancellationToken).ConfigureAwait(true);
+            ErrorText = ErrorText.Length > 0 ? ErrorText + " " + Labels.TodoCardTakeBackFailed : Labels.TodoCardTakeBackFailed;
+        }
+
         return false;
     }
 
     // The import was refused after the key was saved: put the profile back as it was (the old note while Change edits one, else no key).
-    private async Task TakeBack(Uri url, bool changed)
+    private async Task<bool> TakeBack(Uri url, bool changed)
     {
         if (!changed)
         {
-            return;
+            return true;
         }
 
         var back = _changing && _note is { Vault: { } vault, Note: { } note }
             ? await _api.SetTodoNote(url, vault, note, _profileHash, CancellationToken.None).ConfigureAwait(true)
             : await _api.StopTodoNote(url, _profileHash, CancellationToken.None).ConfigureAwait(true);
         _profileHash = back.IsSuccess ? back.Value.ProfileHash : null;
+        return back.IsSuccess;
     }
 
     // SND-TODO-409 (or any -409) on a set or a stop: the live profile is not the one the last answer's hash named.

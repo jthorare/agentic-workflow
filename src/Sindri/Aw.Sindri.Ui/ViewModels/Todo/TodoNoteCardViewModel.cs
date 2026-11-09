@@ -10,7 +10,7 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
 {
     private static readonly string[] _all =
     [
-        nameof(IsAvailable), nameof(Stage), nameof(ShowNoVaults), nameof(ShowForm), nameof(ShowResult), nameof(ShowSyncing), nameof(ShowStopAsk), nameof(IsConfirmingStop), nameof(Vaults), nameof(SelectedVault), nameof(NoteText),
+        nameof(IsAvailable), nameof(Stage), nameof(ShowReading), nameof(ShowNoVaults), nameof(ShowForm), nameof(ShowResult), nameof(ShowSyncing), nameof(ShowStopAsk), nameof(IsConfirmingStop), nameof(Vaults), nameof(SelectedVault), nameof(NoteText),
         nameof(CanCheck), nameof(ShowCheck), nameof(ResultText), nameof(CountsText), nameof(HasCounts), nameof(CantImportText), nameof(HasCantImport), nameof(OverCapText), nameof(HasOverCap), nameof(OneWayText),
         nameof(HasOneWay), nameof(ShowStart), nameof(ShowStartOneWay), nameof(ShowImport), nameof(ShowCancel), nameof(SyncingText), nameof(StopAskText), nameof(StatusText), nameof(ErrorText), nameof(HasError),
         nameof(IsBusy),
@@ -52,7 +52,7 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
     public IReadOnlyList<string> Vaults { get; private set; } = [];
 
     /// <summary>True while the first read of the setting has no answer yet.</summary>
-    public bool ShowReading => Stage == TodoNoteCardStage.Form && false;   // stub
+    public bool ShowReading => Stage == TodoNoteCardStage.Reading && !HasError;
 
     /// <summary>True when the library has no vault.</summary>
     public bool ShowNoVaults => Stage == TodoNoteCardStage.NoVaults;

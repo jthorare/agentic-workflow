@@ -1,7 +1,5 @@
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.Api.Reviews;
-using Aw.Sindri.Ui.ViewModels.Linear;
 
 namespace Aw.Sindri.Ui.ViewModels.Todo;
 
@@ -12,71 +10,6 @@ internal sealed partial class TodoNoteCardViewModel
 
     // The live profile's hash as the last set or stop answered it; sent back as ifHash so a profile edited somewhere else is refused (409) instead of overwritten. Null until a call answered one.
     private string? _profileHash;
-
-    /// <summary>Reads where the sync stands and the library's vaults. A shown check, or a call in flight, is not disturbed.</summary>
-    /// <param name="url">The API's base URL.</param>
-    /// <param name="cancellationToken">Cancels the reads.</param>
-    /// <returns>A task that completes when the card shows what is true.</returns>
-    internal async Task Refresh(Uri url, CancellationToken cancellationToken)
-    {
-        var note = await _api.TodoNote(url, cancellationToken).ConfigureAwait(true);
-        if (note.IsError)
-        {
-            if (OlderSindri.IsNotServed(note.Error))
-            {
-                IsAvailable = false;
-                Changed();
-            }
-
-            return;   // a Sindri that is down shows its own card elsewhere; the last good card stays
-        }
-
-        IsAvailable = true;
-        var library = await _api.Library(url, cancellationToken).ConfigureAwait(true);
-        if (Held)
-        {
-            return;   // a click came in while the reads ran: its answer is the one to show
-        }
-
-        ApplyVaults(library);
-        ApplyNote(note.Value);
-        Changed();
-    }
-
-    private void ApplyVaults(Result<LibraryView> library)
-    {
-        if (library.IsSuccess)
-        {
-            Vaults = [.. library.Value.Roots.Where(r => string.Equals(r.Kind, "vault", StringComparison.Ordinal)).Select(r => r.Name)];
-        }
-        else
-        {
-            ErrorText = Labels.TodoCardError(library.Error);
-        }
-
-        if (!Vaults.Contains(SelectedVault, StringComparer.Ordinal))
-        {
-            _selectedVault = Vaults.Count > 0 ? Vaults[0] : string.Empty;
-        }
-    }
-
-    // A note that is set shows the settled line (unless Change is editing it); a note that is not, and a card that showed a stale one, show the fields.
-    private void ApplyNote(TodoNoteView set)
-    {
-        if (set.Vault is not null && set.Note is not null && !string.Equals(set.State, "not set", StringComparison.Ordinal))
-        {
-            _note = set;
-            if (!(_changing && Stage == TodoNoteCardStage.Form))
-            {
-                (Stage, _checkedVault, _checkedNote) = (TodoNoteCardStage.Syncing, set.Vault, set.Note);
-            }
-        }
-        else if (Stage is TodoNoteCardStage.Reading or TodoNoteCardStage.NoVaults or TodoNoteCardStage.Syncing)
-        {
-            (_note, IsConfirmingStop) = (null, false);
-            Stage = Vaults.Count > 0 ? TodoNoteCardStage.Form : TodoNoteCardStage.NoVaults;
-        }
-    }
 
     /// <summary>Check note: reads the note and writes nothing.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
@@ -99,9 +32,16 @@ internal sealed partial class TodoNoteCardViewModel
         finally
         {
             IsBusy = false;
+            Changed();
         }
 
         StatusText = string.Empty;
+        if (!string.Equals(_selectedVault, vault, StringComparison.Ordinal) || !string.Equals(_noteText.Trim(), note, StringComparison.Ordinal))
+        {
+            Changed();   // the owner edited the fields during the call: the answer is about a note that is no longer typed
+            return;
+        }
+
         if (read.IsError)
         {
             (_check, ErrorText) = (null, Labels.TodoCardError(read.Error));
@@ -180,6 +120,7 @@ internal sealed partial class TodoNoteCardViewModel
             return;
         }
 
+        _reads++;
         (IsBusy, ErrorText, StatusText) = (true, string.Empty, Labels.TodoCardStopping);
         Changed();
         Result<TodoNoteChangedView> stopped;
@@ -190,6 +131,7 @@ internal sealed partial class TodoNoteCardViewModel
         finally
         {
             IsBusy = false;
+            Changed();
         }
 
         StatusText = string.Empty;
@@ -211,6 +153,13 @@ internal sealed partial class TodoNoteCardViewModel
         Changed();
     }
 
+    /// <summary>A click handler threw: shows a plain error and puts the buttons back.</summary>
+    internal void Crashed()
+    {
+        (IsBusy, StatusText, ErrorText) = (false, string.Empty, Labels.TodoCardUnexpected);
+        Changed();
+    }
+
     /// <summary>The no-vault sentence's button: asks for the Library card to be brought into view.</summary>
     internal void OpenLibrary() => RaiseLibraryRequested();
 
@@ -226,6 +175,7 @@ internal sealed partial class TodoNoteCardViewModel
         }
 
         var (vault, note) = (_checkedVault, _checkedNote);
+        _reads++;
         (IsBusy, ErrorText, StatusText) = (true, string.Empty, Labels.TodoCardStarting);
         Changed();
         try

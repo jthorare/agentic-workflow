@@ -35,7 +35,7 @@ internal static class TodoSyncLine
     {
         "waiting for import" => Labels.TodoSyncWaiting,
         "one way" => Labels.TodoSyncOneWay,
-        "can't read" => Labels.TodoSyncCantRead(note.LastError),
+        "can't read" => Labels.TodoSyncCantRead,
         "note busy" => Labels.TodoSyncBusy,
         _ => note.Hold is { } hold ? Labels.TodoSyncPaused(hold.Changes.Count) : note.CantSync.Count > 0 ? Labels.TodoSyncCantSync(note.CantSync) : null,
     };

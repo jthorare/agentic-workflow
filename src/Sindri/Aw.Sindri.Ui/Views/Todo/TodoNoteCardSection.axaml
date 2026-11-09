@@ -17,6 +17,8 @@
       <TextBlock x:Name="TodoNoteError" Classes="caption" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
                  AutomationProperties.Name="{Binding ErrorText}" />
 
+      <TextBlock x:Name="TodoNoteReading" Classes="caption subtle" Text="{Binding Text.Reading}" IsVisible="{Binding ShowReading}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.Reading}" />
+
       <StackPanel x:Name="TodoNoteNoVaultsLine" Orientation="Horizontal" Spacing="{StaticResource Space.SM}" IsVisible="{Binding ShowNoVaults}">
         <TextBlock x:Name="TodoNoteNoVaults" Classes="body" Text="{Binding Text.NoVaults}" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.NoVaults}" />
         <Button x:Name="TodoNoteOpenLibrary" Classes="command-control" Content="{Binding Text.OpenLibrary}" Click="OnOpenLibrary" AutomationProperties.Name="{Binding Text.OpenLibrary}" />
@@ -25,9 +27,9 @@
       <StackPanel x:Name="TodoNoteFields" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowForm}">
         <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="{StaticResource Space.SM}" RowSpacing="{StaticResource Space.XS}">
           <TextBlock Classes="caption subtle" Text="{Binding Text.Vault}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-          <ComboBox x:Name="TodoNoteVault" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Vaults}" SelectedItem="{Binding SelectedVault, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.VaultName}" />
+          <ComboBox x:Name="TodoNoteVault" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Vaults}" SelectedItem="{Binding SelectedVault, Mode=TwoWay}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding Text.VaultName}" />
           <TextBlock Grid.Row="1" Classes="caption subtle" Text="{Binding Text.Note}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-          <TextBox x:Name="TodoNoteField" Grid.Row="1" Grid.Column="1" Text="{Binding NoteText, Mode=TwoWay}" PlaceholderText="{Binding Text.NotePlaceholder}" KeyDown="OnNoteKey"
+          <TextBox x:Name="TodoNoteField" Grid.Row="1" Grid.Column="1" Text="{Binding NoteText, Mode=TwoWay}" IsEnabled="{Binding !IsBusy}" PlaceholderText="{Binding Text.NotePlaceholder}" KeyDown="OnNoteKey"
                    AutomationProperties.Name="{Binding Text.NoteName}" />
           <Button x:Name="TodoNoteCheck" Grid.Row="1" Grid.Column="2" Classes="command-control" Content="{Binding Text.Check}" IsEnabled="{Binding CanCheck}" Click="OnCheck" AutomationProperties.Name="{Binding Text.Check}" />
         </Grid>
