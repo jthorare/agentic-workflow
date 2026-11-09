@@ -17,6 +17,9 @@ internal sealed class TemporalGraphRunAnswerer(Func<CancellationToken, ValueTask
     {
     }
 
+    /// <summary>How long the update may take; a worker that does not poll would hold it for ever.</summary>
+    internal static readonly TimeSpan UpdateLimit = TimeSpan.FromSeconds(10);
+
     /// <inheritdoc />
     public async ValueTask<Result<Unit>> Answer(GraphAnswer answer, CancellationToken cancellationToken)
     {
@@ -27,24 +30,17 @@ internal sealed class TemporalGraphRunAnswerer(Func<CancellationToken, ValueTask
             return SindriErrors.EngineUnavailable.With(client.Error.Message);
         }
 
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        limit.CancelAfter(UpdateLimit);
         try
         {
-            _ = await client.Value.GetWorkflowHandle(answer.Run.Value).ExecuteUpdateAsync<string>("Answer", [new GraphAnswerInput(answer.Node.Value, answer.Text, answer.Choice, answer.By)]).ConfigureAwait(false);
+            var options = new WorkflowUpdateOptions { Rpc = new RpcOptions { CancellationToken = limit.Token } };
+            _ = await client.Value.GetWorkflowHandle(answer.Run.Value).ExecuteUpdateAsync<string>("Answer", [new GraphAnswerInput(answer.Node.Value, answer.Text, answer.Choice, answer.By)], options).ConfigureAwait(false);
             return Unit.Value;
         }
-        catch (WorkflowUpdateFailedException e) when (e.InnerException is ApplicationFailureException refused)   // boundary: the workflow's validator said no
+        catch (Exception e) when (e is TemporalException or OperationCanceledException)   // boundary: Temporal said no, the server is down, or the worker did not answer in time
         {
-            return string.Equals(refused.ErrorType, AnswerRefusal.NotWaiting, StringComparison.Ordinal)
-                ? SindriErrors.GraphNotWaiting.With(refused.Message)
-                : SindriErrors.InvalidInput.With(refused.Message);
-        }
-        catch (RpcException e) when (e.Code == RpcException.StatusCode.NotFound)   // boundary: Temporal has no such workflow, so the run ended
-        {
-            return SindriErrors.GraphRunEnded.With($"the run '{answer.Run.Value}' already ended; there is nothing to answer");
-        }
-        catch (RpcException e)   // boundary: the server is down or refused
-        {
-            return SindriErrors.EngineUnavailable.With(e.Message);
+            return AnswerFailure.Of(e, answer.Run.Value);
         }
     }
 }
