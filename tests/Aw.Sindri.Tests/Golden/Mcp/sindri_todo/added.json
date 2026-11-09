@@ -1,0 +1,15 @@
+{
+  "isError": false,
+  "structuredContent": {
+    "accepted": {
+      "commandId": "<command>",
+      "sequence": "<n>"
+    },
+    "id": "td_<id>",
+    "version": 1,
+    "due": "2026-11-13"
+  },
+  "content": [
+    "added td_<id> · v1 · due 2026-11-13"
+  ]
+}
