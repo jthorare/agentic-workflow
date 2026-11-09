@@ -66,13 +66,13 @@ public sealed class MemoryClientTests
     [Fact]
     public async Task WriteMemoryFact_posts_to_facts_and_reads_id_and_action()
     {
-        var canned = new Canned("""{"id":"f2","action":"written"}""");
+        var canned = new Canned("""{"id":"f2","action":"added"}""");
 
         var written = await Client(canned).WriteMemoryFact(_api, "team-notes", new WriteMemoryFactBody("use heavy", ["build"], ExpiresAt: null, Provenance: null), Token);
 
         Assert.Equal(("POST", "/sindri/memories/team-notes/facts"), (canned.Seen[0].Method, canned.Seen[0].Path));
         Assert.Contains("\"text\":\"use heavy\"", canned.Seen[0].Body, StringComparison.Ordinal);
-        Assert.Equal(("f2", "written"), (written.Value.Key, written.Value.Action));
+        Assert.Equal(("f2", "added"), (written.Value.Key, written.Value.Action));
     }
 
     [Fact]

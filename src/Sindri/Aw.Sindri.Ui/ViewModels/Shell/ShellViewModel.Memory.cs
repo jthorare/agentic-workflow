@@ -6,7 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 
 /// <summary>
 /// The Memory page in the shell (<see cref="ShellViewModel"/>, continued; PR 18a). It is not a tab: G M, the palette, System's Memory link and a 'memory/&lt;name&gt;' link open it.
-/// This file holds the shared wiring only (the page's slot and its link); the Memory builder's files hold the page itself.
+/// The page reads while it is the page shown and re-reads on every event then.
 /// </summary>
 internal sealed partial class ShellViewModel
 {
@@ -20,7 +20,18 @@ internal sealed partial class ShellViewModel
     internal string? RequestedMemoryStore { get; private set; }
 
     [MemberNotNull(nameof(MemoryPage))]
-    private void InitMemory() => MemoryPage = new MemoryPageViewModel();
+    private void InitMemory()
+    {
+        MemoryPage = new MemoryPageViewModel(_api, _clock);
+        Health.Follow(MemoryPage.Refresh);
+        PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(IsMemory), StringComparison.Ordinal))
+            {
+                MemoryPage.SetShown(IsMemory);
+            }
+        };
+    }
 
     // A 'memory/<name>' link: the Memory page, on that store.
     private void OpenMemoryStore(string store)

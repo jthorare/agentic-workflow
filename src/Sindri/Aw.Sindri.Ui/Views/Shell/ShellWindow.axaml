@@ -10,6 +10,7 @@
         xmlns:agv="using:Aw.Sindri.Ui.Views.Agents"
         xmlns:jv="using:Aw.Sindri.Ui.Views.Jobs"
         xmlns:cxv="using:Aw.Sindri.Ui.Views.Connections"
+        xmlns:mmv="using:Aw.Sindri.Ui.Views.Memory"
         xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
         xmlns:lnv="using:Aw.Sindri.Ui.Views.Linear"
         xmlns:rwv="using:Aw.Sindri.Ui.Views.Reviews"
@@ -249,9 +250,13 @@
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </Panel>
-                <!-- The Memory page: the Memory builder's MemoryPage view replaces this placeholder. -->
+                <!-- The Memory page (PR 18a): not a tab; G M, the palette, System's Memory link and a memory/<name> link open it. -->
                 <Panel IsVisible="{Binding IsMemory}">
-                  <views:PlaceholderPage x:Name="MemoryPlaceholder" Title="{Binding Text.MemoryPage}" />
+                  <controls:Deferred DataContext="{Binding MemoryPage}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><mmv:MemoryPage x:Name="MemoryPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
                 </Panel>
                 <Panel IsVisible="{Binding IsJobs}">
                   <controls:Deferred DataContext="{Binding Jobs}">
