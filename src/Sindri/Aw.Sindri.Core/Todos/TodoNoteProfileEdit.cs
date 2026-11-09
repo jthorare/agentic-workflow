@@ -38,16 +38,17 @@ public sealed class TodoNoteProfileEdit(IProfileKeyWriter writer, IProfileTextPa
 
     private async ValueTask<Result<TodoNoteEdit>> Apply(string? ifHash, Func<Result<ProfileKeyEdit>> plan, CancellationToken cancellationToken)
     {
-        var guard = await Guard(ifHash, cancellationToken).ConfigureAwait(false);
-        if (guard is not null)
-        {
-            return guard;
-        }
-
         var planned = plan();
         if (planned.IsError)
         {
             return planned.Error;
+        }
+
+        // why: the guard compares against the text the plan read, the same text the write replaces, so no edit can land between the two
+        var guard = Guard(ifHash, planned.Value);
+        if (guard is not null)
+        {
+            return guard;
         }
 
         if (planned.Value.Changed && parser.Parse(planned.Value.Text, planned.Value.Path) is { IsError: true } parsed)
@@ -58,28 +59,28 @@ public sealed class TodoNoteProfileEdit(IProfileKeyWriter writer, IProfileTextPa
         var saved = writer.Save(planned.Value);
         if (saved.IsError)
         {
-            return saved.Error;
+            return string.Equals(saved.Error.Code, SindriErrors.ProfileHashMismatch.Code, StringComparison.Ordinal) ? Conflict : saved.Error;
         }
 
         var after = await live.Load(cancellationToken).ConfigureAwait(false);
         return after.IsError ? after.Error : new TodoNoteEdit(saved.Value, planned.Value.Changed, after.Value.Hash.Value);
     }
 
-    private async ValueTask<Error?> Guard(string? ifHash, CancellationToken cancellationToken)
+    private static Error Conflict => SindriErrors.TodoConflict.With("the profile changed since you read it (fix: reload the settings and try again)");
+
+    private Error? Guard(string? ifHash, ProfileKeyEdit planned)
     {
         if (ifHash is null)
         {
             return null;
         }
 
-        var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
-        if (loaded.IsError)
+        var read = parser.Parse(planned.Before ?? planned.Text, planned.Path);
+        if (read.IsError)
         {
-            return loaded.Error;
+            return read.Error;
         }
 
-        return string.Equals(loaded.Value.Hash.Value, ifHash, StringComparison.OrdinalIgnoreCase)
-            ? null
-            : SindriErrors.TodoConflict.With("the profile changed since you read it (fix: reload the settings and try again)");
+        return string.Equals(read.Value.Hash.Value, ifHash, StringComparison.OrdinalIgnoreCase) ? null : Conflict;
     }
 }
