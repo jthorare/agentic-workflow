@@ -1203,28 +1203,5 @@
       "idempotentHint": null,
       "openWorldHint": false
     }
-  },
-  {
-    "name": "resources_purge",
-    "description": "Delete every database and disk of one owner for good. Refused while the owner's workflow is active or has a run in flight; archiving a workflow keeps its data.",
-    "inputSchema": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "owner": {
-          "type": "string",
-          "description": "An owner: workflow:<slug>, node:<slug>/<id> or toolkit:<name>"
-        }
-      },
-      "required": [
-        "owner"
-      ]
-    },
-    "annotations": {
-      "readOnlyHint": false,
-      "destructiveHint": true,
-      "idempotentHint": true,
-      "openWorldHint": false
-    }
   }
 ]

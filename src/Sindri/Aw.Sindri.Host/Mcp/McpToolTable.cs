@@ -80,7 +80,7 @@ internal static class McpToolTable
             SindriTools.Todo => SindriTools.CallTodo(services, call.Arguments, cancellationToken),
             ConnectionTools.List or ConnectionTools.Get or ConnectionTools.Add or ConnectionTools.SignIn or ConnectionTools.Test or ConnectionTools.Remove => ConnectionTools.Call(call.Name, services, call.Arguments, cancellationToken),
             WorkflowReadTools.List or WorkflowReadTools.Get or WorkflowReadTools.Runs or WorkflowReadTools.RunGet => WorkflowReadTools.Call(call.Name, services, call.Arguments, cancellationToken),
-            ResourceTools.List or ResourceTools.Purge => ResourceTools.Call(call.Name, services, call.Arguments, cancellationToken),
+            ResourceTools.List => ResourceTools.Call(services, call.Arguments, cancellationToken),
             MemoryTools.List => MemoryTools.CallList(services, call.Arguments, cancellationToken),
             MemoryTools.Create => MemoryTools.CallCreate(services, call.Arguments, cancellationToken),
             MemoryTools.Search => MemoryTools.CallSearch(services, call.Arguments, cancellationToken),

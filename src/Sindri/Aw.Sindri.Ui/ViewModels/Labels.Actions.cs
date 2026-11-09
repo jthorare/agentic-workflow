@@ -100,6 +100,7 @@ internal static partial class Labels
         ["PromoteContextMap"] = "Promote map",
         ["CheckContextMapStructure"] = "Check map structure",
         ["PurgeIndexSource"] = "Purge index source",
+        ["PurgeResources"] = "Purge resources",
         ["ProposeContextMap"] = "Propose map from scope",
         ["BuildCodeIndex"] = "Build code index",
         ["RebuildViews"] = "Rebuild views",

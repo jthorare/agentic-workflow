@@ -386,7 +386,7 @@ workflow and gets its result submitted.
   from the sandbox settings). The path of each resource is passed to the block, agent or toolkit by name.
 - **Removal keeps data.** Archiving a workflow or deleting a toolkit keeps its databases and disks; `sindri resources
   purge <owner>` (or the MCP tool) deletes them.
-- **MCP tools:** `resources_list` (each with size and owner), `resources_purge`.
+- **MCP tools:** `resources_list` (each with size and owner); purge is HTTP and CLI only.
 
 ---
 

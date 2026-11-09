@@ -5,8 +5,8 @@ using Aw.Sindri.Features.PurgeResources;
 namespace Aw.Sindri.Host.Catalog;
 
 /// <summary>
-/// Resources (agent-first PR 14): purge an owner's provisioned data. Desk class, destructive, and an agent session may run it (SessionOk), the way the MCP resources_purge tool and
-/// 'sindri resources purge' do; the service refuses while the owner is active or has a run in flight. The read (list) is a query and has no row.
+/// Resources (agent-first PR 14): purge an owner's provisioned data. Desk class, destructive, and an agent session may run it (SessionOk) over HTTP, as
+/// 'sindri resources purge' does; the service refuses while the owner is active or has a run in flight. The read (list) is a query and has no row.
 /// </summary>
 internal static class ResourceRows
 {
