@@ -31,6 +31,10 @@ public sealed class WriteAttributionTests
         ["DELETE /sindri/linear/connection/write"] = "a connection setting outside PR 2's list (LinearConnectionRules): the owner's",
         ["POST /sindri/views/rebuild"] = "replays the ledger into views.db: it appends no event",
         ["POST /sindri/todos/note/check"] = "a dry check: writes nothing to the vault, the profile or the ledger (CheckTodoNoteService.cs:16)",
+        ["POST /sindri/todos/note/set"] = "edits the live profile file through TodoNoteProfileEdit (SetTodoNoteService.cs:9): writes no ledger event",
+        ["POST /sindri/todos/note/stop"] = "edits the live profile file through TodoNoteProfileEdit (StopTodoNoteService.cs:9): writes no ledger event",
+        ["POST /sindri/linear/connection/teams"] = "reads the key's Linear teams (ListLinearTeamsService): stores nothing and writes no event",
+        ["POST /sindri/workflow/challenges/app"] = "refuses every text (IssueAppChallengeService.cs:17, no ports) and its endpoint appends nothing: writes no event",
     };
 
     // Write routes that do append events but whose caller is proven another way than a launched session's header; not swept here.
@@ -38,7 +42,15 @@ public sealed class WriteAttributionTests
     {
         ["POST /sindri/sessions/{launchId}/heartbeat"] = WrapReason,
         ["POST /sindri/sessions/{launchId}/exit"] = WrapReason,
+        ["POST /sindri/connections"] = "the store row carries the caller (Connection.CreatedBy, AddConnectionService.cs:169); proven by AddConnectionServiceTests.A_launched_session_adding_a_connection_is_the_rows_creator",
+        ["POST /sindri/memories"] = "the store row carries the caller (MemoryInfo.CreatedBy, CreateMemoryService.cs:30); proven by MemoryReadsAndCreateTests.A_launched_session_creating_a_memory_is_its_creator",
+        ["POST /sindri/memories/{name}/facts"] = AuditOnlyReason,
+        ["DELETE /sindri/memories/{name}/facts"] = AuditOnlyReason,
+        ["DELETE /sindri/connections/{name}"] = AuditOnlyReason,
+        ["POST /sindri/connections/{name}/signin"] = AuditOnlyReason,
     };
+
+    private const string AuditOnlyReason = "only the command.handled audit row carries the caller; the store keeps no actor (#2460)";
 
     private const string WrapReason = "the caller is the wrapper of the route's own launch, proven by that launch's secret; actor follow-up #2430";
 
@@ -69,6 +81,8 @@ public sealed class WriteAttributionTests
     private static readonly Dictionary<string, string> _onlyRefusals = new(StringComparer.Ordinal)
     {
         ["POST /sindri/workflows/{slug}/runs"] = "a run that starts needs the Temporal worker, which the golden host doesn't run; its goldens are refusals (#2434)",
+        ["POST /sindri/setup/mcp"] = "a job starter; its only golden is not-in-profile, a refusal; the job's mcp.registered needs a succeeding scenario (#2434)",
+        ["POST /sindri/setup/repos/onboard"] = "a job starter; its only golden is not-approved, a refusal; the job's repo.onboarded needs a succeeding scenario (#2434)",
     };
 
     [Fact(Timeout = 900_000), Trait("Lane", "integration")]
