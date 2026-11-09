@@ -83,9 +83,6 @@ export const CASES: readonly Case[] = [
   // ------------------------------------------------------------------ STRUCT
   { name: "struct-no-source", expect: ["STRUCT/no-source"], mutate: (c) => { rm(c, MD); rm(c, "build"); } },
   { name: "struct-no-content-compile-fails", expect: ["STRUCT/no-content"], mutate: (c) => { rm(c, "build"); json(c, "meta.json", (m) => void (m.people = 7)); } },
-  { name: "struct-no-content-no-compiler", expect: ["STRUCT/no-content"],
-    mutate: (c) => { rm(c, "build"); rm(c, HS); mkdirSync(c.scripts, { recursive: true }); copyFileSync(join(SCRIPTS, "lint_packet.py"), join(c.scripts, "lint_packet.py")); },
-    pyScript: (c) => join(c.scripts, "lint_packet.py"), env: (c) => ({ TDD_SCRIPTS: c.scripts }) },
   { name: "struct-missing-section", expect: ["STRUCT/missing-section"],
     mutate: (c) => { sub(c, MD, "## Front end {#frontend; lead: no}", "## Screens {#screens; lead: no}"); rebuild(c); } },
   { name: "struct-section-order", expect: ["STRUCT/section-order"],

@@ -13,6 +13,8 @@ export const FIXTURES = join(import.meta.dir, "fixtures");
 export const TZ = "Pacific/Chatham";
 /** Every packet file's mtime after a case is set up (2026-01-05T00:00:00Z), so only the cases about time see time. */
 export const T0 = Date.UTC(2026, 0, 5) / 1000;
+/** content.json's stamp for every compile in a run (a compiled lint's PARITY note prints it). */
+export const GENERATED = "2026-01-05T00:00:00Z";
 
 export const HAVE_PYTHON = Bun.spawnSync(["python3", "-I", "-c", "pass"]).exitCode === 0 && existsSync(join(SCRIPTS, "lint_packet.py"));
 
@@ -21,7 +23,7 @@ const dec = new TextDecoder();
 
 function spawn(cmd: string[], cwd: string, env: Record<string, string | undefined> = {}): { code: number; out: string; err: string } {
   const full: Record<string, string> = {};
-  for (const [k, v] of Object.entries({ ...process.env, COLUMNS: undefined, LINES: undefined, TZ, ...env })) if (v !== undefined) full[k] = v;
+  for (const [k, v] of Object.entries({ ...process.env, COLUMNS: undefined, LINES: undefined, TZ, TDD_GENERATED: GENERATED, ...env })) if (v !== undefined) full[k] = v;
   const r = Bun.spawnSync({ cmd, cwd, env: full, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
   return { code: r.exitCode ?? -1, out: dec.decode(r.stdout), err: dec.decode(r.stderr) };
 }
@@ -91,7 +93,7 @@ export function makeRepo(root: string, name = "repo"): Repo {
 
 /** Compile a packet's source into <packet>/build with build_tdd.py (copying files), TDD_GENERATED pinned. */
 export function buildPacket(packet: string, slug: string): void {
-  const r = spawn(["python3", "-I", "-B", join(SCRIPTS, "build_tdd.py"), `${slug}.md`, "build"], packet, { TDD_GENERATED: "2026-01-05T00:00:00Z" });
+  const r = spawn(["python3", "-I", "-B", join(SCRIPTS, "build_tdd.py"), `${slug}.md`, "build"], packet);
   if (r.code !== 0) throw new Error(`build_tdd.py failed on ${packet}: ${r.err || r.out}`);
 }
 
