@@ -5314,3 +5314,102 @@ static Aw.Sindri.Features.GetConnection.SignInFailureView.operator !=(Aw.Sindri.
 static Aw.Sindri.Features.GetConnection.SignInFailureView.operator ==(Aw.Sindri.Features.GetConnection.SignInFailureView? left, Aw.Sindri.Features.GetConnection.SignInFailureView? right) -> bool
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Warning.get -> string?
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Warning.init -> void
+Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest
+Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest.<Clone>$() -> Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest!
+Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest.BuildToolkitRequest(string! Name) -> void
+Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest.Deconstruct(out string! Name) -> void
+Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest.Equals(Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest? other) -> bool
+Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest.Name.get -> string!
+Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest.Name.init -> void
+Aw.Sindri.Features.BuildToolkit.BuildToolkitResult
+Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.<Clone>$() -> Aw.Sindri.Features.BuildToolkit.BuildToolkitResult!
+Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.BuildToolkitResult(string! Name, string! SourceHash) -> void
+Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.Deconstruct(out string! Name, out string! SourceHash) -> void
+Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.Equals(Aw.Sindri.Features.BuildToolkit.BuildToolkitResult? other) -> bool
+Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.Name.get -> string!
+Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.Name.init -> void
+Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.SourceHash.get -> string!
+Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.SourceHash.init -> void
+Aw.Sindri.Features.ListToolkits.ListToolkitsRequest
+Aw.Sindri.Features.ListToolkits.ListToolkitsRequest.<Clone>$() -> Aw.Sindri.Features.ListToolkits.ListToolkitsRequest!
+Aw.Sindri.Features.ListToolkits.ListToolkitsRequest.Equals(Aw.Sindri.Features.ListToolkits.ListToolkitsRequest? other) -> bool
+Aw.Sindri.Features.ListToolkits.ListToolkitsRequest.ListToolkitsRequest() -> void
+Aw.Sindri.Features.ListToolkits.ListToolkitsResponse
+Aw.Sindri.Features.ListToolkits.ListToolkitsResponse.<Clone>$() -> Aw.Sindri.Features.ListToolkits.ListToolkitsResponse!
+Aw.Sindri.Features.ListToolkits.ListToolkitsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.Toolkit!>! Toolkits) -> void
+Aw.Sindri.Features.ListToolkits.ListToolkitsResponse.Equals(Aw.Sindri.Features.ListToolkits.ListToolkitsResponse? other) -> bool
+Aw.Sindri.Features.ListToolkits.ListToolkitsResponse.ListToolkitsResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.Toolkit!>! Toolkits) -> void
+Aw.Sindri.Features.ListToolkits.ListToolkitsResponse.Toolkits.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.Toolkit!>!
+Aw.Sindri.Features.ListToolkits.ListToolkitsResponse.Toolkits.init -> void
+Aw.Sindri.Features.StartToolkit.StartToolkitRequest
+Aw.Sindri.Features.StartToolkit.StartToolkitRequest.<Clone>$() -> Aw.Sindri.Features.StartToolkit.StartToolkitRequest!
+Aw.Sindri.Features.StartToolkit.StartToolkitRequest.Deconstruct(out string! Name) -> void
+Aw.Sindri.Features.StartToolkit.StartToolkitRequest.Equals(Aw.Sindri.Features.StartToolkit.StartToolkitRequest? other) -> bool
+Aw.Sindri.Features.StartToolkit.StartToolkitRequest.Name.get -> string!
+Aw.Sindri.Features.StartToolkit.StartToolkitRequest.Name.init -> void
+Aw.Sindri.Features.StartToolkit.StartToolkitRequest.StartToolkitRequest(string! Name) -> void
+Aw.Sindri.Features.StartToolkit.StartToolkitResponse
+Aw.Sindri.Features.StartToolkit.StartToolkitResponse.<Clone>$() -> Aw.Sindri.Features.StartToolkit.StartToolkitResponse!
+Aw.Sindri.Features.StartToolkit.StartToolkitResponse.Deconstruct(out string! Name, out Aw.Sindri.Core.Toolkits.ToolkitState State) -> void
+Aw.Sindri.Features.StartToolkit.StartToolkitResponse.Equals(Aw.Sindri.Features.StartToolkit.StartToolkitResponse? other) -> bool
+Aw.Sindri.Features.StartToolkit.StartToolkitResponse.Name.get -> string!
+Aw.Sindri.Features.StartToolkit.StartToolkitResponse.Name.init -> void
+Aw.Sindri.Features.StartToolkit.StartToolkitResponse.StartToolkitResponse(string! Name, Aw.Sindri.Core.Toolkits.ToolkitState State) -> void
+Aw.Sindri.Features.StartToolkit.StartToolkitResponse.State.get -> Aw.Sindri.Core.Toolkits.ToolkitState
+Aw.Sindri.Features.StartToolkit.StartToolkitResponse.State.init -> void
+Aw.Sindri.Features.StopToolkit.StopToolkitRequest
+Aw.Sindri.Features.StopToolkit.StopToolkitRequest.<Clone>$() -> Aw.Sindri.Features.StopToolkit.StopToolkitRequest!
+Aw.Sindri.Features.StopToolkit.StopToolkitRequest.Deconstruct(out string! Name) -> void
+Aw.Sindri.Features.StopToolkit.StopToolkitRequest.Equals(Aw.Sindri.Features.StopToolkit.StopToolkitRequest? other) -> bool
+Aw.Sindri.Features.StopToolkit.StopToolkitRequest.Name.get -> string!
+Aw.Sindri.Features.StopToolkit.StopToolkitRequest.Name.init -> void
+Aw.Sindri.Features.StopToolkit.StopToolkitRequest.StopToolkitRequest(string! Name) -> void
+Aw.Sindri.Features.StopToolkit.StopToolkitResponse
+Aw.Sindri.Features.StopToolkit.StopToolkitResponse.<Clone>$() -> Aw.Sindri.Features.StopToolkit.StopToolkitResponse!
+Aw.Sindri.Features.StopToolkit.StopToolkitResponse.Deconstruct(out string! Name, out Aw.Sindri.Core.Toolkits.ToolkitState State) -> void
+Aw.Sindri.Features.StopToolkit.StopToolkitResponse.Equals(Aw.Sindri.Features.StopToolkit.StopToolkitResponse? other) -> bool
+Aw.Sindri.Features.StopToolkit.StopToolkitResponse.Name.get -> string!
+Aw.Sindri.Features.StopToolkit.StopToolkitResponse.Name.init -> void
+Aw.Sindri.Features.StopToolkit.StopToolkitResponse.State.get -> Aw.Sindri.Core.Toolkits.ToolkitState
+Aw.Sindri.Features.StopToolkit.StopToolkitResponse.State.init -> void
+Aw.Sindri.Features.StopToolkit.StopToolkitResponse.StopToolkitResponse(string! Name, Aw.Sindri.Core.Toolkits.ToolkitState State) -> void
+override Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest.GetHashCode() -> int
+override Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest.ToString() -> string!
+override Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.Equals(object? obj) -> bool
+override Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.GetHashCode() -> int
+override Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.ToString() -> string!
+override Aw.Sindri.Features.ListToolkits.ListToolkitsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListToolkits.ListToolkitsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ListToolkits.ListToolkitsRequest.ToString() -> string!
+override Aw.Sindri.Features.ListToolkits.ListToolkitsResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListToolkits.ListToolkitsResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ListToolkits.ListToolkitsResponse.ToString() -> string!
+override Aw.Sindri.Features.StartToolkit.StartToolkitRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.StartToolkit.StartToolkitRequest.GetHashCode() -> int
+override Aw.Sindri.Features.StartToolkit.StartToolkitRequest.ToString() -> string!
+override Aw.Sindri.Features.StartToolkit.StartToolkitResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.StartToolkit.StartToolkitResponse.GetHashCode() -> int
+override Aw.Sindri.Features.StartToolkit.StartToolkitResponse.ToString() -> string!
+override Aw.Sindri.Features.StopToolkit.StopToolkitRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.StopToolkit.StopToolkitRequest.GetHashCode() -> int
+override Aw.Sindri.Features.StopToolkit.StopToolkitRequest.ToString() -> string!
+override Aw.Sindri.Features.StopToolkit.StopToolkitResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.StopToolkit.StopToolkitResponse.GetHashCode() -> int
+override Aw.Sindri.Features.StopToolkit.StopToolkitResponse.ToString() -> string!
+static Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest.operator !=(Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest? left, Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest? right) -> bool
+static Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest.operator ==(Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest? left, Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest? right) -> bool
+static Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.operator !=(Aw.Sindri.Features.BuildToolkit.BuildToolkitResult? left, Aw.Sindri.Features.BuildToolkit.BuildToolkitResult? right) -> bool
+static Aw.Sindri.Features.BuildToolkit.BuildToolkitResult.operator ==(Aw.Sindri.Features.BuildToolkit.BuildToolkitResult? left, Aw.Sindri.Features.BuildToolkit.BuildToolkitResult? right) -> bool
+static Aw.Sindri.Features.ListToolkits.ListToolkitsRequest.operator !=(Aw.Sindri.Features.ListToolkits.ListToolkitsRequest? left, Aw.Sindri.Features.ListToolkits.ListToolkitsRequest? right) -> bool
+static Aw.Sindri.Features.ListToolkits.ListToolkitsRequest.operator ==(Aw.Sindri.Features.ListToolkits.ListToolkitsRequest? left, Aw.Sindri.Features.ListToolkits.ListToolkitsRequest? right) -> bool
+static Aw.Sindri.Features.ListToolkits.ListToolkitsResponse.operator !=(Aw.Sindri.Features.ListToolkits.ListToolkitsResponse? left, Aw.Sindri.Features.ListToolkits.ListToolkitsResponse? right) -> bool
+static Aw.Sindri.Features.ListToolkits.ListToolkitsResponse.operator ==(Aw.Sindri.Features.ListToolkits.ListToolkitsResponse? left, Aw.Sindri.Features.ListToolkits.ListToolkitsResponse? right) -> bool
+static Aw.Sindri.Features.StartToolkit.StartToolkitRequest.operator !=(Aw.Sindri.Features.StartToolkit.StartToolkitRequest? left, Aw.Sindri.Features.StartToolkit.StartToolkitRequest? right) -> bool
+static Aw.Sindri.Features.StartToolkit.StartToolkitRequest.operator ==(Aw.Sindri.Features.StartToolkit.StartToolkitRequest? left, Aw.Sindri.Features.StartToolkit.StartToolkitRequest? right) -> bool
+static Aw.Sindri.Features.StartToolkit.StartToolkitResponse.operator !=(Aw.Sindri.Features.StartToolkit.StartToolkitResponse? left, Aw.Sindri.Features.StartToolkit.StartToolkitResponse? right) -> bool
+static Aw.Sindri.Features.StartToolkit.StartToolkitResponse.operator ==(Aw.Sindri.Features.StartToolkit.StartToolkitResponse? left, Aw.Sindri.Features.StartToolkit.StartToolkitResponse? right) -> bool
+static Aw.Sindri.Features.StopToolkit.StopToolkitRequest.operator !=(Aw.Sindri.Features.StopToolkit.StopToolkitRequest? left, Aw.Sindri.Features.StopToolkit.StopToolkitRequest? right) -> bool
+static Aw.Sindri.Features.StopToolkit.StopToolkitRequest.operator ==(Aw.Sindri.Features.StopToolkit.StopToolkitRequest? left, Aw.Sindri.Features.StopToolkit.StopToolkitRequest? right) -> bool
+static Aw.Sindri.Features.StopToolkit.StopToolkitResponse.operator !=(Aw.Sindri.Features.StopToolkit.StopToolkitResponse? left, Aw.Sindri.Features.StopToolkit.StopToolkitResponse? right) -> bool
+static Aw.Sindri.Features.StopToolkit.StopToolkitResponse.operator ==(Aw.Sindri.Features.StopToolkit.StopToolkitResponse? left, Aw.Sindri.Features.StopToolkit.StopToolkitResponse? right) -> bool

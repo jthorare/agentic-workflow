@@ -133,7 +133,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddSessionSlices()
             .AddLaunchSlices()
             .AddLaunchTargetJob()
-            .AddAddRepo().AddPinConcepts().AddSetPages().AddRegisterMcpJob().AddOnboardRepo();
+            .AddAddRepo().AddToolkits().AddPinConcepts().AddSetPages().AddRegisterMcpJob().AddOnboardRepo();
         return services;
     }
 
