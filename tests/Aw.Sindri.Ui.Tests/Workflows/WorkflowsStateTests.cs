@@ -66,7 +66,7 @@ public sealed class WorkflowsStateTests
     public async Task Pause_posts_once_reads_the_list_again_and_swaps_the_button()
     {
         var page = await Opened(Slug);
-        ServeState(0, null);
+        ServeState(0, active: null);
 
         await page.Pause(Token);
 

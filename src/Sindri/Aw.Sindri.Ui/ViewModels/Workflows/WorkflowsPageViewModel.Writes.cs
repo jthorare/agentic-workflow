@@ -183,25 +183,31 @@ internal sealed partial class WorkflowsPageViewModel
         try
         {
             var error = await send(url, slug, cancellationToken).ConfigureAwait(true);
-            var here = string.Equals(Runs.Slug, slug, StringComparison.Ordinal);
-            var unsure = error is not null && string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
-            if (here && error is not null)
-            {
-                StateNoticeText = unsure ? Labels.WfStateUnsure(error) : refused(error);
-            }
-
-            if (error is null || unsure)
-            {
-                await ReadList(url, cancellationToken).ConfigureAwait(true);
-                if (here)
-                {
-                    await Runs.Read(url, slug, Runs.Title, cancellationToken).ConfigureAwait(true);
-                }
-            }
+            await LandStateChange(url, slug, error, refused, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
             IsChangingState = false;
+        }
+    }
+
+    // The answer of an activate or pause: the notice (only while that workflow is still shown), and a read again unless Sindri refused.
+    private async Task LandStateChange(Uri url, string slug, Error? error, Func<Error, string> refused, CancellationToken cancellationToken)
+    {
+        var here = string.Equals(Runs.Slug, slug, StringComparison.Ordinal);
+        var unsure = error is not null && string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
+        if (here && error is not null)
+        {
+            StateNoticeText = unsure ? Labels.WfStateUnsure(error) : refused(error);
+        }
+
+        if (error is null || unsure)
+        {
+            await ReadList(url, cancellationToken).ConfigureAwait(true);
+            if (here)
+            {
+                await Runs.Read(url, slug, Runs.Title, cancellationToken).ConfigureAwait(true);
+            }
         }
     }
 

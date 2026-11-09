@@ -40,11 +40,11 @@ internal sealed class GraphCanvasAutomationPeer(GraphCanvas owner) : ControlAuto
         {
             if (string.Equals(node.NodeId, old, StringComparison.Ordinal))
             {
-                node.RaisePropertyChangedEvent(SelectionItemPatternIdentifiers.IsSelectedProperty, true, false);
+                node.RaisePropertyChangedEvent(SelectionItemPatternIdentifiers.IsSelectedProperty, oldValue: true, newValue: false);
             }
             else if (string.Equals(node.NodeId, selectedId, StringComparison.Ordinal))
             {
-                node.RaisePropertyChangedEvent(SelectionItemPatternIdentifiers.IsSelectedProperty, false, true);
+                node.RaisePropertyChangedEvent(SelectionItemPatternIdentifiers.IsSelectedProperty, oldValue: false, newValue: true);
             }
         }
     }

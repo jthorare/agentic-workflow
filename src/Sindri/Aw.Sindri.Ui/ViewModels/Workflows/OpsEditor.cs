@@ -11,6 +11,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// The workflow editor's logic (#2258 PR 17 part 2b), no view yet: it reads a workflow and the block list, builds the form of the selected node from its block's config fields, and
 /// sends each edit as ops with the revision it read as the base. Each edit is sent once and never retried; a workflow that changed elsewhere is not overwritten but asks for a reload.
 /// </summary>
+#pragma warning disable MA0182 // until the editor sheet (#2258 PR 17 part 3) binds it; the tests drive it now
 internal sealed class OpsEditor(ISindriApi api) : ObservableObject
 {
     private const string StaleBase = "SND-GRAPH-007";
@@ -217,3 +218,4 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         return nodes;
     }
 }
+#pragma warning restore MA0182

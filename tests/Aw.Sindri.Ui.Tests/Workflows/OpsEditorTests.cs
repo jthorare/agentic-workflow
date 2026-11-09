@@ -12,6 +12,7 @@ namespace Aw.Sindri.Ui.Tests.Workflows;
 public sealed class OpsEditorTests
 {
     // 'found' is at revision 2 (latestRevision) with nodes start (manual) and agent (run_agent, prompt "Look for drift")
+#pragma warning disable MA0136 // a raw string with line ends is the readable form of this JSON
     private const string Blocks = """
         {"groups":[
           {"group":"Triggers","blocks":[{"type":"manual","title":"Manual","isTrigger":true,"config":[],"outputs":{},"branches":["out"],"exampleConfig":null,"exampleSpec":null}]},
@@ -20,6 +21,7 @@ public sealed class OpsEditorTests
             "outputs":{"text":"text"},"branches":["out"],"exampleConfig":null,"exampleSpec":null}]}
         ]}
         """;
+#pragma warning restore MA0136
 
     private readonly WorkflowsFixture _f = new();
 

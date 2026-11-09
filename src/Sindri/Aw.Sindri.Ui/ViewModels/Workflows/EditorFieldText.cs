@@ -19,12 +19,12 @@ internal static class EditorFieldText
             return string.Empty;
         }
 
-        return value.ValueKind switch
+        if (value.ValueKind == JsonValueKind.String)
         {
-            JsonValueKind.String => value.GetString() ?? string.Empty,
-            JsonValueKind.Array => string.Join('\n', value.EnumerateArray().Select(Item)),
-            _ => value.GetRawText(),
-        };
+            return value.GetString() ?? string.Empty;
+        }
+
+        return value.ValueKind == JsonValueKind.Array ? string.Join('\n', value.EnumerateArray().Select(Item)) : value.GetRawText();
     }
 
     /// <summary>The value an op sends for text typed into a field.</summary>
@@ -65,8 +65,8 @@ internal static class EditorFieldText
 
     private static (JsonNode? Value, string Problem) AsBoolean(string text) => text.Trim().ToLowerInvariant() switch
     {
-        "true" => (JsonValue.Create(true), string.Empty),
-        "false" => (JsonValue.Create(false), string.Empty),
+        "true" => (JsonValue.Create(value: true), string.Empty),
+        "false" => (JsonValue.Create(value: false), string.Empty),
         _ => (null, Labels.WfFieldNotBoolean),
     };
 
@@ -75,7 +75,7 @@ internal static class EditorFieldText
         var items = new JsonArray();
         foreach (var line in text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0))
         {
-            items.Add(JsonValue.Create(line));
+            items.Add((JsonNode)JsonValue.Create(line));
         }
 
         return (items, string.Empty);
