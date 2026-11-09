@@ -3,6 +3,7 @@ using ModelContextProtocol.Client;
 
 namespace Aw.Sindri.Toolkit.Tests;
 
+[Collection(ProcessConsole.Name)]
 public sealed class ToolkitRunTests
 {
     private static readonly Dictionary<string, object?> _arguments = new(StringComparer.Ordinal) { ["left"] = "a", ["right"] = "b" };

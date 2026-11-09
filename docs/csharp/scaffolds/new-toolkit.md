@@ -47,7 +47,7 @@ Namespaces are `Toolkits.<Name>` and `Toolkits.<Name>.Tests` (a namespace ending
 
 ## Checks (heavy-job lock, `cwd` = the toolkit folder)
 
-1. `dotnet restore` of both projects (`-p:RestoreLockedMode=false`, so the first restore writes the lock files even under CI).
+1. `dotnet restore` of both projects (`-p:RestoreLockedMode=false`, so the first restore writes the lock files; after that the generated `Directory.Build.props` restores locked whenever `packages.lock.json` exists).
 2. `dotnet build <tests> -warnaserror`.
 3. `dotnet test --project <tests> --filter-trait Lane=unit`: exactly one failing test, the sample, and it must fail with the stub's `NotSupportedException`.
 4. `dotnet format --verify-no-changes` limited to the files it wrote.
