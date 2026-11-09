@@ -49,6 +49,7 @@ using Aw.Sindri.Features.AddRepo;
 using Aw.Sindri.Features.AllowDenial;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.CancelJob;
+using Aw.Sindri.Features.AgentNodeControl;
 using Aw.Sindri.Features.CancelWorkflowRun;
 using Aw.Sindri.Features.CheckSandbox;
 using Aw.Sindri.Features.CloseItem;
@@ -206,7 +207,7 @@ namespace Aw.Sindri.Host;
 
 [JsonSerializable(typeof(CompleteStepRequest))]
 [JsonSerializable(typeof(ListWorkflowsResponse)), JsonSerializable(typeof(GetWorkflowResponse)), JsonSerializable(typeof(ListWorkflowRunsResponse)), JsonSerializable(typeof(GetWorkflowRunResponse))]   // #2258 PR 8a: the workflow reads; GraphSpec and the node positions come with GetWorkflowResponse
-[JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse))]
+[JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse)), JsonSerializable(typeof(AgentNodeBody)), JsonSerializable(typeof(AgentNodeControlled))]
 [JsonSerializable(typeof(RecipeRegistered)), JsonSerializable(typeof(RecipeApproved)), JsonSerializable(typeof(RecipeRevoked))]
 
 [JsonSerializable(typeof(RegisterMcpJobRequest))]   // setup-once §5.4: register Sindri in a repo from the app

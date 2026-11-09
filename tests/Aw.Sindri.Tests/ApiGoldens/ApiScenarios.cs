@@ -80,7 +80,9 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        IsSkillOrLinear(slug, scenario)
+        WorkflowRunScenarios.NeedsAgentControl(slug)
+            ? await WorkflowRunScenarios.Start(ct)
+            : IsSkillOrLinear(slug, scenario)
             ? await StartSkillOrLinear(slug, scenario, ct)
             : IsReviews(slug, scenario)
             ? await StartReviews(slug, scenario, ct)
