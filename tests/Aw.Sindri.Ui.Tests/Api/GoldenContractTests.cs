@@ -153,6 +153,7 @@ public sealed class GoldenContractTests
         [("workflows-slug-runs", "skipped")] = As<WorkflowRunStarted>,
         [("memories-id-facts", "forgot")] = As<MemoryForgotten>,
         [("memories-id-facts", "forgot-tag")] = As<MemoryForgotten>,
+        [("workflows-slug", "replaced")] = AsJsonObject,   // PUT /workflows/{slug}: { slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowView
     };
 
     // Routes the app never calls yet: stop is Health's (U4), and the
@@ -434,6 +435,9 @@ public sealed class GoldenContractTests
         var todo = (JsonNode.Parse(body) as JsonObject)?["todo"];
         return todo is null ? new Error("TEST-001", ErrorKind.Invalid, "no todo in the answer") : As<TodoView>(Encoding.UTF8.GetBytes(todo.ToJsonString()));
     }
+
+    private static Result<object> AsJsonObject(byte[] body) =>
+        JsonNode.Parse(body) is JsonObject node ? node : new Error("TEST-001", ErrorKind.Invalid, "the answer is not a JSON object");
 
     private static Result<object> As<T>(byte[] body)
         where T : class

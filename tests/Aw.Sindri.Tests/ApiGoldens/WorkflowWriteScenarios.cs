@@ -6,8 +6,9 @@ using static Aw.Sindri.Tests.Callers.CallerRequests;
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// The goldens of the workflow writes (issue 2258, PR 8b): the answers that need no block catalog, so they hold on the golden host: a pause, an archive, the refusals (a stale base revision with the current revision,
-/// a body missing a field, an unknown workflow) and a validate with nothing to validate. The graph-checking answers (a create, an ops batch that applies, an activate) are pinned by the service tests.
+/// The goldens of the workflow writes (issue 2258, PR 8b): a pause, an archive, the refusals (a stale base revision with the current revision, a body missing a field, an unknown workflow), a validate with nothing to validate, and the success answers
+/// of a replace, an ops batch and an activate. The golden host runs the real block catalog (schedule, manual, condition, notify, prompt), so the seeded one-node 'manual' workflow validates; the listing of the blocks is pinned here too.
+/// A create that validates is pinned by the service tests.
 /// </summary>
 internal static class WorkflowWriteScenarios
 {
@@ -23,6 +24,7 @@ internal static class WorkflowWriteScenarios
         ("workflows-slug", "replace-stale"), ("workflows-slug", "archived"), ("workflows-slug", "archive-not-found"),
         ("workflows-slug-ops", "ops-stale"), ("workflows-slug-ops", "ops-missing-fields"),
         ("workflows-slug-pause", "paused"), ("workflows-slug-activate", "not-found"),
+        ("workflows-slug-ops", "ops-applied"), ("workflows-slug-activate", "activated"), ("workflows-blocks", "listed"), ("workflows-slug", "replaced"),
     ];
 
     /// <summary>Whether this class owns the scenario.</summary>
@@ -64,6 +66,17 @@ internal static class WorkflowWriteScenarios
             case ("workflows-slug-pause", "paused"):
                 await Seed(host, newerRevision: false, ct);
                 return await Ask(host, Post(route + "/pause", json: null, human));
+            case ("workflows-slug-ops", "ops-applied"):
+                await Seed(host, newerRevision: false, ct);
+                return await Ask(host, Post(route + "/ops", $"{{\"baseRevision\":1,\"ops\":{Rename}}}", human));
+            case ("workflows-slug-activate", "activated"):
+                await Seed(host, newerRevision: false, ct);
+                return await Ask(host, Post(route + "/activate", json: null, human));
+            case ("workflows-blocks", "listed"):
+                return await Ask(host, Get("/sindri/workflows/blocks", human));
+            case ("workflows-slug", "replaced"):
+                await Seed(host, newerRevision: false, ct);
+                return await Ask(host, Put(route, "{\"baseRevision\":1,\"spec\":{\"version\":1,\"name\":\"Morning check v2\",\"nodes\":[{\"id\":\"start\",\"type\":\"manual\",\"config\":{}}],\"edges\":[]}}", human));
             default:
                 return await Ask(host, Post("/sindri/workflows/nope/activate", json: null, human));
         }

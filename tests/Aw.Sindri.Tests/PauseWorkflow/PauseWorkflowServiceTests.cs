@@ -47,6 +47,18 @@ public sealed class PauseWorkflowServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Pausing_an_archived_workflow_is_refused_and_writes_no_event()
+    {
+        await _rig.Seed();
+        _ = (await _rig.Workflows.Archive(Id, Token)).Value;
+
+        var result = await _service.Handle(new PauseWorkflowRequest(Slug, "owner"), Token);
+
+        Assert.Equal(SindriErrors.GraphArchived.Code, result.Error.Code);
+        Assert.Empty(_rig.Recorded(EventTypes.WorkflowPaused));
+    }
+
+    [Fact]
     public async Task An_unknown_workflow_is_not_found_and_without_the_lease_nothing_changes()
     {
         var unknown = await _service.Handle(new PauseWorkflowRequest(Aw.Sindri.Core.Graph.Ids.WorkflowSlug.From("nope"), "owner"), Token);

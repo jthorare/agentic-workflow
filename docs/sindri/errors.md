@@ -143,7 +143,8 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-008` | No such workflow |
 | `SND-GRAPH-009` | Another workflow already has that slug |
 | `SND-GRAPH-010` | A workflow with that id already exists |
-| `SND-GRAPH-011` | This workflow is archived; it can't be activated |
+| `SND-GRAPH-011` | This workflow is archived; it can't be activated, edited or paused. Its slug stays reserved, so a copy needs another slug |
+| `SND-GRAPH-012` | A graph edit could not be applied (the message names the op's number and kind) |
 | `SND-GRAPH-100` | A run with that id already exists |
 | `SND-GRAPH-101` | No such workflow run |
 | `SND-GRAPH-102` | A block could not finish |

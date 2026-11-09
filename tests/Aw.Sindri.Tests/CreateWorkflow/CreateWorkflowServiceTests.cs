@@ -2,6 +2,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Features.CreateWorkflow;
 using Aw.Sindri.Tests.WorkflowWrites;
 using static Aw.Sindri.Tests.WorkflowWrites.WorkflowWriteRig;
@@ -36,6 +37,20 @@ public sealed class CreateWorkflowServiceTests : IDisposable
         Assert.Equal("session:s1", record.CreatedBy);
         var created = Assert.Single(_rig.Recorded(EventTypes.WorkflowCreated));
         Assert.Equal($"workflow.created:{result.Value.Id.Value}", created.IdempotencyKey);
+    }
+
+    [Theory]
+    [InlineData("docs")]
+    [InlineData("blocks")]
+    public async Task A_slug_the_docs_and_blocks_routes_use_is_refused_and_writes_nothing(string slug)
+    {
+        _ = await _rig.Harness.HoldLease();
+
+        var result = await _service.Handle(new CreateWorkflowRequest(WorkflowSlug.From(slug), "manual-notify", Spec: null, "owner"), Token);
+
+        Assert.True(result.IsError);
+        Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
+        Assert.Empty(_rig.Recorded(EventTypes.WorkflowCreated));
     }
 
     [Fact]

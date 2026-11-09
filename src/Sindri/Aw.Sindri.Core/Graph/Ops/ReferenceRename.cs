@@ -9,7 +9,58 @@ internal static partial class ReferenceRename
     [GeneratedRegex("(?<open>\\{\\{\\s*)(?<id>[a-z][a-z0-9_]*)(?=[.\\s}])", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Reference { get; }
 
-    // why: only '{{old.field}}' references follow; a bare name inside a condition's 'when' text is left for the validator to flag.
+    /// <summary>Follows a rename through a condition's 'when' text: 'old.field' outside quotes becomes 'next.field' (the '{{old.field}}' form is covered by <see cref="Apply"/>).</summary>
+    public static void ApplyWhen(JsonObject? config, string old, string next)
+    {
+        if (config?["when"] is JsonValue value && value.TryGetValue<string>(out var text))
+        {
+            config["when"] = JsonValue.Create(RewriteWhen(text, old, next));
+        }
+    }
+
+    // why: a quoted string in an expression is a literal, never a reference; a reference is 'node.field', so the id must be followed by a dot and not follow one
+    private static string RewriteWhen(string text, string old, string next)
+    {
+        var result = new System.Text.StringBuilder(text.Length);
+        var i = 0;
+        while (i < text.Length)
+        {
+            var c = text[i];
+            if (c is '"' or '\'')
+            {
+                var end = text.IndexOf(c, i + 1);
+                var stop = end < 0 ? text.Length : end + 1;
+                result.Append(text, i, stop - i);
+                i = stop;
+            }
+            else if (IsIdentStart(c) && (i == 0 || (!IsIdentPart(text[i - 1]) && text[i - 1] != '.')))
+            {
+                var j = i;
+                while (j < text.Length && IsIdentPart(text[j]))
+                {
+                    j++;
+                }
+
+                var word = text.AsSpan(i, j - i);
+                var isReference = j < text.Length && text[j] == '.' && word.SequenceEqual(old);
+                result.Append(isReference ? next : word.ToString());
+                i = j;
+            }
+            else
+            {
+                result.Append(c);
+                i++;
+            }
+        }
+
+        return result.ToString();
+    }
+
+    private static bool IsIdentStart(char c) => c is >= 'a' and <= 'z';
+
+    private static bool IsIdentPart(char c) => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '_';
+
+    // why: the '{{old.field}}' form follows in every config string; the bare form in a condition's 'when' follows through ApplyWhen
     public static void Apply(JsonNode? node, string old, string next)
     {
         switch (node)

@@ -115,6 +115,21 @@ public sealed class WorkflowDocsTests
     }
 
     [Fact]
+    public void A_word_no_page_contains_does_not_hide_the_pages_the_other_words_find()
+    {
+        var pages = new[]
+        {
+            new WorkflowDocPage("block-notify", "Notify", "# Notify\n\nSends you a message."),
+            new WorkflowDocPage("spec", "The spec", "# The spec\n\nNodes and edges."),
+        };
+
+        var hits = WorkflowDocSearch.Search(pages, "notify slack");
+
+        Assert.Equal(["block-notify"], hits.Select(static h => h.Page.Slug), StringComparer.Ordinal);
+        Assert.False(double.IsNaN(hits[0].Score));
+    }
+
+    [Fact]
     public void Search_orders_by_score_then_page_slug_and_a_heading_beats_a_passing_mention()
     {
         var pages = new[]

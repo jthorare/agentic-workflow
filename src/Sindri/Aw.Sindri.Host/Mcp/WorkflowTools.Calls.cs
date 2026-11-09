@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using Aw.Context.Core;
+using Aw.Context.Core.Trust;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
@@ -105,7 +106,7 @@ internal static partial class WorkflowTools
         }
 
         var slugText = McpArguments.OptionalString(Validate, arguments, "slug");
-        var revision = McpArguments.OptionalLong(Validate, arguments, "revision", min: 1);
+        var revision = McpArguments.OptionalLong(Validate, arguments, "revision", min: 1, max: int.MaxValue);
         var spec = Json(Validate, arguments, "spec", JsonValueKind.Object);
         if (slugText.IsError || revision.IsError || spec.IsError)
         {
@@ -132,14 +133,14 @@ internal static partial class WorkflowTools
     private static async ValueTask<CallToolResult> CallActivate(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
         var slug = McpArguments.Only(Activate, arguments, ["slug", "revision"]) is { } refused ? refused : Slug(Activate, arguments);
-        var revision = McpArguments.OptionalLong(Activate, arguments, "revision", min: 1);
+        var revision = McpArguments.OptionalLong(Activate, arguments, "revision", min: 1, max: int.MaxValue);
         if (slug.IsError || revision.IsError)
         {
             return McpResults.Failure(services, slug.IsError ? slug.Error : revision.Error);
         }
 
         var answer = await services.GetRequiredService<IService<ActivateWorkflowRequest, ActivateWorkflowResponse>>().Handle(new ActivateWorkflowRequest(slug.Value, (int?)revision.Value, By(services)), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, static on => string.Create(CultureInfo.InvariantCulture, $"{on.Slug.Value} is on at revision {on.Revision}"));
+        return McpResults.From(services, FenceFindings(answer), static on => string.Create(CultureInfo.InvariantCulture, $"{on.Slug.Value} is on at revision {on.Revision}"));
     }
 
     private static async ValueTask<CallToolResult> CallPause(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
@@ -223,6 +224,12 @@ internal static partial class WorkflowTools
         return McpResults.From(services, answer, static listed => string.Create(CultureInfo.InvariantCulture, $"{listed.Groups.Sum(static g => g.Blocks.Count)} block types in {listed.Groups.Count} groups"));
     }
 
+    /// <summary>A findings refusal carries text from the stored spec, which another agent may have written: fence it like workflow_validate's findings.</summary>
+    private static Result<T> FenceFindings<T>(Result<T> answer) =>
+        answer.IsError && string.Equals(answer.Error.Code, SindriErrors.GraphFindings.Code, StringComparison.Ordinal)
+            ? SindriErrors.GraphFindings.With(UntrustedFence.Wrap("sindri:workflow", author: null, answer.Error.Message))
+            : answer;
+
     private static Result<WorkflowSlug> Slug(string tool, IDictionary<string, JsonElement>? arguments) =>
         McpArguments.RequiredString(tool, arguments, "slug", "morning-check").Bind(WorkflowReadEndpoints.Slug);
 
@@ -233,8 +240,8 @@ internal static partial class WorkflowTools
             return Missing(tool, "baseRevision", "3");
         }
 
-        var value = McpArguments.OptionalLong(tool, arguments, "baseRevision", min: 1);
-        return value.IsError ? value.Error : value.Value is { } n ? checked((int)n) : Missing(tool, "baseRevision", "3");
+        var value = McpArguments.OptionalLong(tool, arguments, "baseRevision", min: 1, max: int.MaxValue);
+        return value.IsError ? value.Error : value.Value is { } n ? (int)n : Missing(tool, "baseRevision", "3");
     }
 
     /// <summary>An optional JSON object or array argument as JSON text.</summary>
