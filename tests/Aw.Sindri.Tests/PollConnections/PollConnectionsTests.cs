@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.PollConnections;
 using Aw.Sindri.Testing.Connections;
 
@@ -117,8 +118,8 @@ public sealed class PollConnectionsTests
         _ = await _world.Tick(poller);
 
         Assert.Equal("c1", (await _world.Cursors.Get(PollWorld.Name, PollWorld.Kind, PollWorld.Token)).Value!.Value);   // a skip is a handled start, not a failure
-        Assert.Contains(EventTypes.WorkflowTriggerSkipped, _world.Recorded());
-        Assert.Contains(EventTypes.ConnectionPolled, _world.Recorded());
+        Assert.Contains(EventTypes.WorkflowTriggerSkipped, _world.Recorded(), StringComparer.Ordinal);
+        Assert.Contains(EventTypes.ConnectionPolled, _world.Recorded(), StringComparer.Ordinal);
     }
 
     [Fact]

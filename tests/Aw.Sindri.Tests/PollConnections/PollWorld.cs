@@ -12,6 +12,7 @@ using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.PollConnections;
 using Aw.Sindri.Testing.Connections;
 using Aw.Sindri.Testing.Workflow;
+using Aw.Sindri.Tests.Connections;
 
 namespace Aw.Sindri.Tests.PollConnections;
 
@@ -64,7 +65,7 @@ internal sealed class PollWorld
         }
 
         var id = WorkflowId.From("WF-" + (++_created).ToString("D32", System.Globalization.CultureInfo.InvariantCulture));
-        var spec = new GraphSpec(1, slug, null, concurrency, null, [new GraphNode(NodeId.From("start"), "connection_event", null, config)], []);
+        var spec = new GraphSpec(1, slug, Description: null, concurrency, Resources: null, [new GraphNode(NodeId.From("start"), "connection_event", Title: null, config)], []);
         _ = (await Workflows.Create(id, WorkflowSlug.From(slug), spec, "owner", Token)).Value;
         _ = (await Workflows.Activate(id, 1, Token)).Value;
         return WorkflowSlug.From(slug);

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Core.Events;
@@ -26,7 +27,7 @@ public sealed class CatchUpTests
 
         var run = await _world.Connections.Tick();
         var connection = (await _world.Connections.Store.Get(PollWorld.Name, PollWorld.Token)).Value;
-        var saved = cursor is null ? null : new PollCursor(PollWorld.Name, PollWorld.Kind, cursor, null, null, null, 0);
+        var saved = cursor is null ? null : new PollCursor(PollWorld.Name, PollWorld.Kind, cursor, UpdatedAt: null, LastPollAt: null, BackoffUntil: null, Failures: 0);
         var read = await _world.CatchUp().Read(new ReadRequest(Group(), connection, poller, saved, pages, Forward: true), run.Grant, PollWorld.Token);
         return read.Value;
     }
@@ -38,7 +39,7 @@ public sealed class CatchUpTests
     {
         await _world.Connect();
         _ = await _world.GoLive("all-labels");
-        _ = await _world.Cursors.Save(new PollCursor(PollWorld.Name, PollWorld.Kind, "c0", null, null, null, 0), PollWorld.Token);
+        _ = await _world.Cursors.Save(new PollCursor(PollWorld.Name, PollWorld.Kind, "c0", UpdatedAt: null, LastPollAt: null, BackoffUntil: null, Failures: 0), PollWorld.Token);
         _ = _world.Wake.TryTake();
         var poller = new ScriptedEventPoller("linear", (_, _) => PollWorld.Page("c1", PollWorld.Event("linear:h-1"), PollWorld.Event("linear:h-2")));
         _ = await _world.Tick(poller);   // the regular poll starts both runs
@@ -55,7 +56,7 @@ public sealed class CatchUpTests
     [Fact]
     public async Task A_capped_catch_up_records_one_event_and_leaves_the_cursor_where_it_stopped()
     {
-        var poller = new ScriptedEventPoller("linear", (_, call) => PollWorld.Page($"c{call}", PollWorld.Event($"linear:h-{call}")));
+        var poller = new ScriptedEventPoller("linear", (_, call) => PollWorld.Page(string.Create(CultureInfo.InvariantCulture, $"c{call}"), PollWorld.Event(string.Create(CultureInfo.InvariantCulture, $"linear:h-{call}"))));
 
         var read = await Read(poller, pages: 3, cursor: "c0");
 
@@ -77,7 +78,7 @@ public sealed class CatchUpTests
         Assert.False(read.Capped);
         Assert.Equal(2, poller.Calls);   // the second call found nothing new
         Assert.Equal("c1", await SavedCursor());
-        Assert.DoesNotContain(EventTypes.CatchUpCapped, _world.Recorded());
+        Assert.DoesNotContain(EventTypes.CatchUpCapped, _world.Recorded(), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -104,7 +105,7 @@ public sealed class CatchUpTests
 
         Assert.Equal(2, _world.Starter.Requests.Count);
         Assert.Equal([123_456_789, 123_456_790], _world.Starter.Requests.Select(static r => r.Occurrence));
-        Assert.DoesNotContain(EventTypes.WorkflowTriggerSkipped, _world.Recorded());
+        Assert.DoesNotContain(EventTypes.WorkflowTriggerSkipped, _world.Recorded(), StringComparer.Ordinal);
 
         // the same two events again: each finds its own run, so neither starts a second one
         _ = await Read(poller, pages: 1, cursor: "c0");

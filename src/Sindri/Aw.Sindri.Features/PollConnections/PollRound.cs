@@ -96,7 +96,7 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
             : new RoundOutcome(after, [.. poll.Events.Select(static e => e.DeliveryKey)], fan.Started, fan.Skipped, moved, RateLimited: false, poll.Gap, poll.Reason);
     }
 
-    private readonly record struct Fan(int Started, int Skipped);
+    private sealed record Fan(int Started, int Skipped);
 
     // True when a run started or queued; false when the trigger was skipped (and recorded). Any other failure is the round's error.
     // why: the occurrence is a hash, so two deliveries can share one. SND-GRAPH-100 is a duplicate only when the run that holds the id carries THIS delivery id; otherwise the next occurrence number is tried.

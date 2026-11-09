@@ -2,7 +2,6 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
@@ -24,11 +23,9 @@ namespace Aw.Sindri.Host.Server;
 /// nothing. Each service's last recorded outcome is kept in memory and, after a restart, read from its latest row.
 /// </summary>
 internal sealed partial class SchedulerHost(
-    IServiceScopeFactory scopes, ScheduleInputs inputs, ServiceRunGuard guard, HeldLease held, ICallerContextAccessor callers, TimeProvider clock, ILogger<SchedulerHost> log, PollWake? pollWake = null)
+    IServiceScopeFactory scopes, ScheduleInputs inputs, ServiceRunGuard guard, HeldLease held, ICallerContextAccessor callers, TimeProvider clock, ILogger<SchedulerHost> log)
     : BackgroundService
 {
-    private readonly WakeDetector _wakes = new(clock, TimeSpan.FromSeconds(30));   // the poll service's tick: a gap over 3 x 30 s between the wall and the monotonic clock is a sleep
-    private static readonly TimeSpan _tick = TimeSpan.FromSeconds(1);
     private readonly Dictionary<ServiceName, Task> _running = [];
     private IReadOnlyList<ServiceSchedule> _schedules = [];
     private LoadedProfile? _approved;
@@ -42,12 +39,7 @@ internal sealed partial class SchedulerHost(
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (_wakes.Observe())
-            {
-                pollWake?.Request();   // the machine slept: the poll service reads every cursor forward on its next run (#2258, PR 11)
-                RunWakeServicesNow();
-            }
-
+            AfterSleep();
             await Refresh(stoppingToken).ConfigureAwait(false);
             var grant = held.Current;
             if (grant is not null)
@@ -60,16 +52,6 @@ internal sealed partial class SchedulerHost(
         }
 
         await InFlight().ConfigureAwait(false);
-    }
-
-    // why: after a sleep the slots of these services are in the past or far ahead; they run now (workflow-schedule fires its latest missed tick, connection-refresh renews tokens that expired asleep, workflow-poll catches up)
-    private static readonly string[] _wakeServices = ["workflow-poll", "workflow-schedule", "connection-refresh"];
-
-    private void RunWakeServicesNow()
-    {
-        var now = clock.GetUtcNow();
-        _schedules = [.. _schedules.Select(s => _wakeServices.Contains(s.Name.Value, StringComparer.Ordinal) && s.NextSlot > now ? s with { NextSlot = now } : s)];
-        inputs.Live.Publish(_schedules);
     }
 
     /// <summary>Waits for the runs still in flight; they see the stop's cancellation.</summary>

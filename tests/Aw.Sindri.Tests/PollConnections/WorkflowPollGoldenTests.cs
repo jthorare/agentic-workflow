@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Connections.Polling;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Tests.Connections;
 using Aw.Sindri.Testing;
@@ -46,6 +46,6 @@ public sealed class WorkflowPollGoldenTests
         Assert.Equal("connection_event", trigger["kind"]!.GetValue<string>());
         Assert.Equal("linear:h-55:label:lbl-1", trigger["deliveryId"]!.GetValue<string>());
         Assert.Equal("ENG-7", trigger["identifier"]!.GetValue<string>());
-        Assert.Contains(EventTypes.ConnectionPolled, world.Recorded());
+        Assert.Contains(EventTypes.ConnectionPolled, world.Recorded(), StringComparer.Ordinal);
     }
 }
