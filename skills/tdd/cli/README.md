@@ -68,12 +68,33 @@ literals (`py.int` enforces it). `copy2` keeps mtime to the microsecond.
 - `oracle.py` (test only): `python3 -I -B parity/oracle.py <suite>` prints golden JSON for a suite (`list` names
   them). It loads `build_doc.py` / `build_prs.py` unchanged from the sibling `skills/system-design` (or
   `$SYSTEM_DESIGN_SKILL`) and the tdd scripts by path, and never writes bytecode beside them.
-- `gate.ts`: `bun run parity/gate.ts <packet-dir> [--b ts] [--expect-line "<summary>"]` compiles the packet twice into
-  the same temporary out path with `TDD_GENERATED` and `TZ` pinned and compares `content.json`, `content.files.json`,
-  every file by sha256, stdout and stderr. Today both runs are the Python compiler; from PR 11 `--b ts` runs the
-  TypeScript one. Exit 0 green, 1 red, 2 usage.
+- `gate.ts`: `bun run parity/gate.ts <packet-dir> [--a python|ts|exe] [--b python|ts|exe] [--expect-line "<summary>"]
+  [-- <compiler flags>]` compiles the packet twice into the same temporary out path with `TDD_GENERATED` and `TZ`
+  pinned, `build_tdd.py` as A and `bin/build-tdd.ts` as B by default, and compares `content.json`,
+  `content.files.json`, every file by sha256 (the dashed SVGs included), stdout and stderr. Flags after `--`
+  (`--no-copy`, `--strict`) go to both compilers. CPython's own interpreter warnings on stderr (today one
+  `DeprecationWarning` for `build_tdd.py`'s positional `maxsplit`) are printed as notes and not compared. Exit 0
+  green, 1 red, 2 usage.
 - The packet tests read `$TDD_PARITY_PACKETS` (packet folders separated by `:`) and skip when it is unset:
   `TDD_PARITY_PACKETS=<a>:<b> bun test`.
+
+## The compiler (`src/compile`, `src/vocab.ts`, PR 11)
+
+`bin/build-tdd.ts` (also `tdd build`) is `build_tdd.py` in plain synchronous TypeScript on the kernel: the same argv,
+usage text, `content.json` (indent 1) and `content.files.json` (indent 2), copied files and dashed proposed strokes,
+stdout line, `warning:` lines and exit codes. Modules: `args.ts` (argv and the usage text, the Python docstring
+verbatim), `attrs.ts` (`{attrs}`, `:::` containers, `split_title`), `refs.ts` (reference and glossary linking),
+`sanitize.ts` (the HTML guard), `prs.ts` (`prs/pr-NN.md`), `compiler.ts` (the `Compiler`: ids and definitions,
+inline and citations, schema, figures and hotspots, blocks, containers, PR cards, the page). It reads the system-design
+surface from `src/sd` (`import * as sd from "../sd"`, the Python names) and the vocabulary from `src/vocab.ts`, the one
+copy of `TOKEN`, `token_id`, `CITE`, `LEGEND_TONES`, `LINK_KEYS`, `SKIP_TAGS`, the tdd `MARK` and `SQL_KW` (checked
+against `build_tdd.py` and `eval/ev_common.py` in `test/compile`). `BUILD_TDD_SHA256` pins the Python file the port
+reproduces: a change to `build_tdd.py` lands with the same change here and a new pin (the twin rule).
+
+During the overlap the linter's `PARITY` rule (`scripts/lint_packet.py`, `references/validators.md`) compiles every
+linted source with this compiler too. `test/compile` runs the gate on an edge-case fixture (`test/compile/fixtures/edge`:
+every container, hotspot variants, PNG / JPEG / SVG sizing, a CRLF SVG that the dash rewrites, sub-PRs, aliases, the
+sanitizer), with `--no-copy` and `--strict`, on `$TDD_PARITY_PACKETS`, and on argv errors.
 
 ## Effect smoke
 

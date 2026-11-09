@@ -112,6 +112,32 @@ describe.skipIf(!hasPython)("the TypeScript compiler matches build_tdd.py", () =
     }, T);
   }
 
+  test("lint_packet.py PARITY: passes on a fresh build, a note and a skip without bun", () => {
+    const { dir, packet } = edgeCopy();
+    try {
+      const b = spawnSync(["python3", "-I", "-B", "-W", "ignore", BUILD_TDD, "edge.md", "build"], { cwd: packet, stdout: "pipe", stderr: "pipe" });
+      expect(b.exitCode).toBe(0);
+      const lint = (path: string) => {
+        const out = join(dir, `lint-${path ? "bun" : "nobun"}.json`);
+        const r = spawnSync(["python3", "-I", "-B", join(SCRIPTS, "lint_packet.py"), packet, "--json", out], {
+          cwd: packet, stdout: "pipe", stderr: "pipe", env: { ...process.env, PATH: path },
+        });
+        expect([0, 1]).toContain(r.exitCode ?? -1);
+        return JSON.parse(readFileSync(out, "utf8")) as { findings: { rule: string }[]; notes: string[]; counts: { by_rule: Record<string, number> } };
+      };
+      const withBun = lint(process.env.PATH ?? "");
+      expect(withBun.findings.filter((f) => f.rule === "PARITY")).toEqual([]);
+      expect(withBun.notes.some((n) => n.startsWith("PARITY: the TypeScript compiler (cli/bin/build-tdd.ts) reproduced build/content.json byte for byte"))).toBe(true);
+      expect(withBun.counts.by_rule.PARITY).toBe(0);
+      const py = spawnSync(["python3", "-I", "-c", "import sys; print(sys.executable)"], { stdout: "pipe" }).stdout.toString().trim();
+      const noBun = lint(`${py.slice(0, py.lastIndexOf("/"))}:/usr/bin:/bin`);
+      expect(noBun.notes).toContain("PARITY: bun is not on PATH; the TypeScript compiler was not compared");
+      expect(noBun.findings).toEqual(withBun.findings);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, T);
+
   test("vocab.ts is build_tdd.py's vocabulary (and eval/ev_common.py's TOKEN)", () => {
     const code = `
 import importlib.util, json, os, sys
