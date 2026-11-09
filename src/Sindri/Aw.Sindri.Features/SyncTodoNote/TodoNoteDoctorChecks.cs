@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ledger;
@@ -20,6 +21,7 @@ internal sealed class TodoNoteDoctorChecks(INoteLocator locator, ITodoNoteSync s
     internal const string Name = "todo";
 
     private const int FailuresBeforeWarning = 3;
+    private const int NearlyFullBytes = 800 * 1024;
     private const string Fix = "check todo.obsidian: sindri todo note set <vault> <note>";
 
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
@@ -39,8 +41,33 @@ internal sealed class TodoNoteDoctorChecks(INoteLocator locator, ITodoNoteSync s
         var last = synced.IsSuccess && synced.Value is { } sevent
             ? sevent.Envelope.OccurredAt.UtcDateTime.ToString("yyyy-MM-dd HH:mm'Z'", CultureInfo.InvariantCulture)
             : "none yet";
-        _ = source; // why: the green commit reads the note
-        return [Judge(place, sync.Status, last)];
+        return [await WithNote(Judge(place, sync.Status, last), cancellationToken).ConfigureAwait(false)];
+    }
+
+    // why: the note's size and broken lines are facts about the file; a note that can't be read already says so in its own row
+    private async ValueTask<DoctorCheck> WithNote(DoctorCheck row, CancellationToken cancellationToken)
+    {
+        var read = await source.Read(cancellationToken).ConfigureAwait(false);
+        if (read.IsError || read.Value is not { } snapshot)
+        {
+            return row;
+        }
+
+        var broken = NoteBrokenLines.Of(snapshot.Document);
+        var numbers = string.Join(", ", broken.Select(static b => b.Line.ToString(CultureInfo.InvariantCulture)));
+        var detail = $"{row.Detail}; lines that can't sync: {broken.Count.ToString(CultureInfo.InvariantCulture)}{(broken.Count > 0 ? $" ({numbers})" : string.Empty)}";
+        var full = Encoding.UTF8.GetByteCount(snapshot.Document.Render()) > NearlyFullBytes;
+        if (full)
+        {
+            detail += "; note nearly full";
+        }
+
+        if (row.State != CheckState.Ok || (broken.Count == 0 && !full))
+        {
+            return row with { Detail = detail };
+        }
+
+        return row with { State = CheckState.Warn, Detail = detail, Fix = full ? "trim done lines from the note; syncing stops at 1 MB" : "fix or remove the lines listed; they stay out of Sindri until then" };
     }
 
     private static DoctorCheck Judge(NotePlace place, TodoNoteStatus status, string last)
