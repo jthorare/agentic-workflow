@@ -55,6 +55,7 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
 
         Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
         Assert.Equal(500, gathered["count"]!.GetValue<int>());
+        TestContext.Current.SendDiagnosticMessage($"for_each 500 items: parent history {history.Events.Count} events");
         Assert.True(history.Events.Count < 500, $"the parent's history holds {history.Events.Count} events for 500 items");   // why: Temporal stops a workflow at 51,200; the parent holds one entry per batch, not per item
     }
 
