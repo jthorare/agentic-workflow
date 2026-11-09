@@ -203,6 +203,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         private JsonNode? Root(string name) => name switch
         {
             "trigger" => _trigger,
+            // why: GraphValidator._workflowFields lists these four names; change both together
             "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision, ["id"] = run.WorkflowId.Value },
             "item" => loop?.Item,
             "itemIndex" => loop is null ? null : JsonValue.Create(loop.ItemIndex),

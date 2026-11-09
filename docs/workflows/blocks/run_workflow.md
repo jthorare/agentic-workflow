@@ -15,7 +15,7 @@ Starts another workflow's active revision, with a payload. The callee must decla
 | `status` | string | `started`, `queued` or `skipped`; with `wait`, `succeeded`. |
 | `outputs` | any | With `wait`, the called run's outputs: an object keyed by node id, holding what each node that succeeded gave (`{{call.outputs.fetch.items}}`). A node that ran once gives its outputs object; a node that ran per item gives an array of them in item order. Nodes that failed, were skipped or whose output was cut at 64 KB are left out; when the whole object would pass 64 KB it is `null`. |
 
-**Guards.** A run is depth 0 and the run it calls is depth 1. `workflow.callDepth` (profile, default 3): depth 3 is allowed, a call that would be depth 4 is `SND-GRAPH-120`. A run can't start its own workflow, nor the workflow that called it: `SND-GRAPH-121`. The callee's run id is made from the caller's run, node and item index, so a node that runs twice starts one callee run.
+**Guards.** A run is depth 0 and the run it calls is depth 1. `workflow.callDepth` (profile, default 3): depth 3 is allowed, a call that would be depth 4 is `SND-GRAPH-120`. A run can't start its own workflow, nor any workflow up its call chain (the callee's trigger carries them as `ancestors`, so A calling B calling C can't call A): `SND-GRAPH-121`. The callee's run id is made from the caller's run, node and item index, so a node that runs twice starts one callee run.
 
 ```json
 {

@@ -29,6 +29,7 @@ ok    context:index-sync not configured (no record source, so nothing syncs)
 ok    library           the first read of aw hasn't finished yet (sindri library sync reads now)
 ok    launcher:adoption no opens in the last 30 days
 ok    todo              note: not set (no todo.obsidian key)
+ok    connections:catchup no capped or gapped read
 warn  setup             not finished: mcp (todo), map (todo), sources (todo) (fix: sindri mcp register --apply)
 warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
@@ -220,7 +221,7 @@ SND-API-001 not running: no control plane is recorded (fix: sindri)
 exit 1
 ## sindri doctor
 ok    lease             free (last epoch 1)
-ok    ledger            schema 14/14
+ok    ledger            schema 15/15
 ok    views             cursor N of head M
 ok    profile           hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)
@@ -249,6 +250,7 @@ ok    context:index-sync not configured (no record source, so nothing syncs)
 ok    library           the first read of aw hasn't finished yet (sindri library sync reads now)
 ok    launcher:adoption no opens in the last 30 days
 ok    todo              note: not set (no todo.obsidian key)
+ok    connections:catchup no capped or gapped read
 warn  setup             not finished: mcp (todo), map (todo), sources (todo) (fix: sindri mcp register --apply)
 warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
 ok    setup:token       WORK/home/auth/human.token can be read by you alone

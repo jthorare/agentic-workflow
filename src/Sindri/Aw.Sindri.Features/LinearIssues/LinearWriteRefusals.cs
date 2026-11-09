@@ -6,9 +6,9 @@ namespace Aw.Sindri.Features.LinearIssues;
 /// <summary>The refusals of the Linear write gate, with the texts the issue sheet shows (Linear hub spec §8).</summary>
 internal static class LinearWriteRefusals
 {
-    /// <summary>SND-AUTH-002: a session never writes to Linear.</summary>
+    /// <summary>SND-AUTH-002: how a session refusal that Context itself gave (SND-CONTEXT-020) is shown.</summary>
     /// <returns>The error.</returns>
-    internal static Error Session() => SindriErrors.AuthRefused.With("Linear writes are the owner's to make; a session can't (fix: use the app)");
+    internal static Error Session() => SindriErrors.AuthRefused.With("Linear writes aren't open to this caller (fix: the owner turns on context.sessions.enabled in the profile, or uses the app)");
 
     /// <summary>SND-LINEAR-002: no usable write key.</summary>
     /// <returns>The error.</returns>

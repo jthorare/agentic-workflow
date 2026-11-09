@@ -9,7 +9,7 @@ using Aw.Sindri.Core.Secrets;
 namespace Aw.Sindri.Host.IndexSources;
 
 /// <summary>
-/// 'sindri index connect slack' (owned-index spec §5.4, §10): the human reads the bot token at the terminal with the echo off, and Sindri checks it against every channel the profile lists (one cheap read each, through a reader that
+/// 'sindri index connect slack' (owned-index spec §5.4, §10): the bot token is read at the terminal with the echo off, and Sindri checks it against every channel the profile lists (one cheap read each, through a reader that
 /// refuses any other channel) before it saves anything. A direct message or a malformed id in the profile is refused before the token is even asked for. Only then is the token stored where a secret pointer can read it back and the
 /// pointer (never the token) written into the profile. The token is never printed, logged or put in an error.
 /// </summary>
@@ -34,19 +34,13 @@ internal sealed class SlackConnect(
     internal const string TokenPrompt = "Slack bot token (read-only: channels:history and channels:read, plus groups:history for private channels; not shown, not stored in the profile): ";
 
     /// <summary>Connects Slack.</summary>
-    /// <param name="human">Whether the caller is a person at their own terminal; a session is refused before anything is asked.</param>
     /// <param name="cancellationToken">Cancels the asking and the checks.</param>
-    /// <returns>The pointer now in the profile and how many channels were checked; SND-AUTH-002 for a session; SND-INDEX-011 when the profile lists no Slack channel; SND-INDEX-013 for a direct message or a channel the reader refuses; SND-INDEX-009 when Slack refuses the token or the stored pointer does not resolve; SND-INDEX-010 naming the channels the token cannot read.</returns>
-    internal async ValueTask<Result<SlackConnected>> Run(bool human, CancellationToken cancellationToken)
+    /// <returns>The pointer now in the profile and how many channels were checked; SND-INDEX-011 when the profile lists no Slack channel; SND-INDEX-013 for a direct message or a channel the reader refuses; SND-INDEX-009 when Slack refuses the token or the stored pointer does not resolve; SND-INDEX-010 naming the channels the token cannot read.</returns>
+    internal async ValueTask<Result<SlackConnected>> Run(CancellationToken cancellationToken)
     {
-        if (!human)
-        {
-            return SindriErrors.AuthRefused.With("`sindri index connect slack` is the human's: run it in your own terminal, not from an agent session");
-        }
-
         if (!prompts.Interactive)
         {
-            return SindriErrors.InvalidInput.With("`sindri index connect slack` reads the token at the terminal and there is none here (fix: run it in your own terminal)");
+            return SindriErrors.InvalidInput.With("`sindri index connect slack` reads the token at the terminal and there is none here (fix: run it in a terminal, or give the token's environment variable with --token-env NAME)");
         }
 
         var source = await Listed(cancellationToken).ConfigureAwait(false);

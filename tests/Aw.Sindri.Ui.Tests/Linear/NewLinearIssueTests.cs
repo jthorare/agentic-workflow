@@ -253,7 +253,7 @@ public sealed class NewLinearIssueTests
     public Task A_session_refusal_turns_the_form_off_with_no_banner_and_keeps_the_text() => NewLinearIssueFixture.Run(async f =>
     {
         var vm = await f.OpenedOnEng(Token);
-        f.Server.QueueLinearCreate(NewLinearIssueFixture.Create("session-refused"));
+        f.Server.QueueLinearCreate(RouteAnswer.Refused("Linear issues are the owner's to create (fix: use the app)"));
         vm.Title = "Document the retry budget";
 
         await vm.Submit(Token);

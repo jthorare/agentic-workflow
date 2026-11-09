@@ -10,4 +10,8 @@ namespace Aw.Sindri.Core.Graph.Blocks;
 /// <param name="Target">The callee's slug.</param>
 /// <param name="Payload">The payload the callee's 'workflow_call' trigger hands on, or null.</param>
 /// <param name="Depth">The callee's depth: its caller's plus one.</param>
-public sealed record GraphCall(WorkflowRunId Caller, NodeId Node, int Index, WorkflowSlug Target, JsonObject? Payload, int Depth);
+public sealed record GraphCall(WorkflowRunId Caller, NodeId Node, int Index, WorkflowSlug Target, JsonObject? Payload, int Depth)
+{
+    /// <summary>The slugs of the workflows up the call chain, oldest first, at most 'workflow.callDepth' of them; they travel in the callee's trigger as 'ancestors'.</summary>
+    public IReadOnlyList<string> Ancestors { get; init; } = [];
+}
