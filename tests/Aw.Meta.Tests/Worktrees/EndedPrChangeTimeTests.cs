@@ -134,7 +134,7 @@ public sealed class EndedPrChangeTimeTests
         var full = await _world.Sweeper.Sweep(Team(), WorktreeScope.AllIncludingNoPr, SweepMode.Remove, "sweep", CancellationToken.None);
 
         var loose = Assert.Single(full.Value.Kept, r => string.Equals(r.Path, Loose, StringComparison.Ordinal));
-        Assert.Contains(loose.Reasons, r => r.Contains("changed since the last sweep", StringComparison.Ordinal));
+        Assert.Contains(loose.Reasons, r => r.Contains("changed since the last full sweep", StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -164,7 +164,7 @@ public sealed class EndedPrChangeTimeTests
         _ = await _world.Values.Set(KvKeys.WorktreesSweepStart, Stamp(110), CancellationToken.None);
         _world.WorktreeFiles.Touch(Lane, A.At(115));
 
-        Assert.Contains("changed since the last sweep", await MergeRun(), StringComparison.Ordinal);
+        Assert.Contains("changed since the last full sweep", await MergeRun(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
