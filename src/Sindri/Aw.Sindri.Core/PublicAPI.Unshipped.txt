@@ -19485,6 +19485,7 @@ Aw.Sindri.Core.Graph.Blocks.IGraphBlock
 Aw.Sindri.Core.Graph.Blocks.IGraphBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
 Aw.Sindri.Core.Graph.Blocks.IGraphModelPort
 Aw.Sindri.Core.Graph.Blocks.IGraphModelPort.Ask(string! prompt, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphModelPort.Untrusted(string! text) -> string!
 Aw.Sindri.Core.Graph.Blocks.INotifyPort
 Aw.Sindri.Core.Graph.Blocks.INotifyPort.Post(Aw.Sindri.Core.Graph.Ids.WorkflowRunId runId, Aw.Sindri.Core.Graph.Ids.NodeId node, string! title, string? body, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Blocks.ManualBlock
