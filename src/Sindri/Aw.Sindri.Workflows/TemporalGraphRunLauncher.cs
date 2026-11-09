@@ -61,6 +61,11 @@ internal sealed class TemporalGraphRunLauncher(Func<CancellationToken, ValueTask
         {
             return SindriErrors.EngineUnavailable.With(startFailure.Message);
         }
+        catch (RpcException described) when (described.Code == RpcException.StatusCode.Unavailable && startFailure.Code == RpcException.StatusCode.Unavailable)
+        {
+            // boundary: start and describe both found the server gone, so it most likely never took the start; reading it as launched would leave a StartNow run Running with no walk until the next serve start
+            return SindriErrors.EngineUnavailable.With(startFailure.Message);
+        }
         catch (RpcException)   // boundary: the describe failed too, so we can't tell
         {
             // why: failing a run that may be running leaves the walk going with a Failed row, while a Running row with no workflow is ended by the
