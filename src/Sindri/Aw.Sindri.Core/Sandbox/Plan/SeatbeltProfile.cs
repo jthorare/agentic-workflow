@@ -90,7 +90,7 @@ public static class SeatbeltProfile
     {
         var target = $"(subpath \"{Escape(path)}\")";
         var denied = done.Exists(d => d.Mount.Kind is PlanMountKind.Deny or PlanMountKind.Tmpfs && Under(path, d.Path));
-        var writable = done.Exists(d => d.Mount.Kind is PlanMountKind.ReadWrite or PlanMountKind.PerLaunchDir && Under(path, d.Path));
+        var writable = done.Exists(d => d.Mount.Kind is PlanMountKind.ReadWrite or PlanMountKind.PerLaunchDir or PlanMountKind.State && Under(path, d.Path));
         var rules = Rules(mount.Kind, target, denied, writable);
         if (rules.Count == 0)
         {
@@ -111,7 +111,7 @@ public static class SeatbeltProfile
             return [$"(deny file-read* file-write* {target})"];
         }
 
-        if (kind is PlanMountKind.ReadWrite or PlanMountKind.PerLaunchDir)
+        if (kind is PlanMountKind.ReadWrite or PlanMountKind.PerLaunchDir or PlanMountKind.State)
         {
             return [denied ? $"(allow file-read* file-write* {target})" : $"(allow file-write* {target})"];
         }

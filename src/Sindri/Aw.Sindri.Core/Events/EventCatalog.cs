@@ -40,6 +40,7 @@ public static class EventCatalog
         new(EventTypes.RecipeRevoked, Public: true, typeof(RecipeRevoked), "recipe.revoked:<hash>"),
         new(EventTypes.ItemCreated, Public: true, typeof(ItemCreatedPublic), "item.created:<itemId>") { Invalidates = [ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.ItemStateChanged, Public: true, typeof(ItemStateChanged), "item.state-changed:<itemId>:v<version>") { Invalidates = [ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline, ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions] },
+        new(EventTypes.ItemHandoff, Public: false, PublicPayload: null, "item.handoff:<itemId>"),
         new(EventTypes.ItemLinked, Public: true, typeof(ItemLinked), "item.linked:<itemId>:<record>") { Invalidates = [ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.ProjectAttached, Public: true, typeof(ProjectAttached), "project.attached:<projectId>") { Invalidates = [ApiViews.Projects] },
         new(EventTypes.ProjectChanged, Public: true, typeof(ProjectChanged), "project.changed:<projectId>:v<version>") { Invalidates = [ApiViews.Projects] },

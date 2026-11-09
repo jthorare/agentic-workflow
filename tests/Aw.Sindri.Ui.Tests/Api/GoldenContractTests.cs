@@ -166,6 +166,7 @@ public sealed class GoldenContractTests
         "context-concepts-id-members",   // GET /sindri/context/concepts/{id}/members: the band reads sizes from the concepts answer, never a concept's member list
         "context-eval", "context-map-proposals", "context-query", "context-history", "context-subgraph", "context-search",   // not U9's: eval, proposals (U13) and the query routes are read by the phases that call them
         "items",   // GET /items (the list) is never called; POST /items' created* goldens are read (see the loop)
+        "handoff",   // POST /sindri/handoff (#2258 PR 12): a local app or script's call; the CLI's `handoff send`, never the app's
         "ledger",   // API P5: the audit read is the CLI's; the app follows the stream and re-queries
         "services-name-run", "services-name-pause", "services-name-resume",   // API P6: the services calls are U4's (Services); the job calls are read below
         "sessions-id-heartbeat", "sessions-id-exit", "launch-targets", "launch-targets-probe",   // API P10a (U8): U10's session wrap's own calls and the launch-target reads, never the app's

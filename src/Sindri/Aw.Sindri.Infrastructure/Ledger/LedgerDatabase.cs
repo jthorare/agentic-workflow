@@ -132,8 +132,11 @@ internal sealed class LedgerDatabase : IDisposable
     /// <summary>The first migration with 'poll_cursor' (connections PR 11); reads of an older file find no cursor.</summary>
     internal const int PollCursorsVersion = 13;
 
+    /// <summary>The first migration with 'workflow_seen' (agent-first PR 9); reads of an older file find nothing seen. The number is renumbered at the final main merge.</summary>
+    internal const int WorkflowSeenVersion = 14;
+
     /// <summary>The first migration with 'memory_fact.written_by' (#2460); reads of an older file find no writer.</summary>
-    internal const int MemoryFactWrittenByVersion = 14;
+    internal const int MemoryFactWrittenByVersion = 15;
 
     private static IReadOnlyList<Migration> LoadMigrations()
     {
