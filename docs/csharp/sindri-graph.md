@@ -83,6 +83,27 @@ Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkfl
 
 An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string with `truncated: true` on the node run. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list.
 
+## Writing workflows (PR 8b)
+
+Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `ReplaceWorkflow`, `ValidateWorkflow`, `ActivateWorkflow`, `PauseWorkflow`, `DeleteWorkflow`) behind a route, an MCP tool and a `sindri wf` verb. `workflow_run` and `workflow_cancel` are the existing run and cancel slices (PR 6) as tools. Every write is a catalog row (`Host/Catalog/WorkflowRows.cs`) an agent session may run. The CLI verbs start the control plane first, like `wf run`.
+
+| Write | Route | MCP tool | CLI |
+|---|---|---|---|
+| Make a workflow (off, revision 1) from a spec or a starter template | `POST /sindri/workflows` | `workflow_create` | `sindri wf create <slug> (--template <name> \| --file <spec.json>)` |
+| Edit by ops against `baseRevision` | `POST /sindri/workflows/{slug}/ops` | `workflow_apply_ops` | `sindri wf edit <slug> --base <n> (--ops <json> \| --ops-file <file>)` |
+| Replace the whole graph against `baseRevision` | `PUT /sindri/workflows/{slug}` | `workflow_replace` | `sindri wf edit <slug> --base <n> --file <spec.json>` |
+| Check as for activation (writes nothing) | `POST /sindri/workflows/validate` | `workflow_validate` | `sindri wf validate --slug <slug> [--revision <n>]` (a file still runs in process) |
+| Turn triggers on at a revision (newest by default) | `POST /sindri/workflows/{slug}/activate` | `workflow_activate` | `sindri wf activate <slug> [--revision <n>]` |
+| Turn triggers off; revisions stay | `POST /sindri/workflows/{slug}/pause` | `workflow_pause` | `sindri wf pause <slug>` |
+| Archive (hidden, off for good; revisions and runs stay) | `DELETE /sindri/workflows/{slug}` | `workflow_delete` | `sindri wf delete <slug>` |
+| Start / stop a run | `POST /sindri/workflows/{slug}/runs`, `POST /sindri/workflow-runs/{run}/cancel` | `workflow_run`, `workflow_cancel` | `sindri wf run`, `sindri wf cancel` |
+
+**Conflicts.** An edit or replace names the newest revision it read. If a newer one exists, nothing is written and the answer is `409 SND-GRAPH-007` with `currentRevision`; the caller reads the workflow again and retries. A batch of ops applies all or none (`SND-GRAPH-012` names the failing op). Create, edit and replace check the graph in draft mode and refuse blocking findings (`SND-GRAPH` findings); activate checks in activate mode. The checks use the running Sindri's block catalog and the repos of the approved profile (`IWorkflowChecker`, `Host/Commands/ProfileWorkflowChecker.cs`).
+
+**Events.** `workflow.created`, `workflow.revised`, `workflow.activated`, `workflow.paused` and `workflow.archived` (payload `WorkflowChangedPayload`: workflow, slug, revision, spec hash, `By`). The write slices check the lease before they touch the store, then append the event through `WorkflowChangeLog` once the store accepts the change; `By` is `owner` or `session:<id>`. The app's "changed by session X" tag reads them.
+
+**Loop guard.** `workflow_run` refuses with `SND-GRAPH-109` (naming the run) when the calling session was launched by a run of the same workflow (`WorkflowLoopGuard`, `IGraphLaunchRuns`). Until PR 9's agent blocks record which launch belongs to which run, `NoGraphLaunchRuns` answers "none", so the guard cannot fire in production yet.
+
 ## Schedules
 
 The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every minute) starts runs for `schedule` nodes.
