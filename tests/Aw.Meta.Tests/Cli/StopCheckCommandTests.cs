@@ -35,7 +35,7 @@ public sealed class StopCheckCommandTests : IDisposable
         var blocked = await Stop();
 
         Assert.Equal(1, blocked.Exit);
-        Assert.Contains("aw-meta: 1 open obligation(s)", blocked.Out, StringComparison.Ordinal);
+        Assert.Contains("aw-meta: 2 open obligation(s)", blocked.Out, StringComparison.Ordinal);
         Assert.Contains("next: SendMessage to t1-api; or aw-meta inbox-dismiss m1", blocked.Out, StringComparison.Ordinal);
     }
 

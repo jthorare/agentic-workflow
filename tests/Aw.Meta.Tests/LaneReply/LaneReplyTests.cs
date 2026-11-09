@@ -25,7 +25,7 @@ public sealed class LaneReplyTests
 
         Assert.True(result.Value.Recorded);
         Assert.Equal("lane:api:1", result.Value.Id!.Value.Value);
-        var open = Assert.Single(await _world.Open());
+        var open = Assert.Single(await _world.Open(), o => o.Kind == ObligationKind.Reply);
         Assert.Equal(ObligationKind.Reply, open.Kind);
         Assert.Contains("aw-meta lane-send --lane api", open.NextCommand, StringComparison.Ordinal);
         Assert.Empty((await _world.LaneMail.Owed("api", CancellationToken.None)).Value);
