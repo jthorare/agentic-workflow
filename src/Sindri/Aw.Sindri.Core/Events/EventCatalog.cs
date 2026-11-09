@@ -61,6 +61,8 @@ public static class EventCatalog
         new(EventTypes.TodoNoteHeld, Public: false, PublicPayload: null, "todo.note.held:<noteHash>"),
         new(EventTypes.TodoNoteHeldResolved, Public: false, PublicPayload: null, "todo.note.held.resolved:<noteHash>:<ulid>"),
         new(EventTypes.TodoNoteHeldReopened, Public: false, PublicPayload: null, "todo.note.held.reopened:<noteHash>:<ulid>"),
+        new(EventTypes.TodoNoteImported, Public: false, PublicPayload: null, "todo.note.imported:<vault>:<ulid>"),
+        new(EventTypes.TodoNoteSynced, Public: false, PublicPayload: null, "todo.note.synced:<noteHash>:<ulid>"),
         new(EventTypes.RequestFiled, Public: true, typeof(RequestFiledPublic), "request.filed:<requestId>") { Invalidates = [ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions, ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.DecisionRecorded, Public: true, typeof(DecisionRecordedPublic), "decision.recorded:<decisionId>") { Invalidates = [ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions, ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.WorkflowStarted, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:<run id>:<activity id>[:<content hash>]"),

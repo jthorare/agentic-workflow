@@ -18410,7 +18410,7 @@ Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.None = 0 -> Aw.Sindri.Core.Todos.Note.
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Opened = 1 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Replaced = 3 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Unchanged = 2 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
-Aw.Sindri.Core.Todos.Note.NoteHold.StillTrue(Aw.Sindri.Core.Todos.Note.NoteDocument! current) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
+Aw.Sindri.Core.Todos.Note.NoteHold.StillTrue(Aw.Sindri.Core.Todos.Note.NoteDocument! current, Aw.Sindri.Core.Text.ITextScrubber? scrubber = null) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
 Aw.Sindri.Core.Todos.Note.NoteIntent
 Aw.Sindri.Core.Todos.Note.NoteIntent.Id.init -> void
 Aw.Sindri.Core.Todos.Note.NoteIntent.NoteIntent(Aw.Sindri.Core.Todos.Note.NoteIntent! original) -> void
@@ -20512,6 +20512,188 @@ static Aw.Sindri.Core.Todos.TodoItem.operator !=(Aw.Sindri.Core.Todos.TodoItem? 
 static Aw.Sindri.Core.Todos.TodoItem.operator ==(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator !=(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator ==(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
+Aw.Sindri.Core.Events.TodoNoteImported
+Aw.Sindri.Core.Events.TodoNoteImported.By.get -> string!
+Aw.Sindri.Core.Events.TodoNoteImported.By.init -> void
+Aw.Sindri.Core.Events.TodoNoteImported.<Clone>$() -> Aw.Sindri.Core.Events.TodoNoteImported!
+Aw.Sindri.Core.Events.TodoNoteImported.Count.get -> int
+Aw.Sindri.Core.Events.TodoNoteImported.Count.init -> void
+Aw.Sindri.Core.Events.TodoNoteImported.Deconstruct(out string! Vault, out string! Note, out int Count, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoNoteImported.Equals(Aw.Sindri.Core.Events.TodoNoteImported? other) -> bool
+Aw.Sindri.Core.Events.TodoNoteImported.Note.get -> string!
+Aw.Sindri.Core.Events.TodoNoteImported.Note.init -> void
+Aw.Sindri.Core.Events.TodoNoteImported.TodoNoteImported(string! Vault, string! Note, int Count, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoNoteImported.Vault.get -> string!
+Aw.Sindri.Core.Events.TodoNoteImported.Vault.init -> void
+Aw.Sindri.Core.Events.TodoNoteImported.Via.get -> string?
+Aw.Sindri.Core.Events.TodoNoteImported.Via.init -> void
+Aw.Sindri.Core.Events.TodoNoteSynced
+Aw.Sindri.Core.Events.TodoNoteSynced.BaseHash.get -> string!
+Aw.Sindri.Core.Events.TodoNoteSynced.BaseHash.init -> void
+Aw.Sindri.Core.Events.TodoNoteSynced.By.get -> string!
+Aw.Sindri.Core.Events.TodoNoteSynced.By.init -> void
+Aw.Sindri.Core.Events.TodoNoteSynced.<Clone>$() -> Aw.Sindri.Core.Events.TodoNoteSynced!
+Aw.Sindri.Core.Events.TodoNoteSynced.Deconstruct(out string! Vault, out string! Note, out string! Hash, out string! BaseHash, out int Read, out int Wrote, out string! By) -> void
+Aw.Sindri.Core.Events.TodoNoteSynced.Equals(Aw.Sindri.Core.Events.TodoNoteSynced? other) -> bool
+Aw.Sindri.Core.Events.TodoNoteSynced.Hash.get -> string!
+Aw.Sindri.Core.Events.TodoNoteSynced.Hash.init -> void
+Aw.Sindri.Core.Events.TodoNoteSynced.Note.get -> string!
+Aw.Sindri.Core.Events.TodoNoteSynced.Note.init -> void
+Aw.Sindri.Core.Events.TodoNoteSynced.Read.get -> int
+Aw.Sindri.Core.Events.TodoNoteSynced.Read.init -> void
+Aw.Sindri.Core.Events.TodoNoteSynced.TodoNoteSynced(string! Vault, string! Note, string! Hash, string! BaseHash, int Read, int Wrote, string! By) -> void
+Aw.Sindri.Core.Events.TodoNoteSynced.Vault.get -> string!
+Aw.Sindri.Core.Events.TodoNoteSynced.Vault.init -> void
+Aw.Sindri.Core.Events.TodoNoteSynced.Wrote.get -> int
+Aw.Sindri.Core.Events.TodoNoteSynced.Wrote.init -> void
+Aw.Sindri.Core.Todos.ITodoNoteSync
+Aw.Sindri.Core.Todos.ITodoNoteSync.Import(Aw.Sindri.Core.Todos.TodoNoteImportRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoNoteImport!>!>
+Aw.Sindri.Core.Todos.ITodoNoteSync.Pass(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Todos.TodoNoteStatus!>
+Aw.Sindri.Core.Todos.ITodoNoteSync.Status.get -> Aw.Sindri.Core.Todos.TodoNoteStatus!
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.ClearIntent() -> void
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.DeleteBases(string? keep) -> void
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.Delete(string! path) -> void
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.Keep(string! path, System.DateTimeOffset at) -> string!
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.Leftover(string! note) -> string?
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.LoadBase(string! hash) -> Aw.Sindri.Core.Todos.Note.NoteBase?
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.ReadIntent() -> string?
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.ReadQuiet(string! path, System.TimeSpan quiet, System.TimeSpan max, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<(Aw.Sindri.Core.Todos.Note.NoteRead! Read, bool Settled)>
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.Read(string! note) -> Aw.Sindri.Core.Todos.Note.NoteRead!
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.SaveBase(Aw.Sindri.Core.Todos.Note.NoteBase! noteBase) -> string!
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.Swap(string! note, string! text, string! vaultRoot) -> Aw.Sindri.Core.Todos.Note.NoteSwap!
+Aw.Sindri.Core.Todos.Note.ITodoNoteFiles.WriteIntent(string! hash) -> void
+Aw.Sindri.Core.Todos.Note.NoteRead
+Aw.Sindri.Core.Todos.Note.NoteRead.Bytes.get -> long
+Aw.Sindri.Core.Todos.Note.NoteRead.Bytes.init -> void
+Aw.Sindri.Core.Todos.Note.NoteRead.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteRead!
+Aw.Sindri.Core.Todos.Note.NoteRead.Deconstruct(out string? Text, out string? Hash, out long Bytes, out bool Missing, out string? Problem) -> void
+Aw.Sindri.Core.Todos.Note.NoteRead.Equals(Aw.Sindri.Core.Todos.Note.NoteRead? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteRead.Hash.get -> string?
+Aw.Sindri.Core.Todos.Note.NoteRead.Hash.init -> void
+Aw.Sindri.Core.Todos.Note.NoteRead.Missing.get -> bool
+Aw.Sindri.Core.Todos.Note.NoteRead.Missing.init -> void
+Aw.Sindri.Core.Todos.Note.NoteRead.NoteRead(string? Text, string? Hash, long Bytes, bool Missing, string? Problem) -> void
+Aw.Sindri.Core.Todos.Note.NoteRead.Problem.get -> string?
+Aw.Sindri.Core.Todos.Note.NoteRead.Problem.init -> void
+Aw.Sindri.Core.Todos.Note.NoteRead.Text.get -> string?
+Aw.Sindri.Core.Todos.Note.NoteRead.Text.init -> void
+Aw.Sindri.Core.Todos.Note.NoteSwap
+Aw.Sindri.Core.Todos.Note.NoteSwap.CameOut.get -> string?
+Aw.Sindri.Core.Todos.Note.NoteSwap.CameOut.init -> void
+Aw.Sindri.Core.Todos.Note.NoteSwap.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteSwap!
+Aw.Sindri.Core.Todos.Note.NoteSwap.Deconstruct(out string? CameOut, out string? Problem) -> void
+Aw.Sindri.Core.Todos.Note.NoteSwap.Equals(Aw.Sindri.Core.Todos.Note.NoteSwap? other) -> bool
+Aw.Sindri.Core.Todos.Note.NoteSwap.NoteSwap(string? CameOut, string? Problem) -> void
+Aw.Sindri.Core.Todos.Note.NoteSwap.Problem.get -> string?
+Aw.Sindri.Core.Todos.Note.NoteSwap.Problem.init -> void
+Aw.Sindri.Core.Todos.TodoNoteImport
+Aw.Sindri.Core.Todos.TodoNoteImport.<Clone>$() -> Aw.Sindri.Core.Todos.TodoNoteImport!
+Aw.Sindri.Core.Todos.TodoNoteImport.Counts.get -> Aw.Sindri.Core.Todos.Note.NoteCounts!
+Aw.Sindri.Core.Todos.TodoNoteImport.Counts.init -> void
+Aw.Sindri.Core.Todos.TodoNoteImport.Deconstruct(out Aw.Sindri.Core.Todos.Note.NoteCounts! Counts, out int Imported, out bool DryRun) -> void
+Aw.Sindri.Core.Todos.TodoNoteImport.DryRun.get -> bool
+Aw.Sindri.Core.Todos.TodoNoteImport.DryRun.init -> void
+Aw.Sindri.Core.Todos.TodoNoteImport.Equals(Aw.Sindri.Core.Todos.TodoNoteImport? other) -> bool
+Aw.Sindri.Core.Todos.TodoNoteImport.Imported.get -> int
+Aw.Sindri.Core.Todos.TodoNoteImport.Imported.init -> void
+Aw.Sindri.Core.Todos.TodoNoteImportRequest
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.By.get -> string!
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.By.init -> void
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.<Clone>$() -> Aw.Sindri.Core.Todos.TodoNoteImportRequest!
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.Deconstruct(out string! Vault, out string! Note, out int? ExpectOpen, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.Equals(Aw.Sindri.Core.Todos.TodoNoteImportRequest? other) -> bool
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.ExpectOpen.get -> int?
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.ExpectOpen.init -> void
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.Note.get -> string!
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.Note.init -> void
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.TodoNoteImportRequest(string! Vault, string! Note, int? ExpectOpen, string! By, string? Via) -> void
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.Vault.get -> string!
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.Vault.init -> void
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.Via.get -> string?
+Aw.Sindri.Core.Todos.TodoNoteImportRequest.Via.init -> void
+Aw.Sindri.Core.Todos.TodoNoteImport.TodoNoteImport(Aw.Sindri.Core.Todos.Note.NoteCounts! Counts, int Imported, bool DryRun) -> void
+Aw.Sindri.Core.Todos.TodoNoteState
+Aw.Sindri.Core.Todos.TodoNoteState.Busy = 5 -> Aw.Sindri.Core.Todos.TodoNoteState
+Aw.Sindri.Core.Todos.TodoNoteState.CantRead = 3 -> Aw.Sindri.Core.Todos.TodoNoteState
+Aw.Sindri.Core.Todos.TodoNoteState.NotSet = 0 -> Aw.Sindri.Core.Todos.TodoNoteState
+Aw.Sindri.Core.Todos.TodoNoteState.OneWay = 4 -> Aw.Sindri.Core.Todos.TodoNoteState
+Aw.Sindri.Core.Todos.TodoNoteState.Syncing = 1 -> Aw.Sindri.Core.Todos.TodoNoteState
+Aw.Sindri.Core.Todos.TodoNoteState.WaitingForImport = 2 -> Aw.Sindri.Core.Todos.TodoNoteState
+Aw.Sindri.Core.Todos.TodoNoteStatus
+Aw.Sindri.Core.Todos.TodoNoteStatus.<Clone>$() -> Aw.Sindri.Core.Todos.TodoNoteStatus!
+Aw.Sindri.Core.Todos.TodoNoteStatus.Deconstruct(out Aw.Sindri.Core.Todos.TodoNoteState State, out System.DateTimeOffset? LastCheckAt, out string? LastError, out int FailedInARow, out int NotAdopted) -> void
+Aw.Sindri.Core.Todos.TodoNoteStatus.Equals(Aw.Sindri.Core.Todos.TodoNoteStatus? other) -> bool
+Aw.Sindri.Core.Todos.TodoNoteStatus.FailedInARow.get -> int
+Aw.Sindri.Core.Todos.TodoNoteStatus.FailedInARow.init -> void
+Aw.Sindri.Core.Todos.TodoNoteStatus.LastCheckAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Todos.TodoNoteStatus.LastCheckAt.init -> void
+Aw.Sindri.Core.Todos.TodoNoteStatus.LastError.get -> string?
+Aw.Sindri.Core.Todos.TodoNoteStatus.LastError.init -> void
+Aw.Sindri.Core.Todos.TodoNoteStatus.NotAdopted.get -> int
+Aw.Sindri.Core.Todos.TodoNoteStatus.NotAdopted.init -> void
+Aw.Sindri.Core.Todos.TodoNoteStatus.State.get -> Aw.Sindri.Core.Todos.TodoNoteState
+Aw.Sindri.Core.Todos.TodoNoteStatus.State.init -> void
+Aw.Sindri.Core.Todos.TodoNoteStatus.TodoNoteStatus(Aw.Sindri.Core.Todos.TodoNoteState State, System.DateTimeOffset? LastCheckAt, string? LastError, int FailedInARow, int NotAdopted) -> void
+const Aw.Sindri.Core.Events.EventTypes.TodoNoteImported = "todo.note.imported" -> string!
+const Aw.Sindri.Core.Events.EventTypes.TodoNoteSynced = "todo.note.synced" -> string!
+override Aw.Sindri.Core.Events.TodoNoteImported.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoNoteImported.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoNoteImported.ToString() -> string!
+override Aw.Sindri.Core.Events.TodoNoteSynced.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.TodoNoteSynced.GetHashCode() -> int
+override Aw.Sindri.Core.Events.TodoNoteSynced.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteRead.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteRead.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteRead.ToString() -> string!
+override Aw.Sindri.Core.Todos.Note.NoteSwap.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NoteSwap.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NoteSwap.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoNoteImport.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoNoteImport.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoNoteImportRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoNoteImportRequest.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoNoteImportRequest.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoNoteImport.ToString() -> string!
+override Aw.Sindri.Core.Todos.TodoNoteStatus.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.TodoNoteStatus.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.TodoNoteStatus.ToString() -> string!
+static Aw.Sindri.Core.Events.TodoNoteImported.operator !=(Aw.Sindri.Core.Events.TodoNoteImported? left, Aw.Sindri.Core.Events.TodoNoteImported? right) -> bool
+static Aw.Sindri.Core.Events.TodoNoteImported.operator ==(Aw.Sindri.Core.Events.TodoNoteImported? left, Aw.Sindri.Core.Events.TodoNoteImported? right) -> bool
+static Aw.Sindri.Core.Events.TodoNoteSynced.operator !=(Aw.Sindri.Core.Events.TodoNoteSynced? left, Aw.Sindri.Core.Events.TodoNoteSynced? right) -> bool
+static Aw.Sindri.Core.Events.TodoNoteSynced.operator ==(Aw.Sindri.Core.Events.TodoNoteSynced? left, Aw.Sindri.Core.Events.TodoNoteSynced? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteRead.operator !=(Aw.Sindri.Core.Todos.Note.NoteRead? left, Aw.Sindri.Core.Todos.Note.NoteRead? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteRead.operator ==(Aw.Sindri.Core.Todos.Note.NoteRead? left, Aw.Sindri.Core.Todos.Note.NoteRead? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteSwap.operator !=(Aw.Sindri.Core.Todos.Note.NoteSwap? left, Aw.Sindri.Core.Todos.Note.NoteSwap? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NoteSwap.operator ==(Aw.Sindri.Core.Todos.Note.NoteSwap? left, Aw.Sindri.Core.Todos.Note.NoteSwap? right) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteImport.operator !=(Aw.Sindri.Core.Todos.TodoNoteImport? left, Aw.Sindri.Core.Todos.TodoNoteImport? right) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteImport.operator ==(Aw.Sindri.Core.Todos.TodoNoteImport? left, Aw.Sindri.Core.Todos.TodoNoteImport? right) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteImportRequest.operator !=(Aw.Sindri.Core.Todos.TodoNoteImportRequest? left, Aw.Sindri.Core.Todos.TodoNoteImportRequest? right) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteImportRequest.operator ==(Aw.Sindri.Core.Todos.TodoNoteImportRequest? left, Aw.Sindri.Core.Todos.TodoNoteImportRequest? right) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteStatus.NotSet.get -> Aw.Sindri.Core.Todos.TodoNoteStatus!
+static Aw.Sindri.Core.Todos.TodoNoteStatus.operator !=(Aw.Sindri.Core.Todos.TodoNoteStatus? left, Aw.Sindri.Core.Todos.TodoNoteStatus? right) -> bool
+static Aw.Sindri.Core.Todos.TodoNoteStatus.operator ==(Aw.Sindri.Core.Todos.TodoNoteStatus? left, Aw.Sindri.Core.Todos.TodoNoteStatus? right) -> bool
+Aw.Sindri.Core.Todos.Note.NotePlace
+Aw.Sindri.Core.Todos.Note.NotePlace.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NotePlace!
+Aw.Sindri.Core.Todos.Note.NotePlace.Deconstruct(out string! Vault, out string! Note, out string! Root) -> void
+Aw.Sindri.Core.Todos.Note.NotePlace.Equals(Aw.Sindri.Core.Todos.Note.NotePlace? other) -> bool
+Aw.Sindri.Core.Todos.Note.NotePlace.NotePlace(string! Vault, string! Note, string! Root) -> void
+Aw.Sindri.Core.Todos.Note.NotePlace.Vault.get -> string!
+Aw.Sindri.Core.Todos.Note.NotePlace.Vault.init -> void
+Aw.Sindri.Core.Todos.Note.NotePlace.Note.get -> string!
+Aw.Sindri.Core.Todos.Note.NotePlace.Note.init -> void
+Aw.Sindri.Core.Todos.Note.NotePlace.Root.get -> string!
+Aw.Sindri.Core.Todos.Note.NotePlace.Root.init -> void
+override Aw.Sindri.Core.Todos.Note.NotePlace.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Todos.Note.NotePlace.GetHashCode() -> int
+override Aw.Sindri.Core.Todos.Note.NotePlace.ToString() -> string!
+static Aw.Sindri.Core.Todos.Note.NotePlace.operator !=(Aw.Sindri.Core.Todos.Note.NotePlace? left, Aw.Sindri.Core.Todos.Note.NotePlace? right) -> bool
+static Aw.Sindri.Core.Todos.Note.NotePlace.operator ==(Aw.Sindri.Core.Todos.Note.NotePlace? left, Aw.Sindri.Core.Todos.Note.NotePlace? right) -> bool
+Aw.Sindri.Core.Todos.Note.NotePlace.Path.get -> string!
+Aw.Sindri.Core.Todos.Note.INoteLocator
+Aw.Sindri.Core.Todos.Note.INoteLocator.Locate(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.Note.NotePlace?>!>
+Aw.Sindri.Core.Todos.TodoNoteWords
+static Aw.Sindri.Core.Todos.TodoNoteWords.Of(Aw.Sindri.Core.Todos.TodoNoteState state) -> string!
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Recent(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, int offset, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
 Aw.Sindri.Core.Graph.Layout.GraphLayout
 Aw.Sindri.Core.Graph.Layout.GraphPosition

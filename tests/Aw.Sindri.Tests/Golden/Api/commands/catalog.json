@@ -580,6 +580,25 @@
       "confirm": null
     },
     {
+      "action": "ImportTodoNote",
+      "class": "request",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/todos/note/import",
+      "cli": "sindri todo note import [--expect <n>] [--dry-run] [--json]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "InitProfile",
       "class": "local",
       "allowedCallers": [],
