@@ -11755,11 +11755,9 @@ Aw.Sindri.Core.Sandbox.Plan.LimitsInput.AttendedSettings.get -> Aw.Sindri.Core.P
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.AttendedSettings.init -> void
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Cores.get -> int
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Cores.init -> void
-Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Deconstruct(out Aw.Sindri.Core.Profile.SandboxLimits? Limits, out Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, out bool Attended, out System.TimeSpan? StepTimeout, out System.TimeSpan? LongMax, out long RamBytes, out int Cores) -> void
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Equals(Aw.Sindri.Core.Sandbox.Plan.LimitsInput? other) -> bool
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Limits.get -> Aw.Sindri.Core.Profile.SandboxLimits?
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Limits.init -> void
-Aw.Sindri.Core.Sandbox.Plan.LimitsInput.LimitsInput(Aw.Sindri.Core.Profile.SandboxLimits? Limits, Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, bool Attended, System.TimeSpan? StepTimeout, System.TimeSpan? LongMax, long RamBytes, int Cores) -> void
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.LongMax.get -> System.TimeSpan?
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.LongMax.init -> void
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.RamBytes.get -> long
@@ -20216,3 +20214,42 @@ static Aw.Sindri.Core.Todos.TodoItem.operator !=(Aw.Sindri.Core.Todos.TodoItem? 
 static Aw.Sindri.Core.Todos.TodoItem.operator ==(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator !=(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator ==(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
+Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Deconstruct(out Aw.Sindri.Core.Profile.SandboxLimits? Limits, out Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, out bool Attended, out System.TimeSpan? StepTimeout, out System.TimeSpan? LongMax, out long RamBytes, out int Cores, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Override) -> void
+Aw.Sindri.Core.Sandbox.Plan.LimitsInput.LimitsInput(Aw.Sindri.Core.Profile.SandboxLimits? Limits, Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, bool Attended, System.TimeSpan? StepTimeout, System.TimeSpan? LongMax, long RamBytes, int Cores, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Override = null) -> void
+Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Override.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Override.init -> void
+Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.State = 8 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride!
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Cpu.get -> string?
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Cpu.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Deconstruct(out string? Memory, out string? Cpu, out System.TimeSpan? StepTimeout) -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Equals(Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? other) -> bool
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Memory.get -> string?
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Memory.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.ResourceLimitOverride(string? Memory = null, string? Cpu = null, System.TimeSpan? StepTimeout = null) -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.StepTimeout.get -> System.TimeSpan?
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.StepTimeout.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.ResourceMount!
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Deconstruct(out string! Name, out string! HostPath) -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Equals(Aw.Sindri.Core.Sandbox.Plan.ResourceMount? other) -> bool
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.HostPath.get -> string!
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.HostPath.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Name.get -> string!
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Name.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.ResourceMount(string! Name, string! HostPath) -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceLimits.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceLimits.init -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceMounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>?
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceMounts.init -> void
+override Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.GetHashCode() -> int
+override Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.ToString() -> string!
+override Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sandbox.Plan.ResourceMount.GetHashCode() -> int
+override Aw.Sindri.Core.Sandbox.Plan.ResourceMount.ToString() -> string!
+static Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.operator !=(Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? left, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? right) -> bool
+static Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.operator ==(Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? left, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? right) -> bool
+static Aw.Sindri.Core.Sandbox.Plan.ResourceMount.operator !=(Aw.Sindri.Core.Sandbox.Plan.ResourceMount? left, Aw.Sindri.Core.Sandbox.Plan.ResourceMount? right) -> bool
+static Aw.Sindri.Core.Sandbox.Plan.ResourceMount.operator ==(Aw.Sindri.Core.Sandbox.Plan.ResourceMount? left, Aw.Sindri.Core.Sandbox.Plan.ResourceMount? right) -> bool
