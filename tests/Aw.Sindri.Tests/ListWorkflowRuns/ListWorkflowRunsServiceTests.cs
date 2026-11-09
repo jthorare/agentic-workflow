@@ -94,6 +94,21 @@ public sealed class ListWorkflowRunsServiceTests
     }
 
     [Fact]
+    public async Task A_limit_above_fifty_is_capped_at_fifty_and_more_still_says_older_runs_follow()
+    {
+        await Create();
+        for (var n = 1; n <= ListWorkflowRunsService.Newest + 2; n++)
+        {
+            _ = await Insert(n, WorkflowRunStatus.Succeeded, "manual", error: null);
+        }
+
+        var result = await _service.Handle(new ListWorkflowRunsRequest(_slug, Offset: 0, Limit: int.MaxValue), Token);
+
+        Assert.Equal(ListWorkflowRunsService.Newest, result.Value.Runs.Count);
+        Assert.True(result.Value.More);
+    }
+
+    [Fact]
     public async Task An_unknown_slug_is_not_found()
     {
         var result = await _service.Handle(new ListWorkflowRunsRequest(WorkflowSlug.From("nope")), Token);

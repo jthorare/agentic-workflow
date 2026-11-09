@@ -11,7 +11,7 @@ namespace Aw.Sindri.Features.ListWorkflowRuns;
 /// <param name="runs">The runs.</param>
 internal sealed class ListWorkflowRunsService(IWorkflowStore workflows, IWorkflowRunStore runs) : IService<ListWorkflowRunsRequest, ListWorkflowRunsResponse>
 {
-    /// <summary>How many runs a page holds when the call names no limit.</summary>
+    /// <summary>How many runs a page holds when the call names no limit, and the most it holds when the limit is larger.</summary>
     internal const int Newest = 50;
 
     public async ValueTask<Result<ListWorkflowRunsResponse>> Handle(ListWorkflowRunsRequest request, CancellationToken cancellationToken)
@@ -29,7 +29,7 @@ internal sealed class ListWorkflowRunsService(IWorkflowStore workflows, IWorkflo
             return SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'; list the workflows to see what exists");
         }
 
-        var limit = Math.Max(request.Limit, 1);
+        var limit = Math.Clamp(request.Limit, 1, Newest);
         var recent = await runs.Recent(record.Id, Math.Max(request.Offset, 0), limit + 1, cancellationToken).ConfigureAwait(false);
         if (recent.IsError)
         {
