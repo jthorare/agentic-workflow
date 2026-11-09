@@ -8,10 +8,12 @@ namespace Aw.Sindri.Features.ForgetMemoryFact;
 /// <summary>Deletes facts by key, by tag or the expired ones. No selector or more than one is SND-MEM-003's sibling, a plain invalid input; an unknown memory is SND-MEM-001.</summary>
 /// <param name="store">The memories.</param>
 /// <param name="time">The clock, for 'expired'.</param>
-internal sealed class ForgetMemoryFactService(IMemoryStore store, TimeProvider time) : IService<ForgetMemoryFactRequest, ForgetMemoryFactResponse>
+/// <param name="events">Records who forgot the facts (#2460).</param>
+internal sealed class ForgetMemoryFactService(IMemoryStore store, TimeProvider time, MemoryEvents events) : IService<ForgetMemoryFactRequest, ForgetMemoryFactResponse>
 {
     private readonly IMemoryStore _store = store;
     private readonly TimeProvider _time = time;
+    private readonly MemoryEvents _events = events;
 
     public async ValueTask<Result<ForgetMemoryFactResponse>> Handle(ForgetMemoryFactRequest request, CancellationToken cancellationToken)
     {
@@ -31,6 +33,7 @@ internal sealed class ForgetMemoryFactService(IMemoryStore store, TimeProvider t
         var selector = request.Expired ? FactSelector.Expired(_time.GetUtcNow())
             : !string.IsNullOrWhiteSpace(request.Fact) ? FactSelector.ByKey(request.Fact)
             : FactSelector.ByTag(request.Tag!.Trim().ToLowerInvariant());   // why: exactly one selector was chosen and it is neither the fact nor expired, so the tag is set
+        _ = _events;   // red stub (#2460): the event is not appended yet
         var deleted = await _store.Delete(name.Value, selector, cancellationToken).ConfigureAwait(false);
         return deleted.IsError ? deleted.Error : new ForgetMemoryFactResponse(deleted.Value);
     }

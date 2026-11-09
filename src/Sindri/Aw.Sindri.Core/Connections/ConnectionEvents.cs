@@ -37,6 +37,26 @@ public sealed class ConnectionEvents(HeldLease held, ILedgerStore ledger, EventF
         _ = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Appends 'connection.removed' for <paramref name="name"/>; the envelope's actor is the caller's (#2460).</summary>
+    /// <param name="name">The connection.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>A task that ends when the event is recorded or skipped.</returns>
+    public ValueTask Removed(ConnectionName name, CancellationToken cancellationToken)
+    {
+        _ = (name, cancellationToken, Now);   // red stub (#2460): the event is not appended yet
+        return ValueTask.CompletedTask;
+    }
+
+    /// <summary>Appends 'connection.sign-in-requested' for <paramref name="name"/>; the envelope's actor is who signed in (#2460).</summary>
+    /// <param name="name">The connection.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>A task that ends when the event is recorded or skipped.</returns>
+    public ValueTask SignInRequested(ConnectionName name, CancellationToken cancellationToken)
+    {
+        _ = (name, cancellationToken, Now);   // red stub (#2460): the event is not appended yet
+        return ValueTask.CompletedTask;
+    }
+
     /// <summary>Appends 'connection.needs-sign-in' for <paramref name="name"/>, which projects its Needs-you row. Like <see cref="SignedIn"/> it is skipped when no lease is held and ignores a failed append: the status row is already written.</summary>
     /// <param name="name">The connection.</param>
     /// <param name="reason">Why (a provider's error code or fixed text, never a token).</param>

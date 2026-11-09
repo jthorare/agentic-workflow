@@ -44,13 +44,8 @@ public sealed class WriteAttributionTests
         ["POST /sindri/sessions/{launchId}/exit"] = WrapReason,
         ["POST /sindri/connections"] = "the store row carries the caller (Connection.CreatedBy, AddConnectionService.cs:169); proven by AddConnectionServiceTests.A_launched_session_adding_a_connection_is_the_rows_creator",
         ["POST /sindri/memories"] = "the store row carries the caller (MemoryInfo.CreatedBy, CreateMemoryService.cs:30); proven by MemoryReadsAndCreateTests.A_launched_session_creating_a_memory_is_its_creator",
-        ["POST /sindri/memories/{name}/facts"] = AuditOnlyReason,
-        ["DELETE /sindri/memories/{name}/facts"] = AuditOnlyReason,
-        ["DELETE /sindri/connections/{name}"] = AuditOnlyReason,
-        ["POST /sindri/connections/{name}/signin"] = AuditOnlyReason,
+        ["POST /sindri/memories/{name}/facts"] = "the store row carries the caller (MemoryFact.WrittenBy, WriteMemoryFactService.cs); proven by WriteMemoryFactTests.A_launched_session_writing_a_fact_is_its_writer_whatever_the_request_says (#2460)",
     };
-
-    private const string AuditOnlyReason = "only the command.handled audit row carries the caller; the store keeps no actor (#2460)";
 
     private const string WrapReason = "the caller is the wrapper of the route's own launch, proven by that launch's secret; actor follow-up #2430";
 
