@@ -15,6 +15,8 @@ public sealed class DeepLinkTests
     [InlineData("service/index", nameof(DeepLinkKind.Service), "index")]
     [InlineData("service/nightly.index_build", nameof(DeepLinkKind.Service), "nightly.index_build")]
     [InlineData("job/JOB-01:2", nameof(DeepLinkKind.Job), "JOB-01:2")]
+    [InlineData("connection/linear:work", nameof(DeepLinkKind.Connection), "linear:work")]
+    [InlineData("memory/team-notes", nameof(DeepLinkKind.Memory), "team-notes")]
     public void Each_form_parses_and_prints_back(string text, string kind, string? subject)
     {
         Assert.True(DeepLink.TryParse(text, out var link));
