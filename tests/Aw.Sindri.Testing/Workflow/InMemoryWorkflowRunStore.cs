@@ -221,6 +221,19 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
         }
     }
 
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRunsForItem(WorkflowRunId id, int itemIndex, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<NodeRun> rows = [.. _nodeRuns.Values
+                .Where(n => n.RunId == id && (n.ItemIndex == 0 || n.ItemIndex == itemIndex))
+                .OrderBy(static n => n.NodeId.Value, StringComparer.Ordinal)
+                .ThenBy(static n => n.ItemIndex)];
+            return Ok(rows);
+        }
+    }
+
     private static string? KindOf(string trigger) => System.Text.Json.Nodes.JsonNode.Parse(trigger)?["kind"]?.GetValue<string>();
 
     private static ValueTask<Result<T>> Ok<T>(T value) => ValueTask.FromResult<Result<T>>(value);

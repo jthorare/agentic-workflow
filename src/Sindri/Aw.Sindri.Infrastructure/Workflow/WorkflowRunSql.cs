@@ -46,4 +46,7 @@ internal static class WorkflowRunSql
 
     internal const string SelectNodeRuns =
         "SELECT run_id, node_id, item_index, status, input, output, truncated, error, usage FROM workflow_node_run WHERE run_id = $run ORDER BY node_id, item_index";
+
+    internal const string SelectNodeRunsForItem =
+        "SELECT run_id, node_id, item_index, status, input, output, truncated, error, usage FROM workflow_node_run WHERE run_id = $run AND (item_index = 0 OR item_index = $item) ORDER BY node_id, item_index";
 }

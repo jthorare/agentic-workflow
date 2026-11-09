@@ -37,7 +37,8 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return Failed(input: null, SindriErrors.GraphUnknownBlock.With($"this build has no block '{graphNode.Type}'"));
         }
 
-        var nodeRuns = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
+        // why: a node reads index 0 rows and its own item's rows only, so a loop of N items reads O(N) rows in all, not O(N squared)
+        var nodeRuns = GraphFailures.Value(await runs.NodeRunsForItem(run, itemIndex, cancel).ConfigureAwait(false));
         var (loop, loopFailure) = itemIndex > 0 ? Loop(new Scope(row, spec, nodeRuns, loop: null), spec, node, itemIndex) : (null, null);
         if (loopFailure is not null)
         {
@@ -75,7 +76,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         : null;
 
     private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error) =>
-        new(NodeRunStatus.Failed, input?.ToJsonString(), Output: null, [], $"{error.Code}: {error.Message}");
+        new(NodeRunStatus.Failed, Fit(input?.ToJsonString()), Output: null, [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _));
 
     private static GraphBlockOutcome Succeeded(JsonObject input, BlockResult result)
     {
@@ -85,7 +86,19 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             output[name] = value?.DeepClone();
         }
 
-        return new GraphBlockOutcome(NodeRunStatus.Succeeded, input.ToJsonString(), output.ToJsonString(), result.Taken, Error: null);
+        return new GraphBlockOutcome(NodeRunStatus.Succeeded, Fit(input.ToJsonString()), Fit(output.ToJsonString()), result.Taken, Error: null);
+    }
+
+    /// <summary>
+    /// Cuts a block's input or output before it enters the workflow's history: an activity result over Temporal's 2 MB payload limit fails the workflow task, and Temporal retries it forever.
+    /// A cut text keeps one character past the store's 64 KB cap, so the store still cuts it and sets 'Truncated' (a later node that reads it fails with SND-GRAPH-108 instead of reading a half value).
+    /// </summary>
+    /// <param name="text">The input or output text, or null.</param>
+    /// <returns>The text when it fits, otherwise its first 64 KB and an ellipsis.</returns>
+    internal static string? Fit(string? text)
+    {
+        var cut = NodeRunLimits.Cap(text, out var truncated);
+        return truncated ? cut + "\u2026" : text;
     }
 
     /// <summary>The loop a node execution runs in: its shape, the item's position counted from 1 and the item.</summary>
