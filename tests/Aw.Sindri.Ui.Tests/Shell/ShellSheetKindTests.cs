@@ -84,11 +84,11 @@ public sealed class ShellSheetKindTests
     {
         var shell = await Shell();
 
-        foreach (var kind in Enum.GetValues<DeepLinkKind>().Where(k => k is not (DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.PinSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.LibrarySheet or DeepLinkKind.Review or DeepLinkKind.FixTaskSheet)))   // ProjectAdd and PinSheet have no subject: ProjectAddShellTests, ShellPinSheetTests; PageSheet is the Context page's: PageSheetShellFocusTests; AddSeveralPages is the same sheet slot, AddSeveralPagesTests
+        foreach (var kind in Enum.GetValues<DeepLinkKind>().Where(k => k is not (DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.PinSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.LibrarySheet or DeepLinkKind.Review or DeepLinkKind.FixTaskSheet or DeepLinkKind.Memory)))   // Memory is a page link, the Memory page's: ShellConnectionsTests; ProjectAdd and PinSheet have no subject: ProjectAddShellTests, ShellPinSheetTests; PageSheet is the Context page's: PageSheetShellFocusTests; AddSeveralPages is the same sheet slot, AddSeveralPagesTests
         {
             shell.OpenSheet(new DeepLink(kind, kind == DeepLinkKind.HomeNeedsYou ? null : "X"));
 
-            Assert.Equal(kind is not (DeepLinkKind.Item or DeepLinkKind.NeedsYou or DeepLinkKind.Decision or DeepLinkKind.Session or DeepLinkKind.Job or DeepLinkKind.Project or DeepLinkKind.Issue), shell.IsSheetPlaceholderShown);   // Issue is the Linear issue sheet's, Project is the Projects page's, Job is the Jobs lane's, Session is U11a's, Item is U2's, NeedsYou and Decision are U3''s
+            Assert.Equal(kind is not (DeepLinkKind.Item or DeepLinkKind.NeedsYou or DeepLinkKind.Decision or DeepLinkKind.Session or DeepLinkKind.Job or DeepLinkKind.Project or DeepLinkKind.Issue or DeepLinkKind.Connection), shell.IsSheetPlaceholderShown);   // Issue is the Linear issue sheet's, Project is the Projects page's, Job is the Jobs lane's, Connection is the Connections page's, Session is U11a's, Item is U2's, NeedsYou and Decision are U3''s
             var noun = Labels.KindNoun(kind);
             var subject = kind == DeepLinkKind.HomeNeedsYou ? string.Empty : "X";
             Assert.Equal(noun.Length > 0 ? noun + " " + subject : subject, shell.SheetName);

@@ -47,6 +47,8 @@ internal static class ApiScenarios
         ["LinearWrite"] = LinearWriteScenarios.All,
         ["LinearConnection"] = LinearConnectionScenarios.All,
         ["ConnectionSignIn"] = ConnectionSignInScenarios.All,
+        ["Connections"] = ConnectionScenarios.All,
+        ["Memories"] = MemoryScenarios.All,
         ["WorkflowRuns"] = WorkflowRunScenarios.All,
     };
 
@@ -62,6 +64,10 @@ internal static class ApiScenarios
             ? await CodeIndexScenarios.Start(ct, demoBehindMain: scenario == CodeIndexScenarios.StaleScenario)
             : ConnectionSignInScenarios.Handles(slug, scenario)
             ? await ConnectionSignInScenarios.Start(scenario, ct)
+            : ConnectionScenarios.Handles(slug, scenario)
+            ? await ConnectionScenarios.Start(slug, scenario, ct)
+            : MemoryScenarios.Handles(slug, scenario)
+            ? await MemoryScenarios.Start(scenario, ct)
             : ContextApiScenarios.Handles(slug)
             ? await ContextApiScenarios.Start(slug, scenario, ct)
             : (slug, scenario) is ("profile", "repo-added")
@@ -218,6 +224,8 @@ internal static class ApiScenarios
         : LibraryScenarios.Handles(slug, scenario) ? () => LibraryScenarios.Body(host, scenario, ct)
         : LibraryDocScenarios.Handles(slug, scenario) ? () => LibraryDocScenarios.Body(host, scenario, ct)
         : ConnectionSignInScenarios.Handles(slug, scenario) ? () => ConnectionSignInScenarios.Body(host, scenario, ct)
+        : ConnectionScenarios.Handles(slug, scenario) ? () => ConnectionScenarios.Body(host, slug, scenario, ct)
+        : MemoryScenarios.Handles(slug, scenario) ? () => MemoryScenarios.Body(host, slug, scenario, ct)
         : null;
 
 

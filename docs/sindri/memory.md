@@ -67,6 +67,10 @@ The same services answer HTTP (`GET /sindri/memories`, `GET /sindri/memories/{na
 | `SND-MEM-006` | the memory name is not lowercase letters, digits and `-` |
 | `SND-MEM-007` | the fact's expiry is not in the future |
 
+## In the app
+
+The app's Memory page (`G M`, or System's "Memory stores" link) lists the stores with their fact counts and lets you create a store, search (it shows the recall mode), write and forget, the same verbs as above. See `docs/csharp/sindri-ui.md` "PR 18a".
+
 ## Not here yet
 
 Workflow blocks (`memory_search`, `memory_write`, `memory_forget`) and the `memory` field on the prompt and run-agent blocks need the block runtime of the graph PRs.

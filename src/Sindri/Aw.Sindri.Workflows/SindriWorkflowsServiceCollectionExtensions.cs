@@ -60,6 +60,9 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<GraphRunStarter>()
             .AddSingleton<IGraphRunStarter>(static provider => provider.GetRequiredService<GraphRunStarter>())
             .AddSingleton<IGraphQueueAdvance>(static provider => provider.GetRequiredService<GraphRunStarter>())
+            .AddSingleton<IGraphRunProbe>(static provider => new TemporalGraphRunProbe(provider.GetRequiredService<TemporalFrontend>()))
+            .AddSingleton<GraphRunRecovery>()
+            .AddSingleton<IGraphRunRecovery>(static provider => provider.GetRequiredService<GraphRunRecovery>())
             .AddSingleton<GraphRunActivities>().AddSingleton<GraphBlockActivities>().AddSingleton<GraphActivities>();
     }
 

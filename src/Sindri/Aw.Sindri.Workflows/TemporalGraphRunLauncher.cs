@@ -40,13 +40,36 @@ internal sealed class TemporalGraphRunLauncher(Func<CancellationToken, ValueTask
             _ = await client.Value.StartWorkflowAsync((GraphWorkflow w) => w.RunAsync(new GraphWorkflowInput(run.Id)), options).ConfigureAwait(false);
             return true;
         }
-        catch (WorkflowAlreadyStartedException)   // boundary: Temporal's answer to a second start of one run id
+        catch (WorkflowAlreadyStartedException)   // boundary: Temporal already has this run id, so an earlier start of ours got through
         {
-            return SindriErrors.GraphRunIdTaken.With($"Temporal already has a workflow '{run.Id.Value}'; a trigger that fires twice is one run");
+            return true;
         }
-        catch (RpcException e)   // boundary: the server is down or refused
+        catch (RpcException e) when (e.Code == RpcException.StatusCode.Unavailable)   // boundary: the connect failed, nothing ran
         {
             return SindriErrors.EngineUnavailable.With(e.Message);
+        }
+        catch (RpcException e)   // boundary: Temporal may have accepted the start before the reply was lost
+        {
+            return await WasStarted(client.Value, run, e).ConfigureAwait(false);
+        }
+    }
+
+    private static async ValueTask<Result<bool>> WasStarted(ITemporalClient client, WorkflowRun run, RpcException startFailure)
+    {
+        try
+        {
+            _ = await client.GetWorkflowHandle(run.Id.Value).DescribeAsync().ConfigureAwait(false);
+            return true;
+        }
+        catch (RpcException described) when (described.Code == RpcException.StatusCode.NotFound)   // boundary: Temporal has no such workflow
+        {
+            return SindriErrors.EngineUnavailable.With(startFailure.Message);
+        }
+        catch (RpcException)   // boundary: the describe failed too, so we can't tell
+        {
+            // why: failing a run that may be running leaves the walk going with a Failed row, while a Running row with no workflow is ended by the
+            // next serve start's recovery pass; so an unknown answer reads as launched.
+            return true;
         }
     }
 }

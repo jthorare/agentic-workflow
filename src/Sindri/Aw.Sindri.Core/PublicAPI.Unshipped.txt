@@ -19739,6 +19739,131 @@ override Aw.Sindri.Core.Scheduling.StoreCheckpoint.GetHashCode() -> int
 override Aw.Sindri.Core.Scheduling.StoreCheckpoint.ToString() -> string!
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator !=(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
 static Aw.Sindri.Core.Scheduling.StoreCheckpoint.operator ==(Aw.Sindri.Core.Scheduling.StoreCheckpoint? left, Aw.Sindri.Core.Scheduling.StoreCheckpoint? right) -> bool
+Aw.Sindri.Core.Connections.Polling.BackoffDecision
+Aw.Sindri.Core.Connections.Polling.BackoffDecision.<Clone>$() -> Aw.Sindri.Core.Connections.Polling.BackoffDecision!
+Aw.Sindri.Core.Connections.Polling.BackoffDecision.BackoffDecision(int Failures, System.DateTimeOffset Until) -> void
+Aw.Sindri.Core.Connections.Polling.BackoffDecision.Deconstruct(out int Failures, out System.DateTimeOffset Until) -> void
+Aw.Sindri.Core.Connections.Polling.BackoffDecision.Equals(Aw.Sindri.Core.Connections.Polling.BackoffDecision? other) -> bool
+Aw.Sindri.Core.Connections.Polling.BackoffDecision.Failures.get -> int
+Aw.Sindri.Core.Connections.Polling.BackoffDecision.Failures.init -> void
+Aw.Sindri.Core.Connections.Polling.BackoffDecision.Until.get -> System.DateTimeOffset
+Aw.Sindri.Core.Connections.Polling.BackoffDecision.Until.init -> void
+Aw.Sindri.Core.Connections.Polling.EventKind
+Aw.Sindri.Core.Connections.Polling.EventKind.Deconstruct(out string! Key) -> void
+Aw.Sindri.Core.Connections.Polling.EventKind.Equals(Aw.Sindri.Core.Connections.Polling.EventKind other) -> bool
+Aw.Sindri.Core.Connections.Polling.EventKind.EventKind() -> void
+Aw.Sindri.Core.Connections.Polling.EventKind.EventKind(string! Key) -> void
+Aw.Sindri.Core.Connections.Polling.EventKind.Key.get -> string!
+Aw.Sindri.Core.Connections.Polling.EventKind.Key.init -> void
+Aw.Sindri.Core.Connections.Polling.IEventPoller
+Aw.Sindri.Core.Connections.Polling.IEventPoller.Poll(Aw.Sindri.Core.Connections.Connection! connection, Aw.Sindri.Core.Connections.Polling.EventKind kind, string? cursor, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.Polling.PollResult!>!>
+Aw.Sindri.Core.Connections.Polling.IEventPoller.Preset.get -> string!
+Aw.Sindri.Core.Connections.Polling.IPollCursors
+Aw.Sindri.Core.Connections.Polling.IPollCursors.Get(Aw.Sindri.Core.Connections.ConnectionName connection, Aw.Sindri.Core.Connections.Polling.EventKind kind, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.Polling.PollCursor?>!>
+Aw.Sindri.Core.Connections.Polling.IPollCursors.List(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Polling.PollCursor!>!>!>
+Aw.Sindri.Core.Connections.Polling.IPollCursors.Save(Aw.Sindri.Core.Connections.Polling.PollCursor! cursor, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Connections.Polling.PollBackoff
+Aw.Sindri.Core.Connections.Polling.PollCatalog
+Aw.Sindri.Core.Connections.Polling.PollCursor
+Aw.Sindri.Core.Connections.Polling.PollCursor.<Clone>$() -> Aw.Sindri.Core.Connections.Polling.PollCursor!
+Aw.Sindri.Core.Connections.Polling.PollCursor.BackoffUntil.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Connections.Polling.PollCursor.BackoffUntil.init -> void
+Aw.Sindri.Core.Connections.Polling.PollCursor.Connection.get -> Aw.Sindri.Core.Connections.ConnectionName
+Aw.Sindri.Core.Connections.Polling.PollCursor.Connection.init -> void
+Aw.Sindri.Core.Connections.Polling.PollCursor.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionName Connection, out Aw.Sindri.Core.Connections.Polling.EventKind Kind, out string? Value, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? LastPollAt, out System.DateTimeOffset? BackoffUntil, out int Failures) -> void
+Aw.Sindri.Core.Connections.Polling.PollCursor.Equals(Aw.Sindri.Core.Connections.Polling.PollCursor? other) -> bool
+Aw.Sindri.Core.Connections.Polling.PollCursor.Failures.get -> int
+Aw.Sindri.Core.Connections.Polling.PollCursor.Failures.init -> void
+Aw.Sindri.Core.Connections.Polling.PollCursor.Kind.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+Aw.Sindri.Core.Connections.Polling.PollCursor.Kind.init -> void
+Aw.Sindri.Core.Connections.Polling.PollCursor.LastPollAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Connections.Polling.PollCursor.LastPollAt.init -> void
+Aw.Sindri.Core.Connections.Polling.PollCursor.PollCursor(Aw.Sindri.Core.Connections.ConnectionName Connection, Aw.Sindri.Core.Connections.Polling.EventKind Kind, string? Value, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? LastPollAt, System.DateTimeOffset? BackoffUntil, int Failures) -> void
+Aw.Sindri.Core.Connections.Polling.PollCursor.UpdatedAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Connections.Polling.PollCursor.UpdatedAt.init -> void
+Aw.Sindri.Core.Connections.Polling.PollCursor.Value.get -> string?
+Aw.Sindri.Core.Connections.Polling.PollCursor.Value.init -> void
+Aw.Sindri.Core.Connections.Polling.PollResult
+Aw.Sindri.Core.Connections.Polling.PollResult.<Clone>$() -> Aw.Sindri.Core.Connections.Polling.PollResult!
+Aw.Sindri.Core.Connections.Polling.PollResult.Equals(Aw.Sindri.Core.Connections.Polling.PollResult? other) -> bool
+Aw.Sindri.Core.Connections.Polling.PollResult.Events.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Polling.PolledEvent!>!
+Aw.Sindri.Core.Connections.Polling.PollResult.Events.init -> void
+Aw.Sindri.Core.Connections.Polling.PollResult.NextCursor.get -> string?
+Aw.Sindri.Core.Connections.Polling.PollResult.NextCursor.init -> void
+Aw.Sindri.Core.Connections.Polling.PollResult.RateLimited.get -> bool
+Aw.Sindri.Core.Connections.Polling.PollResult.RateLimited.init -> void
+Aw.Sindri.Core.Connections.Polling.PollResult.RetryAfter.get -> System.TimeSpan?
+Aw.Sindri.Core.Connections.Polling.PollResult.RetryAfter.init -> void
+Aw.Sindri.Core.Connections.Polling.PolledEvent
+Aw.Sindri.Core.Connections.Polling.PolledEvent.<Clone>$() -> Aw.Sindri.Core.Connections.Polling.PolledEvent!
+Aw.Sindri.Core.Connections.Polling.PolledEvent.Deconstruct(out string! DeliveryKey, out Aw.Sindri.Core.Connections.Polling.EventKind Kind, out System.DateTimeOffset OccurredAt, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields) -> void
+Aw.Sindri.Core.Connections.Polling.PolledEvent.DeliveryKey.get -> string!
+Aw.Sindri.Core.Connections.Polling.PolledEvent.DeliveryKey.init -> void
+Aw.Sindri.Core.Connections.Polling.PolledEvent.Equals(Aw.Sindri.Core.Connections.Polling.PolledEvent? other) -> bool
+Aw.Sindri.Core.Connections.Polling.PolledEvent.Fields.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Connections.Polling.PolledEvent.Fields.init -> void
+Aw.Sindri.Core.Connections.Polling.PolledEvent.Kind.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+Aw.Sindri.Core.Connections.Polling.PolledEvent.Kind.init -> void
+Aw.Sindri.Core.Connections.Polling.PolledEvent.OccurredAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Connections.Polling.PolledEvent.OccurredAt.init -> void
+Aw.Sindri.Core.Connections.Polling.PolledEvent.PolledEvent(string! DeliveryKey, Aw.Sindri.Core.Connections.Polling.EventKind Kind, System.DateTimeOffset OccurredAt, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields) -> void
+Aw.Sindri.Core.Connections.Polling.WakeDetector
+Aw.Sindri.Core.Connections.Polling.WakeDetector.Observe() -> bool
+Aw.Sindri.Core.Connections.Polling.WakeDetector.WakeDetector(System.TimeProvider! clock, System.TimeSpan tick) -> void
+override Aw.Sindri.Core.Connections.Polling.BackoffDecision.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.Polling.BackoffDecision.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.Polling.BackoffDecision.ToString() -> string!
+override Aw.Sindri.Core.Connections.Polling.EventKind.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.Polling.EventKind.ToString() -> string!
+override Aw.Sindri.Core.Connections.Polling.PollCursor.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.Polling.PollCursor.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.Polling.PollCursor.ToString() -> string!
+override Aw.Sindri.Core.Connections.Polling.PollResult.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.Polling.PollResult.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.Polling.PollResult.ToString() -> string!
+override Aw.Sindri.Core.Connections.Polling.PolledEvent.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.Polling.PolledEvent.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.Polling.PolledEvent.ToString() -> string!
+static Aw.Sindri.Core.Connections.Polling.BackoffDecision.operator !=(Aw.Sindri.Core.Connections.Polling.BackoffDecision? left, Aw.Sindri.Core.Connections.Polling.BackoffDecision? right) -> bool
+static Aw.Sindri.Core.Connections.Polling.BackoffDecision.operator ==(Aw.Sindri.Core.Connections.Polling.BackoffDecision? left, Aw.Sindri.Core.Connections.Polling.BackoffDecision? right) -> bool
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubIssueLabeled.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubIssueOpened.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrMerged.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrOpened.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrReviewRequested.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPush.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.LinearCommentAdded.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.LinearIssueCreated.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.LinearIssueLabeled.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.LinearIssueStateChanged.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.operator !=(Aw.Sindri.Core.Connections.Polling.EventKind left, Aw.Sindri.Core.Connections.Polling.EventKind right) -> bool
+static Aw.Sindri.Core.Connections.Polling.EventKind.operator ==(Aw.Sindri.Core.Connections.Polling.EventKind left, Aw.Sindri.Core.Connections.Polling.EventKind right) -> bool
+static Aw.Sindri.Core.Connections.Polling.PollBackoff.BaseDelay.get -> System.TimeSpan
+static Aw.Sindri.Core.Connections.Polling.PollBackoff.MaxDelay.get -> System.TimeSpan
+static Aw.Sindri.Core.Connections.Polling.PollBackoff.Next(int previousFailures, System.TimeSpan? retryAfter, System.DateTimeOffset now) -> Aw.Sindri.Core.Connections.Polling.BackoffDecision!
+static Aw.Sindri.Core.Connections.Polling.PollCatalog.For(string! preset) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Polling.EventKind>!
+static Aw.Sindri.Core.Connections.Polling.PollCursor.operator !=(Aw.Sindri.Core.Connections.Polling.PollCursor? left, Aw.Sindri.Core.Connections.Polling.PollCursor? right) -> bool
+static Aw.Sindri.Core.Connections.Polling.PollCursor.operator ==(Aw.Sindri.Core.Connections.Polling.PollCursor? left, Aw.Sindri.Core.Connections.Polling.PollCursor? right) -> bool
+static Aw.Sindri.Core.Connections.Polling.PollResult.operator !=(Aw.Sindri.Core.Connections.Polling.PollResult? left, Aw.Sindri.Core.Connections.Polling.PollResult? right) -> bool
+static Aw.Sindri.Core.Connections.Polling.PollResult.operator ==(Aw.Sindri.Core.Connections.Polling.PollResult? left, Aw.Sindri.Core.Connections.Polling.PollResult? right) -> bool
+static Aw.Sindri.Core.Connections.Polling.PolledEvent.operator !=(Aw.Sindri.Core.Connections.Polling.PolledEvent? left, Aw.Sindri.Core.Connections.Polling.PolledEvent? right) -> bool
+static Aw.Sindri.Core.Connections.Polling.PolledEvent.operator ==(Aw.Sindri.Core.Connections.Polling.PolledEvent? left, Aw.Sindri.Core.Connections.Polling.PolledEvent? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionCursorRejected -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionProviderChanged -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ConnectionRateLimited -> Aw.Kernel.ErrorDefinition!
+~override Aw.Sindri.Core.Connections.Polling.EventKind.Equals(object obj) -> bool
+static Aw.Sindri.Core.Connections.Polling.PollCatalog.Find(string! key) -> Aw.Sindri.Core.Connections.Polling.EventKind?
+static Aw.Sindri.Core.Connections.Polling.EventKind.GoogleCalendarEventStarting.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.SlackMention.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+static Aw.Sindri.Core.Connections.Polling.EventKind.SlackMessage.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+Aw.Sindri.Core.Connections.Polling.PollLimits
+Aw.Sindri.Core.Connections.Polling.PollResult.Gap.get -> bool
+Aw.Sindri.Core.Connections.Polling.PollResult.Gap.init -> void
+const Aw.Sindri.Core.Connections.Polling.PollLimits.DefaultPageCap = 10 -> int
+Aw.Sindri.Core.Connections.Polling.PollResult.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Polling.PolledEvent!>! Events, out string? NextCursor, out bool RateLimited, out System.TimeSpan? RetryAfter, out bool Gap, out string? Reason) -> void
+Aw.Sindri.Core.Connections.Polling.PollResult.PollResult(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Connections.Polling.PolledEvent!>! Events, string? NextCursor, bool RateLimited, System.TimeSpan? RetryAfter, bool Gap = false, string? Reason = null) -> void
+Aw.Sindri.Core.Connections.Polling.PollResult.Reason.get -> string?
+Aw.Sindri.Core.Connections.Polling.PollResult.Reason.init -> void
 Aw.Sindri.Core.Todos.TodoCandidate
 Aw.Sindri.Core.Todos.TodoCandidate.<Clone>$() -> Aw.Sindri.Core.Todos.TodoCandidate!
 Aw.Sindri.Core.Todos.TodoCandidate.Deconstruct(out Aw.Sindri.Core.Ids.TodoId Id, out bool Done, out bool Removed) -> void
@@ -19798,6 +19923,7 @@ Aw.Sindri.Core.Graph.GraphNode.OnFailure.get -> string?
 Aw.Sindri.Core.Graph.GraphNode.OnFailure.init -> void
 Aw.Sindri.Core.Graph.Runs.IGraphQueueAdvance
 Aw.Sindri.Core.Graph.Runs.IGraphQueueAdvance.StartNextQueued(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Ids.WorkflowRunId?>!>
+Aw.Sindri.Core.Graph.Runs.IGraphQueueAdvance.RunningBeforeThisProcess(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
 Aw.Sindri.Core.Graph.Runs.IGraphRunCanceller
 Aw.Sindri.Core.Graph.Runs.IGraphRunCanceller.Cancel(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotActive -> Aw.Kernel.ErrorDefinition!
@@ -20407,3 +20533,12 @@ static Aw.Sindri.Core.Todos.TodoItem.operator !=(Aw.Sindri.Core.Todos.TodoItem? 
 static Aw.Sindri.Core.Todos.TodoItem.operator ==(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator !=(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator ==(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
+Aw.Sindri.Core.Connections.PollableEvents
+static Aw.Sindri.Core.Connections.PollableEvents.For(string! preset) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Connections.PollableEvents.Presets.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Runs.IGraphRunProbe
+Aw.Sindri.Core.Graph.Runs.IGraphRunProbe.Exists(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery
+Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Running(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
+Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.DateTimeOffset startedBefore, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
