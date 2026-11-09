@@ -11,14 +11,6 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// </summary>
 internal sealed partial class GraphEditViewModel : ObservableObject
 {
-    private enum Mode
-    {
-        None,
-        Add,
-        Connect,
-        Remove,
-    }
-
     private static readonly string[] _watchedNames =
     [
         nameof(CanEdit), nameof(CanAdd), nameof(CanRemove), nameof(CanConnect), nameof(Groups), nameof(Targets), nameof(ReloadPromptText), nameof(HasReloadPrompt), nameof(FailureText), nameof(HasFailure),
@@ -193,16 +185,27 @@ internal sealed partial class GraphEditViewModel : ObservableObject
         if (!string.Equals(Editor.Slug, _runs.Slug, StringComparison.Ordinal) || Editor.BaseRevision != _runs.Shown?.LatestRevision || Editor.Groups.Count == 0)
         {
             await Editor.Load(url, _runs.Slug, cancellationToken).ConfigureAwait(true);
-            if (Editor.BaseRevision > 0 && Editor.BaseRevision != _runs.Shown?.LatestRevision)
+            if (await HoldOnUnseenRevision(cancellationToken).ConfigureAwait(true))
             {
-                Editor.MarkChangedElsewhere();   // the workflow moved on since the page read it: nothing is sent on a revision the person never saw
-                SetMode(Mode.None);
-                await ReadPage(_runs.Slug, cancellationToken).ConfigureAwait(true);
                 return false;
             }
         }
 
         return Editor.Groups.Count > 0 && Editor.BaseRevision > 0;
+    }
+
+    // The workflow moved on since the page read it: nothing is sent on a revision the person never saw, and the page reads it again.
+    private async Task<bool> HoldOnUnseenRevision(CancellationToken cancellationToken)
+    {
+        if (Editor.BaseRevision == 0 || Editor.BaseRevision == _runs.Shown?.LatestRevision)
+        {
+            return false;
+        }
+
+        Editor.MarkChangedElsewhere();
+        SetMode(Mode.None);
+        await ReadPage(_runs.Slug, cancellationToken).ConfigureAwait(true);
+        return true;
     }
 
     // One edit, never retried; whatever it answered, the page reads the workflow again so the graph shows the revision Sindri holds.
