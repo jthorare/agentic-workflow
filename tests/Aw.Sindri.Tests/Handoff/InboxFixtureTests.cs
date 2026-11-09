@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Infrastructure.Handoff;
@@ -43,7 +44,7 @@ public sealed class InboxFixtureTests
         Assert.True(checkedAny >= 8, "the fixtures were not read");
     }
 
-    private static Aw.Kernel.Result<object> Read(string schema, string json)
+    private static Result<object> Read(string schema, string json)
     {
         switch (schema)
         {
