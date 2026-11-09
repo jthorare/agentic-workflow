@@ -103,9 +103,13 @@ public sealed class WriteAttributionTests
         && row.Route is { Length: > 1 }
         && row.Class is not (ActionClass.Local or ActionClass.StepReport);
 
-    /// <summary>Scenarios about the human's own credentials or an app origin: a launched session has no such reading.</summary>
+    /// <summary>
+    /// Scenarios about the human's own credentials or an app origin: a launched session has no such reading. Also the 'session wrap' routes: the
+    /// caller there is the wrapper of the route's own launch, proven by that launch's secret (X-Sindri-Launch-Secret), never another launched session.
+    /// </summary>
     private static bool IsNotASessionCall((string Slug, string Scenario) row) =>
-        row.Scenario.StartsWith("human-", StringComparison.Ordinal)
+        row.Slug is "sessions-id-heartbeat" or "sessions-id-exit"
+        || row.Scenario.StartsWith("human-", StringComparison.Ordinal)
         || row.Scenario.StartsWith("prover-", StringComparison.Ordinal)
         || row.Scenario.StartsWith("unknown-caller", StringComparison.Ordinal)
         || row.Scenario.StartsWith("refused-origin", StringComparison.Ordinal);

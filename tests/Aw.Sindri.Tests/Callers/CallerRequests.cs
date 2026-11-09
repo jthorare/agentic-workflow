@@ -115,6 +115,13 @@ internal static class CallerRequests
             _ = request.Headers.TryAddWithoutValidation(name, value);
         }
 
+        // why: under AsLaunchedSession a scenario's hand-built session headers (not from Human) are the launched session's too; a call proven by a launch's own secret stays that launch's
+        if (_launch.Value is { } launch && headers.Any(static h => h is { Name: SindriHeaders.Caller, Value: "session" })
+            && !headers.Any(static h => h.Name is SindriHeaders.Launch or SindriHeaders.LaunchSecret))
+        {
+            _ = request.Headers.TryAddWithoutValidation(SindriHeaders.Launch, launch);
+        }
+
         return request;
     }
 }
