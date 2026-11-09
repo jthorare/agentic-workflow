@@ -50,7 +50,7 @@ public sealed class PauseWorkflowServiceTests : IDisposable
     public async Task An_unknown_workflow_is_not_found_and_without_the_lease_nothing_changes()
     {
         var unknown = await _service.Handle(new PauseWorkflowRequest(Aw.Sindri.Core.Graph.Ids.WorkflowSlug.From("nope"), "owner"), Token);
-        _ = (await _rig.Workflows.Create(Id, Slug, Graph(), "owner", Token)).Value;
+        _ = (await _rig.Workflows.Create(Id, Slug, SampleGraph(), "owner", Token)).Value;
         _ = (await _rig.Workflows.Activate(Id, 1, Token)).Value;
 
         var down = await _service.Handle(new PauseWorkflowRequest(Slug, "owner"), Token);

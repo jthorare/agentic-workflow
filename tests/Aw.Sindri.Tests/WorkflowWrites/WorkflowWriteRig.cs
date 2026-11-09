@@ -1,4 +1,3 @@
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Expressions;
@@ -7,7 +6,6 @@ using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Testing.Workflow;
-using Aw.Sindri.Tests.Graph;
 using Aw.Sindri.Tests.Graph.Blocks;
 using static Aw.Sindri.Tests.Graph.GraphFixtures;
 
@@ -41,7 +39,7 @@ internal sealed class WorkflowWriteRig : IDisposable
     public static CancellationToken Token => TestContext.Current.CancellationToken;
 
     /// <summary>daily -> a -> tell, over the fixture block types.</summary>
-    public static GraphSpec Graph() => Spec([Trigger("daily"), Search("a"), Notify("tell", "{{a.facts}}")], [Edge("daily", "a"), Edge("a", "tell")]);
+    public static GraphSpec SampleGraph() => Spec([Trigger("daily"), Search("a"), Notify("tell", "{{a.facts}}")], [Edge("daily", "a"), Edge("a", "tell")]);
 
     /// <summary>The ledger events of one type, oldest first.</summary>
     public IReadOnlyList<LedgerEvent> Recorded(string type) => [.. Harness.Store.Events.Where(e => string.Equals(e.Envelope.Type, type, StringComparison.Ordinal))];
@@ -50,7 +48,7 @@ internal sealed class WorkflowWriteRig : IDisposable
     public async Task Seed()
     {
         _ = await Harness.HoldLease();
-        _ = (await Workflows.Create(Id, Slug, Graph(), "owner", Token)).Value;
+        _ = (await Workflows.Create(Id, Slug, SampleGraph(), "owner", Token)).Value;
     }
 
     public void Dispose() => _caller.Dispose();

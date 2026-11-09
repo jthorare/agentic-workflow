@@ -32,7 +32,7 @@ public sealed class ValidateWorkflowServiceTests : IDisposable
 
         Assert.True(result.IsSuccess);
         Assert.True(result.Value.Passed);
-        Assert.Equal(GraphJson.Hash(Graph()), result.Value.Hash);
+        Assert.Equal(GraphJson.Hash(SampleGraph()), result.Value.Hash);
     }
 
     [Fact]

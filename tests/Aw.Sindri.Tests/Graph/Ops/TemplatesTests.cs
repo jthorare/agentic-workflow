@@ -1,5 +1,4 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Expressions;
 using Aw.Sindri.Core.Graph.Schedule;
@@ -58,6 +57,6 @@ public sealed class TemplatesTests
 
         var second = GraphTemplates.Find("weekday-check")!.Spec;
 
-        Assert.NotEqual("* * * * *", second.Nodes[0].Config["cron"]!.GetValue<string>());
+        Assert.NotEqual("* * * * *", second.Nodes[0].Config["cron"]!.GetValue<string>(), StringComparer.Ordinal);
     }
 }

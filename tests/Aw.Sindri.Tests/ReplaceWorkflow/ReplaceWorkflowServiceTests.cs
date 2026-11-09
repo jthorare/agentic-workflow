@@ -28,7 +28,7 @@ public sealed class ReplaceWorkflowServiceTests : IDisposable
     {
         await _rig.Seed();
 
-        var result = await _service.Handle(new ReplaceWorkflowRequest(Slug, 1, GraphJson.Write(Graph()), "session:s1"), Token);
+        var result = await _service.Handle(new ReplaceWorkflowRequest(Slug, 1, GraphJson.Write(SampleGraph()), "session:s1"), Token);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value.Revision);
@@ -39,9 +39,9 @@ public sealed class ReplaceWorkflowServiceTests : IDisposable
     public async Task A_stale_base_revision_is_a_conflict_with_the_current_revision_and_overwrites_nothing()
     {
         await _rig.Seed();
-        _ = (await _rig.Workflows.Save(Id, 1, Graph(), "owner", Token)).Value;
+        _ = (await _rig.Workflows.Save(Id, 1, SampleGraph(), "owner", Token)).Value;
 
-        var result = await _service.Handle(new ReplaceWorkflowRequest(Slug, 1, GraphJson.Write(Graph()), "session:s1"), Token);
+        var result = await _service.Handle(new ReplaceWorkflowRequest(Slug, 1, GraphJson.Write(SampleGraph()), "session:s1"), Token);
 
         Assert.Equal(SindriErrors.GraphStaleRevision.Code, result.Error.Code);
         Assert.Equal(ErrorKind.Conflict, result.Error.Kind);

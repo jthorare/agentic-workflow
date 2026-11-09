@@ -43,7 +43,7 @@ public sealed class ApplyWorkflowOpsServiceTests : IDisposable
     public async Task A_stale_base_revision_is_a_conflict_with_the_current_revision_and_overwrites_nothing()
     {
         await _rig.Seed();
-        _ = (await _rig.Workflows.Save(Id, 1, Graph(), "owner", Token)).Value;
+        _ = (await _rig.Workflows.Save(Id, 1, SampleGraph(), "owner", Token)).Value;
 
         var result = await _service.Handle(new ApplyWorkflowOpsRequest(Slug, 1, Rename, "session:s1"), Token);
 

@@ -1,6 +1,5 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.CreateWorkflow;

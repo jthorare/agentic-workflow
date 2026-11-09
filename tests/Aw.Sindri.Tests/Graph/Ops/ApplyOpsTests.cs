@@ -151,7 +151,7 @@ public sealed class ApplyOpsTests
     {
         var result = Apply(Base(), new RenameOp(Id("a"), Id("recall")));
 
-        Assert.Equal(["daily", "recall", "tell"], result.Value.Nodes.Select(n => n.Id.Value));
+        Assert.Equal(["daily", "recall", "tell"], result.Value.Nodes.Select(n => n.Id.Value), StringComparer.Ordinal);
         Assert.Equal([("daily", "recall"), ("recall", "tell")], result.Value.Edges.Select(e => (e.From.Value, e.To.Value)));
         Assert.Equal("{{recall.facts}}", result.Value.Nodes[2].Config["body"]!.GetValue<string>());
     }
@@ -178,15 +178,14 @@ public sealed class ApplyOpsTests
     [Fact]
     public void Ops_read_and_write_as_JSON_with_an_op_member()
     {
-        var parsed = GraphOpJson.Parse("""
-            [{"op":"add_node","id":"gate","type":"condition","config":{"when":"a.facts"}},
-             {"op":"set_config","node":"gate","path":"when","value":"a.other"},
-             {"op":"remove_node","node":"tell"},
-             {"op":"connect","from":"a","to":"gate","output":"out"},
-             {"op":"disconnect","from":"a","to":"gate"},
-             {"op":"rename","node":"a","to":"recall"},
-             {"op":"set_meta","name":"X"}]
-            """);
+        var parsed = GraphOpJson.Parse(
+            """[{"op":"add_node","id":"gate","type":"condition","config":{"when":"a.facts"}},""" +
+            """{"op":"set_config","node":"gate","path":"when","value":"a.other"},""" +
+            """{"op":"remove_node","node":"tell"},""" +
+            """{"op":"connect","from":"a","to":"gate","output":"out"},""" +
+            """{"op":"disconnect","from":"a","to":"gate"},""" +
+            """{"op":"rename","node":"a","to":"recall"},""" +
+            """{"op":"set_meta","name":"X"}]""");
 
         Assert.True(parsed.IsSuccess);
         Assert.Collection(

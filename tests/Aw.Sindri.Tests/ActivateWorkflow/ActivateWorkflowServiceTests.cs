@@ -25,7 +25,7 @@ public sealed class ActivateWorkflowServiceTests : IDisposable
     public async Task The_newest_revision_is_activated_by_default_and_the_event_is_written()
     {
         await _rig.Seed();
-        _ = (await _rig.Workflows.Save(Id, 1, Graph(), "owner", Token)).Value;
+        _ = (await _rig.Workflows.Save(Id, 1, SampleGraph(), "owner", Token)).Value;
 
         var result = await _service.Handle(new ActivateWorkflowRequest(Slug, Revision: null, "session:s1"), Token);
 
@@ -39,7 +39,7 @@ public sealed class ActivateWorkflowServiceTests : IDisposable
     public async Task A_named_revision_is_activated()
     {
         await _rig.Seed();
-        _ = (await _rig.Workflows.Save(Id, 1, Graph(), "owner", Token)).Value;
+        _ = (await _rig.Workflows.Save(Id, 1, SampleGraph(), "owner", Token)).Value;
 
         var result = await _service.Handle(new ActivateWorkflowRequest(Slug, 1, "owner"), Token);
 

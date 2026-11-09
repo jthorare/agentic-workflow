@@ -33,7 +33,7 @@ public sealed class DeleteWorkflowServiceTests : IDisposable
         Assert.Empty((await _rig.Workflows.List(includeArchived: false, Token)).Value);
         var record = (await _rig.Workflows.Get(Id, Token)).Value;
         Assert.Null(record.ActiveRevision);
-        Assert.NotNull(record.ArchivedAt);
+        _ = Assert.NotNull(record.ArchivedAt);
         Assert.Equal($"workflow.archived:{Id.Value}", Assert.Single(_rig.Recorded(EventTypes.WorkflowArchived)).IdempotencyKey);
     }
 
