@@ -46,7 +46,7 @@ internal sealed class SendReviewFixService(ICallerContextAccessor callers, FixTa
 
         var item = made.Value;
         var posted = target.PostsThread ? await poster.Post(FixItemText.Review(request, target.Link, item.Value), item.Value, request.Number, cancellationToken).ConfigureAwait(false) : FixPosted.Skipped;
-        var (went, session) = await route.Find(target.Link, target.HeadRepo, target.Branch, cancellationToken).ConfigureAwait(false);
+        var (went, session) = await route.Find(target.HeadRepo, target.Branch, cancellationToken).ConfigureAwait(false);
         string? fileError = null;
         if (Head(target) is { } head && (await files.Add(head, item, request.Number, cancellationToken).ConfigureAwait(false)) is { IsError: true } filed)
         {

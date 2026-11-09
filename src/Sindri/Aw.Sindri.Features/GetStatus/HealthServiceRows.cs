@@ -1,5 +1,4 @@
 using Aw.Sindri.Core.Health;
-using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
@@ -39,16 +38,7 @@ internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInSe
     public async ValueTask<int> IdleAgents(CancellationToken cancellationToken)
     {
         var launches = await views.List<LaunchRow>(ViewNames.Launches, cancellationToken).ConfigureAwait(false);
-        return launches.IsSuccess ? (await StalledLaunches.Open(StalledLaunches.Find(launches.Value, clock?.GetUtcNow()), views, cancellationToken).ConfigureAwait(false)).Count : 0;
-    }
-
-    /// <summary>How many live workflow instances are parked as unavailable: a dependency of their Step stayed down through the retries, so they wait for a rerun, not for an answer.</summary>
-    /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The count; 0 when the items view can't be read (status is where that is reported).</returns>
-    public async ValueTask<int> Unavailable(CancellationToken cancellationToken)
-    {
-        var items = await views.List<ItemRow>(ViewNames.Items, cancellationToken).ConfigureAwait(false);
-        return items.IsSuccess ? items.Value.Sum(static i => EngineItemStates.Unavailable(i.Engine)) : 0;
+        return launches.IsSuccess ? StalledLaunches.Find(launches.Value, clock?.GetUtcNow()).Count : 0;
     }
 
     /// <summary>The rows that count for health.</summary>

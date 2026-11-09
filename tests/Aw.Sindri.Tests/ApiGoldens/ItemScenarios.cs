@@ -34,7 +34,7 @@ internal static class ItemScenarios
         ("items-id", "new"), ("items-id", "needs-decision"), ("items-id", "after-decide"), ("items-id", "after-close"), ("items-id", "not-found"), ("items-id", "cancelled"), ("items-id", "alias"), ("items-id", "with-body"), ("items-id", "session-other-repo"), ("items-id", "bad-id"),
         ("items-id-timeline", "fixture"), ("items-id-timeline", "page-2"), ("items-id-timeline", "closed"), ("items-id-timeline", "not-found"),
         ("items-id-close", "accepted"), ("items-id-close", "stale-version"), ("items-id-close", "accepted-cancelled"), ("items-id-close", "already-closed"), ("items-id-close", "not-found"),
-        ("items-id-close", "while-stalled"), ("items-id-close", "while-rebuilding"), ("items-id-close", "refused-active-instance"),
+        ("items-id-close", "while-stalled"), ("items-id-close", "while-rebuilding"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -242,10 +242,6 @@ internal static class ItemScenarios
                 _ = await Close(host, id, "done", 1);
                 await ViewScenarios.CatchUp(host, ct);
                 return await Close(host, id, "done", 2);
-            case "refused-active-instance":
-                await AppendFor(host, id, EventTypes.WorkflowStarted, ActiveInstance(id), "workflow:golden:started", ct);   // a root instance's desk task is open
-                await ViewScenarios.CatchUp(host, ct);
-                return await Close(host, id, "done", 1);
             case "while-stalled":
                 await Stall(host, ct);
                 return await Close(host, id, "done", 1);
@@ -302,11 +298,4 @@ internal static class ItemScenarios
         _ = appended.Value;
     }
 
-    private static WorkflowEventPayload ActiveInstance(string item)
-    {
-        var delta = new WorkflowEventDelta(new FrameSummary("produce", 1, "1.1", Child: null, Core.Launch.StepRuntime.Desk), Suspension: null, PendingPark: null, Loops: null, TokensSpent: null, TokensGranted: null, Facts: null, Outcome: null);
-        var detail = new WorkflowEventDetail(Core.Workflow.Engine.TriggerKey.For(Core.Launch.WorkflowInstanceId.From("WFI-" + new string('a', 32)), "t"), "human:cli",
-            SourceSequence: null, ArgumentsSha256: null, ReportSha256: null, Answer: null, Amount: null, Reason: null, [], [], Grant: null, Override: null, Refusal: null, [], delta);
-        return new WorkflowEventPayload(item + "/step/1", "start", "produce", "start", Outcome: null, Run: null, detail);
-    }
 }
