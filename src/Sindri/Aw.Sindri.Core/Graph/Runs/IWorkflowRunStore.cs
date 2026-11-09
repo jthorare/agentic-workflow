@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Core.Graph.Runs;
 
@@ -87,6 +88,13 @@ public interface IWorkflowRunStore
     /// <param name="cancellationToken">Cancels the write.</param>
     /// <returns>The run after the call (changed or not), or SND-GRAPH-101.</returns>
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken);
+
+    /// <summary>Links a run to the item its work made (a 'create_item' node). It replaces an earlier link and applies to a run in any status.</summary>
+    /// <param name="id">The run.</param>
+    /// <param name="item">The item.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>The run after the call, or SND-GRAPH-101.</returns>
+    public ValueTask<Result<WorkflowRun>> SetItem(WorkflowRunId id, ItemId item, CancellationToken cancellationToken);
 
     /// <summary>Cancels a run only while it is still queued. A run that was promoted to running meanwhile is left alone.</summary>
     /// <param name="id">The run.</param>
