@@ -12,7 +12,7 @@ public sealed class HttpBlockTests
 {
     private static HttpBlock Block(FlowFakes.ScriptedHandler handler, params string[] hosts) => new(new GraphHttpClient(handler, FlowFakes.Hosts(hosts)));
 
-    private static Task<Aw.Kernel.Result<BlockResult>> Run(HttpBlock block, JsonObject config) => block.Execute(BlockFakes.Context(config), TestContext.Current.CancellationToken).AsTask();
+    private static Task<Kernel.Result<BlockResult>> Run(HttpBlock block, JsonObject config) => block.Execute(BlockFakes.Context(config), TestContext.Current.CancellationToken).AsTask();
 
     [Fact]
     public async Task A_host_off_the_allowlist_a_loopback_address_and_a_cross_host_redirect_are_refused()
