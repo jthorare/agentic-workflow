@@ -1,11 +1,13 @@
 /* schema.css: the D7 table drawer (src/components/SchemaDrawer.tsx) drawn the Snowsight way (D14a, DataGrid.tsx), its
    docked chat (D14c, DataChat.tsx), and the diagram-hotspot badge for boxes that open it. Loaded after
    templates/tdd-system/tdd.css; tokens only, so light and dark both come from the token blocks there.
-   Classes: dialog.drawer.schema, .drawer-head, .drawer-title, .drawer-close, .drawer-body, .drawer-sec, .drawer-summary;
-   tabs .dg-tabs, .dg-tab(.on), .dg-count, .dg-panel; Data preview .dg-bar, .dg-filter, .dg-btn(.on), .dg-grid (thead
-   tr.dg-head th.h-new|h-changed, .dg-h, .dg-glyph.g-<kind>, tr.dg-hstats, th.rn, td.null, td.num, td.long, .dg-more),
-   .dg-cap; stats .dg-mini, .dg-meter, .dg-hist, .dg-freq; Columns .schema-legend (.lg), .dg-cols (tr.col-new|changed|
-   dropped; td.cn, .cnote, td.ct, .was, td.rg .dg-range, td.ds); Details .dg-kv, .load-grid, .load-card (.measured,
+   Classes: dialog.drawer.schema(.expanded), .drawer-head, h2.drawer-name, .drawer-acts, .drawer-expand, .drawer-close,
+   .drawer-body, .drawer-sec, .drawer-summary (Details tab); tabs .dg-tabs, .dg-tab(.on), .dg-count, .dg-panel; Data
+   preview .dg-bar, .dg-filter, .dg-btn(.on), .dg-bands(.multi) > .dg-band (.dg-band-cap, .dg-band-names) > .dg-grid
+   (.banded; thead tr.dg-head th.h-new|h-changed, .dg-h, .dg-glyph.g-<kind>, tr.dg-hstats, th.rn, tbody tr.hot, td.null,
+   td.num, td.long, .dg-more), .dg-ghost-box > .dg-ghost (the hidden measuring copy), .dg-cap; stats .dg-mini,
+   .dg-meter, .dg-hist, .dg-freq; Columns .schema-legend (.lg), .dg-cols (tr.col-new|changed|dropped; td.cn, .cnote,
+   td.ct, .was, td.rg .dg-range, td.ds); Details .dg-kv, .load-grid, .load-card (.measured,
    .expected; .k, .u, .src, .none "not measured"), pre.ddl, .mono-list, .drawer-notes, .where; chat .dchat(.off),
    .dchat-off, .dchat-log, .dchat-msg.user|assistant, .dchat-steps, .dchat-note, .dchat-form, .dchat-btn, .dchat-src;
    .hs.has-table::after. */
@@ -28,21 +30,55 @@ dialog.drawer::backdrop { background: var(--scrim); }
 @media (max-width: 640px) {
   dialog.drawer { width: 100vw; border-left: 0; border-radius: 0; }
 }
+/* the Expand view (D26): the same dialog, centred, landscape, 95% of the page each way. The body becomes a column so
+   the one-band grid fills what the head, the bar and the chat leave, scrolling both ways under its sticky header. */
+dialog.drawer.expanded {
+  inset: 0; margin: auto; width: 95vw; max-width: 95vw; height: 95dvh; max-height: 95dvh;
+  border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: 0 24px 80px var(--shadow);
+}
+@media (prefers-reduced-motion: no-preference) {
+  dialog.drawer.expanded[open] { animation: modal-in .16s ease-out; }
+  @keyframes modal-in { from { transform: scale(0.985); opacity: 0.6; } }
+}
+dialog.drawer.expanded .drawer-body { display: flex; flex-direction: column; gap: 14px; }
+dialog.drawer.expanded #dg-panel-preview:not([hidden]) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+dialog.drawer.expanded .dg-preview { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+dialog.drawer.expanded .dg-bands { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; }
+dialog.drawer.expanded .dg-band { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; }
+dialog.drawer.expanded .dg-grid { flex: 0 1 auto; min-height: 140px; max-height: none; }
+dialog.drawer.expanded .dg-cap { flex: none; }
 
+/* the head (D26): one row holding the name and state chip, the tabs, Expand and Close; the tabs' underline sits on the
+   head's bottom rule. Phones wrap it to two rows: name and Close, then the tabs. */
 .drawer-head {
-  flex: none; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
-  padding: 14px max(20px, env(safe-area-inset-right, 0px)) 12px 20px;
-  padding-top: max(14px, env(safe-area-inset-top, 0px));
+  flex: none; display: flex; align-items: stretch; gap: 0 16px; min-height: 50px; box-sizing: border-box;
+  padding: env(safe-area-inset-top, 0px) max(20px, env(safe-area-inset-right, 0px)) 0 20px;
   background: var(--surface); border-bottom: 1px solid var(--line);
 }
-.drawer-title { display: grid; gap: 4px; min-width: 0; }
-.drawer-head h2 { margin: 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 1.1rem; }
-.drawer-head h2 code { font: 650 1.1rem/1.3 var(--font-mono); background: none; padding: 0; color: var(--fg); overflow-wrap: anywhere; }
-.drawer-close {
-  flex: none; font: 500 var(--fs-xs)/1 var(--font-body); padding: 7px 12px; border-radius: var(--r-pill);
-  border: 1px solid var(--line-strong); background: var(--surface); color: var(--fg); cursor: pointer;
+.drawer-head h2.drawer-name {
+  flex: 0 1 auto; min-width: 0; margin: 0; padding: 0; border: 0; display: flex; align-items: center; gap: 8px;
+  font-size: 1rem; white-space: nowrap;
 }
-.drawer-close:hover { background: var(--surface-2); }
+.drawer-name code {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 650 0.95rem/1.25 var(--font-mono);
+  background: none; padding: 0; color: var(--fg);
+}
+.drawer-name .chip { flex: none; font-size: 0.66rem; padding: 2px 7px; }
+.drawer-acts { flex: none; display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.drawer-close, .drawer-expand {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; font: 500 var(--fs-xs)/1 var(--font-body);
+  padding: 7px 12px; border-radius: var(--r-pill); border: 1px solid var(--line-strong); background: var(--surface);
+  color: var(--fg); cursor: pointer; white-space: nowrap;
+}
+.drawer-close:hover, .drawer-expand:hover { background: var(--surface-2); }
+.drawer-expand { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--surface)); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+.drawer-expand:hover { background: color-mix(in srgb, var(--accent) 13%, var(--surface)); }
+@media (max-width: 640px) {
+  .drawer-head { flex-wrap: wrap; padding-top: max(10px, env(safe-area-inset-top, 0px)); row-gap: 6px; }
+  .drawer-head h2.drawer-name { flex: 1 1 0; }
+  .drawer-head .dg-tabs { order: 3; flex: 1 0 100%; }
+  .drawer-expand { display: none; }
+}
 
 .drawer-body {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
@@ -60,16 +96,15 @@ dialog.drawer::backdrop { background: var(--scrim); }
 .schema .chip.changed { --chip: var(--warn); }
 .schema .chip.dropped { --chip: var(--danger); }
 
-/* ---------------------------------------------------------------- tabs: fixed under the head, like Snowsight's object tabs */
+/* ---------------------------------------------------------------- tabs: in the head row, like Snowsight's object tabs */
 .dg-tabs {
-  flex: none; display: flex; gap: 22px; align-items: flex-end; overflow-x: auto; scrollbar-width: none;
-  padding: 0 max(20px, env(safe-area-inset-right, 0px)) 0 20px; background: var(--surface); border-bottom: 1px solid var(--line);
+  flex: 0 1 auto; min-width: 0; display: flex; gap: 16px; align-items: stretch; overflow-x: auto; scrollbar-width: none;
 }
 .dg-tabs::-webkit-scrollbar { display: none; }
 .dg-tab {
-  flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 10px 0 9px; margin-bottom: -1px;
+  flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 0 0 1px; margin-bottom: -1px;
   font: 600 var(--fs-sm)/1.2 var(--font-body); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent;
-  cursor: pointer; white-space: nowrap;
+  cursor: pointer; white-space: nowrap; min-height: 44px; box-sizing: border-box;
 }
 .dg-tab:hover { color: var(--fg); }
 .dg-tab.on { color: var(--fg); border-bottom-color: var(--accent); }
@@ -109,22 +144,24 @@ dialog.drawer::backdrop { background: var(--scrim); }
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
 }
 .dg-grid:focus-visible { outline-offset: 0; }
-.dg-grid table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font: 400 0.75rem/1.45 var(--font-mono); font-variant-numeric: tabular-nums; }
-.dg-grid th, .dg-grid td { padding: 5px 10px; white-space: nowrap; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
+.dg-grid table, .dg-ghost table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font: 400 0.75rem/1.45 var(--font-mono); font-variant-numeric: tabular-nums; }
+.dg-grid th, .dg-grid td, .dg-ghost th, .dg-ghost td { padding: 5px 10px; white-space: nowrap; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
 .dg-grid th:last-child, .dg-grid td:last-child { border-right: 0; }
 .dg-grid tbody tr:last-child > * { border-bottom: 0; }
 .dg-grid thead th { position: sticky; z-index: 2; background: var(--surface-2); }
-.dg-grid tr.dg-head th { top: 0; height: 34px; box-sizing: border-box; padding: 0 10px; vertical-align: middle; }
-.dg-grid tr.dg-hstats th { top: 34px; padding: 5px 10px 6px; font: 400 0.66rem/1.3 var(--font-body); color: var(--muted); }
+.dg-grid tr.dg-head th, .dg-ghost tr.dg-head th { top: 0; height: 34px; box-sizing: border-box; padding: 0 10px; vertical-align: middle; }
+.dg-grid tr.dg-hstats th, .dg-ghost tr.dg-hstats th { top: 34px; padding: 5px 10px 6px; font: 400 0.66rem/1.3 var(--font-body); color: var(--muted); }
 .dg-grid tr.dg-head th.h-new { box-shadow: inset 0 -2px 0 var(--good); }
 .dg-grid tr.dg-head th.h-changed { box-shadow: inset 0 -2px 0 var(--warn); }
 .dg-grid .rn { position: sticky; left: 0; z-index: 1; min-width: 3ch; text-align: right; color: var(--muted); background: var(--surface-2); font-weight: 400; }
+.dg-ghost .rn { min-width: 3ch; }
 .dg-grid thead .rn { z-index: 3; }
-.dg-grid tbody tr:hover > td { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.dg-grid tbody tr:hover > td, .dg-grid tbody tr.hot > td { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.dg-grid tbody tr.hot > th.rn { color: var(--accent); }
 .dg-grid td.null { color: var(--muted); font-style: italic; }
 .dg-grid td.num { text-align: right; }
-.dg-grid td.long { max-width: 46ch; }
-.dg-grid td.long.open { white-space: normal; }
+.dg-grid td.long, .dg-ghost td.long { max-width: 46ch; }
+.dg-grid td.long.open, .dg-ghost td.long.open { white-space: normal; }
 .dg-empty { color: var(--muted); font-style: italic; }
 .dg-h {
   display: inline-flex; align-items: center; gap: 6px; padding: 0; margin: 0; border: 0; background: none; cursor: pointer;
@@ -136,6 +173,21 @@ dialog.drawer::backdrop { background: var(--scrim); }
 .dg-more { display: block; width: 100%; padding: 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .dg-more .ell { margin-left: 1px; padding: 0 4px; border-radius: var(--r-sm); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
 .dg-more pre { margin: 0; padding: 0; background: none; border: 0; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 56ch; }
+
+/* bands (D26): a grid wider than the drawer is cut into stacked bands of whole columns, each with the same row numbers
+   in its sticky first column; the bands grow with their rows (the drawer body scrolls), and a column wider than the
+   drawer still scrolls sideways inside its band. .dg-ghost is a hidden copy of the whole grid that gives each column's
+   natural width: clipped by .dg-ghost-box so it adds no scroll area, and hidden from assistive tech. */
+.dg-bands { position: relative; display: grid; gap: 14px; min-width: 0; }
+.dg-band { display: grid; gap: 5px; min-width: 0; }
+.dg-band-cap { margin: 0; max-width: none; font-size: var(--fs-xs); line-height: 1.3; color: var(--muted); font-variant-numeric: tabular-nums; }
+.dg-band-cap b { color: var(--fg); font-weight: 600; }
+.dg-band-names { font-family: var(--font-mono); font-size: 0.95em; }
+.dg-grid.banded { max-height: none; }
+.dg-bands.multi .dg-band + .dg-band .dg-grid { border-top: 2px solid color-mix(in srgb, var(--accent) 30%, var(--line)); }
+.dg-ghost-box { position: absolute; left: 0; right: 0; top: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
+.dg-ghost { position: absolute; left: 0; top: 0; width: max-content; }
+.dg-ghost table { min-width: 0; }
 
 /* type glyphs (house reading; see references/data-view.md) */
 .dg-glyph {

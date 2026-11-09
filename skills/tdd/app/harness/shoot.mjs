@@ -8,7 +8,8 @@
 // --chat (needs a page rendered with --stub-claude) it also asks the docked chat the question and writes
 // <prefix>-chat-<table>-<width>-<scheme>.png once the stub's streamed reply is done. Also writes
 // <prefix>-hotspots-<width>-<scheme>.png (the diagram with its "rows" badges, drawer closed) for the first width, and
-// prints the checks as JSON: opened by click, tabs, sticky typed header, stats row, sort, filter, expand, chat dock, Esc
+// prints the checks as JSON: opened by click, tabs, sticky typed header, stats row, sort, filter, expand a long value,
+// Close focused on open, bands or a sideways-scrolling grid on phones, chat dock, Esc
 // closes, backdrop click closes, #tbl- hash opens, drawer width, no horizontal page overflow, hydration and console
 // errors. playwright-core comes from ~/.local/share/system-design-skills/node_modules. Exit 0 when every check passes.
 import { createRequire } from "node:module";
@@ -118,7 +119,8 @@ try {
             cap: d.querySelector(".dg-preview .dg-cap b")?.textContent || "",
             gridScrolls: grid ? grid.scrollWidth > grid.clientWidth : false,
             dock: d.querySelector(".dchat")?.textContent || "",
-            first: d.querySelector("button")?.textContent || "",
+            focus: document.activeElement?.textContent || "",
+            bands: d.querySelectorAll(".dg-bands .dg-band").length,
           };
         });
         check(`${name} tabs (${tag})`, g.tabs.length === 3 && /^Data preview/.test(g.tabs[0]), g.tabs.join(" | "));
@@ -126,8 +128,8 @@ try {
         check(`${name} stats row from sample rows (${tag})`, g.stats === g.cols, `${g.stats} mini graphs`);
         check(`${name} row caption (${tag})`, /^\d+ sample rows? · /.test(g.cap), g.cap);
         check(`${name} chat dock present (${tag})`, /Ask about this table/.test(g.dock), g.dock.slice(0, 120));
-        check(`${name} Close stays the first button (${tag})`, g.first === "Close", g.first);
-        if (width < 760) check(`${name} grid scrolls sideways inside its box (${tag})`, g.gridScrolls, String(g.gridScrolls));
+        check(`${name} Close has focus on open (${tag})`, g.focus === "Close", g.focus);
+        if (width < 760) check(`${name} grid is banded or scrolls sideways inside its box (${tag})`, g.bands > 1 || g.gridScrolls, `${g.bands} bands, scrolls ${g.gridScrolls}`);
 
         // interactions: sort, filter to nothing and back, expand a long value
         const firstH = page.locator(".dg-grid tr.dg-head th:not(.rn) .dg-h").first();
