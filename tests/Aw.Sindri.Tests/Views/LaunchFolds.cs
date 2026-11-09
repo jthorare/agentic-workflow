@@ -25,7 +25,8 @@ internal static class LaunchFolds
         InstanceAddress? instance = null, string? state = null, int? attempt = null, SandboxSummary? sandbox = null, string? run = null, string? node = null) =>
         v.Fold(EventTypes.LaunchStarted,
             new LaunchStarted(launch ?? A.FirstLaunchId, A.FirstItemId, mode, target ?? ClaudeCode, session, "sindri " + A.FirstItemId.Value,
-                new LaunchViewer("warp", "Warp", outcome, outcome == ViewerOutcomeKind.Failed ? "SND-LAUNCH-001" : null, viewerDetail), ["tmux", "attach"], CatalogSource.Builtin, "sha256:abc", instance, state, attempt, sandbox) { Run = run, Node = node }, A.FirstItemId);
+                new LaunchViewer("warp", "Warp", outcome, outcome == ViewerOutcomeKind.Failed ? "SND-LAUNCH-001" : null, viewerDetail), ["tmux", "attach"], CatalogSource.Builtin, "sha256:abc", instance, state, attempt, sandbox)
+            { Run = run, Node = node }, A.FirstItemId);
 
     /// <summary>Folds a 'launch.failed'.</summary>
     public static Task Fail(this ViewsHarness v, string code = "SND-LAUNCH-007", LaunchStage? stage = null, LaunchId? launch = null, string message = "the launch was interrupted",

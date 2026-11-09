@@ -17,6 +17,7 @@ namespace Aw.Sindri.Tests.Views;
 public sealed class LaunchesProjectionTests
 {
     private static readonly RepoName _repo = RepoName.From("demo");
+    private static readonly System.Text.Json.JsonSerializerOptions _web = new(System.Text.Json.JsonSerializerDefaults.Web);
     private readonly ViewsHarness _v = new();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -172,8 +173,8 @@ public sealed class LaunchesProjectionTests
         var step = (await Row())!.Step;
 
         Expect.Equal((null, "check", "walk@1:2", "check"), (step.Instance?.Value, step.State, step.Run, step.Node));
-        Assert.Contains("\"run\":\"walk@1:2\"", System.Text.Json.JsonSerializer.Serialize(step, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)), StringComparison.Ordinal);
-        Assert.DoesNotContain("run", System.Text.Json.JsonSerializer.Serialize(LaunchStep.None, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)), StringComparison.Ordinal);
+        Assert.Contains("\"run\":\"walk@1:2\"", System.Text.Json.JsonSerializer.Serialize(step, _web), StringComparison.Ordinal);
+        Assert.DoesNotContain("run", System.Text.Json.JsonSerializer.Serialize(LaunchStep.None, _web), StringComparison.Ordinal);
     }
 
     [Fact]
