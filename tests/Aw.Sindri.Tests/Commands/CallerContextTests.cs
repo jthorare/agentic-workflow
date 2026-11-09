@@ -32,6 +32,32 @@ public sealed class CallerContextTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void AnsweredBy_names_the_owner_for_a_human_and_for_no_caller()
+    {
+        var human = CallerContext.Http(new HttpCaller(CallerClass.Human, Terminal: true, ClientLabel.Cli, Repo: null), new SequentialIdGenerator());
+
+        Assert.Equal("owner", CallerContext.AnsweredBy(human));
+        Assert.Equal("owner", CallerContext.AnsweredBy(null));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void AnsweredBy_names_the_launch_of_a_launched_session()
+    {
+        var launch = LaunchId.From("LCH-00000000000000000000000000000001");   // what X-Sindri-Launch carries
+        var session = CallerContext.Http(new HttpCaller(CallerClass.Session, Terminal: false, ClientLabel.Mcp, Repo: null, launch), new SequentialIdGenerator());
+
+        Assert.Equal("session:LCH-00000000000000000000000000000001", CallerContext.AnsweredBy(session));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void AnsweredBy_names_the_client_of_a_session_without_a_launch()
+    {
+        var session = CallerContext.Http(new HttpCaller(CallerClass.Session, Terminal: false, ClientLabel.Mcp, Repo: null), new SequentialIdGenerator());
+
+        Assert.Equal("session:mcp", CallerContext.AnsweredBy(session));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Terminal_is_kept_only_for_a_human()
     {
         Assert.True(A.Caller().AtTerminal().Build().Terminal);

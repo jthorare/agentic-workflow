@@ -62,7 +62,7 @@ internal static class WorkflowAnswerTool
             return McpResults.Failure(services, SindriErrors.InvalidInput.With($"'{node.Value}' is not a node id (a lowercase letter, then lowercase letters, digits and '_')"));
         }
 
-        var by = services.GetRequiredService<ICallerContextAccessor>().Current?.Actor ?? "owner";
+        var by = CallerContext.AnsweredBy(services.GetRequiredService<ICallerContextAccessor>().Current);
         var answer = await services.GetRequiredService<IService<AnswerQuestionRequest, AnswerQuestionResponse>>()
             .Handle(new AnswerQuestionRequest(parsedRun, parsedNode, text.Value, choice.Value, by), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static a => $"answered {a.Run.Value}/{a.Node.Value} as {a.AnsweredBy}");

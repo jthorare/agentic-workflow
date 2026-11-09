@@ -16,7 +16,7 @@ Asks a question and waits for the answer. The question is a row on the Needs-you
 | Field | Type | Meaning |
 |---|---|---|
 | `answer` | string | The answer, or the `default` at a timeout. |
-| `answeredBy` | string | `owner`, `session:<id>` (an agent session), or `timeout`. |
+| `answeredBy` | string | `owner` (a person), `session:<launch id>` (a session Sindri launched; any other session shows its client, such as `session:mcp`), or `timeout`. |
 
 Branches: `answered` and `timeout`.
 
@@ -27,7 +27,7 @@ Anyone may answer, and the answer is attributed to the one who gave it:
 - `sindri answer <run>/<node> --text "ship it"` or `--choice yes` (`POST /sindri/workflow-runs/{run}/nodes/{node}/answer`);
 - the MCP tool `workflow_answer` with `run`, `node` and one of `text` or `choice`.
 
-An agent session may answer the question of the run it was launched by; the timeline shows the answer as `session:<id>`. The workflow takes an answer only while the node waits: an answer for a node that is not waiting is `SND-GRAPH-130`, one for a run that ended `SND-GRAPH-107`, and one that is not a choice, or has both a text and a choice, `SND-CLI-003`. The first answer wins. Until the app has an answer box, the CLI and the MCP tool are the way.
+An agent session may answer the question of the run it was launched by; the timeline shows the answer as `session:<launch id>`. The workflow takes an answer only while the node waits: an answer for a node that is not waiting is `SND-GRAPH-130`, one for a run that ended `SND-GRAPH-107`, and one that is not a choice, or has both a text and a choice, `SND-CLI-003`. The first answer wins. Until the app has an answer box, the CLI and the MCP tool are the way.
 
 ## Example
 

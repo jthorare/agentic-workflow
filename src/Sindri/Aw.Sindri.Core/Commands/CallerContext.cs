@@ -37,6 +37,17 @@ public sealed record CallerContext(CallerClass Class, bool Terminal, string Acto
     public static string ActorOf(CallerClass caller, ClientLabel client) =>
         caller == CallerClass.Human ? "human:" + HumanLabel(client) : "session:" + SessionLabel(client);
 
+    /// <summary>Who an answer to an 'ask_owner' question is attributed to: a human is 'owner'; a session Sindri launched is 'session:&lt;launch id&gt;'; any other session is its actor ('session:mcp'). No caller at all (in-process) is 'owner'.</summary>
+    /// <param name="caller">The caller, or null.</param>
+    /// <returns>The attribution the 'workflow.answered' event and the answer's response carry.</returns>
+    public static string AnsweredBy(CallerContext? caller) => caller switch
+    {
+        null => "owner",
+        { Class: CallerClass.Human } => "owner",
+        { Launch: { } launch } => "session:" + launch.Value,
+        _ => caller.Actor,
+    };
+
     /// <summary>An in-process caller, 'service:&lt;name&gt;'.</summary>
     /// <param name="name">The service, for example 'host' or 'heartbeat'.</param>
     /// <param name="ids">The id port, for this run's command and correlation ids.</param>
