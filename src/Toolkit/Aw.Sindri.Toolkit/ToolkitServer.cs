@@ -67,10 +67,12 @@ internal sealed class ToolkitServer(Toolkit toolkit, Func<string, string?> envir
         {
             throw;
         }
-#pragma warning disable CA1031 // the boundary of a tool call: any other exception is a tool failure, reported without its message, type or stack
-        catch (Exception)
+#pragma warning disable CA1031 // the boundary of a tool call: any other exception is a tool failure, reported to the client without its message, type or stack (the type and scrubbed message go to stderr)
+        catch (Exception ex)
 #pragma warning restore CA1031
         {
+            // why: the client text stays generic so no message leaks a secret; the operator still needs the cause, on stderr
+            Console.Error.WriteLine($"toolkit '{toolkit.Name}': tool '{name}' threw {ex.GetType().FullName}: {Scrub(ex.Message)}");
             return ToolResults.Failure(ToolkitErrors.ToolFailed, $"Tool '{name}' failed.");
         }
     }
