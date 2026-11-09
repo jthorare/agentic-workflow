@@ -171,9 +171,9 @@ mkdir -p "$FEED"
 (cd "$C" && env -u CI dotnet pack src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj -c Release -p:Version=0.1.0-local.20260101000000 \
   -p:RestoreLockedMode=false -o "$FEED" >"$TMP/toolkit-pack.log" 2>&1) || { tail -20 "$TMP/toolkit-pack.log" >&2; fail "(c) pack the SDK"; }
 ls "$FEED"/Aw.Sindri.Toolkit.0.1.0-local.20260101000000.nupkg >/dev/null || fail "(c) the pack left no Aw.Sindri.Toolkit package"
-step "(c) /new-toolkit: Contracts, tool diff_contracts, needs database:cache,disk:1g,connection:github:me"
+step "(c) /new-toolkit: Contracts, tool diff_contracts, needs database:cache,disk:1g,connection:me"
 (cd "$C" && gen scripts/scaffold/new-toolkit.mjs --name Contracts --tool diff_contracts --dir "$TK" --feed "$FEED" \
-  --needs database:cache,disk:1g,connection:github:me) || fail "(c) new-toolkit"
+  --needs database:cache,disk:1g,connection:me) || fail "(c) new-toolkit"
 [ -f "$TK/Contracts.Toolkit.csproj" ] || fail "(c) wrote no Contracts.Toolkit.csproj"
 [ -f "$TK/Contracts.Toolkit.Tests/Contracts.Toolkit.Tests.csproj" ] || fail "(c) wrote no test project"
 [ -f "$TK/packages.lock.json" ] || fail "(c) the restore wrote no lock file"

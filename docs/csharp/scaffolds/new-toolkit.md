@@ -19,7 +19,7 @@ repo's build rails reach it. The generator makes a toolkit project that carries 
 | name | `--name` | PascalCase, `^[A-Z][A-Za-z0-9]{2,30}$`, not Common/Shared/Utils/Helpers (`NT-NAME`; missing: `NT-INPUT`). The toolkit's manifest name is the kebab form (`ContractDiff` -> `contract-diff`) |
 | tool | `--tool` | the first tool, snake_case `^[a-z][a-z0-9_]{2,40}$` (`NT-TOOL`; missing: `NT-INPUT`) |
 | dir | `--dir` | default `$AW_SINDRI_HOME/toolkits/<kebab-name>`; must not exist or be empty (`NT-EXISTS`); nothing is ever overwritten |
-| needs | `--needs` | comma list: `database:<name>`, `disk:<size>` or `disk:<name>:<size>` (name defaults to `data`), `connection:<service>:<name>`. Names `[a-z0-9-]`, sizes `1g`, `500m`, `2gib`; each database or disk name once (`NT-NEEDS`) |
+| needs | `--needs` | comma list: `database:<name>`, `disk:<size>` or `disk:<name>:<size>` (name defaults to `data`), `connection:<name>` (or `connection:<service>:<name>`; the SDK takes one name, the service stays a code comment). Names `[a-z0-9-]`, sizes `1g`, `500m`, `2gib`; each database or disk name once (`NT-NEEDS`) |
 | feed | `--feed` | the SDK folder feed: `$AW_SINDRI_SDK_FEED`, else `$AW_SINDRI_HOME/sdk/packages`. Must hold an `Aw.Sindri.Toolkit.*.nupkg` (`NT-SDK`: run `scripts/install-cs.sh`) |
 | root | `--root` | the agentic-workflow checkout whose `global.json` and `Directory.Packages.props` are copied (default: the checkout the script lives in). A missing pin is `NT-PINS` |
 | files only | `--files-only` | write the files, skip the dotnet steps and the feed check (the unit tests; never on a real toolkit) |
@@ -36,9 +36,9 @@ Refusals print `<rule>: <message>` and `fix: <what to do>`, write nothing and ex
   Directory.Packages.props    central pins copied from the repo: analyzers, xunit.v3; Aw.Sindri.Toolkit 0.1.0-local.*
   .editorconfig  .gitignore
   <Name>.Toolkit.csproj       Exe, IsAotCompatible, PublishAot under a RID, PackageReference Aw.Sindri.Toolkit
-  Program.cs                  runs <Name>Tools.Build() as the MCP stdio host
-  <Name>Tools.cs              request and response records, Build() with the needs and the tool, the tool stub (throws)
-  <Name>JsonContext.cs        the source-generated JSON context for every request and response
+  Program.cs                  ToolkitHost.RunAsync(<Name>Tools.Build(), args, ...): the MCP stdio host; --manifest is handled inside
+  <Name>Tools.cs              request and response records, Build() with WithVersion, Needs, UseJson, Tool; the async tool stub (throws)
+  <Name>JsonContext.cs        the source-generated JSON context (RespectNullableAnnotations and RespectRequiredConstructorParameters on, or the SDK throws AW-TOOLKIT-001)
   <Name>.Toolkit.Tests/       one test project, one red test: <Tool>Tests.<Tool>_answers_the_subject_it_was_given
   packages.lock.json (x2)     written by the restore
 ```

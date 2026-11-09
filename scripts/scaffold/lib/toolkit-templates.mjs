@@ -12,7 +12,7 @@ const cs = (s) => JSON.stringify(s);
 export const needExpr = (n) => {
   if (n.kind === "database") return `Resources.Database(${cs(n.name)})`;
   if (n.kind === "disk") return `Resources.Disk(${cs(n.name)}, ${cs(n.size)})`;
-  return `Resources.Connection(${cs(n.service)}, ${cs(n.name)})`;
+  return `Resources.Connection(${cs(n.name)})${n.service ? ` /* ${n.service} */` : ""}`;
 };
 
 export const globalJson = (sdkVersion) => `{
@@ -144,9 +144,10 @@ export const toolkitCsproj = (t) => `<Project Sdk="Microsoft.NET.Sdk">
 </Project>
 `;
 
-export const program = (t) => `using Toolkits.${t.name};
+export const program = (t) => `using Aw.Sindri.Toolkit;
+using Toolkits.${t.name};
 
-return await ${t.name}Tools.Build().RunAsync(args);
+return await ToolkitHost.RunAsync(${t.name}Tools.Build(), args, CancellationToken.None);
 `;
 
 export const jsonContext = (t) => `using System.Text.Json.Serialization;
@@ -154,7 +155,8 @@ export const jsonContext = (t) => `using System.Text.Json.Serialization;
 namespace Toolkits.${t.name};
 
 /// <summary>Source-generated JSON for every tool request and response (AOT-safe; the input schema comes from the request type).</summary>
-[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+// The SDK throws AW-TOOLKIT-001 unless both Respect* options are on: they make the input schema mark required fields.
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, RespectNullableAnnotations = true, RespectRequiredConstructorParameters = true)]
 [JsonSerializable(typeof(${t.toolPascal}Request))]
 [JsonSerializable(typeof(${t.toolPascal}Response))]
 internal sealed partial class ${t.name}JsonContext : JsonSerializerContext;
@@ -162,25 +164,29 @@ internal sealed partial class ${t.name}JsonContext : JsonSerializerContext;
 
 export const tools = (t) => {
   const needs = t.needs.map((n) => `.Needs(${needExpr(n)})`).join("\n            ");
+  const R = `${t.toolPascal}Request`;
+  const S = `${t.toolPascal}Response`;
   return `using Aw.Sindri.Toolkit;
 
 namespace Toolkits.${t.name};
 
 /// <summary>The input of ${t.tool}. A nullable property is optional in the tool's input schema.</summary>
-public sealed record ${t.toolPascal}Request(string Subject);
+public sealed record ${R}(string Subject);
 
 /// <summary>The output of ${t.tool}.</summary>
-public sealed record ${t.toolPascal}Response(string Result);
+public sealed record ${S}(string Result);
 
 /// <summary>The ${t.kebab} toolkit: its needs and its tools.</summary>
 public static class ${t.name}Tools
 {
     /// <summary>Declares the toolkit. Add a tool with one more .Tool call; its schema comes from the request record.</summary>
     public static Toolkit Build() => Toolkit.Named(${cs(t.kebab)})
-            ${needs ? `${needs}\n            ` : ""}.Tool<${t.toolPascal}Request, ${t.toolPascal}Response>(${cs(t.tool)}, ${t.toolPascal}, ${t.name}JsonContext.Default);
+            .WithVersion("0.1.0")${needs ? `\n            ${needs}` : ""}
+            .UseJson(${t.name}JsonContext.Default)
+            .Tool<${R}, ${S}>(${cs(t.tool)}, "TODO: one line on what ${t.tool} does", ${t.toolPascal});
 
     /// <summary>The ${t.tool} tool. Red until ${t.toolPascal}Tests passes (see ${t.name}.Toolkit.Tests).</summary>
-    public static ${t.toolPascal}Response ${t.toolPascal}(${t.toolPascal}Request request)
+    public static Task<${S}> ${t.toolPascal}(${R} request, ToolkitContext ctx, CancellationToken ct)
         => throw new NotSupportedException("${t.toolPascal}: make ${t.toolPascal}Tests pass");
 }
 `;
@@ -216,9 +222,9 @@ public sealed class ${t.toolPascal}Tests
 {
     [Fact]
     [Trait("Lane", "unit")]
-    public void ${t.toolPascal}_answers_the_subject_it_was_given()
+    public async Task ${t.toolPascal}_answers_the_subject_it_was_given()
     {
-        var response = ${t.name}Tools.${t.toolPascal}(new ${t.toolPascal}Request("hello"));
+        var response = await ${t.name}Tools.${t.toolPascal}(new ${t.toolPascal}Request("hello"), null!, TestContext.Current.CancellationToken);
 
         Assert.Equal("hello", response.Result);
     }

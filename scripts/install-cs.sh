@@ -53,8 +53,8 @@
 #
 # The toolkit SDK (src/Toolkit/Aw.Sindri.Toolkit, package id Aw.Sindri.Toolkit): after the publish step (also when the build is
 # current) it is `dotnet pack`ed from a copy of the sources into the folder feed $AW_SINDRI_SDK_FEED (default
-# $AW_SINDRI_HOME/sdk/packages) as version 0.1.0-local.<UTC yyyyMMddHHmmss>, but only when its own inputs (src/Toolkit, the
-# Kernel and Redaction sources it may reference, the root build files) changed since the stamp in <feed>/.sdk-stamp. The two
+# $AW_SINDRI_HOME/sdk/packages) as version 0.1.0-local.<UTC yyyyMMddHHmmss>, but only when its own inputs (src/Toolkit and the
+# root build files; the SDK has no Aw.Kernel dependency) changed since the stamp in <feed>/.sdk-stamp. The two
 # newest packages stay in the feed. Toolkits made by /new-toolkit restore it from there (floating 0.1.0-local.*). A checkout
 # without src/Toolkit/Aw.Sindri.Toolkit skips the step. `--dry-run` prints it. --link does not pack.
 #
@@ -442,7 +442,7 @@ link_through_current() { # link_through_current <name> <target path>; through cu
 # --- toolkit SDK package ---------------------------------------------------------------------------------------------
 sdk_feed="${AW_SINDRI_SDK_FEED:-${AW_SINDRI_HOME:-$state/sindri-app}/sdk/packages}"
 SDK_PROJECT=src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj
-SDK_PATHSPECS=(global.json nuget.config .editorconfig 'Directory.*' 'BannedSymbols*.txt' CodeMetricsConfig.txt src/Toolkit src/Aw.Kernel src/Aw.Kernel.Telemetry src/Redaction src/Aw.Analyzers)
+SDK_PATHSPECS=(global.json nuget.config .editorconfig 'Directory.*' 'BannedSymbols*.txt' CodeMetricsConfig.txt src/Toolkit)
 pack_sdk() {
   [ -f "$root/$SDK_PROJECT" ] || return 0   # a checkout without the SDK has nothing to pack
   if [ "$dry" = 1 ]; then

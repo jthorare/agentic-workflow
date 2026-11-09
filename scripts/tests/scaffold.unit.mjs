@@ -742,8 +742,14 @@ t("new-toolkit writes the project, a test project with one sample test and its o
   assert.match(tools, /Toolkit\.Named\("contracts"\)/);
   assert.match(tools, /Resources\.Database\("cache"\)/);
   assert.match(tools, /Resources\.Disk\("data", "1g"\)/);
-  assert.match(tools, /Resources\.Connection\("github", "me"\)/);
-  assert.match(tools, /\.Tool<DiffContractsRequest, DiffContractsResponse>\("diff_contracts"/);
+  assert.match(tools, /Resources\.Connection\("me"\) \/\* github \*\//);
+  assert.match(tools, /\.Tool<DiffContractsRequest, DiffContractsResponse>\("diff_contracts", "[^"]+", DiffContracts\)/);
+  assert.ok(tools.indexOf(".UseJson(ContractsJsonContext.Default)") > 0 && tools.indexOf(".UseJson(") < tools.indexOf(".Tool<"), "UseJson comes before Tool");
+  assert.match(tools, /Task<DiffContractsResponse> DiffContracts\(DiffContractsRequest request, ToolkitContext ctx, CancellationToken ct\)/);
+  const ctx = fs.readFileSync(path.join(dir, "ContractsJsonContext.cs"), "utf8");
+  assert.match(ctx, /RespectNullableAnnotations = true/);
+  assert.match(ctx, /RespectRequiredConstructorParameters = true/);
+  assert.match(fs.readFileSync(path.join(dir, "Program.cs"), "utf8"), /ToolkitHost\.RunAsync\(ContractsTools\.Build\(\), args, CancellationToken\.None\)/);
   assert.match(tools, /NotSupportedException\("DiffContracts: make DiffContractsTests pass"\)/);
   const nuget = fs.readFileSync(path.join(dir, "nuget.config"), "utf8");
   assert.match(nuget, /key="aw-sindri-sdk" value="[^"]*sdk[\\/]packages"/);
@@ -751,6 +757,12 @@ t("new-toolkit writes the project, a test project with one sample test and its o
   assert.equal(fs.readFileSync(path.join(dir, "global.json"), "utf8"), fs.readFileSync(path.join(REPO, "global.json"), "utf8").replace(/\s+$/, "") + "\n");
   assert.match(fs.readFileSync(path.join(dir, "Directory.Packages.props"), "utf8"), /Include="xunit\.v3" Version="\[\d/);
   assert.match(fs.readFileSync(path.join(dir, "Contracts.Toolkit.csproj"), "utf8"), /Contracts\.Toolkit\.Tests\/\*\*/);
+});
+
+t("new-toolkit accepts connection:<name> with no service", () => {
+  const dir = path.join(scratch(), "tk");
+  assert.equal(toolkit(tkArgs(dir, { needs: "connection:me" })).code, 0);
+  assert.match(fs.readFileSync(path.join(dir, "ContractsTools.cs"), "utf8"), /Resources\.Connection\("me"\)\s*\)/);
 });
 
 t("new-toolkit takes the folder feed from --feed, then AW_SINDRI_SDK_FEED, then AW_SINDRI_HOME", () => {
@@ -781,7 +793,7 @@ for (const [label, extra, rule] of [
   ["an unknown need kind", { needs: "queue:jobs" }, "NT-NEEDS"],
   ["a database name with capitals", { needs: "database:Cache" }, "NT-NEEDS"],
   ["a disk size without a unit", { needs: "disk:100" }, "NT-NEEDS"],
-  ["a connection without a name", { needs: "connection:github" }, "NT-NEEDS"],
+  ["a connection with three parts", { needs: "connection:a:b:c" }, "NT-NEEDS"],
   ["the same database twice", { needs: "database:cache,database:cache" }, "NT-NEEDS"],
 ]) {
   t(`new-toolkit refuses ${label} with ${rule} and writes nothing`, () => {

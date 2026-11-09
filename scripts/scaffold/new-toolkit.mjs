@@ -9,7 +9,7 @@
 // .editorconfig, global.json, nuget.config with the local SDK folder feed). Restores, builds with warnings as errors and
 // runs the unit lane (exactly one failure: the sample tool's test) under the heavy-job lock; reverts every file it wrote
 // if a step fails. --files-only writes the files and skips the dotnet steps (the generator's unit tests; never on a real toolkit).
-// --needs: database:<name>, disk:<size> or disk:<name>:<size>, connection:<service>:<name>, comma separated.
+// --needs: database:<name>, disk:<size> or disk:<name>:<size>, connection:<name> (or connection:<service>:<name>), comma separated.
 // --root is the agentic-workflow checkout whose global.json and Directory.Packages.props it copies (default: this script's repo).
 // Exit codes: 0 done (only the sample test is red), 1 refused or a step failed, 2 usage error.
 
@@ -33,7 +33,7 @@ const pascal = (snake) => snake.split("_").map((w) => w[0].toUpperCase() + w.sli
 
 /** Parses --needs into [{ kind, name, size?, service? }]; a bad entry is NT-NEEDS. */
 export function parseNeeds(text) {
-  const bad = (entry, why) => new ScaffoldError("NT-NEEDS", `need '${entry}': ${why}`, "use database:<name>, disk:<size> (or disk:<name>:<size>) or connection:<service>:<name>; names are [a-z0-9-], sizes like 1g or 500m");
+  const bad = (entry, why) => new ScaffoldError("NT-NEEDS", `need '${entry}': ${why}`, "use database:<name>, disk:<size> (or disk:<name>:<size>) or connection:<name> (connection:<service>:<name> too); names are [a-z0-9-], sizes like 1g or 500m");
   const nameOk = (s) => /^[a-z0-9][a-z0-9-]{0,30}$/.test(s ?? "");
   const needs = [];
   for (const entry of list(text)) {
@@ -42,7 +42,8 @@ export function parseNeeds(text) {
     if (kind === "database" && rest.length === 1 && nameOk(rest[0])) need = { kind, name: rest[0] };
     else if (kind === "disk" && rest.length === 1 && /^[1-9][0-9]*[kmgt](i?b)?$/i.test(rest[0])) need = { kind, name: "data", size: rest[0] };
     else if (kind === "disk" && rest.length === 2 && nameOk(rest[0]) && /^[1-9][0-9]*[kmgt](i?b)?$/i.test(rest[1])) need = { kind, name: rest[0], size: rest[1] };
-    else if (kind === "connection" && rest.length === 2 && nameOk(rest[0]) && nameOk(rest[1])) need = { kind, service: rest[0], name: rest[1] };
+    else if (kind === "connection" && rest.length === 1 && nameOk(rest[0])) need = { kind, name: rest[0] };
+    else if (kind === "connection" && rest.length === 2 && nameOk(rest[0]) && nameOk(rest[1])) need = { kind, service: rest[0], name: rest[1] };   // the service stays a code comment: the SDK takes one name
     else if (!["database", "disk", "connection"].includes(kind)) throw bad(entry, "unknown kind");
     else throw bad(entry, "malformed");
     if (needs.some((n) => n.kind === need.kind && n.name === need.name)) throw bad(entry, `${need.kind} '${need.name}' is listed twice`);

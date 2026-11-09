@@ -32,7 +32,7 @@ Take what the arguments give, then **Ask the user** for every input still missin
 |---|---|---|
 | name | `--name` | PascalCase, `^[A-Z][A-Za-z0-9]{2,30}$`, not Common/Shared/Utils/Helpers |
 | first tool | `--tool` | snake_case, e.g. `diff_contracts` |
-| needs | `--needs` | optional comma list: `database:<name>`, `disk:<size>` (or `disk:<name>:<size>`), `connection:<service>:<name>`; names `[a-z0-9-]` |
+| needs | `--needs` | optional comma list: `database:<name>`, `disk:<size>` (or `disk:<name>:<size>`), `connection:<name>` (or `connection:<service>:<name>`); names `[a-z0-9-]` |
 | folder | `--dir` | optional; default `$AW_SINDRI_HOME/toolkits/<kebab-name>`; must be new or empty |
 
 Ask what the tool should do and what it needs (a place to keep state is a database, big files are a disk, an outside account is a
@@ -42,7 +42,7 @@ connection) before choosing needs.
 
 ```bash
 node "${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/scripts/scaffold/new-toolkit.mjs" --name <Name> --tool <snake_case> \
-  [--needs database:cache,disk:1g,connection:github:me] [--dir <folder>]
+  [--needs database:cache,disk:1g,connection:me] [--dir <folder>]
 ```
 
 It takes a slot of the heavy-job lock itself (or runs inside one, under `AW_HEAVY_LOCK_HELD=1`), writes the files, then restores,
