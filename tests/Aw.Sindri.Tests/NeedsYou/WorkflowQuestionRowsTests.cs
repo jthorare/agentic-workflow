@@ -57,11 +57,21 @@ public sealed class WorkflowQuestionRowsTests
     }
 
     [Fact]
-    public async Task The_row_clears_when_its_node_ends_by_timeout_or_failure()
+    public async Task The_row_clears_when_its_node_finishes_by_timeout()
     {
         await _v.Apply([Question(_run), Event(EventTypes.WorkflowNodeFinished, new WorkflowNodeFinishedPayload(_run, _ask, 0, "succeeded", Truncated: false, "service:workflow"))]);
 
         Assert.Empty(await Rows());
+    }
+
+    [Fact]
+    public async Task The_row_clears_when_its_node_fails()
+    {
+        await _v.Apply([Question(_run), Question(_other), Event(EventTypes.WorkflowNodeFailed, new WorkflowNodeFailedPayload(_run, _ask, 0, "boom", "service:workflow"))]);
+
+        var row = Assert.Single(await Rows());
+
+        Assert.Equal("question:nightly@3:13:ask", row.Row.Id.Value);
     }
 
     [Theory]

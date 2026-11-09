@@ -13,7 +13,7 @@ namespace Aw.Sindri.Tests.Workflows;
 /// sent through the 'Answer' update before the timeout wins. The server skips time while the test awaits the run's result.
 /// </summary>
 [Lane(TestLane.Integration)]
-public sealed class GraphWorkflowParkingTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -67,12 +67,17 @@ public sealed class GraphWorkflowParkingTests(SindriTimeSkippingServer server) :
             [GraphRig.Edge("start", "hold"), GraphRig.Edge("hold", "after")]));
 
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
+        await WaitUntilRunning(rig, started.RunId, "hold");   // the node parks before any time is skipped
         await SkipUntilEnded(rig, started.RunId, TimeSpan.FromMinutes(16));
         var result = await Result(rig, started.RunId);
         var run = await rig.Final(started.RunId);
+        var history = await rig.Client.GetWorkflowHandle(started.RunId.Value).FetchHistoryAsync();
 
         Assert.Equal(WorkflowRunStatus.Succeeded, result.Status);
         Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
+        // why: a Sleep that did nothing would also end Succeeded; only a 15 minute timer in the history and a 15 minute gap between its first and last event show the node slept
+        Assert.Contains(history.Events, static e => e.TimerStartedEventAttributes != null && e.TimerStartedEventAttributes.StartToFireTimeout.ToTimeSpan() == TimeSpan.FromMinutes(15));
+        Assert.True(history.Events.Last().EventTime.ToDateTime() - history.Events.First().EventTime.ToDateTime() >= TimeSpan.FromMinutes(15));
         Assert.Equal([$"{rig.Slug}@1:1/after"], rig.Blocks.Log);
         Assert.All(await rig.NodeStatuses(started.RunId), static s => Assert.Equal(NodeRunStatus.Succeeded, s.Value));
     }
