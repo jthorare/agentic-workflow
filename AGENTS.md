@@ -1,6 +1,6 @@
 # AGENTS.md — Agentic Workflow
 
-> Agentic Workflow — provider-agnostic agent workflow toolkit for Claude Code, Codex, and Cursor: 58 native skills + 3 fetched external packs (impeccable, emil-design-eng, taste-skill), config archive, repo bootstrapper, and a token-efficiency tool (rtk).
+> Agentic Workflow — provider-agnostic agent workflow toolkit for Claude Code, Codex, and Cursor: 59 native skills + 3 fetched external packs (impeccable, emil-design-eng, taste-skill), config archive, repo bootstrapper, and a token-efficiency tool (rtk).
 
 Domain-specific rules live in `.agents/rules/` — one file per rule, the only copy. `.claude/rules` and `.cursor/rules/*.mdc` are symlinks to it (auto-loaded by Claude Code and Cursor), and `CLAUDE.md` is a symlink to this file. Codex reads the Rules Index at the bottom of this file. After adding or removing a rule, run `scripts/sync-rules.sh`.
 
@@ -44,13 +44,13 @@ Domain-specific rules live in `.agents/rules/` — one file per rule, the only c
 
 ```
 agentic-workflow/
-├── skills/        # 56 provider-neutral skills (linked into each provider's skills dir)
+├── skills/        # 59 provider-neutral skills (linked into each provider's skills dir)
 ├── bootstrap/     # /bootstrap skill — repo documentation generator
 ├── config/        # Settings, MCP config, statusline, safety hooks, sindri-nudge SessionStart hook, sindri-tasks UserPromptSubmit hook, meta Stop/outbox hooks, non-Claude lane hooks (meta-lane-gate, session-id-report), the opt-in aw:fleet session-state hook (fleet-state, `--with-fleet`), the reply voice (`voice/`, inlined into each provider's global instructions) (+ hooks/adapters/ per provider)
 ├── providers/     # Per-provider installers (claude, codex, cursor)
 ├── context/       # Pinned external deployments: code-index.lock (graphify, Ollama model), graphify.pin
 ├── planning/      # Project documentation
-├── src/           # C# build: Aw.Kernel (+ .Data, .Telemetry), Redaction, Aw.Analyzers, the tool ports (Packets, Readiness, BugFix; Judge, Evidence), UiDriver (the generic Avalonia UI driver and `aw-ui-driver`), Meta (aw-meta, the /meta harness), Forge (the forge port with GitHub and file adapters), CodeIndex (the Sindri code index block: symbols, callers and callees per repo; library only) and later the new Sindri app — each Core · Features · Infrastructure · Host
+├── src/           # C# build: Aw.Kernel (+ .Data, .Telemetry), Redaction, Aw.Analyzers, the tool ports (Packets, Readiness, BugFix; Judge, Evidence), UiDriver (the generic Avalonia UI driver and `aw-ui-driver`), Meta (aw-meta, the /meta harness), Toolkit (the `Aw.Sindri.Toolkit` SDK that /new-toolkit toolkits reference; packed by install-cs.sh, never referenced by Sindri), Forge (the forge port with GitHub and file adapters), CodeIndex (the Sindri code index block: symbols, callers and callees per repo; library only) and later the new Sindri app — each Core · Features · Infrastructure · Host
 ├── evals/         # Skill evals (#1107): evals/<skill>/{routing,behaviour}/<case>, fixture.sh, graders/_selftest, status.md; _lib, mocks, plugin, stubs (gh, curl, git); run by scripts/skill-evals.sh, rule in .agents/rules/skills.md
 ├── tests/         # C# tests: Aw.<Pkg>.Tests (by feature), Aw.<Pkg>.Testing (fakes, builders, contract bases), Aw.Architecture.Tests
 ├── global.json · AgenticWorkflow.slnx · Directory.Build.props · Directory.Build.targets · Directory.Packages.props · nuget.config · .editorconfig · CodeMetricsConfig.txt · BannedSymbols.txt
@@ -81,6 +81,7 @@ dotnet format --verify-no-changes       # Style and analyzer fixes are applied (
 scripts/dotnet-verify-packages.sh       # Lock files present and unchanged, signature-verified locked restore, dotnet nuget verify --all
 # Add a package: /new-package (node scripts/scaffold/new-package.mjs; contract docs/csharp/scaffolds/new-package.md)
 # Add a use case: /new-slice (node scripts/scaffold/new-slice.mjs; contract docs/csharp/scaffolds/new-slice.md) — test, request and response, service, endpoint, registration
+# Add a toolkit (outside the repo): /new-toolkit (node scripts/scaffold/new-toolkit.mjs --name <Name> --tool <snake_case> [--needs database:cache,disk:1g,connection:github:me] [--dir D]; contract docs/csharp/scaffolds/new-toolkit.md) — a Sindri toolkit project under $AW_SINDRI_HOME/toolkits/ with its own build rails and one red test; needs the Aw.Sindri.Toolkit package in $AW_SINDRI_SDK_FEED, which scripts/install-cs.sh packs; refusals NT-*
 dotnet run --project src/Readiness/Aw.Readiness.App -- check [--json] [--root DIR] [--no-remote]   # Readiness level vs readiness.yaml's target: exit 0 holds, 1 not, 2 tool error (docs/readiness/README.md)
 bash src/Readiness/aot-smoke/run.sh     # Publish aw-readiness NativeAOT and smoke-test the native binary (CI's AOT step)
 bash scripts/scaffold/e2e.sh            # The generators end to end: scaffold, build and test a small cli and a full http package in throwaway worktrees, NativeAOT-publish the cli one (~2 min; needs the NativeAOT toolchain)
