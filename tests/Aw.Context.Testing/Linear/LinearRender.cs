@@ -41,8 +41,13 @@ internal static class LinearRender
             ["attachments"] = Nodes(withChildren ? s.Attachments.Where(a => a.IssueId == i.Id).Select(a => Attachment(s, a)) : []),
             ["relations"] = Nodes([]),
             ["inverseRelations"] = Nodes([]),
+            ["history"] = Nodes(History(i)),
         };
     }
+
+    // why: real Linear returns an issue's history newest first, and the probe (and LinearTimes.HistoryMissing) relies on that order; one entry per distinct timestamp the fake knows
+    private static IEnumerable<JsonNode> History(FakeLinearIssue i) =>
+        new[] { i.UpdatedAt, i.CreatedAt }.Distinct(StringComparer.Ordinal).OrderDescending(StringComparer.Ordinal).Select(t => (JsonNode)new JsonObject { ["createdAt"] = t });
 
     // why: the feed's first read filters on 'project: { status: { type } }', which the fake evaluates against the node, so an issue's project has one (every fake project is started)
     private static JsonObject WithStatus(JsonObject project)

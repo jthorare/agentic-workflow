@@ -5,6 +5,7 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Requests;
 using Aw.Sindri.Core.Views;
+using Aw.Sindri.Features.CreateHandoffItem;
 using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.GetJob;
 using Aw.Sindri.Host.Endpoints;
@@ -68,5 +69,28 @@ internal static partial class SindriTools
         // why: X-Sindri-After isn't honoured on this endpoint, so the tool reads its own write before it answers; a timeout is not a failure
         var caught = await services.GetRequiredService<IProjectorStatus>().WaitFor(answer.Value.Accepted.Sequence, WaitForViews, ct).ConfigureAwait(false);
         return McpResults.Success(services, answer.Value, McpSummaries.Request(answer.Value, bound.Value.Kind, viewsCaughtUp: !caught.IsError));
+    }
+
+    /// <summary>Runs sindri_handoff: makes the item through the command chain, then waits for the views to hold it.</summary>
+    /// <param name="services">The request's services.</param>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <param name="ct">Cancels the call.</param>
+    /// <returns>The tool result.</returns>
+    internal static async ValueTask<CallToolResult> CallHandoff(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var bound = SindriBindings.Handoff(arguments);
+        if (bound.IsError)
+        {
+            return McpResults.Failure(services, bound.Error);
+        }
+
+        var answer = await services.GetRequiredService<IService<CreateHandoffItemRequest, HandoffItemCreatedResponse>>().Handle(bound.Value, ct).ConfigureAwait(false);
+        if (answer.IsError)
+        {
+            return McpResults.Failure(services, answer.Error);
+        }
+
+        var caught = await services.GetRequiredService<IProjectorStatus>().WaitFor(answer.Value.Accepted.Sequence, WaitForViews, ct).ConfigureAwait(false);
+        return McpResults.Success(services, answer.Value, McpSummaries.Handoff(answer.Value, viewsCaughtUp: !caught.IsError));
     }
 }

@@ -24,7 +24,7 @@ internal sealed class GraphTestBlocks
 
     /// <summary>The three blocks.</summary>
     /// <returns>Echo, fail and hold.</returns>
-    public IEnumerable<IGraphBlock> All() => [new Echo(this), new Fail(this), new Hold(this), new Big()];
+    public IEnumerable<IGraphBlock> All() => [new Echo(this), new Fail(this), new Hold(this), new Big(), new Pass()];
 
     private abstract class Base(string type) : IGraphBlock
     {
@@ -42,6 +42,13 @@ internal sealed class GraphTestBlocks
 
         protected static Result<BlockResult> Ok(BlockContext context) =>
             new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["node"] = JsonValue.Create(context.Node.Value) });
+    }
+
+    // why: hands on its interpolated 'value', so a loop test can see the item a body node was given
+    private sealed class Pass() : Base("pass")
+    {
+        public override ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Result<BlockResult>>(new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["value"] = context.Config["value"]?.DeepClone() }));
     }
 
     private sealed class Big() : Base("big")
