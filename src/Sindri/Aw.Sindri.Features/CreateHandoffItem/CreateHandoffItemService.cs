@@ -39,15 +39,18 @@ internal sealed class CreateHandoffItemService(IItemMaker items, HeldLease held,
         }
 
         var key = request.OfferKey is null ? null : $"{EventTypes.ItemHandoff}:{request.Source}:{request.OfferKey}";
-        if (key is not null)
+        var earlier = key is null ? Results.Success<HandoffItemCreatedResponse?>(null) : await Earlier(key, caller, cancellationToken).ConfigureAwait(false);
+        return earlier switch
         {
-            var earlier = await Earlier(key, caller, cancellationToken).ConfigureAwait(false);
-            if (earlier.IsError || earlier.Value is not null)
-            {
-                return earlier.IsError ? earlier.Error : earlier.Value!;
-            }
-        }
+            { IsError: true } => earlier.Error,
+            { Value: { } found } => found,
+            _ => await Make(request, caller, grant, key, cancellationToken).ConfigureAwait(false),
+        };
+    }
 
+    /// <summary>Makes the item and appends its 'item.handoff'. A launched session keeps its own actor; the sender is the actor only for a human or local caller.</summary>
+    private async ValueTask<Result<HandoffItemCreatedResponse>> Make(CreateHandoffItemRequest request, CallerContext caller, LeaseGrant grant, string? key, CancellationToken cancellationToken)
+    {
         var body = request.Prompt is { Length: > MaxBody } text ? text[..MaxBody] : request.Prompt;
         var made = await items.Create(request.Title, request.Repo, body, cancellationToken).ConfigureAwait(false);
         if (made.IsError)
@@ -58,9 +61,7 @@ internal sealed class CreateHandoffItemService(IItemMaker items, HeldLease held,
         var item = made.Value;
         var offer = request.OfferKey ?? item.Value;
         var payload = new ItemHandoff(caller.CommandId, item, offer, request.Source, request.Repo ?? caller.Repo, request.Branch, request.Prompt, request.Links ?? [], request.Labels ?? []);
-        // A launched session keeps its own actor; the sender is the actor only for a human or local caller. The source stays in the payload.
-        var actor = caller.Launch is not null ? caller.Actor : "handoff:" + request.Source;
-        using var _ = callers.Enter(caller with { Actor = actor });
+        using var _ = callers.Enter(caller with { Actor = caller.Launch is not null ? caller.Actor : "handoff:" + request.Source });
         var entry = events.Entry(EventTypes.ItemHandoff, payload, key ?? $"{EventTypes.ItemHandoff}:{item.Value}", item.Value);
         var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
         if (appended.IsError)
@@ -68,17 +69,11 @@ internal sealed class CreateHandoffItemService(IItemMaker items, HeldLease held,
             return appended.Error;
         }
 
-        if (appended.Value.AlreadyRecorded && key is not null)
-        {
-            // Lost a race for the same key: the earlier handoff wins (the item made above stays unlinked).
-            var winner = await Earlier(key, caller, cancellationToken).ConfigureAwait(false);
-            if (!winner.IsError && winner.Value is not null)
-            {
-                return winner.Value;
-            }
-        }
-
-        return new HandoffItemCreatedResponse(new CommandAccepted(caller.CommandId, appended.Value.Sequence), item, offer);
+        // Lost a race for the same key: the earlier handoff wins (the item made above stays unlinked).
+        var winner = appended.Value.AlreadyRecorded && key is not null ? await Earlier(key, caller, cancellationToken).ConfigureAwait(false) : default;
+        return winner is { IsError: false, Value: { } first }
+            ? first
+            : new HandoffItemCreatedResponse(new CommandAccepted(caller.CommandId, appended.Value.Sequence), item, offer);
     }
 
     private async ValueTask<Result<HandoffItemCreatedResponse?>> Earlier(string key, CallerContext caller, CancellationToken cancellationToken)
@@ -91,7 +86,7 @@ internal sealed class CreateHandoffItemService(IItemMaker items, HeldLease held,
 
         if (found.Value is not { } recorded)
         {
-            return Results.Success<HandoffItemCreatedResponse?>(null);
+            return Results.Success<HandoffItemCreatedResponse?>(value: null);
         }
 
         var earlier = events.Payload<ItemHandoff>(recorded);

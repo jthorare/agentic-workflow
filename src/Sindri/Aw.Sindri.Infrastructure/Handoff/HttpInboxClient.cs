@@ -16,7 +16,7 @@ namespace Aw.Sindri.Infrastructure.Handoff;
 /// scheme, host and port, or the request is refused with SND-CONN-206 before it is sent.
 /// </summary>
 /// <param name="http">
-/// The HTTP client. It must be built with <c>AllowAutoRedirect = false</c> (the DI wiring in the next change does this): a followed redirect would leave the
+/// The HTTP client. It must be built with <c lang="csharp">AllowAutoRedirect = false</c> (the DI wiring in the next change does this): a followed redirect would leave the
 /// allowed host and carry the connection's bearer key to the host it points at. The client also treats a 3xx answer as a failure, but only a handler that
 /// does not follow redirects ever lets it see one.
 /// </param>
