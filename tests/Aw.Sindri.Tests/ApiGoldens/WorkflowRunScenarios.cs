@@ -1,7 +1,9 @@
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
 namespace Aw.Sindri.Tests.ApiGoldens;
@@ -23,7 +25,7 @@ internal static class WorkflowRunScenarios
     [
         ("workflows-slug-runs", "unknown-workflow"), ("workflows-slug-runs", "bad-slug"), ("workflows-slug-runs", "not-active"), ("workflows-slug-runs", "bad-payload"),
         ("workflow-runs-run-cancel", "not-found"), ("workflow-runs-run-cancel", "bad-id"), ("workflow-runs-run-cancel", "already-ended"),
-        (AnswerSlug, "not-found"), (AnswerSlug, "bad-id"), (AnswerSlug, "already-ended"),
+        (AnswerSlug, "not-found"), (AnswerSlug, "bad-id"), (AnswerSlug, "already-ended"), (AnswerSlug, "answered"),
     ];
 
     /// <summary>Whether this class owns the scenario.</summary>
@@ -68,12 +70,21 @@ internal static class WorkflowRunScenarios
         }
     }
 
+    /// <summary>The host of the 'answered' scenario: the answerer is a fake that accepts, as Temporal is faked everywhere else.</summary>
+    /// <param name="ct">Cancels the start.</param>
+    /// <returns>The host.</returns>
+    public static Task<GoldenHost> Start(CancellationToken ct) =>
+        GoldenHost.Start(temporary: true, ct, extra: static services => _ = services.Replace(ServiceDescriptor.Singleton<IGraphRunAnswerer>(new FakeGraphRunAnswerer())));
+
     private static async Task<string> Answer(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
     {
         switch (scenario)
         {
             case "bad-id":
                 return await Ask(host, Post("/sindri/workflow-runs/not-a-run/nodes/ask/answer", AnswerBody, human));
+            case "answered":
+                _ = (await host.App.Services.GetRequiredService<IWorkflowRunStore>().Insert(new WorkflowRun(_ended, _id, 1, "{\"kind\":\"manual\"}", WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, host.Now(), EndedAt: null), ct)).Value;
+                return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/nodes/ask/answer", AnswerBody, human));
             case "already-ended":
                 await EndedRun(host, ct);
                 return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/nodes/ask/answer", AnswerBody, human));

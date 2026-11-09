@@ -67,6 +67,8 @@ internal static class ApiScenarios
             ? await ConnectionScenarios.Start(slug, scenario, ct)
             : MemoryScenarios.Handles(slug, scenario)
             ? await MemoryScenarios.Start(scenario, ct)
+            : (slug, scenario) is ("workflow-runs-run-nodes-node-answer", "answered")
+            ? await WorkflowRunScenarios.Start(ct)
             : ContextApiScenarios.Handles(slug)
             ? await ContextApiScenarios.Start(slug, scenario, ct)
             : (slug, scenario) is ("profile", "repo-added")
