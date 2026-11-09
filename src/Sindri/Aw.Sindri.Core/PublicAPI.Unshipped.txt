@@ -21332,3 +21332,6 @@ static Aw.Sindri.Core.Connections.SignInTry.operator !=(Aw.Sindri.Core.Connectio
 static Aw.Sindri.Core.Connections.SignInTry.operator ==(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.get -> string?
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.init -> void
+const Aw.Sindri.Core.Graph.Loops.LoopBody.RunAgentType = "run_agent" -> string!
+const Aw.Sindri.Core.Graph.Loops.LoopBody.AgentInLoopCode = "GRAPH-LOOP-003" -> string!
+static Aw.Sindri.Core.Graph.Loops.LoopBody.AgentRefusal(Aw.Sindri.Core.Graph.Loops.LoopShape! shape) -> string?

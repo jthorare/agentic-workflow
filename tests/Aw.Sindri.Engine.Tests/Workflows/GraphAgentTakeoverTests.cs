@@ -114,4 +114,24 @@ public sealed class GraphAgentTakeoverTests(SindriTimeSkippingServer server) : I
         Assert.Equal(NodeRunStatus.Cancelled, (await AgentNodeRig.Row(rig, run)).Status);
         Assert.False(Assert.Single(runtime.Closes).Measure);
     }
+
+    [Fact]
+    public async Task A_cancel_during_the_launch_closes_only_after_the_launch_returns()
+    {
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var runtime = new FakeAgentNodeRuntime { LaunchGate = gate };
+        await using var rig = GraphRig.Start(server.Environment, runtime);
+        var run = await AgentNodeRig.Start(rig);
+        await runtime.Launching.WaitAsync(TimeSpan.FromSeconds(30), Token);
+
+        await rig.Client.GetWorkflowHandle(run.Value).CancelAsync();
+        await Task.Delay(TimeSpan.FromSeconds(2), Token);   // why: long enough for a TryCancel workflow to have run its close
+        Assert.Empty(runtime.Closes);
+
+        _ = gate.TrySetResult();
+        var final = await rig.Final(run);
+
+        Assert.Equal(WorkflowRunStatus.Cancelled, final.Status);
+        Assert.Equal(["launch-returned", "close"], runtime.Order);
+    }
 }
