@@ -44,19 +44,44 @@ internal static class CallerRequests
         return new Scope(was);
     }
 
-    private sealed class Scope(bool restore = false) : IDisposable
+    private static readonly AsyncLocal<string?> _launch = new();
+
+    /// <summary>
+    /// Like <see cref="AsSession"/>, and the session also carries <paramref name="launchId"/> in X-Sindri-Launch: a session Sindri itself launched
+    /// (the launch must be open: its hash file written). Its writes record the actor 'session:launch:&lt;id&gt;'.
+    /// </summary>
+    public static IDisposable AsLaunchedSession(string launchId)
     {
-        public void Dispose() => _humanAsSession.Value = restore;
+        _humanAsSession.Value = true;
+        _launch.Value = launchId;
+        return new Scope(clearLaunch: true);
+    }
+
+    private sealed class Scope(bool restore = false, bool clearLaunch = false) : IDisposable
+    {
+        public void Dispose()
+        {
+            _humanAsSession.Value = restore;
+            if (clearLaunch)
+            {
+                _launch.Value = null;
+            }
+        }
     }
 
     /// <summary>The repo a session run names (X-Sindri-Repo): the fixture map's, which every context scenario's profile maps; a session must name one for a context call (SND-CONTEXT-021).</summary>
     private const string SessionRepo = FixtureMap.Repo;
 
     public static (string Name, string Value)[] Human(string? token, string client = "cli") =>
-        _humanAsSession.Value ? [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, client), (SindriHeaders.Repo, SessionRepo)] :
+        _humanAsSession.Value ? SessionHeaders(client) :
         token is null
             ? [(SindriHeaders.Caller, "human"), (SindriHeaders.Terminal, "1"), (SindriHeaders.Client, client)]
             : [(SindriHeaders.Caller, "human"), (SindriHeaders.Terminal, "1"), (SindriHeaders.Client, client), (SindriHeaders.Token, token)];
+
+    private static (string Name, string Value)[] SessionHeaders(string client) =>
+        _launch.Value is { } launch
+            ? [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, client), (SindriHeaders.Repo, SessionRepo), (SindriHeaders.Launch, launch)]
+            : [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, client), (SindriHeaders.Repo, SessionRepo)];
 
     /// <summary>Sends <paramref name="request"/>: the status, the ProblemDetails title (null for another body) and the Sindri-Api-Version header.</summary>
     public static async Task<Answer> Ask(this HttpClient http, HttpRequestMessage request)
