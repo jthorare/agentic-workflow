@@ -50,6 +50,17 @@ public sealed class TemplatesTests
     }
 
     [Fact]
+    public void A_schedule_template_uses_this_machines_timezone_not_a_fixed_one()
+    {
+        var expected = TimeZoneInfo.Local.HasIanaId ? TimeZoneInfo.Local.Id : "UTC";
+
+        foreach (var trigger in GraphTemplates.All.SelectMany(static t => t.Spec.Nodes).Where(static n => n.Type == "schedule"))
+        {
+            Assert.Equal(expected, trigger.Config["timezone"]!.GetValue<string>());
+        }
+    }
+
+    [Fact]
     public void A_template_is_a_copy_so_a_caller_changing_it_does_not_change_the_next_caller_s()
     {
         var first = GraphTemplates.Find("weekday-check")!.Spec;

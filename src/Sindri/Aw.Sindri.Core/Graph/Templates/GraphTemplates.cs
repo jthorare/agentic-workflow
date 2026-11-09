@@ -8,11 +8,11 @@ public static class GraphTemplates
         (
             "weekday-check",
             "Every weekday at 7:00 ask the model a question and send a notification only when its answer is flagged.",
-            """{"version":1,"name":"Weekday check","nodes":[ {"id":"weekdays","type":"schedule","title":"Every weekday at 7:00","config":{"cron":"0 7 * * 1-5","timezone":"America/Los_Angeles"}}, {"id":"check","type":"prompt","title":"Check","config":{"prompt":"Check whether anything needs attention today. Set flagged to true when it does, and summarize why.","output":{"type":"object","required":["flagged","summary"],"properties":{"flagged":{"type":"boolean"},"summary":{"type":"string"}}}}}, {"id":"gate","type":"condition","title":"Flagged?","config":{"when":"check.flagged"}}, {"id":"tell","type":"notify","title":"Tell me","config":{"title":"Needs attention","body":"{{check.summary}}"}} ],"edges":[ {"from":"weekdays","to":"check"}, {"from":"check","to":"gate"}, {"from":"gate","output":"true","to":"tell"} ]}"""),
+            """{"version":1,"name":"Weekday check","nodes":[ {"id":"weekdays","type":"schedule","title":"Every weekday at 7:00","config":{"cron":"0 7 * * 1-5","timezone":"@machine-timezone@"}}, {"id":"check","type":"prompt","title":"Check","config":{"prompt":"Check whether anything needs attention today. Set flagged to true when it does, and summarize why.","output":{"type":"object","required":["flagged","summary"],"properties":{"flagged":{"type":"boolean"},"summary":{"type":"string"}}}}}, {"id":"gate","type":"condition","title":"Flagged?","config":{"when":"check.flagged"}}, {"id":"tell","type":"notify","title":"Tell me","config":{"title":"Needs attention","body":"{{check.summary}}"}} ],"edges":[ {"from":"weekdays","to":"check"}, {"from":"check","to":"gate"}, {"from":"gate","output":"true","to":"tell"} ]}"""),
         (
             "daily-digest",
             "Every day at 9:00 ask the model for a summary and send it as a notification.",
-            """{"version":1,"name":"Daily digest","nodes":[ {"id":"daily","type":"schedule","title":"Every day at 9:00","config":{"cron":"0 9 * * *","timezone":"America/Los_Angeles"}}, {"id":"digest","type":"prompt","title":"Write the digest","config":{"prompt":"Write a short summary of what to look at today.","output":{"type":"object","required":["summary"],"properties":{"summary":{"type":"string"}}}}}, {"id":"tell","type":"notify","title":"Send it","config":{"title":"Daily digest","body":"{{digest.summary}}"}} ],"edges":[ {"from":"daily","to":"digest"}, {"from":"digest","to":"tell"} ]}"""),
+            """{"version":1,"name":"Daily digest","nodes":[ {"id":"daily","type":"schedule","title":"Every day at 9:00","config":{"cron":"0 9 * * *","timezone":"@machine-timezone@"}}, {"id":"digest","type":"prompt","title":"Write the digest","config":{"prompt":"Write a short summary of what to look at today.","output":{"type":"object","required":["summary"],"properties":{"summary":{"type":"string"}}}}}, {"id":"tell","type":"notify","title":"Send it","config":{"title":"Daily digest","body":"{{digest.summary}}"}} ],"edges":[ {"from":"daily","to":"digest"}, {"from":"digest","to":"tell"} ]}"""),
         (
             "manual-notify",
             "A button you press: it sends one notification. The smallest workflow to start from.",
@@ -32,10 +32,13 @@ public static class GraphTemplates
         return source.Name is null ? null : Build(source);
     }
 
+    // why: a starter that fires at 7:00 Pacific on any box is wrong for most owners; use this machine's zone, and UTC when the OS names it in a form the cron reader doesn't know
+    private static string MachineTimezone() => TimeZoneInfo.Local.HasIanaId ? TimeZoneInfo.Local.Id : "UTC";
+
     private static GraphTemplate Build((string Name, string Description, string Json) source)
     {
         // why: the JSON is ours and tested to parse; a failure here is a bug in the text above, not an expected error.
-        var parsed = GraphJson.Parse(source.Json);
+        var parsed = GraphJson.Parse(source.Json.Replace("@machine-timezone@", MachineTimezone(), StringComparison.Ordinal));
         return parsed.IsSuccess
             ? new GraphTemplate(source.Name, source.Description, parsed.Value)
             : throw new InvalidOperationException($"template '{source.Name}' does not parse: {parsed.Error.Message}");
