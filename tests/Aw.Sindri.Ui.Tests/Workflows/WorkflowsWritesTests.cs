@@ -156,7 +156,7 @@ public sealed class WorkflowsWritesTests
     [Fact]
     public async Task A_failed_runs_read_offers_Try_again_that_reads_again()
     {
-        _f.Server.WorkflowRunsAnswers.Remove(Slug);
+        _ = _f.Server.WorkflowRunsAnswers.Remove(Slug);
         var page = await OnRuns();
         Assert.Equal(("Try again", true), (page.Runs.RetryText, page.Runs.IsFailed));
 
@@ -169,7 +169,7 @@ public sealed class WorkflowsWritesTests
     [Fact]
     public async Task A_failed_run_read_offers_Try_again_that_reads_again()
     {
-        _f.Server.WorkflowRunAnswers.Remove(RunId);
+        _ = _f.Server.WorkflowRunAnswers.Remove(RunId);
         var page = await _f.Shown(Token);
         await page.OpenWorkflow(Slug, Token);
         await page.OpenRun(RunId, Token);
@@ -191,9 +191,9 @@ public sealed class WorkflowsWritesTests
     [InlineData("queued", false, false, false)]
     public void A_status_has_a_tone_besides_its_glyph_and_word(string status, bool ok, bool attention, bool error)
     {
-        var row = new Aw.Sindri.Ui.ViewModels.Workflows.RunRowViewModel(new Aw.Sindri.Ui.Api.Workflows.WorkflowRunRowView("a@1:1", 1, status, "manual", Now, null, null), _f.Clock);
+        var row = new Aw.Sindri.Ui.ViewModels.Workflows.RunRowViewModel(new Aw.Sindri.Ui.Api.Workflows.WorkflowRunRowView("a@1:1", 1, status, "manual", Now, EndedAt: null, Error: null), _f.Clock);
 
         Assert.Equal((ok, attention, error), (row.IsOk, row.IsAttention, row.IsError));
-        Assert.Contains(' ', row.ChipText, StringComparison.Ordinal);   // a glyph and a word
+        Assert.Contains(" ", row.ChipText, StringComparison.Ordinal);   // a glyph and a word
     }
 }

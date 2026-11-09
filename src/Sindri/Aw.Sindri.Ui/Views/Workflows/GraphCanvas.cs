@@ -7,8 +7,6 @@ using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.Views.Workflows;
 
-#pragma warning disable MA0182 // until the Workflows page places the control
-
 /// <summary>
 /// The read-only workflow graph (#2258 PR 17 part 2), drawn in one <see cref="Render"/> pass: a card per node, a bezier arrow per edge with an arrow head and
 /// the branch output ("true", "false") at its midpoint. Drag on empty space pans, Ctrl+wheel zooms (0.5 to 2), the arrow keys and Tab move the selection and
@@ -201,5 +199,3 @@ internal sealed partial class GraphCanvas : Control
         }
     }
 }
-
-#pragma warning restore MA0182

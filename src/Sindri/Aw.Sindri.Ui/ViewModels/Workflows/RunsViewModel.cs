@@ -26,6 +26,12 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>"1 running · 3 runs"; empty until the first answer.</summary>
     public string Head { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The shown revision as a graph at the positions Sindri served, or null until the workflow is read.</summary>
+    public WorkflowGraphViewModel? Graph { get; private set => Set(ref field, value); }
+
+    /// <summary>The workflow as last read, or null: run detail draws its graph when the run walked this revision.</summary>
+    internal WorkflowView? Shown { get; private set; }
+
     /// <summary>The runs, newest first.</summary>
     public ObservableCollection<RunRowViewModel> Rows { get; } = [];
 
@@ -85,6 +91,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
             (Head, DetailText) = (string.Empty, string.Empty);
             (IsFailed, FailedText, IsEmpty, EmptyText) = (false, string.Empty, false, string.Empty);   // nor does the old one's failure or "off" line
             (CanRun, NoticeText) = (true, string.Empty);
+            (Graph, Shown) = (null, null);
         }
 
         (Slug, Title) = (slug, name);
@@ -100,6 +107,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
 
         IsReading = false;
         DetailText = detail.IsSuccess ? Detail(detail.Value) : string.Empty;
+        (Shown, Graph) = detail.IsSuccess ? (detail.Value, new WorkflowGraphViewModel(detail.Value)) : (Shown, Graph);
         if (runs.IsSuccess)
         {
             Show(runs.Value);

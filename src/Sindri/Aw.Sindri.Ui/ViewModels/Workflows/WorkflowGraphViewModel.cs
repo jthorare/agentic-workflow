@@ -52,6 +52,9 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>The ids of nodes with no served position, in spec order: not drawn, so the page can name them.</summary>
     public IReadOnlyList<string> Unplaced { get; }
 
+    /// <summary>True when some node has no served position.</summary>
+    public bool HasUnplaced => Unplaced.Count > 0;
+
     /// <summary>The words for <see cref="Unplaced"/>, or empty when every node has a position.</summary>
     public string UnplacedText => Unplaced.Count == 0 ? string.Empty : Labels.WfGraphUnplaced(Unplaced);
 

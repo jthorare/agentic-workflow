@@ -106,6 +106,7 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         {
             Id = runId;
             Groups = [];   // another run: nothing of the old one stays
+            Graph = null;
             (Status, Tone, NoticeText) = (string.Empty, ChipTone.Neutral, string.Empty);
             (IsFailed, FailedText) = (false, string.Empty);
             (TitleText, ChipText, TriggerText, RevisionText, WhenText, ErrorText, OutputsText) = (Labels.WfRunTitle(runId), string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
@@ -145,8 +146,15 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
         ErrorText = run.Error ?? string.Empty;
         OutputsText = WorkflowJson.Pretty(run.Outputs);
         Groups = [.. run.Nodes.GroupBy(n => n.Node, StringComparer.Ordinal).Select(g => new NodeGroupViewModel(g.Key, [.. g]))];
+        Graph = Shape is { } shape && shape.Revision == run.Revision ? new WorkflowGraphViewModel(shape, Statuses(run)) : null;
         Changed();
     }
+
+    /// <summary>The run's graph with each node's status, or null when the run walked another revision than the one read (positions belong to a revision).</summary>
+    public WorkflowGraphViewModel? Graph { get; private set => Set(ref field, value); }
+
+    /// <summary>The workflow revision the page read, set before <see cref="Read"/>; null draws no graph.</summary>
+    internal WorkflowView? Shape { get; set; }
 
     /// <summary>Marks Cancel's call as on the way, or as done.</summary>
     /// <param name="cancelling">True while the call is on the way.</param>
@@ -155,6 +163,18 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     /// <summary>Shows what Cancel said, in words.</summary>
     /// <param name="text">The note; empty clears it.</param>
     internal void Note(string text) => NoticeText = text;
+
+    // a node run per item of a for_each: the last one served speaks for the node
+    private static Dictionary<string, string> Statuses(WorkflowRunView run)
+    {
+        var statuses = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var node in run.Nodes)
+        {
+            statuses[node.Node] = node.Status;
+        }
+
+        return statuses;
+    }
 
     private void Changed()
     {

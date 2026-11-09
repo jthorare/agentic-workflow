@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
+             xmlns:wv="using:Aw.Sindri.Ui.Views.Workflows"
              x:Class="Aw.Sindri.Ui.Views.Workflows.WorkflowsPage"
              x:DataType="wf:WorkflowsPageViewModel">
   <!-- The Workflows page, read-only (#2258 PR 17 part 1), three levels in one place: the workflow list, one workflow's runs, one run's detail. Back goes up a level.
@@ -74,6 +75,15 @@
         <TextBlock Classes="caption" Text="{Binding Runs.NoticeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <TextBlock x:Name="RunsDetail" Classes="caption subtle" Text="{Binding Runs.DetailText}" TextWrapping="Wrap" />
+      <!-- The graph at the positions Sindri served (the app lays nothing out); a node with no position is named, not drawn. -->
+      <StackPanel x:Name="RunsGraph" Spacing="4" IsVisible="{Binding Runs.Graph, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <Border Classes="panel" Height="320">
+          <wv:GraphCanvas x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" />
+        </Border>
+        <Border x:Name="RunsUnplacedName" IsVisible="{Binding Runs.Graph.HasUnplaced}" AutomationProperties.Name="{Binding Runs.Graph.UnplacedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption subtle" Text="{Binding Runs.Graph.UnplacedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </StackPanel>
       <Border x:Name="RunsPanel" Classes="panel" AutomationProperties.Name="{Binding Runs.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
         <StackPanel>
           <Border x:Name="RunsReadingName" Margin="16,8" IsVisible="{Binding Runs.IsReading}" AutomationProperties.Name="{Binding Runs.ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -146,6 +156,15 @@
       <StackPanel x:Name="RunOutputs" Spacing="4" IsVisible="{Binding Run.HasOutputs}">
         <TextBlock Classes="caption subtle" Text="{Binding Run.OutputsHeading}" />
         <SelectableTextBlock Classes="mono" Text="{Binding Run.OutputsText}" TextWrapping="Wrap" />
+      </StackPanel>
+      <!-- The graph at the positions Sindri served (the app lays nothing out); a node with no position is named, not drawn. -->
+      <StackPanel x:Name="RunGraph" Spacing="4" IsVisible="{Binding Run.Graph, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <Border Classes="panel" Height="320">
+          <wv:GraphCanvas x:Name="RunCanvas" Graph="{Binding Run.Graph}" />
+        </Border>
+        <Border x:Name="RunUnplacedName" IsVisible="{Binding Run.Graph.HasUnplaced}" AutomationProperties.Name="{Binding Run.Graph.UnplacedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption subtle" Text="{Binding Run.Graph.UnplacedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
       </StackPanel>
       <ItemsControl x:Name="RunGroups" ItemsSource="{Binding Run.Groups}">
         <ItemsControl.ItemTemplate>
