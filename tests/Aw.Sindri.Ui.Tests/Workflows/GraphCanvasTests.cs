@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Views.Workflows;
@@ -135,5 +136,38 @@ public sealed class GraphCanvasTests
         Assert.Equal((1.5, new Point(90, 70)), kept);
         Assert.Equal((1d, new Point(Margin, Margin)), reset);
         Assert.Equal((1d, new Point(Margin, Margin)), afterNull);
+    }
+
+    [Fact]
+    public async Task Moving_the_selection_with_the_keys_pans_a_card_that_is_off_screen_into_view()
+    {
+        var graph = await WorkflowGraphViewModelTests.GraphOf(
+            new WorkflowsFixture(),
+            """[{"id":"a","type":"x","config":{}},{"id":"b","type":"x","config":{}}]""",
+            "[]",
+            """[{"node":"a","x":0,"y":0},{"node":"b","x":2000,"y":900}]""");
+
+        var (before, card, size) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 800, Height = 500 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                _ = canvas.Focus();
+                window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, keySymbol: null);   // selects a: already in view
+                var before = canvas.Pan;
+                window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, keySymbol: null);   // selects b: far off
+                return (before, canvas.NodeRect("b")!.Value, canvas.Bounds.Size);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.Equal(new Point(Margin, Margin), before);
+        Assert.True(card.Left >= 0 && card.Right <= size.Width && card.Top >= 0 && card.Bottom <= size.Height, $"the card {card} is inside {size}");
     }
 }

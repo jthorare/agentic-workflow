@@ -32,6 +32,7 @@ internal sealed partial class GraphCanvas : Control
     /// <summary>Where the world's origin sits in this control.</summary>
     internal static readonly StyledProperty<Point> PanProperty = AvaloniaProperty.Register<GraphCanvas, Point>(nameof(Pan), DefaultPan);
 
+    private const double ViewMargin = 24;
     private const double MinHandle = 40;
     private const double ZoomStep = 1.1;
 
@@ -184,6 +185,25 @@ internal sealed partial class GraphCanvas : Control
             _ => false,
         };
 #pragma warning restore IDE0072
+        if (e.Handled && graph.SelectedId is { } id)
+        {
+            ScrollIntoView(id);
+        }
+    }
+
+    /// <summary>Pans the least that brings a node's card fully into view, with a margin; does nothing when it is already inside.</summary>
+    /// <param name="id">The node's id.</param>
+    internal void ScrollIntoView(string id)
+    {
+        if (NodeRect(id) is not { } card || (new Rect(Bounds.Size).Contains(card.TopLeft) && new Rect(Bounds.Size).Contains(card.BottomRight)))
+        {
+            return;
+        }
+
+        static double Shift(double near, double far, double size) =>
+            near < 0 || far - near > size ? ViewMargin - near : far > size ? size - ViewMargin - far : 0;
+
+        Pan = new Point(Pan.X + Shift(card.Left, card.Right, Bounds.Width), Pan.Y + Shift(card.Top, card.Bottom, Bounds.Height));
     }
 
     private void OnGraphChanged(WorkflowGraphViewModel? old, WorkflowGraphViewModel? graph)
