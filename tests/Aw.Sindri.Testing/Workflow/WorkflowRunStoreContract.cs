@@ -205,6 +205,26 @@ public abstract class WorkflowRunStoreContract
         Expect.Equal("{\"n\":3}", rows[0].Output);
     }
 
+    /// <summary>The rows for one item are every index 0 row plus that item's rows; other items' rows are left out.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Node_runs_for_an_item_hold_index_zero_and_that_item_only()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1), Token)).Value;
+        var row = new NodeRun(Run(1).Id, NodeId.From("fetch"), 0, NodeRunStatus.Succeeded, Input: null, Output: "{}", Truncated: false, Error: null, Usage: null);
+        foreach (var index in new[] { 0, 1, 2, 3 })
+        {
+            _ = (await store.RecordNodeRun(row with { ItemIndex = index }, Token)).Value;
+        }
+
+        _ = (await store.RecordNodeRun(row with { NodeId = NodeId.From("each") }, Token)).Value;
+
+        var rows = (await store.NodeRunsForItem(Run(1).Id, 2, Token)).Value;
+
+        Expect.Sequence([("each", 0), ("fetch", 0), ("fetch", 2)], rows.Select(static r => (r.NodeId.Value, r.ItemIndex)));
+    }
+
     /// <summary>A node run of a run nobody recorded is SND-GRAPH-101.</summary>
     /// <returns>The test.</returns>
     [Fact]
