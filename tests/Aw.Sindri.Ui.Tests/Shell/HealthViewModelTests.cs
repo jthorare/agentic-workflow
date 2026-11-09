@@ -55,6 +55,13 @@ public sealed class HealthViewModelTests : IDisposable
         Assert.True(condition(), what);
     }
 
+    // Waits for a stream opened after `before` streams existed, then returns its cursor (the lease changes before the new stream opens).
+    private async Task<long> ReconnectCursor(int before)
+    {
+        await Eventually(() => _server.StreamCursors.Count > before, "reconnect stream opened");
+        return _server.StreamCursors[^1];
+    }
+
     // Lets work already queued on the fake clock's timers and delays run, without waiting out a fixed real-time interval.
     private static async Task Settle()
     {
@@ -296,8 +303,7 @@ public sealed class HealthViewModelTests : IDisposable
             return _vm.Lease == "pid 4242 · epoch 8";
         }, "reconnected");
         streamGate.SetResult();
-        await Eventually(() => _server.StreamCursors.Count > before, "reconnect stream opened");
-        Assert.Equal(30, _server.StreamCursors[^1]);
+        Assert.Equal(30, await ReconnectCursor(before));
     }
 
     [Fact]
@@ -415,6 +421,7 @@ public sealed class HealthViewModelTests : IDisposable
         Start();
         await Eventually(() => _vm.LastEvent.EndsWith("#30", StringComparison.Ordinal), "event 30");
 
+        var before = _server.StreamCursors.Count;
         _records.Write(A.Record(epoch: 1));
         _server.Pong = new(4242, 1);
         _server.Current = A.Status(epoch: 1);
@@ -423,7 +430,7 @@ public sealed class HealthViewModelTests : IDisposable
             _clock.Advance(HealthViewModel.RetryEvery);
             return _vm.Lease == "pid 4242 · epoch 1";
         }, "reconnected to the new ledger");
-        Assert.Equal(0, _server.StreamCursors[^1]);
+        Assert.Equal(0, await ReconnectCursor(before));
     }
 
     [Fact]
@@ -464,6 +471,7 @@ public sealed class HealthViewModelTests : IDisposable
         Start();
         await Eventually(() => _vm.LastEvent.EndsWith("#30", StringComparison.Ordinal), "event 30");
 
+        var before = _server.StreamCursors.Count;
         _server.Pong = new(5151, 1);
         _server.Current = A.Status(pid: 5151, epoch: 1);
         _records.Write(A.Record(pid: 5151, epoch: 1));
@@ -472,7 +480,7 @@ public sealed class HealthViewModelTests : IDisposable
             _clock.Advance(HealthViewModel.RetryEvery);
             return _vm.Lease == "pid 5151 · epoch 1";
         }, "followed the new process");
-        Assert.Equal(0, _server.StreamCursors[^1]);
+        Assert.Equal(0, await ReconnectCursor(before));
     }
 
     [Fact]
