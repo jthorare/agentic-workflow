@@ -12,7 +12,7 @@ public sealed class HttpInboxClientTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static Offer Sample(string key) => new(key, "Title", "acme/web", Branch: null, Prompt: null, Links: [], Labels: []);
+    private static Offer Sample(string key) => new(key, "Title", "web", Branch: null, Prompt: null, Links: [], Labels: []);
 
     [Fact]
     public async Task List_is_retried_after_a_503_and_then_succeeds()
@@ -90,6 +90,20 @@ public sealed class HttpInboxClientTests
 
         Assert.Equal(SindriErrors.InboxHostNotAllowed.Code, listed.Error.Code);
     }
+
+    [Theory]
+    [InlineData("https://inbox.example.test/offers", "https://inbox.example.test/offers/o-1/claim", true)]
+    [InlineData("https://inbox.example.test/", "https://INBOX.example.test:443/offers", true)]
+    [InlineData("https://inbox.example.test/", "https://evil.example.test/offers", false)]
+    [InlineData("https://inbox.example.test/", "https://inbox.example.test:8443/offers", false)]
+    [InlineData("https://inbox.example.test/", "http://inbox.example.test/offers", false)]
+    [InlineData("https://inbox.example.test/", "https://inbox.example.test.evil.test/offers", false)]
+    public void A_request_address_is_allowed_only_on_the_base_urls_scheme_host_and_port(string baseUrl, string candidate, bool allowed) =>
+        Assert.Equal(allowed, HttpInboxClient.SameOrigin(new Uri(baseUrl), new Uri(candidate)));
+
+    [Fact]
+    public void A_relative_address_is_not_on_the_base_url() =>
+        Assert.False(HttpInboxClient.SameOrigin(new Uri("https://inbox.example.test/"), new Uri("/offers", UriKind.Relative)));
 
     [Fact]
     public async Task An_offer_without_a_title_is_SND_CONN_201_naming_the_field()

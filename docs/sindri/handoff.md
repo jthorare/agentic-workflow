@@ -21,7 +21,7 @@ Every call carries `Authorization: Bearer <key>`: the key of the Sindri connecti
 ```json
 {
   "offers": [
-    { "id": "o-1", "title": "Fix the login timeout", "repo": "acme/web", "branch": "fix/login-timeout",
+    { "id": "o-1", "title": "Fix the login timeout", "repo": "web", "branch": "fix/login-timeout",
       "prompt": "Users are logged out after 5 minutes. Make it 30.",
       "links": [{ "label": "Ticket", "url": "https://tickets.example.test/T-1" }], "labels": ["bug"] }
   ],
