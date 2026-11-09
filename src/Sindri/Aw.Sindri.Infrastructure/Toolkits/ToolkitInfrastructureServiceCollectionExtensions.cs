@@ -19,6 +19,7 @@ internal static class ToolkitInfrastructureServiceCollectionExtensions
             .AddSingleton<IToolkitCommands>(static _ => new ProcessToolkitCommands(new ProcessToolRunner()))
             .AddSingleton<IToolkitProcessLauncher, ToolkitProcess>()
             .AddSingleton<ToolkitSupervisor>(static sp => new ToolkitSupervisor(sp.GetRequiredService<IToolkitProcessLauncher>(), sp.GetRequiredService<IToolkitStore>(), sp.GetRequiredService<TimeProvider>()))
-            .AddSingleton<IToolkitRuntime>(static sp => sp.GetRequiredService<ToolkitSupervisor>());
+            .AddSingleton<IToolkitRuntime>(static sp => sp.GetRequiredService<ToolkitSupervisor>())
+            .AddSingleton<RunningToolkits>();
     }
 }
