@@ -58,7 +58,7 @@ internal static class BubblewrapArgv
         return m.Kind switch
         {
             PlanMountKind.ReadOnly => [m.Optional ? "--ro-bind-try" : "--ro-bind", source, m.Path],
-            PlanMountKind.ReadWrite or PlanMountKind.PerLaunchDir => [m.Optional ? "--bind-try" : "--bind", source, m.Path],
+            PlanMountKind.ReadWrite or PlanMountKind.PerLaunchDir or PlanMountKind.State => [m.Optional ? "--bind-try" : "--bind", source, m.Path],
             PlanMountKind.Dev => ["--dev", m.Path],
             PlanMountKind.Proc => ["--proc", m.Path],
             PlanMountKind.Tmpfs => m.Optional && host.KindOf(m.Path) == HostPathKind.Missing ? [] : Tmpfs(m),   // why: an optional tmpfs needs its mount point on the host (bubblewrap can't make one in a read-only bind), so a missing one is skipped

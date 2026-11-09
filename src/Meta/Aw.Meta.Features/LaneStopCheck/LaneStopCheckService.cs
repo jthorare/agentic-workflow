@@ -3,6 +3,7 @@ using Aw.Kernel.Services;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Lanes;
+using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Features.LaneStopCheck;
@@ -30,12 +31,14 @@ internal sealed class LaneStopCheckService(IMetaConfig config, ILaneMail mail, L
         }
 
         var now = clock.GetUtcNow();
-        var owed = await mail.Owed(request.Identity.Lane, cancellationToken).ConfigureAwait(false);
-        if (owed.IsError)
+        var all = await mail.Owed(request.Identity.Lane, cancellationToken).ConfigureAwait(false);
+        if (all.IsError)
         {
-            return owed.Error;
+            return all.Error;
         }
 
+        // A notice asks nothing: it never blocks. It is shown with a block, and settled once the lane has seen it.
+        var owed = Results.Success<IReadOnlyList<LaneMessage>>([.. all.Value.Where(static m => !NoticeRule.IsNotice(m.Text))]);
         var outcome = await guard.Decide(new LaneStop(request.Identity, owed.Value, request.HookActive, request.MaxBlocks, now), cancellationToken).ConfigureAwait(false);
         if (outcome.IsError)
         {
@@ -52,8 +55,21 @@ internal sealed class LaneStopCheckService(IMetaConfig config, ILaneMail mail, L
             return beat.Error;
         }
 
-        var shown = outcome.Value.Block ? await Show(owed.Value, now, cancellationToken).ConfigureAwait(false) : Results.Ok();
-        return shown.IsError ? shown.Error : new LaneStopCheckResponse(outcome.Value.Block, owed.Value, outcome.Value.Warning);
+        var settled = await ShowAndSettle([.. all.Value], outcome.Value.Block, now, cancellationToken).ConfigureAwait(false);
+        return settled.IsError ? settled.Error : new LaneStopCheckResponse(outcome.Value.Block, owed.Value, outcome.Value.Warning);
+    }
+
+    // A block shows everything owed. Notices are settled by number, never lane-wide (a delivered question must stay owed): the ones the lane has seen, or all of them on a block. An unseen notice on a stop stays for the lane's next prompt.
+    private async ValueTask<Result<Unit>> ShowAndSettle(IReadOnlyList<LaneMessage> all, bool blocked, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var shown = blocked ? await Show(all, now, cancellationToken).ConfigureAwait(false) : Results.Ok();
+        if (shown.IsError)
+        {
+            return shown.Error;
+        }
+
+        var seen = all.Where(m => NoticeRule.IsNotice(m.Text) && (m.Delivered || blocked)).Select(m => m.Seq).ToList();
+        return seen.Count == 0 ? Results.Ok() : await mail.Settle(seen, now, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<Unit>> Show(IReadOnlyList<LaneMessage> owed, DateTimeOffset now, CancellationToken cancellationToken)

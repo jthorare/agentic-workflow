@@ -6,4 +6,4 @@ namespace Aw.Sindri.Host.Endpoints;
 /// <param name="Slug">A stored workflow's slug, or null.</param>
 /// <param name="Revision">Its revision, or null for the newest.</param>
 /// <param name="Spec">A graph as a JSON object, or null.</param>
-internal sealed record ValidateWorkflowBody(string? Slug, int? Revision, JsonNode? Spec);
+internal sealed record ValidateWorkflowBody(string? Slug = null, int? Revision = null, JsonNode? Spec = null);

@@ -11,8 +11,8 @@ Examples use `~/code/my-app` as the work repo and `my-app` as its name in the pr
 
 ## Who runs what
 
-Some commands only a person may run, at a real terminal. Sindri refuses them to a CLI that can't read its token with
-`SND-AUTH-002` (see [Troubleshooting](#9-troubleshooting)). Each command below is marked:
+Some commands are best typed by a person at a real terminal (they ask you to confirm or paste a secret). An agent session is
+no longer refused them; `SND-AUTH-002` now means no caller context (see [Troubleshooting](#9-troubleshooting)). Each command below is marked:
 
 - **Human-only**: you type it in your own terminal (Terminal, iTerm, Warp), not inside Claude Code, Codex or Cursor.
 - **Agent OK**: read-only or harmless; an agent session may run it for you.
@@ -241,7 +241,7 @@ context:
 
 `context.index.windowDays` (default 183) is how many days back a first sync reads.
 
-**2. Connect** (**Human-only**: an agent session is refused, `SND-AUTH-002`):
+**2. Connect** (**Human-only**: it asks for the token at a terminal, or reads `--token-env`):
 
 ```bash
 sindri index connect github
@@ -348,21 +348,15 @@ running the line) is in [OPERATIONS.md](OPERATIONS.md) until those move into the
 
 ## 9. Troubleshooting
 
-### `SND-AUTH-002`: a command only a person may run
+### `SND-AUTH-002`: no caller, or a local-only row
 
 ```text
-SND-AUTH-002 … (this CLI ran as a session: CLAUDE_CODE_ENTRYPOINT is set | parent process claude | no terminal)
+SND-AUTH-002 …
 ```
 
-Sindri splits its commands into classes. Approving config and recipes, starting, answering and completing workflows
-(`workflow start`, `answer`, `complete`, `command`, `cancel`, `handback`), building, reviewing and promoting the map,
-syncing sources, connecting and purging them, registering MCP, deciding, and starting or stopping the control plane are a person's
-decisions. An agent that could run them could approve its own recipes, widen its own config, sign off its own desk
-tasks and merge its own work. That is also why desk tasks are human-only by design: an agent may prepare a desk task's
-output files, but only you submit them with `workflow complete`. (An agent Step's own launched session reports its
-run with its launch secret; that is a different path, class `step-report`.)
-The CLI calls as `human` whenever it can read Sindri's per-start token file, so an agent session you start uses it as you
-would. A CLI that can't read the token calls as `session`, and the API refuses those classes with `SND-AUTH-002`.
+An agent session may run every command, so this code no longer means "a person only". The API answers it when a call carries
+no caller context (the CLI couldn't read Sindri's per-start token, or Sindri runs under another `AW_SINDRI_HOME`) or the
+action is a local-only row that never goes through the API. The ledger records who ran each command.
 
 Fix: run Sindri first (`sindri`), then run the command.
 

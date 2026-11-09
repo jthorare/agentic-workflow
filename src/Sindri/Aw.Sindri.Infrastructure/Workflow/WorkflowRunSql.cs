@@ -18,7 +18,7 @@ internal static class WorkflowRunSql
     internal const string InsertRun =
         "INSERT INTO workflow_run (id, workflow_id, revision, trigger, status, outputs, error, item_id, started_at) VALUES ($id, $workflow, $revision, $trigger, $status, $outputs, $error, $item, $at)";
 
-    internal const string SetItem = "UPDATE workflow_run SET item_id = $item WHERE id = $id";
+    internal const string SetItem = "UPDATE workflow_run SET item_id = $item WHERE id = $id AND item_id IS NULL";
 
     internal const string SetEnded = "UPDATE workflow_run SET ended_at = $at WHERE id = $id";
 

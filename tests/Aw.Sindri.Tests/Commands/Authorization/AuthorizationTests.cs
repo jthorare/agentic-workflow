@@ -13,11 +13,10 @@ public sealed class AuthorizationTests
     {
         [ActionClass.Request] = "haslv",
         [ActionClass.StepReport] = "sl",     // only a session; the service checks its launch secret (SND-AUTH-003)
-        [ActionClass.Pause] = "hasv",        // a launched session can't take over (#1002)
+        [ActionClass.Pause] = "haslv",       // every session may take over (agent-first PR 2)
         [ActionClass.Job] = "haslv",
-        [ActionClass.Decision] = "has",
-        [ActionClass.Desk] = "has",          // plus a service the row grants
-        [ActionClass.Protected] = "has",
+        [ActionClass.Decision] = "hasl",
+        [ActionClass.Desk] = "hasl",         // plus a service the row grants
         [ActionClass.Local] = "",            // never through the API
         [ActionClass.Issue] = "hasl",        // its nonce, heartbeat and exit
     };
@@ -104,16 +103,25 @@ public sealed class AuthorizationTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_row_that_needs_a_terminal_still_refuses_everyone_but_a_human_at_one_and_AppConfirm_narrows_nobody()
+    public void Every_caller_class_may_run_every_non_local_action_class()
     {
-        var row = Rows.Of(ActionClass.Protected, "ShowLineHoldout") with { NeedsTerminal = true };
-        var flagged = Rows.Of(ActionClass.Protected, "ApproveProfile") with { AppConfirm = true };
+        ActionClass[] open = [ActionClass.Request, ActionClass.Pause, ActionClass.Job, ActionClass.Decision, ActionClass.Desk, ActionClass.Issue];
+        CallerContext[] callers = [A.Caller().AtTerminal().Build(), A.Caller().Human().Build(), A.Caller().Session().Build(), A.Caller().Launched().Build()];
 
-        Assert.True(Table.Decide(ActionClass.Protected, A.Caller().AtTerminal().Build(), row).Allowed);
-        Assert.False(Table.Decide(ActionClass.Protected, A.Caller().Human().Build(), row).Allowed);
-        Assert.False(Table.Decide(ActionClass.Protected, A.Caller().Session().Build(), row).Allowed);
-        Assert.True(Table.Decide(ActionClass.Protected, A.Caller().Session().Build(), flagged).Allowed);
-        Assert.True(Table.Decide(ActionClass.Protected, A.Caller().Human().Build(), flagged).Allowed);
+        foreach (var actionClass in open)
+        {
+            Assert.All(callers, caller => Assert.True(Table.Decide(actionClass, caller, Rows.Of(actionClass)).Allowed, $"{actionClass} for {caller.Actor}"));
+        }
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_row_flagged_NeedsTerminal_no_longer_narrows_any_caller()
+    {
+        var row = Rows.Of(ActionClass.Desk, "ShowLineHoldout") with { NeedsTerminal = true };
+
+        Assert.All([A.Caller().AtTerminal().Build(), A.Caller().Human().Build(), A.Caller().Session().Build(), A.Caller().Launched().Build()],
+            caller => Assert.True(Table.Decide(ActionClass.Desk, caller, row).Allowed));
+        Assert.Equal(["human+terminal", "human", "session"], Table.CallersFor(row));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -132,7 +140,7 @@ public sealed class AuthorizationTests
         Assert.Equal(["human+terminal", "human", "session", "service"], Table.CallersFor(ActionClass.Request, []));
         Assert.Equal(["human+terminal", "human", "session", "service:host"], Table.CallersFor(ActionClass.Desk, ["host"]));
         Assert.Equal(["human+terminal", "human", "session"], Table.CallersFor(ActionClass.Decision, ["host"]));
-        Assert.Equal(["human+terminal", "human", "session"], Table.CallersFor(ActionClass.Protected, []));
+        Assert.Equal(["human+terminal", "human", "session"], Table.CallersFor(ActionClass.Desk, []));
         Assert.Equal(["session"], Table.CallersFor(ActionClass.StepReport, []));
         Assert.Empty(Table.CallersFor(ActionClass.Local, []));
     }

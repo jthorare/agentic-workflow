@@ -123,12 +123,11 @@ public sealed class ContextReviewRowsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void An_unknown_review_verb_fails_closed_to_a_protected_terminal_only_row()
+    public void An_unknown_review_verb_fails_closed_to_a_local_row()
     {
         var row = ActionClassifier.Classify(_catalog, new ReviewContextMapRequest("obliterate"));
 
-        Assert.Equal(ActionClass.Protected, row.Class);
-        Assert.True(row.NeedsTerminal);
+        Assert.Equal(ActionClass.Local, row.Class);
     }
 
     [Fact, Trait("Lane", "unit")]

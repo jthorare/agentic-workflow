@@ -11,8 +11,8 @@ public sealed class UsageTests
         Assert.Single(Lines(), l => l.StartsWith($"sindri workflow {verb} ", StringComparison.Ordinal));
 
     [Fact, Trait("Lane", "unit")]
-    public void Help_lists_index_connect_linear_as_the_humans_verb() =>
-        Assert.Contains("SND-AUTH-002", Assert.Single(Lines(), l => l.TrimStart().StartsWith("sindri index connect linear", StringComparison.Ordinal)), StringComparison.Ordinal);
+    public void Help_lists_index_connect_linear_with_the_token_pointer_a_session_uses() =>
+        Assert.Contains("--token-env NAME", Assert.Single(Lines(), l => l.TrimStart().StartsWith("sindri index connect linear", StringComparison.Ordinal)), StringComparison.Ordinal);
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("takeover")]

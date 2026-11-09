@@ -58,6 +58,9 @@ public sealed class GoldenContractTests
         ["context-concepts-glossary"] = As<ConceptGlossaryView>,   // GET /sindri/context/concepts/glossary: the concept cards' top terms (ui #1036); no-map-030 is a ProblemDetails
         ["context-pins"] = As<PinsView>,   // GET /sindri/context/pins: the live pins against the approved profile and the map, and the rebuild state
         ["context-pins-suggest"] = As<PinSuggestView>,   // GET /sindri/context/pins/suggest: the "Pin this" and "Add several" suggestions; invalid-179 is a ProblemDetails
+        ["workflows-blocks"] = As<WorkflowBlockList>,   // GET /sindri/workflows/blocks: the editor's block form (#2258 PR 17 part 2b)
+        ["workflows-slug-ops"] = As<WorkflowOpsApplied>,   // POST /workflows/{slug}/ops: ops-applied; ops-stale and ops-missing-fields are ProblemDetails
+        ["workflows-slug-activate"] = As<WorkflowActivated>,   // POST /workflows/{slug}/activate: activated; not-found is a ProblemDetails
         ["context-whole"] = As<WholeMapView>,   // GET /context/map/whole (whole-map spec §2.1); the refusals (006, 030, 044, 045, 120, 200) are ProblemDetails
         ["context-filemap"] = As<FileMapView>,
         ["context-code"] = As<CodeView>,   // GET /sindri/context/code: the code lens' callers and callees (S-9)
@@ -77,7 +80,7 @@ public sealed class GoldenContractTests
         ["workflows-slug-pause"] = As<WorkflowPaused>,   // POST /workflows/{slug}/pause (the Pause button); the success is paused.json
         ["workflows-slug-runs"] = As<WorkflowRunList>,   // GET /workflows/{slug}/runs: a workflow's runs
         ["workflow-runs-run"] = As<WorkflowRunView>,   // GET /workflow-runs/{run}: a run's detail
-        ["workflow-runs-run-cancel"] = As<WorkflowRunCancelled>,   // POST /workflow-runs/{run}/cancel's cancelled body (spec-shaped: the API records only its refusals, bad-id, not-found, already-ended)
+        ["workflow-runs-run-cancel"] = As<WorkflowRunCancelled>,   // POST /workflow-runs/{run}/cancel's cancelled body (the API golden cancels a queued run)
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
         ["projects"] = As<ProjectList>,   // GET /projects: the Projects page's three groups (projects page spec §6.2)
         ["reviews"] = As<ReviewList>,   // GET /reviews: the Reviews tab, its badge and Home's waiting line (review page spec §6.1)
@@ -153,7 +156,9 @@ public sealed class GoldenContractTests
         [("workflows-slug-runs", "skipped")] = As<WorkflowRunStarted>,
         [("memories-id-facts", "forgot")] = As<MemoryForgotten>,
         [("memories-id-facts", "forgot-tag")] = As<MemoryForgotten>,
+        [("workflows", "created")] = AsJsonObject,   // POST /workflows: { id, slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowList
         [("workflows-slug", "replaced")] = AsJsonObject,   // PUT /workflows/{slug}: { slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowView
+        [("workflows-slug", "archived")] = AsJsonObject,   // DELETE /workflows/{slug}: { slug, archivedAt }, the CLI's and the MCP tools' answer; not a WorkflowView
     };
 
     // Routes the app never calls yet: stop is Health's (U4), and the
@@ -181,7 +186,7 @@ public sealed class GoldenContractTests
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
-        "workflows-validate", "workflows-slug-ops", "workflows-slug-activate",   // #2258 PR 8b: ops and activate have only refusal goldens (ProblemDetails), validate is the CLI's; Pause's success is read above
+        "workflows-validate",   // #2258 PR 8b: validate is the CLI's; ops and activate are read above
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
 

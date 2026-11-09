@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Eval;
@@ -136,7 +137,6 @@ using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Host.Commands.Probe;
 using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Host.Mcp;
-using System.Text.Json.Serialization;
 
 namespace Aw.Sindri.Host;
 
@@ -147,6 +147,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ProfileApproved)), JsonSerializable(typeof(ProfileApprovalsRemoved)), JsonSerializable(typeof(Heartbeat)), JsonSerializable(typeof(CommandHandled)), JsonSerializable(typeof(ServiceRan))]
 [JsonSerializable(typeof(ProfileChecked)), JsonSerializable(typeof(ViewsRebuilt)), JsonSerializable(typeof(RetirePassDone)), JsonSerializable(typeof(ItemCreated)), JsonSerializable(typeof(ItemCreatedPublic))]
 [JsonSerializable(typeof(ProjectAttached)), JsonSerializable(typeof(ProjectChanged)), JsonSerializable(typeof(ProjectDetached)), JsonSerializable(typeof(ProjectHidden)), JsonSerializable(typeof(ProjectLedNoted)), JsonSerializable(typeof(ProjectAttachedRow)), JsonSerializable(typeof(ProjectHiddenRow))]   // projects page Ph3: the owner-state events and their views
+[JsonSerializable(typeof(LinearWriteRecorded))]   // the Linear write events (agent-first PR 2)
 [JsonSerializable(typeof(TodoAdded)), JsonSerializable(typeof(TodoChanged)), JsonSerializable(typeof(TodoDone)), JsonSerializable(typeof(TodoReopened)), JsonSerializable(typeof(TodoRemoved)), JsonSerializable(typeof(TodoRestored))]   // the ledger events of the todos spec (§4.1)
 [JsonSerializable(typeof(TodoConflicted)), JsonSerializable(typeof(TodoConflictResolved)), JsonSerializable(typeof(TodoConflictReopened)), JsonSerializable(typeof(TodoSide)), JsonSerializable(typeof(Core.Todos.TodoRow)), JsonSerializable(typeof(Core.Todos.TodoOpenConflict)), JsonSerializable(typeof(TodoHeldChange)), JsonSerializable(typeof(TodoNoteHeld)), JsonSerializable(typeof(TodoNoteHeldResolved)), JsonSerializable(typeof(TodoNoteHeldReopened)), JsonSerializable(typeof(TodoNoteSynced)), JsonSerializable(typeof(TodoNoteImported))]
 [JsonSerializable(typeof(ItemHandoff)), JsonSerializable(typeof(Features.CreateHandoffItem.CreateHandoffItemRequest)), JsonSerializable(typeof(Features.CreateHandoffItem.HandoffItemCreatedResponse))]
@@ -257,7 +258,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ItemOpenRequested)), JsonSerializable(typeof(LaunchStarted)), JsonSerializable(typeof(LaunchStartedPublic)), JsonSerializable(typeof(LaunchFailed)), JsonSerializable(typeof(LaunchWaiting)), JsonSerializable(typeof(ModelPicked)), JsonSerializable(typeof(ModelPicking)), JsonSerializable(typeof(PickedFile)), JsonSerializable(typeof(OmittedFile))]   // API P10a (U0)
 [JsonSerializable(typeof(LaunchOwnerWaiting))]   // skill flows spec §7: launch.owner-waiting
 [JsonSerializable(typeof(LaunchShowReport)), JsonSerializable(typeof(LaunchProbed)), JsonSerializable(typeof(SessionEnded)), JsonSerializable(typeof(SessionUsage)), JsonSerializable(typeof(LaunchSessionReported))]
-[JsonSerializable(typeof(Core.Sandbox.Denials.DenialFile)), JsonSerializable(typeof(SandboxDenied)), JsonSerializable(typeof(SandboxLimitHit)), JsonSerializable(typeof(SandboxLearnEnded)), JsonSerializable(typeof(SandboxSummary)), JsonSerializable(typeof(StepPolicy)), JsonSerializable(typeof(ModelLoginSource)), JsonSerializable(typeof(PreparedLogin)), JsonSerializable(typeof(LoginStatus))]   // Sandbox SB-0
+[JsonSerializable(typeof(Core.Sandbox.Denials.DenialFile)), JsonSerializable(typeof(SandboxDenied)), JsonSerializable(typeof(SandboxLimitHit)), JsonSerializable(typeof(SandboxLearnEnded)), JsonSerializable(typeof(SandboxEntryAllowed)), JsonSerializable(typeof(ReviewLoginSet)), JsonSerializable(typeof(SandboxSummary)), JsonSerializable(typeof(StepPolicy)), JsonSerializable(typeof(ModelLoginSource)), JsonSerializable(typeof(PreparedLogin)), JsonSerializable(typeof(LoginStatus))]   // Sandbox SB-0
 [JsonSerializable(typeof(LaunchViewerAttached)), JsonSerializable(typeof(LaunchTakeoverOpened))]   // issue 1004
 [JsonSerializable(typeof(GetLaunchTargetsRequest)), JsonSerializable(typeof(LaunchTargets)), JsonSerializable(typeof(ProbeLaunchTargetsRequest)), JsonSerializable(typeof(ProbeLaunchTargetsResult))]   // API P10a (U11): the launch targets and their probe job
 [JsonSerializable(typeof(WorkflowChangedPayload))]   // #2258 PR 8: the five workflow lifecycle events

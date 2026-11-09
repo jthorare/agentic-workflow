@@ -16,7 +16,7 @@ public static class GraphOpJson
         IReadOnlyList<GraphOp>? ops;
         try
         {
-            ops = JsonSerializer.Deserialize(json, GraphJsonContext.Default.IReadOnlyListGraphOp);
+            ops = JsonSerializer.Deserialize(json, GraphOpJsonContext.Default.IReadOnlyListGraphOp);
         }
         catch (Exception ex) when (ex is JsonException or ValueObjectValidationException or ArgumentException or InvalidOperationException or NotSupportedException)
         {
@@ -38,6 +38,6 @@ public static class GraphOpJson
     public static string Write(IReadOnlyList<GraphOp> ops)
     {
         ArgumentNullException.ThrowIfNull(ops);
-        return JsonSerializer.Serialize(ops, GraphJsonContext.Default.IReadOnlyListGraphOp);
+        return JsonSerializer.Serialize(ops, GraphOpJsonContext.Default.IReadOnlyListGraphOp);
     }
 }

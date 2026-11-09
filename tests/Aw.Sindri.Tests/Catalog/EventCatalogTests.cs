@@ -84,4 +84,18 @@ public sealed class EventCatalogTests
 
         Assert.Contains(ApiViews.Projects, ApiViews.All, StringComparer.Ordinal);
     }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("linear.issue.created", "linear.issue.created:<clientId>")]
+    [InlineData("linear.comment.posted", "linear.comment.posted:<clientId>")]
+    [InlineData("linear.issue.changed", "linear.issue.changed:<issue key>:<commandId>")]
+    public void Each_linear_write_event_is_catalogued_privately_under_its_name_and_key_shape(string type, string keyShape)
+    {
+        var entry = Assert.Single(EventCatalog.All, e => e.Type == type);
+
+        Assert.False(entry.Public);   // the actor and the issue key stay in the ledger; Linear's own pages show the write
+        Assert.Null(entry.PublicPayload);
+        Assert.Equal(keyShape, entry.KeyShape);
+        Assert.Contains(type, typeof(EventTypes).GetFields(BindingFlags.Public | BindingFlags.Static).Select(f => (string)f.GetRawConstantValue()!), StringComparer.Ordinal);
+    }
 }

@@ -9,7 +9,7 @@ public sealed class ActionClassifierTests
     private static readonly InMemoryCommandCatalog _catalog = new(
         Rows.Of(ActionClass.Desk, "FixturePlain", typeof(FixturePlain)),
         Rows.Of(ActionClass.Desk, "FixtureApply:answer-text", typeof(FixtureApply)),
-        Rows.Of(ActionClass.Protected, "FixtureApply:answer-grant", typeof(FixtureApply)),
+        Rows.Of(ActionClass.Desk, "FixtureApply:answer-grant", typeof(FixtureApply)),
         Rows.Of(ActionClass.Pause, "FixtureApply:takeover", typeof(FixtureApply)));
 
     [Fact, Trait("Lane", "unit")]
@@ -26,12 +26,11 @@ public sealed class ActionClassifierTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("answer-sideways")]
     [InlineData("Not A Variant")]
-    public void Unknown_variant_is_classified_protected(string variant)
+    public void Unknown_variant_is_classified_local(string variant)
     {
         var row = ActionClassifier.Classify(_catalog, new FixtureApply(variant, Protected: false));
 
-        Assert.Equal(ActionClass.Protected, row.Class);
-        Assert.True(row.NeedsTerminal);
+        Assert.Equal(ActionClass.Local, row.Class);
         Assert.StartsWith("FixtureApply", row.Action.Value, StringComparison.Ordinal);
     }
 
@@ -40,13 +39,13 @@ public sealed class ActionClassifierTests
     {
         var row = ActionClassifier.Classify(_catalog, new FixtureApply("answer-text", Protected: true));
 
-        Assert.Equal(ActionClass.Protected, row.Class);
-        Assert.False(row.NeedsTerminal);   // owner decision q93: a protected field no longer holds the caller to a terminal
+        Assert.Equal(ActionClass.Desk, row.Class);
+        Assert.False(row.NeedsTerminal);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_command_with_no_row_is_classified_protected() =>
-        Assert.Equal(ActionClass.Protected, ActionClassifier.Classify(_catalog, new FixtureUnlisted()).Class);
+    public void A_command_with_no_row_is_classified_local() =>
+        Assert.Equal(ActionClass.Local, ActionClassifier.Classify(_catalog, new FixtureUnlisted()).Class);
 
     private sealed record FixturePlain : ICommand<CommandAccepted>;
 

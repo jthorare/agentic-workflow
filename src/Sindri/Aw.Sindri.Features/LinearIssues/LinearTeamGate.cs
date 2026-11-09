@@ -17,7 +17,7 @@ internal sealed class LinearTeamGate(ILinearSideFacts facts)
     /// <returns>The lookups, or SND-LINEAR-003 when the team is not a picked one; a session's refusal (SND-CONTEXT-020) is SND-AUTH-002.</returns>
     internal async ValueTask<Result<LinearLookupsResponse>> Picked(string team, CancellationToken cancellationToken)
     {
-        var read = await facts.Lookups(team, cancellationToken).ConfigureAwait(false);
+        var read = await facts.LookupsForWrite(team, cancellationToken).ConfigureAwait(false);
         if (read.IsError)
         {
             return LinearWriteFailures.Of(read.Error);

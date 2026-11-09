@@ -64,7 +64,7 @@ public sealed class ActivateWorkflowServiceTests : IDisposable
     public async Task An_unknown_workflow_or_revision_is_not_found_and_an_archived_workflow_is_refused()
     {
         await _rig.Seed();
-        var missing = await _service.Handle(new ActivateWorkflowRequest(Aw.Sindri.Core.Graph.Ids.WorkflowSlug.From("nope"), Revision: null, "owner"), Token);
+        var missing = await _service.Handle(new ActivateWorkflowRequest(Core.Graph.Ids.WorkflowSlug.From("nope"), Revision: null, "owner"), Token);
         var revision = await _service.Handle(new ActivateWorkflowRequest(Slug, 9, "owner"), Token);
         _ = (await _rig.Workflows.Archive(Id, Token)).Value;
 

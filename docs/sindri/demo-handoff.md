@@ -303,7 +303,7 @@ An interactive agent asks to approve the five `mcp__sindri__context_*` tools onc
 | `SND-CONTEXT-040` | The heavy-job lock stayed busy (often during `map build`) | Wait for the other job, then retry on a quiet box; or author the map |
 | `SND-WF-016` "uses input.context.lenses, which this build has no runtime for" | An older build (before #394) | `git pull` to a main with #394 |
 | `SND-CONTEXT-045` on start | `fact:item` has no repo, or one the session's scope does not cover | Pass `{id, repo}` (`spec` is optional) with the profile repo name |
-| `SND-AUTH-002` | The CLI couldn't read the per-start token (Sindri isn't running, or another home) | Start Sindri (`sindri`), then rerun with the same `AW_SINDRI_HOME` |
+| `SND-AUTH-002` | No caller context (the CLI couldn't read the per-start token: Sindri isn't running, or another home), or a local-only row | Start Sindri (`sindri`), then rerun with the same `AW_SINDRI_HOME` |
 | `SND-RECIPE-003` "isn't approved" | A recipe or one of its children is unapproved | Owner approves children first, then the parent |
 | `SND-CLI-003` on `workflow start` | A declared input fact is missing | `sindri recipe show <id>`; pass each as `--fact fact:<name>=<file.json>` |
 | Tools return nothing / MCP "failed to connect" | The control plane restarted on another port | `sindri status` for the port; remove and re-add the MCP entry; start a new agent session |
