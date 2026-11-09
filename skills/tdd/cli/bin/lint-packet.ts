@@ -4,6 +4,7 @@
 import * as py from "../src/py";
 import { LINT_PACKET_DOC as DOC } from "../src/lint/doc";
 import { pyException } from "../src/lint/pyops";
+import { PyError, qualifiedName } from "../src/py/errors";
 import { exitCode, lintJson, report } from "../src/lint/report";
 import { runLint } from "../src/lint/run";
 
@@ -64,8 +65,10 @@ export async function lintMain(argv: readonly string[]): Promise<{ code: number;
     if (a.json) py.io.writeText(a.json, lintJson(r));
     return { code: exitCode(r, a.strict), out, err: "" };
   } catch (e) {
+    // the run ended as lint_packet.py's does on the same input: its traceback's last line, exit 1
     const [name, msg] = pyException(e);
-    return { code: 1, out, err: `Traceback (most recent call last):\n  (tdd lint)\n${name}: ${msg}\n` };
+    const shown = e instanceof PyError ? qualifiedName(e.type) : name;
+    return { code: 1, out, err: `Traceback (most recent call last):\n  (tdd lint)\n${shown}: ${msg}\n` };
   }
 }
 

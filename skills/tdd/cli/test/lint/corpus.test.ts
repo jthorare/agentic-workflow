@@ -1,6 +1,7 @@
 // The lint mutation corpus (PR 14 acceptance): every case runs lint_packet.py and `tdd lint` on the same mutated copy
-// of the base packet and must give the same exit code, stdout, stderr and lint.json bytes; each case's expected check
-// ids must fire, and across the corpus every check id lint_packet.py declares fires at least once.
+// of the base packet and must give the same exit code, stdout, stderr and lint.json bytes (a case where lint_packet.py
+// ends with a traceback: the same exit code, no report and no lint.json from either, and the traceback's last line);
+// each case's expected check ids must fire, and across the corpus every check id lint_packet.py declares fires at least once.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -50,6 +51,19 @@ describe.skipIf(!HAVE_PYTHON)("lint corpus: lint_packet.py and tdd lint agree by
       const env = k.env?.(c) ?? {};
       const py = pyLint(args, dir, out, { ...(k.pyScript ? { script: k.pyScript(c) } : {}), env: {} });
       const ts = tsLint(args, dir, out, { env });
+      if (k.crash !== undefined) {
+        // the run ends as lint_packet.py's does: no report, no lint.json, exit 1, and the traceback's last line
+        const last = (e: string) => e.trimEnd().split("\n").at(-1);
+        expect(py.err.startsWith("Traceback (most recent call last):")).toBe(true);
+        expect(ts.err.startsWith("Traceback (most recent call last):")).toBe(true);
+        expect(last(ts.err)).toBe(last(py.err)!);
+        expect(last(py.err)).toBe(k.crash);
+        expect(ts.out).toBe(py.out);
+        expect(ts.json).toBe(py.json);
+        expect(ts.code).toBe(py.code);
+        expect(py.code).toBe(1);
+        return;
+      }
       expect(py.err).not.toContain("Traceback");
       expect(ts.out).toBe(py.out);
       expect(ts.err).toBe(py.err);

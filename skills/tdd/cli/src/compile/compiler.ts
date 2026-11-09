@@ -9,7 +9,8 @@ import { float as floatOf } from "../py/num";
 import type { Match } from "../py/re";
 import { pyStr } from "../py/repr";
 import type { PyDict, PyValue } from "../py/value";
-import { get, num, truthy, uniq } from "../py/value";
+import { get, getKey, truthy, uniq } from "../py/value";
+import { mul, sub, truediv } from "../py/ops";
 import * as sd from "../sd";
 import { CITE, LEGEND_TONES, LINK_KEYS, SQL_KW, TOKEN, token_id } from "../vocab";
 import type { Args } from "./args";
@@ -317,19 +318,17 @@ export class Compiler {
     }
     const four = iter(vb);
     if (four.length !== 4) throw new PyError("ValueError", `${four.length > 4 ? "too many values to unpack (expected 4)" : `not enough values to unpack (expected 4, got ${four.length})`}`);
-    const [x0, y0, w, h] = four.map(num) as [number, number, number, number];
+    const [x0, y0, w, h] = four as [PyValue, PyValue, PyValue, PyValue];
     const out: Node[] = [];
     const tables = new Map<PyValue, PyValue>(this.schema.map((t) => [t.get("table")!, t.get("id")!]));
-    const pct = (v: number, by: number) => {
-      if (by === 0) throw new PyError("ValueError", "float division by zero (ZeroDivisionError)");
-      return new py.PyFloat(py.round((v / by) * 100, 2));
-    };
+    // round(v / by * 100, 2) with Python's operators, so a bad viewBox or box fails with CPython's exception text
+    const pct = (v: PyValue, by: PyValue) => new py.PyFloat(py.round((mul(truediv(v, by), 100) as py.PyFloat).value, 2));
     for (const bv of iter(get(spec, "boxes", []))) {
       const b = dictOf(bv);
       if (!(truthy(get(b, "href")) || truthy(get(b, "image")) || truthy(get(b, "note")) || truthy(get(b, "table")))) continue;
       const hs: Node = {
-        label: get(b, "label", ""), x: pct(num(b.get("x")) - x0, w), y: pct(num(b.get("y")) - y0, h),
-        w: pct(num(b.get("w")), w), h: pct(num(b.get("h")), h), href: get(b, "href", ""), note: get(b, "note", ""), tone: get(b, "tone", ""),
+        label: get(b, "label", ""), x: pct(sub(getKey(b, "x"), x0), w), y: pct(sub(getKey(b, "y"), y0), h),
+        w: pct(getKey(b, "w"), w), h: pct(getKey(b, "h"), h), href: get(b, "href", ""), note: get(b, "note", ""), tone: get(b, "tone", ""),
       };
       if (truthy(get(b, "table"))) {
         const tb = b.get("table")!;

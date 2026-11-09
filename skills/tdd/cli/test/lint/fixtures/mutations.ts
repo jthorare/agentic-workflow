@@ -3,7 +3,7 @@
 // Between them the cases fire every check id lint_packet.py can emit (inventory.test.ts reads the ids from the source).
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, truncateSync, utimesSync, writeFileSync, copyFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { SCRIPTS, T0, buildPacket, git, type Repo } from "../harness";
+import { SCRIPTS, T0, buildPacket, git, skillCopy, type Repo } from "../harness";
 
 export interface Ctx {
   /** the case folder (cwd of both runs); it holds demo-packet/, sibling-packet/ */
@@ -27,6 +27,8 @@ export interface Case {
   readonly pyScript?: (c: Ctx) => string;
   readonly env?: (c: Ctx) => Record<string, string>;
   readonly code?: number;
+  /** the run ends as lint_packet.py's does (a traceback): this is its last line, and there is no report or lint.json */
+  readonly crash?: string;
 }
 
 const P = (c: Ctx, f: string) => join(c.pk, f);
@@ -62,6 +64,60 @@ const sparse = (c: Ctx, f: string, bytes: number): void => {
   truncateSync(P(c, f), bytes);
 };
 const touch = (c: Ctx, f: string, t: number): void => utimesSync(P(c, f), t, t);
+
+/** What the corpus's build_tdd.py does after the real compile (PARITY's own cases need the two compilers to differ):
+ * content: one more newline at the end of content.json; manifest: one more manifest warning; fail-fresh: as content,
+ * and it fails outright when PARITY runs it (--no-copy). */
+type Perturb = "content" | "manifest" | "fail-fresh";
+const PERTURB_MAIN = `def _corpus_main():
+    # the lint corpus: build_tdd.py with a deliberate difference (scripts/perturb.txt), so PARITY has something to find
+    mode = open(os.path.join(HERE, "perturb.txt"), encoding="utf-8").read().strip()
+    if mode == "fail-fresh" and "--no-copy" in sys.argv:
+        sys.exit("build_tdd.py: fails on purpose (lint corpus)")
+    a = parse_args(sys.argv[1:])
+    Compiler(a).build()
+    if mode in ("content", "fail-fresh"):
+        with open(os.path.join(a.out, "content.json"), "a", encoding="utf-8") as f:
+            f.write("\\n")
+    elif mode == "manifest":
+        p = os.path.join(a.out, "content.files.json")
+        m = json.load(open(p, encoding="utf-8"))
+        m["warnings"] = list(m.get("warnings") or []) + ["a warning only this build_tdd.py gives (lint corpus)"]
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(m, f, indent=1)
+
+if __name__ == "__main__":
+    _corpus_main()
+`;
+
+/** The skill beside the case (harness.skillCopy) with a build_tdd.py that differs from the TypeScript compiler on purpose.
+ * The packet is rebuilt with it; lint_packet.py runs from the copy (pyScript) and tdd lint is pointed at it with
+ * TDD_SCRIPTS (env), so both linters run the same build_tdd.py. */
+const perturbed = (c: Ctx, mode: Perturb): string => {
+  const scripts = join(c.root + "-skill", "tdd", "scripts");
+  if (!existsSync(scripts)) {
+    skillCopy(c.root + "-skill");
+    const bt = join(scripts, "build_tdd.py");
+    const src = readFileSync(bt, "utf8");
+    const tail = "if __name__ == \"__main__\":\n    Compiler(parse_args(sys.argv[1:])).build()\n";
+    if (!src.endsWith(tail)) throw new Error("build_tdd.py no longer ends with its main block: update the corpus's perturbed copy");
+    writeFileSync(bt, src.slice(0, -tail.length) + PERTURB_MAIN);
+  }
+  writeFileSync(join(scripts, "perturb.txt"), mode + "\n");
+  return scripts;
+};
+/** A case whose build comes from the perturbed build_tdd.py, linted by both linters with it. */
+const perturbedCase = (name: string, mode: Perturb, expect: string[], extra: string[] = []): Case => ({
+  name, expect, args: () => ["demo-packet", ...extra],
+  mutate: (c) => {
+    const scripts = perturbed(c, mode);
+    rm(c, "build");
+    buildPacket(c.pk, "demo-packet", scripts);
+    write(c, "build/tdd.html", "<!doctype html><title>Demo Queue</title><main id=\"redesign\"></main>\n");
+  },
+  pyScript: (c) => join(perturbed(c, mode), "lint_packet.py"),
+  env: (c) => ({ TDD_SCRIPTS: perturbed(c, mode) }),
+});
 const MD = "demo-packet.md";
 const HS = "diagrams/flow.hotspots.json";
 const SCHEMA = "schema/demo_table.json";
@@ -83,6 +139,13 @@ export const CASES: readonly Case[] = [
   // ------------------------------------------------------------------ STRUCT
   { name: "struct-no-source", expect: ["STRUCT/no-source"], mutate: (c) => { rm(c, MD); rm(c, "build"); } },
   { name: "struct-no-content-compile-fails", expect: ["STRUCT/no-content"], mutate: (c) => { rm(c, "build"); json(c, "meta.json", (m) => void (m.people = 7)); } },
+  // a compile that fails in hotspots(): each linter reports its own compiler's exception, and the texts are CPython's
+  { name: "struct-no-content-viewbox-strings", expect: ["STRUCT/no-content"], args: () => ["demo-packet", "--compile"],
+    mutate: (c) => json(c, HS, (h) => void (h.viewBox = ["0", "0", "400", "200.04"])) },
+  { name: "struct-no-content-viewbox-zero", expect: ["STRUCT/no-content"], args: () => ["demo-packet", "--compile"],
+    mutate: (c) => json(c, HS, (h) => void (h.viewBox = [0, 0, 0, 200])) },
+  { name: "struct-no-content-box-no-x", expect: ["STRUCT/no-content"], args: () => ["demo-packet", "--compile"],
+    mutate: (c) => json(c, HS, (h) => void delete h.boxes[0].x) },
   { name: "struct-missing-section", expect: ["STRUCT/missing-section"],
     mutate: (c) => { sub(c, MD, "## Front end {#frontend; lead: no}", "## Screens {#screens; lead: no}"); rebuild(c); } },
   { name: "struct-section-order", expect: ["STRUCT/section-order"],
@@ -233,11 +296,60 @@ export const CASES: readonly Case[] = [
     mutate: (c) => { write(c, "build/agents/README.md", "header\n"); write(c, "build/agents/locked.md", "secret\n");
       write(c, "build/agents/tokens.json", JSON.stringify({ files: { "locked.md": { sha256: "0" } } })); },
     times: (c) => chmodSync(P(c, "build/agents/locked.md"), 0o000) },
+  // a malformed tokens.json: write_agents.check raises (it catches only OSError and ValueError), lint_packet.py reports it
+  ...([
+    ["files-list", { files: ["README.md"] }],
+    ["root-list", [1, 2]],
+    ["root-null", null],
+    ["record-str", { files: { "README.md": "nope" } }],
+    ["files-str", { files: "README.md" }],
+  ] as const).map(([tag, tokens]): Case => ({
+    name: `agents-tokens-${tag}`, expect: ["AGENTS/check-failed"],
+    mutate: (c) => { write(c, "build/agents/README.md", "<!-- agents lane · content 2020-01-01T00:00:00Z page none · write_agents/0 -->\n");
+      write(c, "build/agents/tokens.json", JSON.stringify(tokens)); },
+  })),
+  { name: "agents-tokens-skip-check-failed", expect: [], args: () => ["demo-packet", "--skip", "AGENTS/check-failed"], code: 0,
+    mutate: (c) => { write(c, "build/agents/README.md", "<!-- agents lane · content 2020-01-01T00:00:00Z page none · write_agents/0 -->\n");
+      write(c, "build/agents/tokens.json", JSON.stringify({ files: ["README.md"] })); } },
 
   // ------------------------------------------------------------------ XDOC
   { name: "xdoc-glossary-conflict", expect: ["XDOC/glossary-conflict"],
     mutate: (c) => writeFileSync(join(c.root, "sibling-packet", "sibling-packet.md"), "# Sibling\n\n::: glossary\n- **Lane** — a worker pool with a shared budget\n- **Other** - unrelated\n:::\n") },
   { name: "xdoc-no-glossary", expect: [], mutate: (c) => { edit(c, MD, (s) => s.slice(0, s.indexOf(":::: fold Glossary")) + ":::\n"); rebuild(c); } },
+
+  // ------------------------------------------------------------------ PARITY (a build_tdd.py that differs on purpose)
+  perturbedCase("parity-content", "content", ["PARITY/content"]),
+  perturbedCase("parity-content-compiled", "content", ["PARITY/content"], ["--compile"]),
+  perturbedCase("parity-manifest", "manifest", ["PARITY/manifest"]),
+  perturbedCase("parity-fresh-fails", "fail-fresh", ["PARITY/content"]),
+  { name: "parity-stale-build", expect: [], mutate: (c) => sub(c, MD, "The helper in", "A sentence the build has not seen. The helper in") },
+  { name: "parity-both-fail", expect: [], mutate: (c) => json(c, "meta.json", (m) => void (m.people = 7)) },
+  { name: "parity-manifest-only-under-build", expect: [], mutate: (c) => json(c, MANIFEST, (m) => void (m.warnings = ["an old warning"])) },
+  { name: "parity-manifest-unreadable", expect: ["FILES/bad-json"], args: () => ["demo-packet", "--skip", "FILES/no-manifest"],
+    mutate: (c) => write(c, MANIFEST, "{") },
+
+  // ------------------------------------------------------------------ fail closed: a JSON root of the wrong type
+  // lint_packet.py calls .get on these roots unguarded and ends with a traceback (exit 1, no report, no lint.json)
+  { name: "crash-content-list", expect: [], mutate: (c) => write(c, CONTENT, "[]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-content-str", expect: [], mutate: (c) => write(c, CONTENT, "\"x\"\n"), crash: "AttributeError: 'str' object has no attribute 'get'" },
+  { name: "crash-content-int", expect: [], mutate: (c) => write(c, CONTENT, "1\n"), crash: "AttributeError: 'int' object has no attribute 'get'" },
+  { name: "crash-content-defs-int", expect: [], mutate: (c) => json(c, CONTENT, (v) => void (v.defs = 3)), crash: "TypeError: 'int' object is not iterable" },
+  { name: "content-null", expect: [], mutate: (c) => write(c, CONTENT, "null\n") },
+  { name: "crash-manifest-list", expect: [], mutate: (c) => write(c, MANIFEST, "[]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-manifest-bool", expect: [], mutate: (c) => write(c, MANIFEST, "true\n"), crash: "AttributeError: 'bool' object has no attribute 'get'" },
+  { name: "crash-manifest-list-parity", expect: [], args: () => ["demo-packet", "--skip", "FILES"], mutate: (c) => write(c, MANIFEST, "[]\n"),
+    crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-manifest-files-list", expect: [], mutate: (c) => json(c, MANIFEST, (m) => void (m.files = ["x"])),
+    crash: "AttributeError: 'list' object has no attribute 'items'" },
+  { name: "crash-sibling-manifest", expect: [], mutate: (c) => write(c, "page.files.json", "[1]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "sibling-manifest-empty-list", expect: [], mutate: (c) => write(c, "page.files.json", "[]\n") },
+  { name: "crash-packet-json", expect: [], mutate: (c) => { json(c, "meta.json", (m) => void (m.status = "Reviewed")); write(c, "packet.json", "[]\n"); },
+    crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "packet-json-draft", expect: [], mutate: (c) => write(c, "packet.json", "[]\n") },
+  { name: "crash-meta-list", expect: [], mutate: (c) => write(c, "meta.json", "[]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-meta-truthy-list", expect: [], mutate: (c) => write(c, "meta.json", "[1]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-hotspots-list", expect: [], mutate: (c) => write(c, HS, "[1]\n"), crash: "AttributeError: 'list' object has no attribute 'get'" },
+  { name: "crash-cite-record", expect: [], mutate: (c) => json(c, CONTENT, (v) => void v.cites.push("x")), crash: "AttributeError: 'str' object has no attribute 'get'" },
 ];
 
 /** Usage cases: argv only, no packet needed beyond the template copy. */

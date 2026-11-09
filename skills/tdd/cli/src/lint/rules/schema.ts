@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import * as py from "../../py";
 import { Packet } from "../packet";
 import { ISO_DATE } from "../patterns";
-import { type PyDict, type PyValue, eq, get, has, inTuple, isDict, items, iter, plain, str, strip, truthy, walk } from "../pyops";
+import { type PyDict, type PyValue, dget, eq, get, has, inTuple, isDict, isOsOrValueError, items, iter, plain, str, strip, truthy, walk } from "../pyops";
 
 const re = py.re;
 const { join } = py.path;
@@ -25,10 +25,12 @@ export const schema = Effect.gen(function* () {
     let spec: PyValue;
     try {
       spec = py.json.loads(p.fs.readText(join(ddir, f)));
-    } catch {
+    } catch (e) {
+      if (!isOsOrValueError(e)) throw e;
       continue;
     }
-    for (const b of iter(get(spec, "boxes", []))) if (truthy(get(b, "table"))) hs_tables.add(get(b, "table"));
+    // outside the Python's try only in form: its handler catches ValueError and OSError, which these lines never raise
+    for (const b of iter(dget(spec, "boxes", []))) if (truthy(dget(b, "table"))) hs_tables.add(dget(b, "table"));
   }
   for (const fn of py.sorted(p.fs.listdir(sdir))) {
     if (!fn.endsWith(".json")) continue;

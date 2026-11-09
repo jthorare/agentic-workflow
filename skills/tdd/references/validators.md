@@ -187,18 +187,30 @@ bun "$T/cli/bin/tdd.ts" lint <packet-dir> [--build <dir>] [--strict] [--json <ou
 
 Three things differ by design:
 - **The compile runs in-process.** A packet with no build, or `--compile`, is compiled by the TypeScript compiler
-  (`cli/src/compile`) into a temporary folder. The Python linter runs `build_tdd.py` there.
+  (`cli/src/compile`) into a temporary folder. The Python linter runs `build_tdd.py` there. Each linter reports its own
+  compiler's failure, and the two compilers fail with the same exception text.
 - **PARITY is reversed.** The TypeScript compiler runs in-process. `python3` with `build_tdd.py` is the external
-  compiler, used for the fresh compile that a differing build (or a compiled lint) calls for. Every finding and note
-  is the Python rule's text, so `lint.json` stays identical. Only the skip note differs: `python3 is not on PATH` or
-  `build_tdd.py is absent`, where the Python says `bun` or `cli/`.
-- **A rule that fails does not end the run.** A defect inside one rule becomes `<RULE>/check-failed` (error), and the
-  other rules still run. The Python linter stops with a traceback there, so this id never appears in its output.
-  `AGENTS/check-failed` (an exception raised by `write_agents.check`) is the same in both linters.
+  compiler. As in the Python rule, the build is the first reference, and a fresh `build_tdd.py` compile decides whose
+  difference it is whenever the build and the TypeScript compile differ. On a compiled lint that fresh compile is the
+  reference. Every finding and note is the Python rule's text, so `lint.json` stays identical. Only the skip note
+  differs: `python3 is not on PATH` or `build_tdd.py is absent`, where the Python says `bun`, `cli/` or `node_modules`.
+- **A linter defect does not end the run.** An exception that is a defect of the TypeScript linter becomes
+  `<RULE>/check-failed` (error), and the other rules still run. `--skip <RULE>/check-failed` does not hide it, so a
+  broken rule always exits 1, as the Python's traceback does; `--skip <RULE>` leaves the rule out instead. The Python
+  linter stops with a traceback there, so this id never appears in its output. `AGENTS/check-failed` (an exception
+  raised by `write_agents.check`) is the same in both linters, and `--skip` hides it in both.
+
+An exception the Python linter raises too ends the TypeScript run the same way. This covers a JSON file whose root or
+records have the wrong type: `content.json`, `content.files.json`, `packet.json`, `meta.json`, a sibling
+`*.files.json` or a hotspots file. There is no report and no `lint.json`, and the exit code is 1. The traceback's last
+line (for example `AttributeError: 'list' object has no attribute 'get'`) goes to stderr. Neither linter passes a
+corrupt file.
 
 `cli/test/lint` proves the parity. It runs both linters on the packets in `$TDD_PARITY_PACKETS` (on the build and with
-`--compile`). It also runs a mutation corpus: a small neutral packet with a git repository, mutated 84 ways plus 7 usage
-cases, so that every check id this file lists fires at least once in both linters.
+`--compile`). It also runs a mutation corpus: a small neutral packet with a git repository, mutated 118 ways plus 7
+usage cases, so that every check id this file lists fires at least once in both linters. The PARITY cases run both
+linters on a copy of the skill whose `build_tdd.py` differs on purpose. The crash cases compare the exit code, the
+missing report and `lint.json`, and the traceback's last line.
 
 ## Notes, not findings
 - The source was compiled to a temporary folder because the packet had no build.

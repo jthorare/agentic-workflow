@@ -47,6 +47,27 @@ export function or<A, B>(a: A, b: B): A | B {
   return truthy(a) ? a : b;
 }
 
+/** type(v).__name__ for a Python value (NoneType, bool, int, float, str, list, dict). */
+export function pyTypeName(v: unknown): string {
+  if (v === null || v === undefined) return "NoneType";
+  if (typeof v === "boolean") return "bool";
+  if (typeof v === "number") return Number.isInteger(v) ? "int" : "float";
+  if (typeof v === "bigint") return "int";
+  if (typeof v === "string") return "str";
+  if (v instanceof PyFloat) return "float";
+  if (Array.isArray(v)) return "list";
+  if (v instanceof Map) return "dict";
+  return typeof v;
+}
+
+/** d.get(k, dflt) where Python calls .get on a value that may not be a dict (one read from a file): AttributeError,
+ * CPython's text, when d is not a dict; otherwise the stored value even when it is None, or dflt when k is absent. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function strictGet(d: unknown, k: string, dflt: any = null): any {
+  if (!(d instanceof Map)) throw new PyError("AttributeError", `'${pyTypeName(d)}' object has no attribute 'get'`);
+  return d.has(k) ? d.get(k) : dflt;
+}
+
 /** d.get(k, dflt): the stored value even when it is None; dflt when the key is absent or d is not a dict. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function get(d: unknown, k: string, dflt: any = null): any {
