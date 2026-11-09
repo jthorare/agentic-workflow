@@ -7,6 +7,7 @@ namespace Aw.Sindri.Core.Graph.Blocks;
 public static class RunAgentLaunches
 {
     private static readonly string[] _report = ["Bash(sindri workflow complete:*)", "Bash(sindri workflow status:*)", "Bash(sindri workflow events:*)"];
+    private static readonly string[] _mcp = ["mcp__sindri"];   // every tool of the server named 'sindri' (settled call 5): the repo-scoped registration the launcher stages
     private static readonly string[] _commit = ["Bash(git add:*)", "Bash(git commit:*)", "Bash(git status:*)", "Bash(git diff:*)"];
 
     /// <summary>The worktree the node works in: '&lt;repo&gt;/.claude/worktrees/wf-&lt;slug&gt;-&lt;short run&gt;'.</summary>
@@ -60,7 +61,7 @@ public static class RunAgentLaunches
         var worktree = WorktreeFor(address, target.RepoPath);
         var agent = config.Agent is { } named && AgentId.TryFrom(named, out var id) ? id : target.Agent;
         // Never plan mode: plan mode runs read-only tools only, so the session couldn't run 'sindri workflow complete'. The node may report, write its own worktree and commit it, nothing else.
-        var policy = new StepPolicy([.. _report, .. _commit], StepPermissionMode.Default, worktree);
+        var policy = new StepPolicy([.. _report, .. _mcp, .. _commit], StepPermissionMode.Default, worktree);
         var step = new StepArgs(Model: null, policy, new StepRef(address.Node.Value, "run_agent"), brief);
         return new LaunchRequest(address.Launch, target.Item, agent, LaunchMode.Open, Attended: false, target.RepoPath, Instance: null, worktree, step, Run: null)
         {

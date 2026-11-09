@@ -71,6 +71,7 @@ public sealed class RunAgentLaunchTests
         Assert.Equal(StepPermissionMode.Default, request.Step.Policy.Mode);
         Assert.Contains("Bash(git commit:*)", request.Step.Policy.AllowedTools, StringComparer.Ordinal);
         Assert.Contains("Bash(sindri workflow complete:*)", request.Step.Policy.AllowedTools, StringComparer.Ordinal);
+        Assert.Contains("mcp__sindri", request.Step.Policy.AllowedTools, StringComparer.Ordinal);   // the node may call every tool of Sindri's MCP
         Assert.Equal("the brief", request.Step.Brief);
         Assert.Equal(TimeSpan.FromMinutes(45), request.StepTimeout);
     }
