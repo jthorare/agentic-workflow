@@ -10,7 +10,7 @@ internal sealed partial class TodoNoteCardViewModel : ObservableObject
 {
     private static readonly string[] _all =
     [
-        nameof(IsAvailable), nameof(Stage), nameof(ShowNoVaults), nameof(ShowForm), nameof(ShowResult), nameof(ShowSyncing), nameof(ShowStopAsk), nameof(Vaults), nameof(SelectedVault), nameof(NoteText),
+        nameof(IsAvailable), nameof(Stage), nameof(ShowNoVaults), nameof(ShowForm), nameof(ShowResult), nameof(ShowSyncing), nameof(ShowStopAsk), nameof(IsConfirmingStop), nameof(Vaults), nameof(SelectedVault), nameof(NoteText),
         nameof(CanCheck), nameof(ShowCheck), nameof(ResultText), nameof(CountsText), nameof(HasCounts), nameof(CantImportText), nameof(HasCantImport), nameof(OverCapText), nameof(HasOverCap), nameof(OneWayText),
         nameof(HasOneWay), nameof(ShowStart), nameof(ShowStartOneWay), nameof(ShowImport), nameof(ShowCancel), nameof(SyncingText), nameof(StopAskText), nameof(StatusText), nameof(ErrorText), nameof(HasError),
         nameof(IsBusy),
