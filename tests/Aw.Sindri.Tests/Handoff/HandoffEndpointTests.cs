@@ -59,4 +59,51 @@ public sealed class HandoffEndpointTests
         Assert.Equal(item, recorded.Item);
         Assert.Equal("handoff:ci-bot", recorded.Envelope.Actor);
     }
+
+    [Fact(Timeout = 120_000), Trait("Lane", "integration")]
+    public async Task A_wrong_token_without_a_caller_header_is_401()
+    {
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
+
+        var answer = await host.Http.Ask(Post("/sindri/handoff", Body, ("X-Sindri-Token", "not-the-token")));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, answer.Status);
+    }
+
+    [Fact(Timeout = 120_000), Trait("Lane", "integration")]
+    public async Task A_body_over_64_KB_is_413_and_makes_no_item()
+    {
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
+        var big = "{\"title\":\"Big\",\"source\":\"ci-bot\",\"prompt\":\"" + new string('p', 70_000) + "\"}";
+
+        var answer = await host.Http.Ask(Post("/sindri/handoff", big, Human(host.Token.Value)));
+
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, answer.Status);
+        Assert.Equal("SND-API-015", answer.Code);
+    }
+
+    [Fact(Timeout = 120_000), Trait("Lane", "integration")]
+    public async Task A_body_that_is_not_a_handoff_is_400()
+    {
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
+
+        var answer = await host.Http.Ask(Post("/sindri/handoff", "{\"title\":", Human(host.Token.Value)));
+
+        Assert.Equal(HttpStatusCode.BadRequest, answer.Status);
+    }
+
+    [Fact(Timeout = 180_000), Trait("Lane", "integration")]
+    public async Task The_thirty_first_handoff_in_a_minute_is_429()
+    {
+        await using var host = await GoldenHost.Start(temporary: true, TestContext.Current.CancellationToken);
+        for (var i = 0; i < HandoffRateLimit.PerMinute; i++)
+        {
+            Assert.Equal(HttpStatusCode.OK, (await host.Http.Ask(Post("/sindri/handoff", Body, Human(host.Token.Value)))).Status);
+        }
+
+        var answer = await host.Http.Ask(Post("/sindri/handoff", Body, Human(host.Token.Value)));
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, answer.Status);
+        Assert.Equal("SND-API-016", answer.Code);
+    }
 }

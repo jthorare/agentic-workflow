@@ -20247,3 +20247,5 @@ static Aw.Sindri.Core.Events.ItemHandoff.operator !=(Aw.Sindri.Core.Events.ItemH
 static Aw.Sindri.Core.Events.ItemHandoff.operator ==(Aw.Sindri.Core.Events.ItemHandoff? left, Aw.Sindri.Core.Events.ItemHandoff? right) -> bool
 Aw.Sindri.Core.Items.IItemMaker
 Aw.Sindri.Core.Items.IItemMaker.Create(string! title, Aw.Sindri.Core.Ids.RepoName? repo, string? body, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ids.ItemId>!>
+static readonly Aw.Sindri.Core.SindriErrors.HandoffRateLimited -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.HandoffTooLarge -> Aw.Kernel.ErrorDefinition!
