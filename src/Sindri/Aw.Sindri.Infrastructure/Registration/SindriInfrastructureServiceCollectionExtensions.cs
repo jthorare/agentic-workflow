@@ -12,6 +12,7 @@ using Aw.Sindri.Core.EngineReads;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Docs;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Launch;
@@ -125,6 +126,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IWorktrees, GitWorktrees>()               // per-run worktrees (engine spec §6.5)
             .AddSingleton<IWorkflowStore, SqliteWorkflowStore>()    // workflow graphs and their revisions (#2258, PR 5): workflow and workflow_revision in ledger.db
             .AddSingleton<IWorkflowRunStore, SqliteWorkflowRunStore>()    // workflow runs and node runs (#2258, PR 6): workflow_run and workflow_node_run in ledger.db
+            .AddSingleton<IWorkflowDocs, Aw.Sindri.Infrastructure.WorkflowDocs.ShippedWorkflowDocs>()   // workflow_docs: the pages embedded in the binary
             .AddSingleton<IGraphLaunchRuns, NoGraphLaunchRuns>()   // no graph run launches an agent session until PR 9
             .AddSingleton<IGraphBlockCatalog, EmptyGraphBlockCatalog>() // no graph blocks until PR 6 and 9
             .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db

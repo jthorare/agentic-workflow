@@ -53,6 +53,7 @@ using Aw.Sindri.Features.ListJobs;
 using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
+using Aw.Sindri.Features.ListWorkflowBlocks;
 using Aw.Sindri.Features.ListWorkflowRuns;
 using Aw.Sindri.Features.ListWorkflows;
 using Aw.Sindri.Features.OpenItem;
@@ -71,6 +72,7 @@ using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Features.SampleSessionUsage;
 using Aw.Sindri.Features.Scrub;
+using Aw.Sindri.Features.SearchWorkflowDocs;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
 using Aw.Sindri.Features.Sessions;
@@ -121,6 +123,8 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IValidator<ActivateWorkflowRequest>, AcceptAllValidator<ActivateWorkflowRequest>>().AddCommand<ActivateWorkflowRequest, ActivateWorkflowResponse, ActivateWorkflowService>()
             .AddScoped<IValidator<PauseWorkflowRequest>, AcceptAllValidator<PauseWorkflowRequest>>().AddCommand<PauseWorkflowRequest, PauseWorkflowResponse, PauseWorkflowService>()
             .AddScoped<IValidator<DeleteWorkflowRequest>, AcceptAllValidator<DeleteWorkflowRequest>>().AddCommand<DeleteWorkflowRequest, DeleteWorkflowResponse, DeleteWorkflowService>()
+            .AddScoped<IValidator<ListWorkflowBlocksRequest>, AcceptAllValidator<ListWorkflowBlocksRequest>>().AddQuery<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse, ListWorkflowBlocksService>()   // 'wf blocks' and 'wf docs'
+            .AddScoped<IValidator<SearchWorkflowDocsRequest>, AcceptAllValidator<SearchWorkflowDocsRequest>>().AddQuery<SearchWorkflowDocsRequest, SearchWorkflowDocsResponse, SearchWorkflowDocsService>()
             .AddScoped<IService<RecordHeartbeatRequest, RecordHeartbeatResponse>, RecordHeartbeatService>()
             .AddScoped<IService<RetireInstancesOnStartRequest, RetireInstancesOnStartResponse>, RetireInstancesOnStartService>()
             .AddRecordServiceRun()

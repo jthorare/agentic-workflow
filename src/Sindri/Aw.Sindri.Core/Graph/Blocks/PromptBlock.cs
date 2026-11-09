@@ -13,6 +13,12 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
     /// <inheritdoc />
     public bool IsTrigger => false;
 
+    /// <inheritdoc/>
+    public string Group => "AI";
+
+    /// <inheritdoc/>
+    public string Title => "Prompt";
+
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([new("prompt", BlockFieldType.Text), new("output", BlockFieldType.Map)]);
 

@@ -15,8 +15,10 @@ using Aw.Sindri.Features.CancelWorkflowRun;
 using Aw.Sindri.Features.CreateWorkflow;
 using Aw.Sindri.Features.DeleteWorkflow;
 using Aw.Sindri.Features.PauseWorkflow;
+using Aw.Sindri.Features.ListWorkflowBlocks;
 using Aw.Sindri.Features.ReplaceWorkflow;
 using Aw.Sindri.Features.RunWorkflow;
+using Aw.Sindri.Features.SearchWorkflowDocs;
 using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Host.Endpoints;
 using ModelContextProtocol.Protocol;
@@ -24,7 +26,7 @@ using ModelContextProtocol.Protocol;
 namespace Aw.Sindri.Host.Mcp;
 
 /// <summary>
-/// The workflow write tools (#2258, PR 8b): workflow_create, workflow_apply_ops, workflow_replace, workflow_validate, workflow_activate, workflow_pause, workflow_delete, workflow_run and workflow_cancel.
+/// The workflow write tools (#2258, PR 8b), plus workflow_docs and workflow_blocks: workflow_create, workflow_apply_ops, workflow_replace, workflow_validate, workflow_activate, workflow_pause, workflow_delete, workflow_run and workflow_cancel.
 /// Each is one call to the service its HTTP route calls, as the session that made the call. The read tools are <see cref="WorkflowReadTools"/>. workflow_run refuses a loop (<see cref="WorkflowLoopGuard"/>).
 /// </summary>
 internal static class WorkflowTools
@@ -55,6 +57,12 @@ internal static class WorkflowTools
 
     /// <summary>workflow_cancel's name.</summary>
     internal const string Cancel = "workflow_cancel";
+
+    /// <summary>workflow_docs' name.</summary>
+    internal const string Docs = "workflow_docs";
+
+    /// <summary>workflow_blocks' name.</summary>
+    internal const string Blocks = "workflow_blocks";
 
     private const string SlugText = "The workflow's slug, such as morning-check (workflow_list names them)";
     private const string BaseText = "The newest revision you read (workflow_get shows it). A newer revision is refused with the current one, so read again and retry.";
@@ -162,8 +170,28 @@ internal static class WorkflowTools
         Annotations = Write(idempotent: true),
     };
 
-    /// <summary>The nine tools.</summary>
-    internal static IReadOnlyList<Tool> All { get; } = [CreateTool, ApplyOpsTool, ReplaceTool, ValidateTool, ActivateTool, PauseTool, DeleteTool, RunTool, CancelTool];
+    private static Tool DocsTool { get; } = new()
+    {
+        Name = Docs,
+        Description = "The workflow docs shipped with Sindri: the spec, references, conditions, concurrency, runs, and one page per block with an example spec. Give question to rank the pages, page (a slug such as block-schedule) to read one in full, or neither to list every page.",
+        InputSchema = ContextTools.Schema(new JsonObject
+        {
+            ["question"] = ContextTools.Property("string", "What you want to know, in words, such as 'how do I poll a connection'"),
+            ["page"] = ContextTools.Property("string", "A page slug to read in full, such as block-schedule"),
+        }),
+        Annotations = new ToolAnnotations { ReadOnlyHint = true, OpenWorldHint = false },
+    };
+
+    private static Tool BlocksTool { get; } = new()
+    {
+        Name = Blocks,
+        Description = "The block types a workflow can use, grouped as the picker shows them (Triggers, Data, AI, Logic, Outputs), each with its title, config fields, outputs, branches and an example config.",
+        InputSchema = ContextTools.Schema([]),
+        Annotations = new ToolAnnotations { ReadOnlyHint = true, OpenWorldHint = false },
+    };
+
+    /// <summary>The eleven tools.</summary>
+    internal static IReadOnlyList<Tool> All { get; } = [CreateTool, ApplyOpsTool, ReplaceTool, ValidateTool, ActivateTool, PauseTool, DeleteTool, RunTool, CancelTool, DocsTool, BlocksTool];
 
     /// <summary>Runs the workflow write tool named <paramref name="tool"/>.</summary>
     /// <param name="tool">The tool's name (one of the nine constants).</param>
@@ -182,6 +210,8 @@ internal static class WorkflowTools
         Delete => CallDelete(services, arguments, ct),
         Run => CallRun(services, arguments, ct),
         Cancel => CallCancel(services, arguments, ct),
+        Docs => CallDocs(services, arguments, ct),
+        Blocks => CallBlocks(services, arguments, ct),
         _ => throw new UnreachableException($"WorkflowTools has no handler for '{tool}'"),
     };
 
@@ -335,6 +365,30 @@ internal static class WorkflowTools
 
         var answer = await services.GetRequiredService<IService<CancelWorkflowRunRequest, CancelWorkflowRunResponse>>().Handle(new CancelWorkflowRunRequest(run.Value, By(services)), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static cancelled => cancelled.Run.Value + " cancel requested");
+    }
+
+    private static async ValueTask<CallToolResult> CallDocs(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        var question = McpArguments.Only(Docs, arguments, ["question", "page"]) is { } refused ? refused : McpArguments.OptionalString(Docs, arguments, "question");
+        var page = McpArguments.OptionalString(Docs, arguments, "page");
+        if (question.IsError || page.IsError)
+        {
+            return McpResults.Failure(services, question.IsError ? question.Error : page.Error);
+        }
+
+        var answer = await services.GetRequiredService<IService<SearchWorkflowDocsRequest, SearchWorkflowDocsResponse>>().Handle(new SearchWorkflowDocsRequest(question.Value, page.Value), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static found => found.Page is { } read ? read.Title : string.Create(CultureInfo.InvariantCulture, $"{found.Hits.Count} pages"));
+    }
+
+    private static async ValueTask<CallToolResult> CallBlocks(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
+    {
+        if (McpArguments.None(Blocks, arguments) is { } refused)
+        {
+            return McpResults.Failure(services, refused);
+        }
+
+        var answer = await services.GetRequiredService<IService<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse>>().Handle(new ListWorkflowBlocksRequest(), ct).ConfigureAwait(false);
+        return McpResults.From(services, answer, static listed => string.Create(CultureInfo.InvariantCulture, $"{listed.Groups.Sum(static g => g.Blocks.Count)} block types in {listed.Groups.Count} groups"));
     }
 
     private static Result<WorkflowSlug> Slug(string tool, IDictionary<string, JsonElement>? arguments) =>

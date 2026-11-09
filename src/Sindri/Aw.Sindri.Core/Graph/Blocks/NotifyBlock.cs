@@ -15,6 +15,12 @@ public sealed class NotifyBlock(INotifyPort notify) : IGraphBlock
     /// <inheritdoc />
     public bool IsTrigger => false;
 
+    /// <inheritdoc/>
+    public string Group => "Outputs";
+
+    /// <inheritdoc/>
+    public string Title => "Notify";
+
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([new("title", BlockFieldType.Text), new("body", BlockFieldType.Text, Required: false)]);
 

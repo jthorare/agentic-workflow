@@ -20441,3 +20441,17 @@ Aw.Sindri.Core.Graph.Validation.IWorkflowChecker.Validator(System.Threading.Canc
 static readonly Aw.Sindri.Core.SindriErrors.GraphRunLoop -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Graph.Runs.IGraphLaunchRuns
 Aw.Sindri.Core.Graph.Runs.IGraphLaunchRuns.RunOf(Aw.Sindri.Core.Launch.LaunchId launch, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Ids.WorkflowRunId?>>
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Group.get -> string!
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Group.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Group.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Group.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Group.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Group.get -> string!
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Docs.IWorkflowDocs
+Aw.Sindri.Core.Graph.Docs.IWorkflowDocs.Pages.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>!

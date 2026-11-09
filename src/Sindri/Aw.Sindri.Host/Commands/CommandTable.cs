@@ -144,6 +144,8 @@ internal static partial class CommandTable
         ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "list", .. var rest] => await new WfReadVerbs(desk.Client, output).List(rest, ct).ConfigureAwait(false),   // the reads go to the routes and never start the control plane
+        ["wf", "blocks", .. var rest] => await new WfReadVerbs(desk.Client, output).Blocks(rest, ct).ConfigureAwait(false),
+        ["wf", "docs", .. var rest] => await new WfReadVerbs(desk.Client, output).Docs(rest, ct).ConfigureAwait(false),
         ["wf", "show", .. var rest] => await new WfReadVerbs(desk.Client, output).Show(rest, ct).ConfigureAwait(false),
         ["wf", "runs", .. var rest] => await new WfReadVerbs(desk.Client, output).Runs(rest, ct).ConfigureAwait(false),
         ["wf", "run-show", .. var rest] => await new WfReadVerbs(desk.Client, output).RunShow(rest, ct).ConfigureAwait(false),
