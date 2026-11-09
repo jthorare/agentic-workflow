@@ -40,9 +40,26 @@ internal sealed partial class GraphWorkflow
             {
                 return ended;
             }
+
+            if (outcome.Status != NodeRunStatus.Succeeded && string.Equals(node.Type, LoopBody.ForEachType, StringComparison.Ordinal) && LoopBody.Find(spec, node.Id) is { IsSuccess: true } loop)
+            {
+                await SkipLoop(loop.Value).ConfigureAwait(true);
+            }
         }
 
         return await End(WorkflowRunStatus.Succeeded, error: null).ConfigureAwait(true);
+    }
+
+    // why: a for_each that failed and said 'continue' ran no item, so its body and collect must not run once as plain nodes with no item; they are 'skipped' and the walk goes on after the collect
+    private async Task SkipLoop(LoopShape shape)
+    {
+        foreach (var node in shape.PerItem)
+        {
+            _ = _pending.RemoveAll(n => n.Id == node.Id);
+            await Record(Row(node, NodeRunStatus.Skipped), _write).ConfigureAwait(true);
+            _ = _decided.Add(node.Id);
+            _taken[node.Id] = ["out"];
+        }
     }
 
     private bool Ready(GraphSpec spec, GraphNode node) => GraphWalkRules.Ready(spec, node, _decided);
