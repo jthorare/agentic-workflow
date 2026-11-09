@@ -106,7 +106,7 @@ public sealed class ConnectionsPageTests
         var page = await _f.Shown();
         var row = page.Rows[2];
 
-        await _f.Drive(row.SignIn(Token));
+        await _f.Drive(row.SignIn(Token), "notes:mcp");
 
         Assert.Equal([_f.Server.ConsentUrl], _f.Launcher.Opened, StringComparer.Ordinal);
         Assert.Equal(("✓ Connected", Labels.ConnectionSignedIn), (row.ChipText, row.NoteText));
@@ -129,12 +129,64 @@ public sealed class ConnectionsPageTests
     public async Task A_sign_in_that_never_lands_ends_with_a_timeout_note()
     {
         _f.SeedThree();
-        _f.Server.ConnectsAfterPolls = int.MaxValue;
         var page = await _f.Shown();
 
         await _f.Drive(page.Rows[2].SignIn(Token));
 
         Assert.Equal(Labels.ConnectionSignInTimedOut, page.Rows[2].NoteText);
         Assert.Equal("! Needs sign-in", page.Rows[2].ChipText);
+    }
+
+    [Fact]
+    public async Task Signing_in_again_on_a_connected_row_waits_for_a_new_sign_in_not_the_status_it_already_has()
+    {
+        _f.SeedThree();
+        var page = await _f.Shown();
+        var row = page.Rows[1];   // linear:work reads 'connected' before the sign-in starts
+
+        var run = row.SignIn(Token);
+        await _f.Drive(Task.Delay(30, Token), "linear:work", afterReads: 100);   // a minute of polls, no callback
+        Assert.False(run.IsCompleted);
+        Assert.NotEqual(Labels.ConnectionSignedIn, row.NoteText, StringComparer.Ordinal);
+
+        _f.Server.CompleteSignIn("linear:work");
+        await _f.Drive(run);
+
+        Assert.Equal(Labels.ConnectionSignedIn, row.NoteText);
+    }
+
+    [Fact]
+    public async Task Signing_in_again_on_an_error_row_keeps_waiting_while_the_browser_is_open()
+    {
+        _f.SeedThree();
+        _ = _f.Server.SeedConnection(FakeSindriApi.ConnectionRow("linear:work", "error", "oauth", "the provider refused the refresh"));
+        var page = await _f.Shown();
+        var row = page.Rows[1];
+
+        var run = row.SignIn(Token);
+        await _f.Drive(Task.Delay(30, Token), "linear:work", afterReads: 100);
+        Assert.False(run.IsCompleted);
+
+        await _f.Drive(run, "linear:work", afterReads: 0);
+
+        Assert.Equal((Labels.ConnectionSignedIn, "✓ Connected"), (row.NoteText, row.ChipText));
+    }
+
+    [Fact]
+    public async Task A_removal_drops_a_row_that_a_list_read_already_in_flight_still_holds()
+    {
+        _f.SeedThree();
+        var page = await _f.Shown();
+        var gate = new TaskCompletionSource();
+        _f.Server.ConnectionListGate = gate;
+        var read = page.Refresh(ConnectionsFixture.Url, Token);   // answers with all three rows once the gate opens
+        _f.Server.ConnectionListGate = null;
+
+        page.Rows[0].AskRemove();
+        await page.Rows[0].ConfirmRemove(Token);
+        gate.SetResult();
+        await read;
+
+        Assert.Equal(["linear:work", "notes:mcp"], page.Rows.Select(r => r.Name), StringComparer.Ordinal);
     }
 }

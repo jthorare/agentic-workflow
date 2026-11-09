@@ -10,8 +10,8 @@ namespace Aw.Sindri.Ui.Tests.Api;
 
 /// <summary>
 /// The JSON property names of the app's connection and memory records equal the keys of the goldens the server serves, recursively: a field the server
-/// adds or renames fails here, even when the app would still read the answer (the app ignores what it doesn't know). Skips, with the missing slugs named,
-/// until every golden is generated.
+/// adds or renames fails here, even when the app would still read the answer (the app ignores what it doesn't know). A missing golden fails, with its slug named.
+/// Key names only: a golden's null fields give no value kind to compare.
 /// </summary>
 [Lane(TestLane.Unit)]
 public sealed class ConnectionMemoryGoldenParityTests
@@ -56,11 +56,8 @@ public sealed class ConnectionMemoryGoldenParityTests
             }
         }
 
-        Assert.True(checkedCount > 0 || missing.Count > 0);
-        if (missing.Count > 0)
-        {
-            Assert.Skip($"goldens not generated yet for: {string.Join(", ", missing)} ({checkedCount.ToString(System.Globalization.CultureInfo.InvariantCulture)} checked)");
-        }
+        Assert.True(missing.Count == 0, $"goldens missing for: {string.Join(", ", missing)} ({checkedCount.ToString(System.Globalization.CultureInfo.InvariantCulture)} checked)");
+        Assert.True(checkedCount > 0);
     }
 
     private static bool IsProblem(string body) => JsonNode.Parse(body) is JsonObject o && o.ContainsKey("title") && o.ContainsKey("status") && o.ContainsKey("traceId");
