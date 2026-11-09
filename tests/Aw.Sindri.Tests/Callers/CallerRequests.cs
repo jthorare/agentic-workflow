@@ -51,21 +51,29 @@ internal static class CallerRequests
     /// Like <see cref="AsSession"/>, and the session also carries <paramref name="launchId"/> in X-Sindri-Launch: a session Sindri itself launched
     /// (the launch must be open: its hash file written). Its writes record the actor 'session:launch:&lt;id&gt;'.
     /// </summary>
-    public static IDisposable AsLaunchedSession(string launchId) => AsLaunchedSession(launchId, out _);
+    public static IDisposable AsLaunchedSession(string launchId) => AsLaunchedSession(launchId, static () => Task.FromResult(0L), out _);
 
-    private static readonly AsyncLocal<ConcurrentQueue<(string Method, string Path)>?> _sent = new();
+    /// <summary>A request built under <see cref="AsLaunchedSession(string, Func{Task{long}}, out IReadOnlyCollection{SentRequest})"/>: its method, its path (no query string) and the ledger head read as it was built, before it was sent.</summary>
+    /// <param name="Method">The HTTP method.</param>
+    /// <param name="Path">The path, no query string.</param>
+    /// <param name="HeadBefore">The ledger head as the request was built.</param>
+    internal sealed record SentRequest(string Method, string Path, Task<long> HeadBefore);
+
+    private static readonly AsyncLocal<ConcurrentQueue<SentRequest>?> _sent = new();
+    private static readonly AsyncLocal<Func<Task<long>>?> _head = new();
 
     /// <summary>
-    /// As <see cref="AsLaunchedSession(string)"/>, and <paramref name="sent"/> collects the method and path (no query string) of every request built
-    /// through this class on this async flow while the scope is open, seeding calls included. It keeps filling until the scope is disposed.
+    /// As <see cref="AsLaunchedSession(string)"/>, and <paramref name="sent"/> collects every request built through this class on this async flow that
+    /// goes out as the launch, seeding calls included, each with <paramref name="head"/> read as it was built. It keeps filling until the scope is disposed.
     /// </summary>
-    public static IDisposable AsLaunchedSession(string launchId, out IReadOnlyCollection<(string Method, string Path)> sent)
+    public static IDisposable AsLaunchedSession(string launchId, Func<Task<long>> head, out IReadOnlyCollection<SentRequest> sent)
     {
-        var queue = new ConcurrentQueue<(string Method, string Path)>();
+        var queue = new ConcurrentQueue<SentRequest>();
         sent = queue;
         _humanAsSession.Value = true;
         _launch.Value = launchId;
         _sent.Value = queue;
+        _head.Value = head;
         return new Scope(clearLaunch: true);
     }
 
@@ -78,6 +86,7 @@ internal static class CallerRequests
             {
                 _launch.Value = null;
                 _sent.Value = null;
+                _head.Value = null;
             }
         }
     }
@@ -138,7 +147,7 @@ internal static class CallerRequests
         // why: only a request that really goes out as the launch counts; seeding as the human (AsHuman) or a launch-secret call carries no X-Sindri-Launch of this launch
         if (_launch.Value is { } sentAs && request.Headers.TryGetValues(SindriHeaders.Launch, out var launches) && launches.Contains(sentAs, StringComparer.Ordinal))
         {
-            _sent.Value?.Enqueue((request.Method.Method, PathOf(request.RequestUri)));
+            _sent.Value?.Enqueue(new SentRequest(request.Method.Method, PathOf(request.RequestUri), _head.Value?.Invoke() ?? Task.FromResult(0L)));
         }
 
         return request;

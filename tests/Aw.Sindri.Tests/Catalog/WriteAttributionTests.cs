@@ -109,8 +109,8 @@ public sealed class WriteAttributionTests
         LaunchSecrets.Write(host.App.Services.GetRequiredService<LauncherOptions>().SecretsDirectory, LaunchId.From(Launch), "proof");
         var before = (await ledger.ReadAfter(0, 100_000, token)).Value.Count;
         Exception? failure = null;
-        IReadOnlyCollection<(string Method, string Path)> sent;
-        using (Callers.CallerRequests.AsLaunchedSession(Launch, out sent))   // the scenario's own call, with the seeding it does through Human(), as the launched session
+        IReadOnlyCollection<Callers.CallerRequests.SentRequest> sent;
+        using (Callers.CallerRequests.AsLaunchedSession(Launch, async () => (await ledger.Head(token)).Value, out sent))   // the scenario's own call, with the seeding it does through Human(), as the launched session
         {
             try
             {
@@ -132,8 +132,9 @@ public sealed class WriteAttributionTests
 
         var written = (await ledger.ReadAfter(0, 100_000, token)).Value.Skip(before).Select(e => e.Envelope).ToList();
         // why: only the scenario's own call (its last request) covers a route; seeding before it marks Sent only, or a seeding write would cover a silent route
-        var own = sent.Count == 0 ? null : MatchTemplate(sweep.Templates, sent.Last().Method, sent.Last().Path);
-        if (own is not null && written.Exists(e => IsByLaunch(e.Actor)))
+        var last = sent.LastOrDefault();
+        var own = last is null ? null : MatchTemplate(sweep.Templates, last.Method, last.Path);
+        if (own is not null && (await ledger.ReadAfter(await last!.HeadBefore, 100_000, token)).Value.Exists(e => IsByLaunch(e.Envelope.Actor)))   // why: only events after the own call's mark, so a seeding write can't cover it
         {
             sweep.Covered[own] = true;
         }
