@@ -12,8 +12,9 @@ Creates <root>/<repo-slug>/system-design/<slug>/ with:
   status.md       the one living doc: artifact_url placeholder, Reference, Surfaces, Counts, Decisions, Open
                   questions, Lead defaults, Revisions, Tracker
   diagrams/*.svg  templates/packet/ copied as it is: a placeholder image, marked PLACEHOLDER and REPLACE ME, for
-  mockups/*.svg   every diagram and shot the template references, so a fresh packet builds, lints and renders clean
-                  until the author replaces each one (the "todo:" line lists them)
+  mockups/*.svg   every diagram and shot the template references, so a fresh packet builds and renders; it lints
+                  with FILES/placeholder and FILES/placeholder-text errors until the author replaces each one (the
+                  "todo:" line lists the images)
   prs/ diagrams/ mockups/ schema/ queries/ shots/   working folders (prs/ schema/ queries/ shots/ start empty)
 
 <root> is $SYSTEM_DESIGN_OUT, else ~/.system-design. <repo-slug> is derived the way system-design's scripts/env.sh does

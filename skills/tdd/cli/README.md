@@ -169,15 +169,22 @@ codes. Modules:
   value read from a file, the rules use `dget` (AttributeError on a non-dict), so a corrupt JSON file fails closed.
 
 Tests (`test/lint`):
-- `corpus.test.ts`: 118 mutations of a neutral base packet (`fixtures/base`, `fixtures/mutations.ts`) with a git
+- `corpus.test.ts`: 125 mutations of a neutral base packet (`fixtures/base`, `fixtures/mutations.ts`) with a git
   repository built per run (`fixtures/repo`), and 7 usage cases. Each runs both linters from the same cwd with `TZ` and
   `TDD_GENERATED` pinned. Exit code, stdout, stderr and lint.json must be identical, and every check id that
-  `lint_packet.py` declares (read from its source, 69 today) must fire at least once. The PARITY cases lint a packet
+  `lint_packet.py` declares (read from its source, 71 today) must fire at least once. The PARITY cases lint a packet
   built by a copy of the skill whose `build_tdd.py` differs on purpose (`harness.skillCopy`, `TDD_SCRIPTS` for the
   TypeScript run). Where `lint_packet.py` ends with a traceback (a JSON root of the wrong type), the case compares the
   exit code, the missing report and `lint.json`, and the traceback's last line.
   `TDD_LINT_COVERAGE_OUT=<file>` writes, for each check id, the cases that fired it.
 - `packets.test.ts`: `$TDD_PARITY_PACKETS`, on the build and with `--compile`.
+- `placeholders.test.ts`: the scaffold's placeholders (`FILES/placeholder`, `FILES/placeholder-text`). The token list
+  in `src/lint/patterns.ts` equals `lint_packet.py`'s and what a fresh scaffold writes, the pattern matches as CPython's
+  does, and a packet from either scaffold lints with only those errors in both linters, byte for byte, and with none
+  once its placeholders are replaced. `test/scaffold/lints-clean.test.ts` checks the same for the scaffold's own test.
+  A fresh scaffold does not lint clean: it has one error per placeholder image and per line still carrying a template
+  prompt. `tdd rev` still runs every step on it (its lint step records the findings and fails only when the linter
+  cannot run), so the draft page builds; the publish gate is `lint_packet.py <packet> --strict`.
 - `units.test.ts`: the Git, realpath, getmtime, surrogateescape and first_diff texts against CPython; rule isolation
   and `--skip RULE/check-failed` against `lint_packet.py` with the same raise injected; services swapped by layer (a
   Git answering from a table, a raising Agents check, an absent Compiler, a TypeScript compiler that fails).

@@ -19,7 +19,8 @@ Rules (stable ids; references/validators.md says what each checks, its severity 
   CITES   every path:line citation resolves in repo_path at meta.sha with the line range inside the file; sha and sha_date
   DIAG    every [diagram: key] has its svg/png; .mmd not newer than the svg; hotspots match the svg; legend tones
   SCHEMA  schema/*.json against the D7 table contract; measurements carry source and date; expectations carry a basis
-  FILES   the publish manifest: nothing missing, nothing over 15 MB, page <= 16 MB, no orphan media, PR files loadable
+  FILES   the publish manifest: nothing missing, nothing over 15 MB, page <= 16 MB, no orphan media, PR files loadable;
+          no scaffold placeholder left (a placeholder image the page publishes, a template prompt in the source or status.md)
   META    meta.json header fields; rev or updated moved when the source changed after the last build; artifact_url
   AGENTS  write_agents.check(build_dir) over build/agents (skipped with a note when either is absent)
   XDOC    glossary terms defined differently in sibling packets of the same repo slug (D-numbers are per doc: not checked)
@@ -180,6 +181,47 @@ def kind_of(parent, k):
     if "cells" in parent or "align" in parent:
         return "table cell"
     return "item"
+
+# ----------------------------------------------------------------------------- the scaffold's placeholders
+# What new_packet.py (and `tdd new`) writes for the author to replace (FILES/placeholder and FILES/placeholder-text): the
+# marker on every placeholder image in templates/packet/, the placeholder date, and the <angle-bracket> prompts of
+# templates/tdd-template.md (outside its one-line comments) and of the status.md skeleton, in a fresh scaffold's order.
+# An all-lower-case one-word prompt (<name>, <path>, <n>) is ordinary command-line notation and is left out; every
+# template line that carries one also carries a prompt listed here. cli/test/lint/placeholders.test.ts keeps the list
+# equal to what the scaffold writes.
+PLACEHOLDER_MARK = "PLACEHOLDER · REPLACE ME"
+PLACEHOLDER_DATE = "YYYY-MM-DD"
+PLACEHOLDER_PROMPTS = (
+    "<Title: the finding, not the topic>",
+    "<The finding in two to four sentences: what changes, who it reaches first, and what stays exactly as it is today.>",
+    "<the finding as the figure title>", "<one sentence that tells the reader where to start and what the arrows carry>", "<What is new>",
+    "<The new tables, services or screens, in one short paragraph.>", "<What stays exactly as it is today.>", "<The one deliberate change>",
+    "<A change to an existing system, and why it is worth it.>", "<Who sees it first, with a dated count and where the count came from.>", "<Role>",
+    "<Moment>", "<What this person sees and does here, in two or three sentences: which screen, which component, and what it reads.>", "<State>",
+    "<what the screen shows in that state, and why.>", "<What the shot shows, with the real names and numbers on it>",
+    "<Caption: the state this shot shows>", "<What the shot shows>", "<Caption>", "<What the screen does today, in a few words>",
+    "<Today's screen, as it is in production>", "<what today's screen does>", "<What changes for this person, in two sentences.>",
+    "<the states and screens with no mock, and which built component each one reuses>",
+    "<the PRD, the ticket and the threads, each with the date read>", "<The requirement, in the PRD's words>",
+    "<The section, card or table that meets it>", "<The requirement>", "<What is still missing, and the open question that decides it (Q1)>",
+    "<Why it is out of this design, and who agreed>",
+    "<The flow in two or three sentences: the phases in order, and what each one reads and writes.>",
+    "<What the reader should notice first, such as which step never runs inside a transaction>",
+    "<the new and changed tables and what they reference>", "<Phase one>", "<ALIAS>",
+    "<What the design adds here, and the existing code it hooks into.>", "<A detail of that step>", "<Another detail>", "<The next new step.>",
+    "<Phase two>", "<A new step.>", "<An unchanged step this design relies on.>", "<The question, as the owner would ask it>",
+    "<The background and the gap, with one concrete example in real numbers.>", "<Option A>", "<What A means, what it costs, and who it affects.>",
+    "<Option B>", "<What B means, what it costs, and who it affects.>", "<The decision, in one line>", "<Owner>",
+    "<The owner's answer in their words, then what it means for the design.>", "<In scope>", "<Out of scope, with the PRD non-goal it matches>",
+    "<system name>", "<system response>", "<What it counts>", "<YYYY-MM-DD>", "<How each step is undone, and what stays written.>",
+    "<Step one: dark behind the flag>", "<Step two>", "<new_table>", "<what one row is>",
+    "<Why this shape: the alternatives, and the invariant the table keeps.>", "<new_column>", "<what it holds>", "<example id>",
+    "<YYYY-MM-DD hh:mm>", "<What this row means>", "<What it stands for, and what it means in this design>", "<the owner's words>",
+)
+# longest first, so a prompt is reported whole; never right after a letter or digit (useState<State>, Array<Role>)
+PLACEHOLDER = re.compile(r"(?<!\w)(?:" + "|".join(re.escape(t) for t in sorted((PLACEHOLDER_MARK, PLACEHOLDER_DATE) + PLACEHOLDER_PROMPTS,
+                                                                                 key=len, reverse=True)) + ")")
+COMMENT = re.compile(r"^\s*<!--.*-->\s*$")  # build_doc.COMMENT: a comment on one line, which the compiler drops
 
 # ----------------------------------------------------------------------------- the linter
 
@@ -884,6 +926,7 @@ class Lint:
     # ------------------------------------------------------------------------- FILES
     def r_files(self):
         man = self.manifest
+        self.placeholders(man)
         if man is None:
             return
         mrel = "build/content.files.json" if not self.compiled else "(compiled) content.files.json"
@@ -963,6 +1006,41 @@ class Lint:
                 self.add("FILES", "pr-unloaded", "warn", f"prs/{fn} is not named pr-NN.md or pr-NNa.md (a sub-PR), so the PR loader skips it and it is not on the page", self.rel(p))
             elif loaded and fn not in loaded:
                 self.add("FILES", "pr-unloaded", "error", f"prs/{fn} is a PR file but the page has no card for it (the manifest skipped it)", self.rel(p))
+
+    def placeholders(self, man):
+        """FILES/placeholder: a file the page publishes (the manifest's files) still carries the scaffold's marker.
+        FILES/placeholder-text: a line of the source or of status.md (one-line comments aside) still carries a scaffold
+        placeholder. The text check needs no manifest."""
+        mark = PLACEHOLDER_MARK.encode("utf-8")
+        for pub, src in (man.get("files") or {}).items() if man is not None else ():
+            if not src or not os.path.isfile(src):
+                continue
+            try:
+                data = open(src, "rb").read()
+            except OSError:
+                continue
+            at = data.find(mark)
+            if at >= 0:
+                # the build writes resolved paths: name the file relative to the packet even when its path goes through a link
+                real, root = os.path.realpath(src), os.path.realpath(self.root)
+                where = os.path.relpath(real, root) if real.startswith(root + os.sep) else self.rel(src)
+                self.add("FILES", "placeholder", "error", f'{pub} is still the scaffold\'s placeholder image (it says "{PLACEHOLDER_MARK}"): replace it '
+                         f"with the real diagram or shot before publishing", where, data.count(b"\n", 0, at) + 1)
+        for path in ([self.src] if self.src else []) + [os.path.join(self.root, "status.md")]:
+            if not os.path.isfile(path):
+                continue
+            for i, line in enumerate(self.lines(path), 1):
+                if COMMENT.match(line):
+                    continue
+                found = []
+                for m in PLACEHOLDER.finditer(line):
+                    if m.group(0) not in found:
+                        found.append(m.group(0))
+                if found:
+                    names = ", ".join(f'"{t}"' for t in found)
+                    self.add("FILES", "placeholder-text", "error", f"scaffold placeholder left in the text: {names}; write the real text (or delete the "
+                             f'line) before publishing. The scaffold\'s placeholders are the "{PLACEHOLDER_MARK}" marker, the {PLACEHOLDER_DATE} date '
+                             f"and the template's <angle-bracket> prompts", self.rel(path), i)
 
     # ------------------------------------------------------------------------- META
     def r_meta(self):

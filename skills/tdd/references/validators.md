@@ -122,7 +122,7 @@ any commit.
 | `SCHEMA/expected` | error | Every numeric expected value has a `note` giving its basis. | Say how it was estimated. |
 | `SCHEMA/unused` | warn | The table is neither a hotspot table on a diagram nor named on the page. | Wire it to the schema diagram, or drop it. |
 
-## FILES: publish manifest
+## FILES: publish manifest and the scaffold's placeholders
 | Check | Severity | What it checks | How to fix |
 |---|---|---|---|
 | `FILES/no-manifest` | error | `content.files.json` sits beside `content.json`. | Rebuild. |
@@ -131,6 +131,30 @@ any commit.
 | `FILES/page-size` | error | The built page (`page`, usually `tdd.html`) and `page_bytes`, when present, are at most 16 MB. When the app has not built the page yet, this is a note, not a finding. | Move images out of the page. |
 | `FILES/orphan` | warn | Every media file (`svg png jpg jpeg gif webp avif mp4 webm mov`) under `mockups/` and `diagrams/` is published by some page of the packet: `content.files.json`, or any `*.files.json` at the packet root, or a hotspot image. Source files (`.mmd`, `.tldraw`, `.json`, `.html`, `.css`) are not checked. When the markdown names the orphan, the message gives that line: the page did not pick the file up. | Embed it, fix the markup that dropped it, or delete it. |
 | `FILES/pr-unloaded` | warn | Every `prs/*.md` is named `pr-NN.md`. The PR loader skips any other name. | Rename it, for example `pr-02b.md` to a free number. |
+| `FILES/placeholder` | error | No file the page publishes (a source in the manifest's `files`: the build's copy, or with `--compile` the packet's own file) contains the scaffold's marker "PLACEHOLDER · REPLACE ME". The location is the first marker's line in that file. | Draw the diagram (`draw_diagrams.mjs` writes over the placeholder) or render the shot, point the page at it, delete the placeholder, and rebuild. |
+| `FILES/placeholder-text` | error | No line of the source markdown or of `status.md` still carries a scaffold placeholder: the marker "PLACEHOLDER · REPLACE ME", the date `YYYY-MM-DD`, or one of the template's `<angle-bracket>` prompts (the list below). One finding per line, naming the placeholders on it. Fenced code counts. One-line comments do not (the compiler drops them), nor does a prompt right after a letter, digit or `_` (`useState<State>`). The check runs without a manifest too. | Write the real text, or delete the line. In `status.md`, replace the Decisions guide line with the first decision (or `- none yet`). |
+
+**The scaffold's placeholders.** `new_packet.py` and `tdd new` write a packet that builds and renders but is not
+finished: seven placeholder images copied from `templates/packet/` (each says "PLACEHOLDER · REPLACE ME"), and a
+source and `status.md` full of prompts. A fresh packet therefore lints with errors: one `FILES/placeholder` per
+placeholder image and one `FILES/placeholder-text` per line that still carries a placeholder (about 70 in all). They
+are expected while the author writes, they list what is left to replace, and the page is ready to publish only when
+they are gone. They do not stop `tdd rev`: its lint step records the findings in `build/lint.json` (and the database)
+and fails only when the linter cannot run, so the draft page still builds; the publish run (`--strict`, below) is what
+they block. To lint a draft you know still has placeholders, and see only the other findings, pass
+`--skip FILES/placeholder,FILES/placeholder-text`. Never skip them on the publish run. The tokens are matched exactly, case and spacing included (`lint_packet.PLACEHOLDER_MARK`,
+`PLACEHOLDER_DATE` and `PLACEHOLDER_PROMPTS`, mirrored in `cli/src/lint/patterns.ts`):
+- the marker `PLACEHOLDER · REPLACE ME`, and the date `YYYY-MM-DD`;
+- every `<angle-bracket>` prompt of `templates/tdd-template.md` outside its one-line comments, plus the title a
+  scaffold writes when `--title` is left out (`<Title: the finding, not the topic>`) and the `status.md` guide's
+  `<the owner's words>`: 70 prompts today, such as `<What is new>`, `<Role>`, `<Moment>`, `<State>`, `<Caption>`,
+  `<Owner>`, `<ALIAS>`, `<new_table>`, `<new_column>`, `<YYYY-MM-DD>` and the sentence-long ones.
+
+An all-lower-case one-word prompt (`<name>`, `<path>`, `<n>`, `<owner>`) is ordinary command-line notation, so it is
+not matched: a design that documents `git show <sha>:<path>` lints clean. Every template line that carries one also
+carries a matched prompt. So do the `status.md` guide lines that stay true while a list is empty (Counts, Open
+questions): they hold only that notation and are not flagged. To spell a date format in a design, write "ISO date" or
+`yyyy-mm-dd`. `cli/test/lint/placeholders.test.ts` keeps the list equal to what a fresh scaffold writes.
 
 ## META: header fields and revisions
 | Check | Severity | What it checks | How to fix |
