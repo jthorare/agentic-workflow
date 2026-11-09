@@ -284,11 +284,161 @@ aw_write_managed_block() {
   rm -f "$tmp"
 }
 
-# The reply voice (config/voice/joi.md) inlined into a provider's global instruction file.
+# The reply voice (config/voice/reply.md) names the person the agent replies to as {{user}}. The copy
+# setup installs has the name of whoever runs setup there instead, from aw_user_name.
+#
+# aw_user_name prints the first of:
+#   1 AW_USER_NAME, when it passes the checks below (the override when the account's name is wrong)
+#   2 the first name in the account's full name: `id -F` or dscl's RealName on macOS, the passwd GECOS
+#     field elsewhere (before the first comma; "&" in it stands for the login, capitalised). Leading
+#     titles ("Dr.", "Mr", "Prof") are skipped; when the next word is no name, the full name is skipped
+#   3 the login, cut at the first ".", "_", "-" or digit and capitalised: "tanner.s" -> "Tanner"
+#   4 "human"
+# Under sudo it reads SUDO_USER's account, not root's. A word counts as a name only when it is letters
+# (ASCII, or any non-ASCII so "José" and "Zoë" pass) with "'" or "-" only inside, at most 32 characters
+# and 64 bytes, and not a service or shared account name (root, admin, ubuntu, runner, vscode, ...).
+# So "System Administrator" (root's full name on macOS) and a CI box's "runner" both end at "human".
+aw_user_name() {
+  local login full word
+  if word="$(aw_name_word "${AW_USER_NAME:-}")"; then printf '%s\n' "$word"; return 0; fi
+  login="$(id -un 2>/dev/null)" || login=""
+  [ -n "$login" ] || login="${USER:-${LOGNAME:-}}"
+  if [ "$login" = "root" ] && [ -n "${SUDO_USER:-}" ]; then login="$SUDO_USER"; fi
+  if [ -n "$login" ]; then
+    full="$(aw_account_full_name "$login")"
+    if word="$(aw_first_name "$full")"; then printf '%s\n' "$word"; return 0; fi
+    if word="$(aw_name_word "${login%%[._0-9-]*}")"; then printf '%s\n' "$word"; return 0; fi
+  fi
+  printf 'human\n'
+}
+
+# The account's full name as the OS records it, or nothing. Usage: aw_account_full_name <login>
+aw_account_full_name() {
+  local login="$1" full="" cap
+  full="$(id -F "$login" 2>/dev/null)" || full=""
+  if [ -z "$full" ] && command -v dscl >/dev/null 2>&1; then
+    # "RealName: Ann Lee", or "RealName:" with the value on the next line.
+    full="$(dscl . -read "/Users/$login" RealName 2>/dev/null |
+      awk 'NR == 1 { sub(/^RealName:[ \t]*/, ""); if ($0 != "") { print; exit } next } { sub(/^[ \t]+/, ""); print; exit }')"
+  fi
+  if [ -z "$full" ]; then
+    if command -v getent >/dev/null 2>&1; then
+      full="$(getent passwd "$login" 2>/dev/null | cut -d: -f5)"
+    elif [ -r /etc/passwd ]; then
+      full="$(awk -F: -v u="$login" '$1 == u { print $5; exit }' /etc/passwd)"
+    fi
+    full="${full%%,*}"
+    cap="$(printf '%s' "${login:0:1}" | LC_ALL=C tr '[:lower:]' '[:upper:]')${login:1}"
+    full="${full//&/$cap}"
+  fi
+  printf '%s' "$full"
+}
+
+# The first name in a full name: the first word after any titles, when it is a usable name.
+# Usage: aw_first_name <full name>
+aw_first_name() {
+  local lower
+  # shellcheck disable=SC2086 # splitting the name into words is the point
+  set -f; set -- $1; set +f
+  while [ $# -gt 0 ]; do
+    lower="$(printf '%s' "${1%.}" | LC_ALL=C tr '[:upper:]' '[:lower:]')"
+    case "$lower" in
+      dr | mr | mrs | ms | mx | miss | prof | sir | dame | rev) shift ;;
+      *) break ;;
+    esac
+  done
+  [ $# -gt 0 ] || return 1
+  aw_name_word "$1"
+}
+
+# Print <word> with its first letter capitalised when it is a usable first name, else fail.
+# Usage: aw_name_word <word>
+aw_name_word() {
+  local w="$1" lower
+  [ -n "$w" ] && [ "${#w}" -le 32 ] || return 1
+  [ "$(printf '%s' "$w" | LC_ALL=C wc -c | tr -d ' ')" -le 64 ] || return 1
+  # Letters only, ASCII or not, plus ' and - (O'Neil, Anne-Marie): no space, digit, symbol or control byte.
+  [ -z "$(printf '%s' "$w" | LC_ALL=C tr -d "A-Za-z'\200-\377-")" ] || return 1
+  case "$w" in [\'-]* | *[\'-]) return 1 ;; esac
+  lower="$(printf '%s' "$w" | LC_ALL=C tr '[:upper:]' '[:lower:]')"
+  case "$lower" in
+    root | admin | administrator | system | sysadmin | user | users | guest | nobody | daemon | operator | \
+      ubuntu | debian | centos | fedora | rocky | alma | alpine | arch | pi | vagrant | docker | node | \
+      runner | vscode | codespace | codespaces | gitpod | coder | jenkins | build | builder | buildkite | ci | \
+      dev | developer | default | owner | test | tester | local | localuser | shared | service | app | \
+      human | unknown | anonymous | me | ec | azureuser | cloudshell | linuxbrew | homebrew)
+      return 1 ;;
+  esac
+  printf '%s%s\n' "$(printf '%s' "${w:0:1}" | LC_ALL=C tr '[:lower:]' '[:upper:]')" "${w:1}"
+}
+
+# Copy <src> to <dst> with every {{user}} replaced by <name>: a literal replace, so nothing in the name
+# is read as a pattern or an escape (ENVIRON, not -v, which would turn "\1" into a byte).
+# Usage: aw_render_voice <src> <dst> <name>
+aw_render_voice() {
+  AW_VOICE_NAME="$3" awk '{
+    name = ENVIRON["AW_VOICE_NAME"]; out = ""; line = $0
+    while ((i = index(line, "{{user}}")) > 0) { out = out substr(line, 1, i - 1) name; line = substr(line, i + 8) }
+    print out line
+  }' "$1" > "$2"
+}
+
+# The name the installed voice uses, in this order:
+#   1 AW_USER_NAME, when aw_name_word accepts it (the override)
+#   2 the name already in an installed copy, in argument order: the "# Talking to <Name>" line inside a
+#     file's aw:voice block, or the first line of a file without one (the rendered copy), so a box that set its name once (or carries the old
+#     "Joi" text) keeps it on the next setup instead of flipping to the account name
+#   3 aw_user_name (the account's name, the login, then "human")
+# Usage: aw_voice_name [<installed file>...]
+aw_voice_name() {
+  local f found word
+  if word="$(aw_name_word "${AW_USER_NAME:-}")"; then printf '%s\n' "$word"; return 0; fi
+  for f in "$@"; do
+    [ -f "$f" ] || continue
+    if grep -qxF -- "<!-- aw:voice:start -->" "$f"; then
+      # Only inside the block: the user's own text around it is never read.
+      found="$(awk '
+        $0 == "<!-- aw:voice:start -->" { inblock = 1; next }
+        $0 == "<!-- aw:voice:end -->" { inblock = 0; next }
+        inblock && /^# Talking to / { sub(/^# Talking to /, ""); print; exit }
+      ' "$f")"
+    else
+      # A rendered copy: the whole file is the voice, and its first line names the user.
+      found="$(sed -n '1s/^# Talking to //p' "$f")"
+    fi
+    if word="$(aw_name_word "$found")"; then printf '%s\n' "$word"; return 0; fi
+  done
+  aw_user_name
+}
+
+# The rendered voice every provider's skills read (the preamble, the lean agents, Cursor's paste copy).
+aw_voice_copy_path() { printf '%s\n' "$AW_STATE_ROOT/voice/reply.md"; }
+
+# Write the rendered voice for <name> to aw_voice_copy_path. Usage: aw_write_voice_copy <name>
+aw_write_voice_copy() {
+  local out
+  out="$(aw_voice_copy_path)"
+  if aw_dry; then
+    echo "  [dry-run] would write the reply voice for $1 to $out"
+    return 0
+  fi
+  mkdir -p "$(dirname "$out")"
+  aw_render_voice "$TOOLKIT_DIR/config/voice/reply.md" "$out" "$1"
+}
+
+# The reply voice, with the user's name in it, inlined into a provider's global instruction file, and
+# the rendered copy under the state root refreshed with the same name.
 # Usage: aw_install_voice <file>
 aw_install_voice() {
-  aw_write_managed_block "$1" voice "$TOOLKIT_DIR/config/voice/joi.md" || return 0
-  echo "  voice: $1"
+  local name tmp rc=0
+  name="$(aw_voice_name "$1" "$(aw_voice_copy_path)")"
+  aw_write_voice_copy "$name"
+  tmp="$(mktemp)"
+  aw_render_voice "$TOOLKIT_DIR/config/voice/reply.md" "$tmp" "$name"
+  aw_write_managed_block "$1" voice "$tmp" || rc=$?
+  rm -f "$tmp"
+  [ "$rc" -eq 0 ] || return 0
+  echo "  voice: $1 (replies to $name)"
 }
 
 # Write $HOME/.agentic-workflow/providers: one "<name> <skills-dir>" line per
