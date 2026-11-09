@@ -67,6 +67,12 @@ describe.skipIf(!hasPython)("the TypeScript compiler matches build_tdd.py", () =
     }
   }, T);
 
+  test("bare attribute flags ({id}, {chip}, {state} ... are True): gate green, ids print as Python's True-2", () => {
+    const r = gate(join(CLI, "test", "compile", "fixtures", "bare"));
+    expect(r.problems).toEqual([]);
+    expect(r.summary).toBe("3 sections, 0 diagrams, 1 decisions, 0 PRs, 0 schema tables, 0 reference links (1 unlinked), 0 citations, 0 files (0 missing)");
+  }, T);
+
   for (const packet of PACKETS) {
     const name = basename(packet);
     test(`${name}: gate green, python vs ts`, () => {

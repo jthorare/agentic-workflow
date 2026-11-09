@@ -144,7 +144,7 @@ export class Compiler {
     let i = 2;
     let cand = b;
     while (this.ids.has(cand)) {
-      cand = `${b}-${i}`;
+      cand = `${pyStr(b)}-${i}`; // f"{base}-{i}": a bare {id} flag is True, which Python prints as "True-2"
       i += 1;
     }
     this.ids.add(cand);
