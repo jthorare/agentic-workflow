@@ -501,9 +501,9 @@ def suite_stamp(rng, count):
 
 
 # ----------------------------------------------------------------------------- the D1 surface (PR 10, src/sd)
-# Three suites feed test/sd: sd_calls replays a real compile (every call build_tdd.py makes to the 18 system-design
-# names, recorded at the boundary), sd_fuzz runs markdown-shaped documents through the text functions, and sd_files
-# runs img_size / load_json / Assets over files the bun test wrote. Values travel as vtag() trees (tuples as lists);
+# Four suites feed test/sd: sd_calls replays a real compile (every call build_tdd.py makes to the 18 system-design
+# names, recorded at the boundary), sd_fuzz runs markdown-shaped documents through the text functions, sd_files runs
+# img_size / load_json / Assets over files the bun test wrote, and sd_constants dumps the patterns and tables. Values travel as vtag() trees (tuples as lists);
 # an exception travels as [qualified type name, str(e)] and SystemExit as ["SystemExit", code].
 
 ARGS = {"packet": None, "src": None, "copy": False, "dir": None}
