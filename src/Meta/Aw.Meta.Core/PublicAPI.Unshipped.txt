@@ -1000,6 +1000,7 @@ Aw.Meta.Core.Ports.ILaneMail
 Aw.Meta.Core.Ports.ILaneMail.Deliver(System.Collections.Generic.IReadOnlyList<long>! seqs, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.ILaneMail.Owed(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Lanes.LaneMessage!>!>!>
 Aw.Meta.Core.Ports.ILaneMail.Reply(Aw.Meta.Core.Lanes.LaneIdentity! identity, string! text, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ids.MessageId>!>
+Aw.Meta.Core.Ports.ILaneMail.Settle(System.Collections.Generic.IReadOnlyList<long>! seqs, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.ILaneMail.Send(string! lane, string! text, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
 Aw.Meta.Core.Ports.ILanePane
 Aw.Meta.Core.Ports.ILanePane.Probe(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.PaneState?>!>
@@ -2393,3 +2394,6 @@ Aw.Meta.Core.Routing.RouteSuggestion.TargetKnown.get -> bool
 Aw.Meta.Core.Routing.RouteSuggestion.TargetKnown.init -> void
 Aw.Meta.Core.Coordination.ConsumerState
 static Aw.Meta.Core.Coordination.ConsumerState.Read(Aw.Meta.Core.Ports.IKeyValueStore! values, int? waiting, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(string! Line, bool Missing)>!>
+Aw.Meta.Core.Messages.NoticeRule
+static Aw.Meta.Core.Messages.NoticeRule.IsNotice(string! body) -> bool
+const Aw.Meta.Core.Messages.InboxState.Settled = "settled" -> string!

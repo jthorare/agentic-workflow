@@ -40,6 +40,11 @@ internal static class LaneMailSql
         c => c.Bind("$at", at).Bind("$lane", lane),
         "lane mail of " + lane);
 
+    internal static SqlStatement SettleSeq(long seq, DateTimeOffset at) => new(
+        "UPDATE lane_mail SET settled_at = $at, delivered_at = COALESCE(delivered_at, $at) WHERE seq = $seq AND settled_at IS NULL",
+        c => c.Bind("$at", at).Bind("$seq", seq),
+        "lane mail " + seq.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
     internal static LaneMessage ReadOwed(SqliteDataReader r) =>
         new(r.GetInt64(0), r.GetString(1), r.GetString(2), SqliteRead.GetTimestamp(r, 3), Delivered: !r.IsDBNull(4));
 
