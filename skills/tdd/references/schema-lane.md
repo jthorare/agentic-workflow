@@ -101,27 +101,49 @@ grey, blue, amber, red, violet) tints its frame and head.
   (`→ name`), type (`REFERENCES name`) or an `indexes[]` line (`FOREIGN KEY … (cols) → name`, `PRIMARY KEY (cols)`)
   names one; then changed columns in their change colours with a `new` / `changed` / `dropped` tag (not in a new
   table, where every column is new); then the rest, as many as the box holds, in table order, and "+N more columns".
-- Sizing strip, on every card that has room: three tiles, rows, cols and cost. Each shows an icon and label, the
-  production value from `measured.rows`, `measured.columns` (else the file's column count), `measured.cost`, and under
-  it the expected change after the design from `expected.rows`, the column change flags (`+new −dropped`),
-  `expected.cost`, as a pill holding the value only (the unit and the words are in the detail), never cut: a long
-  value wraps to a second line. The change is red when it rises, green when it falls or stays, grey when the file
-  states no direction: a leading `+` or `−`, a word (no change, none, grows, fewer…), a comparison with the measured
-  number in the same unit, or, for a new table, any figure (a rise from nothing). An absent value reads "not measured"
-  or "not estimated" in muted type, never a zero. Writes (`measured.writes`, `expected.writes`) is in the detail only.
-- Detail, by every input: pointing at a tile shows its lines (the value with its unit, the source and date, the change
-  and its basis note); a focused card's hover card lists the lines of all four (rows, cols, cost, writes), so the
-  keyboard reads them; on a touch screen a tap on a tile shows its lines and a second tap, or a tap elsewhere, hides
-  them (a tap elsewhere on the card opens the drawer). The card's `aria-describedby` names a hidden text with every
-  line, and without JavaScript each tile keeps a native `title`.
-- Size: column names and tile numbers are about 11.5 to 12 px when the page fits the drawing to a 1440 px window
-  (keys 1.15 times that, labels at least 10 px), and grow with Actual size. A box that cannot hold a column line at
-  that size may go down to 11 px; below that the card drops column lines (the count moves into the head as "+N cols"),
-  then its strip, and keeps its size: a compact card shows the name, the chip, the key lines that fit and the count.
-  Only a box too short for the head itself shrinks the type. The head and the strip need about 7.6 ems of box height,
-  each column line about 1.45 (a key line 1.6). Draw table boxes tall enough for their keys and the strip (a box of
-  about 280 drawing px in a 2400 px wide drawing shows three key lines and the strip); at phone width the whole
-  drawing is scaled to the column, so read it with Actual size.
+- Sizing strip (D28), on every card that has room: one row of four measures, rows, cols, writes and cost, about a
+  third of the three-row tiles it replaced. Each is an icon, the production number from `measured.rows`,
+  `measured.columns` (else the file's column count), `measured.writes`, `measured.cost` ("–" when not measured; a long
+  figure shortened, 37,821 → 37.8k), and beside it the expected change after the design from `expected.rows`, the
+  column change flags (`+new −dropped`), `expected.writes`, `expected.cost` as a pill (no pill when not estimated).
+  The pill is red when the measure rises, green when it falls or stays, grey when the file states no direction: a
+  leading `+` or `−`, a word (no change, none, grows, fewer…), a comparison with the measured number in the same unit,
+  or, for a new table, any figure (a rise from nothing). No labels or prose in the row; never a zero for a missing
+  value. When the four do not fit one row with their icons, the icons go (the tooltip still names each measure).
+- Detail, by every input: pointing at a measure shows its tooltip (label, production value, after this design, source
+  and date, basis); hovering or focusing the card shows the table's brief in its hover card (below), so the keyboard
+  reads everything; on a touch screen a tap on a measure shows its tooltip and a second tap, or a tap elsewhere, hides
+  it (a tap elsewhere on the card opens the drawer, whose Details tab starts with the same brief). The card's
+  `aria-describedby` names a hidden text with every line, and without JavaScript each measure keeps a native `title`.
+- Size: column names and strip numbers are about 11.5 to 12 px when the page fits the drawing to a 1440 px window
+  (keys 1.15 times that, pills and labels at least 10 px), and grow with Actual size. A box that cannot hold a column
+  line at that size may go down to 11 px; below that the card drops column lines (the count moves into the head as
+  "+N cols"), then its strip, and keeps its size: a compact card shows the name, the chip, the key lines that fit and
+  the count. Only a box too short for the head itself shrinks the type. The head and the strip need about 4.7 ems of
+  box height, each column line about 1.45 (a key line 1.6). Draw table boxes tall enough for their keys and the strip
+  (a box of about 210 drawing px in a 2400 px wide drawing shows three key lines and the strip); at phone width the
+  whole drawing is scaled to the column, so read it with Actual size.
+
+## The table brief (D28)
+
+One shape for a table's detail, wherever it opens (`app/src/components/TableBrief.tsx`): the hover card of a table
+card on the schema diagram (hover or keyboard focus) and the top of the drawer's Details tab.
+
+1. **Purpose**: the first sentence of `summary` (the drawer shows the whole summary). Write that sentence to stand alone.
+2. **Measures**: a small table, measure · production · after this design · delta · source (date), one row each for
+   rows, columns, writes and cost, with "not measured" / "not estimated" cells rather than prose; the drawer adds a row
+   for every other `measured` or `expected` key and lists each row's basis note under the table, the hover card counts
+   them ("+N more measures … in the table's Details"). Columns: production is the live count (`measured.columns`) or
+   the file's columns less the new ones ("none" for a new table), after is that count with the design's change.
+3. **Trade-offs**: the optional `tradeoffs` field, two or three terse lines of what the design gains and costs for
+   this table, taken from the TDD's own text, never invented: `[{ "gain": "…", "cost": "…" }]` or `["…"]` (a string
+   starting with `+` or `gain:` is a gain, with `−` or `cost:` a cost). Shown as `+` and `−` bullets; hidden when absent.
+4. **Place and impact**: an inline SVG drawn from the cards' keys, no library. The table sits in the middle; the tables
+   it references (its foreign keys, from column types, notes and `indexes[]`) are on the right and the cards that
+   reference it on the left, each side box naming the key (`post_id →`, `← request_id`); arrows point at the
+   referenced table. Boxes take the table's tone on the page's diagrams, else new green, changed amber, existing
+   grey; a referenced table with no card is dashed. A dotted "writes" arrow into the table carries `expected.writes`
+   (else `measured.writes`) when the card states one. More than five tables on a side collapse into "+N more".
 
 ## Proof and preview
 
@@ -140,10 +162,18 @@ opens, drawer width, bands or a sideways-scrolling grid on phones, no horizontal
 words, zero hydration and console errors. `--extra` previews a schema file that is not in a packet yet.
 
 `node harness/shoot-d26.mjs <build>/tdd.html <png dir>` checks the built page itself: the one-row head, the bands of
-the widest table, the Expand view (95% of the page, one band, Esc and Close return to the drawer), the table cards
-(three tiles or a compact card, nothing clipped, no delta or name cut, focusable and described; at 1440 names and
-numbers of at least 11 px and labels of at least 10 px; a tile tooltip under the pointer; a focused card's hover card
-with every sizing line; a tap on a tile toggles its lines on a touch screen without opening the drawer; a click opens
-the drawer), and writes `d26-{drawer,bands,modal,diagram,diagram-tip,diagram-focus,diagram-touch}-…png`.
+the widest table, the Expand view (95% of the page, one band, Esc and Close return to the drawer), the column stats
+badges (D30: no stats row or toggle, one labelled badge per column, headers in line with cells, hover shows the popover,
+a click pins it and it stays when the pointer leaves, a second click, a click outside and Esc close it, Esc keeps the
+drawer, Enter and Space open it, one open at a time, a tap opens it on a phone), the table brief in the Details tab
+(D28: measures with "After this design", trade-offs where the card has them, the mini diagram with one edge per
+neighbour box, at least one where foreign keys exist, and a writes arrow where the card states writes), the table
+cards (D28: four measures in one row no taller than a third of the three-row tiles they replaced, or a compact card;
+nothing clipped, no value, delta or name cut, focusable and described; at 1440 names and numbers of at least 11 px and
+labels of at least 10 px; a measure's tooltip under the pointer; every focused card's hover card holds its own brief;
+a tap on a measure toggles its tooltip on a touch screen without opening the drawer; a click opens the drawer), and
+writes `d26-{drawer,bands,modal,diagram,diagram-tip,diagram-focus,diagram-touch}-…png`,
+`d28-{strip,detail-pop,detail-drawer}-1440-…png` and `d30-stats-{hover,open}-1440-…png` plus one
+`d30-stats-open-390-light.png`.
 
 The drawer's data preview, column statistics and the in-page chat are described in `references/data-view.md` (D14).

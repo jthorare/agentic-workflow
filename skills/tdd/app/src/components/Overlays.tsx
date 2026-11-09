@@ -1,5 +1,6 @@
 // The overlays the delegation in App drives through the bus: RefPop (hover card), RefPanel (mobile-sized dialog),
-// HsPop (diagram hotspot card), TipPop (sizing-tile tooltip on table cards), Lightbox (shot zoom), plus the schema
+// HsPop (diagram hotspot card; a table's brief for a table box, D28), TipPop (strip-measure tooltip on table cards),
+// Lightbox (shot zoom), plus the schema
 // worker's SchemaDrawer. All render empty on the
 // server and on the first client render, so hydration matches; content arrives only through bus events.
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
@@ -8,7 +9,8 @@ import { bus } from "../lib/bus";
 import { closeDialog, cloneForPanel, kindLabel, openDialog, place } from "../lib/dom";
 import { Raw, cx } from "../lib/raw";
 import { Guard } from "../lib/guard";
-import { SchemaDrawer } from "./SchemaDrawer";
+import { SchemaDrawer, findTable } from "./SchemaDrawer";
+import { TableBrief } from "./TableBrief";
 
 const OPEN_DELAY_MS = 250, HS_OPEN_DELAY_MS = 120, HIDE_DELAY_MS = 150;
 
@@ -148,6 +150,7 @@ export function RefPanel() {
 
 /** The diagram hotspot card (D4): label, note, the box's image at full card width, and a Go link when it has one. */
 export function HsPop() {
+  const { schema } = useContent();
   const pop = useRef<HTMLDivElement>(null);
   const [el, setEl] = useState<HTMLElement | null>(null);
   const s = useRef({ open: 0, hide: 0, inside: false, shown: false });
@@ -184,18 +187,22 @@ export function HsPop() {
 
   const d: DOMStringMap = el ? el.dataset : {};
   const href = el?.getAttribute("href") || "";
-  // a table card (D26): every sizing fact its tiles carry, so focus and hover give what a tile tooltip gives
-  const tips = el ? [...el.querySelectorAll<HTMLElement>("[data-tip]")].map((t) => t.dataset.tip || "").filter(Boolean) : [];
+  // a box that carries a schema table (D28): the table's brief, the same block as the drawer's Details tab
+  const table = el && d.table ? findTable(schema, d.table) : null;
   return (
-    <div className={cx("hs-pop", el && "show", d.image && "has-image", tips.length > 0 && "has-sizing")} ref={pop}
+    <div className={cx("hs-pop", el && "show", d.image && "has-image", table && "has-brief")} ref={pop}
       onPointerEnter={() => { s.current.inside = true; clearTimeout(s.current.hide); }}
       onPointerLeave={() => { s.current.inside = false; bus.emit("hs", { el: null }); }}>
-      {el ? (
+      {el && table ? (
+        <>
+          <Guard name="table brief"><TableBrief t={table} mode="pop" /></Guard>
+          <span className="go">Click the box to open the table</span>
+        </>
+      ) : el ? (
         <>
           <b>{d.label}</b>
           {d.note ? <span>{d.note}</span> : null}
           {d.image ? <img src={d.image} alt={d.label ? `${d.label}: full image` : ""} /> : null}
-          {tips.length ? <div className="hs-sizing">{tips.map((tip, i) => <div className="hs-tile" key={i}><TipLines text={tip} /></div>)}</div> : null}
           {d.table ? <span className="go">Click the box to open the table</span>
             : href && href !== "#" ? <a className="go" href={href}>Go to it</a> : null}
         </>
@@ -204,8 +211,8 @@ export function HsPop() {
   );
 }
 
-/** A tile's tooltip text as lines: the first is the title, then "Label: text" lines; a trailing "(rises)", "(falls)"
- *  or "(stays the same)" is coloured. Shared by TipPop and the hotspot card. */
+/** A strip measure's tooltip text as lines: the first is the title, then "Label: text" lines; a trailing "(rises)",
+ *  "(falls)" or "(stays the same)" is coloured. */
 export function TipLines({ text }: { text: string }) {
   const lines = text.split("\n").filter(Boolean);
   return (

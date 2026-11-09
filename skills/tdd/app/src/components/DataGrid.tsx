@@ -1,24 +1,27 @@
 // DataGrid: the D7 table card drawn the Snowsight way (D14a). Three tabs: "Data preview" (a compact mono grid with row
 // numbers, a sticky typed header carrying each column's D7 change chip, a stats row, sort, filter and Copy TSV),
 // "Columns" (one row per column: name, change, note, type with the struck-through `was`, and statistics), "Details"
-// (the summary, the D7 measured and expected load cards, DDL, indexes, notes, where the table appears). The tab bar sits
+// (the table's brief, TableBrief.tsx: purpose, measures, trade-offs, place and impact; then the table facts, DDL,
+// indexes, notes, where the table appears). The tab bar sits
 // in the drawer head beside the table name (D26); a grid wider than the drawer is laid out in stacked bands of columns
 // (same row numbers, sticky, on every band), and the drawer's Expand view shows it as one band that scrolls sideways.
+// Column stats (D30) are one small badge per header, not a row: hover or focus shows a popover with "x% null ·
+// n distinct", min and max where the kind has them, one small distribution bar and "from the N sample rows, not the
+// database"; a click (Enter, Space, a tap) opens the same content as a dropdown under the header that stays until Esc,
+// an outside click or a second click. One at a time.
 // Every statistic is computed here from sample_rows, deterministically, and labelled "from sample rows"; none is a
 // measurement. Rendered only in the browser (the drawer is empty on the server), but render stays pure: no Date,
 // random or window during render. The Snowsight reading behind this is in references/data-view.md.
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject } from "react";
 import { cx } from "../lib/raw";
-import type { Column, Measure, SchemaTable } from "../types";
+import { place } from "../lib/dom";
+import type { Column, SchemaTable } from "../types";
+import { TableBrief } from "./TableBrief";
 
 export type Where = { id: string; kind: string; title: string };
-type M = Measure & { label?: string };
 export type TabKey = "preview" | "columns" | "details";
 
-/** Rows every load card shows, measured or not; any other key in the JSON follows them in file order. */
-const CORE = ["reads", "writes", "rows", "storage"];
-const LABELS: Record<string, string> = { reads: "Reads", writes: "Writes", rows: "Rows", storage: "Storage", p50: "p50", p95: "p95", p99: "p99" };
 const TRUNC = 40;
 const BINS = 5;
 
@@ -148,10 +151,9 @@ function binned(xs: number[], lo: number, hi: number) {
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
 
-/** The mini graph: a filled meter, then a histogram (number, date, time) or a frequency bar (anything else). */
-export function MiniStat({ s }: { s: ColStat }) {
+/** The distribution alone: a histogram (number, date, time) or a frequency bar of the most common values. */
+export function Dist({ s }: { s: ColStat }) {
   const filled = s.n - s.nulls;
-  const fp = pct(filled, s.n);
   let dist: ReactNode = null;
   if (s.bins) {
     const max = Math.max(...s.bins, 1);
@@ -170,13 +172,61 @@ export function MiniStat({ s }: { s: ColStat }) {
       </span>
     );
   }
+  return dist;
+}
+
+/** The mini graph (Columns tab): a filled meter, then the distribution. */
+export function MiniStat({ s }: { s: ColStat }) {
+  const fp = pct(s.n - s.nulls, s.n);
   return (
     <span className="dg-mini">
       <span className="dg-meter" title={`${fp}% filled, ${100 - fp}% NULL (from sample rows)`}><i style={{ width: `${fp}%` }} /></span>
-      {dist}
+      <Dist s={s} />
     </span>
   );
 }
+
+const STAT_ICON = <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 10.5h9M2.8 9.2V6.2M5.2 9.2V2.6M7.6 9.2V4.6M10 9.2V7.4" /></svg>;
+
+/** A header's stats badge (D30): a tiny bar-chart glyph, with a dot when the column has nulls. */
+function StatBadge({ k, s, live, openKey, popId, on }: {
+  k: string; s?: ColStat; live: boolean; openKey: string | null; popId: string; on?: StatHandlers;
+}) {
+  if (!s) return null;
+  const cls = cx("dg-sb", s.nulls > 0 && "nulls", openKey === k && "on");
+  if (!live || !on) return <span className={cls} aria-hidden="true">{STAT_ICON}</span>;
+  return (
+    <button type="button" className={cls} aria-label={`Column stats for ${k}: ${pct(s.nulls, s.n)}% null, ${s.distinct} distinct`}
+      aria-expanded={openKey === k} aria-controls={popId}
+      onPointerEnter={(e) => { if (e.pointerType !== "touch") on.enter(k, e.currentTarget); }}
+      onPointerLeave={(e) => { if (e.pointerType !== "touch") on.leave(); }}
+      onFocus={(e) => on.focus(k, e.currentTarget)} onBlur={() => on.leave()}
+      onClick={(e) => on.click(k, e.currentTarget)}>
+      {STAT_ICON}
+    </button>
+  );
+}
+
+interface StatHandlers { enter: (k: string, el: HTMLElement) => void; focus: (k: string, el: HTMLElement) => void; leave: () => void; click: (k: string, el: HTMLElement) => void }
+
+/** The badge's popover and dropdown content. */
+function StatPop({ k, s, c }: { k: string; s: ColStat; c?: Column }) {
+  const kind = kindOfType(c?.type) || s.kind;
+  return (
+    <>
+      <p className="dg-sp-h"><code>{k}</code><span>{c?.type ? baseTypeOf(c.type) : KIND_WORD[kind] || "type not stated"}</span></p>
+      <p className="dg-sp-n"><b>{pct(s.nulls, s.n)}% null</b> · {s.distinct} distinct</p>
+      {s.lo !== undefined && s.hi !== undefined ? (
+        <p className="dg-sp-r"><span>{s.loLabel}</span> <code>{short(s.lo, 30)}</code><span className="sep"> · </span><span>{s.hiLabel}</span> <code>{short(s.hi, 30)}</code></p>
+      ) : null}
+      {s.n - s.nulls > 0 ? <span className="dg-sp-d"><Dist s={s} /></span> : null}
+      <p className="dg-sp-note">From the {s.n} sample {s.n === 1 ? "row" : "rows"}, not the database.</p>
+    </>
+  );
+}
+
+const KIND_WORD: Record<string, string> = { num: "number", text: "text", json: "JSON", array: "array", uuid: "uuid", date: "date", time: "time", bool: "boolean" };
+const baseTypeOf = (type: string) => type.split(/\s+(?=NOT\b|NULL\b|PRIMARY\b|DEFAULT\b|REFERENCES\b|UNIQUE\b|CHECK\b)/i)[0].trim();
 
 function short(s: string, n: number) {
   return s.length > n ? s.slice(0, n - 1) + "…" : s;
@@ -189,17 +239,6 @@ export function Ticks({ text: t }: { text?: string }) {
   if (!t) return null;
   const parts = t.split("`");
   return <>{parts.map((p, i) => (i % 2 ? <code key={i}>{p}</code> : <Fragment key={i}>{p}</Fragment>))}</>;
-}
-
-function label(key: string, m?: M) {
-  if (m?.label) return m.label;
-  if (LABELS[key]) return LABELS[key];
-  const s = key.replace(/_/g, " ");
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-function hasValue(m?: M) {
-  return !!m && m.value !== undefined && m.value !== null && m.value !== "";
 }
 
 /** The grid's column keys: the table's columns (dropped ones left out) that the rows carry, then any other row key. */
@@ -322,7 +361,22 @@ function Preview({ t, keys, byName, stats, mode, onBands }: {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<Sort>(null);
   const [open, setOpen] = useState<Set<string>>(() => new Set());
-  const [showStats, setShowStats] = useState(true);
+  const [stat, setStat] = useState<{ key: string; open: boolean } | null>(null);
+  const statAnchor = useRef<HTMLElement | null>(null);
+  const statPop = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLElement>(null);
+  // under the badge, kept inside the preview's width (the drawer clips anything past its edge)
+  const placeStat = () => {
+    const pop = statPop.current, a = statAnchor.current, box = previewRef.current;
+    if (!pop || !a) return;
+    place(pop, a.getBoundingClientRect(), 6);
+    if (!box) return;
+    const pr = pop.getBoundingClientRect(), br = box.getBoundingClientRect();
+    const shift = pr.right > br.right ? pr.right - br.right : pr.left < br.left ? pr.left - br.left : 0;
+    if (shift) pop.style.left = `${parseFloat(pop.style.left || "0") - shift}px`;
+  };
+  const statTimer = useRef({ show: 0, hide: 0 });
+  const popId = `dg-sp-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const [copied, setCopied] = useState("");
   const [cuts, setCuts] = useState<number[] | null>(null);
   const [hot, setHot] = useState(-1);
@@ -359,10 +413,66 @@ function Preview({ t, keys, byName, stats, mode, onBands }: {
     ro.observe(w);
     ro.observe(g);
     return () => ro.disconnect();
-  }, [banded, keys, shown, showStats, open]);
+  }, [banded, keys, shown, open]);
 
   const bands = banded && cuts && cuts.length > 1 ? cuts.map((s, i) => ({ s, keys: keys.slice(s, cuts[i + 1] ?? keys.length) })) : [{ s: 0, keys }];
   useEffect(() => { if (banded) onBands?.(bands.length); }, [banded, bands.length, onBands]);
+
+  // D30 stats badges: hover or focus shows the popover, a click toggles it as a dropdown that stays; one at a time
+  const statOn: StatHandlers = {
+    enter: (k, el) => {
+      clearTimeout(statTimer.current.hide);
+      clearTimeout(statTimer.current.show);
+      statTimer.current.show = window.setTimeout(() => setStat((cur) => {
+        if (cur?.open) return cur;
+        statAnchor.current = el;
+        return { key: k, open: false };
+      }), 120);
+    },
+    focus: (k, el) => {
+      clearTimeout(statTimer.current.hide);
+      clearTimeout(statTimer.current.show);
+      setStat((cur) => { if (cur?.open) return cur; statAnchor.current = el; return { key: k, open: false }; });
+    },
+    leave: () => {
+      clearTimeout(statTimer.current.show);
+      clearTimeout(statTimer.current.hide);
+      statTimer.current.hide = window.setTimeout(() => setStat((cur) => (cur && !cur.open ? null : cur)), 150);
+    },
+    click: (k, el) => {
+      clearTimeout(statTimer.current.show);
+      clearTimeout(statTimer.current.hide);
+      statAnchor.current = el;
+      setStat((cur) => (cur?.open && cur.key === k ? null : { key: k, open: true }));
+    },
+  };
+  useLayoutEffect(() => { if (stat) placeStat(); }, [stat]);
+  useEffect(() => {
+    if (!stat) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault(); // the popover goes first; the drawer stays open
+      e.stopPropagation();
+      const back = stat.open ? statAnchor.current : null;
+      setStat(null);
+      back?.focus();
+    };
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (statPop.current?.contains(t) || statAnchor.current?.contains(t)) return;
+      setStat(null);
+    };
+    const onScroll = () => placeStat();
+    document.addEventListener("keydown", onKey, true);
+    if (stat.open) document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("scroll", onScroll, true);
+    return () => {
+      document.removeEventListener("keydown", onKey, true);
+      document.removeEventListener("pointerdown", onDown, true);
+      document.removeEventListener("scroll", onScroll, true);
+    };
+  }, [stat]);
+  useEffect(() => () => { clearTimeout(statTimer.current.show); clearTimeout(statTimer.current.hide); }, []);
 
   const toggleSort = (k: string) => setSort((s) => (!s || s.key !== k ? { key: k, dir: 1 } : s.dir === 1 ? { key: k, dir: -1 } : null));
   const toggleOpen = (id: string) => setOpen((o) => { const n = new Set(o); if (n.has(id)) n.delete(id); else n.add(id); return n; });
@@ -384,9 +494,9 @@ function Preview({ t, keys, byName, stats, mode, onBands }: {
   };
 
   if (!rows.length) return <p className="none">No sample rows in schema/{t.table}.json.</p>;
-  const grid = { t, byName, stats, shown, sort, toggleSort, open, toggleOpen, showStats, q, hot, setHot };
+  const grid = { t, byName, stats, shown, sort, toggleSort, open, toggleOpen, q, hot, setHot, statOn, openKey: stat?.open ? stat.key : null, popId };
   return (
-    <section className="dg-preview" aria-label="Data preview">
+    <section className="dg-preview" aria-label="Data preview" ref={previewRef}>
       <div className="dg-bar">
         <label className="dg-filter">
           <span className="sr-only">Filter rows</span>
@@ -394,7 +504,6 @@ function Preview({ t, keys, byName, stats, mode, onBands }: {
         </label>
         <span className="dg-shown">{q.trim() ? `${shown.length} of ${rows.length} rows` : `${rows.length} ${rows.length === 1 ? "row" : "rows"} · ${keys.length} columns`}{bands.length > 1 ? ` · ${bands.length} bands` : ""}</span>
         <span className="dg-actions">
-          <button type="button" className={cx("dg-btn", showStats && "on")} aria-pressed={showStats} onClick={() => setShowStats((v) => !v)}>Column stats</button>
           <button type="button" className="dg-btn" onClick={copy} disabled={!shown.length}>Copy TSV</button>
         </span>
         {copied ? <span className="dg-toast" role="status">{copied}</span> : null}
@@ -420,6 +529,11 @@ function Preview({ t, keys, byName, stats, mode, onBands }: {
           </div>
         ) : null}
       </div>
+      <div id={popId} ref={statPop} className={cx("dg-spop", stat && "show", stat?.open && "open")} role={stat?.open ? "dialog" : "tooltip"}
+        aria-label={stat ? `Column stats: ${stat.key}` : undefined} hidden={!stat}
+        onPointerEnter={() => clearTimeout(statTimer.current.hide)} onPointerLeave={() => { if (!stat?.open) statOn.leave(); }}>
+        {stat && stats.get(stat.key) ? <StatPop k={stat.key} s={stats.get(stat.key)!} c={byName.get(stat.key)} /> : null}
+      </div>
       <p className="dg-cap">
         <b>{rows.length} sample {rows.length === 1 ? "row" : "rows"} · {sourceTag(t.sample_source)}</b>
         <span> · column stats from sample rows, not the database. Source: {t.sample_source || "not stated"}</span>
@@ -428,14 +542,20 @@ function Preview({ t, keys, byName, stats, mode, onBands }: {
   );
 }
 
-/** One band of the preview grid (band -1 is the hidden measuring copy): sticky typed header, stats row, rows. */
-function GridTable({ t, keys, byName, stats, shown, sort, toggleSort, open, toggleOpen, showStats, q, hot, setHot, band, tref }: {
+/** One band of the preview grid (band -1 is the hidden measuring copy): sticky typed header with stats badges, rows. */
+function GridTable({ t, keys, byName, stats, shown, sort, toggleSort, open, toggleOpen, q, hot, setHot, band, tref, statOn, openKey, popId }: {
   t: SchemaTable; keys: string[]; byName: Map<string, Column>; stats: Map<string, ColStat>; shown: RowRef[]; sort: Sort;
-  toggleSort: (k: string) => void; open: Set<string>; toggleOpen: (id: string) => void; showStats: boolean; q: string;
+  toggleSort: (k: string) => void; open: Set<string>; toggleOpen: (id: string) => void; q: string;
+  statOn: StatHandlers; openKey: string | null; popId: string;
   hot: number; setHot: (i: number) => void; band: number; tref?: RefObject<HTMLTableElement | null>;
 }) {
   const allNew = t.state === "new";
   const live = band >= 0;
+  // a column whose cells are right-aligned numbers gets a right-aligned header, so the name sits over its values
+  const numCol = (k: string) => {
+    const vals = (t.sample_rows || []).map((r) => r?.[k]).filter((v) => v !== null && v !== undefined);
+    return vals.length > 0 && vals.every((v) => typeof v === "number");
+  };
   return (
     <table ref={tref}>
       <thead>
@@ -445,32 +565,21 @@ function GridTable({ t, keys, byName, stats, shown, sort, toggleSort, open, togg
             const c = byName.get(k);
             const sorted = sort?.key === k ? (sort.dir === 1 ? "ascending" : "descending") : "none";
             return (
-              <th key={k} scope="col" aria-sort={live ? sorted : undefined} className={cx(c && c.change !== "unchanged" && !allNew && `h-${c.change}`)}>
-                <button type="button" className="dg-h" onClick={live ? () => toggleSort(k) : undefined} tabIndex={live ? undefined : -1}
-                  title={live ? `${k}: ${c?.type || "type not stated"}. Click to sort.` : undefined}>
-                  <Glyph kind={kindOfType(c?.type)} />
-                  <span className="nm">{k}</span>
-                  <ChangeChip c={c} all={allNew} />
-                  {sorted !== "none" ? <span className="dg-sort" aria-hidden="true">{sorted === "ascending" ? "▲" : "▼"}</span> : null}
-                </button>
+              <th key={k} scope="col" aria-sort={live ? sorted : undefined} className={cx(c && c.change !== "unchanged" && !allNew && `h-${c.change}`, numCol(k) && "num")}>
+                <span className="dg-hc">
+                  <button type="button" className="dg-h" onClick={live ? () => toggleSort(k) : undefined} tabIndex={live ? undefined : -1}
+                    title={live ? `${k}: ${c?.type || "type not stated"}. Click to sort.` : undefined}>
+                    <Glyph kind={kindOfType(c?.type)} />
+                    <span className="nm">{k}</span>
+                    <ChangeChip c={c} all={allNew} />
+                    {sorted !== "none" ? <span className="dg-sort" aria-hidden="true">{sorted === "ascending" ? "▲" : "▼"}</span> : null}
+                  </button>
+                  <StatBadge k={k} s={stats.get(k)} live={live} openKey={openKey} popId={popId} on={live ? statOn : undefined} />
+                </span>
               </th>
             );
           })}
         </tr>
-        {showStats ? (
-          <tr className="dg-hstats">
-            <th className="rn" scope="row"><span className="sr-only">Column stats from sample rows</span></th>
-            {keys.map((k) => {
-              const s = stats.get(k)!;
-              return (
-                <th key={k} className="st">
-                  <MiniStat s={s} />
-                  <span className="dg-st-t">{pct(s.nulls, s.n)}% null · {s.distinct} distinct</span>
-                </th>
-              );
-            })}
-          </tr>
-        ) : null}
       </thead>
       <tbody>
         {shown.map(({ r, i }) => (
@@ -582,7 +691,7 @@ function Details({ t, where, onWhere }: { t: SchemaTable; where: { list: Where[]
   const n = (t.sample_rows || []).length;
   return (
     <div className="dg-details">
-      {t.summary ? <p className="drawer-summary"><Ticks text={t.summary} /></p> : null}
+      <TableBrief t={t} mode="drawer" />
       <section className="drawer-sec">
         <h3>Table</h3>
         <dl className="dg-kv">
@@ -592,7 +701,6 @@ function Details({ t, where, onWhere }: { t: SchemaTable; where: { list: Where[]
           <div><dt>Sample rows</dt><dd>{n} · {sourceTag(t.sample_source)}</dd></div>
         </dl>
       </section>
-      <LoadSec t={t} />
       {t.ddl ? (
         <section className="drawer-sec">
           <h3>DDL</h3>
@@ -626,45 +734,3 @@ function Details({ t, where, onWhere }: { t: SchemaTable; where: { list: Where[]
   );
 }
 
-function LoadSec({ t }: { t: SchemaTable }) {
-  return (
-    <section className="drawer-sec">
-      <h3>Load</h3>
-      <div className="load-grid">
-        <LoadCard kind="measured" data={t.measured} />
-        <LoadCard kind="expected" data={t.expected} />
-      </div>
-    </section>
-  );
-}
-
-function LoadCard({ kind, data }: { kind: "measured" | "expected"; data?: Record<string, M> }) {
-  const d = data || {};
-  const keys = [...CORE, ...Object.keys(d).filter((k) => !CORE.includes(k))];
-  const measured = kind === "measured";
-  return (
-    <div className={cx("card load-card", kind)}>
-      <div className="load-h">
-        <b>{measured ? "Measured" : "Expected"}</b>
-        <span>{measured ? "recorded, with source and date" : "after this design, with its basis"}</span>
-      </div>
-      <dl>
-        {keys.map((k) => {
-          const m = d[k];
-          return (
-            <div className="m" key={k}>
-              <dt>{label(k, m)}</dt>
-              {hasValue(m) ? (
-                <dd className="k">{String(m!.value)}{m!.unit ? <span className="u">{m!.unit}</span> : null}</dd>
-              ) : (
-                <dd className="none">{measured ? "not measured" : "not estimated"}</dd>
-              )}
-              {measured && hasValue(m) && (m!.source || m!.date) ? <dd className="src">{[m!.source, m!.date].filter(Boolean).join(" · ")}</dd> : null}
-              {m?.note ? <dd className="src basis"><Ticks text={m.note} /></dd> : null}
-            </div>
-          );
-        })}
-      </dl>
-    </div>
-  );
-}

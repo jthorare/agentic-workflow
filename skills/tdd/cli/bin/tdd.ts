@@ -4,7 +4,7 @@
 // documented path until the cutover (research/bun-port-2026.md §5.3); during the overlap both must agree byte for byte.
 const COMMANDS: Record<string, { file: string; python: string; help: string }> = {
   build:    { file: "build-tdd.ts",        python: "scripts/build_tdd.py",         help: "compile <slug>.md + lanes into build/content.json" },
-  lint:     { file: "lint-packet.ts",      python: "scripts/lint_packet.py",       help: "lint a packet (ten rules, errors first)" },
+  lint:     { file: "lint-packet.ts",      python: "scripts/lint_packet.py",       help: "lint a packet (eleven rules, errors first)" },
   agents:   { file: "write-agents.ts",     python: "scripts/write_agents.py",      help: "write the agents/ lane from content.json" },
   strip:    { file: "strip-page.ts",       python: "scripts/strip_page.py",        help: "strip a built page to plain html, text and outline" },
   hotspots: { file: "diagram-hotspots.ts", python: "scripts/diagram_hotspots.py",  help: "list the boxes of a tldraw SVG into <key>.hotspots.json" },
