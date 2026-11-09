@@ -15,9 +15,12 @@ public sealed class GraphValidatorLoopTests
     {
         ["for_each"] = new ForEachBlock(new DefaultForEachLimits()),
         ["collect"] = new CollectBlock(),
+        ["wait"] = new WaitBlock(TimeProvider.System),
     };
 
     private static GraphNode Each(string id) => new(NodeId.From(id), "for_each", Title: null, new JsonObject { ["items"] = "{{search.facts}}" });
+
+    private static GraphNode Pause(string id) => new(NodeId.From(id), "wait", Title: null, new JsonObject { ["until"] = "07:00", ["timezone"] = "America/Los_Angeles" });
 
     private static GraphNode Gather(string id) => new(NodeId.From(id), "collect", Title: null, new JsonObject { ["value"] = "{{item}}" });
 
@@ -43,6 +46,21 @@ public sealed class GraphValidatorLoopTests
         var finding = Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-001");
         Assert.Equal(["each"], finding.Nodes);
         Assert.Contains("collect", finding.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_wait_inside_a_loop_is_a_loop_finding_naming_it()
+    {
+        // why: an item of a loop runs in its own child workflow, which never parks, so a wait or ask_owner there would end at once
+        var spec = Spec(
+            [Trigger("daily"), Search("search"), Each("each"), Pause("pause"), Gather("gather")],
+            [Edge("daily", "search"), Edge("search", "each"), Edge("each", "pause"), Edge("pause", "gather")]);
+
+        var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
+
+        var finding = Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-003");
+        Assert.Equal(["pause"], finding.Nodes);
+        Assert.Contains("run_workflow", finding.Fix, StringComparison.Ordinal);
     }
 
     [Fact]
