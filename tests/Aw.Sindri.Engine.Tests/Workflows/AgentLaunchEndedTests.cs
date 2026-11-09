@@ -61,12 +61,15 @@ public sealed class AgentLaunchEndedTests
     {
         public ValueTask<Result<LaunchRow?>> Get(LaunchId launch, CancellationToken cancellationToken)
         {
-            var row = state is { } known
-                ? new LaunchRow(launch, A.FirstItemId, Repo: null, LaunchMode.Open, AgentId.From("claude-code"), "engine", known, DateTimeOffset.UnixEpoch, OutcomeAt: null,
-                    Code: null, Message: null, Stage: null, SessionId: null, ReportedSessionId: null, TabTitle: null, Viewer: null, Late: false, Attach: null, CatalogSource: null, ArgvHash: null, Ended: null,
-                    new LaunchStep(Instance: null, State: null, Attempt: null), Sequence: 1)
-                : (LaunchRow?)null;
-            return ValueTask.FromResult(Results.Success(row));
+            if (state is not { } known)
+            {
+                return ValueTask.FromResult(Results.Success<LaunchRow?>(null));
+            }
+
+            var row = new LaunchRow(launch, A.FirstItemId, Repo: null, LaunchMode.Open, AgentId.From("claude-code"), "engine", known, DateTimeOffset.UnixEpoch, OutcomeAt: null,
+                Code: null, Message: null, Stage: null, SessionId: null, ReportedSessionId: null, TabTitle: null, Viewer: null, Late: false, Attach: null, CatalogSource: null, ArgvHash: null, Ended: null,
+                new LaunchStep(), Sequence: 1);
+            return ValueTask.FromResult(Results.Success<LaunchRow?>(row));
         }
 
         public ValueTask<Result<IReadOnlyList<LaunchRow>>> ForItem(ItemId item, CancellationToken cancellationToken) => throw new NotSupportedException();
