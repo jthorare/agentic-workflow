@@ -90,7 +90,7 @@ public sealed class WriteAttributionTests
         await using var host = await GoldenHost.Start(temporary: true, ct);
         return host.App.Services.GetRequiredService<ICommandCatalog>().Rows
             .Where(IsWrite)
-            .Select(static row => ApiGolden.Slug("/sindri" + row.Route))
+            .Select(static row => ApiGolden.Slug(row.Route))
             .ToHashSet(StringComparer.Ordinal);
     }
 
