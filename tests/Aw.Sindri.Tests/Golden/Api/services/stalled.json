@@ -158,6 +158,18 @@
       "description": "Keeps the setup checklist in step with the profile."
     },
     {
+      "name": "todo-note",
+      "every": "24h",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Syncs the Obsidian todo note with your todos."
+    },
+    {
       "name": "workflow-schedule",
       "every": "1m",
       "paused": false,

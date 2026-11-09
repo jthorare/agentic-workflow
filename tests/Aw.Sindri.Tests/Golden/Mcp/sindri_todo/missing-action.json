@@ -2,9 +2,9 @@
   "isError": true,
   "structuredContent": {
     "code": "SND-CONTEXT-022",
-    "message": "sindri_todo needs 'action', one of add, change, done, reopen, remove, restore (fix: call it with {\"action\": \"add\"})"
+    "message": "sindri_todo needs 'action', one of add, change, done, reopen, remove, restore, keep, keepUndo, holdApply, holdRestore, holdUndo, noteImport (fix: call it with {\"action\": \"add\"})"
   },
   "content": [
-    "SND-CONTEXT-022 sindri_todo needs 'action', one of add, change, done, reopen, remove, restore (fix: call it with {\"action\": \"add\"})"
+    "SND-CONTEXT-022 sindri_todo needs 'action', one of add, change, done, reopen, remove, restore, keep, keepUndo, holdApply, holdRestore, holdUndo, noteImport (fix: call it with {\"action\": \"add\"})"
   ]
 }

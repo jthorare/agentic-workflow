@@ -137,6 +137,10 @@ internal static partial class CommandTable
         ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
         ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
+        ["wf", "list", .. var rest] => await new WfReadVerbs(desk.Client, output).List(rest, ct).ConfigureAwait(false),   // the reads go to the routes and never start the control plane
+        ["wf", "show", .. var rest] => await new WfReadVerbs(desk.Client, output).Show(rest, ct).ConfigureAwait(false),
+        ["wf", "runs", .. var rest] => await new WfReadVerbs(desk.Client, output).Runs(rest, ct).ConfigureAwait(false),
+        ["wf", "run-show", .. var rest] => await new WfReadVerbs(desk.Client, output).RunShow(rest, ct).ConfigureAwait(false),
         ["takeover" or "handback", ..] => await WorkflowCommandTable.RunShort(args, services, output, desk, ct).ConfigureAwait(false),
         _ => await UnknownVerb(args, output).ConfigureAwait(false),
     };
@@ -253,7 +257,7 @@ internal static partial class CommandTable
     private static Task<int> ItemOrProject(string[] args, (ControlPlaneClient Client, Output Output, IServiceProvider Services) host, StartCommand start, CancellationToken ct) => args switch
     {
         ["todo", "note", "set" or "stop", ..] => new TodoNoteVerbs(host.Services, host.Output).Run(args, ct),
-        ["todos" or "todo", ..] => new TodoVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
+        ["todos" or "todo", ..] => new TodoVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c), noteKey: c => TodoNoteTargets.Read(host.Services, c)).Run(args, ct),
         ["project" or "projects", ..] => new ProjectVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         ["connection" or "connections", ..] => new ConnectionVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         ["memory" or "memories", ..] => new MemoryVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
