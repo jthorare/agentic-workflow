@@ -43,7 +43,7 @@ public interface IWorkflowRunStore
     /// <returns>The runs.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> InFlight(WorkflowId workflow, CancellationToken cancellationToken);
 
-    /// <summary>A workflow's runs in every status, newest first (by start time, then by id).</summary>
+    /// <summary>A workflow's runs in every status, newest first (by start time, then by occurrence number, so occurrence 10 comes before 9).</summary>
     /// <param name="workflow">The workflow.</param>
     /// <param name="limit">How many runs to keep, 1 or more.</param>
     /// <param name="cancellationToken">Cancels the read.</param>

@@ -112,7 +112,7 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
             IReadOnlyList<WorkflowRun> recent = [.. _runs
                 .Where(r => r.WorkflowId == workflow)
                 .OrderByDescending(static r => r.StartedAt)
-                .ThenByDescending(static r => r.Id.Value, StringComparer.Ordinal)
+                .ThenByDescending(static r => r.Id.Occurrence)
                 .Take(Math.Max(limit, 1))];
             return Ok(recent);
         }

@@ -108,6 +108,20 @@ public abstract class WorkflowRunStoreContract
         Expect.Equal(0, (await store.Recent(WorkflowId.From("WF-00000000000000000000000000000009"), 10, Token)).Value.Count);
     }
 
+    /// <summary>Runs that started at the same instant list by occurrence number, so 10 comes before 9 (text order would put 9 first).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Recent_breaks_a_start_time_tie_by_occurrence_number()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(9, WorkflowRunStatus.Succeeded), Token)).Value;
+        _ = (await store.Insert(Run(10, WorkflowRunStatus.Succeeded), Token)).Value;
+
+        var runs = (await store.Recent(_workflow, 10, Token)).Value;
+
+        Expect.Sequence([Run(10).Id, Run(9).Id], runs.Select(static r => r.Id));
+    }
+
     /// <summary>Only running runs are listed, over every workflow, oldest first.</summary>
     /// <returns>The test.</returns>
     [Fact]
