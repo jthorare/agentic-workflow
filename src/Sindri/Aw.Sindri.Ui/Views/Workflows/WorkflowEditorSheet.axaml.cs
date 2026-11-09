@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Workflows;
@@ -32,7 +33,23 @@ internal sealed partial class WorkflowEditorSheet : UserControl
     }
 #pragma warning restore MA0155
 
-    private void OnClose(object? sender, RoutedEventArgs e)
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        // Escape closes the sheet; handled here, in the page, so the shell's own Escape (it closes the shell sheet) never sees it
+        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && DataContext is WorkflowsPageViewModel { IsEditing: true })
+        {
+            Close();
+            e.Handled = true;
+            return;
+        }
+
+        base.OnKeyDown(e);
+    }
+
+    private void OnClose(object? sender, RoutedEventArgs e) => Close();
+
+    private void Close()
     {
         if (DataContext is WorkflowsPageViewModel page)
         {

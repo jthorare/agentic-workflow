@@ -88,6 +88,41 @@ public sealed class WorkflowsEditorSheetTests
     }
 
     [Fact]
+    public async Task Save_sends_two_changed_fields_as_one_ops_call()
+    {
+        var page = await OnRuns();
+        _ = page.Runs.Graph!.SelectNode("agent");
+        await page.Edit(Token);
+        page.Editor.Fields[0].Text = "Check twice";
+        page.Editor.Fields[1].Text = "true";
+
+        await page.Save(Token);
+
+        var sent = Assert.Single(_f.Server.AppliedWorkflowOps);
+        Assert.Equal(2, sent.BaseRevision);
+        Assert.True(JsonNode.DeepEquals(
+            JsonNode.Parse("""[{"op":"set_config","node":"agent","path":"prompt","value":"Check twice"},{"op":"set_config","node":"agent","path":"strict","value":true}]"""),
+            JsonNode.Parse(sent.Ops)), sent.Ops);
+    }
+
+    [Fact]
+    public async Task A_refused_save_keeps_every_edit_in_the_form_and_the_sheet_open()
+    {
+        var page = await OnRuns();
+        _ = page.Runs.Graph!.SelectNode("agent");
+        await page.Edit(Token);
+        _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem("workflows-slug-ops", "ops-stale");
+        page.Editor.Fields[0].Text = "Check twice";
+        page.Editor.Fields[1].Text = "true";
+
+        await page.Save(Token);
+
+        _ = Assert.Single(_f.Server.AppliedWorkflowOps);
+        Assert.Equal((true, true, true), (page.IsEditing, page.Editor.NeedsReload, page.Editor.Fields.All(f => f.IsChanged)));
+        Assert.Equal(("Check twice", "true"), (page.Editor.Fields[0].Text, page.Editor.Fields[1].Text));
+    }
+
+    [Fact]
     public async Task Edit_is_off_for_an_archived_workflow_and_when_no_workflow_is_open()
     {
         var golden = Golden(Slug, "found");

@@ -115,8 +115,37 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         field.ErrorText = problem;
         if (problem.Length == 0)
         {
-            await Send(new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }, cancellationToken).ConfigureAwait(true);
+            await Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }), cancellationToken).ConfigureAwait(true);
         }
+    }
+
+    /// <summary>Sends a set_config for each of several fields of the selected node as ONE call on the revision read: all are applied or none. Every text is checked first; a problem on any field sends nothing.</summary>
+    /// <param name="edits">The fields and their new text.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal Task EditFields(IReadOnlyList<(string Name, string Text)> edits, CancellationToken cancellationToken)
+    {
+        if (_selected is not { } node)
+        {
+            return Task.CompletedTask;
+        }
+
+        var ops = new JsonArray();
+        var blocked = false;
+        foreach (var (name, text) in edits)
+        {
+            if (Fields.FirstOrDefault(f => string.Equals(f.Name, name, StringComparison.Ordinal)) is not { } field)
+            {
+                continue;
+            }
+
+            var (value, problem) = EditorFieldText.Parse(field, text);
+            field.ErrorText = problem;
+            blocked |= problem.Length > 0;
+            ops.Add((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value });
+        }
+
+        return blocked || ops.Count == 0 ? Task.CompletedTask : Send(ops, cancellationToken);
     }
 
     /// <summary>Sends an add_node.</summary>
@@ -133,7 +162,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
             op["title"] = title;
         }
 
-        return Send(op, cancellationToken);
+        return Send(new JsonArray((JsonNode)op), cancellationToken);
     }
 
     /// <summary>Sends a connect.</summary>
@@ -150,7 +179,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
             op["output"] = output;
         }
 
-        return Send(op, cancellationToken);
+        return Send(new JsonArray((JsonNode)op), cancellationToken);
     }
 
     /// <summary>Sends a remove_node.</summary>
@@ -158,10 +187,10 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
     internal Task RemoveNode(string id, CancellationToken cancellationToken) =>
-        Send(new JsonObject { ["op"] = "remove_node", ["node"] = id }, cancellationToken);
+        Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "remove_node", ["node"] = id }), cancellationToken);
 
     // One call, on the revision read, never retried. A saved edit reads the workflow again; a stale base asks for a reload and holds further edits.
-    private async Task Send(JsonObject op, CancellationToken cancellationToken)
+    private async Task Send(JsonArray ops, CancellationToken cancellationToken)
     {
         if (IsSending || NeedsReload || _url is not { } url || Slug.Length == 0)
         {
@@ -172,7 +201,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         IsSending = true;
         try
         {
-            var applied = await api.ApplyWorkflowOps(url, Slug, BaseRevision, new JsonArray(op).ToJsonString(), cancellationToken).ConfigureAwait(true);
+            var applied = await api.ApplyWorkflowOps(url, Slug, BaseRevision, ops.ToJsonString(), cancellationToken).ConfigureAwait(true);
             if (applied.IsError)
             {
                 Refused(applied.Error);

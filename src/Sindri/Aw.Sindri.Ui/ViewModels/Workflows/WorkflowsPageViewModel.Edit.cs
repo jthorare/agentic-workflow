@@ -58,7 +58,7 @@ internal sealed partial class WorkflowsPageViewModel
         Editor.Select(node);
     }
 
-    /// <summary>Sends the fields that changed, one edit each, on the revision read. A field with a problem stops the save before anything is sent; a refusal or a stale answer stops it after.</summary>
+    /// <summary>Sends every changed field in ONE call on the revision read: all are saved or none, and a refusal or a stale answer keeps every edit in the form. A field with a problem stops the save before anything is sent.</summary>
     /// <param name="cancellationToken">Cancels the calls.</param>
     /// <returns>A task that completes when the answers are shown.</returns>
     internal async Task Save(CancellationToken cancellationToken)
@@ -69,26 +69,7 @@ internal sealed partial class WorkflowsPageViewModel
         }
 
         var changed = Editor.Fields.Where(f => f.IsChanged).Select(f => (f.Name, f.Text)).ToList();
-        var blocked = false;
-        foreach (var field in Editor.Fields.Where(f => f.IsChanged))
-        {
-            field.ErrorText = EditorFieldText.Parse(field, field.Text).Problem;
-            blocked |= field.HasError;
-        }
-
-        if (blocked)
-        {
-            return;
-        }
-
-        foreach (var (name, text) in changed)
-        {
-            await Editor.EditField(name, text, cancellationToken).ConfigureAwait(true);
-            if (Editor.NeedsReload || Editor.FailureText.Length > 0)
-            {
-                return;   // the rest waits: a stale base is reloaded first, a refusal is read first
-            }
-        }
+        await Editor.EditFields(changed, cancellationToken).ConfigureAwait(true);
     }
 
     /// <summary>Closes the sheet.</summary>
