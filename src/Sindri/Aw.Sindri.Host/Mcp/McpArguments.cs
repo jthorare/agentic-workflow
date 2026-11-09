@@ -103,11 +103,12 @@ internal static class McpArguments
             : ContextErrors.McpArgumentsInvalid.With($"'{name}' must be a string, got {Kind(raw)} (fix: see {tool}'s input schema)");
     }
 
-    /// <summary>An optional whole number of at least <paramref name="min"/>; null counts as absent.</summary>
+    /// <summary>An optional whole number from <paramref name="min"/> to <paramref name="max"/>; null counts as absent.</summary>
     /// <param name="tool">The tool's name.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="name">The argument's name.</param>
     /// <param name="min">The least value.</param>
+    /// <param name="max">The greatest value.</param>
     /// <returns>The number, null when absent, or the refusal.</returns>
     internal static Result<long?> OptionalLong(string tool, IDictionary<string, JsonElement>? arguments, string name, long min = 0, long max = long.MaxValue)
     {
