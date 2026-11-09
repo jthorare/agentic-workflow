@@ -116,6 +116,32 @@ internal sealed class GraphRig : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Like <see cref="Rows"/>, but waits until the ledger holds <paramref name="expected"/>. The run's status is written
+    /// before its closing ledger row ('workflow.run.finished' or 'workflow.run.cancelled'), so <see cref="Final"/> can
+    /// return first. On timeout it returns the last rows so the caller's assert shows what was written.
+    /// </summary>
+    public async Task<IReadOnlyList<string>> RowsWith(string expected)
+    {
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        limit.CancelAfter(_patience);
+        var rows = await Rows();
+        try
+        {
+            while (!rows.Contains(expected, StringComparer.Ordinal))
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
+                rows = await Rows();
+            }
+        }
+        catch (OperationCanceledException) when (limit.IsCancellationRequested && !Token.IsCancellationRequested)
+        {
+            // timed out: the caller's assert reports the rows
+        }
+
+        return rows;
+    }
+
     public async Task<IReadOnlyDictionary<string, NodeRunStatus>> NodeStatuses(WorkflowRunId id) =>
         (await Runs.NodeRuns(id, Token)).Value.ToDictionary(static n => n.NodeId.Value, static n => n.Status, StringComparer.Ordinal);
 

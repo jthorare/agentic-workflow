@@ -55,6 +55,22 @@ public sealed class MemoryPageTests
         Assert.Equal(("3 facts", "Forgot 1 fact."), (store.FactsText, store.ForgetResult));
     }
 
+    [Theory]
+    [InlineData(10, null)]   // the API's own default: nothing extra is sent
+    [InlineData(25, 25)]
+    [InlineData(50, 50)]
+    public async Task A_search_sends_the_limit_chosen(int chosen, int? sent)
+    {
+        var page = await _f.Shown(Token);
+        var store = Assert.Single(page.Stores, s => s.Name == MemoryFixture.Store);
+        store.Search.SelectedLimit = chosen;
+
+        _ = await MemoryFixture.Searched(page, "Deploys", Token);
+
+        Assert.Equal(sent, _f.Server.Searches[^1].Limit);
+        Assert.Equal([10, 25, 50], store.Search.LimitChoices);
+    }
+
     [Fact]
     public async Task Forget_failure_keeps_the_row()
     {
