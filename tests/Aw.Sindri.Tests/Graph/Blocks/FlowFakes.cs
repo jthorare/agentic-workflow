@@ -9,6 +9,11 @@ namespace Aw.Sindri.Tests.Graph.Blocks;
 /// <summary>Fakes for the flow blocks (agent-first PR 9 part C): the seen store, the item, call and http ports.</summary>
 internal static class FlowFakes
 {
+    /// <summary>Two workflow ids ("WF-" and 32 lowercase hex digits).</summary>
+    public const string WorkflowA = "WF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+    public const string WorkflowB = "WF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+
     public sealed class MemorySeenStore : IGraphSeenStore
     {
         private readonly HashSet<(string Workflow, string Key)> _seen = [];

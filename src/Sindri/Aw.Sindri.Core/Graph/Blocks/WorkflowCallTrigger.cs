@@ -30,6 +30,15 @@ public sealed class WorkflowCallTrigger : IGraphBlock
     public BlockOutputs OutputsFor(JsonObject config) => _outputs;
 
     /// <inheritdoc />
-    public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken) =>
-        throw new NotSupportedException("workflow_call is not written yet");
+    public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        return ValueTask.FromResult<Result<BlockResult>>(new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal)
+        {
+            ["payload"] = context.Resolve("trigger.payload"),
+            ["parentRun"] = context.Resolve("trigger.parentRun"),
+            ["callDepth"] = context.Resolve("trigger.callDepth"),
+            ["by"] = context.Resolve("trigger.by"),
+        }));
+    }
 }

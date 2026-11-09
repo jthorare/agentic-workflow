@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -116,13 +117,17 @@ public sealed partial class GraphValidator
         var fields = block.OutputsFor(source.Config).Fields;
         var have = fields.TryGetValue(name, out var declared) ? declared : fields.GetValueOrDefault(name + "?")?.TrimEnd('?');
         var need = Needed(want);
-        if (have is null || need is null || string.Equals(have.TrimEnd('?'), need, StringComparison.Ordinal))
+        if (Fits(have, need))
         {
             return;
         }
 
         found.Add(Found.At("GRAPH-REF-005", scope.Node.Id.Value, field, $"'{reference}' is {have.TrimEnd('?')}, but this field takes {need}", $"read an output of type {need}, or write the value in place"));
     }
+
+    // why: a block declares 'any' for an output whose type depends on the answer (an http body), which fits every field
+    private static bool Fits([NotNullWhen(false)] string? have, [NotNullWhen(false)] string? need) =>
+        have is null || need is null || string.Equals(have.TrimEnd('?'), "any", StringComparison.Ordinal) || string.Equals(have.TrimEnd('?'), need, StringComparison.Ordinal);
 
     private static string? Needed(BlockFieldType type) => type switch
     {

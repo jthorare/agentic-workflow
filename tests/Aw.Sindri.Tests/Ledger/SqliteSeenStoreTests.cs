@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Ledger;
 using Aw.Sindri.Infrastructure.Workflow;
+using Aw.Sindri.Tests.Graph.Blocks;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Ledger;
@@ -11,8 +12,8 @@ namespace Aw.Sindri.Tests.Ledger;
 [Lane(TestLane.Integration)]
 public sealed class SqliteSeenStoreTests : IDisposable
 {
-    private static readonly WorkflowId _a = WorkflowId.From("wf_a");
-    private static readonly WorkflowId _b = WorkflowId.From("wf_b");
+    private static readonly WorkflowId _a = WorkflowId.From(FlowFakes.WorkflowA);
+    private static readonly WorkflowId _b = WorkflowId.From(FlowFakes.WorkflowB);
 
     private readonly TempHome _home = new();
     private readonly LedgerDatabase _database;

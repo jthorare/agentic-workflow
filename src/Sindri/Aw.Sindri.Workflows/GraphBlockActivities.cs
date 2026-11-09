@@ -44,8 +44,20 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         }
 
         var context = new BlockContext(run, node, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup);
-        var result = await block.Execute(context, cancel).ConfigureAwait(false);
-        return Cut(scope, config) ?? (result.IsError ? Failed(config, result.Error) : Succeeded(config, result.Value));   // a condition reads its references inside Execute
+        var result = await block.Execute(context, cancel).ConfigureAwait(false);   // a condition reads its references inside Execute
+        if (Cut(scope, config) is { } cutAfter)
+        {
+            return cutAfter;
+        }
+
+        if (result.IsError)
+        {
+            return Failed(config, result.Error);
+        }
+
+        // why: a block that remembers something (only_new) does it here, once its node worked: a node that failed leaves nothing behind
+        var committed = await block.Commit(context, result.Value, cancel).ConfigureAwait(false);
+        return committed.IsError ? Failed(config, committed.Error) : Succeeded(config, result.Value);
     }
 
     private static GraphBlockOutcome? Cut(Scope scope, JsonObject config) => scope.Cut is { } cut
@@ -89,7 +101,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         private JsonNode? Root(string name) => name switch
         {
             "trigger" => _trigger,
-            "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision },
+            "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision, ["id"] = run.WorkflowId.Value },
             _ => Output(name),
         };
 

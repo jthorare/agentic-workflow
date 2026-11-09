@@ -9,7 +9,7 @@ namespace Aw.Sindri.Tests.Graph.Blocks;
 public sealed class OnlyNewBlockTests
 {
     private static BlockContext Context(JsonArray items, string? key = "id") =>
-        BlockFakes.Context(key is null ? new JsonObject { ["items"] = items } : new JsonObject { ["items"] = items, ["key"] = key }, new(StringComparer.Ordinal) { ["workflow.id"] = "wf_a" });
+        BlockFakes.Context(key is null ? new JsonObject { ["items"] = items } : new JsonObject { ["items"] = items, ["key"] = key }, new(StringComparer.Ordinal) { ["workflow.id"] = FlowFakes.WorkflowA });
 
     private static JsonArray Items(params int[] ids) => [.. ids.Select(static i => (JsonNode)new JsonObject { ["id"] = i, ["title"] = "t" + i.ToString(System.Globalization.CultureInfo.InvariantCulture) })];
 
@@ -73,7 +73,7 @@ public sealed class OnlyNewBlockTests
         _ = await block.Commit(first, await Run(block, first), TestContext.Current.CancellationToken);
 
         var next = await Run(block, Context(Items(2, 3, 3, 4)));
-        var other = await Run(block, BlockFakes.Context(new JsonObject { ["items"] = Items(1), ["key"] = "id" }, new(StringComparer.Ordinal) { ["workflow.id"] = "wf_b" }));
+        var other = await Run(block, BlockFakes.Context(new JsonObject { ["items"] = Items(1), ["key"] = "id" }, new(StringComparer.Ordinal) { ["workflow.id"] = FlowFakes.WorkflowB }));
 
         Assert.Equal([3, 4], next.Outputs["items"]!.AsArray().Select(static i => i!["id"]!.GetValue<int>()));   // 2 was seen, the second 3 is a repeat in the same list
         _ = Assert.Single(other.Outputs["items"]!.AsArray());
@@ -96,7 +96,7 @@ public sealed class OnlyNewBlockTests
         var block = new OnlyNewBlock(new FlowFakes.MemorySeenStore());
 
         var noKey = await block.Execute(Context([new JsonObject { ["title"] = "x" }]), TestContext.Current.CancellationToken);
-        var notList = await block.Execute(BlockFakes.Context(new JsonObject { ["items"] = "oops" }, new(StringComparer.Ordinal) { ["workflow.id"] = "wf_a" }), TestContext.Current.CancellationToken);
+        var notList = await block.Execute(BlockFakes.Context(new JsonObject { ["items"] = "oops" }, new(StringComparer.Ordinal) { ["workflow.id"] = FlowFakes.WorkflowA }), TestContext.Current.CancellationToken);
         var noWorkflow = await block.Execute(BlockFakes.Context(new JsonObject { ["items"] = Items(1), ["key"] = "id" }), TestContext.Current.CancellationToken);
 
         Assert.Contains("'id'", noKey.Error.Message, StringComparison.Ordinal);

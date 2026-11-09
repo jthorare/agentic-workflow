@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel;
 
 namespace Aw.Sindri.Core.Graph.Guards;
@@ -21,11 +22,43 @@ public static class CallDepth
     /// can be traced back to the workflow that launched it; until then only the trigger's 'parentRun' is read.
     /// </param>
     /// <returns>The callee's depth, SND-GRAPH-121 when the run would start its own workflow, or SND-GRAPH-120 when the call is too deep.</returns>
-    public static Result<int> Next(CallOrigin caller, string target, int max, IReadOnlyCollection<string>? launchLineage = null) =>
-        throw new NotSupportedException("CallDepth.Next is not written yet");
+    public static Result<int> Next(CallOrigin caller, string target, int max, IReadOnlyCollection<string>? launchLineage = null)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        ArgumentNullException.ThrowIfNull(target);
+        if (SelfStart(caller, target, launchLineage) is { } own)
+        {
+            return SindriErrors.GraphSelfStart.With(own);
+        }
+
+        var next = caller.Depth + 1;
+        return next > max
+            ? SindriErrors.GraphCallDepth.With(string.Create(CultureInfo.InvariantCulture, $"calling '{target}' would be depth {next}, and workflow.callDepth allows {max} (fix: start the work from a top-level workflow, or raise workflow.callDepth)"))
+            : next;
+    }
 
     /// <summary>The slug part of a run id, '&lt;slug&gt;@&lt;revision&gt;:&lt;occurrence&gt;'.</summary>
     /// <param name="run">The run id text.</param>
-    /// <returns>The slug.</returns>
-    public static string SlugOf(string run) => throw new NotSupportedException("CallDepth.SlugOf is not written yet");
+    /// <returns>The slug; the whole text when it has no '@'.</returns>
+    public static string SlugOf(string run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        var at = run.IndexOf('@', StringComparison.Ordinal);
+        return at < 0 ? run : run[..at];
+    }
+
+    private static string? SelfStart(CallOrigin caller, string target, IReadOnlyCollection<string>? launchLineage)
+    {
+        if (string.Equals(SlugOf(caller.Run), target, StringComparison.Ordinal))
+        {
+            return $"'{target}' can't start itself (fix: call a different workflow)";
+        }
+
+        if (caller.ParentRun is { } parent && string.Equals(SlugOf(parent), target, StringComparison.Ordinal))
+        {
+            return $"'{target}' started this run, so this run can't start it again (fix: end the chain here)";
+        }
+
+        return launchLineage?.Contains(target, StringComparer.Ordinal) == true ? $"'{target}' launched the session that is calling it (fix: end the chain here)" : null;
+    }
 }
