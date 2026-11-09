@@ -109,7 +109,7 @@ public sealed class AskOwnerBlockTests
     public void Any_text_is_an_answer_when_the_node_offers_no_choices_and_a_choice_is_not()
     {
         Assert.Null(AskOwnerBlock.CheckAnswer([], "ship it on Friday", choice: null));
-        Assert.Contains("no choices", AskOwnerBlock.CheckAnswer([], text: null, "yes")!, StringComparison.Ordinal);
+        Assert.Contains("no choices", AskOwnerBlock.CheckAnswer([], text: null, "yes"), StringComparison.Ordinal);
     }
 
     [Fact]
