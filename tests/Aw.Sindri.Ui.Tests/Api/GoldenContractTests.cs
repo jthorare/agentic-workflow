@@ -118,6 +118,13 @@ public sealed class GoldenContractTests
         ["todos-reopen"] = As<TodoAcceptedView>,   // POST /todos/{id}/reopen's 200 (api Ph1a)
         ["todos-remove"] = As<TodoAcceptedView>,   // POST /todos/{id}/remove's 200 (api Ph1a)
         ["todos-restore"] = As<TodoAcceptedView>,   // POST /todos/{id}/restore's 200 (api Ph1a)
+        ["todos-note"] = As<TodoNoteView>,   // GET /sindri/todos/note (note, hold); conflict.json is a todo, read as TodoView by _readByScenario
+    };
+
+    // A scenario of a slug that holds files of another shape than the rest of its folder (todos-note/conflict.json is the TodoItem GET /todos/{id} serves).
+    private static readonly Dictionary<(string Slug, string Scenario), Func<byte[], Result<object>>> _readByScenario = new()
+    {
+        [("todos-note", "conflict")] = AsShownTodo,   // { asOf, todo }: the app reads the todo inside (the panel takes it from the list, not from this route)
     };
 
     // Routes the app never calls yet: stop is Health's (U4), and the
@@ -126,7 +133,6 @@ public sealed class GoldenContractTests
     {
         "stop",
         "todos-id",   // the app never calls GET /sindri/todos/{id}; the CLI's `todo show` does
-        "todos-note",   // the note route's goldens (#2354): the app's Ph4 client reads them and moves this slug to _read
         "workflow-instances", "workflow-instance", "workflow-instance-fact", "workflow-status", "workflow-recipe", "workflow-recipes", "workflow-recipes-id-stats", "workflow-instances-start", "workflow-recipes-approve-all",   // v2 PR 4: the app has no Recipes, Workflows or run pages; the routes stay served until the backend PR removes them
         "workflow-challenges-app",   // q93: the app asks for no challenge any more; the route stays served until api removes it
         "setup-repos",   // POST /setup/repos (Add repo): the app's call and the job's progress are U3's (SO-U3)
@@ -171,8 +177,9 @@ public sealed class GoldenContractTests
                 continue;
             }
 
-            Assert.True(_read.TryGetValue(slug, out var read), $"{kind}/{slug}/{scenario}: a route the app doesn't place (read it or list it as not read)");
-            var value = read(bytes);
+            var placed = _readByScenario.TryGetValue((slug, scenario), out var read) || _read.TryGetValue(slug, out read);
+            Assert.True(placed, $"{kind}/{slug}/{scenario}: a route the app doesn't place (read it or list it as not read)");
+            var value = read!(bytes);
             Assert.True(value.IsSuccess, $"{kind}/{slug}/{scenario}: {(value.IsError ? value.Error.Message : string.Empty)}");
         }
     }
@@ -390,6 +397,13 @@ public sealed class GoldenContractTests
         }
 
         return frames;
+    }
+
+    // GET /todos/{id}'s shape: { asOf, todo }; the todo is read as the app reads one from the list.
+    private static Result<object> AsShownTodo(byte[] body)
+    {
+        var todo = (JsonNode.Parse(body) as JsonObject)?["todo"];
+        return todo is null ? new Error("TEST-001", ErrorKind.Invalid, "no todo in the answer") : As<TodoView>(Encoding.UTF8.GetBytes(todo.ToJsonString()));
     }
 
     private static Result<object> As<T>(byte[] body)
