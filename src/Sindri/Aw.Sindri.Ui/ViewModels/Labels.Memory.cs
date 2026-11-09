@@ -70,6 +70,15 @@ internal static partial class Labels
     /// <summary>The level a search starts at.</summary>
     internal const string MemoryDefaultLevel = "balanced";
 
+    /// <summary>The limit choice's accessible name.</summary>
+    internal const string MemoryLimitField = "Show up to";
+
+    /// <summary>The most facts a search may ask for: memory_search's default (10) first, its ceiling (50) last.</summary>
+    internal static readonly int[] MemoryLimits = [10, 25, 50];
+
+    /// <summary>The limit a search starts at: the API's own default, so it is not sent.</summary>
+    internal const int MemoryDefaultLimit = 10;
+
     /// <summary>The chip for a semantic answer.</summary>
     internal const string MemoryModeSemantic = "Semantic match";
 

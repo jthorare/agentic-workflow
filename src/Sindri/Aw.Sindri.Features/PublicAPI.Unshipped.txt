@@ -4898,9 +4898,7 @@ Aw.Sindri.Features.GetConnection.GetConnectionResponse
 Aw.Sindri.Features.GetConnection.GetConnectionResponse.<Clone>$() -> Aw.Sindri.Features.GetConnection.GetConnectionResponse!
 Aw.Sindri.Features.GetConnection.GetConnectionResponse.Connection.get -> Aw.Sindri.Core.Connections.ConnectionView!
 Aw.Sindri.Features.GetConnection.GetConnectionResponse.Connection.init -> void
-Aw.Sindri.Features.GetConnection.GetConnectionResponse.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionView! Connection) -> void
 Aw.Sindri.Features.GetConnection.GetConnectionResponse.Equals(Aw.Sindri.Features.GetConnection.GetConnectionResponse? other) -> bool
-Aw.Sindri.Features.GetConnection.GetConnectionResponse.GetConnectionResponse(Aw.Sindri.Core.Connections.ConnectionView! Connection) -> void
 Aw.Sindri.Features.ListConnections.ListConnectionsRequest
 Aw.Sindri.Features.ListConnections.ListConnectionsRequest.<Clone>$() -> Aw.Sindri.Features.ListConnections.ListConnectionsRequest!
 Aw.Sindri.Features.ListConnections.ListConnectionsRequest.Equals(Aw.Sindri.Features.ListConnections.ListConnectionsRequest? other) -> bool
@@ -5254,3 +5252,21 @@ static Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.operator !=(Aw.Si
 static Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.operator ==(Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest? left, Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest? right) -> bool
 static Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.operator !=(Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse? left, Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse? right) -> bool
 static Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.operator ==(Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse? left, Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse? right) -> bool
+Aw.Sindri.Features.GetConnection.GetConnectionResponse.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionView! Connection, out Aw.Sindri.Features.GetConnection.SignInFailureView? LastSignInFailure) -> void
+Aw.Sindri.Features.GetConnection.GetConnectionResponse.GetConnectionResponse(Aw.Sindri.Core.Connections.ConnectionView! Connection, Aw.Sindri.Features.GetConnection.SignInFailureView? LastSignInFailure = null) -> void
+Aw.Sindri.Features.GetConnection.GetConnectionResponse.LastSignInFailure.get -> Aw.Sindri.Features.GetConnection.SignInFailureView?
+Aw.Sindri.Features.GetConnection.GetConnectionResponse.LastSignInFailure.init -> void
+Aw.Sindri.Features.GetConnection.SignInFailureView
+Aw.Sindri.Features.GetConnection.SignInFailureView.<Clone>$() -> Aw.Sindri.Features.GetConnection.SignInFailureView!
+Aw.Sindri.Features.GetConnection.SignInFailureView.At.get -> System.DateTimeOffset
+Aw.Sindri.Features.GetConnection.SignInFailureView.At.init -> void
+Aw.Sindri.Features.GetConnection.SignInFailureView.Code.get -> string!
+Aw.Sindri.Features.GetConnection.SignInFailureView.Code.init -> void
+Aw.Sindri.Features.GetConnection.SignInFailureView.Deconstruct(out string! Code, out System.DateTimeOffset At) -> void
+Aw.Sindri.Features.GetConnection.SignInFailureView.Equals(Aw.Sindri.Features.GetConnection.SignInFailureView? other) -> bool
+Aw.Sindri.Features.GetConnection.SignInFailureView.SignInFailureView(string! Code, System.DateTimeOffset At) -> void
+override Aw.Sindri.Features.GetConnection.SignInFailureView.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetConnection.SignInFailureView.GetHashCode() -> int
+override Aw.Sindri.Features.GetConnection.SignInFailureView.ToString() -> string!
+static Aw.Sindri.Features.GetConnection.SignInFailureView.operator !=(Aw.Sindri.Features.GetConnection.SignInFailureView? left, Aw.Sindri.Features.GetConnection.SignInFailureView? right) -> bool
+static Aw.Sindri.Features.GetConnection.SignInFailureView.operator ==(Aw.Sindri.Features.GetConnection.SignInFailureView? left, Aw.Sindri.Features.GetConnection.SignInFailureView? right) -> bool

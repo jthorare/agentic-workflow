@@ -10,12 +10,13 @@ namespace Aw.Sindri.Core.Connections;
 /// </summary>
 public sealed class SignInOutcomes
 {
-    private readonly ConcurrentDictionary<string, Error> _failed = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, SignInFailure> _failed = new(StringComparer.Ordinal);
 
     /// <summary>Remembers a failed sign-in.</summary>
     /// <param name="name">The connection name as text.</param>
     /// <param name="error">The failure, already safe to show.</param>
-    public void Failed(string name, Error error) => _failed[name] = error;
+    /// <param name="at">When it failed.</param>
+    public void Failed(string name, Error error, DateTimeOffset at) => _failed[name] = new SignInFailure(error, at);
 
     /// <summary>Forgets the outcome (a new sign-in started, or one finished).</summary>
     /// <param name="name">The connection name as text.</param>
@@ -24,5 +25,10 @@ public sealed class SignInOutcomes
     /// <summary>The last failure of <paramref name="name"/>, or null.</summary>
     /// <param name="name">The connection name as text.</param>
     /// <returns>The error, or null.</returns>
-    public Error? Last(string name) => _failed.GetValueOrDefault(name);
+    public Error? Last(string name) => _failed.GetValueOrDefault(name)?.Error;
+
+    /// <summary>The last failure of <paramref name="name"/> with its time, or null.</summary>
+    /// <param name="name">The connection name as text.</param>
+    /// <returns>The failure, or null.</returns>
+    public SignInFailure? LastFailure(string name) => _failed.GetValueOrDefault(name);
 }
