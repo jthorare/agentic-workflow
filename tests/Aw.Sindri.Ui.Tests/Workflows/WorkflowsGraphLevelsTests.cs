@@ -26,7 +26,7 @@ public sealed class WorkflowsGraphLevelsTests
         await page.OpenWorkflow(Slug, Token);
 
         var graph = Assert.IsType<WorkflowGraphViewModel>(page.Runs.Graph);
-        Assert.Equal(["start", "agent"], graph.Nodes.Select(n => n.Id));
+        Assert.Equal(["start", "agent"], graph.Nodes.Select(n => n.Id), StringComparer.Ordinal);
         Assert.All(graph.Nodes, n => Assert.Equal(string.Empty, n.StatusWord));
     }
 
