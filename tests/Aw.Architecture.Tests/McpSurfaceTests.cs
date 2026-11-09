@@ -21,8 +21,8 @@ using Aw.Sindri.Features.WriteMemoryFact;
 namespace Aw.Architecture.Tests;
 
 /// <summary>
-/// The MCP surface (API spec §8, engine spec §4.2): the sindri_* and context_* tools reach queries and the one request
-/// command (and, todos excepted, the six todo writes: todo spec D2), so the endpoint can't even attempt a decision, a desk, protected or job action, and it never carries a
+/// The MCP surface (API spec §8, engine spec §4.2): the sindri_* and context_* tools reach queries, sindri_request, and the Desk + SessionOk writes listed in
+/// _allowed (the connection, memory and todo writes, and the workflow writes of issue 2258 Part 1), so the endpoint can't even attempt a decision, any other desk, protected or job action, and it never carries a
 /// challenge answer or the launch secret. Read from the Sindri host's catalog, the one table the command chain reads.
 /// </summary>
 [Trait("Lane", "integration")]
