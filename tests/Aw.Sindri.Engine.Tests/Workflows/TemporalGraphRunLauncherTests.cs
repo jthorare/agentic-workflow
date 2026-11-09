@@ -65,7 +65,7 @@ public sealed class TemporalGraphRunLauncherTests(SindriTimeSkippingServer serve
     public async Task A_start_of_a_run_id_Temporal_already_has_is_launched()
     {
         var run = NewRun();
-        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success<ITemporalClient>(server.Environment.Client)), TaskQueue());
+        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(server.Environment.Client)), TaskQueue());
         _ = (await launcher.Launch(run, Token)).Value;
 
         var again = await launcher.Launch(run, Token);
