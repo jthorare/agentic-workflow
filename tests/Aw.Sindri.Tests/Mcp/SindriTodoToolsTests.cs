@@ -152,7 +152,7 @@ public sealed class SindriTodoToolsTests
         await using var mcp = await McpSession.Open(world.Host, "alpha", ct);
 
         var missing = await mcp.Call("sindri_todo", """{"text":"x"}""", ct);
-        var unknown = await mcp.Call("sindri_todo", """{"action":"keep","id":"td_0000000000000000000000000h","side":"sindri"}""", ct);
+        var unknown = await mcp.Call("sindri_todo", """{"action":"archive","id":"td_0000000000000000000000000h"}""", ct);
         var wrongType = await mcp.Call("sindri_todo", """{"action":"add","text":5}""", ct);
         var badState = await mcp.Call("sindri_todos", """{"state":"soon"}""", ct);
 
