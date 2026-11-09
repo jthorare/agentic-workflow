@@ -178,5 +178,25 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
         Assert.DoesNotContain(all, static n => n.Status is NodeRunStatus.Running or NodeRunStatus.Waiting);
     }
 
+    [Fact]
+    public async Task A_failed_for_each_that_continues_skips_its_body_and_collect_and_the_walk_goes_on()
+    {
+        await using var rig = GraphRig.Start(server.Environment);
+        var workflow = await rig.Define(GraphRig.Spec("unlimited",
+            [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", onFailure: "continue", config: Each(maxItems: 2)), GraphRig.Node("tell", "echo"),
+                GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{item}}" }), GraphRig.Node("after", "echo")],
+            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "tell"), GraphRig.Edge("tell", "gather"), GraphRig.Edge("gather", "after")]));
+
+        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, Trigger(Numbers(3)));
+        var run = await rig.Final(started.RunId);
+        var nodes = await rig.NodeStatuses(started.RunId);
+
+        Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
+        Assert.Equal(NodeRunStatus.Failed, nodes["each"]);
+        Assert.Equal(NodeRunStatus.Skipped, nodes["tell"]);
+        Assert.Equal(NodeRunStatus.Skipped, nodes["gather"]);
+        Assert.Equal([$"{rig.Slug}@1:1/after"], rig.Blocks.Log);   // the body never ran, the node after the collect did
+    }
+
     private static JsonObject Item(int n, bool keep) => new() { ["n"] = n, ["keep"] = keep };
 }
