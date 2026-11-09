@@ -117,6 +117,9 @@ public sealed class GoldenContractTests
         ["todos-reopen"] = As<TodoAcceptedView>,   // POST /todos/{id}/reopen's 200 (api Ph1a)
         ["todos-remove"] = As<TodoAcceptedView>,   // POST /todos/{id}/remove's 200 (api Ph1a)
         ["todos-restore"] = As<TodoAcceptedView>,   // POST /todos/{id}/restore's 200 (api Ph1a)
+        ["todos-note-check"] = As<TodoNoteCheckView>,   // POST /todos/note/check: the Settings card's Check note (todo Ph3b); a bad key is ProblemDetails
+        ["todos-note-set"] = As<TodoNoteChangedView>,   // POST /todos/note/set: Start syncing (changed, unchanged); the stale 409 is ProblemDetails
+        ["todos-note-stop"] = As<TodoNoteChangedView>,   // POST /todos/note/stop: Stop syncing (changed, unchanged)
         ["todos-note"] = As<TodoNoteView>,   // GET /sindri/todos/note (note, hold); conflict.json is a todo, read as TodoView by _readByScenario
     };
 
