@@ -64,7 +64,7 @@ internal sealed class GraphHttpClient(HttpMessageHandler handler, Func<Cancellat
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)   // boundary: the request budget ran out (headers or body), not a cancel
         {
-            return SindriErrors.GraphHttpFailed.With($"the request to {request.Url.Host} timed out after {(budget ?? TimeSpan.FromSeconds(30)).TotalSeconds:0.##} s (sending and reading the answer)");
+            return SindriErrors.GraphHttpFailed.With($"the request to {request.Url.Host} timed out after {(budget ?? TimeSpan.FromSeconds(30)).TotalSeconds.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)} s (sending and reading the answer)");
         }
     }
 
