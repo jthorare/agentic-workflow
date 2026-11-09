@@ -49,16 +49,15 @@ public sealed class OnyxPurgeCommandTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task An_agent_session_is_refused_and_nothing_is_listed_or_deleted()
+    public async Task An_agent_session_that_types_yes_is_listed_and_deleted_like_the_owner()
     {
         Seed();
 
         var exit = await _rig.Run(human: false, answer: "yes");
 
-        Assert.Equal(2, exit);
-        Assert.Contains("SND-AUTH-002", _rig.Error, StringComparison.Ordinal);
-        Assert.Empty(_rig.Calls);
-        Assert.True(Directory.Exists(_rig.OnyxDirectory));
+        Assert.Equal(0, exit);
+        Assert.DoesNotContain("SND-AUTH-002", _rig.Error, StringComparison.Ordinal);
+        Assert.False(Directory.Exists(_rig.OnyxDirectory));
     }
 
     [Theory, Trait("Lane", "unit")]

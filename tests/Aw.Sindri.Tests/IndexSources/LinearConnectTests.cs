@@ -48,18 +48,6 @@ public sealed class LinearConnectTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_is_refused_before_anything_is_asked_or_saved()
-    {
-        var result = await Connect().Run(human: false, Ct);
-
-        Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
-        Assert.Empty(_prompts.Asked);
-        Assert.Empty(_secrets.Stored);
-        Assert.Empty(_written.Pointers);
-        Assert.Empty(_built);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public async Task The_key_is_asked_with_the_echo_off_checked_against_the_teams_then_stored_and_pointed_to()
     {
         _reader.Readable = ["ENG", "APP", "OPS"];

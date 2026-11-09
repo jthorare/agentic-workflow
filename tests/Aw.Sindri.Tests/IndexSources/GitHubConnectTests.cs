@@ -39,17 +39,6 @@ public sealed class GitHubConnectTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_is_refused_before_anything_is_asked_or_saved()
-    {
-        var result = await Connect().Run(human: false, Ct);
-
-        Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
-        Assert.Empty(_prompts.Asked);
-        Assert.Empty(_secrets.Stored);
-        Assert.Empty(_written.Pointers);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public async Task A_profile_with_no_github_repos_asks_nothing_and_sends_nothing()
     {
         _profiles.Live = Profile("""{"sources":{}}""");

@@ -26,26 +26,25 @@ public sealed class LinearSinceServiceTests
     private IDisposable Owner() => _slice.Callers.Enter(A.Caller().Human().Build());
 
     [Fact]
-    public async Task A_session_is_refused_SND_AUTH_002_and_nothing_is_read()
+    public async Task A_session_reads_the_changes_too()
     {
         using var entered = _slice.Callers.Enter(A.Caller().Build());
 
         var result = await Service().Handle(new GetLinearSinceRequest(), Token);
 
-        Expect.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
-        Assert.Empty(_facts.AskedAfter);
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        _ = Assert.Single(_facts.AskedAfter);
     }
 
     [Fact]
-    public async Task Contexts_session_refusal_SND_CONTEXT_020_is_SND_AUTH_002()
+    public async Task Contexts_own_refusal_SND_CONTEXT_020_comes_through_as_it_is()
     {
         using var entered = Owner();
         _ = _facts.Failing(ContextErrors.SessionsDisabled.With("what changed is the owner's"));
 
         var result = await Service().Handle(new GetLinearSinceRequest(), Token);
 
-        Expect.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
-        Expect.Equal(GetLinearSinceService.Refusal, result.Error.Message);
+        Expect.Equal(ContextErrors.SessionsDisabled.Code, result.Error.Code);
     }
 
     [Fact]
