@@ -27,7 +27,7 @@ public sealed class ItemStateTests
     }
 
     [Fact]
-    public async Task Old_workflow_rows_leave_an_item_open_and_a_closed_item_closed()
+    public async Task Old_workflow_rows_that_end_nothing_leave_an_item_open_and_a_closed_item_closed()
     {
         var q = new ItemQueryHarness();
         await q.Item('1', "still open");
@@ -35,11 +35,24 @@ public sealed class ItemStateTests
 
         await q.Views.Fold(EventTypes.WorkflowStarted, Old(), ItemQueryHarness.Id('1'));
         await q.Views.Fold(EventTypes.WorkflowTransition, Old(), ItemQueryHarness.Id('1'));
-        await q.Views.Fold(EventTypes.WorkflowStarted, Old(), ItemQueryHarness.Id('2'));
+        await q.Views.Fold(EventTypes.WorkflowTransition, Old(), ItemQueryHarness.Id('2'));
 
         var states = await States(q);
 
         Assert.Equal([ItemState.New, ItemState.Done], states);
+    }
+
+    [Fact]
+    public async Task An_old_instance_started_on_a_closed_item_reopens_it_as_main_did()
+    {
+        var q = new ItemQueryHarness();
+        await q.Item('2', "finished", state: ItemState.Done);
+
+        await q.Views.Fold(EventTypes.WorkflowStarted, Old(), ItemQueryHarness.Id('2'));
+
+        var states = await States(q);
+
+        Assert.Equal([ItemState.New], states);
     }
 
     private static async Task<IReadOnlyList<ItemState>> States(ItemQueryHarness q)
