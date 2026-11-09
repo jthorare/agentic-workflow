@@ -64,10 +64,14 @@ internal sealed class SeatbeltSandbox(SeatbeltOptions options, ISandboxProcesses
     }
 
     /// <inheritdoc />
-    public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => ProcessSandboxPlanner.Build(SandboxMechanism.Seatbelt, request);
+    public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => ProcessRefusal();
 
     /// <inheritdoc />
-    public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => throw new NotSupportedException("not built yet");
+    public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => ProcessRefusal();
+
+    // The Seatbelt profile of a plain process (no PlanContext, no per-launch proxy port from an agent launch) is not built yet: refused loudly, never run unconfined.
+    private static Error ProcessRefusal() =>
+        SandboxRefusal.For(SindriErrors.LaunchSandboxUnavailable, SandboxReasons.UnsupportedPlatform, "toolkits cannot run on macOS yet: the Seatbelt variant for a plain process is not built");
 
     /// <inheritdoc />
     public async Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct)

@@ -32,7 +32,7 @@ public static class ProcessSandboxPlanner
             request.Launch,
             Worktree: null,
             RunNamespace: string.Empty,
-            RunDirectory: request.RunArea,
+            RunDirectory: "/tmp",   // the cwd inside: the run area itself is not mounted, its private /tmp is
             Mounts(request, limits),
             new PlanNetwork(NetworkMode.Enforce, request.HostGroups, request.Net.SindriPort, request.Net.ProxyPort, request.Net.NetDir),
             Environment(request),
