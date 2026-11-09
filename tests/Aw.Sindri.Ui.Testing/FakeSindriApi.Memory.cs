@@ -158,7 +158,7 @@ internal sealed partial class FakeSindriApi
                 found.Facts.Add(fact);
             }
 
-            return Task.FromResult<Result<MemoryFactWritten>>(new MemoryFactWritten(key, same >= 0 ? "refreshed" : "written"));
+            return Task.FromResult<Result<MemoryFactWritten>>(new MemoryFactWritten(key, same >= 0 ? "refreshed" : "added"));
         }
     }
 

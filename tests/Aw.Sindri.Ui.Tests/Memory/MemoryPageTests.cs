@@ -133,7 +133,7 @@ public sealed class MemoryPageTests
 
         await page.CreateStore(Token);
 
-        Assert.Equal("runbooks", string.Join(',', page.Stores.Select(s => s.Name)));
+        Assert.Equal("runbooks,team-notes", string.Join(',', page.Stores.Select(s => s.Name)));
         Assert.Equal(("runbooks", "How we run things"), (_f.Server.CreatedMemories[0].Name, _f.Server.CreatedMemories[0].Description));
         Assert.Equal(("0 facts", "How we run things", string.Empty), (page.Stores[0].FactsText, page.Stores[0].Description, page.NewName));
     }
@@ -175,7 +175,8 @@ public sealed class MemoryPageTests
         await store.Write(Token);
 
         var sent = _f.Server.WrittenFacts[0].Body;
-        Assert.Equal(("Standup is at ten", ["team", "calendar"], new DateTimeOffset(2100, 2, 3, 0, 0, 0, TimeSpan.Zero)), (sent.Text, sent.Tags, sent.ExpiresAt));
+        Assert.Equal(("Standup is at ten", new DateTimeOffset(2100, 2, 3, 0, 0, 0, TimeSpan.Zero)), (sent.Text, sent.ExpiresAt));
+        Assert.Equal(["team", "calendar"], sent.Tags);
         Assert.Equal(("Added.", "5 facts", string.Empty), (store.WriteResult, store.FactsText, store.WriteText));
 
         store.WriteText = "Standup is at ten";

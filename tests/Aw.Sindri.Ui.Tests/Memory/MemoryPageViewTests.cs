@@ -113,7 +113,7 @@ public sealed class MemoryPageViewTests : FrameHost
     {
         await OpenAndSearch(window, "Deploys");
 
-        var buttons = window.GetVisualDescendants().OfType<Button>().Select(b => b.Name).Where(n => n is not null && n.StartsWith("Memory", StringComparison.Ordinal)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
+        var buttons = window.GetVisualDescendants().OfType<Button>().Where(b => b.IsEffectivelyVisible).Select(b => b.Name).Where(n => n is not null && n.StartsWith("Memory", StringComparison.Ordinal)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
 
         // memory_list (the page), memory_create, memory_search, memory_write and memory_forget in three forms: no edit and no delete of a store.
         Assert.Equal(
