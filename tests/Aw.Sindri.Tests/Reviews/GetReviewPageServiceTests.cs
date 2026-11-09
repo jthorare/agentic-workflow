@@ -30,7 +30,7 @@ public sealed class GetReviewPageServiceTests : IDisposable
     {
         var home = new FakeSindriHome(_home.Path);
         _summaries = new FileReviewSummaries(home);
-        _service = new GetReviewPageService(_h.Profiles, _store, new ReviewPageReader(_forge), new ReviewPageFactsReader(_forge, new FakeReviewEvidence(), new Status(), _h.Clock), new ReviewPageCache(new FileReviewPages(home, _h.Clock), _summaries, new Status(), _h.Clock));
+        _service = new GetReviewPageService(_h.Profiles, _store, new ReviewPageReader(_forge), new ReviewPageFactsReader(_forge, new FakeReviewEvidence(), new Status(), _h.Clock), new ReviewPageCache(new FileReviewPages(home, _h.Clock), _summaries, new Status(), _h.Clock), new FakeGitHubAccount());
         var pull = _forge.Add(new PullRepo("github.com", "acme", "api"), 2071, "feat/x", Head);
         pull.Title = "Add retry budget";
         pull.Author = "sam-dev";

@@ -22080,3 +22080,6 @@ static Aw.Sindri.Core.Reviews.ReviewConnect.operator !=(Aw.Sindri.Core.Reviews.R
 static Aw.Sindri.Core.Reviews.ReviewConnect.operator ==(Aw.Sindri.Core.Reviews.ReviewConnect? left, Aw.Sindri.Core.Reviews.ReviewConnect? right) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.ReviewNoConnection -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ReviewSignInAgain -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Reviews.ReviewConnectRules
+static Aw.Sindri.Core.Reviews.ReviewConnectRules.For(Aw.Sindri.Core.Connections.GitHubAccount! account, bool profileHasToken, string? lastCode) -> Aw.Sindri.Core.Reviews.ReviewConnect?
+static Aw.Sindri.Core.Reviews.ReviewConnectRules.IsSignInCode(string? code) -> bool

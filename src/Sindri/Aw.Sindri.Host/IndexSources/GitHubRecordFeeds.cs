@@ -24,16 +24,33 @@ internal sealed class GitHubRecordFeeds(ISecretPointers pointers, IGitHubConnect
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(repos);
-        _ = (connections, connectionSecrets);   // red stub for #2499: the fix reads the GitHub connection's token here
-        if (settings.GitHub is not { Repos.Count: > 0, Token: { } pointer } github
-            || SecretPointer.Parse(pointer) is not { IsSuccess: true } parsed
-            || pointers.Resolve(parsed.Value) is not { IsSuccess: true } token
-            || GitHubSettings.Create(github.Repos, pointer, github.Host, github.AllowPrivateHost, commentCap: null) is not { IsSuccess: true } checkedSettings)
+        if (settings.GitHub is not { Repos.Count: > 0 } github || Token(github.Token, connections, connectionSecrets, pointers) is not { } token
+            || GitHubSettings.Create(github.Repos, github.Token, github.Host, github.AllowPrivateHost, commentCap: null) is not { IsSuccess: true } checkedSettings)
         {
             return [];
         }
 
-        var connector = connectors.Create(checkedSettings.Value, readers(github.Host, github.AllowPrivateHost, token.Value), TimeSpan.FromDays(settings.Index.WindowDays));
+        var connector = connectors.Create(checkedSettings.Value, readers(github.Host, github.AllowPrivateHost, token), TimeSpan.FromDays(settings.Index.WindowDays));
         return [new ConnectorFeed(SourceId.From("github"), connector, new ProfileRepoMap(github.Repos, repos.Select(static r => r.Name)).Place, scrubbers, settings.LinearTeams)];
+    }
+
+    // why: the profile's pointer wins when it resolves (the owner chose it); otherwise the GitHub connection's token, so Reviews read with the credential the Connections page signed in
+    private static string? Token(string? pointer, IConnectionStore connections, IConnectionSecrets connectionSecrets, ISecretPointers pointers)
+    {
+        if (pointer is not null && SecretPointer.Parse(pointer) is { IsSuccess: true } parsed && pointers.Resolve(parsed.Value) is { IsSuccess: true } resolved)
+        {
+            return resolved.Value;
+        }
+
+#pragma warning disable RS0030 // IExternalRecordFeeds.For is synchronous and the connection list is one local SQLite read; the host has no synchronization context to deadlock on
+        var listed = connections.List(CancellationToken.None).AsTask().GetAwaiter().GetResult();
+#pragma warning restore RS0030
+        if (listed.IsError)
+        {
+            return null;
+        }
+
+        var connection = listed.Value.Where(static c => c.Preset == "github" && c.Status == ConnectionStatus.Connected && c.SecretPointer is not null).OrderBy(static c => c.Name.ToString(), StringComparer.Ordinal).FirstOrDefault();
+        return connection?.SecretPointer is { } location && connectionSecrets.Read(location) is { IsSuccess: true } tokens ? tokens.Value.AccessToken : null;
     }
 }
