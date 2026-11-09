@@ -48,6 +48,9 @@ internal sealed class TodoNoteCardText
     /// <summary>Import and start syncing.</summary>
     public string Import { get; } = Labels.TodoCardImport;
 
+    /// <summary>The line in place of the import buttons while import is not served.</summary>
+    public string ImportLater { get; } = Labels.TodoCardImportLater;
+
     /// <summary>Cancel.</summary>
     public string Cancel { get; } = Labels.TodoCardCancel;
 

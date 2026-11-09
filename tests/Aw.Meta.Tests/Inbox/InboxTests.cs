@@ -108,7 +108,7 @@ public sealed class InboxTests
 
         Assert.Equal(_world.Clock.GetUtcNow().AddMinutes(-1), deferred.Value.Until);
         Assert.Empty(snoozed);
-        Assert.Equal(["m1"], due.Select(o => o.Key), StringComparer.Ordinal);
+        Assert.Equal(["m1", "watch"], due.Select(o => o.Key), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

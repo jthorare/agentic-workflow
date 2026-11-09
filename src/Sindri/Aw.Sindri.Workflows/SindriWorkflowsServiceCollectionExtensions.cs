@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -30,6 +32,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton(new TemporalDevServer(childStart))
             .AddSingleton<ITemporalServer, DevServerTemporal>()
             .AddAgentRuntime()
+            .AddGraphEngine()
             .AddSingleton(provider => SindriWorker.Options(settings, provider.GetRequiredService<WorkerActivities>()))
             .AddSingleton<TemporalFrontend>()
             .AddSingleton<ILaunchRequests, LaunchRequestsView>()       // API P10a U9: the item's launch still requested, read from the launches view (UI E-19)
@@ -42,6 +45,22 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IFactStore>(static sp => sp.GetRequiredService<HomeFactStore>())
             .AddSingleton<IFactContents>(static sp => sp.GetRequiredService<HomeFactStore>())   // the agent target resolver and the Linear item links read stored facts
             .AddScoped<Core.Reviews.IFixBabysitters, NoFixBabysitters>();   // PR review page: no pull request has a babysitter now
+    }
+
+    /// <summary>The graph engine (issue 2258, PR 6): the run starter and its Temporal launcher, the queue advance, the blocks and the activities of <see cref="GraphWorkflow"/>.</summary>
+    private static IServiceCollection AddGraphEngine(this IServiceCollection services)
+    {
+        return services
+            .AddSingleton<GraphMirror>()
+            .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>()))
+            .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
+            .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog
+            .AddSingleton<IGraphRunLauncher>(static provider => provider.GetRequiredService<TemporalGraphRunLauncher>())
+            .AddSingleton<IGraphRunCanceller>(static provider => new TemporalGraphRunCanceller(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<IWorkflowRunStore>()))
+            .AddSingleton<GraphRunStarter>()
+            .AddSingleton<IGraphRunStarter>(static provider => provider.GetRequiredService<GraphRunStarter>())
+            .AddSingleton<IGraphQueueAdvance>(static provider => provider.GetRequiredService<GraphRunStarter>())
+            .AddSingleton<GraphRunActivities>().AddSingleton<GraphBlockActivities>().AddSingleton<GraphActivities>();
     }
 
     // Engine P8 U3: LaunchAgentStep, WatchAgentStep, CloseAgentStep and what they use, and the worker's set of activity classes.

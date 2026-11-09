@@ -52,7 +52,7 @@ public static partial class ProfileDiff
             values[key] = value;
         }
 
-        foreach (var (key, value) in SandboxDiff.Keys(p.Sandbox).Concat(PrReviewDiff.Keys(p.Review)))
+        foreach (var (key, value) in SandboxDiff.Keys(p.Sandbox).Concat(PrReviewDiff.Keys(p.Review)).Concat(TodoDiff.Keys(p.Todo)))
         {
             values[key] = value;
         }

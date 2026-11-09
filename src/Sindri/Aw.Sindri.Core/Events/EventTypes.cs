@@ -3,7 +3,7 @@ using Aw.Sindri.Core.Ids;
 namespace Aw.Sindri.Core.Events;
 
 /// <summary>The event types Sindri records (each one is in EventCatalog).</summary>
-public static class EventTypes
+public static partial class EventTypes
 {
     /// <summary>The control plane took the lease and started.</summary>
     public const string ProcessStarted = "process.started";

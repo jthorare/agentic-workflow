@@ -1,5 +1,6 @@
 namespace Aw.Sindri.Infrastructure.Workflows;
 
-/// <summary>The activity classes the worker serves. The recipe workflow is gone, so only the agent runtime's remain until the graph workflow arrives (issue 2258 PR 6).</summary>
+/// <summary>The activity classes the worker serves: the agent runtime's and the graph workflow's (issue 2258 PR 6). The recipe workflow is gone.</summary>
 /// <param name="Agents">LaunchAgentStep, WatchAgentStep and CloseAgentStep (engine P8).</param>
-internal sealed record WorkerActivities(AgentStepActivities Agents);
+/// <param name="Graph">The graph workflow's activities (issue 2258, PR 6).</param>
+internal sealed record WorkerActivities(AgentStepActivities Agents, GraphActivities Graph);

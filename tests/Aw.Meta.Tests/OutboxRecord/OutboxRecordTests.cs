@@ -57,7 +57,7 @@ public sealed class OutboxRecordTests
         Assert.True(response.Recorded);
         Assert.Equal([(ObligationKind.Reply, "m1")], response.Closed.Select(o => (o.Kind, o.Key)));
         Assert.Equal(("t1-api", "done", "out-1"), (sent.To, sent.Message, sent.Id?.Value));
-        Assert.Equal(["m2"], (await _world.Open()).Select(o => o.Key), StringComparer.Ordinal);
+        Assert.Equal(["m2", "watch"], (await _world.Open()).Select(o => o.Key), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -68,7 +68,7 @@ public sealed class OutboxRecordTests
 
         var response = await Send("uds:/run/t1-api.sock", "done");
 
-        _ = Assert.Single(response.Closed);
+        Assert.Equal([ObligationKind.Reply, ObligationKind.RearmWatch], response.Closed.Select(o => o.Kind));
     }
 
     [Fact, Trait("Lane", "unit")]
