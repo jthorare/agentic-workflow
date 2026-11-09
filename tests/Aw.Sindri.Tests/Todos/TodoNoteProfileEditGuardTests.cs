@@ -31,7 +31,7 @@ public sealed class TodoNoteProfileEditGuardTests : IDisposable
     public async Task An_edit_landing_between_the_guard_and_the_plan_read_is_refused_and_not_overwritten()
     {
         _files.Write(Base);
-        var seen = (await _files.Source.Load(Token)).Value!.Hash.Value;
+        var seen = (await _files.Source.Load(Token)).Value.Hash.Value;
         var edit = Edit(beforePlan: static path => File.WriteAllText(path, HandEdited));
 
         var result = await edit.Set("notes", "Todo.md", seen, Token);
@@ -57,17 +57,17 @@ public sealed class TodoNoteProfileEditGuardTests : IDisposable
     public async Task Setting_the_note_leaves_the_profile_hash_and_the_approval_diff_alone_while_another_drifted_key_still_shows()
     {
         _files.Write(Base);
-        var approved = (await _files.Source.Load(Token)).Value!;
+        var approved = (await _files.Source.Load(Token)).Value;
 
         var set = await Edit().Set("notes", "Todo.md", ifHash: null, Token);
-        var afterSet = (await _files.Source.Load(Token)).Value!;
+        var afterSet = (await _files.Source.Load(Token)).Value;
 
         Assert.True(set.IsSuccess);
         Assert.Equal(approved.Hash, afterSet.Hash);
         Assert.Empty(ProfileDiff.Between(approved.Profile, afterSet.Profile));
 
         _files.Write((await File.ReadAllTextAsync(_files.Settings.ProfilePath, Token)).Replace("user: golden", "user: someone-else", StringComparison.Ordinal));
-        var drifted = (await _files.Source.Load(Token)).Value!;
+        var drifted = (await _files.Source.Load(Token)).Value;
 
         Assert.NotEqual(approved.Hash, drifted.Hash);
         Assert.Equal(["user"], ProfileDiff.Between(approved.Profile, drifted.Profile));
