@@ -181,8 +181,8 @@
       ]
     },
     {
-      "name": "workflow-poll",
-      "every": "30s",
+      "name": "todo-note",
+      "every": "24h",
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
@@ -190,7 +190,7 @@
       "actions": [
         "run"
       ],
-      "description": "Polls connections for events that start workflows (connection_event triggers), and reads missed events after a start or a wake."
+      "description": "Syncs the Obsidian todo note with your todos."
     },
     {
       "name": "workflow-schedule",
