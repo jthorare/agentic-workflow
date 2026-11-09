@@ -65,8 +65,15 @@ internal sealed partial class TodoHarness
     internal UndoTodoHoldService UndoHold() => new(Writes(), Converger(), Picks);
 
     /// <summary>Writes a ledger event the way the sync would (for the hold, which the picks read from the ledger, not the views).</summary>
-    internal async Task Record<TPayload>(string type, TPayload payload, string key) =>
+    internal async Task Record<TPayload>(string type, TPayload payload, string key)
+    {
+        if (Slice.Held.Current is null)
+        {
+            await Lease();
+        }
+
         _ = await Slice.Store.Append(Slice.Events.Entry(type, payload, key), Slice.Held.Current!, TestContext.Current.CancellationToken);
+    }
 
     internal ListTodosService List() => new(Views.Views, Views.Progress, Slice.Callers);
 
