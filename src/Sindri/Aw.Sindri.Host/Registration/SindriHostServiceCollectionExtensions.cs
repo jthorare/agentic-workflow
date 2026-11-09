@@ -47,6 +47,7 @@ internal static class SindriHostServiceCollectionExtensions
         .AddHostedService<SchedulerHost>()
         .AddHostedService<ProjectorHost>()
         .AddHostedService<JobRecoveryHost>()
+        .AddHostedService<GraphRunRecoveryHost>()
         .AddHostedService<LostSessionsHost>()
         .AddHostedService<SessionUsageHost>()
         .AddHostedService<ProfileWatch>()

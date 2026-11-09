@@ -1,0 +1,13 @@
+{
+  "connection": {
+    "name": "acme:key",
+    "kind": "rest",
+    "preset": null,
+    "status": "connected",
+    "statusReason": null,
+    "config": {},
+    "lastRefreshedAt": null,
+    "hasSecret": true
+  },
+  "consentUrl": null
+}
