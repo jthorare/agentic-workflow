@@ -1,0 +1,17 @@
+{
+ "packet": "(rewritten by the test)",
+ "build": "(rewritten by the test)",
+ "compiled": false,
+ "notes": ["CITES: 3 distinct citations, 1 resolved at 0123456789"],
+ "counts": {"errors": 1, "warnings": 2, "by_rule": {"REFS": 1, "CITES": 2}},
+ "findings": [
+  {"rule": "REFS", "check": "REFS/unlinked", "severity": "error", "file": "prs/pr-01.md", "line": 3, "message": "reference token R4 has no definition on the page"},
+  {"rule": "CITES", "check": "CITES/no-line", "severity": "warn", "file": "sample-ranking.md", "line": 40, "message": "`docs/notes.md` cites a file without a line"},
+  {"rule": "CITES", "check": "CITES/short-path", "severity": "warn", "file": "sample-ranking.md", "line": 52, "message": "`Short.ts:5` is a short path"}
+ ],
+ "citations": [
+  {"path": "src/a.ts", "from": 10, "to": 20, "section": "design", "resolved": "sha", "checked_sha": "0123456789"},
+  {"path": "docs/notes.md", "from": null, "to": null, "section": "design", "resolved": "packet", "checked_sha": null},
+  {"path": "Short.ts", "from": 5, "to": null, "section": "questions", "resolved": "missing", "checked_sha": null}
+ ]
+}

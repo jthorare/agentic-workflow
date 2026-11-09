@@ -1,0 +1,18 @@
+{
+ "template": "tdd/1",
+ "generated": "2026-01-08T12:00:00Z",
+ "titleText": "Sample system",
+ "meta": {"rev": 2},
+ "stats": {"sections": 1, "diagrams": 0, "prs": 1, "decisions": 2},
+ "sections": [{"id": "design"}],
+ "schema": [],
+ "decisions": [
+  {"id": "D1", "anchor": "d1", "question": "One database", "status": "Owner, 2026-01-02", "state": "done", "section": "design"},
+  {"id": "D2", "anchor": "d2", "question": "Later", "status": "Open · next week", "state": "open", "section": "design"}
+ ],
+ "refs": {"linked": 3, "unlinked": []},
+ "cites": [
+  {"text": "lib/b.py:1-9", "path": "lib/b.py", "from": 1, "to": 9, "section": "design", "anchor": "design"},
+  {"text": "lib/c.py", "path": "lib/c.py", "from": null, "to": null, "section": "design", "anchor": "design"}
+ ]
+}

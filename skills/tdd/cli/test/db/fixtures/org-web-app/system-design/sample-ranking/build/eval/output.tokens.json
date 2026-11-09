@@ -1,0 +1,5 @@
+{"schema": "tdd-eval-output/1", "kind": "tokens", "packet": "org-web-app/sample-ranking@rev4", "generated": "2026-01-08T10:05:01Z",
+ "scores": [
+  {"name": "session_tokens", "value": null, "status": "ok", "method": "sum of usage", "metrics": {"output_tokens": 1200, "usd_api_equivalent": 0.5}},
+  {"name": "judge_tokens", "value": null, "status": "not run", "method": "judge calls", "reason": "no key"}
+ ]}
