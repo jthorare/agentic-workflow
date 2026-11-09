@@ -9,7 +9,8 @@ Run order after an edit: `build_tdd.py` -> `bun run app/build.ts` -> `write_agen
 step is part of every build and every review (D18; Who runs it and when, below).
 
 Also available during the overlap period: `tdd rev <packet-dir>` (`cli/bin/tdd.ts`) runs SKILL.md step 5 in its
-order, `artifact_check` before the eval so the eval scores this run's screenshots, with a journal under `build/.rev/` so
+order, `artifact_check` before the eval so the eval scores this run's screenshots (the eval is `tdd eval`; this
+script runs instead when a `--push` needs the `braintrust` package that `tdd eval` lacks), with a journal under `build/.rev/` so
 a stopped run resumes where it stopped. Without `--push` it runs the eval offline (`--skip linear,aws`) and no child
 process receives a key (the list is in SKILL.md and `tdd rev --help`); with `--push` the eval alone receives
 `BRAINTRUST_API_KEY`, `LINEAR_API_KEY`, the `AWS_*` variables and, unless `--no-gh`, `GH_TOKEN` and `GITHUB_TOKEN`, and

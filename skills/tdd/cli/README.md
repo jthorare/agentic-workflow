@@ -214,13 +214,17 @@ Python leaving `scripts/`) is a later, human-gated step. Modules:
   temporary `#!/bin/sh` wrapper (`env -u NAME ... git "$@"`) written to the system temp folder and removed with the
   run. `scrub` removes every key value (8 characters and up) and a database url's password from the journal, the
   state, the progress notes and the table.
-- `eval.ts`: the one eval boundary, `evalStep` (an `EvalImpl`: its name, its command and the code its fingerprint
-  covers). Today `pythonEval` (`eval_packet.py` in the eval venv, `$TDD_EVAL_PYTHON` overrides the interpreter;
-  recorded as `skipped: not run: ...` when the venv is absent); the swap to lane N8's `tdd eval` is the line
-  `evalStep = bunEval`, and `bunEval.code` covers `src/eval`, `src/lint` and `src/py`, so `--reuse` and the resume
-  guard follow the swap. Without `--push` the eval runs offline (`--skip linear,aws`); with `--push` and the key it
-  pushes itself, and the `push` step reads that result (with `--only push` it runs the eval with `--push`). `--push`
-  without the key fails the push step and runs the eval offline.
+- `eval.ts`: the one eval boundary, `evalStep(paths, push)`, which picks an `EvalImpl` (its name, its command and the
+  code its fingerprint covers) per run. The eval is `bunEval`: `tdd eval` (src/eval) as a child of this bun
+  (`$TDD_REV_BUN` overrides it, for tests), not in-process, so that src/eval's own children (git, node, bun, python),
+  which it spawns with `Bun.spawn` and no `env`, inherit the stripped environment of that child rather than this
+  process's startup environment with the keys. Its fingerprint covers `src/eval`, `src/py`, `bin/eval-packet.ts`,
+  `scripts/lint_packet.py` and the interpreter its lint scorer uses. `pythonEval` (`eval_packet.py` in the eval
+  venv, `$TDD_EVAL_PYTHON` overrides the interpreter) is the fallback, taken only when `bin/eval-packet.ts` is absent
+  or a push finds no `braintrust` package next to src/eval, and only when the venv exists; the journal's `run-start`
+  names the eval and the reason. Without `--push` the eval runs offline (`--skip linear,aws`); with `--push` and the
+  key it pushes itself, and the `push` step reads that result (with `--only push` it runs the eval with `--push`).
+  `--push` without the key fails the push step and runs the eval offline.
 - `stepdefs.ts`: each step's command, its outcome rules (lint: ok whenever the linter ran and wrote `lint.json`, its
   error and warning counts in the detail and in the row's `data`; findings are measured here, not a gate; the eval: ok
   on exit 0, or exit 1 with a fresh `run.json` when only the push failed; load-db: skipped when nothing answers,
