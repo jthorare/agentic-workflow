@@ -43,7 +43,13 @@ public static class TodoObsidianRules
     /// <summary>What is wrong with a note path by its shape alone, or null.</summary>
     /// <param name="note">The path.</param>
     /// <returns>The reason, as the end of "todo.obsidian.note …", or null.</returns>
-    public static string? NotePath(string? note)
+    public static string? NotePath(string? note) => NotePath(note, OperatingSystem.IsWindows());
+
+    /// <summary>What is wrong with a note path by its shape alone, with the platform given.</summary>
+    /// <param name="note">The path.</param>
+    /// <param name="windows">True on Windows, where a ':' in the second place is a drive letter; elsewhere only 'X:/' is an absolute path and 'a:b.md' is a plain file name.</param>
+    /// <returns>The reason, as the end of "todo.obsidian.note …", or null.</returns>
+    internal static string? NotePath(string? note, bool windows)
     {
         if (string.IsNullOrEmpty(note))
         {
@@ -56,23 +62,13 @@ public static class TodoObsidianRules
             _ when note.Length > MaxNote => "is too long",
             _ when note.Any(static c => char.IsControl(c)) => "has a control character",
             _ when note.Contains('\\', StringComparison.Ordinal) => "must use '/' separators",
-            _ when note.StartsWith('/') || (note.Length >= 2 && note[1] == ':') => "must be relative to the vault, not an absolute path",
+            _ when note.StartsWith('/') || (note.Length >= 2 && note[1] == ':' && (windows || (note.Length >= 3 && note[2] == '/'))) => "must be relative to the vault, not an absolute path",
             _ when segments.Any(static s => s.Length == 0) => "has an empty folder name",
             _ when segments.Contains("..", StringComparer.Ordinal) || segments.Contains(".", StringComparer.Ordinal) => "must stay inside the vault: no '.' or '..' in the path",
             _ when segments[..^1].Any(static s => s.StartsWith('.')) => "must not be inside a dot folder (such as .obsidian)",
             _ when !note.EndsWith(".md", StringComparison.OrdinalIgnoreCase) || segments[^1].Length <= ".md".Length => "must be a .md file",
             _ => null,
         };
-    }
-
-    /// <summary>What is wrong with a note path by its shape alone, with the platform given.</summary>
-    /// <param name="note">The path.</param>
-    /// <param name="windows">True on Windows.</param>
-    /// <returns>The reason, or null.</returns>
-    internal static string? NotePath(string? note, bool windows)
-    {
-        _ = windows;
-        return NotePath(note);
     }
 
     private static Error? Denied(string note, IReadOnlyList<string> deny)
