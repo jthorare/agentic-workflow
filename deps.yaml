@@ -287,6 +287,13 @@ packages:
     src: src/Connectors
     note: "source readers (GitHub, Slack; later Notion, Jira): the IConnector contract, text cleaner, HTTP clients with a host allowlist; a port of ConnectAI's connector mechanics; no storage, no Context types (Sindri-owned index spec §9.2)"
 
+  - id: Toolkit
+    kind: package
+    tier: 1
+    projectPrefix: Aw.Sindri.Toolkit
+    src: src/Toolkit
+    note: "the SDK a toolkit project references (name, needs, typed tools, an MCP stdio host); packed alone into the SDK feed, so it has no repo references (no Kernel edge); toolkits live outside the repo and reference it through that feed, and Sindri never references it: Sindri talks to a toolkit over MCP stdio only (PR 15)"
+
 edges:
   # ---- current: found in the source today ----
   - from: Evidence

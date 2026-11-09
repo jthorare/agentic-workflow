@@ -104,7 +104,7 @@ public sealed class HarnessProbeTests : IDisposable
 
         var code = await new Verbs(client, _api, new Output(_out, _error, SliceHarness.Json), new ServiceCollection().BuildServiceProvider()).Stop(Token);
 
-        Assert.Equal((2, $"SND-AUTH-002 {Refusal} (this CLI ran as a session: the per-start human token isn't readable)\n"), (code, _error.ToString().ReplaceLineEndings("\n")));
+        Assert.Equal((2, $"SND-AUTH-002 {Refusal}\n"), (code, _error.ToString().ReplaceLineEndings("\n")));
     }
 
     private static HarnessProbeReport Live() => new("unknown", ["PATH"], [new("launchd", "/sbin/launchd")], Terminal: true, Version: null);

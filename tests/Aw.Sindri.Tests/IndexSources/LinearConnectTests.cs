@@ -48,23 +48,11 @@ public sealed class LinearConnectTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_is_refused_before_anything_is_asked_or_saved()
-    {
-        var result = await Connect().Run(human: false, Ct);
-
-        Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
-        Assert.Empty(_prompts.Asked);
-        Assert.Empty(_secrets.Stored);
-        Assert.Empty(_written.Pointers);
-        Assert.Empty(_built);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public async Task The_key_is_asked_with_the_echo_off_checked_against_the_teams_then_stored_and_pointed_to()
     {
         _reader.Readable = ["ENG", "APP", "OPS"];
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
         Assert.Equal(1, _prompts.SecretsAsked);
@@ -82,7 +70,7 @@ public sealed class LinearConnectTests
         _reader.Readable = ["ENG", "APP"];
         _clock.SetUtcNow(new DateTimeOffset(2026, 11, 7, 9, 30, 0, TimeSpan.Zero));
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
         Assert.Equal(new LinearStoredChecks(new LinearStoredCheck("keychain:sindri-index/linear", "resolves", _clock.GetUtcNow()), Write: null), (await _log.Read(Ct)).Value);
@@ -93,7 +81,7 @@ public sealed class LinearConnectTests
     {
         _reader.Readable = ["ENG"];
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.True(result.IsError);
         Assert.Equal(new LinearStoredChecks(Read: null, Write: null), (await _log.Read(Ct)).Value);
@@ -105,7 +93,7 @@ public sealed class LinearConnectTests
         _profiles.Live = Profile("""{"sources":{"linear":{"teams":["ENG"],"url":"http://127.0.0.1:7777/graphql","token":"env:LINEAR_FAKE"}}}""");
         _reader.Readable = ["ENG"];
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
         Assert.Equal(new Uri("http://127.0.0.1:7777/graphql"), Assert.Single(_built).Url);
@@ -118,7 +106,7 @@ public sealed class LinearConnectTests
     {
         _reader.Readable = ["ENG"];
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.Equal(SindriErrors.IndexRepoUnreadable.Code, result.Error.Code);
         Assert.Contains("APP", result.Error.Message, StringComparison.Ordinal);
@@ -134,7 +122,7 @@ public sealed class LinearConnectTests
         _profiles.Live = Profile("""{"sources":{}}""");
         _reader.Readable = [];
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.Equal(SindriErrors.IndexRepoUnreadable.Code, result.Error.Code);
         Assert.Empty(_secrets.Stored);
@@ -147,7 +135,7 @@ public sealed class LinearConnectTests
         _profiles.Live = Profile("""{"sources":{}}""");
         _reader.Readable = ["ENG", "APP"];
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
         Assert.Equal(2, result.Value.Teams);
@@ -160,7 +148,7 @@ public sealed class LinearConnectTests
         _profiles.Live = Profile("""{"sources":{}}""");
         _reader.Readable = ["OPS", "ENG"];
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
         Assert.Equal(["ENG", "OPS"], result.Value.Added);
@@ -175,7 +163,7 @@ public sealed class LinearConnectTests
     {
         _reader.Readable = ["ENG", "APP", "OPS"];
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
         Assert.Empty(result.Value.Added);
@@ -187,7 +175,7 @@ public sealed class LinearConnectTests
     {
         _reader.Failure = ContextErrors.LinearKeyRefused.With("refused " + Planted);
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.Equal(SindriErrors.IndexTokenUnresolved.Code, result.Error.Code);
         Assert.DoesNotContain(Planted, result.Error.Message, StringComparison.Ordinal);
@@ -200,7 +188,7 @@ public sealed class LinearConnectTests
     {
         _reader.Failure = ContextErrors.SourceUnavailable.With("down");
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect().Run(Ct);
 
         Assert.Equal(ContextErrors.SourceUnavailable.Code, result.Error.Code);
         Assert.Empty(_secrets.Stored);
@@ -213,7 +201,7 @@ public sealed class LinearConnectTests
         var prompts = new FakeSecretPrompts();
         prompts.Answer("   ");
 
-        var result = await Connect(prompts).Run(human: true, Ct);
+        var result = await Connect(prompts).Run(Ct);
 
         Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
         Assert.Empty(_built);
