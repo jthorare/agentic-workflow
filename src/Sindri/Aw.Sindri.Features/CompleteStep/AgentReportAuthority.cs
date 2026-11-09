@@ -47,5 +47,12 @@ internal static class AgentReportAuthority
         var proven = files.Verify(launch, secret);
         return proven.IsError ? proven.Error : StepRuntime.Agent;
     }
+
+    /// <summary>Decides a non-human caller's report for a graph node run (PR 7), by the same rules as <see cref="Decide"/>: only the launched session reports, with its launch secret, and only while a person has not taken the node over.</summary>
+    /// <param name="view">The node run's open agent launch; null when the report names no running 'run_agent' node.</param>
+    /// <param name="request">The report.</param>
+    /// <param name="files">The launches' stored secrets.</param>
+    /// <returns>Success with the runtime the report is recorded as; SND-AUTH-002 for a session that isn't the launched one or a taken-over node, SND-AUTH-003 for a secret that doesn't match.</returns>
+    internal static Result<StepRuntime> DecideNode(NodeReportView? view, CompleteStepRequest request, ILaunchFiles files) => throw new NotSupportedException("red");
 }
 #pragma warning restore MA0182

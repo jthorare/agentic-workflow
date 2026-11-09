@@ -60,6 +60,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
             SkillTrialDirectory = request.Skill?.TrialSkillsDirectory,
             SkillPushes = SkillPushes(request),
             GithubPushApproved = request.GithubPushApproved,
+            AddGroups = request.Task?.HostGroups,
         };
     }
 
