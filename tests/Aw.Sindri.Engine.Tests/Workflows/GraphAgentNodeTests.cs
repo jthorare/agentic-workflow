@@ -35,7 +35,7 @@ public sealed class GraphAgentNodeTests(SindriTimeSkippingServer server) : IClas
         Assert.Equal("def4567", output["commit"]!.GetValue<string>());
         Assert.Equal("agent-session-1", output["sessionId"]!.GetValue<string>());
         Assert.Equal(100, output["usage"]!["tokens"]!.GetValue<int>());
-        var launch = NodeRunAddress.Of(run, AgentNodeRig.Agent).Launch.Value;
+        var launch = NodeRunAddress.Of(run, AgentNodeRig.Agent).Launch().Value;
         Assert.Equal(launch, Assert.Single(runtime.Closes).Launch);
         Assert.True(runtime.Closes[0].Measure);
         _ = Assert.Single(runtime.Launches);
