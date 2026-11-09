@@ -1,21 +1,40 @@
+using Aw.Sindri.Ui.Api.Reviews;
+using Aw.Sindri.Ui.Navigation;
+
 namespace Aw.Sindri.Ui.ViewModels.Reviews;
 
-/// <summary>The Connect GitHub / Sign in again action (#2499). Red stubs: the behaviour is not written yet.</summary>
+/// <summary>The Connect GitHub / Sign in again action (#2499): the list's login comes from the GitHub connection, so a missing or expired one is fixed on the Connections page.</summary>
 internal sealed partial class ReviewsPageViewModel
 {
-#pragma warning disable CA1822, MA0041 // red stub: becomes instance state when written
+    private ReviewConnectView? _connect;
+
     /// <summary>True while GitHub has no usable connection: the page is the one Connect GitHub / Sign in again action.</summary>
-    public bool IsConnect => false;
+    public bool IsConnect => _connect is not null;
 
     /// <summary>The action's words ("Connect GitHub", "Sign in to GitHub again"); empty when there is no action.</summary>
-    public string ConnectText => string.Empty;
-#pragma warning restore CA1822, MA0041
+    public string ConnectText => _connect?.Text ?? string.Empty;
 
-    /// <summary>The connect event: asks the shell to open Connections (the connection's sheet, or the add flow for GitHub).</summary>
-#pragma warning disable CS0067 // red stub: raised once PressConnect is written
+    /// <summary>The connect action asked for Connections: the link is 'connection/&lt;name&gt;' ('connection/github' while there is no connection yet).</summary>
     internal event EventHandler<ReviewOpenRequestedEventArgs>? ConnectRequested;
-#pragma warning restore CS0067
 
-    /// <summary>The action was pressed.</summary>
-    internal void PressConnect() => throw new NotSupportedException("red stub: #2499");
+    /// <summary>The action was pressed: asks the shell to open the connection, or Connections' add flow when there is none.</summary>
+    internal void PressConnect()
+    {
+        if (_connect is not { } connect)
+        {
+            return;
+        }
+
+        if (DeepLink.TryParse("connection/" + (connect.Connection ?? "github"), out var link))
+        {
+            ConnectRequested?.Invoke(this, new ReviewOpenRequestedEventArgs(link));
+        }
+    }
+
+    private void ShowConnect(ReviewConnectView? connect)
+    {
+        _connect = connect;
+        OnChanged(nameof(IsConnect));
+        OnChanged(nameof(ConnectText));
+    }
 }
