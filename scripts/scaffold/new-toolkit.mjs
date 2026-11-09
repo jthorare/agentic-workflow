@@ -34,7 +34,7 @@ const pascal = (snake) => snake.split("_").map((w) => w[0].toUpperCase() + w.sli
 /** Parses --needs into [{ kind, name, size?, service? }]; a bad entry is NT-NEEDS. */
 export function parseNeeds(text) {
   const bad = (entry, why) => new ScaffoldError("NT-NEEDS", `need '${entry}': ${why}`, "use database:<name>, disk:<size> (or disk:<name>:<size>) or connection:<name> (connection:<service>:<name> too); names are [a-z0-9-], sizes like 1g or 500m");
-  const nameOk = (s) => /^[a-z0-9][a-z0-9-]{0,30}$/.test(s ?? "");
+  const nameOk = (s) => /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(s ?? "");   // Resources.CheckedName: no '-' at either end
   const needs = [];
   for (const entry of list(text)) {
     const [kind, ...rest] = entry.split(":");
@@ -140,6 +140,7 @@ export async function main(argv, { log = (line) => console.error(line), out = (l
     throw e;
   }
   let journal = null;
+  let reuseDir = null;   // an existing empty --dir: the revert empties it again (artifacts/ is not in the journal)
   const untrap = trapSignals(log);
   try {
     const t = resolveToolkit(input, { filesOnly: Boolean(input.filesOnly) });
@@ -149,6 +150,7 @@ export async function main(argv, { log = (line) => console.error(line), out = (l
     journal = new Journal(base);
     const rel = path.relative(base, t.dir) || ".";
     if (rel !== ".") journal.mkdirs(rel);
+    else reuseDir = t.dir;
     writeToolkit(journal, t, rel);
     if (!input.filesOnly) {
       await withHeavyLock(async () => checkToolkit(journal, t, rel, log));
@@ -161,6 +163,7 @@ export async function main(argv, { log = (line) => console.error(line), out = (l
   } catch (e) {
     const count = journal ? journal.touched().length : 0;
     journal?.revert();
+    if (reuseDir && fs.existsSync(reuseDir)) for (const f of fs.readdirSync(reuseDir)) fs.rmSync(path.join(reuseDir, f), { recursive: true, force: true });
     const err = e instanceof ScaffoldError ? e : new ScaffoldError("SCAFFOLD-INTERNAL", e.message, "a generator bug: the files were reverted; report the message");
     log(err.message);
     if (err.fix) log(`fix: ${err.fix}`);

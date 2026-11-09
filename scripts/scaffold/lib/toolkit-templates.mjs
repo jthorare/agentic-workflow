@@ -76,6 +76,10 @@ export const directoryBuildProps = () => `<Project>
     <UseArtifactsOutput>true</UseArtifactsOutput>
     <ArtifactsPath>$(MSBuildThisFileDirectory)artifacts</ArtifactsPath>
   </PropertyGroup>
+  <!-- Locked restore always once a project has its lock file; the first restore (no lock file yet) writes it. -->
+  <PropertyGroup Condition="Exists('$(MSBuildProjectDirectory)/packages.lock.json')">
+    <RestoreLockedMode>true</RestoreLockedMode>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(CI)' == 'true'">
     <RestoreLockedMode>true</RestoreLockedMode>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -160,7 +164,15 @@ export const toolkitCsproj = (t) => `<Project Sdk="Microsoft.NET.Sdk">
 export const program = (t) => `using Aw.Sindri.Toolkit;
 using Toolkits.${t.name};
 
-return await ToolkitHost.RunAsync(${t.name}Tools.Build(), args, CancellationToken.None);
+try
+{
+    return await ToolkitHost.RunAsync(${t.name}Tools.Build(), args, CancellationToken.None);
+}
+catch (ToolkitException e)
+{
+    await Console.Error.WriteLineAsync($"{e.Definition.Code}: {e.Message}");
+    return 2;
+}
 `;
 
 export const jsonContext = (t) => `using System.Text.Json.Serialization;
@@ -247,6 +259,13 @@ public sealed class ${t.toolPascal}Tests
         ${t.toolPascal}Response response = await ${t.name}Tools.${t.toolPascal}(new ${t.toolPascal}Request("hello"), null!, TestContext.Current.CancellationToken);
 
         Assert.Equal("hello", response.Result);
+    }
+
+    [Fact]
+    [Trait("Lane", "unit")]
+    public void The_declaration_builds()
+    {
+        Assert.NotNull(${t.name}Tools.Build());
     }
 }
 `;

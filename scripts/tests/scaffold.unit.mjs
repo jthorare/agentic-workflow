@@ -794,6 +794,8 @@ for (const [label, extra, rule] of [
   ["a database name with capitals", { needs: "database:Cache" }, "NT-NEEDS"],
   ["a disk size without a unit", { needs: "disk:100" }, "NT-NEEDS"],
   ["a connection with three parts", { needs: "connection:a:b:c" }, "NT-NEEDS"],
+  ["a database name ending in '-'", { needs: "database:cache-" }, "NT-NEEDS"],
+  ["a connection name starting with '-'", { needs: "connection:-me" }, "NT-NEEDS"],
   ["the same database twice", { needs: "database:cache,database:cache" }, "NT-NEEDS"],
 ]) {
   t(`new-toolkit refuses ${label} with ${rule} and writes nothing`, () => {
@@ -846,6 +848,21 @@ t("new-toolkit reverts every file and folder it made when a dotnet step fails", 
   assert.match(r.out, /^SCAFFOLD-BUILD: /m);
   assert.match(r.out, /reverted \d+ files/);
   assert.equal(fs.existsSync(path.join(home, "deep")), false, "the folders it made are gone");
+});
+
+t("new-toolkit leaves an existing empty --dir empty when a dotnet step fails (artifacts/ included)", () => {
+  const home = scratch();
+  const feed = path.join(home, "feed");
+  fs.mkdirSync(feed);
+  fs.writeFileSync(path.join(feed, "Aw.Sindri.Toolkit.0.1.0-local.1.nupkg"), "");
+  const bin = path.join(home, "bin");
+  fs.mkdirSync(bin);
+  fs.writeFileSync(path.join(bin, "dotnet"), "#!/usr/bin/env bash\ncase \"$1\" in restore) mkdir -p \"$(dirname \"$2\")/artifacts/x\"; exit 0;; esac\nexit 1\n", { mode: 0o755 });
+  const dir = path.join(home, "empty");
+  fs.mkdirSync(dir);
+  const r = toolkit(tkArgs(dir, { feed }), { filesOnly: false, env: { PATH: `${bin}:${process.env.PATH}` } });
+  assert.equal(r.code, 1, r.out);
+  assert.deepEqual(fs.readdirSync(dir), []);
 });
 
 for (const dir of trees) fs.rmSync(dir, { recursive: true, force: true });
