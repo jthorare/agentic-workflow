@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Infrastructure.Locks;
 using Aw.Sindri.Infrastructure.Sandbox;
@@ -8,6 +9,9 @@ namespace Aw.Sindri.Infrastructure.Todos;
 internal sealed class FileTodoNoteDisk(NoteLinkCounter links, Func<string, string, int> swap) : ITodoNoteDisk
 {
     private const long MaxBytes = 8L * 1024 * 1024;
+
+    // the swap probe's answer per folder: a writable folder keeps its answer between passes (an unwritable one is asked again, so a fix is seen)
+    private readonly ConcurrentDictionary<string, NoteFolderFacts> _probed = new(StringComparer.Ordinal);
 
     public FileTodoNoteDisk()
         : this(new NoteLinkCounter(new SandboxProcesses()), Libc.SwapFiles)
@@ -61,9 +65,26 @@ internal sealed class FileTodoNoteDisk(NoteLinkCounter links, Func<string, strin
         var folder = NearestFolder(vaultRoot, note);
         if (!Directory.Exists(folder))
         {
+            _ = _probed.TryRemove(folder, out _);
             return new NoteFolderFacts(Writable: false, CanSwap: false);
         }
 
+        if (_probed.TryGetValue(folder, out var known))
+        {
+            return known;
+        }
+
+        var facts = ProbeFolder(folder);
+        if (facts.Writable)
+        {
+            _probed[folder] = facts;
+        }
+
+        return facts;
+    }
+
+    private NoteFolderFacts ProbeFolder(string folder)
+    {
         var stem = ".sindri-probe-" + Guid.NewGuid().ToString("N");
         var first = Path.Combine(folder, stem + "-a");
         var second = Path.Combine(folder, stem + "-b");
