@@ -68,6 +68,11 @@ public sealed partial record RunAgentConfig(string Repo, IReadOnlyList<string> R
             problems.Add(("agent", $"is '{agent}'; use one of {string.Join(", ", Agents)}"));
         }
 
+        if (string.Equals(Text(config["agent"]), "codex", StringComparison.Ordinal) && Strings(config["readOnlyRepos"]).Count > 0)
+        {
+            problems.Add(("readOnlyRepos", "can't be used with agent 'codex': its policy form has no read-only paths (SND-LAUNCH-013 at launch); use claude-code or cursor, or drop readOnlyRepos"));
+        }
+
         problems.AddRange((config["outputs"] as JsonObject ?? []).Select(o => OutputProblem(o.Key, Text(o.Value))).OfType<string>().Select(static p => ("outputs", p)));
         if (DurationProblem(config["timeout"]) is { } timeout)
         {

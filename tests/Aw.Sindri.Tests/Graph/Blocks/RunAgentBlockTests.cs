@@ -86,6 +86,8 @@ public sealed class RunAgentBlockTests
         Assert.Contains(block.CheckConfig(JsonNode.Parse("""{"repo":"web","prompt":"p","outputs":{"Bad_Name":"string"}}""")!.AsObject()), p => p.Field == "outputs");
         Assert.Contains(block.CheckConfig(JsonNode.Parse("""{"repo":"web","prompt":"p","outputs":{"a":"date"}}""")!.AsObject()), p => p.Field == "outputs");
         Assert.Contains(block.CheckConfig(JsonNode.Parse("""{"repo":"web","prompt":"p","timeout":"soon"}""")!.AsObject()), p => p.Field == "timeout");
+        Assert.Contains(block.CheckConfig(JsonNode.Parse("""{"repo":"web","prompt":"p","agent":"codex","readOnlyRepos":["api"]}""")!.AsObject()), p => p.Field == "readOnlyRepos");
+        Assert.DoesNotContain(block.CheckConfig(JsonNode.Parse("""{"repo":"web","prompt":"p","agent":"claude-code","readOnlyRepos":["api"]}""")!.AsObject()), p => p.Field == "readOnlyRepos");
         Assert.Empty(block.Config.Check(JsonNode.Parse(block.Example)!.AsObject()));
     }
 
