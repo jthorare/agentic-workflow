@@ -33,6 +33,8 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         (Api, _clock) = (api, clock);
         Runs = new RunsViewModel(api, clock);
         Run = new RunDetailViewModel(api, clock);
+        Editor = new OpsEditor(api);
+        WatchEditor();
     }
 
     /// <summary>The API the page reads.</summary>
