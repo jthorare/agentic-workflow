@@ -10,29 +10,57 @@ public static class ToolkitHost
     /// <param name="args">The command-line arguments.</param>
     /// <param name="cancellationToken">Stops the server.</param>
     /// <returns>The exit code: 0 ok, 2 usage.</returns>
-    public static async Task<int> RunAsync(Toolkit toolkit, string[] args, CancellationToken cancellationToken)
+    public static Task<int> RunAsync(Toolkit toolkit, string[] args, CancellationToken cancellationToken) =>
+        RunAsync(toolkit, args, Console.OpenStandardInput, Console.OpenStandardOutput, Console.Out, Console.Error, cancellationToken);
+
+    /// <summary>The entry point over injectable standard streams. Once it serves, Console.Out is Console.Error: the MCP stream owns the real stdout, so a handler's Console.WriteLine cannot corrupt it.</summary>
+    /// <param name="toolkit">The declaration.</param>
+    /// <param name="args">The command-line arguments.</param>
+    /// <param name="openInput">Opens the MCP input stream.</param>
+    /// <param name="openOutput">Opens the MCP output stream (the real stdout).</param>
+    /// <param name="stdout">Where "--manifest" writes.</param>
+    /// <param name="stderr">Where usage text goes, and where Console.Out is redirected while serving.</param>
+    /// <param name="cancellationToken">Stops the server.</param>
+    /// <returns>The exit code: 0 ok, 2 usage.</returns>
+    internal static async Task<int> RunAsync(
+        Toolkit toolkit,
+        string[] args,
+        Func<Stream> openInput,
+        Func<Stream> openOutput,
+        TextWriter stdout,
+        TextWriter stderr,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(toolkit);
         ArgumentNullException.ThrowIfNull(args);
         if (args.Length == 1 && string.Equals(args[0], "--manifest", StringComparison.Ordinal))
         {
-            await Console.Out.WriteAsync(toolkit.Manifest()).ConfigureAwait(false);
+            await stdout.WriteAsync(toolkit.Manifest()).ConfigureAwait(false);
             return 0;
         }
 
         if (args.Length != 0)
         {
-            await Console.Error.WriteLineAsync($"usage: {toolkit.Name} [--manifest]  (no argument serves MCP on stdin and stdout)").ConfigureAwait(false);
+            await stderr.WriteLineAsync($"usage: {toolkit.Name} [--manifest]  (no argument serves MCP on stdin and stdout)").ConfigureAwait(false);
             return 2;
         }
 
-        var input = Console.OpenStandardInput();
+        var input = openInput();
         await using (input.ConfigureAwait(false))
         {
-            var output = Console.OpenStandardOutput();
+            var output = openOutput();
             await using (output.ConfigureAwait(false))
             {
-                await ServeAsync(toolkit, input, output, Environment.GetEnvironmentVariable, cancellationToken).ConfigureAwait(false);
+                var previous = Console.Out;
+                Console.SetOut(stderr);
+                try
+                {
+                    await ServeAsync(toolkit, input, output, Environment.GetEnvironmentVariable, cancellationToken).ConfigureAwait(false);
+                }
+                finally
+                {
+                    Console.SetOut(previous);
+                }
             }
         }
 
