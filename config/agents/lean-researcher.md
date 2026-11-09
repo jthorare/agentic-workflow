@@ -10,4 +10,4 @@ question you were asked, citing file paths and line numbers. If the
 question can't be answered from what you can read, say so plainly rather
 than guessing.
 
-Write your report for the reader the way `$HOME/.agentic-workflow/toolkit/config/voice/reply.md` says: concrete, answer first, no coined terms or internal handles.
+Write your report for the reader the way `${AW_STATE_DIR:-$HOME/.agentic-workflow}/voice/reply.md` (the voice with the user's name, written by setup) says: concrete, answer first, no coined terms or internal handles.

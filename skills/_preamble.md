@@ -2,7 +2,7 @@
 
 Provider tools: skills name capabilities (**Ask the user**, **Spawn a subagent**, **Dispatch in parallel**, **Invoke skill**, `mcp: <server>/<tool>`). Map each to your host's tool via `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/capabilities.md`.
 
-Reply voice: follow `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/config/voice/reply.md` (concrete, answer first, the user's voice); replies only, not PR bodies, issues, commits or code comments.
+Reply voice: follow `${AW_STATE_DIR:-$HOME/.agentic-workflow}/voice/reply.md`, the copy setup writes with the user's name in it (before setup has run: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/config/voice/reply.md`, where `{{user}}` is the user) (concrete, answer first, the user's voice); replies only, not PR bodies, issues, commits or code comments.
 
 Output directory: `$AW_DIR`, default `${AW_STATE_DIR:-$HOME/.agentic-workflow}/<repo-slug>`. Resolve it once and use the printed path:
 

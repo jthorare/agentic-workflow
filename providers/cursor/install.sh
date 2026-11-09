@@ -97,15 +97,11 @@ cursor_install_agents() {
 
 # Cursor keeps user rules in the app's settings, not in a file, so the voice can't be written for it.
 # Skill runs still get it through the preamble.
-# The pasteable copy has the user's name filled in (aw_user_name), so it's written under the state root.
+# The pasteable copy has the user's name filled in (aw_voice_name), so it's written under the state root.
 cursor_install_voice() {
-  local out="$AW_STATE_ROOT/voice/reply.md"
-  if aw_dry; then
-    echo "  [dry-run] would write the reply voice with your name to $out"
-  else
-    mkdir -p "$(dirname "$out")"
-    aw_render_voice "$TOOLKIT_DIR/config/voice/reply.md" "$out" "$(aw_user_name)"
-  fi
+  local out
+  out="$(aw_voice_copy_path)"
+  aw_write_voice_copy "$(aw_voice_name "$out")"
   echo "  voice: Cursor has no global rules file; paste $out into"
   echo "         Cursor > Settings > Rules > User Rules once (skills read it on their own)"
 }

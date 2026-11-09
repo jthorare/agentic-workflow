@@ -383,11 +383,56 @@ aw_render_voice() {
   }' "$1" > "$2"
 }
 
-# The reply voice, with the user's name in it, inlined into a provider's global instruction file.
+# The name the installed voice uses, in this order:
+#   1 AW_USER_NAME, when aw_name_word accepts it (the override)
+#   2 the name already in an installed copy, in argument order: the "# Talking to <Name>" line inside a
+#     file's aw:voice block, or the first line of a file without one (the rendered copy), so a box that set its name once (or carries the old
+#     "Joi" text) keeps it on the next setup instead of flipping to the account name
+#   3 aw_user_name (the account's name, the login, then "human")
+# Usage: aw_voice_name [<installed file>...]
+aw_voice_name() {
+  local f found word
+  if word="$(aw_name_word "${AW_USER_NAME:-}")"; then printf '%s\n' "$word"; return 0; fi
+  for f in "$@"; do
+    [ -f "$f" ] || continue
+    if grep -qxF -- "<!-- aw:voice:start -->" "$f"; then
+      # Only inside the block: the user's own text around it is never read.
+      found="$(awk '
+        $0 == "<!-- aw:voice:start -->" { inblock = 1; next }
+        $0 == "<!-- aw:voice:end -->" { inblock = 0; next }
+        inblock && /^# Talking to / { sub(/^# Talking to /, ""); print; exit }
+      ' "$f")"
+    else
+      # A rendered copy: the whole file is the voice, and its first line names the user.
+      found="$(sed -n '1s/^# Talking to //p' "$f")"
+    fi
+    if word="$(aw_name_word "$found")"; then printf '%s\n' "$word"; return 0; fi
+  done
+  aw_user_name
+}
+
+# The rendered voice every provider's skills read (the preamble, the lean agents, Cursor's paste copy).
+aw_voice_copy_path() { printf '%s\n' "$AW_STATE_ROOT/voice/reply.md"; }
+
+# Write the rendered voice for <name> to aw_voice_copy_path. Usage: aw_write_voice_copy <name>
+aw_write_voice_copy() {
+  local out
+  out="$(aw_voice_copy_path)"
+  if aw_dry; then
+    echo "  [dry-run] would write the reply voice for $1 to $out"
+    return 0
+  fi
+  mkdir -p "$(dirname "$out")"
+  aw_render_voice "$TOOLKIT_DIR/config/voice/reply.md" "$out" "$1"
+}
+
+# The reply voice, with the user's name in it, inlined into a provider's global instruction file, and
+# the rendered copy under the state root refreshed with the same name.
 # Usage: aw_install_voice <file>
 aw_install_voice() {
   local name tmp rc=0
-  name="$(aw_user_name)"
+  name="$(aw_voice_name "$1" "$(aw_voice_copy_path)")"
+  aw_write_voice_copy "$name"
   tmp="$(mktemp)"
   aw_render_voice "$TOOLKIT_DIR/config/voice/reply.md" "$tmp" "$name"
   aw_write_managed_block "$1" voice "$tmp" || rc=$?

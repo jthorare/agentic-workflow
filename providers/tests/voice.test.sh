@@ -240,13 +240,82 @@ test_render_replaces_every_placeholder_literally() {
 }
 
 test_skills_and_agents_read_the_voice() {
-  has "config/voice/reply.md" < "$ROOT/skills/_preamble.md" || fail "the preamble should read the voice"
+  # The rendered copy (the user's name in it), not the template with {{user}} in it.
+  has -F '${AW_STATE_DIR:-$HOME/.agentic-workflow}/voice/reply.md' < "$ROOT/skills/_preamble.md" ||
+    fail "the preamble should read the rendered voice"
   local a
   # qa-runner is left out: its output is a Playwright plan a no-model runner executes, not a report.
   for a in "$ROOT"/config/agents/lean-*.md; do
-    has "config/voice/reply.md" < "$a" || fail "$(basename "$a") should read the voice"
+    has -F '${AW_STATE_DIR:-$HOME/.agentic-workflow}/voice/reply.md' < "$a" || fail "$(basename "$a") should read the rendered voice"
+    ! has -F "config/voice/reply.md" < "$a" || fail "$(basename "$a") should not read the {{user}} template"
   done
   echo "PASS: test_skills_and_agents_read_the_voice"
+}
+
+# #2380 review: with AW_USER_NAME unset, setup keeps the name an installed copy already has, so a box
+# whose account is "thor" and whose voice says "Joi" (the text before {{user}}) still says Joi after setup.
+voice_name_in() {
+  (
+    unset AW_USER_NAME SUDO_USER
+    for kv in "${@:2}"; do export "${kv?}"; done
+    id() { case "$1" in -un) printf '%s\n' "$LOGIN" ;; *) return 1 ;; esac; }
+    dscl() { return 1; }
+    getent() { printf '%s:x:1000:1000:%s:/home/%s:/bin/sh\n' "$2" "${GECOS:-}" "$2"; }
+    aw_install_voice "$1" >/dev/null
+    sed -n 's/^# Talking to //p' "$1" | head -n 1
+    printf '%s\n' "$(sed -n '1s/^# Talking to //p' "$AW_STATE_ROOT/voice/reply.md")"
+  )
+}
+
+test_existing_voice_name_is_kept() {
+  setup_env
+  local f="$HOME/.claude/CLAUDE.md" got
+  mkdir -p "$(dirname "$f")"
+  # An old block (written before {{user}}) names Joi; the account is "thor".
+  printf '## Mine\n\n<!-- aw:voice:start -->\n# Talking to Joi\n\nold text\n<!-- aw:voice:end -->\n' > "$f"
+  got="$(voice_name_in "$f" LOGIN=thor GECOS=thor)"
+  [ "$got" = "$(printf 'Joi\nJoi')" ] || fail "an existing Joi block with account thor should stay Joi (block, copy), got: $got"
+  has "## Mine" < "$f" || fail "text outside the block changed"
+  ! has "old text" < "$f" || fail "the block was not refreshed"
+  # Run again: still Joi, from the block just written.
+  got="$(voice_name_in "$f" LOGIN=thor GECOS=thor)"
+  [ "$got" = "$(printf 'Joi\nJoi')" ] || fail "a second setup should keep Joi, got: $got"
+  # AW_USER_NAME overrides the installed name.
+  got="$(voice_name_in "$f" LOGIN=thor GECOS=thor AW_USER_NAME=sam)"
+  [ "$got" = "$(printf 'Sam\nSam')" ] || fail "AW_USER_NAME=sam should override Joi, got: $got"
+  teardown_env
+
+  setup_env
+  f="$HOME/.codex/AGENTS.md"
+  # No block and no rendered copy: the account's name.
+  got="$(voice_name_in "$f" LOGIN=thor GECOS=thor)"
+  [ "$got" = "$(printf 'Thor\nThor')" ] || fail "with no installed copy the account name should be used, got: $got"
+  teardown_env
+
+  setup_env
+  f="$HOME/.claude/CLAUDE.md"
+  mkdir -p "$(dirname "$f")"
+  # A name outside the block is the user's text, not the voice; a non-name inside the block is ignored.
+  printf '# Talking to Bob\n\n<!-- aw:voice:start -->\n# Talking to root\n<!-- aw:voice:end -->\n' > "$f"
+  got="$(voice_name_in "$f" LOGIN=thor GECOS=thor)"
+  [ "$got" = "$(printf 'Bob\nThor')" ] || fail "only a name inside the block counts (first line here is the user's Bob), got: $got"
+  teardown_env
+
+  setup_env
+  # Cursor: the rendered copy keeps its name too.
+  printf '# Talking to Joi\n' > "$SANDBOX/x"; mkdir -p "$HOME/.agentic-workflow/voice"
+  cp "$SANDBOX/x" "$HOME/.agentic-workflow/voice/reply.md"
+  source "$ROOT/providers/cursor/install.sh"
+  (
+    unset AW_USER_NAME SUDO_USER
+    id() { case "$1" in -un) printf 'thor\n' ;; *) return 1 ;; esac; }
+    getent() { printf '%s:x:1000:1000:thor:/home/%s:/bin/sh\n' "$2" "$2"; }
+    cursor_install_voice >/dev/null
+  )
+  [ "$(sed -n 1p "$HOME/.agentic-workflow/voice/reply.md")" = "# Talking to Joi" ] || fail "cursor: the rendered copy should keep Joi"
+  has -F "Applies to replies to Joi" < "$HOME/.agentic-workflow/voice/reply.md" || fail "cursor: the copy should be re-rendered from the template"
+  teardown_env
+  echo "PASS: test_existing_voice_name_is_kept"
 }
 
 test_inline_voice_stays_under_budget
@@ -262,4 +331,5 @@ test_source_names_no_one
 test_user_name_matcher
 test_render_replaces_every_placeholder_literally
 test_skills_and_agents_read_the_voice
+test_existing_voice_name_is_kept
 echo "ALL PASS"
