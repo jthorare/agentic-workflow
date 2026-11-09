@@ -12,6 +12,15 @@ internal sealed partial class FakeSindriApi
     /// <summary>When set, PurgeResources answers this refusal (the rows stay).</summary>
     public Error? PurgeResourcesError { get; set; }
 
+    /// <summary>When set, ListResources answers this error.</summary>
+    public Error? ListResourcesError { get; set; }
+
+    /// <summary>When set, ListResources waits for it before it answers (the read stays pending).</summary>
+    public TaskCompletionSource? ListResourcesGate { get; set; }
+
+    /// <summary>When set, PurgeResources records its call and then waits for it (the purge stays in flight).</summary>
+    public TaskCompletionSource? PurgeGate { get; set; }
+
     /// <summary>Every resource call, as 'list' or 'purge owner'.</summary>
     public IReadOnlyList<string> ResourceCallLog { get { lock (_gate) { return [.. _resourceCalls]; } } }
 
@@ -27,36 +36,55 @@ internal sealed partial class FakeSindriApi
         }
     }
 
-    public Task<Result<ResourceList>> ListResources(Uri api, string? owner, CancellationToken cancellationToken)
+    public async Task<Result<ResourceList>> ListResources(Uri api, string? owner, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             _resourceCalls.Add("list");
         }
 
+        if (ListResourcesGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (ListResourcesError is { } failed)
+        {
+            return failed;
+        }
+
         if (NotReceived<ResourceList>(api) is { } unanswered)
         {
-            return Task.FromResult(unanswered);
+            return unanswered;
         }
 
         lock (_gate)
         {
-            return Task.FromResult<Result<ResourceList>>(new ResourceList([.. _resources.Where(r => owner is null || string.Equals(r.Owner, owner, StringComparison.Ordinal))]));
+            return new ResourceList([.. _resources.Where(r => owner is null || string.Equals(r.Owner, owner, StringComparison.Ordinal))]);
         }
     }
 
-    public Task<Result<PurgeResourcesResult>> PurgeResources(Uri api, string owner, CancellationToken cancellationToken)
+    public async Task<Result<PurgeResourcesResult>> PurgeResources(Uri api, string owner, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
             _resourceCalls.Add("purge " + owner);
+        }
+
+        if (PurgeGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        lock (_gate)
+        {
             if (PurgeResourcesError is { } refused)
             {
-                return Task.FromResult<Result<PurgeResourcesResult>>(refused);
+                return refused;
             }
 
             var removed = _resources.RemoveAll(r => string.Equals(r.Owner, owner, StringComparison.Ordinal));
-            return Task.FromResult<Result<PurgeResourcesResult>>(new PurgeResourcesResult(owner, removed));
+            return new PurgeResourcesResult(owner, removed);
         }
     }
 }

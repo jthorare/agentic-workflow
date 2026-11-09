@@ -90,6 +90,82 @@ public sealed class ResourcesPageTests
         Assert.Empty(page.Rows);
     }
 
+    [Fact]
+    public async Task Two_rows_of_one_owner_send_one_purge_while_it_is_in_flight()
+    {
+        _server.SeedResources(
+            new ResourceView("workflow:triage", "database", "triage.db", 1024, "/state/triage.db"),
+            new ResourceView("workflow:triage", "disk", "scratch", 2048, "/state/triage"));
+        var gate = _server.PurgeGate = new TaskCompletionSource();
+        var page = await Shown();
+        var (first, second) = (page.Rows[0], page.Rows[1]);
+        first.AskPurge();
+        second.AskPurge();
+
+        var sent = first.ConfirmPurge(Token);
+        var again = second.ConfirmPurge(Token);
+        gate.SetResult();
+        await Task.WhenAll(sent, again);
+
+        _ = Assert.Single(_server.ResourceCallLog, c => string.Equals(c, "purge workflow:triage", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task The_same_row_confirmed_twice_sends_one_purge()
+    {
+        _server.SeedResources(new ResourceView("workflow:triage", "database", "triage.db", 1024, "/state/triage.db"));
+        var gate = _server.PurgeGate = new TaskCompletionSource();
+        var row = Assert.Single((await Shown()).Rows);
+        row.AskPurge();
+
+        var sent = row.ConfirmPurge(Token);
+        var again = row.ConfirmPurge(Token);
+        gate.SetResult();
+        await Task.WhenAll(sent, again);
+
+        _ = Assert.Single(_server.ResourceCallLog, c => string.Equals(c, "purge workflow:triage", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_failed_first_read_shows_the_failed_text_and_Try_again()
+    {
+        _server.ListResourcesError = new Error("SND-UI-002", ErrorKind.Unavailable, "no answer");
+        var gate = _server.ListResourcesGate = new TaskCompletionSource();
+        var page = new ResourcesPageViewModel(_server);
+
+        var read = page.Refresh(_url, Token);
+
+        Assert.True(page.IsReading);
+        Assert.Equal(Labels.ReadingResources, page.ReadingText);
+        gate.SetResult();
+        await read;
+        Assert.Equal((false, true, true, false), (page.IsReading, page.IsFailed, page.ShowRetry, page.IsEmpty));
+        Assert.Equal("Couldn't read the resources just now. no answer · SND-UI-002", page.FailedText);
+
+        _server.ListResourcesError = null;
+        _server.SeedResources(new ResourceView("workflow:triage", "database", "triage.db", 1024, "/state/triage.db"));
+        await page.Retry(Token);
+
+        Assert.Equal((1, false, false, string.Empty), (page.Rows.Count, page.IsFailed, page.ShowRetry, page.FailedText));
+    }
+
+    [Fact]
+    public async Task A_failed_reread_after_a_purge_keeps_no_stale_success()
+    {
+        _server.SeedResources(new ResourceView("workflow:triage", "database", "triage.db", 1024, "/state/triage.db"));
+        var page = await Shown();
+        var row = Assert.Single(page.Rows);
+        row.AskPurge();
+        _server.ListResourcesError = new Error("SND-UI-002", ErrorKind.Unavailable, "no answer");
+
+        await row.ConfirmPurge(Token);
+
+        Assert.True(page.ShowRetry);
+        Assert.Contains("Couldn't read the resources", page.FailedText, StringComparison.Ordinal);
+        Assert.DoesNotContain("Purged", page.NoteText, StringComparison.Ordinal);
+        _ = Assert.Single(page.Rows);   // the old rows stay under the failed text
+    }
+
     private async Task<ResourcesPageViewModel> Shown()
     {
         var page = new ResourcesPageViewModel(_server);

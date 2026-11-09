@@ -39,6 +39,25 @@ internal sealed class ResourcesPageViewModel : ObservableObject
         }
     } = string.Empty;
 
+    /// <summary>True when the first read failed and there are no rows to show.</summary>
+    public bool IsFailed { get; private set => Set(ref field, value); }
+
+    /// <summary>The sentence for a failed read.</summary>
+    public string FailedText { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when a retry is offered.</summary>
+    public bool ShowRetry { get; private set => Set(ref field, value); }
+
+    /// <summary>Reads again after a failed read.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>A task that ends when the list is shown.</returns>
+    internal Task Retry(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _ = _url;   // stub: the fix commit reads again
+        return Task.CompletedTask;
+    }
+
     /// <summary>True when there is a note.</summary>
     public bool HasNote => NoteText.Length > 0;
 
