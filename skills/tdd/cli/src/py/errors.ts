@@ -1,7 +1,7 @@
 // The Python exception a kernel function raises, by name, with CPython's message text: callers that print
 // `str(e)` (warnings, lint findings) print `err.message`, and callers that branch on the type read `err.type`.
 export type PyErrorType =
-  | "ValueError" | "TypeError" | "OverflowError" | "KeyError" | "IndexError" | "AttributeError" | "StopIteration"
+  | "ValueError" | "TypeError" | "OverflowError" | "ZeroDivisionError" | "KeyError" | "IndexError" | "AttributeError" | "StopIteration"
   | "UnicodeDecodeError" | "UnicodeEncodeError" | "JSONDecodeError" | "re.error" | "OSError" | "FileNotFoundError";
 
 export class PyError extends Error {

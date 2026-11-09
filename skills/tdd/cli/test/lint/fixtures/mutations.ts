@@ -139,6 +139,13 @@ export const CASES: readonly Case[] = [
   // ------------------------------------------------------------------ STRUCT
   { name: "struct-no-source", expect: ["STRUCT/no-source"], mutate: (c) => { rm(c, MD); rm(c, "build"); } },
   { name: "struct-no-content-compile-fails", expect: ["STRUCT/no-content"], mutate: (c) => { rm(c, "build"); json(c, "meta.json", (m) => void (m.people = 7)); } },
+  // a compile that fails in hotspots(): each linter reports its own compiler's exception, and the texts are CPython's
+  { name: "struct-no-content-viewbox-strings", expect: ["STRUCT/no-content"], args: () => ["demo-packet", "--compile"],
+    mutate: (c) => json(c, HS, (h) => void (h.viewBox = ["0", "0", "400", "200.04"])) },
+  { name: "struct-no-content-viewbox-zero", expect: ["STRUCT/no-content"], args: () => ["demo-packet", "--compile"],
+    mutate: (c) => json(c, HS, (h) => void (h.viewBox = [0, 0, 0, 200])) },
+  { name: "struct-no-content-box-no-x", expect: ["STRUCT/no-content"], args: () => ["demo-packet", "--compile"],
+    mutate: (c) => json(c, HS, (h) => void delete h.boxes[0].x) },
   { name: "struct-missing-section", expect: ["STRUCT/missing-section"],
     mutate: (c) => { sub(c, MD, "## Front end {#frontend; lead: no}", "## Screens {#screens; lead: no}"); rebuild(c); } },
   { name: "struct-section-order", expect: ["STRUCT/section-order"],
