@@ -106,6 +106,9 @@ internal static partial class Labels
     /// <summary>An expiry that is not a date.</summary>
     internal const string MemoryExpiresInvalid = "The expiry isn't a date. Use yyyy-mm-dd.";
 
+    /// <summary>An expiry that is a date but already past.</summary>
+    internal const string MemoryExpiresPast = "That expiry has already passed. Pick a later date.";
+
     /// <summary>A write that stored a new fact.</summary>
     internal const string MemoryFactAdded = "Added.";
 

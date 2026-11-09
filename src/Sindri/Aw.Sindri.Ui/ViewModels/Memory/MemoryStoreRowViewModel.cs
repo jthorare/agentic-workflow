@@ -12,6 +12,9 @@ internal sealed class MemoryStoreRowViewModel : ObservableObject
 {
     private readonly ISindriApi _api;
     private readonly Func<Uri?> _url;
+    private readonly TimeProvider _clock;
+    private readonly BusyFlag _writing = new();
+    private readonly BusyFlag _forgetting = new();
 
     /// <summary>The row over a served store.</summary>
     /// <param name="store">The store.</param>
@@ -21,9 +24,11 @@ internal sealed class MemoryStoreRowViewModel : ObservableObject
     internal MemoryStoreRowViewModel(MemoryView store, ISindriApi api, Func<Uri?> url, TimeProvider clock)
     {
         ArgumentNullException.ThrowIfNull(store);
-        (_api, _url, Name, FactCount) = (api, url, store.Name, store.Facts);
+        (_api, _url, _clock, Name, FactCount) = (api, url, clock, store.Name, store.Facts);
         Description = store.Description ?? string.Empty;
-        Search = new MemorySearchViewModel(api, url, store.Name, clock, ForgetFact, ForgetTag);
+        _writing.PropertyChanged += (_, _) => OnChanged(nameof(CanWrite));
+        _forgetting.PropertyChanged += (_, _) => OnChanged(nameof(CanForget));
+        Search = new MemorySearchViewModel(api, url, store.Name, clock, ForgetFact, ForgetTag, _forgetting);
     }
 
     /// <summary>The store's name.</summary>
@@ -81,10 +86,10 @@ internal sealed class MemoryStoreRowViewModel : ObservableObject
     public string WriteExpires { get; set => Set(ref field, value ?? string.Empty); } = string.Empty;
 
     /// <summary>False while a write is in flight.</summary>
-    public bool CanWrite { get; private set; } = true;
+    public bool CanWrite => _writing.IsFree;
 
     /// <summary>False while any forget of this store is in flight.</summary>
-    public bool CanForget { get; private set; } = true;
+    public bool CanForget => _forgetting.IsFree;
 
     /// <summary>What the last write said: "Added." or "Refreshed: …"; or its error.</summary>
     public string WriteResult { get; private set { Set(ref field, value); OnChanged(nameof(HasWriteResult)); } } = string.Empty;
@@ -130,12 +135,35 @@ internal sealed class MemoryStoreRowViewModel : ObservableObject
             return;
         }
 
+        if (expires is { } at && at <= _clock.GetUtcNow())
+        {
+            WriteResult = Labels.MemoryExpiresPast;
+            return;
+        }
+
         if (_url() is not { } url)
         {
             WriteResult = Labels.MemoryWriteFailed(SindriUiErrors.Unreachable.With("Sindri isn't reachable yet"));
             return;
         }
 
+        if (!_writing.TryEnter())
+        {
+            return;   // a write is already on its way
+        }
+
+        try
+        {
+            await Send(url, text, expires, cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            _writing.Exit();
+        }
+    }
+
+    private async Task Send(Uri url, string text, DateTimeOffset? expires, CancellationToken cancellationToken)
+    {
         var tags = WriteTags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var answer = await _api.WriteMemoryFact(url, Name, new WriteMemoryFactBody(text, tags, expires, Provenance: null), cancellationToken).ConfigureAwait(true);
         if (!answer.IsSuccess)
@@ -206,6 +234,23 @@ internal sealed class MemoryStoreRowViewModel : ObservableObject
             return;
         }
 
+        if (!_forgetting.TryEnter())
+        {
+            return;   // a forget is already on its way
+        }
+
+        try
+        {
+            await Send(url, forget, rows, cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            _forgetting.Exit();
+        }
+    }
+
+    private async Task Send(Uri url, MemoryForget forget, Func<MemoryFactRowViewModel, bool> rows, CancellationToken cancellationToken)
+    {
         var answer = await _api.ForgetMemoryFacts(url, forget, cancellationToken).ConfigureAwait(true);
         if (!answer.IsSuccess)
         {

@@ -3,23 +3,27 @@ using Aw.Sindri.Ui.Api.Memory;
 namespace Aw.Sindri.Ui.ViewModels.Memory;
 
 /// <summary>One fact of a search: its text, tags, where it came from, when it was refreshed and expires, and its score. It goes away only after the API confirms a forget.</summary>
-internal sealed class MemoryFactRowViewModel
+internal sealed class MemoryFactRowViewModel : ObservableObject
 {
     private readonly Func<string, CancellationToken, Task> _forget;
+    private readonly BusyFlag _busy;
 
     /// <summary>The row over a served fact.</summary>
     /// <param name="fact">The fact.</param>
     /// <param name="clock">The clock expiry is read against.</param>
     /// <param name="forgetFact">Sends the forget for one fact id.</param>
     /// <param name="forgetTag">Sends the forget for one tag.</param>
-    internal MemoryFactRowViewModel(MemoryFactView fact, TimeProvider clock, Func<string, CancellationToken, Task> forgetFact, Func<string, CancellationToken, Task> forgetTag)
+    /// <param name="busy">The store's forget flag.</param>
+    internal MemoryFactRowViewModel(MemoryFactView fact, TimeProvider clock, Func<string, CancellationToken, Task> forgetFact, Func<string, CancellationToken, Task> forgetTag, BusyFlag busy)
     {
         ArgumentNullException.ThrowIfNull(fact);
         ArgumentNullException.ThrowIfNull(clock);
         ArgumentNullException.ThrowIfNull(forgetFact);
         ArgumentNullException.ThrowIfNull(forgetTag);
-        (Fact, _forget) = (fact, forgetFact);
-        Tags = [.. fact.Tags.Select(t => new MemoryTagViewModel(t, ct => forgetTag(t, ct)))];
+        ArgumentNullException.ThrowIfNull(busy);
+        (Fact, _forget, _busy) = (fact, forgetFact, busy);
+        _busy.PropertyChanged += (_, _) => OnChanged(nameof(CanForget));
+        Tags = [.. fact.Tags.Select(t => new MemoryTagViewModel(t, ct => forgetTag(t, ct), busy))];
         var provenance = new (string Kind, string? Value)[] { ("workflow", fact.Provenance.Workflow), ("run", fact.Provenance.Run), ("item", fact.Provenance.Item), ("session", fact.Provenance.Session) }
             .Where(p => !string.IsNullOrEmpty(p.Value))
             .Select(p => (p.Kind, p.Value ?? string.Empty));
@@ -66,7 +70,7 @@ internal sealed class MemoryFactRowViewModel
     public bool HasScore => ScoreText.Length > 0;
 
     /// <summary>False while a forget of this fact's store is in flight.</summary>
-    public bool CanForget { get; private set; } = true;
+    public bool CanForget => _busy.IsFree;
 
     /// <summary>The forget action's words.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it

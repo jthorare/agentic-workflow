@@ -14,6 +14,7 @@ internal sealed class MemoryPageViewModel : ObservableObject, IDisposable
     private readonly ISindriApi _api;
     private readonly TimeProvider _clock;
     private readonly Dictionary<string, MemoryStoreRowViewModel> _rows = new(StringComparer.Ordinal);
+    private readonly BusyFlag _creating = new();
     private int _reads;
     private CancellationTokenSource? _shown;
     private Uri? _url;
@@ -24,6 +25,7 @@ internal sealed class MemoryPageViewModel : ObservableObject, IDisposable
     internal MemoryPageViewModel(ISindriApi api, TimeProvider clock)
     {
         (_api, _clock) = (api, clock);
+        _creating.PropertyChanged += (_, _) => OnChanged(nameof(CanCreate));
     }
 
     /// <summary>The page's name.</summary>
@@ -218,7 +220,7 @@ internal sealed class MemoryPageViewModel : ObservableObject, IDisposable
     public string NewDescription { get; set => Set(ref field, value ?? string.Empty); } = string.Empty;
 
     /// <summary>False while a create is in flight.</summary>
-    public bool CanCreate { get; private set; } = true;
+    public bool CanCreate => _creating.IsFree;
 
     /// <summary>The sentence for a create that didn't work; empty otherwise.</summary>
     public string CreateError { get; private set { Set(ref field, value); OnChanged(nameof(HasCreateError)); } } = string.Empty;
@@ -244,6 +246,23 @@ internal sealed class MemoryPageViewModel : ObservableObject, IDisposable
             return;
         }
 
+        if (!_creating.TryEnter())
+        {
+            return;   // a create is already on its way
+        }
+
+        try
+        {
+            await Send(url, name, cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            _creating.Exit();
+        }
+    }
+
+    private async Task Send(Uri url, string name, CancellationToken cancellationToken)
+    {
         var description = NewDescription.Trim();
         var answer = await _api.CreateMemory(url, new CreateMemoryBody(name, description.Length == 0 ? null : description), cancellationToken).ConfigureAwait(true);
         if (!answer.IsSuccess)
