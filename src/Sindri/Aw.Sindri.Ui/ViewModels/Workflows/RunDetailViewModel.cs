@@ -207,10 +207,11 @@ internal sealed class RunDetailViewModel(ISindriApi api, TimeProvider clock) : O
     }
 
     // The read can lag the call (the engine writes its marker late), so what Sindri answered wins on the rebuilt row of the same node and item.
+    // A row the read shows with no agent has ended since the call: it keeps no button.
     private void KeepAnswered(NodeRunViewModel node, string? agent)
     {
         var row = Groups.FirstOrDefault(g => string.Equals(g.Node, node.Node, StringComparison.Ordinal))?.Runs.FirstOrDefault(r => r.ItemIndex == node.ItemIndex);
-        if (row is not null && agent is not null)
+        if (row is { Agent: not null } && agent is not null)
         {
             row.Agent = agent;
         }
