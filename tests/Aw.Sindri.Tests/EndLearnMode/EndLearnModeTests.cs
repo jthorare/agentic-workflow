@@ -49,6 +49,19 @@ public sealed class EndLearnModeTests
     }
 
     [Fact]
+    public async Task A_launched_session_ends_learn_mode_and_the_event_is_appended()
+    {
+        _ = await _slice.HoldLease();
+        using var entered = _slice.Callers.Enter(A.Caller().Launched().Build());
+
+        var result = await Service().Handle(new EndLearnModeRequest(RepoName.From("web")), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        var recorded = Assert.Single(_slice.Store.Events);
+        Expect.Equal((EventTypes.SandboxLearnEnded, "web"), (recorded.Envelope.Type, _slice.Events.Payload<SandboxLearnEnded>(recorded).Value.Repo?.Value));
+    }
+
+    [Fact]
     public void A_launched_session_may_end_learn_mode_like_the_human()
     {
         var row = new CommandCatalog().Rows.Single(r => string.Equals(r.Action.Value, "EndLearnMode", StringComparison.Ordinal));

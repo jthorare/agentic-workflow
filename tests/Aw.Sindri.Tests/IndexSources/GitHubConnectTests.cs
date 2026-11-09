@@ -65,6 +65,30 @@ public sealed class GitHubConnectTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_token_read_from_an_environment_variable_connects_and_is_in_no_text_the_verb_prints()
+    {
+        var result = await new GitHubConnect(new EnvSecretPrompts(Planted), _profiles, _secrets, _secrets, _written, (_, _, _) => _reader, TimeProvider.System).Run(Ct);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
+        Assert.Equal(["acme/widgets", "acme/gadgets"], _reader.Checked);
+        Assert.Equal(Planted, _secrets.Stored["keychain:sindri-index/github"]);
+        Assert.Equal(["keychain:sindri-index/github"], _written.Pointers);
+        // what the verb prints is built from the pointer and the repo count only
+        Assert.DoesNotContain(Planted, result.Value.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(Planted, string.Join('\n', _written.Pointers), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_blank_token_from_the_prompt_saves_nothing()
+    {
+        var result = await new GitHubConnect(new EnvSecretPrompts("  "), _profiles, _secrets, _secrets, _written, (_, _, _) => _reader, TimeProvider.System).Run(Ct);
+
+        Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
+        Assert.Empty(_secrets.Stored);
+        Assert.Empty(_reader.Checked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task One_unreadable_repo_saves_nothing_and_is_named()
     {
         _reader.Failures["acme/gadgets"] = ConnectorsErrors.NotFound.With("no such repo");

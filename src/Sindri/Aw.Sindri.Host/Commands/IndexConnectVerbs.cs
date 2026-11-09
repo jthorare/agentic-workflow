@@ -53,9 +53,9 @@ internal sealed class IndexConnectVerbs(IServiceProvider services, Output output
         }
 
         var name = args[at + 1];
-        if (environment(name) is not { Length: > 0 } value)
+        if (environment(name) is not { } value || string.IsNullOrWhiteSpace(value))
         {
-            problem = $"--token-env names {name}, which is not set or is empty (fix: export it, then run this again)";
+            problem = $"--token-env names {name}, which is not set or is empty (spaces only counts as empty) (fix: export it with the token, then run this again)";
             return services.GetRequiredService<ISecretPrompts>();
         }
 

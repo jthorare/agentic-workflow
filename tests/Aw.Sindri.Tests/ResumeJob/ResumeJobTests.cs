@@ -47,6 +47,20 @@ public sealed class ResumeJobTests
     }
 
     [Fact]
+    public async Task A_launched_session_resumes_a_job_waiting_on_model_limit()
+    {
+        var wait = _waits.Park(_job, "model-limit");
+        using var entered = _h.Callers.Enter(A.Caller().Session().Launched().Build());
+
+        var resumed = await Service().Handle(new ResumeJobRequest(_job), Token);
+
+        Assert.True(resumed.IsSuccess, resumed.IsError ? resumed.Error.ToString() : null);
+        Assert.True(wait.Came.Task.IsCompletedSuccessfully);
+        Assert.False(_waits.IsWaiting(_job, "model-limit"));
+        Assert.Equal(_job, resumed.Value.JobId);
+    }
+
+    [Fact]
     public async Task A_job_that_is_not_waiting_gets_the_not_waiting_refusal()
     {
         using var entered = Human();

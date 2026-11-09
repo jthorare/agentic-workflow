@@ -31,6 +31,7 @@ public sealed class IndexConnectVerbTests : IDisposable
         "AW_SINDRI_HOME" => _home.Path,
         "AW_SINDRI_LAUNCH" => launch,
         "SOURCE_TOKEN_FOR_TEST" => "a-token-value",
+        "BLANK_TOKEN_FOR_TEST" => "  \t ",
         _ => null,
     };
 
@@ -57,5 +58,19 @@ public sealed class IndexConnectVerbTests : IDisposable
         Assert.Equal(2, exit);
         Assert.Contains("NO_SUCH_VARIABLE", _error.ToString(), StringComparison.Ordinal);
         Assert.DoesNotContain("SND-AUTH-002", _error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("github")]
+    [InlineData("slack")]
+    [InlineData("linear")]
+    public async Task A_token_pointer_to_a_blank_variable_says_it_is_empty_not_to_paste_the_token(string source)
+    {
+        var exit = await CommandTable.Run(["index", "connect", source, "--token-env", "BLANK_TOKEN_FOR_TEST"], Environment(launch: null), TimeProvider.System);
+
+        Assert.Equal(2, exit);
+        Assert.Contains("BLANK_TOKEN_FOR_TEST", _error.ToString(), StringComparison.Ordinal);
+        Assert.Contains("is not set or is empty", _error.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("paste the token", _error.ToString(), StringComparison.Ordinal);
     }
 }
