@@ -35,13 +35,24 @@ internal static class CallerRequests
         return new Scope();
     }
 
-    private sealed class Scope : IDisposable
+    /// <summary>Makes <see cref="Human"/> answer the human's headers again until the returned scope is disposed: a scenario's seeding inside a session run.</summary>
+    public static IDisposable AsHuman()
     {
-        public void Dispose() => _humanAsSession.Value = false;
+        var was = _humanAsSession.Value;
+        _humanAsSession.Value = false;
+        return new Scope(was);
     }
 
+    private sealed class Scope(bool restore = false) : IDisposable
+    {
+        public void Dispose() => _humanAsSession.Value = restore;
+    }
+
+    /// <summary>The repo a session run names (X-Sindri-Repo): the fixture map's, which every context scenario's profile maps; a session must name one for a context call (SND-CONTEXT-021).</summary>
+    private const string SessionRepo = Aw.Context.Testing.Map.FixtureMap.Repo;
+
     public static (string Name, string Value)[] Human(string? token, string client = "cli") =>
-        _humanAsSession.Value ? [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, client)] :
+        _humanAsSession.Value ? [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, client), (SindriHeaders.Repo, SessionRepo)] :
         token is null
             ? [(SindriHeaders.Caller, "human"), (SindriHeaders.Terminal, "1"), (SindriHeaders.Client, client)]
             : [(SindriHeaders.Caller, "human"), (SindriHeaders.Terminal, "1"), (SindriHeaders.Client, client), (SindriHeaders.Token, token)];

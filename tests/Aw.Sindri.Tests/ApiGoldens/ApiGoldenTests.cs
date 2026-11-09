@@ -68,26 +68,42 @@ public sealed class ApiGoldenTests
         var ct = TestContext.Current.CancellationToken;
         var rows = ApiScenarios.All.Where(r => !IsHumanCredentialRow(r) && !IsPending(r.Slug + "/") && !IsStillOwnerOnly(r.Slug)).ToList();
         var refused = new System.Collections.Concurrent.ConcurrentBag<string>();
+        var broken = new System.Collections.Concurrent.ConcurrentBag<string>();
 
         // why: each case starts its own host with file watchers; two at a time keeps the run under the box's inotify limit (128 per user)
         await Parallel.ForEachAsync(rows, new ParallelOptions { MaxDegreeOfParallelism = 2, CancellationToken = ct }, async (row, token) =>
         {
-            using var session = Callers.CallerRequests.AsSession();   // an AsyncLocal: each row's own flow carries it
+            // why: the scenario's setup (seeding, map imports) stays the human's; only the call the golden records goes out as the session
             await using var host = await ApiScenarios.Start(row.Slug, row.Scenario, token);
-            var body = await ApiScenarios.Body(host, row.Slug, row.Scenario, token);
+            string body;
+            try
+            {
+                using (Callers.CallerRequests.AsSession())   // an AsyncLocal: each row's own flow carries it
+                {
+                    body = await ApiScenarios.Body(host, row.Slug, row.Scenario, token);
+                }
+            }
+            catch (Exception e) when (e is not OperationCanceledException)   // why: one run lists every broken case, not just the first
+            {
+                broken.Add($"{row.Slug}/{row.Scenario}: {e.GetType().Name}: {e.Message.ReplaceLineEndings(" ")}");
+                return;
+            }
+
             if (body.Contains("SND-AUTH-002", StringComparison.Ordinal) && !HumanGolden(row).Contains("SND-AUTH-002", StringComparison.Ordinal))
             {
                 refused.Add($"{row.Slug}/{row.Scenario}");
             }
         });
 
-        Assert.True(refused.IsEmpty, "these cases refuse a session with SND-AUTH-002 but not the human:\n" + string.Join('\n', refused.Order(StringComparer.Ordinal)));
+        Assert.True(refused.IsEmpty && broken.IsEmpty,
+            "these cases refuse a session with SND-AUTH-002 but not the human:\n" + string.Join('\n', refused.Order(StringComparer.Ordinal))
+            + "\nthese cases threw as a session:\n" + string.Join('\n', broken.Order(StringComparer.Ordinal)));
     }
 
     // why: the profile and settings writes stay the owner's until the settings PR (#2374) removes that refusal, and the Linear hub's connection
     // writes are a connection setting outside PR 2's list (LinearConnectionRules); both are named in PR 2's body as follow-ups
     private static bool IsStillOwnerOnly(string slug) =>
-        slug.StartsWith("profile", StringComparison.Ordinal) || slug.StartsWith("linear-connection", StringComparison.Ordinal);
+        slug.StartsWith("profile", StringComparison.Ordinal) || slug.StartsWith("linear-connect", StringComparison.Ordinal) || slug.StartsWith("linear-disconnect", StringComparison.Ordinal);
 
     private static string HumanGolden((string Slug, string Scenario) row) =>
         File.ReadAllText(Golden.SourcePath(typeof(ApiGoldenTests).Assembly, ApiGolden.PathOf(row.Slug, row.Scenario)));
