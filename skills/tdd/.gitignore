@@ -1,0 +1,4 @@
+__pycache__/
+cli/node_modules/
+app/node_modules/
+app/harness/out/
