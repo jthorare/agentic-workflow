@@ -219,6 +219,44 @@ public sealed class WorkflowsWritesTests
     }
 
     [Fact]
+    public async Task A_failed_runs_read_hides_its_failure_line_while_it_reads_again()
+    {
+        _ = _f.Server.WorkflowRunsAnswers.Remove(Slug);
+        var page = await OnRuns();
+        Assert.True(page.Runs.IsFailed);
+        var gate = new TaskCompletionSource();
+        _f.Server.WorkflowGates[Slug] = gate;
+        _f.ServeRuns("list-three");
+
+        var retrying = page.RetryRuns(Token);
+
+        Assert.Equal((true, false), (page.Runs.IsReading, page.Runs.IsFailed));
+        gate.SetResult();
+        await retrying;
+        Assert.False(page.Runs.IsFailed);
+    }
+
+    [Fact]
+    public async Task A_failed_run_read_hides_its_failure_line_while_it_reads_again()
+    {
+        _ = _f.Server.WorkflowRunAnswers.Remove(RunId);
+        var page = await _f.Shown(Token);
+        await page.OpenWorkflow(Slug, Token);
+        await page.OpenRun(RunId, Token);
+        Assert.True(page.Run.IsFailed);
+        var gate = new TaskCompletionSource();
+        _f.Server.WorkflowRunGates[RunId] = gate;
+        _f.ServeRun("finished");
+
+        var retrying = page.RetryRun(Token);
+
+        Assert.Equal((true, false), (page.Run.IsReading, page.Run.IsFailed));
+        gate.SetResult();
+        await retrying;
+        Assert.False(page.Run.IsFailed);
+    }
+
+    [Fact]
     public async Task A_failed_run_read_offers_Try_again_that_reads_again()
     {
         _ = _f.Server.WorkflowRunAnswers.Remove(RunId);
