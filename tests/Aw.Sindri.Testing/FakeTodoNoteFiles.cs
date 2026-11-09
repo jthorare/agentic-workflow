@@ -118,7 +118,11 @@ public sealed class FakeTodoNoteFiles : ITodoNoteFiles
     }
 
     /// <inheritdoc/>
-    public string? Leftover(string note) => Files.ContainsKey(TmpOf(note)) ? TmpOf(note) : null;
+    public string? Leftover(string note)
+    {
+        _ = Files.Remove(TmpOf(note) + "-new");   // an unfinished write is never offered
+        return Files.ContainsKey(TmpOf(note)) ? TmpOf(note) : null;
+    }
 
     /// <inheritdoc/>
     public void Delete(string path) => _ = Files.Remove(path);
