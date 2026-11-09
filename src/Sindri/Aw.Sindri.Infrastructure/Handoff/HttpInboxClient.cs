@@ -12,9 +12,14 @@ namespace Aw.Sindri.Infrastructure.Handoff;
 /// IInboxClient over the three HTTP calls of schemas/handoff/inbox.openapi.yaml. The inbox's host has to be on the allowlist, and its URL https (http only for
 /// loopback). Each attempt has a 30 s limit. List and submit are tried up to three times on a transport failure, a timeout, a 429 or a 5xx; claim is tried once,
 /// because a claim that timed out may have won and a second one would lose to it. A redirect is a failure (the allowlist would not cover where it goes). The
-/// errors name a status or a field, never the key and never the inbox's text.
+/// errors name a status or a field, never the key and never the inbox's text. Every request address is also checked against the connection's base URL: the same
+/// scheme, host and port, or the request is refused with SND-CONN-206 before it is sent.
 /// </summary>
-/// <param name="http">The HTTP client (it should not follow redirects).</param>
+/// <param name="http">
+/// The HTTP client. It must be built with <c>AllowAutoRedirect = false</c> (the DI wiring in the next change does this): a followed redirect would leave the
+/// allowed host and carry the connection's bearer key to the host it points at. The client also treats a 3xx answer as a failure, but only a handler that
+/// does not follow redirects ever lets it see one.
+/// </param>
 /// <param name="allowedHosts">The hosts an inbox may be on.</param>
 /// <param name="retryDelay">How long list and submit wait before a retry.</param>
 [SuppressMessage("Meziantou.Analyzer", "MA0182:Internal type is apparently never used", Justification = "The inbox poller (the next change in this series) builds it; until then only the tests do.")]
@@ -96,6 +101,13 @@ internal sealed class HttpInboxClient(HttpClient http, IReadOnlyCollection<strin
         return status == HttpStatusCode.OK ? Results.Ok() : SindriErrors.InboxSubmitFailed.With("the inbox answered " + Code(status) + " to the result");
     }
 
+    // The one allowed origin of a connection is its base URL's: same scheme, host and port (a default port compares equal to the explicit one).
+    internal static bool SameOrigin(Uri allowed, Uri candidate) =>
+        candidate.IsAbsoluteUri
+        && string.Equals(allowed.Scheme, candidate.Scheme, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(allowed.Host, candidate.Host, StringComparison.OrdinalIgnoreCase)
+        && allowed.Port == candidate.Port;
+
     private static Uri Url(InboxTarget target, string relative) => new(target.BaseUrl.AbsoluteUri.TrimEnd('/') + "/" + relative);
 
     private static string Code(HttpStatusCode status) => ((int)status).ToString(CultureInfo.InvariantCulture);
@@ -114,6 +126,11 @@ internal sealed class HttpInboxClient(HttpClient http, IReadOnlyCollection<strin
     // One call with up to Call.Attempts tries: a refused key or an answer the client can use ends it at once; a transport failure, a timeout, a 429 or a 5xx is tried again after the delay.
     private async ValueTask<Result<(HttpStatusCode Status, string Body)>> Send(Call call, InboxTarget target, CancellationToken cancellationToken)
     {
+        if (!SameOrigin(target.BaseUrl, call.Uri))
+        {
+            return SindriErrors.InboxHostNotAllowed.With("the request's address is not on the inbox connection's scheme, host and port");
+        }
+
         for (var attempt = 1; ; attempt++)
         {
             var (final, reason) = await Once(call, target, cancellationToken).ConfigureAwait(false);

@@ -1,4 +1,4 @@
 {
   "claimId": "c-1",
-  "offer": { "id": "o-1", "title": "Fix the login timeout", "repo": "acme/web", "branch": "fix/login-timeout", "prompt": "Make it 30.", "links": [], "labels": ["bug"] }
+  "offer": { "id": "o-1", "title": "Fix the login timeout", "repo": "web", "branch": "fix/login-timeout", "prompt": "Make it 30.", "links": [], "labels": ["bug"] }
 }

@@ -6,7 +6,7 @@ namespace Aw.Sindri.Core.Handoff;
 /// </summary>
 /// <param name="Key">The offer's id at the outside system (the wire field 'id'; named Key because a raw string id may not sit in a public signature, AW1001).</param>
 /// <param name="Title">A one-line title.</param>
-/// <param name="Repo">The repo the work is for ('owner/name' or a name the profile knows).</param>
+/// <param name="Repo">The repo the work is for: a repo name the profile knows (1 to 100 letters, digits, '.', '_' or '-'; no '/').</param>
 /// <param name="Branch">The branch to work on, or null.</param>
 /// <param name="Prompt">What to do, or null.</param>
 /// <param name="Links">Related links.</param>

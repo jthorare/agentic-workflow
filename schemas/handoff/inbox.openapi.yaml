@@ -38,14 +38,14 @@ paths:
                     offers:
                       - id: o-1
                         title: Fix the login timeout
-                        repo: acme/web
+                        repo: web
                         branch: fix/login-timeout
                         prompt: Users are logged out after 5 minutes. Make it 30.
                         links: [{ label: Ticket, url: "https://tickets.example.test/T-1" }]
                         labels: [bug]
                       - id: o-2
                         title: Add a CSV export
-                        repo: acme/web
+                        repo: web
                         branch: null
                         prompt: null
                         links: []
@@ -83,7 +83,7 @@ paths:
                     offer:
                       id: o-1
                       title: Fix the login timeout
-                      repo: acme/web
+                      repo: web
                       branch: fix/login-timeout
                       prompt: Users are logged out after 5 minutes. Make it 30.
                       links: []
@@ -145,7 +145,7 @@ components:
       name: id
       in: path
       required: true
-      schema: { type: string, minLength: 1 }
+      schema: { type: string, minLength: 1, maxLength: 128 }
   responses:
     Unauthorized:
       description: The key is missing, wrong or not allowed to act for that owner.
@@ -156,25 +156,25 @@ components:
       required: [label, url]
       properties:
         label: { type: string, minLength: 1, maxLength: 200 }
-        url: { type: string, format: uri, pattern: "^https?://", maxLength: 2000 }
+        url: { type: string, format: uri, pattern: "^https?://", maxLength: 2048 }
     Offer:
       type: object
       additionalProperties: false
       required: [id, title, repo, links, labels]
       properties:
-        id: { type: string, minLength: 1, maxLength: 200 }
-        title: { type: string, minLength: 1, maxLength: 300 }
-        repo: { type: string, minLength: 1, maxLength: 300 }
-        branch: { type: [string, "null"], maxLength: 300 }
-        prompt: { type: [string, "null"], maxLength: 100000 }
+        id: { type: string, minLength: 1, maxLength: 128 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        repo: { type: string, maxLength: 100, pattern: "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$" }
+        branch: { type: [string, "null"], minLength: 1, maxLength: 255 }
+        prompt: { type: [string, "null"], maxLength: 65536 }
         links:
           type: array
           maxItems: 50
           items: { $ref: "#/components/schemas/Link" }
         labels:
           type: array
-          maxItems: 50
-          items: { type: string, minLength: 1, maxLength: 100 }
+          maxItems: 20
+          items: { type: string, minLength: 1, maxLength: 64 }
     OfferPage:
       type: object
       additionalProperties: false

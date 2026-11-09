@@ -12,7 +12,7 @@ public sealed class HttpInboxClientTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static Offer Sample(string key) => new(key, "Title", "acme/web", Branch: null, Prompt: null, Links: [], Labels: []);
+    private static Offer Sample(string key) => new(key, "Title", "web", Branch: null, Prompt: null, Links: [], Labels: []);
 
     [Fact]
     public async Task List_is_retried_after_a_503_and_then_succeeds()
