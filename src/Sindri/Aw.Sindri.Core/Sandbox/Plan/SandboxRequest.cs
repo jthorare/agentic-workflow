@@ -58,6 +58,6 @@ public sealed record SandboxRequest(
     /// <summary>True when the owner's approval for this repo covers the Step's <see cref="StepPolicy.Github"/> ask (skill flows spec D7). Nothing sets it yet, so an ask stays scrubbed.</summary>
     public bool GithubPushApproved { get; init; }
 
-    /// <summary>The host groups a graph node adds (<see cref="Launch.AgentTask.HostGroups"/>): 'github' for a node that names a repo, and its connections' groups. Null for any other launch.</summary>
+    /// <summary>The host groups a graph node adds (<see cref="AgentTask.HostGroups"/>): 'github' for a node that names a repo, and its connections' groups. Null for any other launch.</summary>
     public IReadOnlyList<string>? AddGroups { get; init; }
 }
