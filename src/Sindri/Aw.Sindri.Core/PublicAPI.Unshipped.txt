@@ -21722,3 +21722,36 @@ static readonly Aw.Sindri.Core.SindriErrors.ResourceNameClash -> Aw.Kernel.Error
 static readonly Aw.Sindri.Core.SindriErrors.ResourcePathEscapes -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ResourcePurgeRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ResourceSandboxOverCap -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Events.WorkflowQuestionPublic
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowQuestionPublic!
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Kind) -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Equals(Aw.Sindri.Core.Events.WorkflowQuestionPublic? other) -> bool
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Kind.get -> string!
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Kind.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Node.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Run.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.WorkflowQuestionPublic(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Kind = "question") -> void
+override Aw.Sindri.Core.Events.WorkflowQuestionPublic.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowQuestionPublic.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowQuestionPublic.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowQuestionPublic.operator !=(Aw.Sindri.Core.Events.WorkflowQuestionPublic? left, Aw.Sindri.Core.Events.WorkflowQuestionPublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowQuestionPublic.operator ==(Aw.Sindri.Core.Events.WorkflowQuestionPublic? left, Aw.Sindri.Core.Events.WorkflowQuestionPublic? right) -> bool
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowAnsweredPublic!
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Kind) -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Equals(Aw.Sindri.Core.Events.WorkflowAnsweredPublic? other) -> bool
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Kind.get -> string!
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Kind.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Node.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Run.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.WorkflowAnsweredPublic(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Kind = "question") -> void
+override Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowAnsweredPublic.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowAnsweredPublic.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowAnsweredPublic.operator !=(Aw.Sindri.Core.Events.WorkflowAnsweredPublic? left, Aw.Sindri.Core.Events.WorkflowAnsweredPublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowAnsweredPublic.operator ==(Aw.Sindri.Core.Events.WorkflowAnsweredPublic? left, Aw.Sindri.Core.Events.WorkflowAnsweredPublic? right) -> bool
+const Aw.Sindri.Core.Events.WorkflowQuestionPublic.QuestionKind = "question" -> string!
