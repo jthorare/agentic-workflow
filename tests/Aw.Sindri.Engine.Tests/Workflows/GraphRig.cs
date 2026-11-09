@@ -46,7 +46,6 @@ internal sealed class GraphRig : IAsyncDisposable
         Blocks = new GraphTestBlocks();
         Client = environment.Client;
         Questions = new GraphTestQuestions();
-        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new WaitBlock(clock), new AskOwnerBlock(Questions, clock), .. Blocks.All()]);
         var probe = new FakeProcessProbe();
         _ledger = new InMemorySindriStore(clock, probe);
         var held = new HeldLease();

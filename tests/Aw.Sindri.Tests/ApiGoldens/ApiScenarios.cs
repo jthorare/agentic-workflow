@@ -68,8 +68,6 @@ internal static class ApiScenarios
             ? await ConnectionScenarios.Start(slug, scenario, ct)
             : MemoryScenarios.Handles(slug, scenario)
             ? await MemoryScenarios.Start(scenario, ct)
-            : (slug, scenario) is ("workflow-runs-run-nodes-node-answer", "answered")
-            ? await WorkflowRunScenarios.Start(ct)
             : ContextApiScenarios.Handles(slug)
             ? await ContextApiScenarios.Start(slug, scenario, ct)
             : (slug, scenario) is ("profile", "repo-added")
@@ -80,9 +78,11 @@ internal static class ApiScenarios
             ? await Jobs.JobHost.Start(ct, pump: false)
             : await StartLaunchOrLater(slug, scenario, ct);
 
-    /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
+    /// <summary>The last hosts of <see cref="Start"/>: the answered workflow run, the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        IsSkillOrLinear(slug, scenario)
+        (slug, scenario) is ("workflow-runs-run-nodes-node-answer", "answered")
+            ? await WorkflowRunScenarios.Start(ct)
+            : IsSkillOrLinear(slug, scenario)
             ? await StartSkillOrLinear(slug, scenario, ct)
             : IsReviews(slug, scenario)
             ? await StartReviews(slug, scenario, ct)

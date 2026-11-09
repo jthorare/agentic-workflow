@@ -17,8 +17,6 @@ public sealed class BlockDurationTests
     }
 
     [Fact]
-    public void A_run_of_parts_adds_up()
-    {
+    public void A_run_of_parts_adds_up() =>
         Assert.Equal(TimeSpan.FromMinutes(90), BlockDuration.Parse("1h30m").Value);
-    }
 }

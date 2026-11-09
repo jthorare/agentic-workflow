@@ -33,15 +33,13 @@ public sealed class AnswerFailureTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_missing_workflow_means_the_run_ended()
-    {
+    public void A_missing_workflow_means_the_run_ended() =>
         Assert.Equal(SindriErrors.GraphRunEnded.Code, AnswerFailure.Of(new RpcException(RpcException.StatusCode.NotFound, "gone", []), "wf@1:1").Code, StringComparer.Ordinal);
-    }
 
     [Fact, Trait("Lane", "unit")]
     public void Any_other_temporal_exception_is_the_engine_being_unavailable()
     {
-        Assert.Equal(SindriErrors.EngineUnavailable.Code, AnswerFailure.Of(new TemporalException("odd"), "wf@1:1").Code, StringComparer.Ordinal);
+        Assert.Equal(SindriErrors.EngineUnavailable.Code, AnswerFailure.Of(new ApplicationFailureException("odd"), "wf@1:1").Code, StringComparer.Ordinal);
         Assert.Equal(SindriErrors.EngineUnavailable.Code, AnswerFailure.Of(new RpcException(RpcException.StatusCode.Unavailable, "down", []), "wf@1:1").Code, StringComparer.Ordinal);
     }
 }

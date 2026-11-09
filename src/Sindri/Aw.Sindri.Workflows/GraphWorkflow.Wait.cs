@@ -29,7 +29,7 @@ internal sealed partial class GraphWorkflow
         ArgumentNullException.ThrowIfNull(input);
         if (!string.Equals(_asking, input.Node, StringComparison.Ordinal))
         {
-            _ = await Workflow.WaitConditionAsync(() => string.Equals(_asking, input.Node, StringComparison.Ordinal), AskingGrace).ConfigureAwait(true);
+            _ = await Workflow.WaitConditionAsync(() => string.Equals(_asking, input.Node, StringComparison.Ordinal), _askingGrace).ConfigureAwait(true);
         }
 
         Refuse(input);   // why: the state may have moved while the update waited
@@ -43,7 +43,7 @@ internal sealed partial class GraphWorkflow
     public void CheckAnswer(GraphAnswerInput input)
     {
         ArgumentNullException.ThrowIfNull(input);
-        var starting = _current is { Type: "ask_owner" } current && string.Equals(current.Id.Value, input.Node, StringComparison.Ordinal);
+        var starting = _current is { } current && string.Equals(current.Type, "ask_owner", StringComparison.Ordinal) && string.Equals(current.Id.Value, input.Node, StringComparison.Ordinal);
         if (!starting && !string.Equals(_asking, input.Node, StringComparison.Ordinal))
         {
             throw NotWaiting(input.Node);
@@ -52,7 +52,7 @@ internal sealed partial class GraphWorkflow
         Refuse(input, requireAsking: false);
     }
 
-    private static readonly TimeSpan AskingGrace = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan _askingGrace = TimeSpan.FromSeconds(5);
 
     private static ApplicationFailureException NotWaiting(string node) => new($"'{node}' is not waiting for an answer", errorType: AnswerRefusal.NotWaiting, nonRetryable: true);
 
@@ -93,7 +93,7 @@ internal sealed partial class GraphWorkflow
         var text = JsonNode.Parse(outcome.Output ?? "{}")?["wakeAt"] is JsonValue v && v.TryGetValue<string>(out var at) ? at : null;
         if (text is not null && DateTimeOffset.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var wakeAt))
         {
-            var remaining = wakeAt - Workflow.UtcNow;
+            var remaining = wakeAt - new DateTimeOffset(Workflow.UtcNow, TimeSpan.Zero);
             if (remaining > TimeSpan.Zero)
             {
                 await Workflow.DelayAsync(remaining).ConfigureAwait(true);

@@ -125,14 +125,13 @@ internal static partial class CommandTable
             ["sandbox", ..] => await Sandbox(args, client, output, services, ct).ConfigureAwait(false),
             ["mcp", .. var rest] => await new McpVerbs(services, output).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await ContextOrPin(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
-            ["answer", .. var rest] => await WfAnswerCommand.Run(rest, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), output, ct).ConfigureAwait(false),
-            ["workflow" or "wf" or "takeover" or "handback", ..] => await Workflows(args, services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), ct).ConfigureAwait(false),
+            ["workflow" or "wf" or "takeover" or "handback" or "answer", ..] => await Workflows(args, services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), ct).ConfigureAwait(false),
             ["help" or "--help" or "-h"] => await output.Text(Usage.Text + "\n", 0).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
     }
 
-    /// <summary>'sindri workflow|wf|outbox|takeover|handback …'.</summary>
+    /// <summary>'sindri workflow|wf|outbox|takeover|handback|answer …'.</summary>
     private static async Task<int> Workflows(string[] args, IServiceProvider services, Output output, RecipeDesk desk, CancellationToken ct) => args switch
     {
         ["workflow", .. var rest] => await WorkflowCommandTable.Run(rest, services, output, desk, ct).ConfigureAwait(false),
@@ -144,6 +143,7 @@ internal static partial class CommandTable
         ["wf", "runs", .. var rest] => await new WfReadVerbs(desk.Client, output).Runs(rest, ct).ConfigureAwait(false),
         ["wf", "run-show", .. var rest] => await new WfReadVerbs(desk.Client, output).RunShow(rest, ct).ConfigureAwait(false),
         ["takeover" or "handback", ..] => await WorkflowCommandTable.RunShort(args, services, output, desk, ct).ConfigureAwait(false),
+        ["answer", .. var rest] => await WfAnswerCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         _ => await UnknownVerb(args, output).ConfigureAwait(false),
     };
 
