@@ -84,3 +84,8 @@ The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every min
 - **A failed launch does not use up its tick.** When the starter returns any other error (the engine is down, say), the tick is not marked, the pass logs a warning, and the next pass tries the same tick again (as long as it is still the latest). A pass keeps going over the other workflows after one fails and returns the first error at the end.
 - **One schedule node.** A workflow has exactly one trigger (`GRAPH-TRIGGER-001`), so the service reads only the first `schedule` node (up to six crons inside it).
 - **Known gap:** nothing stores when a revision was activated, so the floor is `WorkflowRevision.CreatedAt`. A tick between saving and activating a revision can fire once on activation.
+
+## Parking blocks (PR 9)
+
+`wait` and `ask_owner` park a run on a Temporal timer or wait; they never poll (pages: `docs/workflows/blocks/wait.md`, `docs/workflows/blocks/ask_owner.md`). The block runs as an activity first (`wait` works out its wake-up time, `ask_owner` writes its question), then `GraphWorkflow` parks in `GraphWorkflow.Wait.cs` while the node is still `running`, so a cancel ends the node `cancelled`. `ask_owner` takes its answer as a Temporal Update named `Answer`: its validator refuses an answer when the node is not waiting (`SND-GRAPH-130`) or the answer is not one of the node's choices (`SND-CLI-003`). `AnswerQuestionService` delivers it through `IGraphRunAnswerer` and then records `workflow.answered` with who gave it. The question is a `workflow.question` event and a Needs-you row of kind `question`, cleared when it is answered, when its node ends or when its run ends. New code: `SND-GRAPH-130`.
+
