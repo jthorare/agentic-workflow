@@ -13,4 +13,14 @@ public interface IGraphBlock : IGraphBlockType
     /// <param name="cancellationToken">Cancels the execution.</param>
     /// <returns>The outputs and the branches taken, or the reason the node failed.</returns>
     public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Runs after <see cref="Execute"/> succeeded and the node's outputs are known: for a block that must remember something only when its node worked ('only_new' records the keys it passed on).
+    /// A failure here fails the node. The call can repeat for one node, so a block makes it safe to run twice. Nothing by default.
+    /// </summary>
+    /// <param name="context">The node's context, as <see cref="Execute"/> got it.</param>
+    /// <param name="result">What <see cref="Execute"/> returned.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Success, or why the node failed after all.</returns>
+    public ValueTask<Result<Unit>> Commit(BlockContext context, BlockResult result, CancellationToken cancellationToken) => ValueTask.FromResult<Result<Unit>>(Unit.Value);
 }

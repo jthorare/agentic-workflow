@@ -24,12 +24,22 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     /// <inheritdoc />
     public IReadOnlyDictionary<string, IGraphBlockType> Types { get; }
 
-    /// <summary>The five blocks of PR 6: schedule, manual, condition, notify and prompt.</summary>
+    /// <summary>The five blocks of PR 6: schedule, manual, condition, notify and prompt, and any <paramref name="more"/> a later PR adds.</summary>
     /// <param name="notify">Where 'notify' writes.</param>
     /// <param name="model">What 'prompt' asks.</param>
+    /// <param name="more">Further blocks, such as <see cref="FlowBlocks"/>; null for none.</param>
     /// <returns>The registry.</returns>
-    public static GraphBlockRegistry Standard(INotifyPort notify, IGraphModelPort model) =>
-        new([new ScheduleBlock(), new ManualBlock(), new ConditionBlock(), new NotifyBlock(notify), new PromptBlock(model)]);
+    public static GraphBlockRegistry Standard(INotifyPort notify, IGraphModelPort model, IEnumerable<IGraphBlock>? more = null) =>
+        new([new ScheduleBlock(), new ManualBlock(), new ConditionBlock(), new NotifyBlock(notify), new PromptBlock(model), .. more ?? []]);
+
+    /// <summary>The blocks of agent-first PR 9 part C: only_new, create_item, run_workflow, the workflow_call trigger and http.</summary>
+    /// <param name="seen">What 'only_new' remembers.</param>
+    /// <param name="items">Where 'create_item' makes the item.</param>
+    /// <param name="calls">Where 'run_workflow' starts the other workflow.</param>
+    /// <param name="http">Where 'http' sends its request.</param>
+    /// <returns>The five blocks.</returns>
+    public static IReadOnlyList<IGraphBlock> FlowBlocks(IGraphSeenStore seen, ICreateItemPort items, IGraphCallPort calls, IGraphHttpPort http) =>
+        [new OnlyNewBlock(seen), new CreateItemBlock(items), new RunWorkflowBlock(calls), new WorkflowCallTrigger(), new HttpBlock(http)];
 
     /// <summary>Finds the block of a type.</summary>
     /// <param name="type">The type name, such as 'condition'.</param>

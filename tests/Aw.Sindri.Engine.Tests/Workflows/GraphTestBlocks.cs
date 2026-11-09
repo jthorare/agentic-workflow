@@ -24,7 +24,7 @@ internal sealed class GraphTestBlocks
 
     /// <summary>The three blocks.</summary>
     /// <returns>Echo, fail and hold.</returns>
-    public IEnumerable<IGraphBlock> All() => [new Echo(this), new Fail(this), new Hold(this), new Big()];
+    public IEnumerable<IGraphBlock> All() => [new Echo(this), new Fail(this), new Hold(this), new Big(), new CommitProbe(this)];
 
     private abstract class Base(string type) : IGraphBlock
     {
@@ -40,8 +40,28 @@ internal sealed class GraphTestBlocks
 
         public abstract ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken);
 
+        public virtual ValueTask<Result<Unit>> Commit(BlockContext context, BlockResult result, CancellationToken cancellationToken) => ValueTask.FromResult<Result<Unit>>(Unit.Value);
+
         protected static Result<BlockResult> Ok(BlockContext context) =>
             new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["node"] = JsonValue.Create(context.Node.Value) });
+    }
+
+    /// <summary>Logs 'exec' and, when the node succeeded, 'commit' (the block's after-success hook); config 'failCommit' true makes the commit fail.</summary>
+    private sealed class CommitProbe(GraphTestBlocks owner) : Base("commit_probe")
+    {
+        public override ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
+        {
+            owner._log.Enqueue($"exec {context.RunId.Value}/{context.Node.Value}");
+            return context.Config["failExecute"] is JsonValue { } fail && fail.TryGetValue<bool>(out var failed) && failed
+                ? ValueTask.FromResult<Result<BlockResult>>(SindriErrors.GraphBlockFailed.With("execute failed"))
+                : ValueTask.FromResult(Ok(context));
+        }
+
+        public override ValueTask<Result<Unit>> Commit(BlockContext context, BlockResult result, CancellationToken cancellationToken)
+        {
+            owner._log.Enqueue($"commit {context.RunId.Value}/{context.Node.Value}");
+            return ValueTask.FromResult<Result<Unit>>(context.Config["failCommit"] is JsonValue { } fail && fail.TryGetValue<bool>(out var failed) && failed ? SindriErrors.GraphBlockFailed.With("commit failed") : Unit.Value);
+        }
     }
 
     private sealed class Big() : Base("big")

@@ -191,7 +191,7 @@ public static class ProfileRules
 
     private static Error? Workflow(SindriProfile profile) => DurationsAndAgent(profile.Workflow) ?? Effects(profile.Workflow) ?? Judges(profile) ?? ForgeRules.Check(profile.Workflow?.Forge) ?? PrRules.Check(profile.Workflow?.Pr, profile.Workflow?.Docs) ?? Route(profile.Workflow?.Route);
 
-    private static Error? DurationsAndAgent(WorkflowSettings? workflow) => Durations(workflow) ?? ModelKeyRules.Shape(workflow?.Agent);
+    private static Error? DurationsAndAgent(WorkflowSettings? workflow) => Durations(workflow) ?? ModelKeyRules.Shape(workflow?.Agent) ?? FlowRules.Check(workflow);
 
     /// <summary>The router stub's key (engine P7 plan D8): 'workflow.route.startable' is all or none.</summary>
     private static Error? Route(RouteSettings? route) =>
