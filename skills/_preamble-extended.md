@@ -62,6 +62,7 @@ Read after `_preamble.md`, only when `${AW_PREAMBLE:-on}` is not `off`. Run **Se
 > | `/meta` | Meta orchestrator: replies owed, lane map, gate and merge, owner questions, health (aw-meta CLI) |
 > | `/system-design` | System design for a project: persona pages (TDD, product + design), status doc, mockups, tldraw diagrams in the project's tokens |
 > | `/system-design-video` | Whiteboard explainer video of a system design, drawn live, one cut per audience |
+> | `/tdd` | Technical design document in the house template: markdown source compiled to one claude.ai artifact page, with a schema lane, diagram hotspots, an agents lane, a linter and an eval loop |
 > | `/formal-verify` | TLA+ model of a lock, retry, queue or state machine, checked with TLC; counterexamples as real steps |
 >
 > ### Meta-Orchestration Convention
