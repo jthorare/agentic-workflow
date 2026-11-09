@@ -1,4 +1,4 @@
-using System.Globalization;
+using System.Collections.Concurrent;
 using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Infrastructure.Locks;
 using Aw.Sindri.Infrastructure.Sandbox;
@@ -6,9 +6,22 @@ using Aw.Sindri.Infrastructure.Sandbox;
 namespace Aw.Sindri.Infrastructure.Todos;
 
 /// <summary>The note check's disk side (todo spec §4.5): reads the note without following a symlink, and probes the nearest existing folder with two temporary files and the platform's swap call (<see cref="Libc.SwapFiles"/>).</summary>
-internal sealed class FileTodoNoteDisk : ITodoNoteDisk
+internal sealed class FileTodoNoteDisk(NoteLinkCounter links, Func<string, string, int> swap) : ITodoNoteDisk
 {
     private const long MaxBytes = 8L * 1024 * 1024;
+
+    // the swap probe's answer per folder: a writable folder keeps its answer between passes (an unwritable one is asked again, so a fix is seen)
+    private readonly ConcurrentDictionary<string, NoteFolderFacts> _probed = new(StringComparer.Ordinal);
+
+    public FileTodoNoteDisk()
+        : this(new NoteLinkCounter(new SandboxProcesses()), Libc.SwapFiles)
+    {
+    }
+
+    public FileTodoNoteDisk(NoteLinkCounter links)
+        : this(links, Libc.SwapFiles)
+    {
+    }
 
     public bool VaultExists(string vaultRoot) => Directory.Exists(vaultRoot);
 
@@ -27,7 +40,7 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
             return new NoteFileFacts(Exists: false, IsSymlink: false, LinkCount: 0, Text: null, Unreadable: null);
         }
 
-        if (Links(path) is not { } links)
+        if (links.Count(path) is not { } count)
         {
             return new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: 0, Text: null, Unreadable: "its hard links can't be counted");
         }
@@ -36,12 +49,12 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
         {
             var info = new FileInfo(path);
             return info.Length > MaxBytes
-                ? new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: links, Text: null, Unreadable: "it is over 8 MB")
-                : new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: links, Text: File.ReadAllText(path), Unreadable: null);
+                ? new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: count, Text: null, Unreadable: "it is over 8 MB")
+                : new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: count, Text: File.ReadAllText(path), Unreadable: null);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: links, Text: null, Unreadable: e.Message);
+            return new NoteFileFacts(Exists: true, IsSymlink: false, LinkCount: count, Text: null, Unreadable: e.Message);
         }
     }
 
@@ -52,9 +65,26 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
         var folder = NearestFolder(vaultRoot, note);
         if (!Directory.Exists(folder))
         {
+            _ = _probed.TryRemove(folder, out _);
             return new NoteFolderFacts(Writable: false, CanSwap: false);
         }
 
+        if (_probed.TryGetValue(folder, out var known))
+        {
+            return known;
+        }
+
+        var facts = ProbeFolder(folder);
+        if (facts.Writable)
+        {
+            _probed[folder] = facts;
+        }
+
+        return facts;
+    }
+
+    private NoteFolderFacts ProbeFolder(string folder)
+    {
         var stem = ".sindri-probe-" + Guid.NewGuid().ToString("N");
         var first = Path.Combine(folder, stem + "-a");
         var second = Path.Combine(folder, stem + "-b");
@@ -62,7 +92,7 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
         {
             File.WriteAllText(first, "a");
             File.WriteAllText(second, "b");
-            var swapped = Libc.SwapFiles(first, second) == 0 && File.ReadAllText(first) == "b" && File.ReadAllText(second) == "a";
+            var swapped = swap(first, second) == 0 && File.ReadAllText(first) == "b" && File.ReadAllText(second) == "a";
             return new NoteFolderFacts(Writable: true, CanSwap: swapped);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -102,13 +132,6 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
         }
 
         return false;
-    }
-
-    // .NET has no link count; stat prints it (GNU: -c %h, BSD and macOS: -f %l). Null when stat can't answer: the note can't be checked, so it is refused.
-    internal static int? Links(string path)
-    {
-        var run = new SandboxProcesses().Run("/usr/bin/stat", OperatingSystem.IsMacOS() ? ["-f", "%l", path] : ["-c", "%h", path], TimeSpan.FromSeconds(5));
-        return run.Succeeded && int.TryParse(run.Output.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var links) ? links : null;
     }
 
     private static void DeleteQuietly(string path)
