@@ -1,0 +1,16 @@
+{
+  "connection": {
+    "name": "linear:work",
+    "kind": "oauth",
+    "preset": "linear",
+    "status": "needs-sign-in",
+    "statusReason": "waiting for the browser sign-in",
+    "config": {
+      "clientId": "client-123",
+      "scopes": "read write"
+    },
+    "lastRefreshedAt": null,
+    "hasSecret": false
+  },
+  "consentUrl": "https://provider.example.test/authorize?state=fake"
+}

@@ -34,7 +34,7 @@ public sealed class ShellReviewsTests
         var shell = await Shell();
 
         Assert.Equal(
-            [PageId.Home, PageId.Projects, PageId.Work, PageId.Context, PageId.Agents, PageId.System, PageId.Reviews],
+            [PageId.Home, PageId.Projects, PageId.Work, PageId.Context, PageId.Agents, PageId.System, PageId.Reviews, PageId.Connections],   // Connections (PR 18a) comes after Reviews, so Reviews stays the seventh
             shell.Navigation.Select(n => n.Page));
         Assert.Equal(("Reviews", "V"), (Tab(shell).Label, Tab(shell).Key));
     }, Token);
