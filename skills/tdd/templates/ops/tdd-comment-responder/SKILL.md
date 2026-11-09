@@ -3,19 +3,20 @@ name: tdd-comment-responder
 description: Every 15 minutes, answer activated comment threads on the watched TDD artifacts (and PRs labelled tdd:desk) from each packet's agents lane, resolve what was addressed, and log to the packet's status.md.
 ---
 
-<!-- TEMPLATE (UNTESTED). Design: ~/.claude/skills/tdd/references/ops-loop.md. To install, the owner creates a
+<!-- TEMPLATE (UNTESTED). Design: references/ops-loop.md in the tdd skill. Fill every {{TDD_SKILL}} first:
+{{TDD_SKILL}} is the folder the tdd skill is installed in: ${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/tdd with the toolkit, or the link in a provider's skills dir for a symlink install (for example ~/.claude/skills/tdd). To install, the owner creates a
 local scheduled task on the always-on Mac (create_scheduled_task: taskId "tdd-comment-responder", cron "*/15 * * * *"
 in local time, prompt = everything below the closing of this comment). Not installed by the session that wrote it. -->
 
 # TDD comment responder (local scheduled task)
 
 You are one scheduled run with no memory of earlier runs. Do one pass over the watched TDD artifacts, then stop.
-The design behind this pass is `~/.claude/skills/tdd/references/ops-loop.md`; read it only if a step is unclear.
+The design behind this pass is `{{TDD_SKILL}}/references/ops-loop.md`; read it only if a step is unclear.
 
 ## Inputs
 
 - Watchlist: `~/.system-design/ops/watchlist.json` (shape and field notes:
-  `~/.claude/skills/tdd/scripts/ops/watchlist.example.json`). If it is missing or not valid JSON, append one line to
+  `{{TDD_SKILL}}/scripts/ops/watchlist.example.json`). If it is missing or not valid JSON, append one line to
   the run log (below) and stop. Never edit it.
 - This machine's name: `scutil --get LocalHostName`. An entry is yours when its `host` (or `defaults.host`) equals it
   and `enabled` is not false. Merge each entry over `defaults` (grants merge key by key).
@@ -68,7 +69,7 @@ The design behind this pass is `~/.claude/skills/tdd/references/ops-loop.md`; re
    Repo: <repo>, at the sha in <packet>/meta.json (read files at that sha with `git -C <repo> show <sha>:<path>`).
    MCP tools you may call, read-only unless a grant says otherwise: <mcps>.
    Grants: <grants as JSON>. With edit_source you may edit the packet's source (<slug>.md, meta.json, diagrams/,
-   prs/, schema/, mockups/) and rebuild, lint and check per ~/.claude/skills/tdd/SKILL.md step 5; never hand-edit
+   prs/, schema/, mockups/) and rebuild, lint and check per {{TDD_SKILL}}/SKILL.md step 5; never hand-edit
    build/; never publish. Without a grant, say in the reply what would be needed and list it in followups.
 
    Rules: every claim cites path:line (at the sha) or a page anchor (#id). A number has a source and a date, or says
@@ -89,7 +90,7 @@ The design behind this pass is `~/.claude/skills/tdd/references/ops-loop.md`; re
    already answered: log `duplicate, skipped`. If the platform answers that the thread is not activated, log it and go
    on. If `addressed` is true, `ArtifactComments` action `resolve` on the thread.
 7. **Republish** only when the entry's `grants.republish` is true and the subagent's `actions` say it rebuilt the page:
-   follow `~/.claude/skills/tdd/references/publish-and-mirror.md` §4 (Later session: read the artifact first, list its
+   follow `{{TDD_SKILL}}/references/publish-and-mirror.md` §4 (Later session: read the artifact first, list its
    files, publish with `url`, then bump `rev`). Otherwise list "republish needed" in the summary.
 8. **Log.** Re-read `<packet>/<status_doc>` (other sessions edit it), then append one line at the end, under a
    `## Ops log` heading (add the heading at the end of the file if it is missing):

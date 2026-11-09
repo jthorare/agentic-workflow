@@ -23,7 +23,7 @@ credential chain plus `AWS_REGION` (bugs).
 ## Command
 
 ```
-~/.local/share/tdd-skill/venv/bin/python -I ~/.claude/skills/tdd/scripts/eval_packet.py <packet-dir> \
+~/.local/share/tdd-skill/venv/bin/python -I "$T/scripts/eval_packet.py" <packet-dir> \
   [--build <dir>] [--out <dir>] [--push] [--project tdd-skill] [--experiment <stem>] [--base <stem>] \
   [--with-judge] [--with-agent-probe] [--labels <labels.jsonl>] [--session <id>[,<id>]] [--run-tests] [--no-gh] \
   [--aws-log-groups <g1,g2>] [--aws-alarm-prefix <prefix>] [--probe <questions.json>] [--no-shots] [--skip <names>] [--json]
@@ -90,7 +90,7 @@ not-run names.
 |---|---|---|
 | page_exists | 1 when `build/tdd.html` exists | file system |
 | page_size | 1 when page bytes <= 16 MB | file system |
-| artifact_check | `node ~/.claude/skills/system-design/scripts/artifact_check.mjs tdd.html <out>/shots`: exit 0 -> 1, exit 1 -> 0, exit 2 -> not run; metrics renders, failures, warnings | system-design skill |
+| artifact_check | `node "$S/scripts/artifact_check.mjs" tdd.html <out>/shots`: exit 0 -> 1, exit 1 -> 0, exit 2 -> not run; metrics renders, failures, warnings | the system-design scripts the skill resolves (`ev_artifact.py` mirrors `sd_root` in `build_tdd.py`; last the vendored copy) |
 | check_hydrate | `bun run app/check_hydrate.ts tdd.html` (jsdom hydrate and interactions): exit 0 -> 1, 1 -> 0, 2 -> not run; metrics console errors, warnings, hydration warnings, failed steps | app/ |
 | lint | `lint_packet.py <packet> --build <build> --json <out>/lint.json`; value = rules with zero error findings / rules reported; per-rule error and warning counts as metrics | scripts/lint_packet.py |
 | refs_linked | linked / (linked + unlinked occurrences); linked = `content.refs.linked`; unlinked occurrences = tokens in `content.refs.unlinked` counted in the compiler's linkable HTML strings outside `<a>` and `<code>` | content.json |

@@ -2,7 +2,7 @@
 before creating the routine, then paste the text below this comment as the routine's message content. Add one table
 row per TDD the repo answers for. {{ALSO_AT_CLAUDE}} is either empty or ` or "@claude"`: leave it empty when the
 Claude GitHub app or claude-code-action already answers @claude in this repo. Design:
-~/.claude/skills/tdd/references/ops-loop.md §2.5. -->
+references/ops-loop.md §2.5 in the tdd skill. -->
 
 # TDD PR responder (cloud routine)
 

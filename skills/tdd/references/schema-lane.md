@@ -86,8 +86,9 @@ hover, so a reader can see which boxes open the drawer.
 ## Proof and preview
 
 ```
-python3 -I ~/.claude/skills/tdd/scripts/build_tdd.py <source.md> build      # "N schema tables", no "has no schema" warning
-cd ~/.claude/skills/tdd/app
+T="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/tdd"                  # this skill's folder, as SKILL.md sets it
+python3 -I "$T/scripts/build_tdd.py" <source.md> build      # "N schema tables", no "has no schema" warning
+cd "$T/app"
 bun harness/render.tsx <packet>/build <scratch>/schema-harness.html [--extra ../templates/schema.template.json]
 node harness/shoot.mjs <scratch>/schema-harness.html <png dir> <table> [<table> ...]
 ```

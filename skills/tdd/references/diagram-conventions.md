@@ -4,10 +4,10 @@ Diagrams are drawn in tldraw from mermaid sources, embedded as SVG figures, and 
 
 ## 1 · Draw
 
-The tools are system-design's; this skill does not change them.
+The tools are system-design's, from the copy the skill resolves (`S`; see `sd_root` in `scripts/build_tdd.py`); this skill does not change them.
 
 ```bash
-T="$HOME/.claude/skills/tdd"; S="$HOME/.claude/skills/system-design"; SD="<packet>"
+T="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/tdd"; S="${SYSTEM_DESIGN_SKILL:-$T/vendor/system-design}"; SD="<packet>"   # as SKILL.md sets them
 node "$S/scripts/draw_diagrams.mjs" --spec "$SD/diagrams" --out "$SD/diagrams" --name "<slug>-diagrams" [--only <key>]
 node "$S/scripts/svg_to_png.mjs" "$SD/diagrams/<key>.svg" "$SD/shots/diagram-<key>.png"     # Read the PNG: the Read tool shows PNG, not SVG
 python3 -I "$T/scripts/diagram_hotspots.py" "$SD/diagrams/<key>.svg" --write                # writes or merges diagrams/<key>.hotspots.json
