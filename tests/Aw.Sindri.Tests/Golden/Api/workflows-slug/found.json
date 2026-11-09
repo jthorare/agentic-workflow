@@ -1,0 +1,40 @@
+{
+  "id": "WF-00000000000000000000000000000001",
+  "slug": "morning-check",
+  "name": "Morning check",
+  "revision": 1,
+  "activeRevision": 1,
+  "latestRevision": 2,
+  "archivedAt": null,
+  "createdBy": "owner",
+  "changedBy": "session:golden",
+  "changedAt": "2026-01-01T00:00:00.0000000Z",
+  "specHash": "<regenerate: AW_GOLDEN_UPDATE=1>",
+  "spec": {
+    "version": 1,
+    "name": "Morning check",
+    "description": "Checks the repos every morning",
+    "nodes": [
+      {
+        "id": "start",
+        "type": "manual",
+        "config": {}
+      },
+      {
+        "id": "agent",
+        "type": "run_agent",
+        "title": "Check the repos",
+        "config": {
+          "prompt": "Look for drift"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "start",
+        "to": "agent"
+      }
+    ]
+  },
+  "positions": []
+}

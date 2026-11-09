@@ -88,6 +88,26 @@ public abstract class WorkflowRunStoreContract
         Expect.Sequence([Run(2).Id, Run(3).Id], inFlight.Select(static r => r.Id));
     }
 
+    /// <summary>The recent list holds runs of every status, newest first, cut at the limit, and none of another workflow's.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Recent_lists_the_newest_runs_of_every_status_cut_at_the_limit()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1, WorkflowRunStatus.Succeeded) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(1) }, Token)).Value;
+        _ = (await store.Insert(Run(2, WorkflowRunStatus.Failed) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(2) }, Token)).Value;
+        _ = (await store.Insert(Run(3, WorkflowRunStatus.Running) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(3) }, Token)).Value;
+        var other = WorkflowId.From("WF-00000000000000000000000000000002");
+        _ = (await store.Insert(Run(4) with { WorkflowId = other, Id = WorkflowRunId.Of(WorkflowSlug.From("another"), 1, 1) }, Token)).Value;
+
+        var all = (await store.Recent(_workflow, 10, Token)).Value;
+        var two = (await store.Recent(_workflow, 2, Token)).Value;
+
+        Expect.Sequence([Run(3).Id, Run(2).Id, Run(1).Id], all.Select(static r => r.Id));
+        Expect.Sequence([Run(3).Id, Run(2).Id], two.Select(static r => r.Id));
+        Expect.Equal(0, (await store.Recent(WorkflowId.From("WF-00000000000000000000000000000009"), 10, Token)).Value.Count);
+    }
+
     /// <summary>A final status sets the end time from the clock and keeps the outputs and the error given.</summary>
     /// <returns>The test.</returns>
     [Fact]

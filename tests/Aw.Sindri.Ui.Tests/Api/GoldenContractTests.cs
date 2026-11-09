@@ -152,6 +152,7 @@ public sealed class GoldenContractTests
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
         "connections-id-signin",   // POST /connections/{name}/signin (#2349): the CLI's `connection signin` and the MCP tool; the app has no Connections page yet
+        "workflows", "workflows-slug", "workflows-slug-runs", "workflow-runs-run",   // #2258 PR 8a: the workflow reads are the CLI's and the MCP tools'; the app's workflow pages read them when they land (UI lane)
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
 
