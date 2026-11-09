@@ -181,6 +181,8 @@
                             <TextBlock Classes="body-strong" Text="{Binding TitleText}" />
                             <TextBlock Classes="body-strong mono wf-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}" Text="{Binding ChipText}" />
                           </StackPanel>
+                          <Button HorizontalAlignment="Left" Content="{Binding TakeOverText}" Click="OnTakeOverNode" IsVisible="{Binding CanTakeOver}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding TakeOverText}" />
+                          <Button HorizontalAlignment="Left" Content="{Binding HandBackText}" Click="OnHandBackNode" IsVisible="{Binding CanHandBack}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding HandBackText}" />
                           <TextBlock Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
                           <TextBlock Classes="caption subtle" Text="{Binding TruncatedText}" IsVisible="{Binding IsTruncated}" TextWrapping="Wrap" />
                           <StackPanel Spacing="2" IsVisible="{Binding HasInput}">
