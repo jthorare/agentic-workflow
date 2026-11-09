@@ -166,7 +166,7 @@ public sealed class ContextMapApiTests
 
     internal static async Task Import(GoldenHost host, string? mapFile = null)
     {
-        using var seeding = Callers.CallerRequests.AsHuman();   // why: an import is a scenario's seeding, the human's even inside a session run
+        using var seeding = AsHuman();   // why: an import is a scenario's seeding, the human's even inside a session run
         var file = mapFile ?? FixtureMap.WriteTo(host.Home);
         var hash = HashOf(await PreviewBody(host, file));
         var imported = await host.Http.Ask(Post("/sindri/context/map/import", Body(file, hash), Human(host.Token.Value)));

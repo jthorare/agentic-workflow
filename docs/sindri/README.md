@@ -21,7 +21,7 @@ sindri                                  # start the control plane and open the a
 sindri doctor                           # one line per check: ok / warn / fail with a fix
 ```
 
-Some commands (approvals, starting and answering workflows, map builds, `index connect`) only run from a person's terminal and refuse agent sessions with `SND-AUTH-002`.
+An agent session may run every command except the profile writes (`profile set`, `profile approve`, `profile init`) and the local-only verbs; those refuse it with `SND-AUTH-002`. `index purge` still asks for a typed yes, so it needs a terminal.
 
 The full setup, from prerequisites through connecting your sources, agent runtime and MCP to the app, is in **[SETUP.md](SETUP.md)**, and as a guided page with a picture per step: **[`docs/sindri-setup.html`](../sindri-setup.html)** (open it from disk). Operating it from the CLI (the product map, recipes, running the line) is in [OPERATIONS.md](OPERATIONS.md) until those move into the app.
 

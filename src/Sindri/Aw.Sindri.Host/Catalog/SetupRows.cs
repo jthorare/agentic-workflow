@@ -14,7 +14,7 @@ internal static class SetupRows
 {
     internal static IReadOnlyList<CommandRow> All { get; } =
     [
-        JobRows.Job("AddRepo", typeof(AddRepoRequest), "/sindri/setup/repos", "sindri repo add <path>"),   // a job-class row: a session is refused (SND-AUTH-002), the app and the terminal start it
+        JobRows.Job("AddRepo", typeof(AddRepoRequest), "/sindri/setup/repos", "sindri repo add <path>"),   // a job-class row: any caller may start it (agent-first PR 2)
         JobRows.Job("OnboardRepo", typeof(OnboardRepoRequest), "/sindri/setup/repos/onboard", "sindri repo onboard [<path>]"),   // a job-class row like AddRepo: the terminal and the app start it, a session is refused; the setup service onboards on its own after an approval
         JobRows.Job("RegisterMcp", typeof(RegisterMcpJobRequest), "/sindri/setup/mcp", "sindri mcp register --apply") with { ServiceGrants = ["setup"] },
         // the sources step's action is `sindri index connect <source>`: local (no route); the token comes from a terminal prompt or a `--token-env NAME` pointer, so an agent session may run it too (agent-first PR 2)

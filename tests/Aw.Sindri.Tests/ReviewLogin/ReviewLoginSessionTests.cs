@@ -6,11 +6,11 @@ using static Aw.Sindri.Tests.Callers.CallerRequests;
 
 namespace Aw.Sindri.Tests.ReviewLogin;
 
-/// <summary>POST /sindri/reviews/login is the owner's: a launched session is refused with SND-AUTH-002 and nothing changes (the profile file and the approved hash stay as they were).</summary>
+/// <summary>POST /sindri/reviews/login is open to a session (agent-first PR 2): a launched session saves the login into the live profile, and the approved hash stays as it was (saving never approves).</summary>
 public sealed class ReviewLoginSessionTests
 {
     [Fact, Trait("Lane", "integration")]
-    public async Task A_session_post_leaves_the_profile_file_and_the_approved_hash_unchanged()
+    public async Task A_session_post_saves_the_login_and_leaves_the_approved_hash_unchanged()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var host = await GoldenHost.Start(temporary: true, ct);
@@ -21,9 +21,10 @@ public sealed class ReviewLoginSessionTests
 
         var answer = await host.Http.Ask(Post("/sindri/reviews/login", """{"login":"joi-example"}""", ItemScenarios.Session("demo")));
 
-        Assert.Equal(HttpStatusCode.Forbidden, answer.Status);
-        Assert.Contains("SND-AUTH-002", answer.Body, StringComparison.Ordinal);
-        Assert.Equal(before, await File.ReadAllTextAsync(file, ct));
+        Assert.Equal(HttpStatusCode.OK, answer.Status);
+        var after = await File.ReadAllTextAsync(file, ct);
+        Assert.NotEqual(before, after);
+        Assert.Contains("joi-example", after, StringComparison.Ordinal);
         Assert.Equal(approvedBefore, (await host.App.Services.GetRequiredService<IApprovedProfile>().Latest(ct)).Value!.Hash);
     }
 }

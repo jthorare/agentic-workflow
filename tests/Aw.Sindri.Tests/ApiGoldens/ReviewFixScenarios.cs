@@ -27,7 +27,7 @@ internal static class ReviewFixScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("reviews-fix", "done"), ("reviews-fix", "half-done"), ("reviews-fix", "item-only"), ("reviews-fix", "to-babysitter"), ("reviews-fix", "to-session"), ("reviews-fix", "waiting"), ("reviews-fix", "old-side"), ("reviews-fix", "session-refused"), ("reviews-fix", "file-not-written"),
+        ("reviews-fix", "done"), ("reviews-fix", "half-done"), ("reviews-fix", "item-only"), ("reviews-fix", "to-babysitter"), ("reviews-fix", "to-session"), ("reviews-fix", "waiting"), ("reviews-fix", "old-side"), ("reviews-fix", "session"), ("reviews-fix", "file-not-written"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -66,7 +66,7 @@ internal static class ReviewFixScenarios
             "half-done" => await Send(host, "1", $$"""{"kind":"line","text":"Guard the null.","head":"{{new string('b', 40)}}","path":"src/Sync.cs","line":42}"""),
             "item-only" => await Send(host, "2", line + "}"),
             "old-side" => await Send(host, "1", line + ",\"side\":\"old\"}"),
-            "session-refused" => (await host.Http.Ask(Post(Route + "1/fix", line + "}", ItemScenarios.Session("demo")))).Body,
+            "session" => (await host.Http.Ask(Post(Route + "1/fix", line + "}", ItemScenarios.Session("demo")))).Body,
             _ => await Send(host, "1", line + "}"),
         };
         static async Task<string> Send(GoldenHost h, string number, string body) => (await h.Http.Ask(Post(Route + number + "/fix", body, ItemScenarios.Human(h)))).Body;

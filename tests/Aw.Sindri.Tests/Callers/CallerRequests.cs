@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aw.Context.Testing.Map;
 using Aw.Sindri.Host;
 
 namespace Aw.Sindri.Tests.Callers;
@@ -49,7 +50,7 @@ internal static class CallerRequests
     }
 
     /// <summary>The repo a session run names (X-Sindri-Repo): the fixture map's, which every context scenario's profile maps; a session must name one for a context call (SND-CONTEXT-021).</summary>
-    private const string SessionRepo = Aw.Context.Testing.Map.FixtureMap.Repo;
+    private const string SessionRepo = FixtureMap.Repo;
 
     public static (string Name, string Value)[] Human(string? token, string client = "cli") =>
         _humanAsSession.Value ? [(SindriHeaders.Caller, "session"), (SindriHeaders.Client, client), (SindriHeaders.Repo, SessionRepo)] :
