@@ -17,7 +17,7 @@ internal static class TodoScenarios
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged"), ("todos-keep", "sindri"), ("todos-keep", "obsidian"), ("todos-keep-undo", "accepted"), ("todos-hold-apply", "accepted"), ("todos-hold-undo", "accepted"), ("todos-note-import", "dry-run"), ("todos-note-import", "imported"), ("todos-note-import", "stale")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note", "note"), ("todos-note", "hold"), ("todos-note", "conflict"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged"), ("todos-keep", "sindri"), ("todos-keep", "obsidian"), ("todos-keep-undo", "accepted"), ("todos-hold-apply", "accepted"), ("todos-hold-undo", "accepted"), ("todos-note-import", "dry-run"), ("todos-note-import", "imported"), ("todos-note-import", "stale")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
@@ -30,6 +30,7 @@ internal static class TodoScenarios
         GoldenHost.Start(temporary: true, ct, slug switch
         {
             "todos-note-check" => NoteVaultProfile(),
+            "todos-note" => NoteVaultProfile() + "todo:\n  obsidian:\n    vault: notes\n    note: Todo.md\n",
             "todos-note-import" => NoteVaultProfile() + "todo:\n  obsidian:\n    vault: notes\n    note: Todo.md\n",
             "todos-note-set" or "todos-note-stop" => ItemScenarios.ProfileYaml + "context:\n  sources:\n    library:\n      vaults:\n        - { name: notes, path: /work/notes }\n",
             _ => ItemScenarios.ProfileYaml,
@@ -50,9 +51,9 @@ internal static class TodoScenarios
         await ViewScenarios.Approve(host, ct);
         await ViewScenarios.CatchUp(host, ct);
         var human = ItemScenarios.Human(host);
-        if (slug.StartsWith("todos-note-", StringComparison.Ordinal))
+        if (slug.StartsWith("todos-note", StringComparison.Ordinal))
         {
-            return await NoteRoute(host, slug, scenario, human);
+            return slug == "todos-note" ? await NoteState(host, human, scenario, ct) : await NoteRoute(host, slug, scenario, human);
         }
 
         if (slug == "todos-add")
@@ -169,6 +170,38 @@ internal static class TodoScenarios
 
         await ViewScenarios.CatchUp(host, ct);
         return (await host.Http.Ask(Post("/sindri/todos/note/hold/undo", "{}", human))).Body;
+    }
+
+    // GET /sindri/todos/note: "note" has one open conflict, one conflict picked inside its Undo window and the sample note's link line that can't sync; "hold" has an open hold of two changes;
+    // "conflict" is the todo read of a both-places conflict (the TodoItem shape, same as the id route's golden)
+    private static async Task<string> NoteState(GoldenHost host, (string Name, string Value)[] human, string scenario, CancellationToken ct)
+    {
+        const string Hash = "sha256:3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a";
+        if (string.Equals(scenario, "conflict", StringComparison.Ordinal))
+        {
+            return await Show(host, human, ct);
+        }
+
+        var first = await Add(host, human, """{"text":"call the dentist","clientId":"c-1"}""", string.Empty, ct);
+        if (string.Equals(scenario, "hold", StringComparison.Ordinal))
+        {
+            var second = await Add(host, human, """{"text":"reply to Sam","clientId":"c-2"}""", string.Empty, ct);
+            var changes = new[] { new TodoHeldChange(Core.Ids.TodoId.From(first), "removed", NoteLine: null), new TodoHeldChange(Core.Ids.TodoId.From(second), "edited", $"- [ ] reply to Sam about the offsite ^td-{second[3..]}") };
+            await ViewScenarios.Append(host, EventTypes.TodoNoteHeld, new TodoNoteHeld(changes, Hash, "service:todo-note"), "todo.note.held:" + Hash, ct);
+        }
+        else
+        {
+            var picked = await Add(host, human, """{"text":"reply to Sam","clientId":"c-2"}""", string.Empty, ct);
+            var mine = new TodoSide("call the dentist", Due: null, Links: [], Done: false, Removed: false);
+            await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(first), mine, mine with { Text = "call the dentist about the crown" }, Hash), $"todo.conflicted:{first}:{Hash}", ct);
+            var other = new TodoSide("reply to Sam", Due: null, Links: [], Done: false, Removed: false);
+            await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(picked), other, other with { Text = "reply to Sam about the offsite" }, Hash), $"todo.conflicted:{picked}:{Hash}", ct);
+            await ViewScenarios.CatchUp(host, ct);
+            _ = await host.Http.Ask(Post($"/sindri/todos/{picked}/keep", Request("todos-keep", "sindri"), human));
+        }
+
+        await ViewScenarios.CatchUp(host, ct);
+        return (await host.Http.Ask(Get("/sindri/todos/note", human))).Body;
     }
 
     // GET /sindri/todos/{id} for a todo with two links and an open both-places conflict (#2355): the answer must be the list's TodoItem shape, links described, no internal fields
