@@ -34,8 +34,8 @@ public readonly partial struct TriggerKey : ITypedId<TriggerKey, string>
     /// <returns>'wf:{instance}:{part}'.</returns>
     public static TriggerKey For(WorkflowInstanceId instance, string part) => From("wf:" + instance.Value + ":" + part);
 
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A trigger key is 'wf:{instance}:{trigger}', at most 512 characters");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A trigger key is 'wf:{instance}:{trigger}', at most 512 characters");
 
     [GeneratedRegex("^wf:WFI-[0-9a-f]{32}:[!-~]+\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }
