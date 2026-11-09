@@ -1,7 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Graph;
 using static Aw.Sindri.Tests.WorkflowWrites.WorkflowWriteRig;
 
 namespace Aw.Sindri.Tests.WorkflowWrites;

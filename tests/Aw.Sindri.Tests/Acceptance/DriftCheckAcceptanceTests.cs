@@ -8,17 +8,18 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Templates;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.CreateWorkflow;
 using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Host;
-using Aw.Sindri.Host.Mcp;
 using Aw.Sindri.Tests.WorkflowWrites;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using static Aw.Sindri.Tests.WorkflowWrites.WorkflowWriteRig;
+using HostWorkflowTools = Aw.Sindri.Host.Mcp.WorkflowTools;
 
 namespace Aw.Sindri.Tests.Acceptance;
 
@@ -45,13 +46,13 @@ public sealed class DriftCheckAcceptanceTests : IDisposable
         await using var services = Services();
         using var caller = _rig.Harness.Callers.Enter(new CallerContext(CallerClass.Session, Terminal: false, actor, _rig.Harness.Ids.New<CommandId>(), _rig.Harness.Ids.New<CorrelationId>(), Repo: null, launch));
 
-        var made = await Call(services, WorkflowTools.Create, ("slug", Slug.Value), ("template", "weekday-check"));
-        var edited = await Call(services, WorkflowTools.ApplyOps, ("slug", Slug.Value), ("baseRevision", 1), ("ops", new object[] { new { op = "set_config", node = "check", path = "prompt", value = Prompt } }));
-        var checkedOk = await Call(services, WorkflowTools.Validate, ("slug", Slug.Value));
-        var checkedBad = await Call(services, WorkflowTools.Validate, ("spec", BrokenSpec()));
-        var on = await Call(services, WorkflowTools.Activate, ("slug", Slug.Value));
+        var made = await Call(services, HostWorkflowTools.Create, ("slug", Slug.Value), ("template", "weekday-check"));
+        var edited = await Call(services, HostWorkflowTools.ApplyOps, ("slug", Slug.Value), ("baseRevision", 1), ("ops", new object[] { new { op = "set_config", node = "check", path = "prompt", value = Prompt } }));
+        var checkedOk = await Call(services, HostWorkflowTools.Validate, ("slug", Slug.Value));
+        var checkedBad = await Call(services, HostWorkflowTools.Validate, ("spec", BrokenSpec()));
+        var on = await Call(services, HostWorkflowTools.Activate, ("slug", Slug.Value));
 
-        Assert.All(new[] { made, edited, checkedOk, checkedBad, on }, static r => Assert.True(r.IsError != true, r.Content.OfType<TextContentBlock>().FirstOrDefault()?.Text));
+        Assert.All([made, edited, checkedOk, checkedBad, on], static r => Assert.True(r.IsError != true, r.Content.OfType<TextContentBlock>().FirstOrDefault()?.Text));
         Assert.Equal(2, Structured(edited)["revision"]!.GetValue<int>());
         Assert.True(Structured(checkedOk)["passed"]!.GetValue<bool>());
         Assert.Equal(2, Structured(on)["revision"]!.GetValue<int>());
@@ -79,7 +80,7 @@ public sealed class DriftCheckAcceptanceTests : IDisposable
     private static JsonNode Structured(CallToolResult result) => JsonNode.Parse(result.StructuredContent!.Value.GetRawText())!;   // why: every tool result carries structuredContent
 
     private static ValueTask<CallToolResult> Call(IServiceProvider services, string tool, params (string Name, object Value)[] pairs) =>
-        WorkflowTools.Call(tool, services, pairs.ToDictionary(static p => p.Name, static p => JsonSerializer.SerializeToElement(p.Value), StringComparer.Ordinal), Token);
+        HostWorkflowTools.Call(tool, services, pairs.ToDictionary(static p => p.Name, static p => JsonSerializer.SerializeToElement(p.Value), StringComparer.Ordinal), Token);
 
     private ServiceProvider Services() => new ServiceCollection()
         .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
