@@ -21389,3 +21389,5 @@ static Aw.Sindri.Core.Connections.SignInTry.operator !=(Aw.Sindri.Core.Connectio
 static Aw.Sindri.Core.Connections.SignInTry.operator ==(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.get -> string?
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.init -> void
+Aw.Sindri.Core.Graph.Runs.WorkflowLoopRule
+static Aw.Sindri.Core.Graph.Runs.WorkflowLoopRule.Decide(Aw.Sindri.Core.Graph.Ids.WorkflowRunId? parent, Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug) -> Aw.Kernel.Error?

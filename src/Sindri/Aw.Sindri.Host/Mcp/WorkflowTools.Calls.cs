@@ -8,7 +8,6 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph.Ids;
-using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.CancelWorkflowRun;
@@ -178,11 +177,6 @@ internal static partial class WorkflowTools
         }
 
         var caller = services.GetRequiredService<ICallerContextAccessor>().Current;
-        if (await WorkflowLoopGuard.Check(services.GetRequiredService<IGraphLaunchRuns>(), caller?.Launch, slug.Value, ct).ConfigureAwait(false) is { } loop)
-        {
-            return McpResults.Failure(services, loop);
-        }
-
         var answer = await services.GetRequiredService<IService<RunWorkflowRequest, RunWorkflowResponse>>().Handle(new RunWorkflowRequest(slug.Value, payload.Value, caller?.Actor ?? "owner"), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static started => $"{started.Status} {started.Run.Value}{(started.Reason is null ? string.Empty : ": " + started.Reason)}");
     }
