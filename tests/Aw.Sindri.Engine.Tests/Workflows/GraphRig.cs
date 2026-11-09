@@ -45,7 +45,6 @@ internal sealed class GraphRig : IAsyncDisposable
         Workflows = new InMemoryWorkflowStore(clock);
         Blocks = new GraphTestBlocks();
         Client = environment.Client;
-        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), .. Blocks.All()]);
         var probe = new FakeProcessProbe();
         _ledger = new InMemorySindriStore(clock, probe);
         var held = new HeldLease();
@@ -55,6 +54,10 @@ internal sealed class GraphRig : IAsyncDisposable
         var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue);
         var starter = new GraphRunStarter(Runs, launcher, mirror, clock, NullLogger<GraphRunStarter>.Instance);
         _starter = starter;
+        // why: the real wait polls on a clock; the fake one never moves while a node waits, so the caller gets the system clock
+        var caller = new GraphWorkflowCaller(Workflows, Runs, starter, new InMemoryProfiles(), TimeProvider.System);
+        Seen = new GraphTestBlocks.MemorySeen();
+        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new OnlyNewBlock(Seen), new RunWorkflowBlock(caller), new WorkflowCallTrigger(), .. Blocks.All()]);
         var options = new TemporalWorkerOptions(_taskQueue)
             .AddWorkflow<GraphWorkflow>()
             .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror))
@@ -70,6 +73,9 @@ internal sealed class GraphRig : IAsyncDisposable
     public string Slug { get; }
 
     public GraphTestBlocks Blocks { get; }
+
+    /// <summary>What the real 'only_new' block remembers, in memory.</summary>
+    public GraphTestBlocks.MemorySeen Seen { get; }
 
     public ITemporalClient Client { get; }
 
@@ -92,6 +98,30 @@ internal sealed class GraphRig : IAsyncDisposable
         var slug = WorkflowSlug.From(Slug);
         _ = (await Workflows.Create(id, slug, spec, "owner", Token)).Value;
         return (id, slug);
+    }
+
+    /// <summary>Saves the spec as the active revision 1 of a second workflow that another workflow's 'run_workflow' can call.</summary>
+    public async Task<string> DefineCallee(GraphSpec spec)
+    {
+        var id = WorkflowId.From("WF-00000000000000000000000000000002");
+        var slug = $"{Slug}-callee";
+        _ = (await Workflows.Create(id, WorkflowSlug.From(slug), spec, "owner", Token)).Value;
+        _ = (await Workflows.Activate(id, 1, Token)).Value;
+        return slug;
+    }
+
+    /// <summary>One node's stored output as JSON, from the first execution of the node.</summary>
+    public async Task<JsonNode?> NodeOutput(WorkflowRunId id, string node)
+    {
+        var rows = (await Runs.NodeRuns(id, Token)).Value;
+        return rows.First(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == 0).Output is { } text ? JsonNode.Parse(text) : null;
+    }
+
+    /// <summary>One node's stored input (its interpolated config) as JSON.</summary>
+    public async Task<JsonNode?> NodeInput(WorkflowRunId id, string node)
+    {
+        var rows = (await Runs.NodeRuns(id, Token)).Value;
+        return rows.First(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == 0).Input is { } text ? JsonNode.Parse(text) : null;
     }
 
     /// <summary>Asks the starter for a run of revision 1, as a trigger does.</summary>
