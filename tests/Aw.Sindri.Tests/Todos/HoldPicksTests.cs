@@ -219,7 +219,7 @@ public sealed class HoldPicksTests
         var lagging = await _h.UndoHold().Handle(new UndoTodoHoldRequest(), Token);
 
         Assert.Equal("SND-API-011", lagging.Error.Code);
-        Assert.DoesNotContain(_h.Slice.Store.Events, e => e.Envelope.Type is "todo.note.held.reopened" or "todo.restored");
+        Assert.DoesNotContain(_h.Slice.Store.Events, e => string.Equals(e.Envelope.Type, "todo.note.held.reopened", StringComparison.Ordinal) || string.Equals(e.Envelope.Type, "todo.restored", StringComparison.Ordinal));
 
         // once the views catch up, the same Undo reverses the apply and reopens the hold
         await _h.FoldAt(EventTypes.TodoRemoved, new TodoRemoved(_first, 2, "obsidian"), 0);
