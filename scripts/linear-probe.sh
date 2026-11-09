@@ -264,6 +264,16 @@ else
   else failed "mention scan"; fi
 fi
 
+# --- 3b. issue history order: does `history` come newest first? The poller (LinearTimes.HistoryMissing) assumes so; this prints the fact ---
+# Read-only: the most recently updated issue that has at least two history entries among the newest 20, its first 25 entries. Output is the
+# count and the order only (no titles, ids or text).
+hq='query History($first: Int) { issues(first: $first, orderBy: updatedAt) { nodes { history(first: 25) { nodes { createdAt } } } } }'
+if gql read History "$hq" '{"first":20}'; then
+  jq -r '([.data.issues.nodes[]? | [.history.nodes[]?.createdAt] | select(length >= 2)] | first // []) as $t
+    | "history.entries: \($t | length)\nhistory.order: \(if ($t | length) < 2 then "unknown" elif $t[0] > $t[-1] then "newest-first" elif $t[0] < $t[-1] then "oldest-first" else "unknown" end)"' "$work/History.json" > "$work/history.txt"
+  while IFS= read -r l; do lines+=("$l"); printf '%s\n' "$l"; done < "$work/history.txt"
+else failed "history order"; fi
+
 # --- 4. the write part ---
 label_name="sindri-probe"
 team_id="" label_id="" baseline_json="[]" archived_sample="" label_made=0

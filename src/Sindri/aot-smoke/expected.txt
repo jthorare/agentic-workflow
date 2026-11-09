@@ -155,7 +155,7 @@ true
 "http=404"
 post http=405
 ## sindri services --json | jq (name, every, paused, job)
-[{"name":"code-index-embed","every":"1m","paused":false,"job":null},{"name":"code-index-main-move","every":"1m","paused":false,"job":null},{"name":"connection-refresh","every":"5m","paused":false,"job":null},{"name":"context-concept-scan","every":"1m","paused":false,"job":null},{"name":"context-map-refresh","every":"1m","paused":false,"job":null},{"name":"context-sync-gaps","every":"1m","paused":false,"job":null},{"name":"context-upkeep","every":"15m","paused":false,"job":null},{"name":"heartbeat","every":"5s","paused":false,"job":null},{"name":"index-decisions","every":"15m","paused":false,"job":null},{"name":"index-embed","every":"1m","paused":false,"job":null},{"name":"index-sync","every":"5m","paused":false,"job":null},{"name":"memory-expire","every":"1h","paused":false,"job":null},{"name":"setup","every":"1m","paused":false,"job":null},{"name":"todo-note","every":"24h","paused":false,"job":null},{"name":"workflow-schedule","every":"1m","paused":false,"job":null}]
+[{"name":"code-index-embed","every":"1m","paused":false,"job":null},{"name":"code-index-main-move","every":"1m","paused":false,"job":null},{"name":"connection-refresh","every":"5m","paused":false,"job":null},{"name":"context-concept-scan","every":"1m","paused":false,"job":null},{"name":"context-map-refresh","every":"1m","paused":false,"job":null},{"name":"context-sync-gaps","every":"1m","paused":false,"job":null},{"name":"context-upkeep","every":"15m","paused":false,"job":null},{"name":"heartbeat","every":"5s","paused":false,"job":null},{"name":"index-decisions","every":"15m","paused":false,"job":null},{"name":"index-embed","every":"1m","paused":false,"job":null},{"name":"index-sync","every":"5m","paused":false,"job":null},{"name":"memory-expire","every":"1h","paused":false,"job":null},{"name":"setup","every":"1m","paused":false,"job":null},{"name":"todo-note","every":"24h","paused":false,"job":null},{"name":"workflow-poll","every":"30s","paused":false,"job":null},{"name":"workflow-schedule","every":"1m","paused":false,"job":null}]
 ## sindri services run heartbeat (human, terminal)
 job JOB-ID started
 run heartbeat (manual)
@@ -192,6 +192,7 @@ index-sync  every 5m  last: ok  next: TIME
 memory-expire  every 1h  last: ok  next: TIME
 setup  every 1m  last: ok  next: TIME
 todo-note  every 24h  last: ok  next: TIME
+workflow-poll  every 30s  last: ok  next: TIME
 workflow-schedule  every 1m  last: ok  next: TIME
 ## sindri services resume heartbeat (human, terminal)
 heartbeat resumed (sequence SEQ)
@@ -210,6 +211,7 @@ index-sync  every 5m  last: ok  next: TIME
 memory-expire  every 1h  last: ok  next: TIME
 setup  every 1m  last: ok  next: TIME
 todo-note  every 24h  last: ok  next: TIME
+workflow-poll  every 30s  last: ok  next: TIME
 workflow-schedule  every 1m  last: ok  next: TIME
 ## sindri stop (session)
 stopped (pid PID, epoch 1 released)

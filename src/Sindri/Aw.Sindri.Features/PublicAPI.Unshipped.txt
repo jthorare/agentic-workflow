@@ -5227,13 +5227,13 @@ Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.CantImport.get -> int
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.CantImport.init -> void
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.CantImportLines.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>!
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.CantImportLines.init -> void
-Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Deconstruct(out int Imported, out int CantImport, out int Open, out int Done, out int Other, out int Importable, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>! CantImportLines, out bool DryRun) -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Deconstruct(out int Imported, out int CantImport, out int Open, out int Done, out int Other, out int Importable, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>! CantImportLines, out bool DryRun, out string? Warning) -> void
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Done.get -> int
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Done.init -> void
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.DryRun.get -> bool
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.DryRun.init -> void
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Equals(Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse? other) -> bool
-Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.ImportTodoNoteResponse(int Imported, int CantImport, int Open, int Done, int Other, int Importable, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>! CantImportLines, bool DryRun) -> void
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.ImportTodoNoteResponse(int Imported, int CantImport, int Open, int Done, int Other, int Importable, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.NoteCantImport!>! CantImportLines, bool DryRun, string? Warning = null) -> void
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Importable.get -> int
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Importable.init -> void
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Imported.get -> int
@@ -5270,3 +5270,5 @@ override Aw.Sindri.Features.GetConnection.SignInFailureView.GetHashCode() -> int
 override Aw.Sindri.Features.GetConnection.SignInFailureView.ToString() -> string!
 static Aw.Sindri.Features.GetConnection.SignInFailureView.operator !=(Aw.Sindri.Features.GetConnection.SignInFailureView? left, Aw.Sindri.Features.GetConnection.SignInFailureView? right) -> bool
 static Aw.Sindri.Features.GetConnection.SignInFailureView.operator ==(Aw.Sindri.Features.GetConnection.SignInFailureView? left, Aw.Sindri.Features.GetConnection.SignInFailureView? right) -> bool
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Warning.get -> string?
+Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Warning.init -> void
