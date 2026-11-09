@@ -60,6 +60,8 @@ A sign-in that fails leaves **no row and no secret** (for a new connection): den
 | `linear` | Linear, Settings, API, OAuth applications | `http://127.0.0.1` | Not needed | Public client with PKCE |
 | `google` | Google Cloud, Credentials, OAuth client ID of type Desktop app | (a desktop client allows the loopback address by itself) | **Needed** | Google wants the desktop client's secret at the token endpoint: pass `--client-secret-env NAME` |
 | `spotify` | Spotify Developer Dashboard | `http://127.0.0.1` (the IP literal, not `localhost`) | Not needed | Public client with PKCE |
+| `granola` | Granola (its OAuth app settings) | `http://127.0.0.1` | Not needed | Meeting notes for the `meetings` block ([blocks/meetings.md](../workflows/blocks/meetings.md)). The endpoints are provisional until `scripts/probe-meeting-apps.sh` confirms them with a real account |
+| `wispr-flow` | Wispr Flow (its OAuth app settings) | `http://127.0.0.1` | Not needed | Same as `granola`: meeting notes and transcripts for the `meetings` block, provisional endpoints |
 | `slack` | | | | Slack accepts only https redirect URLs, so the browser sign-in cannot come back to your machine. `connection add --preset slack` is refused with this explanation. Make a REST connection with a user token instead: `sindri connection add slack:work --kind rest --key-env SLACK_TOKEN` |
 
 If a provider's page rejects the redirect, the preset's note (shown in the error of a failed add) says what to change.
