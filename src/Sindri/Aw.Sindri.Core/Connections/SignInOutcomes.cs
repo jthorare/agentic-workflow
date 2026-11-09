@@ -12,7 +12,7 @@ public sealed class SignInOutcomes
 {
     private readonly ConcurrentDictionary<string, SignInFailure> _failed = new(StringComparer.Ordinal);
     private readonly Dictionary<string, long> _latest = new(StringComparer.Ordinal);
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
 
     /// <summary>Starts a new try of <paramref name="name"/>: it becomes the latest try and the name's failure is forgotten.</summary>
     /// <param name="name">The connection name as text.</param>
