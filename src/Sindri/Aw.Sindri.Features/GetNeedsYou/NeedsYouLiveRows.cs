@@ -13,15 +13,11 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="ownerStops">The 'desk:' rows of the instances that wait on the owner at a human-verb wait; none when this build has no reader.</param>
 internal sealed class NeedsYouLiveRows(SetupNotices setup, ITextScrubber scrubber, IStalledAgentRuns? stalled = null, IViewReader? views = null, NeedsYouOwnerStops? ownerStops = null)
 {
-    /// <summary>The profile drift row, the setup rows, the stalled agent runs and the owner-stop rows, in that order.</summary>
+    /// <summary>The setup rows, the stalled agent runs and the owner-stop rows, in that order.</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The rows; empty when a source can't be read.</returns>
     public async ValueTask<IReadOnlyList<NeedsYouRow>> Read(CancellationToken cancellationToken) =>
-        [.. await DriftRows(cancellationToken).ConfigureAwait(false), .. await SetupRows(cancellationToken).ConfigureAwait(false), .. await StalledRows(cancellationToken).ConfigureAwait(false), .. await OwnerStopRows(cancellationToken).ConfigureAwait(false)];
-
-    // The profile drift row, computed from the live profile against the approved one (SetupNotices reads both).
-    private async ValueTask<IReadOnlyList<NeedsYouRow>> DriftRows(CancellationToken cancellationToken) =>
-        await setup.Drift(cancellationToken).ConfigureAwait(false) is { } row ? [row] : [];
+        [.. await SetupRows(cancellationToken).ConfigureAwait(false), .. await StalledRows(cancellationToken).ConfigureAwait(false), .. await OwnerStopRows(cancellationToken).ConfigureAwait(false)];
 
     // An agent run idle past its launch's idle time that is still not ended (issue #1000): a 'park:' row the run's own park replaces. A run whose item can't be read is left out.
     private async ValueTask<IReadOnlyList<NeedsYouRow>> StalledRows(CancellationToken cancellationToken)

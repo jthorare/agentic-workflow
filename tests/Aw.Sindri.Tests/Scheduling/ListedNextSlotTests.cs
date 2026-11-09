@@ -8,7 +8,6 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
-using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.StartProcess;
@@ -88,8 +87,6 @@ public sealed class ListedNextSlotTests : IDisposable
                 .Handle(new StartProcessRequest(), Token)).Value;
         }
 
-        var live = (await app.Services.GetRequiredService<IProfileSource>().Load(Token)).Value;
-        _ = (await app.Services.GetRequiredService<IApprovals>().Save(live, Token)).Value;
         _ = Pipeline.Configure(app);
         FirstPass.Publish(app.Services);
         await app.StartAsync(Token);

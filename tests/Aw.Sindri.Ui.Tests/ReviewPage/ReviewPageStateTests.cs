@@ -210,20 +210,6 @@ public sealed class ReviewPageStateTests
     }
 
     [Fact]
-    public async Task A_login_save_that_waits_for_the_profile_approval_shows_the_note_and_does_not_read()
-    {
-        _f.Refuse("no-login");
-        var page = await _f.Opened(Token);
-        page.Login.Field = "joi-example";
-        _f.Server.ReviewLoginAnswer = RouteAnswer.Api("reviews-login", "pending");
-
-        await page.SaveLogin(Token);
-
-        Assert.Equal((Labels.ReviewsLoginPending, ReviewPageState.LoginPrompt), (page.Login.Note, page.State));
-        _ = Assert.Single(_f.Server.ReviewPageReads);
-    }
-
-    [Fact]
     public async Task Try_again_shows_loading_first_and_focus_goes_to_the_state_heading_when_the_read_fails_again()
     {
         _f.Refuse("not-found");

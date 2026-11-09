@@ -11,7 +11,7 @@ public static class EmptyText
 {
     /// <summary>The services list is empty.</summary>
     /// <returns>The sentence.</returns>
-    public static string Services() => "No services are approved: run `sindri profile approve`.";
+    public static string Services() => "No services are set up: add a repo with `sindri repo add <path>`.";
 
     private static string Jobs() => "No jobs have run yet. Start one with `sindri services run <name>`.";
 

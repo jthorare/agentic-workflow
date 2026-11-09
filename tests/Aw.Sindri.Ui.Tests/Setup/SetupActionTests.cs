@@ -27,18 +27,6 @@ public sealed class SetupActionTests
     }
 
     [Fact]
-    public async Task The_profile_approval_is_terminal_copy_until_the_app_can_open_it()
-    {
-        var f = new SetupFixture("extra-approve-all-ready", "ApproveProfile");
-        f.Serve("profile-needs-approval");
-        var setup = await f.Read(Token);
-
-        var action = Step(setup, "profile").Action!;
-
-        Assert.Equal((true, "⌂ Review and approve · terminal"), (action.HasProtected, action.Protected!.Label));
-    }
-
-    [Fact]
     public async Task An_action_the_catalog_does_not_list_shows_the_spec_command()
     {
         var f = new SetupFixture("extra-approve-all-ready");   // this catalog has no AddRepo row

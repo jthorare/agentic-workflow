@@ -101,7 +101,7 @@ public sealed class ProjectsFramesTests : FrameHost
     public Task A_cards_sheet_at(int width, int height) => OnUi(async () =>
     {
         var (window, shell) = await OnProjects("mixed", width, height);
-        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_0000000000000000000000000H"));
+        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_00000000000000000000000008"));
         await Until(window, () => shell.ProjectSheet.IsShown, "the sheet never showed");
         Settle(window);
 
@@ -113,7 +113,7 @@ public sealed class ProjectsFramesTests : FrameHost
     public Task The_sheet_asking_to_remove() => OnUi(async () =>
     {
         var (window, shell) = await OnProjects("mixed", 1440, 900);
-        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_0000000000000000000000000H"));
+        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_00000000000000000000000008"));
         await Until(window, () => shell.ProjectSheet.IsShown && shell.ProjectSheet.CanRemove, "the sheet never offered Remove");
         shell.ProjectSheet.AskRemove();
         Settle(window);

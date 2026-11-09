@@ -29,7 +29,7 @@ internal sealed partial class AddSeveralPagesViewModel
         {
             drafts = await _writes.Suggested(_acceptConcept, keys, cancellationToken).ConfigureAwait(true);
             owners = await _writes.OwnerCount(cancellationToken).ConfigureAwait(true);
-            _waiting = await _writes.Waiting(cancellationToken).ConfigureAwait(true);
+            _hashes = await _writes.Hashes(cancellationToken).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
         {
@@ -41,7 +41,7 @@ internal sealed partial class AddSeveralPagesViewModel
             OnChanged(nameof(IsReading));
         }
 
-        _hash = _waiting?.FileHash ?? _waiting?.LiveHash;   // never a null hash written: no hash, no Save
+        _hash = _hashes?.FileHash ?? _hashes?.LiveHash;   // never a null hash written: no hash, no Save
         DrawSuggested(drafts, owners, before);
         ChangedSave();
         FocusRequested?.Invoke(this, new ValueEventArgs<AddSeveralPagesFocus>(AddSeveralPagesFocus.FirstRow));

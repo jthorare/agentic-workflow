@@ -42,16 +42,6 @@ public sealed class NeedsYouBarViewModelTests
     }
 
     [Fact]
-    public async Task A_settings_request_can_only_be_approved_so_send_back_is_disabled_with_the_reason()
-    {
-        var bar = await Bar(NeedsYouRows.Profile());
-
-        Assert.Equal((true, false, "These can only be approved. Change the settings or workflow file to undo."), (bar.ShowsSendBack, bar.SendBackEnabled, bar.SendBackTooltip));
-        await bar.PressSendBack();
-        Assert.Equal(NeedsYouBarMode.Pending, bar.Mode);
-    }
-
-    [Fact]
     public async Task A_failure_keeps_the_rows_own_controls_and_has_no_bar()
     {
         var bar = await Bar(NeedsYouRows.Failure());

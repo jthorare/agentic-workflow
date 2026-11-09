@@ -53,13 +53,13 @@ public sealed class ProfileSetCommandTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task A_valid_value_is_written_on_its_line_and_the_next_step_is_approving()
+    public async Task A_valid_value_is_written_on_its_line_and_applies_on_save()
     {
         var code = await Run("profile", "set", "context.models.labeling.pick", "jev");
 
         Assert.Equal(0, code);
         Assert.Equal(Profile.Replace("pick: off", "pick: jev", StringComparison.Ordinal), await File.ReadAllTextAsync(ProfilePath, TestContext.Current.CancellationToken));
-        Assert.Contains($"set context.models.labeling.pick = jev in {ProfilePath}. Approve it with: sindri profile approve", _out.ToString(), StringComparison.Ordinal);
+        Assert.Contains($"set context.models.labeling.pick = jev in {ProfilePath}\n", _out.ToString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]

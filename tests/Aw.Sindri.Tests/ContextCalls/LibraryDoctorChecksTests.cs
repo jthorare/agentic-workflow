@@ -40,7 +40,7 @@ public sealed class LibraryDoctorChecksTests
     {
         var row = await RowOf(FakeContextEngine.Instance);
 
-        Assert.Equal(("library", CheckState.Ok, "not configured (no profile is approved)", null), (row.Name, row.State, row.Detail, row.Fix));
+        Assert.Equal(("library", CheckState.Ok, "not configured (no profile yet)", null), (row.Name, row.State, row.Detail, row.Fix));
     }
 
     [Fact, Trait("Lane", "unit")]

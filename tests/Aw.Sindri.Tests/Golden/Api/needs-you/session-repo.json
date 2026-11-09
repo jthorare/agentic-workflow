@@ -1,12 +1,12 @@
 {
   "rows": [
     {
-      "id": "decision:DEC-00000000000000000000000000000012",
+      "id": "decision:DEC-00000000000000000000000000000009",
       "kind": "decision",
       "label": "decision · re-scope",
       "subject": {
         "kind": "decision",
-        "id": "DEC-00000000000000000000000000000012"
+        "id": "DEC-00000000000000000000000000000009"
       },
       "item": null,
       "title": "Mine, in demo.",
@@ -21,19 +21,19 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-00000000000000000000000000000012 accept",
+      "cli": "sindri decide DEC-00000000000000000000000000000009 accept",
       "open": {
-        "route": "decision/DEC-00000000000000000000000000000012",
+        "route": "decision/DEC-00000000000000000000000000000009",
         "label": "Review and decide"
       }
     },
     {
-      "id": "decision:DEC-0000000000000000000000000000001c",
+      "id": "decision:DEC-00000000000000000000000000000013",
       "kind": "decision",
       "label": "decision · re-scope",
       "subject": {
         "kind": "decision",
-        "id": "DEC-0000000000000000000000000000001c"
+        "id": "DEC-00000000000000000000000000000013"
       },
       "item": null,
       "title": "Theirs, in other.",
@@ -48,9 +48,9 @@
       "actions": [
         "Decide"
       ],
-      "cli": "sindri decide DEC-0000000000000000000000000000001c accept",
+      "cli": "sindri decide DEC-00000000000000000000000000000013 accept",
       "open": {
-        "route": "decision/DEC-0000000000000000000000000000001c",
+        "route": "decision/DEC-00000000000000000000000000000013",
         "label": "Review and decide"
       }
     },
@@ -81,12 +81,39 @@
         "route": "service/heartbeat",
         "label": "Open the service"
       }
+    },
+    {
+      "id": "setup:mcp",
+      "kind": "setup",
+      "label": "setup · connect your agents",
+      "subject": {
+        "kind": "setup",
+        "id": "mcp"
+      },
+      "item": null,
+      "title": "Turn on for your repos",
+      "reason": "Sindri can connect your agents to itself in each of your repos, and keep that up to date. Turn it on once and it does it for you.",
+      "repo": null,
+      "urgency": "colour",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "RegisterMcp",
+      "actions": [
+        "RegisterMcp"
+      ],
+      "cli": "sindri mcp register --apply",
+      "open": {
+        "route": "setup",
+        "label": "Open setup"
+      }
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 10,
-    "ledgerHead": 10,
+    "cursor": 6,
+    "ledgerHead": 6,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

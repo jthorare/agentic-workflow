@@ -13,14 +13,14 @@ namespace Aw.Sindri.Features.FileRequest;
 /// <summary>What a request is filed about (API spec §3.2): the item it names, if open and visible to the caller, the repo that follows from it, and the caps a session's request meets.</summary>
 /// <param name="items">Resolves the item by id or alias, in the caller's repo scope.</param>
 /// <param name="views">The 'requests' view, for the open ones.</param>
-/// <param name="approvals">The approved profile, whose repos a repo-less request's header repo must be one of.</param>
+/// <param name="approvals">The profile, whose repos a repo-less request's header repo must be one of.</param>
 internal sealed class RequestTarget(IItemResolver items, IViewReader views, IApprovedProfile approvals)
 {
     /// <summary>Settles the item and repo of <paramref name="request"/> for <paramref name="caller"/>.</summary>
     /// <param name="request">The request.</param>
     /// <param name="caller">Who files it.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
-    /// <returns>The item (or null) and the repo (the item's, else the caller's header; or null); SND-ITEM-404 for an item the caller can't see, SND-ITEM-409 for a closed one, SND-CLI-003 when the header repo of a request about no item isn't a repo of the approved profile, SND-REQ-002 over the caps (a session caller only).</returns>
+    /// <returns>The item (or null) and the repo (the item's, else the caller's header; or null); SND-ITEM-404 for an item the caller can't see, SND-ITEM-409 for a closed one, SND-CLI-003 when the header repo of a request about no item isn't a repo of the profile, SND-REQ-002 over the caps (a session caller only).</returns>
     public async ValueTask<Result<(ItemId? Item, RepoName? Repo)>> Resolve(FileRequestRequest request, CallerContext caller, CancellationToken cancellationToken)
     {
         ItemId? item = null;
@@ -57,7 +57,7 @@ internal sealed class RequestTarget(IItemResolver items, IViewReader views, IApp
         return (item, repo);
     }
 
-    /// <summary>The refusal when <paramref name="repo"/> isn't a repo of the approved profile (as CreateItem refuses one); null when it is.</summary>
+    /// <summary>The refusal when <paramref name="repo"/> isn't a repo of the profile (as CreateItem refuses one); null when it is.</summary>
     private async ValueTask<Error?> Unknown(RepoName repo, CancellationToken cancellationToken)
     {
         var latest = await approvals.Latest(cancellationToken).ConfigureAwait(false);
@@ -67,7 +67,7 @@ internal sealed class RequestTarget(IItemResolver items, IViewReader views, IApp
         }
 
         var known = latest.Value?.Profile.Repos?.Any(r => string.Equals(r.Name, repo.Value, StringComparison.Ordinal)) ?? false;
-        return known ? null : SindriErrors.InvalidInput.With($"'{repo.Value}' isn't a repo of the approved profile (fix: sindri profile approve, or name one of its repos)");
+        return known ? null : SindriErrors.InvalidInput.With($"'{repo.Value}' isn't a repo of the profile (fix: sindri repo add <path>, or name one of its repos)");
     }
 
     private async ValueTask<Result<Unit>> Capped(RepoName? repo, CancellationToken cancellationToken)

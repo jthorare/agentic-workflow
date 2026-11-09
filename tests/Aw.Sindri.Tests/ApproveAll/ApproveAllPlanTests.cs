@@ -26,11 +26,11 @@ public sealed class ApproveAllPlanTests
     private async Task Approved() => _ = await _slice.Profiles.Save(SliceHarness.Profile(), Token);
 
     [Fact]
-    public async Task Before_a_profile_is_approved_the_plan_is_refused()
+    public async Task With_no_profile_the_plan_is_refused()
     {
         var result = await Service(new FakeShippedRecipes(StepAndItem())).Handle(new GetApproveAllPlanRequest(), Token);
 
-        Assert.Equal("SND-SETUP-007", result.Error.Code);
+        Assert.Equal("SND-PROFILE-001", result.Error.Code);
     }
 
     [Fact]

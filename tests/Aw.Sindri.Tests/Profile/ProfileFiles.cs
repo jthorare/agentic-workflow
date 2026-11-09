@@ -33,7 +33,6 @@ internal sealed class ProfileFiles : IDisposable
         _home = owned;
         Settings = new SindriSettings(home, Path.Combine(home, "profile", "profile.yaml"));
         Source = new YamlProfileSource(Settings, Options);
-        Approvals = new FileApprovals(Settings, Options);
     }
 
     public static JsonSerializerOptions Options { get; } = AwJson.CreateOptions(SindriJsonContext.Default);
@@ -41,8 +40,6 @@ internal sealed class ProfileFiles : IDisposable
     public SindriSettings Settings { get; }
 
     public YamlProfileSource Source { get; }
-
-    public FileApprovals Approvals { get; }
 
     public void Write(string yaml)
     {

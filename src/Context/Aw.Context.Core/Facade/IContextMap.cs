@@ -54,7 +54,7 @@ public interface IContextMap : IScopeProposals
     public ValueTask<Result<MapChecksView>> MapStructure(MapChecksSource source, IProgress<string>? progress, ContextScope scope, CancellationToken cancellationToken);
 
     /// <summary>Doctor 'context:map': whether there is a current map and whether overrides are orphaned, counted over the map as the profile's deny globs leave it (as status counts it).</summary>
-    /// <param name="scope">The approved profile's context section and repos with a service caller, or null when no profile is approved (the stored map is counted).</param>
+    /// <param name="scope">The profile's context section and repos with a service caller, or null when no profile yet (the stored map is counted).</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The check.</returns>
     public ValueTask<Result<MapHealth>> CheckMap(ContextScope? scope, CancellationToken cancellationToken);

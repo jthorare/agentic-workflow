@@ -84,7 +84,7 @@ public sealed class FileRequestTests
         var result = await Service().Handle(A.FileRequestRequest().Build(), Token);
 
         Expect.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
-        Assert.Contains("'gamma' isn't a repo of the approved profile", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("'gamma' isn't a repo of the profile", result.Error.Message, StringComparison.Ordinal);
         Assert.Empty(_h.Slice.Store.Events);
     }
 

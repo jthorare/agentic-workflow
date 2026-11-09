@@ -3,7 +3,7 @@
   "structuredContent": {
     "entries": [
       {
-        "sequence": 10,
+        "sequence": 6,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.created",
         "actor": "human:cli",
@@ -11,7 +11,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 15,
+        "sequence": 11,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -19,7 +19,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 16,
+        "sequence": 12,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -27,7 +27,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 17,
+        "sequence": 13,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -35,7 +35,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 18,
+        "sequence": 14,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -43,7 +43,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 19,
+        "sequence": 15,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -51,7 +51,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 20,
+        "sequence": 16,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -59,7 +59,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 21,
+        "sequence": 17,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -67,7 +67,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 22,
+        "sequence": 18,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -75,7 +75,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 23,
+        "sequence": 19,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -83,7 +83,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 24,
+        "sequence": 20,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -91,7 +91,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 25,
+        "sequence": 21,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -99,7 +99,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 26,
+        "sequence": 22,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -107,7 +107,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 27,
+        "sequence": 23,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -115,7 +115,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 28,
+        "sequence": 24,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -123,7 +123,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 29,
+        "sequence": 25,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -131,7 +131,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 30,
+        "sequence": 26,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -139,7 +139,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 31,
+        "sequence": 27,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -147,7 +147,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 32,
+        "sequence": 28,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -155,7 +155,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 33,
+        "sequence": 29,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -163,7 +163,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 34,
+        "sequence": 30,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -171,7 +171,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 35,
+        "sequence": 31,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -179,7 +179,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 36,
+        "sequence": 32,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -187,7 +187,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 37,
+        "sequence": 33,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -195,7 +195,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 38,
+        "sequence": 34,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -203,7 +203,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 39,
+        "sequence": 35,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -211,7 +211,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 40,
+        "sequence": 36,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -219,7 +219,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 41,
+        "sequence": 37,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -227,7 +227,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 42,
+        "sequence": 38,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -235,7 +235,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 43,
+        "sequence": 39,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -243,7 +243,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 44,
+        "sequence": 40,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -251,7 +251,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 45,
+        "sequence": 41,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -259,7 +259,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 46,
+        "sequence": 42,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -267,7 +267,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 47,
+        "sequence": 43,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -275,7 +275,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 48,
+        "sequence": 44,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -283,7 +283,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 49,
+        "sequence": 45,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -291,7 +291,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 50,
+        "sequence": 46,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -299,7 +299,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 51,
+        "sequence": 47,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -307,7 +307,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 52,
+        "sequence": 48,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -315,7 +315,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 53,
+        "sequence": 49,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -323,7 +323,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 54,
+        "sequence": 50,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -331,7 +331,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 55,
+        "sequence": 51,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -339,7 +339,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 56,
+        "sequence": 52,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -347,7 +347,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 57,
+        "sequence": 53,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -355,7 +355,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 58,
+        "sequence": 54,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -363,7 +363,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 59,
+        "sequence": 55,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -371,7 +371,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 60,
+        "sequence": 56,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -379,7 +379,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 61,
+        "sequence": 57,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -387,7 +387,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 62,
+        "sequence": 58,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -395,7 +395,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 63,
+        "sequence": 59,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -403,7 +403,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 64,
+        "sequence": 60,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -411,7 +411,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 65,
+        "sequence": 61,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -419,7 +419,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 66,
+        "sequence": 62,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -427,7 +427,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 67,
+        "sequence": 63,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -435,7 +435,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 68,
+        "sequence": 64,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -443,7 +443,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 69,
+        "sequence": 65,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -451,7 +451,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 70,
+        "sequence": 66,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -459,7 +459,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 71,
+        "sequence": 67,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -467,7 +467,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 72,
+        "sequence": 68,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -475,7 +475,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 73,
+        "sequence": 69,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -483,7 +483,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 74,
+        "sequence": 70,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -491,7 +491,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 75,
+        "sequence": 71,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -499,7 +499,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 76,
+        "sequence": 72,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -507,7 +507,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 77,
+        "sequence": 73,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -515,7 +515,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 78,
+        "sequence": 74,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -523,7 +523,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 79,
+        "sequence": 75,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -531,7 +531,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 80,
+        "sequence": 76,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -539,7 +539,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 81,
+        "sequence": 77,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -547,7 +547,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 82,
+        "sequence": 78,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -555,7 +555,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 83,
+        "sequence": 79,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -563,7 +563,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 84,
+        "sequence": 80,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -571,7 +571,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 85,
+        "sequence": 81,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -579,7 +579,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 86,
+        "sequence": 82,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -587,7 +587,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 87,
+        "sequence": 83,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -595,7 +595,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 88,
+        "sequence": 84,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -603,7 +603,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 89,
+        "sequence": 85,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -611,7 +611,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 90,
+        "sequence": 86,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -619,7 +619,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 91,
+        "sequence": 87,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -627,7 +627,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 92,
+        "sequence": 88,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -635,7 +635,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 93,
+        "sequence": 89,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -643,7 +643,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 94,
+        "sequence": 90,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -651,7 +651,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 95,
+        "sequence": 91,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -659,7 +659,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 96,
+        "sequence": 92,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -667,7 +667,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 97,
+        "sequence": 93,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -675,7 +675,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 98,
+        "sequence": 94,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -683,7 +683,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 99,
+        "sequence": 95,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -691,7 +691,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 100,
+        "sequence": 96,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -699,7 +699,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 101,
+        "sequence": 97,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -707,7 +707,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 102,
+        "sequence": 98,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -715,7 +715,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 103,
+        "sequence": 99,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -723,7 +723,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 104,
+        "sequence": 100,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -731,7 +731,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 105,
+        "sequence": 101,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -739,7 +739,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 106,
+        "sequence": 102,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -747,7 +747,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 107,
+        "sequence": 103,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -755,7 +755,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 108,
+        "sequence": 104,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -763,7 +763,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 109,
+        "sequence": 105,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -771,7 +771,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 110,
+        "sequence": 106,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -779,7 +779,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 111,
+        "sequence": 107,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -787,7 +787,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 112,
+        "sequence": 108,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -795,7 +795,7 @@
         "trust": "untrusted"
       },
       {
-        "sequence": 113,
+        "sequence": 109,
         "time": "2026-01-01T00:00:00.0000000Z",
         "type": "item.linked",
         "actor": "service:host",
@@ -806,8 +806,8 @@
     "next": null,
     "empty": null,
     "asOf": {
-      "cursor": 120,
-      "ledgerHead": 120,
+      "cursor": 116,
+      "ledgerHead": 116,
       "projectedAt": "2026-01-01T00:00:00.0000000Z",
       "rebuilding": false,
       "stalled": false

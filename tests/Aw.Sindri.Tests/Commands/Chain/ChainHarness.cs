@@ -13,7 +13,6 @@ using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Host.Catalog;
@@ -56,18 +55,16 @@ internal sealed class ChainHarness : IAsyncDisposable
             .AddScoped<ServeRecords>()
             .AddSingleton(new TemporalRuntime(new FakeTemporalServer(), H.Clock))   // the stop's Temporal side, with no server running
             .AddSingleton<IProfileSource>(H.Profiles)
-            .AddSingleton<IApprovals>(H.Profiles)
+            .AddSingleton<IApprovedProfile>(H.Profiles)
             .AddSingleton<IChallenges>(H.Challenges)
             .AddSingleton<IContextEngine>(FakeContextEngine.Instance)
             .AddSingleton<IAgentCatalog>(new FixedAgentCatalog())
-            .AddScoped<ProfileChecks>()
             .AddSingleton<ICommandCatalog>(new InMemoryCommandCatalog([.. ShellRows.All, fixture]))
             .AddSingleton(Latch)
             .AddSingleton<IProjectorStatus>(Progress)
             .AddSingleton<ILogger<AuditTrail>>(Log)
             .AddScoped<IValidator<FixtureCommand>, FixtureValidator>().AddCommand<FixtureCommand, CommandAccepted, FixtureService>()
             .AddScoped<IValidator<StopProcessRequest>, AcceptAllValidator<StopProcessRequest>>().AddStopCommand<StopProcessRequest, StopProcessResponse, StopProcessService>()
-            .AddScoped<IValidator<ApproveProfileRequest>, AcceptAllValidator<ApproveProfileRequest>>().AddCommand<ApproveProfileRequest, ApproveProfileResponse, ApproveProfileService>()
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
     }
 

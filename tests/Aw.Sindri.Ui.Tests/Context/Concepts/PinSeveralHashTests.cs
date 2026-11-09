@@ -45,7 +45,7 @@ public sealed class PinSeveralHashTests
 
         await sheet.PinAllAsync(PinSeveralFixtures.Token);
 
-        Assert.Equal("The settings changed while you were editing. Your changes are still here. Press Pin all and approve again.", sheet.Message);
+        Assert.Equal("The settings changed while you were editing. Your changes are still here. Press Pin all again.", sheet.Message);
         Assert.Equal("Updates your pin Payments", sheet.Rows[0].Note);
         Assert.True(sheet.Rows[1].Ticked);
         Assert.True(sheet.CanSubmit);

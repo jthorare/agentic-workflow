@@ -19,9 +19,9 @@
     },
     {
       "id": "profile",
-      "title": "Approve the profile",
+      "title": "Save the profile",
       "state": "done",
-      "why": "Your profile is approved.",
+      "why": "Your profile is saved and live.",
       "detail": null,
       "error": null,
       "action": null,

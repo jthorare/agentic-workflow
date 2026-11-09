@@ -68,7 +68,7 @@ public static class LineDoctorRules
 
     private static DoctorCheck Build(BuildSettings? build) => build?.Commands is { Count: > 0 } commands
         ? new("workflow.build.commands", CheckState.Ok, string.Create(CultureInfo.InvariantCulture, $"{commands.Count} command(s)"), Fix: null)
-        : new("workflow.build.commands", CheckState.Fail, "no commands check a phase's change", "add workflow.build.commands to the profile (for example the build and the test command), then sindri profile approve");
+        : new("workflow.build.commands", CheckState.Fail, "no commands check a phase's change", "add workflow.build.commands to the profile (for example the build and the test command). Edits apply on save; there is no approve step");
 
     private static DoctorCheck Parallel(LineSettings? line, BoxLimits box) => LineProfileRules.ParallelCap(line?.Parallel, box) is { } error
         ? new("workflow.line.parallel", CheckState.Fail, error.Message, "lower workflow.line.parallel and approve the profile, or raise $AW_STATE_DIR/heavy-slots-cap")

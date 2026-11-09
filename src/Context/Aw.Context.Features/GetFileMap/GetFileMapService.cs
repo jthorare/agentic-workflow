@@ -51,7 +51,7 @@ internal sealed class GetFileMapService(MapReader reader, IRepoReader repos, ICo
 
         var repo = addressed.IsError ? null : addressed.Value.FirstOrDefault(r => r.Name == name);
         return repo is null
-            ? ContextErrors.RepoOutsideScope.With("that repo isn't one this caller can read (fix: name a repo of the approved profile; a session names its own X-Sindri-Repo)")
+            ? ContextErrors.RepoOutsideScope.With("that repo isn't one this caller can read (fix: name a repo of the profile; a session names its own X-Sindri-Repo)")
             : repo;
     }
 

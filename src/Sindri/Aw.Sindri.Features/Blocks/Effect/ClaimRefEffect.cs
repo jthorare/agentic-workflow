@@ -14,7 +14,7 @@ namespace Aw.Sindri.Features.Blocks.Effect;
 /// <summary>
 /// 'effect.claim.ref' (engine spec §5.7, §12; engine P6 unit (d)): claims the item in 'workflow_claims' (item, owner
 /// instance, attempt) and creates the marker ref 'sindri/{user}/{item}' ('refs/sindri/…') at the default branch's head
-/// of the repo 'fact:item' names, the path and the user taken from the approved profile. It replies 'claim.created'
+/// of the repo 'fact:item' names, the path and the user taken from the profile. It replies 'claim.created'
 /// with 'created', or 'claimExists' while another live instance holds the item. An ended holder's claim is taken over
 /// (the marker is reused) and reads 'created'. The claim is its existence check: a retry or a re-emission by the holder
 /// changes nothing and reports <see cref="EffectDone.Existed"/>.
@@ -23,7 +23,7 @@ namespace Aw.Sindri.Features.Blocks.Effect;
 /// <param name="liveness">Whether a holder is still live.</param>
 /// <param name="refs">Creates the marker ref.</param>
 /// <param name="facts">Reads 'fact:item' back.</param>
-/// <param name="profile">The approved profile: the user and the repo's path.</param>
+/// <param name="profile">The profile: the user and the repo's path.</param>
 internal sealed class ClaimRefEffect(IWorkflowClaims claims, IInstanceLiveness liveness, IClaimRefs refs, IFactContents facts, IApprovedProfile profile)
     : IEffectKind, IDescribedBlock
 {
@@ -83,7 +83,7 @@ internal sealed class ClaimRefEffect(IWorkflowClaims claims, IInstanceLiveness l
         return taken.IsError ? taken.Error : (taken.Value, found.Value?.Owner == mine.Owner);
     }
 
-    /// <summary>Where the marker goes: the approved profile's user and the path of the repo 'fact:item' names.</summary>
+    /// <summary>Where the marker goes: the profile's user and the path of the repo 'fact:item' names.</summary>
     private async ValueTask<Result<(string User, string Repository)>> Target(EffectContext context, CancellationToken cancellationToken)
     {
         var repo = await ItemRepo(context, cancellationToken).ConfigureAwait(false);
@@ -95,13 +95,13 @@ internal sealed class ClaimRefEffect(IWorkflowClaims claims, IInstanceLiveness l
 
         if (approved.Value is not { } snapshot)
         {
-            return WorkflowErrors.NoRuntime.With("no profile is approved, so the claim has no user or repo (fix: sindri profile approve)");
+            return WorkflowErrors.NoRuntime.With("no profile yet, so the claim has no user or repo (fix: sindri repo add <path>)");
         }
 
         return snapshot.Profile.Repos?.FirstOrDefault(r => string.Equals(r.Name, repo.Value, StringComparison.Ordinal)) is { } entry
             ? (snapshot.Profile.User, entry.Path)
             : WorkflowErrors.NoRuntime.With(
-                $"fact:item names the repo '{repo.Value}', which the approved profile's repos don't list (fix: add it to repos and approve the profile)");
+                $"fact:item names the repo '{repo.Value}', which the profile's repos don't list (fix: add it to repos)");
     }
 
     /// <summary>The repo key 'fact:item' ('{ id, repo, spec }', spec §12) names.</summary>

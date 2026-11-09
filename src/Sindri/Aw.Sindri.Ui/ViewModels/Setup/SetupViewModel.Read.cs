@@ -92,7 +92,6 @@ internal sealed partial class SetupViewModel
 
         Forget(view);
         Patch.To(Steps, served);
-        ConfirmAll(served);
         (IsReading, IsNotServed, IsUnreadable, IsStale, IsFailed, IsNotRunning, FailedText) = (false, false, false, false, false, false, string.Empty);
         OpenTheFirstStep();
         _hasRead = true;
@@ -129,14 +128,6 @@ internal sealed partial class SetupViewModel
         foreach (var gone in _rows.Keys.Where(k => !present.Contains(k)).ToList())
         {
             _ = _rows.Remove(gone);
-        }
-    }
-
-    private static void ConfirmAll(List<SetupStepViewModel> rows)
-    {
-        foreach (var row in rows)
-        {
-            Confirm(row);
         }
     }
 }

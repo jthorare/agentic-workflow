@@ -31,13 +31,11 @@ public sealed class SetupFactsTests
         await using var rig = new SetupFactsRig();
         var missing = (await rig.Facts.Profile(Token)).Value.Presence;
         rig.Profiles.Live = SetupFactsRig.ProfileWithRepos();
-        var unapproved = (await rig.Facts.Profile(Token)).Value.Presence;
-        await rig.Approve(SetupFactsRig.ProfileWithRepos());
-        var approved = (await rig.Facts.Profile(Token)).Value.Presence;
+        var present = (await rig.Facts.Profile(Token)).Value.Presence;
         rig.Profiles.Live = SetupFactsRig.ProfileWithRepos(2);
-        var drifted = (await rig.Facts.Profile(Token)).Value.Presence;
+        var edited = (await rig.Facts.Profile(Token)).Value.Presence;   // no approval to drift from: an edit is live
 
-        Assert.Equal([ProfilePresence.Missing, ProfilePresence.Unapproved, ProfilePresence.Approved, ProfilePresence.Drifted], [missing, unapproved, approved, drifted]);
+        Assert.Equal([ProfilePresence.Missing, ProfilePresence.Present, ProfilePresence.Present], [missing, present, edited]);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -100,14 +98,14 @@ public sealed class SetupFactsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Mcp_has_nothing_to_register_before_a_profile_with_a_repo_is_approved()
+    public async Task Mcp_counts_the_repos_of_the_live_profile_with_none_registered()
     {
         await using var rig = new SetupFactsRig();
         rig.Profiles.Live = SetupFactsRig.ProfileWithRepos();
 
         var fact = (await rig.Facts.Mcp(Token)).Value;
 
-        Assert.Equal((0, 0), (fact.Repos, fact.Registered));
+        Assert.Equal((1, 0), (fact.Repos, fact.Registered));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -334,14 +332,13 @@ public sealed class SetupFactsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Sources_read_from_the_approved_profile_not_the_live_one()
+    public async Task Sources_read_from_the_live_profile()
     {
         await using var rig = new SetupFactsRig();
-        await rig.Approve(SetupFactsRig.ProfileWithContext("""{"sources":{"github":{"repos":["owner/name"]}}}"""));
         rig.Profiles.Live = SetupFactsRig.ProfileWithContext(BothSources);
 
         var fact = (await rig.Facts.Sources(Token)).Value;
 
-        Assert.Equal(["github"], fact.Items.Lines.Select(static i => i.Repo), StringComparer.Ordinal);
+        Assert.Equal(["github", "slack"], fact.Items.Lines.Select(static i => i.Repo), StringComparer.Ordinal);
     }
 }

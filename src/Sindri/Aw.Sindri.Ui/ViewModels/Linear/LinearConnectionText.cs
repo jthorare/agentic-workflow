@@ -69,6 +69,4 @@ internal sealed class LinearConnectionText
     /// <summary><see cref="Labels.LinearConnRemoveIt"/>.</summary>
     public string RemoveIt { get; } = Labels.LinearConnRemoveIt;
 
-    /// <summary><see cref="Labels.LinearConnReview"/>.</summary>
-    public string Review { get; } = Labels.LinearConnReview;
 }

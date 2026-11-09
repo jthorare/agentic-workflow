@@ -83,7 +83,7 @@ public sealed class ResumeServiceTests
 
     [Theory]
     [InlineData("setup", "setup is a built-in service and can't be paused or resumed.")]
-    [InlineData("ghost", "The approved profile has no service 'ghost' (fix: sindri services)")]
+    [InlineData("ghost", "The profile has no service 'ghost' (fix: sindri services)")]
     public async Task Resume_refuses_with_the_wording_of_what_the_name_is(string name, string message)
     {
         await Approve();

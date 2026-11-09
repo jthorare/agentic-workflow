@@ -11,7 +11,7 @@ public sealed class SurfaceChoiceViewModelTests
     private static SurfaceChoiceViewModel Line(string surfacePick)
     {
         var line = new SurfaceChoiceViewModel();
-        line.Show(new ProfileView("a", "b", ChangedSinceApproval: false, Problem: null, Source: "/home/thor/profile.yaml", NeedsApproval: false, SurfacePick: surfacePick));
+        line.Show(new ProfileView("b", Problem: null, Source: "/home/thor/profile.yaml", SurfacePick: surfacePick));
         return line;
     }
 
@@ -29,7 +29,7 @@ public sealed class SurfaceChoiceViewModelTests
 
     [Fact]
     public void A_status_without_the_field_reads_as_off() =>
-        Assert.Equal("Product surface choice: off", Line(new ProfileView("a", "b", ChangedSinceApproval: false, Problem: null, Source: null, NeedsApproval: false).SurfacePick).Line);
+        Assert.Equal("Product surface choice: off", Line(new ProfileView("b", Problem: null, Source: null).SurfacePick).Line);
 
     [Fact]
     public void The_title_and_the_sentence_say_what_jev_reads_and_where_to_change_it()

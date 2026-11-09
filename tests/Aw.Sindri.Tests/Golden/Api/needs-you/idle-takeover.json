@@ -1,16 +1,43 @@
 {
   "rows": [
     {
-      "id": "takeover:WFI-a247af6d31408f5a959d065aa2563277",
+      "id": "setup:mcp",
+      "kind": "setup",
+      "label": "setup · connect your agents",
+      "subject": {
+        "kind": "setup",
+        "id": "mcp"
+      },
+      "item": null,
+      "title": "Turn on for your repos",
+      "reason": "Sindri can connect your agents to itself in each of your repos, and keep that up to date. Turn it on once and it does it for you.",
+      "repo": null,
+      "urgency": "colour",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "RegisterMcp",
+      "actions": [
+        "RegisterMcp"
+      ],
+      "cli": "sindri mcp register --apply",
+      "open": {
+        "route": "setup",
+        "label": "Open setup"
+      }
+    },
+    {
+      "id": "takeover:WFI-c631de50669488eb8021d56b2b4c1c2d",
       "kind": "park",
       "label": "taken over",
       "subject": {
         "kind": "instance",
-        "id": "WFI-a247af6d31408f5a959d065aa2563277"
+        "id": "WFI-c631de50669488eb8021d56b2b4c1c2d"
       },
-      "item": "ITM-0000000000000000000000000000000f",
+      "item": "ITM-00000000000000000000000000000006",
       "title": "Try the engine",
-      "reason": "a takeover is idle (ITM-0000000000000000000000000000000f/step/1)",
+      "reason": "a takeover is idle (ITM-00000000000000000000000000000006/step/1)",
       "repo": "demo",
       "urgency": "calm",
       "since": "2026-01-01T00:00:00.0000000Z",
@@ -22,17 +49,17 @@
         "ApplyCommand:handback",
         "ApplyCommand:cancel"
       ],
-      "cli": "sindri handback ITM-0000000000000000000000000000000f/step/1",
+      "cli": "sindri handback ITM-00000000000000000000000000000006/step/1",
       "open": {
-        "route": "workflow/ITM-0000000000000000000000000000000f/step/1",
+        "route": "workflow/ITM-00000000000000000000000000000006/step/1",
         "label": "Hand back or cancel"
       }
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 10,
-    "ledgerHead": 10,
+    "cursor": 6,
+    "ledgerHead": 6,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

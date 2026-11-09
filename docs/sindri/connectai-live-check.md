@@ -34,7 +34,7 @@ Proof that a hit came from the owned index is the `rrf:records` / `rrf:records-d
    - GitHub: a fine-grained read-only token covering exactly the listed repos (Issues, Pull requests, Metadata, all read). Entered at the `connect` prompt.
    - Linear: a read-only API key, entered at the `sindri index connect linear` prompt like the others. A pointer you write yourself (`env:NAME`, `file:/abs/path` mode 0600, `op:vault/item/field`, or `keychain:` on macOS) works too.
    - Slack: a bot token. Scopes the prompt names: `channels:history`, `channels:read`, plus `groups:history` for private channels. The bot must be invited to each listed channel. Direct messages are never read. Entered at the `connect` prompt.
-5. `connect` and `profile approve` are the human's verbs. They refuse agent sessions (`SND-AUTH-002`) and need a real terminal. If you are an agent, ask the person at the keyboard to run them, or run them in the terminal they gave you.
+5. `connect` is the human's verb. It refuses agent sessions (`SND-AUTH-002`) and needs a real terminal. If you are an agent, ask the person at the keyboard to run it, or run it in the terminal they gave you.
 
 ## 3. Steps
 
@@ -67,16 +67,11 @@ Linear teams are keys like `ENG` (a capital, then capitals or digits). Slack cha
 sindri profile validate
 ```
 
-Expected: a line `hash <64 hex>, not approved`, exit 1 (valid but not approved). Fail: `SND-CONTEXT-001` names the bad key path. `SND-CONTEXT-002` means a token value was pasted instead of a pointer: rotate that token and use a pointer.
+Expected: a line `hash <64 hex>`, exit 0. Fail: `SND-CONTEXT-001` names the bad key path. `SND-CONTEXT-002` means a token value was pasted instead of a pointer: rotate that token and use a pointer.
 
-### 3.3 Approve (the owner or the person at the terminal)
+### 3.3 The profile applies on save
 
-```
-sindri profile approve            # preview: hash and changed key paths
-sindri profile approve <hash>
-```
-
-Expected: `Approved <hash>`. Run `sindri doctor`; before this point every `context:index-*` row says `not configured (no profile is approved)`, which is fine.
+There is no approval step. Run `sindri doctor`; with no profile every `context:index-*` row says `not configured` (`SND-PROFILE-001`), which is fine.
 
 ### 3.4 Connect GitHub
 
@@ -84,7 +79,7 @@ Expected: `Approved <hash>`. Run `sindri doctor`; before this point every `conte
 sindri index connect github
 ```
 
-Prompts once for the token (not echoed). It first reads one issue page from every listed repo and stores the token only if all pass. Expected: `github connected: the token reads all N listed repos and is stored at <pointer>; the profile points to it.` then `Run sindri profile approve to start using it.` Run `sindri profile approve` again (preview, then with the hash).
+Prompts once for the token (not echoed). It first reads one issue page from every listed repo and stores the token only if all pass. Expected: `github connected: the token reads all N listed repos and is stored at <pointer>; the profile points to it.` then `Saved. The profile points to it and applies on save.`
 
 Failures: `SND-INDEX-009` the token was refused (nothing saved; make a new one); `SND-INDEX-010` the token can't read some listed repos (they are named); `SND-INDEX-011` the profile lists no repo; `SND-AUTH-002` you are in an agent session, or stdin is not a terminal.
 
@@ -94,7 +89,7 @@ Failures: `SND-INDEX-009` the token was refused (nothing saved; make a new one);
 sindri index connect linear
 ```
 
-Same flow as GitHub: one hidden prompt, checked against every team `context.sources.linear.teams` lists (when it lists none, the key must read at least one team, and the teams it reads are written in, sorted), then stored and pointed to from the profile. Then `sindri profile approve` again. Failures: `SND-INDEX-009` the key was refused, `SND-INDEX-010` it can't read a listed team; nothing is saved either way. If you wrote your own pointer in 3.1 instead, export the variable before serve starts (or make the file), and skip the connect.
+Same flow as GitHub: one hidden prompt, checked against every team `context.sources.linear.teams` lists (when it lists none, the key must read at least one team, and the teams it reads are written in, sorted), then stored and pointed to from the profile. The profile applies on save. Failures: `SND-INDEX-009` the key was refused, `SND-INDEX-010` it can't read a listed team; nothing is saved either way. If you wrote your own pointer in 3.1 instead, export the variable before serve starts (or make the file), and skip the connect.
 
 Check:
 
@@ -102,7 +97,7 @@ Check:
 sindri doctor
 ```
 
-Expected: `context:index-linear` is `ok <pointer> resolves (not probed: ...)`. If the profile lists teams but no token, `context:linear` warns `Linear needs a token: the approved profile lists teams <TEAMKEY> but no context.sources.linear.token` with the fix `sindri index connect linear`, and the app's Projects page says `Linear needs a token` too: run the connect. Doctor never calls Linear; the first sync proves the key. A refused key shows up at sync as `SND-CONTEXT-071`, an unreachable or rate-limited Linear as `SND-CONTEXT-010`.
+Expected: `context:index-linear` is `ok <pointer> resolves (not probed: ...)`. If the profile lists teams but no token, `context:linear` warns `Linear needs a token: the profile lists teams <TEAMKEY> but no context.sources.linear.token` with the fix `sindri index connect linear`, and the app's Projects page says `Linear needs a token` too: run the connect. Doctor never calls Linear; the first sync proves the key. A refused key shows up at sync as `SND-CONTEXT-071`, an unreachable or rate-limited Linear as `SND-CONTEXT-010`.
 
 ### 3.6 Connect Slack
 
@@ -110,7 +105,7 @@ Expected: `context:index-linear` is `ok <pointer> resolves (not probed: ...)`. I
 sindri index connect slack
 ```
 
-Same flow as GitHub: one hidden prompt, checked against every listed channel, then stored and pointed to from the profile. Then `sindri profile approve` again. Failure `SND-INDEX-009` is a refused token.
+Same flow as GitHub: one hidden prompt, checked against every listed channel, then stored and pointed to from the profile. The profile applies on save. Failure `SND-INDEX-009` is a refused token.
 
 Who sees Slack: a CLI `sindri context query` is a human and reads the profile's channels. An agent session sees a Slack record only when it is linked to its repo's graph.
 

@@ -81,9 +81,6 @@ internal sealed class MapPublishRig : IAsyncDisposable
             return rig;
         }
 
-        var hash = (await host.LiveHash(Ct)).Value;
-        var approved = await host.Http.Ask(Post("/sindri/profile/approve", await ApiScenarios.Confirmed(host, hash), Human(host.Token.Value)));
-        Assert.Equal(System.Net.HttpStatusCode.OK, approved.Status);
         Assert.True((await rig.Run("context-docs-refresh")).IsSuccess);
         return rig;
     }

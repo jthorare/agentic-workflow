@@ -55,8 +55,8 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
         if (scope.IsError || scope.Value.Repos.Count == 0)
         {
-            // no approved profile, or no repo, is nothing to index, not a failed run (a failed run would land in needs-you every tick)
-            return scope.IsError && scope.Error.Code != SindriErrors.ProfileNotApproved.Code ? scope.Error : ScheduledResult.Quiet;
+            // no profile, or no repo, is nothing to index, not a failed run (a failed run would land in needs-you every tick)
+            return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
         }
 
         var read = await Read(scope.Value, cancellationToken).ConfigureAwait(false);

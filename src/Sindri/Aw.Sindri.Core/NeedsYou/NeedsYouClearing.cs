@@ -27,18 +27,7 @@ public static class NeedsYouClearing
         return row.IsError ? row.Error : Results.Success<NeedsYouRow?>(row.Value);
     }
 
-    /// <summary>The profile row after a check.</summary>
-    /// <param name="existing">The profile row so far, or null.</param>
-    /// <param name="profile">The profile row after the check.</param>
-    /// <param name="scrubber">Scrubs the text.</param>
-    /// <returns>The row to keep (its since is the first drift's), or null when the live profile matches the approved one.</returns>
-    public static Result<NeedsYouRow?> AfterCheck(NeedsYouRow? existing, ProfileRow profile, ITextScrubber scrubber)
-    {
-        ArgumentNullException.ThrowIfNull(profile);
-        return NeedsYouRows.ForProfile(profile, existing?.Since ?? profile.CheckedAt ?? DateTimeOffset.UnixEpoch, scrubber);
-    }
-
-    /// <summary>Whether a failure row outlives a check: false when an approved profile no longer names its service (a built-in needs no naming).</summary>
+    /// <summary>Whether a failure row outlives a check: false when a profile no longer names its service (a built-in needs no naming).</summary>
     /// <param name="failure">The failure row.</param>
     /// <param name="profile">The profile row after the check.</param>
     /// <param name="builtIns">The build's built-in services, which the profile need not name.</param>

@@ -17,7 +17,7 @@ SINDRI="dotnet run --project src/Sindri/Aw.Sindri.Host --"      # from the toolk
 
 ### Profile
 
-The engine reads the approved profile's `context:` section and its `repos:`. Every key is optional; the defaults are
+The engine reads the live profile's `context:` section and its `repos:`. Every key is optional; the defaults are
 shown. A key this build doesn't know is refused (`SND-CONTEXT-001` with its key path), so a section written for a later
 stage (`labeling`, …, or a key under `sources` beyond `github`, `slack` and `linear`) needs that stage's build.
 
@@ -35,7 +35,7 @@ services:
   context-docs-refresh: { every: 5m }                  # indexes the docs at each repo's HEAD; first run at serve start
 ```
 
-`sindri profile validate` and `sindri profile approve` check the section; an invalid one is never approved. With a `context:` section, every repo in its scope (all profile repos, or those `context.repos` names) needs a
+`sindri profile validate` checks the section; an invalid one is refused on save. With a `context:` section, every repo in its scope (all profile repos, or those `context.repos` names) needs a
 name of letters, digits, `.`, `_` or `-` (at most 100, starting with a letter or digit): rename the repo under
 `repos:`, or leave it out of `context.repos`. A profile
 without `context:` keeps its hash.
@@ -166,7 +166,7 @@ learns why. Refusals are tool errors
 | `SND-CONTEXT-037` | A name matches several nodes the caller may see; the message lists them. Only the HTTP problem carries `candidates` (an array of at most 100 keys); over MCP the error is only `{code, message}` |
 | `SND-CONTEXT-006` | The question is invalid (no words, two shapes, depth out of range) |
 | `SND-CONTEXT-021` | The call has no `X-Sindri-Repo` (use a registration from `sindri mcp register`) |
-| `SND-PROFILE-005` | No profile is approved yet, so no repo is mapped (the human runs `sindri profile approve`) |
+| `SND-PROFILE-005` | No profile yet, so no repo is mapped (`sindri profile init`, then `sindri repo add <path>`) |
 | `SND-CONTEXT-022` | An argument of the wrong type, or one the tool doesn't have |
 | `SND-CONTEXT-023` | A tool Sindri doesn't have |
 
@@ -231,12 +231,12 @@ only. Answer: *pending the S-1M owner check*.
 
 `$SINDRI doctor` adds two rows:
 
-- `context:sources`: the context engine read in-process from the same home and approved profile serve uses, so it
+- `context:sources`: the context engine read in-process from the same home and live profile serve uses, so it
   works with the process stopped. It reports each source as of its last refresh (the `context-docs-refresh`
   service); repo-docs is not probed live (a repo moved away shows only after the next refresh), while a live source
   is probed on each doctor run. `ok` when every source is ok (it says whether session reads are on; off means MCP
   calls answer `020`), `warn` when some are degraded (`SND-CONTEXT-010`), `fail` when every source is down (`011`) or
-  the store can't open; `warn` with no approved profile, `ok` with no `context:` section.
+  the store can't open; `warn` with no profile, `ok` with no `context:` section.
 - `context:mcp-scope`: warns (`SND-CONTEXT-026`) on a user-wide `sindri` entry in Claude Code's `~/.claude.json`
   (top-level `mcpServers`; the local scope under `projects` is fine), Codex's `~/.codex/config.toml`
   (a `sindri` server under `mcp_servers` in any TOML spelling: a `[mcp_servers.sindri]` table, a `sindri` key in
@@ -290,7 +290,7 @@ context:
   rule id, `blocked` or `secret-field`; the pattern is a .NET regex of at most 1024 characters that can't match empty
   text and uses ASCII classes (`[0-9]`, not `\d`). Give it boundaries as above, or `ACME-[0-9]{6}` also matches inside
   `XACME-1234567`. A pattern that is slow on a text blocks that text (it is withheld, never shown).
-- **Refusals.** `sindri profile validate` and `approve` refuse a bad entry with `SND-CONTEXT-001` and its key path,
+- **Refusals.** `sindri profile validate` and every profile write refuse a bad entry with `SND-CONTEXT-001` and its key path,
   for example `context.scrub.extraPatterns[0].pattern: …` (the message says how to fix it and never repeats the
   pattern). A refused profile is never approved, so the patterns in force are always valid.
 - **Changing the list.** Every stored document records the rules it was cleaned with (the extra patterns, the
@@ -381,7 +381,7 @@ $SINDRI context map import ~/maps/product-map.yaml
 # Imported map v1 (current) for aw-split-panes: 20 nodes, 21 edges, 1 aliases, 1 decisions, 2 overrides
 ```
 
-Import is a protected command, typed like `profile approve`: only you, at an interactive terminal, can do it (a
+Import is a protected command, typed at a terminal: only you, at an interactive terminal, can do it (a
 session, a script or the app gets `SND-AUTH-002`). The preview issues the engine's shared challenge (engine spec §4.2,
 README X30): the action `import map <hash6>`, bound to the file's whole content hash. You type that action; the server
 redeems it once. A missing, mistyped, reused or expired answer is `SND-AUTH-002`, and a file changed after you saw its
@@ -864,9 +864,8 @@ $ sindri context page set "Schedule week" \
     --surface surface:route/GET:/schedule/week \
     --action "Submit a schedule=action:SchedulePage.submit-schedule->self-scheduling,approval-workflow"
 created schedule-week (Schedule week)
-waiting for your approval: sindri profile approve 3f9c...e1
+saved, profile hash 3f9c...e1
 
-$ sindri profile approve 3f9c...e1
 $ sindri context page list
 Schedule week
   surface:route/GET:/schedule/week  ·  Set by a person  ·  Code found
@@ -911,7 +910,7 @@ context:
 - `slack.channels`: each channel as `{ id, name }`; `slack.workspace` names the workspace.
 - `github.token` and `slack.token`: a **secret pointer** to a read-only token, never the token itself. `sindri index connect github|slack`
   asks for the token once at a terminal and writes the pointer here (an agent session is refused, `SND-AUTH-002`); changing a source or a
-  token changes the profile, so approve it again (`sindri profile approve`). Missing, or text that isn't a pointer, is `SND-CONTEXT-002`;
+  token changes the profile, which applies on save. Missing, or text that isn't a pointer, is `SND-CONTEXT-002`;
   the message doesn't repeat the text (rotate a key that was written into the profile).
 - `linear.teams`, `linear.token`, `linear.url`: the Linear source (S-6); see [linear.md](linear.md). `teams` are team keys (a capital
   letter, then one or more capitals or digits, e.g. `ENG`). Any other key under `sources` is refused (`SND-CONTEXT-001`).
@@ -990,8 +989,7 @@ context:
     github: { repos: [acme/work-app], token: "env:SINDRI_GITHUB_TOKEN" }
     linear: { teams: [ENG] }
 YAML
-$SINDRI profile validate                        # prints the hash; exit 1 = valid, not approved yet
-$SINDRI profile approve <hash>                  # type the challenge it shows: 'approve profile <first 6>'; starts the control plane
+$SINDRI profile validate                        # prints the hash; exit 0 = valid (edits apply on save)
 $SINDRI index sync github                       # fill the index from the listed repos
 $SINDRI context sources status
 $SINDRI context query "split pane orientation"
@@ -1073,7 +1071,7 @@ What lies behind a node, in time: the stored records and decisions that reach it
 ## Model routing: `context.models`
 
 Every model call the context engine makes belongs to one of six kinds, and the profile can say which harnesses (agent CLIs) and which models each kind uses. All keys are under
-`context.models` and every one is optional; a profile with none behaves as it did before (same harness order, same models). A wrong value is `SND-CONTEXT-001` with the key path, at `profile validate` and `profile approve`.
+`context.models` and every one is optional; a profile with none behaves as it did before (same harness order, same models). A wrong value is `SND-CONTEXT-001` with the key path, at `profile validate` and on every profile write.
 
 ```yaml
 context:
@@ -1109,7 +1107,7 @@ one the request itself names, else the kind's `models`, else `default.models`, e
 | `codex` | `gpt-6-luna` | `gpt-5.5` |
 | `cursor` | `gpt-5.6-luna-none-fast` | `gpt-5` |
 
-The old `context.conceptScan.models` key is no longer read (issue 1867): `profile validate` and `profile approve` refuse it with SND-CONTEXT-001,
+The old `context.conceptScan.models` key is no longer read (issue 1867): `profile validate` and every profile write refuse it with SND-CONTEXT-001,
 "context.conceptScan.models: was replaced by context.models.names (claude is claude-code there); move the model names there".
 
 Two errors belong to routing: `SND-CONTEXT-240` (every harness for the call is at its usage limit or failing) and `SND-CONTEXT-241` (no harness for the call is installed).

@@ -218,7 +218,7 @@ internal static partial class CommandTable
     /// </summary>
     private static CallerHeaders Headers(AgentSession session, IServiceProvider services) =>
         CallerHeaders.For(session, services.GetRequiredService<IHumanTokenStore>(),
-            ct => CallerHeaders.RepoOf(services.GetRequiredService<IApprovals>(), services.GetRequiredService<IRepoLocator>(), Environment.CurrentDirectory, ct));
+            ct => CallerHeaders.RepoOf(services.GetRequiredService<IApprovedProfile>(), services.GetRequiredService<IRepoLocator>(), Environment.CurrentDirectory, ct));
 
     /// <summary>What bare 'sindri' does to open the app; 'sindri --headless' opens nothing.</summary>
     internal static Func<string>? UiOpener(bool headless, Func<string, string?> environment) =>

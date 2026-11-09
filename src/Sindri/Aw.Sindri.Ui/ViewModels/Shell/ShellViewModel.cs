@@ -73,7 +73,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         Inbox = InitInbox(api, clipboard, (window ?? WindowPorts.None).Launcher);
         InitSandbox();
         window ??= WindowPorts.None;
-        (Setup, LibraryRoots, LinearConnection) = (new SetupViewModel(api, Health.Catalog, clock, OpensInApp, window.Folders, () => Health.LiveProfile), InitLibraryRoots(api, window), InitLinearConnection(api));
+        (Setup, LibraryRoots, LinearConnection) = (new SetupViewModel(api, Health.Catalog, clock, OpensInApp, window.Folders), InitLibraryRoots(api, window), InitLinearConnection(api));
         InitSetup();
         InitSheetNames();
         InitAgents(clipboard, window.Launcher);

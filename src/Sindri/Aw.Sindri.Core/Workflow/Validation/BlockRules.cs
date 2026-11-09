@@ -156,7 +156,7 @@ internal sealed partial class BlockRules : IRecipeRules
                     "add workflow.effects to the profile; until then the effect is refused at run time", FindingSeverity.Skipped)
                 : source.Finding(
                     "RCP-EFFECT-001", e.Path, $"effect '{e.Use.Value}' isn't on the profile's effect allowlist",
-                    "add it to workflow.effects and approve the profile, or remove it"));
+                    "add it to workflow.effects, or remove it"));
 
     /// <summary>RCP-RES-001: information, since the session-slot resource has only a stub allocator in this build (P7); the heavy resource is allocated over the heavy-job lock (LN-WF3).</summary>
     private static IEnumerable<RecipeFinding> Resources(Recipe recipe, RecipeSource source) =>

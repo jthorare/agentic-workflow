@@ -142,8 +142,8 @@ public sealed class LoopbackBindingTests
                 using var response = await client.PostAsync(new Uri("/sindri/profile/approve", UriKind.Relative), body, TestContext.Current.CancellationToken);
                 var text = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal("SND-CLI-003", System.Text.Json.JsonDocument.Parse(text).RootElement.GetProperty("title").GetString());
+                Assert.Equal(HttpStatusCode.Gone, response.StatusCode);
+                Assert.Equal("SND-API-014", System.Text.Json.JsonDocument.Parse(text).RootElement.GetProperty("title").GetString());
                 Assert.Equal(Environments.Production, app.Environment.EnvironmentName);
             }
         }

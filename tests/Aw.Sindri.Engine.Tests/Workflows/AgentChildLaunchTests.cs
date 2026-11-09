@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Aw.Kernel;
-using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
@@ -125,7 +124,7 @@ public sealed class AgentChildLaunchTests : IDisposable
         var declared = new SindriProfile(SindriProfile.CurrentSchemaVersion, "tester", Repos: [new RepoEntry("app", Repo)],
             Workflow: new WorkflowSettings(Agent: new WorkflowAgentSettings(AgentId.From("claude-code"))));
         var profile = ProfileRules.Check(declared).Value;
-        var saved = await sindri.GetRequiredService<IApprovals>().Save(new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml"), ct);
+        var saved = await LiveProfileFile.Write(sindri, profile, ct);
         Assert.False(saved.IsError, saved.IsError ? saved.Error.Message : null);
     }
 

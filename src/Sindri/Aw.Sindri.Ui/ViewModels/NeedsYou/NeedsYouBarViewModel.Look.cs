@@ -24,7 +24,7 @@ internal sealed partial class NeedsYouBarViewModel
     /// <summary>True when the request has a bar of its own.</summary>
     public bool HasBar => Kind != BarKind.None && (ShowsPrimary || ShowsSendBack || IsApproved);
 
-    /// <summary>True in the resting modes (Approve and Send back show).</summary>
+    /// <summary>True in the resting modes (the buttons show).</summary>
     public bool IsPending => Mode is NeedsYouBarMode.Pending or NeedsYouBarMode.Confirming;
 
     /// <summary>True while the reason box shows.</summary>
@@ -49,7 +49,6 @@ internal sealed partial class NeedsYouBarViewModel
     public bool ShowsPrimary => Kind switch
     {
         BarKind.Decision => AcceptControl is not null,
-        BarKind.Settings => ConfirmKind != NeedsYouConfirmKind.None,
         BarKind.None => false,
         _ => throw new InvalidOperationException("a kind the bar doesn't know"),
     };
@@ -58,7 +57,6 @@ internal sealed partial class NeedsYouBarViewModel
     private bool KindAllowsPrimary => Kind switch
     {
         BarKind.Decision => AcceptControl is { IsEnabled: true },
-        BarKind.Settings => _confirm?.CanApprove == true,
         BarKind.None => true,
         _ => throw new InvalidOperationException("a kind the bar doesn't know"),
     };
@@ -70,7 +68,6 @@ internal sealed partial class NeedsYouBarViewModel
     public bool ShowsSendBack => Kind switch
     {
         BarKind.Decision => RejectControl is not null,
-        BarKind.Settings => true,
         BarKind.None => false,
         _ => throw new InvalidOperationException("a kind the bar doesn't know"),
     };
@@ -79,7 +76,7 @@ internal sealed partial class NeedsYouBarViewModel
     public bool SendBackEnabled => Kind switch
     {
         BarKind.Decision => Enabled && RejectControl is { IsEnabled: true },
-        BarKind.None or BarKind.Settings => false,
+        BarKind.None => false,
         _ => throw new InvalidOperationException("a kind the bar doesn't know"),
     };
 
@@ -89,11 +86,8 @@ internal sealed partial class NeedsYouBarViewModel
     /// <summary>The send back button's accessible name.</summary>
     public string SendBackName => Labels.NeedsYouBarName(SendBackWord, Subject);
 
-    /// <summary>Why send back is off; empty when it is on.</summary>
-    public string SendBackTooltip => Kind == BarKind.Settings ? Labels.NeedsYouSendBackLocked : "";
-
     /// <summary>True when the card keeps the row's own controls: no bar takes the request's primary.</summary>
-    public bool ShowsRowControls => Kind == BarKind.None || (Kind == BarKind.Settings && ConfirmKind == NeedsYouConfirmKind.None);
+    public bool ShowsRowControls => Kind == BarKind.None;
 
     /// <summary>The line under the buttons.</summary>
     public string Hint => Mode switch
@@ -106,8 +100,7 @@ internal sealed partial class NeedsYouBarViewModel
 
     private static string ApprovedHint => Labels.NeedsYouApprovedHint;
 
-    private string RestingHint =>
-        Kind == BarKind.Settings ? Labels.NeedsYouKeepSettings : "";
+    private static string RestingHint => "";
 
     /// <summary>True when there is a line to show.</summary>
     public bool HasHint => Hint.Length > 0;

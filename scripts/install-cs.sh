@@ -411,15 +411,14 @@ write_wrapper() { # write_wrapper <name>
   mv -f "$tmp" "$target"
 }
 
-# A build swap can leave the stored profile approval unreadable or not current (#1143): say the one command, never fail the install over it.
+# A build swap can leave the live profile unreadable by the new build: say the one command, never fail the install over it.
 profile_hint() {
   local out rc=0
   [ -x "$link_dir/sindri" ] || return 0
   out="$(cd / && "$link_dir/sindri" profile validate < /dev/null 2>&1)" || rc=$?
   case "$rc:$out" in
     0:*) ;;
-    *:*SND-PROFILE-005*) say "the profile approval can't be read by build $stamp; run \`sindri profile approve\` to see the live hash, then \`sindri profile approve <hash>\`" ;;
-    1:*) say "the profile isn't approved by this build; run \`sindri profile approve\`" ;;
+    *) say "the profile doesn't validate with this build; run \`sindri profile validate\` to see why (edits apply on save, there is nothing to approve)" ;;
   esac
   return 0
 }

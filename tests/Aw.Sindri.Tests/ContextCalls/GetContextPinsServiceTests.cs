@@ -51,7 +51,7 @@ public sealed class GetContextPinsServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Pins_read_marks_a_pin_the_live_profile_added_as_waiting()
+    public async Task Pins_read_lists_a_pin_the_live_profile_added_as_approved()
     {
         var billing = Pin("Billing", features: ["feature:invoices"]);
         var approved = Loaded(Human, [billing], "approved");
@@ -60,22 +60,11 @@ public sealed class GetContextPinsServiceTests
         var read = await Read(approved, live);
 
         Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : null);
-        Assert.Equal([("billing", "approved"), ("refunds", "waiting")], read.Value.Pins.Select(p => (p.Id, p.State)));
+        Assert.Equal([("billing", "approved"), ("refunds", "approved")], read.Value.Pins.Select(p => (p.Id, p.State)));
         Assert.Equal(live.Hash.Value, read.Value.FileHash);   // the hash of the one file load the pins came from
         Assert.Equal(["chargeback"], read.Value.Pins[1].Aliases);
         Assert.Equal(["feature:invoices"], read.Value.Pins[0].Features);
         Assert.Equal("profile", read.Value.Pins[0].SetIn);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task An_edited_pin_is_waiting_and_a_pin_the_live_profile_dropped_is_removing_after_the_live_ones()
-    {
-        var approved = Loaded(Human, [Pin("Billing", id: "billing", summary: "Invoices."), Pin("Auth", id: "auth")], "approved");
-        var live = Loaded(Human, [Pin("Billing", id: "billing", summary: "Invoices and payment.")], "live");
-
-        var read = await Read(approved, live);
-
-        Assert.Equal([("billing", "waiting"), ("auth", "removing")], read.Value.Pins.Select(p => (p.Id, p.State)));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -224,13 +213,13 @@ public sealed class GetContextPinsServiceTests
         Assert.Equal([("billing", "approved", null), ("refunds", "approved", null)], await Changes(_ => null));
 
     [Fact, Trait("Lane", "unit")]
-    public async Task An_unapproved_live_edit_is_the_states_job_and_never_a_change()
+    public async Task A_live_edit_and_a_new_live_pin_are_read_from_the_live_profile()
     {
         var live = Loaded(Human, [Pin("Billing", id: "billing", summary: "edited"), Pin("Refunds", id: "refunds"), Pin("New", id: "new")], "live", new RepoEntry("alpha", "/r/alpha"));
 
         var rows = await Changes(h => new Dictionary<string, string>(h, StringComparer.Ordinal), live);
 
-        Assert.Equal([("billing", "waiting", null), ("refunds", "approved", null), ("new", "waiting", null)], rows);
+        Assert.Equal([("billing", "approved", null), ("refunds", "approved", null), ("new", "approved", "created")], rows);
     }
 
     [Fact, Trait("Lane", "unit")]
