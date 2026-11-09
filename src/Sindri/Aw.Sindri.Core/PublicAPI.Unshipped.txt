@@ -20059,7 +20059,6 @@ Aw.Sindri.Core.Graph.Blocks.PromptBlock.CheckConfig(System.Text.Json.Nodes.JsonO
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.MarkTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.DateTimeOffset tick, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.LastTick(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 static Aw.Sindri.Core.Graph.Runs.WorkflowRun.TriggerProblem(string! trigger) -> string?
-Aw.Sindri.Core.Events.RetiredEvents
 Aw.Sindri.Core.Items.Vocabulary.ItemLinkKind
 Aw.Sindri.Core.Items.Vocabulary.ItemLinkKind.Issue = 0 -> Aw.Sindri.Core.Items.Vocabulary.ItemLinkKind
 Aw.Sindri.Core.Items.Vocabulary.ItemLinkKind.Pr = 1 -> Aw.Sindri.Core.Items.Vocabulary.ItemLinkKind
@@ -20087,7 +20086,6 @@ const Aw.Sindri.Core.Views.ViewNames.ItemLinks = "item-links" -> string!
 override Aw.Sindri.Core.Views.ItemLinkRow.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Views.ItemLinkRow.GetHashCode() -> int
 override Aw.Sindri.Core.Views.ItemLinkRow.ToString() -> string!
-static Aw.Sindri.Core.Events.RetiredEvents.Is(string! eventType) -> bool
 static Aw.Sindri.Core.Views.ItemLinkRow.operator !=(Aw.Sindri.Core.Views.ItemLinkRow? left, Aw.Sindri.Core.Views.ItemLinkRow? right) -> bool
 static Aw.Sindri.Core.Views.ItemLinkRow.operator ==(Aw.Sindri.Core.Views.ItemLinkRow? left, Aw.Sindri.Core.Views.ItemLinkRow? right) -> bool
 Aw.Sindri.Core.Events.ItemLinked.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Ids.RecordKey Record, out Aw.Sindri.Core.Ids.ItemAlias? Alias, out string? Url) -> void
