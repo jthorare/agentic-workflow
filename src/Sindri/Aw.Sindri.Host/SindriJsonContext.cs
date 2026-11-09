@@ -204,6 +204,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(CompleteStepRequest))]
 [JsonSerializable(typeof(ListWorkflowsResponse)), JsonSerializable(typeof(GetWorkflowResponse)), JsonSerializable(typeof(ListWorkflowRunsResponse)), JsonSerializable(typeof(GetWorkflowRunResponse))]   // #2258 PR 8a: the workflow reads; GraphSpec and the node positions come with GetWorkflowResponse
 [JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse))]
+[JsonSerializable(typeof(Features.ListResources.ListResourcesRequest)), JsonSerializable(typeof(Features.ListResources.ListResourcesResponse)), JsonSerializable(typeof(Features.ListResources.ResourceView)), JsonSerializable(typeof(Features.PurgeResources.PurgeResourcesRequest)), JsonSerializable(typeof(Features.PurgeResources.PurgeResourcesResponse))]   // agent-first PR 14: resources
 [JsonSerializable(typeof(RecipeRegistered)), JsonSerializable(typeof(RecipeApproved)), JsonSerializable(typeof(RecipeRevoked))]
 
 [JsonSerializable(typeof(RegisterMcpJobRequest))]   // setup-once §5.4: register Sindri in a repo from the app
