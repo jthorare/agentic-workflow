@@ -91,15 +91,34 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
             .Where(r => r.NodeId == request.Collect && r.ItemIndex > 0 && r.Status == NodeRunStatus.Succeeded)
             .OrderBy(static r => r.ItemIndex)
             .ToList();
-        if (rows.Find(static r => r.Truncated) is { } cut)
+        var (output, failure) = Gather(rows);
+        if (failure is not null)
         {
-            return $"the value of item {cut.ItemIndex.ToString(System.Globalization.CultureInfo.InvariantCulture)} was cut at 64 KB; collect a smaller field";
+            return failure;
+        }
+
+        await RecordNodeAsync(new NodeRun(request.Run, request.Collect, 0, NodeRunStatus.Succeeded, Input: null, output, Truncated: false, Error: null, Usage: null)).ConfigureAwait(false);
+        return null;
+    }
+
+    /// <summary>Builds the 'collect' node's output from the item rows, or says why it can't be: a value was cut at 64 KB, or all the values together do not fit in the 64 KB the store keeps.</summary>
+    /// <param name="rows">The collect rows of items 1 to N that succeeded, in item order.</param>
+    /// <returns>The output text, or the failure.</returns>
+    internal static (string? Output, string? Failure) Gather(IReadOnlyList<NodeRun> rows)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+        var cut = rows.FirstOrDefault(static r => r.Truncated);
+        if (cut is not null)
+        {
+            return (null, $"the value of item {cut.ItemIndex.ToString(System.Globalization.CultureInfo.InvariantCulture)} was cut at 64 KB; collect a smaller field");
         }
 
         var items = new JsonArray([.. rows.Select(static r => JsonNode.Parse(r.Output ?? "{}")?["value"]?.DeepClone())]);
-        var output = new JsonObject { ["items"] = items, ["count"] = rows.Count };
-        await RecordNodeAsync(new NodeRun(request.Run, request.Collect, 0, NodeRunStatus.Succeeded, Input: null, output.ToJsonString(), Truncated: false, Error: null, Usage: null)).ConfigureAwait(false);
-        return null;
+        var text = new JsonObject { ["items"] = items, ["count"] = rows.Count }.ToJsonString();
+        var bytes = System.Text.Encoding.UTF8.GetByteCount(text);
+        return bytes > NodeRunLimits.PayloadBytes
+            ? (null, $"the collected values from {rows.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} items are {bytes.ToString(System.Globalization.CultureInfo.InvariantCulture)} bytes, over the {NodeRunLimits.PayloadBytes.ToString(System.Globalization.CultureInfo.InvariantCulture)}-byte (64 KB) cap on a node's output; collect a smaller field or fewer items")
+            : (text, null);
     }
 
     /// <summary>Gives the run its final status, mirrors it, then starts the oldest queued run of the same workflow.</summary>
