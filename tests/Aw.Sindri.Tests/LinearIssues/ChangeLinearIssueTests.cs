@@ -3,6 +3,7 @@ using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Linear;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Features.LinearIssues;
 using Aw.Sindri.Testing;
@@ -181,11 +182,11 @@ public sealed class ChangeLinearIssueTests
     public async Task A_change_the_recorder_cannot_append_is_that_error_not_a_silent_success()
     {
         _writes.SetLive(Live());
-        _recorder.Failing = Aw.Sindri.Core.SindriErrors.NotRunning.With("no lease in this test");
+        _recorder.Failing = SindriErrors.NotRunning.With("no lease in this test");
 
         var result = await Service().Handle(ToReview(), Token);
 
-        Expect.Equal(Aw.Sindri.Core.SindriErrors.NotRunning.Code, result.Error.Code);
+        Expect.Equal(SindriErrors.NotRunning.Code, result.Error.Code);
     }
 
     [Fact]

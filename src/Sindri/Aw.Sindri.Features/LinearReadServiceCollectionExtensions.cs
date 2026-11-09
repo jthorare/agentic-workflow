@@ -1,5 +1,5 @@
-using Aw.Kernel.Services;
 using Aw.Context.Core.Facade;
+using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;

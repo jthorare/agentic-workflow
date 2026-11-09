@@ -9,6 +9,7 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.LinearIssues;
@@ -143,7 +144,7 @@ public sealed class LinearWriteAttributionTests
         Assert.NotNull(picked.Error);
     }
 
-    private (string Team, string? Issue) PayloadOf(Aw.Sindri.Core.Ledger.LedgerEvent recorded)
+    private (string Team, string? Issue) PayloadOf(LedgerEvent recorded)
     {
         var payload = _slice.Events.Payload<LinearWriteRecorded>(recorded).Value;
         return (payload.Team, payload.Issue);
