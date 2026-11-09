@@ -8,7 +8,7 @@ using Aw.Sindri.Core.Secrets;
 namespace Aw.Sindri.Host.IndexSources;
 
 /// <summary>
-/// 'sindri index connect linear' (issue 1617): the human reads the Linear API key at the terminal with the echo off, and Sindri checks it against Linear's teams before it saves anything: every team in
+/// 'sindri index connect linear' (issue 1617): the Linear API key is read at the terminal with the echo off, and Sindri checks it against Linear's teams before it saves anything: every team in
 /// context.sources.linear.teams must be readable, and with none listed the key must read at least one. Only then is the key stored where a secret pointer can read it back and the pointer (never the key)
 /// written into the profile. The key is never printed, logged or put in an error.
 /// </summary>
@@ -38,19 +38,13 @@ internal sealed class LinearConnect(
     internal static readonly Uri DefaultUrl = new("https://api.linear.app/graphql");
 
     /// <summary>Connects Linear.</summary>
-    /// <param name="human">Whether the caller is a person at their own terminal; a session is refused before anything is asked.</param>
     /// <param name="cancellationToken">Cancels the asking and the checks.</param>
-    /// <returns>The pointer now in the profile and how many teams were checked; SND-AUTH-002 for a session; SND-INDEX-009 when Linear refuses the key or the stored pointer does not resolve; SND-INDEX-010 naming the listed teams the key cannot read, or saying it reads none; SND-CONTEXT-010 when Linear is unreachable.</returns>
-    internal async ValueTask<Result<LinearConnected>> Run(bool human, CancellationToken cancellationToken)
+    /// <returns>The pointer now in the profile and how many teams were checked; SND-INDEX-009 when Linear refuses the key or the stored pointer does not resolve; SND-INDEX-010 naming the listed teams the key cannot read, or saying it reads none; SND-CONTEXT-010 when Linear is unreachable.</returns>
+    internal async ValueTask<Result<LinearConnected>> Run(CancellationToken cancellationToken)
     {
-        if (!human)
-        {
-            return SindriErrors.AuthRefused.With("`sindri index connect linear` is the human's: run it in your own terminal, not from an agent session");
-        }
-
         if (!prompts.Interactive)
         {
-            return SindriErrors.InvalidInput.With("`sindri index connect linear` reads the key at the terminal and there is none here (fix: run it in your own terminal)");
+            return SindriErrors.InvalidInput.With("`sindri index connect linear` reads the key at the terminal and there is none here (fix: run it in a terminal, or give the token's environment variable with --token-env NAME)");
         }
 
         var loaded = await profiles.Load(cancellationToken).ConfigureAwait(false);
