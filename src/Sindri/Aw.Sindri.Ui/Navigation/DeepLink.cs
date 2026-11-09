@@ -2,7 +2,7 @@ namespace Aw.Sindri.Ui.Navigation;
 
 /// <summary>
 /// A place inside the app (UI spec §3.3): 'home/needs-you', 'needs-you/&lt;rowId&gt;', 'item/&lt;ItemId&gt;',
-/// 'decision/&lt;DecisionId&gt;', 'service/&lt;name&gt;', 'job/&lt;JobId&gt;', and from screens spec §3 'node/&lt;key&gt;', 'session/&lt;provider&gt;/&lt;id&gt;' 'system/&lt;dependency&gt;' and 'project/&lt;escaped id&gt;'. The tray, the palette and a
+/// 'decision/&lt;DecisionId&gt;', 'service/&lt;name&gt;', 'job/&lt;JobId&gt;', 'connection/&lt;name&gt;', 'memory/&lt;name&gt;', and from screens spec §3 'node/&lt;key&gt;', 'session/&lt;provider&gt;/&lt;id&gt;' 'system/&lt;dependency&gt;' and 'project/&lt;escaped id&gt;'. The tray, the palette and a
 /// second launch use them; a deep link only navigates. Subjects are opaque to the app: one segment of letters, digits and
 /// '-_.:', at most 128 characters.
 /// </summary>
@@ -137,6 +137,8 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
         ("project", DeepLinkKind.Project),
         ("reviews", DeepLinkKind.Review),
         ("linear", DeepLinkKind.Issue),
+        ("connection", DeepLinkKind.Connection),
+        ("memory", DeepLinkKind.Memory),
     ];
 
     // Each kind's own rule for its subject.
@@ -146,7 +148,7 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
         DeepLinkKind.Project => IsEscapedId(subject),
         DeepLinkKind.Review => IsPrRef(subject),
         DeepLinkKind.Issue => IsIssueKey(subject),
-        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Job or DeepLinkKind.Node or DeepLinkKind.ContextItem or DeepLinkKind.System or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.Reviews or DeepLinkKind.LibrarySheet or DeepLinkKind.FixTaskSheet or DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.PinSheet => IsSubject(subject),
+        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Job or DeepLinkKind.Node or DeepLinkKind.ContextItem or DeepLinkKind.System or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.Reviews or DeepLinkKind.LibrarySheet or DeepLinkKind.FixTaskSheet or DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.PinSheet or DeepLinkKind.Connection or DeepLinkKind.Memory => IsSubject(subject),
         _ => false,
     };
 
