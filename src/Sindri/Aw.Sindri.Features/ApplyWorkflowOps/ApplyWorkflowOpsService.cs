@@ -3,6 +3,7 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Ops;
 using Aw.Sindri.Core.Graph.Validation;
 
