@@ -14,7 +14,8 @@ namespace Aw.Sindri.Features.SyncTodoNote;
 /// <param name="locator">Finds the note the profile names.</param>
 /// <param name="sync">What this process's sync knows.</param>
 /// <param name="ledger">Reads the last 'todo.note.synced'.</param>
-internal sealed class TodoNoteDoctorChecks(INoteLocator locator, ITodoNoteSync sync, ILedgerReader ledger) : IDoctorChecks
+/// <param name="source">Reads the note's size and lines.</param>
+internal sealed class TodoNoteDoctorChecks(INoteLocator locator, ITodoNoteSync sync, ILedgerReader ledger, ITodoNoteSource source) : IDoctorChecks
 {
     internal const string Name = "todo";
 
@@ -38,6 +39,7 @@ internal sealed class TodoNoteDoctorChecks(INoteLocator locator, ITodoNoteSync s
         var last = synced.IsSuccess && synced.Value is { } sevent
             ? sevent.Envelope.OccurredAt.UtcDateTime.ToString("yyyy-MM-dd HH:mm'Z'", CultureInfo.InvariantCulture)
             : "none yet";
+        _ = source; // why: the green commit reads the note
         return [Judge(place, sync.Status, last)];
     }
 
