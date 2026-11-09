@@ -7,8 +7,8 @@ using Aw.Sindri.Core.Graph.Ids;
 namespace Aw.Sindri.Core.Graph.Blocks;
 
 /// <summary>
-/// The 'only_new' block: passes on the items of a list that this workflow has not passed on before, keyed by a field of each item. It records the keys only after the node
-/// succeeded (<see cref="Commit"/>), so a node that fails leaves its items unseen and they come back on the next run. The keys are remembered per workflow, not per run.
+/// The 'only_new' block: passes on the items of a list that this workflow has not passed on before, keyed by a field of each item. It records the keys only when the whole run
+/// succeeded (<see cref="Commit"/>), so a run that fails anywhere leaves its items unseen and they come back on the next run. The keys are remembered per workflow, not per run.
 /// </summary>
 public sealed class OnlyNewBlock(IGraphSeenStore seen) : IGraphBlock
 {

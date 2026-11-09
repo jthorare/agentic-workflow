@@ -3,7 +3,7 @@ using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Tests.Workflows;
 
-/// <summary>A block's after-success hook (agent-first PR 9, for 'only_new'): it runs once the node succeeded, and a failure in it fails the node.</summary>
+/// <summary>A block's after-success hook (agent-first PR 9, for 'only_new'): it runs once the run succeeded, and a failure in it fails the run.</summary>
 [Lane(TestLane.Integration)]
 public sealed class GraphCommitTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
 {
@@ -35,7 +35,7 @@ public sealed class GraphCommitTests(SindriTimeSkippingServer server) : IClassFi
     }
 
     [Fact]
-    public async Task A_commit_that_fails_fails_the_node_and_the_run()
+    public async Task A_commit_that_fails_fails_the_run()
     {
         await using var rig = GraphRig.Start(server.Environment);
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
@@ -46,7 +46,6 @@ public sealed class GraphCommitTests(SindriTimeSkippingServer server) : IClassFi
 
         Assert.Equal(WorkflowRunStatus.Failed, run.Status);
         Assert.Contains("commit failed", run.Error, StringComparison.Ordinal);
-        Assert.Equal(NodeRunStatus.Failed, (await rig.NodeStatuses(started.RunId))["a"]);
     }
 
     private const string TwoIssues = """{"kind":"manual","issues":[{"id":1},{"id":2}]}""";
