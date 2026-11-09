@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Workflow.Ids;
@@ -50,4 +51,9 @@ public static class NeedsYouRoutes
     /// <param name="id">The row's id.</param>
     /// <returns>The route.</returns>
     public static string Row(NeedsYouRowId id) => "needs-you/" + id.Value;
+
+    /// <summary>The route of a graph run.</summary>
+    /// <param name="run">The run.</param>
+    /// <returns>The route.</returns>
+    public static string WorkflowRun(WorkflowRunId run) => "workflow-run/" + run.Value;
 }

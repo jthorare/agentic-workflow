@@ -89,6 +89,7 @@ public static class SindriCoreServiceCollectionExtensions
             .AddSingleton<IProjection, ModelHistoryProjection>()
             .AddSingleton<IProjection, CodeIndexProjection>()
             .AddSingleton<IProjection, ProjectsProjection>()
+            .AddSingleton<IProjection, RunsProjection>()
             .AddSingleton<IProjection, TodosProjection>();
 
     /// <summary>

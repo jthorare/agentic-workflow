@@ -278,6 +278,27 @@ public static class EventTypes
     /// <summary>A connection that needed a new sign-in is connected again (connections PR 10b); it clears the connection's needs-you row.</summary>
     public const string ConnectionSignedIn = "connection.signed-in";
 
+    /// <summary>A graph run was recorded and its workflow started (issue 2258, PR 6).</summary>
+    public const string WorkflowRunStarted = "workflow.run.started";
+
+    /// <summary>A graph run ended, succeeded or failed (issue 2258, PR 6).</summary>
+    public const string WorkflowRunFinished = "workflow.run.finished";
+
+    /// <summary>A graph run was cancelled (issue 2258, PR 6).</summary>
+    public const string WorkflowRunCancelled = "workflow.run.cancelled";
+
+    /// <summary>A graph node started (issue 2258, PR 6).</summary>
+    public const string WorkflowNodeStarted = "workflow.node.started";
+
+    /// <summary>A graph node finished or was skipped (issue 2258, PR 6).</summary>
+    public const string WorkflowNodeFinished = "workflow.node.finished";
+
+    /// <summary>A graph node failed (issue 2258, PR 6).</summary>
+    public const string WorkflowNodeFailed = "workflow.node.failed";
+
+    /// <summary>A graph 'notify' node posted a note for the owner (issue 2258, PR 6).</summary>
+    public const string WorkflowNotify = "workflow.notify";
+
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>
     /// <returns>The event type, for example 'service.heartbeat'.</returns>
