@@ -135,7 +135,8 @@ internal static class CallerRequests
             _ = request.Headers.TryAddWithoutValidation(SindriHeaders.Launch, launch);
         }
 
-        if (_launch.Value is not null)
+        // why: only a request that really goes out as the launch counts; seeding as the human (AsHuman) or a launch-secret call carries no X-Sindri-Launch of this launch
+        if (_launch.Value is { } sentAs && request.Headers.TryGetValues(SindriHeaders.Launch, out var launches) && launches.Contains(sentAs, StringComparer.Ordinal))
         {
             _sent.Value?.Enqueue((request.Method.Method, PathOf(request.RequestUri)));
         }
