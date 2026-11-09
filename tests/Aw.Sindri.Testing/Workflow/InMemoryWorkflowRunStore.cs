@@ -144,8 +144,20 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
         Move(id, status, outputs, error, from => status == WorkflowRunStatus.Queued ? from == WorkflowRunStatus.Running : !IsFinal(from));
 
     /// <inheritdoc/>
-    public ValueTask<Result<WorkflowRun>> SetItem(WorkflowRunId id, ItemId item, CancellationToken cancellationToken) =>
-        throw new NotSupportedException("SetItem is not written yet");
+    public ValueTask<Result<WorkflowRun>> SetItem(WorkflowRunId id, ItemId item, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var at = _runs.FindIndex(r => r.Id == id);
+            if (at < 0)
+            {
+                return Done<WorkflowRun>(NotFound(id));
+            }
+
+            _runs[at] = _runs[at] with { ItemId = item };
+            return Done<WorkflowRun>(_runs[at]);
+        }
+    }
 
     /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> CancelQueued(WorkflowRunId id, string? error, CancellationToken cancellationToken) =>

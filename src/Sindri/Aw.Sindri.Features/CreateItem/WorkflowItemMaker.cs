@@ -3,6 +3,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -47,9 +48,15 @@ internal sealed class WorkflowItemMaker(IServiceScopeFactory scopes) : ICreateIt
             return valid.Error;
         }
 
-        using var scope = scopes.CreateScope();
+        using var scope = scopes.CreateScope();   // why: the handler is scoped; the run store is a singleton
         using var entered = scope.ServiceProvider.GetRequiredService<ICallerContextAccessor>().EnterService("workflow");
         var made = await scope.ServiceProvider.GetRequiredService<CreateItemService>().Handle(request, cancellationToken).ConfigureAwait(false);
-        return made.IsError ? made.Error : made.Value.ItemId.Value;
+        if (made.IsError)
+        {
+            return made.Error;
+        }
+
+        var linked = await scope.ServiceProvider.GetRequiredService<IWorkflowRunStore>().SetItem(run, made.Value.ItemId, cancellationToken).ConfigureAwait(false);
+        return linked.IsError ? linked.Error : made.Value.ItemId.Value;
     }
 }
