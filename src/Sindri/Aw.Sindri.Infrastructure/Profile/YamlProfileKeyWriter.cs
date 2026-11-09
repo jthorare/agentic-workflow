@@ -13,10 +13,42 @@ internal sealed class YamlProfileKeyWriter(SindriSettings settings, Core.Profile
 
     public Result<ProfileKeyEdit> PlanText(string keyPath, string value) => Plan(keyPath, value, asString: true);
 
+    public Result<ProfileKeyEdit> PlanTexts(IReadOnlyList<(string KeyPath, string Value)> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return Edit(text =>
+        {
+            foreach (var (keyPath, value) in values)
+            {
+                var edited = ProfileKeyText.Edit(text, keyPath, value, asString: true);
+                if (edited.IsError)
+                {
+                    return edited;
+                }
+
+                text = edited.Value;
+            }
+
+            return text;
+        });
+    }
+
+    public Result<ProfileKeyEdit> PlanRemove(string keyPath)
+    {
+        ArgumentNullException.ThrowIfNull(keyPath);
+        return Edit(text => ProfileKeyText.Remove(text, keyPath));
+    }
+
     private Result<ProfileKeyEdit> Plan(string keyPath, string value, bool asString)
     {
         ArgumentNullException.ThrowIfNull(keyPath);
         ArgumentNullException.ThrowIfNull(value);
+        return Edit(text => ProfileKeyText.Edit(text, keyPath, value, asString));
+    }
+
+    // reads the profile file once, applies the text edit and says whether the file would change
+    private Result<ProfileKeyEdit> Edit(Func<string, Result<string>> edit)
+    {
         var path = settings.ProfilePath;
         string before;
         try
@@ -28,7 +60,7 @@ internal sealed class YamlProfileKeyWriter(SindriSettings settings, Core.Profile
             return SindriErrors.ProfileMissing.With($"{path} can't be read: {e.Message} (fix: run 'sindri profile init' when there is no profile)");
         }
 
-        var edited = ProfileKeyText.Edit(before, keyPath, value, asString);
+        var edited = edit(before);
         return edited.IsError ? edited.Error : new ProfileKeyEdit(path, edited.Value, !string.Equals(before, edited.Value, StringComparison.Ordinal));
     }
 

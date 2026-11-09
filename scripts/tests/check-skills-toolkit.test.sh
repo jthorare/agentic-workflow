@@ -36,7 +36,7 @@ source "$SHARED_DIR/repo-slug.sh"
 Write the report to `$AW_DIR/qa/report.md`. State lives in `${AW_STATE_DIR:-$HOME/.agentic-workflow}/judge`.
 MD
   printf 'AW_DIR="${AW_STATE_DIR:-$HOME/.agentic-workflow}/$REPO_SLUG"\n' > "$d/skills/_shared/repo-slug.sh"
-  printf 'Examples: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/config/voice/joi-examples.md`\n' > "$d/config/voice/joi.md"
+  printf 'Examples: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/config/voice/reply-examples.md`\n' > "$d/config/voice/reply.md"
   printf '%s' "$d"
 }
 
@@ -75,9 +75,9 @@ run "$D"; expect_rc "a bare ~ toolkit path fails" 1
 expect_out "it names file:line" 'skills/demo/TILDE\.md:2: SKILLS-TOOLKIT-001'
 
 D="$(fixture bare-voice)"
-printf 'a\nb\nIn ~/.agentic-workflow/toolkit/config/voice/joi-examples.md\n' > "$D/config/voice/joi.md"
+printf 'a\nb\nIn ~/.agentic-workflow/toolkit/config/voice/reply-examples.md\n' > "$D/config/voice/reply.md"
 run "$D"; expect_rc "a bare toolkit path in config/voice fails" 1
-expect_out "it names file:line" 'config/voice/joi\.md:3: SKILLS-TOOLKIT-001'
+expect_out "it names file:line" 'config/voice/reply\.md:3: SKILLS-TOOLKIT-001'
 
 D="$(fixture slug-angle)"
 printf 'Report: ~/.agentic-workflow/<repo-slug>/reviews/1.json\n' > "$D/skills/demo/SLUG.md"

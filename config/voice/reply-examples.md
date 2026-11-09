@@ -1,6 +1,6 @@
-# Talking to Joi: examples
+# Talking to the user: examples
 
-Made-up delivery app. Slop first, then how to say it. The rules are in `joi.md`.
+Made-up delivery app. Slop first, then how to say it. The rules are in `reply.md`.
 
 **Root cause**
 > ✗ The issue stems from a race condition in the idempotency layer, where retry semantics interact with
@@ -40,7 +40,7 @@ Made-up delivery app. Slop first, then how to say it. The rules are in `joi.md`.
 > ✓ No, we don't need a new endpoint. `getOrder` already returns `status`, the page just isn't reading it. It's
 > a one-line client change.
 
-**Joi says "what does that mean?"**
+**The user says "what does that mean?"**
 > ✗ To clarify, the mapping layer resolves entity references via predicate matching.
 >
 > ✓ My bad, that was jargon. The replay clicks "Refund" on an order from another customer's account, and our test

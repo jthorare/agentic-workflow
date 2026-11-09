@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-GRAPH-106",
+  "status": 400,
+  "detail": "the payload is valid JSON but not an object; wrap it, for example {\"value\": ...}",
+  "traceId": "<trace>"
+}
