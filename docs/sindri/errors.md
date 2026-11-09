@@ -95,6 +95,12 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-013` | The provider rejected the saved poll cursor. | ask for a full re-read (the owner's call); Sindri does not re-read on its own |
 | `SND-CONN-014` | The provider is rate limiting this connection (429 or 5xx on a poll). | nothing: the next poll waits for Retry-After, then doubles the wait on each repeat |
 | `SND-CONN-101` | A polled event found its run ids, five in a row, held by runs of other events. | nothing: the cursor stays and the next poll tries again; the event is never dropped |
+| `SND-CONN-201` | The handoff inbox's answer breaks the inbox contract; the message names the field. | fix the inbox so it answers as `schemas/handoff/inbox.openapi.yaml` says (docs/sindri/handoff.md) |
+| `SND-CONN-202` | Another caller claimed the offer first. Informational: nothing starts. | none; the next poll lists what is still open |
+| `SND-CONN-203` | The handoff inbox has no such offer any more (unknown or expired). | none; the offer is gone |
+| `SND-CONN-204` | The handoff inbox did not take the result. | check the inbox is up and the claim id is the one the claim returned; the submit is retried |
+| `SND-CONN-205` | The handoff inbox is out of reach, did not answer in 30 seconds, or kept answering 429 or 5xx. | check the connection's base URL and that the inbox is up; list is tried again on the next poll |
+| `SND-CONN-206` | The handoff inbox's host is not on the allowlist, or its URL is not https (http is allowed for loopback only). | use the inbox's https URL and add its host to the allowlist |
 | `SND-MEM-001` | No memory has that name. | `sindri memory list` shows the names |
 | `SND-MEM-002` | A memory with that name exists. | pick another name |
 | `SND-MEM-003` | A fact is empty or longer than 2,000 characters. | shorten the text |
@@ -160,3 +166,7 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-106` | A manual run's payload must be a JSON object |
 | `SND-GRAPH-107` | This run already ended |
 | `SND-GRAPH-108` | A referenced node output was cut at 64 KB |
+| `SND-GRAPH-120` | A workflow call is nested too deep: the call would be past `workflow.callDepth` (default 3) |
+| `SND-GRAPH-121` | A run can't start its own workflow, or the workflow that called it |
+| `SND-GRAPH-122` | An `http` node's request was refused before it was sent: host not on `workflow.http.hosts`, an address that is this machine, plain http, or a credential header |
+| `SND-GRAPH-123` | An `http` node's request got no acceptable answer: status outside `expect`, a redirect loop, an answer over 1 MB, or a network failure |
