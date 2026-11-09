@@ -362,6 +362,24 @@
       "confirm": null
     },
     {
+      "action": "CreateHandoffItem",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/handoff",
+      "cli": "sindri handoff send <title> [--source <name>] [--repo <repo>] [--branch <b>] [--prompt <text>] [--link <url>] [--label <l>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "CreateItem",
       "class": "desk",
       "allowedCallers": [
