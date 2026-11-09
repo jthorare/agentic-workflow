@@ -20438,3 +20438,6 @@ Aw.Sindri.Core.Graph.WorkflowChangeLog.WorkflowChangeLog(Aw.Sindri.Core.Ledger.I
 Aw.Sindri.Core.Graph.Validation.IWorkflowChecker
 Aw.Sindri.Core.Graph.IWorkflowStore.Pause(Aw.Sindri.Core.Graph.Ids.WorkflowId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.WorkflowRecord!>!>
 Aw.Sindri.Core.Graph.Validation.IWorkflowChecker.Validator(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Graph.Validation.GraphValidator!>
+static readonly Aw.Sindri.Core.SindriErrors.GraphRunLoop -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Runs.IGraphLaunchRuns
+Aw.Sindri.Core.Graph.Runs.IGraphLaunchRuns.RunOf(Aw.Sindri.Core.Launch.LaunchId launch, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Ids.WorkflowRunId?>>
