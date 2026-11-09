@@ -29,4 +29,12 @@ public sealed class WorkflowAnsweredEventGoldenTests
         Assert.Null(entry.PublicPayload);
         Assert.Equal("workflow.answered:<run id>:<node id>", entry.KeyShape);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_event_invalidates_the_needs_you_view()
+    {
+        var entry = Assert.Single(EventCatalog.All, static e => e.Type == EventTypes.WorkflowAnswered);
+
+        Expect.Sequence([ApiViews.NeedsYou], entry.Invalidates);
+    }
 }
