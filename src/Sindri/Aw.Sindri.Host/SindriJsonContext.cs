@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Eval;
@@ -43,9 +42,11 @@ using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Core.Workflow.Engine.Events;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AddRepo;
 using Aw.Sindri.Features.AllowDenial;
+using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.CancelJob;
 using Aw.Sindri.Features.CancelWorkflowRun;
@@ -55,7 +56,9 @@ using Aw.Sindri.Features.CodeIndexJobs;
 using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.CreateItem;
+using Aw.Sindri.Features.CreateWorkflow;
 using Aw.Sindri.Features.Decide;
+using Aw.Sindri.Features.DeleteWorkflow;
 using Aw.Sindri.Features.EndLearnMode;
 using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.GetConnection;
@@ -104,12 +107,14 @@ using Aw.Sindri.Features.ListWorkflows;
 using Aw.Sindri.Features.OnboardRepo;
 using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
+using Aw.Sindri.Features.PauseWorkflow;
 using Aw.Sindri.Features.ProbeLaunchTargets;
 using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.RecordLimitHit;
 using Aw.Sindri.Features.RegisterMcp;
 using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Features.ReplaceWorkflow;
 using Aw.Sindri.Features.ResumeJob;
 using Aw.Sindri.Features.ResumeService;
 using Aw.Sindri.Features.RunDoctor;
@@ -124,9 +129,11 @@ using Aw.Sindri.Features.SetReviewLogin;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.TestConnection;
 using Aw.Sindri.Features.ValidateProfile;
+using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Host.Commands.Probe;
 using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Host.Mcp;
+using System.Text.Json.Serialization;
 
 namespace Aw.Sindri.Host;
 
@@ -202,6 +209,8 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(EffectReply))]          // engine P6 unit (a): an effect's reply event (notify.delivered, claim.created)
 
 [JsonSerializable(typeof(CompleteStepRequest))]
+[JsonSerializable(typeof(CreateWorkflowBody)), JsonSerializable(typeof(ApplyWorkflowOpsBody)), JsonSerializable(typeof(ReplaceWorkflowBody)), JsonSerializable(typeof(ValidateWorkflowBody)), JsonSerializable(typeof(ActivateWorkflowBody))]   // #2258 PR 8b: the workflow write bodies
+[JsonSerializable(typeof(CreateWorkflowResponse)), JsonSerializable(typeof(ApplyWorkflowOpsResponse)), JsonSerializable(typeof(ReplaceWorkflowResponse)), JsonSerializable(typeof(ValidateWorkflowResponse)), JsonSerializable(typeof(ActivateWorkflowResponse)), JsonSerializable(typeof(PauseWorkflowResponse)), JsonSerializable(typeof(DeleteWorkflowResponse))]
 [JsonSerializable(typeof(ListWorkflowsResponse)), JsonSerializable(typeof(GetWorkflowResponse)), JsonSerializable(typeof(ListWorkflowRunsResponse)), JsonSerializable(typeof(GetWorkflowRunResponse))]   // #2258 PR 8a: the workflow reads; GraphSpec and the node positions come with GetWorkflowResponse
 [JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse))]
 [JsonSerializable(typeof(RecipeRegistered)), JsonSerializable(typeof(RecipeApproved)), JsonSerializable(typeof(RecipeRevoked))]
