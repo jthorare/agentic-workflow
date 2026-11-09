@@ -16,7 +16,7 @@ namespace Aw.Sindri.Host.Mcp;
 internal static class McpToolTable
 {
     private static readonly IReadOnlyList<Tool> _tools = [ContextTools.QueryTool, ContextTools.SourcesTool, ContextTools.LensesTool, ConceptTools.Tool, PageTools.Tool, GraphTools.NodeTool, GraphTools.NeighborsTool,
->>>>>>> origin/main
+        SindriTools.StatusTool, SindriTools.QueueTool, SindriTools.ItemTool, SindriTools.TimelineTool, SindriTools.PendingDecisionsTool, SindriTools.JobTool, SindriTools.ProjectsTool, SindriTools.RequestTool, SindriTools.HandoffTool, SindriTools.TodosTool, SindriTools.TodoTool, .. ConnectionTools.All, .. MemoryTools.All, .. WorkflowReadTools.All, .. ResourceTools.All];
 
     // why: only the context and graph tools read one repo's map; the sindri_* tools answer for every repo, as the same call does for a human
     private static readonly FrozenSet<string> _repoScoped = FrozenSet.Create(StringComparer.Ordinal,

@@ -1,0 +1,21 @@
+{
+  "resources": [
+    {
+      "owner": "workflow:morning-check",
+      "kind": "database",
+      "name": "state",
+      "size": 40,
+      "path": "<home>/resources/workflow/morning-check/state.db",
+      "limitBytes": null
+    },
+    {
+      "owner": "workflow:morning-check",
+      "kind": "disk",
+      "name": "scratch",
+      "size": 300,
+      "path": "<home>/resources/workflow/morning-check/scratch",
+      "limitBytes": null
+    }
+  ]
+}
+

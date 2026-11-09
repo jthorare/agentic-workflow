@@ -1068,6 +1068,24 @@
       "confirm": null
     },
     {
+      "action": "PurgeResources",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/resources/purge",
+      "cli": "sindri resources purge <owner>",
+      "ui": "ready",
+      "destructive": true,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "RebuildViews",
       "class": "desk",
       "allowedCallers": [
