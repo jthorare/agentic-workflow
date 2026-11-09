@@ -29,7 +29,6 @@ internal static class ApiScenarios
         ["Views"] = ViewScenarios.All,
         ["Sessions"] = SessionScenarios.All,
         ["Items"] = [.. ItemScenarios.All],
-        ["Parks"] = ParkScenarios.All,
         ["Requests"] = RequestScenarios.All,
         ["Streams"] = StreamScenarios.All,
         ["Jobs"] = [.. JobScenarios.All, .. JobScopeScenarios.All],
@@ -47,7 +46,10 @@ internal static class ApiScenarios
         ["LinearWrite"] = LinearWriteScenarios.All,
         ["LinearConnection"] = LinearConnectionScenarios.All,
         ["ConnectionSignIn"] = ConnectionSignInScenarios.All,
+        ["Connections"] = ConnectionScenarios.All,
+        ["Memories"] = MemoryScenarios.All,
         ["WorkflowRuns"] = WorkflowRunScenarios.All,
+        ["WorkflowReads"] = WorkflowReadScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -62,6 +64,10 @@ internal static class ApiScenarios
             ? await CodeIndexScenarios.Start(ct, demoBehindMain: scenario == CodeIndexScenarios.StaleScenario)
             : ConnectionSignInScenarios.Handles(slug, scenario)
             ? await ConnectionSignInScenarios.Start(scenario, ct)
+            : ConnectionScenarios.Handles(slug, scenario)
+            ? await ConnectionScenarios.Start(slug, scenario, ct)
+            : MemoryScenarios.Handles(slug, scenario)
+            ? await MemoryScenarios.Start(scenario, ct)
             : ContextApiScenarios.Handles(slug)
             ? await ContextApiScenarios.Start(slug, scenario, ct)
             : (slug, scenario) is ("profile", "repo-added")
@@ -135,7 +141,7 @@ internal static class ApiScenarios
         SetupScenarios.Handles(slug, scenario) ? SetupScenarios.Start(scenario, ct) : SetupRepoScenarios.Start(scenario, ct);
 
     /// <summary>The live profile the scenario's host starts with: the item scenarios need two repos.</summary>
-    public static string ProfileYaml(string slug, string scenario) => SessionScenarios.Handles(slug, scenario) ? SessionScenarios.ProfileYaml : ItemScenarios.Handles(slug, scenario) || ParkScenarios.Handles(slug, scenario) || RequestScenarios.Handles(slug, scenario) || StreamScenarios.Handles(slug, scenario) ? ItemScenarios.ProfileYaml : GoldenHost.ProfileYaml;
+    public static string ProfileYaml(string slug, string scenario) => SessionScenarios.Handles(slug, scenario) ? SessionScenarios.ProfileYaml : ItemScenarios.Handles(slug, scenario) || RequestScenarios.Handles(slug, scenario) || StreamScenarios.Handles(slug, scenario) ? ItemScenarios.ProfileYaml : GoldenHost.ProfileYaml;
 
     /// <summary>Runs the scenario against <paramref name="host"/> and returns the body to compare.</summary>
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
@@ -175,12 +181,13 @@ internal static class ApiScenarios
 
     /// <summary>The scenario's body when the workflow-run class owns it, else <see cref="Delegated"/>'s.</summary>
     private static Func<Task<string>>? DelegatedOrWorkflow(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
-        WorkflowRunScenarios.Handles(slug, scenario) ? () => WorkflowRunScenarios.Body(host, slug, scenario, ct) : Delegated(host, slug, scenario, ct);
+        WorkflowRunScenarios.Handles(slug, scenario) ? () => WorkflowRunScenarios.Body(host, slug, scenario, ct)
+        : WorkflowReadScenarios.Handles(slug, scenario) ? () => WorkflowReadScenarios.Body(host, slug, scenario, ct)
+        : Delegated(host, slug, scenario, ct);
 
     /// <summary>The scenario's body when one of the scenario classes owns it, else null.</summary>
     private static Func<Task<string>>? Delegated(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
         ItemScenarios.Handles(slug, scenario) ? () => ItemScenarios.Body(host, slug, scenario, ct)
-        : ParkScenarios.Handles(slug, scenario) ? () => ParkScenarios.Body(host, slug, scenario, ct)
         : RequestScenarios.Handles(slug, scenario) ? () => RequestScenarios.Body(host, slug, scenario, ct)
         : StreamScenarios.Handles(slug, scenario) ? () => StreamScenarios.Body(host, slug, scenario, ct)
         : ViewScenarios.Handles(slug, scenario) ? () => ViewScenarios.Body(host, slug, scenario, ct)
@@ -218,6 +225,8 @@ internal static class ApiScenarios
         : LibraryScenarios.Handles(slug, scenario) ? () => LibraryScenarios.Body(host, scenario, ct)
         : LibraryDocScenarios.Handles(slug, scenario) ? () => LibraryDocScenarios.Body(host, scenario, ct)
         : ConnectionSignInScenarios.Handles(slug, scenario) ? () => ConnectionSignInScenarios.Body(host, scenario, ct)
+        : ConnectionScenarios.Handles(slug, scenario) ? () => ConnectionScenarios.Body(host, slug, scenario, ct)
+        : MemoryScenarios.Handles(slug, scenario) ? () => MemoryScenarios.Body(host, slug, scenario, ct)
         : null;
 
 

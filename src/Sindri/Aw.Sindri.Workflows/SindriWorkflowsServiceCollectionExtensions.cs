@@ -43,8 +43,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IInstanceReader>(static sp => sp.GetRequiredService<NoInstances>())
             .AddSingleton<HomeFactStore>()
             .AddSingleton<IFactStore>(static sp => sp.GetRequiredService<HomeFactStore>())
-            .AddSingleton<IFactContents>(static sp => sp.GetRequiredService<HomeFactStore>())   // the agent target resolver and the Linear item links read stored facts
-            .AddScoped<Core.Reviews.IFixBabysitters, NoFixBabysitters>();   // PR review page: no pull request has a babysitter now
+            .AddSingleton<IFactContents>(static sp => sp.GetRequiredService<HomeFactStore>());   // the agent target resolver reads stored facts
     }
 
     /// <summary>The graph engine (issue 2258, PR 6): the run starter and its Temporal launcher, the queue advance, the blocks and the activities of <see cref="GraphWorkflow"/>.</summary>
@@ -52,7 +51,8 @@ public static class SindriWorkflowsServiceCollectionExtensions
     {
         return services
             .AddSingleton<GraphMirror>()
-            .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>()))
+            .AddSingleton<IForEachLimitSource, ProfileForEachLimits>()
+            .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>(), provider.GetRequiredService<IForEachLimitSource>()))
             .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
             .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog
             .AddSingleton<IGraphRunLauncher>(static provider => provider.GetRequiredService<TemporalGraphRunLauncher>())
@@ -60,6 +60,9 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<GraphRunStarter>()
             .AddSingleton<IGraphRunStarter>(static provider => provider.GetRequiredService<GraphRunStarter>())
             .AddSingleton<IGraphQueueAdvance>(static provider => provider.GetRequiredService<GraphRunStarter>())
+            .AddSingleton<IGraphRunProbe>(static provider => new TemporalGraphRunProbe(provider.GetRequiredService<TemporalFrontend>()))
+            .AddSingleton<GraphRunRecovery>()
+            .AddSingleton<IGraphRunRecovery>(static provider => provider.GetRequiredService<GraphRunRecovery>())
             .AddSingleton<GraphRunActivities>().AddSingleton<GraphBlockActivities>().AddSingleton<GraphActivities>();
     }
 

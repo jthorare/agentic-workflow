@@ -9,7 +9,7 @@ namespace Aw.Sindri.Core.Graph.Validation;
 
 public sealed partial class GraphValidator
 {
-    private static readonly HashSet<string> _scopeRoots = new(["trigger", "item", "workflow"], StringComparer.Ordinal);
+    private static readonly HashSet<string> _scopeRoots = new(["trigger", "item", "itemIndex", "workflow"], StringComparer.Ordinal);
 
     private void References(NodeScope scope, List<GraphFinding> found)
     {

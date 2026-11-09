@@ -46,7 +46,8 @@ internal static partial class Labels
         DeepLinkKind.Job => "Job",
         DeepLinkKind.Project => "Project",
         DeepLinkKind.Issue => "Issue",
-        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.ContextItem or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.Reviews or DeepLinkKind.Review or DeepLinkKind.LibrarySheet or DeepLinkKind.FixTaskSheet or DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.PinSheet => string.Empty,
+        DeepLinkKind.Connection => "Connection",
+        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.ContextItem or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.Reviews or DeepLinkKind.Review or DeepLinkKind.LibrarySheet or DeepLinkKind.FixTaskSheet or DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.PinSheet or DeepLinkKind.Memory => string.Empty,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, message: null),
     };
 
@@ -62,7 +63,10 @@ internal static partial class Labels
         PageId.Agents => Agents,
         PageId.System => System,
         PageId.Reviews => ReviewsTab,
+        PageId.Connections => ConnectionsPage,
         PageId.Jobs => JobsPage,
+        PageId.Memory => MemoryPageName,
+        PageId.Workflows => Workflows,
         PageId.Settings => Settings,
         _ => throw new ArgumentOutOfRangeException(nameof(page), page, message: null),
     };
@@ -80,7 +84,7 @@ internal static partial class Labels
     {
         PageId.Work => ArrivesWork,
         PageId.Context => ArrivesContext,
-        PageId.Home or PageId.Projects or PageId.Agents or PageId.System or PageId.Reviews or PageId.Jobs or PageId.Settings => null,
+        PageId.Home or PageId.Projects or PageId.Agents or PageId.System or PageId.Reviews or PageId.Connections or PageId.Jobs or PageId.Memory or PageId.Workflows or PageId.Settings => null,
         _ => throw new ArgumentOutOfRangeException(nameof(page), page, message: null),
     };
 

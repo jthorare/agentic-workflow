@@ -24,6 +24,27 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
     /// <summary>sindri_job: the summary, each progress line and every string inside the result (a service's result can carry text an agent wrote).</summary>
     internal static FencePlan Job { get; } = new("sindri:job", [new("summary", "startedBy"), new("progress[].line"), new("result", "startedBy", EveryString: true)]);
 
+    /// <summary>workflow_list: each workflow's name, by whoever saved its newest revision.</summary>
+    internal static FencePlan WorkflowList { get; } = new("sindri:workflow", [new("workflows[].name", "changedBy")]);
+
+    /// <summary>workflow_get: the names, the description, each node's title, every string of each node's config (prompts, templates, URLs) and the resource names (the graph validator checks a node type and an edge's output against the known blocks, but not these).</summary>
+    internal static FencePlan WorkflowGet { get; } = new("sindri:workflow",
+    [
+        new("name", "changedBy"), new("spec.name"), new("spec.description"),
+        new("spec.nodes[].title"), new("spec.nodes[].config", EveryString: true),
+        new("spec.resources.database.name"), new("spec.resources.sandbox.memory"), new("spec.resources.sandbox.wall"),
+    ]);
+
+    /// <summary>workflow_runs: each run's failure text.</summary>
+    internal static FencePlan WorkflowRuns { get; } = new("sindri:workflow-run", [new("runs[].error")]);
+
+    /// <summary>workflow_run_get: the failure text, what a trigger carried, the outputs, and each node run's input, output and error (payloads an agent or a service wrote).</summary>
+    internal static FencePlan WorkflowRun { get; } = new("sindri:workflow-run",
+    [
+        new("error"), new("trigger.payload", EveryString: true), new("outputs", EveryString: true),
+        new("nodes[].input", EveryString: true), new("nodes[].output", EveryString: true), new("nodes[].error"),
+    ]);
+
     /// <summary>sindri_projects: the Linear-sourced text of every card (name, description, lead's name) in the three lists, and the viewer's name; the owner's notes (free text a session reads); the owner's links stay plain.</summary>
     internal static FencePlan Projects { get; } = new("sindri:project",
     [

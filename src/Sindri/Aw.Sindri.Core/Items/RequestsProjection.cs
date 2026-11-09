@@ -31,12 +31,7 @@ internal sealed class RequestsProjection(EventFactory events, ITextScrubber scru
     public bool Handles(string eventType) =>
         string.Equals(eventType, EventTypes.RequestFiled, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.DecisionRecorded, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ItemStateChanged, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowStarted, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowTransition, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowRefused, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowNotified, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowRetired, StringComparison.Ordinal);
+        || string.Equals(eventType, EventTypes.ItemStateChanged, StringComparison.Ordinal);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
@@ -47,7 +42,7 @@ internal sealed class RequestsProjection(EventFactory events, ITextScrubber scru
             EventTypes.RequestFiled => await Filed(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.DecisionRecorded => await Recorded(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ItemStateChanged => await Closed(recorded, rows, cancellationToken).ConfigureAwait(false),
-            _ => await Engine(recorded, rows, cancellationToken).ConfigureAwait(false),
+            _ => Results.Success(Unit.Value),
         };
     }
 
@@ -178,35 +173,6 @@ internal sealed class RequestsProjection(EventFactory events, ITextScrubber scru
         }
 
         return await VoidWaits(changed.Value.Item.Value, recorded, rows, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// A root instance's 'workflow.*' row that ends its item (API P11, review run 2 I4): the item closes as a projection only, with no
-    /// 'item.state-changed' row (decision Q6), so what a human close voids is voided here, keyed on the item reaching a closed state
-    /// (<see cref="EngineClosure"/>). This projection runs before the items one, so it folds the row the items projection is about to write.
-    /// </summary>
-    private async ValueTask<Result<Unit>> Engine(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
-    {
-        var payload = events.Payload<WorkflowEventPayload>(recorded);
-        if (payload.IsError)
-        {
-            return payload.Error;
-        }
-
-        if (recorded.Item is not { } key)
-        {
-            return Unit.Value;
-        }
-
-        var item = await rows.Get<ItemRow>(ViewNames.Items, key, cancellationToken).ConfigureAwait(false);
-        if (item.IsError)
-        {
-            return item.Error;
-        }
-
-        return item.Value is { } row && EngineClosure.EndsItem(row, recorded.Envelope.Type, payload.Value, recorded)
-            ? await VoidWaits(key, recorded, rows, cancellationToken).ConfigureAwait(false)
-            : Unit.Value;
     }
 
     private static async ValueTask<Result<Unit>> VoidWaits(string item, LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)

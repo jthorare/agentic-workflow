@@ -93,7 +93,7 @@ public sealed class WorktreeRulesTests
         Assert.Equal(WorktreeDecision.Removable, Judge(done).Decision);
         AssertKept(Judge(done with { UnpushedCommits = 1, HeadMerged = false }), "no remote branch");
         AssertKept(Judge(done with { NoPreviousSweep = true }), "no previous sweep");
-        AssertKept(Judge(done with { ChangedSinceSweep = true }), "changed since the last sweep");
+        AssertKept(Judge(done with { ChangedSinceSweep = true }), "changed since the last full sweep");
     }
 
     private static WorktreeFacts NoPr() => new() { Path = "/wt/idea", Branch = "docs/idea", HeadMerged = false };
@@ -134,7 +134,16 @@ public sealed class WorktreeRulesTests
     public void No_pr_branch_with_process_is_kept() => AssertKept(Judge(NoPr() with { Occupants = [new ProcessLocation(4242, "claude -n t1-api", ["/wt/idea"])] }), "4242");
 
     [Fact, Trait("Lane", "unit")]
-    public void No_pr_branch_changed_since_last_sweep_is_kept() => AssertKept(Judge(NoPr() with { ChangedSinceSweep = true }), "changed since the last sweep");
+    public void No_pr_branch_changed_since_last_sweep_is_kept() => AssertKept(Judge(NoPr() with { ChangedSinceSweep = true }), "changed since the last full sweep");
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_tree_changed_since_the_last_full_sweep_names_when_that_sweep_started()
+    {
+        // #2450: a --path pass never moves the marker, so "the last sweep" must say it is the last full one, and when it was.
+        var started = new DateTimeOffset(2026, 11, 8, 11, 43, 7, TimeSpan.Zero);
+
+        AssertKept(Judge(NoPr() with { ChangedSinceSweep = true, SweepStartedAt = started }), "changed since the last full sweep (2026-11-08 11:43Z)");
+    }
 
     [Fact, Trait("Lane", "unit")]
     public void No_pr_branch_outside_the_roots_or_locked_is_kept()
@@ -156,7 +165,7 @@ public sealed class WorktreeRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_tree_changed_after_the_last_sweep_is_kept() => AssertKept(Judge(Merged() with { ChangedSinceSweep = true }), "changed since the last sweep");
+    public void A_tree_changed_after_the_last_sweep_is_kept() => AssertKept(Judge(Merged() with { ChangedSinceSweep = true }), "changed since the last full sweep");
 
     [Fact, Trait("Lane", "unit")]
     public void A_gate_tree_is_not_held_back_by_the_change_trigger()

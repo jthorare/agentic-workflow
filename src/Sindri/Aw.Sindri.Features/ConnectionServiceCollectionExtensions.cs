@@ -1,10 +1,12 @@
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.ListConnections;
+using Aw.Sindri.Features.PollConnections;
 using Aw.Sindri.Features.RefreshConnections;
 using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.TestConnection;
@@ -24,6 +26,13 @@ internal static class ConnectionServiceCollectionExtensions
         return services
             .AddScoped<IScheduledService, RefreshConnectionsService>()
             .AddSingleton(RefreshConnectionsService.BuiltIn)
+            .AddScoped<IScheduledService, PollConnectionsService>()   // the built-in 'workflow-poll' service (#2258, PR 11): connection_event triggers, every 30 s
+            .AddSingleton(PollConnectionsService.BuiltIn)
+            .AddSingleton<PollWake>()
+            .AddScoped<PollRound>()
+            .AddScoped<CatchUp>()
+            .AddScoped<GroupReader>()
+            .AddScoped<PollGroupSource>()
             .AddScoped<ConnectionEvents>()
             .AddScoped<ConnectionStatusWriter>()
             .AddSingleton<SignInOutcomes>()

@@ -43,6 +43,19 @@ public interface IWorkflowRunStore
     /// <returns>The runs.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> InFlight(WorkflowId workflow, CancellationToken cancellationToken);
 
+    /// <summary>A workflow's runs in every status, newest first (by start time, then by occurrence number, so occurrence 10 comes before 9), one page.</summary>
+    /// <param name="workflow">The workflow.</param>
+    /// <param name="offset">How many of the newest runs to skip, 0 or more.</param>
+    /// <param name="limit">How many runs to keep, 1 or more.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The runs; none when the workflow has none.</returns>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int offset, int limit, CancellationToken cancellationToken);
+
+    /// <summary>Every run in 'running', over all workflows, oldest first (serve start reads it to find runs whose Temporal workflow was never started).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The runs.</returns>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken);
+
     /// <summary>The highest occurrence among a workflow's runs started by one kind of trigger, over every revision and every status (a schedule reads its last fired tick from it).</summary>
     /// <param name="workflow">The workflow.</param>
     /// <param name="triggerKind">The trigger's 'kind', such as 'schedule'.</param>
@@ -99,4 +112,11 @@ public interface IWorkflowRunStore
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The node runs.</returns>
     public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRuns(WorkflowRunId id, CancellationToken cancellationToken);
+
+    /// <summary>The rows a node inside a 'for_each' reads: every row at item index 0 (the trigger side, the 'for_each' and the nodes outside the loop) and the rows of one item. Not the other items' rows, so a loop of N items does not read N squared rows.</summary>
+    /// <param name="id">The run.</param>
+    /// <param name="itemIndex">The item's position counted from 1.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The node runs, by node id then item index.</returns>
+    public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRunsForItem(WorkflowRunId id, int itemIndex, CancellationToken cancellationToken);
 }

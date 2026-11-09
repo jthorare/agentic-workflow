@@ -88,6 +88,75 @@ public abstract class WorkflowRunStoreContract
         Expect.Sequence([Run(2).Id, Run(3).Id], inFlight.Select(static r => r.Id));
     }
 
+    /// <summary>The recent list holds runs of every status, newest first, cut at the limit, and none of another workflow's.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Recent_lists_the_newest_runs_of_every_status_cut_at_the_limit()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1, WorkflowRunStatus.Succeeded) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(1) }, Token)).Value;
+        _ = (await store.Insert(Run(2, WorkflowRunStatus.Failed) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(2) }, Token)).Value;
+        _ = (await store.Insert(Run(3, WorkflowRunStatus.Running) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(3) }, Token)).Value;
+        var other = WorkflowId.From("WF-00000000000000000000000000000002");
+        _ = (await store.Insert(Run(4) with { WorkflowId = other, Id = WorkflowRunId.Of(WorkflowSlug.From("another"), 1, 1) }, Token)).Value;
+
+        var all = (await store.Recent(_workflow, 0, 10, Token)).Value;
+        var two = (await store.Recent(_workflow, 0, 2, Token)).Value;
+
+        Expect.Sequence([Run(3).Id, Run(2).Id, Run(1).Id], all.Select(static r => r.Id));
+        Expect.Sequence([Run(3).Id, Run(2).Id], two.Select(static r => r.Id));
+        Expect.Equal(0, (await store.Recent(WorkflowId.From("WF-00000000000000000000000000000009"), 0, 10, Token)).Value.Count);
+    }
+
+    /// <summary>An offset skips the newest runs: of three, offset 1 and limit 1 is the middle one, and an offset past the end is empty.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Recent_pages_with_an_offset()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        for (var n = 1; n <= 3; n++)
+        {
+            _ = (await store.Insert(Run(n, WorkflowRunStatus.Succeeded) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(n) }, Token)).Value;
+        }
+
+        var middle = (await store.Recent(_workflow, 1, 1, Token)).Value;
+        var past = (await store.Recent(_workflow, 3, 5, Token)).Value;
+
+        Expect.Sequence([Run(2).Id], middle.Select(static r => r.Id));
+        Expect.Equal(0, past.Count);
+    }
+
+    /// <summary>Runs that started at the same instant list by occurrence number, so 10 comes before 9 (text order would put 9 first).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Recent_breaks_a_start_time_tie_by_occurrence_number()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(9, WorkflowRunStatus.Succeeded), Token)).Value;
+        _ = (await store.Insert(Run(10, WorkflowRunStatus.Succeeded), Token)).Value;
+
+        var runs = (await store.Recent(_workflow, 0, 10, Token)).Value;
+
+        Expect.Sequence([Run(10).Id, Run(9).Id], runs.Select(static r => r.Id));
+    }
+
+    /// <summary>Only running runs are listed, over every workflow, oldest first.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Running_lists_only_running_runs_oldest_first()
+    {
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var store = Create(clock);
+        _ = (await store.Insert(Run(1, WorkflowRunStatus.Succeeded), Token)).Value;
+        _ = (await store.Insert(Run(2), Token)).Value;
+        _ = (await store.Insert(Run(3, WorkflowRunStatus.Queued), Token)).Value;
+        _ = (await store.Insert(Run(4), Token)).Value;
+
+        var running = (await store.Running(Token)).Value;
+
+        Expect.Sequence([Run(2).Id, Run(4).Id], running.Select(static r => r.Id));
+    }
+
     /// <summary>A final status sets the end time from the clock and keeps the outputs and the error given.</summary>
     /// <returns>The test.</returns>
     [Fact]
@@ -134,6 +203,26 @@ public abstract class WorkflowRunStoreContract
         var rows = (await store.NodeRuns(Run(1).Id, Token)).Value;
         Expect.Sequence([(0, NodeRunStatus.Succeeded), (1, NodeRunStatus.Running)], rows.Select(static r => (r.ItemIndex, r.Status)));
         Expect.Equal("{\"n\":3}", rows[0].Output);
+    }
+
+    /// <summary>The rows for one item are every index 0 row plus that item's rows; other items' rows are left out.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Node_runs_for_an_item_hold_index_zero_and_that_item_only()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1), Token)).Value;
+        var row = new NodeRun(Run(1).Id, NodeId.From("fetch"), 0, NodeRunStatus.Succeeded, Input: null, Output: "{}", Truncated: false, Error: null, Usage: null);
+        foreach (var index in new[] { 0, 1, 2, 3 })
+        {
+            _ = (await store.RecordNodeRun(row with { ItemIndex = index }, Token)).Value;
+        }
+
+        _ = (await store.RecordNodeRun(row with { NodeId = NodeId.From("each") }, Token)).Value;
+
+        var rows = (await store.NodeRunsForItem(Run(1).Id, 2, Token)).Value;
+
+        Expect.Sequence([("each", 0), ("fetch", 0), ("fetch", 2)], rows.Select(static r => (r.NodeId.Value, r.ItemIndex)));
     }
 
     /// <summary>A node run of a run nobody recorded is SND-GRAPH-101.</summary>
