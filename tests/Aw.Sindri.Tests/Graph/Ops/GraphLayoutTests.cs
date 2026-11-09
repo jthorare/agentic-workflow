@@ -7,6 +7,9 @@ namespace Aw.Sindri.Tests.Graph.Ops;
 [Lane(TestLane.Unit)]
 public sealed class GraphLayoutTests
 {
+    private static readonly string[] _chain = ["daily", "a", "b", "c"];
+    private static readonly string[] _oneLayer = ["z", "a", "m"];
+
     [Fact]
     public void A_chain_gets_one_layer_per_step_and_a_node_sits_in_the_layer_of_its_longest_path()
     {
@@ -15,7 +18,7 @@ public sealed class GraphLayoutTests
 
         var layout = GraphLayout.Compute(spec);
 
-        Assert.Equal([0, 1, 2, 3], new[] { "daily", "a", "b", "c" }.Select(id => layout[id].Layer));
+        Assert.Equal([0, 1, 2, 3], _chain.Select(id => layout[id].Layer));
         Assert.All(layout.Values, p => Assert.Equal(0, p.Row));
     }
 
@@ -27,8 +30,8 @@ public sealed class GraphLayoutTests
 
         var layout = GraphLayout.Compute(spec);
 
-        Assert.Equal([1, 1, 1], new[] { "z", "a", "m" }.Select(id => layout[id].Layer));
-        Assert.Equal([0, 1, 2], new[] { "z", "a", "m" }.Select(id => layout[id].Row));
+        Assert.Equal([1, 1, 1], _oneLayer.Select(id => layout[id].Layer));
+        Assert.Equal([0, 1, 2], _oneLayer.Select(id => layout[id].Row));
     }
 
     [Fact]
