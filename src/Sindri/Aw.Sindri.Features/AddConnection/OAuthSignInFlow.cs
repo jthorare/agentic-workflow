@@ -30,22 +30,22 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
     internal async ValueTask<Result<AddConnectionResponse>> Run(OAuthAdd add, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(add);
-        outcomes.Clear(add.Name.ToString());
+        var attempt = outcomes.Begin(add.Name.ToString());
         var started = await signIn.Start(add.Preset, add.Client, add.Scopes, add.Secret, Limit(add.Wait, cancellationToken)).ConfigureAwait(false);
         return started.IsError
             ? ConnectionFailures.Safe(started.Error)
-            : await Follow(Sign.Of(add, events.Now), started.Value, add.Wait, cancellationToken).ConfigureAwait(false);
+            : await Follow(Sign.Of(add, events.Now, attempt), started.Value, add.Wait, cancellationToken).ConfigureAwait(false);
     }
 
     // An mcp server's own sign-in: its metadata, a client registered on the spot, then the same loopback callback. The start's failure text is fixed text with no server content, so it is kept (it says how to use a key instead).
     internal async ValueTask<Result<AddConnectionResponse>> RunMcp(McpAdd add, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(add);
-        outcomes.Clear(add.Name.ToString());
+        var attempt = outcomes.Begin(add.Name.ToString());
         var started = await signIn.StartMcp(add.Server, Limit(add.Wait, cancellationToken)).ConfigureAwait(false);
         return started.IsError
             ? started.Error
-            : await Follow(Sign.Of(add, events.Now), started.Value, add.Wait, cancellationToken).ConfigureAwait(false);
+            : await Follow(Sign.Of(add, events.Now, attempt), started.Value, add.Wait, cancellationToken).ConfigureAwait(false);
     }
 
     // A request that waits ties the sign-in to its own token; one that does not (an agent) runs it under its own 5-minute limit alone.
@@ -77,7 +77,7 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
         var name = sign.Pending.Name.ToString();
         if (done.IsError)
         {
-            outcomes.Failed(name, done.Error, events.Now);
+            outcomes.Failed(sign.Attempt, done.Error, events.Now);
             if (logger is not null)
             {
                 LogFailed(logger, name, done.Error.Code);
@@ -85,7 +85,7 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
         }
         else
         {
-            outcomes.Clear(name);
+            outcomes.Clear(sign.Attempt);
             await events.SignedIn(sign.Pending.Name, cancellationToken).ConfigureAwait(false);   // a stale 'sign in again' row for this name goes away
         }
 
@@ -171,10 +171,10 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
     private static partial void LogFailed(ILogger logger, string name, string code);
 
     /// <summary>One sign-in in flight: the row it will become (waiting for the browser) and the client secret to store with its tokens.</summary>
-    private sealed record Sign(Connection Pending, string? ClientSecret, bool Replaces = false)
+    private sealed record Sign(Connection Pending, string? ClientSecret, SignInTry Attempt, bool Replaces = false)
     {
-        internal static Sign Of(OAuthAdd add, DateTimeOffset created) => add.Existing is { } kept
-            ? new(Waiting(kept), add.Secret, Replaces: true)
+        internal static Sign Of(OAuthAdd add, DateTimeOffset created, SignInTry attempt) => add.Existing is { } kept
+            ? new(Waiting(kept), add.Secret, attempt, Replaces: true)
             : new(
             new Connection(
                 add.Name,
@@ -188,10 +188,11 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
                 created,
                 created,
                 LastRefreshedAt: null),
-            add.Secret);
+            add.Secret,
+            attempt);
 
-        internal static Sign Of(McpAdd add, DateTimeOffset created) => add.Existing is { } kept
-            ? new(Waiting(kept), ClientSecret: null, Replaces: true)
+        internal static Sign Of(McpAdd add, DateTimeOffset created, SignInTry attempt) => add.Existing is { } kept
+            ? new(Waiting(kept), ClientSecret: null, attempt, Replaces: true)
             : new(
             new Connection(
                 add.Name,
@@ -205,7 +206,8 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
                 created,
                 created,
                 LastRefreshedAt: null),
-            ClientSecret: null);
+            ClientSecret: null,
+            attempt);
 
         // The stored row stays as it is until the callback lands; only the text the caller sees says it is waiting.
         private static Connection Waiting(Connection kept) => kept with { StatusReason = "waiting for the browser sign-in" };
