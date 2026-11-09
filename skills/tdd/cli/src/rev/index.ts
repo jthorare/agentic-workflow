@@ -9,7 +9,7 @@ import { SecretsLive } from "./secrets";
 import { DbLive, outLive, ProcLive, ToolsLive } from "./services";
 
 export { parseArgs, USAGE, type RevArgs } from "./args";
-export { evalStep, pythonEval, bunEval } from "./eval";
+export { bunEval, evalPython, evalStep, pythonEval, revBun } from "./eval";
 export { resolvePaths, type Paths } from "./paths";
 export { asJson, table } from "./report";
 export { plan, Refused, revProgram, signalExit, type Interrupt, type Report } from "./run";

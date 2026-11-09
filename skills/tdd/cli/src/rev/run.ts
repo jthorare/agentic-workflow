@@ -140,7 +140,7 @@ export const revProgram = (interrupt: Interrupt): Effect.Effect<Report, Refused,
       yield* j.append({
         event: "run-start", run, cycle: pl.cycle, mode: pl.mode, steps: pl.steps, packet: homeRel(p.packet),
         flags: { no_shots: a.noShots, no_gh: a.noGh, push: a.push, reuse: a.reuse, published: a.published, from: a.from, only: a.only },
-        keys: secrets.present, eval: evalStep.name, offline: !online, ...(notes.length ? { notes } : {}),
+        keys: secrets.present, eval: evalStep(p, online).name, offline: !online, ...(notes.length ? { notes } : {}),
       });
       out.note(`tdd rev ${p.slug}: cycle ${pl.cycle}, ${pl.mode === "resume" ? `resuming at ${pl.steps[0]}` : pl.mode}, run ${run}`);
       for (const n of notes) out.note(`tdd rev: note: ${n}`);

@@ -27,8 +27,9 @@ export const USAGE = `usage: tdd rev <packet-dir> [--no-shots] [--no-gh] [--push
     lint            src/lint in-process -> build/lint.json (findings are measured here; the step fails only when
                     the linter cannot run)
     artifact-check  node <system-design>/scripts/artifact_check.mjs build/tdd.html shots (skipped when absent)
-    eval            the eval lane -> build/eval/, scoring this run's shots (today eval_packet.py in the eval venv;
-                    not run when it is absent)
+    eval            tdd eval (src/eval), a child of this bun -> build/eval/, scoring this run's shots; eval_packet.py
+                    in the eval venv only when bin/eval-packet.ts is absent or a --push needs the braintrust package
+                    that tdd eval lacks
     load-db         tdd load-db after lint; skipped when Postgres is unreachable, failed when it answers but refuses
                     ($DATABASE_URL, else postgres://localhost/tdd_system, the real database)
     push            only with --push: the eval's Braintrust push

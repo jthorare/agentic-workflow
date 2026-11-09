@@ -7,7 +7,7 @@ import { Context, Effect, Option, Redacted } from "effect";
 import { DEFAULT_DATABASE_URL } from "../db/load";
 import type { RevArgs } from "./args";
 import { RevOpts, RevPaths } from "./context";
-import { evalStep } from "./eval";
+import { evalStep, revBun } from "./eval";
 import type { Part } from "./hash";
 import { artifactCheckPath, type Paths } from "./paths";
 import { evalPushKeys, Secrets, type SecretsApi } from "./secrets";
@@ -33,14 +33,13 @@ export interface StepDef {
   readonly name: StepName;
   /** What the step reads; null: never reused, never guarded (the push). */
   // `s`: the run's environment snapshot (the runner withdraws the keys from process.env while it runs)
-  readonly inputs: ((p: Paths, a: RevArgs, s: Pick<SecretsApi, "databaseUrl">) => readonly Part[]) | null;
+  readonly inputs: ((p: Paths, a: RevArgs, s: Pick<SecretsApi, "databaseUrl" | "braintrust">) => readonly Part[]) | null;
   /** What the step writes, checked unchanged before a reuse (empty: nothing to check). */
   readonly outputs: (p: Paths) => readonly Part[];
   readonly run: Effect.Effect<Done, Skip | Fail, StepEnv>;
 }
 
-/** The bun that runs app/build.ts, check_hydrate.ts and tdd load-db: this one ($TDD_REV_BUN overrides it, for tests). */
-const BUN = (): string => process.env["TDD_REV_BUN"] || process.execPath;
+const BUN = revBun;
 const MIN = 60_000;
 /** Never inputs: version control and the agent's own folders. */
 const VCS = [".git", ".claude"];
@@ -74,11 +73,14 @@ export function dbTarget(url: Option.Option<Redacted.Redacted<string>>): { url: 
 export const evalArgs = (a: RevArgs, push: boolean): string[] =>
   [...(a.noShots ? ["--no-shots"] : []), ...(a.noGh ? ["--no-gh"] : []), ...(push ? ["--push"] : ["--skip", "linear,aws"])];
 
+/** Whether this run's eval pushes: --push with the key in the environment. */
+export const evalPushes = (a: RevArgs, s: Pick<SecretsApi, "braintrust">): boolean => a.push && Option.isSome(s.braintrust);
+
 /** Run the eval (evalStep) once: offline (--skip linear,aws, no keys) unless `push`. */
 const runEval = (push: boolean): Effect.Effect<EvalRun, Skip | Fail, StepEnv> =>
   Effect.gen(function* () {
     const p = yield* RevPaths, a = yield* RevOpts, proc = yield* Proc, secrets = yield* Secrets, memo = yield* RunMemo;
-    const c = evalStep.command(p, evalArgs(a, push));
+    const c = evalStep(p, push).command(p, evalArgs(a, push));
     if ("notRun" in c) return yield* new Skip({ reason: c.notRun });
     const started = Date.now();
     const env = secrets.childEnv(push ? evalPushKeys(a.noGh) : []);
@@ -185,16 +187,16 @@ export const STEP_DEFS: readonly StepDef[] = [
   },
   {
     name: "eval",
-    inputs: (p, a) => [
+    inputs: (p, a, s) => [
       // shots/ included: the eval captures the screenshots artifact-check just wrote
       { tree: p.packet, exclude: ["build/eval", "build/.rev", ...VCS] },
-      ...evalStep.code(p),
-      { label: "eval", value: `${evalStep.name} ${evalArgs(a, a.push).join(" ")}` },
+      ...evalStep(p, evalPushes(a, s)).code(p),
+      { label: "eval", value: `${evalStep(p, evalPushes(a, s)).name} ${evalArgs(a, evalPushes(a, s)).join(" ")}` },
     ],
     outputs: (p) => [{ file: join(p.build, "eval", "run.json") }],
     run: Effect.gen(function* () {
       const p = yield* RevPaths, a = yield* RevOpts, secrets = yield* Secrets;
-      const push = a.push && Option.isSome(secrets.braintrust);
+      const push = evalPushes(a, secrets);
       const r = yield* runEval(push);
       const summary = SUMMARY.exec(r.out)?.[0] ?? lastLine(r.out);
       const wrote = freshSince(join(p.build, "eval", "run.json"), r.started);
