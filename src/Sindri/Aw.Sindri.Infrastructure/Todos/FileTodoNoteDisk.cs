@@ -89,7 +89,7 @@ internal sealed class FileTodoNoteDisk : ITodoNoteDisk
     }
 
     // the note itself or any folder on the way to it inside the vault; a dangling link counts, so there is no exists gate
-    private static bool AnySymlink(string vaultRoot, string note)
+    internal static bool AnySymlink(string vaultRoot, string note)
     {
         var at = vaultRoot;
         foreach (var segment in note.Split('/'))

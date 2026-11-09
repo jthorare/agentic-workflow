@@ -99,6 +99,18 @@ internal sealed partial class FileTodoNoteFiles(ISindriHome home, TimeProvider c
         ArgumentNullException.ThrowIfNull(note);
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(vaultRoot);
+        var relative = Path.GetRelativePath(vaultRoot, note).Replace('\\', '/');
+        if (relative.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(relative))
+        {
+            return new NoteSwap(CameOut: null, Problem: "the note is outside the vault");
+        }
+
+        // every write re-checks the way to the note, not only its own link: a folder swapped for a symlink since the last check would send the write elsewhere
+        if (FileTodoNoteDisk.AnySymlink(vaultRoot, relative))
+        {
+            return new NoteSwap(CameOut: null, Problem: "the note or a folder on the way to it is a symlink");
+        }
+
         var tmp = TmpPath(note);
         var exists = File.Exists(note) || new FileInfo(note).LinkTarget is not null;
         try
