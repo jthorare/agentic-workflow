@@ -68,7 +68,7 @@ public sealed class LinearWriteAttributionTests
         Expect.Equal(("linear.comment.posted", $"linear.comment.posted:{ClientId}"), (recorded.Envelope.Type, recorded.IdempotencyKey));
         Expect.Equal(caller.Actor, recorded.Envelope.Actor);
         Expect.Equal($"session:launch:{Launch}", recorded.Envelope.Actor);
-        Expect.Equal(("ENG", "ENG-12", ClientId), PayloadOf(recorded));
+        Expect.Equal(("ENG", "ENG-12"), PayloadOf(recorded));
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public sealed class LinearWriteAttributionTests
         var recorded = Assert.Single(_slice.Store.Events);
         Expect.Equal(("linear.issue.created", $"linear.issue.created:{ClientId}"), (recorded.Envelope.Type, recorded.IdempotencyKey));
         Expect.True(recorded.Envelope.Actor.StartsWith("human:", StringComparison.Ordinal));
-        Expect.Equal(("ENG", "ENG-12", ClientId), PayloadOf(recorded));
+        Expect.Equal(("ENG", "ENG-12"), PayloadOf(recorded));
     }
 
     [Fact]
@@ -143,10 +143,10 @@ public sealed class LinearWriteAttributionTests
         Assert.NotNull(picked.Error);
     }
 
-    private (string Team, string? Issue, string? ClientId) PayloadOf(Aw.Sindri.Core.Ledger.LedgerEvent recorded)
+    private (string Team, string? Issue) PayloadOf(Aw.Sindri.Core.Ledger.LedgerEvent recorded)
     {
         var payload = _slice.Events.Payload<LinearWriteRecorded>(recorded).Value;
-        return (payload.Team, payload.Issue, payload.ClientId);
+        return (payload.Team, payload.Issue);
     }
 
     private static LinearIssueView LiveIssue() => new(

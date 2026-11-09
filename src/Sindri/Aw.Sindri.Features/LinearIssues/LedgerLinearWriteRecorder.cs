@@ -24,7 +24,7 @@ internal sealed class LedgerLinearWriteRecorder(ILedgerStore ledger, HeldLease h
         }
 
         var key = clientId is not null ? $"{type}:{clientId}" : $"{type}:{issue}:{callers.Current?.CommandId.Value}";
-        var appended = await ledger.Append(events.Entry(type, new LinearWriteRecorded(team, issue, clientId, fields), key), grant, cancellationToken).ConfigureAwait(false);
+        var appended = await ledger.Append(events.Entry(type, new LinearWriteRecorded(team, issue, fields), key), grant, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : null;
     }
 }

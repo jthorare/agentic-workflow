@@ -20577,15 +20577,13 @@ const Aw.Sindri.Core.Events.EventTypes.ReviewLoginSet = "review.login-set" -> st
 const Aw.Sindri.Core.Events.EventTypes.SandboxAllowed = "sandbox.allowed" -> string!
 Aw.Sindri.Core.Events.LinearWriteRecorded
 Aw.Sindri.Core.Events.LinearWriteRecorded.<Clone>$() -> Aw.Sindri.Core.Events.LinearWriteRecorded!
-Aw.Sindri.Core.Events.LinearWriteRecorded.ClientId.get -> string?
-Aw.Sindri.Core.Events.LinearWriteRecorded.ClientId.init -> void
-Aw.Sindri.Core.Events.LinearWriteRecorded.Deconstruct(out string! Team, out string? Issue, out string? ClientId, out string? Fields) -> void
+Aw.Sindri.Core.Events.LinearWriteRecorded.Deconstruct(out string! Team, out string? Issue, out string? Fields) -> void
 Aw.Sindri.Core.Events.LinearWriteRecorded.Equals(Aw.Sindri.Core.Events.LinearWriteRecorded? other) -> bool
 Aw.Sindri.Core.Events.LinearWriteRecorded.Fields.get -> string?
 Aw.Sindri.Core.Events.LinearWriteRecorded.Fields.init -> void
 Aw.Sindri.Core.Events.LinearWriteRecorded.Issue.get -> string?
 Aw.Sindri.Core.Events.LinearWriteRecorded.Issue.init -> void
-Aw.Sindri.Core.Events.LinearWriteRecorded.LinearWriteRecorded(string! Team, string? Issue, string? ClientId, string? Fields) -> void
+Aw.Sindri.Core.Events.LinearWriteRecorded.LinearWriteRecorded(string! Team, string? Issue, string? Fields) -> void
 Aw.Sindri.Core.Events.LinearWriteRecorded.Team.get -> string!
 Aw.Sindri.Core.Events.LinearWriteRecorded.Team.init -> void
 override Aw.Sindri.Core.Events.LinearWriteRecorded.Equals(object? obj) -> bool
@@ -20596,4 +20594,4 @@ static Aw.Sindri.Core.Events.LinearWriteRecorded.operator ==(Aw.Sindri.Core.Even
 const Aw.Sindri.Core.Events.EventTypes.LinearIssueCreated = "linear.issue.created" -> string!
 const Aw.Sindri.Core.Events.EventTypes.LinearCommentPosted = "linear.comment.posted" -> string!
 const Aw.Sindri.Core.Events.EventTypes.LinearIssueChanged = "linear.issue.changed" -> string!
-Aw.Sindri.Core.Linear.ILinearSideFacts.LookupsForWrite(string! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Linear.LinearLookupsResponse?>>
+Aw.Sindri.Core.Linear.ILinearSideFacts.LookupsForWrite(string! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Linear.LinearLookupsResponse?>!>
