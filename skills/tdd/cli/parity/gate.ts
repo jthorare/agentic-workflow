@@ -3,11 +3,14 @@
 // same out path, one compiler after the other, and compare everything the compile produces: content.json,
 // content.files.json and every copied file by sha256, the stdout summary line, the stderr warnings, the exit code.
 // `generated` is pinned with TDD_GENERATED and TZ is fixed, so two runs of one compiler must be byte-identical.
-// Today both runs are the Python compiler (A = B = python); from PR 11 the second is the TypeScript one (--b ts).
+// A is the Python compiler and B the TypeScript one (bin/build-tdd.ts) unless --a / --b say otherwise.
+// CPython's own warnings on stderr (`<file>:<line>: DeprecationWarning: ...` and the source line under it) come from
+// the interpreter, not the compiler: they are reported as notes and left out of the stderr comparison.
 //
-// usage: bun run parity/gate.ts <packet-dir> [--src <file.md>] [--a python|ts|<exe>] [--b python|ts|<exe>]
-//        [--out <dir>] [--keep] [--generated <stamp>] [--expect-line <summary>] [--json <report.json>]
-// <exe> is any program taking the compiler's own arguments (<source.md> <out-dir>). The default out path is a new
+// usage: bun run parity/gate.ts <packet-dir> [--src <file.md>] [--a python|ts|<exe>] [--b python|ts|<exe>]   (A python, B ts)
+//        [--out <dir>] [--keep] [--generated <stamp>] [--expect-line <summary>] [--json <report.json>] [-- <flag>...]
+// <exe> is any program taking the compiler's own arguments (<source.md> <out-dir>); flags after `--` (--no-copy,
+// --strict, --meta f ...) are passed to both compilers after those two. The default out path is a new
 // temporary folder, removed afterwards unless --keep. The gate never deletes a file it did not write: an --out folder
 // must be new, empty, or hold exactly the gate's own earlier output (listed in a ledger under the system temp folder);
 // between the two compiles it removes exactly the paths compiler A wrote, and it leaves compiler B's output in place.
@@ -38,18 +41,19 @@ export interface GateResult {
   out: string;
   summary: string;
   problems: string[];
+  notes: string[];
   a: Omit<Snapshot, "files" | "content" | "manifest"> & { files: number };
   b: Omit<Snapshot, "files" | "content" | "manifest"> & { files: number };
 }
 
-function command(which: string, src: string, out: string): string[] {
-  if (which === "python") return ["python3", "-I", "-B", join(TDD, "scripts", "build_tdd.py"), src, out];
+function command(which: string, src: string, out: string, args: string[] = []): string[] {
+  if (which === "python") return ["python3", "-I", "-B", join(TDD, "scripts", "build_tdd.py"), src, out, ...args];
   if (which === "ts") {
     const bin = join(CLI, "bin", "build-tdd.ts");
-    if (!existsSync(bin)) throw new Error(`--b ts: ${relative(process.cwd(), bin)} does not exist yet (the TypeScript compiler lands in PR 11)`);
-    return ["bun", bin, src, out];
+    if (!existsSync(bin)) throw new Error(`ts: ${relative(process.cwd(), bin)} does not exist`);
+    return [process.execPath, "--no-install", bin, src, out, ...args];
   }
-  return [which, src, out];
+  return [which, src, out, ...args];
 }
 
 function walk(root: string, dir = root, acc = new Map<string, { sha256: string; bytes: number }>()) {
@@ -112,9 +116,9 @@ function recordOut(out: string): void {
 }
 
 /** One compile into `out`, which must be missing or empty (gate() sees to that). */
-export function runCompiler(which: string, packet: string, src: string, out: string, env: Record<string, string>): Snapshot {
+export function runCompiler(which: string, packet: string, src: string, out: string, env: Record<string, string>, args: string[] = []): Snapshot {
   const t0 = performance.now();
-  const r = spawnSync(command(which, src, out), { cwd: packet, env: { ...process.env, ...env }, stdout: "pipe", stderr: "pipe" });
+  const r = spawnSync(command(which, src, out, args), { cwd: packet, env: { ...process.env, ...env }, stdout: "pipe", stderr: "pipe" });
   const seconds = (performance.now() - t0) / 1000;
   const has = existsSync(out);
   const read = (f: string) => (has && existsSync(join(out, f)) ? readFileSync(join(out, f)) : null);
@@ -128,6 +132,23 @@ export function runCompiler(which: string, packet: string, src: string, out: str
     manifest: read("content.files.json"),
     seconds,
   };
+}
+
+const PY_WARNING = /^.+:\d+: [A-Za-z]*Warning: /;
+
+/** stderr split into the compiler's own lines and CPython's interpreter warnings (a warning line plus its indented source). */
+export function splitStderr(stderr: string): { own: string; interpreter: string[] } {
+  const lines = stderr.split("\n");
+  const own: string[] = [];
+  const interpreter: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i]!;
+    if (PY_WARNING.test(l)) {
+      interpreter.push(l);
+      if (i + 1 < lines.length && lines[i + 1]!.startsWith("  ")) interpreter.push(lines[++i]!);
+    } else own.push(l);
+  }
+  return { own: own.join("\n"), interpreter };
 }
 
 function firstDiff(a: Buffer, b: Buffer): string {
@@ -152,9 +173,11 @@ export function compare(a: Snapshot, b: Snapshot): string[] {
   if (b.exit !== 0) p.push(`compiler B (${b.compiler}) exited ${b.exit}: ${b.stderr.trim().split("\n").slice(-3).join(" | ")}`);
   if (a.exit !== b.exit) p.push(`exit codes differ: ${a.exit} vs ${b.exit}`);
   if (a.stdout !== b.stdout) p.push(`stdout differs:\n  A ${JSON.stringify(a.stdout)}\n  B ${JSON.stringify(b.stdout)}`);
-  if (a.stderr !== b.stderr) {
-    const wa = a.stderr.split("\n");
-    const wb = b.stderr.split("\n");
+  const ea = splitStderr(a.stderr).own;
+  const eb = splitStderr(b.stderr).own;
+  if (ea !== eb) {
+    const wa = ea.split("\n");
+    const wb = eb.split("\n");
     const k = wa.findIndex((l, i) => l !== wb[i]);
     p.push(`stderr differs at line ${k + 1}:\n  A ${JSON.stringify(wa[k] ?? null)}\n  B ${JSON.stringify(wb[k] ?? null)}`);
   }
@@ -171,7 +194,7 @@ export function compare(a: Snapshot, b: Snapshot): string[] {
   return p;
 }
 
-export function gate(packetDir: string, o: { src?: string; a?: string; b?: string; out?: string; keep?: boolean; generated?: string; expectLine?: string } = {}): GateResult {
+export function gate(packetDir: string, o: { src?: string; a?: string; b?: string; out?: string; keep?: boolean; generated?: string; expectLine?: string; args?: string[] } = {}): GateResult {
   const packet = resolve(packetDir);
   const src = o.src ?? `${basename(packet)}.md`;
   if (!existsSync(resolve(packet, src))) throw new Error(`${resolve(packet, src)}: no such source (pass --src)`);
@@ -180,15 +203,16 @@ export function gate(packetDir: string, o: { src?: string; a?: string; b?: strin
   const env = { TDD_GENERATED: o.generated ?? "2000-01-01T00:00:00Z", TZ: "UTC" };
   if (!created) prepareOut(out);
   try {
-    const A = runCompiler(o.a ?? "python", packet, src, out, env);
+    const A = runCompiler(o.a ?? "python", packet, src, out, env, o.args);
     if (existsSync(out)) removeWritten(out, tree(out)); // exactly what A wrote: the folder was new or empty before it
-    const B = runCompiler(o.b ?? "python", packet, src, out, env);
+    const B = runCompiler(o.b ?? "ts", packet, src, out, env, o.args);
     if (!created) recordOut(out);
     const problems = compare(A, B);
+    const notes = [A, B].flatMap((x) => splitStderr(x.stderr).interpreter.filter((l) => !l.startsWith("  ")).map((l) => `${x.compiler} interpreter warning (not compared): ${l}`));
     const summary = summaryLine(B.stdout);
     if (o.expectLine !== undefined && summary !== o.expectLine) problems.push(`summary line changed:\n  expected ${o.expectLine}\n  got      ${summary}`);
     const strip = ({ files, content, manifest, ...rest }: Snapshot) => ({ ...rest, files: files.size });
-    return { green: problems.length === 0, packet, out, summary, problems, a: strip(A), b: strip(B) };
+    return { green: problems.length === 0, packet, out, summary, problems, notes, a: strip(A), b: strip(B) };
   } finally {
     if (created && !o.keep) rmSync(dirname(out), { recursive: true, force: true });
   }
@@ -200,6 +224,10 @@ function main(argv: string[]): number {
   const keys: Record<string, keyof typeof o> = { "--src": "src", "--a": "a", "--b": "b", "--out": "out", "--generated": "generated", "--expect-line": "expectLine", "--json": "json" };
   for (let i = 0; i < argv.length; i++) {
     const x = argv[i]!;
+    if (x === "--") {
+      o.args = argv.slice(i + 1);
+      break;
+    }
     if (x === "--keep") o.keep = true;
     else if (x in keys) {
       const v = argv[++i];
@@ -220,13 +248,14 @@ function main(argv: string[]): number {
   console.log(`gate ${name}: A=${r.a.compiler} (${r.a.seconds.toFixed(2)} s, exit ${r.a.exit}, ${r.a.files} files)  B=${r.b.compiler} (${r.b.seconds.toFixed(2)} s, exit ${r.b.exit}, ${r.b.files} files)  out=${o.keep ? r.out : "<temp>"}`);
   console.log(`  summary: ${r.summary}`);
   for (const p of r.problems) console.log(`  DIFF ${p}`);
+  for (const n of r.notes) console.log(`  note: ${n}`);
   console.log(r.green ? `gate ${name}: GREEN - content.json, content.files.json, ${r.b.files} files by sha256, stdout and stderr identical` : `gate ${name}: RED - ${r.problems.length} difference(s)`);
   if (o.json) Bun.write(o.json, JSON.stringify(r, null, 2) + "\n");
   return r.green ? 0 : 1;
 }
 
 function usage(msg: string): number {
-  console.error(`gate: ${msg}\nusage: bun run parity/gate.ts <packet-dir> [--src f.md] [--a python|ts|exe] [--b python|ts|exe] [--out dir] [--keep] [--generated stamp] [--expect-line text] [--json report]`);
+  console.error(`gate: ${msg}\nusage: bun run parity/gate.ts <packet-dir> [--src f.md] [--a python|ts|exe] [--b python|ts|exe] [--out dir] [--keep] [--generated stamp] [--expect-line text] [--json report] [-- compiler flags]`);
   return 2;
 }
 

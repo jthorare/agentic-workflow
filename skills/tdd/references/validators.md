@@ -160,8 +160,23 @@ markdown, and compares definitions ignoring case, punctuation and markup.
 The same D-number with different question text in two packets is **not** a finding. D-numbers are per document:
 D3 in one TDD and D3 in another are different decisions, so the linter does not compare them.
 
+## PARITY: the TypeScript compiler (D19, the overlap period)
+While the bun port runs beside the Python (PR 11 to the cutover), the linter compiles the source a second time with
+`cli/bin/build-tdd.ts` (`bun --no-install`, `--no-copy`, into a temporary folder, with `TDD_GENERATED` set to the
+build's `generated`) and compares it with the build. When the build differs, it also compiles the source with
+`build_tdd.py` the same way, so a stale build is reported as a note (rebuild) and not as a parity failure. Nothing is
+written into the packet. When `bun` is not on PATH, or `cli/` or its `node_modules` is absent, the rule is a note and a
+skip, never a finding. `parity/gate.ts` (run by the writer and the reviewer of record) compares more: every copied
+file and the dashed SVGs, stdout and stderr.
+
+| Check | Severity | What it checks | How to fix |
+|---|---|---|---|
+| `PARITY/content` | error | `content.json` from the TypeScript compiler is byte-identical to the build's (or to a fresh `build_tdd.py` compile when the build is stale), and the TypeScript compiler does not fail where the Python succeeds. | Fix `cli/src/compile`: `build_tdd.py` is the reference until the cutover. A change to `build_tdd.py` lands with the same change in TypeScript (the twin rule). |
+| `PARITY/manifest` | warn | `content.files.json`: the same `files` paths, `missing` list and `warnings`, in order. | As above. |
+
 ## Notes, not findings
 - The source was compiled to a temporary folder because the packet had no build.
+- PARITY was skipped (no `bun`, no `cli/`, no `cli/node_modules`), passed, or found the build stale.
 - The app has not built the page yet.
 - `build/agents/` or `write_agents.check` is absent.
 - How many citations resolved, and at which ref.

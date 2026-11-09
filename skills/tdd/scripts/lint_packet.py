@@ -23,6 +23,8 @@ Rules (stable ids; references/validators.md says what each checks, its severity 
   META    meta.json header fields; rev or updated moved when the source changed after the last build; artifact_url
   AGENTS  write_agents.check(build_dir) over build/agents (skipped with a note when either is absent)
   XDOC    glossary terms defined differently in sibling packets of the same repo slug (D-numbers are per doc: not checked)
+  PARITY  the TypeScript compiler (cli/bin/build-tdd.ts, D19) reproduces the build's content.json byte for byte and its
+          manifest's files, missing and warnings (skipped with a note when bun or cli/ is absent)
 
 Output: findings grouped by rule, one line each (`severity CHECK-ID file:line: message`), notes, then
 `N errors, M warnings`. Exit 0 when clean or only warnings; 1 on any error (or any warning with --strict); 2 on bad usage.
@@ -31,7 +33,8 @@ import datetime, html, importlib.util, json, os, re, shutil, subprocess, sys, te
 sys.dont_write_bytecode = True
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-RULES = ("STRUCT", "DNUM", "REFS", "CITES", "DIAG", "SCHEMA", "FILES", "META", "AGENTS", "XDOC")
+RULES = ("STRUCT", "DNUM", "REFS", "CITES", "DIAG", "SCHEMA", "FILES", "META", "AGENTS", "XDOC", "PARITY")
+CLI = os.path.normpath(os.path.join(HERE, "..", "cli"))
 FILE_LIMIT = 15 * 1024 * 1024
 PAGE_LIMIT = 16 * 1024 * 1024
 MEDIA_EXT = (".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".mp4", ".webm", ".mov")
@@ -1085,6 +1088,94 @@ class Lint:
                     self.add("XDOC", "glossary-conflict", "warn", f"glossary term '{term}' is defined differently in {self.rel(f2)}:{l2} ({d2[:60]!r}) than here "
                              f"({d1[:60]!r}); make one definition and use it in both", self.rel(f1), l1)
         self.note(f"XDOC: compared {len(mine)} glossary terms with {len(sibs)} sibling packets; D-numbers are per doc and are not compared")
+
+    # ------------------------------------------------------------------------- PARITY
+    def _compile_to(self, cmd, generated):
+        """Run one compiler into a new temporary folder (--no-copy, TDD_GENERATED pinned): (folder, error or None). The source
+        is passed relative to the packet folder, as the documented build does, so paths in warnings resolve the same way."""
+        out = tempfile.mkdtemp(prefix="lint-tdd-parity-")
+        env = dict(os.environ, TDD_GENERATED=generated)
+        try:
+            p = subprocess.run(cmd + [os.path.relpath(self.src, self.root), out, "--no-copy"], capture_output=True, text=True, cwd=self.root, env=env, timeout=300)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            return out, f"{type(e).__name__}: {e}"
+        if p.returncode != 0 or not os.path.isfile(os.path.join(out, "content.json")):
+            tail = (p.stderr or p.stdout).strip().splitlines()[-1:] or [f"exit {p.returncode}"]
+            return out, f"exit {p.returncode}: {tail[0]}"
+        return out, None
+
+    @staticmethod
+    def _first_diff(a, b):
+        n = min(len(a), len(b))
+        i = next((k for k in range(n) if a[k] != b[k]), n)
+        line = a[:i].count(b"\n") + 1
+        ctx = lambda x: x[max(0, i - 30):i + 30].decode("utf-8", "replace")
+        return f"first difference at byte {i} (line {line}; {len(a)} vs {len(b)} bytes): {ctx(a)!r} vs {ctx(b)!r}"
+
+    def r_parity(self):
+        """During the bun port's overlap period (D19) the TypeScript compiler must agree with build_tdd.py byte for byte."""
+        bun, ts = shutil.which("bun"), os.path.join(CLI, "bin", "build-tdd.ts")
+        if not bun or not os.path.isfile(ts):
+            self.note(f"PARITY: {'bun is not on PATH' if not bun else self.rel(ts) + ' is absent'}; the TypeScript compiler was not compared")
+            return
+        if not os.path.isdir(os.path.join(CLI, "node_modules")):
+            self.note(f"PARITY: {self.rel(CLI)} has no node_modules (run `bun install --frozen-lockfile` there); the TypeScript compiler was not compared")
+            return
+        ref_dir = self.tmp if self.compiled else self.build
+        cpath, mpath = os.path.join(ref_dir or "", "content.json"), os.path.join(ref_dir or "", "content.files.json")
+        generated = self.content.get("generated") if isinstance(self.content, dict) else None
+        if not self.src or not os.path.isfile(cpath) or not isinstance(generated, str) or not generated:
+            self.note("PARITY: no source, no content.json or no generated stamp to compare with; skipped")
+            return
+        where = "(compiled) content.json" if self.compiled else self.rel(cpath)
+        mfile = "(compiled) content.files.json" if self.compiled else self.rel(mpath)
+        tmps = []
+        try:
+            tout, err = self._compile_to([bun, "--no-install", ts], generated)
+            tmps.append(tout)
+            if err:
+                self.add("PARITY", "content", "error", f"the TypeScript compiler failed on {self.rel(self.src)} where build_tdd.py did not ({err})", self.rel(self.src))
+                return
+            ref, mine = open(cpath, "rb").read(), open(os.path.join(tout, "content.json"), "rb").read()
+            ref_m = mpath
+            if ref != mine:
+                # a stale build (or files only under build/) differs from any fresh compile: compare two fresh compiles
+                pout, perr = self._compile_to([sys.executable, "-I", os.path.join(HERE, "build_tdd.py")], generated)
+                tmps.append(pout)
+                if perr:
+                    self.add("PARITY", "content", "error", f"{where} differs from the TypeScript compile, and a fresh build_tdd.py compile failed ({perr})", self.rel(self.src))
+                    return
+                fresh = open(os.path.join(pout, "content.json"), "rb").read()
+                if fresh != mine:
+                    self.add("PARITY", "content", "error", f"the TypeScript compiler's content.json differs from build_tdd.py's on {self.rel(self.src)}: "
+                             f"{self._first_diff(fresh, mine)}; fix cli/src/compile (build_tdd.py stays the reference until the cutover)", self.rel(self.src))
+                    return
+                self.note(f"PARITY: {where} differs from a fresh compile of the source (a stale build: rebuild); the TypeScript and Python compilers "
+                          f"agree on the fresh compile")
+                ref_m, where, mfile = os.path.join(pout, "content.files.json"), "a fresh build_tdd.py compile's content.json", "(fresh compile) content.files.json"
+            if not os.path.isfile(ref_m):
+                self.note(f"PARITY: the TypeScript compiler reproduced {where} byte for byte; no {mfile} to compare manifests with")
+                return
+            try:
+                ma, mb = json.load(open(ref_m, encoding="utf-8")), json.load(open(os.path.join(tout, "content.files.json"), encoding="utf-8"))
+            except (OSError, ValueError) as e:
+                self.add("PARITY", "manifest", "warn", f"the manifests could not be compared: {e}", mfile)
+                return
+            diffs = []
+            for k, f in (("files", lambda m: list((m.get("files") or {}).keys())), ("missing", lambda m: m.get("missing")), ("warnings", lambda m: m.get("warnings"))):
+                x, y = f(ma), f(mb)
+                if x != y:
+                    xs, ys = list(x or []), list(y or [])
+                    j = next((i for i in range(min(len(xs), len(ys))) if xs[i] != ys[i]), min(len(xs), len(ys)))
+                    diffs.append(f"{k} ({len(xs)} vs {len(ys)}; first at {j}: {xs[j] if j < len(xs) else None!r} vs {ys[j] if j < len(ys) else None!r})")
+            if diffs:
+                self.add("PARITY", "manifest", "warn", f"the TypeScript compiler's manifest differs from build_tdd.py's: {'; '.join(diffs)}", mfile)
+                return
+            self.note(f"PARITY: the TypeScript compiler (cli/bin/build-tdd.ts) reproduced {where} byte for byte with TDD_GENERATED={generated}, "
+                      f"and the manifest's files, missing and warnings")
+        finally:
+            for t in tmps:
+                shutil.rmtree(t, ignore_errors=True)
 
     # ------------------------------------------------------------------------- run
     def run(self):
