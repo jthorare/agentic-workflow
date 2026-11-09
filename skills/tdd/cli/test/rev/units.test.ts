@@ -64,7 +64,7 @@ describe("plan", () => {
     const s = withSteps(2, { compile: rec(2, "ok"), "app-build": rec(2, "ok"), hydrate: rec(2, "failed") });
     const p = plan(s, { from: null, only: null }, (step) => step === "app-build");
     expect(p.steps[0]).toBe("app-build");
-    expect(p.notes[0]).toContain("the inputs of app-build changed");
+    expect(p.notes[0]).toContain("what app-build read or wrote changed");
   });
 });
 

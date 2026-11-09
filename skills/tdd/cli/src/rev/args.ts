@@ -33,8 +33,8 @@ export const USAGE = `usage: tdd rev <packet-dir> [--no-shots] [--no-gh] [--push
     artifact-check  node <system-design>/scripts/artifact_check.mjs build/tdd.html shots
   Every step appends to build/.rev/journal.jsonl and records its outcome (ok, skipped with a reason, or failed with
   the error and its stderr tail) in build/.rev/state.json. With neither --from nor --only, a run resumes at the
-  first step not done in the current cycle, or at an earlier step whose inputs changed since it ran; once every
-  step is done, the next run starts a new cycle at compile.
+  first step not done in the current cycle, or at an earlier step whose inputs changed (or whose outputs are gone)
+  since it ran; once every step is done, the next run starts a new cycle at compile.
 
   --from <step>   run that step and every step after it
   --only <step>   run that one step

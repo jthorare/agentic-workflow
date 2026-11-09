@@ -220,8 +220,9 @@ human-gated step. Modules:
   its last ok, renamed into place after every step), a lock (a second run on the same build is refused while the
   first one's pid lives) and a `.gitignore` of `*`, so a packet repo that commits `build/` never picks the folder up.
 - `run.ts`: the plan and the loop. With neither `--from` nor `--only`, a run resumes at the first step not done in the
-  current cycle (missing, failed or from an older cycle), or earlier when an ok step before it has inputs that changed
-  since it ran (the source was edited after a failure); once every step is done, the next run starts a new cycle at
+  current cycle (missing, failed or from an older cycle), or earlier when an ok step before it read something that
+  changed since it ran (the source was edited after a failure) or wrote something that is gone or was edited since;
+  once every step is done, the next run starts a new cycle at
   compile. `--from` and `--only` run inside the current cycle. The run stops at the first failed step (the rest are
   "not reached"). SIGINT and SIGTERM interrupt the program: the running step is recorded as failed ("interrupted by
   SIGTERM"), its child is stopped, the lock released, and the next run resumes there. `--reuse` skips a step whose

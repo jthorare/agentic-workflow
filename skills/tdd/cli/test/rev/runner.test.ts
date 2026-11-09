@@ -106,7 +106,18 @@ describe("resume", () => {
     w.hydrate = "ok";
     const { report } = await runOnce(w, args(w));
     expect(report!.steps[0]).toBe("compile");
-    expect(report!.notes[0]).toContain("the inputs of compile changed");
+    expect(report!.notes[0]).toContain("what compile read or wrote changed");
+  });
+
+  test("an output removed after a failure moves the resume point back to the step that wrote it", async () => {
+    const w = world();
+    w.hydrate = "fail";
+    await runOnce(w, args(w));
+    rmSync(join(w.paths.build, "tdd.html"));
+    w.hydrate = "ok";
+    const { report } = await runOnce(w, args(w));
+    expect(report!.steps[0]).toBe("app-build");
+    expect(report!.notes[0]).toContain("what app-build read or wrote changed");
   });
 
   test("a state.json that does not match the schema starts a new cycle with a note", async () => {

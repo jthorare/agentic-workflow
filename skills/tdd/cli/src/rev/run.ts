@@ -34,7 +34,8 @@ export const isDone = (state: State, s: StepName): boolean => {
 /**
  * Which steps this run takes. --only and --from work inside the current cycle. Otherwise: a fresh state, or a cycle
  * whose every step is done, starts a new cycle at compile; else the run resumes at the first step not done, or at an
- * earlier ok step whose inputs `changed` since it ran (the source was edited after a failure, say).
+ * earlier ok step that `changed` since it ran: its inputs moved (the source was edited after a failure, say) or its
+ * outputs are gone or were edited.
  */
 export function plan(state: State, a: Pick<RevArgs, "from" | "only">, changed: (s: StepName, r: StepRecord) => boolean): Plan {
   const fresh = state.cycle === 0;
@@ -46,10 +47,10 @@ export function plan(state: State, a: Pick<RevArgs, "from" | "only">, changed: (
   if (frontier === -1) return { mode: "new-cycle", cycle: state.cycle + 1, newCycle: true, steps: [...STEPS], notes: [] };
   for (let i = 0; i < frontier; i++) {
     const s = STEPS[i]!, r = state.steps[s]!;
-    if (r.outcome === "ok" && r.inputs !== undefined && changed(s, r)) {
+    if (r.outcome === "ok" && changed(s, r)) {
       return {
         mode: "resume", cycle, newCycle: false, steps: STEPS.slice(i),
-        notes: [`the inputs of ${s} changed since it ran (run ${r.run}): resuming at ${s}, not at ${STEPS[frontier]}`],
+        notes: [`what ${s} read or wrote changed since it ran (run ${r.run}): resuming at ${s}, not at ${STEPS[frontier]}`],
       };
     }
   }
@@ -118,9 +119,12 @@ export const revProgram = (interrupt: Interrupt): Effect.Effect<Report, Refused,
       void cwd;
       const loaded = yield* j.load;
       const S: { state: State } = { state: loaded.state };
+      // A done step must be redone when what it read changed, or what it wrote is gone or was changed since.
       const changed = (s: StepName, r: StepRecord) => {
         const def = stepDef(s);
-        return !!def.inputs && fingerprint(def.inputs(p, a)) !== r.inputs;
+        if (def.inputs && fingerprint(def.inputs(p, a)) !== r.inputs) return true;
+        const outs = def.outputs(p);
+        return r.outputs !== undefined && outs.length > 0 && fingerprint(outs) !== r.outputs;
       };
       const pl = plan(S.state, a, changed);
       if (pl.newCycle) S.state = { ...S.state, packet: homeRel(p.packet), cycle: pl.cycle, cycle_started: nowIso() };
