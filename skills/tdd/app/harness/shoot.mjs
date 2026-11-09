@@ -104,8 +104,9 @@ try {
         check(`${name} drawer width (${tag})`, width >= 760 ? dw === 720 : dw === width, `${dw}px`);
         const over = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         check(`${name} no horizontal page overflow (${tag})`, over <= 0, `${over}px`);
-        const nm = await page.evaluate(() => [...document.querySelectorAll("dialog.drawer .load-card .none")].map((e) => e.textContent));
-        check(`${name} absent measures read as words (${tag})`, nm.every((t) => t === "not measured" || t === "not estimated"), `${nm.length} absent`);
+        // the Details brief's measures table (D28): absent cells read as words or a dash, never a zero
+        const nm = await page.evaluate(() => [...document.querySelectorAll("dialog.drawer .tb-measures .none")].map((e) => e.textContent));
+        check(`${name} absent measures read as words (${tag})`, nm.length > 0 && nm.every((t) => ["not measured", "not estimated", "–", "none (new table)"].includes(t)), `${nm.length} absent`);
         const g = await page.evaluate(() => {
           const d = document.querySelector("dialog.drawer");
           const th = d.querySelector(".dg-grid tr.dg-head th:not(.rn)");
@@ -115,7 +116,8 @@ try {
             sticky: th ? getComputedStyle(th).position : "none",
             glyphs: d.querySelectorAll(".dg-grid .dg-head .dg-glyph").length,
             cols: d.querySelectorAll(".dg-grid .dg-head th:not(.rn)").length,
-            stats: d.querySelectorAll(".dg-grid .dg-hstats .dg-mini").length,
+            stats: d.querySelectorAll(".dg-grid .dg-head .dg-sb").length,
+            statsRow: d.querySelectorAll(".dg-grid .dg-hstats, .dg-actions .dg-btn[aria-pressed]").length,
             rows: d.querySelectorAll(".dg-grid tbody tr").length,
             cap: d.querySelector(".dg-preview .dg-cap b")?.textContent || "",
             gridScrolls: grid ? grid.scrollWidth > grid.clientWidth : false,
@@ -126,7 +128,21 @@ try {
         });
         check(`${name} tabs (${tag})`, g.tabs.length === 3 && /^Data preview/.test(g.tabs[0]), g.tabs.join(" | "));
         check(`${name} sticky typed header (${tag})`, g.sticky === "sticky" && g.glyphs === g.cols && g.cols > 0, `${g.cols} columns, ${g.glyphs} glyphs, ${g.sticky}`);
-        check(`${name} stats row from sample rows (${tag})`, g.stats === g.cols, `${g.stats} mini graphs`);
+        // D30: no stats row and no toggle; one badge per header; hover shows the popover, a click keeps it open as a
+        // dropdown (aria-expanded), Esc closes it and leaves the drawer open
+        const badge = page.locator("dialog.drawer .dg-grid .dg-head .dg-sb").first();
+        await badge.hover();
+        await page.waitForTimeout(350);
+        const hov = await page.evaluate(() => document.querySelector("dialog.drawer .dg-spop.show")?.textContent || "");
+        await badge.click();
+        await page.waitForTimeout(200);
+        const exp = await badge.getAttribute("aria-expanded");
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(200);
+        const after = await page.evaluate(() => ({ pop: !!document.querySelector("dialog.drawer .dg-spop.show"), drawer: !!document.querySelector("dialog.drawer")?.open }));
+        await page.mouse.move(2, 2);
+        check(`${name} stats row from sample rows (${tag})`, g.statsRow === 0 && g.stats === g.cols && /% null/.test(hov) && /sample rows?, not the database/.test(hov) && exp === "true" && !after.pop && after.drawer,
+          `badges ${g.stats} of ${g.cols} columns, no row; hover "${hov.slice(0, 60)}"; click expanded ${exp}; Esc closed it ${!after.pop}, drawer open ${after.drawer}`);
         check(`${name} row caption (${tag})`, /^\d+ sample rows? · /.test(g.cap), g.cap);
         check(`${name} chat dock present (${tag})`, /Ask about this table/.test(g.dock), g.dock.slice(0, 120));
         check(`${name} Close has focus on open (${tag})`, g.focus === "Close", g.focus);

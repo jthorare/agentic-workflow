@@ -8,6 +8,8 @@ export interface SchemaTable {
   id: string; table: string; state: "new" | "changed" | "existing"; summary?: string; columns: Column[];
   sample_rows?: Record<string, any>[]; sample_source?: string;
   measured?: Record<string, Measure>; expected?: Record<string, Measure>; ddl?: string; indexes?: string[]; notes?: string[];
+  /** D28, optional: what the design gains and costs for this table, two or three terse lines */
+  tradeoffs?: (string | { gain?: string; cost?: string })[];
 }
 export interface Section { id: string; num: number; title: string; titleText: string; chip: string; chipTone: string; hasGroup: boolean; blocks: Node[]; subs: { id: string; title: string }[] }
 export interface Content {
