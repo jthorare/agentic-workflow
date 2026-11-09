@@ -1,0 +1,10 @@
+{
+  "isError": true,
+  "structuredContent": {
+    "code": "SND-CONTEXT-022",
+    "message": "sindri_todo needs 'action', one of add, change, done, reopen, remove, restore (fix: call it with {\"action\": \"add\"})"
+  },
+  "content": [
+    "SND-CONTEXT-022 sindri_todo needs 'action', one of add, change, done, reopen, remove, restore (fix: call it with {\"action\": \"add\"})"
+  ]
+}
