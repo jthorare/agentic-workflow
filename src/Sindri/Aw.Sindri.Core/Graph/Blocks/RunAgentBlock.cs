@@ -42,11 +42,30 @@ public sealed class RunAgentBlock : IGraphBlock
     public string Example => """{"repo":"web","prompt":"Check {{trigger.ref}} for contract drift and fix what you can","outputs":{"drifted":"boolean","summary":"string"},"timeout":"45m"}""";
 
     /// <inheritdoc />
-    public BlockOutputs OutputsFor(JsonObject config) => throw new NotSupportedException("red");
+    public BlockOutputs OutputsFor(JsonObject config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        var fields = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (name, type) in config["outputs"] as JsonObject ?? [])
+        {
+            if (type is JsonValue value && value.TryGetValue<string>(out var text))
+            {
+                fields[name] = text;
+            }
+        }
+
+        foreach (var (name, type) in Standard)
+        {
+            fields[name] = type;
+        }
+
+        return new BlockOutputs(fields);
+    }
 
     /// <inheritdoc />
-    public IReadOnlyList<(string Field, string Problem)> CheckConfig(JsonObject config) => throw new NotSupportedException("red");
+    public IReadOnlyList<(string Field, string Problem)> CheckConfig(JsonObject config) => RunAgentConfig.Problems(config);
 
     /// <inheritdoc />
-    public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken) => throw new NotSupportedException("red");
+    public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<BlockResult>>(SindriErrors.GraphBlockFailed.With("a run_agent node runs in the workflow's agent loop, not as a plain block"));
 }

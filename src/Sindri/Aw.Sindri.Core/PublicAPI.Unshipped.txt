@@ -20338,3 +20338,51 @@ Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Example.get -> string!
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+static Aw.Sindri.Core.Graph.Blocks.RunAgentLaunches.ReadingOnly(Aw.Sindri.Core.Launch.LaunchRequest! request, System.Collections.Generic.IReadOnlyList<string!>! paths) -> Aw.Sindri.Core.Launch.LaunchRequest!
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Outputs.get -> string!
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Node.init -> void
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Outputs.init -> void
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Human.get -> bool
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Human.init -> void
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport
+Aw.Sindri.Core.Graph.Runs.IAgentNodeControl
+override Aw.Sindri.Core.Graph.Runs.AgentNodeReport.ToString() -> string!
+static Aw.Sindri.Core.Graph.Runs.AgentNodeReport.operator !=(Aw.Sindri.Core.Graph.Runs.AgentNodeReport? left, Aw.Sindri.Core.Graph.Runs.AgentNodeReport? right) -> bool
+static Aw.Sindri.Core.Graph.Runs.AgentNodeReport.operator ==(Aw.Sindri.Core.Graph.Runs.AgentNodeReport? left, Aw.Sindri.Core.Graph.Runs.AgentNodeReport? right) -> bool
+override Aw.Sindri.Core.Graph.Runs.AgentNodeReport.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Equals(object? obj) -> bool
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Equals(Aw.Sindri.Core.Graph.Runs.AgentNodeReport? other) -> bool
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.ItemIndex.get -> int
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.<Clone>$() -> Aw.Sindri.Core.Graph.Runs.AgentNodeReport!
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.ItemIndex.init -> void
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Node, out int ItemIndex, out string! Outputs, out bool Human) -> void
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode
+override Aw.Sindri.Core.Graph.Runs.RunningAgentNode.ToString() -> string!
+static Aw.Sindri.Core.Graph.Runs.RunningAgentNode.operator !=(Aw.Sindri.Core.Graph.Runs.RunningAgentNode? left, Aw.Sindri.Core.Graph.Runs.RunningAgentNode? right) -> bool
+static Aw.Sindri.Core.Graph.Runs.RunningAgentNode.operator ==(Aw.Sindri.Core.Graph.Runs.RunningAgentNode? left, Aw.Sindri.Core.Graph.Runs.RunningAgentNode? right) -> bool
+override Aw.Sindri.Core.Graph.Runs.RunningAgentNode.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Equals(object? obj) -> bool
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Equals(Aw.Sindri.Core.Graph.Runs.RunningAgentNode? other) -> bool
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.<Clone>$() -> Aw.Sindri.Core.Graph.Runs.RunningAgentNode!
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Node, out int ItemIndex, out Aw.Sindri.Core.Launch.LaunchId Launch, out bool TakenOver) -> void
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Node.init -> void
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.ItemIndex.get -> int
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.ItemIndex.init -> void
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Launch.init -> void
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.TakenOver.get -> bool
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.TakenOver.init -> void
+static Aw.Sindri.Core.Launch.StepEnvironment.RunDirectoryAtNode(Aw.Sindri.Core.Launch.LaunchId launch, string! sindriHome) -> string!
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.RunningAgentNode(Aw.Sindri.Core.Graph.Ids.NodeId Node, int ItemIndex, Aw.Sindri.Core.Launch.LaunchId Launch, bool TakenOver) -> void
+Aw.Sindri.Core.Graph.Runs.IAgentNodeControl.Running(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.RunningAgentNode?>!>
+Aw.Sindri.Core.Graph.Runs.IAgentNodeControl.Takeover(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node, int itemIndex, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Runs.IAgentNodeControl.Handback(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node, int itemIndex, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Runs.IAgentNodeControl.Report(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Runs.AgentNodeReport! report, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.AgentNodeReport(Aw.Sindri.Core.Graph.Ids.NodeId Node, int ItemIndex, string! Outputs, bool Human) -> void
+const Aw.Sindri.Core.Launch.LaunchFiles.TakenOverSuffix = ".taken-over" -> string!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.DeclaredOutputs(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Launches.ILaunchFiles.MarkTakenOver(Aw.Sindri.Core.Launch.LaunchId launch, bool taken) -> void
+Aw.Sindri.Core.Launches.ILaunchFiles.TakenOver(Aw.Sindri.Core.Launch.LaunchId launch) -> bool
+static Aw.Sindri.Core.Launch.LaunchFiles.TakenOverName(Aw.Sindri.Core.Launch.LaunchId launch) -> string!

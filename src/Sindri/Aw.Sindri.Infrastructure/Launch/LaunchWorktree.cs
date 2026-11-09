@@ -24,10 +24,20 @@ internal static class LaunchWorktree
         {
             // why: an open's sandbox writes refs under its own namespace only, so its worktree starts on a branch there (sandbox spec §3.9); a Step's comes from the engine on its run branch
             string[] start = IsTrial(request) && await DefaultBranch(request.RepoPath, cancellationToken).ConfigureAwait(false) is { } trunk ? [trunk] : [];   // a skill trial starts from the repo's default branch, not whatever HEAD is
-            string[] add = request.Attended ? ["-C", request.RepoPath, "worktree", "add", "-b", AttendedOpen.Branch(request.Launch), worktree] : ["-C", request.RepoPath, "worktree", "add", "--detach", worktree, .. start];
-            if (await ViewerProcess.Output("git", add, _gitBudget, cancellationToken).ConfigureAwait(false) is not null)
+            if (request.Node is { } node)
             {
-                return null;
+                if (await NodeWorktree(request.RepoPath, worktree, node.Branch, cancellationToken).ConfigureAwait(false))
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                string[] add = request.Attended ? ["-C", request.RepoPath, "worktree", "add", "-b", AttendedOpen.Branch(request.Launch), worktree] : ["-C", request.RepoPath, "worktree", "add", "--detach", worktree, .. start];
+                if (await ViewerProcess.Output("git", add, _gitBudget, cancellationToken).ConfigureAwait(false) is not null)
+                {
+                    return null;
+                }
             }
         }
         catch (OperationCanceledException)
@@ -38,6 +48,18 @@ internal static class LaunchWorktree
 
         await Discard(request.RepoPath, worktree).ConfigureAwait(false);
         return SindriErrors.LaunchRepoMissing.With($"the Step's worktree could not be created at {worktree}");
+    }
+
+    // A graph node's worktree starts on its own new branch from the repo's default branch (HEAD when there is none); a branch an earlier launch of the same node run made is checked out again, so a relaunch after a swept worktree keeps its commits.
+    private static async ValueTask<bool> NodeWorktree(string repoPath, string worktree, string branch, CancellationToken cancellationToken)
+    {
+        string[] start = await DefaultBranch(repoPath, cancellationToken).ConfigureAwait(false) is { } trunk ? [trunk] : [];
+        if (await ViewerProcess.Output("git", ["-C", repoPath, "worktree", "add", "-b", branch, worktree, .. start], _gitBudget, cancellationToken).ConfigureAwait(false) is not null)
+        {
+            return true;
+        }
+
+        return await ViewerProcess.Output("git", ["-C", repoPath, "worktree", "add", worktree, branch], _gitBudget, cancellationToken).ConfigureAwait(false) is not null;
     }
 
     /// <summary>Whether the launch is a skill trial's Step (its instance is a 'skill-trial' recipe's).</summary>

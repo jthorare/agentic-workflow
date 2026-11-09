@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using Aw.Sindri.Core.Graph.Ids;
 
 namespace Aw.Sindri.Core.Launch;
@@ -18,17 +21,37 @@ public sealed record NodeRunAddress(WorkflowSlug Workflow, WorkflowRunId Run, No
     /// <param name="node">The node.</param>
     /// <param name="itemIndex">The item's position, 0 for a node that runs once.</param>
     /// <returns>The address.</returns>
-    public static NodeRunAddress Of(WorkflowRunId run, NodeId node, int itemIndex = 0) => throw new NotSupportedException("red");
+    public static NodeRunAddress Of(WorkflowRunId run, NodeId node, int itemIndex = 0)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(itemIndex);
+        return new NodeRunAddress(WorkflowSlug.From(run.Value[..run.Value.IndexOf('@', StringComparison.Ordinal)]), run, node, itemIndex);
+    }
 
     /// <summary>The launch id: 'LCH-' and the first 32 hex digits of SHA-256 of 'agent-launch:&lt;run&gt;:&lt;node&gt;:&lt;index&gt;'. A retry or a replay can never start a second session.</summary>
-    public LaunchId Launch => ItemIndex < 0 ? LaunchId.From("LCH-00000000000000000000000000000000") : throw new NotSupportedException("red");
+    public LaunchId Launch
+    {
+        get
+        {
+            var digest = SHA256.HashData(Encoding.UTF8.GetBytes(string.Create(CultureInfo.InvariantCulture, $"agent-launch:{Run.Value}:{Node.Value}:{ItemIndex}")));
+            return LaunchId.From("LCH-" + Convert.ToHexStringLower(digest)[..32]);
+        }
+    }
 
     /// <summary>The run's short name inside a branch: '&lt;revision&gt;-&lt;occurrence&gt;-&lt;node&gt;', and '-&lt;index&gt;' after it for an item of a 'for_each'. No ':' and no '@'.</summary>
-    public string ShortRun => ItemIndex < 0 ? string.Empty : throw new NotSupportedException("red");
+    public string ShortRun
+    {
+        get
+        {
+            var at = Run.Value.IndexOf('@', StringComparison.Ordinal);
+            var colon = Run.Value.IndexOf(':', StringComparison.Ordinal);
+            var item = ItemIndex > 0 ? string.Create(CultureInfo.InvariantCulture, $"-{ItemIndex}") : string.Empty;
+            return $"{Run.Value[(at + 1)..colon]}-{Run.Value[(colon + 1)..]}-{Node.Value}{item}";   // why: two nodes of one run need two branches
+        }
+    }
 
     /// <summary>The branch the node's worktree is made on: 'wf/&lt;slug&gt;/&lt;short run&gt;'.</summary>
-    public string Branch => ItemIndex < 0 ? string.Empty : throw new NotSupportedException("red");
+    public string Branch => $"wf/{Workflow.Value}/{ShortRun}";
 
     /// <summary>The branch namespace the session may write refs in: 'wf/&lt;slug&gt;'. <see cref="Branch"/> sits inside it.</summary>
-    public string RefNamespace => ItemIndex < 0 ? string.Empty : throw new NotSupportedException("red");
+    public string RefNamespace => $"wf/{Workflow.Value}";
 }

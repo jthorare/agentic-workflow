@@ -36,7 +36,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return Failed(input: null, SindriErrors.GraphUnknownBlock.With($"this build has no block '{graphNode.Type}'"));
         }
 
-        var scope = new Scope(row, spec, GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false)));
+        var scope = new GraphNodeScope(row, spec, GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false)));
         var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
         if (Cut(scope, config) is { } cutConfig)
         {
@@ -48,7 +48,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         return Cut(scope, config) ?? (result.IsError ? Failed(config, result.Error) : Succeeded(config, result.Value));   // a condition reads its references inside Execute
     }
 
-    private static GraphBlockOutcome? Cut(Scope scope, JsonObject config) => scope.Cut is { } cut
+    private static GraphBlockOutcome? Cut(GraphNodeScope scope, JsonObject config) => scope.Cut is { } cut
         ? Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field"))
         : null;
 
@@ -64,50 +64,5 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         }
 
         return new GraphBlockOutcome(NodeRunStatus.Succeeded, input.ToJsonString(), output.ToJsonString(), result.Taken, Error: null);
-    }
-
-    /// <summary>What a reference can read in one run: the trigger, the workflow's own facts and the outputs of the nodes that succeeded.</summary>
-    private sealed class Scope(WorkflowRun run, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns)
-    {
-        private readonly JsonObject? _trigger = JsonNode.Parse(run.Trigger) as JsonObject;
-
-        /// <summary>The node whose cut output a reference read, or null.</summary>
-        public string? Cut { get; private set; }
-
-        public JsonNode? Lookup(string reference)
-        {
-            var parts = reference.Split('.');
-            var current = Root(parts[0]);
-            foreach (var part in parts.Skip(1))
-            {
-                current = current is JsonObject o && o.TryGetPropertyValue(part, out var next) ? next : null;
-            }
-
-            return current?.DeepClone();
-        }
-
-        private JsonNode? Root(string name) => name switch
-        {
-            "trigger" => _trigger,
-            "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision },
-            _ => Output(name),
-        };
-
-        private JsonNode? Output(string node)
-        {
-            var found = nodeRuns.FirstOrDefault(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == 0 && n.Status == NodeRunStatus.Succeeded);
-            if (found is null)
-            {
-                return null;
-            }
-
-            if (found.Truncated)
-            {
-                Cut ??= node;
-                return null;
-            }
-
-            return found.Output is null ? null : JsonNode.Parse(found.Output);
-        }
     }
 }

@@ -16,6 +16,7 @@ internal static class SindriWorker
         new TemporalWorkerOptions(settings.TaskQueue)
             .AddWorkflow<GraphWorkflow>()
             .AddAllActivities(activities.Agents)
+            .AddAllActivities(activities.Nodes)
             .AddAllActivities(activities.Graph.Runs)
             .AddAllActivities(activities.Graph.Blocks);
 }

@@ -34,7 +34,7 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly GraphRunStarter _starter;
     private readonly InMemorySindriStore _ledger;
 
-    private GraphRig(WorkflowEnvironment environment)
+    private GraphRig(WorkflowEnvironment environment, IAgentNodeRuntime? agents)
     {
         // why: the test server is shared by the class, and a run id or task queue can be used once on it
         var number = Interlocked.Increment(ref _count).ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -59,6 +59,12 @@ internal sealed class GraphRig : IAsyncDisposable
             .AddWorkflow<GraphWorkflow>()
             .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror))
             .AddAllActivities(new GraphBlockActivities(registry, Runs, Workflows));
+        if (agents is not null)
+        {
+            _ = options.AddAllActivities(new AgentNodeActivities(agents));
+        }
+
+        Control = new TemporalAgentNodeControl(_ => ValueTask.FromResult(Results.Success(Client)));
         _worker = new TemporalWorker(Client, options);
         _loop = _worker.ExecuteAsync(_stop.Token);
     }
@@ -73,9 +79,12 @@ internal sealed class GraphRig : IAsyncDisposable
 
     public ITemporalClient Client { get; }
 
+    /// <summary>The takeover, handback and report of the run's agent node, over the real Temporal adapter.</summary>
+    internal TemporalAgentNodeControl Control { get; }
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public static GraphRig Start(WorkflowEnvironment environment) => new(environment);
+    public static GraphRig Start(WorkflowEnvironment environment, IAgentNodeRuntime? agents = null) => new(environment, agents);
 
     public static GraphNode Node(string id, string type, string? onFailure = null, JsonObject? config = null) =>
         new(NodeId.From(id), type, Title: null, config ?? [], onFailure);
