@@ -187,6 +187,18 @@
       ]
     },
     {
+      "name": "workflow-poll",
+      "every": "30s",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Polls connections for events that start workflows (connection_event triggers), and reads missed events after a start or a wake."
+    },
+    {
       "name": "workflow-schedule",
       "every": "1m",
       "paused": false,
