@@ -179,7 +179,7 @@ internal static class TodoScenarios
         const string Hash = "sha256:3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a";
         if (string.Equals(scenario, "conflict", StringComparison.Ordinal))
         {
-            return await Show(host, human, ct);
+            return await Conflict(host, human, Hash, ct);
         }
 
         var first = await Add(host, human, """{"text":"call the dentist","clientId":"c-1"}""", string.Empty, ct);
@@ -202,6 +202,21 @@ internal static class TodoScenarios
 
         await ViewScenarios.CatchUp(host, ct);
         return (await host.Http.Ask(Get("/sindri/todos/note", human))).Body;
+    }
+
+    // GET /sindri/todos/{id} for a todo at version 3 (added, edited, done) whose done state conflicts with a note edit that changed its text, due date and link (the TodoItem shape with the open conflict)
+    private static async Task<string> Conflict(GoldenHost host, (string Name, string Value)[] human, string hash, CancellationToken ct)
+    {
+        var made = await Add(host, human, """{"text":"reply to Sam","clientId":"c-1"}""", string.Empty, ct);
+        _ = await host.Http.Ask(Post($"/sindri/todos/{made}/change", """{"version":1,"text":"reply to Sam about the offsite","due":"2026-01-02"}""", human));
+        await ViewScenarios.CatchUp(host, ct);
+        _ = await host.Http.Ask(Post($"/sindri/todos/{made}/done", """{"version":2}""", human));
+        await ViewScenarios.CatchUp(host, ct);
+        var sindri = new TodoSide("reply to Sam about the offsite", new DateOnly(2026, 1, 2), Links: [], Done: true, Removed: false);
+        var obsidian = new TodoSide("reply to Sam about the offsite venue", new DateOnly(2026, 1, 3), ["sindri://linear/ENG-12"], Done: false, Removed: false);
+        await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(made), sindri, obsidian, hash), $"todo.conflicted:{made}:{hash}", ct);
+        await ViewScenarios.CatchUp(host, ct);
+        return (await host.Http.Ask(Get($"/sindri/todos/{made}", human))).Body;
     }
 
     // GET /sindri/todos/{id} for a todo with two links and an open both-places conflict (#2355): the answer must be the list's TodoItem shape, links described, no internal fields
