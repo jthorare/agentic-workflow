@@ -59,9 +59,9 @@ internal static class ConnectionScenarios
         var request = (slug, scenario) switch
         {
             ("connections", "list") => Get("/sindri/connections", owner),
-            ("connections", "added-key") => Post("/sindri/connections", """{"name":"acme:key","kind":"rest","key":"sk-golden-0001","scopes":[],"wait":false}""", owner),
-            ("connections", "added-oauth") => Post("/sindri/connections", """{"name":"linear:work","preset":"linear","client":"client-123","scopes":[],"wait":false}""", owner),
-            ("connections", "refused") => Post("/sindri/connections", """{"name":"linear:work","preset":"linear","scopes":[],"wait":false}""", owner),
+            ("connections", "added-key") => Post("/sindri/connections", """{"name":"acme:key","preset":null,"kind":"rest","client":null,"keyEnv":null,"scopes":[],"wait":false,"key":"sk-golden-0001"}""", owner),
+            ("connections", "added-oauth") => Post("/sindri/connections", """{"name":"linear:work","preset":"linear","kind":null,"client":"client-123","keyEnv":null,"scopes":[],"wait":false}""", owner),
+            ("connections", "refused") => Post("/sindri/connections", """{"name":"linear:work","preset":"linear","kind":null,"client":null,"keyEnv":null,"scopes":[],"wait":false}""", owner),
             ("connections-id", "one") => Get($"/sindri/connections/{Uri.EscapeDataString(Linear)}", owner),
             ("connections-id", "not-found") => Get($"/sindri/connections/{Uri.EscapeDataString("acme:nobody")}", owner),
             ("connections-id", "removed") => Delete($"/sindri/connections/{Uri.EscapeDataString(Linear)}", owner),
