@@ -16,7 +16,7 @@ public sealed class WorkflowGraphViewModelTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     /// <summary>The golden workflow with its graph replaced.</summary>
-    internal static async Task<WorkflowGraphViewModel> GraphOf(WorkflowsFixture f, string nodes, string edges, string positions, IReadOnlyDictionary<string, string>? statuses = null)
+    internal static async Task<WorkflowGraphViewModel> GraphOf(WorkflowsFixture f, string nodes, string edges, string positions, IReadOnlyDictionary<string, string>? statuses = null, string? slug = null)
     {
         var json = Golden("workflows-slug", "found");
         json["spec"]!["nodes"] = JsonNode.Parse(nodes);
@@ -24,7 +24,7 @@ public sealed class WorkflowGraphViewModelTests
         json["positions"] = JsonNode.Parse(positions);
         f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, json.ToJsonString());
         var served = await f.Server.Workflow(Url, Slug, Token);
-        return new WorkflowGraphViewModel(served.Value, statuses);
+        return new WorkflowGraphViewModel(slug is null ? served.Value : served.Value with { Slug = slug }, statuses);
     }
 
     private const string Branching = """
@@ -79,6 +79,18 @@ public sealed class WorkflowGraphViewModelTests
         Assert.Equal([("a", "c")], graph.Edges.Select(e => (e.From, e.To)));
         Assert.Equal("1 node has no position: b", graph.UnplacedText);
         Assert.False(graph.SelectNode("b"));
+    }
+
+    [Fact]
+    public async Task A_graph_whose_nodes_all_lack_positions_is_not_empty_and_a_spec_with_no_nodes_is()
+    {
+        var unplaced = await GraphOf(_f, """[{"id":"a","type":"x","config":{}},{"id":"b","type":"x","config":{}}]""", "[]", "[]");
+        var none = await GraphOf(_f, "[]", "[]", "[]");
+
+        Assert.False(unplaced.IsEmpty);   // only the "2 nodes have no position" line shows, not "no steps"
+        Assert.True(unplaced.HasUnplaced);
+        Assert.True(none.IsEmpty);
+        Assert.False(none.HasUnplaced);
     }
 
     [Fact]

@@ -37,4 +37,15 @@ internal sealed class WorkflowRowViewModel : ObservableObject
 
     /// <summary>True when triggers run a revision.</summary>
     public bool IsActive { get; }
+
+    /// <summary>True when the workflow is on (the ok colour); the glyph and word say it too.</summary>
+    public bool IsOk => IsActive;
+
+#pragma warning disable CA1822, MA0041 // the view binds all three tones, so the two a workflow never has are properties too
+    /// <summary>Always false: a workflow's chip has no attention tone.</summary>
+    public bool IsAttention => false;
+
+    /// <summary>Always false: a workflow's chip has no error tone.</summary>
+    public bool IsError => false;
+#pragma warning restore CA1822, MA0041
 }

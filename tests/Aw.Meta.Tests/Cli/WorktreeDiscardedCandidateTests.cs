@@ -208,7 +208,7 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
 
         Assert.False(Directory.Exists(loser), path.Out);
         Assert.True(Directory.Exists(fresh), full.Out);
-        Assert.Contains("changed since the last sweep", full.Out, StringComparison.Ordinal);
+        Assert.Contains("changed since the last full sweep", full.Out, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]
