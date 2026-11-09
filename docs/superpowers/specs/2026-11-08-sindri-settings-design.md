@@ -55,12 +55,10 @@ thread asleep. Linux and macOS use `flock`; Windows opens `.lock` with `FileShar
 the lock:
 
 1. Run the migration's inner step, `SettingsMigration.RunLocked`, which assumes the lock is held (§5). It does
-   nothing once the migration is done. (Taking the lock again here would wait on itself: two handles on one file
-   conflict under `flock`.)
-2. Read `settings.yaml`, or see that it doesn't exist. With no file, a write stops with `SND-SETTINGS-026` ("No
-   settings file yet. Run `sindri settings init`, or press Set up in Settings."). Take the file's sha256 and compare
-   it with the last parseable audit line's sha256 (never with older lines, so a hand revert to an older text is
-   still caught):
+   nothing once the migration is done and the file exists; on a home with no file it writes the defaults. (Taking
+   the lock again here would wait on itself: two handles on one file conflict under `flock`.)
+2. Read `settings.yaml`. Take the file's sha256 and compare it with the last parseable audit line's sha256 (never
+   with older lines, so a hand revert to an older text is still caught):
    - different: someone edited the file outside Sindri since the last save, so append that edit's line first and
      refresh the base (§3.4), then go on;
    - the same, but `.last-saved.yaml` differs from the file (a crash before step 6 last time): refresh the base.
@@ -88,7 +86,7 @@ run out, the write fails with `SND-SETTINGS-409`: "Another change is being saved
 
 | Code | CLI exit | HTTP |
 |---|---|---|
-| `SND-SETTINGS-001..017`, `020..024`, `026` (a rule, a broken file, no file) | 1 | 422 |
+| `SND-SETTINGS-001..017`, `020..024` (a rule, a broken file) | 1 | 422 |
 | `SND-SETTINGS-409` (busy), `410` (changed on disk) | 1 | 409 |
 
 The CLI prints the message on stderr; `--json` prints `{ "code", "path"?, "message" }` on stdout, with `path` set
@@ -162,7 +160,8 @@ the rule. It never quotes the value, so a pasted secret never reaches the API, t
   - a session Sindri launched is `launch:<id>`;
   - any other session is `session`, with its repo when it sends one.
 
-  Edits found outside Sindri are `outside`, and the migration's line is `migrated`. Every app save and CLI save
+  Edits found outside Sindri are `outside`, the migration's line is `migrated`, and the defaults' line is
+  `created`. Every app save and CLI save
   sends a save id (a ulid, made before the request goes out) that the line carries as `saveId`, so a sheet can
   tell its own save from any other, even when the event arrives before the save's response.
 - **The line.** Each line in `changes.jsonl` is `{ at, by, saveId?, sha256, changes[] }`.
@@ -222,31 +221,32 @@ broken file and no last good settings runs nothing, as today.
     "an agent session";
   - `session`: "an agent session";
   - `outside`: "someone outside Sindri";
-  - `migrated`: "the move from your old settings".
-- **Loading, no file, and errors.** While Settings loads, its rows show their labels with empty values and no
-  buttons. When the load fails (serve down, an error), Settings shows "Can't reach Sindri" with **Retry**. With no
-  settings file (a fresh home before `settings init`), it shows "No settings yet" and **Set up**, which runs the same
-  step as `settings init`; while it runs the button shows `Setting up...`, and when another caller created the file
-  first, Settings just loads it. On a fresh start with a broken file and no last good settings, the rows are
+  - `migrated`: "the move from your old settings";
+  - `created`: "Sindri's defaults".
+- **Loading and errors.** While Settings loads, its rows show their labels with empty values and no
+  buttons. When the load fails (serve down, an error), Settings shows "Can't reach Sindri" with **Retry**. There is
+  no "no settings" state: Sindri writes the defaults before the first read (§5), so the person never presses a
+  button to get settings. On a fresh start with a broken file and no last good settings, the rows are
   read-only under the Health text from §3.5.
 - **Last changed.** One line under the Settings heading, read from the last audit line: "Last changed by <who> at
-  14:02", or "Changed by someone outside Sindri at 14:02", or "Moved over from your old settings at 14:02". Times
-  are local, and get a day when not today ("yesterday at 14:02", "Nov 6 at 14:02"). With no audit line the line is
-  hidden. A save's response carries `{ by, at }`, so the line updates the moment the person saves, and
-  `settings.changed` refreshes it for everyone else.
-- **See changes.** A link next to Last changed opens a panel with the last 50 settings changes, newest first: one
-  row per change with <who>, the time, and each path with its from and to (`[redacted]` and trimmed values shown as
-  written). It reads `GET /sindri/ledger?type=settings.changed&newest=true&max=50`; `newest` is one new optional
-  parameter on that route. The panel has a loading row, "No changes yet", and "Can't reach Sindri" with **Retry**.
-  The ledger lags `changes.jsonl` by one copy pass, so the panel re-reads on `settings.changed`. Closing it returns
-  focus to the link. The CLI equivalent is `sindri ledger --type settings.changed`.
+  14:02", or "Changed by someone outside Sindri at 14:02", or "Moved over from your old settings at 14:02", or
+  "Created with the defaults at 14:02". Times are local, and get a day when not today ("yesterday at 14:02", "Nov 6 at
+  14:02"). With no audit line the line is hidden. A save's response carries `{ by, at }`, so the line updates the
+  moment the person saves, and `settings.changed` refreshes it for everyone else.
+- **See changes** (the second PR, §8). A link next to Last changed opens a panel with the last 50 settings changes,
+  newest first: one row per change with <who>, the time, and each path with its from and to (`[redacted]` and trimmed
+  values shown as written). It reads `GET /sindri/ledger?type=settings.changed&newest=true&max=50`; `newest` is one
+  new optional parameter on that route. The panel has a loading row, "No changes yet", and "Can't reach Sindri" with
+  **Retry**. The ledger lags `changes.jsonl` by one copy pass, so the panel re-reads on `settings.changed`. Closing it
+  returns focus to the link. The CLI equivalent is `sindri ledger --type settings.changed`.
 - **Saving.** While a save waits for the lock, its button shows `Saving...` and is busy (`aria-busy`, a second
   click does nothing). A failed save keeps the typed values:
   - `SND-SETTINGS-409`: "Another change is being saved. Try again in a moment." with **Try again**, which sends the
     same save. Focus moves to **Try again**.
   - `SND-SETTINGS-410`: "The settings file changed on disk while you were saving. Nothing was saved." The sheet then
-    re-reads its item. When the outside edit touched it, the stale banner replaces this message (below), so a
-    retry never overwrites an edit the person hasn't seen. Otherwise **Try again** shows, as for 409.
+    re-reads its item and shows **Try again**, as for 409. Once the second PR adds the stale banner (below), the
+    banner replaces this message when the outside edit touched the item, so a retry never overwrites an edit the
+    person hasn't seen.
 
   The codes show only in the CLI's `--json` output and the logs.
 - **Refusals on a field.** A rule refusal shows under the field it names (`aria-invalid`, linked by
@@ -263,7 +263,7 @@ broken file and no last good settings runs nothing, as today.
   above it. **Copy file path** copies the path of `settings.yaml` and shows "Copied" for 2 s. When the file
   validates again, the text goes and the save button comes back without reopening the sheet. Last changed adds
   "(the file has a mistake now)" while it's broken.
-- **A stale open sheet.** Every settings sheet watches `settings.changed`. When an event touches the item the sheet
+- **A stale open sheet** (the second PR, §8). Every settings sheet watches `settings.changed`. When an event touches the item the sheet
   has open and its `saveId` isn't the sheet's own, the sheet shows one banner, naming the item's kind (repo, host,
   source, setting, page or pin):
   - "<who> changed this <kind> while you had it open." with **Load theirs** and **Keep mine**. A newer change
@@ -287,7 +287,7 @@ broken file and no last good settings runs nothing, as today.
 | `profileHash` in responses, `ifHash` in writes | gone |
 | events `profile.approved`, `profile.checked` | no new ones are written. The ledger is append-only, so old rows stay; the event catalog and the projector keep both types as legacy no-ops for `views rebuild` |
 | (new) | `settings.changed { file, line, at, by, saveId?, sha256, changes[] }`, key `settings.changed:<file>:<line>` |
-| `SND-PROFILE-001..017` | `SND-SETTINGS-001..017`, same numbers; new `020..024`, `026`, `409`, `410` (all free today) |
+| `SND-PROFILE-001..017` | `SND-SETTINGS-001..017`, same numbers; new `020..024`, `409`, `410` (all free today) |
 | `sindri profile init \| set \| validate` | `sindri settings init \| set \| validate \| cleanup`; `sindri profile *` exits 2 naming the new verb (§5) |
 | `AW_SINDRI_PROFILE` | `AW_SINDRI_SETTINGS`; a set `AW_SINDRI_PROFILE` is not read, and gives a warning naming the new variable (§6) |
 | `IProfileSource`, `IApprovedProfile`, `LoadedProfile`, `SindriProfile`, `ProfileHash`, `Profile/` folders | `ISettingsSource`, `ISettings`, `LoadedSettings`, `SindriSettings`, gone, `Settings/` folders |
@@ -306,7 +306,7 @@ shim.
 One helper, `SettingsMigration`, with two entry points:
 - `RunLocked` assumes the caller holds the settings lock. Step 1 of every write calls it.
 - `Run` is for serve's start and the reads (`settings validate`, `GET /sindri/settings`). It first checks without
-  the lock whether the migration is due, and returns at once when it isn't, so reads never queue behind writers.
+  the lock whether the migration is due or the file is missing, and returns at once when it isn't, so reads never queue behind writers.
   When it is due, it takes the lock and calls `RunLocked`.
 
 A `settings set` before serve ever starts still migrates. The migration is due when `profile/profile.yaml` exists
@@ -321,13 +321,21 @@ and `changes.jsonl` holds no `migrated` line. `RunLocked` then runs these steps:
 
 Why this order:
 - A crash before step 3 re-runs the migration, and step 2 never copies over a `settings.yaml` that exists.
-- Once the `migrated` line is written, deleting `settings.yaml` by hand never brings the old profile back: the home
-  then has no settings file (§3.6 "No settings yet").
-- A fresh `settings init` has no `profile/`, so it never gets a "Moved over" line.
+- Once the `migrated` line is written, deleting `settings.yaml` by hand never brings the old profile back: the next
+  run writes the defaults (below).
+- A fresh home has no `profile/`, so it never gets a "Moved over" line.
 - If `changes.jsonl` is deleted while `profile/` still exists, the next run writes a new file id and a `migrated`
   line, and copies nothing. That leaves one extra "Moved over" line, which is harmless.
 
-`settings init` refuses when `settings.yaml` exists, as `profile init` does today. A custom `AW_SINDRI_PROFILE`
+**Defaults.** When `settings.yaml` is missing and the migration isn't due (a fresh home, or the file deleted after the
+migration), `RunLocked` writes the default settings: the same text `settings init` writes, to `.last-saved.yaml`,
+then to `settings.yaml`, each by temp file (0600) and rename, then one line `by: created` (Last changed: "Created
+with the defaults at 14:02"). Serve's start runs it before it serves anything, and every read and write runs it
+through `Run` or step 1, so no caller ever sees a home without settings. This is why there is no "no file" code.
+
+`settings init` stays as the CLI verb for scripts that want the file before anything else runs: the same step,
+with the same `created` line. It refuses when
+`settings.yaml` exists, as `profile init` does today. A custom `AW_SINDRI_PROFILE`
 path outside the home isn't migrated: set `AW_SINDRI_SETTINGS` to it, or copy it to `settings/settings.yaml`.
 
 When both `profile/` and `settings/` exist, `settings/` wins. `sindri doctor`'s `settings` row and the Health
@@ -398,7 +406,8 @@ keep the old words). Known today, by group:
   - A ulid in an id field and a sha256 in a hash field are not refused as secrets.
   - A `--from-file` with three pages is one save and one line, and keeps pages not in the file.
   - A `--from-file` whose line would pass 64 KB saves, and its line keeps the paths with `"trimmed": true`.
-  - A write with no settings file is refused with `SND-SETTINGS-026`.
+  - A write, a read and serve's start on a fresh home each write the defaults once, with one `created` line; two
+    at once still write one.
   - Each refusal's CLI exit code, `--json` body and HTTP status match the §3.2 table.
   - A request saying `X-Sindri-Caller: human` without the token is recorded as `session`.
   - A secret in a `command:` argument is refused; redaction runs before the 200-character cap.
@@ -433,20 +442,22 @@ keep the old words). Known today, by group:
   - `settings set` before serve ever started migrates, without waiting on its own lock.
   - Run twice: no second copy and no second `migrated` line.
   - A crash between the copy and the `migrated` line is finished by the next run, with one `migrated` line.
-  - Deleting `settings.yaml` after the migration gives "No settings yet", never the old profile.
+  - Deleting `settings.yaml` after the migration gives the defaults with a `created` line, never the old profile.
   - A fresh `settings init` writes no `migrated` line.
   - With both folders, `settings/` wins and doctor warns.
   - The folder is 0700 and the files 0600.
 - Integration: `GET /sindri/settings` and status in the API goldens; the page and pin writes without `ifHash`;
   `EndpointCqrsTests`; an architecture test that every settings write route is in `EndpointTable`'s `commands`
-  group; `GET /sindri/ledger` with `newest=true`; a settings write with an `Origin` header is 403 `SND-API-008`; a settings write with a form
-  content type is refused.
-- UI (Frames tests): Setup without the profile step; the Health "Settings" row with its broken-file, leftover and
-  missing-checkout warnings; the loading, can't-reach and no-file states; Last changed after the person's own save,
-  with a day when not today; See changes with its empty and error states; both busy messages keeping typed values,
-  and a 410 on an item the outside edit touched showing the banner; a field refusal with focus on the field; a
-  sheet on a broken file, and its save coming back once the file is fixed; and the stale-sheet banner for a change,
-  a removal, Keep mine leaving the other writer's field alone, a reconnect, and the sheet's own save showing nothing.
+  group; a settings write with an `Origin` header is 403 `SND-API-008`; a settings write with a form content type
+  is refused; and, in the second PR, `GET /sindri/ledger` with `newest=true`.
+- UI (Frames tests), first PR: Setup without the profile step; the Health "Settings" row with its broken-file,
+  leftover and missing-checkout warnings; the loading and can't-reach states; Last changed reading "Created with the
+  defaults" on a fresh home, and after the person's own save, with a day when not today; both busy messages keeping
+  typed values; a field refusal with focus on the field; and a sheet on a broken file, with its save coming back
+  once the file is fixed.
+- UI (Frames tests), second PR: See changes with its empty and error states; a 410 on an item the outside edit
+  touched showing the banner; and the stale-sheet banner for a change, a removal, Keep mine leaving the other
+  writer's field alone, a reconnect, and the sheet's own save showing nothing.
 - aot-smoke: its `profile/profile.yaml` lines move to `settings/settings.yaml`, and expected.txt is re-pinned.
 - The closing grep returns only the migration and tombstone code, their tests, and this spec:
 
@@ -465,9 +476,14 @@ About 6k lines in about 1000 `src/Sindri` files say profile, plus 4.5k in tests 
 - The removals shrink the code: the hash guard (about 494 lines across src, tests and docs), `ProfileHash`, the
   profile Setup step, two NeedsYou rows, and two UI checks.
 - The new code is the file lock, the audit line with its edits-outside-Sindri check, the `settings.changed` event,
-  the migration, `settings cleanup`, and the UI's Last changed line, See changes, and the stale-sheet banner.
-- If the PR runs long, the stale-sheet banner and See changes are the pieces that can move to a follow-up PR. The
-  outside-Sindri check stays, because without it the ledger misses edits.
+  the migration with the defaults, `settings cleanup`, and the UI's Last changed line, See changes, and the
+  stale-sheet banner.
+- It ships as two PRs, to keep the first one small:
+  1. Everything except the two UI pieces below: the renames, the removals, the lock, the audit line with its
+     outside-Sindri check (without it the ledger misses edits), `settings.changed`, the migration and defaults,
+     `settings cleanup`, and in the UI Last changed, the busy messages with **Try again**, field refusals and the
+     broken-file state.
+  2. See changes (with `newest=true` on `GET /sindri/ledger`) and the stale-sheet banner, with their Frames tests.
 - The PR body gives a reading order: the new code first (lock, audit line, migration, UI), then the per-area
   rename commits.
 
