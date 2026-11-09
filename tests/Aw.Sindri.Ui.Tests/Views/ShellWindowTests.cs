@@ -1275,7 +1275,7 @@ public sealed class ShellWindowTests : IDisposable
     public Task The_health_pill_opens_Health_with_S1bs_status_card() => OnUi(async () =>
     {
         _records.Write(A.Record());
-        _server.Current = A.Status(profile: A.ChangedProfile());
+        _server.Current = A.Status(profile: A.Live());
         _server.Push(A.Event(3));
         var (window, shell) = await Show(s => s.State == ShellState.Normal && s.Health.LastEvent.EndsWith("#3", StringComparison.Ordinal));
 
@@ -1291,10 +1291,9 @@ public sealed class ShellWindowTests : IDisposable
         List<string?> Rows(string name) => [.. Named<ItemsControl>(window, name).GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)];
         Assert.Equal(["pid · epoch", "4242 · 7", "Host lease", "held · expires " + A.Noon.AddSeconds(60).ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture), "API", "127.0.0.1:7410"], Rows("ProcessRows"));
         Assert.Equal((StateGlyph.Ok, Labels.Running), (Glyph(window, "ProcessGlyph"), Text(window, "ProcessWord")));
-        Assert.Equal(("changed since approval", StateGlyph.Profile), (Text(window, "ProfileHeadText"), Glyph(window, "ProfileHeadGlyph")));
-        Assert.Equal(["approved", "ab12cd", "live", "ff00ee", "file", "/home/profile.yaml"], Rows("ProfileRows"));
+        Assert.Equal(("live", StateGlyph.Ok), (Text(window, "ProfileHeadText"), Glyph(window, "ProfileHeadGlyph")));
+        Assert.Equal(["live", "ab12cd", "file", "/home/profile.yaml"], Rows("ProfileRows"));
         HealthHeadsAndPathsAreAligned(window);
-        Assert.Equal("sindri profile approve", Text(window, "ProfileFixText"));
         Assert.False(Visible(window, "HeadlineText"));
         var page = Named<Control>(window, "HealthPage");
         Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.FontSize > 13 && !t.Classes.Contains("page-title"));
@@ -1337,15 +1336,14 @@ public sealed class ShellWindowTests : IDisposable
 
     // F3 review (456-1): what the person must act on stays up front; only the per-service detail waits behind Details.
     [Fact]
-    public Task The_profile_fix_and_the_actions_are_up_front_with_the_cards() => OnUi(async () =>
+    public Task The_actions_are_up_front_with_the_cards() => OnUi(async () =>
     {
         _records.Write(A.Record());
-        _server.Current = A.Status(profile: A.ChangedProfile());
-        var (window, shell) = await Show(s => s.State == ShellState.Normal && s.Health.HasProfileFix);
+        _server.Current = A.Status(profile: A.Live());
+        var (window, shell) = await Show(s => s.State == ShellState.Normal);
         shell.GoTo(PageId.System);
         Settle(window);
 
-        Assert.True(Visible(window, "ProfileFixText"));
         Assert.True(Visible(window, "ActionsSection"));
         Assert.True(Visible(window, "ProcessRows"));
     });
@@ -1359,7 +1357,7 @@ public sealed class ShellWindowTests : IDisposable
         // I4 (home.html): labelled cells, the G . hint and a trailing ›; still one button named by the health line.
         var cells = Named<ItemsControl>(window, "HealthCells");
         var texts = cells.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
-        Assert.Equal(["Process", "Running · pid 4242", "Epoch · lease", "7 · held", "Services", "1 service", "Profile", "approved"], texts);
+        Assert.Equal(["Process", "Running · pid 4242", "Epoch · lease", "7 · held", "Services", "1 service", "Profile", "live"], texts);
         Assert.Equal([StateGlyph.Ok], cells.GetVisualDescendants().OfType<StateIcon>().Where(i => i.IsEffectivelyVisible).Select(i => i.Glyph));
         Assert.True(Visible(window, "HealthChevron"));
         Assert.True(Visible(window, "HealthKeys"));

@@ -26,6 +26,7 @@ internal static class StatusCommand
                     + (status.Lanes.Entries.Count == 0 ? "(none mapped)" : string.Join(", ", status.Lanes.Entries.Select(static e => $"{e.Lane}={e.SessionName}"))),
                 .. status.Train is { Length: > 0 } train ? train.Split('\n') : [],
                 .. ContextLine.Of(status.Context),
+                status.Consumer is { } consumer ? "consumer: " + consumer : "consumer: not computed",
                 "health: " + (status.LastHealth ?? "never run (aw-meta health)"),
                 .. status.Heavy is { } heavy ? [heavy.Line()] : Array.Empty<string>(),
                 .. status.Builders is { } builders ? [builders.Line()] : Array.Empty<string>(),

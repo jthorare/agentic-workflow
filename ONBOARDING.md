@@ -268,7 +268,7 @@ sindri doctor                     # expect every line ok
 sindri                            # start the control plane and open the app
 sindri status                     # where it stands
 sindri profile init               # scaffold your profile
-sindri profile validate           # check it; `sindri profile approve` at a terminal
+sindri profile validate           # check it; edits apply on save, no approve step
 ```
 
 See [`docs/sindri/README.md`](docs/sindri/README.md), or open `docs/sindri.html` for the visual walkthrough.

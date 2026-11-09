@@ -53,7 +53,7 @@ public sealed class ProfileSourceTests : IDisposable
     }
 
     [Theory, Trait("Lane", "integration")]
-    [InlineData("schemaVersion: 1\nuser: thor\ncolour: blue\n", "'colour' is not a profile key here (allowed: schemaVersion, user, tenant, repos, services, api, workflow, context, index, launch, agents, setup, sandbox, review)")]
+    [InlineData("schemaVersion: 1\nuser: thor\ncolour: blue\n", "'colour' is not a profile key here (allowed: schemaVersion, user, tenant, repos, services, api, workflow, context, index, launch, agents, setup, sandbox, review, todo)")]
     [InlineData("schemaVersion: one\nuser: thor\n", "schemaVersion: expected a whole number")]
     [InlineData("schemaVersion: 1\nuser: thor\nrepos: { a: 1 }\n", "repos: expected a list")]
     [InlineData("schemaVersion: 1\n", "user")]
@@ -80,35 +80,6 @@ public sealed class ProfileSourceTests : IDisposable
 
         Assert.Equal(SindriErrors.ProfileMissing.Code, error.Code);
         Assert.Contains("sindri profile init", error.Message, StringComparison.Ordinal);
-        Assert.Contains("sindri profile approve", error.Message, StringComparison.Ordinal);
     }
 
-    [Fact, Trait("Lane", "integration")]
-    [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
-    public async Task An_approval_is_the_latest_snapshot_owner_only_and_survives_a_live_edit()
-    {
-        Assert.Null((await _files.Approvals.Latest(Token)).Value);
-        _files.Write(Valid);
-        var approved = (await _files.Source.Load(Token)).Value;
-        _ = await _files.Approvals.Save(approved, Token);
-        _files.Write(Valid.Replace("30s", "7s", StringComparison.Ordinal));
-
-        var latest = (await _files.Approvals.Latest(Token)).Value;
-
-        Assert.Equal(approved.Hash, latest!.Hash);
-        Assert.Equal("30s", latest.Profile.Services!["heartbeat"].Every);
-        Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(latest.Source));
-    }
-
-    [Fact, Trait("Lane", "integration")]
-    public async Task A_hand_edited_snapshot_is_not_trusted()
-    {
-        _files.Write(Valid);
-        var approved = (await _files.Source.Load(Token)).Value;
-        _ = await _files.Approvals.Save(approved, Token);
-        var snapshot = Path.Combine(_files.Settings.ApprovalsDirectory, approved.Hash.Value, "profile.json");
-        await File.WriteAllTextAsync(snapshot, (await File.ReadAllTextAsync(snapshot, Token)).Replace("30s", "5s", StringComparison.Ordinal), Token);
-
-        Assert.Equal(SindriErrors.ProfileNotApproved.Code, (await _files.Approvals.Latest(Token)).Error.Code);
-    }
 }

@@ -23,7 +23,7 @@ public sealed class OnyxLeftoverKeyTests : IDisposable
         Assert.Equal(SindriErrors.IndexOnyxInProfile.Code, result.Error.Code);
         Assert.Equal("SND-INDEX-007", result.Error.Code);
         Assert.Contains("context.sources.onyx", result.Error.Message, StringComparison.Ordinal);
-        Assert.Contains("sindri profile approve", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("no approve step", result.Error.Message, StringComparison.Ordinal);
     }
 
     [Theory, Trait("Lane", "unit")]
@@ -49,6 +49,6 @@ public sealed class OnyxLeftoverKeyTests : IDisposable
         var loaded = await _files.Source.Load(TestContext.Current.CancellationToken);
 
         Assert.Equal("SND-INDEX-007", loaded.Error.Code);
-        Assert.Contains("sindri profile approve", loaded.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("no approve step", loaded.Error.Message, StringComparison.Ordinal);
     }
 }

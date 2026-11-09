@@ -1,4 +1,3 @@
-using System.Net;
 using Aw.Context.Core.Glossary;
 using Aw.Context.Testing.Fixtures;
 using Aw.Context.Testing.Glossary;
@@ -7,7 +6,6 @@ using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Tests.ApiGoldens;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using static Aw.Sindri.Tests.Callers.CallerRequests;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -53,9 +51,6 @@ internal static class ContextHosts
         var yaml = $"schemaVersion: 1\nuser: golden\nrepos:\n  - {{ name: {name}, path: \"{repoPath}\" }}\n"
             + $"context:\n  docs: {{ globs: [\"docs/**/*.md\"] }}\n  sessions: {{ enabled: {(sessions ? "true" : "false")} }}\n" + (labeling ? string.Empty : NoLabeling) + contextExtra + profileExtra;
         var host = await GoldenHost.Start(temporary: true, ct, yaml, extra: services => { NoCodeIndex(services); extra?.Invoke(services); });
-        var hash = (await host.LiveHash(ct)).Value;
-        var approved = await host.Http.Ask(Post("/sindri/profile/approve", await ApiScenarios.Confirmed(host, hash), Human(host.Token.Value)));
-        Assert.Equal(HttpStatusCode.OK, approved.Status);
         await using var scope = host.App.Services.CreateAsyncScope();
         var refresh = scope.ServiceProvider.GetServices<IScheduledService>().Single(s => s.Identity().Value == "context-docs-refresh");
         var grant = host.App.Services.GetRequiredService<HeldLease>().Current!;   // why: the started host holds the lease

@@ -14,8 +14,6 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     private List<ConceptChoice> _columns = [];
     private PageDraft? _draft;
     private string? _hash;
-    private bool _approve;
-    private IReadOnlyList<string> _before = [];
     private string _initial = string.Empty;
 
     /// <summary>Builds a sheet that has read nothing yet.</summary>
@@ -161,7 +159,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
             return;
         }
 
-        await ReadProfile(draft.Id is { Length: > 0 } id ? [id] : [], cancellationToken).ConfigureAwait(true);
+        await ReadProfile(cancellationToken).ConfigureAwait(true);
         Fill(draft);
     }
 
@@ -170,7 +168,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     /// <returns>When the sheet is filled.</returns>
     internal async Task OpenNew(CancellationToken cancellationToken)
     {
-        await ReadProfile([], cancellationToken).ConfigureAwait(true);
+        await ReadProfile(cancellationToken).ConfigureAwait(true);
         Fill(new PageDraft(Id: null, Name: string.Empty, Repo: null, Surface: null, Owner: false, Actions: [new PageActionDraft(Id: null, Name: string.Empty, Action: null, Concepts: _openConcept is null ? [] : [_openConcept])]));   // opened from a concept: its first action relates to it (#1851)
     }
 
@@ -193,12 +191,11 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     /// <summary>Gets a value indicating whether anything was typed, ticked, added or removed since the sheet filled.</summary>
     internal bool HasChanges => IsReady && !string.Equals(Snapshot(), _initial, StringComparison.Ordinal);
 
-    // The button's label and the hash come from the profile as it is now: only this page waiting means one click saves and approves.
-    // The hash is the file's at open, what the writer compares with (#1826): the live hash can lag a hand edit, and a change after open still clashes.
-    private async Task ReadProfile(IReadOnlyList<string> pageIds, CancellationToken cancellationToken)
+    // The hash comes from the profile as it is now. The hash is the file's at open, what the writer compares with (#1826): the live hash can lag a hand edit, and a change after open still clashes.
+    private async Task ReadProfile(CancellationToken cancellationToken)
     {
-        var waiting = await _writes.Waiting(cancellationToken).ConfigureAwait(true);
-        (_hash, _approve, _before) = (waiting?.FileHash ?? waiting?.LiveHash, waiting?.OnlyPages(pageIds) == true, waiting?.ChangedPaths ?? []);
+        var hashes = await _writes.Hashes(cancellationToken).ConfigureAwait(true);
+        _hash = hashes?.FileHash ?? hashes?.LiveHash;
         if (_hash is null)
         {
             Say(Labels.PageSheetNoHash);

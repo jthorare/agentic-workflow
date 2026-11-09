@@ -305,15 +305,13 @@ sleep 0.3
 bash "$INSTALL" --publish --rebuild > /dev/null 2>&1; check "--rebuild with no serve exits 0" "$?" "0"
 check "and publishes the seven binaries again" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "7"
 
-# A profile approval this build can't read (#1143) or that isn't there: --link says the one command and still exits 0.
+# A profile this build can't validate: --link says the one command and still exits 0.
 bash "$INSTALL" --publish > /dev/null 2>&1   # --link needs a build to link
-out="$(FAKE_PROFILE_RC=2 FAKE_PROFILE_OUT="SND-PROFILE-005 x/profile.json doesn't match its approval hash" bash "$INSTALL" --link 2>&1)"; rc=$?
-check "an unreadable approval: --link still exits 0" "$rc" "0"
-has "an unreadable approval: the hint names the command" "$out" "run \`sindri profile approve\` to see the live hash"
-out="$(FAKE_PROFILE_RC=1 FAKE_PROFILE_OUT="valid, not approved" bash "$INSTALL" --link 2>&1)"; rc=$?
-has "an unapproved profile: the hint" "$out" "the profile isn't approved by this build; run \`sindri profile approve\`"
+out="$(FAKE_PROFILE_RC=2 FAKE_PROFILE_OUT="SND-PROFILE-001 x/profile.yaml: unknown key" bash "$INSTALL" --link 2>&1)"; rc=$?
+check "an invalid profile: --link still exits 0" "$rc" "0"
+has "an invalid profile: the hint names the command" "$out" "run \`sindri profile validate\` to see why"
 out="$(bash "$INSTALL" --link 2>&1)"
-check "an approved profile: no hint" "$(printf '%s' "$out" | grep -c 'profile approve')" "0"
+check "a valid profile: no hint, and no word of approving it" "$(printf '%s' "$out" | grep -c 'profile approve\|to see why')" "0"
 
 # A tree that is not a git checkout cannot be published.
 NG="$WORK/nogit"; mkdir -p "$NG/scripts/lib" "$NG/src/Sindri/Aw.Sindri.Host"

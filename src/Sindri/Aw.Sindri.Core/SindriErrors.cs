@@ -23,14 +23,8 @@ public static partial class SindriErrors
     /// <summary>SND-MODEL-001: a 'workflow.agent' model key names an agent or a state that isn't there, or a default that isn't in its list (model-pick spec §8); the message names the nearest id.</summary>
     public static readonly ErrorDefinition ModelKeyInvalid = new("SND-MODEL-001", ErrorKind.Invalid, "A model key doesn't match anything");
 
-    /// <summary>SND-PROFILE-003: the hash to approve isn't the live profile's hash.</summary>
+    /// <summary>SND-PROFILE-003: the --if-hash given isn't the live profile's hash.</summary>
     public static readonly ErrorDefinition ProfileHashMismatch = new("SND-PROFILE-003", ErrorKind.Conflict, "The hash doesn't match the profile");
-
-    /// <summary>SND-PROFILE-005: no profile has been approved yet.</summary>
-    public static readonly ErrorDefinition ProfileNotApproved = new("SND-PROFILE-005", ErrorKind.NotFound, "No profile is approved");
-
-    /// <summary>SND-PROFILE-006: the approved snapshots can't be read or written (permissions, a full disk).</summary>
-    public static readonly ErrorDefinition ApprovalsUnavailable = new("SND-PROFILE-006", ErrorKind.Unavailable, "The approvals can't be read or written");
 
     /// <summary>SND-LEDGER-001: the ledger's schema doesn't match this build.</summary>
     public static readonly ErrorDefinition LedgerSchema = new("SND-LEDGER-001", ErrorKind.Conflict, "The ledger schema doesn't match this build");
@@ -131,8 +125,8 @@ public static partial class SindriErrors
     /// <summary>SND-JOB-004: a refresh job wrote no progress line for 30 min and was ended as timed out (#2106); it is never retried. A job that keeps writing lines is never cut off.</summary>
     public static readonly ErrorDefinition JobStalled = new("SND-JOB-004", ErrorKind.Timeout, "The job wrote no progress line for 30 min");
 
-    /// <summary>SND-SVC-404: no service of the approved profile, and no built-in, has that name (API spec §9).</summary>
-    public static readonly ErrorDefinition ServiceNotFound = new("SND-SVC-404", ErrorKind.NotFound, "No such service in the approved profile");
+    /// <summary>SND-SVC-404: no service of the profile, and no built-in, has that name (API spec §9).</summary>
+    public static readonly ErrorDefinition ServiceNotFound = new("SND-SVC-404", ErrorKind.NotFound, "No such service in the profile");
 
     /// <summary>SND-LAUNCH-001: the terminal viewer didn't open the launch; on a tmux host the session keeps running (API P10a, UI E-5).</summary>
     public static readonly ErrorDefinition LaunchViewerFailed = new("SND-LAUNCH-001", ErrorKind.Unavailable, "The terminal didn't open the launch");
@@ -245,14 +239,11 @@ public static partial class SindriErrors
     /// <summary>SND-SETUP-003: the app's confirmation was not given: a hold that was too short, an answer less than 2 seconds after the challenge, or the wrong kind of answer.</summary>
     public static readonly ErrorDefinition SetupConfirmationRefused = new("SND-SETUP-003", ErrorKind.Forbidden, "The confirmation was not given (fix: for a held one, hold the button for the full time or type the text; for a typed one, type the text exactly)");
 
-    /// <summary>SND-SETUP-004: RegisterMcp for a repo the approved profile does not name.</summary>
-    public static readonly ErrorDefinition SetupRepoNotInProfile = new("SND-SETUP-004", ErrorKind.Conflict, "The approved profile does not name that repo (fix: add the repo, approve the profile, then try again)");
+    /// <summary>SND-SETUP-004: RegisterMcp for a repo the profile does not name.</summary>
+    public static readonly ErrorDefinition SetupRepoNotInProfile = new("SND-SETUP-004", ErrorKind.Conflict, "The profile does not name that repo (fix: add the repo, then try again)");
 
-    /// <summary>SND-SETUP-007: the approve-all plan, or its challenge, was asked for before a profile is approved (setup-once spec §7.6).</summary>
-    public static readonly ErrorDefinition SetupProfileNotApproved = new("SND-SETUP-007", ErrorKind.Conflict, "No profile is approved yet (fix: approve the profile first)");
-
-    /// <summary>SND-FORGE-001: a pull-request call while the approved profile names no forge ('workflow.forge.adapter' is absent).</summary>
-    public static readonly ErrorDefinition NoForge = new("SND-FORGE-001", ErrorKind.Conflict, "No forge is configured (fix: set workflow.forge.adapter in the profile and approve it)");
+    /// <summary>SND-FORGE-001: a pull-request call while the profile names no forge ('workflow.forge.adapter' is absent).</summary>
+    public static readonly ErrorDefinition NoForge = new("SND-FORGE-001", ErrorKind.Conflict, "No forge is configured (fix: set workflow.forge.adapter in the profile)");
 
     /// <summary>SND-FORGE-002: the forge port refused the call: a host outside 'workflow.forge.hosts', a missing or rejected credential, input the forge doesn't accept.</summary>
     public static readonly ErrorDefinition ForgeRefused = new("SND-FORGE-002", ErrorKind.Forbidden, "The forge refused the call");
@@ -276,20 +267,20 @@ public static partial class SindriErrors
     private static ErrorDefinition[] Every() =>
     [
         LeaseHeld, LeaseLost, LeaseStale, ProfileMissing, ProfileInvalid, ModelKeyInvalid, ProfileHashMismatch,
-        ProfileNotApproved, ApprovalsUnavailable, LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, ApiNoCode, ApiInternal,
+        LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, ApiNoCode, ApiInternal,
         CallerUnknown, OriginRefused, CommandBusy, AuthTokenRequired, AuthRefused, UnknownVerb, StartFailed,
         InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, RequestInvalid, RequestsRateLimited, DecisionNotFound, DecisionInvalid, JobNotFound, JobConflict, JobInterrupted, JobsRateLimited, JobNotWaiting, JobStalled, ServiceNotFound, SecretNotStored, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe, IndexTokenUnresolved, IndexRepoUnreadable, IndexNotInProfile, IndexOnyxLeftover, IndexOnyxInProfile,
         LaunchNotFound, LaunchViewerFailed, LaunchNoViewer, LaunchAgentMissing, LaunchRepoMissing, LaunchNoSession, LaunchInterrupted, LaunchInProgress, LaunchTimedOut, LaunchBudgetReached,
         LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchPrePushForeign, LaunchPushRefused, LaunchTrustUnavailable, LaunchFactFileTracked, LaunchT3Unavailable, LaunchT3NoProject, LaunchT3NoProvider,
         LaunchSandboxUnavailable, LaunchUnconfinable, LaunchSelfCheckFailed, LaunchLoginUnavailable, LaunchGitHubTokenFailed, LaunchLimitHit, LaunchSessionWait, LaunchPrepareFailed, SandboxAllowRefused, LaunchSessionIdTimedOut, LaunchNoUsableAgent, ModelNoneAllowed, ModelListUnavailable, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride, SessionNotFound, SessionConflict,
-        WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile, SetupProfileNotApproved,
-        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound, InvalidQuery,
+        WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile,
+        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound, InvalidQuery, RouteRemoved,
         ScrubStagedSecrets, ScrubForeignHook, ScrubNotARepo, ScrubGitFailed,
         ProjectAlreadyOnPage, ProjectFactsUnavailable, ProjectNotSynced, ProjectInvalid, ProjectNotFound, ProjectConflict,
-        GraphInvalid, GraphFindings, GraphUnknownBlock, GraphBadReference, GraphBadExpression, GraphBadCron, GraphStaleRevision, GraphNotFound, GraphSlugTaken, GraphIdTaken, GraphArchived, GraphRunIdTaken, GraphRunNotFound, GraphBlockFailed, GraphPromptAnswer, GraphRunControlsPending,
+        GraphInvalid, GraphFindings, GraphUnknownBlock, GraphBadReference, GraphBadExpression, GraphBadCron, GraphStaleRevision, GraphNotFound, GraphSlugTaken, GraphIdTaken, GraphArchived, GraphRunIdTaken, GraphRunNotFound, GraphBlockFailed, GraphPromptAnswer, GraphRunControlsPending, GraphNotActive, GraphBadPayload, GraphRunEnded, GraphOutputTruncated,
         SkillResultUnreadable, SkillResultWrongSkill, SkillVerdictUnmapped, SkillOutputInvalid, SkillRequirementMissing, SkillPrInputInvalid, SkillAgentCopyDiffers, SkillPrFetchFailed,
         ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewNotSynced, ReviewFixNotPosted, ReviewRepoUnsynced, ReviewNoLogin, ReviewPrNotFound, ReviewOfflineUncached,
-        LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain, LinearUrlNotApproved,
+        LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain,
         ConnectionNotFound, ConnectionNeedsSignIn, ConnectionSignInTimeout, ConnectionStateMismatch, ConnectionRefreshFailed, ConnectionSecretUnavailable, ConnectionNeedsClientId, ConnectionNameInvalid, ConnectionConsentDenied, ConnectionExists, ConnectionKindNoSignIn,
         MemoryNotFound, MemoryNameTaken, MemoryFactInvalid, MemoryEmbedUnavailable, MemoryMatchLevelInvalid, MemoryNameInvalid, MemoryExpiryPast,
         .. EveryTodo(),

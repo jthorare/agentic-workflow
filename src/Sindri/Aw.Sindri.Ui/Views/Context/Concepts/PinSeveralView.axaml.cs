@@ -34,7 +34,7 @@ internal sealed partial class PinSeveralView : UserControl
         {
             _bound.RowsRead += OnRowsRead;
             _bound.KeepEditingFocusRequested += OnKeepEditingFocus;
-            _ = _bound.StartAsync(Token);
+            _bound.Start();
         }
     }
 

@@ -14,7 +14,7 @@ public sealed class ProfileWatchTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Profile_watch_checks_at_start_and_sees_a_drift_within_30_seconds()
+    public async Task Profile_watch_checks_at_start_and_sees_a_change_within_30_seconds()
     {
         _ = await _h.Profiles.Save(SliceHarness.Profile("30s"), Token);
         _h.Profiles.Live = SliceHarness.Profile("30s");
@@ -22,7 +22,8 @@ public sealed class ProfileWatchTests
 
         await Run(() => _h.Profiles.Live = SliceHarness.Profile("5s"), ProfileWatch.Every, steps: 1);
 
-        Assert.Equal([false, true], Checks().Select(c => c.Drifted));
+        Assert.Equal([SliceHarness.Profile("30s").Hash, SliceHarness.Profile("5s").Hash], Checks().Select(c => c.Live!.Value));
+        Assert.All(Checks(), c => Assert.False(c.Drifted));
         Assert.All(_h.Store.Events.Where(e => e.Envelope.Type == EventTypes.ProfileChecked), e => Assert.Equal("service:profile-watch", e.Envelope.Actor));
     }
 

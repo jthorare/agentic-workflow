@@ -14,8 +14,7 @@
 #      1. Scratch home: AW_SINDRI_HOME=$AW_STATE_DIR/sindri-app-firstrun (0700, marker .first-run-scratch), port 7481.
 #      2. Profile: `sindri profile init`, then this repo as the one repo, the context-docs-refresh service, and the
 #         `index:` and `context:` sections. Written only when the home has no profile yet.
-#      3. STOP for approval. Approval needs no typed phrase, but the script stops so you read what changed first; it prints the exact
-#         `sindri profile approve <hash>` for you to type, and exits 3. Run `continue` after.
+#      3. The profile is live as written (edits apply on save); there is nothing to approve and this step does not stop.
 #      4. Serve: `sindri --headless` (the control plane and its Temporal dev server), then `sindri status --json`.
 #      5. First code index build: `sindri services run code-index-main-move` (there is no build verb: the service starts the
 #         BuildCodeIndex job), then `sindri code-index status --repo <repo> --json` until the repo is ok.
@@ -43,7 +42,7 @@
 #   AW_SINDRI_UI              the sindri-ui binary; default $AW_STATE_DIR/bin/cs/current/sindri-ui
 # It exports AW_SINDRI_APP_NO_MCP=1 for every Sindri it starts, so the scratch plane never registers a 'sindri' MCP server in ~/.claude.json.
 #
-# Exit: 0 ok; 1 a step failed (the message names it); 2 usage or a refused setup; 3 stopped for you to approve something.
+# Exit: 0 ok; 1 a step failed (the message names it); 2 usage or a refused setup.
 # Bash 3.2 compatible (macOS /bin/bash).
 set -uo pipefail
 
@@ -248,7 +247,7 @@ write_profile() {
     echo "+ append to $profile_file:"
     profile_tail | sed 's/^/    | /'
     sx profile validate --json
-    check "profile validate gives a hash (exit 0 approved, 1 not approved yet, 2 invalid)"
+    check "profile validate gives a hash (exit 0 valid, 2 invalid)"
     return 0
   fi
   if [ -f "$profile_file" ]; then
@@ -280,25 +279,14 @@ EOF
   [ -z "${FIRST_RUN_CONTEXT_EXTRA:-}" ] || printf '%s\n' "$FIRST_RUN_CONTEXT_EXTRA"
 }
 
-# ---- 3. approval gate ----
+# ---- 3. profile applies on save ----
 approval_gate() {
-  step "3. profile approval (yours, at a terminal)"
+  step "3. profile (edits apply on save; nothing to approve)"
   if [ "$dry" = 1 ]; then
-    echo "+ (stop here unless 'profile validate' exits 0) print:"
-    echo "    AW_SINDRI_HOME=$home AW_SINDRI_PORT=$port $sindri_cmd profile approve <hash>"
-    echo "  and exit 3; after you approve, '$self continue' resumes at step 4"
+    echo "+ nothing to approve: the profile written in step 2 is the live one"
     return 0
   fi
-  if [ "$PROFILE_RC" = 0 ]; then note "the profile is approved ($HASH)"; return 0; fi
-  cat >&2 <<EOF
-The profile needs your approval. Read what changed, then approve it with:
-
-  AW_SINDRI_HOME=$home AW_SINDRI_PORT=$port $sindri_cmd profile approve $HASH
-
-It shows what changed and asks you to type: approve profile ${HASH:0:6}
-Then run:  $self continue
-EOF
-  exit 3
+  note "the profile is live ($HASH)"
 }
 
 # ---- 4. serve ----
@@ -307,7 +295,7 @@ start_serve() {
   if [ "$dry" = 1 ]; then
     sx --headless
     sx status --json
-    check "status --json has running true and profile.needsApproval false (its exit code is 1 while health isn't healthy; that's fine)"
+    check "status --json has running true (its exit code is 1 while health isn't healthy; that's fine)"
     return 0
   fi
   sx_out status --json
@@ -319,7 +307,6 @@ start_serve() {
     sx_out status --json
   fi
   [ "$(printf '%s' "$OUT" | jq -r '.running // false' 2>/dev/null)" = true ] || broke "step 4 (serve): the control plane isn't running; see $home/logs/serve.log"
-  [ "$(printf '%s' "$OUT" | jq -r 'if .profile.needsApproval == false then "false" else "true" end' 2>/dev/null)" = false ] || broke "step 4 (serve): it runs but the profile still needs approval; run $self up again"
   echo "  running on port $port"
 }
 

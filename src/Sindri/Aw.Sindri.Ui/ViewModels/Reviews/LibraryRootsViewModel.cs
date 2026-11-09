@@ -26,7 +26,7 @@ internal sealed class LibraryRootsViewModel : ObservableObject
     internal LibraryRootsViewModel(Func<Uri?> url, ISindriApi api, IFolderPicker folders, TimeProvider clock)
     {
         (_url, _api, _clock) = (url, api, clock);
-        Form = new LibraryRootFormViewModel(url, api, folders, Applied);
+        Form = new LibraryRootFormViewModel(url, api, folders, (_, ct) => Applied(ct));
     }
 
 #pragma warning disable CA1822, MA0041 // why: the view binds these as instance properties of the view model
@@ -256,13 +256,13 @@ internal sealed class LibraryRootsViewModel : ObservableObject
         }
 
         ChangeError = string.Empty;
-        await Applied(changed.Value, cancellationToken).ConfigureAwait(true);
+        await Applied(cancellationToken).ConfigureAwait(true);
     }
 
-    // A change that went through: said when it waits for the approval, and the folders are read again.
-    private async Task Applied(LibraryRootChanged changed, CancellationToken cancellationToken)
+    // A change that went through (it applies on save): the folders are read again.
+    private async Task Applied(CancellationToken cancellationToken)
     {
-        Note = changed.Approved ? string.Empty : Labels.ReviewsLoginPending;
+        Note = string.Empty;
         OnChanged(nameof(CanAdd));
         if (_url() is { } url)
         {

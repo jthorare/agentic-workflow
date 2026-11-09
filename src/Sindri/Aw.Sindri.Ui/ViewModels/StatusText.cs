@@ -4,39 +4,24 @@ using Aw.Sindri.Ui.Api;
 namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>
-/// How the window words Sindri's answers. Presentation only: every verdict (running, needs approval, changed) comes from
+/// How the window words Sindri's answers. Presentation only: every verdict (running, health) comes from
 /// Sindri's status record; this picks the words, the same words 'sindri status' uses.
 /// </summary>
 internal static class StatusText
 {
-    internal const string ApproveFix = "sindri profile approve";
-
     // The health line (§4.8): Running · pid · epoch · API v1 · N services · profile <state>, the fields the status carries.
     internal static string HealthLine(StatusView s) => string.Join(" · ", HealthWords(s));
 
     internal static string Lease(StatusView s) => string.Create(CultureInfo.InvariantCulture, $"pid {s.Pid} · epoch {s.Epoch}");
 
-    // "approved" only when Sindri says nothing needs approval; otherwise the most specific reason the record gives.
-    internal static string ProfileState(ProfileView p) => p switch
-    {
-        { Approved: null, Problem: not null } => "unreadable",
-        { Approved: null } => "not approved",
-        { ChangedSinceApproval: true } => "changed since approval",
-        { NeedsApproval: true } => "needs approval",
-        _ => "approved",
-    };
+    // "unreadable" when the live file doesn't load, else "live": an edit applies on save, so there is no approval state to word.
+    internal static string ProfileState(ProfileView p) => p.Problem is not null ? "unreadable" : "live";
 
     internal static string ProfileDetail(ProfileView p) => p switch
     {
-        { Approved: null, Problem: { } problem } => problem,
-        { Approved: null } => $"{p.Source} (hash {Short(p.Live)})",
-        { ChangedSinceApproval: true } => $"running with approved {Short(p.Approved)}; {p.Source} is now {Short(p.Live)}",
-        { Problem: { } problem } => $"hash {Short(p.Approved)}; the live file has a problem: {problem}",
-        _ => $"hash {Short(p.Approved)} · {(p.Source is { } source ? Home(source) : null)}",
+        { Problem: { } problem } => problem,
+        _ => $"hash {Short(p.Live)} · {(p.Source is { } source ? Home(source) : null)}",
     };
-
-    // Approving needs a live profile that loads: offer the command only when it can work (approve refuses an unreadable one).
-    internal static string ProfileFix(ProfileView p) => p.NeedsApproval && p.Live is not null ? ApproveFix : string.Empty;
 
     internal static ServiceRow Service(ServiceView s) => new(s.Name, "every " + s.Every, s.LastRun is { } t ? "last run " + Time(t) : "not run yet");
 
@@ -67,22 +52,13 @@ internal static class StatusText
     // The profile's state in words; its glyph is ProfileGlyph's.
     internal static string ProfileHead(ProfileView p) => ProfileState(p);
 
-    // The profile state's §11.3 glyph: ✓ approved, ✕ unreadable, ◇ anything else to look at.
-    internal static StateGlyph ProfileGlyph(ProfileView p) => ProfileState(p) switch
-    {
-        "approved" => StateGlyph.Ok,
-        "unreadable" => StateGlyph.Down,
-        _ => StateGlyph.Profile,
-    };
+    // The profile state's §11.3 glyph: ✓ live, ✕ unreadable.
+    internal static StateGlyph ProfileGlyph(ProfileView p) => p.Problem is not null ? StateGlyph.Down : StateGlyph.Ok;
 
-    // The Health page's profile rows (§4.8): the approved hash, the live one when it differs, the file with ~ for home.
+    // The Health page's profile rows (§4.8): the live hash, the file with ~ for home.
     internal static IEnumerable<HealthCell> Profile(ProfileView p)
     {
-        yield return new(Labels.RowApproved, Short(p.Approved));
-        if (!string.Equals(p.Live, p.Approved, StringComparison.Ordinal))
-        {
-            yield return new(Labels.RowLive, Short(p.Live));
-        }
+        yield return new(Labels.RowLive, Short(p.Live));
 
         if (p.Source is { } source)
         {

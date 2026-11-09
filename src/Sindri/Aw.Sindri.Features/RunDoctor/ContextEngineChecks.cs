@@ -19,7 +19,7 @@ namespace Aw.Sindri.Features.RunDoctor;
 internal sealed class ContextEngineChecks(IContextEngine context, IMapPublishCheck publish, LinearDoctor linear, ICodeIndexChecks codeIndex)
 {
     /// <summary>The checks, in the order doctor prints them.</summary>
-    /// <param name="approved">The approved profile, or null.</param>
+    /// <param name="approved">The profile, or null.</param>
     /// <param name="cancellationToken">Cancels the reads and the probe.</param>
     /// <returns>The four context checks, then the code index's.</returns>
     internal async ValueTask<DoctorCheck[]> Check(LoadedProfile? approved, CancellationToken cancellationToken)
@@ -38,12 +38,12 @@ internal sealed class ContextEngineChecks(IContextEngine context, IMapPublishChe
         ];
     }
 
-    // 'context:roles' (issue 1105): read from the map status, so it counts what status counts; nothing to say without an approved profile or a map.
+    // 'context:roles' (issue 1105): read from the map status, so it counts what status counts; nothing to say without a profile or a map.
     private async ValueTask<DoctorCheck> Roles(ContextScope? scope, CancellationToken cancellationToken)
     {
         if (scope is null)
         {
-            return new DoctorCheck("context:roles", CheckState.Ok, "not configured: no approved profile", Fix: null);
+            return new DoctorCheck("context:roles", CheckState.Ok, "not configured: no profile", Fix: null);
         }
 
         var status = await context.MapStatus(anchor: null, scope, cancellationToken).ConfigureAwait(false);
@@ -52,7 +52,7 @@ internal sealed class ContextEngineChecks(IContextEngine context, IMapPublishChe
             : status.IsError ? Line("context:roles", status.Error) : Line("context:roles", RoleHealth.Check(status.Value.Roles ?? []));
     }
 
-    // The approved profile's scope as a service reads it (the deny globs and the pages apply); null while no profile is approved. Each slice maps the profile itself (AW1003).
+    // The profile's scope as a service reads it (the deny globs and the pages apply); null while no profile yet. Each slice maps the profile itself (AW1003).
     private static ContextScope? ScopeOf(LoadedProfile? approved) => approved is null
         ? null
         : new ContextScope(approved.Profile.Context, ScopeRules.Usable([.. (approved.Profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path, RepoDenyGlobs.For(approved.Profile, r), [.. RepoConcepts.For(approved.Profile, r).Select(c => ConceptPin.Of(c.Id is { } id ? ConceptId.From(id.Value) : null, c.Name, c.Summary, c.Features, c.Paths).Declaring(c.DependsOn, c.Owns).WithAliases(c.Aliases))], DemotePaths: RepoDemoteGlobs.For(approved.Profile, r)) { Roles = RepoRoleSets.For(approved.Profile, r) is { } sets ? [.. sets.Select(x => new RepoRole(x.Name, x.Demoted, x.Globs))] : null, Pages = Pages(approved.Profile, r) })]), new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service));

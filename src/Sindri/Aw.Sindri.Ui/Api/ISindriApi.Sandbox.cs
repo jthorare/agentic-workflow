@@ -29,6 +29,6 @@ internal partial interface ISindriApi
     /// <param name="api">The base URL.</param>
     /// <param name="request">The launch, kind and target.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>'needs-approval' with the approval id, SND-AUTH-002 for a session, or a SND-SANDBOX refusal for a permanent path or a policy kind.</returns>
+    /// <returns>'allowed' (the entry applies on save), SND-AUTH-002 for a session, or a SND-SANDBOX refusal for a permanent path or a policy kind.</returns>
     public Task<Result<AllowView>> SandboxAllow(Uri api, AllowRequest request, CancellationToken cancellationToken);
 }

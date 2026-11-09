@@ -43,12 +43,12 @@ internal static class SetupScenarios
         "profile-needs-approval" => new InMemorySetupFacts
         {
             RepoAnswer = InMemorySetupFacts.OneRepo,
-            ProfileAnswer = new ProfileFact(ProfilePresence.Unapproved),
+            ProfileAnswer = new ProfileFact(ProfilePresence.Present),
         },
         "profile-preview" => new InMemorySetupFacts
         {
             RepoAnswer = InMemorySetupFacts.OneRepo,
-            ProfileAnswer = new ProfileFact(ProfilePresence.Unapproved) { Preview = _previewLines },
+            ProfileAnswer = new ProfileFact(ProfilePresence.Present) { Preview = _previewLines },
         },
         "running-progress" => Done(map: new MapFact(MapPhase.Building, new SetupProgress(40, 100, "files")) { Items = Lines(SetupState.Running) }),
         "failed" => Done(map: new MapFact(MapPhase.Failed, FailureCode: "SND-CONTEXT-042") { Items = Lines(SetupState.Failed) }),

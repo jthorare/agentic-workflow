@@ -119,7 +119,7 @@ public static class LaunchOptions
         var blockers = new List<LaunchBlocker>();
         if (inputs.RepoPath is null)
         {
-            blockers.Add(new LaunchBlocker(SindriErrors.LaunchRepoMissing.Code, "the item's repo has no path in the approved profile (fix: add it to repos and approve)"));
+            blockers.Add(new LaunchBlocker(SindriErrors.LaunchRepoMissing.Code, "the item's repo has no path in the profile (fix: add it to repos)"));
         }
 
         if (inputs.Probe is not { Probed: true } probe)

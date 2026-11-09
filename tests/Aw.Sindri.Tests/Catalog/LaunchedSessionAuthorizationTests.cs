@@ -6,15 +6,17 @@ using Aw.Sindri.Testing;
 namespace Aw.Sindri.Tests.Catalog;
 
 /// <summary>
-/// #1002: a session Sindri launched for a Step reports its own run and nothing a human decides. On the real catalog rows it is refused SND-AUTH-002 on approve and decide, which an owner-started session keeps (owner decision q93), and it keeps its report, its nonce, its heartbeat and a request.
+/// #1002: a session Sindri launched for a Step reports its own run and nothing a human decides. On the real catalog rows it is refused SND-AUTH-002 on a protected action, decide, and starting or cancelling a workflow run, which an owner-started session keeps (owner decision q93), and it keeps its report, its nonce, its heartbeat and a request.
 /// </summary>
 public sealed class LaunchedSessionAuthorizationTests
 {
     private static readonly CommandCatalog _catalog = new();
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("ApproveProfile")]
+    [InlineData("ImportContextMap")]
     [InlineData("Decide")]
+    [InlineData("RunWorkflow")]
+    [InlineData("CancelWorkflowRun")]
     [InlineData("EndLearnMode")]
     public void A_launched_session_is_refused_a_human_verb_an_owner_started_session_may_run(string action)
     {

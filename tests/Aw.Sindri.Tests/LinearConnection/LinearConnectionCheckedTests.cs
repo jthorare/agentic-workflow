@@ -42,11 +42,11 @@ public sealed class LinearConnectionCheckedTests
         return new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
     }
 
-    private ContextLinearConnectionFacts Facts() => new(_profiles, _profiles, FakeContextEngine.Instance, new FakeLinearSideFacts(), _log);
+    private ContextLinearConnectionFacts Facts() => new(_profiles, FakeContextEngine.Instance, new FakeLinearSideFacts(), _log);
 
-    private SaveLinearConnectionService Save() => new(new FakeLinearKeyChecks().Reading(new LinearConnectionTeamView("e1", "ENG", "Engineering")), _store, new FakeLinearConnectionApproval(), _slice.Callers, _log, _clock, LinearConnectionTestSupport.Guard(_profiles));
+    private SaveLinearConnectionService Save() => new(new FakeLinearKeyChecks().Reading(new LinearConnectionTeamView("e1", "ENG", "Engineering")), _store, _slice.Callers, _log, _clock, _profiles);
 
-    private RemoveLinearWriteKeyService Remove() => new(_store, new FakeLinearConnectionApproval(), _profiles, _slice.Callers, _log);
+    private RemoveLinearWriteKeyService Remove() => new(_store, _profiles, _slice.Callers, _log);
 
     private IDisposable Owner() => _slice.Callers.Enter(A.Caller().Human().Build());
 

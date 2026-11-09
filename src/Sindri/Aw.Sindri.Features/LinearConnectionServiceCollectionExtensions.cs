@@ -1,5 +1,4 @@
 using Aw.Kernel.Services;
-using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.LinearConnection;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,9 +20,6 @@ internal static class LinearConnectionServiceCollectionExtensions
             .AddScoped<IValidator<SaveLinearConnectionRequest>, AcceptAllValidator<SaveLinearConnectionRequest>>().AddCommand<SaveLinearConnectionRequest, SaveLinearConnectionResponse, SaveLinearConnectionService>()
             .AddScoped<IValidator<RemoveLinearWriteKeyRequest>, AcceptAllValidator<RemoveLinearWriteKeyRequest>>().AddCommand<RemoveLinearWriteKeyRequest, RemoveLinearWriteKeyResponse, RemoveLinearWriteKeyService>()
             .AddScoped<ILinearConnectionFacts, ContextLinearConnectionFacts>()
-            .AddScoped<ILinearConnectionStore, CoreLinearConnectionStore>()
-            .AddScoped<ProfileChangeApproval>()
-            .AddScoped(static sp => new LinearUrlGuard(sp.GetRequiredService<IProfileSource>(), sp.GetRequiredService<IApprovedProfile>()))
-            .AddScoped<ILinearConnectionApproval, ProfileLinearConnectionApproval>();
+            .AddScoped<ILinearConnectionStore, CoreLinearConnectionStore>();
     }
 }

@@ -160,13 +160,13 @@ public sealed class ContextPinVerbsTests : IDisposable
     }
 
     [Fact]
-    public async Task With_detach_it_prints_the_job_id_and_the_success_line_names_the_hash_to_approve()
+    public async Task With_detach_it_prints_the_job_id_and_the_success_line_names_the_saved_profile_hash()
     {
         var (exit, _) = await Run("set", "Billing");
 
         Assert.Equal(0, exit);
         Assert.Equal("job JOB-0000000000000000000000000000000e started\n", _out.ToString().ReplaceLineEndings("\n"));
         var done = new Features.PinConcepts.PinConceptsResult([new(Core.Ids.ConceptPinId.From("billing"), "Billing", "created"), new(Core.Ids.ConceptPinId.From("auth"), "Auth", "created"), new(Core.Ids.ConceptPinId.From("old"), "Old", "removed")], Core.Ids.ProfileHash.From(_hash), Approved: false, Dropped: []);
-        Assert.Equal($"pinned billing, auth (waiting for your approval: sindri profile approve {_hash})\nunpinned old (waiting for your approval: sindri profile approve {_hash})\n", ContextPinVerbs.Text(done));
+        Assert.Equal($"pinned billing, auth (saved, profile hash {_hash})\nunpinned old (saved, profile hash {_hash})\n", ContextPinVerbs.Text(done));
     }
 }

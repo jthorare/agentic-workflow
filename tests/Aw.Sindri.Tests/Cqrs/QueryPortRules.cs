@@ -2,13 +2,12 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
-using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 
 namespace Aw.Sindri.Tests.Cqrs;
 
-/// <summary>ARCH-CQRS-002 (API spec §2.5): no query handler's constructor takes a write port (ILedgerStore, ILease, IApprovals, IViewStore, the registry's stores).</summary>
+/// <summary>ARCH-CQRS-002 (API spec §2.5): no query handler's constructor takes a write port (ILedgerStore, ILease, IViewStore, the registry's stores).</summary>
 internal static class QueryPortRules
 {
     public const string Rule = "ARCH-CQRS-002";
@@ -19,7 +18,7 @@ internal static class QueryPortRules
     /// them through Core's read-only domain services instead.
     /// </summary>
     public static readonly IReadOnlyList<Type> WritePorts =
-        [typeof(ILedgerStore), typeof(ILease), typeof(IApprovals), typeof(IViewStore), typeof(IProjectorControl), typeof(IProjectorFeed), typeof(IInstanceRuntime), typeof(IFactStore), typeof(ICommandNonces)];
+        [typeof(ILedgerStore), typeof(ILease), typeof(IViewStore), typeof(IProjectorControl), typeof(IProjectorFeed), typeof(IInstanceRuntime), typeof(IFactStore), typeof(ICommandNonces)];
 
     /// <summary>The query handlers among <paramref name="types"/> that take a write port. There is no allowlist (P1's G1 one went with C9).</summary>
     public static IReadOnlyList<string> Check(IEnumerable<Type> types) =>

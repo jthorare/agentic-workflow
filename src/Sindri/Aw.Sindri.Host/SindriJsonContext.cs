@@ -46,9 +46,9 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AddRepo;
 using Aw.Sindri.Features.AllowDenial;
-using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.CancelJob;
+using Aw.Sindri.Features.CancelWorkflowRun;
 using Aw.Sindri.Features.CheckSandbox;
 using Aw.Sindri.Features.CloseItem;
 using Aw.Sindri.Features.CodeIndexJobs;
@@ -110,6 +110,7 @@ using Aw.Sindri.Features.ResumeJob;
 using Aw.Sindri.Features.ResumeService;
 using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Features.RunService;
+using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Features.Scrub;
 using Aw.Sindri.Features.SendReviewFix;
 using Aw.Sindri.Features.SessionExit;
@@ -129,8 +130,8 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(AgentLimits))]
 [JsonSerializable(typeof(Error)), JsonSerializable(typeof(SindriProfile)), JsonSerializable(typeof(ControlEndpoint)), JsonSerializable(typeof(Ping))]
 [JsonSerializable(typeof(ApiProblem)), JsonSerializable(typeof(ApiProblemBuilding)), JsonSerializable(typeof(ApiProblemNoMap)), JsonSerializable(typeof(ProcessStarted)), JsonSerializable(typeof(ProcessStopped)), JsonSerializable(typeof(WorkflowEventPayload))]
-[JsonSerializable(typeof(ProfileApproved)), JsonSerializable(typeof(Heartbeat)), JsonSerializable(typeof(CommandHandled)), JsonSerializable(typeof(ServiceRan))]
-[JsonSerializable(typeof(ProfileChecked)), JsonSerializable(typeof(ViewsRebuilt)), JsonSerializable(typeof(ItemCreated)), JsonSerializable(typeof(ItemCreatedPublic))]
+[JsonSerializable(typeof(ProfileApproved)), JsonSerializable(typeof(ProfileApprovalsRemoved)), JsonSerializable(typeof(Heartbeat)), JsonSerializable(typeof(CommandHandled)), JsonSerializable(typeof(ServiceRan))]
+[JsonSerializable(typeof(ProfileChecked)), JsonSerializable(typeof(ViewsRebuilt)), JsonSerializable(typeof(RetirePassDone)), JsonSerializable(typeof(ItemCreated)), JsonSerializable(typeof(ItemCreatedPublic))]
 [JsonSerializable(typeof(ProjectAttached)), JsonSerializable(typeof(ProjectChanged)), JsonSerializable(typeof(ProjectDetached)), JsonSerializable(typeof(ProjectHidden)), JsonSerializable(typeof(ProjectLedNoted)), JsonSerializable(typeof(ProjectAttachedRow)), JsonSerializable(typeof(ProjectHiddenRow))]   // projects page Ph3: the owner-state events and their views
 [JsonSerializable(typeof(TodoAdded)), JsonSerializable(typeof(TodoChanged)), JsonSerializable(typeof(TodoDone)), JsonSerializable(typeof(TodoReopened)), JsonSerializable(typeof(TodoRemoved)), JsonSerializable(typeof(TodoRestored))]   // the ledger events of the todos spec (§4.1)
 [JsonSerializable(typeof(TodoConflicted)), JsonSerializable(typeof(TodoConflictResolved)), JsonSerializable(typeof(TodoConflictReopened)), JsonSerializable(typeof(TodoSide)), JsonSerializable(typeof(Core.Todos.TodoRow)), JsonSerializable(typeof(Core.Todos.TodoOpenConflict))]
@@ -148,7 +149,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ItemRow)), JsonSerializable(typeof(ItemLinkRow)), JsonSerializable(typeof(AliasRow)), JsonSerializable(typeof(RequestRow)), JsonSerializable(typeof(HumanDecisionRow))]
 [JsonSerializable(typeof(NeedsYouRowRecord)), JsonSerializable(typeof(NestedPark)), JsonSerializable(typeof(NeedsYouRow)), JsonSerializable(typeof(NeedsYouStop)), JsonSerializable(typeof(NeedsYouSubject)), JsonSerializable(typeof(TimelineRow))]
 [JsonSerializable(typeof(HealthReport)), JsonSerializable(typeof(CommandAccepted)), JsonSerializable(typeof(GetStatusResponse)), JsonSerializable(typeof(StopProcessResponse))]
-[JsonSerializable(typeof(ApproveProfileRequest)), JsonSerializable(typeof(ApproveProfileResponse)), JsonSerializable(typeof(ValidateProfileResponse)), JsonSerializable(typeof(InitProfileResponse)), JsonSerializable(typeof(SetProfileKeyResponse)), JsonSerializable(typeof(ScrubResponse)), JsonSerializable(typeof(RunDoctorResponse))]
+[JsonSerializable(typeof(ValidateProfileResponse)), JsonSerializable(typeof(InitProfileResponse)), JsonSerializable(typeof(SetProfileKeyResponse)), JsonSerializable(typeof(ScrubResponse)), JsonSerializable(typeof(RunDoctorResponse))]
 [JsonSerializable(typeof(PublicEvent)), JsonSerializable(typeof(LedgerPage)), JsonSerializable(typeof(EventCatalogView)), JsonSerializable(typeof(EventTypeView))]
 [JsonSerializable(typeof(StreamErrorFrame)), JsonSerializable(typeof(InstanceChanged)), JsonSerializable(typeof(ListCommandsRequest)), JsonSerializable(typeof(ListCommandsResponse)), JsonSerializable(typeof(CommandListRow))]
 [JsonSerializable(typeof(ListServicesRequest)), JsonSerializable(typeof(ListServicesResponse)), JsonSerializable(typeof(ServiceView)), JsonSerializable(typeof(GetProfileRequest))]
@@ -157,7 +158,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(SendReviewFixRequest)), JsonSerializable(typeof(SendReviewFixResponse)), JsonSerializable(typeof(ReviewFixBody)), JsonSerializable(typeof(ReviewFixSent))]
 [JsonSerializable(typeof(GetSetupRequest)), JsonSerializable(typeof(GetSetupResponse)), JsonSerializable(typeof(GetRepoStatusResponse)), JsonSerializable(typeof(RepoStatus))]
 [JsonSerializable(typeof(GetProfileResponse)), JsonSerializable(typeof(ProfileSummary)), JsonSerializable(typeof(RepoPreview)), JsonSerializable(typeof(RebuildViewsRequest)), JsonSerializable(typeof(CreateItemRequest)), JsonSerializable(typeof(ItemCreatedResponse))]
-[JsonSerializable(typeof(Features.AddTodo.AddTodoRequest)), JsonSerializable(typeof(AddTodoBody)), JsonSerializable(typeof(Features.ChangeTodo.ChangeTodoRequest)), JsonSerializable(typeof(ChangeTodoBody)), JsonSerializable(typeof(Features.MarkTodo.MarkTodoRequest)), JsonSerializable(typeof(MarkTodoBody)), JsonSerializable(typeof(Core.Todos.TodoAccepted)), JsonSerializable(typeof(Features.ListTodos.ListTodosRequest)), JsonSerializable(typeof(Features.ListTodos.ListTodosResponse)), JsonSerializable(typeof(Features.GetTodo.GetTodoResponse)), JsonSerializable(typeof(Features.GetTodoNote.GetTodoNoteResponse)), JsonSerializable(typeof(Core.Todos.TodoCounts)), JsonSerializable(typeof(Core.Todos.TodoListState)), JsonSerializable(typeof(Core.Todos.TodoItem)), JsonSerializable(typeof(Core.Todos.TodoLinkItem))]   // the todo writes and reads (todo spec §4.4)
+[JsonSerializable(typeof(Features.AddTodo.AddTodoRequest)), JsonSerializable(typeof(AddTodoBody)), JsonSerializable(typeof(Features.ChangeTodo.ChangeTodoRequest)), JsonSerializable(typeof(ChangeTodoBody)), JsonSerializable(typeof(Features.MarkTodo.MarkTodoRequest)), JsonSerializable(typeof(MarkTodoBody)), JsonSerializable(typeof(Core.Todos.TodoAccepted)), JsonSerializable(typeof(Features.ListTodos.ListTodosRequest)), JsonSerializable(typeof(Features.ListTodos.ListTodosResponse)), JsonSerializable(typeof(Features.GetTodo.GetTodoResponse)), JsonSerializable(typeof(Features.GetTodoNote.GetTodoNoteResponse)), JsonSerializable(typeof(Core.Todos.TodoCounts)), JsonSerializable(typeof(Core.Todos.TodoListState)), JsonSerializable(typeof(Core.Todos.TodoItem)), JsonSerializable(typeof(Core.Todos.TodoLinkItem)), JsonSerializable(typeof(Features.CheckTodoNote.CheckTodoNoteRequest)), JsonSerializable(typeof(Features.CheckTodoNote.CheckTodoNoteResponse)), JsonSerializable(typeof(Features.SetTodoNote.SetTodoNoteRequest)), JsonSerializable(typeof(Features.StopTodoNote.StopTodoNoteRequest)), JsonSerializable(typeof(Core.Todos.TodoNoteWritten)), JsonSerializable(typeof(Core.Todos.TodoNoteEdit)), JsonSerializable(typeof(Core.Todos.Note.NoteCantImport)), JsonSerializable(typeof(CheckTodoNoteBody)), JsonSerializable(typeof(SetTodoNoteBody)), JsonSerializable(typeof(StopTodoNoteBody))]   // the todo writes and reads (todo spec §4.4)
 [JsonSerializable(typeof(AttachProjectRequest)), JsonSerializable(typeof(AttachProjectBody)), JsonSerializable(typeof(ProjectAccepted)), JsonSerializable(typeof(ChangeProjectBody)), JsonSerializable(typeof(DetachProjectBody)), JsonSerializable(typeof(HideProjectRequest))]
 [JsonSerializable(typeof(ListReviewsRequest)), JsonSerializable(typeof(ListReviewsResponse))]   // PR review page Ph5: the Reviews list
 [JsonSerializable(typeof(GetReviewPageRequest)), JsonSerializable(typeof(ReviewPageModel))]   // PR review page Ph5c: the PR page
@@ -197,6 +198,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(EffectReply))]          // engine P6 unit (a): an effect's reply event (notify.delivered, claim.created)
 
 [JsonSerializable(typeof(CompleteStepRequest))]
+[JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse))]
 [JsonSerializable(typeof(RecipeRegistered)), JsonSerializable(typeof(RecipeApproved)), JsonSerializable(typeof(RecipeRevoked))]
 
 [JsonSerializable(typeof(RegisterMcpJobRequest))]   // setup-once §5.4: register Sindri in a repo from the app
@@ -239,12 +241,11 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(Core.Sandbox.Denials.DenialFile)), JsonSerializable(typeof(SandboxDenied)), JsonSerializable(typeof(SandboxLimitHit)), JsonSerializable(typeof(SandboxLearnEnded)), JsonSerializable(typeof(SandboxSummary)), JsonSerializable(typeof(StepPolicy)), JsonSerializable(typeof(ModelLoginSource)), JsonSerializable(typeof(PreparedLogin)), JsonSerializable(typeof(LoginStatus))]   // Sandbox SB-0
 [JsonSerializable(typeof(LaunchViewerAttached)), JsonSerializable(typeof(LaunchTakeoverOpened))]   // issue 1004
 [JsonSerializable(typeof(GetLaunchTargetsRequest)), JsonSerializable(typeof(LaunchTargets)), JsonSerializable(typeof(ProbeLaunchTargetsRequest)), JsonSerializable(typeof(ProbeLaunchTargetsResult))]   // API P10a (U11): the launch targets and their probe job
-[JsonSerializable(typeof(CodeIndexRow))]
+[JsonSerializable(typeof(WorkflowRunRow)), JsonSerializable(typeof(WorkflowRunStartedPayload)), JsonSerializable(typeof(WorkflowRunFinishedPayload)), JsonSerializable(typeof(WorkflowRunCancelledPayload)), JsonSerializable(typeof(WorkflowNodeStartedPayload)), JsonSerializable(typeof(WorkflowNodeFinishedPayload)), JsonSerializable(typeof(WorkflowNodeFailedPayload))]   // issue 2258 PR 6: the graph runs view and its six events
 [JsonSerializable(typeof(ModelHistoryRow)), JsonSerializable(typeof(RunScope)), JsonSerializable(typeof(RunModel)), JsonSerializable(typeof(StateOrder))]   // model-pick M-4: the model-history and model-runs views
 [JsonSerializable(typeof(LaunchRow)), JsonSerializable(typeof(LaunchEnd)), JsonSerializable(typeof(LaunchViewer)), JsonSerializable(typeof(LaunchViewerPublic))]   // API P10a (U8): the launches view
 [JsonSerializable(typeof(OpenItemRequest)), JsonSerializable(typeof(OpenItemBody)), JsonSerializable(typeof(LaunchRequested)), JsonSerializable(typeof(GetLaunchRequest)), JsonSerializable(typeof(LaunchView))]
-[JsonSerializable(typeof(EndLearnModeRequest)), JsonSerializable(typeof(RecordLimitHitRequest)), JsonSerializable(typeof(RecordLimitHitResponse)), JsonSerializable(typeof(LimitHitBody))]
-[JsonSerializable(typeof(GetRunSuspensionRequest)), JsonSerializable(typeof(RunSuspensionView))]
+[JsonSerializable(typeof(EndLearnModeRequest)), JsonSerializable(typeof(RecordLimitHitRequest)), JsonSerializable(typeof(RecordLimitHitResponse)), JsonSerializable(typeof(LimitHitBody)), JsonSerializable(typeof(GetRunSuspensionRequest)), JsonSerializable(typeof(RunSuspensionView)), JsonSerializable(typeof(CodeIndexRow))]
 [JsonSerializable(typeof(ListDenialsRequest)), JsonSerializable(typeof(ListDenialsResponse)), JsonSerializable(typeof(Core.Sandbox.Denials.DenialFile)), JsonSerializable(typeof(Core.Sandbox.Plan.SandboxPlan))]   // SB-4b: the denials read and the plan file `sandbox explain` reads
 [JsonSerializable(typeof(AllowDenialRequest)), JsonSerializable(typeof(AllowDenialResponse))]   // SB-6a: the Allow button
 [JsonSerializable(typeof(CheckSandboxRequest)), JsonSerializable(typeof(CheckSandboxResponse)), JsonSerializable(typeof(SandboxBlockerLine)), JsonSerializable(typeof(SandboxResumeLine))]   // SB-5a: Check again
@@ -253,8 +254,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(SessionHeartbeatBody)), JsonSerializable(typeof(SessionHeartbeatResponse)), JsonSerializable(typeof(SessionExitBody)), JsonSerializable(typeof(SessionExitResponse)), JsonSerializable(typeof(CaptureRule))]   // API P10a (U10)
 // Two LaunchId types meet here: the collector's looser one (Core.Launch) and the engine's 'LCH-…' one the launch events carry (SYSLIB1031).
 [JsonSerializable(typeof(LaunchId), TypeInfoPropertyName = "EngineLaunchId")]
-[JsonSerializable(typeof(SyncContextSourcesRequest)), JsonSerializable(typeof(SyncContextSourcesResult)), JsonSerializable(typeof(SyncIndexSourceRequest)), JsonSerializable(typeof(SyncIndexSourceResult))]
-[JsonSerializable(typeof(BuildContextMapRequest)), JsonSerializable(typeof(BuildContextMapResult))]
+[JsonSerializable(typeof(SyncContextSourcesRequest)), JsonSerializable(typeof(SyncContextSourcesResult)), JsonSerializable(typeof(SyncIndexSourceRequest)), JsonSerializable(typeof(SyncIndexSourceResult)), JsonSerializable(typeof(BuildContextMapRequest)), JsonSerializable(typeof(BuildContextMapResult))]
 [JsonSerializable(typeof(RefreshContextMapRequest)), JsonSerializable(typeof(RefreshContextMapResult)), JsonSerializable(typeof(ContextMapRefreshed))]
 [JsonSerializable(typeof(BuildCodeIndexRequest)), JsonSerializable(typeof(BuildCodeIndexResult)), JsonSerializable(typeof(EmbedCodeIndexRequest)), JsonSerializable(typeof(EmbedCodeIndexResult)), JsonSerializable(typeof(CodeIndexBuilt)), JsonSerializable(typeof(CodeIndexBuiltLayer))]
 [JsonSerializable(typeof(RelinkPinAliasesRequest)), JsonSerializable(typeof(RelinkPinAliasesJobResult)), JsonSerializable(typeof(Context.Core.Linking.PinLinkCount)), JsonSerializable(typeof(ScanContextConceptsRequest)), JsonSerializable(typeof(ScanContextConceptsResult)), JsonSerializable(typeof(PublishContextMapRequest)), JsonSerializable(typeof(PublishContextMapResult)), JsonSerializable(typeof(ContextMapHeld)), JsonSerializable(typeof(ContextMapPublished)), JsonSerializable(typeof(ContextMapPublishedPublic)), JsonSerializable(typeof(ContextMapHoldDropped))]

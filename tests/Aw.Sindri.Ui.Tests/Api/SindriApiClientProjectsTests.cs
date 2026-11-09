@@ -21,7 +21,7 @@ public sealed class SindriApiClientProjectsTests
     public void The_routes_escape_a_linear_key_into_one_segment_and_all_adds_the_query()
     {
         Assert.Equal("/sindri/projects/linear%3Aproject%2F00000000-0000-4000-8000-000000000001", ProjectRoutes.One("linear:project/00000000-0000-4000-8000-000000000001"));
-        Assert.Equal("/sindri/projects/prj_0000000000000000000000000H", ProjectRoutes.One("prj_0000000000000000000000000H"));
+        Assert.Equal("/sindri/projects/prj_00000000000000000000000008", ProjectRoutes.One("prj_00000000000000000000000008"));
         Assert.Equal("/sindri/projects?all=true", ProjectRoutes.List(all: true));
         Assert.Equal("/sindri/projects", ProjectRoutes.List(all: false));
     }
@@ -75,7 +75,7 @@ public sealed class SindriApiClientProjectsTests
     [Fact]
     public async Task Project_reads_the_one_card_with_its_hidden_flag()
     {
-        var one = (await Client(new Canned(HttpStatusCode.OK, GoldenFiles.Api("projects-id", "attached"))).Project(_api, "prj_0000000000000000000000000H", Token)).Value;
+        var one = (await Client(new Canned(HttpStatusCode.OK, GoldenFiles.Api("projects-id", "attached"))).Project(_api, "prj_00000000000000000000000008", Token)).Value;
 
         Assert.Equal(("Mobile app", "Waiting on the vendor", false), (one.Project.Name, one.Project.Notes, one.Hidden));
     }

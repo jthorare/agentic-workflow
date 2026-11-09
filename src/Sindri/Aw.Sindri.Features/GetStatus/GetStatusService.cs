@@ -12,7 +12,7 @@ using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.GetStatus;
 
-internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, ILedgerReader ledger, EventFactory events,
+internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, ILedgerReader ledger,
     IProjectorStatus projector, HealthServiceRows healthRows, ISessionSnapshot sessions)
     : IService<GetStatusRequest, GetStatusResponse>
 {
@@ -22,17 +22,15 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         var loaded = await profiles.Live(cancellationToken).ConfigureAwait(false);
         var approvedProfile = approved.IsSuccess ? approved.Value : null;
         var services = await Services(approvedProfile, cancellationToken).ConfigureAwait(false);
-        var recorded = RecordedApproval.From(await ledger.Latest(EventTypes.ProfileApproved, cancellationToken).ConfigureAwait(false), events);
-        if (approved.IsError || recorded.IsError)
+        if (approved.IsError)
         {
-            // like validate, the approve preview and doctor: an approval or a ledger that can't be read isn't "needs approval"
-            return approved.IsError ? approved.Error : recorded.Error;
+            return approved.Error;
         }
 
         var grant = held.Current;
-        var profile = Profile(approvedProfile, recorded.Value, loaded, await profiles.LabelPick(approvedProfile, cancellationToken).ConfigureAwait(false), await profiles.SurfacePick(approvedProfile, cancellationToken).ConfigureAwait(false));
+        var profile = Profile(approvedProfile, loaded, await profiles.LabelPick(approvedProfile, cancellationToken).ConfigureAwait(false), await profiles.SurfacePick(approvedProfile, cancellationToken).ConfigureAwait(false));
         var views = await Views(cancellationToken).ConfigureAwait(false);
-        var health = await Health(grant is not null, views, profile, approvedProfile, cancellationToken).ConfigureAwait(false);
+        var health = await Health(grant is not null, views, approvedProfile, cancellationToken).ConfigureAwait(false);
         health = healthRows.WithStaleBuild(health);
         var status = new GetStatusResponse(grant is not null, grant?.Holder.Pid ?? 0, grant?.Epoch ?? 0, grant?.ExpiresAt, profile, services);
         return status with { ApiVersion = SindriApi.Version, Views = views, Health = health, Sessions = SessionCounts() };
@@ -49,12 +47,11 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         return head.IsSuccess ? projector.Current with { LedgerHead = head.Value } : projector.Current;
     }
 
-    private async ValueTask<HealthReport> Health(bool running, ViewsStatus views, ProfileStatus profile, LoadedProfile? approved, CancellationToken cancellationToken)
+    private async ValueTask<HealthReport> Health(bool running, ViewsStatus views, LoadedProfile? approved, CancellationToken cancellationToken)
     {
         var rows = await healthRows.Read(approved, cancellationToken).ConfigureAwait(false);
         var problems = await healthRows.CodeIndexProblems(approved, cancellationToken).ConfigureAwait(false);
-        var standing = profile.ChangedSinceApproval ? ProfileApproval.Changed : profile.NeedsApproval ? ProfileApproval.NeedsApproval : ProfileApproval.Approved;
-        var health = HealthSummary.For(running, views, rows, standing, healthRows.Context(problems));
+        var health = HealthSummary.For(running, views, rows, healthRows.Context(problems));
         var stalled = HealthSummary.WithStalledAgents(health, await healthRows.Stalled(cancellationToken).ConfigureAwait(false));   // issue #1000: so do agent runs idle past their launch's idle time
         return HealthSummary.WithIdleAgents(stalled, await healthRows.IdleAgents(cancellationToken).ConfigureAwait(false));   // issue #1265: and sessions ended as idle that no retry replaced (ended launches, so no overlap with the live count above)
     }
@@ -62,15 +59,9 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
     // 'on' when the APPROVED profile asks for model choice: that is what is in force, and the app never reads the word itself (model-pick spec 8).
     private static string ModelPick(LoadedProfile? approved) => approved?.Profile.Workflow?.Agent is { PickIsOn: true } ? "on" : "off";
 
-    private static ProfileStatus Profile(LoadedProfile? approved, RecordedApproval? recorded, Result<LoadedProfile> loaded, string labelPick, string surfacePick)
-    {
-        var approvedHash = approved?.Hash;
-        var liveHash = loaded.IsSuccess ? loaded.Value.Hash : (Core.Ids.ProfileHash?)null;
-        var changed = approvedHash is not null && liveHash is not null && liveHash != approvedHash;
-        return new ProfileStatus(approvedHash, liveHash, changed, loaded.IsError ? loaded.Error.Message : null, loaded.IsSuccess ? loaded.Value.Source : null,
-            ProfileRules.NeedsApproval(approvedHash, recorded?.Hash, liveHash),
+    private static ProfileStatus Profile(LoadedProfile? approved, Result<LoadedProfile> loaded, string labelPick, string surfacePick) =>
+        new(loaded.IsSuccess ? loaded.Value.Hash : null, loaded.IsError ? loaded.Error.Message : null, loaded.IsSuccess ? loaded.Value.Source : null,
             ModelPick(approved), labelPick, surfacePick);
-    }
 
     private async ValueTask<IReadOnlyList<ServiceStatus>> Services(LoadedProfile? approved, CancellationToken cancellationToken)
     {

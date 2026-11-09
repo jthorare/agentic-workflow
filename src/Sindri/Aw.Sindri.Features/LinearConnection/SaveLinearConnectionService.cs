@@ -3,21 +3,21 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Linear;
+using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Features.LinearConnection;
 
 /// <summary>
 /// Saves a pasted Linear key (Linear hub spec 2026-11-04 §3). Owner only. A read key is checked against Linear first (every ticked team must be readable) and stored with its teams; a write key must differ from the read key,
-/// is checked against Linear, and goes to the keychain only. Then the profile is approved when this was the only change waiting. Nothing is stored when a check fails, and the key is never in an answer.
+/// is checked against Linear, and goes to the keychain only. The pointer goes into the live profile at once (edits apply on save). Nothing is stored when a check fails, and the key is never in an answer.
 /// </summary>
 /// <param name="checks">Asks Linear.</param>
 /// <param name="store">Keeps the key and its pointer.</param>
-/// <param name="approval">Approves the profile when the key is the only waiting change.</param>
 /// <param name="callers">The current caller.</param>
 /// <param name="log">Keeps the result and time of the check.</param>
 /// <param name="clock">The clock.</param>
-/// <param name="urlGuard">Refuses while the Linear url has a change waiting, before the key goes anywhere; also loads the live profile for its hash.</param>
-internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILinearConnectionStore store, ILinearConnectionApproval approval, ICallerContextAccessor callers, ILinearCheckStore log, TimeProvider clock, LinearUrlGuard urlGuard)
+/// <param name="live">The live profile, for the hash the save answers with.</param>
+internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILinearConnectionStore store, ICallerContextAccessor callers, ILinearCheckStore log, TimeProvider clock, IProfileSource live)
     : IService<SaveLinearConnectionRequest, SaveLinearConnectionResponse>
 {
     public async ValueTask<Result<SaveLinearConnectionResponse>> Handle(SaveLinearConnectionRequest request, CancellationToken cancellationToken)
@@ -32,11 +32,6 @@ internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILine
         if (key.Length == 0 || key.Any(static c => char.IsControl(c) || char.IsWhiteSpace(c)))
         {
             return SindriErrors.InvalidInput.With("paste only the Linear API key, with no spaces (fix: copy it again from linear.app/settings/api)");
-        }
-
-        if (await urlGuard.Pending(cancellationToken).ConfigureAwait(false) is { } waiting)
-        {
-            return waiting;
         }
 
         var saved = request.Kind switch
@@ -74,7 +69,7 @@ internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILine
         }
 
         _ = await log.RecordRead(new LinearStoredCheck(stored.Value, "resolves", clock.GetUtcNow()), cancellationToken).ConfigureAwait(false);   // why: the key is saved by now, so a check that can't be kept only leaves the page at 'unchecked'
-        return new SavedKey(Write: null, Change: LinearConnectionChange.ReadSaved(stored.Value, teams));
+        return new SavedKey(Write: null);
     }
 
     private async ValueTask<Result<SavedKey>> SaveWrite(string key, CancellationToken cancellationToken)
@@ -98,20 +93,14 @@ internal sealed class SaveLinearConnectionService(ILinearKeyChecks checks, ILine
 
         var state = scope.Value == LinearKeyScope.Writable ? "resolves" : "scopeUnknown";
         _ = await log.RecordWrite(new LinearStoredCheck(stored.Value, state, clock.GetUtcNow()), cancellationToken).ConfigureAwait(false);
-        return new SavedKey(Write: new LinearSavedWriteView(state), Change: LinearConnectionChange.WriteSaved(stored.Value));
+        return new SavedKey(Write: new LinearSavedWriteView(state));
     }
 
     private async ValueTask<Result<SaveLinearConnectionResponse>> Settled(SavedKey saved, CancellationToken cancellationToken)
     {
-        var approved = await approval.Settle(saved.Change, cancellationToken).ConfigureAwait(false);
-        var loaded = await urlGuard.Live(cancellationToken).ConfigureAwait(false);
-        if (approved.IsError || loaded.IsError)
-        {
-            return approved.IsError ? approved.Error : loaded.Error;
-        }
-
-        return new SaveLinearConnectionResponse(Saved: true, approved.Value, loaded.Value.Hash.Value, saved.Write);
+        var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
+        return loaded.IsError ? loaded.Error : new SaveLinearConnectionResponse(Saved: true, loaded.Value.Hash.Value, saved.Write);
     }
 
-    private sealed record SavedKey(LinearSavedWriteView? Write, LinearConnectionChange Change);
+    private sealed record SavedKey(LinearSavedWriteView? Write);
 }

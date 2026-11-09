@@ -7,14 +7,15 @@ namespace Aw.Sindri.Ui.Testing;
 public abstract partial class SindriApiContract
 {
     [Fact]
-    public async Task NeedsYou_empty_returns_the_served_sentence()
+    public async Task NeedsYou_without_work_returns_the_served_setup_row_and_no_sentence()
     {
         var server = new FakeSindriApi { NeedsYouView = RouteAnswer.Api("needs-you", "empty") };
 
         var list = (await Reach(server).NeedsYou(_api, Token)).Value;
 
-        Expect.Sequence([], list.Rows);
-        Expect.Equal((string)GoldenFiles.Node("needs-you", "empty")["empty"]!, list.Empty);
+        Expect.Sequence(["setup:mcp"], list.Rows.Select(r => r.Id));
+        Expect.Equal(("RegisterMcp", null), (list.Rows[0].PrimaryAction, list.Empty));
+        Expect.Equal((string?)GoldenFiles.Node("needs-you", "empty")["empty"], list.Empty);
     }
 
     [Fact]

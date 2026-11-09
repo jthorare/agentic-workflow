@@ -29,4 +29,7 @@ public sealed record StatusResponse(IReadOnlyList<Obligation> Obligations, IRead
 
     /// <summary>The builders per lane to run now; null when the host could not be read.</summary>
     public BuilderAdvice? Builders { get; init; }
+
+    /// <summary>Whether anything is consuming the meta's mail (a beating watch); null when not computed.</summary>
+    public string? Consumer { get; init; }
 }

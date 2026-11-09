@@ -85,6 +85,19 @@
       "description": "Checkpoints context.db's log and refreshes its query stats."
     },
     {
+      "name": "heartbeat",
+      "every": "5s",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run",
+        "pause"
+      ],
+      "description": "Records that Sindri is alive."
+    },
+    {
       "name": "index-decisions",
       "every": "15m",
       "paused": false,
@@ -143,6 +156,18 @@
         "run"
       ],
       "description": "Keeps the setup checklist in step with the profile."
+    },
+    {
+      "name": "workflow-schedule",
+      "every": "1m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Starts a run of each active workflow whose schedule has a tick to fire, once for the latest missed tick."
     }
   ],
   "empty": "Views are stalled at 2: run `sindri views rebuild`",

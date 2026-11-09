@@ -28,7 +28,7 @@ internal static class SandboxScenarios
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("sandbox-denials", "by-item"), ("sandbox-denials", "other-item"),
-        ("sandbox-allow", "needs-approval"), ("sandbox-allow", "refused-never"), ("sandbox-allow", "refused-policy"), ("sandbox-allow", "refused-origin"),
+        ("sandbox-allow", "allowed"), ("sandbox-allow", "refused-never"), ("sandbox-allow", "refused-policy"), ("sandbox-allow", "refused-origin"),
         ("sandbox-status", "never-checked"), ("sandbox-status", "after-blocked-check"), ("sandbox-status", "after-ready-check"),
         ("sandbox-check", "blocked"), ("sandbox-check", "ready"), ("sandbox-check", "hooks-not-checked"),
     ];

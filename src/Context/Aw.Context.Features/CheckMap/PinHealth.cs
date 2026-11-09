@@ -19,13 +19,13 @@ internal sealed record PinHealth(IReadOnlyList<string> Notes, IReadOnlyList<stri
         if (unmatched.Count > 0)
         {
             notes.Add($"concept pin {string.Join(", ", unmatched.Select(n => $"'{n}'"))} matches no feature");
-            fixes.Add("edit the pin's features or paths under index.concepts in the profile (a pin written for a model cluster key matches nothing now: features come from directories), then approve it");
+            fixes.Add("edit the pin's features or paths under index.concepts in the profile (a pin written for a model cluster key matches nothing now: features come from directories)");
         }
 
         if (overlaps.Count > 0)
         {
             notes.AddRange(overlaps);
-            fixes.Add("narrow the pins' paths under index.concepts in the profile, or reorder them (the first pin in the list wins a file both match), then approve it");
+            fixes.Add("narrow the pins' paths under index.concepts in the profile, or reorder them (the first pin in the list wins a file both match)");
         }
 
         return new PinHealth(notes, fixes);

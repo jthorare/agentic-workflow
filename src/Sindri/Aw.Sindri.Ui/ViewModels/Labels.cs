@@ -104,7 +104,7 @@ internal static partial class Labels
     internal const string LastEventCard = "Last event";
 
     /// <summary>The services card with none scheduled.</summary>
-    internal const string NoServices = "none scheduled (the approved profile names no services)";
+    internal const string NoServices = "none scheduled (the profile names no services)";
 
     /// <summary>The not-running panel's fix prompt.</summary>
     internal const string StartIt = "Start it:";
@@ -198,9 +198,6 @@ internal static partial class Labels
 
     /// <summary>The Health page's lease row.</summary>
     internal const string RowLease = "Host lease";
-
-    /// <summary>The Health page's approved-hash row.</summary>
-    internal const string RowApproved = "approved";
 
     /// <summary>The Health page's live-hash row.</summary>
     internal const string RowLive = "live";

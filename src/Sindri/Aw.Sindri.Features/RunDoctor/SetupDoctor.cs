@@ -63,7 +63,7 @@ internal sealed class SetupDoctor(ISetupFacts facts, IRepoHookStates? hooks = nu
     private static string FixFor(SetupStepId id) => id switch
     {
         SetupStepId.Repo => "sindri repo add <path>",
-        SetupStepId.Profile => "sindri profile approve <hash>",
+        SetupStepId.Profile => "sindri repo add <path>",
         SetupStepId.Mcp => "sindri mcp register --apply",
         SetupStepId.Map => "sindri context map refresh",
         SetupStepId.Sources => "sindri index connect <source>",

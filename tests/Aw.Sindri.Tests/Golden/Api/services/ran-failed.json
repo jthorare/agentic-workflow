@@ -161,12 +161,24 @@
         "run"
       ],
       "description": "Keeps the setup checklist in step with the profile."
+    },
+    {
+      "name": "workflow-schedule",
+      "every": "1m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Starts a run of each active workflow whose schedule has a tick to fire, once for the latest missed tick."
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 6,
-    "ledgerHead": 6,
+    "cursor": 2,
+    "ledgerHead": 2,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

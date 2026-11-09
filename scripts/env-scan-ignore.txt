@@ -8,6 +8,8 @@ SHELL # the user's login shell, set by the OS (the lane drops to it when its age
 LANG # the locale, set by the OS or shell
 TERM # set by the terminal
 USER # login name (OS)
+LOGNAME # login name (OS), read when USER is unset
+SUDO_USER # the account that ran sudo (sudo sets it)
 EUID # the effective user id (bash sets it)
 TMPDIR # temp directory (OS)
 COLUMNS # terminal width (shell); the statusline falls back to it

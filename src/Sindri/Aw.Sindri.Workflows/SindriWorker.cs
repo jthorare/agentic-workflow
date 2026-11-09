@@ -3,8 +3,8 @@ using Temporalio.Worker;
 namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
-/// The worker 'sindri serve' runs on the settings' task queue (engine spec rev 8 §0 "Operations"). It serves no workflow type until
-/// the graph workflow (issue 2258 PR 6) adds one; the agent runtime's activities stay registered for it. <see cref="SindriWorkerHost"/> runs it inside 'sindri serve'.
+/// The worker 'sindri serve' runs on the settings' task queue (engine spec rev 8 §0 "Operations"). It serves the graph workflow
+/// (issue 2258 PR 6) and the agent runtime's activities; the recipe workflow is gone. <see cref="SindriWorkerHost"/> runs it inside 'sindri serve'.
 /// </summary>
 internal static class SindriWorker
 {
@@ -14,5 +14,8 @@ internal static class SindriWorker
     /// <returns>The options, on <see cref="TemporalSettings.TaskQueue"/>.</returns>
     public static TemporalWorkerOptions Options(TemporalSettings settings, WorkerActivities activities) =>
         new TemporalWorkerOptions(settings.TaskQueue)
-            .AddAllActivities(activities.Agents);
+            .AddWorkflow<GraphWorkflow>()
+            .AddAllActivities(activities.Agents)
+            .AddAllActivities(activities.Graph.Runs)
+            .AddAllActivities(activities.Graph.Blocks);
 }

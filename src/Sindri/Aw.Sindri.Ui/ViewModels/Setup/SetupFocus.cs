@@ -5,7 +5,4 @@ internal enum SetupFocus
 {
     /// <summary>The repo form's folder field.</summary>
     RepoPath,
-
-    /// <summary>The heading of the setup step the form is in (its header toggle), after the form's control left the tree.</summary>
-    StepHeading,
 }

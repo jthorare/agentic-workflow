@@ -44,6 +44,7 @@ internal static class ViewSql
         [ViewNames.ProjectAttached] = new ViewTable("view_project_attached"),
         [ViewNames.ProjectHidden] = new ViewTable("view_project_hidden"),
         [ViewNames.ItemLinks] = new ViewTable("view_item_links"),
+        [ViewNames.WorkflowRuns] = new ViewTable("view_workflow_runs"),
         [ViewNames.Todo] = new ViewTable("view_todo"),
     };
 

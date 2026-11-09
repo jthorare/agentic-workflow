@@ -1,10 +1,8 @@
 using System.Text.Json;
-using Aw.Context.Testing.Engine;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Testing;
 
@@ -25,9 +23,7 @@ public sealed class StatusLabelPickTests
         return new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
     }
 
-    private GetStatusService Status(bool key) => new(_h.Held, new ProfileReads(_h.Profiles, _h.Profiles, new Key(key)), _h.Store, _h.Events, new ProjectorProgress(_h.Clock), new HealthServiceRows(new InMemoryViewStore(SliceHarness.Json), []), new InMemorySessionSnapshot());
-
-    private ApproveProfileService Approve() => new(_h.Profiles, _h.Profiles, _h.Held, _h.Store, _h.Events, new ProfileChecks(FakeContextEngine.Instance, new FixedAgentCatalog()));
+    private GetStatusService Status(bool key) => new(_h.Held, new ProfileReads(_h.Profiles, _h.Profiles, new Key(key)), _h.Store, new ProjectorProgress(_h.Clock), new HealthServiceRows(new InMemoryViewStore(SliceHarness.Json), []), new InMemorySessionSnapshot());
 
     [Theory]
     [InlineData("jev", true, "on")]
@@ -40,25 +36,11 @@ public sealed class StatusLabelPickTests
         var live = Profile(pick);
         _h.Profiles.Live = live;
         _ = await _h.HoldLease();
-        _ = await Approve().Handle(new ApproveProfileRequest(live.Hash, Answer: null), Token);
+        _ = await _h.Profiles.Save(live, Token);
 
         var status = (await Status(key).Handle(new GetStatusRequest(), Token)).Value;
 
         Assert.Equal(expected, status.Profile.LabelPick);
-    }
-
-    [Fact]
-    public async Task A_live_profile_that_turns_it_on_is_off_until_it_is_approved()
-    {
-        var off = Profile("off");
-        _h.Profiles.Live = off;
-        _ = await _h.HoldLease();
-        _ = await Approve().Handle(new ApproveProfileRequest(off.Hash, Answer: null), Token);
-        _h.Profiles.Live = Profile("jev");
-
-        var status = (await Status(key: true).Handle(new GetStatusRequest(), Token)).Value;
-
-        Assert.Equal(("off", true), (status.Profile.LabelPick, status.Profile.NeedsApproval));
     }
 
     [Fact]
@@ -67,8 +49,8 @@ public sealed class StatusLabelPickTests
         var live = Profile("jev");
         _h.Profiles.Live = live;
         _ = await _h.HoldLease();
-        _ = await Approve().Handle(new ApproveProfileRequest(live.Hash, Answer: null), Token);
-        var bare = new GetStatusService(_h.Held, new ProfileReads(_h.Profiles, _h.Profiles), _h.Store, _h.Events, new ProjectorProgress(_h.Clock), new HealthServiceRows(new InMemoryViewStore(SliceHarness.Json), []), new InMemorySessionSnapshot());
+        _ = await _h.Profiles.Save(live, Token);
+        var bare = new GetStatusService(_h.Held, new ProfileReads(_h.Profiles, _h.Profiles), _h.Store, new ProjectorProgress(_h.Clock), new HealthServiceRows(new InMemoryViewStore(SliceHarness.Json), []), new InMemorySessionSnapshot());
 
         Assert.Equal("on", (await bare.Handle(new GetStatusRequest(), Token)).Value.Profile.LabelPick);
     }

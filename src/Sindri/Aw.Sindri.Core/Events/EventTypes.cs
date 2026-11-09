@@ -3,7 +3,7 @@ using Aw.Sindri.Core.Ids;
 namespace Aw.Sindri.Core.Events;
 
 /// <summary>The event types Sindri records (each one is in EventCatalog).</summary>
-public static class EventTypes
+public static partial class EventTypes
 {
     /// <summary>The control plane took the lease and started.</summary>
     public const string ProcessStarted = "process.started";
@@ -13,6 +13,9 @@ public static class EventTypes
 
     /// <summary>An instance still open when the recipe engine was removed was cancelled, once, with this note (issue 2258 PR 3).</summary>
     public const string WorkflowRetired = "workflow.retired";
+
+    /// <summary>The retire pass finished (issue 2258 PR 3): written once, even when it retired nothing, so a later start reads no ledger page.</summary>
+    public const string WorkflowRetireDone = "workflow.retire.done";
 
     /// <summary>A recipe instance started (mirrored from its RecipeWorkflow; engine spec rev 8.1 §5.6).</summary>
     public const string WorkflowStarted = "workflow.started";
@@ -38,8 +41,11 @@ public static class EventTypes
     /// <summary>The Step inputs of a run filled its injection plan: the sections' names, sizes and digests, never their text (Step inputs plan, S4).</summary>
     public const string WorkflowInjection = "workflow.injection";
 
-    /// <summary>A human approved a profile hash.</summary>
+    /// <summary>A human approved a profile hash (history: profile edits apply on save now, #2258 PR 1).</summary>
     public const string ProfileApproved = "profile.approved";
+
+    /// <summary>The first start without approvals removed the old approved-snapshot folder (#2258 PR 1).</summary>
+    public const string ProfileApprovalsRemoved = "profile.approvals.removed";
 
     /// <summary>A recipe was registered by hash (engine spec §4.1).</summary>
     public const string RecipeRegistered = "recipe.registered";

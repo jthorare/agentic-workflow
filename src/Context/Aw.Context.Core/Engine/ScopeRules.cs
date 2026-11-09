@@ -35,7 +35,7 @@ public static class ScopeRules
         if (!settings.SessionsEnabled)
         {
             return ContextErrors.SessionsDisabled.With(
-                "context reads from agent sessions are off (context.sessions.enabled: false in the approved profile); ask the human to turn them on in the profile and approve it");
+                "context reads from agent sessions are off (context.sessions.enabled: false in the profile); ask the human to turn them on in the profile");
         }
 
         if (caller.Repo is null)

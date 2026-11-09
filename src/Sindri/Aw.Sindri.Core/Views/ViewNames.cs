@@ -49,6 +49,9 @@ public static class ViewNames
     /// <summary>Whether a led Linear project is hidden, keyed by its Linear key (projects page spec §5.2).</summary>
     public const string ProjectHidden = "project-hidden";
 
+    /// <summary>Graph runs, keyed by run id (issue 2258, PR 6), folded from the six 'workflow.run.*' and 'workflow.node.*' events.</summary>
+    public const string WorkflowRuns = "workflow-runs";
+
     /// <summary>The owner's todos (todo spec §4.2): a row per todo, keyed by its id.</summary>
     public const string Todo = "todo";
 
@@ -56,5 +59,5 @@ public static class ViewNames
     public const string ItemLinks = "item-links";
 
     /// <summary>Every view that has a table.</summary>
-    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, ItemLinks, Todo];
+    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, WorkflowRuns, ItemLinks, Todo];
 }

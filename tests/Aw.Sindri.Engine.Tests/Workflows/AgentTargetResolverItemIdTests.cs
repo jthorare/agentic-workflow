@@ -41,7 +41,7 @@ public sealed class AgentTargetResolverItemIdTests
         var target = await Resolve("""{"id":"ITM-00000000000000000000000000000001","repo":"other"}""");
 
         Assert.True(target.IsError);
-        Assert.Equal((SindriErrors.LaunchRepoMissing.Code, true), (target.Error.Code, target.Error.Message.Contains("approved profile", StringComparison.Ordinal)));
+        Assert.Equal((SindriErrors.LaunchRepoMissing.Code, true), (target.Error.Code, target.Error.Message.Contains("not in the profile", StringComparison.Ordinal)));
     }
 
     private sealed class Approved : IApprovedProfile

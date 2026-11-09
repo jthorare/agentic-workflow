@@ -31,7 +31,7 @@ public sealed class CheckProfileTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_drift_names_the_changed_paths_and_a_revert_writes_drifted_false()
+    public async Task A_changed_live_profile_and_its_revert_each_write_a_check_that_is_never_drifted()
     {
         var grant = await Approve(_a);
         _h.Profiles.Live = _b;
@@ -40,13 +40,12 @@ public sealed class CheckProfileTests
 
         _ = await Check(grant);
 
-        Assert.Equal([(_b.Hash, true), (_a.Hash, false)], Checks().Select(c => (c.Live!.Value, c.Drifted)));
-        Assert.Equal(["services.heartbeat.every"], Checks()[0].ChangedPaths);
-        Assert.Empty(Checks()[1].ChangedPaths);
+        Assert.Equal([(_b.Hash, false), (_a.Hash, false)], Checks().Select(c => (c.Live!.Value, c.Drifted)));
+        Assert.All(Checks(), c => Assert.Empty(c.ChangedPaths));
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Drifting_back_to_an_old_hash_writes_again()
+    public async Task Changing_back_to_an_old_hash_writes_again()
     {
         var grant = await Approve(_a);
         foreach (var live in new[] { _a, _b, _a, _b })
@@ -55,33 +54,34 @@ public sealed class CheckProfileTests
             _ = await Check(grant);
         }
 
-        Assert.Equal([false, true, false, true], Checks().Select(c => c.Drifted));
+        Assert.Equal([false, false, false, false], Checks().Select(c => c.Drifted));
         Assert.Equal(["profile.checked:0", "profile.checked:1", "profile.checked:2", "profile.checked:3"],
             _h.Store.Events.Where(e => e.Envelope.Type == EventTypes.ProfileChecked).Select(e => e.IdempotencyKey), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task An_unreadable_live_profile_is_live_null_and_drifted_when_approved()
+    public async Task An_unreadable_live_profile_is_live_null_and_not_drifted()
     {
-        var grant = await Approve(_a);   // the harness's live profile is missing
+        var grant = await _h.HoldLease();   // the harness's live profile is missing
 
         _ = await Check(grant);
 
         var check = Assert.Single(Checks());
-        Assert.Equal((_a.Hash, true), (check.Approved, check.Drifted));
+        Assert.False(check.Drifted);
         Assert.Null(check.Live);
         Assert.Empty(check.ChangedPaths);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task With_nothing_approved_a_check_is_not_drifted()
+    public async Task A_readable_live_profile_is_checked_and_not_drifted()
     {
         var grant = await _h.HoldLease();
         _h.Profiles.Live = _a;
 
         _ = await Check(grant);
 
-        Assert.True(Assert.Single(Checks()) is { Approved: null, Drifted: false, ApprovedServices.Count: 0 });
+        var check = Assert.Single(Checks());
+        Assert.Equal((_a.Hash, false), (check.Live!.Value, check.Drifted));
     }
 
     private async Task<LeaseGrant> Approve(LoadedProfile profile)

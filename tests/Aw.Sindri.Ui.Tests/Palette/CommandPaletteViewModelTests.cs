@@ -84,7 +84,7 @@ public sealed partial class CommandPaletteViewModelTests
     [InlineData("rebuild", new[] { "RebuildViews" })]
     [InlineData("REBVIEWS", new[] { "RebuildViews" })]
     [InlineData("probelaunch", new[] { "ProbeLaunchTargets" })]
-    [InlineData("stop sin", new[] { "StopProcess" })]
+    [InlineData("stop sindri", new[] { "StopProcess" })]
     public void Typing_filters_by_label_and_id(string query, string[] ids)
     {
         _palette.Open();

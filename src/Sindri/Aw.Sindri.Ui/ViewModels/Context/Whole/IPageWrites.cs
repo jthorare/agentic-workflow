@@ -3,15 +3,15 @@ using Aw.Sindri.Ui.Api;
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>
-/// How the page sheet reads and writes the owner's pages (pages spec §3.6): the page as the map and the profile hold it, the profile's state, and one write of
-/// 'index.pages' through the SetPages job, approved by the app only when it is the only waiting change (the pin rule, concept pins spec §3.6).
+/// How the page sheet reads and writes the owner's pages (pages spec §3.6): the page as the map and the profile hold it, the profile's hashes, and one write of
+/// 'index.pages' through the SetPages job. A write that lands is applied; nothing approves it.
 /// </summary>
 internal interface IPageWrites
 {
-    /// <summary>Reads the live profile's hash and the key paths that wait for approval.</summary>
+    /// <summary>Reads the live profile's hashes.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The state, or null when the profile can't be read.</returns>
-    public Task<ProfileWaiting?> Waiting(CancellationToken cancellationToken);
+    /// <returns>The hashes, or null when the profile can't be read.</returns>
+    public Task<ProfileHashes?> Hashes(CancellationToken cancellationToken);
 
     /// <summary>Reads one page of the map (GET /sindri/context/pages) by its node key, owner-named or suggested.</summary>
     /// <param name="key">The page's node key.</param>
@@ -46,13 +46,12 @@ internal interface IPageWrites
     /// <returns>The page's suggested actions (an owner action already holds its map action, and a second one on it folds into the first on the map), or null when the read failed, the map has no such page or no API address is known.</returns>
     public Task<IReadOnlyList<PageMatch>?> Actions(string surface, CancellationToken cancellationToken);
 
-    /// <summary>Writes the pages in one profile write, waits for the job, then approves its hash when <paramref name="approve"/> is set and nothing else waits.</summary>
+    /// <summary>Writes the pages in one profile write and waits for the job.</summary>
     /// <param name="save">The pages to set and the page ids to remove.</param>
     /// <param name="ifHash">The live hash the sheet read when it opened.</param>
-    /// <param name="approve">True when the button read "Save and approve".</param>
     /// <param name="cancellationToken">Cancels the wait (the write itself is sent once).</param>
     /// <returns>What happened.</returns>
-    public Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken);
+    public Task<PageSaved> Save(PageSave save, string? ifHash, CancellationToken cancellationToken);
 
     /// <summary>Reads a pasted list as one row per page (QUERY /sindri/context/pages/preview): the page each block names, what it matches and the page to send in the save.</summary>
     /// <param name="text">The paste.</param>

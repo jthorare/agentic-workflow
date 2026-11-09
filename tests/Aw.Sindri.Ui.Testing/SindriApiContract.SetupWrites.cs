@@ -40,7 +40,7 @@ public abstract partial class SindriApiContract
         var api = Reach(server);
 
         var started = (await api.RegisterMcp(_api, new RegisterMcpRequest(), Token)).Value;
-        server.RegisterMcpAnswer = RouteAnswer.Problem("setup-mcp", "not-approved");
+        server.RegisterMcpAnswer = RouteAnswer.Problem("setup-mcp", "not-in-profile");
         var refused = await api.RegisterMcp(_api, new RegisterMcpRequest("other"), Token);
 
         Expect.Equal("JOB-000000000000000000000000000000b1", started.JobId);

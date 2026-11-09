@@ -1,7 +1,7 @@
 {
   "items": [
     {
-      "id": "ITM-0000000000000000000000000000000f",
+      "id": "ITM-00000000000000000000000000000006",
       "title": "Item 1",
       "repo": "demo",
       "state": "new",
@@ -15,7 +15,7 @@
       "owner": null
     },
     {
-      "id": "ITM-00000000000000000000000000000014",
+      "id": "ITM-0000000000000000000000000000000b",
       "title": "Item 2",
       "repo": "demo",
       "state": "new",
@@ -29,7 +29,7 @@
       "owner": null
     },
     {
-      "id": "ITM-00000000000000000000000000000019",
+      "id": "ITM-00000000000000000000000000000010",
       "title": "Item 3",
       "repo": "demo",
       "state": "new",
@@ -45,8 +45,8 @@
   ],
   "empty": null,
   "asOf": {
-    "cursor": 11,
-    "ledgerHead": 11,
+    "cursor": 7,
+    "ledgerHead": 7,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

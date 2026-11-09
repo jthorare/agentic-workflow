@@ -18,14 +18,14 @@ namespace Aw.Sindri.Tests.Views;
 /// </summary>
 public sealed class ViewRowShapeTests
 {
-    private const int PinnedVersion = 28;
-    private const string PinnedShape = "fc65df67adce5975d3ba574b3ff520523777a655d79caef3f5fbc03d7f4dc18e";
+    private const int PinnedVersion = 30;
+    private const string PinnedShape = "881bc8b724207018304d6a002870110d962189b9ce5fd873f6f7f0028b53acd5";
 
     private static readonly Type[] _rows =
     [
         typeof(ServiceRow), typeof(ProfileRow), typeof(ItemRow), typeof(AliasRow), typeof(TimelineRow), typeof(RequestRow),
         typeof(HumanDecisionRow), typeof(NeedsYouRowRecord), typeof(JobRow), typeof(LaunchRow), typeof(CodeIndexRow),
-        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder), typeof(ProjectAttachedRow), typeof(ProjectHiddenRow), typeof(ItemLinkRow), typeof(TodoRow),
+        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder), typeof(ProjectAttachedRow), typeof(ProjectHiddenRow), typeof(WorkflowRunRow), typeof(ItemLinkRow), typeof(TodoRow),
     ];
 
     [Fact, Trait("Lane", "unit")]

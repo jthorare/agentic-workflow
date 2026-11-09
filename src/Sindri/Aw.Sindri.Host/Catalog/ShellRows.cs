@@ -1,6 +1,5 @@
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.StopProcess;
 
@@ -14,9 +13,6 @@ internal static class ShellRows
         new(ActionId.From("StopProcess"), typeof(StopProcessRequest), Variant: null, ActionClass.Desk, ServiceGrants: ["host"],
             NeedsTerminal: false, SelfAudited: true, Destructive: true, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/stop", Form("sindri stop"), "ready"),
-        new(ActionId.From("ApproveProfile"), typeof(ApproveProfileRequest), Variant: null, ActionClass.Protected, ServiceGrants: [],
-            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/profile/approve", Form("sindri profile approve [<hash>]"), "ready"),
         new(ActionId.From("RebuildViews"), typeof(RebuildViewsRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/views/rebuild", Form("sindri views rebuild"), "ready"),

@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Profile;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Profile;
 
 namespace Aw.Sindri.Tests.PinConcepts;
@@ -32,7 +33,7 @@ public sealed class YamlProfileIndexWriterPageTests : IDisposable
         }
     }
 
-    private YamlProfileIndexWriter Writer() => new(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options);
+    private YamlProfileIndexWriter Writer() => new(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options, NoProfileCache.Instance);
 
     private void Put(string text)
     {

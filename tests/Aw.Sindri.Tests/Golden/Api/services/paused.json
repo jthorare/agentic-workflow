@@ -182,12 +182,24 @@
         "run",
         "pause"
       ]
+    },
+    {
+      "name": "workflow-schedule",
+      "every": "1m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Starts a run of each active workflow whose schedule has a tick to fire, once for the latest missed tick."
     }
   ],
   "empty": null,
   "asOf": {
-    "cursor": 7,
-    "ledgerHead": 7,
+    "cursor": 3,
+    "ledgerHead": 3,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false

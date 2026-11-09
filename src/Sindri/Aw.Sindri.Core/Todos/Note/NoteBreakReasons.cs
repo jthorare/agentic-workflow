@@ -19,4 +19,21 @@ public static class NoteBreakReasons
         NoteBreak.None => throw new ArgumentOutOfRangeException(nameof(reason), reason, "a line that is a valid todo has no reason"),
         _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "a line that is a valid todo has no reason"),
     };
+
+    /// <summary>The reason in a few words, for a list ("markdown link", "due marker inside the text").</summary>
+    /// <param name="reason">The break; <see cref="NoteBreak.None"/> is refused.</param>
+    /// <returns>For example "markdown link".</returns>
+    public static string Brief(NoteBreak reason) => reason switch
+    {
+        NoteBreak.TwoIds => "two ids",
+        NoteBreak.TwoDueMarkers => "two due dates",
+        NoteBreak.MarkerInText => "due marker inside the text",
+        NoteBreak.ForeignLink => "markdown link",
+        NoteBreak.ForbiddenCharacter => "character Sindri can't store",
+        NoteBreak.EmptyText => "no text",
+        NoteBreak.TextTooLong => "over 280 characters",
+        NoteBreak.ForeignBlockId => "block id of its own",
+        NoteBreak.None => throw new ArgumentOutOfRangeException(nameof(reason), reason, "a line that is a valid todo has no reason"),
+        _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "a line that is a valid todo has no reason"),
+    };
 }
