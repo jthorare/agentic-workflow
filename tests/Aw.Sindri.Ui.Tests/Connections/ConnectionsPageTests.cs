@@ -3,6 +3,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api.Connections;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Connections;
 
 namespace Aw.Sindri.Ui.Tests.Connections;
 
@@ -172,6 +173,25 @@ public sealed class ConnectionsPageTests
         await _f.Drive(run);
 
         Assert.Equal(Labels.ConnectionSignedIn, row.NoteText);
+    }
+
+    [Fact]
+    public async Task A_failed_sign_in_again_on_a_connected_row_ends_on_the_failure_without_waiting_out_the_5_minutes()
+    {
+        _f.SeedThree();
+        var page = await _f.Shown();
+        var row = page.Rows[1];   // linear:work reads 'connected' before the sign-in starts
+        var run = row.SignIn(Token);
+        await _f.Drive(Task.Delay(30, Token));
+        Assert.False(run.IsCompleted);
+
+        _f.Server.FailSignIn("linear:work", "SND-CONN-009");
+        var before = _f.Clock.GetUtcNow();
+        await _f.Drive(run);
+
+        Assert.True(_f.Clock.GetUtcNow() - before <= ConnectionActions.PollEvery * 3, "the poll should stop on the failure, not wait out the 5 minutes");
+        Assert.Contains("SND-CONN-009", row.NoteText, StringComparison.Ordinal);
+        Assert.Equal("✓ Connected", row.ChipText);   // the row still works on its old tokens
     }
 
     [Fact]
