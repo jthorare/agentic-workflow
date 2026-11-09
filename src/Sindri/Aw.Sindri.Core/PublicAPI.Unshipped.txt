@@ -20512,6 +20512,29 @@ static Aw.Sindri.Core.Todos.TodoItem.operator !=(Aw.Sindri.Core.Todos.TodoItem? 
 static Aw.Sindri.Core.Todos.TodoItem.operator ==(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator !=(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator ==(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
+Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Recent(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, int offset, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
+Aw.Sindri.Core.Graph.Layout.GraphLayout
+Aw.Sindri.Core.Graph.Layout.GraphPosition
+Aw.Sindri.Core.Graph.Layout.GraphPosition.<Clone>$() -> Aw.Sindri.Core.Graph.Layout.GraphPosition!
+Aw.Sindri.Core.Graph.Layout.GraphPosition.Deconstruct(out int Layer, out int Row, out int X, out int Y) -> void
+Aw.Sindri.Core.Graph.Layout.GraphPosition.Equals(Aw.Sindri.Core.Graph.Layout.GraphPosition? other) -> bool
+Aw.Sindri.Core.Graph.Layout.GraphPosition.GraphPosition(int Layer, int Row, int X, int Y) -> void
+Aw.Sindri.Core.Graph.Layout.GraphPosition.Layer.get -> int
+Aw.Sindri.Core.Graph.Layout.GraphPosition.Layer.init -> void
+Aw.Sindri.Core.Graph.Layout.GraphPosition.Row.get -> int
+Aw.Sindri.Core.Graph.Layout.GraphPosition.Row.init -> void
+Aw.Sindri.Core.Graph.Layout.GraphPosition.X.get -> int
+Aw.Sindri.Core.Graph.Layout.GraphPosition.X.init -> void
+Aw.Sindri.Core.Graph.Layout.GraphPosition.Y.get -> int
+Aw.Sindri.Core.Graph.Layout.GraphPosition.Y.init -> void
+const Aw.Sindri.Core.Graph.Layout.GraphLayout.LayerWidth = 280 -> int
+const Aw.Sindri.Core.Graph.Layout.GraphLayout.RowHeight = 140 -> int
+override Aw.Sindri.Core.Graph.Layout.GraphPosition.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Layout.GraphPosition.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Layout.GraphPosition.ToString() -> string!
+static Aw.Sindri.Core.Graph.Layout.GraphLayout.Compute(Aw.Sindri.Core.Graph.GraphSpec! spec) -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Layout.GraphPosition!>!
+static Aw.Sindri.Core.Graph.Layout.GraphPosition.operator !=(Aw.Sindri.Core.Graph.Layout.GraphPosition? left, Aw.Sindri.Core.Graph.Layout.GraphPosition? right) -> bool
+static Aw.Sindri.Core.Graph.Layout.GraphPosition.operator ==(Aw.Sindri.Core.Graph.Layout.GraphPosition? left, Aw.Sindri.Core.Graph.Layout.GraphPosition? right) -> bool
 Aw.Sindri.Core.Todos.TodoConverger.Apply(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Todos.TodoConvergeTarget! to, Aw.Sindri.Core.Todos.TodoPickCaller! who, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
 Aw.Sindri.Core.Todos.TodoConvergeTarget
 Aw.Sindri.Core.Todos.TodoConvergeTarget.By.get -> string!
