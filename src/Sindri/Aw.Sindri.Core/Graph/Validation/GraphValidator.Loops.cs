@@ -21,7 +21,7 @@ public sealed partial class GraphValidator
             // why: each item runs in a GraphIteration child workflow, which runs blocks but never parks, so a wait would end at once and an ask_owner would never ask
             foreach (var parked in loop.Value.Body.Where(static n => _parking.Contains(n.Type)))
             {
-                found.Add(Found.Error("GRAPH-LOOP-003", [parked.Id.Value], $"'{parked.Type}' node '{parked.Id.Value}' is inside the loop of '{node.Id.Value}': a loop's nodes can't wait or ask", "move it before the for_each or after the collect, or put the per-item part in its own workflow and call it with run_workflow"));
+                found.Add(Found.Error("GRAPH-LOOP-004", [parked.Id.Value], $"'{parked.Type}' node '{parked.Id.Value}' is inside the loop of '{node.Id.Value}': a loop's nodes can't wait or ask", "move it before the for_each or after the collect, or put the per-item part in its own workflow and call it with run_workflow"));
             }
         }
 

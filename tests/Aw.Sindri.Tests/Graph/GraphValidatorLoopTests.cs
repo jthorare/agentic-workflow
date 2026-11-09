@@ -58,7 +58,7 @@ public sealed class GraphValidatorLoopTests
 
         var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
 
-        var finding = Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-003");
+        var finding = Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-004");
         Assert.Equal(["pause"], finding.Nodes);
         Assert.Contains("run_workflow", finding.Fix, StringComparison.Ordinal);
     }
