@@ -34,6 +34,10 @@ public sealed class NoticeRuleTests
     [InlineData("please rebase #12")]
     [InlineData("Ack: ui champions #12. ideas is at ~200k context, please lane-recycle me.")]
     [InlineData("FYI: aw-wt/x is cleaned, please sweep it")]
+    [InlineData("main moved to 0589ab3. #12 conflicts in EndpointTable, can you merge main?")]
+    [InlineData("FYI: gate done on #12, want me to rerun it?")]
+    [InlineData("NOTICE: lane api restarted. Is it on your list?")]
+    [InlineData("LANE MAP v12: meta=a, api=b. Did ui come back?")]
     [InlineData("")]
     public void These_lines_are_not_notices(string body) => Assert.False(NoticeRule.IsNotice(body));
 
