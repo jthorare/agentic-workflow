@@ -9,7 +9,7 @@ namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
 /// 'sindri onyx down --purge': removes what an old `sindri onyx up` left on the box (owned-index spec §8.2 step 5): the containers and volumes labelled with its compose project, the keychain entry Sindri recorded and the onyx/ directory. Lists them, asks the human, then deletes in that order.
-/// The human's verb (a session is refused SND-AUTH-002), local, no control plane. Exit 0 done, declined or nothing left, 1 a step failed (SND-INDEX-014 names the fix), 2 refused.
+/// Local, no control plane; the owner and an agent session run it alike, and both type the yes. Exit 0 done, declined or nothing left, 1 a step failed (SND-INDEX-014 names the fix).
 /// Self-contained on purpose: it reads onyx/state.json with its own record and uses nothing from the Onyx setup code, so deleting that code leaves this building.
 /// </summary>
 /// <param name="home">The Sindri home (AW_SINDRI_HOME).</param>
@@ -21,13 +21,8 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="question">Where the question is asked (standard error).</param>
 internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeKeychain keychain, ILeftoverFiles files, Output output, TextReader input, TextWriter question)
 {
-    internal async Task<int> Run(bool human, CancellationToken ct)
+    internal async Task<int> Run(CancellationToken ct)
     {
-        if (!human)
-        {
-            return await output.Error(SindriErrors.AuthRefused.With("'onyx down --purge' deletes data and is the human's verb (fix: ask the human to run it at a terminal)")).ConfigureAwait(false);
-        }
-
         var plan = OnyxLeftovers.Find(home, docker, files);
         if (plan.IsError)
         {
