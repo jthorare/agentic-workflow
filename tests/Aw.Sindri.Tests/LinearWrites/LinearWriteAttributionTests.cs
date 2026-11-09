@@ -66,8 +66,8 @@ public sealed class LinearWriteAttributionTests
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         var recorded = Assert.Single(_slice.Store.Events);
         Expect.Equal(("linear.comment.posted", $"linear.comment.posted:{ClientId}"), (recorded.Envelope.Type, recorded.IdempotencyKey));
-        Expect.Equal(caller.Actor, recorded.Envelope.Actor);   // why: CallerContext composes the actor; the launch id is in it once the attribution fix (session:launch:<id>) is merged
-        Expect.True(recorded.Envelope.Actor.StartsWith("session:", StringComparison.Ordinal));
+        Expect.Equal(caller.Actor, recorded.Envelope.Actor);
+        Expect.Equal($"session:launch:{Launch}", recorded.Envelope.Actor);
         Expect.Equal(("ENG", "ENG-12", ClientId), PayloadOf(recorded));
     }
 
