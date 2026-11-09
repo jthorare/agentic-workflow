@@ -60,7 +60,7 @@ internal sealed partial class TodoHarness
 
     internal KeepTodoUndoService KeepUndo() => new(Writes(), Converger(), Picks);
 
-    internal PickTodoHoldService PickHold() => new(new TodoHolds(Slice.Store, Slice.Events), Writes(), Converger(), NoteFile, Picks);
+    internal PickTodoHoldService PickHold() => new(new TodoHolds(Slice.Store, Slice.Events), Writes(), Converger(), NoteFile, Picks, new MaskingScrubber());
 
     internal UndoTodoHoldService UndoHold() => new(Writes(), Converger(), Picks);
 
