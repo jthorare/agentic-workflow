@@ -105,6 +105,10 @@ The row in `ledger.db` (table `connection`) has the name, kind, preset, non-secr
 
 The app's Connections tab (`G O`) lists the same connections with their status, and offers Test, Sign in again, Remove and Add, the same actions as the commands above. A key you paste there is sent once and is never stored by the app. See `docs/csharp/sindri-ui.md` "PR 18a".
 
+## Events that start workflows
+
+A workflow whose trigger is a `connection_event` node is started by what its connection's provider reports (a merged pull request, a labelled Linear issue, a Slack message). Sindri polls; there is no webhook and no tunnel. The built-in `workflow-poll` service, every 30 seconds, makes one provider call per (connection, event kind) that any active workflow watches, then each trigger keeps the events its `filter` takes. The cursor of each (connection, event kind) is saved only after the runs for its events started, and each run's id comes from the event's delivery id, so the same event never starts a second run. After the control plane starts and after the machine wakes, every cursor is read forward at once. Intervals, the catch-up cap and the events it records: [workflows/blocks/poll.md](../workflows/blocks/poll.md).
+
 ## What this release does not do yet
 
 The `mcp` kind refreshing on its own, and passing a connection to the nodes of a workflow come in the next changes. Until then an expired mcp token is replaced with `connection signin`.

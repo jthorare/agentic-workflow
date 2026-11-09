@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 
@@ -8,7 +9,8 @@ namespace Aw.Sindri.Host.Server;
 /// <param name="builtIns">The built-in services.</param>
 /// <param name="pauses">The paused services.</param>
 /// <param name="live">Where the scheduler publishes its next slots.</param>
-internal sealed class ScheduleInputs(IApprovedProfile approvals, IEnumerable<BuiltInService> builtIns, IServicePauses pauses, LiveSchedule live)
+/// <param name="pollWake">Asked for when the machine woke, so the poll service catches up; none in rigs that do not poll.</param>
+internal sealed class ScheduleInputs(IApprovedProfile approvals, IEnumerable<BuiltInService> builtIns, IServicePauses pauses, LiveSchedule live, PollWake? pollWake = null)
 {
     public IApprovedProfile Approvals { get; } = approvals;
 
@@ -17,4 +19,6 @@ internal sealed class ScheduleInputs(IApprovedProfile approvals, IEnumerable<Bui
     public IServicePauses Pauses { get; } = pauses;
 
     public LiveSchedule Live { get; } = live;
+
+    public PollWake? PollWake { get; } = pollWake;
 }
