@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Resources;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
-#pragma warning disable MA0182 // the red commit: the next one wires it into GraphBlockActivities
 /// <summary>'EnsureResources' (agent-first PR 14): before a node runs, makes the workflow's declared resources exist and checks their disks.</summary>
 /// <param name="provisioner">Creates the files; null on a build with no resources.</param>
 /// <param name="workflows">Where the workflow's slug is read from.</param>
@@ -16,10 +15,21 @@ internal sealed class GraphResourceEnsurer(IResourceProvisioner? provisioner, IW
     /// <param name="spec">The revision's spec.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>What the run gets; nothing when the spec declares no resources.</returns>
-    public ValueTask<Result<ProvisionedResources>> Ensure(WorkflowId workflow, GraphSpec spec, CancellationToken cancellationToken)
+    public async ValueTask<Result<ProvisionedResources>> Ensure(WorkflowId workflow, GraphSpec spec, CancellationToken cancellationToken)
     {
-        _ = (provisioner, workflows, workflow, spec, cancellationToken);
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(spec);
+        if (provisioner is null || spec.Resources is null)
+        {
+            return ProvisionedResources.None;
+        }
+
+        var record = await workflows.Get(workflow, cancellationToken).ConfigureAwait(false);
+        if (record.IsError)
+        {
+            return record.Error;
+        }
+
+        var owner = ResourceOwner.Parse($"workflow:{record.Value.Slug.Value}");
+        return owner.IsError ? owner.Error : await provisioner.Ensure(owner.Value, GraphResourceSpec.From(spec.Resources), cancellationToken).ConfigureAwait(false);
     }
 }
-#pragma warning restore MA0182

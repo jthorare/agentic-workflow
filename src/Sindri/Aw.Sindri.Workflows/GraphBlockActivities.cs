@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Loops;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Resources;
 using Temporalio.Activities;
 using Temporalio.Exceptions;
 
@@ -17,8 +18,11 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="blocks">The blocks this build has.</param>
 /// <param name="runs">Where the earlier nodes' outputs are read from.</param>
 /// <param name="workflows">Where the run's spec is read from.</param>
-internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowRunStore runs, IWorkflowStore workflows)
+/// <param name="provisioner">Creates the workflow's declared resources before a node runs; null on a build with none.</param>
+internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowRunStore runs, IWorkflowStore workflows, IResourceProvisioner? provisioner = null)
 {
+    private readonly GraphResourceEnsurer _resources = new(provisioner, workflows);
+
     /// <summary>Runs one node execution.</summary>
     /// <param name="run">The run.</param>
     /// <param name="node">The node.</param>
@@ -52,7 +56,20 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return cutConfig;   // why: the config read an output the store cut at 64 KB; the block never runs on a partial value
         }
 
-        var context = new BlockContext(run, node, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup);
+        return await Execute(row, spec, new Prepared(graphNode, block, scope, config), cancel).ConfigureAwait(false);
+    }
+
+    private async Task<GraphBlockOutcome> Execute(WorkflowRun row, GraphSpec spec, Prepared node, CancellationToken cancel)
+    {
+        var (graphNode, block, scope, config) = (node.Node, node.Block, node.Scope, node.Config);
+        // why: idempotent and cheap without a disk (a graph declares a database and a sandbox size only), so it runs before every node and the activity keeps no state across a retry
+        var ensured = await _resources.Ensure(row.WorkflowId, spec, cancel).ConfigureAwait(false);
+        if (ensured.IsError)
+        {
+            return Failed(config, ensured.Error);
+        }
+
+        var context = new BlockContext(row.Id, graphNode.Id, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup) { Resources = ensured.Value.Env };
         var result = await block.Execute(context, cancel).ConfigureAwait(false);   // a condition reads its references inside Execute
         if (Cut(scope, config) is { } cutAfter)
         {
@@ -66,6 +83,8 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
 
         return Succeeded(config, result.Value);   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
     }
+
+    private sealed record Prepared(GraphNode Node, IGraphBlock Block, Scope Scope, JsonObject Config);
 
     /// <summary>
     /// Runs the after-success step of every block whose node succeeded, once the whole run has succeeded ('only_new' records its keys here). A run that failed or was cancelled never gets here,
