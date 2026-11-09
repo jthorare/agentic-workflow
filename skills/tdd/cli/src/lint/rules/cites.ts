@@ -6,7 +6,7 @@ import * as py from "../../py";
 import { Packet } from "../packet";
 import { CODE_EXT } from "../patterns";
 import { Git } from "../services";
-import { type PyDict, type PyValue, decodeSurrogateEscape, get, iter, norm, str, truthy } from "../pyops";
+import { type PyDict, type PyValue, decodeSurrogateEscape, dget, get, iter, norm, str, truthy } from "../pyops";
 
 const re = py.re;
 const { join, abspath, expanduser, isabs } = py.path;
@@ -26,14 +26,14 @@ export const cites = Effect.gen(function* () {
   const p = yield* Packet;
   const git = yield* Git;
   const c = p.content;
-  const citesList = truthy(c) ? iter(get(c, "cites", [])) : [];
+  const citesList = truthy(c) ? iter(dget(c, "cites", [])) : [];
   const meta = truthy(p.meta) ? p.meta : new Map();
   const uniq = new Map<unknown, PyDict>();
   for (const x of citesList) {
-    const t = get(x, "text");
+    const t = dget(x, "text");
     if (!uniq.has(t)) uniq.set(t, x as PyDict);
   }
-  const repoV = get(meta, "repo_path");
+  const repoV = dget(meta, "repo_path");
   if (!truthy(repoV)) {
     if (uniq.size) {
       p.add("CITES", "no-repo", "warn", `NEEDS_CONTEXT: ${uniq.size} citations not checked: meta.json has no repo_path (add repo_path, ` +

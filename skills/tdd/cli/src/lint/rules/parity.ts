@@ -1,17 +1,19 @@
 // PARITY, reversed (research/bun-port-2026.md sections 5.2 and 5.3). lint_packet.py's PARITY rule runs the TypeScript
 // compiler as a subprocess (bun cli/bin/build-tdd.ts) and compares it with the build; here the TypeScript compiler runs
 // in-process and python3 (build_tdd.py) is the external one. The checks, their order and every finding and note text
-// are the Python rule's, so lint.json stays identical on both linters; only the skip note differs (python3 or
-// build_tdd.py absent, where the Python says bun or cli/).
+// are the Python rule's (Lint.r_parity), so lint.json stays identical on both linters; only the skip note differs
+// (python3 or build_tdd.py absent, where the Python says bun, cli/ or node_modules).
 //
-// On a compiled lint the reference is not a build: lint_packet.py compiled the source with build_tdd.py, this linter
-// compiled it with the TypeScript compiler, so the rule compiles it with python3 (TDD_GENERATED pinned to the compile's
-// stamp) and compares that, as the Python rule compares its temporary compile with the TypeScript one.
+// The build is the first reference. Whenever it differs from the TypeScript compile (or the TypeScript compile fails),
+// a fresh build_tdd.py compile, spelled the same way, decides whether the difference is the TypeScript's. On a compiled
+// lint lint_packet.py compared its own build_tdd.py compile with the TypeScript one; this linter compiled with the
+// TypeScript compiler, so the reference is that fresh build_tdd.py compile (TDD_GENERATED pinned to the compile's
+// stamp), and a build_tdd.py failure there is reported in the Python rule's words for a failing fresh compile.
 import { Context, Effect, Layer } from "effect";
 import * as py from "../../py";
 import { Packet } from "../packet";
 import { type CompileFailure, SCRIPTS, pythonCompileOnce, tempDir, tsCompileOnce } from "../services";
-import { type PyValue, eq, get, items, iter, pyErrText, repr, truthy } from "../pyops";
+import { type PyValue, dget, eq, get, isDict, isOsOrValueError, iter, keys, or, repr } from "../pyops";
 
 const { join, relpath } = py.path;
 
@@ -51,6 +53,28 @@ export function firstDiff(a: Uint8Array, b: Uint8Array): string {
 
 const sameBytes = (a: Uint8Array, b: Uint8Array): boolean => a.length === b.length && a.every((x, k) => x === b[k]);
 
+/** Lint._manifest_diffs(ma, mb): the manifest fields PARITY compares (files paths, missing, warnings) that differ,
+ * described. ma and mb must be dicts (AttributeError otherwise, as in the Python). */
+export function manifestDiffs(ma: PyValue, mb: PyValue): string[] {
+  const diffs: string[] = [];
+  const fields: readonly (readonly [string, (m: PyValue) => PyValue])[] = [
+    ["files", (m) => keys(or(dget(m, "files"), new Map()))],
+    ["missing", (m) => dget(m, "missing")],
+    ["warnings", (m) => dget(m, "warnings")],
+  ];
+  for (const [k, f] of fields) {
+    const x = f(ma), y = f(mb);
+    if (!eq(x, y)) {
+      const xs = iter(or(x, [])), ys = iter(or(y, []));
+      const n = Math.min(xs.length, ys.length);
+      let j = 0;
+      while (j < n && eq(xs[j], ys[j])) j++;
+      diffs.push(`${k} (${xs.length} vs ${ys.length}; first at ${j}: ${repr(j < xs.length ? xs[j] : null)} vs ${repr(j < ys.length ? ys[j] : null)})`);
+    }
+  }
+  return diffs;
+}
+
 /** The rule; its temporary folders are removed when it ends (the Python rule's finally). */
 export const parity = Effect.scoped(Effect.gen(function* () {
   const p = yield* Packet;
@@ -61,90 +85,87 @@ export const parity = Effect.scoped(Effect.gen(function* () {
     p.note(`PARITY: ${!python ? "python3 is not on PATH" : p.rel(bt) + " is absent"}; build_tdd.py was not compared`);
     return;
   }
-  const refDir = p.compiled ? p.tmp : p.build;
-  const cpath = join(refDir ?? "", "content.json"), mpath = join(refDir ?? "", "content.files.json");
-  const generated = get(p.content, "generated");
-  if (!p.src || !p.fs.isfile(cpath) || typeof generated !== "string" || !generated) {
+  const own = (p.compiled ? p.tmp : p.build) ?? "";
+  const generated = isDict(p.content) ? get(p.content, "generated") : null;
+  if (!p.src || !p.fs.isfile(join(own, "content.json")) || typeof generated !== "string" || !generated) {
     p.note("PARITY: no source, no content.json or no generated stamp to compare with; skipped");
     return;
   }
-  const src = p.src;
-  const srcRel = relpath(src, p.root);
-  let where = p.compiled ? "(compiled) content.json" : p.rel(cpath)!;
-  let mfile = p.compiled ? "(compiled) content.files.json" : p.rel(mpath)!;
+  const where = p.compiled ? "(compiled) content.json" : p.rel(join(own, "content.json"))!;
+  const mfile = p.compiled ? "(compiled) content.files.json" : p.rel(join(own, "content.files.json"))!;
+  const src = p.rel(p.src)!;
+  const srcRel = relpath(p.src, p.root);
+  // python_fresh(): one build_tdd.py compile of the source, made when first needed
+  let fresh: readonly [string, string | null] | null = null;
+  const pythonFresh = Effect.gen(function* () {
+    if (fresh === null) {
+      const out = yield* tempDir("lint-tdd-parity-");
+      fresh = [out, pythonCompileTo(python, srcRel, p.root, out, generated)] as const;
+    }
+    return fresh;
+  });
+  // read_manifest(path): the JSON, or None when it is missing or unreadable
+  const readManifest = (path: string): PyValue => {
+    try {
+      return py.json.loads(p.fs.readText(path));
+    } catch (e) {
+      if (!isOsOrValueError(e)) throw e;
+      return null;
+    }
+  };
   const tout = yield* tempDir("lint-tdd-parity-");
   const terr = ts.compile(srcRel, p.root, tout, generated);
   if (terr !== null) {
-    p.add("PARITY", "content", "error", `the TypeScript compiler failed on ${p.rel(src)} where build_tdd.py did not (${failure(terr)})`, p.rel(src));
+    const [, perr] = yield* pythonFresh;
+    if (perr !== null) {
+      p.note(`PARITY: build_tdd.py fails on the current source too (${perr}); the compilers were not compared`);
+      return;
+    }
+    p.add("PARITY", "content", "error", `the TypeScript compiler failed on ${src} where build_tdd.py did not (${failure(terr)})`, src);
     return;
   }
   const mine = p.fs.readBytes(join(tout, "content.json"));
-  let refM = mpath;
-  // the reference: the build, or (compiled) build_tdd.py's compile of the source, which the Python linter linted
-  let ref: Uint8Array;
+  const mineM = readManifest(join(tout, "content.files.json"));
+  // the reference: the build, or (compiled) build_tdd.py's compile of the source, which lint_packet.py's run linted
+  let ref = own;
   if (p.compiled) {
-    const cout = yield* tempDir("lint-tdd-parity-");
-    const cerr = pythonCompileTo(python, srcRel, p.root, cout, generated);
-    if (cerr !== null) {
-      p.add("PARITY", "content", "error", `build_tdd.py failed on ${p.rel(src)} where the TypeScript compiler did not (${cerr})`, p.rel(src));
-      return;
-    }
-    ref = p.fs.readBytes(join(cout, "content.json"));
-    refM = join(cout, "content.files.json");
-  } else ref = p.fs.readBytes(cpath);
-  if (!sameBytes(ref, mine)) {
-    if (p.compiled) {
-      p.add("PARITY", "content", "error", `the TypeScript compiler's content.json differs from build_tdd.py's on ${p.rel(src)}: ` +
-        `${firstDiff(ref, mine)}; fix cli/src/compile (build_tdd.py stays the reference until the cutover)`, p.rel(src));
-      return;
-    }
-    // a stale build (or files only under build/) differs from any fresh compile: compare two fresh compiles
-    const pout = yield* tempDir("lint-tdd-parity-");
-    const perr = pythonCompileTo(python, srcRel, p.root, pout, generated);
+    const [pout, perr] = yield* pythonFresh;
     if (perr !== null) {
-      p.add("PARITY", "content", "error", `${where} differs from the TypeScript compile, and a fresh build_tdd.py compile failed (${perr})`, p.rel(src));
+      p.add("PARITY", "content", "error", `build_tdd.py fails on ${src} (${perr}) where the TypeScript compiler succeeded`, src);
       return;
     }
-    const fresh = p.fs.readBytes(join(pout, "content.json"));
-    if (!sameBytes(fresh, mine)) {
-      p.add("PARITY", "content", "error", `the TypeScript compiler's content.json differs from build_tdd.py's on ${p.rel(src)}: ` +
-        `${firstDiff(fresh, mine)}; fix cli/src/compile (build_tdd.py stays the reference until the cutover)`, p.rel(src));
-      return;
-    }
-    p.note(`PARITY: ${where} differs from a fresh compile of the source (a stale build: rebuild); the TypeScript and Python compilers ` +
-      `agree on the fresh compile`);
-    refM = join(pout, "content.files.json");
-    where = "a fresh build_tdd.py compile's content.json";
-    mfile = "(fresh compile) content.files.json";
+    ref = pout;
   }
-  if (!p.fs.isfile(refM)) {
-    p.note(`PARITY: the TypeScript compiler reproduced ${where} byte for byte; no ${mfile} to compare manifests with`);
+  const refM = readManifest(join(ref, "content.files.json"));
+  const sameC = sameBytes(p.fs.readBytes(join(ref, "content.json")), mine);
+  const mDiffs = refM !== null && mineM !== null ? manifestDiffs(refM, mineM) : null;
+  if (sameC && mDiffs !== null && mDiffs.length === 0) {
+    p.note(`PARITY: the TypeScript compiler (cli/bin/build-tdd.ts) reproduced ${where} byte for byte with TDD_GENERATED=${generated}, ` +
+      `and the manifest's files, missing and warnings`);
     return;
   }
-  let ma: PyValue, mb: PyValue;
-  try {
-    ma = py.json.loads(p.fs.readText(refM));
-    mb = py.json.loads(p.fs.readText(join(tout, "content.files.json")));
-  } catch (e) {
-    p.add("PARITY", "manifest", "warn", `the manifests could not be compared: ${pyErrText(e)}`, mfile);
+  // the build differs from the TypeScript compile: a fresh build_tdd.py compile decides whose difference it is
+  const [pout, perr] = yield* pythonFresh;
+  if (perr !== null) {
+    p.add("PARITY", "content", "error", `build_tdd.py fails on ${src} (${perr}) where the TypeScript compiler succeeded`, src);
     return;
   }
-  const keys = (m: PyValue): PyValue[] => items(truthy(get(m, "files")) ? get(m, "files") : new Map()).map(([k]) => k);
-  const diffs: string[] = [];
-  for (const [k, f] of [["files", keys], ["missing", (m: PyValue) => get(m, "missing")], ["warnings", (m: PyValue) => get(m, "warnings")]] as const) {
-    const x = f(ma), y = f(mb);
-    if (!eq(x, y)) {
-      const xs = iter(truthy(x) ? x : []), ys = iter(truthy(y) ? y : []);
-      const n = Math.min(xs.length, ys.length);
-      let j = 0;
-      while (j < n && eq(xs[j], ys[j])) j++;
-      diffs.push(`${k} (${xs.length} vs ${ys.length}; first at ${j}: ${repr(j < xs.length ? xs[j] : null)} vs ${repr(j < ys.length ? ys[j] : null)})`);
-    }
-  }
-  if (diffs.length) {
-    p.add("PARITY", "manifest", "warn", `the TypeScript compiler's manifest differs from build_tdd.py's: ${diffs.join("; ")}`, mfile);
+  const freshC = p.fs.readBytes(join(pout, "content.json"));
+  const freshM = readManifest(join(pout, "content.files.json"));
+  if (!sameBytes(freshC, mine)) {
+    p.add("PARITY", "content", "error", `the TypeScript compiler's content.json differs from build_tdd.py's on ${src}: ` +
+      `${firstDiff(freshC, mine)}; fix cli/src/compile (build_tdd.py stays the reference until the cutover)`, src);
     return;
   }
-  p.note(`PARITY: the TypeScript compiler (cli/bin/build-tdd.ts) reproduced ${where} byte for byte with TDD_GENERATED=${generated}, ` +
-    `and the manifest's files, missing and warnings`);
+  const d = manifestDiffs(or(freshM, new Map()), or(mineM, new Map()));
+  if (d.length) {
+    p.add("PARITY", "manifest", "warn", `the TypeScript compiler's manifest differs from build_tdd.py's on ${src}: ${d.join("; ")}`, src);
+    return;
+  }
+  const why = !sameC ? `${where} differs from a fresh compile of the source (a stale build: rebuild)`
+    : mDiffs === null ? `${mfile} is missing or unreadable`
+    : `${mfile} differs from a fresh compile's (${mDiffs.join("; ")}): a stale build, files found only under the build folder, ` +
+      `or another spelling of the packet path`;
+  p.note(`PARITY: ${why}; the TypeScript compiler (cli/bin/build-tdd.ts) reproduced a fresh build_tdd.py compile byte for byte ` +
+    `with TDD_GENERATED=${generated}, and its manifest's files, missing and warnings`);
 }));

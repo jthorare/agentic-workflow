@@ -3,7 +3,9 @@ import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmdirSync, unlinkSy
 import { Lane, BUDGET, GENERATOR, readJson, rel } from "./lane";
 import * as re from "../py/re";
 import { PageLane } from "./pagelane";
-import { type Py, abspath, dirname, isdir, isfile, pjoin, readText, sha256, get, or, str as S, strip as pystrip } from "./_py";
+import { type Py, abspath, dirname, isdir, isfile, pjoin, readText, sha256, or, str as S, strip as pystrip } from "./_py";
+import { PyError, isOsOrValueError } from "../py/errors";
+import { pyTypeName, strictGet } from "../py/value";
 
 export class SystemExit extends Error {
   constructor(readonly code: number, msg = "") {
@@ -11,16 +13,32 @@ export class SystemExit extends Error {
   }
 }
 
-function laneFiles(out: string): Map<string, Py> | null {
+/** _lane_files(out): tokens.json's "files" as it is (`or {}`), or None when tokens.json is missing or unreadable (OSError,
+ * ValueError). A root that is not a dict raises AttributeError, as in the Python, and so do the callers that need a
+ * dict and get something else: lint_packet.py reports that as AGENTS/check-failed. */
+function laneFiles(out: string): Py | null {
   const tj = pjoin(out, "tokens.json");
   if (!isfile(tj)) return null;
   try {
-    const d = readJson(tj);
-    const f = or(get(d, "files"), new Map());
-    return f instanceof Map ? f : new Map();
-  } catch {
+    return or(strictGet(readJson(tj), "files"), new Map());
+  } catch (e) {
+    if (!isOsOrValueError(e)) throw e;
     return null;
   }
+}
+
+/** for x in v: a dict's keys, a list's items, a str's characters; TypeError otherwise. */
+function pyIter(v: Py): Py[] {
+  if (v instanceof Map) return [...v.keys()];
+  if (Array.isArray(v)) return v;
+  if (typeof v === "string") return Array.from(v);
+  throw new PyError("TypeError", `'${pyTypeName(v)}' object is not iterable`);
+}
+
+/** os.path.join(out, f) for a name read from tokens.json: TypeError when it is not a str. */
+function joinName(out: string, f: Py): string {
+  if (typeof f !== "string") throw new PyError("TypeError", `join() argument must be str, bytes, or os.PathLike object, not '${pyTypeName(f)}'`);
+  return pjoin(out, f);
 }
 
 function firstLine(p: string): string {
@@ -73,9 +91,9 @@ export function write(buildDir: string, packet: string | null = null, out: strin
   if (existsSync(o) && !looksLikeLane(o) && !force) {
     throw new SystemExit(1, `${o}: exists and is not an agents lane (no README header, no tokens.json); pass --force to overwrite`);
   }
-  const old = laneFiles(o) ?? new Map();
-  for (const f of old.keys()) {   // remove what the previous run generated; never touch unlisted files
-    const p = pjoin(o, f);
+  const old = or(laneFiles(o), new Map());
+  for (const f of pyIter(old)) {   // remove what the previous run generated; never touch unlisted files
+    const p = joinName(o, f);
     if (!lane.files.has(f) && isfile(p)) unlinkSync(p);
   }
   for (const [f, v] of lane.files) {
@@ -99,8 +117,9 @@ export function check(buildDir: string, out: string | null = null): string[] {
   if (isfile(cpath)) {
     let gen: Py;
     try {
-      gen = get(readJson(cpath), "generated");
+      gen = strictGet(readJson(cpath), "generated");
     } catch (e) {
+      if (!isOsOrValueError(e)) throw e;
       return [`${cpath}: unreadable (${(e as Error).message})`];
     }
     want = [`content ${S(gen)} `, `page ${pageSha || "none"} `];
@@ -123,10 +142,11 @@ export function check(buildDir: string, out: string | null = null): string[] {
     problems.push(`${o}/tokens.json: missing or unreadable`);
     return problems;
   }
+  if (!(listed instanceof Map)) throw new PyError("AttributeError", `'${pyTypeName(listed)}' object has no attribute 'items'`);
   for (const [f, rec] of listed) {
     const p = pjoin(o, f);
     if (!isfile(p)) problems.push(`agents/${f}: listed in tokens.json but missing`);
-    else if (sha256(readFileSync(p)) !== get(rec, "sha256")) problems.push(`agents/${f}: changed since it was generated (hand edit?)`);
+    else if (sha256(readFileSync(p)) !== strictGet(rec, "sha256")) problems.push(`agents/${f}: changed since it was generated (hand edit?)`);
   }
   for (const [dp, , fns] of walk(o)) {
     for (const fn of fns) {

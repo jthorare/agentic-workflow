@@ -1,20 +1,22 @@
 // Unit tests of the linter's parts against CPython where Python decides (Git failure text, realpath, getmtime,
 // surrogateescape, the usage text), and of what only the TypeScript linter has: rule isolation, the swappable services
-// (a Git that answers from a table, an Agents check that raises, a Compiler that is absent).
+// (a Git that answers from a table, an Agents check that raises, a Compiler that is absent, a TypeScript compiler that
+// fails).
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { chmodSync, mkdirSync, symlinkSync, utimesSync, writeFileSync, copyFileSync, rmSync } from "node:fs";
+import { chmodSync, mkdirSync, readFileSync, symlinkSync, utimesSync, writeFileSync, copyFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { Effect, Layer } from "effect";
 import { LINT_PACKET_DOC } from "../../src/lint/doc";
 import { Finding } from "../../src/lint/finding";
 import { Packet } from "../../src/lint/packet";
 import { decodeSurrogateEscape } from "../../src/lint/pyops";
-import { lintJson, report } from "../../src/lint/report";
-import { firstDiff } from "../../src/lint/rules/parity";
+import { exitCode, lintJson, report } from "../../src/lint/report";
+import { TsCompiler, firstDiff } from "../../src/lint/rules/parity";
+import { PyError } from "../../src/py/errors";
 import type { RuleId } from "../../src/lint/patterns";
 import { AllLive, RULE_EFFECTS, lintEffect, type Rule } from "../../src/lint/run";
 import { Agents, Compiler, Git, gitLive, liveFs, timeoutText } from "../../src/lint/services";
-import { HAVE_PYTHON, SCRIPTS, T0, caseFrom, makeRepo, makeTemplate, pyLint, rmrf, tempDir, touchAll, type Repo } from "./harness";
+import { HAVE_PYTHON, SCRIPTS, T0, caseFrom, makeRepo, makeTemplate, pyLint, rmrf, skillCopy, tempDir, touchAll, type Repo } from "./harness";
 
 const dec = new TextDecoder();
 function py(code: string, ...args: string[]): string {
@@ -126,7 +128,7 @@ describe.skipIf(!HAVE_PYTHON)("services swapped by layer", () => {
     }
   });
 
-  test("a rule that throws or dies becomes RULE/check-failed and the other rules run", async () => {
+  test("a rule that raises a linter defect becomes RULE/check-failed and the other rules run", async () => {
     const pk = join(caseFrom(template, ROOT, "isolation"), "demo-packet");
     const table = {
       ...RULE_EFFECTS,
@@ -139,8 +141,54 @@ describe.skipIf(!HAVE_PYTHON)("services swapped by layer", () => {
     expect(checks).toContain("DNUM/none warn before the defect");
     expect(checks).toContain("DNUM/check-failed error the DNUM rule raised RangeError: late; the other rules ran (a linter defect: please report it)");
     expect(r.notes.some((n) => n.startsWith("XDOC: compared"))).toBe(true);
-    const skipped = await run(pk, null, table, ["STRUCT/check-failed"]);
-    expect(skipped.findings.some((f) => f.check === "STRUCT/check-failed")).toBe(false);
+  });
+
+  test("--skip RULE/check-failed does not hide a broken rule: exit 1, as lint_packet.py's run ends", async () => {
+    const dir = caseFrom(template, ROOT, "skip-check-failed");
+    const pk = join(dir, "demo-packet");
+    const table = { ...RULE_EFFECTS, DNUM: Effect.sync(() => { throw new TypeError("injected"); }) as Rule };
+    const skipped = await run(pk, null, table, ["DNUM/check-failed", "DNUM/partial"]);
+    expect(skipped.findings.filter((f) => f.check === "DNUM/check-failed").map((f) => f.message))
+      .toEqual(["the DNUM rule raised TypeError: injected; the other rules ran (a linter defect: please report it)"]);
+    expect(exitCode(skipped, false)).toBe(1);
+    // lint_packet.py with the same raise in r_dnum: a traceback and exit 1 under the same --skip
+    const alone = join(dir, "scripts-injected");
+    mkdirSync(alone);
+    const src = readFileSync(join(SCRIPTS, "lint_packet.py"), "utf8");
+    const at = "    def r_dnum(self):\n";
+    expect(src.includes(at)).toBe(true);
+    writeFileSync(join(alone, "lint_packet.py"), src.replace(at, at + "        raise TypeError(\"injected\")\n"));
+    const want = pyLint(["demo-packet", "--skip", "DNUM/check-failed,DNUM/partial"], dir, dir, { script: join(alone, "lint_packet.py"), json: false });
+    expect(want.code).toBe(1);
+    expect(want.err.trimEnd().split("\n").at(-1)).toBe("TypeError: injected");
+    // --skip DNUM leaves the rule out: nothing raised, nothing reported
+    const ruleSkipped = await run(pk, null, table, ["DNUM"]);
+    expect(ruleSkipped.findings.some((f) => f.rule === "DNUM")).toBe(false);
+  });
+
+  test("a rule that raises what lint_packet.py raises (a PyError) ends the run instead of being isolated", async () => {
+    const pk = join(caseFrom(template, ROOT, "py-raise"), "demo-packet");
+    const table = { ...RULE_EFFECTS, FILES: Effect.sync(() => { throw new PyError("AttributeError", "'list' object has no attribute 'get'"); }) as Rule };
+    await expect(run(pk, null, table)).rejects.toThrow("'list' object has no attribute 'get'");
+  });
+
+  test("PARITY: the TypeScript compiler fails where build_tdd.py does not, worded as lint_packet.py words it", async () => {
+    const dir = caseFrom(template, ROOT, "ts-compile-fails");
+    const skill = skillCopy(dir + "-skill", "the TypeScript compiler fails on purpose");
+    touchAll(dir, T0);
+    const want = pyLint(["demo-packet"], dir, dir, { script: join(skill, "scripts", "lint_packet.py") });
+    const failing = Layer.succeed(TsCompiler, { compile: () => [1, "the TypeScript compiler fails on purpose"] as const });
+    const here = process.cwd();
+    process.chdir(dir);
+    try {
+      const r = await Effect.runPromise(Effect.provide(lintEffect({ packet: "demo-packet" }), Layer.merge(AllLive, failing)));
+      expect(report(r)).toBe(want.out);
+      expect(lintJson(r)).toBe(want.json!);
+      expect(r.findings.filter((f) => f.rule === "PARITY").map((f) => f.message))
+        .toEqual(["the TypeScript compiler failed on demo-packet.md where build_tdd.py did not (exit 1: the TypeScript compiler fails on purpose)"]);
+    } finally {
+      process.chdir(here);
+    }
   });
 
   test("AGENTS: a check that raises is AGENTS/check-failed with Python's exception name", async () => {
