@@ -67,11 +67,7 @@ internal sealed partial class TodoHarness
     /// <summary>Writes a ledger event the way the sync would (for the hold, which the picks read from the ledger, not the views).</summary>
     internal async Task Record<TPayload>(string type, TPayload payload, string key)
     {
-        if (Slice.Held.Current is null)
-        {
-            await Lease();
-        }
-
+        await Lease();
         _ = await Slice.Store.Append(Slice.Events.Entry(type, payload, key), Slice.Held.Current!, TestContext.Current.CancellationToken);
     }
 
@@ -85,7 +81,14 @@ internal sealed partial class TodoHarness
 
     internal NoteLocatorStub NoteLocator { get; } = new();
 
-    internal async Task Lease() => _ = await Slice.HoldLease();
+    /// <summary>Takes the lease once: a test that records a hold and then reads the note asks twice, and a second acquire is refused (SND-LEASE-001).</summary>
+    internal async Task Lease()
+    {
+        if (Slice.Held.Current is null)
+        {
+            _ = await Slice.HoldLease();
+        }
+    }
 
     internal IDisposable Cli() => Slice.Callers.Enter(A.Caller().Human().Client(ClientLabel.Cli).Build());
 
