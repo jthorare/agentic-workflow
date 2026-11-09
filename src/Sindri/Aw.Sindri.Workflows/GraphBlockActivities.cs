@@ -75,33 +75,33 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         foreach (var graphNode in spec.Nodes)
         {
             var stored = nodeRuns.FirstOrDefault(n => n.NodeId == graphNode.Id && n.ItemIndex == 0 && n.Status == NodeRunStatus.Succeeded);
-            if (stored?.Output is null || blocks.Find(graphNode.Type) is not { } block)
+            if (stored is not null && blocks.Find(graphNode.Type) is { } block && await CommitNode(run, graphNode, stored, block, scope, cancel).ConfigureAwait(false) is { } failure)
             {
-                continue;
-            }
-
-            // why: a cut output is not what the block gave, so committing it would remember the wrong keys; the items stay unseen and come back on the next run (a repeat, never a loss)
-            if (stored.Truncated)
-            {
-                continue;
-            }
-
-            var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
-            if (scope.Cut is not null || JsonNode.Parse(stored.Output) is not JsonObject output)
-            {
-                continue;   // why: the config read a cut output, so the keys it names are unknown
-            }
-
-            var result = new BlockResult(output.ToDictionary(static p => p.Key, static p => p.Value?.DeepClone(), StringComparer.Ordinal), Branches: null);
-            var context = new BlockContext(run, graphNode.Id, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup);
-            var committed = await block.Commit(context, result, cancel).ConfigureAwait(false);
-            if (committed.IsError)
-            {
-                return $"node '{graphNode.Id.Value}' could not record what it passed on: {committed.Error.Code}: {committed.Error.Message}";
+                return failure;
             }
         }
 
         return null;
+    }
+
+    private static async Task<string?> CommitNode(WorkflowRunId run, GraphNode graphNode, NodeRun stored, IGraphBlock block, Scope scope, CancellationToken cancel)
+    {
+        // why: a cut output is not what the block gave, so committing it would remember the wrong keys; the items stay unseen and come back on the next run (a repeat, never a loss)
+        if (stored.Output is null || stored.Truncated)
+        {
+            return null;
+        }
+
+        var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
+        if (scope.Cut is not null || JsonNode.Parse(stored.Output) is not JsonObject output)
+        {
+            return null;   // why: the config read a cut output, so the keys it names are unknown
+        }
+
+        var result = new BlockResult(output.ToDictionary(static p => p.Key, static p => p.Value?.DeepClone(), StringComparer.Ordinal), Branches: null);
+        var context = new BlockContext(run, graphNode.Id, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup);
+        var committed = await block.Commit(context, result, cancel).ConfigureAwait(false);
+        return committed.IsError ? $"node '{graphNode.Id.Value}' could not record what it passed on: {committed.Error.Code}: {committed.Error.Message}" : null;
     }
 
     private static GraphBlockOutcome? Cut(Scope scope, JsonObject config) => scope.Cut is { } cut
