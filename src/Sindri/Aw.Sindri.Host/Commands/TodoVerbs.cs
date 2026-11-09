@@ -21,7 +21,8 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="ensureRunning">Starts the control plane (true: this verb may launch it) or names why not; null: never start it.</param>
 /// <param name="stdoutIsTerminal">Whether stdout is a terminal; the default asks the console.</param>
 /// <param name="today">The local date, for due words; the default is this machine's.</param>
-internal sealed partial class TodoVerbs(ControlPlaneClient client, Output output, Func<bool, CancellationToken, Task<Error?>>? ensureRunning = null, Func<bool>? stdoutIsTerminal = null, Func<DateOnly>? today = null)
+/// <param name="noteKey">Reads the live profile's 'todo.obsidian' for 'todo note import'; null: the import verb answers SND-TODO-002.</param>
+internal sealed partial class TodoVerbs(ControlPlaneClient client, Output output, Func<bool, CancellationToken, Task<Error?>>? ensureRunning = null, Func<bool>? stdoutIsTerminal = null, Func<DateOnly>? today = null, Func<CancellationToken, Task<Result<TodoNoteTarget>>>? noteKey = null)
 {
     private const string Root = "/sindri/todos";
 
@@ -46,6 +47,7 @@ internal sealed partial class TodoVerbs(ControlPlaneClient client, Output output
             TodoVerbArguments.Verb.Show => await Show(command, ct).ConfigureAwait(false),
             TodoVerbArguments.Verb.Note => await Note(command, ct).ConfigureAwait(false),
             TodoVerbArguments.Verb.Keep => await Keep(command, ct).ConfigureAwait(false),
+            TodoVerbArguments.Verb.NoteImport => await ImportNote(command, ct).ConfigureAwait(false),
             TodoVerbArguments.Verb.None or TodoVerbArguments.Verb.Add or TodoVerbArguments.Verb.Edit or TodoVerbArguments.Verb.Done or TodoVerbArguments.Verb.Reopen or TodoVerbArguments.Verb.Remove or TodoVerbArguments.Verb.Restore
                 => await Write(command, ct).ConfigureAwait(false),
             _ => throw new ArgumentOutOfRangeException(nameof(args), command.Verb, "not a todo verb"),
@@ -161,7 +163,7 @@ internal sealed partial class TodoVerbs(ControlPlaneClient client, Output output
         TodoVerbArguments.Verb.Reopen => TodoCliVerb.Reopen,
         TodoVerbArguments.Verb.Remove => TodoCliVerb.Remove,
         TodoVerbArguments.Verb.Restore => TodoCliVerb.Restore,
-        TodoVerbArguments.Verb.None or TodoVerbArguments.Verb.List or TodoVerbArguments.Verb.Show or TodoVerbArguments.Verb.Add or TodoVerbArguments.Verb.Note => throw new ArgumentOutOfRangeException(nameof(verb), verb, "not a verb that takes an id"),
+        TodoVerbArguments.Verb.None or TodoVerbArguments.Verb.List or TodoVerbArguments.Verb.Show or TodoVerbArguments.Verb.Add or TodoVerbArguments.Verb.Note or TodoVerbArguments.Verb.NoteImport => throw new ArgumentOutOfRangeException(nameof(verb), verb, "not a verb that takes an id"),
         _ => throw new ArgumentOutOfRangeException(nameof(verb), verb, "not a todo verb"),
     };
 
@@ -197,7 +199,7 @@ internal sealed partial class TodoVerbs(ControlPlaneClient client, Output output
             TodoVerbArguments.Verb.Reopen => $"{id} reopened\n",
             TodoVerbArguments.Verb.Remove => $"{id} removed (sindri todo restore {id})\n",
             TodoVerbArguments.Verb.Restore => $"{id} restored\n",
-            TodoVerbArguments.Verb.None or TodoVerbArguments.Verb.List or TodoVerbArguments.Verb.Show or TodoVerbArguments.Verb.Note or TodoVerbArguments.Verb.Keep => throw new ArgumentOutOfRangeException(nameof(command), command.Verb, "not a plain write"),
+            TodoVerbArguments.Verb.None or TodoVerbArguments.Verb.List or TodoVerbArguments.Verb.Show or TodoVerbArguments.Verb.Note or TodoVerbArguments.Verb.NoteImport or TodoVerbArguments.Verb.Keep => throw new ArgumentOutOfRangeException(nameof(command), command.Verb, "not a plain write"),
             _ => throw new ArgumentOutOfRangeException(nameof(command), command.Verb, "not a todo verb"),
         };
     }
