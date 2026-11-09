@@ -134,6 +134,12 @@ internal static partial class CommandTable
     private static async Task<int> Workflows(string[] args, IServiceProvider services, Output output, RecipeDesk desk, CancellationToken ct) => args switch
     {
         ["workflow", .. var rest] => await WorkflowCommandTable.Run(rest, services, output, desk, ct).ConfigureAwait(false),
+        ["wf", "create", .. var rest] => await new WfWriteVerbs(desk, output).Create(rest, ct).ConfigureAwait(false),
+        ["wf", "edit", .. var rest] => await new WfWriteVerbs(desk, output).Edit(rest, ct).ConfigureAwait(false),
+        ["wf", "activate", .. var rest] => await new WfWriteVerbs(desk, output).Activate(rest, ct).ConfigureAwait(false),
+        ["wf", "pause", .. var rest] => await new WfWriteVerbs(desk, output).Pause(rest, ct).ConfigureAwait(false),
+        ["wf", "delete", .. var rest] => await new WfWriteVerbs(desk, output).Delete(rest, ct).ConfigureAwait(false),
+        ["wf", "validate", .. var rest] when rest.Contains("--slug", StringComparer.Ordinal) => await new WfWriteVerbs(desk, output).Validate(rest, ct).ConfigureAwait(false),   // a stored workflow goes to the server; a file stays in process
         ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
         ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
