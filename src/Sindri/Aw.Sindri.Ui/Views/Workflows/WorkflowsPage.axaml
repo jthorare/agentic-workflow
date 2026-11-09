@@ -79,6 +79,7 @@
       <TextBlock x:Name="RunsDetail" Classes="caption subtle" Text="{Binding Runs.DetailText}" TextWrapping="Wrap" />
       <!-- The graph at the positions Sindri served (the app lays nothing out); a node with no position is named, not drawn. -->
       <StackPanel x:Name="RunsGraph" Spacing="4" IsVisible="{Binding Runs.Graph, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <wv:GraphEditBar x:Name="RunsEdit" DataContext="{Binding GraphEdit}" />
         <Border Classes="panel" Height="320">
           <wv:GraphCanvas x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" />
         </Border>
