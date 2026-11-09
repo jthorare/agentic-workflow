@@ -65,16 +65,19 @@ public sealed class WorkflowGraphViewModelTests
     }
 
     [Fact]
-    public async Task A_node_without_a_position_is_placed_after_the_rightmost_one()
+    public async Task A_node_without_a_position_is_not_drawn_nor_are_its_edges_and_it_is_counted()
     {
         var graph = await GraphOf(
             _f,
             """[{"id":"a","type":"manual","config":{}},{"id":"b","type":"x","config":{}},{"id":"c","type":"x","config":{}}]""",
-            "[]",
-            """[{"node":"a","x":100,"y":40}]""");
+            """[{"from":"a","to":"b"},{"from":"a","to":"c"}]""",
+            """[{"node":"a","x":100,"y":40},{"node":"c","x":400,"y":40}]""");
 
-        // a ends at 100 + 200; each unplaced card follows one gap later, on the top row.
-        Assert.Equal([(100d, 40d), (380d, 0d), (660d, 0d)], graph.Nodes.Select(n => (n.X, n.Y)));
+        Assert.Equal(["a", "c"], graph.Nodes.Select(n => n.Id));
+        Assert.Equal(["b"], graph.Unplaced);
+        Assert.Equal([("a", "c")], graph.Edges.Select(e => (e.From, e.To)));
+        Assert.Equal("1 node has no position, so it is not drawn.", graph.UnplacedText);
+        Assert.False(graph.SelectNode("b"));
     }
 
     [Fact]

@@ -15,4 +15,10 @@ internal static partial class Labels
     /// <param name="word">The status word in lower case, or empty.</param>
     /// <returns>The words.</returns>
     internal static string WfGraphNodeName(string title, string type, string word) => word.Length == 0 ? title + ", " + type : title + ", " + type + ", " + word;
+
+    /// <summary>The note over a graph whose nodes lack positions.</summary>
+    /// <param name="count">Nodes not drawn.</param>
+    /// <returns>The words.</returns>
+    internal static string WfGraphUnplaced(int count) =>
+        string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{count} {(count == 1 ? "node has" : "nodes have")} no position, so {(count == 1 ? "it is" : "they are")} not drawn.");
 }

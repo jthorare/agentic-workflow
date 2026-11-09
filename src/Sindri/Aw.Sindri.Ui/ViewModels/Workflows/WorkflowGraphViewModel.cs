@@ -5,7 +5,7 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
 /// <summary>
 /// The read-only graph of one workflow revision: its nodes at the positions Sindri served, its edges as arrows and, when a run is given, each node's status.
-/// A node the server gave no position is placed after the rightmost one (its left edge one card width plus <see cref="Gap"/> right of it), at the top row.
+/// The app does no layout: a node the server gave no position is not drawn (its id is in <see cref="Unplaced"/>), and nor is an edge that touches one.
 /// </summary>
 internal sealed class WorkflowGraphViewModel : ObservableObject
 {
@@ -14,9 +14,6 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
 
     /// <summary>A node card's height in the world.</summary>
     internal const double CardHeight = 64;
-
-    /// <summary>The space between a placed card and the next unplaced one.</summary>
-    internal const double Gap = 80;
 
     private string? _selectedId;
 
@@ -31,17 +28,14 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
             positions[p.Node] = new GraphPoint(p.X, p.Y);
         }
 
-        var raw = ReadNodes(workflow.Spec);
-        var cursor = raw.Select(n => positions.TryGetValue(n.Id, out var at) ? at.X + CardWidth : double.NegativeInfinity).DefaultIfEmpty(double.NegativeInfinity).Max();
-        var nextFree = double.IsNegativeInfinity(cursor) ? 0 : cursor + Gap;
-
         var nodes = new List<GraphNodeViewModel>();
-        foreach (var (id, type, title) in raw)
+        var unplaced = new List<string>();
+        foreach (var (id, type, title) in ReadNodes(workflow.Spec))
         {
             if (!positions.TryGetValue(id, out var at))
             {
-                at = new GraphPoint(nextFree, 0);
-                nextFree += CardWidth + Gap;
+                unplaced.Add(id);
+                continue;
             }
 
             var status = statuses is not null && statuses.TryGetValue(id, out var word) ? word : null;
@@ -49,6 +43,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         }
 
         Nodes = nodes;
+        Unplaced = unplaced;
         Edges = BuildEdges(workflow.Spec, nodes);
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
     }
@@ -56,7 +51,13 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>Raised with the node's id when a node is selected or activated.</summary>
     internal event EventHandler<string>? NodeSelected;
 
-    /// <summary>The nodes, in the order the spec lists them.</summary>
+    /// <summary>The ids of nodes with no served position: not drawn, so the page can say how many.</summary>
+    public IReadOnlyList<string> Unplaced { get; }
+
+    /// <summary>The words for <see cref="Unplaced"/>, or empty when every node has a position.</summary>
+    public string UnplacedText => Unplaced.Count == 0 ? string.Empty : Labels.WfGraphUnplaced(Unplaced.Count);
+
+    /// <summary>The nodes with a position, in the order the spec lists them.</summary>
     public IReadOnlyList<GraphNodeViewModel> Nodes { get; }
 
     /// <summary>The arrows; an edge naming a node the spec lacks is left out.</summary>
