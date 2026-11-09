@@ -40,7 +40,7 @@ public sealed class ForEachBlock(IForEachLimitSource limits) : IGraphBlock
 
         var defaults = await limits.Current(cancellationToken).ConfigureAwait(false);
         var asked = Whole(context.Config["maxItems"]);
-        var maxItems = asked is { } own && own >= 1 ? Math.Min(own, defaults.MaxItems) : asked ?? defaults.MaxItems;   // why: the profile's maxItems is the cap; a node may lower it, never raise it
+        var maxItems = Capped(asked, defaults.MaxItems);
         var batchSize = Whole(context.Config["batchSize"]) ?? defaults.BatchSize;
         if (maxItems < 1 || asked > ForEachLimits.MaxItemsCeiling)
         {
@@ -54,8 +54,7 @@ public sealed class ForEachBlock(IForEachLimitSource limits) : IGraphBlock
 
         if (items.Count > maxItems)
         {
-            var raised = asked > defaults.MaxItems ? $" (the profile's workflow.forEach.maxItems {defaults.MaxItems.ToString(CultureInfo.InvariantCulture)} caps it; a node can lower it, not raise it)" : string.Empty;
-            return Failed($"the list has {items.Count.ToString(CultureInfo.InvariantCulture)} items, more than maxItems {maxItems.ToString(CultureInfo.InvariantCulture)}{raised}; filter the list first");
+            return Failed(TooMany(items.Count, maxItems, asked, defaults.MaxItems));
         }
 
         return new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal)
@@ -63,6 +62,15 @@ public sealed class ForEachBlock(IForEachLimitSource limits) : IGraphBlock
             ["count"] = JsonValue.Create(items.Count),
             ["batchSize"] = JsonValue.Create(batchSize),
         });
+    }
+
+    // why: the profile's maxItems is the cap; a node may lower it, never raise it
+    private static int Capped(int? asked, int cap) => asked is { } own && own >= 1 ? Math.Min(own, cap) : asked ?? cap;
+
+    private static string TooMany(int count, int maxItems, int? asked, int cap)
+    {
+        var raised = asked > cap ? $" (the profile's workflow.forEach.maxItems {cap.ToString(CultureInfo.InvariantCulture)} caps it; a node can lower it, not raise it)" : string.Empty;
+        return $"the list has {count.ToString(CultureInfo.InvariantCulture)} items, more than maxItems {maxItems.ToString(CultureInfo.InvariantCulture)}{raised}; filter the list first";
     }
 
     private static int? Whole(JsonNode? node) => node is JsonValue value && value.GetValueKind() == JsonValueKind.Number && value.TryGetValue<int>(out var whole) ? whole : null;
