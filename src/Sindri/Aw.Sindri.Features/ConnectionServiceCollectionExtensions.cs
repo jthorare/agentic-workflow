@@ -31,6 +31,8 @@ internal static class ConnectionServiceCollectionExtensions
             .AddSingleton<PollWake>()
             .AddScoped<PollRound>()
             .AddScoped<CatchUp>()
+            .AddScoped<GroupReader>()
+            .AddScoped<PollGroupSource>()
             .AddScoped<ConnectionEvents>()
             .AddScoped<ConnectionStatusWriter>()
             .AddSingleton<SignInOutcomes>()

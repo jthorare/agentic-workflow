@@ -9,17 +9,6 @@ using Aw.Sindri.Core.Lease;
 
 namespace Aw.Sindri.Features.PollConnections;
 
-/// <summary>What one provider call did.</summary>
-/// <param name="Cursor">The cursor as it stands after the call (saved when the call succeeded).</param>
-/// <param name="Keys">The delivery ids the provider returned.</param>
-/// <param name="Started">Runs started or queued.</param>
-/// <param name="Skipped">Triggers skipped (a run in flight, or the delivery already had its run).</param>
-/// <param name="CursorMoved">True when the saved cursor value changed.</param>
-/// <param name="RateLimited">True when the provider asked to wait; the backoff is saved and nothing else changed.</param>
-/// <param name="Gap">True when the poller hit its own page cap and skipped older events.</param>
-/// <param name="Reason">The poller's reason for the gap, or null.</param>
-internal sealed record RoundOutcome(PollCursor Cursor, IReadOnlyList<string> Keys, int Started, int Skipped, bool CursorMoved, bool RateLimited, bool Gap, string? Reason);
-
 /// <summary>
 /// One provider call for one (connection, event kind) and what follows it: the events fan out to the triggers that watch the group, each trigger starts a run whose occurrence is the delivery id,
 /// and only then is the cursor saved. A start that fails for a reason other than "this delivery already has its run" (a Temporal outage, a store error) stops the round with the cursor where it was,
@@ -39,13 +28,12 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
     private const int Last = 999_999_999;
     private const int First = 100_000_000;
 
-    internal async ValueTask<Result<RoundOutcome>> Run(PollGroup group, Connection connection, IEventPoller poller, PollCursor? saved, LeaseGrant grant, CancellationToken cancellationToken)
+    internal async ValueTask<Result<RoundOutcome>> Run(RoundRequest request, LeaseGrant grant, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(group);
-        ArgumentNullException.ThrowIfNull(connection);
-        ArgumentNullException.ThrowIfNull(poller);
-        var cursor = saved ?? new PollCursor(group.Connection, group.Kind, Value: null, UpdatedAt: null, LastPollAt: null, BackoffUntil: null, Failures: 0);
-        var answered = await poller.Poll(connection, group.Kind, cursor.Value, cancellationToken).ConfigureAwait(false);
+        ArgumentNullException.ThrowIfNull(request);
+        var group = request.Group;
+        var cursor = request.Cursor ?? new PollCursor(group.Connection, group.Kind, Value: null, UpdatedAt: null, LastPollAt: null, BackoffUntil: null, Failures: 0);
+        var answered = await request.Poller.Poll(request.Connection, group.Kind, cursor.Value, cancellationToken).ConfigureAwait(false);
         var now = clock.GetUtcNow();
         if (answered.IsError)
         {
@@ -57,12 +45,25 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
         var poll = answered.Value;
         if (poll.RateLimited)
         {
-            var wait = PollBackoff.Next(cursor.Failures, poll.RetryAfter, now);
-            var waiting = cursor with { LastPollAt = now, BackoffUntil = wait.Until, Failures = wait.Failures };
-            var kept = await cursors.Save(waiting, cancellationToken).ConfigureAwait(false);
-            return kept.IsError ? kept.Error : new RoundOutcome(waiting, [], Started: 0, Skipped: 0, CursorMoved: false, RateLimited: true, Gap: false, poll.Reason);
+            return await SaveRateLimit(cursor, poll, now, cancellationToken).ConfigureAwait(false);
         }
 
+        var fanned = await FanOut(group, poll, grant, cancellationToken).ConfigureAwait(false);
+        return fanned.IsError ? fanned.Error : await Advance(cursor, poll, fanned.Value, now, cancellationToken).ConfigureAwait(false);
+    }
+
+    // A rate-limited answer saves the backoff and keeps the cursor value.
+    private async ValueTask<Result<RoundOutcome>> SaveRateLimit(PollCursor cursor, PollResult poll, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var wait = PollBackoff.Next(cursor.Failures, poll.RetryAfter, now);
+        var waiting = cursor with { LastPollAt = now, BackoffUntil = wait.Until, Failures = wait.Failures };
+        var kept = await cursors.Save(waiting, cancellationToken).ConfigureAwait(false);
+        return kept.IsError ? kept.Error : new RoundOutcome(waiting, [], Started: 0, Skipped: 0, CursorMoved: false, RateLimited: true, Gap: false, poll.Reason);
+    }
+
+    // Each event goes to every trigger whose filter takes it; the first failed start stops the round.
+    private async ValueTask<Result<Fan>> FanOut(PollGroup group, PollResult poll, LeaseGrant grant, CancellationToken cancellationToken)
+    {
         var started = 0;
         var skipped = 0;
         foreach (var polled in poll.Events)
@@ -80,14 +81,22 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
             }
         }
 
+        return new Fan(started, skipped);
+    }
+
+    // Saved only after every run started.
+    private async ValueTask<Result<RoundOutcome>> Advance(PollCursor cursor, PollResult poll, Fan fan, DateTimeOffset now, CancellationToken cancellationToken)
+    {
         var value = poll.NextCursor ?? cursor.Value;
         var moved = !string.Equals(value, cursor.Value, StringComparison.Ordinal);
         var after = cursor with { Value = value, UpdatedAt = moved ? now : cursor.UpdatedAt, LastPollAt = now, BackoffUntil = null, Failures = 0 };
         var written = await cursors.Save(after, cancellationToken).ConfigureAwait(false);
         return written.IsError
             ? written.Error
-            : new RoundOutcome(after, [.. poll.Events.Select(static e => e.DeliveryKey)], started, skipped, moved, RateLimited: false, poll.Gap, poll.Reason);
+            : new RoundOutcome(after, [.. poll.Events.Select(static e => e.DeliveryKey)], fan.Started, fan.Skipped, moved, RateLimited: false, poll.Gap, poll.Reason);
     }
+
+    private readonly record struct Fan(int Started, int Skipped);
 
     // True when a run started or queued; false when the trigger was skipped (and recorded). Any other failure is the round's error.
     // why: the occurrence is a hash, so two deliveries can share one. SND-GRAPH-100 is a duplicate only when the run that holds the id carries THIS delivery id; otherwise the next occurrence number is tried.

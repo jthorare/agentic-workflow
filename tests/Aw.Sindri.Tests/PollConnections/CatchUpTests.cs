@@ -27,7 +27,7 @@ public sealed class CatchUpTests
         var run = await _world.Connections.Tick();
         var connection = (await _world.Connections.Store.Get(PollWorld.Name, PollWorld.Token)).Value;
         var saved = cursor is null ? null : new PollCursor(PollWorld.Name, PollWorld.Kind, cursor, null, null, null, 0);
-        var read = await _world.CatchUp().Read(Group(), connection, poller, saved, pages, forward: true, run.Grant, PollWorld.Token);
+        var read = await _world.CatchUp().Read(new ReadRequest(Group(), connection, poller, saved, pages, Forward: true), run.Grant, PollWorld.Token);
         return read.Value;
     }
 

@@ -82,7 +82,7 @@ internal sealed class PollWorld
     public CatchUp CatchUp() => new(Round(), Connections.Events());
 
     public PollConnectionsService Service(IEventPoller poller) =>
-        new(Workflows, Connections.Store, [poller], Cursors, CatchUp(), Wake, new NoProfile(), Connections.Clock);
+        new(new PollGroupSource(Workflows), new GroupReader(Connections.Store, [poller], CatchUp()), Cursors, Wake, new NoProfile(), Connections.Clock);
 
     public async Task<Result<ScheduledResult>> Tick(IEventPoller poller) =>
         await Service(poller).Run(await Connections.Tick(), Token);
