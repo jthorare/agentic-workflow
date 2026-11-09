@@ -7,6 +7,8 @@ namespace Aw.Sindri.Infrastructure.Todos;
 /// <summary>
 /// Counts a note's hard links. .NET has no link count, so `stat` prints it (GNU: -c %h, BSD and macOS: -f %l). The answer is kept per path
 /// with the note's mtime and size: an idle pass on an unchanged note starts no process, a changed note is counted again.
+/// The key has no inode or ctime (.NET exposes neither): a link added by `ln`, or a file swapped in with the same mtime and size
+/// (`cp -p`), keeps the old count until the note changes. Writes still go only through the swap, so a missed link is never written through.
 /// </summary>
 internal sealed class NoteLinkCounter(ISandboxProcesses processes)
 {
