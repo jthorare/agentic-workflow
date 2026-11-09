@@ -2430,3 +2430,5 @@ static Aw.Meta.Core.Ports.BoardFacts.operator !=(Aw.Meta.Core.Ports.BoardFacts? 
 static Aw.Meta.Core.Ports.BoardFacts.operator ==(Aw.Meta.Core.Ports.BoardFacts? left, Aw.Meta.Core.Ports.BoardFacts? right) -> bool
 static Aw.Meta.Core.Ports.BoardSeen.operator !=(Aw.Meta.Core.Ports.BoardSeen? left, Aw.Meta.Core.Ports.BoardSeen? right) -> bool
 static Aw.Meta.Core.Ports.BoardSeen.operator ==(Aw.Meta.Core.Ports.BoardSeen? left, Aw.Meta.Core.Ports.BoardSeen? right) -> bool
+const Aw.Meta.Core.KvKeys.BoardMain = "board.main" -> string!
+const Aw.Meta.Core.KvKeys.BoardSeenPrefix = "board.seen." -> string!

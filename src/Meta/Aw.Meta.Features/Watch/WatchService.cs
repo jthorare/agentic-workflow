@@ -26,7 +26,6 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
     public async ValueTask<Result<WatchResponse>> Handle(WatchRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        _ = board; // Red stub: the poll that sees "MAIN moved" records it here.
         var team = await config.Load(cancellationToken).ConfigureAwait(false);
         if (team.IsError)
         {
@@ -75,7 +74,11 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
                 ContextWatch.Parse(high.IsSuccess ? high.Value : null),
                 async lanes => _ = await values.Set(KvKeys.WatchContext, ContextWatch.Format(lanes), cancellationToken).ConfigureAwait(false)),
             // Advisory: a pane or transcript that can't be read leaves usage out of the poll.
-            async () => await usage.Check(team, cancellationToken).ConfigureAwait(false));
+            async () => await usage.Check(team, cancellationToken).ConfigureAwait(false))
+        {
+            // Advisory: if the board can't be written, lanes miss one line and the next move fixes it.
+            MainMoved = async (sha, merged) => _ = await board.RecordMain(sha, merged, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false),
+        };
     }
 
     private async ValueTask<Result<Unit>> Beat(TimeSpan interval, CancellationToken cancellationToken)
