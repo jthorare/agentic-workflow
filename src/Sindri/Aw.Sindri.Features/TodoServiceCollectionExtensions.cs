@@ -14,6 +14,7 @@ using Aw.Sindri.Features.CheckTodoNote;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.GetTodo;
 using Aw.Sindri.Features.GetTodoNote;
+using Aw.Sindri.Features.ImportTodoNote;
 using Aw.Sindri.Features.KeepTodo;
 using Aw.Sindri.Features.KeepTodoUndo;
 using Aw.Sindri.Features.ListTodos;
@@ -62,6 +63,7 @@ internal static class TodoServiceCollectionExtensions
             .AddScoped<IScheduledService, TodoNoteService>()
             .AddSingleton(TodoNoteService.BuiltIn)   // runs without a profile entry, so PauseService refuses it
             .AddScoped<TodoNoteProfileEdit>()
+            .AddScoped<IValidator<ImportTodoNoteRequest>, AcceptAllValidator<ImportTodoNoteRequest>>().AddCommand<ImportTodoNoteRequest, ImportTodoNoteResponse, ImportTodoNoteService>()
             .AddScoped<IValidator<SetTodoNoteRequest>, AcceptAllValidator<SetTodoNoteRequest>>().AddCommand<SetTodoNoteRequest, TodoNoteWritten, SetTodoNoteService>()
             .AddScoped<IValidator<StopTodoNoteRequest>, AcceptAllValidator<StopTodoNoteRequest>>().AddCommand<StopTodoNoteRequest, TodoNoteWritten, StopTodoNoteService>();
     }
