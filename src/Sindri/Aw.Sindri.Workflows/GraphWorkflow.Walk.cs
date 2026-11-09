@@ -36,18 +36,34 @@ internal sealed partial class GraphWorkflow
             }
 
             _taken[node.Id] = outcome.Status == NodeRunStatus.Succeeded ? outcome.Taken : ["out"];
-            if (outcome.Status == NodeRunStatus.Succeeded && string.Equals(node.Type, LoopBody.ForEachType, StringComparison.Ordinal) && await RunLoop(spec, node, outcome).ConfigureAwait(true) is { } ended)
+            if (await AfterForEach(spec, node, outcome).ConfigureAwait(true) is { } ended)
             {
                 return ended;
-            }
-
-            if (outcome.Status != NodeRunStatus.Succeeded && string.Equals(node.Type, LoopBody.ForEachType, StringComparison.Ordinal) && LoopBody.Find(spec, node.Id) is { IsSuccess: true } loop)
-            {
-                await SkipLoop(loop.Value).ConfigureAwait(true);
             }
         }
 
         return await End(WorkflowRunStatus.Succeeded, error: null).ConfigureAwait(true);
+    }
+
+    /// <summary>After a for_each node: a succeeded one runs its loop, any other skips its body and collect. Null when the walk goes on.</summary>
+    private async Task<GraphWorkflowResult?> AfterForEach(GraphSpec spec, GraphNode node, GraphBlockOutcome outcome)
+    {
+        if (!string.Equals(node.Type, LoopBody.ForEachType, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        if (outcome.Status == NodeRunStatus.Succeeded)
+        {
+            return await RunLoop(spec, node, outcome).ConfigureAwait(true);
+        }
+
+        if (LoopBody.Find(spec, node.Id) is { IsSuccess: true } loop)
+        {
+            await SkipLoop(loop.Value).ConfigureAwait(true);
+        }
+
+        return null;
     }
 
     // why: a for_each that failed and said 'continue' ran no item, so its body and collect must not run once as plain nodes with no item; they are 'skipped' and the walk goes on after the collect
