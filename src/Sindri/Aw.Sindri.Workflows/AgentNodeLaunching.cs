@@ -24,7 +24,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="launcher">The launcher, waiting out a full session cap (SND-LAUNCH-020).</param>
 /// <param name="recorder">Records 'launch.started' and 'launch.failed'.</param>
 /// <param name="diff">Reads the start commit.</param>
-internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore workflows, IApprovedProfile approved, AgentLaunchWaiting launcher, AgentLaunchRecorder recorder, IRunDiff diff)
+/// <param name="ended">Answers for a launch whose session already ended, so a retry starts no second agent.</param>
+internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore workflows, IApprovedProfile approved, AgentLaunchWaiting launcher, AgentLaunchRecorder recorder, IRunDiff diff, AgentLaunchEnded ended)
 {
     /// <summary>Launches the node run's session.</summary>
     /// <param name="node">The node run.</param>
@@ -67,6 +68,11 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
     // Asks the launcher for the session and records the outcome; the worktree and start commit, or the failure.
     private async Task<AgentLaunched> Start(LaunchRequest request, CancellationToken cancellationToken)
     {
+        if (await ended.Find(request, cancellationToken).ConfigureAwait(false) is { } over)
+        {
+            return over;
+        }
+
         var result = await launcher.Launch(request, cancellationToken).ConfigureAwait(false);
         if (result is null)
         {
