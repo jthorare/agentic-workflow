@@ -64,6 +64,12 @@ internal sealed class SeatbeltSandbox(SeatbeltOptions options, ISandboxProcesses
     }
 
     /// <inheritdoc />
+    public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => ProcessSandboxPlanner.Build(SandboxMechanism.Seatbelt, request);
+
+    /// <inheritdoc />
+    public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => throw new NotSupportedException("not built yet");
+
+    /// <inheritdoc />
     public async Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(plan);

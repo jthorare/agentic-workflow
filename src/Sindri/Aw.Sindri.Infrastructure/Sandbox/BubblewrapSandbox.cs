@@ -96,6 +96,12 @@ internal sealed class BubblewrapSandbox(BubblewrapOptions options, ISandboxProce
     }
 
     /// <inheritdoc />
+    public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, request);
+
+    /// <inheritdoc />
+    public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => throw new NotSupportedException("not built yet");
+
+    /// <inheritdoc />
     public async Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(plan);
