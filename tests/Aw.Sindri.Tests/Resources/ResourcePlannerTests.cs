@@ -1,11 +1,13 @@
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Resources;
+using Aw.Sindri.Core.Sandbox.Plan;
 
 namespace Aw.Sindri.Tests.Resources;
 
 public sealed class ResourcePlannerTests
 {
     private const string Root = "/home/x/resources";
-    private static readonly ResourceBoxLimits _box = new(8L << 30, 100, TimeSpan.FromHours(4));
+    private const long Gib = 1L << 30;
 
     private static ResourceOwner Owner(string text) => ResourceOwner.Parse(text).Value;
 
@@ -14,11 +16,11 @@ public sealed class ResourcePlannerTests
     {
         var spec = new ResourceSpec([new DatabaseResource("state")], [new DiskResource("scratch-pad", "512MiB")], null, []);
 
-        var plan = ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root, _box).Value;
+        var plan = ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root).Value;
 
         Assert.Equal($"{Root}/workflow/triage/state.db", plan.Env[ResourceEnv.Database("state")]);
         Assert.Equal($"{Root}/workflow/triage/scratch-pad", plan.Env["SINDRI_DISK_SCRATCH_PAD"]);
-        Assert.Equal([new ResourceMount($"{Root}/workflow/triage/state.db", true), new ResourceMount($"{Root}/workflow/triage/scratch-pad", true)], plan.Mounts);
+        Assert.Equal([new ResourceMount("state", $"{Root}/workflow/triage/state.db"), new ResourceMount("scratch-pad", $"{Root}/workflow/triage/scratch-pad")], plan.Mounts);
         Assert.Equal([new PlannedResource(ResourceKind.Database, "state", $"{Root}/workflow/triage/state.db", null), new PlannedResource(ResourceKind.Disk, "scratch-pad", $"{Root}/workflow/triage/scratch-pad", 512L << 20)], plan.Create);
     }
 
@@ -36,7 +38,7 @@ public sealed class ResourcePlannerTests
     {
         var spec = new ResourceSpec([], [], null, [new ConnectionResource("github")]);
 
-        var plan = ResourcePlanner.Plan(Owner("toolkit:forge"), spec, Root, _box).Value;
+        var plan = ResourcePlanner.Plan(Owner("toolkit:forge"), spec, Root).Value;
 
         Assert.Equal("github", plan.Env["SINDRI_CONNECTION_GITHUB"]);
         Assert.Empty(plan.Mounts);
@@ -48,29 +50,54 @@ public sealed class ResourcePlannerTests
     {
         var spec = new ResourceSpec([new DatabaseResource("state")], [], null, []);
 
-        var plan = ResourcePlanner.Plan(Owner("node:triage/fetch"), spec, Root, _box).Value;
+        var plan = ResourcePlanner.Plan(Owner("node:triage/fetch"), spec, Root).Value;
 
         Assert.Equal($"{Root}/node/triage/fetch/state.db", plan.Env["SINDRI_DB_STATE"]);
     }
 
+    private static PlanLimits Resolve(ResourceLimitOverride? over) =>
+        LimitsResolver.Resolve(new LimitsInput(new SandboxLimits(Memory: "8GiB"), AttendedSettings: null, Attended: false, StepTimeout: TimeSpan.FromHours(4), LongMax: null, RamBytes: 64 * Gib, Cores: 4, Override: over));
+
     [Fact, Trait("Lane", "unit")]
-    public void A_sandbox_size_above_the_box_is_clamped_and_one_below_it_is_kept()
+    public void A_sandbox_size_above_the_profile_is_clamped_by_the_resolver_and_one_below_it_is_kept()
     {
-        var spec = new ResourceSpec([], [], new SandboxResource(Cpu: "50%", Memory: "64GiB", Wall: "45m"), []);
+        var big = new ResourceSpec([], [], new SandboxResource(Cpu: "50%", Memory: "64GiB", Wall: "45m"), []);
+        var small = new ResourceSpec([], [], new SandboxResource(Cpu: null, Memory: "2GiB", Wall: null), []);
 
-        var limits = ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root, _box).Value.Limits;
+        var clamped = Resolve(ResourcePlanner.Plan(Owner("workflow:triage"), big, Root).Value.Limits);
+        var kept = Resolve(ResourcePlanner.Plan(Owner("workflow:triage"), small, Root).Value.Limits);
 
-        Assert.Equal(8L << 30, limits.MemoryBytes);
-        Assert.Equal(50, limits.CpuPercent);
-        Assert.Equal(TimeSpan.FromMinutes(45), limits.Wall);
+        Assert.Equal(8 * Gib, clamped.MemoryMaxBytes);
+        Assert.True(clamped.CpuQuotaPercent <= 200);
+        Assert.Equal(2 * Gib, kept.MemoryMaxBytes);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_declared_wall_becomes_the_step_timeout_and_only_tightens()
+    {
+        var spec = new ResourceSpec([], [], new SandboxResource(Cpu: null, Memory: null, Wall: "45m"), []);
+
+        var limits = ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root).Value.Limits;
+
+        Assert.Equal(new ResourceLimitOverride(null, null, TimeSpan.FromMinutes(45)), limits);
+        Assert.True(Resolve(limits).Wall < Resolve(null).Wall);
     }
 
     [Fact, Trait("Lane", "unit")]
     public void No_sandbox_declared_overrides_nothing()
     {
-        var limits = ResourcePlanner.Plan(Owner("workflow:triage"), ResourceSpec.Empty, Root, _box).Value.Limits;
+        Assert.Null(ResourcePlanner.Plan(Owner("workflow:triage"), ResourceSpec.Empty, Root).Value.Limits);
+    }
 
-        Assert.Equal(new ResourceLimitOverrides(null, null, null), limits);
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("4g")]
+    [InlineData("512m")]
+    [InlineData("lots")]
+    public void A_sandbox_memory_the_size_parser_would_reject_is_invalid_here_not_in_the_resolver(string memory)
+    {
+        var spec = new ResourceSpec([], [], new SandboxResource(Cpu: null, Memory: memory, Wall: null), []);
+
+        Assert.Equal("SND-RES-006", ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root).Error.Code);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -78,7 +105,7 @@ public sealed class ResourcePlannerTests
     {
         var spec = new ResourceSpec([new DatabaseResource("state"), new DatabaseResource("state")], [], null, []);
 
-        var result = ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root, _box);
+        var result = ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root);
 
         Assert.Equal("SND-RES-002", result.Error.Code);
     }
@@ -92,7 +119,7 @@ public sealed class ResourcePlannerTests
     {
         var spec = new ResourceSpec([new DatabaseResource(name)], [], null, []);
 
-        Assert.Equal("SND-RES-006", ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root, _box).Error.Code);
+        Assert.Equal("SND-RES-006", ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root).Error.Code);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -100,7 +127,7 @@ public sealed class ResourcePlannerTests
     {
         var spec = new ResourceSpec([], [new DiskResource("scratch", "lots")], null, []);
 
-        Assert.Equal("SND-RES-006", ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root, _box).Error.Code);
+        Assert.Equal("SND-RES-006", ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root).Error.Code);
     }
 
     [Theory, Trait("Lane", "unit")]

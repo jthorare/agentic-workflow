@@ -1,24 +1,23 @@
 using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Sandbox.Plan;
 
 namespace Aw.Sindri.Core.Resources;
 
-/// <summary>Turns an owner's declarations and the box's limits into what to create, the environment, the mounts and the limit overrides. Pure.</summary>
+/// <summary>Turns an owner's declarations into what to create, the environment, the mounts and the limit overrides. Pure.</summary>
 public static partial class ResourcePlanner
 {
     /// <summary>Plans an owner's resources.</summary>
     /// <param name="owner">The owner.</param>
     /// <param name="spec">What it declares.</param>
     /// <param name="resourcesRoot">The resources root, <c>$AW_SINDRI_HOME/resources</c>.</param>
-    /// <param name="box">What the box allows one session.</param>
     /// <returns>The plan, or SND-RES-002 for a name used twice, SND-RES-006 for a bad name or size.</returns>
-    public static Result<ResourcePlan> Plan(ResourceOwner owner, ResourceSpec spec, string resourcesRoot, ResourceBoxLimits box)
+    public static Result<ResourcePlan> Plan(ResourceOwner owner, ResourceSpec spec, string resourcesRoot)
     {
         ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(spec);
         ArgumentNullException.ThrowIfNull(resourcesRoot);
-        ArgumentNullException.ThrowIfNull(box);
         var home = $"{resourcesRoot.TrimEnd('/')}/{owner.Folder}";
         var create = new List<PlannedResource>();
         var env = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -34,7 +33,7 @@ public static partial class ResourcePlanner
             var path = $"{home}/{name}.db";
             create.Add(new PlannedResource(ResourceKind.Database, name, path, null));
             env[ResourceEnv.Database(name)] = path;
-            mounts.Add(new ResourceMount(path, Writable: true));
+            mounts.Add(new ResourceMount(name, path));
         }
 
         foreach (var disk in spec.Disks)
@@ -52,7 +51,7 @@ public static partial class ResourcePlanner
             var path = $"{home}/{disk.Name}";
             create.Add(new PlannedResource(ResourceKind.Disk, disk.Name, path, limit));
             env[ResourceEnv.Disk(disk.Name)] = path;
-            mounts.Add(new ResourceMount(path, Writable: true));
+            mounts.Add(new ResourceMount(disk.Name, path));
         }
 
         var connections = new HashSet<string>(StringComparer.Ordinal);
@@ -71,7 +70,7 @@ public static partial class ResourcePlanner
             env[ResourceEnv.Connection(connection.Name!)] = connection.Name!;
         }
 
-        var limits = Limits(spec.Sandbox, box);
+        var limits = Limits(spec.Sandbox);
         return limits.IsError ? limits.Error : new ResourcePlan(create, env, mounts, limits.Value);
     }
 
@@ -89,36 +88,26 @@ public static partial class ResourcePlanner
 
     private static Error NameInvalid(string what) => SindriErrors.ResourceInvalid.With($"A {what} name is lowercase letters, digits and '-', 1 to 64 characters, starting with a letter or digit.");
 
-    private static Result<ResourceLimitOverrides> Limits(SandboxResource? sandbox, ResourceBoxLimits box)
+    // Declared limits pass through as text: LimitsResolver clamps them to the profile and the box. They must be exactly what
+    // SandboxUnits.ParseSize (KiB, MiB, GiB, TiB only) and ParsePercent accept, or the resolver would throw on a launch.
+    private static Result<ResourceLimitOverride?> Limits(SandboxResource? sandbox)
     {
         if (sandbox is null)
         {
-            return new ResourceLimitOverrides(null, null, null);
+            return (ResourceLimitOverride?)null;
         }
 
-        long? memory = null;
-        int? cpu = null;
+        if (sandbox.Memory is not null && !(ResourceSizes.TryParse(sandbox.Memory, out _) && sandbox.Memory.EndsWith("iB", StringComparison.Ordinal)))
+        {
+            return SindriErrors.ResourceInvalid.With("A sandbox memory is a whole number and KiB, MiB, GiB or TiB, such as 4GiB.");
+        }
+
+        if (sandbox.Cpu is not null && !CpuShape.IsMatch(sandbox.Cpu))
+        {
+            return SindriErrors.ResourceInvalid.With("A sandbox cpu is a percent such as 50%.");
+        }
+
         TimeSpan? wall = null;
-        if (sandbox.Memory is not null)
-        {
-            if (!ResourceSizes.TryParse(sandbox.Memory, out var bytes))
-            {
-                return SindriErrors.ResourceInvalid.With("A sandbox memory is a whole number and KiB, MiB, GiB or TiB, such as 4GiB.");
-            }
-
-            memory = Math.Min(bytes, box.MemoryBytes);
-        }
-
-        if (sandbox.Cpu is not null)
-        {
-            if (!CpuShape.IsMatch(sandbox.Cpu))
-            {
-                return SindriErrors.ResourceInvalid.With("A sandbox cpu is a percent such as 50%.");
-            }
-
-            cpu = Math.Min(int.Parse(sandbox.Cpu.AsSpan(0, sandbox.Cpu.Length - 1), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture), box.CpuPercent);
-        }
-
         if (sandbox.Wall is not null)
         {
             if (!RecipeDuration.TryParse(sandbox.Wall, null, out var duration))
@@ -126,10 +115,10 @@ public static partial class ResourcePlanner
                 return SindriErrors.ResourceInvalid.With("A sandbox wall is a whole number and m, h or d, such as 45m.");
             }
 
-            wall = duration.Span < box.Wall ? duration.Span : box.Wall;
+            wall = duration.Span;
         }
 
-        return new ResourceLimitOverrides(memory, cpu, wall);
+        return new ResourceLimitOverride(sandbox.Memory, sandbox.Cpu, wall);
     }
 
     [GeneratedRegex("^[a-z0-9][a-z0-9-]{0,63}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]

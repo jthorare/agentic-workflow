@@ -8,7 +8,6 @@ namespace Aw.Sindri.Tests.Resources;
 public sealed class ResourceStoreTests : IDisposable
 {
     private readonly TempHome _home = new();
-    private static readonly ResourceBoxLimits _box = new(8L << 30, 100, TimeSpan.FromHours(4));
 
     public void Dispose() => _home.Dispose();
 
@@ -17,8 +16,7 @@ public sealed class ResourceStoreTests : IDisposable
     private ResourcePlan Plan() => ResourcePlanner.Plan(
         ResourceOwner.Parse("workflow:triage").Value,
         new ResourceSpec([new DatabaseResource("state")], [new DiskResource("scratch", "1MiB")], null, []),
-        Root,
-        _box).Value;
+        Root).Value;
 
     [Fact, Trait("Lane", "unit")]
     public void Provision_creates_owner_only_files_and_is_idempotent()
