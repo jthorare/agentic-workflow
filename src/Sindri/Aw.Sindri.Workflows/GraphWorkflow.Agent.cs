@@ -27,6 +27,7 @@ internal sealed partial class GraphWorkflow
             do
             {
                 started = await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.LaunchAsync(reference), _agentLaunch).ConfigureAwait(true);   // why: a full session cap makes the activity hand back after its slice, and the workflow asks again
+                Workflow.CancellationToken.ThrowIfCancellationRequested();   // why: the launch is not cancelled with the workflow (_agentLaunch); a cancel that came during it stops here, and the catch closes what it made
             }
             while (started.Launched.Waiting);
 
