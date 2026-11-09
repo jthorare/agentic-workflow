@@ -292,7 +292,7 @@ packages:
     tier: 1
     projectPrefix: Aw.Sindri.Toolkit
     src: src/Toolkit
-    note: "the SDK a toolkit project references (name, needs, typed tools, an MCP stdio host); toolkits live outside the repo and reference it through a local package feed, and Sindri never references it: Sindri talks to a toolkit over MCP stdio only (PR 15)"
+    note: "the SDK a toolkit project references (name, needs, typed tools, an MCP stdio host); packed alone into the SDK feed, so it has no repo references (no Kernel edge); toolkits live outside the repo and reference it through that feed, and Sindri never references it: Sindri talks to a toolkit over MCP stdio only (PR 15)"
 
 edges:
   # ---- current: found in the source today ----
@@ -697,12 +697,6 @@ edges:
     kind: compose
     status: current
     note: "Host calls AddConnectorsFeatures and AddConnectorsInfrastructure and nothing else from them"
-
-  - from: Toolkit
-    to: Kernel
-    kind: project
-    status: current
-    note: "ErrorDefinition and the error catalogue for the AW-TOOLKIT codes"
 
 exceptions:
   - rule: DEPS-CYCLE-001

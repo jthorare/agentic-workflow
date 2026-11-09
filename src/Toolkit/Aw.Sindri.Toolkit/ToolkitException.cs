@@ -1,5 +1,3 @@
-using Aw.Kernel;
-
 namespace Aw.Sindri.Toolkit;
 
 /// <summary>A failure a toolkit author or the SDK raises on purpose. Its message is safe to show a client; any other exception is not.</summary>
@@ -30,7 +28,7 @@ public sealed class ToolkitException : Exception
     /// <summary>Makes an exception for an SDK error code.</summary>
     /// <param name="definition">The code.</param>
     /// <param name="message">What happened and the fix, without secrets.</param>
-    public ToolkitException(ErrorDefinition definition, string message)
+    public ToolkitException(ToolkitError definition, string message)
         : base(message)
     {
         ArgumentNullException.ThrowIfNull(definition);
@@ -38,5 +36,5 @@ public sealed class ToolkitException : Exception
     }
 
     /// <summary>The error code this exception carries.</summary>
-    public ErrorDefinition Definition { get; }
+    public ToolkitError Definition { get; }
 }

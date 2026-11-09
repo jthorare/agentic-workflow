@@ -72,13 +72,9 @@
           "SQLitePCLRaw.core": "2.1.12"
         }
       },
-      "aw.kernel": {
-        "type": "Project"
-      },
       "aw.sindri.toolkit": {
         "type": "Project",
         "dependencies": {
-          "Aw.Kernel": "[1.0.0, )",
           "Microsoft.Data.Sqlite": "[10.0.12, 10.0.12]",
           "ModelContextProtocol.Core": "[2.2.0, 2.2.0]"
         }

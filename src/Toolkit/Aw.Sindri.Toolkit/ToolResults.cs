@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Aw.Kernel;
 using ModelContextProtocol.Protocol;
 
 namespace Aw.Sindri.Toolkit;
@@ -14,7 +13,7 @@ internal static class ToolResults
         Content = [new TextContentBlock { Text = $"{tool} done." }],
     };
 
-    public static CallToolResult Failure(ErrorDefinition definition, string message)
+    public static CallToolResult Failure(ToolkitError definition, string message)
     {
         var node = new JsonObject { ["code"] = definition.Code, ["message"] = message };
         using var document = JsonDocument.Parse(node.ToJsonString());

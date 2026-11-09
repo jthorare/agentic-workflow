@@ -99,9 +99,6 @@
           "SQLitePCLRaw.core": "2.1.12"
         }
       },
-      "aw.kernel": {
-        "type": "Project"
-      },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "CentralTransitive",
         "requested": "[10.0.12, 10.0.12]",
