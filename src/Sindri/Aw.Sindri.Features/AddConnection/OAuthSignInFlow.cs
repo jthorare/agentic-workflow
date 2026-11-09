@@ -77,7 +77,7 @@ internal sealed partial class OAuthSignInFlow(IConnectionStore store, IConnectio
         var name = sign.Pending.Name.ToString();
         if (done.IsError)
         {
-            outcomes.Failed(name, done.Error);
+            outcomes.Failed(name, done.Error, events.Now);
             if (logger is not null)
             {
                 LogFailed(logger, name, done.Error.Code);

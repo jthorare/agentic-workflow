@@ -19859,7 +19859,6 @@ static Aw.Sindri.Core.Connections.OAuth.McpSignInTarget.operator ==(Aw.Sindri.Co
 Aw.Sindri.Core.Connections.SignInOutcomes
 Aw.Sindri.Core.Connections.SignInOutcomes.SignInOutcomes() -> void
 Aw.Sindri.Core.Connections.SignInOutcomes.Clear(string! name) -> void
-Aw.Sindri.Core.Connections.SignInOutcomes.Failed(string! name, Aw.Kernel.Error! error) -> void
 Aw.Sindri.Core.Connections.SignInOutcomes.Last(string! name) -> Aw.Kernel.Error?
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Admit(Aw.Sindri.Core.Graph.Runs.WorkflowRun! run, Aw.Sindri.Core.Graph.Runs.GraphConcurrency mode, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.GraphStartKind>!>
 Aw.Sindri.Core.Graph.GraphNode.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Id, out string! Type, out string? Title, out System.Text.Json.Nodes.JsonObject! Config, out string? OnFailure) -> void
@@ -20540,3 +20539,19 @@ Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery
 Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Running(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
 Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.DateTimeOffset startedBefore, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Connections.SignInFailure
+Aw.Sindri.Core.Connections.SignInFailure.<Clone>$() -> Aw.Sindri.Core.Connections.SignInFailure!
+Aw.Sindri.Core.Connections.SignInFailure.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Connections.SignInFailure.At.init -> void
+Aw.Sindri.Core.Connections.SignInFailure.Deconstruct(out Aw.Kernel.Error! Error, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Connections.SignInFailure.Equals(Aw.Sindri.Core.Connections.SignInFailure? other) -> bool
+Aw.Sindri.Core.Connections.SignInFailure.Error.get -> Aw.Kernel.Error!
+Aw.Sindri.Core.Connections.SignInFailure.Error.init -> void
+Aw.Sindri.Core.Connections.SignInFailure.SignInFailure(Aw.Kernel.Error! Error, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Connections.SignInOutcomes.Failed(string! name, Aw.Kernel.Error! error, System.DateTimeOffset at) -> void
+Aw.Sindri.Core.Connections.SignInOutcomes.LastFailure(string! name) -> Aw.Sindri.Core.Connections.SignInFailure?
+override Aw.Sindri.Core.Connections.SignInFailure.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.SignInFailure.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.SignInFailure.ToString() -> string!
+static Aw.Sindri.Core.Connections.SignInFailure.operator !=(Aw.Sindri.Core.Connections.SignInFailure? left, Aw.Sindri.Core.Connections.SignInFailure? right) -> bool
+static Aw.Sindri.Core.Connections.SignInFailure.operator ==(Aw.Sindri.Core.Connections.SignInFailure? left, Aw.Sindri.Core.Connections.SignInFailure? right) -> bool

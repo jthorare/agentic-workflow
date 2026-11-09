@@ -122,6 +122,11 @@ internal sealed partial class ShellViewModel
             ReviewFix.Close();
         }
 
+        if (IsConnectionSheet)
+        {
+            ConnectionSheet.Close();   // a sign-in's browser wait stops; reopening reads the connection again
+        }
+
         _ = NeedsYou.CloseSheet();
         Changed(nameof(IsSheetOpen), nameof(IsSheetShown), nameof(IsEdgeTabShown));
     }
