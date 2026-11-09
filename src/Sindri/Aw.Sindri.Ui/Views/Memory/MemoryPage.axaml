@@ -53,6 +53,7 @@
                     <StackPanel Orientation="Horizontal" Spacing="8" DataContext="{Binding Search}" x:DataType="mm:MemorySearchViewModel">
                       <TextBox x:Name="MemorySearchBox" Width="260" Text="{Binding Query, Mode=TwoWay}" KeyDown="OnSearchKey" AutomationProperties.Name="{Binding FieldName}" />
                       <ComboBox x:Name="MemoryLevel" ItemsSource="{Binding LevelChoices}" SelectedItem="{Binding SelectedLevel}" MinWidth="110" AutomationProperties.Name="{Binding LevelName}" />
+                      <ComboBox x:Name="MemoryLimit" ItemsSource="{Binding LimitChoices}" SelectedItem="{Binding SelectedLimit}" MinWidth="70" AutomationProperties.Name="{Binding LimitName}" ToolTip.Tip="{Binding LimitName}" />
                       <Button x:Name="MemorySearchButton" Content="{Binding ActionText}" Click="OnSearch" AutomationProperties.Name="{Binding ActionText}" />
                     </StackPanel>
 
