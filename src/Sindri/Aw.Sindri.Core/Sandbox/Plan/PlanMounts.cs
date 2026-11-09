@@ -42,6 +42,7 @@ internal static class PlanMounts
         AddLogin(m, c, inSindriHome: true);   // why: a separate-login agent home lives in Sindri's home, which AddInventory just emptied; it goes on top of the mask
         AddLaunchFiles(m, c);
         AddSkillState(m, c);
+        AddResourceState(m, c);
         AddWritable(m, c);
         m.AddRange(c.OwnerDenied().Select(d => new PlanMount(d.Path, PlanMountKind.Deny, Reason: d.Reason)));
         return m;
@@ -200,6 +201,15 @@ internal static class PlanMounts
 
         Beneath(m, new PlanMount(directory, PlanMountKind.ReadWrite, Reason: "the skill's results and plans for this repo ($AW_DIR)"));
         Beneath(m, new PlanMount($"{c.StateDir}/bugfix/{directory[(directory.LastIndexOf('/') + 1)..]}", PlanMountKind.ReadWrite, Reason: "bugfix-state's own folder for this repo"));
+    }
+
+    // PR 14: a resource's folder or file, read-write at its own path. Like the skill folders it goes above the masks over its parent (a resource lives under Sindri's home).
+    private static void AddResourceState(List<PlanMount> m, PlanContext c)
+    {
+        foreach (var resource in c.Request.ResourceMounts ?? [])
+        {
+            Beneath(m, new PlanMount(resource.HostPath.TrimEnd('/'), PlanMountKind.State, Reason: $"the {resource.Name} resource of this run's owner"));
+        }
     }
 
     // A later mount wins, so a bind appended last would bring back whatever an earlier mask or deny hides inside it (a Sindri home under AW_DIR, found in F-1's
