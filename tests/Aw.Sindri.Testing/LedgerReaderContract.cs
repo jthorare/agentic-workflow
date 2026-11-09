@@ -203,6 +203,45 @@ public abstract class LedgerReaderContract
         Expect.True(none is null);
     }
 
+    /// <summary>LatestByKeyPrefix reads the row with the greatest key (ordinal) that starts with the prefix, not the last appended one and not a longer-named neighbour's, and null for none, also on a ledger never written.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task LatestByKeyPrefix_reads_the_greatest_key_under_that_prefix()
+    {
+        var (lease, ledger) = await Create(Clock, Probe);
+        Expect.True((await Reader().LatestByKeyPrefix("p:a:", Token)).Value is null);
+        var grant = (await lease.Acquire(Probe.Self(), Token)).Value;
+        var newest = (await ledger.Append(Entry("process.started", "p:a:2"), grant, Token)).Value;
+        _ = await ledger.Append(Entry("process.started", "p:a:1"), grant, Token);
+        _ = await ledger.Append(Entry("process.started", "p:ab:3"), grant, Token);
+        var reader = Reader();
+
+        var found = (await reader.LatestByKeyPrefix("p:a:", Token)).Value;
+        var none = (await reader.LatestByKeyPrefix("p:b:", Token)).Value;
+
+        Expect.Equal(newest.Sequence, found?.Sequence);
+        Expect.True(none is null);
+    }
+
+    /// <summary>LatestByKeyPrefix refuses a prefix whose last character is not ASCII: the exclusive upper bound raises that character by one, which is only ordered the same in SQLite (UTF-8 bytes) and .NET (UTF-16) for ASCII.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task LatestByKeyPrefix_refuses_a_non_ascii_last_character()
+    {
+        _ = await Create(Clock, Probe);
+        var refused = false;
+        try
+        {
+            _ = await Reader().LatestByKeyPrefix("p:\u00e9", Token);
+        }
+        catch (ArgumentException)
+        {
+            refused = true;
+        }
+
+        Expect.True(refused);
+    }
+
     /// <summary>On a ledger nothing was written to, a scan is empty at sequence 0 and creates no file.</summary>
     /// <returns>The test.</returns>
     [Fact]
