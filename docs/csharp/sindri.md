@@ -657,7 +657,7 @@ blocks.
 
 ## MCP tools (API P8)
 
-`/sindri/mcp` (one stateless Streamable HTTP endpoint, `Aw.Sindri.Host/Mcp/`) serves the `context_*` tools (docs/csharp/sindri-context.md S-1M) and these ten `sindri_*` tools. Every call runs as `session:mcp`; the `sindri_*` tools answer for every repo, as the same call does for a human, and only the `context_*` and graph tools need the repo named by `X-Sindri-Repo` (owner decision q93, 2026-10-23). Each tool binds its arguments (`McpArguments`), calls one service of the same decorated chain the HTTP route uses, fences the result and summarises it; no logic lives in the endpoint. `tools/list` returns 12 tools in this order: the five `context_*`, then the seven below.
+`/sindri/mcp` (one stateless Streamable HTTP endpoint, `Aw.Sindri.Host/Mcp/`) serves the `context_*` tools (docs/csharp/sindri-context.md S-1M) and these ten `sindri_*` tools. Every call runs as `session:mcp`; the `sindri_*` tools answer for every repo, as the same call does for a human, and only the `context_*` and graph tools need the repo named by `X-Sindri-Repo` (owner decision q93, 2026-10-23). Each tool binds its arguments (`McpArguments`), calls one service of the same decorated chain the HTTP route uses, fences the result and summarises it; no logic lives in the endpoint. `tools/list` returns 28 tools in this order: the seven `context_*`, then the ten `sindri_*` below, then the six `connection_*` and the five `memory_*`.
 
 | Tool | Arguments | Same as | Kind |
 |---|---|---|---|
@@ -697,7 +697,7 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-CONTEXT-022` | Invalid | An argument of the wrong type, a missing required one, an unknown one, or an enum value outside the schema |
 | `SND-CONTEXT-023` | NotFound | Unknown tool (`sindri_decide` and every other absent tool) |
 
-**Goldens.** `tests/Aw.Sindri.Tests/Golden/Mcp/<tool>/<scenario>.json`, plus `tools-list/default.json` (names, schemas, annotations; descriptions may be reworded and the golden re-recorded) and `errors/`. They sit outside `Golden/Api`, so the UI contract test doesn't enumerate them. The AOT smoke (`src/Sindri/aot-smoke`) lists the 12 tools and calls `sindri_queue`, `sindri_request`, `sindri_item` (`SND-CLI-003`) and `sindri_decide` (`SND-CONTEXT-023`); its profile names the repo `smoke`.
+**Goldens.** `tests/Aw.Sindri.Tests/Golden/Mcp/<tool>/<scenario>.json`, plus `tools-list/default.json` (names, schemas, annotations; descriptions may be reworded and the golden re-recorded) and `errors/`. They sit outside `Golden/Api`, so the UI contract test doesn't enumerate them. The AOT smoke (`src/Sindri/aot-smoke`) lists the 28 tools and calls `sindri_queue`, `sindri_request`, `sindri_item` (`SND-CLI-003`) and `sindri_decide` (`SND-CONTEXT-023`); its profile names the repo `smoke`.
 
 ## Errors
 

@@ -46,8 +46,7 @@ internal static partial class SindriTools
         Name = Todo,
         Description = "Add or change a todo on the owner's list. Text: one line, 1 to 280 characters, no 📅, ✅, ^td- or markdown links. Due: YYYY-MM-DD, or \"\" to clear it. "
             + "Links: up to 10, each an item id (ITM-…), owner/repo#n, a Linear key (ENG-12) or a workflow address. `change` needs the version from sindri_todos. Ids are full ids (td_…). "
-            + "At most 20 adds an hour. On SND-TODO-409, call sindri_todos for the current row and retry. SND-TODO-423 means a version has to be picked first: read the conflict with sindri_todos and call keep, or leave it for the owner. "
-            + "A pick throws away the other side's text, and a hold pick applies or puts back every held change: only pick when the user asked you to.",
+            + "At most 20 adds an hour. On SND-TODO-409, call sindri_todos for the current row and retry. SND-TODO-423: the todo has an open conflict; leave it for the owner.",
         InputSchema = ContextTools.Schema(new JsonObject
         {
             ["action"] = ContextTools.Property("string", "What to do", bounds: new ContextTools.PropertyBounds(Allowed: TodoActions)),
