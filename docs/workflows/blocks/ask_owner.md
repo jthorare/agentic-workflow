@@ -42,4 +42,4 @@ An agent session may answer the question of the run it was launched by; the time
 
 Here `go` runs on any answer (add a `condition` on `ask.answer` to tell yes from no) and `stop` runs when nobody answers in 2 hours.
 
-A `ask_owner` node can't sit inside a `for_each` loop (`GRAPH-LOOP-003`): put the per-item part in its own workflow and call it with `run_workflow`.
+An `ask_owner` node can't sit inside a `for_each` loop (`GRAPH-LOOP-003`): put the per-item part in its own workflow and call it with `run_workflow`.
