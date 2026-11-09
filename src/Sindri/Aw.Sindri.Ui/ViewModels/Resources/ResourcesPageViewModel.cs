@@ -52,9 +52,26 @@ internal sealed class ResourcesPageViewModel : ObservableObject
         }
 
         IsEmpty = Rows.Count == 0;
+        EmptyText = IsEmpty ? Labels.ResourcesEmpty : string.Empty;
     }
 
-    // Stub: a purge sends nothing yet and only reads the list again; the refusal is never shown.
-    private Task Purge(string owner, CancellationToken cancellationToken) =>
-        _url is { } url && owner.Length > 0 ? Refresh(url, cancellationToken) : Task.CompletedTask;
+    // A purge: the API's refusal keeps the rows and shows its detail; a purge that worked reads the list again.
+    private async Task Purge(string owner, CancellationToken cancellationToken)
+    {
+        if (_url is not { } url)
+        {
+            return;
+        }
+
+        NoteText = string.Empty;
+        var purged = await _api.PurgeResources(url, owner, cancellationToken).ConfigureAwait(true);
+        if (purged.IsError)
+        {
+            NoteText = Labels.ResourcePurgeFailed(purged.Error);
+            return;
+        }
+
+        NoteText = Labels.ResourcePurged(owner, purged.Value.Removed);
+        await Refresh(url, cancellationToken).ConfigureAwait(true);
+    }
 }

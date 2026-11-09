@@ -40,4 +40,10 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string ResourcePurged(string owner, int removed) =>
         string.Create(CultureInfo.InvariantCulture, $"Purged {removed} {(removed == 1 ? "resource" : "resources")} of {owner}.");
+
+    /// <summary>A size against its cap: "1.2 MB of 5.0 MB".</summary>
+    /// <param name="size">The size in words.</param>
+    /// <param name="limit">The limit in words.</param>
+    /// <returns>The words.</returns>
+    internal static string ResourceSizeOf(string size, string limit) => size + " of " + limit;
 }
