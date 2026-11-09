@@ -16,7 +16,7 @@ namespace Aw.Sindri.Host.Mcp;
 internal static class McpToolTable
 {
     private static readonly IReadOnlyList<Tool> _tools = [ContextTools.QueryTool, ContextTools.SourcesTool, ContextTools.LensesTool, ConceptTools.Tool, PageTools.Tool, GraphTools.NodeTool, GraphTools.NeighborsTool,
-        SindriTools.StatusTool, SindriTools.QueueTool, SindriTools.ItemTool, SindriTools.TimelineTool, SindriTools.PendingDecisionsTool, SindriTools.JobTool, SindriTools.ProjectsTool, SindriTools.RequestTool, SindriTools.TodosTool, SindriTools.TodoTool, .. ConnectionTools.All, .. MemoryTools.All, .. WorkflowReadTools.All, .. WorkflowTools.All];
+        SindriTools.StatusTool, SindriTools.QueueTool, SindriTools.ItemTool, SindriTools.TimelineTool, SindriTools.PendingDecisionsTool, SindriTools.JobTool, SindriTools.ProjectsTool, SindriTools.RequestTool, SindriTools.HandoffTool, SindriTools.TodosTool, SindriTools.TodoTool, .. ConnectionTools.All, .. MemoryTools.All, .. WorkflowReadTools.All, .. WorkflowTools.All];
 
     // why: only the context and graph tools read one repo's map; the sindri_* tools answer for every repo, as the same call does for a human
     private static readonly FrozenSet<string> _repoScoped = FrozenSet.Create(StringComparer.Ordinal,
@@ -75,6 +75,7 @@ internal static class McpToolTable
             SindriTools.Job => SindriTools.CallJob(services, call.Arguments, cancellationToken),
             SindriTools.Projects => SindriTools.CallProjects(services, call.Arguments, cancellationToken),
             SindriTools.Request => SindriTools.CallRequest(services, call.Arguments, cancellationToken),
+            SindriTools.Handoff => SindriTools.CallHandoff(services, call.Arguments, cancellationToken),
             SindriTools.Todos => SindriTools.CallTodos(services, call.Arguments, cancellationToken),
             SindriTools.Todo => SindriTools.CallTodo(services, call.Arguments, cancellationToken),
             ConnectionTools.List or ConnectionTools.Get or ConnectionTools.Add or ConnectionTools.SignIn or ConnectionTools.Test or ConnectionTools.Remove => ConnectionTools.Call(call.Name, services, call.Arguments, cancellationToken),

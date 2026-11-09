@@ -5208,6 +5208,48 @@ override Aw.Sindri.Features.AddConnection.SignInConnectionRequest.GetHashCode() 
 override Aw.Sindri.Features.AddConnection.SignInConnectionRequest.ToString() -> string!
 static Aw.Sindri.Features.AddConnection.SignInConnectionRequest.operator !=(Aw.Sindri.Features.AddConnection.SignInConnectionRequest? left, Aw.Sindri.Features.AddConnection.SignInConnectionRequest? right) -> bool
 static Aw.Sindri.Features.AddConnection.SignInConnectionRequest.operator ==(Aw.Sindri.Features.AddConnection.SignInConnectionRequest? left, Aw.Sindri.Features.AddConnection.SignInConnectionRequest? right) -> bool
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.<Clone>$() -> Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest!
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Branch.get -> string?
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Branch.init -> void
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.CreateHandoffItemRequest(string! Title, string! Source, string? OfferKey = null, Aw.Sindri.Core.Ids.RepoName? Repo = null, string? Branch = null, string? Prompt = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>? Links = null, System.Collections.Generic.IReadOnlyList<string!>? Labels = null) -> void
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Deconstruct(out string! Title, out string! Source, out string? OfferKey, out Aw.Sindri.Core.Ids.RepoName? Repo, out string? Branch, out string? Prompt, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>? Links, out System.Collections.Generic.IReadOnlyList<string!>? Labels) -> void
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Equals(Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest? other) -> bool
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Labels.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Labels.init -> void
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Links.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Handoff.HandoffLink!>?
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Links.init -> void
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.OfferKey.get -> string?
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.OfferKey.init -> void
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Prompt.get -> string?
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Prompt.init -> void
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Repo.get -> Aw.Sindri.Core.Ids.RepoName?
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Repo.init -> void
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Source.get -> string!
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Source.init -> void
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Title.get -> string!
+Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Title.init -> void
+Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse
+Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.<Clone>$() -> Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse!
+Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.Accepted.get -> Aw.Sindri.Core.Commands.CommandAccepted!
+Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.Accepted.init -> void
+Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.Deconstruct(out Aw.Sindri.Core.Commands.CommandAccepted! Accepted, out Aw.Sindri.Core.Ids.ItemId ItemId, out string! OfferKey) -> void
+Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.Equals(Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse? other) -> bool
+Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.HandoffItemCreatedResponse(Aw.Sindri.Core.Commands.CommandAccepted! Accepted, Aw.Sindri.Core.Ids.ItemId ItemId, string! OfferKey) -> void
+Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.ItemId.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.ItemId.init -> void
+Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.OfferKey.get -> string!
+Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.OfferKey.init -> void
+override Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.GetHashCode() -> int
+override Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.ToString() -> string!
+override Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.GetHashCode() -> int
+override Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.ToString() -> string!
+static Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.operator !=(Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest? left, Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest? right) -> bool
+static Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest.operator ==(Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest? left, Aw.Sindri.Features.CreateHandoffItem.CreateHandoffItemRequest? right) -> bool
+static Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.operator !=(Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse? left, Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse? right) -> bool
+static Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse.operator ==(Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse? left, Aw.Sindri.Features.CreateHandoffItem.HandoffItemCreatedResponse? right) -> bool
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.<Clone>$() -> Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest!
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteRequest.Deconstruct(out string! Vault, out string! Note, out int? ExpectOpen, out bool Piped) -> void

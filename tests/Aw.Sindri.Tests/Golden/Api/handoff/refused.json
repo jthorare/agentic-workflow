@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+  "title": "SND-AUTH-001",
+  "status": 401,
+  "detail": "send this start's token in X-Sindri-Token (fix: restart the app or rerun the command)",
+  "traceId": "<trace>"
+}

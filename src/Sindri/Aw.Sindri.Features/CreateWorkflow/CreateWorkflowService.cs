@@ -20,12 +20,12 @@ namespace Aw.Sindri.Features.CreateWorkflow;
 /// <param name="log">Writes the lifecycle event.</param>
 internal sealed class CreateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, IIdGenerator ids, WorkflowChangeLog log) : IService<CreateWorkflowRequest, CreateWorkflowResponse>
 {
-    private static readonly HashSet<string> Reserved = new(["docs", "blocks"], StringComparer.Ordinal);
+    private static readonly HashSet<string> _reserved = new(["docs", "blocks"], StringComparer.Ordinal);
 
     public async ValueTask<Result<CreateWorkflowResponse>> Handle(CreateWorkflowRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (Reserved.Contains(request.Slug.Value))
+        if (_reserved.Contains(request.Slug.Value))
         {
             // why: GET /sindri/workflows/docs and /blocks are the doc and block routes, so a workflow with that slug could never be read
             return SindriErrors.InvalidInput.With($"'{request.Slug.Value}' is reserved for the workflow docs and blocks routes; pick another slug");
