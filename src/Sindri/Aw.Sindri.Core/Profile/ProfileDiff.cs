@@ -156,7 +156,7 @@ public static partial class ProfileDiff
     /// <summary>The line's keys (line spec LN-WF9): every one is a re-approval, so each key the profile sets has a path.</summary>
     private static IEnumerable<(string Key, string? Value)> LineKeys(WorkflowSettings? workflow) =>
         PackDefaults(workflow?.Packs).Concat(PackMaps(workflow?.Packs)).Concat(LineLimits(workflow?.Line)).Concat(PlanKeys(workflow?.Plan)).Concat(BuildKeys(workflow)).Concat(ModelKeys(workflow)).Concat(StepKeys(workflow)).Concat(PollKeys(workflow?.Poll))
-            .Concat(ForEachKeys(workflow?.ForEach));
+            .Concat(FlowKeys(workflow)).Concat(ForEachKeys(workflow?.ForEach));
 
     private static (string Key, string? Value)[] PackDefaults(PackSettings? packs) =>
     [
@@ -222,6 +222,12 @@ public static partial class ProfileDiff
     [
         ("workflow.poll.intervalSeconds", Number(poll?.IntervalSeconds)),
         ("workflow.poll.catchUpPages", Number(poll?.CatchUpPages)),
+    ];
+
+    private static (string Key, string? Value)[] FlowKeys(WorkflowSettings? workflow) =>
+    [
+        ("workflow.http.hosts", Joined(workflow?.Http?.Hosts)),
+        ("workflow.callDepth", Number(workflow?.CallDepth)),
     ];
 
     private static string? Number(long? value) => value?.ToString(System.Globalization.CultureInfo.InvariantCulture);

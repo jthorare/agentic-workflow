@@ -53,8 +53,84 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         }
 
         var context = new BlockContext(run, node, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup);
-        var result = await block.Execute(context, cancel).ConfigureAwait(false);
-        return Cut(scope, config) ?? (result.IsError ? Failed(config, result.Error) : Succeeded(config, result.Value));   // a condition reads its references inside Execute
+        var result = await block.Execute(context, cancel).ConfigureAwait(false);   // a condition reads its references inside Execute
+        if (Cut(scope, config) is { } cutAfter)
+        {
+            return cutAfter;
+        }
+
+        if (result.IsError)
+        {
+            return Failed(config, result.Error);
+        }
+
+        return Succeeded(config, result.Value);   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
+    }
+
+    /// <summary>
+    /// Runs the after-success step of every block whose node succeeded, once the whole run has succeeded ('only_new' records its keys here). A run that failed or was cancelled never gets here,
+    /// so what a node passed on is not marked done while a later node lost it. The call can repeat after a retry: the blocks make their commit safe to run twice.
+    /// </summary>
+    /// <param name="run">The run, already walked to the end with every node succeeded, skipped or continued past.</param>
+    /// <returns>Null when every commit worked, or the reason the first one failed.</returns>
+    [Activity("GraphCommitBlocks")]
+    public async Task<string?> CommitRunAsync(WorkflowRunId run)
+    {
+        var cancel = ActivityExecutionContext.Current.CancellationToken;
+        var row = GraphFailures.Value(await runs.Get(run, cancel).ConfigureAwait(false));
+        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancel).ConfigureAwait(false)).Spec;
+        var nodeRuns = GraphFailures.Value(await runs.NodeRuns(run, cancel).ConfigureAwait(false));
+        var outer = new Scope(row, spec, nodeRuns, loop: null);
+        foreach (var graphNode in spec.Nodes)
+        {
+            if (blocks.Find(graphNode.Type) is not { } block)
+            {
+                continue;
+            }
+
+            // why: a node inside a for_each body has one row per item (ItemIndex 1..N); each item's row is committed with that item's scope, as Execute read it
+            foreach (var stored in nodeRuns.Where(n => n.NodeId == graphNode.Id && n.Status == NodeRunStatus.Succeeded))
+            {
+                if (ItemScope(outer, row, spec, nodeRuns, stored) is { } scope && await CommitNode(graphNode, stored, block, scope, cancel).ConfigureAwait(false) is { } failure)
+                {
+                    return failure;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // why: a loop that can't be read again (its list was cut) leaves that item's keys unseen: they come back on the next run (a repeat, never a loss)
+    private static Scope? ItemScope(Scope outer, WorkflowRun row, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns, NodeRun stored)
+    {
+        if (stored.ItemIndex == 0)
+        {
+            return outer;
+        }
+
+        var (loop, failure) = Loop(outer, spec, stored.NodeId, stored.ItemIndex);
+        return failure is null && loop is not null ? new Scope(row, spec, nodeRuns, loop) : null;
+    }
+
+    private static async Task<string?> CommitNode(GraphNode graphNode, NodeRun stored, IGraphBlock block, Scope scope, CancellationToken cancel)
+    {
+        // why: a cut output is not what the block gave, so committing it would remember the wrong keys; the items stay unseen and come back on the next run (a repeat, never a loss)
+        if (stored.Output is null || stored.Truncated)
+        {
+            return null;
+        }
+
+        var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
+        if (scope.Cut is not null || JsonNode.Parse(stored.Output) is not JsonObject output)
+        {
+            return null;   // why: the config read a cut output, so the keys it names are unknown
+        }
+
+        var result = new BlockResult(output.ToDictionary(static p => p.Key, static p => p.Value?.DeepClone(), StringComparer.Ordinal), Branches: null);
+        var context = new BlockContext(stored.RunId, graphNode.Id, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup);
+        var committed = await block.Commit(context, result, cancel).ConfigureAwait(false);
+        return committed.IsError ? $"node '{graphNode.Id.Value}' could not record what it passed on: {committed.Error.Code}: {committed.Error.Message}" : null;
     }
 
     // why: inside a 'for_each' a reference reads the item and the loop's nodes of the same item; the list is read the way the 'for_each' read it, from outputs that never change
@@ -127,7 +203,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         private JsonNode? Root(string name) => name switch
         {
             "trigger" => _trigger,
-            "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision },
+            "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision, ["id"] = run.WorkflowId.Value },
             "item" => loop?.Item,
             "itemIndex" => loop is null ? null : JsonValue.Create(loop.ItemIndex),
             _ => Output(name),
