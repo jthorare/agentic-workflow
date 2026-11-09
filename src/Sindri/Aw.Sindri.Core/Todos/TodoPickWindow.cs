@@ -21,12 +21,21 @@ public sealed class TodoPickWindow
     /// <returns>The instant.</returns>
     public static DateTimeOffset Until(DateTimeOffset at) => at + Span;
 
-    /// <summary>Remembers a conflict pick.</summary>
+    /// <summary>Remembers a conflict pick, and drops the picks whose window had closed by then.</summary>
     /// <param name="id">The todo.</param>
     /// <param name="pick">The pick.</param>
     public void Remember(TodoId id, TodoPick pick)
     {
         ArgumentNullException.ThrowIfNull(pick);
+        foreach (var (key, earlier) in _picks)
+        {
+            // why: an undone-never pick would stay for the life of the process; the new pick's time is the clock here
+            if (Until(earlier.At) <= pick.At)
+            {
+                _ = _picks.TryRemove(key, out _);
+            }
+        }
+
         _picks[id] = pick;
     }
 
