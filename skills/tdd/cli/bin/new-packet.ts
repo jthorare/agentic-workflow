@@ -3,19 +3,20 @@
 // with the same files, bytes, stdout and exit codes as the Python; TDD_TODAY (YYYY-MM-DD) pins the date in both.
 // The argparse surface is reproduced for this parser's options (exact, --opt=value, unique prefixes, --, -h); as in
 // CPython 3.13, an option never takes its value across "--".
-import { mkdirSync, writeFileSync } from "node:fs";
-import { PyError, abspath, basename, exists, expanduser, isDir, isFile, join, jsonDumps, jsonLoads, listdir,
+import { lstatSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { PyError, abspath, basename, cmpCodepoint, dirname, exists, expanduser, isDir, isFile, join, jsonDumps, jsonLoads, listdir,
   normpath, readText, repr, splitWs, strip, type PyDict, type PyValue } from "../src/hotspots/_py";
 import { traceback } from "../src/hotspots/shapes";
 import * as re from "../src/py/re";
 
-export const DOC = "Create a new TDD packet from the house template.\n\nUsage:\n  new_packet.py <slug> [--title T] [--ticket P-XXX-NNN] [--repo <path>] [--root <dir>]\n\nCreates <root>/<repo-slug>/system-design/<slug>/ with:\n  <slug>.md       templates/tdd-template.md, with the title, ticket, sha and date filled in\n  meta.json       templates/meta.template.json without its _doc block, filled: title (the tab title, from --title the\n                  way build_doc.page_title derives it, else from the slug), project (the ticket), Author (git user.name),\n                  updated (today), rev 1, repo_url (GitHub or GitLab origin only), sha, sha_date, repo_path\n  status.md       the one living doc: artifact_url placeholder, Reference, Surfaces, Counts, Decisions, Open\n                  questions, Lead defaults, Revisions, Tracker\n  prs/ diagrams/ mockups/ schema/ queries/ shots/   empty working folders\n\n<root> is $SYSTEM_DESIGN_OUT, else ~/.system-design. <repo-slug> is derived the way system-design's scripts/env.sh does\nit: owner-repo from the origin remote of --repo (default: the current folder), else the repo root's folder name, else\nthe folder's own name. The sha is origin/HEAD when that ref exists, else HEAD; sha_date is its commit date. Nothing is\nfetched: run `git fetch` first if the remote default branch should be current.\n\nRefuses to write into a packet folder that already has files in it. Standard library only; run with python3 -I.\nExit 0 on success; 1 on bad arguments, an existing packet, or a missing template.";
+export const DOC = "Create a new TDD packet from the house template.\n\nUsage:\n  new_packet.py <slug> [--title T] [--ticket P-XXX-NNN] [--repo <path>] [--root <dir>]\n\nCreates <root>/<repo-slug>/system-design/<slug>/ with:\n  <slug>.md       templates/tdd-template.md, with the title, ticket, sha and date filled in\n  meta.json       templates/meta.template.json without its _doc block, filled: title (the tab title, from --title the\n                  way build_doc.page_title derives it, else from the slug), project (the ticket), Author (git user.name),\n                  updated (today), rev 1, repo_url (GitHub or GitLab origin only), sha, sha_date, repo_path\n  status.md       the one living doc: artifact_url placeholder, Reference, Surfaces, Counts, Decisions, Open\n                  questions, Lead defaults, Revisions, Tracker\n  diagrams/*.svg  templates/packet/ copied as it is: a placeholder image, marked PLACEHOLDER and REPLACE ME, for\n  mockups/*.svg   every diagram and shot the template references, so a fresh packet builds, lints and renders clean\n                  until the author replaces each one (the \"todo:\" line lists them)\n  prs/ diagrams/ mockups/ schema/ queries/ shots/   working folders (prs/ schema/ queries/ shots/ start empty)\n\n<root> is $SYSTEM_DESIGN_OUT, else ~/.system-design. <repo-slug> is derived the way system-design's scripts/env.sh does\nit: owner-repo from the origin remote of --repo (default: the current folder), else the repo root's folder name, else\nthe folder's own name. The sha is origin/HEAD when that ref exists, else HEAD; sha_date is its commit date. Nothing is\nfetched: run `git fetch` first if the remote default branch should be current.\n\nRefuses to write into a packet folder that already has files in it. Standard library only; run with python3 -I.\nExit 0 on success; 1 on bad arguments, an existing packet, or a missing template.";
 
 // The Python's paths: HERE is skills/tdd/scripts (named in the "next:" line), SKILL is skills/tdd.
 const SKILL = normpath(join(import.meta.dir, "..", ".."));
 const HERE = join(SKILL, "scripts");
 const TEMPLATE_MD = join(SKILL, "templates", "tdd-template.md");
 const TEMPLATE_META = join(SKILL, "templates", "meta.template.json");
+const TEMPLATE_PACKET = join(SKILL, "templates", "packet");
 const DIRS = ["prs", "diagrams", "mockups", "schema", "queries", "shots"];
 
 // argparse's rendering at its default width (no COLUMNS, not a terminal: 80 columns).
@@ -165,6 +166,25 @@ function tabTitle(h1: string, slug: string): string {
   return words.length > 4 ? words.slice(0, 4).join(" ") : t;
 }
 
+/** Every file under templates/packet/ as a '/'-separated path relative to it, sorted by code point; names starting
+ * with '.' are skipped. os.walk's reading: an entry is a folder when it stats as one (links followed), and a linked
+ * folder is listed but not entered. */
+function packetFiles(): string[] {
+  const out: string[] = [];
+  const walk = (d: string, rel: string) => {
+    for (const name of readdirSync(d)) {
+      if (name.startsWith(".")) continue;
+      const p = join(d, name), r = rel ? rel + "/" + name : name;
+      let dir = false;
+      try { dir = statSync(p).isDirectory(); } catch { dir = false; }
+      if (!dir) out.push(r);
+      else if (!lstatSync(p).isSymbolicLink()) walk(p, r);
+    }
+  };
+  walk(TEMPLATE_PACKET, "");
+  return out.sort(cmpCodepoint);
+}
+
 function tilde(path: string): string {
   const home = expanduser("~");
   return path === home || path.startsWith(home + "/") ? "~" + path.slice(home.length) : path;
@@ -189,6 +209,7 @@ export function run(argv: string[]): Result {
     for (const t of [TEMPLATE_MD, TEMPLATE_META]) {
       if (!isFile(t)) throw die(`${t}: template missing; is the tdd skill complete?`);
     }
+    if (!isDir(TEMPLATE_PACKET)) throw die(`${TEMPLATE_PACKET}: template missing; is the tdd skill complete?`);
     const repo = abspath(expanduser(a.repo));
     if (!isDir(repo)) throw die(`--repo ${repo}: no such folder`);
 
@@ -267,6 +288,12 @@ Slug \`${slug}\`. Ticket ${ticket || "(none named)"}. Started ${today}${author ?
 
     mkdirSync(packet, { recursive: true });
     for (const d of DIRS) mkdirSync(join(packet, d), { recursive: true });
+    const placeholders = packetFiles();
+    for (const rel of placeholders) {
+      const dest = join(packet, ...rel.split("/"));
+      mkdirSync(dirname(dest), { recursive: true });
+      writeFileSync(dest, readFileSync(join(TEMPLATE_PACKET, ...rel.split("/"))));
+    }
     writeFileSync(join(packet, `${slug}.md`), md, "utf8");
     writeFileSync(join(packet, "meta.json"), jsonDumps(meta, { indent: 2, ensureAscii: false }) + "\n", "utf8");
     writeFileSync(join(packet, "status.md"), status, "utf8");
@@ -276,6 +303,7 @@ Slug \`${slug}\`. Ticket ${ticket || "(none named)"}. Started ${today}${author ?
     out.push(`repo:   ${tilde(repo)} (repo slug ${rslug}; origin ${origin || "none"}; repo_url ${repoUrl || "none"})\n`);
     out.push(`sha:    ${sha ? sha + " (" + ref + ", committed " + (shaDate ?? "None") + ")" : "none recorded"}\n`);
     out.push(`wrote:  ${slug}.md, meta.json, status.md; folders ${DIRS.map((d) => d + "/").join(", ")}\n`);
+    if (placeholders.length) out.push(`todo:   replace the placeholder images before publishing: ${placeholders.join(", ")}\n`);
     out.push(`next:   python3 -I ${tilde(join(HERE, "build_tdd.py"))} ${tilde(join(packet, slug + ".md"))} ${tilde(join(packet, "build"))}\n`);
     return { code: 0, out: out.join(""), err: "" };
   } catch (e) {
