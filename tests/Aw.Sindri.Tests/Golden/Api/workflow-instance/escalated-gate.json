@@ -116,7 +116,7 @@
       "answer": {
         "kind": "accept",
         "actionId": "ApplyCommand:answer-accept",
-        "class": "protected",
+        "class": "desk",
         "cli": "sindri workflow answer ITM-01JK6/triage-alert/1 --accept",
         "atTerminal": true
       },
@@ -130,7 +130,7 @@
         {
           "verb": "answer",
           "actionId": "ApplyCommand:answer-accept",
-          "class": "protected",
+          "class": "desk",
           "cli": "sindri workflow answer ITM-01JK6/triage-alert/1 --accept",
           "confirm": null
         },
