@@ -30,14 +30,14 @@ public sealed class InboxContractExamplesTests
         }
     }
 
-    // An offer is a mapping with id, title and repo (the examples nest them under offers[] and offer).
+    // An offer is a mapping whose id, title and repo are values (the examples nest them under offers[] and offer);
+    // the schema's properties block has the same keys holding type mappings, so it is skipped.
     private static void Collect(YamlNode node, List<YamlMappingNode> found)
     {
         switch (node)
         {
             case YamlMappingNode map:
-                var keys = map.Children.Keys.OfType<YamlScalarNode>().Select(k => k.Value).ToHashSet(StringComparer.Ordinal);
-                if (keys.Contains("id") && keys.Contains("title") && keys.Contains("repo"))
+                if (Text(map, "id") is not null && Text(map, "title") is not null && Text(map, "repo") is not null)
                 {
                     found.Add(map);
                 }
