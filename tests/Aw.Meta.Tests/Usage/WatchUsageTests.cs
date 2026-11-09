@@ -23,7 +23,8 @@ public sealed class WatchUsageTests
             w.Values,
             w.Delay,
             w.Clock,
-            _u.Monitor);
+            _u.Monitor,
+            w.Board);
     }
 
     private async Task Watch(TimeSpan duration)

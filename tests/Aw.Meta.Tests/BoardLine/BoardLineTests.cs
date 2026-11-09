@@ -1,5 +1,4 @@
 using Aw.Meta.Core.Lanes;
-using Aw.Meta.Core.Obligations;
 using Aw.Meta.Features.BoardLine;
 using Aw.Meta.Testing;
 
@@ -12,7 +11,7 @@ public sealed class BoardLineTests
 
     private readonly MetaWorld _world = new();
 
-    private BoardLineService Service() => new(_world.Config, _world.Gates, _world.Lanes, _world.Values);
+    private BoardLineService Service() => new(_world.Config, _world.Board, _world.Lanes);
 
     private async Task<string?> Line(LaneIdentity lane)
     {
@@ -22,7 +21,7 @@ public sealed class BoardLineTests
     }
 
     private async Task Merge(int pr, string sha, int minute) =>
-        _ = await _world.Gates.RecordMerge(new MergeRecord(pr, sha, A.At(minute)), CancellationToken.None);
+        _ = await _world.Board.RecordMain(sha, [pr], A.At(minute), CancellationToken.None);
 
     private async Task LaneMap(int version) =>
         _ = await _world.Lanes.Save(new LaneMapState(version, [A.Assigned("api", "t1-api")]), A.At(version), CancellationToken.None);
@@ -101,12 +100,10 @@ public sealed class BoardLineTests
         var lane = new LaneIdentity("t1", "api");
 
         var result = await Service().Handle(new BoardLineRequest(lane), CancellationToken.None);
-        await _world.Ready();
-        var afterSetup = await Line(lane);
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.Line);
-        Assert.NotNull(afterSetup);
+        Assert.Null((await _world.Board.SeenVersion("api", CancellationToken.None)).Value);
     }
 
     [Fact, Trait("Lane", "unit")]

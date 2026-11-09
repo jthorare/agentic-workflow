@@ -20,7 +20,8 @@ public sealed class WatchUntilMailTests
         _world.Values,
         _world.Delay,
         _world.Clock,
-        _world.Monitor);
+        _world.Monitor,
+        _world.Board);
 
     // Mail arrives while poll number `mailAtPoll` (from 0) runs, so that poll sees it; -1 sends none.
     private void Script(int mailAtPoll)

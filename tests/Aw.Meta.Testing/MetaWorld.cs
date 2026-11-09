@@ -39,6 +39,9 @@ public sealed class MetaWorld
     /// <summary>Small values.</summary>
     public InMemoryKeyValueStore Values { get; } = new();
 
+    /// <summary>Main's latest move and what each lane saw of the board.</summary>
+    public InMemoryBoardStore Board { get; } = new();
+
     /// <summary>The team config.</summary>
     public InMemoryMetaConfig Config { get; } = new();
 

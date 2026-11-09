@@ -20,7 +20,8 @@ public sealed class WatchTests
         _world.Values,
         _world.Delay,
         _world.Clock,
-        _world.Monitor);
+        _world.Monitor,
+        _world.Board);
 
     private static string Pr(int number, string state, string head, string mergeable = "MERGEABLE", bool draft = false) =>
         string.Create(CultureInfo.InvariantCulture, $$"""{"number":{{number}},"state":"{{state}}","isDraft":{{(draft ? "true" : "false")}},"headRefOid":"{{head}}","mergeable":"{{mergeable}}","title":"t{{number}}"}""");
@@ -80,6 +81,26 @@ public sealed class WatchTests
             _lines);
         Assert.Equal((5, 7), (response.Polls, response.Lines));
         Assert.DoesNotContain(_lines, l => l.Contains("UNKNOWN", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_poll_that_sees_main_move_records_the_sha_and_the_pull_requests_that_merged()
+    {
+        await _world.Ready();
+        Script(
+            [
+                List(Pr(190, "OPEN", "aaa1111"), Pr(191, "OPEN", "bbb2222")),
+                List(Pr(190, "MERGED", "aaa1111"), Pr(191, "OPEN", "bbb2222")),
+            ],
+            mains: ["aaaaaaa1111111", "bbbbbbb2222222"]);
+
+        _ = await Watch(TimeSpan.FromSeconds(300));
+
+        var board = (await _world.Board.Read(CancellationToken.None)).Value;
+        Assert.NotNull(board);
+        Assert.Equal("bbbbbbb2222222", board.MainSha);
+        Assert.Equal([190], board.MergedPrs);
+        Assert.Equal(1, board.Version);
     }
 
     [Fact, Trait("Lane", "unit")]

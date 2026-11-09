@@ -14,7 +14,7 @@ public sealed class MergeRunTests
 {
     private readonly MetaWorld _world = new();
 
-    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles), _world.Repo, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock);
+    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles), _world.Repo, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board);
 
     private async Task Ready(bool gated = true, bool mergeFails = false, bool fetchFails = false, string state = "OPEN", string? mergeCommit = null)
     {
@@ -71,6 +71,20 @@ public sealed class MergeRunTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_merge_records_main_and_the_pull_request_on_the_board()
+    {
+        await Ready();
+        await AssignApiLane();
+
+        _ = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        var board = (await _world.Board.Read(CancellationToken.None)).Value;
+        Assert.NotNull(board);
+        Assert.Equal("newmainsha1234", board.MainSha);
+        Assert.Equal([190], board.MergedPrs);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_pull_request_the_checks_refuse_is_not_merged()
     {
         await Ready(gated: false);
@@ -83,6 +97,7 @@ public sealed class MergeRunTests
         Assert.Null(result.Value.Announce);
         Assert.DoesNotContain(_world.Runner.Lines, l => l.StartsWith("gh pr merge", StringComparison.Ordinal));
         Assert.Null((await _world.Gates.LatestMerge(CancellationToken.None)).Value);
+        Assert.Null((await _world.Board.Read(CancellationToken.None)).Value);
         Assert.Empty(_world.Log.Lines);
     }
 

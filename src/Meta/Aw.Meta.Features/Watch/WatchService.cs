@@ -19,12 +19,14 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="delay">Waits between polls.</param>
 /// <param name="clock">The current time.</param>
 /// <param name="usage">Looks for lanes and the meta stopped at a usage limit, and resumes the idle ones.</param>
-internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyValueStore values, IDelay delay, TimeProvider clock, UsageMonitor usage)
+/// <param name="board">Records main's new sha and the pull requests that merged when a poll sees main move.</param>
+internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyValueStore values, IDelay delay, TimeProvider clock, UsageMonitor usage, IBoardStore board)
     : IService<WatchRequest, WatchResponse>
 {
     public async ValueTask<Result<WatchResponse>> Handle(WatchRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        _ = board; // Red stub: the poll that sees "MAIN moved" records it here.
         var team = await config.Load(cancellationToken).ConfigureAwait(false);
         if (team.IsError)
         {

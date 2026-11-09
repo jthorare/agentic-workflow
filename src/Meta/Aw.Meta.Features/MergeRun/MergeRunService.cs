@@ -22,12 +22,14 @@ namespace Aw.Meta.Features.MergeRun;
 /// <param name="log">The running log.</param>
 /// <param name="reservation">Computes the heavy-slot reservation again once the merge has left the queue.</param>
 /// <param name="clock">Dates the merge.</param>
-internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands repo, IGateStore gates, IRunningLog log, HeavyReservation reservation, TimeProvider clock)
+/// <param name="board">Records main's new sha and the merged pull request.</param>
+internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands repo, IGateStore gates, IRunningLog log, HeavyReservation reservation, TimeProvider clock, IBoardStore board)
     : IService<MergeRunRequest, MergeRunResponse>
 {
     public async ValueTask<Result<MergeRunResponse>> Handle(MergeRunRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        _ = board; // Red stub: a successful merge records main and the pull request here.
         var assessed = await readiness.Assess(request.Pr, cancellationToken).ConfigureAwait(false);
         if (assessed.IsError)
         {
