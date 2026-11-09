@@ -6,10 +6,11 @@ using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
+using Aw.Sindri.Core.Workflow.Engine.Triggers;
 
 namespace Aw.Sindri.Core.Items;
 
-/// <summary>Folds 'item.created', 'item.state-changed', 'item.linked' and the requests and decisions about an item into the 'items' view (API spec §3.1): one row per item, keyed by its id, its text scrubbed and escaped. A 'new' item with a pending decision reads 'needs-decision'.</summary>
+/// <summary>Folds 'item.created', 'item.state-changed', 'item.linked', the requests and decisions about an item, and the end of a recipe-era root instance (state only) into the 'items' view (API spec §3.1): one row per item, keyed by its id, its text scrubbed and escaped. A 'new' item with a pending decision reads 'needs-decision'.</summary>
 /// <param name="events">Reads the payloads through the package's AwJson options.</param>
 /// <param name="scrubber">Scrubs secrets out of the text a row stores.</param>
 internal sealed class ItemsProjection(EventFactory events, ITextScrubber scrubber) : IProjection
@@ -24,7 +25,9 @@ internal sealed class ItemsProjection(EventFactory events, ITextScrubber scrubbe
         || string.Equals(eventType, EventTypes.ItemStateChanged, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.ItemLinked, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.RequestFiled, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.DecisionRecorded, StringComparison.Ordinal);
+        || string.Equals(eventType, EventTypes.DecisionRecorded, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.WorkflowStarted, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.WorkflowTransition, StringComparison.Ordinal);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
@@ -46,6 +49,12 @@ internal sealed class ItemsProjection(EventFactory events, ITextScrubber scrubbe
         if (string.Equals(recorded.Envelope.Type, EventTypes.DecisionRecorded, StringComparison.Ordinal))
         {
             return await Decided(recorded, rows, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (string.Equals(recorded.Envelope.Type, EventTypes.WorkflowStarted, StringComparison.Ordinal)
+            || string.Equals(recorded.Envelope.Type, EventTypes.WorkflowTransition, StringComparison.Ordinal))
+        {
+            return await RecipeEra(recorded, rows, cancellationToken).ConfigureAwait(false);
         }
 
         var next = string.Equals(recorded.Envelope.Type, EventTypes.ItemStateChanged, StringComparison.Ordinal)
@@ -162,6 +171,66 @@ internal sealed class ItemsProjection(EventFactory events, ITextScrubber scrubbe
         ArgumentNullException.ThrowIfNull(linked);
         ArgumentNullException.ThrowIfNull(recorded);
         return row with { Link = linked.Record, Alias = linked.Alias, UpdatedAt = recorded.Envelope.OccurredAt, Sequence = recorded.Sequence };
+    }
+
+    /// <summary>
+    /// The row after a recipe-era root instance's 'workflow.started' or 'workflow.transition' (#2258, v2 PR 4b): the recipe engine never wrote
+    /// 'item.closed', so an instance that ended is what closed its item. The state only: an ended root reads Done (Cancelled when a cancel ended it),
+    /// a root started again on a closed item reopens it as New, and an instance still open when the engine went leaves the item as it is (New). A
+    /// child's row, a row that ends nothing and the retire pass's note change nothing. When two roots of one item overlapped, the earlier one's end
+    /// closes the item too (the engine part that told them apart is gone).
+    /// </summary>
+    /// <param name="row">The row so far.</param>
+    /// <param name="type">The event type.</param>
+    /// <param name="payload">The payload.</param>
+    /// <param name="recorded">The recorded event.</param>
+    /// <returns>The new row; the same row when the event leaves the item alone.</returns>
+    public static ItemRow Fold(ItemRow row, string type, WorkflowEventPayload payload, LedgerEvent recorded)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(type);
+        ArgumentNullException.ThrowIfNull(payload);
+        ArgumentNullException.ThrowIfNull(recorded);
+        if (payload.Instance.AsSpan().Count('/') != 2)
+        {
+            return row;   // a child instance's row: its root's rows carry the item
+        }
+
+        var closed = row.State is ItemState.Done or ItemState.Cancelled;
+        ItemState? state = string.Equals(type, EventTypes.WorkflowStarted, StringComparison.Ordinal)
+            ? (closed ? ItemState.New : null)
+            : closed || !Ends(payload) ? null
+            : string.Equals(payload.Trigger, TriggerNames.Cancel, StringComparison.Ordinal) ? ItemState.Cancelled : ItemState.Done;
+        if (state is not { } next)
+        {
+            return row;
+        }
+
+        var at = recorded.Envelope.OccurredAt;
+        return row with { State = next, Since = at, WaitingOn = null, UpdatedAt = at, Sequence = recorded.Sequence };
+    }
+
+    // A row ended the instance when its delta names an outcome, or, stored without its detail (the scrub's fallback), when its trigger is the cancel.
+    // The retire pass's note is not an end: an instance open when the engine went leaves its item open.
+    private static bool Ends(WorkflowEventPayload payload) =>
+        payload.Detail is { } detail ? detail.Delta.Outcome is not null : string.Equals(payload.Trigger, TriggerNames.Cancel, StringComparison.Ordinal);
+
+    private async ValueTask<Result<Unit>> RecipeEra(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var payload = events.Payload<WorkflowEventPayload>(recorded);
+        if (payload.IsError || recorded.Item is not { } item)
+        {
+            return Unit.Value;   // history only: an old row this build can't read, or one about no item, leaves the views alone
+        }
+
+        var row = await rows.Get<ItemRow>(ViewNames.Items, item, cancellationToken).ConfigureAwait(false);
+        if (row.IsError || row.Value is null)
+        {
+            return row.IsError ? row.Error : Unit.Value;
+        }
+
+        var next = Fold(row.Value, recorded.Envelope.Type, payload.Value, recorded);
+        return ReferenceEquals(next, row.Value) ? Unit.Value : await rows.Put(ViewNames.Items, item, next, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<Unit>> Filed(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
