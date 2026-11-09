@@ -9,7 +9,7 @@ import { SequenceMatcher } from "../hotspots/difflib";
 import { type Py, fixed, fl, get, isInt, norm, prsOf, pySum, ratio, readJson, readText, tail } from "./common";
 import { type Input } from "./capture";
 import { python } from "./artifact";
-import { type Output, type ScoreRec, metric, notRun, output, score } from "./score";
+import { type Output, type ScoreRec, metric, notRun, output, score, settle, unscored } from "./score";
 import { Tools } from "./tools";
 
 const re = py.re;
@@ -27,13 +27,17 @@ export function ghRepo(meta: Py): string | null {
 }
 
 /** (date.fromisoformat(b[:10]) - date.fromisoformat(a[:10])).days, or None. */
+// date.fromisoformat's two date forms, ASCII digits only ([0-9], not \d, which is Unicode in Python's re)
+const ISO_DASH = re.compile("([0-9]{4})-([0-9]{2})-([0-9]{2})");
+const ISO_BASIC = re.compile("([0-9]{4})([0-9]{2})([0-9]{2})");
+
 export function daysBetween(a: Py, b: Py): number | null {
   const parse = (s: Py): number | null => {
     if (typeof s !== "string") return null;
     const t = py.cpSlice(s, 0, 10);
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t) ?? /^(\d{4})(\d{2})(\d{2})$/.exec(t);
+    const m = ISO_DASH.fullmatch(t) ?? ISO_BASIC.fullmatch(t);
     if (!m) return null;
-    const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    const [y, mo, d] = [Number(m.group(1)), Number(m.group(2)), Number(m.group(3))];
     const ms = Date.UTC(y, mo - 1, d);
     const dt = new Date(ms);
     if (y < 1 || dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
@@ -287,7 +291,11 @@ export function declaredTestCommand(repoPath: string): [string[] | null, string 
   return [null, null];
 }
 
-export const evaluateQa = (inp: Input, matched: Matched, artifactOut: Output, runTests: boolean, ownerReview: (inp: Input, t: string) => ScoreRec) =>
+/** The outer limit on the test command (seconds): above TEST_TIMEOUT, so the tool's own cap ("too slow") wins. */
+export const QA_LIMIT = TEST_TIMEOUT + 60;
+
+export const evaluateQa = (inp: Input, matched: Matched, artifactOut: Output, runTests: boolean, ownerReview: (inp: Input, t: string) => ScoreRec,
+  limit: number = QA_LIMIT) =>
   Effect.gen(function* () {
     const tools = yield* Tools;
     const [repo, rows] = matched;
@@ -312,9 +320,14 @@ export const evaluateQa = (inp: Input, matched: Matched, artifactOut: Output, ru
     else if (!runTests) scores.push(notRun("qa_test_command", `pass --run-tests to run \`${cmd.join(" ")}\` (${origin}) in ${repo.path}`, tcMethod, origin!));
     else if (!tools.which(cmd[0]!) && !path.isabs(cmd[0]!)) scores.push(notRun("qa_test_command", `${cmd[0]} not on PATH`, tcMethod, origin!));
     else {
-      const r = yield* tools.run(cmd, { cwd: repo.path, timeout: TEST_TIMEOUT });
-      if (r.timeout) scores.push(notRun("qa_test_command", `too slow (> ${TEST_TIMEOUT} s)`, tcMethod, origin!, { seconds: r.seconds }));
-      else scores.push(score("qa_test_command", r.code === 0 ? 1 : 0, tcMethod, origin!, { exit: r.code, seconds: r.seconds }, { tail: tail(r.out + "\n" + r.err, 15) }));
+      // the tool returns at TEST_TIMEOUT (its process group killed); the outer limit only bounds a tool that would not
+      const o = yield* settle(tools.run(cmd, { cwd: repo.path, timeout: TEST_TIMEOUT }), limit);
+      if (o._tag !== "scored") scores.push(unscored({ name: "qa_test_command", method: tcMethod, source: origin! }, o));
+      else if (o.value.timeout) scores.push(notRun("qa_test_command", `too slow (> ${TEST_TIMEOUT} s)`, tcMethod, origin!, { seconds: o.value.seconds }));
+      else {
+        const r = o.value;
+        scores.push(score("qa_test_command", r.code === 0 ? 1 : 0, tcMethod, origin!, { exit: r.code, seconds: r.seconds }, { tail: tail(r.out + "\n" + r.err, 15) }));
+      }
     }
     for (const name of ["artifact_check", "check_hydrate"]) {
       const s = artifactOut.scores.find((x) => x.name === name);

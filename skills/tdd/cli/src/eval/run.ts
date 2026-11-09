@@ -33,7 +33,7 @@ export interface Opts {
 export interface Io { out: (s: string) => void; err: (s: string) => void }
 
 /** Per-scorer time limits (seconds): above each tool's own subprocess limit, so the Python's record wins normally. */
-export const LIMITS = { artifact_check: 660, check_hydrate: 330, lint: 660, judge: 900, probe_agent: 900, implementation: 1800, linear: 330, aws: 330 };
+export const LIMITS = { artifact_check: 660, check_hydrate: 330, lint: 660, judge: 900, probe_agent: 900, implementation: 1800, qa: I.QA_LIMIT, linear: 330, aws: 330 };
 export type Limits = typeof LIMITS;
 
 function short(s: ScoreRec): string {
@@ -94,7 +94,7 @@ export const program = (o: Opts, keys: Keys, io: Io, limits: Limits = LIMITS) =>
   writeJson(path.join(out, "probe.json"), probe.rec);
   outputs.set("packet", K.evaluate(build, content, inp, [probe.answerable, agent.score], ownerReview));
   outputs.set("implementation", I.evaluateImpl(inp, meta, matched, ownerReview));
-  outputs.set("qa", yield* I.evaluateQa(inp, matched, outputs.get("artifact")!, !!o.run_tests, ownerReview));
+  outputs.set("qa", yield* I.evaluateQa(inp, matched, outputs.get("artifact")!, !!o.run_tests, ownerReview, limits.qa));
   outputs.set("bugs", B.evaluate(inp, lin, awsRes, ownerReview));
   outputs.set("tokens", T.evaluate(inp, build, meta, sessions, [...judged.ledger, ...agent.ledger], outputs.get("packet")!));
   for (const [kind, data] of outputs) writeJson(path.join(out, `output.${kind}.json`), data);
