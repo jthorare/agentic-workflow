@@ -1,6 +1,5 @@
 using System.Globalization;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
@@ -50,14 +49,27 @@ public sealed class EndLearnModeTests
     }
 
     [Fact]
-    public void Learn_off_is_refused_for_an_agent_session()
+    public async Task A_launched_session_ends_learn_mode_and_the_event_is_appended()
+    {
+        _ = await _slice.HoldLease();
+        using var entered = _slice.Callers.Enter(A.Caller().Launched().Build());
+
+        var result = await Service().Handle(new EndLearnModeRequest(RepoName.From("web")), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        var recorded = Assert.Single(_slice.Store.Events);
+        Expect.Equal((EventTypes.SandboxLearnEnded, "web"), (recorded.Envelope.Type, _slice.Events.Payload<SandboxLearnEnded>(recorded).Value.Repo?.Value));
+    }
+
+    [Fact]
+    public void A_launched_session_may_end_learn_mode_like_the_human()
     {
         var row = new CommandCatalog().Rows.Single(r => string.Equals(r.Action.Value, "EndLearnMode", StringComparison.Ordinal));
 
         var launched = Authorization.Decide(row.Class, A.Caller().Launched().Build(), row);
         var human = Authorization.Decide(row.Class, A.Caller().Human().Build(), row);
 
-        Expect.Equal(SindriErrors.AuthRefused.Code, launched.Refusal?.Code);
+        Expect.True(launched.Refusal is null);
         Expect.True(human.Refusal is null);
     }
 }

@@ -3,6 +3,7 @@ using System.Text;
 using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Infrastructure.Todos;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Sandbox.Bubblewrap;
 
 namespace Aw.Sindri.Tests.Todos;
 
@@ -267,5 +268,21 @@ public sealed class TodoNoteFilesTests : IDisposable
         using var run = System.Diagnostics.Process.Start(info)!;
         run.WaitForExit();
         return run.ExitCode;
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Reading_an_unchanged_note_again_spawns_no_stat_and_a_changed_one_does()
+    {
+        await File.WriteAllTextAsync(_note, "- [ ] one\n", TestContext.Current.CancellationToken);
+        var processes = new FakeProcesses().When(static (program, _) => program == "/usr/bin/stat", FakeProcesses.Ok("1\n"));
+        var files = new FileTodoNoteFiles(new FakeSindriHome(Path.Combine(_root, "home")), TimeProvider.System, new NoteLinkCounter(processes));
+
+        _ = files.Read(_note);
+        _ = files.Read(_note);
+        var unchanged = processes.Calls.Count;
+        await File.WriteAllTextAsync(_note, "- [ ] one\n- [ ] two\n", TestContext.Current.CancellationToken);
+        _ = files.Read(_note);
+
+        Assert.Equal((1, 2), (unchanged, processes.Calls.Count));
     }
 }

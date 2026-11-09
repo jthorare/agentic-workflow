@@ -1,0 +1,116 @@
+{
+  "name": "contracts",
+  "version": "1.2.0",
+  "resources": [
+    {
+      "kind": "database",
+      "name": "cache",
+      "variable": "SINDRI_DB_CACHE"
+    },
+    {
+      "kind": "disk",
+      "name": "scratch",
+      "size": "1GiB",
+      "variable": "SINDRI_DISK_SCRATCH"
+    },
+    {
+      "kind": "connection",
+      "name": "github",
+      "variable": "SINDRI_CONNECTION_GITHUB"
+    }
+  ],
+  "tools": [
+    {
+      "name": "diff_contracts",
+      "description": "Compares two contracts and says what changed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "left": {
+            "type": "string"
+          },
+          "right": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "summary",
+          "changes"
+        ]
+      }
+    },
+    {
+      "name": "explode",
+      "description": "Always fails, with a secret and a stack line in the exception.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "left": {
+            "type": "string"
+          },
+          "right": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "summary",
+          "changes"
+        ]
+      }
+    }
+  ]
+}

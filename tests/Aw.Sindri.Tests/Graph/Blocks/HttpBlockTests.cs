@@ -190,4 +190,51 @@ public sealed class HttpBlockTests
         Assert.Contains(block.Config.Check([]), static p => p.Field == "url");
         Assert.Equal(["body", "status", "text"], block.OutputsFor([]).Fields.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
+
+    [Fact]
+    public async Task A_body_that_stalls_after_the_headers_fails_within_the_request_budget()
+    {
+        var handler = new FlowFakes.ScriptedHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new StalledBody()) });
+        var block = new HttpBlock(new GraphHttpClient(handler, FlowFakes.Hosts("api.example.com"), TimeSpan.FromMilliseconds(200)));
+        using var guard = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        guard.CancelAfter(TimeSpan.FromSeconds(5));   // why: without the fix the read hangs; the guard turns that into a failure instead of a stuck run
+
+        var result = await block.Execute(BlockFakes.Context(new JsonObject { ["url"] = "https://api.example.com/x" }), guard.Token).AsTask();
+
+        Assert.True(result.IsError);
+        Assert.Equal(SindriErrors.GraphHttpFailed.Code, result.Error.Code);
+        Assert.Contains("timed out", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>A response body that never delivers a byte until it is cancelled.</summary>
+    private sealed class StalledBody : Stream
+    {
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+            return 0;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
 }
