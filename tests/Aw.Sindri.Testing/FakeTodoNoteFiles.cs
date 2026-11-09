@@ -14,10 +14,10 @@ public sealed class FakeTodoNoteFiles : ITodoNoteFiles
     private readonly Dictionary<string, NoteBase> _bases = new(StringComparer.Ordinal);
 
     /// <summary>Gets every file by path: notes, tmp files and kept files.</summary>
-    public Dictionary<string, string> Files { get; } = new(StringComparer.Ordinal);
+    public IDictionary<string, string> Files { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
     /// <summary>Gets the paths a read of which answers a problem instead of the text.</summary>
-    public Dictionary<string, string> Problems { get; } = new(StringComparer.Ordinal);
+    public IDictionary<string, string> Problems { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
     /// <summary>Gets or sets a problem every Swap answers instead of writing.</summary>
     public string? SwapProblem { get; set; }
@@ -32,13 +32,13 @@ public sealed class FakeTodoNoteFiles : ITodoNoteFiles
     public int Swaps { get; private set; }
 
     /// <summary>Gets the text each swap wrote, in order.</summary>
-    public List<string> Written { get; } = [];
+    public IList<string> Written { get; } = [];
 
     /// <summary>Gets each quiet read as (path, quiet, max).</summary>
-    public List<(string Path, TimeSpan Quiet, TimeSpan Max)> QuietReads { get; } = [];
+    public IList<(string Path, TimeSpan Quiet, TimeSpan Max)> QuietReads { get; } = [];
 
     /// <summary>Gets the 'keep' to delete bases was called with, per call.</summary>
-    public List<string?> BasesDeleted { get; } = [];
+    public IList<string?> BasesDeleted { get; } = [];
 
     /// <summary>Gets or sets the intent file's hash, or null for none.</summary>
     public string? Intent { get; set; }
@@ -127,7 +127,7 @@ public sealed class FakeTodoNoteFiles : ITodoNoteFiles
     public string Keep(string path, DateTimeOffset at)
     {
         var kept = path + ".keep-" + at.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture);
-        Files[kept] = Files.GetValueOrDefault(path, string.Empty);
+        Files[kept] = Files.TryGetValue(path, out var kept0) ? kept0 : string.Empty;
         _ = Files.Remove(path);
         return kept;
     }

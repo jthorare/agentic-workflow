@@ -16,7 +16,7 @@ public sealed class NoteSyncWriteTests
 
         Assert.Equal(TodoNoteState.Syncing, status.State);
         Assert.Equal("# Todo\n\n- [ ] reply to Sam ^td-01jc5a8xq0n4w7ms2t9r3vbk6e\n", rig.Note);
-        Assert.Single(await rig.Events(EventTypes.TodoNoteSynced));
+        _ = Assert.Single(await rig.Events(EventTypes.TodoNoteSynced));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -46,7 +46,7 @@ public sealed class NoteSyncWriteTests
         _ = await rig.Pass();
 
         var id = SyncRig.IdOnLine(rig.Note!, "buy milk");
-        Assert.NotNull(id);
+        _ = Assert.NotNull(id);
         var added = Assert.Single(await rig.Payloads<TodoAdded>(EventTypes.TodoAdded));
         Assert.Equal((id, "obsidian", "buy milk", 0), (added.Id, added.By, added.Text, addedBeforeSwap));
     }

@@ -81,8 +81,8 @@ public sealed class NoteImportTests
         var import = (await rig.Sync.Import(Ask(expect: 2), TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal((2, false), (import.Imported, import.DryRun));
-        Assert.NotNull(SyncRig.IdOnLine(rig.Note!, "one"));
-        Assert.NotNull(SyncRig.IdOnLine(rig.Note!, "two"));
+        _ = Assert.NotNull(SyncRig.IdOnLine(rig.Note!, "one"));
+        _ = Assert.NotNull(SyncRig.IdOnLine(rig.Note!, "two"));
         var imported = Assert.Single(await rig.Payloads<TodoNoteImported>(EventTypes.TodoNoteImported));
         Assert.Equal((SyncRig.Vault, SyncRig.NoteName, 2, "human:cli"), (imported.Vault, imported.Note, imported.Count, imported.By));
         Assert.Equal(TodoNoteState.Syncing, (await rig.Pass()).State);

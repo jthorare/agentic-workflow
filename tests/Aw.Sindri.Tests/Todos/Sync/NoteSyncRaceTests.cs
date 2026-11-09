@@ -33,7 +33,7 @@ public sealed class NoteSyncRaceTests
 
         var id = SyncRig.IdOnLine(rig.Note!, "from the phone");
         Assert.Equal((TodoNoteState.Syncing, 2), (status.State, rig.Files.Swaps));
-        Assert.NotNull(id);
+        _ = Assert.NotNull(id);
         Assert.Contains("reply to Sam", rig.Note, StringComparison.Ordinal);
         Assert.Equal(id, Assert.Single(await rig.Payloads<TodoAdded>(EventTypes.TodoAdded)).Id);
     }
@@ -54,7 +54,7 @@ public sealed class NoteSyncRaceTests
 
         _ = await rig.Pass();
 
-        Assert.NotNull(SyncRig.IdOnLine(rig.Note!, "typed late"));
+        _ = Assert.NotNull(SyncRig.IdOnLine(rig.Note!, "typed late"));
         Assert.Contains(rig.Files.QuietReads, r => r.Path == FakeName() && r.Quiet == TimeSpan.FromSeconds(2) && r.Max == TimeSpan.FromSeconds(30));
         Assert.DoesNotContain(rig.Files.Files.Keys, k => k.Contains("sindri-tmp", StringComparison.Ordinal));
     }
@@ -77,7 +77,7 @@ public sealed class NoteSyncRaceTests
     {
         var rig = await WithNote();
         var n = 0;
-        rig.Files.AfterSwap = tmp => rig.Files.Files[tmp] += $"- [ ] edit {++n}\n";
+        rig.Files.AfterSwap = tmp => rig.Files.Files[tmp] += string.Create(System.Globalization.CultureInfo.InvariantCulture, $"- [ ] edit {++n}\n");
 
         var status = await rig.Pass();
 
@@ -121,7 +121,7 @@ public sealed class NoteSyncRaceTests
         }
 
         _ = await rig.Pass();
-        rig.Files.Files[SyncRig.Path] = string.Join('\n', rig.Note!.Split('\n').Where((_, i) => i < 2 || i >= 7));
+        rig.Files.Files[SyncRig.Path] = string.Join('\n', rig.Note!.Split('\n').Where((_, i) => i is < 2 or >= 7));
 
         var status = await rig.Pass();
 

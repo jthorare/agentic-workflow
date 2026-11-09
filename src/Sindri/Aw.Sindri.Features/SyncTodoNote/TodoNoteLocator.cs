@@ -32,8 +32,9 @@ internal sealed class TodoNoteLocator(IProfileSource live, IContextEngine contex
             return problem;
         }
 
-        var root = VaultRoot(profile, key.Vault);
-        return root.IsError ? root.Error : new NotePlace(key.Vault, key.Note, root.Value);
+        var vault = key.Vault ?? string.Empty;   // why: Problem refused an empty one above
+        var root = VaultRoot(profile, vault);
+        return root.IsError ? root.Error : new NotePlace(vault, key.Note ?? string.Empty, root.Value);
     }
 
     private Result<string> VaultRoot(SindriProfile profile, string vault)

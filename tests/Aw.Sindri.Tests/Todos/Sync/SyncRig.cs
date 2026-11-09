@@ -1,5 +1,4 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Todos.Note;
@@ -43,7 +42,7 @@ internal sealed class SyncRig
     }
 
     /// <summary>The note's text now, or null when it is missing.</summary>
-    internal string? Note => Files.Files.GetValueOrDefault(Path);
+    internal string? Note => Files.Files.TryGetValue(Path, out var text) ? text : null;
 
     internal Task<TodoNoteStatus> Pass() => Sync.Pass(TestContext.Current.CancellationToken).AsTask();
 
@@ -57,7 +56,7 @@ internal sealed class SyncRig
     internal async Task<IReadOnlyList<T>> Payloads<T>(string type)
     {
         var all = (await Harness.Slice.Store.ReadAfter(0, 10_000, TestContext.Current.CancellationToken)).Value;
-        return [.. all.Where(e => e.Envelope.Type == type).Select(e => Harness.Payload<T>(e))];
+        return [.. all.Where(e => e.Envelope.Type == type).Select(Harness.Payload<T>)];
     }
 
     /// <summary>The id of a note line, by its text.</summary>
