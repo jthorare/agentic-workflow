@@ -33,7 +33,7 @@ internal sealed class UndoTodoHoldService(TodoPickWrites writes, TodoConverger c
         var via = who.Value.Via;
         foreach (var (prior, versionAfter) in pick.Priors)
         {
-            var back = await Reverse(prior, versionAfter, who.Value, cancellationToken).ConfigureAwait(false);
+            var back = await writes.Revert(converger, prior, versionAfter, who.Value, cancellationToken).ConfigureAwait(false);
             if (back is not null)
             {
                 return back;
@@ -48,18 +48,5 @@ internal sealed class UndoTodoHoldService(TodoPickWrites writes, TodoConverger c
 
         window.ForgetHold();
         return new UndoTodoHoldResponse(Kept: null);
-    }
-
-    // a todo that moved since Apply, or is gone, is left as it is
-    private async ValueTask<Error?> Reverse(TodoRow prior, long versionAfter, TodoPickCaller who, CancellationToken cancellationToken)
-    {
-        var read = await writes.Row(prior.Id, cancellationToken).ConfigureAwait(false);
-        if (read.IsError || read.Value.Version != versionAfter)
-        {
-            return null;
-        }
-
-        var back = await converger.Apply(read.Value, TodoNoteSides.Of(prior), who.By, who, cancellationToken).ConfigureAwait(false);
-        return back.IsError ? back.Error : null;
     }
 }

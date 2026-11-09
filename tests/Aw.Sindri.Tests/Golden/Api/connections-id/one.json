@@ -11,5 +11,6 @@
     },
     "lastRefreshedAt": "2026-01-01T00:30:00.0000000Z",
     "hasSecret": true
-  }
+  },
+  "lastSignInFailure": null
 }

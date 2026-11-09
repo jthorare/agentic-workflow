@@ -51,6 +51,12 @@ internal sealed partial class ConnectionVerbs
             while (true)
             {
                 var read = await _client.Get<GetConnectionResponse>(Route(name), limit.Token).ConfigureAwait(false);
+                if (read.IsSuccess && read.Value.Value.LastSignInFailure is { } failed)
+                {
+                    // why: a connected row keeps its status and signedInAt when the sign-in again fails, so without this the wait ran out the 5 minutes
+                    return SignInFailed(failed.Code);
+                }
+
                 if (read.IsError || (read.Value.Value.Connection is { } view && string.Equals(view.Status, "connected", StringComparison.Ordinal) && view.Config.GetValueOrDefault(SignedInAt) is { } at && !string.Equals(at, before, StringComparison.Ordinal)))
                 {
                     return read;
@@ -63,5 +69,15 @@ internal sealed partial class ConnectionVerbs
         {
             return SindriErrors.ConnectionSignInTimeout.With("no sign-in finished in 5 minutes (consent denied or the page was closed); run the command again");
         }
+    }
+
+    // The codes a sign-in ends with (OAuthSignInFlow); GET reports only the code, so the kind and title come from here.
+    private static Error SignInFailed(string code)
+    {
+        ErrorDefinition[] known = [SindriErrors.ConnectionConsentDenied, SindriErrors.ConnectionStateMismatch, SindriErrors.ConnectionSignInTimeout, SindriErrors.ConnectionSecretUnavailable];
+        var definition = Array.Find(known, d => string.Equals(d.Code, code, StringComparison.Ordinal));
+        return definition is not null
+            ? definition.With("the sign-in failed; the connection still works on its old sign-in")
+            : new Error(code, ErrorKind.Conflict, "the sign-in failed; the connection still works on its old sign-in");
     }
 }

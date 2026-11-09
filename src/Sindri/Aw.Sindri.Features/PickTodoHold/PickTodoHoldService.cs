@@ -74,6 +74,12 @@ internal sealed class PickTodoHoldService(TodoHolds holds, TodoPickWrites writes
             return failed;
         }
 
+        // why: "put them back" after a failed Apply must leave nothing of that try behind, so the todos it changed go back to before it
+        if (request.Restore && await Revert(priors, who, cancellationToken).ConfigureAwait(false) is { } stuck)
+        {
+            return stuck;
+        }
+
         var kept = request.Restore ? "restored" : "applied";
         var resolved = new TodoNoteHeldResolved(kept, hold.NoteHash, hold.Changes.Count, who.By, via);
         var appended = await writes.Append(who, EventTypes.TodoNoteHeldResolved, resolved, writes.Key($"todo.note.held.resolved:{hold.NoteHash}"), cancellationToken).ConfigureAwait(false);
@@ -83,8 +89,21 @@ internal sealed class PickTodoHoldService(TodoHolds holds, TodoPickWrites writes
         }
 
         window.ForgetPartial();
-        window.RememberHold(new TodoHoldPick(who.Now, kept, priors));
+        window.RememberHold(new TodoHoldPick(who.Now, kept, request.Restore ? [] : priors));
         return new PickTodoHoldResponse(kept, hold.Changes.Count, TodoPickWindow.Until(who.Now));
+    }
+
+    private async ValueTask<Error?> Revert(List<(TodoRow Prior, long VersionAfter)> priors, TodoPickCaller who, CancellationToken cancellationToken)
+    {
+        foreach (var (prior, versionAfter) in priors)
+        {
+            if (await writes.Revert(converger, prior, versionAfter, who, cancellationToken).ConfigureAwait(false) is { } back)
+            {
+                return back;
+            }
+        }
+
+        return null;
     }
 
     private async ValueTask<Error?> Apply(TodoOpenHold hold, TodoPickCaller who, List<(TodoRow Prior, long VersionAfter)> priors, CancellationToken cancellationToken)
