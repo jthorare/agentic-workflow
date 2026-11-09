@@ -103,14 +103,14 @@ public sealed class AskOwnerBlock(IQuestionPort questions, TimeProvider clock) :
     /// <summary>What the node hands on once it is answered or has timed out.</summary>
     /// <param name="config">The node's config.</param>
     /// <param name="answer">The answer, or null when the timeout passed with none.</param>
-    /// <param name="answeredBy">Who answered (the caller's actor: 'human:&lt;client&gt;', 'session:launch:&lt;launch id&gt;' or 'session:&lt;client&gt;'); ignored when <paramref name="answer"/> is null.</param>
+    /// <param name="answeredBy">Who answered (the caller's actor: 'human:&lt;client&gt;', 'session:launch:&lt;launch id&gt;' or 'session:&lt;client&gt;'); ignored when <paramref name="answer"/> is null (the timeout branch).</param>
     /// <returns>The outputs and the branch taken.</returns>
-    public static AskOwnerOutcome Resolve(JsonObject config, string? answer, string? answeredBy)
+    public static AskOwnerOutcome Resolve(JsonObject config, string? answer, string answeredBy)
     {
         ArgumentNullException.ThrowIfNull(config);
         return answer is null
             ? new AskOwnerOutcome(new JsonObject { ["answer"] = Text(config["default"]) ?? string.Empty, ["answeredBy"] = "timeout" }, "timeout")
-            : new AskOwnerOutcome(new JsonObject { ["answer"] = answer, ["answeredBy"] = answeredBy ?? "owner" }, "answered");
+            : new AskOwnerOutcome(new JsonObject { ["answer"] = answer, ["answeredBy"] = answeredBy }, "answered");
     }
 
     /// <inheritdoc />

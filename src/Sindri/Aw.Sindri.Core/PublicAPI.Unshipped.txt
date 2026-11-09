@@ -20589,7 +20589,7 @@ static Aw.Sindri.Core.Events.WorkflowQuestionPayload.operator !=(Aw.Sindri.Core.
 static Aw.Sindri.Core.Events.WorkflowQuestionPayload.operator ==(Aw.Sindri.Core.Events.WorkflowQuestionPayload? left, Aw.Sindri.Core.Events.WorkflowQuestionPayload? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.CheckAnswer(System.Collections.Generic.IReadOnlyList<string!>! choices, string? text, string? choice) -> string?
 static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.ChoicesOf(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<string!>!
-static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Resolve(System.Text.Json.Nodes.JsonObject! config, string? answer, string? answeredBy) -> Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome!
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Resolve(System.Text.Json.Nodes.JsonObject! config, string? answer, string! answeredBy) -> Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome!
 static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.TimeoutOf(System.Text.Json.Nodes.JsonObject! config) -> System.TimeSpan?
 static Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.operator !=(Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? left, Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.operator ==(Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? left, Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? right) -> bool
