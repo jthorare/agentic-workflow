@@ -5,7 +5,7 @@
 import { describe, expect, test } from "bun:test";
 import * as py from "../../src/py";
 import type { Pattern } from "../../src/py/re";
-import { DEFAULT_MARK, MARK, bd, bp, parseBlocks, setMark } from "../../src/sd";
+import { DEFAULT_MARK, JSON_MAX_DEPTH, MARK, RecursionError, bd, bp, jsonLoads, parseBlocks, setMark } from "../../src/sd";
 import { hasPython, runOracle, tagOf, type Tagged } from "./harness";
 
 const TDD_MARK = py.re.compile(String.raw`^\s*\\?\[(embedded content|diagram|video|media|image|legend|reading)\s*:\s*(.*?)\s*\\?\]\s*$`, py.re.I);
@@ -79,6 +79,16 @@ describe("src/sd without python", () => {
     expect(bd.FILE_LIMIT).toBe(15728640);
     expect(bd.load_json("", "--meta")).toBeNull();
     expect(() => bd.load_json("/nonexistent/x.json", "--meta")).toThrow("--meta /nonexistent/x.json: [Errno 2] No such file or directory: '/nonexistent/x.json'");
+  });
+
+  test("jsonLoads keeps CPython's int-digit and nesting limits", () => {
+    expect(jsonLoads("9".repeat(4300))).toBe(10n ** 4300n - 1n);
+    expect(() => jsonLoads("-" + "9".repeat(4301))).toThrow("Exceeds the limit (4300 digits) for integer string conversion: value has 4301 digits; use sys.set_int_max_str_digits() to increase the limit");
+    expect(() => jsonLoads('{"a" ' + "9".repeat(5000) + "}")).toThrow("Expecting ':' delimiter: line 1 column 6 (char 5)");
+    const deep = (n: number) => "[".repeat(n) + "]".repeat(n);
+    expect(() => jsonLoads(deep(JSON_MAX_DEPTH))).not.toThrow();
+    expect(() => jsonLoads(deep(JSON_MAX_DEPTH + 1))).toThrow(RecursionError);
+    expect(() => jsonLoads("[".repeat(100000))).toThrow("maximum recursion depth exceeded while decoding a JSON array from a unicode string");
   });
 });
 

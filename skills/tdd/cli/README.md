@@ -71,8 +71,9 @@ specification; system-design and the vendor copy are never edited.
 
 - `blocks.ts` (MARK, HEAD, FENCE, LI, HR, TSEP, COMMENT, isBlockStart, splitRow, indentOf, parseList, parseBlocks,
   splitMarker, slug), `inline.ts` (esc, Inline, renderInline, stripTags), `assets.ts` (FILE_LIMIT, svgSize, pngSize,
-  imgSize, Assets, publishedFor, mimeOf), `page.ts` (STATUS_WORDS, GENERIC_TAILS, pageTitle, loadJson, SystemExit),
-  `prs.ts` (BLOCK, front, inline, splitRow, markdown, firstSentence).
+  imgSize, Assets, copy2, publishedFor, mimeOf), `page.ts` (STATUS_WORDS, GENERIC_TAILS, pageTitle, jsonLoads,
+  loadJson, SystemExit), `prs.ts` (BLOCK, front, inline, splitRow, markdown, firstSentence), `errors.ts` (SdError,
+  StructError, SameFileError, RecursionError).
 - `index.ts` also exports `bd` and `bp` with the Python names, so a port reads like `build_tdd.py`:
   `bd.MARK = TDD_MARK; bd.parse_blocks(run); const inl = bd.Inline(); inl(s, false); bp.markdown(body)`.
 - **MARK** is read at call time, as the Python module global is: `bd.MARK = p` (or `setMark(p)`) changes what
@@ -80,11 +81,16 @@ specification; system-design and the vendor copy are never edited.
 - **Values.** Blocks are plain objects with the Python dicts' key order (`{t, level, text}`, ...); a list's `start` is
   `number | bigint`; tuples are arrays (`splitMarker`, `imgSize`, `front`, `Assets.ref`); Python dicts with open keys are
   Maps (`front`'s meta, `Assets.files`, `Assets.finish()`, `STATUS_WORDS`, `anchor_map`; `.get(k) ?? null` is
-  `dict.get(k)`); `loadJson` returns kernel values (`py.json.loads`).
+  `dict.get(k)`); `loadJson` returns kernel values (`jsonLoads`, on `py.json.loads`).
 - **Inline** is a factory: `bd.Inline()` returns a function with an `anchor_map` Map, called as `inl(s, links)`.
 - **Errors.** Python's exceptions surface as the kernel's `PyError` (a stray `\0C9\0` placeholder is `IndexError`, a bad
-  SVG width `ValueError`, an infinite one `OverflowError`), png_size's short PNG as `StructError`, and load_json's
-  `sys.exit` as `SystemExit(1, "{what} {path}: {e}")` with CPython's OSError / UnicodeDecodeError / JSONDecodeError text.
+  SVG width `ValueError`, an infinite one `OverflowError`) or an `SdError` whose `type` is the Python name (png_size's
+  short PNG `struct.error`; Assets.finish copying a file onto itself through a symlink, a hard link or a case-only name
+  `shutil.SameFileError`, as `shutil.copy2` does). load_json's `sys.exit` is `SystemExit(1, "{what} {path}: {e}")` with
+  CPython's OSError / UnicodeDecodeError / JSONDecodeError text. `jsonLoads` adds the two json limits the kernel's
+  `loads` leaves out: an int literal over 4,300 digits is ValueError (so load_json exits with CPython's "Exceeds the
+  limit (4300 digits) ..." text) and a container nested deeper than 9,998 is RecursionError, which load_json does not
+  catch; whichever the scanner meets first wins, a JSONDecodeError included.
 - `../UPSTREAM.json` pins the sha256 of the vendor `build_doc.py` and `build_prs.py` and of each ported line range;
   `test/sd/upstream.test.ts` fails, naming the ranges that moved, when a file (or the copy `build_tdd.py` would load)
   changes. Port the change, re-run the oracle suites, then update the hashes.
@@ -92,11 +98,16 @@ specification; system-design and the vendor copy are never edited.
   `build_tdd.py`, recording every call it makes to the 18 names (arguments, result, and the Inline / Assets state after
   each call), and `replay.test.ts` replays them through src/sd, with and without copying, plus every image under the
   packet through img_size and the data: URL branch; `sd_fuzz` runs 10,000 seeded markdown-shaped documents through
-  every text function (`TDD_SD_FUZZ` overrides the count); `sd_files` runs written SVG, PNG and JSON edge cases through
-  img_size, load_json and Assets; `sd_constants` compares the patterns and tables. `ban.test.ts` rejects regex literals,
-  `RegExp`, `\p{...}`, `toLowerCase`, `trim`, `JSON`, `Number()` and string `.match/.split/.replace` in src/sd.
+  every text function (`TDD_SD_FUZZ` overrides the count); `sd_files` runs written SVG, PNG and JSON edge cases
+  (including the int-digit and nesting limits) through img_size, load_json and Assets; `sd_finish` runs Assets.finish's
+  copying on twin trees (symlinked folder, hard link, case-only name, folder destination); `sd_constants` compares the
+  patterns and tables. `ban.test.ts` rejects regex literals, `RegExp`, `\p{...}`, `toLowerCase`, `trim`, `JSON`,
+  `Number()` and string `.match/.split/.replace` in src/sd.
 - Known limits: `mimeOf` (Assets with inline=true only, which build_tdd never uses) knows CPython's built-in table, not
-  the host's mime.types; Python's recursion limit (about 1,000 nested quotes or lists) is not reproduced.
+  the host's mime.types, and on macOS that changes common types: CPython reads /etc/apache2/mime.types, so `.ico` is
+  image/x-icon there (image/vnd.microsoft.icon here), `.xml` application/xml (text/xml here), and `.woff`, `.woff2`,
+  `.ttf`, `.otf`, `.ogg`, `.ogv`, `.m4v` and `.jxl` get a type where this table has none (application/octet-stream
+  here). Python's recursion limit in parse_blocks / parse_list (about 1,000 nested quotes or lists) is not reproduced.
 
 ## Parity harness (`parity/`)
 

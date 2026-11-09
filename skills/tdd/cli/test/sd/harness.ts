@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { StructError } from "../../src/sd/assets";
+import { SdError } from "../../src/sd/errors";
 import { SystemExit } from "../../src/sd/page";
 import { PyError, qualifiedName } from "../../src/py/errors";
 import { PyFloat } from "../../src/py/num";
@@ -56,7 +56,7 @@ export type Outcome = { r: Tagged } | { x: [string, string | number | null] };
 /** The exception's name as the oracle's exc_name() prints it. */
 function excName(e: unknown): string {
   if (e instanceof SystemExit) return "SystemExit";
-  if (e instanceof StructError) return "struct.error";
+  if (e instanceof SdError) return e.type;
   if (e instanceof PyError) return qualifiedName(e.type);
   throw e; // not a Python exception: a bug in the port, so let the test see it
 }

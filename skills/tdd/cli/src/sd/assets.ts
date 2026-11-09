@@ -1,25 +1,17 @@
 // build_doc.py:26 and 410-483: FILE_LIMIT, svg_size, png_size, img_size, Assets, published_for, on the kernel.
 // build_tdd.py builds Assets with inline=False, so the data: URL branch never runs in a compile; it is kept (with
 // Python's default mimetypes table, see mimeOf) so the class has the same API.
-import { closeSync, mkdirSync, openSync, readSync } from "node:fs";
+import { closeSync, mkdirSync, openSync, readSync, statSync } from "node:fs";
 import * as py from "../py";
 import { PyError } from "../py/errors";
 import { float } from "../py/num";
+import { SameFileError, StructError } from "./errors";
 
 const re = py.re;
 const { abspath, basename, dirname, isabs, join } = py.path;
 
 /** Artifact publish limit per binary file (build_doc.py:26). */
 export const FILE_LIMIT = 15 * 1024 * 1024;
-
-/** Python's struct.error (png_size lets it through for a PNG signature followed by fewer than 16 bytes). */
-export class StructError extends Error {
-  readonly type = "struct.error";
-  constructor(message: string) {
-    super(message);
-    this.name = "struct.error";
-  }
-}
 
 /** An OSError from the file system (Node's errors carry a string `code`); anything else is a bug and propagates. */
 const isOSError = (e: unknown): boolean => (e instanceof PyError && (e.type === "OSError" || e.type === "FileNotFoundError"))
@@ -99,8 +91,9 @@ export function imgSize(path: string | null | undefined): [number, number] | nul
 }
 
 // mimetypes.guess_type(src)[0] with CPython 3.13's built-in table (mimetypes.MimeTypes(filenames=()).types_map[True]).
-// CPython also reads the host's mime.types files (macOS: /etc/apache2/mime.types), which can add or override an
-// extension, so an exotic one can differ by host; build_tdd never inlines, so no compile depends on this.
+// Known limit: CPython also reads the host's mime.types files, and on macOS /etc/apache2/mime.types changes common
+// extensions (.ico is image/x-icon there, .xml application/xml; .woff, .woff2, .ttf, .otf, .ogg, .ogv, .m4v and .jxl
+// get a type where this table has none). Only Assets(inline=true) reads it, and build_tdd never inlines.
 const TYPES: ReadonlyMap<string, string> = new Map(Object.entries({
   ".js": "text/javascript", ".mjs": "text/javascript", ".json": "application/json",
   ".webmanifest": "application/manifest+json", ".doc": "application/msword", ".dot": "application/msword",
@@ -158,6 +151,25 @@ export function mimeOf(path: string): string | null {
   return TYPES.get(py.lower(ext)) ?? null;
 }
 
+/** os.path.samefile(a, b): the same device and inode (symlinks followed); false when either cannot be stat'ed. */
+function samefile(a: string, b: string): boolean {
+  try {
+    const x = statSync(a, { bigint: true });
+    const y = statSync(b, { bigint: true });
+    return x.ino === y.ino && x.dev === y.dev;
+  } catch {
+    return false;
+  }
+}
+
+/** shutil.copy2(src, dst): into dst/basename(src) when dst is a folder; SameFileError when both name one file. */
+export function copy2(src: string, dst: string): string {
+  if (py.io.isdir(dst)) dst = join(dst, basename(src));
+  if (samefile(src, dst)) throw new SameFileError(`${py.strRepr(src)} and ${py.strRepr(dst)} are the same file`);
+  py.io.copy2(src, dst);
+  return dst;
+}
+
 /** Every file the page references: published path -> source path. Copies into the output folder at the end. */
 export class Assets {
   out_dir: string;
@@ -204,7 +216,7 @@ export class Assets {
       const dest = join(this.out_dir, p);
       if (this.copy && abspath(dest) !== src) {
         mkdirSync(dirname(dest), { recursive: true });
-        py.io.copy2(src, dest);
+        copy2(src, dest);
         out.set(p, abspath(dest));
       } else out.set(p, src);
     }
