@@ -51,9 +51,7 @@ public sealed class WriteAttributionTests
         ["POST /sindri/workflow/challenges"] = NoGoldenReason,
         ["POST /sindri/workflow/instances/{instanceId}/runs/{run}/complete"] = NoGoldenReason,
         ["POST /sindri/jobs/{jobId}/resume"] = NoGoldenReason,
-        ["POST /sindri/workflows/{slug}/runs"] = NoGoldenReason,
         ["POST /sindri/todos/note/hold/restore"] = NoGoldenReason,
-        ["POST /sindri/context/map/build"] = NoGoldenReason,
         ["POST /sindri/context/map/refresh"] = NoGoldenReason,
         ["POST /sindri/context/eval/backtest"] = NoGoldenReason,
         ["POST /sindri/context/sources/sync"] = NoGoldenReason,
@@ -63,6 +61,12 @@ public sealed class WriteAttributionTests
     };
 
     private const string NoGoldenReason = "no API golden scenario sends it yet (#2434)";
+
+    // Write routes whose goldens are all refusals that write nothing; the succeeding scenario is #2434. An entry must be sent and must stay uncovered.
+    private static readonly Dictionary<string, string> _onlyRefusals = new(StringComparer.Ordinal)
+    {
+        ["POST /sindri/workflows/{slug}/runs"] = "a run that starts needs the Temporal worker, which the golden host doesn't run; its goldens are refusals (#2434)",
+    };
 
     [Fact(Timeout = 900_000), Trait("Lane", "integration")]
     public async Task Every_write_a_launched_session_makes_records_that_launch_as_its_actor()
@@ -88,13 +92,15 @@ public sealed class WriteAttributionTests
             ("these scenarios threw as a launched session:", Sorted(sweep.Broken)),
             ($"these events were written during a launched session's calls without 'session:launch:{Launch}' as actor:", Sorted(sweep.Strays)),
             ("UNCOVERED: these catalog write routes appended no event by the launched session in any scenario that sent them (no event, no scenario, or another actor; a route that writes no event goes in _notSwept with its reason, one no golden sends goes in _noGolden with #2434):",
-                Sorted(catalog.Where(k => !_notSwept.ContainsKey(k) && !_noGolden.ContainsKey(k) && !_otherProof.ContainsKey(k) && !sweep.Covered.ContainsKey(k)))),
+                Sorted(catalog.Where(k => !_notSwept.ContainsKey(k) && !_noGolden.ContainsKey(k) && !_otherProof.ContainsKey(k) && !_onlyRefusals.ContainsKey(k) && !sweep.Covered.ContainsKey(k)))),
             ("these _notSwept and _otherProof keys name no catalog write route (misspelt, or the route is gone):",
                 Sorted(_notSwept.Keys.Concat(_otherProof.Keys).Where(k => !catalog.Contains(k)))),
             ("_noGolden guard: these entries are not a catalog write, or a scenario now sends them; move them into the sweep (delete the entry):",
                 Sorted(_noGolden.Keys.Where(k => !catalog.Contains(k) || sweep.Sent.ContainsKey(k)))),
-            ("these _noGolden entries do not name #2434:",
-                Sorted(_noGolden.Where(e => !e.Value.Contains("#2434", StringComparison.Ordinal)).Select(e => e.Key))),
+            ("these _noGolden and _onlyRefusals entries do not name #2434:",
+                Sorted(_noGolden.Concat(_onlyRefusals).Where(e => !e.Value.Contains("#2434", StringComparison.Ordinal)).Select(e => e.Key))),
+            ("_onlyRefusals guard: these entries are not a catalog write, no scenario sends them, or a scenario now covers them; move them into the sweep or _noGolden:",
+                Sorted(_onlyRefusals.Keys.Where(k => !catalog.Contains(k) || !sweep.Sent.ContainsKey(k) || sweep.Covered.ContainsKey(k)))),
         };
 
         return [.. sections.Where(s => s.Items.Count > 0).Select(s => s.Heading + "\n" + string.Join('\n', s.Items))];
@@ -130,17 +136,28 @@ public sealed class WriteAttributionTests
             return;
         }
 
-        var written = (await ledger.ReadAfter(0, 100_000, token)).Value.Skip(before).Select(e => e.Envelope).ToList();
-        // why: only the scenario's own call (its last request) covers a route; seeding before it marks Sent only, or a seeding write would cover a silent route
-        if (sent.LastOrDefault() is { } last && MatchTemplate(sweep.Templates, last.Method, last.Path) is { } own
-            && (await ledger.ReadAfter(await last.HeadBefore, 100_000, token)).Value.Any(e => IsByLaunch(e.Envelope.Actor)))   // why: only events after the own call's mark, so a seeding write can't cover it
-        {
-            sweep.Covered[own] = true;
-        }
+        var marks = await Task.WhenAll(sent.Select(r => r.HeadBefore));
+        var events = (await ledger.ReadAfter(0, 100_000, token)).Value.Skip(before).ToList();
+        Cover(sweep, [.. sent], marks, events);
 
-        foreach (var envelope in written.Where(e => IsWrongActor(e.Actor)))
+        // why: setup the human does before the session's first call (a typed-confirmation import) is not the session's; from that call on, every event must be the launch's
+        var from = marks.Length == 0 ? long.MaxValue : marks[0];
+        foreach (var envelope in events.Where(e => e.Sequence > from).Select(e => e.Envelope).Where(e => IsWrongActor(e.Actor)))
         {
             sweep.Strays.Add($"{row.Slug}/{row.Scenario}: {envelope.Type} by {envelope.Actor}");
+        }
+    }
+
+    /// <summary>Each request sent as the launch covers its route when an event by the launch lands between its mark and the next request's, so no request's write can cover another's.</summary>
+    private static void Cover(Sweep sweep, List<Callers.CallerRequests.SentRequest> sent, long[] marks, List<LedgerEvent> events)
+    {
+        for (var i = 0; i < sent.Count; i++)
+        {
+            var (start, end) = (marks[i], i + 1 < marks.Length ? marks[i + 1] : long.MaxValue);
+            if (MatchTemplate(sweep.Templates, sent[i].Method, sent[i].Path) is { } key && events.Exists(e => e.Sequence > start && e.Sequence <= end && IsByLaunch(e.Envelope.Actor)))
+            {
+                sweep.Covered[key] = true;
+            }
         }
     }
 
