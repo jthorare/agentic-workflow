@@ -22,6 +22,9 @@ public sealed class FakeTodoNoteFiles : ITodoNoteFiles
     /// <summary>Gets or sets a problem every Swap answers instead of writing.</summary>
     public string? SwapProblem { get; set; }
 
+    /// <summary>Gets or sets an exception WriteIntent throws, as a failing disk does.</summary>
+    public Exception? WriteIntentThrows { get; set; }
+
     /// <summary>Gets or sets what runs just before a swap, with the note's path.</summary>
     public Action<string>? BeforeSwap { get; set; }
 
@@ -78,7 +81,15 @@ public sealed class FakeTodoNoteFiles : ITodoNoteFiles
     }
 
     /// <inheritdoc/>
-    public void WriteIntent(string hash) => Intent = hash;
+    public void WriteIntent(string hash)
+    {
+        if (WriteIntentThrows is { } thrown)
+        {
+            throw thrown;
+        }
+
+        Intent = hash;
+    }
 
     /// <inheritdoc/>
     public string? ReadIntent() => Intent;
