@@ -66,6 +66,7 @@ export const directoryBuildProps = () => `<Project>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <MSBuildTreatWarningsAsErrors>true</MSBuildTreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <EnableNETAnalyzers>false</EnableNETAnalyzers>
     <Deterministic>true</Deterministic>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
@@ -122,6 +123,10 @@ dotnet_diagnostic.CA2007.severity = none           # an app, not a library: no C
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.MA0004.severity = none
 dotnet_diagnostic.CS1591.severity = none           # no XML docs required
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_style_expression_bodied_methods = when_on_single_line:silent
+dotnet_diagnostic.IDE0022.severity = none          # expression bodies are fine
+dotnet_diagnostic.MA0048.severity = none           # a tool's request, response and tools class share one file
 `;
 
 export const gitignore = () => `artifacts/
@@ -162,8 +167,10 @@ export const jsonContext = (t) => `using System.Text.Json.Serialization;
 
 namespace Toolkits.${t.name};
 
-/// <summary>Source-generated JSON for every tool request and response (AOT-safe; the input schema comes from the request type).</summary>
-// The SDK throws AW-TOOLKIT-001 unless both Respect* options are on: they make the input schema mark required fields.
+/// <summary>
+/// Source-generated JSON for every tool request and response (AOT-safe; the input schema comes from the request type).
+/// The SDK throws AW-TOOLKIT-001 unless both Respect* options are on: they make the input schema mark required fields.
+/// </summary>
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, RespectNullableAnnotations = true, RespectRequiredConstructorParameters = true)]
 [JsonSerializable(typeof(${t.toolPascal}Request))]
 [JsonSerializable(typeof(${t.toolPascal}Response))]
