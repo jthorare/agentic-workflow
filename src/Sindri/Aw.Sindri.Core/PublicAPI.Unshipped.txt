@@ -20392,3 +20392,17 @@ static readonly Aw.Sindri.Core.SindriErrors.GraphOpInvalid -> Aw.Kernel.ErrorDef
 virtual Aw.Sindri.Core.Graph.Ops.GraphOp.EqualityContract.get -> System.Type!
 virtual Aw.Sindri.Core.Graph.Ops.GraphOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
 virtual Aw.Sindri.Core.Graph.Ops.GraphOp.PrintMembers(System.Text.StringBuilder! builder) -> bool
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit.Page.get -> Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit.Score.get -> double
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit.WorkflowDocHit(Aw.Sindri.Core.Graph.Docs.WorkflowDocPage! page, double score) -> void
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.BlockType.get -> string?
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.Slug.get -> string!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.JsonExamples() -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.Text.get -> string!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.Title.get -> string!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.WorkflowDocPage(string! slug, string! title, string! text) -> void
+Aw.Sindri.Core.Graph.Docs.WorkflowDocSearch
+const Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.BlockPrefix = "block-" -> string!
+static Aw.Sindri.Core.Graph.Docs.WorkflowDocSearch.Search(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>! pages, string! question, int max = 5) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocHit!>!
