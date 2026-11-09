@@ -1,7 +1,7 @@
 // The lint mutation corpus: each case copies the built base packet (fixtures/base, built once per run), applies one
 // mutation, and names the check ids it must fire. Python and TypeScript must then agree byte for byte (corpus.test.ts).
 // Between them the cases fire every check id lint_packet.py can emit (inventory.test.ts reads the ids from the source).
-import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, truncateSync, utimesSync, writeFileSync, copyFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, truncateSync, utimesSync, writeFileSync, copyFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { SCRIPTS, T0, buildPacket, git, skillCopy, type Repo } from "../harness";
 
@@ -124,6 +124,7 @@ const SCHEMA = "schema/demo_table.json";
 const CONTENT = "build/content.json";
 const MANIFEST = "build/content.files.json";
 const MB = 1024 * 1024;
+const MARKER = "PLACEHOLDER · REPLACE ME";
 
 export const CASES: readonly Case[] = [
   // ------------------------------------------------------------------ the base and the run modes
@@ -272,6 +273,60 @@ export const CASES: readonly Case[] = [
     mutate: (c) => { write(c, "mockups/unused.png", "x"); write(c, "diagrams/sub/old.svg", "<svg/>"); write(c, "mockups/Upper.JPG", "x"); sub(c, MD, "The operator sees the retry count.", "The operator sees the retry count (mockups/unused.png)."); } },
   { name: "files-pr-unloaded", expect: ["FILES/pr-unloaded"],
     mutate: (c) => { write(c, "prs/pr-xx.md", "# not a PR\n"); write(c, "prs/pr-02.md", "---\ntitle: Later\n---\n# PR 2: Later\n"); } },
+  // FILES/placeholder: a file the page publishes (the manifest's files: the build's copies, or with --compile the packet's
+  // own files) still carries the scaffold's marker; the finding's line is the first marker's, counted in bytes
+  { name: "files-placeholder", expect: ["FILES/placeholder"],
+    mutate: (c) => {
+      // CRLF line ends in the SVG copy; in the PNG copy the marker comes twice after IEND (its signature holds a \n)
+      edit(c, "build/diagrams/flow.svg", (s) => s.split("\n").join("\r\n").split("</svg>").join(`<text>${MARKER}</text>\r\n</svg>`));
+      writeFileSync(P(c, "build/mockups/shot.png"), Buffer.concat([readFileSync(P(c, "build/mockups/shot.png")), Buffer.from(`\n\n${MARKER}\n${MARKER}\n`)]));
+    } },
+  // the packet named through a link: the build's paths are resolved, so the file is named relative to the resolved packet
+  { name: "files-placeholder-linked-path", expect: ["FILES/placeholder"], args: (c) => [join(c.root + "-link", "demo-packet")],
+    mutate: (c) => { symlinkSync(c.root, c.root + "-link"); edit(c, "build/diagrams/flow.svg", (s) => `<!-- ${MARKER} -->\n` + s); } },
+  { name: "files-placeholder-compiled", expect: ["FILES/placeholder"], args: () => ["demo-packet", "--compile"],
+    mutate: (c) => writeFileSync(P(c, "mockups/shot.png"), Buffer.concat([readFileSync(P(c, "mockups/shot.png")), Buffer.from(`\n${MARKER}\n`)])) },
+  { name: "files-placeholder-unreadable", expect: [],
+    mutate: (c) => writeFileSync(P(c, "build/mockups/shot.png"), Buffer.concat([readFileSync(P(c, "build/mockups/shot.png")), Buffer.from(MARKER)])),
+    times: (c) => chmodSync(P(c, "build/mockups/shot.png"), 0o000) },
+  // FILES/placeholder-text: a line of the source or of status.md still carries one: the template's prompts, the
+  // YYYY-MM-DD date, the marker; fenced code counts, one-line comments do not, nor a prompt right after a word character
+  { name: "files-placeholder-text", expect: ["FILES/placeholder-text"],
+    mutate: (c) => {
+      sub(c, MD, "The worker loop.", "<What stays exactly as it is today.>");
+      sub(c, MD, "reads the job; notes live in `docs/notes.md`.\n", "reads the job; notes live in `docs/notes.md`.\n\n" + [
+        "<!-- a one-line comment with <Role> and YYYY-MM-DD: the compiler drops it -->",
+        "   <!-- <Owner> in an indented one-line comment -->",
+        "A hook such as useState<State>, Array<Role> or _<Owner> is code; <name>, <path> and <n> are notation; é<Moment> too.",
+        "**<State>:** <what the screen shows in that state, and why.> And <State> once more, then (<Role>) and -<Moment>. {small}",
+        `Measured at <YYYY-MM-DD hh:mm>, on <YYYY-MM-DD> and on YYYY-MM-DD; ${MARKER}`,
+        "",
+        "```sql",
+        "CREATE TABLE <new_table> (",
+        "  <new_column> text  -- <what it holds>",
+        ");",
+        "```",
+        "",
+      ].join("\n"));
+      write(c, "status.md", [
+        "# <Title: the finding, not the topic>: status (the one living doc)",
+        "",
+        "artifact_url: (not published yet)",
+        "",
+        "## Decisions (the owner's words)",
+        "- (none yet. Each answer gets the next D-number: D<n> (YYYY-MM-DD, who): \"<the owner's words>\", then one line on what it means.)",
+        "- D1 (2026-01-02, Owner): \"Keep the worker loop.\"",
+        "<!-- <Owner> -->",
+        "",
+      ].join("\r\n"));
+    } },
+  { name: "files-placeholder-text-no-manifest", expect: ["FILES/no-manifest", "FILES/placeholder-text"],
+    mutate: (c) => { rm(c, MANIFEST); write(c, "status.md", "Waiting on <Owner> since YYYY-MM-DD.\n"); } },
+  { name: "files-placeholder-skip-one", expect: ["FILES/placeholder-text"], args: () => ["demo-packet", "--skip", "FILES/placeholder"],
+    mutate: (c) => {
+      edit(c, "build/diagrams/flow.svg", (s) => s + `<!-- ${MARKER} -->\n`);
+      write(c, "status.md", `${MARKER}\n`);
+    } },
 
   // ------------------------------------------------------------------ META
   { name: "meta-missing", expect: ["META/missing"], mutate: (c) => rm(c, "meta.json") },
