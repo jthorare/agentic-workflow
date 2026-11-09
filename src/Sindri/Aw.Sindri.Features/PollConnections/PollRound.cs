@@ -118,7 +118,7 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
 
                 if (string.Equals(DeliveryOf(holder.Value.Trigger), polled.DeliveryKey, StringComparison.Ordinal))
                 {
-                    await events.TriggerSkipped(new SkippedTrigger(trigger.Slug.Value, group.Connection, group.Kind, polled.DeliveryKey, Duplicate), grant, cancellationToken).ConfigureAwait(false);
+                    await events.TriggerSkipped(new SkippedTrigger(trigger.Slug.Value, group.Connection, group.Kind.Key, polled.DeliveryKey, Duplicate), grant, cancellationToken).ConfigureAwait(false);
                     return false;
                 }
 
@@ -133,7 +133,7 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
 
             if (begun.Value.Kind == GraphStartKind.Skipped)
             {
-                await events.TriggerSkipped(new SkippedTrigger(trigger.Slug.Value, group.Connection, group.Kind, polled.DeliveryKey, Concurrency), grant, cancellationToken).ConfigureAwait(false);
+                await events.TriggerSkipped(new SkippedTrigger(trigger.Slug.Value, group.Connection, group.Kind.Key, polled.DeliveryKey, Concurrency), grant, cancellationToken).ConfigureAwait(false);
                 return false;
             }
 

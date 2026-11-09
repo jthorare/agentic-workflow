@@ -42,12 +42,12 @@ internal sealed class CatchUp(PollRound round, ConnectionEvents events)
     {
         if (tally.Seen.Count > 0)
         {
-            await events.Polled(new PollCounts(group.Connection, group.Kind, tally.Seen.Count, tally.Started, tally.Skipped), grant, cancellationToken).ConfigureAwait(false);
+            await events.Polled(new PollCounts(group.Connection, group.Kind.Key, tally.Seen.Count, tally.Started, tally.Skipped), grant, cancellationToken).ConfigureAwait(false);
         }
 
         if (tally.Capped)
         {
-            await events.CatchUpStopped(group.Connection, group.Kind, tally.Reason ?? "the page cap", grant, cancellationToken).ConfigureAwait(false);
+            await events.CatchUpStopped(group.Connection, group.Kind.Key, tally.Reason ?? "the page cap", grant, cancellationToken).ConfigureAwait(false);
         }
     }
 

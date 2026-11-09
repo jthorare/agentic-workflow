@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Core.Connections.Polling;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
@@ -68,7 +67,7 @@ public sealed class ConnectionEvents(HeldLease held, ILedgerStore ledger, EventF
         }
 
         var at = Now;
-        var entry = events.Entry(EventTypes.ConnectionPolled, new ConnectionPolled(counts.Name.ToString(), counts.Kind.Key, counts.Count, counts.Started, counts.Skipped, at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionPolled}:{counts.Name}:{counts.Kind.Key}:{at.UtcTicks}"));
+        var entry = events.Entry(EventTypes.ConnectionPolled, new ConnectionPolled(counts.Name.ToString(), counts.Kind, counts.Count, counts.Started, counts.Skipped, at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionPolled}:{counts.Name}:{counts.Kind}:{at.UtcTicks}"));
         _ = await ledger.Append(entry, lease, cancellationToken).ConfigureAwait(false);
     }
 
@@ -84,18 +83,18 @@ public sealed class ConnectionEvents(HeldLease held, ILedgerStore ledger, EventF
             return;
         }
 
-        var entry = events.Entry(EventTypes.WorkflowTriggerSkipped, new WorkflowTriggerSkipped(skipped.Workflow, skipped.Name.ToString(), skipped.Kind.Key, skipped.DeliveryKey, skipped.Reason, Now), $"{EventTypes.WorkflowTriggerSkipped}:{skipped.Workflow}:{skipped.DeliveryKey}:{skipped.Reason}");
+        var entry = events.Entry(EventTypes.WorkflowTriggerSkipped, new WorkflowTriggerSkipped(skipped.Workflow, skipped.Name.ToString(), skipped.Kind, skipped.DeliveryKey, skipped.Reason, Now), $"{EventTypes.WorkflowTriggerSkipped}:{skipped.Workflow}:{skipped.DeliveryKey}:{skipped.Reason}");
         _ = await ledger.Append(entry, lease, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Appends 'catchup.capped' once for a capped read of (connection, event kind).</summary>
     /// <param name="name">The connection.</param>
-    /// <param name="kind">The event kind.</param>
+    /// <param name="kind">The event kind's key (EventKind.Key).</param>
     /// <param name="reason">Why, in words for the owner.</param>
     /// <param name="grant">The lease to append under; null uses the one this process holds.</param>
     /// <param name="cancellationToken">Cancels the append.</param>
     /// <returns>A task that ends when the event is recorded or skipped.</returns>
-    public async ValueTask CatchUpStopped(ConnectionName name, EventKind kind, string reason, LeaseGrant? grant, CancellationToken cancellationToken)
+    public async ValueTask CatchUpStopped(ConnectionName name, string kind, string reason, LeaseGrant? grant, CancellationToken cancellationToken)
     {
         if ((grant ?? held.Current) is not { } lease)
         {
@@ -103,7 +102,7 @@ public sealed class ConnectionEvents(HeldLease held, ILedgerStore ledger, EventF
         }
 
         var at = Now;
-        var entry = events.Entry(EventTypes.CatchUpCapped, new CatchUpCapped(name.ToString(), kind.Key, reason, at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.CatchUpCapped}:{name}:{kind.Key}:{at.UtcTicks}"));
+        var entry = events.Entry(EventTypes.CatchUpCapped, new CatchUpCapped(name.ToString(), kind, reason, at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.CatchUpCapped}:{name}:{kind}:{at.UtcTicks}"));
         _ = await ledger.Append(entry, lease, cancellationToken).ConfigureAwait(false);
     }
 }

@@ -20849,7 +20849,7 @@ Aw.Sindri.Core.Connections.PollCounts
 Aw.Sindri.Core.Connections.PollCounts.<Clone>$() -> Aw.Sindri.Core.Connections.PollCounts!
 Aw.Sindri.Core.Connections.PollCounts.Name.get -> Aw.Sindri.Core.Connections.ConnectionName
 Aw.Sindri.Core.Connections.PollCounts.Name.init -> void
-Aw.Sindri.Core.Connections.PollCounts.Kind.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+Aw.Sindri.Core.Connections.PollCounts.Kind.get -> string!
 Aw.Sindri.Core.Connections.PollCounts.Kind.init -> void
 Aw.Sindri.Core.Connections.PollCounts.Count.get -> int
 Aw.Sindri.Core.Connections.PollCounts.Count.init -> void
@@ -20857,8 +20857,8 @@ Aw.Sindri.Core.Connections.PollCounts.Started.get -> int
 Aw.Sindri.Core.Connections.PollCounts.Started.init -> void
 Aw.Sindri.Core.Connections.PollCounts.Skipped.get -> int
 Aw.Sindri.Core.Connections.PollCounts.Skipped.init -> void
-Aw.Sindri.Core.Connections.PollCounts.PollCounts(Aw.Sindri.Core.Connections.ConnectionName Name, Aw.Sindri.Core.Connections.Polling.EventKind Kind, int Count, int Started, int Skipped) -> void
-Aw.Sindri.Core.Connections.PollCounts.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionName Name, out Aw.Sindri.Core.Connections.Polling.EventKind Kind, out int Count, out int Started, out int Skipped) -> void
+Aw.Sindri.Core.Connections.PollCounts.PollCounts(Aw.Sindri.Core.Connections.ConnectionName Name, string! Kind, int Count, int Started, int Skipped) -> void
+Aw.Sindri.Core.Connections.PollCounts.Deconstruct(out Aw.Sindri.Core.Connections.ConnectionName Name, out string! Kind, out int Count, out int Started, out int Skipped) -> void
 Aw.Sindri.Core.Connections.PollCounts.Equals(Aw.Sindri.Core.Connections.PollCounts? other) -> bool
 override Aw.Sindri.Core.Connections.PollCounts.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Connections.PollCounts.GetHashCode() -> int
@@ -20871,14 +20871,14 @@ Aw.Sindri.Core.Connections.SkippedTrigger.Workflow.get -> string!
 Aw.Sindri.Core.Connections.SkippedTrigger.Workflow.init -> void
 Aw.Sindri.Core.Connections.SkippedTrigger.Name.get -> Aw.Sindri.Core.Connections.ConnectionName
 Aw.Sindri.Core.Connections.SkippedTrigger.Name.init -> void
-Aw.Sindri.Core.Connections.SkippedTrigger.Kind.get -> Aw.Sindri.Core.Connections.Polling.EventKind
+Aw.Sindri.Core.Connections.SkippedTrigger.Kind.get -> string!
 Aw.Sindri.Core.Connections.SkippedTrigger.Kind.init -> void
 Aw.Sindri.Core.Connections.SkippedTrigger.DeliveryKey.get -> string!
 Aw.Sindri.Core.Connections.SkippedTrigger.DeliveryKey.init -> void
 Aw.Sindri.Core.Connections.SkippedTrigger.Reason.get -> string!
 Aw.Sindri.Core.Connections.SkippedTrigger.Reason.init -> void
-Aw.Sindri.Core.Connections.SkippedTrigger.SkippedTrigger(string! Workflow, Aw.Sindri.Core.Connections.ConnectionName Name, Aw.Sindri.Core.Connections.Polling.EventKind Kind, string! DeliveryKey, string! Reason) -> void
-Aw.Sindri.Core.Connections.SkippedTrigger.Deconstruct(out string! Workflow, out Aw.Sindri.Core.Connections.ConnectionName Name, out Aw.Sindri.Core.Connections.Polling.EventKind Kind, out string! DeliveryKey, out string! Reason) -> void
+Aw.Sindri.Core.Connections.SkippedTrigger.SkippedTrigger(string! Workflow, Aw.Sindri.Core.Connections.ConnectionName Name, string! Kind, string! DeliveryKey, string! Reason) -> void
+Aw.Sindri.Core.Connections.SkippedTrigger.Deconstruct(out string! Workflow, out Aw.Sindri.Core.Connections.ConnectionName Name, out string! Kind, out string! DeliveryKey, out string! Reason) -> void
 Aw.Sindri.Core.Connections.SkippedTrigger.Equals(Aw.Sindri.Core.Connections.SkippedTrigger? other) -> bool
 override Aw.Sindri.Core.Connections.SkippedTrigger.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Connections.SkippedTrigger.GetHashCode() -> int
@@ -20886,7 +20886,7 @@ override Aw.Sindri.Core.Connections.SkippedTrigger.ToString() -> string!
 static Aw.Sindri.Core.Connections.SkippedTrigger.operator !=(Aw.Sindri.Core.Connections.SkippedTrigger? left, Aw.Sindri.Core.Connections.SkippedTrigger? right) -> bool
 static Aw.Sindri.Core.Connections.SkippedTrigger.operator ==(Aw.Sindri.Core.Connections.SkippedTrigger? left, Aw.Sindri.Core.Connections.SkippedTrigger? right) -> bool
 Aw.Sindri.Core.Connections.ConnectionEvents.TriggerSkipped(Aw.Sindri.Core.Connections.SkippedTrigger! skipped, Aw.Sindri.Core.Lease.LeaseGrant? grant, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
-Aw.Sindri.Core.Connections.ConnectionEvents.CatchUpStopped(Aw.Sindri.Core.Connections.ConnectionName name, Aw.Sindri.Core.Connections.Polling.EventKind kind, string! reason, Aw.Sindri.Core.Lease.LeaseGrant? grant, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Connections.ConnectionEvents.CatchUpStopped(Aw.Sindri.Core.Connections.ConnectionName name, string! kind, string! reason, Aw.Sindri.Core.Lease.LeaseGrant? grant, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
 static readonly Aw.Sindri.Core.SindriErrors.ConnectionRunIdsHeld -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Connections.SignInFailure
 Aw.Sindri.Core.Connections.SignInFailure.<Clone>$() -> Aw.Sindri.Core.Connections.SignInFailure!

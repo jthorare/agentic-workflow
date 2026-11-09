@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Tests.Connections;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Connections;
 
 namespace Aw.Sindri.Tests.PollConnections;
 
