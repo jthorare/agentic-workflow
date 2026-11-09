@@ -32,6 +32,8 @@ public sealed class NoticeRuleTests
     [InlineData("acknowledgement of the plan")]
     [InlineData("LANE MAP vX")]
     [InlineData("please rebase #12")]
+    [InlineData("Ack: ui champions #12. ideas is at ~200k context, please lane-recycle me.")]
+    [InlineData("FYI: aw-wt/x is cleaned, please sweep it")]
     [InlineData("")]
     public void These_lines_are_not_notices(string body) => Assert.False(NoticeRule.IsNotice(body));
 
