@@ -12,7 +12,7 @@ const COMMANDS: Record<string, { file: string; python: string; help: string }> =
   new:      { file: "new-packet.ts",       python: "scripts/new_packet.py",        help: "scaffold a packet from the template" },
   eval:     { file: "eval-packet.ts",      python: "scripts/eval_packet.py",       help: "score a revision; push to Braintrust only with --push" },
   "load-db":{ file: "tdd-load-db.ts",      python: "",                             help: "load a built, linted packet into the system database (D24)" },
-  rev:      { file: "tdd-rev.ts",          python: "",                             help: "run one revision end to end" },
+  rev:      { file: "rev.ts",              python: "",                             help: "run one revision end to end" },
 };
 
 const [cmd, ...rest] = Bun.argv.slice(2);
