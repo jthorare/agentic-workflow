@@ -3,7 +3,7 @@
 // Between them the cases fire every check id lint_packet.py can emit (inventory.test.ts reads the ids from the source).
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, truncateSync, utimesSync, writeFileSync, copyFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { SCRIPTS, T0, buildPacket, git, type Repo } from "../harness";
+import { SCRIPTS, T0, buildPacket, git, skillCopy, type Repo } from "../harness";
 
 export interface Ctx {
   /** the case folder (cwd of both runs); it holds demo-packet/, sibling-packet/ */
@@ -62,6 +62,60 @@ const sparse = (c: Ctx, f: string, bytes: number): void => {
   truncateSync(P(c, f), bytes);
 };
 const touch = (c: Ctx, f: string, t: number): void => utimesSync(P(c, f), t, t);
+
+/** What the corpus's build_tdd.py does after the real compile (PARITY's own cases need the two compilers to differ):
+ * content: one more newline at the end of content.json; manifest: one more manifest warning; fail-fresh: as content,
+ * and it fails outright when PARITY runs it (--no-copy). */
+type Perturb = "content" | "manifest" | "fail-fresh";
+const PERTURB_MAIN = `def _corpus_main():
+    # the lint corpus: build_tdd.py with a deliberate difference (scripts/perturb.txt), so PARITY has something to find
+    mode = open(os.path.join(HERE, "perturb.txt"), encoding="utf-8").read().strip()
+    if mode == "fail-fresh" and "--no-copy" in sys.argv:
+        sys.exit("build_tdd.py: fails on purpose (lint corpus)")
+    a = parse_args(sys.argv[1:])
+    Compiler(a).build()
+    if mode in ("content", "fail-fresh"):
+        with open(os.path.join(a.out, "content.json"), "a", encoding="utf-8") as f:
+            f.write("\\n")
+    elif mode == "manifest":
+        p = os.path.join(a.out, "content.files.json")
+        m = json.load(open(p, encoding="utf-8"))
+        m["warnings"] = list(m.get("warnings") or []) + ["a warning only this build_tdd.py gives (lint corpus)"]
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(m, f, indent=1)
+
+if __name__ == "__main__":
+    _corpus_main()
+`;
+
+/** The skill beside the case (harness.skillCopy) with a build_tdd.py that differs from the TypeScript compiler on purpose.
+ * The packet is rebuilt with it; lint_packet.py runs from the copy (pyScript) and tdd lint is pointed at it with
+ * TDD_SCRIPTS (env), so both linters run the same build_tdd.py. */
+const perturbed = (c: Ctx, mode: Perturb): string => {
+  const scripts = join(c.root + "-skill", "tdd", "scripts");
+  if (!existsSync(scripts)) {
+    skillCopy(c.root + "-skill");
+    const bt = join(scripts, "build_tdd.py");
+    const src = readFileSync(bt, "utf8");
+    const tail = "if __name__ == \"__main__\":\n    Compiler(parse_args(sys.argv[1:])).build()\n";
+    if (!src.endsWith(tail)) throw new Error("build_tdd.py no longer ends with its main block: update the corpus's perturbed copy");
+    writeFileSync(bt, src.slice(0, -tail.length) + PERTURB_MAIN);
+  }
+  writeFileSync(join(scripts, "perturb.txt"), mode + "\n");
+  return scripts;
+};
+/** A case whose build comes from the perturbed build_tdd.py, linted by both linters with it. */
+const perturbedCase = (name: string, mode: Perturb, expect: string[], extra: string[] = []): Case => ({
+  name, expect, args: () => ["demo-packet", ...extra],
+  mutate: (c) => {
+    const scripts = perturbed(c, mode);
+    rm(c, "build");
+    buildPacket(c.pk, "demo-packet", scripts);
+    write(c, "build/tdd.html", "<!doctype html><title>Demo Queue</title><main id=\"redesign\"></main>\n");
+  },
+  pyScript: (c) => join(perturbed(c, mode), "lint_packet.py"),
+  env: (c) => ({ TDD_SCRIPTS: perturbed(c, mode) }),
+});
 const MD = "demo-packet.md";
 const HS = "diagrams/flow.hotspots.json";
 const SCHEMA = "schema/demo_table.json";
@@ -238,6 +292,17 @@ export const CASES: readonly Case[] = [
   { name: "xdoc-glossary-conflict", expect: ["XDOC/glossary-conflict"],
     mutate: (c) => writeFileSync(join(c.root, "sibling-packet", "sibling-packet.md"), "# Sibling\n\n::: glossary\n- **Lane** — a worker pool with a shared budget\n- **Other** - unrelated\n:::\n") },
   { name: "xdoc-no-glossary", expect: [], mutate: (c) => { edit(c, MD, (s) => s.slice(0, s.indexOf(":::: fold Glossary")) + ":::\n"); rebuild(c); } },
+
+  // ------------------------------------------------------------------ PARITY (a build_tdd.py that differs on purpose)
+  perturbedCase("parity-content", "content", ["PARITY/content"]),
+  perturbedCase("parity-content-compiled", "content", ["PARITY/content"], ["--compile"]),
+  perturbedCase("parity-manifest", "manifest", ["PARITY/manifest"]),
+  perturbedCase("parity-fresh-fails", "fail-fresh", ["PARITY/content"]),
+  { name: "parity-stale-build", expect: [], mutate: (c) => sub(c, MD, "The helper in", "A sentence the build has not seen. The helper in") },
+  { name: "parity-both-fail", expect: [], mutate: (c) => json(c, "meta.json", (m) => void (m.people = 7)) },
+  { name: "parity-manifest-only-under-build", expect: [], mutate: (c) => json(c, MANIFEST, (m) => void (m.warnings = ["an old warning"])) },
+  { name: "parity-manifest-unreadable", expect: ["FILES/bad-json"], args: () => ["demo-packet", "--skip", "FILES/no-manifest"],
+    mutate: (c) => write(c, MANIFEST, "{") },
 ];
 
 /** Usage cases: argv only, no packet needed beyond the template copy. */

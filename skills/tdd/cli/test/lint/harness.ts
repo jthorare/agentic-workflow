@@ -1,7 +1,7 @@
 // The lint parity harness: run lint_packet.py (python3 -I -B) and `bun bin/tdd.ts lint` on the same packet, from the
 // same cwd, with the same environment (TZ pinned: META/stale-build prints a local time), and compare the exit code,
 // stdout, stderr and the --json file byte for byte. The corpus builds the base packet once and copies it per case.
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 
@@ -54,10 +54,13 @@ export const rmrf = (p: string): void => {
 };
 export const copy = (src: string, dst: string): void => cpSync(src, dst, { recursive: true, preserveTimestamps: true });
 
+/** Every file and folder under p, p included; a symbolic link is neither visited nor followed (a case may link the real
+ * skill, which a chmod or an mtime reset must never reach). */
 function walkAll(p: string, fn: (f: string) => void): void {
-  fn(p);
   let st;
-  try { st = statSync(p); } catch { return; }
+  try { st = lstatSync(p); } catch { return; }
+  if (st.isSymbolicLink()) return;
+  fn(p);
   if (st.isDirectory()) for (const n of readdirSync(p)) walkAll(join(p, n), fn);
 }
 
@@ -92,8 +95,8 @@ export function makeRepo(root: string, name = "repo"): Repo {
 }
 
 /** Compile a packet's source into <packet>/build with build_tdd.py (copying files), TDD_GENERATED pinned. */
-export function buildPacket(packet: string, slug: string): void {
-  const r = spawn(["python3", "-I", "-B", join(SCRIPTS, "build_tdd.py"), `${slug}.md`, "build"], packet);
+export function buildPacket(packet: string, slug: string, scripts: string = SCRIPTS): void {
+  const r = spawn(["python3", "-I", "-B", join(scripts, "build_tdd.py"), `${slug}.md`, "build"], packet);
   if (r.code !== 0) throw new Error(`build_tdd.py failed on ${packet}: ${r.err || r.out}`);
 }
 
@@ -126,3 +129,23 @@ export function caseFrom(template: string, root: string, name: string): string {
 }
 
 export const rel = (root: string, p: string): string => relative(root, p);
+
+/**
+ * A copy of the skill at <base>/tdd for a case that needs a different compiler: scripts/ copied (to be patched), cli/
+ * linked to the real one or, with fakeCli, a cli whose bin/build-tdd.ts prints fakeCli to stderr and exits 1, every
+ * other entry linked to the real skill, and the system-design skill linked as its sibling (where build_tdd.py looks).
+ * Returns <base>/tdd. Links are never followed by touchAll or rmrf.
+ */
+export function skillCopy(base: string, fakeCli: string | null = null): string {
+  const skill = join(base, "tdd");
+  mkdirSync(skill, { recursive: true });
+  for (const n of readdirSync(SKILL)) if (n !== "scripts" && (n !== "cli" || fakeCli === null)) symlinkSync(join(SKILL, n), join(skill, n));
+  symlinkSync(join(SKILL, "..", "system-design"), join(base, "system-design"));
+  cpSync(SCRIPTS, join(skill, "scripts"), { recursive: true, filter: (s) => !s.includes("__pycache__") });
+  if (fakeCli !== null) {
+    mkdirSync(join(skill, "cli", "bin"), { recursive: true });
+    mkdirSync(join(skill, "cli", "node_modules"));
+    writeFileSync(join(skill, "cli", "bin", "build-tdd.ts"), `console.error(${JSON.stringify(fakeCli)});\nprocess.exit(1);\n`);
+  }
+  return skill;
+}

@@ -1,10 +1,10 @@
 // Python semantics the linter needs on top of the kernel (src/py): dict access, ==, iteration, str(), the content-tree
 // walkers and the small text helpers of lint_packet.py (plain, norm, unlinked_text, outside_fences, parse_attrs ...).
 import * as py from "../py";
-import { PyError } from "../py/errors";
+import { PyError, isOSError, isOsOrValueError } from "../py/errors";
 import { PyFloat } from "../py/num";
 import { pyStr } from "../py/repr";
-import type { PyDict, PyValue } from "../py/value";
+import { type PyDict, type PyValue, pyTypeName, strictGet } from "../py/value";
 import { ATTRS } from "./patterns";
 
 const re = py.re;
@@ -16,9 +16,20 @@ export const truthy = py.truthy;
 export const str = pyStr;
 export const repr = py.repr;
 
-/** d.get(k, dflt) on a dict; dflt when d is not a dict (Python would raise: only malformed packets get there). */
+/** d.get(k, dflt) where lint_packet.py guards the receiver (isinstance, or a value the linter built): dflt when d is not
+ * a dict. Where lint_packet.py calls .get on a value read from a file unguarded, use dget. */
 export function get(d: unknown, k: string, dflt: PyValue = null): PyValue {
   return d instanceof Map && d.has(k) ? (d.get(k) as PyValue) : dflt;
+}
+
+/** d.get(k, dflt) as lint_packet.py calls it unguarded: AttributeError, CPython's text, when d is not a dict (a JSON
+ * file whose root, or a record in it, has the wrong type), so the run ends as the Python's does. */
+export const dget = (d: unknown, k: string, dflt: PyValue = null): PyValue => strictGet(d, k, dflt) as PyValue;
+
+/** d.keys(): AttributeError when d is not a dict. */
+export function keys(d: unknown): PyValue[] {
+  if (!(d instanceof Map)) throw new PyError("AttributeError", `'${typeName(d)}' object has no attribute 'keys'`);
+  return [...d.keys()];
 }
 
 /** `k in d` for a dict. */
@@ -77,17 +88,8 @@ export function items(v: unknown): [string, PyValue][] {
   throw new PyError("AttributeError", `'${typeName(v)}' object has no attribute 'items'`);
 }
 
-export function typeName(v: unknown): string {
-  if (v === null || v === undefined) return "NoneType";
-  if (typeof v === "boolean") return "bool";
-  if (typeof v === "number") return Number.isInteger(v) ? "int" : "float";
-  if (typeof v === "bigint") return "int";
-  if (typeof v === "string") return "str";
-  if (v instanceof PyFloat) return "float";
-  if (Array.isArray(v)) return "list";
-  if (v instanceof Map) return "dict";
-  return typeof v;
-}
+/** type(v).__name__ */
+export const typeName = pyTypeName;
 
 /** v.strip() on a value Python requires to be a str. */
 export function strip(v: unknown): string {
@@ -254,6 +256,13 @@ export function pyException(e: unknown): [string, string] {
   if (e instanceof Error) return [e.name || "Error", e.message];
   return ["Exception", String(e)];
 }
+
+export { isOSError, isOsOrValueError };
+
+/** An exception lint_packet.py raises too, at the same place and for the same input: a kernel PyError (CPython's type
+ * and text) or a file-system error. It ends the run as it ends lint_packet.py's (a traceback, exit 1, no report and no
+ * lint.json). Any other exception is a defect of this linter, which rule isolation reports as RULE/check-failed. */
+export const mirrorsPython = (e: unknown): boolean => e instanceof PyError || isOSError(e);
 
 /** str(e) for an OSError / ValueError the linter reports in a message. */
 export const pyErrText = (e: unknown): string => pyException(e)[1];

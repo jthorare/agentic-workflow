@@ -1,6 +1,7 @@
 // Unit tests of the linter's parts against CPython where Python decides (Git failure text, realpath, getmtime,
 // surrogateescape, the usage text), and of what only the TypeScript linter has: rule isolation, the swappable services
-// (a Git that answers from a table, an Agents check that raises, a Compiler that is absent).
+// (a Git that answers from a table, an Agents check that raises, a Compiler that is absent, a TypeScript compiler that
+// fails).
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { chmodSync, mkdirSync, symlinkSync, utimesSync, writeFileSync, copyFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
@@ -10,11 +11,11 @@ import { Finding } from "../../src/lint/finding";
 import { Packet } from "../../src/lint/packet";
 import { decodeSurrogateEscape } from "../../src/lint/pyops";
 import { lintJson, report } from "../../src/lint/report";
-import { firstDiff } from "../../src/lint/rules/parity";
+import { TsCompiler, firstDiff } from "../../src/lint/rules/parity";
 import type { RuleId } from "../../src/lint/patterns";
 import { AllLive, RULE_EFFECTS, lintEffect, type Rule } from "../../src/lint/run";
 import { Agents, Compiler, Git, gitLive, liveFs, timeoutText } from "../../src/lint/services";
-import { HAVE_PYTHON, SCRIPTS, T0, caseFrom, makeRepo, makeTemplate, pyLint, rmrf, tempDir, touchAll, type Repo } from "./harness";
+import { HAVE_PYTHON, SCRIPTS, T0, caseFrom, makeRepo, makeTemplate, pyLint, rmrf, skillCopy, tempDir, touchAll, type Repo } from "./harness";
 
 const dec = new TextDecoder();
 function py(code: string, ...args: string[]): string {
@@ -141,6 +142,25 @@ describe.skipIf(!HAVE_PYTHON)("services swapped by layer", () => {
     expect(r.notes.some((n) => n.startsWith("XDOC: compared"))).toBe(true);
     const skipped = await run(pk, null, table, ["STRUCT/check-failed"]);
     expect(skipped.findings.some((f) => f.check === "STRUCT/check-failed")).toBe(false);
+  });
+
+  test("PARITY: the TypeScript compiler fails where build_tdd.py does not, worded as lint_packet.py words it", async () => {
+    const dir = caseFrom(template, ROOT, "ts-compile-fails");
+    const skill = skillCopy(dir + "-skill", "the TypeScript compiler fails on purpose");
+    touchAll(dir, T0);
+    const want = pyLint(["demo-packet"], dir, dir, { script: join(skill, "scripts", "lint_packet.py") });
+    const failing = Layer.succeed(TsCompiler, { compile: () => [1, "the TypeScript compiler fails on purpose"] as const });
+    const here = process.cwd();
+    process.chdir(dir);
+    try {
+      const r = await Effect.runPromise(Effect.provide(lintEffect({ packet: "demo-packet" }), Layer.merge(AllLive, failing)));
+      expect(report(r)).toBe(want.out);
+      expect(lintJson(r)).toBe(want.json!);
+      expect(r.findings.filter((f) => f.rule === "PARITY").map((f) => f.message))
+        .toEqual(["the TypeScript compiler failed on demo-packet.md where build_tdd.py did not (exit 1: the TypeScript compiler fails on purpose)"]);
+    } finally {
+      process.chdir(here);
+    }
   });
 
   test("AGENTS: a check that raises is AGENTS/check-failed with Python's exception name", async () => {
