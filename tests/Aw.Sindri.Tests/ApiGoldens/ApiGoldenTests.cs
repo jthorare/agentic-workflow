@@ -47,6 +47,44 @@ public sealed class ApiGoldenTests
         Assert.Equal(ApiScenarios.Groups.Keys.Order(StringComparer.Ordinal), classes);
     }
 
+    /// <summary>
+    /// Scenarios that are about the human's own credentials (no token, a stale one, the prover label, an app origin): a session has none of these, so they
+    /// have no session reading.
+    /// </summary>
+    private static bool IsHumanCredentialRow((string Slug, string Scenario) row) =>
+        row.Scenario.StartsWith("human-", StringComparison.Ordinal)
+        || row.Scenario.StartsWith("prover-", StringComparison.Ordinal)
+        || row.Scenario.StartsWith("unknown-caller", StringComparison.Ordinal)
+        || row.Scenario.StartsWith("refused-origin", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Every Golden/Api case with its human headers swapped for an owner-started session's (PR 2 of the agent-first spec: every verb is open to sessions).
+    /// A case whose answer differs only because it was a session is a gate PR 2 should have removed, or a golden that records the caller. Until the
+    /// authorization PRs (A and B of PR 2) land, expect the rows they open to stay red.
+    /// </summary>
+    [Fact(Timeout = 600_000), Trait("Lane", "integration")]
+    public async Task The_API_goldens_pass_when_run_as_a_session()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var rows = ApiScenarios.All.Where(r => !IsHumanCredentialRow(r) && !IsPending(r.Slug + "/")).ToList();
+        var failures = new System.Collections.Concurrent.ConcurrentBag<string>();
+
+        await Parallel.ForEachAsync(rows, new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = ct }, async (row, token) =>
+        {
+            using var session = Callers.CallerRequests.AsSession();   // an AsyncLocal: each row's own flow carries it
+            try
+            {
+                await ApiGoldenRows.Match(row.Slug, row.Scenario, token);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                failures.Add($"{row.Slug}/{row.Scenario}: {e.GetType().Name}: {e.Message.Split('\n')[0]}");
+            }
+        });
+
+        Assert.True(failures.IsEmpty, "these goldens differ when run as a session:\n" + string.Join('\n', failures.Order(StringComparer.Ordinal)));
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("/sindri/status", "status")]
     [InlineData("/sindri/profile/approve", "profile-approve")]
