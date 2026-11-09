@@ -60,7 +60,7 @@ public sealed class DiskMeterTests : IDisposable
         _ = Directory.CreateDirectory(Path.Combine(folder, "a", "b"));   // folders count toward the cap too
         for (var i = 0; i < 4; i++)
         {
-            File.WriteAllBytes(Path.Combine(folder, $"f{i}.bin"), new byte[10]);
+            File.WriteAllBytes(Path.Combine(folder, $"f{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}.bin"), new byte[10]);
         }
 
         var result = DiskMeter.Check("scratch", folder, 1 << 20, entryCap: 5);
