@@ -82,4 +82,18 @@ public sealed class WorkflowItemMakerTests
         Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
         Assert.Null(_h.Events.Payload<ItemCreated>(Assert.Single(_h.Store.Events)).Value.Repo);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_item_made_for_a_run_is_linked_to_that_run_in_the_ledger()
+    {
+        _ = await _h.HoldLease();
+        await Seed();
+
+        var made = await Maker().Create(new ItemToCreate(_run, "Loose end", Repo: null, Body: null, LinearIssue: null), Token);
+
+        Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
+        var linked = Assert.Single(_h.Store.Events, static e => e.Envelope.Type == EventTypes.ItemLinked);
+        var payload = _h.Events.Payload<ItemLinked>(linked).Value;
+        Assert.Equal((made.Value, true), (payload.Item.Value, payload.Record.Value.StartsWith("sindri:run/", StringComparison.Ordinal)));
+    }
 }
