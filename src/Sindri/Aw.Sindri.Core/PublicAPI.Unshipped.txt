@@ -20519,6 +20519,8 @@ Aw.Sindri.Core.Graph.Blocks.DefaultForEachLimits
 override Aw.Sindri.Core.Profile.ForEachSettings.GetHashCode() -> int
 Aw.Sindri.Core.Graph.Blocks.ForEachLimits.ForEachLimits(int MaxItems, int BatchSize) -> void
 override Aw.Sindri.Core.Graph.Loops.LoopShape.Equals(object? obj) -> bool
+Aw.Sindri.Core.Graph.Blocks.CollectBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.CollectBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Blocks.CollectBlock.Type.get -> string!
 Aw.Sindri.Core.Graph.Loops.LoopShape
 Aw.Sindri.Core.Graph.Loops.LoopShape.Deconstruct(out Aw.Sindri.Core.Graph.GraphNode! ForEach, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.GraphNode!>! Body, out Aw.Sindri.Core.Graph.GraphNode! Collect) -> void
@@ -20553,6 +20555,8 @@ static Aw.Sindri.Core.Graph.Blocks.ForEachLimits.operator ==(Aw.Sindri.Core.Grap
 static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Standard(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model, Aw.Sindri.Core.Graph.Blocks.IForEachLimitSource? forEachLimits = null) -> Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry!
 static Aw.Sindri.Core.Graph.Loops.LoopBody.Find(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId forEach) -> Aw.Kernel.Result<Aw.Sindri.Core.Graph.Loops.LoopShape!>!
 Aw.Sindri.Core.Graph.Blocks.ForEachBlock.ForEachBlock(Aw.Sindri.Core.Graph.Blocks.IForEachLimitSource! limits) -> void
+Aw.Sindri.Core.Graph.Blocks.ForEachBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ForEachBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Blocks.ForEachBlock.Type.get -> string!
 Aw.Sindri.Core.Profile.ForEachSettings.Deconstruct(out int? MaxItems, out int? BatchSize) -> void
 static Aw.Sindri.Core.Graph.Loops.LoopBody.Enclosing(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId node) -> Aw.Sindri.Core.Graph.Loops.LoopShape?
