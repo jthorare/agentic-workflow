@@ -20679,6 +20679,8 @@ static readonly Aw.Sindri.Core.SindriErrors.GraphHttpRefused -> Aw.Kernel.ErrorD
 static readonly Aw.Sindri.Core.SindriErrors.GraphSelfStart -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Graph.Guards.CallOrigin
 Aw.Sindri.Core.Graph.Guards.CallOrigin.<Clone>$() -> Aw.Sindri.Core.Graph.Guards.CallOrigin!
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Ancestors.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Ancestors.init -> void
 Aw.Sindri.Core.Graph.Guards.CallOrigin.CallOrigin(string! Run, int Depth, string? ParentRun) -> void
 Aw.Sindri.Core.Graph.Guards.CallOrigin.Deconstruct(out string! Run, out int Depth, out string? ParentRun) -> void
 Aw.Sindri.Core.Graph.Guards.CallOrigin.Depth.get -> int
