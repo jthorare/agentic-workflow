@@ -24,12 +24,12 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     /// <inheritdoc />
     public IReadOnlyDictionary<string, IGraphBlockType> Types { get; }
 
-    /// <summary>The five blocks of PR 6: schedule, manual, condition, notify and prompt.</summary>
+    /// <summary>The six blocks: schedule, connection_event (PR 11), manual, condition, notify and prompt.</summary>
     /// <param name="notify">Where 'notify' writes.</param>
     /// <param name="model">What 'prompt' asks.</param>
     /// <returns>The registry.</returns>
     public static GraphBlockRegistry Standard(INotifyPort notify, IGraphModelPort model) =>
-        new([new ScheduleBlock(), new ManualBlock(), new ConditionBlock(), new NotifyBlock(notify), new PromptBlock(model)]);
+        new([new ScheduleBlock(), new ConnectionEventBlock(), new ManualBlock(), new ConditionBlock(), new NotifyBlock(notify), new PromptBlock(model)]);
 
     /// <summary>Finds the block of a type.</summary>
     /// <param name="type">The type name, such as 'condition'.</param>
