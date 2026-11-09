@@ -21,6 +21,18 @@ internal static class WorkflowWriteEndpoints
 {
     internal static RouteGroupBuilder MapWorkflowWrites(this RouteGroupBuilder group)
     {
+        MapCreate(group);
+        MapValidate(group);
+        MapOps(group);
+        MapReplace(group);
+        MapActivate(group);
+        MapPause(group);
+        MapDelete(group);
+        return group;
+    }
+
+    private static void MapCreate(RouteGroupBuilder group)
+    {
         _ = group.MapPost("/workflows", static async (CreateWorkflowBody? body, IService<CreateWorkflowRequest, CreateWorkflowResponse> service, ICallerContextAccessor callers, CancellationToken ct) =>
         {
             var slug = body?.Slug is { } text ? WorkflowReadEndpoints.Slug(text) : Missing<WorkflowSlug>("slug");
@@ -28,6 +40,10 @@ internal static class WorkflowWriteEndpoints
                 ? ((Result<CreateWorkflowResponse>)slug.Error).ToHttpResult()
                 : (await service.Handle(new CreateWorkflowRequest(slug.Value, body!.Template, body.Spec?.ToJsonString(), By(callers)), ct).ConfigureAwait(false)).ToHttpResult();   // why: a slug was read from body, so body is not null
         });
+    }
+
+    private static void MapValidate(RouteGroupBuilder group)
+    {
         _ = group.MapPost("/workflows/validate", static async (ValidateWorkflowBody? body, IService<ValidateWorkflowRequest, ValidateWorkflowResponse> service, CancellationToken ct) =>
         {
             WorkflowSlug? stored = null;
@@ -44,6 +60,10 @@ internal static class WorkflowWriteEndpoints
 
             return (await service.Handle(new ValidateWorkflowRequest(stored, body?.Revision, body?.Spec?.ToJsonString()), ct).ConfigureAwait(false)).ToHttpResult();
         });
+    }
+
+    private static void MapOps(RouteGroupBuilder group)
+    {
         _ = group.MapPost("/workflows/{slug}/ops", static async (string slug, ApplyWorkflowOpsBody? body, IService<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse> service, ICallerContextAccessor callers, CancellationToken ct) =>
         {
             var parsed = WorkflowReadEndpoints.Slug(slug);
@@ -54,6 +74,10 @@ internal static class WorkflowWriteEndpoints
 
             return (await service.Handle(new ApplyWorkflowOpsRequest(parsed.Value, baseRevision, body.Ops.ToJsonString(), By(callers)), ct).ConfigureAwait(false)).ToHttpResult();
         });
+    }
+
+    private static void MapReplace(RouteGroupBuilder group)
+    {
         _ = group.MapPut("/workflows/{slug}", static async (string slug, ReplaceWorkflowBody? body, IService<ReplaceWorkflowRequest, ReplaceWorkflowResponse> service, ICallerContextAccessor callers, CancellationToken ct) =>
         {
             var parsed = WorkflowReadEndpoints.Slug(slug);
@@ -64,6 +88,10 @@ internal static class WorkflowWriteEndpoints
 
             return (await service.Handle(new ReplaceWorkflowRequest(parsed.Value, baseRevision, body.Spec.ToJsonString(), By(callers)), ct).ConfigureAwait(false)).ToHttpResult();
         });
+    }
+
+    private static void MapActivate(RouteGroupBuilder group)
+    {
         _ = group.MapPost("/workflows/{slug}/activate", static async (string slug, ActivateWorkflowBody? body, IService<ActivateWorkflowRequest, ActivateWorkflowResponse> service, ICallerContextAccessor callers, CancellationToken ct) =>
         {
             var parsed = WorkflowReadEndpoints.Slug(slug);
@@ -71,6 +99,10 @@ internal static class WorkflowWriteEndpoints
                 ? ((Result<ActivateWorkflowResponse>)parsed.Error).ToHttpResult()
                 : (await service.Handle(new ActivateWorkflowRequest(parsed.Value, body?.Revision, By(callers)), ct).ConfigureAwait(false)).ToHttpResult();
         });
+    }
+
+    private static void MapPause(RouteGroupBuilder group)
+    {
         _ = group.MapPost("/workflows/{slug}/pause", static async (string slug, IService<PauseWorkflowRequest, PauseWorkflowResponse> service, ICallerContextAccessor callers, CancellationToken ct) =>
         {
             var parsed = WorkflowReadEndpoints.Slug(slug);
@@ -78,6 +110,10 @@ internal static class WorkflowWriteEndpoints
                 ? ((Result<PauseWorkflowResponse>)parsed.Error).ToHttpResult()
                 : (await service.Handle(new PauseWorkflowRequest(parsed.Value, By(callers)), ct).ConfigureAwait(false)).ToHttpResult();
         });
+    }
+
+    private static void MapDelete(RouteGroupBuilder group)
+    {
         _ = group.MapDelete("/workflows/{slug}", static async (string slug, IService<DeleteWorkflowRequest, DeleteWorkflowResponse> service, ICallerContextAccessor callers, CancellationToken ct) =>
         {
             var parsed = WorkflowReadEndpoints.Slug(slug);
@@ -85,7 +121,6 @@ internal static class WorkflowWriteEndpoints
                 ? ((Result<DeleteWorkflowResponse>)parsed.Error).ToHttpResult()
                 : (await service.Handle(new DeleteWorkflowRequest(parsed.Value, By(callers)), ct).ConfigureAwait(false)).ToHttpResult();
         });
-        return group;
     }
 
     private static string By(ICallerContextAccessor callers) => callers.Current?.Actor ?? "owner";

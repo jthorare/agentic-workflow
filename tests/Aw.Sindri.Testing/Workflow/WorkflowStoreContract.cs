@@ -80,7 +80,7 @@ public abstract class WorkflowStoreContract
 
         var paused = (await store.Pause(_id, Token)).Value;
 
-        Assert.Null(paused.ActiveRevision);
+        Expect.True(paused.ActiveRevision is null);
         Expect.Equal(1, paused.LatestRevision);
         Expect.Equal(SindriErrors.GraphNotFound.Code, (await store.Pause(WorkflowId.From("WF-00000000000000000000000000000009"), Token)).Error.Code);
     }

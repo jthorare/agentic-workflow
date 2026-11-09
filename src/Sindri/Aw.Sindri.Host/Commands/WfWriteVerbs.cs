@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Core;
@@ -49,7 +50,7 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
         }
 
         var body = new CreateWorkflowBody(slug, flags.Value("--template"), spec.Value);
-        return await Send<CreateWorkflowBody, CreateWorkflowResponse>(HttpMethod.Post, "/sindri/workflows", body, flags.Json, static r => $"{r.Slug.Value} created at revision {r.Revision} (off)\n", ct).ConfigureAwait(false);
+        return await Send(new Call<CreateWorkflowBody, CreateWorkflowResponse>(HttpMethod.Post, "/sindri/workflows", body, static r => r.Slug.Value + " created at revision " + r.Revision.ToString(CultureInfo.InvariantCulture) + " (off)\n"), flags.Json, ct).ConfigureAwait(false);
     }
 
     internal async Task<int> Edit(string[] args, CancellationToken ct)
@@ -77,13 +78,13 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
             var spec = await ReadJson(file, EditUsage, ct).ConfigureAwait(false);
             return spec.IsError
                 ? await output.Error(spec.Error).ConfigureAwait(false)
-                : await Send<ReplaceWorkflowBody, ReplaceWorkflowResponse>(HttpMethod.Put, route, new ReplaceWorkflowBody(baseRevision, spec.Value), flags.Json, static r => $"{r.Slug.Value} is now at revision {r.Revision}\n", ct).ConfigureAwait(false);
+                : await Send(new Call<ReplaceWorkflowBody, ReplaceWorkflowResponse>(HttpMethod.Put, route, new ReplaceWorkflowBody(baseRevision, spec.Value), static r => r.Slug.Value + " is now at revision " + r.Revision.ToString(CultureInfo.InvariantCulture) + "\n"), flags.Json, ct).ConfigureAwait(false);
         }
 
         var ops = await ReadJson(flags.Value("--ops-file"), EditUsage, ct, inline: flags.Value("--ops")).ConfigureAwait(false);
         return ops.IsError
             ? await output.Error(ops.Error).ConfigureAwait(false)
-            : await Send<ApplyWorkflowOpsBody, ApplyWorkflowOpsResponse>(HttpMethod.Post, route + "/ops", new ApplyWorkflowOpsBody(baseRevision, ops.Value), flags.Json, static r => $"{r.Slug.Value} is now at revision {r.Revision}\n", ct).ConfigureAwait(false);
+            : await Send(new Call<ApplyWorkflowOpsBody, ApplyWorkflowOpsResponse>(HttpMethod.Post, route + "/ops", new ApplyWorkflowOpsBody(baseRevision, ops.Value), static r => r.Slug.Value + " is now at revision " + r.Revision.ToString(CultureInfo.InvariantCulture) + "\n"), flags.Json, ct).ConfigureAwait(false);
     }
 
     internal async Task<int> Validate(string[] args, CancellationToken ct)
@@ -110,10 +111,10 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
             revision = parsed;
         }
 
-        return await Send<ValidateWorkflowBody, ValidateWorkflowResponse>(HttpMethod.Post, "/sindri/workflows/validate", new ValidateWorkflowBody(slug, revision, Spec: null), flags.Json, WfWriteText.Validation, ct).ConfigureAwait(false);
+        return await Send(new Call<ValidateWorkflowBody, ValidateWorkflowResponse>(HttpMethod.Post, "/sindri/workflows/validate", new ValidateWorkflowBody(slug, revision, Spec: null), WfWriteText.Validation), flags.Json, ct).ConfigureAwait(false);
     }
 
-    internal Task<int> Activate(string[] args, CancellationToken ct) => OneSlug(args, ActivateUsage, "--revision", ct, async (slug, flags) =>
+    internal Task<int> Activate(string[] args, CancellationToken ct) => OneSlug(args, ActivateUsage, "--revision", async (slug, flags) =>
     {
         int? revision = null;
         if (flags.Value("--revision") is { } text)
@@ -126,16 +127,16 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
             revision = parsed;
         }
 
-        return await Send<ActivateWorkflowBody, ActivateWorkflowResponse>(HttpMethod.Post, "/sindri/workflows/" + Uri.EscapeDataString(slug) + "/activate", new ActivateWorkflowBody(revision), flags.Json, static r => $"{r.Slug.Value} is on at revision {r.Revision}\n", ct).ConfigureAwait(false);
-    });
+        return await Send(new Call<ActivateWorkflowBody, ActivateWorkflowResponse>(HttpMethod.Post, "/sindri/workflows/" + Uri.EscapeDataString(slug) + "/activate", new ActivateWorkflowBody(revision), static r => r.Slug.Value + " is on at revision " + r.Revision.ToString(CultureInfo.InvariantCulture) + "\n"), flags.Json, ct).ConfigureAwait(false);
+    }, ct);
 
-    internal Task<int> Pause(string[] args, CancellationToken ct) => OneSlug(args, PauseUsage, flag: null, ct, async (slug, flags) =>
-        await Send<ActivateWorkflowBody, PauseWorkflowResponse>(HttpMethod.Post, "/sindri/workflows/" + Uri.EscapeDataString(slug) + "/pause", body: null, flags.Json, static r => $"{r.Slug.Value} is off\n", ct).ConfigureAwait(false));
+    internal Task<int> Pause(string[] args, CancellationToken ct) => OneSlug(args, PauseUsage, flag: null, async (slug, flags) =>
+        await Send(new Call<ActivateWorkflowBody, PauseWorkflowResponse>(HttpMethod.Post, "/sindri/workflows/" + Uri.EscapeDataString(slug) + "/pause", Body: null, static r => $"{r.Slug.Value} is off\n"), flags.Json, ct).ConfigureAwait(false), ct);
 
-    internal Task<int> Delete(string[] args, CancellationToken ct) => OneSlug(args, DeleteUsage, flag: null, ct, async (slug, flags) =>
-        await Send<ActivateWorkflowBody, DeleteWorkflowResponse>(HttpMethod.Delete, "/sindri/workflows/" + Uri.EscapeDataString(slug), body: null, flags.Json, static r => $"{r.Slug.Value} is archived\n", ct).ConfigureAwait(false));
+    internal Task<int> Delete(string[] args, CancellationToken ct) => OneSlug(args, DeleteUsage, flag: null, async (slug, flags) =>
+        await Send(new Call<ActivateWorkflowBody, DeleteWorkflowResponse>(HttpMethod.Delete, "/sindri/workflows/" + Uri.EscapeDataString(slug), Body: null, static r => $"{r.Slug.Value} is archived\n"), flags.Json, ct).ConfigureAwait(false), ct);
 
-    private async Task<int> OneSlug(string[] args, string usage, string? flag, CancellationToken ct, Func<string, Flags, Task<int>> run)
+    private async Task<int> OneSlug(string[] args, string usage, string? flag, Func<string, Flags, Task<int>> run, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(args);
         var flags = flag is null ? Flags.Read(args, usage) : Flags.Read(args, usage, flag);
@@ -148,9 +149,10 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
         return flags.Slug is { } slug ? await run(slug, flags).ConfigureAwait(false) : await output.Error(SindriErrors.InvalidInput.With("this verb needs a workflow slug (" + usage + ")")).ConfigureAwait(false);
     }
 
-    private async Task<int> Send<TBody, T>(HttpMethod method, string route, TBody? body, bool json, Func<T, string> text, CancellationToken ct)
+    private async Task<int> Send<TBody, T>(Call<TBody, T> call, bool json, CancellationToken ct)
         where TBody : class
     {
+        var (method, route, body, text) = call;
         if (await desk.EnsureRunning(ct).ConfigureAwait(false) is { } down)
         {
             return await output.Error(down).ConfigureAwait(false);
@@ -167,7 +169,7 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
     /// <summary>A JSON document from a file (or, for <paramref name="inline"/>, from the argument itself).</summary>
     private static async Task<Result<JsonNode?>> ReadJson(string? file, string usage, CancellationToken ct, string? inline = null)
     {
-        string? text = inline;
+        var text = inline;
         if (text is null && file is not null)
         {
             try
@@ -194,6 +196,10 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
             return SindriErrors.InvalidInput.With($"the JSON can't be read: {ex.Message} ({usage})");
         }
     }
+
+    /// <summary>One request to a workflow write route and how its answer reads as text.</summary>
+    private sealed record Call<TBody, T>(HttpMethod Method, string Route, TBody? Body, Func<T, string> Text)
+        where TBody : class;
 
     /// <summary>The slug, the value flags and --json of one verb.</summary>
     private sealed record Flags(string? Slug, IReadOnlyDictionary<string, string> Values, bool Json, Error? Bad)
