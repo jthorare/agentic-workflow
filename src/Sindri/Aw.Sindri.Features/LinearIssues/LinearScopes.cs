@@ -27,6 +27,38 @@ internal sealed class LinearScopes(IApprovedProfile approvals, ICallerContextAcc
         return new ContextScope(loaded.Profile.Context, ScopeRules.Usable(repos), owner ? new ContextCaller(ContextCallerKind.Human, Repo: null, ContextClient.Http) : Caller(callers.Current));
     }
 
+    /// <summary>
+    /// The scope a Linear write runs under: always the owner's (the write key is the owner's), but only once the current caller's own scope would let it in. A session is held to what its reads are:
+    /// SND-CONTEXT-020 when the owner turned <c>context.sessions.enabled</c> off, SND-CONTEXT-021 when the call names no repo, SND-CONTEXT-003 when the session's repo is not one the profile maps.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The owner's scope, or the caller's refusal, or the error when no profile yet.</returns>
+    internal async ValueTask<Result<ContextScope>> Write(CancellationToken cancellationToken)
+    {
+        var caller = await Read(owner: false, cancellationToken).ConfigureAwait(false);
+        if (caller.IsError)
+        {
+            return caller.Error;
+        }
+
+        if (caller.Value.Caller.Kind == ContextCallerKind.Session)
+        {
+            var settings = SettingsReader.Read(caller.Value.Settings);
+            if (settings.IsError)
+            {
+                return settings.Error;
+            }
+
+            var resolved = ScopeRules.Resolve(settings.Value, caller.Value.Repos, caller.Value.Caller);
+            if (resolved.IsError)
+            {
+                return resolved.Error;
+            }
+        }
+
+        return await Read(owner: true, cancellationToken).ConfigureAwait(false);
+    }
+
     private static ContextCaller Caller(CallerContext? caller) => caller switch
     {
         { Class: CallerClass.Human } => new ContextCaller(ContextCallerKind.Human, Repo: null, ContextClient.Http),

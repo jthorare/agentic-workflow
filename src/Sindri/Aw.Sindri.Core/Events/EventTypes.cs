@@ -134,6 +134,15 @@ public static partial class EventTypes
     /// <summary>The owner wrote or cleared the notes on a Linear project they lead.</summary>
     public const string ProjectLedNoted = "project.led.noted";
 
+    /// <summary>A caller created a Linear issue through Sindri.</summary>
+    public const string LinearIssueCreated = "linear.issue.created";
+
+    /// <summary>A caller posted a comment on a Linear issue through Sindri.</summary>
+    public const string LinearCommentPosted = "linear.comment.posted";
+
+    /// <summary>A caller changed fields of a Linear issue through Sindri.</summary>
+    public const string LinearIssueChanged = "linear.issue.changed";
+
     /// <summary>A session or a human filed a request; a decision was created with it.</summary>
     public const string RequestFiled = "request.filed";
 

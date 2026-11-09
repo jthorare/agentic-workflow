@@ -3,6 +3,7 @@ using Aw.Context.Core.Linear;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 
 namespace Aw.Sindri.Features.LinearIssues;
 
@@ -16,7 +17,8 @@ namespace Aw.Sindri.Features.LinearIssues;
 /// <param name="teams">The picked-team check.</param>
 /// <param name="issues">The issue read the answer is taken from.</param>
 /// <param name="clock">Stamps a comment the store did not return.</param>
-internal sealed class CommentLinearIssueService(LinearScopes scopes, IContextLinearWrites engine, LinearTeamGate teams, IService<GetLinearIssueRequest, GetLinearIssueResponse> issues, TimeProvider clock)
+/// <param name="recorder">Records the write under the caller's actor.</param>
+internal sealed class CommentLinearIssueService(LinearScopes scopes, IContextLinearWrites engine, LinearTeamGate teams, IService<GetLinearIssueRequest, GetLinearIssueResponse> issues, TimeProvider clock, ILinearWriteRecorder recorder)
     : IService<CommentLinearIssueRequest, CommentLinearIssueResponse>
 {
     private const string NotStored = "SND-LINEAR-013";
@@ -31,17 +33,28 @@ internal sealed class CommentLinearIssueService(LinearScopes scopes, IContextLin
             return SindriErrors.InvalidInput.With((key.IsError ? key.Error : client.Error).Message);
         }
 
-        var team = await teams.Picked(key.Value.Team, cancellationToken).ConfigureAwait(false);
-        var scope = await scopes.Read(owner: true, cancellationToken).ConfigureAwait(false);
-        if (team.IsError || scope.IsError)
+        var scope = await scopes.Write(cancellationToken).ConfigureAwait(false);
+        if (scope.IsError)
         {
-            return team.IsError ? team.Error : scope.Error;
+            return scope.Error;
+        }
+
+        var team = await teams.Picked(key.Value.Team, cancellationToken).ConfigureAwait(false);
+        if (team.IsError)
+        {
+            return team.Error;
         }
 
         var sent = await engine.Comment(key.Value, request.Body, client.Value, scope.Value, cancellationToken).ConfigureAwait(false);
         if (sent.IsError)
         {
             return sent.Error.Code == LinearHubErrors.NoAnswer.Code ? Unconfirmed(key.Value, client.Value) : LinearWriteFailures.Of(sent.Error);
+        }
+
+        if (sent.Value is LinearWriteApplied or LinearWriteAppliedNotStored
+            && await recorder.Record(EventTypes.LinearCommentPosted, key.Value.Team, key.Value.ToString(), client.Value.Value, fields: null, cancellationToken).ConfigureAwait(false) is { } failed)
+        {
+            return failed;
         }
 
         return sent.Value switch
