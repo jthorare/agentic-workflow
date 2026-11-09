@@ -74,6 +74,8 @@ not in the profile: they live in `launcher.json` (`docs/csharp/sindri-launcher.m
 | `steps` | object (`longMax`) | no | none | The longest a block Step may declare (line spec LN-WF7) |
 | `docs` | object (`globs`, `sync`) | no | none | Where docs sync may write (line spec §7.6) and whether it runs (`workflow.docs.sync`, below) |
 | `scoping` | object (`historyWindow`) | no | none | The scoping recipe's keys (see `workflow.scoping.historyWindow` below) |
+| `http` | object (`hosts`) | no | none | What a workflow `http` node may reach (agent-first PR 9; see `workflow.http.hosts` below) |
+| `callDepth` | integer, 1 to 10 | no | `3` | How many calls deep one workflow may start another through `run_workflow` (see `workflow.callDepth` below) |
 
 ### `workflow.agent` model keys
 
@@ -121,6 +123,8 @@ Line spec Appendix D and LN-WF9. Every key is optional and applies on save. A pr
 | `workflow.review.models` | object (`lens`) | no | profile roles | The agent that runs the review lenses |
 | `workflow.steps.longMax` | duration | no | `2h` | The longest `MaxDuration` a block Step may declare (LN-WF7) |
 | `workflow.scoping.historyWindow` | object (`since`, `before`) | no | none (all history); `profile init` writes `{}` | The window the scoping recipe's `input.context.history` reads (#399): `since` and `before` are RFC 3339 instants or dates (`2026-01-01`), either may be left out; `{}`, or leaving the key out, is all history. The recipe names this key as `window: { profile: workflow.scoping.historyWindow }`, and the input resolves it from the live profile when it fills; a key the profile leaves out reads the open window |
+| `workflow.http.hosts` | string[] | no | none (every request refused) | The hosts a workflow `http` node may send to: bare lower-case DNS names such as `api.example.com`, at most 50, none twice. No scheme, port or path, no IP address, no `localhost`; a bad entry is refused when you save it (`workflow.http.hosts[i]`). Requests are https only and unauthenticated until connections exist; a redirect to another host is never followed. A change needs a re-approval (it is in the profile diff) |
+| `workflow.callDepth` | integer, 1 to 10 | no | `3` | The deepest `run_workflow` chain: a top-level run is depth 0, the run it calls is 1. A call that would pass this is `SND-GRAPH-120`. A run can't start its own workflow or the one that called it (`SND-GRAPH-121`) whatever this says |
 | `workflow.docs.globs` | string[] | no | `docs/**`, `*.md` | The paths docs sync may write (BD5): repo-relative globs with `/` separators and no `..`, as `index.denyPaths` takes them |
 
 `workflow.effects` gains no key of its own: the line's effects (`effect.line.start-phase`, `effect.line.report`, `effect.pr.open`) are entries of the allowlist. Code reads the values with their defaults through `LineProfile` (`Aw.Sindri.Core.Profile`).
