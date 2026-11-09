@@ -108,6 +108,14 @@ internal sealed partial class TodoNoteSync(SyncDeps deps) : ITodoNoteSync, IDisp
 
     private async ValueTask<Result<TodoNoteImport>> Adopt(TodoNoteImportRequest request, NotePlace place, NoteCounts counts, CancellationToken cancellationToken)
     {
+        // why: the adopting pass caps at the room under the 500 open todos, so the number it should take is the capped one the check showed
+        var rows = await new SyncLedger(deps).Rows(cancellationToken).ConfigureAwait(false);
+        if (rows.IsError)
+        {
+            return rows.Error;
+        }
+
+        var willTake = NoteCounter.WillImport(counts.Importable, rows.Value.Count(TodoDecisions.IsOpen));
         var ran = await Run(place, PassMode.Import, cancellationToken).ConfigureAwait(false);
         if (ran.IsError)
         {
@@ -119,10 +127,10 @@ internal sealed partial class TodoNoteSync(SyncDeps deps) : ITodoNoteSync, IDisp
             return SindriErrors.TodoConflict.With(ran.Value.Error ?? $"The note can't be imported now ({ran.Value.State}). Try again.");
         }
 
-        if (ran.Value.Adopted != counts.Importable)
+        if (ran.Value.Adopted != willTake)
         {
             // why: the count was read without the quiet wait, the adopting pass reads after it; the note grew or shrank in between
-            return SindriErrors.TodoConflict.With(string.Create(CultureInfo.InvariantCulture, $"The note had {counts.Importable} lines to import when you checked and {ran.Value.Adopted} when they were taken. Check the note again."));
+            return SindriErrors.TodoConflict.With(string.Create(CultureInfo.InvariantCulture, $"The note had {willTake} lines to import when you checked and {ran.Value.Adopted} when they were taken. Check the note again."));
         }
 
         var events = new NoteEvents(deps, new Dictionary<Core.Ids.TodoId, long>(), string.Empty);

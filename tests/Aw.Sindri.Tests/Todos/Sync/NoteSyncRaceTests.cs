@@ -89,15 +89,20 @@ public sealed class NoteSyncRaceTests
     public async Task The_edit_made_during_the_swap_that_ends_busy_is_kept_and_lands_on_the_next_pass()
     {
         var rig = await WithNote();
+        _ = await rig.Pass();   // a synced base first: with none, bare lines wait for an import
+        await rig.Harness.Seed(TodoHarness.Second, "pay rent");   // a Sindri change, so the next pass writes the note
         var n = 0;
         rig.Files.AfterSwap = tmp => rig.Files.Files[tmp] += string.Create(System.Globalization.CultureInfo.InvariantCulture, $"- [ ] edit {++n}\n");
         _ = await rig.Pass();
         rig.Files.AfterSwap = null;
 
-        var status = await rig.Pass();
+        var status = await rig.Pass();   // the lines typed into what came out of the swaps become todos
+        await rig.FoldAdded();
+        _ = await rig.Pass();            // and land in the note
 
         Assert.Equal(TodoNoteState.Syncing, status.State);
         Assert.Contains(await rig.Payloads<TodoAdded>(EventTypes.TodoAdded), a => a.Text == "edit 3");
+        _ = Assert.NotNull(SyncRig.IdOnLine(rig.Note!, "edit 1"));
         _ = Assert.NotNull(SyncRig.IdOnLine(rig.Note!, "edit 3"));
         Assert.DoesNotContain(rig.Files.Files.Keys, k => k.Contains("sindri-tmp", StringComparison.Ordinal));
     }

@@ -67,21 +67,27 @@ internal sealed partial class SyncPass(SyncDeps d, NotePlace place, PassMode mod
             return stop;
         }
 
+        return await MergeNote(inputs.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    // the note as it is now, merged with Sindri's todos and landed
+    private async ValueTask<Result<SyncOutcome>> MergeNote(PassInputs inputs, CancellationToken cancellationToken)
+    {
         var read = (await d.Files.ReadQuiet(place.Path, _quiet, _longest, cancellationToken).ConfigureAwait(false)).Read;
-        if (Unreadable(read, inputs.Value.Base) is { } why)
+        if (Unreadable(read, inputs.Base) is { } why)
         {
             return new SyncOutcome(TodoNoteState.CantRead, why);
         }
 
         var doc = NoteParser.Parse(read.Text ?? string.Empty);
-        var waiting = await Waiting(inputs.Value, doc, cancellationToken).ConfigureAwait(false);
+        var waiting = await Waiting(inputs, doc, cancellationToken).ConfigureAwait(false);
         if (waiting.IsError || waiting.Value)
         {
             return waiting.IsError ? waiting.Error : new SyncOutcome(TodoNoteState.WaitingForImport, Error: null);
         }
 
-        var merged = NoteMerge.Merge(inputs.Value.Base, doc, inputs.Value.Sindri, inputs.Value.Options);
-        return await Land(new Merged(inputs.Value, doc, read, merged), cancellationToken).ConfigureAwait(false);
+        var merged = NoteMerge.Merge(inputs.Base, doc, inputs.Sindri, inputs.Options);
+        return await Land(new Merged(inputs, doc, read, merged), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<PassInputs>> Inputs(CancellationToken cancellationToken)

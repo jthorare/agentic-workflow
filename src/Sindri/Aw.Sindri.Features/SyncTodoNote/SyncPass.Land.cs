@@ -83,7 +83,7 @@ internal sealed partial class SyncPass
             NoteHash = m.Read.Hash ?? RowMapping.HashOf(string.Empty),
         };
 
-    // step 5 of Writing: a tmp file left by an earlier run. The swap never ran when its hash is the intent's (delete it unread); else it is what came out, merged as the note (events only; the pass then reads the note as it is)
+    // step 5 of Writing: a tmp file left by an earlier run. The swap never ran when its hash is the intent's (delete it unread); else it is what came out, merged as the note (its events and adoptions only; the pass then reads the note as it is)
     private async ValueTask<Result<SyncOutcome?>> Leftover(PassInputs inputs, CancellationToken cancellationToken)
     {
         if (d.Files.Leftover(place.Path) is not { } tmp)
@@ -115,15 +115,23 @@ internal sealed partial class SyncPass
             return new SyncOutcome(TodoNoteState.CantRead, "the file the last swap left was empty; it is kept beside the note");
         }
 
-        var doc = NoteParser.Parse(read.Text ?? string.Empty);
-        var events = new NoteEvents(d, inputs.Rows.ToDictionary(static r => r.Id, static r => r.Version), RowMapping.Tag(read.Hash ?? string.Empty));
-        var put = await events.Changes(NoteMerge.Merge(inputs.Base, doc, inputs.Sindri, inputs.Options).Intents, doc, cancellationToken).ConfigureAwait(false);
-        if (put.IsError)
+        var merged = await MergeLeftover(inputs, read, cancellationToken).ConfigureAwait(false);
+        if (merged.IsError)
         {
-            return put.Error;
+            return merged.Error;
         }
 
         d.Files.Delete(tmp);
         return Results.Success<SyncOutcome?>(value: null);
+    }
+
+    // what came out of the last swap, merged as the note: its changes and the lines it adopts become events
+    private async ValueTask<Result<Unit>> MergeLeftover(PassInputs inputs, NoteRead read, CancellationToken cancellationToken)
+    {
+        var doc = NoteParser.Parse(read.Text ?? string.Empty);
+        var events = new NoteEvents(d, inputs.Rows.ToDictionary(static r => r.Id, static r => r.Version), RowMapping.Tag(read.Hash ?? string.Empty));
+        var intents = NoteMerge.Merge(inputs.Base, doc, inputs.Sindri, inputs.Options).Intents;
+        var put = await events.Changes(intents, doc, cancellationToken).ConfigureAwait(false);
+        return put.IsError ? put : await events.Adopts(intents, cancellationToken).ConfigureAwait(false);   // why: a line typed into what came out of the last swap is a new todo; without this it went with the tmp file
     }
 }
