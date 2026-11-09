@@ -77,7 +77,7 @@ internal sealed partial class FakeSindriApi
         }
     }
 
-    public Task<Result<MemoryCreated>> CreateMemory(Uri api, CreateMemoryBody body, CancellationToken cancellationToken)
+    private Task<Result<MemoryCreated>> CreateMemoryCore(Uri api, CreateMemoryBody body)
     {
         ArgumentNullException.ThrowIfNull(body);
         if (NotReceived<MemoryCreated>(api) is { } unanswered)
@@ -99,7 +99,7 @@ internal sealed partial class FakeSindriApi
         }
     }
 
-    public Task<Result<MemorySearchView>> SearchMemory(Uri api, MemorySearch search, CancellationToken cancellationToken)
+    private Task<Result<MemorySearchView>> SearchMemoryCore(Uri api, MemorySearch search)
     {
         ArgumentNullException.ThrowIfNull(search);
         var (name, query, level, limit) = search;
@@ -125,7 +125,7 @@ internal sealed partial class FakeSindriApi
         }
     }
 
-    public Task<Result<MemoryFactWritten>> WriteMemoryFact(Uri api, string name, WriteMemoryFactBody body, CancellationToken cancellationToken)
+    private Task<Result<MemoryFactWritten>> WriteMemoryFactCore(Uri api, string name, WriteMemoryFactBody body)
     {
         ArgumentNullException.ThrowIfNull(body);
         if (NotReceived<MemoryFactWritten>(api) is { } unanswered)
@@ -162,7 +162,7 @@ internal sealed partial class FakeSindriApi
         }
     }
 
-    public Task<Result<MemoryForgotten>> ForgetMemoryFacts(Uri api, MemoryForget forget, CancellationToken cancellationToken)
+    private Task<Result<MemoryForgotten>> ForgetMemoryFactsCore(Uri api, MemoryForget forget)
     {
         ArgumentNullException.ThrowIfNull(forget);
         var (name, factId, tag, expired) = forget;
@@ -191,6 +191,53 @@ internal sealed partial class FakeSindriApi
                 || (expired && f.ExpiresAt is { } at && at <= now));
             return Task.FromResult<Result<MemoryForgotten>>(new MemoryForgotten(gone));
         }
+    }
+
+    /// <summary>When set, the four memory calls that change or read a store (create, search, write, forget) record and compute their answer at once but hand it back only when this completes.</summary>
+    public TaskCompletionSource? MemoryGate { get; set; }
+
+    public async Task<Result<MemoryCreated>> CreateMemory(Uri api, CreateMemoryBody body, CancellationToken cancellationToken)
+    {
+        var answer = CreateMemoryCore(api, body);   // computed now, so a held call answers with what the store held when it was sent
+        if (MemoryGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return await answer.ConfigureAwait(false);
+    }
+
+    public async Task<Result<MemorySearchView>> SearchMemory(Uri api, MemorySearch search, CancellationToken cancellationToken)
+    {
+        var answer = SearchMemoryCore(api, search);   // computed now, so a held call answers with what the store held when it was sent
+        if (MemoryGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return await answer.ConfigureAwait(false);
+    }
+
+    public async Task<Result<MemoryFactWritten>> WriteMemoryFact(Uri api, string name, WriteMemoryFactBody body, CancellationToken cancellationToken)
+    {
+        var answer = WriteMemoryFactCore(api, name, body);   // computed now, so a held call answers with what the store held when it was sent
+        if (MemoryGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return await answer.ConfigureAwait(false);
+    }
+
+    public async Task<Result<MemoryForgotten>> ForgetMemoryFacts(Uri api, MemoryForget forget, CancellationToken cancellationToken)
+    {
+        var answer = ForgetMemoryFactsCore(api, forget);   // computed now, so a held call answers with what the store held when it was sent
+        if (MemoryGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return await answer.ConfigureAwait(false);
     }
 
     private static Error NoMemory(string name) => new("SND-MEM-404", ErrorKind.NotFound, $"No memory named {name}.");

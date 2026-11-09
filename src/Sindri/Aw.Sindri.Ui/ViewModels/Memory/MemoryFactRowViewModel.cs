@@ -65,6 +65,9 @@ internal sealed class MemoryFactRowViewModel
     /// <summary>True when the fact has a score.</summary>
     public bool HasScore => ScoreText.Length > 0;
 
+    /// <summary>False while a forget of this fact's store is in flight.</summary>
+    public bool CanForget { get; private set; } = true;
+
     /// <summary>The forget action's words.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string ForgetText => Labels.MemoryForgetFact;

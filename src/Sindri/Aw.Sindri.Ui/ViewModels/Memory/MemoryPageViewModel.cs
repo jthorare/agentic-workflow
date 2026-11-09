@@ -217,6 +217,9 @@ internal sealed class MemoryPageViewModel : ObservableObject, IDisposable
     /// <summary>The new store's description.</summary>
     public string NewDescription { get; set => Set(ref field, value ?? string.Empty); } = string.Empty;
 
+    /// <summary>False while a create is in flight.</summary>
+    public bool CanCreate { get; private set; } = true;
+
     /// <summary>The sentence for a create that didn't work; empty otherwise.</summary>
     public string CreateError { get; private set { Set(ref field, value); OnChanged(nameof(HasCreateError)); } } = string.Empty;
 

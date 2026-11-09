@@ -80,6 +80,12 @@ internal sealed class MemoryStoreRowViewModel : ObservableObject
     /// <summary>The expiry being written, as yyyy-mm-dd; empty for none.</summary>
     public string WriteExpires { get; set => Set(ref field, value ?? string.Empty); } = string.Empty;
 
+    /// <summary>False while a write is in flight.</summary>
+    public bool CanWrite { get; private set; } = true;
+
+    /// <summary>False while any forget of this store is in flight.</summary>
+    public bool CanForget { get; private set; } = true;
+
     /// <summary>What the last write said: "Added." or "Refreshed: …"; or its error.</summary>
     public string WriteResult { get; private set { Set(ref field, value); OnChanged(nameof(HasWriteResult)); } } = string.Empty;
 
