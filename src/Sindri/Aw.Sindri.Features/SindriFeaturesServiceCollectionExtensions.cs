@@ -34,6 +34,8 @@ using Aw.Sindri.Features.GetRunSuspension;
 using Aw.Sindri.Features.GetSession;
 using Aw.Sindri.Features.GetSessionPreview;
 using Aw.Sindri.Features.GetStatus;
+using Aw.Sindri.Features.GetWorkflow;
+using Aw.Sindri.Features.GetWorkflowRun;
 using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.IssueChallenge;
 using Aw.Sindri.Features.Items;
@@ -47,6 +49,8 @@ using Aw.Sindri.Features.ListJobs;
 using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
+using Aw.Sindri.Features.ListWorkflowRuns;
+using Aw.Sindri.Features.ListWorkflows;
 using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
 using Aw.Sindri.Features.PingProcess;
@@ -99,6 +103,10 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IScheduledService, WorkflowScheduleService>().AddSingleton(WorkflowScheduleService.BuiltIn)   // the built-in 'workflow-schedule' service (#2258, PR 6): runs without a profile entry, every minute
             .AddScoped<IValidator<RunWorkflowRequest>, AcceptAllValidator<RunWorkflowRequest>>().AddCommand<RunWorkflowRequest, RunWorkflowResponse, RunWorkflowService>()   // 'sindri wf run' and 'wf cancel' (#2258, PR 6): behind the command chain; the slug and payload are checked by the service
             .AddScoped<IValidator<CancelWorkflowRunRequest>, AcceptAllValidator<CancelWorkflowRunRequest>>().AddCommand<CancelWorkflowRunRequest, CancelWorkflowRunResponse, CancelWorkflowRunService>()
+            .AddScoped<IValidator<ListWorkflowsRequest>, AcceptAllValidator<ListWorkflowsRequest>>().AddQuery<ListWorkflowsRequest, ListWorkflowsResponse, ListWorkflowsService>()   // the workflow reads (#2258, PR 8a): 'sindri wf list|show|runs|run-show'; the slug and the run id are typed, the services say what is missing
+            .AddScoped<IValidator<GetWorkflowRequest>, AcceptAllValidator<GetWorkflowRequest>>().AddQuery<GetWorkflowRequest, GetWorkflowResponse, GetWorkflowService>()
+            .AddScoped<IValidator<ListWorkflowRunsRequest>, AcceptAllValidator<ListWorkflowRunsRequest>>().AddQuery<ListWorkflowRunsRequest, ListWorkflowRunsResponse, ListWorkflowRunsService>()
+            .AddScoped<IValidator<GetWorkflowRunRequest>, AcceptAllValidator<GetWorkflowRunRequest>>().AddQuery<GetWorkflowRunRequest, GetWorkflowRunResponse, GetWorkflowRunService>()
             .AddScoped<IService<RecordHeartbeatRequest, RecordHeartbeatResponse>, RecordHeartbeatService>()
             .AddScoped<IService<RetireInstancesOnStartRequest, RetireInstancesOnStartResponse>, RetireInstancesOnStartService>()
             .AddRecordServiceRun()
