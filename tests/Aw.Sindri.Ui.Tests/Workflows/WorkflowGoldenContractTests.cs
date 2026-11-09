@@ -109,7 +109,8 @@ public sealed class WorkflowGoldenContractTests
         var manual = read.Groups[0].Blocks.Single(b => b.Type == "manual");
         Assert.Equal(("When called", true), (manual.Title, manual.IsTrigger));
         Assert.Equal("start", manual.ExampleSpec!.Value.GetProperty("nodes")[0].GetProperty("id").GetString());
-        var prompt = Assert.Single(read.Groups[2].Blocks);
+        Assert.Equal(["prompt", "run_agent"], read.Groups[2].Blocks.Select(b => b.Type), StringComparer.Ordinal);
+        var prompt = read.Groups[2].Blocks[0];
         Assert.Equal(new WorkflowBlockField("prompt", "text", Required: true), prompt.Config[0]);
         Assert.Equal("Summarize {{search.facts}}", prompt.ExampleConfig!.Value.GetProperty("prompt").GetString());
         Assert.Equal(["collect", "for_each", "condition", "only_new", "run_workflow"], read.Groups[3].Blocks.Select(b => b.Type), StringComparer.Ordinal);
