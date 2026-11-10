@@ -1,25 +1,25 @@
 {
   "asOf": {
-    "cursor": 14,
-    "ledgerHead": 14,
+    "cursor": 8,
+    "ledgerHead": 8,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
   },
   "todo": {
-    "id": "td_01jc5a8xq0n4w7ms2t9r3vbk6e",
+    "id": "td_00000000000000000000000008",
     "text": "reply to Sam about the offsite",
     "due": "2026-01-02",
     "links": [],
-    "addedAt": "2025-12-30T09:15:00.0000000Z",
-    "addedBy": "human:ui",
+    "addedAt": "2026-01-01T00:00:00.0000000Z",
+    "addedBy": "human:cli",
     "addedVia": null,
-    "doneAt": null,
+    "doneAt": "2026-01-01T00:00:00.0000000Z",
     "removed": false,
     "removedAt": null,
     "removedBy": null,
     "version": 3,
-    "lastBy": "human:ui",
+    "lastBy": "human:cli",
     "lastVia": null,
     "conflict": {
       "sindri": {
@@ -38,7 +38,7 @@
         "done": false,
         "removed": false
       },
-      "noteHash": "sha256:9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a"
+      "noteHash": "sha256:3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a"
     }
   }
 }

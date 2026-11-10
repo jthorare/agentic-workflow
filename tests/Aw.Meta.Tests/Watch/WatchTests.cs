@@ -101,7 +101,25 @@ public sealed class WatchTests
         Assert.NotNull(board);
         Assert.Equal("bbbbbbb2222222", board.MainSha);
         Assert.Equal([190], board.MergedPrs);
-        Assert.Equal(1, board.Version);
+        Assert.Equal(2, board.Version);   // the start recorded aaaaaaa1111111 as version 1
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_watch_that_starts_records_the_main_it_starts_at_once()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], mains: ["aaaaaaa1111111"]);
+
+        _ = await Watch(TimeSpan.FromSeconds(120));
+        var first = (await _world.Board.Read(CancellationToken.None)).Value;
+        _ = await Watch(TimeSpan.FromSeconds(120));
+        var second = (await _world.Board.Read(CancellationToken.None)).Value;
+
+        Assert.NotNull(first);
+        Assert.Equal(("aaaaaaa1111111", 1), (first.MainSha, first.Version));
+        Assert.Empty(first.MergedPrs);
+        Assert.NotNull(second);
+        Assert.Equal(("aaaaaaa1111111", 1), (second.MainSha, second.Version));
     }
 
     [Fact, Trait("Lane", "unit")]
