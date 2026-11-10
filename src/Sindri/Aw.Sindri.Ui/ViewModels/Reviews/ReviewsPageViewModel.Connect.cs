@@ -14,6 +14,11 @@ internal sealed partial class ReviewsPageViewModel
     /// <summary>The action's words ("Connect GitHub", "Sign in to GitHub again"); empty when there is no action.</summary>
     public string ConnectText => _connect?.Text ?? string.Empty;
 
+    /// <summary>The one line over the action while there is no list ("Pull requests waiting on your review, with their threads and checks."); empty otherwise.</summary>
+#pragma warning disable CA1822, MA0041 // red stub: the real line reads the connect state
+    public string ConnectLine => string.Empty;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>The action named a connection that needs signing in again: the link is 'connection/&lt;name&gt;', its sheet.</summary>
     internal event EventHandler<ReviewOpenRequestedEventArgs>? ConnectRequested;
 

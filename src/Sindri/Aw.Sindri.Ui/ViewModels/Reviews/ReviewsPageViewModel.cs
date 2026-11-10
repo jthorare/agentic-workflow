@@ -58,6 +58,14 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
         }
     } = string.Empty;
 
+#pragma warning disable CA1822, MA0041 // red stubs: the real values read the served library state and the rows
+    /// <summary>True when the header's library button has something to open: not while the library is being read, and not when it holds no design docs.</summary>
+    public bool ShowLibrary => true;
+
+    /// <summary>True when the key hints show: the list has rows.</summary>
+    public bool ShowHints => true;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>True when the header shows a warning (docs with errors, or a folder that can't be read).</summary>
     public bool LibraryWarns { get; private set => Set(ref field, value); }
 
