@@ -44,12 +44,12 @@ public sealed class GraphAgentLaunchCapTests
         var final = await rig.Final(started.RunId);
         var rows = await rig.ItemRuns(started.RunId, "work");
 
+        // why: a for_each runs its items in order, and the first item whose node fails stops the loop (the node has no on_failure: continue), so item 2 never launches
         Assert.Equal(WorkflowRunStatus.Failed, final.Status);
-        var perItem = runtime.Launches.GroupBy(static l => l.ItemIndex).ToList();
-        Assert.NotEmpty(perItem);
-        Assert.All(perItem, static g => Assert.Equal(3, g.Count()));
-        Assert.All(perItem, g => Assert.Equal(NodeRunStatus.Failed, rows[g.Key].Status));
-        Assert.All(perItem, g => Assert.Contains("store error", rows[g.Key].Error, StringComparison.Ordinal));
+        Assert.Equal([1, 1, 1], runtime.Launches.Select(static l => l.ItemIndex));
+        Assert.Equal(NodeRunStatus.Failed, rows[1].Status);
+        Assert.Contains("store error", rows[1].Error, StringComparison.Ordinal);
+        Assert.False(rows.ContainsKey(2));
     }
 
     // why: bounds the history events one failed attempt adds, which is what keeps the cap's attempts far under Temporal's 51,200 events; the count wobbles by one or two (Temporal folds an attempt's events into a shared workflow task), so it is an upper bound, not a constant
