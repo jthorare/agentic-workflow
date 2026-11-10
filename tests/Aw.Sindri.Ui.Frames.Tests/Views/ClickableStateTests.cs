@@ -251,11 +251,10 @@ public sealed class ClickableStateTests : FrameHost
         Assert.DoesNotContain(":pressed", card.Classes, StringComparer.Ordinal);
     });
 
+    // A calm row only: an attention row (pulsing, steady) keeps its amber under the pointer instead (#2611, the test below).
     [Theory]
-    [InlineData("pulsing")]
-    [InlineData("steady")]
     [InlineData("subtle")]
-    public Task The_pointer_over_a_tinted_Needs_You_row_shows_the_hover_background(string tint) => OnUi(async () =>
+    public Task The_pointer_over_a_calm_Needs_You_row_shows_the_hover_background(string tint) => OnUi(async () =>
     {
         using var instant = InstantMotion.Start(); // no easing, but motion stays on: under reduced motion an unseen park row is outlined, not pulsing
         var (window, shell) = await Connected();
@@ -508,7 +507,11 @@ public sealed class ClickableStateTests : FrameHost
         var point = await PointAt(window, () => Corner(window, row), row);
 
         Assert.True(row.IsPointerOver, $"at {point}, hit {Describe(window.InputHitTest(point))}, chain {Chain(row)}");
-        Assert.Equal(TokenColor("Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.Equal(TokenColor(IsAttention(row) ? "Brush.AttentionSoft.Hover" : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
         Frame(window, $"{stem}-row-hover", "gh2535-");
     });
+
+    // An attention Needs You row (an inbox row asking for you) lifts within its own amber, not to the grey hover (#2611).
+    private static bool IsAttention(Border row) =>
+        row.Classes.Contains("needs-you-row") && (row.Classes.Contains("pulsing") || row.Classes.Contains("steady") || row.Classes.Contains("outlined"));
 }
