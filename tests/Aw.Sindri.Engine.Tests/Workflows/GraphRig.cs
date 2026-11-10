@@ -35,7 +35,7 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly InMemorySindriStore _ledger;
     private readonly SindriTimeSkippingServer _server;
 
-    private GraphRig(SindriTimeSkippingServer server, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
+    private GraphRig(SindriTimeSkippingServer server, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0)
     {
         _server = server;
         var environment = server.Environment;
@@ -55,7 +55,7 @@ internal sealed class GraphRig : IAsyncDisposable
         held.Hold(_ledger.Acquire(probe.Self(), Token).AsTask().GetAwaiter().GetResult().Value);
         var ids = new SequentialIdGenerator();
         var mirror = new GraphMirror(_ledger, held, new EventFactory(EventScope.ControlPlane, clock, ids, SliceHarness.Json, new AsyncLocalCallerContextAccessor(ids)));
-        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue);
+        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue, agentLaunchAttempts);
         var starter = new GraphRunStarter(Runs, launcher, mirror, clock, NullLogger<GraphRunStarter>.Instance);
         _starter = starter;
         // why: the real wait polls on a clock; the fake one never moves while a node waits, so the caller gets the system clock
@@ -108,18 +108,24 @@ internal sealed class GraphRig : IAsyncDisposable
     /// <returns>The started rig.</returns>
     public static Task<GraphRig> StartAsync(IAgentNodeRuntime? agents = null) => StartAsync(agents, forEachLimits: null);
 
+    /// <summary>Starts a time-skipping server of its own and a rig on it whose 'run_agent' launch is tried <paramref name="agentLaunchAttempts"/> times before the node fails.</summary>
+    /// <param name="agents">The agent runtime of 'run_agent' nodes.</param>
+    /// <param name="agentLaunchAttempts">The cap on launch attempts.</param>
+    /// <returns>The started rig.</returns>
+    public static Task<GraphRig> StartAsync(IAgentNodeRuntime agents, int agentLaunchAttempts) => StartAsync(agents, forEachLimits: null, agentLaunchAttempts);
+
     /// <summary>A rig whose for_each blocks read <paramref name="forEachLimits"/> as the profile's limits.</summary>
     /// <param name="forEachLimits">The profile's item cap and batch size.</param>
     /// <returns>The started rig.</returns>
     public static Task<GraphRig> StartAsync(ForEachLimits forEachLimits) => StartAsync(agents: null, forEachLimits);
 
-    private static async Task<GraphRig> StartAsync(IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
+    private static async Task<GraphRig> StartAsync(IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0)
     {
         var server = new SindriTimeSkippingServer();
         await server.InitializeAsync();
         try
         {
-            return new GraphRig(server, agents, forEachLimits);
+            return new GraphRig(server, agents, forEachLimits, agentLaunchAttempts);
         }
         catch
         {
