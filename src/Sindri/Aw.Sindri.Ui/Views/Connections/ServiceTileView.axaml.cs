@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Threading;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Aw.Sindri.Ui.ViewModels.Connections;
 
 namespace Aw.Sindri.Ui.Views.Connections;
