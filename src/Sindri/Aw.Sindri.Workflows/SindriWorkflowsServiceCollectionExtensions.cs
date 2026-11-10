@@ -53,6 +53,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<GraphMirror>()
             .AddSingleton<IForEachLimitSource, ProfileForEachLimits>()
             .AddSingleton<IGraphCallPort, GraphWorkflowCaller>()   // 'run_workflow' starts the other workflow's active revision (agent-first PR 9)
+            .AddSingleton<IGraphResultPort, GraphRunResults>()   // 'workflow_result' reads a finished run (agent-first PR 9)
             .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>(), provider.GetRequiredService<IForEachLimitSource>(),
                 [.. GraphBlockRegistry.FlowBlocks(provider.GetRequiredService<IGraphSeenStore>(), provider.GetRequiredService<ICreateItemPort>(), provider.GetRequiredService<IGraphCallPort>(), provider.GetRequiredService<IGraphHttpPort>()),
                  .. GraphBlockRegistry.ParkingBlocks(provider.GetRequiredService<IQuestionPort>(), provider.GetRequiredService<TimeProvider>())]))
