@@ -33,7 +33,8 @@ public sealed class AgentsColumnsTests
         {
             Remove(l, Claude);
             Remove(l, "codex/");
-        }));   // what is left is the cursor session: no repository, no worktree, nothing it asks or runs
+            Row(l, "cursor/")["launch"] = null;
+        }));   // what is left is the cursor session without its Step: no repository, no worktree, nothing it asks or runs
         var page = await _f.Shown(Token);
         page.Resize(1280);
 

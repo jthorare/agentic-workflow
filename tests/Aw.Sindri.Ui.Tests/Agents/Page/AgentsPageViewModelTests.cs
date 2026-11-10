@@ -94,7 +94,7 @@ public sealed class AgentsPageViewModelTests
         Assert.Equal("● Waiting on you", row.ChipText);
         Assert.Equal(Labels.AskingDetail((string)served["reason"]!, (string)served["tool"]!), row.AskingText);
         Assert.Contains(row.AskingText, row.Name, StringComparison.Ordinal);
-        Assert.Contains("asking", row.Name, StringComparison.Ordinal);
+        Assert.Contains("waiting on you", row.Name, StringComparison.Ordinal);
     }
 
     [Fact]
