@@ -115,7 +115,7 @@ internal sealed class ConnectionToolAdapter(IConnectionStore store, IConnectionS
         var path = action.Path;
         foreach (var part in PathParts(action.Path))
         {
-            if (arguments[part] is not JsonValue value || value.ToJsonString().Trim('"') is not { Length: > 0 } text)
+            if (arguments[part] is not JsonValue value || PathText(value) is not { Length: > 0 } text)
             {
                 return SindriErrors.GraphBlockFailed.With($"{action.Name} needs '{part}'");
             }
@@ -133,6 +133,9 @@ internal sealed class ConnectionToolAdapter(IConnectionStore store, IConnectionS
 
         return new HttpRequestMessage(action.Method, url) { Content = new StringContent(arguments.ToJsonString(), Encoding.UTF8, "application/json") };
     }
+
+    // A string is its value (not its JSON text, whose escapes would end up in the url); a number or a bool is its JSON text.
+    private static string PathText(JsonValue value) => value.TryGetValue<string>(out var text) ? text : value.ToJsonString();
 
     private static IEnumerable<string> PathParts(string path)
     {
