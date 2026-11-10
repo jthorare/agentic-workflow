@@ -56,6 +56,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IGraphResultPort, GraphRunResults>()   // 'workflow_result' reads a finished run (agent-first PR 9)
             .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>(), provider.GetRequiredService<IForEachLimitSource>(),
                 [.. GraphBlockRegistry.FlowBlocks(provider.GetRequiredService<IGraphSeenStore>(), provider.GetRequiredService<ICreateItemPort>(), provider.GetRequiredService<IGraphCallPort>(), provider.GetRequiredService<IGraphHttpPort>()),
+                 .. GraphBlockRegistry.ResultBlocks(provider.GetRequiredService<IGraphResultPort>()),
                  .. GraphBlockRegistry.ParkingBlocks(provider.GetRequiredService<IQuestionPort>(), provider.GetRequiredService<TimeProvider>())]))
             .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
             .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog

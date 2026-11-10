@@ -22485,3 +22485,4 @@ Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.Config.get -> Aw.Sindri.Core.Gra
 Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
 Aw.Sindri.Core.Graph.Blocks.IGraphResultPort.Read(Aw.Sindri.Core.Graph.Ids.WorkflowSlug workflow, Aw.Sindri.Core.Graph.Ids.WorkflowRunId? run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.GraphRunResult!>!>
 Aw.Sindri.Core.Graph.Blocks.GraphRunResult.GraphRunResult(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, string! Status, System.DateTimeOffset? FinishedAt, System.Text.Json.Nodes.JsonNode? Outputs) -> void
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.ResultBlocks(Aw.Sindri.Core.Graph.Blocks.IGraphResultPort! results) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>!
