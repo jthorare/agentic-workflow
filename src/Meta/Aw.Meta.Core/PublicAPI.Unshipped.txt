@@ -2422,6 +2422,7 @@ Aw.Meta.Core.Ports.IBoardStore
 Aw.Meta.Core.Ports.IBoardStore.MarkSeen(string! lane, Aw.Meta.Core.Ports.BoardSeen! seen, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.IBoardStore.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.BoardFacts?>!>
 Aw.Meta.Core.Ports.IBoardStore.RecordMain(string! sha, System.Collections.Generic.IReadOnlyList<int>! mergedPrs, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.IBoardStore.SeedMain(string! sha, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Meta.Core.Ports.IBoardStore.SeenVersion(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.BoardSeen?>!>
 override Aw.Meta.Core.Ports.BoardFacts.Equals(object? obj) -> bool
 override Aw.Meta.Core.Ports.BoardFacts.GetHashCode() -> int

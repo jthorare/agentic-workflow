@@ -46,6 +46,8 @@ internal sealed class SqliteBoardStore(IKeyValueStore values) : IBoardStore
         return MetaErrors.BoardContended.With($"main's board row changed {MaxAttempts} times while recording {sha}");
     }
 
+    public ValueTask<Result<bool>> SeedMain(string sha, DateTimeOffset at, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     public async ValueTask<Result<BoardFacts?>> Read(CancellationToken cancellationToken)
     {
         var stored = await values.Get(KvKeys.BoardMain, cancellationToken).ConfigureAwait(false);

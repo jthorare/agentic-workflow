@@ -20,6 +20,9 @@ public sealed class InMemoryBoardStore : IBoardStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<bool>> SeedMain(string sha, DateTimeOffset at, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <inheritdoc />
     public ValueTask<Result<BoardFacts?>> Read(CancellationToken cancellationToken) => Done.Of(_board);
 
     /// <inheritdoc />

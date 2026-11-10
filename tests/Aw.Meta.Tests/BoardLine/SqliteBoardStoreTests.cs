@@ -89,6 +89,48 @@ public sealed class SqliteBoardStoreTests
         Assert.Equal([12, 13], board.MergedPrs.Order());
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task Seeding_an_empty_board_records_main_as_version_one_with_no_pull_requests()
+    {
+        var seeded = await Store().SeedMain("abc1234", A.At(5), CancellationToken.None);
+        var board = (await Store().Read(CancellationToken.None)).Value;
+
+        Assert.True(seeded.IsSuccess && seeded.Value);
+        Assert.NotNull(board);
+        Assert.Equal((1, "abc1234"), (board.Version, board.MainSha));
+        Assert.Empty(board.MergedPrs);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Seeding_a_board_that_holds_a_move_leaves_it_as_it_is()
+    {
+        _ = await Store().RecordMain("new1111", [190], A.At(5), CancellationToken.None);
+
+        var seeded = await Store().SeedMain("old0000", A.At(6), CancellationToken.None);
+        var board = (await Store().Read(CancellationToken.None)).Value;
+
+        Assert.True(seeded.IsSuccess);
+        Assert.False(seeded.Value);
+        Assert.NotNull(board);
+        Assert.Equal((1, "new1111"), (board.Version, board.MainSha));
+        Assert.Equal([190], board.MergedPrs);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_fake_seeds_only_an_empty_board_like_the_store()
+    {
+        var fake = new InMemoryBoardStore();
+
+        var first = await fake.SeedMain("abc1234", A.At(5), CancellationToken.None);
+        _ = await fake.RecordMain("new1111", [190], A.At(6), CancellationToken.None);
+        var second = await fake.SeedMain("old0000", A.At(7), CancellationToken.None);
+        var board = (await fake.Read(CancellationToken.None)).Value;
+
+        Assert.Equal((true, false), (first.Value, second.Value));
+        Assert.NotNull(board);
+        Assert.Equal((2, "new1111"), (board.Version, board.MainSha));
+    }
+
     // Holds the first two reads of the board key until both have arrived, so both writers see the same row before either writes.
     private sealed class RacingKeyValueStore(IKeyValueStore inner) : IKeyValueStore
     {
