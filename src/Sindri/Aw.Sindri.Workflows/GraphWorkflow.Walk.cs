@@ -18,7 +18,8 @@ internal sealed partial class GraphWorkflow
     private async Task<GraphWorkflowResult> Walk(GraphSpec spec)
     {
         _pending = [.. spec.Nodes];
-        while (_pending.Find(n => Ready(spec, n)) is { } node)
+        // why: a ready node on a branch nobody took is recorded 'skipped' before a live one runs, so a dead branch shows skipped while its sibling parks (a wait or ask_owner can hold the walk for hours)
+        while ((_pending.Find(n => Ready(spec, n) && !Live(spec, n)) ?? _pending.Find(n => Ready(spec, n))) is { } node)
         {
             _ = _pending.Remove(node);
             if (!Live(spec, node))
