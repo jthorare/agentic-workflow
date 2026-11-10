@@ -10,7 +10,7 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
-/// <summary>Key frames for the Connections page, its sheet and its add form at 1440 and 900 px wide, against the in-memory API. Saved under frames/ as connections-*.png.</summary>
+/// <summary>Key frames for the Connections page, its sheet and its add form at 1440 and 900 px wide (the tile check at 1000, the window minimum), against the in-memory API. Saved under frames/ as connections-*.png.</summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
 public sealed class ConnectionsFramesTests : FrameHost
@@ -107,23 +107,29 @@ public sealed class ConnectionsFramesTests : FrameHost
         await tile.Connect(CancellationToken.None);
         Settle(window);
 
-        Assert.True(Visible(window, "ServiceTileClientId"));
-        Assert.True(Visible(window, "ServiceTileReason"));
+        Assert.True(VisibleIn(window, tile, "ServiceTileClientId"));
+        Assert.True(VisibleIn(window, tile, "ServiceTileReason"));
         Frame(window, "tile-asks", Prefix);
     });
+
+    // 1000 px is the narrowest the window goes (Size.WindowMinWidth): at 900 the layout stays 1000 wide and every frame "clips".
     [Fact]
-    public Task A_tile_shows_its_chip_one_primary_button_and_the_help_line_and_nothing_clips_at_900() => OnUi(async () =>
+    public Task A_tile_shows_its_chip_one_primary_button_and_the_help_line_and_nothing_clips_at_1000() => OnUi(async () =>
     {
-        var (window, shell) = await OnConnections(900);
+        var (window, shell) = await OnConnections(1000);
         var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "linear", StringComparison.Ordinal));
         await tile.Connect(CancellationToken.None);
         Settle(window);
 
-        Assert.True(Visible(window, "ServiceTileChip"));
-        Assert.True(Visible(window, "ServiceTileHelp"));
-        Assert.True(Visible(window, "ServiceTileHelpLink"));
+        Assert.True(VisibleIn(window, tile, "ServiceTileChip"), "the chip is hidden");
+        Assert.True(VisibleIn(window, tile, "ServiceTileHelp"), "the help line is hidden");
+        Assert.True(VisibleIn(window, tile, "ServiceTileHelpLink"), "the help link is hidden");
         Assert.Equal(1, window.GetVisualDescendants().OfType<Button>().Count(b => string.Equals(b.Name, "ServiceTilePrimary", StringComparison.Ordinal) && b.IsEffectivelyVisible && b.GetVisualAncestors().OfType<Control>().Any(c => c.DataContext == tile)));
-        Assert.All(window.GetVisualDescendants().OfType<Border>().Where(b => string.Equals(b.Name, "ServiceTileFrame", StringComparison.Ordinal)), b => Assert.True(b.TranslatePoint(new Point(b.Bounds.Width, 0), window)!.Value.X <= window.Bounds.Width));
-        Frame(window, "tile-help-900", Prefix);
+        Assert.All(window.GetVisualDescendants().OfType<Border>().Where(b => string.Equals(b.Name, "ServiceTileFrame", StringComparison.Ordinal)), b => Assert.True(b.TranslatePoint(new Point(b.Bounds.Width, 0), window)!.Value.X <= window.Bounds.Width, "a tile runs past the window's right edge"));
+        Frame(window, "tile-help-1000", Prefix);
     });
+
+    // Every tile has the same element names, so a lookup by name alone finds the first tile's: look inside this tile's view only.
+    private static bool VisibleIn(Window window, object tile, string name) =>
+        window.GetVisualDescendants().OfType<Control>().Any(c => c.Name == name && c.IsEffectivelyVisible && c.GetVisualAncestors().OfType<Control>().Any(a => a.DataContext == tile));
 }
