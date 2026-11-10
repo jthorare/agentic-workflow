@@ -19,9 +19,9 @@ public sealed class WorkflowsPageViewModelTests
 
         Assert.Equal(2, page.Rows.Count);
         var (active, off) = (page.Rows[0], page.Rows[1]);
-        Assert.Equal(("Morning check", "● Active", "Revision 1", "Changed by owner, 5m ago"), (active.NameText, active.StateText, active.RevisionText, active.ChangedText));
-        Assert.Equal(("Weekly report", "○ Off", "Newest revision 1"), (off.NameText, off.StateText, off.RevisionText));
-        Assert.Equal("Morning check, active, revision 1, changed by owner, 5m ago", active.Name);
+        Assert.Equal(("Morning check", "● Active", string.Empty, "Changed by owner, 5m ago"), (active.NameText, active.StateText, active.RevisionText, active.ChangedText));
+        Assert.Equal(("Weekly report", "○ Off", string.Empty), (off.NameText, off.StateText, off.RevisionText));
+        Assert.Equal("Morning check, active, changed by owner, 5m ago", active.Name);
         Assert.Equal("2 workflows · 1 active", page.Head);
         Assert.Equal((false, true, false, false), (page.IsReading, page.IsList, page.IsRuns, page.IsRun));
     }

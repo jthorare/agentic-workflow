@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -95,6 +96,21 @@ public sealed class WorkflowsFramesTests : FrameHost
         Assert.True(Visible(window, "WorkflowsNewReason"));
         Assert.True(Visible(window, "WorkflowsAgentCommand"));
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"empty-form-{width}"), Prefix);
+    });
+
+    [Fact]
+    public Task A_row_title_does_not_hug_the_rows_top_border_and_New_workflow_sits_in_the_header_beside_the_list() => OnUi(async () =>
+    {
+        var (window, _) = await OnWorkflows(1280);
+        Settle(window);
+
+        var header = Named<Button>(window, "WorkflowsNewHeader");
+        Assert.True(header.IsEffectivelyVisible && header.IsEnabled);
+        var list = Named<ItemsControl>(window, "WorkflowRows");
+        var row = list.GetVisualDescendants().OfType<Border>().First(b => b.Classes.Contains("item-row"));
+        var title = row.GetVisualDescendants().OfType<Button>().First(b => b.Classes.Contains("row-title"));
+        Assert.True(title.TranslatePoint(default, row)!.Value.Y >= 8, "the title is at least 8 px below the row's top");
+        Assert.False(title.Focusable, "the row draws the focus ring, not the title");
     });
 
     [Theory]
