@@ -45,7 +45,7 @@ Use 6 only inside chips and small buttons, as in `Padding="6,0"`. Do not use 6 f
 - Pressed scales the element to 0.98. Linear presses buttons to 0.97 and Raycast presses cards to 0.98 (measured `:active` rules). We use 0.98 for everything so a row does not jump.
 - Pressed does not change the colour of the label.
 
-The `clickable` class applies hover and pressed to any element. It lives in `Theme/ClickableStyles.axaml`, which issue #2545 owns. Put `Classes="clickable"` on a row or card instead of writing a trigger.
+The `clickable` class applies hover and pressed to any element. It lives in `Theme/ClickableStyles.axaml`, added by the hover states fix (#2535). Put `Classes="clickable"` on a row or card instead of writing a trigger.
 
 ## Chips
 
