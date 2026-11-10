@@ -124,9 +124,11 @@ Aw.Meta.Features.Inbox.ListInboxRequest
 Aw.Meta.Features.Inbox.ListInboxRequest.<Clone>$() -> Aw.Meta.Features.Inbox.ListInboxRequest!
 Aw.Meta.Features.Inbox.ListInboxRequest.All.get -> bool
 Aw.Meta.Features.Inbox.ListInboxRequest.All.init -> void
-Aw.Meta.Features.Inbox.ListInboxRequest.Deconstruct(out bool All) -> void
+Aw.Meta.Features.Inbox.ListInboxRequest.Deconstruct(out bool All, out bool Once) -> void
 Aw.Meta.Features.Inbox.ListInboxRequest.Equals(Aw.Meta.Features.Inbox.ListInboxRequest? other) -> bool
-Aw.Meta.Features.Inbox.ListInboxRequest.ListInboxRequest(bool All) -> void
+Aw.Meta.Features.Inbox.ListInboxRequest.ListInboxRequest(bool All, bool Once = false) -> void
+Aw.Meta.Features.Inbox.ListInboxRequest.Once.get -> bool
+Aw.Meta.Features.Inbox.ListInboxRequest.Once.init -> void
 Aw.Meta.Features.Inbox.ListInboxResponse
 Aw.Meta.Features.Inbox.ListInboxResponse.<Clone>$() -> Aw.Meta.Features.Inbox.ListInboxResponse!
 Aw.Meta.Features.Inbox.ListInboxResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Features.Inbox.InboxItem!>! Items) -> void
@@ -954,7 +956,7 @@ Aw.Meta.Features.LaneRecycle.LaneRecycleRequest.WaitIdle.get -> bool
 Aw.Meta.Features.LaneRecycle.LaneRecycleRequest.WaitIdle.init -> void
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.<Clone>$() -> Aw.Meta.Features.LaneRecycle.LaneRecycleResponse!
-Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.Deconstruct(out string! Lane, out bool DryRun, out string! OldSession, out string? NewSession, out long? OldTokens, out string! Digest, out System.Collections.Generic.IReadOnlyList<string!>! Steps, out string? Warning, out int? WaiterPid) -> void
+Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.Deconstruct(out string! Lane, out bool DryRun, out string! OldSession, out string? NewSession, out long? OldTokens, out string! Digest, out System.Collections.Generic.IReadOnlyList<string!>! Steps, out string? Warning, out int? WaiterPid, out System.Collections.Generic.IReadOnlyList<string!>? SettledMessages) -> void
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.Digest.get -> string!
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.Digest.init -> void
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.DryRun.get -> bool
@@ -962,9 +964,11 @@ Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.DryRun.init -> void
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.Equals(Aw.Meta.Features.LaneRecycle.LaneRecycleResponse? other) -> bool
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.Lane.get -> string!
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.Lane.init -> void
-Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.LaneRecycleResponse(string! Lane, bool DryRun, string! OldSession, string? NewSession, long? OldTokens, string! Digest, System.Collections.Generic.IReadOnlyList<string!>! Steps, string? Warning = null, int? WaiterPid = null) -> void
+Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.LaneRecycleResponse(string! Lane, bool DryRun, string! OldSession, string? NewSession, long? OldTokens, string! Digest, System.Collections.Generic.IReadOnlyList<string!>! Steps, string? Warning = null, int? WaiterPid = null, System.Collections.Generic.IReadOnlyList<string!>? SettledMessages = null) -> void
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.WaiterPid.get -> int?
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.WaiterPid.init -> void
+Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.SettledMessages.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.SettledMessages.init -> void
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.NewSession.get -> string?
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.NewSession.init -> void
 Aw.Meta.Features.LaneRecycle.LaneRecycleResponse.OldSession.get -> string!

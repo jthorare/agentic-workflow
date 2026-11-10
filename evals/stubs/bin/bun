@@ -26,8 +26,9 @@ while [ $# -gt 0 ]; do case "$1" in --tokens) tokens="${2:-}"; shift 2 ;; --stil
 [ -n "$tokens" ] || { echo "$usage" >&2; exit 1; }
 [ -f "$tokens" ] || { echo "error: ENOENT: no such file or directory, open '$tokens'" >&2; exit 1; }
 mkdir -p "$out" || exit 1
-mapfile -t hexes < <(grep -o '#[0-9a-fA-F]\{6\}' "$tokens")
-mapfile -t ids < <(ids_of "$sb")
+# no mapfile: macOS ships bash 3.2
+hexes=(); while IFS= read -r line; do hexes+=("$line"); done < <(grep -o '#[0-9a-fA-F]\{6\}' "$tokens")
+ids=(); while IFS= read -r line; do ids+=("$line"); done < <(ids_of "$sb")
 n=${#ids[@]}; total=$((n * beat_secs))
 printf '{\n  "board": "%s",\n  "chalk": "%s",\n  "primary": "%s"\n}\n' "${hexes[0]:-#0d1117}" "${hexes[1]:-#e6edf3}" "${hexes[2]:-#58a6ff}" > "$out/resolved-inks.json"
 {

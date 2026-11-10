@@ -31,6 +31,9 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
     /// <summary>When set, a launch starts, signals <see cref="Launching"/> and waits for this gate before it returns, so a test can cancel while the launch is open.</summary>
     public TaskCompletionSource? LaunchGate { get; init; }
 
+    /// <summary>When set, every launch attempt throws this after signalling <see cref="Launching"/>, like a store error in the real launch.</summary>
+    public Exception? LaunchThrows { get; init; }
+
     /// <summary>Completes when a launch has started (before it waits on <see cref="LaunchGate"/>).</summary>
     public Task Launching => _launching.Task;
 
@@ -57,6 +60,11 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
     {
         _launches.Enqueue(node);
         _ = _launching.TrySetResult();
+        if (LaunchThrows is { } thrown)
+        {
+            throw thrown;
+        }
+
         if (LaunchGate is { } gate)
         {
             await gate.Task.ConfigureAwait(false);   // why: deliberately ignores the token, like a real launch in the middle of making a worktree
