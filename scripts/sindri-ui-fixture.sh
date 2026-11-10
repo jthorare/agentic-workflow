@@ -122,6 +122,17 @@
 #                                  removes the PR record, the forge world and the profile's review and forge entries, then restarts the
 #                                  control plane when it is running. Needs jq and sqlite3 or python3.
 #
+#   sindri-ui-fixture.sh workflows up|down  (run after 'up')
+#                                  the Workflows page's data, through the real verbs (sindri wf create|activate|run|delete, as the owner), never
+#                                  a row written into a DB. up makes three workflows: fx-hello (template manual-notify, activated, run twice: two
+#                                  finished runs), fx-status-ping (a manual trigger into an http block to a host that is not on
+#                                  workflow.http.hosts, activated and run once: the block is refused with SND-GRAPH-122, so the run FAILED) and
+#                                  fx-daily-digest (template daily-digest, left off: its schedule never fires and it has no run). A workflow
+#                                  that already exists is kept; a run that has not ended after 30 s is left as it is. Missing: nothing that
+#                                  needs a model or the network is run (the digest's prompt block would), and if wf create refuses the http
+#                                  spec's host at check time, fx-status-ping is skipped with a note on stderr and the page shows ok + off only.
+#                                  down archives the three (sindri wf delete; their runs stay in the ledger, hidden with them).
+#
 #   sindri-ui-fixture.sh sessions up|ask <pid>|end <pid>|back <pid>|disable|enable|down
 #                                  the Agents page's data (U11a; run after 'up', and run 'sessions up' right after every 'up': a
 #                                  control plane started without it reads the real box). up copies tests/fixtures/sessions/
@@ -954,6 +965,57 @@ reviews() {
   case "$1" in up) reviews_up ;; down) reviews_down ;; esac
 }
 
+# --- workflows: the Workflows page's data (through the wf verbs) ---
+WORKFLOWS_SLUGS=(fx-hello fx-status-ping fx-daily-digest)
+
+workflows_exists() { "$PROVE" human wf show "$1" --json >/dev/null 2>&1; }
+
+# Starts one run of $1 and waits (30 s at most) until none of its runs is still going.
+workflows_run() {
+  local slug="$1" i open
+  "$PROVE" human wf run "$slug" >/dev/null || { echo "workflows: wf run $slug failed" >&2; return 0; }
+  for i in $(seq 1 30); do
+    open="$("$PROVE" human wf runs "$slug" --json 2>/dev/null | jq '[.. | objects | select(has("status")) | .status] | map(select(. == "running" or . == "queued" or . == "waiting")) | length' 2>/dev/null)"
+    [ "${open:-1}" = 0 ] && return 0
+    sleep 1
+  done
+}
+
+workflows_up() {
+  local spec
+  workflows_exists fx-hello || "$PROVE" human wf create fx-hello --template manual-notify >/dev/null || die "workflows: wf create fx-hello failed"
+  "$PROVE" human wf activate fx-hello >/dev/null || die "workflows: wf activate fx-hello failed"
+  workflows_run fx-hello
+  workflows_run fx-hello
+  spec="$AW_SINDRI_HOME/ui-fixture-workflow-status-ping.json"
+  cat > "$spec" <<'SPEC' || die "workflows: can't write $spec"
+{"version":1,"name":"Status ping","nodes":[
+  {"id":"start","type":"manual","title":"Run now","config":{}},
+  {"id":"ask","type":"http","title":"Read the status page","config":{"url":"https://status.fixture.invalid/api/v2/status.json","expect":"200"}},
+  {"id":"tell","type":"notify","title":"Tell me","config":{"title":"Status: {{ask.status}}"}}],
+ "edges":[{"from":"start","to":"ask"},{"from":"ask","to":"tell"}]}
+SPEC
+  if workflows_exists fx-status-ping || "$PROVE" human wf create fx-status-ping --file "$spec" >/dev/null; then
+    if "$PROVE" human wf activate fx-status-ping >/dev/null; then workflows_run fx-status-ping; else echo "workflows: wf activate fx-status-ping refused: no failed run seeded" >&2; fi
+  else
+    echo "workflows: wf create fx-status-ping refused: no failed run seeded" >&2
+  fi
+  workflows_exists fx-daily-digest || "$PROVE" human wf create fx-daily-digest --template daily-digest >/dev/null || die "workflows: wf create fx-daily-digest failed"
+  "$PROVE" human wf list || true
+}
+
+workflows_down() {
+  local slug
+  for slug in "${WORKFLOWS_SLUGS[@]}"; do
+    if workflows_exists "$slug"; then "$PROVE" human wf delete "$slug" >/dev/null || die "workflows: wf delete $slug failed"; fi
+  done
+  rm -f -- "$AW_SINDRI_HOME/ui-fixture-workflow-status-ping.json"
+}
+
+workflows() {
+  case "$1" in up) workflows_up ;; down) workflows_down ;; esac
+}
+
 # --- context sources: the node panel's source links (#1702) ---
 SOURCES_ORIGIN="https://github.com/acme/tabs.git"
 SOURCES_DOC_NODE="feature:staffing.schema"
@@ -1247,6 +1309,7 @@ case "$verb" in
   todos) [ "$#" -eq 1 ] || die "'todos' takes no arguments" ;;
   resources) [ "$#" -eq 1 ] || die "'resources' takes no arguments" ;;
   reviews) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: reviews up|down" ;;
+  workflows) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: workflows up|down" ;;
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
   context)
     case "${2:-}" in
