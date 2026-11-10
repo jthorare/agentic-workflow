@@ -161,7 +161,7 @@ public sealed class GoldenContractTests
         [("workflows-slug-runs", "skipped")] = As<WorkflowRunStarted>,
         [("memories-id-facts", "forgot")] = As<MemoryForgotten>,
         [("memories-id-facts", "forgot-tag")] = As<MemoryForgotten>,
-        [("workflows", "created")] = AsJsonObject,   // POST /workflows: { id, slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowList
+        [("workflows", "created")] = As<WorkflowCreated>,   // POST /workflows: { id, slug, revision, specHash }; not a WorkflowList
         [("workflows-slug", "replaced")] = AsJsonObject,   // PUT /workflows/{slug}: { slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowView
         [("workflows-slug", "archived")] = AsJsonObject,   // DELETE /workflows/{slug}: { slug, archivedAt }, the CLI's and the MCP tools' answer; not a WorkflowView
     };
