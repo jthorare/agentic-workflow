@@ -10,7 +10,7 @@ public sealed class StopCheckTests
 {
     private readonly MetaWorld _world = new();
 
-    private StopCheckService Service() => new(_world.Session, _world.Sweep, _world.Guard, _world.Clock);
+    private StopCheckService Service() => new(_world.Session, _world.Sweep, _world.Guard, _world.Clock, _world.Beats);
 
     private async Task<StopCheckResponse> Check(string session = MetaWorld.MetaSessionId, bool hookActive = false)
     {

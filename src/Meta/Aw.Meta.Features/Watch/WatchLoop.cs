@@ -85,7 +85,7 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         }
     }
 
-    // CONTEXT HIGH once per crossing, CONTEXT OK after a recycle; the lanes reported high are kept for a re-armed watch.
+    // CONTEXT HIGH (META RECYCLE for the meta lane) once per crossing, CONTEXT OK after a recycle; the lanes reported high are kept for a re-armed watch.
     private async ValueTask ReportContext(IReadOnlyList<LaneContext>? contexts)
     {
         if (contexts is null)
@@ -93,7 +93,7 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
             return;
         }
 
-        var (lines, high) = ContextWatch.Step(_high, contexts);
+        var (lines, high) = ContextWatch.Step(_high, contexts, team.MetaLane);
         foreach (var line in lines)
         {
             await Say(line).ConfigureAwait(false);
