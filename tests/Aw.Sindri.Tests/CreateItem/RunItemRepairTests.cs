@@ -1,7 +1,8 @@
+using Aw.Kernel.Ids;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
@@ -34,8 +35,8 @@ public sealed class RunItemRepairTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private WorkflowItemMaker Maker(bool linkRefused) =>
-        new(new CreateItemService(_h.Profiles, _h.Held, linkRefused ? new LinkRefusingLedger(_h.Store) : _h.Store, _h.Events, _h.Ids, _h.Callers), _h.Callers, _runs);
+    private WorkflowItemMaker Maker(bool linkRefused, IIdGenerator? ids = null) =>
+        new(new CreateItemService(_h.Profiles, _h.Held, linkRefused ? new LinkRefusingLedger(_h.Store) : _h.Store, _h.Events, ids ?? _h.Ids, _h.Callers), _h.Callers, _runs);
 
     private RunItemRepair Repair() => new(_workflows, _runs, _h.Store, _h.Held, _h.Events, _h.Callers, _h.Ids);
 
@@ -48,9 +49,9 @@ public sealed class RunItemRepairTests
     }
 
     /// <summary>Makes an item for the run the way the node does and records the node's output, as the node would.</summary>
-    private async Task<ItemId> Make(string title, int itemIndex, bool linkRefused)
+    private async Task<ItemId> Make(string title, int itemIndex, bool linkRefused, IIdGenerator? ids = null)
     {
-        var made = await Maker(linkRefused).Create(new ItemToCreate(_run, title, Repo: null, Body: null, LinearIssue: null), Token);
+        var made = await Maker(linkRefused, ids).Create(new ItemToCreate(_run, title, Repo: null, Body: null, LinearIssue: null), Token);
         Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
         _ = (await _runs.RecordNodeRun(new NodeRun(_run, _node, itemIndex, NodeRunStatus.Succeeded, Input: null, $$"""{"itemId":"{{made.Value.ItemId.Value}}"}""", Truncated: false, Error: null, Usage: null), Token)).Value;
         return made.Value.ItemId;
@@ -136,5 +137,37 @@ public sealed class RunItemRepairTests
         Assert.True(again.IsSuccess, again.IsError ? again.Error.ToString() : null);
         Assert.Equal(0, again.Value);
         Assert.Equal((rows, setItems), (_h.Store.Events.Count, _runs.SetItemCalls));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_first_made_item_is_the_one_with_the_lowest_created_sequence_not_the_lowest_id()
+    {
+        await Seed();
+        _runs.Fail = true;
+        // why: ids count down, so each item's id sorts before the one made earlier, as two ids made in one millisecond can
+        var descending = new DescendingIds();
+        var first = await Make("one", 1, linkRefused: true, descending);
+        var second = await Make("two", 2, linkRefused: true, descending);
+        _runs.Fail = false;
+        Assert.True(string.CompareOrdinal(second.Value, first.Value) < 0, "the test needs the second item's id to sort first");
+
+        _ = await Repair().RepairAll(Token);
+
+        Assert.Equal(first, await RunItem());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_repair_that_fails_in_the_ledger_is_an_error_and_the_next_pass_finishes_it()
+    {
+        await Seed();
+        var item = await Make("one", 0, linkRefused: true);
+        var refusing = new RunItemRepair(_workflows, _runs, new LinkRefusingLedger(_h.Store), _h.Held, _h.Events, _h.Callers, _h.Ids);
+
+        var failed = await refusing.RepairAll(Token);
+        var repaired = await Repair().RepairAll(Token);
+
+        Assert.True(failed.IsError);
+        Assert.True(repaired.IsSuccess, repaired.IsError ? repaired.Error.ToString() : null);
+        Assert.True(Linked(item));
     }
 }
