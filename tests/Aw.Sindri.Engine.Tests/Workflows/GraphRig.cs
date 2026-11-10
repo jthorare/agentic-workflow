@@ -33,12 +33,12 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly Task _loop;
     private readonly GraphRunStarter _starter;
     private readonly InMemorySindriStore _ledger;
-    private readonly SindriTimeSkippingServer _server;
+    private readonly SindriTimeSkippingServer? _server;
 
-    private GraphRig(SindriTimeSkippingServer server, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
+    private GraphRig(WorkflowEnvironment environment, SindriTimeSkippingServer? ownedServer, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
     {
-        _server = server;
-        var environment = server.Environment;
+        _server = ownedServer;
+        Environment = environment;
         // why: a run id or task queue can be used once on a server, and the counter keeps the slugs of one process apart
         var number = Interlocked.Increment(ref _count).ToString(System.Globalization.CultureInfo.InvariantCulture);
         Slug = $"walk-test-{number}";
@@ -92,8 +92,8 @@ internal sealed class GraphRig : IAsyncDisposable
 
     public ITemporalClient Client { get; }
 
-    /// <summary>The rig's own time-skipping server: a task a stopped rig leaves in flight dies with it and can't freeze time for another rig (issue 2574).</summary>
-    public WorkflowEnvironment Environment => _server.Environment;
+    /// <summary>The server the rig runs on: its own time-skipping server by default, so a task a stopped rig leaves in flight dies with it and can't freeze time for another rig (issue 2574).</summary>
+    public WorkflowEnvironment Environment { get; }
 
     /// <summary>The takeover, handback and report of the run's agent node, over the real Temporal adapter.</summary>
     internal TemporalAgentNodeControl Control { get; }
@@ -110,13 +110,22 @@ internal sealed class GraphRig : IAsyncDisposable
     /// <returns>The started rig.</returns>
     public static Task<GraphRig> StartAsync(ForEachLimits forEachLimits) => StartAsync(agents: null, forEachLimits);
 
+    /// <summary>A rig on a server the caller owns, such as a real dev server: the rig stops its worker on dispose and leaves the server running.</summary>
+    /// <param name="environment">The caller's server, with Sindri's search attributes registered.</param>
+    /// <returns>The started rig.</returns>
+    public static GraphRig StartOn(WorkflowEnvironment environment)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        return new GraphRig(environment, ownedServer: null, agents: null, forEachLimits: null);
+    }
+
     private static async Task<GraphRig> StartAsync(IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
     {
         var server = new SindriTimeSkippingServer();
         await server.InitializeAsync();
         try
         {
-            return new GraphRig(server, agents, forEachLimits);
+            return new GraphRig(server.Environment, server, agents, forEachLimits);
         }
         catch
         {
@@ -248,7 +257,10 @@ internal sealed class GraphRig : IAsyncDisposable
 
         _worker.Dispose();
         _stop.Dispose();
-        // why: a task the worker held when it stopped keeps time skipping locked on its server (issue 2574); the server is the rig's own, so it dies with the rig
-        await _server.DisposeAsync();
+        // why: a task the worker held when it stopped keeps time skipping locked on its server (issue 2574); a server the rig started is its own, so it dies with the rig
+        if (_server is not null)
+        {
+            await _server.DisposeAsync();
+        }
     }
 }
