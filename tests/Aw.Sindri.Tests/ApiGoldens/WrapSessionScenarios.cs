@@ -25,6 +25,7 @@ internal static class WrapSessionScenarios
     [
         ("sessions-id-heartbeat", "ok"), ("sessions-id-heartbeat", "with-session-id"), ("sessions-id-heartbeat", "bad-secret"),
         ("sessions-id-exit", "ok"), ("sessions-id-exit", "bad-secret"),
+        ("launches-id-limit-hit", "ok"), ("launches-id-limit-hit", "bad-secret"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -54,6 +55,11 @@ internal static class WrapSessionScenarios
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
     {
         var launch = await StartLaunch(host, ct);
+        if (slug == "launches-id-limit-hit")
+        {
+            throw new NotSupportedException("the limit-hit scenario is not written yet (#2434)");
+        }
+
         var proof = scenario == "bad-secret" ? "not-the-proof" : Proof;
         var request = slug == "sessions-id-heartbeat"
             ? Post(Route(launch, "heartbeat"), scenario == "with-session-id" ? $$"""{"sessionId":"{{ReportedId}}"}""" : "{}", Wrap(proof))

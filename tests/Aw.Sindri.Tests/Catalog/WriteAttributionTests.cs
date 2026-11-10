@@ -64,13 +64,10 @@ public sealed class WriteAttributionTests
         ["POST /sindri/context/map/checks"] = NoGoldenReason,
         ["POST /sindri/context/map/import"] = NoGoldenReason,
         ["POST /sindri/index/purge"] = NoGoldenReason,
-        ["POST /sindri/sandbox/learn-off"] = NoGoldenReason,
         ["POST /sindri/sessions/{provider}/{id}/focus"] = NoGoldenReason,
-        ["POST /sindri/launches/{launchId}/limit-hit"] = NoGoldenReason,
         ["POST /sindri/workflow/challenges"] = NoGoldenReason,
         ["POST /sindri/workflow/instances/{instanceId}/runs/{run}/complete"] = NoGoldenReason,
         ["POST /sindri/jobs/{jobId}/resume"] = NoGoldenReason,
-        ["POST /sindri/todos/note/hold/restore"] = NoGoldenReason,
         ["POST /sindri/context/map/refresh"] = NoGoldenReason,
         ["POST /sindri/context/eval/backtest"] = NoGoldenReason,
         ["POST /sindri/context/sources/sync"] = NoGoldenReason,
@@ -338,6 +335,7 @@ public sealed class WriteAttributionTests
     private static bool IsNotASessionCall((string Slug, string Scenario) row) =>
         string.Equals(row.Slug, "sessions-id-heartbeat", StringComparison.Ordinal)
         || string.Equals(row.Slug, "sessions-id-exit", StringComparison.Ordinal)
+        || string.Equals(row.Slug, "launches-id-limit-hit", StringComparison.Ordinal)
         || row.Scenario.StartsWith("human-", StringComparison.Ordinal)
         || row.Scenario.StartsWith("prover-", StringComparison.Ordinal)
         || row.Scenario.StartsWith("unknown-caller", StringComparison.Ordinal)

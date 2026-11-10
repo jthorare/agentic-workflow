@@ -31,6 +31,7 @@ internal static class SandboxScenarios
         ("sandbox-allow", "allowed"), ("sandbox-allow", "refused-never"), ("sandbox-allow", "refused-policy"), ("sandbox-allow", "refused-origin"),
         ("sandbox-status", "never-checked"), ("sandbox-status", "after-blocked-check"), ("sandbox-status", "after-ready-check"),
         ("sandbox-check", "blocked"), ("sandbox-check", "ready"), ("sandbox-check", "hooks-not-checked"),
+        ("sandbox-learn-off", "all-repos"), ("sandbox-learn-off", "one-repo"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -59,6 +60,11 @@ internal static class SandboxScenarios
         if (IsStatus(slug))
         {
             return await StatusBody(host, slug, scenario, ct);
+        }
+
+        if (slug == "sandbox-learn-off")
+        {
+            throw new NotSupportedException("the learn-off scenario is not written yet (#2434)");
         }
 
         await ViewScenarios.Approve(host, ct);

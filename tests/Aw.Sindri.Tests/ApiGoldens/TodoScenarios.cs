@@ -17,7 +17,7 @@ internal static class TodoScenarios
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note", "note"), ("todos-note", "hold"), ("todos-note", "conflict"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged"), ("todos-keep", "sindri"), ("todos-keep", "obsidian"), ("todos-keep-undo", "accepted"), ("todos-hold-apply", "accepted"), ("todos-hold-undo", "accepted"), ("todos-note-import", "dry-run"), ("todos-note-import", "imported"), ("todos-note-import", "stale")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note", "note"), ("todos-note", "hold"), ("todos-note", "conflict"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged"), ("todos-keep", "sindri"), ("todos-keep", "obsidian"), ("todos-keep-undo", "accepted"), ("todos-hold-apply", "accepted"), ("todos-hold-restore", "accepted"), ("todos-hold-undo", "accepted"), ("todos-note-import", "dry-run"), ("todos-note-import", "imported"), ("todos-note-import", "stale")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
@@ -162,6 +162,11 @@ internal static class TodoScenarios
         var changes = new[] { new TodoHeldChange(id, "removed", NoteLine: null), new TodoHeldChange(Core.Ids.TodoId.From(second), "edited", $"- [ ] reply to Sam about the offsite ^td-{second[3..]}") };
         await ViewScenarios.Append(host, EventTypes.TodoNoteHeld, new TodoNoteHeld(changes, Hash, "service:todo-note"), "todo.note.held:" + Hash, ct);
         await ViewScenarios.CatchUp(host, ct);
+        if (slug == "todos-hold-restore")
+        {
+            throw new NotSupportedException("the restore pick's scenario is not written yet (#2434)");
+        }
+
         var applied = await host.Http.Ask(Post("/sindri/todos/note/hold/apply", Request("todos-hold-apply", "accepted"), human));
         if (slug == "todos-hold-apply")
         {
