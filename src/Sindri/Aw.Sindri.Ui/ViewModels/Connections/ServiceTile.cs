@@ -5,4 +5,4 @@ namespace Aw.Sindri.Ui.ViewModels.Connections;
 /// <param name="Title">The service in words.</param>
 /// <param name="Blurb">What the tile says before it is connected.</param>
 /// <param name="Mode">What the tile asks for.</param>
-internal sealed record ServiceTile(string Id, string Title, string Blurb, TileMode Mode);
+internal sealed record ServiceTile(string Id, string Title, string Blurb, ServiceTileMode Mode);

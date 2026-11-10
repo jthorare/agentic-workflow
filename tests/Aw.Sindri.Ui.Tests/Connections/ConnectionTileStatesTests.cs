@@ -164,7 +164,7 @@ public sealed class ConnectionTileStatesTests
         await _f.Drive(form.Send(Token), "notes:mcp");
 
         Assert.Equal([_f.Server.ConsentUrl], _f.Launcher.Opened, StringComparer.Ordinal);
-        Assert.Equal(Aw.Sindri.Ui.ViewModels.Labels.ConnectionAdded("notes:mcp"), form.StatusText);
+        Assert.Equal(ViewModels.Labels.ConnectionAdded("notes:mcp"), form.StatusText);
         Assert.Equal(["notes:mcp"], page.OtherRows.Select(r => r.Name), StringComparer.Ordinal);
     }
 

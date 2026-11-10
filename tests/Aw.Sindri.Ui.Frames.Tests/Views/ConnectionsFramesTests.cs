@@ -113,11 +113,12 @@ public sealed class ConnectionsFramesTests : FrameHost
     });
 
     // 1000 px is the narrowest the window goes (Size.WindowMinWidth): at 900 the layout stays 1000 wide and every frame "clips".
+    // Spotify, not Linear: OnConnections seeds linear:work as connected, and a connected tile has no primary button (Reconnect is in its menu).
     [Fact]
     public Task A_tile_shows_its_chip_one_primary_button_and_the_help_line_and_nothing_clips_at_1000() => OnUi(async () =>
     {
         var (window, shell) = await OnConnections(1000);
-        var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "linear", StringComparison.Ordinal));
+        var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "spotify", StringComparison.Ordinal));
         await tile.Connect(CancellationToken.None);
         Settle(window);
 

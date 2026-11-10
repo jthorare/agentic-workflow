@@ -54,13 +54,13 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     } = string.Empty;
 
     /// <summary>True when the sign-in needs a client id.</summary>
-    public bool NeedsClientId => Service.Mode is TileMode.ClientId or TileMode.ClientIdAndSecret;
+    public bool NeedsClientId => Service.Mode is ServiceTileMode.ClientId or ServiceTileMode.ClientIdAndSecret;
 
     /// <summary>True when the sign-in also needs the OAuth app's client secret.</summary>
-    public bool NeedsSecret => Service.Mode == TileMode.ClientIdAndSecret;
+    public bool NeedsSecret => Service.Mode == ServiceTileMode.ClientIdAndSecret;
 
     /// <summary>True when the sign-in takes a pasted token.</summary>
-    public bool TakesToken => Service.Mode == TileMode.Token;
+    public bool TakesToken => Service.Mode == ServiceTileMode.Token;
 
     /// <summary>True while the tile has no connection.</summary>
     public bool IsOffered => _row is null;

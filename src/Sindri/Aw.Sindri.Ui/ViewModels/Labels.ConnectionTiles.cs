@@ -4,13 +4,13 @@ namespace Aw.Sindri.Ui.ViewModels;
 internal static partial class Labels
 {
     /// <summary>The tiles of the Connections page: services with a sign-in path. A preset ships no client id (SND-CONN-007), and GitHub and Google also need the client secret at the token endpoint (TokenSet.ClientSecret), so those two ask for it; no preset flag says so, so the table does.</summary>
-    internal static readonly (string Id, string Title, string Blurb, Connections.TileMode Mode)[] ConnectionTiles =
+    internal static readonly (string Id, string Title, string Blurb, ServiceTileMode Mode)[] ConnectionTiles =
     [
-        ("github", "GitHub", "Reviews and pull requests", Connections.TileMode.ClientIdAndSecret),
-        ("linear", "Linear", "Issues and projects", Connections.TileMode.ClientId),
-        ("slack", "Slack", "Messages, with a pasted token", Connections.TileMode.Token),
-        ("google", "Google", "Calendar", Connections.TileMode.ClientIdAndSecret),
-        ("spotify", "Spotify", "Playback", Connections.TileMode.ClientId),
+        ("github", "GitHub", "Reviews and pull requests", ServiceTileMode.ClientIdAndSecret),
+        ("linear", "Linear", "Issues and projects", ServiceTileMode.ClientId),
+        ("slack", "Slack", "Messages, with a pasted token", ServiceTileMode.Token),
+        ("google", "Google", "Calendar", ServiceTileMode.ClientIdAndSecret),
+        ("spotify", "Spotify", "Playback", ServiceTileMode.ClientId),
     ];
 
     /// <summary>The status chip of a connected tile.</summary>

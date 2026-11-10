@@ -1,7 +1,7 @@
-namespace Aw.Sindri.Ui.ViewModels.Connections;
+namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>What a tile needs before it can sign in.</summary>
-internal enum TileMode
+internal enum ServiceTileMode
 {
     /// <summary>A browser sign-in whose provider needs the person's own OAuth client id.</summary>
     ClientId,
