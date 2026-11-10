@@ -6,8 +6,8 @@ using Aw.Sindri.Core.Toolkits;
 namespace Aw.Sindri.Infrastructure.Toolkits;
 
 /// <summary>
-/// Keeps toolkit processes running (see <see cref="IToolkitRuntime"/>). One watcher task per toolkit waits for its process to end; a crash restarts it after 1 s, then 2 s, then 4 s (doubling), and the
-/// third crash inside ten minutes marks the toolkit 'failed' in the store and stops the restarts. A stop and a shutdown end the watcher first, so neither counts as a crash.
+/// Keeps toolkit processes running (see <see cref="IToolkitRuntime"/>). One watcher task per toolkit waits for its process to end; the first crash restarts it after 1 s, the second after 2 s, and the
+/// third crash inside ten minutes marks the toolkit 'failed' in the store with no restart (there is no 4 s wait). A later start launches it again. A stop and a shutdown end the watcher first, so neither counts as a crash.
 /// </summary>
 /// <param name="launcher">Starts processes.</param>
 /// <param name="store">Takes the 'failed' state.</param>
