@@ -9,6 +9,6 @@ public sealed record WatchRequest(TimeSpan Interval, TimeSpan Duration, Func<str
     /// <summary>End the watch at the first poll where the meta's inbox holds messages still owed a reply (a Codex or Cursor meta polls in the foreground).</summary>
     public bool UntilMail { get; init; }
 
-    /// <summary>When the window ends with nothing to report, keep polling in a new window and print nothing, so a Monitor-run watch costs no model turn (#2498).</summary>
-    public bool Rearm { get; init; }
+    /// <summary>No window and no WATCH EXPIRING: keep polling until a poll prints a real line (anything but the start line), print it and end (a Claude meta runs this as a background command that wakes the model on exit; #2498).</summary>
+    public bool UntilEvent { get; init; }
 }
