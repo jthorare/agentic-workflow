@@ -202,6 +202,20 @@ public sealed class ProjectsPageTests
     }
 
     [Fact]
+    public async Task The_last_read_counts_only_Linears_rows_never_a_newer_GitHub_row()
+    {
+        var page = await ShownWithMissingKey(list =>
+        {
+            foreach (var row in list["freshness"]!.AsArray().Where(r => string.Equals((string?)r!["source"], "github", StringComparison.Ordinal)))
+            {
+                row!["at"] = "2025-12-31T23:59:00.0000000Z";   // a minute ago: newer than every Linear row
+            }
+        });
+
+        Assert.Equal("Sindri has no Linear key, so projects aren't refreshing. Last read 14m ago.", page.Sentence);
+    }
+
+    [Fact]
     public async Task A_missing_key_banner_with_no_last_read_leaves_the_last_read_out()
     {
         var page = await ShownWithMissingKey(list => list["freshness"] = new System.Text.Json.Nodes.JsonArray());
