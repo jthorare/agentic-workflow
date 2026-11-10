@@ -84,7 +84,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         return Succeeded(config, result.Value);   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
     }
 
-    private sealed record Prepared(GraphNode Node, IGraphBlock Block, Scope Scope, JsonObject Config);
+    private sealed record Prepared(GraphNode Node, IGraphBlock Block, GraphNodeScope Scope, JsonObject Config);
 
     /// <summary>
     /// Runs the after-success step of every block whose node succeeded, once the whole run has succeeded ('only_new' records its keys here). A run that failed or was cancelled never gets here,
