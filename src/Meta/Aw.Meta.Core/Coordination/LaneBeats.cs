@@ -81,6 +81,37 @@ public sealed class LaneBeats(IKeyValueStore values, IDelay delay)
         return false;
     }
 
+    /// <summary>Waits for a stop beat (a hook run that let a turn end) newer than <paramref name="since"/>, polling every 500 ms. A blocked stop is a beat but not a stopped one.</summary>
+    /// <param name="lane">The lane.</param>
+    /// <param name="since">The time after which the stop must have happened.</param>
+    /// <param name="window">How long to wait.</param>
+    /// <param name="cancellationToken">Cancels the wait.</param>
+    /// <returns>True when a stop beat arrived inside the window.</returns>
+    public async ValueTask<Result<bool>> WaitForStop(string lane, DateTimeOffset since, TimeSpan window, CancellationToken cancellationToken)
+    {
+        var polls = (int)(window / _pollEvery);
+        for (var poll = 0; poll <= polls; poll++)
+        {
+            var beat = await Last(lane, cancellationToken).ConfigureAwait(false);
+            if (beat.IsError)
+            {
+                return beat.Error;
+            }
+
+            if (beat.Value is { Stopped: true } last && last.At > since)
+            {
+                return true;
+            }
+
+            if (poll < polls)
+            {
+                await delay.Wait(_pollEvery, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Records that the lane ran an aw-meta lane command by hand (no AW_META_HOOK): it is never hook proof.</summary>
     /// <param name="lane">The lane.</param>
     /// <param name="now">When.</param>

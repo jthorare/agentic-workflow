@@ -13,10 +13,11 @@ internal sealed class GraphModelPortAdapter(IModelPort models) : IGraphModelPort
 
     private static readonly TimeSpan _budget = TimeSpan.FromMinutes(5);
 
-    public string Untrusted(string text)
+    public string Untrusted(string source, string text)
     {
+        ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(text);
-        return UntrustedFence.Wrap("workflow:trigger", author: null, text);
+        return UntrustedFence.Wrap(source, author: null, text);
     }
 
     public async ValueTask<Result<string>> Ask(string prompt, CancellationToken cancellationToken)
