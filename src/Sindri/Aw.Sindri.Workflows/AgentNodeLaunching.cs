@@ -58,19 +58,15 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
             return Failed(input, placed.Error);
         }
 
-        // why: idempotent; the workflow's database and disk folders and its declared sandbox size reach the session's plan (#2532)
-        var ensured = await _resources.Ensure(row.WorkflowId, spec, cancellationToken).ConfigureAwait(false);
-        if (ensured.IsError)
-        {
-            return Failed(input, ensured.Error);
-        }
-
         var address = NodeRunAddress.Of(node.Run, node.Node, node.ItemIndex);
         var token = RunAgentWire.TokenOf(spec, node.Node, node.ItemIndex) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
         var brief = RunAgentBrief.Render(address, token, parsed.Value);
         var groups = RunAgentLaunches.GroupsFor(parsed.Value, static _ => []);   // why: a connection's host group comes with the connection presets (PR 10); until then only the repo's 'github' applies
-        var request = RunAgentLaunches.ReadingOnly(RunAgentLaunches.WithResources(RunAgentLaunches.RequestFor(address, placed.Value.Target, parsed.Value, brief, groups), ensured.Value), placed.Value.ReadOnlyPaths);
-        return new AgentNodeLaunched(await starting.Start(request, cancellationToken).ConfigureAwait(false), input, parsed.Value.Timeout);
+        var request = RunAgentLaunches.ReadingOnly(RunAgentLaunches.RequestFor(address, placed.Value.Target, parsed.Value, brief, groups), placed.Value.ReadOnlyPaths);
+
+        // why: idempotent; the workflow's database and disk folders and its declared sandbox size reach the session's plan (#2532), made after the ended check so a retry never fails on them
+        var launched = await starting.Start(request, ct => _resources.Ensure(row.WorkflowId, spec, ct), cancellationToken).ConfigureAwait(false);
+        return new AgentNodeLaunched(launched, input, parsed.Value.Timeout);
     }
 
     // The repo checkout, the agent and the read-only checkouts from the live profile; the run's item, or one made from the run's id when it has none.

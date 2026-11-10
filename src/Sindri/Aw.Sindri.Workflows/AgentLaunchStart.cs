@@ -1,4 +1,7 @@
+using Aw.Kernel;
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
@@ -21,6 +24,30 @@ internal sealed class AgentLaunchStart(AgentLaunchWaiting launcher, AgentLaunchR
             return over;
         }
 
+        return await Launch(request, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Launches the session with the workflow's resources, made only once the session is known not to have ended (#2586): a retry after the end never fails on them.</summary>
+    /// <param name="request">The launch, without the resources.</param>
+    /// <param name="resources">Makes the workflow's declared resources exist; idempotent.</param>
+    /// <param name="cancellationToken">Cancels the launch.</param>
+    /// <returns>The worktree and start commit, or the failure, or that the session cap made it wait.</returns>
+    public async Task<AgentLaunched> Start(LaunchRequest request, Func<CancellationToken, ValueTask<Result<ProvisionedResources>>> resources, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(resources);
+        if (await ended.Find(request, cancellationToken).ConfigureAwait(false) is { } over)
+        {
+            return over;
+        }
+
+        var ensured = await resources(cancellationToken).ConfigureAwait(false);
+        return ensured.IsError
+            ? new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, ensured.Error.Code, ensured.Error.Message))
+            : await Launch(RunAgentLaunches.WithResources(request, ensured.Value), cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<AgentLaunched> Launch(LaunchRequest request, CancellationToken cancellationToken)
+    {
         var result = await launcher.Launch(request, cancellationToken).ConfigureAwait(false);
         if (result is null)
         {
