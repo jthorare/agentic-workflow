@@ -22264,6 +22264,7 @@ static Aw.Sindri.Core.Resources.ResourceOwner.operator ==(Aw.Sindri.Core.Resourc
 static Aw.Sindri.Core.Resources.ResourcePlan.operator !=(Aw.Sindri.Core.Resources.ResourcePlan? left, Aw.Sindri.Core.Resources.ResourcePlan? right) -> bool
 static Aw.Sindri.Core.Resources.ResourcePlan.operator ==(Aw.Sindri.Core.Resources.ResourcePlan? left, Aw.Sindri.Core.Resources.ResourcePlan? right) -> bool
 static Aw.Sindri.Core.Resources.ResourcePlanner.Plan(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceSpec! spec, string! resourcesRoot) -> Aw.Kernel.Result<Aw.Sindri.Core.Resources.ResourcePlan!>!
+static Aw.Sindri.Core.Resources.ResourceSizes.TryNormalize(string? text, out string? canonical) -> bool
 static Aw.Sindri.Core.Resources.ResourceSizes.TryParse(string? text, out long bytes) -> bool
 static Aw.Sindri.Core.Resources.ResourceSpec.Empty.get -> Aw.Sindri.Core.Resources.ResourceSpec!
 static Aw.Sindri.Core.Resources.ResourceSpec.operator !=(Aw.Sindri.Core.Resources.ResourceSpec? left, Aw.Sindri.Core.Resources.ResourceSpec? right) -> bool
