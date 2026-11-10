@@ -6,24 +6,26 @@ using Aw.Meta.Core.Ports;
 namespace Aw.Meta.Infrastructure.Processes;
 
 /// <summary>
-/// IWaiterLauncher over a child process that outlives the caller: the command runs under setsid (its own session, so the end of the
-/// caller's turn or shell can't signal it) with stdin, stdout and stderr sent to /dev/null by an sh that execs the command. The program name "aw-meta" stands for the running
-/// binary (<see cref="Environment.ProcessPath"/>). Where there is no setsid (stock macOS) nothing starts: the child would stay in the caller's process group and could die with the caller's shell, so the start is AW-META-010.
+/// IWaiterLauncher over a child process that outlives the caller: the command runs in its own session (so the end of the
+/// caller's turn or shell can't signal it) under setsid, or, where there is no setsid binary (stock macOS), under perl's POSIX::setsid.
+/// Stdin, stdout and stderr go to /dev/null through an sh that execs the command. The program name "aw-meta" stands for the running
+/// binary (<see cref="Environment.ProcessPath"/>). With neither setsid nor perl nothing starts: the child would stay in the caller's process group and could die with the caller's shell, so the start is AW-META-010.
 /// </summary>
-internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator, Func<string?> selfLocator) : IWaiterLauncher
+internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator, Func<string?> perlLocator, Func<string?> selfLocator) : IWaiterLauncher
 {
     private const string LogicalProgram = "aw-meta";
 
+    // POSIX::setsid() returns -1 (a true value) on failure, so the check is "== -1", never "or die".
+    private const string PerlDetach = "POSIX::setsid() == -1 and die \"setsid: $!\\n\"; exec @ARGV or die \"exec $ARGV[0]: $!\\n\"";
+
     public DetachedWaiterLauncher()
-        : this(() => FindOnPath("setsid"), () => Environment.ProcessPath)
+        : this(() => FindOnPath("setsid"), FindPerl, () => Environment.ProcessPath)
     {
     }
 
-    // Red stub for #2645: the perl locator is not used yet.
-    internal DetachedWaiterLauncher(Func<string?> setsidLocator, Func<string?> perlLocator, Func<string?> selfLocator)
-        : this(setsidLocator, selfLocator)
+    internal DetachedWaiterLauncher(Func<string?> setsidLocator, Func<string?> selfLocator)
+        : this(setsidLocator, () => null, selfLocator)
     {
-        _ = perlLocator;
     }
 
     public ValueTask<Result<int>> Start(IReadOnlyList<string> argv, CancellationToken cancellationToken) => new(StartNow(argv));
@@ -36,11 +38,21 @@ internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator, Func<s
             return MetaErrors.CommandNotStarted.With("empty command");
         }
 
+        List<string> prefix;
         var setsid = setsidLocator();
-        if (setsid is null)
+        var perl = setsid is null ? perlLocator() : null;
+        if (setsid is not null)
+        {
+            prefix = [setsid];
+        }
+        else if (perl is not null)
+        {
+            prefix = [perl, "-MPOSIX", "-e", PerlDetach];
+        }
+        else
         {
             var os = OperatingSystem.IsMacOS() ? "macOS" : OperatingSystem.IsLinux() ? "Linux" : "this OS";
-            return MetaErrors.HostUnreadable.With($"unavailable on {os}: setsid not found, so the waiter can't outlive this turn; recycle the meta by hand");
+            return MetaErrors.HostUnreadable.With($"unavailable on {os}: setsid not found and no perl to call POSIX::setsid, so the waiter can't outlive this turn; recycle the meta by hand");
         }
 
         var program = Program(argv[0]);
@@ -49,13 +61,18 @@ internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator, Func<s
             return program.Error;
         }
 
-        return Spawn(setsid, program.Value, argv);
+        return Spawn(prefix, program.Value, argv);
     }
 
-    private static Result<int> Spawn(string setsid, string program, IReadOnlyList<string> argv)
+    private static Result<int> Spawn(List<string> prefix, string program, IReadOnlyList<string> argv)
     {
         // sh redirects the three streams to /dev/null and execs the command, so the pid is the command's own and nothing it prints can break a pipe.
-        var info = new ProcessStartInfo(setsid) { UseShellExecute = false, CreateNoWindow = true };
+        var info = new ProcessStartInfo(prefix[0]) { UseShellExecute = false, CreateNoWindow = true };
+        foreach (var argument in prefix.Skip(1))
+        {
+            info.ArgumentList.Add(argument);
+        }
+
         info.ArgumentList.Add("sh");
 
         info.ArgumentList.Add("-c");
@@ -96,6 +113,8 @@ internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator, Func<s
             ? MetaErrors.CommandNotStarted.With("--detach needs the published aw-meta binary (this process runs under the dotnet host): run the installed aw-meta, or recycle the meta by hand")
             : self;
     }
+
+    private static string? FindPerl() => File.Exists("/usr/bin/perl") ? "/usr/bin/perl" : FindOnPath("perl");
 
     private static string? FindOnPath(string name) =>
         (Environment.GetEnvironmentVariable("PATH") ?? string.Empty)

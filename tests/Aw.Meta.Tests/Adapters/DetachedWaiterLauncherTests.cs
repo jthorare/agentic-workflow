@@ -108,6 +108,22 @@ public sealed class DetachedWaiterLauncherTests
         }
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task Without_setsid_or_perl_the_start_is_AW_META_010_naming_both_and_nothing_is_started()
+    {
+        using var dir = new TempDirectory();
+        var marker = Path.Combine(dir.Path, "started");
+        var launcher = new DetachedWaiterLauncher(() => null, () => null, () => "/usr/bin/aw-meta");
+
+        var result = await launcher.Start(["sh", "-c", "touch " + marker], TestContext.Current.CancellationToken);
+
+        Assert.Equal(MetaErrors.HostUnreadable.Code, result.Error.Code);
+        Assert.Contains("setsid not found", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("perl", result.Error.Message, StringComparison.Ordinal);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
+        Assert.False(File.Exists(marker));
+    }
+
     // Reads /proc/<pid>/cmdline up to 5 s (100 x 50 ms) until argv[0] is <name>; returns the last one read either way, so the caller fails with it.
     private static async Task<string[]> CommandLineOnceItRuns(string id, string name)
     {
