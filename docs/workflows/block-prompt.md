@@ -1,4 +1,4 @@
-# Prompt
+# Prompt: ask the model
 
 Group: AI. Type: `prompt`. Ask the model a question and get JSON back, checked against a schema you write.
 

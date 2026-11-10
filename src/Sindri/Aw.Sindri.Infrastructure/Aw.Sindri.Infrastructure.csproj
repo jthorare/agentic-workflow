@@ -32,6 +32,9 @@
     <!-- the workflow docs (PR 8): docs/workflows/<slug>.md, embedded as workflow-docs/<slug>.md and searched by 'workflow_docs' -->
     <WorkflowDocFile Include="../../../docs/workflows/*.md" />
     <EmbeddedResource Include="@(WorkflowDocFile)" LogicalName="workflow-docs/%(Filename)%(Extension)" />
+    <!-- the pages of blocks outside the standard registry (flow and parking blocks): docs/workflows/blocks/<type>.md, embedded as workflow-docs/block-<type>.md so the picker reads their example spec; poll.md is the poll service's page, not a block -->
+    <WorkflowBlockDocFile Include="../../../docs/workflows/blocks/*.md" Exclude="../../../docs/workflows/blocks/poll.md" />
+    <EmbeddedResource Include="@(WorkflowBlockDocFile)" LogicalName="workflow-docs/block-%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- An empty glob embeds nothing and every pack lookup fails at run time (a publish copy tree without config/packs did): make it a build error. -->
