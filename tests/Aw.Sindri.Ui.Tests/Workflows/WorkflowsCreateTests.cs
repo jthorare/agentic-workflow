@@ -85,6 +85,19 @@ public sealed class WorkflowsCreateTests
         Assert.Equal("weekly", page.NewSlug);
     }
 
+    [Fact]
+    public async Task Clearing_the_short_id_makes_it_follow_the_name_again()
+    {
+        var page = await Opened();
+        page.NewName = "Daily";
+        page.NewSlug = "my-id";
+        page.NewSlug = string.Empty;
+
+        page.NewName = "Weekly";
+
+        Assert.Equal("weekly", page.NewSlug);
+    }
+
     [Theory]
     [InlineData("!!!")]
     [InlineData("🚀")]
