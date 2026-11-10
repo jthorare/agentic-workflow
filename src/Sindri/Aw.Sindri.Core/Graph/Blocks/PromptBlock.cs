@@ -115,11 +115,21 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
         };
     }
 
-    /// <summary>The fence source of a reference: "workflow:trigger" for the trigger, "workflow:node:&lt;nodeId&gt;" for a node output.</summary>
+    /// <summary>
+    /// The fence source of a reference: "workflow:trigger" for the trigger, "workflow:item" for a for_each item, "workflow:run" for the run's own
+    /// values ('itemIndex', 'workflow.*'), "workflow:node:&lt;nodeId&gt;" for a node output. The roots are GraphValidator's scope roots.
+    /// </summary>
     private static string SourceOf(string reference)
     {
+        // why: 'item' is often stranger text (a for_each over an http list); 'itemIndex' and 'workflow.*' are Sindri's own values, still fenced, under the run's source, so no root reads as a node that doesn't exist (issue 2446)
         var head = reference.Split('.', 2)[0];
-        return string.Equals(head, "trigger", StringComparison.Ordinal) ? "workflow:trigger" : "workflow:node:" + head;
+        return head switch
+        {
+            "trigger" => "workflow:trigger",
+            "item" => "workflow:item",
+            "itemIndex" or "workflow" => "workflow:run",
+            _ => "workflow:node:" + head,
+        };
     }
 
     private static Dictionary<string, JsonNode?> Outputs(JsonObject? schema, JsonObject answer)
