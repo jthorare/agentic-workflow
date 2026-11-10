@@ -37,7 +37,7 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     /// <summary>The state: glyph and word.</summary>
     public string StateText { get; }
 
-    /// <summary>"Revision 2", "Revision 1 active, 3 newest" or "Newest revision 2"; empty for a first revision.</summary>
+    /// <summary>"Revision 2" or "Revision 1 active, 3 newest"; empty for a first revision and for a workflow with no active revision.</summary>
     public string RevisionText { get; }
 
     /// <summary>"Changed by you, 5m ago" for the person's own actor, "Changed by owner, 5m ago" or "session:abc" as served.</summary>

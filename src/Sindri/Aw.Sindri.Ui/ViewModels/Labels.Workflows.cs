@@ -48,7 +48,7 @@ internal static partial class Labels
     internal static string WfRevision(int? active, int latest) => active switch
     {
         _ when latest < 2 => string.Empty,   // a first revision is not news: "Revision 1" says nothing the row doesn't
-        null => string.Create(CultureInfo.InvariantCulture, $"Newest revision {latest}"),
+        null => string.Empty,   // no active revision: no revision words, so a new workflow doesn't say "Newest revision 2" for the rename's bump
         { } a when a == latest => string.Create(CultureInfo.InvariantCulture, $"Revision {a}"),
         { } a => string.Create(CultureInfo.InvariantCulture, $"Revision {a} active, {latest} newest"),
     };
@@ -95,11 +95,12 @@ internal static partial class Labels
     /// <param name="shown">The revision shown.</param>
     /// <param name="latest">The newest revision.</param>
     /// <param name="nodes">How many nodes the graph has.</param>
-    /// <param name="createdBy">Who made the workflow.</param>
+    /// <param name="createdBy">Who made the workflow, as served: the person's own actor reads "you".</param>
+    /// <param name="hasActive">True when a revision is active; without one the line says no revision.</param>
     /// <returns>The words.</returns>
-    internal static string WfDetail(int shown, int latest, int nodes, string createdBy) => string.Create(
+    internal static string WfDetail(int shown, int latest, int nodes, string createdBy, bool hasActive) => string.Create(
         CultureInfo.InvariantCulture,
-        $"{(shown == latest ? $"Revision {shown}" : $"Revision {shown} of {latest}")} · {nodes} {(nodes == 1 ? "node" : "nodes")} · created by {createdBy}");
+        $"{(hasActive ? (shown == latest ? $"Revision {shown} · " : $"Revision {shown} of {latest} · ") : string.Empty)}{nodes} {(nodes == 1 ? "node" : "nodes")} · created by {WfActor(createdBy)}");
 
     /// <summary>A trigger kind as a word ("manual" is "Manual").</summary>
     /// <param name="kind">The kind as served.</param>

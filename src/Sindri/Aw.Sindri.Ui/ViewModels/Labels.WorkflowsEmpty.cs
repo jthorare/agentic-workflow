@@ -58,7 +58,7 @@ internal static partial class Labels
     internal static string WfCreateRenameFailed(Error error) => "Created, but the name couldn't be set: " + error.Message;
 
     /// <summary>The list level's line while the views are stalled (the Rebuild action is beside it).</summary>
-    internal const string WfStalled = "Workflows can't load while the lists are stalled.";
+    internal const string WfStalled = "The lists are stalled, so this may be out of date.";
 
     /// <summary>The starter templates Sindri accepts (there is no list route yet; GraphTemplates names them), with their titles and what each does.</summary>
     internal static IReadOnlyList<TemplateChoice> WfTemplates { get; } =

@@ -15,7 +15,7 @@ internal sealed partial class WorkflowsPageViewModel
     public bool HasRebuild => Rebuild is not null;
 
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
-    /// <summary>"Workflows can't load while the lists are stalled."</summary>
+    /// <summary>"The lists are stalled, so this may be out of date."</summary>
     public string StalledText => Labels.WfStalled;
 #pragma warning restore CA1822, MA0041
 
