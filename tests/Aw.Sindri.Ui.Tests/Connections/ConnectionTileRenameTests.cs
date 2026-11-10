@@ -67,14 +67,15 @@ public sealed class ConnectionTileRenameTests
     [Fact]
     public async Task A_name_that_is_taken_keeps_the_field_open_and_says_so_without_a_code()
     {
-        _ = _f.Server.SeedConnection(FakeSindriApi.ConnectionRow("linear:home"));
+        // The fake lists connections by name and a tile binds to the first of its service: "home" would sort before "work" and become the tile. "work2" sorts after it.
+        _ = _f.Server.SeedConnection(FakeSindriApi.ConnectionRow("linear:work2"));
         var tile = await Connected();
         tile.StartRename();
-        tile.RenameText = "home";
+        tile.RenameText = "work2";
 
         await tile.Rename(Token);
 
-        Assert.Equal((true, "Another Linear connection is already called 'home'. Pick another name."), (tile.IsRenaming, tile.RenameError));
+        Assert.Equal((true, "Another Linear connection is already called 'work2'. Pick another name."), (tile.IsRenaming, tile.RenameError));
         Assert.DoesNotContain("SND-", tile.RenameError, StringComparison.Ordinal);
         Assert.Equal("work", tile.Account);
     }
