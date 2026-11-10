@@ -10,6 +10,7 @@ internal sealed class WorkflowRowViewModel : ObservableObject
         Slug = row.Slug;
         NameText = row.Name;
         IsActive = row.ActiveRevision is not null;
+        HasNewerRevision = row.ActiveRevision is { } active && active < row.LatestRevision;
         var (glyph, word) = Labels.WfState(IsActive);
         StateText = glyph + " " + word;
         RevisionText = Labels.WfRevision(row.ActiveRevision, row.LatestRevision);
@@ -37,6 +38,9 @@ internal sealed class WorkflowRowViewModel : ObservableObject
 
     /// <summary>True when triggers run a revision.</summary>
     public bool IsActive { get; }
+
+    /// <summary>True when an edit made a revision newer than the one triggers run: Activate puts it live.</summary>
+    public bool HasNewerRevision { get; }
 
     /// <summary>True when the workflow is on (the ok colour); the glyph and word say it too.</summary>
     public bool IsOk => IsActive;

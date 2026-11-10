@@ -59,7 +59,9 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <param name="slug">The workflow.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when both are read.</returns>
-    internal async Task Load(Uri url, string slug, CancellationToken cancellationToken)
+    internal Task Load(Uri url, string slug, CancellationToken cancellationToken) => Load(url, slug, afterSave: false, cancellationToken);
+
+    private async Task Load(Uri url, string slug, bool afterSave, CancellationToken cancellationToken)
     {
         if (!string.Equals(Slug, slug, StringComparison.Ordinal))
         {
@@ -81,7 +83,8 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
 
         if (workflow.IsError || blocks.IsError)
         {
-            FailureText = Labels.WfEditLoadFailed(workflow.IsError ? workflow.Error : blocks.Error);
+            var error = workflow.IsError ? workflow.Error : blocks.Error;
+            FailureText = afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error);
             return;
         }
 
@@ -234,7 +237,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
                 return;
             }
 
-            await Load(url, Slug, cancellationToken).ConfigureAwait(true);
+            await Load(url, Slug, afterSave: true, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
