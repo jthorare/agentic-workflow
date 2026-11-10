@@ -62,8 +62,7 @@ internal sealed class CreateItemService(IApprovedProfile approvals, HeldLease he
         var linked = new ItemLinked(command, item, run, Alias: null);
         var link = await ledger.Append(events.Entry(EventTypes.ItemLinked, linked, $"{EventTypes.ItemLinked}:{item.Value}:{run.Value}", item.Value), grant, cancellationToken).ConfigureAwait(false);
         // issue 2588 repairs the missing link; until then the person can link it by hand
-        const string prefix = "sindri:run/";
-        var runId = run.Value.StartsWith(prefix, StringComparison.Ordinal) ? run.Value[prefix.Length..] : run.Value;   // the key may not carry the prefix
+        var runId = run.Value[(run.Value.IndexOf('/', StringComparison.Ordinal) + 1)..];   // what follows '<source>:<kind>/'; a key with no '/' stays whole
         return link.IsError ? $"the item was made, but its link to run {runId} wasn't written ({link.Error.Message}); link it by hand from the item" : null;
     }
 
