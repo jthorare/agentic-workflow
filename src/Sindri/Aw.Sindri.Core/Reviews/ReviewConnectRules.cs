@@ -2,7 +2,7 @@ using Aw.Sindri.Core.Connections;
 
 namespace Aw.Sindri.Core.Reviews;
 
-/// <summary>When the Reviews list shows its one connect action (#2499): no GitHub connection to read with, or one GitHub refused or needs sign-in again.</summary>
+/// <summary>When the Reviews list shows its one connect action (#2499): no GitHub connection to read with (and no profile token, or one GitHub refused), or a connection GitHub refused or that needs sign-in again.</summary>
 public static class ReviewConnectRules
 {
     private static readonly HashSet<string> _signInCodes = new(StringComparer.Ordinal) { "AW-CONNECTORS-006", "AW-CONNECTORS-007", "SND-REVIEW-009" };
@@ -25,7 +25,8 @@ public static class ReviewConnectRules
             return new ReviewConnect("SND-REVIEW-009", "sign-in-again", "Sign in to GitHub again", account.Connection);
         }
 
-        return account.State == GitHubAccountState.Missing && !profileHasToken
+        // a profile token GitHub refused (the owner's case in #2499) is no way to read either: connecting is the fix
+        return account.State == GitHubAccountState.Missing && (!profileHasToken || IsSignInCode(lastCode))
             ? new ReviewConnect("SND-REVIEW-008", "connect", "Connect GitHub", Connection: null)
             : null;
     }

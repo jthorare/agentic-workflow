@@ -9,12 +9,12 @@ using Aw.Sindri.Core.Secrets;
 namespace Aw.Sindri.Host.IndexSources;
 
 /// <summary>
-/// The GitHub record feed the sync driver picks up (owned-index spec §5.2): when the profile lists GitHub repos and its token pointer resolves, a <see cref="ConnectorFeed"/> over the GitHub connector, the first pull reaching back by 'context.index.windowDays'.
+/// The GitHub record feed the sync driver picks up (owned-index spec §5.2): when the profile lists GitHub repos and a token is found (the connected GitHub connection's, else the profile's pointer), a <see cref="ConnectorFeed"/> over the GitHub connector, the first pull reaching back by 'context.index.windowDays'.
 /// No entry, no pointer or a pointer that doesn't resolve gives no feed (the source's status row says why).
 /// </summary>
 /// <param name="pointers">Resolves the token pointer.</param>
 /// <param name="connectors">Makes the connector.</param>
-/// <param name="connections">The Connections page's rows (the GitHub connection whose token the feed reads with when the profile has no pointer).</param>
+/// <param name="connections">The Connections page's rows (the GitHub connection whose token the feed reads with first).</param>
 /// <param name="connectionSecrets">Reads a connection's tokens.</param>
 /// <param name="readers">Makes the GitHub reader for a host, the private-host switch and the token.</param>
 internal sealed class GitHubRecordFeeds(ISecretPointers pointers, IGitHubConnectorFactory connectors, IConnectionStore connections, IConnectionSecrets connectionSecrets, Func<string?, bool, string, IGitHubReader> readers) : IExternalRecordFeeds
@@ -34,14 +34,23 @@ internal sealed class GitHubRecordFeeds(ISecretPointers pointers, IGitHubConnect
         return [new ConnectorFeed(SourceId.From("github"), connector, new ProfileRepoMap(github.Repos, repos.Select(static r => r.Name)).Place, scrubbers, settings.LinearTeams)];
     }
 
-    // why: the profile's pointer wins when it resolves (the owner chose it); otherwise the GitHub connection's token, so Reviews read with the credential the Connections page signed in
+    // why: the connected GitHub connection wins, so Reviews read with the credential the Connections page signed in (#2499: the
+    // owner's profile still names the old token the work org rejects); the profile's pointer is the fallback when no GitHub
+    // connection is connected
     private static string? Token(string? pointer, IConnectionStore connections, IConnectionSecrets connectionSecrets, ISecretPointers pointers)
     {
-        if (pointer is not null && SecretPointer.Parse(pointer) is { IsSuccess: true } parsed && pointers.Resolve(parsed.Value) is { IsSuccess: true } resolved)
+        if (ConnectionToken(connections, connectionSecrets) is { } fromConnection)
         {
-            return resolved.Value;
+            return fromConnection;
         }
 
+        return pointer is not null && SecretPointer.Parse(pointer) is { IsSuccess: true } parsed && pointers.Resolve(parsed.Value) is { IsSuccess: true } resolved
+            ? resolved.Value
+            : null;
+    }
+
+    private static string? ConnectionToken(IConnectionStore connections, IConnectionSecrets connectionSecrets)
+    {
 #pragma warning disable RS0030 // IExternalRecordFeeds.For is synchronous and the connection list is one local SQLite read; the host has no synchronization context to deadlock on
         var listed = connections.List(CancellationToken.None).AsTask().GetAwaiter().GetResult();
 #pragma warning restore RS0030
