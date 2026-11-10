@@ -206,9 +206,10 @@ bash scripts/tests/heavy-dead-holder.test.sh   # a SIGKILLed holder's slot on sc
 bash scripts/tests/heavy-cap-reserve.test.sh   # every heavy-slot taker reads heavy-slots-cap as it reads now and non-meta takers honour heavy-meta-reserve, on scratch lock dirs: config/lib/locks.sh acquire_any_lock and the scripts/heavy.sh wrapper (#2061)
 bash scripts/tests/heavy-full-reserve.test.sh   # heavy-meta-reserve is capped at the slot count minus one, so a lane job always has a slot: config/lib/heavy-config.sh heavy_reserve and config/lib/locks.sh acquire_any_lock on scratch lock dirs (#2060; the wrapper rows are in heavy.test.sh)
 bash scripts/tests/skill-lock.test.sh   # skills/_shared/skill-lock.sh called the way the skills document it (`LOCK_NAME=browser source skill-lock.sh; acquire_lock`, then release_lock): exit 0, the lock named, the file gone after release, and the default name
-bash scripts/tests/skill-lock-recovery.test.sh   # skill-lock.sh after a failed or abandoned call (#1989): an abandoned lock is taken over, a failed acquire leaves the holder's pid and none of its own, the next acquire gets the lock
+bash scripts/tests/skill-lock-recovery.test.sh   # skill-lock.sh after a failed or abandoned call (#1989): an abandoned lock is taken over, a failed acquire leaves the holder's pid and none of its own, the next acquire gets the lock; the #2569 reclaim guard: a dead holder's guard is cleared, a live or young one is waited on
 bash scripts/tests/skill-lock-sessions.test.sh   # skill-lock.sh called the way skills call it (#1991): acquire and release in separate Bash calls of one session, another session's acquire waits while the lock is held, a session that ends while holding it is taken over
 bash scripts/tests/skill-lock-portable.test.sh   # skills/_shared/skill-lock.sh has no bash 4 or GNU-only forms (mapfile, BASHPID, declare -A, sed -i, find -printf, stat -c, date -d, BASH_VERSINFO ...), so it runs on the macOS runner (#2534); SKILL_LOCK_FILE points the scan at another file
+bash scripts/tests/skill-lock-reclaim-race.test.sh   # two waiters reclaiming one dead holder of a skill-lock.sh lock never both hold it (#2569): a PATH rm stub holds one waiter at its remove until the other has taken the lock
 bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/weeklyretro-shortlog.test.sh   # #1898: /weeklyRetro's `git shortlog` names a revision, so it lists authors with no terminal on stdin
 bash scripts/tests/canary-baseline-keys.test.sh   # #1896: every `baseline.<key>` /canary reads is a key /landAndDeploy writes to baseline.json
@@ -239,7 +240,7 @@ bash scripts/tests/sindri-open-runs.test.sh     # the open agent runs guard inst
 bash scripts/tests/sindri-pod.test.sh      # scripts/sindri-pod.sh (connect, profile edit, repo add, doctor) with a fake kubectl, sindri-ui and EDITOR: --pod/--release, the dry run, the mirror home and its modes, the container wait and its state, restart and forward retry, refusals, the per-verb exit codes, --onyx (the pod's port, override warning, Onyx off, --adopt), profile edit (init, unchanged, valid, invalid then fixed or aborted, conflict), the thin verbs' exit-code passthrough
 bash scripts/tests/readiness-baseline.test.sh
 bash scripts/tests/agent-token.test.sh
-bash scripts/tests/signal-suites-ignored-hup.test.sh   # agent-token.test.sh and formal-verify-tlc.test.sh started with SIGHUP ignored (a `nohup` gate) both pass: each wrapper resets every signal it sends (#2377)
+bash scripts/tests/signal-suites-ignored-hup.test.sh   # agent-token.test.sh, formal-verify-tlc.test.sh and meta-launch.test.sh started with SIGHUP ignored (a `nohup` gate) all pass: each wrapper resets every signal it sends (#2377, #2566)
 bash scripts/tests/ci-changed-areas.test.sh
 bash scripts/tests/ci-bash-tests.test.sh
 bash scripts/tests/ci-lane-budgets.test.sh
