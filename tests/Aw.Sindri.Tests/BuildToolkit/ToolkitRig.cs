@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Toolkits;
@@ -29,6 +30,8 @@ internal sealed class ToolkitRig : IDisposable
     internal FakeHeavySlots Slots { get; } = new();
 
     internal FakeRuntime Runtime { get; } = new();
+
+    internal FakeFolders Folders { get; } = new();
 
     internal FakeJobContextAccessor Jobs { get; } = new();
 
@@ -98,6 +101,13 @@ internal sealed class ToolkitRig : IDisposable
 
         internal List<string> Stopped { get; } = [];
 
+        internal List<string> Paused { get; } = [];
+
+        internal List<string> Resumed { get; } = [];
+
+        /// <summary>Names that have no process: pause and resume refuse them with SND-TK-001.</summary>
+        internal HashSet<string> NotRunning { get; } = new(StringComparer.Ordinal);
+
         public ValueTask<Result<Unit>> Start(Toolkit toolkit, CancellationToken cancellationToken)
         {
             Started.Add(toolkit.Name);
@@ -108,6 +118,48 @@ internal sealed class ToolkitRig : IDisposable
         {
             Stopped.Add(name);
             return ValueTask.FromResult<Result<Unit>>(default(Unit));
+        }
+
+        public ValueTask<Result<Unit>> Pause(string name, CancellationToken cancellationToken)
+        {
+            if (NotRunning.Contains(name))
+            {
+                return ValueTask.FromResult<Result<Unit>>(SindriErrors.ToolkitNotBuilt.With($"'{name}' isn't running"));
+            }
+
+            Paused.Add(name);
+            return ValueTask.FromResult<Result<Unit>>(default(Unit));
+        }
+
+        public ValueTask<Result<Unit>> Resume(string name, CancellationToken cancellationToken)
+        {
+            if (NotRunning.Contains(name))
+            {
+                return ValueTask.FromResult<Result<Unit>>(SindriErrors.ToolkitNotBuilt.With($"'{name}' isn't running"));
+            }
+
+            Resumed.Add(name);
+            return ValueTask.FromResult<Result<Unit>>(default(Unit));
+        }
+    }
+
+    internal sealed class FakeFolders : IToolkitFolders
+    {
+        /// <summary>The folders already on disk.</summary>
+        internal List<ToolkitFolder> Existing { get; } = [];
+
+        /// <summary>What the generator was asked for: name, first tool, needs.</summary>
+        internal List<(string Name, string Tool, string? Needs)> Generated { get; } = [];
+
+        /// <summary>When set, the generator fails with it.</summary>
+        internal Error? Failure { get; set; }
+
+        public IReadOnlyList<ToolkitFolder> Folders() => Existing;
+
+        public ValueTask<Result<ToolkitFolder>> Generate(string name, string tool, string? needs, CancellationToken cancellationToken)
+        {
+            Generated.Add((name, tool, needs));
+            return ValueTask.FromResult<Result<ToolkitFolder>>(Failure is { } failure ? failure : new ToolkitFolder(name, "/tk/" + name));
         }
     }
 }

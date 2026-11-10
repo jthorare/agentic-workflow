@@ -36,4 +36,10 @@ public static partial class SindriErrors
 
     /// <summary>SND-TK-011: the toolkit's tool ran and answered with an error.</summary>
     public static readonly ErrorDefinition ToolkitToolFailed = new("SND-TK-011", ErrorKind.Unavailable, "The toolkit tool returned an error");
+
+    /// <summary>SND-TK-012: a toolkit with that name exists already.</summary>
+    public static readonly ErrorDefinition ToolkitExists = new("SND-TK-012", ErrorKind.Conflict, "A toolkit with that name exists already");
+
+    /// <summary>SND-TK-013: the toolkit generator failed.</summary>
+    public static readonly ErrorDefinition ToolkitCreateFailed = new("SND-TK-013", ErrorKind.Unavailable, "The toolkit generator failed");
 }

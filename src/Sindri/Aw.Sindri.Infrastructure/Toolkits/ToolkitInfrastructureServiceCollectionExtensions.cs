@@ -16,6 +16,7 @@ internal static class ToolkitInfrastructureServiceCollectionExtensions
         return services
             .AddSingleton<IToolkitStore, SqliteToolkitStore>()
             .AddSingleton<IToolkitWorkspace, FileToolkitWorkspace>()
+            .AddSingleton<IToolkitFolders, FileToolkitFolders>()
             .AddSingleton<IToolkitCommands>(static _ => new ProcessToolkitCommands(new ProcessToolRunner()))
             .AddSingleton<IToolkitProcessLauncher, ToolkitProcess>()
             .AddSingleton(static sp => new ToolkitSupervisor(sp.GetRequiredService<IToolkitProcessLauncher>(), sp.GetRequiredService<IToolkitStore>(), sp.GetRequiredService<TimeProvider>()))

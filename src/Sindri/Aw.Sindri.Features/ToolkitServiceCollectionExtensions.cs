@@ -1,7 +1,11 @@
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Features.AdoptToolkits;
 using Aw.Sindri.Features.BuildToolkit;
+using Aw.Sindri.Features.CreateToolkit;
 using Aw.Sindri.Features.ListToolkits;
+using Aw.Sindri.Features.PauseToolkit;
+using Aw.Sindri.Features.ResumeToolkit;
 using Aw.Sindri.Features.StartToolkit;
 using Aw.Sindri.Features.StopToolkit;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +23,11 @@ internal static class ToolkitServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddJob<BuildToolkitRequest, BuildToolkitResult, BuildToolkitService>(static r => JobKey.From("toolkit:" + r.Name), static r => "built " + r.Name)
+            .AddJob<CreateToolkitRequest, CreateToolkitResult, CreateToolkitService>(static r => JobKey.From("toolkit:" + r.Name), static r => "created " + r.Name)
             .AddSingleton<ToolkitRecovery>()
+            .AddSingleton<ToolkitAdoption>()
+            .AddScoped<IService<PauseToolkitRequest, PauseToolkitResponse>, PauseToolkitService>()
+            .AddScoped<IService<ResumeToolkitRequest, ResumeToolkitResponse>, ResumeToolkitService>()
             .AddScoped<IService<StartToolkitRequest, StartToolkitResponse>, StartToolkitService>()
             .AddScoped<IService<StopToolkitRequest, StopToolkitResponse>, StopToolkitService>()
             .AddScoped<IService<ListToolkitsRequest, ListToolkitsResponse>, ListToolkitsService>();

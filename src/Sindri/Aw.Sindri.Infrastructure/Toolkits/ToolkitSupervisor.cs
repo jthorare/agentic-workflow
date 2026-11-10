@@ -92,6 +92,10 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         return Unit.Value;
     }
 
+    public ValueTask<Result<Unit>> Pause(string name, CancellationToken cancellationToken) => throw new NotSupportedException(name);
+
+    public ValueTask<Result<Unit>> Resume(string name, CancellationToken cancellationToken) => throw new NotSupportedException(name);
+
     /// <summary>How many calls are queued on the gate right now (a test signal: tests wait on it instead of a delay).</summary>
     internal int GateWaiters => Volatile.Read(ref _waiting);
 

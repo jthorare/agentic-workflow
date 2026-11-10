@@ -33,6 +33,11 @@ public static partial class ToolNames
             : SindriErrors.ToolkitNameInvalid.With($"'{name}' is {name.Length} characters; clients allow {MaxLength}. Shorten the toolkit or the tool name.");
     }
 
+    /// <summary>Whether <paramref name="name"/> is a toolkit name: lowercase letters, digits and '-', at most 64 characters, starting with a letter or digit.</summary>
+    /// <param name="name">A folder or toolkit name.</param>
+    /// <returns>True when it is one.</returns>
+    public static bool IsToolkitName(string? name) => name is not null && ToolkitName.IsMatch(name);
+
     /// <summary>Splits a client-facing name back into the toolkit and the tool.</summary>
     /// <param name="name">The name as a client sent it.</param>
     /// <param name="toolkit">The toolkit name when this returns true.</param>

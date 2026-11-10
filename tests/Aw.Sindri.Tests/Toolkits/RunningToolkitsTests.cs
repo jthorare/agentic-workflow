@@ -73,8 +73,7 @@ public sealed class RunningToolkitsTests : IAsyncDisposable
         var answer = await _runtime.CallTool("triage", "ping", "{}", "session:abc", Token);
 
         Assert.Equal(SindriErrors.ToolkitPaused.Code, answer.Error.Code);
-        Assert.Contains("toolkit_stop", answer.Error.Message, StringComparison.Ordinal);
-        Assert.DoesNotContain("sindri toolkit resume", answer.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("toolkit_resume", answer.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -100,6 +99,60 @@ public sealed class RunningToolkitsTests : IAsyncDisposable
         Assert.Equal("SND-TK-001", answer.Error.Code);   // built, not started
         Assert.Equal("SND-TK-009", unknown.Error.Code);
         Assert.Empty(_calls.All);
+    }
+
+    [Fact]
+    public async Task A_paused_toolkit_keeps_its_process_is_listed_paused_and_refuses_calls_until_resumed()
+    {
+        _ = await _supervisor.Start(_triage, Token);
+        var process = _launcher.Last;
+        process.Answer = _ => """{"pong":true}""";
+
+        var paused = await _supervisor.Pause("triage", Token);
+        var refused = await _runtime.CallTool("triage", "ping", "{}", "session:abc", Token);
+
+        Assert.True(paused.IsSuccess);
+        Assert.Equal(ToolkitState.Paused, Assert.Single(_runtime.Toolkits()).State);
+        Assert.Equal(SindriErrors.ToolkitPaused.Code, refused.Error.Code);
+        Assert.Contains("toolkit_resume", refused.Error.Message, StringComparison.Ordinal);
+        Assert.False(process.Disposed);
+        Assert.Equal(0, process.Calls);
+        Assert.Empty(_calls.All);
+
+        var resumed = await _supervisor.Resume("triage", Token);
+        var answered = await _runtime.CallTool("triage", "ping", "{}", "session:abc", Token);
+
+        Assert.True(resumed.IsSuccess);
+        Assert.Equal(ToolkitState.Running, Assert.Single(_runtime.Toolkits()).State);
+        Assert.Equal("""{"pong":true}""", answered.Value);
+        Assert.Equal(1, process.Calls);
+    }
+
+    [Fact]
+    public async Task Pause_and_resume_answer_not_running_for_a_toolkit_with_no_process_and_change_nothing_twice()
+    {
+        var pausedCold = await _supervisor.Pause("triage", Token);
+        var resumedCold = await _supervisor.Resume("triage", Token);
+        _ = await _supervisor.Start(_triage, Token);
+        _ = await _supervisor.Pause("triage", Token);
+        var pausedTwice = await _supervisor.Pause("triage", Token);
+
+        Assert.Equal(SindriErrors.ToolkitNotBuilt.Code, pausedCold.Error.Code);
+        Assert.Equal(SindriErrors.ToolkitNotBuilt.Code, resumedCold.Error.Code);
+        Assert.True(pausedTwice.IsSuccess);
+        Assert.Equal(ToolkitState.Paused, Assert.Single(_runtime.Toolkits()).State);
+    }
+
+    [Fact]
+    public async Task A_stop_ends_a_paused_toolkit_and_a_new_start_runs_unpaused()
+    {
+        _ = await _supervisor.Start(_triage, Token);
+        _ = await _supervisor.Pause("triage", Token);
+        _ = await _supervisor.Stop("triage", Token);
+
+        _ = await _supervisor.Start(_triage, Token);
+
+        Assert.Equal(ToolkitState.Running, Assert.Single(_runtime.Toolkits()).State);
     }
 
     [Fact]
@@ -141,16 +194,22 @@ public sealed class RunningToolkitsTests : IAsyncDisposable
 
         internal TimeSpan Takes { get; set; }
 
+        internal int Calls { get; private set; }
+
+        internal bool Disposed { get; private set; }
+
         internal Error? Failure { get; set; }
 
         public ValueTask<Result<string>> Call(string tool, string inputJson, TimeSpan timeout, CancellationToken cancellationToken)
         {
+            Calls++;
             clock.Advance(Takes);
             return ValueTask.FromResult(Failure is { } error ? (Result<string>)error : Answer(inputJson));
         }
 
         public ValueTask DisposeAsync()
         {
+            Disposed = true;
             _ = _exited.TrySetResult();
             return ValueTask.CompletedTask;
         }
