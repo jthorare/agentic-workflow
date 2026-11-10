@@ -8,3 +8,4 @@ models: scripts/meta-start-lock.sh:40-80
 - **Witness:** `gaps/OldLoop.cfg` sets `Old = TRUE`: the loop before #2613 decided from the first entry in glob order (the lowest pid here), so a dead file in front of a live holder's file let a third waiter in.
 - **Not modelled:** liveness (a lone waiter eventually takes over). The outer retry loop in `acquire_start_lock` and its deadline are outside the model, so a waiter that backs off is simply done here. The random backoff sleep is not modelled (it only breaks lockstep, never safety).
 - **Run:** `scripts/tlc-check.sh --witnesses specs/tla/StartLockTakeover`
+- **Not modelled, either:** the guard's age (`find -mmin +1`). `Age` clears an empty guard at any time here, so TLC cannot see a waiter's pid-file write keep an old guard young (#2613 follow-up). The age rule is covered by case 4 of `scripts/tests/meta-start-lock-guard.test.sh`.
