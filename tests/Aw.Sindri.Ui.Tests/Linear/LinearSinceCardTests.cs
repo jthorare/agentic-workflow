@@ -299,6 +299,100 @@ public sealed class LinearSinceCardTests
         Assert.Equal(string.Empty, work.StripDetail);
     }
 
+    private async Task Reread(LinearWorkViewModel work, JsonObject since)
+    {
+        _f.Server.LinearSinceAnswer = LinearFixture.Served(since);
+        await work.Refresh(LinearFixture.Url, Token);
+    }
+
+    [Fact]
+    public async Task A_re_read_keeps_the_group_and_the_rows_of_unchanged_issues_and_replaces_only_the_changed_row()
+    {
+        var work = await ShownWith(Since(
+            ("assigned", "ENG-1", "One", "2025-12-31T23:00:00Z", null, null),
+            ("assigned", "ENG-2", "Two", "2025-12-31T22:00:00Z", null, null),
+            ("mentioned", "OPS-9", "Nine", "2025-12-31T21:00:00Z", null, null)));
+        var assigned = work.StripGroups[0];
+        var other = work.StripGroups[1];
+        var one = assigned.Rows[0];
+        var two = assigned.Rows[1];
+
+        await Reread(work, Since(
+            ("assigned", "ENG-1", "One", "2025-12-31T23:00:00Z", null, null),
+            ("assigned", "ENG-2", "Two", "2025-12-31T23:30:00Z", null, null),   // a newer change: this row is replaced
+            ("mentioned", "OPS-9", "Nine", "2025-12-31T21:00:00Z", null, null)));
+
+        Assert.Same(assigned, work.StripGroups[0]);
+        Assert.Same(other, work.StripGroups[1]);
+        Assert.Same(one, work.StripGroups[0].ShownRows.Single(r => string.Equals(r.Key, "ENG-1", StringComparison.Ordinal)));
+        Assert.NotSame(two, work.StripGroups[0].ShownRows.Single(r => string.Equals(r.Key, "ENG-2", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public async Task A_group_the_owner_opened_stays_open_and_is_the_same_group_after_a_re_read()
+    {
+        var items = Enumerable.Range(1, 6).Select(i => ("assigned", "ENG-" + i.ToString(System.Globalization.CultureInfo.InvariantCulture), "T", "2025-12-31T23:00:00Z", (string?)null, (string?)null)).ToArray();
+        var work = await ShownWith(Since(items));
+        var group = work.StripGroups[0];
+        group.Toggle();
+
+        await Reread(work, Since(items));
+
+        Assert.Same(group, work.StripGroups[0]);
+        Assert.Equal((true, 6, "Show fewer"), (group.IsExpanded, group.ShownRows.Count, group.ToggleText));
+    }
+
+    [Fact]
+    public async Task An_issue_that_moves_to_another_group_leaves_the_old_one_and_an_emptied_group_is_removed()
+    {
+        var work = await ShownWith(Since(("state", "ENG-7", "Seven", "2025-12-31T22:00:00Z", "Todo", "In Progress")));
+        Assert.Equal(["Moved"], work.StripGroups.Select(g => g.Heading), StringComparer.Ordinal);
+
+        await Reread(work, Since(
+            ("state", "ENG-7", "Seven", "2025-12-31T22:00:00Z", "Todo", "In Progress"),
+            ("assigned", "ENG-7", "Seven", "2025-12-31T23:00:00Z", null, null)));
+
+        Assert.Equal(["Assigned to you"], work.StripGroups.Select(g => g.Heading), StringComparer.Ordinal);
+        Assert.Equal(["ENG-7"], work.StripGroups[0].Rows.Select(r => r.Key), StringComparer.Ordinal);
+        Assert.Equal(["ENG-7"], work.StripRows.Select(r => r.Key), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_group_that_appears_is_inserted_in_its_fixed_place()
+    {
+        var work = await ShownWith(Since(
+            ("assigned", "ENG-1", "One", "2025-12-31T23:00:00Z", null, null),
+            ("mentioned", "OPS-9", "Nine", "2025-12-31T21:00:00Z", null, null)));
+        var assigned = work.StripGroups[0];
+        var other = work.StripGroups[1];
+
+        await Reread(work, Since(
+            ("assigned", "ENG-1", "One", "2025-12-31T23:00:00Z", null, null),
+            ("state", "ENG-5", "Five", "2025-12-31T22:00:00Z", "Todo", "Done"),
+            ("mentioned", "OPS-9", "Nine", "2025-12-31T21:00:00Z", null, null)));
+
+        Assert.Equal(["Assigned to you", "Moved", "Other"], work.StripGroups.Select(g => g.Heading), StringComparer.Ordinal);
+        Assert.Same(assigned, work.StripGroups[0]);
+        Assert.Same(other, work.StripGroups[2]);
+    }
+
+    [Fact]
+    public async Task A_kept_row_says_how_long_ago_as_of_the_latest_read()
+    {
+        var since = Since(("assigned", "ENG-1", "One", "2025-12-31T23:00:00Z", null, null));
+        var work = await ShownWith(since);
+        var row = work.StripRows[0];
+        var beforeTime = row.TimeText;
+
+        _f.Clock.Advance(TimeSpan.FromHours(3));
+        await Reread(work, since);
+
+        Assert.Same(row, work.StripRows[0]);
+        Assert.NotEqual(beforeTime, row.TimeText, StringComparer.Ordinal);
+        Assert.Contains(row.TimeText, row.Name, StringComparison.Ordinal);
+        Assert.DoesNotContain(beforeTime, row.Name, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task Reconnect_asks_for_the_Connections_page()
     {

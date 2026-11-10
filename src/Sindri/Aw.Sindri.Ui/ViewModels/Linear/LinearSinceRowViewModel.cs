@@ -87,6 +87,14 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
     /// <summary>True when the avatar shows: the assignee is known, and the row is not in "Assigned to you" (there it is always the viewer).</summary>
     public bool HasInitials => Initials.Length > 0 && Group != LinearSinceGroup.Assigned;
 
+#pragma warning disable CA1822, MA0041, IDE0060 // red stub: the real Tick recomputes TimeText and Name
+    /// <summary>Recomputes the "ago" words and the accessible name as of a later instant.</summary>
+    /// <param name="now">The instant "ago" counts from.</param>
+    internal void Tick(DateTimeOffset now)
+    {
+    }
+#pragma warning restore CA1822, MA0041, IDE0060
+
     /// <summary>Takes what the issue list knows of this issue (or nothing, when it isn't listed).</summary>
     /// <param name="issue">The listed issue.</param>
     internal void Apply(LinearIssueRow? issue)

@@ -129,6 +129,27 @@ public sealed class LinearSinceCardFramesTests : FrameHost
     });
 
     [Fact]
+    public Task A_re_read_keeps_keyboard_focus_on_a_Show_fewer_button() => OnUi(async () =>
+    {
+        var (window, shell) = await OnLinear(SixAssignedAndOneMention());
+        var toggle = Named<Button>(window, "LinearSinceGroupToggle");
+        toggle.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+        Assert.Equal("Show fewer", toggle.Content);
+        Assert.True(toggle.Focus());
+        Settle(window);
+
+        var again = JsonNode.Parse(SixAssignedAndOneMention())!.AsObject();   // why: the helper's own JSON object
+        again["items"]!.AsArray()[6]!["at"] = "2025-12-31T22:30:00Z";   // the mention changed: a read with one changed row
+        Server.LinearSinceAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, again.ToJsonString());
+        await shell.Linear.Refresh(new Uri("http://127.0.0.1:7410/"), TestContext.Current.CancellationToken);
+        Settle(window);
+
+        Assert.Same(toggle, Named<Button>(window, "LinearSinceGroupToggle"));
+        Assert.True(toggle.IsFocused);
+    });
+
+    [Fact]
     public Task Nothing_new_shows_the_empty_message_in_the_card_and_no_action() => OnUi(async () =>
     {
         var (window, _) = await OnLinear(GoldenFiles.Api("linear-since", "empty"));
