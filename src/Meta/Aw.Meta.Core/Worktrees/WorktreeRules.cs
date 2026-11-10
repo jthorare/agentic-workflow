@@ -150,12 +150,12 @@ internal static class WorktreeRules
         }
     }
 
-    // Only the owning lane's --done frees a detached tree (the unpushed-commits reason in Judge checks its HEAD); rule 7 needs a recorded sweep.
+    // Only the owning lane's --done frees a detached tree (the unpushed-commits reason in Judge checks its HEAD); like --discarded it waives rule 7 and "no previous sweep" (#2544, #2560).
     private static void DetachedReasons(WorktreeFacts facts, List<string> reasons)
     {
-        if (!facts.Done || facts.NoPreviousSweep)
+        if (!facts.Done)
         {
-            reasons.Add(facts.Done ? "no previous sweep to compare with" : "detached, not a gate tree");
+            reasons.Add("detached, not a gate tree");
         }
     }
 
