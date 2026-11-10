@@ -51,7 +51,7 @@ public sealed class RunAgentBriefFenceTests
 
         Assert.Contains(fenced, brief, StringComparison.Ordinal);
         Assert.DoesNotContain("TASK-", brief, StringComparison.Ordinal);
-        Assert.Equal(1, brief.Split("<untrusted", StringSplitOptions.None).Length - 1);   // only the value's own fence, no fence around the author's words
+        Assert.Equal(1, brief.Split("<untrusted source=", StringSplitOptions.None).Length - 1);   // only the value's own fence, no fence around the author's words (the brief's preamble names the tag, so count opened fences)
     }
 
     [Fact]
