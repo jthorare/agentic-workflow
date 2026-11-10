@@ -22376,6 +22376,11 @@ Aw.Sindri.Core.Resources.ResourceEntry.Owner.get -> Aw.Sindri.Core.Resources.Res
 Aw.Sindri.Core.Resources.ResourceEntry.Path.get -> string!
 Aw.Sindri.Core.Resources.ResourceEntry.ResourceEntry(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceKind kind, string! name, long sizeBytes, string! path) -> void
 Aw.Sindri.Core.Resources.ResourceEntry.SizeBytes.get -> long
+Aw.Sindri.Core.Connections.ConnectionCredentials
+Aw.Sindri.Core.Connections.ConnectionCredentials.ConnectionCredentials(Aw.Sindri.Core.Connections.IConnectionStore? connections, Aw.Sindri.Core.Connections.IConnectionSecrets? connectionSecrets, Aw.Sindri.Core.Secrets.ISecretPointers! pointers) -> void
+Aw.Sindri.Core.Connections.ConnectionCredentials.TokenFor(string! preset, string? profilePointer) -> string?
+Aw.Sindri.Core.Connections.IConnectionCredentials
+Aw.Sindri.Core.Connections.IConnectionCredentials.TokenFor(string! preset, string? profilePointer) -> string?
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext.BoxCap.get -> Aw.Sindri.Core.Resources.ResourceBoxCap?
 Aw.Sindri.Core.Graph.Validation.GraphValidationContext.BoxCap.init -> void
 Aw.Sindri.Core.Resources.ResourceBoxCap

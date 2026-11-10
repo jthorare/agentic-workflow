@@ -49,7 +49,7 @@ internal sealed class ContextLinearConnectionFacts(IProfileSource live, IContext
     }
 
     private static LinearKeyStateView ReadState(LinearSettings? linear, LinearStoredCheck? stored) =>
-        linear is null ? _notSet : Checked(linear.Token, stored);
+        linear?.Token is not { } token ? _notSet : Checked(token, stored);
 
     private static LinearKeyStateView WriteState(LinearSettings? linear, LinearStoredCheck? stored)
     {
