@@ -148,6 +148,7 @@ internal static class Usage
         "       sindri wf cancel <run> [--json]   ask a run in flight to stop (exit 0 ok, 1 not running, 2 refused)",
         "       sindri wf takeover <run> <node> [--item <index>] [--json]   take the run_agent node the run waits on over: its timeout pauses and only you report it (exit 0 ok, 1 not running, 2 refused)",
         "       sindri wf handback <run> <node> [--item <index>] [--json]   hand a taken-over run_agent node back: its timeout resumes with what was left (exit 0 ok, 1 not running, 2 refused)",
+        "       sindri answer <run>/<node> (--text T | --choice C) [--json]   answer the question an ask_owner node waits on, as yourself (the timeline shows your actor: human:<client>, session:launch:<launch id> or session:<client>); the node must be waiting and a choice must be one it offers (exit 0 answered, 1 not running, 2 refused)",
         "       sindri workflow takeover <address> [--nonce <n>] [--json]   take the instance over: its timer pauses",
         "       sindri workflow handback <address> [--nonce <n>] [--json]   hand a taken-over instance back: its timer resumes",
         "       sindri takeover <run> <node> [--item <index>] [--json]   short form of 'wf takeover'",

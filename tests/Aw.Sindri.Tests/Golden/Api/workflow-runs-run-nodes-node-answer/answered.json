@@ -1,0 +1,6 @@
+{
+  "run": "morning-check@1:1",
+  "node": "ask",
+  "answer": "yes",
+  "answeredBy": "human:cli"
+}
