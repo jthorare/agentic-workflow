@@ -156,7 +156,7 @@ public sealed class WriteAttributionTests
     {
         var shards = typeof(WriteAttributionTests).Assembly.GetTypes().Select(static t => t.Name).Where(static n => n.StartsWith("WriteAttributionShard", StringComparison.Ordinal)).Order(StringComparer.Ordinal);
 
-        Assert.Equal(Enumerable.Range(0, Shards).Select(static i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"WriteAttributionShard{i}Tests")).Order(StringComparer.Ordinal), shards);   // why: a shard with no class would skip its rows silently
+        Assert.Equal(Enumerable.Range(0, Shards).Select(static i => string.Create(CultureInfo.InvariantCulture, $"WriteAttributionShard{i}Tests")).Order(StringComparer.Ordinal), shards);   // why: a shard with no class would skip its rows silently
     }
 
     [Fact, Trait("Lane", "unit")]
