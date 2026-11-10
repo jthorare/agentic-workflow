@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # The bash-tests job runs on macos-15 (bash 3.2, BSD sed/find/touch). Six suites passed on the Linux box and failed there (#2534):
 # meta-hooks, check-skill-blocks, check-skill-requires, eval-av-fakes, heavy and install-cs. This test reproduces the runner's
-# conditions on any box, in two parts:
+# conditions on any box, in three parts:
 #   1. a static scan of those suites (and the stubs they run) for what bash 3.2 or BSD tools reject;
-#   2. the quick suites run with sed, touch and find that refuse the GNU-only forms the way the BSD ones do.
-# A suite made portable passes both parts on Linux and macOS alike; none of this weakens a suite's own assertions.
+#   2. the quick suites run with sed, touch and find that refuse the GNU-only forms the way the BSD ones do;
+#   3. heavy and install-cs run on a PATH without setsid and timeout, which macOS doesn't ship (main f936ef2d13 on the runner:
+#      heavy's perl fallback read `--expensive` as a perl switch, exit 25; install-cs's staged rows ran `timeout`, exit 127).
+# A suite made portable passes every part on Linux and macOS alike; none of this weakens a suite's own assertions.
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SUITES="config/hooks/tests/meta-hooks.test.sh scripts/tests/check-skill-blocks.test.sh scripts/tests/check-skill-requires.test.sh scripts/tests/eval-av-fakes.test.sh scripts/tests/heavy.test.sh scripts/tests/install-cs.test.sh"
@@ -29,7 +31,8 @@ scan "BSD touch has no -d 'N seconds ago' (meta-hooks: out of range or illegal t
 
 # Part 2: sed, touch and find that refuse the GNU-only forms, first on PATH for the quick suites.
 SHIM="$(mktemp -d)"
-trap 'rm -f "$SHIM/sed" "$SHIM/touch" "$SHIM/find"; rmdir "$SHIM"' EXIT
+NOTOOLS="$(mktemp -d)"
+trap 'rm -f "$SHIM/sed" "$SHIM/touch" "$SHIM/find"; rmdir "$SHIM"; find "$NOTOOLS" -type l -delete; rmdir "$NOTOOLS"' EXIT
 real_sed="$(command -v sed)"; real_touch="$(command -v touch)"; real_find="$(command -v find)"
 cat > "$SHIM/sed" <<SH
 #!/bin/bash
@@ -55,6 +58,25 @@ for s in scripts/tests/check-skill-requires.test.sh scripts/tests/check-skill-bl
   else
     bad "$s fails with BSD-style sed, touch and find"
     printf '%s\n' "$out" | grep -E 'FAIL|not ok|invalid command|illegal time' | head -5 | sed 's/^/      | /'
+  fi
+done
+
+# Part 3: every tool on PATH but setsid, timeout and gtimeout, linked into one folder that is the whole PATH.
+IFS=: read -r -a path_dirs <<< "$PATH"
+for d in "${path_dirs[@]}"; do
+  [ -d "$d" ] || continue
+  for t in "$d"/*; do
+    n="${t##*/}"
+    case "$n" in setsid|timeout|gtimeout) continue ;; esac
+    if [ -x "$t" ] && [ ! -d "$t" ] && [ ! -e "$NOTOOLS/$n" ]; then ln -s "$t" "$NOTOOLS/$n"; fi
+  done
+done
+for s in scripts/tests/heavy.test.sh scripts/tests/install-cs.test.sh; do
+  if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$NOTOOLS" bash "$s" 2>&1)"; then
+    ok "$s passes without setsid and timeout on PATH"
+  else
+    bad "$s fails without setsid and timeout on PATH"
+    printf '%s\n' "$out" | grep -E 'not ok|command not found|Unrecognized switch' | head -5 | sed 's/^/      | /'
   fi
 done
 

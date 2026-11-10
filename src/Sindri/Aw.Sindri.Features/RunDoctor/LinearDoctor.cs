@@ -1,5 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Linear;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
@@ -59,6 +60,16 @@ internal sealed class LinearDoctor(IContextEngine engine, ISecretPointers secret
         if (ScopeRules.Usable(entries).Count == 0)
         {
             return new DoctorCheck(Name, CheckState.Warn, "the profile maps no repo, so no context source runs, linear included", "map a repo in the profile's repos and context.repos");
+        }
+
+        return KeyCheck(linear);
+    }
+
+    private DoctorCheck KeyCheck(LinearSettings linear)
+    {
+        if (linear.Token is null)
+        {
+            return new DoctorCheck(Name, CheckState.Ok, "configured: the profile names no context.sources.linear.token, so the feed reads with the Linear connection on the Connections page (not probed here)", Fix: null);
         }
 
         var key = SecretPointer.Parse(linear.Token).Bind(secrets.Resolve);

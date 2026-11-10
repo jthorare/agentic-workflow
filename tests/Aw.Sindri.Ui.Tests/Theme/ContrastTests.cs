@@ -18,46 +18,62 @@ public sealed partial class ContrastTests
     private static readonly TokenFile _tokens = TokenFile.Load();
 
     // (foreground, background, the ratio §11.1 records, the minimum its use needs; 0 = decoration or disabled, no minimum)
-    public static TheoryData<string, string, double, double> Pairs => new()
-    {
-        { "Ink", "Canvas", 19.6, TextAa },
-        { "Ink", "Surface1", 17.9, TextAa },
-        { "Ink", "Surface2", 17.2, TextAa },
-        { "InkMuted", "Canvas", 14.3, TextAa },
-        { "InkMuted", "Surface1", 13.0, TextAa },
-        { "InkSubtle", "Canvas", 6.4, TextAa },
-        { "InkSubtle", "Surface1", 5.9, TextAa },
-        { "InkSubtle", "Surface2", 5.6, TextAa },
-        { "InkTertiary", "Canvas", 3.6, 0 },
-        { "InkTertiary", "Surface1", 3.3, 0 },
-        { "PrimaryHover", "Canvas", 7.3, TextAa },
-        { "PrimaryHover", "Surface1", 6.6, NonText },
-        { "PrimaryHover", "Surface3", 6.1, NonText },   // the palette's selected-row bar on its card (U1 run 1, a11y-4)
-        { "OnPrimary", "Primary", 4.70, TextAa },
-        { "OnPrimary", "PrimaryHoverFill", 5.5, TextAa },
-        { "OnPrimary", "PrimaryPressed", 6.2, TextAa },
-        { "Error", "Canvas", 6.0, TextAa },
-        { "Error", "Surface1", 5.5, TextAa },   // the todo row's Overdue due word on the panel (todo spec §3.5)
-        { "Success", "Canvas", 6.6, TextAa },
-        { "Attention", "Canvas", 9.4, TextAa },
-        { "Attention", "Surface1", 8.6, TextAa },
-        { "Attention", "AttentionSoft", 7.9, TextAa },   // the attn chip
-        { "Error", "ErrorSoft", 5.3, TextAa },   // the fail chip
-        { "Success", "SuccessSoft", 5.8, TextAa },   // the ok chip
-        { "InkMuted", "Surface2", 12.5, TextAa },   // the neutral chip
-        { "Ink", "AttentionFill", 8.4, TextAa },   // the hold button's label over its fill (setup spec §2.3 says about 9; the computed ratio is 8.4)
-        { "AttentionFill", "Surface2", 2.05, 0 },   // decoration: the fill against the button's own background
-        { "Hairline", "Canvas", 1.3, 0 },
-        { "HairlineStrong", "Canvas", 1.7, 0 },
+    private static readonly (string, string, double, double)[] _pairRows =
+    [
+        ("Ink", "Canvas", 19.6, TextAa),
+        ("Ink", "Surface1", 17.9, TextAa),
+        ("Ink", "Surface2", 17.2, TextAa),
+        ("InkMuted", "Canvas", 14.3, TextAa),
+        ("InkMuted", "Surface1", 13.0, TextAa),
+        ("InkSubtle", "Canvas", 6.4, TextAa),
+        ("InkSubtle", "Surface1", 5.9, TextAa),
+        ("InkSubtle", "Surface2", 5.6, TextAa),
+        ("InkTertiary", "Canvas", 3.6, 0),
+        ("InkTertiary", "Surface1", 3.3, 0),
+        ("PrimaryHover", "Canvas", 7.3, TextAa),
+        ("PrimaryHover", "Surface1", 6.6, NonText),
+        ("PrimaryHover", "Surface3", 6.1, NonText),   // the palette's selected-row bar on its card (U1 run 1, a11y-4)
+        ("OnPrimary", "Primary", 4.70, TextAa),
+        ("OnPrimary", "PrimaryHoverFill", 5.5, TextAa),
+        ("OnPrimary", "PrimaryPressed", 6.2, TextAa),
+        ("Error", "Canvas", 6.0, TextAa),
+        ("Error", "Surface1", 5.5, TextAa),   // the todo row's Overdue due word on the panel (todo spec §3.5)
+        ("Success", "Canvas", 6.6, TextAa),
+        ("Attention", "Canvas", 9.4, TextAa),
+        ("Attention", "Surface1", 8.6, TextAa),
+        ("Attention", "AttentionSoft", 7.9, TextAa),   // the attn chip
+        ("Error", "ErrorSoft", 5.3, TextAa),   // the fail chip
+        ("Success", "SuccessSoft", 5.8, TextAa),   // the ok chip
+        ("InkMuted", "Surface2", 12.5, TextAa),   // the neutral chip
+        ("Ink", "AttentionSoft.Hover", 15.0, TextAa),   // a Needs You row's text under the pointer (#2611)
+        ("Ink", "AttentionSoft.Pressed", 13.9, TextAa),   // and while pressed
+        ("Ink", "AttentionFill", 8.4, TextAa),   // the hold button's label over its fill (setup spec §2.3 says about 9; the computed ratio is 8.4)
+        ("AttentionFill", "Surface2", 2.05, 0),   // decoration: the fill against the button's own background
+        ("Hairline", "Canvas", 1.3, 0),
+        ("HairlineStrong", "Canvas", 1.7, 0),
         // The context map (F3 spec 1 §2 "Tokens"): the wire and its ports are decoration, 1.3+ like the hairline; the
         // highlighted wire and the anchor ring are the same values as InkSubtle and InkMuted, so they pass as non-text.
-        { "Wire", "Canvas", 2.4, 1.3 },
-        { "Wire", "Surface1", 2.2, 1.3 },
-        { "WireHi", "Canvas", 6.4, NonText },
-        { "WireHi", "Surface1", 5.9, NonText },
-        { "RingAnchor", "Canvas", 14.3, NonText },
-        { "RingAnchor", "Surface1", 13.0, NonText },
-    };
+        ("Wire", "Canvas", 2.4, 1.3),
+        ("Wire", "Surface1", 2.2, 1.3),
+        ("WireHi", "Canvas", 6.4, NonText),
+        ("WireHi", "Surface1", 5.9, NonText),
+        ("RingAnchor", "Canvas", 14.3, NonText),
+        ("RingAnchor", "Surface1", 13.0, NonText),
+    ];
+
+    public static TheoryData<string, string, double, double> Pairs
+    {
+        get
+        {
+            var data = new TheoryData<string, string, double, double>();
+            foreach (var r in _pairRows)
+            {
+                data.Add(r.Item1, r.Item2, r.Item3, r.Item4);
+            }
+
+            return data;
+        }
+    }
 
     // The todo panel's colours (todo spec D6, §3.5). The theme is dark only, so there is one set of rows.
     public static TheoryData<string, string, double, double> TodoPairs => new()

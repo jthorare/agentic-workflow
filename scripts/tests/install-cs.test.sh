@@ -10,6 +10,7 @@
 # Run: bash scripts/tests/install-cs.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$DIR/lib/test-portable.sh"   # timeout for macOS (the staged-scripts rows)
 fail=0
 check() {
   if [ "$2" == "$3" ]; then echo "ok - $1"; else

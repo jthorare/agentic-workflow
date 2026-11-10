@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Infrastructure.Workflows;
 using Temporalio.Client;
+using Temporalio.Exceptions;
 
 namespace Aw.Sindri.Tests.Workflows;
 
@@ -12,9 +13,8 @@ namespace Aw.Sindri.Tests.Workflows;
 /// The parking blocks on the time-skipping server (issue 2258, PR 9): a 'wait' node sleeps on a timer and the run goes on, an 'ask_owner' node takes the default branch at its timeout, and an answer
 /// sent through the 'Answer' update before the timeout wins. The server skips time while the test awaits the run's result.
 /// </summary>
-// why: quarantined in the heavy lane (no gate runs it) until issue 2574 lands: a run left open by an earlier test stops time on the shared server, and the later tests time out
-[Lane(TestLane.Heavy)]
-public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+[Lane(TestLane.Integration)]
+public sealed partial class GraphWorkflowParkingTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -38,12 +38,12 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     }
 
     // why: the server did not skip time on its own while GetResultAsync waited (both timer tests hung), so the test skips it; again until the run ends, because the timer may start after the first skip
-    private async Task SkipUntilEnded(GraphRig rig, WorkflowRunId run, TimeSpan step)
+    private static async Task SkipUntilEnded(GraphRig rig, WorkflowRunId run, TimeSpan step)
     {
         using var limit = Limit();
         while ((await rig.Runs.Get(run, limit.Token)).Value.Status is not (WorkflowRunStatus.Succeeded or WorkflowRunStatus.Failed or WorkflowRunStatus.Cancelled))
         {
-            await server.Environment.DelayAsync(step);
+            await rig.Environment.DelayAsync(step);
             await Task.Delay(TimeSpan.FromMilliseconds(100), limit.Token);
         }
     }
@@ -62,7 +62,7 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     [Fact]
     public async Task A_wait_node_sleeps_on_a_timer_and_the_run_then_goes_on()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("hold", "wait", config: new JsonObject { ["duration"] = "15m" }), GraphRig.Node("after", "echo")],
             [GraphRig.Edge("start", "hold"), GraphRig.Edge("hold", "after")]));
@@ -86,12 +86,13 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     [Fact]
     public async Task A_cancel_ends_a_wait_node_cancelled_and_skips_the_rest()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("hold", "wait", config: new JsonObject { ["duration"] = "1d" }), GraphRig.Node("after", "echo")],
             [GraphRig.Edge("start", "hold"), GraphRig.Edge("hold", "after")]));
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         await WaitUntilRunning(rig, started.RunId, "hold");
+        await WaitUntilTimerStarted(rig, started.RunId.Value);
 
         await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
         var run = await rig.Final(started.RunId);
@@ -106,7 +107,7 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     [Fact]
     public async Task An_unanswered_question_takes_the_timeout_branch_with_the_default()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(AskSpec());
 
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
@@ -126,7 +127,7 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     [Fact]
     public async Task An_answer_before_the_timeout_wins_and_is_attributed_to_the_session_that_gave_it()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(AskSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
 
@@ -145,29 +146,29 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     [Fact]
     public async Task An_answer_that_is_not_a_choice_and_an_answer_to_a_node_that_does_not_wait_are_refused()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(AskSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         var handle = rig.Client.GetWorkflowHandle(started.RunId.Value);
         using var limit = Limit();
-        Temporalio.Exceptions.WorkflowUpdateFailedException? notAChoice = null;
+        WorkflowUpdateFailedException? notAChoice = null;
         while (notAChoice is null)
         {
             try
             {
                 _ = await Answer(handle, new GraphAnswerInput("ask", "maybe", Choice: null, "owner"), limit.Token);
             }
-            catch (Temporalio.Exceptions.WorkflowUpdateFailedException e) when (e.InnerException!.Message.Contains("not one of the choices", StringComparison.Ordinal))
+            catch (WorkflowUpdateFailedException e) when (e.InnerException!.Message.Contains("not one of the choices", StringComparison.Ordinal))
             {
                 notAChoice = e;   // the node waits now: it refused the answer for what it is, not because it was not waiting yet
             }
-            catch (Temporalio.Exceptions.WorkflowUpdateFailedException)
+            catch (WorkflowUpdateFailedException)
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
             }
         }
 
-        var wrongNode = await Assert.ThrowsAsync<Temporalio.Exceptions.WorkflowUpdateFailedException>(async () =>
+        var wrongNode = await Assert.ThrowsAsync<WorkflowUpdateFailedException>(async () =>
             await Answer(handle, new GraphAnswerInput("start", "yes", Choice: null, "owner"), limit.Token));
 
         Assert.Contains("not one of the choices", notAChoice.InnerException!.Message, StringComparison.Ordinal);
@@ -188,7 +189,7 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
                 _ = await Answer(handle, answer, limit.Token);
                 return;
             }
-            catch (Temporalio.Exceptions.WorkflowUpdateFailedException)
+            catch (WorkflowUpdateFailedException)
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
             }
@@ -200,6 +201,29 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
         using var limit = Limit();
         while (!(await rig.NodeStatuses(run)).TryGetValue(node, out var status) || status != NodeRunStatus.Running)
         {
+            await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
+        }
+    }
+
+    // why: a node's row says "running" as soon as its block starts, while the block's activity may still be in flight. A cancel that lands then races that activity: the run can end
+    // before the node ever parks, and the node's row ends in a different state than the test expects. The workflow's own timer shows the node is parked and waiting.
+    private static async Task WaitUntilTimerStarted(GraphRig rig, string workflowId)
+    {
+        using var limit = Limit();
+        while (true)
+        {
+            try
+            {
+                var history = await rig.Client.GetWorkflowHandle(workflowId).FetchHistoryAsync();
+                if (history.Events.Any(static e => e.TimerStartedEventAttributes != null))
+                {
+                    return;
+                }
+            }
+            catch (RpcException e) when (e.Code == RpcException.StatusCode.NotFound)   // boundary: a child workflow that has not started yet
+            {
+            }
+
             await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
         }
     }

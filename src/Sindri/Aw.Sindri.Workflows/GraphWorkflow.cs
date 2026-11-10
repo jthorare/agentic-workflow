@@ -19,9 +19,11 @@ internal sealed partial class GraphWorkflow
     // the workflow lets the launch return, then stops, so the close that follows sees the session the launch made (TryCancel let the close run first and left an orphan). Sending the cancel
     // anyway raced the launch's completion, and the server refused the whole workflow task ("ACTIVITY_UNKNOWN for scheduledEventId"). The one-shot reads and the close are retried without end like the writes
     private static readonly ActivityOptions _agentLaunch = new() { StartToCloseTimeout = TimeSpan.FromMinutes(10), RetryPolicy = GraphActivityOptions.Unbounded, CancellationToken = CancellationToken.None };
+    private static readonly ActivityOptions _agentLaunchAttempt = new() { StartToCloseTimeout = TimeSpan.FromMinutes(10), RetryPolicy = new Temporalio.Common.RetryPolicy { MaximumAttempts = 1 }, CancellationToken = CancellationToken.None };
     private static readonly ActivityOptions _agentRead = new() { StartToCloseTimeout = TimeSpan.FromMinutes(5), RetryPolicy = GraphActivityOptions.Unbounded };
 
     private WorkflowRunId _run;
+    private int _agentLaunchAttempts = DefaultAgentLaunchAttempts;
 
     /// <summary>Walks the run's spec.</summary>
     /// <param name="input">The run.</param>
@@ -32,6 +34,7 @@ internal sealed partial class GraphWorkflow
         ArgumentNullException.ThrowIfNull(input);
         _ = Workflow.Patched("graph-walk-1");
         _run = input.Run;
+        _agentLaunchAttempts = input.AgentLaunchAttempts > 0 ? input.AgentLaunchAttempts : DefaultAgentLaunchAttempts;
         try
         {
             var spec = await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.LoadAsync(_run), _write).ConfigureAwait(true);
