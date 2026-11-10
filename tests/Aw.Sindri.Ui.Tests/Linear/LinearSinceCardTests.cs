@@ -200,7 +200,8 @@ public sealed class LinearSinceCardTests
     {
         var work = await _f.Shown(Token);
 
-        Assert.Equal((true, (string?)null), (work.CanCreate, work.CreateTip));
+        Assert.True(work.CanCreate);
+        Assert.Null(work.CreateTip);
     }
 
     [Fact]
