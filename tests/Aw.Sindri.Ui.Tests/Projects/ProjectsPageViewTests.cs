@@ -20,6 +20,10 @@ namespace Aw.Sindri.Ui.Tests.Projects;
 [Collection(HeadlessWindows.Name)]
 public sealed class ProjectsPageViewTests : FrameHost
 {
+    // The one Add project rule: the window shows exactly one visible button with the Add text.
+    private static int AddButtons(ShellWindow window, ShellViewModel shell) =>
+        window.GetVisualDescendants().OfType<Button>().Count(b => b.IsEffectivelyVisible && string.Equals(b.Content as string, shell.Projects.AddText, StringComparison.Ordinal));
+
     private async Task<(ShellWindow Window, ShellViewModel Shell)> OnProjects(string? scenario = null)
     {
         if (scenario is not null)
@@ -86,16 +90,16 @@ public sealed class ProjectsPageViewTests : FrameHost
         var (window, shell) = await OnProjects("empty-leads-nothing");
 
         Assert.Equal(shell.Projects.Sentence, Heard.Wrapper(Named<Border>(window, "ProjectsEmptyName")));
-        Assert.Equal((true, false, false, true), (Visible(window, "ProjectsEmptyBlock"), Visible(window, "ProjectsBanner"), Visible(window, "ProjectsAddEmpty"), Visible(window, "ProjectsAdd")));
+        Assert.Equal((true, false, true, 1), (Visible(window, "ProjectsEmptyCard"), Visible(window, "ProjectsBanner"), Visible(window, "ProjectsAdd"), AddButtons(window, shell)));
         Assert.Empty(Frames(window));
     });
 
     [Fact]
     public Task Linear_not_connected_offers_Connect_Linear_in_the_empty_card_and_one_Add_project() => OnUi(async () =>
     {
-        var (window, _) = await OnProjects("empty-no-linear");
+        var (window, shell) = await OnProjects("empty-no-linear");
 
-        Assert.Equal((true, true, false), (Visible(window, "ProjectsConnectEmpty"), Visible(window, "ProjectsAdd"), Visible(window, "ProjectsAddEmpty")));
+        Assert.Equal((true, true, 1), (Visible(window, "ProjectsConnectEmpty"), Visible(window, "ProjectsAdd"), AddButtons(window, shell)));
         Assert.Equal("Connect Linear", Named<Button>(window, "ProjectsConnectEmpty").Content);
     });
 
@@ -129,7 +133,7 @@ public sealed class ProjectsPageViewTests : FrameHost
         var (window, shell) = await OnProjects("context-down");
 
         Assert.Equal(shell.Projects.Sentence, Heard.Wrapper(Named<Border>(window, "ProjectsBannerName")));
-        Assert.Equal((true, false), (Visible(window, "ProjectsBanner"), Visible(window, "ProjectsEmptyBlock")));
+        Assert.Equal((true, false), (Visible(window, "ProjectsBanner"), Visible(window, "ProjectsEmptyCard")));
         Assert.Equal(2, Frames(window).Count);
         Assert.False(Visible(window, "ProjectCardStats"));
         Assert.False(Visible(window, "ProjectCardFooter"));

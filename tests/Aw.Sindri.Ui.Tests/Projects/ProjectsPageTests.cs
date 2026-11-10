@@ -156,7 +156,7 @@ public sealed class ProjectsPageTests
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal(("Linear is still syncing. Projects you lead show up when it's done.", true, false, false, false), (page.Sentence, page.IsEmptyBlock, page.IsBanner, page.ShowsAddInEmpty, page.NamesOnly));
+        Assert.Equal(("Linear is still syncing. Projects you lead show up when it's done.", true, false, false), (page.Sentence, page.IsEmptyBlock, page.IsBanner, page.NamesOnly));
         Assert.Empty(page.Groups);
     }
 
@@ -167,7 +167,7 @@ public sealed class ProjectsPageTests
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal((true, true, false), (page.IsEmptyBlock, page.ShowsAddInEmpty, page.IsBanner));
+        Assert.Equal((true, false), (page.IsEmptyBlock, page.IsBanner));
         Assert.StartsWith("You don't lead any Linear projects", page.Sentence, StringComparison.Ordinal);
     }
 
@@ -178,7 +178,7 @@ public sealed class ProjectsPageTests
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal((true, true), (page.IsEmptyBlock, page.ShowsAddInEmpty));
+        Assert.True(page.IsEmptyBlock);
     }
 
     private const string ServedMissingKey = "Linear needs a token. Run sindri index connect linear in your terminal to connect it.";

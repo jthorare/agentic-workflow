@@ -62,9 +62,6 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     /// <summary>True when there are cards and a sentence: the banner.</summary>
     public bool IsBanner { get; private set => Set(ref field, value); }
 
-    /// <summary>True when the dashed block offers Add project (not while Linear is syncing).</summary>
-    public bool ShowsAddInEmpty { get; private set => Set(ref field, value); }
-
     /// <summary>True when Context is failing: cards show their name and origin chip only.</summary>
     public bool NamesOnly { get; private set => Set(ref field, value); }
 
@@ -243,7 +240,6 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
         (Sentence, ShowsConnect) = (ProjectsLinear.Sentence(list, _clock.GetUtcNow()), ProjectsLinear.OffersConnect(list.Empty));
         IsEmptyBlock = list.Projects.Count == 0 && list.Empty is not null;
         IsBanner = list.Projects.Count > 0 && list.Empty is not null;
-        ShowsAddInEmpty = IsEmptyBlock && !list.Freshness.Any(f => string.Equals(f.State, "syncing", StringComparison.Ordinal));
 
         var present = new HashSet<string>(list.Projects.Concat(list.Finished).Concat(list.Hidden).Select(c => c.Id), StringComparer.Ordinal);
         foreach (var gone in _cards.Keys.Where(k => !present.Contains(k)).ToList())

@@ -81,7 +81,7 @@ public sealed class ProjectsFramesTests : FrameHost
         var (window, shell) = await OnProjects("empty-leads-nothing", 1440, 900);
 
         Shown(window, shell);
-        Assert.True(Visible(window, "ProjectsEmptyBlock"));
+        Assert.True(Visible(window, "ProjectsEmptyCard"));
         Frame(window, "projects-empty-leads-nothing-1440", prefix: string.Empty);
     });
 
