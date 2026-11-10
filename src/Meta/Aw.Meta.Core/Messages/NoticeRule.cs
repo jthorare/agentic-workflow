@@ -108,8 +108,12 @@ public static partial class NoticeRule
             && (line.Length == word.Length || !char.IsLetterOrDigit(line[word.Length])));
     }
 
-    private static string StripSender(string text)
+    /// <summary>Drops a leading sender prefix: a lane name, an arrow, a lane name and a colon ("api -> meta:").</summary>
+    /// <param name="text">The text, already trimmed.</param>
+    /// <returns>The text after the prefix; the same instance when it has none.</returns>
+    public static string StripSender(string text)
     {
+        ArgumentNullException.ThrowIfNull(text);
         try
         {
             var match = SenderPrefix.Match(text);

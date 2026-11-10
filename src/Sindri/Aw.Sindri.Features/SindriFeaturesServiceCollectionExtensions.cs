@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;
@@ -189,7 +190,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IValidator<SessionHeartbeatRequest>, AcceptAllValidator<SessionHeartbeatRequest>>().AddIssue<SessionHeartbeatRequest, SessionHeartbeatResponse, SessionHeartbeatService>().AddScoped<IValidator<SessionExitRequest>, AcceptAllValidator<SessionExitRequest>>().AddIssue<SessionExitRequest, SessionExitResponse, SessionExitService>();
         _ = services.AddScoped<IValidator<DecideRequest>, DecideValidator>().AddCommand<DecideRequest, CommandAccepted, DecideService>();
         _ = services.AddScoped<IValidator<FileRequestRequest>, FileRequestValidator>().AddCommand<FileRequestRequest, RequestFiledResponse, FileRequestService>();
-        _ = services.AddProjectCommands().AddConnectionSlices().AddMemorySlices().AddToolkitCallSlices().AddTodoSlices().AddLinearReads().AddLinearConnection().AddReviewCommands().AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>().AddScoped<IItemMaker, FixItemMaker>().AddScoped<IValidator<CreateHandoffItemRequest>, CreateHandoffItemValidator>().AddCommand<CreateHandoffItemRequest, HandoffItemCreatedResponse, CreateHandoffItemService>().AddScoped<WorkflowItemMaker>()
+        _ = services.AddProjectCommands().AddConnectionSlices().AddMemorySlices().AddToolkitCallSlices().AddTodoSlices().AddLinearReads().AddLinearConnection().AddReviewCommands().AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>().AddScoped<IItemMaker, FixItemMaker>().AddScoped<IValidator<CreateHandoffItemRequest>, CreateHandoffItemValidator>().AddCommand<CreateHandoffItemRequest, HandoffItemCreatedResponse, CreateHandoffItemService>().AddScoped<WorkflowItemMaker>().AddScoped<RunItemLinker>().AddScoped<RunItemRepair>().AddRunItemRepair()
             .AddSingleton<ICreateItemPort>(static sp => new ScopedCreateItemPort(async (item, ct) =>
             {
                 var scope = sp.CreateAsyncScope();   // why: the engine's blocks are singletons, the create-item handler is scoped
@@ -269,4 +270,19 @@ public static class SindriFeaturesServiceCollectionExtensions
         .AddScoped<IDoctorChecks, PollConnections.CatchUpDoctorChecks>()                   // #2437: `connections:catchup`, the last capped or gapped read per connection and kind
         .AddScoped<IDoctorChecks, SetupDoctor>()                                          // SO-A6: `setup`, ok when every step is done or skipped
         .AddScoped<IDoctorChecks, Leftovers.OnyxLeftoverDoctor>();                                // #1598: `index:onyx-leftover`, only while an old `onyx up` left something
+
+    /// <summary>The engine's singleton <see cref="IRunItemRepair"/>: each call runs the scoped <see cref="RunItemRepair"/> in its own scope (#2588).</summary>
+    private static IServiceCollection AddRunItemRepair(this IServiceCollection services) => services
+        .AddSingleton<IRunItemRepair>(static sp =>
+        {
+            var scopes = sp.GetRequiredService<IServiceScopeFactory>();
+            return new ScopedRunItemRepair(async work =>
+            {
+                var scope = scopes.CreateAsyncScope();
+                await using (scope.ConfigureAwait(false))
+                {
+                    return await work(scope.ServiceProvider.GetRequiredService<RunItemRepair>()).ConfigureAwait(false);
+                }
+            });
+        });
 }

@@ -5,6 +5,7 @@ using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Features.LaneRecycle;
+using Aw.Meta.Features.StopCheck;
 using Aw.Meta.Testing;
 
 namespace Aw.Meta.Tests.LaneRecycle;
@@ -28,7 +29,7 @@ public sealed class RecycleSettlesRequestTests
     private LaneRecycleService Service(Action? onWait = null)
     {
         var delay = onWait is null ? (IDelay)_world.Delay : new ClearTakesEffect(_world.Delay, onWait);
-        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.LaneFiles, _world.Log, delay, _world.Clock, _world.Messages);
+        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.LaneFiles, _world.Log, delay, _world.Clock, new RecycleSettler(_world.Messages, _world.Sync, _world.Clock));
         return new LaneRecycleService(
             _world.Config,
             new RecycleGuard(_world.LaneFiles, _world.LaneSessions, _world.Digests, _world.Context, _world.Clock),
@@ -54,6 +55,14 @@ public sealed class RecycleSettlesRequestTests
         (await _world.Messages.Messages(CancellationToken.None)).Value.Single(m => m.Id == MessageId.From(id));
 
     private void NewSessionAppears() => _world.LaneSessions.Set("t1-api", "s-new");
+
+    private async Task<StopCheckResponse> MetaStops(string transcript)
+    {
+        var result = await new StopCheckService(_world.Session, _world.Sweep, _world.Guard, _world.Clock, _world.Beats)
+            .Handle(new StopCheckRequest(SessionId.From(MetaWorld.MetaSessionId), transcript, HookActive: false, MaxBlocks: 3), CancellationToken.None);
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        return result.Value;
+    }
 
     private async Task<Kernel.Result<LaneRecycleResponse>> Run(Action? onWait, bool dryRun = false) =>
         await Service(onWait).Handle(new LaneRecycleRequest("api", Digest, dryRun), CancellationToken.None);
@@ -85,6 +94,143 @@ public sealed class RecycleSettlesRequestTests
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         Assert.Equal(["m-digest"], result.Value.SettledMessages);
         Assert.Equal(MessageResolutionKind.Dismissed, (await Stored("m-digest")).Resolution?.Kind);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_DIGEST_READY_the_meta_read_this_turn_before_its_Stop_hook_synced_the_inbox_is_settled()
+    {
+        // #2647: the meta reads DIGEST READY mid-turn and recycles at once; only the Stop hook's stop-check stores the message.
+        await Ready();
+        var transcript = "/transcripts/" + MetaWorld.MetaSessionId + ".jsonl";
+        _world.Transcripts.Append(transcript, MetaWorld.PeerLine("m-early", "t1-ui", "gate is green"));
+        _ = await _world.Sync.Run(transcript, CancellationToken.None);
+        _world.Transcripts.Append(transcript, MetaWorld.PeerLine("m-digest", "t1-api", "DIGEST READY " + Digest));
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal(["m-digest"], result.Value.SettledMessages);
+        Assert.Equal(MessageResolutionKind.Dismissed, (await Stored("m-digest")).Resolution?.Kind);
+        Assert.Null((await Stored("m-early")).Resolution);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Another_sessions_transcript_is_not_read_when_settling()
+    {
+        await Ready();
+        const string old = "/transcripts/s-old-meta.jsonl";
+        _world.Transcripts.Append(old, MetaWorld.PeerLine("m-early", "t1-ui", "gate is green"));
+        _ = await _world.Sync.Run(old, CancellationToken.None);
+        _world.Transcripts.Append(old, MetaWorld.PeerLine("m-stale", "t1-api", "DIGEST READY " + Digest));
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Null(result.Value.SettledMessages);
+        Assert.DoesNotContain((await _world.Messages.Messages(CancellationToken.None)).Value, m => m.Id == MessageId.From("m-stale"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_issue_case_a_dry_run_settles_nothing_then_the_real_run_settles_it_and_the_stop_has_nothing_open()
+    {
+        // #2647 "done when": DIGEST READY /x/d.md from lane ui, lane-recycle ui --digest /x/d.md --dry-run, then the real run,
+        // then the meta's stop-check reports 0 open obligations.
+        const string uiDigest = "/x/d.md";
+        await _world.Ready();
+        _world.LaneFiles.Put(new LaneRecord("ui", SessionId.From("s-ui-old"), Agent: null, A.At(1)));
+        _world.LaneSessions.Set("t1-ui", "s-ui-old");
+        _world.Panes.Put("t1-ui", "claude");
+        _world.ClaudeTranscripts.PutUsage("s-ui-old", 206_000, A.At(30));
+        _world.Digests.Put(uiDigest, 1200, _world.Clock.GetUtcNow().AddMinutes(-5));
+        var transcript = "/transcripts/" + MetaWorld.MetaSessionId + ".jsonl";
+        _world.Transcripts.Append(transcript, MetaWorld.PeerLine("m-digest", "t1-ui", "DIGEST READY " + uiDigest));
+
+        var dry = await Service().Handle(new LaneRecycleRequest("ui", uiDigest, DryRun: true), CancellationToken.None);
+        var openAfterDry = (await MetaStops(transcript)).Open;
+        var real = await Service(() => _world.LaneSessions.Set("t1-ui", "s-ui-new")).Handle(new LaneRecycleRequest("ui", uiDigest, DryRun: false), CancellationToken.None);
+        var stop = await MetaStops(transcript);
+
+        Assert.True(dry.IsSuccess, dry.IsError ? dry.Error.Message : string.Empty);
+        Assert.Null(dry.Value.SettledMessages);
+        Assert.Contains(openAfterDry, o => o.Key.Contains("m-digest", StringComparison.Ordinal));
+        Assert.True(real.IsSuccess, real.IsError ? real.Error.Message : string.Empty);
+        Assert.Equal(["m-digest"], real.Value.SettledMessages);
+        Assert.Contains(_world.Log.Lines, l => l.Contains("m-digest", StringComparison.Ordinal));
+        Assert.Empty(stop.Open);
+        Assert.False(stop.Blocked);
+    }
+
+    // Ideas' review of #2679: lanes write the line with a colon, a dash, a STATUS:/ACTION: tag or a sender prefix; each still names the digest.
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("DIGEST READY: /home/x/digests/t1-api-2026-10-17.md")]
+    [InlineData("DIGEST READY - `/home/x/digests/t1-api-2026-10-17.md`.")]
+    [InlineData("DIGEST READY \u2014 /home/x/digests/t1-api-2026-10-17.md")]
+    [InlineData("STATUS: DIGEST READY ~/digests/t1-api-2026-10-17.md")]
+    [InlineData("ACTION: DIGEST READY t1-api-2026-10-17.md")]
+    [InlineData("api -> meta: DIGEST READY /home/x/digests/t1-api-2026-10-17.md")]
+    [InlineData("api -> meta: STATUS: DIGEST READY: ~/digests/t1-api-2026-10-17.md (context 300k)")]
+    public async Task A_DIGEST_READY_written_with_a_colon_dash_tag_or_sender_prefix_is_settled(string body)
+    {
+        await Ready();
+        await Receive("m-form", "t1-api", body);
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal(["m-form"], result.Value.SettledMessages);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("DIGEST READY: /other/t1-api-2026-10-17.md")]
+    [InlineData("STATUS: DIGEST READY ~/other/t1-api-2026-10-17.md")]
+    [InlineData("api -> meta: DIGEST READY t1-api-2026-10-16.md")]
+    public async Task A_tagged_or_prefixed_DIGEST_READY_for_another_path_stays_open(string body)
+    {
+        await Ready();
+        await Receive("m-form", "t1-api", body);
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.SettledMessages);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_DIGEST_READY_for_the_same_file_name_on_another_path_stays_open()
+    {
+        await Ready();
+        await Receive("m-other-path", "t1-api", "DIGEST READY /other/t1-api-2026-10-17.md");
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.SettledMessages);
+        Assert.Null((await Stored("m-other-path")).Resolution);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_DIGEST_READY_for_another_digest_stays_open()
+    {
+        await Ready();
+        await Receive("m-other", "t1-api", "DIGEST READY /home/x/digests/t1-api-2026-10-16.md");
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.SettledMessages);
+        Assert.Null((await Stored("m-other")).Resolution);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_DIGEST_READY_naming_the_digest_with_a_tilde_path_is_settled()
+    {
+        await Ready();
+        await Receive("m-tilde", "t1-api", "DIGEST READY ~/digests/t1-api-2026-10-17.md");
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["m-tilde"], result.Value.SettledMessages);
     }
 
     [Fact, Trait("Lane", "unit")]
