@@ -28,6 +28,7 @@ internal static partial class Labels
         ["WriteMemoryFact"] = "Write memory fact",
         ["ForgetMemoryFact"] = "Forget memory facts",
         ["PurgeResources"] = "Purge resources",
+        ["BuildToolkit"] = "Build toolkit",
         ["CreateWorkflow"] = "Create workflow",
         ["ReplaceWorkflow"] = "Replace workflow",
         ["ApplyWorkflowOps"] = "Edit workflow",
