@@ -71,14 +71,14 @@ internal sealed class BuildToolkitService(IToolkitStore store, IToolkitWorkspace
         var built = await commands.Run(toolkit.Dir, _build, cancellationToken).ConfigureAwait(false);
         if (built.ExitCode != 0)
         {
-            return await Failed(toolkit, "the build failed: " + Tail(built.Output), cancellationToken).ConfigureAwait(false);
+            return await Failed(toolkit, "the build failed: " + Tail(Both(built)), cancellationToken).ConfigureAwait(false);
         }
 
         progress?.Report("running the toolkit's tests");
         var tested = await commands.Run(toolkit.Dir, _test, cancellationToken).ConfigureAwait(false);
         if (tested.ExitCode != 0)
         {
-            return await Failed(toolkit, "the tests failed: " + Tail(tested.Output), cancellationToken).ConfigureAwait(false);
+            return await Failed(toolkit, "the tests failed: " + Tail(Both(tested)), cancellationToken).ConfigureAwait(false);
         }
 
         var manifest = await ReadManifest(toolkit, cancellationToken).ConfigureAwait(false);
@@ -110,7 +110,7 @@ internal sealed class BuildToolkitService(IToolkitStore store, IToolkitWorkspace
         var printed = await commands.Run(toolkit.Dir, [binary.Value, "--manifest"], cancellationToken).ConfigureAwait(false);
         return printed.ExitCode == 0
             ? ToolkitManifest.Parse(printed.Output)
-            : SindriErrors.ToolkitManifestInvalid.With("--manifest failed: " + Tail(printed.Output));
+            : SindriErrors.ToolkitManifestInvalid.With("--manifest failed: " + Tail(Both(printed)));
     }
 
     private async ValueTask<Result<BuildToolkitResult>> Failed(Toolkit toolkit, string why, CancellationToken cancellationToken)
@@ -123,6 +123,8 @@ internal sealed class BuildToolkitService(IToolkitStore store, IToolkitWorkspace
 
         return SindriErrors.ToolkitTestsFailed.With($"{toolkit.Name}: {why}");
     }
+
+    private static string Both(ToolkitCommandResult result) => string.IsNullOrEmpty(result.Error) ? result.Output : result.Output + "\n" + result.Error;
 
     private static string Tail(string output) => output.Length <= OutputCap ? output : "..." + output[^OutputCap..];
 }
