@@ -100,6 +100,7 @@ public sealed partial class GraphWorkflowParkingTests
         var second = await Refused(handle, new GraphAnswerInput("ask", Text: null, Choice: "no", "session:second"));
         var kept = await AskOutput(rig, started.RunId);
         await handle.CancelAsync();
+        _ = await rig.Final(started.RunId);   // why: a cancel left open when the rig stops its worker is a workflow task nobody polls, and the shared time-skipping server stops skipping time for every later test in the class
 
         Assert.Contains("not waiting", second.InnerException!.Message, StringComparison.Ordinal);
         Assert.Equal(("yes", "session:first"), kept);
@@ -118,6 +119,7 @@ public sealed partial class GraphWorkflowParkingTests
         var kept = await AskOutput(rig, started.RunId);
         var nodes = await rig.NodeStatuses(started.RunId);
         await handle.CancelAsync();
+        _ = await rig.Final(started.RunId);   // why: a cancel left open when the rig stops its worker is a workflow task nobody polls, and the shared time-skipping server stops skipping time for every later test in the class
 
         Assert.Contains("not waiting", late.InnerException!.Message, StringComparison.Ordinal);
         Assert.Equal(("no", "timeout"), kept);
