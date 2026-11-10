@@ -63,8 +63,8 @@ public sealed class FileToolkitFoldersTests : IDisposable
     private static FakeToolRunner Writes() => new((_, arguments) =>
     {
         var dir = arguments[arguments.ToList().IndexOf("--dir") + 1];
-        _ = Directory.CreateDirectory(dir);
-        File.WriteAllText(Path.Combine(dir, "Made.Toolkit.csproj"), "<Project />");
+        var folder = Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(folder.FullName, "Made.Toolkit.csproj"), "<Project />");
         return new ToolRun(ToolOutcome.Exited, 0, string.Empty, string.Empty);
     });
 
