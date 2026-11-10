@@ -38,7 +38,7 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
     public string AddText => Labels.ProjectsAddButton;
 
     /// <summary>The button that opens Connections to connect Linear.</summary>
-    public string ConnectText => Labels.ProjectsConnectButton;
+    public string ConnectText => Labels.LinearConnect;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>True until the first answer.</summary>

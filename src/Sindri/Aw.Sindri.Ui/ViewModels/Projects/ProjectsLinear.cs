@@ -29,7 +29,8 @@ internal static class ProjectsLinear
             return list.Empty;
         }
 
-        var last = list.Freshness.Select(static f => f.At ?? default).DefaultIfEmpty().Max();
+        // Only Linear's own rows: a newer GitHub sync says nothing about when Linear was last read.
+        var last = list.Freshness.Where(static f => f.Source.StartsWith("linear", StringComparison.Ordinal)).Select(static f => f.At ?? default).DefaultIfEmpty().Max();
         return Labels.ProjectsNoKey(last == default ? string.Empty : Labels.AgoWords(now - last));
     }
 

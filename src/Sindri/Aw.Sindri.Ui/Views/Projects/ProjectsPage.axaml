@@ -46,7 +46,7 @@
 
     <!-- The empty card is a solid card like the other pages' empty states; Add project stays the one button at the top right, and Connect Linear is the second way in when Linear is not set up. -->
     <Border x:Name="ProjectsEmptyCard" Classes="card" BorderThickness="1" IsVisible="{Binding IsEmptyBlock}">
-      <StackPanel Margin="16" Spacing="{StaticResource Space.MD}" HorizontalAlignment="Center">
+      <StackPanel Margin="{StaticResource Space.MD.Thickness}" Spacing="{StaticResource Space.MD}" HorizontalAlignment="Center">
         <Border x:Name="ProjectsEmptyName" AutomationProperties.Name="{Binding Sentence}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body muted" Text="{Binding Sentence}" TextWrapping="Wrap" TextAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
         </Border>
