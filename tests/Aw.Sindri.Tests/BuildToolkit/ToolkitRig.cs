@@ -68,7 +68,7 @@ internal sealed class ToolkitRig : IDisposable
 
         public ValueTask<Result<string>> SourceHash(string dir, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>(Hash);
 
-        public Result<string> BinaryOf(string dir, string name) => dir + "/bin/" + name;
+        public Result<string> BinaryOf(string dir) => dir + "/bin/" + Path.GetFileName(dir);
     }
 
     internal sealed class FakeCommands : IToolkitCommands

@@ -101,7 +101,7 @@ internal sealed class BuildToolkitService(IToolkitStore store, IToolkitWorkspace
     /// <summary>Runs the built binary with --manifest and parses what it prints; nothing is written to the toolkit's folder (a file there would change the source hash).</summary>
     private async ValueTask<Result<ToolkitManifest>> ReadManifest(Toolkit toolkit, CancellationToken cancellationToken)
     {
-        var binary = workspace.BinaryOf(toolkit.Dir, toolkit.Name);
+        var binary = workspace.BinaryOf(toolkit.Dir);
         if (binary.IsError)
         {
             return binary.Error;

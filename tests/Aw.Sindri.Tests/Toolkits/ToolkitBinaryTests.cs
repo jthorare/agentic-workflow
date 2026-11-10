@@ -27,7 +27,7 @@ public sealed class ToolkitBinaryTests : IDisposable
         Write("bin/Debug/net10.0/github-triage", string.Empty);   // a file that only shares the toolkit's name is not the binary
         var expected = Path.Combine(_dir, "bin/Debug/net10.0/GithubTriage.Toolkit");
 
-        var forBuild = new FileToolkitWorkspace().BinaryOf(_dir, "github-triage");
+        var forBuild = new FileToolkitWorkspace().BinaryOf(_dir);
         var forStart = ToolkitProcess.BinaryOf(new Toolkit("github-triage", _dir, ToolkitState.Built, "h", DateTimeOffset.UnixEpoch, Manifest: null, "human"));
 
         Assert.Equal(expected, forBuild.Value);
@@ -40,7 +40,7 @@ public sealed class ToolkitBinaryTests : IDisposable
         Write("Notes.Toolkit.csproj", "<Project />");
         Write("bin/Debug/net10.0/Notes.Toolkit", string.Empty);
 
-        var found = new FileToolkitWorkspace().BinaryOf(_dir, "notes");
+        var found = new FileToolkitWorkspace().BinaryOf(_dir);
 
         Assert.EndsWith("Notes.Toolkit", found.Value, StringComparison.Ordinal);
     }
@@ -49,10 +49,10 @@ public sealed class ToolkitBinaryTests : IDisposable
     public void No_csproj_or_two_of_them_is_SND_TK_003()
     {
         Write("bin/Debug/net10.0/Notes.Toolkit", string.Empty);
-        var none = new FileToolkitWorkspace().BinaryOf(_dir, "notes");
+        var none = new FileToolkitWorkspace().BinaryOf(_dir);
         Write("A.Toolkit.csproj", "<Project />");
         Write("B.Toolkit.csproj", "<Project />");
-        var two = new FileToolkitWorkspace().BinaryOf(_dir, "notes");
+        var two = new FileToolkitWorkspace().BinaryOf(_dir);
 
         Assert.Equal(SindriErrors.ToolkitManifestInvalid.Code, none.Error.Code);
         Assert.Equal(SindriErrors.ToolkitManifestInvalid.Code, two.Error.Code);

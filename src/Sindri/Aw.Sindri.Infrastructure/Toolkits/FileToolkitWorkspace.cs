@@ -30,7 +30,7 @@ internal sealed class FileToolkitWorkspace : IToolkitWorkspace
         }
     }
 
-    public Result<string> BinaryOf(string dir, string name) => ResolveBinary(dir);
+    public Result<string> BinaryOf(string dir) => ResolveBinary(dir);
 
     /// <summary>The toolkit's apphost: the file named by the folder's one *.Toolkit.csproj (its AssemblyName, else the csproj's own name) under bin, the newest when a build left several.</summary>
     /// <param name="dir">The toolkit's folder.</param>
@@ -70,6 +70,7 @@ internal sealed class FileToolkitWorkspace : IToolkitWorkspace
 
     private static string AssemblyName(string csproj)
     {
+        // A literal value is read as written; an MSBuild property such as $(MSBuildProjectName).Toolkit is taken literally too, which is fine because the scaffold writes a literal name.
         var declared = System.Xml.Linq.XDocument.Load(csproj).Descendants("AssemblyName").Select(static e => e.Value.Trim()).FirstOrDefault(static v => v.Length > 0);
         return declared ?? Path.GetFileNameWithoutExtension(csproj);
     }
