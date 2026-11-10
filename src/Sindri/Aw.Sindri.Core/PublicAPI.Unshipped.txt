@@ -22470,7 +22470,7 @@ Aw.Sindri.Core.Toolkits.IToolkitRuntime.Start(Aw.Sindri.Core.Toolkits.Toolkit! t
 Aw.Sindri.Core.Toolkits.IToolkitRuntime.Stop(string! name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Toolkits.IToolkitStore
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace
-Aw.Sindri.Core.Toolkits.IToolkitWorkspace.ReadManifest(string! dir, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Toolkits.IToolkitWorkspace.BinaryOf(string! dir, string! name) -> Aw.Kernel.Result<string!>!
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace.SourceHash(string! dir, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult.<Clone>$() -> Aw.Sindri.Core.Toolkits.ToolkitCommandResult!

@@ -49,14 +49,5 @@ internal sealed class ToolkitProcess(ISandbox sandbox, ISandboxLaunchInputs inpu
         return client.Value;
     }
 
-    /// <summary>The newest file named after the toolkit under its bin folder (what `dotnet build` or a publish left), or null.</summary>
-    /// <param name="toolkit">The toolkit.</param>
-    /// <returns>The absolute path, or null.</returns>
-    internal static string? BinaryOf(Toolkit toolkit)
-    {
-        var bin = Path.Combine(toolkit.Dir, "bin");
-        return Directory.Exists(bin)
-            ? Directory.EnumerateFiles(bin, toolkit.Name, SearchOption.AllDirectories).OrderByDescending(static f => File.GetLastWriteTimeUtc(f)).FirstOrDefault()
-            : null;
-    }
+    internal static string? BinaryOf(Toolkit toolkit) => FileToolkitWorkspace.FindBinary(toolkit.Dir, toolkit.Name);
 }

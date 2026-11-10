@@ -81,8 +81,7 @@ internal sealed class BuildToolkitService(IToolkitStore store, IToolkitWorkspace
             return await Failed(toolkit, "the tests failed: " + Tail(tested.Output), cancellationToken).ConfigureAwait(false);
         }
 
-        var text = await workspace.ReadManifest(toolkit.Dir, cancellationToken).ConfigureAwait(false);
-        var manifest = text.IsError ? text.Error : ToolkitManifest.Parse(text.Value);
+        var manifest = await ReadManifest(toolkit, cancellationToken).ConfigureAwait(false);
         if (manifest.IsError)
         {
             _ = await Failed(toolkit, manifest.Error.Message, cancellationToken).ConfigureAwait(false);
@@ -97,6 +96,21 @@ internal sealed class BuildToolkitService(IToolkitStore store, IToolkitWorkspace
 
         progress?.Report("built");
         return new BuildToolkitResult(toolkit.Name, hash.Value);
+    }
+
+    /// <summary>Runs the built binary with --manifest and parses what it prints; nothing is written to the toolkit's folder (a file there would change the source hash).</summary>
+    private async ValueTask<Result<ToolkitManifest>> ReadManifest(Toolkit toolkit, CancellationToken cancellationToken)
+    {
+        var binary = workspace.BinaryOf(toolkit.Dir, toolkit.Name);
+        if (binary.IsError)
+        {
+            return binary.Error;
+        }
+
+        var printed = await commands.Run(toolkit.Dir, [binary.Value, "--manifest"], cancellationToken).ConfigureAwait(false);
+        return printed.ExitCode == 0
+            ? ToolkitManifest.Parse(printed.Output)
+            : SindriErrors.ToolkitManifestInvalid.With("--manifest failed: " + Tail(printed.Output));
     }
 
     private async ValueTask<Result<BuildToolkitResult>> Failed(Toolkit toolkit, string why, CancellationToken cancellationToken)

@@ -1,5 +1,4 @@
 using Aw.Kernel;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Toolkits;
@@ -69,7 +68,7 @@ internal sealed class ToolkitRig : IDisposable
 
         public ValueTask<Result<string>> SourceHash(string dir, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>(Hash);
 
-        public ValueTask<Result<string>> ReadManifest(string dir, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>(SindriErrors.ToolkitManifestInvalid.With("no toolkit.json in " + dir));   // what a real folder does: the build never writes the file
+        public Result<string> BinaryOf(string dir, string name) => dir + "/bin/" + name;
     }
 
     internal sealed class FakeCommands : IToolkitCommands

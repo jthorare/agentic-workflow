@@ -6,7 +6,7 @@ using Aw.Sindri.Core.Toolkits;
 
 namespace Aw.Sindri.Infrastructure.Toolkits;
 
-/// <summary>A toolkit's folder on disk: the source hash is SHA-256 over every file's relative path and bytes, in path order, leaving out bin, obj and .git; the manifest is toolkit.json in the folder.</summary>
+/// <summary>A toolkit's folder on disk: the source hash is SHA-256 over every file's relative path and bytes, in path order, leaving out bin, obj and .git; the binary is the newest file named after the toolkit under bin.</summary>
 internal sealed class FileToolkitWorkspace : IToolkitWorkspace
 {
     private static readonly string[] _skipped = ["bin", "obj", ".git"];
@@ -30,17 +30,21 @@ internal sealed class FileToolkitWorkspace : IToolkitWorkspace
         }
     }
 
-    public async ValueTask<Result<string>> ReadManifest(string dir, CancellationToken cancellationToken)
+    public Result<string> BinaryOf(string dir, string name) =>
+        FindBinary(dir, name) is { } binary
+            ? binary
+            : SindriErrors.ToolkitManifestInvalid.With($"the build left no binary named {name} under {Path.Combine(dir, "bin")}");
+
+    /// <summary>The newest file named <paramref name="name"/> under the folder's bin, what `dotnet build` or a publish left, or null.</summary>
+    /// <param name="dir">The toolkit's folder.</param>
+    /// <param name="name">The toolkit name.</param>
+    /// <returns>The absolute path, or null.</returns>
+    internal static string? FindBinary(string dir, string name)
     {
-        var path = Path.Combine(dir, "toolkit.json");
-        try
-        {
-            return await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            return SindriErrors.ToolkitManifestInvalid.With($"{path} can't be read (fix: the toolkit's build writes it with --manifest)");
-        }
+        var bin = Path.Combine(dir, "bin");
+        return Directory.Exists(bin)
+            ? Directory.EnumerateFiles(bin, name, SearchOption.AllDirectories).OrderByDescending(static f => File.GetLastWriteTimeUtc(f)).FirstOrDefault()
+            : null;
     }
 
     private static bool IsSkipped(string relative) => _skipped.Contains(relative.Split('/', '\\')[0], StringComparer.Ordinal);
