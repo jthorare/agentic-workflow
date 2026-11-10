@@ -4,7 +4,7 @@ namespace Aw.Sindri.Core.Graph.Validation;
 
 public sealed partial class GraphValidator
 {
-    private static readonly HashSet<string> _parking = new(["wait", "ask_owner"], StringComparer.Ordinal);
+    private static readonly HashSet<string> _parking = new(["ask_owner"], StringComparer.Ordinal);
 
     // why: the engine refuses a loop it can't run when the for_each starts; saying so here lets 'wf validate' catch it first
     private static void Loops(GraphSpec spec, List<GraphFinding> found)
@@ -23,7 +23,7 @@ public sealed partial class GraphValidator
                 continue;
             }
 
-            // why: each item runs in a GraphIteration child workflow, which runs blocks but never parks, so a wait would end at once and an ask_owner would never ask
+            // why: each item runs in a GraphIteration child workflow, which sleeps a wait on its own timer but can't yet take an answer, so an ask_owner would never be answered (#2490)
             foreach (var parked in loop.Value.Body.Where(static n => _parking.Contains(n.Type)))
             {
                 found.Add(Found.Error("GRAPH-LOOP-004", [parked.Id.Value], $"'{parked.Type}' node '{parked.Id.Value}' is inside the loop of '{node.Id.Value}': a loop's nodes can't wait or ask", "move it before the for_each or after the collect, or put the per-item part in its own workflow and call it with run_workflow"));

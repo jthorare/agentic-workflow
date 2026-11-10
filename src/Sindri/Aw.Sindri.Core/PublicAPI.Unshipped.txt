@@ -19312,9 +19312,9 @@ Aw.Sindri.Core.Memory.MemoryEmbedding.Deconstruct(out System.Collections.Generic
 Aw.Sindri.Core.Memory.MemoryEmbedding.MemoryEmbedding(System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>? Vectors, string? Reason, string? Model = null) -> void
 Aw.Sindri.Core.Memory.MemoryEmbedding.Model.get -> string?
 Aw.Sindri.Core.Memory.MemoryEmbedding.Model.init -> void
-Aw.Sindri.Core.Memory.MemoryFact.Deconstruct(out string! Key, out Aw.Sindri.Core.Memory.MemoryName Store, out string! Text, out System.Collections.Generic.IReadOnlyList<string!>! Tags, out Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, out System.DateTimeOffset? ExpiresAt, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset RefreshedAt, out System.ReadOnlyMemory<float> Embedding, out string? Model, out string? WrittenBy) -> void
+Aw.Sindri.Core.Memory.MemoryFact.Deconstruct(out string! Key, out Aw.Sindri.Core.Memory.MemoryName Store, out string! Text, out System.Collections.Generic.IReadOnlyList<string!>! Tags, out Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, out System.DateTimeOffset? ExpiresAt, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset RefreshedAt, out System.ReadOnlyMemory<float> Embedding, out string? Model, out string? WrittenBy, out string? RefreshedBy) -> void
 Aw.Sindri.Core.Memory.MemoryFact.Dimension.get -> int
-Aw.Sindri.Core.Memory.MemoryFact.MemoryFact(string! Key, Aw.Sindri.Core.Memory.MemoryName Store, string! Text, System.Collections.Generic.IReadOnlyList<string!>! Tags, Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, System.DateTimeOffset? ExpiresAt, System.DateTimeOffset CreatedAt, System.DateTimeOffset RefreshedAt, System.ReadOnlyMemory<float> Embedding, string? Model = null, string? WrittenBy = null) -> void
+Aw.Sindri.Core.Memory.MemoryFact.MemoryFact(string! Key, Aw.Sindri.Core.Memory.MemoryName Store, string! Text, System.Collections.Generic.IReadOnlyList<string!>! Tags, Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, System.DateTimeOffset? ExpiresAt, System.DateTimeOffset CreatedAt, System.DateTimeOffset RefreshedAt, System.ReadOnlyMemory<float> Embedding, string? Model = null, string? WrittenBy = null, string? RefreshedBy = null) -> void
 Aw.Sindri.Core.Memory.MemoryFact.Model.get -> string?
 Aw.Sindri.Core.Memory.MemoryFact.Model.init -> void
 Aw.Sindri.Core.Memory.MemoryRecall.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.RecalledFact!>! Facts, out Aw.Sindri.Core.Memory.RecallMode Mode, out int Skipped) -> void
@@ -19481,6 +19481,8 @@ Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Execute(Aw.Sindri.Core.Graph.Blocks.B
 Aw.Sindri.Core.Graph.Blocks.ConditionBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.ConditionBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
 Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.FencedPrompt
+static Aw.Sindri.Core.Graph.Blocks.FencedPrompt.Render(string! raw, System.Func<string!, System.Text.Json.Nodes.JsonNode?>! resolve, System.Func<string!, string!, string!>! untrusted) -> string!
 Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry
 Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Find(string! type) -> Aw.Sindri.Core.Graph.Blocks.IGraphBlock?
 Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.GraphBlockRegistry(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>! blocks) -> void
@@ -22077,6 +22079,8 @@ Aw.Sindri.Core.Memory.MemoryEvents.Forgotten(Aw.Sindri.Core.Memory.MemoryName me
 Aw.Sindri.Core.Memory.MemoryEvents.MemoryEvents(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.TimeProvider! clock) -> void
 Aw.Sindri.Core.Memory.MemoryFact.WrittenBy.get -> string?
 Aw.Sindri.Core.Memory.MemoryFact.WrittenBy.init -> void
+Aw.Sindri.Core.Memory.MemoryFact.RefreshedBy.get -> string?
+Aw.Sindri.Core.Memory.MemoryFact.RefreshedBy.init -> void
 static Aw.Sindri.Core.Events.ConnectionRemoved.operator !=(Aw.Sindri.Core.Events.ConnectionRemoved? left, Aw.Sindri.Core.Events.ConnectionRemoved? right) -> bool
 static Aw.Sindri.Core.Events.ConnectionRemoved.operator ==(Aw.Sindri.Core.Events.ConnectionRemoved? left, Aw.Sindri.Core.Events.ConnectionRemoved? right) -> bool
 static Aw.Sindri.Core.Events.ConnectionSignInRequested.operator !=(Aw.Sindri.Core.Events.ConnectionSignInRequested? left, Aw.Sindri.Core.Events.ConnectionSignInRequested? right) -> bool
