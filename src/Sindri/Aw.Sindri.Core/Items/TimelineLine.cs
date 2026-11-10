@@ -16,7 +16,7 @@ public static class TimelineLine
     /// <summary>The line for a 'workflow.retired' note: the item's old recipe workflow ended because that engine was removed.</summary>
     public const string WorkflowRetired = "Old workflow retired: Sindri no longer runs recipes";
 
-    /// <summary>The line for <paramref name="recorded"/>: 'Created: &lt;title&gt;', 'new → done', 'Linked to &lt;record&gt; (&lt;alias&gt;)', 're-scope request filed by session:cli', 'decision DEC-… accepted by human:prover', the retired-workflow line, 'Agent node agent (item 0) taken over by human:cli', or the event type.</summary>
+    /// <summary>The line for <paramref name="recorded"/>: 'Created: &lt;title&gt;', 'new → done', 'Linked to &lt;record&gt; (&lt;alias&gt;)', 're-scope request filed by session:cli', 'decision DEC-… accepted by human:prover', the retired-workflow line, 'Agent node agent taken over by human:cli', or the event type.</summary>
     /// <param name="recorded">The ledger event.</param>
     /// <param name="json">The options its payload reads with.</param>
     /// <returns>The line, before scrubbing.</returns>
@@ -50,7 +50,8 @@ public static class TimelineLine
     }
 
     private static string ControlLine(string node, int itemIndex, string what, string by) =>
-        string.Create(CultureInfo.InvariantCulture, $"Agent node {node} (item {itemIndex}) {what} by {by}");
+        // why: an agent node outside a loop is item 0, so only a loop item (1 and up) is named
+        itemIndex > 0 ? string.Create(CultureInfo.InvariantCulture, $"Agent node {node} (item {itemIndex}) {what} by {by}") : $"Agent node {node} {what} by {by}";
 
     private static string Past(DecisionOption choice) => choice.Value switch
     {

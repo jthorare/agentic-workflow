@@ -42,21 +42,25 @@ public sealed class RequestTimelineLineTests
         Assert.Equal($"decision {_decision.Value} {words} by human:prover", TimelineLine.For(recorded, SliceHarness.Json));
     }
 
-    [Fact]
-    public void A_takeover_names_the_node_the_item_and_who_took_it_over()
+    [Theory]
+    [InlineData(0, "Agent node agent taken over by human:cli")]
+    [InlineData(2, "Agent node agent (item 2) taken over by human:cli")]
+    public void A_takeover_names_the_node_who_took_it_over_and_the_item_of_a_loop(int itemIndex, string line)
     {
-        var taken = new WorkflowNodeTakenOverPayload(WorkflowRunId.From("nightly@3:12"), NodeId.From("agent"), 2, "human:cli");
+        var taken = new WorkflowNodeTakenOverPayload(WorkflowRunId.From("nightly@3:12"), NodeId.From("agent"), itemIndex, "human:cli");
         var recorded = Recorded.Of(_h.Events, EventTypes.WorkflowNodeTakenOver, taken, 3);
 
-        Assert.Equal("Agent node agent (item 2) taken over by human:cli", TimelineLine.For(recorded, SliceHarness.Json));
+        Assert.Equal(line, TimelineLine.For(recorded, SliceHarness.Json));
     }
 
-    [Fact]
-    public void A_handback_names_the_node_the_item_and_who_handed_it_back()
+    [Theory]
+    [InlineData(0, "Agent node agent handed back by human:cli")]
+    [InlineData(1, "Agent node agent (item 1) handed back by human:cli")]
+    public void A_handback_names_the_node_who_handed_it_back_and_the_item_of_a_loop(int itemIndex, string line)
     {
-        var back = new WorkflowNodeHandedBackPayload(WorkflowRunId.From("nightly@3:12"), NodeId.From("agent"), 0, "human:cli");
+        var back = new WorkflowNodeHandedBackPayload(WorkflowRunId.From("nightly@3:12"), NodeId.From("agent"), itemIndex, "human:cli");
         var recorded = Recorded.Of(_h.Events, EventTypes.WorkflowNodeHandedBack, back, 4);
 
-        Assert.Equal("Agent node agent (item 0) handed back by human:cli", TimelineLine.For(recorded, SliceHarness.Json));
+        Assert.Equal(line, TimelineLine.For(recorded, SliceHarness.Json));
     }
 }
