@@ -23,6 +23,8 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
     private readonly ConcurrentDictionary<string, Running> _running = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _gate = new(1, 1);
     private int _disposed;
+    private int _waiting;
+    private int _giveUps;
 
     public async ValueTask<Result<Unit>> Start(Toolkit toolkit, CancellationToken cancellationToken)
     {
@@ -90,6 +92,17 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         return Unit.Value;
     }
 
+    /// <summary>How many calls are queued on the gate right now (a test signal: tests wait on it instead of a delay).</summary>
+    internal int GateWaiters => Volatile.Read(ref _waiting);
+
+    /// <summary>How many give-ups have finished (a test signal).</summary>
+    internal int GiveUpsDone => Volatile.Read(ref _giveUps);
+
+    /// <summary>Whether the toolkit's current entry has decided to give up (a test signal).</summary>
+    /// <param name="name">The toolkit name.</param>
+    /// <returns>True when the watcher set its give-up flag.</returns>
+    internal bool IsGivingUp(string name) => _running.TryGetValue(name, out var running) && running.GivingUp;
+
     private static Error Stopped(string name) => SindriErrors.ToolkitNotBuilt.With($"Toolkit '{name}' can't start: Sindri is shutting down");
 
     /// <summary>Takes the gate; false when the supervisor is already shut down.</summary>
@@ -100,6 +113,7 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
             return false;
         }
 
+        _ = Interlocked.Increment(ref _waiting);
         try
         {
             await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -108,6 +122,10 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         catch (ObjectDisposedException)
         {
             return false;   // shut down while this call waited
+        }
+        finally
+        {
+            _ = Interlocked.Decrement(ref _waiting);
         }
     }
 
@@ -244,6 +262,7 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         finally
         {
             _ = _gate.Release();
+            _ = Interlocked.Increment(ref _giveUps);
         }
     }
 

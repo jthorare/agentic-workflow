@@ -118,16 +118,16 @@ public sealed class ToolkitSupervisorTests : IAsyncDisposable
         var third = _launcher.Last;
         var hold = _launcher.Block("other");
         var holding = _supervisor.Start(other, Token).AsTask();   // sits inside the launcher with the gate held
-        await Task.Delay(100, Token);
+        await _launcher.Entered("other").WaitAsync(Token);
         var late = _supervisor.Start(_built, Token).AsTask();   // queued on the gate before the watcher gets there
-        await Task.Delay(100, Token);
+        await Until(() => _supervisor.GateWaiters == 1);
         third.Crash();   // crash 3: the watcher decides to give up and queues on the gate behind the start
-        await Task.Delay(150, Token);
+        await Until(() => _supervisor.IsGivingUp("triage") && _supervisor.GateWaiters == 2);
 
         hold.SetResult();
         _ = await holding;
         var started = await late;
-        await Task.Delay(150, Token);
+        await Until(() => _supervisor.GiveUpsDone == 1);
         var answer = await _supervisor.Call("triage", "ping", "{}", TimeSpan.FromSeconds(1), Token);
 
         Assert.True(started.IsSuccess);
@@ -146,6 +146,17 @@ public sealed class ToolkitSupervisorTests : IAsyncDisposable
         await Eventually(() => _store.Items["triage"].State == ToolkitState.Failed, advance: TimeSpan.FromSeconds(1));
     }
 
+    // Waits for a real signal from the supervisor, never a fixed delay: this box runs many builds at once.
+    private static async Task Until(Func<bool> condition)
+    {
+        for (var i = 0; i < 2000 && !condition(); i++)   // 2000 x 5 ms: a 10 s cap
+        {
+            await Task.Delay(5, Token);
+        }
+
+        Assert.True(condition());
+    }
+
     // The watcher runs on its own task: tick the fake clock and wait in small real steps until the condition holds.
     private async Task Eventually(Func<bool> condition, TimeSpan advance)
     {
@@ -162,6 +173,7 @@ public sealed class ToolkitSupervisorTests : IAsyncDisposable
     {
         private readonly List<(string Name, FakeProcess Process)> _all = [];
         private readonly Dictionary<string, TaskCompletionSource> _blocks = new(StringComparer.Ordinal);
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, TaskCompletionSource> _entered = new(StringComparer.Ordinal);
 
         internal int Launched => _all.Count;
 
@@ -172,10 +184,14 @@ public sealed class ToolkitSupervisorTests : IAsyncDisposable
         /// <summary>Makes the next launch of <paramref name="name"/> wait until the returned source completes.</summary>
         internal TaskCompletionSource Block(string name) => _blocks[name] = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        /// <summary>Completes when a launch of <paramref name="name"/> reaches its block.</summary>
+        internal Task Entered(string name) => _entered.GetOrAdd(name, static _ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously)).Task;
+
         public async ValueTask<Result<IToolkitProcess>> Launch(Toolkit toolkit, CancellationToken cancellationToken)
         {
             if (_blocks.TryGetValue(toolkit.Name, out var block))
             {
+                _ = _entered.GetOrAdd(toolkit.Name, static _ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously)).TrySetResult();
                 await block.Task.ConfigureAwait(false);
             }
 
