@@ -46,6 +46,9 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
     /// <summary>The line that says why the map is shown without concepts, or that an open concept went away; empty when there is none to say.</summary>
     public string Note { get; private set; } = string.Empty;
 
+    /// <summary>The tooltip over the note: the error code behind it, or empty.</summary>
+    public string NoteTip { get; private set; } = string.Empty;
+
     /// <summary>Whether the note has words.</summary>
     public bool HasNote => Note.Length > 0;
 
