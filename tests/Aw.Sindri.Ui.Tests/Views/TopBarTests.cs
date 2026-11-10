@@ -157,6 +157,97 @@ public sealed class TopBarTests : IDisposable
             string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the problem text got {problems.Bounds.Width} of its {layout.Width}"));
     });
 
+    private static HealthView LongProblems() =>
+        new("degraded", [new HealthProblemView("SND-PROFILE-001", "the profile changed since approval", "the profile changed since approval and a much longer clause")]);
+
+    private static double Natural(TextBlock text)
+    {
+        using var layout = new TextLayout(text.Text, new Typeface(text.FontFamily, text.FontStyle, text.FontWeight), text.FontSize, foreground: null);
+        return layout.Width;
+    }
+
+    // #2547: the room the problem text gets came from a pill width of an older measure and a problem width of a fresh one, so at
+    // 1280 px with a long problem the bar measured again and again, flipping its step each time. A settled bar measures a few times.
+    [Fact]
+    public Task The_bar_measures_at_most_three_times_when_the_window_is_set_to_1280() => OnUi(async () =>
+    {
+        _records.Write(A.Record());
+        _server.Current = A.Status() with { Health = LongProblems() };
+        var (window, _) = await Show(s => s.State == ShellState.Normal && s.Pill.HasProblems);
+        var bar = window.Get<TopBar>("TopBar");
+        bar.ResetMeasurePasses();
+        window.Width = 1280;
+        window.UpdateLayout();
+
+        Assert.True(bar.MeasurePasses <= 3, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the bar measured {bar.MeasurePasses} times for one change of width"));
+    });
+
+    // #2547: a window that grows from 1000 to 1280 px gives the problem text back its full width; the cap lowered at 1000 doesn't stay.
+    [Fact]
+    public Task A_short_problem_reads_in_full_after_the_window_grows_from_1000_to_1280() => OnUi(async () =>
+    {
+        _records.Write(A.Record());
+        _server.Current = A.Status() with
+        {
+            Health = new HealthView("degraded", [new HealthProblemView("SND-SERVICE-001", "service broken failed")]),
+        };
+        var (window, _) = await Show(s => s.State == ShellState.Normal && s.Pill.HasProblems);
+        window.Width = 1000;
+        Settle(window);
+        window.Width = 1280;
+        Settle(window);
+
+        var problems = Named<TextBlock>(window, "PillProblems");
+        var natural = Natural(problems);
+        Assert.True(problems.IsEffectivelyVisible);
+        Assert.True(
+            problems.Bounds.Width >= natural - 0.5,
+            string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the problem text got {problems.Bounds.Width} of its {natural}"));
+        Assert.True(
+            problems.MaxWidth >= natural - 0.5,
+            string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the problem text's cap is {problems.MaxWidth}, under its {natural}"));
+    });
+
+    // #2547: TopBar.Counts counted 6 px before a count; the tabs' stack spaces its label and count by 8. The bar's estimate of
+    // what the counts take must equal what hiding them gives back (the estimate is what every step of the fit is measured from).
+    [Theory]
+    [InlineData(1.0, true)]
+    [InlineData(1.3, true)]
+    [InlineData(1.0, false)]
+    [InlineData(1.3, false)]
+    public Task The_bars_estimate_of_the_counts_matches_the_width_they_take(double scale, bool withCounts) => OnUi(async () =>
+    {
+        _records.Write(A.Record());
+        var (window, shell) = await Show(s => s.State == ShellState.Normal);
+        var resources = Application.Current!.Resources;
+        TextScale.Apply(resources, scale);
+        try
+        {
+            window.Width = 1700;
+            if (withCounts)
+            {
+                shell.Navigation.First(n => n.Page == PageId.Work).Count = "12";
+                shell.Navigation.First(n => n.Page == PageId.Agents).Count = "3";
+            }
+
+            Settle(window);
+            var bar = window.Get<TopBar>("TopBar");
+            var list = Named<ListBox>(window, "Navigation");
+            var shown = list.Bounds.Width;
+            list.Classes.Set("no-counts", value: true);
+            Settle(window);
+            var taken = shown - list.Bounds.Width;
+
+            Assert.True(
+                Math.Abs(bar.CountsWidth - taken) <= 0.5,
+                string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at {scale:0.0} {(withCounts ? "with" : "without")} counts: the bar estimates {bar.CountsWidth} px, hiding them gives back {taken} px"));
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+        }
+    });
+
     [Fact]
     public Task The_search_field_is_exposed_to_assistive_tech_and_reachable_by_keyboard() => OnUi(async () =>
     {

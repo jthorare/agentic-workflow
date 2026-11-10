@@ -7,7 +7,7 @@ namespace Aw.Sindri.Ui.Views.Shell;
 internal sealed partial class TopBar
 {
     // What the shown counts take, remembered while they show so the bar knows what hiding them would give back.
-    private double CountsWidth { get; set; }
+    internal double CountsWidth { get; private set; }
 
     private ListBox NavigationList => this.Get<ListBox>("Navigation");
 
@@ -22,7 +22,7 @@ internal sealed partial class TopBar
     }
 
     // The navigation's width with its counts and its full tab padding, which is what every step measures from.
-    private double NavigationWidthWithCounts => NavSegments.DesiredSize.Width + (_fit == Fit.NoCounts ? CountsWidth : 0) + (_fit >= Fit.TightNav ? TightSaving : 0);
+    internal double NavigationWidthWithCounts => NavSegments.DesiredSize.Width + (_fit == Fit.NoCounts ? CountsWidth : 0) + (_fit >= Fit.TightNav ? TightSaving : 0);
 
     // What the tight step gives back: the narrower padding on both sides of every tab, and the gaps between the tabs
     // (#2547: with full labels at every width, nine tabs at 130% text still ran 7 px past a 1,000 px window).

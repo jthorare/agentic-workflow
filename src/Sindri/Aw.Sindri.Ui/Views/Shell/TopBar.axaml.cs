@@ -33,6 +33,12 @@ internal sealed partial class TopBar : UserControl
     private bool _refreshHeldFocus;
     private NavigationMethod _refreshMethod = NavigationMethod.Tab;
 
+    /// <summary>How many times the bar was measured since the last reset; a bar that never settles measures again and again.</summary>
+    internal int MeasurePasses { get; private set; }
+
+    /// <summary>Sets <see cref="MeasurePasses"/> back to 0.</summary>
+    internal void ResetMeasurePasses() => MeasurePasses = 0;
+
     public TopBar()
     {
         InitializeComponent();
@@ -55,6 +61,7 @@ internal sealed partial class TopBar : UserControl
     /// <inheritdoc />
     protected override Size MeasureOverride(Size availableSize)
     {
+        MeasurePasses++;
         CapProblems(availableSize.Width);
         var size = base.MeasureOverride(availableSize);
         Remember();

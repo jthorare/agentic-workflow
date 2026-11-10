@@ -12,6 +12,7 @@ using Avalonia.Media.TextFormatting;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.Testing;
@@ -1484,6 +1485,9 @@ public sealed class ShellWindowTests : IDisposable
 
         /// <summary>First load.</summary>
         Connecting,
+
+        /// <summary>Degraded, with a problem long enough that its text has to give way (#2547). Last, so the frame names of the others don't move.</summary>
+        DegradedLongProblems,
     }
 
     public static TheoryData<BarState, double> MinimumWidthStates()
@@ -1666,11 +1670,13 @@ public sealed class ShellWindowTests : IDisposable
 
         _records.Write(A.Record());
         _server.UnreadableStatus = state == BarState.Unreadable;
-        _server.Current = state == BarState.VersionMismatch ? A.Status() with { ApiVersion = 2 } : A.Status();
+        _server.Current = state == BarState.VersionMismatch ? A.Status() with { ApiVersion = 2 }
+            : state == BarState.DegradedLongProblems ? A.Status() with { Health = new HealthView("degraded", [new HealthProblemView("SND-PROFILE-001", "the profile changed since approval", "the profile changed since approval and a much longer clause")]) }
+            : A.Status();
         var expected = state == BarState.Unreadable ? ShellState.Unreadable
             : state == BarState.VersionMismatch ? ShellState.VersionMismatch
             : ShellState.Normal;
-        var (window, shell) = await Show(s => s.State == expected);
+        var (window, shell) = await Show(s => s.State == expected && (state != BarState.DegradedLongProblems || s.Pill.HasProblems));
         if (state is BarState.Stale or BarState.NotResponding or BarState.Sending)
         {
             await GoStale(window, shell, state);
@@ -1713,8 +1719,10 @@ public sealed class ShellWindowTests : IDisposable
         var pill = bar[^1];
         Assert.Equal("HealthPill", pill.Name);
         Assert.True(Visible(window, "HealthPillText"), $"{at}: the pill's word is hidden");
-        Assert.True(pill.Box.Right <= window.ClientSize.Width - 4,
-            string.Create(CultureInfo.InvariantCulture, $"{at}: the pill ends at {pill.Box.Right}, past the window's {window.ClientSize.Width} less its ring"));
+        var padding = ((Border)Named<TopBar>(window, "TopBar").Content!).Padding.Right;
+        Assert.True(pill.Box.Right <= window.ClientSize.Width - padding,
+            string.Create(CultureInfo.InvariantCulture, $"{at}: the pill ends at {pill.Box.Right}, past the window's {window.ClientSize.Width} less the bar's {padding} px padding"));
+        Assert.True(pill.Box.Right <= window.ClientSize.Width - 4, $"{at}: the pill's ring is cut");
         for (var i = 1; i < bar.Count; i++)
         {
             Assert.True(bar[i - 1].Box.Right <= bar[i].Box.Left, $"{at}: {bar[i - 1].Name} {bar[i - 1].Box} overlaps {bar[i].Name} {bar[i].Box}");
@@ -1744,6 +1752,118 @@ public sealed class ShellWindowTests : IDisposable
             .ToList();
         Assert.True(outside.Count == 0, string.Create(CultureInfo.InvariantCulture, $"{state} at {scale:0.0}: outside the window: {string.Join(", ", outside)}"));
     }
+
+    private static readonly string[] _settledParts = ["BarGrid", "Brand", "BrandWord", "NavSegments", "Navigation", "SearchField", "SearchText", "SearchKeycap", "PillGroup", "PillProblems", "PillAge"];
+
+    public static TheoryData<BarState, double, double> BarWidthsAndScales()
+    {
+        var data = new TheoryData<BarState, double, double>();
+        foreach (var state in Enum.GetValues<BarState>().Where(s => s != BarState.VersionMismatch))
+        {
+            foreach (var width in new[] { 1000.0, 1099.0, 1280.0 })
+            {
+                data.Add(state, width, 1.0);
+                data.Add(state, width, 1.3);
+            }
+        }
+
+        return data;
+    }
+
+    public static TheoryData<BarState, double, double> GapWidthsAndScales()
+    {
+        var data = new TheoryData<BarState, double, double>();
+        foreach (var state in Enum.GetValues<BarState>().Where(s => s != BarState.VersionMismatch))
+        {
+            foreach (var width in new[] { 1000.0, 1280.0 })
+            {
+                data.Add(state, width, 1.0);
+                data.Add(state, width, 1.3);
+            }
+        }
+
+        return data;
+    }
+
+    // Shows the window in a state at a width and a text scale, runs the check, and puts the scale back.
+    private async Task WithBar(BarState state, double width, double scale, Action<ShellWindow> check)
+    {
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, width, 600) });
+        var window = await ShowIn(state);
+        var resources = Application.Current!.Resources;
+        TextScale.Apply(resources, scale);
+        try
+        {
+            Settle(window);
+            check(window);
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+            _ = _server.StatusGate?.TrySetResult();
+            Settle(window);
+        }
+    }
+
+    private static List<(string Name, Rect Box)> PartBoxes(Window window)
+    {
+        var names = _settledParts.Select(n => (Name: n, Control: Named<Control>(window, n)))
+            .Concat(Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<ListBoxItem>().Select((t, i) => (Name: "Tab" + i.ToString(CultureInfo.InvariantCulture), Control: (Control)t)));
+        return [.. names.Select(p => (p.Name, new Rect(p.Control.TranslatePoint(new Point(0, 0), window) ?? default, p.Control.Bounds.Size)))];
+    }
+
+    // #2547: a bar that has settled is still after one more layout pass: no part moves, and no part is left waiting for a pass.
+    [Theory]
+    [MemberData(nameof(BarWidthsAndScales))]
+    public Task The_top_bar_has_settled_and_another_layout_pass_moves_no_part(BarState state, double width, double scale) => OnUi(() => WithBar(state, width, scale, window =>
+    {
+        var at = string.Create(CultureInfo.InvariantCulture, $"{state} at {width} px, {scale:0.0}");
+        var stale = _settledParts.Select(n => Named<Control>(window, n))
+            .Concat(Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<ListBoxItem>())
+            .Where(c => c.IsEffectivelyVisible && !(c.IsMeasureValid && c.IsArrangeValid))
+            .Select(c => c.Name ?? c.GetType().Name)
+            .ToList();
+        Assert.True(stale.Count == 0, $"{at}: still waiting for a layout pass after Settle: {string.Join(", ", stale)}");
+
+        var before = PartBoxes(window);
+        Named<TopBar>(window, "TopBar").InvalidateMeasure();
+        window.UpdateLayout();
+        var after = PartBoxes(window);
+        var moved = before.Zip(after, (b, a) => (b.Name, Before: b.Box, After: a.Box))
+            .Where(p => Math.Abs(p.Before.X - p.After.X) > 0.5 || Math.Abs(p.Before.Y - p.After.Y) > 0.5
+                || Math.Abs(p.Before.Width - p.After.Width) > 0.5 || Math.Abs(p.Before.Height - p.After.Height) > 0.5)
+            .Select(p => $"{p.Name} {p.Before} -> {p.After}")
+            .ToList();
+        Assert.True(before.Count == after.Count && moved.Count == 0, $"{at}: moved on one more pass: {string.Join("; ", moved)}");
+    }));
+
+    // A tab's content, in order: the dot, the label and the count (the item template's stack).
+    private static List<Control> TabContent(ListBoxItem tab) =>
+        [.. tab.GetVisualDescendants().OfType<StackPanel>().First(p => p.Children.OfType<TextBlock>().Any()).Children.Where(c => c.IsEffectivelyVisible)];
+
+    // The empty room between the tabs' texts must not close up: the label's (or count's) right edge to the next tab's dot.
+    private const double TabGapFloor = 6;
+
+    [Theory]
+    [MemberData(nameof(GapWidthsAndScales))]
+    public Task Two_tabs_keep_at_least_the_gap_floor_between_their_contents(BarState state, double width, double scale) => OnUi(() => WithBar(state, width, scale, window =>
+    {
+        var tabs = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<ListBoxItem>().ToList();
+        var gaps = new List<(string Pair, double Gap)>();
+        for (var i = 0; i + 1 < tabs.Count; i++)
+        {
+            var last = TabContent(tabs[i]).OfType<TextBlock>().Last();
+            var next = TabContent(tabs[i + 1])[0];
+            var right = (last.TranslatePoint(new Point(0, 0), window) ?? default).X + last.Bounds.Width;
+            var left = (next.TranslatePoint(new Point(0, 0), window) ?? default).X;
+            gaps.Add(($"{AutomationProperties.GetName(tabs[i].GetVisualDescendants().OfType<TextBlock>().First())}|{AutomationProperties.GetName(tabs[i + 1].GetVisualDescendants().OfType<TextBlock>().First())}", left - right));
+        }
+
+        var all = string.Join(", ", gaps.Select(g => string.Create(CultureInfo.InvariantCulture, $"{g.Pair} {g.Gap:0.#}")));
+        Assert.True(
+            gaps.TrueForAll(g => g.Gap >= TabGapFloor),
+            string.Create(CultureInfo.InvariantCulture, $"{state} at {width} px, {scale:0.0}: a gap is under {TabGapFloor} px: {all}"));
+    }));
 
     // With room the ⌘K field keeps its full 300 px and the pill sits at the right edge (inside the top bar's 16 px padding).
     [Fact]
