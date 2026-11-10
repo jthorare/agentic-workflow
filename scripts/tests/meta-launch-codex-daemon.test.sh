@@ -6,6 +6,7 @@
 # Run: bash scripts/tests/meta-launch-codex-daemon.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$DIR/lib/test-portable.sh"   # timeout for macOS
 ROOT="$(cd "$DIR/.." && pwd)"
 fail=0
 check() {

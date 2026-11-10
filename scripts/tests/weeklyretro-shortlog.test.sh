@@ -3,6 +3,7 @@
 # isn't a terminal (an agent's shell): it hangs on an open pipe and prints nothing on /dev/null.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+. "$ROOT/scripts/lib/test-portable.sh"   # timeout for macOS
 SKILL="${WEEKLYRETRO_SKILL:-$ROOT/skills/weeklyRetro/SKILL.md}"
 fail=0
 
