@@ -159,7 +159,7 @@ public sealed class CliConnectionVerbsTests : IDisposable
     [Fact]
     public async Task A_refused_rename_prints_the_servers_code_and_exits_nonzero()
     {
-        var api = new RoutedApi().OnRaw("/sindri/connections/slack%3Aold/rename", HttpStatusCode.Conflict, """{"title":"SND-CONN-010","detail":"a connection named slack:new already exists"}""");
+        var api = new RoutedApi().OnRaw("/sindri/connections/slack%3Aold/rename", HttpStatusCode.Conflict, """{"type":"about:blank","title":"SND-CONN-010","status":409,"detail":"a connection named slack:new already exists"}""");
 
         var code = await Verbs(api).Run(["connection", "rename", "slack:old", "new"], Token);
 
