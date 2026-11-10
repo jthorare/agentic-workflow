@@ -40,6 +40,14 @@ internal partial interface ISindriApi
     /// <returns>The connection and consent URL, the API's refusal, or SND-UI-002/003.</returns>
     public Task<Result<ConnectionAdded>> SignInConnection(Uri api, string name, CancellationToken cancellationToken);
 
+    /// <summary>POST /sindri/connections/{name}/rename: changes the label, keeps the secret.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="name">The connection.</param>
+    /// <param name="body">The new label.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The new and the old name, the API's refusal (SND-CONN-001, -008, -010 or SND-CLI-003), or SND-UI-002/003.</returns>
+    public Task<Result<ConnectionRenamed>> RenameConnection(Uri api, string name, RenameConnectionBody body, CancellationToken cancellationToken);
+
     /// <summary>DELETE /sindri/connections/{name}.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="name">The connection.</param>

@@ -3,6 +3,8 @@
 # Callers must tolerate nounset (-u) and pipefail after sourcing.
 # In particular, all referenced variables must be set or provide a default.
 #
+# Works on bash 3.2 (macOS /bin/bash): no bash 4 features, no GNU-only tools.
+#
 # NOTE: No trap is registered for automatic lock release on unexpected exit.
 # Traps in sourced files can interfere with the caller's own trap handlers.
 # Recovery from unexpected exits relies on stale-lock detection (kill -0 check).
@@ -51,14 +53,6 @@ if ! [[ "$SKILL_LOCK_OWNER" =~ ^[0-9]+$ ]]; then
   return 1 2>/dev/null || exit 1
 fi
 
-# sec-1: Require bash >= 4 for atomic noclobber (O_CREAT|O_EXCL semantics).
-# macOS ships bash 3.2 where noclobber uses stat+open, not open(O_CREAT|O_EXCL),
-# making the atomic write claim false on that platform.
-if [ "${BASH_VERSINFO[0]:-0}" -lt 4 ]; then
-  echo "skill-lock: requires bash >= 4 for atomic noclobber (found $BASH_VERSION)" >&2
-  return 1 2>/dev/null || exit 1
-fi
-
 LOCK_FILE="${AW_STATE_DIR:-$HOME/.agentic-workflow}/.${SKILL_LOCK_NAME}.lock"
 SKILL_LOCK_TIMEOUT="${SKILL_LOCK_TIMEOUT:-120}"
 
@@ -79,6 +73,62 @@ _lock_is_stale() {
   return 0  # stale — process is gone
 }
 
+# Atomic create that works on bash 3.2 and BSD/macOS (noclobber is not O_EXCL there): write the pid to a private
+# temp file, then ln it to LOCK_FILE. ln fails when LOCK_FILE exists, and the lock is never visible half-written.
+_lock_try_create() {
+  local tmp="${LOCK_FILE}.new.$$"
+  echo "$SKILL_LOCK_OWNER" > "$tmp" 2>/dev/null || return 1
+  if ln "$tmp" "$LOCK_FILE" 2>/dev/null; then rm -f "$tmp"; return 0; fi
+  rm -f "$tmp"
+  return 1
+}
+
+# Remove a dead holder's lock, one waiter at a time (#2569). Two waiters can both read the dead pid; without a guard,
+# the late one's remove deletes the lock the other has just taken, and both hold it. The guard is a mkdir mutex next to
+# the lock (only one mkdir wins): under it the lock is read again and removed only when its holder is still dead, so a
+# fresh lock (a live pid) is never removed. Returns 1 when another waiter holds the guard.
+# The guard holds one empty file named by its holder's pid ($$, the shell running acquire_lock). A guard whose holder
+# died mid-reclaim is taken over by the waiter that unlinks its pid file (_lock_reclaim_takeover).
+# An empty guard is a holder between its mkdir and its pid file, and is cleared only once over two minutes old
+# (`find -mmin +1`; a reclaim takes milliseconds). Every cleanup rmdir goes through _lock_guard_rmdir_if_old, so a fresh
+# guard another waiter just made is never removed (#2581); only a winner removes its own guard, after its own pid file.
+_lock_guard_rmdir_if_old() {
+  [ -n "$(find "$1" -maxdepth 0 -mmin +1 2>/dev/null)" ] && rmdir "$1" 2>/dev/null
+  return 0
+}
+
+# Take over a dead holder's guard (#2581). Our pid file goes in first, so the guard is never empty and no other waiter
+# can rmdir it and mkdir a fresh one. Then the dead pid file is unlinked; unlink succeeds for one waiter only, and that
+# waiter holds the guard: it runs the reclaim and removes its own file and guard, as the mkdir winner does.
+_lock_reclaim_takeover() {
+  local guard="$1" dead="$2"
+  : > "$guard/$$" 2>/dev/null || return 1
+  if rm "$dead" 2>/dev/null; then
+    if _lock_is_stale; then rm -f "$LOCK_FILE"; fi
+    rm -f "$guard/$$"; rmdir "$guard" 2>/dev/null || true
+    return 0
+  fi
+  rm -f "$guard/$$"
+  return 1
+}
+
+_lock_reclaim() {
+  local guard="${LOCK_FILE}.reclaim" f p
+  if mkdir "$guard" 2>/dev/null; then
+    : > "$guard/$$"
+    if _lock_is_stale; then rm -f "$LOCK_FILE"; fi
+    rm -f "$guard/$$"; rmdir "$guard" 2>/dev/null || true
+    return 0
+  fi
+  for f in "$guard"/*; do
+    [ -e "$f" ] || { _lock_guard_rmdir_if_old "$guard"; return 1; }
+    p="${f##*/}"
+    case "$p" in ""|*[!0-9]*) rm -f "$f" ;; *) kill -0 "$p" 2>/dev/null && return 1; _lock_reclaim_takeover "$guard" "$f" && return 0; return 1 ;; esac
+  done
+  _lock_guard_rmdir_if_old "$guard"
+  return 1
+}
+
 acquire_lock() {
   # sec-5: Explicitly check that lock directory creation succeeds.
   # When sourced, mkdir failure could be silently ignored without this guard.
@@ -91,10 +141,9 @@ acquire_lock() {
   local backoff=1
 
   while true; do
-    # sec-1: Attempt atomic O_EXCL write via noclobber — avoids TOCTOU race
+    # sec-1: Attempt an atomic create (hard link, see _lock_try_create) — avoids the TOCTOU race
     # where two processes could both see a stale lock and both write their PID.
-    # The subshell ensures noclobber is scoped and does not leak into the caller.
-    if ( set -o noclobber; echo "$SKILL_LOCK_OWNER" > "$LOCK_FILE" ) 2>/dev/null; then
+    if _lock_try_create; then
       echo "skill-lock[$SKILL_LOCK_NAME]: acquired (owner pid $SKILL_LOCK_OWNER)"
       return 0
     fi
@@ -105,12 +154,9 @@ acquire_lock() {
       return 0
     fi
 
-    # File exists — check if the holder is still alive
-    if _lock_is_stale; then
-      # Stale lock: remove and retry. Safe for concurrent waiters — if multiple
-      # processes remove it simultaneously, the noclobber write below arbitrates;
-      # only one winner proceeds, others loop back and wait.
-      rm -f "$LOCK_FILE"
+    # File exists — check if the holder is still alive. A dead holder's lock is removed
+    # under the reclaim guard only; a waiter that loses the guard waits like any other.
+    if _lock_is_stale && _lock_reclaim; then
       continue
     fi
 
@@ -136,17 +182,25 @@ acquire_lock() {
   done
 }
 
+# Release only a lock we own, and never write the lock path as a non-owner (#2581). The holder is read first: a
+# non-owner touches nothing. An owner moves the lock aside to a private name and reads it again; if it is still ours it is
+# removed. If it changed in between, it goes back with ln, which fails when a newer lock exists (then the private copy is
+# dropped). mv is never used to put it back, because mv would replace a lock a waiter just took.
 release_lock() {
-  local tmp="${LOCK_FILE}.releasing.$$"
-  if mv "$LOCK_FILE" "$tmp" 2>/dev/null; then
-    local holder
-    holder=$(cat "$tmp" 2>/dev/null || echo "")
-    if [ "$holder" = "$SKILL_LOCK_OWNER" ]; then
-      rm "$tmp"
-      echo "skill-lock[$SKILL_LOCK_NAME]: released (owner pid $SKILL_LOCK_OWNER)"
-    else
-      mv "$tmp" "$LOCK_FILE" 2>/dev/null || true
-      echo "skill-lock[$SKILL_LOCK_NAME]: not releasing — held by pid $holder, we are owner pid $SKILL_LOCK_OWNER" >&2
-    fi
+  local holder tmp="${LOCK_FILE}.releasing.$$"
+  holder=$(cat "$LOCK_FILE" 2>/dev/null || echo "")
+  if [ "$holder" != "$SKILL_LOCK_OWNER" ]; then
+    [ -n "$holder" ] && echo "skill-lock[$SKILL_LOCK_NAME]: not releasing — held by pid $holder, we are owner pid $SKILL_LOCK_OWNER" >&2
+    return 0
+  fi
+  mv "$LOCK_FILE" "$tmp" 2>/dev/null || return 0
+  holder=$(cat "$tmp" 2>/dev/null || echo "")
+  if [ "$holder" = "$SKILL_LOCK_OWNER" ]; then
+    rm -f "$tmp"
+    echo "skill-lock[$SKILL_LOCK_NAME]: released (owner pid $SKILL_LOCK_OWNER)"
+  else
+    ln "$tmp" "$LOCK_FILE" 2>/dev/null || true
+    rm -f "$tmp"
+    echo "skill-lock[$SKILL_LOCK_NAME]: not releasing — held by pid $holder, we are owner pid $SKILL_LOCK_OWNER" >&2
   fi
 }

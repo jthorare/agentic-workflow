@@ -180,7 +180,8 @@ if [ -n "$is_dotnet_test" ] && [ "$run_max" -gt 0 ]; then
 fi
 # This relies on job control being off (non-interactive bash): the background child is not a group leader, so setsid
 # execs in place, $! is the job's pid and its group id. Under job control setsid would fork and $! would exit at once.
-if command -v setsid >/dev/null 2>&1; then setsid "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' "$@" & fi
+# macOS has no setsid: perl does the same. Its `--` stops perl from reading a command word that starts with - as a perl switch.
+if command -v setsid >/dev/null 2>&1; then setsid "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' -- "$@" & fi
 job=$!
 reason="$(mktemp "${TMPDIR:-/tmp}/heavy-reason.XXXXXX")"
 (

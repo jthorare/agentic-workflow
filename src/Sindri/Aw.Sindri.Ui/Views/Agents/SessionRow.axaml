@@ -7,7 +7,7 @@
        is (worktree, host, lane or launch) and how long, and Focus: disabled until its send is wired, with its phase and the CLI to run on a
        focusable line with Copy. The row's name is provider, title, state, what it asks and host; every named line is a Border wrapper. The row
        draws its own focus border (item-row), not the adorner. -->
-  <Border x:Name="SessionRowFrame" Classes="item-row session-row" Classes.selected="{Binding IsSelected}" Focusable="True"
+  <Border x:Name="SessionRowFrame" Classes="item-row session-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <Grid x:Name="SessionRowGrid" ColumnDefinitions="150,2*,1.2*,120,1.4*,56" MinHeight="{StaticResource Size.Row}" VerticalAlignment="Center">
       <Border x:Name="SessionRowChip" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
