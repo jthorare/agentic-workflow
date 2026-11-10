@@ -42,6 +42,9 @@ public static class KvKeys
     /// <summary>The lanes the last watch reported CONTEXT HIGH for (comma-separated), so a re-armed watch does not announce a standing one again.</summary>
     public const string WatchContext = "watch.context";
 
+    /// <summary>The status lines a watch announced and when its last STATUS line printed (StatusMemory), so the next watch run neither repeats nor drops one (#2651).</summary>
+    public const string WatchStatus = "watch.status";
+
     /// <summary>The pull requests and main's sha the last watch poll settled on (WatchMemory), so the next watch run diffs its first poll against them instead of seeding silently.</summary>
     public const string WatchSnapshot = "watch.snapshot";
 

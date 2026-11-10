@@ -13,6 +13,6 @@ internal sealed record Polled(WatchSnapshot Snapshot, int Inbox, IReadOnlyList<s
     /// <summary>How many messages are still owed a reply (what "aw-meta inbox" lists).</summary>
     internal int Open { get; init; }
 
-    /// <summary>The sending lane of each status line the inbox holds, in arrival order (#2651).</summary>
-    internal IReadOnlyList<string> Status { get; init; } = [];
+    /// <summary>The status lines not read yet, each with its sending lane (#2651).</summary>
+    internal IReadOnlyList<(string Id, string Lane)> Status { get; init; } = [];
 }

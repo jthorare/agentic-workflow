@@ -40,11 +40,8 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// </summary>
     internal Func<bool, ValueTask<string?>> KeepFailing { get; init; } = static _ => ValueTask.FromResult<string?>(null);
 
-    /// <summary>The current time, for how often a batched STATUS line may print.</summary>
-    internal required TimeProvider Clock { get; init; }
-
-    /// <summary>The shortest time between two STATUS lines of their own (#2651); in between, status lines ride on the next INBOX line.</summary>
-    internal static readonly TimeSpan StatusEvery = TimeSpan.FromMinutes(15);
+    /// <summary>Batches the status lines (#2651).</summary>
+    internal required StatusBatch Status { get; init; }
 
     /// <summary>The state the first poll diffs against: the last poll of an earlier run, or the state before any poll.</summary>
     internal WatchState Baseline { init => _state = value; }
@@ -55,8 +52,6 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     private WatchState _state = WatchState.Continuing(reported);
     private WatchResources _kept = reported;
     private int? _inbox;
-    private int? _status;
-    private DateTimeOffset? _statusAt;
     private bool _failing;
     private bool _started;
     private IReadOnlySet<string> _high = context.High;
@@ -123,30 +118,15 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         return step;
     }
 
-    // New mail is an INBOX line. New status lines never are (#2651): they ride on the next INBOX line, or print as one STATUS line when the last
-    // one is at least StatusEvery old. The first poll only counts what is there.
+    // New mail is an INBOX line; status lines ride on it or print batched (StatusBatch).
     private async ValueTask SayInbox(Polled poll)
     {
-        var news = _status is { } seen ? poll.Status.Skip(seen).ToList() : [];
-        _status ??= poll.Status.Count;
-        if (_inbox is { } before && poll.Inbox > before)
+        var mail = _inbox is { } before && poll.Inbox > before ? string.Create(CultureInfo.InvariantCulture, $"INBOX {poll.Inbox - before} new message(s)") : null;
+        if (await Status.Line(poll.Status, mail).ConfigureAwait(false) is { } line)
         {
-            var mail = string.Create(CultureInfo.InvariantCulture, $"INBOX {poll.Inbox - before} new message(s)");
-            await Say(news.Count > 0 ? $"{mail}; {StatusLine(news)}" : mail).ConfigureAwait(false);
-            _status = poll.Status.Count;
-            return;
-        }
-
-        var now = Clock.GetUtcNow();
-        if (news.Count > 0 && (_statusAt is not { } last || now - last >= StatusEvery))
-        {
-            await Say(StatusLine(news)).ConfigureAwait(false);
-            (_status, _statusAt) = (poll.Status.Count, now);
+            await Say(line).ConfigureAwait(false);
         }
     }
-
-    private static string StatusLine(List<string> lanes) =>
-        string.Create(CultureInfo.InvariantCulture, $"STATUS {lanes.Count} new (lanes: {string.Join(", ", lanes.Distinct(StringComparer.Ordinal))})");
 
     // A newer watch owns the team's watch keys: say so once and stop writing them.
     private async ValueTask<bool> Supersede(string? newer)

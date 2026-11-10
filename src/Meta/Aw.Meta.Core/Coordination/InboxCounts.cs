@@ -7,7 +7,7 @@ namespace Aw.Meta.Core.Coordination;
 
 /// <summary>
 /// Counts the meta's inbound messages: every one stored but the status lines, those still owed a reply (what "aw-meta inbox" lists), and the
-/// lanes that sent each status line (#2651: a STATUS:-tagged message is batched, never counted as new mail).
+/// unread status lines with their sending lanes (#2651: a STATUS:-tagged message is batched, never counted as new mail).
 /// </summary>
 /// <param name="config">The team config, for the meta lane.</param>
 /// <param name="messages">The messages.</param>
@@ -17,8 +17,8 @@ public sealed class InboxCounts(IMetaConfig config, IMessageStore messages, Obli
 {
     /// <summary>Counts the inbox.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The total stored but the status lines, the number still owed a reply, and the sending lane of each status line in arrival order.</returns>
-    public async ValueTask<Result<(int Total, int Open, IReadOnlyList<string> Status)>> Read(CancellationToken cancellationToken)
+    /// <returns>The total stored but the status lines, the number still owed a reply, and each status line not read yet (`inbox --status`) with its sending lane.</returns>
+    public async ValueTask<Result<(int Total, int Open, IReadOnlyList<(string Id, string Lane)> Status)>> Read(CancellationToken cancellationToken)
     {
         var team = await config.Load(cancellationToken).ConfigureAwait(false);
         var inbound = await messages.Messages(cancellationToken).ConfigureAwait(false);
@@ -35,9 +35,10 @@ public sealed class InboxCounts(IMetaConfig config, IMessageStore messages, Obli
 
         var now = clock.GetUtcNow();
         var owed = obligations.Value.Where(static o => o.Kind == ObligationKind.Reply).Select(static o => o.Key).ToHashSet(StringComparer.Ordinal);
-        var status = inbound.Value.Where(static m => NoticeRule.IsStatusTagged(m.Body)).Select(m => Lane(m, team.Value.Team)).ToList();
+        var status = inbound.Value.Where(static m => NoticeRule.IsStatusTagged(m.Body)).ToList();
+        var unread = status.Where(static m => m.ShownAt is null).Select(m => (m.Id.Value, Lane(m, team.Value.Team))).ToList();
         var open = inbound.Value.Count(m => string.Equals(InboxState.Of(m, owed.Contains(m.Id.Value), now), InboxState.Open, StringComparison.Ordinal));
-        return (inbound.Value.Count - status.Count, open, status);
+        return (inbound.Value.Count - status.Count, open, unread);
     }
 
     // The lane a message came from: its session name without the "team-" prefix, or the socket address when it had no name.
