@@ -86,6 +86,21 @@ public abstract class MessageStoreContract
         Expect.That(missing.IsError && missing.Error.Code == MetaErrors.MessageNotFound.Code, "AW-META-005 for an unknown message");
     }
 
+    /// <summary>Marking messages shown stores the time on those messages only; an unknown id is skipped.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Shown_messages_keep_the_time_they_were_shown()
+    {
+        var store = await Create(_none);
+        _ = await store.RecordInbound("/t/a.jsonl", 1, [A.Inbox("m1"), A.Inbox("m2", minute: 1)], _none);
+
+        var marked = await store.MarkShown([MessageId.From("m1"), MessageId.From("nope")], A.At(30), _none);
+        var read = await store.Messages(_none);
+
+        Expect.That(marked.IsSuccess, "marking succeeds, an unknown id is skipped");
+        Expect.That(read.Value[0].ShownAt == A.At(30) && read.Value[1].ShownAt is null, "only the marked message has a shown time");
+    }
+
     /// <summary>Sent messages read back in order, with their message id when known.</summary>
     /// <returns>A task.</returns>
     [Fact]
