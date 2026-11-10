@@ -22474,13 +22474,15 @@ Aw.Sindri.Core.Toolkits.IToolkitWorkspace.BinaryOf(string! dir, string! name) ->
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace.SourceHash(string! dir, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult.<Clone>$() -> Aw.Sindri.Core.Toolkits.ToolkitCommandResult!
-Aw.Sindri.Core.Toolkits.ToolkitCommandResult.Deconstruct(out int ExitCode, out string! Output) -> void
+Aw.Sindri.Core.Toolkits.ToolkitCommandResult.Deconstruct(out int ExitCode, out string! Output, out string! Error) -> void
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult.Equals(Aw.Sindri.Core.Toolkits.ToolkitCommandResult? other) -> bool
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult.ExitCode.get -> int
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult.ExitCode.init -> void
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult.Output.get -> string!
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult.Output.init -> void
-Aw.Sindri.Core.Toolkits.ToolkitCommandResult.ToolkitCommandResult(int ExitCode, string! Output) -> void
+Aw.Sindri.Core.Toolkits.ToolkitCommandResult.Error.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitCommandResult.Error.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitCommandResult.ToolkitCommandResult(int ExitCode, string! Output, string! Error = "") -> void
 override Aw.Sindri.Core.Toolkits.ToolkitCommandResult.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Toolkits.ToolkitCommandResult.GetHashCode() -> int
 override Aw.Sindri.Core.Toolkits.ToolkitCommandResult.ToString() -> string!

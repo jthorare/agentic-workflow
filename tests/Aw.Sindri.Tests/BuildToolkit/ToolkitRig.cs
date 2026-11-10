@@ -79,13 +79,16 @@ internal sealed class ToolkitRig : IDisposable
         /// <summary>What a command prints, by its second word; 'ok' when a key is missing, and the valid manifest for '--manifest'.</summary>
         internal Dictionary<string, string> Outputs { get; } = new(StringComparer.Ordinal) { ["--manifest"] = Manifest };
 
+        /// <summary>What a command prints on standard error, by its second word; empty when a key is missing.</summary>
+        internal Dictionary<string, string> Errors { get; } = new(StringComparer.Ordinal);
+
         internal List<string> Ran { get; } = [];
 
         public ValueTask<ToolkitCommandResult> Run(string workingDir, IReadOnlyList<string> argv, CancellationToken cancellationToken)
         {
             Ran.Add(string.Join(' ', argv));
             var exit = Exits.GetValueOrDefault(argv[1]);
-            return ValueTask.FromResult(new ToolkitCommandResult(exit, exit == 0 ? Outputs.GetValueOrDefault(argv[1], "ok") : "failed: " + argv[1]));
+            return ValueTask.FromResult(new ToolkitCommandResult(exit, exit == 0 ? Outputs.GetValueOrDefault(argv[1], "ok") : "failed: " + argv[1], Errors.GetValueOrDefault(argv[1], string.Empty)));
         }
     }
 

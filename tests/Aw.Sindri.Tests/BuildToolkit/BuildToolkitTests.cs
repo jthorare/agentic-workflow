@@ -71,6 +71,28 @@ public sealed class BuildToolkitTests : IDisposable
     }
 
     [Fact]
+    public async Task A_warning_on_standard_error_during_manifest_does_not_break_the_manifest()
+    {
+        _rig.Commands.Errors["--manifest"] = "warn: using the default port";
+
+        var built = await Build().Handle(new BuildToolkitRequest("triage"), Token);
+
+        Assert.True(built.IsSuccess);
+        Assert.Equal(ToolkitState.Built, _rig.Store.Items["triage"].State);
+    }
+
+    [Fact]
+    public async Task A_failed_build_reports_what_the_compiler_wrote_on_standard_error()
+    {
+        _rig.Commands.Exits["build"] = 1;
+        _rig.Commands.Errors["build"] = "CS1234: the error text";
+
+        var built = await Build().Handle(new BuildToolkitRequest("triage"), Token);
+
+        Assert.Contains("CS1234: the error text", built.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_toolkit_whose_manifest_command_fails_ends_failed_with_SND_TK_003()
     {
         _rig.Commands.Exits["--manifest"] = 1;
