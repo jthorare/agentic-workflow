@@ -71,8 +71,10 @@ internal sealed class GraphMirror(ILedgerStore ledger, HeldLease lease, EventFac
         ArgumentNullException.ThrowIfNull(run);
         var payload = new WorkflowRunStartedPayload(run.Id, run.WorkflowId, run.Revision, Clean(run.Trigger) ?? string.Empty, By);
         await Append(EventTypes.WorkflowRunStarted, payload, $"{EventTypes.WorkflowRunStarted}:{run.Id.Value}", run.ItemId?.Value, cancellationToken).ConfigureAwait(false);
-        if (run.ItemId is { } item && RecordKey.TryFrom("sindri:run/" + run.Id.Value, out var record))
+        if (run.ItemId is { } item)
         {
+            // why: every valid run id fits a record key, so a mismatch throws instead of dropping the link (issue 2433)
+            var record = RecordKey.From("sindri:run/" + run.Id.Value);
             // the item shows the run it works for (issue 2433); keyed by item and record, so a repeat is recorded once
             var linked = new ItemLinked(CommandFor(record), item, record, Alias: null);
             await Append(EventTypes.ItemLinked, linked, $"{EventTypes.ItemLinked}:{item.Value}:{record.Value}", item.Value, cancellationToken).ConfigureAwait(false);

@@ -27,7 +27,7 @@ internal sealed class WorkflowItemMaker(CreateItemService service, ICallerContex
         }
 
         var run = item.Run;
-        var request = parsed.Value with { RunRecord = RecordKey.TryFrom("sindri:run/" + run.Value, out var runRecord) ? runRecord : null };
+        var request = parsed.Value with { RunRecord = RecordKey.From("sindri:run/" + run.Value) };   // every valid run id fits a record key; a mismatch throws (issue 2433)
         using var entered = callers.EnterService("workflow");
         var made = await service.Handle(request, cancellationToken).ConfigureAwait(false);
         if (made.IsError)
