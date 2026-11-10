@@ -110,9 +110,9 @@ acquire_lock() {
 
     # File exists — check if the holder is still alive
     if _lock_is_stale; then
-      # Stale lock: remove and retry. Safe for concurrent waiters — if multiple
-      # processes remove it simultaneously, the noclobber write below arbitrates;
-      # only one winner proceeds, others loop back and wait.
+      # Stale lock: remove and retry. The ln below arbitrates between waiters that
+      # create at once, but not a late rm: a waiter that saw the dead holder can
+      # remove a lock another waiter just took (#2569).
       rm -f "$LOCK_FILE"
       continue
     fi

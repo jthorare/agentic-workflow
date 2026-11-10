@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Tests for scripts/linear-probe.sh with a stub curl (a small stateful Linear). Run: bash scripts/tests/linear-probe.test.sh
-[ "$(uname)" = Darwin ] && { echo "SKIP: linear-probe loopback url rows fail on the macOS runner; cause not reproducible off macOS (suspect bash 3.2 quoting in the url guard, scripts/linear-probe.sh:49) (#2534)"; exit 0; }
+[ "$(uname)" = Darwin ] && { echo "SKIP: linear-probe loopback url rows fail on the macOS runner; cause not reproducible off macOS (suspect bash 3.2 quoting in the url guard, scripts/linear-probe.sh:49) (#2568)"; exit 0; }
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$DIR/../.." && pwd)"
