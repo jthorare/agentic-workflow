@@ -160,7 +160,7 @@ internal sealed partial class WorkflowsPage : UserControl
     }
 #pragma warning restore MA0155
 
-    // Back lands on the level it returns to: the first row's button, else the first thing on that level that takes focus (Try again, Run now), never the Back button it just hid.
+    // Back lands on the level it returns to: the first row's focus stop (the workflow row itself, or a run row's button), else the first thing on that level that takes focus (Try again, Run now), never the Back button it just hid.
     private void OnBack(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not WorkflowsPageViewModel page)
@@ -171,8 +171,9 @@ internal sealed partial class WorkflowsPage : UserControl
         page.Back();
         var rows = page.IsList ? WorkflowRows : RunRows;
         Control level = page.IsList ? WorkflowsListLevel : WorkflowRunsLevel;
+        Func<Control, bool> stop = page.IsList ? static c => c is Border b && b.Classes.Contains("item-row") : static c => c is Button;   // a workflow row is its own focus stop (#2550); a run row's title button is still one
         Dispatcher.UIThread.Post(
-            () => _ = (FirstTarget(rows, static b => b is Button) ?? FirstTarget(level, static c => c.Focusable) ?? level).Focus(NavigationMethod.Tab),
+            () => _ = (FirstTarget(rows, stop) ?? FirstTarget(level, static c => c.Focusable) ?? level).Focus(NavigationMethod.Tab),
             DispatcherPriority.Loaded);
     }
 

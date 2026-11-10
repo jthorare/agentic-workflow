@@ -189,9 +189,9 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         var back = Named<Button>(window, "WorkflowsBack");
         Click(back);
-        await Until(window, () => shell.Workflows.IsList && Focused(window) is Button { DataContext: WorkflowRowViewModel }, "the first workflow never took focus when Back returned");
+        await Until(window, () => shell.Workflows.IsList && Focused(window) is Border { DataContext: WorkflowRowViewModel } focused && focused.Classes.Contains("item-row"), "the first workflow never took focus when Back returned");
 
-        var first = Assert.IsType<Button>(Focused(window));
+        var first = Assert.IsType<Border>(Focused(window));   // the row is the focus stop since #2550, not its title button
         Assert.Equal(shell.Workflows.Rows[0], first.DataContext);
         Assert.False(back.IsEffectivelyVisible);
     });
