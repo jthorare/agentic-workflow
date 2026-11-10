@@ -13,6 +13,8 @@ Makes a work item through the same create-item handler as `sindri item add` and 
 |---|---|---|
 | `itemId` | string | The new item's id. |
 
+Inside a `for_each`, every pass makes an item, but the run is linked to the first one made; later items keep their own ids in the node outputs.
+
 ```json
 {
   "version": 1, "name": "File follow-ups", "concurrency": "unlimited",

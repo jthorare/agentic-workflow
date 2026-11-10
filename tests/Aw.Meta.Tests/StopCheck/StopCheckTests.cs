@@ -10,7 +10,7 @@ public sealed class StopCheckTests
 {
     private readonly MetaWorld _world = new();
 
-    private StopCheckService Service() => new(_world.Session, _world.Sweep, _world.Guard, _world.Clock);
+    private StopCheckService Service() => new(_world.Session, _world.Sweep, _world.Guard, _world.Clock, _world.Beats);
 
     private async Task<StopCheckResponse> Check(string session = MetaWorld.MetaSessionId, bool hookActive = false)
     {
@@ -134,19 +134,6 @@ public sealed class StopCheckTests
 
         Assert.False(snoozed.Blocked);
         Assert.Equal(["m2", "watch"], due.Open.Select(o => o.Key), StringComparer.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_changed_lane_map_blocks_until_it_is_sent_to_every_lane()
-    {
-        await _world.Ready();
-        _world.Transcripts.Write(MetaWorld.Transcript, string.Empty);
-        _world.Sessions.Add(A.Live("t1-api", "s-api"));
-
-        var response = await Check();
-
-        Assert.Equal([(ObligationKind.BroadcastLanes, "v1")], response.Open.Select(o => (o.Kind, o.Key)));
-        Assert.Contains("aw-meta lanes --announce", response.Open[0].NextCommand, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

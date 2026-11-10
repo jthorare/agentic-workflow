@@ -112,7 +112,7 @@ internal static partial class CommandTable
                 .RebuildViews(ct).ConfigureAwait(false),
             ["handoff", .. var rest] => await new HandoffVerbs(client, output, start.EnsureRunning).Run(rest, ct).ConfigureAwait(false),
             ["open", .. var rest] => await new OpenCommand(client, output, start.EnsureRunning, services.GetRequiredService<TimeProvider>()).Run(rest, ct).ConfigureAwait(false),
-            ["queue" or "items" or "item" or "project" or "projects" or "todos" or "todo" or "connection" or "connections" or "memory" or "memories", ..] => await ItemOrProject(args, (client, output, services), start, ct).ConfigureAwait(false),
+            ["queue" or "items" or "item" or "project" or "projects" or "todos" or "todo" or "connection" or "connections" or "memory" or "memories" or "resources", ..] => await ItemOrProject(args, (client, output, services), start, ct).ConfigureAwait(false),
             ["request" or "requests" or "decisions" or "decide" or "needs-you", ..] => await new RequestVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct).ConfigureAwait(false),
             ["index", "connect", .. var rest] => await new IndexConnectVerbs(services, output, environment).Run(["connect", .. rest], ct).ConfigureAwait(false),
             ["services" or "jobs", ..] or ["index", "embed", ..] => await JobCommands.Run(args, (client, output), start.EnsureRunning, services.GetRequiredService<TimeProvider>(), (ct, interrupt.Again)).ConfigureAwait(false),
@@ -125,24 +125,35 @@ internal static partial class CommandTable
             ["sandbox", ..] => await Sandbox(args, client, output, services, ct).ConfigureAwait(false),
             ["mcp", .. var rest] => await new McpVerbs(services, output).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await ContextOrPin(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
-            ["workflow" or "wf" or "takeover" or "handback", ..] => await Workflows(args, services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), ct).ConfigureAwait(false),
+            ["workflow" or "wf" or "takeover" or "handback" or "answer", ..] => await Workflows(args, services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), ct).ConfigureAwait(false),
             ["help" or "--help" or "-h"] => await output.Text(Usage.Text + "\n", 0).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
     }
 
-    /// <summary>'sindri workflow|wf|outbox|takeover|handback …'.</summary>
+    /// <summary>'sindri workflow|wf|outbox|takeover|handback|answer …'.</summary>
     private static async Task<int> Workflows(string[] args, IServiceProvider services, Output output, RecipeDesk desk, CancellationToken ct) => args switch
     {
         ["workflow", .. var rest] => await WorkflowCommandTable.Run(rest, services, output, desk, ct).ConfigureAwait(false),
+        ["wf", "create", .. var rest] => await new WfWriteVerbs(desk, output).Create(rest, ct).ConfigureAwait(false),
+        ["wf", "edit", .. var rest] => await new WfWriteVerbs(desk, output).Edit(rest, ct).ConfigureAwait(false),
+        ["wf", "activate", .. var rest] => await new WfWriteVerbs(desk, output).Activate(rest, ct).ConfigureAwait(false),
+        ["wf", "pause", .. var rest] => await new WfWriteVerbs(desk, output).Pause(rest, ct).ConfigureAwait(false),
+        ["wf", "delete", .. var rest] => await new WfWriteVerbs(desk, output).Delete(rest, ct).ConfigureAwait(false),
+        ["wf", "validate", .. var rest] when rest.Contains("--slug", StringComparer.Ordinal) => await new WfWriteVerbs(desk, output).Validate(rest, ct).ConfigureAwait(false),   // a stored workflow goes to the server; a file stays in process
         ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
         ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
+        ["wf", "takeover", .. var rest] => await WfAgentNodeCommand.TakeOver(rest, desk, output, ct).ConfigureAwait(false),
+        ["wf", "handback", .. var rest] => await WfAgentNodeCommand.HandBack(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "list", .. var rest] => await new WfReadVerbs(desk.Client, output).List(rest, ct).ConfigureAwait(false),   // the reads go to the routes and never start the control plane
+        ["wf", "blocks", .. var rest] => await new WfReadVerbs(desk.Client, output).Blocks(rest, ct).ConfigureAwait(false),
+        ["wf", "docs", .. var rest] => await new WfReadVerbs(desk.Client, output).Docs(rest, ct).ConfigureAwait(false),
         ["wf", "show", .. var rest] => await new WfReadVerbs(desk.Client, output).Show(rest, ct).ConfigureAwait(false),
         ["wf", "runs", .. var rest] => await new WfReadVerbs(desk.Client, output).Runs(rest, ct).ConfigureAwait(false),
         ["wf", "run-show", .. var rest] => await new WfReadVerbs(desk.Client, output).RunShow(rest, ct).ConfigureAwait(false),
         ["takeover" or "handback", ..] => await WorkflowCommandTable.RunShort(args, services, output, desk, ct).ConfigureAwait(false),
+        ["answer", .. var rest] => await WfAnswerCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         _ => await UnknownVerb(args, output).ConfigureAwait(false),
     };
 
@@ -261,6 +272,7 @@ internal static partial class CommandTable
         ["todos" or "todo", ..] => new TodoVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c), noteKey: c => TodoNoteTargets.Read(host.Services, c)).Run(args, ct),
         ["project" or "projects", ..] => new ProjectVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         ["connection" or "connections", ..] => new ConnectionVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
+        ["resources", ..] => new ResourceVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         ["memory" or "memories", ..] => new MemoryVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         _ => new ItemVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
     };

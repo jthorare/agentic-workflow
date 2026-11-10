@@ -24,7 +24,7 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     /// <inheritdoc />
     public IReadOnlyDictionary<string, IGraphBlockType> Types { get; }
 
-    /// <summary>The blocks of PR 6 (schedule, manual, condition, notify and prompt), PR 11 (connection_event), PR 9 loops (for_each and collect) and any <paramref name="more"/> a later PR adds (PR 9 flow blocks).</summary>
+    /// <summary>The blocks of PR 6 (schedule, manual, condition, notify and prompt), PR 7 (run_agent), PR 11 (connection_event), PR 9 loops (for_each and collect) and any <paramref name="more"/> a later PR adds (PR 9 flow blocks).</summary>
     /// <param name="notify">Where 'notify' writes.</param>
     /// <param name="model">What 'prompt' asks.</param>
     /// <param name="forEachLimits">Where 'for_each' reads its defaults; null takes <see cref="ForEachLimits.Defaults"/>.</param>
@@ -33,7 +33,7 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     public static GraphBlockRegistry Standard(INotifyPort notify, IGraphModelPort model, IForEachLimitSource? forEachLimits = null, IEnumerable<IGraphBlock>? more = null) =>
         new([
             new ScheduleBlock(), new ConnectionEventBlock(), new ManualBlock(), new ConditionBlock(), new NotifyBlock(notify), new PromptBlock(model),
-            new ForEachBlock(forEachLimits ?? new DefaultForEachLimits()), new CollectBlock(),
+            new ForEachBlock(forEachLimits ?? new DefaultForEachLimits()), new CollectBlock(), new RunAgentBlock(),
             .. more ?? [],
         ]);
 
@@ -45,6 +45,13 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     /// <returns>The five blocks.</returns>
     public static IReadOnlyList<IGraphBlock> FlowBlocks(IGraphSeenStore seen, ICreateItemPort items, IGraphCallPort calls, IGraphHttpPort http) =>
         [new OnlyNewBlock(seen), new CreateItemBlock(items), new RunWorkflowBlock(calls), new WorkflowCallTrigger(), new HttpBlock(http)];
+
+    /// <summary>The parking blocks of agent-first PR 9 part B: wait and ask_owner.</summary>
+    /// <param name="questions">Where 'ask_owner' writes.</param>
+    /// <param name="clock">The clock 'wait' and 'ask_owner' read.</param>
+    /// <returns>The two blocks.</returns>
+    public static IReadOnlyList<IGraphBlock> ParkingBlocks(IQuestionPort questions, TimeProvider clock) =>
+        [new WaitBlock(clock), new AskOwnerBlock(questions, clock)];
 
     /// <summary>Finds the block of a type.</summary>
     /// <param name="type">The type name, such as 'condition'.</param>

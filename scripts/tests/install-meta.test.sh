@@ -148,7 +148,7 @@ mktree() { # mktree <dir>
   mkdir -p "$1/scripts" "$1/config/hooks/adapters" "$1/config/lib" "$1/src/Meta" "$1/docs"
   cp "$DIR/install-meta.sh" "$DIR/meta-launch.sh" "$DIR/meta-team-lib.sh" "$DIR/meta-version-lib.sh" "$DIR/meta-build-paths.txt" "$1/scripts/" 2> /dev/null
   cp "$DIR/../config/hooks/adapters/"* "$1/config/hooks/adapters/"; cp -r "$DIR/../config/lib/." "$1/config/lib/"
-  cp "$DIR/../config/hooks/meta-stop-gate.sh" "$DIR/../config/hooks/meta-outbox.sh" "$1/config/hooks/"
+  cp "$DIR/../config/hooks/meta-stop-gate.sh" "$DIR/../config/hooks/meta-outbox.sh" "$DIR/../config/hooks/meta-board-line.sh" "$1/config/hooks/"
   cp "$DIR/../global.json" "$1/"; echo one > "$1/src/Meta/a.cs"; echo doc > "$1/docs/a.md"
   git -C "$1" init -q && git -C "$1" add -A && git -C "$1" -c user.email=t@t -c user.name=t commit -qm t
 }
@@ -210,7 +210,7 @@ mkdir -p "$WORK/tree/scripts" "$WORK/tree/config/hooks/adapters" "$WORK/tree/con
 cp "$DIR/install-meta.sh" "$DIR/meta-launch.sh" "$DIR/meta-team-lib.sh" "$DIR/meta-version-lib.sh" "$DIR/meta-build-paths.txt" "$WORK/tree/scripts/"
 cp "$TOP/config/hooks/adapters/"* "$WORK/tree/config/hooks/adapters/" 2>/dev/null
 cp -r "$TOP/config/lib/." "$WORK/tree/config/lib/"
-cp "$TOP/config/hooks/meta-stop-gate.sh" "$TOP/config/hooks/meta-outbox.sh" "$WORK/tree/config/hooks/"
+cp "$TOP/config/hooks/meta-stop-gate.sh" "$TOP/config/hooks/meta-outbox.sh" "$TOP/config/hooks/meta-board-line.sh" "$WORK/tree/config/hooks/"
 cp "$TOP/global.json" "$WORK/tree/"
 git -C "$WORK/tree" init -q && git -C "$WORK/tree" add -A && git -C "$WORK/tree" -c user.email=t@t -c user.name=t commit -qm t
 git -C "$WORK/tree" worktree add -q --detach "$WORK/wt" HEAD

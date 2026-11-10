@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
+using Aw.Meta.Features.BoardLine;
 using Aw.Meta.Features.CheckMerge;
 using Aw.Meta.Features.GateRerun;
 using Aw.Meta.Features.GateRun;
@@ -71,6 +72,7 @@ namespace Aw.Meta.Host;
 [JsonSerializable(typeof(LaneSendResponse))]
 [JsonSerializable(typeof(LanesContextResponse))]
 [JsonSerializable(typeof(LaneRecycleResponse))]
+[JsonSerializable(typeof(BoardLineResponse))]
 [JsonSerializable(typeof(LaneInboxResponse))]
 [JsonSerializable(typeof(LaneStopCheckResponse))]
 [JsonSerializable(typeof(LaneReplyResponse))]

@@ -5,7 +5,7 @@ using Aw.Sindri.Tests.ContextCalls;
 
 namespace Aw.Sindri.Tests.Mcp;
 
-/// <summary>/sindri/mcp tools/list after API P8: the seven context tools first, then the eleven sindri_* tools (API spec §8; sindri_projects from the Projects page spec §6.2; sindri_todos and sindri_todo from the todo spec §4.4), then the six connection_* tools (connections PR 10a), then the five memory_* tools (agent-first PR 13).</summary>
+/// <summary>/sindri/mcp tools/list after API P8: the seven context tools first, then the eleven sindri_* tools (API spec §8; sindri_projects from the Projects page spec §6.2; sindri_todos and sindri_todo from the todo spec §4.4), then the six connection_* tools (connections PR 10a), then the five memory_* tools (agent-first PR 13), then the four workflow reads and workflow_answer (agent-first PR 8 and PR 9).</summary>
 public sealed class SindriToolsListTests(PlainMcpHost plain) : IClassFixture<PlainMcpHost>
 {
     private static readonly string[] _expected =
@@ -15,6 +15,9 @@ public sealed class SindriToolsListTests(PlainMcpHost plain) : IClassFixture<Pla
         "connection_list", "connection_get", "connection_add", "connection_signin", "connection_test", "connection_remove",
         "memory_list", "memory_create", "memory_search", "memory_write", "memory_forget",
         "workflow_list", "workflow_get", "workflow_runs", "workflow_run_get",
+        "workflow_create", "workflow_apply_ops", "workflow_replace", "workflow_validate", "workflow_activate", "workflow_pause", "workflow_delete", "workflow_run", "workflow_cancel", "workflow_docs", "workflow_blocks",
+        "workflow_answer",
+        "resources_list", "resources_purge",
     ];
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]

@@ -36,4 +36,12 @@ public sealed record LaunchStarted(
     /// <summary>The sha of the PR head the host fetched into the run's own refs before the launch (skill flows spec §3.1, the 'pr' input of review and address-review), or null when the launch had no PR; left out when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? PrHead { get; init; }
+
+    /// <summary>The graph run's id when the launch is a 'run_agent' node run's (PR 7), else null; left out when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Run { get; init; }
+
+    /// <summary>The node's id in that run, else null; left out when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Node { get; init; }
 }

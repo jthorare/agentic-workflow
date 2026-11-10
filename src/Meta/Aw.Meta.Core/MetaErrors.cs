@@ -32,7 +32,7 @@ public static class MetaErrors
     /// <summary>AW-META-009.</summary>
     public static readonly ErrorDefinition CommandNotStarted = new("AW-META-009", ErrorKind.Unavailable, "A command could not be started");
 
-    /// <summary>AW-META-010.</summary>
+    /// <summary>AW-META-010: a host figure or tool is unavailable on this OS (the process table, memory, a macOS tool, setsid for the detached recycle waiter).</summary>
     public static readonly ErrorDefinition HostUnreadable = new("AW-META-010", ErrorKind.Unavailable, "The process table can't be read");
 
     /// <summary>AW-META-011.</summary>
@@ -71,7 +71,10 @@ public static class MetaErrors
     /// <summary>AW-META-022.</summary>
     public static readonly ErrorDefinition RecycleTimedOut = new("AW-META-022", ErrorKind.Unavailable, "The recycled lane never reported a new session");
 
+    /// <summary>AW-META-023.</summary>
+    public static readonly ErrorDefinition BoardContended = new("AW-META-023", ErrorKind.Conflict, "The team board kept changing under the write");
+
     /// <summary>Every Meta error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
-        [Invalid, NoTeamConfig, ConfigInvalid, TranscriptUnreadable, MessageNotFound, QuestionNotFound, GateStepNotFound, LogUnwritable, CommandNotStarted, HostUnreadable, ConfigExists, CommandFailed, LogUnreadable, LaneVariablesUnset, LaneNotRecorded, UnknownLane, ClaudeLane, QueueEntryNotFound, TeamAmbiguous, TeamMigrationRefused, RecycleRefused, RecycleTimedOut];
+        [Invalid, NoTeamConfig, ConfigInvalid, TranscriptUnreadable, MessageNotFound, QuestionNotFound, GateStepNotFound, LogUnwritable, CommandNotStarted, HostUnreadable, ConfigExists, CommandFailed, LogUnreadable, LaneVariablesUnset, LaneNotRecorded, UnknownLane, ClaudeLane, QueueEntryNotFound, TeamAmbiguous, TeamMigrationRefused, RecycleRefused, RecycleTimedOut, BoardContended];
 }

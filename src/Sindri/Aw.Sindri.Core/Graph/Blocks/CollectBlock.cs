@@ -15,6 +15,12 @@ public sealed class CollectBlock : IGraphBlock
     public string Type => "collect";
 
     /// <inheritdoc />
+    public string Title => "Collect";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Logic;
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />

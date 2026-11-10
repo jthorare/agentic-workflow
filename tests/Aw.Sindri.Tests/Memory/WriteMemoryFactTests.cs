@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Memory;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Memory;
 
@@ -25,6 +26,23 @@ public sealed class WriteMemoryFactTests
         Assert.Equal(first.Value.Key, second.Value.Key);
         var only = Assert.Single(h.Store.AllFacts);
         Assert.Equal(h.Clock.GetUtcNow(), only.RefreshedAt);
+    }
+
+    [Fact]
+    public async Task A_launched_session_writing_a_fact_is_its_writer_whatever_the_request_says()
+    {
+        var h = new MemoryHarness();
+        await h.Memory();
+        var caller = A.Caller().Launched("LCH-0000000000000000000000000000ff01").Build();
+        using var entered = h.Callers.Enter(caller);
+        var request = MemoryHarness.Fact("Deploys run from main") with { Provenance = new MemoryProvenance(Workflow: null, Run: null, Item: null, Session: "session:launch:someone-else") };
+
+        var written = await h.Write().Handle(request, Token);
+
+        Assert.True(written.IsSuccess);
+        var stored = Assert.Single(h.Store.AllFacts);
+        Assert.Equal(caller.Actor, stored.WrittenBy);
+        Assert.Contains("LCH-0000000000000000000000000000ff01", stored.WrittenBy, StringComparison.Ordinal);
     }
 
     [Fact]

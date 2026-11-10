@@ -6,8 +6,11 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>One execution of one node: status as a glyph and a word, then input, output, the cut-short note and the error as served.</summary>
 internal sealed class NodeRunViewModel : ObservableObject
 {
-    internal NodeRunViewModel(NodeRunView run, int count)
+    private readonly Func<NodeRunViewModel, bool, CancellationToken, Task>? _control;
+
+    internal NodeRunViewModel(NodeRunView run, int count, Func<NodeRunViewModel, bool, CancellationToken, Task>? control = null)
     {
+        _control = control;
         TitleText = count > 1 || run.ItemIndex > 0 ? Labels.WfItemTitle(run.ItemIndex, count) : run.Node;
         var (glyph, word) = Labels.WfChip(run.Status);
         ChipText = glyph + " " + word;
@@ -17,7 +20,44 @@ internal sealed class NodeRunViewModel : ObservableObject
         IsTruncated = run.Truncated;
         ErrorText = run.Error ?? string.Empty;
         Name = Labels.WfNodeRunName(TitleText, word.ToLowerInvariant(), ErrorText);
+        (Node, ItemIndex, Agent) = (run.Node, run.ItemIndex, run.Agent);
     }
+
+    /// <summary>The node's id (the take over call names it).</summary>
+    public string Node { get; }
+
+    /// <summary>The item's position, 0 for a node that runs once.</summary>
+    public int ItemIndex { get; }
+
+    /// <summary>As served: null, "waiting" or "taken_over".</summary>
+    public string? Agent { get; internal set { Set(ref field, value); OnChanged(nameof(CanTakeOver)); OnChanged(nameof(CanHandBack)); } }
+
+    /// <summary>True on an agent node that waits on its agent: Take over shows.</summary>
+    public bool CanTakeOver => string.Equals(Agent, "waiting", StringComparison.Ordinal);
+
+    /// <summary>True on a taken-over agent node: Hand back shows.</summary>
+    public bool CanHandBack => string.Equals(Agent, "taken_over", StringComparison.Ordinal);
+
+    /// <summary>True while a take over or hand back call is on the way; a second press does nothing.</summary>
+    public bool IsBusy { get; internal set { Set(ref field, value); OnChanged(nameof(TakeOverText)); OnChanged(nameof(HandBackText)); } }
+
+    /// <summary>The Take over button's words: "Take over", or "Taking over…" while its call is on the way.</summary>
+    public string TakeOverText => IsBusy ? Labels.WfTakeOverBusy : Labels.WfTakeOver;
+
+    /// <summary>The Hand back button's words: "Hand back", or "Handing back…" while its call is on the way.</summary>
+    public string HandBackText => IsBusy ? Labels.WfHandBackBusy : Labels.WfHandBack;
+
+    /// <summary>
+    /// Take over: sends the node and item once, notes what Sindri said in the run's notice and reads the run again (a refusal shows the server's text and reads nothing).
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the call and the read.</param>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal Task TakeOver(CancellationToken cancellationToken) => _control?.Invoke(this, true, cancellationToken) ?? Task.CompletedTask;
+
+    /// <summary>Hand back: the same, for a taken-over node.</summary>
+    /// <param name="cancellationToken">Cancels the call and the read.</param>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal Task HandBack(CancellationToken cancellationToken) => _control?.Invoke(this, false, cancellationToken) ?? Task.CompletedTask;
 
     /// <summary>The node's id, or "Item 2 of 3" for one item of a for_each node.</summary>
     public string TitleText { get; }

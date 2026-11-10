@@ -39,6 +39,12 @@ public sealed class RecordingSandbox(ISandbox? inner = null) : ISandbox
     }
 
     /// <inheritdoc />
+    public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => _inner.PlanProcess(request);
+
+    /// <inheritdoc />
+    public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => _inner.WrapProcess(plan, argv);
+
+    /// <inheritdoc />
     public Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct)
     {
         _checked.Add(plan);

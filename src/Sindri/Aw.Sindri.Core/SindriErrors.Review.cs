@@ -25,6 +25,12 @@ public static partial class SindriErrors
     /// <summary>SND-REVIEW-007: a review route before 'review.login' is set.</summary>
     public static readonly ErrorDefinition ReviewNoLogin = new("SND-REVIEW-007", ErrorKind.Conflict, "Set your GitHub login on the Reviews tab first.");
 
+    /// <summary>SND-REVIEW-008: the Reviews tab has no GitHub connection and no profile token to read with.</summary>
+    public static readonly ErrorDefinition ReviewNoConnection = new("SND-REVIEW-008", ErrorKind.Conflict, "Connect GitHub");
+
+    /// <summary>SND-REVIEW-009: the GitHub connection needs sign-in again (or GitHub refused its token).</summary>
+    public static readonly ErrorDefinition ReviewSignInAgain = new("SND-REVIEW-009", ErrorKind.Conflict, "Sign in to GitHub again");
+
     /// <summary>SND-REVIEW-404: a review route for a PR the forge does not have.</summary>
     public static readonly ErrorDefinition ReviewPrNotFound = new("SND-REVIEW-404", ErrorKind.NotFound, "PR not found");
 

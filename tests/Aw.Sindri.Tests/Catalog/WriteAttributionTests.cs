@@ -34,7 +34,10 @@ public sealed class WriteAttributionTests
         ["POST /sindri/todos/note/set"] = "edits the live profile file through TodoNoteProfileEdit (SetTodoNoteService.cs:9): writes no ledger event",
         ["POST /sindri/todos/note/stop"] = "edits the live profile file through TodoNoteProfileEdit (StopTodoNoteService.cs:9): writes no ledger event",
         ["POST /sindri/linear/connection/teams"] = "reads the key's Linear teams (ListLinearTeamsService): stores nothing and writes no event",
+        ["POST /sindri/workflow-runs/{run}/nodes/{node}/takeover"] = TakeoverReason,
+        ["POST /sindri/workflow-runs/{run}/nodes/{node}/handback"] = TakeoverReason,
         ["POST /sindri/workflow/challenges/app"] = "refuses every text (IssueAppChallengeService.cs:17, no ports) and its endpoint appends nothing: writes no event",
+        ["POST /sindri/workflows/validate"] = "checks a stored spec and returns its findings (ValidateWorkflowService): stores nothing and writes no event",
     };
 
     // Write routes that do append events but whose caller is proven another way than a launched session's header; not swept here.
@@ -44,14 +47,14 @@ public sealed class WriteAttributionTests
         ["POST /sindri/sessions/{launchId}/exit"] = WrapReason,
         ["POST /sindri/connections"] = "the store row carries the caller (Connection.CreatedBy, AddConnectionService.cs:169); proven by AddConnectionServiceTests.A_launched_session_adding_a_connection_is_the_rows_creator",
         ["POST /sindri/memories"] = "the store row carries the caller (MemoryInfo.CreatedBy, CreateMemoryService.cs:30); proven by MemoryReadsAndCreateTests.A_launched_session_creating_a_memory_is_its_creator",
-        ["POST /sindri/memories/{name}/facts"] = AuditOnlyReason,
-        ["DELETE /sindri/memories/{name}/facts"] = AuditOnlyReason,
-        ["DELETE /sindri/connections/{name}"] = AuditOnlyReason,
-        ["POST /sindri/connections/{name}/signin"] = AuditOnlyReason,
+        ["POST /sindri/memories/{name}/facts"] = "the store row carries the caller (MemoryFact.WrittenBy, WriteMemoryFactService.cs); proven by WriteMemoryFactTests.A_launched_session_writing_a_fact_is_its_writer_whatever_the_request_says (#2460)",
+        ["POST /sindri/resources/purge"] = AuditOnlyReason,
         ["POST /sindri/handoff"] = "the golden scenarios send it as the human; a launched session's handoff is proven by HandoffEndpointTests.A_launched_session_hands_off_without_the_human_token_and_keeps_its_actor (item.handoff's actor is session:launch:<id>)",
     };
 
-    private const string AuditOnlyReason = "only the command.handled audit row carries the caller; the store keeps no actor (#2460)";
+    private const string TakeoverReason = "the node's held state lives in its Temporal workflow, so the route appends no ledger event (#2472); a session's call is proven by AgentNodeControlServiceTests";
+
+    private const string AuditOnlyReason = "only the command.handled audit row carries the caller; the store keeps no actor";
 
     private const string WrapReason = "the caller is the wrapper of the route's own launch, proven by that launch's secret; actor follow-up #2430";
 
