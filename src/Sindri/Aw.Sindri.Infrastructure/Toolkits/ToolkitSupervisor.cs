@@ -12,7 +12,7 @@ namespace Aw.Sindri.Infrastructure.Toolkits;
 /// <param name="launcher">Starts processes.</param>
 /// <param name="store">Takes the 'failed' state.</param>
 /// <param name="clock">The clock the backoff and the crash window use.</param>
-internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolkitStore store, TimeProvider clock) : IToolkitRuntime, IAsyncDisposable
+internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolkitStore store, TimeProvider clock) : IToolkitRuntime, IAsyncDisposable, IDisposable
 {
     /// <summary>The crashes that make a toolkit 'failed' when they fall inside <see cref="Window"/>.</summary>
     internal const int MaxCrashes = 3;
@@ -22,6 +22,7 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
 
     private readonly ConcurrentDictionary<string, Running> _running = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private int _disposed;
 
     public async ValueTask<Result<Unit>> Start(Toolkit toolkit, CancellationToken cancellationToken)
     {
@@ -96,8 +97,16 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
             : ValueTask.FromResult<Result<string>>(SindriErrors.ToolkitProcessDied.With($"Toolkit '{name}' is restarting after a crash (fix: try again in a few seconds)"));
     }
 
+    /// <remarks>A container disposed synchronously: waits for the same shutdown <see cref="DisposeAsync"/> runs.</remarks>
+    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
+
     public async ValueTask DisposeAsync()
     {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+        {
+            return;   // already shut down: a second dispose changes nothing
+        }
+
         Running[] all;
         await _gate.WaitAsync().ConfigureAwait(false);
         try
