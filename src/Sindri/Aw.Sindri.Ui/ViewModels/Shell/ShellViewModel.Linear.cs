@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.ViewModels.Linear;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;

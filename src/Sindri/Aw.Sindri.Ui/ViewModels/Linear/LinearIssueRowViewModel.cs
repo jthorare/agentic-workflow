@@ -10,51 +10,49 @@ internal sealed class LinearIssueRowViewModel : ObservableObject
         nameof(Title), nameof(StateName), nameof(AssigneeName), nameof(PriorityText), nameof(PrText), nameof(HasPr), nameof(RunState), nameof(Name),
     ];
 
-    private LinearIssueRow _row;
-
     internal LinearIssueRowViewModel(LinearIssueRow row)
     {
-        _row = row;
+        Issue = row;
     }
 
     /// <summary>The issue as last read: the since-you-looked card takes its priority, project and assignee from it.</summary>
-    internal LinearIssueRow Issue => _row;
+    internal LinearIssueRow Issue { get; private set; }
 
     /// <summary>The issue key.</summary>
-    public string Key => _row.Key;
+    public string Key => Issue.Key;
 
     /// <summary>The title.</summary>
-    public string Title => _row.Title;
+    public string Title => Issue.Title;
 
     /// <summary>The state's name.</summary>
-    public string StateName => _row.State.Name;
+    public string StateName => Issue.State.Name;
 
     /// <summary>The assignee's name, or "Unassigned".</summary>
-    public string AssigneeName => _row.Assignee?.Name ?? Labels.LinearUnassigned;
+    public string AssigneeName => Issue.Assignee?.Name ?? Labels.LinearUnassigned;
 
     /// <summary>The priority in words (a chip carries text, never colour alone).</summary>
-    public string PriorityText => Labels.LinearPriority(_row.Priority);
+    public string PriorityText => Labels.LinearPriority(Issue.Priority);
 
     /// <summary>"PR #2071 waiting on you"; empty without a PR.</summary>
-    public string PrText => _row.Pr is { } pr ? Labels.LinearPrChip(pr.Number, pr.Review) : string.Empty;
+    public string PrText => Issue.Pr is { } pr ? Labels.LinearPrChip(pr.Number, pr.Review) : string.Empty;
 
     /// <summary>True when a PR is linked.</summary>
-    public bool HasPr => _row.Pr is not null;
+    public bool HasPr => Issue.Pr is not null;
 
     /// <summary>The linked item's state; empty when no item works the issue.</summary>
-    public string RunState => _row.Link?.ItemState ?? string.Empty;
+    public string RunState => Issue.Link?.ItemState ?? string.Empty;
 
     /// <summary>True while J / K have the row selected.</summary>
     public bool IsSelected { get; internal set => Set(ref field, value); }
 
     /// <summary>The row's accessible name.</summary>
-    public string Name => Labels.LinearRowName(_row);
+    public string Name => Labels.LinearRowName(Issue);
 
     /// <summary>Takes a newer read of the same issue.</summary>
     /// <param name="row">The row.</param>
     internal void Update(LinearIssueRow row)
     {
-        _row = row;
+        Issue = row;
         foreach (var name in _all)
         {
             OnChanged(name);

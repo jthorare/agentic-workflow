@@ -1,7 +1,6 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
-using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Linear;
 
 namespace Aw.Sindri.Ui.Tests.Linear;
@@ -17,7 +16,7 @@ public sealed class LinearSinceCardTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static JsonNode Since(params (string Kind, string Key, string Title, string At, string? From, string? To)[] items)
+    private static JsonObject Since(params (string Kind, string Key, string Title, string At, string? From, string? To)[] items)
     {
         var rows = new JsonArray();
         foreach (var (kind, key, title, at, from, to) in items)
@@ -28,7 +27,7 @@ public sealed class LinearSinceCardTests
         return new JsonObject { ["marker"] = "lin_08de48c5e9b68800", ["count"] = items.Length, ["items"] = rows };
     }
 
-    private async Task<LinearWorkViewModel> ShownWith(JsonNode since)
+    private async Task<LinearWorkViewModel> ShownWith(JsonObject since)
     {
         _f.Server.LinearSinceAnswer = LinearFixture.Served(since);
         return await _f.Shown(Token);

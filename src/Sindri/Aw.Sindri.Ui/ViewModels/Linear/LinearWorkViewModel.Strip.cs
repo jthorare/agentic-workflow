@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Globalization;
 using Aw.Sindri.Ui.Api.Linear;
 
 namespace Aw.Sindri.Ui.ViewModels.Linear;
@@ -21,7 +20,7 @@ internal sealed partial class LinearWorkViewModel
     private int _sinceReads;
     private string? _marker;   // the stored one: what every read asks "after"
     private LinearSince? _since;
-    private bool _sinceAnswered;   // the last read was an answer (not an error, not an older Sindri): "nothing new" may be said
+    private bool SinceAnswered { get; set; }   // the last read was an answer (not an error, not an older Sindri): "nothing new" may be said
     private Dictionary<string, LinearSinceRowViewModel> _stripShown = new(StringComparer.Ordinal);
 
     /// <summary>How many issues the card holds (the tab and the Home line carry it).</summary>
@@ -34,7 +33,7 @@ internal sealed partial class LinearWorkViewModel
     public bool ShowsStrip => IsLinear && !ShowsConnect && (HasNew || StripFailed || FeedFailing || ShowsNothingNew);
 
     /// <summary>True when the last read answered and nothing is new: the card says so.</summary>
-    public bool ShowsNothingNew => _sinceAnswered && !HasNew && !StripFailed && !FeedFailing && !ShowsConnect;
+    public bool ShowsNothingNew => SinceAnswered && !HasNew && !StripFailed && !FeedFailing && !ShowsConnect;
 
     /// <summary>True when Linear refused the key (SND-CONTEXT-071): the card says why and offers Reconnect, which opens the Connections page.</summary>
     public bool StripNeedsReconnect => FeedFailing && string.Equals(_list?.Feed.Code, "SND-CONTEXT-071", StringComparison.Ordinal);
@@ -118,14 +117,14 @@ internal sealed partial class LinearWorkViewModel
     private void Show(LinearSince? since, bool answered = true)
     {
         _since = since is { Count: > 0 } ? since : null;
-        _sinceAnswered = answered;
+        SinceAnswered = answered;
         StripFailed = false;
         var now = _clock.GetUtcNow();
         var kept = new Dictionary<string, LinearSinceRowViewModel>(StringComparer.Ordinal);
         var groups = new List<LinearSinceGroupViewModel>();
         var flat = new List<LinearSinceRowViewModel>();
         var perIssue = (_since?.Items ?? []).GroupBy(static i => i.Key, StringComparer.Ordinal);
-        var rows = perIssue.Select(g => Row(g.ToList(), now)).ToList();
+        List<LinearSinceRowViewModel> rows = [.. perIssue.Select(g => Row([.. g], now))];
         foreach (var (group, heading) in _stripGroups)
         {
             var inGroup = rows.Where(r => r.Group == group).OrderByDescending(static r => r.At).ToList();

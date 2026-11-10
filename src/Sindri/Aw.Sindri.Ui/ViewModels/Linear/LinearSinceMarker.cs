@@ -17,7 +17,7 @@ internal static class LinearSinceMarker
     internal static bool TryRead(string? marker, out DateTimeOffset at)
     {
         at = default;
-        if (marker is not { Length: Prefix.Length + 16 } || !marker.StartsWith(Prefix, StringComparison.Ordinal))
+        if (marker is null || marker.Length != Prefix.Length + 16 || !marker.StartsWith(Prefix, StringComparison.Ordinal))
         {
             return false;
         }

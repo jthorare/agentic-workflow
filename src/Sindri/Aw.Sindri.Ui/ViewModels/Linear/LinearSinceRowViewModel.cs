@@ -1,4 +1,3 @@
-using System.Globalization;
 using Aw.Sindri.Ui.Api.Linear;
 
 namespace Aw.Sindri.Ui.ViewModels.Linear;
@@ -86,12 +85,16 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
     internal void Apply(LinearIssueRow? issue)
     {
         StateChip = _movedChip ?? issue?.State.Name ?? string.Empty;
-        PriorityChip = issue is { Priority: > 0 } ? Labels.LinearPriority(issue.Priority) : string.Empty;
+        PriorityChip = PriorityOf(issue);
         Project = issue?.Project?.Name ?? string.Empty;
-        Initials = issue?.Assignee is { } who ? Labels.LinearInitials(who.Name) : string.Empty;
+        Initials = InitialsOf(issue);
         foreach (var name in _issueBound)
         {
             OnChanged(name);
         }
     }
+
+    private static string PriorityOf(LinearIssueRow? issue) => issue is { Priority: > 0 } ? Labels.LinearPriority(issue.Priority) : string.Empty;
+
+    private static string InitialsOf(LinearIssueRow? issue) => issue?.Assignee is { } who ? Labels.LinearInitials(who.Name) : string.Empty;
 }
