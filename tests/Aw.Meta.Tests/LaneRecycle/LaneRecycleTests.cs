@@ -26,11 +26,13 @@ public sealed class LaneRecycleTests
     private LaneRecycleService Service(Action? onWait = null)
     {
         var delay = onWait is null ? (IDelay)_world.Delay : new ClearTakesEffect(_world.Delay, onWait);
+        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.LaneFiles, _world.Log, delay, _world.Clock, _world.Messages);
         return new LaneRecycleService(
             _world.Config,
             new RecycleGuard(_world.LaneFiles, _world.LaneSessions, _world.Digests, _world.Context, _world.Clock),
-            new RecycleRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.LaneFiles, _world.Log, delay, _world.Clock),
-            new SwitchRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.Runner, _world.Log, delay, _world.Clock));
+            runner,
+            new SwitchRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.Runner, _world.Log, delay, _world.Clock),
+            new RecycleWaiter(new InMemoryWaiterLauncher(), _world.LaneFiles, new InMemoryProcessLiveness(), new LaneBeats(_world.Values, delay), runner, _world.Log, _world.Clock));
     }
 
     private async Task Ready()
@@ -186,7 +188,7 @@ public sealed class LaneRecycleTests
         _ = _world.PutLane("ui", "codex");
 
         Assert.Equal(MetaErrors.RecycleRefused.Code, (await Run(lane: "ui")).Error.Code);
-        Assert.Equal(MetaErrors.UnknownLane.Code, (await Run(lane: "meta")).Error.Code);
+        Assert.Equal(MetaErrors.UnknownLane.Code, (await Run(lane: "nope")).Error.Code);
         Assert.Empty(_world.Panes.Woken);
     }
 

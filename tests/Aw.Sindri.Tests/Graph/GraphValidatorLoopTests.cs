@@ -15,9 +15,12 @@ public sealed class GraphValidatorLoopTests
     {
         ["for_each"] = new ForEachBlock(new DefaultForEachLimits()),
         ["collect"] = new CollectBlock(),
+        ["wait"] = new WaitBlock(TimeProvider.System),
     };
 
     private static GraphNode Each(string id) => new(NodeId.From(id), "for_each", Title: null, new JsonObject { ["items"] = "{{search.facts}}" });
+
+    private static GraphNode Pause(string id) => new(NodeId.From(id), "wait", Title: null, new JsonObject { ["until"] = "07:00", ["timezone"] = "America/Los_Angeles" });
 
     private static GraphNode Gather(string id) => new(NodeId.From(id), "collect", Title: null, new JsonObject { ["value"] = "{{item}}" });
 
@@ -43,6 +46,35 @@ public sealed class GraphValidatorLoopTests
         var finding = Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-001");
         Assert.Equal(["each"], finding.Nodes);
         Assert.Contains("collect", finding.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_wait_inside_a_loop_passes()
+    {
+        // why: an item of a loop runs in a GraphIteration child workflow, which sleeps a wait node on its own timer (#2490)
+        var spec = Spec(
+            [Trigger("daily"), Search("search"), Each("each"), Pause("pause"), Gather("gather")],
+            [Edge("daily", "search"), Edge("search", "each"), Edge("each", "pause"), Edge("pause", "gather")]);
+
+        var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
+
+        Assert.DoesNotContain(result.Findings, static f => f.Code == "GRAPH-LOOP-004");
+    }
+
+    [Fact]
+    public void An_ask_owner_inside_a_loop_is_still_a_loop_finding_naming_it()
+    {
+        // why: an answer can't yet find the question of one item of a loop, so an ask_owner there would never be answered
+        var ask = new GraphNode(NodeId.From("ask"), "ask_owner", Title: null, new JsonObject { ["question"] = "Ship {{item}}?" });
+        var spec = Spec(
+            [Trigger("daily"), Search("search"), Each("each"), ask, Gather("gather")],
+            [Edge("daily", "search"), Edge("search", "each"), Edge("each", "ask"), Edge("ask", "gather")]);
+
+        var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
+
+        var finding = Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-004");
+        Assert.Equal(["ask"], finding.Nodes);
+        Assert.Contains("run_workflow", finding.Fix, StringComparison.Ordinal);
     }
 
     [Fact]

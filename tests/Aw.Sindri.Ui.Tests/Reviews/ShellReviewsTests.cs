@@ -53,6 +53,33 @@ public sealed class ShellReviewsTests
     }, Token);
 
     [Fact]
+    public Task Connect_GitHub_lands_on_the_Connections_page() => UiThread.Run(async () =>
+    {
+        _server.ReviewsAnswer = RouteAnswer.Api("reviews", "connect-github");
+        var shell = await Shell();
+        await ShellWait.Until(shell, () => shell.Reviews.IsConnect, Token);
+
+        shell.Reviews.PressConnect();
+
+        Assert.Equal(PageId.Connections, shell.CurrentPage);
+    }, Token);
+
+    [Fact]
+    public Task Sign_in_again_opens_the_github_work_sheet() => UiThread.Run(async () =>
+    {
+        _ = _server.SeedConnection(FakeSindriApi.ConnectionRow("github:work"));
+        _server.ReviewsAnswer = RouteAnswer.Api("reviews", "sign-in-again");
+        var shell = await Shell();
+        await ShellWait.Until(shell, () => shell.Reviews.IsConnect, Token);
+
+        shell.Reviews.PressConnect();
+
+        Assert.Equal((PageId.Connections, true, "github:work"), (shell.CurrentPage, shell.IsConnectionSheet, shell.SheetSubject));
+        await ShellWait.Until(shell, () => shell.ConnectionSheet.Phase is not (FramePhase.Empty or FramePhase.Loading), Token);
+        Assert.Equal(FramePhase.Shown, shell.ConnectionSheet.Phase);   // a sheet that opens and then errors must not pass
+    }, Token);
+
+    [Fact]
     public void The_reviews_deep_link_parses_and_prints_back()
     {
         Assert.True(DeepLink.TryParse("reviews", out var link));

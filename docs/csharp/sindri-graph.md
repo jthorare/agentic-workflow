@@ -31,6 +31,7 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 | `GRAPH-REPO-001`, `GRAPH-NAME-001` | repo, connection or memory that does not exist (`-002` is the warning when nobody can answer yet) |
 | `GRAPH-LOOP-003` | a `run_agent` node in a `for_each` body (the per-item path has no agent loop); the run fails the `for_each` before any item |
 | `GRAPH-LOOP-001` / `-002` | a `for_each` that can't run as a loop: no `collect` after it, more than one, a loop inside it, or a node of the loop also fed from outside it / a `collect` no `for_each` reaches |
+| `GRAPH-LOOP-004` | an `ask_owner` node inside a loop: an answer can't yet find the question of one item (call a workflow with `run_workflow` for per-item questions) |
 | `GRAPH-NODE-001` / `-002`, `GRAPH-EDGE-001` / `-002` | repeated node id / a node id that is `trigger`, `item`, `itemIndex` or `workflow` (reserved reference roots), edge to a missing node, edge by an output the block lacks (an edge with no `output` leaves by `out`) |
 
 `GRAPH-TRIGGER-001` / `-002`, `GRAPH-CYCLE-001` and `GRAPH-WIRING-001` are node-level findings: they name nodes and have no field.
@@ -149,6 +150,10 @@ The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every min
 - **A failed launch does not use up its tick.** When the starter returns any other error (the engine is down, say), the tick is not marked, the pass logs a warning, and the next pass tries the same tick again (as long as it is still the latest). A pass keeps going over the other workflows after one fails and returns the first error at the end.
 - **One schedule node.** A workflow has exactly one trigger (`GRAPH-TRIGGER-001`), so the service reads only the first `schedule` node (up to six crons inside it).
 - **Known gap:** nothing stores when a revision was activated, so the floor is `WorkflowRevision.CreatedAt`. A tick between saving and activating a revision can fire once on activation.
+
+## Parking blocks (PR 9)
+
+`wait` and `ask_owner` park a run on a Temporal timer or wait; they never poll (pages: `docs/workflows/blocks/wait.md`, `docs/workflows/blocks/ask_owner.md`). The block runs as an activity first (`wait` works out its wake-up time, `ask_owner` writes its question), then `GraphWorkflow` parks in `GraphWorkflow.Wait.cs` while the node is still `running`, so a cancel ends the node `cancelled`. `ask_owner` takes its answer as a Temporal Update named `Answer`: its validator refuses an answer when the node is not waiting (`SND-GRAPH-130`) or the answer is not one of the node's choices (`SND-CLI-003`). `AnswerQuestionService` delivers it through `IGraphRunAnswerer` and then records `workflow.answered` with who gave it. The question is a `workflow.question` event and a Needs-you row of kind `question`, cleared when it is answered, when its node ends or when its run ends. Both events are public on the event stream (`GET /sindri/events`) with the payload `{run, node, kind}` and no question, choices, default, answer or answerer (`WorkflowQuestionPublic`, `WorkflowAnsweredPublic`); `kind` is always `question`, the Needs-you row kind the app re-reads, so the row shows and clears live. The ledger keeps the whole payload. New code: `SND-GRAPH-130`.
 
 ## Loops (`for_each`, `collect`; PR 9)
 
