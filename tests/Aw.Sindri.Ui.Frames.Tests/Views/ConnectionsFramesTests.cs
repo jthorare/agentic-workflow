@@ -110,4 +110,19 @@ public sealed class ConnectionsFramesTests : FrameHost
         Assert.True(Visible(window, "ServiceTileReason"));
         Frame(window, "tile-asks", Prefix);
     });
+    [Fact]
+    public Task A_tile_shows_its_chip_one_primary_button_and_the_help_line_and_nothing_clips_at_900() => OnUi(async () =>
+    {
+        var (window, shell) = await OnConnections(900);
+        var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "linear", StringComparison.Ordinal));
+        await tile.Connect(CancellationToken.None);
+        Settle(window);
+
+        Assert.True(Visible(window, "ServiceTileChip"));
+        Assert.True(Visible(window, "ServiceTileHelp"));
+        Assert.True(Visible(window, "ServiceTileHelpLink"));
+        Assert.Equal(1, window.GetVisualDescendants().OfType<Button>().Count(b => string.Equals(b.Name, "ServiceTilePrimary", StringComparison.Ordinal) && b.IsEffectivelyVisible && b.GetVisualAncestors().OfType<Control>().Any(c => c.DataContext == tile)));
+        Assert.All(window.GetVisualDescendants().OfType<Border>().Where(b => string.Equals(b.Name, "ServiceTileFrame", StringComparison.Ordinal)), b => Assert.True(b.TranslatePoint(new Avalonia.Point(b.Bounds.Width, 0), window)!.Value.X <= window.Bounds.Width));
+        Frame(window, "tile-help-900", Prefix);
+    });
 }

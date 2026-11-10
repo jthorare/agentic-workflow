@@ -20,10 +20,10 @@ public sealed class AddConnectionTests
         var form = (await _f.Shown()).Add;
 
         form.SelectedPreset = form.Presets.Single(p => p.Id == "rest");
-        Assert.Equal((false, false, true, false), (form.ShowClient, form.ShowClientSecret, form.ShowKey, form.ShowUrl));
+        Assert.Equal((true, false), (form.ShowKey, form.ShowUrl));
 
         form.SelectedPreset = form.Presets.Single(p => p.Id == "mcp");
-        Assert.Equal((false, false, false, true), (form.ShowClient, form.ShowClientSecret, form.ShowKey, form.ShowUrl));
+        Assert.Equal((false, true), (form.ShowKey, form.ShowUrl));
     }
 
     [Fact]

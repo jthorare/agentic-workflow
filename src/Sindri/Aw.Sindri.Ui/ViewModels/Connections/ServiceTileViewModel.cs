@@ -120,6 +120,42 @@ internal sealed class ServiceTileViewModel : ObservableObject
     /// <summary>The tile's accessible name.</summary>
     public string AccessibleName => IsConnected ? Title + ", connected as " + Account : Title + ", " + (HasError ? ErrorText : Service.Blurb);
 
+#pragma warning disable CA1822, MA0041, IDE0060 // red commit: stubs, replaced by the green commit
+    /// <summary>The status chip: Connected, Needs reconnect or Not connected.</summary>
+    public string StatusChip => string.Empty;
+
+    /// <summary>Why the tile needs a reconnect, in words; empty otherwise.</summary>
+    public string ReasonText => string.Empty;
+
+    /// <summary>The label of the tile's one primary button; empty when it has none.</summary>
+    public string PrimaryText => string.Empty;
+
+    /// <summary>True when the primary button can be pressed.</summary>
+    public bool CanPress => false;
+
+    /// <summary>The one help line under the input: where the client id or the token comes from.</summary>
+    public string HelpText => string.Empty;
+
+    /// <summary>The help link's words; empty when the tile has none.</summary>
+    public string HelpLinkText => string.Empty;
+
+    /// <summary>The provider page the help link opens; empty when the tile has none.</summary>
+    public string HelpUrl => string.Empty;
+
+    /// <summary>True when the menu offers Reconnect.</summary>
+    public bool CanReconnect => false;
+
+    /// <summary>Opens the provider's page in the browser.</summary>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>A task that ends when the system answered.</returns>
+    internal Task OpenHelp(CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <summary>The primary button was pressed.</summary>
+    /// <param name="cancellationToken">Cancels the wait.</param>
+    /// <returns>A task that ends with the action.</returns>
+    internal Task Primary(CancellationToken cancellationToken) => throw new NotSupportedException();
+#pragma warning restore CA1822, MA0041, IDE0060
+
     /// <summary>The connection this tile shows, or null: the page sets it on every read.</summary>
     /// <param name="row">The matching row.</param>
     internal void Bind(ConnectionRowViewModel? row)
