@@ -105,7 +105,7 @@ contains "seed checks names the failing run" "$calls" "seed checks https://githu
 contains "seed thread is on the changed file" "$calls" "seed thread https://github.com/acme/api/pull/7 --author reviewer-kai"
 contains "every forge call uses the world inside the home" "$calls" "[state=$STATE adapter=file hosts=github.com login=fx-viewer]"
 lacks "no forge call touches the real state dir" "$calls" "[state=$AW_STATE_DIR "
-check "the forge world is inside the guarded home" "$(case "$STATE/" in "$PJ"/*) echo inside ;; *) echo outside ;; esac)" "inside"
+check "the forge world is inside the guarded home" "$(case "$STATE/" in ("$PJ"/*) echo inside ;; *) echo outside ;; esac)" "inside"
 check "the real state's cache/bin is linked into the forge state (serve finds Temporal there)" "$(readlink "$STATE/cache/bin")" "$AW_STATE_DIR/cache/bin"
 check "the seeded file is src/Sync.cs with 3 added lines" "$(jq -r '.[0].file | "\(.path) \(.status) +\(.additions) -\(.deletions)"' "$FORGE_LOG.files")" "src/Sync.cs Modified +3 -0"
 check "line 42 of the seeded text is an added line (on the new side)" "$(jq -r '.[0].text' "$FORGE_LOG.files" | sed -n 42p)" "    if (delay is null) return Retry.Stop;"
