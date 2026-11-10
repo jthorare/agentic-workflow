@@ -5,13 +5,13 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>A 'run_agent' launch that keeps throwing is tried a bounded number of times, then the node fails with the last error (#2578): the workflow's history grows with every attempt.</summary>
 [Lane(TestLane.Integration)]
-public sealed class GraphAgentLaunchCapTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class GraphAgentLaunchCapTests
 {
     [Fact]
     public async Task A_launch_that_keeps_throwing_fails_the_node_with_its_last_error_after_the_cap_and_the_run_ends_in_the_ledger()
     {
         var runtime = new FakeAgentNodeRuntime { LaunchThrows = new InvalidOperationException("store error") };
-        await using var rig = GraphRig.Start(server.Environment, runtime, agentLaunchAttempts: 3);
+        await using var rig = await GraphRig.StartAsync(runtime, agentLaunchAttempts: 3);
 
         var run = await AgentNodeRig.Start(rig);
         var final = await rig.Final(run);
@@ -42,7 +42,7 @@ public sealed class GraphAgentLaunchCapTests(SindriTimeSkippingServer server) : 
     private async Task<int> HistoryLength(int attempts)
     {
         var runtime = new FakeAgentNodeRuntime { LaunchThrows = new InvalidOperationException("store error") };
-        await using var rig = GraphRig.Start(server.Environment, runtime, attempts);
+        await using var rig = await GraphRig.StartAsync(runtime, attempts);
         var run = await AgentNodeRig.Start(rig);
         _ = await rig.Final(run, TimeSpan.FromSeconds(60));
         var history = await rig.Client.GetWorkflowHandle(run.Value).FetchHistoryAsync();
