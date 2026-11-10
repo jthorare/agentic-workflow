@@ -12114,6 +12114,7 @@ static Aw.Sindri.Core.Sandbox.Plan.SandboxUnits.FormatDuration(System.TimeSpan d
 static Aw.Sindri.Core.Sandbox.Plan.SandboxUnits.FormatSize(long bytes) -> string!
 static Aw.Sindri.Core.Sandbox.Plan.SandboxUnits.ParsePercent(string! percent) -> int
 static Aw.Sindri.Core.Sandbox.Plan.SandboxUnits.ParseSize(string! size) -> long
+static Aw.Sindri.Core.Sandbox.Plan.SandboxUnits.TryParseSize(string? size, out long bytes) -> bool
 static Aw.Sindri.Core.Sandbox.Plan.StatePathEntry.operator !=(Aw.Sindri.Core.Sandbox.Plan.StatePathEntry? left, Aw.Sindri.Core.Sandbox.Plan.StatePathEntry? right) -> bool
 static Aw.Sindri.Core.Sandbox.Plan.StatePathEntry.operator ==(Aw.Sindri.Core.Sandbox.Plan.StatePathEntry? left, Aw.Sindri.Core.Sandbox.Plan.StatePathEntry? right) -> bool
 Aw.Sindri.Core.Sandbox.Plan.HookScript.Source.get -> string!

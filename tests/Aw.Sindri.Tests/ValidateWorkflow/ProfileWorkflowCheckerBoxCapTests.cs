@@ -52,4 +52,15 @@ public sealed class ProfileWorkflowCheckerBoxCapTests
 
         Assert.True((await Activate(profile, "64g")).Passed);
     }
+
+    [Theory]
+    [InlineData("8g")]
+    [InlineData("lots")]
+    [InlineData("GiB")]
+    public async Task Activate_has_no_cap_when_the_profile_limit_is_not_a_size(string limit)
+    {
+        var profile = new SindriProfile(1, "thor", Sandbox: new SandboxSettings(Limits: new SandboxLimits(Memory: limit)));
+
+        Assert.True((await Activate(profile, "64g")).Passed);
+    }
 }

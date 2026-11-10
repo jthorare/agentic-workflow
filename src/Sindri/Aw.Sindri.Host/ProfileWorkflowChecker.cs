@@ -28,9 +28,9 @@ internal sealed class ProfileWorkflowChecker(IApprovedProfile profile, IGraphBlo
     {
         var latest = await profile.Latest(cancellationToken).ConfigureAwait(false);
         var memory = latest.IsSuccess ? latest.Value?.Profile.Sandbox?.Limits?.Memory : null;
-        return memory is null || string.Equals(memory, SandboxDefaults.Memory, StringComparison.Ordinal)
-            ? null
-            : new ResourceBoxCap(SandboxUnits.ParseSize(memory), TimeSpan.MaxValue);
+        return memory is null || string.Equals(memory, SandboxDefaults.Memory, StringComparison.Ordinal) || !SandboxUnits.TryParseSize(memory, out var bytes)
+            ? null   // why: a size the profile rules would refuse caps nothing here; the profile check reports it
+            : new ResourceBoxCap(bytes, TimeSpan.MaxValue);
     }
 
     private static ConditionParse ParseCondition(string text) =>
