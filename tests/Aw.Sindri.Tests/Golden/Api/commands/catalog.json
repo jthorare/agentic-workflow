@@ -634,6 +634,24 @@
       "confirm": null
     },
     {
+      "action": "HandBackAgentNode",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow-runs/{run}/nodes/{node}/handback",
+      "cli": "sindri wf handback <run> <node> [--item <index>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "HideProject",
       "class": "desk",
       "allowedCallers": [
@@ -1153,6 +1171,24 @@
       "cli": "sindri index purge <source>",
       "ui": "cli-only:typed-yes",
       "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "PurgeResources",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/resources/purge",
+      "cli": "sindri resources purge <owner>",
+      "ui": "ready",
+      "destructive": true,
       "readsViews": false,
       "shortcut": null,
       "confirm": null
@@ -1875,6 +1911,24 @@
       "method": "POST",
       "route": "/sindri/context/sources/sync",
       "cli": "sindri context sources sync",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "TakeOverAgentNode",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow-runs/{run}/nodes/{node}/takeover",
+      "cli": "sindri wf takeover <run> <node> [--item <index>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

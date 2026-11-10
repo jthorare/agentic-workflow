@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:rs="using:Aw.Sindri.Ui.ViewModels.Resources"
+             x:Class="Aw.Sindri.Ui.Views.Resources.ResourcesPage"
+             x:DataType="rs:ResourcesPageViewModel">
+  <!-- The Resources page: what each owner holds (owner, kind, name, size with a bar against its limit) and a Purge that asks first, naming the owner. Only what the
+       resource tools do. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
+  <StackPanel x:Name="ResourcesRoot" Spacing="{StaticResource Size.PanelGap}">
+    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+      <TextBlock Classes="page-title" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
+      <TextBlock x:Name="ResourcesHead" Classes="caption subtle" Text="{Binding Head}" VerticalAlignment="Center" />
+    </StackPanel>
+    <Border AutomationProperties.Name="{Binding Purpose}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="body muted" Text="{Binding Purpose}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
+    <Border x:Name="ResourcesNoteName" IsVisible="{Binding HasNote}" AutomationProperties.Name="{Binding NoteText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock x:Name="ResourcesNote" Classes="caption" Text="{Binding NoteText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
+    <Border Classes="panel" AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+      <StackPanel Spacing="4">
+        <Border x:Name="ResourcesReadingName" Margin="16,8" IsVisible="{Binding IsReading}" AutomationProperties.Name="{Binding ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding ReadingText}" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <StackPanel x:Name="ResourcesFailed" Margin="16,8" Spacing="8" IsVisible="{Binding ShowRetry}">
+          <Border AutomationProperties.Name="{Binding FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="caption quiet" Text="{Binding FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <Button x:Name="ResourcesRetry" Content="{Binding RetryText}" Click="OnRetry" HorizontalAlignment="Left" AutomationProperties.Name="{Binding RetryText}" />
+        </StackPanel>
+        <Border x:Name="ResourcesEmptyName" Margin="16,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption quiet" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+
+        <ItemsControl x:Name="ResourcesRows" ItemsSource="{Binding Rows}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="rs:ResourceRowViewModel">
+              <Border x:Name="ResourceFrame" Classes="item-row" Padding="16,8" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                <StackPanel Spacing="6">
+                  <DockPanel LastChildFill="True">
+                    <Button x:Name="ResourcePurge" DockPanel.Dock="Right" Content="{Binding PurgeText}" IsVisible="{Binding ShowActions}" Click="OnPurge" AutomationProperties.Name="{Binding PurgeName}" />
+                    <TextBlock x:Name="ResourceSize" DockPanel.Dock="Right" Classes="caption subtle" Text="{Binding SizeLine}" Margin="8,0" VerticalAlignment="Center" />
+                    <StackPanel Spacing="2">
+                      <TextBlock x:Name="ResourceOwner" Classes="body-strong" Text="{Binding OwnerText}" />
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock x:Name="ResourceKind" Classes="caption subtle" Text="{Binding KindText}" />
+                        <TextBlock x:Name="ResourceName" Classes="caption subtle" Text="{Binding NameText}" />
+                      </StackPanel>
+                    </StackPanel>
+                  </DockPanel>
+                  <ProgressBar x:Name="ResourceFill" Classes="map-meter" IsVisible="{Binding HasFill}" Minimum="0" Maximum="1" Value="{Binding FillValue}" AutomationProperties.AccessibilityView="Raw" />
+                  <StackPanel x:Name="ResourceConfirm" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsConfirming}">
+                    <Border AutomationProperties.Name="{Binding ConfirmText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                      <TextBlock x:Name="ResourceConfirmText" Classes="body" Text="{Binding ConfirmText}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                    </Border>
+                    <Button x:Name="ResourcePurgeConfirm" Content="{Binding ConfirmButtonText}" Click="OnConfirm" AutomationProperties.Name="{Binding ConfirmName}" />
+                    <Button x:Name="ResourcePurgeKeep" Content="{Binding KeepText}" Click="OnKeep" AutomationProperties.Name="{Binding KeepName}" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>
