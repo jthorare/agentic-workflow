@@ -1,11 +1,123 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core;
+using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Core.Secrets;
 
 namespace Aw.Sindri.Features.RenameConnection;
 
-/// <summary>Changes a connection's label and keeps its secret (red stub: the behaviour arrives with the next commit).</summary>
-internal sealed class RenameConnectionService : IService<RenameConnectionRequest, RenameConnectionResponse>
+/// <summary>
+/// Changes a connection's label: 'slack:old' becomes 'slack:new', the service part stays. The keychain entry is keyed by the name, so the tokens are read and stored again
+/// under the new name first, then the new row is inserted (a plain INSERT: a name taken meanwhile is refused) and the old row and its entry are removed. A step that fails before
+/// the old row is gone undoes what it did, so the old connection keeps working. An unknown name is SND-CONN-001, a taken new name SND-CONN-010 naming that connection, a bad
+/// label SND-CONN-008 and the same label SND-CLI-003. A connection that needs a sign-in keeps its Needs-you row, moved to the new name. An error shows its code and fixed title
+/// only (<see cref="ConnectionFailures"/>).
+/// </summary>
+/// <param name="store">The connections.</param>
+/// <param name="secrets">Moves the tokens to the new name's entry.</param>
+/// <param name="events">Moves the Needs-you row and holds the clock.</param>
+internal sealed class RenameConnectionService(IConnectionStore store, IConnectionSecrets secrets, ConnectionEvents events) : IService<RenameConnectionRequest, RenameConnectionResponse>
 {
-    public ValueTask<Result<RenameConnectionResponse>> Handle(RenameConnectionRequest request, CancellationToken cancellationToken)
-        => throw new NotSupportedException("RenameConnectionService is not implemented yet.");
+    private readonly IConnectionStore _store = store;
+    private readonly IConnectionSecrets _secrets = secrets;
+    private readonly ConnectionEvents _events = events;
+
+    public async ValueTask<Result<RenameConnectionResponse>> Handle(RenameConnectionRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var from = ConnectionName.Parse(request.Name);
+        if (from.IsError)
+        {
+            return from.Error;
+        }
+
+        var to = ConnectionName.Parse(string.Concat(from.Value.Service, ":", request.Label));
+        if (to.IsError)
+        {
+            return to.Error;
+        }
+
+        if (to.Value == from.Value)
+        {
+            return SindriErrors.InvalidInput.With($"{from.Value} already has that label (fix: give a different label)");
+        }
+
+        var found = await _store.Get(from.Value, cancellationToken).ConfigureAwait(false);
+        if (found.IsError)
+        {
+            return ConnectionFailures.Safe(found.Error);
+        }
+
+        var taken = await _store.Get(to.Value, cancellationToken).ConfigureAwait(false);
+        if (taken.IsSuccess)
+        {
+            return SindriErrors.ConnectionExists.With($"a connection named {to.Value} already exists (fix: pick another label, or sindri connection remove {to.Value} first)");
+        }
+
+        if (taken.Error.Code != SindriErrors.ConnectionNotFound.Code)
+        {
+            return ConnectionFailures.Safe(taken.Error);
+        }
+
+        var moved = Move(found.Value, to.Value);
+        if (moved.IsError)
+        {
+            return moved.Error;
+        }
+
+        var row = found.Value with { Name = to.Value, SecretPointer = moved.Value, UpdatedAt = _events.Now };
+        var inserted = await _store.Insert(row, cancellationToken).ConfigureAwait(false);
+        if (inserted.IsError)
+        {
+            Undo(moved.Value, found.Value);
+            return ConnectionFailures.Safe(inserted.Error);
+        }
+
+        var removed = await _store.Remove(from.Value, cancellationToken).ConfigureAwait(false);
+        if (removed.IsError)
+        {
+            _ = await _store.Remove(to.Value, cancellationToken).ConfigureAwait(false);
+            Undo(moved.Value, found.Value);
+            return ConnectionFailures.Safe(removed.Error);
+        }
+
+        if (found.Value.SecretPointer is { } old && moved.Value is not null)
+        {
+            _ = _secrets.Delete(old);   // why: the row already points at the new entry; a leftover old entry is only an orphan, so a failed delete does not undo the rename
+        }
+
+        if (found.Value.Status == ConnectionStatus.NeedsSignIn)
+        {
+            await _events.SignedIn(from.Value, cancellationToken).ConfigureAwait(false);   // why: the Needs-you row is keyed by name; the old one would point at nothing
+            await _events.NeedsSignIn(to.Value, found.Value.StatusReason ?? "sign in again", grant: null, cancellationToken).ConfigureAwait(false);
+        }
+
+        return new RenameConnectionResponse(to.Value.ToString(), from.Value.ToString(), SecretMoved: moved.Value is not null);
+    }
+
+    // Stores the tokens under the new name and returns the new pointer, or null when the row has no secret yet.
+    private Result<SecretPointer?> Move(Connection connection, ConnectionName to)
+    {
+        if (connection.SecretPointer is not { } pointer)
+        {
+            return Results.Success<SecretPointer?>(value: null);
+        }
+
+        var tokens = _secrets.Read(pointer);
+        if (tokens.IsError)
+        {
+            return ConnectionFailures.Safe(tokens.Error);
+        }
+
+        var stored = _secrets.Store(to, tokens.Value);
+        return stored.IsError ? ConnectionFailures.Safe(stored.Error) : stored.Value;
+    }
+
+    private void Undo(SecretPointer? created, Connection original)
+    {
+        if (created is not null && created != original.SecretPointer)
+        {
+            _ = _secrets.Delete(created);
+        }
+    }
 }

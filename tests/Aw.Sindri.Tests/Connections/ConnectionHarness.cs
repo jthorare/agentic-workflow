@@ -105,7 +105,7 @@ internal sealed class ConnectionHarness
 
     public RemoveConnectionService Remove() => new(Store, Secrets, Events());
 
-    public RenameConnectionService Rename() => new();
+    public RenameConnectionService Rename() => new(Store, Secrets, Events());
 
     /// <summary>The sign-in-again slice over the harness's ports and the same sign-in flow Add builds.</summary>
     /// <returns>The service.</returns>

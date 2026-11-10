@@ -23,6 +23,7 @@ sindri connection add <service:label> --kind rest --key-env NAME
 sindri connection list
 sindri connection show <service:label>
 sindri connection test <service:label>
+sindri connection rename <service:label> <new-label>
 sindri connection remove <service:label>
 ```
 
@@ -41,6 +42,8 @@ What happens when you run `sindri connection add linear:work --preset linear --c
 3. You approve at the provider. The provider redirects to `http://127.0.0.1:<port>/callback`.
 4. Sindri checks the callback's `state`, trades the code for tokens (PKCE, S256) and stores them in the keychain. Only then is the connection row written.
 5. The listener closes. It also closes after 5 minutes, on a denied consent, and on a state mismatch.
+
+**Renaming.** `sindri connection rename <service:label> <new-label>` (POST `/sindri/connections/{name}/rename` with the body `{"label":"<new-label>"}`; the app's rename action) changes the label only: `slack:old` becomes `slack:new`, the service part stays. The keychain entry is keyed by the name, so Sindri stores the tokens again under the new name, inserts the new row, then removes the old row and its entry; a step that fails first undoes what it did, so the old connection keeps working. The preset, settings, status and creator carry over, and a connection that needs a sign-in keeps its Needs-you row under the new name. Refusals: an unknown name is `SND-CONN-001`, a new name that another connection uses is `SND-CONN-010` (naming it), a bad label is `SND-CONN-008` and the same label is `SND-CLI-003`. Anything that names the connection by its old text is not rewritten; point it at the new name.
 
 **Signing in again.** `sindri connection signin <name>` (POST `/sindri/connections/{name}/signin`, MCP `connection_signin`) runs the same loopback sign-in for a stored oauth or mcp connection, from the row's own preset, client id, scopes (or server address) and the client secret kept beside its tokens. The row stays (name, creator, creation time); its tokens are replaced when the callback lands, and the Needs-you row clears. A failed try leaves the row and its old secret as they were, and `connection show` reports the failure until the next try: a row that is not connected answers the failure's code instead of the row, and a connected row (it still works on its old tokens) answers the row with the failure beside it as `lastSignInFailure` (`code`, `at`), null otherwise. `connection signin` and the app's "Sign in again" stop waiting on either. `connection signin` waits for its own sign-in (the row's `signedInAt` setting changes), so a background refresh of the same connection does not end the wait early.
 
