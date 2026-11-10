@@ -22372,3 +22372,46 @@ Aw.Sindri.Core.Resources.ResourceEntry.Owner.get -> Aw.Sindri.Core.Resources.Res
 Aw.Sindri.Core.Resources.ResourceEntry.Path.get -> string!
 Aw.Sindri.Core.Resources.ResourceEntry.ResourceEntry(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceKind kind, string! name, long sizeBytes, string! path) -> void
 Aw.Sindri.Core.Resources.ResourceEntry.SizeBytes.get -> long
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.BoxCap.get -> Aw.Sindri.Core.Resources.ResourceBoxCap?
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.BoxCap.init -> void
+Aw.Sindri.Core.Resources.ResourceBoxCap
+Aw.Sindri.Core.Resources.ResourceBoxCap.<Clone>$() -> Aw.Sindri.Core.Resources.ResourceBoxCap!
+Aw.Sindri.Core.Resources.ResourceBoxCap.Deconstruct(out long MemoryBytes, out System.TimeSpan Wall) -> void
+Aw.Sindri.Core.Resources.ResourceBoxCap.Equals(Aw.Sindri.Core.Resources.ResourceBoxCap? other) -> bool
+Aw.Sindri.Core.Resources.ResourceBoxCap.MemoryBytes.get -> long
+Aw.Sindri.Core.Resources.ResourceBoxCap.MemoryBytes.init -> void
+Aw.Sindri.Core.Resources.ResourceBoxCap.ResourceBoxCap(long MemoryBytes, System.TimeSpan Wall) -> void
+Aw.Sindri.Core.Resources.ResourceBoxCap.Wall.get -> System.TimeSpan
+Aw.Sindri.Core.Resources.ResourceBoxCap.Wall.init -> void
+override Aw.Sindri.Core.Resources.ResourceBoxCap.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.ResourceBoxCap.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.ResourceBoxCap.ToString() -> string!
+static Aw.Sindri.Core.Resources.ResourceBoxCap.operator !=(Aw.Sindri.Core.Resources.ResourceBoxCap? left, Aw.Sindri.Core.Resources.ResourceBoxCap? right) -> bool
+static Aw.Sindri.Core.Resources.ResourceBoxCap.operator ==(Aw.Sindri.Core.Resources.ResourceBoxCap? left, Aw.Sindri.Core.Resources.ResourceBoxCap? right) -> bool
+Aw.Sindri.Core.Graph.GraphResourceSpec
+Aw.Sindri.Core.Resources.IResourceProvisioner
+Aw.Sindri.Core.Resources.IResourceProvisioner.Ensure(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceSpec! spec, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Resources.ProvisionedResources!>!>
+Aw.Sindri.Core.Resources.ProvisionedResources
+Aw.Sindri.Core.Resources.ProvisionedResources.<Clone>$() -> Aw.Sindri.Core.Resources.ProvisionedResources!
+Aw.Sindri.Core.Resources.ProvisionedResources.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! Mounts, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Resources.ProvisionedResources.Env.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Resources.ProvisionedResources.Env.init -> void
+Aw.Sindri.Core.Resources.ProvisionedResources.Equals(Aw.Sindri.Core.Resources.ProvisionedResources? other) -> bool
+Aw.Sindri.Core.Resources.ProvisionedResources.Limits.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Resources.ProvisionedResources.Limits.init -> void
+Aw.Sindri.Core.Resources.ProvisionedResources.Mounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>!
+Aw.Sindri.Core.Resources.ProvisionedResources.Mounts.init -> void
+Aw.Sindri.Core.Resources.ProvisionedResources.ProvisionedResources(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! Mounts, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+override Aw.Sindri.Core.Resources.ProvisionedResources.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.ProvisionedResources.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.ProvisionedResources.ToString() -> string!
+static Aw.Sindri.Core.Graph.GraphResourceSpec.From(Aw.Sindri.Core.Graph.GraphResources? resources) -> Aw.Sindri.Core.Resources.ResourceSpec!
+static Aw.Sindri.Core.Resources.ProvisionedResources.None.get -> Aw.Sindri.Core.Resources.ProvisionedResources!
+static Aw.Sindri.Core.Resources.ProvisionedResources.operator !=(Aw.Sindri.Core.Resources.ProvisionedResources? left, Aw.Sindri.Core.Resources.ProvisionedResources? right) -> bool
+static Aw.Sindri.Core.Resources.ProvisionedResources.operator ==(Aw.Sindri.Core.Resources.ProvisionedResources? left, Aw.Sindri.Core.Resources.ProvisionedResources? right) -> bool
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Resources.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Resources.init -> void
+Aw.Sindri.Core.Resources.ResourceDoctorRule
+const Aw.Sindri.Core.Resources.ResourceDoctorRule.NearLimit = 0.9 -> double
+static Aw.Sindri.Core.Resources.ResourceDoctorRule.Check(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>! entries, System.Collections.Generic.IReadOnlyDictionary<string!, long>! diskLimits) -> Aw.Sindri.Core.Doctor.DoctorCheck!
+static Aw.Sindri.Core.Resources.ResourceDoctorRule.LimitKey(Aw.Sindri.Core.Resources.ResourceOwner! owner, string! name) -> string!
