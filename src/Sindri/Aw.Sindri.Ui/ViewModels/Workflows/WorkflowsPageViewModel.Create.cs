@@ -186,7 +186,7 @@ internal sealed partial class WorkflowsPageViewModel
             return Labels.WfNameEmpty;
         }
 
-        if (name is "docs" or "blocks")
+        if (string.Equals(name, "docs", StringComparison.Ordinal) || string.Equals(name, "blocks", StringComparison.Ordinal))
         {
             return Labels.WfNameReserved(name);
         }
@@ -194,5 +194,5 @@ internal sealed partial class WorkflowsPageViewModel
         return name.Length <= SlugMax && IsSlugStart(name[0]) && name.All(static c => IsSlugStart(c) || c == '-') ? string.Empty : Labels.WfNameShape;
     }
 
-    private static bool IsSlugStart(char c) => c is >= 'a' and <= 'z' or >= '0' and <= '9';
+    private static bool IsSlugStart(char c) => c is (>= 'a' and <= 'z') or (>= '0' and <= '9');
 }

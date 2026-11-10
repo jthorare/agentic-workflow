@@ -37,10 +37,8 @@ public sealed class WorkflowsCreateTests
     // Sindri has no route that lists templates, so the form carries the names GraphTemplates (Aw.Sindri.Core/Graph/Templates/GraphTemplates.cs) accepts.
     // When a template there is renamed, added or removed, this fails: update Labels.WfTemplates with it.
     [Fact]
-    public void The_templates_the_form_offers_are_the_three_names_GraphTemplates_accepts()
-    {
+    public void The_templates_the_form_offers_are_the_three_names_GraphTemplates_accepts() =>
         Assert.Equal(["weekday-check", "daily-digest", "manual-notify"], Labels.WfTemplates.Select(t => t.Name), StringComparer.Ordinal);
-    }
 
     [Theory]
     [InlineData("", false)]
@@ -137,7 +135,7 @@ public sealed class WorkflowsCreateTests
         _f.Server.CreateWorkflowGate.SetResult();
         await first;
 
-        Assert.Single(_f.Server.CreatedWorkflows);
+        _ = Assert.Single(_f.Server.CreatedWorkflows);
     }
 
     [Fact]
