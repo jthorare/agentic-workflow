@@ -34,7 +34,7 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly GraphRunStarter _starter;
     private readonly InMemorySindriStore _ledger;
 
-    private GraphRig(WorkflowEnvironment environment, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
+    private GraphRig(WorkflowEnvironment environment, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0)
     {
         // why: the test server is shared by the class, and a run id or task queue can be used once on it
         var number = Interlocked.Increment(ref _count).ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -52,7 +52,7 @@ internal sealed class GraphRig : IAsyncDisposable
         held.Hold(_ledger.Acquire(probe.Self(), Token).AsTask().GetAwaiter().GetResult().Value);
         var ids = new SequentialIdGenerator();
         var mirror = new GraphMirror(_ledger, held, new EventFactory(EventScope.ControlPlane, clock, ids, SliceHarness.Json, new AsyncLocalCallerContextAccessor(ids)));
-        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue);
+        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue, agentLaunchAttempts);
         var starter = new GraphRunStarter(Runs, launcher, mirror, clock, NullLogger<GraphRunStarter>.Instance);
         _starter = starter;
         // why: the real wait polls on a clock; the fake one never moves while a node waits, so the caller gets the system clock
@@ -95,6 +95,13 @@ internal sealed class GraphRig : IAsyncDisposable
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     public static GraphRig Start(WorkflowEnvironment environment, IAgentNodeRuntime? agents = null) => new(environment, agents, forEachLimits: null);
+
+    /// <summary>A rig whose 'run_agent' launch is tried <paramref name="agentLaunchAttempts"/> times before the node fails.</summary>
+    /// <param name="environment">The shared Temporal test server.</param>
+    /// <param name="agents">The fake agent runtime.</param>
+    /// <param name="agentLaunchAttempts">The cap on launch attempts.</param>
+    /// <returns>The started rig.</returns>
+    public static GraphRig Start(WorkflowEnvironment environment, IAgentNodeRuntime agents, int agentLaunchAttempts) => new(environment, agents, forEachLimits: null, agentLaunchAttempts);
 
     /// <summary>A rig whose for_each blocks read <paramref name="forEachLimits"/> as the profile's limits.</summary>
     /// <param name="environment">The shared Temporal test server.</param>
