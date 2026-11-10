@@ -231,7 +231,7 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.LG}" />
   </Style>
   <Style Selector="Border.phead">
-    <Setter Property="MinHeight" Value="{StaticResource Size.Row}" />
+    <Setter Property="MinHeight" Value="{StaticResource Size.PanelHeader}" />
     <Setter Property="Padding" Value="16,0" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
