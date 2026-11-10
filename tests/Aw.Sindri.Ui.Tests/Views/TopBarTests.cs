@@ -169,6 +169,16 @@ public sealed class TopBarTests : IDisposable
         Assert.False(string.IsNullOrWhiteSpace(AutomationProperties.GetName(field)));
     });
 
+    // Folded to its magnifier the field loses its keycap, so the tooltip carries the shortcut (QA #2547).
+    [Fact]
+    public Task The_search_field_tooltip_names_its_shortcut() => OnUi(async () =>
+    {
+        _records.Write(A.Record());
+        var (window, _) = await Show(s => s.State == ShellState.Normal);
+
+        Assert.Equal("Search or run a command (⌘K)", ToolTip.GetTip(window.Get<TopBar>("TopBar").Get<Control>("SearchField")));
+    });
+
     [Fact]
     public Task Sending_is_announced_by_a_polite_TextBlock_that_is_never_emptied() => OnUi(async () =>
     {
