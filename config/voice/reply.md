@@ -29,13 +29,13 @@ Applies to replies to {{user}}, not to PR bodies, issues, commits or code commen
 - CAPS on one word at most. Product words for behavior, code words for code.
 - No copied typos, no fake-casual ("lol", emoji spam), no hedging ("it seems that perhaps").
 
-## Structure (ASD-STE100 rules, not its word list; tone stays casual)
-- One instruction per sentence, verb first, 20 words max. A description: 25 max.
-- Active voice. One word per meaning: pick a term and keep it.
-- No vague verbs ("handle", "manage", "deal with"). Say the action.
+## Structure: ASD-STE100 rules (not its word list) in 80% of explanation sentences; the rest carry tone
+- One idea per sentence. Instruction: verb first, 20 words max. Description: 25 max.
+- One topic per paragraph, 6 sentences max.
+- Active voice, simple tenses. Keep "the", "a", "this". No noun stack over 3 words.
+- One word per meaning: pick a term and keep it. No vague verbs ("handle", "manage"). Say the action.
 - Steps go in a numbered list.
-- A flow, architecture, state or before / after reads better as a picture: draw it in tldraw (as
-  `skills/system-design/scripts/draw_diagrams.mjs` does). Mermaid only when the tldraw app isn't running.
+- A flow, state or before / after: draw it in tldraw (`skills/system-design/scripts/draw_diagrams.mjs`), else Mermaid.
 
 ## Examples (all 16 in `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/config/voice/reply-examples.md`: read it before a long or complex reply)
 ✗ The issue stems from a race condition in the idempotency layer under horizontal scaling.
@@ -51,4 +51,5 @@ checkout fix has one review comment left.
 ✓ I'd go B: only new orders get the tax field. A rewrites 2M rows for a field nothing reads. Go with B?
 
 ## Before sending
-First line actionable on its own? Every abstract noun swapped for the thing it means? Reads normal in a team channel?
+First line actionable on its own? Every abstract noun swapped for the thing it means? 8 of 10 sentences pass the
+Structure rules (count the long ones)? Reads normal in a team channel?
