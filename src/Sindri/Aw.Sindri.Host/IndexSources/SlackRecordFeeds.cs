@@ -3,6 +3,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Secrets;
 
 namespace Aw.Sindri.Host.IndexSources;
@@ -14,8 +15,16 @@ namespace Aw.Sindri.Host.IndexSources;
 /// <param name="pointers">Resolves the token pointer.</param>
 /// <param name="connectors">Makes the connector.</param>
 /// <param name="readers">Makes the Slack reader for a token and the channel ids it may read.</param>
-internal sealed class SlackRecordFeeds(ISecretPointers pointers, ISlackConnectorFactory connectors, Func<string, IReadOnlyCollection<string>, ISlackReader> readers) : IExternalRecordFeeds
+/// <param name="connections">The Connections page's rows (seam only, no behaviour yet: the Slack feed does not read them).</param>
+/// <param name="connectionSecrets">Reads a connection's tokens (seam only, no behaviour yet).</param>
+internal sealed class SlackRecordFeeds(ISecretPointers pointers, ISlackConnectorFactory connectors, Func<string, IReadOnlyCollection<string>, ISlackReader> readers, IConnectionStore? connections = null, IConnectionSecrets? connectionSecrets = null) : IExternalRecordFeeds
 {
+    /// <summary>Gets the Connections page's rows (seam only, no behaviour yet).</summary>
+    internal IConnectionStore? Connections { get; } = connections;
+
+    /// <summary>Gets the connection token reader (seam only, no behaviour yet).</summary>
+    internal IConnectionSecrets? ConnectionSecrets { get; } = connectionSecrets;
+
     /// <inheritdoc />
     public IReadOnlyList<RecordFeed> For(ContextSettings settings, IReadOnlyList<ContextRepo> repos, Scrubbers scrubbers)
     {
