@@ -29,7 +29,7 @@ public sealed class RecycleWaiterFailureTests
     private LaneRecycleService Service(IDelay? delay = null)
     {
         var wait = delay ?? _world.Delay;
-        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, wait), _world.LaneSessions, _world.LaneFiles, _world.Log, wait, _world.Clock);
+        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, wait), _world.LaneSessions, _world.LaneFiles, _world.Log, wait, _world.Clock, _world.Messages);
         return new LaneRecycleService(
             _world.Config,
             new RecycleGuard(_world.LaneFiles, _world.LaneSessions, _world.Digests, _world.Context, _world.Clock),
@@ -78,7 +78,7 @@ public sealed class RecycleWaiterFailureTests
     {
         await Ready(digestAgeMinutes: 5);
         var failing = new FailingLauncher();
-        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, _world.Delay), _world.LaneSessions, _world.LaneFiles, _world.Log, _world.Delay, _world.Clock);
+        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, _world.Delay), _world.LaneSessions, _world.LaneFiles, _world.Log, _world.Delay, _world.Clock, _world.Messages);
         var service = new LaneRecycleService(
             _world.Config,
             new RecycleGuard(_world.LaneFiles, _world.LaneSessions, _world.Digests, _world.Context, _world.Clock),
