@@ -59,7 +59,7 @@ public sealed class WorkflowQuestionRowsTests
 
         Assert.Equal(["question:nightly@3:12:ask:1", "question:nightly@3:12:ask:2"], rows.Select(static r => r.Row.Id.Value), StringComparer.Ordinal);
         Assert.Contains("nightly@3:12/ask item 2", rows[1].Row.Reason, StringComparison.Ordinal);
-        Assert.Contains("--item 2", rows[1].Row.Cli, StringComparison.Ordinal);
+        Assert.Contains("--item <item>", rows[1].Row.Cli, StringComparison.Ordinal);
         Assert.All(rows, static r => Assert.Equal("nightly@3:12/each/1", r.BatchWorkflow));
     }
 

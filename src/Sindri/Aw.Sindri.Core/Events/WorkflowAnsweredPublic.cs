@@ -9,5 +9,6 @@ namespace Aw.Sindri.Core.Events;
 public sealed record WorkflowAnsweredPublic(WorkflowRunId Run, NodeId Node, string Kind = WorkflowQuestionPublic.QuestionKind)
 {
     /// <summary>The item inside a 'for_each' body that was answered, or null for a node outside a loop.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public int? Item { get; init; }
 }

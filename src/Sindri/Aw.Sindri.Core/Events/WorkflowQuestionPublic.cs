@@ -9,6 +9,7 @@ namespace Aw.Sindri.Core.Events;
 public sealed record WorkflowQuestionPublic(WorkflowRunId Run, NodeId Node, string Kind = WorkflowQuestionPublic.QuestionKind)
 {
     /// <summary>The item inside a 'for_each' body that asks, or null for a node outside a loop.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public int? Item { get; init; }
 
     /// <summary>The Needs-you row kind of an 'ask_owner' question.</summary>

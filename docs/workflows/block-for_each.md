@@ -17,7 +17,7 @@ Inside the loop:
 - Every node of the loop has one run per item (`workflow_run_get` lists them with their `itemIndex`). `for_each` and `collect` themselves have one run each, at index 0.
 - A node that fails and says `stop` (the default) ends the loop: no later item runs, the `collect` fails with `node '<id>' failed on item N: <why>`, and the run follows the `collect`'s `onFailure`. Say `continue` on a node to let the loop go on without it.
 
-The loop is what lies between the `for_each` and its one `collect`. Loops don't nest (start another workflow with `run_workflow`), and a node of the loop may be fed only from the loop. `sindri wf validate` reports both as `GRAPH-LOOP-001`. A `run_agent` node can't sit in the loop (an agent session doesn't run once per item): that is `GRAPH-LOOP-003`, and a run that reaches such a `for_each` fails it before any item runs. Run the agent in another workflow with `run_workflow`. An `ask_owner` can't sit inside a loop (`GRAPH-LOOP-004`); a `wait` can, and sleeps once per item: put the per-item part in its own workflow and call it with `run_workflow`.
+The loop is what lies between the `for_each` and its one `collect`. Loops don't nest (start another workflow with `run_workflow`), and a node of the loop may be fed only from the loop. `sindri wf validate` reports both as `GRAPH-LOOP-001`. A `run_agent` node can't sit in the loop (an agent session doesn't run once per item): that is `GRAPH-LOOP-003`, and a run that reaches such a `for_each` fails it before any item runs. Run the agent in another workflow with `run_workflow`. A `wait` can sit in the loop and sleeps once per item; an `ask_owner` can too and asks once per item (answer it with `--item`, see the `ask_owner` page).
 
 ## Example
 

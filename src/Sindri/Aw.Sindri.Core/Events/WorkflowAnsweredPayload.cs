@@ -10,5 +10,6 @@ namespace Aw.Sindri.Core.Events;
 public sealed record WorkflowAnsweredPayload(WorkflowRunId Run, NodeId Node, string Answer, string By)
 {
     /// <summary>The item the answered question was asked for inside a 'for_each' body, or null.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public int? Item { get; init; }
 }
