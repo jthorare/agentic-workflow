@@ -274,6 +274,33 @@ public sealed class ClickableStateTests : FrameHost
         Assert.NotEqual(rest, ((ISolidColorBrush)row.Background!).Color);
     });
 
+    // #2611: an attention row lifts within its own amber under the pointer and a press; it used to step aside to the grey hover fill.
+    [Theory]
+    [InlineData("pulsing")]
+    [InlineData("steady")]
+    public Task The_pointer_over_an_attention_Needs_You_row_keeps_its_amber_and_a_press_lifts_it_again(string tint) => OnUi(async () =>
+    {
+        using var instant = InstantMotion.Start();
+        var (window, shell) = await Connected();
+        shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Park(), NeedsYouRows.Failure(), NeedsYouRows.Profile()], ""));
+        Settle(window);
+        var row = window.GetVisualDescendants().OfType<NeedsYouRow>().Where(r => r.IsEffectivelyVisible)
+            .SelectMany(r => r.GetVisualDescendants().OfType<Border>()).First(b => b.Name == "RowFrame" && b.Classes.Contains(tint));
+        Assert.Equal(TokenColor("Brush.AttentionSoft"), ((ISolidColorBrush)row.Background!).Color);
+        Frame(window, $"{tint}-rest", "gh2611-");
+
+        var at = await PointAt(window, () => row.TranslatePoint(new Point(4, 4), window)!.Value, row);
+        Frame(window, $"{tint}-hover", "gh2611-");
+        Assert.True(row.IsPointerOver, $"at {at}, row bounds {row.Bounds}, hit {Describe(window.InputHitTest(at))}");
+        Assert.Equal(TokenColor("Brush.AttentionSoft.Hover"), ((ISolidColorBrush)row.Background!).Color);
+
+        window.MouseDown(at, MouseButton.Left, RawInputModifiers.LeftMouseButton);
+        Settle(window);
+        Assert.Contains(":pressed", row.Classes, StringComparer.Ordinal);
+        Assert.Equal(TokenColor("Brush.AttentionSoft.Pressed"), ((ISolidColorBrush)row.Background!).Color);
+        window.MouseUp(at, MouseButton.Left, RawInputModifiers.None);
+    });
+
     [Fact]
     public Task A_pressed_project_card_scales_to_098_about_its_centre_and_eases_it_over_Motion_Hover() => OnUi(async () =>
     {
