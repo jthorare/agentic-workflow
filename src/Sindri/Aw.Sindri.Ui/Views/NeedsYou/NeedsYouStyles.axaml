@@ -2,8 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- The Needs-you rows' tint (screens spec R8-13): the urgency, not a side bar. Tokens only. A pulse row that is unseen keeps
        the attention tint and pulses its tint between two tokens (the text is never faded: contrast); under reduced motion it keeps a steady outline instead (HasOutline). -->
-  <!-- A tint is the row's resting look: under the pointer or a press it steps aside (the :not guards) so the shared clickable hover and
-       pressed background (Theme/ClickableStyles.axaml) shows, and the pulse stops (a running animation would beat any style setter). -->
+  <!-- An attention tint (pulsing, steady, outlined) lifts within its own amber under the pointer and a press (Brush.AttentionSoft.Hover and
+       .Pressed), so the urgency stays; the pulse runs only at rest (a running animation would beat any style setter). Those rules live in Theme/ClickableStyles.axaml,
+       which loads last, so they beat its grey hover. A calm row (subtle, stale) steps aside to that shared clickable hover and pressed background. -->
   <Style Selector="Border.needs-you-row.pulsing:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
     <Style.Animations>
