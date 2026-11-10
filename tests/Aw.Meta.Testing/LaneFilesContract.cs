@@ -90,4 +90,48 @@ public abstract class LaneFilesContract
 
         Expect.That(escaping.IsSuccess && escaping.Value is null && dots.IsSuccess && dots.Value is null && empty.IsSuccess && empty.Value is null, "no trace for a bad name");
     }
+
+    /// <summary>A lane with no waiter recorded has none.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_lane_with_no_waiter_recorded_has_none()
+    {
+        var (files, _) = await Create();
+
+        var waiter = await files.Waiter("meta", _none);
+
+        Expect.That(waiter.IsSuccess && waiter.Value is null, "no waiter");
+    }
+
+    /// <summary>A recorded waiter reads back with its pid and start, replaces an earlier one and is cleared by null.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_recorded_waiter_reads_back_is_replaced_and_is_cleared()
+    {
+        var (files, _) = await Create();
+        var started = new DateTimeOffset(2026, 11, 9, 12, 0, 0, TimeSpan.Zero);
+
+        var first = await files.RecordWaiter("meta", (11, started), _none);
+        var second = await files.RecordWaiter("meta", (22, started.AddMinutes(1)), _none);
+        var read = (await files.Waiter("meta", _none)).Value;
+        var cleared = await files.RecordWaiter("meta", waiter: null, _none);
+        var gone = await files.Waiter("meta", _none);
+        var clearedAgain = await files.RecordWaiter("meta", waiter: null, _none);
+
+        Expect.That(first.IsSuccess && second.IsSuccess && read is { Pid: 22 } && read.Value.StartedAt == started.AddMinutes(1), "the second waiter replaced the first");
+        Expect.That(cleared.IsSuccess && gone.Value is null && clearedAgain.IsSuccess, "cleared, and clearing nothing is fine");
+    }
+
+    /// <summary>A name that could escape the directory is refused and has no waiter.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_bad_lane_name_has_no_waiter()
+    {
+        var (files, _) = await Create();
+
+        var recorded = await files.RecordWaiter("../x", (1, DateTimeOffset.UnixEpoch), _none);
+        var read = await files.Waiter("../x", _none);
+
+        Expect.That(recorded.IsError && read.IsSuccess && read.Value is null, "refused and absent");
+    }
 }

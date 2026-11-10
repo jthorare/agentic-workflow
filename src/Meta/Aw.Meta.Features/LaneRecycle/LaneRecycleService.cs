@@ -12,7 +12,8 @@ namespace Aw.Meta.Features.LaneRecycle;
 /// <param name="guard">The refusals.</param>
 /// <param name="runner">The recycle itself.</param>
 /// <param name="switcher">The move to another agent, for a lane routing.lanes assigns elsewhere.</param>
-internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard, RecycleRunner runner, SwitchRunner switcher) : IService<LaneRecycleRequest, LaneRecycleResponse>
+/// <param name="waiter">The detached waiter, for --detach and --wait-idle.</param>
+internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard, RecycleRunner runner, SwitchRunner switcher, RecycleWaiter waiter) : IService<LaneRecycleRequest, LaneRecycleResponse>
 {
     public async ValueTask<Result<LaneRecycleResponse>> Handle(LaneRecycleRequest request, CancellationToken cancellationToken)
     {
@@ -26,7 +27,12 @@ internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard,
         var plan = await guard.Check(team.Value, request, cancellationToken).ConfigureAwait(false);
         if (plan.IsError)
         {
-            return plan.Error;
+            return await Refused(request, plan.Error, cancellationToken).ConfigureAwait(false);
+        }
+
+        if ((request.Detach || request.WaitIdle) && !request.DryRun)
+        {
+            return await waiter.Run(plan.Value, request, cancellationToken).ConfigureAwait(false);
         }
 
         var switching = plan.Value.SwitchTo is not null;
@@ -39,4 +45,8 @@ internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard,
             ? await switcher.Run(plan.Value, cancellationToken).ConfigureAwait(false)
             : await runner.Run(plan.Value, cancellationToken).ConfigureAwait(false);
     }
+
+    // The detached waiter's output goes to /dev/null, so its start-up refusal is logged; any other caller sees the error on its own terminal.
+    private async ValueTask<Error> Refused(LaneRecycleRequest request, Error error, CancellationToken cancellationToken) =>
+        request.WaitIdle && !request.DryRun ? await waiter.RefusedAtStart(request.Lane, error, cancellationToken).ConfigureAwait(false) : error;
 }

@@ -14,7 +14,7 @@ public sealed class LaneContextReader(ILaneFiles files, ILaneSessions sessions, 
     /// <summary>How many bytes from the end of a transcript are read: the last API call is in the last few lines.</summary>
     public const int TailBytes = 1024 * 1024;
 
-    /// <summary>Reads every lane but the meta lane.</summary>
+    /// <summary>Reads every lane, the meta lane included.</summary>
     /// <param name="team">The team config.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>One row per lane, in lane order.</returns>
@@ -22,7 +22,7 @@ public sealed class LaneContextReader(ILaneFiles files, ILaneSessions sessions, 
     {
         ArgumentNullException.ThrowIfNull(team);
         var rows = new List<LaneContext>();
-        foreach (var lane in team.Lanes.Where(l => !string.Equals(l, team.MetaLane, StringComparison.OrdinalIgnoreCase)))
+        foreach (var lane in team.Lanes)
         {
             var row = await ReadLane(team.Team, lane, team.Context.RecycleAt, cancellationToken).ConfigureAwait(false);
             if (row.IsError)
@@ -36,7 +36,7 @@ public sealed class LaneContextReader(ILaneFiles files, ILaneSessions sessions, 
         return rows;
     }
 
-    /// <summary>Reads every lane but the meta lane for a report that can do without: a failure to read leaves the figures out.</summary>
+    /// <summary>Reads every lane for a report that can do without: a failure to read leaves the figures out.</summary>
     /// <param name="team">The team config; null when there is none.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>One row per lane, or null.</returns>
