@@ -25,17 +25,17 @@ public sealed class GraphAgentLaunchCapTests
         Assert.Equal(3, runtime.Launches.Count);
     }
 
-    // why: the lead sets the production cap from N, the history events one failed attempt adds; two runs with different caps give it as a difference
+    // why: the lead sets the production cap from N, the history events one failed attempt adds; two runs with different caps give it as a difference (small caps: the back-off is real time, 100 ms doubling to 30 s)
     [Fact]
     public async Task A_failed_attempt_adds_a_constant_number_of_history_events()
     {
-        var few = await HistoryLength(10);
-        var many = await HistoryLength(20);
+        var few = await HistoryLength(4);
+        var many = await HistoryLength(8);
 
-        var perAttempt = (many - few) / 10;
-        var text = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"N = {perAttempt} ({few} events at 10 attempts, {many} at 20; the 10 extra attempts added {many - few})");
+        var perAttempt = (many - few) / 4;
+        var text = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"N = {perAttempt} ({few} events at 4 attempts, {many} at 8; the 4 extra attempts added {many - few})");
         TestContext.Current.SendDiagnosticMessage("history events per failed launch attempt: " + text);
-        Assert.True((many - few) % 10 == 0, "not a whole number of events per attempt: " + text);
+        Assert.True((many - few) % 4 == 0, "not a whole number of events per attempt: " + text);
         Assert.InRange(perAttempt, 1, 20);
     }
 
