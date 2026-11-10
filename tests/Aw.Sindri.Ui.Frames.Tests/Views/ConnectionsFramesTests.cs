@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -122,7 +123,7 @@ public sealed class ConnectionsFramesTests : FrameHost
         Assert.True(Visible(window, "ServiceTileHelp"));
         Assert.True(Visible(window, "ServiceTileHelpLink"));
         Assert.Equal(1, window.GetVisualDescendants().OfType<Button>().Count(b => string.Equals(b.Name, "ServiceTilePrimary", StringComparison.Ordinal) && b.IsEffectivelyVisible && b.GetVisualAncestors().OfType<Control>().Any(c => c.DataContext == tile)));
-        Assert.All(window.GetVisualDescendants().OfType<Border>().Where(b => string.Equals(b.Name, "ServiceTileFrame", StringComparison.Ordinal)), b => Assert.True(b.TranslatePoint(new Avalonia.Point(b.Bounds.Width, 0), window)!.Value.X <= window.Bounds.Width));
+        Assert.All(window.GetVisualDescendants().OfType<Border>().Where(b => string.Equals(b.Name, "ServiceTileFrame", StringComparison.Ordinal)), b => Assert.True(b.TranslatePoint(new Point(b.Bounds.Width, 0), window)!.Value.X <= window.Bounds.Width));
         Frame(window, "tile-help-900", Prefix);
     });
 }
