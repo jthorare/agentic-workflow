@@ -6717,7 +6717,7 @@ override Aw.Context.Core.Linear.LinearSettings.Equals(object? obj) -> bool
 Aw.Context.Core.Linear.LinearSettings.Equals(Aw.Context.Core.Linear.LinearSettings? other) -> bool
 Aw.Context.Core.Linear.LinearSettings.<Clone>$() -> Aw.Context.Core.Linear.LinearSettings!
 Aw.Context.Core.Linear.LinearSettings.Url.get -> System.Uri!
-Aw.Context.Core.Linear.LinearSettings.Token.get -> string!
+Aw.Context.Core.Linear.LinearSettings.Token.get -> string?
 Aw.Context.Core.Linear.LinearSettings.WriteToken.get -> string?
 Aw.Context.Core.Linear.LinearSettings.Teams.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Linear.LinearSettings.Address.get -> string!
@@ -12460,3 +12460,5 @@ static Aw.Context.Core.Concepts.PinMembership.Moves(int fromVersion, int toVersi
 Aw.Context.Core.Facade.IContextMap.PinMoves(Aw.Context.Core.Map.MapVersion! from, Aw.Context.Core.Map.MapVersion! to, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>!>!>
 Aw.Context.Core.Engine.ModelKind.WorkflowPrompt = 7 -> Aw.Context.Core.Engine.ModelKind
 Aw.Context.Core.Models.ModelPurpose.WorkflowPrompt = 9 -> Aw.Context.Core.Models.ModelPurpose
+Aw.Context.Core.Linear.ILinearReadCredential
+Aw.Context.Core.Linear.ILinearReadCredential.TokenFor(string? profilePointer) -> string?

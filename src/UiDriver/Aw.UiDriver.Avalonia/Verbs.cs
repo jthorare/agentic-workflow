@@ -9,7 +9,7 @@ namespace Aw.UiDriver.Avalonia;
 internal static class Verbs
 {
     /// <summary>The verbs' names, for the CLI's help and the tests.</summary>
-    internal static IReadOnlyList<string> Names { get; } = ["tree", "search", "props", "click", "type", "key", "scroll", "wait-for", "screenshot", "window", "action"];
+    internal static IReadOnlyList<string> Names { get; } = ["tree", "search", "props", "click", "type", "key", "scroll", "hover", "wait-for", "screenshot", "window", "action"];
 
     /// <summary>Runs one verb.</summary>
     /// <param name="verb">The verb's name.</param>
@@ -26,6 +26,7 @@ internal static class Verbs
         "type" => await Json<TypeRequest, ActedResponse>(body, host.Type).ConfigureAwait(false),
         "key" => await Json<KeyRequest, ActedResponse>(body, host.Key).ConfigureAwait(false),
         "scroll" => await Json<ScrollRequest, ActedResponse>(body, host.Scroll).ConfigureAwait(false),
+        "hover" => await Json<HoverRequest, ActedResponse>(body, host.Hover).ConfigureAwait(false),
         "action" => await Json<ActionRequest, ActedResponse>(body, host.Action).ConfigureAwait(false),
         "window" => await Json<WindowRequest, WindowResponse>(body, host.WindowSize).ConfigureAwait(false),
         "wait-for" => await Json<WaitForRequest, WaitedResponse>(body, request => host.WaitFor(request, cancellationToken)).ConfigureAwait(false),

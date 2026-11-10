@@ -210,6 +210,8 @@ bash scripts/tests/skill-lock-recovery.test.sh   # skill-lock.sh after a failed 
 bash scripts/tests/skill-lock-sessions.test.sh   # skill-lock.sh called the way skills call it (#1991): acquire and release in separate Bash calls of one session, another session's acquire waits while the lock is held, a session that ends while holding it is taken over
 bash scripts/tests/skill-lock-portable.test.sh   # skills/_shared/skill-lock.sh has no bash 4 or GNU-only forms (mapfile, BASHPID, declare -A, sed -i, find -printf, stat -c, date -d, BASH_VERSINFO ...), so it runs on the macOS runner (#2534); SKILL_LOCK_FILE points the scan at another file
 bash scripts/tests/skill-lock-reclaim-race.test.sh   # two waiters reclaiming one dead holder of a skill-lock.sh lock never both hold it (#2569): a PATH rm stub holds one waiter at its remove until the other has taken the lock
+bash scripts/tests/skill-lock-release-guard.test.sh   # a non-owner release_lock and a dead-guard cleanup never destroy another waiter's lock or guard (#2581): a PATH mv stub plays a waiter that takes the lock in a release gap, a PATH rm stub plays one that makes a fresh guard during a dead-guard cleanup
+bash scripts/tests/ui-before-after-stack-parallel.test.sh   # #2596: two copies of skills/ui-before-after/scripts/stack.test.sh at once must both exit 0 (each copy claims its own free 7-port block below 32768)
 bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/weeklyretro-shortlog.test.sh   # #1898: /weeklyRetro's `git shortlog` names a revision, so it lists authors with no terminal on stdin
 bash scripts/tests/canary-baseline-keys.test.sh   # #1896: every `baseline.<key>` /canary reads is a key /landAndDeploy writes to baseline.json

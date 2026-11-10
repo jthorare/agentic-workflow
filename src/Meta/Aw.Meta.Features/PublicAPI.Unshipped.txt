@@ -1099,6 +1099,8 @@ Aw.Meta.Features.Watch.WatchRequest.UntilMail.get -> bool
 Aw.Meta.Features.Watch.WatchRequest.UntilMail.init -> void
 Aw.Meta.Features.Watch.WatchRequest.UntilEvent.get -> bool
 Aw.Meta.Features.Watch.WatchRequest.UntilEvent.init -> void
+Aw.Meta.Features.Watch.WatchRequest.Owner.get -> int
+Aw.Meta.Features.Watch.WatchRequest.Owner.init -> void
 Aw.Meta.Features.Watch.WatchResponse.EndedOnMail.get -> bool
 Aw.Meta.Features.Watch.WatchResponse.EndedOnMail.init -> void
 Aw.Meta.Features.LaneStopCheck.LaneStopCheckRequest.HookEvent.get -> string?
