@@ -130,7 +130,7 @@ Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `Re
 
 **Events.** `workflow.created`, `workflow.revised`, `workflow.activated`, `workflow.paused` and `workflow.archived` (payload `WorkflowChangedPayload`: workflow, slug, revision, spec hash, `By`). The write slices check the lease before they touch the store, then append the event through `WorkflowChangeLog` once the store accepts the change; `By` is `owner` or `session:<id>`. The app's "changed by session X" tag reads them.
 
-**Loop guard.** `workflow_run` refuses with `SND-GRAPH-109` (naming the run) when the calling session was launched by a run of the same workflow (`WorkflowLoopGuard`, `IGraphLaunchRuns`). Until PR 9's agent blocks record which launch belongs to which run, `NoGraphLaunchRuns` answers "none", so the guard cannot fire in production yet.
+**Loop guard.** `RunWorkflowService` refuses with `SND-GRAPH-109` (naming the run) on HTTP, CLI and MCP when the calling session was launched by a run of the same workflow (`WorkflowLoopRule`, `IGraphLaunchRuns`). Until PR 9's agent blocks record which launch belongs to which run, `NoGraphLaunchRuns` answers "none", so the guard cannot fire in production yet.
 
 ## Connection events
 
