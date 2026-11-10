@@ -55,8 +55,9 @@ internal sealed partial class WorkflowsPageViewModel
                 return;   // the view echoing what the name filled in is not an edit
             }
 
-            _slugEdited = true;
-            Set(ref _newSlug, value);
+            // Emptying the field gives it back to the name: the short id is derived from it again.
+            _slugEdited = value.Length > 0;
+            Set(ref _newSlug, _slugEdited ? value : WorkflowSlugs.From(_newName));
             ClearCreateError();
             NotifyCreate();
         }
