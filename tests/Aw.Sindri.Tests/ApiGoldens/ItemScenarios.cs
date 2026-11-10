@@ -31,7 +31,7 @@ internal static class ItemScenarios
         ("queue", "fixture"), ("queue", "empty"), ("queue", "stalled"), ("queue", "large"), ("queue", "session-scoped"), ("queue", "rebuilding"),
         ("items", "list-empty"), ("items", "list-open"), ("items", "list-state-done"), ("items", "list-repo"), ("items", "list-session-other-repo"), ("items", "list-bad-state"),
         ("items", "created"), ("items", "created-repo"), ("items", "created-link"), ("items", "invalid-title"), ("items", "unknown-repo"), ("items", "refused-origin"),
-        ("items-id", "new"), ("items-id", "needs-decision"), ("items-id", "after-decide"), ("items-id", "after-close"), ("items-id", "not-found"), ("items-id", "cancelled"), ("items-id", "alias"), ("items-id", "with-body"), ("items-id", "session-other-repo"), ("items-id", "bad-id"),
+        ("items-id", "new"), ("items-id", "needs-decision"), ("items-id", "after-decide"), ("items-id", "after-close"), ("items-id", "not-found"), ("items-id", "cancelled"), ("items-id", "alias"), ("items-id", "with-body"), ("items-id", "with-runs"), ("items-id", "session-other-repo"), ("items-id", "bad-id"),
         ("items-id-timeline", "fixture"), ("items-id-timeline", "page-2"), ("items-id-timeline", "closed"), ("items-id-timeline", "not-found"),
         ("items-id-close", "accepted"), ("items-id-close", "stale-version"), ("items-id-close", "accepted-cancelled"), ("items-id-close", "already-closed"), ("items-id-close", "not-found"),
         ("items-id-close", "while-stalled"), ("items-id-close", "while-rebuilding"),
@@ -186,6 +186,10 @@ internal static class ItemScenarios
             case "alias":
                 await AppendFor(host, id, EventTypes.ItemLinked, new ItemLinked(Command(0xb1), ItemId.From(id), RecordKey.From("linear:issue/abc-123"), ItemAlias.From("ENG-142")), "item.linked:golden:alias", ct);
                 id = "ENG-142";
+                break;
+            case "with-runs":
+                await AppendFor(host, id, EventTypes.ItemLinked, new ItemLinked(Command(0xb2), ItemId.From(id), RecordKey.From("sindri:run/nightly@1:1"), Alias: null), "item.linked:golden:run-1", ct);
+                await AppendFor(host, id, EventTypes.ItemLinked, new ItemLinked(Command(0xb3), ItemId.From(id), RecordKey.From("sindri:run/nightly@1:2"), Alias: null), "item.linked:golden:run-2", ct);
                 break;
             default:
                 break;   // 'new', 'with-body', 'session-other-repo'
