@@ -208,6 +208,7 @@ bash scripts/tests/heavy-full-reserve.test.sh   # heavy-meta-reserve is capped a
 bash scripts/tests/skill-lock.test.sh   # skills/_shared/skill-lock.sh called the way the skills document it (`LOCK_NAME=browser source skill-lock.sh; acquire_lock`, then release_lock): exit 0, the lock named, the file gone after release, and the default name
 bash scripts/tests/skill-lock-recovery.test.sh   # skill-lock.sh after a failed or abandoned call (#1989): an abandoned lock is taken over, a failed acquire leaves the holder's pid and none of its own, the next acquire gets the lock
 bash scripts/tests/skill-lock-sessions.test.sh   # skill-lock.sh called the way skills call it (#1991): acquire and release in separate Bash calls of one session, another session's acquire waits while the lock is held, a session that ends while holding it is taken over
+bash scripts/tests/skill-lock-portable.test.sh   # skills/_shared/skill-lock.sh has no bash 4 or GNU-only forms (mapfile, BASHPID, declare -A, sed -i, find -printf, stat -c, date -d, BASH_VERSINFO ...), so it runs on the macOS runner (#2534); SKILL_LOCK_FILE points the scan at another file
 bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/weeklyretro-shortlog.test.sh   # #1898: /weeklyRetro's `git shortlog` names a revision, so it lists authors with no terminal on stdin
 bash scripts/tests/canary-baseline-keys.test.sh   # #1896: every `baseline.<key>` /canary reads is a key /landAndDeploy writes to baseline.json
