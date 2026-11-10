@@ -278,7 +278,7 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string ConnectedOf(int connected, int total) => string.Create(CultureInfo.InvariantCulture, $"{connected} of {total} connected");
 
-    /// <summary>The tiles of the Connections page: services with a sign-in path.</summary>
+    /// <summary>The tiles of the Connections page: services with a sign-in path. A preset ships no client id (SND-CONN-007), and GitHub and Google also need the client secret at the token endpoint (TokenSet.ClientSecret), so those two ask for it; no preset flag says so, so the table does.</summary>
     internal static readonly (string Id, string Title, string Blurb, Connections.TileMode Mode)[] ConnectionTiles =
     [
         ("github", "GitHub", "Reviews and pull requests", Connections.TileMode.ClientIdAndSecret),
