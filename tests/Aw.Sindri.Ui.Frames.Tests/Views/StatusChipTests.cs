@@ -37,7 +37,7 @@ public sealed class StatusChipTests
             return (chip.Background, chip.BorderBrush, text.Foreground, chip.CornerRadius, chip.Bounds.Height, chip.BorderThickness);
         });
 
-        await OnUi(() =>
+        _ = await OnUi(() =>
         {
             Assert.Same(Token($"Brush.Status.{token}.Bg"), bg);
             Assert.Same(Token($"Brush.Status.{token}.Border"), border);
