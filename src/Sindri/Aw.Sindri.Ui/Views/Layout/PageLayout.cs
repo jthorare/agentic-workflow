@@ -15,16 +15,36 @@ internal static class PageLayout
     public static readonly AttachedProperty<PageTier> TierProperty =
         AvaloniaProperty.RegisterAttached<Control, Control, PageTier>("Tier", PageTier.Wide, inherits: true);
 
+    /// <summary>Reads the page region's width class under a control.</summary>
+    /// <param name="control">The control.</param>
+    /// <returns>The class.</returns>
+    internal static PageTier GetTier(Control control) => control.GetValue(TierProperty);
+
+    /// <summary>Reads whether the Repo column shows under a control.</summary>
+    /// <param name="control">The control.</param>
+    /// <returns>True when it does.</returns>
+    public static bool GetHasRepoColumn(Control control) => control.GetValue(HasRepoColumnProperty);
+
+    /// <summary>Sets whether the Repo column shows under a control.</summary>
+    /// <param name="control">The control.</param>
+    /// <param name="value">True when it shows.</param>
+    public static void SetHasRepoColumn(Control control, bool value) => control.SetValue(HasRepoColumnProperty, value);
+
     /// <summary>Sets the page region's width class on a control (and so on everything under it).</summary>
     /// <param name="control">The page region.</param>
     /// <param name="tier">The class.</param>
     internal static void SetTier(Control control, PageTier tier) => control.SetValue(TierProperty, tier);
 
+    /// <summary>Whether the Repo column has anything to show; the queue sets it from its rows, and the rows and the header read it.</summary>
+    public static readonly AttachedProperty<bool> HasRepoColumnProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, bool>("HasRepoColumn", defaultValue: true, inherits: true);
+
+    // Title, Repo, Status, Stage, Age, action. Narrower pages drop Stage, then Repo; Age never goes.
     private static readonly double[][] _widths =
     [
         [0, 150, 130, 110, 70, 260],
-        [0, 150, 130, 0, 0, 260],
-        [0, 0, 130, 0, 0, 260],
+        [0, 150, 130, 0, 70, 260],
+        [0, 0, 130, 0, 70, 260],
         [0, 0, 130, 0, 70, 170],
     ];
 
@@ -34,8 +54,13 @@ internal static class PageLayout
     /// <returns>The widths, title column first (0 for the star).</returns>
     internal static double[] Widths(PageTier tier, bool hasRepo)
     {
-        _ = hasRepo;   // red stub: the real rule follows
-        return [.. _widths[(int)tier]];
+        var widths = (double[])_widths[(int)tier].Clone();
+        if (!hasRepo)
+        {
+            widths[1] = 0;
+        }
+
+        return widths;
     }
 
     /// <summary>The class a page region of this width has.</summary>
@@ -47,9 +72,10 @@ internal static class PageLayout
     /// <summary>Sets a table's columns (the queue's header and rows) for a tier; the title column (0) stays a star, and a dropped column's cells are hidden.</summary>
     /// <param name="table">The grid with the six queue columns.</param>
     /// <param name="tier">The tier.</param>
-    internal static void Apply(Grid table, PageTier tier)
+    /// <param name="hasRepo">False when no shown row has a repo.</param>
+    internal static void Apply(Grid table, PageTier tier, bool hasRepo)
     {
-        var widths = _widths[(int)tier];
+        var widths = Widths(tier, hasRepo);
         for (var i = 0; i < table.ColumnDefinitions.Count; i++)
         {
             table.ColumnDefinitions[i].Width = i == 0 ? new GridLength(1, GridUnitType.Star) : new GridLength(widths[i]);

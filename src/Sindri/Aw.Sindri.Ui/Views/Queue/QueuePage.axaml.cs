@@ -23,9 +23,9 @@ internal sealed partial class QueuePage : UserControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == PageLayout.TierProperty && this.FindControl<Grid>("QueueHeader") is { } header)
+        if ((change.Property == PageLayout.TierProperty || change.Property == PageLayout.HasRepoColumnProperty) && this.FindControl<Grid>("QueueHeader") is { } header)
         {
-            PageLayout.Apply(header, change.GetNewValue<PageTier>());   // the same columns as the rows, so they line up
+            PageLayout.Apply(header, PageLayout.GetTier(this), PageLayout.GetHasRepoColumn(this));   // the same columns as the rows, so they line up
         }
     }
 

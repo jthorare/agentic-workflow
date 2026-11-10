@@ -28,7 +28,7 @@ public sealed class PageLayoutBandTests
     {
         var grid = SixColumns();
 
-        PageLayout.Apply(grid, PageTier.Tight);
+        PageLayout.Apply(grid, PageTier.Tight, hasRepo: true);
 
         Assert.Equal([true, false, true, false, true, true], grid.Children.Select(c => c.IsVisible));
         return true;
@@ -42,7 +42,7 @@ public sealed class PageLayoutBandTests
     {
         var grid = SixColumns();
 
-        PageLayout.Apply(grid, Enum.Parse<PageTier>(tier));
+        PageLayout.Apply(grid, Enum.Parse<PageTier>(tier), hasRepo: true);
 
         var fixedWidth = grid.ColumnDefinitions.Skip(1).Sum(c => c.Width.Value);
         Assert.True(width - fixedWidth >= 160, string.Create(CultureInfo.InvariantCulture, $"{tier}: the title column gets {width - fixedWidth} px"));

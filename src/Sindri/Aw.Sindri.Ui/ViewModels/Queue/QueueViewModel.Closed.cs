@@ -19,6 +19,9 @@ internal sealed partial class QueueViewModel
     /// <summary>"Closed" before the first read, then "Closed (3)".</summary>
     public string ClosedHeader { get; private set => Set(ref field, value); } = Labels.ClosedHeader(count: null);
 
+    // The queue's size when the closed items were last read: a refresh that finds another size reads them again.
+    private int _closedTotal = -1;
+
     /// <summary>The closed items, newest first; they carry no actions.</summary>
     public ObservableCollection<ItemRowViewModel> ClosedRows { get; } = [];
 
@@ -29,11 +32,18 @@ internal sealed partial class QueueViewModel
     internal async Task ToggleClosed(Uri url, CancellationToken cancellationToken)
     {
         IsClosedOpen = !IsClosedOpen;
+        Columns();
         if (!IsClosedOpen || _closedRead)
         {
             return;
         }
 
+        await ReadClosed(url, cancellationToken).ConfigureAwait(true);
+    }
+
+    // Reads done and cancelled; both failing leaves the fold as it was, so the next try reads again.
+    private async Task ReadClosed(Uri url, CancellationToken cancellationToken)
+    {
         var done = await api.ListItems(url, "done", cancellationToken).ConfigureAwait(true);
         var cancelled = await api.ListItems(url, "cancelled", cancellationToken).ConfigureAwait(true);
         if (done.IsError && cancelled.IsError)
@@ -42,9 +52,16 @@ internal sealed partial class QueueViewModel
         }
 
         _closedRead = true;
+        _closedTotal = Total;
         var now = clock.GetUtcNow();
         var items = (done.IsSuccess ? done.Value.Items : []).Concat(cancelled.IsSuccess ? cancelled.Value.Items : []).OrderByDescending(i => i.Since);
         Patch.To(ClosedRows, [.. items.Select(i => new ItemRowViewModel(i, "closed", primaryAction: null, now))]);
         ClosedHeader = Labels.ClosedHeader(ClosedRows.Count);
+        ShowsClosed = ClosedRows.Count > 0;
+        Columns();
     }
+
+    // After a refresh: learn whether there is anything closed, so the fold is hidden when there is not.
+    private Task LearnClosed(Uri url, CancellationToken cancellationToken) =>
+        _closedRead && _closedTotal == Total ? Task.CompletedTask : ReadClosed(url, cancellationToken);
 }
