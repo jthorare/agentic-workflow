@@ -79,7 +79,7 @@ internal sealed class ConnectionsText
     /// <summary><see cref="Labels.ConnectionMore"/>.</summary>
     public string More { get; } = Labels.ConnectionMore;
 
-    /// <summary><see cref="Labels.ConnectionClientLabel"/> for a tile.</summary>
+    /// <summary>The label of a tile's client id field.</summary>
     public string TileClientLabel { get; } = "Client id";
 
     /// <summary>The label of a tile's client secret field.</summary>

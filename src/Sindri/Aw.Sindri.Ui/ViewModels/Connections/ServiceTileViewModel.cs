@@ -1,5 +1,3 @@
-using Aw.Sindri.Ui.Api.Connections;
-
 namespace Aw.Sindri.Ui.ViewModels.Connections;
 
 /// <summary>
@@ -7,7 +5,7 @@ namespace Aw.Sindri.Ui.ViewModels.Connections;
 /// provider needs a client id asks for it on the tile; Slack has no browser sign-in, so its tile takes a pasted token. Once connected the tile shows the account, last use,
 /// a status chip and a menu with Reconnect and Disconnect. A failed or cancelled sign-in shows on the tile with Try again. A pasted token goes into one request and is gone.
 /// </summary>
-internal sealed class ServiceTileViewModel : ObservableObject
+internal sealed partial class ServiceTileViewModel : ObservableObject
 {
     private const string DefaultLabel = "work";
 
@@ -284,14 +282,6 @@ internal sealed class ServiceTileViewModel : ObservableObject
         {
             ErrorText = row.NoteText;
         }
-    }
-
-    private AddConnectionBody Body()
-    {
-        var name = Service.Id + ":" + DefaultLabel;
-        return Service.Mode == TileMode.Token
-            ? new AddConnectionBody(name, Preset: null, Kind: "rest", Client: null, KeyEnv: null, Scopes: [], Wait: false, Key: Token.Take())
-            : new AddConnectionBody(name, Service.Id, Kind: null, ClientId.Trim(), KeyEnv: null, Scopes: [], Wait: false, ClientSecret: ClientSecret.Take());
     }
 
     private void Raise(params string[] names)
