@@ -30,21 +30,77 @@ internal sealed class ResourceFiles(string root, int entryCap = DiskMeter.FileCa
 
     public Result<int> Purge(ResourceOwner owner)
     {
+        var staged = Stage(owner);
+        return staged.IsError ? staged.Error : staged.Value.Delete();
+    }
+
+    public Result<IStagedPurge> Stage(ResourceOwner owner)
+    {
         ArgumentNullException.ThrowIfNull(owner);
         var folder = Folder(owner);
         if (!Directory.Exists(folder))
         {
-            return 0;
+            return Results.Success<IStagedPurge>(new StagedFolder(owner, folder, aside: null, count: 0));
         }
 
-        var count = Entries(owner).Count();
+        var count = new DirectoryInfo(folder).EnumerateFileSystemInfos().Count(static e => e.LinkTarget is null);
+        var aside = Path.Combine(Root, $".purging-{Guid.NewGuid():N}");
+        try
+        {
+            // why: one rename takes the folder out of the listing; a run that starts after it provisions a fresh folder at the old path
+            Directory.Move(folder, aside);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return SindriErrors.ResourcePurgeFailed.With($"Could not move '{owner.Folder}' aside to purge it: {e.Message}");
+        }
 
-        // why: Directory.Delete(recursive) removes a symlink inside the folder as a link and never follows it
-        Directory.Delete(folder, recursive: true);
-        return count;
+        return Results.Success<IStagedPurge>(new StagedFolder(owner, folder, aside, count));
     }
 
-    public Result<IStagedPurge> Stage(ResourceOwner owner) => throw new NotSupportedException();
+    private sealed class StagedFolder(ResourceOwner owner, string folder, string? aside, int count) : IStagedPurge
+    {
+        public int Count { get; } = count;
+
+        public Result<int> Delete()
+        {
+            if (aside is null)
+            {
+                return 0;
+            }
+
+            try
+            {
+                // why: Directory.Delete(recursive) removes a symlink inside the folder as a link and never follows it
+                Directory.Delete(aside, recursive: true);
+                return Count;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                var put = Restore();
+                var where = put.IsError ? $"; what is left is at '{aside}'" : string.Empty;
+                return SindriErrors.ResourcePurgeFailed.With($"Could not delete '{owner.Folder}': {e.Message}{where}");
+            }
+        }
+
+        public Result<int> Restore()
+        {
+            if (aside is null)
+            {
+                return 0;
+            }
+
+            try
+            {
+                Directory.Move(aside, folder);
+                return Count;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                return SindriErrors.ResourcePurgeFailed.With($"Could not put '{owner.Folder}' back; it is at '{aside}': {e.Message}");
+            }
+        }
+    }
 
     private string Folder(ResourceOwner owner) => Path.GetFullPath(Path.Combine(Root, owner.Folder));
 
@@ -91,7 +147,7 @@ internal sealed class ResourceFiles(string root, int entryCap = DiskMeter.FileCa
             if (entry is DirectoryInfo dir)
             {
                 var used = DiskMeter.Check(dir.Name, dir.FullName, long.MaxValue, entryCap);
-                yield return new ResourceEntry(owner, ResourceKind.Disk, dir.Name, used.IsSuccess ? used.Value : 0, dir.FullName);
+                yield return new ResourceEntry(owner, ResourceKind.Disk, dir.Name, used.IsSuccess ? used.Value : 0, dir.FullName, unmeasured: used.IsError);
             }
             else if (entry is FileInfo file && file.Name.EndsWith(DatabaseSuffix, StringComparison.Ordinal))
             {

@@ -60,4 +60,4 @@ for any disk at 90% of its size or more.
 
 ## Errors
 
-`SND-RES-001` to `SND-RES-007`: see docs/sindri/errors.md.
+`SND-RES-001` to `SND-RES-008`: see docs/sindri/errors.md.

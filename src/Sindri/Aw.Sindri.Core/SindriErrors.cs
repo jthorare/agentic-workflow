@@ -285,7 +285,7 @@ public static partial class SindriErrors
         ConnectionRateLimited, ConnectionProviderChanged, ConnectionCursorRejected, ConnectionRunIdsHeld,
         InboxContractViolation, InboxClaimLost, InboxOfferGone, InboxSubmitFailed, InboxUnavailable, InboxHostNotAllowed,
         MemoryNotFound, MemoryNameTaken, MemoryFactInvalid, MemoryEmbedUnavailable, MemoryMatchLevelInvalid, MemoryNameInvalid, MemoryExpiryPast,
-        ResourceDiskOverSize, ResourceNameClash, ResourcePurgeRefused, ResourcePathEscapes, ResourceSandboxOverCap, ResourceInvalid, ResourceDiskUnmeasured,
+        ResourceDiskOverSize, ResourceNameClash, ResourcePurgeRefused, ResourcePathEscapes, ResourceSandboxOverCap, ResourceInvalid, ResourceDiskUnmeasured, ResourcePurgeFailed,
         GraphCallDepth, GraphSelfStart, GraphHttpRefused, GraphHttpFailed,
         .. EveryTodo(),
     ];
