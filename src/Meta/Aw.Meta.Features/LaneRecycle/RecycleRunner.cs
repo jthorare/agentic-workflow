@@ -90,7 +90,7 @@ internal sealed class RecycleRunner(PaneSubmitter pane, ILaneSessions sessions, 
         var settled = new List<string>();
         foreach (var message in all.Value.Where(m => m.At <= started
             && string.Equals(m.FromName, plan.Session, StringComparison.OrdinalIgnoreCase)
-            && m.Resolution is null
+            && (m.Resolution is null || (m.Resolution is { Kind: MessageResolutionKind.Deferred } && !InboxState.IsDeferred(m, now)))
             && !NoticeRule.IsNotice(m.Body)
             && m.Body.Contains("recycle", StringComparison.OrdinalIgnoreCase)))
         {

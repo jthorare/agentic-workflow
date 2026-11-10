@@ -125,4 +125,32 @@ public sealed class RecycleSettlesRequestTests
         Assert.Equal(MessageResolutionKind.Dismissed, (await Stored("m-ask")).Resolution?.Kind);
         Assert.Null((await Stored("m-ui")).Resolution);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_request_whose_deferral_has_run_out_is_open_again_and_is_settled()
+    {
+        await Ready();
+        await Receive("m-ask", "t1-api", Ask);
+        _ = await _world.Messages.Resolve(MessageId.From("m-ask"), new MessageResolution(MessageResolutionKind.Deferred, "later", _world.Clock.GetUtcNow().AddMinutes(-1)), CancellationToken.None);
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["m-ask"], result.Value.SettledMessages);
+        Assert.Equal(MessageResolutionKind.Dismissed, (await Stored("m-ask")).Resolution?.Kind);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_request_whose_deferral_is_still_running_stays_deferred()
+    {
+        await Ready();
+        await Receive("m-ask", "t1-api", Ask);
+        _ = await _world.Messages.Resolve(MessageId.From("m-ask"), new MessageResolution(MessageResolutionKind.Deferred, "later", _world.Clock.GetUtcNow().AddHours(2)), CancellationToken.None);
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.SettledMessages);
+        Assert.Equal(MessageResolutionKind.Deferred, (await Stored("m-ask")).Resolution?.Kind);
+    }
 }
