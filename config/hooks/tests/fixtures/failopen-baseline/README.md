@@ -9,7 +9,7 @@ logging is logging only.
 If a hook's **decision** changes on purpose later, copy the new hook here in the same PR, so the
 baseline keeps tracking "the hook without its fail-open logging".
 
-`meta-stop-gate.sh` and `meta-outbox.sh` were written with fail-open logging from the start; their baseline copies are
+`meta-stop-gate.sh`, `meta-outbox.sh` and `meta-board-line.sh` were written with fail-open logging from the start; their baseline copies are
 the same hooks with `failopen()` reduced to a no-op.
 
 `sindri-tasks.sh` has no fail-open logging at all; its baseline copy is the hook itself.

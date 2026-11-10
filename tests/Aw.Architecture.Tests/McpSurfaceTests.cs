@@ -43,6 +43,8 @@ public sealed class McpSurfaceTests
         typeof(CreateMemoryRequest).FullName!,
         typeof(WriteMemoryFactRequest).FullName!,
         typeof(ForgetMemoryFactRequest).FullName!,
+        // why: agent parity (G8, agent-first PR 14): resources_purge reaches PurgeResources, Desk class with SessionOk; the service still refuses an active owner or a run in flight (SND-RES-003)
+        "Aw.Sindri.Features.PurgeResources.PurgeResourcesRequest",   // internal to Features (no public API rows for one slice), so named by its full name
         // why: todo spec D2 (Ph1b): a todo list can't change anything outside Sindri, so agents get the six todo writes (add, change, done, reopen, remove, restore), all request class; MarkTodoRequest carries the last four
         typeof(AddTodoRequest).FullName!,
         typeof(ChangeTodoRequest).FullName!,

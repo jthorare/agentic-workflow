@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-RES-003",
+  "status": 409,
+  "detail": "workflow 'morning-check' is active; turn it off or archive it, then purge workflow:morning-check",
+  "traceId": "<trace>"
+}

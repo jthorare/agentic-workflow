@@ -48,6 +48,7 @@ public sealed class WriteAttributionTests
         ["POST /sindri/memories/{name}/facts"] = AuditOnlyReason,
         ["DELETE /sindri/memories/{name}/facts"] = AuditOnlyReason,
         ["DELETE /sindri/connections/{name}"] = AuditOnlyReason,
+        ["POST /sindri/resources/purge"] = AuditOnlyReason,
         ["POST /sindri/connections/{name}/signin"] = AuditOnlyReason,
         ["POST /sindri/handoff"] = "the golden scenarios send it as the human; a launched session's handoff is proven by HandoffEndpointTests.A_launched_session_hands_off_without_the_human_token_and_keeps_its_actor (item.handoff's actor is session:launch:<id>)",
     };

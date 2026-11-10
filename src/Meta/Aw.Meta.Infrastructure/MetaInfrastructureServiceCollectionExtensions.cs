@@ -34,12 +34,7 @@ public static class MetaInfrastructureServiceCollectionExtensions
                 ? new LaneHealthOptions(TimeSpan.FromMinutes(limit))
                 : LaneHealthOptions.Default)
             .AddSingleton(sp => new MetaDatabase(MetaDatabase.OptionsFor(settings.StateDirectory), sp.GetRequiredService<TimeProvider>()))
-            .AddScoped<IMessageStore, SqliteMessageStore>()
-            .AddScoped<ILaneStore, SqliteLaneStore>()
-            .AddScoped<IOwnerStore, SqliteOwnerStore>()
-            .AddScoped<IGateStore, SqliteGateStore>()
-            .AddScoped<IKeyValueStore, SqliteKeyValueStore>()
-            .AddScoped<ILaneMail, SqliteLaneMail>()
+            .AddSqliteStores()
             .AddScoped<IMetaConfig>(sp => new FileMetaConfig(settings.ConfigPath, new JsonSerializerOptions(sp.GetRequiredService<JsonSerializerOptions>()) { WriteIndented = true }))
             .AddSingleton<ITranscriptReader, FileTranscriptReader>()
             .AddScoped<ILaneSessions>(sp => new PaneLaneSessions(sp.GetRequiredService<ILanePane>(), sp.GetRequiredService<IProcessTable>(), settings.SessionsDirectory))
@@ -65,6 +60,15 @@ public static class MetaInfrastructureServiceCollectionExtensions
                 return config.IsSuccess && config.Value.Log is { Length: > 0 } log ? log : Path.Combine(settings.StateDirectory, DefaultLogFile);
             }));
     }
+
+    private static IServiceCollection AddSqliteStores(this IServiceCollection services) => services
+        .AddScoped<IMessageStore, SqliteMessageStore>()
+        .AddScoped<ILaneStore, SqliteLaneStore>()
+        .AddScoped<IOwnerStore, SqliteOwnerStore>()
+        .AddScoped<IGateStore, SqliteGateStore>()
+        .AddScoped<IKeyValueStore, SqliteKeyValueStore>()
+        .AddScoped<IBoardStore, SqliteBoardStore>()
+        .AddScoped<ILaneMail, SqliteLaneMail>();
 
     // Codex's own files, read-only: its session rollouts and its model list.
     private static IServiceCollection AddCodexFiles(this IServiceCollection services, string home) =>

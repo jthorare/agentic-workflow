@@ -22211,3 +22211,13 @@ Aw.Sindri.Core.Graph.Blocks.WaitBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Blocks.WaitBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
 Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Resources.IResourceFiles
+Aw.Sindri.Core.Resources.IResourceFiles.List(Aw.Sindri.Core.Resources.ResourceOwner? owner) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>!>!
+Aw.Sindri.Core.Resources.IResourceFiles.Purge(Aw.Sindri.Core.Resources.ResourceOwner! owner) -> Aw.Kernel.Result<int>!
+Aw.Sindri.Core.Resources.ResourceEntry
+Aw.Sindri.Core.Resources.ResourceEntry.Kind.get -> Aw.Sindri.Core.Resources.ResourceKind
+Aw.Sindri.Core.Resources.ResourceEntry.Name.get -> string!
+Aw.Sindri.Core.Resources.ResourceEntry.Owner.get -> Aw.Sindri.Core.Resources.ResourceOwner!
+Aw.Sindri.Core.Resources.ResourceEntry.Path.get -> string!
+Aw.Sindri.Core.Resources.ResourceEntry.ResourceEntry(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceKind kind, string! name, long sizeBytes, string! path) -> void
+Aw.Sindri.Core.Resources.ResourceEntry.SizeBytes.get -> long

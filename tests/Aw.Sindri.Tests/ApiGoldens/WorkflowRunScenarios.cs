@@ -24,7 +24,7 @@ internal static class WorkflowRunScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("workflows-slug-runs", "unknown-workflow"), ("workflows-slug-runs", "bad-slug"), ("workflows-slug-runs", "not-active"), ("workflows-slug-runs", "bad-payload"),
+        ("workflows-slug-runs", "unknown-workflow"), ("workflows-slug-runs", "bad-slug"), ("workflows-slug-runs", "not-active"), ("workflows-slug-runs", "bad-payload"), ("workflows-slug-runs", "empty-body"),
         ("workflow-runs-run-cancel", "not-found"), ("workflow-runs-run-cancel", "bad-id"), ("workflow-runs-run-cancel", "already-ended"), ("workflow-runs-run-cancel", "cancelled"),
         (AnswerSlug, "not-found"), (AnswerSlug, "bad-id"), (AnswerSlug, "already-ended"), (AnswerSlug, "answered"),
     ];
@@ -58,6 +58,10 @@ internal static class WorkflowRunScenarios
             case ("workflows-slug-runs", "not-active"):
                 await Create(host, activate: false, ct);
                 return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", json: null, human));
+            case ("workflows-slug-runs", "empty-body"):
+                // why: a body that leaves 'payload' out reaches the service (#2493); before, binding refused it with a bodiless 400
+                await Create(host, activate: false, ct);
+                return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", "{}", human));
             case ("workflows-slug-runs", "bad-payload"):
                 await Create(host, activate: true, ct);
                 return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", "{\"payload\":\"[1, 2]\"}", human));
