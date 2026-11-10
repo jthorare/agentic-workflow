@@ -124,9 +124,11 @@ Aw.Meta.Features.Inbox.ListInboxRequest
 Aw.Meta.Features.Inbox.ListInboxRequest.<Clone>$() -> Aw.Meta.Features.Inbox.ListInboxRequest!
 Aw.Meta.Features.Inbox.ListInboxRequest.All.get -> bool
 Aw.Meta.Features.Inbox.ListInboxRequest.All.init -> void
-Aw.Meta.Features.Inbox.ListInboxRequest.Deconstruct(out bool All) -> void
+Aw.Meta.Features.Inbox.ListInboxRequest.Deconstruct(out bool All, out bool Once) -> void
 Aw.Meta.Features.Inbox.ListInboxRequest.Equals(Aw.Meta.Features.Inbox.ListInboxRequest? other) -> bool
-Aw.Meta.Features.Inbox.ListInboxRequest.ListInboxRequest(bool All) -> void
+Aw.Meta.Features.Inbox.ListInboxRequest.ListInboxRequest(bool All, bool Once = false) -> void
+Aw.Meta.Features.Inbox.ListInboxRequest.Once.get -> bool
+Aw.Meta.Features.Inbox.ListInboxRequest.Once.init -> void
 Aw.Meta.Features.Inbox.ListInboxResponse
 Aw.Meta.Features.Inbox.ListInboxResponse.<Clone>$() -> Aw.Meta.Features.Inbox.ListInboxResponse!
 Aw.Meta.Features.Inbox.ListInboxResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Features.Inbox.InboxItem!>! Items) -> void
