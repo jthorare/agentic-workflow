@@ -203,6 +203,7 @@ public sealed class WorkflowsEditorSheetTests
         _ = ServeRevision(3);   // what the save makes Sindri hold
         await page.Save(Token);
         Assert.Equal(3, page.Runs.Shown!.LatestRevision);   // the page shows the revision the save made
+        page.CloseEditor();   // graph edits wait for the sheet to close
 
         await page.GraphEdit.BeginAdd(Token);
         await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
