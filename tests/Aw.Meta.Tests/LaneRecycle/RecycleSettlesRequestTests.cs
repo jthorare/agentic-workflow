@@ -160,6 +160,41 @@ public sealed class RecycleSettlesRequestTests
         Assert.False(stop.Blocked);
     }
 
+    // Ideas' review of #2679: lanes write the line with a colon, a dash, a STATUS:/ACTION: tag or a sender prefix; each still names the digest.
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("DIGEST READY: /home/x/digests/t1-api-2026-10-17.md")]
+    [InlineData("DIGEST READY - `/home/x/digests/t1-api-2026-10-17.md`.")]
+    [InlineData("DIGEST READY \u2014 /home/x/digests/t1-api-2026-10-17.md")]
+    [InlineData("STATUS: DIGEST READY ~/digests/t1-api-2026-10-17.md")]
+    [InlineData("ACTION: DIGEST READY t1-api-2026-10-17.md")]
+    [InlineData("api -> meta: DIGEST READY /home/x/digests/t1-api-2026-10-17.md")]
+    [InlineData("api -> meta: STATUS: DIGEST READY: ~/digests/t1-api-2026-10-17.md (context 300k)")]
+    public async Task A_DIGEST_READY_written_with_a_colon_dash_tag_or_sender_prefix_is_settled(string body)
+    {
+        await Ready();
+        await Receive("m-form", "t1-api", body);
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal(["m-form"], result.Value.SettledMessages);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("DIGEST READY: /other/t1-api-2026-10-17.md")]
+    [InlineData("STATUS: DIGEST READY ~/other/t1-api-2026-10-17.md")]
+    [InlineData("api -> meta: DIGEST READY t1-api-2026-10-16.md")]
+    public async Task A_tagged_or_prefixed_DIGEST_READY_for_another_path_stays_open(string body)
+    {
+        await Ready();
+        await Receive("m-form", "t1-api", body);
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.SettledMessages);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_DIGEST_READY_for_the_same_file_name_on_another_path_stays_open()
     {

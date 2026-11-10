@@ -88,18 +88,20 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
 
     private const string DigestReady = "DIGEST READY";
 
-    // A DIGEST READY line asks for this recycle when it names no path or names this digest; one for another path stays open
-    // (#2647). Any other line asks for it only when it holds the digest's full path.
+    // A DIGEST READY line (after an optional `<lane> -> <lane>:` prefix and STATUS:/ACTION: tag, as the classifier reads it)
+    // asks for this recycle when it names no path or names this digest; one for another path stays open (#2647). Any other
+    // line asks for it only when it holds the digest's full path.
     private static bool AsksForThisRecycle(string body, string digest)
     {
-        var text = body.TrimStart();
+        var text = NoticeRule.StripTag(NoticeRule.StripSender(body.Trim()));
         if (!text.StartsWith(DigestReady, StringComparison.OrdinalIgnoreCase))
         {
             return digest.Length > 0 && body.Contains(digest, StringComparison.Ordinal);
         }
 
-        var rest = text[DigestReady.Length..].Trim();
-        var named = rest.Split((char[]?)null, 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim('`', '"', '\'') ?? string.Empty;
+        // "DIGEST READY: <path>", "DIGEST READY - <path>" and "DIGEST READY (<path>)." name the path too.
+        var rest = text[DigestReady.Length..].TrimStart(':', '-', '\u2014', '\u2013', ' ', '\t');
+        var named = rest.Split((char[]?)null, 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.TrimEnd('.', ',', ';', ':').Trim('`', '"', '\'', '(', ')', '<', '>').TrimEnd('.', ',', ';', ':') ?? string.Empty;
         return named.Length == 0 || NamesDigest(named, digest);
     }
 

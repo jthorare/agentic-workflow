@@ -2444,6 +2444,7 @@ const Aw.Meta.Core.KvKeys.BoardSeenPrefix = "board.seen." -> string!
 Aw.Meta.Core.Messages.NoticeRule
 static Aw.Meta.Core.Messages.NoticeRule.IsNotice(string! body) -> bool
 static Aw.Meta.Core.Messages.NoticeRule.IsStatusTagged(string! body) -> bool
+static Aw.Meta.Core.Messages.NoticeRule.StripSender(string! text) -> string!
 static Aw.Meta.Core.Messages.NoticeRule.StripTag(string! text) -> string!
 static Aw.Meta.Core.Messages.NoticeRule.UntaggedIsStatus.get -> bool
 const Aw.Meta.Core.Messages.InboxState.Settled = "settled" -> string!
