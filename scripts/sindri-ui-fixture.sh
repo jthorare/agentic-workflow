@@ -84,6 +84,20 @@
 #                                  drop the hold and resume the service first; every other state removes the index file again;
 #                                  pause and resume only toggle the service
 #
+#   sindri-ui-fixture.sh linear-catchup [empty|typical|error|read-error]
+#                                  the Work > Linear "Since you last looked" strip (Linear hub spec 3, #2536; run after 'context up'; needs
+#                                  the migrations through 0036). Seeds 25 SPL issues (audience linear:SPL, ids fxc-N, 3+ projects, priorities
+#                                  1 to 4, titles up to 85 characters, 12 over 60) into <home>/context/context.db: linear_issue, linear_issue_change
+#                                  (assignments to the viewer and state moves with names, via 'feed') and linear_comment (5 comments that
+#                                  @-mention the viewer), 37 strip rows in all, spread over the last 71 hours, 10 issues with 2 or 3 of them.
+#                                  typical (default) clears the marker; empty sets the marker to now (nothing new); error records a failed
+#                                  Linear sync on the feed's source_cursor row (source 'linear', repo 'records': last_error SND-CONTEXT-071,
+#                                  failures 3, last_sync 4 minutes ago, last_error_text 'Linear refused the key (401)'), rows kept: the
+#                                  Reconnect card; read-error renames linear_issue_change so the strip's stored read fails (it says it could
+#                                  not read, with Retry). The other states put the cursor and the table back. The marker lives in
+#                                  <home>/ui/preferences.json (linearSince): restart the app after a run, it keeps preferences in memory.
+#                                  Idempotent: a repeat replaces the fxc rows and puts a renamed table back; 'projects' leaves them alone
+#
 #   sindri-ui-fixture.sh projects  (run after 'context up')
 #                                  the Projects page's data (projects page spec 4.1, 5, 12 Ph5, 13.1): seeds six Linear projects into
 #                                  <home>/context/context.db (source_record, record_link; source 'linear-projects', audience linear:SPL, a
@@ -799,6 +813,149 @@ UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;
   fi
 }
 
+# --- linear-catchup: the Work > Linear "Since you last looked" strip (Linear hub spec §3; #2536) ---
+# The strip reads linear_issue_change (assignments to the viewer and state moves on the viewer's issues, via 'feed') and linear_comment (an
+# '@' mention by someone else) after the marker held in <home>/ui/preferences.json (linearSince); no marker reads from the start of the store.
+LC_TEAM_ID="fxc-team"
+LC_SQL_BAK="linear_issue_change_fxc_off"
+lc_prefs() { printf '%s\n' "$AW_SINDRI_HOME/ui/preferences.json"; }
+
+# The strip's marker for an instant ($1: seconds since the epoch): 'lin_' and the UTC ticks as 16 hex digits (LinearSinceMarkers.Format).
+lc_marker() { printf 'lin_%016x' $(($1 * 10000000 + 621355968000000000)); }
+
+# Sets or clears linearSince in the preferences file ($1: a marker, or '' to clear). The app rewrites the file from memory when it saves: restart it after this.
+lc_set_marker() {
+  local f dir
+  f="$(lc_prefs)"
+  dir="$(dirname "$f")"
+  need jq
+  if [ -n "$1" ]; then
+    mkdir -p "$dir" || die "linear-catchup: can't make $dir"
+    if [ -f "$f" ]; then jq --arg m "$1" '.linearSince = $m' "$f" > "$f.new" || die "linear-catchup: $f is not JSON"; else jq -n --arg m "$1" '{version: 1, linearSince: $m}' > "$f.new"; fi
+    chmod 600 "$f.new"; mv "$f.new" "$f"
+  elif [ -f "$f" ]; then
+    jq 'del(.linearSince)' "$f" > "$f.new" || die "linear-catchup: $f is not JSON"
+    chmod 600 "$f.new"; mv "$f.new" "$f"
+  fi
+}
+
+# One issue, its events and its mention, appended to $lc_sql. $1 number, $2 project, $3 priority, $4 assignee ('viewer' or 'other'), $5 title, $6... events:
+# A@H (assigned to the viewer H hours ago), S:Old>New@H (a state move), M@H (someone else's comment that @-mentions the viewer).
+lc_issue() {
+  local n="$1" project="$2" prio="$3" who="$4" title="$5" key id assignee ev state_name state_type updated=0 old new h
+  shift 5
+  key="linear:issue/fxc-$n"
+  id="$PROJECTS_TEAM-$((200 + n))"
+  assignee="fx-other"; [ "$who" = viewer ] && assignee="$PROJECTS_VIEWER"
+  for ev in "$@"; do h="${ev##*@}"; if [ "$updated" -eq 0 ] || [ "$h" -lt "$updated" ]; then updated="$h"; fi; done
+  state_name="Todo"; state_type="unstarted"
+  for ev in "$@"; do
+    case "$ev" in S:*) new="${ev#S:*>}"; new="${new%@*}"; state_name="$new" ;; esac   # the last state move listed is the issue's current state
+  done
+  case "$state_name" in "In Progress" | "In Review") state_type="started" ;; Done) state_type="completed" ;; Backlog) state_type="backlog" ;; esac
+  lc_sql+="INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
+    VALUES ('$key', 'linear', 'issue', NULL, '$PROJECTS_AUDIENCE', '$title', 'https://linear.app/fixture/issue/$id', 'Dana Okafor', '$([ "$state_type" = completed ] && echo done || echo open)', '$state_name', $(projects_ts '-20 days'), $(projects_ts "-$updated hours"), NULL, 'fixture', 'fixture-lc-$n', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
+INSERT INTO linear_issue (key, team_id, identifier, state_id, state_type, assignee_id, priority, estimate, cycle_id, project_id, parent_id, labels, due_date, sort_order, updated_at, description, state_name)
+    VALUES ('$key', '$LC_TEAM_ID', '$id', 'st-$(printf '%s' "$state_name" | tr 'A-Z ' 'a-z-')', '$state_type', '$assignee', $prio, NULL, NULL, 'fxc-$project', NULL, '[]', NULL, $n, $(projects_ts "-$updated hours"), NULL, '$state_name');
+"
+  for ev in "$@"; do
+    h="${ev##*@}"
+    case "$ev" in
+      A@*) lc_sql+="INSERT INTO linear_issue_change (issue_key, field, \"old\", \"new\", at, via, old_name, new_name) VALUES ('$key', 'assignee', NULL, '$PROJECTS_VIEWER', $(projects_ts "-$h hours"), 'feed', NULL, NULL);
+" ;;
+      S:*) old="${ev#S:}"; old="${old%%>*}"; new="${ev#*>}"; new="${new%@*}"
+        lc_sql+="INSERT INTO linear_issue_change (issue_key, field, \"old\", \"new\", at, via, old_name, new_name) VALUES ('$key', 'state', 'st-$(printf '%s' "$old" | tr 'A-Z ' 'a-z-')', 'st-$(printf '%s' "$new" | tr 'A-Z ' 'a-z-')', $(projects_ts "-$h hours"), 'feed', '$old', '$new');
+" ;;
+      M@*) lc_sql+="INSERT INTO linear_comment (id, issue_key, author_id, created_at, body, sindri) VALUES ('fxc-c-$n', '$key', 'fx-dana', $(projects_ts "-$h hours"), '@$PROJECTS_VIEWER_NAME can you look at this one before Thursday?', 0);
+" ;;
+    esac
+  done
+}
+
+# Linear reads as connected only when the profile names a token pointer (LinearSettings: no pointer, no feed, so the page shows
+# "Linear isn't connected"). The pointer names an env var nothing sets and the url is a dead loopback port, so a tick (none runs in
+# this fixture: its only service is the heartbeat) could never reach Linear. Written once, on the profile's Linear line.
+lc_connect() {
+  local profile
+  profile="$(profile_path)"
+  grep -q 'linear: { teams: \[.*token:' "$profile" && return 0
+  sed "s|linear: { teams: \[$PROJECTS_TEAM\] }|linear: { teams: [$PROJECTS_TEAM], token: \"env:FIXTURE_LINEAR_KEY\", url: \"http://127.0.0.1:9/graphql\" }|" "$profile" > "$profile.new" \
+    && mv "$profile.new" "$profile" || die "linear-catchup: can't add the Linear token pointer to $profile"
+  grep -q 'token: "env:FIXTURE_LINEAR_KEY"' "$profile" || die "linear-catchup: the profile's Linear line isn't 'linear: { teams: [$PROJECTS_TEAM] }'; add a token pointer to it by hand"
+}
+
+linear_catchup() {
+  local mode="${1:-typical}" db now
+  case "$mode" in empty | typical | error | read-error) ;; *) die "linear-catchup: '$mode' is not a state (empty, typical, error, read-error)" ;; esac
+  need_sql
+  need jq
+  db="$(context_db)"
+  [ -f "$db" ] || die "no context store at $db: run 'context up' first"
+  sql_on "$db" "SELECT 1 FROM linear_issue_change LIMIT 1" >/dev/null 2>&1 \
+    || sql_on "$db" "SELECT 1 FROM $LC_SQL_BAK LIMIT 1" >/dev/null 2>&1 \
+    || die "the context store at $db has no linear_issue_change table (migrations 0032 and 0036): rebuild sindri and run 'context up' first"
+  sql_on "$db" "SELECT state_name FROM linear_issue LIMIT 1" >/dev/null 2>&1 || die "the context store at $db has no linear_issue.state_name (migration 0036): rebuild sindri and run 'context up' first"
+  projects_profile || return
+  lc_connect
+
+  # An 'error' run left the changes table renamed: put it back before anything else.
+  sql_on "$db" "SELECT 1 FROM $LC_SQL_BAK LIMIT 1" >/dev/null 2>&1 && { sql_on "$db" "ALTER TABLE $LC_SQL_BAK RENAME TO linear_issue_change" >/dev/null || die "linear-catchup: can't restore linear_issue_change"; }
+
+  local lc_sql="DELETE FROM linear_comment WHERE issue_key LIKE 'linear:issue/fxc-%';
+DELETE FROM linear_issue_change WHERE issue_key LIKE 'linear:issue/fxc-%';
+DELETE FROM linear_issue WHERE key LIKE 'linear:issue/fxc-%';
+DELETE FROM source_record WHERE key LIKE 'linear:issue/fxc-%';
+"
+  # 25 issues, 37 events (32 changes and 5 mentions), the oldest 71 hours ago. Issues 1, 8, 11, 17, 24 and others carry two or three events.
+  lc_issue 1  checkout   1 viewer 'Retry failed card captures when the payment provider times out' 'A@70' 'S:Todo>In Progress@50' 'S:In Progress>In Review@6'
+  lc_issue 2  checkout   2 viewer 'Checkout form shows a stale total after a coupon is removed twice' 'A@60' 'S:Todo>In Progress@30'
+  lc_issue 3  billing    3 viewer 'Export invoices as CSV' 'A@5'
+  lc_issue 4  search     2 viewer 'Search results ignore diacritics in product names and brand names' 'A@48' 'S:Backlog>Todo@47'
+  lc_issue 5  mobile     1 viewer 'Offline queue drops edits when the app is killed during sync' 'S:In Progress>In Review@20' 'S:In Review>Done@3'
+  lc_issue 6  platform   2 viewer 'Rate limit headers missing on the v3 list endpoints and the export routes' 'A@40'
+  lc_issue 7  onboarding 4 viewer 'Onboarding checklist' 'S:Todo>In Progress@12'
+  lc_issue 8  platform   1 viewer 'Migrate legacy webhooks to the signed delivery format before the old endpoint is removed' 'A@71' 'M@10' 'S:Todo>In Progress@9'
+  lc_issue 9  mobile     3 viewer 'Dark mode contrast on the settings page' 'A@2'
+  lc_issue 10 search     2 viewer 'Search relevance: boost recently opened documents for returning users' 'S:In Progress>In Review@28'
+  lc_issue 11 billing    1 viewer 'Billing portal redirects to a blank page for annual plans after a downgrade' 'A@36' 'S:Todo>In Progress@35'
+  lc_issue 12 platform   3 viewer 'Add pagination to the audit log API' 'A@55'
+  lc_issue 13 checkout   4 viewer 'Tooltip clipped on the narrow sidebar' 'A@1'
+  lc_issue 14 billing    3 other  'Decide on the retention window for exported reports' 'M@25'
+  lc_issue 15 mobile     4 viewer 'Push notification opt-in copy needs a rewrite for clarity and brevity' 'S:Backlog>Todo@44'
+  lc_issue 16 checkout   2 viewer 'Flaky checkout e2e test on the payment step when the sandbox is slow' 'A@18' 'S:Todo>In Progress@17'
+  lc_issue 17 mobile     1 viewer 'Sync conflicts resolve to the older edit on slow connections' 'S:Todo>In Progress@52' 'S:In Progress>In Review@15'
+  lc_issue 18 platform   3 viewer 'SDK: surface retry-after in the error type' 'A@33'
+  lc_issue 19 onboarding 4 viewer 'Welcome email links to the old docs' 'S:In Review>Done@22'
+  lc_issue 20 billing    1 viewer 'Invoice totals round differently in the PDF and the portal for euro accounts' 'A@14' 'S:Todo>In Progress@13'
+  lc_issue 21 search     3 other  'Ask: can we drop support for the v1 search API this quarter?' 'M@4'
+  lc_issue 22 search     2 viewer 'Search suggestions flicker while typing quickly on slower laptops' 'A@8'
+  lc_issue 23 platform   4 other  'Update the API reference for the new pagination parameters' 'M@30'
+  lc_issue 24 checkout   1 viewer 'Handle expired sessions on the checkout confirmation page without losing the cart' 'A@64' 'S:Todo>In Progress@63'
+  lc_issue 25 mobile     3 other  'Mobile: cache the last 50 shifts for offline viewing' 'M@7'
+  lc_sql+="INSERT OR REPLACE INTO source_identity (source, user_ref, name, read_at) VALUES ('linear', 'linear:user/$PROJECTS_VIEWER', '$PROJECTS_VIEWER_NAME', $(projects_ts '+0 seconds'));
+INSERT OR REPLACE INTO linear_team (id, key, name, synced_at) VALUES ('$LC_TEAM_ID', '$PROJECTS_TEAM', 'Spline', $(projects_ts '-3 minutes'));
+INSERT OR REPLACE INTO linear_member (team_id, id, name, display_name, active) VALUES ('$LC_TEAM_ID', '$PROJECTS_VIEWER', '$PROJECTS_VIEWER_NAME', 'sam', 1), ('$LC_TEAM_ID', 'fx-dana', 'Dana Okafor', 'dana', 1);
+INSERT OR REPLACE INTO source_cursor (source, repo, cursor, last_sync, last_error, phase, failures, next_try, last_error_text) VALUES ('linear', 'records', NULL, $(projects_ts '-3 minutes'), NULL, 'incremental', 0, NULL, NULL);
+UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;
+"
+  sql_on "$db" "$lc_sql" >/dev/null || die "linear-catchup: can't write the Linear issues to $db"
+
+  now="$(date -u +%s)"
+  case "$mode" in
+    typical) lc_set_marker "" ;;
+    # the marker is now: newer than every change, so the strip says nothing is new
+    empty) lc_set_marker "$(lc_marker "$now")" ;;
+    # the feed's last tick failed: Linear refused the key (SND-CONTEXT-071, a 401), three ticks in a row; the earlier rows stay, which is what the Reconnect card sits beside
+    error) lc_set_marker ""
+      sql_on "$db" "UPDATE source_cursor SET last_error = 'SND-CONTEXT-071', failures = 3, last_sync = $(projects_ts '-4 minutes'), next_try = $(projects_ts '+10 minutes'), last_error_text = 'Linear refused the key (401)' WHERE source = 'linear' AND repo = 'records'" >/dev/null || die "linear-catchup: can't record the failed sync" ;;
+    # the stored read fails (a missing table), which the strip shows as "could not read", with Retry
+    read-error) lc_set_marker ""; sql_on "$db" "ALTER TABLE linear_issue_change RENAME TO $LC_SQL_BAK" >/dev/null || die "linear-catchup: can't break the changes read" ;;
+  esac
+  printf 'linear-catchup %s: %s changes and mentions on %s issues in %s. Restart the app (it keeps its preferences in memory).\n' "$mode" \
+    "$(sql_on "$db" "SELECT (SELECT COUNT(*) FROM $([ "$mode" = read-error ] && echo "$LC_SQL_BAK" || echo linear_issue_change) WHERE issue_key LIKE 'linear:issue/fxc-%') + (SELECT COUNT(*) FROM linear_comment WHERE issue_key LIKE 'linear:issue/fxc-%')")" \
+    "$(sql_on "$db" "SELECT COUNT(*) FROM linear_issue WHERE key LIKE 'linear:issue/fxc-%'")" "$db"
+}
+
 # --- reviews: a review page on a fixture PR (PR review page spec 8.2) ---
 REVIEWS_SLUG="acme/api"
 REVIEWS_HEAD_SHA="1f2e3d4c5b6a79880011223344556677889900aa"
@@ -1244,6 +1401,7 @@ case "$verb" in
   items) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--large" ]; } || die "usage: items [--large]" ;;
   close) [ "$#" -eq 2 ] || { [ "$#" -eq 3 ] && [ "$3" = "--cancelled" ]; } || die "usage: close <item> [--cancelled]" ;;
   projects) [ "$#" -eq 1 ] || die "'projects' takes no arguments" ;;
+  linear-catchup) { [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && case "$2" in empty | typical | error | read-error) true ;; *) false ;; esac; }; } || die "usage: linear-catchup [empty|typical|error|read-error]" ;;
   todos) [ "$#" -eq 1 ] || die "'todos' takes no arguments" ;;
   resources) [ "$#" -eq 1 ] || die "'resources' takes no arguments" ;;
   reviews) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: reviews up|down" ;;
