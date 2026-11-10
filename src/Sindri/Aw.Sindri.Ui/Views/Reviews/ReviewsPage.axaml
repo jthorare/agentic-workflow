@@ -19,7 +19,7 @@
         <TextBlock x:Name="ReviewsSubLine" Classes="caption subtle" Text="{Binding SubLine}" TextWrapping="Wrap" IsVisible="{Binding SubLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
       </StackPanel>
       <Button x:Name="ReviewsLibrary" Grid.Column="1" VerticalAlignment="Top" IsEnabled="{Binding CanOpenLibrary}" Click="OnOpenLibrary" AutomationProperties.Name="{Binding LibraryText}"
-              IsVisible="{Binding LibraryText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+              IsVisible="{Binding ShowLibrary}">
         <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
           <icons:StateIcon Glyph="Warning" IsVisible="{Binding LibraryWarns}" VerticalAlignment="Center" />
           <TextBlock Classes="body" Classes.warns="{Binding LibraryWarns}" Text="{Binding LibraryText}" VerticalAlignment="Center" />
@@ -55,8 +55,11 @@
     </Border>
 
     <Border x:Name="ReviewsConnect" Classes="panel" IsVisible="{Binding IsConnect}">
-      <StackPanel Margin="24" Spacing="{StaticResource Space.MD}" MaxWidth="420" HorizontalAlignment="Left">
-        <Button x:Name="ReviewsConnectButton" Content="{Binding ConnectText}" Click="OnConnect" AutomationProperties.Name="{Binding ConnectText}" />
+      <StackPanel Margin="32" Spacing="{StaticResource Space.MD}" HorizontalAlignment="Center">
+        <Border x:Name="ReviewsConnectLine" AutomationProperties.Name="{Binding ConnectLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body muted" Text="{Binding ConnectLine}" TextWrapping="Wrap" TextAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Button x:Name="ReviewsConnectButton" Classes="command-control primary" HorizontalAlignment="Center" Content="{Binding ConnectText}" Click="OnConnect" AutomationProperties.Name="{Binding ConnectText}" />
       </StackPanel>
     </Border>
 
@@ -99,7 +102,7 @@
                         <ItemsControl ItemsSource="{Binding Rows}">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="rvm:ReviewRowViewModel">
-                              <Border x:Name="ReviewRowFrame" Classes="review-row" Focusable="True" BorderThickness="1" Padding="16,8"
+                              <Border x:Name="ReviewRowFrame" Classes="review-row clickable" Focusable="True" BorderThickness="1" Padding="16,8"
                                       AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                                 <Grid ColumnDefinitions="*,140,70,120,160,140" AutomationProperties.AccessibilityView="Raw">
                                   <StackPanel>
@@ -138,7 +141,7 @@
       </ItemsControl.ItemTemplate>
     </ItemsControl>
 
-    <TextBlock x:Name="ReviewsHint" Classes="caption subtle" Text="{Binding HintText}" IsVisible="{Binding !IsLoading}" />
+    <TextBlock x:Name="ReviewsHint" Classes="caption subtle" Text="{Binding HintText}" IsVisible="{Binding ShowHints}" />
   </StackPanel>
 
 </UserControl>

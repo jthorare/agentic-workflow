@@ -33,45 +33,64 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
         }
 
         var end = clock.GetUtcNow() + request.Duration;
-        var loop = await NewLoop(team.Value, request.Emit, cancellationToken).ConfigureAwait(false);
+        var loop = await NewLoop(team.Value, request.Emit, request.Owner.ToString(CultureInfo.InvariantCulture), cancellationToken).ConfigureAwait(false);
         for (var polls = 1; ; polls++)
         {
             await loop.Tick(cancellationToken).ConfigureAwait(false);
+            if (loop.Superseded is not null)
+            {
+                return new WatchResponse(polls, loop.Lines);
+            }
+
             var beat = await Beat(request.Interval, cancellationToken).ConfigureAwait(false);
             if (beat.IsError)
             {
                 return beat.Error;
             }
 
-            if (request.UntilMail && loop.Open > 0)
+            if (await Ended(request, loop, polls, end).ConfigureAwait(false) is { } done)
             {
-                await loop.Say(string.Create(CultureInfo.InvariantCulture, $"INBOX {loop.Open} open message(s)")).ConfigureAwait(false);
-                return new WatchResponse(polls, loop.Lines) { EndedOnMail = true };
-            }
-
-            if (request.UntilEvent)
-            {
-                if (loop.Events > 0)
-                {
-                    return new WatchResponse(polls, loop.Lines);
-                }
-            }
-            else if (clock.GetUtcNow() + request.Interval >= end)
-            {
-                await loop.Say("WATCH EXPIRING: rerun aw-meta watch").ConfigureAwait(false);
-                return new WatchResponse(polls, loop.Lines);
+                return done;
             }
 
             await delay.Wait(request.Interval, cancellationToken).ConfigureAwait(false);
         }
     }
 
-    private async ValueTask<WatchLoop> NewLoop(TeamConfig team, Func<string, ValueTask> emit, CancellationToken cancellationToken)
+    // The response when this poll ends the watch (mail, an event, or the window running out); null to keep polling.
+    private async ValueTask<WatchResponse?> Ended(WatchRequest request, WatchLoop loop, int polls, DateTimeOffset end)
+    {
+        if (request.UntilMail && loop.Open > 0)
+        {
+            await loop.Say(string.Create(CultureInfo.InvariantCulture, $"INBOX {loop.Open} open message(s)")).ConfigureAwait(false);
+            return new WatchResponse(polls, loop.Lines) { EndedOnMail = true };
+        }
+
+        if (request.UntilEvent)
+        {
+            if (loop.Events > 0)
+            {
+                return new WatchResponse(polls, loop.Lines);
+            }
+        }
+        else if (clock.GetUtcNow() + request.Interval >= end)
+        {
+            await loop.Say("WATCH EXPIRING: rerun aw-meta watch").ConfigureAwait(false);
+            return new WatchResponse(polls, loop.Lines);
+        }
+
+        return null;
+    }
+
+    private async ValueTask<WatchLoop> NewLoop(TeamConfig team, Func<string, ValueTask> emit, string owner, CancellationToken cancellationToken)
     {
         var reported = await values.Get(KvKeys.WatchResources, cancellationToken).ConfigureAwait(false);
         var high = await values.Get(KvKeys.WatchContext, cancellationToken).ConfigureAwait(false);
         var snapshot = await values.Get(KvKeys.WatchSnapshot, cancellationToken).ConfigureAwait(false);
         var failing = await values.Get(KvKeys.WatchFailing, cancellationToken).ConfigureAwait(false);
+        var kept = snapshot.IsSuccess ? snapshot.Value : null;
+        var ownership = new WatchOwnership(values, team.Repo, owner, kept, failing.IsSuccess ? failing.Value : null);
+        await ownership.Claim(cancellationToken).ConfigureAwait(false);
         var resources = WatchResources.Parse(reported.IsSuccess ? reported.Value : null);
         return new WatchLoop(
             team,
@@ -88,12 +107,15 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
         {
             // Advisory: a board write that fails is printed as a WATCH ERROR line; the watch keeps polling and the next move fixes the board.
             // The last poll's pull requests and main, so a change between two runs is reported by the next run's first poll. Keyed by repo: another repo's snapshot is not used.
-            Baseline = WatchMemory.Parse(snapshot.IsSuccess ? snapshot.Value : null, team.Repo, resources),
+            Baseline = WatchMemory.Parse(kept, team.Repo, resources),
             // Advisory: if this can't be kept, the next run starts from a fresh baseline, as before.
-            KeepSnapshot = async state => _ = await values.Set(KvKeys.WatchSnapshot, WatchMemory.Format(team.Repo, state), cancellationToken).ConfigureAwait(false),
+            // A compare-and-set against what this watch last read or wrote: a newer watch that wrote meanwhile ends this one (#2564).
+            KeepSnapshot = state => ownership.KeepSnapshot(state, cancellationToken),
+            NewerOwner = () => ownership.NewerOwner(cancellationToken),
             // Advisory: if this can't be kept, the next run reports its first error again.
             Failing = failing.IsSuccess && string.Equals(failing.Value, "1", StringComparison.Ordinal),
-            KeepFailing = async now => _ = await values.Set(KvKeys.WatchFailing, now ? "1" : "0", cancellationToken).ConfigureAwait(false),
+            // A compare-and-set like the snapshot's: a newer watch that wrote the flag meanwhile ends this one (#2564).
+            KeepFailing = now => ownership.KeepFailing(now, cancellationToken),
             MainMoved = async (sha, merged) => await board.RecordMain(sha, merged, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false),
             SeedMain = async sha => (await board.SeedMain(sha, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false)).Map(static _ => Unit.Value),
         };

@@ -36,8 +36,9 @@ internal sealed class TodoNoteReads(TodoPickWindow picks, TodoHolds holds, ITodo
         var heldAt = opened.Value.FirstOrDefault(e => e.Sequence == hold.Sequence)?.Envelope.OccurredAt ?? clock.GetUtcNow();
         var byId = rows.ToDictionary(static r => r.Id);
         var changes = hold.Changes.Select(c => new TodoNoteHeldChange(c.Id, KindWord(c.Kind), byId.TryGetValue(c.Id, out var row) ? row.Text : string.Empty, c.NoteLine)).ToList();
-        // why: an approximation of the 10% rule's base: Sindri's open todos now, not the count when the hold was drawn
-        var openInBase = rows.Count(static r => !r.Removed && r.DoneAt is null);
+        // why: the base the 10% rule counted against is on the event; a 'todo.note.held' written before that field existed has none, so those
+        // holds still show Sindri's open todos now (the old approximation) rather than a made-up number
+        var openInBase = hold.OpenInBase ?? rows.Count(static r => !r.Removed && r.DoneAt is null);
         return new TodoNoteHold(hold.NoteHash, heldAt, openInBase, changes);
     }
 

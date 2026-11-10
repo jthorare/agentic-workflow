@@ -7,7 +7,7 @@
   <!-- One row of the Needs-you inbox (needs-you spec §2): a 24 px kind tile, the title and one muted line, and how long it has waited.
        Selecting is the focus: the row draws its own ring (the selected row's), like the Home row. The urgency is the tint, as on Home (never a side stripe). -->
   <Grid RowDefinitions="Auto,1">
-    <Border x:Name="InboxRowFrame" Classes="inbox-row needs-you-row" Classes.selected="{Binding IsSelected}" Classes.pulsing="{Binding IsPulsing}" Classes.steady="{Binding IsSteady}" Classes.subtle="{Binding IsSubtle}"
+    <Border x:Name="InboxRowFrame" Classes="inbox-row needs-you-row clickable" Classes.selected="{Binding IsSelected}" Classes.pulsing="{Binding IsPulsing}" Classes.steady="{Binding IsSteady}" Classes.subtle="{Binding IsSubtle}"
             Classes.slides-in="{Binding SlidesIn}" Classes.stale="{Binding IsStale}" Focusable="True"
             AutomationProperties.Name="{Binding InboxName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
       <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" VerticalAlignment="Center">

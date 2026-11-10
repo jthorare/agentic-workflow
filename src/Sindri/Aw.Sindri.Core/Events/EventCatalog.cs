@@ -38,6 +38,8 @@ public static class EventCatalog
         new(EventTypes.WorkflowNodeStarted, Public: false, PublicPayload: null, "workflow.node.started:<run id>:<node id>:<item index>"),
         new(EventTypes.WorkflowNodeFinished, Public: false, PublicPayload: null, "workflow.node.finished:<run id>:<node id>:<item index>"),
         new(EventTypes.WorkflowNodeFailed, Public: false, PublicPayload: null, "workflow.node.failed:<run id>:<node id>:<item index>"),
+        new(EventTypes.WorkflowNodeTakenOver, Public: false, PublicPayload: null, "workflow.node.taken-over:<run id>:<node id>:<item index>:<command id>") { Invalidates = [ApiViews.Timeline] },
+        new(EventTypes.WorkflowNodeHandedBack, Public: false, PublicPayload: null, "workflow.node.handed-back:<run id>:<node id>:<item index>:<command id>") { Invalidates = [ApiViews.Timeline] },
         new(EventTypes.WorkflowNotify, Public: false, PublicPayload: null, "workflow.notify:<run id>:<node id>"),
         new(EventTypes.WorkflowQuestion, Public: true, typeof(WorkflowQuestionPublic), "workflow.question:<run id>:<node id>[:<item index>]") { Invalidates = [ApiViews.NeedsYou] },
         new(EventTypes.WorkflowAnswered, Public: true, typeof(WorkflowAnsweredPublic), "workflow.answered:<run id>:<node id>[:<item index>]") { Invalidates = [ApiViews.NeedsYou] },

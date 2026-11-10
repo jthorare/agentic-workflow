@@ -29,4 +29,10 @@ public static partial class EventTypes
 
     /// <summary>An 'ask_owner' node's question was answered, by the owner or by a session (issue 2258, PR 9).</summary>
     public const string WorkflowAnswered = "workflow.answered";
+
+    /// <summary>A person or an agent session took a 'run_agent' node over (#2497).</summary>
+    public const string WorkflowNodeTakenOver = "workflow.node.taken-over";
+
+    /// <summary>A person or an agent session handed a taken-over 'run_agent' node back (#2497).</summary>
+    public const string WorkflowNodeHandedBack = "workflow.node.handed-back";
 }

@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Infrastructure.Workflows;
 using Temporalio.Client;
+using Temporalio.Exceptions;
 
 namespace Aw.Sindri.Tests.Workflows;
 
@@ -91,6 +92,7 @@ public sealed partial class GraphWorkflowParkingTests
             [GraphRig.Edge("start", "hold"), GraphRig.Edge("hold", "after")]));
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         await WaitUntilRunning(rig, started.RunId, "hold");
+        await WaitUntilTimerStarted(rig, started.RunId.Value);
 
         await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
         var run = await rig.Final(started.RunId);
@@ -149,24 +151,24 @@ public sealed partial class GraphWorkflowParkingTests
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         var handle = rig.Client.GetWorkflowHandle(started.RunId.Value);
         using var limit = Limit();
-        Temporalio.Exceptions.WorkflowUpdateFailedException? notAChoice = null;
+        WorkflowUpdateFailedException? notAChoice = null;
         while (notAChoice is null)
         {
             try
             {
                 _ = await Answer(handle, new GraphAnswerInput("ask", "maybe", Choice: null, "owner"), limit.Token);
             }
-            catch (Temporalio.Exceptions.WorkflowUpdateFailedException e) when (e.InnerException!.Message.Contains("not one of the choices", StringComparison.Ordinal))
+            catch (WorkflowUpdateFailedException e) when (e.InnerException!.Message.Contains("not one of the choices", StringComparison.Ordinal))
             {
                 notAChoice = e;   // the node waits now: it refused the answer for what it is, not because it was not waiting yet
             }
-            catch (Temporalio.Exceptions.WorkflowUpdateFailedException)
+            catch (WorkflowUpdateFailedException)
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
             }
         }
 
-        var wrongNode = await Assert.ThrowsAsync<Temporalio.Exceptions.WorkflowUpdateFailedException>(async () =>
+        var wrongNode = await Assert.ThrowsAsync<WorkflowUpdateFailedException>(async () =>
             await Answer(handle, new GraphAnswerInput("start", "yes", Choice: null, "owner"), limit.Token));
 
         Assert.Contains("not one of the choices", notAChoice.InnerException!.Message, StringComparison.Ordinal);
@@ -187,7 +189,7 @@ public sealed partial class GraphWorkflowParkingTests
                 _ = await Answer(handle, answer, limit.Token);
                 return;
             }
-            catch (Temporalio.Exceptions.WorkflowUpdateFailedException)
+            catch (WorkflowUpdateFailedException)
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
             }
@@ -199,6 +201,29 @@ public sealed partial class GraphWorkflowParkingTests
         using var limit = Limit();
         while (!(await rig.NodeStatuses(run)).TryGetValue(node, out var status) || status != NodeRunStatus.Running)
         {
+            await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
+        }
+    }
+
+    // why: a node's row says "running" as soon as its block starts, while the block's activity may still be in flight. A cancel that lands then races that activity: the run can end
+    // before the node ever parks, and the node's row ends in a different state than the test expects. The workflow's own timer shows the node is parked and waiting.
+    private static async Task WaitUntilTimerStarted(GraphRig rig, string workflowId)
+    {
+        using var limit = Limit();
+        while (true)
+        {
+            try
+            {
+                var history = await rig.Client.GetWorkflowHandle(workflowId).FetchHistoryAsync();
+                if (history.Events.Any(static e => e.TimerStartedEventAttributes != null))
+                {
+                    return;
+                }
+            }
+            catch (RpcException e) when (e.Code == RpcException.StatusCode.NotFound)   // boundary: a child workflow that has not started yet
+            {
+            }
+
             await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
         }
     }

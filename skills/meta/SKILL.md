@@ -21,7 +21,7 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 
 ### Card: Claude Code
 - Reply to a Claude lane with **Message a running agent** (SendMessage), to the name the inbox shows. The Stop and outbox hooks record the send.
-- Watch for mail: run `aw-meta watch --until-event` with the Bash tool's `run_in_background`. It prints nothing and costs no turn until a real line (PR change, `INBOX`, `DISK LOW`, `CONTEXT HIGH`, an error) makes it print and exit. Handle the lines, then start it again. Don't use Monitor for it.
+- Watch for mail: run `aw-meta watch --until-event` with the Bash tool's `run_in_background`. It prints nothing and costs no turn until a real line (PR change, `INBOX`, `DISK LOW`, `CONTEXT HIGH`, an error) makes it print and exit. Handle the lines, then start it again, except after `WATCH superseded by pid N`: a newer watch already runs, so don't start another. Don't use Monitor for it.
 - A non-Claude lane gets `aw-meta lane-send --lane <lane> --text "..."`, never the message tool.
 
 ### Card: Codex
@@ -68,7 +68,7 @@ Act on each line when it prints:
 
 A lane queues a pull request with exactly `ready #N <sha>` on the **first line** of its message (any case; the sha, 7 to 40 hex digits, may sit in backticks), details below. A bare `ready #N`, a ready in the middle of a sentence, or a first line with "not ready" or "follows" in it is **ignored**: it is an ordinary request. Put this in every lane's kickoff prompt (`prompts/<lane>.md`). To drop a wrongly queued pull request: `aw-meta queue-drop N --reason "..."`.
 
-1. `aw-meta merge-check N`. Read every FAIL line. A merge-order FAIL means wait: tell the lane why.
+1. `aw-meta merge-check N`. Read every FAIL line. A merge-order FAIL means wait: tell the lane why. With `review.lane` set in the team config, `merge-check` is READY on the reviewer's `OK #N at <sha>` at the head (not taken back by a later `HOLD #N`; on a UI pull request the line after it says `qa passed <sha>` at the head) plus the lane's ready message with a passing `N passed, M skipped, 0 failed` line, with no gate run: then `queue-gate` is optional, skip to step 4, and gate main periodically instead.
 2. `aw-meta gate-run N` (never a hand-run gate). Scopes come from the diff and the team config; name them to override (`gate-run N repo`). Defer the lane's message while it runs. A docs-only delta on an already-gated head needs only the `always` scopes; the CLI picks that itself.
 3. For each red test the PR doesn't touch: `aw-meta gate-rerun N --step <step> --test <filter>`. It reruns the test alone and on plain main, and records `flake` or `real`. Only `real` reds go back to the lane. A gate failure that only waited for a heavy lock is infrastructure: re-run the gate.
 4. `aw-meta merge-check N` again (head and main must not have moved since the gate), then `aw-meta merge-run N`.
