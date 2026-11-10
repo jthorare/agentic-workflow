@@ -17,10 +17,16 @@ for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # the caller ma
 export HOME="$WORK/home"; mkdir -p "$HOME"
 export AW_STATE_DIR="$WORK/state"
 unset AW_JUDGE_CHILD AW_SINDRI_HOME CLAUDE_LOCAL_BIN   # a caller's Sindri home must not receive the session-id-report cases' launch files
-export CALLS="$WORK/calls" STDIN_SEEN="$WORK/stdin" HOOKLOG="$WORK/hooklog"
+export BOARDCALLS="$WORK/boardcalls" CALLS="$WORK/calls" STDIN_SEEN="$WORK/stdin" HOOKLOG="$WORK/hooklog"
 STUB="$WORK/aw-meta"
 cat > "$STUB" <<'EOF'
 #!/usr/bin/env bash
+# board-line has its own log and output (STUB_BOARD), so the lane-inbox rows below stay about lane-inbox
+if [ "$1" = board-line ]; then
+  echo "board-line|${AW_META_HOOK:-}" >> "$BOARDCALLS"
+  [ -n "${STUB_BOARD:-}" ] && echo "$STUB_BOARD"
+  exit "${STUB_BOARD_RC:-0}"
+fi
 echo "$*" >> "$CALLS"
 echo "$1|${AW_META_HOOK:-}" >> "$HOOKLOG"   # the command and the hook event the caller named (none: a hand-typed run)
 if [ "$1" = outbox-record ] || [ "$1" = lane-reply ]; then cat > "$STDIN_SEEN"; fi
@@ -88,6 +94,31 @@ check "outbox: aw-meta failure never blocks" "$RC:$OUT" "0:"
 grep -q '"hook":"meta-outbox","cause":"meta-exit-2"' "$AW_STATE_DIR/logs/failopen.log"
 check "outbox: failure logged" "$?" "0"
 
+# meta-board-line.sh (Claude lanes: UserPromptSubmit and PostToolUse print the board line as additionalContext)
+BL='Board: main moved to abc1234 (#12); lane map v5'
+board() { printf '%s' "$1" > "$WORK/in"; AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/meta-board-line.sh" 2> "$WORK/err" < "$WORK/in"; }
+: > "$BOARDCALLS"
+OUT="$(printf '%s' '{"hook_event_name":"UserPromptSubmit"}' | bash "$HOOKS/meta-board-line.sh")"; RC=$?
+check "board-line hook outside a lane: exit 0, silent, aw-meta not called" "$RC:$OUT:$(cat "$BOARDCALLS")" "0::"
+OUT="$(STUB_BOARD="$BL" board '{"hook_event_name":"UserPromptSubmit","session_id":"s-1","prompt":"hi"}')"; RC=$?
+check "board-line hook UserPromptSubmit: additionalContext JSON with the line" "$RC:$(jq -c . <<< "$OUT")" "0:{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"$BL\"}}"
+OUT="$(STUB_BOARD="$BL" board '{"hook_event_name":"PostToolUse","session_id":"s-1","tool_name":"Bash"}')"
+check "board-line hook PostToolUse (any tool): additionalContext JSON with the line" "$(jq -r '.hookSpecificOutput | .hookEventName + "|" + .additionalContext' <<< "$OUT")" "PostToolUse|$BL"
+check "board-line hook: each call carries AW_META_HOOK=<event>" "$(paste -sd, "$BOARDCALLS")" "board-line|UserPromptSubmit,board-line|PostToolUse"
+OUT="$(board '{"hook_event_name":"UserPromptSubmit","session_id":"s-1"}')"; RC=$?
+check "board-line hook with an unchanged board (no output): exit 0, silent" "$RC:$OUT" "0:"
+OUT="$(STUB_BOARD="$BL" STUB_BOARD_RC=2 board '{"hook_event_name":"UserPromptSubmit","session_id":"s-1"}')"; RC=$?
+check "board-line hook when aw-meta fails: exit 0, silent" "$RC:$OUT" "0:"
+grep -q '"hook":"meta-board-line","cause":"board-line-exit-2"' "$AW_STATE_DIR/logs/failopen.log"
+check "board-line hook failure logged" "$?" "0"
+: > "$BOARDCALLS"
+OUT="$(STUB_BOARD="$BL" board '{"hook_event_name":"Stop","session_id":"s-1"}')"; RC=$?
+check "board-line hook on an event it does not handle: silent, aw-meta not called" "$RC:$OUT:$(cat "$BOARDCALLS")" "0::"
+OUT="$(STUB_BOARD="$BL" AW_META_BIN="$WORK/missing" board '{"hook_event_name":"UserPromptSubmit"}')"; RC=$?
+check "board-line hook with aw-meta not installed: exit 0, silent" "$RC:$OUT" "0:"
+OUT="$(STUB_BOARD="$BL" AW_JUDGE_CHILD=1 board '{"hook_event_name":"UserPromptSubmit"}')"; RC=$?
+check "board-line hook in a judge child: exit 0, silent" "$RC:$OUT" "0:"
+
 # --- meta-lane-gate.sh: the lane hook for a Codex or Cursor lane ---
 # The hooks act only in a lane started by scripts/meta-lane.sh, which exports its own pid as AW_META_LANE_PID: this shell plays it.
 export AW_META_LANE_PID=$$ AW_META_LANE_AGENT=codex AW_META_LANE_PROC=codex
@@ -119,6 +150,22 @@ OUT="$(lane '{"hook_event_name":"PreToolUse","session_id":"s-2"}')"; RC=$?
 check "an event the hook does not handle: exit 0, silent" "$RC:$OUT" "0:"
 AW_JUDGE_CHILD=1 lane "$UPS" > /dev/null; RC=$?
 check "judge child: exit 0" "$RC" "0"
+
+# the board line (`aw-meta board-line`) rides next to the inbox
+: > "$BOARDCALLS"
+OUT="$(STUB_OUT="inbox text" STUB_BOARD="$BL" lane "$UPS")"; RC=$?
+check "UserPromptSubmit: inbox then the board line, both plain text" "$RC:$OUT" "0:inbox text
+$BL"
+check "UserPromptSubmit: board-line carries AW_META_HOOK=UserPromptSubmit" "$(cat "$BOARDCALLS")" "board-line|UserPromptSubmit"
+OUT="$(STUB_BOARD="$BL" lane "$UPS")"
+check "UserPromptSubmit: an empty inbox still prints a changed board line" "$OUT" "$BL"
+OUT="$(STUB_OUT="inbox text" STUB_BOARD="$BL" lane '{"hook_event_name":"PostToolUse","session_id":"s-2","tool_name":"Shell"}')"
+check "PostToolUse (Cursor): one additionalContext holding the inbox and the board line" "$(jq -r .hookSpecificOutput.additionalContext <<< "$OUT")" "inbox text
+$BL"
+OUT="$(STUB_OUT="inbox text" STUB_BOARD="$BL" STUB_BOARD_RC=2 lane "$UPS")"; RC=$?
+check "a failing board-line leaves the inbox alone" "$RC:$OUT" "0:inbox text"
+: > "$BOARDCALLS"; STUB_BOARD="$BL" lane '{"hook_event_name":"Stop","session_id":"s-2","last_assistant_message":"done"}' > /dev/null
+check "Stop never asks for the board line" "$(cat "$BOARDCALLS")" ""
 
 STOP='{"hook_event_name":"Stop","session_id":"s-2","stop_hook_active":false,"last_assistant_message":"Rebased.\nREPLY TO META: rebased and pushed\nsecond line"}'
 : > "$CALLS"; : > "$STDIN_SEEN"

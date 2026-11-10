@@ -28,6 +28,13 @@ public interface ILaneMail
     /// <returns>Success.</returns>
     public ValueTask<Result<Unit>> Deliver(IReadOnlyList<long> seqs, DateTimeOffset at, CancellationToken cancellationToken);
 
+    /// <summary>Settles the given messages (notices, which owe no reply) without touching the lane's other mail; a message not yet shown is marked shown too.</summary>
+    /// <param name="seqs">The message numbers.</param>
+    /// <param name="at">When they were settled.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success.</returns>
+    public ValueTask<Result<Unit>> Settle(IReadOnlyList<long> seqs, DateTimeOffset at, CancellationToken cancellationToken);
+
     /// <summary>Records the lane's reply as an inbound message of the meta (id "lane:&lt;lane&gt;:&lt;n&gt;", from "&lt;team&gt;-&lt;lane&gt;", classified like any inbound message) and clears what the lane owed.</summary>
     /// <param name="identity">The lane.</param>
     /// <param name="text">The reply.</param>

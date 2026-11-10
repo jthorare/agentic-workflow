@@ -45,7 +45,7 @@ internal static class LinearWriteScenarios
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("linear-change", "applied"), ("linear-change", "applied-store-failed"), ("linear-change", "already-applied"), ("linear-change", "conflict"), ("linear-change", "unknown"),
-        ("linear-change", "rate-limited"), ("linear-change", "no-write-key"), ("linear-change", "team-not-picked"), ("linear-change", "bad-value"), ("linear-change", "session"),
+        ("linear-change", "rate-limited"), ("linear-change", "no-write-key"), ("linear-change", "team-not-picked"), ("linear-change", "bad-value"), ("linear-change", "session"), ("linear-change", "set-only"),
         ("linear-comment", "applied"), ("linear-comment", "applied-slow"), ("linear-comment", "unknown"), ("linear-comment", "session"),
         ("linear-create", "applied"), ("linear-create", "unknown"), ("linear-create", "bad-value"), ("linear-create", "session"),
     ];
@@ -97,7 +97,9 @@ internal static class LinearWriteScenarios
         if (slug == "linear-change")
         {
             var changed = scenario == "bad-value" ? "00000000-0000-4000-8000-0000000000ff" : Review;
-            return Post("/sindri/linear/issues/ENG-12/change", $$$"""{"opened":{"stateId":"{{{Progress}}}"},"set":{"stateId":"{{{changed}}}"}}""", caller);
+            return scenario == "set-only"   // why: a body that leaves 'opened' out reaches the service as an empty part (#2493)
+                ? Post("/sindri/linear/issues/ENG-12/change", $$$"""{"set":{"stateId":"{{{changed}}}"}}""", caller)
+                : Post("/sindri/linear/issues/ENG-12/change", $$$"""{"opened":{"stateId":"{{{Progress}}}"},"set":{"stateId":"{{{changed}}}"}}""", caller);
         }
 
         return slug == "linear-comment"
