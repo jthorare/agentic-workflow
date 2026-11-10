@@ -24,7 +24,7 @@ public sealed class LinearSinceStripTests
 
         Assert.Equal((true, "Since you last looked, 2 items"), (work.ShowsStrip, work.StripName));
         Assert.Equal(
-            ["ENG-31 · assigned to you", "ENG-12 · moved from Todo to In Progress · Sam Lee mentioned you"],
+            ["ENG-31", "ENG-12 · Sam Lee mentioned you"],
             work.StripRows.Select(r => r.Detail),
             StringComparer.Ordinal);
     }

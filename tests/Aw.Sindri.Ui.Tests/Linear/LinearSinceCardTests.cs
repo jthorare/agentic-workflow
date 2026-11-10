@@ -58,7 +58,7 @@ public sealed class LinearSinceCardTests
             ("state", "FRN-6177", "Retry budget", "2025-12-31T23:00:00Z", "Todo", "In Progress")));
 
         var row = Assert.Single(work.StripRows);
-        Assert.Equal((LinearSinceGroup.Assigned, "FRN-6177 · moved from Todo to In Progress · assigned to you", 1), (row.Group, row.Detail, work.NewCount));
+        Assert.Equal((LinearSinceGroup.Assigned, "FRN-6177", 1), (row.Group, row.Detail, work.NewCount));
     }
 
     [Fact]
@@ -91,6 +91,74 @@ public sealed class LinearSinceCardTests
 
         var row = Assert.Single(work.StripRows);
         Assert.Equal((false, false, false, true), (row.HasPriorityChip, row.HasProject, row.HasInitials, row.HasStateChip));
+    }
+
+    [Fact]
+    public async Task The_second_line_is_the_key_and_only_what_the_chips_do_not_show()
+    {
+        var work = await _f.Shown(Token);
+
+        Assert.Equal("ENG-31", work.StripRows.Single(r => string.Equals(r.Key, "ENG-31", StringComparison.Ordinal)).Detail);   // assigned to you: the group says it
+        Assert.Equal("ENG-12 · Sam Lee mentioned you", work.StripRows.Single(r => string.Equals(r.Key, "ENG-12", StringComparison.Ordinal)).Detail);   // the move is the state chip
+    }
+
+    [Fact]
+    public async Task The_assignee_shows_as_initials_outside_Assigned_to_you_and_not_inside_it()
+    {
+        var work = await _f.Shown(Token);
+
+        var assigned = work.StripRows.Single(r => r.Group == LinearSinceGroup.Assigned);
+        var moved = work.StripRows.Single(r => r.Group == LinearSinceGroup.Moved);
+        Assert.Equal((false, true, "JE"), (assigned.HasInitials, moved.HasInitials, moved.Initials));
+    }
+
+    [Fact]
+    public async Task Only_an_Urgent_priority_is_flagged()
+    {
+        var work = await _f.Shown(Token);
+
+        var urgent = work.StripRows.Single(r => string.Equals(r.Key, "ENG-12", StringComparison.Ordinal));
+        var high = work.StripRows.Single(r => string.Equals(r.Key, "ENG-31", StringComparison.Ordinal));
+        Assert.Equal(("Urgent", true, "High", false), (urgent.PriorityChip, urgent.IsUrgent, high.PriorityChip, high.IsUrgent));
+    }
+
+    [Fact]
+    public async Task A_group_shows_five_rows_and_Show_all_expands_it_and_Show_fewer_folds_it_back()
+    {
+        var work = await ShownWith(Since(
+            ("mentioned", "A-1", "Mention 1", "2025-12-31T11:00:00Z", null, null),
+            ("mentioned", "A-2", "Mention 2", "2025-12-31T12:00:00Z", null, null),
+            ("mentioned", "A-3", "Mention 3", "2025-12-31T13:00:00Z", null, null),
+            ("mentioned", "A-4", "Mention 4", "2025-12-31T14:00:00Z", null, null),
+            ("mentioned", "A-5", "Mention 5", "2025-12-31T15:00:00Z", null, null),
+            ("mentioned", "A-6", "Mention 6", "2025-12-31T16:00:00Z", null, null),
+            ("mentioned", "A-7", "Mention 7", "2025-12-31T17:00:00Z", null, null)));
+        var group = work.StripGroups.Single();
+
+        Assert.Equal((7, 5, true, "Show all 7"), (group.Rows.Count, group.ShownRows.Count, group.HasMore, group.ToggleText));
+        group.Toggle();
+        Assert.Equal((7, "Show fewer"), (group.ShownRows.Count, group.ToggleText));
+        group.Toggle();
+        Assert.Equal((5, "Show all 7"), (group.ShownRows.Count, group.ToggleText));
+    }
+
+    [Fact]
+    public async Task A_group_of_five_or_fewer_has_no_Show_all()
+    {
+        var work = await _f.Shown(Token);
+
+        Assert.All(work.StripGroups, g => Assert.False(g.HasMore));
+    }
+
+    [Fact]
+    public async Task While_the_connect_card_shows_the_Linear_tab_has_no_count()
+    {
+        _f.Mine = RouteAnswer.Api("linear-issues", "not-connected");
+        _f.Teams = RouteAnswer.Api("linear-issues", "not-connected");
+
+        var work = await _f.Shown(Token);
+
+        Assert.Equal((true, "Linear", "Linear"), (work.ShowsConnect, work.LinearTabText, work.LinearTabName));
     }
 
     [Fact]

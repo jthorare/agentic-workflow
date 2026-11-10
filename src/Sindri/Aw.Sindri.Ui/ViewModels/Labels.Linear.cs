@@ -213,6 +213,20 @@ internal static partial class Labels
         _ => "New state",
     };
 
+    /// <summary>A since-you-looked row's second line.</summary>
+    /// <param name="key">The issue key.</param>
+    /// <param name="changes">What the chips don't show, newest first; may be empty.</param>
+    /// <returns>"ENG-12" or "ENG-12 · Sam Lee mentioned you".</returns>
+    internal static string LinearSinceDetail(string key, IEnumerable<string> changes) => string.Join(" · ", new[] { key }.Concat(changes));
+
+    /// <summary>A group's button that shows its other rows.</summary>
+    /// <param name="count">How many rows the group holds.</param>
+    /// <returns>"Show all 7".</returns>
+    internal static string LinearShowAll(int count) => string.Create(CultureInfo.InvariantCulture, $"Show all {count}");
+
+    /// <summary>The same button once the group is expanded.</summary>
+    internal const string LinearShowFewer = "Show fewer";
+
     /// <summary>A person's initials for a row.</summary>
     /// <param name="name">The display name.</param>
     /// <returns>"JE" for "Joi Example", "J" for "Joi"; empty for a blank name.</returns>

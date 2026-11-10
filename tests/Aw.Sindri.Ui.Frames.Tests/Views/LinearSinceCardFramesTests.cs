@@ -17,14 +17,16 @@ public sealed class LinearSinceCardFramesTests : FrameHost
 {
     private static string LongTitle => "Retry budget for the sync worker: cap the retries at five per hour, log each one, and stop paging the owner at night";
 
-    private async Task<(Ui.Views.Shell.ShellWindow Window, ViewModels.Shell.ShellViewModel Shell)> OnLinear(string? since = null)
+    private static readonly string[] _chipSlots = ["LinearSinceRowState", "LinearSinceRowPriority", "LinearSinceRowProject"];
+
+    private async Task<(Ui.Views.Shell.ShellWindow Window, ViewModels.Shell.ShellViewModel Shell)> OnLinear(string? since = null, double width = 900)
     {
         if (since is not null)
         {
             Server.LinearSinceAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, since);
         }
 
-        var (window, shell) = await Connected(width: 900, height: 700);
+        var (window, shell) = await Connected(width: width, height: 700);
         shell.GoTo(PageId.Work);
         shell.Linear.Choose(linear: true);
         await Until(window, () => Visible(window, "LinearStrip"), "the card never showed");
@@ -81,6 +83,23 @@ public sealed class LinearSinceCardFramesTests : FrameHost
         {
             Assert.True(time.IsEffectivelyVisible && time.Bounds.Width > 0, "the time shows on every row");
         }
+    });
+
+    [Fact]
+    public Task The_state_priority_and_project_chips_of_two_rows_line_up_at_1280_px() => OnUi(async () =>
+    {
+        var (window, _) = await OnLinear(width: 1280);
+        Settle(window);
+
+        var card = Named<Border>(window, "LinearStrip");
+        foreach (var slot in _chipSlots)
+        {
+            var xs = window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == slot && b.IsEffectivelyVisible).Select(b => Math.Round(b.TranslatePoint(default, card)!.Value.X, 1, MidpointRounding.AwayFromZero)).ToList();
+            Assert.True(xs.Count >= 2, slot + " shows on two rows");
+            _ = Assert.Single(xs.Distinct());
+        }
+
+        Frame(window, "linear-since-1280", "l2536-");
     });
 
     [Fact]

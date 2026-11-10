@@ -8,7 +8,7 @@ namespace Aw.Sindri.Ui.ViewModels.Linear;
 /// </summary>
 internal sealed class LinearSinceRowViewModel : ObservableObject
 {
-    private static readonly string[] _issueBound = [nameof(StateChip), nameof(HasStateChip), nameof(PriorityChip), nameof(HasPriorityChip), nameof(Project), nameof(HasProject), nameof(Initials), nameof(HasInitials)];
+    private static readonly string[] _issueBound = [nameof(StateChip), nameof(HasStateChip), nameof(PriorityChip), nameof(HasPriorityChip), nameof(Project), nameof(HasProject), nameof(Initials), nameof(HasInitials), nameof(IsUrgent)];
 
     private readonly string? _movedChip;   // from the state change; null without one
 
@@ -27,7 +27,7 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
             : changes.Any(static c => string.Equals(c.Kind, "state", StringComparison.Ordinal)) ? LinearSinceGroup.Moved
             : LinearSinceGroup.Other;
         var said = newestFirst.Select(Labels.LinearSinceChange).ToList();
-        Detail = Key + " · " + string.Join(" · ", said);
+        Detail = Labels.LinearSinceDetail(Key, newestFirst.Where(c => !IsShownElsewhere(c)).Select(Labels.LinearSinceChange));
         TimeText = Labels.AgoWords(now - At);
         Name = Key + ", " + Title + ", " + string.Join(", ", said) + ", " + TimeText;
         var moved = newestFirst.FirstOrDefault(static c => string.Equals(c.Kind, "state", StringComparison.Ordinal));
@@ -47,7 +47,7 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
     /// <summary>The issue's title: the row's main line.</summary>
     public string Title { get; }
 
-    /// <summary>The second line: the key, then each change, newest first.</summary>
+    /// <summary>The second line: the key, then only the changes the chips and the group don't show (a mention), newest first.</summary>
     public string Detail { get; }
 
     /// <summary>"2h ago".</summary>
@@ -68,6 +68,9 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
     /// <summary>The assignee's initials; empty until the list holds the issue, and when it is unassigned.</summary>
     public string Initials { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>True when the issue's priority is Urgent: the chip takes the attention colour.</summary>
+    public bool IsUrgent { get; private set => Set(ref field, value); }
+
     /// <summary>True when there is a state chip.</summary>
     public bool HasStateChip => StateChip.Length > 0;
 
@@ -77,8 +80,8 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
     /// <summary>True when there is a project chip.</summary>
     public bool HasProject => Project.Length > 0;
 
-    /// <summary>True when there are initials.</summary>
-    public bool HasInitials => Initials.Length > 0;
+    /// <summary>True when the avatar shows: the assignee is known, and the row is not in "Assigned to you" (there it is always the viewer).</summary>
+    public bool HasInitials => Initials.Length > 0 && Group != LinearSinceGroup.Assigned;
 
     /// <summary>Takes what the issue list knows of this issue (or nothing, when it isn't listed).</summary>
     /// <param name="issue">The listed issue.</param>
@@ -88,11 +91,15 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
         PriorityChip = PriorityOf(issue);
         Project = issue?.Project?.Name ?? string.Empty;
         Initials = InitialsOf(issue);
+        IsUrgent = issue is { Priority: 1 };
         foreach (var name in _issueBound)
         {
             OnChanged(name);
         }
     }
+
+    // A state move is the state chip; an assignment is the group's heading.
+    private static bool IsShownElsewhere(LinearSinceItem change) => string.Equals(change.Kind, "state", StringComparison.Ordinal) || string.Equals(change.Kind, "assigned", StringComparison.Ordinal);
 
     private static string PriorityOf(LinearIssueRow? issue) => issue is { Priority: > 0 } ? Labels.LinearPriority(issue.Priority) : string.Empty;
 

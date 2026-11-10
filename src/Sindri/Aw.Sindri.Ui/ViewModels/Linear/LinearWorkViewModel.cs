@@ -20,7 +20,7 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
 
     private static readonly string[] _derived =
     [
-        nameof(IsLoading), nameof(ShowsConnect), nameof(ShowsFinding), nameof(ShowsNoMatch), nameof(UpdatingText), nameof(FeedText), nameof(IsSindriDown), nameof(IsSindriOlder), nameof(OlderText), nameof(AsOfText),
+        nameof(IsLoading), nameof(ShowsConnect), nameof(LinearTabText), nameof(LinearTabName), nameof(ShowsFinding), nameof(ShowsNoMatch), nameof(UpdatingText), nameof(FeedText), nameof(IsSindriDown), nameof(IsSindriOlder), nameof(OlderText), nameof(AsOfText),
         nameof(HasMore), nameof(HasFilters), nameof(ShowsStrip), nameof(ShowsNothingNew), nameof(StripNeedsReconnect), nameof(StripFeedFailing), nameof(StripReason), nameof(CanCreate), nameof(CreateTip),
     ];
 
@@ -111,10 +111,10 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
     public string? CreateTip => CanCreate ? null : Labels.LinearNewIssueNeedsConnection;
 
     /// <summary>The Linear tab's text: "Linear · 3 new" when the strip has changes.</summary>
-    public string LinearTabText => Labels.LinearTab(NewCount);
+    public string LinearTabText => ShowsConnect ? Labels.WorkViewLinear : Labels.LinearTab(NewCount);
 
     /// <summary>The Linear tab's accessible name: "Linear, 3 new".</summary>
-    public string LinearTabName => Labels.LinearTabName(NewCount);
+    public string LinearTabName => ShowsConnect ? Labels.WorkViewLinear : Labels.LinearTabName(NewCount);
 
     /// <summary>The header button's words: "Create item" on the Sindri view, "New issue" on the Linear one.</summary>
     public string CreateText => IsLinear ? Labels.LinearNewIssue : Labels.Action("CreateItem");
