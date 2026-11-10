@@ -94,7 +94,10 @@ internal sealed partial class HealthViewModel
 
     private static List<HealthCell> ViewsCells(AsOfView views)
     {
-        List<HealthCell> cells = [new(Labels.ViewsReadUpTo, Labels.ViewsProgress(views.Cursor, views.LedgerHead))];
+        // Stalled, the banner names the event that threw (stalled at 337); the cursor is the one before it, so the card says the same number.
+        List<HealthCell> cells = [views.Stalled
+            ? new(Labels.ViewsStopped, Labels.ViewsStoppedBefore(views.StalledAt ?? views.Cursor + 1, views.LedgerHead))
+            : new(Labels.ViewsReadUpTo, Labels.ViewsProgress(views.Cursor, views.LedgerHead))];
         if (views.ProjectedAt is { } at)
         {
             cells.Add(new(Labels.ViewsUpdated, StatusText.Time(at)));

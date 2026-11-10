@@ -121,6 +121,12 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string ServiceEvery(string every) => "every " + every;
 
+    /// <summary>The Views card's stalled row: "before event 337 of 391", the event that threw, as the banner says it.</summary>
+    /// <param name="at">The event the projector stopped at.</param>
+    /// <param name="head">The newest event.</param>
+    /// <returns>The words.</returns>
+    internal static string ViewsStoppedBefore(long at, long head) => string.Create(CultureInfo.InvariantCulture, $"before event {at} of {head}");
+
     /// <summary>The Views card's progress: "event 214 of 214".</summary>
     /// <param name="cursor">The event the views have read up to.</param>
     /// <param name="head">The newest event.</param>
