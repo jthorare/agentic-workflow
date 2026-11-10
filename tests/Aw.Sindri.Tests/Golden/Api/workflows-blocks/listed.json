@@ -18,7 +18,32 @@
             "out"
           ],
           "exampleConfig": {},
-          "exampleSpec": null
+          "exampleSpec": {
+            "version": 1,
+            "name": "Triage",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Triage for {{start.payload.source}}",
+                  "body": "called by {{start.parentRun}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "tell"
+              }
+            ]
+          }
         },
         {
           "type": "connection_event",
@@ -244,7 +269,45 @@
             },
             "expect": "200,201"
           },
-          "exampleSpec": null
+          "exampleSpec": {
+            "version": 1,
+            "name": "Ping status page",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "hourly",
+                "type": "schedule",
+                "config": {
+                  "cron": "0 * * * *"
+                }
+              },
+              {
+                "id": "ask",
+                "type": "http",
+                "config": {
+                  "url": "https://status.example.com/api/v2/status.json",
+                  "expect": "200"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Status: {{ask.status}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "hourly",
+                "to": "ask"
+              },
+              {
+                "from": "ask",
+                "to": "tell"
+              }
+            ]
+          }
         }
       ]
     },
@@ -757,7 +820,43 @@
             "items": "{{search.results}}",
             "key": "id"
           },
-          "exampleSpec": null
+          "exampleSpec": {
+            "version": 1,
+            "name": "New issues",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "fresh",
+                "type": "only_new",
+                "config": {
+                  "items": "{{trigger.payload.issues}}",
+                  "key": "number"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "{{fresh.count}} new issues"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "fresh"
+              },
+              {
+                "from": "fresh",
+                "to": "tell"
+              }
+            ]
+          }
         },
         {
           "type": "run_workflow",
@@ -800,7 +899,49 @@
             },
             "wait": true
           },
-          "exampleSpec": null
+          "exampleSpec": {
+            "version": 1,
+            "name": "Nightly",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "daily",
+                "type": "schedule",
+                "config": {
+                  "cron": "0 2 * * *"
+                }
+              },
+              {
+                "id": "triage",
+                "type": "run_workflow",
+                "config": {
+                  "workflow": "triage",
+                  "payload": {
+                    "source": "nightly"
+                  },
+                  "wait": true,
+                  "waitSeconds": 300
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Triage {{triage.status}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "daily",
+                "to": "triage"
+              },
+              {
+                "from": "triage",
+                "to": "tell"
+              }
+            ]
+          }
         },
         {
           "type": "wait",
@@ -1014,7 +1155,33 @@
             "repo": "web",
             "body": "{{triage.details}}"
           },
-          "exampleSpec": null
+          "exampleSpec": {
+            "version": 1,
+            "name": "File follow-ups",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "make",
+                "type": "create_item",
+                "config": {
+                  "title": "Follow up: {{trigger.payload.subject}}",
+                  "repo": "web",
+                  "body": "{{trigger.payload.details}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "make"
+              }
+            ]
+          }
         },
         {
           "type": "notify",
