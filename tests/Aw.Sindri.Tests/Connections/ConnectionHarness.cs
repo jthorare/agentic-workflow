@@ -15,6 +15,7 @@ using Aw.Sindri.Features.RenameConnection;
 using Aw.Sindri.Features.TestConnection;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
+using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
 
@@ -28,7 +29,11 @@ internal sealed class ConnectionHarness
         Ledger = new InMemorySindriStore(new FakeTimeProvider(KnownInstants.Epoch), LedgerProbe);
         Callers = new AsyncLocalCallerContextAccessor(Ids);
         Presets = new FakeConnectionPresets(Linear);
+        Workflows = new InMemoryWorkflowStore(Clock);
     }
+
+    /// <summary>The workflows a rename checks for triggers that watch the connection.</summary>
+    public InMemoryWorkflowStore Workflows { get; }
 
     /// <summary>A linear-shaped preset (no client id, https endpoints, a probe URL).</summary>
     public static ConnectionPreset Linear { get; } = new(
@@ -105,7 +110,7 @@ internal sealed class ConnectionHarness
 
     public RemoveConnectionService Remove() => new(Store, Secrets, Events());
 
-    public RenameConnectionService Rename() => new(Store, Secrets, Events());
+    public RenameConnectionService Rename() => new(Store, Secrets, Events(), Workflows);
 
     /// <summary>The sign-in-again slice over the harness's ports and the same sign-in flow Add builds.</summary>
     /// <returns>The service.</returns>
