@@ -10,8 +10,8 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Shell;
-using static Aw.Sindri.Ui.Tests.Projects.ProjectsFixture;
 using Aw.Sindri.Ui.Views.Shell;
+using static Aw.Sindri.Ui.Tests.Projects.ProjectsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Projects;
 

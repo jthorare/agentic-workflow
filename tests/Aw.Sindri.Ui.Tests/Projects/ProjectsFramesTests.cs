@@ -39,7 +39,7 @@ public sealed class ProjectsFramesTests : FrameHost
         var (window, shell) = await OnProjects("mixed", width, height);
 
         Shown(window, shell);
-        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"projects-mixed-{width}"), prefix: string.Empty);
+        Frame(window, string.Create(CultureInfo.InvariantCulture, $"projects-mixed-{width}"), prefix: string.Empty);
     });
 
     [Fact]
@@ -144,7 +144,7 @@ public sealed class ProjectsFramesTests : FrameHost
         Settle(window);
 
         Assert.True(shell.IsProjectSheet);
-        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"projects-sheet-{width}"), prefix: string.Empty);
+        Frame(window, string.Create(CultureInfo.InvariantCulture, $"projects-sheet-{width}"), prefix: string.Empty);
     });
 
     [Fact]
