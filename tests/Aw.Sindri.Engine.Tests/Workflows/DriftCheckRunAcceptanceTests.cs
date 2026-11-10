@@ -255,7 +255,7 @@ public sealed class DriftCheckRunAcceptanceTests(SindriTimeSkippingServer server
 
     private sealed class ScriptedModel(string answer) : IGraphModelPort
     {
-        public string Untrusted(string text) => $"<untrusted>{text}</untrusted>";
+        public string Untrusted(string source, string text) => $"<untrusted>{text}</untrusted>";
 
         public ValueTask<Result<string>> Ask(string prompt, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>(answer);
     }
