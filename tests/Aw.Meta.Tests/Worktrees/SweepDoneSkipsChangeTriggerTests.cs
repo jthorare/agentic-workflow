@@ -36,4 +36,18 @@ public sealed class SweepDoneSkipsChangeTriggerTests
     [Fact, Trait("Lane", "unit")]
     public void Done_still_keeps_a_tree_with_a_process_in_it() =>
         AssertKept(WorktreeRules.Judge(Changed() with { Done = true, Occupants = [new ProcessLocation(4242, "claude -n t1-api", ["/wt/detached"])] }), "4242");
+
+    // #2560: on a fresh box no full sweep has recorded its start yet; --done waives that reason as --discarded does.
+    [Fact, Trait("Lane", "unit")]
+    public void Done_removes_a_tree_when_no_full_sweep_was_recorded()
+    {
+        var verdict = WorktreeRules.Judge(new WorktreeFacts { Path = "/wt/detached", HeadMerged = true, Done = true, NoPreviousSweep = true });
+
+        Assert.Equal(WorktreeDecision.Removable, verdict.Decision);
+        Assert.DoesNotContain(verdict.Reasons, reason => reason.Contains("no previous sweep", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Done_with_no_recorded_sweep_still_keeps_unpushed_work() =>
+        AssertKept(WorktreeRules.Judge(new WorktreeFacts { Path = "/wt/detached", Done = true, NoPreviousSweep = true, UnpushedCommits = 1 }), "no remote branch");
 }
