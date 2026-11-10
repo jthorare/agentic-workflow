@@ -3,13 +3,13 @@ using System.Text;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
-using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.ListConnections;
 using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.RenameConnection;
 using Aw.Sindri.Features.TestConnection;
+using Aw.Sindri.Host.Endpoints;
 
 namespace Aw.Sindri.Host.Commands;
 
