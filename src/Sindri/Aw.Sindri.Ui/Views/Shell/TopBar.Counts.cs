@@ -26,14 +26,15 @@ internal sealed partial class TopBar
 
     // What the tight step gives back: the narrower padding on both sides of every tab, and the gaps between the tabs
     // (#2547: with full labels at every width, nine tabs at 130% text still ran 7 px past a 1,000 px window).
-    private double TightSaving => (NavigationList.ItemCount * 2 * (TabPadding - TightTabPadding)) + (Math.Max(NavigationList.ItemCount - 1, 0) * (TabGap - TightTabGap));
+    private double TightSaving => (NavigationList.ItemCount * 2 * (TabPadding - TightTabPadding)) + (Math.Max(NavigationList.ItemCount - 1, 0) * (NormalTabGap - TightTabGap));
 
     // The tight step closes the gaps between the tabs (the items panel, TopBar.axaml); the segment's hover and selected fills still have their padding.
     private void ApplyTabGap(Fit fit)
     {
         if (NavigationList.ItemsPanelRoot is StackPanel tabs)
         {
-            tabs.Spacing = fit >= Fit.TightNav ? TightTabGap : TabGap;
+            var normal = NormalTabGap;   // read before the first change: the markup's Spacing
+            tabs.Spacing = fit >= Fit.TightNav ? TightTabGap : normal;
         }
     }
 
@@ -41,9 +42,21 @@ internal sealed partial class TopBar
     private const double TabPadding = 7;
     private const double TightTabPadding = 2;
 
-    // The gap between two tabs (the items panel's Spacing, TopBar.axaml) and the tight step's.
-    private const double TabGap = 2;
+    // The gap between two tabs is the items panel's Spacing in TopBar.axaml, read once; the tight step's is none.
     private const double TightTabGap = 0;
+
+    private double NormalTabGap
+    {
+        get
+        {
+            if (double.IsNaN(field) && NavigationList.ItemsPanelRoot is StackPanel tabs)
+            {
+                field = tabs.Spacing;
+            }
+
+            return double.IsNaN(field) ? 0 : field;
+        }
+    } = double.NaN;
 
     // The count sits after its label in a stack spaced by 6.
     private const double SpacingBeforeCount = 6;

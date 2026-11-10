@@ -14,6 +14,8 @@ internal sealed class ShellText
     internal ShellText(bool? macOS = null)
     {
         ShowCommandIcon = macOS ?? OperatingSystem.IsMacOS();
+        SearchKey = ShowCommandIcon ? Labels.SearchKey : Labels.SearchKeyCtrl;
+        SearchTip = Labels.Search + " (" + SearchKey + ")";
         SearchKeyModifier = ShowCommandIcon ? string.Empty : Labels.SearchKeyModifier;
     }
 
@@ -168,10 +170,10 @@ internal sealed class ShellText
     public string Search { get; } = Labels.Search;
 
     /// <summary>The search field's tooltip: its name and the shortcut, so the folded icon keeps the hint.</summary>
-    public string SearchTip { get; } = Labels.Search + " (" + Labels.SearchKey + ")";
+    public string SearchTip { get; }
 
-    /// <summary><see cref="Labels.SearchKey"/>.</summary>
-    public string SearchKey { get; } = Labels.SearchKey;
+    /// <summary>The key chip as a screen reader says it: "⌘K" on macOS, "Ctrl+K" elsewhere.</summary>
+    public string SearchKey { get; }
 
     /// <summary><see cref="Labels.SearchKeyLetter"/>.</summary>
     public string SearchKeyLetter { get; } = Labels.SearchKeyLetter;

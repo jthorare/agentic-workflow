@@ -92,7 +92,9 @@
                      TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
           <Border x:Name="SearchKeycap" Grid.Column="2" Classes="kbd search-key" AutomationProperties.Name="{Binding Text.SearchKey}" AutomationProperties.AccessibilityView="Raw">
             <StackPanel Orientation="Horizontal" Spacing="1" AutomationProperties.AccessibilityView="Raw">
-              <icons:StateIcon Classes="kbd" Icon="Command" VerticalAlignment="Center" />
+              <icons:StateIcon Classes="kbd" Icon="Command" IsVisible="{Binding Text.ShowCommandIcon}" VerticalAlignment="Center" />
+              <TextBlock Classes="kbd" Text="{Binding Text.SearchKeyModifier}" IsVisible="{Binding !Text.ShowCommandIcon}" VerticalAlignment="Center"
+                         AutomationProperties.AccessibilityView="Raw" />
               <TextBlock Classes="kbd" Text="{Binding Text.SearchKeyLetter}" VerticalAlignment="Center"
                          AutomationProperties.Name="{Binding Text.SearchKey}" AutomationProperties.AccessibilityView="Raw" />
             </StackPanel>
