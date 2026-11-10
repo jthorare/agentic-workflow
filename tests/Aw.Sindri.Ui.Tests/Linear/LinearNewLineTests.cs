@@ -88,7 +88,7 @@ public sealed class LinearNewLineTests
         var sessions = shell.Health.Sessions is { } counts ? Labels.AgentsCounts(counts.Live, counts.Asking) : null;
         var todos = shell.Todo.OverdueCount > 0 || shell.Todo.ToSortOutCount > 0 ? Labels.TrayTodos(shell.Todo.OverdueCount, shell.Todo.ToSortOutCount) : null;
         Assert.StartsWith("Sindri", lines[0], StringComparison.Ordinal);
-        Assert.Equal(new[] { sessions, Labels.LinearNewLine(3), todos }.OfType<string>(), lines[1..], StringComparer.Ordinal);
+        Assert.Equal(new[] { sessions, Labels.LinearNewLine(2), todos }.OfType<string>(), lines[1..], StringComparer.Ordinal);
     }, Token);
 
     [Fact]

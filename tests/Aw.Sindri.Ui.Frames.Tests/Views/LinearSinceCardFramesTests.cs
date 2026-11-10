@@ -103,7 +103,7 @@ public sealed class LinearSinceCardFramesTests : FrameHost
 
         Assert.True(Visible(window, "LinearStripReason"));
         Assert.Equal("Reconnect", Named<Button>(window, "LinearStripReconnect").Content);
-        Assert.False(Visible(window, "LinearStripMarkAllSeen"));
+        Assert.True(Visible(window, "LinearStripGroups"));   // the stored changes stay under the reason
         Frame(window, "linear-since-error-900", "l2536-");
     });
 
