@@ -17,7 +17,7 @@ public static partial class SindriErrors
     public static readonly ErrorDefinition ToolkitProcessDied = new("SND-TK-004", ErrorKind.Unavailable, "The toolkit's process ended");
 
     /// <summary>SND-TK-005: the toolkit is paused.</summary>
-    public static readonly ErrorDefinition ToolkitPaused = new("SND-TK-005", ErrorKind.Conflict, "The toolkit is paused (fix: sindri toolkit resume <name>)");
+    public static readonly ErrorDefinition ToolkitPaused = new("SND-TK-005", ErrorKind.Conflict, "The toolkit is paused (fix: toolkit_stop, then toolkit_start)");
 
     /// <summary>SND-TK-006: a tool call ran past its timeout.</summary>
     public static readonly ErrorDefinition ToolkitCallTimedOut = new("SND-TK-006", ErrorKind.Unavailable, "The toolkit tool didn't answer in time");

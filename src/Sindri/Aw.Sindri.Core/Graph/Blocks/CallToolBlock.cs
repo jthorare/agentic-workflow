@@ -139,7 +139,7 @@ public sealed class CallToolBlock(IRunningToolkits toolkits, IConnectionToolPort
 
         if (toolkit.State == ToolkitState.Paused)
         {
-            return SindriErrors.ToolkitPaused.With($"Toolkit '{toolkitName}' is paused (fix: sindri toolkit resume {toolkitName})");
+            return SindriErrors.ToolkitPaused.With($"Toolkit '{toolkitName}' is paused (fix: toolkit_stop, then toolkit_start)");
         }
 
         if (toolkit.State != ToolkitState.Running || toolkit.Manifest is null)
