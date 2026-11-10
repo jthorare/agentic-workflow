@@ -398,6 +398,51 @@ public sealed class WatchTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_is_no_inbox_event_only_a_batched_status_line()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], onPoll: poll =>
+        {
+            if (poll == 1)
+            {
+                _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123").GetAwaiter().GetResult();
+            }
+        });
+
+        _ = await Watch(TimeSpan.FromSeconds(360));
+
+        Assert.Equal(["STATUS 1 new (lanes: ideas)"], _lines.Where(l => l.StartsWith("INBOX", StringComparison.Ordinal) || l.StartsWith("STATUS", StringComparison.Ordinal)), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Status_lines_print_at_most_every_15_minutes_and_ride_on_the_next_inbox_event()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], onPoll: poll =>
+        {
+            var message = poll switch
+            {
+                1 => ("m1", "t1-ideas", "STATUS: review clean on #123"),
+                2 => ("m2", "t1-ui", "STATUS: gate started on #12"),
+                3 => ("m3", "t1-api", "please rebase #12"),
+                4 => ("m4", "t1-api", "STATUS: rebased"),
+                _ => default,
+            };
+            if (message.Item1 is not null)
+            {
+                _world.Receive(message.Item1, message.Item2, message.Item3).GetAwaiter().GetResult();
+            }
+        });
+
+        _ = await Watch(TimeSpan.FromSeconds(1200));
+
+        Assert.Equal(
+            ["STATUS 1 new (lanes: ideas)", "INBOX 1 new message(s); STATUS 1 new (lanes: ui)", "STATUS 1 new (lanes: api)"],
+            _lines.Where(l => l.StartsWith("INBOX", StringComparison.Ordinal) || l.StartsWith("STATUS", StringComparison.Ordinal)),
+            StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void The_interval_and_duration_must_make_sense()
     {
         var validator = new WatchValidator();
