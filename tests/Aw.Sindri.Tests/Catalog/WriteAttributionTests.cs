@@ -90,7 +90,7 @@ public sealed class WriteAttributionTests
     };
 
     /// <summary>How many classes (WriteAttributionShardNTests) split the sweep, so no single test passes its lane's per-test cap (#2534: one test over all rows took 155 s on CI, 321 s on a loaded box).</summary>
-    internal const int Shards = 10;
+    internal const int Shards = 20;
 
     private static readonly Lazy<Task<Sweep>> _sweep = new(async () => new Sweep(await CatalogWriteTemplates(CancellationToken.None)));
 
@@ -149,6 +149,14 @@ public sealed class WriteAttributionTests
         Assert.NotEmpty(all);
         Assert.Equal(all.Count, union.Count);
         Assert.Equal(all.Order(), union.Order());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Every_shard_has_its_class()
+    {
+        var shards = typeof(WriteAttributionTests).Assembly.GetTypes().Select(static t => t.Name).Where(static n => n.StartsWith("WriteAttributionShard", StringComparison.Ordinal)).Order(StringComparer.Ordinal);
+
+        Assert.Equal(Enumerable.Range(0, Shards).Select(static i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"WriteAttributionShard{i}Tests")).Order(StringComparer.Ordinal), shards);   // why: a shard with no class would skip its rows silently
     }
 
     [Fact, Trait("Lane", "unit")]
