@@ -65,20 +65,8 @@ internal static class WorkflowRunScenarios
         var human = Human(host.Token.Value);
         switch ((slug, scenario))
         {
-            case ("workflows-slug-runs", "unknown-workflow"):
-                return await Ask(host, Post("/sindri/workflows/nope/runs", json: null, human));
-            case ("workflows-slug-runs", "bad-slug"):
-                return await Ask(host, Post("/sindri/workflows/Not_A_Slug/runs", json: null, human));
-            case ("workflows-slug-runs", "not-active"):
-                await Create(host, activate: false, ct);
-                return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", json: null, human));
-            case ("workflows-slug-runs", "empty-body"):
-                // why: a body that leaves 'payload' out reaches the service (#2493); before, binding refused it with a bodiless 400
-                await Create(host, activate: false, ct);
-                return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", "{}", human));
-            case ("workflows-slug-runs", "bad-payload"):
-                await Create(host, activate: true, ct);
-                return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", "{\"payload\":\"[1, 2]\"}", human));
+            case ("workflows-slug-runs", _):
+                return await Runs(host, scenario, human, ct);
             case ("workflow-runs-run-cancel", "bad-id"):
                 return await Ask(host, Post("/sindri/workflow-runs/not-a-run/cancel", json: null, human));
             case ("workflow-runs-run-cancel", "already-ended"):
@@ -92,6 +80,30 @@ internal static class WorkflowRunScenarios
                 return await AgentNode(host, slug, scenario, human, ct);
             default:
                 return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/cancel", json: null, human));
+        }
+    }
+
+    // POST /sindri/workflows/{slug}/runs: the refusals and the empty body.
+    private static async Task<string> Runs(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
+    {
+        switch (scenario)
+        {
+            case "unknown-workflow":
+                return await Ask(host, Post("/sindri/workflows/nope/runs", json: null, human));
+            case "bad-slug":
+                return await Ask(host, Post("/sindri/workflows/Not_A_Slug/runs", json: null, human));
+            case "not-active":
+                await Create(host, activate: false, ct);
+                return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", json: null, human));
+            case "empty-body":
+                // why: a body that leaves 'payload' out reaches the service (#2493); before, binding refused it with a bodiless 400
+                await Create(host, activate: false, ct);
+                return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", "{}", human));
+            case "bad-payload":
+                await Create(host, activate: true, ct);
+                return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", "{\"payload\":\"[1, 2]\"}", human));
+            default:
+                return await Ask(host, Post("/sindri/workflows/nope/runs", json: null, human));
         }
     }
 
