@@ -72,7 +72,7 @@
                   <ItemsControl ItemsSource="{Binding Fields}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="ag:SessionFieldViewModel">
-                        <Border Name="SessionField" Margin="0,0,0,6" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                        <Border Name="SessionField" Margin="0,0,0,8" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                           <Grid ColumnDefinitions="150,*" AutomationProperties.AccessibilityView="Raw">
                             <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
                             <TextBlock Grid.Column="1" Classes="body mono" Text="{Binding Value}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -91,7 +91,7 @@
           <ItemsControl x:Name="SessionHostFields" ItemsSource="{Binding HostFields}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="ag:SessionFieldViewModel">
-                <Border Name="SessionHostField" Margin="0,0,0,6" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <Border Name="SessionHostField" Margin="0,0,0,8" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                   <Grid ColumnDefinitions="150,*" AutomationProperties.AccessibilityView="Raw">
                     <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
                     <TextBlock Grid.Column="1" Classes="body mono" Text="{Binding Value}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -101,7 +101,7 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
 
-          <StackPanel x:Name="SessionHistory" Spacing="6" IsVisible="{Binding HasHistory}">
+          <StackPanel x:Name="SessionHistory" Spacing="8" IsVisible="{Binding HasHistory}">
             <TextBlock Classes="eyebrow" Text="{Binding HistoryHeading}" AutomationProperties.AccessibilityView="Raw" />
             <ItemsControl x:Name="SessionHistoryList" ItemsSource="{Binding History}">
               <ItemsControl.ItemTemplate>
@@ -119,7 +119,7 @@
 
           <!-- Focus is the catalog's pending control (the send is U11a-f): a disabled button, then the phase and the CLI on a line with Copy. -->
           <!-- Hidden until the send exists (B-11): a disabled "Coming soon" button and a CLI line are no use in the sheet. -->
-          <StackPanel x:Name="SessionFocusRow" Spacing="6" IsVisible="False">
+          <StackPanel x:Name="SessionFocusRow" Spacing="8" IsVisible="False">
             <Button x:Name="SessionFocus" Content="{Binding FocusLabel}" IsEnabled="{Binding IsFocusEnabled}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding FocusName}" />
             <Border x:Name="SessionFocusLine" AutomationProperties.Name="{Binding FocusLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
               <TextBlock Classes="caption mono" Text="{Binding FocusLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

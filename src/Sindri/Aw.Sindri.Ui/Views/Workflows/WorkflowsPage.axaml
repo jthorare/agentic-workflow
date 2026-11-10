@@ -44,14 +44,14 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:WorkflowRowViewModel">
                 <Border Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" MinHeight="36" VerticalAlignment="Center">
+                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" MinHeight="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
                     <Button Classes="row-title" Click="OnOpenWorkflow" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
                       <TextBlock Classes="body-strong" Text="{Binding NameText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
                     <Border Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding StateText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                       <TextBlock Classes="body-strong mono wf-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}" Text="{Binding StateText}" AutomationProperties.AccessibilityView="Raw" />
                     </Border>
-                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" Margin="0,0,0,6" AutomationProperties.AccessibilityView="Raw">
+                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12" Margin="0,0,0,8" AutomationProperties.AccessibilityView="Raw">
                       <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" />
                       <TextBlock Classes="caption subtle" Text="{Binding ChangedText}" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
@@ -105,7 +105,7 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:RunRowViewModel">
                 <Border Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" MinHeight="36" VerticalAlignment="Center">
+                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" MinHeight="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
                     <Button Classes="row-title" Click="OnOpenRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
                       <TextBlock Classes="body-strong mono" Text="{Binding Id}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
@@ -117,7 +117,7 @@
                       <TextBlock Classes="caption subtle" Text="{Binding RevisionText}" />
                       <TextBlock Classes="caption subtle" Text="{Binding WhenText}" />
                     </StackPanel>
-                    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" Margin="0,0,0,8" />
                   </Grid>
                 </Border>
               </DataTemplate>
@@ -173,7 +173,7 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="wf:NodeGroupViewModel">
             <Border Classes="panel" Margin="0,0,0,8" AutomationProperties.Name="{Binding HeaderText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
-              <StackPanel Spacing="6" Margin="16,8">
+              <StackPanel Spacing="8" Margin="16,8">
                 <TextBlock Classes="body-strong" Text="{Binding HeaderText}" />
                 <ItemsControl ItemsSource="{Binding Runs}">
                   <ItemsControl.ItemTemplate>

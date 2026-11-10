@@ -10,11 +10,6 @@ public sealed partial class GraphValidator
         foreach (var node in spec.Nodes.Where(static n => string.Equals(n.Type, LoopBody.ForEachType, StringComparison.Ordinal)))
         {
             var loop = LoopBody.Find(spec, node.Id);
-            if (loop.IsSuccess && LoopBody.AgentRefusal(loop.Value) is { } agentInLoop)
-            {
-                found.Add(Found.Error(LoopBody.AgentInLoopCode, [node.Id.Value], agentInLoop, "move the run_agent out of the loop, or run it in another workflow started with run_workflow"));
-            }
-
             if (loop is { IsError: true } refused)
             {
                 found.Add(Found.Error("GRAPH-LOOP-001", [node.Id.Value], refused.Error.Message, "wire the for_each through its nodes to exactly one collect, and feed the loop's nodes only from the loop"));

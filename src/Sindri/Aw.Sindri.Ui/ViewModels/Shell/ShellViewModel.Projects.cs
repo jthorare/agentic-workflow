@@ -73,6 +73,7 @@ internal sealed partial class ShellViewModel
     // The Add project sheet: the page's button opens it, Cancel closes it, and an added project closes it with the sentence said.
     private void WireProjectAdd()
     {
+        Projects.ConnectRequested += (_, _) => GoTo(PageId.Connections);
         Projects.AddRequested += (_, _) =>
         {
             OpenSheet(DeepLink.ProjectAdd);

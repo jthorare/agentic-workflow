@@ -39,7 +39,7 @@
               <StackPanel>
                 <Button Click="OnOpen" Padding="14,12" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" Background="Transparent" BorderThickness="0"
                         AutomationProperties.Name="{Binding AccessibleName}">
-                  <StackPanel Spacing="6">
+                  <StackPanel Spacing="8">
                     <TextBlock Classes="body-strong" Text="{Binding Name}" TextWrapping="Wrap" />
                     <TextBlock Classes="body" Text="{Binding Summary}" IsVisible="{Binding HasSummary}" TextWrapping="Wrap" />
                     <TextBlock Classes="caption subtle" Text="{Binding SizeText}" TextWrapping="Wrap" />

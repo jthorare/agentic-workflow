@@ -1558,5 +1558,117 @@
       "idempotentHint": true,
       "openWorldHint": false
     }
+  },
+  {
+    "name": "toolkit_list",
+    "description": "List Sindri toolkits (small programs Sindri builds and runs in a sandbox) with their state and tools.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "toolkit_build",
+    "description": "Build a toolkit (zero warnings and its tests passing) so it can start. A job; it takes a heavy slot.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The toolkit's name, e.g. github-triage"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "toolkit_start",
+    "description": "Start a built toolkit; its tools then appear in tools/list as <toolkit>__<tool>.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The toolkit's name, e.g. github-triage"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "toolkit_stop",
+    "description": "Switch a running toolkit off; its process stops and its tools leave tools/list.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The toolkit's name, e.g. github-triage"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "toolkit_calls",
+    "description": "The recent calls to a toolkit's tools: tool, caller, duration and error (inputs and outputs are scrubbed and capped).",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The toolkit's name, e.g. github-triage"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "At most this many calls (default 20)",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
   }
 ]

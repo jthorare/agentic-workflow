@@ -86,17 +86,16 @@ public sealed class GraphValidatorLoopTests
     }
 
     [Fact]
-    public void A_run_agent_in_a_loop_body_is_a_loop_finding_naming_the_for_each()
+    public void A_run_agent_in_a_loop_body_is_not_a_loop_finding()
     {
+        // why: an agent runs once per item (#2470), so a run_agent in the body is a valid loop
         var spec = Spec(
             [Trigger("daily"), Each("each"), Agent("work", "app"), Gather("gather")],
             [Edge("daily", "each"), Edge("each", "work"), Edge("work", "gather")]);
 
         var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
 
-        var finding = Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-003");
-        Assert.Equal(["each"], finding.Nodes);
-        Assert.Contains("'work'", finding.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(result.Findings, static f => f.Code == "GRAPH-LOOP-003");
     }
 
     [Fact]
