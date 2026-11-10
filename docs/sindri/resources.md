@@ -31,10 +31,10 @@ and a size check never follows or counts a symlink.
 
 ## When Sindri makes them
 
-1. On **activate** the validator refuses a bad name, a bad size,
-   a bad name, a bad size, or a sandbox `memory` or `wall` above the box's cap (`SND-RES-005`, `SND-RES-006`). The files themselves are made by the first step below; there is no
-   separate create-on-activate yet (the activate slice of PR 8 is not on this branch).
-2. Before each node runs, the `EnsureResources` step creates what is missing (nothing changes if it exists) and measures each disk. A disk over its `size` fails the node with the bytes used and
+1. On **activate** the validator refuses a bad name, a bad size, or a sandbox `memory` or `wall` above the box's cap (`SND-RES-005`, `SND-RES-006`).
+   A revision that passes then gets its database files and disk folders made and each disk measured. A failure here (`SND-RES-001` and the rest) refuses the activate,
+   and the workflow stays as it was.
+2. Before each node runs, the `EnsureResources` step makes the same check again: it creates what is missing (nothing changes if it exists) and measures each disk. A disk over its `size` fails the node with the bytes used and
    the limit (`SND-RES-001`). A disk with more than 100,000 files is `SND-RES-007`: delete files you don't need.
 3. The block gets the paths by environment name on its block context (`Resources`), and an agent Step gets the same names in its environment:
    `SINDRI_DB_<NAME>` (the file), `SINDRI_DISK_<NAME>` (the folder), `SINDRI_CONNECTION_<NAME>` (the connection's name). `<NAME>` is the resource name in capitals,
