@@ -13,6 +13,7 @@ namespace Aw.Sindri.Tests.Workflows;
 /// sent through the 'Answer' update before the timeout wins. The server skips time while the test awaits the run's result.
 /// </summary>
 [Lane(TestLane.Integration)]
+[Collection(nameof(WallClockAlone))]   // why: beside the parallel classes on a busy box, the server's time skip (DelayAsync) missed its ~30 s RPC deadline (#2574)
 public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
