@@ -54,11 +54,11 @@ while IFS= read -r f; do
     n=$((n + 1))
     waived_above=$prev_waiver
     prev_waiver=0
-    case "$line" in
-      [[:space:]]*'#'*|'#'*)
-        [[ "$line" =~ $WAIVER ]] && prev_waiver=1
-        continue ;;
-    esac
+    # A comment line is one whose first non-space character is `#`; a code line with a trailing comment or a `${#x}` is code.
+    if [[ "$line" =~ ^[[:space:]]*# ]]; then
+      [[ "$line" =~ $WAIVER ]] && prev_waiver=1
+      continue
+    fi
     if [[ "$line" =~ $NC_LISTEN ]] || [[ "$line" =~ $SOCAT_LISTEN ]] || [[ "$line" =~ $HTTP_SERVER ]] \
       || [[ "$line" =~ $PY_BIND ]] || [[ "$line" =~ $PORT_ASSIGN ]]; then
       [ "$waived_above" = 1 ] && continue
