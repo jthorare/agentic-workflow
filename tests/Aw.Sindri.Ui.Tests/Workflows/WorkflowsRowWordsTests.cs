@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
@@ -55,10 +56,49 @@ public sealed class WorkflowsRowWordsTests
     [InlineData(1, 1, "")]
     [InlineData(null, 1, "")]
     [InlineData(2, 2, "Revision 2")]
-    [InlineData(null, 2, "Newest revision 2")]
+    [InlineData(null, 2, "")]
     [InlineData(1, 3, "Revision 1 active, 3 newest")]
     public void The_revision_is_said_only_from_the_second_revision_on(int? active, int latest, string expected) =>
         Assert.Equal(expected, Labels.WfRevision(active, latest));
+
+    [Fact]
+    public async Task A_row_of_a_workflow_with_no_active_revision_says_no_revision()
+    {
+        var list = Golden("workflows", "list-two");
+        list["workflows"]![0]!["activeRevision"] = null;
+        list["workflows"]![0]!["latestRevision"] = 2;
+        _f.ServeList(list);
+
+        var page = await _f.Shown(Token);
+
+        Assert.Equal((string.Empty, false), (page.Rows[0].RevisionText, page.Rows[0].HasRevisionText));
+    }
+
+    [Fact]
+    public async Task The_page_of_a_workflow_with_no_active_revision_says_no_revision_and_one_with_an_active_revision_keeps_its_words()
+    {
+        var off = Golden("workflows-slug", "found");
+        off["activeRevision"] = null;
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, off.ToJsonString());
+        var page = await _f.Shown(Token);
+
+        await page.OpenWorkflow(Slug, Token);
+
+        Assert.Equal("2 nodes · created by owner", page.Runs.DetailText);
+    }
+
+    [Fact]
+    public async Task The_page_says_created_by_you_for_the_persons_own_actor()
+    {
+        var made = Golden("workflows-slug", "found");
+        made["createdBy"] = "human:ui";
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, made.ToJsonString());
+        var page = await _f.Shown(Token);
+
+        await page.OpenWorkflow(Slug, Token);
+
+        Assert.Equal("Revision 1 of 2 · 2 nodes · created by you", page.Runs.DetailText);
+    }
 
     [Fact]
     public void The_shared_refusal_line_starts_the_reason_with_a_capital_letter()

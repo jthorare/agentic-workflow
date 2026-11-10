@@ -326,9 +326,25 @@ public sealed class WorkflowsCreateTests
 
         page.OpenCreate();
 
-        Assert.Equal((true, false, false, false, "Workflows can't load while the lists are stalled."), (page.ViewsStalled, page.ShowsEmpty, page.ShowsCreateForm, page.CanOpenCreate, page.StalledText));
-        Assert.Equal("Workflows can't load while the lists are stalled.", page.NewWorkflowTip);
+        Assert.Equal((true, false, false, false, "The lists are stalled, so this may be out of date."), (page.ViewsStalled, page.ShowsEmpty, page.ShowsCreateForm, page.CanOpenCreate, page.StalledText));
+        Assert.Equal("The lists are stalled, so this may be out of date.", page.NewWorkflowTip);
         Assert.False(page.IsCreating);
+    }
+
+    [Fact]
+    public async Task A_stall_hides_the_form_and_the_form_comes_back_with_what_was_typed()
+    {
+        _f.ServeList(Golden("workflows", "list-empty"));
+        var page = await _f.Shown(Token);
+        page.OpenCreate();
+        page.NewName = "Morning check";
+        page.NewSlug = "my-own-id";
+
+        page.SetViewsStalled(stalled: true, rebuild: null);
+        Assert.False(page.ShowsCreateForm);
+        page.SetViewsStalled(stalled: false, rebuild: null);
+
+        Assert.Equal((true, "Morning check", "my-own-id"), (page.ShowsCreateForm, page.NewName, page.NewSlug));
     }
 
     [Fact]

@@ -98,6 +98,30 @@ public sealed class WorkflowsFramesTests : FrameHost
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"empty-form-{width}"), Prefix);
     });
 
+    // qa round 2: a server refusal shows inside the form as a red sentence with no code; the code is the line's tooltip.
+    [Fact]
+    public Task A_refused_create_shows_a_red_sentence_in_the_form_and_the_code_in_its_tooltip() => OnUi(async () =>
+    {
+        Server.WorkflowsAnswer = RouteAnswer.Api("workflows", "list-empty");
+        Server.CreateWorkflowAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.Conflict, "SND-GRAPH-009", "Another workflow already has that slug");
+        var (window, shell) = await Connected(width: 1280, height: 900);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.IsEmpty, "the Workflows page never read the empty list");
+        shell.Workflows.OpenCreate();
+        shell.Workflows.NewName = "Morning check";
+        await shell.Workflows.Create(CancellationToken.None);
+        await Until(window, () => Visible(window, "WorkflowsCreateError"), "the refusal line never showed");
+
+        var form = Named<Control>(window, "WorkflowsCreateForm");
+        var line = Named<Border>(form, "WorkflowsCreateError");
+        var text = line.GetVisualDescendants().OfType<TextBlock>().Single();
+        Assert.True(line.IsEffectivelyVisible, "the refusal line is not visible inside the form");
+        Assert.DoesNotContain("SND-", text.Text, StringComparison.Ordinal);
+        Assert.Equal("SND-GRAPH-009", ToolTip.GetTip(line));
+        Assert.Equal(ThemeColor(window, "Brush.Error", window.ActualThemeVariant), ChipColor(text));
+        Frame(window, "create-refused-1280", Prefix);
+    });
+
     [Fact]
     public Task A_row_title_does_not_hug_the_rows_top_border_and_New_workflow_sits_in_the_header_beside_the_list() => OnUi(async () =>
     {
