@@ -232,7 +232,7 @@ Aw.Meta.Core.Coordination.MergeQueueReader.MergeQueueReader(Aw.Meta.Core.Ports.I
 Aw.Meta.Core.Coordination.MergeQueueReader.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.QueuedPr!>!>!>
 Aw.Meta.Core.Coordination.MergeReadiness
 Aw.Meta.Core.Coordination.MergeReadiness.Assess(int pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Coordination.MergeAssessment!>!>
-Aw.Meta.Core.Coordination.MergeReadiness.MergeReadiness(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.ILogFiles! logs) -> void
+Aw.Meta.Core.Coordination.MergeReadiness.MergeReadiness(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.ILogFiles! logs, Aw.Meta.Core.Ports.IMessageStore! messages) -> void
 Aw.Meta.Core.Coordination.MetaSession
 Aw.Meta.Core.Coordination.MetaSession.MetaSession(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.ISessionDirectory! sessions) -> void
 Aw.Meta.Core.Coordination.MetaSession.Resolve(Aw.Meta.Core.Ids.SessionId session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Config.TeamConfig?>!>
@@ -2061,7 +2061,6 @@ static readonly Aw.Meta.Core.MetaErrors.BoardContended -> Aw.Kernel.ErrorDefinit
 Aw.Meta.Core.Coordination.LaneContextReader.ReadOrNull(Aw.Meta.Core.Config.TeamConfig? team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Lanes.LaneContext!>?>
 Aw.Meta.Core.Config.TeamConfig.Agent.get -> string?
 Aw.Meta.Core.Config.TeamConfig.Agent.init -> void
-Aw.Meta.Core.Config.TeamConfig.TeamConfig(string! team, string! repo, System.Collections.Generic.IReadOnlyList<string!>! lanes, string! metaLane = "meta", string? log = null, string? prompts = null, Aw.Meta.Core.Config.GateConfig? gate = null, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Config.MergeOrderRule!>? mergeOrder = null, System.Collections.Generic.IReadOnlyList<string!>? knownFlakes = null, Aw.Meta.Core.Config.WorktreeConfig? worktrees = null, Aw.Meta.Core.Config.ResourcesConfig? resources = null, Aw.Meta.Core.Config.BuildersConfig? builders = null, Aw.Meta.Core.Config.HeavyConfig? heavy = null, Aw.Meta.Core.Config.ContextConfig? context = null, Aw.Meta.Core.Config.UsageConfig? usage = null, string? agent = null) -> void
 Aw.Meta.Core.Config.TeamConfig.Usage.get -> Aw.Meta.Core.Config.UsageConfig!
 Aw.Meta.Core.Config.TeamConfig.Usage.init -> void
 Aw.Meta.Core.Config.UsageConfig
@@ -2453,3 +2452,62 @@ const Aw.Meta.Core.KvKeys.WatchOwner = "watch.owner" -> string!
 Aw.Meta.Core.Watch.WatchMemory
 static Aw.Meta.Core.Watch.WatchMemory.Format(string! repo, Aw.Meta.Core.Watch.WatchState! state) -> string!
 static Aw.Meta.Core.Watch.WatchMemory.Parse(string? text, string! repo, Aw.Meta.Core.Watch.WatchResources! resources) -> Aw.Meta.Core.Watch.WatchState!
+Aw.Meta.Core.Config.ReviewConfig
+Aw.Meta.Core.Config.ReviewConfig.<Clone>$() -> Aw.Meta.Core.Config.ReviewConfig!
+Aw.Meta.Core.Config.ReviewConfig.Deconstruct(out string! Lane) -> void
+Aw.Meta.Core.Config.ReviewConfig.Equals(Aw.Meta.Core.Config.ReviewConfig? other) -> bool
+Aw.Meta.Core.Config.ReviewConfig.Lane.get -> string!
+Aw.Meta.Core.Config.ReviewConfig.Lane.init -> void
+Aw.Meta.Core.Config.ReviewConfig.ReviewConfig(string! Lane) -> void
+Aw.Meta.Core.Config.TeamConfig.Review.get -> Aw.Meta.Core.Config.ReviewConfig?
+Aw.Meta.Core.Config.TeamConfig.Review.init -> void
+Aw.Meta.Core.Config.TeamConfig.TeamConfig(string! team, string! repo, System.Collections.Generic.IReadOnlyList<string!>! lanes, string! metaLane = "meta", string? log = null, string? prompts = null, Aw.Meta.Core.Config.GateConfig? gate = null, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Config.MergeOrderRule!>? mergeOrder = null, System.Collections.Generic.IReadOnlyList<string!>? knownFlakes = null, Aw.Meta.Core.Config.WorktreeConfig? worktrees = null, Aw.Meta.Core.Config.ResourcesConfig? resources = null, Aw.Meta.Core.Config.BuildersConfig? builders = null, Aw.Meta.Core.Config.HeavyConfig? heavy = null, Aw.Meta.Core.Config.ContextConfig? context = null, Aw.Meta.Core.Config.UsageConfig? usage = null, string? agent = null, Aw.Meta.Core.Config.ReviewConfig? review = null) -> void
+Aw.Meta.Core.Merge.CountLine
+Aw.Meta.Core.Merge.CountLine.<Clone>$() -> Aw.Meta.Core.Merge.CountLine!
+Aw.Meta.Core.Merge.CountLine.CountLine(int Passed, int Skipped, int Failed) -> void
+Aw.Meta.Core.Merge.CountLine.Deconstruct(out int Passed, out int Skipped, out int Failed) -> void
+Aw.Meta.Core.Merge.CountLine.Equals(Aw.Meta.Core.Merge.CountLine? other) -> bool
+Aw.Meta.Core.Merge.CountLine.Failed.get -> int
+Aw.Meta.Core.Merge.CountLine.Failed.init -> void
+Aw.Meta.Core.Merge.CountLine.Passed.get -> int
+Aw.Meta.Core.Merge.CountLine.Passed.init -> void
+Aw.Meta.Core.Merge.CountLine.Skipped.get -> int
+Aw.Meta.Core.Merge.CountLine.Skipped.init -> void
+Aw.Meta.Core.Merge.MergeFacts.Review.get -> Aw.Meta.Core.Merge.ReviewFacts?
+Aw.Meta.Core.Merge.MergeFacts.Review.init -> void
+Aw.Meta.Core.Merge.ReviewFacts
+Aw.Meta.Core.Merge.ReviewFacts.<Clone>$() -> Aw.Meta.Core.Merge.ReviewFacts!
+Aw.Meta.Core.Merge.ReviewFacts.Counts.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.CountLine!>!
+Aw.Meta.Core.Merge.ReviewFacts.Counts.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.Equals(Aw.Meta.Core.Merge.ReviewFacts? other) -> bool
+Aw.Meta.Core.Merge.ReviewFacts.OkSha.get -> string?
+Aw.Meta.Core.Merge.ReviewFacts.OkSha.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.QaNotYet.get -> bool
+Aw.Meta.Core.Merge.ReviewFacts.QaNotYet.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.QaSha.get -> string?
+Aw.Meta.Core.Merge.ReviewFacts.QaSha.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.ReadySha.get -> string?
+Aw.Meta.Core.Merge.ReviewFacts.ReadySha.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.Reviewer.get -> string!
+Aw.Meta.Core.Merge.ReviewFacts.Reviewer.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.ReviewFacts() -> void
+Aw.Meta.Core.Merge.ReviewProof
+override Aw.Meta.Core.Config.ReviewConfig.Equals(object? obj) -> bool
+override Aw.Meta.Core.Config.ReviewConfig.GetHashCode() -> int
+override Aw.Meta.Core.Config.ReviewConfig.ToString() -> string!
+override Aw.Meta.Core.Merge.CountLine.Equals(object? obj) -> bool
+override Aw.Meta.Core.Merge.CountLine.GetHashCode() -> int
+override Aw.Meta.Core.Merge.CountLine.ToString() -> string!
+override Aw.Meta.Core.Merge.ReviewFacts.Equals(object? obj) -> bool
+override Aw.Meta.Core.Merge.ReviewFacts.GetHashCode() -> int
+override Aw.Meta.Core.Merge.ReviewFacts.ToString() -> string!
+static Aw.Meta.Core.Config.ReviewConfig.operator !=(Aw.Meta.Core.Config.ReviewConfig? left, Aw.Meta.Core.Config.ReviewConfig? right) -> bool
+static Aw.Meta.Core.Config.ReviewConfig.operator ==(Aw.Meta.Core.Config.ReviewConfig? left, Aw.Meta.Core.Config.ReviewConfig? right) -> bool
+static Aw.Meta.Core.Merge.CountLine.operator !=(Aw.Meta.Core.Merge.CountLine? left, Aw.Meta.Core.Merge.CountLine? right) -> bool
+static Aw.Meta.Core.Merge.CountLine.operator ==(Aw.Meta.Core.Merge.CountLine? left, Aw.Meta.Core.Merge.CountLine? right) -> bool
+static Aw.Meta.Core.Merge.ReviewFacts.operator !=(Aw.Meta.Core.Merge.ReviewFacts? left, Aw.Meta.Core.Merge.ReviewFacts? right) -> bool
+static Aw.Meta.Core.Merge.ReviewFacts.operator ==(Aw.Meta.Core.Merge.ReviewFacts? left, Aw.Meta.Core.Merge.ReviewFacts? right) -> bool
+static Aw.Meta.Core.Merge.ReviewProof.Collect(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! messages, string! reviewer, int pr) -> Aw.Meta.Core.Merge.ReviewFacts!
+static Aw.Meta.Core.Merge.ReviewProof.Counts(string! body) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.CountLine!>!
+static Aw.Meta.Core.Merge.ReviewProof.IsHead(string? sha, string! head) -> bool
+static Aw.Meta.Core.Merge.ReviewProof.ReadySha(string! body) -> string?
