@@ -153,6 +153,9 @@ internal sealed class ShellText
     /// <summary><see cref="Labels.Search"/>.</summary>
     public string Search { get; } = Labels.Search;
 
+    /// <summary>The search field's tooltip: its name and the shortcut, so the folded icon keeps the hint.</summary>
+    public string SearchTip { get; } = Labels.Search + " (" + Labels.SearchKey + ")";
+
     /// <summary><see cref="Labels.SearchKey"/>.</summary>
     public string SearchKey { get; } = Labels.SearchKey;
 
