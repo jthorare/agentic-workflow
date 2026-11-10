@@ -349,11 +349,13 @@ Aw.Sindri.Features.CreateItem.ItemCreatedResponse
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.<Clone>$() -> Aw.Sindri.Features.CreateItem.ItemCreatedResponse!
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Accepted.get -> Aw.Sindri.Core.Commands.CommandAccepted!
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Accepted.init -> void
-Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Deconstruct(out Aw.Sindri.Core.Commands.CommandAccepted! Accepted, out Aw.Sindri.Core.Ids.ItemId ItemId) -> void
+Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Deconstruct(out Aw.Sindri.Core.Commands.CommandAccepted! Accepted, out Aw.Sindri.Core.Ids.ItemId ItemId, out string? Warning) -> void
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Equals(Aw.Sindri.Features.CreateItem.ItemCreatedResponse? other) -> bool
-Aw.Sindri.Features.CreateItem.ItemCreatedResponse.ItemCreatedResponse(Aw.Sindri.Core.Commands.CommandAccepted! Accepted, Aw.Sindri.Core.Ids.ItemId ItemId) -> void
+Aw.Sindri.Features.CreateItem.ItemCreatedResponse.ItemCreatedResponse(Aw.Sindri.Core.Commands.CommandAccepted! Accepted, Aw.Sindri.Core.Ids.ItemId ItemId, string? Warning = null) -> void
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.ItemId.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.ItemId.init -> void
+Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Warning.get -> string?
+Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Warning.init -> void
 Aw.Sindri.Features.Decide.DecideRequest
 Aw.Sindri.Features.Decide.DecideRequest.<Clone>$() -> Aw.Sindri.Features.Decide.DecideRequest!
 Aw.Sindri.Features.Decide.DecideRequest.Choice.get -> Aw.Sindri.Core.Ids.DecisionOption

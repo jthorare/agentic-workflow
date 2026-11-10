@@ -139,4 +139,20 @@ public sealed class CreateItemTests
         Assert.True(validator.Validate(A.CreateItemRequest().WithBody(new string('x', 4001)).Build()).IsError);
         Assert.True(validator.Validate(A.CreateItemRequest().WithBody("line one\nline two\ttabbed").Build()).IsSuccess);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_failed_run_link_makes_one_item_and_a_warning()
+    {
+        _ = await _h.HoldLease();
+        using var entered = _h.Callers.Enter(A.Caller().Human().Build());
+        var service = new CreateItemService(_h.Profiles, _h.Held, new LinkRefusingLedger(_h.Store), _h.Events, _h.Ids, _h.Callers);
+        var run = RecordKey.From("sindri:run/nightly@1:1");
+
+        var result = await service.Handle(A.CreateItemRequest().WithTitle("Try the queue").Build() with { RunRecord = run }, Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);   // success: the node doesn't fail, so nothing retries it
+        var recorded = Assert.Single(_h.Store.Events);
+        Assert.Equal(EventTypes.ItemCreated, recorded.Envelope.Type);
+        Assert.Contains("nightly@1:1", result.Value.Warning, StringComparison.Ordinal);
+    }
 }

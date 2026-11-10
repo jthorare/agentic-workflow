@@ -17,7 +17,7 @@ namespace Aw.Sindri.Features.CreateItem;
 /// <param name="runs">Links the run to the item it made.</param>
 internal sealed class WorkflowItemMaker(CreateItemService service, ICallerContextAccessor callers, IWorkflowRunStore runs) : ICreateItemPort
 {
-    public async ValueTask<Result<string>> Create(ItemToCreate item, CancellationToken cancellationToken)
+    public async ValueTask<Result<ItemMade>> Create(ItemToCreate item, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(item);
         var parsed = ToRequest(item);
@@ -36,7 +36,7 @@ internal sealed class WorkflowItemMaker(CreateItemService service, ICallerContex
         }
 
         var linked = await runs.SetItem(run, made.Value.ItemId, cancellationToken).ConfigureAwait(false);
-        return linked.IsError ? linked.Error : made.Value.ItemId.Value;
+        return linked.IsError ? linked.Error : new ItemMade(made.Value.ItemId, Warning: null);
     }
 
     private static Result<CreateItemRequest> ToRequest(ItemToCreate item)

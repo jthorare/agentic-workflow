@@ -45,9 +45,9 @@ public sealed class WorkflowItemMakerTests
         Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
         var recorded = Assert.Single(_h.Store.Events, static e => e.Envelope.Type == EventTypes.ItemCreated);
         Assert.Equal(EventTypes.ItemCreated, recorded.Envelope.Type);
-        Assert.Equal(made.Value, recorded.Item);
+        Assert.Equal(made.Value.ItemId.Value, recorded.Item);
         Assert.Equal("service:workflow", recorded.Envelope.Actor);
-        Assert.Equal(made.Value, (await _runs.Get(_run, Token)).Value.ItemId?.Value);   // the run is linked to its item
+        Assert.Equal(made.Value.ItemId.Value, (await _runs.Get(_run, Token)).Value.ItemId?.Value);   // the run is linked to its item
         var payload = _h.Events.Payload<ItemCreated>(recorded).Value;
         Assert.Equal(("Fix login", "details", RepoName.From("web"), RecordKey.From("linear:issue/abc-1")), (payload.Title, payload.Body, payload.Repo, payload.Link));
     }
@@ -89,6 +89,49 @@ public sealed class WorkflowItemMakerTests
         Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
         var linked = Assert.Single(_h.Store.Events, static e => e.Envelope.Type == EventTypes.ItemLinked);
         var payload = _h.Events.Payload<ItemLinked>(linked).Value;
-        Assert.Equal((made.Value, "sindri:run/" + _run.Value), (payload.Item.Value, payload.Record.Value));
+        Assert.Equal((made.Value.ItemId.Value, "sindri:run/" + _run.Value), (payload.Item.Value, payload.Record.Value));
+        Assert.Null(made.Value.Warning);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_failed_run_link_makes_one_item_and_a_warning()
+    {
+        _ = await _h.HoldLease();
+        await Seed();
+        var maker = new WorkflowItemMaker(new CreateItemService(_h.Profiles, _h.Held, new LinkRefusingLedger(_h.Store), _h.Events, _h.Ids, _h.Callers), _h.Callers, _runs);
+
+        var made = await maker.Create(new ItemToCreate(_run, "Loose end", Repo: null, Body: null, LinearIssue: null), Token);
+
+        Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);   // a success never fails the node, so nothing retries it into a second item
+        var item = Assert.Single(_h.Store.Events, static e => e.Envelope.Type == EventTypes.ItemCreated);
+        Assert.Equal(item.Item, made.Value.ItemId.Value);
+        Assert.Contains(_run.Value, made.Value.Warning, StringComparison.Ordinal);
+        Assert.Contains("2588", made.Value.Warning, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_failed_run_store_write_makes_one_item_and_a_warning()
+    {
+        _ = await _h.HoldLease();   // the run is never seeded: runs.SetItem says it is not found
+
+        var made = await Maker().Create(new ItemToCreate(_run, "Loose end", Repo: null, Body: null, LinearIssue: null), Token);
+
+        Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
+        _ = Assert.Single(_h.Store.Events, static e => e.Envelope.Type == EventTypes.ItemCreated);
+        Assert.Contains(_run.Value, made.Value.Warning, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Both_writes_failing_join_their_warnings()
+    {
+        _ = await _h.HoldLease();
+        var maker = new WorkflowItemMaker(new CreateItemService(_h.Profiles, _h.Held, new LinkRefusingLedger(_h.Store), _h.Events, _h.Ids, _h.Callers), _h.Callers, _runs);
+
+        var made = await maker.Create(new ItemToCreate(_run, "Loose end", Repo: null, Body: null, LinearIssue: null), Token);
+
+        Assert.True(made.IsSuccess, made.IsError ? made.Error.ToString() : null);
+        _ = Assert.Single(_h.Store.Events, static e => e.Envelope.Type == EventTypes.ItemCreated);
+        Assert.Contains("link to run", made.Value.Warning, StringComparison.Ordinal);
+        Assert.Contains("run store", made.Value.Warning, StringComparison.Ordinal);
     }
 }

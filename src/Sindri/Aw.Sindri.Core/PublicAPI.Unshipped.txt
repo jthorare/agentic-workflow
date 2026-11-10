@@ -20951,7 +20951,7 @@ Aw.Sindri.Core.Graph.Blocks.HttpBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.HttpBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
 Aw.Sindri.Core.Graph.Blocks.HttpBlock.Type.get -> string!
 Aw.Sindri.Core.Graph.Blocks.ICreateItemPort
-Aw.Sindri.Core.Graph.Blocks.ICreateItemPort.Create(Aw.Sindri.Core.Graph.Blocks.ItemToCreate! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Graph.Blocks.ICreateItemPort.Create(Aw.Sindri.Core.Graph.Blocks.ItemToCreate! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.ItemMade!>!>
 Aw.Sindri.Core.Graph.Blocks.IGraphBlock.Commit(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, Aw.Sindri.Core.Graph.Blocks.BlockResult! result, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Graph.Blocks.IGraphCallPort
 Aw.Sindri.Core.Graph.Blocks.IGraphCallPort.MaxDepth(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
@@ -21827,6 +21827,20 @@ const Aw.Sindri.Core.Events.EventTypes.LinearIssueCreated = "linear.issue.create
 const Aw.Sindri.Core.Events.EventTypes.LinearCommentPosted = "linear.comment.posted" -> string!
 const Aw.Sindri.Core.Events.EventTypes.LinearIssueChanged = "linear.issue.changed" -> string!
 Aw.Sindri.Core.Linear.ILinearSideFacts.LookupsForWrite(string! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Linear.LinearLookupsResponse?>!>
+Aw.Sindri.Core.Graph.Blocks.ItemMade
+Aw.Sindri.Core.Graph.Blocks.ItemMade.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.ItemMade!
+Aw.Sindri.Core.Graph.Blocks.ItemMade.Deconstruct(out Aw.Sindri.Core.Ids.ItemId ItemId, out string? Warning) -> void
+Aw.Sindri.Core.Graph.Blocks.ItemMade.Equals(Aw.Sindri.Core.Graph.Blocks.ItemMade? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.ItemMade.ItemId.get -> Aw.Sindri.Core.Ids.ItemId
+Aw.Sindri.Core.Graph.Blocks.ItemMade.ItemId.init -> void
+Aw.Sindri.Core.Graph.Blocks.ItemMade.ItemMade(Aw.Sindri.Core.Ids.ItemId ItemId, string? Warning) -> void
+Aw.Sindri.Core.Graph.Blocks.ItemMade.Warning.get -> string?
+Aw.Sindri.Core.Graph.Blocks.ItemMade.Warning.init -> void
+override Aw.Sindri.Core.Graph.Blocks.ItemMade.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.ItemMade.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.ItemMade.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.ItemMade.operator !=(Aw.Sindri.Core.Graph.Blocks.ItemMade? left, Aw.Sindri.Core.Graph.Blocks.ItemMade? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.ItemMade.operator ==(Aw.Sindri.Core.Graph.Blocks.ItemMade? left, Aw.Sindri.Core.Graph.Blocks.ItemMade? right) -> bool
 Aw.Sindri.Core.Graph.Blocks.ItemToCreate
 Aw.Sindri.Core.Graph.Blocks.ItemToCreate.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.ItemToCreate!
 Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Body.get -> string?
