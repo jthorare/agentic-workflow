@@ -533,7 +533,7 @@ check "marked reply, lane still owes (mail arrived mid-turn): no unmarked line, 
 # A nested agent's not-own-agent trace does not replace the lane's own trace from this session
 nested() { printf '%s' "$2" > "$WORK/in"; AW_META_LANE_PID=999999 AW_META_TEAM=t1 AW_META_LANE=api bash "$HOOKS/$1" 2> /dev/null < "$WORK/in"; }
 clear_lane; STUB_RC=1 STUB_OUT="owes the meta a reply" lane "$UNM"
-printf 'id-1\n' > "$LS/api"; touch -d '2 seconds ago' "$LS/api"
+printf 'id-1\n' > "$LS/api"; touch -t "$(date -v-2S +%Y%m%d%H%M.%S 2> /dev/null || date -d '2 seconds ago' +%Y%m%d%H%M.%S)" "$LS/api"   # BSD date -v, GNU date -d (macOS touch lacks a relative date)
 nested meta-lane-gate.sh "$UPS"
 check "a nested agent's gate run keeps the lane's reply-unmarked trace (newer than the session id)" "$(trace)" "meta-lane-gate Stop reply-unmarked"
 nested session-id-report.sh '{"hook_event_name":"SessionStart","session_id":"s-6"}'

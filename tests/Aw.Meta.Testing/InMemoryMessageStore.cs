@@ -14,6 +14,9 @@ public sealed class InMemoryMessageStore : IMessageStore
     private readonly List<Outbound> _sent = [];
     private MetaRole? _role;
 
+    /// <summary>Whether <see cref="Resolve"/> fails (a store that cannot write).</summary>
+    public bool FailResolves { get; set; }
+
     /// <inheritdoc />
     public ValueTask<Result<long>> Offset(string transcript, CancellationToken cancellationToken) =>
         Done.Of(_offsets.GetValueOrDefault(transcript));
@@ -40,6 +43,11 @@ public sealed class InMemoryMessageStore : IMessageStore
     /// <inheritdoc />
     public ValueTask<Result<Unit>> Resolve(MessageId id, MessageResolution resolution, CancellationToken cancellationToken)
     {
+        if (FailResolves)
+        {
+            return Done.Failed<Unit>(MetaErrors.MessageNotFound.With("the message store cannot be written"));
+        }
+
         var at = _messages.FindIndex(m => m.Id == id);
         if (at < 0)
         {
