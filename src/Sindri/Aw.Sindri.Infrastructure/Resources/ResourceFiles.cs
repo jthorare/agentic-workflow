@@ -8,7 +8,8 @@ namespace Aw.Sindri.Infrastructure.Resources;
 /// and <c language="text">node/&lt;slug&gt;/&lt;id&gt;</c>, each holding <c language="text">&lt;name&gt;.db</c> files (databases) and folders (disks). Symlinks are never followed or counted.
 /// </summary>
 /// <param name="root">The resources root, <c language="text">$AW_SINDRI_HOME/resources</c>.</param>
-internal sealed class ResourceFiles(string root) : IResourceFiles
+/// <param name="entryCap">Largest number of files and folders one disk measurement visits (tests pass a small one).</param>
+internal sealed class ResourceFiles(string root, int entryCap = DiskMeter.FileCap) : IResourceFiles
 {
     private const string DatabaseSuffix = ".db";
 
@@ -42,6 +43,8 @@ internal sealed class ResourceFiles(string root) : IResourceFiles
         Directory.Delete(folder, recursive: true);
         return count;
     }
+
+    public Result<IStagedPurge> Stage(ResourceOwner owner) => throw new NotSupportedException();
 
     private string Folder(ResourceOwner owner) => Path.GetFullPath(Path.Combine(Root, owner.Folder));
 
@@ -87,7 +90,7 @@ internal sealed class ResourceFiles(string root) : IResourceFiles
 
             if (entry is DirectoryInfo dir)
             {
-                var used = DiskMeter.Check(dir.Name, dir.FullName, long.MaxValue);
+                var used = DiskMeter.Check(dir.Name, dir.FullName, long.MaxValue, entryCap);
                 yield return new ResourceEntry(owner, ResourceKind.Disk, dir.Name, used.IsSuccess ? used.Value : 0, dir.FullName);
             }
             else if (entry is FileInfo file && file.Name.EndsWith(DatabaseSuffix, StringComparison.Ordinal))

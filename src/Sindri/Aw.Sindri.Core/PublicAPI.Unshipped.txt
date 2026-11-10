@@ -22365,10 +22365,16 @@ override Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Equals(object? obj) -
 Aw.Sindri.Core.Resources.IResourceFiles
 Aw.Sindri.Core.Resources.IResourceFiles.List(Aw.Sindri.Core.Resources.ResourceOwner? owner) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>!>!
 Aw.Sindri.Core.Resources.IResourceFiles.Purge(Aw.Sindri.Core.Resources.ResourceOwner! owner) -> Aw.Kernel.Result<int>!
+Aw.Sindri.Core.Resources.IResourceFiles.Stage(Aw.Sindri.Core.Resources.ResourceOwner! owner) -> Aw.Kernel.Result<Aw.Sindri.Core.Resources.IStagedPurge!>!
+Aw.Sindri.Core.Resources.IStagedPurge
+Aw.Sindri.Core.Resources.IStagedPurge.Count.get -> int
+Aw.Sindri.Core.Resources.IStagedPurge.Delete() -> Aw.Kernel.Result<int>!
+Aw.Sindri.Core.Resources.IStagedPurge.Restore() -> Aw.Kernel.Result<int>!
 Aw.Sindri.Core.Resources.ResourceEntry
 Aw.Sindri.Core.Resources.ResourceEntry.Kind.get -> Aw.Sindri.Core.Resources.ResourceKind
 Aw.Sindri.Core.Resources.ResourceEntry.Name.get -> string!
 Aw.Sindri.Core.Resources.ResourceEntry.Owner.get -> Aw.Sindri.Core.Resources.ResourceOwner!
 Aw.Sindri.Core.Resources.ResourceEntry.Path.get -> string!
-Aw.Sindri.Core.Resources.ResourceEntry.ResourceEntry(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceKind kind, string! name, long sizeBytes, string! path) -> void
+Aw.Sindri.Core.Resources.ResourceEntry.ResourceEntry(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceKind kind, string! name, long sizeBytes, string! path, bool unmeasured = false) -> void
 Aw.Sindri.Core.Resources.ResourceEntry.SizeBytes.get -> long
+Aw.Sindri.Core.Resources.ResourceEntry.Unmeasured.get -> bool
