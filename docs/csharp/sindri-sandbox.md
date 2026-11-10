@@ -219,6 +219,7 @@ SB-5a's rendered settings put it into effect.
 | `external-write-guard` | PreToolUse * | allow | no | **drop** | answers 'allow' to every tool call it doesn't match, so with it every tool would pass 'dontAsk'; its external writes stay refused by the deny rule 'gh:*' and by 'dontAsk' for tools outside the Step's list |
 | `git-context` | SessionStart | no | no | keep | prints git context; answers nothing |
 | `judge-health` | SessionStart | no | no | keep | warns when the judge is degraded; answers nothing |
+| `meta-board-line` | UserPromptSubmit, PostToolUse | no | no | keep | acts only in a Meta lane (does nothing in a Sindri launch); prints the team board line as context; answers nothing |
 | `meta-lane-gate` | UserPromptSubmit, SessionStart, PostToolUse, Stop (Codex and Cursor lanes) | no | no | keep | acts only in a Meta lane (does nothing in a Sindri launch); blocks a stop, answers no permission |
 | `meta-outbox` | PostToolUse SendMessage | no | no | keep | records sent messages for the meta; answers nothing |
 | `meta-stop-gate` | Stop | no | no | keep | blocks only the registered meta's stop; answers no permission |
