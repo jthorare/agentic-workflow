@@ -60,4 +60,23 @@ plain 1 && rc=0 || rc=$?
 check "a young empty guard (a reclaimer between its mkdir and its pid file) is not cleared" "$rc:$([ -d "$G" ] && echo guard)" "1:guard"
 rm -rf "$G" "$LF"
 
+# --- a live holder's pid file in the guard (#2616): a dead pid file that sorts first must not let the lock be removed ---
+# 04194399: the leading 0 sorts it before any real pid, and it is above the default pid_max, so it is never live.
+reclaim_once() { bash -c 'LOCK_NAME=browser source "$1"; set +e; _lock_reclaim; echo $?' _ "$LOCK" 2>/dev/null | tail -n 1; }
+rm -rf "$G" "$LF"; mkdir -p "$AW_STATE_DIR"; dead_pid >"$LF"; mkdir "$G"
+sleep 30 & holder=$!
+: >"$G/04194399"; : >"$G/$holder"
+check "precondition: the dead pid file sorts before the live holder's in the guard" "$(printf '%s\n' "$G"/* | head -n 1 | sed 's|.*/||')" "04194399"
+reclaim_once >/dev/null
+check "a dead pid file ahead of a live holder's does not let the waiter remove the lock" "$([ -e "$LF" ] && echo kept || echo removed)" "kept"
+check "the live holder's pid file is still in the guard" "$([ -e "$G/$holder" ] && echo present || echo gone)" "present"
+kill "$holder" 2>/dev/null || true; wait "$holder" 2>/dev/null || true; holder=""
+
+# --- an old empty guard and a dead lock owner: within two reclaims the lock is gone (a fix must not write into an empty guard) ---
+rm -rf "$G" "$LF"; dead_pid >"$LF"; mkdir "$G"
+touch -d '5 minutes ago' "$G" 2>/dev/null || touch -t "$(date -v-5M +%Y%m%d%H%M 2>/dev/null)" "$G"
+reclaim_once >/dev/null; reclaim_once >/dev/null
+check "an old empty guard is cleared and the dead owner's lock removed within two reclaims" "$([ -e "$LF" ] && echo kept || echo removed)" "removed"
+rm -rf "$G" "$LF"
+
 exit "$fail"
