@@ -122,6 +122,7 @@ internal sealed partial class LinearWorkViewModel
         var now = _clock.GetUtcNow();
         var kept = new Dictionary<string, LinearSinceRowViewModel>(StringComparer.Ordinal);
         var groups = new List<LinearSinceGroupViewModel>();
+        var open = StripGroups.Where(static g => g.IsExpanded).Select(static g => g.Heading).ToHashSet(StringComparer.Ordinal);   // every read makes new groups: keep what Show all opened
         var flat = new List<LinearSinceRowViewModel>();
         var perIssue = (_since?.Items ?? []).GroupBy(static i => i.Key, StringComparer.Ordinal);
         List<LinearSinceRowViewModel> rows = [.. perIssue.Select(g => Row([.. g], now))];
@@ -133,7 +134,7 @@ internal sealed partial class LinearWorkViewModel
                 continue;
             }
 
-            groups.Add(new LinearSinceGroupViewModel(heading, inGroup));
+            groups.Add(new LinearSinceGroupViewModel(heading, inGroup, open.Contains(heading)));
             flat.AddRange(inGroup);
         }
 

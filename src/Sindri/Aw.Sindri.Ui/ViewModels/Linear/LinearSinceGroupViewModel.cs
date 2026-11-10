@@ -3,7 +3,8 @@ namespace Aw.Sindri.Ui.ViewModels.Linear;
 /// <summary>One fixed group of the since-you-looked card: a heading and its rows, newest first. The card shows the first five; Show all expands the group.</summary>
 /// <param name="heading">"Assigned to you", "Moved" or "Other".</param>
 /// <param name="rows">The issues' rows, newest change first.</param>
-internal sealed class LinearSinceGroupViewModel(string heading, IReadOnlyList<LinearSinceRowViewModel> rows) : ObservableObject
+/// <param name="expanded">True when the group was open before this read: a re-read keeps what Show all opened.</param>
+internal sealed class LinearSinceGroupViewModel(string heading, IReadOnlyList<LinearSinceRowViewModel> rows, bool expanded = false) : ObservableObject
 {
     /// <summary>How many rows a group shows before Show all.</summary>
     internal const int Cap = 5;
@@ -18,7 +19,7 @@ internal sealed class LinearSinceGroupViewModel(string heading, IReadOnlyList<Li
     public IReadOnlyList<LinearSinceRowViewModel> Rows { get; } = rows;
 
     /// <summary>True once Show all expanded the group.</summary>
-    public bool IsExpanded { get; private set; }
+    public bool IsExpanded { get; private set; } = expanded;
 
     /// <summary>The rows the card shows: the first five, or all of them once expanded.</summary>
     public IReadOnlyList<LinearSinceRowViewModel> ShownRows => IsExpanded ? Rows : [.. Rows.Take(Cap)];
