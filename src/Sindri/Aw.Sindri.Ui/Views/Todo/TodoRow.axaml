@@ -38,7 +38,9 @@
       </Grid>
     </Border>
     <Grid x:Name="TodoReading" ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center" IsVisible="{Binding IsReading}">
-      <CheckBox x:Name="TodoDone" MinWidth="0" MinHeight="0" Padding="0" Margin="0,0,12,0" VerticalAlignment="Center" Focusable="False" IsHitTestVisible="False"
+      <!-- Fluent's CheckBox template holds its 20 px box in a 32 px tall grid, so the row's 1 px top border made the row 33 (#2546).
+           The -6 margins give back the 12 px around the box: the box stays centred and the row stays Row.Height.Default. -->
+      <CheckBox x:Name="TodoDone" MinWidth="0" MinHeight="0" Padding="0" Margin="0,-6,12,-6" VerticalAlignment="Center" Focusable="False" IsHitTestVisible="False"
                 IsChecked="{Binding IsDone, Mode=OneWay}" AutomationProperties.Name="{Binding DoneBoxName}" AutomationProperties.AccessibilityView="Raw" />
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="TodoText" Classes="body todo-text" Text="{Binding Text}" MaxWidth="480" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"

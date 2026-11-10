@@ -71,7 +71,7 @@
                 </Grid>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                   <!-- B2: "N marked seen · Undo" for 5 min after Mark all seen; the Undo button is a plain tab stop, and its words are spoken once by NeedsYouSeenLive. -->
-                  <StackPanel x:Name="NeedsYouUndo" Orientation="Horizontal" Spacing="6" IsVisible="{Binding NeedsYou.Seen.UndoOffered}" VerticalAlignment="Center">
+                  <StackPanel x:Name="NeedsYouUndo" Orientation="Horizontal" Spacing="8" IsVisible="{Binding NeedsYou.Seen.UndoOffered}" VerticalAlignment="Center">
                     <TextBlock x:Name="NeedsYouUndoText" Classes="caption subtle" Text="{Binding NeedsYou.Seen.UndoText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
                     <TextBlock Classes="caption subtle" Text="·" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
                     <Button x:Name="NeedsYouUndoButton" Classes="copy" Click="OnUndoSeen" GotFocus="OnUndoHeld" LostFocus="OnUndoReleased" PointerEntered="OnUndoHeld" PointerExited="OnUndoReleased" AutomationProperties.Name="{Binding Text.UndoMarkAllSeen}">
@@ -85,7 +85,7 @@
                 </StackPanel>
               </Grid>
             </Border>
-            <TextBlock x:Name="NeedsYouBanner" Classes="caption" Text="{Binding NeedsYou.Banner}" IsVisible="{Binding NeedsYou.HasBanner}" Margin="16,6"
+            <TextBlock x:Name="NeedsYouBanner" Classes="caption" Text="{Binding NeedsYou.Banner}" IsVisible="{Binding NeedsYou.HasBanner}" Margin="16,8"
                        TextWrapping="Wrap" AutomationProperties.Name="{Binding NeedsYou.Banner}" />
             <Button x:Name="NeedsYouHeld" Classes="held-pill" Click="OnShowNeedsYouHeld" IsVisible="{Binding NeedsYou.HasHeld}" HorizontalAlignment="Center"
                     AutomationProperties.Name="{Binding NeedsYou.HeldText}">
@@ -106,7 +106,7 @@
             <TextBlock x:Name="NeedsYouEmpty" Classes="caption quiet" Text="{Binding NeedsYou.EmptyLine}" Margin="16,8"
                        IsVisible="{Binding NeedsYou.EmptyLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding NeedsYou.EmptyLine}" />
             <Button x:Name="NeedsYouShowAll" HorizontalAlignment="Left" Classes="copy" Click="OnShowAllNeedsYou" IsVisible="{Binding NeedsYou.HasOverflow}"
-                    AutomationProperties.Name="{Binding NeedsYou.OverflowText}" Margin="16,6">
+                    AutomationProperties.Name="{Binding NeedsYou.OverflowText}" Margin="16,8">
               <TextBlock Classes="caption" Text="{Binding NeedsYou.OverflowText}" />
             </Button>
           </StackPanel>
@@ -147,7 +147,7 @@
                 </StackPanel>
               </Border>
               <Button DockPanel.Dock="Bottom" HorizontalAlignment="Left" x:Name="RunningShowAll" Classes="copy" Tag="Running" Click="OnShowAll" IsVisible="{Binding Queue.HasMoreRunning}"
-                      AutomationProperties.Name="{Binding Queue.ShowAllRunning}" Margin="16,6">
+                      AutomationProperties.Name="{Binding Queue.ShowAllRunning}" Margin="16,8">
                 <TextBlock Classes="caption" Text="{Binding Queue.ShowAllRunning}" />
               </Button>
               <Panel>
@@ -177,7 +177,7 @@
                 </StackPanel>
               </Border>
               <Button DockPanel.Dock="Bottom" HorizontalAlignment="Left" x:Name="QueuedShowAll" Classes="copy" Tag="All" Click="OnShowAll" IsVisible="{Binding Queue.HasMoreQueued}"
-                      AutomationProperties.Name="{Binding Queue.ShowAllQueued}" Margin="16,6">
+                      AutomationProperties.Name="{Binding Queue.ShowAllQueued}" Margin="16,8">
                 <TextBlock Classes="caption" Text="{Binding Queue.ShowAllQueued}" />
               </Button>
               <Panel>
@@ -204,10 +204,10 @@
     <Button x:Name="HealthStrip" Classes="health-strip" Click="OnHealthStrip"
             AutomationProperties.Name="{Binding Health.StripName}">
       <Grid ColumnDefinitions="Auto,*,Auto">
-        <StackPanel x:Name="HealthKeys" Classes="strip-head" Orientation="Horizontal" Spacing="6">
+        <StackPanel x:Name="HealthKeys" Classes="strip-head" Orientation="Horizontal" Spacing="8">
           <TextBlock Classes="eyebrow" Text="{Binding Text.HealthPanel}" VerticalAlignment="Center" />
           <!-- R3 (§4.1): while the views are stale the strip's values are marked so, as the pill is. -->
-          <StackPanel x:Name="StripStale" Orientation="Horizontal" Spacing="4" Margin="6,0,0,0" VerticalAlignment="Center"
+          <StackPanel x:Name="StripStale" Orientation="Horizontal" Spacing="4" Margin="8,0,0,0" VerticalAlignment="Center"
                       IsVisible="{Binding Pill.IsDataStale}">
             <icons:StateIcon x:Name="StripStaleGlyph" Glyph="Stale" VerticalAlignment="Center" />
             <TextBlock x:Name="StripStaleText" Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />

@@ -9,6 +9,7 @@ using Aw.Context.Tests.Map;
 namespace Aw.Context.Tests.Library;
 
 /// <summary>Where each library root stands, as the doctor row and the Library page read it (PR review page spec 2026-11-04 §4.1, §5.2): the owner's, from what the feed's last pass left.</summary>
+[Trait("Lane", "integration")]
 public sealed class LibraryRootsTests : IDisposable
 {
     private const string WithVault = """{"sources":{"library":{"vaults":[{"name":"work","path":"/srv/work"}]}}}""";

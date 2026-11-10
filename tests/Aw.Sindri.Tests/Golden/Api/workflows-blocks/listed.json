@@ -308,6 +308,87 @@
               }
             ]
           }
+        },
+        {
+          "type": "call_tool",
+          "title": "Toolkit tool",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "tool",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "connection",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "arguments",
+              "type": "object",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "result": "any"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "tool": "notes__add_note",
+            "arguments": {
+              "text": "{{triage.summary}}"
+            }
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Note each new issue",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "hourly",
+                "type": "schedule",
+                "config": {
+                  "cron": "0 * * * *"
+                }
+              },
+              {
+                "id": "issues",
+                "type": "call_tool",
+                "config": {
+                  "connection": "github:work",
+                  "tool": "list_issues",
+                  "arguments": {
+                    "owner": "acme",
+                    "repo": "web",
+                    "state": "open"
+                  }
+                }
+              },
+              {
+                "id": "save",
+                "type": "call_tool",
+                "config": {
+                  "tool": "notes__add_note",
+                  "arguments": {
+                    "text": "{{issues.result}}"
+                  }
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "hourly",
+                "to": "issues"
+              },
+              {
+                "from": "issues",
+                "to": "save"
+              }
+            ]
+          }
         }
       ]
     },
