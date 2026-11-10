@@ -76,7 +76,7 @@
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock x:Name="ContextMapEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Text.ContextMapCard}"
                          AutomationProperties.Name="{Binding Text.ContextMapCard}" />
-              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                 <icons:StateIcon x:Name="ContextMapGlyph" Glyph="{Binding ContextMap.Glyph}" VerticalAlignment="Center" />
                 <TextBlock x:Name="ContextMapState" Classes="body-strong" Text="{Binding ContextMap.State}" TextWrapping="Wrap"
                            AutomationProperties.Name="{Binding ContextMap.State}" />
@@ -155,7 +155,7 @@
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock x:Name="ControlPlaneEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Text.ControlPlaneCard}"
                            AutomationProperties.Name="{Binding Text.ControlPlaneCard}" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                   <icons:StateIcon x:Name="ProcessGlyph" Glyph="{Binding Pill.Glyph}" VerticalAlignment="Center" />
                   <TextBlock x:Name="ProcessWord" Classes="body-strong" Text="{Binding Pill.Word}" AutomationProperties.Name="{Binding Pill.Text}" />
                 </StackPanel>
@@ -185,7 +185,7 @@
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock x:Name="ProfileEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Text.ProfileCard}"
                            AutomationProperties.Name="{Binding Text.ProfileCard}" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                   <icons:StateIcon x:Name="ProfileHeadGlyph" Glyph="{Binding Detail.ProfileGlyph}" VerticalAlignment="Center" />
                   <TextBlock x:Name="ProfileHeadText" Classes="body-strong" Text="{Binding Detail.ProfileHead}"
                              AutomationProperties.Name="{Binding Detail.ProfileHead}" />
