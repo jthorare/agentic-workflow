@@ -5,14 +5,14 @@
              x:DataType="queue:ItemRowViewModel">
   <!-- An item row in Home's half-width panels (home.html): id, title, the state as a word, and the age. A title click
        opens the sheet, as on the Queue page. -->
-  <Border x:Name="RowFrame" Classes="item-row" Classes.selected="{Binding IsSelected}" Focusable="True"
+  <Border x:Name="RowFrame" Classes="item-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <Grid x:Name="CompactRow" ColumnDefinitions="120,*,Auto,50" VerticalAlignment="Center">
       <TextBlock Classes="mono subtle" Text="{Binding Id}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" AutomationProperties.Name="{Binding Id}" />
       <Button x:Name="CompactTitle" Grid.Column="1" Classes="row-title" Click="OnOpen" AutomationProperties.Name="{Binding OpenName}">
         <TextBlock Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding Title}" />
       </Button>
-      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" Margin="8,0" VerticalAlignment="Center">
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" Margin="8,0" VerticalAlignment="Center">
         <TextBlock Classes="caption subtle" Text="{Binding StateWord}" VerticalAlignment="Center" AutomationProperties.Name="{Binding StateWord}" />
         <Border Classes="badge" IsVisible="{Binding HasBadge}" VerticalAlignment="Center">
           <TextBlock Classes="caption" Text="{Binding Badge}" AutomationProperties.Name="{Binding Badge}" />

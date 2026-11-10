@@ -1397,6 +1397,24 @@
       "confirm": null
     },
     {
+      "action": "RenameConnection",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/connections/{name}/rename",
+      "cli": "sindri connection rename <name> <label>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ReplaceWorkflow",
       "class": "desk",
       "allowedCallers": [

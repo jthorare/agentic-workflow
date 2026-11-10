@@ -47,7 +47,23 @@ internal sealed class CreateItemService(IApprovedProfile approvals, HeldLease he
         var created = new ItemCreated(caller.CommandId, item, request.Title.Trim(), repo, request.Link, request.Body, Owner: null);
         var entry = events.Entry(EventTypes.ItemCreated, created, $"{EventTypes.ItemCreated}:{item.Value}", item.Value);
         var appended = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
-        return appended.IsError ? appended.Error : new ItemCreatedResponse(new CommandAccepted(caller.CommandId, appended.Value.Sequence), item);
+        if (appended.IsError)
+        {
+            return appended.Error;
+        }
+
+        var warning = request.RunRecord is { } run ? await LinkRun(caller.CommandId, item, run, grant, cancellationToken).ConfigureAwait(false) : null;
+        return new ItemCreatedResponse(new CommandAccepted(caller.CommandId, appended.Value.Sequence), item, warning);
+    }
+
+    /// <summary>Links the new item to its run; the warning when the append fails (the item exists: failing would fail the node, and its retry would make a second item), else null.</summary>
+    private async ValueTask<string?> LinkRun(CommandId command, ItemId item, RecordKey run, LeaseGrant grant, CancellationToken cancellationToken)
+    {
+        var linked = new ItemLinked(command, item, run, Alias: null);
+        var link = await ledger.Append(events.Entry(EventTypes.ItemLinked, linked, $"{EventTypes.ItemLinked}:{item.Value}:{run.Value}", item.Value), grant, cancellationToken).ConfigureAwait(false);
+        // issue 2588 repairs the missing link; until then the person can link it by hand
+        var runId = run.Value[(run.Value.IndexOf('/', StringComparison.Ordinal) + 1)..];   // what follows '<source>:<kind>/'; a key with no '/' stays whole
+        return link.IsError ? $"the item was made, but its link to run {runId} wasn't written ({link.Error.Message}); link it by hand from the item" : null;
     }
 
     /// <summary>The refusal when <paramref name="repo"/> isn't a repo of the profile; null when it is. A header repo is the checkout the human ran from, so its message says that.</summary>

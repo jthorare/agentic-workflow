@@ -34,6 +34,14 @@ public sealed class NoteMergeHoldTests
     }
 
     [Fact]
+    public void An_opened_hold_carries_the_open_todos_of_the_base_it_was_drawn_against()
+    {
+        var r = Run(_ten, Without(1, 2, 3, 4), _tenInSindri);
+
+        Assert.Equal(10, r.HoldNow!.OpenInBase);
+    }
+
+    [Fact]
     public void Held_ids_keep_their_old_base_lines()
     {
         var r = Run(_ten, Without(1, 2, 3, 4), _tenInSindri);

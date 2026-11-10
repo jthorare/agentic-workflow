@@ -14,7 +14,7 @@ namespace Aw.Sindri.Ui.Tests.Theme;
 [Lane(TestLane.Integration)]
 public sealed class MotionTests
 {
-    private static readonly string[] _keys = ["Motion.Instant", "Motion.Fast", "Motion.Base", "Motion.Pulse", "Motion.Spin"];
+    private static readonly string[] _keys = ["Motion.Instant", "Motion.Fast", "Motion.Hover", "Motion.Base", "Motion.Pulse", "Motion.Spin"];
     private static readonly TokenFile _tokens = TokenFile.Load();
 
     private static TimeSpan Token(string key) => TimeSpan.Parse(_tokens.Resources[key].Value.Trim(), CultureInfo.InvariantCulture);

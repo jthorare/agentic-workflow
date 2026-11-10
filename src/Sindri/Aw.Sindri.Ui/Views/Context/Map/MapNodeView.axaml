@@ -21,8 +21,8 @@
         <icons:StateIcon Icon="{Binding KindIcon}" Foreground="{DynamicResource Brush.InkMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Border>
       <StackPanel Grid.Column="1" VerticalAlignment="Center">
-        <TextBlock Text="{Binding Label}" Classes.mono="{Binding IsMono}" FontSize="12" LineHeight="15" FontWeight="Medium" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Ink}" />
-        <TextBlock Text="{Binding Caption}" FontSize="11" LineHeight="14" MaxLines="1" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.InkSubtle}" />
+        <TextBlock Text="{Binding Label}" Classes="caption" Classes.mono="{Binding IsMono}" FontWeight="Medium" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Ink}" />
+        <TextBlock Classes="caption" Text="{Binding Caption}" MaxLines="1" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.InkSubtle}" />
       </StackPanel>
     </Grid>
 
@@ -32,23 +32,23 @@
           <icons:StateIcon Icon="{Binding KindIcon}" Foreground="{DynamicResource Brush.InkMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Border>
         <StackPanel Grid.Column="1" Spacing="2">
-          <TextBlock Text="{Binding Label}" FontSize="14" LineHeight="19" FontWeight="SemiBold" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Ink}" />
-          <TextBlock Text="{Binding Caption}" FontSize="12" LineHeight="16" MaxLines="1" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.InkSubtle}" />
+          <TextBlock Classes="section-title" Text="{Binding Label}" MaxLines="1" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Label}" Foreground="{DynamicResource Brush.Ink}" />
+          <TextBlock Classes="caption" Text="{Binding Caption}" MaxLines="1" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.InkSubtle}" />
         </StackPanel>
       </Grid>
-      <Border Grid.Row="1" Height="36" IsVisible="{Binding HasFoot}" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Brush.Hairline}" Padding="14,0">
-        <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="6" VerticalAlignment="Center">
+      <Border Grid.Row="1" Height="{StaticResource Size.PanelHeader}" IsVisible="{Binding HasFoot}" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Brush.Hairline}" Padding="14,0">
+        <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
           <icons:StateIcon IsVisible="{Binding FootIsOk}" Icon="Ok" Foreground="{DynamicResource Brush.Success}" />
           <icons:StateIcon IsVisible="{Binding FootIsWarn}" Icon="Kind.Warn" Foreground="{DynamicResource Brush.Attention}" />
-          <TextBlock Grid.Column="1" Text="{Binding FootWord}" FontSize="12" LineHeight="16" FontWeight="Medium" Foreground="{DynamicResource Brush.Ink}" />
-          <TextBlock Grid.Column="3" Text="{Binding FootRight}" FontSize="12" LineHeight="16" Foreground="{DynamicResource Brush.InkSubtle}" />
+          <TextBlock Grid.Column="1" Classes="caption" Text="{Binding FootWord}" FontWeight="Medium" Foreground="{DynamicResource Brush.Ink}" />
+          <TextBlock Grid.Column="3" Classes="caption" Text="{Binding FootRight}" Foreground="{DynamicResource Brush.InkSubtle}" />
         </Grid>
       </Border>
     </Grid>
 
     <Border IsVisible="{Binding IsAnchor}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,-12,0,0" Padding="7,1"
             Background="{DynamicResource Brush.Surface3}" BorderBrush="{DynamicResource Brush.RingAnchor}" BorderThickness="1" CornerRadius="{StaticResource Radius.Pill}">
-      <TextBlock Text="{Binding StartsHere}" FontSize="11" LineHeight="14" FontWeight="Medium" Foreground="{DynamicResource Brush.Ink}" />
+      <TextBlock Classes="caption" Text="{Binding StartsHere}" FontWeight="Medium" Foreground="{DynamicResource Brush.Ink}" />
     </Border>
   </Grid>
 </UserControl>

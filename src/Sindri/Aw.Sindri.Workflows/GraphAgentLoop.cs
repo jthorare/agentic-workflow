@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -11,32 +12,55 @@ using Temporalio.Workflows;
 namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
-/// A 'run_agent' node (PR 7): launch the session, wait for it with a heartbeating activity raced against the node's timeout, take the report (or read the output folder of a session that ended without
+/// The agent loop of a 'run_agent' node (PR 7), for the run's walk (item 0) and for a 'for_each' batch (one agent per item, #2470): launch the session, wait for it with a heartbeating activity raced against the node's timeout, take the report (or read the output folder of a session that ended without
 /// one), close the run and hand on the declared outputs plus status, branch, commit, sessionId and usage. A takeover pauses the timeout and a handback resumes what was left of it.
 /// </summary>
-internal sealed partial class GraphWorkflow
+/// <param name="run">The run.</param>
+/// <param name="launchAttempts">How many times a failing launch is tried before the node fails; 0 or less for <see cref="DefaultAgentLaunchAttempts"/>.</param>
+/// <param name="announce">Told when the node starts waiting on a session and when it stops (null): a batch workflow passes it on to the run workflow; the run's own walk passes none.</param>
+internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttempts, Func<AgentWait?, Task>? announce = null)
 {
-    private async Task<GraphBlockOutcome> RunAgent(GraphNode node)
+    // why: a launch hands back after its slice when the session cap is full, and the workflow asks again. A cancel never goes to the launch (it does not heartbeat, so it could not hear one):
+    // the workflow lets the launch return, then stops, so the close that follows sees the session the launch made (TryCancel let the close run first and left an orphan). Sending the cancel
+    // anyway raced the launch's completion, and the server refused the whole workflow task ("ACTIVITY_UNKNOWN for scheduledEventId"). The one-shot reads and the close are retried without end like the writes
+    private static readonly ActivityOptions _agentLaunch = new() { StartToCloseTimeout = TimeSpan.FromMinutes(10), RetryPolicy = GraphActivityOptions.Unbounded, CancellationToken = CancellationToken.None };
+    private static readonly ActivityOptions _agentLaunchAttempt = new() { StartToCloseTimeout = TimeSpan.FromMinutes(10), RetryPolicy = new Temporalio.Common.RetryPolicy { MaximumAttempts = 1 }, CancellationToken = CancellationToken.None };
+    private static readonly ActivityOptions _agentRead = new() { StartToCloseTimeout = TimeSpan.FromMinutes(5), RetryPolicy = GraphActivityOptions.Unbounded };
+    private static readonly ActivityOptions _detached = GraphActivityOptions.Detached;
+
+    private readonly WorkflowRunId _run = run;
+    private readonly int _agentLaunchAttempts = launchAttempts > 0 ? launchAttempts : DefaultAgentLaunchAttempts;
+
+    /// <summary>The node this workflow waits on, or null.</summary>
+    public AgentWait? Current { get; private set; }
+
+    /// <summary>Runs the node's agent for one item.</summary>
+    /// <param name="node">The 'run_agent' node.</param>
+    /// <param name="itemIndex">The item's position counted from 1, or 0 for a node that runs once.</param>
+    /// <returns>The node's outcome.</returns>
+    public async Task<GraphBlockOutcome> Run(GraphNode node, int itemIndex)
     {
-        var reference = new AgentNodeRef(_run, node.Id, ItemIndex: 0);
-        var address = NodeRunAddress.Of(_run, node.Id);
+        var reference = new AgentNodeRef(_run, node.Id, itemIndex);
+        var address = NodeRunAddress.Of(_run, node.Id, itemIndex);
         var launch = address.Launch().Value;
         try
         {
             AgentNodeLaunched started;
-            do
+            try
             {
-                started = await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.LaunchAsync(reference), _agentLaunch).ConfigureAwait(true);   // why: a full session cap makes the activity hand back after its slice, and the workflow asks again
-                Workflow.CancellationToken.ThrowIfCancellationRequested();   // why: the launch is not cancelled with the workflow (_agentLaunch); a cancel that came during it stops here, and the catch closes what it made
+                started = await Launch(reference).ConfigureAwait(true);
             }
-            while (started.Launched.Waiting);
+            catch (ActivityFailureException e) when (!TemporalException.IsCanceledException(e))
+            {
+                return Failed(input: null, e.InnerException?.Message ?? e.Message);   // why: the last attempt's error, as a node whose block threw ends (RunBlock); the node's on_failure then applies as for any failed node (#2578)
+            }
 
             if (started.Launched.Failure is { } failure)
             {
                 return Failed(started.Input, failure.Text);
             }
 
-            return await Supervise(new AgentWait(node.Id, 0, launch), started, address, reference).ConfigureAwait(true);
+            return await Supervise(new AgentWait(node.Id, itemIndex, launch), started, address, reference).ConfigureAwait(true);
         }
         catch (Exception e) when (TemporalException.IsCanceledException(e))
         {
@@ -46,13 +70,82 @@ internal sealed partial class GraphWorkflow
         }
         finally
         {
-            _agent = null;
+            await Announce(wait: null).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>What the 'agent-node' query answers while this loop waits on a session.</summary>
+    /// <returns>The node, its launch and whether a person holds it, or null.</returns>
+    public AgentNodeView? View() => Current is { } wait ? new AgentNodeView(wait.Node.Value, wait.ItemIndex, wait.Launch, wait.TakenOver) : null;
+
+    /// <summary>Takes the node over.</summary>
+    /// <param name="call">The node.</param>
+    /// <returns>True when this call took it over, false when it already was.</returns>
+    public bool TakeOver(AgentNodeCall call)
+    {
+        var wait = Waiting(call.Node, call.ItemIndex);
+        var changed = !wait.TakenOver;
+        wait.TakenOver = true;
+        return changed;
+    }
+
+    /// <summary>Hands the node back.</summary>
+    /// <param name="call">The node.</param>
+    public void HandBack(AgentNodeCall call) => Waiting(call.Node, call.ItemIndex).TakenOver = false;
+
+    /// <summary>Refuses a handback of a node nobody holds.</summary>
+    /// <param name="call">The node.</param>
+    public void ValidateHandback(AgentNodeCall call)
+    {
+        if (!Waiting(call.Node, call.ItemIndex).TakenOver)
+        {
+            throw Refusal($"node '{call.Node}' is not taken over, so there is nothing to hand back");
+        }
+    }
+
+    /// <summary>Records the node's report.</summary>
+    /// <param name="report">The node and the checked values.</param>
+    public void Deliver(AgentNodeDelivery report) => Waiting(report.Node, report.ItemIndex).Report = report;
+
+    /// <summary>Refuses a report for a node not waited on, a second report, and the launched session's report of a node a person holds.</summary>
+    /// <param name="report">The node and the checked values.</param>
+    public void ValidateReport(AgentNodeDelivery report)
+    {
+        var wait = Waiting(report.Node, report.ItemIndex);
+        if (wait.Report is not null)
+        {
+            throw Refusal($"node '{report.Node}' was already reported");
+        }
+
+        if (wait.TakenOver && !report.Human)
+        {
+            throw Refusal($"node '{report.Node}' is taken over: only the human reports it (fix: report it from a terminal or the Sindri app, or hand it back)");
+        }
+    }
+
+    /// <summary>Refuses a takeover of a node not waited on.</summary>
+    /// <param name="call">The node.</param>
+    public void ValidateTakeover(AgentNodeCall call) => _ = Waiting(call.Node, call.ItemIndex);
+
+    private AgentWait Waiting(string node, int itemIndex) =>
+        Current is { } wait && string.Equals(wait.Node.Value, node, StringComparison.Ordinal) && wait.ItemIndex == itemIndex
+            ? wait
+            : throw Refusal($"the run is not waiting on a run_agent node '{node}'");
+
+    private static ApplicationFailureException Refusal(string message) => new(message, nonRetryable: true);
+
+    private async Task Announce(AgentWait? wait)
+    {
+        Current = wait;
+        if (announce is not null)
+        {
+            await announce(wait).ConfigureAwait(true);
         }
     }
 
     private async Task<GraphBlockOutcome> Supervise(AgentWait wait, AgentNodeLaunched started, NodeRunAddress address, AgentNodeRef reference)
     {
-        _agent = wait;
+        await Announce(wait).ConfigureAwait(true);
         var launched = started.Launched;
         using var stop = new CancellationTokenSource();
         var watch = Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.WatchAsync(wait.Launch), WatchOptions(stop.Token));
@@ -184,40 +277,4 @@ internal sealed partial class GraphWorkflow
         };
         return new AgentNodeEnding(Outputs: null, recovered.Reason is { } detail ? $"{why}; {detail}" : why);
     }
-
-    // Why a session that ended can't have finished the node: a report the engine refused it for, or a sandbox limit. Null when its output folder may still prove it did.
-    private static string? Unrecoverable(AgentSessionState state) =>
-        state.Refused ? $"exit: {state.Detail}"
-        : state.EndedAs == AgentSessionEnd.Limit ? $"limit: the sandbox killed the session ({state.Limit?.Detail})"
-        : null;
-
-    private static AgentNodeEnding TimedOut(TimeSpan timeout) =>
-        new(Outputs: null, string.Create(CultureInfo.InvariantCulture, $"timeout: the node ran past its limit of {timeout.TotalSeconds:0} s (time a person held it does not count)"));
-
-    // The watch ends by its own cancel or by the session's end; either way its outcome was read already or is not wanted, so a cancelled or failed watch is not an error here.
-    private static async Task Observe(Task<AgentSessionState> watch)
-    {
-        try
-        {
-            _ = await watch.ConfigureAwait(true);
-        }
-        catch (Exception e) when (TemporalException.IsCanceledException(e) || e is ActivityFailureException)
-        {
-            // the cancel above, or a failure Ended already turned into the node's error
-        }
-    }
-
-    private static Task Hold(AgentWait wait, bool held) =>
-        Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.HoldAsync(new AgentNodeHeld(wait.Launch, held)), _agentRead);
-
-    private static ActivityOptions WatchOptions(CancellationToken stop) => new()
-    {
-        StartToCloseTimeout = TimeSpan.FromDays(30),
-        HeartbeatTimeout = TimeSpan.FromMinutes(1),
-        RetryPolicy = GraphActivityOptions.Unbounded,
-        CancellationToken = stop,
-        CancellationType = ActivityCancellationType.TryCancel,
-    };
-
-    private static GraphBlockOutcome Failed(string? input, string error) => new(NodeRunStatus.Failed, input, Output: null, [], error);
 }

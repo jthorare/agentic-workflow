@@ -56,7 +56,13 @@ internal sealed class TemporalAgentNodeControl(Func<CancellationToken, ValueTask
 
     private async ValueTask<Result<Unit>> Update(WorkflowRunId run, string name, object argument, CancellationToken cancellationToken)
     {
-        var done = await Ask(run, async (handle, _) => await handle.ExecuteUpdateAsync<bool>(name, [argument]).ConfigureAwait(false), (cancellationToken, cancellationToken)).ConfigureAwait(false);
+        var done = await Ask(run, async (handle, token) =>
+        {
+            // why: a node inside a 'for_each' body waits in its batch's workflow (#2470); the run's query names that child, and the update goes there
+            var view = await handle.QueryAsync<AgentNodeView?>("agent-node", [], new WorkflowQueryOptions { Rpc = new RpcOptions { CancellationToken = token } }).ConfigureAwait(false);
+            var target = view?.Child is { } child && handle.Client is { } client ? client.GetWorkflowHandle(child) : handle;
+            return await target.ExecuteUpdateAsync<bool>(name, [argument]).ConfigureAwait(false);
+        }, (cancellationToken, cancellationToken)).ConfigureAwait(false);
         return done.IsError ? done.Error : Unit.Value;
     }
 

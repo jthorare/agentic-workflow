@@ -9,13 +9,16 @@ set -euo pipefail
 REAL="$(cd "$(dirname "$0")/../.." && pwd)"
 PASS=0
 FAIL=0
-TMPROOT="$(mktemp -d "${TMPDIR:-/tmp}/skill-evals-test.XXXXXX")"
+# pwd -P: on macOS mktemp -d gives /var/folders/..., a symlink to /private/var, and repo-slug.sh (git rev-parse) resolves it (#2584)
+TMPROOT="$(cd "$(mktemp -d "${TMPDIR:-/tmp}/skill-evals-test.XXXXXX")" && pwd -P)"
 # why: the state dirs sit in /tmp, not under TMPDIR: the script refuses an eval temp dir too long for claude's sandbox socket (#1931)
 SHORT="$(mktemp -d /tmp/se.XXXXXX)"
 LIVE_PID=""
 cleanup() { [ -z "$LIVE_PID" ] || kill "$LIVE_PID" 2>/dev/null || true; find "$TMPROOT" "$SHORT" -delete 2>/dev/null || true; }
 trap cleanup EXIT
 
+# sedi EXPR FILE: in-place edit that works with GNU and BSD sed (`sed -i EXPR` reads EXPR as the backup suffix on macOS).
+sedi() { sed "$1" "$2" > "$2.new" && mv "$2.new" "$2"; }
 ok()   { PASS=$((PASS + 1)); echo "  ok   $1"; }
 fail() { FAIL=$((FAIL + 1)); echo "  FAIL $1"; }
 show() { printf '%s\n' "$OUT" | sed 's/^/      | /' | head -30; }
@@ -205,7 +208,7 @@ grep -q 'AW_GIT_MODE:-readonly' "$STAGE_R/stubs/bin/gh" && ok "the staged gh stu
 WS="$TMPROOT/ws$N"; mkdir -p "$WS/.aw-eval" "$WS/src/deep"
 slug() { (cd "$1" && env -i PATH="$PATH" HOME="$H" bash -c '. "$0"; printf %s "$AW_DIR"' "$STAGE_R/skills/_shared/repo-slug.sh"); }
 r1="$(dirname "$(slug "$WS")")"; r2="$(dirname "$(slug "$WS/src/deep")")"
-[ -n "$r1" ] && [ "$r1" = "$r2" ] && [ "$r1" = "$WS/.aw-state" ] && ok "the staged state root is the same from a subdirectory ($r1)" || fail "AW_DIR differs: '$r1' vs '$r2'"
+[ -n "$r1" ] && [ "$r1" = "$r2" ] && [ "$r1" = "$WS/.aw-state" ] && ok "the staged state root is the same from a subdirectory ($r1)" || fail "AW_DIR differs: '$r1' vs '$r2' (want '$WS/.aw-state')"
 [ ! -s "$STATE/skill-evals/spend.jsonl" ] && ok "a dry run writes no tally row" || fail "dry run wrote the tally"
 
 echo "a staged path outside the repo"
@@ -474,7 +477,7 @@ lacks "no gate line on a good result" 'ROUTING GATE MISSED'
 
 echo "the routing gate and slash-only skills (#1947)"
 slashonly() { # make alpha slash-only and commit (the script refuses uncommitted changes under skills/)
-  sed -i 's/^name: alpha$/name: alpha\ndisable-model-invocation: true/' "$REPO/skills/alpha/SKILL.md"
+  awk '{ print } /^name: alpha$/ { print "disable-model-invocation: true" }' "$REPO/skills/alpha/SKILL.md" > "$REPO/skills/alpha/SKILL.new" && mv "$REPO/skills/alpha/SKILL.new" "$REPO/skills/alpha/SKILL.md"
   git -C "$REPO" commit -qam "alpha is slash-only"
 }
 notfired() { # the natural case did not fire, and its grader passed (skill-not-fired passed=true is fired=false)
@@ -575,7 +578,7 @@ pattern: '^(?:(?!"skill"\s*:)[\s\S])*"skill"\s*:\s*"(?:[\w-]+:)?MEMBER"'
 
 The first Skill call names MEMBER.
 EOF
-    sed -i "s/MEMBER/$m/g" "$F/$m/graders/first-skill.md"
+    sedi "s/MEMBER/$m/g" "$F/$m/graders/first-skill.md"
     trace_reply "aw-evals:$m" >"$F/$m/graders/_selftest/first-skill.pass.trace"
     { trace_reply zzz; trace_reply "$m"; } >"$F/$m/graders/_selftest/first-skill.fail.trace"
   done
@@ -631,7 +634,7 @@ run --changed --dry-run
 expect "a body-only change picks the skill" 0 'skills: alpha'
 lacks "a body-only change does not pull in its family" 'family plan'
 git -C "$REPO" checkout -q -- skills/alpha/SKILL.md
-sed -i 's/^description: Use when the cart total looks wrong/description: Use when the cart total looks off/' "$REPO/skills/alpha/SKILL.md"
+sedi 's/^description: Use when the cart total looks wrong/description: Use when the cart total looks off/' "$REPO/skills/alpha/SKILL.md"
 run --changed --dry-run
 expect "a description change pulls in the member's family" 0 'family plan: grp \(2 case\(s\), ablation none, cap \$12\): description of alpha changed'
 has -E 'staged family-grp' <<<"$OUT" && has -E -- '--ablation none .*--max-cost-usd 12' <<<"$OUT" && ok "the dry run shows the family stage, ablation none and the \$12 ceiling" || { fail "family dry-run command"; show; }
@@ -838,7 +841,7 @@ if [ -s "$BIN/cases.txt" ] && [ -n "$S" ] && [ -d "$S/evals/mocks/playwright" ] 
   ok "a run killed mid-call puts the mock dirs back (the trap)"
 else fail "killed run's stage: cases=$(cat "$BIN/cases.txt" 2>/dev/null) $(ls -a "$S/evals" "$S/evals/mocks" 2>&1 | tr '\n' ' ')"; fi
 mkrepo
-sed -i '/^allowed_tools:/d' "$REPO/evals/alpha/routing/alpha-near-miss/prompt.md"
+sedi '/^allowed_tools:/d' "$REPO/evals/alpha/routing/alpha-near-miss/prompt.md"
 git -C "$REPO" commit -qam "no list"
 run --skills alpha --selftest
 expect "a case without allowed_tools is a selftest error" 1 'SELFTEST-CASE: .*alpha-near-miss: no allowed_tools'

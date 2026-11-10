@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.GetConnection;
+using Aw.Sindri.Features.RenameConnection;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
 
@@ -130,6 +131,40 @@ public sealed class CliConnectionVerbsTests : IDisposable
         Assert.Equal(0, code);
         Assert.Contains("https://provider.example.test/authorize", _error.ToString(), StringComparison.Ordinal);
         Assert.Contains("connected", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Rename_posts_the_new_label_to_the_connection_and_prints_both_names()
+    {
+        var api = new RoutedApi().OnPost("/sindri/connections/slack%3Aold/rename", HttpStatusCode.OK, new RenameConnectionResponse("slack:new", "slack:old", SecretMoved: true));
+
+        var code = await Verbs(api).Run(["connection", "rename", "slack:old", "new"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("""{"label":"new"}""", api.Calls.Single(static c => c.Method == "POST").Body, StringComparison.Ordinal);
+        Assert.Contains("Renamed slack:old to slack:new", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Rename_needs_the_name_and_the_new_label_and_sends_nothing_without_both()
+    {
+        var api = new RoutedApi();
+
+        var code = await Verbs(api).Run(["connection", "rename", "slack:old"], Token);
+
+        Assert.Equal(2, code);
+        Assert.Empty(api.Calls);
+    }
+
+    [Fact]
+    public async Task A_refused_rename_prints_the_servers_code_and_exits_nonzero()
+    {
+        var api = new RoutedApi().OnRaw("/sindri/connections/slack%3Aold/rename", HttpStatusCode.Conflict, """{"type":"about:blank","title":"SND-CONN-010","status":409,"detail":"a connection named slack:new already exists"}""");
+
+        var code = await Verbs(api).Run(["connection", "rename", "slack:old", "new"], Token);
+
+        Assert.NotEqual(0, code);
+        Assert.Contains("SND-CONN-010", _error.ToString(), StringComparison.Ordinal);
     }
 
     private static Dictionary<string, string> Stamp(string at) => new(StringComparer.Ordinal) { ["signedInAt"] = at };

@@ -10,13 +10,13 @@
     <StackPanel x:Name="ButtonRow" Orientation="Horizontal" Spacing="{StaticResource Space.XS}" IsVisible="{Binding !IsCopyOnly}">
       <Button x:Name="RunButton" Classes="command-control" IsEnabled="{Binding IsSendable}" Click="OnRun"
               AutomationProperties.Name="{Binding Name}">
-        <StackPanel Orientation="Horizontal" Spacing="6">
+        <StackPanel Orientation="Horizontal" Spacing="8">
           <icons:StateIcon x:Name="RunSpinner" Icon="Spinner" IsVisible="{Binding IsSending}" Spins="{Binding IsSending}"
                            VerticalAlignment="Center" />
           <TextBlock x:Name="RunLabel" Classes="button" Text="{Binding Label}" VerticalAlignment="Center" />
         </StackPanel>
       </Button>
-      <StackPanel x:Name="AcceptedLine" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsAccepted}" VerticalAlignment="Center"
+      <StackPanel x:Name="AcceptedLine" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsAccepted}" VerticalAlignment="Center"
                   AutomationProperties.Name="{Binding Outcome}">
         <icons:StateIcon Glyph="Ok" VerticalAlignment="Center" />
         <TextBlock x:Name="OutcomeText" Classes="caption" Text="{Binding Outcome}" VerticalAlignment="Center" />
@@ -53,8 +53,8 @@
 
     <!-- refused / failed: the API's title (the SND code) and detail as served, under the control. -->
     <Grid x:Name="ErrorLine" ColumnDefinitions="Auto,Auto,*" IsVisible="{Binding IsFailed}">
-      <icons:StateIcon Glyph="Down" Classes="error" VerticalAlignment="Top" Margin="0,0,6,0" />
-      <TextBlock x:Name="ErrorCodeText" Grid.Column="1" Classes="caption error" Text="{Binding ErrorCode}" Margin="0,0,6,0"
+      <icons:StateIcon Glyph="Down" Classes="error" VerticalAlignment="Top" Margin="0,0,8,0" />
+      <TextBlock x:Name="ErrorCodeText" Grid.Column="1" Classes="caption error" Text="{Binding ErrorCode}" Margin="0,0,8,0"
                  AutomationProperties.Name="{Binding ErrorCode}" />
       <TextBlock x:Name="ErrorDetailText" Grid.Column="2" Classes="caption" Text="{Binding ErrorDetail}" TextWrapping="Wrap" MaxWidth="560"
                  HorizontalAlignment="Left" AutomationProperties.Name="{Binding ErrorDetail}" />

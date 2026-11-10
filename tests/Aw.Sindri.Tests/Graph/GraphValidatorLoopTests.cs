@@ -49,17 +49,31 @@ public sealed class GraphValidatorLoopTests
     }
 
     [Fact]
-    public void A_wait_inside_a_loop_is_a_loop_finding_naming_it()
+    public void A_wait_inside_a_loop_passes()
     {
-        // why: an item of a loop runs in its own child workflow, which never parks, so a wait or ask_owner there would end at once
+        // why: an item of a loop runs in a GraphIteration child workflow, which sleeps a wait node on its own timer (#2490)
         var spec = Spec(
             [Trigger("daily"), Search("search"), Each("each"), Pause("pause"), Gather("gather")],
             [Edge("daily", "search"), Edge("search", "each"), Edge("each", "pause"), Edge("pause", "gather")]);
 
         var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
 
+        Assert.DoesNotContain(result.Findings, static f => f.Code == "GRAPH-LOOP-004");
+    }
+
+    [Fact]
+    public void An_ask_owner_inside_a_loop_is_still_a_loop_finding_naming_it()
+    {
+        // why: an answer can't yet find the question of one item of a loop, so an ask_owner there would never be answered
+        var ask = new GraphNode(NodeId.From("ask"), "ask_owner", Title: null, new JsonObject { ["question"] = "Ship {{item}}?" });
+        var spec = Spec(
+            [Trigger("daily"), Search("search"), Each("each"), ask, Gather("gather")],
+            [Edge("daily", "search"), Edge("search", "each"), Edge("each", "ask"), Edge("ask", "gather")]);
+
+        var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
+
         var finding = Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-004");
-        Assert.Equal(["pause"], finding.Nodes);
+        Assert.Equal(["ask"], finding.Nodes);
         Assert.Contains("run_workflow", finding.Fix, StringComparison.Ordinal);
     }
 
@@ -74,17 +88,16 @@ public sealed class GraphValidatorLoopTests
     }
 
     [Fact]
-    public void A_run_agent_in_a_loop_body_is_a_loop_finding_naming_the_for_each()
+    public void A_run_agent_in_a_loop_body_is_not_a_loop_finding()
     {
+        // why: an agent runs once per item (#2470), so a run_agent in the body is a valid loop
         var spec = Spec(
             [Trigger("daily"), Each("each"), Agent("work", "app"), Gather("gather")],
             [Edge("daily", "each"), Edge("each", "work"), Edge("work", "gather")]);
 
         var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
 
-        var finding = Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-003");
-        Assert.Equal(["each"], finding.Nodes);
-        Assert.Contains("'work'", finding.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(result.Findings, static f => f.Code == "GRAPH-LOOP-003");
     }
 
     [Fact]

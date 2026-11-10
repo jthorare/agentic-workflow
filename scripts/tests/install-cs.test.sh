@@ -10,6 +10,7 @@
 # Run: bash scripts/tests/install-cs.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$DIR/lib/test-portable.sh"   # timeout for macOS (the staged-scripts rows)
 fail=0
 check() {
   if [ "$2" == "$3" ]; then echo "ok - $1"; else
@@ -337,7 +338,7 @@ cp "$DIR/heavy.sh" "$REPO/scripts/heavy.sh"; cp "$DIR/meta-gate-reserve.sh" "$RE
 cp "$DIR/../config/lib/"*.sh "$REPO/config/lib/"
 g add -A; ccommit -m "real heavy and meta-gate-reserve"
 bash "$INSTALL" --publish > /dev/null 2>&1; check "staged-scripts: the publish with the real scripts exits 0" "$?" "0"
-SB="$(find "$B" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d" " -f2-)"   # the build just published is the newest
+SB="$(ls -td "$B"/*/ | head -1)"; SB="${SB%/}"   # the build just published is the newest
 SCR="$WORK/staged-state"; mkdir -p "$SCR"
 errf="$WORK/staged.err"
 (cd / && AW_STATE_DIR="$SCR" timeout 20 "$SB/heavy" --expensive true > /dev/null 2> "$errf"); rc=$?
