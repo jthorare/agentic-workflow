@@ -32,11 +32,11 @@
           <icons:StateIcon Icon="{Binding KindIcon}" Foreground="{DynamicResource Brush.InkMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Border>
         <StackPanel Grid.Column="1" Spacing="2">
-          <TextBlock Classes="section-title" Text="{Binding Label}" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Ink}" />
+          <TextBlock Classes="section-title" Text="{Binding Label}" MaxLines="1" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Label}" Foreground="{DynamicResource Brush.Ink}" />
           <TextBlock Classes="caption" Text="{Binding Caption}" MaxLines="1" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.InkSubtle}" />
         </StackPanel>
       </Grid>
-      <Border Grid.Row="1" Height="36" IsVisible="{Binding HasFoot}" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Brush.Hairline}" Padding="14,0">
+      <Border Grid.Row="1" Height="{StaticResource Size.PanelHeader}" IsVisible="{Binding HasFoot}" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Brush.Hairline}" Padding="14,0">
         <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
           <icons:StateIcon IsVisible="{Binding FootIsOk}" Icon="Ok" Foreground="{DynamicResource Brush.Success}" />
           <icons:StateIcon IsVisible="{Binding FootIsWarn}" Icon="Kind.Warn" Foreground="{DynamicResource Brush.Attention}" />
@@ -48,7 +48,7 @@
 
     <Border IsVisible="{Binding IsAnchor}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,-12,0,0" Padding="7,1"
             Background="{DynamicResource Brush.Surface3}" BorderBrush="{DynamicResource Brush.RingAnchor}" BorderThickness="1" CornerRadius="{StaticResource Radius.Pill}">
-      <TextBlock Classes="caption" Text="{Binding StartsHere}" Foreground="{DynamicResource Brush.Ink}" />
+      <TextBlock Classes="caption" Text="{Binding StartsHere}" FontWeight="Medium" Foreground="{DynamicResource Brush.Ink}" />
     </Border>
   </Grid>
 </UserControl>

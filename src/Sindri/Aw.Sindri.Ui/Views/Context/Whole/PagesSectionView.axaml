@@ -28,7 +28,7 @@
           <ItemsControl x:Name="PagesRows" ItemsSource="{Binding Rows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:PageRowViewModel">
-                <StackPanel Spacing="2" Margin="0,8,0,10" AutomationProperties.Name="{Binding RowName}">
+                <StackPanel Spacing="2" Margin="0,8,0,8" AutomationProperties.Name="{Binding RowName}">
                   <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBlock Classes="body-strong" Text="{Binding Name}" VerticalAlignment="Center" />
                     <ItemsControl ItemsSource="{Binding Marks}" VerticalAlignment="Center">
