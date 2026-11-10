@@ -40,7 +40,7 @@ public sealed class TodoHolds(ILedgerStore ledger, EventFactory events)
         var payload = events.Payload<TodoNoteHeld>(latest);
         return payload.IsError
             ? payload.Error
-            : Results.Success<TodoOpenHold?>(new TodoOpenHold([.. payload.Value.Changes.Select(Held).OfType<HeldChange>()], payload.Value.NoteHash, opened));
+            : Results.Success<TodoOpenHold?>(new TodoOpenHold([.. payload.Value.Changes.Select(Held).OfType<HeldChange>()], payload.Value.NoteHash, opened, payload.Value.OpenInBase));
     }
 
     private static HeldChange? Held(TodoHeldChange change) => change.Kind switch

@@ -89,21 +89,74 @@ public sealed class WriteAttributionTests
         ["POST /sindri/setup/repos/onboard"] = "a job starter; its only golden is not-approved, a refusal; the job's repo.onboarded needs a succeeding scenario (#2434)",
     };
 
-    [Fact(Timeout = 900_000), Trait("Lane", "integration")]
-    public async Task Every_write_a_launched_session_makes_records_that_launch_as_its_actor()
+    /// <summary>How many classes (WriteAttributionShardNTests) split the sweep, so no single test passes its lane's per-test cap (#2534: one test over all rows took 155 s on CI, 321 s on a loaded box).</summary>
+    internal const int Shards = 20;
+
+    private static readonly Lazy<Task<Sweep>> _sweep = new(async () => new Sweep(await CatalogWriteTemplates(CancellationToken.None)));
+
+    private static int _finished;
+
+    /// <summary>The scenarios this sweep runs as a launched session, in <see cref="ApiScenarios.All"/>'s order.</summary>
+    internal static List<(string Slug, string Scenario)> SweepRows() => [.. ApiScenarios.All.Where(r => !IsNotASessionCall(r))];
+
+    /// <summary>
+    /// Runs shard <paramref name="shard"/> of <see cref="Shards"/> (the rows whose index is the shard modulo the shard count) and asserts that shard's own rows:
+    /// no case threw, no event carries a wrong actor. The checks that read the catalog and the skip tables alone are
+    /// <see cref="The_skip_tables_name_only_catalog_write_routes"/>. Only what needs every row's result (which routes some scenario sent or covered)
+    /// still waits for the last shard to finish, through <see cref="_finished"/>: it can't be computed without running every host.
+    /// </summary>
+    internal static async Task RunShard(int shard)
     {
         var ct = TestContext.Current.CancellationToken;
-        var templates = await CatalogWriteTemplates(ct);
-        var scenarios = ApiScenarios.All.Where(r => !IsNotASessionCall(r)).ToList();
-        var sweep = new Sweep(templates);
+        var sweep = await _sweep.Value;
+        var rows = ApiGoldenRows.Slice(SweepRows(), shard, Shards);
+        var own = new ShardProblems();
+        try
+        {
+            // why: each case starts its own host with file watchers; two at a time per shard (inotify limit, 128 per user)
+            await Parallel.ForEachAsync(rows, new ParallelOptions { MaxDegreeOfParallelism = 2, CancellationToken = ct }, async (row, token) =>
+                await RunAsLaunchedSession(row, sweep, own, token));
+        }
+        finally
+        {
+            _ = Interlocked.Increment(ref _finished);
+        }
 
-        // why: each case starts its own host with file watchers; two at a time keeps the run under the box's inotify limit (128 per user)
-        await Parallel.ForEachAsync(scenarios, new ParallelOptions { MaxDegreeOfParallelism = 2, CancellationToken = ct }, async (row, token) =>
-            await RunAsLaunchedSession(row, sweep, token));
-
-        Assert.True(scenarios.Count > 0, "the sweep reached no scenario");
-        var report = Problems(sweep, templates.Select(t => t.Key).ToHashSet(StringComparer.Ordinal));
+        Assert.True(rows.Count > 0, "the shard reached no scenario");
+        var report = OwnProblems(own);
         Assert.True(report.Count == 0, string.Join("\n\n", report));
+        if (Volatile.Read(ref _finished) == Shards)
+        {
+            var coverage = CoverageProblems(sweep, sweep.Templates.Select(t => t.Key).ToHashSet(StringComparer.Ordinal));
+            Assert.True(coverage.Count == 0, string.Join("\n\n", coverage));
+        }
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task The_skip_tables_name_only_catalog_write_routes()
+    {
+        var catalog = (await CatalogWriteTemplates(TestContext.Current.CancellationToken)).Select(t => t.Key).ToHashSet(StringComparer.Ordinal);
+        var report = StaticProblems(catalog);
+        Assert.True(report.Count == 0, string.Join("\n\n", report));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_shards_partition_the_sweep_rows_exactly_once()
+    {
+        var all = SweepRows();
+        var union = Enumerable.Range(0, Shards).SelectMany(s => ApiGoldenRows.Slice(all, s, Shards)).ToList();
+
+        Assert.NotEmpty(all);
+        Assert.Equal(all.Count, union.Count);
+        Assert.Equal(all.Order(), union.Order());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Every_shard_has_its_class()
+    {
+        var shards = typeof(WriteAttributionTests).Assembly.GetTypes().Select(static t => t.Name).Where(static n => n.StartsWith("WriteAttributionShard", StringComparison.Ordinal)).Order(StringComparer.Ordinal);
+
+        Assert.Equal(Enumerable.Range(0, Shards).Select(static i => string.Create(CultureInfo.InvariantCulture, $"WriteAttributionShard{i}Tests")).Order(StringComparer.Ordinal), shards);   // why: a shard with no class would skip its rows silently
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -127,26 +180,38 @@ public sealed class WriteAttributionTests
         return new LedgerEvent(sequence, Epoch: 1, envelope, IdempotencyKey: type + ":" + sequence.ToString(CultureInfo.InvariantCulture), Item: null);
     }
 
-    private static List<string> Problems(Sweep sweep, HashSet<string> catalog)
-    {
-        var sections = new List<(string Heading, List<string> Items)>
-        {
-            ("these scenarios threw as a launched session:", Sorted(sweep.Broken)),
-            ($"these events were written during a launched session's calls without 'session:launch:{Launch}' as actor:", Sorted(sweep.Strays)),
-            ("UNCOVERED: these catalog write routes appended no event by the launched session in any scenario that sent them (no event, no scenario, or another actor; a route that writes no event goes in _notSwept with its reason, one no golden sends goes in _noGolden with #2434):",
-                Sorted(catalog.Where(k => !_notSwept.ContainsKey(k) && !_noGolden.ContainsKey(k) && !_otherProof.ContainsKey(k) && !_onlyRefusals.ContainsKey(k) && !sweep.Covered.ContainsKey(k)))),
-            ("these _notSwept and _otherProof keys name no catalog write route (misspelt, or the route is gone):",
-                Sorted(_notSwept.Keys.Concat(_otherProof.Keys).Where(k => !catalog.Contains(k)))),
-            ("_noGolden guard: these entries are not a catalog write, or a scenario now sends them; move them into the sweep (delete the entry):",
-                Sorted(_noGolden.Keys.Where(k => !catalog.Contains(k) || sweep.Sent.ContainsKey(k)))),
-            ("these _noGolden and _onlyRefusals entries do not name #2434:",
-                Sorted(_noGolden.Concat(_onlyRefusals).Where(e => !e.Value.Contains("#2434", StringComparison.Ordinal)).Select(e => e.Key))),
-            ("_onlyRefusals guard: these entries are not a catalog write, no scenario sends them, or a scenario now covers them; move them into the sweep or _noGolden:",
-                Sorted(_onlyRefusals.Keys.Select(k => (k, Why: OnlyRefusalBroken(k, catalog, sweep))).Where(e => e.Why is not null).Select(e => $"{e.k}: {e.Why}"))),
-        };
+    private static List<string> OwnProblems(ShardProblems own) => Sections(
+    [
+        ("these scenarios threw as a launched session:", Sorted(own.Broken)),
+        ($"these events were written during a launched session's calls without 'session:launch:{Launch}' as actor:", Sorted(own.Strays)),
+    ]);
 
-        return [.. sections.Where(s => s.Items.Count > 0).Select(s => s.Heading + "\n" + string.Join('\n', s.Items))];
-    }
+    /// <summary>What the catalog and the skip tables decide alone, with no scenario run.</summary>
+    private static List<string> StaticProblems(HashSet<string> catalog) => Sections(
+    [
+        ("these _notSwept and _otherProof keys name no catalog write route (misspelt, or the route is gone):",
+            Sorted(_notSwept.Keys.Concat(_otherProof.Keys).Where(k => !catalog.Contains(k)))),
+        ("_noGolden guard: these entries are not a catalog write; delete the entry:",
+            Sorted(_noGolden.Keys.Where(k => !catalog.Contains(k)))),
+        ("_onlyRefusals guard: these entries are not a catalog write:",
+            Sorted(_onlyRefusals.Keys.Where(k => !catalog.Contains(k)))),
+        ("these _noGolden and _onlyRefusals entries do not name #2434:",
+            Sorted(_noGolden.Concat(_onlyRefusals).Where(e => !e.Value.Contains("#2434", StringComparison.Ordinal)).Select(e => e.Key))),
+    ]);
+
+    /// <summary>What needs the result of every scenario: which routes some scenario sent, and which it covered.</summary>
+    private static List<string> CoverageProblems(Sweep sweep, HashSet<string> catalog) => Sections(
+    [
+        ("UNCOVERED: these catalog write routes appended no event by the launched session in any scenario that sent them (no event, no scenario, or another actor; a route that writes no event goes in _notSwept with its reason, one no golden sends goes in _noGolden with #2434):",
+            Sorted(catalog.Where(k => !_notSwept.ContainsKey(k) && !_noGolden.ContainsKey(k) && !_otherProof.ContainsKey(k) && !_onlyRefusals.ContainsKey(k) && !sweep.Covered.ContainsKey(k)))),
+        ("_noGolden guard: a scenario now sends these entries; move them into the sweep (delete the entry):",
+            Sorted(_noGolden.Keys.Where(sweep.Sent.ContainsKey))),
+        ("_onlyRefusals guard: no scenario sends these entries, or a scenario now covers them; move them into the sweep or _noGolden:",
+            Sorted(_onlyRefusals.Keys.Where(catalog.Contains).Select(k => (k, Why: OnlyRefusalBroken(k, catalog, sweep))).Where(e => e.Why is not null).Select(e => $"{e.k}: {e.Why}"))),
+    ]);
+
+    private static List<string> Sections(List<(string Heading, List<string> Items)> sections) =>
+        [.. sections.Where(s => s.Items.Count > 0).Select(s => s.Heading + "\n" + string.Join('\n', s.Items))];
 
     private static string? OnlyRefusalBroken(string key, HashSet<string> catalog, Sweep sweep) =>
         !catalog.Contains(key) ? "not a catalog write"
@@ -156,7 +221,7 @@ public sealed class WriteAttributionTests
 
     private static List<string> Sorted(IEnumerable<string> items) => [.. items.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
 
-    private static async Task RunAsLaunchedSession((string Slug, string Scenario) row, Sweep sweep, CancellationToken token)
+    private static async Task RunAsLaunchedSession((string Slug, string Scenario) row, Sweep sweep, ShardProblems own, CancellationToken token)
     {
         await using var host = await ApiScenarios.Start(row.Slug, row.Scenario, token);
         var ledger = host.App.Services.GetRequiredService<ILedgerStore>();
@@ -180,7 +245,7 @@ public sealed class WriteAttributionTests
         keys.ForEach(k => sweep.Sent[k] = true);
         if (failure is not null)
         {
-            sweep.Broken.Add($"{row.Slug}/{row.Scenario}: {failure.GetType().Name}: {failure.Message.ReplaceLineEndings(" ")}");
+            own.Broken.Add($"{row.Slug}/{row.Scenario}: {failure.GetType().Name}: {failure.Message.ReplaceLineEndings(" ")}");
             return;
         }
 
@@ -192,7 +257,7 @@ public sealed class WriteAttributionTests
         var from = marks.Length == 0 ? long.MaxValue : marks[0];
         foreach (var envelope in events.Where(e => e.Sequence > from).Select(e => e.Envelope).Where(e => IsWrongActor(e.Actor)))
         {
-            sweep.Strays.Add($"{row.Slug}/{row.Scenario}: {envelope.Type} by {envelope.Actor}");
+            own.Strays.Add($"{row.Slug}/{row.Scenario}: {envelope.Type} by {envelope.Actor}");
         }
     }
 
@@ -264,6 +329,11 @@ public sealed class WriteAttributionTests
         /// <summary>Catalog write keys sent by a scenario whose calls appended an event by the launch; the value names one such scenario and the event type.</summary>
         public ConcurrentDictionary<string, string> Covered { get; } = new(StringComparer.Ordinal);
 
+    }
+
+    /// <summary>What one shard's own rows did wrong; each shard asserts its own, never another's.</summary>
+    private sealed class ShardProblems
+    {
         public ConcurrentBag<string> Strays { get; } = [];
 
         public ConcurrentBag<string> Broken { get; } = [];
