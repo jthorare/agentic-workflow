@@ -105,7 +105,8 @@ internal sealed partial class GraphWorkflow
             return new GraphBlockOutcome(NodeRunStatus.Failed, Input: null, Output: null, [], $"{refused.Error.Code}: {refused.Error.Message}");
         }
 
-        if (string.Equals(node.Type, LoopBody.ForEachType, StringComparison.Ordinal) && LoopBody.Find(spec, node.Id) is { IsSuccess: true } loop && LoopBody.AgentRefusal(loop.Value) is { } agentInLoop)
+        // why: a loop with a run_agent in its body ran no item before #2470; a run that started on that walk still replays the refusal
+        if (string.Equals(node.Type, LoopBody.ForEachType, StringComparison.Ordinal) && LoopBody.Find(spec, node.Id) is { IsSuccess: true } loop && LoopBody.AgentRefusal(loop.Value) is { } agentInLoop && !Workflow.Patched("graph-agent-in-loop"))
         {
             return new GraphBlockOutcome(NodeRunStatus.Failed, Input: null, Output: null, [], $"{LoopBody.AgentInLoopCode}: {agentInLoop}");
         }
@@ -113,7 +114,7 @@ internal sealed partial class GraphWorkflow
         try
         {
             return string.Equals(node.Type, "run_agent", StringComparison.Ordinal)
-                ? await RunAgent(node).ConfigureAwait(true)   // why: a session outlives a plain activity and a person may take it over, so the agent loop runs in the workflow (PR 7)
+                ? await Agents.Run(node, 0).ConfigureAwait(true)   // why: a session outlives a plain activity and a person may take it over, so the agent loop runs in the workflow (PR 7)
                 : await Workflow.ExecuteActivityAsync((GraphBlockActivities a) => a.RunBlockAsync(_run, node.Id, 0), _block).ConfigureAwait(true);
         }
         catch (ActivityFailureException e) when (!TemporalException.IsCanceledException(e))
