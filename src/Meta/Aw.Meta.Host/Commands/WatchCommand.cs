@@ -3,7 +3,7 @@ using Aw.Meta.Features.Watch;
 
 namespace Aw.Meta.Host.Commands;
 
-/// <summary>The 'watch' command: prints each line as it happens (for Monitor) and exits 0 when it expires.</summary>
+/// <summary>The 'watch' command: prints each line as it happens (for Monitor) and exits 0 when it expires (--until-event: on the first real line, never on a window).</summary>
 internal static class WatchCommand
 {
     private static readonly TimeSpan _defaultInterval = TimeSpan.FromSeconds(120);
@@ -11,7 +11,7 @@ internal static class WatchCommand
 
     internal static CommandEntry Entry { get; } = new(
         "watch",
-        new CommandSpec("watch [--interval 120] [--for 29m] [--until-mail] [--json]", [], ["interval", "for"], ["until-mail"]),
+        new CommandSpec("watch [--interval 120] [--for 29m] [--until-mail | --until-event] [--json]", [], ["interval", "for"], ["until-mail", "until-event"]),
         NeedsConfig: true,
         Run);
 
@@ -28,7 +28,7 @@ internal static class WatchCommand
             await context.Io.Out.FlushAsync(context.Cancellation).ConfigureAwait(false);
         }
 
-        return CommandOutput.Call<WatchRequest, WatchResponse>(context, new WatchRequest(interval, duration, Print) { UntilMail = context.Line.Has("until-mail") }, static _ => string.Empty);
+        return CommandOutput.Call<WatchRequest, WatchResponse>(context, new WatchRequest(interval, duration, Print) { UntilMail = context.Line.Has("until-mail"), UntilEvent = context.Line.Has("until-event") }, static _ => string.Empty);
     }
 
     private static bool Duration(string? text, TimeSpan fallback, out TimeSpan value)

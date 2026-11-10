@@ -49,7 +49,14 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
                 return new WatchResponse(polls, loop.Lines) { EndedOnMail = true };
             }
 
-            if (clock.GetUtcNow() + request.Interval >= end)
+            if (request.UntilEvent)
+            {
+                if (loop.Events > 0)
+                {
+                    return new WatchResponse(polls, loop.Lines);
+                }
+            }
+            else if (clock.GetUtcNow() + request.Interval >= end)
             {
                 await loop.Say("WATCH EXPIRING: rerun aw-meta watch").ConfigureAwait(false);
                 return new WatchResponse(polls, loop.Lines);

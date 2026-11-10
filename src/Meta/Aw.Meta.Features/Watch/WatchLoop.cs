@@ -160,10 +160,18 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         }
     }
 
+    /// <summary>How many lines were emitted that report something (every line but the start line).</summary>
+    internal int Events { get; private set; }
+
     /// <summary>Emits one line.</summary>
     internal async ValueTask Say(string line)
     {
         Lines++;
+        if (!line.StartsWith("WATCH started", StringComparison.Ordinal))
+        {
+            Events++;
+        }
+
         await emit(line).ConfigureAwait(false);
     }
 

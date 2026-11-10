@@ -252,6 +252,7 @@ bash scripts/tests/skill-evals.test.sh      # scripts/skill-evals.sh with a stub
 bash scripts/tests/skill-evals-node-failure.test.sh   # scripts/skill-evals.sh --selftest with a stub node that fails on any RegExp check (#2027): a node failure is reported as SELFTEST-REGEX "node failed (exit N)" for a regex grader and a tool_used input_match, never read as "compiles fine"
 bash scripts/tests/eval-gh-wrapper.test.sh   # evals/stubs/bin/gh and curl: the readonly refusals (every form), canned answers from .aw-eval/*.json (match rules, first match, no match, no file, subdirectory), pass-through to a fake real gh
 bash scripts/tests/code-index-fixture.test.sh  # the code-index fixtures (tests/fixtures/code-index): verify.mjs, the sample check, the hostile generator
+bash scripts/tests/meta-skill-card.test.sh   # #2498: skills/meta/SKILL.md stays under its byte cap, opens with a card per harness (Claude Code, Codex, Cursor), says to trust the CLI FAIL lines and not open gate logs, and points at docs/csharp/meta-skill-reference.md, which exists
 bash scripts/tests/meta-launch.test.sh      # Linux and macOS (golden transcript; needs cc on macOS)
 bash scripts/tests/launcher-probe.test.sh   # launcher_cli_has_flag: finds a flag, answers no without it, ends a hanging CLI, leaves none of its children running (#2329)
 bash scripts/tests/meta-version.test.sh     # the installed aw-meta's version and the launcher's staleness warning (Linux and macOS)
