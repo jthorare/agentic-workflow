@@ -22415,3 +22415,27 @@ Aw.Sindri.Core.Resources.ResourceDoctorRule
 const Aw.Sindri.Core.Resources.ResourceDoctorRule.NearLimit = 0.9 -> double
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.Check(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>! entries, System.Collections.Generic.IReadOnlyDictionary<string!, long>! diskLimits) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.LimitKey(Aw.Sindri.Core.Resources.ResourceOwner! owner, string! name) -> string!
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Item.get -> int?
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Item.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.BatchWorkflow.get -> string?
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.BatchWorkflow.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Item.get -> int?
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Item.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.BatchWorkflow.get -> string?
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.BatchWorkflow.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Item.get -> int?
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Item.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.BatchWorkflow.get -> string?
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.BatchWorkflow.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Item.get -> int?
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Item.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.BatchWorkflow.get -> string?
+Aw.Sindri.Core.Graph.Blocks.BlockContext.BatchWorkflow.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Item.get -> int?
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Item.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Item.get -> int?
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Item.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Item.get -> int?
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Item.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.BatchWorkflow.get -> string?
+Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.BatchWorkflow.init -> void

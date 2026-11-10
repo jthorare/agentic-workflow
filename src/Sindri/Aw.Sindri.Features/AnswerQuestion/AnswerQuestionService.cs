@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Text;
+using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.AnswerQuestion;
 
@@ -14,18 +15,20 @@ namespace Aw.Sindri.Features.AnswerQuestion;
 /// Once the workflow took the answer, 'workflow.answered' records who gave it (the caller's actor: 'human:&lt;client&gt;' for a person, 'session:launch:&lt;launch id&gt;' for a session Sindri launched, 'session:&lt;client&gt;' for any other session).
 /// </summary>
 /// <param name="runs">The runs.</param>
+/// <param name="views">Reads the needs-you row of a loop item's question, which records the workflow that waits for the answer.</param>
 /// <param name="answerer">Delivers the answer to the run's workflow.</param>
 /// <param name="ledger">Appends 'workflow.answered'.</param>
 /// <param name="held">The lease this process holds.</param>
 /// <param name="events">Builds the entry.</param>
 /// <param name="scrubber">Scrubs the answer before the ledger stores it; the workflow gets the answer as given.</param>
-internal sealed class AnswerQuestionService(IWorkflowRunStore runs, IGraphRunAnswerer answerer, ILedgerStore ledger, HeldLease held, EventFactory events, ITextScrubber scrubber) : IService<AnswerQuestionRequest, AnswerQuestionResponse>
+internal sealed class AnswerQuestionService(IWorkflowRunStore runs, IViewReader views, IGraphRunAnswerer answerer, ILedgerStore ledger, HeldLease held, EventFactory events, ITextScrubber scrubber) : IService<AnswerQuestionRequest, AnswerQuestionResponse>
 {
     private const int AnswerMax = 4000;
 
     public async ValueTask<Result<AnswerQuestionResponse>> Handle(AnswerQuestionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        _ = views;   // stub: the loop item's question row is read here by the fix (#2543)
         var answer = AnswerOf(request);
         if (answer.IsError)
         {

@@ -6,4 +6,8 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Run">The run.</param>
 /// <param name="Node">The 'ask_owner' node.</param>
 /// <param name="Kind">The Needs-you row kind that clears; the ledger row doesn't hold it, so it reads as 'question'.</param>
-public sealed record WorkflowAnsweredPublic(WorkflowRunId Run, NodeId Node, string Kind = WorkflowQuestionPublic.QuestionKind);
+public sealed record WorkflowAnsweredPublic(WorkflowRunId Run, NodeId Node, string Kind = WorkflowQuestionPublic.QuestionKind)
+{
+    /// <summary>The item inside a 'for_each' body that was answered, or null for a node outside a loop.</summary>
+    public int? Item { get; init; }
+}

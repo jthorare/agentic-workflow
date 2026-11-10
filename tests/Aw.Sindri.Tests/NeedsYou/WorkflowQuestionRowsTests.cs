@@ -47,6 +47,42 @@ public sealed class WorkflowQuestionRowsTests
         Assert.Equal(asked.Sequence, row.Sequence);
     }
 
+    private LedgerEvent ItemQuestion(int item) =>
+        Event(EventTypes.WorkflowQuestion, new WorkflowQuestionPayload(_run, _ask, $"Ship item {item.ToString(System.Globalization.CultureInfo.InvariantCulture)}?", [], Default: null, TimeoutAt: null, "service:workflow") { Item = item, BatchWorkflow = "nightly@3:12/each/1" });
+
+    [Fact]
+    public async Task Two_items_of_one_node_are_two_rows_that_name_their_item_and_keep_the_waiting_workflow()
+    {
+        await _v.Apply([ItemQuestion(1), ItemQuestion(2)]);
+
+        var rows = (await Rows()).OrderBy(static r => r.Row.Id.Value, StringComparer.Ordinal).ToList();
+
+        Assert.Equal(["question:nightly@3:12:ask:1", "question:nightly@3:12:ask:2"], rows.Select(static r => r.Row.Id.Value), StringComparer.Ordinal);
+        Assert.Contains("nightly@3:12/ask item 2", rows[1].Row.Reason, StringComparison.Ordinal);
+        Assert.Contains("--item 2", rows[1].Row.Cli, StringComparison.Ordinal);
+        Assert.All(rows, static r => Assert.Equal("nightly@3:12/each/1", r.BatchWorkflow));
+    }
+
+    [Fact]
+    public async Task Answering_one_item_clears_only_that_items_row()
+    {
+        await _v.Apply([ItemQuestion(1), ItemQuestion(2), Event(EventTypes.WorkflowAnswered, new WorkflowAnsweredPayload(_run, _ask, "yes", "owner") { Item = 1 })]);
+
+        var row = Assert.Single(await Rows());
+
+        Assert.Equal("question:nightly@3:12:ask:2", row.Row.Id.Value);
+    }
+
+    [Fact]
+    public async Task An_item_whose_node_finishes_clears_only_that_items_row()
+    {
+        await _v.Apply([ItemQuestion(1), ItemQuestion(2), Event(EventTypes.WorkflowNodeFinished, new WorkflowNodeFinishedPayload(_run, _ask, 2, "succeeded", Truncated: false, "service:workflow"))]);
+
+        var row = Assert.Single(await Rows());
+
+        Assert.Equal("question:nightly@3:12:ask:1", row.Row.Id.Value);
+    }
+
     [Fact]
     public async Task Answering_clears_only_that_question()
     {
