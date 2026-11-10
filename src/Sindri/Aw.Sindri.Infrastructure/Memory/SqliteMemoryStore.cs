@@ -202,5 +202,6 @@ internal sealed class SqliteMemoryStore(LedgerDatabase database) : IMemoryStore
         .Bind("$createdAt", fact.CreatedAt)
         .Bind("$refreshedAt", fact.RefreshedAt)
         .Bind("$model", fact.Embedding.IsEmpty ? null : fact.Model)
-        .Bind("$dimension", fact.Embedding.IsEmpty ? null : fact.Embedding.Length);
+        .Bind("$dimension", fact.Embedding.IsEmpty ? null : fact.Embedding.Length)
+        .Bind("$writtenBy", fact.WrittenBy);
 }

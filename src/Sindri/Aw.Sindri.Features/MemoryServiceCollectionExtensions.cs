@@ -1,4 +1,5 @@
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.CreateMemory;
@@ -21,6 +22,7 @@ internal static class MemoryServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services
+            .AddScoped<MemoryEvents>()
             .AddScoped<IValidator<CreateMemoryRequest>, AcceptAllValidator<CreateMemoryRequest>>().AddCommand<CreateMemoryRequest, CreateMemoryResponse, CreateMemoryService>()
             .AddScoped<IValidator<WriteMemoryFactRequest>, AcceptAllValidator<WriteMemoryFactRequest>>().AddCommand<WriteMemoryFactRequest, WriteMemoryFactResponse, WriteMemoryFactService>()
             .AddScoped<IValidator<ForgetMemoryFactRequest>, AcceptAllValidator<ForgetMemoryFactRequest>>().AddCommand<ForgetMemoryFactRequest, ForgetMemoryFactResponse, ForgetMemoryFactService>()
