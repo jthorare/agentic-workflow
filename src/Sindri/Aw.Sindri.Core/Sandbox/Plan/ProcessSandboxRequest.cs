@@ -12,7 +12,7 @@ namespace Aw.Sindri.Core.Sandbox.Plan;
 /// <param name="Command">The absolute path of the binary; its folder is bound read-only.</param>
 /// <param name="RunArea">The process's own folder on the host: its private /tmp lives in it.</param>
 /// <param name="ResourceMounts">The databases and disks the process declared; each is bound read-write at its own path.</param>
-/// <param name="Environment">The variables the process gets besides the allowlisted ones: the resource variables (<see cref="Aw.Sindri.Core.Resources.ResourceEnv"/>).</param>
+/// <param name="Environment">The variables the process gets besides the allowlisted ones: the resource variables (<see cref="Core.Resources.ResourceEnv"/>).</param>
 /// <param name="HostGroups">The hosts its connections reach: the only network the process has.</param>
 /// <param name="Net">The network facts (the socket folder and the forwarders' ports).</param>
 /// <param name="Host">The host facts.</param>
