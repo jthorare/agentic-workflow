@@ -3,7 +3,7 @@
     {
       "name": "notes",
       "dir": "/toolkits/notes",
-      "state": 2,
+      "state": "Built",
       "sourceHash": "hash-1",
       "builtAt": "2026-01-01T00:00:00.0000000Z",
       "manifest": {
@@ -24,7 +24,7 @@
     {
       "name": "scratch",
       "dir": "/toolkits/scratch",
-      "state": 1,
+      "state": "Off",
       "sourceHash": null,
       "builtAt": null,
       "manifest": null,
