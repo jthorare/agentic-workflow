@@ -128,4 +128,52 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
         Assert.Equal(1.0, ((ITransform)card.RenderTransform!).Value.M11, 3);
     });
+
+    [Fact]
+    public Task Under_reduced_motion_the_pointer_arriving_sets_every_clickable_transition_to_zero() => OnUi(async () =>
+    {
+        var (window, card) = await OnFirstCard();
+        var transitions = card.Transitions ?? throw new InvalidOperationException("the card has no Transitions");
+        Assert.All(transitions, t => Assert.Equal(150, Length(t).TotalMilliseconds)); // wired before motion was reduced
+
+        Motion.Set(reduce: true);
+        window.MouseMove(Corner(window, card), RawInputModifiers.None);
+        Settle(window);
+
+        Assert.True(card.IsPointerOver);
+        Assert.Equal(3, transitions.Count);
+        Assert.All(transitions, t => Assert.Equal(TimeSpan.Zero, Length(t)));
+    });
+
+    [Fact]
+    public Task A_Needs_You_row_that_slid_in_scales_to_098_while_pressed() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected();
+        shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Failure()], ""));
+        shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Failure(), NeedsYouRows.Park()], ""));
+        Settle(window);
+        var row = window.GetVisualDescendants().OfType<NeedsYouRow>().Where(r => r.IsEffectivelyVisible)
+            .SelectMany(r => r.GetVisualDescendants().OfType<Border>()).First(b => b.Name == "RowFrame" && b.Classes.Contains("slides-in"));
+        await Task.Delay(TimeSpan.FromMilliseconds(250), Token); // past the 180 ms slide
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick(2); // headless moves the animation clock only on a forced tick
+        Settle(window);
+        Motion.Set(reduce: true); // the press lands at once; the row keeps its slides-in class (SlidesIn is read on arrival)
+        var point = row.TranslatePoint(new Point(4, 4), window)!.Value;
+
+        window.MouseMove(point, RawInputModifiers.None);
+        window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
+
+        Assert.Contains(":pressed", row.Classes, StringComparer.Ordinal);
+        var pressed = ((ITransform)row.RenderTransform!).Value;
+        Assert.Equal((0.98, 0.98), (Math.Round(pressed.M11, 3), Math.Round(pressed.M22, 3)));
+        window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
+    });
+
+    private static TimeSpan Length(ITransition transition) => transition switch
+    {
+        BrushTransition brush => brush.Duration,
+        TransformOperationsTransition transform => transform.Duration,
+        _ => throw new InvalidOperationException($"unexpected transition {transition.GetType().Name}"),
+    };
 }

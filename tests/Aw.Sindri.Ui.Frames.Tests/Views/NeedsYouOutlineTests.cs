@@ -48,6 +48,28 @@ public sealed class NeedsYouOutlineTests : FrameHost
     });
 
     [Fact]
+    public Task An_outlined_row_keeps_its_border_padding_and_height_under_the_pointer_and_while_pressed() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        var (window, _) = await Connected(s => s.NeedsYou.Count > 0);
+        var frame = Frame(Rows(window).First(r => r.DataContext is ViewModels.NeedsYou.NeedsYouRowViewModel { HasOutline: true }));
+        var inset = Inset(frame);
+        var height = frame.Bounds.Height;
+        var point = frame.TranslatePoint(new Point(4, 4), window)!.Value;
+
+        window.MouseMove(point, RawInputModifiers.None);
+        Settle(window);
+        Assert.True(frame.IsPointerOver);
+        Assert.Equal((inset, height), (Inset(frame), frame.Bounds.Height));
+
+        window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
+        Assert.Contains(":pressed", frame.Classes, StringComparer.Ordinal);
+        Assert.Equal((inset, height), (Inset(frame), frame.Bounds.Height));
+        window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
+    });
+
+    [Fact]
     public Task A_selected_outlined_row_keeps_the_selection_bar_colour() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
