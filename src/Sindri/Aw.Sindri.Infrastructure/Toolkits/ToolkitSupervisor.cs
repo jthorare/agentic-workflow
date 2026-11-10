@@ -36,13 +36,16 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         {
             if (_running.TryGetValue(toolkit.Name, out var existing))
             {
-                if (!existing.Watcher.IsCompleted)
+                if (!existing.Watcher.IsCompleted && !existing.GivingUp)
                 {
                     return Unit.Value;   // already up (or restarting): a second start changes nothing
                 }
 
                 _ = _running.TryRemove(toolkit.Name, out _);   // its watcher gave up: this start replaces it
-                await End(existing).ConfigureAwait(false);
+                if (existing.Watcher.IsCompleted)
+                {
+                    await End(existing).ConfigureAwait(false);   // not for one still giving up: its watcher waits for this gate, so awaiting it would deadlock
+                }
             }
 
             var launched = await launcher.Launch(toolkit, cancellationToken).ConfigureAwait(false);
@@ -198,6 +201,7 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
 
                 if (crashes.Count >= MaxCrashes)
                 {
+                    running.GivingUp = true;   // a start that gets the gate before this watcher does treats the entry as gone
                     await GiveUp(toolkit.Name, running).ConfigureAwait(false);
                     return;
                 }
@@ -228,6 +232,11 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
             }
         }
 
+        if (_running.ContainsKey(name))
+        {
+            return;   // a newer start owns the row now
+        }
+
         var fresh = await store.Find(name, CancellationToken.None).ConfigureAwait(false);
         if (fresh.IsSuccess && fresh.Value is { } current)
         {
@@ -242,6 +251,9 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         internal IToolkitProcess? Process { get; set; } = first;
 
         internal Task Watcher { get; set; } = Task.CompletedTask;
+
+        /// <summary>Set once the watcher has decided to give up, before it queues on the gate.</summary>
+        internal volatile bool GivingUp;
 
         internal CancellationTokenSource Stopping { get; } = new();
     }
