@@ -94,8 +94,9 @@
               <DataTemplate x:DataType="wf:WorkflowRowViewModel">
                 <Border Classes="item-row" Focusable="True" KeyDown="OnWorkflowRowKey" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                   <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" MinHeight="36" Margin="0,8" VerticalAlignment="Center">
-                    <!-- The row is the one focus stop and draws the ring; the title is a click target only, so it draws none of its own (Enter or Space on the row opens it). -->
-                    <Button Classes="row-title" Focusable="False" Click="OnOpenWorkflow" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
+                    <!-- The row is the one focus stop and draws the ring; the title is a click target only, so it draws none of its own (Enter or Space on the row opens it).
+                         Margin="-2,0": the shared row-title style pulls the button up 2 px for a ring this one never draws (QueueStyles.axaml:40-42), which put the title under 8 px from the row's top; keep the sideways -2 so the text lines up. -->
+                    <Button Classes="row-title" Focusable="False" Margin="-2,0" Click="OnOpenWorkflow" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
                       <TextBlock Classes="body-strong" Text="{Binding NameText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
                     <Border Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding StateText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
