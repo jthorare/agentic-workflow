@@ -2,12 +2,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:theme="using:Aw.Sindri.Ui.Theme">
   <!-- The one look of a clickable surface (#2535): put Classes="clickable" on a Border that opens something or runs a command. Hand cursor; under the
-       pointer the background and border lift to Brush.Hover / Brush.HoverBorder, while a button is down they take Brush.Pressed / Brush.PressedBorder.
+       pointer the background and border lift to Brush.Hover / Brush.HoverBorder, while a button is down they take Brush.Pressed / Brush.PressedBorder and the surface scales to 0.98 about its centre (Linear and Raycast press the same way).
        The colours ease over Motion.Hover (theme:Clickable gives the control its Transitions; zero under reduced motion). A keyboard focus ring stays
        each surface's own (:focus-visible), and a surface that draws one keeps it over the hover. A surface that is not clickable gets none of this. -->
   <Style Selector="Border.clickable">
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="theme:Clickable.Track" Value="True" />
+    <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+    <Setter Property="RenderTransform" Value="none" />
   </Style>
   <Style Selector="Border.clickable:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.Hover}" />
@@ -16,6 +18,7 @@
   <Style Selector="Border.clickable:pressed">
     <Setter Property="Background" Value="{DynamicResource Brush.Pressed}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PressedBorder}" />
+    <Setter Property="RenderTransform" Value="scale(0.98)" />
   </Style>
   <!-- Focus and a selected row keep their own border; the lift is the background only there. -->
   <Style Selector="Border.clickable:focus-visible:pointerover">
