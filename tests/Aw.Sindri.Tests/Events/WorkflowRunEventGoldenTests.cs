@@ -15,6 +15,7 @@ public sealed class WorkflowRunEventGoldenTests
     private static readonly WorkflowRunId _run = WorkflowRunId.From("nightly@3:12");
     private static readonly NodeId _fetch = NodeId.From("fetch");
     private static readonly NodeId _notify = NodeId.From("notify");
+    private static readonly NodeId _agent = NodeId.From("agent");
 
     public static TheoryData<string> Cases =>
     [
@@ -24,6 +25,8 @@ public sealed class WorkflowRunEventGoldenTests
         EventTypes.WorkflowNodeStarted,
         EventTypes.WorkflowNodeFinished,
         EventTypes.WorkflowNodeFailed,
+        EventTypes.WorkflowNodeTakenOver,
+        EventTypes.WorkflowNodeHandedBack,
     ];
 
     private static string Of<T>(SliceHarness h, string type, T payload) => ApiGolden.Reindent(h.Events.Entry(type, payload, "key", A.FirstItemId.Value).Envelope.Payload);
@@ -36,6 +39,8 @@ public sealed class WorkflowRunEventGoldenTests
         EventTypes.WorkflowNodeStarted => Of(h, type, new WorkflowNodeStartedPayload(_run, _fetch, 0, "service:workflow")),
         EventTypes.WorkflowNodeFinished => Of(h, type, new WorkflowNodeFinishedPayload(_run, _fetch, 2, "succeeded", Truncated: true, "service:workflow")),
         EventTypes.WorkflowNodeFailed => Of(h, type, new WorkflowNodeFailedPayload(_run, _notify, 0, "no channel", "service:workflow")),
+        EventTypes.WorkflowNodeTakenOver => Of(h, type, new WorkflowNodeTakenOverPayload(_run, _agent, 2, "human:cli")),
+        EventTypes.WorkflowNodeHandedBack => Of(h, type, new WorkflowNodeHandedBackPayload(_run, _agent, 2, "session:launch:LCH-00000000000000000000000000000001")),
         _ => throw new ArgumentOutOfRangeException(nameof(type)),
     };
 
