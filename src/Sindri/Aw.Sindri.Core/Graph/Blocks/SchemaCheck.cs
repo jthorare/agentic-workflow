@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -76,12 +77,20 @@ internal static class SchemaCheck
         {
             "string" => kind == JsonValueKind.String,
             "number" => kind == JsonValueKind.Number,
-            "integer" => kind == JsonValueKind.Number && value is JsonValue v && (v.TryGetValue<long>(out _) || (v.TryGetValue<double>(out var d) && d == Math.Floor(d))),
+            "integer" => kind == JsonValueKind.Number && IsWhole(value),
             "boolean" => kind is JsonValueKind.True or JsonValueKind.False,
             "object" => kind == JsonValueKind.Object,
             "array" => kind == JsonValueKind.Array,
             "null" => kind == JsonValueKind.Null,
             _ => true,
         };
+    }
+
+    /// <summary>Reads a number node as text, so an int, a long, a double and a parsed element all answer alike (JsonValue.TryGetValue&lt;long&gt; is false for a node holding an int).</summary>
+    private static bool IsWhole(JsonNode value)
+    {
+        var text = value.ToJsonString();
+        return long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _)
+            || (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) && d == Math.Floor(d));
     }
 }
