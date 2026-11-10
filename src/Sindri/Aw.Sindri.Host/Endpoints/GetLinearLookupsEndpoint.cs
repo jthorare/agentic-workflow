@@ -4,7 +4,7 @@ using Aw.Sindri.Features.GetLinearLookups;
 
 namespace Aw.Sindri.Host.Endpoints;
 
-/// <summary>GET /sindri/linear/lookups/{team} (Linear hub spec 2026-11-04 §3; query): a team's states, members, labels and cycles. Owner only: a session is SND-AUTH-002 (403). A team never synced answers 200 with empty lists.</summary>
+/// <summary>GET /sindri/linear/lookups/{team} (Linear hub spec 2026-11-04 §3; query): a team's states, members, labels and cycles. A team never synced answers 200 with empty lists.</summary>
 internal static class GetLinearLookupsEndpoint
 {
     internal static RouteGroupBuilder MapGetLinearLookups(this RouteGroupBuilder group)

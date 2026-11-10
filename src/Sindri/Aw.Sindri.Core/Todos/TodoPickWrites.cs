@@ -63,14 +63,25 @@ public sealed class TodoPickWrites(ILedgerStore ledger, HeldLease held, Events.E
     /// <param name="versionAfter">The version the change left it at.</param>
     /// <param name="who">The caller.</param>
     /// <param name="cancellationToken">Cancels the read and the appends.</param>
-    /// <returns>The first error, or null.</returns>
+    /// <returns>The first error (SND-API-011 when the views are behind the change), or null.</returns>
     public async ValueTask<Error?> Revert(TodoConverger converger, TodoRow prior, long versionAfter, TodoPickCaller who, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(converger);
         ArgumentNullException.ThrowIfNull(prior);
         ArgumentNullException.ThrowIfNull(who);
         var read = await Row(prior.Id, cancellationToken).ConfigureAwait(false);
-        if (read.IsError || read.Value.Version != versionAfter)
+        if (read.IsError)
+        {
+            return null;
+        }
+
+        // why: a row below the version the change left it at means the views haven't folded the change yet; that is not "moved since", and skipping it would report a revert that never happened
+        if (read.Value.Version < versionAfter)
+        {
+            return SindriErrors.ViewsBehind.With("The views haven't caught up with the last change to a todo yet. Try again in a moment.");
+        }
+
+        if (read.Value.Version != versionAfter)
         {
             return null;
         }

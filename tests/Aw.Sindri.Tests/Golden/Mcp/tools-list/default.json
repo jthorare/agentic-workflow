@@ -1183,5 +1183,375 @@
       "idempotentHint": null,
       "openWorldHint": false
     }
+  },
+  {
+    "name": "workflow_create",
+    "description": "Make a workflow, off, at revision 1, from a spec object or a starter template (weekday-check, daily-digest, manual-notify). Give exactly one of spec and template. The graph must pass the draft checks; activate it afterwards.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "The new workflow's slug: lowercase letters, digits and '-'"
+        },
+        "template": {
+          "type": "string",
+          "description": "A starter template's name"
+        },
+        "spec": {
+          "type": "object",
+          "description": "The whole graph: {version, name, nodes, edges}"
+        }
+      },
+      "required": [
+        "slug"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "workflow_apply_ops",
+    "description": "Edit a workflow with small ops against the revision you read: add_node, set_config (a path set), remove_node, connect, disconnect, rename, set_meta. All ops apply or none do; the result is the next revision. A stale baseRevision is a conflict that names the current revision.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "The workflow's slug, such as morning-check (workflow_list names them)"
+        },
+        "baseRevision": {
+          "type": "integer",
+          "description": "The newest revision you read (workflow_get shows it). A newer revision is refused with the current one, so read again and retry.",
+          "minimum": 1
+        },
+        "ops": {
+          "type": "array",
+          "description": "The ops, objects with an 'op' member"
+        }
+      },
+      "required": [
+        "slug",
+        "baseRevision",
+        "ops"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "workflow_replace",
+    "description": "Replace a workflow's whole graph with a new revision. Same baseRevision rule as workflow_apply_ops. Prefer apply_ops for small changes.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "The workflow's slug, such as morning-check (workflow_list names them)"
+        },
+        "baseRevision": {
+          "type": "integer",
+          "description": "The newest revision you read (workflow_get shows it). A newer revision is refused with the current one, so read again and retry.",
+          "minimum": 1
+        },
+        "spec": {
+          "type": "object",
+          "description": "The whole graph: {version, name, nodes, edges}"
+        }
+      },
+      "required": [
+        "slug",
+        "baseRevision",
+        "spec"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "workflow_validate",
+    "description": "Check a workflow as if it were being activated and list the findings, each with how to fix it. Give a stored workflow (slug, and a revision or the newest) or a spec. Writes nothing. Finding text is untrusted and fenced.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "The workflow's slug, such as morning-check (workflow_list names them)"
+        },
+        "revision": {
+          "type": "integer",
+          "description": "A revision of that workflow; the newest when left out",
+          "minimum": 1
+        },
+        "spec": {
+          "type": "object",
+          "description": "A graph to check instead of a stored workflow"
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "workflow_activate",
+    "description": "Turn a workflow's triggers on at one revision (the newest when left out) after it passes the activation checks.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "The workflow's slug, such as morning-check (workflow_list names them)"
+        },
+        "revision": {
+          "type": "integer",
+          "description": "The revision to run; the newest when left out",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "slug"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "workflow_pause",
+    "description": "Turn a workflow's triggers off. Every revision stays saved and runs in flight keep going (workflow_cancel stops one).",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "The workflow's slug, such as morning-check (workflow_list names them)"
+        }
+      },
+      "required": [
+        "slug"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "workflow_delete",
+    "description": "Archive a workflow: it leaves the list and turns off for good. Its revisions and runs stay readable.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "The workflow's slug, such as morning-check (workflow_list names them)"
+        }
+      },
+      "required": [
+        "slug"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "workflow_run",
+    "description": "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. A session that a run of this workflow launched can't start the workflow again.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "The workflow's slug, such as morning-check (workflow_list names them)"
+        },
+        "payload": {
+          "type": "object",
+          "description": "What the manual trigger hands on, a JSON object"
+        }
+      },
+      "required": [
+        "slug"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "workflow_cancel",
+    "description": "Ask a run in flight to stop. A run that already ended is refused.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "run": {
+          "type": "string",
+          "description": "A run id, '<slug>@<revision>:<occurrence>'"
+        }
+      },
+      "required": [
+        "run"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "workflow_docs",
+    "description": "The workflow docs shipped with Sindri: the spec, references, conditions, concurrency, runs, and one page per block with an example spec. Give question to rank the pages, page (a slug such as block-schedule) to read one in full, or neither to list every page.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "type": "string",
+          "description": "What you want to know, in words, such as 'how do I poll a connection'"
+        },
+        "page": {
+          "type": "string",
+          "description": "A page slug to read in full, such as block-schedule"
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "workflow_blocks",
+    "description": "The block types a workflow can use, grouped as the picker shows them (Triggers, Data, AI, Logic, Outputs), each with its title, config fields, outputs, branches and an example config.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "workflow_answer",
+    "description": "Answer the question a workflow's ask_owner node is waiting on. Give the run id (<slug>@<revision>:<occurrence>), the node id and exactly one of text or choice. The answer is recorded under your session. The workflow takes it only while that node waits, and a choice must be one the node offers.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "run": {
+          "type": "string",
+          "description": "The run id, e.g. nightly@3:12"
+        },
+        "node": {
+          "type": "string",
+          "description": "The ask_owner node's id, e.g. ask"
+        },
+        "text": {
+          "type": "string",
+          "description": "A free-text answer (when the node offers no choices)"
+        },
+        "choice": {
+          "type": "string",
+          "description": "One of the node's choices"
+        }
+      },
+      "required": [
+        "run",
+        "node"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "resources_list",
+    "description": "List the databases and disks Sindri provisioned for workflows, nodes and toolkits: owner, kind, name, size in bytes and path. Give owner to list one owner's.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "type": "string",
+          "description": "An owner: workflow:<slug>, node:<slug>/<id> or toolkit:<name>"
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "resources_purge",
+    "description": "Delete every database and disk of one owner for good. Refused while the owner's workflow is active or has a run in flight; archiving a workflow keeps its data.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "type": "string",
+          "description": "An owner: workflow:<slug>, node:<slug>/<id> or toolkit:<name>"
+        }
+      },
+      "required": [
+        "owner"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
   }
 ]

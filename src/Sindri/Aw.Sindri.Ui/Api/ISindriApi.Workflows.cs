@@ -3,7 +3,7 @@ using Aw.Sindri.Ui.Api.Workflows;
 
 namespace Aw.Sindri.Ui.Api;
 
-/// <summary>The workflow reads (<see cref="ISindriApi"/>, continued; #2258 PR 8a): the list, one workflow, its runs and one run; and the two writes, Run now and Cancel run (PR 17 part 2a), each sent once.</summary>
+/// <summary>The workflow reads (<see cref="ISindriApi"/>, continued; #2258 PR 8a): the list, one workflow, its runs and one run; the block list, and the writes: Run now, Cancel run (PR 17 part 2a), ops, Activate and Pause (part 2b), each sent once.</summary>
 internal partial interface ISindriApi
 {
     /// <summary>GET /sindri/workflows: every workflow by slug.</summary>
@@ -46,4 +46,51 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The run, SND-GRAPH-107 for one that already ended, SND-GRAPH-101 for an unknown one, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowRunCancelled>> CancelWorkflowRun(Uri api, string runId, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflow-runs/{run}/nodes/{node}/takeover: the human takes a waiting agent node's agent over. Sent once, never retried.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="runId">The run.</param>
+    /// <param name="node">The node.</param>
+    /// <param name="itemIndex">The item, 0 for a node that runs once.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The node's new agent state, a refusal as served, or SND-UI-002/003.</returns>
+    public Task<Result<AgentNodeControlled>> TakeOverAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflow-runs/{run}/nodes/{node}/handback: the human hands a taken-over agent node back. Sent once, never retried.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="runId">The run.</param>
+    /// <param name="node">The node.</param>
+    /// <param name="itemIndex">The item, 0 for a node that runs once.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The node's new agent state, a refusal as served, or SND-UI-002/003.</returns>
+    public Task<Result<AgentNodeControlled>> HandBackAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken);
+
+    /// <summary>GET /sindri/workflows/blocks: the block types by group, with the config fields the editor's form is made from.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The groups, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowBlockList>> WorkflowBlocks(Uri api, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflows/{slug}/ops: applies edits made on a revision, all together or not at all. A human action, sent once, never retried.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="baseRevision">The newest revision the editor read.</param>
+    /// <param name="opsJson">The ops, a JSON array of objects with an "op" member.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The revision the ops made, SND-GRAPH-007 when the workflow changed since (the current revision is in the message), SND-GRAPH-008 for an unknown one, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowOpsApplied>> ApplyWorkflowOps(Uri api, string slug, int baseRevision, string opsJson, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflows/{slug}/activate: turns the newest revision on. Sent once.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The revision that runs, SND-GRAPH-008 for an unknown workflow, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowActivated>> ActivateWorkflow(Uri api, string slug, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/workflows/{slug}/pause: turns the workflow off; its revisions stay saved. Sent once.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The workflow.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The newest revision, SND-GRAPH-008 for an unknown workflow, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowPaused>> PauseWorkflow(Uri api, string slug, CancellationToken cancellationToken);
 }

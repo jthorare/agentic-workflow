@@ -95,6 +95,10 @@ id and `<path>` the 0600 settings file the launcher renders from the Step's poli
 A Step that requests a model or a policy on an entry whose matching form is `none`, parks with `SND-LAUNCH-013` and never
 launches unrestricted (the API implements the check).
 
+### A graph node's launch (PR 7)
+
+A `run_agent` node (`docs/csharp/sindri-graph.md`) launches through the same launcher. `LaunchRequest.Node` (a `NodeRunAddress`: workflow, run, node, item index) and `LaunchRequest.Task` (the brief, the declared outputs, the sandbox host groups the node adds) are set for it, and null for an attended open and for a recipe Step. The worktree is made on the node's own branch `wf/<slug>/<short run>/work` (`LaunchWorktree`; a branch an earlier launch of the node run made is checked out again), the run directory is `$AW_SINDRI_HOME/workflow/nodes/<launch>/` (`StepEnvironment.RunDirectoryAtNode`), and the session may write refs under `wf/<slug>/<short run>/` (`SandboxLaunchStages.RunNamespace`). The launch id, the session name `snd-<launch id>` and the launch secret work as for a Step.
+
 ### The sandboxed launch flow (sandbox spec §6; SB-0 contract, built in SB-1 to SB-5b)
 
 For a Step run `ILauncher.Launch` becomes, with the new steps in bold: resolve the agent, SL8 (`-012`), L-17's form check (`-013`),

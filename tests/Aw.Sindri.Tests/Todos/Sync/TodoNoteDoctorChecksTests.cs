@@ -21,7 +21,7 @@ public sealed class TodoNoteDoctorChecksTests
     private async Task<DoctorCheck> Row(bool keySet = true)
     {
         _h.NoteLocator.Place = keySet ? new NotePlace("notes", "Todo.md", "/vault") : null;
-        return Assert.Single(await new TodoNoteDoctorChecks(_h.NoteLocator, _h.NoteSync, _h.Slice.Store).Run(Token));
+        return Assert.Single(await new TodoNoteDoctorChecks(_h.NoteLocator, _h.NoteSync, _h.Slice.Store, _h.NoteFile).Run(Token));
     }
 
     [Fact]
@@ -71,5 +71,43 @@ public sealed class TodoNoteDoctorChecksTests
 
         Assert.Equal(CheckState.Warn, row.State);
         Assert.Contains("failing 3 in a row", row.Detail, StringComparison.Ordinal);
+    }
+
+    private static TodoNoteSnapshot Snapshot(string text) => new("sha256:x", NoteParser.Parse(text));
+
+    [Fact]
+    public async Task A_note_with_broken_lines_warns_and_names_their_numbers()
+    {
+        _h.NoteSync.Status = Status(TodoNoteState.Syncing);
+        _h.NoteFile.Current = Snapshot("# Todo\n- [ ] ok ^td-01jc5a8xq0n4w7ms2t9r3vbk6e\n- [ ] see [x](http://a.example) ^td-01jc5b2kz8m3r6tq1w9xh4dn7y\n- [ ] two ^td-01jc5c90a2b7k4m8q1r6t3w9xz ^td-01jc5917f3h8n2p5s9v4x1z6bq\n");
+
+        var row = await Row();
+
+        Assert.Equal(CheckState.Warn, row.State);
+        Assert.Contains("lines that can't sync: 2 (3, 4)", row.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_clean_note_says_no_line_is_stuck_and_stays_ok()
+    {
+        _h.NoteSync.Status = Status(TodoNoteState.Syncing);
+        _h.NoteFile.Current = Snapshot("# Todo\n- [ ] ok ^td-01jc5a8xq0n4w7ms2t9r3vbk6e\n");
+
+        var row = await Row();
+
+        Assert.Equal(CheckState.Ok, row.State);
+        Assert.Contains("lines that can't sync: 0", row.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_note_over_800_KB_warns_it_is_nearly_full()
+    {
+        _h.NoteSync.Status = Status(TodoNoteState.Syncing);
+        _h.NoteFile.Current = Snapshot(string.Concat(Enumerable.Repeat("- [ ] filler line of the note\n", 30_000)));
+
+        var row = await Row();
+
+        Assert.Equal(CheckState.Warn, row.State);
+        Assert.Contains("note nearly full", row.Detail, StringComparison.Ordinal);
     }
 }

@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Validation;
+using Aw.Sindri.Core.Resources;
 
 namespace Aw.Sindri.Tests.Graph;
 
@@ -21,8 +22,8 @@ internal static class GraphFixtures
     };
 
     /// <summary>A context where every name is known and cron and conditions parse (unless a test says otherwise).</summary>
-    public static GraphValidator Validator(IGraphWorld? world = null, Func<string, string?, string?>? cron = null, Func<string, ConditionParse>? condition = null, IReadOnlyDictionary<string, IGraphBlockType>? blocks = null) =>
-        new(new GraphValidationContext(blocks ?? Blocks, world ?? new KnownWorld(), cron ?? ((_, _) => null), condition ?? (text => new ConditionParse(Error: null, References: Template(text)))));
+    public static GraphValidator Validator(IGraphWorld? world = null, Func<string, string?, string?>? cron = null, Func<string, ConditionParse>? condition = null, IReadOnlyDictionary<string, IGraphBlockType>? blocks = null, ResourceBoxCap? boxCap = null) =>
+        new(new GraphValidationContext(blocks ?? Blocks, world ?? new KnownWorld(), cron ?? ((_, _) => null), condition ?? (text => new ConditionParse(Error: null, References: Template(text)))) { BoxCap = boxCap });
 
     public static GraphNode Trigger(string id) => new(NodeId.From(id), "schedule", Title: null, new JsonObject { ["cron"] = "0 7 * * 1-5", ["timezone"] = "America/Los_Angeles" });
 
@@ -49,6 +50,8 @@ internal static class GraphFixtures
 
     public static GraphEdge Edge(string from, string to, string? output = null) => new(From: NodeId.From(from), Output: output, To: NodeId.From(to));
 
+    public static GraphSpec SpecWith(GraphResources resources, IReadOnlyList<GraphNode> nodes, IReadOnlyList<GraphEdge> edges) => Spec(nodes, edges) with { Resources = resources };
+
     public static GraphSpec Spec(IReadOnlyList<GraphNode> nodes, IReadOnlyList<GraphEdge> edges) => new(Version: 1, Name: "Test", Description: null, Concurrency: null, Resources: null, Nodes: nodes, Edges: edges);
 
     private static IReadOnlyList<string> Template(string text) => Core.Graph.Interpolation.Template.References(text);
@@ -59,6 +62,10 @@ internal static class GraphFixtures
             : this(type, trigger, new BlockSchema(fields), "{}", new BlockOutputs(outputs, branches))
         {
         }
+
+        public string Title => Type;
+
+        public BlockGroup Group => IsTrigger ? BlockGroup.Triggers : BlockGroup.Logic;
 
         public BlockOutputs OutputsFor(JsonObject config) => Declared;
     }

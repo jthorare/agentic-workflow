@@ -62,6 +62,7 @@ public sealed partial class GraphValidator
         }
 
         Lookup(node, new NameCheck("connection", context.World.Connection, "GRAPH-NAME", "connection"), found);
+        Lookup(node, new NameCheck("connections", context.World.Connection, "GRAPH-NAME", "connection"), found);   // a 'run_agent' node names its connections as a list (PR 7)
         Lookup(node, new NameCheck("memory", context.World.Memory, "GRAPH-NAME", "memory"), found);
     }
 

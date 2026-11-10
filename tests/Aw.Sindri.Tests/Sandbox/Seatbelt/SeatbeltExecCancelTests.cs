@@ -110,6 +110,10 @@ public sealed class SeatbeltExecCancelTests : IDisposable
 
         public Result<SandboxPlan> Plan(SandboxRequest request) => throw new NotSupportedException();
 
+        public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => throw new NotSupportedException();
+
+        public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => throw new NotSupportedException();
+
         public Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct) => throw new NotSupportedException();
 
         public Result<IReadOnlyList<string>> Wrap(SandboxPlan plan, IReadOnlyList<string> argv) => Results.Success(argv);

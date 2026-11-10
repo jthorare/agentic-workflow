@@ -242,6 +242,13 @@ run_case "meta-lane-gate: lane-stop-check errors, lane-reply errors" meta-lane-g
 # shellcheck disable=SC2086
 run_case "meta-lane-gate: nothing owed logs nothing" meta-lane-gate.sh "$META_LANE_STOP" "-" $LANE AW_META_BIN="$FAKE_BIN/aw-meta"
 # shellcheck disable=SC2086
+run_case "meta-board-line: unparsable stdin" meta-board-line.sh "$SECRET" "meta-board-line input-unparsable" $LANE AW_META_BIN="$FAKE_BIN/aw-meta"
+# shellcheck disable=SC2086
+run_case "meta-board-line: board-line errors" meta-board-line.sh "$META_LANE_PROMPT" "meta-board-line board-line-exit-2" $LANE AW_META_BIN="$FAKE_BIN/aw-meta" META_MODE=2
+# shellcheck disable=SC2086
+run_case "meta-board-line: unchanged board logs nothing" meta-board-line.sh "$META_LANE_PROMPT" "-" $LANE AW_META_BIN="$FAKE_BIN/aw-meta"
+run_case "meta-board-line: outside a lane logs nothing" meta-board-line.sh "$SECRET" "-" AW_META_BIN="$FAKE_BIN/aw-meta" META_MODE=2
+# shellcheck disable=SC2086
 run_case "meta-lane-gate: outside a lane logs nothing" meta-lane-gate.sh "$SECRET" "-" AW_META_BIN="$FAKE_BIN/aw-meta" META_MODE=2
 # shellcheck disable=SC2086
 run_case "session-id-report: unparsable stdin" session-id-report.sh "$SECRET" "session-id-report input-unparsable" $LANE
@@ -340,6 +347,8 @@ hostile "done-gate: brief judge fails, then RF-2 denies" done-gate.sh "{\"sessio
 hostile "meta-stop-gate: unreadable payload" meta-stop-gate.sh "$SECRET" AW_META_BIN="$FAKE_BIN/aw-meta"
 hostile "meta-stop-gate: aw-meta errors" meta-stop-gate.sh "$META_STOP" AW_META_BIN="$FAKE_BIN/aw-meta" META_MODE=2
 hostile "meta-outbox: aw-meta errors" meta-outbox.sh "$META_SEND" AW_META_BIN="$FAKE_BIN/aw-meta" META_MODE=2
+# shellcheck disable=SC2086
+hostile "meta-board-line: aw-meta errors" meta-board-line.sh "$META_LANE_PROMPT" $LANE AW_META_BIN="$FAKE_BIN/aw-meta" META_MODE=2
 # shellcheck disable=SC2086
 hostile "meta-lane-gate: aw-meta errors at stop" meta-lane-gate.sh "$META_LANE_STOP" $LANE AW_META_BIN="$FAKE_BIN/aw-meta" META_MODE=2
 # shellcheck disable=SC2086

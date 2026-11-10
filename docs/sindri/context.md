@@ -50,8 +50,8 @@ they are stored**: each document is cleaned whole (hidden comments, images, remo
 `sindri context sources sync [<source>] [--detach] [--json]` syncs the intent sources now, as a job: it prints `job JOB-… started`, follows
 the job to its end (Ctrl-C cancels it, a second Ctrl-C leaves) and exits 0 when it succeeded, 1 when it failed or was cancelled, 2 when the
 start was refused. One sync job runs at a time, whatever it names: a second start while one runs answers `SND-JOB-409` naming the running job. A sync of every source goes source by source and records each source's event as it finishes; a source that is running already (`SND-CONTEXT-056`) is its own row with that code and the others go on. POST with no body syncs every source. The job's result is the counts per source
-and the code each ended with, never record text; the same `context.sources.synced` events are recorded as for the service below. A
-session can't start it (`SND-AUTH-002`).
+and the code each ended with, never record text; the same `context.sources.synced` events are recorded as for the service below. An
+agent session may start it, like any other verb; the ledger records the caller.
 The repo docs refresh through the service above, and the intent sources (the index's records linked to the map, decisions
 extracted from them) sync through the `context-sync` service (`services: { context-sync: { every: 15m } }`; it runs only
 when named). `context sources status` shows each intent source's last sync, links, decisions and queued records, and
@@ -381,8 +381,8 @@ $SINDRI context map import ~/maps/product-map.yaml
 # Imported map v1 (current) for aw-split-panes: 20 nodes, 21 edges, 1 aliases, 1 decisions, 2 overrides
 ```
 
-Import is a protected command, typed at a terminal: only you, at an interactive terminal, can do it (a
-session, a script or the app gets `SND-AUTH-002`). The preview issues the engine's shared challenge (engine spec §4.2,
+Import is a protected command, typed at a terminal: the CLI asks you to type the challenge (a session that
+is let in still has to redeem it; with `context.sessions.enabled: false` it gets `SND-CONTEXT-020`). The preview issues the engine's shared challenge (engine spec §4.2,
 README X30): the action `import map <hash6>`, bound to the file's whole content hash. You type that action; the server
 redeems it once. A missing, mistyped, reused or expired answer is `SND-AUTH-002`, and a file changed after you saw its
 hash is `SND-CONTEXT-034`; either way nothing is written. The new version becomes `current`, the previous one
@@ -723,7 +723,7 @@ Accept all 31 deterministic proposals at once? [y]es / [n]o, go through them one
   draft and its decisions, which a session never reads, so a session (an agent) gets `SND-CONTEXT-020` (`… is a human
   decision: a session can't`) whether or not `context.sessions.enabled` is on.
 - **Desk** actions run from a terminal or the app: one `map_override` row each, Undo is the recovery, and a session
-  (an agent) is refused with `SND-AUTH-002`. **Protected** ones need you at a terminal: the command shows what it will do and a
+  (an agent) may run them too (the ledger records who). **Protected** ones need you at a terminal: the command shows what it will do and a
   challenge (`review apply-file 3f0c9a`, `promote map v14`), and you type it back. The app never runs them.
 - Skip writes nothing: the item stays in the queue, and quitting mid-queue keeps every decision made so far.
 - A review file (`--export`, then edit each entry's `decision`: `accept`, `reject`, `rename` with a label, `move` or `merge` with an `other`) is
@@ -909,9 +909,11 @@ context:
 - `github.repos`: the `owner/name` repos to read (issues and PRs); `github.host` is optional (GitHub Enterprise).
 - `slack.channels`: each channel as `{ id, name }`; `slack.workspace` names the workspace.
 - `github.token` and `slack.token`: a **secret pointer** to a read-only token, never the token itself. `sindri index connect github|slack`
-  asks for the token once at a terminal and writes the pointer here (an agent session is refused, `SND-AUTH-002`); changing a source or a
+  asks for the token once at a terminal (or reads it from `--token-env`) and writes the pointer here (an agent session may run it); changing a source or a
   token changes the profile, which applies on save. Missing, or text that isn't a pointer, is `SND-CONTEXT-002`;
   the message doesn't repeat the text (rotate a key that was written into the profile).
+- GitHub reads first with a **connected GitHub connection** (the Connections page, OAuth); `github.token` is only the fallback when
+  no GitHub connection is connected. A profile token GitHub refuses shows "Connect GitHub" on the Reviews page (#2499).
 - `linear.teams`, `linear.token`, `linear.url`: the Linear source (S-6); see [linear.md](linear.md). `teams` are team keys (a capital
   letter, then one or more capitals or digits, e.g. `ENG`). Any other key under `sources` is refused (`SND-CONTEXT-001`).
 

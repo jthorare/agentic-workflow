@@ -18,7 +18,10 @@ internal sealed partial class GraphWorkflow
     private async Task<GraphWorkflowResult> Walk(GraphSpec spec)
     {
         _pending = [.. spec.Nodes];
-        while (_pending.Find(n => Ready(spec, n)) is { } node)
+        // why: a ready node on a branch nobody took is recorded 'skipped' before a live one runs, so a dead branch shows skipped while its sibling parks (a wait or ask_owner can hold the walk for hours).
+        // The patch keeps a run started on the old walk order replaying it: its history has the live node's activity next.
+        var deadFirst = Workflow.Patched("graph-walk-dead-first");
+        while (((deadFirst ? _pending.Find(n => Ready(spec, n) && !Live(spec, n)) : null) ?? _pending.Find(n => Ready(spec, n))) is { } node)
         {
             _ = _pending.Remove(node);
             if (!Live(spec, node))
@@ -86,7 +89,7 @@ internal sealed partial class GraphWorkflow
     {
         _current = node;
         await Record(Row(node, NodeRunStatus.Running), _write).ConfigureAwait(true);
-        var outcome = await RunBlock(spec, node).ConfigureAwait(true);
+        var outcome = await Park(node, await RunBlock(spec, node).ConfigureAwait(true)).ConfigureAwait(true);   // a wait or ask_owner node sleeps here, still running
 
         // why: once the block has answered, the node's result is decided; clearing _current first and writing detached means a cancel now cannot overwrite 'succeeded' with 'cancelled'
         _current = null;
@@ -102,9 +105,16 @@ internal sealed partial class GraphWorkflow
             return new GraphBlockOutcome(NodeRunStatus.Failed, Input: null, Output: null, [], $"{refused.Error.Code}: {refused.Error.Message}");
         }
 
+        if (string.Equals(node.Type, LoopBody.ForEachType, StringComparison.Ordinal) && LoopBody.Find(spec, node.Id) is { IsSuccess: true } loop && LoopBody.AgentRefusal(loop.Value) is { } agentInLoop)
+        {
+            return new GraphBlockOutcome(NodeRunStatus.Failed, Input: null, Output: null, [], $"{LoopBody.AgentInLoopCode}: {agentInLoop}");
+        }
+
         try
         {
-            return await Workflow.ExecuteActivityAsync((GraphBlockActivities a) => a.RunBlockAsync(_run, node.Id, 0), _block).ConfigureAwait(true);
+            return string.Equals(node.Type, "run_agent", StringComparison.Ordinal)
+                ? await RunAgent(node).ConfigureAwait(true)   // why: a session outlives a plain activity and a person may take it over, so the agent loop runs in the workflow (PR 7)
+                : await Workflow.ExecuteActivityAsync((GraphBlockActivities a) => a.RunBlockAsync(_run, node.Id, 0), _block).ConfigureAwait(true);
         }
         catch (ActivityFailureException e) when (!TemporalException.IsCanceledException(e))
         {
@@ -121,6 +131,16 @@ internal sealed partial class GraphWorkflow
     {
         // why: the walk has decided how the run ends, so the end is written detached; a cancel that arrives now finds the run already final (the store refuses a second end)
         await SkipRest(_detached).ConfigureAwait(true);
+        if (status == WorkflowRunStatus.Succeeded && Workflow.Patched("graph-commit-run-end"))
+        {
+            // why: a block remembers what it passed on (only_new) only when the whole run worked; a failed commit fails the run, and the items come back on the next one
+            if (await Workflow.ExecuteActivityAsync((GraphBlockActivities a) => a.CommitRunAsync(_run), _detached).ConfigureAwait(true) is { } why)
+            {
+                status = WorkflowRunStatus.Failed;
+                error = why;
+            }
+        }
+
         await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.FinishAsync(new GraphFinish(_run, status, error)), _detached).ConfigureAwait(true);
         return new GraphWorkflowResult(status);
     }

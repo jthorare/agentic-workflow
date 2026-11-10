@@ -191,6 +191,7 @@ internal sealed partial class GraphCanvas : Control
             Key.Left or Key.Up => graph.SelectPrevious(),
             Key.Tab => e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? graph.SelectPrevious() : graph.SelectNext(),   // at either end Tab is not handled, so focus moves on
             Key.Enter => graph.ActivateSelected(),
+            Key.Delete => graph.RequestRemoveSelected(),   // a request only: the edit bar asks before anything is sent
             _ => false,
         };
 #pragma warning restore IDE0072
@@ -238,6 +239,11 @@ internal sealed partial class GraphCanvas : Control
     {
         if (ReferenceEquals(sender, _watched))
         {
+            if (string.Equals(e.PropertyName, nameof(WorkflowGraphViewModel.SelectedId), StringComparison.Ordinal))
+            {
+                (ControlAutomationPeer.FromElement(this) as GraphCanvasAutomationPeer)?.SelectionChanged(_watched?.SelectedId);
+            }
+
             InvalidateVisual();
         }
     }

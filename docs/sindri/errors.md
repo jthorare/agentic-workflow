@@ -108,6 +108,13 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-MEM-005` | The match level is not loose, balanced or strict. | use one of the three |
 | `SND-MEM-006` | The memory name is not lowercase letters, digits and `-`. | use 1 to 48 of them, starting with a letter or digit |
 | `SND-MEM-007` | A fact's expiry is not in the future. | give a later `--expires-at`, or none |
+| `SND-RES-001` | A disk holds more than its size limit (the message names the bytes used and the limit). | delete files from the disk, or raise its `size` |
+| `SND-RES-002` | Two databases, disks or connections of one owner share a name. | rename one |
+| `SND-RES-003` | A purge was refused: the owner is still active or has a run going. | archive the owner, or wait for the run to end |
+| `SND-RES-004` | A resource path leaves its owner's folder, or a symlink sits where a resource folder or file goes. | remove the symlink or the stray path, then run again |
+| `SND-RES-005` | A sandbox size is above the box's cap. | lower the `sandbox` memory or wall in the declaration to the cap the message names |
+| `SND-RES-006` | A resource owner, name or size is malformed, or a path exists as the wrong type (a folder where a database goes). | fix the declaration, or move the stray path away |
+| `SND-RES-007` | A disk holds too many files and folders to measure (over 100,000). | delete files you don't need from the disk |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml. |
 | `SND-TRACKER-002` | The tracker's source holds no items to read (for plan-file: no plan file matches tracker.include). | Fix tracker.include in profile.yaml (or restore the plan files). |
 | `SND-TRACKER-003` | A plan file is too big to read (over 2 MiB). | Split the plan file into smaller plans. |
@@ -149,13 +156,22 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-008` | No such workflow |
 | `SND-GRAPH-009` | Another workflow already has that slug |
 | `SND-GRAPH-010` | A workflow with that id already exists |
-| `SND-GRAPH-011` | This workflow is archived; it can't be activated |
+| `SND-GRAPH-011` | This workflow is archived; it can't be activated, edited or paused. Its slug stays reserved, so a copy needs another slug |
+| `SND-GRAPH-012` | A graph edit could not be applied (the message names the op's number and kind) |
 | `SND-GRAPH-100` | A run with that id already exists |
 | `SND-GRAPH-101` | No such workflow run |
 | `SND-GRAPH-102` | A block could not finish |
 | `SND-GRAPH-103` | The model's answer does not fit the prompt's output schema |
-| `SND-GRAPH-104` | `sindri workflow takeover` and `handback` are refused until graph run controls land |
+| `SND-GRAPH-104` | Run controls that come back with the graph engine (`sindri workflow takeover` and `handback` of an instance); a `run_agent` node uses `sindri wf takeover` and `wf handback` |
 | `SND-GRAPH-105` | This workflow is not active; activate a revision to run it |
 | `SND-GRAPH-106` | A manual run's payload must be a JSON object |
 | `SND-GRAPH-107` | This run already ended |
 | `SND-GRAPH-108` | A referenced node output was cut at 64 KB |
+| `SND-GRAPH-109` | A run of this workflow can't start the workflow again |
+| `SND-GRAPH-110` | The run is not waiting on an agent at that node, so there is nothing to take over |
+| `SND-GRAPH-111` | That agent node is not taken over, so there is nothing to hand back |
+| `SND-GRAPH-120` | A workflow call is nested too deep: the call would be past `workflow.callDepth` (default 3) |
+| `SND-GRAPH-121` | A run can't start its own workflow, or the workflow that called it |
+| `SND-GRAPH-122` | An `http` node's request was refused before it was sent: host not on `workflow.http.hosts`, an address that is this machine, plain http, or a credential header |
+| `SND-GRAPH-123` | An `http` node's request got no acceptable answer: status outside `expect`, a redirect loop, an answer over 1 MB, or a network failure |
+| `SND-GRAPH-130` | No question waits at that node |

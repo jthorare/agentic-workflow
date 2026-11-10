@@ -1,8 +1,6 @@
 # Hand-written todo-note goldens (todo spec Ph3b, first commit)
 
-Written before the routes exist, so the ui lane can build Ph4 against them. Ph3b regenerates them with
-`AW_GOLDEN_UPDATE=1` once the routes ship and takes the folder out of `ApiGoldenTests._pendingGoldenFolders`; any field
-that changes on the way is called out in that PR.
+Written before the routes existed; the server now serves them (#2418), so these files are regenerated with `AW_GOLDEN_UPDATE=1` and any field that changed on the way is called out in that PR.
 
 - `note.json`: `GET /sindri/todos/note` while syncing, one open conflict, one pick in its Undo window, one line that
   can't sync.

@@ -7,7 +7,7 @@ using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Features.LaneRecycle;
 
-/// <summary>The refusals before a recycle, and whether routing.lanes sends the lane to another agent. The refusals: an unknown lane, a lane that isn't Claude Code, a lane with no session, and a digest that is missing, empty or old.</summary>
+/// <summary>The refusals before a recycle, and whether routing.lanes sends the lane to another agent. The refusals: an unknown lane, the meta lane without --detach, a lane that isn't Claude Code, a lane with no session, and a digest that is missing, empty or old.</summary>
 /// <param name="files">The lane records.</param>
 /// <param name="sessions">The session the lane's Claude runs now.</param>
 /// <param name="digests">The digest files.</param>
@@ -19,11 +19,13 @@ internal sealed class RecycleGuard(ILaneFiles files, ILaneSessions sessions, IDi
 
     internal async ValueTask<Result<RecyclePlan>> Check(TeamConfig team, LaneRecycleRequest request, CancellationToken cancellationToken)
     {
-        var name = team.Lanes.FirstOrDefault(l => string.Equals(l, request.Lane, StringComparison.OrdinalIgnoreCase) && !string.Equals(l, team.MetaLane, StringComparison.OrdinalIgnoreCase));
-        if (name is null)
+        var named = LaneNamed(team, request);
+        if (named.IsError)
         {
-            return MetaErrors.UnknownLane.With($"'{request.Lane}' is not a lane of team {team.Team}");
+            return named.Error;
         }
+
+        var name = named.Value;
 
         var record = await files.Record(name, cancellationToken).ConfigureAwait(false);
         if (record.IsError)
@@ -52,6 +54,20 @@ internal sealed class RecycleGuard(ILaneFiles files, ILaneSessions sessions, IDi
         var before = await context.ReadLane(team.Team, name, team.Context.RecycleAt, cancellationToken).ConfigureAwait(false);
         var (to, model) = Routed(team, name, record.Value);
         return new RecyclePlan(team.Team, name, session, before.IsSuccess ? before.Value.Tokens : null, Path.GetFullPath(request.Digest), to, model);
+    }
+
+    // The lane as the team config spells it. The meta runs this command from inside its own turn: a direct /clear would cut that turn off, so it recycles only through the detached waiter.
+    private static Result<string> LaneNamed(TeamConfig team, LaneRecycleRequest request)
+    {
+        var name = team.Lanes.FirstOrDefault(l => string.Equals(l, request.Lane, StringComparison.OrdinalIgnoreCase));
+        if (name is null)
+        {
+            return MetaErrors.UnknownLane.With($"'{request.Lane}' is not a lane of team {team.Team}");
+        }
+
+        return string.Equals(name, team.MetaLane, StringComparison.OrdinalIgnoreCase) && !request.Detach && !request.WaitIdle
+            ? MetaErrors.RecycleRefused.With($"the meta lane recycles only with --detach: a waiter then clears it once its turn has ended (lane {name})")
+            : name;
     }
 
     // The agent routing.lanes assigns when it differs from the one the lane runs (the lane is Claude Code here), else none.
