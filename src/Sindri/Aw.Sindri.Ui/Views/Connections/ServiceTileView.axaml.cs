@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Threading;
 using Avalonia.Interactivity;
 using Aw.Sindri.Ui.ViewModels.Connections;
 
@@ -22,6 +24,38 @@ internal sealed partial class ServiceTileView : UserControl
     private void OnCancel(object? sender, RoutedEventArgs e) => Tile?.Cancel();
 
     private void OnSignIn(object? sender, RoutedEventArgs e) => _ = Tile?.SignInAgain(CancellationToken.None);
+
+    // The field opens holding the current label, focused and selected, so typing replaces it.
+    private void OnRename(object? sender, RoutedEventArgs e)
+    {
+        Tile?.StartRename();
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                _ = ServiceTileRenameField.Focus(NavigationMethod.Tab);
+                ServiceTileRenameField.SelectAll();
+            },
+            DispatcherPriority.Loaded);
+    }
+
+    private void OnRenameSave(object? sender, RoutedEventArgs e) => _ = Tile?.Rename(CancellationToken.None);
+
+    private void OnRenameCancel(object? sender, RoutedEventArgs e) => Tile?.CancelRename();
+
+    // Enter saves and Escape cancels, as in every inline field of the app.
+    private void OnRenameKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            _ = Tile?.Rename(CancellationToken.None);
+        }
+        else if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            Tile?.CancelRename();
+        }
+    }
 
     private void OnDisconnect(object? sender, RoutedEventArgs e) => _ = Tile?.Disconnect(CancellationToken.None);
 }

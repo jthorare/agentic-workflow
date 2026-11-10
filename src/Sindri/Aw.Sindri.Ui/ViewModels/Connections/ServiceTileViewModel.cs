@@ -173,7 +173,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     internal Task Primary(CancellationToken cancellationToken) => NeedsAttention ? SignInAgain(cancellationToken) : Connect(cancellationToken);
 
     // Everything the chip, the primary button and the menu read from the connection and the input.
-    private void RaiseState() => Raise(nameof(StatusChip), nameof(ReasonText), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(HasHelpLink));
+    private void RaiseState() => Raise(nameof(StatusChip), nameof(ReasonText), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(CanRename), nameof(HasHelpLink));
 
     /// <summary>The connection this tile shows, or null: the page sets it on every read.</summary>
     /// <param name="row">The matching row.</param>
