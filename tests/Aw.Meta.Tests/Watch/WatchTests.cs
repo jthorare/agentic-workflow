@@ -105,6 +105,24 @@ public sealed class WatchTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_watch_that_starts_records_the_main_it_starts_at_once()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], mains: ["aaaaaaa1111111"]);
+
+        _ = await Watch(TimeSpan.FromSeconds(120));
+        var first = (await _world.Board.Read(CancellationToken.None)).Value;
+        _ = await Watch(TimeSpan.FromSeconds(120));
+        var second = (await _world.Board.Read(CancellationToken.None)).Value;
+
+        Assert.NotNull(first);
+        Assert.Equal(("aaaaaaa1111111", 1), (first.MainSha, first.Version));
+        Assert.Empty(first.MergedPrs);
+        Assert.NotNull(second);
+        Assert.Equal(("aaaaaaa1111111", 1), (second.MainSha, second.Version));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_watch_seeing_main_move_to_a_sha_merge_run_recorded_shows_the_lane_one_line()
     {
         await _world.Ready();
