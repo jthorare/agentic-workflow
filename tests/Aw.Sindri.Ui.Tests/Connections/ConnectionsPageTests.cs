@@ -110,7 +110,7 @@ public sealed class ConnectionsPageTests
         await _f.Drive(row.SignIn(Token), "notes:mcp");
 
         Assert.Equal([_f.Server.ConsentUrl], _f.Launcher.Opened, StringComparer.Ordinal);
-        Assert.Equal(("✓ Connected", Labels.ConnectionSignedIn), (row.ChipText, row.NoteText));
+        Assert.Equal(("Connected", Labels.ConnectionSignedIn), (row.ChipText, row.NoteText));
         Assert.Contains("signin notes:mcp", _f.Server.ConnectionCallLog, StringComparer.Ordinal);
     }
 
@@ -135,7 +135,7 @@ public sealed class ConnectionsPageTests
         await _f.Drive(page.Rows[2].SignIn(Token));
 
         Assert.Equal(Labels.ConnectionSignInTimedOut, page.Rows[2].NoteText);
-        Assert.Equal("! Needs sign-in", page.Rows[2].ChipText);
+        Assert.Equal("Needs sign-in", page.Rows[2].ChipText);
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public sealed class ConnectionsPageTests
 
         Assert.True(_f.Clock.GetUtcNow() - before <= ConnectionActions.PollEvery * 3, "the poll should stop on the failure, not wait out the 5 minutes");
         Assert.Contains("SND-CONN-009", row.NoteText, StringComparison.Ordinal);
-        Assert.Equal("✓ Connected", row.ChipText);   // the row still works on its old tokens
+        Assert.Equal("Connected", row.ChipText);   // the row still works on its old tokens
     }
 
     [Fact]
@@ -208,7 +208,7 @@ public sealed class ConnectionsPageTests
 
         await _f.Drive(run, "linear:work", afterReads: 0);
 
-        Assert.Equal((Labels.ConnectionSignedIn, "✓ Connected"), (row.NoteText, row.ChipText));
+        Assert.Equal((Labels.ConnectionSignedIn, "Connected"), (row.NoteText, row.ChipText));
     }
 
     [Fact]

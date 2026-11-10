@@ -38,7 +38,7 @@ public sealed class ConnectionsFramesTests : FrameHost
 
         Assert.Equal(shell.Connections.Head, Named<TextBlock>(window, "ConnectionsHead").Text);
         Assert.True(Visible(window, "ConnectionRows"));
-        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => string.Equals(t.Text, "! Needs sign-in", StringComparison.Ordinal));
+        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => string.Equals(t.Text, "Needs sign-in", StringComparison.Ordinal));
         Assert.Contains(window.GetVisualDescendants().OfType<Button>(), t => string.Equals(t.Name, "ConnSignIn", StringComparison.Ordinal) && t.IsEffectivelyVisible);
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"list-{width}"), Prefix);
     });
