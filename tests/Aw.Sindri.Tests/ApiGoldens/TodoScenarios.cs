@@ -172,7 +172,7 @@ internal static class TodoScenarios
         return (await host.Http.Ask(Post("/sindri/todos/note/hold/undo", "{}", human))).Body;
     }
 
-    // GET /sindri/todos/note: "note" has one open conflict, one conflict picked (the Obsidian side) inside its Undo window, a last sync and the sample note's link line that can't sync; "hold" has an open hold of four changes over 20 open todos;
+    // GET /sindri/todos/note: "note" has one open conflict, one conflict picked (Sindri's side) inside its Undo window, a last sync and the sample note's link line that can't sync; "hold" has an open hold of four changes over 20 open todos;
     // "conflict" is the todo read of a both-places conflict (the TodoItem shape, same as the id route's golden)
     private static async Task<string> NoteState(GoldenHost host, (string Name, string Value)[] human, string scenario, CancellationToken ct)
     {
@@ -194,7 +194,13 @@ internal static class TodoScenarios
         var other = new TodoSide("reply to Sam", Due: null, Links: [], Done: false, Removed: false);
         await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(picked), other, other with { Text = "reply to Sam about the offsite" }, Hash), $"todo.conflicted:{picked}:{Hash}", ct);
         await ViewScenarios.CatchUp(host, ct);
-        _ = await host.Http.Ask(Post($"/sindri/todos/{picked}/keep", Request("todos-keep", "obsidian"), human));
+        // why: Sindri's side, because this host names a real note (todo.obsidian) and a 'keep obsidian' re-reads it: the sample note has no line for this todo, so that keep is SND-TODO-409
+        var kept = await host.Http.Ask(Post($"/sindri/todos/{picked}/keep", Request("todos-keep", "sindri"), human));
+        if (kept.Status != System.Net.HttpStatusCode.OK)
+        {
+            throw new InvalidOperationException($"the note golden's keep was refused: {kept.Body}");
+        }
+
         // why: the last sync is read from the ledger (the sync's check time is in memory and stays null on this host); appended last so the ids above do not move
         await ViewScenarios.Append(host, EventTypes.TodoNoteSynced, new TodoNoteSynced("notes", "Todo.md", Hash, Hash, Read: 4, Wrote: 0, "service:todo-note"), "todo.note.synced:golden", ct);
         await ViewScenarios.CatchUp(host, ct);
@@ -213,7 +219,8 @@ internal static class TodoScenarios
         for (var i = 5; i <= 21; i++)
         {
             var n = i.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            _ = await Add(host, human, $$"""{"text":"filler todo {{n}}","clientId":"c-{{n}}"}""", string.Empty, ct);
+            // why: as the human, because an agent session may add 20 todos an hour (TodoAdds.MaxPerHour) and this scenario adds 21; the session runs of the goldens use the same scenario
+            _ = await Add(host, Human(host.Token.Value), $$"""{"text":"filler todo {{n}}","clientId":"c-{{n}}"}""", string.Empty, ct);
         }
 
         var changes = new[]

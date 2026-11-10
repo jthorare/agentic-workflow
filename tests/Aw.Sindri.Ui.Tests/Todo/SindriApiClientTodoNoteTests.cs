@@ -38,12 +38,13 @@ public sealed class SindriApiClientTodoNoteTests
         Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
         var note = read.Value;
         Assert.Equal(("syncing", "notes", "Todo.md", null), (note.State, note.Vault, note.Note, note.LastError));
-        Assert.Equal(DateTimeOffset.Parse("2026-01-01T09:59:30Z", CultureInfo.InvariantCulture), note.LastCheckAt);
+        // why: the last check time lives in the sync's memory, and the golden host runs no sync, so the generated golden has none
+        Assert.Null(note.LastCheckAt);
         Assert.Equal(DateTimeOffset.Parse("2026-01-01T00:00:00Z", CultureInfo.InvariantCulture), note.LastSyncAt);
         Assert.Equal(["td_00000000000000000000000008"], note.Conflicts);
         Assert.Null(note.Hold);
         var pick = Assert.Single(note.Picks);
-        Assert.Equal(("conflict", "td_0000000000000000000000000f", "obsidian", "human:cli"), (pick.Kind, pick.Id, pick.Kept, pick.By));
+        Assert.Equal(("conflict", "td_0000000000000000000000000f", "sindri", "human:cli"), (pick.Kind, pick.Id, pick.Kept, pick.By));
         Assert.Equal(DateTimeOffset.Parse("2026-01-01T00:00:10Z", CultureInfo.InvariantCulture), pick.UndoUntil);
         var line = Assert.Single(note.CantSync);
         Assert.Equal((4, "it has a markdown link"), (line.Line, line.Reason));
@@ -60,7 +61,7 @@ public sealed class SindriApiClientTodoNoteTests
         var hold = read.Value.Hold!;
         Assert.Equal(("sha256:3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a", 20, DateTimeOffset.Parse("2026-01-01T00:00:00Z", CultureInfo.InvariantCulture)), (hold.NoteHash, hold.OpenInBase, hold.HeldAt));
         Assert.Equal(["removed", "removed", "edited", "reopened"], hold.Changes.Select(c => c.Kind), StringComparer.Ordinal);
-        Assert.Equal(("td_00000000000000000000000016", "call the dentist", "- [ ] call the dentist about the crown 📅 2026-01-05 ^td-00000000000000000000000016"), (hold.Changes[2].Id, hold.Changes[2].Text, hold.Changes[2].NoteLine));
+        Assert.Equal(("td_0000000000000000000000000p", "call the dentist", "- [ ] call the dentist about the crown 📅 2026-01-05 ^td-0000000000000000000000000p"), (hold.Changes[2].Id, hold.Changes[2].Text, hold.Changes[2].NoteLine));
         Assert.Null(hold.Changes[0].NoteLine);
         Assert.Empty(read.Value.Conflicts);
         Assert.Empty(read.Value.Picks);
