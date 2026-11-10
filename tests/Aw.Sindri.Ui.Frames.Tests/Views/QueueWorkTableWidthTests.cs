@@ -15,10 +15,10 @@ public sealed partial class QueueWorkTableWidthTests : FrameHost
 {
     // The fixture queue with every row's repo taken out: no golden has rows without a repo.
     private static RouteAnswer NoRepos() =>
-        new(System.Net.HttpStatusCode.OK, RepoValue().Replace(GoldenFiles.SpecShaped("queue", "fixture"), "\"repo\": null"));
+        new(System.Net.HttpStatusCode.OK, RepoValue.Replace(GoldenFiles.SpecShaped("queue", "fixture"), "\"repo\": null"));
 
     [GeneratedRegex("\"repo\": *\"[^\"]*\"", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex RepoValue();
+    private static partial Regex RepoValue { get; }
 
     private async Task<(Window Window, Grid Header)> Table(double width)
     {
