@@ -259,6 +259,7 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
             _prefilling = false;
         }
 
+        ShowConnect(list.Connect);
         EmptyLines = list.Empty is { } empty ? [empty.Text, empty.Hint, empty.Teams] : null;
         Patch.To(Groups, shown);
     }
