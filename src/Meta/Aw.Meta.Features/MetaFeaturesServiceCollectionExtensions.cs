@@ -3,6 +3,7 @@ using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Worktrees;
+using Aw.Meta.Features.BoardLine;
 using Aw.Meta.Features.CheckMerge;
 using Aw.Meta.Features.GateRerun;
 using Aw.Meta.Features.GateRun;
@@ -109,6 +110,8 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<LaneRecycleService>()
         .AddScoped<IValidator<LaneRecycleRequest>, LaneRecycleValidator>()
         .Validated<LaneRecycleService, LaneRecycleRequest, LaneRecycleResponse>()
+        .AddScoped<BoardLineService>()
+        .Plain<BoardLineService, BoardLineRequest, BoardLineResponse>()
         .AddScoped<LaneInboxService>()
         .Plain<LaneInboxService, LaneInboxRequest, LaneInboxResponse>()
         .AddScoped<LaneStopCheckService>()

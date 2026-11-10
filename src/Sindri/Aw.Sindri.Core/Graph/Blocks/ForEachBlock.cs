@@ -18,6 +18,12 @@ public sealed class ForEachBlock(IForEachLimitSource limits) : IGraphBlock
     public string Type => "for_each";
 
     /// <inheritdoc />
+    public string Title => "For each";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Logic;
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />

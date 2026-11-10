@@ -24,4 +24,23 @@ internal sealed class SqliteKeyValueStore(MetaDatabase database) : IKeyValueStor
                 c => c.Bind("$key", key).Bind("$value", value),
                 "kv " + key),
             cancellationToken);
+
+    public ValueTask<Result<bool>> SetIf(string key, string? expected, string value, CancellationToken cancellationToken) =>
+        database.Write(
+            async work =>
+            {
+                // One statement. A null expected is an insert that does nothing when the key exists; otherwise an update that needs the stored value to still match.
+                var statement = expected is null
+                    ? new SqlStatement(
+                        "INSERT INTO kv (key, value) VALUES ($key, $value) ON CONFLICT(key) DO NOTHING",
+                        c => c.Bind("$key", key).Bind("$value", value),
+                        "kv " + key)
+                    : new SqlStatement(
+                        "UPDATE kv SET value = $value WHERE key = $key AND value = $expected",
+                        c => c.Bind("$key", key).Bind("$value", value).Bind("$expected", expected),
+                        "kv " + key);
+                var changed = await SqliteQueries.Execute(work, statement, cancellationToken).ConfigureAwait(false);
+                return changed.IsError ? changed.Error : Results.Success(changed.Value > 0);
+            },
+            cancellationToken);
 }

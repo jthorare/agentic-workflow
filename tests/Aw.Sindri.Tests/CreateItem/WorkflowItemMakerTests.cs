@@ -46,6 +46,7 @@ public sealed class WorkflowItemMakerTests
         var recorded = Assert.Single(_h.Store.Events);
         Assert.Equal(EventTypes.ItemCreated, recorded.Envelope.Type);
         Assert.Equal(made.Value, recorded.Item);
+        Assert.Equal("service:workflow", recorded.Envelope.Actor);
         Assert.Equal(made.Value, (await _runs.Get(_run, Token)).Value.ItemId?.Value);   // the run is linked to its item
         var payload = _h.Events.Payload<ItemCreated>(recorded).Value;
         Assert.Equal(("Fix login", "details", RepoName.From("web"), RecordKey.From("linear:issue/abc-1")), (payload.Title, payload.Body, payload.Repo, payload.Link));

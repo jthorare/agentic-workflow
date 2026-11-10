@@ -70,13 +70,16 @@
         <TextBlock x:Name="RunsTitle" Classes="body-strong" Text="{Binding Runs.Title}" AutomationProperties.Name="{Binding Runs.Title}" />
         <TextBlock x:Name="RunsHead" Classes="caption subtle" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
         <Button x:Name="RunNow" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
+        <Button x:Name="WorkflowEdit" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
       </StackPanel>
       <Border x:Name="RunsNoticeName" IsVisible="{Binding Runs.HasNotice}" AutomationProperties.Name="{Binding Runs.NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding Runs.NoticeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
+      <wv:WorkflowEditorSheet x:Name="WorkflowEditor" IsVisible="{Binding IsEditing}" />
       <TextBlock x:Name="RunsDetail" Classes="caption subtle" Text="{Binding Runs.DetailText}" TextWrapping="Wrap" />
       <!-- The graph at the positions Sindri served (the app lays nothing out); a node with no position is named, not drawn. -->
       <StackPanel x:Name="RunsGraph" Spacing="4" IsVisible="{Binding Runs.Graph, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <wv:GraphEditBar x:Name="RunsEdit" DataContext="{Binding GraphEdit}" />
         <Border Classes="panel" Height="320">
           <wv:GraphCanvas x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" />
         </Border>
@@ -181,6 +184,8 @@
                             <TextBlock Classes="body-strong" Text="{Binding TitleText}" />
                             <TextBlock Classes="body-strong mono wf-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}" Text="{Binding ChipText}" />
                           </StackPanel>
+                          <Button HorizontalAlignment="Left" Content="{Binding TakeOverText}" Click="OnTakeOverNode" IsVisible="{Binding CanTakeOver}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding TakeOverText}" />
+                          <Button HorizontalAlignment="Left" Content="{Binding HandBackText}" Click="OnHandBackNode" IsVisible="{Binding CanHandBack}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding HandBackText}" />
                           <TextBlock Classes="caption" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
                           <TextBlock Classes="caption subtle" Text="{Binding TruncatedText}" IsVisible="{Binding IsTruncated}" TextWrapping="Wrap" />
                           <StackPanel Spacing="2" IsVisible="{Binding HasInput}">

@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-GRAPH-105",
+  "status": 409,
+  "detail": "'morning-check' has no active revision; activate one first",
+  "traceId": "<trace>"
+}

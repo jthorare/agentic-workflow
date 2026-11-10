@@ -18,7 +18,7 @@ public sealed class UsageTests
     [InlineData("takeover")]
     [InlineData("handback")]
     public void Help_lists_the_short_form_of_takeover_and_handback(string verb) =>
-        Assert.Single(Lines(), l => l.StartsWith($"sindri {verb} <item-or-address>", StringComparison.Ordinal));
+        Assert.Single(Lines(), l => l.StartsWith($"sindri {verb} <run> <node> [--item <index>]", StringComparison.Ordinal));
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("sindri repo onboard ", "never edits the profile")]

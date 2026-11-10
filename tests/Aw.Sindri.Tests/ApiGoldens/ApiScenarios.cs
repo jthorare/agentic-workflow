@@ -51,6 +51,7 @@ internal static class ApiScenarios
         ["WorkflowRuns"] = WorkflowRunScenarios.All,
         ["WorkflowReads"] = WorkflowReadScenarios.All,
         ["Resources"] = ResourceScenarios.All,
+        ["WorkflowWrites"] = WorkflowWriteScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -81,7 +82,9 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        IsSkillOrLinear(slug, scenario)
+        WorkflowRunScenarios.NeedsAgentControl(slug)
+            ? await WorkflowRunScenarios.Start(ct)
+            : IsSkillOrLinear(slug, scenario)
             ? await StartSkillOrLinear(slug, scenario, ct)
             : IsReviews(slug, scenario)
             ? await StartReviews(slug, scenario, ct)
@@ -185,6 +188,7 @@ internal static class ApiScenarios
         WorkflowRunScenarios.Handles(slug, scenario) ? () => WorkflowRunScenarios.Body(host, slug, scenario, ct)
         : WorkflowReadScenarios.Handles(slug, scenario) ? () => WorkflowReadScenarios.Body(host, slug, scenario, ct)
         : ResourceScenarios.Handles(slug, scenario) ? () => ResourceScenarios.Body(host, slug, scenario, ct)
+        : WorkflowWriteScenarios.Handles(slug, scenario) ? () => WorkflowWriteScenarios.Body(host, slug, scenario, ct)
         : Delegated(host, slug, scenario, ct);
 
     /// <summary>The scenario's body when one of the scenario classes owns it, else null.</summary>

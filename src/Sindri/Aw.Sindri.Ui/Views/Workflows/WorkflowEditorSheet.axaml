@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
+             x:Class="Aw.Sindri.Ui.Views.Workflows.WorkflowEditorSheet"
+             x:DataType="wf:WorkflowsPageViewModel">
+  <!-- The workflow editor (#2258 PR 17 part 3a): the settings of the node selected on the graph, one input per field type, Save, and the reload prompt when the workflow changed elsewhere.
+       Every named line is a Border the screen reader reads as one text (a TextBlock's peer ignores a Name). -->
+  <Border x:Name="EditorSheet" Classes="panel" Padding="16">
+    <StackPanel Spacing="{StaticResource Space.MD}">
+      <Border x:Name="EditorHeadingName" AutomationProperties.Name="{Binding EditorHeading}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body-strong" Text="{Binding EditorHeading}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Border x:Name="EditorNodeName" IsVisible="{Binding EditorNodeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding EditorNodeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption subtle" Text="{Binding EditorNodeText}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Border x:Name="EditorNoFieldsName" IsVisible="{Binding HasNoFields}" AutomationProperties.Name="{Binding NoFieldsText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption quiet" Text="{Binding NoFieldsText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+
+      <!-- Held back until Reload: nothing is retried. -->
+      <StackPanel x:Name="EditorReload" Spacing="6" IsVisible="{Binding Editor.NeedsReload}">
+        <Border x:Name="EditorReloadPrompt" AutomationProperties.Name="{Binding Editor.ReloadPromptText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body" Text="{Binding Editor.ReloadPromptText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Button x:Name="EditorReloadButton" Content="{Binding Editor.ReloadText}" Click="OnReload" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Editor.ReloadText}" />
+      </StackPanel>
+
+      <ItemsControl x:Name="EditorFields" ItemsSource="{Binding Editor.Fields}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="wf:ConfigFieldViewModel">
+            <StackPanel Spacing="2" Margin="0,0,0,8">
+              <TextBlock Classes="caption subtle" Text="{Binding Caption}" AutomationProperties.AccessibilityView="Raw" />
+              <TextBox Name="EditorFieldText" IsVisible="{Binding IsSingleLine}" Text="{Binding Text, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
+              <CheckBox Name="EditorFieldCheck" IsVisible="{Binding IsBoolean}" IsChecked="{Binding IsOn, Mode=TwoWay}" Content="{Binding Name}" AutomationProperties.Name="{Binding Caption}" />
+              <TextBox Name="EditorFieldLines" IsVisible="{Binding IsMultiline}" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Caption}" />
+              <Border Name="EditorFieldError" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                <TextBlock Classes="caption" Text="{Binding ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Border x:Name="EditorFailure" IsVisible="{Binding Editor.FailureText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Editor.FailureText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption" Text="{Binding Editor.FailureText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button x:Name="EditorSave" Content="{Binding SaveText}" Click="OnSave" IsEnabled="{Binding CanSave}" AutomationProperties.Name="{Binding SaveText}" />
+        <Button x:Name="EditorClose" Content="{Binding CloseEditorText}" Click="OnClose" AutomationProperties.Name="{Binding CloseEditorText}" />
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

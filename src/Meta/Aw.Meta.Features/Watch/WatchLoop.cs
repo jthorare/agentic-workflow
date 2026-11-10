@@ -15,6 +15,12 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="usage">Looks at the lanes and the meta for usage limits and returns the lines to print (USAGE LIMITED / USAGE OK).</param>
 internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string, ValueTask> emit, WatchResources reported, Func<WatchResources, ValueTask> remember, ContextReported context, Func<ValueTask<IReadOnlyList<string>>> usage)
 {
+    /// <summary>Called with main's new sha and the pull requests that went MERGED in the same poll, when a poll reports "MAIN moved".</summary>
+    internal Func<string, IReadOnlyList<int>, ValueTask> MainMoved { get; init; } = static (_, _) => ValueTask.CompletedTask;
+
+    /// <summary>Records main as the board's first move when the board holds none yet (the watch's start).</summary>
+    internal Func<string, ValueTask> SeedMain { get; init; } = static _ => ValueTask.CompletedTask;
+
     private WatchState _state = WatchState.Continuing(reported);
     private WatchResources _kept = reported;
     private int? _inbox;
@@ -47,13 +53,10 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         if (!_state.Initialized)
         {
             await Say(Started(polled.Value.Snapshot)).ConfigureAwait(false);
+            await SeedBoard(polled.Value.Snapshot).ConfigureAwait(false);
         }
 
-        foreach (var line in step.Lines)
-        {
-            await Say(line).ConfigureAwait(false);
-        }
-
+        await SayStep(step, polled.Value.Snapshot).ConfigureAwait(false);
         foreach (var line in polled.Value.Worktrees)
         {
             await Say(line).ConfigureAwait(false);
@@ -110,6 +113,41 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         {
             _kept = now;
             await remember(now).ConfigureAwait(false);
+        }
+    }
+
+    private async ValueTask SayStep(WatchStep step, WatchSnapshot snapshot)
+    {
+        foreach (var line in step.Lines)
+        {
+            await Say(line).ConfigureAwait(false);
+        }
+
+        await RecordMain(step, snapshot).ConfigureAwait(false);
+    }
+
+    // The board: a poll that reports "MAIN moved" records main's sha and the pull requests that went MERGED since the last poll.
+    private async ValueTask RecordMain(WatchStep step, WatchSnapshot snapshot)
+    {
+        if (!step.Lines.Any(l => l.StartsWith("MAIN moved", StringComparison.Ordinal)))
+        {
+            return;
+        }
+
+        var merged = snapshot.Prs
+            .Where(pr => pr.State == PrState.Merged && _state.Prs.TryGetValue(pr.Number, out var known) && known.State != PrState.Merged)
+            .Select(pr => pr.Number)
+            .Order()
+            .ToList();
+        await MainMoved(snapshot.MainSha, merged).ConfigureAwait(false);
+    }
+
+    // A fresh install's board holds main as the watch found it. A board that already holds a move (a restart, or merge-run's newer record) is left alone.
+    private async ValueTask SeedBoard(WatchSnapshot snapshot)
+    {
+        if (snapshot.MainSha.Length > 0)
+        {
+            await SeedMain(snapshot.MainSha).ConfigureAwait(false);
         }
     }
 

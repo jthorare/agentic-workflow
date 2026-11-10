@@ -46,25 +46,20 @@ public sealed class OwnerLanesAndStatusCommandTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task The_lane_map_is_announced_and_status_shows_what_is_owed_until_it_is_sent()
+    public async Task The_lane_map_is_announced_and_owes_nothing_because_lanes_read_it_from_the_board()
     {
         await Ready();
         await File.WriteAllTextAsync(Path.Combine(_cli.SessionsDirectory, "1.json"), "{\"pid\":" + Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture) + ",\"sessionId\":\"s-api\",\"name\":\"t1-api\",\"status\":\"idle\",\"cwd\":\"/w\"}", TestContext.Current.CancellationToken);
         var refresh = await _cli.Run("lanes-refresh");
         var before = await _cli.Run("status");
         var announce = await _cli.Run("lanes", "--announce");
-        _cli.Clock.Advance(TimeSpan.FromMinutes(1));
-        _ = await _cli.RunWithInput(Hook("t1-api", announce.Out.Trim()), "outbox-record");
-        var after = await _cli.Run("status");
         var table = await _cli.Run("lanes");
 
         Assert.Contains("(changed)", refresh.Out, StringComparison.Ordinal);
         Assert.StartsWith("LANE MAP v1: api=t1-api", announce.Out, StringComparison.Ordinal);
-        Assert.Equal(1, before.Exit);
-        Assert.Contains("[BroadcastLanes]", before.Out, StringComparison.Ordinal);
+        Assert.Equal(0, before.Exit);   // a new lane map version owes nothing: lanes see it through board-line
+        Assert.DoesNotContain("[BroadcastLanes]", before.Out, StringComparison.Ordinal);
         Assert.Contains("lanes: v1 api=t1-api", before.Out, StringComparison.Ordinal);
-        Assert.Equal(0, after.Exit);   // ui has no session, so it is not in the map and the broadcast is complete once api has it
-        Assert.DoesNotContain("[BroadcastLanes]", after.Out, StringComparison.Ordinal);
         Assert.Contains("ui           (no session)", table.Out, StringComparison.Ordinal);
     }
 

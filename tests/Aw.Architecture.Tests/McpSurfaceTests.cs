@@ -13,7 +13,6 @@ using Aw.Sindri.Features.KeepTodo;
 using Aw.Sindri.Features.KeepTodoUndo;
 using Aw.Sindri.Features.MarkTodo;
 using Aw.Sindri.Features.PickTodoHold;
-using Aw.Sindri.Features.PurgeResources;
 using Aw.Sindri.Features.RemoveConnection;
 using Aw.Sindri.Features.TestConnection;
 using Aw.Sindri.Features.UndoTodoHold;
@@ -22,8 +21,8 @@ using Aw.Sindri.Features.WriteMemoryFact;
 namespace Aw.Architecture.Tests;
 
 /// <summary>
-/// The MCP surface (API spec §8, engine spec §4.2): the sindri_* and context_* tools reach queries and the one request
-/// command (and, todos excepted, the six todo writes: todo spec D2), so the endpoint can't even attempt a decision, a desk, protected or job action, and it never carries a
+/// The MCP surface (API spec §8, engine spec §4.2): the sindri_* and context_* tools reach queries, sindri_request, and the Desk + SessionOk writes listed in
+/// _allowed (the connection, memory and todo writes, and the workflow writes of issue 2258 Part 1), so the endpoint can't even attempt a decision, any other desk, protected or job action, and it never carries a
 /// challenge answer or the launch secret. Read from the Sindri host's catalog, the one table the command chain reads.
 /// </summary>
 [Trait("Lane", "integration")]
@@ -45,7 +44,7 @@ public sealed class McpSurfaceTests
         typeof(WriteMemoryFactRequest).FullName!,
         typeof(ForgetMemoryFactRequest).FullName!,
         // why: agent parity (G8, agent-first PR 14): resources_purge reaches PurgeResources, Desk class with SessionOk; the service still refuses an active owner or a run in flight (SND-RES-003)
-        typeof(PurgeResourcesRequest).FullName!,
+        "Aw.Sindri.Features.PurgeResources.PurgeResourcesRequest",   // internal to Features (no public API rows for one slice), so named by its full name
         // why: todo spec D2 (Ph1b): a todo list can't change anything outside Sindri, so agents get the six todo writes (add, change, done, reopen, remove, restore), all request class; MarkTodoRequest carries the last four
         typeof(AddTodoRequest).FullName!,
         typeof(ChangeTodoRequest).FullName!,
@@ -56,6 +55,16 @@ public sealed class McpSurfaceTests
         typeof(PickTodoHoldRequest).FullName!,
         typeof(UndoTodoHoldRequest).FullName!,
         typeof(ImportTodoNoteRequest).FullName!,
+        // why: issue 2258 Part 1 (every verb for agents): an agent session builds, edits, validates, activates, pauses, archives, runs and cancels workflows through the workflow_* tools; each write is desk class and names the launch as its actor (WriteAttributionTests); the requests are internal to Features, so they're named by full name
+        "Aw.Sindri.Features.ActivateWorkflow.ActivateWorkflowRequest",
+        "Aw.Sindri.Features.ApplyWorkflowOps.ApplyWorkflowOpsRequest",
+        "Aw.Sindri.Features.CancelWorkflowRun.CancelWorkflowRunRequest",
+        "Aw.Sindri.Features.CreateWorkflow.CreateWorkflowRequest",
+        "Aw.Sindri.Features.DeleteWorkflow.DeleteWorkflowRequest",
+        "Aw.Sindri.Features.PauseWorkflow.PauseWorkflowRequest",
+        "Aw.Sindri.Features.ReplaceWorkflow.ReplaceWorkflowRequest",
+        "Aw.Sindri.Features.RunWorkflow.RunWorkflowRequest",
+        "Aw.Sindri.Features.ValidateWorkflow.ValidateWorkflowRequest",
     };
 
     private static readonly string[] _launchSecretMarkers = ["LAUNCH_SECRET", "Launch-Secret", "LaunchSecret"];

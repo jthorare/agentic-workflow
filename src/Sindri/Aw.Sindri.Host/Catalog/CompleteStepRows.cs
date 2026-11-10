@@ -5,8 +5,8 @@ using Aw.Sindri.Features.CompleteStep;
 namespace Aw.Sindri.Host.Catalog;
 
 /// <summary>
-/// The Step completion rows (API spec §4.1): the human's desk row and a launched agent session's report, both on one route.
-/// The service refuses with SND-GRAPH-104 until the run_agent block (PR7) brings completion back.
+/// The completion rows (API spec §4.1): the human's desk row and a launched agent session's report, both on one route. The report is a 'run_agent' node's (PR 7): the route's
+/// instance is the run id and its run is the node's token (RunAgentWire).
 /// </summary>
 internal static class CompleteStepRows
 {

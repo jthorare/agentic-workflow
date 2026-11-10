@@ -266,6 +266,15 @@ public static partial class EventTypes
     /// <summary>A connection that needed a new sign-in is connected again (connections PR 10b); it clears the connection's needs-you row.</summary>
     public const string ConnectionSignedIn = "connection.signed-in";
 
+    /// <summary>A connection was removed (#2460): its secret and row are gone. The envelope's actor is who removed it. Not public.</summary>
+    public const string ConnectionRemoved = "connection.removed";
+
+    /// <summary>A sign-in (or sign-in again) was started for a connection (#2460). The envelope's actor is who signed in; the row keeps its original creator. Not public.</summary>
+    public const string ConnectionSignInRequested = "connection.sign-in-requested";
+
+    /// <summary>Facts were deleted from a memory (#2460). The envelope's actor is who forgot them. Not public.</summary>
+    public const string MemoryFactsForgotten = "memory.facts.forgotten";
+
     /// <summary>A poll of a connection for one event kind returned events (#2258, PR 11). Counts only. Not public.</summary>
     public const string ConnectionPolled = "connection.polled";
 

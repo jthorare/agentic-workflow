@@ -44,9 +44,12 @@ using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Effects;
 using Aw.Sindri.Core.Workflow.Engine.Events;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AddRepo;
+using Aw.Sindri.Features.AgentNodeControl;
 using Aw.Sindri.Features.AllowDenial;
+using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.CancelJob;
 using Aw.Sindri.Features.CancelWorkflowRun;
@@ -56,7 +59,9 @@ using Aw.Sindri.Features.CodeIndexJobs;
 using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.CreateItem;
+using Aw.Sindri.Features.CreateWorkflow;
 using Aw.Sindri.Features.Decide;
+using Aw.Sindri.Features.DeleteWorkflow;
 using Aw.Sindri.Features.EndLearnMode;
 using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.GetConnection;
@@ -100,23 +105,27 @@ using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListReviews;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
+using Aw.Sindri.Features.ListWorkflowBlocks;
 using Aw.Sindri.Features.ListWorkflowRuns;
 using Aw.Sindri.Features.ListWorkflows;
 using Aw.Sindri.Features.OnboardRepo;
 using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
+using Aw.Sindri.Features.PauseWorkflow;
 using Aw.Sindri.Features.ProbeLaunchTargets;
 using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.RecordLimitHit;
 using Aw.Sindri.Features.RegisterMcp;
 using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Features.ReplaceWorkflow;
 using Aw.Sindri.Features.ResumeJob;
 using Aw.Sindri.Features.ResumeService;
 using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Features.RunService;
 using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Features.Scrub;
+using Aw.Sindri.Features.SearchWorkflowDocs;
 using Aw.Sindri.Features.SendReviewFix;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
@@ -125,6 +134,7 @@ using Aw.Sindri.Features.SetReviewLogin;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.TestConnection;
 using Aw.Sindri.Features.ValidateProfile;
+using Aw.Sindri.Features.ValidateWorkflow;
 using Aw.Sindri.Host.Commands.Probe;
 using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Host.Mcp;
@@ -147,7 +157,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(JobProgress)), JsonSerializable(typeof(JobFinished)), JsonSerializable(typeof(JobFinishedPublic)), JsonSerializable(typeof(JobCancelled)), JsonSerializable(typeof(JobWaiting)), JsonSerializable(typeof(JobResumed))]
 [JsonSerializable(typeof(ServicePaused)), JsonSerializable(typeof(ServiceResumed)), JsonSerializable(typeof(JobRow)), JsonSerializable(typeof(JobLine))]
 [JsonSerializable(typeof(ContextModelCalled)), JsonSerializable(typeof(ModelCallTry)), JsonSerializable(typeof(ModelCallAnswerer)), JsonSerializable(typeof(ModelCallHow)), JsonSerializable(typeof(ModelTotals)), JsonSerializable(typeof(ModelAnsweredCount))]
-[JsonSerializable(typeof(SetupStepChanged)), JsonSerializable(typeof(RepoAdded)), JsonSerializable(typeof(RepoAddedPublic)), JsonSerializable(typeof(RepoOnboarded)), JsonSerializable(typeof(ContextPinWritten)), JsonSerializable(typeof(ContextPageWritten)), JsonSerializable(typeof(RecipeRegistrationCompleted)), JsonSerializable(typeof(ConnectionNeedsSignIn)), JsonSerializable(typeof(ConnectionSignedIn)), JsonSerializable(typeof(ConnectionPolled)), JsonSerializable(typeof(WorkflowTriggerSkipped)), JsonSerializable(typeof(CatchUpCapped))]   // connections PR 10b: the sign-in events; PR 11: the poll events
+[JsonSerializable(typeof(SetupStepChanged)), JsonSerializable(typeof(RepoAdded)), JsonSerializable(typeof(RepoAddedPublic)), JsonSerializable(typeof(RepoOnboarded)), JsonSerializable(typeof(ContextPinWritten)), JsonSerializable(typeof(ContextPageWritten)), JsonSerializable(typeof(RecipeRegistrationCompleted)), JsonSerializable(typeof(ConnectionNeedsSignIn)), JsonSerializable(typeof(ConnectionSignedIn)), JsonSerializable(typeof(ConnectionPolled)), JsonSerializable(typeof(ConnectionRemoved)), JsonSerializable(typeof(ConnectionSignInRequested)), JsonSerializable(typeof(MemoryFactsForgotten)), JsonSerializable(typeof(WorkflowTriggerSkipped)), JsonSerializable(typeof(CatchUpCapped))]   // connections PR 10b: the sign-in events; PR 11: the poll events
 [JsonSerializable(typeof(McpRegistered)), JsonSerializable(typeof(McpProviderOutcome)), JsonSerializable(typeof(SetupConsentGiven))]
 [JsonSerializable(typeof(JobLinks)), JsonSerializable(typeof(JobStartedResponse)), JsonSerializable(typeof(RunServiceRequest)), JsonSerializable(typeof(PauseServiceRequest))]
 [JsonSerializable(typeof(ResumeServiceRequest)), JsonSerializable(typeof(CancelJobRequest)), JsonSerializable(typeof(ResumeJobRequest)), JsonSerializable(typeof(GetJobRequest)), JsonSerializable(typeof(JobView))]
@@ -205,8 +215,11 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(EffectReply))]          // engine P6 unit (a): an effect's reply event (notify.delivered, claim.created)
 
 [JsonSerializable(typeof(CompleteStepRequest))]
+[JsonSerializable(typeof(ListWorkflowBlocksResponse)), JsonSerializable(typeof(SearchWorkflowDocsResponse))]   // #2258 PR 8b: workflow_blocks and workflow_docs
+[JsonSerializable(typeof(CreateWorkflowBody)), JsonSerializable(typeof(ApplyWorkflowOpsBody)), JsonSerializable(typeof(ReplaceWorkflowBody)), JsonSerializable(typeof(ValidateWorkflowBody)), JsonSerializable(typeof(ActivateWorkflowBody))]   // #2258 PR 8b: the workflow write bodies
+[JsonSerializable(typeof(CreateWorkflowResponse)), JsonSerializable(typeof(ApplyWorkflowOpsResponse)), JsonSerializable(typeof(ReplaceWorkflowResponse)), JsonSerializable(typeof(ValidateWorkflowResponse)), JsonSerializable(typeof(ActivateWorkflowResponse)), JsonSerializable(typeof(PauseWorkflowResponse)), JsonSerializable(typeof(DeleteWorkflowResponse))]
 [JsonSerializable(typeof(ListWorkflowsResponse)), JsonSerializable(typeof(GetWorkflowResponse)), JsonSerializable(typeof(ListWorkflowRunsResponse)), JsonSerializable(typeof(GetWorkflowRunResponse))]   // #2258 PR 8a: the workflow reads; GraphSpec and the node positions come with GetWorkflowResponse
-[JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse))]
+[JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse)), JsonSerializable(typeof(AgentNodeBody)), JsonSerializable(typeof(AgentNodeControlled))]
 [JsonSerializable(typeof(Features.ListResources.ListResourcesRequest)), JsonSerializable(typeof(Features.ListResources.ListResourcesResponse)), JsonSerializable(typeof(Features.ListResources.ResourceView)), JsonSerializable(typeof(Features.PurgeResources.PurgeResourcesRequest)), JsonSerializable(typeof(Features.PurgeResources.PurgeResourcesResponse))]   // agent-first PR 14: resources
 [JsonSerializable(typeof(RecipeRegistered)), JsonSerializable(typeof(RecipeApproved)), JsonSerializable(typeof(RecipeRevoked))]
 
@@ -250,6 +263,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(Core.Sandbox.Denials.DenialFile)), JsonSerializable(typeof(SandboxDenied)), JsonSerializable(typeof(SandboxLimitHit)), JsonSerializable(typeof(SandboxLearnEnded)), JsonSerializable(typeof(SandboxEntryAllowed)), JsonSerializable(typeof(ReviewLoginSet)), JsonSerializable(typeof(SandboxSummary)), JsonSerializable(typeof(StepPolicy)), JsonSerializable(typeof(ModelLoginSource)), JsonSerializable(typeof(PreparedLogin)), JsonSerializable(typeof(LoginStatus))]   // Sandbox SB-0
 [JsonSerializable(typeof(LaunchViewerAttached)), JsonSerializable(typeof(LaunchTakeoverOpened))]   // issue 1004
 [JsonSerializable(typeof(GetLaunchTargetsRequest)), JsonSerializable(typeof(LaunchTargets)), JsonSerializable(typeof(ProbeLaunchTargetsRequest)), JsonSerializable(typeof(ProbeLaunchTargetsResult))]   // API P10a (U11): the launch targets and their probe job
+[JsonSerializable(typeof(WorkflowChangedPayload))]   // #2258 PR 8: the five workflow lifecycle events
 [JsonSerializable(typeof(WorkflowRunRow)), JsonSerializable(typeof(WorkflowRunStartedPayload)), JsonSerializable(typeof(WorkflowRunFinishedPayload)), JsonSerializable(typeof(WorkflowRunCancelledPayload)), JsonSerializable(typeof(WorkflowNodeStartedPayload)), JsonSerializable(typeof(WorkflowNodeFinishedPayload)), JsonSerializable(typeof(WorkflowNodeFailedPayload))]   // issue 2258 PR 6: the graph runs view and its six events
 [JsonSerializable(typeof(ModelHistoryRow)), JsonSerializable(typeof(RunScope)), JsonSerializable(typeof(RunModel)), JsonSerializable(typeof(StateOrder))]   // model-pick M-4: the model-history and model-runs views
 [JsonSerializable(typeof(LaunchRow)), JsonSerializable(typeof(LaunchEnd)), JsonSerializable(typeof(LaunchViewer)), JsonSerializable(typeof(LaunchViewerPublic))]   // API P10a (U8): the launches view
