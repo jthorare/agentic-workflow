@@ -6,7 +6,8 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.XS}" />
     <Setter Property="Padding" Value="6,0" />
-    <Setter Property="Height" Value="20" />
+    <!-- MinHeight, not Height: at the 1.3 text size the caption line is 20.8 px, which a fixed 20 px chip with its 1 px border cut (#2674) -->
+    <Setter Property="MinHeight" Value="20" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="HorizontalAlignment" Value="Left" />
     <!-- a chip with no variant is the neutral one -->
