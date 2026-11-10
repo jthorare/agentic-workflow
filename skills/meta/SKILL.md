@@ -224,7 +224,7 @@ On `CONTEXT HIGH` (or a `recycle` verdict), message the lane (SendMessage): at a
 background job is running (`/clear` cuts them off) and everything is pushed. When the reply arrives, run
 `aw-meta lane-recycle <lane> --digest <path>` (`--dry-run` shows the steps). It clears the lane, waits for the new session, records it so a
 relaunch resumes it, and has the lane read the digest and continue. Exit 1 means it refused (stale or empty digest, or no live Claude session in the lane's pane) or the new session never
-appeared (nothing more was sent; the error prints the command to send the line by hand). Never recycle the meta lane this way.
+appeared (nothing more was sent; the error prints the command to send the line by hand). Never recycle the meta lane this way: its own context shows as `META RECYCLE <N>k`; write a digest, then run `aw-meta lane-recycle <meta lane> --digest <abs path> --detach`, which waits for your turn to end before it clears. If the clear never comes, look for a NOTE in the running log.
 
 ## Usage limits
 
