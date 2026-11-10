@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
@@ -14,6 +15,7 @@ using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Temporalio.Client;
+using Temporalio.Exceptions;
 using Temporalio.Testing;
 using Temporalio.Worker;
 
@@ -33,6 +35,7 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly Task _loop;
     private readonly GraphRunStarter _starter;
     private readonly InMemorySindriStore _ledger;
+    private readonly ConcurrentQueue<string> _launched = new();
 
     private GraphRig(WorkflowEnvironment environment, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
     {
@@ -52,7 +55,7 @@ internal sealed class GraphRig : IAsyncDisposable
         held.Hold(_ledger.Acquire(probe.Self(), Token).AsTask().GetAwaiter().GetResult().Value);
         var ids = new SequentialIdGenerator();
         var mirror = new GraphMirror(_ledger, held, new EventFactory(EventScope.ControlPlane, clock, ids, SliceHarness.Json, new AsyncLocalCallerContextAccessor(ids)));
-        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue);
+        var launcher = new RecordingLauncher(new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue), _launched);
         var starter = new GraphRunStarter(Runs, launcher, mirror, clock, NullLogger<GraphRunStarter>.Instance);
         _starter = starter;
         // why: the real wait polls on a clock; the fake one never moves while a node waits, so the caller gets the system clock
@@ -213,6 +216,7 @@ internal sealed class GraphRig : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         Blocks.Release();
+        await TerminateOpenRuns();
         await _stop.CancelAsync();
         try
         {
@@ -225,5 +229,33 @@ internal sealed class GraphRig : IAsyncDisposable
 
         _worker.Dispose();
         _stop.Dispose();
+    }
+
+    // why: a run still open when the worker stops (a test that threw before its cancel, or a run whose status row was written before its last workflow task) gets
+    // workflow tasks nobody polls: when its timer fires, the shared time-skipping server stops skipping time, and every later test in the class times out (issue 2574).
+    // Terminating it needs no worker; a run that already closed answers NotFound. Child runs of for_each close with their parent.
+    private async Task TerminateOpenRuns()
+    {
+        using var limit = new CancellationTokenSource(_patience);
+        foreach (var id in _launched)
+        {
+            try
+            {
+                await Client.GetWorkflowHandle(id).TerminateAsync("the test ended", new WorkflowTerminateOptions { Rpc = new RpcOptions { CancellationToken = limit.Token } });
+            }
+            catch (RpcException e) when (e.Code == RpcException.StatusCode.NotFound)   // boundary: the run had already closed
+            {
+            }
+        }
+    }
+
+    /// <summary>The real launcher, keeping the id of every run it started so the rig can end the ones still open.</summary>
+    private sealed class RecordingLauncher(IGraphRunLauncher inner, ConcurrentQueue<string> launched) : IGraphRunLauncher
+    {
+        public async ValueTask<Result<bool>> Launch(WorkflowRun run, CancellationToken cancellationToken)
+        {
+            launched.Enqueue(run.Id.Value);
+            return await inner.Launch(run, cancellationToken);
+        }
     }
 }
