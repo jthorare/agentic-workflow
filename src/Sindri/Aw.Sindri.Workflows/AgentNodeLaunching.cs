@@ -1,9 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
@@ -19,15 +17,13 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <see cref="RunAgentLaunches.RequestFor"/> in a fresh worktree on the node's branch, records the outcome, and reads the worktree's HEAD as the node's start. The launch id is the node run's,
 /// so a retry or a replay starts no second session.
 /// </summary>
-/// <param name="runs">Where the run and its earlier nodes' outputs are read from.</param>
-/// <param name="workflows">Where the run's spec is read from.</param>
+/// <param name="reading">Reads the run, the node's config and its prompt with every reference fenced as untrusted (#2447).</param>
 /// <param name="approved">The live profile: the repos and the default agent.</param>
 /// <param name="launcher">The launcher, waiting out a full session cap (SND-LAUNCH-020).</param>
 /// <param name="recorder">Records 'launch.started' and 'launch.failed'.</param>
 /// <param name="diff">Reads the start commit.</param>
 /// <param name="ended">Answers for a launch whose session already ended, so a retry starts no second agent.</param>
-/// <param name="model">Fences the prompt's references, the way the 'prompt' block does (#2447).</param>
-internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore workflows, IApprovedProfile approved, AgentLaunchWaiting launcher, AgentLaunchRecorder recorder, IRunDiff diff, AgentLaunchEnded ended, IGraphModelPort model)
+internal sealed class AgentNodeLaunching(AgentNodeReading reading, IApprovedProfile approved, AgentLaunchWaiting launcher, AgentLaunchRecorder recorder, IRunDiff diff, AgentLaunchEnded ended)
 {
     /// <summary>Launches the node run's session.</summary>
     /// <param name="node">The node run.</param>
@@ -36,11 +32,11 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
     public async Task<AgentNodeLaunched> Launch(AgentNodeRef node, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(node);
-        var row = GraphFailures.Value(await runs.Get(node.Run, cancellationToken).ConfigureAwait(false));
-        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancellationToken).ConfigureAwait(false)).Spec;
-        var graphNode = spec.Nodes.FirstOrDefault(n => n.Id == node.Node) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
-        var scope = new GraphNodeScope(row, spec, GraphFailures.Value(await runs.NodeRuns(node.Run, cancellationToken).ConfigureAwait(false)));
-        var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
+        var read = await reading.Read(node, cancellationToken).ConfigureAwait(false);
+        var row = read.Run;
+        var spec = read.Spec;
+        var scope = read.Scope;
+        var config = read.Config;
         var input = config.ToJsonString();
         if (scope.Cut is { } cut)
         {
@@ -53,11 +49,7 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
             return Failed(input, parsed.Error);
         }
 
-        var task = parsed.Value;
-        if (graphNode.Config["prompt"] is JsonValue { } promptValue && promptValue.TryGetValue<string>(out var rawPrompt))
-        {
-            task = task with { Prompt = FencedPrompt.Render(rawPrompt, scope.Lookup, model.Untrusted) };   // why: the brief fences each reference's value like the 'prompt' block; the interpolated prompt has lost which text came from outside
-        }
+        var task = read.Prompt is { } fenced ? parsed.Value with { Prompt = fenced } : parsed.Value;
 
         var placed = await Place(parsed.Value, row, cancellationToken).ConfigureAwait(false);
         if (placed.IsError)
