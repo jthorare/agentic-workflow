@@ -103,7 +103,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
         => services.AddSingleton(sp => new LinearSources(new LinearSourceParts(
             LinearHttp.Client, environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<LinearClient>>())
         {
-            Credential = sp.GetService<Core.Linear.ILinearReadCredential>(),   // Sindri's connection-first order (#2508), when the host registers one
+            Credential = sp.GetService<ILinearReadCredential>(),   // Sindri's connection-first order (#2508), when the host registers one
         }));
 
     /// <summary>
