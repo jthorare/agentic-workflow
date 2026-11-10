@@ -55,13 +55,17 @@
   <!-- derived (§11.1): the primary button's pressed fill (white 6.2:1) -->
   <Color x:Key="Color.PrimaryPressed">#4c57be</Color>
   <SolidColorBrush x:Key="Brush.PrimaryPressed" Color="{StaticResource Color.PrimaryPressed}" />
-  <!-- Clickable surfaces (#2535, Theme/ClickableStyles.axaml): the lift under the pointer and the press. Hover is Surface2 with the strong hairline, pressed Surface3 with the tertiary one. -->
-  <SolidColorBrush x:Key="Brush.Clickable.Hover" Color="{StaticResource Color.Surface2}" />
-  <!-- A clickable row's rest fill: the hover colour at zero alpha. A Border with no background is not hit-tested, and the colour ease blends each channel
-       straight, so a rest of Transparent (#00FFFFFF) would pass through grey on the way to the hover; this one only gains alpha. -->
-  <SolidColorBrush x:Key="Brush.Clickable.Rest" Color="#00141516" />
+  <!-- Clickable surfaces (#2535, Theme/ClickableStyles.axaml): the lift under the pointer and the press. The surface ladder steps 4-5 per channel,
+       which nobody sees as a hover, so these sit above it: hover #1c1d20 (+13 over Surface1; Raycast's filled control measures #1b1c1e,
+       design/measured-linear-raycast-2026-11-10.md) with the strong hairline, pressed #222326 with the tertiary one. A row that rests on
+       Surface2 (selected, calm) lifts to the pressed fill under the pointer, so it still moves by a visible step. -->
+  <SolidColorBrush x:Key="Brush.Clickable.Hover" Color="#1c1d20" />
+  <!-- A clickable surface's rest fill: the hover colour at zero alpha (TokenTests pins the match). A Border with no background is not hit-tested,
+       and the colour ease blends each channel straight, so a rest of Transparent (#00FFFFFF) would pass through grey on the way to the hover;
+       this one only gains alpha. -->
+  <SolidColorBrush x:Key="Brush.Clickable.Rest" Color="#001c1d20" />
   <SolidColorBrush x:Key="Brush.Clickable.HoverBorder" Color="{StaticResource Color.HairlineStrong}" />
-  <SolidColorBrush x:Key="Brush.Clickable.Pressed" Color="{StaticResource Color.Surface3}" />
+  <SolidColorBrush x:Key="Brush.Clickable.Pressed" Color="#222326" />
   <SolidColorBrush x:Key="Brush.Clickable.PressedBorder" Color="{StaticResource Color.HairlineTertiary}" />
   <!-- on-primary: primary button text -->
   <Color x:Key="Color.OnPrimary">#ffffff</Color>
