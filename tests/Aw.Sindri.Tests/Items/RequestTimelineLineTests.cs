@@ -1,6 +1,7 @@
 using Aw.Kernel.Ids;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Requests;
@@ -39,5 +40,27 @@ public sealed class RequestTimelineLineTests
         var recorded = Recorded.Of(_h.Events, EventTypes.DecisionRecorded, decided, 2);
 
         Assert.Equal($"decision {_decision.Value} {words} by human:prover", TimelineLine.For(recorded, SliceHarness.Json));
+    }
+
+    [Theory]
+    [InlineData(0, "Agent node agent taken over by human:cli")]
+    [InlineData(2, "Agent node agent (item 2) taken over by human:cli")]
+    public void A_takeover_names_the_node_who_took_it_over_and_the_item_of_a_loop(int itemIndex, string line)
+    {
+        var taken = new WorkflowNodeTakenOverPayload(WorkflowRunId.From("nightly@3:12"), NodeId.From("agent"), itemIndex, "human:cli");
+        var recorded = Recorded.Of(_h.Events, EventTypes.WorkflowNodeTakenOver, taken, 3);
+
+        Assert.Equal(line, TimelineLine.For(recorded, SliceHarness.Json));
+    }
+
+    [Theory]
+    [InlineData(0, "Agent node agent handed back by human:cli")]
+    [InlineData(1, "Agent node agent (item 1) handed back by human:cli")]
+    public void A_handback_names_the_node_who_handed_it_back_and_the_item_of_a_loop(int itemIndex, string line)
+    {
+        var back = new WorkflowNodeHandedBackPayload(WorkflowRunId.From("nightly@3:12"), NodeId.From("agent"), itemIndex, "human:cli");
+        var recorded = Recorded.Of(_h.Events, EventTypes.WorkflowNodeHandedBack, back, 4);
+
+        Assert.Equal(line, TimelineLine.For(recorded, SliceHarness.Json));
     }
 }

@@ -191,5 +191,7 @@ records:
     section: "4b.3"
   - id: engineering.csharp.port-methods-take-token
     section: "4b.3"
+  - id: engineering.csharp.workflow-scheduler
+    section: "4b.3"
   - id: engineering.csharp.small-bans
     section: "4b.6"

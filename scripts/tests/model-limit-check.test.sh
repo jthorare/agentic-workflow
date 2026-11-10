@@ -99,7 +99,7 @@ expect "refuses a relative MODEL_LIMIT_HOME" 2 "absolute path"
 mkdir -p "$T/real/sindri-app-firstrun-modellimit" && echo x > "$T/real/sindri-app-firstrun-modellimit/ledger.db"
 OUT="$(AW_STATE_DIR="$STATE" MODEL_LIMIT_HOME="$T/real/sindri-app-firstrun-modellimit" "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
 expect "refuses a home that holds files and has no marker" 2 "no .first-run-scratch marker"
-OUT="$(AW_STATE_DIR="$STATE" MODEL_LIMIT_PORT=7410 "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
+OUT="$(AW_STATE_DIR="$STATE" MODEL_LIMIT_PORT=7410 "$SCRIPT" up --dry-run 2>&1)"; CODE=$?  # test-ports: ok: dry run, nothing binds the port
 expect "refuses the real instance's port" 2 "7410"
 OUT="$(AW_STATE_DIR="$STATE" MODEL_LIMIT_POLL_SECONDS=x "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
 expect "refuses a poll interval that isn't whole seconds" 2 "whole seconds"
@@ -121,6 +121,7 @@ else
   expect "up writes the profile and runs on to the model-limit pause, asking for no profile approval (exit 0)" 0 "JOB-0001 is waiting on model-limit"
   P="$HOME_DIR/profile/profile.yaml"
   if grep -q '^  models:' "$P" && grep -q 'default: { harnesses: \[claude-code, codex\] }' "$P"; then ok "the profile routes every kind to claude-code, then codex"; else fail "the profile routes every kind to claude-code, then codex"; sed 's/^/       | /' "$P"; fi
+  # test-ports: ok: the port=N strings are what the stub sindri logged, matched as text; nothing binds them
   if logged "home=sindri-app-firstrun-modellimit port=7482" && ! logged "port=7481" && ! logged "port=7410"; then ok "every call used the check's home and port 7482"; else fail "every call used the check's home and port 7482"; fi
 
   if [ "$(cut -d' ' -f2- "$HOME_DIR/model-limit/calls.log" | tr '\n' '|')" = "claude-code limit|codex limit|" ]; then ok "the refresh reached both fakes through the PATH the script gave sindri"; else fail "the refresh reached both fakes through the PATH"; sed 's/^/       | /' "$HOME_DIR/model-limit/calls.log"; fi

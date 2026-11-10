@@ -7,7 +7,7 @@ using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Core.Items;
 
-/// <summary>Folds 'item.linked' into the 'item-links' view: one row per thing an item is linked to (issue, pull request; runs come later). A record of another kind has no row.</summary>
+/// <summary>Folds 'item.linked' into the 'item-links' view: one row per thing an item is linked to (issue, pull request, workflow run). A record of another kind has no row.</summary>
 /// <param name="events">Reads the payloads through the package's AwJson options.</param>
 internal sealed class ItemLinksProjection(EventFactory events) : IProjection
 {
@@ -31,8 +31,16 @@ internal sealed class ItemLinksProjection(EventFactory events) : IProjection
         }
 
         var row = new ItemLinkRow(linked.Value.Item, kind, linked.Value.Alias?.Value ?? linked.Value.Record.Value, linked.Value.Url, State: null, recorded.Envelope.OccurredAt, recorded.Sequence);
-        return await rows.Put(ViewNames.ItemLinks, linked.Value.Item.Value + "/" + (kind == ItemLinkKind.Pr ? "pr" : "issue") + "/" + linked.Value.Record.Value, row, cancellationToken).ConfigureAwait(false);
+        return await rows.Put(ViewNames.ItemLinks, linked.Value.Item.Value + "/" + KeyWord(kind) + "/" + linked.Value.Record.Value, row, cancellationToken).ConfigureAwait(false);
     }
+
+    private static string KeyWord(ItemLinkKind kind) => kind switch
+    {
+        ItemLinkKind.Issue => "issue",
+        ItemLinkKind.Pr => "pr",
+        ItemLinkKind.Run => "run",
+        _ => throw new ArgumentOutOfRangeException(nameof(kind)),
+    };
 
     // '<source>:<kind>/<id>': the middle word names what the record is
     private static ItemLinkKind? KindOf(RecordKey record)
@@ -44,6 +52,7 @@ internal sealed class ItemLinksProjection(EventFactory events) : IProjection
         {
             "issue" => ItemLinkKind.Issue,
             "pr" => ItemLinkKind.Pr,
+            "run" => ItemLinkKind.Run,
             _ => null,
         };
     }
