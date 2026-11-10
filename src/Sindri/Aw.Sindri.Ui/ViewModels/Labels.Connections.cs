@@ -229,6 +229,11 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string ConnectNeedsClientId(string service) => $"Enter your {service} app's client id";
 
+    /// <summary>The tile's inline line when the client secret is missing.</summary>
+    /// <param name="service">The service.</param>
+    /// <returns>The words.</returns>
+    internal static string ConnectNeedsClientSecret(string service) => $"Paste your {service} app's client secret";
+
     /// <summary>The tile's inline line when the token is missing.</summary>
     /// <param name="service">The service.</param>
     /// <returns>The words.</returns>
@@ -274,13 +279,13 @@ internal static partial class Labels
     internal static string ConnectedOf(int connected, int total) => string.Create(CultureInfo.InvariantCulture, $"{connected} of {total} connected");
 
     /// <summary>The tiles of the Connections page: services with a sign-in path.</summary>
-    internal static readonly (string Id, string Title, string Blurb, bool Token)[] ConnectionTiles =
+    internal static readonly (string Id, string Title, string Blurb, Connections.TileMode Mode)[] ConnectionTiles =
     [
-        ("github", "GitHub", "Reviews and pull requests", false),
-        ("linear", "Linear", "Issues and projects", false),
-        ("slack", "Slack", "Messages, with a pasted token", true),
-        ("google", "Google", "Calendar", false),
-        ("spotify", "Spotify", "Playback", false),
+        ("github", "GitHub", "Reviews and pull requests", Connections.TileMode.ClientIdAndSecret),
+        ("linear", "Linear", "Issues and projects", Connections.TileMode.ClientId),
+        ("slack", "Slack", "Messages, with a pasted token", Connections.TileMode.Token),
+        ("google", "Google", "Calendar", Connections.TileMode.ClientIdAndSecret),
+        ("spotify", "Spotify", "Playback", Connections.TileMode.ClientId),
     ];
 
     /// <summary>The status chip of a connected tile.</summary>
@@ -303,9 +308,9 @@ internal static partial class Labels
     /// <returns>The line, the link's words and the link; the link is empty when there is none.</returns>
     internal static (string Line, string LinkText, string Url) TileHelp(string id) => id switch
     {
-        "github" => ("Create an OAuth app in GitHub, then paste its client id here.", "Open GitHub's OAuth apps", "https://github.com/settings/developers"),
+        "github" => ("Paste the client ID and secret from your GitHub OAuth app.", "Open GitHub's OAuth apps", "https://github.com/settings/developers"),
         "linear" => ("Create an OAuth app in Linear, then paste its client id here.", "Open Linear's API settings", "https://linear.app/settings/api"),
-        "google" => ("Create an OAuth client in Google, then paste its client id here.", "Open Google's credentials page", "https://console.cloud.google.com/apis/credentials"),
+        "google" => ("Paste the client ID and secret from your Google OAuth client.", "Open Google's credentials page", "https://console.cloud.google.com/apis/credentials"),
         "spotify" => ("Create an app in Spotify, then paste its client id here.", "Open Spotify's developer dashboard", "https://developer.spotify.com/dashboard"),
         "slack" => ("In Slack, open your app's OAuth & Permissions page and copy the user token.", string.Empty, string.Empty),
         _ => (string.Empty, string.Empty, string.Empty),

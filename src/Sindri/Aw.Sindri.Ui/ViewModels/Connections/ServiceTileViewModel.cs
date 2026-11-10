@@ -20,6 +20,7 @@ internal sealed class ServiceTileViewModel : ObservableObject
     {
         (Service, _actions, _changed, _clock) = (service, actions, changed, clock);
         Token.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
+        ClientSecret.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
     }
 
     /// <summary>The service this tile is for.</summary>
@@ -40,6 +41,9 @@ internal sealed class ServiceTileViewModel : ObservableObject
     /// <summary>The pasted token (Slack).</summary>
     public SecretField Token { get; } = new();
 
+    /// <summary>The pasted OAuth client secret (GitHub, Google): sent once with the client id, then gone.</summary>
+    public SecretField ClientSecret { get; } = new();
+
     /// <summary>The OAuth client id typed on the tile.</summary>
     public string ClientId
     {
@@ -52,7 +56,10 @@ internal sealed class ServiceTileViewModel : ObservableObject
     } = string.Empty;
 
     /// <summary>True when the sign-in needs a client id.</summary>
-    public bool NeedsClientId => Service.Mode == TileMode.ClientId;
+    public bool NeedsClientId => Service.Mode is TileMode.ClientId or TileMode.ClientIdAndSecret;
+
+    /// <summary>True when the sign-in also needs the OAuth app's client secret.</summary>
+    public bool NeedsSecret => Service.Mode == TileMode.ClientIdAndSecret;
 
     /// <summary>True when the sign-in takes a pasted token.</summary>
     public bool TakesToken => Service.Mode == TileMode.Token;
@@ -91,6 +98,7 @@ internal sealed class ServiceTileViewModel : ObservableObject
 
     /// <summary>Why Connect can't send yet, in words; empty when it can.</summary>
     public string BlockedReason => NeedsClientId && ClientId.Trim().Length == 0 ? Labels.ConnectNeedsClientId(Service.Title)
+        : NeedsSecret && !ClientSecret.HasValue ? Labels.ConnectNeedsClientSecret(Service.Title)
         : TakesToken && !Token.HasValue ? Labels.ConnectNeedsToken(Service.Title) : string.Empty;
 
     /// <summary>True when the inline line explains a disabled send.</summary>
@@ -239,6 +247,7 @@ internal sealed class ServiceTileViewModel : ObservableObject
         if (end.State == SignInState.Connected)
         {
             (IsAsking, ClientId) = (false, string.Empty);
+            _ = ClientSecret.Take();
             return;
         }
 
@@ -249,6 +258,7 @@ internal sealed class ServiceTileViewModel : ObservableObject
     internal void Cancel()
     {
         _ = Token.Take();
+        _ = ClientSecret.Take();
         (IsAsking, ErrorText) = (false, string.Empty);
         OnChanged(nameof(HasBlockedReason));
     }
@@ -281,7 +291,7 @@ internal sealed class ServiceTileViewModel : ObservableObject
         var name = Service.Id + ":" + DefaultLabel;
         return Service.Mode == TileMode.Token
             ? new AddConnectionBody(name, Preset: null, Kind: "rest", Client: null, KeyEnv: null, Scopes: [], Wait: false, Key: Token.Take())
-            : new AddConnectionBody(name, Service.Id, Kind: null, ClientId.Trim(), KeyEnv: null, Scopes: [], Wait: false);
+            : new AddConnectionBody(name, Service.Id, Kind: null, ClientId.Trim(), KeyEnv: null, Scopes: [], Wait: false, ClientSecret: ClientSecret.Take());
     }
 
     private void Raise(params string[] names)

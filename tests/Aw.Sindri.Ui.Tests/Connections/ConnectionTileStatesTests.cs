@@ -44,6 +44,7 @@ public sealed class ConnectionTileStatesTests
         var tile = await Tile("github");
         await tile.Connect(Token);
         tile.ClientId = "client-123";
+        tile.ClientSecret.Text = "secret-456";
         _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-006", Kernel.ErrorKind.Unavailable, "The connection's secret store is not available");
 
         await tile.Primary(Token);
@@ -63,7 +64,11 @@ public sealed class ConnectionTileStatesTests
         Assert.False(tile.CanPress);
         Assert.Equal("Enter your GitHub app's client id", tile.BlockedReason);
         tile.ClientId = "client-123";
+        Assert.False(tile.CanPress);
+        Assert.Equal("Paste your GitHub app's client secret", tile.BlockedReason);
+        tile.ClientSecret.Text = "secret-456";
         Assert.True(tile.CanPress);
+        Assert.Equal(string.Empty, tile.BlockedReason);
     }
 
     [Fact]
@@ -161,5 +166,63 @@ public sealed class ConnectionTileStatesTests
         Assert.Equal([_f.Server.ConsentUrl], _f.Launcher.Opened, StringComparer.Ordinal);
         Assert.Equal(Aw.Sindri.Ui.ViewModels.Labels.ConnectionAdded("notes:mcp"), form.StatusText);
         Assert.Equal(["notes:mcp"], page.OtherRows.Select(r => r.Name), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_GitHub_tile_sends_the_client_id_and_the_client_secret_and_the_secret_is_gone_after()
+    {
+        var page = await _f.Shown();
+        var tile = page.Tiles.Single(t => string.Equals(t.Id, "github", StringComparison.Ordinal));
+        await tile.Connect(Token);
+        Assert.True(tile.NeedsSecret);
+        Assert.Equal("Paste the client ID and secret from your GitHub OAuth app.", tile.HelpText);
+        tile.ClientId = "client-123";
+        tile.ClientSecret.Text = "secret-456";
+
+        await _f.Drive(tile.Connect(Token), "github:work");
+
+        var sent = _f.Server.LastAddConnection!;
+        Assert.Equal(("github:work", "github", "client-123", "secret-456"), (sent.Name, sent.Preset, sent.Client, sent.ClientSecret));
+        Assert.False(tile.ClientSecret.HasValue);
+        Assert.True(tile.IsConnected);
+    }
+
+    [Fact]
+    public async Task A_Google_tile_also_asks_for_the_secret_and_Linear_and_Spotify_do_not()
+    {
+        var page = await _f.Shown();
+
+        Assert.Equal(["github", "google"], page.Tiles.Where(t => t.NeedsSecret).Select(t => t.Id), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_Linear_tile_sends_no_client_secret()
+    {
+        var page = await _f.Shown();
+        var tile = page.Tiles.Single(t => string.Equals(t.Id, "linear", StringComparison.Ordinal));
+        await tile.Connect(Token);
+        tile.ClientId = "client-123";
+        Assert.True(tile.CanPress);
+
+        await _f.Drive(tile.Connect(Token), "linear:work");
+
+        Assert.Null(_f.Server.LastAddConnection!.ClientSecret);
+    }
+
+    [Fact]
+    public async Task The_client_secret_is_in_no_text_of_the_tile()
+    {
+        var page = await _f.Shown();
+        var tile = page.Tiles.Single(t => string.Equals(t.Id, "github", StringComparison.Ordinal));
+        await tile.Connect(Token);
+        tile.ClientId = "client-123";
+        tile.ClientSecret.Text = "secret-9f3a7c21";
+        _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-010", Kernel.ErrorKind.Conflict, "A connection named github:work already exists.");
+
+        await tile.Connect(Token);
+
+        string[] shown = [tile.ClientSecret.ToString(), tile.BlockedReason, tile.ErrorText, tile.StatusText, tile.AccessibleName, tile.HelpText, tile.Subtitle, tile.ClientId, tile.ReasonText];
+        Assert.DoesNotContain(shown, t => t.Contains("secret-9f3a7c21", StringComparison.Ordinal));
+        Assert.False(tile.ClientSecret.HasValue);
     }
 }

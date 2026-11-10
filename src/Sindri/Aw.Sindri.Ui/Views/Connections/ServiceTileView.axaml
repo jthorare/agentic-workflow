@@ -32,6 +32,7 @@
 
       <StackPanel x:Name="ServiceTileInput" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsAsking}">
         <TextBox x:Name="ServiceTileClientId" Text="{Binding ClientId, Mode=TwoWay}" PlaceholderText="{Binding Text.TileClientLabel}" IsVisible="{Binding NeedsClientId}" AutomationProperties.Name="{Binding Text.TileClientLabel}" />
+        <TextBox x:Name="ServiceTileClientSecret" PasswordChar="●" Text="{Binding ClientSecret.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileSecretLabel}" IsVisible="{Binding NeedsSecret}" AutomationProperties.Name="{Binding Text.TileSecretLabel}" />
         <TextBox x:Name="ServiceTileToken" PasswordChar="●" Text="{Binding Token.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileTokenLabel}" IsVisible="{Binding TakesToken}" AutomationProperties.Name="{Binding Text.TileTokenLabel}" />
         <TextBlock x:Name="ServiceTileHelp" Classes="caption subtle" Text="{Binding HelpText}" TextWrapping="Wrap" />
         <Button x:Name="ServiceTileHelpLink" Classes="link" Content="{Binding HelpLinkText}" IsVisible="{Binding HasHelpLink}" Click="OnHelp" HorizontalAlignment="Left" />

@@ -31,7 +31,7 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
         (_api, _clock) = (api, clock);
         _actions = new ConnectionActions(api, () => _url, launcher, clock);
         Add = new AddConnectionViewModel(_actions, ReadAgain);
-        Tiles = [.. Labels.ConnectionTiles.Select(t => new ServiceTileViewModel(new ServiceTile(t.Id, t.Title, t.Blurb, t.Token ? TileMode.Token : TileMode.ClientId), _actions, ReadAgain, clock))];
+        Tiles = [.. Labels.ConnectionTiles.Select(t => new ServiceTileViewModel(new ServiceTile(t.Id, t.Title, t.Blurb, t.Mode), _actions, ReadAgain, clock))];
     }
 
     /// <summary>Raised when a row asks to open its connection's sheet; the shell opens it.</summary>

@@ -93,6 +93,7 @@ public sealed class ConnectionTilesTests
         var tile = page.Tiles.Single(t => t.Id == "github");
         await tile.Connect(Token);
         tile.ClientId = "client-123";
+        tile.ClientSecret.Text = "secret-456";
         _f.Server.NextConnectionGetError = new Kernel.Error("SND-CONN-003", Kernel.ErrorKind.Unavailable, "The provider refused the sign-in.");
 
         await _f.Drive(tile.Connect(Token));
@@ -109,6 +110,7 @@ public sealed class ConnectionTilesTests
         var tile = page.Tiles.Single(t => t.Id == "github");
         await tile.Connect(Token);
         tile.ClientId = "client-123";
+        tile.ClientSecret.Text = "secret-456";
         _f.Server.ConnectionWriteError = new Kernel.Error("SND-CONN-006", Kernel.ErrorKind.Unavailable, "The connection's secret store is not available");
 
         await tile.Connect(Token);
