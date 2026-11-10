@@ -22,8 +22,8 @@ internal sealed class ViewsBanner : ObservableObject
     /// <summary>The view's sentence for its state, as served.</summary>
     public string Text { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The sentence the banner draws: <see cref="Text"/>, without its "run `sindri views rebuild`" while the Rebuild views button is beside it (the button does that).</summary>
-    public string ShownText => HasRebuild && Text.EndsWith(RebuildCommand, StringComparison.Ordinal) ? Text[..^RebuildCommand.Length] : Text;
+    /// <summary>The sentence the banner draws: <see cref="Text"/>, ending at a full stop where its ": run `sindri views rebuild`" was while the Rebuild views button is beside it (the button does that).</summary>
+    public string ShownText => HasRebuild && Text.EndsWith(RebuildCommand, StringComparison.Ordinal) ? Text[..^RebuildCommand.Length] + "." : Text;
 
     private const string RebuildCommand = ": run `sindri views rebuild`";
 
