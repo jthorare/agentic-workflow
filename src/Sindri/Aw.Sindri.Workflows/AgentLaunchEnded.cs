@@ -1,6 +1,7 @@
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Temporalio.Exceptions;
 
@@ -14,7 +15,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="views">The launches view.</param>
 /// <param name="sessions">Whether the session ended.</param>
 /// <param name="home">Sindri's home, for the run directory.</param>
-internal sealed class AgentLaunchEnded(ILaunchViews views, IAgentSessions sessions, ISindriHome home)
+/// <param name="ledger">The ledger, read directly so the answer doesn't wait for the projector.</param>
+internal sealed class AgentLaunchEnded(ILaunchViews views, IAgentSessions sessions, ISindriHome home, ILedgerReader ledger)
 {
     /// <summary>Answers for a launch whose session already ended.</summary>
     /// <param name="request">The launch.</param>
@@ -22,6 +24,7 @@ internal sealed class AgentLaunchEnded(ILaunchViews views, IAgentSessions sessio
     /// <returns>The first start's answer, or null when the launch never started or its session still runs.</returns>
     public async Task<AgentLaunched?> Find(LaunchRequest request, CancellationToken cancellationToken)
     {
+        _ = ledger;   // stub: the fix reads the launch's start from the ledger
         var row = await views.Get(request.Launch, cancellationToken).ConfigureAwait(false);
         if (row.IsError)
         {
