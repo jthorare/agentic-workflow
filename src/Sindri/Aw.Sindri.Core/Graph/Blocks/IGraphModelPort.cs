@@ -15,7 +15,7 @@ public interface IGraphModelPort
     public ValueTask<Result<string>> Ask(string prompt, CancellationToken cancellationToken);
 
     /// <summary>Wraps connection text in the untrusted fence the model reads as data.</summary>
-    /// <param name="source">Where the text came from: "workflow:trigger" or "workflow:node:&lt;nodeId&gt;".</param>
+    /// <param name="source">Where the text came from: "workflow:trigger", "workflow:item" (a for_each item), "workflow:run" (itemIndex, workflow.*) or "workflow:node:&lt;nodeId&gt;".</param>
     /// <param name="text">The connection text.</param>
     /// <returns>The fenced text.</returns>
     public string Untrusted(string source, string text);

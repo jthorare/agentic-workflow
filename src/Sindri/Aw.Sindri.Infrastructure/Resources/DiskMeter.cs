@@ -5,8 +5,6 @@ using Aw.Sindri.Core.Sandbox.Plan;
 
 namespace Aw.Sindri.Infrastructure.Resources;
 
-#pragma warning disable MA0182 // until the launch path provisions resources before a launch (agent-first PR 14 wires only the tests)
-
 /// <summary>Measures a disk folder with a bounded walk.</summary>
 internal static class DiskMeter
 {
@@ -83,4 +81,3 @@ internal static class DiskMeter
         }
     }
 }
-#pragma warning restore MA0182
