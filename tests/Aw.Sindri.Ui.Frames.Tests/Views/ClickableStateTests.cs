@@ -11,7 +11,12 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
+using Aw.Sindri.Ui.Views.Agents;
+using Aw.Sindri.Ui.Views.Connections;
+using Aw.Sindri.Ui.Views.Jobs;
+using Aw.Sindri.Ui.Views.Linear;
 using Aw.Sindri.Ui.Views.NeedsYou;
+using Aw.Sindri.Ui.Views.Queue;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
@@ -126,12 +131,12 @@ public sealed class ClickableStateTests : FrameHost
         // Every row that opens something takes the shared look (#2535 review): the row views, and Linear's row from its page's item template.
         var frames = new (Control View, string Frame)[]
         {
-            (new Aw.Sindri.Ui.Views.Queue.ItemRow(), "RowFrame"),
-            (new Aw.Sindri.Ui.Views.Queue.CompactItemRow(), "RowFrame"),
-            (new Aw.Sindri.Ui.Views.Jobs.JobRow(), "JobRowFrame"),
-            (new Aw.Sindri.Ui.Views.Connections.ConnectionRow(), "ConnectionRowFrame"),
-            (new Aw.Sindri.Ui.Views.Agents.SessionRow(), "SessionRowFrame"),
-            (new Aw.Sindri.Ui.Views.Agents.EndedSessionRow(), "EndedRowFrame"),
+            (new ItemRow(), "RowFrame"),
+            (new CompactItemRow(), "RowFrame"),
+            (new JobRow(), "JobRowFrame"),
+            (new ConnectionRow(), "ConnectionRowFrame"),
+            (new SessionRow(), "SessionRowFrame"),
+            (new EndedSessionRow(), "EndedRowFrame"),
             (new NeedsYouRow(), "RowFrame"),
         };
         foreach (var (view, name) in frames)
@@ -141,7 +146,7 @@ public sealed class ClickableStateTests : FrameHost
         }
 
         // The row sits two templates deep (groups, then rows), so each built template is searched for the next list.
-        var linear = Templated(new Aw.Sindri.Ui.Views.Linear.LinearWorkView()).OfType<Border>()
+        var linear = Templated(new LinearWorkView()).OfType<Border>()
             .Single(b => string.Equals(b.Name, "LinearRowFrame", StringComparison.Ordinal));
         Assert.Contains("clickable", linear.Classes, StringComparer.Ordinal);
         return Task.CompletedTask;
@@ -311,4 +316,43 @@ public sealed class ClickableStateTests : FrameHost
             }
         }
     }
+
+    [Theory]
+    [InlineData("work", 1280)]
+    [InlineData("work", 900)]
+    [InlineData("linear", 1280)]
+    [InlineData("linear", 900)]
+    public Task A_list_row_lifts_under_the_pointer_over_its_empty_space(string list, int width) => OnUi(async () =>
+    {
+        // A real hit test, not a set pseudo-class: the pointer sits in the row's own padding, where no child control is, so the row itself must take the hit.
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, shell) = await Connected(width: width, height: 900);
+        shell.GoTo(PageId.Work);
+        var linear = string.Equals(list, "linear", StringComparison.Ordinal);
+        shell.Linear.Choose(linear);
+        var frameName = linear ? "LinearRowFrame" : "RowFrame";
+        var stem = $"{list}-{width.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+        // The list reads, then the since strip lands above it and a refresh can rebuild the rows: wait until one unselected row stays the same Border at
+        // the same point for three reads.
+        Border? row = null;
+        Point? last = null;
+        var steady = 0;
+        await Until(window, () =>
+        {
+            var now = window.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => string.Equals(b.Name, frameName, StringComparison.Ordinal) && b.IsEffectivelyVisible && b.Classes.Contains("item-row") && !b.Classes.Contains("selected"));
+            var at = now?.TranslatePoint(new Point(6, 6), window);
+            steady = now is not null && ReferenceEquals(now, row) && at == last ? steady + 1 : 0;
+            (row, last) = (now, at);
+            return steady >= 3;
+        }, $"the {list} list never settled on an unselected row");
+        Frame(window, $"{stem}-rest", "gh2535-");
+
+        var point = await PointAt(window, () => Corner(window, row!), row!);
+
+        Assert.True(row!.IsPointerOver, $"at {point}, hit {Describe(window.InputHitTest(point))}, chain {Chain(row)}");
+        Assert.Equal(TokenColor("Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
+        Frame(window, $"{stem}-row-hover", "gh2535-");
+    });
 }
