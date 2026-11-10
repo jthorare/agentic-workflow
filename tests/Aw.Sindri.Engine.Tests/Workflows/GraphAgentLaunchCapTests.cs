@@ -39,7 +39,7 @@ public sealed class GraphAgentLaunchCapTests
         Assert.InRange(perAttempt, 1, 20);
     }
 
-    private async Task<int> HistoryLength(int attempts)
+    private static async Task<int> HistoryLength(int attempts)
     {
         var runtime = new FakeAgentNodeRuntime { LaunchThrows = new InvalidOperationException("store error") };
         await using var rig = await GraphRig.StartAsync(runtime, attempts);
