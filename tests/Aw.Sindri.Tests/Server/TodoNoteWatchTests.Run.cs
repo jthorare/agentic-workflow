@@ -7,12 +7,13 @@ public sealed partial class TodoNoteWatchTests
     private sealed class Run(TodoNoteWatch watch, SteppedClock clock, FakeSync sync) : IAsyncDisposable
     {
         /// <summary>Gets the clock the loop waits on.</summary>
-        internal SteppedClock Clock => clock;
+        internal SteppedClock Clock { get; } = clock;
 
         /// <summary>Runs <paramref name="act"/>, steps the clock and waits for the loop to arm its next wait.</summary>
         internal async Task Next(TimeSpan by, Func<Task>? act = null, bool expectPass = true)
         {
             var before = sync.Passes;
+            var parked = clock.Arms;   // the loop is parked in its wait here; an arm past this count is one it made after waking
             if (act is not null)
             {
                 await act();
@@ -22,7 +23,7 @@ public sealed partial class TodoNoteWatchTests
             if (expectPass)
             {
                 await clock.Armed(() => sync.Passes > before);
-                await clock.Armed();
+                await clock.ArmedBeyond(parked);
             }
         }
 
