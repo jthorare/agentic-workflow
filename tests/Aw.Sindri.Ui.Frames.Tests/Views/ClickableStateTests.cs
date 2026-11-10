@@ -3,6 +3,7 @@ using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -119,6 +120,88 @@ public sealed class ClickableStateTests : FrameHost
         Assert.Equal(TokenColor("Brush.Clickable.Hover"), ((ISolidColorBrush)card.Background!).Color);
     });
 
+    [Fact]
+    public Task Every_list_row_frame_is_clickable() => OnUi(() =>
+    {
+        // Every row that opens something takes the shared look (#2535 review): the row views, and Linear's row from its page's item template.
+        var frames = new (Control View, string Frame)[]
+        {
+            (new Aw.Sindri.Ui.Views.Queue.ItemRow(), "RowFrame"),
+            (new Aw.Sindri.Ui.Views.Queue.CompactItemRow(), "RowFrame"),
+            (new Aw.Sindri.Ui.Views.Jobs.JobRow(), "JobRowFrame"),
+            (new Aw.Sindri.Ui.Views.Connections.ConnectionRow(), "ConnectionRowFrame"),
+            (new Aw.Sindri.Ui.Views.Agents.SessionRow(), "SessionRowFrame"),
+            (new Aw.Sindri.Ui.Views.Agents.EndedSessionRow(), "EndedRowFrame"),
+            (new NeedsYouRow(), "RowFrame"),
+        };
+        foreach (var (view, name) in frames)
+        {
+            var frame = view.FindControl<Border>(name) ?? throw new InvalidOperationException($"{view.GetType().Name} has no {name}");
+            Assert.True(frame.Classes.Contains("clickable"), $"{view.GetType().Name}.{name} is not clickable");
+        }
+
+        // The row sits two templates deep (groups, then rows), so each built template is searched for the next list.
+        var linear = Templated(new Aw.Sindri.Ui.Views.Linear.LinearWorkView()).OfType<Border>()
+            .Single(b => string.Equals(b.Name, "LinearRowFrame", StringComparison.Ordinal));
+        Assert.Contains("clickable", linear.Classes, StringComparer.Ordinal);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task A_selected_card_lifts_one_step_more_under_the_pointer() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, card) = await OnFirstCard();
+        card.Classes.Add("selected"); // a selected row rests on Surface2, the hover fill
+
+        _ = await PointAt(window, () => Corner(window, card), card);
+
+        Assert.Equal(TokenColor("Brush.Surface3"), ((ISolidColorBrush)card.Background!).Color);
+    });
+
+    [Fact]
+    public Task A_card_with_the_keyboard_ring_keeps_it_while_pressed() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, card) = await OnFirstCard();
+        Assert.True(card.Focus(NavigationMethod.Tab));
+        Settle(window);
+        Assert.Contains(":focus-visible", card.Classes, StringComparer.Ordinal);
+
+        ((IPseudoClasses)card.Classes).Set(":pressed", value: true);
+        Settle(window);
+
+        Assert.Equal(TokenColor("Brush.PrimaryHover"), ((ISolidColorBrush)card.BorderBrush!).Color);
+    });
+
+    [Fact]
+    public Task A_press_that_starts_on_a_child_holds_when_the_pointer_leaves_and_ends_on_release_outside() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, card) = await OnFirstCard();
+        var text = card.GetVisualDescendants().OfType<TextBlock>()
+            .First(t => t.IsEffectivelyVisible && !t.GetVisualAncestors().TakeWhile(a => !ReferenceEquals(a, card)).OfType<Button>().Any());
+        text.Background = Brushes.Transparent; // a TextBlock without a fill never takes the hit; a chip or a filled label does
+        // The row is still sliding in, so the label's point is read again until the pointer is on it.
+        var on = await PointAt(window, () => text.TranslatePoint(new Point(2, text.Bounds.Height / 2), window)!.Value, text);
+        Assert.True(ReferenceEquals(text, window.InputHitTest(on)), $"the press lands on {Describe(window.InputHitTest(on))}, not the label");
+
+        window.MouseDown(on, MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
+        var away = new Point(1, 1);
+        window.MouseMove(away, RawInputModifiers.LeftMouseButton);
+        Settle(window);
+
+        Assert.Contains(":pressed", card.Classes, StringComparer.Ordinal);
+
+        window.MouseUp(away, MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
+        Assert.DoesNotContain(":pressed", card.Classes, StringComparer.Ordinal);
+    });
+
     [Theory]
     [InlineData("pulsing")]
     [InlineData("steady")]
@@ -213,4 +296,19 @@ public sealed class ClickableStateTests : FrameHost
         TransformOperationsTransition transform => transform.Duration,
         _ => throw new InvalidOperationException($"unexpected transition {transition.GetType().Name}"),
     };
+
+    private static IEnumerable<Control> Templated(Control root)
+    {
+        foreach (var list in root.GetLogicalDescendants().OfType<ItemsControl>().ToList())
+        {
+            if (list.ItemTemplate?.Build(param: null) is { } built)
+            {
+                yield return built;
+                foreach (var inner in Templated(built))
+                {
+                    yield return inner;
+                }
+            }
+        }
+    }
 }
