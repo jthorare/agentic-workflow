@@ -226,7 +226,7 @@ public sealed class MemoryBlockTests
         Assert.Equal([("memory_search", "Recall", BlockGroup.Data), ("memory_write", "Remember", BlockGroup.Logic), ("memory_forget", "Forget", BlockGroup.Logic)],
             new IGraphBlock[] { search, write, forget }.Select(static b => (b.Type, b.Title, b.Group)));
         Assert.Equal(["facts", "mode"], search.OutputsFor([]).Fields.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
-        Assert.Equal(["action", "id"], write.OutputsFor([]).Fields.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["action", "id", "warning"], write.OutputsFor([]).Fields.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.Equal(["count"], forget.OutputsFor([]).Fields.Keys, StringComparer.Ordinal);
     }
 
