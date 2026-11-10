@@ -7,6 +7,9 @@ using Avalonia.Media;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.NeedsYou;
+using Aw.Sindri.Ui.Views.NeedsYou;
 using Aw.Sindri.Ui.Tests.Views;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
@@ -79,5 +82,27 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
         Assert.DoesNotContain(":pressed", card.Classes, StringComparer.Ordinal);
         Assert.Equal(TokenColor("Brush.Hover"), ((ISolidColorBrush)card.Background!).Color);
+    });
+
+    [Theory]
+    [InlineData("pulsing")]
+    [InlineData("steady")]
+    [InlineData("subtle")]
+    public Task The_pointer_over_a_tinted_Needs_You_row_shows_the_hover_background(string tint) => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        var (window, shell) = await Connected();
+        shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Park(), NeedsYouRows.Failure(), NeedsYouRows.Profile()], ""));
+        Settle(window);
+        var row = window.GetVisualDescendants().OfType<NeedsYouRow>().Where(r => r.IsEffectivelyVisible)
+            .SelectMany(r => r.GetVisualDescendants().OfType<Border>()).First(b => b.Name == "RowFrame" && b.Classes.Contains(tint));
+        var rest = ((ISolidColorBrush)row.Background!).Color;
+
+        window.MouseMove(row.TranslatePoint(new Point(4, 4), window)!.Value, RawInputModifiers.None);
+        Settle(window);
+
+        Assert.True(row.IsPointerOver);
+        Assert.Equal(TokenColor("Brush.Hover"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.NotEqual(rest, ((ISolidColorBrush)row.Background!).Color);
     });
 }
