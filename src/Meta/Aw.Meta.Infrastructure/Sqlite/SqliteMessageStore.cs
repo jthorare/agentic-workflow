@@ -61,6 +61,26 @@ internal sealed class SqliteMessageStore(MetaDatabase database) : IMessageStore
             cancellationToken);
     }
 
+    public ValueTask<Result<Unit>> MarkShown(IReadOnlyList<MessageId> ids, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        return database.Write(
+            async work =>
+            {
+                foreach (var id in ids)
+                {
+                    var changed = await SqliteQueries.Execute(work, MessageSql.MarkShown(id, at), cancellationToken).ConfigureAwait(false);
+                    if (changed.IsError)
+                    {
+                        return changed.Error;
+                    }
+                }
+
+                return Results.Ok();
+            },
+            cancellationToken);
+    }
+
     public ValueTask<Result<Unit>> RecordOutbound(Outbound sent, CancellationToken cancellationToken) =>
         database.Run(MessageSql.InsertOutbound(sent), cancellationToken);
 

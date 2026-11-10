@@ -30,6 +30,17 @@ fi
 echo "$*" >> "$CALLS"
 echo "$1|${AW_META_HOOK:-}" >> "$HOOKLOG"   # the command and the hook event the caller named (none: a hand-typed run)
 if [ "$1" = outbox-record ] || [ "$1" = lane-reply ]; then cat > "$STDIN_SEEN"; fi
+# inbox as the real one behaves (#2498): STUB_INBOX_EMPTY=1 = nothing open, STUB_INBOX_BODY = one open message. Plain `inbox` always
+# prints (the empty line "nothing in the inbox", or the body); `inbox --once` prints a body only the first time (STUB_ONCE_FILE) and
+# nothing when the inbox is empty.
+if [ "$1" = inbox ] && { [ -n "${STUB_INBOX_EMPTY:-}" ] || [ -n "${STUB_INBOX_BODY:-}" ]; }; then
+  if [ "$2" = --once ]; then
+    if [ -n "${STUB_INBOX_BODY:-}" ] && ! grep -qxF "$STUB_INBOX_BODY" "$STUB_ONCE_FILE" 2> /dev/null; then
+      echo "$STUB_INBOX_BODY" | tee -a "$STUB_ONCE_FILE"
+    fi
+  elif [ -n "${STUB_INBOX_BODY:-}" ]; then echo "$STUB_INBOX_BODY"; else echo "nothing in the inbox"; fi
+  exit 0
+fi
 [ -n "${STUB_OUT:-}" ] && echo "$STUB_OUT"
 # lane-reply answers STUB_REPLY_RC when set (a lane that records its reply and is still blocked), else STUB_RC like every command
 if [ "$1" = lane-reply ]; then exit "${STUB_REPLY_RC:-${STUB_RC:-0}}"; fi
@@ -397,7 +408,7 @@ check "role-set failing: the cause is logged" "$?" "0"
 
 : > "$CALLS"
 OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_OUT="a message" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
-check "meta lane: UserPromptSubmit prints the meta inbox (aw-meta inbox) and runs no lane command" "$OUT:$(cat "$CALLS")" "a message:inbox"
+check "meta lane: UserPromptSubmit prints the meta inbox (aw-meta inbox --once) and runs no lane command" "$OUT:$(cat "$CALLS")" "a message:inbox --once"
 printf '%s' '{"hook_event_name":"Stop","session_id":"s-9","stop_hook_active":false,"last_assistant_message":"REPLY TO META: ok"}' > "$WORK/stop-meta.json"
 : > "$CALLS"
 AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_RC=1 STUB_OUT="owes" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/stop-meta.json" 2> "$WORK/err"; RC=$?
@@ -476,6 +487,25 @@ check "C5 meta lane Stop: passes, nothing called, trace meta-lane" "$RC:$(cat "$
 clear_lane
 OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
 check "C5 meta lane with an empty inbox prints nothing" "$OUT" ""
+
+# #2498: an empty meta inbox injects no text (the real `aw-meta inbox` prints "nothing in the inbox"), and an open body is shown once
+export STUB_ONCE_FILE="$WORK/inbox-once"
+clear_lane; unlink "$STUB_ONCE_FILE" 2> /dev/null
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_INBOX_EMPTY=1 bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
+check "C5 meta lane, nothing open in the inbox: UserPromptSubmit prints nothing" "$OUT" ""
+clear_lane
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_INBOX_EMPTY=1 bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/start-meta.json")"
+check "C5 meta lane, nothing open in the inbox: SessionStart prints nothing" "$OUT" ""
+clear_lane; unlink "$STUB_ONCE_FILE" 2> /dev/null
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_INBOX_BODY="m1 api reply open do the thing" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
+check "C5 meta lane, open message: the first run prints its body" "$OUT" "m1 api reply open do the thing"
+clear_lane
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_INBOX_BODY="m1 api reply open do the thing" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
+check "C5 meta lane, same open message: the second run prints nothing" "$OUT" ""
+clear_lane
+OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_INBOX_BODY="m1 api reply open do the thing" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/start-meta.json")"
+check "C5 meta lane, same open message: SessionStart prints nothing too" "$OUT" ""
+unset STUB_ONCE_FILE
 
 # C6: AfterAgentResponse records the reply, never runs lane-stop-check; Stop does not record it again
 clear_lane
