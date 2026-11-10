@@ -49,5 +49,5 @@ internal sealed class ToolkitProcess(ISandbox sandbox, ISandboxLaunchInputs inpu
         return new SandboxedToolkitProcess(client.Value, sandbox, plan.Value);
     }
 
-    internal static string? BinaryOf(Toolkit toolkit) => FileToolkitWorkspace.FindBinary(toolkit.Dir, toolkit.Name);
+    internal static string? BinaryOf(Toolkit toolkit) => FileToolkitWorkspace.FindBinary(toolkit.Dir);
 }

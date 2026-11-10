@@ -30,21 +30,48 @@ internal sealed class FileToolkitWorkspace : IToolkitWorkspace
         }
     }
 
-    public Result<string> BinaryOf(string dir, string name) =>
-        FindBinary(dir, name) is { } binary
-            ? binary
-            : SindriErrors.ToolkitManifestInvalid.With($"the build left no binary named {name} under {Path.Combine(dir, "bin")}");
+    public Result<string> BinaryOf(string dir, string name) => ResolveBinary(dir);
 
-    /// <summary>The newest file named <paramref name="name"/> under the folder's bin, what `dotnet build` or a publish left, or null.</summary>
+    /// <summary>The toolkit's apphost: the file named by the folder's one *.Toolkit.csproj (its AssemblyName, else the csproj's own name) under bin, the newest when a build left several.</summary>
     /// <param name="dir">The toolkit's folder.</param>
-    /// <param name="name">The toolkit name.</param>
-    /// <returns>The absolute path, or null.</returns>
-    internal static string? FindBinary(string dir, string name)
+    /// <returns>The absolute path, or SND-TK-003 saying which part is missing.</returns>
+    internal static Result<string> ResolveBinary(string dir)
     {
-        var bin = Path.Combine(dir, "bin");
-        return Directory.Exists(bin)
-            ? Directory.EnumerateFiles(bin, name, SearchOption.AllDirectories).OrderByDescending(static f => File.GetLastWriteTimeUtc(f)).FirstOrDefault()
-            : null;
+        try
+        {
+            var projects = Directory.GetFiles(dir, "*.Toolkit.csproj", SearchOption.TopDirectoryOnly);
+            if (projects.Length != 1)
+            {
+                return SindriErrors.ToolkitManifestInvalid.With($"{dir} needs exactly one *.Toolkit.csproj to name its binary, and has {projects.Length.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+            }
+
+            var assembly = AssemblyName(projects[0]);
+            var file = OperatingSystem.IsWindows() ? assembly + ".exe" : assembly;
+            var bin = Path.Combine(dir, "bin");
+            var found = Directory.Exists(bin)
+                ? Directory.EnumerateFiles(bin, file, SearchOption.AllDirectories).OrderByDescending(static f => File.GetLastWriteTimeUtc(f)).FirstOrDefault()
+                : null;
+            return found ?? (Result<string>)SindriErrors.ToolkitManifestInvalid.With($"the build left no binary named {file} under {bin}");
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Xml.XmlException)
+        {
+            return SindriErrors.ToolkitManifestInvalid.With($"the binary of {dir} can't be found: {e.Message}");
+        }
+    }
+
+    /// <summary>The binary's path, or null (what a start needs; <see cref="ResolveBinary"/> says why not).</summary>
+    /// <param name="dir">The toolkit's folder.</param>
+    /// <returns>The absolute path, or null.</returns>
+    internal static string? FindBinary(string dir)
+    {
+        var found = ResolveBinary(dir);
+        return found.IsSuccess ? found.Value : null;
+    }
+
+    private static string AssemblyName(string csproj)
+    {
+        var declared = System.Xml.Linq.XDocument.Load(csproj).Descendants("AssemblyName").Select(static e => e.Value.Trim()).FirstOrDefault(static v => v.Length > 0);
+        return declared ?? Path.GetFileNameWithoutExtension(csproj);
     }
 
     private static bool IsSkipped(string relative) => _skipped.Contains(relative.Split('/', '\\')[0], StringComparer.Ordinal);
