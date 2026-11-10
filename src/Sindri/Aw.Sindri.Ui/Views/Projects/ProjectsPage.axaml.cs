@@ -57,6 +57,8 @@ internal sealed partial class ProjectsPage : UserControl
 
     private void OnAdd(object? sender, RoutedEventArgs e) => (DataContext as ProjectsPageViewModel)?.RequestAdd();
 
+    private void OnConnect(object? sender, RoutedEventArgs e) => (DataContext as ProjectsPageViewModel)?.RequestConnect();
+
     // After the list is read again and the sheet has closed: the next card's frame, the Add button, or a fold's button. The empty block's
     // Add button stands in when the header's is not usable, and the page title when neither is.
     private void OnFocusRequested(object? sender, ProjectFocusEventArgs e) =>
@@ -68,7 +70,7 @@ internal sealed partial class ProjectsPage : UserControl
             .FirstOrDefault(c => c is { DataContext: ProjectCardViewModel card } && string.Equals(card.Id, e.CardId, StringComparison.Ordinal))?.FindControl<Border>("ProjectCardFrame"),
         ProjectFocus.HiddenFold => FoldButton("ProjectsHidden"),
         ProjectFocus.FinishedFold => FoldButton("ProjectsFinished"),
-        ProjectFocus.Add => this.FindControl<Button>("ProjectsAdd") is { IsEnabled: true } add ? add : this.FindControl<Button>("ProjectsAddEmpty") is { IsEnabled: true, IsEffectivelyVisible: true } empty ? empty : this.FindControl<TextBlock>("ProjectsTitle"),
+        ProjectFocus.Add => this.FindControl<Button>("ProjectsAdd") is { IsEnabled: true } add ? add : this.FindControl<TextBlock>("ProjectsTitle"),
         _ => null,
     };
 

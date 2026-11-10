@@ -6,7 +6,7 @@
        headers as quiet toggles, timeline entries on a hairline. Tokens only. -->
   <Style Selector="Border.item-row">
     <Setter Property="Padding" Value="16,0" />
-    <Setter Property="MinHeight" Value="36" />
+    <Setter Property="MinHeight" Value="{StaticResource Row.Height.Default}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="0,1,0,0" />
   </Style>
@@ -70,7 +70,7 @@
     <Setter Property="BorderThickness" Value="0,1,0,0" />
     <Setter Property="CornerRadius" Value="0" />
     <Setter Property="Padding" Value="16,0" />
-    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="MinHeight" Value="{StaticResource Row.Height.Default}" />
     <Setter Property="Margin" Value="0,12,0,0" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
