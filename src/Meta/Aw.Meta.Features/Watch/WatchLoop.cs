@@ -22,10 +22,23 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// <summary>Records main as the board's first move when the board holds none yet (the watch's start).</summary>
     internal Func<string, ValueTask<Result<Unit>>> SeedMain { get; init; } = static _ => ValueTask.FromResult<Result<Unit>>(Unit.Value);
 
+    /// <summary>Keeps the pull requests and main's sha after each good poll, so the next run diffs its first poll against them.</summary>
+    internal Func<WatchState, ValueTask> KeepSnapshot { get; init; } = static _ => ValueTask.CompletedTask;
+
+    /// <summary>Keeps whether polls are failing, whenever that changes (a failing streak spans runs).</summary>
+    internal Func<bool, ValueTask> KeepFailing { get; init; } = static _ => ValueTask.CompletedTask;
+
+    /// <summary>The state the first poll diffs against: the last poll of an earlier run, or the state before any poll.</summary>
+    internal WatchState Baseline { init => _state = value; }
+
+    /// <summary>Whether the earlier run ended on a failing poll: the streak's next errors are not events.</summary>
+    internal bool Failing { init => _failing = value; }
+
     private WatchState _state = WatchState.Continuing(reported);
     private WatchResources _kept = reported;
     private int? _inbox;
     private bool _failing;
+    private bool _started;
     private IReadOnlySet<string> _high = context.High;
 
     /// <summary>How many inbox messages were still owed a reply at the last poll.</summary>
@@ -40,19 +53,16 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         var polled = await poller.Poll(team, cancellationToken).ConfigureAwait(false);
         if (polled.IsError)
         {
-            if (!_failing)
-            {
-                await Say($"WATCH ERROR: {polled.Error.Code}: {polled.Error.Message.ReplaceLineEndings(" ")}").ConfigureAwait(false);
-            }
-
-            _failing = true;
+            await Failed(polled.Error).ConfigureAwait(false);
             return;
         }
 
-        _failing = false;
+        await Recovered().ConfigureAwait(false);
+
         var step = WatchDiff.Step(_state, polled.Value.Snapshot);
-        if (!_state.Initialized)
+        if (!_started)
         {
+            _started = true;
             await Say(Started(polled.Value.Snapshot)).ConfigureAwait(false);
             await SeedBoard(polled.Value.Snapshot).ConfigureAwait(false);
         }
@@ -72,7 +82,30 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
 
         (_inbox, Open) = (polled.Value.Inbox, polled.Value.Open);
         _state = step.State;
+        await KeepSnapshot(_state).ConfigureAwait(false);
         await Remember().ConfigureAwait(false);
+    }
+
+    // The first failed poll of a streak (which can span runs) says WATCH ERROR; the rest say nothing.
+    private async ValueTask Failed(Error error)
+    {
+        if (_failing)
+        {
+            return;
+        }
+
+        _failing = true;
+        await KeepFailing(true).ConfigureAwait(false);
+        await Say($"WATCH ERROR: {error.Code}: {error.Message.ReplaceLineEndings(" ")}").ConfigureAwait(false);
+    }
+
+    private async ValueTask Recovered()
+    {
+        if (_failing)
+        {
+            _failing = false;
+            await KeepFailing(false).ConfigureAwait(false);
+        }
     }
 
     // The lanes' standing: context sizes, then usage limits. Neither can fail the poll.
@@ -160,10 +193,18 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         }
     }
 
+    /// <summary>How many lines were emitted that report something (every line but the start line).</summary>
+    internal int Events { get; private set; }
+
     /// <summary>Emits one line.</summary>
     internal async ValueTask Say(string line)
     {
         Lines++;
+        if (!line.StartsWith("WATCH started", StringComparison.Ordinal))
+        {
+            Events++;
+        }
+
         await emit(line).ConfigureAwait(false);
     }
 
