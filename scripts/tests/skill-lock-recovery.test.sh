@@ -79,4 +79,20 @@ reclaim_once >/dev/null; reclaim_once >/dev/null
 check "an old empty guard is cleared and the dead owner's lock removed within two reclaims" "$([ -e "$LF" ] && echo kept || echo removed)" "removed"
 rm -rf "$G" "$LF"
 
+# --- two overlapping reclaims (#2616): the last one out removes the guard, so no empty young guard blocks the next reclaim ---
+# A copy of the lock script with a sleep after the announce line holds both reclaimers in the guard at the same time.
+SLOW="$WORK/skill-lock-slow.sh"
+sed '/^  : > "\$guard\/\$\$" 2>\/dev\/null || return 1$/a\
+  if [ "$winner" = 1 ]; then sleep 0.3; else sleep 0.6; fi' "$LOCK" >"$SLOW"
+check "precondition: the slowed copy has the sleep after the announce line" "$(grep -c 'sleep 0.6; fi' "$SLOW")" "1"
+rm -rf "$G" "$LF"; mkdir -p "$AW_STATE_DIR"; dead_pid >"$LF"
+bash -c 'LOCK_NAME=browser source "$1"; set +e; _lock_reclaim' _ "$SLOW" >/dev/null 2>&1 & r1=$!
+sleep 0.01
+bash -c 'LOCK_NAME=browser source "$1"; set +e; _lock_reclaim' _ "$SLOW" >/dev/null 2>&1 & r2=$!
+wait "$r1" 2>/dev/null || true; wait "$r2" 2>/dev/null || true
+check "after two overlapping reclaims the guard is gone" "$([ -d "$G" ] && echo exists || echo gone)" "gone"
+dead_pid >"$LF"
+check "a dead lock right after the race is reclaimed at once" "$(reclaim_once):$([ -e "$LF" ] && echo kept || echo removed)" "0:removed"
+rm -f "$LF"; rmdir "$G" 2>/dev/null || true
+
 exit "$fail"
