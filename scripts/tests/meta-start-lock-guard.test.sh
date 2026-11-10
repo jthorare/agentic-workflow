@@ -110,5 +110,22 @@ mkdir "$G4"; touch -d '5 minutes ago' "$G4"
 ( start_lock="$L4"; lane_pid=$$; lane=x; . "$MSL"; take_over_dead x; take_over_dead x ) 2> /dev/null
 check "an old empty guard does not block the takeover: the lock is gone after two calls" "$([ -L "$L4" ] && echo kept || echo unlinked)" "unlinked"
 
+# --- case 5: two overlapping takers leave no empty guard behind (#2631) ---
+# A copy of the lib with a sleep after the announce line holds both takers in the guard at the same time. Each sees the other's
+# live pid file and backs off. The last one out must remove the guard, or the next taker finds an empty young guard and leaves.
+L5="$WORK/e.lock"; G5="$L5.takeover"; SLOW="$WORK/meta-start-lock-slow.sh"
+sed '/^  : > "\$guard\/\$lane_pid" 2> \/dev\/null || return 0$/a\
+  if [ "$winner" = 1 ]; then sleep 0.6; else sleep 0.9; fi' "$MSL" > "$SLOW"
+check "case 5 precondition: the slowed copy has the sleep after the announce line" "$(grep -c 'sleep 0.9; fi' "$SLOW")" "1"
+ln -s "$(dead_pid)" "$L5"
+bash -c 'start_lock="$1"; lane_pid=$$; lane=a; . "$2"; take_over_dead x' _ "$L5" "$SLOW" > /dev/null 2>&1 & r1=$!
+sleep 0.01
+bash -c 'start_lock="$1"; lane_pid=$$; lane=b; . "$2"; take_over_dead x' _ "$L5" "$SLOW" > /dev/null 2>&1 & r2=$!
+wait "$r1" 2> /dev/null; wait "$r2" 2> /dev/null
+check "after two overlapping takers the guard is gone" "$([ -d "$G5" ] && echo exists || echo gone)" "gone"
+[ -L "$L5" ] || ln -s "$(dead_pid)" "$L5"
+( start_lock="$L5"; lane_pid=$$; lane=c; . "$MSL"; take_over_dead x ) 2> /dev/null
+check "a dead lock right after the race is taken over at once" "$([ -L "$L5" ] && echo kept || echo unlinked)" "unlinked"
+
 if [ "$fail" -eq 0 ]; then echo "meta-start-lock-guard: all passed"; else echo "meta-start-lock-guard: FAILED"; fi
 exit $fail
