@@ -8,19 +8,36 @@ public static class MergeGate
 {
     private const string NoGate = "no gate recorded for this pull request";
 
-    /// <summary>Evaluates every precondition: gate, gate-result, head, main, order, draft. With no gate recorded, only
-    /// the gate check: the pull request isn't looked up then, so order and draft would report defaults, not facts.</summary>
+    /// <summary>Evaluates every precondition: gate, gate-result, head, main, order, draft. With no gate recorded and no reviewer
+    /// lane, only the gate check. With a reviewer lane (<see cref="MergeFacts.Review"/>), the review path (review, ready, counts, order, draft) is
+    /// enough on its own, with no check against main; a red gate recorded at the current head still refuses.</summary>
     /// <param name="facts">What is known about the pull request and main.</param>
     /// <returns>One check per precondition, in that order.</returns>
     public static IReadOnlyList<MergeCheck> Evaluate(MergeFacts facts)
     {
         ArgumentNullException.ThrowIfNull(facts);
         var gate = facts.Gate;
-        if (gate is null)
+        var review = facts.Review is null ? null : ReviewChecks(facts, facts.Review);
+        if (gate is null || review is null || !review.All(check => check.Ok))
         {
-            return [new MergeCheck("gate", Ok: false, NoGate + "; run aw-meta gate-run " + facts.Pr.ToString(CultureInfo.InvariantCulture))];
+            return gate is null ? NoGateChecks(facts, review) : GateChecks(facts, gate);
         }
 
+        // A red gate recorded at this head still refuses; a gate at another head says nothing about it.
+        var red = gate.Head == facts.CurrentHead ? GateResult(gate, facts.FailingTests, facts.FailureCounts) : null;
+        return red is { Ok: false } ? [.. review, red] : review;
+    }
+
+    private static MergeCheck[] NoGateChecks(MergeFacts facts, MergeCheck[]? review)
+    {
+        var hint = NoGate + "; run aw-meta gate-run " + facts.Pr.ToString(CultureInfo.InvariantCulture);
+        return review is null ? [new MergeCheck("gate", Ok: false, hint)]
+            : review.All(check => check.Ok) ? review
+            : [.. review, new MergeCheck("gate", Ok: false, hint + ", or complete the review checks above")];
+    }
+
+    private static MergeCheck[] GateChecks(MergeFacts facts, GateRecord gate)
+    {
         return
         [
             new MergeCheck("gate", Ok: true, "gate run " + gate.Run.ToString(CultureInfo.InvariantCulture) + " at " + gate.Head),
@@ -31,6 +48,29 @@ public static class MergeGate
             Order(facts),
             new MergeCheck("draft", !facts.IsDraft, facts.IsDraft ? "the pull request is a draft" : "ready for review"),
         ];
+    }
+
+    // The review path: the reviewer's OK at the head, the lane's ready at the head, its counts, order and draft. Nothing is checked against main.
+    private static MergeCheck[] ReviewChecks(MergeFacts facts, ReviewFacts review)
+    {
+        var pr = facts.Pr.ToString(CultureInfo.InvariantCulture);
+        var ok = review.OkSha is null
+            ? new MergeCheck("review", Ok: false, $"no \"OK #{pr} at <sha>\" from {review.Reviewer}")
+            : ReviewProof.IsHead(review.OkSha, facts.CurrentHead)
+                ? new MergeCheck("review", Ok: true, $"{review.Reviewer} said OK at {review.OkSha}")
+                : new MergeCheck("review", Ok: false, $"{review.Reviewer}'s newest OK is at {review.OkSha}, the head is {facts.CurrentHead}");
+        var ready = review.ReadySha is null
+            ? new MergeCheck("ready", Ok: false, $"no ready message for #{pr} naming a sha")
+            : ReviewProof.IsHead(review.ReadySha, facts.CurrentHead)
+                ? new MergeCheck("ready", Ok: true, $"ready at {review.ReadySha}")
+                : new MergeCheck("ready", Ok: false, $"the newest ready is at {review.ReadySha}, the head is {facts.CurrentHead}");
+        var failed = review.Counts.Where(c => c.Failed > 0).ToList();
+        var counts = review.Counts.Count == 0
+            ? new MergeCheck("counts", Ok: false, "the ready message has no \"N passed, M skipped, K failed\" line")
+            : failed.Count > 0
+                ? new MergeCheck("counts", Ok: false, $"the ready message counts {failed.Sum(c => c.Failed).ToString(CultureInfo.InvariantCulture)} failed")
+                : new MergeCheck("counts", Ok: true, $"{review.Counts.Count.ToString(CultureInfo.InvariantCulture)} count line(s), 0 failed");
+        return [ok, ready, counts, Order(facts), new MergeCheck("draft", !facts.IsDraft, facts.IsDraft ? "the pull request is a draft" : "ready for review")];
     }
 
     private static MergeCheck GateResult(GateRecord gate, IReadOnlyDictionary<string, IReadOnlyList<string>> failing, IReadOnlyDictionary<string, (int Summarized, int Named)> counts)

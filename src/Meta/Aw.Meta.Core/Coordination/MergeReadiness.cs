@@ -10,7 +10,7 @@ namespace Aw.Meta.Core.Coordination;
 
 /// <summary>
 /// Gathers the facts the merge gate decides on (the recorded gates, GitHub's view of the pull request, origin/main, the earlier
-/// pull requests it must wait for) and runs MergeGate over them. A pull request that was never gated is refused without asking GitHub.
+/// pull requests it must wait for) and runs MergeGate over them. A pull request that was never gated and has no reviewer lane is refused without asking GitHub.
 /// </summary>
 /// <param name="config">The team config.</param>
 /// <param name="gates">The recorded gate runs.</param>
@@ -19,11 +19,6 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="messages">The lanes' messages, where a reviewer's OK and a lane's ready notice are read.</param>
 public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCommands repo, ILogFiles logs, IMessageStore messages)
 {
-    // The reviewer path (#2610) reads the lanes' messages through this; nothing does yet.
-#pragma warning disable CA1822, MA0041 // a stub: the reviewer path will read the instance's messages
-    internal IMessageStore Messages => messages;
-#pragma warning restore CA1822, MA0041
-
     private const string Fields = "headRefOid,isDraft,title,state";
     private const int LogCharacters = 32 * 1024 * 1024;
 
@@ -40,7 +35,13 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
             return team.IsError ? team.Error : history.Error;
         }
 
-        if (history.Value.Count == 0)
+        var review = await Review(team.Value, pr, cancellationToken).ConfigureAwait(false);
+        if (review.IsError)
+        {
+            return review.Error;
+        }
+
+        if (history.Value.Count == 0 && review.Value is null)
         {
             return NeverGated(team.Value, pr);
         }
@@ -51,27 +52,64 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
             return current.Error;
         }
 
-        var (view, main) = current.Value;
-        var (gate, repoPassed, scopeRuns) = Choose(history.Value, view.Head, team.Value.Gate);
+        return history.Value.Count == 0
+            ? await Ungated(team.Value, pr, review.Value, current.Value).ConfigureAwait(false)
+            : await Gated(team.Value, pr, history.Value, review.Value, current.Value).ConfigureAwait(false);
+    }
+
+    // No gate recorded, but the team has a reviewer lane: the review checks, order and draft decide.
+    private async ValueTask<MergeAssessment> Ungated(TeamConfig team, int pr, ReviewFacts? review, (PrDetails View, string Main) current)
+    {
+        var (view, main) = current;
+        var facts = new MergeFacts
+        {
+            Pr = pr,
+            Review = review,
+            CurrentHead = view.Head,
+            CurrentMain = main,
+            IsDraft = view.IsDraft,
+            OpenPrs = await OpenBefore(team, pr).ConfigureAwait(false),
+            MergeOrder = team.MergeOrder,
+        };
+        return new MergeAssessment(team, [.. MergeGate.Evaluate(facts), State(view)], view);
+    }
+
+    private async ValueTask<MergeAssessment> Gated(TeamConfig team, int pr, IReadOnlyList<GateRecord> history, ReviewFacts? review, (PrDetails View, string Main) current)
+    {
+        var (view, main) = current;
+        var (gate, repoPassed, scopeRuns) = Choose(history, view.Head, team.Gate);
         var (names, counts) = await FailingTests(gate).ConfigureAwait(false);
         var facts = new MergeFacts
         {
             Pr = pr,
+            Review = review,
             Gate = gate,
             CurrentHead = view.Head,
             CurrentMain = main,
             IsDraft = view.IsDraft,
-            DeltaPaths = await Delta(team.Value.Repo, gate, view.Head).ConfigureAwait(false),
+            DeltaPaths = await Delta(team.Repo, gate, view.Head).ConfigureAwait(false),
             RepoGatePassedOnHead = repoPassed,
-            OpenPrs = await OpenBefore(team.Value, pr).ConfigureAwait(false),
-            MergeOrder = team.Value.MergeOrder,
-            DocsOnly = team.Value.Gate.DocsOnly,
-            PlannedScopes = await Planned(team.Value, gate).ConfigureAwait(false),
+            OpenPrs = await OpenBefore(team, pr).ConfigureAwait(false),
+            MergeOrder = team.MergeOrder,
+            DocsOnly = team.Gate.DocsOnly,
+            PlannedScopes = await Planned(team, gate).ConfigureAwait(false),
             ScopeRuns = scopeRuns,
             FailingTests = names,
             FailureCounts = counts,
         };
-        return new MergeAssessment(team.Value, [.. MergeGate.Evaluate(facts with { MergedTree = await MergedTree(team.Value.Repo, gate, main).ConfigureAwait(false) }), State(view)], view);
+        return new MergeAssessment(team, [.. MergeGate.Evaluate(facts with { MergedTree = await MergedTree(team.Repo, gate, main).ConfigureAwait(false) }), State(view)], view);
+    }
+
+    // Null when the team has no reviewer lane.
+    private async ValueTask<Result<ReviewFacts?>> Review(TeamConfig team, int pr, CancellationToken cancellationToken)
+    {
+        if (team.Review is not { } review)
+        {
+            return Results.Success<ReviewFacts?>(value: null);
+        }
+
+        var all = await messages.Messages(cancellationToken).ConfigureAwait(false);
+        return all.IsError ? all.Error : Results.Success<ReviewFacts?>(ReviewProof.Collect(all.Value, $"{team.Team}-{review.Lane}", pr));
     }
 
     private static MergeAssessment NeverGated(TeamConfig team, int pr) =>
