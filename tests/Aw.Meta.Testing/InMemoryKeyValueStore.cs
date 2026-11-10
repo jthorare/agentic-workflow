@@ -18,4 +18,8 @@ public sealed class InMemoryKeyValueStore : IKeyValueStore
         _values[key] = value;
         return Done.Unit();
     }
+
+    /// <inheritdoc />
+    public ValueTask<Result<bool>> SetIf(string key, string? expected, string value, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
 }

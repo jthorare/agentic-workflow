@@ -24,4 +24,7 @@ internal sealed class SqliteKeyValueStore(MetaDatabase database) : IKeyValueStor
                 c => c.Bind("$key", key).Bind("$value", value),
                 "kv " + key),
             cancellationToken);
+
+    public ValueTask<Result<bool>> SetIf(string key, string? expected, string value, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
 }

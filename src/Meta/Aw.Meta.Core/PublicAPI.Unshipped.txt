@@ -994,6 +994,7 @@ Aw.Meta.Core.Ports.IHostResources.Read(System.Threading.CancellationToken cancel
 Aw.Meta.Core.Ports.IKeyValueStore
 Aw.Meta.Core.Ports.IKeyValueStore.Get(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Meta.Core.Ports.IKeyValueStore.Set(string! key, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.IKeyValueStore.SetIf(string! key, string? expected, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Meta.Core.Ports.ILaneFiles
 Aw.Meta.Core.Ports.ILaneFiles.Record(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneRecord?>!>
 Aw.Meta.Core.Ports.ILaneMail
