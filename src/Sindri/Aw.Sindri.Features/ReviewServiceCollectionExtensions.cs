@@ -36,7 +36,7 @@ internal static class ReviewServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services
-            .AddScoped<IValidator<ListReviewsRequest>, AcceptAllValidator<ListReviewsRequest>>().AddQuery<ListReviewsRequest, ListReviewsResponse, ListReviewsService>()
+            .AddScoped<ReviewAccountReader>().AddScoped<IValidator<ListReviewsRequest>, AcceptAllValidator<ListReviewsRequest>>().AddQuery<ListReviewsRequest, ListReviewsResponse, ListReviewsService>()
             .AddScoped<IValidator<GetReviewPageRequest>, AcceptAllValidator<GetReviewPageRequest>>().AddQuery<GetReviewPageRequest, ReviewPageModel, GetReviewPageService>()
             .AddScoped<IReviewPageStore, ContextReviewPageStore>().AddScoped<ReviewPageReader>().AddScoped<ReviewPageFactsReader>().AddScoped<ReviewPageCache>().AddScoped<ReviewPageLibraryReader>()
             .AddScoped<IReviewFacts, ContextReviewFacts>()
