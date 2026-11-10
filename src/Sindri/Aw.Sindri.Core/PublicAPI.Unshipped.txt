@@ -18406,9 +18406,11 @@ Aw.Sindri.Core.Todos.Note.NoteHold
 Aw.Sindri.Core.Todos.Note.NoteHold.Changes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
 Aw.Sindri.Core.Todos.Note.NoteHold.Changes.init -> void
 Aw.Sindri.Core.Todos.Note.NoteHold.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteHold!
-Aw.Sindri.Core.Todos.Note.NoteHold.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes) -> void
+Aw.Sindri.Core.Todos.Note.NoteHold.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes, out int? OpenInBase) -> void
 Aw.Sindri.Core.Todos.Note.NoteHold.Equals(Aw.Sindri.Core.Todos.Note.NoteHold? other) -> bool
-Aw.Sindri.Core.Todos.Note.NoteHold.NoteHold(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes) -> void
+Aw.Sindri.Core.Todos.Note.NoteHold.NoteHold(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes, int? OpenInBase = null) -> void
+Aw.Sindri.Core.Todos.Note.NoteHold.OpenInBase.get -> int?
+Aw.Sindri.Core.Todos.Note.NoteHold.OpenInBase.init -> void
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Dissolved = 4 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.None = 0 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
@@ -20119,11 +20121,13 @@ Aw.Sindri.Core.Events.TodoNoteHeld.By.get -> string!
 Aw.Sindri.Core.Events.TodoNoteHeld.By.init -> void
 Aw.Sindri.Core.Events.TodoNoteHeld.Changes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>!
 Aw.Sindri.Core.Events.TodoNoteHeld.Changes.init -> void
-Aw.Sindri.Core.Events.TodoNoteHeld.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>! Changes, out string! NoteHash, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoNoteHeld.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>! Changes, out string! NoteHash, out string! By, out string? Via, out int? OpenInBase) -> void
 Aw.Sindri.Core.Events.TodoNoteHeld.Equals(Aw.Sindri.Core.Events.TodoNoteHeld? other) -> bool
 Aw.Sindri.Core.Events.TodoNoteHeld.NoteHash.get -> string!
 Aw.Sindri.Core.Events.TodoNoteHeld.NoteHash.init -> void
-Aw.Sindri.Core.Events.TodoNoteHeld.TodoNoteHeld(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>! Changes, string! NoteHash, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoNoteHeld.TodoNoteHeld(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>! Changes, string! NoteHash, string! By, string? Via = null, int? OpenInBase = null) -> void
+Aw.Sindri.Core.Events.TodoNoteHeld.OpenInBase.get -> int?
+Aw.Sindri.Core.Events.TodoNoteHeld.OpenInBase.init -> void
 Aw.Sindri.Core.Events.TodoNoteHeld.Via.get -> string?
 Aw.Sindri.Core.Events.TodoNoteHeld.Via.init -> void
 Aw.Sindri.Core.Events.TodoNoteHeldReopened
@@ -20171,13 +20175,15 @@ Aw.Sindri.Core.Todos.TodoHolds.TodoHolds(Aw.Sindri.Core.Ledger.ILedgerStore! led
 Aw.Sindri.Core.Todos.TodoNoteSides
 Aw.Sindri.Core.Todos.TodoNoteSnapshot
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.<Clone>$() -> Aw.Sindri.Core.Todos.TodoNoteSnapshot!
-Aw.Sindri.Core.Todos.TodoNoteSnapshot.Deconstruct(out string! Hash, out Aw.Sindri.Core.Todos.Note.NoteDocument! Document) -> void
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.Deconstruct(out string! Hash, out Aw.Sindri.Core.Todos.Note.NoteDocument! Document, out long? RawBytes) -> void
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.Document.get -> Aw.Sindri.Core.Todos.Note.NoteDocument!
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.Document.init -> void
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.Equals(Aw.Sindri.Core.Todos.TodoNoteSnapshot? other) -> bool
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.Hash.get -> string!
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.Hash.init -> void
-Aw.Sindri.Core.Todos.TodoNoteSnapshot.TodoNoteSnapshot(string! Hash, Aw.Sindri.Core.Todos.Note.NoteDocument! Document) -> void
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.TodoNoteSnapshot(string! Hash, Aw.Sindri.Core.Todos.Note.NoteDocument! Document, long? RawBytes = null) -> void
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.RawBytes.get -> long?
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.RawBytes.init -> void
 Aw.Sindri.Core.Todos.TodoOpenHold
 Aw.Sindri.Core.Todos.TodoOpenHold.<Clone>$() -> Aw.Sindri.Core.Todos.TodoOpenHold!
 Aw.Sindri.Core.Todos.TodoOpenHold.Changes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
