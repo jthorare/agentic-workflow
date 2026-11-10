@@ -22,8 +22,17 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// <summary>Records main as the board's first move when the board holds none yet (the watch's start).</summary>
     internal Func<string, ValueTask<Result<Unit>>> SeedMain { get; init; } = static _ => ValueTask.FromResult<Result<Unit>>(Unit.Value);
 
-    /// <summary>Keeps the pull requests and main's sha after each good poll, so the next run diffs its first poll against them.</summary>
-    internal Func<WatchState, ValueTask> KeepSnapshot { get; init; } = static _ => ValueTask.CompletedTask;
+    /// <summary>
+    /// Keeps the pull requests and main's sha after each good poll, so the next run diffs its first poll against them.
+    /// Returns the pid of the newer watch when another watch wrote the snapshot meanwhile, and null when it kept it.
+    /// </summary>
+    internal Func<WatchState, ValueTask<string?>> KeepSnapshot { get; init; } = static _ => ValueTask.FromResult<string?>(null);
+
+    /// <summary>Returns the pid of a newer watch that claimed the team's watch, or null while this watch still owns it.</summary>
+    internal Func<ValueTask<string?>> NewerOwner { get; init; } = static () => ValueTask.FromResult<string?>(null);
+
+    /// <summary>The pid of the newer watch that ended this one, or null while this watch is still the newest. A superseded watch writes nothing more.</summary>
+    internal string? Superseded { get; private set; }
 
     /// <summary>Keeps whether polls are failing, whenever that changes (a failing streak spans runs).</summary>
     internal Func<bool, ValueTask> KeepFailing { get; init; } = static _ => ValueTask.CompletedTask;
@@ -51,6 +60,11 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     internal async ValueTask Tick(CancellationToken cancellationToken)
     {
         var polled = await poller.Poll(team, cancellationToken).ConfigureAwait(false);
+        if (await Supersede(await NewerOwner().ConfigureAwait(false)).ConfigureAwait(false))
+        {
+            return;
+        }
+
         if (polled.IsError)
         {
             await Failed(polled.Error).ConfigureAwait(false);
@@ -59,31 +73,56 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
 
         await Recovered().ConfigureAwait(false);
 
-        var step = WatchDiff.Step(_state, polled.Value.Snapshot);
+        var step = await SayPoll(polled.Value).ConfigureAwait(false);
+
+        (_inbox, Open) = (polled.Value.Inbox, polled.Value.Open);
+        _state = step.State;
+        if (await Supersede(await KeepSnapshot(_state).ConfigureAwait(false)).ConfigureAwait(false))
+        {
+            return;
+        }
+
+        await Remember().ConfigureAwait(false);
+    }
+
+    // The lines one good poll yields: the start line (once), the step, the worktrees, new inbox messages, then the lanes' standing.
+    private async ValueTask<WatchStep> SayPoll(Polled poll)
+    {
+        var step = WatchDiff.Step(_state, poll.Snapshot);
         if (!_started)
         {
             _started = true;
-            await Say(Started(polled.Value.Snapshot)).ConfigureAwait(false);
-            await SeedBoard(polled.Value.Snapshot).ConfigureAwait(false);
+            await Say(Started(poll.Snapshot)).ConfigureAwait(false);
+            await SeedBoard(poll.Snapshot).ConfigureAwait(false);
         }
 
-        await SayStep(step, polled.Value.Snapshot).ConfigureAwait(false);
-        foreach (var line in polled.Value.Worktrees)
+        await SayStep(step, poll.Snapshot).ConfigureAwait(false);
+        foreach (var line in poll.Worktrees)
         {
             await Say(line).ConfigureAwait(false);
         }
 
-        if (_inbox is { } before && polled.Value.Inbox > before)
+        if (_inbox is { } before && poll.Inbox > before)
         {
-            await Say(string.Create(CultureInfo.InvariantCulture, $"INBOX {polled.Value.Inbox - before} new message(s)")).ConfigureAwait(false);
+            await Say(string.Create(CultureInfo.InvariantCulture, $"INBOX {poll.Inbox - before} new message(s)")).ConfigureAwait(false);
         }
 
-        await ReportLanes(polled.Value.Context).ConfigureAwait(false);
+        await ReportLanes(poll.Context).ConfigureAwait(false);
 
-        (_inbox, Open) = (polled.Value.Inbox, polled.Value.Open);
-        _state = step.State;
-        await KeepSnapshot(_state).ConfigureAwait(false);
-        await Remember().ConfigureAwait(false);
+        return step;
+    }
+
+    // A newer watch owns the team's watch keys: say so once and stop writing them.
+    private async ValueTask<bool> Supersede(string? newer)
+    {
+        if (newer is null)
+        {
+            return false;
+        }
+
+        Superseded = newer;
+        await Say($"WATCH superseded by pid {newer}").ConfigureAwait(false);
+        return true;
     }
 
     // The first failed poll of a streak (which can span runs) says WATCH ERROR; the rest say nothing.

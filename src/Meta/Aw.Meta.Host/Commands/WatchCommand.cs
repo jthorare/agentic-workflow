@@ -33,7 +33,7 @@ internal static class WatchCommand
             await context.Io.Out.FlushAsync(context.Cancellation).ConfigureAwait(false);
         }
 
-        return CommandOutput.Call<WatchRequest, WatchResponse>(context, new WatchRequest(interval, duration, Print) { UntilMail = context.Line.Has("until-mail"), UntilEvent = context.Line.Has("until-event") }, static _ => string.Empty);
+        return CommandOutput.Call<WatchRequest, WatchResponse>(context, new WatchRequest(interval, duration, Print) { UntilMail = context.Line.Has("until-mail"), UntilEvent = context.Line.Has("until-event"), Owner = Environment.ProcessId }, static _ => string.Empty);
     }
 
     private static bool Duration(string? text, TimeSpan fallback, out TimeSpan value)
