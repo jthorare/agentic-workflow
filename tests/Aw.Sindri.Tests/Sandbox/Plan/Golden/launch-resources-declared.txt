@@ -1,0 +1,2 @@
+  writable (resource) /home/owner/.agentic-workflow/sindri-app/resources/workflow/web  (the resources folder of this run's owner)
+  memory 1GiB (slowed at 819MiB), cpu 400%, processes 2048, sessions 3, home 256MiB, time 70m
