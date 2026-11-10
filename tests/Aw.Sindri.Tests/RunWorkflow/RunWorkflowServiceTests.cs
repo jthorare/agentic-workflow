@@ -173,7 +173,7 @@ public sealed class RunWorkflowServiceTests
         }
     }
 
-    /// <summary>Like the real starter, it admits the run into the store, so the next manual run sees it; a set <see cref="Answer"/> stands in for a queue or skip answer and admits nothing.</summary>
+    /// <summary>Maps a launch to the run that launched it.</summary>
     private sealed class FakeLaunches : IGraphLaunchRuns
     {
         private readonly Dictionary<LaunchId, WorkflowRunId> _runs = [];
@@ -184,6 +184,7 @@ public sealed class RunWorkflowServiceTests
             ValueTask.FromResult<Result<WorkflowRunId?>>(_runs.TryGetValue(launch, out var run) ? (WorkflowRunId?)run : null);
     }
 
+    /// <summary>Like the real starter, it admits the run into the store, so the next manual run sees it; a set <see cref="Answer"/> stands in for a queue or skip answer and admits nothing.</summary>
     private sealed class FakeStarter(InMemoryWorkflowRunStore runs, TimeProvider clock) : IGraphRunStarter
     {
         public List<GraphStartRequest> Requests { get; } = [];
