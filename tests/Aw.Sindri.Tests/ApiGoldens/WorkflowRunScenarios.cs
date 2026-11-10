@@ -9,7 +9,7 @@ using static Aw.Sindri.Tests.Callers.CallerRequests;
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
-/// The goldens of 'POST /sindri/workflows/{slug}/runs' and 'POST /sindri/workflow-runs/{run}/cancel' (issue 2258, PR 6): the refusals, which need no Temporal
+/// The goldens of 'POST /sindri/workflows/{slug}/runs', 'POST /sindri/workflow-runs/{run}/cancel' (issue 2258, PR 6) and 'POST /sindri/workflow-runs/{run}/nodes/{node}/answer' (PR 9): the refusals, which need no Temporal
 /// server. A started run needs one, so its answer is pinned by the service tests. Each scenario seeds the workflow or run it needs through the host's stores.
 /// The takeover and handback of a 'run_agent' node (#2472) run on a host whose <see cref="IAgentNodeControl"/> is a <see cref="FakeAgentNodeControl"/>,
 /// so their success answers need no Temporal either.
@@ -19,6 +19,8 @@ internal static class WorkflowRunScenarios
     private static readonly WorkflowId _id = WorkflowId.From("WF-00000000000000000000000000000001");
     private static readonly WorkflowSlug _slug = WorkflowSlug.From("morning-check");
     private static readonly WorkflowRunId _ended = WorkflowRunId.Of(_slug, 1, 1);
+    private const string AnswerSlug = "workflow-runs-run-nodes-node-answer";
+    private const string AnswerBody = "{\"text\":\"yes\"}";
     private static readonly WorkflowRunId _queued = WorkflowRunId.Of(_slug, 1, 2);
     private const string TakeOverSlug = "workflow-runs-run-nodes-node-takeover";
     private const string HandBackSlug = "workflow-runs-run-nodes-node-handback";
@@ -28,6 +30,7 @@ internal static class WorkflowRunScenarios
     [
         ("workflows-slug-runs", "unknown-workflow"), ("workflows-slug-runs", "bad-slug"), ("workflows-slug-runs", "not-active"), ("workflows-slug-runs", "bad-payload"), ("workflows-slug-runs", "empty-body"),
         ("workflow-runs-run-cancel", "not-found"), ("workflow-runs-run-cancel", "bad-id"), ("workflow-runs-run-cancel", "already-ended"), ("workflow-runs-run-cancel", "cancelled"),
+        (AnswerSlug, "not-found"), (AnswerSlug, "bad-id"), (AnswerSlug, "already-ended"), (AnswerSlug, "answered"),
         (TakeOverSlug, "taken-over"), (TakeOverSlug, "not-waiting"), (TakeOverSlug, "bad-id"), (TakeOverSlug, "not-found"), (TakeOverSlug, "already-ended"), (TakeOverSlug, "temporal-down"),
         (HandBackSlug, "handed-back"), (HandBackSlug, "not-taken-over"), (HandBackSlug, "not-waiting"),
     ];
@@ -37,7 +40,13 @@ internal static class WorkflowRunScenarios
     /// <returns>True for the takeover and handback routes.</returns>
     public static bool NeedsAgentControl(string slug) => string.Equals(slug, TakeOverSlug, StringComparison.Ordinal) || string.Equals(slug, HandBackSlug, StringComparison.Ordinal);
 
-    /// <summary>The golden host with a <see cref="FakeAgentNodeControl"/> where Temporal's control would be.</summary>
+    /// <summary>Whether the scenario runs on <see cref="Start"/>'s host: the takeover and handback routes, and the answered question.</summary>
+    /// <param name="slug">The route.</param>
+    /// <param name="scenario">The scenario.</param>
+    /// <returns>True when it does.</returns>
+    public static bool NeedsHost(string slug, string scenario) => NeedsAgentControl(slug) || (slug, scenario) is (AnswerSlug, "answered");
+
+    /// <summary>The golden host with a <see cref="FakeAgentNodeControl"/> and a <see cref="FakeGraphRunAnswerer"/> where Temporal's control and answerer would be.</summary>
     /// <param name="ct">Cancels the start.</param>
     /// <returns>The started host.</returns>
     public static Task<GoldenHost> Start(CancellationToken ct) =>
@@ -46,6 +55,7 @@ internal static class WorkflowRunScenarios
             var control = new FakeAgentNodeControl();
             _ = services.AddSingleton(control);
             _ = services.Replace(ServiceDescriptor.Singleton<IAgentNodeControl>(control));
+            _ = services.Replace(ServiceDescriptor.Singleton<IGraphRunAnswerer>(new FakeGraphRunAnswerer()));
         });
 
     /// <summary>Whether this class owns the scenario.</summary>
@@ -63,6 +73,11 @@ internal static class WorkflowRunScenarios
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
     {
         var human = Human(host.Token.Value);
+        if (string.Equals(slug, AnswerSlug, StringComparison.Ordinal))
+        {
+            return await Answer(host, scenario, human, ct);
+        }
+
         switch ((slug, scenario))
         {
             case ("workflows-slug-runs", _):
@@ -104,6 +119,23 @@ internal static class WorkflowRunScenarios
                 return await Ask(host, Post($"/sindri/workflows/{_slug.Value}/runs", "{\"payload\":\"[1, 2]\"}", human));
             default:
                 return await Ask(host, Post("/sindri/workflows/nope/runs", json: null, human));
+        }
+    }
+
+    private static async Task<string> Answer(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
+    {
+        switch (scenario)
+        {
+            case "bad-id":
+                return await Ask(host, Post("/sindri/workflow-runs/not-a-run/nodes/ask/answer", AnswerBody, human));
+            case "answered":
+                _ = (await host.App.Services.GetRequiredService<IWorkflowRunStore>().Insert(new WorkflowRun(_ended, _id, 1, "{\"kind\":\"manual\"}", WorkflowRunStatus.Running, Outputs: null, Error: null, ItemId: null, host.Now(), EndedAt: null), ct)).Value;
+                return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/nodes/ask/answer", AnswerBody, human));
+            case "already-ended":
+                await EndedRun(host, ct);
+                return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/nodes/ask/answer", AnswerBody, human));
+            default:
+                return await Ask(host, Post($"/sindri/workflow-runs/{Uri.EscapeDataString(_ended.Value)}/nodes/ask/answer", AnswerBody, human));
         }
     }
 
