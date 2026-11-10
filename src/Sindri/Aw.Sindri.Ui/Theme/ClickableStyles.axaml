@@ -1,0 +1,38 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:theme="using:Aw.Sindri.Ui.Theme">
+  <!-- The one look of a clickable surface (#2535): put Classes="clickable" on a Border that opens something or runs a command. Hand cursor; under the
+       pointer the background and border lift to Brush.Clickable.Hover / Brush.Clickable.HoverBorder, while a button is down they take Brush.Clickable.Pressed / Brush.Clickable.PressedBorder and the surface scales to 0.98 about its centre (Linear and Raycast press the same way).
+       The colours ease over Motion.Hover (theme:Clickable gives the control its Transitions; zero under reduced motion). A keyboard focus ring stays
+       each surface's own (:focus-visible), and a surface that draws one keeps it over the hover. A surface that is not clickable gets none of this. -->
+  <Style Selector="Border.clickable">
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="theme:Clickable.Track" Value="True" />
+    <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+    <Setter Property="RenderTransform" Value="none" />
+  </Style>
+  <Style Selector="Border.clickable:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Hover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.HoverBorder}" />
+  </Style>
+  <!-- A calm Needs You row rests on Surface2, close to the hover fill: it lifts to the pressed fill so the pointer still shows. -->
+  <Style Selector="Border.clickable.subtle:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+  </Style>
+  <!-- A selected row rests on Surface2 too (QueueStyles item-row.selected): the same lift. -->
+  <Style Selector="Border.clickable.selected:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+  </Style>
+  <Style Selector="Border.clickable:pressed">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
+    <Setter Property="RenderTransform" Value="scale(0.98)" />
+  </Style>
+  <!-- Focus and a selected row keep their own border; the lift is the background only there. -->
+  <Style Selector="Border.clickable:focus-visible:pointerover, Border.clickable:focus-visible:pressed">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+  </Style>
+  <Style Selector="Border.clickable.selected:pointerover, Border.clickable.selected:pressed">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+  </Style>
+</Styles>
