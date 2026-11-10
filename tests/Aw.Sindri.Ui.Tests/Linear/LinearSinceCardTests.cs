@@ -165,6 +165,25 @@ public sealed class LinearSinceCardTests
     }
 
     [Fact]
+    public async Task A_group_opened_with_Show_all_stays_open_when_the_changes_are_read_again()
+    {
+        var since = Since(
+            ("mentioned", "A-1", "Mention 1", "2025-12-31T11:00:00Z", null, null),
+            ("mentioned", "A-2", "Mention 2", "2025-12-31T12:00:00Z", null, null),
+            ("mentioned", "A-3", "Mention 3", "2025-12-31T13:00:00Z", null, null),
+            ("mentioned", "A-4", "Mention 4", "2025-12-31T14:00:00Z", null, null),
+            ("mentioned", "A-5", "Mention 5", "2025-12-31T15:00:00Z", null, null),
+            ("mentioned", "A-6", "Mention 6", "2025-12-31T16:00:00Z", null, null));
+        var work = await ShownWith(since);
+        work.StripGroups.Single().Toggle();
+
+        await work.Refresh(LinearFixture.Url, Token);
+
+        var group = work.StripGroups.Single();
+        Assert.Equal((6, "Show fewer"), (group.ShownRows.Count, group.ToggleText));
+    }
+
+    [Fact]
     public async Task A_group_of_five_or_fewer_has_no_Show_all()
     {
         var work = await _f.Shown(Token);
