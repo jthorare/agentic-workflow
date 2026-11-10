@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Aw.Context.Core.Trust;
+using Aw.Context.Testing.Engine;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
@@ -13,7 +14,7 @@ namespace Aw.Sindri.Tests.Launch;
 public sealed class RunAgentBriefFenceTests
 {
     private static readonly NodeRunAddress _address = NodeRunAddress.Of(WorkflowRunId.From("walk@1:12"), NodeId.From("check"));
-    private static readonly GraphModelPortAdapter _port = new(new Aw.Context.Testing.Engine.FakeModelPort());
+    private static readonly GraphModelPortAdapter _port = new(new FakeModelPort());
 
     private static RunAgentConfig Config(string prompt) =>
         new("web", [], Agent: null, prompt, new Dictionary<string, string>(StringComparer.Ordinal) { ["ok"] = "boolean" }, TimeSpan.FromMinutes(45), [], Wall: null);
