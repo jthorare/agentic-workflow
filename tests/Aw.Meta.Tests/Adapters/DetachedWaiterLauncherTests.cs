@@ -49,7 +49,7 @@ public sealed class DetachedWaiterLauncherTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_path_that_only_contains_dotnet_is_not_taken_for_the_dotnet_host()
     {
-        var launcher = new DetachedWaiterLauncher(() => "/bin/true", () => "/home/x/.dotnet-tools/aw-meta");
+        var launcher = new DetachedWaiterLauncher(() => "/usr/bin/true", () => "/home/x/.dotnet-tools/aw-meta");
 
         var result = await launcher.Start(["aw-meta", "lane-recycle", "meta", "--wait-idle"], TestContext.Current.CancellationToken);
 
