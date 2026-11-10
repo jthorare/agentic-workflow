@@ -11,6 +11,8 @@ FAIL=0
 TMPROOT="$(mktemp -d "${TMPDIR:-/tmp}/check-skill-requires-test.XXXXXX")"
 trap 'rm -rf "$TMPROOT"' EXIT
 
+# sedi EXPR FILE: in-place edit that works with GNU and BSD sed (`sed -i EXPR` reads EXPR as the backup suffix on macOS).
+sedi() { sed "$1" "$2" > "$2.new" && mv "$2.new" "$2"; }
 ok()   { PASS=$((PASS + 1)); echo "  ok   $1"; }
 fail() { FAIL=$((FAIL + 1)); echo "  FAIL $1"; }
 
@@ -51,7 +53,7 @@ T="$(fixture good)"
 run "$T"; expect_rc "compliant tree passes" 0
 if [ -z "$OUT" ]; then ok "compliant tree prints nothing"; else fail "compliant tree printed: $OUT"; fi
 
-T="$(fixture no-aw-dir)"; skill "$T" nodir '{}'; sed -i '/echo "AW_DIR=/d' "$T/skills/nodir/SKILL.md"
+T="$(fixture no-aw-dir)"; skill "$T" nodir '{}'; sedi '/echo "AW_DIR=/d' "$T/skills/nodir/SKILL.md"
 run "$T"; expect_rc "a gate that does not print AW_DIR fails" 1
 expect_out "a gate without AW_DIR is named" "skills/nodir/SKILL.md: the Result block's gate does not print AW_DIR"
 
@@ -153,7 +155,7 @@ run "$T"; expect_rc "the gate pointer only after the first heading fails" 1
 expect_out "late opening reason" 'lateopen/SKILL.md: the opening'
 
 T="$(fixture no-order)"; skill "$T" noorder '{}'
-sed -i 's/ Under `AW_RESULT=1` your final reply opens with the `aw-result` block\.//' "$T/skills/noorder/SKILL.md"
+sedi 's/ Under `AW_RESULT=1` your final reply opens with the `aw-result` block\.//' "$T/skills/noorder/SKILL.md"
 run "$T"; expect_rc "an opening that runs the gate but never says the reply opens with the block fails" 1
 expect_out "no-order reason" 'noorder/SKILL.md: the opening'
 

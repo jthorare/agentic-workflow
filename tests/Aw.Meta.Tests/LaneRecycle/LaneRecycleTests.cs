@@ -26,7 +26,7 @@ public sealed class LaneRecycleTests
     private LaneRecycleService Service(Action? onWait = null)
     {
         var delay = onWait is null ? (IDelay)_world.Delay : new ClearTakesEffect(_world.Delay, onWait);
-        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.LaneFiles, _world.Log, delay, _world.Clock);
+        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.LaneFiles, _world.Log, delay, _world.Clock, _world.Messages);
         return new LaneRecycleService(
             _world.Config,
             new RecycleGuard(_world.LaneFiles, _world.LaneSessions, _world.Digests, _world.Context, _world.Clock),
