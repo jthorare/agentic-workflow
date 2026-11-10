@@ -7,7 +7,7 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>'only_new' inside a 'for_each' body (PR 9): each item's keys are recorded at the run's end, so the next run passes none of them again.</summary>
 [Lane(TestLane.Integration)]
-public sealed class ForEachOnlyNewTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class ForEachOnlyNewTests
 {
     private static readonly int[] _firstCounts = [2, 1];
     private static readonly int[] _secondCounts = [0, 0];
@@ -15,7 +15,7 @@ public sealed class ForEachOnlyNewTests(SindriTimeSkippingServer server) : IClas
     [Fact]
     public async Task An_only_new_inside_for_each_records_every_items_keys_so_the_next_run_passes_none()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [
                 GraphRig.Node("start", "manual"),

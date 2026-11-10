@@ -74,6 +74,34 @@ public sealed class TokenTests
     }
 
     [Fact]
+    public void A_clickable_surface_rests_on_the_hover_colour_at_zero_alpha()
+    {
+        // #2535: the colour ease blends each channel straight, so a rest fill of another colour (Transparent is #00FFFFFF) passes through it.
+        var hover = _tokens.Resources["Brush.Clickable.Hover"].Attribute("Color")!.Value.Trim().ToLowerInvariant();
+        var rest = _tokens.Resources["Brush.Clickable.Rest"].Attribute("Color")!.Value.Trim().ToLowerInvariant();
+
+        Assert.Matches("^#[0-9a-f]{6}$", hover);
+        Assert.Equal("#00" + hover[1..], rest);
+    }
+
+    [Fact]
+    public void Every_clickable_surface_gets_its_rest_fill_before_any_surface_look()
+    {
+        // A Border with no background is not hit-tested (#2535). The fill is the first surface style in the app, so each surface's own fill,
+        // declared later, replaces it, and ClickableStyles, last, lifts it.
+        var app = XDocument.Load(Path.Combine(UiSource.Library, "Views", "SindriApp.axaml"));
+        var styles = app.Descendants().Single(e => e.Name.LocalName == "Application.Styles").Elements().ToList();
+        var rest = styles.FindIndex(e => e.Name.LocalName == "Style" && e.Attribute("Selector")?.Value == "Border.clickable");
+        int Include(string file) => styles.FindIndex(e => e.Name.LocalName == "StyleInclude" && (e.Attribute("Source")?.Value.EndsWith(file, StringComparison.Ordinal) ?? false));
+
+        Assert.True(rest >= 0, "SindriApp.axaml has no Border.clickable rest style");
+        Assert.Equal("{DynamicResource Brush.Clickable.Rest}", styles[rest].Elements().Single(e => e.Attribute("Property")?.Value == "Background").Attribute("Value")?.Value);
+        Assert.True(rest < Include("QueueStyles.axaml") && rest < Include("NeedsYouStyles.axaml"), "the rest fill comes after a surface look");
+        Assert.True(rest < styles.FindIndex(e => e.Attribute("Selector")?.Value == "Border.card"), "the rest fill comes after Border.card");
+        Assert.Equal(styles.Count - 1, Include("ClickableStyles.axaml"));
+    }
+
+    [Fact]
     public void The_overlay_brush_is_the_scrim_at_60_percent() =>
         Assert.Equal("0.6", _tokens.Resources["Brush.Overlay"].Attribute("Opacity")?.Value);
 
@@ -126,6 +154,7 @@ public sealed class TokenTests
     [InlineData("Space.MD.Thickness", "16")]
     [InlineData("Motion.Instant", "0:0:0")]
     [InlineData("Motion.Fast", "0:0:0.120")]
+    [InlineData("Motion.Hover", "0:0:0.150")]
     [InlineData("Motion.Base", "0:0:0.180")]
     [InlineData("Motion.Pulse", "0:0:1.600")]
     [InlineData("Motion.Spin", "0:0:0.900")]

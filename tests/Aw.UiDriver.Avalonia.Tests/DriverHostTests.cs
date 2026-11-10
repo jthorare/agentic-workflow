@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using Aw.Kernel.Json;
 using Aw.UiDriver.Core;
 using Aw.UiDriver.Core.Protocol;
 
@@ -93,6 +94,47 @@ public sealed class DriverHostTests
         Assert.True(saved.IsSuccess && toggled.IsSuccess, saved.IsError ? saved.Error.Message : toggled.IsError ? toggled.Error.Message : string.Empty);
         Assert.Equal(1, screen.Saved.Runs);
         Assert.True(await TestScreen.OnUi(() => screen.Dark.IsChecked) ?? false);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Hover_sets_the_pointer_over_state_on_the_matched_element_and_off_takes_it_away()
+    {
+        var screen = await TestScreen.OpenAsync();
+        var host = Host(screen);
+
+        var on = await host.Hover(new HoverRequest(new Selector(AutomationId: "save")));
+        var during = await TestScreen.OnUi(() => screen.Save.Classes.Contains(":pointerover"));
+        var off = await host.Hover(new HoverRequest(new Selector(AutomationId: "save"), Off: true));
+        var after = await TestScreen.OnUi(() => screen.Save.Classes.Contains(":pointerover"));
+
+        Assert.Equal("save", on.Value.Node.AutomationId);
+        Assert.True(off.IsSuccess);
+        Assert.Equal((true, false), (during, after));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task The_hover_verb_reads_its_request_and_writes_its_response_through_the_source_generated_context()
+    {
+        var screen = await TestScreen.OpenAsync();
+        var host = Host(screen);
+        var body = System.Text.Encoding.UTF8.GetBytes("""{"selector":{"automationId":"save"},"off":false}""");
+
+        var reply = await Verbs.RunAsync("hover", body, host, CancellationToken.None);
+
+        Assert.Equal(200, reply.Status);
+        var read = AwJson.Deserialize<ActedResponse>(reply.Body.Span, UiDriverJson.Options);
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
+        Assert.Equal("save", read.Value.Node.AutomationId);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Hover_on_nothing_is_refused_with_its_code()
+    {
+        var screen = await TestScreen.OpenAsync();
+
+        var missing = await Host(screen).Hover(new HoverRequest(new Selector(AutomationId: "nope")));
+
+        Assert.Equal(UiDriverErrors.NoMatch.Code, missing.Error.Code);
     }
 
     [Fact, Trait("Lane", "integration")]
