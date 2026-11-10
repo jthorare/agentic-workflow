@@ -57,6 +57,22 @@ public sealed class ConnectionToolAdapterTests
     }
 
     [Fact(Timeout = 60_000)]
+    public async Task A_path_argument_with_a_quote_is_url_escaped_as_the_value_it_is_not_as_json_text()
+    {
+        var provider = new Recording("{}");
+        using var http = new HttpClient(provider, disposeHandler: false);
+        var world = new World(http);
+        world.AddRest("github:work", "github", RestCredential);
+
+        var called = await world.Adapter.Call("github:work", "create_issue", """{"owner":"a\"b","repo":"app","title":"t"}""", TestContext.Current.CancellationToken);
+
+        Assert.True(called.IsSuccess);
+        var sent = Assert.Single(provider.Requests);
+        Assert.DoesNotContain("u0022", sent.Uri, StringComparison.Ordinal);   // the JSON escape of the quote, kept by Trim('"') today
+        Assert.DoesNotContain("%5C", sent.Uri, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact(Timeout = 60_000)]
     public async Task A_missing_connection_is_SND_CONN_001_and_an_unknown_action_or_a_missing_path_argument_sends_nothing()
     {
         var provider = new Recording("{}");

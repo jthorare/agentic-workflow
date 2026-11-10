@@ -78,6 +78,17 @@ internal sealed class ToolkitMcpClient : IToolkitProcess
         }
     }
 
+    /// <summary>Says which SND-TK error an MCP failure on a call is.</summary>
+    /// <param name="tool">The tool called.</param>
+    /// <param name="failure">What the client threw.</param>
+    /// <returns>SND-TK-007 for an unknown tool, SND-TK-011 when the server answered with an error, SND-TK-004 when the connection failed.</returns>
+    internal static Result<string> Failure(string tool, McpException failure)
+    {
+        ArgumentNullException.ThrowIfNull(failure);
+        _ = tool;
+        return SindriErrors.ToolkitProcessDied.With(failure.Message);
+    }
+
     public ValueTask DisposeAsync() => _client.DisposeAsync();
 
     private static Result<Dictionary<string, object?>> Arguments(string inputJson)

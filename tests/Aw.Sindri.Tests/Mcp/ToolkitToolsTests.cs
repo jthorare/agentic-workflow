@@ -73,6 +73,8 @@ public sealed class ToolkitToolsTests
 
         Assert.True(paused.IsError);
         Assert.Contains("SND-TK-005", JsonSerializer.Serialize(paused.StructuredContent), StringComparison.Ordinal);
+        Assert.Contains("toolkit_stop", JsonSerializer.Serialize(paused.StructuredContent), StringComparison.Ordinal);   // a tool that exists, not the CLI verb this PR doesn't have
+        Assert.DoesNotContain("sindri toolkit resume", JsonSerializer.Serialize(paused.StructuredContent), StringComparison.Ordinal);
         Assert.True(unknown.IsError);
         Assert.Contains("SND-TK-009", JsonSerializer.Serialize(unknown.StructuredContent), StringComparison.Ordinal);
         Assert.Empty(runtime.Calls);

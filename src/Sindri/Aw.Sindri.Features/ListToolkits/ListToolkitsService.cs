@@ -6,10 +6,12 @@ namespace Aw.Sindri.Features.ListToolkits;
 
 /// <summary>Reads the toolkit store.</summary>
 /// <param name="store">The toolkit store.</param>
-internal sealed class ListToolkitsService(IToolkitStore store) : IService<ListToolkitsRequest, ListToolkitsResponse>
+/// <param name="running">The toolkits that have a live process.</param>
+internal sealed class ListToolkitsService(IToolkitStore store, IRunningToolkits running) : IService<ListToolkitsRequest, ListToolkitsResponse>
 {
     public async ValueTask<Result<ListToolkitsResponse>> Handle(ListToolkitsRequest request, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(running);
         var all = await store.List(cancellationToken).ConfigureAwait(false);
         return all.IsError ? all.Error : new ListToolkitsResponse(all.Value);
     }

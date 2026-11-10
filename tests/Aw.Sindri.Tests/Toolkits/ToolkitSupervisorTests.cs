@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Toolkits;
 using Aw.Sindri.Infrastructure.Toolkits;
 using Aw.Sindri.Tests.BuildToolkit;
@@ -60,6 +61,59 @@ public sealed class ToolkitSupervisorTests : IAsyncDisposable
         Assert.True(process.Disposed);
         Assert.Equal(1, _launcher.Launched);
         Assert.NotEqual(ToolkitState.Failed, _store.Items["triage"].State);
+    }
+
+    [Fact]
+    public async Task A_toolkit_that_gave_up_after_three_crashes_starts_again_and_answers_a_call()
+    {
+        _ = await _supervisor.Start(_built, Token);
+        await CrashUntilFailed();
+
+        var again = await _supervisor.Start(_built, Token);
+        var answer = await _supervisor.Call("triage", "ping", "{}", TimeSpan.FromSeconds(1), Token);
+
+        Assert.True(again.IsSuccess);
+        Assert.Equal(4, _launcher.Launched);
+        Assert.True(answer.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Giving_up_saves_the_row_as_it_is_now_so_a_rebuild_in_between_keeps_its_hash()
+    {
+        _ = await _supervisor.Start(_built, Token);
+        _launcher.Last.Crash();
+        await Eventually(() => _launcher.Launched == 2, advance: TimeSpan.FromSeconds(1));
+        _launcher.Last.Crash();
+        await Eventually(() => _launcher.Launched == 3, advance: TimeSpan.FromSeconds(1));
+        _store.Items["triage"] = _built with { SourceHash = "h2" };   // a rebuild finished while the toolkit was crashing
+        _launcher.Last.Crash();
+        await Eventually(() => _store.Items["triage"].State == ToolkitState.Failed, advance: TimeSpan.FromSeconds(1));
+
+        Assert.Equal("h2", _store.Items["triage"].SourceHash);
+    }
+
+    [Fact]
+    public async Task Start_and_stop_after_dispose_are_refused_or_do_nothing_and_never_throw()
+    {
+        await _supervisor.DisposeAsync();
+
+        var started = await _supervisor.Start(_built, Token);
+        var stopped = await _supervisor.Stop("triage", Token);
+
+        Assert.True(started.IsError);
+        Assert.Equal(SindriErrors.ToolkitNotBuilt.Code, started.Error.Code);
+        Assert.Equal(0, _launcher.Launched);
+        Assert.True(stopped.IsSuccess);
+    }
+
+    private async Task CrashUntilFailed()
+    {
+        _launcher.Last.Crash();
+        await Eventually(() => _launcher.Launched == 2, advance: TimeSpan.FromSeconds(1));
+        _launcher.Last.Crash();
+        await Eventually(() => _launcher.Launched == 3, advance: TimeSpan.FromSeconds(1));
+        _launcher.Last.Crash();
+        await Eventually(() => _store.Items["triage"].State == ToolkitState.Failed, advance: TimeSpan.FromSeconds(1));
     }
 
     // The watcher runs on its own task: tick the fake clock and wait in small real steps until the condition holds.

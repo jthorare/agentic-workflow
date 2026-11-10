@@ -66,6 +66,18 @@ public sealed class RunningToolkitsTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task A_paused_toolkits_refusal_names_a_tool_that_exists()
+    {
+        _store.Items["triage"] = _triage with { State = ToolkitState.Paused };
+
+        var answer = await _runtime.CallTool("triage", "ping", "{}", "session:abc", Token);
+
+        Assert.Equal(SindriErrors.ToolkitPaused.Code, answer.Error.Code);
+        Assert.Contains("toolkit_stop", answer.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("sindri toolkit resume", answer.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task A_failed_call_is_logged_with_its_error_and_returned()
     {
         _ = await _supervisor.Start(_triage, Token);
