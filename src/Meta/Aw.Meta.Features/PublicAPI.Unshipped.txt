@@ -1093,6 +1093,8 @@ Aw.Meta.Features.LaneSend.LaneSendResponse.ViewerAttached.get -> bool
 Aw.Meta.Features.LaneSend.LaneSendResponse.ViewerAttached.init -> void
 Aw.Meta.Features.Watch.WatchRequest.UntilMail.get -> bool
 Aw.Meta.Features.Watch.WatchRequest.UntilMail.init -> void
+Aw.Meta.Features.Watch.WatchRequest.Rearm.get -> bool
+Aw.Meta.Features.Watch.WatchRequest.Rearm.init -> void
 Aw.Meta.Features.Watch.WatchResponse.EndedOnMail.get -> bool
 Aw.Meta.Features.Watch.WatchResponse.EndedOnMail.init -> void
 Aw.Meta.Features.LaneStopCheck.LaneStopCheckRequest.HookEvent.get -> string?
