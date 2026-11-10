@@ -62,6 +62,21 @@ public sealed class BoardLineTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Recording_the_same_main_again_shows_the_lane_nothing_new()
+    {
+        await _world.Ready();
+        var lane = _world.PutLane("api");
+        await Merge(12, Sha12, 5);
+        var first = await Line(lane);
+        _ = await _world.Board.RecordMain(Sha12, [], A.At(6), CancellationToken.None);
+
+        var second = await Line(lane);
+
+        Assert.Contains("#12", first, StringComparison.Ordinal);
+        Assert.Null(second);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_new_lane_map_version_without_a_merge_names_the_version()
     {
         await _world.Ready();

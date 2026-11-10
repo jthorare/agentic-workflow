@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
 using Aw.Meta.Core.Health;
+using Aw.Meta.Features.BoardLine;
 using Aw.Meta.Features.Watch;
 using Aw.Meta.Testing;
 using Aw.Meta.Tests.Reserve;
@@ -101,6 +102,28 @@ public sealed class WatchTests
         Assert.Equal("bbbbbbb2222222", board.MainSha);
         Assert.Equal([190], board.MergedPrs);
         Assert.Equal(1, board.Version);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_watch_seeing_main_move_to_a_sha_merge_run_recorded_shows_the_lane_one_line()
+    {
+        await _world.Ready();
+        var lane = _world.PutLane("api");
+        var board = new BoardLineService(_world.Config, _world.Board, _world.Lanes);
+        Script(
+            [
+                List(Pr(190, "OPEN", "aaa1111")),
+                List(Pr(190, "MERGED", "aaa1111")),
+            ],
+            mains: ["aaaaaaa1111111", "bbbbbbb2222222"]);
+        _ = await _world.Board.RecordMain("bbbbbbb2222222", [190], A.At(5), CancellationToken.None);   // merge-run's record
+        var first = await board.Handle(new BoardLineRequest(lane), CancellationToken.None);
+
+        _ = await Watch(TimeSpan.FromSeconds(300));
+        var second = await board.Handle(new BoardLineRequest(lane), CancellationToken.None);
+
+        Assert.Contains("#190", first.Value.Line, StringComparison.Ordinal);
+        Assert.Null(second.Value.Line);
     }
 
     [Fact, Trait("Lane", "unit")]
