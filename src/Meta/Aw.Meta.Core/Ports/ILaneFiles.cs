@@ -25,4 +25,17 @@ public interface ILaneFiles
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>Success, or AW-META-012 when the file can't be written or the lane name is not one.</returns>
     public ValueTask<Result<Unit>> RecordSession(string lane, Ids.SessionId session, DateTimeOffset at, CancellationToken cancellationToken);
+
+    /// <summary>Reads the detached recycle waiter recorded for a lane.</summary>
+    /// <param name="lane">The lane name.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The waiter's pid and when it was recorded; null when none is recorded.</returns>
+    public ValueTask<Result<(int Pid, DateTimeOffset StartedAt)?>> Waiter(string lane, CancellationToken cancellationToken);
+
+    /// <summary>Records the detached recycle waiter of a lane, or clears the record.</summary>
+    /// <param name="lane">The lane name.</param>
+    /// <param name="waiter">The waiter's pid and start time; null clears the record.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success.</returns>
+    public ValueTask<Result<Unit>> RecordWaiter(string lane, (int Pid, DateTimeOffset StartedAt)? waiter, CancellationToken cancellationToken);
 }
