@@ -9,9 +9,9 @@
        draws its own focus border (item-row), not the adorner. -->
   <Border x:Name="SessionRowFrame" Classes="item-row session-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <Grid x:Name="SessionRowGrid" ColumnDefinitions="150,2*,1.2*,120,1.4*,56" MinHeight="{StaticResource Size.Row}" VerticalAlignment="Center">
+    <Grid x:Name="SessionRowGrid" ColumnDefinitions="150,2*,1.2*,120,1.4*,56" MinHeight="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
       <Border x:Name="SessionRowChip" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.AccessibilityView="Raw">
+        <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
           <TextBlock Classes="body-strong" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
           <TextBlock Classes="caption subtle" Text="{Binding EstimatedText}" IsVisible="{Binding IsEstimated}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
         </StackPanel>

@@ -13,6 +13,7 @@ using Microsoft.Extensions.Time.Testing;
 namespace Aw.Context.Tests.Sync;
 
 /// <summary>The library feed in the record feed catalog (PR review page spec 2026-11-04 §5.2): it runs with no repo in scope, beside repo-docs when there are repos, and only when its folders pass the path rules.</summary>
+[Trait("Lane", "unit")]
 public sealed class LibraryCatalogTests
 {
     private static readonly LibraryHost _host = new() { Home = "/home/owner", StateDefault = "/home/owner/.agentic-workflow" };

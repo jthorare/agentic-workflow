@@ -60,7 +60,7 @@
           <TextBlock Classes="caption quiet" Text="{Binding NoneRunningText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <StackPanel x:Name="JobsTable" Classes.dimmed="{Binding IsDimmed}">
-        <Grid x:Name="JobsHeader" ColumnDefinitions="1.6*,110,150,1.2*,130,56,120" Margin="16,6" AutomationProperties.AccessibilityView="Raw">
+        <Grid x:Name="JobsHeader" ColumnDefinitions="1.6*,110,150,1.2*,130,56,120" Margin="16,8" AutomationProperties.AccessibilityView="Raw">
           <TextBlock Grid.Column="0" Classes="caption subtle" Text="{Binding Columns[0]}" />
           <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Columns[1]}" />
           <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Columns[2]}" IsVisible="{Binding !IsCompact}" />
