@@ -60,6 +60,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
             SkillTrialDirectory = request.Skill?.TrialSkillsDirectory,
             SkillPushes = SkillPushes(request),
             GithubPushApproved = request.GithubPushApproved,
+            AddGroups = request.Task?.HostGroups,
         };
     }
 
@@ -127,6 +128,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
     // The branch namespace the session may write refs in: an open's own, a Step's run, or none.
     private static string RunNamespace(LaunchRequest request) =>
         request.Attended ? AttendedOpen.RunNamespace(request.Launch)
+        : request.Node is { } node ? node.RefNamespace   // why: the node's work branch 'wf/<slug>/<short run>/work' sits inside it, so the session can commit and push it and no other branch
         : request.Instance is { } instance && request.Run is { } token ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"sindri/{WorkflowInstanceId.Of(instance).Value}/{token.Number}")
         : string.Empty;
 

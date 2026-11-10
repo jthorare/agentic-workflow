@@ -53,6 +53,10 @@ internal sealed class GraphTestBlocks
     {
         public string Type => type;
 
+        public string Title => type;
+
+        public BlockGroup Group => BlockGroup.Logic;
+
         public bool IsTrigger => false;
 
         public BlockSchema Config { get; } = new([]);

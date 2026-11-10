@@ -15,6 +15,12 @@ public sealed class CreateItemBlock(ICreateItemPort items) : IGraphBlock
     public string Type => "create_item";
 
     /// <inheritdoc />
+    public string Title => "Create item";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Outputs;
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />

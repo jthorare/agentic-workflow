@@ -22,6 +22,12 @@ public sealed class ConnectionEventBlock : IGraphBlock
     public string Type => "connection_event";
 
     /// <inheritdoc />
+    public string Title => "Connection event";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Triggers;
+
+    /// <inheritdoc />
     public bool IsTrigger => true;
 
     /// <inheritdoc />

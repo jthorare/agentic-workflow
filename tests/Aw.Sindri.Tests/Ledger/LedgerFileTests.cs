@@ -82,7 +82,7 @@ public sealed class LedgerFileTests : IDisposable
 
         Assert.True((await database.Writable(TestContext.Current.CancellationToken)).IsSuccess);
 
-        Assert.Equal(["connection", "events", "lease", "memory", "memory_fact", "outbox_commands", "poll_cursor", "workflow", "workflow_node_run", "workflow_revision", "workflow_run", "workflow_schedule_tick", "workflow_seen"], Tables(ledger));
+        Assert.Equal(["connection", "events", "lease", "memory", "memory_fact", "outbox_commands", "poll_cursor", "resource", "workflow", "workflow_node_run", "workflow_revision", "workflow_run", "workflow_schedule_tick", "workflow_seen"], Tables(ledger));
         Assert.Equal("evt-1", Scalar(ledger, "SELECT id FROM events"));
         Assert.True(File.Exists($"{ledger}.bak-v{(retiring.Version - 1).ToString(CultureInfo.InvariantCulture)}"));
     }
@@ -129,6 +129,34 @@ public sealed class LedgerFileTests : IDisposable
         Assert.True(
             plan.Exists(static step => step.StartsWith("SEARCH events USING INDEX sqlite_autoindex_events", StringComparison.Ordinal) && step.Contains("idempotency_key", StringComparison.Ordinal)),
             string.Join("; ", plan));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task The_newest_key_under_a_prefix_is_one_seek_on_the_idempotency_key_index()
+    {
+        var path = Path.Combine(_home.Path, "prefix-plan.db");
+        var runner = new MigrationRunner(new SqliteConnectionFactory(new SqliteOptions(path)), new FakeTimeProvider(), backupBeforeUpgrade: false);
+        Assert.True((await runner.Migrate(LedgerDatabase.Migrations, TestContext.Current.CancellationToken)).IsSuccess);
+
+        using var connection = new SqliteConnection($"Data Source={path};Mode=ReadOnly;Pooling=False");
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "EXPLAIN QUERY PLAN " + LedgerSql.SelectLatestByKeyPrefix;
+        _ = command.Parameters.AddWithValue("$from", "connection.polled:a:k:");
+        _ = command.Parameters.AddWithValue("$to", "connection.polled:a:k;");
+        using var reader = command.ExecuteReader();
+        var plan = new List<string>();
+        while (reader.Read())
+        {
+            plan.Add(reader.GetString(3));
+        }
+
+        var shown = string.Join("; ", plan);
+        Assert.True(
+            plan.Exists(static step => step.StartsWith("SEARCH events USING INDEX sqlite_autoindex_events", StringComparison.Ordinal) && step.Contains("idempotency_key", StringComparison.Ordinal)),
+            shown);
+        Assert.DoesNotContain(plan, static step => step.Contains("TEMP B-TREE", StringComparison.Ordinal));
+        Assert.DoesNotContain(plan, static step => step.StartsWith("SCAN", StringComparison.Ordinal));
     }
 
     private static void Execute(string path, string sql)
