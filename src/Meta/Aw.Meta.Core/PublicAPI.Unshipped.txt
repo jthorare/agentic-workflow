@@ -1019,6 +1019,7 @@ Aw.Meta.Core.Ports.ILogFiles.Tail(string! path, int maxCharacters, System.Thread
 Aw.Meta.Core.Ports.IMessageStore
 Aw.Meta.Core.Ports.IMessageStore.Messages(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>!>!>
 Aw.Meta.Core.Ports.IMessageStore.Offset(string! transcript, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
+Aw.Meta.Core.Ports.IMessageStore.Transcripts(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
 Aw.Meta.Core.Ports.IMessageStore.RecordInbound(string! transcript, long offset, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! messages, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ids.MessageId>!>!>
 Aw.Meta.Core.Ports.IMessageStore.RecordOutbound(Aw.Meta.Core.Messages.Outbound! sent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.IMessageStore.MarkShown(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ids.MessageId>! ids, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
@@ -2443,6 +2444,7 @@ const Aw.Meta.Core.KvKeys.BoardSeenPrefix = "board.seen." -> string!
 Aw.Meta.Core.Messages.NoticeRule
 static Aw.Meta.Core.Messages.NoticeRule.IsNotice(string! body) -> bool
 static Aw.Meta.Core.Messages.NoticeRule.IsStatusTagged(string! body) -> bool
+static Aw.Meta.Core.Messages.NoticeRule.StripSender(string! text) -> string!
 static Aw.Meta.Core.Messages.NoticeRule.StripTag(string! text) -> string!
 static Aw.Meta.Core.Messages.NoticeRule.UntaggedIsStatus.get -> bool
 const Aw.Meta.Core.Messages.InboxState.Settled = "settled" -> string!
