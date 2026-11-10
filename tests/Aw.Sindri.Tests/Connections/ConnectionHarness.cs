@@ -11,6 +11,7 @@ using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.ListConnections;
 using Aw.Sindri.Features.RefreshConnections;
 using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Features.RenameConnection;
 using Aw.Sindri.Features.TestConnection;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
@@ -103,6 +104,8 @@ internal sealed class ConnectionHarness
     public GetConnectionService Get() => new(Store, Outcomes);
 
     public RemoveConnectionService Remove() => new(Store, Secrets, Events());
+
+    public RenameConnectionService Rename() => new();
 
     /// <summary>The sign-in-again slice over the harness's ports and the same sign-in flow Add builds.</summary>
     /// <returns>The service.</returns>
