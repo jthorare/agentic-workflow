@@ -83,6 +83,12 @@ The test framework is decided (R7, R1a spike): xUnit v3 on Microsoft.Testing.Pla
 - Deterministic ids (a fake `IIdGenerator`) and `FakeTimeProvider`; never the wall clock, `Guid.NewGuid` or `Thread.Sleep` in a test (`BannedSymbols.Tests.txt` checks it; `Aw.Kernel.Testing.RealTime` is the named exception for real time, GUID names and sleeps). `CA2000`, `CA2213`, `CA2100` and `CA1508` are off under `tests/` (`tests/.editorconfig`).
 - No shared mutable fixtures; each test builds its own state.
 - Golden files for CLI output and JSON contracts, recorded from the **C# build** (the golden-file assertions live in `Aw.Kernel.Testing`). Compare after the declared normalization (ids, times), never by loose matching. Update a golden file only in a reviewed change that says why the contract changed.
+- A golden file lands only as `AW_GOLDEN_UPDATE=1` wrote it, on a build of the same commit or a later one. Then a second run without the flag must pass. A hand-written golden in a red commit is fine as a placeholder; replace it with the generated file before ready, and review the generated diff, not the hand copy. A hand copy hid a real binding bug for a day in #2451: three goldens held the service's own error text, while the real answer was the generic `ApiProblems` refusal. Commands, one class or one namespace:
+  ```bash
+  AW_GOLDEN_UPDATE=1 dotnet test --project tests/Aw.Sindri.Tests --filter-namespace Aw.Sindri.Tests.ApiGoldens   # or --filter-class <Class>
+  dotnet test --project tests/Aw.Sindri.Tests --filter-namespace Aw.Sindri.Tests.ApiGoldens                       # rerun without the flag: must pass
+  ```
+  Update mode reports tests as failed; that's expected. Say in the PR body: `goldens generated at <sha>`.
 
 ## Architecture tests
 
