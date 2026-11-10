@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Validation;
+using Aw.Sindri.Core.Resources;
 
 namespace Aw.Sindri.Features.ActivateWorkflow;
 
@@ -14,11 +15,13 @@ namespace Aw.Sindri.Features.ActivateWorkflow;
 /// <param name="workflows">The workflows.</param>
 /// <param name="checker">Builds the validator.</param>
 /// <param name="log">Writes the lifecycle event.</param>
-internal sealed class ActivateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, WorkflowChangeLog log) : IService<ActivateWorkflowRequest, ActivateWorkflowResponse>
+/// <param name="provisioner">Makes the revision's declared resources exist (agent-first PR 14); null on a build with no resources.</param>
+internal sealed class ActivateWorkflowService(IWorkflowStore workflows, IWorkflowChecker checker, WorkflowChangeLog log, IResourceProvisioner? provisioner = null) : IService<ActivateWorkflowRequest, ActivateWorkflowResponse>
 {
     public async ValueTask<Result<ActivateWorkflowResponse>> Handle(ActivateWorkflowRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        _ = provisioner;   // red: the activate path provisions in the next commit
         var found = await FindActive(request.Slug, cancellationToken).ConfigureAwait(false);
         if (found.IsError)
         {

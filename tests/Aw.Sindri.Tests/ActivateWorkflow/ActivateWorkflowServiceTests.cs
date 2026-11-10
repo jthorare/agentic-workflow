@@ -1,6 +1,9 @@
+using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Tests.WorkflowWrites;
 using static Aw.Sindri.Tests.WorkflowWrites.WorkflowWriteRig;
@@ -12,12 +15,15 @@ namespace Aw.Sindri.Tests.ActivateWorkflow;
 public sealed class ActivateWorkflowServiceTests : IDisposable
 {
     private readonly WorkflowWriteRig _rig = new();
+    private readonly RecordingProvisioner _provisioner = new();
     private readonly ActivateWorkflowService _service;
 
     public ActivateWorkflowServiceTests()
     {
-        _service = new ActivateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Log);
+        _service = new ActivateWorkflowService(_rig.Workflows, _rig.Checker, _rig.Log, _provisioner);
     }
+
+    private static GraphSpec WithDatabase() => SampleGraph() with { Resources = new GraphResources(new GraphDatabase("state"), Sandbox: null) };
 
     public void Dispose() => _rig.Dispose();
 
@@ -73,5 +79,57 @@ public sealed class ActivateWorkflowServiceTests : IDisposable
         Assert.Equal(SindriErrors.GraphNotFound.Code, missing.Error.Code);
         Assert.Equal(SindriErrors.GraphNotFound.Code, revision.Error.Code);
         Assert.Equal(SindriErrors.GraphArchived.Code, archived.Error.Code);
+    }
+
+    [Fact]
+    public async Task Activating_a_revision_that_declares_a_database_provisions_it_for_the_workflow_owner()
+    {
+        await _rig.Seed();
+        _ = (await _rig.Workflows.Save(Id, 1, WithDatabase(), "owner", Token)).Value;
+
+        var result = await _service.Handle(new ActivateWorkflowRequest(Slug, Revision: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        var (owner, declared) = Assert.Single(_provisioner.Calls);
+        Assert.Equal("workflow:drift-check", owner.ToString());
+        Assert.Equal("state", Assert.Single(declared.Databases).Name);
+    }
+
+    [Fact]
+    public async Task A_revision_with_no_resources_never_asks_the_provisioner()
+    {
+        await _rig.Seed();
+
+        var result = await _service.Handle(new ActivateWorkflowRequest(Slug, Revision: null, "owner"), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(_provisioner.Calls);
+    }
+
+    [Fact]
+    public async Task A_provisioning_failure_refuses_the_activate_and_the_workflow_stays_off()
+    {
+        await _rig.Seed();
+        _ = (await _rig.Workflows.Save(Id, 1, WithDatabase(), "owner", Token)).Value;
+        _provisioner.Fail = SindriErrors.ResourceDiskOverSize.With("Disk 'scratch' holds 4096 bytes, more than its limit of 1024 bytes.");
+
+        var result = await _service.Handle(new ActivateWorkflowRequest(Slug, Revision: null, "owner"), Token);
+
+        Assert.Equal("SND-RES-001", result.Error.Code);
+        Assert.Null((await _rig.Workflows.Get(Id, Token)).Value.ActiveRevision);
+        Assert.Empty(_rig.Recorded(EventTypes.WorkflowActivated));
+    }
+
+    private sealed class RecordingProvisioner : IResourceProvisioner
+    {
+        public List<(ResourceOwner Owner, ResourceSpec Spec)> Calls { get; } = [];
+
+        public Error? Fail { get; set; }
+
+        public ValueTask<Result<ProvisionedResources>> Ensure(ResourceOwner owner, ResourceSpec spec, CancellationToken cancellationToken)
+        {
+            Calls.Add((owner, spec));
+            return ValueTask.FromResult(Fail is { } error ? Results.Failure<ProvisionedResources>(error) : Results.Success(ProvisionedResources.None));
+        }
     }
 }
