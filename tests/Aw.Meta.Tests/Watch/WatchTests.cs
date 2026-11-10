@@ -1,7 +1,9 @@
 using System.Globalization;
+using Aw.Kernel;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
 using Aw.Meta.Core.Health;
+using Aw.Meta.Core.Ports;
 using Aw.Meta.Features.BoardLine;
 using Aw.Meta.Features.Watch;
 using Aw.Meta.Testing;
@@ -15,14 +17,14 @@ public sealed class WatchTests
     private readonly MetaWorld _world = new();
     private readonly List<string> _lines = [];
 
-    private WatchService Service() => new(
+    private WatchService Service(IBoardStore? board = null) => new(
         _world.Config,
         new WatchPoller(_world.Repo, _world.Resources, _world.InboxCounts, _world.Values, new WatchSweeper(_world.Config, _world.Sweeper, _world.Values), Worlds.Reservation(_world), _world.Context),
         _world.Values,
         _world.Delay,
         _world.Clock,
         _world.Monitor,
-        _world.Board);
+        board ?? _world.Board);
 
     private static string Pr(int number, string state, string head, string mergeable = "MERGEABLE", bool draft = false) =>
         string.Create(CultureInfo.InvariantCulture, $$"""{"number":{{number}},"state":"{{state}}","isDraft":{{(draft ? "true" : "false")}},"headRefOid":"{{head}}","mergeable":"{{mergeable}}","title":"t{{number}}"}""");
@@ -46,9 +48,9 @@ public sealed class WatchTests
             .When("git ls-remote origin main", _ => new CommandResult(0, main[Math.Min(Math.Max(polls, 0), main.Length - 1)] + "\trefs/heads/main\n", string.Empty, TimedOut: false));
     }
 
-    private async Task<WatchResponse> Watch(TimeSpan duration)
+    private async Task<WatchResponse> Watch(TimeSpan duration, IBoardStore? board = null)
     {
-        var result = await Service().Handle(new WatchRequest(_interval, duration, line => { _lines.Add(line); return ValueTask.CompletedTask; }), CancellationToken.None);
+        var result = await Service(board).Handle(new WatchRequest(_interval, duration, line => { _lines.Add(line); return ValueTask.CompletedTask; }), CancellationToken.None);
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         return result.Value;
     }
@@ -102,6 +104,57 @@ public sealed class WatchTests
         Assert.Equal("bbbbbbb2222222", board.MainSha);
         Assert.Equal([190], board.MergedPrs);
         Assert.Equal(2, board.Version);   // the start recorded aaaaaaa1111111 as version 1
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_watch_whose_board_seed_fails_prints_one_watch_error_and_keeps_polling()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], mains: ["aaaaaaa1111111"]);
+
+        var response = await Watch(TimeSpan.FromSeconds(300), new FailingBoard(_world.Board, failSeed: true, failRecord: false));
+
+        var errors = _lines.Where(l => l.StartsWith("WATCH ERROR: ", StringComparison.Ordinal)).ToList();
+        var error = Assert.Single(errors);
+        Assert.Contains(MetaErrors.BoardContended.Code, error, StringComparison.Ordinal);
+        Assert.True(response.Polls > 1);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_watch_whose_board_record_fails_prints_one_watch_error()
+    {
+        await _world.Ready();
+        Script(
+            [
+                List(Pr(190, "OPEN", "aaa1111")),
+                List(Pr(190, "MERGED", "aaa1111")),
+            ],
+            mains: ["aaaaaaa1111111", "bbbbbbb2222222"]);
+
+        _ = await Watch(TimeSpan.FromSeconds(300), new FailingBoard(_world.Board, failSeed: false, failRecord: true));
+
+        var errors = _lines.Where(l => l.StartsWith("WATCH ERROR: ", StringComparison.Ordinal)).ToList();
+        var error = Assert.Single(errors);
+        Assert.StartsWith("WATCH ERROR: AW-META-023", error, StringComparison.Ordinal);
+    }
+
+    private sealed class FailingBoard(IBoardStore inner, bool failSeed, bool failRecord) : IBoardStore
+    {
+        public ValueTask<Result<Unit>> RecordMain(string sha, IReadOnlyList<int> mergedPrs, DateTimeOffset at, CancellationToken cancellationToken) =>
+            failRecord
+                ? ValueTask.FromResult<Result<Unit>>(MetaErrors.BoardContended.With("record failed"))
+                : inner.RecordMain(sha, mergedPrs, at, cancellationToken);
+
+        public ValueTask<Result<bool>> SeedMain(string sha, DateTimeOffset at, CancellationToken cancellationToken) =>
+            failSeed
+                ? ValueTask.FromResult<Result<bool>>(MetaErrors.BoardContended.With("seed failed"))
+                : inner.SeedMain(sha, at, cancellationToken);
+
+        public ValueTask<Result<BoardFacts?>> Read(CancellationToken cancellationToken) => inner.Read(cancellationToken);
+
+        public ValueTask<Result<BoardSeen?>> SeenVersion(string lane, CancellationToken cancellationToken) => inner.SeenVersion(lane, cancellationToken);
+
+        public ValueTask<Result<Unit>> MarkSeen(string lane, BoardSeen seen, CancellationToken cancellationToken) => inner.MarkSeen(lane, seen, cancellationToken);
     }
 
     [Fact, Trait("Lane", "unit")]

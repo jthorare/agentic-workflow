@@ -42,5 +42,6 @@
     "text": "Nothing waiting on you and no open PRs of yours.",
     "hint": "Repos are set in Settings → Connections.",
     "teams": "Reviews asked of a team don't show here yet."
-  }
+  },
+  "connect": null
 }

@@ -22108,6 +22108,51 @@ static readonly Aw.Sindri.Core.SindriErrors.ResourceNameClash -> Aw.Kernel.Error
 static readonly Aw.Sindri.Core.SindriErrors.ResourcePathEscapes -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ResourcePurgeRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ResourceSandboxOverCap -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Connections.GitHubAccountState
+Aw.Sindri.Core.Connections.GitHubAccountState.Connected = 0 -> Aw.Sindri.Core.Connections.GitHubAccountState
+Aw.Sindri.Core.Connections.GitHubAccountState.Missing = 2 -> Aw.Sindri.Core.Connections.GitHubAccountState
+Aw.Sindri.Core.Connections.GitHubAccountState.NeedsSignIn = 1 -> Aw.Sindri.Core.Connections.GitHubAccountState
+Aw.Sindri.Core.Connections.GitHubAccount
+Aw.Sindri.Core.Connections.GitHubAccount.<Clone>$() -> Aw.Sindri.Core.Connections.GitHubAccount!
+Aw.Sindri.Core.Connections.GitHubAccount.Connection.get -> string?
+Aw.Sindri.Core.Connections.GitHubAccount.Connection.init -> void
+Aw.Sindri.Core.Connections.GitHubAccount.Deconstruct(out Aw.Sindri.Core.Connections.GitHubAccountState State, out string? Connection, out string? Login) -> void
+Aw.Sindri.Core.Connections.GitHubAccount.Equals(Aw.Sindri.Core.Connections.GitHubAccount? other) -> bool
+Aw.Sindri.Core.Connections.GitHubAccount.GitHubAccount(Aw.Sindri.Core.Connections.GitHubAccountState State, string? Connection, string? Login) -> void
+Aw.Sindri.Core.Connections.GitHubAccount.Login.get -> string?
+Aw.Sindri.Core.Connections.GitHubAccount.Login.init -> void
+Aw.Sindri.Core.Connections.GitHubAccount.State.get -> Aw.Sindri.Core.Connections.GitHubAccountState
+Aw.Sindri.Core.Connections.GitHubAccount.State.init -> void
+override Aw.Sindri.Core.Connections.GitHubAccount.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.GitHubAccount.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.GitHubAccount.ToString() -> string!
+static Aw.Sindri.Core.Connections.GitHubAccount.operator !=(Aw.Sindri.Core.Connections.GitHubAccount? left, Aw.Sindri.Core.Connections.GitHubAccount? right) -> bool
+static Aw.Sindri.Core.Connections.GitHubAccount.operator ==(Aw.Sindri.Core.Connections.GitHubAccount? left, Aw.Sindri.Core.Connections.GitHubAccount? right) -> bool
+Aw.Sindri.Core.Connections.IGitHubAccount
+Aw.Sindri.Core.Connections.IGitHubAccount.Current(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.GitHubAccount!>!>
+Aw.Sindri.Core.Reviews.ReviewConnect
+Aw.Sindri.Core.Reviews.ReviewConnect.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewConnect!
+Aw.Sindri.Core.Reviews.ReviewConnect.Action.get -> string!
+Aw.Sindri.Core.Reviews.ReviewConnect.Action.init -> void
+Aw.Sindri.Core.Reviews.ReviewConnect.Code.get -> string!
+Aw.Sindri.Core.Reviews.ReviewConnect.Code.init -> void
+Aw.Sindri.Core.Reviews.ReviewConnect.Connection.get -> string?
+Aw.Sindri.Core.Reviews.ReviewConnect.Connection.init -> void
+Aw.Sindri.Core.Reviews.ReviewConnect.Deconstruct(out string! Code, out string! Action, out string! Text, out string? Connection) -> void
+Aw.Sindri.Core.Reviews.ReviewConnect.Equals(Aw.Sindri.Core.Reviews.ReviewConnect? other) -> bool
+Aw.Sindri.Core.Reviews.ReviewConnect.ReviewConnect(string! Code, string! Action, string! Text, string? Connection) -> void
+Aw.Sindri.Core.Reviews.ReviewConnect.Text.get -> string!
+Aw.Sindri.Core.Reviews.ReviewConnect.Text.init -> void
+override Aw.Sindri.Core.Reviews.ReviewConnect.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Reviews.ReviewConnect.GetHashCode() -> int
+override Aw.Sindri.Core.Reviews.ReviewConnect.ToString() -> string!
+static Aw.Sindri.Core.Reviews.ReviewConnect.operator !=(Aw.Sindri.Core.Reviews.ReviewConnect? left, Aw.Sindri.Core.Reviews.ReviewConnect? right) -> bool
+static Aw.Sindri.Core.Reviews.ReviewConnect.operator ==(Aw.Sindri.Core.Reviews.ReviewConnect? left, Aw.Sindri.Core.Reviews.ReviewConnect? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ReviewNoConnection -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ReviewSignInAgain -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Reviews.ReviewConnectRules
+static Aw.Sindri.Core.Reviews.ReviewConnectRules.For(Aw.Sindri.Core.Connections.GitHubAccount! account, bool profileHasToken, string? lastCode) -> Aw.Sindri.Core.Reviews.ReviewConnect?
+static Aw.Sindri.Core.Reviews.ReviewConnectRules.IsSignInCode(string? code) -> bool
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest!
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out string! Owner, out string! Command, out string! RunArea, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! ResourceMounts, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>! HostGroups, out Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts! Net, out Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts! Host, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void

@@ -15,6 +15,7 @@ namespace Aw.Sindri.Features.ListReviews;
 /// <param name="WaitingCount">The Waiting on you group's size.</param>
 /// <param name="Groups">Waiting on you, then Yours; none before the login is set.</param>
 /// <param name="Empty">The empty state when there are no rows; null otherwise.</param>
+/// <param name="Connect">The connect state when there is no usable GitHub connection; null otherwise.</param>
 public sealed record ListReviewsResponse(
     AsOf AsOf,
     string? Login,
@@ -25,4 +26,5 @@ public sealed record ListReviewsResponse(
     ReviewLibrary Library,
     int WaitingCount,
     IReadOnlyList<ReviewListGroup> Groups,
-    ReviewEmpty? Empty);
+    ReviewEmpty? Empty,
+    ReviewConnect? Connect);
