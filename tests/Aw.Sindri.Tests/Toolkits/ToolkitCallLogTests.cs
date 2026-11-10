@@ -20,7 +20,7 @@ public sealed class ToolkitCallLogTests
         var store = new InMemoryToolkitCalls();
         var log = new ToolkitCallLog(store, new RedactingScrubber(Redactor.Default));
         var at = new DateTimeOffset(2026, 11, 1, 12, 0, 0, TimeSpan.Zero);
-        var big = Token + new string('x', ToolkitCallLog.MaxPayloadChars * 2);
+        var big = Token + " " + string.Concat(Enumerable.Repeat("ab ", ToolkitCallLog.MaxPayloadChars));   // a space after the token: a token followed by letters is one longer token and the scrubber would take the whole run
 
         var recorded = await log.Record(new ToolkitCallEntry("notes", "search", "session:abc", $"{{\"auth\":\"{Token}\"}}", big, $"failed with {Token}", TimeSpan.FromMilliseconds(250), at), Cancel);
 
