@@ -2,7 +2,6 @@
 # Tests for launcher_cli_has_flag (scripts/launcher-lib.sh): the `<agent> --help` probe finds a flag, answers no for a CLI that
 # lacks it, ends a CLI that hangs, and leaves no child of that CLI running (#2329).
 # Run: bash scripts/tests/launcher-probe.test.sh
-[ "$(uname)" = Darwin ] && { echo "SKIP: launcher-probe timing (1 s cap, 3 s ceiling, 0.3 s settles) is too tight for the macOS runner and the cause is not reproducible off macOS (#2568)"; exit 0; }
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fail=0
@@ -66,7 +65,8 @@ chmod +x "$WORK/deaf"
 : > "$KIDS"
 t0=$SECONDS
 AW_LAUNCHER_PROBE_SECONDS=1 launcher_cli_has_flag "$WORK/deaf" --no-daemon; rc=$?
-check "a CLI that ignores TERM: no, within the cap + 2 s" "$rc:$([ $((SECONDS - t0)) -le 3 ] && echo fast || echo "slow $((SECONDS - t0))s")" "1:fast"
+# The ceiling is far under the CLI's own 20 s, not cap + grace: the loaded macOS runner took 4 s in the parallel run (#2568).
+check "a CLI that ignores TERM: no, well before the CLI's own 20 s" "$rc:$([ $((SECONDS - t0)) -le 8 ] && echo fast || echo "slow $((SECONDS - t0))s")" "1:fast"
 sleep 0.3
 kid="$(head -1 "$KIDS")"
 check "a CLI that ignores TERM: nothing left running" "$(kill -0 "$kid" 2> /dev/null && echo running || echo gone)" "gone"

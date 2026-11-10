@@ -211,6 +211,7 @@ bash scripts/tests/skill-lock-sessions.test.sh   # skill-lock.sh called the way 
 bash scripts/tests/skill-lock-portable.test.sh   # skills/_shared/skill-lock.sh has no bash 4 or GNU-only forms (mapfile, BASHPID, declare -A, sed -i, find -printf, stat -c, date -d, BASH_VERSINFO ...), so it runs on the macOS runner (#2534); SKILL_LOCK_FILE points the scan at another file
 bash scripts/tests/skill-lock-reclaim-race.test.sh   # two waiters reclaiming one dead holder of a skill-lock.sh lock never both hold it (#2569): a PATH rm stub holds one waiter at its remove until the other has taken the lock
 bash scripts/tests/skill-lock-release-guard.test.sh   # a non-owner release_lock and a dead-guard cleanup never destroy another waiter's lock or guard (#2581): a PATH mv stub plays a waiter that takes the lock in a release gap, a PATH rm stub plays one that makes a fresh guard during a dead-guard cleanup
+bash scripts/tests/ui-before-after-stack-parallel.test.sh   # #2596: two copies of skills/ui-before-after/scripts/stack.test.sh at once must both exit 0 (each copy claims its own free 7-port block below 32768)
 bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/weeklyretro-shortlog.test.sh   # #1898: /weeklyRetro's `git shortlog` names a revision, so it lists authors with no terminal on stdin
 bash scripts/tests/canary-baseline-keys.test.sh   # #1896: every `baseline.<key>` /canary reads is a key /landAndDeploy writes to baseline.json
@@ -241,7 +242,7 @@ bash scripts/tests/sindri-open-runs.test.sh     # the open agent runs guard inst
 bash scripts/tests/sindri-pod.test.sh      # scripts/sindri-pod.sh (connect, profile edit, repo add, doctor) with a fake kubectl, sindri-ui and EDITOR: --pod/--release, the dry run, the mirror home and its modes, the container wait and its state, restart and forward retry, refusals, the per-verb exit codes, --onyx (the pod's port, override warning, Onyx off, --adopt), profile edit (init, unchanged, valid, invalid then fixed or aborted, conflict), the thin verbs' exit-code passthrough
 bash scripts/tests/readiness-baseline.test.sh
 bash scripts/tests/agent-token.test.sh
-bash scripts/tests/signal-suites-ignored-hup.test.sh   # agent-token.test.sh and formal-verify-tlc.test.sh started with SIGHUP ignored (a `nohup` gate) both pass: each wrapper resets every signal it sends (#2377)
+bash scripts/tests/signal-suites-ignored-hup.test.sh   # agent-token.test.sh, formal-verify-tlc.test.sh and meta-launch.test.sh started with SIGHUP ignored (a `nohup` gate) all pass: each wrapper resets every signal it sends (#2377, #2566)
 bash scripts/tests/ci-changed-areas.test.sh
 bash scripts/tests/ci-bash-tests.test.sh
 bash scripts/tests/ci-lane-budgets.test.sh
@@ -255,6 +256,7 @@ bash scripts/tests/skill-evals.test.sh      # scripts/skill-evals.sh with a stub
 bash scripts/tests/skill-evals-node-failure.test.sh   # scripts/skill-evals.sh --selftest with a stub node that fails on any RegExp check (#2027): a node failure is reported as SELFTEST-REGEX "node failed (exit N)" for a regex grader and a tool_used input_match, never read as "compiles fine"
 bash scripts/tests/eval-gh-wrapper.test.sh   # evals/stubs/bin/gh and curl: the readonly refusals (every form), canned answers from .aw-eval/*.json (match rules, first match, no match, no file, subdirectory), pass-through to a fake real gh
 bash scripts/tests/code-index-fixture.test.sh  # the code-index fixtures (tests/fixtures/code-index): verify.mjs, the sample check, the hostile generator
+bash scripts/tests/meta-skill-card.test.sh   # #2498: skills/meta/SKILL.md stays under its byte cap, opens with a card per harness (Claude Code, Codex, Cursor), says to trust the CLI FAIL lines and not open gate logs, and points at docs/csharp/meta-skill-reference.md, which exists
 bash scripts/tests/meta-launch.test.sh      # Linux and macOS (golden transcript; needs cc on macOS)
 bash scripts/tests/launcher-probe.test.sh   # launcher_cli_has_flag: finds a flag, answers no without it, ends a hanging CLI, leaves none of its children running (#2329)
 bash scripts/tests/meta-version.test.sh     # the installed aw-meta's version and the launcher's staleness warning (Linux and macOS)

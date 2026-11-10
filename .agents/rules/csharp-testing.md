@@ -110,6 +110,7 @@ ArchUnitNET (not NetArchTest), in the `integration` lane (owner, 2026-10-16), in
 | `ARCH-ASYNC-001` | Every `Task`/`ValueTask` method on a Core interface (a port) takes a `CancellationToken`; `DisposeAsync` is exempt |
 | `ARCH-UI-001` | The UI package: no UI type uses a Sindri type; a view model uses no `Avalonia.*` type; a platform head holds no view or view model |
 | `ARCH-ENGINE-001` | The Temporal boundary: only `Aw.Sindri.Workflows` (the worker and the engine read adapter) references the `Temporalio` package, and only types in `Aw.Sindri.Infrastructure.Workflows` use a `Temporalio` type; the app, the CLI, the UI and the MCP server hold no Temporal client (API spec P13) |
+| `ARCH-WF-001` | A type with Temporal's `[Workflow]` attribute (its partial parts and nested types included) calls no scheduler-escaping API: `CancelAsync`, `Task.Run`/`Delay`/`WhenAny`, `ConfigureAwait(false)` (the constant only), the wall clock, `Guid.NewGuid`, `Random` and the rest listed in `Rules/WorkflowSchedulerRules.cs`; found by the attribute, never by folder |
 
 The layer rules apply to shaped packages (assemblies named `Aw.<Pkg>.Core`, `.Features`, `.Infrastructure`, `.Host`
 or `.App`, and not tier 0 in `deps.yaml`, which `RegistryTests` checks against `Rules/TierZero.cs`); tier-0 packages (`Aw.Kernel`, `Aw.Kernel.Data`) get the cycle, naming, service-provider and typed-id rules.

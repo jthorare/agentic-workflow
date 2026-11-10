@@ -60,6 +60,8 @@ internal sealed class DriverHost(Func<Window?> window, TimeProvider clock)
     internal Task<Result<ActedResponse>> Scroll(ScrollRequest request) =>
         Act(request.Selector, (_, visual) => ElementActions.Scroll(visual, request.Dx, request.Dy));
 
+    internal Task<Result<ActedResponse>> Hover(HoverRequest request) => Act(request.Selector, (_, visual) => ElementActions.Hover(visual, !request.Off));
+
     internal Task<Result<WindowResponse>> WindowSize(WindowRequest request) => OnUi<WindowResponse>(tree =>
     {
         if (request.Width is < 1 or > 16_384 || request.Height is < 1 or > 16_384)

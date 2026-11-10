@@ -18,7 +18,7 @@ public sealed record LinearSettings
     private static readonly HashSet<string> _schemes = new(StringComparer.Ordinal) { "env", "file", "keychain", "op" };
     private static readonly HashSet<string> _localSchemes = new(StringComparer.Ordinal) { "env", "file" };
 
-    private LinearSettings(Uri url, string token, IReadOnlyList<string> teams, string? writeToken)
+    private LinearSettings(Uri url, string? token, IReadOnlyList<string> teams, string? writeToken)
     {
         Url = url;
         Token = token;
@@ -29,8 +29,8 @@ public sealed record LinearSettings
     /// <summary>Linear's GraphQL endpoint.</summary>
     public Uri Url { get; }
 
-    /// <summary>The secret pointer to the API key ('env:…', 'file:…', 'keychain:…', 'op:…'), never the key itself.</summary>
-    public string Token { get; }
+    /// <summary>The secret pointer to the API key ('env:…', 'file:…', 'keychain:…', 'op:…'), never the key itself; null when the profile names none and the key comes from the Connections page's Linear connection (#2508).</summary>
+    public string? Token { get; }
 
     /// <summary>The secret pointer to the write key (same schemes as <see cref="Token"/>), or null when the profile sets none (Linear hub spec 2026-11-04 §5.1). Whether it is a keychain or 1Password pointer, and whether it differs from the read key, is Sindri's profile check (SND-LINEAR-001), not this type's.</summary>
     public string? WriteToken { get; }
@@ -50,17 +50,9 @@ public sealed record LinearSettings
     public static Result<LinearSettings> Create(string? url, string? token, IReadOnlyList<string> teams, string? writeToken = null)
     {
         ArgumentNullException.ThrowIfNull(teams);
-        if (string.IsNullOrWhiteSpace(token))
+        if (CheckToken(url, token) is { } refused)
         {
-            return ContextErrors.SourceNotConfigured.With(
-                $"{TokenKey}: required: a secret pointer to the Linear API key (env:NAME, file:/path, keychain:service/account or op:vault/item/field).");
-        }
-
-        if (!IsPointer(token))
-        {
-            return ContextErrors.SourceNotConfigured.With(
-                $"{TokenKey}: isn't a secret pointer, so it isn't used or shown here. Keep the Linear API key outside the profile and point to it: "
-                + "env:NAME, file:/path (mode 0600), keychain:service/account or op:vault/item/field (spec §4); rotate a key that was written into the profile.");
+            return refused;
         }
 
         var write = string.IsNullOrWhiteSpace(writeToken) ? null : writeToken;
@@ -71,15 +63,34 @@ public sealed record LinearSettings
                 + "keychain:service/account or op:vault/item/field (env: and file: only for a loopback fixture); rotate a key that was written into the profile.");
         }
 
-        var endpoint = CheckUrl(url, token, write);
-        return endpoint.IsError ? endpoint.Error : new LinearSettings(endpoint.Value, token, [.. teams], write);
+        var pointer = string.IsNullOrWhiteSpace(token) ? null : token;
+        var endpoint = CheckUrl(url, pointer, write);
+        return endpoint.IsError ? endpoint.Error : new LinearSettings(endpoint.Value, pointer, [.. teams], write);
+    }
+
+    // why: a profile that names the endpoint but no token is read with the Connections page's Linear connection (#2508); a profile with neither is still SND-CONTEXT-002
+    private static Error? CheckToken(string? url, string? token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return url is not null
+                ? null
+                : ContextErrors.SourceNotConfigured.With(
+                    $"{TokenKey}: required: a secret pointer to the Linear API key (env:NAME, file:/path, keychain:service/account or op:vault/item/field).");
+        }
+
+        return IsPointer(token)
+            ? null
+            : ContextErrors.SourceNotConfigured.With(
+                $"{TokenKey}: isn't a secret pointer, so it isn't used or shown here. Keep the Linear API key outside the profile and point to it: "
+                + "env:NAME, file:/path (mode 0600), keychain:service/account or op:vault/item/field (spec §4); rotate a key that was written into the profile.");
     }
 
     /// <summary>The settings without the token pointer.</summary>
     /// <returns>A description.</returns>
     public override string ToString() => $"LinearSettings {{ Url = {Url}, Teams = {string.Join(',', Teams)}, Token = (withheld), WriteToken = {(WriteToken is null ? "(none)" : "(withheld)")} }}";
 
-    private static Result<Uri> CheckUrl(string? text, string token, string? writeToken)
+    private static Result<Uri> CheckUrl(string? text, string? token, string? writeToken)
     {
         if (text is null)
         {
@@ -105,7 +116,7 @@ public sealed record LinearSettings
         _ => null,
     };
 
-    private static Result<Uri> Host(Uri uri, string token, string? writeToken)
+    private static Result<Uri> Host(Uri uri, string? token, string? writeToken)
     {
         var linear = string.Equals(uri.Host, LinearHost, StringComparison.OrdinalIgnoreCase);
         if (linear && uri.Scheme == Uri.UriSchemeHttps && uri.IsDefaultPort)
@@ -118,7 +129,7 @@ public sealed record LinearSettings
             return Refused($"its host is '{Shown(uri.Host)}', not {LinearHost} over https");
         }
 
-        if (!_localSchemes.Contains(Scheme(token)))
+        if (token is not null && !_localSchemes.Contains(Scheme(token)))
         {
             return Refused($"a loopback Linear is for the fixture only, so its token must be an env: or file: pointer, not {Scheme(token)}: (the real key never goes to a local listener)");
         }
