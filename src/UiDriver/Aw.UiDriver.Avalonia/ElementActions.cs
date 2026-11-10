@@ -141,7 +141,7 @@ internal static class ElementActions
         return Unit.Value;
     }
 
-    /// <summary>Sets or clears the :pointerover pseudo-class, as the pointer entering or leaving would (a real pointer move afterwards takes over).</summary>
+    /// <summary>Sets or clears the :pointerover pseudo-class, as the pointer entering or leaving would (it stays until `off`, or a real pointer enters and leaves this element).</summary>
     /// <param name="visual">The element.</param>
     /// <param name="on">True to set it, false to clear it.</param>
     /// <returns>Success, or AW-UIDRIVER-003 for an element that has no classes.</returns>

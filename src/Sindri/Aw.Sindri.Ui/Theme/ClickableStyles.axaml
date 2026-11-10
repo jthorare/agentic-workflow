@@ -19,13 +19,17 @@
   <Style Selector="Border.clickable.subtle:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
   </Style>
+  <!-- A selected row rests on Surface2 too (QueueStyles item-row.selected); the guard leaves a press to the pressed fill. -->
+  <Style Selector="Border.clickable.selected:pointerover:not(:pressed)">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+  </Style>
   <Style Selector="Border.clickable:pressed">
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
     <Setter Property="RenderTransform" Value="scale(0.98)" />
   </Style>
   <!-- Focus and a selected row keep their own border; the lift is the background only there. -->
-  <Style Selector="Border.clickable:focus-visible:pointerover">
+  <Style Selector="Border.clickable:focus-visible:pointerover, Border.clickable:focus-visible:pressed">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
   </Style>
   <Style Selector="Border.clickable.selected:pointerover, Border.clickable.selected:pressed">

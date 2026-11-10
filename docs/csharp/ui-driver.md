@@ -70,7 +70,7 @@ elements are in its own popup window, not the main window. A popup leaves the tr
 | `type` | `{text, selector?, replace?}` | sets a text box (appends unless `replace`); the focused element when no selector |
 | `key` | `{chord, selector?}` | raises key down and up on the element (focused when none): `Enter`, `Ctrl+K`, `Ctrl+Shift+P` (Avalonia `Key` names) |
 | `scroll` | `{dx, dy, selector?}` | moves the scroll viewer holding (or held by) the element, clamped to its extent |
-| `hover` | `{selector, off?: false}` | sets (or with `off`, clears) the `:pointerover` pseudo-class on the matched element through its `Classes`, as the pointer entering or leaving would; the answer names the node it set. No real pointer moves, so a later real move over the window takes over |
+| `hover` | `{selector, off?: false}` | sets (or with `off`, clears) the `:pointerover` pseudo-class on the matched element through its `Classes`, as the pointer entering or leaving would; the answer names the node it set. No real pointer moves: the next `hover` with `off`, or a real pointer entering and leaving that element, clears it; a move elsewhere does not. It works on a disabled element too, on purpose: a disabled row still shows its hover in the app, and only `click` refuses. Let `Motion.Hover` (150 ms) pass before a screenshot |
 | `wait-for` | `{selector, state?: visible, text?, timeoutMs?: 10000}` | polls (50 ms) until the state holds: `exists`, `visible`, `hidden`, `gone`, `notVisible`, `enabled`, `disabled`, `textEquals`, `textContains`; else `AW-UIDRIVER-004` |
 | `screenshot` | `{selector?}` | PNG of the window or one element at scale 1 (`RenderTargetBitmap`) |
 | `window` | `{width?, height?}` | sets the window size when given; answers `{width, height, title}` |

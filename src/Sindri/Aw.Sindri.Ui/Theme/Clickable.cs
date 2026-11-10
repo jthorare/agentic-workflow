@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.VisualTree;
 
 namespace Aw.Sindri.Ui.Theme;
 
@@ -60,10 +62,11 @@ internal static class Clickable
         border.PointerReleased += (_, _) => Set(border, pressed: false);
         border.PointerCaptureLost += (_, _) => Set(border, pressed: false);
         // A press holds the pointer (implicit capture), as a Button's does: the 0.98 scale pulls the edges in, so a press near one
-        // leaves the pointer outside; the press lasts until the release or a lost capture, not until the pointer leaves.
+        // leaves the pointer outside; the press lasts until the release or a lost capture, not until the pointer leaves. The capture
+        // goes to what was hit, which is often a child (a TextBlock, a chip), so a holder inside the border counts as the border.
         border.PointerExited += (_, e) =>
         {
-            if (!ReferenceEquals(e.Pointer.Captured, border))
+            if (!Holds(border, e.Pointer.Captured))
             {
                 Set(border, pressed: false);
             }
@@ -88,6 +91,9 @@ internal static class Clickable
             transition.Duration = length;
         }
     }
+
+    private static bool Holds(Border border, IInputElement? captured) =>
+        captured is Visual holder && (ReferenceEquals(holder, border) || border.IsVisualAncestorOf(holder));
 
     private static void Set(Border border, bool pressed) => ((IPseudoClasses)border.Classes).Set(":pressed", pressed);
 
