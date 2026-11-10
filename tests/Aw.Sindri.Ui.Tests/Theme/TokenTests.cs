@@ -77,27 +77,63 @@ public sealed class TokenTests
     public void The_overlay_brush_is_the_scrim_at_60_percent() =>
         Assert.Equal("0.6", _tokens.Resources["Brush.Overlay"].Attribute("Opacity")?.Value);
 
-    // §14.2: base sizes and line heights at scale 1.0, and one Double text-scale resource.
-    public static TheoryData<string, double, double> Ramp => new()
+    // §14.2 and the 2026-11 measured pass (docs/csharp/sindri-ui-design.md): size, line height and weight at scale 1.0.
+    public static TheoryData<string, double, double, string> Ramp => new()
     {
-        { "PageTitle", 20, 24 },
-        { "DetailTitle", 18, 22.5 },
-        { "Body", 13, 19.5 },
-        { "BodyStrong", 13, 19.5 },
-        { "Caption", 12, 16.8 },
-        { "Eyebrow", 11, 14.3 },
-        { "Button", 13, 15.6 },
-        { "Mono", 12, 18 },
-        { "Kbd", 11, 14.3 },
+        { "PageTitle", 24, 32, "SemiBold" },
+        { "SectionTitle", 15, 24, "SemiBold" },
+        { "DetailTitle", 20, 28, "SemiBold" },
+        { "Body", 13, 20, "Normal" },
+        { "BodyStrong", 13, 20, "Medium" },
+        { "Caption", 12, 16, "Normal" },
+        { "Eyebrow", 11, 16, "Medium" },
+        { "Button", 13, 15.6, "Medium" },
+        { "Mono", 12, 16, "Normal" },
+        { "Kbd", 11, 16, "Medium" },
     };
 
     [Theory]
     [MemberData(nameof(Ramp))]
-    public void Each_type_step_has_its_size_and_line_height(string step, double size, double lineHeight)
+    public void Each_type_step_has_its_size_line_height_and_weight(string step, double size, double lineHeight, string weight)
     {
         Assert.Equal(size, _tokens.Number($"Type.{step}.Size"));
         Assert.Equal(lineHeight, _tokens.Number($"Type.{step}.LineHeight"), 3);
+        Assert.Equal(weight, _tokens.Resources[$"Type.{step}.Weight"].Value.Trim());
     }
+
+    [Theory]
+    [InlineData("Compact", 28)]
+    [InlineData("Default", 32)]
+    [InlineData("Comfortable", 40)]
+    public void Each_row_height_has_its_value(string name, double height) => Assert.Equal(height, _tokens.Number($"Row.Height.{name}"));
+
+    // Every TextBlock class reads its step's size, line height and weight from the tokens; no literal size is left.
+    [Theory]
+    [InlineData("page-title", "PageTitle")]
+    [InlineData("section-title", "SectionTitle")]
+    [InlineData("detail-title", "DetailTitle")]
+    [InlineData("body", "Body")]
+    [InlineData("body-strong", "BodyStrong")]
+    [InlineData("caption", "Caption")]
+    [InlineData("eyebrow", "Eyebrow")]
+    [InlineData("button", "Button")]
+    [InlineData("mono", "Mono")]
+    [InlineData("kbd", "Kbd")]
+    public void Each_type_class_reads_its_tokens(string name, string step)
+    {
+        var style = TypographyStyles().Single(s => s.Attribute("Selector")?.Value == "TextBlock." + name);
+        string? Setter(string property) => style.Elements().Single(e => Attr(e, "Property") == property).Attribute("Value")?.Value;
+
+        Assert.Equal($"{{DynamicResource Type.{step}.Size}}", Setter("FontSize"));
+        Assert.Equal($"{{DynamicResource Type.{step}.LineHeight}}", Setter("LineHeight"));
+        Assert.Equal($"{{DynamicResource Type.{step}.Weight}}", Setter("FontWeight"));
+    }
+
+    [Fact]
+    public void Typography_has_no_literal_font_size_or_line_height() =>
+        Assert.DoesNotContain(
+            TypographyStyles().SelectMany(s => s.Elements()),
+            e => (Attr(e, "Property") is "FontSize" or "LineHeight" or "FontWeight") && !(Attr(e, "Value") ?? "").StartsWith("{DynamicResource", StringComparison.Ordinal));
 
     [Fact]
     public void The_text_scale_starts_at_one() => Assert.Equal(1.0, _tokens.Number("Type.Scale"));
@@ -154,6 +190,7 @@ public sealed class TokenTests
     // §14.2: one TextBlock style class per type step.
     [Theory]
     [InlineData("page-title")]
+    [InlineData("section-title")]
     [InlineData("detail-title")]
     [InlineData("body")]
     [InlineData("body-strong")]
@@ -168,6 +205,9 @@ public sealed class TokenTests
 
         Assert.Contains(styles, s => s.Attribute("Selector")?.Value == "TextBlock." + name);
     }
+
+    private static IEnumerable<XElement> TypographyStyles() =>
+        XDocument.Load(Path.Combine(UiSource.Theme, "Typography.axaml")).Descendants().Where(e => e.Name.LocalName == "Style");
 
     private static string? Attr(XElement e, string name) => e.Attribute(name)?.Value;
 
