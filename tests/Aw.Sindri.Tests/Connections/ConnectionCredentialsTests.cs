@@ -79,6 +79,29 @@ public sealed class ConnectionCredentialsTests
         Assert.Equal(preset + "-connection-token-alpha", Credentials().TokenFor(preset, profilePointer: null));
     }
 
+    // ideas on #2590: a pointer that doesn't resolve gives null alone, and never hides a connected connection
+    [Theory, MemberData(nameof(Presets)), Trait("Lane", "unit")]
+    public async Task A_pointer_that_does_not_resolve_gives_null_alone_and_the_connection_with_one(string preset)
+    {
+        Assert.Null(Credentials().TokenFor(preset, "keychain:aw/missing"));
+        Assert.Null(Credentials().TokenFor(preset, "not-a-pointer"));
+
+        await Connect(preset, ConnectionStatus.Connected);
+
+        Assert.Equal(preset + "-connection-token-work", Credentials().TokenFor(preset, "keychain:aw/missing"));
+    }
+
+    [Theory, MemberData(nameof(Presets)), Trait("Lane", "unit")]
+    public async Task A_connected_connection_whose_secret_cannot_be_read_falls_back_to_the_pointer(string preset)
+    {
+        await Connect(preset, ConnectionStatus.Connected);
+        var pointer = Pointer(preset);
+        _connectionSecrets.Fails = true;
+
+        Assert.Equal(preset + "-profile-token", Credentials().TokenFor(preset, pointer));
+        Assert.Null(Credentials().TokenFor(preset, profilePointer: null));
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void No_store_reads_the_pointer_alone()
         => Assert.Equal("slack-profile-token", new ConnectionCredentials(connections: null, connectionSecrets: null, _pointers).TokenFor("slack", Pointer("slack")));

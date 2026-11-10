@@ -290,6 +290,21 @@ public sealed class SetupFactsTests
         Assert.Equal([("linear", SetupState.Todo, "needs token")], fact.Items.Lines.Select(static i => (i.Repo, i.State, i.Detail)));
     }
 
+    // #2508: a source the profile names with no token reads with a connected connection of its preset, so setup lists no to-do for it
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_source_with_no_token_pointer_and_a_connected_connection_is_connected()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithContext("""{"sources":{"linear":{"teams":["ENG"]},"slack":{"channels":[{"id":"C0001GEN","name":"eng"}]}}}"""));
+        await rig.Connect("linear", Core.Connections.ConnectionStatus.Connected);
+        await rig.Connect("slack", Core.Connections.ConnectionStatus.NeedsSignIn);
+
+        var fact = (await rig.Facts.Sources(Token)).Value;
+
+        Assert.Equal([("slack", SetupState.Todo, "needs token"), ("linear", SetupState.Done, "connected")], fact.Items.Lines.Select(static i => (i.Repo, i.State, i.Detail)));
+        Assert.DoesNotContain("connection-token", string.Join('|', fact.Items.Lines.Select(static i => i.Detail)), StringComparison.Ordinal);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_source_is_connected_when_its_token_pointer_resolves_and_needs_a_token_when_it_does_not()
     {
