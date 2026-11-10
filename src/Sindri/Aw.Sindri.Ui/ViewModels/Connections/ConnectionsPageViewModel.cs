@@ -52,6 +52,15 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
     /// <summary>True when there are connections no tile shows.</summary>
     public bool HasOthers { get; private set => Set(ref field, value); }
 
+    /// <summary>True when the Custom section (label and rows) shows. Red stub.</summary>
+    public bool ShowsCustom { get; private set => Set(ref field, value); }
+
+    /// <summary>The Custom section's label. Red stub.</summary>
+    public string CustomLabel { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The Custom section's count. Red stub.</summary>
+    public string CustomCount { get; private set => Set(ref field, value); } = string.Empty;
+
     /// <summary>The connections, as the API orders them.</summary>
     public ObservableCollection<ConnectionRowViewModel> Rows { get; } = [];
 

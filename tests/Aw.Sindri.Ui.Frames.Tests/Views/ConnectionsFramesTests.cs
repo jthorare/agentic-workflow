@@ -130,6 +130,24 @@ public sealed class ConnectionsFramesTests : FrameHost
         Frame(window, "tile-help-1000", Prefix);
     });
 
+    // qa (#2537): the custom row has ONE top edge (the panel's), a "Custom" label sits above it, and every tile's title sits at the same y with or without the menu button.
+    [Fact]
+    public Task The_custom_section_has_a_label_and_one_top_edge_and_the_tile_titles_line_up() => OnUi(async () =>
+    {
+        var (window, shell) = await OnConnections(1280);
+
+        Assert.True(Visible(window, "ConnectionsCustomLabel"), "no Custom label above the custom rows");
+        var first = window.GetVisualDescendants().OfType<Border>().First(b => string.Equals(b.Name, "ConnectionRowFrame", StringComparison.Ordinal));
+        Assert.Equal(0, first.BorderThickness.Top);
+        var tops = window.GetVisualDescendants().OfType<Border>()
+            .Where(b => string.Equals(b.Name, "ServiceTileFrame", StringComparison.Ordinal))
+            .Select(b => b.GetVisualDescendants().OfType<TextBlock>().First().TranslatePoint(new Point(0, 0), b)!.Value.Y)
+            .Distinct().ToList();
+        _ = Assert.Single(tops);
+        Assert.Contains(shell.Connections.Tiles, t => !t.IsOffered);   // a tile with the menu button is among them
+        Frame(window, "custom-and-titles", Prefix);
+    });
+
     // Every tile has the same element names, so a lookup by name alone finds the first tile's: look inside this tile's view only.
     private static bool VisibleIn(Window window, object tile, string name) =>
         window.GetVisualDescendants().OfType<Control>().Any(c => c.Name == name && c.IsEffectivelyVisible && c.GetVisualAncestors().OfType<Control>().Any(a => a.DataContext == tile));

@@ -23,7 +23,7 @@ public sealed class ConnectionsPageTests
         var page = await _f.Shown();
 
         Assert.Equal(["acme:key", "linear:work", "notes:mcp"], page.Rows.Select(r => r.Name), StringComparer.Ordinal);
-        Assert.Equal(["✕ Error", "✓ Connected", "! Needs sign-in"], page.Rows.Select(r => r.ChipText), StringComparer.Ordinal);
+        Assert.Equal(["Error", "Connected", "Needs sign-in"], page.Rows.Select(r => r.ChipText), StringComparer.Ordinal);
         Assert.Equal("the provider refused the refresh", page.Rows[0].ReasonText);
         Assert.Equal("1 of 5 connected", page.Head);   // linear:work is on the Linear tile
         Assert.Equal([false, true, true], page.Rows.Select(r => r.CanSignIn));   // a key connection has no browser sign-in (SND-CONN-011)
