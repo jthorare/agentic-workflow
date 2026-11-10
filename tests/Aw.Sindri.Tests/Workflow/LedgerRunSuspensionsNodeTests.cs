@@ -33,7 +33,7 @@ public sealed class LedgerRunSuspensionsNodeTests
             Run = _run.Value,
             Node = _agent.Value,
         };
-        await Append(EventTypes.LaunchStarted, started, $"launch.outcome:{A.FirstLaunchId.Value}");
+        await Append(EventTypes.LaunchStarted, started, $"launch.outcome:{A.FirstLaunchId.Value}", A.FirstItemId.Value);
         return new LedgerRunSuspensions(_slice.Store, _slice.Events);
     }
 
@@ -44,11 +44,12 @@ public sealed class LedgerRunSuspensionsNodeTests
         return answer.Value;
     }
 
-    private ValueTask TakenOver(NodeId node, int item = 0) =>
-        Append(EventTypes.WorkflowNodeTakenOver, new WorkflowNodeTakenOverPayload(_run, node, item, "human:cli"), Key(EventTypes.WorkflowNodeTakenOver, node, item));
+    // why: #2497 writes the rows about the run's item, so a run with no item writes them with none; 'onItem' false is that run
+    private ValueTask TakenOver(NodeId node, int item = 0, bool onItem = true) =>
+        Append(EventTypes.WorkflowNodeTakenOver, new WorkflowNodeTakenOverPayload(_run, node, item, "human:cli"), Key(EventTypes.WorkflowNodeTakenOver, node, item), onItem ? A.FirstItemId.Value : null);
 
-    private ValueTask HandedBack(NodeId node, int item = 0) =>
-        Append(EventTypes.WorkflowNodeHandedBack, new WorkflowNodeHandedBackPayload(_run, node, item, "human:cli"), Key(EventTypes.WorkflowNodeHandedBack, node, item));
+    private ValueTask HandedBack(NodeId node, int item = 0, bool onItem = true) =>
+        Append(EventTypes.WorkflowNodeHandedBack, new WorkflowNodeHandedBackPayload(_run, node, item, "human:cli"), Key(EventTypes.WorkflowNodeHandedBack, node, item), onItem ? A.FirstItemId.Value : null);
 
     [Fact]
     public async Task A_node_taken_over_suspends_its_launch()
@@ -106,11 +107,39 @@ public sealed class LedgerRunSuspensionsNodeTests
         Expect.True(!await Suspended(subject));
     }
 
+    [Fact]
+    public async Task A_run_with_no_item_taken_over_suspends_its_launch()
+    {
+        var subject = await Subject();
+        await TakenOver(_agent, onItem: false);
+
+        Expect.True(await Suspended(subject));
+    }
+
+    [Fact]
+    public async Task A_run_with_no_item_handed_back_resumes_its_launch()
+    {
+        var subject = await Subject();
+        await TakenOver(_agent, onItem: false);
+        await HandedBack(_agent, onItem: false);
+
+        Expect.True(!await Suspended(subject));
+    }
+
+    [Fact]
+    public async Task A_nodes_takeover_does_not_suspend_a_node_whose_id_starts_with_its_id()
+    {
+        var subject = await Subject();
+        await TakenOver(NodeId.From("agent2"), onItem: false);
+
+        Expect.True(!await Suspended(subject));
+    }
+
     private string Key(string type, NodeId node, int item) => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{type}:{_run.Value}:{node.Value}:{item}:cmd{_rows++}");
 
-    private async ValueTask Append<T>(string type, T payload, string key)
+    private async ValueTask Append<T>(string type, T payload, string key, string? item = null)
     {
-        var appended = await _slice.Store.Append(_slice.Events.Entry(type, payload, key, A.FirstItemId.Value), _grant!, Token);   // why: Subject ran first
+        var appended = await _slice.Store.Append(_slice.Events.Entry(type, payload, key, item), _grant!, Token);   // why: Subject ran first
         Expect.True(appended.IsSuccess);
     }
 }
