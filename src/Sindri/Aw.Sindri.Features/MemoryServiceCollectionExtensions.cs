@@ -23,6 +23,7 @@ internal static class MemoryServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddScoped<MemoryEvents>()
+            .AddScoped<WorkflowMemoryPort>()   // the memory blocks of a workflow reach the slices through it (agent-first PR 13 follow-up)
             .AddScoped<IValidator<CreateMemoryRequest>, AcceptAllValidator<CreateMemoryRequest>>().AddCommand<CreateMemoryRequest, CreateMemoryResponse, CreateMemoryService>()
             .AddScoped<IValidator<WriteMemoryFactRequest>, AcceptAllValidator<WriteMemoryFactRequest>>().AddCommand<WriteMemoryFactRequest, WriteMemoryFactResponse, WriteMemoryFactService>()
             .AddScoped<IValidator<ForgetMemoryFactRequest>, AcceptAllValidator<ForgetMemoryFactRequest>>().AddCommand<ForgetMemoryFactRequest, ForgetMemoryFactResponse, ForgetMemoryFactService>()
