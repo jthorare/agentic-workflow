@@ -18,6 +18,12 @@ public sealed class WorkflowCallTrigger : IGraphBlock
     public string Type => "workflow_call";
 
     /// <inheritdoc />
+    public string Title => "Called by a workflow";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Triggers;
+
+    /// <inheritdoc />
     public bool IsTrigger => true;
 
     /// <inheritdoc />

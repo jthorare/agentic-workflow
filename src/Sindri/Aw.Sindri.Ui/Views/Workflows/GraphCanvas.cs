@@ -238,6 +238,11 @@ internal sealed partial class GraphCanvas : Control
     {
         if (ReferenceEquals(sender, _watched))
         {
+            if (string.Equals(e.PropertyName, nameof(WorkflowGraphViewModel.SelectedId), StringComparison.Ordinal))
+            {
+                (ControlAutomationPeer.FromElement(this) as GraphCanvasAutomationPeer)?.SelectionChanged(_watched?.SelectedId);
+            }
+
             InvalidateVisual();
         }
     }

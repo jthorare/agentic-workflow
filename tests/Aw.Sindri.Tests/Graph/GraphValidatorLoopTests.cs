@@ -54,4 +54,30 @@ public sealed class GraphValidatorLoopTests
 
         Assert.Equal(["gather"], Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-002").Nodes);
     }
+
+    [Fact]
+    public void A_run_agent_in_a_loop_body_is_a_loop_finding_naming_the_for_each()
+    {
+        var spec = Spec(
+            [Trigger("daily"), Each("each"), Agent("work", "app"), Gather("gather")],
+            [Edge("daily", "each"), Edge("each", "work"), Edge("work", "gather")]);
+
+        var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
+
+        var finding = Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-003");
+        Assert.Equal(["each"], finding.Nodes);
+        Assert.Contains("'work'", finding.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_run_agent_before_the_for_each_is_not_a_loop_finding()
+    {
+        var spec = Spec(
+            [Trigger("daily"), Agent("work", "app"), Each("each"), Gather("gather")],
+            [Edge("daily", "work"), Edge("work", "each"), Edge("each", "gather")]);
+
+        var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
+
+        Assert.DoesNotContain(result.Findings, static f => f.Code == "GRAPH-LOOP-003");
+    }
 }

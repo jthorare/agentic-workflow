@@ -35,6 +35,18 @@ public interface ILaunchFiles
     /// <returns>True while the marker exists.</returns>
     public bool ToolRunning(LaunchId launch);
 
+    /// <summary>Whether a person holds the launch's session (PR 7): the engine marks a graph node's launch from its takeover until its handback, and the idle sweep leaves it alone.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <returns>True while the marker exists.</returns>
+    public bool TakenOver(LaunchId launch) => false;
+
+    /// <summary>Marks the launch's session as held by a person, or frees it (a launch with no files directory is left alone).</summary>
+    /// <param name="launch">The launch.</param>
+    /// <param name="taken">True from a takeover, false from the handback.</param>
+    public void MarkTakenOver(LaunchId launch, bool taken)
+    {
+    }
+
     /// <summary>When the idle sweep sent the launch's session its one re-prompt.</summary>
     /// <param name="launch">The launch.</param>
     /// <returns>When it was sent, or null when it has not been.</returns>

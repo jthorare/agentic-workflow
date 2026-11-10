@@ -5,18 +5,20 @@ meta session s-meta (smoke-meta)
 ## inbox-sync --session s-meta --transcript <tmp>/meta.jsonl
 no new messages
 ## stop-check --session s-meta --transcript <tmp>/meta.jsonl
-aw-meta: 3 open obligation(s); close them before stopping.
+aw-meta: 4 open obligation(s); close them before stopping.
 1. [Reply] reply to smoke-api (m-idle): ready #1 079c2541
    next: SendMessage to smoke-api; or aw-meta inbox-dismiss m-idle --reason "<why>"; or aw-meta inbox-defer m-idle --reason "<why>" --until +30m
 2. [Reply] reply to smoke-ui (d-queued): can you rebase me
    next: SendMessage to smoke-ui; or aw-meta inbox-dismiss d-queued --reason "<why>"; or aw-meta inbox-defer d-queued --reason "<why>" --until +30m
 3. [BroadcastLanes] lane map v1 not sent to: api (smoke-api)
    next: aw-meta lanes --announce, then SendMessage the printed text to: smoke-api
+4. [RearmWatch] no active coordinator consumer: watch last beat never, 2 waiting
+   next: Claude: aw-meta watch --for 29m (with Monitor, persistent); Codex/Cursor: aw-meta watch --until-mail --for 29m in the foreground, rearm after each exit
 exit 1
 ## outbox-record smoke-api
 recorded the send; closed: reply to smoke-api (m-idle): ready #1 079c2541
 ## outbox-record smoke-ui
-recorded the send; closed: reply to smoke-ui (d-queued): can you rebase me
+recorded the send; closed: reply to smoke-ui (d-queued): can you rebase me; no active coordinator consumer: watch last beat never, 1 waiting
 ## lanes --announce
 LANE MAP v1: api=smoke-api (unmapped: ui)
 ## outbox-record the lane map to smoke-api

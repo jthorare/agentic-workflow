@@ -11,4 +11,8 @@ namespace Aw.Sindri.Core.Sandbox.Plan;
 /// <param name="Attended">True for an attended session (never 'github').</param>
 /// <param name="Github">The resolved GitHub credentials.</param>
 /// <param name="Omit">Groups the Step removes from itself.</param>
-public sealed record GroupsInput(SandboxSettings? Settings, SandboxRepoSettings? Repo, AgentId Target, bool WriteScope, bool Attended, GithubCredentials Github, IReadOnlyList<string>? Omit);
+public sealed record GroupsInput(SandboxSettings? Settings, SandboxRepoSettings? Repo, AgentId Target, bool WriteScope, bool Attended, GithubCredentials Github, IReadOnlyList<string>? Omit)
+{
+    /// <summary>The groups a graph node adds to the session's own (PR 7): 'github' for a node that names a repo, and the host groups of the connections it names. Null for any other launch.</summary>
+    public IReadOnlyList<string>? AddGroups { get; init; }
+}

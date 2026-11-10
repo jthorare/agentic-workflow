@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Automation.Peers;
+using Avalonia.Automation.Provider;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -170,6 +171,102 @@ public sealed class GraphCanvasTests
 
         Assert.Equal(new Point(Margin, Margin), before);
         Assert.True(card.Left >= 0 && card.Right <= size.Width && card.Top >= 0 && card.Bottom <= size.Height, $"the card {card} is inside {size}");
+    }
+
+    [Fact]
+    public async Task The_node_peers_keep_their_identity_between_queries_and_are_rebuilt_for_another_graph()
+    {
+        const string Positions = """[{"node":"a","x":0,"y":0},{"node":"b","x":300,"y":0}]""";
+        var f = new WorkflowsFixture();
+        var first = await WorkflowGraphViewModelTests.GraphOf(f, """[{"id":"a","type":"x","config":{}},{"id":"b","type":"x","config":{}}]""", "[]", Positions, slug: "one");
+        var other = await WorkflowGraphViewModelTests.GraphOf(f, """[{"id":"c","type":"x","title":"See","config":{}}]""", "[]", """[{"node":"c","x":0,"y":0}]""", slug: "two");
+
+        var (same, swappedNames) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = first };
+            var window = new Window { Content = canvas, Width = 800, Height = 500 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                var peer = ControlAutomationPeer.CreatePeerForElement(canvas);
+                var one = peer.GetChildren();
+                var two = peer.GetChildren();
+                canvas.Graph = other;
+                return (one.Count == two.Count && one.Zip(two).All(p => ReferenceEquals(p.First, p.Second)), peer.GetChildren().Select(c => c.GetName()).ToArray());
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.True(same, "two queries return the same peer instances");
+        Assert.Equal(other.Nodes.Select(n => n.Name), swappedNames, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_key_move_makes_the_new_node_peer_selected_and_the_old_one_not()
+    {
+        var graph = await WorkflowGraphViewModelTests.GraphOf(
+            new WorkflowsFixture(),
+            """[{"id":"a","type":"x","config":{}},{"id":"b","type":"x","config":{}}]""",
+            "[]",
+            """[{"node":"a","x":0,"y":0},{"node":"b","x":300,"y":0}]""");
+
+        var (afterFirst, afterSecond) = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 800, Height = 500 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                var peer = ControlAutomationPeer.CreatePeerForElement(canvas);
+                var items = peer.GetChildren().Cast<ISelectionItemProvider>().ToArray();
+                _ = canvas.Focus();
+                window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, keySymbol: null);
+                var first = items.Select(i => i.IsSelected).ToArray();
+                window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, keySymbol: null);
+                return (first, items.Select(i => i.IsSelected).ToArray());
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.Equal([true, false], afterFirst);
+        Assert.Equal([false, true], afterSecond);
+    }
+
+    [Fact]
+    public async Task Selecting_through_a_node_peer_moves_the_graph_selection()
+    {
+        var graph = await WorkflowGraphViewModelTests.GraphOf(
+            new WorkflowsFixture(),
+            """[{"id":"a","type":"x","config":{}},{"id":"b","type":"x","config":{}}]""",
+            "[]",
+            """[{"node":"a","x":0,"y":0},{"node":"b","x":300,"y":0}]""");
+
+        var selected = await OnUi(() =>
+        {
+            var canvas = new GraphCanvas { Graph = graph };
+            var window = new Window { Content = canvas, Width = 800, Height = 500 };
+            window.Show();
+            Settle(window);
+            try
+            {
+                ((ISelectionItemProvider)ControlAutomationPeer.CreatePeerForElement(canvas).GetChildren()[1]).Select();
+                return graph.SelectedId;
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        Assert.Equal("b", selected);
     }
 
     [Fact]
