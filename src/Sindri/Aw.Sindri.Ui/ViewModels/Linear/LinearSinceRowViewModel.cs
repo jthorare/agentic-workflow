@@ -30,8 +30,9 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
         Detail = Labels.LinearSinceDetail(Key, newestFirst.Where(c => !IsShownElsewhere(c)).Select(Labels.LinearSinceChange));
         TimeText = Labels.AgoWords(now - At);
         Name = Key + ", " + Title + ", " + string.Join(", ", said) + ", " + TimeText;
-        var moved = newestFirst.FirstOrDefault(static c => string.Equals(c.Kind, "state", StringComparison.Ordinal));
-        _movedChip = moved is null ? null : Labels.LinearStateChip(moved.From, moved.To);
+        // Two or more moves read as one span, first From to last To ("Todo → In Review"), so no move is lost.
+        var moves = newestFirst.Where(static c => string.Equals(c.Kind, "state", StringComparison.Ordinal)).ToList();
+        _movedChip = moves.Count == 0 ? null : Labels.LinearStateChip(moves[^1].From, moves[0].To);
         Apply(issue: null);
     }
 
@@ -56,7 +57,7 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
     /// <summary>The row's accessible name.</summary>
     public string Name { get; }
 
-    /// <summary>"Todo → In Progress", or the issue's state from the list when the row has no state change; empty when neither is known.</summary>
+    /// <summary>"Todo → In Progress" (several moves: the first From to the last To), or the issue's state from the list when the row has no state change; empty when neither is known.</summary>
     public string StateChip { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>"Urgent"; empty until the list holds the issue, and for no priority.</summary>

@@ -85,6 +85,17 @@ public sealed class LinearSinceCardTests
     }
 
     [Fact]
+    public async Task Two_moves_on_one_issue_read_as_one_chip_from_the_first_state_to_the_last()
+    {
+        var work = await ShownWith(Since(
+            ("state", "ZZZ-2", "Two moves", "2025-12-31T20:00:00Z", "Todo", "In Progress"),
+            ("state", "ZZZ-2", "Two moves", "2025-12-31T23:00:00Z", "In Progress", "In Review")));
+
+        var row = Assert.Single(work.StripRows);
+        Assert.Equal(("Todo → In Review", "ZZZ-2"), (row.StateChip, row.Detail));
+    }
+
+    [Fact]
     public async Task An_issue_the_list_does_not_hold_has_no_priority_project_or_initials_chip_and_no_blank_one()
     {
         var work = await ShownWith(Since(("state", "ZZZ-1", "Not in the list", "2025-12-31T23:00:00Z", "Todo", "Done")));
@@ -135,11 +146,11 @@ public sealed class LinearSinceCardTests
             ("mentioned", "A-7", "Mention 7", "2025-12-31T17:00:00Z", null, null)));
         var group = work.StripGroups.Single();
 
-        Assert.Equal((7, 5, true, "Show all 7"), (group.Rows.Count, group.ShownRows.Count, group.HasMore, group.ToggleText));
+        Assert.Equal((7, 5, true, "Show all"), (group.Rows.Count, group.ShownRows.Count, group.HasMore, group.ToggleText));
         group.Toggle();
         Assert.Equal((7, "Show fewer"), (group.ShownRows.Count, group.ToggleText));
         group.Toggle();
-        Assert.Equal((5, "Show all 7"), (group.ShownRows.Count, group.ToggleText));
+        Assert.Equal((5, "Show all"), (group.ShownRows.Count, group.ToggleText));
     }
 
     [Fact]

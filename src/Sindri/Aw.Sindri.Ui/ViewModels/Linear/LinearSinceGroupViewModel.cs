@@ -26,8 +26,8 @@ internal sealed class LinearSinceGroupViewModel(string heading, IReadOnlyList<Li
     /// <summary>True when the group holds more rows than the card shows at first.</summary>
     public bool HasMore => Rows.Count > Cap;
 
-    /// <summary>"Show all 7", or "Show fewer" once expanded.</summary>
-    public string ToggleText => IsExpanded ? Labels.LinearShowFewer : Labels.LinearShowAll(Rows.Count);
+    /// <summary>"Show all", or "Show fewer" once expanded.</summary>
+    public string ToggleText => IsExpanded ? Labels.LinearShowFewer : Labels.LinearShowAll;
 
     /// <summary>Expands the group, or folds it back to five rows.</summary>
     internal void Toggle()
