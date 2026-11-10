@@ -54,6 +54,9 @@ internal static partial class Labels
     /// <summary>The login field's name.</summary>
     internal const string ReviewsLoginFieldName = "GitHub login";
 
+    /// <summary>The line over the Connect GitHub action: what the page shows.</summary>
+    internal const string ReviewsConnectLine = "Pull requests waiting on your review, with their threads and checks.";
+
     /// <summary>The hint line under the list.</summary>
     internal const string ReviewsHint = "J K next / previous PR · Enter open · G V go to Reviews";
 

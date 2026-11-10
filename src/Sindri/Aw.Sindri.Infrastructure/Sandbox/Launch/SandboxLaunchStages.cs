@@ -46,7 +46,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         var common = await inputs.GitCommonDir(request.RepoPath, cancellationToken).ConfigureAwait(false);
         var run = RunDirectory(request);
         var skill = await SkillEnvironment(request, run, cancellationToken).ConfigureAwait(false);
-        return new SandboxRequest(
+        var built = new SandboxRequest(
             request.Launch, request.Item, request.Agent, repo, request.Instance,
             new SandboxPaths(request.RepoPath, common, request.Worktree, run, inputs.RunAreaFor(request.Launch)),
             RunNamespace(request),
@@ -60,9 +60,13 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
             SkillTrialDirectory = request.Skill?.TrialSkillsDirectory,
             SkillPushes = SkillPushes(request),
             GithubPushApproved = request.GithubPushApproved,
-            AddGroups = request.Task?.HostGroups,
         };
+        return WithTask(built, request.Task);
     }
+
+    // A graph node's own asks (PR 7, PR 14): its host groups, the workflow's rw State mounts and its declared limits, which the plan clamps to the profile and the box (#2532).
+    private static SandboxRequest WithTask(SandboxRequest built, AgentTask? task) =>
+        task is null ? built : built with { AddGroups = task.HostGroups, ResourceMounts = task.ResourceMounts, ResourceLimits = task.ResourceLimits };
 
     // The skill block's variables: AW_DIR is computed here, once, from the repo's origin remote, the way skills/_shared/repo-slug.sh would (D8). A 'pr' input adds the branch PrHeadFetch fetched the PR head to, which the cleared sandbox environment would otherwise lose.
     private async ValueTask<IReadOnlyDictionary<string, string>?> SkillEnvironment(LaunchRequest request, string run, CancellationToken cancellationToken)
