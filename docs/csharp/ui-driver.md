@@ -70,6 +70,7 @@ elements are in its own popup window, not the main window. A popup leaves the tr
 | `type` | `{text, selector?, replace?}` | sets a text box (appends unless `replace`); the focused element when no selector |
 | `key` | `{chord, selector?}` | raises key down and up on the element (focused when none): `Enter`, `Ctrl+K`, `Ctrl+Shift+P` (Avalonia `Key` names) |
 | `scroll` | `{dx, dy, selector?}` | moves the scroll viewer holding (or held by) the element, clamped to its extent |
+| `hover` | `{selector, off?: false}` | sets (or with `off`, clears) the `:pointerover` pseudo-class on the matched element through its `Classes`, as the pointer entering or leaving would; the answer names the node it set. No real pointer moves, so a later real move over the window takes over |
 | `wait-for` | `{selector, state?: visible, text?, timeoutMs?: 10000}` | polls (50 ms) until the state holds: `exists`, `visible`, `hidden`, `gone`, `notVisible`, `enabled`, `disabled`, `textEquals`, `textContains`; else `AW-UIDRIVER-004` |
 | `screenshot` | `{selector?}` | PNG of the window or one element at scale 1 (`RenderTargetBitmap`) |
 | `window` | `{width?, height?}` | sets the window size when given; answers `{width, height, title}` |
@@ -89,7 +90,7 @@ accessibility fix, and it benefits screen readers too.
 aw-ui-driver [--dir D] [--timeout-ms N] <verb> [flags]   D defaults to $AW_UI_DRIVER_DIR; N (default 60000, else $AW_UI_DRIVER_TIMEOUT_MS) bounds the whole call
   ready [--wait-ms 30000]                  wait until a driver answers (the app may still be starting)
   tree [--depth N] · search --limit N · props · click · type --value T [--replace] · key --chord Ctrl+K
-  scroll --dx N --dy N · wait-for --state S [--expect-text T] [--wait-ms N] · screenshot --out file.png
+  scroll --dx N --dy N · hover [--off] · wait-for --state S [--expect-text T] [--wait-ms N] · screenshot --out file.png
   window [--width N --height N] · action --do invoke · call --path <verb> --json '<request>'
   selector flags: --node-id --automation-id --name --type --text --contains --index
 ```
@@ -117,5 +118,5 @@ through this command line, and stops the app. Sindri's `sindri-ui` opts in with 
 
 ## Not in this version
 
-Raw pointer injection, drag, hover and multi-window addressing (the main window only), and a `launch` verb (the caller starts the app with `AW_UI_DRIVER=1`, then
+Raw pointer injection, drag, a real pointer hover (`hover` only sets the pseudo-class) and multi-window addressing (the main window only), and a `launch` verb (the caller starts the app with `AW_UI_DRIVER=1`, then
 runs `aw-ui-driver ready`; `desktop-run` does this for its scripts).

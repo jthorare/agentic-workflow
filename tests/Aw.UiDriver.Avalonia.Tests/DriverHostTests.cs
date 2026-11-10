@@ -96,6 +96,32 @@ public sealed class DriverHostTests
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task Hover_sets_the_pointer_over_state_on_the_matched_element_and_off_takes_it_away()
+    {
+        var screen = await TestScreen.OpenAsync();
+        var host = Host(screen);
+
+        var on = await host.Hover(new HoverRequest(new Selector(AutomationId: "save")));
+        var during = await TestScreen.OnUi(() => screen.Save.Classes.Contains(":pointerover"));
+        var off = await host.Hover(new HoverRequest(new Selector(AutomationId: "save"), Off: true));
+        var after = await TestScreen.OnUi(() => screen.Save.Classes.Contains(":pointerover"));
+
+        Assert.Equal("save", on.Value.Node.AutomationId);
+        Assert.True(off.IsSuccess);
+        Assert.Equal((true, false), (during, after));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Hover_on_nothing_is_refused_with_its_code()
+    {
+        var screen = await TestScreen.OpenAsync();
+
+        var missing = await Host(screen).Hover(new HoverRequest(new Selector(AutomationId: "nope")));
+
+        Assert.Equal(UiDriverErrors.NoMatch.Code, missing.Error.Code);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task A_disabled_element_cannot_be_clicked()
     {
         var screen = await TestScreen.OpenAsync();
