@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Kernel;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Watch;
@@ -16,10 +17,10 @@ namespace Aw.Meta.Features.Watch;
 internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string, ValueTask> emit, WatchResources reported, Func<WatchResources, ValueTask> remember, ContextReported context, Func<ValueTask<IReadOnlyList<string>>> usage)
 {
     /// <summary>Called with main's new sha and the pull requests that went MERGED in the same poll, when a poll reports "MAIN moved".</summary>
-    internal Func<string, IReadOnlyList<int>, ValueTask> MainMoved { get; init; } = static (_, _) => ValueTask.CompletedTask;
+    internal Func<string, IReadOnlyList<int>, ValueTask<Result<Unit>>> MainMoved { get; init; } = static (_, _) => ValueTask.FromResult<Result<Unit>>(Unit.Value);
 
     /// <summary>Records main as the board's first move when the board holds none yet (the watch's start).</summary>
-    internal Func<string, ValueTask> SeedMain { get; init; } = static _ => ValueTask.CompletedTask;
+    internal Func<string, ValueTask<Result<Unit>>> SeedMain { get; init; } = static _ => ValueTask.FromResult<Result<Unit>>(Unit.Value);
 
     private WatchState _state = WatchState.Continuing(reported);
     private WatchResources _kept = reported;
@@ -84,7 +85,7 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         }
     }
 
-    // CONTEXT HIGH once per crossing, CONTEXT OK after a recycle; the lanes reported high are kept for a re-armed watch.
+    // CONTEXT HIGH (META RECYCLE for the meta lane) once per crossing, CONTEXT OK after a recycle; the lanes reported high are kept for a re-armed watch.
     private async ValueTask ReportContext(IReadOnlyList<LaneContext>? contexts)
     {
         if (contexts is null)
@@ -92,7 +93,7 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
             return;
         }
 
-        var (lines, high) = ContextWatch.Step(_high, contexts);
+        var (lines, high) = ContextWatch.Step(_high, contexts, team.MetaLane);
         foreach (var line in lines)
         {
             await Say(line).ConfigureAwait(false);
@@ -139,7 +140,7 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
             .Select(pr => pr.Number)
             .Order()
             .ToList();
-        await MainMoved(snapshot.MainSha, merged).ConfigureAwait(false);
+        await SayIfFailed(await MainMoved(snapshot.MainSha, merged).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     // A fresh install's board holds main as the watch found it. A board that already holds a move (a restart, or merge-run's newer record) is left alone.
@@ -147,7 +148,15 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     {
         if (snapshot.MainSha.Length > 0)
         {
-            await SeedMain(snapshot.MainSha).ConfigureAwait(false);
+            await SayIfFailed(await SeedMain(snapshot.MainSha).ConfigureAwait(false)).ConfigureAwait(false);
+        }
+    }
+
+    private async ValueTask SayIfFailed(Result<Unit> written)
+    {
+        if (written.IsError)
+        {
+            await Say($"WATCH ERROR: {written.Error.Code}: {written.Error.Message.ReplaceLineEndings(" ")}").ConfigureAwait(false);
         }
     }
 
