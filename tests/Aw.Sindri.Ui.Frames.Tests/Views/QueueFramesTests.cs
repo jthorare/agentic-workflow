@@ -177,7 +177,9 @@ public sealed class QueueFramesTests : IDisposable
         Assert.All(pairs, b => Assert.InRange(Centre(b[^1]) - Centre(b[^2]), -1, 1));
     });
 
-    private static double Centre(TextBlock block) => block.Bounds.Y + (block.Bounds.Height / 2);   // why: both blocks sit in one StackPanel, so Bounds share its origin
+    // The drawn line's centre, not the box's: a stretched TextBlock draws its line at the top of a taller box, so two stretched
+    // blocks share a box centre wherever their words are (the test passed before the fix). Both sit in one StackPanel, so Bounds share its origin.
+    private static double Centre(TextBlock block) => block.Bounds.Y + (block.TextLayout.Height / 2);
 
     [Fact]
     public Task An_empty_queue_shows_the_views_sentence() => OnUi(async () =>
