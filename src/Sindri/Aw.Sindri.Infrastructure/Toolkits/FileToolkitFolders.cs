@@ -59,12 +59,25 @@ internal sealed class FileToolkitFolders(string sindriHome, Func<string, string?
         var ran = await Task.Run(() => runner.Run("node", arguments, _timeout, new ToolRunOptions(WorkingDirectory: toolkit), cancellationToken), cancellationToken).ConfigureAwait(false);
         return ran.Outcome switch
         {
-            ToolOutcome.Exited when ran.ExitCode == 0 => new ToolkitFolder(name, dir),
+            ToolOutcome.Exited when ran.ExitCode == 0 && HoldsProject(dir) => new ToolkitFolder(name, dir),
+            ToolOutcome.Exited when ran.ExitCode == 0 => SindriErrors.ToolkitCreateFailed.With($"the generator exited 0 but {dir} holds no *.Toolkit.csproj (fix: run the generator by hand with the same arguments and read what it prints)"),   // #2692: a run that did nothing must not write a row
             ToolOutcome.Missing => SindriErrors.ToolkitCreateFailed.With("node isn't installed (fix: install Node, see .nvmrc)"),
             ToolOutcome.TimedOut => SindriErrors.ToolkitCreateFailed.With($"the generator ran past {_timeout.TotalMinutes.ToString("0", CultureInfo.InvariantCulture)} minutes"),
             ToolOutcome.Cancelled or ToolOutcome.Exited => SindriErrors.ToolkitCreateFailed.With(Tail(string.IsNullOrWhiteSpace(ran.Error) ? ran.Output : ran.Error)),
             _ => SindriErrors.ToolkitCreateFailed.With("the generator didn't finish"),
         };
+    }
+
+    private static bool HoldsProject(string dir)
+    {
+        try
+        {
+            return Directory.Exists(dir) && Directory.EnumerateFiles(dir, "*.Toolkit.csproj", SearchOption.TopDirectoryOnly).Any();
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     /// <summary>'github-triage' as the generator's PascalCase 'GithubTriage'; its own kebab function turns that back into the folder name.</summary>

@@ -6,6 +6,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 /** A refusal or a failed check: printed as "<rule>: <message>" plus "fix: <fix>", exit 1. */
 export class ScaffoldError extends Error {
@@ -264,3 +265,15 @@ export const lower = (name) => name.toLowerCase();
 export const camel = (name) => name[0].toLowerCase() + name.slice(1);
 /** CheckRepo -> check-repo. */
 export const kebab = (name) => name.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+
+// True when the module at `metaUrl` is the script node was started with. Both sides go through realpath: node resolves
+// symlinks in import.meta.url but not in argv[1], so through ~/.agentic-workflow/toolkit (a link to the checkout) a plain
+// path compare is false and the generator exits 0 having done nothing (#2692).
+export function isMain(metaUrl) {
+  if (!process.argv[1]) return false;
+  try {
+    return fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(metaUrl));
+  } catch {
+    return false;
+  }
+}
