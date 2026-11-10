@@ -179,17 +179,19 @@ public sealed class GraphEditTests
     }
 
     [Fact]
-    public async Task An_add_step_on_a_revision_the_page_never_showed_sends_nothing_and_asks_to_reload()
+    public async Task An_add_step_on_a_revision_the_picker_read_goes_out_on_that_base_and_Sindris_stale_answer_asks_to_reload()
     {
         var page = await Open("agent");
-        await page.GraphEdit.BeginAdd(Token);
+        await page.GraphEdit.BeginAdd(Token);   // the editor read revision 2 here; the page shows 2, so nothing is held
         var newer = Golden("workflows-slug", "found");
         newer["latestRevision"] = 3;
-        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newer.ToJsonString());
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newer.ToJsonString());   // saved elsewhere after the picker opened
+        _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem("workflows-slug-ops", "ops-stale");   // Sindri refuses a stale base
 
         await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
 
-        Assert.Empty(_f.Server.AppliedWorkflowOps);
+        Assert.Equal(2, _f.Server.AppliedWorkflowOps.Single().BaseRevision);   // never retried on another base
+        Assert.True(page.Editor.NeedsReload);
         Assert.True(page.GraphEdit.HasReloadPrompt);
     }
 
