@@ -185,6 +185,30 @@ public sealed class WorkflowsEditorSheetTests
         Assert.Contains(nameof(WorkflowsPageViewModel.CanEdit), raised, StringComparer.Ordinal);
     }
 
+    [Fact]
+    public async Task A_stale_Edit_does_not_select_its_node_on_the_newer_sheet()
+    {
+        const string Other = "weekly-report";
+        _f.Server.WorkflowAnswers[Other] = RouteAnswer.Api("workflows-slug", "found");
+        _f.Server.WorkflowRunsAnswers[Other] = RouteAnswer.Api("workflows-slug-runs", "list-empty");
+        var page = await OnRuns();
+        _ = page.Runs.Graph!.SelectNode("agent");
+        var slow = new TaskCompletionSource();
+        _f.Server.WorkflowGates[Slug] = slow;
+        var staleEdit = page.Edit(Token);
+
+        page.Back();
+        await page.OpenWorkflow(Other, Token);
+        _ = page.Runs.Graph!.SelectNode("start");
+        await page.Edit(Token);
+        slow.SetResult();
+        await staleEdit;
+
+        Assert.Equal((true, Other), (page.IsEditing, page.Editor.Slug));
+        Assert.Equal("Settings of start", page.EditorNodeText);
+        Assert.Empty(page.Editor.Fields);
+    }
+
     private JsonNode ServeRevision(int revision)
     {
         var newer = Golden("workflows-slug", "found");
