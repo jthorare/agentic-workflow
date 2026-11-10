@@ -54,7 +54,7 @@ public sealed partial class GraphWorkflowParkingTests
         await ItemRunning(rig, started.RunId, "hold");
 
         await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
-        _ = await rig.Final(started.RunId);   // why: a cancel left open is a workflow task nobody polls, and the shared time-skipping server stops skipping time for later tests
+        _ = await rig.Final(started.RunId);   // why: wait for the cancel to finish, so the rig does not stop its worker with a workflow task still in flight; the rig's own time-skipping server dies with it (issue 2574)
         var holds = await rig.ItemRuns(started.RunId, "hold");
 
         Assert.Equal(NodeRunStatus.Cancelled, holds[1].Status);
