@@ -24,15 +24,14 @@ internal sealed partial class GraphWorkflow
         try
         {
             AgentNodeLaunched started;
-            var attempts = Workflow.Patched("agent-launch-attempts-1");   // why: histories from before this change keep the one unbounded retried call
-            do
+            try
             {
-                started = attempts
-                    ? await LaunchOnce(reference).ConfigureAwait(true)
-                    : await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.LaunchAsync(reference), _agentLaunch).ConfigureAwait(true);   // why: a full session cap makes the activity hand back after its slice, and the workflow asks again
-                Workflow.CancellationToken.ThrowIfCancellationRequested();   // why: the launch is not cancelled with the workflow (_agentLaunch); a cancel that came during it stops here, and the catch closes what it made
+                started = await Launch(reference).ConfigureAwait(true);
             }
-            while (started.Launched.Waiting);
+            catch (ActivityFailureException e) when (!TemporalException.IsCanceledException(e))
+            {
+                return Failed(input: null, e.InnerException?.Message ?? e.Message);   // why: the last attempt's error, as a node whose block threw ends (RunBlock); the node's on_failure then applies as for any failed node (#2578)
+            }
 
             if (started.Launched.Failure is { } failure)
             {
@@ -53,9 +52,30 @@ internal sealed partial class GraphWorkflow
         }
     }
 
+    // why: a full session cap makes the activity hand back after its slice, and the workflow asks again
+    private async Task<AgentNodeLaunched> Launch(AgentNodeRef reference)
+    {
+        var attempts = Workflow.Patched("agent-launch-attempts-1");   // why: histories from before this change keep the one unbounded retried call
+        AgentNodeLaunched started;
+        do
+        {
+            started = attempts
+                ? await LaunchOnce(reference).ConfigureAwait(true)
+                : await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.LaunchAsync(reference), _agentLaunch).ConfigureAwait(true);
+            Workflow.CancellationToken.ThrowIfCancellationRequested();   // why: the launch is not cancelled with the workflow (_agentLaunch); a cancel that came during it stops here, and the catch closes what it made
+        }
+        while (started.Launched.Waiting);
+
+        return started;
+    }
+
     // One launch attempt per activity call, retried here: the launch is not cancelled with the workflow (it raced its own completion, #2469), so a launch that keeps throwing
     // is only stoppable between attempts. After each failure the workflow checks for a cancel, and the back-off timer ends on one.
-    private static async Task<AgentNodeLaunched> LaunchOnce(AgentNodeRef reference)
+    // After the cap the last error leaves, and RunAgent turns it into a failed node. The cap is the history's bound: each attempt adds a fixed number of events (the activity, its task and the back-off timer),
+    // and Temporal ends a workflow at 51,200 events with no ledger record. ~1 h of attempts at the 30 s back-off is 120 attempts, plus the ramp from 100 ms (about 9 attempts in the first minute).
+    internal const int DefaultAgentLaunchAttempts = 130;
+
+    private async Task<AgentNodeLaunched> LaunchOnce(AgentNodeRef reference)
     {
         for (var attempt = 0; ; attempt++)
         {
@@ -63,7 +83,7 @@ internal sealed partial class GraphWorkflow
             {
                 return await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.LaunchAsync(reference), _agentLaunchAttempt).ConfigureAwait(true);
             }
-            catch (ActivityFailureException)
+            catch (ActivityFailureException) when (attempt + 1 < _agentLaunchAttempts)
             {
                 Workflow.CancellationToken.ThrowIfCancellationRequested();
                 var backoff = TimeSpan.FromMilliseconds(Math.Min(30_000, 100 * Math.Pow(2, Math.Min(attempt, 10))));
