@@ -18,7 +18,7 @@
                HorizontalAlignment="Left" Text="{Binding Live.Text}" />
     <StackPanel Orientation="Horizontal" Spacing="12">
       <Button x:Name="SandboxCheckButton" Classes="bar-button" Click="OnCheck" AutomationProperties.Name="{Binding Label}">
-        <StackPanel Orientation="Horizontal" Spacing="6">
+        <StackPanel Orientation="Horizontal" Spacing="8">
           <Panel VerticalAlignment="Center">
             <icons:StateIcon Icon="Refresh" IsVisible="{Binding !IsChecking}" />
             <icons:StateIcon x:Name="SandboxCheckSpinner" Icon="Spinner" IsVisible="{Binding IsChecking}" Spins="{Binding IsChecking}" />
@@ -36,7 +36,7 @@
         <DataTemplate x:DataType="sb:SandboxBlockerRow">
           <StackPanel Spacing="2" Margin="0,4,0,0">
             <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text}" />
-            <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasCommand}">
               <TextBlock Classes="mono subtle" Text="{Binding Command}" TextWrapping="Wrap" MaxWidth="360" VerticalAlignment="Center" AutomationProperties.Name="{Binding Command}" />
               <Button Classes="copy" Click="OnCopy" AutomationProperties.Name="{Binding CopyName}">
                 <TextBlock Classes="caption" Text="Copy" AutomationProperties.AccessibilityView="Raw" />

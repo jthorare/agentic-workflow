@@ -11,7 +11,7 @@
 #     or without flags before N, a python bind((host, N)) or *Server((host, N), H), or a node .listen(N) with N >= 1024 (a smaller
 #     number is a socket backlog), with N literal digits;
 #   - a word that is port or ends in _port, in any case, assigned literal non-zero digits (PORT=39917, port=39917, AW_PORT=3100,
-#     export X_PORT=1, local srv_port=5, X_PORT=7410 cmd), or given one as a default (${PORT:-39918}, ${AW_PORT-3100}) (#2635).
+#     export X_PORT=1, local srv_port=5, X_PORT=7410 cmd), or given one as a dollar-brace default (PORT:-39918, AW_PORT-3100) (#2635).
 # Allowed: port 0, anything with a `$` (a variable, a substitution, arithmetic), `nc -z` probes, ports inside URLs, comment lines.
 # Waiver: `test-ports: ok` plus a reason (text after it; a leading `:` is fine) on the flagged line, or on the comment line directly
 # above it. A bare marker does not waive. A waiver covers one line. Use it for a value no process binds (a stub, a dry run).
@@ -53,7 +53,7 @@ PY_BIND='(bind|Server)\(\([^,)]*,[[:space:]]*[1-9][0-9]*[[:space:]]*\)'
 NODE_LISTEN='\.listen\([[:space:]]*[1-9][0-9]{3,}[[:space:]]*[,)]'
 # a word that is port or ends in _port, in any case: PORT=1, port=1, srv_port=1 (never report=1 or passport=1)
 PORT_ASSIGN='(^|[^A-Za-z0-9])([A-Za-z0-9_]*_)?[Pp][Oo][Rr][Tt]=["'"'"']?[1-9][0-9]*(["'"'"']|[^0-9A-Za-z_$.]|$)'
-# a literal default for such a word: ${PORT:-1}, ${AW_PORT-1}, ${port:=1}
+# a literal default for such a word, in dollar-brace form: PORT:-1, AW_PORT-1, port:=1
 PORT_DEFAULT='\$\{([A-Za-z0-9_]*_)?[Pp][Oo][Rr][Tt]:?[-=]["'"'"']?[1-9][0-9]*["'"'"']?\}'
 WAIVER='test-ports: ok:?[[:space:]]*[^[:space:]:]'
 

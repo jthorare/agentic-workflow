@@ -119,7 +119,7 @@
 #   sindri-ui-fixture.sh reviews up|down  (run after 'context up')
 #                                  a review page that opens on a fixture PR, for sending a fix from its fix sheet end to end
 #                                  (POST /sindri/reviews/acme/api/<N>/fix; PR review page spec 8.2). up adds what projects adds to the live
-#                                  profile (the SPL team, github repos acme/api and acme/web), review.login fx-viewer and workflow.forge
+#                                  profile (the SPL team, github repos acme/api and acme/web, and a github token pointer env:FIXTURE_GITHUB_TOKEN that nothing sets: without a token or a GitHub connection Reviews shows Connect GitHub and no rows, #2619), review.login fx-viewer and workflow.forge
 #                                  (adapter file, hosts github.com), It builds a file-backed forge world inside the home,
 #                                  <home>/ui-fixture-forge/state/forge/file (never the owner's $AW_STATE_DIR), with ONE open PR on
 #                                  github.com/acme/api (branch feat/retry-budget, authored by fx-viewer so the fix posts a sindri.fix thread):
@@ -975,7 +975,7 @@ reviews_need_tmp_home() {
 }
 
 # review.login and workflow.forge (the file adapter on github.com) in the live profile, once each; approved afterwards when it isn't.
-# What 'reviews up' added (one word per line: review, forge, cursor), so 'reviews down' removes only that and never a block that was there before.
+# What 'reviews up' added (one word per line: review, forge, ghtoken, cursor), so 'reviews down' removes only that and never a block that was there before.
 reviews_marker() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-reviews-added"; }
 reviews_mark() { grep -qx "$1" "$(reviews_marker)" 2>/dev/null || printf '%s\n' "$1" >> "$(reviews_marker)"; }
 reviews_marked() { grep -qx "$1" "$(reviews_marker)" 2>/dev/null; }
@@ -998,6 +998,14 @@ reviews_profile() {
       awk '{print} /^user:/ {print "workflow:\n  forge: { adapter: file, hosts: [github.com] }"}' "$profile" > "$profile.new"
     fi && mv "$profile.new" "$profile" || die "reviews: can't add workflow.forge to $profile"
     reviews_mark forge
+  fi
+  # Reviews shows "Connect GitHub" and no rows while there is no GitHub connection and no profile token (ReviewConnectRules.For, #2619), and this
+  # fixture has no connection (it uses the file forge). A token pointer is the one input that lets the list read the seeded PR. It names an env var nothing
+  # sets and no tick runs here (the only service is the heartbeat), so the github cursor's last_error stays NULL: no AW-CONNECTORS-006/-007 sign-in code.
+  if grep -q 'github: { repos: \[' "$profile" && ! grep -q 'github: {[^}]*token:' "$profile"; then
+    sed 's|\(github: { repos: \[[^]]*\]\) }|\1, token: "env:FIXTURE_GITHUB_TOKEN" }|' "$profile" > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't add the github token pointer to $profile"
+    grep -q 'token: "env:FIXTURE_GITHUB_TOKEN"' "$profile" || die "reviews: the profile's github line isn't 'github: { repos: [...] }'; add token: \"env:FIXTURE_GITHUB_TOKEN\" to it by hand"
+    reviews_mark ghtoken
   fi
   approve >&2 || return
 }
@@ -1101,6 +1109,9 @@ reviews_down() {
   if [ -f "$profile" ] && [ -n "$drop" ]; then
     grep -Ev "$drop" "$profile" \
       | awk '{l[NR]=$0} END {for (i=1;i<=NR;i++) if (!(l[i]=="workflow:" && (i==NR || l[i+1] !~ /^  /))) print l[i]}' > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't edit $profile"
+  fi
+  if [ -f "$profile" ] && reviews_marked ghtoken; then
+    sed 's|, token: "env:FIXTURE_GITHUB_TOKEN" }| }|' "$profile" > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't remove the github token pointer from $profile"
   fi
   rm -f -- "$(reviews_marker)"
   # The dir is gone, so the restart no longer points AW_STATE_DIR at it.

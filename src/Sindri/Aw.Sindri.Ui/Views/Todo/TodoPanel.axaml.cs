@@ -14,7 +14,7 @@ namespace Aw.Sindri.Ui.Views.Todo;
 internal sealed partial class TodoPanel : UserControl
 {
     private const int CollapsedSlots = 5 + 1;   // five rows and the Show all slot
-    private const double DefaultRowHeight = 36;   // Size.Row, should the resource be missing
+    private const double DefaultRowHeight = 32;   // Row.Height.Default, should the resource be missing
 
     private IDisposable? _height;
     private TodoPanelViewModel? _watched;
@@ -61,11 +61,11 @@ internal sealed partial class TodoPanel : UserControl
         }
     }
 
-    // The collapsed body is five row slots and the Show all slot tall in every state (D13): one row height, Size.Row, the one the
+    // The collapsed body is five row slots and the Show all slot tall in every state (D13): one row height, Row.Height.Default, the one the
     // skeleton bars and the rows already use.
     private void FixCollapsedHeight()
     {
-        var row = this.TryFindResource("Size.Row", ActualThemeVariant, out var found) && found is double height ? height : DefaultRowHeight;
+        var row = this.TryFindResource("Row.Height.Default", ActualThemeVariant, out var found) && found is double height ? height : DefaultRowHeight;
         if (this.FindControl<Grid>("TodoCollapsed") is { } collapsed)
         {
             collapsed.Height = Panel is { IsAttentionOpen: true } ? double.NaN : row * CollapsedSlots;

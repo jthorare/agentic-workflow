@@ -114,14 +114,24 @@ public sealed class ResourcePlannerTests
     public void No_sandbox_declared_overrides_nothing() => Assert.Null(ResourcePlanner.Plan(Owner("workflow:triage"), ResourceSpec.Empty, Root).Value.Limits);
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("4g")]
-    [InlineData("512m")]
     [InlineData("lots")]
-    public void A_sandbox_memory_the_size_parser_would_reject_is_invalid_here_not_in_the_resolver(string memory)
+    public void A_sandbox_memory_that_is_not_a_size_is_invalid_here_not_in_the_resolver(string memory)
     {
         var spec = new ResourceSpec([], [], new SandboxResource(Cpu: null, Memory: memory, Wall: null), []);
 
         Assert.Equal("SND-RES-006", ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root).Error.Code);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("4g", "4GiB")]
+    [InlineData("512m", "512MiB")]
+    public void A_short_sandbox_memory_plans_in_the_long_spelling(string memory, string expected)
+    {
+        var spec = new ResourceSpec([], [], new SandboxResource(Cpu: null, Memory: memory, Wall: null), []);
+
+        var plan = ResourcePlanner.Plan(Owner("workflow:triage"), spec, Root);
+
+        Assert.Equal(expected, plan.Value.Limits!.Memory);
     }
 
     [Fact, Trait("Lane", "unit")]

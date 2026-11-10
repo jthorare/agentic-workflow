@@ -32,6 +32,7 @@ using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Text;
+using Aw.Sindri.Core.Toolkits;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Effects;
@@ -64,6 +65,7 @@ using Aw.Sindri.Infrastructure.Sessions;
 using Aw.Sindri.Infrastructure.Setup;
 using Aw.Sindri.Infrastructure.Skills;
 using Aw.Sindri.Infrastructure.Text;
+using Aw.Sindri.Infrastructure.Toolkits;
 using Aw.Sindri.Infrastructure.Views;
 using Aw.Sindri.Infrastructure.Workflow;
 using Aw.Sindri.Infrastructure.Worktrees;
@@ -137,6 +139,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton(static sp => new ResourceProvisioner(new ResourceStore(Path.Combine(sp.GetRequiredService<ISindriHome>().Path, "resources")), sp.GetRequiredService<LedgerDatabase>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IResourceProvisioner>(static sp => sp.GetRequiredService<ResourceProvisioner>())   // makes an owner's resources exist before a run and books them in ledger.db
             .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
+            .AddSingleton<IToolkitCalls, SqliteToolkitCalls>()       // toolkit call log (agent-first PR 16): toolkit_call in ledger.db
+            .AddSingleton<ToolkitCallLog>()
             .AddSingleton<IGraphSeenStore, SqliteSeenStore>()      // what 'only_new' nodes have passed on (agent-first PR 9): workflow_seen in ledger.db
             .AddSingleton<IGraphHttpPort>(static sp => new GraphHttpClient(GraphHttpHandler.Create(), ct => GraphHttpClient.HostsOf(sp.GetRequiredService<IApprovedProfile>(), ct)))   // the 'http' block's client: only 'workflow.http.hosts'
             .AddConnections();
@@ -174,6 +178,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IChallenges, ProcessChallenges>()
             .AddSingleton(sp => HeavyLockSettings.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton<IHeavySlots, DirectoryHeavySlots>()
+            .AddToolkitInfrastructure()
             .AddSingleton<IHarnessVersions, CommandHarnessVersions>()
             .AddSingleton<IOsNotifier, OsascriptNotifier>()          // engine P6 unit (c): the only OS notifier (README X5, X50)
             .AddSingleton<IDeskNotices, FileDeskNotices>()           // engine P6 unit (c): notifications.jsonl
@@ -221,6 +226,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IConnectionProbe>(static _ => new HttpConnectionProbe(new HttpClient()))
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IMcpConnectionClient>(static _ => new McpConnectionClient(new HttpClient()))
+            .AddSingleton<IConnectionToolPort>(static sp => new ConnectionToolAdapter(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IMcpConnectionClient>(), NoRedirectClient(), sp.GetRequiredService<ITextScrubber>()))
             .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
             .AddSingleton<IConnectionCredentials>(static sp => new ConnectionCredentials(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<ISecretPointers>()))   // #2508: the one token order (connection first, profile pointer second) for the github, slack and linear feeds
             .AddSingleton<IGitHubAccount>(static sp => new Connections.GitHub.GitHubConnectionAccount(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IConnectionPresetCatalog>(), NoRedirectClient(), sp.GetRequiredService<TimeProvider>()))   // #2499: the Reviews tab's GitHub account, from the Connections page
