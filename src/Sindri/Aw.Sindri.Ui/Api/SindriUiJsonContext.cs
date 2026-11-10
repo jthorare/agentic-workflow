@@ -78,6 +78,8 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Connections.ConnectionAdded))]
 [JsonSerializable(typeof(Connections.ConnectionTested))]
 [JsonSerializable(typeof(Connections.ConnectionRemoved))]
+[JsonSerializable(typeof(Connections.ConnectionRenamed))]
+[JsonSerializable(typeof(Connections.RenameConnectionBody))]
 [JsonSerializable(typeof(Connections.AddConnectionBody))]
 [JsonSerializable(typeof(Resources.ResourceList))]
 [JsonSerializable(typeof(Resources.PurgeResourcesResult))]

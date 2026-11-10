@@ -67,9 +67,9 @@ public static class ObligationEvaluator
                 string.Create(CultureInfo.InvariantCulture, $"owner answer q{a.Question} not relayed to {a.AskedBy}"),
                 string.Create(CultureInfo.InvariantCulture, $"SendMessage \"OWNER ANSWER q{a.Question}: {a.Text}\" to {a.AskedBy}")));
 
-    /// <summary>The rearm hint per provider (#2370): a Claude meta keeps a plain watch running under Monitor, because --until-mail exits on its first
+    /// <summary>The rearm hint per provider (#2370): a Claude meta runs --until-event in the background (no window, no model turn until a real line), because --until-mail exits on its first
     /// poll whenever mail waits; a Codex or Cursor meta runs --until-mail in the foreground and rearms after each exit.</summary>
-    internal const string WatchCommand = "Claude: aw-meta watch --for 29m (with Monitor, persistent); Codex/Cursor: aw-meta watch --until-mail --for 29m in the foreground, rearm after each exit";
+    internal const string WatchCommand = "Claude: aw-meta watch --until-event (run_in_background, ends on the first real line); Codex/Cursor: aw-meta watch --until-mail --for 29m in the foreground, rearm after each exit";
 
     private static IEnumerable<Obligation> Rearm(ObligationFacts facts)
     {

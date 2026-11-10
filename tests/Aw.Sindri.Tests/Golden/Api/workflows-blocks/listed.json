@@ -1145,7 +1145,8 @@
             }
           ],
           "outputs": {
-            "itemId": "string"
+            "itemId": "string",
+            "warning": "string?"
           },
           "branches": [
             "out"

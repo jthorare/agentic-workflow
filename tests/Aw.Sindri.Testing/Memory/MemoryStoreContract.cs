@@ -218,6 +218,24 @@ public abstract class MemoryStoreContract
         Expect.Equal(later, (await store.Facts(MemorySamples.Name(), Token)).Value.First(static f => f.Key == "a").RefreshedAt);
     }
 
+    /// <summary>A refresh by another caller records that caller as the refresher and keeps the first writer.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task AddOrRefresh_records_the_refresher_and_keeps_the_first_writer()
+    {
+        var store = Create();
+        _ = await store.Create(MemorySamples.Info(), Token);
+        var later = MemorySamples.Fact().CreatedAt.AddHours(1);
+
+        _ = await store.AddOrRefresh(MemorySamples.Fact("a", "alpha", tags: ["ops"], vector: [1f, 0.2f, 0f, 0f]) with { WrittenBy = "session:launch:A" }, Token);
+        Expect.True((await store.Facts(MemorySamples.Name(), Token)).Value.Single().RefreshedBy is null);
+        _ = await store.AddOrRefresh(MemorySamples.Fact("b", "alpha again", tags: ["ops"], vector: [1f, 0.25f, 0f, 0f]) with { RefreshedAt = later, WrittenBy = "session:launch:B" }, Token);
+
+        var row = (await store.Facts(MemorySamples.Name(), Token)).Value.Single();
+        Expect.Equal("session:launch:A", row.WrittenBy);
+        Expect.Equal("session:launch:B", row.RefreshedBy);
+    }
+
     /// <summary>Two near-same writes at once add one fact.</summary>
     /// <returns>The test.</returns>
     [Fact]
