@@ -1,0 +1,128 @@
+using Aw.Meta.Core;
+using Aw.Meta.Core.Coordination;
+using Aw.Meta.Core.Ids;
+using Aw.Meta.Core.Lanes;
+using Aw.Meta.Core.Messages;
+using Aw.Meta.Core.Ports;
+using Aw.Meta.Features.LaneRecycle;
+using Aw.Meta.Testing;
+
+namespace Aw.Meta.Tests.LaneRecycle;
+
+// #2533: a lane asks the meta to recycle it; the recycle itself settles that message, so the meta need not dismiss it by hand.
+public sealed class RecycleSettlesRequestTests
+{
+    private const string Digest = "/home/x/digests/t1-api-2026-10-17.md";
+    private const string Ask = "api lane is at ~206k context. Please recycle it: `aw-meta lane-recycle api --digest /home/x/digests/t1-api-2026-10-17.md`";
+    private readonly MetaWorld _world = new();
+
+    private sealed class ClearTakesEffect(IDelay inner, Action onWait) : IDelay
+    {
+        public ValueTask Wait(TimeSpan duration, CancellationToken cancellationToken)
+        {
+            onWait();
+            return inner.Wait(duration, cancellationToken);
+        }
+    }
+
+    private LaneRecycleService Service(Action? onWait = null)
+    {
+        var delay = onWait is null ? (IDelay)_world.Delay : new ClearTakesEffect(_world.Delay, onWait);
+        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.LaneFiles, _world.Log, delay, _world.Clock, _world.Messages);
+        return new LaneRecycleService(
+            _world.Config,
+            new RecycleGuard(_world.LaneFiles, _world.LaneSessions, _world.Digests, _world.Context, _world.Clock),
+            runner,
+            new SwitchRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.Runner, _world.Log, delay, _world.Clock),
+            new RecycleWaiter(new InMemoryWaiterLauncher(), _world.LaneFiles, new InMemoryProcessLiveness(), new LaneBeats(_world.Values, delay), runner, _world.Log, _world.Clock));
+    }
+
+    private async Task Ready()
+    {
+        await _world.Ready();
+        _world.LaneFiles.Put(new LaneRecord("api", SessionId.From("s-old"), Agent: null, A.At(1)));
+        _world.LaneSessions.Set("t1-api", "s-old");
+        _world.Panes.Put("t1-api", "claude");
+        _world.ClaudeTranscripts.PutUsage("s-old", 206_000, A.At(30));
+        _world.Digests.Put(Digest, 1200, _world.Clock.GetUtcNow().AddMinutes(-5));
+    }
+
+    private async Task Receive(string id, string fromName, string body) =>
+        _ = await _world.Messages.RecordInbound("/t", 1, [InboxMessage.Of(new PeerMessage(MessageId.From(id), "sock-" + fromName, fromName, body, A.At(50)))], CancellationToken.None);
+
+    private async Task<InboxMessage> Stored(string id) =>
+        (await _world.Messages.Messages(CancellationToken.None)).Value.Single(m => m.Id == MessageId.From(id));
+
+    private void NewSessionAppears() => _world.LaneSessions.Set("t1-api", "s-new");
+
+    private async Task<Kernel.Result<LaneRecycleResponse>> Run(Action? onWait, bool dryRun = false) =>
+        await Service(onWait).Handle(new LaneRecycleRequest("api", Digest, dryRun), CancellationToken.None);
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_successful_recycle_dismisses_the_lanes_open_recycle_request_and_names_it_in_the_note_and_the_response()
+    {
+        await Ready();
+        await Receive("m-ask", "t1-api", Ask);
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        var resolution = (await Stored("m-ask")).Resolution;
+        Assert.Equal(MessageResolutionKind.Dismissed, resolution?.Kind);
+        Assert.Contains("settled by lane-recycle api", resolution?.Reason, StringComparison.Ordinal);
+        Assert.Equal(["m-ask"], result.Value.SettledMessages);
+        Assert.Contains("m-ask", Assert.Single(_world.Log.Lines), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_dry_run_leaves_the_request_open()
+    {
+        await Ready();
+        await Receive("m-ask", "t1-api", Ask);
+
+        var result = await Run(onWait: null, dryRun: true);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null((await Stored("m-ask")).Resolution);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_timed_out_recycle_AW_META_022_leaves_the_request_open()
+    {
+        await Ready();
+        await Receive("m-ask", "t1-api", Ask);
+
+        var result = await Run(onWait: null);
+
+        Assert.Equal(MetaErrors.RecycleTimedOut.Code, result.Error.Code);
+        Assert.Null((await Stored("m-ask")).Resolution);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_open_message_from_the_same_lane_that_does_not_mention_recycling_stays_open()
+    {
+        await Ready();
+        await Receive("m-ask", "t1-api", Ask);
+        await Receive("m-other", "t1-api", "Which flag does the gate take for the unit lane?");
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["m-ask"], result.Value.SettledMessages);
+        Assert.Null((await Stored("m-other")).Resolution);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Another_lanes_recycle_request_stays_open()
+    {
+        await Ready();
+        await Receive("m-ask", "t1-api", Ask);
+        await Receive("m-ui", "t1-ui", "ui lane is at ~210k context. Please recycle it.");
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(MessageResolutionKind.Dismissed, (await Stored("m-ask")).Resolution?.Kind);
+        Assert.Null((await Stored("m-ui")).Resolution);
+    }
+}

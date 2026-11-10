@@ -18,8 +18,12 @@ namespace Aw.Meta.Features.LaneRecycle;
 /// <param name="log">The running log.</param>
 /// <param name="delay">Waits between polls for the new session id.</param>
 /// <param name="clock">The current time.</param>
-internal sealed class RecycleRunner(PaneSubmitter pane, ILaneSessions sessions, ILaneFiles files, IRunningLog log, IDelay delay, TimeProvider clock)
+/// <param name="messages">The inbox, where the lane's request for this recycle is settled.</param>
+internal sealed class RecycleRunner(PaneSubmitter pane, ILaneSessions sessions, ILaneFiles files, IRunningLog log, IDelay delay, TimeProvider clock, IMessageStore? messages = null)
 {
+    // Stub (#2533): the store the runner will settle the lane's recycle request in.
+    internal IMessageStore? Messages { get; } = messages;
+
     internal const string ClearLine = "/clear";
     internal static readonly TimeSpan Wait = TimeSpan.FromSeconds(180);
     private const string WaitSeconds = "180";
