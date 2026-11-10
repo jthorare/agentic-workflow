@@ -17,6 +17,7 @@ public sealed class HookPermissionPolicyTests
     [InlineData("fleet-state", HookTreatment.Keep)]
     [InlineData("git-context", HookTreatment.Keep)]
     [InlineData("judge-health", HookTreatment.Keep)]
+    [InlineData("meta-board-line", HookTreatment.Keep)]
     [InlineData("meta-lane-gate", HookTreatment.Keep)]
     [InlineData("meta-outbox", HookTreatment.Keep)]
     [InlineData("meta-stop-gate", HookTreatment.Keep)]

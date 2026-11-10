@@ -25,7 +25,8 @@
         "text": "no drift"
       },
       "truncated": false,
-      "error": null
+      "error": null,
+      "agent": null
     },
     {
       "node": "start",
@@ -36,7 +37,8 @@
         "kind": "manual"
       },
       "truncated": false,
-      "error": null
+      "error": null,
+      "agent": null
     }
   ]
 }
