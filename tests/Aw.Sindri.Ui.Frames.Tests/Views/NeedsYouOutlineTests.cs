@@ -32,6 +32,7 @@ public sealed class NeedsYouOutlineTests : FrameHost
     public Task A_focused_outlined_row_shows_the_focus_ring_and_its_content_does_not_move() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
         var (window, shell) = await Connected(s => s.NeedsYou.Count > 0);
         var row = Rows(window).First(r => r.DataContext is ViewModels.NeedsYou.NeedsYouRowViewModel { HasOutline: true });
         var frame = Frame(row);
@@ -52,6 +53,7 @@ public sealed class NeedsYouOutlineTests : FrameHost
     public Task An_outlined_row_keeps_its_border_padding_and_height_under_the_pointer_and_while_pressed() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
         var (window, _) = await Connected(s => s.NeedsYou.Count > 0);
         var frame = Frame(Rows(window).First(r => r.DataContext is ViewModels.NeedsYou.NeedsYouRowViewModel { HasOutline: true }));
         var inset = Inset(frame);
@@ -74,6 +76,7 @@ public sealed class NeedsYouOutlineTests : FrameHost
     public Task A_selected_outlined_row_keeps_the_selection_bar_colour() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
         var (window, shell) = await Connected(s => s.NeedsYou.Count > 0);
         var row = Rows(window).First(r => r.DataContext is ViewModels.NeedsYou.NeedsYouRowViewModel { HasOutline: true });
         var frame = Frame(row);
@@ -91,6 +94,7 @@ public sealed class NeedsYouOutlineTests : FrameHost
     public Task A_selected_outlined_row_differs_from_the_focus_ring_by_shape_and_its_content_does_not_move() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
         var (window, shell) = await Connected(s => s.NeedsYou.Count > 0);
         var row = Rows(window).First(r => r.DataContext is ViewModels.NeedsYou.NeedsYouRowViewModel { HasOutline: true });
         var frame = Frame(row);

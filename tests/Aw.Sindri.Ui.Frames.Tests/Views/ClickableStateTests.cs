@@ -30,6 +30,38 @@ public sealed class ClickableStateTests : FrameHost
     private static Color TokenColor(string key) =>
         Application.Current is { } app && app.TryFindResource(key, app.ActualThemeVariant, out var value) && value is ISolidColorBrush brush ? brush.Color : throw new InvalidOperationException($"{key} is not a brush token");
 
+    /// <summary>
+    /// Moves the pointer to <paramref name="at"/> until <paramref name="target"/> is under it, and returns the last point. The point is read
+    /// again on every try: a row still sliding in (180 ms) sits higher than it ends, and a pressed card takes focus, which scrolls it into
+    /// view. Headless hit-tests the last rendered scene, renders one only on a forced tick, and its animation clock reads real time on each
+    /// tick, so wait real time between tries (at most 600 ms).
+    /// </summary>
+    private static async Task<Point> PointAt(Window window, Func<Point> at, InputElement target)
+    {
+        var point = at();
+        for (var tick = 0; tick < 20 && !target.IsPointerOver; tick++)
+        {
+            await Task.Delay(30, Token);
+            AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+            Settle(window);
+            point = at();
+            window.MouseMove(point, RawInputModifiers.None);
+            Settle(window);
+        }
+
+        return point;
+    }
+
+    private static string Describe(IInputElement? hit) =>
+        hit is Visual visual
+            ? string.Join(" < ", visual.GetSelfAndVisualAncestors().Take(6).Select(v => $"{v.GetType().Name}#{(v as Control)?.Name}[{(v as Control)?.DataContext?.GetHashCode().ToString(System.Globalization.CultureInfo.InvariantCulture)}]"))
+            : "nothing";
+
+    private static string Chain(Visual target) =>
+        string.Join(" | ", target.GetSelfAndVisualAncestors().Where(v => v.RenderTransform is not null && !v.RenderTransform.Value.IsIdentity)
+            .Select(v => $"{v.GetType().Name}#{(v as Control)?.Name} {v.RenderTransform!.Value} origin {v.RenderTransformOrigin}"))
+        + $" ; classes {string.Join(',', (target as StyledElement)?.Classes ?? [])} ; dc {(target as Control)?.DataContext?.GetHashCode().ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
     private static Point Corner(Window window, Border card) => card.TranslatePoint(new Point(6, 6), window)!.Value; // the card's own padding, no control in it
 
     [Fact]
@@ -51,6 +83,7 @@ public sealed class ClickableStateTests : FrameHost
     public Task The_pointer_over_a_project_card_lifts_its_background_and_border_to_the_hover_tokens() => OnUi(async () =>
     {
         Motion.Set(reduce: true); // no easing: the value is the end value at once
+        using var instant = InstantMotion.Start();
         var (window, card) = await OnFirstCard();
         var rest = ((ISolidColorBrush)card.Background!).Color;
 
@@ -67,6 +100,7 @@ public sealed class ClickableStateTests : FrameHost
     public Task A_pressed_project_card_takes_the_pressed_tokens_and_lets_go_on_release() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
         var (window, card) = await OnFirstCard();
         var point = Corner(window, card);
 
@@ -79,8 +113,9 @@ public sealed class ClickableStateTests : FrameHost
         Assert.Equal(TokenColor("Brush.Clickable.PressedBorder"), ((ISolidColorBrush)card.BorderBrush!).Color);
 
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
-        Settle(window);
+        point = await PointAt(window, () => Corner(window, card), card); // the press near the edge left the shrunk card, and its focus scrolled it into view
         Assert.DoesNotContain(":pressed", card.Classes, StringComparer.Ordinal);
+        Assert.True(card.IsPointerOver, $"at {point}, hit {Describe(window.InputHitTest(point))}, chain {Chain(card)}, at now {Corner(window, card)}");
         Assert.Equal(TokenColor("Brush.Clickable.Hover"), ((ISolidColorBrush)card.Background!).Color);
     });
 
@@ -90,7 +125,7 @@ public sealed class ClickableStateTests : FrameHost
     [InlineData("subtle")]
     public Task The_pointer_over_a_tinted_Needs_You_row_shows_the_hover_background(string tint) => OnUi(async () =>
     {
-        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start(); // no easing, but motion stays on: under reduced motion an unseen park row is outlined, not pulsing
         var (window, shell) = await Connected();
         shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Park(), NeedsYouRows.Failure(), NeedsYouRows.Profile()], ""));
         Settle(window);
@@ -98,23 +133,24 @@ public sealed class ClickableStateTests : FrameHost
             .SelectMany(r => r.GetVisualDescendants().OfType<Border>()).First(b => b.Name == "RowFrame" && b.Classes.Contains(tint));
         var rest = ((ISolidColorBrush)row.Background!).Color;
 
-        window.MouseMove(row.TranslatePoint(new Point(4, 4), window)!.Value, RawInputModifiers.None);
-        Settle(window);
+        var at = await PointAt(window, () => row.TranslatePoint(new Point(4, 4), window)!.Value, row);
 
-        Assert.True(row.IsPointerOver);
-        Assert.Equal(TokenColor("Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.True(row.IsPointerOver, $"at {at}, row bounds {row.Bounds}, hit {Describe(window.InputHitTest(at))}, chain {Chain(row)}, at now {row.TranslatePoint(new Point(4, 4), window)}");
+        Assert.Equal(TokenColor(tint == "subtle" ? "Brush.Surface3" : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color); // a calm row rests on the hover fill, so it lifts one step more
         Assert.NotEqual(rest, ((ISolidColorBrush)row.Background!).Color);
     });
 
     [Fact]
     public Task A_pressed_project_card_scales_to_098_about_its_centre_and_eases_it_over_Motion_Hover() => OnUi(async () =>
     {
-        Motion.Set(reduce: true);
         var (window, card) = await OnFirstCard();
         var point = Corner(window, card);
         var transition = Assert.Single((card.Transitions ?? throw new InvalidOperationException("no Transitions")).OfType<TransformOperationsTransition>());
         Assert.Equal(150, transition.Duration.TotalMilliseconds);
         Assert.Equal(1.0, card.RenderTransform!.Value.M11, 3); // at rest: no scale
+
+        Motion.Set(reduce: true); // the press lands at once: the transition reads Motion.Hover again as the pointer arrives
+        using var instant = InstantMotion.Start();
 
         window.MouseMove(point, RawInputModifiers.None);
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
@@ -137,6 +173,7 @@ public sealed class ClickableStateTests : FrameHost
         Assert.All(transitions, t => Assert.Equal(150, Length(t).TotalMilliseconds)); // wired before motion was reduced
 
         Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
         window.MouseMove(Corner(window, card), RawInputModifiers.None);
         Settle(window);
 
@@ -157,7 +194,7 @@ public sealed class ClickableStateTests : FrameHost
         await Task.Delay(250, Token); // past the 180 ms slide
         AvaloniaHeadlessPlatform.ForceRenderTimerTick(2); // headless moves the animation clock only on a forced tick
         Settle(window);
-        Motion.Set(reduce: true); // the press lands at once; the row keeps its slides-in class (SlidesIn is read on arrival)
+        using var instant = InstantMotion.Start(); // the press lands at once; motion stays on, since reduced motion takes the slides-in class away
         var point = row.TranslatePoint(new Point(4, 4), window)!.Value;
 
         window.MouseMove(point, RawInputModifiers.None);
