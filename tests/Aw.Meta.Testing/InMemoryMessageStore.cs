@@ -22,6 +22,10 @@ public sealed class InMemoryMessageStore : IMessageStore
         Done.Of(_offsets.GetValueOrDefault(transcript));
 
     /// <inheritdoc />
+    public ValueTask<Result<IReadOnlyList<string>>> Transcripts(CancellationToken cancellationToken) =>
+        Done.Of<IReadOnlyList<string>>([.. _offsets.Keys.Order(StringComparer.Ordinal)]);
+
+    /// <inheritdoc />
     public ValueTask<Result<IReadOnlyList<MessageId>>> RecordInbound(string transcript, long offset, IReadOnlyList<InboxMessage> messages, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(messages);

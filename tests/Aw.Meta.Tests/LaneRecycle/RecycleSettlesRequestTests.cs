@@ -28,7 +28,7 @@ public sealed class RecycleSettlesRequestTests
     private LaneRecycleService Service(Action? onWait = null)
     {
         var delay = onWait is null ? (IDelay)_world.Delay : new ClearTakesEffect(_world.Delay, onWait);
-        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.LaneFiles, _world.Log, delay, _world.Clock, _world.Messages);
+        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.LaneFiles, _world.Log, delay, _world.Clock, new RecycleSettler(_world.Messages, _world.Sync, _world.Clock));
         return new LaneRecycleService(
             _world.Config,
             new RecycleGuard(_world.LaneFiles, _world.LaneSessions, _world.Digests, _world.Context, _world.Clock),
@@ -85,6 +85,40 @@ public sealed class RecycleSettlesRequestTests
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         Assert.Equal(["m-digest"], result.Value.SettledMessages);
         Assert.Equal(MessageResolutionKind.Dismissed, (await Stored("m-digest")).Resolution?.Kind);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_DIGEST_READY_the_meta_read_this_turn_before_its_Stop_hook_synced_the_inbox_is_settled()
+    {
+        // #2647: the meta reads DIGEST READY mid-turn and recycles at once; only the Stop hook's stop-check stores the message.
+        await Ready();
+        var transcript = "/transcripts/" + MetaWorld.MetaSessionId + ".jsonl";
+        _world.Transcripts.Append(transcript, MetaWorld.PeerLine("m-early", "t1-ui", "gate is green"));
+        _ = await _world.Sync.Run(transcript, CancellationToken.None);
+        _world.Transcripts.Append(transcript, MetaWorld.PeerLine("m-digest", "t1-api", "DIGEST READY " + Digest));
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal(["m-digest"], result.Value.SettledMessages);
+        Assert.Equal(MessageResolutionKind.Dismissed, (await Stored("m-digest")).Resolution?.Kind);
+        Assert.Null((await Stored("m-early")).Resolution);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Another_sessions_transcript_is_not_read_when_settling()
+    {
+        await Ready();
+        const string old = "/transcripts/s-old-meta.jsonl";
+        _world.Transcripts.Append(old, MetaWorld.PeerLine("m-early", "t1-ui", "gate is green"));
+        _ = await _world.Sync.Run(old, CancellationToken.None);
+        _world.Transcripts.Append(old, MetaWorld.PeerLine("m-stale", "t1-api", "DIGEST READY " + Digest));
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Null(result.Value.SettledMessages);
+        Assert.DoesNotContain((await _world.Messages.Messages(CancellationToken.None)).Value, m => m.Id == MessageId.From("m-stale"));
     }
 
     [Fact, Trait("Lane", "unit")]
