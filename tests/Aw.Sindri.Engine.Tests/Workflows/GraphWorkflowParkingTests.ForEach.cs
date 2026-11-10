@@ -30,7 +30,7 @@ public sealed partial class GraphWorkflowParkingTests
     [Fact]
     public async Task A_wait_node_in_a_for_each_body_sleeps_once_per_item()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(WaitInLoopSpec());
 
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, TwoItems);
@@ -48,7 +48,7 @@ public sealed partial class GraphWorkflowParkingTests
     [Fact]
     public async Task A_cancel_ends_a_waiting_item_cancelled_and_skips_the_rest_of_the_loop()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(WaitInLoopSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, TwoItems);
         await ItemRunning(rig, started.RunId, "hold");
