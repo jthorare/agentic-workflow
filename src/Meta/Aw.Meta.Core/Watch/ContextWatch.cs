@@ -28,7 +28,6 @@ public static class ContextWatch
     /// <returns>The lines to report and the lanes now reported high.</returns>
     public static (IReadOnlyList<string> Lines, IReadOnlySet<string> High) Step(IReadOnlySet<string> high, IReadOnlyList<LaneContext> now, string? metaLane = null)
     {
-        _ = metaLane;   // red stub: the fix prints META RECYCLE <N>k for this lane
         ArgumentNullException.ThrowIfNull(high);
         ArgumentNullException.ThrowIfNull(now);
         var kept = new HashSet<string>(high, StringComparer.Ordinal);
@@ -37,7 +36,9 @@ public static class ContextWatch
         {
             if (lane.Verdict == ContextVerdict.Recycle && kept.Add(lane.Lane))
             {
-                lines.Add(string.Create(CultureInfo.InvariantCulture, $"CONTEXT HIGH {lane.Lane} {lane.Tokens / 1000}k"));
+                lines.Add(metaLane is not null && string.Equals(lane.Lane, metaLane, StringComparison.OrdinalIgnoreCase)
+                    ? string.Create(CultureInfo.InvariantCulture, $"META RECYCLE {lane.Tokens / 1000}k")
+                    : string.Create(CultureInfo.InvariantCulture, $"CONTEXT HIGH {lane.Lane} {lane.Tokens / 1000}k"));
             }
             else if (lane.Verdict == ContextVerdict.Ok && kept.Remove(lane.Lane))
             {

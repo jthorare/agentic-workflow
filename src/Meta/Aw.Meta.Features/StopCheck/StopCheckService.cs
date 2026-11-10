@@ -37,8 +37,22 @@ internal sealed class StopCheckService(MetaSession session, MetaSweep sweep, Sto
             return open.Error;
         }
 
-        _ = beats;   // red stub (#2498): the fix records the meta lane's stop beat (stopped = !block) here
         var outcome = await guard.Decide(open.Value, request.HookActive, request.MaxBlocks, now, cancellationToken).ConfigureAwait(false);
-        return outcome.IsError ? outcome.Error : new StopCheckResponse(IsMeta: true, outcome.Value.Block, open.Value, outcome.Value.Warning);
+        if (outcome.IsError)
+        {
+            return outcome.Error;
+        }
+
+        if (beats is not null)
+        {
+            // The idle signal a detached recycle waits for: a blocked stop is a beat too (the hook ran) but not a stopped one.
+            var beat = await beats.Record(config.MetaLane, stopped: !outcome.Value.Block, now, cancellationToken).ConfigureAwait(false);
+            if (beat.IsError)
+            {
+                return beat.Error;
+            }
+        }
+
+        return new StopCheckResponse(IsMeta: true, outcome.Value.Block, open.Value, outcome.Value.Warning);
     }
 }

@@ -10,17 +10,74 @@ namespace Aw.Meta.Infrastructure.Files;
 
 /// <summary>
 /// ILaneFiles over $AW_STATE_DIR/meta/lane-sessions: &lt;lane&gt; holds the session id the CLI's hook reported, &lt;lane&gt;.agent the agent facts the
-/// launcher recorded (JSON: agent, processName, hooks, transcripts), &lt;lane&gt;.ambiguous marks a refused guess. Every file is read
+/// launcher recorded (JSON: agent, processName, hooks, transcripts), &lt;lane&gt;.ambiguous marks a refused guess, &lt;lane&gt;.waiter the pid and start time of a detached recycle waiter. Every file is read
 /// defensively: one that can't be read counts as absent.
 /// </summary>
 /// <param name="directory">The lane-sessions directory.</param>
 internal sealed class DirectoryLaneFiles(string directory) : ILaneFiles
 {
-    public ValueTask<Result<(int Pid, DateTimeOffset StartedAt)?>> Waiter(string lane, CancellationToken cancellationToken) =>
-        throw new NotSupportedException("red stub (#2498): the waiter pid file is not written yet");
+    // <lane>.waiter holds "<pid> <start time, round-trip>" for the detached recycle waiter of the lane.
+    public async ValueTask<Result<(int Pid, DateTimeOffset StartedAt)?>> Waiter(string lane, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(lane);
+        if (!IsLaneName(lane))
+        {
+            return Results.Success<(int Pid, DateTimeOffset StartedAt)?>(value: null);
+        }
 
-    public ValueTask<Result<Unit>> RecordWaiter(string lane, (int Pid, DateTimeOffset StartedAt)? waiter, CancellationToken cancellationToken) =>
-        throw new NotSupportedException("red stub (#2498): the waiter pid file is not written yet");
+        try
+        {
+            var path = Path.Combine(directory, lane + ".waiter");
+            if (!File.Exists(path))
+            {
+                return Results.Success<(int Pid, DateTimeOffset StartedAt)?>(value: null);
+            }
+
+            var fields = (await File.ReadAllTextAsync(path, cancellationToken).ConfigureAwait(false)).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return Results.Success<(int Pid, DateTimeOffset StartedAt)?>(
+                fields.Length == 2 && int.TryParse(fields[0], NumberStyles.None, CultureInfo.InvariantCulture, out var pid) && DateTimeOffset.TryParse(fields[1], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var at)
+                    ? (pid, at)
+                    : null);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return Results.Success<(int Pid, DateTimeOffset StartedAt)?>(value: null);
+        }
+    }
+
+    public async ValueTask<Result<Unit>> RecordWaiter(string lane, (int Pid, DateTimeOffset StartedAt)? waiter, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(lane);
+        if (!IsLaneName(lane))
+        {
+            return MetaErrors.UnknownLane.With($"'{lane}' is not a lane name");
+        }
+
+        var target = Path.Combine(directory, lane + ".waiter");
+        var temporary = Path.Combine(directory, "." + lane + ".waiter." + Guid.NewGuid().ToString("N"));
+        try
+        {
+            if (waiter is not { } value)
+            {
+                File.Delete(target);
+                return Results.Ok();
+            }
+
+            _ = Directory.CreateDirectory(directory);
+            await File.WriteAllTextAsync(temporary, value.Pid.ToString(CultureInfo.InvariantCulture) + " " + value.StartedAt.ToString("O", CultureInfo.InvariantCulture) + "\n", cancellationToken).ConfigureAwait(false);
+            if (!OperatingSystem.IsWindows())
+            {
+                File.SetUnixFileMode(temporary, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            }
+
+            File.Move(temporary, target, overwrite: true);
+            return Results.Ok();
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return MetaErrors.CommandFailed.With($"lane-sessions/{lane}.waiter can't be written: {exception.Message}");
+        }
+    }
 
     public async ValueTask<Result<LaneHookTrace?>> HookTrace(string lane, CancellationToken cancellationToken)
     {

@@ -192,6 +192,7 @@ Aw.Meta.Core.Coordination.LaneBeats
 Aw.Meta.Core.Coordination.LaneBeats.IsIdle(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Meta.Core.Coordination.LaneBeats.LaneBeats(Aw.Meta.Core.Ports.IKeyValueStore! values, Aw.Meta.Core.Ports.IDelay! delay) -> void
 Aw.Meta.Core.Coordination.LaneBeats.WaitForHook(string! lane, System.DateTimeOffset since, System.TimeSpan window, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Meta.Core.Coordination.LaneBeats.WaitForStop(string! lane, System.DateTimeOffset since, System.TimeSpan window, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Meta.Core.Coordination.LaneBeats.Last(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneBeat?>!>
 Aw.Meta.Core.Coordination.LaneBeats.Record(string! lane, bool stopped, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Coordination.LaneBeats.Woke(string! lane, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>

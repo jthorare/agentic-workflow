@@ -31,7 +31,7 @@ internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard,
             return plan.Error;
         }
 
-        if (request.Detach || request.WaitIdle)
+        if ((request.Detach || request.WaitIdle) && !request.DryRun)
         {
             return waiter is null
                 ? MetaErrors.CommandNotStarted.With("no recycle waiter is set up")
