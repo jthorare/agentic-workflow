@@ -112,7 +112,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-RES-002` | Two databases, disks or connections of one owner share a name. | rename one |
 | `SND-RES-003` | A purge was refused: the owner is still active or has a run going. | archive the owner, or wait for the run to end |
 | `SND-RES-004` | A resource path leaves its owner's folder, or a symlink sits where a resource folder or file goes. | remove the symlink or the stray path, then run again |
-| `SND-RES-005` | A sandbox size is above the box's cap. | lower the `sandbox` memory or cpu in the declaration |
+| `SND-RES-005` | A sandbox size is above the box's cap. | lower the `sandbox` memory or wall in the declaration to the cap the message names |
 | `SND-RES-006` | A resource owner, name or size is malformed, or a path exists as the wrong type (a folder where a database goes). | fix the declaration, or move the stray path away |
 | `SND-RES-007` | A disk holds too many files and folders to measure (over 100,000). | delete files you don't need from the disk |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml. |
