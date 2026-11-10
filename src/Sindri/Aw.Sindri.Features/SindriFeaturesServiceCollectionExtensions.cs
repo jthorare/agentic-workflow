@@ -54,6 +54,7 @@ using Aw.Sindri.Features.ListDecisions;
 using Aw.Sindri.Features.ListItems;
 using Aw.Sindri.Features.ListJobs;
 using Aw.Sindri.Features.ListRequests;
+using Aw.Sindri.Features.ListResources;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
 using Aw.Sindri.Features.ListWorkflowBlocks;
@@ -63,6 +64,7 @@ using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
 using Aw.Sindri.Features.PauseWorkflow;
 using Aw.Sindri.Features.PingProcess;
+using Aw.Sindri.Features.PurgeResources;
 using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.RecordHeartbeat;
@@ -113,6 +115,8 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<RequestTarget>()
             .AddScoped<IService<StartProcessRequest, StartProcessResponse>, StartProcessService>()
             .AddWorkflowServices()
+            .AddScoped<IValidator<ListResourcesRequest>, AcceptAllValidator<ListResourcesRequest>>().AddQuery<ListResourcesRequest, ListResourcesResponse, ListResourcesService>()   // agent-first PR 14: the owner is parsed in the service (SND-RES-006)
+            .AddScoped<IValidator<PurgeResourcesRequest>, AcceptAllValidator<PurgeResourcesRequest>>().AddCommand<PurgeResourcesRequest, PurgeResourcesResponse, PurgeResourcesService>()
             .AddScoped<IService<RecordHeartbeatRequest, RecordHeartbeatResponse>, RecordHeartbeatService>()
             .AddScoped<IService<RetireInstancesOnStartRequest, RetireInstancesOnStartResponse>, RetireInstancesOnStartService>()
             .AddRecordServiceRun()

@@ -1141,3 +1141,27 @@ Aw.Meta.Features.Routing.RouteRequest.Force.init -> void
 Aw.Meta.Features.Routing.RouteRequest.RouteRequest(bool Apply = false, string? Lane = null, bool Force = false) -> void
 Aw.Meta.Features.Status.StatusResponse.Consumer.get -> string?
 Aw.Meta.Features.Status.StatusResponse.Consumer.init -> void
+Aw.Meta.Features.BoardLine.BoardLineRequest
+Aw.Meta.Features.BoardLine.BoardLineRequest.BoardLineRequest(Aw.Meta.Core.Lanes.LaneIdentity! Identity) -> void
+Aw.Meta.Features.BoardLine.BoardLineRequest.<Clone>$() -> Aw.Meta.Features.BoardLine.BoardLineRequest!
+Aw.Meta.Features.BoardLine.BoardLineRequest.Deconstruct(out Aw.Meta.Core.Lanes.LaneIdentity! Identity) -> void
+Aw.Meta.Features.BoardLine.BoardLineRequest.Equals(Aw.Meta.Features.BoardLine.BoardLineRequest? other) -> bool
+Aw.Meta.Features.BoardLine.BoardLineRequest.Identity.get -> Aw.Meta.Core.Lanes.LaneIdentity!
+Aw.Meta.Features.BoardLine.BoardLineRequest.Identity.init -> void
+Aw.Meta.Features.BoardLine.BoardLineResponse
+Aw.Meta.Features.BoardLine.BoardLineResponse.BoardLineResponse(string? Line) -> void
+Aw.Meta.Features.BoardLine.BoardLineResponse.<Clone>$() -> Aw.Meta.Features.BoardLine.BoardLineResponse!
+Aw.Meta.Features.BoardLine.BoardLineResponse.Deconstruct(out string? Line) -> void
+Aw.Meta.Features.BoardLine.BoardLineResponse.Equals(Aw.Meta.Features.BoardLine.BoardLineResponse? other) -> bool
+Aw.Meta.Features.BoardLine.BoardLineResponse.Line.get -> string?
+Aw.Meta.Features.BoardLine.BoardLineResponse.Line.init -> void
+override Aw.Meta.Features.BoardLine.BoardLineRequest.Equals(object? obj) -> bool
+override Aw.Meta.Features.BoardLine.BoardLineRequest.GetHashCode() -> int
+override Aw.Meta.Features.BoardLine.BoardLineRequest.ToString() -> string!
+override Aw.Meta.Features.BoardLine.BoardLineResponse.Equals(object? obj) -> bool
+override Aw.Meta.Features.BoardLine.BoardLineResponse.GetHashCode() -> int
+override Aw.Meta.Features.BoardLine.BoardLineResponse.ToString() -> string!
+static Aw.Meta.Features.BoardLine.BoardLineRequest.operator !=(Aw.Meta.Features.BoardLine.BoardLineRequest? left, Aw.Meta.Features.BoardLine.BoardLineRequest? right) -> bool
+static Aw.Meta.Features.BoardLine.BoardLineRequest.operator ==(Aw.Meta.Features.BoardLine.BoardLineRequest? left, Aw.Meta.Features.BoardLine.BoardLineRequest? right) -> bool
+static Aw.Meta.Features.BoardLine.BoardLineResponse.operator !=(Aw.Meta.Features.BoardLine.BoardLineResponse? left, Aw.Meta.Features.BoardLine.BoardLineResponse? right) -> bool
+static Aw.Meta.Features.BoardLine.BoardLineResponse.operator ==(Aw.Meta.Features.BoardLine.BoardLineResponse? left, Aw.Meta.Features.BoardLine.BoardLineResponse? right) -> bool

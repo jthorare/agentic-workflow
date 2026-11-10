@@ -27,7 +27,7 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 ## The rule that runs everything: obligations
 
 Every message a lane sends you is recorded (the Stop hook reads it from your transcript) and opens an **obligation**:
-you owe that lane a reply. A merge owes every lane "main moved". A changed lane map owes every lane the new map. An
+you owe that lane a reply. An
 owner answer owes the asking lane the answer. **While any obligation is open, the Stop hook won't let you go idle**:
 it prints what you owe and the command that settles it. Settle it, don't argue with it:
 
@@ -44,7 +44,7 @@ it prints what you owe and the command that settles it. Settle it, don't argue w
   lane gets it at its next prompt. Exit 1 means the message is stored but the lane can't act on it (launch-only, or its
   hooks aren't running: on Codex, trust them with `/hooks`). The lane answers by ending its turn with a line
   `REPLY TO META: <reply>`, which its stop hook records as a message from `<team>-<lane>` and opens your reply
-  obligation, so `lane-send` it back like any other. Send the lane map and "main moved" texts to these lanes the same way.
+  obligation, so `lane-send` it back like any other.
 - A pure FYI that needs no reply: `aw-meta inbox-dismiss <id> --reason "<why>"`.
 - Work in flight (a gate, a review): `aw-meta inbox-defer <id> --reason "<what>" --until +30m`. It reopens when due.
 
@@ -108,8 +108,8 @@ request, nothing unpushed, no process inside). Give each team its own `worktrees
    name>` (the launcher does this for the meta pane).
 2. **List agents**, then `aw-meta lanes-refresh` and `aw-meta lanes`. Sessions named `<team>-<lane>` map themselves;
    anything else maps from the lane's announcement ("API lane: …").
-3. `aw-meta lanes --announce` and **send the printed text to every lane** (the `broadcast-lanes` obligation stays open
-   until each mapped lane got it).
+3. Nothing to send about the lane map: each lane's prompt hook runs `aw-meta board-line` and shows the new map version
+   once. (`aw-meta lanes --announce` still prints the text if you want to read it.)
 4. **Watch for mail**, by provider. Claude: run `aw-meta watch --for 29m` with Monitor in the background; when it prints
    `WATCH EXPIRING`, start it again. Codex or Cursor: run `aw-meta watch --until-mail --for 29m` in the **foreground**
    (no Monitor tool), handle the mail it prints, then run it again (see docs/csharp/meta.md "Codex or Cursor meta"). If
@@ -129,7 +129,9 @@ A lane queues a pull request with exactly `ready #N <sha>` on the **first line**
 3. For each red test the PR doesn't touch: `aw-meta gate-rerun N --step <step> --test <filter>`. It reruns the test
    alone and on plain main, and records `flake` or `real`. Only `real` reds go back to the lane.
 4. `aw-meta merge-check N` again (the PR head and main must not have moved since the gate), then `aw-meta merge-run N`.
-5. Send the printed "main moved to <sha>" text to **every lane**. `merge-run` has already swept that PR's worktrees (its
+5. Send nothing about main moving: `merge-run` recorded the new sha and the PR on the board, and each lane's prompt hook
+   shows it once, on its next prompt or tool call. A lane that is waiting on that merge (to restack, say) still gets a direct
+   message. `merge-run` has already swept that PR's worktrees (its
    branch's and its gate trees); the `WORKTREES …` line it printed says what was removed and what was kept and why. A kept
    one is not an error: it has work, a process or an unpushed commit in it, and nothing removes it by age.
 
@@ -209,8 +211,7 @@ starts whatever the advice says for a lane that is idle.
 closes (see Worktrees); a kept worktree is still holding disk, so ask its lane to clear the reason (commit and push, stop the
 process) and sweep again.
 
-**Announcements.** Any message to a lane that announces main moving must carry the new **short sha** (the text `merge-run`
-prints does: send it verbatim). The Stop hook closes the `announce-main` obligation by matching that sha in what you sent.
+**Board.** Lanes learn that main moved and that the lane map changed from `aw-meta board-line` in their prompt hook: one line, once per change. You don't send either, and neither opens an obligation.
 
 ## Lane context
 

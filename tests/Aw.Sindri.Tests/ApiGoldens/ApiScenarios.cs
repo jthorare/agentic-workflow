@@ -50,6 +50,7 @@ internal static class ApiScenarios
         ["Memories"] = MemoryScenarios.All,
         ["WorkflowRuns"] = WorkflowRunScenarios.All,
         ["WorkflowReads"] = WorkflowReadScenarios.All,
+        ["Resources"] = ResourceScenarios.All,
         ["WorkflowWrites"] = WorkflowWriteScenarios.All,
     };
 
@@ -186,6 +187,7 @@ internal static class ApiScenarios
     private static Func<Task<string>>? DelegatedOrWorkflow(GoldenHost host, string slug, string scenario, CancellationToken ct) =>
         WorkflowRunScenarios.Handles(slug, scenario) ? () => WorkflowRunScenarios.Body(host, slug, scenario, ct)
         : WorkflowReadScenarios.Handles(slug, scenario) ? () => WorkflowReadScenarios.Body(host, slug, scenario, ct)
+        : ResourceScenarios.Handles(slug, scenario) ? () => ResourceScenarios.Body(host, slug, scenario, ct)
         : WorkflowWriteScenarios.Handles(slug, scenario) ? () => WorkflowWriteScenarios.Body(host, slug, scenario, ct)
         : Delegated(host, slug, scenario, ct);
 

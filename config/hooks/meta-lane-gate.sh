@@ -2,7 +2,7 @@
 # aw:meta-lane-gate — the lane hook for a non-Claude Meta lane (Codex, Cursor), installed user-wide by scripts/install-meta.sh
 # through the provider adapters (config/hooks/adapters/README.md). Claude lanes use meta-stop-gate.sh and SendMessage instead.
 # It acts only in a lane: AW_META_TEAM and AW_META_LANE set by scripts/meta-lane.sh; anywhere else it exits 0 at once.
-#   UserPromptSubmit (Codex)              prints `aw-meta lane-inbox` as plain text: the adapter makes it developer context
+#   UserPromptSubmit (Codex)              prints `aw-meta lane-inbox` and `aw-meta board-line` as plain text: the adapter makes it developer context
 #   SessionStart, PostToolUse (Cursor)    the same text as hookSpecificOutput.additionalContext (cursor.sh -> additional_context)
 #   AfterAgentResponse (Cursor)           records the reply from the event's text (Cursor's stop payload carries none) and never
 #                                         asks lane-stop-check; the Stop that follows does not record the same text again
@@ -150,8 +150,13 @@ case "$EVENT" in
     OUT="$(AW_LOG_LEVEL=none "$META" lane-inbox 2>&1)"; rc=$?
     [ "$rc" = 0 ] || { trace lane-inbox-failed; failopen "lane-inbox-exit-$rc$(code_of "$OUT")"; exit 0; }
     trace ran
-    [ -n "$OUT" ] || exit 0
-    unlink "$REPLIED" 2> /dev/null; unlink "$OWED" 2> /dev/null   # new mail: the next reply is a new one, even if its text repeats
+    # The team board (`aw-meta board-line`): one line when main or the lane map changed since this lane last saw it. Advisory: a failure shows nothing.
+    BOARD="$(AW_LOG_LEVEL=none "$META" board-line 2> /dev/null)" || BOARD=""
+    [ -n "$OUT" ] || [ -n "$BOARD" ] || exit 0
+    if [ -n "$OUT" ]; then
+      unlink "$REPLIED" 2> /dev/null; unlink "$OWED" 2> /dev/null   # new mail: the next reply is a new one, even if its text repeats
+    fi
+    if [ -n "$BOARD" ] && [ -n "$OUT" ]; then OUT="$OUT"$'\n'"$BOARD"; elif [ -n "$BOARD" ]; then OUT="$BOARD"; fi
     if [ "$EVENT" = UserPromptSubmit ]; then
       printf '%s\n' "$OUT"
     else
