@@ -161,7 +161,7 @@ public sealed class WorkflowsPageViewModelTests
         await page.OpenWorkflow("nope", Token);
 
         Assert.True(page.Runs.IsFailed);
-        Assert.Contains("no workflow 'nope'", page.Runs.FailedText, StringComparison.Ordinal);
+        Assert.Contains("No workflow 'nope'", page.Runs.FailedText, StringComparison.Ordinal);
     }
 
     [Fact]
