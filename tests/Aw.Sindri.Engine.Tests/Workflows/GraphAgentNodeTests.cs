@@ -9,7 +9,7 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>A 'run_agent' node in the graph workflow (PR 7): launch, the report that ends it, recovery from the output folder, and a launch that fails.</summary>
 [Lane(TestLane.Integration)]
-public sealed class GraphAgentNodeTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class GraphAgentNodeTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -17,7 +17,7 @@ public sealed class GraphAgentNodeTests(SindriTimeSkippingServer server) : IClas
     public async Task A_report_ends_the_node_with_the_declared_outputs_and_the_standard_fields()
     {
         var runtime = new FakeAgentNodeRuntime();
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig, """{"drifted":"boolean"}""");
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
@@ -45,7 +45,7 @@ public sealed class GraphAgentNodeTests(SindriTimeSkippingServer server) : IClas
     public async Task A_launch_that_fails_fails_the_node_with_its_code_and_starts_no_watch()
     {
         var runtime = new FakeAgentNodeRuntime { Failure = new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, "SND-LAUNCH-004", "the repo is not in the profile") };
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
 
         var final = await rig.Final(run);
@@ -61,7 +61,7 @@ public sealed class GraphAgentNodeTests(SindriTimeSkippingServer server) : IClas
     public async Task A_session_that_ended_with_its_outputs_in_the_folder_completes_the_node()
     {
         var runtime = new FakeAgentNodeRuntime { Recovered = new AgentNodeRecovered("""{"drifted":false}""", Reason: null) };
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig, """{"drifted":"boolean"}""");
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
@@ -76,7 +76,7 @@ public sealed class GraphAgentNodeTests(SindriTimeSkippingServer server) : IClas
     public async Task A_session_that_ended_with_nothing_to_recover_fails_the_node_with_exit_and_the_reason()
     {
         var runtime = new FakeAgentNodeRuntime { Recovered = new AgentNodeRecovered(Outputs: null, Reason: "the agent finished but its result was not recorded: /home/nodes/run/.sindri-out") };
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig, """{"drifted":"boolean"}""");
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 

@@ -30,7 +30,7 @@ public sealed partial class GraphWorkflowParkingTests
     [Fact]
     public async Task A_wait_node_in_a_for_each_body_sleeps_once_per_item()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(WaitInLoopSpec());
 
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, TwoItems);
@@ -48,13 +48,13 @@ public sealed partial class GraphWorkflowParkingTests
     [Fact]
     public async Task A_cancel_ends_a_waiting_item_cancelled_and_skips_the_rest_of_the_loop()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(WaitInLoopSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, TwoItems);
         await ItemRunning(rig, started.RunId, "hold");
 
         await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
-        _ = await rig.Final(started.RunId);   // why: a cancel left open is a workflow task nobody polls, and the shared time-skipping server stops skipping time for later tests
+        _ = await rig.Final(started.RunId);   // why: wait for the cancel to finish, so the rig does not stop its worker with a workflow task still in flight; the rig's own time-skipping server dies with it (issue 2574)
         var holds = await rig.ItemRuns(started.RunId, "hold");
 
         Assert.Equal(NodeRunStatus.Cancelled, holds[1].Status);

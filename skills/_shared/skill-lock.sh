@@ -83,6 +83,31 @@ _lock_try_create() {
   return 1
 }
 
+# Remove a dead holder's lock, one waiter at a time (#2569). Two waiters can both read the dead pid; without a guard,
+# the late one's remove deletes the lock the other has just taken, and both hold it. The guard is a mkdir mutex next to
+# the lock (only one mkdir wins): under it the lock is read again and removed only when its holder is still dead, so a
+# fresh lock (a live pid) is never removed. Returns 1 when another waiter holds the guard.
+# The guard holds one empty file named by its holder's pid ($$, the shell running acquire_lock). A guard whose holder
+# died mid-reclaim is cleared: its pid file is removed, then the folder (rmdir fails when a new holder's file is in it).
+# An empty guard is a holder between its mkdir and its pid file, and is cleared only once over two minutes old
+# (`find -mmin +1`; a reclaim takes milliseconds).
+_lock_reclaim() {
+  local guard="${LOCK_FILE}.reclaim" f p
+  if mkdir "$guard" 2>/dev/null; then
+    : > "$guard/$$"
+    if _lock_is_stale; then rm -f "$LOCK_FILE"; fi
+    rm -f "$guard/$$"; rmdir "$guard" 2>/dev/null || true
+    return 0
+  fi
+  for f in "$guard"/*; do
+    [ -e "$f" ] || { [ -n "$(find "$guard" -maxdepth 0 -mmin +1 2>/dev/null)" ] && rmdir "$guard" 2>/dev/null; return 1; }
+    p="${f##*/}"
+    case "$p" in ""|*[!0-9]*) rm -f "$f" ;; *) kill -0 "$p" 2>/dev/null && return 1; rm -f "$f" ;; esac
+  done
+  rmdir "$guard" 2>/dev/null || true
+  return 1
+}
+
 acquire_lock() {
   # sec-5: Explicitly check that lock directory creation succeeds.
   # When sourced, mkdir failure could be silently ignored without this guard.
@@ -108,12 +133,9 @@ acquire_lock() {
       return 0
     fi
 
-    # File exists — check if the holder is still alive
-    if _lock_is_stale; then
-      # Stale lock: remove and retry. The ln below arbitrates between waiters that
-      # create at once, but not a late rm: a waiter that saw the dead holder can
-      # remove a lock another waiter just took (#2569).
-      rm -f "$LOCK_FILE"
+    # File exists — check if the holder is still alive. A dead holder's lock is removed
+    # under the reclaim guard only; a waiter that loses the guard waits like any other.
+    if _lock_is_stale && _lock_reclaim; then
       continue
     fi
 

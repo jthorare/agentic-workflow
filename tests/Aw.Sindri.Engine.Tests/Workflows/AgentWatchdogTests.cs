@@ -6,14 +6,14 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>How a 'run_agent' node fails when its session is ended for it (PR 7): the sweeps end the session, the watch reports how, and the node's error says which reason.</summary>
 [Lane(TestLane.Integration)]
-public sealed class AgentWatchdogTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class AgentWatchdogTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private async Task<string?> ErrorOf(AgentSessionState ended)
+    private static async Task<string?> ErrorOf(AgentSessionState ended)
     {
         var runtime = new FakeAgentNodeRuntime();
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
