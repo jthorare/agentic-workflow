@@ -168,7 +168,7 @@ public static class WorkflowSchedulerRules
             new(typeof(Parallel), "ForAsync", "Parallel.ForAsync", parallel),
             new(typeof(Parallel), "ForEachAsync", "Parallel.ForEachAsync", parallel),
             new(typeof(Parallel), "Invoke", "Parallel.Invoke", parallel),
-            new(typeof(System.Threading.Timer), ".ctor", "System.Threading.Timer", "loop on await Workflow.DelayAsync(period)"),
+            new(typeof(Timer), ".ctor", "System.Threading.Timer", "loop on await Workflow.DelayAsync(period)"),
         ];
     }
 

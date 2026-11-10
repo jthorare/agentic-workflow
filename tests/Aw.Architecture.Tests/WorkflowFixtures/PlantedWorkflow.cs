@@ -84,7 +84,7 @@ internal static partial class PlantedWorkflow
 
     internal static void ParallelInvoke() => Parallel.Invoke(static () => { });
 
-    internal static System.Threading.Timer ThreadingTimer() => new(callback: static _ => { }, state: null, dueTime: 0, period: 0);
+    internal static Timer ThreadingTimer() => new(callback: static _ => { }, state: null, dueTime: 0, period: 0);
 
     internal static Task UsesHelper(CancellationToken token) => Helper.Wait(token);
 
