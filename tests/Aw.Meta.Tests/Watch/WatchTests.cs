@@ -415,6 +415,55 @@ public sealed class WatchTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_that_came_while_no_watch_ran_is_announced_once_and_never_again_by_the_next_watch()
+    {
+        await _world.Ready();
+        await _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123");
+        Script([List(Pr(190, "OPEN", "aaa1111"))]);
+
+        _ = await Watch(TimeSpan.FromSeconds(240));
+        _ = await Watch(TimeSpan.FromSeconds(240));
+
+        Assert.Equal(["STATUS 1 new (lanes: ideas)"], _lines.Where(l => l.StartsWith("STATUS", StringComparison.Ordinal)), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_held_by_the_15_minute_timer_is_announced_by_the_next_watch_once_due()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], onPoll: poll =>
+        {
+            if (poll == 1)
+            {
+                _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123").GetAwaiter().GetResult();
+            }
+            else if (poll == 2)
+            {
+                _world.Receive("m2", "t1-ui", "STATUS: gate started on #12").GetAwaiter().GetResult();
+            }
+        });
+
+        _ = await Watch(TimeSpan.FromSeconds(360));
+        _world.Clock.Advance(TimeSpan.FromMinutes(15));
+        _ = await Watch(TimeSpan.FromSeconds(240));
+
+        Assert.Equal(["STATUS 1 new (lanes: ideas)", "STATUS 1 new (lanes: ui)"], _lines.Where(l => l.StartsWith("STATUS", StringComparison.Ordinal)), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_read_with_inbox_status_is_never_announced()
+    {
+        await _world.Ready();
+        await _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123");
+        _ = await _world.Messages.MarkShown([Core.Ids.MessageId.From("m1")], _world.Clock.GetUtcNow(), CancellationToken.None);
+        Script([List(Pr(190, "OPEN", "aaa1111"))]);
+
+        _ = await Watch(TimeSpan.FromSeconds(240));
+
+        Assert.DoesNotContain(_lines, l => l.StartsWith("STATUS", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Status_lines_print_at_most_every_15_minutes_and_ride_on_the_next_inbox_event()
     {
         await _world.Ready();
