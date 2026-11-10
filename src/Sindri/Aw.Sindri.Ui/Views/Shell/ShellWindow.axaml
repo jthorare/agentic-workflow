@@ -78,7 +78,7 @@
               AutomationProperties.Name="{Binding Text.NotResponding}">
         <!-- A WrapPanel, like Unreadable's below: at the 1,000 px minimum or a large text scale the command moves to its
              own line instead of running past the window's edge. -->
-        <WrapPanel ItemSpacing="10" LineSpacing="6">
+        <WrapPanel ItemSpacing="10" LineSpacing="8">
           <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
             <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
             <TextBlock x:Name="NotRespondingText" Classes="body" Text="{Binding Text.NotRespondingLead}" VerticalAlignment="Center"
@@ -96,7 +96,7 @@
            while they fit; a longer reason takes the full width and wraps, and the command moves to the next line whole,
            so nothing runs past the window's edge at the 1,000 px minimum. -->
       <Border x:Name="UnreadableBanner" DockPanel.Dock="Top" Classes="banner" IsVisible="{Binding IsUnreadable}">
-        <WrapPanel ItemSpacing="12" LineSpacing="6">
+        <WrapPanel ItemSpacing="12" LineSpacing="8">
           <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
             <icons:StateIcon Glyph="Down" VerticalAlignment="Center" />
             <TextBlock x:Name="UnreadableHeading" Classes="body-strong" Text="{Binding Text.Unreadable}" VerticalAlignment="Center"
@@ -119,7 +119,7 @@
            stalled one carries Rebuild views, the catalog's RebuildViews row through the control renderer. Rows stay. -->
       <Border x:Name="ViewsBanner" DockPanel.Dock="Top" Classes="banner" DataContext="{Binding Health.Banner}" x:DataType="shell:ViewsBanner"
               IsVisible="{Binding IsShown}" AutomationProperties.Name="{Binding Text}">
-        <WrapPanel ItemSpacing="12" LineSpacing="6">
+        <WrapPanel ItemSpacing="12" LineSpacing="8">
           <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
             <icons:StateIcon x:Name="StalledGlyph" Glyph="Down" Classes="error" IsVisible="{Binding IsStalled}" VerticalAlignment="Center" />
             <icons:StateIcon x:Name="RebuildingGlyph" Icon="Spinner" Spins="{Binding IsRebuilding}" IsVisible="{Binding IsRebuilding}"
@@ -339,7 +339,7 @@
                 </Border>
                 <Button x:Name="SheetClose" Grid.Column="2" Click="OnCloseSheet" Margin="12,0,0,0"
                         AutomationProperties.Name="{Binding Text.CloseSheetName}">
-                  <StackPanel Orientation="Horizontal" Spacing="6">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
                     <icons:StateIcon Icon="Close" VerticalAlignment="Center" />
                     <TextBlock Text="{Binding Text.CloseSheet}" VerticalAlignment="Center" />
                   </StackPanel>

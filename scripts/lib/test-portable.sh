@@ -11,7 +11,9 @@ if ! command -v timeout > /dev/null 2>&1; then
     exec 3<&0
     "$@" <&3 &
     local pid=$!
-    ( sleep "$secs"; : > "$fired"; kill -TERM "$pid" 2> /dev/null ) &
+    # The watcher kills its own sleep when it is stopped, and writes to /dev/null: a leftover sleep holding the caller's
+    # stdout made `got="$(timeout 10 ...)"` wait the full 10 s (#2584).
+    ( sleep "$secs" & sp=$!; trap 'kill "$sp" 2> /dev/null; exit 0' TERM; wait "$sp"; : > "$fired"; kill -TERM "$pid" 2> /dev/null ) > /dev/null 2>&1 &
     local watcher=$!
     wait "$pid"; local rc=$?
     exec 3<&-

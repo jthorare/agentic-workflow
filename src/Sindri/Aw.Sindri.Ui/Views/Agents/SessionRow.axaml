@@ -16,7 +16,7 @@
   <Border x:Name="SessionRowFrame" Classes="item-row session-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <!-- The columns are one definition with the header's: the Auto ones are shared size groups under the page's scope, so a value starts where its head does, and a column nobody shows is zero wide (#2553). -->
-    <Grid x:Name="SessionRowGrid" MinHeight="{StaticResource Size.Row}" VerticalAlignment="Center">
+    <Grid x:Name="SessionRowGrid" MinHeight="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto" MinWidth="136" SharedSizeGroup="AgStatus" />
         <ColumnDefinition Width="*" />
@@ -26,7 +26,7 @@
         <ColumnDefinition Width="Auto" MinWidth="56" SharedSizeGroup="AgFor" />
       </Grid.ColumnDefinitions>
       <Border x:Name="SessionRowChip" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.AccessibilityView="Raw">
+        <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
           <TextBlock x:Name="SessionRowGlyph" Classes="body-strong dot" Classes.working="{Binding IsWorking}" Classes.waiting="{Binding IsWaiting}" Text="{Binding Glyph}" AutomationProperties.AccessibilityView="Raw" />
           <TextBlock Classes="body-strong" Text="{Binding StateWord}" AutomationProperties.AccessibilityView="Raw" />
           <TextBlock x:Name="SessionRowEstimated" Classes="caption subtle" Text="{Binding EstimatedText}" IsVisible="{Binding IsEstimated}" VerticalAlignment="Center" ToolTip.Tip="{Binding EstimatedTip}" AutomationProperties.AccessibilityView="Raw" />
