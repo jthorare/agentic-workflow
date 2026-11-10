@@ -13,6 +13,15 @@ internal static partial class Labels
         ("spotify", "Spotify", "Playback", ServiceTileMode.ClientId),
     ];
 
+    /// <summary>The tile menu's Rename.</summary>
+    internal const string TileRename = "Rename";
+
+    /// <summary>The rename field's name and placeholder.</summary>
+    internal const string TileRenameLabel = "Name";
+
+    /// <summary>The rename field's Save.</summary>
+    internal const string TileRenameSave = "Save";
+
     /// <summary>The status chip of a connected tile.</summary>
     internal const string TileConnected = "Connected";
 
