@@ -17,8 +17,13 @@ internal sealed class ResourceDoctorChecks(IResourceFiles files, ResourceProvisi
         }
 
         var rows = await book.BookedAll(cancellationToken).ConfigureAwait(false);
+        if (rows.IsError)
+        {
+            return [new DoctorCheck("resources", CheckState.Warn, rows.Error.Message, "check the disk holding ledger.db under the Sindri home has free space")];
+        }
+
         var limits = new Dictionary<string, long>(StringComparer.Ordinal);
-        foreach (var row in rows.IsSuccess ? rows.Value : [])
+        foreach (var row in rows.Value)
         {
             if (row.SizeLimit is { } limit && string.Equals(row.Kind, "disk", StringComparison.Ordinal))
             {
