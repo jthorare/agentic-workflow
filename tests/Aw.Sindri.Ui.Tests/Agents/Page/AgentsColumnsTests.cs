@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Agents;
 using static Aw.Sindri.Ui.Tests.Agents.Page.AgentsPageFixture;
 
@@ -24,6 +25,19 @@ public sealed class AgentsColumnsTests
         page.Resize(1280);
 
         Assert.Equal((true, true, true), (page.ShowsRepo, page.ShowsWhere, page.ShowsDoing));
+    }
+
+    [Fact]
+    public async Task When_sessions_become_unavailable_the_caption_row_and_the_optional_columns_go_with_the_rows()
+    {
+        var page = await _f.Shown(Token);
+        page.Resize(1280);
+        Assert.True(page.HasColumns);
+        _f.Server.SessionAnswer = RouteAnswer.Problem("sessions", "disabled");
+
+        await page.Refresh(Url, Token);
+
+        Assert.Equal((false, false, false, false), (page.HasColumns, page.ShowsRepo, page.ShowsWhere, page.ShowsDoing));
     }
 
     [Fact]
