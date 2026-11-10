@@ -28,6 +28,10 @@
 #   sindri-ui-fixture.sh decide <DEC-id> <choice>
 #                                  decide at the CLI (sindri decide, as the owner): with the app open on the same
 #                                  decision, the app's own Decide is then refused (SND-ITEM-409)
+#   sindri-ui-fixture.sh resources (run after 'up')
+#                                  the Resources page's data (#2258 PR18b, #2494): files under <home>/resources, which is all
+#                                  GET /sindri/resources reads: workflow:morning-check gets a 1.2 MB database (state.db) and a
+#                                  300 KB disk (scratch/), toolkit:notes a 40 KB disk (cache/). Rewritten to the same sizes on a repeat
 #   sindri-ui-fixture.sh fail      add a service the build cannot run to the live profile (a failure row)
 #   sindri-ui-fixture.sh unfail    remove it again (the row clears)
 #                                  (items --large also files 12 requests, in FIXTURE_REPO when set, else with no repo)
@@ -389,6 +393,15 @@ todos() {
   if "$PROVE" human todos --json --no-fence | jq -e --arg id "$done_id" '.todos[] | select(.id == $id)' >/dev/null; then
     "$PROVE" human todo done "$done_id" || return
   fi
+}
+
+resources() {
+  local root="$AW_SINDRI_HOME/resources"
+  # Sizes in bytes: the page shows them as 1.2 MB, 300 KB and 40 KB.
+  seed_file() { mkdir -p "$(dirname "$1")" && head -c "$2" /dev/zero > "$1" || die "resources: can't write $1"; }
+  seed_file "$root/workflow/morning-check/state.db" 1258291
+  seed_file "$root/workflow/morning-check/scratch/notes.txt" 307200
+  seed_file "$root/toolkit/notes/cache/index.bin" 40960
 }
 
 close() {
@@ -1232,6 +1245,7 @@ case "$verb" in
   close) [ "$#" -eq 2 ] || { [ "$#" -eq 3 ] && [ "$3" = "--cancelled" ]; } || die "usage: close <item> [--cancelled]" ;;
   projects) [ "$#" -eq 1 ] || die "'projects' takes no arguments" ;;
   todos) [ "$#" -eq 1 ] || die "'todos' takes no arguments" ;;
+  resources) [ "$#" -eq 1 ] || die "'resources' takes no arguments" ;;
   reviews) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: reviews up|down" ;;
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
   context)

@@ -25,6 +25,7 @@ using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Core.Scheduling;
@@ -56,6 +57,7 @@ using Aw.Sindri.Infrastructure.Memory;
 using Aw.Sindri.Infrastructure.Notifications;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Profile;
+using Aw.Sindri.Infrastructure.Resources;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Infrastructure.Sessions;
@@ -131,6 +133,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IWorkflowDocs, WorkflowDocs.ShippedWorkflowDocs>()   // workflow_docs: the pages embedded in the binary
             .AddSingleton<IGraphLaunchRuns, NoGraphLaunchRuns>()   // no graph run launches an agent session until PR 9
             .AddSingleton<IGraphBlockCatalog, EmptyGraphBlockCatalog>() // no graph blocks until PR 6 and 9
+            .AddSingleton<IResourceFiles>(static sp => new ResourceFiles(Path.Combine(sp.GetRequiredService<ISindriHome>().Path, "resources")))   // provisioned resources (agent-first PR 14): the files under <home>/resources
             .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
             .AddSingleton<IGraphSeenStore, SqliteSeenStore>()      // what 'only_new' nodes have passed on (agent-first PR 9): workflow_seen in ledger.db
             .AddSingleton<IGraphHttpPort>(static sp => new GraphHttpClient(GraphHttpHandler.Create(), ct => GraphHttpClient.HostsOf(sp.GetRequiredService<IApprovedProfile>(), ct)))   // the 'http' block's client: only 'workflow.http.hosts'
@@ -216,6 +219,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IMcpConnectionClient>(static _ => new McpConnectionClient(new HttpClient()))
             .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
+            .AddSingleton<IGitHubAccount>(static sp => new Connections.GitHub.GitHubConnectionAccount(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IConnectionPresetCatalog>(), NoRedirectClient(), sp.GetRequiredService<TimeProvider>()))   // #2499: the Reviews tab's GitHub account, from the Connections page
             .AddSingleton<IPollCursors, SqlitePollCursors>()   // PR 11: poll cursors in ledger.db
             .AddSingleton<IEventPoller>(static sp => new GitHubEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IEventPoller>(static sp => new LinearEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))

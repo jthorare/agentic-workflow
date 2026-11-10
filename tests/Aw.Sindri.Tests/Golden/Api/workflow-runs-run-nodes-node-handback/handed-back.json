@@ -1,0 +1,6 @@
+{
+  "run": "morning-check@1:2",
+  "node": "agent",
+  "itemIndex": 0,
+  "agent": "waiting"
+}

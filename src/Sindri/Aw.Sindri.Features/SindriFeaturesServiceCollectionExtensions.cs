@@ -12,6 +12,7 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ActivateWorkflow;
+using Aw.Sindri.Features.AgentNodeControl;
 using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.CancelJob;
 using Aw.Sindri.Features.CancelWorkflowRun;
@@ -53,6 +54,7 @@ using Aw.Sindri.Features.ListDecisions;
 using Aw.Sindri.Features.ListItems;
 using Aw.Sindri.Features.ListJobs;
 using Aw.Sindri.Features.ListRequests;
+using Aw.Sindri.Features.ListResources;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
 using Aw.Sindri.Features.ListWorkflowBlocks;
@@ -62,6 +64,7 @@ using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
 using Aw.Sindri.Features.PauseWorkflow;
 using Aw.Sindri.Features.PingProcess;
+using Aw.Sindri.Features.PurgeResources;
 using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.RecordHeartbeat;
@@ -112,6 +115,8 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<RequestTarget>()
             .AddScoped<IService<StartProcessRequest, StartProcessResponse>, StartProcessService>()
             .AddWorkflowServices()
+            .AddScoped<IValidator<ListResourcesRequest>, AcceptAllValidator<ListResourcesRequest>>().AddQuery<ListResourcesRequest, ListResourcesResponse, ListResourcesService>()   // agent-first PR 14: the owner is parsed in the service (SND-RES-006)
+            .AddScoped<IValidator<PurgeResourcesRequest>, AcceptAllValidator<PurgeResourcesRequest>>().AddCommand<PurgeResourcesRequest, PurgeResourcesResponse, PurgeResourcesService>()
             .AddScoped<IService<RecordHeartbeatRequest, RecordHeartbeatResponse>, RecordHeartbeatService>()
             .AddScoped<IService<RetireInstancesOnStartRequest, RetireInstancesOnStartResponse>, RetireInstancesOnStartService>()
             .AddRecordServiceRun()
@@ -146,6 +151,8 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IScheduledService, WorkflowScheduleService>().AddSingleton(WorkflowScheduleService.BuiltIn)   // the built-in 'workflow-schedule' service (#2258, PR 6): runs without a profile entry, every minute
             .AddScoped<IValidator<RunWorkflowRequest>, AcceptAllValidator<RunWorkflowRequest>>().AddCommand<RunWorkflowRequest, RunWorkflowResponse, RunWorkflowService>()   // 'sindri wf run' and 'wf cancel' (#2258, PR 6): behind the command chain; the slug and payload are checked by the service
             .AddScoped<IValidator<CancelWorkflowRunRequest>, AcceptAllValidator<CancelWorkflowRunRequest>>().AddCommand<CancelWorkflowRunRequest, CancelWorkflowRunResponse, CancelWorkflowRunService>()
+            .AddScoped<IValidator<TakeOverAgentNodeRequest>, AcceptAllValidator<TakeOverAgentNodeRequest>>().AddCommand<TakeOverAgentNodeRequest, AgentNodeControlled, TakeOverAgentNodeService>()   // the human takes a run_agent node over and hands it back (#2472): behind the command chain; the services check the caller, the run and the node
+            .AddScoped<IValidator<HandBackAgentNodeRequest>, AcceptAllValidator<HandBackAgentNodeRequest>>().AddCommand<HandBackAgentNodeRequest, AgentNodeControlled, HandBackAgentNodeService>()
             .AddScoped<IValidator<ListWorkflowsRequest>, AcceptAllValidator<ListWorkflowsRequest>>().AddQuery<ListWorkflowsRequest, ListWorkflowsResponse, ListWorkflowsService>()   // the workflow reads (#2258, PR 8a): 'sindri wf list|show|runs|run-show'; the slug and the run id are typed, the services say what is missing
             .AddScoped<IValidator<GetWorkflowRequest>, AcceptAllValidator<GetWorkflowRequest>>().AddQuery<GetWorkflowRequest, GetWorkflowResponse, GetWorkflowService>()
             .AddScoped<IValidator<ListWorkflowRunsRequest>, AcceptAllValidator<ListWorkflowRunsRequest>>().AddQuery<ListWorkflowRunsRequest, ListWorkflowRunsResponse, ListWorkflowRunsService>()

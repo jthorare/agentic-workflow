@@ -143,6 +143,22 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>Raised when the Delete key asks to remove the selected node.</summary>
+    internal event EventHandler<ValueEventArgs<string>>? RemoveRequested;
+
+    /// <summary>Asks to remove the selected node (Delete).</summary>
+    /// <returns>False when no node is selected.</returns>
+    internal bool RequestRemoveSelected()
+    {
+        if (SelectedId is not { } id)
+        {
+            return false;
+        }
+
+        RemoveRequested?.Invoke(this, new ValueEventArgs<string>(id));
+        return true;
+    }
+
     private bool Step(int direction)
     {
         if (Order.Count == 0)

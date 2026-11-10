@@ -47,6 +47,7 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AddRepo;
+using Aw.Sindri.Features.AgentNodeControl;
 using Aw.Sindri.Features.AllowDenial;
 using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.AttachProject;
@@ -156,7 +157,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(JobProgress)), JsonSerializable(typeof(JobFinished)), JsonSerializable(typeof(JobFinishedPublic)), JsonSerializable(typeof(JobCancelled)), JsonSerializable(typeof(JobWaiting)), JsonSerializable(typeof(JobResumed))]
 [JsonSerializable(typeof(ServicePaused)), JsonSerializable(typeof(ServiceResumed)), JsonSerializable(typeof(JobRow)), JsonSerializable(typeof(JobLine))]
 [JsonSerializable(typeof(ContextModelCalled)), JsonSerializable(typeof(ModelCallTry)), JsonSerializable(typeof(ModelCallAnswerer)), JsonSerializable(typeof(ModelCallHow)), JsonSerializable(typeof(ModelTotals)), JsonSerializable(typeof(ModelAnsweredCount))]
-[JsonSerializable(typeof(SetupStepChanged)), JsonSerializable(typeof(RepoAdded)), JsonSerializable(typeof(RepoAddedPublic)), JsonSerializable(typeof(RepoOnboarded)), JsonSerializable(typeof(ContextPinWritten)), JsonSerializable(typeof(ContextPageWritten)), JsonSerializable(typeof(RecipeRegistrationCompleted)), JsonSerializable(typeof(ConnectionNeedsSignIn)), JsonSerializable(typeof(ConnectionSignedIn)), JsonSerializable(typeof(ConnectionPolled)), JsonSerializable(typeof(WorkflowTriggerSkipped)), JsonSerializable(typeof(CatchUpCapped))]   // connections PR 10b: the sign-in events; PR 11: the poll events
+[JsonSerializable(typeof(SetupStepChanged)), JsonSerializable(typeof(RepoAdded)), JsonSerializable(typeof(RepoAddedPublic)), JsonSerializable(typeof(RepoOnboarded)), JsonSerializable(typeof(ContextPinWritten)), JsonSerializable(typeof(ContextPageWritten)), JsonSerializable(typeof(RecipeRegistrationCompleted)), JsonSerializable(typeof(ConnectionNeedsSignIn)), JsonSerializable(typeof(ConnectionSignedIn)), JsonSerializable(typeof(ConnectionPolled)), JsonSerializable(typeof(ConnectionRemoved)), JsonSerializable(typeof(ConnectionSignInRequested)), JsonSerializable(typeof(MemoryFactsForgotten)), JsonSerializable(typeof(WorkflowTriggerSkipped)), JsonSerializable(typeof(CatchUpCapped))]   // connections PR 10b: the sign-in events; PR 11: the poll events
 [JsonSerializable(typeof(McpRegistered)), JsonSerializable(typeof(McpProviderOutcome)), JsonSerializable(typeof(SetupConsentGiven))]
 [JsonSerializable(typeof(JobLinks)), JsonSerializable(typeof(JobStartedResponse)), JsonSerializable(typeof(RunServiceRequest)), JsonSerializable(typeof(PauseServiceRequest))]
 [JsonSerializable(typeof(ResumeServiceRequest)), JsonSerializable(typeof(CancelJobRequest)), JsonSerializable(typeof(ResumeJobRequest)), JsonSerializable(typeof(GetJobRequest)), JsonSerializable(typeof(JobView))]
@@ -218,7 +219,8 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(CreateWorkflowBody)), JsonSerializable(typeof(ApplyWorkflowOpsBody)), JsonSerializable(typeof(ReplaceWorkflowBody)), JsonSerializable(typeof(ValidateWorkflowBody)), JsonSerializable(typeof(ActivateWorkflowBody))]   // #2258 PR 8b: the workflow write bodies
 [JsonSerializable(typeof(CreateWorkflowResponse)), JsonSerializable(typeof(ApplyWorkflowOpsResponse)), JsonSerializable(typeof(ReplaceWorkflowResponse)), JsonSerializable(typeof(ValidateWorkflowResponse)), JsonSerializable(typeof(ActivateWorkflowResponse)), JsonSerializable(typeof(PauseWorkflowResponse)), JsonSerializable(typeof(DeleteWorkflowResponse))]
 [JsonSerializable(typeof(ListWorkflowsResponse)), JsonSerializable(typeof(GetWorkflowResponse)), JsonSerializable(typeof(ListWorkflowRunsResponse)), JsonSerializable(typeof(GetWorkflowRunResponse))]   // #2258 PR 8a: the workflow reads; GraphSpec and the node positions come with GetWorkflowResponse
-[JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse))]
+[JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse)), JsonSerializable(typeof(AgentNodeBody)), JsonSerializable(typeof(AgentNodeControlled))]
+[JsonSerializable(typeof(Features.ListResources.ListResourcesRequest)), JsonSerializable(typeof(Features.ListResources.ListResourcesResponse)), JsonSerializable(typeof(Features.ListResources.ResourceView)), JsonSerializable(typeof(Features.PurgeResources.PurgeResourcesRequest)), JsonSerializable(typeof(Features.PurgeResources.PurgeResourcesResponse))]   // agent-first PR 14: resources
 [JsonSerializable(typeof(RecipeRegistered)), JsonSerializable(typeof(RecipeApproved)), JsonSerializable(typeof(RecipeRevoked))]
 
 [JsonSerializable(typeof(RegisterMcpJobRequest))]   // setup-once §5.4: register Sindri in a repo from the app

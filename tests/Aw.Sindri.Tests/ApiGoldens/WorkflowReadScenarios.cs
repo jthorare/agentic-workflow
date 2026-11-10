@@ -2,6 +2,8 @@ using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Launches;
 using Microsoft.Extensions.DependencyInjection;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
@@ -25,6 +27,7 @@ internal static class WorkflowReadScenarios
         ("workflows-slug", "found"), ("workflows-slug", "not-found"),
         ("workflows-slug-runs", "list-empty"), ("workflows-slug-runs", "list-three"),
         ("workflow-runs-run", "running"), ("workflow-runs-run", "finished"), ("workflow-runs-run", "not-found"),
+        ("workflow-runs-run", "agent-waiting"), ("workflow-runs-run", "agent-taken-over"),
     ];
 
     /// <summary>Whether this class owns the scenario.</summary>
@@ -63,17 +66,36 @@ internal static class WorkflowReadScenarios
                 await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
                 await ThreeRuns(host, ct);
                 return await Ask(host, Get($"/sindri/workflows/{_morningSlug.Value}/runs", human));
-            case ("workflow-runs-run", "running"):
-                await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
-                await RunningRun(host, ct);
-                return await Ask(host, Get(RunRoute(1), human));
-            case ("workflow-runs-run", "finished"):
-                await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
-                await FinishedRun(host, ct);
-                return await Ask(host, Get(RunRoute(1), human));
             default:
-                return await Ask(host, Get(RunRoute(9), human));
+                return await RunRead(host, scenario, human, ct);
         }
+    }
+
+    // GET /sindri/workflow-runs/{run}: the running run (its run_agent node 'agent' runs, so its row says 'waiting'), the same once the human took the node over ('taken_over': the held marker of its launch is set, as the workflow sets it),
+    // the finished run, and an unknown one.
+    private static async Task<string> RunRead(GoldenHost host, string scenario, (string Name, string Value)[] human, CancellationToken ct)
+    {
+        if (string.Equals(scenario, "not-found", StringComparison.Ordinal))
+        {
+            return await Ask(host, Get(RunRoute(9), human));
+        }
+
+        await Create(host, _morning, _morningSlug, "Morning check", activate: true, ct);
+        if (string.Equals(scenario, "finished", StringComparison.Ordinal))
+        {
+            await FinishedRun(host, ct);
+        }
+        else
+        {
+            await RunningRun(host, ct);
+        }
+
+        if (string.Equals(scenario, "agent-taken-over", StringComparison.Ordinal))
+        {
+            host.App.Services.GetRequiredService<ILaunchFiles>().MarkTakenOver(NodeRunAddress.Of(WorkflowRunId.Of(_morningSlug, 1, 1), NodeId.From("agent")).Launch(), taken: true);
+        }
+
+        return await Ask(host, Get(RunRoute(1), human));
     }
 
     private static string RunRoute(int occurrence) => $"/sindri/workflow-runs/{Uri.EscapeDataString(WorkflowRunId.Of(_morningSlug, 1, occurrence).Value)}";

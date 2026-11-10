@@ -32,9 +32,9 @@
       "title": "Waiting on you",
       "sections": [
         {
-          "by": "project",
-          "id": "prj_0000000000000000000000000A",
-          "name": "Sindri",
+          "by": "repo",
+          "id": null,
+          "name": "acme/api",
           "rows": [
             {
               "repo": "acme/api",
@@ -86,9 +86,9 @@
       "title": "Yours",
       "sections": [
         {
-          "by": "project",
-          "id": "prj_0000000000000000000000000A",
-          "name": "Sindri",
+          "by": "repo",
+          "id": null,
+          "name": "acme/api",
           "rows": [
             {
               "repo": "acme/api",

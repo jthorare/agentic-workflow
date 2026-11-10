@@ -139,8 +139,8 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>The Pause button's words: "Pause", or "Pausing…" while its call is on the way.</summary>
     public string PauseText => IsChangingState ? Labels.WfPauseBusy : Labels.WfPause;
 
-    /// <summary>True when the open workflow is off and no call is on the way: Activate is offered.</summary>
-    public bool CanActivate => IsRuns && !IsChangingState && OpenRow is { IsActive: false };
+    /// <summary>True when no call is on the way and the open workflow is off, or an edit made a newer revision than the live one: Activate is offered.</summary>
+    public bool CanActivate => IsRuns && !IsChangingState && OpenRow is { IsActive: false } or { HasNewerRevision: true };
 
     /// <summary>True when the open workflow is on and no call is on the way: Pause is offered.</summary>
     public bool CanPause => IsRuns && !IsChangingState && OpenRow is { IsActive: true };

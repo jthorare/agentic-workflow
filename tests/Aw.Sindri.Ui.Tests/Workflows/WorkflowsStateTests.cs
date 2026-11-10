@@ -41,6 +41,19 @@ public sealed class WorkflowsStateTests
     }
 
     [Fact]
+    public async Task Activate_and_Pause_both_show_when_an_edit_made_a_newer_revision_than_the_active_one()
+    {
+        var list = Golden("workflows", "list-two");
+        list["workflows"]![0]!["activeRevision"] = 1;
+        list["workflows"]![0]!["latestRevision"] = 2;
+        _f.ServeList(list);
+
+        var page = await Opened(Slug);
+
+        Assert.Equal((true, true), (page.CanActivate, page.CanPause));
+    }
+
+    [Fact]
     public async Task Neither_shows_on_the_list()
     {
         var page = await _f.Shown(Token);

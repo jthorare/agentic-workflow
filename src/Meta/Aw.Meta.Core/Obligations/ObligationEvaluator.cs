@@ -1,24 +1,21 @@
 using System.Globalization;
-using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Messages;
 
 namespace Aw.Meta.Core.Obligations;
 
-/// <summary>Derives the open obligations from the recorded facts. Nothing is stored: sending a message closes the obligation it answers.</summary>
+/// <summary>Derives the open obligations from the recorded facts. Nothing is stored: sending a message closes the obligation it answers. A new lane map version and a merge owe the lanes nothing: they read both from the board (aw-meta board-line).</summary>
 public static class ObligationEvaluator
 {
     private const int BodyPreview = 80;
 
     /// <summary>Evaluates the open set.</summary>
     /// <param name="facts">The recorded facts.</param>
-    /// <returns>The open obligations: replies in arrival order, then lane map, main, owner relay and watch.</returns>
+    /// <returns>The open obligations: replies in arrival order, then owner relay and watch.</returns>
     public static IReadOnlyList<Obligation> Evaluate(ObligationFacts facts)
     {
         ArgumentNullException.ThrowIfNull(facts);
         var open = new List<Obligation>();
         open.AddRange(Replies(facts));
-        open.AddRange(Broadcast(facts));
-        open.AddRange(Announce(facts));
         open.AddRange(Relays(facts));
         open.AddRange(Rearm(facts));
         return open;
@@ -57,58 +54,6 @@ public static class ObligationEvaluator
         var end = id.LastIndexOf(':');
         return id.StartsWith(prefix, StringComparison.Ordinal) && end > prefix.Length ? id[prefix.Length..end] : null;
     }
-
-    private static IEnumerable<LaneAssignment> Targets(ObligationFacts facts) =>
-        facts.Lanes.Entries.Where(e => !string.Equals(e.Lane, facts.MetaLane, StringComparison.OrdinalIgnoreCase));
-
-    private static IEnumerable<Obligation> Broadcast(ObligationFacts facts)
-    {
-        var marker = string.Create(CultureInfo.InvariantCulture, $"LANE MAP v{facts.Lanes.Version}");
-        var missing = Missing(facts, Targets(facts), o => Recipient.Contains(o.Message, marker));
-        if (facts.Lanes.Version > 0 && missing.Count > 0)
-        {
-            yield return new Obligation(
-                ObligationKind.BroadcastLanes,
-                string.Create(CultureInfo.InvariantCulture, $"v{facts.Lanes.Version}"),
-                string.Create(CultureInfo.InvariantCulture, $"lane map v{facts.Lanes.Version} not sent to: {Described(missing)}"),
-                $"aw-meta lanes --announce, then SendMessage the printed text to: {Addresses(missing)}");
-        }
-    }
-
-    private static IEnumerable<Obligation> Announce(ObligationFacts facts)
-    {
-        if (facts.LatestMerge is not { } merge)
-        {
-            yield break;
-        }
-
-        // A short sha also matches inside the full one; "#N" must match as a whole number (#22 is not in #221).
-        var missing = Missing(facts, Targets(facts), o => o.At >= merge.At && (merge.IsKnown
-            ? o.Message.Contains(merge.ShortSha, StringComparison.Ordinal)
-            : Recipient.Contains(o.Message, merge.Marker)));
-        if (missing.Count > 0)
-        {
-            var moved = merge.IsKnown ? $"main moved to {merge.ShortSha}" : "main moved";
-            var number = merge.Pr.ToString(CultureInfo.InvariantCulture);
-            var sent = merge.IsKnown ? $"{moved}: #{number} merged." : $"main moved (#{number} merged).";
-            yield return new Obligation(
-                ObligationKind.AnnounceMain,
-                merge.Marker,
-                $"{moved} (#{number}); not sent to: {Described(missing)}",
-                $"SendMessage \"{sent} Merge main into your branches.\" to: {Addresses(missing)}");
-        }
-    }
-
-    private static List<LaneAssignment> Missing(ObligationFacts facts, IEnumerable<LaneAssignment> lanes, Func<Outbound, bool> sent) =>
-        [.. lanes.Where(lane => !facts.Outbound.Any(o => Recipient.Matches(o.To, lane) && sent(o)))];
-
-    // The address SendMessage takes is the session name; a lane label alone reaches no one.
-    private static string Address(LaneAssignment lane) => lane.SessionName.Length > 0 ? lane.SessionName : lane.Lane;
-
-    private static string Addresses(List<LaneAssignment> lanes) => string.Join(", ", lanes.Select(Address));
-
-    private static string Described(List<LaneAssignment> lanes) =>
-        string.Join(", ", lanes.Select(l => Address(l) == l.Lane ? l.Lane : $"{l.Lane} ({Address(l)})"));
 
     private static IEnumerable<Obligation> Relays(ObligationFacts facts) =>
         facts.Answers

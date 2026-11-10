@@ -12,6 +12,8 @@ internal sealed partial class FakeSindriApi
     private int _workflowRunCalls;
     private readonly List<string> _startedWorkflows = [];
     private readonly List<string> _cancelledWorkflowRuns = [];
+    private readonly List<string> _agentNodeControls = [];
+
     private readonly List<string> _activatedWorkflows = [];
     private readonly List<string> _pausedWorkflows = [];
     private readonly List<AppliedOps> _appliedOps = [];
@@ -21,6 +23,18 @@ internal sealed partial class FakeSindriApi
 
     /// <summary>POST /sindri/workflow-runs/{run}/cancel's answer: the cancelled body by default.</summary>
     public RouteAnswer CancelWorkflowRunAnswer { get; set; } = RouteAnswer.SpecShaped("workflow-runs-run-cancel", "cancelled");
+
+    /// <summary>POST .../takeover's answer: taken_over by default.</summary>
+    public RouteAnswer TakeOverAgentNodeAnswer { get; set; } = RouteAnswer.Api("workflow-runs-run-nodes-node-takeover", "taken-over");
+
+    /// <summary>POST .../handback's answer: waiting by default.</summary>
+    public RouteAnswer HandBackAgentNodeAnswer { get; set; } = RouteAnswer.Api("workflow-runs-run-nodes-node-handback", "handed-back");
+
+    /// <summary>When set, a take over or hand back waits for it before it answers.</summary>
+    public TaskCompletionSource? AgentNodeControlGate { get; set; }
+
+    /// <summary>Every take over and hand back sent, in order, as "takeover|handback &lt;run&gt; &lt;node&gt; &lt;item&gt;".</summary>
+    public IReadOnlyList<string> AgentNodeControls { get { lock (_gate) { return [.. _agentNodeControls]; } } }
 
     /// <summary>When set, the next Run now waits for it before it answers.</summary>
     public TaskCompletionSource? StartWorkflowRunGate { get; set; }
@@ -116,6 +130,28 @@ internal sealed partial class FakeSindriApi
         return Task.FromResult(Answer<WorkflowRunCancelled>(api, WorkflowRoutes.Cancel(runId), CancelWorkflowRunAnswer));
     }
 
+    public async Task<Result<AgentNodeControlled>> TakeOverAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken)
+    {
+        Record("takeover", runId, node, itemIndex);
+        await WaitFor(AgentNodeControlGate, cancellationToken).ConfigureAwait(false);
+        return Answer<AgentNodeControlled>(api, WorkflowRoutes.TakeOver(runId, node), TakeOverAgentNodeAnswer);
+    }
+
+    public async Task<Result<AgentNodeControlled>> HandBackAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken)
+    {
+        Record("handback", runId, node, itemIndex);
+        await WaitFor(AgentNodeControlGate, cancellationToken).ConfigureAwait(false);
+        return Answer<AgentNodeControlled>(api, WorkflowRoutes.HandBack(runId, node), HandBackAgentNodeAnswer);
+    }
+
+    private void Record(string verb, string runId, string node, int itemIndex)
+    {
+        lock (_gate)
+        {
+            _agentNodeControls.Add(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{verb} {runId} {node} {itemIndex}"));
+        }
+    }
+
     /// <summary>One POST .../ops the fake got.</summary>
     /// <param name="Slug">The workflow.</param>
     /// <param name="BaseRevision">The base revision sent.</param>
@@ -126,13 +162,13 @@ internal sealed partial class FakeSindriApi
     public RouteAnswer WorkflowBlocksAnswer { get; set; } = RouteAnswer.Problem(System.Net.HttpStatusCode.NotFound, "SND-GRAPH-008", "no blocks served");
 
     /// <summary>POST .../ops's answer.</summary>
-    public RouteAnswer ApplyWorkflowOpsAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"slug":"morning-check","revision":3,"specHash":"sha256:x"}""");
+    public RouteAnswer ApplyWorkflowOpsAnswer { get; set; } = RouteAnswer.Api("workflows-slug-ops", "ops-applied");
 
     /// <summary>Holds POST .../ops until a test releases it (the call is recorded first).</summary>
     public TaskCompletionSource? ApplyWorkflowOpsGate { get; set; }
 
     /// <summary>POST .../activate's answer.</summary>
-    public RouteAnswer ActivateWorkflowAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"slug":"morning-check","revision":2,"specHash":"sha256:x"}""");
+    public RouteAnswer ActivateWorkflowAnswer { get; set; } = RouteAnswer.Api("workflows-slug-activate", "activated");
 
     /// <summary>POST .../pause's answer.</summary>
     public RouteAnswer PauseWorkflowAnswer { get; set; } = RouteAnswer.Api("workflows-slug-pause", "paused");

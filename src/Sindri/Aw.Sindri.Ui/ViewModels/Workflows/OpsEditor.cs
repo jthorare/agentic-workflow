@@ -11,7 +11,6 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// The workflow editor's logic (#2258 PR 17 part 2b), no view yet: it reads a workflow and the block list, builds the form of the selected node from its block's config fields, and
 /// sends each edit as ops with the revision it read as the base. Each edit is sent once and never retried; a workflow that changed elsewhere is not overwritten but asks for a reload.
 /// </summary>
-#pragma warning disable MA0182 // until the editor sheet (#2258 PR 17 part 3) binds it; the tests drive it now
 internal sealed class OpsEditor(ISindriApi api) : ObservableObject
 {
     private const string StaleBase = "SND-GRAPH-007";
@@ -44,6 +43,9 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <summary>The prompt under the editor when the workflow changed elsewhere; empty otherwise.</summary>
     public string ReloadPromptText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>Holds every edit until a reload: the workflow changed since the page read it.</summary>
+    internal void MarkChangedElsewhere() => (NeedsReload, ReloadPromptText) = (true, Labels.WfEditChangedElsewhere);
+
     /// <summary>The Reload command's words.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string ReloadText => Labels.WfReload;
@@ -57,8 +59,17 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <param name="slug">The workflow.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>A task that completes when both are read.</returns>
-    internal async Task Load(Uri url, string slug, CancellationToken cancellationToken)
+    internal Task Load(Uri url, string slug, CancellationToken cancellationToken) => Load(url, slug, afterSave: false, cancellationToken);
+
+    private async Task Load(Uri url, string slug, bool afterSave, CancellationToken cancellationToken)
     {
+        if (!string.Equals(Slug, slug, StringComparison.Ordinal))
+        {
+            // another workflow: nothing of the old one stays to be saved to this one, even when this read fails
+            Fields.Clear();
+            (Nodes, BaseRevision, _selected) = ([], 0, null);
+        }
+
         (_url, Slug) = (url, slug);
         var read = ++_reads;
         var workflowRead = api.Workflow(url, slug, cancellationToken);
@@ -72,7 +83,8 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
 
         if (workflow.IsError || blocks.IsError)
         {
-            FailureText = Labels.WfEditLoadFailed(workflow.IsError ? workflow.Error : blocks.Error);
+            var error = workflow.IsError ? workflow.Error : blocks.Error;
+            FailureText = afterSave ? Labels.WfEditSavedReloadFailed(error) : Labels.WfEditLoadFailed(error);
             return;
         }
 
@@ -116,8 +128,37 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         field.ErrorText = problem;
         if (problem.Length == 0)
         {
-            await Send(new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }, cancellationToken).ConfigureAwait(true);
+            await Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value }), cancellationToken).ConfigureAwait(true);
         }
+    }
+
+    /// <summary>Sends a set_config for each of several fields of the selected node as ONE call on the revision read: all are applied or none. Every text is checked first; a problem on any field sends nothing.</summary>
+    /// <param name="edits">The fields and their new text.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal Task EditFields(IReadOnlyList<(string Name, string Text)> edits, CancellationToken cancellationToken)
+    {
+        if (_selected is not { } node)
+        {
+            return Task.CompletedTask;
+        }
+
+        var ops = new JsonArray();
+        var blocked = false;
+        foreach (var (name, text) in edits)
+        {
+            if (Fields.FirstOrDefault(f => string.Equals(f.Name, name, StringComparison.Ordinal)) is not { } field)
+            {
+                continue;
+            }
+
+            var (value, problem) = EditorFieldText.Parse(field, text);
+            field.ErrorText = problem;
+            blocked |= problem.Length > 0;
+            ops.Add((JsonNode)new JsonObject { ["op"] = "set_config", ["node"] = node, ["path"] = name, ["value"] = value });
+        }
+
+        return blocked || ops.Count == 0 ? Task.CompletedTask : Send(ops, cancellationToken);
     }
 
     /// <summary>Sends an add_node.</summary>
@@ -134,7 +175,23 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
             op["title"] = title;
         }
 
-        return Send(op, cancellationToken);
+        return Send(new JsonArray((JsonNode)op), cancellationToken);
+    }
+
+    /// <summary>Sends an add_node and, when a node is given, a connect from it to the new one, as one set of ops: both are saved or neither.</summary>
+    /// <param name="id">The new node's id.</param>
+    /// <param name="type">Its block type.</param>
+    /// <param name="after">The node the new one follows, or null for none.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>A task that completes when the answer is shown.</returns>
+    internal Task AddNodeAfter(string id, string type, string? after, CancellationToken cancellationToken)
+    {
+        var add = new JsonObject { ["op"] = "add_node", ["id"] = id, ["type"] = type };
+        var ops = after is null
+            ? new JsonArray((JsonNode)add)
+            : new JsonArray(add, new JsonObject { ["op"] = "connect", ["from"] = after, ["to"] = id });
+
+        return Send(ops, cancellationToken);
     }
 
     /// <summary>Sends a connect.</summary>
@@ -151,7 +208,7 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
             op["output"] = output;
         }
 
-        return Send(op, cancellationToken);
+        return Send(new JsonArray((JsonNode)op), cancellationToken);
     }
 
     /// <summary>Sends a remove_node.</summary>
@@ -159,10 +216,10 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>A task that completes when the answer is shown.</returns>
     internal Task RemoveNode(string id, CancellationToken cancellationToken) =>
-        Send(new JsonObject { ["op"] = "remove_node", ["node"] = id }, cancellationToken);
+        Send(new JsonArray((JsonNode)new JsonObject { ["op"] = "remove_node", ["node"] = id }), cancellationToken);
 
     // One call, on the revision read, never retried. A saved edit reads the workflow again; a stale base asks for a reload and holds further edits.
-    private async Task Send(JsonObject op, CancellationToken cancellationToken)
+    private async Task Send(JsonArray ops, CancellationToken cancellationToken)
     {
         if (IsSending || NeedsReload || _url is not { } url || Slug.Length == 0)
         {
@@ -173,14 +230,14 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         IsSending = true;
         try
         {
-            var applied = await api.ApplyWorkflowOps(url, Slug, BaseRevision, new JsonArray(op).ToJsonString(), cancellationToken).ConfigureAwait(true);
+            var applied = await api.ApplyWorkflowOps(url, Slug, BaseRevision, ops.ToJsonString(), cancellationToken).ConfigureAwait(true);
             if (applied.IsError)
             {
                 Refused(applied.Error);
                 return;
             }
 
-            await Load(url, Slug, cancellationToken).ConfigureAwait(true);
+            await Load(url, Slug, afterSave: true, cancellationToken).ConfigureAwait(true);
         }
         finally
         {
@@ -218,4 +275,3 @@ internal sealed class OpsEditor(ISindriApi api) : ObservableObject
         return nodes;
     }
 }
-#pragma warning restore MA0182

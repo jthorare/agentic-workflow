@@ -146,10 +146,12 @@ internal static class Usage
         "       sindri wf pause <slug> [--json]   turn the workflow's triggers off; revisions stay and runs in flight keep going",
         "       sindri wf delete <slug> [--json]   archive the workflow: it leaves the list and turns off for good; revisions and runs stay readable",
         "       sindri wf cancel <run> [--json]   ask a run in flight to stop (exit 0 ok, 1 not running, 2 refused)",
+        "       sindri wf takeover <run> <node> [--item <index>] [--json]   take the run_agent node the run waits on over: its timeout pauses and only you report it (exit 0 ok, 1 not running, 2 refused)",
+        "       sindri wf handback <run> <node> [--item <index>] [--json]   hand a taken-over run_agent node back: its timeout resumes with what was left (exit 0 ok, 1 not running, 2 refused)",
         "       sindri workflow takeover <address> [--nonce <n>] [--json]   take the instance over: its timer pauses",
         "       sindri workflow handback <address> [--nonce <n>] [--json]   hand a taken-over instance back: its timer resumes",
-        "       sindri takeover <item-or-address> [--nonce <n>] [--json]   short form of 'workflow takeover' (a bare item is its latest attempt)",
-        "       sindri handback <item-or-address> [--nonce <n>] [--json]   short form of 'workflow handback' (a bare item is its latest attempt)",
+        "       sindri takeover <run> <node> [--item <index>] [--json]   short form of 'wf takeover'",
+        "       sindri handback <run> <node> [--item <index>] [--json]   short form of 'wf handback'",
         "       sindri workflow complete <address> --run <token> --outcome <o> [--output <fact>=<file>]... [--nonce <n>] [--json]   report an open desk run (exit 0 applied, 1 not running, 2 invalid, refused or error)",
     ];
 

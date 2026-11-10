@@ -9,7 +9,7 @@ using Aw.Sindri.Ui.ViewModels.Linear;
 
 namespace Aw.Sindri.Ui.Tests.Todo;
 
-/// <summary>The client's todo note calls (todo spec §4.4): the note route read through the hand-written goldens, the conflict part of a todo, the pick routes and bodies, and an older Sindri's bare 404.</summary>
+/// <summary>The client's todo note calls (todo spec §4.4): the note route read through the generated goldens, the conflict part of a todo, the pick routes and bodies, and an older Sindri's bare 404.</summary>
 [Lane(TestLane.Unit)]
 public sealed class SindriApiClientTodoNoteTests
 {
@@ -38,15 +38,16 @@ public sealed class SindriApiClientTodoNoteTests
         Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
         var note = read.Value;
         Assert.Equal(("syncing", "notes", "Todo.md", null), (note.State, note.Vault, note.Note, note.LastError));
-        Assert.Equal(DateTimeOffset.Parse("2026-01-01T09:59:30Z", CultureInfo.InvariantCulture), note.LastCheckAt);
-        Assert.Equal(DateTimeOffset.Parse("2026-01-01T09:58:12Z", CultureInfo.InvariantCulture), note.LastSyncAt);
-        Assert.Equal(["td_01jc5a8xq0n4w7ms2t9r3vbk6e"], note.Conflicts);
+        // why: the last check time lives in the sync's memory, and the golden host runs no sync, so the generated golden has none
+        Assert.Null(note.LastCheckAt);
+        Assert.Equal(DateTimeOffset.Parse("2026-01-01T00:00:00Z", CultureInfo.InvariantCulture), note.LastSyncAt);
+        Assert.Equal(["td_00000000000000000000000008"], note.Conflicts);
         Assert.Null(note.Hold);
         var pick = Assert.Single(note.Picks);
-        Assert.Equal(("conflict", "td_01jc5d4m7p2q9r5s8t1v3w6x0y", "obsidian", "human:ui"), (pick.Kind, pick.Id, pick.Kept, pick.By));
-        Assert.Equal(DateTimeOffset.Parse("2026-01-01T10:00:08Z", CultureInfo.InvariantCulture), pick.UndoUntil);
+        Assert.Equal(("conflict", "td_0000000000000000000000000f", "sindri", "human:cli"), (pick.Kind, pick.Id, pick.Kept, pick.By));
+        Assert.Equal(DateTimeOffset.Parse("2026-01-01T00:00:10Z", CultureInfo.InvariantCulture), pick.UndoUntil);
         var line = Assert.Single(note.CantSync);
-        Assert.Equal((14, "it has a markdown link"), (line.Line, line.Reason));
+        Assert.Equal((4, "it has a markdown link"), (line.Line, line.Reason));
         var seen = Assert.Single(handler.Seen);
         Assert.Equal((HttpMethod.Get, "/sindri/todos/note"), (seen.Method, seen.Uri.AbsolutePath));
     }
@@ -58,9 +59,9 @@ public sealed class SindriApiClientTodoNoteTests
 
         Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
         var hold = read.Value.Hold!;
-        Assert.Equal(("sha256:3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a", 20, DateTimeOffset.Parse("2026-01-01T10:04:41Z", CultureInfo.InvariantCulture)), (hold.NoteHash, hold.OpenInBase, hold.HeldAt));
+        Assert.Equal(("sha256:3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a", 20, DateTimeOffset.Parse("2026-01-01T00:00:00Z", CultureInfo.InvariantCulture)), (hold.NoteHash, hold.OpenInBase, hold.HeldAt));
         Assert.Equal(["removed", "removed", "edited", "reopened"], hold.Changes.Select(c => c.Kind), StringComparer.Ordinal);
-        Assert.Equal(("td_01jc5c90a2b7k4m8q1r6t3w9xz", "call the dentist", "- [ ] call the dentist about the crown 📅 2026-01-05 ^td-01jc5c90a2b7k4m8q1r6t3w9xz"), (hold.Changes[2].Id, hold.Changes[2].Text, hold.Changes[2].NoteLine));
+        Assert.Equal(("td_0000000000000000000000000p", "call the dentist", "- [ ] call the dentist about the crown 📅 2026-01-05 ^td-0000000000000000000000000p"), (hold.Changes[2].Id, hold.Changes[2].Text, hold.Changes[2].NoteLine));
         Assert.Null(hold.Changes[0].NoteLine);
         Assert.Empty(read.Value.Conflicts);
         Assert.Empty(read.Value.Picks);
@@ -82,7 +83,7 @@ public sealed class SindriApiClientTodoNoteTests
 
         Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
         var conflict = read.Value.Todos[0].Conflict!;
-        Assert.Equal("sha256:9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a", conflict.NoteHash);
+        Assert.Equal("sha256:3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a", conflict.NoteHash);
         Assert.Equal(("reply to Sam about the offsite", new DateOnly(2026, 1, 2), true, false), (conflict.Sindri.Text, conflict.Sindri.Due, conflict.Sindri.Done, conflict.Sindri.Removed));
         Assert.Equal(("reply to Sam about the offsite venue", new DateOnly(2026, 1, 3), false), (conflict.Obsidian.Text, conflict.Obsidian.Due, conflict.Obsidian.Done));
         Assert.Equal(["sindri://linear/ENG-12"], conflict.Obsidian.Links);
@@ -107,7 +108,7 @@ public sealed class SindriApiClientTodoNoteTests
         var kept = await Client(handler).KeepTodo(_api, "td_x", "obsidian", Token);
 
         Assert.True(kept.IsSuccess, kept.IsError ? kept.Error.Message : string.Empty);
-        Assert.Equal(("td_01jc5a8xq0n4w7ms2t9r3vbk6e", DateTimeOffset.Parse("2026-01-01T10:00:10Z", CultureInfo.InvariantCulture)), (kept.Value.Todo!.Id, kept.Value.UndoUntil));
+        Assert.Equal(("td_00000000000000000000000008", DateTimeOffset.Parse("2026-01-01T10:00:10Z", CultureInfo.InvariantCulture)), (kept.Value.Todo!.Id, kept.Value.UndoUntil));
         var seen = Assert.Single(handler.Seen);
         Assert.Equal((HttpMethod.Post, "/sindri/todos/td_x/keep", """{"side":"obsidian"}"""), (seen.Method, seen.Uri.AbsolutePath, Compact(seen.Body)));
     }

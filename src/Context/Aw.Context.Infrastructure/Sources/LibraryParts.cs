@@ -7,4 +7,5 @@ namespace Aw.Context.Infrastructure.Sources;
 /// <param name="Host">The home folders the library's path rules are checked against.</param>
 /// <param name="Status">Where the feed leaves what each pass found.</param>
 /// <param name="Clock">The clock the status is stamped with.</param>
-internal sealed record LibraryParts(LibraryHost Host, ILibraryStatus Status, TimeProvider Clock);
+/// <param name="Skips">The files the host keeps out of the library (the todo note); none when the host names none.</param>
+internal sealed record LibraryParts(LibraryHost Host, ILibraryStatus Status, TimeProvider Clock, ILibrarySkips? Skips = null);

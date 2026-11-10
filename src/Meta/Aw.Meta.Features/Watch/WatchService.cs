@@ -19,7 +19,8 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="delay">Waits between polls.</param>
 /// <param name="clock">The current time.</param>
 /// <param name="usage">Looks for lanes and the meta stopped at a usage limit, and resumes the idle ones.</param>
-internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyValueStore values, IDelay delay, TimeProvider clock, UsageMonitor usage)
+/// <param name="board">Records main's new sha and the pull requests that merged when a poll sees main move.</param>
+internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyValueStore values, IDelay delay, TimeProvider clock, UsageMonitor usage, IBoardStore board)
     : IService<WatchRequest, WatchResponse>
 {
     public async ValueTask<Result<WatchResponse>> Handle(WatchRequest request, CancellationToken cancellationToken)
@@ -73,7 +74,12 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
                 ContextWatch.Parse(high.IsSuccess ? high.Value : null),
                 async lanes => _ = await values.Set(KvKeys.WatchContext, ContextWatch.Format(lanes), cancellationToken).ConfigureAwait(false)),
             // Advisory: a pane or transcript that can't be read leaves usage out of the poll.
-            async () => await usage.Check(team, cancellationToken).ConfigureAwait(false));
+            async () => await usage.Check(team, cancellationToken).ConfigureAwait(false))
+        {
+            // Advisory: a board write that fails is printed as a WATCH ERROR line; the watch keeps polling and the next move fixes the board.
+            MainMoved = async (sha, merged) => await board.RecordMain(sha, merged, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false),
+            SeedMain = async sha => (await board.SeedMain(sha, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false)).Map(static _ => Unit.Value),
+        };
     }
 
     private async ValueTask<Result<Unit>> Beat(TimeSpan interval, CancellationToken cancellationToken)
