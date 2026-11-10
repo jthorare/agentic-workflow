@@ -24,6 +24,9 @@ internal static partial class Labels
     /// <summary>The "+ Add project" button's words.</summary>
     internal const string ProjectsAddButton = "+ Add project";
 
+    /// <summary>The button that opens the Connections page to connect Linear.</summary>
+    internal const string ProjectsConnectButton = "Connect Linear";
+
     /// <summary>The label under a card's PR count.</summary>
     internal const string ProjectPrsLabel = "open PRs";
 

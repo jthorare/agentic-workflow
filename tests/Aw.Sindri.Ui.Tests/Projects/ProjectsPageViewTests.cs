@@ -10,6 +10,7 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Shell;
+using static Aw.Sindri.Ui.Tests.Projects.ProjectsFixture;
 using Aw.Sindri.Ui.Views.Shell;
 
 namespace Aw.Sindri.Ui.Tests.Projects;
@@ -80,22 +81,46 @@ public sealed class ProjectsPageViewTests : FrameHost
     });
 
     [Fact]
-    public Task Leading_nothing_shows_the_served_sentence_in_the_empty_block_with_a_disabled_Add() => OnUi(async () =>
+    public Task Leading_nothing_shows_the_served_sentence_in_the_empty_block_with_no_second_Add_project() => OnUi(async () =>
     {
         var (window, shell) = await OnProjects("empty-leads-nothing");
 
         Assert.Equal(shell.Projects.Sentence, Heard.Wrapper(Named<Border>(window, "ProjectsEmptyName")));
-        Assert.Equal((true, false, true), (Visible(window, "ProjectsEmptyBlock"), Visible(window, "ProjectsBanner"), Visible(window, "ProjectsAddEmpty")));
-        Assert.True(Named<Button>(window, "ProjectsAddEmpty").IsEnabled);
+        Assert.Equal((true, false, false, true), (Visible(window, "ProjectsEmptyBlock"), Visible(window, "ProjectsBanner"), Visible(window, "ProjectsAddEmpty"), Visible(window, "ProjectsAdd")));
         Assert.Empty(Frames(window));
     });
 
     [Fact]
-    public Task Syncing_shows_the_empty_block_without_Add() => OnUi(async () =>
+    public Task Linear_not_connected_offers_Connect_Linear_in_the_empty_card_and_one_Add_project() => OnUi(async () =>
     {
-        var (window, _) = await OnProjects("syncing");
+        var (window, _) = await OnProjects("empty-no-linear");
 
-        Assert.Equal((true, false), (Visible(window, "ProjectsEmptyBlock"), Visible(window, "ProjectsAddEmpty")));
+        Assert.Equal((true, true, false), (Visible(window, "ProjectsConnectEmpty"), Visible(window, "ProjectsAdd"), Visible(window, "ProjectsAddEmpty")));
+        Assert.Equal("Connect Linear", Named<Button>(window, "ProjectsConnectEmpty").Content);
+    });
+
+    [Fact]
+    public Task The_empty_card_has_a_solid_border_like_the_other_pages() => OnUi(async () =>
+    {
+        var (window, _) = await OnProjects("empty-no-linear");
+
+        Assert.Empty(window.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Rectangle>().Where(r => r.IsEffectivelyVisible && r.StrokeDashArray is { Count: > 0 }));
+        Assert.Equal(new Avalonia.Thickness(1), Named<Border>(window, "ProjectsEmptyCard").BorderThickness);
+    });
+
+    [Fact]
+    public Task A_missing_key_banner_has_a_Connect_Linear_button_and_no_terminal_command() => OnUi(async () =>
+    {
+        var list = Golden("mixed");
+        list["empty"] = "Linear needs a token. Run sindri index connect linear in your terminal to connect it.";
+        Server.ProjectsAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, list.ToJsonString());
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.Projects);
+        await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
+
+        Assert.Equal((true, true), (Visible(window, "ProjectsBanner"), Visible(window, "ProjectsConnectBanner")));
+        var words = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text ?? string.Empty);
+        Assert.DoesNotContain(words, w => w.Contains("sindri index connect", StringComparison.Ordinal));
     });
 
     [Fact]

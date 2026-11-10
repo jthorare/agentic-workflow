@@ -36,6 +36,9 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
 
     /// <summary>The button that adds a project.</summary>
     public string AddText => Labels.ProjectsAddButton;
+
+    /// <summary>The button that opens Connections to connect Linear.</summary>
+    public string ConnectText => Labels.ProjectsConnectButton;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>True until the first answer.</summary>
@@ -49,6 +52,9 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
 
     /// <summary>The served empty sentence, as served; null when none.</summary>
     public string? Sentence { get; private set => Set(ref field, value); }
+
+    /// <summary>True when the sentence is about a missing Linear key or Linear not connected: the empty block or the banner offers Connect Linear.</summary>
+    public bool ShowsConnect { get; private set => Set(ref field, value); }
 
     /// <summary>True when there are no cards and a sentence: the dashed block.</summary>
     public bool IsEmptyBlock { get; private set => Set(ref field, value); }
@@ -85,6 +91,12 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
 
     /// <summary>Add project was pressed: the shell opens the Add project sheet.</summary>
     internal event EventHandler? AddRequested;
+
+    /// <summary>Connect Linear was pressed: the shell opens Connections.</summary>
+    internal event EventHandler? ConnectRequested;
+
+    /// <summary>Asks the shell to open Connections.</summary>
+    internal void RequestConnect() => ConnectRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>Asks the shell to open the Add project sheet.</summary>
     internal void RequestAdd() => AddRequested?.Invoke(this, EventArgs.Empty);

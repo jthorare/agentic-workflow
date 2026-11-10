@@ -83,6 +83,42 @@ public sealed class ProjectsFramesTests : FrameHost
         Frame(window, "projects-empty-leads-nothing-1440", prefix: string.Empty);
     });
 
+    private static string ThreeInOneState()
+    {
+        var list = ProjectsFixture.Golden("mixed");
+        var projects = list["projects"]!.AsArray();
+        for (var i = 0; i < 2; i++)
+        {
+            var copy = projects[0]!.DeepClone();
+            copy["id"] = $"linear:project/00000000-0000-4000-8000-0000000000b{i}";
+            copy["name"] = $"Extra {i}";
+            projects.Insert(1, copy);
+        }
+
+        return list.ToJsonString();
+    }
+
+    [Theory]
+    [InlineData(1280, 900, 3)]
+    [InlineData(900, 900, 2)]
+    public Task Cards_fill_the_width_and_share_a_row_height_at(int width, int height, int across) => OnUi(async () =>
+    {
+        Server.ProjectsAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, ThreeInOneState());
+        var (window, shell) = await Connected(width: width, height: height);
+        shell.GoTo(PageId.Projects);
+        await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
+        Settle(window);
+
+        var group = Named<ItemsControl>(window, "ProjectsGroups").GetVisualDescendants().OfType<Border>().Where(b => b.Name == "ProjectCardFrame" && b.IsEffectivelyVisible).Take(3).ToList();
+        var tops = group.Select(c => Math.Round(c.TranslatePoint(default, window)!.Value.Y)).ToList();
+        var first = group.Where((_, i) => Math.Abs(tops[i] - tops[0]) < 1).ToList();
+        Assert.Equal(across, first.Count);
+        Assert.Single(first.Select(c => Math.Round(c.Bounds.Height)).Distinct());
+        var right = first.Max(c => c.TranslatePoint(new Avalonia.Point(c.Bounds.Width, 0), window)!.Value.X);
+        var page = Named<StackPanel>(window, "ProjectsRoot").TranslatePoint(new Avalonia.Point(Named<StackPanel>(window, "ProjectsRoot").Bounds.Width, 0), window)!.Value.X;
+        Assert.InRange(page - right, 0, 14);   // the last card ends at the page's right edge, less its own 12 px margin
+    });
+
     [Fact]
     public Task A_cards_notes_open_for_editing() => OnUi(async () =>
     {
