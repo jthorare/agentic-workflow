@@ -1,6 +1,5 @@
 using Aw.Kernel;
 using Aw.Kernel.Services;
-using Aw.Meta.Core;
 using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Features.LaneRecycle;
@@ -14,7 +13,7 @@ namespace Aw.Meta.Features.LaneRecycle;
 /// <param name="runner">The recycle itself.</param>
 /// <param name="switcher">The move to another agent, for a lane routing.lanes assigns elsewhere.</param>
 /// <param name="waiter">The detached waiter, for --detach and --wait-idle.</param>
-internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard, RecycleRunner runner, SwitchRunner switcher, RecycleWaiter? waiter = null) : IService<LaneRecycleRequest, LaneRecycleResponse>
+internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard, RecycleRunner runner, SwitchRunner switcher, RecycleWaiter waiter) : IService<LaneRecycleRequest, LaneRecycleResponse>
 {
     public async ValueTask<Result<LaneRecycleResponse>> Handle(LaneRecycleRequest request, CancellationToken cancellationToken)
     {
@@ -33,9 +32,7 @@ internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard,
 
         if ((request.Detach || request.WaitIdle) && !request.DryRun)
         {
-            return waiter is null
-                ? MetaErrors.CommandNotStarted.With("no recycle waiter is set up")
-                : await waiter.Run(plan.Value, request, cancellationToken).ConfigureAwait(false);
+            return await waiter.Run(plan.Value, request, cancellationToken).ConfigureAwait(false);
         }
 
         var switching = plan.Value.SwitchTo is not null;

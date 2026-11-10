@@ -48,6 +48,11 @@ public sealed class InMemoryLaneFiles : ILaneFiles
     /// <inheritdoc />
     public ValueTask<Result<Unit>> RecordWaiter(string lane, (int Pid, DateTimeOffset StartedAt)? waiter, CancellationToken cancellationToken)
     {
+        if (lane.Length == 0 || lane.All(static c => c == '.') || !lane.All(static c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '-'))
+        {
+            return Done.Failed<Unit>(MetaErrors.UnknownLane.With($"'{lane}' is not a lane name"));
+        }
+
         if (waiter is { } kept)
         {
             _waiters[lane] = kept;
