@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # tests/ui-checks/ui-audit-shots.sh — the full-app screenshot audit (2026-11-10): every page of the Sindri desktop app at two widths, per state.
 #   STATE=empty    the fixture up with no data
-#   STATE=typical  up + items --large + request + todos + resources + context up + projects
+#   STATE=typical  up + items + request + todos + resources + context up + projects + reviews up + workflows up
 #   STATE=error    typical + fail (a service the build can't run) + stall (the views stall banner)
-# Output: $OUT/<page>/<state>-<width>.png (OUT default a new temp dir). PAGES (space list of tab names) defaults to the nav tabs below.
+# Output: $OUT/<page>/<state>-<width>.png (OUT default a new temp dir). PAGES (space list of tab names, e.g. PAGES="Workflows Reviews" to reshoot those two) defaults to the nav tabs below.
 # States the fixture can't make (Linear catch-up changes, connections) are not faked: the shots show what the app does with none.
 #   bash tests/ui-checks/ui-audit-shots.sh   (STATE=...)   run guarded: scripts/run-test-guard.sh -- bash tests/ui-checks/ui-audit-shots.sh
 # Env: STATE, PAGES, WIDTHS (default "1280 900"), OUT, AW_SINDRI_UI, SINDRI, AW_UI_DRIVER_BIN (a built aw-ui-driver).
@@ -25,6 +25,8 @@ if [ "$STATE" != empty ]; then
   bash "$FIXTURE" resources >>"$OUT/items.log" 2>&1
   bash "$FIXTURE" context up >"$OUT/context-up.log" 2>&1
   bash "$FIXTURE" projects >"$OUT/projects-up.log" 2>&1
+  bash "$FIXTURE" reviews up >"$OUT/reviews-up.log" 2>&1     # after projects: it deletes the github:pr rows
+  bash "$FIXTURE" workflows up >"$OUT/workflows-up.log" 2>&1
 fi
 if [ "$STATE" = error ]; then
   bash "$FIXTURE" fail >/dev/null 2>&1
