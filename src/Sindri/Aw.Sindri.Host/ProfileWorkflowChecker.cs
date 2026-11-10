@@ -11,7 +11,8 @@ namespace Aw.Sindri.Host;
 /// <summary>The validator the workflow write slices use: the block catalog, the repos of the approved profile (when one can be read) and the cron and condition parsers; the same context 'wf validate' builds.</summary>
 /// <param name="profile">The approved profile.</param>
 /// <param name="blocks">The graph block catalog.</param>
-internal sealed class ProfileWorkflowChecker(IApprovedProfile profile, IGraphBlockCatalog blocks) : IWorkflowChecker
+/// <param name="codeCheck">Compiles a 'code' node's body, or null to skip the check.</param>
+internal sealed class ProfileWorkflowChecker(IApprovedProfile profile, IGraphBlockCatalog blocks, ICodeCheck? codeCheck = null) : IWorkflowChecker
 {
     public async ValueTask<GraphValidator> Validator(CancellationToken cancellationToken)
     {
@@ -19,6 +20,7 @@ internal sealed class ProfileWorkflowChecker(IApprovedProfile profile, IGraphBlo
         var context = new GraphValidationContext(blocks.Types, world, (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem, ParseCondition)
         {
             BoxCap = await BoxCap(cancellationToken).ConfigureAwait(false),
+            CodeCheck = codeCheck is null ? null : codeCheck.Check,
         };
         return new GraphValidator(context);
     }

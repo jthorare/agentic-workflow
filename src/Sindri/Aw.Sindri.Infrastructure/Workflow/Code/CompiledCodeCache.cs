@@ -1,8 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
 
-// why: nothing in the product uses this type until the Code block (the next PR) registers it; the tests reach it through InternalsVisibleTo
-#pragma warning disable MA0182
 namespace Aw.Sindri.Infrastructure.Workflow.Code;
 
 /// <summary>Compiled assemblies on disk, keyed by the sha256 of the body and the compiler's reference set, so the same code compiles once.</summary>

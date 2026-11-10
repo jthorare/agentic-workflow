@@ -1,8 +1,6 @@
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sandbox.Plan;
 
-// why: the red commit holds a stub; the runner that uses it comes with the implementation
-#pragma warning disable MA0182
 namespace Aw.Sindri.Infrastructure.Workflow.Code;
 
 /// <summary>The sandbox request of one Code run: the runner's folder read-only, the private /tmp as the only writable place, the repo read-only, no host and so no network.</summary>
@@ -16,5 +14,5 @@ internal static class CodeRunSandbox
     /// <param name="host">The host facts.</param>
     /// <returns>The request for <see cref="ISandbox.PlanProcess"/>.</returns>
     internal static ProcessSandboxRequest Request(LaunchId launch, string runnerPath, string runArea, string? repoPath, SandboxHostFacts host) =>
-        throw new NotSupportedException(string.Concat(launch.Value, runnerPath, runArea, repoPath, host.Home));
+        new(launch, "code", runnerPath, runArea, [], new Dictionary<string, string>(StringComparer.Ordinal), [], new SandboxNetFacts(runArea + "/net", SindriPort: 0, ProxyPort: 0), host, Limits: null, ReadOnlyPaths: repoPath is null ? null : [repoPath]);
 }

@@ -5,8 +5,6 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Infrastructure.Processes;
 
-// why: nothing in the product uses this type until the Code block (the next PR) registers it; the tests reach it through InternalsVisibleTo
-#pragma warning disable MA0182
 namespace Aw.Sindri.Infrastructure.Workflow.Code;
 
 /// <summary>Runs a compiled body in a 'sindri-code-runner' process: the input goes in on stdin, the result comes back on stdout, and the process is killed at the timeout.</summary>

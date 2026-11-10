@@ -3,8 +3,6 @@ using System.Globalization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-// why: nothing in the product uses this type until the Code block (the next PR) registers it; the tests reach it through InternalsVisibleTo
-#pragma warning disable MA0182
 namespace Aw.Sindri.Infrastructure.Workflow.Code;
 
 /// <summary>Roslyn over a fixed reference set: the base class library, System.Text.Json and System.Linq.</summary>
