@@ -18,7 +18,7 @@
       </Border>
 
       <!-- Held back until Reload: nothing is retried. -->
-      <StackPanel x:Name="EditorReload" Spacing="6" IsVisible="{Binding Editor.NeedsReload}">
+      <StackPanel x:Name="EditorReload" Spacing="8" IsVisible="{Binding Editor.NeedsReload}">
         <Border x:Name="EditorReloadPrompt" AutomationProperties.Name="{Binding Editor.ReloadPromptText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body" Text="{Binding Editor.ReloadPromptText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
