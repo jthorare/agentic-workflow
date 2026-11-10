@@ -108,12 +108,12 @@ public sealed class InMemoryMemoryStore : IMemoryStore
             var duplicate = fact.Embedding.IsEmpty ? null : MemoryDedupe.FindDuplicate(fact.Embedding, fact.Tags, [.. _facts.Where(f => f.Store == fact.Store && !f.IsExpired(fact.RefreshedAt))]);
             if (duplicate is null)
             {
-                _facts.Add(fact);
+                _facts.Add(fact with { RefreshedBy = null });
                 return ValueTask.FromResult<Result<FactWritten>>(new FactWritten(fact.Key, Refreshed: false));
             }
 
             var index = _facts.FindIndex(f => string.Equals(f.Key, duplicate.Key, StringComparison.Ordinal));
-            _facts[index] = _facts[index] with { RefreshedAt = fact.RefreshedAt, ExpiresAt = fact.ExpiresAt ?? _facts[index].ExpiresAt };
+            _facts[index] = _facts[index] with { RefreshedAt = fact.RefreshedAt, ExpiresAt = fact.ExpiresAt ?? _facts[index].ExpiresAt, RefreshedBy = fact.WrittenBy ?? _facts[index].RefreshedBy };
             return ValueTask.FromResult<Result<FactWritten>>(new FactWritten(duplicate.Key, Refreshed: true));
         }
     }
