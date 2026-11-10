@@ -181,6 +181,21 @@ public sealed class AgentsPageViewModelTests
     }
 
     [Fact]
+    public async Task The_filters_are_hidden_while_sessions_are_unavailable_and_return_with_the_list()
+    {
+        var page = await _f.Shown(Token);
+        Assert.True(page.ShowsFilters);
+        _f.Server.SessionAnswer = RouteAnswer.Problem("sessions", "disabled");
+
+        await page.Refresh(Url, Token);
+        Assert.False(page.ShowsFilters);
+        _f.Server.SessionAnswer = null;
+        await page.Refresh(Url, Token);
+
+        Assert.True(page.ShowsFilters);
+    }
+
+    [Fact]
     public async Task The_list_comes_back_after_a_002()
     {
         _f.Server.SessionAnswer = RouteAnswer.Problem("sessions", "disabled");

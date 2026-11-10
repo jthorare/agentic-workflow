@@ -80,6 +80,9 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     /// <summary>True while the collector can't run here.</summary>
     public bool IsUnavailable => UnavailableText.Length > 0;
 
+    /// <summary>True when the three filters show. Red stub.</summary>
+    public bool ShowsFilters { get; } = true;
+
     /// <summary>True when the filters can be used.</summary>
     public bool FiltersEnabled => !IsUnavailable && !IsReading;
 
