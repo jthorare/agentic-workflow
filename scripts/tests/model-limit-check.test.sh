@@ -121,6 +121,7 @@ else
   expect "up writes the profile and runs on to the model-limit pause, asking for no profile approval (exit 0)" 0 "JOB-0001 is waiting on model-limit"
   P="$HOME_DIR/profile/profile.yaml"
   if grep -q '^  models:' "$P" && grep -q 'default: { harnesses: \[claude-code, codex\] }' "$P"; then ok "the profile routes every kind to claude-code, then codex"; else fail "the profile routes every kind to claude-code, then codex"; sed 's/^/       | /' "$P"; fi
+  # test-ports: ok: the port=N strings are what the stub sindri logged, matched as text; nothing binds them
   if logged "home=sindri-app-firstrun-modellimit port=7482" && ! logged "port=7481" && ! logged "port=7410"; then ok "every call used the check's home and port 7482"; else fail "every call used the check's home and port 7482"; fi
 
   if [ "$(cut -d' ' -f2- "$HOME_DIR/model-limit/calls.log" | tr '\n' '|')" = "claude-code limit|codex limit|" ]; then ok "the refresh reached both fakes through the PATH the script gave sindri"; else fail "the refresh reached both fakes through the PATH"; sed 's/^/       | /' "$HOME_DIR/model-limit/calls.log"; fi
