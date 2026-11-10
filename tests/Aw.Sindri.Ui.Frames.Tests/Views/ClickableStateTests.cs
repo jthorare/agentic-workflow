@@ -8,9 +8,9 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.Views.NeedsYou;
-using Aw.Sindri.Ui.Tests.Views;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
@@ -58,8 +58,8 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
 
         Assert.True(card.IsPointerOver);
-        Assert.Equal(TokenColor("Brush.Hover"), ((ISolidColorBrush)card.Background!).Color);
-        Assert.Equal(TokenColor("Brush.HoverBorder"), ((ISolidColorBrush)card.BorderBrush!).Color);
+        Assert.Equal(TokenColor("Brush.Clickable.Hover"), ((ISolidColorBrush)card.Background!).Color);
+        Assert.Equal(TokenColor("Brush.Clickable.HoverBorder"), ((ISolidColorBrush)card.BorderBrush!).Color);
         Assert.NotEqual(rest, ((ISolidColorBrush)card.Background!).Color);
     });
 
@@ -75,13 +75,13 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
 
         Assert.Contains(":pressed", card.Classes, StringComparer.Ordinal);
-        Assert.Equal(TokenColor("Brush.Pressed"), ((ISolidColorBrush)card.Background!).Color);
-        Assert.Equal(TokenColor("Brush.PressedBorder"), ((ISolidColorBrush)card.BorderBrush!).Color);
+        Assert.Equal(TokenColor("Brush.Clickable.Pressed"), ((ISolidColorBrush)card.Background!).Color);
+        Assert.Equal(TokenColor("Brush.Clickable.PressedBorder"), ((ISolidColorBrush)card.BorderBrush!).Color);
 
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
         Assert.DoesNotContain(":pressed", card.Classes, StringComparer.Ordinal);
-        Assert.Equal(TokenColor("Brush.Hover"), ((ISolidColorBrush)card.Background!).Color);
+        Assert.Equal(TokenColor("Brush.Clickable.Hover"), ((ISolidColorBrush)card.Background!).Color);
     });
 
     [Theory]
@@ -102,7 +102,7 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
 
         Assert.True(row.IsPointerOver);
-        Assert.Equal(TokenColor("Brush.Hover"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.Equal(TokenColor("Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
         Assert.NotEqual(rest, ((ISolidColorBrush)row.Background!).Color);
     });
 
