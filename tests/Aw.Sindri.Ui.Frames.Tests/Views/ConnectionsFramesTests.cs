@@ -38,7 +38,7 @@ public sealed class ConnectionsFramesTests : FrameHost
 
         Assert.Equal(shell.Connections.Head, Named<TextBlock>(window, "ConnectionsHead").Text);
         Assert.True(Visible(window, "ConnectionRows"));
-        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => string.Equals(t.Text, "! Needs sign-in", StringComparison.Ordinal));
+        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => string.Equals(t.Text, "Needs sign-in", StringComparison.Ordinal));
         Assert.Contains(window.GetVisualDescendants().OfType<Button>(), t => string.Equals(t.Name, "ConnSignIn", StringComparison.Ordinal) && t.IsEffectivelyVisible);
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"list-{width}"), Prefix);
     });
@@ -150,6 +150,24 @@ public sealed class ConnectionsFramesTests : FrameHost
         var frame = field.GetVisualAncestors().OfType<Border>().First(b => string.Equals(b.Name, "ServiceTileFrame", StringComparison.Ordinal));
         Assert.True(field.TranslatePoint(new Point(field.Bounds.Width, 0), frame)!.Value.X <= frame.Bounds.Width, "the field ends inside the tile");
         Frame(window, "tile-rename-1000", Prefix);
+    });
+
+    // qa (#2537): the custom row has ONE top edge (the panel's), a "Custom" label sits above it, and every tile's title sits at the same y with or without the menu button.
+    [Fact]
+    public Task The_custom_section_has_a_label_and_one_top_edge_and_the_tile_titles_line_up() => OnUi(async () =>
+    {
+        var (window, shell) = await OnConnections(1280);
+
+        Assert.True(Visible(window, "ConnectionsCustomLabel"), "no Custom label above the custom rows");
+        var first = window.GetVisualDescendants().OfType<Border>().First(b => string.Equals(b.Name, "ConnectionRowFrame", StringComparison.Ordinal));
+        Assert.Equal(0, first.BorderThickness.Top);
+        var tops = window.GetVisualDescendants().OfType<Border>()
+            .Where(b => string.Equals(b.Name, "ServiceTileFrame", StringComparison.Ordinal))
+            .Select(b => b.GetVisualDescendants().OfType<TextBlock>().First().TranslatePoint(new Point(0, 0), b)!.Value.Y)
+            .Distinct().ToList();
+        _ = Assert.Single(tops);
+        Assert.Contains(shell.Connections.Tiles, t => !t.IsOffered);   // a tile with the menu button is among them
+        Frame(window, "custom-and-titles", Prefix);
     });
 
     // Every tile has the same element names, so a lookup by name alone finds the first tile's: look inside this tile's view only.

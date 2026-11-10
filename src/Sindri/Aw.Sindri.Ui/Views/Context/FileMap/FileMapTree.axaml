@@ -16,7 +16,7 @@
 
   <UserControl.Styles>
     <Style Selector="Border.file-row">
-      <Setter Property="Height" Value="{StaticResource Size.Row}" />
+      <Setter Property="Height" Value="{StaticResource Row.Height.Compact}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
       <Setter Property="BorderThickness" Value="0,0,0,1" />
     </Style>

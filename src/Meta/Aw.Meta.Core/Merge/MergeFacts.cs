@@ -12,6 +12,9 @@ public sealed record MergeFacts
     /// <summary>The latest gate run for it, if any.</summary>
     public GateRecord? Gate { get; init; }
 
+    /// <summary>The reviewer's OK and the lane's counts from the inbox; null when the team has no reviewer lane.</summary>
+    public ReviewFacts? Review { get; init; }
+
     /// <summary>The pull request's head now.</summary>
     public required string CurrentHead { get; init; }
 

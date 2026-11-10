@@ -130,7 +130,7 @@ public sealed class ShellLinearTests
     }, Token);
 
     [Fact]
-    public Task The_Connect_Linear_button_goes_to_Settings() => UiThread.Run(async () =>
+    public Task The_Connect_Linear_button_goes_to_the_Connections_page() => UiThread.Run(async () =>
     {
         _server.LinearIssuesAnswer = RouteAnswer.Api("linear-issues", "not-connected");
         var shell = await Shell();
@@ -140,7 +140,7 @@ public sealed class ShellLinearTests
 
         shell.Linear.RequestConnect();
 
-        Assert.True(shell.IsSettings);
+        Assert.Equal(PageId.Connections, shell.CurrentPage);
     }, Token);
 
     [Fact]

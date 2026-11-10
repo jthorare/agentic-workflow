@@ -7,7 +7,7 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>A body node that fails in a later batch (PR 9a review, S4): only the collect's 'onFailure' decides whether the run goes on.</summary>
 [Lane(TestLane.Integration)]
-public sealed class ForEachLaterBatchTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class ForEachLaterBatchTests
 {
     private static string Trigger() => new JsonObject
     {
@@ -15,9 +15,9 @@ public sealed class ForEachLaterBatchTests(SindriTimeSkippingServer server) : IC
         ["items"] = new JsonArray([.. Enumerable.Range(1, 30).Select(static n => (JsonNode?)new JsonObject { ["n"] = n, ["bad"] = n == 25 })]),
     }.ToJsonString();
 
-    private async Task<(GraphRig Rig, WorkflowRunId Id)> Start(string? collectOnFailure)
+    private static async Task<(GraphRig Rig, WorkflowRunId Id)> Start(string? collectOnFailure)
     {
-        var rig = GraphRig.Start(server.Environment);
+        var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: new JsonObject { ["items"] = "{{trigger.items}}", ["batchSize"] = 20 }),
                 GraphRig.Node("check", "condition", config: new JsonObject { ["when"] = "item.bad" }), GraphRig.Node("bad", "fail"),

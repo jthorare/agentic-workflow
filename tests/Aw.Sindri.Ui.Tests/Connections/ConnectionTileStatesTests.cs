@@ -23,7 +23,7 @@ public sealed class ConnectionTileStatesTests
         ServiceTileViewModel Of(string id) => page.Tiles.Single(t => string.Equals(t.Id, id, StringComparison.Ordinal));
 
         Assert.Equal(("Connected", string.Empty), (Of("linear").StatusChip, Of("linear").ReasonText));
-        Assert.Equal(("Needs reconnect", "the token expired"), (Of("github").StatusChip, Of("github").ReasonText));
+        Assert.Equal(("Needs reconnect", "The token expired."), (Of("github").StatusChip, Of("github").ReasonText));
         Assert.Equal(("Not connected", string.Empty), (Of("slack").StatusChip, Of("slack").ReasonText));
     }
 

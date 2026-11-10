@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # The bash-tests job runs on macos-15 (bash 3.2, BSD sed/find/touch). Six suites passed on the Linux box and failed there (#2534):
 # meta-hooks, check-skill-blocks, check-skill-requires, eval-av-fakes, heavy and install-cs. This test reproduces the runner's
-# conditions on any box, in two parts:
+# conditions on any box, in three parts:
 #   1. a static scan of those suites (and the stubs they run) for what bash 3.2 or BSD tools reject;
-#   2. the quick suites run with sed, touch and find that refuse the GNU-only forms the way the BSD ones do.
-# A suite made portable passes both parts on Linux and macOS alike; none of this weakens a suite's own assertions.
+#   2. the quick suites run with sed, touch and find that refuse the GNU-only forms the way the BSD ones do;
+#   3. heavy and install-cs run on a PATH without setsid and timeout, which macOS doesn't ship (main f936ef2d13 on the runner:
+#      heavy's perl fallback read `--expensive` as a perl switch, exit 25; install-cs's staged rows ran `timeout`, exit 127).
+# A suite made portable passes every part on Linux and macOS alike; none of this weakens a suite's own assertions.
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SUITES="config/hooks/tests/meta-hooks.test.sh scripts/tests/check-skill-blocks.test.sh scripts/tests/check-skill-requires.test.sh scripts/tests/eval-av-fakes.test.sh scripts/tests/heavy.test.sh scripts/tests/install-cs.test.sh"
@@ -29,7 +31,8 @@ scan "BSD touch has no -d 'N seconds ago' (meta-hooks: out of range or illegal t
 
 # Part 2: sed, touch and find that refuse the GNU-only forms, first on PATH for the quick suites.
 SHIM="$(mktemp -d)"
-trap 'rm -f "$SHIM/sed" "$SHIM/touch" "$SHIM/find"; rmdir "$SHIM"' EXIT
+NOTOOLS="$(mktemp -d)"
+trap 'rm -f "$SHIM/sed" "$SHIM/touch" "$SHIM/find"; rmdir "$SHIM"; find "$NOTOOLS" -type l -delete; rmdir "$NOTOOLS"' EXIT
 real_sed="$(command -v sed)"; real_touch="$(command -v touch)"; real_find="$(command -v find)"
 cat > "$SHIM/sed" <<SH
 #!/bin/bash
@@ -57,6 +60,75 @@ for s in scripts/tests/check-skill-requires.test.sh scripts/tests/check-skill-bl
     printf '%s\n' "$out" | grep -E 'FAIL|not ok|invalid command|illegal time' | head -5 | sed 's/^/      | /'
   fi
 done
+
+# Part 3: every tool on PATH but setsid, timeout and gtimeout, linked into one folder that is the whole PATH.
+IFS=: read -r -a path_dirs <<< "$PATH"
+for d in "${path_dirs[@]}"; do
+  [ -d "$d" ] || continue
+  for t in "$d"/*; do
+    n="${t##*/}"
+    case "$n" in setsid|timeout|gtimeout) continue ;; esac
+    if [ -x "$t" ] && [ ! -d "$t" ] && [ ! -e "$NOTOOLS/$n" ]; then ln -s "$t" "$NOTOOLS/$n"; fi
+  done
+done
+for s in scripts/tests/heavy.test.sh scripts/tests/install-cs.test.sh; do
+  if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$NOTOOLS" bash "$s" 2>&1)"; then
+    ok "$s passes without setsid and timeout on PATH"
+  else
+    bad "$s fails without setsid and timeout on PATH"
+    printf '%s\n' "$out" | grep -E 'not ok|command not found|Unrecognized switch' | head -5 | sed 's/^/      | /'
+  fi
+done
+
+# Part 4 (#2584): three more suites failed on the runner, each from one macOS difference reproduced here.
+# 4a. bash 3.2 ends a command substitution at the `)` of a bare case pattern: `$(case X in "$P"/*) ...` does not parse,
+#     `$(case X in ("$P"/*) ...` does (sindri-ui-fixture-reviews.test.sh:108 printed " echo inside ;; *) echo outside").
+FILES="$(cd "$ROOT" && git ls-files '*.sh' | tr '\n' ' ')" \
+  scan "bash 3.2 ends \$( ) at a bare case pattern's ) (write the pattern as (pattern))" '\$\(case .* in +[^( ]'
+# 4b. /var -> /private/var: mktemp -d under a symlinked TMPDIR, as macOS's /var/folders is (skill-evals: "AW_DIR differs").
+LINKTMP="$(mktemp -u "${TMPDIR:-/tmp}/parity-linktmp.XXXXXX")"; REALTMP="$(mktemp -d)"; ln -s "$REALTMP" "$LINKTMP"
+if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX TMPDIR="$LINKTMP" bash scripts/tests/skill-evals.test.sh 2>&1)"; then
+  ok "skill-evals.test.sh passes with TMPDIR behind a symlink (macOS /var -> /private/var)"
+else
+  bad "skill-evals.test.sh fails with TMPDIR behind a symlink (macOS /var -> /private/var)"
+  printf '%s\n' "$out" | grep -E 'FAIL' | head -5 | sed 's/^/      | /'
+fi
+command rm -f "$LINKTMP"; rmdir "$REALTMP" 2> /dev/null
+# 4c. heavy-cap-reserve on a PATH without timeout: test-portable.sh's fallback timeout must not leave its sleep holding
+#     the caller's stdout ("reserve 1, both slots busy, timeout 2 gives up inside 6 s": got "none slow 10s").
+if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$NOTOOLS" bash scripts/tests/heavy-cap-reserve.test.sh 2>&1)"; then
+  ok "heavy-cap-reserve.test.sh passes without setsid and timeout on PATH"
+else
+  bad "heavy-cap-reserve.test.sh fails without setsid and timeout on PATH"
+  printf '%s\n' "$out" | grep -E 'not ok|FAIL' | head -5 | sed 's/^/      | /'
+fi
+# 4d. no /proc/meminfo (macOS): heavy.sh's memory guard must read vm_stat instead, or slot 2 and the meta reserve are gone
+#     (the wrapper rows got 0 for 124 and 124 for 0). A fake vm_stat reports 32 GB free; bwrap hides /proc/meminfo.
+if command -v bwrap > /dev/null 2>&1 && bwrap --dev-bind / / true 2> /dev/null; then
+  cat > "$SHIM/vm_stat" <<'SH'
+#!/bin/bash
+cat <<'OUT'
+Mach Virtual Memory Statistics: (page size of 16384 bytes)
+Pages free:                              1048576.
+Pages active:                             200000.
+Pages inactive:                           524288.
+Pages speculative:                        524288.
+Pages throttled:                               0.
+Pages wired down:                         100000.
+OUT
+SH
+  chmod +x "$SHIM/vm_stat"
+  if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$SHIM:$PATH" \
+      bwrap --dev-bind / / --ro-bind /dev/null /proc/meminfo bash scripts/tests/heavy-cap-reserve.test.sh 2>&1)"; then
+    ok "heavy-cap-reserve.test.sh passes without /proc/meminfo (vm_stat on PATH)"
+  else
+    bad "heavy-cap-reserve.test.sh fails without /proc/meminfo (vm_stat on PATH)"
+    printf '%s\n' "$out" | grep -E 'not ok|FAIL' | head -5 | sed 's/^/      | /'
+  fi
+  command rm -f "$SHIM/vm_stat"
+else
+  echo "SKIP: heavy-cap-reserve without /proc/meminfo (no working bwrap)"
+fi
 
 [ "$FAILS" -eq 0 ] || { echo "ci-runner-parity: $FAILS check(s) failed"; exit 1; }
 echo "ci-runner-parity: all checks passed"

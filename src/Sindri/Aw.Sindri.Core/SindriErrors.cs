@@ -282,11 +282,12 @@ public static partial class SindriErrors
         ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewNotSynced, ReviewFixNotPosted, ReviewRepoUnsynced, ReviewNoLogin, ReviewNoConnection, ReviewSignInAgain, ReviewPrNotFound, ReviewOfflineUncached,
         LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain,
         ConnectionNotFound, ConnectionNeedsSignIn, ConnectionSignInTimeout, ConnectionStateMismatch, ConnectionRefreshFailed, ConnectionSecretUnavailable, ConnectionNeedsClientId, ConnectionNameInvalid, ConnectionConsentDenied, ConnectionExists, ConnectionKindNoSignIn,
-        ConnectionRateLimited, ConnectionProviderChanged, ConnectionCursorRejected, ConnectionRunIdsHeld,
+        ConnectionRateLimited, ConnectionProviderChanged, ConnectionCursorRejected, ConnectionRunIdsHeld, ConnectionWatched,
         InboxContractViolation, InboxClaimLost, InboxOfferGone, InboxSubmitFailed, InboxUnavailable, InboxHostNotAllowed,
         MemoryNotFound, MemoryNameTaken, MemoryFactInvalid, MemoryEmbedUnavailable, MemoryMatchLevelInvalid, MemoryNameInvalid, MemoryExpiryPast,
         ResourceDiskOverSize, ResourceNameClash, ResourcePurgeRefused, ResourcePathEscapes, ResourceSandboxOverCap, ResourceInvalid, ResourceDiskUnmeasured,
         GraphCallDepth, GraphSelfStart, GraphHttpRefused, GraphHttpFailed,
+        ToolkitNotBuilt, ToolkitTestsFailed, ToolkitManifestInvalid, ToolkitProcessDied, ToolkitPaused, ToolkitCallTimedOut, ToolkitToolUnknown, ToolkitSandboxUnavailable, ToolkitNotFound, ToolkitNameInvalid, ToolkitToolFailed,
         .. EveryTodo(),
     ];
 }

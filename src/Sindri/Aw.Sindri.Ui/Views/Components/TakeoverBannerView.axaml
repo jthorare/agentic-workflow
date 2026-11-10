@@ -15,7 +15,7 @@
                Text="{Binding Voice.Announcement}" />
     <Border x:Name="TakeoverBanner" Classes="callout" IsVisible="{Binding IsVisible}" AutomationProperties.Name="{Binding Text}" AutomationProperties.AccessibilityView="Control"
             AutomationProperties.ControlTypeOverride="Group">
-      <StackPanel Spacing="6">
+      <StackPanel Spacing="8">
         <TextBlock x:Name="TakeoverBannerText" Classes="body" Text="{Binding Text}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         <Button x:Name="TakeoverBannerDismiss" Click="OnDismiss" HorizontalAlignment="Left" AutomationProperties.Name="{Binding DismissText}">
           <TextBlock Text="{Binding DismissText}" AutomationProperties.AccessibilityView="Raw" />

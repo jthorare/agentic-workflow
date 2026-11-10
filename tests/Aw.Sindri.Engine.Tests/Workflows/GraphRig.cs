@@ -33,10 +33,13 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly Task _loop;
     private readonly GraphRunStarter _starter;
     private readonly InMemorySindriStore _ledger;
+    private readonly SindriTimeSkippingServer _server;
 
-    private GraphRig(WorkflowEnvironment environment, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
+    private GraphRig(SindriTimeSkippingServer server, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0)
     {
-        // why: the test server is shared by the class, and a run id or task queue can be used once on it
+        _server = server;
+        var environment = server.Environment;
+        // why: a run id or task queue can be used once on a server, and the counter keeps the slugs of one process apart
         var number = Interlocked.Increment(ref _count).ToString(System.Globalization.CultureInfo.InvariantCulture);
         Slug = $"walk-test-{number}";
         _taskQueue = $"graph-test-{number}";
@@ -52,7 +55,7 @@ internal sealed class GraphRig : IAsyncDisposable
         held.Hold(_ledger.Acquire(probe.Self(), Token).AsTask().GetAwaiter().GetResult().Value);
         var ids = new SequentialIdGenerator();
         var mirror = new GraphMirror(_ledger, held, new EventFactory(EventScope.ControlPlane, clock, ids, SliceHarness.Json, new AsyncLocalCallerContextAccessor(ids)));
-        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue);
+        var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue, agentLaunchAttempts);
         var starter = new GraphRunStarter(Runs, launcher, mirror, clock, NullLogger<GraphRunStarter>.Instance);
         _starter = starter;
         // why: the real wait polls on a clock; the fake one never moves while a node waits, so the caller gets the system clock
@@ -89,18 +92,44 @@ internal sealed class GraphRig : IAsyncDisposable
 
     public ITemporalClient Client { get; }
 
+    /// <summary>The rig's own time-skipping server: a task a stopped rig leaves in flight dies with it and can't freeze time for another rig (issue 2574).</summary>
+    public WorkflowEnvironment Environment => _server.Environment;
+
     /// <summary>The takeover, handback and report of the run's agent node, over the real Temporal adapter.</summary>
     internal TemporalAgentNodeControl Control { get; }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public static GraphRig Start(WorkflowEnvironment environment, IAgentNodeRuntime? agents = null) => new(environment, agents, forEachLimits: null);
+    /// <summary>Starts a time-skipping server of its own and a rig on it.</summary>
+    /// <param name="agents">The agent runtime of 'run_agent' nodes, when the test has one.</param>
+    /// <returns>The started rig.</returns>
+    public static Task<GraphRig> StartAsync(IAgentNodeRuntime? agents = null) => StartAsync(agents, forEachLimits: null);
+
+    /// <summary>Starts a time-skipping server of its own and a rig on it whose 'run_agent' launch is tried <paramref name="agentLaunchAttempts"/> times before the node fails.</summary>
+    /// <param name="agents">The agent runtime of 'run_agent' nodes.</param>
+    /// <param name="agentLaunchAttempts">The cap on launch attempts.</param>
+    /// <returns>The started rig.</returns>
+    public static Task<GraphRig> StartAsync(IAgentNodeRuntime agents, int agentLaunchAttempts) => StartAsync(agents, forEachLimits: null, agentLaunchAttempts);
 
     /// <summary>A rig whose for_each blocks read <paramref name="forEachLimits"/> as the profile's limits.</summary>
-    /// <param name="environment">The shared Temporal test server.</param>
     /// <param name="forEachLimits">The profile's item cap and batch size.</param>
     /// <returns>The started rig.</returns>
-    public static GraphRig Start(WorkflowEnvironment environment, ForEachLimits forEachLimits) => new(environment, agents: null, forEachLimits);
+    public static Task<GraphRig> StartAsync(ForEachLimits forEachLimits) => StartAsync(agents: null, forEachLimits);
+
+    private static async Task<GraphRig> StartAsync(IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0)
+    {
+        var server = new SindriTimeSkippingServer();
+        await server.InitializeAsync();
+        try
+        {
+            return new GraphRig(server, agents, forEachLimits, agentLaunchAttempts);
+        }
+        catch
+        {
+            await server.DisposeAsync();
+            throw;
+        }
+    }
 
     private sealed class FixedForEachLimits(ForEachLimits limits) : IForEachLimitSource
     {
@@ -225,5 +254,7 @@ internal sealed class GraphRig : IAsyncDisposable
 
         _worker.Dispose();
         _stop.Dispose();
+        // why: a task the worker held when it stopped keeps time skipping locked on its server (issue 2574); the server is the rig's own, so it dies with the rig
+        await _server.DisposeAsync();
     }
 }

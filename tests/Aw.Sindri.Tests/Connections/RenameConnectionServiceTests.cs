@@ -1,7 +1,10 @@
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Features.RenameConnection;
 using Aw.Sindri.Testing.Connections;
 
@@ -166,5 +169,45 @@ public sealed class RenameConnectionServiceTests
         Assert.Contains("slack:old", cleared.Envelope.Payload, StringComparison.Ordinal);
         var raised = Assert.Single(world.Ledger.Events, static e => e.Envelope.Type == EventTypes.ConnectionNeedsSignIn);
         Assert.Contains("slack:new", raised.Envelope.Payload, StringComparison.Ordinal);
+    }
+    [Fact]
+    public async Task A_connection_an_active_workflow_watches_is_SND_CONN_015_naming_it_and_nothing_changes()
+    {
+        var world = new ConnectionHarness();
+        _ = await world.Store.Upsert(ConnectionSamples.Oauth(ConnectionSamples.Name("linear", "work")) with { SecretPointer = null }, Token);
+        _ = await Watch(world, 1, "triage", "linear:work");
+
+        var renamed = await world.Rename().Handle(new RenameConnectionRequest("linear:work", "acme"), Token);
+
+        Assert.Equal(SindriErrors.ConnectionWatched.Code, renamed.Error.Code);
+        Assert.Contains("triage", renamed.Error.Message, StringComparison.Ordinal);
+        Assert.Equal("linear:work", Assert.Single(world.Store.Rows).Name.ToString());
+    }
+
+    [Fact]
+    public async Task A_paused_workflow_or_one_on_another_connection_does_not_hold_the_rename()
+    {
+        var world = new ConnectionHarness();
+        _ = await world.Store.Upsert(ConnectionSamples.Oauth(ConnectionSamples.Name("linear", "work")) with { SecretPointer = null }, Token);
+        var paused = await Watch(world, 1, "triage", "linear:work");
+        _ = (await world.Workflows.Pause(paused, Token)).Value;
+        _ = await Watch(world, 2, "other", "linear:home");
+
+        var renamed = await world.Rename().Handle(new RenameConnectionRequest("linear:work", "acme"), Token);
+
+        Assert.True(renamed.IsSuccess);
+        Assert.Equal("linear:acme", Assert.Single(world.Store.Rows).Name.ToString());
+    }
+
+    // Saves and activates a workflow whose trigger is a connection_event on the connection.
+    private static async Task<WorkflowId> Watch(ConnectionHarness world, int number, string slug, string connection)
+    {
+        var config = new JsonObject { ["connection"] = connection, ["event"] = "linear.issue.labeled" };
+        var id = WorkflowId.From("WF-" + number.ToString("D32", System.Globalization.CultureInfo.InvariantCulture));
+        var spec = new GraphSpec(1, slug, Description: null, Concurrency: null, Resources: null, [new GraphNode(NodeId.From("start"), "connection_event", Title: null, config)], []);
+        _ = (await world.Workflows.Create(id, WorkflowSlug.From(slug), spec, "owner", Token)).Value;
+        _ = (await world.Workflows.Activate(id, 1, Token)).Value;
+
+        return id;
     }
 }

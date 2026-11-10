@@ -52,6 +52,17 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
     /// <summary>True when there are connections no tile shows.</summary>
     public bool HasOthers { get; private set => Set(ref field, value); }
 
+    /// <summary>True when the Custom section (its label and rows) shows: there is a connection that has no tile.</summary>
+    public bool ShowsCustom => HasOthers;
+
+    /// <summary>The Custom section's label.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string CustomLabel => Labels.ConnectionsCustom;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>The Custom section's count.</summary>
+    public string CustomCount => OtherRows.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
     /// <summary>The connections, as the API orders them.</summary>
     public ObservableCollection<ConnectionRowViewModel> Rows { get; } = [];
 
@@ -247,6 +258,8 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
 
         Patch.To(OtherRows, [.. Rows.Where(r => !taken.Contains(r))]);
         HasOthers = OtherRows.Count > 0;
+        OnChanged(nameof(ShowsCustom));
+        OnChanged(nameof(CustomCount));
         var connected = Tiles.Count(t => t.IsConnected);
         Head = connected > 0 ? Labels.ConnectedOf(connected, Tiles.Count) : string.Empty;
         (IsEmpty, EmptyText) = (false, string.Empty);

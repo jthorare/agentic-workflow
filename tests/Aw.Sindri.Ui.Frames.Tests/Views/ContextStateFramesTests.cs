@@ -35,7 +35,7 @@ public sealed class ContextStateFramesTests : FrameHost
     }
 
     [Fact]
-    public Task The_files_view_draws_36_px_rows_and_hatches_the_suggested_one() => OnUi(async () =>
+    public Task The_files_view_draws_compact_rows_and_hatches_the_suggested_one() => OnUi(async () =>
     {
         var (window, shell) = await Open();
         await shell.Context.FileMap.Load("src/tabs/", Token);
@@ -46,7 +46,7 @@ public sealed class ContextStateFramesTests : FrameHost
 
         var rows = window.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("file-row")).ToList();
         Assert.Equal(shell.Context.FileMap.Rows.Count, rows.Count);
-        Assert.All(rows, r => Assert.Equal(36, r.Bounds.Height, precision: 1));
+        Assert.All(rows, r => Assert.Equal(28, r.Bounds.Height, precision: 1)); // Row.Height.Compact (#2546)
         Assert.Equal(shell.Context.FileMap.Rows.Count(r => r.IsSuggested), rows.Count(r => r.Classes.Contains("suggested")));
         Assert.Equal(shell.Context.FileMap.TotalsText, Named<TextBlock>(window, "FilesTotals").Text);
         Assert.True(Visible(window, "FilesNote"));

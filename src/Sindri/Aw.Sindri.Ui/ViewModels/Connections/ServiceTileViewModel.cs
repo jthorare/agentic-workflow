@@ -127,9 +127,12 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     public string StatusChip => IsConnected ? Labels.TileConnected : NeedsAttention ? Labels.TileNeedsReconnect : Labels.TileNotConnected;
 
     /// <summary>Why the tile needs a reconnect, in words; empty otherwise.</summary>
-    public string ReasonText => !NeedsAttention ? string.Empty : _row is { HasReason: true } ? _row.ReasonText : Labels.TileSignInExpired;
+    public string ReasonText => !NeedsAttention ? string.Empty : _row is { HasReason: true } ? Labels.TileReason(Title, _row.ReasonText).Sentence : Labels.TileSignInExpired;
 
-    /// <summary>True when the tile says why it needs a reconnect.</summary>
+    /// <summary>The raw provider code behind the reason line (invalid_grant), for its tooltip; null when there is none, so no empty tooltip box opens.</summary>
+    public string? ReasonTip => NeedsAttention && _row is { HasReason: true } && Labels.TileReason(Title, _row.ReasonText).Code is { Length: > 0 } code ? code : null;
+
+    /// <summary>True when the tile has a reason line.</summary>
     public bool HasReason => ReasonText.Length > 0;
 
     /// <summary>The label of the tile's one primary button; empty when it has none (a connected tile, or a sign-in running).</summary>
@@ -173,7 +176,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     internal Task Primary(CancellationToken cancellationToken) => NeedsAttention ? SignInAgain(cancellationToken) : Connect(cancellationToken);
 
     // Everything the chip, the primary button and the menu read from the connection and the input.
-    private void RaiseState() => Raise(nameof(StatusChip), nameof(ReasonText), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(CanRename), nameof(HasHelpLink));
+    private void RaiseState() => Raise(nameof(StatusChip), nameof(ReasonText), nameof(ReasonTip), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(CanRename), nameof(HasHelpLink));
 
     /// <summary>The connection this tile shows, or null: the page sets it on every read.</summary>
     /// <param name="row">The matching row.</param>

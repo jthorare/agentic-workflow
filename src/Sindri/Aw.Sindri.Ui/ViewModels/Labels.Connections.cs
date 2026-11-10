@@ -18,6 +18,9 @@ internal static partial class Labels
     /// <summary>The link's accessible name: its visible words first.</summary>
     internal const string MemoryLinkName = "Memory stores, opens the Memory page";
 
+    /// <summary>The label above the connections that have no tile.</summary>
+    internal const string ConnectionsCustom = "Custom";
+
     /// <summary>The page's one-line purpose.</summary>
     internal const string ConnectionsPurpose = "Connect the services Sindri works with. Your sign-in stays in your keychain; this page never shows it.";
 

@@ -43,7 +43,7 @@ public sealed class AddConnectionTests
         Assert.Equal(string.Empty, form.Key.Text);
         Assert.False(form.Key.HasValue);
         Assert.Empty(StringsHolding(Key, form, page));
-        Assert.Equal(["✓ Connected"], page.Rows.Select(r => r.ChipText), StringComparer.Ordinal);   // a key connection is connected at once
+        Assert.Equal(["Connected"], page.Rows.Select(r => r.ChipText), StringComparer.Ordinal);   // a key connection is connected at once
     }
 
     [Fact]
