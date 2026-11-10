@@ -115,7 +115,7 @@ public sealed class LinearTokenOrderTests : IDisposable
         }
     }
 
-    [Fact, Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "integration")]
     public async Task The_linear_feed_reads_with_the_connected_linear_connection_even_when_the_profile_token_resolves()
     {
         await Connect(ConnectionStatus.Connected);
@@ -126,7 +126,7 @@ public sealed class LinearTokenOrderTests : IDisposable
         Assert.EndsWith("lin_oauth_connection", await FirstAuthorization(feeds), StringComparison.Ordinal);
     }
 
-    [Fact, Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "integration")]
     public async Task The_linear_feed_exists_and_reads_with_the_connected_linear_connection_when_the_profile_has_no_token_pointer()
     {
         await Connect(ConnectionStatus.Connected);
@@ -137,7 +137,7 @@ public sealed class LinearTokenOrderTests : IDisposable
         Assert.EndsWith("lin_oauth_connection", await FirstAuthorization(feeds), StringComparison.Ordinal);
     }
 
-    [Fact, Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "integration")]
     public async Task The_linear_feed_falls_back_to_the_profile_token_when_the_connection_needs_sign_in()
     {
         await Connect(ConnectionStatus.NeedsSignIn);
@@ -148,7 +148,7 @@ public sealed class LinearTokenOrderTests : IDisposable
         Assert.Equal("lin_profile_key", await FirstAuthorization(feeds));
     }
 
-    [Fact, Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "integration")]
     public async Task The_linear_feed_reads_with_the_profile_token_when_there_is_no_linear_connection()
     {
         var feeds = LinearFeeds(WithPointer);
@@ -157,7 +157,7 @@ public sealed class LinearTokenOrderTests : IDisposable
         Assert.Equal("lin_profile_key", await FirstAuthorization(feeds));
     }
 
-    [Fact, Trait("Lane", "unit")]
+    [Fact, Trait("Lane", "integration")]
     public void There_is_no_linear_feed_with_no_linear_connection_and_no_profile_token_pointer()
         => Assert.Empty(LinearFeeds(NoLinear));
 
