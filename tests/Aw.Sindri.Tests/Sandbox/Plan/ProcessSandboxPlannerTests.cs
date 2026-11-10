@@ -78,9 +78,10 @@ public sealed class ProcessSandboxPlannerTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_relative_command_or_resource_path_is_refused()
+    public void A_relative_command_a_command_with_no_parent_folder_or_a_relative_resource_path_is_refused()
     {
         Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { Command = "triage" }).IsError);
+        Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { Command = "/tool" }).IsError);   // no parent folder to bind as the binary's
         Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { ResourceMounts = [new ResourceMount("state", "db/state.sqlite")] }).IsError);
     }
 }
