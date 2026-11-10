@@ -44,4 +44,4 @@ A workflow that reminds the owner at 07:00 Los Angeles time, whatever time the t
 - Cancelling the run (`sindri wf cancel <run>`) ends the wait; the node is `cancelled` and the rest `skipped`.
 - A `duration` or `until` that can't be read fails the node with `SND-GRAPH-102` and the reason; `sindri wf validate` finds the same mistake before the run when it has no reference in it.
 
-A `wait` node inside a `for_each` loop sleeps once per item, in the batch's own workflow. (An `ask_owner` can't sit in a loop yet: `GRAPH-LOOP-004`.)
+A `wait` node inside a `for_each` loop sleeps once per item, in the batch's own workflow.
