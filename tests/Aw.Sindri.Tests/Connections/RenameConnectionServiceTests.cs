@@ -46,7 +46,7 @@ public sealed class RenameConnectionServiceTests
         var tokens = world.Secrets.Read(row.SecretPointer!);
         Assert.True(tokens.IsSuccess);
         Assert.Equal("access-1", tokens.Value.AccessToken);
-        Assert.NotEqual(oldPointer.ToString(), row.SecretPointer!.ToString());
+        Assert.NotEqual(oldPointer.ToString(), row.SecretPointer!.ToString(), StringComparer.Ordinal);
         Assert.Equal([row.SecretPointer.ToString()], world.Secrets.Pointers);
         Assert.Equal([oldPointer.ToString()], world.Secrets.Deleted);
     }
@@ -88,7 +88,7 @@ public sealed class RenameConnectionServiceTests
 
         Assert.Equal(SindriErrors.ConnectionExists.Code, renamed.Error.Code);
         Assert.Contains("slack:taken", renamed.Error.Message, StringComparison.Ordinal);
-        Assert.Equal(["slack:old", "slack:taken"], world.Store.Rows.Select(static r => r.Name.ToString()));
+        Assert.Equal(["slack:old", "slack:taken"], world.Store.Rows.Select(static r => r.Name.ToString()), StringComparer.Ordinal);
         Assert.Equal(2, world.Secrets.Pointers.Count);
         Assert.Empty(world.Secrets.Deleted);
     }
