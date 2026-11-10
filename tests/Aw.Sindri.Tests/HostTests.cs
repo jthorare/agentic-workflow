@@ -60,6 +60,7 @@ public sealed class HostTests
         _ = Assert.Single(hosted.OfType<ToolkitAdoptionHost>());
         _ = Assert.Single(hosted.OfType<GraphRunRecoveryHost>());
         _ = Assert.Single(hosted.OfType<ContextWarmHost>());
+        _ = Assert.Single(hosted.OfType<RunItemRepairHost>());
     }
 
     [Fact, Trait("Lane", "unit")]

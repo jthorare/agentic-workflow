@@ -106,6 +106,7 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Plain<LanesContextService, LanesContextRequest, LanesContextResponse>()
         .AddScoped<RecycleGuard>()
         .AddScoped<RecycleRunner>()
+        .AddScoped<RecycleSettler>()
         .AddScoped<SwitchRunner>()
         .AddScoped<RecycleWaiter>()
         .AddScoped<LaneRecycleService>()

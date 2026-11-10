@@ -22743,6 +22743,9 @@ static Aw.Sindri.Core.Toolkits.ToolkitFolder.operator ==(Aw.Sindri.Core.Toolkits
 static Aw.Sindri.Core.Toolkits.ToolNames.IsToolkitName(string? name) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.ToolkitCreateFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ToolkitExists -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair.RepairAll(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair.RepairRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.RunId.init -> void
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId
