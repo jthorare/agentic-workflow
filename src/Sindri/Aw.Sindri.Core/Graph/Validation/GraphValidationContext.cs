@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Resources;
 
 namespace Aw.Sindri.Core.Graph.Validation;
 
@@ -11,4 +12,8 @@ public sealed record GraphValidationContext(
     IReadOnlyDictionary<string, IGraphBlockType> Blocks,
     IGraphWorld World,
     Func<string, string?, string?> CronProblem,
-    Func<string, ConditionParse> Condition);
+    Func<string, ConditionParse> Condition)
+{
+    /// <summary>Gets the box's cap on a sandbox's memory and wall clock, or null to skip the check (PR 14).</summary>
+    public ResourceBoxCap? BoxCap { get; init; }
+}
