@@ -50,7 +50,7 @@ merges and owner answers, not stored as state. A new lane map version and a merg
 |------|-----------|-----------|
 | `reply` | every inbound lane message | a later send to that peer; `inbox-dismiss <id> --reason`; `inbox-defer <id> --until` (reopens when due) |
 | `relay-owner` | `owner-answer` | a send of the `OWNER ANSWER` text to the asking lane |
-| `rearm-watch` | a started watch whose heartbeat is older than two intervals, or no watch ever beat while mail waits (`no active coordinator consumer`; the command is `aw-meta watch --for 29m` with Monitor on Claude, never `--until-mail`, which exits on its first poll while mail waits, and `aw-meta watch --until-mail --for 29m` in the foreground on Codex and Cursor). `status` calls a watch active while its last beat is at most two intervals old, the same threshold | `watch` running again |
+| `rearm-watch` | a started watch whose heartbeat is older than two intervals, or no watch ever beat while mail waits (`no active coordinator consumer`; the command is `aw-meta watch --until-event` run with `run_in_background` on Claude, never `--until-mail`, which exits on its first poll while mail waits, and `aw-meta watch --until-mail --for 29m` in the foreground on Codex and Cursor). `status` calls a watch active while its last beat is at most two intervals old, the same threshold | `watch` running again |
 
 `stop-check` exits 0 silently for any session that isn't the registered meta session (`role-set`), so the hook is safe
 to install globally. Loop guard: a stop-check without `stop_hook_active` starts a new turn (it blocks and resets the count); each
