@@ -912,6 +912,8 @@ context:
   asks for the token once at a terminal (or reads it from `--token-env`) and writes the pointer here (an agent session may run it); changing a source or a
   token changes the profile, which applies on save. Missing, or text that isn't a pointer, is `SND-CONTEXT-002`;
   the message doesn't repeat the text (rotate a key that was written into the profile).
+- GitHub reads first with a **connected GitHub connection** (the Connections page, OAuth); `github.token` is only the fallback when
+  no GitHub connection is connected. A profile token GitHub refuses shows "Connect GitHub" on the Reviews page (#2499).
 - `linear.teams`, `linear.token`, `linear.url`: the Linear source (S-6); see [linear.md](linear.md). `teams` are team keys (a capital
   letter, then one or more capitals or digits, e.g. `ENG`). Any other key under `sources` is refused (`SND-CONTEXT-001`).
 
