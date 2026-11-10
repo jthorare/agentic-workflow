@@ -78,11 +78,11 @@
               <ColumnDefinition Width="Auto" SharedSizeGroup="AgDoing" />
               <ColumnDefinition Width="Auto" MinWidth="56" SharedSizeGroup="AgFor" />
             </Grid.ColumnDefinitions>
-            <TextBlock Classes="caption subtle" Text="{Binding Columns.Status}" />
-            <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Columns.Agent}" />
-            <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Columns.Repo}" IsVisible="{Binding ShowsRepo}" />
-            <TextBlock Grid.Column="3" Classes="caption subtle" Text="{Binding Columns.Where}" IsVisible="{Binding ShowsWhere}" />
-            <TextBlock Grid.Column="4" Classes="caption subtle" Text="{Binding Columns.Doing}" IsVisible="{Binding ShowsDoing}" />
+            <TextBlock Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Status}" />
+            <TextBlock Grid.Column="1" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Agent}" />
+            <TextBlock Grid.Column="2" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Repo}" IsVisible="{Binding ShowsRepo}" />
+            <TextBlock Grid.Column="3" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Where}" IsVisible="{Binding ShowsWhere}" />
+            <TextBlock Grid.Column="4" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Doing}" IsVisible="{Binding ShowsDoing}" />
             <TextBlock Grid.Column="5" Classes="caption subtle" Text="{Binding Columns.For}" HorizontalAlignment="Right" />
           </Grid>
         </Border>

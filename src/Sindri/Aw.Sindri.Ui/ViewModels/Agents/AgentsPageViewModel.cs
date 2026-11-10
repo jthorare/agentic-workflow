@@ -196,6 +196,8 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         Groups.Clear();
         _groups.Clear();
         _rows.Clear();
+        RefreshColumns([]);   // no rows: the optional columns and the caption row go with them
+        OnChanged(nameof(HasColumns));
         Ended.Clear();
         _ended.Clear();
         (SelectedKey, IsEmpty, EmptyText) = (null, false, string.Empty);
