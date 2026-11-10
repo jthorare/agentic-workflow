@@ -50,6 +50,7 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         if (!_state.Initialized)
         {
             await Say(Started(polled.Value.Snapshot)).ConfigureAwait(false);
+            await SeedBoard(polled.Value.Snapshot).ConfigureAwait(false);
         }
 
         await SayStep(step, polled.Value.Snapshot).ConfigureAwait(false);
@@ -136,6 +137,15 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
             .Order()
             .ToList();
         await MainMoved(snapshot.MainSha, merged).ConfigureAwait(false);
+    }
+
+    // A fresh install's board holds main as the watch found it. The same sha again (a restart) bumps nothing.
+    private async ValueTask SeedBoard(WatchSnapshot snapshot)
+    {
+        if (snapshot.MainSha.Length > 0)
+        {
+            await MainMoved(snapshot.MainSha, []).ConfigureAwait(false);
+        }
     }
 
     /// <summary>Emits one line.</summary>

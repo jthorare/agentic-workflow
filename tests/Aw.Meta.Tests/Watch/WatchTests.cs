@@ -101,7 +101,7 @@ public sealed class WatchTests
         Assert.NotNull(board);
         Assert.Equal("bbbbbbb2222222", board.MainSha);
         Assert.Equal([190], board.MergedPrs);
-        Assert.Equal(1, board.Version);
+        Assert.Equal(2, board.Version);   // the start recorded aaaaaaa1111111 as version 1
     }
 
     [Fact, Trait("Lane", "unit")]
