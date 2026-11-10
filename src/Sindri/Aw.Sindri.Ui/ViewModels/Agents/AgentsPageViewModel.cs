@@ -75,10 +75,13 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
     public bool IsReading { get; private set { Set(ref field, value); OnChanged(nameof(ReadingText)); } } = true;
 
     /// <summary>The line that replaces the list when the collector can't run here (SND-SESSION-002); empty otherwise.</summary>
-    public string UnavailableText { get; private set { Set(ref field, value); OnChanged(nameof(IsUnavailable)); OnChanged(nameof(FiltersEnabled)); } } = string.Empty;
+    public string UnavailableText { get; private set { Set(ref field, value); OnChanged(nameof(IsUnavailable)); OnChanged(nameof(ShowsFilters)); OnChanged(nameof(FiltersEnabled)); } } = string.Empty;
 
     /// <summary>True while the collector can't run here.</summary>
     public bool IsUnavailable => UnavailableText.Length > 0;
+
+    /// <summary>True when the three filters show: not while sessions are unavailable, when there is nothing to filter.</summary>
+    public bool ShowsFilters => !IsUnavailable;
 
     /// <summary>True when the filters can be used.</summary>
     public bool FiltersEnabled => !IsUnavailable && !IsReading;
@@ -196,6 +199,8 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         Groups.Clear();
         _groups.Clear();
         _rows.Clear();
+        RefreshColumns([]);   // no rows: the optional columns and the caption row go with them
+        OnChanged(nameof(HasColumns));
         Ended.Clear();
         _ended.Clear();
         (SelectedKey, IsEmpty, EmptyText) = (null, false, string.Empty);
@@ -252,6 +257,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         }
 
         Patch.To(Groups, shown);
+        RefreshColumns(kept);
         OnChanged(nameof(HasColumns));
         ShowEnded(list);
         IsEmpty = kept.Count == 0;

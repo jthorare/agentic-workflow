@@ -22838,6 +22838,9 @@ static Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.operator ==(Aw.Sindri.Core.Gra
 static Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.operator !=(Aw.Sindri.Core.Graph.Blocks.MemoryToRemember? left, Aw.Sindri.Core.Graph.Blocks.MemoryToRemember? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.operator ==(Aw.Sindri.Core.Graph.Blocks.MemoryToRemember? left, Aw.Sindri.Core.Graph.Blocks.MemoryToRemember? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.MemoryBlocks(Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort! memory) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>!
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair.RepairAll(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair.RepairRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.RunId.init -> void
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId

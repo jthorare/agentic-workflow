@@ -110,7 +110,7 @@ internal sealed class RecycleWaiter(IWaiterLauncher launcher, ILaneFiles files, 
     // The error's message already carries the manual tmux line when RecycleRunner has one (AW-META-022).
     private async ValueTask<Result<LaneRecycleResponse>> Failed(string lane, Error error, CancellationToken cancellationToken)
     {
-        var note = LogLine.Event(LogKind.Note, clock.GetUtcNow(), $"recycle waiter for {lane} failed: {error.Code}: {error.Message}");
+        var note = LogLine.Event(LogKind.Note, clock.GetUtcNow(), $"RECYCLE FAILED {lane}: the recycle waiter failed: {error.Code}: {error.Message}");
         _ = await log.Append(note, cancellationToken).ConfigureAwait(false);
         return error;
     }
@@ -124,7 +124,7 @@ internal sealed class RecycleWaiter(IWaiterLauncher launcher, ILaneFiles files, 
 
     private async ValueTask<Result<LaneRecycleResponse>> GaveUp(RecyclePlan plan, CancellationToken cancellationToken)
     {
-        var note = LogLine.Event(LogKind.Note, clock.GetUtcNow(), $"recycle of {plan.Lane} gave up: no turn ended within 30 min; an open obligation keeps the stop blocked");
+        var note = LogLine.Event(LogKind.Note, clock.GetUtcNow(), $"RECYCLE FAILED {plan.Lane}: recycle gave up, no turn ended within 30 min; an open obligation keeps the stop blocked");
         var logged = await log.Append(note, cancellationToken).ConfigureAwait(false);
         return logged.IsError
             ? logged.Error

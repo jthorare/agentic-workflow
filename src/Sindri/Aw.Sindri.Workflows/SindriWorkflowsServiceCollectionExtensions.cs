@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Toolkits;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
@@ -71,6 +72,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IGraphRunProbe>(static provider => new TemporalGraphRunProbe(provider.GetRequiredService<TemporalFrontend>()))
             .AddSingleton<GraphRunRecovery>()
             .AddSingleton<IGraphRunRecovery>(static provider => provider.GetRequiredService<GraphRunRecovery>())
+            .AddSingleton(static provider => new GraphRunItemRepair(provider.GetService<IRunItemRepair>(), provider.GetRequiredService<ILogger<GraphRunItemRepair>>()))
             .AddSingleton<GraphRunActivities>().AddSingleton<GraphBlockActivities>().AddSingleton<GraphActivities>();
     }
 
