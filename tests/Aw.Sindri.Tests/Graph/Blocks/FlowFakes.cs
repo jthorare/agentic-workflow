@@ -48,14 +48,16 @@ internal static class FlowFakes
 
         public Error? Fail { get; init; }
 
+        public string? Warning { get; init; }
+
         public List<string> Runs { get; } = [];
 
-        public ValueTask<Result<string>> Create(ItemToCreate item, CancellationToken cancellationToken)
+        public ValueTask<Result<ItemMade>> Create(ItemToCreate item, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(item);
             Runs.Add(item.Run.Value);
             Created.Add((item.Title, item.Repo, item.Body, item.LinearIssue));
-            return ValueTask.FromResult<Result<string>>(Fail is { } error ? error : string.Create(System.Globalization.CultureInfo.InvariantCulture, $"itm_{Created.Count}"));
+            return ValueTask.FromResult<Result<ItemMade>>(Fail is { } error ? error : new ItemMade(Aw.Sindri.Core.Ids.ItemId.From($"ITM-{Created.Count:x32}"), Warning));
         }
     }
 

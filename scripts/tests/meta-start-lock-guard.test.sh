@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# A start-lock taker never clears another live taker's takeover guard (#2598).
+# Run: bash scripts/tests/meta-start-lock-guard.test.sh
+#
+# take_over_dead (scripts/meta-start-lock.sh) clears a takeover guard ($start_lock.takeover) it saw held by a dead or unnamed
+# holder. Only observable behaviour is asserted: every holder is a real taker running the lib under test, so the guard's
+# files are in whatever format the lib writes.
+# Case 1: taker E (a live pid) has mkdir'd the guard but not written its holder file yet. Taker D sees an empty guard on
+#   several calls in a row and must not read that as "dead holder": E's guard still exists afterwards.
+# Case 2: taker Z dies inside the guard (killed in its "gap" hook), so the guard holds a dead holder's file. D (guard_seen
+#   starts empty) sees it and goes to clear it. A PATH stub for rm and rmdir fires once, on D's first call that names the
+#   guard: it plays C (clears the guard with the real tools) and E (a real taker that takes the fresh guard and waits inside
+#   its "gap" hook), then runs the real tool. After D returns, E is still inside its guard, so the guard must still exist.
+# Scratch dirs only; bash 3.2-compatible. Kills only the pids it started.
+set -uo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MSL="$DIR/../meta-start-lock.sh"
+fail=0
+
+check() {
+  if [ "$2" == "$3" ]; then echo "ok - $1"; else
+    echo "not ok - $1"; echo "  expected: $3"; echo "  actual:   $2"; fail=1
+  fi
+}
+
+real_rm="$(command -v rm)"; real_rmdir="$(command -v rmdir)"
+WORK="$(mktemp -d)"
+SIG="$WORK/sig"
+mkdir -p "$WORK/stub" "$SIG"
+sleep 600 & E1_PID=$!
+cleanup() {
+  local p
+  kill "$E1_PID" 2> /dev/null
+  p="$(cat "$SIG/E-pid" 2> /dev/null)"; [ -z "$p" ] || kill "$p" 2> /dev/null
+  "$real_rm" -r -f -- "$WORK"
+}
+trap cleanup EXIT
+
+dead_pid() { bash -c 'exit 0' & local p=$!; wait "$p"; echo "$p"; }
+
+# --- case 1: an empty guard of a live taker survives repeated sightings ---
+L1="$WORK/a.lock"; G1="$L1.takeover"
+mkdir "$G1"
+( start_lock="$L1"; lane_pid=$$; lane=d; guard_seen=""
+  . "$MSL"
+  take_over_dead x; take_over_dead x; take_over_dead x )
+check "an empty guard of a live taker (E, between mkdir and its write) is left in place" "$([ -d "$G1" ] && echo exists || echo cleared)" "exists"
+
+# --- case 2: a late cleanup of a dead holder never destroys a live taker's fresh guard ---
+L2="$WORK/b.lock"; G2="$L2.takeover"
+# Z: a real taker that dies inside the guard
+ln -s "$(dead_pid)" "$L2"
+{ bash -c 'start_lock="$1"; lane_pid=$$; lane=z; . "$2"; start_lock_hook() { [ "$1" = gap ] && kill -9 $$; }; take_over_dead x' _ "$L2" "$MSL"; } 2> /dev/null
+check "Z died inside the guard, leaving it behind" "$([ -d "$G2" ] && echo exists || echo gone)" "exists"
+# Z unlinked the lock; point it at a dead pid again so later takers see a dead lock
+unlink "$L2" 2> /dev/null; ln -s "$(dead_pid)" "$L2"
+
+ORIG_PATH="$PATH"
+for tool in rm rmdir; do
+  real="$(command -v "$tool")"
+  cat > "$WORK/stub/$tool" <<STUB
+#!/usr/bin/env bash
+hit=""; for a in "\$@"; do case "\$a" in "$G2"|"$G2"/*) hit=1 ;; esac; done
+if [ -n "\$hit" ] && [ ! -e "$SIG/fired" ]; then
+  : > "$SIG/fired"
+  # C clears the guard with the real tools
+  for f in "$G2"/* "$G2"/.[!.]*; do [ -e "\$f" ] && "$real_rm" -f -- "\$f"; done
+  "$real_rmdir" "$G2" 2> /dev/null
+  # E: a real taker (real PATH) that takes the fresh guard and waits inside it
+  env PATH="$ORIG_PATH" bash -c 'start_lock="\$1"; lane_pid=\$\$; lane=e; SIG="\$3"; . "\$2"
+    start_lock_hook() { [ "\$1" = gap ] && { : > "\$SIG/E-inside"; while [ ! -e "\$SIG/D-done" ]; do sleep 0.05; done; }; }
+    take_over_dead x' _ "$L2" "$MSL" "$SIG" > /dev/null 2>&1 &
+  echo \$! > "$SIG/E-pid"
+  i=0; while [ ! -e "$SIG/E-inside" ] && [ \$i -lt 100 ]; do sleep 0.05; i=\$((i + 1)); done
+fi
+exec "$real" "\$@"
+STUB
+  chmod +x "$WORK/stub/$tool"
+done
+( start_lock="$L2"; lane_pid=$$; lane=d; guard_seen=""
+  . "$MSL"
+  export PATH="$WORK/stub:$PATH"
+  take_over_dead x; take_over_dead x; take_over_dead x ) 2> /dev/null
+check "D reached its cleanup of the dead holder's guard (the stub fired)" "$([ -e "$SIG/fired" ] && echo yes || echo no)" "yes"
+check "E took the fresh guard and is inside it" "$([ -e "$SIG/E-inside" ] && echo yes || echo no)" "yes"
+check "E is still inside its guard after D returned, so the guard exists" "$([ -d "$G2" ] && echo exists || echo destroyed)" "exists"
+: > "$SIG/D-done"
+E_PID="$(cat "$SIG/E-pid" 2> /dev/null)"
+i=0; while [ -n "$E_PID" ] && kill -0 "$E_PID" 2> /dev/null && [ $i -lt 100 ]; do sleep 0.05; i=$((i + 1)); done
+
+if [ "$fail" -eq 0 ]; then echo "meta-start-lock-guard: all passed"; else echo "meta-start-lock-guard: FAILED"; fi
+exit $fail
