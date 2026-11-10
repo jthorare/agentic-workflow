@@ -11,8 +11,8 @@ using Aw.Meta.Core.Watch;
 namespace Aw.Meta.Features.MergeRun;
 
 /// <summary>
-/// Merges a pull request once every check holds: "gh pr merge --merge", the merge recorded with main's new sha (which opens
-/// the announce-main obligation), a running-log line, and the text to send every lane. The merge is recorded as soon as gh
+/// Merges a pull request once every check holds: "gh pr merge --merge", the merge recorded with main's new sha (and put on
+/// the board lanes read through board-line), a running-log line, and the "main moved" text for the log and the owner. The merge is recorded as soon as gh
 /// succeeds: main's sha comes from a fetch, else from GitHub's merge commit, else stays unknown. A pull request that is
 /// already merged on GitHub with no merge recorded (an earlier run died after gh) is recorded now instead.
 /// </summary>
@@ -22,7 +22,8 @@ namespace Aw.Meta.Features.MergeRun;
 /// <param name="log">The running log.</param>
 /// <param name="reservation">Computes the heavy-slot reservation again once the merge has left the queue.</param>
 /// <param name="clock">Dates the merge.</param>
-internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands repo, IGateStore gates, IRunningLog log, HeavyReservation reservation, TimeProvider clock)
+/// <param name="board">Records main's new sha and the merged pull request.</param>
+internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands repo, IGateStore gates, IRunningLog log, HeavyReservation reservation, TimeProvider clock, IBoardStore board)
     : IService<MergeRunRequest, MergeRunResponse>
 {
     public async ValueTask<Result<MergeRunResponse>> Handle(MergeRunRequest request, CancellationToken cancellationToken)
@@ -76,6 +77,12 @@ internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands rep
         if (recorded.IsError)
         {
             return recorded.Error;
+        }
+
+        // Advisory, like the reservation below: the merge happened either way, and a sha that can't be read can't be shown to lanes.
+        if (record.IsKnown)
+        {
+            _ = await board.RecordMain(record.Sha, [request.Pr], now, cancellationToken).ConfigureAwait(false);
         }
 
         var number = request.Pr.ToString(CultureInfo.InvariantCulture);

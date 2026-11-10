@@ -11,4 +11,7 @@ internal sealed partial class ShellWindow
 
     // Memory is not a tab either: System's link goes to it.
     private void OnMemoryLink(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.GoTo(PageId.Memory);
+
+    // Resources is not a tab either: System's link goes to it.
+    private void OnResourcesLink(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.GoTo(PageId.Resources);
 }

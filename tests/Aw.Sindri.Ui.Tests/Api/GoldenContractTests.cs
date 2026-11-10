@@ -12,6 +12,7 @@ using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.Api.Linear;
 using Aw.Sindri.Ui.Api.Memory;
 using Aw.Sindri.Ui.Api.Projects;
+using Aw.Sindri.Ui.Api.Resources;
 using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Api.Setup;
@@ -140,6 +141,8 @@ public sealed class GoldenContractTests
         ["memories"] = As<MemoryList>,   // GET /sindri/memories; created is POST's MemoryCreated (_readByScenario)
         ["memories-id-search"] = As<MemorySearchView>,   // GET /sindri/memories/{name}/search
         ["memories-id-facts"] = As<MemoryFactWritten>,   // POST /sindri/memories/{name}/facts; the forgot* scenarios are DELETE's MemoryForgotten (_readByScenario)
+        ["resources"] = As<ResourceList>,   // GET /sindri/resources: the Resources page's rows (#2258 PR18b); bad-owner is a ProblemDetails
+        ["resources-purge"] = As<PurgeResourcesResult>,   // POST /sindri/resources/purge: the purged count; the 409 SND-RES-003 and 400 SND-RES-006 bodies are ProblemDetails
     };
 
     // A scenario of a slug that holds files of another shape than the rest of its folder (todos-note/conflict.json is the TodoItem GET /todos/{id} serves).

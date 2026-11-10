@@ -33,6 +33,12 @@ public static class KvKeys
     /// <summary>The disk and memory state the last watch reported ("disk=low mem=ok"), so a re-armed watch does not announce an unchanged state again.</summary>
     public const string WatchResources = "watch.resources";
 
+    /// <summary>The board: main's latest move as "version|sha|ticks|pr,pr" (the version goes up on each move).</summary>
+    public const string BoardMain = "board.main";
+
+    /// <summary>The prefix of a lane's last-seen mark of the board, "board.seen.&lt;lane&gt;", holding "boardVersion,laneMapVersion".</summary>
+    public const string BoardSeenPrefix = "board.seen.";
+
     /// <summary>The lanes the last watch reported CONTEXT HIGH for (comma-separated), so a re-armed watch does not announce a standing one again.</summary>
     public const string WatchContext = "watch.context";
 
