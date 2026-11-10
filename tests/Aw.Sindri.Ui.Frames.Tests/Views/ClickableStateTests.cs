@@ -11,12 +11,16 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
+using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Agents;
 using Aw.Sindri.Ui.Views.Connections;
 using Aw.Sindri.Ui.Views.Jobs;
 using Aw.Sindri.Ui.Views.Linear;
 using Aw.Sindri.Ui.Views.NeedsYou;
+using Aw.Sindri.Ui.Views.Projects;
 using Aw.Sindri.Ui.Views.Queue;
+using Aw.Sindri.Ui.Views.Reviews;
+using Aw.Sindri.Ui.Views.Workflows;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
@@ -153,16 +157,56 @@ public sealed class ClickableStateTests : FrameHost
     });
 
     [Fact]
-    public Task A_selected_card_lifts_one_step_more_under_the_pointer() => OnUi(async () =>
+    public Task Every_clickable_surface_rests_on_a_fill_so_the_pointer_over_its_empty_space_finds_it() => OnUi(() =>
+    {
+        // A Border with no background is not hit-tested (#2535 review): a real pointer over its empty space reaches the panel behind. Each view is
+        // shown in a window so the app's styles apply; the page rows are built from their item templates, the way Every_list_row_frame finds Linear's.
+        var views = new Control[] { new ItemRow(), new CompactItemRow(), new JobRow(), new ConnectionRow(), new SessionRow(), new EndedSessionRow(), new NeedsYouRow(), new NeedsYouInboxRow(), new ProjectCard() };
+        var pages = new Control[] { new LinearWorkView(), new ReviewsPage(), new WorkflowsPage() };
+        var host = new StackPanel();
+        foreach (var view in views.Concat(pages.SelectMany(Templated)))
+        {
+            host.Children.Add(view);
+        }
+
+        var window = new Window { Width = 1280, Height = 900, Content = new ScrollViewer { Content = host } };
+        window.Show();
+        Settle(window);
+
+        var clickable = host.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("clickable")).ToList();
+        Assert.True(clickable.Count >= 14, $"found {clickable.Count} clickable surfaces, expected the 9 row and card views, Linear's row, the review row and the 3 Workflows rows");
+        Assert.All(clickable, b => Assert.True(b.Background is not null, $"{b.Name} [{string.Join(',', b.Classes)}] in {b.FindAncestorOfType<UserControl>()?.GetType().Name} rests on no fill"));
+        Assert.Contains(clickable, b => string.Equals(b.Name, "InboxRowFrame", StringComparison.Ordinal));
+        Assert.Contains(clickable, b => string.Equals(b.Name, "ReviewRowFrame", StringComparison.Ordinal));
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task A_selected_row_lifts_one_step_more_under_the_pointer_and_shrinks_when_pressed() => OnUi(async () =>
     {
         Motion.Set(reduce: true);
         using var instant = InstantMotion.Start();
-        var (window, card) = await OnFirstCard();
-        card.Classes.Add("selected"); // a selected row rests on Surface2, the hover fill
+        var (window, isRow) = await OnList("work", 1280);
+        var row = await SteadyRow(window, isRow, "work");
+        row.Classes.Add("selected"); // what selecting a row sets (QueueStyles item-row.selected): Surface2 and the 2 px Primary bar
+        Settle(window);
+        Assert.Equal(TokenColor("Brush.Surface2"), ((ISolidColorBrush)row.Background!).Color);
+        Frame(window, "selected-rest", "gh2535-");
 
-        _ = await PointAt(window, () => Corner(window, card), card);
+        var at = await PointAt(window, () => Corner(window, row), row);
+        Frame(window, "selected-hover", "gh2535-");
+        Assert.Equal(TokenColor("Brush.Clickable.Pressed"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.Equal(TokenColor("Brush.Primary"), ((ISolidColorBrush)row.BorderBrush!).Color);
 
-        Assert.Equal(TokenColor("Brush.Surface3"), ((ISolidColorBrush)card.Background!).Color);
+        // The selected hover already sits on the pressed fill, so the 0.98 scale is what shows the press here.
+        window.MouseDown(at, MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
+        Frame(window, "selected-pressed", "gh2535-");
+        var pressed = row.RenderTransform!.Value;
+        Assert.Equal((0.98, 0.98), (Math.Round(pressed.M11, 3, MidpointRounding.AwayFromZero), Math.Round(pressed.M22, 3, MidpointRounding.AwayFromZero)));
+        window.MouseUp(at, MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
     });
 
     [Fact]
@@ -220,11 +264,13 @@ public sealed class ClickableStateTests : FrameHost
         var row = window.GetVisualDescendants().OfType<NeedsYouRow>().Where(r => r.IsEffectivelyVisible)
             .SelectMany(r => r.GetVisualDescendants().OfType<Border>()).First(b => b.Name == "RowFrame" && b.Classes.Contains(tint));
         var rest = ((ISolidColorBrush)row.Background!).Color;
+        Frame(window, $"tint-{tint}-rest", "gh2535-");
 
         var at = await PointAt(window, () => row.TranslatePoint(new Point(4, 4), window)!.Value, row);
+        Frame(window, $"tint-{tint}-hover", "gh2535-");
 
         Assert.True(row.IsPointerOver, $"at {at}, row bounds {row.Bounds}, hit {Describe(window.InputHitTest(at))}, chain {Chain(row)}, at now {row.TranslatePoint(new Point(4, 4), window)}");
-        Assert.Equal(TokenColor(tint == "subtle" ? "Brush.Surface3" : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color); // a calm row rests on the hover fill, so it lifts one step more
+        Assert.Equal(TokenColor(tint == "subtle" ? "Brush.Clickable.Pressed" : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color); // a calm row rests on Surface2, so it lifts to the pressed fill
         Assert.NotEqual(rest, ((ISolidColorBrush)row.Background!).Color);
     });
 
@@ -284,10 +330,12 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
         using var instant = InstantMotion.Start(); // the press lands at once; motion stays on, since reduced motion takes the slides-in class away
         var point = row.TranslatePoint(new Point(4, 4), window)!.Value;
+        Frame(window, "slid-in-rest", "gh2535-");
 
         window.MouseMove(point, RawInputModifiers.None);
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
+        Frame(window, "slid-in-pressed", "gh2535-");
 
         Assert.Contains(":pressed", row.Classes, StringComparer.Ordinal);
         var pressed = row.RenderTransform!.Value;
@@ -317,41 +365,122 @@ public sealed class ClickableStateTests : FrameHost
         }
     }
 
-    [Theory]
-    [InlineData("work", 1280)]
-    [InlineData("work", 900)]
-    [InlineData("linear", 1280)]
-    [InlineData("linear", 900)]
-    public Task A_list_row_lifts_under_the_pointer_over_its_empty_space(string list, int width) => OnUi(async () =>
+    public static TheoryData<string, int> Lists => new()
     {
-        // A real hit test, not a set pseudo-class: the pointer sits in the row's own padding, where no child control is, so the row itself must take the hit.
-        Motion.Set(reduce: true);
-        using var instant = InstantMotion.Start();
-        var (window, shell) = await Connected(width: width, height: 900);
-        shell.GoTo(PageId.Work);
-        var linear = string.Equals(list, "linear", StringComparison.Ordinal);
-        shell.Linear.Choose(linear);
-        var frameName = linear ? "LinearRowFrame" : "RowFrame";
-        var stem = $"{list}-{width.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        { "work", 1280 }, { "work", 900 },
+        { "linear", 1280 }, { "linear", 900 },
+        { "agents", 1280 }, { "agents", 900 },
+        { "connections", 1280 }, { "connections", 900 },
+        { "reviews", 1280 }, { "reviews", 900 },
+        { "workflows", 1280 }, { "workflows", 900 },
+        { "inbox", 1280 }, { "inbox", 900 },
+    };
 
-        // The list reads, then the since strip lands above it and a refresh can rebuild the rows: wait until one unselected row stays the same Border at
-        // the same point for three reads.
+    // Opens the list and returns the test for its row: a visible, unselected, untinted clickable Border of that list.
+    private async Task<(Window Window, Func<Border, bool> IsRow)> OnList(string list, int width)
+    {
+        var isRow = RowOf(list);
+        Seed(list);
+        var (window, shell) = await Connected(list == "inbox" ? s => s.NeedsYou.Count > 0 : null, width: width, height: 900);
+        Open(shell, list);
+        return (window, isRow);
+    }
+
+    // The list reads, then a strip can land above it and a refresh can rebuild the rows: wait until one row stays the same Border at the same
+    // point for three reads.
+    private static async Task<Border> SteadyRow(Window window, Func<Border, bool> isRow, string list)
+    {
         Border? row = null;
         Point? last = null;
         var steady = 0;
         await Until(window, () =>
         {
-            var now = window.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => string.Equals(b.Name, frameName, StringComparison.Ordinal) && b.IsEffectivelyVisible && b.Classes.Contains("item-row") && !b.Classes.Contains("selected"));
+            var now = window.GetVisualDescendants().OfType<Border>().FirstOrDefault(isRow);
             var at = now?.TranslatePoint(new Point(6, 6), window);
             steady = now is not null && ReferenceEquals(now, row) && at == last ? steady + 1 : 0;
             (row, last) = (now, at);
             return steady >= 3;
         }, $"the {list} list never settled on an unselected row");
+        return row!;
+    }
+
+    private static readonly string[] _marks = ["selected", "subtle", "pulsing", "outlined"];
+
+    private static bool Plain(Border b) =>
+        b.IsEffectivelyVisible && b.Classes.Contains("clickable") && !_marks.Any(b.Classes.Contains);
+
+    private static Func<Border, bool> Named(string name) => b => Plain(b) && string.Equals(b.Name, name, StringComparison.Ordinal);
+
+    private static Func<Border, bool> RowOf(string list) => list switch
+    {
+        "work" => b => Named("RowFrame")(b) && b.Classes.Contains("item-row"),
+        "linear" => Named("LinearRowFrame"),
+        "agents" => Named("SessionRowFrame"),
+        "connections" => Named("ConnectionRowFrame"),
+        "reviews" => Named("ReviewRowFrame"),
+        "workflows" => b => Plain(b) && b.Classes.Contains("item-row") && b.FindAncestorOfType<WorkflowsPage>() is not null,
+        "inbox" => Named("InboxRowFrame"),
+        _ => throw new ArgumentOutOfRangeException(nameof(list), list, "unknown list"),
+    };
+
+    private void Seed(string list)
+    {
+        switch (list)
+        {
+            case "agents":
+                Server.SessionAnswer = RouteAnswer.Api("sessions", "fixture-three-providers");
+                break;
+            case "connections":
+                _ = Server.SeedConnection(FakeSindriApi.ConnectionRow("linear:work"));
+                _ = Server.SeedConnection(FakeSindriApi.ConnectionRow("notes:mcp", "needs-sign-in", "mcp", "the token expired"));
+                break;
+            case "reviews":
+                Server.ReviewsAnswer = RouteAnswer.Api("reviews", "some");
+                break;
+            default:
+                break;
+        }
+    }
+
+    private static void Open(ShellViewModel shell, string list)
+    {
+        if (list == "inbox")
+        {
+            shell.OpenNeedsYouInbox();
+            return;
+        }
+
+        var page = list switch
+        {
+            "agents" => PageId.Agents,
+            "connections" => PageId.Connections,
+            "reviews" => PageId.Reviews,
+            "workflows" => PageId.Workflows,
+            _ => PageId.Work,
+        };
+        shell.GoTo(page);
+        if (page == PageId.Work)
+        {
+            shell.Linear.Choose(string.Equals(list, "linear", StringComparison.Ordinal));
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Lists))]
+    public Task A_list_row_lifts_under_the_pointer_over_its_empty_space(string list, int width) => OnUi(async () =>
+    {
+        // A real hit test, not a set pseudo-class: the pointer sits in the row's own padding, where no child control is, so the row itself must take the hit.
+        Motion.Set(reduce: true);
+        using var instant = InstantMotion.Start();
+        var (window, isRow) = await OnList(list, width);
+        var stem = $"{list}-{width.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+        var row = await SteadyRow(window, isRow, list);
         Frame(window, $"{stem}-rest", "gh2535-");
 
-        var point = await PointAt(window, () => Corner(window, row!), row!);
+        var point = await PointAt(window, () => Corner(window, row), row);
 
-        Assert.True(row!.IsPointerOver, $"at {point}, hit {Describe(window.InputHitTest(point))}, chain {Chain(row)}");
+        Assert.True(row.IsPointerOver, $"at {point}, hit {Describe(window.InputHitTest(point))}, chain {Chain(row)}");
         Assert.Equal(TokenColor("Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
         Frame(window, $"{stem}-row-hover", "gh2535-");
     });

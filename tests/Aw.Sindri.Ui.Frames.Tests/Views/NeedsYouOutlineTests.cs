@@ -56,19 +56,25 @@ public sealed class NeedsYouOutlineTests : FrameHost
         using var instant = InstantMotion.Start();
         var (window, _) = await Connected(s => s.NeedsYou.Count > 0);
         var frame = Frame(Rows(window).First(r => r.DataContext is ViewModels.NeedsYou.NeedsYouRowViewModel { HasOutline: true }));
+        // Where the content is laid out, so a shift shows even if border and padding traded off against each other. Layout
+        // bounds, not TranslatePoint: the 0.98 press scale draws the content toward the row's centre without moving it.
+        double ContentTop() => frame.Bounds.Y + frame.Child!.Bounds.Y;
         var inset = Inset(frame);
         var height = frame.Bounds.Height;
+        var top = ContentTop();
         var point = frame.TranslatePoint(new Point(4, 4), window)!.Value;
+        Frame(window, "outlined-rest", "gh2535-");
 
         window.MouseMove(point, RawInputModifiers.None);
         Settle(window);
         Assert.True(frame.IsPointerOver);
-        Assert.Equal((inset, height), (Inset(frame), frame.Bounds.Height));
+        Assert.Equal((inset, height, top), (Inset(frame), frame.Bounds.Height, ContentTop()));
+        Frame(window, "outlined-hover", "gh2535-");
 
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
         Assert.Contains(":pressed", frame.Classes, StringComparer.Ordinal);
-        Assert.Equal((inset, height), (Inset(frame), frame.Bounds.Height));
+        Assert.Equal((inset, height, top), (Inset(frame), frame.Bounds.Height, ContentTop()));
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
     });
 
