@@ -15,9 +15,9 @@ internal static class CoreJsonContextRule
     public static IReadOnlyList<string> Violations(IReadOnlyList<string> contexts, string rule)
     {
         var split = contexts.Count > 1;
-        IEnumerable<string> offList = split ? contexts.Where(static c => !_allowed.Contains(c, StringComparer.Ordinal)) : [];
-        IEnumerable<string> missing = _allowed.Where(a => !contexts.Contains(a, StringComparer.Ordinal));
-        IEnumerable<string> unnamed = split ? _allowed.Where(a => !rule.Contains($"`{a}`", StringComparison.Ordinal)) : [];
-        return offList.Concat(missing).Concat(unnamed).Distinct(StringComparer.Ordinal).ToList();
+        var offList = contexts.Where(c => split && !_allowed.Contains(c, StringComparer.Ordinal));
+        var missing = _allowed.Where(a => !contexts.Contains(a, StringComparer.Ordinal));
+        var unnamed = _allowed.Where(a => split && !rule.Contains($"`{a}`", StringComparison.Ordinal));
+        return [.. offList.Concat(missing).Concat(unnamed).Distinct(StringComparer.Ordinal)];
     }
 }
