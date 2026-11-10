@@ -127,10 +127,10 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     public string StatusChip => IsConnected ? Labels.TileConnected : NeedsAttention ? Labels.TileNeedsReconnect : Labels.TileNotConnected;
 
     /// <summary>Why the tile needs a reconnect, in words; empty otherwise.</summary>
-    public string ReasonText => !NeedsAttention ? string.Empty : _row is { HasReason: true } ? _row.ReasonText : Labels.TileSignInExpired;
+    public string ReasonText => !NeedsAttention ? string.Empty : _row is { HasReason: true } ? Labels.TileReason(Title, _row.ReasonText).Sentence : Labels.TileSignInExpired;
 
-    /// <summary>The raw provider code behind the reason line (invalid_grant), for its tooltip; empty when there is none. Red stub.</summary>
-    public string ReasonTip { get; private set => Set(ref field, value); } = string.Empty;
+    /// <summary>The raw provider code behind the reason line (invalid_grant), for its tooltip; empty when there is none.</summary>
+    public string ReasonTip => NeedsAttention && _row is { HasReason: true } ? Labels.TileReason(Title, _row.ReasonText).Code : string.Empty;
 
     /// <summary>True when the tile has a reason line.</summary>
     public bool HasReason => ReasonText.Length > 0;
@@ -176,7 +176,7 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     internal Task Primary(CancellationToken cancellationToken) => NeedsAttention ? SignInAgain(cancellationToken) : Connect(cancellationToken);
 
     // Everything the chip, the primary button and the menu read from the connection and the input.
-    private void RaiseState() => Raise(nameof(StatusChip), nameof(ReasonText), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(HasHelpLink));
+    private void RaiseState() => Raise(nameof(StatusChip), nameof(ReasonText), nameof(ReasonTip), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(HasHelpLink));
 
     /// <summary>The connection this tile shows, or null: the page sets it on every read.</summary>
     /// <param name="row">The matching row.</param>

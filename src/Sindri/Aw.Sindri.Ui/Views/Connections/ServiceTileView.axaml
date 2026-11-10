@@ -12,9 +12,10 @@
   </UserControl.Styles>
   <Border x:Name="ServiceTileFrame" Classes="card clickable" Width="260" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
     <StackPanel Spacing="{StaticResource Space.XS}">
-      <Grid ColumnDefinitions="*,Auto">
+      <!-- A fixed-height title row, both the title and the menu button centred in it, so every tile's title sits at the same y whether it has the menu button or not. -->
+      <Grid ColumnDefinitions="*,Auto" Height="32"><!-- TODO(#2546): Row.Height.Default -->
         <TextBlock Classes="body-strong" Text="{Binding Title}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-        <Button x:Name="ServiceTileMenu" Grid.Column="1" Classes="command-control" Content="⋯" IsVisible="{Binding !IsOffered}" AutomationProperties.Name="{Binding Text.More}">
+        <Button x:Name="ServiceTileMenu" Grid.Column="1" Classes="command-control" VerticalAlignment="Center" Content="⋯" IsVisible="{Binding !IsOffered}" AutomationProperties.Name="{Binding Text.More}">
           <Button.Flyout>
             <MenuFlyout Placement="BottomEdgeAlignedRight">
               <MenuItem x:Name="ServiceTileReconnect" Header="{Binding Text.Reconnect}" IsVisible="{Binding CanReconnect}" Click="OnSignIn" />
@@ -28,7 +29,7 @@
       </Border>
       <TextBlock Classes="caption subtle" Text="{Binding Subtitle}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       <TextBlock x:Name="ServiceTileLastUsed" Classes="caption subtle" Text="{Binding LastUsedText}" IsVisible="{Binding IsConnected}" AutomationProperties.AccessibilityView="Raw" />
-      <TextBlock x:Name="ServiceTileAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding ReasonText}" IsVisible="{Binding HasReason}" TextWrapping="Wrap" />
+      <TextBlock x:Name="ServiceTileAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding ReasonText}" IsVisible="{Binding HasReason}" TextWrapping="Wrap" ToolTip.Tip="{Binding ReasonTip}" />
 
       <StackPanel x:Name="ServiceTileInput" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsAsking}">
         <TextBox x:Name="ServiceTileClientId" Text="{Binding ClientId, Mode=TwoWay}" PlaceholderText="{Binding Text.TileClientLabel}" IsVisible="{Binding NeedsClientId}" AutomationProperties.Name="{Binding Text.TileClientLabel}" />

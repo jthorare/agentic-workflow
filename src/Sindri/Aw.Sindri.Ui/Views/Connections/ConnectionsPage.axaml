@@ -7,6 +7,12 @@
              x:DataType="cb:ConnectionsPageViewModel">
   <!-- The Connections page (PR 18a): the title with the count, one line saying what a connection is, the Add connection form, then the rows as the API orders them with their status
        chips and actions. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
+  <UserControl.Styles>
+    <!-- The panel already draws the top edge: the first row draws none, so the custom row has ONE 1 px border like the tiles. -->
+    <Style Selector="ItemsControl#ConnectionRows > ContentPresenter:nth-child(1) Border.item-row">
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+  </UserControl.Styles>
   <StackPanel x:Name="ConnectionsRoot" Spacing="{StaticResource Size.PanelGap}">
     <Grid x:Name="ConnectionsHeadRegion" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}" VerticalAlignment="Center">
@@ -37,6 +43,11 @@
     <StackPanel x:Name="ConnectionsStale" Orientation="Horizontal" Spacing="{StaticResource Space.XXS}" IsVisible="{Binding IsStale}">
       <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
       <TextBlock Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
+    </StackPanel>
+
+    <StackPanel x:Name="ConnectionsCustomLabel" Orientation="Horizontal" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowsCustom}">
+      <TextBlock Classes="body-strong" Text="{Binding CustomLabel}" />
+      <TextBlock Classes="caption subtle" Text="{Binding CustomCount}" VerticalAlignment="Center" />
     </StackPanel>
 
     <Border x:Name="ConnectionsPanel" Classes="panel" IsVisible="{Binding HasOthers}" AutomationProperties.Name="{Binding Text.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">

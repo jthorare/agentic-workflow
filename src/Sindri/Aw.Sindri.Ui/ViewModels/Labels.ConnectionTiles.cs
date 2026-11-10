@@ -40,4 +40,22 @@ internal static partial class Labels
         "slack" => ("In Slack, open your app's OAuth & Permissions page and copy the user token.", string.Empty, string.Empty),
         _ => (string.Empty, string.Empty, string.Empty),
     };
+
+    /// <summary>A tile's reason line as a sentence, and the raw provider code for its tooltip.</summary>
+    /// <param name="service">The service's display name.</param>
+    /// <param name="reason">The reason as Sindri served it.</param>
+    /// <returns>The sentence and the code (empty when the reason has none).</returns>
+    internal static (string Sentence, string Code) TileReason(string service, string reason)
+    {
+        const string Prefix = "the provider refused the refresh (";
+        if (reason.StartsWith(Prefix, StringComparison.Ordinal) && reason.EndsWith(')'))
+        {
+            return (service + " refused the sign-in refresh. Reconnect to sign in again.", reason[Prefix.Length..^1]);
+        }
+
+        // Only a plain first word gets a capital: a key or id at the start stays as served. (#2550's Capitalised does the same; this branch does not have it yet.)
+        var word = reason.Split(' ')[0];
+        var sentence = word.Length > 0 && word.All(char.IsLetter) && char.IsLower(word[0]) ? char.ToUpperInvariant(reason[0]) + reason[1..] : reason;
+        return (sentence.Length == 0 || sentence[^1] is '.' or '!' or '?' ? sentence : sentence + ".", string.Empty);
+    }
 }
