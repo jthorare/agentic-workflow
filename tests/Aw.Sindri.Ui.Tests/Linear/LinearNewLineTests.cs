@@ -31,10 +31,10 @@ public sealed class LinearNewLineTests
     public Task Home_says_how_many_are_new_and_opens_Work_on_the_Linear_view() => UiThread.Run(async () =>
     {
         var shell = await ShellOnWork();
-        await ShellWait.Until(shell, () => shell.Linear.NewCount == 3, Token);
+        await ShellWait.Until(shell, () => shell.Linear.NewCount == 2, Token);
         shell.GoTo(PageId.Home);
 
-        Assert.Equal(("3 new on your Linear issues", true), (shell.LinearNewLine, shell.HasLinearNewLine));
+        Assert.Equal(("2 new on your Linear issues", true), (shell.LinearNewLine, shell.HasLinearNewLine));
 
         shell.OpenLinear();
 
@@ -52,7 +52,7 @@ public sealed class LinearNewLineTests
 
         await ShellWait.Until(fresh, () => fresh.LinearNewLine is not null, Token);
 
-        Assert.Equal(("3 new on your Linear issues", PageId.Home), (fresh.LinearNewLine, fresh.CurrentPage));
+        Assert.Equal(("2 new on your Linear issues", PageId.Home), (fresh.LinearNewLine, fresh.CurrentPage));
     }, Token);
 
     [Fact]
@@ -66,12 +66,12 @@ public sealed class LinearNewLineTests
     }, Token);
 
     [Fact]
-    public Task Dismiss_takes_the_line_away() => UiThread.Run(async () =>
+    public Task Mark_all_seen_takes_the_line_away() => UiThread.Run(async () =>
     {
         var shell = await ShellOnWork();
-        await ShellWait.Until(shell, () => shell.Linear.NewCount == 3, Token);
+        await ShellWait.Until(shell, () => shell.Linear.NewCount == 2, Token);
 
-        await shell.Linear.Dismiss();
+        await shell.Linear.MarkAllSeen();
 
         Assert.Null(shell.LinearNewLine);
     }, Token);
@@ -81,7 +81,7 @@ public sealed class LinearNewLineTests
     {
         var shell = await ShellOnWork();
 
-        await ShellWait.Until(shell, () => shell.Attention.Tray.Tooltip.Contains("\n3 new on your Linear issues", StringComparison.Ordinal) && !shell.Todo.IsLoading, Token);
+        await ShellWait.Until(shell, () => shell.Attention.Tray.Tooltip.Contains("\n2 new on your Linear issues", StringComparison.Ordinal) && !shell.Todo.IsLoading, Token);
 
         // The whole tooltip, line by line: the needs-you head, the session counts (when the status serves them), the Linear line, then the todo counts.
         var lines = shell.Attention.Tray.Tooltip.Split('\n');

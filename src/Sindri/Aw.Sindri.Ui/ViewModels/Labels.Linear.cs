@@ -185,12 +185,29 @@ internal static partial class Labels
         _ => "moved to a new state",
     };
 
-    /// <summary>The strip's button that moves the marker.</summary>
-    internal const string LinearDismiss = "Dismiss";
+    /// <summary>The card's one action: moves the marker.</summary>
+    internal const string LinearMarkAllSeen = "Mark all seen";
 
-    /// <summary>The strip's line when the changes cannot be read.</summary>
+    /// <summary>The card's line when the changes cannot be read.</summary>
     internal const string LinearStripFailed = "Couldn't load what changed";
 
-    /// <summary>The button that reads them again.</summary>
-    internal const string LinearStripRetry = "Retry";
+    /// <summary>The card's one button when the changes cannot be read: opens the Linear connection.</summary>
+    internal const string LinearReconnect = "Reconnect";
+
+    /// <summary>The card's line when nothing is new.</summary>
+    internal const string LinearNothingNew = "Nothing new since you last looked";
+
+    /// <summary>The card's second line when nothing is new and the marker's time is known.</summary>
+    /// <param name="age">How long ago the newest change you saw happened.</param>
+    /// <returns>"The last change you saw was 2h ago".</returns>
+    internal static string LinearNothingNewWhen(TimeSpan age) => "The last change you saw was " + AgoWords(age);
+
+    /// <summary>The group of issues assigned to the viewer.</summary>
+    internal const string LinearSinceAssigned = "Assigned to you";
+
+    /// <summary>The group of issues that changed state.</summary>
+    internal const string LinearSinceMoved = "Moved";
+
+    /// <summary>The group of everything else (mentions).</summary>
+    internal const string LinearSinceOther = "Other";
 }

@@ -114,7 +114,7 @@ public sealed class LinearWorkRefreshTests
         _f.Server.LinearSinceGate = gate;
         var held = work.Refresh(LinearFixture.Url, Token);
 
-        await work.Dismiss();
+        await work.MarkAllSeen();
         gate.SetResult();
         await held;
 

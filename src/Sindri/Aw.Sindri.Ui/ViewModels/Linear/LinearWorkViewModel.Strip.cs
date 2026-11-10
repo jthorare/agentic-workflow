@@ -5,7 +5,7 @@ namespace Aw.Sindri.Ui.ViewModels.Linear;
 
 /// <summary>
 /// The since-you-looked strip (<see cref="LinearWorkViewModel"/>, continued; Linear hub spec §3, REQ-9): a band above the filter bar. It reads from
-/// the marker the preferences hold. Dismiss is the only thing that moves that marker: leaving the view, a reload or a glance never does.
+/// the marker the preferences hold. Mark all seen is the only thing that moves that marker: leaving the view, a reload or a glance never does.
 /// </summary>
 internal sealed partial class LinearWorkViewModel
 {
@@ -17,7 +17,7 @@ internal sealed partial class LinearWorkViewModel
     /// <summary>How many changes the strip holds (the tab carries it).</summary>
     public int NewCount => _since?.Count ?? 0;
 
-    /// <summary>True when the strip holds changes (Dismiss shows).</summary>
+    /// <summary>True when the card holds issues (Mark all seen shows).</summary>
     public bool HasNew => NewCount > 0;
 
     /// <summary>True when the strip shows: on the Linear view, with changes or with a failed read.</summary>
@@ -26,15 +26,35 @@ internal sealed partial class LinearWorkViewModel
     /// <summary>The strip's region name: "Since you last looked, 3 items".</summary>
     public string StripName => Labels.LinearStripName(NewCount);
 
-    /// <summary>The changes, oldest first.</summary>
+    /// <summary>The issues with news, in the groups' order (the groups' rows, flattened).</summary>
     public ObservableCollection<LinearSinceRowViewModel> StripRows { get; } = [];
+
+    /// <summary>The card's groups, fixed order (Assigned to you, Moved, Other), empty ones left out.</summary>
+    public ObservableCollection<LinearSinceGroupViewModel> StripGroups { get; } = [];
+
+    /// <summary>True when the last read succeeded and nothing is new: the card says so.</summary>
+    public bool ShowsNothingNew { get; private set; }
+
+    /// <summary>"Nothing new since you last looked".</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string NothingNewText => Labels.LinearNothingNew;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>When the newest change you saw happened; empty when there is no marker.</summary>
+    public string NothingNewWhen { get; private set; } = string.Empty;
+
+    /// <summary>Why the changes could not be read.</summary>
+    public string StripReason { get; private set; } = string.Empty;
+
+    /// <summary>Opens the Linear connection: the card's one button when the read failed.</summary>
+    internal void Reconnect() => _ = _url;
 
     /// <summary>True when the changes could not be read: the strip says so and offers Retry; the list below stays.</summary>
     public bool StripFailed { get; private set; }
 
-    /// <summary>Dismiss: stores the answer's marker, so the next read asks after it. The one thing that moves the marker.</summary>
+    /// <summary>Mark all seen: stores the answer's marker, so the next read asks after it. The one thing that moves the marker.</summary>
     /// <returns>A task that completes when the marker is written.</returns>
-    internal async Task Dismiss()
+    internal async Task MarkAllSeen()
     {
         if (_since is not { } since)
         {
@@ -85,7 +105,7 @@ internal sealed partial class LinearWorkViewModel
         foreach (var item in _since?.Items ?? [])
         {
             var id = $"{item.Kind}|{item.Key}|{item.At:O}";
-            kept[id] = _stripShown.TryGetValue(id, out var shown) ? shown : new LinearSinceRowViewModel(item);   // a row keeps its button, and its focus, across reads
+            kept[id] = _stripShown.TryGetValue(id, out var shown) ? shown : new LinearSinceRowViewModel([item], _clock.GetUtcNow());   // a row keeps its button, and its focus, across reads
         }
 
         _stripShown = kept;

@@ -60,9 +60,9 @@ internal sealed partial class LinearWorkView : UserControl
             .FirstOrDefault(b => string.Equals(b.Name, "LinearRowTitle", StringComparison.Ordinal) && b.DataContext is LinearIssueRowViewModel row && string.Equals(row.Key, key, StringComparison.Ordinal))
             ?.Focus();
 
-    private void OnDismiss(object? sender, RoutedEventArgs e) => _ = Work?.Dismiss();
+    private void OnMarkAllSeen(object? sender, RoutedEventArgs e) => _ = Work?.MarkAllSeen();
 
-    private void OnRetryStrip(object? sender, RoutedEventArgs e) => _ = Work?.RetryStrip();
+    private void OnReconnect(object? sender, RoutedEventArgs e) => Work?.Reconnect();
 
     private void OnOpenStripRow(object? sender, RoutedEventArgs e)
     {

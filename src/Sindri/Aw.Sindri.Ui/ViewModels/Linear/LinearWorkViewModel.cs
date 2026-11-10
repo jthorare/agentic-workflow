@@ -64,14 +64,14 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
     /// <summary>The switch's accessible name.</summary>
     public string SwitchName => Labels.WorkViewSwitch;
 
-    /// <summary>The strip's button that moves the marker.</summary>
-    public string DismissText => Labels.LinearDismiss;
+    /// <summary>The card's one action: moves the marker.</summary>
+    public string MarkAllSeenText => Labels.LinearMarkAllSeen;
 
     /// <summary>The strip's line when the changes cannot be read.</summary>
     public string StripFailedText => Labels.LinearStripFailed;
 
-    /// <summary>The strip's button that reads them again.</summary>
-    public string RetryText => Labels.LinearStripRetry;
+    /// <summary>The card's one button when the read failed.</summary>
+    public string ReconnectText => Labels.LinearReconnect;
 
     /// <summary>The Connect Linear card's title.</summary>
     public string ConnectTitle => Labels.LinearConnectTitle;

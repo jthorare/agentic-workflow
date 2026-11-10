@@ -5,7 +5,7 @@ using Aw.Sindri.Ui.ViewModels;
 
 namespace Aw.Sindri.Ui.Tests.Linear;
 
-/// <summary>The since-you-looked strip (Linear hub spec §3, REQ-9): a band above the filter bar whose Dismiss is the only thing that moves the marker.</summary>
+/// <summary>The since-you-looked strip (Linear hub spec §3, REQ-9): a band above the filter bar whose Mark all seen is the only thing that moves the marker.</summary>
 [Lane(TestLane.Unit)]
 public sealed class LinearSinceStripTests
 {
@@ -17,26 +17,26 @@ public sealed class LinearSinceStripTests
 
     [Fact]
     // Sindri finds assigned and state changes by comparing what each sync stored, so it can't say who made them (actor null);
-    // only a mention names its author.
-    public async Task The_strip_names_its_region_by_the_count_and_says_each_change_in_words()
+    // only a mention names its author. Three changes on two issues are two rows: the count is issues.
+    public async Task The_strip_names_its_region_by_the_issue_count_and_says_each_change_in_words()
     {
         var work = await _f.Shown(Token);
 
-        Assert.Equal((true, "Since you last looked, 3 items"), (work.ShowsStrip, work.StripName));
+        Assert.Equal((true, "Since you last looked, 2 items"), (work.ShowsStrip, work.StripName));
         Assert.Equal(
-            ["ENG-31 assigned to you", "Sam Lee mentioned you on ENG-12", "ENG-12 moved from Todo to In Progress"],
-            work.StripRows.Select(r => r.Text),
+            ["ENG-31 · assigned to you", "ENG-12 · moved from Todo to In Progress · Sam Lee mentioned you"],
+            work.StripRows.Select(r => r.Detail),
             StringComparer.Ordinal);
     }
 
     [Fact]
-    public async Task The_strip_is_hidden_when_nothing_is_new()
+    public async Task The_card_has_no_rows_when_nothing_is_new_and_says_so()
     {
         _f.Server.LinearSinceAnswer = RouteAnswer.Api("linear-since", "empty");
 
         var work = await _f.Shown(Token);
 
-        Assert.Equal((false, 0), (work.ShowsStrip, work.StripRows.Count));
+        Assert.Equal((false, 0, true, "Nothing new since you last looked"), (work.HasNew, work.StripRows.Count, work.ShowsNothingNew, work.NothingNewText));
     }
 
     [Fact]
@@ -68,17 +68,17 @@ public sealed class LinearSinceStripTests
 
         await work.Refresh(LinearFixture.Url, Token);
 
-        Assert.Equal((3, 0), (work.NewCount, _f.Server.LinearQueries.Count));
+        Assert.Equal((2, 0), (work.NewCount, _f.Server.LinearQueries.Count));
     }
 
     [Fact]
-    public async Task Dismiss_stores_the_marker_and_hides_the_strip()
+    public async Task Mark_all_seen_stores_the_marker_and_hides_the_rows()
     {
         var work = await _f.Shown(Token);
 
-        await work.Dismiss();
+        await work.MarkAllSeen();
 
-        Assert.Equal((_marker, false, 0), ((await _f.Prefs.Load(Token)).LinearSince, work.ShowsStrip, work.NewCount));
+        Assert.Equal((_marker, false, 0), ((await _f.Prefs.Load(Token)).LinearSince, work.HasNew, work.NewCount));
     }
 
     [Fact]
@@ -96,14 +96,14 @@ public sealed class LinearSinceStripTests
 
         Assert.Null((await _f.Prefs.Load(Token)).LinearSince);
         Assert.All(_f.Server.LinearSinceAfters, Assert.Null);
-        Assert.Equal(3, work.NewCount);
+        Assert.Equal(2, work.NewCount);
     }
 
     [Fact]
-    public async Task After_Dismiss_the_next_read_asks_after_the_stored_marker_and_a_restart_does_too()
+    public async Task After_Mark_all_seen_the_next_read_asks_after_the_stored_marker_and_a_restart_does_too()
     {
         var work = await _f.Shown(Token);
-        await work.Dismiss();
+        await work.MarkAllSeen();
         _f.Server.LinearSinceAnswer = RouteAnswer.Api("linear-since", "empty");
 
         await work.Refresh(LinearFixture.Url, Token);
@@ -123,7 +123,7 @@ public sealed class LinearSinceStripTests
         var work = await _f.Shown(Token);
 
         Assert.Equal((true, true, 3), (work.ShowsStrip, work.StripFailed, work.Mine.Rows.Count));
-        Assert.Equal(("Couldn't load what changed", "Retry"), (Labels.LinearStripFailed, Labels.LinearStripRetry));
+        Assert.Equal(("Couldn't load what changed", "Reconnect"), (Labels.LinearStripFailed, Labels.LinearReconnect));
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public sealed class LinearSinceStripTests
 
         await work.RetryStrip();
 
-        Assert.Equal((false, 3), (work.StripFailed, work.StripRows.Count));
+        Assert.Equal((false, 2), (work.StripFailed, work.StripRows.Count));
     }
 
     [Fact]
