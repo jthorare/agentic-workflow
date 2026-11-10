@@ -35,6 +35,9 @@ internal static partial class Labels
     /// <summary>The Views card's row for when they last changed.</summary>
     internal const string ViewsUpdated = "Updated";
 
+    /// <summary>The Views card's row while stalled: where the projector stopped.</summary>
+    internal const string ViewsStopped = "Stopped";
+
     /// <summary>The Agents card's row for running sessions.</summary>
     internal const string AgentsRunning = "Running";
 

@@ -57,6 +57,18 @@ public sealed class HealthCardsTests
         Assert.Null(system.Vm.ViewsFix);   // the banner above the page already carries Rebuild views: one button on screen (#2554)
     }
 
+    // #2554: the banner says "stalled at 337"; the card said "Read up to event 336 of 391", the same fact one apart in other words. It says it in the banner's terms.
+    [Fact]
+    public async Task Stalled_views_say_where_they_stopped_in_the_banners_number()
+    {
+        var system = new SystemTestHarness("stalled");
+
+        await system.Show();
+
+        Assert.Equal([Labels.ViewsStopped, "before event 42 of 42"], Flat(system.Vm.ViewsRows).Take(2), StringComparer.Ordinal);
+        Assert.DoesNotContain(Labels.ViewsReadUpTo, Flat(system.Vm.ViewsRows), StringComparer.Ordinal);
+    }
+
     [Fact]
     public async Task The_agents_card_counts_working_not_live_sessions_asking_and_failed_sources()
     {
