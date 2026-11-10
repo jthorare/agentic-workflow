@@ -48,6 +48,18 @@ public sealed class ConnectionQaFixesTests
         var page = await _f.Shown();
         var tile = page.Tiles.Single(t => string.Equals(t.Id, "github", StringComparison.Ordinal));
 
-        Assert.Equal(("The token expired.", string.Empty), (tile.ReasonText, tile.ReasonTip));
+        Assert.Equal("The token expired.", tile.ReasonText);
+        Assert.Null(tile.ReasonTip);
+    }
+
+    [Fact]
+    public async Task A_reconnect_with_no_reason_reads_the_sign_in_ran_out_and_has_no_tooltip()
+    {
+        _ = _f.Server.SeedConnection(FakeSindriApi.ConnectionRow("github:work", "needs-sign-in", "oauth"));
+        var page = await _f.Shown();
+        var tile = page.Tiles.Single(t => string.Equals(t.Id, "github", StringComparison.Ordinal));
+
+        Assert.Equal("The sign-in ran out.", tile.ReasonText);
+        Assert.Null(tile.ReasonTip);
     }
 }

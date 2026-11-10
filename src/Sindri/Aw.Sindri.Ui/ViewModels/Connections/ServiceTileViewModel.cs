@@ -129,8 +129,8 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     /// <summary>Why the tile needs a reconnect, in words; empty otherwise.</summary>
     public string ReasonText => !NeedsAttention ? string.Empty : _row is { HasReason: true } ? Labels.TileReason(Title, _row.ReasonText).Sentence : Labels.TileSignInExpired;
 
-    /// <summary>The raw provider code behind the reason line (invalid_grant), for its tooltip; empty when there is none.</summary>
-    public string ReasonTip => NeedsAttention && _row is { HasReason: true } ? Labels.TileReason(Title, _row.ReasonText).Code : string.Empty;
+    /// <summary>The raw provider code behind the reason line (invalid_grant), for its tooltip; null when there is none, so no empty tooltip box opens.</summary>
+    public string? ReasonTip => NeedsAttention && _row is { HasReason: true } && Labels.TileReason(Title, _row.ReasonText).Code is { Length: > 0 } code ? code : null;
 
     /// <summary>True when the tile has a reason line.</summary>
     public bool HasReason => ReasonText.Length > 0;
