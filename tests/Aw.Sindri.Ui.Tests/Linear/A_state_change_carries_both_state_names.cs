@@ -24,11 +24,11 @@ public sealed class A_state_change_carries_both_state_names
         Assert.Equal("FRN-6177 moved to In Progress", Row(from: null, "In Progress"));
 
     [Fact]
-    public void A_move_with_no_names_says_the_state_changed_and_never_prints_a_blank()
+    public void A_move_with_no_names_says_a_new_state_and_never_prints_a_blank()
     {
         var text = Row(from: null, to: null);
 
         Assert.DoesNotContain("  ", text, StringComparison.Ordinal);
-        Assert.Equal("FRN-6177 changed state", text);
+        Assert.Equal("FRN-6177 moved to a new state", text);
     }
 }

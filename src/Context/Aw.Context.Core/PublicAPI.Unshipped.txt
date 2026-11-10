@@ -11686,7 +11686,7 @@ Aw.Context.Core.Linear.LinearSinceChange
 Aw.Context.Core.Linear.LinearSinceChange.<Clone>$() -> Aw.Context.Core.Linear.LinearSinceChange!
 Aw.Context.Core.Linear.LinearSinceChange.At.get -> System.DateTimeOffset
 Aw.Context.Core.Linear.LinearSinceChange.At.init -> void
-Aw.Context.Core.Linear.LinearSinceChange.Deconstruct(out Aw.Context.Core.Sources.RecordKey Issue, out string! Identifier, out string! Field, out Aw.Context.Core.Sources.ExternalId? Old, out Aw.Context.Core.Sources.ExternalId? New, out System.DateTimeOffset At, out string! Via) -> void
+Aw.Context.Core.Linear.LinearSinceChange.Deconstruct(out Aw.Context.Core.Sources.RecordKey Issue, out string! Identifier, out string! Field, out Aw.Context.Core.Sources.ExternalId? Old, out Aw.Context.Core.Sources.ExternalId? New, out System.DateTimeOffset At, out string! Via, out string? OldName, out string? NewName) -> void
 Aw.Context.Core.Linear.LinearSinceChange.Equals(Aw.Context.Core.Linear.LinearSinceChange? other) -> bool
 Aw.Context.Core.Linear.LinearSinceChange.Field.get -> string!
 Aw.Context.Core.Linear.LinearSinceChange.Field.init -> void
@@ -11694,9 +11694,13 @@ Aw.Context.Core.Linear.LinearSinceChange.Identifier.get -> string!
 Aw.Context.Core.Linear.LinearSinceChange.Identifier.init -> void
 Aw.Context.Core.Linear.LinearSinceChange.Issue.get -> Aw.Context.Core.Sources.RecordKey
 Aw.Context.Core.Linear.LinearSinceChange.Issue.init -> void
-Aw.Context.Core.Linear.LinearSinceChange.LinearSinceChange(Aw.Context.Core.Sources.RecordKey Issue, string! Identifier, string! Field, Aw.Context.Core.Sources.ExternalId? Old, Aw.Context.Core.Sources.ExternalId? New, System.DateTimeOffset At, string! Via) -> void
+Aw.Context.Core.Linear.LinearSinceChange.LinearSinceChange(Aw.Context.Core.Sources.RecordKey Issue, string! Identifier, string! Field, Aw.Context.Core.Sources.ExternalId? Old, Aw.Context.Core.Sources.ExternalId? New, System.DateTimeOffset At, string! Via, string? OldName = null, string? NewName = null) -> void
 Aw.Context.Core.Linear.LinearSinceChange.New.get -> Aw.Context.Core.Sources.ExternalId?
 Aw.Context.Core.Linear.LinearSinceChange.New.init -> void
+Aw.Context.Core.Linear.LinearSinceChange.NewName.get -> string?
+Aw.Context.Core.Linear.LinearSinceChange.NewName.init -> void
+Aw.Context.Core.Linear.LinearSinceChange.OldName.get -> string?
+Aw.Context.Core.Linear.LinearSinceChange.OldName.init -> void
 Aw.Context.Core.Linear.LinearSinceChange.Old.get -> Aw.Context.Core.Sources.ExternalId?
 Aw.Context.Core.Linear.LinearSinceChange.Old.init -> void
 Aw.Context.Core.Linear.LinearSinceChange.Via.get -> string!
