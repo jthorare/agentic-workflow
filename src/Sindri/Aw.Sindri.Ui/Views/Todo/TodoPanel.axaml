@@ -62,7 +62,7 @@
 
       <!-- Collapsed: one body of a fixed height in every state (spec D13, §3.4): five row slots on top, the Show all slot below
            (Show all on the left, the error line on the right). The rows, the skeleton and the empty sentence draw in the slots;
-           none of them changes the height, so Needs you below never moves. TodoPanel.axaml.cs sets the height from Size.Row. -->
+           none of them changes the height, so Needs you below never moves. TodoPanel.axaml.cs sets the height from Row.Height.Default. -->
       <Grid x:Name="TodoCollapsed" Grid.Row="1" RowDefinitions="*,Auto" ClipToBounds="True" IsVisible="{Binding !IsExpanded}">
         <StackPanel>
           <!-- The attention rows (a conflict or the hold, todo spec §3.1, D13) take the first slots, inside the five. -->
@@ -103,7 +103,7 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
-        <Grid x:Name="TodoShowAllSlot" Grid.Row="1" ColumnDefinitions="Auto,*" Height="{StaticResource Size.Row}">
+        <Grid x:Name="TodoShowAllSlot" Grid.Row="1" ColumnDefinitions="Auto,*" Height="{StaticResource Row.Height.Default}">
           <Button x:Name="TodoShowAll" HorizontalAlignment="Left" VerticalAlignment="Center" Classes="copy" Click="OnShowAll" IsVisible="{Binding ShowsShowAll}" Margin="16,0"
                   AutomationProperties.Name="{Binding ShowAllText}">
             <TextBlock x:Name="TodoShowAllText" Classes="caption" Text="{Binding ShowAllText}" AutomationProperties.AccessibilityView="Raw" />
@@ -189,7 +189,7 @@
       <!-- The "From elsewhere" line (2 PRs waiting on your review · 1 Linear issue assigned · 3 need you, below): read-only counts under the
            rows, in a slot one row tall in every state (D13), so the collapsed panel's height never follows the line's words. Its view model
            is the shell's, not the panel's. -->
-      <Border x:Name="TodoElsewhereSlot" Grid.Row="2" Height="{StaticResource Size.Row}" ClipToBounds="True" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
+      <Border x:Name="TodoElsewhereSlot" Grid.Row="2" Height="{StaticResource Row.Height.Default}" ClipToBounds="True" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
         <tv:FromElsewhereLine x:Name="TodoElsewhere" VerticalAlignment="Center" DataContext="{Binding $parent[Window].((shell:ShellViewModel)DataContext).Elsewhere}" />
       </Border>
     </Grid>
