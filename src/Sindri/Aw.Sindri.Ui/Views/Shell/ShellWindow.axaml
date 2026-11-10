@@ -124,7 +124,7 @@
             <icons:StateIcon x:Name="StalledGlyph" Glyph="Down" Classes="error" IsVisible="{Binding IsStalled}" VerticalAlignment="Center" />
             <icons:StateIcon x:Name="RebuildingGlyph" Icon="Spinner" Spins="{Binding IsRebuilding}" IsVisible="{Binding IsRebuilding}"
                              VerticalAlignment="Center" />
-            <TextBlock x:Name="ViewsBannerText" Classes="body" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center"
+            <TextBlock x:Name="ViewsBannerText" Classes="body" Text="{Binding ShownText}" TextWrapping="Wrap" VerticalAlignment="Center"
                        AutomationProperties.Name="{Binding Text}" />
           </StackPanel>
           <Panel IsVisible="{Binding HasRebuild}" VerticalAlignment="Center">

@@ -75,8 +75,9 @@ internal sealed partial class TopBar : UserControl
         // A part can grow after the bar was measured (a text-size change reaches it late); measure again to step down.
         Remember();
         var cap = PillProblems.MaxWidth;
+        var yielded = _ageYields;
         CapProblems(finalSize.Width);
-        if (Choose(finalSize.Width) != _fit || Math.Abs(PillProblems.MaxWidth - cap) > 0.5)
+        if (Choose(finalSize.Width) != _fit || Math.Abs(PillProblems.MaxWidth - cap) > 0.5 || yielded != _ageYields)
         {
             InvalidateMeasure();
         }
@@ -99,7 +100,7 @@ internal sealed partial class TopBar : UserControl
             return Fit.Full;
         }
 
-        var age = PillAgeText.Text is { Length: > 0 } ? _ageWidth + PillGroup.Spacing : 0;
+        var age = PillAgeText.Text is { Length: > 0 } && !_ageYields ? _ageWidth + PillGroup.Spacing : 0;
         var pill = PillGroup.DesiredSize.Width - (PillAge.IsVisible ? age : 0);
         var word = _brandWordWidth + Brand.Spacing;
         var padding = Content is Border bar ? bar.Padding.Left + bar.Padding.Right : 0;
@@ -138,7 +139,7 @@ internal sealed partial class TopBar : UserControl
         SearchColumn.Width = compact ? GridLength.Auto : new GridLength(100, GridUnitType.Star);
         SearchColumn.MinWidth = compact ? 0 : SearchMin;
         SearchColumn.MaxWidth = compact ? double.PositiveInfinity : SearchMax;
-        PillAge.IsVisible = fit < Fit.NoAge;
+        PillAge.IsVisible = fit < Fit.NoAge && !_ageYields;
         BrandWord.IsVisible = fit < Fit.NoBrandWord;
         NavigationList.Classes.Set("tight", fit >= Fit.TightNav);
         NavigationList.Classes.Set("no-counts", fit == Fit.NoCounts);

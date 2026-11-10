@@ -20,6 +20,20 @@ internal sealed partial class TopBar
     private double _loweredCap = double.PositiveInfinity;
     private double _loweredFor = double.NaN;
 
+    // The age gives way before the problem text is trimmed (QA #2547): a short problem reads in full at 1280 px.
+    private bool _ageYields;
+
+    private double NaturalProblems()
+    {
+        if (!PillProblems.IsVisible || PillProblems.Text is not { Length: > 0 } text)
+        {
+            return 0;
+        }
+
+        using var layout = new TextLayout(text, new Typeface(PillProblems.FontFamily, PillProblems.FontStyle, PillProblems.FontWeight), PillProblems.FontSize, foreground: null);
+        return Math.Min(ProblemsMax, Math.Ceiling(layout.Width) + 1);
+    }
+
     private void CapProblems(double width)
     {
         if (width != _loweredFor)
@@ -47,7 +61,19 @@ internal sealed partial class TopBar
         var problems = PillProblems.IsVisible ? PillProblems.DesiredSize.Width + PillProblems.Margin.Left + PillProblems.Margin.Right : 0;
         var others = bar.Padding.Left + bar.Padding.Right + Brand.DesiredSize.Width
             + NavigationWidthWithCounts + search + PillGroup.DesiredSize.Width - problems;
-        PillProblems.MaxWidth = Math.Min(Math.Clamp(width - others - PillProblems.Margin.Left - PillProblems.Margin.Right, 0, ProblemsMax), _loweredCap);
+        var room = width - others - PillProblems.Margin.Left - PillProblems.Margin.Right;
+        PillProblems.MaxWidth = Math.Min(Math.Clamp(YieldAge(room), 0, ProblemsMax), _loweredCap);
+    }
+
+    // Decides whether the age gives way to the problem text, applies it, and returns the room the problem text then has.
+    private double YieldAge(double room)
+    {
+        var ageSize = PillAgeText.Text is { Length: > 0 } ? _ageWidth + PillGroup.Spacing : 0;
+        var roomWithAge = room - (PillAge.IsVisible ? 0 : ageSize);
+        var natural = NaturalProblems();
+        _ageYields = natural > 0 && ageSize > 0 && natural > roomWithAge - (_ageYields ? Slack : 0);
+        PillAge.IsVisible = _fit < Fit.NoAge && !_ageYields;
+        return roomWithAge + (PillAge.IsVisible ? 0 : ageSize);
     }
 
     // After an arrange: if the placeholder is narrower than its text, the estimate above was short; take the shortfall
