@@ -19,13 +19,17 @@ public sealed class StatusChipTests
         { "error", "Error" }, { "neutral", "Neutral" }, { "draft", "Draft" },
     };
 
-    private static IBrush? Token(string key) => Application.Current!.FindResource(key) as IBrush; // why: the headless session starts the app
+    // A brush's colour, looked up from the chip: the chip resolves its tokens through its window's theme, so the theme's brush is another
+    // instance than the app's (Assert.Same failed on one colour), and the colour is what the reader sees.
+    private static Color? ColourOf(IBrush? brush) => (brush as ISolidColorBrush)?.Color;
+
+    private static Color? Token(StyledElement chip, string key) => ColourOf(chip.FindResource(key) as IBrush);
 
     [Theory]
     [MemberData(nameof(Variants))]
     public async Task A_chip_resolves_its_fill_border_and_text_brushes_from_its_variant(string variant, string token)
     {
-        var (bg, border, fg, radius, height, thickness) = await OnUi(() =>
+        var (drawn, expected, radius, height, thickness) = await OnUi(() =>
         {
             var text = new TextBlock { Text = variant };
             var chip = new Border { Child = text };
@@ -34,18 +38,17 @@ public sealed class StatusChipTests
             var window = new Window { Content = chip };
             window.Show();
             window.UpdateLayout();
-            return (chip.Background, chip.BorderBrush, text.Foreground, chip.CornerRadius, chip.Bounds.Height, chip.BorderThickness);
+            var drawnColours = (ColourOf(chip.Background), ColourOf(chip.BorderBrush), ColourOf(text.Foreground));
+            var tokens = (Token(chip, $"Brush.Status.{token}.Bg"), Token(chip, $"Brush.Status.{token}.Border"), Token(chip, $"Brush.Status.{token}.Fg"));
+            return (drawnColours, tokens, chip.CornerRadius, chip.Bounds.Height, chip.BorderThickness);
         });
 
-        _ = await OnUi(() =>
-        {
-            Assert.Same(Token($"Brush.Status.{token}.Bg"), bg);
-            Assert.Same(Token($"Brush.Status.{token}.Border"), border);
-            Assert.Same(Token($"Brush.Status.{token}.Fg"), fg);
-            Assert.Equal(new CornerRadius(4), radius);
-            Assert.Equal(20, height);
-            Assert.Equal(new Thickness(1), thickness);
-            return 0;
-        });
+        Assert.NotNull(expected.Item1);
+        Assert.NotNull(expected.Item2);
+        Assert.NotNull(expected.Item3);
+        Assert.Equal(expected, drawn);
+        Assert.Equal(new CornerRadius(4), radius);
+        Assert.Equal(20, height);
+        Assert.Equal(new Thickness(1), thickness);
     }
 }
