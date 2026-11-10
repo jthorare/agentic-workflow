@@ -46,7 +46,7 @@
       </Border>
       <StackPanel x:Name="SessionRowDoing" Grid.Column="4" Margin="0,0,8,0" MaxWidth="260" VerticalAlignment="Center" IsVisible="{Binding ShowsDoing}">
         <TextBlock Classes="caption" Text="{Binding AskingText}" IsVisible="{Binding HasAsking}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
-        <TextBlock Classes="caption quiet" Text="{Binding NoStepText}" IsVisible="{Binding HasNoStep}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBlock Classes="caption subtle" Text="{Binding NoStepText}" IsVisible="{Binding HasNoStep}" AutomationProperties.AccessibilityView="Raw" />
         <TextBlock x:Name="SessionRowStep" Classes="caption" Text="{Binding StepText}" IsVisible="{Binding HasStep}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding StepName}" />
       </StackPanel>
       <Border x:Name="SessionRowSince" Grid.Column="5" VerticalAlignment="Center" AutomationProperties.Name="{Binding SinceText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
