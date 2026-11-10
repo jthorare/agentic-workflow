@@ -27,7 +27,10 @@ internal sealed class WatchOwnership(IKeyValueStore values, string repo, string 
         return current.IsSuccess && current.Value is { } pid && !string.Equals(pid, owner, StringComparison.Ordinal) ? pid : null;
     }
 
-    /// <summary>Keeps the snapshot unless another watch wrote it since this one last did.</summary>
+    /// <summary>
+    /// Keeps the snapshot. When another watch wrote it since this one last did, watch.owner tells who: a different pid means a newer watch
+    /// (this one is superseded); this watch's own pid, or an unreadable owner, means an older watch wrote before it saw the claim, so this watch overwrites it.
+    /// </summary>
     /// <returns>Null when it kept it (or the store failed: advisory, the next run starts fresh); else the pid of the watch that superseded this one.</returns>
     internal async ValueTask<string?> KeepSnapshot(WatchState state, CancellationToken cancellationToken)
     {
@@ -45,6 +48,14 @@ internal sealed class WatchOwnership(IKeyValueStore values, string repo, string 
         }
 
         var current = await values.Get(KvKeys.WatchOwner, cancellationToken).ConfigureAwait(false);
-        return current.IsSuccess && current.Value is { } pid ? pid : owner;
+        if (current.IsSuccess && current.Value is { } pid && !string.Equals(pid, owner, StringComparison.Ordinal))
+        {
+            return pid;
+        }
+
+        // Still the owner: the writer was an older watch that has not seen the claim yet. It ends at its next owner check.
+        _ = await values.Set(KvKeys.WatchSnapshot, text, cancellationToken).ConfigureAwait(false);
+        _kept = text;
+        return null;
     }
 }
