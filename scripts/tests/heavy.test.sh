@@ -12,6 +12,7 @@
 # Run: bash scripts/tests/heavy.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$DIR/lib/test-portable.sh"   # timeout for macOS
 HEAVY="$DIR/heavy.sh"
 fail=0
 check() {
@@ -51,8 +52,8 @@ check "the copies differ from the wrapper only in TIMEOUT" "$(diff "$HEAVY" "$FA
 
 # The wrapper's watchdog leaves a `sleep 5` holding its stdout after the job ends, so a $(...) around it would wait up to 5 s for
 # the pipe to close (pinned as is). H and F (the wrapper, and the TIMEOUT=0 copy) write to a file and cat it: the sleep holds the file.
-H() { local f="$WORK/h.$BASHPID"; bash "$HEAVY" "$@" > "$f" 2>&1; local rc=$?; cat "$f"; return $rc; }
-F() { local f="$WORK/f.$BASHPID"; bash "$FAST" "$@" > "$f" 2>&1; local rc=$?; cat "$f"; return $rc; }
+H() { local f; f="$(mktemp "$WORK/h.XXXXXX")"; bash "$HEAVY" "$@" > "$f" 2>&1; local rc=$?; cat "$f"; return $rc; }
+F() { local f; f="$(mktemp "$WORK/f.XXXXXX")"; bash "$FAST" "$@" > "$f" 2>&1; local rc=$?; cat "$f"; return $rc; }
 reset() { find "$STATE" -mindepth 1 -delete 2> /dev/null; mkdir -p "$STATE"; }
 dead_pid() { sleep 0 & local p=$!; wait "$p"; echo "$p"; }
 DEAD="$(dead_pid)"
