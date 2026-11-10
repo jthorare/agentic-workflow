@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
@@ -25,7 +26,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="recorder">Records 'launch.started' and 'launch.failed'.</param>
 /// <param name="diff">Reads the start commit.</param>
 /// <param name="ended">Answers for a launch whose session already ended, so a retry starts no second agent.</param>
-internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore workflows, IApprovedProfile approved, AgentLaunchWaiting launcher, AgentLaunchRecorder recorder, IRunDiff diff, AgentLaunchEnded ended)
+/// <param name="model">Fences the prompt's references, the way the 'prompt' block does (#2447).</param>
+internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore workflows, IApprovedProfile approved, AgentLaunchWaiting launcher, AgentLaunchRecorder recorder, IRunDiff diff, AgentLaunchEnded ended, IGraphModelPort model)
 {
     /// <summary>Launches the node run's session.</summary>
     /// <param name="node">The node run.</param>
@@ -51,6 +53,12 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
             return Failed(input, parsed.Error);
         }
 
+        var task = parsed.Value;
+        if (graphNode.Config["prompt"] is JsonValue { } promptValue && promptValue.TryGetValue<string>(out var rawPrompt))
+        {
+            task = task with { Prompt = FencedPrompt.Render(rawPrompt, scope.Lookup, model.Untrusted) };   // why: the brief fences each reference's value like the 'prompt' block; the interpolated prompt has lost which text came from outside
+        }
+
         var placed = await Place(parsed.Value, row, cancellationToken).ConfigureAwait(false);
         if (placed.IsError)
         {
@@ -59,7 +67,7 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
 
         var address = NodeRunAddress.Of(node.Run, node.Node, node.ItemIndex);
         var token = RunAgentWire.TokenOf(spec, node.Node, node.ItemIndex) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
-        var brief = RunAgentBrief.Render(address, token, parsed.Value);
+        var brief = RunAgentBrief.Render(address, token, task);
         var groups = RunAgentLaunches.GroupsFor(parsed.Value, static _ => []);   // why: a connection's host group comes with the connection presets (PR 10); until then only the repo's 'github' applies
         var request = RunAgentLaunches.ReadingOnly(RunAgentLaunches.RequestFor(address, placed.Value.Target, parsed.Value, brief, groups), placed.Value.ReadOnlyPaths);
         return new AgentNodeLaunched(await Start(request, cancellationToken).ConfigureAwait(false), input, parsed.Value.Timeout);
