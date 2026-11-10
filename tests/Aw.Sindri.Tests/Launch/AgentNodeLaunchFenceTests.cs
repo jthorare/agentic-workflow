@@ -45,7 +45,7 @@ public sealed class AgentNodeLaunchFenceTests
             new AgentNodeReading(runs, workflows, new GraphModelPortAdapter(new FakeModelPort())),
             new Approved(new LoadedProfile(profile, ProfileHashing.Of("profile"u8), "/home/profile.yaml")),
             new AgentLaunchWaiting(launcher, new AgentRuntimeOptions(TimeSpan.FromSeconds(5)), recorder),
-            recorder, new FakeRunDiff(), new AgentLaunchEnded(new NoLaunches(), new FakeAgentSessions(), new FakeSindriHome("/home/sindri")));
+            recorder, new FakeRunDiff(), new AgentLaunchEnded(new NoLaunches(), new FakeAgentSessions(), new FakeSindriHome("/home/sindri"), slice.Store));
 
         _ = await launching.Launch(new AgentNodeRef(runId, agent.Id, ItemIndex: 0), Token);
 
