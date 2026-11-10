@@ -62,7 +62,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     private async Task<GraphBlockOutcome> Execute(WorkflowRun row, GraphSpec spec, Prepared node, CancellationToken cancel)
     {
         var (graphNode, block, scope, config) = (node.Node, node.Block, node.Scope, node.Config);
-        // why: idempotent and cheap without a disk (a graph declares a database and a sandbox size only), so it runs before every node and the activity keeps no state across a retry
+        // why: idempotent, so it runs before every node and the activity keeps no state across a retry; each call is a workflow read plus one ledger upsert transaction (a 20-node run makes 20), acceptable because a graph declares no disk, so a repeat changes no data and creates no files
         var ensured = await _resources.Ensure(row.WorkflowId, spec, cancel).ConfigureAwait(false);
         if (ensured.IsError)
         {
