@@ -17,6 +17,12 @@ public sealed class CallToolBlock(IRunningToolkits toolkits, IConnectionToolPort
     public string Type => "call_tool";
 
     /// <inheritdoc />
+    public string Title => "Toolkit tool";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Data;   // why: like 'http', a tool call may read or write; Data is where the picker puts the blocks that reach outside Sindri for an answer
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />
