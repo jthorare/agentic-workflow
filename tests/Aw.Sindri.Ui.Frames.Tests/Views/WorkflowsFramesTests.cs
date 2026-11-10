@@ -59,6 +59,25 @@ public sealed class WorkflowsFramesTests : FrameHost
     [Theory]
     [InlineData(1440)]
     [InlineData(900)]
+    public Task The_empty_state_offers_New_workflow_and_names_the_agent_command(double width) => OnUi(async () =>
+    {
+        Server.WorkflowsAnswer = RouteAnswer.Api("workflows", "list-empty");
+        var (window, shell) = await Connected(width: width, height: 900);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.IsEmpty, "the Workflows page never read the empty list");
+
+        Assert.False(Visible(window, "WorkflowsHead"));
+        var button = Named<Button>(window, "WorkflowsNew");
+        Assert.True(button.IsEffectivelyVisible);
+        Assert.False(button.IsEnabled);
+        Assert.True(Visible(window, "WorkflowsNewReason"));
+        Assert.Equal("sindri wf create", Named<TextBlock>(window, "WorkflowsAgentCommand").Text);
+        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"empty-{width}"), Prefix);
+    });
+
+    [Theory]
+    [InlineData(1440)]
+    [InlineData(900)]
     public Task A_workflows_runs(double width) => OnUi(async () =>
     {
         var (window, shell) = await OnWorkflows(width);

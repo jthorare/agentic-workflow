@@ -67,6 +67,26 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>"2 workflows · 1 active"; empty until the first list.</summary>
     public string Head { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>True when the head has a count to show (at least one workflow).</summary>
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
+    public bool HasHead => true;
+
+    /// <summary>The empty state's create action: "New workflow".</summary>
+    public string NewWorkflowText => string.Empty;
+
+    /// <summary>True when the app can create a workflow. It can't yet: the API client has no create call.</summary>
+    public bool CanCreateWorkflow => true;
+
+    /// <summary>Why the create action is off.</summary>
+    public string NewWorkflowReason => string.Empty;
+
+    /// <summary>The line before the agent command.</summary>
+    public string AgentRouteLead => string.Empty;
+
+    /// <summary>The command an agent runs to make a workflow, shown as mono text.</summary>
+    public string AgentRouteCommand => string.Empty;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>True until the first answer.</summary>
     public bool IsReading { get; private set => Set(ref field, value); } = true;
 
