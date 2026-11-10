@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Toolkits;
@@ -68,7 +69,7 @@ internal sealed class ToolkitRig : IDisposable
 
         public ValueTask<Result<string>> SourceHash(string dir, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>(Hash);
 
-        public ValueTask<Result<string>> ReadManifest(string dir, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>(Manifest);
+        public ValueTask<Result<string>> ReadManifest(string dir, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>(SindriErrors.ToolkitManifestInvalid.With("no toolkit.json in " + dir));   // what a real folder does: the build never writes the file
     }
 
     internal sealed class FakeCommands : IToolkitCommands
@@ -76,13 +77,16 @@ internal sealed class ToolkitRig : IDisposable
         /// <summary>Exit codes by the command's second word ('build' or 'test'); a missing key is 0.</summary>
         internal Dictionary<string, int> Exits { get; } = new(StringComparer.Ordinal);
 
+        /// <summary>What a command prints, by its second word; 'ok' when a key is missing, and the valid manifest for '--manifest'.</summary>
+        internal Dictionary<string, string> Outputs { get; } = new(StringComparer.Ordinal) { ["--manifest"] = Manifest };
+
         internal List<string> Ran { get; } = [];
 
         public ValueTask<ToolkitCommandResult> Run(string workingDir, IReadOnlyList<string> argv, CancellationToken cancellationToken)
         {
             Ran.Add(string.Join(' ', argv));
             var exit = Exits.GetValueOrDefault(argv[1]);
-            return ValueTask.FromResult(new ToolkitCommandResult(exit, exit == 0 ? "ok" : "failed: " + argv[1]));
+            return ValueTask.FromResult(new ToolkitCommandResult(exit, exit == 0 ? Outputs.GetValueOrDefault(argv[1], "ok") : "failed: " + argv[1]));
         }
     }
 

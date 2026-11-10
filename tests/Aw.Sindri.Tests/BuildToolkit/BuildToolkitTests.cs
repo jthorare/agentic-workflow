@@ -48,12 +48,40 @@ public sealed class BuildToolkitTests : IDisposable
 
         Assert.True(built.IsSuccess);
         Assert.Equal("hash-1", built.Value.SourceHash);
-        Assert.Equal(["dotnet build -warnaserror", "dotnet test"], _rig.Commands.Ran);
+        Assert.Equal(["dotnet build -warnaserror", "dotnet test", "/tk/triage/bin/triage --manifest"], _rig.Commands.Ran);
         Assert.Equal(1, _rig.Slots.Taken);
         Assert.Equal(0, _rig.Slots.Held);
         Assert.True(started.IsSuccess);
         Assert.Equal(ToolkitState.Running, started.Value.State);
         Assert.Equal(["triage"], _rig.Runtime.Started);
+    }
+
+    [Fact]
+    public async Task The_manifest_is_what_the_built_toolkit_prints_for_manifest_and_nothing_is_written_to_its_folder()
+    {
+        const string printed = """{"name":"triage","version":"2.0.0","resources":[],"tools":[]}""";
+        _rig.Commands.Outputs["--manifest"] = printed;
+
+        var built = await Build().Handle(new BuildToolkitRequest("triage"), Token);
+
+        Assert.True(built.IsSuccess);
+        Assert.Contains(_rig.Commands.Ran, static r => r.EndsWith(" --manifest", StringComparison.Ordinal));
+        Assert.Equal(ToolkitState.Built, _rig.Store.Items["triage"].State);
+        Assert.Equal("2.0.0", _rig.Store.Items["triage"].Manifest?.Version);
+    }
+
+    [Fact]
+    public async Task A_toolkit_whose_manifest_command_fails_ends_failed_with_SND_TK_003()
+    {
+        _rig.Commands.Exits["--manifest"] = 1;
+
+        var built = await Build().Handle(new BuildToolkitRequest("triage"), Token);
+
+        Assert.True(built.IsError);
+        Assert.Equal(SindriErrors.ToolkitManifestInvalid.Code, built.Error.Code);
+        Assert.Contains(_rig.Commands.Ran, static r => r.EndsWith(" --manifest", StringComparison.Ordinal));
+        Assert.Equal(ToolkitState.Failed, _rig.Store.Items["triage"].State);
+        Assert.Null(_rig.Store.Items["triage"].SourceHash);
     }
 
     [Fact]
