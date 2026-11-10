@@ -23,6 +23,7 @@ internal sealed partial class GraphWorkflow
     private static readonly ActivityOptions _agentRead = new() { StartToCloseTimeout = TimeSpan.FromMinutes(5), RetryPolicy = GraphActivityOptions.Unbounded };
 
     private WorkflowRunId _run;
+    private int _agentLaunchAttempts = DefaultAgentLaunchAttempts;
 
     /// <summary>Walks the run's spec.</summary>
     /// <param name="input">The run.</param>
@@ -33,6 +34,7 @@ internal sealed partial class GraphWorkflow
         ArgumentNullException.ThrowIfNull(input);
         _ = Workflow.Patched("graph-walk-1");
         _run = input.Run;
+        _agentLaunchAttempts = input.AgentLaunchAttempts > 0 ? input.AgentLaunchAttempts : DefaultAgentLaunchAttempts;
         try
         {
             var spec = await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.LoadAsync(_run), _write).ConfigureAwait(true);

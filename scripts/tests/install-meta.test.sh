@@ -15,6 +15,13 @@ check() {
     echo "not ok - $1"; echo "  expected: $3"; echo "  actual:   $2"; fail=1
   fi
 }
+# cp_tree_scripts <dir>: the installer and the launcher set it copies under --allow-worktree (META_LAUNCH_SET in install-meta.sh, #2640)
+cp_tree_scripts() {
+  mkdir -p "$1/scripts" "$1/schemas" "$1/config/launcher"
+  cp "$DIR/install-meta.sh" "$DIR/meta-launch.sh" "$DIR/meta-lane.sh" "$DIR/launcher-lib.sh" "$DIR/meta-team-lib.sh" "$DIR/meta-version-lib.sh" \
+    "$DIR/meta-start-lock.sh" "$DIR/meta-build-paths.txt" "$1/scripts/"
+  cp "$DIR/../schemas/launcher.schema.json" "$1/schemas/"; cp "$DIR/../config/launcher/"*.json "$1/config/launcher/"
+}
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # the caller may be a meta session: its team config, bin and claude must not reach the stubs
@@ -146,7 +153,7 @@ unset AW_SKIP_BUILD
 # The trees the publish runs from are temp git repos (this checkout's own state must not matter): scripts, the meta build paths, a Meta source.
 mktree() { # mktree <dir>
   mkdir -p "$1/scripts" "$1/config/hooks/adapters" "$1/config/lib" "$1/src/Meta" "$1/docs"
-  cp "$DIR/install-meta.sh" "$DIR/meta-launch.sh" "$DIR/meta-team-lib.sh" "$DIR/meta-version-lib.sh" "$DIR/meta-build-paths.txt" "$1/scripts/" 2> /dev/null
+  cp_tree_scripts "$1"
   cp "$DIR/../config/hooks/adapters/"* "$1/config/hooks/adapters/"; cp -r "$DIR/../config/lib/." "$1/config/lib/"
   cp "$DIR/../config/hooks/meta-stop-gate.sh" "$DIR/../config/hooks/meta-outbox.sh" "$DIR/../config/hooks/meta-board-line.sh" "$1/config/hooks/"
   cp "$DIR/../global.json" "$1/"; echo one > "$1/src/Meta/a.cs"; echo doc > "$1/docs/a.md"
@@ -207,7 +214,7 @@ check "a codex hook command runs its adapter and script from the quoted paths" "
 # tree it runs from; a linked worktree of it is the throwaway one.
 TOP="$DIR/.."
 mkdir -p "$WORK/tree/scripts" "$WORK/tree/config/hooks/adapters" "$WORK/tree/config/lib"
-cp "$DIR/install-meta.sh" "$DIR/meta-launch.sh" "$DIR/meta-team-lib.sh" "$DIR/meta-version-lib.sh" "$DIR/meta-build-paths.txt" "$WORK/tree/scripts/"
+cp_tree_scripts "$WORK/tree"
 cp "$TOP/config/hooks/adapters/"* "$WORK/tree/config/hooks/adapters/" 2>/dev/null
 cp -r "$TOP/config/lib/." "$WORK/tree/config/lib/"
 cp "$TOP/config/hooks/meta-stop-gate.sh" "$TOP/config/hooks/meta-outbox.sh" "$TOP/config/hooks/meta-board-line.sh" "$WORK/tree/config/hooks/"
@@ -222,7 +229,15 @@ OUT="$(bash "$WORK/wt/scripts/install-meta.sh" --provider claude 2>&1)"; RC=$?
 check "worktree, no team repo: refused with its own exit code 3" "$RC:$(printf '%s' "$OUT" | grep -c 'linked git worktree')" "3:1"
 check "worktree, no team repo: nothing linked" "$(link)" "none"
 OUT="$(bash "$WORK/wt/scripts/install-meta.sh" --provider claude --allow-worktree 2>&1)"; RC=$?
-check "worktree with --allow-worktree: linked into the worktree" "$RC:$(link)" "0:$WORK/wt/scripts/meta-launch.sh"
+WTHEAD="$(git -C "$WORK/wt" rev-parse HEAD)"
+check "worktree with --allow-worktree: linked to the copy at its commit, not into the worktree (#2640)" "$RC:$(link)" "0:$AW_STATE_DIR/bin/meta-launch/$WTHEAD/scripts/meta-launch.sh"
+check "the copy holds the launcher set, byte for byte" \
+  "$(for f in scripts/meta-launch.sh scripts/meta-lane.sh scripts/launcher-lib.sh scripts/meta-start-lock.sh schemas/launcher.schema.json config/launcher/terminals.json; do cmp -s "$WORK/wt/$f" "$AW_STATE_DIR/bin/meta-launch/$WTHEAD/$f" || echo "$f differs"; done)" ""
+echo '# local edit' >> "$WORK/wt/scripts/meta-lane.sh"
+OUT="$(bash "$WORK/wt/scripts/install-meta.sh" --provider claude --allow-worktree 2>&1)"; RC=$?
+check "a change in the launcher set: the copy is <commit>-dirty and holds the change" \
+  "$RC:$(link):$(tail -1 "$AW_STATE_DIR/bin/meta-launch/$WTHEAD-dirty/scripts/meta-lane.sh")" "0:$AW_STATE_DIR/bin/meta-launch/$WTHEAD-dirty/scripts/meta-launch.sh:# local edit"
+git -C "$WORK/wt" checkout -q -- scripts/meta-lane.sh
 
 rm -f "$CLAUDE_LOCAL_BIN/aw-meta-launch"
 mkdir -p "$WORK/canon2/scripts"; printf '#!/usr/bin/env bash\nexit 0\n' > "$WORK/canon2/scripts/meta-launch.sh"
@@ -232,7 +247,7 @@ check "a team repo set, run from another tree: refused, nothing linked" "$RC:$(p
 OUT="$(bash "$WORK/tree/scripts/install-meta.sh" --provider claude 2>&1)"; RC=$?
 check "a team repo set, run from a second plain clone: refused too" "$RC:$(link)" "3:none"
 OUT="$(bash "$WORK/wt/scripts/install-meta.sh" --provider claude --allow-worktree 2>&1)"; RC=$?
-check "a team repo set, --allow-worktree: installs from this tree and links it" "$RC:$(link)" "0:$WORK/wt/scripts/meta-launch.sh"
+check "a team repo set, --allow-worktree: installs from this tree and links the copy at its commit" "$RC:$(link)" "0:$AW_STATE_DIR/bin/meta-launch/$WTHEAD/scripts/meta-launch.sh"
 rm -f "$CLAUDE_LOCAL_BIN/aw-meta-launch"
 cp "$WORK/tree/scripts/install-meta.sh" "$WORK/tree/scripts/meta-team-lib.sh" "$WORK/tree/scripts/meta-version-lib.sh" "$WORK/tree/scripts/meta-build-paths.txt" "$WORK/canon2/scripts/"
 cp -r "$WORK/tree/config" "$WORK/tree/global.json" "$WORK/canon2/"
