@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-GRAPH-107",
+  "status": 409,
+  "detail": "the run 'morning-check@1:1' already ended, so its agent node has too",
+  "traceId": "<trace>"
+}

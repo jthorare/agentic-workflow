@@ -47,6 +47,7 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Features.ActivateWorkflow;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.AddRepo;
+using Aw.Sindri.Features.AgentNodeControl;
 using Aw.Sindri.Features.AllowDenial;
 using Aw.Sindri.Features.AnswerQuestion;
 using Aw.Sindri.Features.ApplyWorkflowOps;
@@ -219,7 +220,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(CreateWorkflowBody)), JsonSerializable(typeof(ApplyWorkflowOpsBody)), JsonSerializable(typeof(ReplaceWorkflowBody)), JsonSerializable(typeof(ValidateWorkflowBody)), JsonSerializable(typeof(ActivateWorkflowBody))]   // #2258 PR 8b: the workflow write bodies
 [JsonSerializable(typeof(CreateWorkflowResponse)), JsonSerializable(typeof(ApplyWorkflowOpsResponse)), JsonSerializable(typeof(ReplaceWorkflowResponse)), JsonSerializable(typeof(ValidateWorkflowResponse)), JsonSerializable(typeof(ActivateWorkflowResponse)), JsonSerializable(typeof(PauseWorkflowResponse)), JsonSerializable(typeof(DeleteWorkflowResponse))]
 [JsonSerializable(typeof(ListWorkflowsResponse)), JsonSerializable(typeof(GetWorkflowResponse)), JsonSerializable(typeof(ListWorkflowRunsResponse)), JsonSerializable(typeof(GetWorkflowRunResponse))]   // #2258 PR 8a: the workflow reads; GraphSpec and the node positions come with GetWorkflowResponse
-[JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse))]
+[JsonSerializable(typeof(WorkflowNotifyPayload)), JsonSerializable(typeof(RunWorkflowBody)), JsonSerializable(typeof(RunWorkflowResponse)), JsonSerializable(typeof(CancelWorkflowRunResponse)), JsonSerializable(typeof(AgentNodeBody)), JsonSerializable(typeof(AgentNodeControlled))]
 [JsonSerializable(typeof(WorkflowQuestionPayload)), JsonSerializable(typeof(WorkflowAnsweredPayload)), JsonSerializable(typeof(WorkflowQuestionPublic)), JsonSerializable(typeof(WorkflowAnsweredPublic)), JsonSerializable(typeof(AnswerQuestionBody)), JsonSerializable(typeof(AnswerQuestionResponse))]   // agent-first PR 9: ask_owner and 'sindri answer'
 [JsonSerializable(typeof(Features.ListResources.ListResourcesRequest)), JsonSerializable(typeof(Features.ListResources.ListResourcesResponse)), JsonSerializable(typeof(Features.ListResources.ResourceView)), JsonSerializable(typeof(Features.PurgeResources.PurgeResourcesRequest)), JsonSerializable(typeof(Features.PurgeResources.PurgeResourcesResponse))]   // agent-first PR 14: resources
 [JsonSerializable(typeof(RecipeRegistered)), JsonSerializable(typeof(RecipeApproved)), JsonSerializable(typeof(RecipeRevoked))]
