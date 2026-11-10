@@ -37,9 +37,12 @@ public sealed class WorkflowSchedulerTests
             Planted("LambdaDelay", "Task.Delay"),
             Planted("TaskYield", "Task.Yield"),
             Planted("StartNewCall", "Task.Factory.StartNew"),
+            Planted("StartNewOfT", "Task.Factory.StartNew"),          // TaskFactory<T>.StartNew
             Planted("WaitAsyncTimeout", "Task.WaitAsync(TimeSpan)"),
+            Planted("WaitAsyncTimeoutOfT", "Task.WaitAsync(TimeSpan)"), // Task<T>.WaitAsync
             Planted("DateTimeNow", "DateTime.Now"),
             Planted("DateTimeUtcNow", "DateTime.UtcNow"),
+            Planted("DateTimeToday", "DateTime.Today"),
             Planted("DateTimeOffsetNow", "DateTimeOffset.Now"),
             Planted("DateTimeOffsetUtcNow", "DateTimeOffset.UtcNow"),
             Planted("NewGuidCall", "Guid.NewGuid"),
@@ -49,7 +52,12 @@ public sealed class WorkflowSchedulerTests
             Planted("StopwatchCall", "Stopwatch"),
             Planted("SystemTimeProvider", "TimeProvider.System"),
             Planted("TickCount", "Environment.TickCount"),
+            Planted("TickCount64", "Environment.TickCount"),
             Planted("ParallelFor", "Parallel.For"),
+            Planted("ParallelForEach", "Parallel.ForEach"),
+            Planted("ParallelForAsync", "Parallel.ForAsync"),
+            Planted("ParallelForEachAsync", "Parallel.ForEachAsync"),
+            Planted("ParallelInvoke", "Parallel.Invoke"),
             Planted("ThreadingTimer", "System.Threading.Timer"),
             Planted("Helper.Wait", "Task.Delay"),   // a type nested in the workflow type
             Planted("InPartialPart", "Task.Delay"), // the part of the workflow type that carries no [Workflow]

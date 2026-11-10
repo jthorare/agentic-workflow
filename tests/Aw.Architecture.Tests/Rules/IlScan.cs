@@ -134,6 +134,8 @@ public static class IlScan
     }
 
     // ldc.i4.0 or ldc.i4.s 0 right before the call: the last argument pushed is the constant false (or 0).
+    // Only the constant is seen: ConfigureAwait(someBool) with a variable or a field reads as not-false and passes, so ARCH-WF-001 leaves it to review
+    // (the gap is in rules/engineering/csharp/workflow-scheduler.yaml).
     private static bool FalseBefore(byte[] il, int call) =>
         call > 0 && (il[call - 1] == LdcI40 || (call > 1 && il[call - 2] == LdcI4S && il[call - 1] == 0));
 

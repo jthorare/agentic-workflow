@@ -42,11 +42,17 @@ internal static partial class PlantedWorkflow
 
     internal static Task StartNewCall(CancellationToken token) => Task.Factory.StartNew(static () => { }, token, TaskCreationOptions.None, TaskScheduler.Default);
 
+    internal static Task<int> StartNewOfT(CancellationToken token) => Task<int>.Factory.StartNew(static () => 1, token, TaskCreationOptions.None, TaskScheduler.Default);
+
     internal static Task WaitAsyncTimeout(Task work, CancellationToken token) => work.WaitAsync(TimeSpan.FromSeconds(1), token);
+
+    internal static Task<int> WaitAsyncTimeoutOfT(Task<int> work, CancellationToken token) => work.WaitAsync(TimeSpan.FromSeconds(1), token);
 
     internal static DateTime DateTimeNow() => DateTime.Now;
 
     internal static DateTime DateTimeUtcNow() => DateTime.UtcNow;
+
+    internal static DateTime DateTimeToday() => DateTime.Today;
 
     internal static DateTimeOffset DateTimeOffsetNow() => DateTimeOffset.Now;
 
@@ -66,7 +72,17 @@ internal static partial class PlantedWorkflow
 
     internal static int TickCount() => Environment.TickCount;
 
+    internal static long TickCount64() => Environment.TickCount64;
+
     internal static ParallelLoopResult ParallelFor() => Parallel.For(0, 1, static _ => { });
+
+    internal static ParallelLoopResult ParallelForEach(int[] items) => Parallel.ForEach(items, static _ => { });
+
+    internal static Task ParallelForAsync(CancellationToken token) => Parallel.ForAsync(0, 1, token, static (_, _) => ValueTask.CompletedTask);
+
+    internal static Task ParallelForEachAsync(int[] items, CancellationToken token) => Parallel.ForEachAsync(items, token, static (_, _) => ValueTask.CompletedTask);
+
+    internal static void ParallelInvoke() => Parallel.Invoke(static () => { });
 
     internal static System.Threading.Timer ThreadingTimer() => new(callback: static _ => { }, state: null, dueTime: 0, period: 0);
 
