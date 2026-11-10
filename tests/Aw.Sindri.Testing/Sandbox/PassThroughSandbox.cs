@@ -17,6 +17,12 @@ public sealed class PassThroughSandbox : ISandbox
     public Result<SandboxPlan> Plan(SandboxRequest request) => SandboxPlanner.Build(SandboxMechanism.PassThrough, request);
 
     /// <inheritdoc />
+    public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => ProcessSandboxPlanner.Build(SandboxMechanism.PassThrough, request);
+
+    /// <inheritdoc />
+    public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => Results.Success(argv);
+
+    /// <inheritdoc />
     public Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct) => Task.FromResult<Result<Unit>>(Unit.Value);
 
     /// <inheritdoc />
