@@ -122,6 +122,49 @@ public sealed class RecycleSettlesRequestTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task The_issue_case_a_dry_run_settles_nothing_then_the_real_run_settles_it_and_the_stop_has_nothing_open()
+    {
+        // #2647 "done when": DIGEST READY from the lane, --dry-run, then the real run, then stop-check.
+        await Ready();
+        await Receive("m-digest", "t1-api", "DIGEST READY " + Digest);
+
+        var dry = await Run(onWait: null, dryRun: true);
+        var openAfterDry = await _world.Open();
+        var real = await Run(NewSessionAppears);
+
+        Assert.True(dry.IsSuccess);
+        Assert.Contains(openAfterDry, o => o.Key.Contains("m-digest", StringComparison.Ordinal));
+        Assert.True(real.IsSuccess, real.IsError ? real.Error.Message : string.Empty);
+        Assert.Equal(["m-digest"], real.Value.SettledMessages);
+        Assert.Empty(await _world.Open());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_DIGEST_READY_for_another_digest_stays_open()
+    {
+        await Ready();
+        await Receive("m-other", "t1-api", "DIGEST READY /home/x/digests/t1-api-2026-10-16.md");
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.SettledMessages);
+        Assert.Null((await Stored("m-other")).Resolution);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_DIGEST_READY_naming_the_digest_with_a_tilde_path_is_settled()
+    {
+        await Ready();
+        await Receive("m-tilde", "t1-api", "DIGEST READY ~/digests/t1-api-2026-10-17.md");
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["m-tilde"], result.Value.SettledMessages);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_message_naming_the_digest_path_without_the_DIGEST_READY_prefix_is_settled()
     {
         await Ready();

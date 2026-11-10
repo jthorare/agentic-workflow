@@ -86,7 +86,20 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
         && !NoticeRule.IsNotice(m.Body)
         && AsksForThisRecycle(m.Body, plan.Digest);
 
-    private static bool AsksForThisRecycle(string body, string digest) =>
-        body.TrimStart().StartsWith("DIGEST READY", StringComparison.OrdinalIgnoreCase)
-        || (digest.Length > 0 && body.Contains(digest, StringComparison.Ordinal));
+    private const string DigestReady = "DIGEST READY";
+
+    // A DIGEST READY line asks for this recycle when it names no path or names this digest's file (a lane may write the path
+    // with ~/); one for another digest stays open (#2647). Any other line asks for it only when it holds the digest's full path.
+    private static bool AsksForThisRecycle(string body, string digest)
+    {
+        var text = body.TrimStart();
+        if (!text.StartsWith(DigestReady, StringComparison.OrdinalIgnoreCase))
+        {
+            return digest.Length > 0 && body.Contains(digest, StringComparison.Ordinal);
+        }
+
+        var named = text[DigestReady.Length..].Trim();
+        var file = digest[(digest.LastIndexOf('/') + 1)..];
+        return named.Length == 0 || (file.Length > 0 && named.Contains(file, StringComparison.Ordinal));
+    }
 }
