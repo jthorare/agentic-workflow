@@ -31,7 +31,7 @@ Write a text size as a class, never as an inline `FontSize`. Use a local `FontWe
 | `Row.Height.Default` | 32 | Linear docs nav row, radius 8 (measured, /docs) |
 | `Row.Height.Comfortable` | 40 | Proposal. Nearest measured rows are Raycast's 36 and 41 to 42. |
 
-Use these as `MinHeight` on a list row. Two-line rows grow past them. The older `Size.Row` (36) and `Size.RowComfortable` (40) still exist for the views that read them, and will move to these tokens.
+Use these as `MinHeight` on a list row. Two-line rows grow past them. A panel header is not a row: it has its own token, `Size.PanelHeader` (36). `Size.Row` and `Size.RowComfortable` are gone.
 
 ## Grid
 

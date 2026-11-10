@@ -186,8 +186,7 @@
   <x:Double x:Key="Row.Height.Default">32</x:Double>
   <x:Double x:Key="Row.Height.Comfortable">40</x:Double>
   <!-- §14.3 Sizes (px). Row and control minimums are scaled with the text by the views that use them. -->
-  <x:Double x:Key="Size.Row">36</x:Double>
-  <x:Double x:Key="Size.RowComfortable">40</x:Double>
+  <x:Double x:Key="Size.PanelHeader">36</x:Double>
   <x:Double x:Key="Size.TopBar">48</x:Double>
   <x:Double x:Key="Size.Sheet">520</x:Double>
   <x:Double x:Key="Size.SheetMin">420</x:Double>
