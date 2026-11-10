@@ -13,6 +13,9 @@ internal sealed class SetItemFailingRunStore(IWorkflowRunStore inner) : IWorkflo
     /// <summary>Whether SetItem refuses.</summary>
     public bool Fail { get; set; }
 
+    /// <summary>The run whose node runs can never be read, or null.</summary>
+    public WorkflowRunId? BrokenRun { get; set; }
+
     /// <summary>How many SetItem calls it got, refused or not.</summary>
     public int SetItemCalls { get; private set; }
 
@@ -50,7 +53,8 @@ internal sealed class SetItemFailingRunStore(IWorkflowRunStore inner) : IWorkflo
 
     public ValueTask<Result<NodeRun>> RecordNodeRun(NodeRun nodeRun, CancellationToken cancellationToken) => inner.RecordNodeRun(nodeRun, cancellationToken);
 
-    public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRuns(WorkflowRunId id, CancellationToken cancellationToken) => inner.NodeRuns(id, cancellationToken);
+    public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRuns(WorkflowRunId id, CancellationToken cancellationToken) =>
+        BrokenRun == id ? ValueTask.FromResult<Result<IReadOnlyList<NodeRun>>>(SindriErrors.LedgerUnavailable.With("runs.db: cannot read")) : inner.NodeRuns(id, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRunsForItem(WorkflowRunId id, int itemIndex, CancellationToken cancellationToken) => inner.NodeRunsForItem(id, itemIndex, cancellationToken);
 }

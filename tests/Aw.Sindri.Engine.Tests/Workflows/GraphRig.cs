@@ -65,7 +65,7 @@ internal sealed class GraphRig : IAsyncDisposable
         var options = new TemporalWorkerOptions(_taskQueue)
             .AddWorkflow<GraphWorkflow>()
             .AddWorkflow<GraphIterationWorkflow>()
-            .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror))
+            .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror, new GraphRunItemRepair(ItemRepair, NullLogger<GraphRunItemRepair>.Instance)))
             .AddAllActivities(new GraphBlockActivities(registry, Runs, Workflows));
         if (agents is not null)
         {
@@ -78,6 +78,9 @@ internal sealed class GraphRig : IAsyncDisposable
     }
 
     public InMemoryWorkflowRunStore Runs { get; }
+
+    /// <summary>The run-item repair the activities call when a run ends; it records the runs it was asked about (issue 2588).</summary>
+    public SpyRunItemRepair ItemRepair { get; } = new();
 
     public InMemoryWorkflowStore Workflows { get; }
 

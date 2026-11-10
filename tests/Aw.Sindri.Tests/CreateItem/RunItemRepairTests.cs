@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.Time.Testing;
@@ -38,7 +39,9 @@ public sealed class RunItemRepairTests
     private WorkflowItemMaker Maker(bool linkRefused, IIdGenerator? ids = null) =>
         new(new CreateItemService(_h.Profiles, _h.Held, linkRefused ? new LinkRefusingLedger(_h.Store) : _h.Store, _h.Events, ids ?? _h.Ids, _h.Callers), _h.Callers, _runs);
 
-    private RunItemRepair Repair() => new(_workflows, _runs, _h.Store, _h.Held, _h.Events, _h.Callers, _h.Ids);
+    private RunItemRepair Repair() => Repair(_h.Store);
+
+    private RunItemRepair Repair(ILedgerStore ledger) => new(_workflows, _runs, _h.Held, new RunItemLinker(_runs, ledger, _h.Held, _h.Events, _h.Callers, _h.Ids));
 
     private async Task Seed(WorkflowRunStatus status = WorkflowRunStatus.Succeeded)
     {
@@ -161,7 +164,7 @@ public sealed class RunItemRepairTests
     {
         await Seed();
         var item = await Make("one", 0, linkRefused: true);
-        var refusing = new RunItemRepair(_workflows, _runs, new LinkRefusingLedger(_h.Store), _h.Held, _h.Events, _h.Callers, _h.Ids);
+        var refusing = Repair(new LinkRefusingLedger(_h.Store));
 
         var failed = await refusing.RepairAll(Token);
         var repaired = await Repair().RepairAll(Token);
@@ -169,5 +172,33 @@ public sealed class RunItemRepairTests
         Assert.True(failed.IsError);
         Assert.True(repaired.IsSuccess, repaired.IsError ? repaired.Error.ToString() : null);
         Assert.True(Linked(item));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_run_that_always_fails_is_skipped_and_the_pass_still_succeeds_for_the_others()
+    {
+        await Seed();
+        var broken = WorkflowRunId.From("nightly@1:2");
+        _ = (await _runs.Insert(new WorkflowRun(broken, _workflow, 1, """{"kind":"manual"}""", WorkflowRunStatus.Succeeded, Outputs: null, Error: null, ItemId: null, KnownInstants.Epoch.AddMinutes(1), EndedAt: null), Token)).Value;
+        var item = await Make("one", 0, linkRefused: true);
+        _runs.BrokenRun = broken;
+
+        var repaired = await Repair().RepairAll(Token);
+
+        Assert.True(repaired.IsSuccess, repaired.IsError ? repaired.Error.ToString() : null);   // the host does not go again
+        Assert.True(Linked(item));
+        Assert.Equal(1, repaired.Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pass_stops_when_the_lease_goes_mid_scan()
+    {
+        await Seed();
+        _ = await Make("one", 0, linkRefused: true);
+        _h.Held.Clear();
+
+        var repaired = await Repair().RepairAll(Token);
+
+        Assert.True(repaired.IsError);
     }
 }
