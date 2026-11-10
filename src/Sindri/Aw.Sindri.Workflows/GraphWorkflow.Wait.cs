@@ -87,17 +87,15 @@ internal sealed partial class GraphWorkflow
         };
     }
 
-    // why: the wait ends at 'wakeAt' as the node promised, not a fixed number of seconds after the activity's result reached the workflow
+    // why: the sleep is the block's own 'waitedSeconds' (wakeAt minus the block's clock), never wakeAt minus Workflow.UtcNow: the block and
+    // the Temporal server keep separate clocks, so comparing them can end a wait at once (it did: the parking tests' fake clock sat months
+    // behind the server and every wait node finished before anyone saw it running)
     private static async Task<GraphBlockOutcome> Sleep(GraphBlockOutcome outcome)
     {
-        var text = JsonNode.Parse(outcome.Output ?? "{}")?["wakeAt"] is JsonValue v && v.TryGetValue<string>(out var at) ? at : null;
-        if (text is not null && DateTimeOffset.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var wakeAt))
+        var seconds = JsonNode.Parse(outcome.Output ?? "{}")?["waitedSeconds"] is JsonValue v && v.TryGetValue<double>(out var wait) ? wait : 0;
+        if (seconds > 0)
         {
-            var remaining = wakeAt - new DateTimeOffset(Workflow.UtcNow, TimeSpan.Zero);
-            if (remaining > TimeSpan.Zero)
-            {
-                await Workflow.DelayAsync(remaining).ConfigureAwait(true);
-            }
+            await Workflow.DelayAsync(TimeSpan.FromSeconds(seconds)).ConfigureAwait(true);
         }
 
         return outcome;
