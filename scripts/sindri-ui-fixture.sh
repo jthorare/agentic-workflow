@@ -238,6 +238,8 @@ services:
 api: { port: 0 }
 YAML
   approve || return
+  # The fleet hook's state files are the box's real sessions: an empty directory in the temp home keeps the Agents shots repeatable.
+  mkdir -p "$AW_SINDRI_HOME/ui-fixture-fleet" && export AW_FLEET_DIR="$AW_SINDRI_HOME/ui-fixture-fleet"
   "$PROVE" human --headless
 }
 

@@ -7,13 +7,29 @@
        is (worktree, host, lane or launch) and how long, and Focus: disabled until its send is wired, with its phase and the CLI to run on a
        focusable line with Copy. The row's name is provider, title, state, what it asks and host; every named line is a Border wrapper. The row
        draws its own focus border (item-row), not the adorner. -->
+  <UserControl.Styles>
+    <!-- One dot shape for every state: the status brushes carry the state and the word stays beside it. -->
+    <Style Selector="TextBlock.dot"><Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" /></Style>
+    <Style Selector="TextBlock.dot.working"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="TextBlock.dot.waiting"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+  </UserControl.Styles>
   <Border x:Name="SessionRowFrame" Classes="item-row session-row" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <Grid x:Name="SessionRowGrid" ColumnDefinitions="150,2*,1.2*,120,1.4*,56" MinHeight="{StaticResource Size.Row}" VerticalAlignment="Center">
+    <!-- The columns are one definition with the header's: the Auto ones are shared size groups under the page's scope, so a value starts where its head does, and a column nobody shows is zero wide (#2553). -->
+    <Grid x:Name="SessionRowGrid" MinHeight="{StaticResource Size.Row}" VerticalAlignment="Center">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" MinWidth="136" SharedSizeGroup="AgStatus" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" SharedSizeGroup="AgRepo" />
+        <ColumnDefinition Width="Auto" SharedSizeGroup="AgWhere" />
+        <ColumnDefinition Width="Auto" SharedSizeGroup="AgDoing" />
+        <ColumnDefinition Width="Auto" MinWidth="56" SharedSizeGroup="AgFor" />
+      </Grid.ColumnDefinitions>
       <Border x:Name="SessionRowChip" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.AccessibilityView="Raw">
-          <TextBlock Classes="body-strong" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
-          <TextBlock Classes="caption subtle" Text="{Binding EstimatedText}" IsVisible="{Binding IsEstimated}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock x:Name="SessionRowGlyph" Classes="body-strong dot" Classes.working="{Binding IsWorking}" Classes.waiting="{Binding IsWaiting}" Text="{Binding Glyph}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock Classes="body-strong" Text="{Binding StateWord}" AutomationProperties.AccessibilityView="Raw" />
+          <TextBlock x:Name="SessionRowEstimated" Classes="caption subtle" Text="{Binding EstimatedText}" IsVisible="{Binding IsEstimated}" VerticalAlignment="Center" ToolTip.Tip="{Binding EstimatedTip}" AutomationProperties.AccessibilityView="Raw" />
         </StackPanel>
       </Border>
       <Button x:Name="SessionRowOpen" Grid.Column="1" Classes="row-title" Click="OnOpen" HorizontalAlignment="Left" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}">
@@ -22,13 +38,13 @@
           <TextBlock Classes="body-strong" Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
         </StackPanel>
       </Button>
-      <Border x:Name="SessionRowRepo" Grid.Column="2" Margin="0,0,8,0" IsVisible="{Binding IsWide}" VerticalAlignment="Center" AutomationProperties.Name="{Binding RepoText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <Border x:Name="SessionRowRepo" Grid.Column="2" Margin="0,0,8,0" MaxWidth="200" IsVisible="{Binding ShowsRepo}" ToolTip.Tip="{Binding RepoText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding RepoText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption subtle" Text="{Binding RepoText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <Border x:Name="SessionRowWhere" Grid.Column="3" Margin="0,0,8,0" IsVisible="{Binding IsWide}" VerticalAlignment="Center" AutomationProperties.Name="{Binding WhereText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <Border x:Name="SessionRowWhere" Grid.Column="3" Margin="0,0,8,0" MaxWidth="360" IsVisible="{Binding ShowsWhere}" ToolTip.Tip="{Binding WhereText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding WhereText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption subtle" Text="{Binding WhereText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <StackPanel x:Name="SessionRowDoing" Grid.Column="4" Margin="0,0,8,0" VerticalAlignment="Center" IsVisible="{Binding IsWide}">
+      <StackPanel x:Name="SessionRowDoing" Grid.Column="4" Margin="0,0,8,0" MaxWidth="260" VerticalAlignment="Center" IsVisible="{Binding ShowsDoing}">
         <TextBlock Classes="caption" Text="{Binding AskingText}" IsVisible="{Binding HasAsking}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
         <TextBlock Classes="caption quiet" Text="{Binding NoStepText}" IsVisible="{Binding HasNoStep}" AutomationProperties.AccessibilityView="Raw" />
         <TextBlock x:Name="SessionRowStep" Classes="caption" Text="{Binding StepText}" IsVisible="{Binding HasStep}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding StepName}" />

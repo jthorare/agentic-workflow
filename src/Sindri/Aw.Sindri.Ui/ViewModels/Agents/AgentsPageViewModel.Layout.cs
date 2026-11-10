@@ -10,13 +10,13 @@ internal sealed partial class AgentsPageViewModel
     public bool IsWide => !IsCompact;
 
     /// <summary>True when the Repository column shows: the page is wide and some row has a repository.</summary>
-    public bool ShowsRepo => IsWide;
+    public bool ShowsRepo { get; private set => Set(ref field, value); }
 
     /// <summary>True when the Where it runs column shows: the page is wide and some row says where it runs.</summary>
-    public bool ShowsWhere => IsWide;
+    public bool ShowsWhere { get; private set => Set(ref field, value); }
 
     /// <summary>True when the What it is doing column shows: the page is wide and some row asks or runs a Step.</summary>
-    public bool ShowsDoing => IsWide;
+    public bool ShowsDoing { get; private set => Set(ref field, value); }
 
     /// <summary>"Clear filters": the button on the no-match line.</summary>
     public string ClearFiltersText { get; } = Labels.ClearFilters;
@@ -47,6 +47,19 @@ internal sealed partial class AgentsPageViewModel
         foreach (var row in _rows.Values)
         {
             row.SetCompact(compact);
+        }
+
+        RefreshColumns(_rows.Values);
+    }
+
+    // An optional column shows while the page is wide and some row has a value for it; the header and every row follow, so the head never sits over an empty column.
+    private void RefreshColumns(IEnumerable<SessionRowViewModel> rows)
+    {
+        var shown = rows.ToList();
+        (ShowsRepo, ShowsWhere, ShowsDoing) = (IsWide && shown.Exists(static r => r.HasRepoValue), IsWide && shown.Exists(static r => r.HasWhereValue), IsWide && shown.Exists(static r => r.HasDoingValue));
+        foreach (var row in _rows.Values)
+        {
+            row.SetColumns(ShowsRepo, ShowsWhere, ShowsDoing);
         }
     }
 

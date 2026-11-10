@@ -252,6 +252,7 @@ internal sealed partial class AgentsPageViewModel(ISindriApi api, IClipboard cli
         }
 
         Patch.To(Groups, shown);
+        RefreshColumns(kept);
         OnChanged(nameof(HasColumns));
         ShowEnded(list);
         IsEmpty = kept.Count == 0;
