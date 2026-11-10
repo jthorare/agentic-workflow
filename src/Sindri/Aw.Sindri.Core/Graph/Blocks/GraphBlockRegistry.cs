@@ -46,6 +46,13 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     public static IReadOnlyList<IGraphBlock> FlowBlocks(IGraphSeenStore seen, ICreateItemPort items, IGraphCallPort calls, IGraphHttpPort http) =>
         [new OnlyNewBlock(seen), new CreateItemBlock(items), new RunWorkflowBlock(calls), new WorkflowCallTrigger(), new HttpBlock(http)];
 
+    /// <summary>The parking blocks of agent-first PR 9 part B: wait and ask_owner.</summary>
+    /// <param name="questions">Where 'ask_owner' writes.</param>
+    /// <param name="clock">The clock 'wait' and 'ask_owner' read.</param>
+    /// <returns>The two blocks.</returns>
+    public static IReadOnlyList<IGraphBlock> ParkingBlocks(IQuestionPort questions, TimeProvider clock) =>
+        [new WaitBlock(clock), new AskOwnerBlock(questions, clock)];
+
     /// <summary>Finds the block of a type.</summary>
     /// <param name="type">The type name, such as 'condition'.</param>
     /// <returns>The block, or null when this build has no such block.</returns>
