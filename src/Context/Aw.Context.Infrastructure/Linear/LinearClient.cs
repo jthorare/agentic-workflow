@@ -21,7 +21,7 @@ internal sealed class LinearClient(LinearSettings settings, LinearSourceParts pa
 {
     private const string TokenKey = "context.sources.linear.token";
     private const int PageSize = 250;
-    private readonly LinearReadKey _key = new(settings.Token, parts.Environment);
+    private readonly LinearReadKey _key = new(settings.Token, parts.Environment, parts.Credential);
     private readonly LinearCalls _calls = new(settings, parts.Logger, $"Create a read-only personal API key, store it behind {TokenKey} and save the profile again (spec §8.8).");
 
     /// <summary>The checked settings.</summary>
@@ -51,7 +51,7 @@ internal sealed class LinearClient(LinearSettings settings, LinearSourceParts pa
             if (string.IsNullOrEmpty(key) || key.Any(c => char.IsControl(c) || char.IsWhiteSpace(c)))
             {
                 return _calls.Failed(operation, ContextErrors.SourceNotConfigured.With(
-                    $"{TokenKey}: the {Scheme(Settings.Token)}: secret pointer doesn't resolve to a usable Linear key (none, or one with spaces or control characters); "
+                    $"{TokenKey}: {Described(Settings.Token)} doesn't resolve to a usable Linear key (none, or one with spaces or control characters); "
                     + "'sindri doctor' shows why (its SND-SECRET code names the target and the fix). Point it at a read-only personal API key (spec §8.8)."), status: null);
             }
 
@@ -111,6 +111,8 @@ internal sealed class LinearClient(LinearSettings settings, LinearSourceParts pa
             after = cursor;
         }
     }
+
+    private static string Described(string? pointer) => pointer is null ? "no connected Linear connection or token pointer" : $"the {Scheme(pointer)}: secret pointer";
 
     private static string Scheme(string pointer) => pointer[..pointer.IndexOf(':', StringComparison.Ordinal)];
 }

@@ -3,16 +3,18 @@ using System.Text;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.ListConnections;
 using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Features.RenameConnection;
 using Aw.Sindri.Features.TestConnection;
 
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri connection add|list|show|test|remove|signin [--client-id ID] [--key-env NAME] [--kind K] [--preset P]' (connections PR 10a): a client of the /sindri/connections routes.
+/// 'sindri connection add|list|show|test|rename|remove|signin [--client-id ID] [--key-env NAME] [--kind K] [--preset P]' (connections PR 10a): a client of the /sindri/connections routes.
 /// A session may run every verb (owner decision D2). 'add' for an oauth connection prints the consent URL as soon as it has it, then waits for the callback.
 /// </summary>
 /// <param name="client">The API client.</param>
@@ -50,6 +52,7 @@ internal sealed partial class ConnectionVerbs(ControlPlaneClient client, Output 
             "list" => await List(command, ct).ConfigureAwait(false),
             "show" => await Show(command, ct).ConfigureAwait(false),
             "test" => await Test(command, ct).ConfigureAwait(false),
+            "rename" => await Rename(command, ct).ConfigureAwait(false),
             "remove" => await Remove(command, ct).ConfigureAwait(false),
             "signin" => await SignIn(command, ct).ConfigureAwait(false),
             _ => await Add(command, ct).ConfigureAwait(false),
@@ -104,6 +107,20 @@ internal sealed partial class ConnectionVerbs(ControlPlaneClient client, Output 
         return command.Json
             ? await _output.Raw(answer.Value.Body, code).ConfigureAwait(false)
             : await _output.Text(tested.Ok ? $"{tested.Connection.Name}: the provider accepted the credential.{(tested.Tools is { } tools ? $" Tools: {string.Join(", ", tools)}." : string.Empty)}\n" : $"{tested.Connection.Name}: {tested.Reason}\n", code).ConfigureAwait(false);
+    }
+
+    private async Task<int> Rename(Parsed command, CancellationToken ct)
+    {
+        var answer = await _client.Post<RenameConnectionBody, RenameConnectionResponse>(Route(command.Name) + "/rename", new RenameConnectionBody(command.Label ?? string.Empty), ct).ConfigureAwait(false);
+        if (answer.IsError)
+        {
+            return await _output.Error(answer.Error).ConfigureAwait(false);
+        }
+
+        var renamed = answer.Value.Value;
+        return command.Json
+            ? await _output.Raw(answer.Value.Body, 0).ConfigureAwait(false)
+            : await _output.Text($"Renamed {renamed.PreviousName} to {renamed.Name}{(renamed.SecretMoved ? " (its stored secret moved with it)" : string.Empty)}.\n", 0).ConfigureAwait(false);
     }
 
     private async Task<int> Remove(Parsed command, CancellationToken ct)
@@ -221,75 +238,4 @@ internal sealed partial class ConnectionVerbs(ControlPlaneClient client, Output 
 
         return text.ToString();
     }
-
-    private static readonly string[] _verbs = ["add", "list", "show", "test", "remove", "signin"];
-    private static readonly string[] _switchFlags = ["--json", "--no-start"];
-    private static readonly string[] _valueFlags = ["--preset", "--kind", "--client-id", "--client-secret-env", "--key-env", "--scope", "--url"];
-
-    private static Result<Parsed> Parse(string[] args)
-    {
-        var alias = args[0] == "connections";
-        var verb = alias || args.Length < 2 ? "list" : args[1];
-        if (!_verbs.Contains(verb, StringComparer.Ordinal))
-        {
-            return SindriErrors.InvalidInput.With("usage: sindri connection add|list|show|test|remove|signin (fix: sindri help)");
-        }
-
-        var scanned = Scan([.. args.Skip(alias ? 1 : 2)]);
-        if (scanned.IsError)
-        {
-            return scanned.Error;
-        }
-
-        var (values, switches, names) = scanned.Value;
-        if (WrongNames(verb, names) is { } wrong)
-        {
-            return wrong;
-        }
-
-        string? Last(string flag) => values.TryGetValue(flag, out var given) ? given[^1] : null;
-        return new Parsed(verb, names.Count == 0 ? string.Empty : names[0], Last("--preset"), Last("--kind"), Last("--client-id"), Last("--key-env"), Last("--client-secret-env"), values.GetValueOrDefault("--scope") ?? [], switches.Contains("--json"), switches.Contains("--no-start"), Last("--url"));
-    }
-
-    private static Error? WrongNames(string verb, List<string> names) =>
-        names.Count > 1 || (!string.Equals(verb, "list", StringComparison.Ordinal) && names.Count == 0)
-            ? SindriErrors.InvalidInput.With($"sindri connection {verb} takes exactly one name (service:label)")
-            : null;
-
-    private static Result<(Dictionary<string, List<string>> Values, HashSet<string> Switches, List<string> Names)> Scan(string[] rest)
-    {
-        var values = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-        var switches = new HashSet<string>(StringComparer.Ordinal);
-        var names = new List<string>();
-        for (var i = 0; i < rest.Length; i++)
-        {
-            var word = rest[i];
-            if (_switchFlags.Contains(word, StringComparer.Ordinal))
-            {
-                _ = switches.Add(word);
-            }
-            else if (_valueFlags.Contains(word, StringComparer.Ordinal))
-            {
-                if (i + 1 >= rest.Length)
-                {
-                    return SindriErrors.InvalidInput.With($"{word} needs a value");
-                }
-
-                _ = values.TryAdd(word, []);
-                values[word].Add(rest[++i]);
-            }
-            else if (word.StartsWith('-'))
-            {
-                return SindriErrors.InvalidInput.With($"unknown flag {word} (fix: sindri help)");
-            }
-            else
-            {
-                names.Add(word);
-            }
-        }
-
-        return (values, switches, names);
-    }
-
-    private sealed record Parsed(string Verb, string Name, string? Preset, string? Kind, string? Client, string? KeyEnv, string? ClientSecretEnv, IReadOnlyList<string> Scopes, bool Json, bool NoStart, string? Url = null);
 }

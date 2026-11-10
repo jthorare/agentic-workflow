@@ -66,7 +66,7 @@ internal static partial class Labels
     internal const string LinearConnectTitle = "Linear isn't connected";
 
     /// <summary>The card's sentence.</summary>
-    internal const string LinearConnectBody = "Paste a Linear key and tick your teams in Settings, Connections, Linear.";
+    internal const string LinearConnectBody = "Paste a Linear key and tick your teams under Connections, Linear.";
 
     /// <summary>The card's button.</summary>
     internal const string LinearConnect = "Connect Linear";
@@ -172,17 +172,113 @@ internal static partial class Labels
             "assigned" => $"{item.Key} assigned to you{by}",
             "mentioned" when item.Actor is { } author => $"{author.Name} mentioned you on {item.Key}",
             "mentioned" => $"You were mentioned on {item.Key}",
-            "state" => $"{item.Key} moved from {item.From} to {item.To}{by}",
+            "state" => $"{item.Key} {StateMove(item)}{by}",
             _ => $"{item.Key} changed{by}",
         };
     }
 
-    /// <summary>The strip's button that moves the marker.</summary>
-    internal const string LinearDismiss = "Dismiss";
+    // why: a name the server could not find is null; the row says what it knows and never leaves a blank (#2536)
+    private static string StateMove(LinearSinceItem item) => (item.From, item.To) switch
+    {
+        ({ Length: > 0 } from, { Length: > 0 } to) => $"moved from {from} to {to}",
+        (_, { Length: > 0 } to) => $"moved to {to}",
+        _ => "moved to a new state",
+    };
 
-    /// <summary>The strip's line when the changes cannot be read.</summary>
+    /// <summary>One change of an issue, without its key.</summary>
+    /// <param name="item">The change.</param>
+    /// <returns>"assigned to you", "moved from Todo to In Progress", "Sam Lee mentioned you", "you were mentioned" or "changed".</returns>
+    internal static string LinearSinceChange(LinearSinceItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        var by = item.Actor is { } actor ? " by " + actor.Name : string.Empty;
+        return item.Kind switch
+        {
+            "assigned" => "assigned to you" + by,
+            "mentioned" when item.Actor is { } author => author.Name + " mentioned you",
+            "mentioned" => "you were mentioned",
+            "state" => StateMove(item) + by,
+            _ => "changed" + by,
+        };
+    }
+
+    /// <summary>The state chip of a move.</summary>
+    /// <param name="from">The old state's name; null when unknown.</param>
+    /// <param name="to">The new state's name; null when unknown.</param>
+    /// <returns>"Todo → In Progress", "→ In Progress" or "New state".</returns>
+    internal static string LinearStateChip(string? from, string? to) => (from, to) switch
+    {
+        ({ Length: > 0 } a, { Length: > 0 } b) => a + " → " + b,
+        (_, { Length: > 0 } b) => "→ " + b,
+        _ => "New state",
+    };
+
+    /// <summary>A since-you-looked row's second line.</summary>
+    /// <param name="key">The issue key.</param>
+    /// <param name="changes">What the chips don't show, newest first; may be empty.</param>
+    /// <returns>"ENG-12" or "ENG-12 · Sam Lee mentioned you".</returns>
+    internal static string LinearSinceDetail(string key, IEnumerable<string> changes) => string.Join(" · ", new[] { key }.Concat(changes));
+
+    /// <summary>A since-you-looked row's note when its moves end where they started.</summary>
+    /// <param name="moves">How many moves; at least two.</param>
+    /// <returns>"moved twice" or "moved 3 times".</returns>
+    internal static string LinearMovedTimes(int moves) => moves == 2 ? "moved twice" : string.Create(CultureInfo.InvariantCulture, $"moved {moves} times");
+
+    /// <summary>A group's button that shows its other rows; no count, the heading already says it.</summary>
+    internal const string LinearShowAll = "Show all";
+
+    /// <summary>The same button once the group is expanded.</summary>
+    internal const string LinearShowFewer = "Show fewer";
+
+    /// <summary>A person's initials for a row.</summary>
+    /// <param name="name">The display name.</param>
+    /// <returns>"JE" for "Joi Example", "J" for "Joi"; empty for a blank name.</returns>
+    internal static string LinearInitials(string name)
+    {
+        var words = (name ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return words.Length == 0 ? string.Empty : string.Concat(words.Take(2).Select(static w => char.ToUpperInvariant(w[0])));
+    }
+
+    /// <summary>The reason a Linear feed failed, in words.</summary>
+    /// <param name="code">The feed's error code; may be empty.</param>
+    /// <returns>The sentence the card shows.</returns>
+    internal static string LinearFeedReason(string? code) => code switch
+    {
+        "SND-CONTEXT-071" => "Linear refused the key. It may have expired or been revoked.",
+        "SND-CONTEXT-010" => "Linear is rate-limiting Sindri or is down. Sindri keeps trying.",
+        "SND-CONTEXT-072" => "Linear sent a reply Sindri couldn't read.",
+        _ => "Linear sync is failing.",
+    };
+
+    /// <summary>The Retry button of the card's smaller states.</summary>
+    internal const string LinearStripRetry = "Retry";
+
+    /// <summary>New issue's tooltip while Linear is not connected.</summary>
+    internal const string LinearNewIssueNeedsConnection = "Connect Linear first: New issue needs a Linear connection.";
+
+    /// <summary>The card's one action: moves the marker.</summary>
+    internal const string LinearMarkAllSeen = "Mark all seen";
+
+    /// <summary>The card's line when the changes cannot be read.</summary>
     internal const string LinearStripFailed = "Couldn't load what changed";
 
-    /// <summary>The button that reads them again.</summary>
-    internal const string LinearStripRetry = "Retry";
+    /// <summary>The card's one button when the changes cannot be read: opens the Linear connection.</summary>
+    internal const string LinearReconnect = "Reconnect";
+
+    /// <summary>The card's line when nothing is new.</summary>
+    internal const string LinearNothingNew = "Nothing new since you last looked";
+
+    /// <summary>The card's second line when nothing is new and the marker's time is known.</summary>
+    /// <param name="age">How long ago the newest change you saw happened.</param>
+    /// <returns>"The last change you saw was 2h ago".</returns>
+    internal static string LinearNothingNewWhen(TimeSpan age) => "The last change you saw was " + AgoWords(age);
+
+    /// <summary>The group of issues assigned to the viewer.</summary>
+    internal const string LinearSinceAssigned = "Assigned to you";
+
+    /// <summary>The group of issues that changed state.</summary>
+    internal const string LinearSinceMoved = "Moved";
+
+    /// <summary>The group of everything else (mentions).</summary>
+    internal const string LinearSinceOther = "Other";
 }

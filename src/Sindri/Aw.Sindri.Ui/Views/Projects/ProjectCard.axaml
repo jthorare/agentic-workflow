@@ -34,7 +34,7 @@
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
     </Style>
   </UserControl.Styles>
-  <Border x:Name="ProjectCardFrame" Classes="card pcard" Classes.gone="{Binding IsGone}" Focusable="True"
+  <Border x:Name="ProjectCardFrame" Classes="card pcard clickable" Classes.gone="{Binding IsGone}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
     <StackPanel Spacing="{StaticResource Space.SM}">
       <Grid ColumnDefinitions="*,Auto" AutomationProperties.AccessibilityView="Raw">

@@ -77,8 +77,11 @@ AW_HEAVY_LOCK_HELD=1 H > /dev/null 2>&1; check "usage is checked before the nest
 check "stdout passes through" "$(H --light echo hello)" "hello"
 H --light sh -c 'exit 7' > /dev/null 2>&1; check "the job's exit code is the wrapper's" "$?" "7"
 H --light no-such-command-here > /dev/null 2>&1; check "a command that does not exist: 127" "$?" "127"
-H --light --expensive echo x > /dev/null 2>&1
-check "a second flag is taken as the command (pinned as is): setsid rejects it, exit 1" "$?" "1"
+out="$(H --light --expensive echo x 2>&1)"; rc=$?
+# setsid refuses the unknown option (1); without setsid (macOS) the perl fallback can't exec a `--expensive` command (127).
+if command -v setsid > /dev/null 2>&1; then want=1; else want=127; fi
+check "a second flag is taken as the command (pinned as is): setsid or perl rejects it, exit $want" "$rc" "$want"
+check "a second flag is taken as the command: echo never runs" "$(printf '%s\n' "$out" | grep -cx 'x')" "0"
 reset
 
 # --- lock files while a job runs, and after ---

@@ -11,7 +11,7 @@
     <Style Selector="TextBlock.conn-chip.attention"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
     <Style Selector="TextBlock.conn-chip.error"><Setter Property="Foreground" Value="{DynamicResource Brush.Error}" /></Style>
   </UserControl.Styles>
-  <Border x:Name="ConnectionRowFrame" Classes="item-row" Focusable="True"
+  <Border x:Name="ConnectionRowFrame" Classes="item-row clickable" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <Grid ColumnDefinitions="1.4*,140,170,Auto" RowDefinitions="Auto,Auto" VerticalAlignment="Center" MinHeight="36">
       <DockPanel LastChildFill="True" Margin="0,0,8,0" VerticalAlignment="Center">
