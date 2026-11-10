@@ -16,7 +16,7 @@ internal sealed class SqliteToolkitStore(LedgerDatabase database) : IToolkitStor
     public async ValueTask<Result<Toolkit?>> Find(string name, CancellationToken cancellationToken)
     {
         var rows = await Read(new SqlStatement(Select + " WHERE name = $name", c => c.Bind("$name", name)), cancellationToken).ConfigureAwait(false);
-        return rows.IsError ? rows.Error : Results.Success<Toolkit?>(rows.Value.Count == 0 ? null : rows.Value[0]);
+        return rows.IsError ? rows.Error : Results.Success(rows.Value.Count == 0 ? null : rows.Value[0]);
     }
 
     public ValueTask<Result<IReadOnlyList<Toolkit>>> List(CancellationToken cancellationToken) =>
