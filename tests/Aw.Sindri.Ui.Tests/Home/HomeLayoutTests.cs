@@ -17,6 +17,8 @@ namespace Aw.Sindri.Ui.Tests.Home;
 [Lane(TestLane.Integration)]
 public sealed class HomeLayoutTests
 {
+    private static readonly string[] _panels = ["NeedsYouPanel", "RunningPanel", "QueuedPanel"];
+
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static async Task OnHome(double width, Action<ShellWindow> check, PageTier? tier = null)
@@ -65,6 +67,36 @@ public sealed class HomeLayoutTests
     {
         var control = window.GetVisualDescendants().OfType<Control>().Single(c => c.Name == name);
         return new Rect(control.TranslatePoint(default, window) ?? default, control.Bounds.Size);
+    }
+
+    [Fact]
+    public async Task The_three_card_headers_centre_their_text_and_share_one_height()
+    {
+        await OnHome(1440, window =>
+        {
+            var heads = _panels.Select(name => window.GetVisualDescendants().OfType<Control>().Single(c => c.Name == name).GetVisualDescendants().OfType<Border>().First(b => b.Classes.Contains("phead"))).ToList();
+
+            foreach (var head in heads)
+            {
+                var text = head.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("eyebrow"));
+                var centre = text.TranslatePoint(new Point(0, text.Bounds.Height / 2), head)!.Value.Y;
+                Assert.True(Math.Abs(centre - (head.Bounds.Height / 2)) <= 1, "the header text is vertically centred in its header");
+            }
+
+            Assert.True(heads.Max(h => h.Bounds.Height) - heads.Min(h => h.Bounds.Height) < 1, "the three headers are one height");
+        });
+    }
+
+    [Fact]
+    public async Task The_cards_clip_their_rows_to_their_rounded_corners()
+    {
+        await OnHome(1440, window =>
+        {
+            foreach (var name in _panels)
+            {
+                Assert.True(window.GetVisualDescendants().OfType<Border>().Single(b => b.Name == name).ClipToBounds, name + " clips to its corners");
+            }
+        });
     }
 
     [Fact]

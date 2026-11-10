@@ -177,6 +177,18 @@ public sealed class FromElsewhereTests
     }
 
     [Fact]
+    public async Task Only_the_Connect_Linear_part_is_an_action_drawn_as_a_link()
+    {
+        _server.LinearIssuesAnswer = RouteAnswer.Api("linear-issues", "not-connected");
+        var notConnected = await Ready(reviews: 2);
+        Assigned(1);
+        var counts = await Ready(reviews: 2);
+
+        Assert.Equal([false, true], notConnected.Parts.Select(p => p.IsAction));
+        Assert.All(counts.Parts, p => Assert.False(p.IsAction));
+    }
+
+    [Fact]
     public async Task Each_part_opens_its_own_place()
     {
         Assigned(1);
