@@ -1,6 +1,7 @@
 using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
@@ -31,6 +32,14 @@ public sealed class WorkflowsCreateTests
         Assert.Equal(["weekday-check", "daily-digest", "manual-notify"], page.Templates.Select(t => t.Name), StringComparer.Ordinal);
         Assert.All(page.Templates, t => Assert.NotEmpty(t.Description));
         Assert.Equal("weekday-check", page.SelectedTemplate);
+    }
+
+    // Sindri has no route that lists templates, so the form carries the names GraphTemplates (Aw.Sindri.Core/Graph/Templates/GraphTemplates.cs) accepts.
+    // When a template there is renamed, added or removed, this fails: update Labels.WfTemplates with it.
+    [Fact]
+    public void The_templates_the_form_offers_are_the_three_names_GraphTemplates_accepts()
+    {
+        Assert.Equal(["weekday-check", "daily-digest", "manual-notify"], Labels.WfTemplates.Select(t => t.Name), StringComparer.Ordinal);
     }
 
     [Theory]
