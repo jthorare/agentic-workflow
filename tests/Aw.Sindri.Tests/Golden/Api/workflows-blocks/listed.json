@@ -801,12 +801,182 @@
             "wait": true
           },
           "exampleSpec": null
+        },
+        {
+          "type": "wait",
+          "title": "Wait",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "duration",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "until",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "timezone",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "wakeAt": "string",
+            "waitedSeconds": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "until": "07:00",
+            "timezone": "America/Los_Angeles"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Morning nudge",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "hold",
+                "type": "wait",
+                "config": {
+                  "until": "07:00",
+                  "timezone": "America/Los_Angeles"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Good morning",
+                  "body": "Woke at {{hold.wakeAt}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "hold"
+              },
+              {
+                "from": "hold",
+                "to": "tell"
+              }
+            ]
+          }
         }
       ]
     },
     {
       "group": "Outputs",
       "blocks": [
+        {
+          "type": "ask_owner",
+          "title": "Ask owner",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "question",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "choices",
+              "type": "text list",
+              "required": false
+            },
+            {
+              "name": "timeout",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "default",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "answer": "string",
+            "answeredBy": "string"
+          },
+          "branches": [
+            "answered",
+            "timeout"
+          ],
+          "exampleConfig": {
+            "question": "Ship the release?",
+            "choices": [
+              "yes",
+              "no"
+            ],
+            "timeout": "2h",
+            "default": "no"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Ship gate",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "ask",
+                "type": "ask_owner",
+                "config": {
+                  "question": "Ship the release?",
+                  "choices": [
+                    "yes",
+                    "no"
+                  ],
+                  "timeout": "2h",
+                  "default": "no"
+                }
+              },
+              {
+                "id": "go",
+                "type": "notify",
+                "config": {
+                  "title": "Shipping",
+                  "body": "{{ask.answeredBy}} said {{ask.answer}}"
+                }
+              },
+              {
+                "id": "stop",
+                "type": "notify",
+                "config": {
+                  "title": "Held back",
+                  "body": "Nobody answered in 2 hours"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "ask"
+              },
+              {
+                "from": "ask",
+                "output": "answered",
+                "to": "go"
+              },
+              {
+                "from": "ask",
+                "output": "timeout",
+                "to": "stop"
+              }
+            ]
+          }
+        },
         {
           "type": "create_item",
           "title": "Create item",
