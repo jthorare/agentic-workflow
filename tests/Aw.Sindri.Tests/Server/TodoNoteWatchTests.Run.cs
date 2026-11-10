@@ -13,17 +13,17 @@ public sealed partial class TodoNoteWatchTests
         internal async Task Next(TimeSpan by, Func<Task>? act = null, bool expectPass = true)
         {
             var before = sync.Passes;
-            var parked = clock.Arms;   // the loop is parked in its wait here; an arm past this count is one it made after waking
+            var parked = Clock.Arms;   // the loop is parked in its wait here; an arm past this count is one it made after waking
             if (act is not null)
             {
                 await act();
             }
 
-            await clock.Step(by);
+            await Clock.Step(by);
             if (expectPass)
             {
-                await clock.Armed(() => sync.Passes > before);
-                await clock.ArmedBeyond(parked);
+                await Clock.Armed(() => sync.Passes > before);
+                await Clock.ArmedBeyond(parked);
             }
         }
 
