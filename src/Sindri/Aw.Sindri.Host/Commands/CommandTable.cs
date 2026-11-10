@@ -144,6 +144,8 @@ internal static partial class CommandTable
         ["wf", "validate", .. var rest] => await WfValidateCommand.Run(rest, services, output, ct).ConfigureAwait(false),   // in process: reads the graph file, never starts or contacts serve
         ["wf", "run", .. var rest] => await WfRunCommand.Run(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "cancel", .. var rest] => await WfRunCommand.Cancel(rest, desk, output, ct).ConfigureAwait(false),
+        ["wf", "takeover", .. var rest] => await WfAgentNodeCommand.TakeOver(rest, desk, output, ct).ConfigureAwait(false),
+        ["wf", "handback", .. var rest] => await WfAgentNodeCommand.HandBack(rest, desk, output, ct).ConfigureAwait(false),
         ["wf", "list", .. var rest] => await new WfReadVerbs(desk.Client, output).List(rest, ct).ConfigureAwait(false),   // the reads go to the routes and never start the control plane
         ["wf", "blocks", .. var rest] => await new WfReadVerbs(desk.Client, output).Blocks(rest, ct).ConfigureAwait(false),
         ["wf", "docs", .. var rest] => await new WfReadVerbs(desk.Client, output).Docs(rest, ct).ConfigureAwait(false),
