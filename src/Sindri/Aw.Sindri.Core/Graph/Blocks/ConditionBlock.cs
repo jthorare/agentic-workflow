@@ -13,6 +13,12 @@ public sealed class ConditionBlock : IGraphBlock
     public string Type => "condition";
 
     /// <inheritdoc />
+    public string Title => "If";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.Logic;
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />

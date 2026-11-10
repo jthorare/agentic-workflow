@@ -14,6 +14,12 @@ public interface ILinearSideFacts
     /// <returns>The lists; a picked team never synced answers null ids, name and sync time and empty lists. Null when Context holds nothing for the team in this scope (it isn't a picked team). Context's error otherwise (SND-CONTEXT-020 for a session).</returns>
     public ValueTask<Result<LinearLookupsResponse?>> Lookups(string team, CancellationToken cancellationToken);
 
+    /// <summary>Reads a team's pickers for a write: under the scope a write runs under (the owner's, once the caller's own check passed), so a session that may write isn't turned away by the pickers' owner-only read.</summary>
+    /// <param name="team">The team's key.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>As <see cref="Lookups"/>; the caller's refusal (SND-CONTEXT-020, 021, 003) when a session may not write at all.</returns>
+    public ValueTask<Result<LinearLookupsResponse?>> LookupsForWrite(string team, CancellationToken cancellationToken);
+
     /// <summary>Reads whether the profile names any Linear team (<c language="text">context.sources.linear.teams</c>).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>True when it does; the error when the profile can't be read.</returns>

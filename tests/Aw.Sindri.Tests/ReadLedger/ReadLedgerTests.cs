@@ -190,6 +190,8 @@ public sealed class ReadLedgerTests
 
         public ValueTask<Result<LedgerEvent?>> ByKey(string idempotencyKey, CancellationToken cancellationToken) => inner.ByKey(idempotencyKey, cancellationToken);
 
+        public ValueTask<Result<LedgerEvent?>> LatestByKeyPrefix(string keyPrefix, CancellationToken cancellationToken) => inner.LatestByKeyPrefix(keyPrefix, cancellationToken);
+
         public ValueTask<Result<long>> Head(CancellationToken cancellationToken) => ValueTask.FromResult<Result<long>>(head);
     }
 

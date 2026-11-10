@@ -31,5 +31,6 @@
   },
   "waitingCount": 0,
   "groups": [],
-  "empty": null
+  "empty": null,
+  "connect": null
 }

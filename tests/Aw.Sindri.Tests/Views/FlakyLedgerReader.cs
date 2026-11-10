@@ -21,6 +21,8 @@ internal sealed class FlakyLedgerReader(ILedgerReader inner) : ILedgerReader
 
     public ValueTask<Result<LedgerEvent?>> ByKey(string idempotencyKey, CancellationToken cancellationToken) => inner.ByKey(idempotencyKey, cancellationToken);
 
+    public ValueTask<Result<LedgerEvent?>> LatestByKeyPrefix(string keyPrefix, CancellationToken cancellationToken) => inner.LatestByKeyPrefix(keyPrefix, cancellationToken);
+
     public ValueTask<Result<long>> Head(CancellationToken cancellationToken) =>
         FailHead ? ValueTask.FromResult<Result<long>>(Unavailable) : inner.Head(cancellationToken);
 

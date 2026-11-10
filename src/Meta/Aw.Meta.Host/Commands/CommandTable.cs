@@ -47,6 +47,7 @@ internal static class CommandTable
         LanesContextCommand.Entry,
         LaneRecycleCommand.Entry,
         LaneInboxCommand.Entry,
+        BoardLineCommand.Entry,
         LaneStopCheckCommand.Entry,
         LaneReplyCommand.Entry,
         UsageCommand.Entry,

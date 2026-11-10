@@ -53,6 +53,12 @@ public interface IWorkflowStore
     /// <returns>The record after the change, SND-GRAPH-008 or SND-GRAPH-011.</returns>
     public ValueTask<Result<WorkflowRecord>> Activate(WorkflowId id, int revision, CancellationToken cancellationToken);
 
+    /// <summary>Turns a workflow off: no revision is active, so no trigger runs it. Pausing a workflow that is already off changes nothing.</summary>
+    /// <param name="id">The workflow.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>The record after the change, or SND-GRAPH-008.</returns>
+    public ValueTask<Result<WorkflowRecord>> Pause(WorkflowId id, CancellationToken cancellationToken);
+
     /// <summary>Archives a workflow: it leaves the list and turns off.</summary>
     /// <param name="id">The workflow.</param>
     /// <param name="cancellationToken">Cancels the write.</param>

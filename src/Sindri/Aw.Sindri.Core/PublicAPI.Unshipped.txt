@@ -69,11 +69,10 @@ Aw.Sindri.Core.Challenges.IssuedChallenge.Subject.init -> void
 Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.Decision = 4 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.Desk = 5 -> Aw.Sindri.Core.Commands.ActionClass
-Aw.Sindri.Core.Commands.ActionClass.Issue = 8 -> Aw.Sindri.Core.Commands.ActionClass
+Aw.Sindri.Core.Commands.ActionClass.Issue = 7 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.Job = 3 -> Aw.Sindri.Core.Commands.ActionClass
-Aw.Sindri.Core.Commands.ActionClass.Local = 7 -> Aw.Sindri.Core.Commands.ActionClass
+Aw.Sindri.Core.Commands.ActionClass.Local = 6 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.Pause = 2 -> Aw.Sindri.Core.Commands.ActionClass
-Aw.Sindri.Core.Commands.ActionClass.Protected = 6 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.Request = 0 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClass.StepReport = 1 -> Aw.Sindri.Core.Commands.ActionClass
 Aw.Sindri.Core.Commands.ActionClassifier
@@ -1433,11 +1432,15 @@ Aw.Sindri.Core.Launch.LaunchStep
 Aw.Sindri.Core.Launch.LaunchStep.<Clone>$() -> Aw.Sindri.Core.Launch.LaunchStep!
 Aw.Sindri.Core.Launch.LaunchStep.Attempt.get -> int?
 Aw.Sindri.Core.Launch.LaunchStep.Attempt.init -> void
-Aw.Sindri.Core.Launch.LaunchStep.Deconstruct(out Aw.Sindri.Core.Launch.InstanceAddress? Instance, out string? State, out int? Attempt) -> void
+Aw.Sindri.Core.Launch.LaunchStep.Deconstruct(out Aw.Sindri.Core.Launch.InstanceAddress? Instance, out string? State, out int? Attempt, out string? Run, out string? Node) -> void
 Aw.Sindri.Core.Launch.LaunchStep.Equals(Aw.Sindri.Core.Launch.LaunchStep? other) -> bool
 Aw.Sindri.Core.Launch.LaunchStep.Instance.get -> Aw.Sindri.Core.Launch.InstanceAddress?
 Aw.Sindri.Core.Launch.LaunchStep.Instance.init -> void
-Aw.Sindri.Core.Launch.LaunchStep.LaunchStep(Aw.Sindri.Core.Launch.InstanceAddress? Instance = null, string? State = null, int? Attempt = null) -> void
+Aw.Sindri.Core.Launch.LaunchStep.LaunchStep(Aw.Sindri.Core.Launch.InstanceAddress? Instance = null, string? State = null, int? Attempt = null, string? Run = null, string? Node = null) -> void
+Aw.Sindri.Core.Launch.LaunchStep.Run.get -> string?
+Aw.Sindri.Core.Launch.LaunchStep.Run.init -> void
+Aw.Sindri.Core.Launch.LaunchStep.Node.get -> string?
+Aw.Sindri.Core.Launch.LaunchStep.Node.init -> void
 Aw.Sindri.Core.Launch.LaunchStep.State.get -> string?
 Aw.Sindri.Core.Launch.LaunchStep.State.init -> void
 Aw.Sindri.Core.Launches.LaunchRow.Step.get -> Aw.Sindri.Core.Launch.LaunchStep!
@@ -9637,7 +9640,7 @@ static Aw.Sindri.Core.Challenges.IssuedChallenge.MinHoldMs.get -> int
 static Aw.Sindri.Core.Commands.Authorization.CallersFor(Aw.Sindri.Core.Commands.CommandRow! row) -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Challenges.ChallengeConfirmation
 static Aw.Sindri.Core.Challenges.ChallengeConfirmation.Refusal(Aw.Sindri.Core.Challenges.IssuedChallenge! issued, Aw.Sindri.Core.Challenges.ChallengeAnswer! answer, System.DateTimeOffset now) -> Aw.Kernel.Error?
-static Aw.Sindri.Core.Commands.CallerContext.ActorOf(Aw.Sindri.Core.Commands.CallerClass caller, Aw.Sindri.Core.Commands.ClientLabel client) -> string!
+static Aw.Sindri.Core.Commands.CallerContext.ActorOf(Aw.Sindri.Core.Commands.CallerClass caller, Aw.Sindri.Core.Commands.ClientLabel client, Aw.Sindri.Core.Launch.LaunchId? launch = null) -> string!
 Aw.Sindri.Core.Control.IRepoLocator.Place(string! directory, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.RepoEntry!>! repos, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Control.RepoPlacement?>
 Aw.Sindri.Core.Control.RepoPlacement
 Aw.Sindri.Core.Control.RepoPlacement.<Clone>$() -> Aw.Sindri.Core.Control.RepoPlacement!
@@ -11475,15 +11478,15 @@ static Aw.Sindri.Core.Health.HealthSummary.WithStalledAgents(Aw.Sindri.Core.Heal
 static Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepBrief.Needed(Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor! descriptor, Aw.Sindri.Core.Workflow.Ids.OutcomeName outcome) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Ids.FactKey>!
 Aw.Sindri.Core.Launches.StalledAgentRun
 Aw.Sindri.Core.Launches.StalledAgentRun.<Clone>$() -> Aw.Sindri.Core.Launches.StalledAgentRun!
-Aw.Sindri.Core.Launches.StalledAgentRun.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.InstanceAddress Instance, out System.DateTimeOffset TurnEndedAt) -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out Aw.Sindri.Core.Ids.ItemId Item, out Aw.Sindri.Core.Launch.InstanceAddress? Instance, out System.DateTimeOffset TurnEndedAt) -> void
 Aw.Sindri.Core.Launches.StalledAgentRun.Equals(Aw.Sindri.Core.Launches.StalledAgentRun? other) -> bool
-Aw.Sindri.Core.Launches.StalledAgentRun.Instance.get -> Aw.Sindri.Core.Launch.InstanceAddress
+Aw.Sindri.Core.Launches.StalledAgentRun.Instance.get -> Aw.Sindri.Core.Launch.InstanceAddress?
 Aw.Sindri.Core.Launches.StalledAgentRun.Instance.init -> void
 Aw.Sindri.Core.Launches.StalledAgentRun.Item.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Core.Launches.StalledAgentRun.Item.init -> void
 Aw.Sindri.Core.Launches.StalledAgentRun.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
 Aw.Sindri.Core.Launches.StalledAgentRun.Launch.init -> void
-Aw.Sindri.Core.Launches.StalledAgentRun.StalledAgentRun(Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.InstanceAddress Instance, System.DateTimeOffset TurnEndedAt) -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.StalledAgentRun(Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Ids.ItemId Item, Aw.Sindri.Core.Launch.InstanceAddress? Instance, System.DateTimeOffset TurnEndedAt) -> void
 Aw.Sindri.Core.Launches.StalledAgentRun.TurnEndedAt.get -> System.DateTimeOffset
 Aw.Sindri.Core.Launches.StalledAgentRun.TurnEndedAt.init -> void
 override Aw.Sindri.Core.Launches.StalledAgentRun.Equals(object? obj) -> bool
@@ -11716,11 +11719,9 @@ Aw.Sindri.Core.Sandbox.Plan.LimitsInput.AttendedSettings.get -> Aw.Sindri.Core.P
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.AttendedSettings.init -> void
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Cores.get -> int
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Cores.init -> void
-Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Deconstruct(out Aw.Sindri.Core.Profile.SandboxLimits? Limits, out Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, out bool Attended, out System.TimeSpan? StepTimeout, out System.TimeSpan? LongMax, out long RamBytes, out int Cores) -> void
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Equals(Aw.Sindri.Core.Sandbox.Plan.LimitsInput? other) -> bool
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Limits.get -> Aw.Sindri.Core.Profile.SandboxLimits?
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Limits.init -> void
-Aw.Sindri.Core.Sandbox.Plan.LimitsInput.LimitsInput(Aw.Sindri.Core.Profile.SandboxLimits? Limits, Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, bool Attended, System.TimeSpan? StepTimeout, System.TimeSpan? LongMax, long RamBytes, int Cores) -> void
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.LongMax.get -> System.TimeSpan?
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.LongMax.init -> void
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.RamBytes.get -> long
@@ -12806,6 +12807,7 @@ static Aw.Sindri.Core.Sandbox.RuntimeCeiling.Next(System.TimeSpan elapsedReal, S
 Aw.Sindri.Core.Workflow.Engine.Runtime.IRunSuspensions
 Aw.Sindri.Core.Workflow.Engine.Runtime.IRunSuspensions.IsSuspended(Aw.Sindri.Core.Launch.LaunchId launch, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Sindri.Core.Ledger.ILedgerReader.ByKey(string! idempotencyKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ledger.LedgerEvent?>!>
+Aw.Sindri.Core.Ledger.ILedgerReader.LatestByKeyPrefix(string! keyPrefix, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ledger.LedgerEvent?>!>
 Aw.Sindri.Core.Workflow.Engine.Instances.Suspension.Sandbox.init -> void
 Aw.Sindri.Core.Workflow.Engine.ParkKind.SelfCheck = 10 -> Aw.Sindri.Core.Workflow.Engine.ParkKind
 Aw.Sindri.Core.Workflow.Engine.ParkKind.Unconfinable = 9 -> Aw.Sindri.Core.Workflow.Engine.ParkKind
@@ -13952,7 +13954,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 30 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 32 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -14389,8 +14391,12 @@ override Aw.Sindri.Core.Jobs.JobModelCall.ToString() -> string!
 static Aw.Sindri.Core.Jobs.JobModelCall.operator !=(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Jobs.JobModelCall.operator ==(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Projects.Cards.ProjectCards.StateOf(string? raw) -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
+Aw.Sindri.Core.Sandbox.Plan.SeatbeltProcessPlan
+static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProcessPlan.IsPrivateTmp(Aw.Sindri.Core.Sandbox.Plan.PlanMount! m) -> bool
+static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProcessPlan.Rewrite(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan) -> Aw.Sindri.Core.Sandbox.Plan.SandboxPlan!
 Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile
 static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.MacOsCanonical(string! path) -> string!
+static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.RenderProcess(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, string! runArea, System.Func<string!, string!>? canonical = null) -> string!
 static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.Render(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, string! runArea, System.Func<string!, string!>? canonical = null) -> string!
 Aw.Sindri.Core.Setup.ProfileKeyEdit
 Aw.Sindri.Core.Setup.ProfileKeyEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ProfileKeyEdit!
@@ -19306,9 +19312,9 @@ Aw.Sindri.Core.Memory.MemoryEmbedding.Deconstruct(out System.Collections.Generic
 Aw.Sindri.Core.Memory.MemoryEmbedding.MemoryEmbedding(System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>? Vectors, string? Reason, string? Model = null) -> void
 Aw.Sindri.Core.Memory.MemoryEmbedding.Model.get -> string?
 Aw.Sindri.Core.Memory.MemoryEmbedding.Model.init -> void
-Aw.Sindri.Core.Memory.MemoryFact.Deconstruct(out string! Key, out Aw.Sindri.Core.Memory.MemoryName Store, out string! Text, out System.Collections.Generic.IReadOnlyList<string!>! Tags, out Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, out System.DateTimeOffset? ExpiresAt, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset RefreshedAt, out System.ReadOnlyMemory<float> Embedding, out string? Model) -> void
+Aw.Sindri.Core.Memory.MemoryFact.Deconstruct(out string! Key, out Aw.Sindri.Core.Memory.MemoryName Store, out string! Text, out System.Collections.Generic.IReadOnlyList<string!>! Tags, out Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, out System.DateTimeOffset? ExpiresAt, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset RefreshedAt, out System.ReadOnlyMemory<float> Embedding, out string? Model, out string? WrittenBy) -> void
 Aw.Sindri.Core.Memory.MemoryFact.Dimension.get -> int
-Aw.Sindri.Core.Memory.MemoryFact.MemoryFact(string! Key, Aw.Sindri.Core.Memory.MemoryName Store, string! Text, System.Collections.Generic.IReadOnlyList<string!>! Tags, Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, System.DateTimeOffset? ExpiresAt, System.DateTimeOffset CreatedAt, System.DateTimeOffset RefreshedAt, System.ReadOnlyMemory<float> Embedding, string? Model = null) -> void
+Aw.Sindri.Core.Memory.MemoryFact.MemoryFact(string! Key, Aw.Sindri.Core.Memory.MemoryName Store, string! Text, System.Collections.Generic.IReadOnlyList<string!>! Tags, Aw.Sindri.Core.Memory.MemoryProvenance! Provenance, System.DateTimeOffset? ExpiresAt, System.DateTimeOffset CreatedAt, System.DateTimeOffset RefreshedAt, System.ReadOnlyMemory<float> Embedding, string? Model = null, string? WrittenBy = null) -> void
 Aw.Sindri.Core.Memory.MemoryFact.Model.get -> string?
 Aw.Sindri.Core.Memory.MemoryFact.Model.init -> void
 Aw.Sindri.Core.Memory.MemoryRecall.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Memory.RecalledFact!>! Facts, out Aw.Sindri.Core.Memory.RecallMode Mode, out int Skipped) -> void
@@ -19528,6 +19534,7 @@ static Aw.Sindri.Core.Graph.Blocks.BlockContext.operator !=(Aw.Sindri.Core.Graph
 static Aw.Sindri.Core.Graph.Blocks.BlockContext.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockContext? left, Aw.Sindri.Core.Graph.Blocks.BlockContext? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.BlockResult.operator !=(Aw.Sindri.Core.Graph.Blocks.BlockResult? left, Aw.Sindri.Core.Graph.Blocks.BlockResult? right) -> bool
 static Aw.Sindri.Core.Graph.Blocks.BlockResult.operator ==(Aw.Sindri.Core.Graph.Blocks.BlockResult? left, Aw.Sindri.Core.Graph.Blocks.BlockResult? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.ParkingBlocks(Aw.Sindri.Core.Graph.Blocks.IQuestionPort! questions, System.TimeProvider! clock) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>!
 Aw.Sindri.Core.Graph.Runs.GraphConcurrency
 Aw.Sindri.Core.Graph.Runs.GraphConcurrency.OnePerWorkflow = 1 -> Aw.Sindri.Core.Graph.Runs.GraphConcurrency
 Aw.Sindri.Core.Graph.Runs.GraphConcurrency.Queue = 2 -> Aw.Sindri.Core.Graph.Runs.GraphConcurrency
@@ -19554,6 +19561,7 @@ Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Insert(Aw.Sindri.Core.Graph.Runs.Wor
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.NodeRunsForItem(Aw.Sindri.Core.Graph.Ids.WorkflowRunId id, int itemIndex, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.NodeRun!>!>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.NodeRuns(Aw.Sindri.Core.Graph.Ids.WorkflowRunId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.NodeRun!>!>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.RecordNodeRun(Aw.Sindri.Core.Graph.Runs.NodeRun! nodeRun, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.NodeRun!>!>
+Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.SetItem(Aw.Sindri.Core.Graph.Ids.WorkflowRunId id, Aw.Sindri.Core.Ids.ItemId item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.SetStatus(Aw.Sindri.Core.Graph.Ids.WorkflowRunId id, Aw.Sindri.Core.Graph.Runs.WorkflowRunStatus status, string? outputs, string? error, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.CancelQueued(Aw.Sindri.Core.Graph.Ids.WorkflowRunId id, string? error, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Discard(Aw.Sindri.Core.Graph.Ids.WorkflowRunId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
@@ -19871,6 +19879,8 @@ Aw.Sindri.Core.Graph.Runs.IGraphRunCanceller.Cancel(Aw.Sindri.Core.Graph.Ids.Wor
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotActive -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphBadPayload -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphRunEnded -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphNodeNotWaiting -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphNodeNotTakenOver -> Aw.Kernel.ErrorDefinition!
 const Aw.Sindri.Core.Views.ViewNames.WorkflowRuns = "workflow-runs" -> string!
 Aw.Sindri.Core.Views.WorkflowRunRow
 Aw.Sindri.Core.Views.WorkflowRunRow.Id.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
@@ -20146,13 +20156,15 @@ Aw.Sindri.Core.Todos.TodoHoldPick
 Aw.Sindri.Core.Todos.TodoHoldPick.<Clone>$() -> Aw.Sindri.Core.Todos.TodoHoldPick!
 Aw.Sindri.Core.Todos.TodoHoldPick.At.get -> System.DateTimeOffset
 Aw.Sindri.Core.Todos.TodoHoldPick.At.init -> void
-Aw.Sindri.Core.Todos.TodoHoldPick.Deconstruct(out System.DateTimeOffset At, out string! Kept, out System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>! Priors) -> void
+Aw.Sindri.Core.Todos.TodoHoldPick.By.get -> string!
+Aw.Sindri.Core.Todos.TodoHoldPick.By.init -> void
+Aw.Sindri.Core.Todos.TodoHoldPick.Deconstruct(out System.DateTimeOffset At, out string! Kept, out System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>! Priors, out string! By) -> void
 Aw.Sindri.Core.Todos.TodoHoldPick.Equals(Aw.Sindri.Core.Todos.TodoHoldPick? other) -> bool
 Aw.Sindri.Core.Todos.TodoHoldPick.Kept.get -> string!
 Aw.Sindri.Core.Todos.TodoHoldPick.Kept.init -> void
 Aw.Sindri.Core.Todos.TodoHoldPick.Priors.get -> System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>!
 Aw.Sindri.Core.Todos.TodoHoldPick.Priors.init -> void
-Aw.Sindri.Core.Todos.TodoHoldPick.TodoHoldPick(System.DateTimeOffset At, string! Kept, System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>! Priors) -> void
+Aw.Sindri.Core.Todos.TodoHoldPick.TodoHoldPick(System.DateTimeOffset At, string! Kept, System.Collections.Generic.IReadOnlyList<(Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter)>! Priors, string! By = "") -> void
 Aw.Sindri.Core.Todos.TodoHolds
 Aw.Sindri.Core.Todos.TodoHolds.Open(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Todos.TodoOpenHold?>!>
 Aw.Sindri.Core.Todos.TodoHolds.TodoHolds(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events) -> void
@@ -20181,11 +20193,15 @@ Aw.Sindri.Core.Todos.TodoPick
 Aw.Sindri.Core.Todos.TodoPick.<Clone>$() -> Aw.Sindri.Core.Todos.TodoPick!
 Aw.Sindri.Core.Todos.TodoPick.At.get -> System.DateTimeOffset
 Aw.Sindri.Core.Todos.TodoPick.At.init -> void
-Aw.Sindri.Core.Todos.TodoPick.Deconstruct(out System.DateTimeOffset At, out Aw.Sindri.Core.Todos.TodoRow! Prior, out long VersionAfter) -> void
+Aw.Sindri.Core.Todos.TodoPick.By.get -> string!
+Aw.Sindri.Core.Todos.TodoPick.By.init -> void
+Aw.Sindri.Core.Todos.TodoPick.Kept.get -> string!
+Aw.Sindri.Core.Todos.TodoPick.Kept.init -> void
+Aw.Sindri.Core.Todos.TodoPick.Deconstruct(out System.DateTimeOffset At, out Aw.Sindri.Core.Todos.TodoRow! Prior, out long VersionAfter, out string! Kept, out string! By) -> void
 Aw.Sindri.Core.Todos.TodoPick.Equals(Aw.Sindri.Core.Todos.TodoPick? other) -> bool
 Aw.Sindri.Core.Todos.TodoPick.Prior.get -> Aw.Sindri.Core.Todos.TodoRow!
 Aw.Sindri.Core.Todos.TodoPick.Prior.init -> void
-Aw.Sindri.Core.Todos.TodoPick.TodoPick(System.DateTimeOffset At, Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter) -> void
+Aw.Sindri.Core.Todos.TodoPick.TodoPick(System.DateTimeOffset At, Aw.Sindri.Core.Todos.TodoRow! Prior, long VersionAfter, string! Kept = "", string! By = "") -> void
 Aw.Sindri.Core.Todos.TodoPick.VersionAfter.get -> long
 Aw.Sindri.Core.Todos.TodoPick.VersionAfter.init -> void
 Aw.Sindri.Core.Todos.TodoPickWindow
@@ -20511,6 +20527,539 @@ static Aw.Sindri.Core.Todos.TodoItem.operator !=(Aw.Sindri.Core.Todos.TodoItem? 
 static Aw.Sindri.Core.Todos.TodoItem.operator ==(Aw.Sindri.Core.Todos.TodoItem? left, Aw.Sindri.Core.Todos.TodoItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator !=(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
 static Aw.Sindri.Core.Todos.TodoLinkItem.operator ==(Aw.Sindri.Core.Todos.TodoLinkItem? left, Aw.Sindri.Core.Todos.TodoLinkItem? right) -> bool
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowAnsweredPayload!
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Answer.get -> string!
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Answer.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.By.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Answer, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Equals(Aw.Sindri.Core.Events.WorkflowAnsweredPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Node.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Run.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.WorkflowAnsweredPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Answer, string! By) -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowQuestionPayload!
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.By.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Choices.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Choices.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Question, out System.Collections.Generic.IReadOnlyList<string!>! Choices, out string? Default, out System.DateTimeOffset? TimeoutAt, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Default.get -> string?
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Default.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Equals(Aw.Sindri.Core.Events.WorkflowQuestionPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Node.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Question.get -> string!
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Question.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Run.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.TimeoutAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.TimeoutAt.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.WorkflowQuestionPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Question, System.Collections.Generic.IReadOnlyList<string!>! Choices, string? Default, System.DateTimeOffset? TimeoutAt, string! By) -> void
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.AskOwnerBlock(Aw.Sindri.Core.Graph.Blocks.IQuestionPort! questions, System.TimeProvider! clock) -> void
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.AskOwnerOutcome(System.Text.Json.Nodes.JsonObject! Outputs, string! Branch) -> void
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Branch.get -> string!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Branch.init -> void
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Deconstruct(out System.Text.Json.Nodes.JsonObject! Outputs, out string! Branch) -> void
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Equals(Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Outputs.get -> System.Text.Json.Nodes.JsonObject!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Outputs.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockDuration
+Aw.Sindri.Core.Graph.Blocks.IQuestionPort
+Aw.Sindri.Core.Graph.Blocks.WaitBlock
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.WaitBlock(System.TimeProvider! clock) -> void
+Aw.Sindri.Core.Graph.Blocks.WaitSchedule
+Aw.Sindri.Core.Graph.Runs.IGraphRunAnswerer
+Aw.Sindri.Core.NeedsYou.NeedsYouKind.Question = 8 -> Aw.Sindri.Core.NeedsYou.NeedsYouKind
+const Aw.Sindri.Core.Events.EventTypes.WorkflowAnswered = "workflow.answered" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowQuestion = "workflow.question" -> string!
+override Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowAnsweredPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowAnsweredPayload.ToString() -> string!
+override Aw.Sindri.Core.Events.WorkflowQuestionPayload.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowQuestionPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowQuestionPayload.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowAnsweredPayload.operator !=(Aw.Sindri.Core.Events.WorkflowAnsweredPayload? left, Aw.Sindri.Core.Events.WorkflowAnsweredPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowAnsweredPayload.operator ==(Aw.Sindri.Core.Events.WorkflowAnsweredPayload? left, Aw.Sindri.Core.Events.WorkflowAnsweredPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowQuestionPayload.operator !=(Aw.Sindri.Core.Events.WorkflowQuestionPayload? left, Aw.Sindri.Core.Events.WorkflowQuestionPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowQuestionPayload.operator ==(Aw.Sindri.Core.Events.WorkflowQuestionPayload? left, Aw.Sindri.Core.Events.WorkflowQuestionPayload? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.CheckAnswer(System.Collections.Generic.IReadOnlyList<string!>! choices, string? text, string? choice) -> string?
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.ChoicesOf(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Resolve(System.Text.Json.Nodes.JsonObject! config, string? answer, string! answeredBy) -> Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome!
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.TimeoutOf(System.Text.Json.Nodes.JsonObject! config) -> System.TimeSpan?
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.operator !=(Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? left, Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.operator ==(Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? left, Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.BlockDuration.Parse(string! text) -> Aw.Kernel.Result<System.TimeSpan>!
+static Aw.Sindri.Core.Graph.Blocks.WaitSchedule.Check(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+static Aw.Sindri.Core.Graph.Blocks.WaitSchedule.WakeAt(System.Text.Json.Nodes.JsonObject! config, System.DateTimeOffset now) -> Aw.Kernel.Result<System.DateTimeOffset>!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRowIds.WorkflowQuestion(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node) -> Aw.Sindri.Core.Ids.NeedsYouRowId
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForWorkflowQuestion(Aw.Sindri.Core.Events.WorkflowQuestionPayload! question, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
+static readonly Aw.Sindri.Core.SindriErrors.GraphNotWaiting -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Blocks.IQuestionPort.Post(Aw.Sindri.Core.Graph.Blocks.QuestionAsk! ask, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.QuestionAsk!
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Choices.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Choices.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Question, out System.Collections.Generic.IReadOnlyList<string!>! Choices, out string? Default, out System.DateTimeOffset? TimeoutAt) -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Default.get -> string?
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Default.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Equals(Aw.Sindri.Core.Graph.Blocks.QuestionAsk? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Node.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Question.get -> string!
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Question.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.QuestionAsk(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Question, System.Collections.Generic.IReadOnlyList<string!>! Choices, string? Default, System.DateTimeOffset? TimeoutAt) -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Run.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.TimeoutAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.TimeoutAt.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.<Clone>$() -> Aw.Sindri.Core.Graph.Runs.GraphAnswer!
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.By.get -> string!
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.By.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Choice.get -> string?
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Choice.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string? Text, out string? Choice, out string! By) -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Equals(Aw.Sindri.Core.Graph.Runs.GraphAnswer? other) -> bool
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.GraphAnswer(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string? Text, string? Choice, string! By) -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Node.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Run.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Text.get -> string?
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Text.init -> void
+Aw.Sindri.Core.Graph.Runs.IGraphRunAnswerer.Answer(Aw.Sindri.Core.Graph.Runs.GraphAnswer! answer, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+override Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.QuestionAsk.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.QuestionAsk.ToString() -> string!
+override Aw.Sindri.Core.Graph.Runs.GraphAnswer.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Runs.GraphAnswer.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Runs.GraphAnswer.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.QuestionAsk.operator !=(Aw.Sindri.Core.Graph.Blocks.QuestionAsk? left, Aw.Sindri.Core.Graph.Blocks.QuestionAsk? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.QuestionAsk.operator ==(Aw.Sindri.Core.Graph.Blocks.QuestionAsk? left, Aw.Sindri.Core.Graph.Blocks.QuestionAsk? right) -> bool
+static Aw.Sindri.Core.Graph.Runs.GraphAnswer.operator !=(Aw.Sindri.Core.Graph.Runs.GraphAnswer? left, Aw.Sindri.Core.Graph.Runs.GraphAnswer? right) -> bool
+static Aw.Sindri.Core.Graph.Runs.GraphAnswer.operator ==(Aw.Sindri.Core.Graph.Runs.GraphAnswer? left, Aw.Sindri.Core.Graph.Runs.GraphAnswer? right) -> bool
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Launch.AgentTask.Brief.get -> string!
+Aw.Sindri.Core.Launch.AgentTask.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Launch.AgentTask.Brief.init -> void
+Aw.Sindri.Core.Launch.AgentTask.HostGroups.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Launch.AgentTask.Outputs.init -> void
+Aw.Sindri.Core.Launch.AgentTask.Model.get -> string?
+Aw.Sindri.Core.Launch.AgentTask.Model.init -> void
+Aw.Sindri.Core.Launch.AgentTask.HostGroups.init -> void
+Aw.Sindri.Core.Launch.AgentTask
+override Aw.Sindri.Core.Launch.AgentTask.ToString() -> string!
+static Aw.Sindri.Core.Launch.AgentTask.operator !=(Aw.Sindri.Core.Launch.AgentTask? left, Aw.Sindri.Core.Launch.AgentTask? right) -> bool
+static Aw.Sindri.Core.Launch.AgentTask.operator ==(Aw.Sindri.Core.Launch.AgentTask? left, Aw.Sindri.Core.Launch.AgentTask? right) -> bool
+override Aw.Sindri.Core.Launch.AgentTask.GetHashCode() -> int
+override Aw.Sindri.Core.Launch.AgentTask.Equals(object? obj) -> bool
+Aw.Sindri.Core.Launch.AgentTask.Equals(Aw.Sindri.Core.Launch.AgentTask? other) -> bool
+Aw.Sindri.Core.Launch.AgentTask.<Clone>$() -> Aw.Sindri.Core.Launch.AgentTask!
+Aw.Sindri.Core.Launch.AgentTask.Deconstruct(out string! Brief, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, out System.Collections.Generic.IReadOnlyList<string!>! HostGroups, out string? Model) -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.RunAgentBlock() -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentBrief
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig
+override Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.ToString() -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Repo.get -> string!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.operator !=(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? left, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? right) -> bool
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.ReadOnlyRepos.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.operator ==(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? left, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? right) -> bool
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.ReadOnlyRepos.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Repo.init -> void
+override Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.GetHashCode() -> int
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Agent.get -> string?
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Agent.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Prompt.get -> string!
+override Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Equals(object? obj) -> bool
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Outputs.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Prompt.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Timeout.get -> System.TimeSpan
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Equals(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Wall.get -> System.TimeSpan?
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Connections.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Timeout.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.RunAgentConfig!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Wall.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Deconstruct(out string! Repo, out System.Collections.Generic.IReadOnlyList<string!>! ReadOnlyRepos, out string? Agent, out string! Prompt, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, out System.TimeSpan Timeout, out System.Collections.Generic.IReadOnlyList<string!>! Connections, out System.TimeSpan? Wall) -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Connections.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd
+Aw.Sindri.Core.Graph.Blocks.RunAgentLaunches
+override Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.ToString() -> string!
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.Branch.get -> string!
+static Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.operator !=(Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd? left, Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd? right) -> bool
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.Commit.get -> string?
+static Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.operator ==(Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd? left, Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd? right) -> bool
+override Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.GetHashCode() -> int
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.AgentSession.get -> string?
+override Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.Equals(object? obj) -> bool
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.Branch.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.Equals(Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd!
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.Commit.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.AgentSession.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.Deconstruct(out string! Branch, out string? Commit, out string? AgentSession, out int Tokens, out bool EmptyDiff) -> void
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.EmptyDiff.get -> bool
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.Tokens.get -> int
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.EmptyDiff.init -> void
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.Tokens.init -> void
+Aw.Sindri.Core.Graph.Blocks.RunAgentReport
+Aw.Sindri.Core.Graph.Blocks.RunAgentWire
+Aw.Sindri.Core.Graph.Blocks.RunAgentOutput
+Aw.Sindri.Core.Launch.NodeRunAddress.Workflow.get -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+Aw.Sindri.Core.Launch.NodeRunAddress.Workflow.init -> void
+Aw.Sindri.Core.Launch.NodeRunAddress.ItemIndex.get -> int
+Aw.Sindri.Core.Launch.NodeRunAddress.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Launch.NodeRunAddress.ItemIndex.init -> void
+Aw.Sindri.Core.Launch.NodeRunAddress.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Launch.NodeRunAddress.Run.init -> void
+Aw.Sindri.Core.Launch.NodeRunAddress.Node.init -> void
+Aw.Sindri.Core.Launch.NodeRunAddress
+override Aw.Sindri.Core.Launch.NodeRunAddress.ToString() -> string!
+static Aw.Sindri.Core.Launch.NodeRunAddress.operator !=(Aw.Sindri.Core.Launch.NodeRunAddress? left, Aw.Sindri.Core.Launch.NodeRunAddress? right) -> bool
+static Aw.Sindri.Core.Launch.NodeRunAddress.operator ==(Aw.Sindri.Core.Launch.NodeRunAddress? left, Aw.Sindri.Core.Launch.NodeRunAddress? right) -> bool
+override Aw.Sindri.Core.Launch.NodeRunAddress.GetHashCode() -> int
+override Aw.Sindri.Core.Launch.NodeRunAddress.Equals(object? obj) -> bool
+Aw.Sindri.Core.Launch.NodeRunAddress.Equals(Aw.Sindri.Core.Launch.NodeRunAddress? other) -> bool
+Aw.Sindri.Core.Launch.NodeRunAddress.<Clone>$() -> Aw.Sindri.Core.Launch.NodeRunAddress!
+Aw.Sindri.Core.Launch.NodeRunAddress.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Workflow, out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out int ItemIndex) -> void
+Aw.Sindri.Core.Launch.NodeRunAddress.NodeRunAddress(Aw.Sindri.Core.Graph.Ids.WorkflowSlug Workflow, Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, int ItemIndex) -> void
+static Aw.Sindri.Core.Launch.NodeRunAddress.Of(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node, int itemIndex = 0) -> Aw.Sindri.Core.Launch.NodeRunAddress!
+Aw.Sindri.Core.Launch.NodeRunAddress.Launch() -> Aw.Sindri.Core.Launch.LaunchId
+Aw.Sindri.Core.Launch.NodeRunAddress.ShortRun.get -> string!
+Aw.Sindri.Core.Launch.NodeRunAddress.Branch.get -> string!
+Aw.Sindri.Core.Launch.NodeRunAddress.RefNamespace.get -> string!
+Aw.Sindri.Core.Launch.LaunchRequest.Node.get -> Aw.Sindri.Core.Launch.NodeRunAddress?
+Aw.Sindri.Core.Launch.LaunchRequest.Node.init -> void
+Aw.Sindri.Core.Launch.LaunchRequest.Task.init -> void
+Aw.Sindri.Core.Launch.LaunchRequest.Task.get -> Aw.Sindri.Core.Launch.AgentTask?
+Aw.Sindri.Core.Launch.AgentTask.AgentTask(string! Brief, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, System.Collections.Generic.IReadOnlyList<string!>! HostGroups, string? Model = null) -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.AddGroups.init -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.AddGroups.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Sandbox.Plan.GroupsInput.AddGroups.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Sandbox.Plan.GroupsInput.AddGroups.init -> void
+static Aw.Sindri.Core.Graph.Blocks.RunAgentWire.TokenOf(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId node, int itemIndex) -> Aw.Sindri.Core.Launch.RunToken?
+static Aw.Sindri.Core.Graph.Blocks.RunAgentWire.NodeOf(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Launch.RunToken token) -> (Aw.Sindri.Core.Graph.GraphNode! Node, int ItemIndex)?
+static Aw.Sindri.Core.Graph.Blocks.RunAgentReport.Check(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! declared, System.Collections.Generic.IReadOnlyDictionary<string!, System.ReadOnlyMemory<byte>>! reported) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.Nodes.JsonNode?>!>!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentOutput.Compose(System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.Nodes.JsonNode?>! declared, Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd! end) -> Aw.Sindri.Core.Graph.Blocks.BlockResult!
+Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.AgentNodeEnd(string! Branch, string? Commit, string? AgentSession, int Tokens, bool EmptyDiff) -> void
+static Aw.Sindri.Core.Graph.Blocks.RunAgentLaunches.WorktreeFor(Aw.Sindri.Core.Launch.NodeRunAddress! address, string! repoPath) -> string!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentLaunches.GroupsFor(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig! config, System.Func<string!, System.Collections.Generic.IReadOnlyList<string!>!>! connectionGroups) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentLaunches.RequestFor(Aw.Sindri.Core.Launch.NodeRunAddress! address, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepTarget! target, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig! config, string! brief, System.Collections.Generic.IReadOnlyList<string!>! groups) -> Aw.Sindri.Core.Launch.LaunchRequest!
+Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.RunAgentConfig(string! Repo, System.Collections.Generic.IReadOnlyList<string!>! ReadOnlyRepos, string? Agent, string! Prompt, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, System.TimeSpan Timeout, System.Collections.Generic.IReadOnlyList<string!>! Connections, System.TimeSpan? Wall) -> void
+static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Agents.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.DefaultTimeout.get -> System.TimeSpan
+static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Parse(System.Text.Json.Nodes.JsonObject! config) -> Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.RunAgentConfig!>!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Problems(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentBrief.Render(Aw.Sindri.Core.Launch.NodeRunAddress! address, Aw.Sindri.Core.Launch.RunToken token, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig! config) -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Standard.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.CheckConfig(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
+Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+static Aw.Sindri.Core.Graph.Blocks.RunAgentLaunches.ReadingOnly(Aw.Sindri.Core.Launch.LaunchRequest! request, System.Collections.Generic.IReadOnlyList<string!>! paths) -> Aw.Sindri.Core.Launch.LaunchRequest!
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Outputs.get -> string!
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Node.init -> void
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Outputs.init -> void
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Human.get -> bool
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Human.init -> void
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport
+Aw.Sindri.Core.Graph.Runs.IAgentNodeControl
+override Aw.Sindri.Core.Graph.Runs.AgentNodeReport.ToString() -> string!
+static Aw.Sindri.Core.Graph.Runs.AgentNodeReport.operator !=(Aw.Sindri.Core.Graph.Runs.AgentNodeReport? left, Aw.Sindri.Core.Graph.Runs.AgentNodeReport? right) -> bool
+static Aw.Sindri.Core.Graph.Runs.AgentNodeReport.operator ==(Aw.Sindri.Core.Graph.Runs.AgentNodeReport? left, Aw.Sindri.Core.Graph.Runs.AgentNodeReport? right) -> bool
+override Aw.Sindri.Core.Graph.Runs.AgentNodeReport.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Equals(object? obj) -> bool
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Equals(Aw.Sindri.Core.Graph.Runs.AgentNodeReport? other) -> bool
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.ItemIndex.get -> int
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.<Clone>$() -> Aw.Sindri.Core.Graph.Runs.AgentNodeReport!
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.ItemIndex.init -> void
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Node, out int ItemIndex, out string! Outputs, out bool Human) -> void
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode
+override Aw.Sindri.Core.Graph.Runs.RunningAgentNode.ToString() -> string!
+static Aw.Sindri.Core.Graph.Runs.RunningAgentNode.operator !=(Aw.Sindri.Core.Graph.Runs.RunningAgentNode? left, Aw.Sindri.Core.Graph.Runs.RunningAgentNode? right) -> bool
+static Aw.Sindri.Core.Graph.Runs.RunningAgentNode.operator ==(Aw.Sindri.Core.Graph.Runs.RunningAgentNode? left, Aw.Sindri.Core.Graph.Runs.RunningAgentNode? right) -> bool
+override Aw.Sindri.Core.Graph.Runs.RunningAgentNode.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Equals(object? obj) -> bool
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Equals(Aw.Sindri.Core.Graph.Runs.RunningAgentNode? other) -> bool
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.<Clone>$() -> Aw.Sindri.Core.Graph.Runs.RunningAgentNode!
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Node, out int ItemIndex, out Aw.Sindri.Core.Launch.LaunchId Launch, out bool TakenOver) -> void
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Node.init -> void
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.ItemIndex.get -> int
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.ItemIndex.init -> void
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.Launch.init -> void
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.TakenOver.get -> bool
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.TakenOver.init -> void
+static Aw.Sindri.Core.Launch.StepEnvironment.RunDirectoryAtNode(Aw.Sindri.Core.Launch.LaunchId launch, string! sindriHome) -> string!
+Aw.Sindri.Core.Graph.Runs.RunningAgentNode.RunningAgentNode(Aw.Sindri.Core.Graph.Ids.NodeId Node, int ItemIndex, Aw.Sindri.Core.Launch.LaunchId Launch, bool TakenOver) -> void
+Aw.Sindri.Core.Graph.Runs.IAgentNodeControl.Running(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Runs.RunningAgentNode?>!>
+Aw.Sindri.Core.Graph.Runs.IAgentNodeControl.Takeover(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node, int itemIndex, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Runs.IAgentNodeControl.Handback(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node, int itemIndex, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Runs.IAgentNodeControl.Report(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Runs.AgentNodeReport! report, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Runs.AgentNodeReport.AgentNodeReport(Aw.Sindri.Core.Graph.Ids.NodeId Node, int ItemIndex, string! Outputs, bool Human) -> void
+const Aw.Sindri.Core.Launch.LaunchFiles.TakenOverSuffix = ".taken-over" -> string!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.DeclaredOutputs(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Launches.ILaunchFiles.MarkTakenOver(Aw.Sindri.Core.Launch.LaunchId launch, bool taken) -> void
+Aw.Sindri.Core.Launches.ILaunchFiles.TakenOver(Aw.Sindri.Core.Launch.LaunchId launch) -> bool
+static Aw.Sindri.Core.Launch.LaunchFiles.TakenOverName(Aw.Sindri.Core.Launch.LaunchId launch) -> string!
+Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Deconstruct(out Aw.Sindri.Core.Profile.SandboxLimits? Limits, out Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, out bool Attended, out System.TimeSpan? StepTimeout, out System.TimeSpan? LongMax, out long RamBytes, out int Cores, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Override) -> void
+Aw.Sindri.Core.Sandbox.Plan.LimitsInput.LimitsInput(Aw.Sindri.Core.Profile.SandboxLimits? Limits, Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, bool Attended, System.TimeSpan? StepTimeout, System.TimeSpan? LongMax, long RamBytes, int Cores, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Override = null) -> void
+Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Override.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Override.init -> void
+Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.State = 8 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride!
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Cpu.get -> string?
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Cpu.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Deconstruct(out string? Memory, out string? Cpu, out System.TimeSpan? StepTimeout) -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Equals(Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? other) -> bool
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Memory.get -> string?
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Memory.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.ResourceLimitOverride(string? Memory = null, string? Cpu = null, System.TimeSpan? StepTimeout = null) -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.StepTimeout.get -> System.TimeSpan?
+Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.StepTimeout.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.ResourceMount!
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Deconstruct(out string! Name, out string! HostPath) -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Equals(Aw.Sindri.Core.Sandbox.Plan.ResourceMount? other) -> bool
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.HostPath.get -> string!
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.HostPath.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Name.get -> string!
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Name.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ResourceMount.ResourceMount(string! Name, string! HostPath) -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceLimits.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceLimits.init -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceMounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>?
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceMounts.init -> void
+override Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.GetHashCode() -> int
+override Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.ToString() -> string!
+override Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sandbox.Plan.ResourceMount.GetHashCode() -> int
+override Aw.Sindri.Core.Sandbox.Plan.ResourceMount.ToString() -> string!
+static Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.operator !=(Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? left, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? right) -> bool
+static Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.operator ==(Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? left, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? right) -> bool
+static Aw.Sindri.Core.Sandbox.Plan.ResourceMount.operator !=(Aw.Sindri.Core.Sandbox.Plan.ResourceMount? left, Aw.Sindri.Core.Sandbox.Plan.ResourceMount? right) -> bool
+static Aw.Sindri.Core.Sandbox.Plan.ResourceMount.operator ==(Aw.Sindri.Core.Sandbox.Plan.ResourceMount? left, Aw.Sindri.Core.Sandbox.Plan.ResourceMount? right) -> bool
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.CreateItemBlock(Aw.Sindri.Core.Graph.Blocks.ICreateItemPort! items) -> void
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphCall
+Aw.Sindri.Core.Graph.Blocks.GraphCall.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.GraphCall!
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Ancestors.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Ancestors.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Caller.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Caller.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Caller, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out int Index, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Target, out System.Text.Json.Nodes.JsonObject? Payload, out int Depth) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Depth.get -> int
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Depth.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Equals(Aw.Sindri.Core.Graph.Blocks.GraphCall? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.GraphCall.GraphCall(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Caller, Aw.Sindri.Core.Graph.Ids.NodeId Node, int Index, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Target, System.Text.Json.Nodes.JsonObject? Payload, int Depth) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Index.get -> int
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Index.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Node.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Payload.get -> System.Text.Json.Nodes.JsonObject?
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Payload.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Target.get -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+Aw.Sindri.Core.Graph.Blocks.GraphCall.Target.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCallEnd
+Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.GraphCallEnd!
+Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.Deconstruct(out string! Status, out System.Text.Json.Nodes.JsonNode? Outputs, out string? Error) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.Equals(Aw.Sindri.Core.Graph.Blocks.GraphCallEnd? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.Error.get -> string?
+Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.Error.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.GraphCallEnd(string! Status, System.Text.Json.Nodes.JsonNode? Outputs, string? Error) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.Outputs.get -> System.Text.Json.Nodes.JsonNode?
+Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.Outputs.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.Status.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.Status.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCalled
+Aw.Sindri.Core.Graph.Blocks.GraphCalled.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.GraphCalled!
+Aw.Sindri.Core.Graph.Blocks.GraphCalled.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out string! Status) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCalled.Equals(Aw.Sindri.Core.Graph.Blocks.GraphCalled? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.GraphCalled.GraphCalled(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, string! Status) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCalled.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Blocks.GraphCalled.Run.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphCalled.Status.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphCalled.Status.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest!
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.Body.get -> string?
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.Body.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.Deconstruct(out string! Method, out System.Uri! Url, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Headers, out string? Body) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.Equals(Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.GraphHttpRequest(string! Method, System.Uri! Url, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Headers, string? Body) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.Headers.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.Headers.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.Method.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.Method.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.Url.get -> System.Uri!
+Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.Url.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse
+Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse!
+Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.Body.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.Body.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.Deconstruct(out int Status, out string! Body) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.Equals(Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.GraphHttpResponse(int Status, string! Body) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.Status.get -> int
+Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.Status.init -> void
+Aw.Sindri.Core.Graph.Blocks.HttpBlock
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.HttpBlock(Aw.Sindri.Core.Graph.Blocks.IGraphHttpPort! http) -> void
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ICreateItemPort
+Aw.Sindri.Core.Graph.Blocks.ICreateItemPort.Create(Aw.Sindri.Core.Graph.Blocks.ItemToCreate! item, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphBlock.Commit(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, Aw.Sindri.Core.Graph.Blocks.BlockResult! result, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphCallPort
+Aw.Sindri.Core.Graph.Blocks.IGraphCallPort.MaxDepth(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
+Aw.Sindri.Core.Graph.Blocks.IGraphCallPort.Start(Aw.Sindri.Core.Graph.Blocks.GraphCall! call, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.GraphCalled!>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphCallPort.Wait(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.GraphCallEnd!>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphHttpPort
+Aw.Sindri.Core.Graph.Blocks.IGraphHttpPort.Send(Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse!>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphSeenStore
+Aw.Sindri.Core.Graph.Blocks.IGraphSeenStore.Record(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Collections.Generic.IReadOnlyList<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphSeenStore.Seen(Aw.Sindri.Core.Graph.Ids.WorkflowId workflow, System.Collections.Generic.IReadOnlyList<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>!>!>
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.Commit(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, Aw.Sindri.Core.Graph.Blocks.BlockResult! result, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.OnlyNewBlock(Aw.Sindri.Core.Graph.Blocks.IGraphSeenStore! seen) -> void
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.RunWorkflowBlock(Aw.Sindri.Core.Graph.Blocks.IGraphCallPort! calls) -> void
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.WorkflowCallTrigger() -> void
+Aw.Sindri.Core.Graph.Guards.CallDepth
+Aw.Sindri.Core.Graph.Guards.CallOccurrence
+Aw.Sindri.Core.Profile.HttpSettings
+Aw.Sindri.Core.Profile.HttpSettings.<Clone>$() -> Aw.Sindri.Core.Profile.HttpSettings!
+Aw.Sindri.Core.Profile.HttpSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Hosts) -> void
+Aw.Sindri.Core.Profile.HttpSettings.Equals(Aw.Sindri.Core.Profile.HttpSettings? other) -> bool
+Aw.Sindri.Core.Profile.HttpSettings.Hosts.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.HttpSettings.Hosts.init -> void
+Aw.Sindri.Core.Profile.HttpSettings.HttpSettings(System.Collections.Generic.IReadOnlyList<string!>? Hosts = null) -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.CallDepth.get -> int?
+Aw.Sindri.Core.Profile.WorkflowSettings.CallDepth.init -> void
+Aw.Sindri.Core.Profile.WorkflowSettings.Http.get -> Aw.Sindri.Core.Profile.HttpSettings?
+Aw.Sindri.Core.Profile.WorkflowSettings.Http.init -> void
+const Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.DefaultWaitSeconds = 600 -> int
+const Aw.Sindri.Core.Graph.Guards.CallDepth.DefaultMax = 3 -> int
+override Aw.Sindri.Core.Graph.Blocks.GraphCall.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.GraphCall.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.GraphCall.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.GraphCalled.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.GraphCalled.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.GraphCalled.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.ToString() -> string!
+override Aw.Sindri.Core.Profile.HttpSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.HttpSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.HttpSettings.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.FlowBlocks(Aw.Sindri.Core.Graph.Blocks.IGraphSeenStore! seen, Aw.Sindri.Core.Graph.Blocks.ICreateItemPort! items, Aw.Sindri.Core.Graph.Blocks.IGraphCallPort! calls, Aw.Sindri.Core.Graph.Blocks.IGraphHttpPort! http) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>!
+static Aw.Sindri.Core.Graph.Blocks.GraphCall.operator !=(Aw.Sindri.Core.Graph.Blocks.GraphCall? left, Aw.Sindri.Core.Graph.Blocks.GraphCall? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphCall.operator ==(Aw.Sindri.Core.Graph.Blocks.GraphCall? left, Aw.Sindri.Core.Graph.Blocks.GraphCall? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.operator !=(Aw.Sindri.Core.Graph.Blocks.GraphCallEnd? left, Aw.Sindri.Core.Graph.Blocks.GraphCallEnd? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphCallEnd.operator ==(Aw.Sindri.Core.Graph.Blocks.GraphCallEnd? left, Aw.Sindri.Core.Graph.Blocks.GraphCallEnd? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphCalled.operator !=(Aw.Sindri.Core.Graph.Blocks.GraphCalled? left, Aw.Sindri.Core.Graph.Blocks.GraphCalled? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphCalled.operator ==(Aw.Sindri.Core.Graph.Blocks.GraphCalled? left, Aw.Sindri.Core.Graph.Blocks.GraphCalled? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.operator !=(Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest? left, Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest.operator ==(Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest? left, Aw.Sindri.Core.Graph.Blocks.GraphHttpRequest? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.operator !=(Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse? left, Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse.operator ==(Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse? left, Aw.Sindri.Core.Graph.Blocks.GraphHttpResponse? right) -> bool
+static Aw.Sindri.Core.Graph.Guards.CallDepth.SlugOf(string! run) -> string!
+static Aw.Sindri.Core.Graph.Guards.CallOccurrence.Of(string! caller, string! node, int index) -> int
+static Aw.Sindri.Core.Graph.Guards.CallOccurrence.Of(string! caller, string! node, int index, int attempt) -> int
+static Aw.Sindri.Core.Profile.HttpSettings.operator !=(Aw.Sindri.Core.Profile.HttpSettings? left, Aw.Sindri.Core.Profile.HttpSettings? right) -> bool
+static Aw.Sindri.Core.Profile.HttpSettings.operator ==(Aw.Sindri.Core.Profile.HttpSettings? left, Aw.Sindri.Core.Profile.HttpSettings? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.GraphCallDepth -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphHttpFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphHttpRefused -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphSelfStart -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Guards.CallOrigin
+Aw.Sindri.Core.Graph.Guards.CallOrigin.<Clone>$() -> Aw.Sindri.Core.Graph.Guards.CallOrigin!
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Ancestors.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Ancestors.init -> void
+Aw.Sindri.Core.Graph.Guards.CallOrigin.CallOrigin(string! Run, int Depth, string? ParentRun) -> void
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Deconstruct(out string! Run, out int Depth, out string? ParentRun) -> void
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Depth.get -> int
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Depth.init -> void
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Equals(Aw.Sindri.Core.Graph.Guards.CallOrigin? other) -> bool
+Aw.Sindri.Core.Graph.Guards.CallOrigin.ParentRun.get -> string?
+Aw.Sindri.Core.Graph.Guards.CallOrigin.ParentRun.init -> void
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Run.get -> string!
+Aw.Sindri.Core.Graph.Guards.CallOrigin.Run.init -> void
+override Aw.Sindri.Core.Graph.Guards.CallOrigin.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Guards.CallOrigin.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Guards.CallOrigin.ToString() -> string!
+static Aw.Sindri.Core.Graph.Guards.CallDepth.AncestorsOf(Aw.Sindri.Core.Graph.Guards.CallOrigin! caller, int max) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Graph.Guards.CallDepth.Next(Aw.Sindri.Core.Graph.Guards.CallOrigin! caller, string! target, int max, System.Collections.Generic.IReadOnlyCollection<string!>? launchLineage = null) -> Aw.Kernel.Result<int>!
+static Aw.Sindri.Core.Graph.Guards.CallOrigin.operator !=(Aw.Sindri.Core.Graph.Guards.CallOrigin? left, Aw.Sindri.Core.Graph.Guards.CallOrigin? right) -> bool
+static Aw.Sindri.Core.Graph.Guards.CallOrigin.operator ==(Aw.Sindri.Core.Graph.Guards.CallOrigin? left, Aw.Sindri.Core.Graph.Guards.CallOrigin? right) -> bool
 Aw.Sindri.Core.Handoff.ClaimResult
 Aw.Sindri.Core.Handoff.ClaimResult.<Clone>$() -> Aw.Sindri.Core.Handoff.ClaimResult!
 Aw.Sindri.Core.Handoff.ClaimResult.ClaimKey.get -> string!
@@ -20662,6 +21211,8 @@ Aw.Sindri.Core.Graph.Blocks.DefaultForEachLimits
 override Aw.Sindri.Core.Profile.ForEachSettings.GetHashCode() -> int
 Aw.Sindri.Core.Graph.Blocks.ForEachLimits.ForEachLimits(int MaxItems, int BatchSize) -> void
 override Aw.Sindri.Core.Graph.Loops.LoopShape.Equals(object? obj) -> bool
+Aw.Sindri.Core.Graph.Blocks.CollectBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.CollectBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Blocks.CollectBlock.Type.get -> string!
 Aw.Sindri.Core.Graph.Loops.LoopShape
 Aw.Sindri.Core.Graph.Loops.LoopShape.Deconstruct(out Aw.Sindri.Core.Graph.GraphNode! ForEach, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.GraphNode!>! Body, out Aw.Sindri.Core.Graph.GraphNode! Collect) -> void
@@ -20693,9 +21244,11 @@ override Aw.Sindri.Core.Profile.ForEachSettings.ToString() -> string!
 Aw.Sindri.Core.Graph.Blocks.CollectBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.ForEachLimits.BatchSize.get -> int
 static Aw.Sindri.Core.Graph.Blocks.ForEachLimits.operator ==(Aw.Sindri.Core.Graph.Blocks.ForEachLimits? left, Aw.Sindri.Core.Graph.Blocks.ForEachLimits? right) -> bool
-static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Standard(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model, Aw.Sindri.Core.Graph.Blocks.IForEachLimitSource? forEachLimits = null) -> Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry!
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Standard(Aw.Sindri.Core.Graph.Blocks.INotifyPort! notify, Aw.Sindri.Core.Graph.Blocks.IGraphModelPort! model, Aw.Sindri.Core.Graph.Blocks.IForEachLimitSource? forEachLimits = null, System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>? more = null) -> Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry!
 static Aw.Sindri.Core.Graph.Loops.LoopBody.Find(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId forEach) -> Aw.Kernel.Result<Aw.Sindri.Core.Graph.Loops.LoopShape!>!
 Aw.Sindri.Core.Graph.Blocks.ForEachBlock.ForEachBlock(Aw.Sindri.Core.Graph.Blocks.IForEachLimitSource! limits) -> void
+Aw.Sindri.Core.Graph.Blocks.ForEachBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ForEachBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Blocks.ForEachBlock.Type.get -> string!
 Aw.Sindri.Core.Profile.ForEachSettings.Deconstruct(out int? MaxItems, out int? BatchSize) -> void
 static Aw.Sindri.Core.Graph.Loops.LoopBody.Enclosing(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.Ids.NodeId node) -> Aw.Sindri.Core.Graph.Loops.LoopShape?
@@ -20941,6 +21494,244 @@ override Aw.Sindri.Core.Graph.Layout.GraphPosition.ToString() -> string!
 static Aw.Sindri.Core.Graph.Layout.GraphLayout.Compute(Aw.Sindri.Core.Graph.GraphSpec! spec) -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Graph.Layout.GraphPosition!>!
 static Aw.Sindri.Core.Graph.Layout.GraphPosition.operator !=(Aw.Sindri.Core.Graph.Layout.GraphPosition? left, Aw.Sindri.Core.Graph.Layout.GraphPosition? right) -> bool
 static Aw.Sindri.Core.Graph.Layout.GraphPosition.operator ==(Aw.Sindri.Core.Graph.Layout.GraphPosition? left, Aw.Sindri.Core.Graph.Layout.GraphPosition? right) -> bool
+abstract Aw.Sindri.Core.Graph.Ops.GraphOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.GraphOp!
+Aw.Sindri.Core.Graph.Ops.AddNodeOp
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.AddNodeOp(Aw.Sindri.Core.Graph.Ids.NodeId Id, string! Type, string? Title = null, System.Text.Json.Nodes.JsonObject? Config = null, string? OnFailure = null) -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Config.get -> System.Text.Json.Nodes.JsonObject?
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Config.init -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Id, out string! Type, out string? Title, out System.Text.Json.Nodes.JsonObject? Config, out string? OnFailure) -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Equals(Aw.Sindri.Core.Graph.Ops.AddNodeOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Id.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Id.init -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.OnFailure.get -> string?
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.OnFailure.init -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Title.get -> string?
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Title.init -> void
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Type.get -> string!
+Aw.Sindri.Core.Graph.Ops.AddNodeOp.Type.init -> void
+Aw.Sindri.Core.Graph.Ops.ConnectOp
+Aw.Sindri.Core.Graph.Ops.ConnectOp.ConnectOp(Aw.Sindri.Core.Graph.Ids.NodeId From, Aw.Sindri.Core.Graph.Ids.NodeId To, string? Output = null) -> void
+Aw.Sindri.Core.Graph.Ops.ConnectOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId From, out Aw.Sindri.Core.Graph.Ids.NodeId To, out string? Output) -> void
+Aw.Sindri.Core.Graph.Ops.ConnectOp.Equals(Aw.Sindri.Core.Graph.Ops.ConnectOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.ConnectOp.From.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.ConnectOp.From.init -> void
+Aw.Sindri.Core.Graph.Ops.ConnectOp.Output.get -> string?
+Aw.Sindri.Core.Graph.Ops.ConnectOp.Output.init -> void
+Aw.Sindri.Core.Graph.Ops.ConnectOp.To.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.ConnectOp.To.init -> void
+Aw.Sindri.Core.Graph.Ops.DisconnectOp
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId From, out Aw.Sindri.Core.Graph.Ids.NodeId To, out string? Output) -> void
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.DisconnectOp(Aw.Sindri.Core.Graph.Ids.NodeId From, Aw.Sindri.Core.Graph.Ids.NodeId To, string? Output = null) -> void
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.Equals(Aw.Sindri.Core.Graph.Ops.DisconnectOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.From.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.From.init -> void
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.Output.get -> string?
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.Output.init -> void
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.To.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.DisconnectOp.To.init -> void
+Aw.Sindri.Core.Graph.Ops.GraphOp
+Aw.Sindri.Core.Graph.Ops.GraphOp.GraphOp(Aw.Sindri.Core.Graph.Ops.GraphOp! original) -> void
+Aw.Sindri.Core.Graph.Ops.GraphOpJson
+Aw.Sindri.Core.Graph.Ops.GraphOps
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Node) -> void
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Equals(Aw.Sindri.Core.Graph.Ops.RemoveNodeOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Node.init -> void
+Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.RemoveNodeOp(Aw.Sindri.Core.Graph.Ids.NodeId Node) -> void
+Aw.Sindri.Core.Graph.Ops.RenameOp
+Aw.Sindri.Core.Graph.Ops.RenameOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Node, out Aw.Sindri.Core.Graph.Ids.NodeId To) -> void
+Aw.Sindri.Core.Graph.Ops.RenameOp.Equals(Aw.Sindri.Core.Graph.Ops.RenameOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.RenameOp.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.RenameOp.Node.init -> void
+Aw.Sindri.Core.Graph.Ops.RenameOp.RenameOp(Aw.Sindri.Core.Graph.Ids.NodeId Node, Aw.Sindri.Core.Graph.Ids.NodeId To) -> void
+Aw.Sindri.Core.Graph.Ops.RenameOp.To.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.RenameOp.To.init -> void
+Aw.Sindri.Core.Graph.Ops.SetConfigOp
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Deconstruct(out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Path, out System.Text.Json.Nodes.JsonNode? Value) -> void
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Equals(Aw.Sindri.Core.Graph.Ops.SetConfigOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Node.init -> void
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Path.get -> string!
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Path.init -> void
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.SetConfigOp(Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Path, System.Text.Json.Nodes.JsonNode? Value) -> void
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Value.get -> System.Text.Json.Nodes.JsonNode?
+Aw.Sindri.Core.Graph.Ops.SetConfigOp.Value.init -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Concurrency.get -> string?
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Concurrency.init -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Deconstruct(out string? Name, out string? Description, out string? Concurrency) -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Description.get -> string?
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Description.init -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Equals(Aw.Sindri.Core.Graph.Ops.SetMetaOp? other) -> bool
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Name.get -> string?
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.Name.init -> void
+Aw.Sindri.Core.Graph.Ops.SetMetaOp.SetMetaOp(string? Name = null, string? Description = null, string? Concurrency = null) -> void
+Aw.Sindri.Core.Graph.Templates.GraphTemplate
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.<Clone>$() -> Aw.Sindri.Core.Graph.Templates.GraphTemplate!
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Deconstruct(out string! Name, out string! Description, out Aw.Sindri.Core.Graph.GraphSpec! Spec) -> void
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Description.get -> string!
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Description.init -> void
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Equals(Aw.Sindri.Core.Graph.Templates.GraphTemplate? other) -> bool
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.GraphTemplate(string! Name, string! Description, Aw.Sindri.Core.Graph.GraphSpec! Spec) -> void
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Name.get -> string!
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Name.init -> void
+Aw.Sindri.Core.Graph.Templates.GraphTemplates
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Spec.get -> Aw.Sindri.Core.Graph.GraphSpec!
+Aw.Sindri.Core.Graph.Templates.GraphTemplate.Spec.init -> void
+override Aw.Sindri.Core.Graph.Ops.AddNodeOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.AddNodeOp!
+override Aw.Sindri.Core.Graph.Ops.AddNodeOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.AddNodeOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.AddNodeOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.ConnectOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.ConnectOp!
+override Aw.Sindri.Core.Graph.Ops.ConnectOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.ConnectOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.ConnectOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.DisconnectOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.DisconnectOp!
+override Aw.Sindri.Core.Graph.Ops.DisconnectOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.DisconnectOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.DisconnectOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.GraphOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.GraphOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.GraphOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.RemoveNodeOp!
+override Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.RenameOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.RenameOp!
+override Aw.Sindri.Core.Graph.Ops.RenameOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.RenameOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.RenameOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.SetConfigOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.SetConfigOp!
+override Aw.Sindri.Core.Graph.Ops.SetConfigOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.SetConfigOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.SetConfigOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Ops.SetMetaOp.<Clone>$() -> Aw.Sindri.Core.Graph.Ops.SetMetaOp!
+override Aw.Sindri.Core.Graph.Ops.SetMetaOp.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Ops.SetMetaOp.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Ops.SetMetaOp.ToString() -> string!
+override Aw.Sindri.Core.Graph.Templates.GraphTemplate.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Templates.GraphTemplate.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Templates.GraphTemplate.ToString() -> string!
+override sealed Aw.Sindri.Core.Graph.Ops.AddNodeOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.ConnectOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.DisconnectOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.RenameOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.SetConfigOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+override sealed Aw.Sindri.Core.Graph.Ops.SetMetaOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+static Aw.Sindri.Core.Graph.Ops.AddNodeOp.operator !=(Aw.Sindri.Core.Graph.Ops.AddNodeOp? left, Aw.Sindri.Core.Graph.Ops.AddNodeOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.AddNodeOp.operator ==(Aw.Sindri.Core.Graph.Ops.AddNodeOp? left, Aw.Sindri.Core.Graph.Ops.AddNodeOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.ConnectOp.operator !=(Aw.Sindri.Core.Graph.Ops.ConnectOp? left, Aw.Sindri.Core.Graph.Ops.ConnectOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.ConnectOp.operator ==(Aw.Sindri.Core.Graph.Ops.ConnectOp? left, Aw.Sindri.Core.Graph.Ops.ConnectOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.DisconnectOp.operator !=(Aw.Sindri.Core.Graph.Ops.DisconnectOp? left, Aw.Sindri.Core.Graph.Ops.DisconnectOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.DisconnectOp.operator ==(Aw.Sindri.Core.Graph.Ops.DisconnectOp? left, Aw.Sindri.Core.Graph.Ops.DisconnectOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.GraphOpJson.Parse(string! json) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ops.GraphOp!>!>!
+static Aw.Sindri.Core.Graph.Ops.GraphOpJson.Write(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ops.GraphOp!>! ops) -> string!
+static Aw.Sindri.Core.Graph.Ops.GraphOp.operator !=(Aw.Sindri.Core.Graph.Ops.GraphOp? left, Aw.Sindri.Core.Graph.Ops.GraphOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.GraphOp.operator ==(Aw.Sindri.Core.Graph.Ops.GraphOp? left, Aw.Sindri.Core.Graph.Ops.GraphOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.GraphOps.Apply(Aw.Sindri.Core.Graph.GraphSpec! spec, int baseRevision, int currentRevision, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Ops.GraphOp!>! ops, Aw.Sindri.Core.Graph.Validation.GraphValidator! validator) -> Aw.Kernel.Result<Aw.Sindri.Core.Graph.GraphSpec!>!
+static Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.operator !=(Aw.Sindri.Core.Graph.Ops.RemoveNodeOp? left, Aw.Sindri.Core.Graph.Ops.RemoveNodeOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.RemoveNodeOp.operator ==(Aw.Sindri.Core.Graph.Ops.RemoveNodeOp? left, Aw.Sindri.Core.Graph.Ops.RemoveNodeOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.RenameOp.operator !=(Aw.Sindri.Core.Graph.Ops.RenameOp? left, Aw.Sindri.Core.Graph.Ops.RenameOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.RenameOp.operator ==(Aw.Sindri.Core.Graph.Ops.RenameOp? left, Aw.Sindri.Core.Graph.Ops.RenameOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.SetConfigOp.operator !=(Aw.Sindri.Core.Graph.Ops.SetConfigOp? left, Aw.Sindri.Core.Graph.Ops.SetConfigOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.SetConfigOp.operator ==(Aw.Sindri.Core.Graph.Ops.SetConfigOp? left, Aw.Sindri.Core.Graph.Ops.SetConfigOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.SetMetaOp.operator !=(Aw.Sindri.Core.Graph.Ops.SetMetaOp? left, Aw.Sindri.Core.Graph.Ops.SetMetaOp? right) -> bool
+static Aw.Sindri.Core.Graph.Ops.SetMetaOp.operator ==(Aw.Sindri.Core.Graph.Ops.SetMetaOp? left, Aw.Sindri.Core.Graph.Ops.SetMetaOp? right) -> bool
+static Aw.Sindri.Core.Graph.Templates.GraphTemplate.operator !=(Aw.Sindri.Core.Graph.Templates.GraphTemplate? left, Aw.Sindri.Core.Graph.Templates.GraphTemplate? right) -> bool
+static Aw.Sindri.Core.Graph.Templates.GraphTemplate.operator ==(Aw.Sindri.Core.Graph.Templates.GraphTemplate? left, Aw.Sindri.Core.Graph.Templates.GraphTemplate? right) -> bool
+static Aw.Sindri.Core.Graph.Templates.GraphTemplates.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Templates.GraphTemplate!>!
+static Aw.Sindri.Core.Graph.Templates.GraphTemplates.Find(string! name) -> Aw.Sindri.Core.Graph.Templates.GraphTemplate?
+static readonly Aw.Sindri.Core.SindriErrors.GraphOpInvalid -> Aw.Kernel.ErrorDefinition!
+virtual Aw.Sindri.Core.Graph.Ops.GraphOp.EqualityContract.get -> System.Type!
+virtual Aw.Sindri.Core.Graph.Ops.GraphOp.Equals(Aw.Sindri.Core.Graph.Ops.GraphOp? other) -> bool
+virtual Aw.Sindri.Core.Graph.Ops.GraphOp.PrintMembers(System.Text.StringBuilder! builder) -> bool
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit.Page.get -> Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit.Score.get -> double
+Aw.Sindri.Core.Graph.Docs.WorkflowDocHit.WorkflowDocHit(Aw.Sindri.Core.Graph.Docs.WorkflowDocPage! page, double score) -> void
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.BlockType.get -> string?
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.Slug.get -> string!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.JsonExamples() -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.Text.get -> string!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.Title.get -> string!
+Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.WorkflowDocPage(string! slug, string! title, string! text) -> void
+Aw.Sindri.Core.Graph.Docs.WorkflowDocSearch
+const Aw.Sindri.Core.Graph.Docs.WorkflowDocPage.BlockPrefix = "block-" -> string!
+static Aw.Sindri.Core.Graph.Docs.WorkflowDocSearch.Search(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>! pages, string! question, int max = 5) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocHit!>!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowCreated = "workflow.created" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowRevised = "workflow.revised" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowActivated = "workflow.activated" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowPaused = "workflow.paused" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowArchived = "workflow.archived" -> string!
+Aw.Sindri.Core.Events.WorkflowChangedPayload
+Aw.Sindri.Core.Events.WorkflowChangedPayload.WorkflowId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+Aw.Sindri.Core.Events.WorkflowChangedPayload.WorkflowId.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Slug.get -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Slug.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Revision.get -> int
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Revision.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.SpecHash.get -> string?
+Aw.Sindri.Core.Events.WorkflowChangedPayload.SpecHash.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowChangedPayload.By.init -> void
+override Aw.Sindri.Core.Events.WorkflowChangedPayload.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowChangedPayload.operator !=(Aw.Sindri.Core.Events.WorkflowChangedPayload? left, Aw.Sindri.Core.Events.WorkflowChangedPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowChangedPayload.operator ==(Aw.Sindri.Core.Events.WorkflowChangedPayload? left, Aw.Sindri.Core.Events.WorkflowChangedPayload? right) -> bool
+override Aw.Sindri.Core.Events.WorkflowChangedPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowChangedPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Equals(Aw.Sindri.Core.Events.WorkflowChangedPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowChangedPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowChangedPayload!
+Aw.Sindri.Core.Events.WorkflowChangedPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out int Revision, out string? SpecHash, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowChangedPayload.WorkflowChangedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, int Revision, string? SpecHash, string! By) -> void
+Aw.Sindri.Core.Graph.WorkflowChangeLog
+Aw.Sindri.Core.Graph.WorkflowChangeLog.LeaseProblem() -> Aw.Kernel.Error?
+Aw.Sindri.Core.Graph.WorkflowChangeLog.Record(string! type, Aw.Sindri.Core.Events.WorkflowChangedPayload! payload, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Graph.WorkflowChangeLog.WorkflowChangeLog(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Commands.ICallerContextAccessor! callers) -> void
+Aw.Sindri.Core.Graph.Validation.IWorkflowChecker
+Aw.Sindri.Core.Graph.IWorkflowStore.Pause(Aw.Sindri.Core.Graph.Ids.WorkflowId id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.WorkflowRecord!>!>
+Aw.Sindri.Core.Graph.Validation.IWorkflowChecker.Validator(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Graph.Validation.GraphValidator!>
+static readonly Aw.Sindri.Core.SindriErrors.GraphRunLoop -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Runs.IGraphLaunchRuns
+Aw.Sindri.Core.Graph.Runs.IGraphLaunchRuns.RunOf(Aw.Sindri.Core.Launch.LaunchId launch, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Ids.WorkflowRunId?>!>
+Aw.Sindri.Core.Graph.Docs.IWorkflowDocs
+Aw.Sindri.Core.Graph.Docs.IWorkflowDocs.Pages.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Triggers = 1 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Data = 2 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.AI = 3 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Logic = 4 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.BlockGroup.Outputs = 5 -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.GraphBlockEntry(Aw.Sindri.Core.Graph.Blocks.IGraphBlockType! block, string? exampleSpec) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.ExampleConfig.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.Outputs.get -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry.ExampleSpec.get -> string?
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup.GraphBlockGroup(Aw.Sindri.Core.Graph.Blocks.BlockGroup group, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry!>! blocks) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup.Blocks.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.GraphBlockEntry!>!
+Aw.Sindri.Core.Graph.Blocks.GraphBlockListing
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockListing.Group(Aw.Sindri.Core.Graph.Blocks.IGraphBlockCatalog! catalog, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Docs.WorkflowDocPage!>! pages) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.GraphBlockGroup!>!
+Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ManualBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.NotifyBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.PromptBlock.Title.get -> string!
 Aw.Sindri.Core.Todos.TodoConverger.Apply(Aw.Sindri.Core.Todos.TodoRow! row, Aw.Sindri.Core.Todos.TodoConvergeTarget! to, Aw.Sindri.Core.Todos.TodoPickCaller! who, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
 Aw.Sindri.Core.Todos.TodoConvergeTarget
 Aw.Sindri.Core.Todos.TodoConvergeTarget.By.get -> string!
@@ -20967,6 +21758,95 @@ Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery
 Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Graph.Runs.IWorkflowRunStore.Running(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Runs.WorkflowRun!>!>!>
 Aw.Sindri.Core.Graph.Runs.IGraphRunRecovery.Run(System.DateTimeOffset startedBefore, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Launch.NodeRunAddress.WorkBranch.get -> string!
+Aw.Sindri.Core.Events.LaunchStarted.Run.get -> string?
+Aw.Sindri.Core.Events.LaunchStarted.Run.init -> void
+Aw.Sindri.Core.Events.LaunchStarted.Node.get -> string?
+Aw.Sindri.Core.Events.LaunchStarted.Node.init -> void
+Aw.Sindri.Core.Events.LaunchStartedPublic.Run.get -> string?
+Aw.Sindri.Core.Events.LaunchStartedPublic.Run.init -> void
+Aw.Sindri.Core.Events.LaunchStartedPublic.Node.get -> string?
+Aw.Sindri.Core.Events.LaunchStartedPublic.Node.init -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Run.get -> string?
+Aw.Sindri.Core.Launches.StalledAgentRun.Run.init -> void
+Aw.Sindri.Core.Launches.StalledAgentRun.Node.get -> string?
+Aw.Sindri.Core.Launches.StalledAgentRun.Node.init -> void
+Aw.Sindri.Core.Events.ReviewLoginSet
+Aw.Sindri.Core.Events.ReviewLoginSet.<Clone>$() -> Aw.Sindri.Core.Events.ReviewLoginSet!
+Aw.Sindri.Core.Events.ReviewLoginSet.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out string! Login) -> void
+Aw.Sindri.Core.Events.ReviewLoginSet.Equals(Aw.Sindri.Core.Events.ReviewLoginSet? other) -> bool
+Aw.Sindri.Core.Events.ReviewLoginSet.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.ReviewLoginSet.CommandId.init -> void
+Aw.Sindri.Core.Events.ReviewLoginSet.Login.get -> string!
+Aw.Sindri.Core.Events.ReviewLoginSet.Login.init -> void
+Aw.Sindri.Core.Events.ReviewLoginSet.ReviewLoginSet(Aw.Sindri.Core.Ids.CommandId CommandId, string! Login) -> void
+override Aw.Sindri.Core.Events.ReviewLoginSet.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ReviewLoginSet.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ReviewLoginSet.ToString() -> string!
+static Aw.Sindri.Core.Events.ReviewLoginSet.operator !=(Aw.Sindri.Core.Events.ReviewLoginSet? left, Aw.Sindri.Core.Events.ReviewLoginSet? right) -> bool
+static Aw.Sindri.Core.Events.ReviewLoginSet.operator ==(Aw.Sindri.Core.Events.ReviewLoginSet? left, Aw.Sindri.Core.Events.ReviewLoginSet? right) -> bool
+Aw.Sindri.Core.Events.SandboxEntryAllowed
+Aw.Sindri.Core.Events.SandboxEntryAllowed.<Clone>$() -> Aw.Sindri.Core.Events.SandboxEntryAllowed!
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out Aw.Sindri.Core.Launch.LaunchId Launch, out Aw.Sindri.Core.Ids.RepoName Repo, out string! Kind, out string! Entry) -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Equals(Aw.Sindri.Core.Events.SandboxEntryAllowed? other) -> bool
+Aw.Sindri.Core.Events.SandboxEntryAllowed.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.SandboxEntryAllowed.CommandId.init -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Launch.init -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Repo.get -> Aw.Sindri.Core.Ids.RepoName
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Repo.init -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Kind.get -> string!
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Kind.init -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Entry.get -> string!
+Aw.Sindri.Core.Events.SandboxEntryAllowed.Entry.init -> void
+Aw.Sindri.Core.Events.SandboxEntryAllowed.SandboxEntryAllowed(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Ids.RepoName Repo, string! Kind, string! Entry) -> void
+override Aw.Sindri.Core.Events.SandboxEntryAllowed.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.SandboxEntryAllowed.GetHashCode() -> int
+override Aw.Sindri.Core.Events.SandboxEntryAllowed.ToString() -> string!
+static Aw.Sindri.Core.Events.SandboxEntryAllowed.operator !=(Aw.Sindri.Core.Events.SandboxEntryAllowed? left, Aw.Sindri.Core.Events.SandboxEntryAllowed? right) -> bool
+static Aw.Sindri.Core.Events.SandboxEntryAllowed.operator ==(Aw.Sindri.Core.Events.SandboxEntryAllowed? left, Aw.Sindri.Core.Events.SandboxEntryAllowed? right) -> bool
+const Aw.Sindri.Core.Events.EventTypes.ReviewLoginSet = "review.login-set" -> string!
+const Aw.Sindri.Core.Events.EventTypes.SandboxAllowed = "sandbox.allowed" -> string!
+Aw.Sindri.Core.Events.LinearWriteRecorded
+Aw.Sindri.Core.Events.LinearWriteRecorded.<Clone>$() -> Aw.Sindri.Core.Events.LinearWriteRecorded!
+Aw.Sindri.Core.Events.LinearWriteRecorded.Deconstruct(out string! Team, out string? Issue, out string? Fields) -> void
+Aw.Sindri.Core.Events.LinearWriteRecorded.Equals(Aw.Sindri.Core.Events.LinearWriteRecorded? other) -> bool
+Aw.Sindri.Core.Events.LinearWriteRecorded.Fields.get -> string?
+Aw.Sindri.Core.Events.LinearWriteRecorded.Fields.init -> void
+Aw.Sindri.Core.Events.LinearWriteRecorded.Issue.get -> string?
+Aw.Sindri.Core.Events.LinearWriteRecorded.Issue.init -> void
+Aw.Sindri.Core.Events.LinearWriteRecorded.LinearWriteRecorded(string! Team, string? Issue, string? Fields) -> void
+Aw.Sindri.Core.Events.LinearWriteRecorded.Team.get -> string!
+Aw.Sindri.Core.Events.LinearWriteRecorded.Team.init -> void
+override Aw.Sindri.Core.Events.LinearWriteRecorded.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.LinearWriteRecorded.GetHashCode() -> int
+override Aw.Sindri.Core.Events.LinearWriteRecorded.ToString() -> string!
+static Aw.Sindri.Core.Events.LinearWriteRecorded.operator !=(Aw.Sindri.Core.Events.LinearWriteRecorded? left, Aw.Sindri.Core.Events.LinearWriteRecorded? right) -> bool
+static Aw.Sindri.Core.Events.LinearWriteRecorded.operator ==(Aw.Sindri.Core.Events.LinearWriteRecorded? left, Aw.Sindri.Core.Events.LinearWriteRecorded? right) -> bool
+const Aw.Sindri.Core.Events.EventTypes.LinearIssueCreated = "linear.issue.created" -> string!
+const Aw.Sindri.Core.Events.EventTypes.LinearCommentPosted = "linear.comment.posted" -> string!
+const Aw.Sindri.Core.Events.EventTypes.LinearIssueChanged = "linear.issue.changed" -> string!
+Aw.Sindri.Core.Linear.ILinearSideFacts.LookupsForWrite(string! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Linear.LinearLookupsResponse?>!>
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.ItemToCreate!
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Body.get -> string?
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Body.init -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.LinearIssue.get -> string?
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.LinearIssue.init -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Repo.get -> string?
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Repo.init -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Run.init -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Title.init -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out string! Title, out string? Repo, out string? Body, out string? LinearIssue) -> void
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Equals(Aw.Sindri.Core.Graph.Blocks.ItemToCreate? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.ItemToCreate.ItemToCreate(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, string! Title, string? Repo, string? Body, string? LinearIssue) -> void
+override Aw.Sindri.Core.Graph.Blocks.ItemToCreate.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.ItemToCreate.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.ItemToCreate.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.ItemToCreate.operator !=(Aw.Sindri.Core.Graph.Blocks.ItemToCreate? left, Aw.Sindri.Core.Graph.Blocks.ItemToCreate? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.ItemToCreate.operator ==(Aw.Sindri.Core.Graph.Blocks.ItemToCreate? left, Aw.Sindri.Core.Graph.Blocks.ItemToCreate? right) -> bool
 Aw.Sindri.Core.Events.ConnectionPolled
 Aw.Sindri.Core.Events.ConnectionPolled.<Clone>$() -> Aw.Sindri.Core.Events.ConnectionPolled!
 Aw.Sindri.Core.Events.ConnectionPolled.Connection.get -> string!
@@ -21059,6 +21939,8 @@ Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.CheckConfig(System.Text.Json.No
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.ConnectionEventBlock() -> void
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.ConnectionEventBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
@@ -21145,3 +22027,348 @@ static Aw.Sindri.Core.Connections.SignInTry.operator !=(Aw.Sindri.Core.Connectio
 static Aw.Sindri.Core.Connections.SignInTry.operator ==(Aw.Sindri.Core.Connections.SignInTry? left, Aw.Sindri.Core.Connections.SignInTry? right) -> bool
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.get -> string?
 Aw.Sindri.Core.Todos.TodoNoteImport.Warning.init -> void
+Aw.Sindri.Core.Events.ConnectionRemoved
+Aw.Sindri.Core.Events.ConnectionRemoved.<Clone>$() -> Aw.Sindri.Core.Events.ConnectionRemoved!
+Aw.Sindri.Core.Events.ConnectionRemoved.Connection.get -> string!
+Aw.Sindri.Core.Events.ConnectionRemoved.Connection.init -> void
+Aw.Sindri.Core.Events.ConnectionRemoved.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.ConnectionRemoved.At.init -> void
+Aw.Sindri.Core.Events.ConnectionRemoved.ConnectionRemoved(string! Connection, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionRemoved.Deconstruct(out string! Connection, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionRemoved.Equals(Aw.Sindri.Core.Events.ConnectionRemoved? other) -> bool
+override Aw.Sindri.Core.Events.ConnectionRemoved.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ConnectionRemoved.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ConnectionRemoved.ToString() -> string!
+Aw.Sindri.Core.Events.ConnectionSignInRequested
+Aw.Sindri.Core.Events.ConnectionSignInRequested.<Clone>$() -> Aw.Sindri.Core.Events.ConnectionSignInRequested!
+Aw.Sindri.Core.Events.ConnectionSignInRequested.Connection.get -> string!
+Aw.Sindri.Core.Events.ConnectionSignInRequested.Connection.init -> void
+Aw.Sindri.Core.Events.ConnectionSignInRequested.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.ConnectionSignInRequested.At.init -> void
+Aw.Sindri.Core.Events.ConnectionSignInRequested.ConnectionSignInRequested(string! Connection, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionSignInRequested.Deconstruct(out string! Connection, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.ConnectionSignInRequested.Equals(Aw.Sindri.Core.Events.ConnectionSignInRequested? other) -> bool
+override Aw.Sindri.Core.Events.ConnectionSignInRequested.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ConnectionSignInRequested.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ConnectionSignInRequested.ToString() -> string!
+Aw.Sindri.Core.Events.MemoryFactsForgotten
+Aw.Sindri.Core.Events.MemoryFactsForgotten.<Clone>$() -> Aw.Sindri.Core.Events.MemoryFactsForgotten!
+Aw.Sindri.Core.Events.MemoryFactsForgotten.Memory.get -> string!
+Aw.Sindri.Core.Events.MemoryFactsForgotten.Memory.init -> void
+Aw.Sindri.Core.Events.MemoryFactsForgotten.Selector.get -> string!
+Aw.Sindri.Core.Events.MemoryFactsForgotten.Selector.init -> void
+Aw.Sindri.Core.Events.MemoryFactsForgotten.Count.get -> int
+Aw.Sindri.Core.Events.MemoryFactsForgotten.Count.init -> void
+Aw.Sindri.Core.Events.MemoryFactsForgotten.At.get -> System.DateTimeOffset
+Aw.Sindri.Core.Events.MemoryFactsForgotten.At.init -> void
+Aw.Sindri.Core.Events.MemoryFactsForgotten.MemoryFactsForgotten(string! Memory, string! Selector, int Count, System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.MemoryFactsForgotten.Deconstruct(out string! Memory, out string! Selector, out int Count, out System.DateTimeOffset At) -> void
+Aw.Sindri.Core.Events.MemoryFactsForgotten.Equals(Aw.Sindri.Core.Events.MemoryFactsForgotten? other) -> bool
+override Aw.Sindri.Core.Events.MemoryFactsForgotten.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.MemoryFactsForgotten.GetHashCode() -> int
+override Aw.Sindri.Core.Events.MemoryFactsForgotten.ToString() -> string!
+const Aw.Sindri.Core.Events.EventTypes.ConnectionRemoved = "connection.removed" -> string!
+const Aw.Sindri.Core.Events.EventTypes.ConnectionSignInRequested = "connection.sign-in-requested" -> string!
+const Aw.Sindri.Core.Events.EventTypes.MemoryFactsForgotten = "memory.facts.forgotten" -> string!
+Aw.Sindri.Core.Connections.ConnectionEvents.Removed(Aw.Sindri.Core.Connections.ConnectionName name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Connections.ConnectionEvents.SignInRequested(Aw.Sindri.Core.Connections.ConnectionName name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Memory.MemoryEvents
+Aw.Sindri.Core.Memory.MemoryEvents.Forgotten(Aw.Sindri.Core.Memory.MemoryName memory, string! selector, int count, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+Aw.Sindri.Core.Memory.MemoryEvents.MemoryEvents(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, System.TimeProvider! clock) -> void
+Aw.Sindri.Core.Memory.MemoryFact.WrittenBy.get -> string?
+Aw.Sindri.Core.Memory.MemoryFact.WrittenBy.init -> void
+static Aw.Sindri.Core.Events.ConnectionRemoved.operator !=(Aw.Sindri.Core.Events.ConnectionRemoved? left, Aw.Sindri.Core.Events.ConnectionRemoved? right) -> bool
+static Aw.Sindri.Core.Events.ConnectionRemoved.operator ==(Aw.Sindri.Core.Events.ConnectionRemoved? left, Aw.Sindri.Core.Events.ConnectionRemoved? right) -> bool
+static Aw.Sindri.Core.Events.ConnectionSignInRequested.operator !=(Aw.Sindri.Core.Events.ConnectionSignInRequested? left, Aw.Sindri.Core.Events.ConnectionSignInRequested? right) -> bool
+static Aw.Sindri.Core.Events.ConnectionSignInRequested.operator ==(Aw.Sindri.Core.Events.ConnectionSignInRequested? left, Aw.Sindri.Core.Events.ConnectionSignInRequested? right) -> bool
+static Aw.Sindri.Core.Events.MemoryFactsForgotten.operator !=(Aw.Sindri.Core.Events.MemoryFactsForgotten? left, Aw.Sindri.Core.Events.MemoryFactsForgotten? right) -> bool
+static Aw.Sindri.Core.Events.MemoryFactsForgotten.operator ==(Aw.Sindri.Core.Events.MemoryFactsForgotten? left, Aw.Sindri.Core.Events.MemoryFactsForgotten? right) -> bool
+Aw.Sindri.Core.Todos.Note.NoteBrokenLines
+static Aw.Sindri.Core.Todos.Note.NoteBrokenLines.Of(Aw.Sindri.Core.Todos.Note.NoteDocument! document) -> System.Collections.Generic.IReadOnlyList<(int Line, string! Reason)>!
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.OnlyNewBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.HttpBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.WorkflowCallTrigger.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.RunWorkflowBlock.Title.get -> string!
+const Aw.Sindri.Core.Graph.Loops.LoopBody.RunAgentType = "run_agent" -> string!
+const Aw.Sindri.Core.Graph.Loops.LoopBody.AgentInLoopCode = "GRAPH-LOOP-003" -> string!
+static Aw.Sindri.Core.Graph.Loops.LoopBody.AgentRefusal(Aw.Sindri.Core.Graph.Loops.LoopShape! shape) -> string?
+Aw.Sindri.Core.Resources.ConnectionResource
+Aw.Sindri.Core.Resources.ConnectionResource.<Clone>$() -> Aw.Sindri.Core.Resources.ConnectionResource!
+Aw.Sindri.Core.Resources.ConnectionResource.ConnectionResource(string! Name) -> void
+Aw.Sindri.Core.Resources.ConnectionResource.Deconstruct(out string! Name) -> void
+Aw.Sindri.Core.Resources.ConnectionResource.Equals(Aw.Sindri.Core.Resources.ConnectionResource? other) -> bool
+Aw.Sindri.Core.Resources.ConnectionResource.Name.get -> string!
+Aw.Sindri.Core.Resources.ConnectionResource.Name.init -> void
+Aw.Sindri.Core.Resources.DatabaseResource
+Aw.Sindri.Core.Resources.DatabaseResource.<Clone>$() -> Aw.Sindri.Core.Resources.DatabaseResource!
+Aw.Sindri.Core.Resources.DatabaseResource.DatabaseResource(string! Name) -> void
+Aw.Sindri.Core.Resources.DatabaseResource.Deconstruct(out string! Name) -> void
+Aw.Sindri.Core.Resources.DatabaseResource.Equals(Aw.Sindri.Core.Resources.DatabaseResource? other) -> bool
+Aw.Sindri.Core.Resources.DatabaseResource.Name.get -> string!
+Aw.Sindri.Core.Resources.DatabaseResource.Name.init -> void
+Aw.Sindri.Core.Resources.DiskResource
+Aw.Sindri.Core.Resources.DiskResource.<Clone>$() -> Aw.Sindri.Core.Resources.DiskResource!
+Aw.Sindri.Core.Resources.DiskResource.Deconstruct(out string! Name, out string! Size) -> void
+Aw.Sindri.Core.Resources.DiskResource.DiskResource(string! Name, string! Size) -> void
+Aw.Sindri.Core.Resources.DiskResource.Equals(Aw.Sindri.Core.Resources.DiskResource? other) -> bool
+Aw.Sindri.Core.Resources.DiskResource.Name.get -> string!
+Aw.Sindri.Core.Resources.DiskResource.Name.init -> void
+Aw.Sindri.Core.Resources.DiskResource.Size.get -> string!
+Aw.Sindri.Core.Resources.DiskResource.Size.init -> void
+Aw.Sindri.Core.Resources.PlannedResource
+Aw.Sindri.Core.Resources.PlannedResource.<Clone>$() -> Aw.Sindri.Core.Resources.PlannedResource!
+Aw.Sindri.Core.Resources.PlannedResource.Deconstruct(out Aw.Sindri.Core.Resources.ResourceKind Kind, out string! Name, out string! Path, out long? SizeLimit) -> void
+Aw.Sindri.Core.Resources.PlannedResource.Equals(Aw.Sindri.Core.Resources.PlannedResource? other) -> bool
+Aw.Sindri.Core.Resources.PlannedResource.Kind.get -> Aw.Sindri.Core.Resources.ResourceKind
+Aw.Sindri.Core.Resources.PlannedResource.Kind.init -> void
+Aw.Sindri.Core.Resources.PlannedResource.Name.get -> string!
+Aw.Sindri.Core.Resources.PlannedResource.Name.init -> void
+Aw.Sindri.Core.Resources.PlannedResource.Path.get -> string!
+Aw.Sindri.Core.Resources.PlannedResource.Path.init -> void
+Aw.Sindri.Core.Resources.PlannedResource.PlannedResource(Aw.Sindri.Core.Resources.ResourceKind Kind, string! Name, string! Path, long? SizeLimit) -> void
+Aw.Sindri.Core.Resources.PlannedResource.SizeLimit.get -> long?
+Aw.Sindri.Core.Resources.PlannedResource.SizeLimit.init -> void
+Aw.Sindri.Core.Resources.ResourceEnv
+Aw.Sindri.Core.Resources.ResourceKind
+Aw.Sindri.Core.Resources.ResourceKind.Database = 1 -> Aw.Sindri.Core.Resources.ResourceKind
+Aw.Sindri.Core.Resources.ResourceKind.Disk = 2 -> Aw.Sindri.Core.Resources.ResourceKind
+Aw.Sindri.Core.Resources.ResourceOwner
+Aw.Sindri.Core.Resources.ResourceOwner.<Clone>$() -> Aw.Sindri.Core.Resources.ResourceOwner!
+Aw.Sindri.Core.Resources.ResourceOwner.Equals(Aw.Sindri.Core.Resources.ResourceOwner? other) -> bool
+Aw.Sindri.Core.Resources.ResourceOwner.Folder.get -> string!
+Aw.Sindri.Core.Resources.ResourceOwner.Key.get -> string!
+Aw.Sindri.Core.Resources.ResourceOwner.Kind.get -> Aw.Sindri.Core.Resources.ResourceOwnerKind
+Aw.Sindri.Core.Resources.ResourceOwnerKind
+Aw.Sindri.Core.Resources.ResourceOwnerKind.Node = 2 -> Aw.Sindri.Core.Resources.ResourceOwnerKind
+Aw.Sindri.Core.Resources.ResourceOwnerKind.Toolkit = 3 -> Aw.Sindri.Core.Resources.ResourceOwnerKind
+Aw.Sindri.Core.Resources.ResourceOwnerKind.Workflow = 1 -> Aw.Sindri.Core.Resources.ResourceOwnerKind
+Aw.Sindri.Core.Resources.ResourcePlan
+Aw.Sindri.Core.Resources.ResourcePlan.<Clone>$() -> Aw.Sindri.Core.Resources.ResourcePlan!
+Aw.Sindri.Core.Resources.ResourcePlan.Create.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.PlannedResource!>!
+Aw.Sindri.Core.Resources.ResourcePlan.Create.init -> void
+Aw.Sindri.Core.Resources.ResourcePlan.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.PlannedResource!>! Create, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! Mounts, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Resources.ResourcePlan.Env.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Resources.ResourcePlan.Env.init -> void
+Aw.Sindri.Core.Resources.ResourcePlan.Equals(Aw.Sindri.Core.Resources.ResourcePlan? other) -> bool
+Aw.Sindri.Core.Resources.ResourcePlan.Limits.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Resources.ResourcePlan.Limits.init -> void
+Aw.Sindri.Core.Resources.ResourcePlan.Mounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>!
+Aw.Sindri.Core.Resources.ResourcePlan.Mounts.init -> void
+Aw.Sindri.Core.Resources.ResourcePlan.ResourcePlan(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.PlannedResource!>! Create, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! Mounts, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Resources.ResourcePlanner
+Aw.Sindri.Core.Resources.ResourceSizes
+Aw.Sindri.Core.Resources.ResourceSpec
+Aw.Sindri.Core.Resources.ResourceSpec.<Clone>$() -> Aw.Sindri.Core.Resources.ResourceSpec!
+Aw.Sindri.Core.Resources.ResourceSpec.Connections.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ConnectionResource!>!
+Aw.Sindri.Core.Resources.ResourceSpec.Connections.init -> void
+Aw.Sindri.Core.Resources.ResourceSpec.Databases.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DatabaseResource!>!
+Aw.Sindri.Core.Resources.ResourceSpec.Databases.init -> void
+Aw.Sindri.Core.Resources.ResourceSpec.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DatabaseResource!>! Databases, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DiskResource!>! Disks, out Aw.Sindri.Core.Resources.SandboxResource? Sandbox, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ConnectionResource!>! Connections) -> void
+Aw.Sindri.Core.Resources.ResourceSpec.Disks.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DiskResource!>!
+Aw.Sindri.Core.Resources.ResourceSpec.Disks.init -> void
+Aw.Sindri.Core.Resources.ResourceSpec.Equals(Aw.Sindri.Core.Resources.ResourceSpec? other) -> bool
+Aw.Sindri.Core.Resources.ResourceSpec.ResourceSpec(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DatabaseResource!>! Databases, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.DiskResource!>! Disks, Aw.Sindri.Core.Resources.SandboxResource? Sandbox, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ConnectionResource!>! Connections) -> void
+Aw.Sindri.Core.Resources.ResourceSpec.Sandbox.get -> Aw.Sindri.Core.Resources.SandboxResource?
+Aw.Sindri.Core.Resources.ResourceSpec.Sandbox.init -> void
+Aw.Sindri.Core.Resources.SandboxResource
+Aw.Sindri.Core.Resources.SandboxResource.<Clone>$() -> Aw.Sindri.Core.Resources.SandboxResource!
+Aw.Sindri.Core.Resources.SandboxResource.Cpu.get -> string?
+Aw.Sindri.Core.Resources.SandboxResource.Cpu.init -> void
+Aw.Sindri.Core.Resources.SandboxResource.Deconstruct(out string? Cpu, out string? Memory, out string? Wall) -> void
+Aw.Sindri.Core.Resources.SandboxResource.Equals(Aw.Sindri.Core.Resources.SandboxResource? other) -> bool
+Aw.Sindri.Core.Resources.SandboxResource.Memory.get -> string?
+Aw.Sindri.Core.Resources.SandboxResource.Memory.init -> void
+Aw.Sindri.Core.Resources.SandboxResource.SandboxResource(string? Cpu = null, string? Memory = null, string? Wall = null) -> void
+Aw.Sindri.Core.Resources.SandboxResource.Wall.get -> string?
+Aw.Sindri.Core.Resources.SandboxResource.Wall.init -> void
+const Aw.Sindri.Core.Resources.ResourceEnv.ConnectionPrefix = "SINDRI_CONNECTION_" -> string!
+const Aw.Sindri.Core.Resources.ResourceEnv.DatabasePrefix = "SINDRI_DB_" -> string!
+const Aw.Sindri.Core.Resources.ResourceEnv.DiskPrefix = "SINDRI_DISK_" -> string!
+override Aw.Sindri.Core.Resources.ConnectionResource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.ConnectionResource.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.ConnectionResource.ToString() -> string!
+override Aw.Sindri.Core.Resources.DatabaseResource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.DatabaseResource.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.DatabaseResource.ToString() -> string!
+override Aw.Sindri.Core.Resources.DiskResource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.DiskResource.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.DiskResource.ToString() -> string!
+override Aw.Sindri.Core.Resources.PlannedResource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.PlannedResource.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.PlannedResource.ToString() -> string!
+override Aw.Sindri.Core.Resources.ResourceOwner.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.ResourceOwner.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.ResourceOwner.ToString() -> string!
+override Aw.Sindri.Core.Resources.ResourcePlan.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.ResourcePlan.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.ResourcePlan.ToString() -> string!
+override Aw.Sindri.Core.Resources.ResourceSpec.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.ResourceSpec.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.ResourceSpec.ToString() -> string!
+override Aw.Sindri.Core.Resources.SandboxResource.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Resources.SandboxResource.GetHashCode() -> int
+override Aw.Sindri.Core.Resources.SandboxResource.ToString() -> string!
+static Aw.Sindri.Core.Resources.ConnectionResource.operator !=(Aw.Sindri.Core.Resources.ConnectionResource? left, Aw.Sindri.Core.Resources.ConnectionResource? right) -> bool
+static Aw.Sindri.Core.Resources.ConnectionResource.operator ==(Aw.Sindri.Core.Resources.ConnectionResource? left, Aw.Sindri.Core.Resources.ConnectionResource? right) -> bool
+static Aw.Sindri.Core.Resources.DatabaseResource.operator !=(Aw.Sindri.Core.Resources.DatabaseResource? left, Aw.Sindri.Core.Resources.DatabaseResource? right) -> bool
+static Aw.Sindri.Core.Resources.DatabaseResource.operator ==(Aw.Sindri.Core.Resources.DatabaseResource? left, Aw.Sindri.Core.Resources.DatabaseResource? right) -> bool
+static Aw.Sindri.Core.Resources.DiskResource.operator !=(Aw.Sindri.Core.Resources.DiskResource? left, Aw.Sindri.Core.Resources.DiskResource? right) -> bool
+static Aw.Sindri.Core.Resources.DiskResource.operator ==(Aw.Sindri.Core.Resources.DiskResource? left, Aw.Sindri.Core.Resources.DiskResource? right) -> bool
+static Aw.Sindri.Core.Resources.PlannedResource.operator !=(Aw.Sindri.Core.Resources.PlannedResource? left, Aw.Sindri.Core.Resources.PlannedResource? right) -> bool
+static Aw.Sindri.Core.Resources.PlannedResource.operator ==(Aw.Sindri.Core.Resources.PlannedResource? left, Aw.Sindri.Core.Resources.PlannedResource? right) -> bool
+static Aw.Sindri.Core.Resources.ResourceEnv.Connection(string! name) -> string!
+static Aw.Sindri.Core.Resources.ResourceEnv.Database(string! name) -> string!
+static Aw.Sindri.Core.Resources.ResourceEnv.Disk(string! name) -> string!
+static Aw.Sindri.Core.Resources.ResourceOwner.Parse(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Resources.ResourceOwner!>!
+static Aw.Sindri.Core.Resources.ResourceOwner.operator !=(Aw.Sindri.Core.Resources.ResourceOwner? left, Aw.Sindri.Core.Resources.ResourceOwner? right) -> bool
+static Aw.Sindri.Core.Resources.ResourceOwner.operator ==(Aw.Sindri.Core.Resources.ResourceOwner? left, Aw.Sindri.Core.Resources.ResourceOwner? right) -> bool
+static Aw.Sindri.Core.Resources.ResourcePlan.operator !=(Aw.Sindri.Core.Resources.ResourcePlan? left, Aw.Sindri.Core.Resources.ResourcePlan? right) -> bool
+static Aw.Sindri.Core.Resources.ResourcePlan.operator ==(Aw.Sindri.Core.Resources.ResourcePlan? left, Aw.Sindri.Core.Resources.ResourcePlan? right) -> bool
+static Aw.Sindri.Core.Resources.ResourcePlanner.Plan(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceSpec! spec, string! resourcesRoot) -> Aw.Kernel.Result<Aw.Sindri.Core.Resources.ResourcePlan!>!
+static Aw.Sindri.Core.Resources.ResourceSizes.TryParse(string? text, out long bytes) -> bool
+static Aw.Sindri.Core.Resources.ResourceSpec.Empty.get -> Aw.Sindri.Core.Resources.ResourceSpec!
+static Aw.Sindri.Core.Resources.ResourceSpec.operator !=(Aw.Sindri.Core.Resources.ResourceSpec? left, Aw.Sindri.Core.Resources.ResourceSpec? right) -> bool
+static Aw.Sindri.Core.Resources.ResourceSpec.operator ==(Aw.Sindri.Core.Resources.ResourceSpec? left, Aw.Sindri.Core.Resources.ResourceSpec? right) -> bool
+static Aw.Sindri.Core.Resources.SandboxResource.operator !=(Aw.Sindri.Core.Resources.SandboxResource? left, Aw.Sindri.Core.Resources.SandboxResource? right) -> bool
+static Aw.Sindri.Core.Resources.SandboxResource.operator ==(Aw.Sindri.Core.Resources.SandboxResource? left, Aw.Sindri.Core.Resources.SandboxResource? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ResourceDiskOverSize -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourceInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourceDiskUnmeasured -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourceNameClash -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourcePathEscapes -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourcePurgeRefused -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourceSandboxOverCap -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Events.WorkflowQuestionPublic
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowQuestionPublic!
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Kind) -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Equals(Aw.Sindri.Core.Events.WorkflowQuestionPublic? other) -> bool
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Kind.get -> string!
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Kind.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Node.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Run.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.WorkflowQuestionPublic(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Kind = "question") -> void
+override Aw.Sindri.Core.Events.WorkflowQuestionPublic.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowQuestionPublic.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowQuestionPublic.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowQuestionPublic.operator !=(Aw.Sindri.Core.Events.WorkflowQuestionPublic? left, Aw.Sindri.Core.Events.WorkflowQuestionPublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowQuestionPublic.operator ==(Aw.Sindri.Core.Events.WorkflowQuestionPublic? left, Aw.Sindri.Core.Events.WorkflowQuestionPublic? right) -> bool
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowAnsweredPublic!
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out Aw.Sindri.Core.Graph.Ids.NodeId Node, out string! Kind) -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Equals(Aw.Sindri.Core.Events.WorkflowAnsweredPublic? other) -> bool
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Kind.get -> string!
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Kind.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Node.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Node.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Run.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.WorkflowAnsweredPublic(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, Aw.Sindri.Core.Graph.Ids.NodeId Node, string! Kind = "question") -> void
+override Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowAnsweredPublic.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowAnsweredPublic.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowAnsweredPublic.operator !=(Aw.Sindri.Core.Events.WorkflowAnsweredPublic? left, Aw.Sindri.Core.Events.WorkflowAnsweredPublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowAnsweredPublic.operator ==(Aw.Sindri.Core.Events.WorkflowAnsweredPublic? left, Aw.Sindri.Core.Events.WorkflowAnsweredPublic? right) -> bool
+const Aw.Sindri.Core.Events.WorkflowQuestionPublic.QuestionKind = "question" -> string!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WaitBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.AskOwnerBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Connections.GitHubAccountState
+Aw.Sindri.Core.Connections.GitHubAccountState.Connected = 0 -> Aw.Sindri.Core.Connections.GitHubAccountState
+Aw.Sindri.Core.Connections.GitHubAccountState.Missing = 2 -> Aw.Sindri.Core.Connections.GitHubAccountState
+Aw.Sindri.Core.Connections.GitHubAccountState.NeedsSignIn = 1 -> Aw.Sindri.Core.Connections.GitHubAccountState
+Aw.Sindri.Core.Connections.GitHubAccount
+Aw.Sindri.Core.Connections.GitHubAccount.<Clone>$() -> Aw.Sindri.Core.Connections.GitHubAccount!
+Aw.Sindri.Core.Connections.GitHubAccount.Connection.get -> string?
+Aw.Sindri.Core.Connections.GitHubAccount.Connection.init -> void
+Aw.Sindri.Core.Connections.GitHubAccount.Deconstruct(out Aw.Sindri.Core.Connections.GitHubAccountState State, out string? Connection, out string? Login) -> void
+Aw.Sindri.Core.Connections.GitHubAccount.Equals(Aw.Sindri.Core.Connections.GitHubAccount? other) -> bool
+Aw.Sindri.Core.Connections.GitHubAccount.GitHubAccount(Aw.Sindri.Core.Connections.GitHubAccountState State, string? Connection, string? Login) -> void
+Aw.Sindri.Core.Connections.GitHubAccount.Login.get -> string?
+Aw.Sindri.Core.Connections.GitHubAccount.Login.init -> void
+Aw.Sindri.Core.Connections.GitHubAccount.State.get -> Aw.Sindri.Core.Connections.GitHubAccountState
+Aw.Sindri.Core.Connections.GitHubAccount.State.init -> void
+override Aw.Sindri.Core.Connections.GitHubAccount.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Connections.GitHubAccount.GetHashCode() -> int
+override Aw.Sindri.Core.Connections.GitHubAccount.ToString() -> string!
+static Aw.Sindri.Core.Connections.GitHubAccount.operator !=(Aw.Sindri.Core.Connections.GitHubAccount? left, Aw.Sindri.Core.Connections.GitHubAccount? right) -> bool
+static Aw.Sindri.Core.Connections.GitHubAccount.operator ==(Aw.Sindri.Core.Connections.GitHubAccount? left, Aw.Sindri.Core.Connections.GitHubAccount? right) -> bool
+Aw.Sindri.Core.Connections.IGitHubAccount
+Aw.Sindri.Core.Connections.IGitHubAccount.Current(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Connections.GitHubAccount!>!>
+Aw.Sindri.Core.Reviews.ReviewConnect
+Aw.Sindri.Core.Reviews.ReviewConnect.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewConnect!
+Aw.Sindri.Core.Reviews.ReviewConnect.Action.get -> string!
+Aw.Sindri.Core.Reviews.ReviewConnect.Action.init -> void
+Aw.Sindri.Core.Reviews.ReviewConnect.Code.get -> string!
+Aw.Sindri.Core.Reviews.ReviewConnect.Code.init -> void
+Aw.Sindri.Core.Reviews.ReviewConnect.Connection.get -> string?
+Aw.Sindri.Core.Reviews.ReviewConnect.Connection.init -> void
+Aw.Sindri.Core.Reviews.ReviewConnect.Deconstruct(out string! Code, out string! Action, out string! Text, out string? Connection) -> void
+Aw.Sindri.Core.Reviews.ReviewConnect.Equals(Aw.Sindri.Core.Reviews.ReviewConnect? other) -> bool
+Aw.Sindri.Core.Reviews.ReviewConnect.ReviewConnect(string! Code, string! Action, string! Text, string? Connection) -> void
+Aw.Sindri.Core.Reviews.ReviewConnect.Text.get -> string!
+Aw.Sindri.Core.Reviews.ReviewConnect.Text.init -> void
+override Aw.Sindri.Core.Reviews.ReviewConnect.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Reviews.ReviewConnect.GetHashCode() -> int
+override Aw.Sindri.Core.Reviews.ReviewConnect.ToString() -> string!
+static Aw.Sindri.Core.Reviews.ReviewConnect.operator !=(Aw.Sindri.Core.Reviews.ReviewConnect? left, Aw.Sindri.Core.Reviews.ReviewConnect? right) -> bool
+static Aw.Sindri.Core.Reviews.ReviewConnect.operator ==(Aw.Sindri.Core.Reviews.ReviewConnect? left, Aw.Sindri.Core.Reviews.ReviewConnect? right) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ReviewNoConnection -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ReviewSignInAgain -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Reviews.ReviewConnectRules
+static Aw.Sindri.Core.Reviews.ReviewConnectRules.For(Aw.Sindri.Core.Connections.GitHubAccount! account, bool profileHasToken, string? lastCode) -> Aw.Sindri.Core.Reviews.ReviewConnect?
+static Aw.Sindri.Core.Reviews.ReviewConnectRules.IsSignInCode(string? code) -> bool
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest!
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out string! Owner, out string! Command, out string! RunArea, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! ResourceMounts, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>! HostGroups, out Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts! Net, out Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts! Host, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Equals(Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest? other) -> bool
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ProcessSandboxRequest(Aw.Sindri.Core.Launch.LaunchId Launch, string! Owner, string! Command, string! RunArea, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! ResourceMounts, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>! HostGroups, Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts! Net, Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts! Host, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits = null) -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Launch.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Owner.get -> string!
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Owner.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Command.get -> string!
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Command.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.RunArea.get -> string!
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.RunArea.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ResourceMounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>!
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ResourceMounts.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Environment.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Environment.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.HostGroups.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>!
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.HostGroups.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Net.get -> Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts!
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Net.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Host.get -> Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts!
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Host.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Limits.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Limits.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxPlanner
+static Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxPlanner.Build(Aw.Sindri.Core.Sandbox.SandboxMechanism mechanism, Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest! request) -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Plan.SandboxPlan!>!
+Aw.Sindri.Core.Sandbox.Plan.ISandbox.PlanProcess(Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest! request) -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Plan.SandboxPlan!>!
+Aw.Sindri.Core.Sandbox.Plan.ISandbox.WrapProcess(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, System.Collections.Generic.IReadOnlyList<string!>! argv) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Sindri.Core.Sandbox.Plan.UnavailableSandbox.PlanProcess(Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest! request) -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Plan.SandboxPlan!>!
+Aw.Sindri.Core.Sandbox.Plan.UnavailableSandbox.WrapProcess(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, System.Collections.Generic.IReadOnlyList<string!>! argv) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+override Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ToString() -> string!
+static Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.operator !=(Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest? left, Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest? right) -> bool
+static Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.operator ==(Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest? left, Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest? right) -> bool
+override Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.GetHashCode() -> int
+override Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Equals(object? obj) -> bool
+Aw.Sindri.Core.Resources.IResourceFiles
+Aw.Sindri.Core.Resources.IResourceFiles.List(Aw.Sindri.Core.Resources.ResourceOwner? owner) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>!>!
+Aw.Sindri.Core.Resources.IResourceFiles.Purge(Aw.Sindri.Core.Resources.ResourceOwner! owner) -> Aw.Kernel.Result<int>!
+Aw.Sindri.Core.Resources.ResourceEntry
+Aw.Sindri.Core.Resources.ResourceEntry.Kind.get -> Aw.Sindri.Core.Resources.ResourceKind
+Aw.Sindri.Core.Resources.ResourceEntry.Name.get -> string!
+Aw.Sindri.Core.Resources.ResourceEntry.Owner.get -> Aw.Sindri.Core.Resources.ResourceOwner!
+Aw.Sindri.Core.Resources.ResourceEntry.Path.get -> string!
+Aw.Sindri.Core.Resources.ResourceEntry.ResourceEntry(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceKind kind, string! name, long sizeBytes, string! path) -> void
+Aw.Sindri.Core.Resources.ResourceEntry.SizeBytes.get -> long

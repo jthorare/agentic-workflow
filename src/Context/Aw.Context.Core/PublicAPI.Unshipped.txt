@@ -11957,6 +11957,8 @@ const Aw.Context.Core.Sync.RecordBatches.MaxIssueDescription = 65536 -> int
 Aw.Context.Core.Facade.IContextPulls
 Aw.Context.Core.Facade.IContextPulls.OpenPulls(Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.StoredRecord!>!>!>
 Aw.Context.Core.Facade.IContextLibrary.Roots(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRootStatus!>!>!>
+Aw.Context.Core.Library.ILibrarySkips
+Aw.Context.Core.Library.ILibrarySkips.In(string! root, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
 Aw.Context.Core.Library.ILibraryStatus
 Aw.Context.Core.Library.ILibraryStatus.Read() -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRootReport!>!
 Aw.Context.Core.Library.ILibraryStatus.Write(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRootReport!>! reports) -> void

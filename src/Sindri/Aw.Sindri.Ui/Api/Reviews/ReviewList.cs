@@ -10,6 +10,7 @@ namespace Aw.Sindri.Ui.Api.Reviews;
 /// <param name="WaitingCount">The Waiting on you group's size: Home's line and the tab's badge.</param>
 /// <param name="Groups">Waiting on you, then Yours; a group with no rows is left out.</param>
 /// <param name="Empty">The empty state's lines when there are no rows; null otherwise.</param>
+/// <param name="Connect">The Connect GitHub / Sign in again action (#2499) while GitHub has no usable connection; null otherwise.</param>
 internal sealed record ReviewList(
     string? Login,
     ReviewLoginPromptView? LoginPrompt,
@@ -19,4 +20,5 @@ internal sealed record ReviewList(
     ReviewLibraryView Library,
     int WaitingCount,
     IReadOnlyList<ReviewGroupView> Groups,
-    ReviewEmptyView? Empty);
+    ReviewEmptyView? Empty,
+    ReviewConnectView? Connect);

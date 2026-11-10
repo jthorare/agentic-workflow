@@ -51,6 +51,11 @@ public sealed class EventCatalogTests
     [InlineData("workflow.run.started", "workflow.run.started:<run id>")]
     [InlineData("workflow.run.finished", "workflow.run.finished:<run id>")]
     [InlineData("workflow.run.cancelled", "workflow.run.cancelled:<run id>")]
+    [InlineData("workflow.created", "workflow.created:<workflow id>")]
+    [InlineData("workflow.revised", "workflow.revised:<command id>")]
+    [InlineData("workflow.activated", "workflow.activated:<command id>")]
+    [InlineData("workflow.paused", "workflow.paused:<command id>")]
+    [InlineData("workflow.archived", "workflow.archived:<workflow id>")]
     [InlineData("workflow.node.started", "workflow.node.started:<run id>:<node id>:<item index>")]
     [InlineData("workflow.node.finished", "workflow.node.finished:<run id>:<node id>:<item index>")]
     [InlineData("workflow.node.failed", "workflow.node.failed:<run id>:<node id>:<item index>")]
@@ -78,5 +83,19 @@ public sealed class EventCatalogTests
         }
 
         Assert.Contains(ApiViews.Projects, ApiViews.All, StringComparer.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("linear.issue.created", "linear.issue.created:<clientId>")]
+    [InlineData("linear.comment.posted", "linear.comment.posted:<clientId>")]
+    [InlineData("linear.issue.changed", "linear.issue.changed:<issue key>:<commandId>")]
+    public void Each_linear_write_event_is_catalogued_privately_under_its_name_and_key_shape(string type, string keyShape)
+    {
+        var entry = Assert.Single(EventCatalog.All, e => e.Type == type);
+
+        Assert.False(entry.Public);   // the actor and the issue key stay in the ledger; Linear's own pages show the write
+        Assert.Null(entry.PublicPayload);
+        Assert.Equal(keyShape, entry.KeyShape);
+        Assert.Contains(type, typeof(EventTypes).GetFields(BindingFlags.Public | BindingFlags.Static).Select(f => (string)f.GetRawConstantValue()!), StringComparer.Ordinal);
     }
 }

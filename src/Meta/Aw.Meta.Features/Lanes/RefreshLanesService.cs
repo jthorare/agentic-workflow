@@ -7,8 +7,7 @@ namespace Aw.Meta.Features.Lanes;
 
 /// <summary>
 /// Maps each configured lane to the live session working it (a session named "team-lane", else one that announced the lane)
-/// and saves the map when it changed. A changed map opens a broadcast-lanes obligation (it is derived: not every lane has
-/// been sent the new version).
+/// and saves the map when it changed. A changed map raises the lane map version that lanes see through board-line.
 /// </summary>
 /// <param name="config">The team config.</param>
 /// <param name="refresher">Maps and saves.</param>

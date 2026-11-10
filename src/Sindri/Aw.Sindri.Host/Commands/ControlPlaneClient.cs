@@ -20,7 +20,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="timeout">A hard cap on one call (AW_SINDRI_CLI_TIMEOUT); none by default, so a slow but healthy answer completes. Connecting is bounded by <see cref="CliTimeout.Connect"/> instead.</param>
 /// <param name="refusal">A refusal every call answers with instead of calling (a malformed AW_SINDRI_CLI_TIMEOUT), so verbs that never call the control plane aren't affected by it.</param>
 /// <param name="handler">The HTTP handler (tests); a loopback handler without a proxy when null.</param>
-internal sealed class ControlPlaneClient(IControlPlaneProbe probe, JsonSerializerOptions options, CallerHeaders? headers = null, TimeSpan? timeout = null,
+internal sealed partial class ControlPlaneClient(IControlPlaneProbe probe, JsonSerializerOptions options, CallerHeaders? headers = null, TimeSpan? timeout = null,
     HttpMessageHandler? handler = null, Error? refusal = null) : IDisposable
 {
     private readonly HttpClient _http = new(handler ?? new SocketsHttpHandler { UseProxy = false, ConnectTimeout = CliTimeout.Connect }) { Timeout = timeout ?? Timeout.InfiniteTimeSpan };
@@ -122,21 +122,6 @@ internal sealed class ControlPlaneClient(IControlPlaneProbe probe, JsonSerialize
         var content = body is null ? null : new ByteArrayContent(AwJson.Serialize(body, options)) { Headers = { ContentType = new MediaTypeHeaderValue("application/json") } };
 #pragma warning restore CA2000
         return Send<T>(HttpMethod.Post, route, content, after: null, ct);
-    }
-
-    /// <summary>QUERY <paramref name="body"/> to a route and read its answer: the HTTP method for a read whose question is too large for a URL (an IETF draft; safe and idempotent, never a command).</summary>
-    /// <param name="route">The route.</param>
-    /// <param name="body">The request record.</param>
-    /// <param name="ct">Cancels the call.</param>
-    /// <typeparam name="TBody">The request type.</typeparam>
-    /// <typeparam name="T">The response type.</typeparam>
-    /// <returns>The answer, or the API's error.</returns>
-    public Task<Result<ApiAnswer<T>>> Query<TBody, T>(string route, TBody body, CancellationToken ct)
-    {
-#pragma warning disable CA2000 // Send disposes the content, on its failure paths and with the request
-        var content = new ByteArrayContent(AwJson.Serialize(body, options)) { Headers = { ContentType = new MediaTypeHeaderValue("application/json") } };
-#pragma warning restore CA2000
-        return Send<T>(HttpMethod.Query, route, content, after: null, ct);
     }
 
     /// <summary>The longest query string a GET carries; a longer one (Kestrel's request line is 8 KB) goes as a QUERY with the same fields as the JSON body.</summary>
@@ -278,7 +263,7 @@ internal sealed class ControlPlaneClient(IControlPlaneProbe probe, JsonSerialize
     {
         var problem = AwJson.Deserialize<ApiProblem>(bytes, options);
         return problem.IsSuccess && problem.Value.Title is { } code
-            ? new Error(code, Kind(status), Refusal(code, problem.Value.Detail ?? code) + RunningJob(code, problem.Value.Detail, problem.Value.RunningJob) + ProblemWords.Of(problem.Value))
+            ? new Error(code, Kind(status), (problem.Value.Detail ?? code) + RunningJob(code, problem.Value.Detail, problem.Value.RunningJob) + ProblemWords.Of(problem.Value))
             : SindriErrors.ApiNoCode.With(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the API answered HTTP {status} without an error code"));
     }
 
@@ -292,8 +277,4 @@ internal sealed class ControlPlaneClient(IControlPlaneProbe probe, JsonSerialize
     /// <summary>A refused start names the job that is already running and the command that shows it, unless the route's detail already says so.</summary>
     private static string RunningJob(string code, string? detail, string? job) =>
         code == SindriErrors.JobConflict.Code && !string.IsNullOrEmpty(job) && detail?.Contains("(fix:", StringComparison.Ordinal) != true ? $" (fix: sindri jobs show {SafeText.Line(SafeText.Escape(job), 60)})" : string.Empty;
-
-    /// <summary>A refused action class names why this CLI called as a session (workflow spec §4.2), so the reader knows what to change.</summary>
-    private string Refusal(string code, string detail) =>
-        code == SindriErrors.AuthRefused.Code && _headers.SessionReason is { } reason ? $"{detail} (this CLI ran as a session: {reason})" : detail;
 }

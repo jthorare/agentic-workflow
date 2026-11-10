@@ -176,7 +176,15 @@ public sealed class FakeContextEngine : IContextEngine
 
     /// <inheritdoc cref="IssueList"/>
     public ValueTask<Result<LinearTeamLookups?>> IssueLookups(string team, ContextScope scope, CancellationToken cancellationToken) =>
-        ValueTask.FromResult<Result<LinearTeamLookups?>>(Down());
+        ValueTask.FromResult(Lookups is { } answer ? answer(team, scope) : Down());
+
+    /// <summary>Gets what <see cref="IssueLookups"/> answers, given the team and the scope it was asked under; null keeps the unavailable answer.</summary>
+    public Func<string, ContextScope, Result<LinearTeamLookups?>>? Lookups { get; private init; }
+
+    /// <summary>An engine like <see cref="Instance"/> whose pickers' read answers with <paramref name="lookups"/>, so a test can refuse a scope as Context does.</summary>
+    /// <param name="lookups">The answer, given the team and the scope.</param>
+    /// <returns>The engine.</returns>
+    public static FakeContextEngine WithLookups(Func<string, ContextScope, Result<LinearTeamLookups?>> lookups) => new(probes: null) { Lookups = lookups };
 
     /// <inheritdoc cref="IssueList"/>
     public ValueTask<Result<string?>> WorkspaceUrlKey(ContextScope scope, CancellationToken cancellationToken) =>

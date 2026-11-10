@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Testing.Workflow;
 
@@ -169,6 +170,22 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
         Move(id, status, outputs, error, from => status == WorkflowRunStatus.Queued ? from == WorkflowRunStatus.Running : !IsFinal(from));
+
+    /// <inheritdoc/>
+    public ValueTask<Result<WorkflowRun>> SetItem(WorkflowRunId id, ItemId item, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var at = _runs.FindIndex(r => r.Id == id);
+            if (at < 0)
+            {
+                return Done<WorkflowRun>(NotFound(id));
+            }
+
+            _runs[at] = _runs[at] with { ItemId = _runs[at].ItemId ?? item };
+            return Done<WorkflowRun>(_runs[at]);
+        }
+    }
 
     /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> CancelQueued(WorkflowRunId id, string? error, CancellationToken cancellationToken) =>

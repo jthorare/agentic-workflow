@@ -35,6 +35,12 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
         new("spec.resources.database.name"), new("spec.resources.sandbox.memory"), new("spec.resources.sandbox.wall"),
     ]);
 
+    /// <summary>workflow_validate: each finding's message, fix, field and node ids (they quote the spec).</summary>
+    internal static FencePlan WorkflowValidation { get; } = new("sindri:workflow",
+    [
+        new("findings[].message"), new("findings[].fix"), new("findings[].field"), new("findings[].nodes[]"),
+    ]);
+
     /// <summary>workflow_runs: each run's failure text.</summary>
     internal static FencePlan WorkflowRuns { get; } = new("sindri:workflow-run", [new("runs[].error")]);
 

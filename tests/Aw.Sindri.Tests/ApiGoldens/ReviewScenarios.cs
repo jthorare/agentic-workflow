@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Projects.Facts;
@@ -23,6 +24,7 @@ internal static class ReviewScenarios
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("reviews", "some"), ("reviews", "empty"), ("reviews", "no-login"), ("reviews", "github-failing"), ("reviews", "before-reviewers"), ("reviews", "library-unreadable"), ("reviews", "session"),
+        ("reviews", "login-from-connection"), ("reviews", "connect-github"), ("reviews", "sign-in-again"),
         ("reviews-pr", "full"), ("reviews-pr", "empty-panels"), ("reviews-pr", "panel-errors"), ("reviews-pr", "moving"), ("reviews-pr", "offline-cached"),
         ("reviews-pr", "own-pr"), ("reviews-pr", "agent-pr"), ("reviews-pr", "capped"), ("reviews-pr", "not-synced"), ("reviews-pr", "no-login"), ("reviews-pr", "not-found"), ("reviews-pr", "offline-uncached"),
     ];
@@ -34,25 +36,40 @@ internal static class ReviewScenarios
     internal const string SindriProject = "prj_0000000000000000000000000A";
     private const string ReviewBlock = "review:\n  login: joi-example\n  projects:\n    - { project: prj_0000000000000000000000000A, repos: [acme/api] }\n";
 
+    /// <summary>The rows whose profile has no 'review' block: the login is missing, or comes from the GitHub connection.</summary>
+    private static readonly string[] _noReviewBlock = ["no-login", "login-from-connection", "connect-github", "sign-in-again"];
+
     private static readonly string[] _heads = [new('a', 40), new('b', 40), new('c', 40), new('d', 40)];
 
     /// <summary>Starts the scenario's host: the item profile with the github repos (and the review block unless the scenario is 'no-login'), over the scenario's stored PR records, project names and forge login.</summary>
     public static Task<GoldenHost> Start(string slug, string scenario, CancellationToken ct) =>
         slug != "reviews"
             ? ReviewPageScenarios.Start(scenario, ct)
-            : GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml + GithubContext + (scenario == "no-login" ? string.Empty : ReviewBlock), extra: services =>
+            : GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml + GithubContext + (_noReviewBlock.Contains(scenario) ? string.Empty : ReviewBlock), extra: services =>
             {
                 _ = services.Replace(ServiceDescriptor.Singleton<IReviewFacts>(Facts(scenario)));
                 _ = services.Replace(ServiceDescriptor.Singleton<IReviewProjects>(new FakeReviewProjects().With(SindriProject, "Sindri")));
                 _ = services.Replace(ServiceDescriptor.Singleton<IProjectPages>(new OneProjectPage()));   // the setup approval checks 'review.projects' against the Projects page (SND-REVIEW-002)
                 _ = services.Replace(ServiceDescriptor.Singleton<IPullRequests>(new FakePullRequests(["github.com"]) { SelfLogin = "joi-example" }));
+                _ = services.Replace(ServiceDescriptor.Singleton<IGitHubAccount>(Account(scenario)));   // #2499: the Reviews tab reads the GitHub connection
             });
+
+    /// <summary>The GitHub account of a row (#2499): connected as "github:work" with login "joi-example"; 'no-login' is connected but /user gave no login; 'connect-github' has no connection.</summary>
+    internal static FakeGitHubAccount Account(string scenario) => scenario switch
+    {
+        "no-login" => new FakeGitHubAccount { State = GitHubAccountState.Connected, Connection = "github:work", Login = null },
+        "connect-github" => new FakeGitHubAccount { State = GitHubAccountState.Missing },
+        _ => new FakeGitHubAccount { State = GitHubAccountState.Connected, Connection = "github:work", Login = "joi-example" },
+    };
+
+    /// <summary>The rows with no stored PR records.</summary>
+    private static bool NoPulls(string scenario) => scenario switch { "empty" or "connect-github" => true, _ => false };
 
     /// <summary>The stored PR records and sources of a 'reviews' row: 'some' and its variants share four open PRs (acme/api#2071 asks for the owner's review, acme/web#880 was reviewed with 2 commits since, acme/api#2064 and the draft acme/web#875 are the owner's).</summary>
     private static FakeReviewFacts Facts(string scenario)
     {
         var read = scenario != "before-reviewers";
-        List<ReviewPull> pulls = scenario == "empty" ? [] :
+        List<ReviewPull> pulls = NoPulls(scenario) ? [] :
         [
             Pull("acme/api", 2071, "Add retry budget to the sync worker", "sam-dev", draft: false, (2025, 12, 29, 12), (2025, 12, 31, 12), _heads[0], read ? ["joi-example"] : [], [], read, [new ReviewClaim("sindri-pr-review#Ph5", Resolved: true)]),
             Pull("acme/web", 880, "Fold the settings tabs into one page", "kim-dev", draft: false, (2025, 12, 27, 12), (2025, 12, 30, 12), _heads[1], [], read ? [new ReviewedAt("joi-example", _heads[3], NewCommits: 2)] : [], read, []),
@@ -60,7 +77,7 @@ internal static class ReviewScenarios
             Pull("acme/web", 875, "Draft: new empty state for Work", "joi-example", draft: true, (2025, 12, 30, 12), (2025, 12, 30, 12), head: null, [], [], read, []),
         ];
         var synced = KnownInstants.Epoch.AddMinutes(-14.4);
-        var github = new ProjectSourceFreshness("github", Usable: true, synced, scenario == "github-failing" ? "SND-INDEX-401" : null);
+        var github = new ProjectSourceFreshness("github", Usable: true, synced, scenario switch { "github-failing" => "SND-INDEX-401", "sign-in-again" => "AW-CONNECTORS-007", _ => null });
         var library = scenario == "library-unreadable" ? new ReviewLibraryFacts(Reading: false, 33, WithErrors: 0, [new ReviewUnreadableRoot("~/notes/vault", "permission denied")]) : new ReviewLibraryFacts(Reading: false, 41, WithErrors: 3, []);
         return new FakeReviewFacts().With(new ReviewFactsSnapshot(pulls, github, library));
     }

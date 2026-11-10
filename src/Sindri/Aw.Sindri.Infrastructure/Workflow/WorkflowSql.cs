@@ -24,6 +24,8 @@ internal static class WorkflowSql
 
     internal const string Pin = "UPDATE workflow SET active_revision = $revision WHERE id = $id";
 
+    internal const string Unpin = "UPDATE workflow SET active_revision = NULL WHERE id = $id";
+
     internal const string Archive = "UPDATE workflow SET archived_at = $at, active_revision = NULL WHERE id = $id";
 
     internal const string SelectRevision =
