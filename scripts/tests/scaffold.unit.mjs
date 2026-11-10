@@ -865,6 +865,18 @@ t("new-toolkit leaves an existing empty --dir empty when a dotnet step fails (ar
   assert.deepEqual(fs.readdirSync(dir), []);
 });
 
+// #2692: setup.sh links ~/.agentic-workflow/toolkit to the checkout, and Sindri runs the generator through that link. Each generator's
+// main check must hold there too, or node exits 0 having done nothing.
+for (const script of ["new-package.mjs", "new-slice.mjs", "new-toolkit.mjs"]) {
+  t(`${script} run through a symlinked checkout still runs its main and refuses an unknown option`, () => {
+    const link = path.join(tree(), "toolkit");
+    fs.symlinkSync(REPO, link);
+    const r = spawnSync(process.execPath, [path.join(link, "scripts", "scaffold", script), "--no-such-option"], { encoding: "utf8" });
+    assert.notEqual(r.status, 0, `exit ${r.status}, stdout ${JSON.stringify(r.stdout)}, stderr ${JSON.stringify(r.stderr)}`);
+    assert.match(r.stdout + r.stderr, /no-such-option/);
+  });
+}
+
 for (const dir of trees) fs.rmSync(dir, { recursive: true, force: true });
 if (failures.length) {
   for (const f of failures) console.error(`FAIL ${f}`);

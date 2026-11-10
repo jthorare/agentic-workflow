@@ -59,10 +59,19 @@ public sealed class FileToolkitFoldersTests : IDisposable
     [Fact]
     public void A_box_with_no_toolkits_folder_lists_nothing() => Assert.Empty(Folders(Exits(0)).Folders());
 
+    // A generator run that exits 0 after writing the project, the way new-toolkit.mjs leaves the folder.
+    private static FakeToolRunner Writes() => new((_, arguments) =>
+    {
+        var dir = arguments[arguments.ToList().IndexOf("--dir") + 1];
+        _ = Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "Made.Toolkit.csproj"), "<Project />");
+        return new ToolRun(ToolOutcome.Exited, 0, string.Empty, string.Empty);
+    });
+
     [Fact]
     public async Task The_generator_gets_a_pascal_case_name_the_tool_the_folder_the_feed_and_the_needs()
     {
-        var runner = Exits(0);
+        var runner = Writes();
 
         var made = await Folders(runner).Generate("github-triage", "list_issues", "connection:github", Token);
 
@@ -84,6 +93,16 @@ public sealed class FileToolkitFoldersTests : IDisposable
 
         Assert.Equal(SindriErrors.ToolkitCreateFailed.Code, made.Error.Code);
         Assert.Contains("NT-SDK", made.Error.Message, StringComparison.Ordinal);
+    }
+
+    // #2692: through the ~/.agentic-workflow/toolkit link the generator's main check was false, so node exited 0 having written nothing.
+    [Fact]
+    public async Task A_generator_that_exits_0_and_leaves_no_toolkit_project_is_SND_TK_013_naming_the_folder()
+    {
+        var made = await Folders(Exits(0)).Generate("notes", "add_note", needs: null, Token);
+
+        Assert.Equal(SindriErrors.ToolkitCreateFailed.Code, made.Error.Code);
+        Assert.Contains(Path.Combine(_home.Path, "toolkits", "notes"), made.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
