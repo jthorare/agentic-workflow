@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
@@ -93,7 +95,7 @@ public sealed class RunLinkWarningReadsTests : IAsyncLifetime
         using var stdout = new StringWriter();
         using var stderr = new StringWriter();
         var client = new ControlPlaneClient(_up, SliceHarness.Json,
-            CallerHeaders.For(new AgentSession(Terminal: true, Prover: false), InMemoryHumanTokenStore.WithToken(), _ => ValueTask.FromResult<RepoName?>(RepoName.From("alpha"))), handler: new ForwardToHost(Host.Http));
+            CallerHeaders.For(new AgentSession(Terminal: true, Prover: false), new HostToken(Host.Token), _ => ValueTask.FromResult<RepoName?>(RepoName.From("alpha"))), handler: new ForwardToHost(Host.Http));
 
         var code = await new WfReadVerbs(client, new Output(stdout, stderr, SliceHarness.Json)).RunShow([_run.Value, "--json"], ct);
 
@@ -130,5 +132,15 @@ public sealed class RunLinkWarningReadsTests : IAsyncLifetime
 
             return await host.SendAsync(forwarded, cancellationToken);
         }
+    }
+
+    // The token this host checks: the host mints its own per start, so the CLI under test has to send that one.
+    private sealed class HostToken(HumanToken token) : IHumanTokenStore
+    {
+        public ValueTask<Result<HumanToken>> Mint(CancellationToken cancellationToken) => ValueTask.FromResult<Result<HumanToken>>(token);
+
+        public ValueTask<Result<HumanToken?>> Read(CancellationToken cancellationToken) => ValueTask.FromResult<Result<HumanToken?>>(token);
+
+        public ValueTask<Result<Unit>> Remove(HumanToken mine, CancellationToken cancellationToken) => ValueTask.FromResult<Result<Unit>>(Unit.Value);
     }
 }
