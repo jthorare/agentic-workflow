@@ -89,21 +89,54 @@ public sealed class WriteAttributionTests
         ["POST /sindri/setup/repos/onboard"] = "a job starter; its only golden is not-approved, a refusal; the job's repo.onboarded needs a succeeding scenario (#2434)",
     };
 
-    [Fact(Timeout = 900_000), Trait("Lane", "integration")]
-    public async Task Every_write_a_launched_session_makes_records_that_launch_as_its_actor()
+    /// <summary>How many classes (WriteAttributionShardNTests) split the sweep, so no single test passes its lane's per-test cap (#2534: one test over all rows took 155 s on CI, 321 s on a loaded box).</summary>
+    internal const int Shards = 10;
+
+    private static readonly Lazy<Task<Sweep>> _sweep = new(async () => new Sweep(await CatalogWriteTemplates(CancellationToken.None)));
+
+    private static int _finished;
+
+    /// <summary>The scenarios this sweep runs as a launched session, in <see cref="ApiScenarios.All"/>'s order.</summary>
+    internal static List<(string Slug, string Scenario)> SweepRows() => [.. ApiScenarios.All.Where(r => !IsNotASessionCall(r))];
+
+    /// <summary>
+    /// Runs shard <paramref name="shard"/> of <see cref="Shards"/> (the rows whose index is the shard modulo the shard count) into the one sweep every shard shares.
+    /// The checks (broken cases, stray actors, "UNCOVERED", the guards on the skip tables) need every row, so the
+    /// shard that finishes last runs them all: no shard waits on another, and a run of one shard alone checks that shard's rows only.
+    /// </summary>
+    internal static async Task RunShard(int shard)
     {
         var ct = TestContext.Current.CancellationToken;
-        var templates = await CatalogWriteTemplates(ct);
-        var scenarios = ApiScenarios.All.Where(r => !IsNotASessionCall(r)).ToList();
-        var sweep = new Sweep(templates);
+        var sweep = await _sweep.Value;
+        var rows = ApiGoldenRows.Slice(SweepRows(), shard, Shards);
+        try
+        {
+            // why: each case starts its own host with file watchers; two at a time per shard (inotify limit, 128 per user)
+            await Parallel.ForEachAsync(rows, new ParallelOptions { MaxDegreeOfParallelism = 2, CancellationToken = ct }, async (row, token) =>
+                await RunAsLaunchedSession(row, sweep, token));
+        }
+        finally
+        {
+            _ = Interlocked.Increment(ref _finished);
+        }
 
-        // why: each case starts its own host with file watchers; two at a time keeps the run under the box's inotify limit (128 per user)
-        await Parallel.ForEachAsync(scenarios, new ParallelOptions { MaxDegreeOfParallelism = 2, CancellationToken = ct }, async (row, token) =>
-            await RunAsLaunchedSession(row, sweep, token));
+        Assert.True(rows.Count > 0, "the shard reached no scenario");
+        if (Volatile.Read(ref _finished) == Shards)
+        {
+            var report = Problems(sweep, sweep.Templates.Select(t => t.Key).ToHashSet(StringComparer.Ordinal));
+            Assert.True(report.Count == 0, string.Join("\n\n", report));
+        }
+    }
 
-        Assert.True(scenarios.Count > 0, "the sweep reached no scenario");
-        var report = Problems(sweep, templates.Select(t => t.Key).ToHashSet(StringComparer.Ordinal));
-        Assert.True(report.Count == 0, string.Join("\n\n", report));
+    [Fact, Trait("Lane", "unit")]
+    public void The_shards_partition_the_sweep_rows_exactly_once()
+    {
+        var all = SweepRows();
+        var union = Enumerable.Range(0, Shards).SelectMany(s => ApiGoldenRows.Slice(all, s, Shards)).ToList();
+
+        Assert.NotEmpty(all);
+        Assert.Equal(all.Count, union.Count);
+        Assert.Equal(all.Order(), union.Order());
     }
 
     [Fact, Trait("Lane", "unit")]
