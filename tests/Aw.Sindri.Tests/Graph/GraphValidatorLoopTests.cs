@@ -62,9 +62,9 @@ public sealed class GraphValidatorLoopTests
     }
 
     [Fact]
-    public void An_ask_owner_inside_a_loop_is_still_a_loop_finding_naming_it()
+    public void An_ask_owner_inside_a_loop_passes()
     {
-        // why: an answer can't yet find the question of one item of a loop, so an ask_owner there would never be answered
+        // why: an answer names the run, the node and the item, so the question of one item of a loop can be answered (#2543)
         var ask = new GraphNode(NodeId.From("ask"), "ask_owner", Title: null, new JsonObject { ["question"] = "Ship {{item}}?" });
         var spec = Spec(
             [Trigger("daily"), Search("search"), Each("each"), ask, Gather("gather")],
@@ -72,9 +72,7 @@ public sealed class GraphValidatorLoopTests
 
         var result = Validator(blocks: _blocks).Validate(spec, GraphMode.Activate);
 
-        var finding = Assert.Single(result.Findings, static f => f.Code == "GRAPH-LOOP-004");
-        Assert.Equal(["ask"], finding.Nodes);
-        Assert.Contains("run_workflow", finding.Fix, StringComparison.Ordinal);
+        Assert.DoesNotContain(result.Findings, static f => f.Code == "GRAPH-LOOP-004");
     }
 
     [Fact]
