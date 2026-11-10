@@ -43,6 +43,8 @@
             <icons:StateIcon Glyph="Down" Classes="error" VerticalAlignment="Top" />
             <TextBlock x:Name="LinearStripReason" Classes="body" Text="{Binding StripReason}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StripReason}" />
           </StackPanel>
+          <TextBlock x:Name="LinearStripDetail" Classes="caption subtle" Text="{Binding StripDetail}" TextWrapping="Wrap" IsVisible="{Binding StripDetail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                     AutomationProperties.Name="{Binding StripDetail}" />
           <Button x:Name="LinearStripReconnect" Classes="accent" IsVisible="{Binding StripNeedsReconnect}" HorizontalAlignment="Left" Content="{Binding ReconnectText}" Click="OnReconnect"
                   AutomationProperties.Name="{Binding ReconnectText}" />
           <Button x:Name="LinearStripRetry" IsVisible="{Binding !StripNeedsReconnect}" HorizontalAlignment="Left" Content="{Binding RetryText}" Click="OnRetryStrip"
@@ -53,13 +55,13 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="lvm:LinearSinceGroupViewModel">
               <StackPanel>
-                <Border BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="16,8">
+                <Border x:Name="LinearSinceGroupHeader" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="16,4" MinHeight="32">
                   <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                       <TextBlock Classes="body-strong" Text="{Binding Heading}" />
                       <TextBlock Classes="caption subtle" Text="{Binding Count}" />
                     </StackPanel>
-                    <Button x:Name="LinearSinceGroupToggle" Grid.Column="1" IsVisible="{Binding HasMore}" Content="{Binding ToggleText}" Click="OnToggleGroup" AutomationProperties.Name="{Binding ToggleText}" />
+                    <Button x:Name="LinearSinceGroupToggle" Grid.Column="1" MinHeight="0" Padding="8,2" VerticalAlignment="Center" IsVisible="{Binding HasMore}" Content="{Binding ToggleText}" Click="OnToggleGroup" AutomationProperties.Name="{Binding ToggleText}" />
                   </Grid>
                 </Border>
                 <ItemsControl ItemsSource="{Binding ShownRows}">
