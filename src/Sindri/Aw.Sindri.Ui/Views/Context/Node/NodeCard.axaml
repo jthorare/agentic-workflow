@@ -12,7 +12,7 @@
         <icons:StateIcon Icon="{Binding KindIcon}" Foreground="{DynamicResource Brush.InkMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Border>
       <StackPanel Grid.Column="1" Spacing="2">
-        <TextBlock x:Name="NodeTitle" Text="{Binding Title}" FontSize="16" LineHeight="22" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink}" />
+        <TextBlock x:Name="NodeTitle" Classes="section-title" Text="{Binding Title}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Ink}" />
         <TextBlock Text="{Binding Caption}" Classes="caption subtle" TextWrapping="Wrap" />
       </StackPanel>
     </Grid>
@@ -31,7 +31,7 @@
     <Border x:Name="NodeConflict" IsVisible="{Binding HasConflict}" Padding="12" CornerRadius="{StaticResource Radius.MD}" BorderThickness="1"
             Background="{DynamicResource Brush.AttentionSoft}" BorderBrush="{DynamicResource Brush.Attention}">
       <StackPanel Spacing="4">
-        <StackPanel Orientation="Horizontal" Spacing="6">
+        <StackPanel Orientation="Horizontal" Spacing="8">
           <icons:StateIcon Icon="Kind.Warn" Foreground="{DynamicResource Brush.Attention}" VerticalAlignment="Center" />
           <TextBlock Classes="body-strong" Text="{Binding ConflictTitle}" />
         </StackPanel>
@@ -44,7 +44,7 @@
       <ItemsControl x:Name="NodeConnected" ItemsSource="{Binding Connected}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="ctx:NodeLinkRow">
-            <Border MinHeight="36" Padding="0,4" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Hairline}"
+            <Border MinHeight="{StaticResource Row.Height.Default}" Padding="0,4" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Hairline}"
                     AutomationProperties.Name="{Binding Label}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
               <StackPanel VerticalAlignment="Center">
                 <TextBlock Classes="body" Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
