@@ -32,7 +32,7 @@ public static class MetaErrors
     /// <summary>AW-META-009.</summary>
     public static readonly ErrorDefinition CommandNotStarted = new("AW-META-009", ErrorKind.Unavailable, "A command could not be started");
 
-    /// <summary>AW-META-010.</summary>
+    /// <summary>AW-META-010: a host figure or tool is unavailable on this OS (the process table, memory, a macOS tool, setsid for the detached recycle waiter).</summary>
     public static readonly ErrorDefinition HostUnreadable = new("AW-META-010", ErrorKind.Unavailable, "The process table can't be read");
 
     /// <summary>AW-META-011.</summary>

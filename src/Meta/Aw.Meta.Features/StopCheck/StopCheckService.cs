@@ -13,7 +13,8 @@ namespace Aw.Meta.Features.StopCheck;
 /// <param name="sweep">Syncs, refreshes and evaluates.</param>
 /// <param name="guard">The loop guard.</param>
 /// <param name="clock">Dates the incident.</param>
-internal sealed class StopCheckService(MetaSession session, MetaSweep sweep, StopGuard guard, TimeProvider clock) : IService<StopCheckRequest, StopCheckResponse>
+/// <param name="beats">The lanes' stop beats; the meta's own stop is recorded there.</param>
+internal sealed class StopCheckService(MetaSession session, MetaSweep sweep, StopGuard guard, TimeProvider clock, LaneBeats beats) : IService<StopCheckRequest, StopCheckResponse>
 {
     public async ValueTask<Result<StopCheckResponse>> Handle(StopCheckRequest request, CancellationToken cancellationToken)
     {
@@ -37,6 +38,18 @@ internal sealed class StopCheckService(MetaSession session, MetaSweep sweep, Sto
         }
 
         var outcome = await guard.Decide(open.Value, request.HookActive, request.MaxBlocks, now, cancellationToken).ConfigureAwait(false);
-        return outcome.IsError ? outcome.Error : new StopCheckResponse(IsMeta: true, outcome.Value.Block, open.Value, outcome.Value.Warning);
+        if (outcome.IsError)
+        {
+            return outcome.Error;
+        }
+
+        // The idle signal a detached recycle waits for: a blocked stop is a beat too (the hook ran) but not a stopped one.
+        var beat = await beats.Record(config.MetaLane, stopped: !outcome.Value.Block, now, cancellationToken).ConfigureAwait(false);
+        if (beat.IsError)
+        {
+            return beat.Error;
+        }
+
+        return new StopCheckResponse(IsMeta: true, outcome.Value.Block, open.Value, outcome.Value.Warning);
     }
 }
