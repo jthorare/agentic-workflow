@@ -47,7 +47,8 @@ public sealed class SweepDoneSkipsChangeTriggerTests
         Assert.DoesNotContain(verdict.Reasons, reason => reason.Contains("no previous sweep", StringComparison.Ordinal));
     }
 
+    // HeadMerged defaults to true, and a HEAD already in origin/main has no unpushed work; this row is a HEAD that is not.
     [Fact, Trait("Lane", "unit")]
     public void Done_with_no_recorded_sweep_still_keeps_unpushed_work() =>
-        AssertKept(WorktreeRules.Judge(new WorktreeFacts { Path = "/wt/detached", Done = true, NoPreviousSweep = true, UnpushedCommits = 1 }), "no remote branch");
+        AssertKept(WorktreeRules.Judge(new WorktreeFacts { Path = "/wt/detached", Done = true, NoPreviousSweep = true, HeadMerged = false, UnpushedCommits = 1 }), "no remote branch");
 }
