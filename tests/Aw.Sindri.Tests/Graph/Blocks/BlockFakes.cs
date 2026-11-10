@@ -43,7 +43,7 @@ internal static class BlockFakes
     {
         public List<string> Prompts { get; } = [];
 
-        public string Untrusted(string text) => $"<untrusted>{text}</untrusted>";
+        public string Untrusted(string source, string text) => $"<untrusted>{text}</untrusted>";
 
         public ValueTask<Result<string>> Ask(string prompt, CancellationToken cancellationToken)
         {
