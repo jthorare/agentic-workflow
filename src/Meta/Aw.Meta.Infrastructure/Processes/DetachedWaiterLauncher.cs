@@ -10,12 +10,12 @@ namespace Aw.Meta.Infrastructure.Processes;
 /// caller's turn or shell can't signal it) with stdin, stdout and stderr sent to /dev/null by an sh that execs the command. The program name "aw-meta" stands for the running
 /// binary (<see cref="Environment.ProcessPath"/>). Where there is no setsid (stock macOS) nothing starts: the child would stay in the caller's process group and could die with the caller's shell, so the start is AW-META-010.
 /// </summary>
-internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator) : IWaiterLauncher
+internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator, Func<string?> selfLocator) : IWaiterLauncher
 {
     private const string LogicalProgram = "aw-meta";
 
     public DetachedWaiterLauncher()
-        : this(() => FindOnPath("setsid"))
+        : this(() => FindOnPath("setsid"), () => Environment.ProcessPath)
     {
     }
 
@@ -36,7 +36,17 @@ internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator) : IWai
             return MetaErrors.HostUnreadable.With($"unavailable on {os}: setsid not found, so the waiter can't outlive this turn; recycle the meta by hand");
         }
 
-        var program = string.Equals(argv[0], LogicalProgram, StringComparison.Ordinal) && Environment.ProcessPath is { Length: > 0 } self ? self : argv[0];
+        var program = Program(argv[0]);
+        if (program.IsError)
+        {
+            return program.Error;
+        }
+
+        return Spawn(setsid, program.Value, argv);
+    }
+
+    private static Result<int> Spawn(string setsid, string program, IReadOnlyList<string> argv)
+    {
         // sh redirects the three streams to /dev/null and execs the command, so the pid is the command's own and nothing it prints can break a pipe.
         var info = new ProcessStartInfo(setsid) { UseShellExecute = false, CreateNoWindow = true };
         info.ArgumentList.Add("sh");
@@ -59,6 +69,20 @@ internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator) : IWai
         {
             return MetaErrors.CommandNotStarted.With($"{argv[0]} did not start: {exception.Message}");
         }
+    }
+
+    // The logical "aw-meta" is the running binary; under `dotnet run` that is the dotnet host, and the waiter would run `dotnet lane-recycle ...` and die at once.
+    private Result<string> Program(string name)
+    {
+        if (!string.Equals(name, LogicalProgram, StringComparison.Ordinal))
+        {
+            return name;
+        }
+
+        var self = selfLocator();
+        return self is { Length: > 0 } && !string.Equals(Path.GetFileNameWithoutExtension(self), "dotnet", StringComparison.Ordinal)
+            ? self
+            : MetaErrors.CommandNotStarted.With("--detach needs the published aw-meta binary (this is dotnet run)");
     }
 
     private static string? FindOnPath(string name) =>

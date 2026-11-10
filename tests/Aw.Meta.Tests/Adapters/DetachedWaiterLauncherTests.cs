@@ -13,7 +13,7 @@ public sealed class DetachedWaiterLauncherTests
     {
         using var dir = new TempDirectory();
         var marker = Path.Combine(dir.Path, "started");
-        var launcher = new DetachedWaiterLauncher(() => null);
+        var launcher = new DetachedWaiterLauncher(() => null, () => "/usr/bin/aw-meta");
 
         var result = await launcher.Start(["sh", "-c", "touch " + marker], TestContext.Current.CancellationToken);
 
@@ -22,6 +22,17 @@ public sealed class DetachedWaiterLauncherTests
         Assert.Contains("setsid not found", result.Error.Message, StringComparison.Ordinal);
         await Task.Delay(300, TestContext.Current.CancellationToken);
         Assert.False(File.Exists(marker));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Under_the_dotnet_host_the_start_is_AW_META_009_and_nothing_is_started()
+    {
+        var launcher = new DetachedWaiterLauncher(() => "/usr/bin/setsid", () => "/usr/share/dotnet/dotnet");
+
+        var result = await launcher.Start(["aw-meta", "lane-recycle", "meta", "--wait-idle"], TestContext.Current.CancellationToken);
+
+        Assert.Equal(MetaErrors.CommandNotStarted.Code, result.Error.Code);
+        Assert.Contains("--detach needs the published aw-meta binary", result.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]
