@@ -130,7 +130,8 @@ public sealed class NeedsYouFramesTests : FrameHost
         Server.NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-nothing");   // the API's empty golden holds the setup:mcp row now
         var (window, _) = await Connected();
 
-        Assert.Equal((true, (string)Nothing()["empty"]!), (Visible(window, "NeedsYouEmpty"), Named<TextBlock>(window, "NeedsYouEmpty").Text));
+        var served = (string)Nothing()["empty"]!;   // #2548: Home shows only its first sentence; the running and queued counts have their own cards
+        Assert.Equal((true, served[..(served.IndexOf(". ", StringComparison.Ordinal) + 1)]), (Visible(window, "NeedsYouEmpty"), Named<TextBlock>(window, "NeedsYouEmpty").Text));
         Assert.Empty(Rows(window));
         Frame(window, "needs-you-empty");
     });

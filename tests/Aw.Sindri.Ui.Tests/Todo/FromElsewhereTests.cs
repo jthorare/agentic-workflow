@@ -276,6 +276,7 @@ public sealed class FromElsewhereTests
         var raised = new List<string?>();
         line.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
 
+        line.SetReviews(loading: false, waiting: 3, failed: false);
 
         Assert.Contains(raised, r => string.Equals(r, nameof(FromElsewhereViewModel.Parts), StringComparison.Ordinal));
         Assert.Contains(raised, r => string.Equals(r, nameof(FromElsewhereViewModel.Text), StringComparison.Ordinal));

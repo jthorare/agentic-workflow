@@ -181,7 +181,7 @@ public sealed class TodoPanelHomeTests : IDisposable
     }
 
     [Fact]
-    public Task The_collapsed_panel_keeps_one_height_whatever_it_holds() => OnUi(async () =>
+    public Task The_collapsed_panel_keeps_one_height_whatever_todos_it_holds_and_an_empty_one_is_shorter() => OnUi(async () =>
     {
         var skeleton = await CollapsedHeight(hold: true, Eight());
         var empty = await CollapsedHeight(hold: false);
@@ -189,7 +189,8 @@ public sealed class TodoPanelHomeTests : IDisposable
         var six = await CollapsedHeight(hold: false, Eight()[..6]);
 
         Assert.True(skeleton > 0);
-        Assert.Equal([skeleton, skeleton, skeleton], [empty, two, six]);
+        Assert.Equal([skeleton, skeleton], [two, six]);
+        Assert.True(empty > 0 && empty < skeleton, string.Create(CultureInfo.InvariantCulture, $"empty {empty} vs {skeleton}"));   // #2548: an empty list collapses to one line
     });
 
     // The collapsed body clips at five rows plus the Show all slot: a row drawn taller than its slot would hide the fifth.
