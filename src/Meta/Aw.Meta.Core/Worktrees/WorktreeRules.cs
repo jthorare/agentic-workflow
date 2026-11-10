@@ -205,10 +205,10 @@ internal static class WorktreeRules
         }
     }
 
-    // Rule 7's reason: a tree whose pull request ended is compared with that time, any other with the last sweep's start.
+    // Rule 7's reason (waived for a gate tree, --discarded and --done: the owning lane said it is finished): a tree whose pull request ended is compared with that time, any other with the last sweep's start.
     private static void Changed(WorktreeFacts facts, List<string> reasons)
     {
-        if (facts.GatePr is not null || facts.Discarded is not null)
+        if (facts.GatePr is not null || facts.Discarded is not null || facts.Done)
         {
             return;
         }
