@@ -15,6 +15,10 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Hover}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.HoverBorder}" />
   </Style>
+  <!-- A calm Needs You row already rests on Surface2, the hover fill: it lifts one step more so the pointer still shows. -->
+  <Style Selector="Border.clickable.subtle:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+  </Style>
   <Style Selector="Border.clickable:pressed">
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />

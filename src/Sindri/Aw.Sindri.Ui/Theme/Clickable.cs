@@ -59,7 +59,15 @@ internal static class Clickable
         };
         border.PointerReleased += (_, _) => Set(border, pressed: false);
         border.PointerCaptureLost += (_, _) => Set(border, pressed: false);
-        border.PointerExited += (_, _) => Set(border, pressed: false);
+        // A press holds the pointer (implicit capture), as a Button's does: the 0.98 scale pulls the edges in, so a press near one
+        // leaves the pointer outside; the press lasts until the release or a lost capture, not until the pointer leaves.
+        border.PointerExited += (_, e) =>
+        {
+            if (!ReferenceEquals(e.Pointer.Captured, border))
+            {
+                Set(border, pressed: false);
+            }
+        };
     }
 
     private static void Refresh(Border border)

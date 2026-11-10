@@ -22,7 +22,6 @@
   <Application.Styles>
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/FluentOverrides.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/Typography.axaml" />
-    <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/ClickableStyles.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Controls/ControlStyles.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Queue/QueueStyles.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/NeedsYou/NeedsYouStyles.axaml" />
@@ -71,5 +70,7 @@
       <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
     </Style>
+    <!-- Last: a later style wins in Avalonia, so the clickable hover and press beat each surface's resting fill above (Border.card) (#2535). -->
+    <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/ClickableStyles.axaml" />
   </Application.Styles>
 </Application>
