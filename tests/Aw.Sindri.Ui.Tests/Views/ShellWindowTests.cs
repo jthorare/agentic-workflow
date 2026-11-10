@@ -1549,7 +1549,7 @@ public sealed class ShellWindowTests : IDisposable
             var shell = (ShellViewModel)window.DataContext!;
             var labels = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")).ToList();
 
-            Assert.Equal(shell.Navigation.Select(n => n.DisplayLabel), labels.Select(t => t.Text), StringComparer.Ordinal);   // the short label where the tab has one
+            Assert.Equal(shell.Navigation.Select(n => n.Label), labels.Select(t => t.Text), StringComparer.Ordinal);
             Assert.Equal(9, labels.Count);
             foreach (var label in labels)
             {
@@ -1568,21 +1568,54 @@ public sealed class ShellWindowTests : IDisposable
         }
     });
 
-    // Below 1,100 px the Reviews tab draws "PRs"; its name for assistive tech stays full. With room it draws the full label.
+    // One page, one name: every tab draws its full label at 900 px and at 1,280 px (the bar shrinks padding, never the words).
     [Theory]
-    [InlineData(1000, "PRs")]
-    [InlineData(1440, "Reviews")]
-    public Task Narrow_windows_shorten_the_Reviews_tab_and_keep_its_name(int width, string reviews) => OnUi(async () =>
+    [InlineData(900)]
+    [InlineData(1280)]
+    public Task Nav_tab_labels_are_the_same_at_900_and_1280(int width) => OnUi(async () =>
     {
         await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, width, 600) });
         var window = await ShowIn(BarState.Normal);
         Settle(window);
 
+        var shell = (ShellViewModel)window.DataContext!;
         var labels = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")).ToList();
-        string[] shown = [.. labels.Select(t => t.Text!)];
-        Assert.Contains(reviews, shown, StringComparer.Ordinal);
-        var names = labels.Select(t => AutomationProperties.GetName(t)).ToList();
-        Assert.Contains(Labels.ReviewsTab, names, StringComparer.Ordinal);
+        Assert.Equal(shell.Navigation.Select(n => n.Label), labels.Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Contains("Workflows", labels.Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Contains(Labels.ReviewsTab, labels.Select(t => t.Text), StringComparer.Ordinal);
+    });
+
+    // Focus rings are for the keyboard: opening the window and clicking or driving to another page with no key pressed leaves no tab with a ring.
+    [Fact]
+    public Task Only_keyboard_focus_draws_a_ring_on_the_tabs_and_the_page() => OnUi(async () =>
+    {
+        var window = await ShowIn(BarState.Normal);
+        var shell = (ShellViewModel)window.DataContext!;
+        Settle(window);
+        Assert.False(Named<Border>(window, "Page").Classes.Contains(":focus-visible"), "the page region draws a ring");   // Home's page region: no outline after the window opens
+
+        shell.GoTo(PageId.Work);
+        Settle(window);
+        shell.GoTo(PageId.Projects);
+        Settle(window);
+
+        var tabs = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<ListBoxItem>().ToList();
+        Assert.Equal(9, tabs.Count);
+        Assert.DoesNotContain(tabs, t => t.Classes.Contains(":focus-visible"));
+        Assert.False(Named<Border>(window, "Page").Classes.Contains(":focus-visible"), "the page region draws a ring");
+    });
+
+    // The folded search icon keeps the shortcut in its tooltip.
+    [Fact]
+    public Task The_folded_search_icon_names_its_shortcut_in_its_tooltip() => OnUi(async () =>
+    {
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 900, 600) });
+        var window = await ShowIn(BarState.Normal);
+        Settle(window);
+
+        var field = Named<Border>(window, "SearchField");
+        Assert.True(field.Classes.Contains("compact"), "the field did not fold at 900 px");
+        Assert.Contains(Labels.SearchKey, ToolTip.GetTip(field) as string ?? string.Empty, StringComparison.Ordinal);
     });
 
     // Sending… beside Refresh, and the not-responding sentence in full in its banner.
