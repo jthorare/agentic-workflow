@@ -80,7 +80,7 @@ internal sealed class RecycleWaiter(IWaiterLauncher launcher, ILaneFiles files, 
             var idle = await WaitForStop(plan.Lane, since, cancellationToken).ConfigureAwait(false);
             if (idle.IsError)
             {
-                return idle.Error;
+                return await Failed(plan.Lane, idle.Error, cancellationToken).ConfigureAwait(false);
             }
 
             if (!idle.Value)
@@ -88,12 +88,30 @@ internal sealed class RecycleWaiter(IWaiterLauncher launcher, ILaneFiles files, 
                 return await GaveUp(plan, cancellationToken).ConfigureAwait(false);
             }
 
-            return await runner.Run(plan, cancellationToken).ConfigureAwait(false);
+            var recycled = await runner.Run(plan, cancellationToken).ConfigureAwait(false);
+            return recycled.IsError ? await Failed(plan.Lane, recycled.Error, cancellationToken).ConfigureAwait(false) : recycled;
         }
         finally
         {
             _ = await files.RecordWaiter(plan.Lane, waiter: null, CancellationToken.None).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>The guard refused at the start of the waiter: logs why (nothing else shows it, the waiter's output goes to /dev/null) and clears the lane's waiter record, which the waiter's own exit path never reaches.</summary>
+    internal async ValueTask<Error> RefusedAtStart(string lane, Error error, CancellationToken cancellationToken)
+    {
+        var failed = await Failed(lane, error, cancellationToken).ConfigureAwait(false);
+        _ = await files.RecordWaiter(lane, waiter: null, CancellationToken.None).ConfigureAwait(false);
+        return failed.Error;
+    }
+
+    // The waiter's output goes to /dev/null, so every failed exit is a NOTE in the running log; a failing append never hides the original error.
+    // The error's message already carries the manual tmux line when RecycleRunner has one (AW-META-022).
+    private async ValueTask<Result<LaneRecycleResponse>> Failed(string lane, Error error, CancellationToken cancellationToken)
+    {
+        var note = LogLine.Event(LogKind.Note, clock.GetUtcNow(), $"recycle waiter for {lane} failed: {error.Code}: {error.Message}");
+        _ = await log.Append(note, cancellationToken).ConfigureAwait(false);
+        return error;
     }
 
     // True once a stop beat newer than <since> arrives; false when 30 minutes after <since> pass first.

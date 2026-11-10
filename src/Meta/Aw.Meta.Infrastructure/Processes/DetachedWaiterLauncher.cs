@@ -8,15 +8,20 @@ namespace Aw.Meta.Infrastructure.Processes;
 /// <summary>
 /// IWaiterLauncher over a child process that outlives the caller: the command runs under setsid (its own session, so the end of the
 /// caller's turn or shell can't signal it) with stdin, stdout and stderr sent to /dev/null by an sh that execs the command. The program name "aw-meta" stands for the running
-/// binary (<see cref="Environment.ProcessPath"/>). Where there is no setsid (macOS) the child starts without it.
+/// binary (<see cref="Environment.ProcessPath"/>). Where there is no setsid (stock macOS) nothing starts: the child would stay in the caller's process group and could die with the caller's shell, so the start is AW-META-010.
 /// </summary>
-internal sealed class DetachedWaiterLauncher : IWaiterLauncher
+internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator) : IWaiterLauncher
 {
     private const string LogicalProgram = "aw-meta";
 
+    public DetachedWaiterLauncher()
+        : this(() => FindOnPath("setsid"))
+    {
+    }
+
     public ValueTask<Result<int>> Start(IReadOnlyList<string> argv, CancellationToken cancellationToken) => new(StartNow(argv));
 
-    private static Result<int> StartNow(IReadOnlyList<string> argv)
+    private Result<int> StartNow(IReadOnlyList<string> argv)
     {
         ArgumentNullException.ThrowIfNull(argv);
         if (argv.Count == 0)
@@ -24,15 +29,17 @@ internal sealed class DetachedWaiterLauncher : IWaiterLauncher
             return MetaErrors.CommandNotStarted.With("empty command");
         }
 
-        var program = string.Equals(argv[0], LogicalProgram, StringComparison.Ordinal) && Environment.ProcessPath is { Length: > 0 } self ? self : argv[0];
-        var setsid = FindOnPath("setsid");
-
-        // sh redirects the three streams to /dev/null and execs the command, so the pid is the command's own and nothing it prints can break a pipe.
-        var info = new ProcessStartInfo(setsid ?? "sh") { UseShellExecute = false, CreateNoWindow = true };
-        if (setsid is not null)
+        var setsid = setsidLocator();
+        if (setsid is null)
         {
-            info.ArgumentList.Add("sh");
+            var os = OperatingSystem.IsMacOS() ? "macOS" : OperatingSystem.IsLinux() ? "Linux" : "this OS";
+            return MetaErrors.HostUnreadable.With($"unavailable on {os}: setsid not found, so the waiter can't outlive this turn; recycle the meta by hand");
         }
+
+        var program = string.Equals(argv[0], LogicalProgram, StringComparison.Ordinal) && Environment.ProcessPath is { Length: > 0 } self ? self : argv[0];
+        // sh redirects the three streams to /dev/null and execs the command, so the pid is the command's own and nothing it prints can break a pipe.
+        var info = new ProcessStartInfo(setsid) { UseShellExecute = false, CreateNoWindow = true };
+        info.ArgumentList.Add("sh");
 
         info.ArgumentList.Add("-c");
         info.ArgumentList.Add("exec \"$@\" </dev/null >/dev/null 2>&1");

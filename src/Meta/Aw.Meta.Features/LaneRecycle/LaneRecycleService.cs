@@ -27,7 +27,7 @@ internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard,
         var plan = await guard.Check(team.Value, request, cancellationToken).ConfigureAwait(false);
         if (plan.IsError)
         {
-            return plan.Error;
+            return await Refused(request, plan.Error, cancellationToken).ConfigureAwait(false);
         }
 
         if ((request.Detach || request.WaitIdle) && !request.DryRun)
@@ -45,4 +45,8 @@ internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard,
             ? await switcher.Run(plan.Value, cancellationToken).ConfigureAwait(false)
             : await runner.Run(plan.Value, cancellationToken).ConfigureAwait(false);
     }
+
+    // The detached waiter's output goes to /dev/null, so its start-up refusal is logged; any other caller sees the error on its own terminal.
+    private async ValueTask<Error> Refused(LaneRecycleRequest request, Error error, CancellationToken cancellationToken) =>
+        request.WaitIdle && !request.DryRun ? await waiter.RefusedAtStart(request.Lane, error, cancellationToken).ConfigureAwait(false) : error;
 }
