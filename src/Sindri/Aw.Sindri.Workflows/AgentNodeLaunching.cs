@@ -37,8 +37,6 @@ internal sealed class AgentNodeLaunching(AgentNodeReading reading, IWorkflowStor
         ArgumentNullException.ThrowIfNull(node);
         var read = await reading.Read(node, cancellationToken).ConfigureAwait(false);
         var row = read.Run;
-        var spec = read.Spec;
-        var scope = read.Scope;
         if (read.CutNode is { } cutNode)
         {
             return Failed("{}", SindriErrors.GraphOutputTruncated.With($"the output of '{cutNode}' was cut at 64 KB; refer to a smaller field"));
@@ -46,7 +44,7 @@ internal sealed class AgentNodeLaunching(AgentNodeReading reading, IWorkflowStor
 
         var config = read.Config;
         var input = config.ToJsonString();
-        if (scope.Cut is { } cut)
+        if (read.Scope.Cut is { } cut)
         {
             return Failed(input, SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field"));
         }
@@ -66,13 +64,13 @@ internal sealed class AgentNodeLaunching(AgentNodeReading reading, IWorkflowStor
         }
 
         var address = NodeRunAddress.Of(node.Run, node.Node, node.ItemIndex);
-        var token = RunAgentWire.TokenOf(spec, node.Node, node.ItemIndex) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
+        var token = RunAgentWire.TokenOf(read.Spec, node.Node, node.ItemIndex) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
         var brief = RunAgentBrief.Render(address, token, task);
         var groups = RunAgentLaunches.GroupsFor(parsed.Value, static _ => []);   // why: a connection's host group comes with the connection presets (PR 10); until then only the repo's 'github' applies
         var request = RunAgentLaunches.ReadingOnly(RunAgentLaunches.RequestFor(address, placed.Value.Target, parsed.Value, brief, groups), placed.Value.ReadOnlyPaths);
 
         // why: idempotent; the workflow's database and disk folders and its declared sandbox size reach the session's plan (#2532), made after the ended check so a retry never fails on them
-        var launched = await starting.Start(request, ct => _resources.Ensure(row.WorkflowId, spec, ct), cancellationToken).ConfigureAwait(false);
+        var launched = await starting.Start(request, ct => _resources.Ensure(row.WorkflowId, read.Spec, ct), cancellationToken).ConfigureAwait(false);
         return new AgentNodeLaunched(launched, input, parsed.Value.Timeout);
     }
 
