@@ -355,6 +355,8 @@ run_model_lane() { # lane: run meta-lane.sh against the stub until it has record
   check "run_model_lane $1: the lane script ends once its recorded stub is stopped (#2637)" "$(kill -0 "$rp" 2> /dev/null && echo running || echo ended)" "ended"
   # the recorded pid may be a probe's while the real launch's sleep still runs: stop the pid recorded now, so the suite never blocks on it
   kill -0 "$rp" 2> /dev/null && [ -s "$CALLS.modelpid" ] && kill "$(cat "$CALLS.modelpid")" 2> /dev/null
+  # a lane script that hangs on its own never runs the stub, so nothing above ends it: stop rp, the suite's own child, so the wait is bounded (#2643)
+  kill -0 "$rp" 2> /dev/null && kill "$rp" 2> /dev/null
   wait "$rp" 2> /dev/null
 }
 jq -n --arg c "$WORK/agent-model" '{schema:1, agents:{codex:{override:true, bin:$c}}}' > "$AW_STATE_DIR/launcher.json"

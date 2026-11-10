@@ -179,6 +179,7 @@ else
   if [ -f "$STATE/sindri-app-firstrun/.first-run-scratch" ]; then ok "the home carries the scratch marker"; else fail "the home carries the scratch marker"; fi
   P="$STATE/sindri-app-firstrun/profile/profile.yaml"
   if grep -q "path: $REPO" "$P" && grep -q 'context-docs-refresh' "$P" && grep -q 'enabled: false' "$P" && grep -q '^context:' "$P" && grep -q '^index:' "$P"; then ok "the profile onboards the repo with services, index and context"; else fail "the profile onboards the repo with services, index and context"; sed 's/^/       | /' "$P"; fi
+  # test-ports: ok: the port=N strings are what the stub sindri logged, matched as text; nothing binds them
   if logged "home=sindri-app-firstrun port=7481" && ! logged "port=7480" && ! logged "port=7410"; then ok "every call used the scratch home and port 7481"; else fail "every call used the scratch home and port 7481"; fi
   before="$(wc -l < "$P")"
   run up --no-embeddings --no-graph --no-ui

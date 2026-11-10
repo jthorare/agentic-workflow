@@ -37,7 +37,7 @@
       <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
       <Setter Property="Padding" Value="12,0" />
       <Setter Property="Margin" Value="4,0" />
-      <Setter Property="MinHeight" Value="{StaticResource Size.Row}" />
+      <Setter Property="MinHeight" Value="{StaticResource Row.Height.Comfortable}" />
     </Style>
     <!-- The selection: PrimarySoft (the selected nav's background) and a 2 px PrimaryHover bar (6.1:1 on the card): the fill alone
          is 1.1:1, so the bar is what tells the selected row apart (WCAG 1.4.11). -->
@@ -92,8 +92,8 @@
                           <!-- A ready command run from here shows §4.1's lifecycle in place (U1 F2): a spinner beside the
                                kept label while sending, the outcome or Sindri's code as the status, the detail under it. -->
                           <StackPanel>
-                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource Space.SM}" MinHeight="{StaticResource Size.Row}">
-                              <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource Space.SM}" MinHeight="{StaticResource Row.Height.Comfortable}">
+                              <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <icons:StateIcon Classes="entry-spinner" Icon="Spinner" IsVisible="{Binding IsSending}" Spins="{Binding IsSending}"
                                                  VerticalAlignment="Center" />
                                 <TextBlock Classes="body entry-label" Text="{Binding Label}" VerticalAlignment="Center" />

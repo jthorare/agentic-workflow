@@ -9,7 +9,8 @@ set -euo pipefail
 REAL="$(cd "$(dirname "$0")/../.." && pwd)"
 PASS=0
 FAIL=0
-TMPROOT="$(mktemp -d "${TMPDIR:-/tmp}/skill-evals-test.XXXXXX")"
+# pwd -P: on macOS mktemp -d gives /var/folders/..., a symlink to /private/var, and repo-slug.sh (git rev-parse) resolves it (#2584)
+TMPROOT="$(cd "$(mktemp -d "${TMPDIR:-/tmp}/skill-evals-test.XXXXXX")" && pwd -P)"
 # why: the state dirs sit in /tmp, not under TMPDIR: the script refuses an eval temp dir too long for claude's sandbox socket (#1931)
 SHORT="$(mktemp -d /tmp/se.XXXXXX)"
 LIVE_PID=""
@@ -207,7 +208,7 @@ grep -q 'AW_GIT_MODE:-readonly' "$STAGE_R/stubs/bin/gh" && ok "the staged gh stu
 WS="$TMPROOT/ws$N"; mkdir -p "$WS/.aw-eval" "$WS/src/deep"
 slug() { (cd "$1" && env -i PATH="$PATH" HOME="$H" bash -c '. "$0"; printf %s "$AW_DIR"' "$STAGE_R/skills/_shared/repo-slug.sh"); }
 r1="$(dirname "$(slug "$WS")")"; r2="$(dirname "$(slug "$WS/src/deep")")"
-[ -n "$r1" ] && [ "$r1" = "$r2" ] && [ "$r1" = "$WS/.aw-state" ] && ok "the staged state root is the same from a subdirectory ($r1)" || fail "AW_DIR differs: '$r1' vs '$r2'"
+[ -n "$r1" ] && [ "$r1" = "$r2" ] && [ "$r1" = "$WS/.aw-state" ] && ok "the staged state root is the same from a subdirectory ($r1)" || fail "AW_DIR differs: '$r1' vs '$r2' (want '$WS/.aw-state')"
 [ ! -s "$STATE/skill-evals/spend.jsonl" ] && ok "a dry run writes no tally row" || fail "dry run wrote the tally"
 
 echo "a staged path outside the repo"
