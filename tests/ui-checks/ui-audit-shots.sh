@@ -16,6 +16,17 @@ WIDTHS="${WIDTHS:-1280 900}"
 export AW_UI_DRIVER_BIN="${AW_UI_DRIVER_BIN:-$CTX_ROOT/artifacts/bin/Aw.UiDriver.Cli/debug/aw-ui-driver}"
 [ -x "$AW_UI_DRIVER_BIN" ] || setup_fail "no aw-ui-driver at $AW_UI_DRIVER_BIN (heavy --light dotnet build src/UiDriver/Aw.UiDriver.Cli)"
 d() { timeout 60 "$DRIVER" "$@"; }
+# Waits (1 s apart, 60 s at most) until two reads of the window's tree in a row are identical, so a page still loading is not shot. Writes "unsettled: <label>" to missing.txt on a timeout and goes on.
+settle() {
+  local label="$1" prev="" cur i
+  for i in $(seq 1 60); do
+    cur="$(d tree 2>/dev/null | sha256sum)"
+    [ -n "$prev" ] && [ "$cur" = "$prev" ] && return 0
+    prev="$cur"
+    sleep 1
+  done
+  echo "unsettled: $label" >>"$OUT/missing.txt"
+}
 
 bash "$FIXTURE" up >/dev/null 2>&1 || setup_fail "fixture up"
 if [ "$STATE" != empty ]; then
@@ -46,16 +57,17 @@ for page in $PAGES; do
   else
     d click --type ListBoxItem --name Home >/dev/null 2>&1 || true
   fi
+  settle "$page"
   for w in $WIDTHS; do
     d window --width "$w" --height 900 >/dev/null 2>&1
-    sleep 3
+    settle "$page $w"
     d screenshot --out "$OUT/$page/$STATE-$w.png" >/dev/null 2>&1 || echo "no shot: $page $w" >>"$OUT/missing.txt"
   done
   if [ "$page" = Work ]; then   # the Linear tab of Work, as its own page dir
     d click --name Linear >/dev/null 2>&1 || { echo "no Linear tab" >>"$OUT/missing.txt"; continue; }
     mkdir -p "$OUT/Work-Linear"
     for w in $WIDTHS; do
-      d window --width "$w" --height 900 >/dev/null 2>&1; sleep 3
+      d window --width "$w" --height 900 >/dev/null 2>&1; settle "Work-Linear $w"
       d screenshot --out "$OUT/Work-Linear/$STATE-$w.png" >/dev/null 2>&1 || echo "no shot: Work-Linear $w" >>"$OUT/missing.txt"
     done
   fi
