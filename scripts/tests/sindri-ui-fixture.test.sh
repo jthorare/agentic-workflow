@@ -641,8 +641,14 @@ check "empty: the marker is a lin_ marker newer than every change" "$(jq -r '.li
 check "empty: the preferences file keeps its version" "$(jq -r .version "$LC/ui/preferences.json")" "1"
 check "empty: the marker's instant is within a minute of now" "$(( $(date -u +%s) - ( $(printf '%d' "0x$(jq -r '.linearSince' "$LC/ui/preferences.json" | cut -c5-)") - 621355968000000000 ) / 10000000 < 60 ))" "1"
 lcatch error >/dev/null 2>&1; check "linear-catchup error exits 0" "$?" "0"
-check "error: the changes table is gone for the strip's read" "$(sqlq "$LCDB" "SELECT COUNT(*) FROM sqlite_master WHERE name = 'linear_issue_change'")" "0"
-check "error: the marker is cleared" "$(jq -r '.linearSince // "none"' "$LC/ui/preferences.json")" "none"
+check "error: the feed's cursor row records the refused key" "$(sqlq "$LCDB" "SELECT last_error || '|' || failures || '|' || last_error_text || '|' || (last_sync > strftime('%Y-%m-%dT%H:%M:%S', 'now', '-10 minutes')) FROM source_cursor WHERE source = 'linear' AND repo = 'records'")" "SND-CONTEXT-071|3|Linear refused the key (401)|1"
+check "error: the earlier rows stay" "$(sqlq "$LCDB" "$LCN")" "37"
+lcatch typical >/dev/null 2>&1
+check "typical after error clears the failed sync" "$(sqlq "$LCDB" "SELECT ifnull(last_error, 'none') || '|' || failures || '|' || ifnull(last_error_text, 'none') FROM source_cursor WHERE source = 'linear' AND repo = 'records'")" "none|0|none"
+lcatch read-error >/dev/null 2>&1; check "linear-catchup read-error exits 0" "$?" "0"
+check "read-error: the cursor row is healthy" "$(sqlq "$LCDB" "SELECT ifnull(last_error, 'none') FROM source_cursor WHERE source = 'linear' AND repo = 'records'")" "none"
+check "read-error: the changes table is gone for the strip's read" "$(sqlq "$LCDB" "SELECT COUNT(*) FROM sqlite_master WHERE name = 'linear_issue_change'")" "0"
+check "read-error: the marker is cleared" "$(jq -r '.linearSince // "none"' "$LC/ui/preferences.json")" "none"
 lcatch typical >/dev/null 2>&1; check "typical after error exits 0" "$?" "0"
 check "typical after error has put the table back with its rows" "$(sqlq "$LCDB" "$LCN")" "37"
 
