@@ -247,6 +247,7 @@ bash scripts/tests/ci-changed-areas.test.sh
 bash scripts/tests/ci-bash-tests.test.sh
 bash scripts/tests/ci-lane-budgets.test.sh
 bash scripts/tests/tmux-isolation.test.sh   # scripts/ci/tmux-isolation.sh: no test runs a tmux outside scripts/test-tmux.sh, -L, -S or AW_TMUX
+bash scripts/tests/test-ports.test.sh   # scripts/ci/test-ports.sh: no *.test.sh binds a literal listener port or assigns digits to a *PORT variable without a "test-ports: ok <reason>" waiver (#2597)
 bash scripts/tests/ui-checks-xvfb-lib.test.sh   # tests/ui-checks/xvfb-lib.sh with a fake Xvfb: the display is stopped by pid on exit and an existing EXIT trap still runs
 bash scripts/tests/test-tmux.test.sh
 bash scripts/tests/sindri-smoke-normalize.test.sh
@@ -258,6 +259,7 @@ bash scripts/tests/eval-gh-wrapper.test.sh   # evals/stubs/bin/gh and curl: the 
 bash scripts/tests/code-index-fixture.test.sh  # the code-index fixtures (tests/fixtures/code-index): verify.mjs, the sample check, the hostile generator
 bash scripts/tests/meta-skill-card.test.sh   # #2498: skills/meta/SKILL.md stays under its byte cap, opens with a card per harness (Claude Code, Codex, Cursor), says to trust the CLI FAIL lines and not open gate logs, and points at docs/csharp/meta-skill-reference.md, which exists
 bash scripts/tests/meta-launch.test.sh      # Linux and macOS (golden transcript; needs cc on macOS)
+bash scripts/tests/meta-start-lock-guard.test.sh   # scripts/meta-start-lock.sh's takeover guard (#2598): a taker never clears a guard a live taker holds, neither one between its mkdir and its pid file nor a fresh one made after a dead holder's guard was cleared (PATH rm/rmdir stubs start a real taker in the gap)
 bash scripts/tests/launcher-probe.test.sh   # launcher_cli_has_flag: finds a flag, answers no without it, ends a hanging CLI, leaves none of its children running (#2329)
 bash scripts/tests/meta-version.test.sh     # the installed aw-meta's version and the launcher's staleness warning (Linux and macOS)
 bash scripts/tests/install-meta.test.sh

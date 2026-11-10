@@ -99,7 +99,7 @@ expect "refuses a relative MODEL_LIMIT_HOME" 2 "absolute path"
 mkdir -p "$T/real/sindri-app-firstrun-modellimit" && echo x > "$T/real/sindri-app-firstrun-modellimit/ledger.db"
 OUT="$(AW_STATE_DIR="$STATE" MODEL_LIMIT_HOME="$T/real/sindri-app-firstrun-modellimit" "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
 expect "refuses a home that holds files and has no marker" 2 "no .first-run-scratch marker"
-OUT="$(AW_STATE_DIR="$STATE" MODEL_LIMIT_PORT=7410 "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
+OUT="$(AW_STATE_DIR="$STATE" MODEL_LIMIT_PORT=7410 "$SCRIPT" up --dry-run 2>&1)"; CODE=$?  # test-ports: ok: dry run, nothing binds the port
 expect "refuses the real instance's port" 2 "7410"
 OUT="$(AW_STATE_DIR="$STATE" MODEL_LIMIT_POLL_SECONDS=x "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
 expect "refuses a poll interval that isn't whole seconds" 2 "whole seconds"
