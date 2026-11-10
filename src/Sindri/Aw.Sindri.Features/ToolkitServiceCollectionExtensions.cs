@@ -1,4 +1,5 @@
 using Aw.Kernel.Services;
+using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.AdoptToolkits;
 using Aw.Sindri.Features.BuildToolkit;
@@ -26,10 +27,10 @@ internal static class ToolkitServiceCollectionExtensions
             .AddJob<CreateToolkitRequest, CreateToolkitResult, CreateToolkitService>(static r => JobKey.From("toolkit:" + r.Name), static r => "created " + r.Name)
             .AddSingleton<ToolkitRecovery>()
             .AddSingleton<ToolkitAdoption>()
-            .AddScoped<IService<PauseToolkitRequest, PauseToolkitResponse>, PauseToolkitService>()
-            .AddScoped<IService<ResumeToolkitRequest, ResumeToolkitResponse>, ResumeToolkitService>()
-            .AddScoped<IService<StartToolkitRequest, StartToolkitResponse>, StartToolkitService>()
-            .AddScoped<IService<StopToolkitRequest, StopToolkitResponse>, StopToolkitService>()
-            .AddScoped<IService<ListToolkitsRequest, ListToolkitsResponse>, ListToolkitsService>();
+            .AddScoped<IValidator<StartToolkitRequest>, AcceptAllValidator<StartToolkitRequest>>().AddCommand<StartToolkitRequest, StartToolkitResponse, StartToolkitService>()
+            .AddScoped<IValidator<StopToolkitRequest>, AcceptAllValidator<StopToolkitRequest>>().AddCommand<StopToolkitRequest, StopToolkitResponse, StopToolkitService>()
+            .AddScoped<IValidator<PauseToolkitRequest>, AcceptAllValidator<PauseToolkitRequest>>().AddCommand<PauseToolkitRequest, PauseToolkitResponse, PauseToolkitService>()
+            .AddScoped<IValidator<ResumeToolkitRequest>, AcceptAllValidator<ResumeToolkitRequest>>().AddCommand<ResumeToolkitRequest, ResumeToolkitResponse, ResumeToolkitService>()
+            .AddScoped<IValidator<ListToolkitsRequest>, AcceptAllValidator<ListToolkitsRequest>>().AddQuery<ListToolkitsRequest, ListToolkitsResponse, ListToolkitsService>();
     }
 }
