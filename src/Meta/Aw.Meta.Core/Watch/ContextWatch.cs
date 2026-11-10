@@ -24,9 +24,11 @@ public static class ContextWatch
     /// <summary>Compares a poll with the lanes already reported high. A lane whose size can't be told keeps its state.</summary>
     /// <param name="high">The lanes reported high so far.</param>
     /// <param name="now">This poll's lane contexts.</param>
+    /// <param name="metaLane">The meta lane's name: it reports META RECYCLE instead of CONTEXT HIGH; null for none.</param>
     /// <returns>The lines to report and the lanes now reported high.</returns>
-    public static (IReadOnlyList<string> Lines, IReadOnlySet<string> High) Step(IReadOnlySet<string> high, IReadOnlyList<LaneContext> now)
+    public static (IReadOnlyList<string> Lines, IReadOnlySet<string> High) Step(IReadOnlySet<string> high, IReadOnlyList<LaneContext> now, string? metaLane = null)
     {
+        _ = metaLane;   // red stub: the fix prints META RECYCLE <N>k for this lane
         ArgumentNullException.ThrowIfNull(high);
         ArgumentNullException.ThrowIfNull(now);
         var kept = new HashSet<string>(high, StringComparer.Ordinal);

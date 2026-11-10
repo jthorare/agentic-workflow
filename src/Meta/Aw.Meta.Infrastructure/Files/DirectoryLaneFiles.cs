@@ -16,6 +16,12 @@ namespace Aw.Meta.Infrastructure.Files;
 /// <param name="directory">The lane-sessions directory.</param>
 internal sealed class DirectoryLaneFiles(string directory) : ILaneFiles
 {
+    public ValueTask<Result<(int Pid, DateTimeOffset StartedAt)?>> Waiter(string lane, CancellationToken cancellationToken) =>
+        throw new NotSupportedException("red stub (#2498): the waiter pid file is not written yet");
+
+    public ValueTask<Result<Unit>> RecordWaiter(string lane, (int Pid, DateTimeOffset StartedAt)? waiter, CancellationToken cancellationToken) =>
+        throw new NotSupportedException("red stub (#2498): the waiter pid file is not written yet");
+
     public async ValueTask<Result<LaneHookTrace?>> HookTrace(string lane, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(lane);

@@ -9,6 +9,7 @@ namespace Aw.Meta.Testing;
 public sealed class InMemoryLaneFiles : ILaneFiles
 {
     private readonly Dictionary<string, LaneRecord> _records = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, (int Pid, DateTimeOffset StartedAt)> _waiters = new(StringComparer.Ordinal);
     private readonly Dictionary<string, LaneHookTrace> _traces = new(StringComparer.Ordinal);
 
     /// <summary>Puts a lane's record in place.</summary>
@@ -37,6 +38,25 @@ public sealed class InMemoryLaneFiles : ILaneFiles
         }
 
         _records[lane] = (_records.GetValueOrDefault(lane) ?? new LaneRecord(lane, Session: null, Agent: null)) with { Session = session, RecordedAt = at, Ambiguous = false };
+        return Done.Unit();
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<(int Pid, DateTimeOffset StartedAt)?>> Waiter(string lane, CancellationToken cancellationToken) =>
+        Done.Of(_waiters.TryGetValue(lane, out var waiter) ? waiter : ((int Pid, DateTimeOffset StartedAt)?)null);
+
+    /// <inheritdoc />
+    public ValueTask<Result<Unit>> RecordWaiter(string lane, (int Pid, DateTimeOffset StartedAt)? waiter, CancellationToken cancellationToken)
+    {
+        if (waiter is { } kept)
+        {
+            _waiters[lane] = kept;
+        }
+        else
+        {
+            _ = _waiters.Remove(lane);
+        }
+
         return Done.Unit();
     }
 

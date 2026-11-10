@@ -2049,7 +2049,7 @@ static Aw.Meta.Core.Ports.TranscriptTail.operator !=(Aw.Meta.Core.Ports.Transcri
 static Aw.Meta.Core.Ports.TranscriptTail.operator ==(Aw.Meta.Core.Ports.TranscriptTail? left, Aw.Meta.Core.Ports.TranscriptTail? right) -> bool
 static Aw.Meta.Core.Watch.ContextWatch.Format(System.Collections.Generic.IReadOnlySet<string!>! high) -> string!
 static Aw.Meta.Core.Watch.ContextWatch.Parse(string? text) -> System.Collections.Generic.IReadOnlySet<string!>!
-static Aw.Meta.Core.Watch.ContextWatch.Step(System.Collections.Generic.IReadOnlySet<string!>! high, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Lanes.LaneContext!>! now) -> (System.Collections.Generic.IReadOnlyList<string!>! Lines, System.Collections.Generic.IReadOnlySet<string!>! High)
+static Aw.Meta.Core.Watch.ContextWatch.Step(System.Collections.Generic.IReadOnlySet<string!>! high, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Lanes.LaneContext!>! now, string? metaLane = null) -> (System.Collections.Generic.IReadOnlyList<string!>! Lines, System.Collections.Generic.IReadOnlySet<string!>! High)
 static readonly Aw.Meta.Core.Coordination.PaneSubmitter.Pause -> System.TimeSpan
 static readonly Aw.Meta.Core.MetaErrors.RecycleRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Meta.Core.MetaErrors.RecycleTimedOut -> Aw.Kernel.ErrorDefinition!
@@ -2439,3 +2439,7 @@ const Aw.Meta.Core.KvKeys.BoardSeenPrefix = "board.seen." -> string!
 Aw.Meta.Core.Messages.NoticeRule
 static Aw.Meta.Core.Messages.NoticeRule.IsNotice(string! body) -> bool
 const Aw.Meta.Core.Messages.InboxState.Settled = "settled" -> string!
+Aw.Meta.Core.Ports.ILaneFiles.Waiter(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(int Pid, System.DateTimeOffset StartedAt)?>!>
+Aw.Meta.Core.Ports.ILaneFiles.RecordWaiter(string! lane, (int Pid, System.DateTimeOffset StartedAt)? waiter, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.IWaiterLauncher
+Aw.Meta.Core.Ports.IWaiterLauncher.Start(System.Collections.Generic.IReadOnlyList<string!>! argv, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>

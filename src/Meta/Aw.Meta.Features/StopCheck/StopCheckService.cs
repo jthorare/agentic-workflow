@@ -13,7 +13,8 @@ namespace Aw.Meta.Features.StopCheck;
 /// <param name="sweep">Syncs, refreshes and evaluates.</param>
 /// <param name="guard">The loop guard.</param>
 /// <param name="clock">Dates the incident.</param>
-internal sealed class StopCheckService(MetaSession session, MetaSweep sweep, StopGuard guard, TimeProvider clock) : IService<StopCheckRequest, StopCheckResponse>
+/// <param name="beats">The lanes' stop beats; the meta's own stop is recorded there.</param>
+internal sealed class StopCheckService(MetaSession session, MetaSweep sweep, StopGuard guard, TimeProvider clock, LaneBeats? beats = null) : IService<StopCheckRequest, StopCheckResponse>
 {
     public async ValueTask<Result<StopCheckResponse>> Handle(StopCheckRequest request, CancellationToken cancellationToken)
     {
@@ -36,6 +37,7 @@ internal sealed class StopCheckService(MetaSession session, MetaSweep sweep, Sto
             return open.Error;
         }
 
+        _ = beats;   // red stub (#2498): the fix records the meta lane's stop beat (stopped = !block) here
         var outcome = await guard.Decide(open.Value, request.HookActive, request.MaxBlocks, now, cancellationToken).ConfigureAwait(false);
         return outcome.IsError ? outcome.Error : new StopCheckResponse(IsMeta: true, outcome.Value.Block, open.Value, outcome.Value.Warning);
     }
