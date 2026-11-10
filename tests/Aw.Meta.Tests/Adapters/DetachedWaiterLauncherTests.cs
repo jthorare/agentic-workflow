@@ -36,6 +36,17 @@ public sealed class DetachedWaiterLauncherTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task An_unknown_process_path_is_AW_META_009_with_its_own_message()
+    {
+        var launcher = new DetachedWaiterLauncher(() => "/usr/bin/setsid", () => null);
+
+        var result = await launcher.Start(["aw-meta", "lane-recycle", "meta", "--wait-idle"], TestContext.Current.CancellationToken);
+
+        Assert.Equal(MetaErrors.CommandNotStarted.Code, result.Error.Code);
+        Assert.Contains("can't find the running aw-meta binary", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_path_that_only_contains_dotnet_is_not_taken_for_the_dotnet_host()
     {
         var launcher = new DetachedWaiterLauncher(() => "/bin/true", () => "/home/x/.dotnet-tools/aw-meta");

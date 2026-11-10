@@ -71,7 +71,7 @@ internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator, Func<s
         }
     }
 
-    // The logical "aw-meta" is the running binary; under `dotnet run` that is the dotnet host, and the waiter would run `dotnet lane-recycle ...` and die at once.
+    // The logical "aw-meta" is the running binary. Under the dotnet host (`dotnet Aw.Meta.Host.dll`, no apphost) that is `dotnet`, and the waiter would run `dotnet lane-recycle ...` and die at once.
     private Result<string> Program(string name)
     {
         if (!string.Equals(name, LogicalProgram, StringComparison.Ordinal))
@@ -80,9 +80,14 @@ internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator, Func<s
         }
 
         var self = selfLocator();
-        return self is { Length: > 0 } && !string.Equals(Path.GetFileNameWithoutExtension(self), "dotnet", StringComparison.Ordinal)
-            ? self
-            : MetaErrors.CommandNotStarted.With("--detach needs the published aw-meta binary (this is dotnet run): run the installed aw-meta, or recycle the meta by hand");
+        if (string.IsNullOrEmpty(self))
+        {
+            return MetaErrors.CommandNotStarted.With("--detach can't find the running aw-meta binary: run the installed aw-meta, or recycle the meta by hand");
+        }
+
+        return string.Equals(Path.GetFileNameWithoutExtension(self), "dotnet", StringComparison.Ordinal)
+            ? MetaErrors.CommandNotStarted.With("--detach needs the published aw-meta binary (this process runs under the dotnet host): run the installed aw-meta, or recycle the meta by hand")
+            : self;
     }
 
     private static string? FindOnPath(string name) =>
