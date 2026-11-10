@@ -7,7 +7,7 @@
   <!-- One item row (UI spec §4.5, queue.html): title, repo, the state as a word, step, since, and the row's
        primary action from the catalog. A click on the title, or Enter, opens the sheet (§3.2); the row is named by its
        id, title and state (the id is read out, never drawn). -->
-  <Border x:Name="RowFrame" Classes="item-row" Classes.selected="{Binding IsSelected}" Focusable="True"
+  <Border x:Name="RowFrame" Classes="item-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <Grid x:Name="TableRow" VerticalAlignment="Center">
       <Grid.ColumnDefinitions>

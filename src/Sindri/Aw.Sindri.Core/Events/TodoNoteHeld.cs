@@ -7,4 +7,10 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="NoteHash">The sha256 of the note the hold was drawn from; Apply and Put them back send it back.</param>
 /// <param name="By">Who wrote the event (the note service).</param>
 /// <param name="Via">'pipe' when the CLI had no terminal on stdout, else null.</param>
-public sealed record TodoNoteHeld(IReadOnlyList<TodoHeldChange> Changes, string NoteHash, string By, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Via = null);
+/// <param name="OpenInBase">How many open todos the base had when the 10% rule drew this hold; null on events written before the field existed.</param>
+public sealed record TodoNoteHeld(
+    IReadOnlyList<TodoHeldChange> Changes,
+    string NoteHash,
+    string By,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Via = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? OpenInBase = null);

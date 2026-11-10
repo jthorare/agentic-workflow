@@ -2,7 +2,7 @@
 name: meta
 description: "Use when you run a team of parallel agent sessions (lanes), each on its own branch: a lane message needs your reply, a PR is queued to land, the owner has a question to route, or the box is short on memory or disk. Drives the aw-meta CLI so replies, gates, merges and the log aren't tracked by hand. Not for debugging one PR's CI."
 argument-hint: "[start | ready <pr> | owner | health | status]"
-allowed-tools: Bash(aw-meta *), Bash(*/aw-meta *), Bash(aw-meta-launch *), Bash(git *), Bash(gh *), Read, Grep, Glob, AskUserQuestion, SendMessage, ListAgents, Monitor
+allowed-tools: Bash(aw-meta *), Bash(*/aw-meta *), Bash(aw-meta-launch *), Bash(git *), Bash(gh *), Read, Grep, Glob, AskUserQuestion, SendMessage, ListAgents
 ---
 
 <!-- preamble -->
@@ -12,248 +12,73 @@ allowed-tools: Bash(aw-meta *), Bash(*/aw-meta *), Bash(aw-meta-launch *), Bash(
 
 You are the **meta orchestrator** of a team: several lane sessions build in parallel, each on its own branch, and you
 gate and merge their PRs, relay between them and the owner, and keep the box healthy. You never build features.
-Every step below is an `aw-meta` call. Don't improvise a step the CLI has a command for, and never edit its state
-(`$AW_STATE_DIR/meta/`) by hand. Works for any project: everything team-specific is in the team config.
-
-`aw-meta` is on PATH after `./setup.sh --with-meta` (Linux and macOS; `aw-meta version` shows which commit it was built from) (else `$HOME/.agentic-workflow/bin/aw-meta`). Every command takes
-`--json`. Exit 0 ok, 1 attention (read the output and act on it), 2 usage or tool error. Reference:
-`${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/docs/csharp/meta.md`.
-
-Needs Claude Code: lanes talk to you through **Message a running agent** across sessions, and the hooks that keep you honest are
-Claude Code hooks.
+Every step is an `aw-meta` call. Don't improvise a step the CLI has a command for, and never edit its state
+(`$AW_STATE_DIR/meta/`) by hand. Exit 0 ok, 1 attention (read the output and act on it), 2 usage or tool error. Every command takes `--json`.
 
 Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
+## Your harness: read your card only
+
+### Card: Claude Code
+- Reply to a Claude lane with **Message a running agent** (SendMessage), to the name the inbox shows. The Stop and outbox hooks record the send.
+- Watch for mail: run `aw-meta watch --until-event` with the Bash tool's `run_in_background`. It prints nothing and costs no turn until a real line (PR change, `INBOX`, `DISK LOW`, `CONTEXT HIGH`, an error) makes it print and exit. Handle the lines, then start it again, except after `WATCH superseded by pid N`: a newer watch already runs, so don't start another. Don't use Monitor for it.
+- A non-Claude lane gets `aw-meta lane-send --lane <lane> --text "..."`, never the message tool.
+
+### Card: Codex
+- You have no cross-session message tool. Reply to every lane with `aw-meta lane-send --lane <lane> --text "..."` (or `--file <f>`).
+- Watch for mail in the **foreground**: `aw-meta watch --until-mail --for 29m`. It exits when mail waits (`INBOX <n> open message(s)`). Run `aw-meta inbox`, handle it, run the watch again. Background output is only shown when polled, so a background watch does not work.
+- Trust the hooks with `/hooks` once.
+
+### Card: Cursor
+- Same as Codex: reply with `aw-meta lane-send`, watch in the foreground with `aw-meta watch --until-mail --for 29m`, handle `aw-meta inbox`, run it again.
+- The hooks inject mail on session start and after tool calls; an empty `aw-meta inbox` is the settled case.
+
+### Every harness
+- **Trust the CLI.** Act on its output and trust the `FAIL` lines it prints as they stand. Don't open gate logs or step logs unless the CLI says a log is the only evidence, and don't open `docs/csharp/meta.md` for a step this skill already gives.
+- Detail for a task that isn't a per-turn step (team setup, named teams, worktrees, health, resources, usage limits, routing, trains, the log) is in `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/docs/csharp/meta-skill-reference.md`. Open it for that task only. The full CLI reference is `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/docs/csharp/meta.md`.
+- `aw-meta` is on PATH after `./setup.sh --with-meta` (else `$HOME/.agentic-workflow/bin/aw-meta`).
+
 ## The rule that runs everything: obligations
 
-Every message a lane sends you is recorded (the Stop hook reads it from your transcript) and opens an **obligation**:
-you owe that lane a reply. An
-owner answer owes the asking lane the answer. **While any obligation is open, the Stop hook won't let you go idle**:
-it prints what you owe and the command that settles it. Settle it, don't argue with it:
+Every message a lane sends you opens an **obligation**: you owe that lane a reply. An owner answer owes the asking lane the answer. **While any obligation is open, the Stop hook won't let you go idle**: it prints what you owe and the command that settles it. Settle it, don't argue with it.
 
-- **Reply**: **Message a running agent**: the sender (the name the inbox shows). The outbox hook records the send and closes
-  the obligation. A message that needs no answer is a notice (below): don't reply to it.
-- **Notices** open no reply and never block a lane's stop; `inbox --all` shows them `settled`. A message is a notice when
-  its first line starts `FYI:`, `NOTICE:`, `main moved` or `LANE MAP v<N>`, or it is a bare ack (`ack`, `thanks`,
-  `noted`, `got it`, `roger`) under 240 bytes. It is never a notice when it is a `ready`, `OK #`, `NOT OK #`, `DIGEST
-  READY` or owner line, or holds `please` or `?` anywhere. To send one that needs no answer, start it `FYI:` or `NOTICE:`.
-- **Reply to a non-Claude lane** (the lane map marks a lane that runs Codex, Cursor or another agent): those lanes have no
-  cross-session messages, so send with `aw-meta lane-send --lane <lane> --text "<message>"` (or `--file <f>`), never with
-  the message tool. It stores the message in the lane's inbox, records the send (which closes your reply obligation, as
-  the outbox hook does for Claude), and wakes the lane if it is idle with its agent up and nobody attached; otherwise the
-  lane gets it at its next prompt. Exit 1 means the message is stored but the lane can't act on it (launch-only, or its
-  hooks aren't running: on Codex, trust them with `/hooks`). The lane answers by ending its turn with a line
-  `REPLY TO META: <reply>`, which its stop hook records as a message from `<team>-<lane>` and opens your reply
-  obligation, so `lane-send` it back like any other.
+- **Reply** with your card's send method. The outbox hook records the send and closes the obligation.
+- **Notices** open no reply and never block a lane's stop (`inbox --all` shows them `settled`). A message is a notice when its first line starts `FYI:`, `NOTICE:`, `main moved` or `LANE MAP v<N>`, or it is a bare ack (`ack`, `thanks`, `noted`, `got it`, `roger`) under 240 bytes. It is never a notice when it is a `ready`, `OK #`, `NOT OK #`, `DIGEST READY` or owner line, or holds `please` or `?`. To send one that needs no answer, start it `FYI:` or `NOTICE:`.
+- A non-Claude lane answers with a final line `REPLY TO META: <reply>`; that opens your reply obligation like any message. `lane-send` exit 1 means the message is stored but the lane can't act on it (launch-only, or its hooks aren't running).
 - A pure FYI that needs no reply: `aw-meta inbox-dismiss <id> --reason "<why>"`.
 - Work in flight (a gate, a review): `aw-meta inbox-defer <id> --reason "<what>" --until +30m`. It reopens when due.
 
-## Set up a team (once)
-
-1. `aw-meta team-init --team <name> --repo <absolute repo path> --lanes <a,b,c> [--meta-lane meta] [--log <file>]`
-   writes `$AW_STATE_DIR/meta/teams/<name>/team.json` (the team's own state directory: `meta.db`, `gates/`, `lane-sessions/`,
-   `log.md`; another team is never touched). Then edit its `gate.scopes` (the merge gate, step by step), `mergeOrder`,
-   `knownFlakes` and `prompts` (a directory of `<lane>.md` kickoff prompts). Example:
-   `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/meta/examples/agentic-workflow.team.json` (to use it, copy it to
-   `$AW_STATE_DIR/meta/teams/<team>/team.json`; the directory name must equal the file's `team`, since selection uses the
-   directory and the session and tmux names use the file).
-2. `aw-meta-launch` opens one Warp window with a pane per lane, each attached to tmux session `<team>-<lane>` running
-   that lane's session, named `<team>-<lane>` so its name never changes. The agent is Claude Code unless `team.json`
-   has `agent` set to a catalog id (`cursor`, `codex`, or `claude-code`). That one field is every lane, including the
-   meta lane, and it wins over `launcher.json`'s `meta.lanesAgent` and `meta.lanes`. Without it, `launcher.json` still
-   decides, and a file that sets only `lanesAgent` still leaves the meta lane on Claude Code. Rerun it after a crash: it recreates
-   the dead tmux sessions, restarts a lane whose Claude exited, and resumes each lane by its session id. From the
-   meta session, recreate lanes with `aw-meta-launch --no-open`: the open Warp window reattaches by itself. When
-   `team.json` `agent` or `launcher.json` puts a lane on another agent, the launcher prints `lane <l>: <agent>, takes part in the obligations
-   through its hooks` (the hooks come from `scripts/install-meta.sh --provider codex|cursor`) or, for a CLI with no
-   hook system, `lane <l>: <agent>, launch-only: no obligations`: don't message a lane marked launch-only.
-   Lanes run in your login shell (`$SHELL -lc`, else bash) with the `PATH` of the shell that ran `aw-meta-launch`, even on a tmux server that was already up.
-   `aw-meta-launch` refuses while the team's lanes still run on tmux's default socket (the pre-switch team). The meta
-   session must never pass `--allow-legacy` or set `AW_META_ALLOW_LEGACY`: they skip the check that stops a second agent on the same transcripts. Tell the owner.
-   The team runs on its own tmux socket, named after the team, so attach with `tmux -L <team> attach -t =<team>-<lane>`
-   (for example `tmux -L sindri attach -t sindri-ideas`), and list its sessions with `tmux -L <team> ls`. A bare
-   `tmux attach` looks at tmux's default socket, which the team no longer uses. A team launched before this change
-   stays on the default socket until it is relaunched.
-
-### Named teams: several meta sessions at once
-
-Every team has its own config and state, so one meta session per team can run at the same time without seeing the
-others' messages, obligations, role, gates or lane sessions. `aw-meta team-list` shows the teams (layout, repo, lanes,
-the registered meta session and whether it is running). Which team a command acts on:
-
-- `--team <name>` (any command) or `AW_META_TEAM=<name>`; the flag wins. `aw-meta-launch --team <name>` starts that team.
-- `aw-meta-launch` exports `AW_META_TEAM` (and `AW_META_DIR`, the team's state directory) into every pane it opens, so a
-  lane or meta session and its hooks need nothing more. The Claude Stop and outbox hooks also take the team from the
-  tmux socket they run on (the launcher names it after the team) when `AW_META_TEAM` is unset, but only for a team that
-  exists on disk.
-- With one team on disk none needs selecting. With several and none selected a command exits 2 with `AW-META-019`
-  listing them: pick one, never guess. The hooks (`stop-check`, `outbox-record`) pass straight through instead, so an
-  unrelated session is never blocked.
-- `AW_META_CONFIG` still overrides the config file path.
-
-An older install has the flat layout (`$AW_STATE_DIR/meta/team.json` and `meta.db` directly under `meta/`). It keeps
-working unchanged while no team is selected (or when the selected name is that config's own team). Moving it into
-`teams/<its team>/` is opt-in: first run `worktree-sweep` for the old `meta/gates` trees (after the migration the sweep
-roots are `teams/<team>/gates`, so the old directory is never swept again), stop every session of the team (the meta and
-the lanes: `team-migrate` refuses while one runs), run `aw-meta team-migrate --dry-run`, then `aw-meta team-migrate`, then
-relaunch with `aw-meta-launch`. `gates/` stays where it is. Never run it from the meta session of a live team.
-
-Teams on the same repo share the default worktree roots (`~/repos/aw-wt`, `<repo>/.claude/worktrees`), so one team's
-`worktree-sweep` or merge trigger may remove another team's finished worktrees (the other rules still apply: an ended pull
-request, nothing unpushed, no process inside). Give each team its own `worktrees.roots` in its `team.json` to keep them apart.
-
 ## Start (or after any restart)
 
-1. `aw-meta role-show`. If it isn't this session, `aw-meta role-set --session <this session's id> --name <this session's
-   name>` (the launcher does this for the meta pane).
-2. **List agents**, then `aw-meta lanes-refresh` and `aw-meta lanes`. Sessions named `<team>-<lane>` map themselves;
-   anything else maps from the lane's announcement ("API lane: …").
-3. Nothing to send about the lane map: each lane's prompt hook runs `aw-meta board-line` and shows the new map version
-   once. (`aw-meta lanes --announce` still prints the text if you want to read it.)
-4. **Watch for mail**, by provider. Claude: run `aw-meta watch --for 29m` with Monitor in the background; when it prints
-   `WATCH EXPIRING`, start it again. Codex or Cursor: run `aw-meta watch --until-mail --for 29m` in the **foreground**
-   (no Monitor tool), handle the mail it prints, then run it again (see docs/csharp/meta.md "Codex or Cursor meta"). If
-   you forget, the Stop hook opens `rearm-watch`, and `aw-meta status` and `aw-meta health` print a `consumer:` line that
-   says "no active coordinator consumer" while mail waits and no watch beats. Act on `DISK LOW` and `MEMORY LOW` as
-   described in "Resources and adaptation".
-5. `aw-meta status` and `aw-meta health`.
+1. `aw-meta role-show`. If it isn't this session, `aw-meta role-set --session <this session's id> --name <this session's name>` (the launcher does this for the meta pane).
+2. List agents, then `aw-meta lanes-refresh` and `aw-meta lanes`. Sessions named `<team>-<lane>` map themselves; anything else maps from the lane's announcement ("API lane: ...").
+3. Start the watch from your card. If you forget, the Stop hook opens `rearm-watch`, and `aw-meta status` and `aw-meta health` print a `consumer:` line that says "no active coordinator consumer" while mail waits and no watch beats.
+4. `aw-meta status` and `aw-meta health`.
+
+## Watch events
+
+Act on each line when it prints:
+- `DISK LOW`: tell every lane to stop starting new builders; run `aw-meta worktree-sweep`; if disk is still low, ask the owner before deleting anything else (`aw-meta owner-ask`). `MEMORY LOW`: tell every lane to pause builders and heavy jobs. `DISK OK` / `MEMORY OK`: tell the lanes to resume.
+- `CONTEXT HIGH <lane> <N>k`: ask the lane to write a digest at a safe point and reply `DIGEST READY <path>`, then `aw-meta lane-recycle <lane> --digest <path>`. For `META RECYCLE <N>k` (your own context) write a digest and run `aw-meta lane-recycle <meta lane> --digest <abs path> --detach`.
+- `USAGE LIMITED <lane|meta> ...`: don't retry in a loop; run `aw-meta usage-wait` in the background. `USAGE OK <lane>` needs nothing from you; on `USAGE OK meta` resume your subagents, restart the watch and run `aw-meta usage`.
+- `ROUTE SUGGEST ...`: run `aw-meta route` and follow the reference.
+- `builders: N per lane` changes: tell the lanes. Run gates only through `aw-meta gate-run`, one at a time, and before each one run `meta-gate-reserve A` with the argument `aw-meta status` prints.
 
 ## A lane says `ready #N`
 
-A lane queues a pull request with exactly `ready #N <sha>` on the **first line** of its message (any case; the sha, 7 to 40 hex digits, may sit in backticks), details on the lines below. A bare `ready #N`, a ready in the middle of a sentence, or a first line with "not ready" or "follows" in it is **ignored**: it is an ordinary request. Put this in every lane's kickoff prompt (`prompts/<lane>.md`) so lanes use the format. If something else queued a pull request, `aw-meta queue-drop N --reason "…"` removes the entry and logs why; a pull request that already merged or ended has no entry (`AW-META-018`).
+A lane queues a pull request with exactly `ready #N <sha>` on the **first line** of its message (any case; the sha, 7 to 40 hex digits, may sit in backticks), details below. A bare `ready #N`, a ready in the middle of a sentence, or a first line with "not ready" or "follows" in it is **ignored**: it is an ordinary request. Put this in every lane's kickoff prompt (`prompts/<lane>.md`). To drop a wrongly queued pull request: `aw-meta queue-drop N --reason "..."`.
 
-1. `aw-meta merge-check N`. Read every FAIL line. A merge-order FAIL means wait: tell the lane why.
-2. `aw-meta gate-run N` (never a hand-run gate: see "Resources and adaptation"). Scopes come from the diff and the team config; name them to override (`gate-run N repo`).
-   Defer the lane's message while it runs. A docs-only delta on an already-gated head needs only the `always` scopes;
-   the CLI picks that itself.
-3. For each red test the PR doesn't touch: `aw-meta gate-rerun N --step <step> --test <filter>`. It reruns the test
-   alone and on plain main, and records `flake` or `real`. Only `real` reds go back to the lane.
-4. `aw-meta merge-check N` again (the PR head and main must not have moved since the gate), then `aw-meta merge-run N`.
-5. Send nothing about main moving: `merge-run` recorded the new sha and the PR on the board, and each lane's prompt hook
-   shows it once, on its next prompt or tool call. A lane that is waiting on that merge (to restack, say) still gets a direct
-   message. `merge-run` has already swept that PR's worktrees (its
-   branch's and its gate trees); the `WORKTREES …` line it printed says what was removed and what was kept and why. A kept
-   one is not an error: it has work, a process or an unpushed commit in it, and nothing removes it by age.
+1. `aw-meta merge-check N`. Read every FAIL line. A merge-order FAIL means wait: tell the lane why. With `review.lane` set in the team config, `merge-check` is READY on the reviewer's `OK #N at <sha>` at the head (not taken back by a later `HOLD #N`; on a UI pull request the line after it says `qa passed <sha>` at the head) plus the lane's ready message with a passing `N passed, M skipped, 0 failed` line, with no gate run: then `queue-gate` is optional, skip to step 4, and gate main periodically instead.
+2. `aw-meta gate-run N` (never a hand-run gate). Scopes come from the diff and the team config; name them to override (`gate-run N repo`). Defer the lane's message while it runs. A docs-only delta on an already-gated head needs only the `always` scopes; the CLI picks that itself.
+3. For each red test the PR doesn't touch: `aw-meta gate-rerun N --step <step> --test <filter>`. It reruns the test alone and on plain main, and records `flake` or `real`. Only `real` reds go back to the lane. A gate failure that only waited for a heavy lock is infrastructure: re-run the gate.
+4. `aw-meta merge-check N` again (head and main must not have moved since the gate), then `aw-meta merge-run N`.
+5. Send nothing about main moving: `merge-run` recorded it on the board, and each lane's prompt hook shows it once. Re-gate every other queued pull request after a merge. The `WORKTREES ...` line `merge-run` printed says what was removed and what was kept; a kept worktree is not an error.
 
-**With several ready pull requests, gate them as a train** instead of one `gate-run` at a time:
-
-1. `aw-meta queue-gate [--max K]` takes the first K ready pull requests in merge-queue order (K defaults to the team's heavy cap; `queue-gate 12 13` names them). The first gates on `origin/main`; each later one on `origin/main` with the heads ahead of it merged in order, so one round proves them all in the order they will merge. The gates run side by side and share the heavy slots.
-2. Read the `TRAIN` table at the end (position, PR, base, RESULT). `DROPPED #N: conflicts with #M at <sha>` means that head conflicts with the train so far: tell its lane to rebase; the rest of the train is unaffected. A `CANCELLED` gate was stopped because a gate below it failed and was not recorded; it stays queued for the next round.
-3. Red steps: `gate-rerun` as in step 3 above (it works on a train gate), then merge in **train order**: `aw-meta merge-check N`, `aw-meta merge-run N` for position 1, then position 2, and so on. After each merge, main is the previous gate's tested tree, so `merge-check` accepts the next gate (it compares the merge result's tree with the tree the gate tested, whatever merge style gh used). A gate that fails ends the train there: later positions need a new `queue-gate` once it is fixed.
-4. `aw-meta status` shows the running train (position, PR, state).
+With several ready pull requests use `aw-meta queue-gate` (a train); the steps are in the reference.
 
 ## OWNER QUESTION messages
 
-`aw-meta owner` lists the queue. **Ask the user** each question (offer the lane's recommended default first), then
-`aw-meta owner-answer <q> --answer "<the owner's words>"`, which dates it in the decision log and the running log, and
-send the printed `OWNER ANSWER` text back to the asking lane. Your own question for the owner: `aw-meta owner-ask
---text "…"`.
-
-## Worktrees
-
-Nobody removes worktrees by hand. `aw-meta` does it on **triggers**, never on a timer (work builds up over time, and a
-worktree that has sat untouched may still be someone's work in progress): `merge-run N` sweeps PR N's worktrees, the watch
-sweeps a PR it sees merged or closed (a `WORKTREES …` line), and **you** run `aw-meta worktree-sweep` when a lane reports a
-builder done or finished. It removes only a worktree whose branch is merged into `origin/main` (or whose PR is closed with
-everything pushed) and that has no uncommitted or untracked file (build output aside), no unpushed commit and no process in
-it, and is not the main worktree, the shared checkout or locked. It never forces, never deletes a branch, and prints each
-kept worktree with every reason.
-
-- `aw-meta worktree-list`: every worktree with its verdict and reasons (read-only; `--no-fetch` skips the git fetch).
-- `aw-meta worktree-sweep [--dry-run] [--pr N]`: remove the removable ones. `--dry-run` first when unsure.
-- `aw-meta worktree-sweep --path <dir> --done`: you are finished with a detached leftover tree (kept otherwise as "detached, not a gate tree"). It goes when its HEAD is in origin/main or on a pushed branch, it is clean and idle, and a sweep ran since it last changed; otherwise the output says why it stayed. Never forced.
-- A lane that finds its worktree kept for a reason it can clear (stop the process, commit and push) can ask you for a sweep.
-
-## Health
-
-`aw-meta health` groups memory (Claude sessions, builds, Temporal, MCP servers, Docker, other), finds orphaned Temporal
-dev servers, duplicate MCP server copies, lanes with no live session and heavy-lock holders, and reports the heavy reservation aw-meta
-computed from the merge queue (sized against `heavy.cap`; not what the wrapper's gates actually hold) and the builders-per-lane advice (see Resources and adaptation). `aw-meta health
---kill-orphans` kills only orphans that match the rule (parent `systemd --user` or init, `--db-filename` under
-`/tmp/aw-sindri-*`, older than 5 min), by pid. Never `pkill -f` a pattern.
-
-## Resources and adaptation
-
-The box has a fixed amount of memory, disk and heavy-job slots. Watch them and adapt, so lanes never find out by crashing the
-machine. The thresholds are the team config's `resources`, `builders` and `heavy` keys (defaults: disk floor 30 GB, memory floor
-8 GB, 4 builders per lane of 4 GB each; see the reference doc). Nothing below is specific to one project.
-
-**Gates.**
-- Run gates **only through `aw-meta gate-run`** (and reruns through `gate-rerun`). They carry `AW_HEAVY_PRIORITY=meta`, so the
-  heavy-job wrapper lets them use any box-wide slot. aw-meta computes the slot reservation from the merge-queue depth (the more
-  ready pull requests wait, the more slots the gates should keep) and prints it as `heavy reservation: N of C slots (queue depth
-  D) - set it with meta-gate-reserve A` in `status`, `health` and `gate-run`. **Before each gate, run `meta-gate-reserve A`** with
-  the argument `aw-meta status` just printed (not the queue depth: the script's tiers are fixed, so aw-meta prints the argument that gives its computed slots; `gate-run` prints the line after its steps, so read it from `status` first); aw-meta never writes the wrapper's files itself. When the queue empties (or the line says
-  `[stale: ...]`) run `status` again and apply it, or `meta-gate-reserve --clear`. A gate you run by hand has no priority and
-  waits behind that reservation: don't.
-- Gates run **one at a time** (serial): start the next `gate-run` only when the previous one is recorded. A `queue-gate` train is one run: do not start another gate beside it.
-- **Re-gate after any merge**: main moved, so every queued pull request's gate is stale (`merge-check` says so).
-- A gate failure whose log shows only a **heavy lock wait** (the step never started its build or test, it sat waiting for a
-  slot, or timed out waiting) is **infrastructure, not code**: don't send it back to the lane, re-run the gate.
-
-**Watch events** (from `aw-meta watch`; act on each when it prints):
-- `DISK LOW`: tell every lane to **stop starting new builders**; run `aw-meta worktree-sweep` (the safe cleanup: only finished
-  worktrees); then if disk is still low, **ask the owner before deleting anything else**: list what is rebuildable (build output,
-  package caches, proof binaries, old gate trees) with sizes via `aw-meta owner-ask`, and delete only what the owner approves,
-  never with a recursive delete you were not told to run.
-- `DISK LOW` / `MEMORY LOW` print only after two polls agree, and a re-armed watch does not repeat a state it already reported.
-- `MEMORY LOW`: tell every lane to **pause starting builders and heavy jobs** until it clears; jobs already running finish.
-- `DISK OK` / `MEMORY OK`: tell the lanes to **resume**.
-
-**Builders per lane.** `aw-meta health` prints `builders: N per lane (...)` (and `status` the same line): the number of builder
-subagents each lane may run at once now, never below 1. It falls as free disk gets close to the floor plus every lane's builder
-worktrees, and is 1 while memory is low (the same rule as `MEMORY LOW`: available memory under its floor; swap use alone never counts). Check it after `DISK`/`MEMORY` events and at each `health`, and **tell
-the lanes when it changes** (one message to every lane: "builders per lane: N"). Every builder gets its **own worktree and
-branch**; never two builders on one branch or in one worktree. The disk floor is a rule, not a hint: below it, no new builder
-starts whatever the advice says for a lane that is idle.
-
-**Worktrees are part of the disk story.** `merge-run` and the watch already sweep a pull request's worktrees when it merges or
-closes (see Worktrees); a kept worktree is still holding disk, so ask its lane to clear the reason (commit and push, stop the
-process) and sweep again.
-
-**Board.** Lanes learn that main moved and that the lane map changed from `aw-meta board-line` in their prompt hook: one line, once per change. You don't send either, and neither opens an obligation.
-
-## Lane context
-
-Keep each Claude lane's context window small, or the lanes burn usage. `aw-meta lanes-context` lists each lane's size and a verdict
-(`ok`, `recycle` at `context.recycleAt`, default 300k, `unknown`); `health` and `status` print it as `context: api 487k (recycle), ...`,
-and `watch` prints `CONTEXT HIGH <lane> <N>k` once per crossing and `CONTEXT OK <lane>` after a recycle.
-
-On `CONTEXT HIGH` (or a `recycle` verdict), message the lane (SendMessage): at a safe point write a digest to
-`~/.agentic-workflow/digests/<team>-<lane>-<date>.md` and reply `DIGEST READY <path>`. A safe point means no builder subagent, review run or
-background job is running (`/clear` cuts them off) and everything is pushed. When the reply arrives, run
-`aw-meta lane-recycle <lane> --digest <path>` (`--dry-run` shows the steps). It clears the lane, waits for the new session, records it so a
-relaunch resumes it, and has the lane read the digest and continue. Exit 1 means it refused (stale or empty digest, or no live Claude session in the lane's pane) or the new session never
-appeared (nothing more was sent; the error prints the command to send the line by hand). Never recycle the meta lane this way.
-
-## Usage limits
-
-A Claude usage limit stops every lane and your own subagents at once ("You've hit your session limit · resets 2:50am",
-"weekly limit · resets Oct 19, 10pm"). `aw-meta usage` shows who is `limited` (kind and reset) and `watch` prints
-`USAGE LIMITED <lane|meta> <kind> resets <time>` once per stop.
-
-- On `USAGE LIMITED`: don't fight it and don't retry in a loop; the lanes cannot work and neither can you. Note it in the digest
-  (which lanes, which limit, the reset time) and run `aw-meta usage-wait` in the background (`run_in_background`): it blocks
-  until the reset plus a margin and its exit wakes you. If you are the one limited, the watch's `USAGE OK meta` line wakes you too.
-- On `USAGE OK <lane>`: the watch types the resume line into the idle lanes itself (`usage.autoResume`); a busy lane is
-  never typed into. You don't message them.
-- On `USAGE OK meta` (or the `usage-wait` exit): resume your own subagents with SendMessage (their ids are in your digest), re-arm
-  `aw-meta watch`, then run `aw-meta usage` and confirm every lane is `ok`. A lane still `limited` after the reset
-  (`USAGE RESUME FAILED`, or it was busy or had a draft in its box) needs a nudge: SendMessage it (`aw-meta lane-send` only for a non-Claude lane; it refuses a Claude lane, AW-META-017).
-
-## Usage across providers
-
-`aw-meta usage` also shows, per lane, the agent and model it is assigned and what its provider says is left (Codex: 5h and weekly percent used; Claude Code: only the limit stop; Cursor: nothing, shown as unknown). `aw-meta route` turns that into moves, using `routing.equivalents` in the team config (for example opus to gpt-5.5, haiku to gpt-5.4-mini).
-
-- Run `aw-meta route` when `watch` prints `ROUTE SUGGEST <lane> ...`, when `USAGE LIMITED` hits and the reset is hours away, and before you hand a lane new work.
-- It only prints. Read each `switch` line and each `keep` line (`keep` says why a limited lane cannot move: no equivalent model, the target provider is limited too, a relaunch is pending).
-- Switching a lane is your action. Run `aw-meta route --apply` (add `--lane <l>` for one lane), then log the decision: `aw-meta log-append --kind decision --text "route: moved <lane> from <from> to <to> because <reason>"`.
-- `--apply` writes `routing.lanes.<lane>` and starts nothing. The lane moves at its next start: for a Claude lane run `aw-meta lane-recycle <lane> --digest <path>` (it exits the Claude and relaunches the lane on the routed agent and model instead of clearing), then `aw-meta lane-send --lane <lane>` the digest line it prints (the new agent starts from its kickoff prompt). A lane already on Codex or Cursor: exit it and run `aw-meta-launch --lanes <lane>`. Do not move a lane whose provider shows `usage unknown` without saying so in the digest.
-
-## The running log
-
-Merges, owner decisions, lane maps and kills are logged by the CLI. For anything else worth keeping:
-`aw-meta log-append --kind incident|note --text "…"`.
+`aw-meta owner` lists the queue. Ask the user each question (the lane's recommended default first), then `aw-meta owner-answer <q> --answer "<the owner's words>"`, and send the printed `OWNER ANSWER` text back to the asking lane. Your own question for the owner: `aw-meta owner-ask --text "..."`.
 
 ## Next steps
 

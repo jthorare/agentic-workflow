@@ -137,9 +137,9 @@ internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICaller
         }
 
         var assigned = string.Equals(change.Field, "assignee", StringComparison.Ordinal);
-        // why: Context keeps no actor for an assignment or a state move, so those items carry none
+        // why: Context keeps no actor for an assignment or a state move, so those items carry none; a state move names its states from what the sync recorded with the change, and only an older change falls back to the team's state list (#2536)
         return new LinearSinceItem(assigned ? "assigned" : "state", change.Identifier, title.Value, Actor: null, change.At,
-            assigned ? null : StateName(lookups.Value, change.Old), assigned ? null : StateName(lookups.Value, change.New));
+            assigned ? null : change.OldName ?? StateName(lookups.Value, change.Old), assigned ? null : change.NewName ?? StateName(lookups.Value, change.New));
     }
 
     private async ValueTask<Result<LinearSinceItem>> Mention(LinearSinceMention mention, Dictionary<string, LinearTeamLookups?> teams, Dictionary<RecordKey, string> titles, ContextScope scope, CancellationToken cancellationToken)

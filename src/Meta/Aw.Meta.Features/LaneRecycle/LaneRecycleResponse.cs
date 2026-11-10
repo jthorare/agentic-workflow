@@ -11,4 +11,6 @@ namespace Aw.Meta.Features.LaneRecycle;
 /// <param name="Digest">The digest file.</param>
 /// <param name="Steps">The steps, in order.</param>
 /// <param name="Warning">What the recycle did not verify but went on past (the continue line's pane check misread); null when nothing is in doubt.</param>
-public sealed record LaneRecycleResponse(string Lane, bool DryRun, string OldSession, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? NewSession, long? OldTokens, string Digest, IReadOnlyList<string> Steps, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Warning = null);
+/// <param name="WaiterPid">The detached waiter's process id, for a --detach run; null otherwise.</param>
+/// <param name="SettledMessages">The ids of the lane's open recycle requests this recycle settled; null when none.</param>
+public sealed record LaneRecycleResponse(string Lane, bool DryRun, string OldSession, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? NewSession, long? OldTokens, string Digest, IReadOnlyList<string> Steps, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Warning = null, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? WaiterPid = null, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? SettledMessages = null);

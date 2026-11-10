@@ -42,7 +42,7 @@ namespace Aw.Sindri.Tests.Workflows;
 /// over the real block types. Asserts who each ledger event names.
 /// </summary>
 [Lane(TestLane.Integration)]
-public sealed class DriftCheckRunAcceptanceTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class DriftCheckRunAcceptanceTests
 {
     private const string Summary = "the client has no field 'retryAfter' that the API returns";
     private static readonly WorkflowSlug _slug = WorkflowSlug.From("drift-check");
@@ -54,6 +54,8 @@ public sealed class DriftCheckRunAcceptanceTests(SindriTimeSkippingServer server
     [Fact]
     public async Task A_workflow_a_session_made_runs_on_its_tick_and_every_event_names_who_wrote_it()
     {
+        await using var server = new SindriTimeSkippingServer();
+        await server.InitializeAsync();
         await using var rig = new Rig(server);
         var actor = await rig.MakeAsSession();
 
@@ -255,7 +257,7 @@ public sealed class DriftCheckRunAcceptanceTests(SindriTimeSkippingServer server
 
     private sealed class ScriptedModel(string answer) : IGraphModelPort
     {
-        public string Untrusted(string text) => $"<untrusted>{text}</untrusted>";
+        public string Untrusted(string source, string text) => $"<untrusted>{text}</untrusted>";
 
         public ValueTask<Result<string>> Ask(string prompt, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>(answer);
     }
