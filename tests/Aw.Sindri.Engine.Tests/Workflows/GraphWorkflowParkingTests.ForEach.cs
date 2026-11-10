@@ -18,7 +18,7 @@ public sealed partial class GraphWorkflowParkingTests
         history.Events.Count(static e => e.TimerStartedEventAttributes != null && e.TimerStartedEventAttributes.StartToFireTimeout.ToTimeSpan() == TimeSpan.FromMinutes(15));
 
     // why: WaitUntilRunning keys rows by node, and a loop node has one row per item
-    private static async Task ItemRunning(GraphRig rig, Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, string node)
+    private static async Task ItemRunning(GraphRig rig, Core.Graph.Ids.WorkflowRunId run, string node)
     {
         using var limit = Limit();
         while (!(await rig.Runs.NodeRuns(run, limit.Token)).Value.Any(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.Status == NodeRunStatus.Running))
