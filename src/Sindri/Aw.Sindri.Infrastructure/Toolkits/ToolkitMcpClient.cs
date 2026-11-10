@@ -68,11 +68,11 @@ internal sealed class ToolkitMcpClient : IToolkitProcess
         {
             return SindriErrors.ToolkitCallTimedOut.With($"{tool} did not answer in {timeout.TotalSeconds.ToString("0.#", CultureInfo.InvariantCulture)} s");
         }
-        catch (McpException e) when (e.Message.Contains("unknown tool", StringComparison.OrdinalIgnoreCase) || e.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+        catch (McpException e)
         {
-            return SindriErrors.ToolkitToolUnknown.With(tool);
+            return Failure(tool, e);
         }
-        catch (Exception e) when (e is McpException or IOException or ObjectDisposedException)
+        catch (Exception e) when (e is IOException or ObjectDisposedException)
         {
             return SindriErrors.ToolkitProcessDied.With(e.Message);
         }
@@ -85,8 +85,13 @@ internal sealed class ToolkitMcpClient : IToolkitProcess
     internal static Result<string> Failure(string tool, McpException failure)
     {
         ArgumentNullException.ThrowIfNull(failure);
-        _ = tool;
-        return SindriErrors.ToolkitProcessDied.With(failure.Message);
+        return failure switch
+        {
+            McpProtocolException { ErrorCode: McpErrorCode.MethodNotFound } => SindriErrors.ToolkitToolUnknown.With(tool),
+            McpProtocolException { ErrorCode: McpErrorCode.InvalidParams } e when e.Message.Contains("unknown tool", StringComparison.OrdinalIgnoreCase) => SindriErrors.ToolkitToolUnknown.With(tool),   // the SDK server's answer to a tool it doesn't have
+            McpProtocolException e => SindriErrors.ToolkitToolFailed.With(e.Message),   // the server answered with its own error, whatever words it uses
+            _ => SindriErrors.ToolkitProcessDied.With(failure.Message),
+        };
     }
 
     public ValueTask DisposeAsync() => _client.DisposeAsync();
