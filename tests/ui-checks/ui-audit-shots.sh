@@ -21,11 +21,20 @@ shape() {
   d tree 2>/dev/null | jq -r '.root | .. | objects | select(has("children")) | "\(.type)|\(.name // "")"' 2>/dev/null \
     | sed -E 's/[0-9]+ ?(s|sec|m|min|h|d)( ago)?\b//g; s/just now//g; s/updated [^|]*//g' | sort | uniq -c | sha256sum
 }
-# Waits (1 s apart, 60 s at most) until two reads of shape in a row match, so a page still loading is not shot. Logs "<label> stable <N>s" or "<label> gave-up 60s" to settle.txt (gave-up also to missing.txt as "unsettled: <label>") and goes on. label is "<page> <width>".
+# Waits (1 s apart, 60 s at most) until two reads of the window's tree in a row agree, so a page still loading is not shot. A read is
+# the visible elements' type and name with counts per line; texts and bounds are left out and relative times ("23s ago", "7m", "just now")
+# are stripped from names, since those change every second and a page would never settle. One line per call goes to settle.txt
+# ("<label> stable <N>s" or "<label> gave-up 60s"); a give-up also goes to missing.txt as "unsettled: <label>", and the shot is taken anyway.
+settle_read() {
+  d tree --depth 16 2>/dev/null \
+    | jq -r '.. | objects | select(has("type") and (.visible != false)) | "\(.type) \(.name // "")"' 2>/dev/null \
+    | sed -E 's/[0-9]+ ?(s|sec|secs|m|min|mins|h|d)( ago)?\b//g; s/just now//g; s/updated [^ ]*( ago)?//g' \
+    | sort | uniq -c | sha256sum
+}
 settle() {
   local label="$1" prev="" cur i
   for i in $(seq 1 60); do
-    cur="$(shape)"
+    cur="$(settle_read)"
     if [ -n "$prev" ] && [ "$cur" = "$prev" ]; then echo "$label stable ${i}s" >>"$OUT/settle.txt"; return 0; fi
     prev="$cur"
     sleep 1
