@@ -29,9 +29,7 @@ internal sealed class SqliteBoardStore(IKeyValueStore values) : IBoardStore
             var facts = current is { } board && string.Equals(board.MainSha, sha, StringComparison.Ordinal)
                 ? board with { MergedPrs = [.. board.MergedPrs.Union(mergedPrs)] }
                 : new BoardFacts(sha, mergedPrs, at, (current?.Version ?? 0) + 1);
-            var prs = string.Join(',', facts.MergedPrs.Select(pr => pr.ToString(CultureInfo.InvariantCulture)));
-            var text = string.Create(CultureInfo.InvariantCulture, $"{facts.Version}|{facts.MainSha}|{facts.At.UtcTicks}|{prs}");
-            var wrote = await values.SetIf(KvKeys.BoardMain, stored.Value, text, cancellationToken).ConfigureAwait(false);
+            var wrote = await values.SetIf(KvKeys.BoardMain, stored.Value, Format(facts), cancellationToken).ConfigureAwait(false);
             if (wrote.IsError)
             {
                 return wrote.Error;
@@ -46,7 +44,9 @@ internal sealed class SqliteBoardStore(IKeyValueStore values) : IBoardStore
         return MetaErrors.BoardContended.With($"main's board row changed {MaxAttempts} times while recording {sha}");
     }
 
-    public ValueTask<Result<bool>> SeedMain(string sha, DateTimeOffset at, CancellationToken cancellationToken) => throw new NotSupportedException();
+    // One compare-and-set on an absent row: a move merge-run recorded first (even between the watch's poll and this write) is never overwritten.
+    public ValueTask<Result<bool>> SeedMain(string sha, DateTimeOffset at, CancellationToken cancellationToken) =>
+        values.SetIf(KvKeys.BoardMain, expected: null, Format(new BoardFacts(sha, [], at, 1)), cancellationToken);
 
     public async ValueTask<Result<BoardFacts?>> Read(CancellationToken cancellationToken)
     {
@@ -75,6 +75,12 @@ internal sealed class SqliteBoardStore(IKeyValueStore values) : IBoardStore
     {
         ArgumentNullException.ThrowIfNull(seen);
         return values.Set(KvKeys.BoardSeenPrefix + lane, string.Create(CultureInfo.InvariantCulture, $"{seen.BoardVersion},{seen.LaneMapVersion}"), cancellationToken);
+    }
+
+    private static string Format(BoardFacts facts)
+    {
+        var prs = string.Join(',', facts.MergedPrs.Select(pr => pr.ToString(CultureInfo.InvariantCulture)));
+        return string.Create(CultureInfo.InvariantCulture, $"{facts.Version}|{facts.MainSha}|{facts.At.UtcTicks}|{prs}");
     }
 
     // A value that doesn't parse reads as no move recorded: the next move replaces it.
