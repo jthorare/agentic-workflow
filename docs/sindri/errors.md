@@ -112,7 +112,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-RES-002` | Two databases, disks or connections of one owner share a name. | rename one |
 | `SND-RES-003` | A purge was refused: the owner is still active or has a run going. | archive the owner, or wait for the run to end |
 | `SND-RES-004` | A resource path leaves its owner's folder, or a symlink sits where a resource folder or file goes. | remove the symlink or the stray path, then run again |
-| `SND-RES-005` | A sandbox size is above the box's cap. | lower the `sandbox` memory or cpu in the declaration |
+| `SND-RES-005` | A sandbox size is above the box's cap. | lower the `sandbox` memory or wall in the declaration to the cap the message names |
 | `SND-RES-006` | A resource owner, name or size is malformed, or a path exists as the wrong type (a folder where a database goes). | fix the declaration, or move the stray path away |
 | `SND-RES-007` | A disk holds too many files and folders to measure (over 100,000). | delete files you don't need from the disk |
 | `SND-TK-001` | The toolkit is unbuilt, or its source changed since the last good build. | `sindri toolkit build <name>` |
@@ -185,3 +185,4 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-121` | A run can't start its own workflow, or the workflow that called it |
 | `SND-GRAPH-122` | An `http` node's request was refused before it was sent: host not on `workflow.http.hosts`, an address that is this machine, plain http, or a credential header |
 | `SND-GRAPH-123` | An `http` node's request got no acceptable answer: status outside `expect`, a redirect loop, an answer over 1 MB, or a network failure |
+| `SND-GRAPH-130` | No question waits at that node |

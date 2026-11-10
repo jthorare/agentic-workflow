@@ -53,6 +53,8 @@ public sealed class McpSurfaceTests
         typeof(AddTodoRequest).FullName!,
         typeof(ChangeTodoRequest).FullName!,
         typeof(MarkTodoRequest).FullName!,
+        // why: agent-first spec D2 (design.md, PR 9): any caller may answer a waiting ask_owner question, attributed `session:<id>`, so workflow_answer reaches the AnswerQuestion command
+        "Aw.Sindri.Features.AnswerQuestion.AnswerQuestionRequest",   // internal to Features, so named by its full name
         // why: todo spec D2 (rev 5.3, no exceptions): a pick, a hold pick, their Undo and the note import are request class too, and sindri_todo takes them as actions
         typeof(KeepTodoRequest).FullName!,
         typeof(KeepTodoUndoRequest).FullName!,

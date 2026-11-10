@@ -135,10 +135,14 @@ internal sealed class LedgerDatabase : IDisposable
     /// <summary>The first migration with 'workflow_seen' (agent-first PR 9); reads of an older file find nothing seen. The number is renumbered at the final main merge.</summary>
     internal const int WorkflowSeenVersion = 14;
 
-    /// <summary>The first migration with 'toolkit' and 'toolkit_call' (agent-first PR 16); reads of an older file find no toolkit.</summary>
-    internal const int ToolkitsVersion = 17;
+    /// <summary>The first migration with 'resource' (agent-first PR 14); reads of an older file find no rows.</summary>
+    internal const int ResourcesVersion = 15;
+
     /// <summary>The first migration with 'memory_fact.written_by' (#2460); reads of an older file find no writer.</summary>
     internal const int MemoryFactWrittenByVersion = 16;
+
+    /// <summary>The first migration with 'toolkit' and 'toolkit_call' (agent-first PR 16); reads of an older file find no toolkit.</summary>
+    internal const int ToolkitsVersion = 17;
 
     private static IReadOnlyList<Migration> LoadMigrations()
     {

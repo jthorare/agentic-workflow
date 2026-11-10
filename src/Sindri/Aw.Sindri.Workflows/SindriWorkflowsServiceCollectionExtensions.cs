@@ -56,12 +56,14 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IGraphCallPort, GraphWorkflowCaller>()   // 'run_workflow' starts the other workflow's active revision (agent-first PR 9)
             .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>(), provider.GetRequiredService<IForEachLimitSource>(),
                 [.. GraphBlockRegistry.FlowBlocks(provider.GetRequiredService<IGraphSeenStore>(), provider.GetRequiredService<ICreateItemPort>(), provider.GetRequiredService<IGraphCallPort>(), provider.GetRequiredService<IGraphHttpPort>()),
-                    new CallToolBlock(provider.GetService<IRunningToolkits>() ?? NoToolkits.Instance, provider.GetRequiredService<IConnectionToolPort>())]))   // 'call_tool' (PR 16b); with no toolkit runtime registered yet it reaches connections only
+                 .. GraphBlockRegistry.ParkingBlocks(provider.GetRequiredService<IQuestionPort>(), provider.GetRequiredService<TimeProvider>()),
+                 new CallToolBlock(provider.GetService<IRunningToolkits>() ?? NoToolkits.Instance, provider.GetRequiredService<IConnectionToolPort>())]))   // 'call_tool' (PR 16b); with no toolkit runtime registered yet it reaches connections only
             .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
             .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog
             .AddSingleton<IGraphRunLauncher>(static provider => provider.GetRequiredService<TemporalGraphRunLauncher>())
             .AddSingleton<IAgentNodeControl>(static provider => new TemporalAgentNodeControl(provider.GetRequiredService<TemporalFrontend>()))
             .AddSingleton<IGraphRunCanceller>(static provider => new TemporalGraphRunCanceller(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<IWorkflowRunStore>()))
+            .AddSingleton<IGraphRunAnswerer>(static provider => new TemporalGraphRunAnswerer(provider.GetRequiredService<TemporalFrontend>()))   // the 'Answer' update of an ask_owner node (PR 9)
             .AddSingleton<GraphRunStarter>()
             .AddSingleton<IGraphRunStarter>(static provider => provider.GetRequiredService<GraphRunStarter>())
             .AddSingleton<IGraphQueueAdvance>(static provider => provider.GetRequiredService<GraphRunStarter>())

@@ -7,6 +7,7 @@ using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Infrastructure.WorkflowDocs;
 using Aw.Sindri.Tests.Graph.Blocks;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Graph.Docs;
 
@@ -15,7 +16,11 @@ public sealed class WorkflowDocsTests
 {
     private static readonly string[] _concepts = ["spec", "references", "conditions", "concurrency", "runs"];
 
-    private static GraphBlockRegistry Registry() => GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}"));
+    private static GraphBlockRegistry Registry() => GraphBlockRegistry.Standard(
+        new BlockFakes.RecordingNotifyPort(),
+        new BlockFakes.ScriptedModelPort("{}"),
+        more: [.. GraphBlockRegistry.FlowBlocks(new FlowFakes.MemorySeenStore(), new FlowFakes.RecordingItemPort(), new FlowFakes.ScriptedCallPort(), new FlowFakes.ScriptedHttpPort()),
+            .. GraphBlockRegistry.ParkingBlocks(new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider())]);
 
     private static GraphValidator Validator() => new(new GraphValidationContext(
         Registry().Types,
