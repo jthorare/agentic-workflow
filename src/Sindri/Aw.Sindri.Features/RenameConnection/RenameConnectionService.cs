@@ -25,6 +25,42 @@ internal sealed class RenameConnectionService(IConnectionStore store, IConnectio
     public async ValueTask<Result<RenameConnectionResponse>> Handle(RenameConnectionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        var plan = await Plan(request, cancellationToken).ConfigureAwait(false);
+        if (plan.IsError)
+        {
+            return plan.Error;
+        }
+
+        var (from, to, found) = plan.Value;
+        var moved = Move(found, to);
+        if (moved.IsError)
+        {
+            return moved.Error;
+        }
+
+        var swapped = await Swap(found, to, moved.Value, cancellationToken).ConfigureAwait(false);
+        if (swapped.IsError)
+        {
+            return swapped.Error;
+        }
+
+        if (found.SecretPointer is { } old && moved.Value is not null)
+        {
+            _ = _secrets.Delete(old);   // why: the row already points at the new entry; a leftover old entry is only an orphan, so a failed delete does not undo the rename
+        }
+
+        if (found.Status == ConnectionStatus.NeedsSignIn)
+        {
+            await _events.SignedIn(from, cancellationToken).ConfigureAwait(false);   // why: the Needs-you row is keyed by name; the old one would point at nothing
+            await _events.NeedsSignIn(to, found.StatusReason ?? "sign in again", grant: null, cancellationToken).ConfigureAwait(false);
+        }
+
+        return new RenameConnectionResponse(to.ToString(), from.ToString(), SecretMoved: moved.Value is not null);
+    }
+
+    // The two names and the stored row, or the refusal: a bad name, the same label, an unknown connection, a new name that is taken.
+    private async ValueTask<Result<(ConnectionName From, ConnectionName To, Connection Found)>> Plan(RenameConnectionRequest request, CancellationToken cancellationToken)
+    {
         var from = ConnectionName.Parse(request.Name);
         if (from.IsError)
         {
@@ -59,40 +95,28 @@ internal sealed class RenameConnectionService(IConnectionStore store, IConnectio
             return ConnectionFailures.Safe(taken.Error);
         }
 
-        var moved = Move(found.Value, to.Value);
-        if (moved.IsError)
-        {
-            return moved.Error;
-        }
+        return (from.Value, to.Value, found.Value);
+    }
 
-        var row = found.Value with { Name = to.Value, SecretPointer = moved.Value, UpdatedAt = _events.Now };
-        var inserted = await _store.Insert(row, cancellationToken).ConfigureAwait(false);
+    // Inserts the row under the new name, then removes the old one; a failure undoes the new row and the new entry, so the old connection keeps working.
+    private async ValueTask<Result<Unit>> Swap(Connection found, ConnectionName to, SecretPointer? pointer, CancellationToken cancellationToken)
+    {
+        var inserted = await _store.Insert(found with { Name = to, SecretPointer = pointer, UpdatedAt = _events.Now }, cancellationToken).ConfigureAwait(false);
         if (inserted.IsError)
         {
-            Undo(moved.Value, found.Value);
+            Undo(pointer, found);
             return ConnectionFailures.Safe(inserted.Error);
         }
 
-        var removed = await _store.Remove(from.Value, cancellationToken).ConfigureAwait(false);
+        var removed = await _store.Remove(found.Name, cancellationToken).ConfigureAwait(false);
         if (removed.IsError)
         {
-            _ = await _store.Remove(to.Value, cancellationToken).ConfigureAwait(false);
-            Undo(moved.Value, found.Value);
+            _ = await _store.Remove(to, cancellationToken).ConfigureAwait(false);
+            Undo(pointer, found);
             return ConnectionFailures.Safe(removed.Error);
         }
 
-        if (found.Value.SecretPointer is { } old && moved.Value is not null)
-        {
-            _ = _secrets.Delete(old);   // why: the row already points at the new entry; a leftover old entry is only an orphan, so a failed delete does not undo the rename
-        }
-
-        if (found.Value.Status == ConnectionStatus.NeedsSignIn)
-        {
-            await _events.SignedIn(from.Value, cancellationToken).ConfigureAwait(false);   // why: the Needs-you row is keyed by name; the old one would point at nothing
-            await _events.NeedsSignIn(to.Value, found.Value.StatusReason ?? "sign in again", grant: null, cancellationToken).ConfigureAwait(false);
-        }
-
-        return new RenameConnectionResponse(to.Value.ToString(), from.Value.ToString(), SecretMoved: moved.Value is not null);
+        return Unit.Value;
     }
 
     // Stores the tokens under the new name and returns the new pointer, or null when the row has no secret yet.
