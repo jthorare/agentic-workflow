@@ -71,12 +71,15 @@ public sealed class HttpControlPlaneProbeContractTests : ControlPlaneProbeContra
         _servers.Add(server);
         _ = await _endpoints.Write(new ControlEndpoint(server.Url, 42, 3), ct);
 
-        Assert.Equal(SindriErrors.ApiTimeout.Code, (await Probe().Check(ct)).Error.Code);
+        var found = await Probe(answer: TimeSpan.FromSeconds(1)).Check(ct);   // the default answer cap is 15 s; a short one keeps the test quick
+
+        Assert.Equal(SindriErrors.ApiTimeout.Code, found.Error.Code);
+        Assert.EndsWith("didn't answer the ping within 1 s", found.Error.Message, StringComparison.Ordinal);
     }
 
-    private HttpControlPlaneProbe Probe()
+    private HttpControlPlaneProbe Probe(TimeSpan? answer = null)
     {
-        var probe = new HttpControlPlaneProbe(_endpoints, SliceHarness.Json);
+        var probe = new HttpControlPlaneProbe(_endpoints, SliceHarness.Json, answer);
         _probes.Add(probe);
         return probe;
     }
