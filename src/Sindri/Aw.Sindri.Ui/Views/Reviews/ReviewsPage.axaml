@@ -102,7 +102,7 @@
                         <ItemsControl ItemsSource="{Binding Rows}">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="rvm:ReviewRowViewModel">
-                              <Border x:Name="ReviewRowFrame" Classes="review-row" Focusable="True" BorderThickness="1" Padding="16,8"
+                              <Border x:Name="ReviewRowFrame" Classes="review-row clickable" Focusable="True" BorderThickness="1" Padding="16,8"
                                       AutomationProperties.Name="{Binding AutomationName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                                 <Grid ColumnDefinitions="*,140,70,120,160,140" AutomationProperties.AccessibilityView="Raw">
                                   <StackPanel>

@@ -6,7 +6,7 @@ using Temporalio.Testing;
 namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>
-/// The pinned time-skipping test server, once per test class, with Sindri's search attributes registered as 'sindri
+/// The pinned time-skipping test server, one per <see cref="GraphRig"/> (or per test that has no rig), with Sindri's search attributes registered as 'sindri
 /// serve' registers them on the dev server (engine spec rev 8 §5.1). Time moves only when a test calls
 /// <see cref="WorkflowEnvironment.DelayAsync(TimeSpan, CancellationToken?)"/>.
 /// </summary>
