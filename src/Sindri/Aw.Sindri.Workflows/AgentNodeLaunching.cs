@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Temporalio.Exceptions;
 
@@ -21,12 +22,12 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="runs">Where the run and its earlier nodes' outputs are read from.</param>
 /// <param name="workflows">Where the run's spec is read from.</param>
 /// <param name="approved">The live profile: the repos and the default agent.</param>
-/// <param name="launcher">The launcher, waiting out a full session cap (SND-LAUNCH-020).</param>
-/// <param name="recorder">Records 'launch.started' and 'launch.failed'.</param>
-/// <param name="diff">Reads the start commit.</param>
-/// <param name="ended">Answers for a launch whose session already ended, so a retry starts no second agent.</param>
-internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore workflows, IApprovedProfile approved, AgentLaunchWaiting launcher, AgentLaunchRecorder recorder, IRunDiff diff, AgentLaunchEnded ended)
+/// <param name="starting">Asks the launcher for the session and records the outcome.</param>
+/// <param name="provisioner">Makes the workflow's declared resources exist before the session starts; null on a build with none.</param>
+internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore workflows, IApprovedProfile approved, AgentLaunchStart starting, IResourceProvisioner? provisioner = null)
 {
+    private readonly GraphResourceEnsurer _resources = new(provisioner, workflows);
+
     /// <summary>Launches the node run's session.</summary>
     /// <param name="node">The node run.</param>
     /// <param name="cancellationToken">Cancels the launch.</param>
@@ -57,40 +58,19 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
             return Failed(input, placed.Error);
         }
 
+        // why: idempotent; the workflow's database and disk folders and its declared sandbox size reach the session's plan (#2532)
+        var ensured = await _resources.Ensure(row.WorkflowId, spec, cancellationToken).ConfigureAwait(false);
+        if (ensured.IsError)
+        {
+            return Failed(input, ensured.Error);
+        }
+
         var address = NodeRunAddress.Of(node.Run, node.Node, node.ItemIndex);
         var token = RunAgentWire.TokenOf(spec, node.Node, node.ItemIndex) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
         var brief = RunAgentBrief.Render(address, token, parsed.Value);
         var groups = RunAgentLaunches.GroupsFor(parsed.Value, static _ => []);   // why: a connection's host group comes with the connection presets (PR 10); until then only the repo's 'github' applies
-        var request = RunAgentLaunches.ReadingOnly(RunAgentLaunches.RequestFor(address, placed.Value.Target, parsed.Value, brief, groups), placed.Value.ReadOnlyPaths);
-        return new AgentNodeLaunched(await Start(request, cancellationToken).ConfigureAwait(false), input, parsed.Value.Timeout);
-    }
-
-    // Asks the launcher for the session and records the outcome; the worktree and start commit, or the failure.
-    private async Task<AgentLaunched> Start(LaunchRequest request, CancellationToken cancellationToken)
-    {
-        if (await ended.Find(request, cancellationToken).ConfigureAwait(false) is { } over)
-        {
-            return over;
-        }
-
-        var result = await launcher.Launch(request, cancellationToken).ConfigureAwait(false);
-        if (result is null)
-        {
-            return new AgentLaunched(Worktree: null, StartHead: null, Failure: null, Waiting: true);   // the cap is still reached: nothing is recorded, the workflow asks again
-        }
-
-        switch (result)
-        {
-            case StartedLaunch started:
-                await recorder.Started(request, started, cancellationToken).ConfigureAwait(false);
-                var head = await diff.Head(request.Worktree!, cancellationToken).ConfigureAwait(false);   // why: RequestFor always names the worktree
-                return new AgentLaunched(request.Worktree, head.IsError ? null : head.Value, Failure: null, Agent: request.Agent.Value, RunDirectory: started.RunDirectory);   // a worktree with no HEAD leaves the diff signal unmeasured
-            case FailedLaunch failed:
-                await recorder.Failed(request, failed, cancellationToken).ConfigureAwait(false);
-                return new AgentLaunched(Worktree: null, StartHead: null, AgentLaunchFailures.Of(failed));
-            default:
-                throw new InvalidOperationException($"the launcher answered {result.GetType().Name}");
-        }
+        var request = RunAgentLaunches.ReadingOnly(RunAgentLaunches.WithResources(RunAgentLaunches.RequestFor(address, placed.Value.Target, parsed.Value, brief, groups), ensured.Value), placed.Value.ReadOnlyPaths);
+        return new AgentNodeLaunched(await starting.Start(request, cancellationToken).ConfigureAwait(false), input, parsed.Value.Timeout);
     }
 
     // The repo checkout, the agent and the read-only checkouts from the live profile; the run's item, or one made from the run's id when it has none.

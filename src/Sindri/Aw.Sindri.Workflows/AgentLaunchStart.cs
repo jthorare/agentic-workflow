@@ -1,0 +1,43 @@
+using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Workflow.Engine.Runtime;
+
+namespace Aw.Sindri.Infrastructure.Workflows;
+
+/// <summary>Asks the launcher for a node's session and records the outcome (split from <see cref="AgentNodeLaunching"/>, #2532): the worktree and start commit, or the failure.</summary>
+/// <param name="launcher">Starts the session, waiting when the cap is reached.</param>
+/// <param name="recorder">Records 'launch.started' and 'launch.failed'.</param>
+/// <param name="diff">Reads the start commit.</param>
+/// <param name="ended">Answers for a launch whose session already ended, so a retry starts no second agent.</param>
+internal sealed class AgentLaunchStart(AgentLaunchWaiting launcher, AgentLaunchRecorder recorder, IRunDiff diff, AgentLaunchEnded ended)
+{
+    /// <summary>Launches the session.</summary>
+    /// <param name="request">The launch.</param>
+    /// <param name="cancellationToken">Cancels the launch.</param>
+    /// <returns>The worktree and start commit, or the failure, or that the session cap made it wait.</returns>
+    public async Task<AgentLaunched> Start(LaunchRequest request, CancellationToken cancellationToken)
+    {
+        if (await ended.Find(request, cancellationToken).ConfigureAwait(false) is { } over)
+        {
+            return over;
+        }
+
+        var result = await launcher.Launch(request, cancellationToken).ConfigureAwait(false);
+        if (result is null)
+        {
+            return new AgentLaunched(Worktree: null, StartHead: null, Failure: null, Waiting: true);   // the cap is still reached: nothing is recorded, the workflow asks again
+        }
+
+        switch (result)
+        {
+            case StartedLaunch started:
+                await recorder.Started(request, started, cancellationToken).ConfigureAwait(false);
+                var head = await diff.Head(request.Worktree!, cancellationToken).ConfigureAwait(false);   // why: RequestFor always names the worktree
+                return new AgentLaunched(request.Worktree, head.IsError ? null : head.Value, Failure: null, Agent: request.Agent.Value, RunDirectory: started.RunDirectory);   // a worktree with no HEAD leaves the diff signal unmeasured
+            case FailedLaunch failed:
+                await recorder.Failed(request, failed, cancellationToken).ConfigureAwait(false);
+                return new AgentLaunched(Worktree: null, StartHead: null, AgentLaunchFailures.Of(failed));
+            default:
+                throw new InvalidOperationException($"the launcher answered {result.GetType().Name}");
+        }
+    }
+}

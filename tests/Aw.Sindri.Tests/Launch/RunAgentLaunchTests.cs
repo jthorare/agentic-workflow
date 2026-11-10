@@ -77,6 +77,18 @@ public sealed class RunAgentLaunchTests
     }
 
     [Fact]
+    public void RequestFor_puts_the_provisioned_mounts_and_limits_on_the_task()
+    {
+        var resources = new Aw.Sindri.Core.Resources.ProvisionedResources(new Dictionary<string, string>(StringComparer.Ordinal), [new Aw.Sindri.Core.Sandbox.Plan.ResourceMount("resources", "/home/s/resources/workflow/web")], new Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride(Memory: "2GiB"));
+
+        var request = RunAgentLaunches.WithResources(RunAgentLaunches.RequestFor(_address, _target, Config(), "b", []), resources);
+
+        Assert.Equal("/home/s/resources/workflow/web", Assert.Single(request.Task!.ResourceMounts!).HostPath);
+        Assert.Equal("2GiB", request.Task.ResourceLimits!.Memory);
+        Assert.Null(RunAgentLaunches.RequestFor(_address, _target, Config(), "b", []).Task!.ResourceMounts);
+    }
+
+    [Fact]
     public void A_nodes_agent_overrides_the_target_and_an_attended_launch_keeps_a_null_node_run()
     {
         var codex = RunAgentLaunches.RequestFor(_address, _target, Config("codex"), "b", []);
