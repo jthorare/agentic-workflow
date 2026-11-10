@@ -94,6 +94,8 @@ _lock_try_create() {
 # none and it won the mkdir); it removes one dead pid file with `rm` (only the waiter whose `rm` succeeds enters) and the
 # other dead ones too. A waiter with no other file leaves: it can't tell that from a winner that has not announced yet.
 # Deciding from the first entry in glob order missed a live holder's file behind a dead one (#2616, as #2613).
+# Every exit removes the waiter's own pid file and then tries `rmdir` on the guard: the last waiter out removes it, and
+# `rmdir` of a guard that still holds a file fails harmlessly. So an empty guard means nobody is announced in it.
 # An empty guard is a holder between its mkdir and its pid file, and is cleared only once over two minutes old
 # (`find -mmin +1`; a reclaim takes milliseconds). A waiter that finds the guard empty checks its age BEFORE it writes its
 # pid file: the write would touch the guard and keep it young forever. Every cleanup rmdir goes through
@@ -126,16 +128,15 @@ _lock_reclaim() {
       ""|*[!0-9]*) rm -f "$f" ;;
       "$$") ;;
       *)
-        if kill -0 "$p" 2>/dev/null; then rm -f "$guard/$$"; return 1; fi
+        if kill -0 "$p" 2>/dev/null; then rm -f "$guard/$$"; rmdir "$guard" 2>/dev/null || true; return 1; fi
         if [ -z "$dead" ]; then dead="$f"; else rm -f "$f"; fi
         ;;
     esac
   done
   if [ -n "$dead" ]; then
-    rm "$dead" 2>/dev/null || { rm -f "$guard/$$"; return 1; }
+    rm "$dead" 2>/dev/null || { rm -f "$guard/$$"; rmdir "$guard" 2>/dev/null || true; return 1; }
   elif [ "$winner" = 0 ]; then
-    rm -f "$guard/$$"
-    _lock_guard_rmdir_if_old "$guard"
+    rm -f "$guard/$$"; rmdir "$guard" 2>/dev/null || true
     return 1
   fi
   if _lock_is_stale; then rm -f "$LOCK_FILE"; fi
