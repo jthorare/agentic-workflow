@@ -27,12 +27,22 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
     public async ValueTask<Result<Unit>> Start(Toolkit toolkit, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(toolkit);
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (!await Enter(cancellationToken).ConfigureAwait(false))
+        {
+            return Stopped(toolkit.Name);
+        }
+
         try
         {
-            if (_running.ContainsKey(toolkit.Name))
+            if (_running.TryGetValue(toolkit.Name, out var existing))
             {
-                return Unit.Value;   // already up: a second start changes nothing
+                if (!existing.Watcher.IsCompleted)
+                {
+                    return Unit.Value;   // already up (or restarting): a second start changes nothing
+                }
+
+                _ = _running.TryRemove(toolkit.Name, out _);   // its watcher gave up: this start replaces it
+                await End(existing).ConfigureAwait(false);
             }
 
             var launched = await launcher.Launch(toolkit, cancellationToken).ConfigureAwait(false);
@@ -56,7 +66,11 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
     {
         ArgumentNullException.ThrowIfNull(name);
         Running? running;
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (!await Enter(cancellationToken).ConfigureAwait(false))
+        {
+            return Unit.Value;   // shut down: nothing runs
+        }
+
         try
         {
             if (!_running.TryRemove(name, out running))
@@ -71,6 +85,27 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
 
         await End(running).ConfigureAwait(false);
         return Unit.Value;
+    }
+
+    private static Error Stopped(string name) => SindriErrors.ToolkitNotBuilt.With($"Toolkit '{name}' can't start: Sindri is shutting down");
+
+    /// <summary>Takes the gate; false when the supervisor is already shut down.</summary>
+    private async ValueTask<bool> Enter(CancellationToken cancellationToken)
+    {
+        if (Volatile.Read(ref _disposed) != 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (ObjectDisposedException)
+        {
+            return false;   // shut down while this call waited
+        }
     }
 
     /// <summary>The toolkits that have a live process right now, as 'running'; one waiting out a restart backoff or given up on has none.</summary>
@@ -163,7 +198,7 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
 
                 if (crashes.Count >= MaxCrashes)
                 {
-                    _ = await store.Save(toolkit with { State = ToolkitState.Failed }, CancellationToken.None).ConfigureAwait(false);
+                    await GiveUp(toolkit.Name, running).ConfigureAwait(false);
                     return;
                 }
 
@@ -175,6 +210,28 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
             // stopped: not a crash
+        }
+    }
+
+    /// <summary>Drops this watcher's entry, so a later start launches a new process, then marks the toolkit 'failed' on the row as it is now (a rebuild since the start keeps its hash and manifest).</summary>
+    private async Task GiveUp(string name, Running running)
+    {
+        if (await Enter(CancellationToken.None).ConfigureAwait(false))
+        {
+            try
+            {
+                _ = _running.TryRemove(new KeyValuePair<string, Running>(name, running));
+            }
+            finally
+            {
+                _ = _gate.Release();
+            }
+        }
+
+        var fresh = await store.Find(name, CancellationToken.None).ConfigureAwait(false);
+        if (fresh.IsSuccess && fresh.Value is { } current)
+        {
+            _ = await store.Save(current with { State = ToolkitState.Failed }, CancellationToken.None).ConfigureAwait(false);
         }
     }
 
