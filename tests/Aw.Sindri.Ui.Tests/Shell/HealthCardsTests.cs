@@ -47,14 +47,14 @@ public sealed class HealthCardsTests
     }
 
     [Fact]
-    public async Task Stalled_views_say_so_and_offer_the_rebuild_control()
+    public async Task Stalled_views_say_so_and_leave_the_rebuild_button_to_the_views_banner()
     {
         var system = new SystemTestHarness("stalled");
 
         await system.Show();
 
         Assert.Equal(Labels.ViewsStalled, system.Vm.ViewsWord);
-        Assert.Equal("RebuildViews", system.Vm.ViewsFix!.Action);
+        Assert.Null(system.Vm.ViewsFix);   // the banner above the page already carries Rebuild views: one button on screen (#2554)
     }
 
     [Fact]

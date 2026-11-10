@@ -43,4 +43,17 @@ public sealed class SystemHonestyTests
         Assert.True(system.Vm.ToneWarn);
         Assert.Equal(StateGlyph.Warning, system.Vm.HeadlineGlyph);
     }
+
+    // #2554: a stalled projector was said four times on the System page. The page's own banner says it; the "Needs a look" list keeps what the banner doesn't.
+    [Fact]
+    public async Task The_needs_a_look_list_leaves_out_the_stall_the_banner_already_says()
+    {
+        var system = new SystemTestHarness("stalled");
+        await system.Show(A.Status() with
+        {
+            Health = new HealthView("stalled", [new HealthProblemView("SND-VIEW-001", "Views are stalled at 337: run `sindri views rebuild`"), new HealthProblemView("SND-SVC-404", "Service broken failed 1 min ago")]),
+        });
+
+        Assert.Equal(["SND-SVC-404"], system.Vm.ProblemLines.Select(l => l.Code), StringComparer.Ordinal);
+    }
 }
