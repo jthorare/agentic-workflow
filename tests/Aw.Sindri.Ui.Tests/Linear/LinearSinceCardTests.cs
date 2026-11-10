@@ -96,6 +96,17 @@ public sealed class LinearSinceCardTests
     }
 
     [Fact]
+    public async Task A_move_away_and_back_shows_the_state_alone_and_says_how_often_it_moved()
+    {
+        var work = await ShownWith(Since(
+            ("state", "ZZZ-3", "Away and back", "2025-12-31T20:00:00Z", "Todo", "In Progress"),
+            ("state", "ZZZ-3", "Away and back", "2025-12-31T23:00:00Z", "In Progress", "Todo")));
+
+        var row = Assert.Single(work.StripRows);
+        Assert.Equal(("Todo", "ZZZ-3 · moved twice"), (row.StateChip, row.Detail));
+    }
+
+    [Fact]
     public async Task An_issue_the_list_does_not_hold_has_no_priority_project_or_initials_chip_and_no_blank_one()
     {
         var work = await ShownWith(Since(("state", "ZZZ-1", "Not in the list", "2025-12-31T23:00:00Z", "Todo", "Done")));

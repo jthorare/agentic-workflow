@@ -219,6 +219,11 @@ internal static partial class Labels
     /// <returns>"ENG-12" or "ENG-12 · Sam Lee mentioned you".</returns>
     internal static string LinearSinceDetail(string key, IEnumerable<string> changes) => string.Join(" · ", new[] { key }.Concat(changes));
 
+    /// <summary>A since-you-looked row's note when its moves end where they started.</summary>
+    /// <param name="moves">How many moves; at least two.</param>
+    /// <returns>"moved twice" or "moved 3 times".</returns>
+    internal static string LinearMovedTimes(int moves) => moves == 2 ? "moved twice" : string.Create(CultureInfo.InvariantCulture, $"moved {moves} times");
+
     /// <summary>A group's button that shows its other rows; no count, the heading already says it.</summary>
     internal const string LinearShowAll = "Show all";
 

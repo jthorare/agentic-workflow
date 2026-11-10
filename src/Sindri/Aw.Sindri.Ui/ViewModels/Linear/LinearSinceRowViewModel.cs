@@ -27,12 +27,15 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
             : changes.Any(static c => string.Equals(c.Kind, "state", StringComparison.Ordinal)) ? LinearSinceGroup.Moved
             : LinearSinceGroup.Other;
         var said = newestFirst.Select(Labels.LinearSinceChange).ToList();
-        Detail = Labels.LinearSinceDetail(Key, newestFirst.Where(c => !IsShownElsewhere(c)).Select(Labels.LinearSinceChange));
+        // Two or more moves read as one span, first From to last To ("Todo → In Review"), so no move is lost. A move away and back
+        // ("Todo → In Progress → Todo") would span "Todo → Todo": the chip is then the state alone and the second line says how often it moved.
+        var moves = newestFirst.Where(static c => string.Equals(c.Kind, "state", StringComparison.Ordinal)).ToList();
+        var roundTrip = moves.Count > 1 && moves[0].To is { Length: > 0 } now0 && string.Equals(moves[^1].From, now0, StringComparison.Ordinal);
+        var notShown = newestFirst.Where(c => !IsShownElsewhere(c)).Select(Labels.LinearSinceChange);
+        Detail = Labels.LinearSinceDetail(Key, roundTrip ? notShown.Prepend(Labels.LinearMovedTimes(moves.Count)) : notShown);
         TimeText = Labels.AgoWords(now - At);
         Name = Key + ", " + Title + ", " + string.Join(", ", said) + ", " + TimeText;
-        // Two or more moves read as one span, first From to last To ("Todo → In Review"), so no move is lost.
-        var moves = newestFirst.Where(static c => string.Equals(c.Kind, "state", StringComparison.Ordinal)).ToList();
-        _movedChip = moves.Count == 0 ? null : Labels.LinearStateChip(moves[^1].From, moves[0].To);
+        _movedChip = moves.Count == 0 ? null : roundTrip ? moves[0].To : Labels.LinearStateChip(moves[^1].From, moves[0].To);
         Apply(issue: null);
     }
 
@@ -57,7 +60,7 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
     /// <summary>The row's accessible name.</summary>
     public string Name { get; }
 
-    /// <summary>"Todo → In Progress" (several moves: the first From to the last To), or the issue's state from the list when the row has no state change; empty when neither is known.</summary>
+    /// <summary>"Todo → In Progress" (several moves: the first From to the last To; "Todo" for a move away and back), or the issue's state from the list when the row has no state change; empty when neither is known.</summary>
     public string StateChip { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>"Urgent"; empty until the list holds the issue, and for no priority.</summary>
