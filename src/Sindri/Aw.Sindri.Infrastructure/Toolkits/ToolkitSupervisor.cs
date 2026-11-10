@@ -97,8 +97,8 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
             : ValueTask.FromResult<Result<string>>(SindriErrors.ToolkitProcessDied.With($"Toolkit '{name}' is restarting after a crash (fix: try again in a few seconds)"));
     }
 
-    /// <remarks>A container disposed synchronously: waits for the same shutdown <see cref="DisposeAsync"/> runs.</remarks>
-    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
+    /// <remarks>A container disposed synchronously: starts the same shutdown <see cref="DisposeAsync"/> runs and leaves it to finish (blocking on it is banned).</remarks>
+    public void Dispose() => _ = DisposeAsync().AsTask();
 
     public async ValueTask DisposeAsync()
     {
