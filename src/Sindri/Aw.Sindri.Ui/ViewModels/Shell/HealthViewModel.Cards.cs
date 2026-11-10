@@ -20,7 +20,8 @@ internal sealed partial class HealthViewModel
             _ => Labels.ViewsUpToDate,
         };
         ViewsRows = views is null ? [] : ViewsCells(views);
-        ViewsFix = views is { } v && (v.Stalled || v.Rebuilding) ? Catalog.Rebuild : null;
+        // A stalled view has Rebuild views in the banner above the page: one button on screen. While rebuilding the card shows the control (its progress).
+        ViewsFix = views is { Rebuilding: true, Stalled: false } ? Catalog.Rebuild : null;
     }
 
     /// <summary>Has the Code index and Context index cards read on connect and after every event, with the other views.</summary>

@@ -9,7 +9,8 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 internal sealed class HealthPill : ObservableObject
 {
     // The views' own problems (stalled, replaying): the shell's banner says them once, and the pill's word is the state.
-    private static readonly HashSet<string> _viewsCodes = new(["SND-VIEW-001", "SND-API-010"], StringComparer.Ordinal);
+    // The problems the views banner and the Views card say; the pill and the Needs a look list leave them out.
+    internal static readonly HashSet<string> ViewsCodes = new(["SND-VIEW-001", "SND-API-010"], StringComparer.Ordinal);
 
     /// <summary>The state's glyph (§11.3): ✓ running, ⌛ stale, ✕ not running or unreadable; none while connecting.</summary>
     public StateGlyph Glyph
@@ -95,7 +96,7 @@ internal sealed class HealthPill : ObservableObject
             ShellState.Connecting => (StateGlyph.None, Labels.Connecting, string.Empty),
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, message: null),
         };
-        Problems = state == ShellState.Normal && health is not null ? string.Join(" · ", health.Problems.Where(p => !_viewsCodes.Contains(p.Code)).Select(p => p.Clause ?? p.Text)) : string.Empty;
+        Problems = state == ShellState.Normal && health is not null ? string.Join(" · ", health.Problems.Where(p => !ViewsCodes.Contains(p.Code)).Select(p => p.Clause ?? p.Text)) : string.Empty;
         Text = string.Join(" · ", ((string[])[Word, Age, Problems]).Where(t => t.Length > 0));
         IsHealthy = state == ShellState.Normal && (health is null || string.Equals(health.Word, "healthy", StringComparison.Ordinal));
         var stale = state == ShellState.Stale;

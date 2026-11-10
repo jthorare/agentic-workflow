@@ -146,7 +146,7 @@ internal sealed partial class HealthViewModel
         Sentence = SentenceFor(new SentenceInputs(State, _health is not null, Pill.IsHealthy, Pill.Problems, _health?.Sentence, look));
         (ToneWarn, ToneError) = ToneFor(State, _health?.Word, look.Length > 0);
         OnChanged(nameof(HeadlineGlyph));
-        ProblemLines = [.. (_health?.Problems ?? []).Select(p => HealthProblemLine.From(p, _health?.Word))];
+        ProblemLines = [.. (_health?.Problems ?? []).Where(p => !HealthPill.ViewsCodes.Contains(p.Code)).Select(p => HealthProblemLine.From(p, _health?.Word))];
         OnChanged(nameof(HasProblemLines));
         ShowAgentsCard();
         ShowViewsCard();
