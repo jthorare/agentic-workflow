@@ -21,7 +21,7 @@ public sealed class ToolkitRecoveryTests
         var changed = await new ToolkitRecovery(store).Run(TestContext.Current.CancellationToken);
 
         Assert.Equal(2, changed.Value);
-        Assert.Equal<ToolkitState>(
+        Assert.Equal(
             [ToolkitState.Built, ToolkitState.Built, ToolkitState.Built, ToolkitState.Failed, ToolkitState.Off],
             store.Items.OrderBy(static p => p.Key, StringComparer.Ordinal).Select(static p => p.Value.State));
         Assert.Equal("h", store.Items["a"].SourceHash);
