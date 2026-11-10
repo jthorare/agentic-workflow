@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Ledger;
@@ -24,7 +25,6 @@ internal sealed class AgentLaunchEnded(ILaunchViews views, IAgentSessions sessio
     /// <returns>The first start's answer, or null when the launch never started or its session still runs.</returns>
     public async Task<AgentLaunched?> Find(LaunchRequest request, CancellationToken cancellationToken)
     {
-        _ = ledger;   // stub: the fix reads the launch's start from the ledger
         var row = await views.Get(request.Launch, cancellationToken).ConfigureAwait(false);
         if (row.IsError)
         {
@@ -33,7 +33,8 @@ internal sealed class AgentLaunchEnded(ILaunchViews views, IAgentSessions sessio
 
         if (row.Value is not { State: LaunchState.Started })
         {
-            return null;
+            // The projector may not have written 'launch.started' into the view yet (#2482): the ledger is the source of truth, so ask it.
+            return await EndedInLedger(request, cancellationToken).ConfigureAwait(false) ? Answer(request) : null;
         }
 
         var state = await sessions.Watch(request.Launch, cancellationToken).ConfigureAwait(false);
@@ -42,8 +43,29 @@ internal sealed class AgentLaunchEnded(ILaunchViews views, IAgentSessions sessio
             throw new ApplicationFailureException($"{state.Error.Code}: {state.Error.Message}");
         }
 
-        return state.Value.IsLive
-            ? null
-            : new AgentLaunched(request.Worktree, StartHead: null, Failure: null, Agent: request.Agent.Value, RunDirectory: StepEnvironment.RunDirectoryOf(request, home.Path));
+        return state.Value.IsLive ? null : Answer(request);
+    }
+
+    private AgentLaunched Answer(LaunchRequest request) =>
+        new(request.Worktree, StartHead: null, Failure: null, Agent: request.Agent.Value, RunDirectory: StepEnvironment.RunDirectoryOf(request, home.Path));
+
+    /// <summary>True when the ledger holds the launch's 'launch.started' (not a 'launch.failed' under the same key) and its 'session.ended'. Two key lookups, no scan.</summary>
+    private async Task<bool> EndedInLedger(LaunchRequest request, CancellationToken cancellationToken)
+    {
+        var started = await ledger.ByKey("launch.outcome:" + request.Launch.Value, cancellationToken).ConfigureAwait(false);
+        if (started.IsError)
+        {
+            throw new ApplicationFailureException($"{started.Error.Code}: {started.Error.Message}");
+        }
+
+        if (started.Value is not { } first || first.Envelope.Type != EventTypes.LaunchStarted)
+        {
+            return false;
+        }
+
+        var ended = await ledger.ByKey($"{EventTypes.SessionEnded}:{request.Launch.Value}", cancellationToken).ConfigureAwait(false);
+        return ended.IsError
+            ? throw new ApplicationFailureException($"{ended.Error.Code}: {ended.Error.Message}")
+            : ended.Value is not null;
     }
 }

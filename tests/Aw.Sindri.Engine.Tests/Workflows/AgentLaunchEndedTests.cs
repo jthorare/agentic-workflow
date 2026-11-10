@@ -4,8 +4,8 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
-using Aw.Sindri.Infrastructure.Workflow;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Infrastructure.Workflow;
 using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
@@ -90,7 +90,7 @@ public sealed class AgentLaunchEndedTests
     private static LaunchStarted Started() =>
         new(_launch, A.FirstItemId, LaunchMode.Open, AgentId.From("claude-code"), SessionId: null, "sindri", new LaunchViewer("warp", "Warp", ViewerOutcomeKind.Unconfirmed, Code: null, Detail: null), ["tmux"], CatalogSource.Builtin, "sha256:abc");
 
-    private async Task Append<T>(Aw.Sindri.Core.Lease.LeaseGrant grant, string type, T payload, string key) =>
+    private async Task Append<T>(Core.Lease.LeaseGrant grant, string type, T payload, string key) =>
         Assert.True((await _slice.Store.Append(_slice.Events.Entry(type, payload, key, A.FirstItemId.Value), grant, Token)).IsSuccess);
 
     private static AgentSessionEnd? AgentSessionEndOf(FakeAgentSessions sessions) =>
