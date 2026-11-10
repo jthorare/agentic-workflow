@@ -5355,3 +5355,33 @@ override Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange.GetHashCode() -> int
 override Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange.ToString() -> string!
 static Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange.operator !=(Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange? left, Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange? right) -> bool
 static Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange.operator ==(Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange? left, Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange? right) -> bool
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.<Clone>$() -> Aw.Sindri.Features.RenameConnection.RenameConnectionRequest!
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Deconstruct(out string! Name, out string! Label) -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Equals(Aw.Sindri.Features.RenameConnection.RenameConnectionRequest? other) -> bool
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Name.get -> string!
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Name.init -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Label.get -> string!
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Label.init -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.RenameConnectionRequest(string! Name, string! Label) -> void
+override Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.GetHashCode() -> int
+override Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.ToString() -> string!
+static Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.operator !=(Aw.Sindri.Features.RenameConnection.RenameConnectionRequest? left, Aw.Sindri.Features.RenameConnection.RenameConnectionRequest? right) -> bool
+static Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.operator ==(Aw.Sindri.Features.RenameConnection.RenameConnectionRequest? left, Aw.Sindri.Features.RenameConnection.RenameConnectionRequest? right) -> bool
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.<Clone>$() -> Aw.Sindri.Features.RenameConnection.RenameConnectionResponse!
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.Deconstruct(out string! Name, out string! PreviousName, out bool SecretMoved) -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.Equals(Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? other) -> bool
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.Name.get -> string!
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.Name.init -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.PreviousName.get -> string!
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.PreviousName.init -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.SecretMoved.get -> bool
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.SecretMoved.init -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.RenameConnectionResponse(string! Name, string! PreviousName, bool SecretMoved) -> void
+override Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.GetHashCode() -> int
+override Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.ToString() -> string!
+static Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.operator !=(Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? left, Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? right) -> bool
+static Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.operator ==(Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? left, Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? right) -> bool

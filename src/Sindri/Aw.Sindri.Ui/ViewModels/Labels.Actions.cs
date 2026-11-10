@@ -22,6 +22,7 @@ internal static partial class Labels
         ["AddRepo"] = "Add repo",
         ["AddConnection"] = "Add connection",
         ["RemoveConnection"] = "Remove connection",
+        ["RenameConnection"] = "Rename connection",
         ["TestConnection"] = "Test connection",
         ["SignInConnection"] = "Sign in to connection",
         ["CreateMemory"] = "Create memory",
