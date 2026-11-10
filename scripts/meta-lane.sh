@@ -196,7 +196,7 @@ while IFS= read -r -d '' a; do args+=("$a"); done < "$argv_file"
 unlink "$argv_file"
 [ "${#args[@]}" -gt 0 ] || fail 1 "meta-lane: agent '$agent' has an empty argv"
 # Write only when the id changes: the file's mtime is the session's start, which lane-recycle checks digests against (#2691).
-if [ "$write_id" = 1 ] && [ "$(tr -d '[:space:]' < "$ids/$lane" 2> /dev/null)" != "$id" ]; then printf '%s\n' "$id" > "$ids/$lane.tmp" && mv "$ids/$lane.tmp" "$ids/$lane"; fi
+if [ "$write_id" = 1 ] && [ "$(tr -d '[:space:]' 2> /dev/null < "$ids/$lane")" != "$id" ]; then printf '%s\n' "$id" > "$ids/$lane.tmp" && mv "$ids/$lane.tmp" "$ids/$lane"; fi
 if [ "$id_mode" = reported ] && [ "$mode" = resume ]; then : > "$ids/$lane.settled"; fi
 if [ "$lane" = "$meta_lane" ] && [ -x "$meta_bin" ] && [ -n "$id" ]; then
   AW_META_TEAM="$team" AW_LOG_LEVEL=none "$meta_bin" role-set --session "$id" --name "$team-$lane" > /dev/null 2>&1 \
