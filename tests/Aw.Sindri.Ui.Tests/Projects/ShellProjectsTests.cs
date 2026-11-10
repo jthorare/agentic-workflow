@@ -57,4 +57,15 @@ public sealed class ShellProjectsTests
         Assert.Equal(0, _server.ProjectsCalls);
         Assert.True(shell.Projects.IsLoading);
     }, Token);
+
+    [Fact]
+    public Task Connect_Linear_opens_the_Connections_page() => UiThread.Run(async () =>
+    {
+        var shell = await Shell();
+        shell.GoTo(PageId.Projects);
+
+        shell.Projects.RequestConnect();
+
+        Assert.Equal(PageId.Connections, shell.CurrentPage);
+    }, Token);
 }

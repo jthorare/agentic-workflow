@@ -75,6 +75,33 @@ public sealed class ReviewMergeTests
         Assert.True(response.Ready);
     }
 
+    // #2651: a STATUS: or ACTION: tag in front of a protocol line is read past by the merge gate too, not only by the classifier.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_tagged_OK_and_a_tagged_ready_at_the_head_are_ready()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"STATUS: OK #190 at {Head}");
+        await Inbox("t1-api", "ACTION: " + ReadyBody());
+        Script();
+
+        var response = await Check();
+
+        Assert.Empty(Failed(response));
+        Assert.True(response.Ready);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_tagged_HOLD_voids_the_OK()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Head}");
+        await Inbox("t1-ideas", "STATUS: HOLD #190 until the owner answers");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        Assert.False((await Check()).Ready);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task An_OK_at_an_older_head_is_not_ready()
     {

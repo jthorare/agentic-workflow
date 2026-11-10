@@ -7,7 +7,7 @@ using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Features.Inbox;
 
-/// <summary>Lists the inbound messages still owed a reply, or with all, every message with its state (open, answered, dismissed or deferred).</summary>
+/// <summary>Lists the inbound messages still owed a reply, or with all, every message with its state (open, answered, dismissed or deferred), or with status, the status lines not read yet.</summary>
 /// <param name="config">The team config, for the meta lane.</param>
 /// <param name="messages">The messages.</param>
 /// <param name="reader">The open obligations.</param>
@@ -32,21 +32,34 @@ internal sealed class ListInboxService(IMetaConfig config, IMessageStore message
         }
 
         var owed = open.Value.Where(o => o.Kind == ObligationKind.Reply).Select(o => o.Key).ToHashSet(StringComparer.Ordinal);
+        if (request.Status)
+        {
+            return await Status(inbound.Value, owed, now, cancellationToken).ConfigureAwait(false);
+        }
+
         var items = inbound.Value
             .Select(m => Item(m, owed.Contains(m.Id.Value), now))
             .Where(i => request.All || string.Equals(i.State, InboxState.Open, StringComparison.Ordinal))
             .ToList();
-        if (!request.Once)
-        {
-            return new ListInboxResponse(items);
-        }
+        return request.Once ? await Once(items, inbound.Value, now, cancellationToken).ConfigureAwait(false) : new ListInboxResponse(items);
+    }
 
-        // A hook's view: open messages it has not shown, and a deferred one whose deferral ran out since it was shown.
+    // A hook's view: open messages it has not shown, and a deferred one whose deferral ran out since it was shown.
+    private async ValueTask<Result<ListInboxResponse>> Once(List<InboxItem> items, IReadOnlyList<InboxMessage> inbound, DateTimeOffset now, CancellationToken cancellationToken)
+    {
         var unseen = items
-            .Where(i => string.Equals(i.State, InboxState.Open, StringComparison.Ordinal) && !Shown(inbound.Value.First(m => m.Id == i.Id), now))
+            .Where(i => string.Equals(i.State, InboxState.Open, StringComparison.Ordinal) && !Shown(inbound.First(m => m.Id == i.Id), now))
             .ToList();
         var marked = unseen.Count == 0 ? Results.Ok() : await messages.MarkShown([.. unseen.Select(i => i.Id)], now, cancellationToken).ConfigureAwait(false);
         return marked.IsError ? marked.Error : new ListInboxResponse(unseen);
+    }
+
+    // The status lines not read yet, marked read: reading them is all a status line ever needs (#2651).
+    private async ValueTask<Result<ListInboxResponse>> Status(IReadOnlyList<InboxMessage> inbound, HashSet<string> owed, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var unread = inbound.Where(static m => m.ShownAt is null && NoticeRule.IsStatusTagged(m.Body)).ToList();
+        var marked = unread.Count == 0 ? Results.Ok() : await messages.MarkShown([.. unread.Select(m => m.Id)], now, cancellationToken).ConfigureAwait(false);
+        return marked.IsError ? marked.Error : new ListInboxResponse([.. unread.Select(m => Item(m, owed.Contains(m.Id.Value), now))]);
     }
 
     private static bool Shown(InboxMessage message, DateTimeOffset now) =>

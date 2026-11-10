@@ -28,7 +28,7 @@
           </Border>
         </StackPanel>
         <Border x:Name="ProjectState" AutomationProperties.Name="{Binding StateText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.AccessibilityView="Raw">
+          <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
             <TextBlock Classes="body" Text="{Binding StateText}" />
             <TextBlock Classes="body" Foreground="{DynamicResource Brush.Ink}" Text="{Binding HealthWord, StringFormat='· {0}'}" IsVisible="{Binding HealthWord, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
           </StackPanel>
@@ -123,7 +123,7 @@
         </StackPanel>
       </Border>
 
-      <StackPanel x:Name="ProjectStateForm" Spacing="6" IsVisible="{Binding CanSetState}">
+      <StackPanel x:Name="ProjectStateForm" Spacing="8" IsVisible="{Binding CanSetState}">
         <TextBlock Classes="eyebrow" Text="{Binding StateLabel}" AutomationProperties.AccessibilityView="Raw" />
         <ComboBox x:Name="ProjectStatePick" ItemsSource="{Binding StateChoices}" SelectedItem="{Binding SelectedState, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding StateLabel}">
           <ComboBox.ItemTemplate>
@@ -136,7 +136,7 @@
         </WrapPanel>
       </StackPanel>
 
-      <StackPanel x:Name="ProjectEditForm" Spacing="6" IsVisible="{Binding IsEditing}">
+      <StackPanel x:Name="ProjectEditForm" Spacing="8" IsVisible="{Binding IsEditing}">
         <StackPanel Spacing="2" IsVisible="{Binding CanEditName}">
           <TextBlock Classes="caption subtle" Text="{Binding NameLabel}" AutomationProperties.AccessibilityView="Raw" />
           <TextBox x:Name="ProjectEditName" Text="{Binding EditName, Mode=TwoWay}" AutomationProperties.Name="{Binding NameLabel}" />
@@ -155,7 +155,7 @@
         </StackPanel>
       </StackPanel>
 
-      <StackPanel Spacing="6" IsVisible="{Binding SaveError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+      <StackPanel Spacing="8" IsVisible="{Binding SaveError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
         <Border x:Name="ProjectSaveError" AutomationProperties.Name="{Binding SaveError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding SaveError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>

@@ -80,5 +80,55 @@ for s in scripts/tests/heavy.test.sh scripts/tests/install-cs.test.sh; do
   fi
 done
 
+# Part 4 (#2584): three more suites failed on the runner, each from one macOS difference reproduced here.
+# 4a. bash 3.2 ends a command substitution at the `)` of a bare case pattern: `$(case X in "$P"/*) ...` does not parse,
+#     `$(case X in ("$P"/*) ...` does (sindri-ui-fixture-reviews.test.sh:108 printed " echo inside ;; *) echo outside").
+FILES="$(cd "$ROOT" && git ls-files '*.sh' | tr '\n' ' ')" \
+  scan "bash 3.2 ends \$( ) at a bare case pattern's ) (write the pattern as (pattern))" '\$\(case .* in +[^( ]'
+# 4b. /var -> /private/var: mktemp -d under a symlinked TMPDIR, as macOS's /var/folders is (skill-evals: "AW_DIR differs").
+LINKTMP="$(mktemp -u "${TMPDIR:-/tmp}/parity-linktmp.XXXXXX")"; REALTMP="$(mktemp -d)"; ln -s "$REALTMP" "$LINKTMP"
+if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX TMPDIR="$LINKTMP" bash scripts/tests/skill-evals.test.sh 2>&1)"; then
+  ok "skill-evals.test.sh passes with TMPDIR behind a symlink (macOS /var -> /private/var)"
+else
+  bad "skill-evals.test.sh fails with TMPDIR behind a symlink (macOS /var -> /private/var)"
+  printf '%s\n' "$out" | grep -E 'FAIL' | head -5 | sed 's/^/      | /'
+fi
+command rm -f "$LINKTMP"; rmdir "$REALTMP" 2> /dev/null
+# 4c. heavy-cap-reserve on a PATH without timeout: test-portable.sh's fallback timeout must not leave its sleep holding
+#     the caller's stdout ("reserve 1, both slots busy, timeout 2 gives up inside 6 s": got "none slow 10s").
+if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$NOTOOLS" bash scripts/tests/heavy-cap-reserve.test.sh 2>&1)"; then
+  ok "heavy-cap-reserve.test.sh passes without setsid and timeout on PATH"
+else
+  bad "heavy-cap-reserve.test.sh fails without setsid and timeout on PATH"
+  printf '%s\n' "$out" | grep -E 'not ok|FAIL' | head -5 | sed 's/^/      | /'
+fi
+# 4d. no /proc/meminfo (macOS): heavy.sh's memory guard must read vm_stat instead, or slot 2 and the meta reserve are gone
+#     (the wrapper rows got 0 for 124 and 124 for 0). A fake vm_stat reports 32 GB free; bwrap hides /proc/meminfo.
+if command -v bwrap > /dev/null 2>&1 && bwrap --dev-bind / / true 2> /dev/null; then
+  cat > "$SHIM/vm_stat" <<'SH'
+#!/bin/bash
+cat <<'OUT'
+Mach Virtual Memory Statistics: (page size of 16384 bytes)
+Pages free:                              1048576.
+Pages active:                             200000.
+Pages inactive:                           524288.
+Pages speculative:                        524288.
+Pages throttled:                               0.
+Pages wired down:                         100000.
+OUT
+SH
+  chmod +x "$SHIM/vm_stat"
+  if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$SHIM:$PATH" \
+      bwrap --dev-bind / / --ro-bind /dev/null /proc/meminfo bash scripts/tests/heavy-cap-reserve.test.sh 2>&1)"; then
+    ok "heavy-cap-reserve.test.sh passes without /proc/meminfo (vm_stat on PATH)"
+  else
+    bad "heavy-cap-reserve.test.sh fails without /proc/meminfo (vm_stat on PATH)"
+    printf '%s\n' "$out" | grep -E 'not ok|FAIL' | head -5 | sed 's/^/      | /'
+  fi
+  command rm -f "$SHIM/vm_stat"
+else
+  echo "SKIP: heavy-cap-reserve without /proc/meminfo (no working bwrap)"
+fi
+
 [ "$FAILS" -eq 0 ] || { echo "ci-runner-parity: $FAILS check(s) failed"; exit 1; }
 echo "ci-runner-parity: all checks passed"

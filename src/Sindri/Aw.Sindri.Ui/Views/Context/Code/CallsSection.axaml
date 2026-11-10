@@ -13,7 +13,7 @@
     <ItemsControl x:Name="CallRows" ItemsSource="{Binding Rows}">
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="ctx:CallRow">
-          <Border MinHeight="36" Padding="0,4" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Hairline}"
+          <Border MinHeight="{StaticResource Row.Height.Default}" Padding="0,4" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Hairline}"
                   AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <StackPanel VerticalAlignment="Center">
               <TextBlock Classes="body" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
