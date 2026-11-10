@@ -94,6 +94,26 @@ public sealed class SandboxCardTests
     }
 
     [Fact]
+    public async Task A_status_the_app_cannot_read_says_it_once_with_the_reason()
+    {
+        _bed.Server.SandboxStatusAnswer = new RouteAnswer(HttpStatusCode.OK, "not json");
+        await _bed.Card.Refresh(SandboxTestBed.Api, SandboxTestBed.Token);
+
+        Assert.False(_bed.Card.ShowsRow);
+        Assert.True(_bed.Card.HasDetail);
+        Assert.DoesNotContain("details unavailable", _bed.Card.Detail, StringComparison.Ordinal);
+        Assert.Contains("update", _bed.Card.Detail, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task A_ready_status_shows_its_row_and_no_detail()
+    {
+        await Read("ready");
+
+        Assert.Equal((true, false), (_bed.Card.ShowsRow, _bed.Card.HasDetail));
+    }
+
+    [Fact]
     public async Task No_row_text_uses_a_word_the_sandbox_vocabulary_bans()
     {
         var banned = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.Sandbox("copy.json"))!["bannedWords"]!.AsArray().Select(w => (string)w!).ToList();

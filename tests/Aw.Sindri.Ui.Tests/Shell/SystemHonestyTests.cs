@@ -29,4 +29,18 @@ public sealed class SystemHonestyTests
         Assert.True(system.Vm.ToneWarn);
         Assert.False(system.Vm.ToneError);
     }
+
+    [Fact]
+    public async Task The_headline_glyph_follows_the_headline_tone_not_the_pill()
+    {
+        var system = new SystemTestHarness();
+        await system.Show(A.Status() with { Health = new HealthView("healthy", []) });
+        Assert.Equal(StateGlyph.Ok, system.Vm.HeadlineGlyph);
+
+        system.Server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, MissingIndex);
+        await system.Vm.CodeIndex.Refresh(A.Record().Url, Token);
+
+        Assert.True(system.Vm.ToneWarn);
+        Assert.Equal(StateGlyph.Warning, system.Vm.HeadlineGlyph);
+    }
 }

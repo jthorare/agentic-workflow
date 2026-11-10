@@ -51,6 +51,15 @@ internal sealed class SandboxCardViewModel : ObservableObject
     /// <summary>The mark before the state's word: never colour alone.</summary>
     public StateGlyph Glyph { get; private set; }
 
+    /// <summary>True when the row line shows.</summary>
+    public bool ShowsRow => true;
+
+    /// <summary>The reason the details are unavailable and what to do; empty otherwise.</summary>
+    public string Detail => string.Empty;
+
+    /// <summary>True when <see cref="Detail"/> shows.</summary>
+    public bool HasDetail => false;
+
     /// <summary>Every blocker the last check found.</summary>
     public IReadOnlyList<SandboxBlockerRow> Blockers { get; private set; } = [];
 

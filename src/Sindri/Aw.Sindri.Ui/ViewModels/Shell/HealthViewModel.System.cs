@@ -115,6 +115,9 @@ internal sealed partial class HealthViewModel
     /// <summary>The headline is amber: something needs a look, or the profile needs approval.</summary>
     public bool ToneWarn { get; private set => Set(ref field, value); }
 
+    /// <summary>The headline's glyph: the tone decides it (warning, failure), the pill's glyph otherwise.</summary>
+    public StateGlyph HeadlineGlyph => Pill.Glyph;
+
     /// <summary>The headline is red: stalled, not running, unreadable or a version mismatch.</summary>
     public bool ToneError { get; private set => Set(ref field, value); }
 
