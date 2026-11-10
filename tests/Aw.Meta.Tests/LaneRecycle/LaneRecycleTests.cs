@@ -236,6 +236,22 @@ public sealed class LaneRecycleTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_dry_run_names_when_the_digest_was_last_written_and_when_the_lanes_session_started()
+    {
+        await Ready();
+        _world.LaneFiles.Put(new LaneRecord("api", SessionId.From("s-old"), Agent: null, A.At(40)));
+        _world.Digests.Put(Digest, 1200, A.At(41));
+
+        var result = await Run(dryRun: true);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal(
+            "digest last written " + A.At(41).UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "Z; lane's current session since " + A.At(40).UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "Z",
+            result.Value.DigestTimes);
+        Assert.Empty(_world.Panes.Woken);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_lane_with_no_recorded_session_time_is_checked_by_the_digests_age_only()
     {
         await Ready();
