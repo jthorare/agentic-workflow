@@ -632,7 +632,7 @@ check "typical: state moves keep their names" "$(sqlq "$LCDB" "SELECT old_name |
 check "typical: assignments are to the viewer, state moves are on the viewer's issues" "$(sqlq "$LCDB" "SELECT (SELECT COUNT(*) FROM linear_issue_change WHERE field = 'assignee' AND \"new\" <> 'fx-viewer') + (SELECT COUNT(*) FROM linear_issue_change c JOIN linear_issue i ON i.key = c.issue_key WHERE c.field = 'state' AND i.assignee_id <> 'fx-viewer')")" "0"
 check "typical: every issue is in the profile team's audience" "$(sqlq "$LCDB" "SELECT DISTINCT audience_key FROM source_record WHERE key LIKE 'linear:issue/fxc-%'")" "linear:SPL"
 check "typical: the mentions name a viewer who is a stored member" "$(sqlq "$LCDB" "SELECT COUNT(*) FROM linear_comment WHERE body LIKE '@' || (SELECT name FROM linear_member WHERE id = 'fx-viewer') || '%'")" "5"
-contains "linear-catchup puts the Linear team in the live profile" "$(cat "$LC/profile/profile.yaml")" "linear: { teams: [SPL] }"
+contains "linear-catchup gives Linear a token pointer and a dead loopback url, so the page reads connected" "$(cat "$LC/profile/profile.yaml")" 'linear: { teams: [SPL], token: "env:FIXTURE_LINEAR_KEY", url: "http://127.0.0.1:9/graphql" }'
 check "typical: no marker is stored" "$(test -f "$LC/ui/preferences.json" && jq -r '.linearSince // "none"' "$LC/ui/preferences.json" || echo none)" "none"
 lcatch typical >/dev/null 2>&1; check "a second typical exits 0" "$?" "0"
 check "a second typical replaces the rows" "$(sqlq "$LCDB" "$LCN") $(sqlq "$LCDB" "SELECT COUNT(*) FROM linear_issue")" "37 25"

@@ -872,6 +872,18 @@ INSERT INTO linear_issue (key, team_id, identifier, state_id, state_type, assign
   done
 }
 
+# Linear reads as connected only when the profile names a token pointer (LinearSettings: no pointer, no feed, so the page shows
+# "Linear isn't connected"). The pointer names an env var nothing sets and the url is a dead loopback port, so a tick (none runs in
+# this fixture: its only service is the heartbeat) could never reach Linear. Written once, on the profile's Linear line.
+lc_connect() {
+  local profile
+  profile="$(profile_path)"
+  grep -q 'linear: { teams: \[.*token:' "$profile" && return 0
+  sed "s|linear: { teams: \[$PROJECTS_TEAM\] }|linear: { teams: [$PROJECTS_TEAM], token: \"env:FIXTURE_LINEAR_KEY\", url: \"http://127.0.0.1:9/graphql\" }|" "$profile" > "$profile.new" \
+    && mv "$profile.new" "$profile" || die "linear-catchup: can't add the Linear token pointer to $profile"
+  grep -q 'token: "env:FIXTURE_LINEAR_KEY"' "$profile" || die "linear-catchup: the profile's Linear line isn't 'linear: { teams: [$PROJECTS_TEAM] }'; add a token pointer to it by hand"
+}
+
 linear_catchup() {
   local mode="${1:-typical}" db now
   case "$mode" in empty | typical | error | read-error) ;; *) die "linear-catchup: '$mode' is not a state (empty, typical, error, read-error)" ;; esac
@@ -884,6 +896,7 @@ linear_catchup() {
     || die "the context store at $db has no linear_issue_change table (migrations 0032 and 0036): rebuild sindri and run 'context up' first"
   sql_on "$db" "SELECT state_name FROM linear_issue LIMIT 1" >/dev/null 2>&1 || die "the context store at $db has no linear_issue.state_name (migration 0036): rebuild sindri and run 'context up' first"
   projects_profile || return
+  lc_connect
 
   # An 'error' run left the changes table renamed: put it back before anything else.
   sql_on "$db" "SELECT 1 FROM $LC_SQL_BAK LIMIT 1" >/dev/null 2>&1 && { sql_on "$db" "ALTER TABLE $LC_SQL_BAK RENAME TO linear_issue_change" >/dev/null || die "linear-catchup: can't restore linear_issue_change"; }
