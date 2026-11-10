@@ -52,17 +52,19 @@ internal sealed class CreateItemService(IApprovedProfile approvals, HeldLease he
             return appended.Error;
         }
 
+        string? warning = null;
         if (request.RunRecord is { } run)
         {
             var linked = new ItemLinked(caller.CommandId, item, run, Alias: null);
             var link = await ledger.Append(events.Entry(EventTypes.ItemLinked, linked, $"{EventTypes.ItemLinked}:{item.Value}:{run.Value}", item.Value), grant, cancellationToken).ConfigureAwait(false);
             if (link.IsError)
             {
-                return link.Error;
+                // the item exists: failing here would fail the node, and its retry would make a second item
+                warning = $"the item was made, but its link to run {run.Value["sindri:run/".Length..]} wasn't written ({link.Error.Message}); issue 2588 repairs it";
             }
         }
 
-        return new ItemCreatedResponse(new CommandAccepted(caller.CommandId, appended.Value.Sequence), item);
+        return new ItemCreatedResponse(new CommandAccepted(caller.CommandId, appended.Value.Sequence), item, warning);
     }
 
     /// <summary>The refusal when <paramref name="repo"/> isn't a repo of the profile; null when it is. A header repo is the checkout the human ran from, so its message says that.</summary>
