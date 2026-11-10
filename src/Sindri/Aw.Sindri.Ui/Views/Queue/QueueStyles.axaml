@@ -4,7 +4,10 @@
   <!-- The queue's and the item sheet's looks (UI spec §4.5, §4.6, §14; queue.html, item-detail.html): rows on a hairline,
        the selected row with a 2 px Primary bar (a shape, never colour alone: it also reads "selected" by focus), group
        headers as quiet toggles, timeline entries on a hairline. Tokens only. -->
+  <!-- A clear fill, not none: a Border with no background is not hit-tested, so the pointer over a row's empty space would reach the panel
+       behind it and the row would never be under the pointer (#2535). item-row.selected below replaces it. -->
   <Style Selector="Border.item-row">
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Rest}" />
     <Setter Property="Padding" Value="16,0" />
     <Setter Property="MinHeight" Value="36" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
