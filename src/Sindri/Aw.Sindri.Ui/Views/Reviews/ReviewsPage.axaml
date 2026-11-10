@@ -105,11 +105,11 @@
                                   <StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
                                       <TextBlock Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
-                                      <Border Classes="chip" IsVisible="{Binding HasWaitingChip}" BorderBrush="{DynamicResource Brush.Attention}" BorderThickness="1" CornerRadius="4" Padding="6,0">
-                                        <TextBlock Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding WaitingChip}" />
+                                      <Border Classes="status-chip waiting" IsVisible="{Binding HasWaitingChip}">
+                                        <TextBlock Text="{Binding WaitingChip}" />
                                       </Border>
-                                      <Border Classes="chip" IsVisible="{Binding IsDraft}" BorderBrush="{DynamicResource Brush.HairlineStrong}" BorderThickness="1" CornerRadius="4" Padding="6,0">
-                                        <TextBlock Classes="caption subtle" Text="{Binding DraftText}" />
+                                      <Border Classes="status-chip draft" IsVisible="{Binding IsDraft}">
+                                        <TextBlock Text="{Binding DraftText}" />
                                       </Border>
                                     </StackPanel>
                                     <TextBlock Classes="caption mono subtle" Text="{Binding Ref}" />
