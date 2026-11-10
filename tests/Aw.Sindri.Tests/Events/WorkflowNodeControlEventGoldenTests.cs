@@ -1,5 +1,5 @@
-using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Events;
 
