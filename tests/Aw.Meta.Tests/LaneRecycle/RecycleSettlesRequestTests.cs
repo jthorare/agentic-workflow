@@ -75,6 +75,59 @@ public sealed class RecycleSettlesRequestTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_DIGEST_READY_message_the_skill_tells_lanes_to_send_is_settled()
+    {
+        await Ready();
+        await Receive("m-digest", "t1-api", "DIGEST READY " + Digest);
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal(["m-digest"], result.Value.SettledMessages);
+        Assert.Equal(MessageResolutionKind.Dismissed, (await Stored("m-digest")).Resolution?.Kind);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_message_naming_the_digest_path_without_the_DIGEST_READY_prefix_is_settled()
+    {
+        await Ready();
+        await Receive("m-path", "t1-api", "context is full, my notes are in " + Digest);
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["m-path"], result.Value.SettledMessages);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_message_that_only_says_recycle_in_passing_stays_open()
+    {
+        await Ready();
+        await Receive("m-no", "t1-api", "don't recycle me, gate running");
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.SettledMessages);
+        Assert.Null((await Stored("m-no")).Resolution);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_store_that_cannot_resolve_leaves_the_recycle_a_success_with_a_warning_and_still_logs_the_note()
+    {
+        await Ready();
+        await Receive("m-ask", "t1-api", Ask);
+        _world.Messages.FailResolves = true;
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Contains("settling the lane's request failed", result.Value.Warning, StringComparison.Ordinal);
+        Assert.Contains("inbox-dismiss", result.Value.Warning, StringComparison.Ordinal);
+        Assert.Contains("recycled lane api", Assert.Single(_world.Log.Lines), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_dry_run_leaves_the_request_open()
     {
         await Ready();
@@ -124,5 +177,33 @@ public sealed class RecycleSettlesRequestTests
         Assert.True(result.IsSuccess);
         Assert.Equal(MessageResolutionKind.Dismissed, (await Stored("m-ask")).Resolution?.Kind);
         Assert.Null((await Stored("m-ui")).Resolution);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_request_whose_deferral_has_run_out_is_open_again_and_is_settled()
+    {
+        await Ready();
+        await Receive("m-ask", "t1-api", Ask);
+        _ = await _world.Messages.Resolve(MessageId.From("m-ask"), new MessageResolution(MessageResolutionKind.Deferred, "later", _world.Clock.GetUtcNow().AddMinutes(-1)), CancellationToken.None);
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["m-ask"], result.Value.SettledMessages);
+        Assert.Equal(MessageResolutionKind.Dismissed, (await Stored("m-ask")).Resolution?.Kind);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_request_whose_deferral_is_still_running_stays_deferred()
+    {
+        await Ready();
+        await Receive("m-ask", "t1-api", Ask);
+        _ = await _world.Messages.Resolve(MessageId.From("m-ask"), new MessageResolution(MessageResolutionKind.Deferred, "later", _world.Clock.GetUtcNow().AddHours(2)), CancellationToken.None);
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.SettledMessages);
+        Assert.Equal(MessageResolutionKind.Deferred, (await Stored("m-ask")).Resolution?.Kind);
     }
 }
