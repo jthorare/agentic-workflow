@@ -22453,3 +22453,41 @@ Aw.Sindri.Core.Resources.ResourceDoctorRule
 const Aw.Sindri.Core.Resources.ResourceDoctorRule.NearLimit = 0.9 -> double
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.Check(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>! entries, System.Collections.Generic.IReadOnlyDictionary<string!, long>! diskLimits) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.LimitKey(Aw.Sindri.Core.Resources.ResourceOwner! owner, string! name) -> string!
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.RunId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.ItemIndex.get -> int
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.ItemIndex.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.NodeId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload
+override Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.ToString() -> string!
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.By.init -> void
+static Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.operator !=(Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload? left, Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.operator ==(Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload? left, Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload? right) -> bool
+override Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.Equals(Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload!
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.WorkflowNodeTakenOverPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.RunId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.ItemIndex.get -> int
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.ItemIndex.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.NodeId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload
+override Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.ToString() -> string!
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.By.init -> void
+static Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.operator !=(Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload? left, Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.operator ==(Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload? left, Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload? right) -> bool
+override Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.Equals(Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload!
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.WorkflowNodeHandedBackPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! By) -> void
+const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeTakenOver = "workflow.node.taken-over" -> string!
+const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeHandedBack = "workflow.node.handed-back" -> string!
