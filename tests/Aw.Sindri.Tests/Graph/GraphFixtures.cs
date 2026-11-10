@@ -60,6 +60,10 @@ internal static class GraphFixtures
         {
         }
 
+        public string Title => Type;
+
+        public BlockGroup Group => IsTrigger ? BlockGroup.Triggers : BlockGroup.Logic;
+
         public BlockOutputs OutputsFor(JsonObject config) => Declared;
     }
 

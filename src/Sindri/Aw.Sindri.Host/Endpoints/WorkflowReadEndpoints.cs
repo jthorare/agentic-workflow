@@ -4,8 +4,10 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Features.GetWorkflow;
 using Aw.Sindri.Features.GetWorkflowRun;
+using Aw.Sindri.Features.ListWorkflowBlocks;
 using Aw.Sindri.Features.ListWorkflowRuns;
 using Aw.Sindri.Features.ListWorkflows;
+using Aw.Sindri.Features.SearchWorkflowDocs;
 
 namespace Aw.Sindri.Host.Endpoints;
 
@@ -19,6 +21,11 @@ internal static class WorkflowReadEndpoints
     {
         _ = group.MapGet("/workflows", static async (IService<ListWorkflowsRequest, ListWorkflowsResponse> service, CancellationToken ct)
             => (await service.Handle(new ListWorkflowsRequest(), ct).ConfigureAwait(false)).ToHttpResult());
+        // why: the literal routes below win over '/workflows/{slug}', so 'blocks' and 'docs' can't be slugs
+        _ = group.MapGet("/workflows/blocks", static async (IService<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse> service, CancellationToken ct)
+            => (await service.Handle(new ListWorkflowBlocksRequest(), ct).ConfigureAwait(false)).ToHttpResult());
+        _ = group.MapGet("/workflows/docs", static async (string? question, string? page, IService<SearchWorkflowDocsRequest, SearchWorkflowDocsResponse> service, CancellationToken ct)
+            => (await service.Handle(new SearchWorkflowDocsRequest(question, page), ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapGet("/workflows/{slug}", static async (string slug, IService<GetWorkflowRequest, GetWorkflowResponse> service, CancellationToken ct) =>
         {
             var parsed = Slug(slug);

@@ -14,8 +14,10 @@ public static class ReviewFreshness
     public static ProjectFreshnessRow Row(ProjectSourceFreshness source, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(source);
-        return source.LastCode is { } code
-            ? new ProjectFreshnessRow(source.Source, ProjectFreshnessState.Failing, "failing: " + code, source.LastSync)
+        return ReviewConnectRules.IsSignInCode(source.LastCode)
+            ? new ProjectFreshnessRow(source.Source, ProjectFreshnessState.Failing, "needs sign-in", source.LastSync)
+            : source.LastCode is { } failed
+            ? new ProjectFreshnessRow(source.Source, ProjectFreshnessState.Failing, "failing: " + failed, source.LastSync)
             : !source.Usable
                 ? new ProjectFreshnessRow(source.Source, ProjectFreshnessState.Syncing, "still syncing", source.LastSync)
                 : new ProjectFreshnessRow(source.Source, ProjectFreshnessState.Ok, Synced(source.LastSync, now), source.LastSync);

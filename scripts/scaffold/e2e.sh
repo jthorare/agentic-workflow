@@ -15,7 +15,7 @@
 #
 # Needs the NativeAOT toolchain for the AOT step: the Xcode command-line tools on macOS, clang and zlib on Linux.
 # Usage: scripts/scaffold/e2e.sh            (from the repo root; needs the .NET SDK from global.json and node)
-# Exit:  0 both packages behaved; 1 a check failed (its output is printed); 2 usage or setup error.
+# Exit:  0 both packages and the toolkit behaved; 1 a check failed (its output is printed); 2 usage or setup error.
 #
 # The generators restore new projects, which have no lock file yet: under CI=true (RestoreLockedMode, the AW0001
 # lock-file guard) that is refused by design, so the generator steps run with CI unset. CI's own locked restore
@@ -39,7 +39,7 @@ fi
 export AW_HEAVY_LOCK_HELD=1
 cleanup() {
   local dir
-  for dir in "$TMP/small" "$TMP/http"; do
+  for dir in "$TMP/small" "$TMP/http" "$TMP/toolkit"; do
     if [ -d "$dir" ]; then git -C "$ROOT" worktree remove --force "$dir" >/dev/null 2>&1 || true; fi
   done
   rm -rf "$TMP"
@@ -158,6 +158,38 @@ step "(b) integration lane: loopback binding and id route binding (GetShelf's Sh
 step "(b) check-deps with the new node"
 (cd "$B" && node scripts/check-deps.mjs) || fail "(b) check-deps"
 
+# ---- (c) a toolkit, outside the repo ----
+# /new-toolkit (docs/csharp/scaffolds/new-toolkit.md): a toolkit lives outside the repo and gets the SDK from a folder feed,
+# so this packs the SDK from a throwaway worktree into a throwaway feed (what install-cs.sh does), scaffolds a toolkit in a
+# throwaway dir with a database, a disk and a connection need, lets the generator restore, build and test it (exactly one red
+# test), makes that test green, rebuilds with -warnaserror, prints the manifest and NativeAOT-publishes it for the runner's RID.
+step "(c) /new-toolkit: pack the SDK into a throwaway feed"
+tree toolkit
+C="$TMP/toolkit"
+FEED="$TMP/sdk-feed"; TK="$TMP/toolkit-out/e2e-toolkit"
+mkdir -p "$FEED"
+(cd "$C" && env -u CI dotnet pack src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj -c Release -p:Version=0.1.0-local.20260101000000 \
+  -p:RestoreLockedMode=false -o "$FEED" >"$TMP/toolkit-pack.log" 2>&1) || { tail -20 "$TMP/toolkit-pack.log" >&2; fail "(c) pack the SDK"; }
+ls "$FEED"/Aw.Sindri.Toolkit.0.1.0-local.20260101000000.nupkg >/dev/null || fail "(c) the pack left no Aw.Sindri.Toolkit package"
+step "(c) /new-toolkit: Contracts, tool diff_contracts, needs database:cache,disk:1g,connection:me"
+(cd "$C" && gen scripts/scaffold/new-toolkit.mjs --name Contracts --tool diff_contracts --dir "$TK" --feed "$FEED" \
+  --needs database:cache,disk:1g,connection:me) || fail "(c) new-toolkit"
+[ -f "$TK/Contracts.Toolkit.csproj" ] || fail "(c) wrote no Contracts.Toolkit.csproj"
+[ -f "$TK/Contracts.Toolkit.Tests/Contracts.Toolkit.Tests.csproj" ] || fail "(c) wrote no test project"
+[ -f "$TK/packages.lock.json" ] || fail "(c) the restore wrote no lock file"
+[ ! -e "$TK/../../AgenticWorkflow.slnx" ] || fail "(c) the toolkit sits inside a repo tree"
+step "(c) make DiffContracts green (the sample test asserts the subject comes back), then build -warnaserror again"
+perl -0pi -e 's/=> throw new NotSupportedException\("DiffContracts: make DiffContractsTests pass"\);/=> Task.FromResult(new DiffContractsResponse(request.Subject));/' "$TK/ContractsTools.cs"
+(cd "$TK" && env -u CI dotnet build Contracts.Toolkit.Tests/Contracts.Toolkit.Tests.csproj -warnaserror) || fail "(c) build after the edit"
+(cd "$TK" && env -u CI dotnet test --project Contracts.Toolkit.Tests --filter-trait "Lane=unit") || fail "(c) the sample test is not green after the edit"
+step "(c) the toolkit prints its manifest, then NativeAOT-publishes with no trim or AOT warning"
+(cd "$TK" && env -u CI dotnet run --project Contracts.Toolkit.csproj -- --manifest >"$TMP/toolkit-manifest.json") || fail "(c) --manifest"
+grep -q '"diff_contracts"' "$TMP/toolkit-manifest.json" || fail "(c) the manifest does not name diff_contracts"
+grep -q 'cache' "$TMP/toolkit-manifest.json" || fail "(c) the manifest does not name the cache database"
+(cd "$TK" && env -u CI dotnet publish Contracts.Toolkit.csproj -c Release -r "$rid" -p:RestoreLockedMode=false -o "$TMP/toolkit-aot" \
+  >"$TMP/toolkit-aot.log" 2>&1) || { tail -20 "$TMP/toolkit-aot.log" >&2; fail "(c) AOT publish"; }
+if grep -E 'IL[23][0-9]{3}' "$TMP/toolkit-aot.log" >&2; then fail "(c) AOT publish raised trim or AOT warnings"; fi
+
 # The generators check only what they wrote (the package's test project and the architecture tests build and run,
 # format is limited to the files written); this is the one whole-solution build, so a generator change that breaks
 # some other project is still caught.
@@ -166,4 +198,4 @@ step "(a) whole-solution build -warnaserror"
 step "(b) whole-solution build -warnaserror"
 (cd "$B" && env -u CI dotnet build AgenticWorkflow.slnx -warnaserror) || fail "(b) whole-solution build"
 
-step "both packages scaffolded, built and tested; the worktrees are removed on exit"
+step "both packages and the toolkit scaffolded, built and tested; the worktrees are removed on exit"

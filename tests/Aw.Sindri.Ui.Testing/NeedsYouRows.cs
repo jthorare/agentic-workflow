@@ -36,7 +36,7 @@ internal static class NeedsYouRows
     internal static NeedsYouEntry Grant(string id = "park:WFI-1") => Park(id) with
     {
         PrimaryAction = "ApplyCommand:answer-grant",
-        Actions = [new NeedsYouAction("ApplyCommand:answer-grant", "Grant rounds", ActionReadiness.Ready, "sindri workflow answer ITM-01JC8/step/1 --grant 1", RejectLike: false) { IsProtected = true }],
+        Actions = [new NeedsYouAction("ApplyCommand:answer-grant", "Grant rounds", ActionReadiness.Ready, "sindri workflow answer ITM-01JC8/step/1 --grant 1", RejectLike: false)],
         Cli = "sindri workflow answer ITM-01JC8/step/1 --grant 1",
     };
 
@@ -52,7 +52,7 @@ internal static class NeedsYouRows
         Reason = "checks failed twice with the same findings",
         Since = A.Noon.AddMinutes(-minutes),
         PrimaryAction = "GrantRounds",
-        Actions = [new NeedsYouAction("GrantRounds", "Grant rounds", ActionReadiness.Ready, Command, RejectLike: false) { IsProtected = true }],
+        Actions = [new NeedsYouAction("GrantRounds", "Grant rounds", ActionReadiness.Ready, Command, RejectLike: false)],
         Subject = new NeedsYouSubject("item", "ITM-01JC8"),
         ItemId = "ITM-01JC8",
         Cli = Command,

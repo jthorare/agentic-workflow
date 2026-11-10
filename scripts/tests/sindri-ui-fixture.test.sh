@@ -659,4 +659,20 @@ tds >/dev/null 2>&1; check "a second todos exits 0" "$?" "0"
 check "a second todos leaves 11 todos (same client ids)" "$(wc -l < "$STUB_LOG.todos" | tr -d ' ')" "11"
 absent "a second todos marks nothing done again" "$(cat "$STUB_LOG")" "todo done"
 
+# --- resources: the Resources page's data (#2258 PR18b, #2494), files under <home>/resources ---
+contains "the usage lists resources" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh resources"
+RS="$TMPDIR/resources"
+mkdir -p "$RS/profile"
+printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\n' > "$RS/profile/profile.yaml"
+rss() { AW_SINDRI_HOME="$RS" SINDRI="$STUB" bash "$FIXTURE" resources "$@"; }
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" resources >/dev/null 2>&1; check "resources refuses outside a guarded home" "$?" "2"
+[ ! -e "$WORK/elsewhere/resources" ]; check "a refused resources writes nothing" "$?" "0"
+rss extra >/dev/null 2>&1; check "resources takes no arguments (exit 2)" "$?" "2"
+rss >/dev/null 2>&1; check "resources exits 0" "$?" "0"
+check "the workflow's database is 1.2 MB" "$(wc -c < "$RS/resources/workflow/morning-check/state.db" | tr -d ' ')" "1258291"
+check "the workflow's disk holds 300 KB" "$(wc -c < "$RS/resources/workflow/morning-check/scratch/notes.txt" | tr -d ' ')" "307200"
+check "the toolkit's disk holds 40 KB" "$(wc -c < "$RS/resources/toolkit/notes/cache/index.bin" | tr -d ' ')" "40960"
+rss >/dev/null 2>&1; check "a second resources exits 0" "$?" "0"
+check "a second resources keeps the same three files" "$(find "$RS/resources" -type f | wc -l | tr -d ' ') $(wc -c < "$RS/resources/workflow/morning-check/state.db" | tr -d ' ')" "3 1258291"
+
 exit "$fail"

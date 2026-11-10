@@ -5,7 +5,7 @@ Sindri is a local, always-on harness that picks up work, sizes it, starts agent 
 It runs on your machine as one process, the **control plane**, with three engines inside it:
 
 - **Control plane**: the ledger (every event, append-only), the API on `127.0.0.1`, the scheduler and the host lease (one Sindri per box).
-- **Workflow engine**: runs each piece of work as a workflow graph on a local Temporal server (`docs/csharp/sindri-graph.md`). The YAML recipes and the factory line were removed in issue 2258; the notes below that describe them are history.
+- **Workflow engine**: runs each piece of work as a workflow graph on a local Temporal server (`docs/csharp/sindri-graph.md`). Agents and the CLI write workflows through the `workflow_*` MCP tools and `sindri wf` (create from a template, apply ops, replace, validate, activate, pause, delete), and read the authoring docs through `workflow_docs`. The YAML recipes and the factory line were removed in issue 2258; the notes below that describe them are history.
 - **Context engine**: the product map of your repo, its docs, and your GitHub, Slack and Linear (read by Sindri's own connectors, see [sources.md](sources.md)), answered with citations to you and to agent sessions over MCP.
 
 The **Sindri app** (`sindri-ui`) is a desktop window onto the control plane. Your agent work still happens in Claude Code, Codex or Cursor in your terminal; Sindri starts those sessions, feeds them context and tracks them.
@@ -21,7 +21,7 @@ sindri                                  # start the control plane and open the a
 sindri doctor                           # one line per check: ok / warn / fail with a fix
 ```
 
-Some commands (approvals, starting and answering workflows, map builds, `index connect`) only run from a person's terminal and refuse agent sessions with `SND-AUTH-002`.
+An agent session may run every command. `SND-AUTH-002` now means only "no caller context, or a local-only row". `index purge` and `onyx down --purge` still ask for a typed yes, so they need a terminal.
 
 The full setup, from prerequisites through connecting your sources, agent runtime and MCP to the app, is in **[SETUP.md](SETUP.md)**, and as a guided page with a picture per step: **[`docs/sindri-setup.html`](../sindri-setup.html)** (open it from disk). Operating it from the CLI (the product map, recipes, running the line) is in [OPERATIONS.md](OPERATIONS.md) until those move into the app.
 

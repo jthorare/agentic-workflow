@@ -26,6 +26,19 @@ internal static class BlockFakes
         }
     }
 
+    public sealed class RecordingQuestionPort : IQuestionPort
+    {
+        public List<QuestionAsk> Posted { get; } = [];
+
+        public Error? Fail { get; init; }
+
+        public ValueTask<Result<Unit>> Post(QuestionAsk ask, CancellationToken cancellationToken)
+        {
+            Posted.Add(ask);
+            return ValueTask.FromResult<Result<Unit>>(Fail is { } error ? error : Unit.Value);
+        }
+    }
+
     public sealed class ScriptedModelPort(string answer) : IGraphModelPort
     {
         public List<string> Prompts { get; } = [];

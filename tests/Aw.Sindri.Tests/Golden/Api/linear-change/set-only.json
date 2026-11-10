@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-LINEAR-006",
+  "status": 400,
+  "detail": "stateId has no opened value (fix: send the value you opened with each field you change)",
+  "traceId": "<trace>"
+}

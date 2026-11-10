@@ -17,6 +17,17 @@ public interface ISandbox
     /// <returns>The plan, or SND-LAUNCH-014/015/016/017.</returns>
     public Result<SandboxPlan> Plan(SandboxRequest request);
 
+    /// <summary>Builds the plan for one plain process (a toolkit): no item, agent or Step policy. Pure: no I/O.</summary>
+    /// <param name="request">The process.</param>
+    /// <returns>The plan, or SND-LAUNCH-014/015.</returns>
+    public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request);
+
+    /// <summary>Wraps a process's argv in the sandbox. Its stdin and stdout stay the caller's pipes, and it gets no launch secret.</summary>
+    /// <param name="plan">The plan from <see cref="PlanProcess"/>.</param>
+    /// <param name="argv">The process's argv.</param>
+    /// <returns>The wrapped argv, or SND-LAUNCH-014.</returns>
+    public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv);
+
     /// <summary>Proves the plan inside the real sandbox with a canary per denial and per grant.</summary>
     /// <param name="plan">The plan.</param>
     /// <param name="ct">Cancels the work.</param>

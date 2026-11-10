@@ -17,4 +17,12 @@ public interface IKeyValueStore
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>Success.</returns>
     public ValueTask<Result<Unit>> Set(string key, string value, CancellationToken cancellationToken);
+
+    /// <summary>Sets a value only when the stored one is still the one the caller read (compare and set).</summary>
+    /// <param name="key">The key.</param>
+    /// <param name="expected">The value the caller read; null means the key must be absent.</param>
+    /// <param name="value">The new value.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>True when it wrote; false when the stored value was not <paramref name="expected"/>, and nothing changed.</returns>
+    public ValueTask<Result<bool>> SetIf(string key, string? expected, string value, CancellationToken cancellationToken);
 }

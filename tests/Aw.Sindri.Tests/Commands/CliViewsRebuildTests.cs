@@ -53,7 +53,7 @@ public sealed class CliViewsRebuildTests : IDisposable
         var code = await Verbs(client).RebuildViews(Token);
 
         Assert.Equal(2, code);
-        Assert.Equal($"SND-AUTH-002 {Refusal} (this CLI ran as a session: the per-start human token isn't readable)\n", _error.ToString().ReplaceLineEndings("\n"));
+        Assert.Equal($"SND-AUTH-002 {Refusal}\n", _error.ToString().ReplaceLineEndings("\n"));
     }
 
     [Fact, Trait("Lane", "unit")]

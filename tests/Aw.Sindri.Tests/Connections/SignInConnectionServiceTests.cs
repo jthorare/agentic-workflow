@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
 
 namespace Aw.Sindri.Tests.Connections;
@@ -44,6 +45,21 @@ public sealed class SignInConnectionServiceTests
         Assert.Equal("new-access", world.Secrets.Tokens(stored.SecretPointer!.ToString())!.AccessToken);
         Assert.Equal("cs-stored", world.Secrets.Tokens(stored.SecretPointer.ToString())!.ClientSecret);
         Assert.Contains(EventTypes.ConnectionSignedIn, world.Ledger.Events.Select(static e => e.Envelope.Type), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task SignIn_again_records_who_signed_in_and_leaves_the_rows_creator_alone()
+    {
+        var (world, row) = await NeedingSignIn();
+        var caller = A.Caller().Launched("LCH-0000000000000000000000000000ff01").Build();
+        using var entered = world.Callers.Enter(caller);
+
+        var signed = await world.SignInAgain().Handle(new SignInConnectionRequest("linear:work"), Token);
+
+        Assert.True(signed.IsSuccess);
+        var recorded = Assert.Single(world.Ledger.Events, static e => e.Envelope.Type == EventTypes.ConnectionSignInRequested);
+        Assert.Equal(caller.Actor, recorded.Envelope.Actor);
+        Assert.Equal(row.CreatedBy, Assert.Single(world.Store.Rows).CreatedBy);
     }
 
     [Fact]

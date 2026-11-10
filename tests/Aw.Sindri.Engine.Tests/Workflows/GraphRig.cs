@@ -34,7 +34,7 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly GraphRunStarter _starter;
     private readonly InMemorySindriStore _ledger;
 
-    private GraphRig(WorkflowEnvironment environment, ForEachLimits? forEachLimits)
+    private GraphRig(WorkflowEnvironment environment, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits)
     {
         // why: the test server is shared by the class, and a run id or task queue can be used once on it
         var number = Interlocked.Increment(ref _count).ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -45,7 +45,7 @@ internal sealed class GraphRig : IAsyncDisposable
         Workflows = new InMemoryWorkflowStore(clock);
         Blocks = new GraphTestBlocks();
         Client = environment.Client;
-        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), .. Blocks.All()]);
+        Questions = new GraphTestQuestions();
         var probe = new FakeProcessProbe();
         _ledger = new InMemorySindriStore(clock, probe);
         var held = new HeldLease();
@@ -55,11 +55,21 @@ internal sealed class GraphRig : IAsyncDisposable
         var launcher = new TemporalGraphRunLauncher(_ => ValueTask.FromResult(Results.Success(Client)), _taskQueue);
         var starter = new GraphRunStarter(Runs, launcher, mirror, clock, NullLogger<GraphRunStarter>.Instance);
         _starter = starter;
+        // why: the real wait polls on a clock; the fake one never moves while a node waits, so the caller gets the system clock
+        var caller = new GraphWorkflowCaller(Workflows, Runs, starter, new InMemoryProfiles(), TimeProvider.System);
+        Seen = new GraphTestBlocks.MemorySeen();
+        var registry = new GraphBlockRegistry([new ManualBlock(), new ConditionBlock(), new ForEachBlock(forEachLimits is { } limits ? new FixedForEachLimits(limits) : new DefaultForEachLimits()), new CollectBlock(), new OnlyNewBlock(Seen), new RunWorkflowBlock(caller), new WorkflowCallTrigger(), new WaitBlock(clock), new AskOwnerBlock(Questions, clock), .. Blocks.All()]);
         var options = new TemporalWorkerOptions(_taskQueue)
             .AddWorkflow<GraphWorkflow>()
             .AddWorkflow<GraphIterationWorkflow>()
             .AddAllActivities(new GraphRunActivities(Runs, Workflows, starter, mirror))
             .AddAllActivities(new GraphBlockActivities(registry, Runs, Workflows));
+        if (agents is not null)
+        {
+            _ = options.AddAllActivities(new AgentNodeActivities(agents));
+        }
+
+        Control = new TemporalAgentNodeControl(_ => ValueTask.FromResult(Results.Success(Client)));
         _worker = new TemporalWorker(Client, options);
         _loop = _worker.ExecuteAsync(_stop.Token);
     }
@@ -72,17 +82,25 @@ internal sealed class GraphRig : IAsyncDisposable
 
     public GraphTestBlocks Blocks { get; }
 
+    /// <summary>What the ask_owner blocks asked.</summary>
+    public GraphTestQuestions Questions { get; }
+    /// <summary>What the real 'only_new' block remembers, in memory.</summary>
+    public GraphTestBlocks.MemorySeen Seen { get; }
+
     public ITemporalClient Client { get; }
+
+    /// <summary>The takeover, handback and report of the run's agent node, over the real Temporal adapter.</summary>
+    internal TemporalAgentNodeControl Control { get; }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public static GraphRig Start(WorkflowEnvironment environment) => new(environment, forEachLimits: null);
+    public static GraphRig Start(WorkflowEnvironment environment, IAgentNodeRuntime? agents = null) => new(environment, agents, forEachLimits: null);
 
     /// <summary>A rig whose for_each blocks read <paramref name="forEachLimits"/> as the profile's limits.</summary>
     /// <param name="environment">The shared Temporal test server.</param>
     /// <param name="forEachLimits">The profile's item cap and batch size.</param>
     /// <returns>The started rig.</returns>
-    public static GraphRig Start(WorkflowEnvironment environment, ForEachLimits forEachLimits) => new(environment, forEachLimits);
+    public static GraphRig Start(WorkflowEnvironment environment, ForEachLimits forEachLimits) => new(environment, agents: null, forEachLimits);
 
     private sealed class FixedForEachLimits(ForEachLimits limits) : IForEachLimitSource
     {
@@ -104,6 +122,30 @@ internal sealed class GraphRig : IAsyncDisposable
         var slug = WorkflowSlug.From(Slug);
         _ = (await Workflows.Create(id, slug, spec, "owner", Token)).Value;
         return (id, slug);
+    }
+
+    /// <summary>Saves the spec as the active revision 1 of a second workflow that another workflow's 'run_workflow' can call.</summary>
+    public async Task<string> DefineCallee(GraphSpec spec)
+    {
+        var id = WorkflowId.From("WF-00000000000000000000000000000002");
+        var slug = $"{Slug}-callee";
+        _ = (await Workflows.Create(id, WorkflowSlug.From(slug), spec, "owner", Token)).Value;
+        _ = (await Workflows.Activate(id, 1, Token)).Value;
+        return slug;
+    }
+
+    /// <summary>One node's stored output as JSON, from the first execution of the node.</summary>
+    public async Task<JsonNode?> NodeOutput(WorkflowRunId id, string node)
+    {
+        var rows = (await Runs.NodeRuns(id, Token)).Value;
+        return rows.First(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == 0).Output is { } text ? JsonNode.Parse(text) : null;
+    }
+
+    /// <summary>One node's stored input (its interpolated config) as JSON.</summary>
+    public async Task<JsonNode?> NodeInput(WorkflowRunId id, string node)
+    {
+        var rows = (await Runs.NodeRuns(id, Token)).Value;
+        return rows.First(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == 0).Input is { } text ? JsonNode.Parse(text) : null;
     }
 
     /// <summary>Asks the starter for a run of revision 1, as a trigger does.</summary>

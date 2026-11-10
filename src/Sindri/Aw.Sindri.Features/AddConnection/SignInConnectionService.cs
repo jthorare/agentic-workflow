@@ -17,7 +17,8 @@ namespace Aw.Sindri.Features.AddConnection;
 /// <param name="presets">The shipped presets.</param>
 /// <param name="callers">Who is signing in.</param>
 /// <param name="oauth">The oauth sign-in.</param>
-internal sealed class SignInConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, ICallerContextAccessor callers, OAuthSignInFlow oauth)
+/// <param name="events">Records who signed in (#2460).</param>
+internal sealed class SignInConnectionService(IConnectionStore store, IConnectionSecrets secrets, IConnectionPresetCatalog presets, ICallerContextAccessor callers, OAuthSignInFlow oauth, ConnectionEvents events)
     : IService<SignInConnectionRequest, AddConnectionResponse>
 {
     private readonly IConnectionStore _store = store;
@@ -25,6 +26,7 @@ internal sealed class SignInConnectionService(IConnectionStore store, IConnectio
     private readonly IConnectionPresetCatalog _presets = presets;
     private readonly ICallerContextAccessor _callers = callers;
     private readonly OAuthSignInFlow _oauth = oauth;
+    private readonly ConnectionEvents _events = events;
 
     public async ValueTask<Result<AddConnectionResponse>> Handle(SignInConnectionRequest request, CancellationToken cancellationToken)
     {
@@ -42,6 +44,7 @@ internal sealed class SignInConnectionService(IConnectionStore store, IConnectio
         }
 
         var row = found.Value;
+        await _events.SignInRequested(name.Value, cancellationToken).ConfigureAwait(false);   // why: the row keeps its creator, so this event is the record of who signed in
         var actor = _callers.Current?.Actor ?? "unknown";
         if (row.Kind == ConnectionKind.OAuth)
         {
