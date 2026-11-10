@@ -10,47 +10,63 @@ public sealed class TokenTests
     private static readonly TokenFile _tokens = TokenFile.Load();
 
     // §14.1, every row with a resource key.
-    public static TheoryData<string, string> Colours => new()
+    private static readonly (string, string)[] _colourRows =
+    [
+        ("Canvas", "#010102"),
+        ("Surface1", "#0f1011"),
+        ("Surface2", "#141516"),
+        ("Surface3", "#18191a"),
+        ("Surface4", "#191a1b"),
+        ("Hairline", "#23252a"),
+        ("HairlineStrong", "#34343a"),
+        ("HairlineTertiary", "#3e3e44"),
+        ("Ink", "#f7f8f8"),
+        ("InkMuted", "#d0d6e0"),
+        ("InkSubtle", "#8a8f98"),
+        ("InkTertiary", "#62666d"),
+        ("Primary", "#5e6ad2"),
+        ("PrimaryHover", "#828fff"),
+        ("PrimaryHoverFill", "#535fc6"),
+        ("PrimaryPressed", "#4c57be"),
+        ("OnPrimary", "#ffffff"),
+        ("Success", "#27a644"),
+        ("Overlay", "#000000"),
+        ("Attention", "#f2994a"),
+        ("Error", "#eb5757"),
+        ("AttentionSoft", "#23160c"),
+        ("AttentionSoft.Hover", "#2c1f15"),   // an attention row lifts within its own colour: AttentionSoft one step up
+        ("AttentionSoft.Pressed", "#32251b"),   // and two steps up
+        ("AttentionFill", "#624328"),   // the hold button's fill: Attention at 35 % over Surface2
+        ("PrimarySoft", "#1d2036"),
+        ("ErrorSoft", "#220d0e"),
+        ("SuccessSoft", "#06180b"),
+        ("Wire", "#4a4a52"),
+        ("WireHi", "#8a8f98"),
+        ("LaneFill", "#05ffffff"),
+        ("RingAnchor", "#d0d6e0"),
+        ("Violet", "#a78bfa"),
+        ("VioletSoft", "#170f2a"),
+        ("Area1", "#7aa2f7"),
+        ("Area2", "#e0af68"),
+        ("Area3", "#7bd88f"),
+        ("Area4", "#c792ea"),
+        ("Area5", "#5fd4e0"),
+        ("Area6", "#ff9e8f"),
+    ];
+
+    public static TheoryData<string, string> Colours
     {
-        { "Canvas", "#010102" },
-        { "Surface1", "#0f1011" },
-        { "Surface2", "#141516" },
-        { "Surface3", "#18191a" },
-        { "Surface4", "#191a1b" },
-        { "Hairline", "#23252a" },
-        { "HairlineStrong", "#34343a" },
-        { "HairlineTertiary", "#3e3e44" },
-        { "Ink", "#f7f8f8" },
-        { "InkMuted", "#d0d6e0" },
-        { "InkSubtle", "#8a8f98" },
-        { "InkTertiary", "#62666d" },
-        { "Primary", "#5e6ad2" },
-        { "PrimaryHover", "#828fff" },
-        { "PrimaryHoverFill", "#535fc6" },
-        { "PrimaryPressed", "#4c57be" },
-        { "OnPrimary", "#ffffff" },
-        { "Success", "#27a644" },
-        { "Overlay", "#000000" },
-        { "Attention", "#f2994a" },
-        { "Error", "#eb5757" },
-        { "AttentionSoft", "#23160c" },
-        { "AttentionFill", "#624328" },   // the hold button's fill: Attention at 35 % over Surface2
-        { "PrimarySoft", "#1d2036" },
-        { "ErrorSoft", "#220d0e" },
-        { "SuccessSoft", "#06180b" },
-        { "Wire", "#4a4a52" },
-        { "WireHi", "#8a8f98" },
-        { "LaneFill", "#05ffffff" },
-        { "RingAnchor", "#d0d6e0" },
-        { "Violet", "#a78bfa" },
-        { "VioletSoft", "#170f2a" },
-        { "Area1", "#7aa2f7" },
-        { "Area2", "#e0af68" },
-        { "Area3", "#7bd88f" },
-        { "Area4", "#c792ea" },
-        { "Area5", "#5fd4e0" },
-        { "Area6", "#ff9e8f" },
-    };
+        get
+        {
+            var data = new TheoryData<string, string>();
+            foreach (var r in _colourRows)
+            {
+                data.Add(r.Item1, r.Item2);
+            }
+
+            return data;
+        }
+    }
 
     [Theory]
     [MemberData(nameof(Colours))]
@@ -71,6 +87,34 @@ public sealed class TokenTests
 
         Assert.Empty(colours.Except(spec, StringComparer.Ordinal));
         Assert.Equal(colours.Order(StringComparer.Ordinal), brushes.Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void A_clickable_surface_rests_on_the_hover_colour_at_zero_alpha()
+    {
+        // #2535: the colour ease blends each channel straight, so a rest fill of another colour (Transparent is #00FFFFFF) passes through it.
+        var hover = _tokens.Resources["Brush.Clickable.Hover"].Attribute("Color")!.Value.Trim().ToLowerInvariant();
+        var rest = _tokens.Resources["Brush.Clickable.Rest"].Attribute("Color")!.Value.Trim().ToLowerInvariant();
+
+        Assert.Matches("^#[0-9a-f]{6}$", hover);
+        Assert.Equal("#00" + hover[1..], rest);
+    }
+
+    [Fact]
+    public void Every_clickable_surface_gets_its_rest_fill_before_any_surface_look()
+    {
+        // A Border with no background is not hit-tested (#2535). The fill is the first surface style in the app, so each surface's own fill,
+        // declared later, replaces it, and ClickableStyles, last, lifts it.
+        var app = XDocument.Load(Path.Combine(UiSource.Library, "Views", "SindriApp.axaml"));
+        var styles = app.Descendants().Single(e => e.Name.LocalName == "Application.Styles").Elements().ToList();
+        var rest = styles.FindIndex(e => e.Name.LocalName == "Style" && e.Attribute("Selector")?.Value == "Border.clickable");
+        int Include(string file) => styles.FindIndex(e => e.Name.LocalName == "StyleInclude" && (e.Attribute("Source")?.Value.EndsWith(file, StringComparison.Ordinal) ?? false));
+
+        Assert.True(rest >= 0, "SindriApp.axaml has no Border.clickable rest style");
+        Assert.Equal("{DynamicResource Brush.Clickable.Rest}", styles[rest].Elements().Single(e => e.Attribute("Property")?.Value == "Background").Attribute("Value")?.Value);
+        Assert.True(rest < Include("QueueStyles.axaml") && rest < Include("NeedsYouStyles.axaml"), "the rest fill comes after a surface look");
+        Assert.True(rest < styles.FindIndex(e => e.Attribute("Selector")?.Value == "Border.card"), "the rest fill comes after Border.card");
+        Assert.Equal(styles.Count - 1, Include("ClickableStyles.axaml"));
     }
 
     [Fact]
@@ -126,6 +170,7 @@ public sealed class TokenTests
     [InlineData("Space.MD.Thickness", "16")]
     [InlineData("Motion.Instant", "0:0:0")]
     [InlineData("Motion.Fast", "0:0:0.120")]
+    [InlineData("Motion.Hover", "0:0:0.150")]
     [InlineData("Motion.Base", "0:0:0.180")]
     [InlineData("Motion.Pulse", "0:0:1.600")]
     [InlineData("Motion.Spin", "0:0:0.900")]

@@ -67,5 +67,5 @@ internal sealed partial class GraphWorkflow
     public void ValidateReport(AgentNodeDelivery report) => Agents.ValidateReport(report);
 
     // why: an update can arrive before RunAsync made the loop; it finds nothing to wait on and is refused
-    private GraphAgentLoop Agents => _agents ??= new GraphAgentLoop(_run);
+    private GraphAgentLoop Agents => _agents ??= new GraphAgentLoop(_run, _agentLaunchAttempts);
 }

@@ -141,6 +141,21 @@ internal static class ElementActions
         return Unit.Value;
     }
 
+    /// <summary>Sets or clears the :pointerover pseudo-class, as the pointer entering or leaving would (it stays until `off`, or a real pointer enters and leaves this element).</summary>
+    /// <param name="visual">The element.</param>
+    /// <param name="on">True to set it, false to clear it.</param>
+    /// <returns>Success, or AW-UIDRIVER-003 for an element that has no classes.</returns>
+    internal static Result<Unit> Hover(Visual visual, bool on)
+    {
+        if (visual is not StyledElement element)
+        {
+            return UiDriverErrors.NotActionable.With($"{visual.GetType().Name} has no style classes to hover");
+        }
+
+        ((IPseudoClasses)element.Classes).Set(":pointerover", on);
+        return Unit.Value;
+    }
+
     private static Result<Unit> Run(Action action)
     {
         action();

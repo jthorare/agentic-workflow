@@ -5,7 +5,8 @@ namespace Aw.Architecture.Tests;
 
 /// <summary>
 /// .agents/rules/csharp.md allows one source-generated JsonSerializerContext per package and two named exceptions.
-/// Core's contexts past the first must be on a reviewed list that the rule names, so a new one can't slip in (#2496, #2563).
+/// With more than one, Core's contexts must be on a reviewed list that the rule names, so a new one can't slip in; a listed one Core no longer has fails
+/// at any count, so a stale entry can't stay (#2496, #2563, #2576).
 /// </summary>
 [Trait("Lane", "integration")]
 public sealed class CoreJsonContextRuleTests
@@ -44,6 +45,15 @@ public sealed class CoreJsonContextRuleTests
         var violations = CoreJsonContextRule.Violations(["GraphJsonContext", "GraphOpJsonContext", "JsonContext"], _rule);
 
         Assert.Equal(["JsonContext"], violations);
+    }
+
+    [Fact]
+    public void A_listed_context_Core_folded_away_is_refused_with_one_context_left()
+    {
+        // why: folding GraphOpJsonContext back into GraphJsonContext leaves one context; the stale list entry must still fail (#2576).
+        var violations = CoreJsonContextRule.Violations(["GraphJsonContext"], _rule);
+
+        Assert.Equal(["GraphOpJsonContext"], violations);
     }
 
     [Fact]

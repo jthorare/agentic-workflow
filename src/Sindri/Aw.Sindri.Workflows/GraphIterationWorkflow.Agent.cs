@@ -57,7 +57,7 @@ internal sealed partial class GraphIterationWorkflow
     [WorkflowUpdateValidator(nameof(ReportAsync))]
     public void ValidateReport(AgentNodeDelivery report) => Agents.ValidateReport(report);
 
-    private GraphAgentLoop Agents => _agents ??= new GraphAgentLoop(_run, Announce);
+    private GraphAgentLoop Agents => _agents ??= new GraphAgentLoop(_run, _agentLaunchAttempts, Announce);
 
     // why: the run's 'agent-node' query names this workflow while an agent of the batch waits, so the control sends the updates here. A failed signal (the run is gone, or a cancel is under way) is not the batch's error
     private async Task Announce(AgentWait? wait)

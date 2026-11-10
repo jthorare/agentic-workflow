@@ -97,8 +97,14 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IBriefSource, StoreBriefSource>()
             .AddSingleton<IAsOfDocs, AsOfDocsFactory>()
             .AddSingleton<IEvalStore, FileEvalStore>()
-            .AddSingleton(sp => new LinearSources(new LinearSourceParts(
-                LinearHttp.Client, environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<LinearClient>>())));
+            .AddLinearSources(environment);
+
+    private static IServiceCollection AddLinearSources(this IServiceCollection services, Func<string, string?> environment)
+        => services.AddSingleton(sp => new LinearSources(new LinearSourceParts(
+            LinearHttp.Client, environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<LinearClient>>())
+        {
+            Credential = sp.GetService<ILinearReadCredential>(),   // Sindri's connection-first order (#2508), when the host registers one
+        }));
 
     /// <summary>
     /// Adds the labeling pass ('context.labeling'): <see cref="ILabeler"/> over the host's <see cref="Core.Models.IModelPort"/>. The token cap

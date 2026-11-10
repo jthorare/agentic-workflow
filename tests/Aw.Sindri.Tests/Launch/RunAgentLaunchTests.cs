@@ -4,6 +4,8 @@ using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Resources;
+using Aw.Sindri.Core.Sandbox.Resources;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Testing;
 
@@ -74,6 +76,18 @@ public sealed class RunAgentLaunchTests
         Assert.Contains("mcp__sindri", request.Step.Policy.AllowedTools, StringComparer.Ordinal);   // the node may call every tool of Sindri's MCP
         Assert.Equal("the brief", request.Step.Brief);
         Assert.Equal(TimeSpan.FromMinutes(45), request.StepTimeout);
+    }
+
+    [Fact]
+    public void RequestFor_puts_the_provisioned_mounts_and_limits_on_the_task()
+    {
+        var resources = new ProvisionedResources(new Dictionary<string, string>(StringComparer.Ordinal), [new ResourceMount("resources", "/home/s/resources/workflow/web")], new ResourceLimitOverride(Memory: "2GiB"));
+
+        var request = RunAgentLaunches.WithResources(RunAgentLaunches.RequestFor(_address, _target, Config(), "b", []), resources);
+
+        Assert.Equal("/home/s/resources/workflow/web", Assert.Single(request.Task!.ResourceMounts!).HostPath);
+        Assert.Equal("2GiB", request.Task.ResourceLimits!.Memory);
+        Assert.Null(RunAgentLaunches.RequestFor(_address, _target, Config(), "b", []).Task!.ResourceMounts);
     }
 
     [Fact]

@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Sandbox.Resources;
 
 namespace Aw.Sindri.Core.Resources;
 

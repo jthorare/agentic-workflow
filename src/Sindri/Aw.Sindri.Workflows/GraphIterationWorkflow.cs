@@ -23,6 +23,7 @@ internal sealed partial class GraphIterationWorkflow
     private WorkflowRunId _run;
     private GraphNode? _current;
     private int _item;
+    private int _agentLaunchAttempts = GraphAgentLoop.DefaultAgentLaunchAttempts;
     private LoopShape? _shape;
     private int _last;
     private List<GraphNode> _left = [];
@@ -35,7 +36,8 @@ internal sealed partial class GraphIterationWorkflow
     {
         ArgumentNullException.ThrowIfNull(input);
         _run = input.Run;
-        _agents = new GraphAgentLoop(_run, Announce);
+        _agentLaunchAttempts = input.AgentLaunchAttempts > 0 ? input.AgentLaunchAttempts : GraphAgentLoop.DefaultAgentLaunchAttempts;
+        _agents = new GraphAgentLoop(_run, _agentLaunchAttempts, Announce);
         try
         {
             var spec = await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.LoadAsync(_run), _write).ConfigureAwait(true);
