@@ -61,6 +61,20 @@ internal static partial class Labels
     /// <summary>The freshness line's last part.</summary>
     internal static string ProjectViewer(string viewer) => "Linear says you're " + viewer;
 
+    /// <summary>The freshness line's last part while Sindri has no working Linear key: the name is what Linear said earlier, not a live answer.</summary>
+    internal static string ProjectViewerLastSeen(string viewer) => "last seen as " + viewer;
+
+    /// <summary>The start of the served sentence for a profile that lists Linear teams but names no token (Aw.Sindri.Core LinearToken.Missing).</summary>
+    internal const string ProjectsServedNoKey = "Linear needs a token";
+
+    /// <summary>The start of the served sentence for no projects and no Linear connection.</summary>
+    internal const string ProjectsServedNoLinear = "No projects yet. Connect Linear";
+
+    /// <summary>What is wrong when Sindri has no Linear key, in plain words; the button beside it connects Linear.</summary>
+    /// <param name="lastRead">When Linear was last read, as "14m ago"; empty when it never was.</param>
+    /// <returns>The sentence.</returns>
+    internal static string ProjectsNoKey(string lastRead) => "Sindri has no Linear key, so projects aren't refreshing." + (lastRead.Length > 0 ? " Last read " + lastRead + "." : string.Empty);
+
     /// <summary>A project state's word; a state this build doesn't know is shown as served, first letter up.</summary>
     internal static string ProjectStateWord(string? state) => state switch
     {

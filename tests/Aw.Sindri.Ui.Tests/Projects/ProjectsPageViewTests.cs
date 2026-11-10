@@ -104,7 +104,7 @@ public sealed class ProjectsPageViewTests : FrameHost
     {
         var (window, _) = await OnProjects("empty-no-linear");
 
-        Assert.Empty(window.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Rectangle>().Where(r => r.IsEffectivelyVisible && r.StrokeDashArray is { Count: > 0 }));
+        Assert.DoesNotContain(window.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Rectangle>(), r => r.IsEffectivelyVisible && r.StrokeDashArray is { Count: > 0 });
         Assert.Equal(new Avalonia.Thickness(1), Named<Border>(window, "ProjectsEmptyCard").BorderThickness);
     });
 

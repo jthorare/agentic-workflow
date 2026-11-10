@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.ViewModels.Projects;
 /// The Projects page (projects page spec §3): the owner's projects in state groups, two folds, and the served sentence for an empty or unavailable list.
 /// It reads while it is the page shown, on every event, and keeps its cards by id across reads. The server owns the order and the sentence.
 /// </summary>
-internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
+internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposable
 {
     private static readonly string[] _stateOrder = ["inProgress", "planned", "paused", "backlog"];
 
@@ -53,7 +53,7 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
     /// <summary>The served empty sentence, as served; null when none.</summary>
     public string? Sentence { get; private set => Set(ref field, value); }
 
-    /// <summary>True when the sentence is about a missing Linear key or Linear not connected: the empty block or the banner offers Connect Linear.</summary>
+    /// <summary>True when the sentence is about a missing Linear key or Linear not connected: the empty card or the banner offers Connect Linear.</summary>
     public bool ShowsConnect { get; private set => Set(ref field, value); }
 
     /// <summary>True when there are no cards and a sentence: the dashed block.</summary>
@@ -91,12 +91,6 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
 
     /// <summary>Add project was pressed: the shell opens the Add project sheet.</summary>
     internal event EventHandler? AddRequested;
-
-    /// <summary>Connect Linear was pressed: the shell opens Connections.</summary>
-    internal event EventHandler? ConnectRequested;
-
-    /// <summary>Asks the shell to open Connections.</summary>
-    internal void RequestConnect() => ConnectRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>Asks the shell to open the Add project sheet.</summary>
     internal void RequestAdd() => AddRequested?.Invoke(this, EventArgs.Empty);
@@ -244,9 +238,9 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
         (IsLoading, Error) = (false, string.Empty);
         var failing = list.Freshness.Any(f => string.Equals(f.State, "failing", StringComparison.Ordinal));
         FreshnessFailing = failing;
-        Freshness = string.Join(" · ", list.Freshness.Select(f => Labels.ProjectFreshnessPart(f.Source, f.Text)).Concat(list.Viewer is { } viewer ? [Labels.ProjectViewer(viewer)] : []));
+        Freshness = ProjectsLinear.Freshness(list);
         NamesOnly = list.Freshness.Any(f => string.Equals(f.Source, "context", StringComparison.Ordinal) && string.Equals(f.State, "failing", StringComparison.Ordinal));
-        Sentence = list.Empty;
+        (Sentence, ShowsConnect) = (ProjectsLinear.Sentence(list, _clock.GetUtcNow()), ProjectsLinear.OffersConnect(list.Empty));
         IsEmptyBlock = list.Projects.Count == 0 && list.Empty is not null;
         IsBanner = list.Projects.Count > 0 && list.Empty is not null;
         ShowsAddInEmpty = IsEmptyBlock && !list.Freshness.Any(f => string.Equals(f.State, "syncing", StringComparison.Ordinal));

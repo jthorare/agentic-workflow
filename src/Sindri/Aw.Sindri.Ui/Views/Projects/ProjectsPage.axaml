@@ -11,7 +11,7 @@
     <Style Selector="ItemsControl.cards">
       <Setter Property="ItemTemplate">
         <DataTemplate x:DataType="pvm:ProjectCardViewModel">
-          <pv:ProjectCard Margin="0,0,12,12" />
+          <pv:ProjectCard Margin="0,0,12,12" VerticalAlignment="Stretch" />
         </DataTemplate>
       </Setter>
     </Style>
@@ -40,18 +40,19 @@
         <Border x:Name="ProjectsBannerName" AutomationProperties.Name="{Binding Sentence}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body" Foreground="{DynamicResource Brush.Ink}" Text="{Binding Sentence}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
+        <Button x:Name="ProjectsConnectBanner" Content="{Binding ConnectText}" Click="OnConnect" IsVisible="{Binding ShowsConnect}" VerticalAlignment="Center" AutomationProperties.Name="{Binding ConnectText}" />
       </StackPanel>
     </Border>
 
-    <Panel x:Name="ProjectsEmptyBlock" IsVisible="{Binding IsEmptyBlock}">
-      <Rectangle Stroke="{DynamicResource Brush.HairlineStrong}" StrokeDashArray="4,3" StrokeThickness="1" RadiusX="8" RadiusY="8" IsHitTestVisible="False" AutomationProperties.AccessibilityView="Raw" />
-      <StackPanel Margin="32" Spacing="{StaticResource Space.MD}" HorizontalAlignment="Center">
+    <!-- The empty card is a solid card like the other pages' empty states; Add project stays the one button at the top right, and Connect Linear is the second way in when Linear is not set up. -->
+    <Border x:Name="ProjectsEmptyCard" Classes="card" BorderThickness="1" IsVisible="{Binding IsEmptyBlock}">
+      <StackPanel Margin="16" Spacing="{StaticResource Space.MD}" HorizontalAlignment="Center">
         <Border x:Name="ProjectsEmptyName" AutomationProperties.Name="{Binding Sentence}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body muted" Text="{Binding Sentence}" TextWrapping="Wrap" TextAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="ProjectsAddEmpty" Content="{Binding AddText}" Click="OnAdd" IsVisible="{Binding ShowsAddInEmpty}" HorizontalAlignment="Center" AutomationProperties.Name="{Binding AddText}" />
+        <Button x:Name="ProjectsConnectEmpty" Classes="accent" Content="{Binding ConnectText}" Click="OnConnect" IsVisible="{Binding ShowsConnect}" HorizontalAlignment="Center" AutomationProperties.Name="{Binding ConnectText}" />
       </StackPanel>
-    </Panel>
+    </Border>
 
     <ItemsControl x:Name="ProjectsGroups" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Groups}">
       <ItemsControl.ItemTemplate>

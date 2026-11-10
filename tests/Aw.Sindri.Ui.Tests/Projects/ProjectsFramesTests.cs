@@ -1,3 +1,5 @@
+using System.Globalization;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -90,8 +92,8 @@ public sealed class ProjectsFramesTests : FrameHost
         for (var i = 0; i < 2; i++)
         {
             var copy = projects[0]!.DeepClone();
-            copy["id"] = $"linear:project/00000000-0000-4000-8000-0000000000b{i}";
-            copy["name"] = $"Extra {i}";
+            copy["id"] = string.Create(CultureInfo.InvariantCulture, $"linear:project/00000000-0000-4000-8000-0000000000b{i}");
+            copy["name"] = string.Create(CultureInfo.InvariantCulture, $"Extra {i}");
             projects.Insert(1, copy);
         }
 
@@ -110,12 +112,12 @@ public sealed class ProjectsFramesTests : FrameHost
         Settle(window);
 
         var group = Named<ItemsControl>(window, "ProjectsGroups").GetVisualDescendants().OfType<Border>().Where(b => b.Name == "ProjectCardFrame" && b.IsEffectivelyVisible).Take(3).ToList();
-        var tops = group.Select(c => Math.Round(c.TranslatePoint(default, window)!.Value.Y)).ToList();
+        var tops = group.Select(c => Math.Round(c.TranslatePoint(default, window)!.Value.Y, MidpointRounding.AwayFromZero)).ToList();
         var first = group.Where((_, i) => Math.Abs(tops[i] - tops[0]) < 1).ToList();
         Assert.Equal(across, first.Count);
-        Assert.Single(first.Select(c => Math.Round(c.Bounds.Height)).Distinct());
-        var right = first.Max(c => c.TranslatePoint(new Avalonia.Point(c.Bounds.Width, 0), window)!.Value.X);
-        var page = Named<StackPanel>(window, "ProjectsRoot").TranslatePoint(new Avalonia.Point(Named<StackPanel>(window, "ProjectsRoot").Bounds.Width, 0), window)!.Value.X;
+        _ = Assert.Single(first.Select(c => Math.Round(c.Bounds.Height, MidpointRounding.AwayFromZero)).Distinct());
+        var right = first.Max(c => c.TranslatePoint(new Point(c.Bounds.Width, 0), window)!.Value.X);
+        var page = Named<StackPanel>(window, "ProjectsRoot").TranslatePoint(new Point(Named<StackPanel>(window, "ProjectsRoot").Bounds.Width, 0), window)!.Value.X;
         Assert.InRange(page - right, 0, 14);   // the last card ends at the page's right edge, less its own 12 px margin
     });
 

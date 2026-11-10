@@ -1,6 +1,7 @@
 using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.Projects;
 using static Aw.Sindri.Ui.Tests.Projects.ProjectsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Projects;
