@@ -87,46 +87,60 @@ _lock_try_create() {
 # the late one's remove deletes the lock the other has just taken, and both hold it. The guard is a mkdir mutex next to
 # the lock (only one mkdir wins): under it the lock is read again and removed only when its holder is still dead, so a
 # fresh lock (a live pid) is never removed. Returns 1 when another waiter holds the guard.
-# The guard holds one empty file named by its holder's pid ($$, the shell running acquire_lock). A guard whose holder
-# died mid-reclaim is taken over by the waiter that unlinks its pid file (_lock_reclaim_takeover).
+# Every waiter, the mkdir winner too, announces first: it creates an empty file named by its pid ($$, the shell running
+# acquire_lock) in the guard, then reads EVERY entry. Any other pid file whose process is live means someone else holds or
+# is taking the guard: it removes its own file and leaves. Each announces before it scans, so of two waiters that run at
+# once the later scanner always sees the earlier one's file. It enters only when every other pid file is dead (or there is
+# none and it won the mkdir); it removes one dead pid file with `rm` (only the waiter whose `rm` succeeds enters) and the
+# other dead ones too. A waiter with no other file leaves: it can't tell that from a winner that has not announced yet.
+# Deciding from the first entry in glob order missed a live holder's file behind a dead one (#2616, as #2613).
 # An empty guard is a holder between its mkdir and its pid file, and is cleared only once over two minutes old
-# (`find -mmin +1`; a reclaim takes milliseconds). Every cleanup rmdir goes through _lock_guard_rmdir_if_old, so a fresh
-# guard another waiter just made is never removed (#2581); only a winner removes its own guard, after its own pid file.
+# (`find -mmin +1`; a reclaim takes milliseconds). A waiter that finds the guard empty checks its age BEFORE it writes its
+# pid file: the write would touch the guard and keep it young forever. Every cleanup rmdir goes through
+# _lock_guard_rmdir_if_old, so a fresh guard another waiter just made is never removed (#2581).
 _lock_guard_rmdir_if_old() {
   [ -n "$(find "$1" -maxdepth 0 -mmin +1 2>/dev/null)" ] && rmdir "$1" 2>/dev/null
   return 0
 }
 
-# Take over a dead holder's guard (#2581). Our pid file goes in first, so the guard is never empty and no other waiter
-# can rmdir it and mkdir a fresh one. Then the dead pid file is unlinked; unlink succeeds for one waiter only, and that
-# waiter holds the guard: it runs the reclaim and removes its own file and guard, as the mkdir winner does.
-_lock_reclaim_takeover() {
-  local guard="$1" dead="$2"
-  : > "$guard/$$" 2>/dev/null || return 1
-  if rm "$dead" 2>/dev/null; then
-    if _lock_is_stale; then rm -f "$LOCK_FILE"; fi
-    rm -f "$guard/$$"; rmdir "$guard" 2>/dev/null || true
-    return 0
-  fi
-  rm -f "$guard/$$"
-  return 1
+# A random 0.05-0.30 s sleep, so waiters that announce together do not back off in lockstep.
+_lock_guard_nap() {
+  local n=$((RANDOM % 26 + 5))
+  sleep "0.$(printf '%02d' "$n")"
 }
 
 _lock_reclaim() {
-  local guard="${LOCK_FILE}.reclaim" f p
-  if mkdir "$guard" 2>/dev/null; then
-    : > "$guard/$$"
-    if _lock_is_stale; then rm -f "$LOCK_FILE"; fi
-    rm -f "$guard/$$"; rmdir "$guard" 2>/dev/null || true
-    return 0
+  local guard="${LOCK_FILE}.reclaim" f p dead="" winner=1
+  if ! mkdir "$guard" 2>/dev/null; then
+    winner=0; _lock_guard_nap
+    # An empty guard: announcing would touch it and keep it young. Check its age, don't write.
+    if [ -z "$(find "$guard" -mindepth 1 -maxdepth 1 2>/dev/null | head -n 1)" ]; then
+      _lock_guard_rmdir_if_old "$guard"; return 1
+    fi
   fi
+  : > "$guard/$$" 2>/dev/null || return 1
   for f in "$guard"/*; do
-    [ -e "$f" ] || { _lock_guard_rmdir_if_old "$guard"; return 1; }
+    [ -e "$f" ] || continue
     p="${f##*/}"
-    case "$p" in ""|*[!0-9]*) rm -f "$f" ;; *) kill -0 "$p" 2>/dev/null && return 1; _lock_reclaim_takeover "$guard" "$f" && return 0; return 1 ;; esac
+    case "$p" in
+      ""|*[!0-9]*) rm -f "$f" ;;
+      "$$") ;;
+      *)
+        if kill -0 "$p" 2>/dev/null; then rm -f "$guard/$$"; return 1; fi
+        if [ -z "$dead" ]; then dead="$f"; else rm -f "$f"; fi
+        ;;
+    esac
   done
-  _lock_guard_rmdir_if_old "$guard"
-  return 1
+  if [ -n "$dead" ]; then
+    rm "$dead" 2>/dev/null || { rm -f "$guard/$$"; return 1; }
+  elif [ "$winner" = 0 ]; then
+    rm -f "$guard/$$"
+    _lock_guard_rmdir_if_old "$guard"
+    return 1
+  fi
+  if _lock_is_stale; then rm -f "$LOCK_FILE"; fi
+  rm -f "$guard/$$"; rmdir "$guard" 2>/dev/null || true
+  return 0
 }
 
 acquire_lock() {
