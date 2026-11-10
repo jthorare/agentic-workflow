@@ -22,7 +22,7 @@
       </Border>
       <StackPanel Grid.Column="1" VerticalAlignment="Center">
         <TextBlock Text="{Binding Label}" Classes="caption" Classes.mono="{Binding IsMono}" FontWeight="Medium" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Ink}" />
-        <TextBlock Classes="eyebrow" Text="{Binding Caption}" MaxLines="1" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.InkSubtle}" />
+        <TextBlock Classes="caption" Text="{Binding Caption}" MaxLines="1" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.InkSubtle}" />
       </StackPanel>
     </Grid>
 
@@ -48,7 +48,7 @@
 
     <Border IsVisible="{Binding IsAnchor}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,-12,0,0" Padding="7,1"
             Background="{DynamicResource Brush.Surface3}" BorderBrush="{DynamicResource Brush.RingAnchor}" BorderThickness="1" CornerRadius="{StaticResource Radius.Pill}">
-      <TextBlock Classes="eyebrow" Text="{Binding StartsHere}" Foreground="{DynamicResource Brush.Ink}" />
+      <TextBlock Classes="caption" Text="{Binding StartsHere}" Foreground="{DynamicResource Brush.Ink}" />
     </Border>
   </Grid>
 </UserControl>
