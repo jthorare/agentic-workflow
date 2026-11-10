@@ -6,8 +6,12 @@ STACK="$(cd "$(dirname "$0")" && pwd)/stack.sh"
 FAILURES=0
 
 # The suite opens real listeners on PORT..PORT+6, so it CLAIMS a free block at start (#2596): an atomic mkdir of a per-base lock dir (a bind check
-# alone lets two runs both see a free block), then every port in the block must be free. The lock holds the claiming pid and is released on exit;
-# a lock whose pid is dead is reclaimed.
+# alone lets two runs both see a free block), then every port in the block must be free. The lock holds the claiming pid and is released on exit.
+# A held lock is skipped, even when its pid is dead: taking over a dead holder's lock lets two runs that both saw the dead pid hold one block
+# (the race #2569 fixed in skill-lock.sh), and a killed run leaves at most one of the 1500 blocks unused until /tmp is cleared.
+# Blocks stay below 32768, where Linux's ephemeral range starts: a port an outgoing connection holds shows no LISTEN, so the check would pass and
+# `nc -l` could still fail to bind.
+PORT_BLOCKS=1500
 PORT_LOCKS="${TMPDIR:-/tmp}/aw-stack-test-ports"
 
 port_free() { ! lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; }
@@ -18,20 +22,12 @@ release_port_lock() {
 }
 
 claim_port_block() {
-  local slot=$(($$ % 2500)) i base lock holder p free
+  local slot=$(($$ % PORT_BLOCKS)) i base lock p free
   mkdir -p "$PORT_LOCKS"
-  for ((i = 0; i < 2500; i++)); do
-    base=$((20000 + ((slot + i) % 2500) * 8))
+  for ((i = 0; i < PORT_BLOCKS; i++)); do
+    base=$((20000 + ((slot + i) % PORT_BLOCKS) * 8))
     lock="$PORT_LOCKS/$base"
-    if ! mkdir "$lock" 2>/dev/null; then
-      holder=$(cat "$lock/pid" 2>/dev/null || true)
-      if [ -n "$holder" ] && ! kill -0 "$holder" 2>/dev/null; then
-        release_port_lock "$lock"
-        mkdir "$lock" 2>/dev/null || continue
-      else
-        continue
-      fi
-    fi
+    mkdir "$lock" 2>/dev/null || continue
     echo $$ >"$lock/pid"
     free=1
     for p in $(seq "$base" $((base + 6))); do
