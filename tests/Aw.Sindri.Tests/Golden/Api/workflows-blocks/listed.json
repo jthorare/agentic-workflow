@@ -245,6 +245,41 @@
             "expect": "200,201"
           },
           "exampleSpec": null
+        },
+        {
+          "type": "call_tool",
+          "title": "Toolkit tool",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "tool",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "connection",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "arguments",
+              "type": "object",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "result": "any"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "tool": "notes__add_note",
+            "arguments": {
+              "text": "{{triage.summary}}"
+            }
+          },
+          "exampleSpec": null
         }
       ]
     },
