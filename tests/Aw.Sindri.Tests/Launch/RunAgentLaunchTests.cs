@@ -4,6 +4,8 @@ using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Resources;
+using Aw.Sindri.Core.Sandbox.Resources;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Testing;
 
@@ -79,7 +81,7 @@ public sealed class RunAgentLaunchTests
     [Fact]
     public void RequestFor_puts_the_provisioned_mounts_and_limits_on_the_task()
     {
-        var resources = new Aw.Sindri.Core.Resources.ProvisionedResources(new Dictionary<string, string>(StringComparer.Ordinal), [new Aw.Sindri.Core.Sandbox.Plan.ResourceMount("resources", "/home/s/resources/workflow/web")], new Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride(Memory: "2GiB"));
+        var resources = new ProvisionedResources(new Dictionary<string, string>(StringComparer.Ordinal), [new ResourceMount("resources", "/home/s/resources/workflow/web")], new ResourceLimitOverride(Memory: "2GiB"));
 
         var request = RunAgentLaunches.WithResources(RunAgentLaunches.RequestFor(_address, _target, Config(), "b", []), resources);
 

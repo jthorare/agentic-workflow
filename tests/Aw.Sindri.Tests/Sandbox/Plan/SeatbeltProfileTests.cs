@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
+using Aw.Sindri.Core.Sandbox.Resources;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
 

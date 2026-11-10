@@ -34,7 +34,7 @@ public sealed class ActivateRefusesSandboxAboveBoxCapOnTheRealHostTests
     [Fact(Timeout = 60_000)]
     public async Task Activate_refuses_a_sandbox_memory_above_the_profile_limit_with_SND_RES_005_naming_the_cap()
     {
-        var (status, body) = await Activate("16g", TestContext.Current.CancellationToken);
+        var (status, body) = await Activate("16GiB", TestContext.Current.CancellationToken);
 
         Assert.NotEqual(HttpStatusCode.OK, status);
         Assert.Contains("SND-RES-005", body, StringComparison.Ordinal);
@@ -44,7 +44,7 @@ public sealed class ActivateRefusesSandboxAboveBoxCapOnTheRealHostTests
     [Fact(Timeout = 60_000)]
     public async Task Activate_accepts_a_sandbox_memory_within_the_profile_limit()
     {
-        var (status, body) = await Activate("4g", TestContext.Current.CancellationToken);
+        var (status, body) = await Activate("4GiB", TestContext.Current.CancellationToken);
 
         Assert.True(status == HttpStatusCode.OK, body);
     }
