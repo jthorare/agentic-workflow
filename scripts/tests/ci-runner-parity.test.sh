@@ -27,6 +27,10 @@ scan "BSD sed reads the next argument of a bare -i as the backup suffix (sed: in
 scan "BSD find has no -printf (install-cs.test.sh: the staged-scripts rows ran /heavy, exit 127)" 'find[[:space:]].*-printf'
 scan "BSD touch has no -d 'N seconds ago' (meta-hooks: out of range or illegal time specification)" 'touch[[:space:]]+-d[[:space:]]'
 
+# skills/_shared/skill-lock.sh must run on bash 3.2: none of the bash 4 or GNU-only forms, and no bash >= 4 refusal.
+lockhits="$(grep -nE '\b(mapfile|readarray|coproc)\b|\$\{?BASHPID|declare[[:space:]]+-A|\$\{[A-Za-z_]+(,,|\^\^)|wait[[:space:]]+-n|\{[a-z_]+\}[<>]|sed[[:space:]]+-i[[:space:]]|find[[:space:]].*-printf|stat[[:space:]]+-c|date[[:space:]]+-d|readlink[[:space:]]+-f|touch[[:space:]]+-d|BASH_VERSINFO' "$ROOT/skills/_shared/skill-lock.sh" | grep -vE '^[0-9]+:[[:space:]]*#' || true)"
+if [ -n "$lockhits" ]; then bad "skill-lock.sh uses a bash 4 or GNU-only form"; printf '%s\n' "$lockhits" | sed 's/^/      | /'; else ok "skill-lock.sh has no bash 4 or GNU-only forms"; fi
+
 # Part 2: sed, touch and find that refuse the GNU-only forms, first on PATH for the quick suites.
 SHIM="$(mktemp -d)"
 trap 'rm -f "$SHIM/sed" "$SHIM/touch" "$SHIM/find"; rmdir "$SHIM"' EXIT
