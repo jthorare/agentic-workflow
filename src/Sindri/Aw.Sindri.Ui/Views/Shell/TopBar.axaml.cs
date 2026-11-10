@@ -142,6 +142,7 @@ internal sealed partial class TopBar : UserControl
         PillAge.IsVisible = fit < Fit.NoAge && !_ageYields;
         BrandWord.IsVisible = fit < Fit.NoBrandWord;
         NavigationList.Classes.Set("tight", fit >= Fit.TightNav);
+        ApplyTabGap(fit);
         NavigationList.Classes.Set("no-counts", fit == Fit.NoCounts);
     }
 

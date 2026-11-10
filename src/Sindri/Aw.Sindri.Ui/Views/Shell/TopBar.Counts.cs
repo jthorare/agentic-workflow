@@ -24,12 +24,26 @@ internal sealed partial class TopBar
     // The navigation's width with its counts and its full tab padding, which is what every step measures from.
     private double NavigationWidthWithCounts => NavSegments.DesiredSize.Width + (_fit == Fit.NoCounts ? CountsWidth : 0) + (_fit >= Fit.TightNav ? TightSaving : 0);
 
-    // What the tight step's narrower tab padding gives back: both sides of every tab.
-    private double TightSaving => NavigationList.ItemCount * 2 * (TabPadding - TightTabPadding);
+    // What the tight step gives back: the narrower padding on both sides of every tab, and the gaps between the tabs
+    // (#2547: with full labels at every width, nine tabs at 130% text still ran 7 px past a 1,000 px window).
+    private double TightSaving => (NavigationList.ItemCount * 2 * (TabPadding - TightTabPadding)) + (Math.Max(NavigationList.ItemCount - 1, 0) * (TabGap - TightTabGap));
+
+    // The tight step closes the gaps between the tabs (the items panel, TopBar.axaml); the segment's hover and selected fills still have their padding.
+    private void ApplyTabGap(Fit fit)
+    {
+        if (NavigationList.ItemsPanelRoot is StackPanel tabs)
+        {
+            tabs.Spacing = fit >= Fit.TightNav ? TightTabGap : TabGap;
+        }
+    }
 
     // The tabs' horizontal padding (ShellStyles: ListBox.nav > ListBoxItem) and the tight step's.
     private const double TabPadding = 7;
     private const double TightTabPadding = 2;
+
+    // The gap between two tabs (the items panel's Spacing, TopBar.axaml) and the tight step's.
+    private const double TabGap = 2;
+    private const double TightTabGap = 0;
 
     // The count sits after its label in a stack spaced by 6.
     private const double SpacingBeforeCount = 6;
