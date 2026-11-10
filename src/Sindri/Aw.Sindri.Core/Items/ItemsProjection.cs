@@ -169,6 +169,12 @@ internal sealed partial class ItemsProjection(EventFactory events, ITextScrubber
         ArgumentNullException.ThrowIfNull(row);
         ArgumentNullException.ThrowIfNull(linked);
         ArgumentNullException.ThrowIfNull(recorded);
+        if (linked.Record.Value.StartsWith("sindri:run/", StringComparison.Ordinal))
+        {
+            // a run is shown in the 'item-links' view; it must not replace the item's tracker link or alias
+            return row with { UpdatedAt = recorded.Envelope.OccurredAt, Sequence = recorded.Sequence };
+        }
+
         return row with { Link = linked.Record, Alias = linked.Alias, UpdatedAt = recorded.Envelope.OccurredAt, Sequence = recorded.Sequence };
     }
 

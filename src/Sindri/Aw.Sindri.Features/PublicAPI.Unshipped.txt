@@ -349,11 +349,13 @@ Aw.Sindri.Features.CreateItem.ItemCreatedResponse
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.<Clone>$() -> Aw.Sindri.Features.CreateItem.ItemCreatedResponse!
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Accepted.get -> Aw.Sindri.Core.Commands.CommandAccepted!
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Accepted.init -> void
-Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Deconstruct(out Aw.Sindri.Core.Commands.CommandAccepted! Accepted, out Aw.Sindri.Core.Ids.ItemId ItemId) -> void
+Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Deconstruct(out Aw.Sindri.Core.Commands.CommandAccepted! Accepted, out Aw.Sindri.Core.Ids.ItemId ItemId, out string? Warning) -> void
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Equals(Aw.Sindri.Features.CreateItem.ItemCreatedResponse? other) -> bool
-Aw.Sindri.Features.CreateItem.ItemCreatedResponse.ItemCreatedResponse(Aw.Sindri.Core.Commands.CommandAccepted! Accepted, Aw.Sindri.Core.Ids.ItemId ItemId) -> void
+Aw.Sindri.Features.CreateItem.ItemCreatedResponse.ItemCreatedResponse(Aw.Sindri.Core.Commands.CommandAccepted! Accepted, Aw.Sindri.Core.Ids.ItemId ItemId, string? Warning = null) -> void
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.ItemId.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Features.CreateItem.ItemCreatedResponse.ItemId.init -> void
+Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Warning.get -> string?
+Aw.Sindri.Features.CreateItem.ItemCreatedResponse.Warning.init -> void
 Aw.Sindri.Features.Decide.DecideRequest
 Aw.Sindri.Features.Decide.DecideRequest.<Clone>$() -> Aw.Sindri.Features.Decide.DecideRequest!
 Aw.Sindri.Features.Decide.DecideRequest.Choice.get -> Aw.Sindri.Core.Ids.DecisionOption
@@ -441,6 +443,8 @@ Aw.Sindri.Features.GetItem.ItemView.PrimaryAction.get -> Aw.Sindri.Core.Ids.Acti
 Aw.Sindri.Features.GetItem.ItemView.PrimaryAction.init -> void
 Aw.Sindri.Features.GetItem.ItemView.Repo.get -> Aw.Sindri.Core.Ids.RepoName?
 Aw.Sindri.Features.GetItem.ItemView.Repo.init -> void
+Aw.Sindri.Features.GetItem.ItemView.Runs.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Features.GetItem.ItemView.Runs.init -> void
 Aw.Sindri.Features.GetItem.ItemView.Since.get -> System.DateTimeOffset
 Aw.Sindri.Features.GetItem.ItemView.Since.init -> void
 Aw.Sindri.Features.GetItem.ItemView.State.get -> Aw.Sindri.Core.Items.Vocabulary.ItemState
@@ -2220,8 +2224,8 @@ override Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.GetHashCode()
 override Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.ToString() -> string!
 static Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.operator !=(Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? left, Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? right) -> bool
 static Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest.operator ==(Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? left, Aw.Sindri.Features.ContextCalls.GetContextSubgraphRequest? right) -> bool
-Aw.Sindri.Features.GetItem.ItemView.Deconstruct(out Aw.Sindri.Core.Ids.ItemId Id, out string! Title, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Items.Vocabulary.ItemState State, out string? Step, out System.DateTimeOffset Since, out Aw.Sindri.Core.Ids.ActionId? PrimaryAction, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string? Owner, out long Version, out string! CreatedBy, out string? WaitingOn, out string? Instance, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset UpdatedAt, out string? Body, out Aw.Sindri.Core.Ids.RecordKey? Link, out Aw.Sindri.Core.Launches.ItemLaunch! Launch, out Aw.Sindri.Core.Views.AsOf! AsOf) -> void
-Aw.Sindri.Features.GetItem.ItemView.ItemView(Aw.Sindri.Core.Ids.ItemId Id, string! Title, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Items.Vocabulary.ItemState State, string? Step, System.DateTimeOffset Since, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string? Owner, long Version, string! CreatedBy, string? WaitingOn, string? Instance, System.DateTimeOffset CreatedAt, System.DateTimeOffset UpdatedAt, string? Body, Aw.Sindri.Core.Ids.RecordKey? Link, Aw.Sindri.Core.Launches.ItemLaunch! Launch, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
+Aw.Sindri.Features.GetItem.ItemView.Deconstruct(out Aw.Sindri.Core.Ids.ItemId Id, out string! Title, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Items.Vocabulary.ItemState State, out string? Step, out System.DateTimeOffset Since, out Aw.Sindri.Core.Ids.ActionId? PrimaryAction, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string? Owner, out long Version, out string! CreatedBy, out string? WaitingOn, out string? Instance, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset UpdatedAt, out string? Body, out Aw.Sindri.Core.Ids.RecordKey? Link, out System.Collections.Generic.IReadOnlyList<string!>! Runs, out Aw.Sindri.Core.Launches.ItemLaunch! Launch, out Aw.Sindri.Core.Views.AsOf! AsOf) -> void
+Aw.Sindri.Features.GetItem.ItemView.ItemView(Aw.Sindri.Core.Ids.ItemId Id, string! Title, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Items.Vocabulary.ItemState State, string? Step, System.DateTimeOffset Since, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string? Owner, long Version, string! CreatedBy, string? WaitingOn, string? Instance, System.DateTimeOffset CreatedAt, System.DateTimeOffset UpdatedAt, string? Body, Aw.Sindri.Core.Ids.RecordKey? Link, System.Collections.Generic.IReadOnlyList<string!>! Runs, Aw.Sindri.Core.Launches.ItemLaunch! Launch, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
 Aw.Sindri.Features.GetItem.ItemView.Launch.get -> Aw.Sindri.Core.Launches.ItemLaunch!
 Aw.Sindri.Features.GetItem.ItemView.Launch.init -> void
 Aw.Sindri.Features.GetStatus.IJevKeyProbe
@@ -5318,6 +5322,8 @@ static Aw.Sindri.Features.GetConnection.SignInFailureView.operator !=(Aw.Sindri.
 static Aw.Sindri.Features.GetConnection.SignInFailureView.operator ==(Aw.Sindri.Features.GetConnection.SignInFailureView? left, Aw.Sindri.Features.GetConnection.SignInFailureView? right) -> bool
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Warning.get -> string?
 Aw.Sindri.Features.ImportTodoNote.ImportTodoNoteResponse.Warning.init -> void
+Aw.Sindri.Features.CreateItem.CreateItemRequest.RunRecord.get -> Aw.Sindri.Core.Ids.RecordKey?
+Aw.Sindri.Features.CreateItem.CreateItemRequest.RunRecord.init -> void
 
 Aw.Sindri.Features.GetTodoNote.TodoNoteHold
 Aw.Sindri.Features.GetTodoNote.TodoNoteHold.<Clone>$() -> Aw.Sindri.Features.GetTodoNote.TodoNoteHold!
@@ -5355,3 +5361,33 @@ override Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange.GetHashCode() -> int
 override Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange.ToString() -> string!
 static Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange.operator !=(Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange? left, Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange? right) -> bool
 static Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange.operator ==(Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange? left, Aw.Sindri.Features.GetTodoNote.TodoNoteHeldChange? right) -> bool
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.<Clone>$() -> Aw.Sindri.Features.RenameConnection.RenameConnectionRequest!
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Deconstruct(out string! Name, out string! Label) -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Equals(Aw.Sindri.Features.RenameConnection.RenameConnectionRequest? other) -> bool
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Name.get -> string!
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Name.init -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Label.get -> string!
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Label.init -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.RenameConnectionRequest(string! Name, string! Label) -> void
+override Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.GetHashCode() -> int
+override Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.ToString() -> string!
+static Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.operator !=(Aw.Sindri.Features.RenameConnection.RenameConnectionRequest? left, Aw.Sindri.Features.RenameConnection.RenameConnectionRequest? right) -> bool
+static Aw.Sindri.Features.RenameConnection.RenameConnectionRequest.operator ==(Aw.Sindri.Features.RenameConnection.RenameConnectionRequest? left, Aw.Sindri.Features.RenameConnection.RenameConnectionRequest? right) -> bool
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.<Clone>$() -> Aw.Sindri.Features.RenameConnection.RenameConnectionResponse!
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.Deconstruct(out string! Name, out string! PreviousName, out bool SecretMoved) -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.Equals(Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? other) -> bool
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.Name.get -> string!
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.Name.init -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.PreviousName.get -> string!
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.PreviousName.init -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.SecretMoved.get -> bool
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.SecretMoved.init -> void
+Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.RenameConnectionResponse(string! Name, string! PreviousName, bool SecretMoved) -> void
+override Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.GetHashCode() -> int
+override Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.ToString() -> string!
+static Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.operator !=(Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? left, Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? right) -> bool
+static Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.operator ==(Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? left, Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? right) -> bool

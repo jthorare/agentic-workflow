@@ -56,6 +56,7 @@ public sealed partial class GraphWorkflowParkingTests
         var workflow = await rig.Define(AskSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         await WaitUntilAsked(rig);
+        await WaitUntilTimerStarted(rig, started.RunId.Value);
 
         await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
         var run = await rig.Final(started.RunId);

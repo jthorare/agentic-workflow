@@ -222,6 +222,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IMcpConnectionClient>(static _ => new McpConnectionClient(new HttpClient()))
             .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
+            .AddSingleton<IConnectionCredentials>(static sp => new ConnectionCredentials(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<ISecretPointers>()))   // #2508: the one token order (connection first, profile pointer second) for the github, slack and linear feeds
             .AddSingleton<IGitHubAccount>(static sp => new Connections.GitHub.GitHubConnectionAccount(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IConnectionPresetCatalog>(), NoRedirectClient(), sp.GetRequiredService<TimeProvider>()))   // #2499: the Reviews tab's GitHub account, from the Connections page
             .AddSingleton<IPollCursors, SqlitePollCursors>()   // PR 11: poll cursors in ledger.db
             .AddSingleton<IEventPoller>(static sp => new GitHubEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))

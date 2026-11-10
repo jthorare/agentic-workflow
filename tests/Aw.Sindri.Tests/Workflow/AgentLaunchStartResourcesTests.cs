@@ -36,7 +36,7 @@ public sealed class AgentLaunchStartResourcesTests
         _ = await _slice.HoldLease();
         var recorder = new AgentLaunchRecorder(_slice.Store, _slice.Held, _slice.Events, new LaunchLiveness(), _slice.Clock);
         var waiting = new AgentLaunchWaiting(_launcher, new AgentRuntimeOptions(PollInterval: TimeSpan.FromMilliseconds(10)), recorder);
-        return new AgentLaunchStart(waiting, recorder, new FakeRunDiff(), new AgentLaunchEnded(new Views(state), _sessions, new FakeSindriHome("/home/sindri")));
+        return new AgentLaunchStart(waiting, recorder, new FakeRunDiff(), new AgentLaunchEnded(new Views(state), _sessions, new FakeSindriHome("/home/sindri"), _slice.Store));
     }
 
     private ValueTask<Result<ProvisionedResources>> FailingResources(CancellationToken cancellationToken)
