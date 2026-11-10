@@ -1,7 +1,7 @@
 {
   "asOf": {
-    "cursor": 21,
-    "ledgerHead": 21,
+    "cursor": 46,
+    "ledgerHead": 46,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
@@ -9,41 +9,46 @@
   "state": "syncing",
   "vault": "notes",
   "note": "Todo.md",
-  "lastCheckAt": "2026-01-01T10:05:00.0000000Z",
-  "lastSyncAt": "2026-01-01T10:04:41.0000000Z",
+  "lastCheckAt": null,
+  "lastSyncAt": null,
   "lastError": null,
   "conflicts": [],
   "hold": {
     "noteHash": "sha256:3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a",
-    "heldAt": "2026-01-01T10:04:41.0000000Z",
+    "heldAt": "2026-01-01T00:00:00.0000000Z",
     "openInBase": 20,
     "changes": [
       {
-        "id": "td_01jc5a8xq0n4w7ms2t9r3vbk6e",
+        "id": "td_00000000000000000000000008",
         "kind": "removed",
         "text": "reply to Sam about the offsite",
         "noteLine": null
       },
       {
-        "id": "td_01jc5b2kz8m3r6tq1w9xh4dn7y",
+        "id": "td_0000000000000000000000000f",
         "kind": "removed",
         "text": "rotate the staging key",
         "noteLine": null
       },
       {
-        "id": "td_01jc5c90a2b7k4m8q1r6t3w9xz",
+        "id": "td_0000000000000000000000000p",
         "kind": "edited",
         "text": "call the dentist",
-        "noteLine": "- [ ] call the dentist about the crown 📅 2026-01-05 ^td-01jc5c90a2b7k4m8q1r6t3w9xz"
+        "noteLine": "- [ ] call the dentist about the crown \uD83D\uDCC5 2026-01-05 ^td-0000000000000000000000000p"
       },
       {
-        "id": "td_01jc5917f3h8n2p5s9v4x1z6bq",
+        "id": "td_0000000000000000000000000x",
         "kind": "reopened",
         "text": "renew the cert",
-        "noteLine": "- [ ] renew the cert 📅 2025-12-30 ^td-01jc5917f3h8n2p5s9v4x1z6bq"
+        "noteLine": "- [ ] renew the cert \uD83D\uDCC5 2025-12-30 ^td-0000000000000000000000000x"
       }
     ]
   },
   "picks": [],
-  "cantSync": []
+  "cantSync": [
+    {
+      "line": 4,
+      "reason": "it has a markdown link"
+    }
+  ]
 }

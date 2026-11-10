@@ -37,6 +37,38 @@ public sealed class ConnectionEvents(HeldLease held, ILedgerStore ledger, EventF
         _ = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Appends 'connection.removed' for <paramref name="name"/>; the envelope's actor is the caller's (#2460).</summary>
+    /// <param name="name">The connection.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>A task that ends when the event is recorded or skipped.</returns>
+    public async ValueTask Removed(ConnectionName name, CancellationToken cancellationToken)
+    {
+        if (held.Current is not { } grant)
+        {
+            return;
+        }
+
+        var at = Now;
+        var entry = events.Entry(EventTypes.ConnectionRemoved, new ConnectionRemoved(name.ToString(), at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionRemoved}:{name}:{at.UtcTicks}"));
+        _ = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Appends 'connection.sign-in-requested' for <paramref name="name"/>; the envelope's actor is who signed in (#2460).</summary>
+    /// <param name="name">The connection.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>A task that ends when the event is recorded or skipped.</returns>
+    public async ValueTask SignInRequested(ConnectionName name, CancellationToken cancellationToken)
+    {
+        if (held.Current is not { } grant)
+        {
+            return;
+        }
+
+        var at = Now;
+        var entry = events.Entry(EventTypes.ConnectionSignInRequested, new ConnectionSignInRequested(name.ToString(), at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionSignInRequested}:{name}:{at.UtcTicks}"));
+        _ = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Appends 'connection.needs-sign-in' for <paramref name="name"/>, which projects its Needs-you row. Like <see cref="SignedIn"/> it is skipped when no lease is held and ignores a failed append: the status row is already written.</summary>
     /// <param name="name">The connection.</param>
     /// <param name="reason">Why (a provider's error code or fixed text, never a token).</param>

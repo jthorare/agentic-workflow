@@ -281,6 +281,11 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfEditLoadFailed(Error error) => "Couldn't read the workflow to edit. " + InstanceRefused(error);
 
+    /// <summary>The editor's note when an edit was saved but the workflow can't be read again: the reason follows.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string WfEditSavedReloadFailed(Error error) => "The edit was saved, but the workflow couldn't be read again. Reload to see it. " + InstanceRefused(error);
+
     /// <summary>The line under a required field left empty.</summary>
     internal const string WfFieldNeeded = "This field is required.";
 
