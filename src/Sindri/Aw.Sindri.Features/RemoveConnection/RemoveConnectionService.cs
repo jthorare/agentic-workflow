@@ -47,6 +47,7 @@ internal sealed class RemoveConnectionService(IConnectionStore store, IConnectio
             return ConnectionFailures.Safe(removed.Error);
         }
 
+        await _events.Removed(name.Value, cancellationToken).ConfigureAwait(false);
         if (found.Value.Status == ConnectionStatus.NeedsSignIn)
         {
             await _events.SignedIn(name.Value, cancellationToken).ConfigureAwait(false);   // why: a 'sign in again' row for a connection that is gone would point at nothing

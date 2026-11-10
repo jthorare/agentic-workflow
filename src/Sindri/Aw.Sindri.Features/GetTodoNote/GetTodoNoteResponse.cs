@@ -2,7 +2,7 @@ using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.GetTodoNote;
 
-/// <summary>The note's state (todo spec §4.4 'sindri todo note'). The open hold is not served yet.</summary>
+/// <summary>The note's state (todo spec §4.4 'sindri todo note').</summary>
 /// <param name="AsOf">How fresh the views are.</param>
 /// <param name="State">'not set', 'waiting for import', 'syncing', 'one way', 'can't read' or 'note busy'.</param>
 /// <param name="Vault">The vault of the note (todo.obsidian); null when not set.</param>
@@ -11,6 +11,7 @@ namespace Aw.Sindri.Features.GetTodoNote;
 /// <param name="LastSyncAt">The last 'todo.note.synced', or null.</param>
 /// <param name="LastError">The last failure's reason, or null.</param>
 /// <param name="Conflicts">Ids of the todos with an open conflict, oldest first.</param>
+/// <param name="Hold">The open hold (REQ-E7), or null.</param>
 /// <param name="Picks">The picks still in their Undo window.</param>
 /// <param name="CantSync">The note lines that can't sync.</param>
 public sealed record GetTodoNoteResponse(
@@ -22,5 +23,6 @@ public sealed record GetTodoNoteResponse(
     DateTimeOffset? LastSyncAt,
     string? LastError,
     IReadOnlyList<string> Conflicts,
+    TodoNoteHold? Hold,
     IReadOnlyList<TodoNotePick> Picks,
     IReadOnlyList<TodoNoteCantSync> CantSync);

@@ -76,8 +76,9 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
             // Advisory: a pane or transcript that can't be read leaves usage out of the poll.
             async () => await usage.Check(team, cancellationToken).ConfigureAwait(false))
         {
-            // Advisory: if the board can't be written, lanes miss one line and the next move fixes it.
-            MainMoved = async (sha, merged) => _ = await board.RecordMain(sha, merged, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false),
+            // Advisory: a board write that fails is printed as a WATCH ERROR line; the watch keeps polling and the next move fixes the board.
+            MainMoved = async (sha, merged) => await board.RecordMain(sha, merged, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false),
+            SeedMain = async sha => (await board.SeedMain(sha, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false)).Map(static _ => Unit.Value),
         };
     }
 

@@ -13,6 +13,13 @@ public interface IBoardStore
     /// <returns>Success.</returns>
     public ValueTask<Result<Unit>> RecordMain(string sha, IReadOnlyList<int> mergedPrs, DateTimeOffset at, CancellationToken cancellationToken);
 
+    /// <summary>Records main as the first move, only when no move was recorded yet (a fresh install's watch start); a board that holds a move is left as it is.</summary>
+    /// <param name="sha">Main's sha as the watch found it.</param>
+    /// <param name="at">When the watch found it.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>True when this call wrote the first move, false when the board already held one.</returns>
+    public ValueTask<Result<bool>> SeedMain(string sha, DateTimeOffset at, CancellationToken cancellationToken);
+
     /// <summary>The latest recorded move of main.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The facts; null before any move was recorded.</returns>

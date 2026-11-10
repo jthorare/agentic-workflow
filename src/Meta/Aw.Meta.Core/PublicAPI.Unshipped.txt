@@ -994,6 +994,7 @@ Aw.Meta.Core.Ports.IHostResources.Read(System.Threading.CancellationToken cancel
 Aw.Meta.Core.Ports.IKeyValueStore
 Aw.Meta.Core.Ports.IKeyValueStore.Get(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Meta.Core.Ports.IKeyValueStore.Set(string! key, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.IKeyValueStore.SetIf(string! key, string? expected, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Meta.Core.Ports.ILaneFiles
 Aw.Meta.Core.Ports.ILaneFiles.Record(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneRecord?>!>
 Aw.Meta.Core.Ports.ILaneMail
@@ -2052,6 +2053,7 @@ static Aw.Meta.Core.Watch.ContextWatch.Step(System.Collections.Generic.IReadOnly
 static readonly Aw.Meta.Core.Coordination.PaneSubmitter.Pause -> System.TimeSpan
 static readonly Aw.Meta.Core.MetaErrors.RecycleRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Meta.Core.MetaErrors.RecycleTimedOut -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Meta.Core.MetaErrors.BoardContended -> Aw.Kernel.ErrorDefinition!
 Aw.Meta.Core.Coordination.LaneContextReader.ReadOrNull(Aw.Meta.Core.Config.TeamConfig? team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Lanes.LaneContext!>?>
 Aw.Meta.Core.Config.TeamConfig.Agent.get -> string?
 Aw.Meta.Core.Config.TeamConfig.Agent.init -> void
@@ -2420,6 +2422,7 @@ Aw.Meta.Core.Ports.IBoardStore
 Aw.Meta.Core.Ports.IBoardStore.MarkSeen(string! lane, Aw.Meta.Core.Ports.BoardSeen! seen, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.IBoardStore.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.BoardFacts?>!>
 Aw.Meta.Core.Ports.IBoardStore.RecordMain(string! sha, System.Collections.Generic.IReadOnlyList<int>! mergedPrs, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.IBoardStore.SeedMain(string! sha, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Meta.Core.Ports.IBoardStore.SeenVersion(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.BoardSeen?>!>
 override Aw.Meta.Core.Ports.BoardFacts.Equals(object? obj) -> bool
 override Aw.Meta.Core.Ports.BoardFacts.GetHashCode() -> int

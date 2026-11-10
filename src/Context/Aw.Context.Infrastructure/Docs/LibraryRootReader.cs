@@ -27,7 +27,7 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
     // A doc's audience comes from the synced repos, so they are part of what a pass compared with: the cursor part is the listing's hash (16 characters), then this hash of the sorted repos (8).
     private readonly string _repos = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join('\n', githubRepos.Select(static r => r.ToLowerInvariant()).Order(StringComparer.Ordinal)))))[..8];
 
-    internal async ValueTask<Result<LibraryRootPass>> Run(LibraryRoot root, string? known, int room, CancellationToken cancellationToken)
+    internal async ValueTask<Result<LibraryRootPass>> Run(LibraryRoot root, string? known, int room, IReadOnlyCollection<string> skipped, CancellationToken cancellationToken)
     {
         var listing = LibraryWalker.List(root);
         if (listing.Problem is { } problem)
@@ -40,7 +40,9 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
             return kept.IsError ? kept.Error : LibraryRootPass.Failed(root.Name, root.Path, kept.Value);
         }
 
-        var fingerprint = Fingerprint(listing.Files) + _repos;
+        // why: the skipped files leave the listing after the empty check (a vault holding only the note is not an unmounted drive) and before the fingerprint, so naming one changes it
+        var files = skipped.Count == 0 ? listing.Files : [.. listing.Files.Where(f => !skipped.Contains(f.Relative, StringComparer.Ordinal))];
+        var fingerprint = Fingerprint(files) + _repos;
         if (string.Equals(fingerprint, known, StringComparison.Ordinal))
         {
             return LibraryRootPass.Same(root.Name, root.Path, fingerprint);
@@ -48,7 +50,7 @@ internal sealed class LibraryRootReader(IReadOnlyList<string> githubRepos, IReco
 
         var stored = await Stored(root.Name, cancellationToken).ConfigureAwait(false);
         var reaudience = known is null || !known.EndsWith(_repos, StringComparison.Ordinal);   // the synced repos changed: every doc's audience is worked out again
-        return stored.IsError ? stored.Error : Diff(root, listing.Files, stored.Value, new Tally(room, reaudience), fingerprint);
+        return stored.IsError ? stored.Error : Diff(root, files, stored.Value, new Tally(room, reaudience), fingerprint);
     }
 
     // An unmounted drive leaves an empty mount point: a root that lists nothing while docs are stored for it is a problem, not a deletion.
