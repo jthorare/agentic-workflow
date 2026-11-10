@@ -10,18 +10,20 @@
   <UserControl.Styles>
     <Style Selector="Border.dimmed"><Setter Property="Opacity" Value="0.5" /></Style>
   </UserControl.Styles>
-  <Border x:Name="SandboxPanel" Classes="panel" Width="440" Margin="0,0,12,12" Classes.dimmed="{Binding IsDimmed}">
+  <Border x:Name="SandboxPanel" Classes="panel" Margin="0,0,12,12" Classes.dimmed="{Binding IsDimmed}">
     <Border Classes="section last">
       <StackPanel Spacing="{StaticResource Space.XS}">
         <Grid ColumnDefinitions="*,Auto">
           <TextBlock x:Name="SandboxEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
           <TextBlock x:Name="SandboxWord" Grid.Column="1" Classes="body-strong" Text="{Binding StateWord}" AutomationProperties.Name="{Binding StateWord}" />
         </Grid>
-        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6" AutomationProperties.Name="{Binding RowText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6" IsVisible="{Binding ShowsRow}" AutomationProperties.Name="{Binding RowText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
           <icons:StateIcon x:Name="SandboxGlyph" Glyph="{Binding Glyph}" VerticalAlignment="Top" Margin="0,2,0,0" />
           <TextBlock x:Name="SandboxRow" Grid.Column="1" Classes="body" Text="{Binding RowText}" TextWrapping="Wrap"
                      AutomationProperties.Name="{Binding RowText}" />
         </Grid>
+        <TextBlock x:Name="SandboxDetail" Classes="body subtle" Text="{Binding Detail}" TextWrapping="Wrap" IsVisible="{Binding HasDetail}"
+                   AutomationProperties.Name="{Binding Detail}" />
         <StackPanel x:Name="SandboxCheckSlot" IsVisible="{Binding ShowsCheck}">
           <sv:SandboxCheckPanel DataContext="{Binding Check}" />
         </StackPanel>

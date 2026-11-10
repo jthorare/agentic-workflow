@@ -62,7 +62,7 @@
       <!-- The headline: the state's glyph and word, then the one sentence ("Everything is running." or what is wrong). -->
       <Border x:Name="Headline" Classes="panel headline" Classes.warn="{Binding ToneWarn}" Classes.bad="{Binding ToneError}">
         <StackPanel Orientation="Horizontal" Spacing="10">
-          <icons:StateIcon x:Name="HeadlineGlyph" Glyph="{Binding Pill.Glyph}" VerticalAlignment="Center" />
+          <icons:StateIcon x:Name="HeadlineGlyph" Glyph="{Binding HeadlineGlyph}" VerticalAlignment="Center" />
           <TextBlock x:Name="HealthSentence" Classes="body-strong" Text="{Binding Sentence}" TextWrapping="Wrap" VerticalAlignment="Center"
                      AutomationProperties.Name="{Binding Sentence}" />
         </StackPanel>
@@ -149,7 +149,7 @@
 
       <WrapPanel x:Name="SystemCards" Orientation="Horizontal" IsVisible="{Binding ShowOverviewCards}">
         <!-- The control plane: its state is the pill's glyph and word (running, stale, not running). -->
-        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border Classes="panel" Margin="0,0,12,12">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -179,7 +179,7 @@
           </Border>
         </Border>
 
-        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border Classes="panel" Margin="0,0,12,12">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -207,7 +207,7 @@
           </Border>
         </Border>
 
-        <Border x:Name="ViewsCard" Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border x:Name="ViewsCard" Classes="panel" Margin="0,0,12,12">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -231,7 +231,7 @@
         </Border>
 
         <!-- CI-10b (code-index spec §7.3): the Code index card: one wrapped line per repo, its state a word and never colour alone. -->
-        <Border x:Name="CodeIndexPanel" Classes="panel" Width="440" Margin="0,0,12,12" DataContext="{Binding CodeIndex}" x:DataType="shell:CodeIndexCardViewModel">
+        <Border x:Name="CodeIndexPanel" Classes="panel" Margin="0,0,12,12" DataContext="{Binding CodeIndex}" x:DataType="shell:CodeIndexCardViewModel">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -252,7 +252,7 @@
         </Border>
 
         <!-- #1597: the Context index card: one wrapped line per context source, its state a word and never colour alone. -->
-        <Border x:Name="ContextIndexPanel" Classes="panel" Width="440" Margin="0,0,12,12" DataContext="{Binding ContextIndex}" x:DataType="shell:ContextIndexCardViewModel">
+        <Border x:Name="ContextIndexPanel" Classes="panel" Margin="0,0,12,12" DataContext="{Binding ContextIndex}" x:DataType="shell:ContextIndexCardViewModel">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -274,7 +274,7 @@
         <!-- Sandbox (sandbox spec 8): the row "Sandbox: <state>" and, while it is blocked or never checked, Check again. -->
         <sandbox:SandboxHealthCard x:Name="SandboxCard" DataContext="{Binding Sandbox}" />
 
-        <Border x:Name="AgentsCard" Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border x:Name="AgentsCard" Classes="panel" Margin="0,0,12,12">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <TextBlock Classes="eyebrow head-eyebrow" Text="{Binding AgentsCardName}" AutomationProperties.Name="{Binding AgentsCardName}" />
@@ -292,7 +292,7 @@
           </Border>
         </Border>
 
-        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border Classes="panel" Margin="0,0,12,12">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">
               <Grid ColumnDefinitions="*,Auto">
@@ -304,9 +304,10 @@
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="shell:ServiceRowViewModel">
                     <StackPanel>
-                      <Grid Classes="row" ColumnDefinitions="140,*,Auto" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding What}">
-                        <TextBlock Classes="body-strong" Text="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
-                        <TextBlock Grid.Column="1" Classes="body muted" Text="{Binding Every}" AutomationProperties.Name="{Binding Every}" />
+                      <Grid Classes="row" ColumnDefinitions="*,Auto,Auto" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding What}">
+                        <TextBlock Classes="body-strong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" Margin="0,0,12,0"
+                                   ToolTip.Tip="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
+                        <TextBlock Grid.Column="1" Classes="body muted" Margin="0,0,12,0" Text="{Binding Every}" AutomationProperties.Name="{Binding Every}" />
                         <TextBlock Grid.Column="2" Classes="body subtle" Text="{Binding LastRun}" AutomationProperties.Name="{Binding LastRun}" />
                       </Grid>
                       <TextBlock Classes="body subtle" Classes.error="{Binding HasFailed}" TextWrapping="Wrap" IsVisible="{Binding HasWhy}" Text="{Binding Why}"
@@ -321,7 +322,7 @@
           </Border>
         </Border>
 
-        <Border Classes="panel" Width="440" Margin="0,0,12,12">
+        <Border Classes="panel" Margin="0,0,12,12">
           <!-- The catalog (§4.8): the actions the app has no form for (copy blocks). Every control comes from the control renderer; nothing here runs a command. -->
         <Border x:Name="ActionsSection" Classes="section last" DataContext="{Binding Catalog}" x:DataType="controls:CatalogViewModel">
           <StackPanel Spacing="{StaticResource Space.XS}">

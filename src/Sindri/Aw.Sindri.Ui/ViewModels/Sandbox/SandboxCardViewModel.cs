@@ -52,13 +52,13 @@ internal sealed class SandboxCardViewModel : ObservableObject
     public StateGlyph Glyph { get; private set; }
 
     /// <summary>True when the row line shows.</summary>
-    public bool ShowsRow => true;
+    public bool ShowsRow => State != SandboxHealthState.Unreadable;
 
     /// <summary>The reason the details are unavailable and what to do; empty otherwise.</summary>
-    public string Detail => string.Empty;
+    public string Detail => State == SandboxHealthState.Unreadable ? Labels.SandboxUnreadableReason : string.Empty;
 
     /// <summary>True when <see cref="Detail"/> shows.</summary>
-    public bool HasDetail => false;
+    public bool HasDetail => State == SandboxHealthState.Unreadable;
 
     /// <summary>Every blocker the last check found.</summary>
     public IReadOnlyList<SandboxBlockerRow> Blockers { get; private set; } = [];
@@ -135,6 +135,9 @@ internal sealed class SandboxCardViewModel : ObservableObject
         OnChanged(nameof(IsDimmed));
         OnChanged(nameof(IsWarning));
         OnChanged(nameof(ShowsCheck));
+        OnChanged(nameof(ShowsRow));
+        OnChanged(nameof(Detail));
+        OnChanged(nameof(HasDetail));
     }
 
     /// <summary>The state in a word at the card's right.</summary>

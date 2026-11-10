@@ -13,7 +13,22 @@ internal sealed partial class HealthPage : UserControl
     {
         InitializeComponent();
         SizeChanged += (_, e) => (DataContext as HealthViewModel)?.Resize(e.NewSize.Width);
+        SystemCards.SizeChanged += (_, e) => FillCards(e.NewSize.Width);
         SystemTabs.AddHandler(KeyDownEvent, OnTabKey);
+    }
+
+    // The card grid fills its width: as many columns as fit the minimum card width, each card an equal share (its own margin inside the share).
+    private const double MinCardWidth = 400;
+
+    private void FillCards(double width)
+    {
+        if (width <= 0)
+        {
+            return;
+        }
+
+        var columns = Math.Max(1, (int)Math.Floor(width / MinCardWidth));
+        SystemCards.ItemWidth = Math.Floor(width / columns);
     }
 
     // Left and Right move between the two tabs, and focus follows the choice (system spec §5).

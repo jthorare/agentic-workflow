@@ -116,7 +116,7 @@ internal sealed partial class HealthViewModel
     public bool ToneWarn { get; private set => Set(ref field, value); }
 
     /// <summary>The headline's glyph: the tone decides it (warning, failure), the pill's glyph otherwise.</summary>
-    public StateGlyph HeadlineGlyph => Pill.Glyph;
+    public StateGlyph HeadlineGlyph => ToneError ? StateGlyph.Down : ToneWarn ? StateGlyph.Warning : Pill.Glyph;
 
     /// <summary>The headline is red: stalled, not running, unreadable or a version mismatch.</summary>
     public bool ToneError { get; private set => Set(ref field, value); }
@@ -145,6 +145,7 @@ internal sealed partial class HealthViewModel
         var look = NeedsLook();
         Sentence = SentenceFor(new SentenceInputs(State, _health is not null, Pill.IsHealthy, Pill.Problems, _health?.Sentence, look));
         (ToneWarn, ToneError) = ToneFor(State, _health?.Word, look.Length > 0);
+        OnChanged(nameof(HeadlineGlyph));
         ProblemLines = [.. (_health?.Problems ?? []).Select(p => HealthProblemLine.From(p, _health?.Word))];
         OnChanged(nameof(HasProblemLines));
         ShowAgentsCard();

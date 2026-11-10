@@ -25,6 +25,9 @@ internal static partial class Labels
     /// <summary>The Settings section and the sheet's Sandbox line while the details can't be read.</summary>
     internal const string SandboxDetailsUnavailable = "Sandbox: details unavailable";
 
+    /// <summary>The Health card's one line under the "details unavailable" word: why, and what to do.</summary>
+    internal const string SandboxUnreadableReason = "Sindri answered, but in a form this app can't read. Update the app or Sindri so their versions match.";
+
     /// <summary>The Settings section and the sheet's Sandbox line while Sindri doesn't answer.</summary>
     internal const string SandboxStatusUnavailable = "Sandbox: status unavailable";
 
