@@ -48,6 +48,9 @@ public static class KvKeys
     /// <summary>"1" while the watch's polls are failing (set by the first failed poll, cleared by a good one): a repeat error in a later run is not a new event.</summary>
     public const string WatchFailing = "watch.failing";
 
+    /// <summary>The pid of the newest watch (#2564). Only that watch keeps watch.snapshot and watch.failing; an older one prints WATCH superseded and ends.</summary>
+    public const string WatchOwner = "watch.owner";
+
     /// <summary>When the owner or meta dropped a pull request's merge-queue entry (aw-meta queue-drop), as "pr=ticks" pairs; a ready message newer than the drop queues it again.</summary>
     public const string QueueDropped = "queue.dropped";
 
