@@ -79,6 +79,7 @@ public sealed class HomeLayoutTests
             Assert.True(Math.Abs(needs.Top - running.Top) < 1, "the two columns start on the same line");
             Assert.True(queued.Top >= running.Bottom - 0.5, "Queued sits under Running");
             Assert.True(health.Top >= Math.Max(needs.Bottom, queued.Bottom) - 0.5, "the health strip runs across the bottom");
+            Assert.True(needs.Width > running.Width * 1.3, "Needs you is the main column, wider than the right one");
         });
     }
 

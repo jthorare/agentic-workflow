@@ -84,7 +84,14 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
     internal bool IsLoading => !_loaded;
 
     /// <summary>The empty line Home shows: the served sentence, or the app's own words when none was served; empty unless the list is read and empty.</summary>
-    internal string EmptyLine => !_loaded || !IsEmpty ? "" : _feed.Sentence.Length > 0 ? _feed.Sentence : Labels.HomeNothingNeedsYou;
+    // The served sentence can carry the running and queued counts ("Nothing needs you. 0 running, 0 queued."); those live in their own cards, so only its first sentence shows.
+    private static string FirstSentence(string sentence)
+    {
+        var end = sentence.IndexOf(". ", StringComparison.Ordinal);
+        return end < 0 ? sentence : sentence[..(end + 1)];
+    }
+
+    internal string EmptyLine => !_loaded || !IsEmpty ? "" : _feed.Sentence.Length > 0 ? FirstSentence(_feed.Sentence) : Labels.HomeNothingNeedsYou;
 
     /// <summary>True while a stalled or rebuilding banner shows.</summary>
     internal bool HasBanner => _feed.Stalled || _feed.Rebuilding;

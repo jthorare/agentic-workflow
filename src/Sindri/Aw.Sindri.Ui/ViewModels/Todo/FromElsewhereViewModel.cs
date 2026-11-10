@@ -158,7 +158,7 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     private ElsewherePartViewModel? LinearPart() => _linear switch
     {
         LinearState.Failed => Part(ElsewherePart.Linear, Labels.ElsewhereLinearFailed, "Linear", retryName: "Linear"),
-        LinearState.NotConnected => Part(ElsewherePart.Linear, Labels.ElsewhereLinearNotConnected, "Settings, Connections"),
+        LinearState.NotConnected => Part(ElsewherePart.Linear, Labels.ElsewhereLinearNotConnected, "Connections"),
         LinearState.Ready when _assigned > 0 => Part(ElsewherePart.Linear, Labels.ElsewhereLinear(_assigned), "Linear"),
         LinearState.Loading or LinearState.Ready or LinearState.NotShown => null,
         _ => throw new InvalidOperationException(_linear.ToString()),

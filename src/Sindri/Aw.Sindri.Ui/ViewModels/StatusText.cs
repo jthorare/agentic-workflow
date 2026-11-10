@@ -27,16 +27,10 @@ internal static class StatusText
 
     internal static string Event(EventView e) => string.Create(CultureInfo.InvariantCulture, $"{e.Type} · {Time(e.OccurredAt)} · #{e.Sequence}");
 
-    // Home's strip (§4.2, §4.8): the health line's fields as labelled cells, each value a word.
+    // Home's strip (§4.2, §4.8): status dots with a word each. pid, epoch, lease and the API version are the System page's (Process).
     internal static IEnumerable<HealthCell> Strip(StatusView s)
     {
-        yield return new(Labels.CellProcess, string.Create(CultureInfo.InvariantCulture, $"{Labels.Running} · pid {s.Pid}"));
-        yield return new(Labels.CellEpoch, string.Create(CultureInfo.InvariantCulture, $"{s.Epoch} · {Labels.LeaseHeld}"));
-        if (s.ApiVersion is { } version)
-        {
-            yield return new(Labels.CellApi, string.Create(CultureInfo.InvariantCulture, $"v{version}"));
-        }
-
+        yield return new(Labels.CellProcess, Labels.Running, StateGlyph.Ok);
         yield return new(Labels.CellServices, Services(s));
         yield return new(Labels.CellProfile, ProfileHead(s.Profile), ProfileGlyph(s.Profile));
     }

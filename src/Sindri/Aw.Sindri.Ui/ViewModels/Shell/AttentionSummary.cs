@@ -36,8 +36,14 @@ internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, 
             badge > 0 ? Labels.TitleNeedsYou(badge) : Labels.Sindri,
             badge,
             TrayFor(feed, state, now, sessions),
-            feed is null ? "" : Labels.Summary(listed ?? rows.Count, counts.Running, counts.WithYou, counts.Queued));
+            feed is null ? "" : Labels.Summary(listed ?? rows.Count, counts.Running, counts.WithYou, counts.Queued))
+        {
+            NeedsYouLine = HeaderCount(feed, listed ?? rows.Count),
+        };
     }
+
+    // Home's header names only the need-you count, and nothing at zero: running and queued live in their own cards.
+    private static string HeaderCount(NeedsYouFeed? feed, int count) => feed is null || count == 0 ? "" : Labels.NeedYouCount(count);
 
     /// <summary>Adds the Linear strip's count to the tray's tooltip as a line, the way the session counts do; the badge and the title stay.</summary>
     /// <param name="count">How many changes the strip holds; 0 adds nothing.</param>

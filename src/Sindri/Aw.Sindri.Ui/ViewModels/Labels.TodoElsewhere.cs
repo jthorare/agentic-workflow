@@ -17,8 +17,8 @@ internal static partial class Labels
     /// <summary>The Linear part when its read failed.</summary>
     internal const string ElsewhereLinearFailed = "Linear didn't load";
 
-    /// <summary>The Linear part when no Linear source is set up; it opens Settings, Connections.</summary>
-    internal const string ElsewhereLinearNotConnected = "Linear not connected";
+    /// <summary>The Linear part when no Linear source is set up; it opens Connections.</summary>
+    internal const string ElsewhereLinearNotConnected = "Connect Linear";
 
     /// <summary>The button beside a part that failed to load.</summary>
     internal const string ElsewhereRetry = "Retry";

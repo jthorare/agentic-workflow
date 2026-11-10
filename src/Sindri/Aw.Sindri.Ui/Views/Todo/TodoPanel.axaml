@@ -92,7 +92,7 @@
             </Border>
           </StackPanel>
 
-          <TextBlock x:Name="TodoEmpty" Classes="caption quiet" Text="{Binding EmptyText}" Margin="16,12" HorizontalAlignment="Left" TextAlignment="Left"
+          <TextBlock x:Name="TodoEmpty" Classes="caption quiet" Text="{Binding EmptyText}" Margin="16,8" HorizontalAlignment="Left" TextAlignment="Left"
                      IsVisible="{Binding EmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding EmptyText}" />
 
           <ItemsControl x:Name="TodoRows" ItemsSource="{Binding Rows}" IsVisible="{Binding !IsExpanded}">
@@ -103,7 +103,7 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
-        <Grid x:Name="TodoShowAllSlot" Grid.Row="1" ColumnDefinitions="Auto,*" Height="{StaticResource Size.Row}">
+        <Grid x:Name="TodoShowAllSlot" Grid.Row="1" ColumnDefinitions="Auto,*" Height="{StaticResource Size.Row}" IsVisible="{Binding HasFootSlot}">
           <Button x:Name="TodoShowAll" HorizontalAlignment="Left" VerticalAlignment="Center" Classes="copy" Click="OnShowAll" IsVisible="{Binding ShowsShowAll}" Margin="16,0"
                   AutomationProperties.Name="{Binding ShowAllText}">
             <TextBlock x:Name="TodoShowAllText" Classes="caption" Text="{Binding ShowAllText}" AutomationProperties.AccessibilityView="Raw" />

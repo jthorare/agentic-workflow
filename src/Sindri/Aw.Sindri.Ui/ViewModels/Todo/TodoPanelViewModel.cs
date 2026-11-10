@@ -51,7 +51,7 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
     public bool IsLoading { get; private set => Set(ref field, value); } = true;
 
     /// <summary>The last read's failure line; empty when the last read worked.</summary>
-    public string Error { get; private set => Set(ref field, value); } = string.Empty;
+    public string Error { get; private set { Set(ref field, value); RaiseSlots(); } } = string.Empty;
 
     /// <summary>"11 open · 1 overdue", plus "· 1 to sort out" while a conflict is open.</summary>
     public string CountLine { get; private set => Set(ref field, value); } = string.Empty;
@@ -61,9 +61,6 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
 
     /// <summary>Todos with an open both-places conflict (the tray's tooltip).</summary>
     public int ToSortOutCount { get; private set => Set(ref field, value); }
-
-    /// <summary>How many row-high slots the collapsed body takes: 6 (five rows and the Show all slot), or 1 when the list is empty.</summary>
-    public int CollapsedSlots => IsExpanded ? 6 : 5 + 1;
 
     /// <summary>True when no todo is open.</summary>
     public bool IsEmpty { get; private set => Set(ref field, value); }
@@ -243,6 +240,7 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
         (OverdueCount, ToSortOutCount) = (split.Overdue.Count, toSortOut);
         CountLine = Labels.TodoCountLine(open, split.Overdue.Count, toSortOut);
         (IsEmpty, EmptyText) = (open == 0, open == 0 ? Labels.TodoEmpty : string.Empty);
+        RaiseSlots();
         (ShowsShowAll, ShowAllText) = (!IsExpanded && shown.Open.Count > CollapsedRows - slots, Labels.TodoShowAll(open));
         DoneToggleText = ShowsDone ? Labels.TodoHideDone : Labels.TodoShowDone;
         DoneToggleName = Labels.TodoShowDoneName(listed);
