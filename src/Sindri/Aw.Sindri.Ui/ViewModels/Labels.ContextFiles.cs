@@ -109,7 +109,10 @@ internal static partial class Labels
     internal const string ContextStateBuildingBody = "Reading the ticket, the product map and the code. This usually takes under a minute.";
 
     /// <summary>The No map state's title.</summary>
-    internal const string ContextStateEmptyTitle = "No map for this item yet";
+    internal const string ContextStateEmptyTitle = "No map yet. Build one to see what your repo is made of.";
+
+    /// <summary>The No map state's title when an item is picked.</summary>
+    internal const string ContextStateEmptyItemTitle = "No map for this item yet";
 
     /// <summary>The No map state's body.</summary>
     internal const string ContextStateEmptyBody = "Build it to see why this work exists and what it touches.";

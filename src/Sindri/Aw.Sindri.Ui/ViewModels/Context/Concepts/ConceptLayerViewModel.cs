@@ -74,7 +74,7 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
     /// <summary>A read starts.</summary>
     internal void Loading()
     {
-        (IsLoading, Note) = (true, string.Empty);
+        (IsLoading, Note, NoteTip) = (true, string.Empty, string.Empty);
         Changed();
     }
 
@@ -146,7 +146,11 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
 
     /// <summary>The concepts cannot be read.</summary>
     /// <param name="code">The error code.</param>
-    internal void Unavailable(string code) => Say(Labels.ContextConceptsUnavailable(code));
+    internal void Unavailable(string code)
+    {
+        Say(Labels.ContextConceptsUnavailable);
+        NoteTip = code;
+    }
 
     /// <summary>Forgets everything (another repo is chosen).</summary>
     internal void Reset() => Say(string.Empty);
@@ -190,7 +194,7 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
         TermsNote = string.Empty;
         _all = [];
         (_pins, _wasBuilding, RebuildText) = (null, false, string.Empty);
-        (IsLoading, Note) = (false, note);
+        (IsLoading, Note, NoteTip) = (false, note, string.Empty);
         ResetSearch();
         Changed();
     }

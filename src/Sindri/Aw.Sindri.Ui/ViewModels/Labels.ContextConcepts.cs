@@ -39,9 +39,7 @@ internal static partial class Labels
     internal const string ContextConceptsBuilding = "The concepts are still being built, so the whole map is shown.";
 
     /// <summary>The line when the concepts cannot be read; the map itself opens as before.</summary>
-    /// <param name="code">The error code.</param>
-    /// <returns>"Concepts are not available (SND-CONTEXT-041), so the whole map is shown."</returns>
-    internal static string ContextConceptsUnavailable(string code) => $"Concepts are not available ({code}), so the whole map is shown.";
+    internal const string ContextConceptsUnavailable = "No concepts yet, showing the whole map.";
 
     /// <summary>What a concept holds, in people's words.</summary>
     /// <param name="features">Features.</param>

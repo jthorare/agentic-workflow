@@ -35,8 +35,10 @@ public sealed class ContextPlainWordsTests
         var catalog = new CatalogViewModel(clipboard, clock);
         var url = new Uri("http://127.0.0.1:1/");
         catalog.Show(url, api, (await api.Commands(url, Token)).Value);
-        var page = new ContextPageViewModel(new ContextPorts(api, () => url, clipboard, clock, catalog, _ => { }));
-        page.AnchorText = (string)GoldenFiles.Node("context-lenses", "map-tabs")["anchor"]!["key"]!;
+        var page = new ContextPageViewModel(new ContextPorts(api, () => url, clipboard, clock, catalog, _ => { }))
+        {
+            AnchorText = (string)GoldenFiles.Node("context-lenses", "map-tabs")["anchor"]!["key"]!,
+        };
 
         await page.Submit(Token);
 
