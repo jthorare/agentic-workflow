@@ -130,6 +130,28 @@ public sealed class ConnectionsFramesTests : FrameHost
         Frame(window, "tile-help-1000", Prefix);
     });
 
+    // #2556: Rename opens an inline field on the tile holding the current label; at 1000 px (the window's narrowest) the field, its Save and its error stay inside the tile.
+    [Fact]
+    public Task A_tile_in_rename_mode_shows_the_field_with_the_label_and_nothing_clips_at_1000() => OnUi(async () =>
+    {
+        var (window, shell) = await OnConnections(1000);
+        var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "linear", StringComparison.Ordinal));
+        tile.StartRename();
+        tile.RenameText = "home-office";
+        Server.ConnectionWriteError = new Kernel.Error("SND-CONN-010", Kernel.ErrorKind.Conflict, "A connection with that name already exists");
+        await tile.Rename(CancellationToken.None);
+        Settle(window);
+
+        Assert.True(VisibleIn(window, tile, "ServiceTileRenameField"), "the field is hidden");
+        Assert.True(VisibleIn(window, tile, "ServiceTileRenameSave"), "Save is hidden");
+        Assert.True(VisibleIn(window, tile, "ServiceTileRenameError"), "the refusal is hidden");
+        var field = window.GetVisualDescendants().OfType<TextBox>().Single(b => string.Equals(b.Name, "ServiceTileRenameField", StringComparison.Ordinal) && b.IsEffectivelyVisible);
+        Assert.Equal("home-office", field.Text);
+        var frame = field.GetVisualAncestors().OfType<Border>().First(b => string.Equals(b.Name, "ServiceTileFrame", StringComparison.Ordinal));
+        Assert.True(field.TranslatePoint(new Point(field.Bounds.Width, 0), frame)!.Value.X <= frame.Bounds.Width, "the field ends inside the tile");
+        Frame(window, "tile-rename-1000", Prefix);
+    });
+
     // Every tile has the same element names, so a lookup by name alone finds the first tile's: look inside this tile's view only.
     private static bool VisibleIn(Window window, object tile, string name) =>
         window.GetVisualDescendants().OfType<Control>().Any(c => c.Name == name && c.IsEffectivelyVisible && c.GetVisualAncestors().OfType<Control>().Any(a => a.DataContext == tile));
