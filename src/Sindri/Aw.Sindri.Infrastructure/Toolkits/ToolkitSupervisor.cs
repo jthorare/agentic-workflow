@@ -12,7 +12,7 @@ namespace Aw.Sindri.Infrastructure.Toolkits;
 /// <param name="launcher">Starts processes.</param>
 /// <param name="store">Takes the 'failed' state.</param>
 /// <param name="clock">The clock the backoff and the crash window use.</param>
-internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolkitStore store, TimeProvider clock) : IToolkitRuntime, IAsyncDisposable, IDisposable
+internal sealed partial class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolkitStore store, TimeProvider clock) : IToolkitRuntime, IAsyncDisposable, IDisposable
 {
     /// <summary>The crashes that make a toolkit 'failed' when they fall inside <see cref="Window"/>.</summary>
     internal const int MaxCrashes = 3;
@@ -92,9 +92,22 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         return Unit.Value;
     }
 
-    public ValueTask<Result<Unit>> Pause(string name, CancellationToken cancellationToken) => throw new NotSupportedException(name);
+    public ValueTask<Result<Unit>> Pause(string name, CancellationToken cancellationToken) => ValueTask.FromResult(SetPaused(name, paused: true));
 
-    public ValueTask<Result<Unit>> Resume(string name, CancellationToken cancellationToken) => throw new NotSupportedException(name);
+    public ValueTask<Result<Unit>> Resume(string name, CancellationToken cancellationToken) => ValueTask.FromResult(SetPaused(name, paused: false));
+
+    /// <summary>Flips the pause flag of a toolkit that has a live process. The flag lives on the entry the watcher keeps, so a restart after a crash stays paused, and a stop ends the entry with it.</summary>
+    private Result<Unit> SetPaused(string name, bool paused)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        if (!_running.TryGetValue(name, out var running) || running.Process is null)
+        {
+            return SindriErrors.ToolkitNotBuilt.With($"Toolkit '{name}' isn't running (fix: toolkit_start)");
+        }
+
+        running.Paused = paused;
+        return Unit.Value;
+    }
 
     /// <summary>How many calls are queued on the gate right now (a test signal: tests wait on it instead of a delay).</summary>
     internal int GateWaiters => Volatile.Read(ref _waiting);
@@ -133,10 +146,10 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         }
     }
 
-    /// <summary>The toolkits that have a live process right now, as 'running'; one waiting out a restart backoff or given up on has none.</summary>
+    /// <summary>The toolkits that have a live process right now, as 'running' or, when paused, 'paused'; one waiting out a restart backoff or given up on has none.</summary>
     /// <returns>The toolkits in name order.</returns>
     internal IReadOnlyList<Toolkit> RunningNow() =>
-        [.. _running.Values.Where(static r => r.Process is not null).Select(static r => r.Toolkit with { State = ToolkitState.Running }).OrderBy(static t => t.Name, StringComparer.Ordinal)];
+        [.. _running.Values.Where(static r => r.Process is not null).Select(static r => r.Toolkit with { State = r.Paused ? ToolkitState.Paused : ToolkitState.Running }).OrderBy(static t => t.Name, StringComparer.Ordinal)];
 
     /// <summary>Calls one tool of a running toolkit.</summary>
     /// <param name="name">The toolkit name.</param>
@@ -268,19 +281,5 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
             _ = _gate.Release();
             _ = Interlocked.Increment(ref _giveUps);
         }
-    }
-
-    private sealed class Running(IToolkitProcess first, Toolkit toolkit)
-    {
-        internal Toolkit Toolkit { get; } = toolkit;
-
-        internal IToolkitProcess? Process { get; set; } = first;
-
-        internal Task Watcher { get; set; } = Task.CompletedTask;
-
-        /// <summary>Set once the watcher has decided to give up, before it queues on the gate.</summary>
-        internal volatile bool GivingUp;
-
-        internal CancellationTokenSource Stopping { get; } = new();
     }
 }

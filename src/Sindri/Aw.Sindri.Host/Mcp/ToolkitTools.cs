@@ -267,7 +267,7 @@ internal static class ToolkitTools
         return toolkit switch
         {
             null => SindriErrors.ToolkitNotFound.With($"No toolkit named '{toolkitName}' (fix: toolkit_list names them)"),
-            { State: ToolkitState.Paused } => SindriErrors.ToolkitPaused.With($"Toolkit '{toolkitName}' is paused (fix: toolkit_stop, then toolkit_start)"),
+            { State: ToolkitState.Paused } => SindriErrors.ToolkitPaused.With($"Toolkit '{toolkitName}' is paused (fix: toolkit_resume)"),
             { State: not ToolkitState.Running } => SindriErrors.ToolkitNotBuilt.With($"Toolkit '{toolkitName}' isn't running (fix: toolkit_start)"),
             _ when toolkit.Manifest is null || !toolkit.Manifest.Tools.Any(t => string.Equals(t.Name, toolName, StringComparison.Ordinal)) =>
                 SindriErrors.ToolkitToolUnknown.With($"Toolkit '{toolkitName}' has no tool '{toolName}' (fix: tools/list names them)"),

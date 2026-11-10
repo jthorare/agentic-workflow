@@ -119,7 +119,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-TK-002` | The toolkit's `dotnet build -warnaserror` or its tests failed; it stays `failed` and can't start. | read the build job's output, fix, build again |
 | `SND-TK-003` | `toolkit.json` isn't the SDK's manifest, or a tool name can't become a client tool name. | rebuild with the toolkit SDK; keep `<toolkit>__<tool>` within 64 characters |
 | `SND-TK-004` | The toolkit's process ended during a call. | `sindri toolkit start <name>`; three crashes in ten minutes mark it `failed` |
-| `SND-TK-005` | The toolkit is paused; its process is kept and calls are refused. | `toolkit_stop`, then `toolkit_start` |
+| `SND-TK-005` | The toolkit is paused; its process is kept and calls are refused. | `toolkit_resume` (or `sindri toolkit resume <name>`) |
 | `SND-TK-006` | A tool call didn't answer within its timeout (60 s by default). | retry, or make the tool faster |
 | `SND-TK-007` | The toolkit has no tool with that name. | `sindri toolkit list` shows the tools |
 | `SND-TK-008` | This box has no sandbox for a plain process (no bubblewrap or Seatbelt), so a toolkit can't start. | `sindri doctor` names the missing piece |

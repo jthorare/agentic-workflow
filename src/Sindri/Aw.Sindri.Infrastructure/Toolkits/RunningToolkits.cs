@@ -16,9 +16,15 @@ internal sealed class RunningToolkits(ToolkitSupervisor supervisor, IToolkitStor
     public async ValueTask<Result<string>> CallTool(string toolkit, string tool, string argumentsJson, string caller, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(toolkit);
-        if (!supervisor.RunningNow().Any(t => string.Equals(t.Name, toolkit, StringComparison.Ordinal)))
+        var live = supervisor.RunningNow().FirstOrDefault(t => string.Equals(t.Name, toolkit, StringComparison.Ordinal));
+        if (live is null)
         {
             return await NotRunning(toolkit, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (live.State == ToolkitState.Paused)
+        {
+            return Paused(toolkit);
         }
 
         var startedAt = clock.GetUtcNow();
@@ -41,8 +47,10 @@ internal sealed class RunningToolkits(ToolkitSupervisor supervisor, IToolkitStor
         return found.Value switch
         {
             null => SindriErrors.ToolkitNotFound.With($"No toolkit named '{toolkit}' (fix: toolkit_list names them)"),
-            { State: ToolkitState.Paused } => SindriErrors.ToolkitPaused.With($"Toolkit '{toolkit}' is paused (fix: toolkit_stop, then toolkit_start)"),
+            { State: ToolkitState.Paused } => Paused(toolkit),
             _ => SindriErrors.ToolkitNotBuilt.With($"Toolkit '{toolkit}' isn't running (fix: toolkit_start)"),
         };
     }
+
+    private static Error Paused(string toolkit) => SindriErrors.ToolkitPaused.With($"Toolkit '{toolkit}' is paused (fix: toolkit_resume)");
 }
