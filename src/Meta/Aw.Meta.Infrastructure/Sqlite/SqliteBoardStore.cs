@@ -9,22 +9,41 @@ namespace Aw.Meta.Infrastructure.Sqlite;
 /// <param name="values">The key-value store.</param>
 internal sealed class SqliteBoardStore(IKeyValueStore values) : IBoardStore
 {
+    private const int MaxAttempts = 5;
+
     public async ValueTask<Result<Unit>> RecordMain(string sha, IReadOnlyList<int> mergedPrs, DateTimeOffset at, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(mergedPrs);
-        var current = await Read(cancellationToken).ConfigureAwait(false);
-        if (current.IsError)
+
+        // Another process (the watch loop, merge-run) may write between our read and our write, so the write only lands on the row we read; otherwise read again.
+        for (var attempt = 0; attempt < MaxAttempts; attempt++)
         {
-            return current.Error;
+            var stored = await values.Get(KvKeys.BoardMain, cancellationToken).ConfigureAwait(false);
+            if (stored.IsError)
+            {
+                return stored.Error;
+            }
+
+            // The same sha again (merge-run, then the watch seeing main move) is not a new move: it keeps the version, so no lane sees a second line, and joins the pull requests.
+            var current = Parse(stored.Value);
+            var facts = current is { } board && string.Equals(board.MainSha, sha, StringComparison.Ordinal)
+                ? board with { MergedPrs = [.. board.MergedPrs.Union(mergedPrs)] }
+                : new BoardFacts(sha, mergedPrs, at, (current?.Version ?? 0) + 1);
+            var prs = string.Join(',', facts.MergedPrs.Select(pr => pr.ToString(CultureInfo.InvariantCulture)));
+            var text = string.Create(CultureInfo.InvariantCulture, $"{facts.Version}|{facts.MainSha}|{facts.At.UtcTicks}|{prs}");
+            var wrote = await values.SetIf(KvKeys.BoardMain, stored.Value, text, cancellationToken).ConfigureAwait(false);
+            if (wrote.IsError)
+            {
+                return wrote.Error;
+            }
+
+            if (wrote.Value)
+            {
+                return Results.Ok();
+            }
         }
 
-        // The same sha again (merge-run, then the watch seeing main move) is not a new move: it keeps the version, so no lane sees a second line, and joins the pull requests.
-        var facts = current.Value is { } board && string.Equals(board.MainSha, sha, StringComparison.Ordinal)
-            ? board with { MergedPrs = [.. board.MergedPrs.Union(mergedPrs)] }
-            : new BoardFacts(sha, mergedPrs, at, (current.Value?.Version ?? 0) + 1);
-        var prs = string.Join(',', facts.MergedPrs.Select(pr => pr.ToString(CultureInfo.InvariantCulture)));
-        var text = string.Create(CultureInfo.InvariantCulture, $"{facts.Version}|{facts.MainSha}|{facts.At.UtcTicks}|{prs}");
-        return await values.Set(KvKeys.BoardMain, text, cancellationToken).ConfigureAwait(false);
+        return MetaErrors.BoardContended.With($"main's board row changed {MaxAttempts} times while recording {sha}");
     }
 
     public async ValueTask<Result<BoardFacts?>> Read(CancellationToken cancellationToken)

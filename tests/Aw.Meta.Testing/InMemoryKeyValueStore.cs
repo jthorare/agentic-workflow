@@ -21,5 +21,16 @@ public sealed class InMemoryKeyValueStore : IKeyValueStore
 
     /// <inheritdoc />
     public ValueTask<Result<bool>> SetIf(string key, string? expected, string value, CancellationToken cancellationToken) =>
-        throw new NotSupportedException();
+        Done.Of(TrySetIf(key, expected, value));
+
+    private bool TrySetIf(string key, string? expected, string value)
+    {
+        if (!string.Equals(_values.GetValueOrDefault(key), expected, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        _values[key] = value;
+        return true;
+    }
 }

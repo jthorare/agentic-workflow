@@ -2053,6 +2053,7 @@ static Aw.Meta.Core.Watch.ContextWatch.Step(System.Collections.Generic.IReadOnly
 static readonly Aw.Meta.Core.Coordination.PaneSubmitter.Pause -> System.TimeSpan
 static readonly Aw.Meta.Core.MetaErrors.RecycleRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Meta.Core.MetaErrors.RecycleTimedOut -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Meta.Core.MetaErrors.BoardContended -> Aw.Kernel.ErrorDefinition!
 Aw.Meta.Core.Coordination.LaneContextReader.ReadOrNull(Aw.Meta.Core.Config.TeamConfig? team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Lanes.LaneContext!>?>
 Aw.Meta.Core.Config.TeamConfig.Agent.get -> string?
 Aw.Meta.Core.Config.TeamConfig.Agent.init -> void
