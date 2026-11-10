@@ -89,6 +89,22 @@ public sealed class WorkflowsEditorSheetTests
     }
 
     [Fact]
+    public async Task A_saved_edit_whose_reload_fails_says_it_saved_and_the_reload_failed()
+    {
+        var page = await OnRuns();
+        _ = page.Runs.Graph!.SelectNode("agent");
+        await page.Edit(Token);
+        page.Editor.Fields[0].Text = "Check twice";
+        _f.Server.WorkflowAnswers[Slug] = RouteAnswer.Problem("workflows-slug", "not-found");
+
+        await page.Save(Token);
+
+        _ = Assert.Single(_f.Server.AppliedWorkflowOps);
+        Assert.StartsWith("The edit was saved, but", page.Editor.FailureText, StringComparison.Ordinal);
+        Assert.DoesNotContain("Couldn't read the workflow to edit", page.Editor.FailureText, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Save_sends_two_changed_fields_as_one_ops_call()
     {
         var page = await OnRuns();
