@@ -19,6 +19,13 @@ internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator, Func<s
     {
     }
 
+    // Red stub for #2645: the perl locator is not used yet.
+    internal DetachedWaiterLauncher(Func<string?> setsidLocator, Func<string?> perlLocator, Func<string?> selfLocator)
+        : this(setsidLocator, selfLocator)
+    {
+        _ = perlLocator;
+    }
+
     public ValueTask<Result<int>> Start(IReadOnlyList<string> argv, CancellationToken cancellationToken) => new(StartNow(argv));
 
     private Result<int> StartNow(IReadOnlyList<string> argv)
