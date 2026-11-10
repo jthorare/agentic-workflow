@@ -1,8 +1,8 @@
-using Aw.Sindri.Core.Graph.Ids;
 using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -17,7 +17,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// </summary>
 /// <param name="run">The run.</param>
 /// <param name="announce">Told when the node starts waiting on a session and when it stops (null): a batch workflow passes it on to the run workflow; the run's own walk passes none.</param>
-internal sealed class GraphAgentLoop(WorkflowRunId run, Func<AgentWait?, Task>? announce = null)
+internal sealed partial class GraphAgentLoop(WorkflowRunId run, Func<AgentWait?, Task>? announce = null)
 {
     // why: a launch hands back after its slice when the session cap is full, and the workflow asks again. A cancel never goes to the launch (it does not heartbeat, so it could not hear one):
     // the workflow lets the launch return, then stops, so the close that follows sees the session the launch made (TryCancel let the close run first and left an orphan). Sending the cancel
@@ -65,7 +65,7 @@ internal sealed class GraphAgentLoop(WorkflowRunId run, Func<AgentWait?, Task>? 
         }
         finally
         {
-            await Announce(null).ConfigureAwait(true);
+            await Announce(wait: null).ConfigureAwait(true);
         }
     }
 
@@ -272,40 +272,4 @@ internal sealed class GraphAgentLoop(WorkflowRunId run, Func<AgentWait?, Task>? 
         };
         return new AgentNodeEnding(Outputs: null, recovered.Reason is { } detail ? $"{why}; {detail}" : why);
     }
-
-    // Why a session that ended can't have finished the node: a report the engine refused it for, or a sandbox limit. Null when its output folder may still prove it did.
-    private static string? Unrecoverable(AgentSessionState state) =>
-        state.Refused ? $"exit: {state.Detail}"
-        : state.EndedAs == AgentSessionEnd.Limit ? $"limit: the sandbox killed the session ({state.Limit?.Detail})"
-        : null;
-
-    private static AgentNodeEnding TimedOut(TimeSpan timeout) =>
-        new(Outputs: null, string.Create(CultureInfo.InvariantCulture, $"timeout: the node ran past its limit of {timeout.TotalSeconds:0} s (time a person held it does not count)"));
-
-    // The watch ends by its own cancel or by the session's end; either way its outcome was read already or is not wanted, so a cancelled or failed watch is not an error here.
-    private static async Task Observe(Task<AgentSessionState> watch)
-    {
-        try
-        {
-            _ = await watch.ConfigureAwait(true);
-        }
-        catch (Exception e) when (TemporalException.IsCanceledException(e) || e is ActivityFailureException)
-        {
-            // the cancel above, or a failure Ended already turned into the node's error
-        }
-    }
-
-    private static Task Hold(AgentWait wait, bool held) =>
-        Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.HoldAsync(new AgentNodeHeld(wait.Launch, held)), _agentRead);
-
-    private static ActivityOptions WatchOptions(CancellationToken stop) => new()
-    {
-        StartToCloseTimeout = TimeSpan.FromDays(30),
-        HeartbeatTimeout = TimeSpan.FromMinutes(1),
-        RetryPolicy = GraphActivityOptions.Unbounded,
-        CancellationToken = stop,
-        CancellationType = ActivityCancellationType.TryCancel,
-    };
-
-    private static GraphBlockOutcome Failed(string? input, string error) => new(NodeRunStatus.Failed, input, Output: null, [], error);
 }

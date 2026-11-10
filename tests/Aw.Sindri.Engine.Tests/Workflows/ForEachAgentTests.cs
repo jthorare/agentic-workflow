@@ -1,11 +1,10 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Graph.Blocks;
-using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
+using Aw.Sindri.Infrastructure.Workflows;
 
 namespace Aw.Sindri.Tests.Workflows;
 
@@ -34,8 +33,8 @@ public sealed class ForEachAgentTests(SindriTimeSkippingServer server) : IClassF
         Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
         Assert.Equal([1, 2], runtime.Launches.Select(static l => l.ItemIndex).Order());
         Assert.Equal([NodeRunStatus.Succeeded, NodeRunStatus.Succeeded], [rows[1].Status, rows[2].Status]);
-        var launches = runtime.Closes.Select(static c => c.Launch).Order(StringComparer.Ordinal).ToList();
-        Assert.Equal([NodeRunAddress.Of(started.RunId, NodeId.From("work"), 1).Launch().Value, NodeRunAddress.Of(started.RunId, NodeId.From("work"), 2).Launch().Value], launches.Order(StringComparer.Ordinal));
+        var expected = Enumerable.Range(1, 2).Select(i => NodeRunAddress.Of(started.RunId, NodeId.From("work"), i).Launch().Value).Order(StringComparer.Ordinal).ToList();
+        Assert.True(expected.SequenceEqual(runtime.Closes.Select(static c => c.Launch).Order(StringComparer.Ordinal), StringComparer.Ordinal));
     }
 
     [Fact]

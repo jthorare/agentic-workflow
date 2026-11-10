@@ -161,6 +161,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return (loop, null);
         }
 
+        // why: a node run with an item index sits in a loop body, so its enclosing loop exists
         var config = GraphConfig.Interpolate(LoopBody.Enclosing(spec, node)!.ForEach.Config, outer.Lookup);
         return (null, Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cutNode}' was cut at 64 KB; refer to a smaller field")));
     }

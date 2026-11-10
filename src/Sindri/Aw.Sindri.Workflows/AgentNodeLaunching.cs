@@ -38,17 +38,10 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
         var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancellationToken).ConfigureAwait(false)).Spec;
         var graphNode = spec.Nodes.FirstOrDefault(n => n.Id == node.Node) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
         var nodeRuns = GraphFailures.Value(await runs.NodeRuns(node.Run, cancellationToken).ConfigureAwait(false));
-        var scope = new GraphNodeScope(row, spec, nodeRuns);
-        if (node.ItemIndex > 0)
+        var scope = OpenScope(row, spec, nodeRuns, node, out var cutNode);
+        if (cutNode is not null)
         {
-            // why: a node of a for_each body reads the item and the loop's nodes of its own item (#2470), the way the block activity opens them
-            var (loop, cutNode) = GraphLoopScopes.Open(scope, spec, node.Node, node.ItemIndex);
-            if (cutNode is not null)
-            {
-                return Failed("{}", SindriErrors.GraphOutputTruncated.With($"the output of '{cutNode}' was cut at 64 KB; refer to a smaller field"));
-            }
-
-            scope = new GraphNodeScope(row, spec, nodeRuns, loop);
+            return Failed("{}", SindriErrors.GraphOutputTruncated.With($"the output of '{cutNode}' was cut at 64 KB; refer to a smaller field"));
         }
 
         var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
@@ -76,6 +69,21 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
         var groups = RunAgentLaunches.GroupsFor(parsed.Value, static _ => []);   // why: a connection's host group comes with the connection presets (PR 10); until then only the repo's 'github' applies
         var request = RunAgentLaunches.ReadingOnly(RunAgentLaunches.RequestFor(address, placed.Value.Target, parsed.Value, brief, groups), placed.Value.ReadOnlyPaths);
         return new AgentNodeLaunched(await Start(request, cancellationToken).ConfigureAwait(false), input, parsed.Value.Timeout);
+    }
+
+    // why: a node of a for_each body reads the item and the loop's nodes of its own item (#2470), the way the block activity opens them
+    private static GraphNodeScope OpenScope(WorkflowRun row, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns, AgentNodeRef node, out string? cutNode)
+    {
+        var scope = new GraphNodeScope(row, spec, nodeRuns);
+        cutNode = null;
+        if (node.ItemIndex <= 0)
+        {
+            return scope;
+        }
+
+        var (loop, cut) = GraphLoopScopes.Open(scope, spec, node.Node, node.ItemIndex);
+        cutNode = cut;
+        return cut is null ? new GraphNodeScope(row, spec, nodeRuns, loop) : scope;
     }
 
     // Asks the launcher for the session and records the outcome; the worktree and start commit, or the failure.
