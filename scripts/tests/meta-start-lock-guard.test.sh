@@ -13,6 +13,7 @@
 #   its "gap" hook), then runs the real tool. After D returns, E is still inside its guard, so the guard must still exist.
 # Case 3 (#2613): the guard holds a dead waiter's pid file that sorts first and a live holder V's pid file after it. A third
 #   waiter must leave the lock alone while V is in the guard: the lock is still there and V's pid file is still in the guard.
+# Case 4 (#2613): an empty guard over a minute old and a dead owner: within two calls the guard is cleared and the lock is gone.
 # Scratch dirs only; bash 3.2-compatible. Kills only the pids it started.
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -101,6 +102,13 @@ check "case 3 precondition: the dead name sorts before the live holder's" "$(pri
 ( start_lock="$L3"; lane_pid=$$; lane=x; . "$MSL"; take_over_dead x ) 2> /dev/null
 check "a third waiter leaves the lock alone while a live holder's pid file is in the guard" "$([ -L "$L3" ] && echo kept || echo unlinked)" "kept"
 check "the live holder's pid file is still in the guard" "$([ -e "$G3/$V_PID" ] && echo present || echo gone)" "present"
+
+# --- case 4: an old empty guard with a dead owner is cleared and the lock taken over (#2613) ---
+L4="$WORK/d.lock"; G4="$L4.takeover"
+ln -s "$(dead_pid)" "$L4"
+mkdir "$G4"; touch -d '5 minutes ago' "$G4"
+( start_lock="$L4"; lane_pid=$$; lane=x; . "$MSL"; take_over_dead x; take_over_dead x ) 2> /dev/null
+check "an old empty guard does not block the takeover: the lock is gone after two calls" "$([ -L "$L4" ] && echo kept || echo unlinked)" "unlinked"
 
 if [ "$fail" -eq 0 ]; then echo "meta-start-lock-guard: all passed"; else echo "meta-start-lock-guard: FAILED"; fi
 exit $fail
