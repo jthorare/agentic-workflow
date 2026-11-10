@@ -41,6 +41,7 @@ public static class HookInventory
         Keep("fleet-state", "SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Notification, Stop, SessionEnd", "writes this session's state file for Sindri's session collector; answers nothing"),
         Keep("git-context", "SessionStart", "prints git context; answers nothing"),
         Keep("judge-health", "SessionStart", "warns when the judge is degraded; answers nothing"),
+        Keep("meta-board-line", "UserPromptSubmit, PostToolUse", "acts only in a Meta lane (does nothing in a Sindri launch); prints the team board line as context; answers nothing"),
         Keep("meta-lane-gate", "UserPromptSubmit, SessionStart, PostToolUse, Stop (Codex and Cursor lanes)", "acts only in a Meta lane (does nothing in a Sindri launch); blocks a stop, answers no permission"),
         Keep("meta-outbox", "PostToolUse SendMessage", "records sent messages for the meta; answers nothing"),
         Keep("meta-stop-gate", "Stop", "blocks only the registered meta's stop; answers no permission"),
