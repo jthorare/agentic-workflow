@@ -46,11 +46,36 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
 
     // The meta runs a recycle in the turn it reads the lane's DIGEST READY, and only its Stop hook syncs the inbox, so the
     // request is not stored yet (#2647): read the meta session's own transcript first, as stop-check would.
-    private ValueTask<Result<Unit>> SyncMetaTranscript(CancellationToken cancellationToken)
+    private async ValueTask<Result<Unit>> SyncMetaTranscript(CancellationToken cancellationToken)
     {
-        // red (#2647): the meta's transcript is not synced yet.
-        _ = (sync, messages, cancellationToken);
-        return ValueTask.FromResult(Results.Ok());
+        var role = await messages.Role(cancellationToken).ConfigureAwait(false);
+        if (role.IsError)
+        {
+            return role.Error;
+        }
+
+        if (role.Value is not { } meta)
+        {
+            return Results.Ok();
+        }
+
+        var transcripts = await messages.Transcripts(cancellationToken).ConfigureAwait(false);
+        if (transcripts.IsError)
+        {
+            return transcripts.Error;
+        }
+
+        var own = "/" + meta.Session.Value + ".jsonl";
+        foreach (var transcript in transcripts.Value.Where(t => t.EndsWith(own, StringComparison.Ordinal)))
+        {
+            var read = await sync.Run(transcript, cancellationToken).ConfigureAwait(false);
+            if (read.IsError)
+            {
+                return read.Error;
+            }
+        }
+
+        return Results.Ok();
     }
 
     // An open message (or one whose deferral ran out) the lane sent before this run, asking for this recycle.

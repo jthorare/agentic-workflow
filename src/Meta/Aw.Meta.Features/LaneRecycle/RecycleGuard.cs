@@ -7,7 +7,7 @@ using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Features.LaneRecycle;
 
-/// <summary>The refusals before a recycle, and whether routing.lanes sends the lane to another agent. The refusals: an unknown lane, the meta lane without --detach, a lane that isn't Claude Code, a lane with no session, and a digest that is missing, empty or old.</summary>
+/// <summary>The refusals before a recycle, and whether routing.lanes sends the lane to another agent. The refusals: an unknown lane, the meta lane without --detach, another lane with --detach or --wait-idle, a lane that isn't Claude Code, a lane with no session, and a digest that is missing, empty or old.</summary>
 /// <param name="files">The lane records.</param>
 /// <param name="sessions">The session the lane's Claude runs now.</param>
 /// <param name="digests">The digest files.</param>
@@ -65,8 +65,15 @@ internal sealed class RecycleGuard(ILaneFiles files, ILaneSessions sessions, IDi
             return MetaErrors.UnknownLane.With($"'{request.Lane}' is not a lane of team {team.Team}");
         }
 
-        return string.Equals(name, team.MetaLane, StringComparison.OrdinalIgnoreCase) && !request.Detach && !request.WaitIdle
-            ? MetaErrors.RecycleRefused.With($"the meta lane recycles only with --detach: a waiter then clears it once its turn has ended (lane {name})")
+        var isMeta = string.Equals(name, team.MetaLane, StringComparison.OrdinalIgnoreCase);
+        if (isMeta && !request.Detach && !request.WaitIdle)
+        {
+            return MetaErrors.RecycleRefused.With($"the meta lane recycles only with --detach: a waiter then clears it once its turn has ended (lane {name})");
+        }
+
+        // #2648: the waiter waits for a stop beat, and only the meta's own Stop hook records one, so a waiter for another lane sat 30 min and recycled nothing.
+        return !isMeta && (request.Detach || request.WaitIdle)
+            ? MetaErrors.RecycleRefused.With($"--detach and --wait-idle are for the meta lane only: lane {name} records no stop beat for a waiter to see; run aw-meta lane-recycle {name} --digest <path> without the flag")
             : name;
     }
 
