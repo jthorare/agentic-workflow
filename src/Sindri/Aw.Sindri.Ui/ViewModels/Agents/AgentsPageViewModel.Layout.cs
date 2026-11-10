@@ -49,13 +49,17 @@ internal sealed partial class AgentsPageViewModel
             row.SetCompact(compact);
         }
 
-        RefreshColumns(_rows.Values);
+        RefreshColumns(_columnRows);   // the rows the table shows, not every row: a filter that leaves only no-repo rows must keep Repository dropped
     }
+
+    // The rows the columns were last worked out from (the filtered ones), so a resize decides over the same rows.
+    private List<SessionRowViewModel> _columnRows = [];
 
     // An optional column shows while the page is wide and some row has a value for it; the header and every row follow, so the head never sits over an empty column.
     private void RefreshColumns(IEnumerable<SessionRowViewModel> rows)
     {
         var shown = rows.ToList();
+        _columnRows = shown;
         (ShowsRepo, ShowsWhere, ShowsDoing) = (IsWide && shown.Exists(static r => r.HasRepoValue), IsWide && shown.Exists(static r => r.HasWhereValue), IsWide && shown.Exists(static r => r.HasDoingValue));
         foreach (var row in _rows.Values)
         {
