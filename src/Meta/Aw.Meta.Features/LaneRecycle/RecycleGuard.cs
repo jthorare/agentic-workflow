@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Config;
@@ -45,7 +46,7 @@ internal sealed class RecycleGuard(ILaneFiles files, ILaneSessions sessions, IDi
             return MetaErrors.RecycleRefused.With($"lane {name}: no live Claude session found under tmux session {team.Team}-{name} (is the lane up?); nothing was sent");
         }
 
-        var digest = await CheckDigest(Path.GetFullPath(request.Digest), cancellationToken).ConfigureAwait(false);
+        var digest = await CheckDigest(Path.GetFullPath(request.Digest), record.Value?.RecordedAt, cancellationToken).ConfigureAwait(false);
         if (digest.IsError)
         {
             return digest.Error;
@@ -90,7 +91,9 @@ internal sealed class RecycleGuard(ILaneFiles files, ILaneSessions sessions, IDi
         return assigned is not null && !string.Equals(assigned, running, StringComparison.Ordinal) ? (assigned, route.Model) : (null, null);
     }
 
-    private async ValueTask<Result<Unit>> CheckDigest(string path, CancellationToken cancellationToken)
+    // A digest the lane's current session wrote is newer than the time its session id was recorded (the last recycle or the
+    // session-id hook). One path serves a lane all day, so an older file is the previous session's digest (#2661).
+    private async ValueTask<Result<Unit>> CheckDigest(string path, DateTimeOffset? sessionSince, CancellationToken cancellationToken)
     {
         var stat = await digests.Stat(path, cancellationToken).ConfigureAwait(false);
         if (stat.IsError)
@@ -103,6 +106,8 @@ internal sealed class RecycleGuard(ILaneFiles files, ILaneSessions sessions, IDi
             null => MetaErrors.RecycleRefused.With($"the digest {path} does not exist"),
             { Length: 0 } => MetaErrors.RecycleRefused.With($"the digest {path} is empty"),
             { } info when clock.GetUtcNow() - info.ModifiedAt > DigestMaxAge => MetaErrors.RecycleRefused.With($"the digest {path} is older than 2 hours: ask the lane for a fresh one"),
+            { } info when sessionSince is { } since && info.ModifiedAt < since => MetaErrors.RecycleRefused.With(
+                string.Create(CultureInfo.InvariantCulture, $"the digest {path} was last written at {info.ModifiedAt.UtcDateTime:yyyy-MM-dd HH:mm:ss}Z, before the lane's current session started at {since.UtcDateTime:yyyy-MM-dd HH:mm:ss}Z: it is the previous session's digest; wait for the lane's new write, or ask it for a fresh one")),
             _ => Unit.Value,
         };
     }
