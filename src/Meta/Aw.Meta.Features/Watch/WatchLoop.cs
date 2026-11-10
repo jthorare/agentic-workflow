@@ -18,6 +18,9 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// <summary>Called with main's new sha and the pull requests that went MERGED in the same poll, when a poll reports "MAIN moved".</summary>
     internal Func<string, IReadOnlyList<int>, ValueTask> MainMoved { get; init; } = static (_, _) => ValueTask.CompletedTask;
 
+    /// <summary>Records main as the board's first move when the board holds none yet (the watch's start).</summary>
+    internal Func<string, ValueTask> SeedMain { get; init; } = static _ => ValueTask.CompletedTask;
+
     private WatchState _state = WatchState.Continuing(reported);
     private WatchResources _kept = reported;
     private int? _inbox;
@@ -50,6 +53,7 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         if (!_state.Initialized)
         {
             await Say(Started(polled.Value.Snapshot)).ConfigureAwait(false);
+            await SeedBoard(polled.Value.Snapshot).ConfigureAwait(false);
         }
 
         await SayStep(step, polled.Value.Snapshot).ConfigureAwait(false);
@@ -136,6 +140,15 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
             .Order()
             .ToList();
         await MainMoved(snapshot.MainSha, merged).ConfigureAwait(false);
+    }
+
+    // A fresh install's board holds main as the watch found it. A board that already holds a move (a restart, or merge-run's newer record) is left alone.
+    private async ValueTask SeedBoard(WatchSnapshot snapshot)
+    {
+        if (snapshot.MainSha.Length > 0)
+        {
+            await SeedMain(snapshot.MainSha).ConfigureAwait(false);
+        }
     }
 
     /// <summary>Emits one line.</summary>

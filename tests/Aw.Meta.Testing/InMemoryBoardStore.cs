@@ -20,6 +20,18 @@ public sealed class InMemoryBoardStore : IBoardStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<bool>> SeedMain(string sha, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        if (_board is not null)
+        {
+            return Done.Of(value: false);
+        }
+
+        _board = new BoardFacts(sha, [], at, 1);
+        return Done.Of(value: true);
+    }
+
+    /// <inheritdoc />
     public ValueTask<Result<BoardFacts?>> Read(CancellationToken cancellationToken) => Done.Of(_board);
 
     /// <inheritdoc />

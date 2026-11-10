@@ -91,7 +91,7 @@ internal sealed class PickTodoHoldService(TodoHolds holds, TodoPickWrites writes
         }
 
         window.ForgetPartial();
-        window.RememberHold(new TodoHoldPick(who.Now, kept, request.Restore ? [] : priors));
+        window.RememberHold(new TodoHoldPick(who.Now, kept, request.Restore ? [] : priors, who.By));
         return new PickTodoHoldResponse(kept, hold.Changes.Count, TodoPickWindow.Until(who.Now));
     }
 
