@@ -14,7 +14,7 @@ public sealed class InboxOnceTests
 
     private async Task Receive(params (string Id, string Name, string Body)[] messages)
     {
-        _world.Transcripts.Write(MetaWorld.Transcript, string.Concat(messages.Select(m => MetaWorld.PeerLine(m.Id, m.Name, m.Body))));
+        _world.Transcripts.Append(MetaWorld.Transcript, string.Concat(messages.Select(m => MetaWorld.PeerLine(m.Id, m.Name, m.Body))));
         _ = await _world.Sync.Run(MetaWorld.Transcript, CancellationToken.None);
     }
 
