@@ -160,7 +160,7 @@ public sealed class RunItemRepairTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_repair_that_fails_in_the_ledger_is_an_error_and_the_next_pass_finishes_it()
+    public async Task A_repair_that_fails_in_the_ledger_is_skipped_and_the_next_pass_finishes_it()
     {
         await Seed();
         var item = await Make("one", 0, linkRefused: true);
@@ -169,7 +169,8 @@ public sealed class RunItemRepairTests
         var failed = await refusing.RepairAll(Token);
         var repaired = await Repair().RepairAll(Token);
 
-        Assert.True(failed.IsError);
+        Assert.True(failed.IsSuccess, failed.IsError ? failed.Error.ToString() : null);
+        Assert.Equal(0, failed.Value);
         Assert.True(repaired.IsSuccess, repaired.IsError ? repaired.Error.ToString() : null);
         Assert.True(Linked(item));
     }
