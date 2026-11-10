@@ -105,4 +105,27 @@ public sealed class ClickableStateTests : FrameHost
         Assert.Equal(TokenColor("Brush.Hover"), ((ISolidColorBrush)row.Background!).Color);
         Assert.NotEqual(rest, ((ISolidColorBrush)row.Background!).Color);
     });
+
+    [Fact]
+    public Task A_pressed_project_card_scales_to_098_about_its_centre_and_eases_it_over_Motion_Hover() => OnUi(async () =>
+    {
+        Motion.Set(reduce: true);
+        var (window, card) = await OnFirstCard();
+        var point = Corner(window, card);
+        var transition = Assert.Single((card.Transitions ?? throw new InvalidOperationException("no Transitions")).OfType<TransformOperationsTransition>());
+        Assert.Equal(150, transition.Duration.TotalMilliseconds);
+        Assert.Equal(1.0, ((ITransform)card.RenderTransform!).Value.M11, 3); // at rest: no scale
+
+        window.MouseMove(point, RawInputModifiers.None);
+        window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
+
+        var pressed = ((ITransform)card.RenderTransform!).Value;
+        Assert.Equal((0.98, 0.98), (Math.Round(pressed.M11, 3), Math.Round(pressed.M22, 3)));
+        Assert.Equal(RelativePoint.Center, card.RenderTransformOrigin);
+
+        window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
+        Settle(window);
+        Assert.Equal(1.0, ((ITransform)card.RenderTransform!).Value.M11, 3);
+    });
 }
