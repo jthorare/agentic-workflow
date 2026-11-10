@@ -68,8 +68,9 @@ public sealed class DetachedWaiterLauncherTests
         try
         {
             var id = pid.ToString(CultureInfo.InvariantCulture);
-            var command = (await File.ReadAllTextAsync("/proc/" + id + "/cmdline", TestContext.Current.CancellationToken)).Split('\0', StringSplitOptions.RemoveEmptyEntries);
-            Assert.Equal("sleep", Path.GetFileName(command[0]));
+            // Exec chain on one pid (setsid -> sh -> sleep); the read can land before sleep.
+            var command = await CommandLineOnceItRuns(id, "sleep");
+            Assert.True(string.Equals("sleep", Path.GetFileName(command[0]), StringComparison.Ordinal), $"pid {id} never became sleep within 5 s; last cmdline: {string.Join(' ', command)}");
             Assert.False(string.Equals(SessionOf("/proc/self/stat"), SessionOf("/proc/" + id + "/stat"), StringComparison.Ordinal));
         }
         finally
@@ -78,6 +79,24 @@ public sealed class DetachedWaiterLauncherTests
             child.Kill();
             await child.WaitForExitAsync(TestContext.Current.CancellationToken);
         }
+    }
+
+    // Reads /proc/<pid>/cmdline up to 5 s (100 x 50 ms) until argv[0] is <name>; returns the last one read either way, so the caller fails with it.
+    private static async Task<string[]> CommandLineOnceItRuns(string id, string name)
+    {
+        var command = Array.Empty<string>();
+        for (var i = 0; i < 100; i++)
+        {
+            command = (await File.ReadAllTextAsync("/proc/" + id + "/cmdline", TestContext.Current.CancellationToken)).Split('\0', StringSplitOptions.RemoveEmptyEntries);
+            if (command.Length > 0 && string.Equals(name, Path.GetFileName(command[0]), StringComparison.Ordinal))
+            {
+                return command;
+            }
+
+            await Task.Delay(50, TestContext.Current.CancellationToken);
+        }
+
+        return command.Length > 0 ? command : ["<empty>"];
     }
 
     // Field 6 of /proc/<pid>/stat; the command name (field 2) is in parentheses and may hold spaces, so count from the last ')'.
