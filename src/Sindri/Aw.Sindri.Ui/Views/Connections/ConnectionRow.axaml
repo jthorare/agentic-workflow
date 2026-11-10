@@ -21,7 +21,7 @@
         <TextBlock Classes="caption subtle" Text="{Binding KindText}" Margin="8,0,0,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
       </DockPanel>
       <Border x:Name="ConnectionRowChip" Grid.Column="1" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <TextBlock Classes="body-strong mono conn-chip" Classes.ok="{Binding IsConnected}" Classes.attention="{Binding NeedsSignIn}" Classes.error="{Binding IsError}" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBlock Classes="caption conn-chip" Classes.ok="{Binding IsConnected}" Classes.attention="{Binding NeedsSignIn}" Classes.error="{Binding IsError}" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <Border x:Name="ConnectionRowRefreshed" Grid.Column="2" Margin="0,0,8,0" VerticalAlignment="Center" IsVisible="{Binding HasRefreshed}" AutomationProperties.Name="{Binding RefreshedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption subtle" Text="{Binding RefreshedText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
