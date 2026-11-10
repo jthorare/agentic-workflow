@@ -88,8 +88,8 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
 
     private const string DigestReady = "DIGEST READY";
 
-    // A DIGEST READY line asks for this recycle when it names no path or names this digest's file (a lane may write the path
-    // with ~/); one for another digest stays open (#2647). Any other line asks for it only when it holds the digest's full path.
+    // A DIGEST READY line asks for this recycle when it names no path or names this digest; one for another path stays open
+    // (#2647). Any other line asks for it only when it holds the digest's full path.
     private static bool AsksForThisRecycle(string body, string digest)
     {
         var text = body.TrimStart();
@@ -98,8 +98,25 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
             return digest.Length > 0 && body.Contains(digest, StringComparison.Ordinal);
         }
 
-        var named = text[DigestReady.Length..].Trim();
-        var file = digest[(digest.LastIndexOf('/') + 1)..];
-        return named.Length == 0 || (file.Length > 0 && named.Contains(file, StringComparison.Ordinal));
+        var rest = text[DigestReady.Length..].Trim();
+        var named = rest.Split((char[]?)null, 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim('`', '"', '\'') ?? string.Empty;
+        return named.Length == 0 || NamesDigest(named, digest);
+    }
+
+    // The same full path; a ~/ path names the digest when the digest ends with it after the ~ (the meta's HOME is not the
+    // lane's to spell); a bare file name names it when the digest's file has that name.
+    private static bool NamesDigest(string named, string digest)
+    {
+        if (named.StartsWith("~/", StringComparison.Ordinal))
+        {
+            return digest.EndsWith(named[1..], StringComparison.Ordinal);
+        }
+
+        if (named.Contains('/', StringComparison.Ordinal))
+        {
+            return string.Equals(named, digest, StringComparison.Ordinal);
+        }
+
+        return string.Equals(named, digest[(digest.LastIndexOf('/') + 1)..], StringComparison.Ordinal);
     }
 }

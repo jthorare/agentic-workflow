@@ -5,6 +5,7 @@ using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Features.LaneRecycle;
+using Aw.Meta.Features.StopCheck;
 using Aw.Meta.Testing;
 
 namespace Aw.Meta.Tests.LaneRecycle;
@@ -54,6 +55,14 @@ public sealed class RecycleSettlesRequestTests
         (await _world.Messages.Messages(CancellationToken.None)).Value.Single(m => m.Id == MessageId.From(id));
 
     private void NewSessionAppears() => _world.LaneSessions.Set("t1-api", "s-new");
+
+    private async Task<StopCheckResponse> MetaStops(string transcript)
+    {
+        var result = await new StopCheckService(_world.Session, _world.Sweep, _world.Guard, _world.Clock, _world.Beats)
+            .Handle(new StopCheckRequest(SessionId.From(MetaWorld.MetaSessionId), transcript, HookActive: false, MaxBlocks: 3), CancellationToken.None);
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        return result.Value;
+    }
 
     private async Task<Kernel.Result<LaneRecycleResponse>> Run(Action? onWait, bool dryRun = false) =>
         await Service(onWait).Handle(new LaneRecycleRequest("api", Digest, dryRun), CancellationToken.None);
@@ -124,19 +133,44 @@ public sealed class RecycleSettlesRequestTests
     [Fact, Trait("Lane", "unit")]
     public async Task The_issue_case_a_dry_run_settles_nothing_then_the_real_run_settles_it_and_the_stop_has_nothing_open()
     {
-        // #2647 "done when": DIGEST READY from the lane, --dry-run, then the real run, then stop-check.
-        await Ready();
-        await Receive("m-digest", "t1-api", "DIGEST READY " + Digest);
+        // #2647 "done when": DIGEST READY /x/d.md from lane ui, lane-recycle ui --digest /x/d.md --dry-run, then the real run,
+        // then the meta's stop-check reports 0 open obligations.
+        const string uiDigest = "/x/d.md";
+        await _world.Ready();
+        _world.LaneFiles.Put(new LaneRecord("ui", SessionId.From("s-ui-old"), Agent: null, A.At(1)));
+        _world.LaneSessions.Set("t1-ui", "s-ui-old");
+        _world.Panes.Put("t1-ui", "claude");
+        _world.ClaudeTranscripts.PutUsage("s-ui-old", 206_000, A.At(30));
+        _world.Digests.Put(uiDigest, 1200, _world.Clock.GetUtcNow().AddMinutes(-5));
+        var transcript = "/transcripts/" + MetaWorld.MetaSessionId + ".jsonl";
+        _world.Transcripts.Append(transcript, MetaWorld.PeerLine("m-digest", "t1-ui", "DIGEST READY " + uiDigest));
 
-        var dry = await Run(onWait: null, dryRun: true);
-        var openAfterDry = await _world.Open();
-        var real = await Run(NewSessionAppears);
+        var dry = await Service().Handle(new LaneRecycleRequest("ui", uiDigest, DryRun: true), CancellationToken.None);
+        var openAfterDry = (await MetaStops(transcript)).Open;
+        var real = await Service(() => _world.LaneSessions.Set("t1-ui", "s-ui-new")).Handle(new LaneRecycleRequest("ui", uiDigest, DryRun: false), CancellationToken.None);
+        var stop = await MetaStops(transcript);
 
-        Assert.True(dry.IsSuccess);
+        Assert.True(dry.IsSuccess, dry.IsError ? dry.Error.Message : string.Empty);
+        Assert.Null(dry.Value.SettledMessages);
         Assert.Contains(openAfterDry, o => o.Key.Contains("m-digest", StringComparison.Ordinal));
         Assert.True(real.IsSuccess, real.IsError ? real.Error.Message : string.Empty);
         Assert.Equal(["m-digest"], real.Value.SettledMessages);
-        Assert.Empty(await _world.Open());
+        Assert.Contains(_world.Log.Lines, l => l.Contains("m-digest", StringComparison.Ordinal));
+        Assert.Empty(stop.Open);
+        Assert.False(stop.Blocked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_DIGEST_READY_for_the_same_file_name_on_another_path_stays_open()
+    {
+        await Ready();
+        await Receive("m-other-path", "t1-api", "DIGEST READY /other/t1-api-2026-10-17.md");
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.SettledMessages);
+        Assert.Null((await Stored("m-other-path")).Resolution);
     }
 
     [Fact, Trait("Lane", "unit")]
