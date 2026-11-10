@@ -6,7 +6,7 @@ using Aw.Sindri.Core.Graph.Interpolation;
 
 namespace Aw.Sindri.Core.Graph.Blocks;
 
-/// <summary>The 'prompt' block: asks the model and checks the answer against the 'output' JSON schema; a bad answer fails the node with the reason.</summary>
+/// <summary>The 'prompt' block: asks the model, with every trigger and node-output reference fenced as untrusted, and checks the answer against the 'output' JSON schema; a bad answer fails the node with the reason.</summary>
 public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
 {
     private static readonly JsonSerializerOptions _compact = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
@@ -98,19 +98,37 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
         var rendered = Template.Render(raw, reference =>
         {
             var node = context.Resolve(reference);
-            if (node is null || !(reference == "trigger" || reference.StartsWith("trigger.", StringComparison.Ordinal)))
+            if (node is null)
             {
                 return node;
             }
 
+            // why: a trigger payload and every node output (an http body, search facts) carry text a stranger can write; only the author's own prompt words stay bare
             var text = node is JsonValue value && value.TryGetValue<string>(out var s) ? s : node.ToJsonString(_compact);
-            return JsonValue.Create(model.Untrusted(text));
+            return JsonValue.Create(model.Untrusted(SourceOf(reference), text));
         });
         return rendered switch
         {
             null => string.Empty,
             JsonValue value when value.TryGetValue<string>(out var s) => s,
             _ => rendered.ToJsonString(_compact),
+        };
+    }
+
+    /// <summary>
+    /// The fence source of a reference: "workflow:trigger" for the trigger, "workflow:item" for a for_each item, "workflow:run" for the run's own
+    /// values ('itemIndex', 'workflow.*'), "workflow:node:&lt;nodeId&gt;" for a node output. The roots are GraphValidator's scope roots.
+    /// </summary>
+    private static string SourceOf(string reference)
+    {
+        // why: 'item' is often stranger text (a for_each over an http list); 'itemIndex' and 'workflow.*' are Sindri's own values, still fenced, under the run's source, so no root reads as a node that doesn't exist (issue 2446)
+        var head = reference.Split('.', 2)[0];
+        return head switch
+        {
+            "trigger" => "workflow:trigger",
+            "item" => "workflow:item",
+            "itemIndex" or "workflow" => "workflow:run",
+            _ => "workflow:node:" + head,
         };
     }
 

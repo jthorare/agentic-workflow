@@ -27,4 +27,10 @@ public static class NeedsYouRowIds
     /// <param name="node">The notify node.</param>
     /// <returns>The id.</returns>
     public static NeedsYouRowId WorkflowNotify(WorkflowRunId run, NodeId node) => NeedsYouRowId.From($"workflow-notify:{run.Value}:{node.Value}");
+
+    /// <summary>The row id of a graph 'ask_owner' node's question: one row per run and node.</summary>
+    /// <param name="run">The run.</param>
+    /// <param name="node">The 'ask_owner' node.</param>
+    /// <returns>The id.</returns>
+    public static NeedsYouRowId WorkflowQuestion(WorkflowRunId run, NodeId node) => NeedsYouRowId.From($"question:{run.Value}:{node.Value}");
 }

@@ -87,4 +87,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-123: an 'http' node's request was sent but did not give an acceptable answer (a status outside 'expect', a redirect to another host, a body over 1 MB, a network failure).</summary>
     public static readonly ErrorDefinition GraphHttpFailed = new("SND-GRAPH-123", ErrorKind.Unavailable, "An http request failed");
+
+    /// <summary>SND-GRAPH-130: no 'ask_owner' node of the run waits for an answer now.</summary>
+    public static readonly ErrorDefinition GraphNotWaiting = new("SND-GRAPH-130", ErrorKind.Conflict, "No question waits at that node");
 }
