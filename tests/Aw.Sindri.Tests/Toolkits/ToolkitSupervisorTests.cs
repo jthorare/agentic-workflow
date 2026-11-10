@@ -106,6 +106,36 @@ public sealed class ToolkitSupervisorTests : IAsyncDisposable
         Assert.True(stopped.IsSuccess);
     }
 
+    [Fact]
+    public async Task A_start_that_lands_while_the_watcher_gives_up_launches_a_fresh_process_and_the_late_failed_save_is_skipped()
+    {
+        var other = _built with { Name = "other", Dir = "/tk/other" };
+        _ = await _supervisor.Start(_built, Token);
+        _launcher.Last.Crash();
+        await Eventually(() => _launcher.Launched == 2, advance: TimeSpan.FromSeconds(1));
+        _launcher.Last.Crash();
+        await Eventually(() => _launcher.Launched == 3, advance: TimeSpan.FromSeconds(1));
+        var third = _launcher.Last;
+        var hold = _launcher.Block("other");
+        var holding = _supervisor.Start(other, Token).AsTask();   // sits inside the launcher with the gate held
+        await Task.Delay(100, Token);
+        var late = _supervisor.Start(_built, Token).AsTask();   // queued on the gate before the watcher gets there
+        await Task.Delay(100, Token);
+        third.Crash();   // crash 3: the watcher decides to give up and queues on the gate behind the start
+        await Task.Delay(150, Token);
+
+        hold.SetResult();
+        _ = await holding;
+        var started = await late;
+        await Task.Delay(150, Token);
+        var answer = await _supervisor.Call("triage", "ping", "{}", TimeSpan.FromSeconds(1), Token);
+
+        Assert.True(started.IsSuccess);
+        Assert.Equal(4, _launcher.LaunchedFor("triage"));
+        Assert.NotEqual(ToolkitState.Failed, _store.Items["triage"].State);   // the give-up's save was skipped: a newer process owns the row
+        Assert.True(answer.IsSuccess);
+    }
+
     private async Task CrashUntilFailed()
     {
         _launcher.Last.Crash();
@@ -130,17 +160,28 @@ public sealed class ToolkitSupervisorTests : IAsyncDisposable
 
     private sealed class FakeLauncher : IToolkitProcessLauncher
     {
-        private readonly List<FakeProcess> _all = [];
+        private readonly List<(string Name, FakeProcess Process)> _all = [];
+        private readonly Dictionary<string, TaskCompletionSource> _blocks = new(StringComparer.Ordinal);
 
         internal int Launched => _all.Count;
 
-        internal FakeProcess Last => _all[^1];
+        internal FakeProcess Last => _all[^1].Process;
 
-        public ValueTask<Result<IToolkitProcess>> Launch(Toolkit toolkit, CancellationToken cancellationToken)
+        internal int LaunchedFor(string name) => _all.Count(a => string.Equals(a.Name, name, StringComparison.Ordinal));
+
+        /// <summary>Makes the next launch of <paramref name="name"/> wait until the returned source completes.</summary>
+        internal TaskCompletionSource Block(string name) => _blocks[name] = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public async ValueTask<Result<IToolkitProcess>> Launch(Toolkit toolkit, CancellationToken cancellationToken)
         {
+            if (_blocks.TryGetValue(toolkit.Name, out var block))
+            {
+                await block.Task.ConfigureAwait(false);
+            }
+
             var process = new FakeProcess();
-            _all.Add(process);
-            return ValueTask.FromResult<Result<IToolkitProcess>>(process);
+            _all.Add((toolkit.Name, process));
+            return process;
         }
     }
 

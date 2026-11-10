@@ -107,6 +107,18 @@ public sealed class BuildToolkitTests : IDisposable
     }
 
     [Fact]
+    public async Task A_toolkit_that_gave_up_after_crashes_starts_again_while_its_source_is_unchanged()
+    {
+        _ = await Build().Handle(new BuildToolkitRequest("triage"), Token);
+        _rig.Store.Items["triage"] = _rig.Store.Items["triage"] with { State = ToolkitState.Failed };   // what the supervisor saves when it gives up: hash and manifest stay
+
+        var started = await Start().Handle(new StartToolkitRequest("triage"), Token);
+
+        Assert.True(started.IsSuccess);
+        Assert.Equal(["triage"], _rig.Runtime.Started);
+    }
+
+    [Fact]
     public async Task A_start_after_the_source_changed_is_refused()
     {
         _ = await Build().Handle(new BuildToolkitRequest("triage"), Token);
