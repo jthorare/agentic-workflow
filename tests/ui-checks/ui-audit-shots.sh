@@ -19,7 +19,7 @@ d() { timeout 60 "$DRIVER" "$@"; }
 
 bash "$FIXTURE" up >/dev/null 2>&1 || setup_fail "fixture up"
 if [ "$STATE" != empty ]; then
-  bash "$FIXTURE" items --large >"$OUT/items.log" 2>&1
+  bash "$FIXTURE" items >"$OUT/items.log" 2>&1   # not --large: 30 more items + 12 requests took past 600 s
   bash "$FIXTURE" request "Which retry budget should sync use?" >>"$OUT/items.log" 2>&1
   bash "$FIXTURE" todos >>"$OUT/items.log" 2>&1
   bash "$FIXTURE" resources >>"$OUT/items.log" 2>&1
