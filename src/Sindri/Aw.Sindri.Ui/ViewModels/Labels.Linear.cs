@@ -172,10 +172,18 @@ internal static partial class Labels
             "assigned" => $"{item.Key} assigned to you{by}",
             "mentioned" when item.Actor is { } author => $"{author.Name} mentioned you on {item.Key}",
             "mentioned" => $"You were mentioned on {item.Key}",
-            "state" => $"{item.Key} moved from {item.From} to {item.To}{by}",
+            "state" => $"{item.Key} {StateMove(item)}{by}",
             _ => $"{item.Key} changed{by}",
         };
     }
+
+    // why: a name the server could not find is null; the row says what it knows and never leaves a blank (#2536)
+    private static string StateMove(LinearSinceItem item) => (item.From, item.To) switch
+    {
+        ({ Length: > 0 } from, { Length: > 0 } to) => $"moved from {from} to {to}",
+        (_, { Length: > 0 } to) => $"moved to {to}",
+        _ => "moved to a new state",
+    };
 
     /// <summary>The strip's button that moves the marker.</summary>
     internal const string LinearDismiss = "Dismiss";

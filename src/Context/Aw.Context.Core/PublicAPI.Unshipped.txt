@@ -11953,10 +11953,12 @@ Aw.Context.Core.Linear.LinearIssueRow.Deconstruct(out Aw.Context.Core.Sources.Re
 Aw.Context.Core.Linear.LinearIssueRow.Description.get -> string?
 Aw.Context.Core.Linear.LinearIssueRow.Description.init -> void
 Aw.Context.Core.Linear.LinearIssueRow.LinearIssueRow(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Url, string? StateRaw, string? Author, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? ClosedAt, string? TeamKey, Aw.Context.Core.Linear.LinearIssueFields! Fields, string? Description = null) -> void
-Aw.Context.Core.Linear.LinearIssueSide.Deconstruct(out Aw.Context.Core.Linear.LinearIssueFields! Fields, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, out string? Description) -> void
+Aw.Context.Core.Linear.LinearIssueSide.Deconstruct(out Aw.Context.Core.Linear.LinearIssueFields! Fields, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, out string? Description, out string? StateName) -> void
+Aw.Context.Core.Linear.LinearIssueSide.StateName.get -> string?
+Aw.Context.Core.Linear.LinearIssueSide.StateName.init -> void
 Aw.Context.Core.Linear.LinearIssueSide.Description.get -> string?
 Aw.Context.Core.Linear.LinearIssueSide.Description.init -> void
-Aw.Context.Core.Linear.LinearIssueSide.LinearIssueSide(Aw.Context.Core.Linear.LinearIssueFields! Fields, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, string? Description = null) -> void
+Aw.Context.Core.Linear.LinearIssueSide.LinearIssueSide(Aw.Context.Core.Linear.LinearIssueFields! Fields, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, string? Description = null, string? StateName = null) -> void
 const Aw.Context.Core.Sync.RecordBatches.MaxIssueDescription = 65536 -> int
 Aw.Context.Core.Facade.IContextPulls
 Aw.Context.Core.Facade.IContextPulls.OpenPulls(Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.StoredRecord!>!>!>
