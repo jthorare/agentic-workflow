@@ -19482,6 +19482,8 @@ Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Execute(Aw.Sindri.Core.Graph.Blocks.B
 Aw.Sindri.Core.Graph.Blocks.ConditionBlock.IsTrigger.get -> bool
 Aw.Sindri.Core.Graph.Blocks.ConditionBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
 Aw.Sindri.Core.Graph.Blocks.ConditionBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.FencedPrompt
+static Aw.Sindri.Core.Graph.Blocks.FencedPrompt.Render(string! raw, System.Func<string!, System.Text.Json.Nodes.JsonNode?>! resolve, System.Func<string!, string!, string!>! untrusted) -> string!
 Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry
 Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.Find(string! type) -> Aw.Sindri.Core.Graph.Blocks.IGraphBlock?
 Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.GraphBlockRegistry(System.Collections.Generic.IEnumerable<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>! blocks) -> void

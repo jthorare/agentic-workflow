@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
@@ -19,12 +18,12 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <see cref="RunAgentLaunches.RequestFor"/> in a fresh worktree on the node's branch, records the outcome, and reads the worktree's HEAD as the node's start. The launch id is the node run's,
 /// so a retry or a replay starts no second session.
 /// </summary>
-/// <param name="runs">Where the run and its earlier nodes' outputs are read from.</param>
-/// <param name="workflows">Where the run's spec is read from.</param>
+/// <param name="reading">Reads the run, the node's config and its prompt with every reference fenced as untrusted (#2447).</param>
+/// <param name="workflows">Where the workflow's declared resources are read from.</param>
 /// <param name="approved">The live profile: the repos and the default agent.</param>
 /// <param name="starting">Asks the launcher for the session and records the outcome.</param>
 /// <param name="provisioner">Makes the workflow's declared resources exist before the session starts; null on a build with none.</param>
-internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore workflows, IApprovedProfile approved, AgentLaunchStart starting, IResourceProvisioner? provisioner = null)
+internal sealed class AgentNodeLaunching(AgentNodeReading reading, IWorkflowStore workflows, IApprovedProfile approved, AgentLaunchStart starting, IResourceProvisioner? provisioner = null)
 {
     private readonly GraphResourceEnsurer _resources = new(provisioner, workflows);
 
@@ -35,11 +34,11 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
     public async Task<AgentNodeLaunched> Launch(AgentNodeRef node, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(node);
-        var row = GraphFailures.Value(await runs.Get(node.Run, cancellationToken).ConfigureAwait(false));
-        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancellationToken).ConfigureAwait(false)).Spec;
-        var graphNode = spec.Nodes.FirstOrDefault(n => n.Id == node.Node) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
-        var scope = new GraphNodeScope(row, spec, GraphFailures.Value(await runs.NodeRuns(node.Run, cancellationToken).ConfigureAwait(false)));
-        var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
+        var read = await reading.Read(node, cancellationToken).ConfigureAwait(false);
+        var row = read.Run;
+        var spec = read.Spec;
+        var scope = read.Scope;
+        var config = read.Config;
         var input = config.ToJsonString();
         if (scope.Cut is { } cut)
         {
@@ -52,6 +51,8 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
             return Failed(input, parsed.Error);
         }
 
+        var task = read.Prompt is { } fenced ? parsed.Value with { Prompt = fenced } : parsed.Value;
+
         var placed = await Place(parsed.Value, row, cancellationToken).ConfigureAwait(false);
         if (placed.IsError)
         {
@@ -60,7 +61,7 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
 
         var address = NodeRunAddress.Of(node.Run, node.Node, node.ItemIndex);
         var token = RunAgentWire.TokenOf(spec, node.Node, node.ItemIndex) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
-        var brief = RunAgentBrief.Render(address, token, parsed.Value);
+        var brief = RunAgentBrief.Render(address, token, task);
         var groups = RunAgentLaunches.GroupsFor(parsed.Value, static _ => []);   // why: a connection's host group comes with the connection presets (PR 10); until then only the repo's 'github' applies
         var request = RunAgentLaunches.ReadingOnly(RunAgentLaunches.RequestFor(address, placed.Value.Target, parsed.Value, brief, groups), placed.Value.ReadOnlyPaths);
 

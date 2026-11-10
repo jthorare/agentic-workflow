@@ -36,8 +36,21 @@ internal sealed class ListInboxService(IMetaConfig config, IMessageStore message
             .Select(m => Item(m, owed.Contains(m.Id.Value), now))
             .Where(i => request.All || string.Equals(i.State, InboxState.Open, StringComparison.Ordinal))
             .ToList();
-        return new ListInboxResponse(items);
+        if (!request.Once)
+        {
+            return new ListInboxResponse(items);
+        }
+
+        // A hook's view: open messages it has not shown, and a deferred one whose deferral ran out since it was shown.
+        var unseen = items
+            .Where(i => string.Equals(i.State, InboxState.Open, StringComparison.Ordinal) && !Shown(inbound.Value.First(m => m.Id == i.Id), now))
+            .ToList();
+        var marked = unseen.Count == 0 ? Results.Ok() : await messages.MarkShown([.. unseen.Select(i => i.Id)], now, cancellationToken).ConfigureAwait(false);
+        return marked.IsError ? marked.Error : new ListInboxResponse(unseen);
     }
+
+    private static bool Shown(InboxMessage message, DateTimeOffset now) =>
+        message.ShownAt is { } shown && !(message.Resolution is { Kind: MessageResolutionKind.Deferred, Until: { } until } && until <= now && shown < until);
 
     private static InboxItem Item(InboxMessage message, bool owed, DateTimeOffset now)
     {
