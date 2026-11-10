@@ -135,7 +135,7 @@ check "a second reviews up lists each repo once" "$(grep -c 'acme/api' "$PJ/prof
 
 # A later restart by another verb keeps the forge state while the folder exists.
 : > "$STUB_LOG"
-AW_SINDRI_HOME="$PJ" SINDRI="$STUB" bash -c 'source <(sed -n "/^sessions_export()/,/^}/p;/^reviews_state()/p;/^reviews_dir()/p;/^sessions_dir()/p;/^agent_dir()/p;/^sandbox_dir()/p;/^REVIEWS_DIRNAME=/p;/^SESSIONS_DIRNAME=/p;/^PROJECTS_VIEWER=/p" "$1"); sessions_export; echo "$AW_STATE_DIR $AW_FORGE_LOGIN"' _ "$FIXTURE" > "$WORK/export" 2>/dev/null
+AW_SINDRI_HOME="$PJ" SINDRI="$STUB" bash -c 'eval "$(sed -n "/^sessions_export()/,/^}/p;/^reviews_state()/p;/^reviews_dir()/p;/^sessions_dir()/p;/^agent_dir()/p;/^sandbox_dir()/p;/^REVIEWS_DIRNAME=/p;/^SESSIONS_DIRNAME=/p;/^PROJECTS_VIEWER=/p" "$1")"; sessions_export; echo "$AW_STATE_DIR $AW_FORGE_LOGIN"' _ "$FIXTURE" > "$WORK/export" 2>/dev/null
 check "sessions_export keeps AW_STATE_DIR and AW_FORGE_LOGIN on the forge state" "$(cat "$WORK/export")" "$STATE fx-viewer"
 
 # Guards.

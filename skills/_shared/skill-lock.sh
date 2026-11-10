@@ -3,6 +3,8 @@
 # Callers must tolerate nounset (-u) and pipefail after sourcing.
 # In particular, all referenced variables must be set or provide a default.
 #
+# Works on bash 3.2 (macOS /bin/bash): no bash 4 features, no GNU-only tools.
+#
 # NOTE: No trap is registered for automatic lock release on unexpected exit.
 # Traps in sourced files can interfere with the caller's own trap handlers.
 # Recovery from unexpected exits relies on stale-lock detection (kill -0 check).
@@ -51,14 +53,6 @@ if ! [[ "$SKILL_LOCK_OWNER" =~ ^[0-9]+$ ]]; then
   return 1 2>/dev/null || exit 1
 fi
 
-# sec-1: Require bash >= 4 for atomic noclobber (O_CREAT|O_EXCL semantics).
-# macOS ships bash 3.2 where noclobber uses stat+open, not open(O_CREAT|O_EXCL),
-# making the atomic write claim false on that platform.
-if [ "${BASH_VERSINFO[0]:-0}" -lt 4 ]; then
-  echo "skill-lock: requires bash >= 4 for atomic noclobber (found $BASH_VERSION)" >&2
-  return 1 2>/dev/null || exit 1
-fi
-
 LOCK_FILE="${AW_STATE_DIR:-$HOME/.agentic-workflow}/.${SKILL_LOCK_NAME}.lock"
 SKILL_LOCK_TIMEOUT="${SKILL_LOCK_TIMEOUT:-120}"
 
@@ -79,6 +73,16 @@ _lock_is_stale() {
   return 0  # stale — process is gone
 }
 
+# Atomic create that works on bash 3.2 and BSD/macOS (noclobber is not O_EXCL there): write the pid to a private
+# temp file, then ln it to LOCK_FILE. ln fails when LOCK_FILE exists, and the lock is never visible half-written.
+_lock_try_create() {
+  local tmp="${LOCK_FILE}.new.$$"
+  echo "$SKILL_LOCK_OWNER" > "$tmp" 2>/dev/null || return 1
+  if ln "$tmp" "$LOCK_FILE" 2>/dev/null; then rm -f "$tmp"; return 0; fi
+  rm -f "$tmp"
+  return 1
+}
+
 acquire_lock() {
   # sec-5: Explicitly check that lock directory creation succeeds.
   # When sourced, mkdir failure could be silently ignored without this guard.
@@ -91,10 +95,9 @@ acquire_lock() {
   local backoff=1
 
   while true; do
-    # sec-1: Attempt atomic O_EXCL write via noclobber — avoids TOCTOU race
+    # sec-1: Attempt an atomic create (hard link, see _lock_try_create) — avoids the TOCTOU race
     # where two processes could both see a stale lock and both write their PID.
-    # The subshell ensures noclobber is scoped and does not leak into the caller.
-    if ( set -o noclobber; echo "$SKILL_LOCK_OWNER" > "$LOCK_FILE" ) 2>/dev/null; then
+    if _lock_try_create; then
       echo "skill-lock[$SKILL_LOCK_NAME]: acquired (owner pid $SKILL_LOCK_OWNER)"
       return 0
     fi
@@ -107,9 +110,9 @@ acquire_lock() {
 
     # File exists — check if the holder is still alive
     if _lock_is_stale; then
-      # Stale lock: remove and retry. Safe for concurrent waiters — if multiple
-      # processes remove it simultaneously, the noclobber write below arbitrates;
-      # only one winner proceeds, others loop back and wait.
+      # Stale lock: remove and retry. The ln below arbitrates between waiters that
+      # create at once, but not a late rm: a waiter that saw the dead holder can
+      # remove a lock another waiter just took (#2569).
       rm -f "$LOCK_FILE"
       continue
     fi
