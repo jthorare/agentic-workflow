@@ -7,5 +7,12 @@ internal static partial class Labels
     internal const string HomeNothingNeedsYou = "Nothing needs you.";
 
     /// <summary>Running, nothing open.</summary>
+    /// <summary>A stalled Running card's body, in place of the banner's sentence.</summary>
+    internal const string QueueNothingRunning = "Nothing running.";
+
+    /// <summary>A stalled Queued card's body, in place of the banner's sentence.</summary>
+    internal const string QueueNothingQueued = "Nothing queued.";
+
+    /// <summary>"Nothing running. Start a workflow to see it here."</summary>
     internal const string HomeNothingRunning = "Nothing running. Start a workflow to see it here.";
 }

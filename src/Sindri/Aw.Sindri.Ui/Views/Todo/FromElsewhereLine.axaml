@@ -21,6 +21,10 @@
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
     </Style>
+    <!-- Connect Linear is an action, not a count: a link in the primary colour (#2548). -->
+    <Style Selector="Button.elsewhere-part.action-link TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Primary}" />
+    </Style>
     <Style Selector="Button.elsewhere-part.active TextBlock">
       <Setter Property="TextDecorations" Value="Underline" />
     </Style>

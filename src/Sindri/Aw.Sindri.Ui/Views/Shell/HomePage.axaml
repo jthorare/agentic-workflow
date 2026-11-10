@@ -59,7 +59,7 @@
          Under 1100 px the columns stack (HomePage.axaml.cs). -->
     <Grid x:Name="HomeColumns" ColumnDefinitions="3*,16,2*">
       <StackPanel x:Name="HomeLeft" Spacing="{StaticResource Size.PanelGap}">
-        <Border x:Name="NeedsYouPanel" Classes="panel" Classes.region-focus="{Binding IsNeedsYouFocused}" PointerEntered="OnNeedsYouPanelEntered" PointerExited="OnNeedsYouPanelExited" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+        <Border x:Name="NeedsYouPanel" Classes="panel" ClipToBounds="True" Classes.region-focus="{Binding IsNeedsYouFocused}" PointerEntered="OnNeedsYouPanelEntered" PointerExited="OnNeedsYouPanelExited" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
           <StackPanel>
             <Border Classes="phead">
               <Grid ColumnDefinitions="*,Auto">
@@ -134,13 +134,13 @@
         </Button>
 
         <Grid x:Name="PanelGrid" ColumnDefinitions="*" RowDefinitions="Auto,16,Auto" PointerEntered="OnPanelEntered" PointerExited="OnPanelExited">
-          <Border x:Name="RunningPanel" Classes="panel" AutomationProperties.Name="{Binding Text.RunningPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <Border x:Name="RunningPanel" Classes="panel" ClipToBounds="True" AutomationProperties.Name="{Binding Text.RunningPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
             <!-- The panel stretches to its row's height; an empty group's sentence sits centred in the body (states.html .empty). -->
             <DockPanel>
               <Border Classes="phead" DockPanel.Dock="Top">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <TextBlock Classes="eyebrow" Text="{Binding Queue.RunningHeader}" AutomationProperties.Name="{Binding Queue.RunningHeader}" />
-                  <StackPanel x:Name="RunningStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding Queue.IsStale}">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                  <TextBlock Classes="eyebrow" VerticalAlignment="Center" Text="{Binding Queue.RunningHeader}" AutomationProperties.Name="{Binding Queue.RunningHeader}" />
+                  <StackPanel x:Name="RunningStale" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" IsVisible="{Binding Queue.IsStale}">
                     <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
                     <TextBlock Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
                   </StackPanel>
@@ -164,13 +164,13 @@
               </Panel>
             </DockPanel>
           </Border>
-          <Border x:Name="QueuedPanel" Grid.Row="2" Classes="panel" AutomationProperties.Name="{Binding Text.QueuedPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <Border x:Name="QueuedPanel" Grid.Row="2" Classes="panel" ClipToBounds="True" AutomationProperties.Name="{Binding Text.QueuedPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
             <!-- The panel stretches to its row's height; an empty group's sentence sits centred in the body (states.html .empty). -->
             <DockPanel>
               <Border Classes="phead" DockPanel.Dock="Top">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <TextBlock Classes="eyebrow" Text="{Binding Queue.QueuedHeader}" AutomationProperties.Name="{Binding Queue.QueuedHeader}" />
-                  <StackPanel x:Name="QueuedStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding Queue.IsStale}">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                  <TextBlock Classes="eyebrow" VerticalAlignment="Center" Text="{Binding Queue.QueuedHeader}" AutomationProperties.Name="{Binding Queue.QueuedHeader}" />
+                  <StackPanel x:Name="QueuedStale" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" IsVisible="{Binding Queue.IsStale}">
                     <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
                     <TextBlock Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
                   </StackPanel>

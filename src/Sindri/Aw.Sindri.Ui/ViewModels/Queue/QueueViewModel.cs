@@ -227,13 +227,15 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         var left = withYou.Concat(running).ToList();
         Patch.To(RunningRows, [.. left.Take(PanelCap)]);
         RunningHeader = Labels.RunningHeader(running.Count, withYou.Count);
-        RunningEmpty = left.Count == 0 ? EmptyOf("running") : string.Empty;
+        RunningEmpty = left.Count == 0 ? EmptyOr("running", Labels.QueueNothingRunning) : string.Empty;   // a stalled card keeps a body: the banner already says why
         (HasMoreRunning, ShowAllRunning) = (left.Count > PanelCap, Labels.ShowAllInQueue(left.Count));
         Patch.To(QueuedRows, [.. queued.Take(PanelCap)]);
         QueuedHeader = Labels.QueuedHeader(queued.Count);
-        QueuedEmpty = queued.Count == 0 ? EmptyOf("queued") : string.Empty;
+        QueuedEmpty = queued.Count == 0 ? EmptyOr("queued", Labels.QueueNothingQueued) : string.Empty;
         (HasMoreQueued, ShowAllQueued) = (queued.Count > PanelCap, Labels.ShowAllInQueue(queued.Count));
     }
+
+    private string EmptyOr(string group, string plain) => EmptyOf(group) is { Length: > 0 } served ? served : plain;
 
     private string EmptyOf(string group) => Groups.FirstOrDefault(g => g.Group == group)?.Empty ?? string.Empty;
 }
