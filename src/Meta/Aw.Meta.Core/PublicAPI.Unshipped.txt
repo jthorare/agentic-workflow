@@ -2482,6 +2482,10 @@ Aw.Meta.Core.Merge.ReviewFacts.Counts.init -> void
 Aw.Meta.Core.Merge.ReviewFacts.Equals(Aw.Meta.Core.Merge.ReviewFacts? other) -> bool
 Aw.Meta.Core.Merge.ReviewFacts.OkSha.get -> string?
 Aw.Meta.Core.Merge.ReviewFacts.OkSha.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.QaNotYet.get -> bool
+Aw.Meta.Core.Merge.ReviewFacts.QaNotYet.init -> void
+Aw.Meta.Core.Merge.ReviewFacts.QaSha.get -> string?
+Aw.Meta.Core.Merge.ReviewFacts.QaSha.init -> void
 Aw.Meta.Core.Merge.ReviewFacts.ReadySha.get -> string?
 Aw.Meta.Core.Merge.ReviewFacts.ReadySha.init -> void
 Aw.Meta.Core.Merge.ReviewFacts.Reviewer.get -> string!
@@ -2506,5 +2510,4 @@ static Aw.Meta.Core.Merge.ReviewFacts.operator ==(Aw.Meta.Core.Merge.ReviewFacts
 static Aw.Meta.Core.Merge.ReviewProof.Collect(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! messages, string! reviewer, int pr) -> Aw.Meta.Core.Merge.ReviewFacts!
 static Aw.Meta.Core.Merge.ReviewProof.Counts(string! body) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.CountLine!>!
 static Aw.Meta.Core.Merge.ReviewProof.IsHead(string? sha, string! head) -> bool
-static Aw.Meta.Core.Merge.ReviewProof.OkSha(string! body, int pr) -> string?
 static Aw.Meta.Core.Merge.ReviewProof.ReadySha(string! body) -> string?

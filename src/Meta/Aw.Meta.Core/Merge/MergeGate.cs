@@ -54,11 +54,7 @@ public static class MergeGate
     private static MergeCheck[] ReviewChecks(MergeFacts facts, ReviewFacts review)
     {
         var pr = facts.Pr.ToString(CultureInfo.InvariantCulture);
-        var ok = review.OkSha is null
-            ? new MergeCheck("review", Ok: false, $"no \"OK #{pr} at <sha>\" from {review.Reviewer}")
-            : ReviewProof.IsHead(review.OkSha, facts.CurrentHead)
-                ? new MergeCheck("review", Ok: true, $"{review.Reviewer} said OK at {review.OkSha}")
-                : new MergeCheck("review", Ok: false, $"{review.Reviewer}'s newest OK is at {review.OkSha}, the head is {facts.CurrentHead}");
+        var ok = ReviewCheck(review, pr, facts.CurrentHead);
         var ready = review.ReadySha is null
             ? new MergeCheck("ready", Ok: false, $"no ready message for #{pr} naming a sha")
             : ReviewProof.IsHead(review.ReadySha, facts.CurrentHead)
@@ -71,6 +67,29 @@ public static class MergeGate
                 ? new MergeCheck("counts", Ok: false, $"the ready message counts {failed.Sum(c => c.Failed).ToString(CultureInfo.InvariantCulture)} failed")
                 : new MergeCheck("counts", Ok: true, $"{review.Counts.Count.ToString(CultureInfo.InvariantCulture)} count line(s), 0 failed");
         return [ok, ready, counts, Order(facts), new MergeCheck("draft", !facts.IsDraft, facts.IsDraft ? "the pull request is a draft" : "ready for review")];
+    }
+
+    // The reviewer's standing OK must name the head; a qa line under it ("qa not yet", "qa passed <sha>") must say passed at the head.
+    private static MergeCheck ReviewCheck(ReviewFacts review, string pr, string head)
+    {
+        if (review.OkSha is null)
+        {
+            return new MergeCheck("review", Ok: false, $"no standing \"OK #{pr} at <sha>\" from {review.Reviewer}");
+        }
+
+        if (!ReviewProof.IsHead(review.OkSha, head))
+        {
+            return new MergeCheck("review", Ok: false, $"{review.Reviewer}'s newest OK is at {review.OkSha}, the head is {head}");
+        }
+
+        if (review.QaNotYet)
+        {
+            return new MergeCheck("review", Ok: false, $"{review.Reviewer} said OK at {review.OkSha} but qa not yet");
+        }
+
+        return review.QaSha is null || ReviewProof.IsHead(review.QaSha, head)
+            ? new MergeCheck("review", Ok: true, $"{review.Reviewer} said OK at {review.OkSha}" + (review.QaSha is null ? string.Empty : $", qa passed at {review.QaSha}"))
+            : new MergeCheck("review", Ok: false, $"qa passed at {review.QaSha}, the head is {head}");
     }
 
     private static MergeCheck GateResult(GateRecord gate, IReadOnlyDictionary<string, IReadOnlyList<string>> failing, IReadOnlyDictionary<string, (int Summarized, int Named)> counts)

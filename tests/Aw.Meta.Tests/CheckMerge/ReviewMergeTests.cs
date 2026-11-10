@@ -121,4 +121,84 @@ public sealed class ReviewMergeTests
 
         Assert.False((await Check()).Ready);
     }
+
+    // Review fix on #2614: the reviewer voids an OK at an unchanged head (main moved under it) with "HOLD #<pr>"; only a later OK counts again.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_HOLD_after_the_OK_is_not_ready_until_a_new_OK()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Head}");
+        await Inbox("t1-api", ReadyBody());
+        await Inbox("t1-ideas", "HOLD #190: main changed AgentLaunchEnded under it");
+        Script();
+
+        var held = await Check();
+        Assert.False(held.Ready);
+        Assert.Contains("review", Failed(held), StringComparer.Ordinal);
+
+        await Inbox("t1-ideas", $"OK #190 at {Head}");
+
+        Assert.True((await Check()).Ready);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_HOLD_for_another_pr_keeps_this_OK()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Head}");
+        await Inbox("t1-ideas", "HOLD #1900");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        Assert.True((await Check()).Ready);
+    }
+
+    // A later reviewer message that names no OK or HOLD for the pull request keeps the standing OK.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_later_reviewer_message_without_an_OK_keeps_the_OK()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Head}");
+        await Inbox("t1-ideas", "OK #191 at abcdef1234567\nlooking at #192 next");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        Assert.True((await Check()).Ready);
+    }
+
+    // Meta's UI rule: the line after the OK is the qa line. "qa not yet" refuses; "qa passed <sha>" must name the head.
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_OK_with_qa_not_yet_is_not_ready()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Head}\nqa not yet");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        var response = await Check();
+        Assert.False(response.Ready);
+        Assert.Contains("review", Failed(response), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_OK_with_qa_passed_at_an_older_head_is_not_ready()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Head}\nqa passed {Old}");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        Assert.False((await Check()).Ready);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_OK_with_qa_passed_at_the_head_is_ready()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Head}\nqa passed {Head[..10]}\nOK #191 at abcdef1234567\nqa not yet");
+        await Inbox("t1-api", ReadyBody());
+        Script();
+
+        Assert.True((await Check()).Ready);
+    }
 }
