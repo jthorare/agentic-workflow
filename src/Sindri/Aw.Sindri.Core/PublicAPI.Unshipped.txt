@@ -22721,6 +22721,9 @@ Aw.Sindri.Core.Resources.ResourceDoctorRule
 const Aw.Sindri.Core.Resources.ResourceDoctorRule.NearLimit = 0.9 -> double
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.Check(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>! entries, System.Collections.Generic.IReadOnlyDictionary<string!, long>! diskLimits) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.LimitKey(Aw.Sindri.Core.Resources.ResourceOwner! owner, string! name) -> string!
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair.RepairAll(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair.RepairRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.RunId.init -> void
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId
