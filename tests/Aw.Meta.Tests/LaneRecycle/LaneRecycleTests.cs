@@ -188,7 +188,7 @@ public sealed class LaneRecycleTests
         _ = _world.PutLane("ui", "codex");
 
         Assert.Equal(MetaErrors.RecycleRefused.Code, (await Run(lane: "ui")).Error.Code);
-        Assert.Equal(MetaErrors.UnknownLane.Code, (await Run(lane: "meta")).Error.Code);
+        Assert.Equal(MetaErrors.UnknownLane.Code, (await Run(lane: "nope")).Error.Code);
         Assert.Empty(_world.Panes.Woken);
     }
 
