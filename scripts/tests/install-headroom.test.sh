@@ -25,7 +25,14 @@ export AW_STATE_DIR="$WORK/state"
 export CLAUDE_SETTINGS_FILE="$HOME/.claude/settings.json"
 export CODEX_HOME="$HOME/.codex"
 export AW_HEADROOM_BIN_DIR="$WORK/localbin"
-PC=$((20000 + $$ % 9000)); PX=$((PC + 1))
+# Ask the kernel for two free ports: two sockets bound to port 0 at once get different ephemeral ports (#2636). A pid-derived
+# port could collide with anything holding that port, or with another run.
+read -r PC PX < <(python3 -c 'import socket
+a = socket.socket(); a.bind(("127.0.0.1", 0))
+b = socket.socket(); b.bind(("127.0.0.1", 0))
+print(a.getsockname()[1], b.getsockname()[1])
+a.close(); b.close()')
+[ -n "${PC:-}" ] && [ -n "${PX:-}" ] || { echo "install-headroom.test: could not pick two free ports" >&2; exit 1; }
 export AW_HEADROOM_PORT_CLAUDE="$PC" AW_HEADROOM_PORT_CODEX="$PX"
 export AW_HEADROOM_START_WAIT=20
 unset ANTHROPIC_BASE_URL OPENAI_BASE_URL

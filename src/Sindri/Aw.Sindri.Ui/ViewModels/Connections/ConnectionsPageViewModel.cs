@@ -31,6 +31,7 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
         (_api, _clock) = (api, clock);
         _actions = new ConnectionActions(api, () => _url, launcher, clock);
         Add = new AddConnectionViewModel(_actions, ReadAgain);
+        Tiles = [.. Labels.ConnectionTiles.Select(t => new ServiceTileViewModel(new ServiceTile(t.Id, t.Title, t.Blurb, t.Mode), _actions, ReadAgain, clock))];
     }
 
     /// <summary>Raised when a row asks to open its connection's sheet; the shell opens it.</summary>
@@ -41,6 +42,26 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
 
     /// <summary>The Add connection form.</summary>
     public AddConnectionViewModel Add { get; }
+
+    /// <summary>The service tiles: the page's default view and, with nothing connected, its empty state.</summary>
+    public IReadOnlyList<ServiceTileViewModel> Tiles { get; }
+
+    /// <summary>The connections no tile shows (custom servers and keys).</summary>
+    public ObservableCollection<ConnectionRowViewModel> OtherRows { get; } = [];
+
+    /// <summary>True when there are connections no tile shows.</summary>
+    public bool HasOthers { get; private set => Set(ref field, value); }
+
+    /// <summary>True when the Custom section (its label and rows) shows: there is a connection that has no tile.</summary>
+    public bool ShowsCustom => HasOthers;
+
+    /// <summary>The Custom section's label.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string CustomLabel => Labels.ConnectionsCustom;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>The Custom section's count.</summary>
+    public string CustomCount => OtherRows.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>The connections, as the API orders them.</summary>
     public ObservableCollection<ConnectionRowViewModel> Rows { get; } = [];
@@ -194,9 +215,7 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
         }
 
         Patch.To(Rows, rows);
-        Head = Labels.ConnectionsHead(rows.Count, rows.Count(r => r.IsProblem));
-        (IsEmpty, EmptyText) = (rows.Count == 0, rows.Count == 0 ? Labels.ConnectionsEmpty : string.Empty);
-        OnChanged(nameof(HeadName));
+        Redraw();
     }
 
     private ConnectionRowViewModel Row(ConnectionView served)
@@ -223,8 +242,27 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
         _reads++;   // a list read already on its way may still hold this row: its answer is not wanted
         _ = _rows.Remove(gone.Name);
         _ = Rows.Remove(gone);
-        Head = Labels.ConnectionsHead(Rows.Count, Rows.Count(r => r.IsProblem));
-        (IsEmpty, EmptyText) = (Rows.Count == 0, Rows.Count == 0 ? Labels.ConnectionsEmpty : string.Empty);
+        Redraw();
+    }
+
+    // Binds each tile to its connection, lists the rest, and words the count. The tiles are the empty state, so IsEmpty stays false.
+    private void Redraw()
+    {
+        var taken = new HashSet<ConnectionRowViewModel>();
+        foreach (var tile in Tiles)
+        {
+            var row = Rows.FirstOrDefault(r => string.Equals(r.View.Preset, tile.Id, StringComparison.Ordinal) || r.Name.StartsWith(tile.Id + ":", StringComparison.Ordinal));
+            tile.Bind(row);
+            _ = row is null || taken.Add(row);
+        }
+
+        Patch.To(OtherRows, [.. Rows.Where(r => !taken.Contains(r))]);
+        HasOthers = OtherRows.Count > 0;
+        OnChanged(nameof(ShowsCustom));
+        OnChanged(nameof(CustomCount));
+        var connected = Tiles.Count(t => t.IsConnected);
+        Head = connected > 0 ? Labels.ConnectedOf(connected, Tiles.Count) : string.Empty;
+        (IsEmpty, EmptyText) = (false, string.Empty);
         OnChanged(nameof(HeadName));
     }
 }
