@@ -83,8 +83,14 @@ internal sealed partial class GraphWorkflow
             {
                 return await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.LaunchAsync(reference), _agentLaunchAttempt).ConfigureAwait(true);
             }
-            catch (ActivityFailureException) when (attempt + 1 < _agentLaunchAttempts)
+            catch (ActivityFailureException)
             {
+                // why: Patched runs only at the cap, so a history shorter than the cap gets no marker. A history that already went past the cap (a launch that failed for over an hour before this change) holds a back-off timer here, so on its replay Patched is false and it keeps retrying as before; failing the node there would not match that history (nondeterminism, #2578)
+                if (attempt + 1 >= _agentLaunchAttempts && Workflow.Patched("agent-launch-cap-1"))
+                {
+                    throw;
+                }
+
                 Workflow.CancellationToken.ThrowIfCancellationRequested();
                 var backoff = TimeSpan.FromMilliseconds(Math.Min(30_000, 100 * Math.Pow(2, Math.Min(attempt, 10))));
                 await Workflow.DelayAsync(backoff, Workflow.CancellationToken).ConfigureAwait(true);

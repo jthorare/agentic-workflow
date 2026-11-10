@@ -1,5 +1,8 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Infrastructure.Workflows;
+using Temporalio.Common;
+using Temporalio.Worker;
 
 namespace Aw.Sindri.Tests.Workflows;
 
@@ -36,6 +39,47 @@ public sealed class GraphAgentLaunchCapTests
         var text = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"N = {perAttempt} ({few} events at 4 attempts, {many} at 8; the 4 extra attempts added {many - few})");
         TestContext.Current.SendDiagnosticMessage("history events per failed launch attempt: " + text);
         Assert.InRange(perAttempt, 1, 20);
+    }
+
+    // why: a live run whose launch failed past the cap before the cap existed holds a back-off timer where the new code would fail the node; replaying it must not raise nondeterminism (Workflow.Patched("agent-launch-cap-1")).
+    // The history is recorded under a large cap, so it holds 6 attempts and no marker, and the cap in its start input is then lowered to 3 so the replay reaches the cap inside the recorded attempts
+    [Fact]
+    public async Task A_history_recorded_past_the_cap_without_the_cap_marker_replays_without_nondeterminism()
+    {
+        var runtime = new FakeAgentNodeRuntime { LaunchThrows = new InvalidOperationException("store error") };
+        await using var rig = await GraphRig.StartAsync(runtime, agentLaunchAttempts: 100);
+        var run = await AgentNodeRig.Start(rig);
+        using (var limit = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken))
+        {
+            limit.CancelAfter(TimeSpan.FromSeconds(30));
+            while (runtime.Launches.Count < 6)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
+            }
+        }
+
+        var handle = rig.Client.GetWorkflowHandle(run.Value);
+        var recorded = await handle.FetchHistoryAsync();
+        await handle.CancelAsync();
+        _ = await rig.Final(run);
+
+        var replayer = new WorkflowReplayer(new WorkflowReplayerOptions().AddWorkflow<GraphWorkflow>());
+        var result = await replayer.ReplayWorkflowAsync(WithCap(recorded, 3), throwOnReplayFailure: false, TestContext.Current.CancellationToken);
+
+        Assert.Null(result.ReplayFailure);
+    }
+
+    // Rewrites the 'AgentLaunchAttempts' of the workflow's start input in the recorded history.
+    private static WorkflowHistory WithCap(WorkflowHistory history, int cap)
+    {
+        var json = System.Text.Json.Nodes.JsonNode.Parse(history.ToJson())!;
+        var started = json["events"]!.AsArray().First(static e => e!["workflowExecutionStartedEventAttributes"] is not null)!["workflowExecutionStartedEventAttributes"]!;
+        var payload = started["input"]!["payloads"]![0]!;
+        var input = System.Text.Json.Nodes.JsonNode.Parse(Convert.FromBase64String(payload["data"]!.GetValue<string>()))!.AsObject();
+        var key = input.Select(static p => p.Key).First(static k => string.Equals(k, "agentLaunchAttempts", StringComparison.OrdinalIgnoreCase));
+        input[key] = cap;
+        payload["data"] = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(input.ToJsonString()));
+        return WorkflowHistory.FromJson(history.Id, json.ToJsonString());
     }
 
     private static async Task<int> HistoryLength(int attempts)
