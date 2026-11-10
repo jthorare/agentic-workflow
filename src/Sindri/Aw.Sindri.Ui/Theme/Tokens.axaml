@@ -85,6 +85,30 @@
   <!-- derived (S1b): the selected nav background, the running pill -->
   <Color x:Key="Color.PrimarySoft">#1d2036</Color>
   <SolidColorBrush x:Key="Brush.PrimarySoft" Color="{StaticResource Color.PrimarySoft}" />
+  <!-- status chip (#2545), one set per Sindri state: Fg is the state colour, Bg that colour at 14 %, Border at 30 %. Running is the
+       blue Area1 over a Primary tint; Waiting is an amber outline with no fill, so it never reads as Running or as Attention (filled amber).
+       Neutral and Draft stay in the ink greys. One dictionary, as the other tokens: the chip reads the same in both theme variants. -->
+  <SolidColorBrush x:Key="Brush.Status.Ok.Fg" Color="{StaticResource Color.Success}" />
+  <SolidColorBrush x:Key="Brush.Status.Ok.Bg" Color="{StaticResource Color.Success}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Ok.Border" Color="{StaticResource Color.Success}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Running.Fg" Color="{StaticResource Color.Area1}" />
+  <SolidColorBrush x:Key="Brush.Status.Running.Bg" Color="{StaticResource Color.Primary}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Running.Border" Color="{StaticResource Color.Primary}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.Fg" Color="{StaticResource Color.Attention}" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.Bg" Color="Transparent" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.Border" Color="{StaticResource Color.Attention}" Opacity="0.6" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.Fg" Color="{StaticResource Color.Attention}" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.Bg" Color="{StaticResource Color.Attention}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.Border" Color="{StaticResource Color.Attention}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Fg" Color="{StaticResource Color.Error}" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Bg" Color="{StaticResource Color.Error}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Border" Color="{StaticResource Color.Error}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.Fg" Color="{StaticResource Color.InkMuted}" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.Bg" Color="{StaticResource Color.LaneFill}" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.Border" Color="{StaticResource Color.Hairline}" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.Fg" Color="{StaticResource Color.InkSubtle}" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.Bg" Color="Transparent" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.Border" Color="{StaticResource Color.HairlineStrong}" />
   <!-- context map (F3 spec 1 §2): wire is an edge, a port and a suggested node's dashed border (decoration, 2.4:1 like the
        hairlines; a suggestion is carried by its dash and its words, never by this colour) -->
   <Color x:Key="Color.Wire">#4a4a52</Color>
