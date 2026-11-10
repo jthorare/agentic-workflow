@@ -137,4 +137,40 @@ public sealed class WatchSupersededTests : IDisposable
         Assert.DoesNotContain(_lines, l => l.StartsWith("WATCH superseded", StringComparison.Ordinal));
         Assert.NotNull(Read(KvKeys.WatchSnapshot));
     }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task A_superseded_watch_whose_poll_fails_never_writes_watch_failing(bool untilEvent)
+    {
+        // Poll 1 fails, and a newer watch claims inside it; the older watch must not start a failing streak for the team.
+        var polls = -1;
+        _ = _world.Runner
+            .When("gh pr list", _ =>
+            {
+                polls++;
+                if (polls == 20)
+                {
+                    _cap.Cancel();
+                }
+
+                if (polls == 1)
+                {
+                    Write(KvKeys.WatchOwner, "200");
+                    return new CommandResult(1, string.Empty, "network down", TimedOut: false);
+                }
+
+                return new CommandResult(0, "[]", string.Empty, TimedOut: false);
+            })
+            .When("git ls-remote origin main", _ => new CommandResult(0, "aaaaaaa1111111\trefs/heads/main\n", string.Empty, TimedOut: false));
+        await _world.Ready();
+        Write(KvKeys.WatchFailing, "0");
+
+        var result = await Service().Handle(Request(Older, untilEvent), _cap.Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal("WATCH superseded by pid 200", _lines[^1]);
+        Assert.DoesNotContain(_lines, l => l.StartsWith("WATCH ERROR", StringComparison.Ordinal));
+        Assert.Equal("0", Read(KvKeys.WatchFailing));
+    }
 }
