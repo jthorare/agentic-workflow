@@ -133,7 +133,7 @@ public sealed class TokenTests
     public void Typography_has_no_literal_font_size_or_line_height() =>
         Assert.DoesNotContain(
             TypographyStyles().SelectMany(s => s.Elements()),
-            e => (Attr(e, "Property") is "FontSize" or "LineHeight" or "FontWeight") && !(Attr(e, "Value") ?? "").StartsWith("{DynamicResource", StringComparison.Ordinal));
+            e => (string.Equals(Attr(e, "Property"), "FontSize", StringComparison.Ordinal) || string.Equals(Attr(e, "Property"), "LineHeight", StringComparison.Ordinal) || string.Equals(Attr(e, "Property"), "FontWeight", StringComparison.Ordinal)) && !(Attr(e, "Value") ?? "").StartsWith("{DynamicResource", StringComparison.Ordinal));
 
     [Fact]
     public void The_text_scale_starts_at_one() => Assert.Equal(1.0, _tokens.Number("Type.Scale"));
