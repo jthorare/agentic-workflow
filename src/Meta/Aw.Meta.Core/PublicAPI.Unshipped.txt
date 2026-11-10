@@ -232,7 +232,7 @@ Aw.Meta.Core.Coordination.MergeQueueReader.MergeQueueReader(Aw.Meta.Core.Ports.I
 Aw.Meta.Core.Coordination.MergeQueueReader.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.QueuedPr!>!>!>
 Aw.Meta.Core.Coordination.MergeReadiness
 Aw.Meta.Core.Coordination.MergeReadiness.Assess(int pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Coordination.MergeAssessment!>!>
-Aw.Meta.Core.Coordination.MergeReadiness.MergeReadiness(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.ILogFiles! logs) -> void
+Aw.Meta.Core.Coordination.MergeReadiness.MergeReadiness(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.ILogFiles! logs, Aw.Meta.Core.Ports.IMessageStore! messages) -> void
 Aw.Meta.Core.Coordination.MetaSession
 Aw.Meta.Core.Coordination.MetaSession.MetaSession(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.ISessionDirectory! sessions) -> void
 Aw.Meta.Core.Coordination.MetaSession.Resolve(Aw.Meta.Core.Ids.SessionId session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Config.TeamConfig?>!>

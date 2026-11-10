@@ -16,8 +16,14 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="gates">The recorded gate runs.</param>
 /// <param name="repo">The git and gh calls.</param>
 /// <param name="logs">Reads the red steps' logs for their failing tests.</param>
-public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCommands repo, ILogFiles logs)
+/// <param name="messages">The lanes' messages, where a reviewer's OK and a lane's ready notice are read.</param>
+public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCommands repo, ILogFiles logs, IMessageStore messages)
 {
+    // The reviewer path (#2610) reads the lanes' messages through this; nothing does yet.
+#pragma warning disable CA1822, MA0041 // a stub: the reviewer path will read the instance's messages
+    internal IMessageStore Messages => messages;
+#pragma warning restore CA1822, MA0041
+
     private const string Fields = "headRefOid,isDraft,title,state";
     private const int LogCharacters = 32 * 1024 * 1024;
 
