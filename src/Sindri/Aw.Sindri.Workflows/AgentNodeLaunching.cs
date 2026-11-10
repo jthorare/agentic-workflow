@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
