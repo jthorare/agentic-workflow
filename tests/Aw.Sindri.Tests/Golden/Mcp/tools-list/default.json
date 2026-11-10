@@ -1388,7 +1388,7 @@
   },
   {
     "name": "workflow_run",
-    "description": "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. A session that a run of this workflow launched can't start the workflow again.",
+    "description": "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. A session that a run of this workflow launched can't start the workflow again (SND-GRAPH-109); that guard does nothing until graph runs launch agent sessions.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,

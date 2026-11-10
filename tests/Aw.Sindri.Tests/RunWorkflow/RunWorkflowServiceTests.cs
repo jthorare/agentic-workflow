@@ -1,10 +1,14 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel;
+using Aw.Kernel.Ids;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.Time.Testing;
@@ -22,6 +26,9 @@ public sealed class RunWorkflowServiceTests
     private readonly InMemoryWorkflowStore _workflows;
     private readonly InMemoryWorkflowRunStore _runs;
     private readonly FakeStarter _starter;
+    private readonly FakeLaunches _launches = new();
+    private readonly SequentialIdGenerator _ids = new();
+    private readonly AsyncLocalCallerContextAccessor _callers;
     private readonly RunWorkflowService _service;
 
     public RunWorkflowServiceTests()
@@ -29,7 +36,8 @@ public sealed class RunWorkflowServiceTests
         _workflows = new InMemoryWorkflowStore(_clock);
         _runs = new InMemoryWorkflowRunStore(_clock);
         _starter = new FakeStarter(_runs, _clock);
-        _service = new RunWorkflowService(_workflows, _runs, _starter);
+        _callers = new AsyncLocalCallerContextAccessor(_ids);
+        _service = new RunWorkflowService(_workflows, _runs, _starter, _launches, _callers);
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -52,6 +60,46 @@ public sealed class RunWorkflowServiceTests
         Assert.Equal("api", trigger["payload"]!["repo"]!.GetValue<string>());
         Assert.Equal("session:s1", trigger["by"]!.GetValue<string>());
         Assert.Equal(WorkflowRunId.Of(_slug, 1, request.Occurrence), result.Value.Run);
+    }
+
+    [Fact]
+    public async Task A_session_launched_by_a_run_of_the_same_workflow_is_refused_SND_GRAPH_109()
+    {
+        await Create(concurrency: null, activate: true);
+        var launch = LaunchId.From("LCH-" + new string('0', 31) + "1");
+        var parent = WorkflowRunId.Of(_slug, 3, 12);
+        _launches.Add(launch, parent);
+        using var caller = _callers.Enter(new CallerContext(CallerClass.Session, Terminal: false, "session:s1", _ids.New<CommandId>(), _ids.New<CorrelationId>(), Repo: null, launch));
+
+        var result = await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "session:s1"), Token);
+
+        Assert.True(result.IsError);
+        Assert.Equal(SindriErrors.GraphRunLoop.Code, result.Error.Code);
+        Assert.Contains(parent.Value, result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(_starter.Requests);
+    }
+
+    [Fact]
+    public async Task A_session_launched_by_a_run_of_another_workflow_may_run_it()
+    {
+        await Create(concurrency: null, activate: true);
+        var launch = LaunchId.From("LCH-" + new string('0', 31) + "1");
+        _launches.Add(launch, WorkflowRunId.Of(WorkflowSlug.From("morning-checker"), 1, 1));
+        using var caller = _callers.Enter(new CallerContext(CallerClass.Session, Terminal: false, "session:s1", _ids.New<CommandId>(), _ids.New<CorrelationId>(), Repo: null, launch));
+
+        var result = await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "session:s1"), Token);
+
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task A_caller_with_no_launch_or_no_caller_may_run_it()
+    {
+        await Create(concurrency: "queue", activate: true);
+
+        Assert.True((await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "owner"), Token)).IsSuccess);
+        using var caller = _callers.Enter(new CallerContext(CallerClass.Human, Terminal: true, "human:cli", _ids.New<CommandId>(), _ids.New<CorrelationId>(), Repo: null));
+        Assert.True((await _service.Handle(new RunWorkflowRequest(_slug, Payload: null, "human:cli"), Token)).IsSuccess);
     }
 
     [Fact]
@@ -123,6 +171,17 @@ public sealed class RunWorkflowServiceTests
         {
             _ = (await _workflows.Activate(_id, 1, Token)).Value;
         }
+    }
+
+    /// <summary>Maps a launch to the run that launched it.</summary>
+    private sealed class FakeLaunches : IGraphLaunchRuns
+    {
+        private readonly Dictionary<LaunchId, WorkflowRunId> _runs = [];
+
+        public void Add(LaunchId launch, WorkflowRunId run) => _runs[launch] = run;
+
+        public ValueTask<Result<WorkflowRunId?>> RunOf(LaunchId launch, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Result<WorkflowRunId?>>(_runs.TryGetValue(launch, out var run) ? (WorkflowRunId?)run : null);
     }
 
     /// <summary>Like the real starter, it admits the run into the store, so the next manual run sees it; a set <see cref="Answer"/> stands in for a queue or skip answer and admits nothing.</summary>
