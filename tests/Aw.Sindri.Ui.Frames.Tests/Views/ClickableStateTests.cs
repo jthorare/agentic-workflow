@@ -11,7 +11,7 @@ using Aw.Sindri.Ui.Tests.Views;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
 
-/// <summary>Clickable surfaces answer the pointer (#2535): the shared clickable class gives a hover and a pressed look from theme tokens, eased over Motion.Fast (120 ms), instantly under reduced motion. The project card is the first user.</summary>
+/// <summary>Clickable surfaces answer the pointer (#2535): the shared clickable class gives a hover and a pressed look from theme tokens, eased over Motion.Hover (150 ms), instantly under reduced motion. The project card is the first user.</summary>
 [Lane(TestLane.Integration)]
 public sealed class ClickableStateTests : FrameHost
 {
@@ -30,7 +30,7 @@ public sealed class ClickableStateTests : FrameHost
     private static Point Corner(Window window, Border card) => card.TranslatePoint(new Point(6, 6), window)!.Value; // the card's own padding, no control in it
 
     [Fact]
-    public Task A_project_card_carries_the_shared_class_and_eases_its_colours_over_Motion_Fast() => OnUi(async () =>
+    public Task A_project_card_carries_the_shared_class_and_eases_its_colours_over_Motion_Hover() => OnUi(async () =>
     {
         var (_, card) = await OnFirstCard();
 
@@ -40,7 +40,7 @@ public sealed class ClickableStateTests : FrameHost
         foreach (var property in new AvaloniaProperty[] { Border.BackgroundProperty, Border.BorderBrushProperty })
         {
             var transition = Assert.Single(transitions.OfType<BrushTransition>(), t => Equals(t.Property, property));
-            Assert.InRange(transition.Duration.TotalMilliseconds, 120, 150);
+            Assert.Equal(150, transition.Duration.TotalMilliseconds);
         }
     });
 

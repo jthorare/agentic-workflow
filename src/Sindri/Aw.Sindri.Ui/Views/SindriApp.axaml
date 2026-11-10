@@ -22,6 +22,7 @@
   <Application.Styles>
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/FluentOverrides.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/Typography.axaml" />
+    <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/ClickableStyles.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Controls/ControlStyles.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Queue/QueueStyles.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/NeedsYou/NeedsYouStyles.axaml" />

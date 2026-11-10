@@ -126,6 +126,7 @@ public sealed class TokenTests
     [InlineData("Space.MD.Thickness", "16")]
     [InlineData("Motion.Instant", "0:0:0")]
     [InlineData("Motion.Fast", "0:0:0.120")]
+    [InlineData("Motion.Hover", "0:0:0.150")]
     [InlineData("Motion.Base", "0:0:0.180")]
     [InlineData("Motion.Pulse", "0:0:1.600")]
     [InlineData("Motion.Spin", "0:0:0.900")]

@@ -43,7 +43,7 @@
           <ItemsControl x:Name="WorkflowRows" ItemsSource="{Binding Rows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:WorkflowRowViewModel">
-                <Border Classes="item-row" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                <Border Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                   <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" MinHeight="36" VerticalAlignment="Center">
                     <Button Classes="row-title" Click="OnOpenWorkflow" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
                       <TextBlock Classes="body-strong" Text="{Binding NameText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
@@ -104,7 +104,7 @@
           <ItemsControl x:Name="RunRows" ItemsSource="{Binding Runs.Rows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:RunRowViewModel">
-                <Border Classes="item-row" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                <Border Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                   <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" MinHeight="36" VerticalAlignment="Center">
                     <Button Classes="row-title" Click="OnOpenRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
                       <TextBlock Classes="body-strong mono" Text="{Binding Id}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
@@ -178,7 +178,7 @@
                 <ItemsControl ItemsSource="{Binding Runs}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="wf:NodeRunViewModel">
-                      <Border Classes="item-row" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
+                      <Border Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                         <StackPanel Spacing="4" Margin="0,4">
                           <StackPanel Orientation="Horizontal" Spacing="12" AutomationProperties.AccessibilityView="Raw">
                             <TextBlock Classes="body-strong" Text="{Binding TitleText}" />
