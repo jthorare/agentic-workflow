@@ -19,7 +19,7 @@ internal sealed class ResourceDoctorChecks(IResourceFiles files, ResourceProvisi
         var rows = await book.BookedAll(cancellationToken).ConfigureAwait(false);
         if (rows.IsError)
         {
-            return [new DoctorCheck("resources", CheckState.Warn, rows.Error.Message, "check the disk holding ledger.db under the Sindri home has free space")];
+            return [new DoctorCheck("resources", CheckState.Warn, rows.Error.Message, "check that ledger.db under the Sindri home is readable, then run sindri doctor again")];
         }
 
         var limits = new Dictionary<string, long>(StringComparer.Ordinal);
