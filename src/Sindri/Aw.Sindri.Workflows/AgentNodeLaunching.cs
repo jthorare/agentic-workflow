@@ -37,7 +37,20 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
         var row = GraphFailures.Value(await runs.Get(node.Run, cancellationToken).ConfigureAwait(false));
         var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancellationToken).ConfigureAwait(false)).Spec;
         var graphNode = spec.Nodes.FirstOrDefault(n => n.Id == node.Node) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
-        var scope = new GraphNodeScope(row, spec, GraphFailures.Value(await runs.NodeRuns(node.Run, cancellationToken).ConfigureAwait(false)));
+        var nodeRuns = GraphFailures.Value(await runs.NodeRuns(node.Run, cancellationToken).ConfigureAwait(false));
+        var scope = new GraphNodeScope(row, spec, nodeRuns);
+        if (node.ItemIndex > 0)
+        {
+            // why: a node of a for_each body reads the item and the loop's nodes of its own item (#2470), the way the block activity opens them
+            var (loop, cutNode) = GraphLoopScopes.Open(scope, spec, node.Node, node.ItemIndex);
+            if (cutNode is not null)
+            {
+                return Failed("{}", SindriErrors.GraphOutputTruncated.With($"the output of '{cutNode}' was cut at 64 KB; refer to a smaller field"));
+            }
+
+            scope = new GraphNodeScope(row, spec, nodeRuns, loop);
+        }
+
         var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
         var input = config.ToJsonString();
         if (scope.Cut is { } cut)

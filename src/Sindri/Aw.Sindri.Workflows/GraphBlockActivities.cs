@@ -136,15 +136,14 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     // why: inside a 'for_each' a reference reads the item and the loop's nodes of the same item; the list is read the way the 'for_each' read it, from outputs that never change
     private static (GraphLoopContext? Loop, GraphBlockOutcome? Failure) Loop(GraphNodeScope outer, GraphSpec spec, NodeId node, int itemIndex)
     {
-        var shape = LoopBody.Enclosing(spec, node) ?? throw new ApplicationFailureException($"node '{node.Value}' is not inside a for_each", nonRetryable: true);
-        var config = GraphConfig.Interpolate(shape.ForEach.Config, outer.Lookup);
-        if (Cut(outer, config) is { } cut)
+        var (loop, cutNode) = GraphLoopScopes.Open(outer, spec, node, itemIndex);
+        if (cutNode is null)
         {
-            return (null, cut);
+            return (loop, null);
         }
 
-        var item = config["items"] is JsonArray items && itemIndex <= items.Count ? items[itemIndex - 1]?.DeepClone() : null;
-        return (new GraphLoopContext(shape, itemIndex, item), null);
+        var config = GraphConfig.Interpolate(LoopBody.Enclosing(spec, node)!.ForEach.Config, outer.Lookup);
+        return (null, Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cutNode}' was cut at 64 KB; refer to a smaller field")));
     }
 
     private static GraphBlockOutcome? Cut(GraphNodeScope scope, JsonObject config) => scope.Cut is { } cut

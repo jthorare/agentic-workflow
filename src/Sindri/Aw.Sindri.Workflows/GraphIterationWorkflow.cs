@@ -13,7 +13,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// The first node that fails and says 'stop' ends the batch; the nodes left for that item are 'skipped'.
 /// </summary>
 [Workflow("GraphIteration")]
-internal sealed class GraphIterationWorkflow
+internal sealed partial class GraphIterationWorkflow
 {
     private static readonly ActivityOptions _write = GraphActivityOptions.Write;
     private static readonly ActivityOptions _detached = GraphActivityOptions.Detached;
@@ -34,6 +34,7 @@ internal sealed class GraphIterationWorkflow
     {
         ArgumentNullException.ThrowIfNull(input);
         _run = input.Run;
+        _agents = new GraphAgentLoop(_run, Announce);
         try
         {
             var spec = await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.LoadAsync(_run), _write).ConfigureAwait(true);
@@ -143,6 +144,12 @@ internal sealed class GraphIterationWorkflow
     {
         try
         {
+            // why: a session outlives a plain activity and a person may take it over, so a run_agent runs the agent loop in the workflow, one agent per item (#2470)
+            if (string.Equals(node.Type, LoopBody.RunAgentType, StringComparison.Ordinal))
+            {
+                return await Agents.Run(node, item).ConfigureAwait(true);
+            }
+
             return await Workflow.ExecuteActivityAsync((GraphBlockActivities a) => a.RunBlockAsync(_run, node.Id, item), _block).ConfigureAwait(true);
         }
         catch (ActivityFailureException e) when (!TemporalException.IsCanceledException(e))
