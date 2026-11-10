@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-TK-001",
+  "status": 409,
+  "detail": "the source in /toolkits/notes can't be read: Could not find a part of the path '/toolkits/notes'.",
+  "traceId": "<trace>"
+}
