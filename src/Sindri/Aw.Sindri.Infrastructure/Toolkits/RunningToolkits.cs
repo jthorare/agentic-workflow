@@ -41,7 +41,7 @@ internal sealed class RunningToolkits(ToolkitSupervisor supervisor, IToolkitStor
         return found.Value switch
         {
             null => SindriErrors.ToolkitNotFound.With($"No toolkit named '{toolkit}' (fix: toolkit_list names them)"),
-            { State: ToolkitState.Paused } => SindriErrors.ToolkitPaused.With($"Toolkit '{toolkit}' is paused (fix: sindri toolkit resume {toolkit})"),
+            { State: ToolkitState.Paused } => SindriErrors.ToolkitPaused.With($"Toolkit '{toolkit}' is paused (fix: toolkit_stop, then toolkit_start)"),
             _ => SindriErrors.ToolkitNotBuilt.With($"Toolkit '{toolkit}' isn't running (fix: toolkit_start)"),
         };
     }
