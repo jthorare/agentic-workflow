@@ -133,12 +133,12 @@ public sealed class GraphAgentTakeoverTests
         Assert.Equal(["launch-returned", "close"], runtime.Order);
     }
 
-    // why: the launch is retried for ever when it keeps throwing (#2495); a cancel has to end the run within one attempt, and awaiting the final result leaves no open cancel for the shared server
+    // why: the launch is retried for ever when it keeps throwing (#2495); a cancel has to end the run within one attempt
     [Fact]
     public async Task A_cancel_ends_a_run_whose_launch_keeps_throwing()
     {
         var runtime = new FakeAgentNodeRuntime { LaunchThrows = new InvalidOperationException("store error") };
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
         await runtime.Launching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
