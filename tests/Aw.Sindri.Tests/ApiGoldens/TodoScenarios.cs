@@ -172,7 +172,7 @@ internal static class TodoScenarios
         return (await host.Http.Ask(Post("/sindri/todos/note/hold/undo", "{}", human))).Body;
     }
 
-    // GET /sindri/todos/note: "note" has one open conflict, one conflict picked inside its Undo window and the sample note's link line that can't sync; "hold" has an open hold of two changes;
+    // GET /sindri/todos/note: "note" has one open conflict, one conflict picked (the Obsidian side) inside its Undo window, a last sync and the sample note's link line that can't sync; "hold" has an open hold of four changes over 20 open todos;
     // "conflict" is the todo read of a both-places conflict (the TodoItem shape, same as the id route's golden)
     private static async Task<string> NoteState(GoldenHost host, (string Name, string Value)[] human, string scenario, CancellationToken ct)
     {
@@ -182,24 +182,48 @@ internal static class TodoScenarios
             return await Conflict(host, human, Hash, ct);
         }
 
-        var first = await Add(host, human, """{"text":"call the dentist","clientId":"c-1"}""", string.Empty, ct);
         if (string.Equals(scenario, "hold", StringComparison.Ordinal))
         {
-            var second = await Add(host, human, """{"text":"reply to Sam","clientId":"c-2"}""", string.Empty, ct);
-            var changes = new[] { new TodoHeldChange(Core.Ids.TodoId.From(first), "removed", NoteLine: null), new TodoHeldChange(Core.Ids.TodoId.From(second), "edited", $"- [ ] reply to Sam about the offsite ^td-{second[3..]}") };
-            await ViewScenarios.Append(host, EventTypes.TodoNoteHeld, new TodoNoteHeld(changes, Hash, "service:todo-note"), "todo.note.held:" + Hash, ct);
-        }
-        else
-        {
-            var picked = await Add(host, human, """{"text":"reply to Sam","clientId":"c-2"}""", string.Empty, ct);
-            var mine = new TodoSide("call the dentist", Due: null, Links: [], Done: false, Removed: false);
-            await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(first), mine, mine with { Text = "call the dentist about the crown" }, Hash), $"todo.conflicted:{first}:{Hash}", ct);
-            var other = new TodoSide("reply to Sam", Due: null, Links: [], Done: false, Removed: false);
-            await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(picked), other, other with { Text = "reply to Sam about the offsite" }, Hash), $"todo.conflicted:{picked}:{Hash}", ct);
-            await ViewScenarios.CatchUp(host, ct);
-            _ = await host.Http.Ask(Post($"/sindri/todos/{picked}/keep", Request("todos-keep", "sindri"), human));
+            return await Hold(host, human, Hash, ct);
         }
 
+        var first = await Add(host, human, """{"text":"call the dentist","clientId":"c-1"}""", string.Empty, ct);
+        var picked = await Add(host, human, """{"text":"reply to Sam","clientId":"c-2"}""", string.Empty, ct);
+        var mine = new TodoSide("call the dentist", Due: null, Links: [], Done: false, Removed: false);
+        await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(first), mine, mine with { Text = "call the dentist about the crown" }, Hash), $"todo.conflicted:{first}:{Hash}", ct);
+        var other = new TodoSide("reply to Sam", Due: null, Links: [], Done: false, Removed: false);
+        await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(picked), other, other with { Text = "reply to Sam about the offsite" }, Hash), $"todo.conflicted:{picked}:{Hash}", ct);
+        await ViewScenarios.CatchUp(host, ct);
+        _ = await host.Http.Ask(Post($"/sindri/todos/{picked}/keep", Request("todos-keep", "obsidian"), human));
+        // why: the last sync is read from the ledger (the sync's check time is in memory and stays null on this host); appended last so the ids above do not move
+        await ViewScenarios.Append(host, EventTypes.TodoNoteSynced, new TodoNoteSynced("notes", "Todo.md", Hash, Hash, Read: 4, Wrote: 0, "service:todo-note"), "todo.note.synced:golden", ct);
+        await ViewScenarios.CatchUp(host, ct);
+        return (await host.Http.Ask(Get("/sindri/todos/note", human))).Body;
+    }
+
+    // the hold scenario: four held changes (two removed, one edited, one reopened) against 20 open todos, so the 10% rule's base is 20; the four held todos come first so their ids stay put
+    private static async Task<string> Hold(GoldenHost host, (string Name, string Value)[] human, string hash, CancellationToken ct)
+    {
+        var removedA = await Add(host, human, """{"text":"reply to Sam about the offsite","clientId":"c-1"}""", string.Empty, ct);
+        var removedB = await Add(host, human, """{"text":"rotate the staging key","clientId":"c-2"}""", string.Empty, ct);
+        var edited = await Add(host, human, """{"text":"call the dentist","clientId":"c-3"}""", string.Empty, ct);
+        var reopened = await Add(host, human, """{"text":"renew the cert","due":"2025-12-30","clientId":"c-4"}""", string.Empty, ct);
+        _ = await host.Http.Ask(Post($"/sindri/todos/{reopened}/done", "{}", human));
+        await ViewScenarios.CatchUp(host, ct);
+        for (var i = 5; i <= 21; i++)
+        {
+            var n = i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            _ = await Add(host, human, $$"""{"text":"filler todo {{n}}","clientId":"c-{{n}}"}""", string.Empty, ct);
+        }
+
+        var changes = new[]
+        {
+            new TodoHeldChange(Core.Ids.TodoId.From(removedA), "removed", NoteLine: null),
+            new TodoHeldChange(Core.Ids.TodoId.From(removedB), "removed", NoteLine: null),
+            new TodoHeldChange(Core.Ids.TodoId.From(edited), "edited", $"- [ ] call the dentist about the crown 📅 2026-01-05 ^td-{edited[3..]}"),
+            new TodoHeldChange(Core.Ids.TodoId.From(reopened), "reopened", $"- [ ] renew the cert 📅 2025-12-30 ^td-{reopened[3..]}"),
+        };
+        await ViewScenarios.Append(host, EventTypes.TodoNoteHeld, new TodoNoteHeld(changes, hash, "service:todo-note"), "todo.note.held:" + hash, ct);
         await ViewScenarios.CatchUp(host, ct);
         return (await host.Http.Ask(Get("/sindri/todos/note", human))).Body;
     }
