@@ -22,7 +22,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
     internal AddConnectionViewModel(ConnectionActions actions, Func<Task> changed)
     {
         (_actions, _changed) = (actions, changed);
-        Key.PropertyChanged += (_, _) => OnChanged(nameof(CanSend));
+        Key.PropertyChanged += (_, _) => NotifyCanSend();
     }
 
     /// <summary>The form's copy.</summary>
@@ -55,7 +55,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
 
             DropSecrets();
             field = value;
-            foreach (var name in (string[])[nameof(SelectedPreset), nameof(ShowClient), nameof(ShowClientSecret), nameof(ShowKey), nameof(ShowUrl), nameof(ShowSecretNote), nameof(CanSend)])
+            foreach (var name in (string[])[nameof(SelectedPreset), nameof(ShowClient), nameof(ShowClientSecret), nameof(ShowKey), nameof(ShowUrl), nameof(ShowSecretNote), nameof(CanSend), nameof(SendBlockedReason), nameof(HasBlockedReason)])
             {
                 OnChanged(name);
             }
@@ -70,9 +70,9 @@ internal sealed class AddConnectionViewModel : ObservableObject
         {
             field = value ?? string.Empty;
             OnChanged(nameof(Name));
-            OnChanged(nameof(CanSend));
+            NotifyCanSend();
         }
-    } = string.Empty;
+    } = Labels.ConnectionDefaultName;
 
     /// <summary>The OAuth client id (not a secret).</summary>
     public string ClientId
@@ -82,7 +82,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
         {
             field = value ?? string.Empty;
             OnChanged(nameof(ClientId));
-            OnChanged(nameof(CanSend));
+            NotifyCanSend();
         }
     } = string.Empty;
 
@@ -94,7 +94,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
         {
             field = value ?? string.Empty;
             OnChanged(nameof(Url));
-            OnChanged(nameof(CanSend));
+            NotifyCanSend();
         }
     } = string.Empty;
 
@@ -119,10 +119,18 @@ internal sealed class AddConnectionViewModel : ObservableObject
     /// <summary>True when the form has what its kind needs and nothing is being sent.</summary>
     public bool CanSend => !IsWorking && Name.Trim().Length > 0 && Needed();
 
-    /// <summary>Why Add is disabled, in words; empty while it can send (red stub).</summary>
-#pragma warning disable CA1822, MA0041
-    public string SendBlockedReason => string.Empty;
-#pragma warning restore CA1822, MA0041
+    /// <summary>Why Add is disabled, in words; empty while it can send.</summary>
+    public string SendBlockedReason => CanSend ? string.Empty : IsWorking ? Labels.ConnectionAdding
+        : Name.Trim().Length == 0 ? Labels.ConnectNeedsName
+        : SelectedPreset.Kind switch
+        {
+            "mcp" => Labels.ConnectNeedsAddress,
+            "oauth" => Labels.ConnectNeedsClientId(SelectedPreset.Label),
+            _ => Labels.ConnectNeedsToken(SelectedPreset.Label),
+        };
+
+    /// <summary>True when the reason line shows.</summary>
+    public bool HasBlockedReason => IsOpen && SendBlockedReason.Length > 0;
 
     /// <summary>What the form says it is doing: sending, waiting for the browser, done; empty otherwise.</summary>
     public string StatusText
@@ -152,8 +160,19 @@ internal sealed class AddConnectionViewModel : ObservableObject
     /// <summary>True when there is an error.</summary>
     public bool HasError => ErrorText.Length > 0;
 
+    private void NotifyCanSend()
+    {
+        OnChanged(nameof(CanSend));
+        OnChanged(nameof(SendBlockedReason));
+        OnChanged(nameof(HasBlockedReason));
+    }
+
     /// <summary>Shows the form.</summary>
-    internal void Open() => IsOpen = true;
+    internal void Open()
+    {
+        IsOpen = true;
+        OnChanged(nameof(HasBlockedReason));
+    }
 
     /// <summary>Closes the form and drops anything pasted.</summary>
     internal void Close()
@@ -164,7 +183,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
         _run.Dispose();
         _run = new CancellationTokenSource();
         (IsWorking, StatusText, ErrorText) = (false, string.Empty, string.Empty);
-        OnChanged(nameof(CanSend));
+        NotifyCanSend();
     }
 
     /// <summary>
@@ -184,7 +203,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
         var run = _run;
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, run.Token);
         (IsWorking, ErrorText, StatusText) = (true, string.Empty, Labels.ConnectionAdding);
-        OnChanged(nameof(CanSend));
+        NotifyCanSend();
         try
         {
             // the body, with any pasted secret, lives only as this argument: after the POST the form holds the name and nothing else
@@ -206,7 +225,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
             if (!run.IsCancellationRequested)
             {
                 IsWorking = false;
-                OnChanged(nameof(CanSend));
+                NotifyCanSend();
             }
         }
     }
@@ -245,7 +264,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
     {
         if (end.State == SignInState.Connected)
         {
-            (StatusText, Name, ClientId, Url) = (Labels.ConnectionAdded(name), string.Empty, string.Empty, string.Empty);
+            (StatusText, Name, ClientId, Url) = (Labels.ConnectionAdded(name), Labels.ConnectionDefaultName, string.Empty, string.Empty);
             return;
         }
 

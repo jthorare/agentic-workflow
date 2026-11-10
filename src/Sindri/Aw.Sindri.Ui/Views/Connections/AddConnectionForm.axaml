@@ -17,7 +17,7 @@
         </ComboBox.ItemTemplate>
       </ComboBox>
       <TextBlock Classes="caption subtle" Text="{Binding Text.NameLabel}" />
-      <TextBox x:Name="AddConnectionName" Text="{Binding Name, Mode=TwoWay}" PlaceholderText="{Binding Text.NameHint}" AutomationProperties.Name="{Binding Text.NameLabel}" />
+      <TextBox x:Name="AddConnectionName" Text="{Binding Name, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.NameLabel}" />
       <StackPanel x:Name="AddConnectionClient" Spacing="8" IsVisible="{Binding ShowClient}">
         <TextBlock Classes="caption subtle" Text="{Binding Text.ClientLabel}" />
         <TextBox x:Name="AddConnectionClientId" Text="{Binding ClientId, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.ClientLabel}" />
@@ -37,8 +37,8 @@
       <Border x:Name="AddConnectionSecretNote" IsVisible="{Binding ShowSecretNote}" AutomationProperties.Name="{Binding Text.SecretNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption subtle" Text="{Binding Text.SecretNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <Border x:Name="AddConnectionSlack" IsVisible="{Binding ShowClient}" AutomationProperties.Name="{Binding Text.SlackNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <TextBlock Classes="caption subtle" Text="{Binding Text.SlackNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      <Border x:Name="AddConnectionReason" IsVisible="{Binding HasBlockedReason}" AutomationProperties.Name="{Binding SendBlockedReason}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption subtle" Text="{Binding SendBlockedReason}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <Border x:Name="AddConnectionStatus" IsVisible="{Binding HasStatus}" AutomationProperties.Name="{Binding StatusText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -47,8 +47,8 @@
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <StackPanel Orientation="Horizontal" Spacing="8">
-        <Button x:Name="AddConnectionSend" Content="{Binding Text.Send}" Click="OnSend" IsEnabled="{Binding CanSend}" AutomationProperties.Name="{Binding Text.Add}" />
-        <Button x:Name="AddConnectionClose" Content="{Binding Text.Cancel}" Click="OnClose" AutomationProperties.Name="{Binding Text.Cancel}" />
+        <Button x:Name="AddConnectionSend" Classes="command-control primary" ToolTip.Tip="{Binding SendBlockedReason}" Content="{Binding Text.Send}" Click="OnSend" IsEnabled="{Binding CanSend}" AutomationProperties.Name="{Binding Text.Add}" />
+        <Button x:Name="AddConnectionClose" Classes="command-control" Content="{Binding Text.Cancel}" Click="OnClose" AutomationProperties.Name="{Binding Text.Cancel}" />
       </StackPanel>
     </StackPanel>
   </Border>

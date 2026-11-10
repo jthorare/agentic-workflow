@@ -81,4 +81,22 @@ internal sealed class ConnectionsText
 
     /// <summary><see cref="Labels.ConnectionSettings"/>.</summary>
     public string Settings { get; } = Labels.ConnectionSettings;
+
+    /// <summary><see cref="Labels.ConnectionOthers"/>.</summary>
+    public string Others { get; } = Labels.ConnectionOthers;
+
+    /// <summary><see cref="Labels.ConnectionDisconnect"/>.</summary>
+    public string Disconnect { get; } = Labels.ConnectionDisconnect;
+
+    /// <summary><see cref="Labels.ConnectionMore"/>.</summary>
+    public string More { get; } = Labels.ConnectionMore;
+
+    /// <summary><see cref="Labels.ConnectionClientLabel"/> for a tile.</summary>
+    public string TileClientLabel { get; } = "Client id";
+
+    /// <summary><see cref="Labels.ConnectionKeyLabel"/> for a tile.</summary>
+    public string TileTokenLabel { get; } = "Token";
+
+    /// <summary><see cref="Labels.ConnectTile"/>.</summary>
+    public string Connect { get; } = Labels.ConnectTile;
 }

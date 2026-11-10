@@ -15,11 +15,22 @@
           <TextBlock x:Name="ConnectionsHead" Classes="caption subtle" Text="{Binding Head}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
       </StackPanel>
-      <Button x:Name="ConnectionsAdd" Grid.Column="2" Content="{Binding Text.Add}" Click="OnAdd" AutomationProperties.Name="{Binding Text.Add}" />
+      <Button x:Name="ConnectionsAdd" Grid.Column="2" Classes="link" Content="{Binding Text.Add}" Click="OnAdd" AutomationProperties.Name="{Binding Text.Add}" />
     </Grid>
     <Border x:Name="ConnectionsPurposeName" AutomationProperties.Name="{Binding Text.Purpose}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
       <TextBlock Classes="body muted" Text="{Binding Text.Purpose}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
     </Border>
+
+    <ItemsControl x:Name="ConnectionTiles" ItemsSource="{Binding Tiles}">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="cb:ServiceTileViewModel">
+          <cv:ServiceTileView />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
 
     <cv:AddConnectionForm x:Name="ConnectionsAddForm" DataContext="{Binding Add}" />
 
@@ -28,7 +39,7 @@
       <TextBlock Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
     </StackPanel>
 
-    <Border x:Name="ConnectionsPanel" Classes="panel" AutomationProperties.Name="{Binding Text.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+    <Border x:Name="ConnectionsPanel" Classes="panel" IsVisible="{Binding HasOthers}" AutomationProperties.Name="{Binding Text.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
       <StackPanel>
         <Border x:Name="ConnectionsReadingName" Margin="16,8" IsVisible="{Binding IsReading}" AutomationProperties.Name="{Binding Text.Reading}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption quiet" Text="{Binding Text.Reading}" AutomationProperties.AccessibilityView="Raw" />
@@ -45,7 +56,7 @@
         <Border x:Name="ConnectionsEmptyName" Margin="16,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock x:Name="ConnectionsEmpty" Classes="caption quiet" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <ItemsControl x:Name="ConnectionRows" ItemsSource="{Binding Rows}">
+        <ItemsControl x:Name="ConnectionRows" ItemsSource="{Binding OtherRows}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="cb:ConnectionRowViewModel">
               <cv:ConnectionRow />

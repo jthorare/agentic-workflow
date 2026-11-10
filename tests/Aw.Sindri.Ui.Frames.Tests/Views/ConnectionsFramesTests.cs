@@ -49,7 +49,8 @@ public sealed class ConnectionsFramesTests : FrameHost
         shell.GoTo(PageId.Connections);
         await Until(window, () => shell.Connections.Drawn > 0, "the Connections page never read the list");
 
-        Assert.True(Visible(window, "ConnectionsEmptyName"));
+        Assert.True(Visible(window, "ConnectionTiles"));
+        Assert.False(Visible(window, "ConnectionsEmptyName"));
         Frame(window, "empty", Prefix);
     });
 
@@ -98,15 +99,15 @@ public sealed class ConnectionsFramesTests : FrameHost
     });
 
     [Fact]
-    public Task The_add_form_for_a_sign_in_provider_asks_for_a_client_id() => OnUi(async () =>
+    public Task A_tile_for_a_sign_in_provider_asks_for_a_client_id_and_says_why_Connect_waits() => OnUi(async () =>
     {
         var (window, shell) = await OnConnections(1440);
-        shell.Connections.Add.Open();
-        shell.Connections.Add.SelectedPreset = shell.Connections.Add.Presets.Single(p => string.Equals(p.Id, "linear", StringComparison.Ordinal));
+        var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "linear", StringComparison.Ordinal));
+        await tile.Connect(CancellationToken.None);
         Settle(window);
 
-        Assert.True(Visible(window, "AddConnectionClientId"));
-        Assert.False(Visible(window, "AddConnectionKey"));
-        Frame(window, "add-oauth", Prefix);
+        Assert.True(Visible(window, "ServiceTileClientId"));
+        Assert.True(Visible(window, "ServiceTileReason"));
+        Frame(window, "tile-asks", Prefix);
     });
 }
