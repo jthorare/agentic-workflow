@@ -66,7 +66,7 @@ internal sealed partial class ContextPageViewModel
     }
 
     /// <summary>The No map state's body.</summary>
-    public string EmptyBody { get; } = Labels.ContextStateEmptyBody;
+    public string EmptyBody => _itemOpened is null ? Labels.ContextStateEmptyBody : Labels.ContextStateEmptyItemBody;
 
     /// <summary>The build button (the catalog's BuildContextMap), or null before the first no-map answer.</summary>
     public ControlViewModel? BuildControl { get; private set; }

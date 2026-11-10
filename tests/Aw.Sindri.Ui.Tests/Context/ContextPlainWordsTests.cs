@@ -42,7 +42,30 @@ public sealed class ContextPlainWordsTests
 
         await page.Submit(Token);
 
-        Assert.Equal("No map yet. Build one to see what your repo is made of.", page.EmptyTitle);
+        Assert.Equal(("No map yet. Build one to see what your repo is made of.", "Build it to see what your repo is made of and how its parts connect."), (page.EmptyTitle, page.EmptyBody));
+    }
+
+    [Fact]
+    public async Task With_an_item_opened_the_empty_state_keeps_the_item_words()
+    {
+        const string item = "ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a304";
+        var api = new FakeSindriApi();
+        api.Items[item] = RouteAnswer.SpecShaped("items-id", "new");
+        var clipboard = new FakeClipboard();
+        var clock = new FakeTimeProvider(A.Noon);
+        var page = new ContextPageViewModel(new ContextPorts(api, () => new Uri("http://127.0.0.1:1/"), clipboard, clock, new CatalogViewModel(clipboard, clock), _ => { }));
+
+        await page.OpenForItem(item, Token);
+
+        Assert.Equal(("No map for this item yet", "Build it to see why this work exists and what it touches."), (page.EmptyTitle, page.EmptyBody));
+    }
+
+    [Fact]
+    public async Task The_note_tip_is_null_when_the_note_has_no_code()
+    {
+        var page = await ConceptPage.Shown(ConceptPage.Serving(AConcepts.Without("building", null)));
+
+        Assert.Null(page.Concepts.NoteTip);
     }
 
     [Fact]

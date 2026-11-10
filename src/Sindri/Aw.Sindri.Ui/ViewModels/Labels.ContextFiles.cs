@@ -115,7 +115,10 @@ internal static partial class Labels
     internal const string ContextStateEmptyItemTitle = "No map for this item yet";
 
     /// <summary>The No map state's body.</summary>
-    internal const string ContextStateEmptyBody = "Build it to see why this work exists and what it touches.";
+    internal const string ContextStateEmptyItemBody = "Build it to see why this work exists and what it touches.";
+
+    /// <summary>The No map state's body when no item is picked.</summary>
+    internal const string ContextStateEmptyBody = "Build it to see what your repo is made of and how its parts connect.";
 
     /// <summary>The whole map's Building overlay when the API says how far it is: the parts it knows, joined.</summary>
     /// <param name="parts">The parts that are known ("3 of 7 sources", "started 4 min ago").</param>

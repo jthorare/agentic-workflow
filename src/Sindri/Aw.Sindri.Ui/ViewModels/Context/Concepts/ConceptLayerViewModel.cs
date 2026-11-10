@@ -46,8 +46,8 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
     /// <summary>The line that says why the map is shown without concepts, or that an open concept went away; empty when there is none to say.</summary>
     public string Note { get; private set; } = string.Empty;
 
-    /// <summary>The tooltip over the note: the error code behind it, or empty.</summary>
-    public string NoteTip { get; private set; } = string.Empty;
+    /// <summary>The tooltip over the note: the error code behind it, or null when there is none.</summary>
+    public string? NoteTip { get; private set; }
 
     /// <summary>Whether the note has words.</summary>
     public bool HasNote => Note.Length > 0;
@@ -74,7 +74,7 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
     /// <summary>A read starts.</summary>
     internal void Loading()
     {
-        (IsLoading, Note, NoteTip) = (true, string.Empty, string.Empty);
+        (IsLoading, Note, NoteTip) = (true, string.Empty, null);
         Changed();
     }
 
@@ -194,7 +194,7 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
         TermsNote = string.Empty;
         _all = [];
         (_pins, _wasBuilding, RebuildText) = (null, false, string.Empty);
-        (IsLoading, Note, NoteTip) = (false, note, string.Empty);
+        (IsLoading, Note, NoteTip) = (false, note, null);
         ResetSearch();
         Changed();
     }
