@@ -55,7 +55,7 @@ public sealed class AgentsPageViewModelTests
     {
         var page = await _f.Shown(Token);
 
-        Assert.Equal([Labels.AllStates, "Working", "Asking you", "Idle", "Unknown"], page.StateChoices.Take(5), StringComparer.Ordinal);
+        Assert.Equal([Labels.AllStates, "Working", "Waiting on you", "Idle", "Unknown"], page.StateChoices.Take(5), StringComparer.Ordinal);
         page.FilterState("Working");
         Assert.Equal("running", page.StateFilter);
         Assert.Equal([Claude], Providers(page.Groups.SelectMany(g => g.Rows)), StringComparer.Ordinal);
@@ -91,7 +91,7 @@ public sealed class AgentsPageViewModelTests
 
         var row = RowOf(page, Codex);
 
-        Assert.Equal("◐ Asking you", row.ChipText);
+        Assert.Equal("● Waiting on you", row.ChipText);
         Assert.Equal(Labels.AskingDetail((string)served["reason"]!, (string)served["tool"]!), row.AskingText);
         Assert.Contains(row.AskingText, row.Name, StringComparison.Ordinal);
         Assert.Contains("asking", row.Name, StringComparison.Ordinal);

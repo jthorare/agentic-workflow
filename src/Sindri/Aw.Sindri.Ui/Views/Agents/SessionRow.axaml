@@ -28,7 +28,7 @@
       <Border x:Name="SessionRowWhere" Grid.Column="3" Margin="0,0,8,0" IsVisible="{Binding IsWide}" VerticalAlignment="Center" AutomationProperties.Name="{Binding WhereText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption subtle" Text="{Binding WhereText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <StackPanel Grid.Column="4" Margin="0,0,8,0" VerticalAlignment="Center" IsVisible="{Binding IsWide}">
+      <StackPanel x:Name="SessionRowDoing" Grid.Column="4" Margin="0,0,8,0" VerticalAlignment="Center" IsVisible="{Binding IsWide}">
         <TextBlock Classes="caption" Text="{Binding AskingText}" IsVisible="{Binding HasAsking}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
         <TextBlock Classes="caption quiet" Text="{Binding NoStepText}" IsVisible="{Binding HasNoStep}" AutomationProperties.AccessibilityView="Raw" />
         <TextBlock x:Name="SessionRowStep" Classes="caption" Text="{Binding StepText}" IsVisible="{Binding HasStep}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding StepName}" />

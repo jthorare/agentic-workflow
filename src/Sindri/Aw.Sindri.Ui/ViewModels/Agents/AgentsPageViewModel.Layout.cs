@@ -9,6 +9,15 @@ internal sealed partial class AgentsPageViewModel
     /// <summary>True when every column shows.</summary>
     public bool IsWide => !IsCompact;
 
+    /// <summary>True when the Repository column shows: the page is wide and some row has a repository.</summary>
+    public bool ShowsRepo => IsWide;
+
+    /// <summary>True when the Where it runs column shows: the page is wide and some row says where it runs.</summary>
+    public bool ShowsWhere => IsWide;
+
+    /// <summary>True when the What it is doing column shows: the page is wide and some row asks or runs a Step.</summary>
+    public bool ShowsDoing => IsWide;
+
     /// <summary>"Clear filters": the button on the no-match line.</summary>
     public string ClearFiltersText { get; } = Labels.ClearFilters;
 

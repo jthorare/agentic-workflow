@@ -52,6 +52,9 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     /// <summary>"estimated" when the state was worked out from the transcript.</summary>
     public string EstimatedText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The tooltip on "estimated": what is estimated and why; empty when the row is not estimated.</summary>
+    public string EstimatedTip => EstimatedText;
+
     /// <summary>The worktree as served, or empty.</summary>
     public string WorktreeText { get; private set => Set(ref field, value); } = string.Empty;
 
