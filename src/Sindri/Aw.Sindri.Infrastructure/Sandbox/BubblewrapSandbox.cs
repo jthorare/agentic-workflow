@@ -109,7 +109,7 @@ internal sealed class BubblewrapSandbox(BubblewrapOptions options, ISandboxProce
         try
         {
             // The process's private /tmp is the only per-process directory; stdin and stdout stay the caller's pipes and no launch secret exists, so the command is plain.
-            var tmp = plan.Mounts.FirstOrDefault(m => m.Kind == PlanMountKind.ReadWrite && m.Source is not null && string.Equals(m.Path, "/tmp", StringComparison.Ordinal))?.Source;
+            var tmp = plan.Mounts.FirstOrDefault(SeatbeltProcessPlan.IsPrivateTmp)?.Source;
             if (tmp is not null)
             {
                 _ = Directory.CreateDirectory(tmp);

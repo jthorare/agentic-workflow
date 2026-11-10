@@ -2,8 +2,10 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Features.GetWorkflow;
 using Aw.Sindri.Features.GetWorkflowRun;
+using Aw.Sindri.Features.ListWorkflowBlocks;
 using Aw.Sindri.Features.ListWorkflowRuns;
 using Aw.Sindri.Features.ListWorkflows;
+using Aw.Sindri.Features.SearchWorkflowDocs;
 
 namespace Aw.Sindri.Host.Commands;
 
@@ -18,6 +20,8 @@ internal sealed class WfReadVerbs(ControlPlaneClient client, Output output)
     internal const string ListUsage = "usage: sindri wf list [--json]";
     internal const string ShowUsage = "usage: sindri wf show <slug> [--json]";
     internal const string RunsUsage = "usage: sindri wf runs <slug> [--json]";
+    internal const string BlocksUsage = "usage: sindri wf blocks [--json]";
+    internal const string DocsUsage = "usage: sindri wf docs [<question words>] [--page <slug>] [--json]";
     internal const string RunShowUsage = "usage: sindri wf run-show <run> [--json]";
 
     internal async Task<int> List(string[] args, CancellationToken ct)
@@ -70,6 +74,55 @@ internal sealed class WfReadVerbs(ControlPlaneClient client, Output output)
 
         var answer = await client.Get<GetWorkflowRunResponse>("/sindri/workflow-runs/" + Uri.EscapeDataString(run.Value), ct).ConfigureAwait(false);
         return await Print(answer, args, WfReadText.Run, ct).ConfigureAwait(false);
+    }
+
+    internal async Task<int> Blocks(string[] args, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+        var bad = One(args, 0, "wf blocks", BlocksUsage);
+        if (bad.IsError)
+        {
+            return await output.Error(bad.Error).ConfigureAwait(false);
+        }
+
+        var answer = await client.Get<ListWorkflowBlocksResponse>("/sindri/workflows/blocks", ct).ConfigureAwait(false);
+        return await Print(answer, args, WfReadText.Blocks, ct).ConfigureAwait(false);
+    }
+
+    internal async Task<int> Docs(string[] args, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+        string? page = null;
+        var words = new List<string>();
+        for (var i = 0; i < args.Length; i++)
+        {
+            if (args[i] == "--json")
+            {
+                continue;
+            }
+
+            if (args[i] == "--page")
+            {
+                if (i + 1 >= args.Length)
+                {
+                    return await output.Error(SindriErrors.InvalidInput.With("'--page' needs a page slug (" + DocsUsage + ")")).ConfigureAwait(false);
+                }
+
+                page = args[++i];
+            }
+            else if (args[i].StartsWith('-'))
+            {
+                return await output.Error(SindriErrors.InvalidInput.With($"'{args[i]}' isn't an option of wf docs ({DocsUsage})")).ConfigureAwait(false);
+            }
+            else
+            {
+                words.Add(args[i]);
+            }
+        }
+
+        var query = UrlQuery.Of([("question", words.Count == 0 ? null : string.Join(' ', words)), ("page", page)]);
+        var answer = await client.Get<SearchWorkflowDocsResponse>("/sindri/workflows/docs" + query, ct).ConfigureAwait(false);
+        return await Print(answer, args, WfReadText.Docs, ct).ConfigureAwait(false);
     }
 
     private async Task<int> Print<T>(Result<ApiAnswer<T>> answer, string[] args, Func<T, string> text, CancellationToken ct)

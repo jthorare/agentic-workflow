@@ -14,6 +14,7 @@ using Aw.Sindri.Core.EngineReads;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Docs;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Launch;
@@ -26,6 +27,7 @@ using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.Toolkits;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Core.Scheduling;
@@ -57,6 +59,7 @@ using Aw.Sindri.Infrastructure.Memory;
 using Aw.Sindri.Infrastructure.Notifications;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Profile;
+using Aw.Sindri.Infrastructure.Resources;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Infrastructure.Sessions;
@@ -81,7 +84,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     public static IServiceCollection AddSindriInfrastructure(this IServiceCollection services, Func<string, string?> environment)
     {
         var settings = SettingsFromEnvironment.Read(environment);
-        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters().AddSindriMcp(environment).AddSecretInfrastructure().AddProfileEditing(environment).AddLeftoverInfrastructure().AddScopingInfrastructure().AddJudgeInfrastructure(environment).AddScopeWatch().AddSkillBlocks(environment).AddSingleton<Core.Reviews.IReviewSummaries, Reviews.FileReviewSummaries>().AddSingleton<Core.Reviews.IFixTaskFiles, Reviews.FixTaskFiles>().AddSingleton<Core.Reviews.IFixSessions>(sp => new Reviews.GitFixSessions(sp.GetRequiredService<Core.Sessions.ISessionSnapshot>(), new ProcessToolRunner())).AddSingleton<Core.Reviews.IReviewPages, Reviews.FileReviewPages>().AddSingleton<Core.Reviews.IReviewEvidence>(_ => new Reviews.FileReviewEvidence(environment)).AddSingleton<Core.Todos.Note.ITodoNoteDisk, Todos.FileTodoNoteDisk>().AddSingleton<Core.Todos.Note.ITodoNoteFiles, Todos.FileTodoNoteFiles>();
+        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters().AddSindriMcp(environment).AddSecretInfrastructure().AddProfileEditing(environment).AddLeftoverInfrastructure().AddScopingInfrastructure().AddJudgeInfrastructure(environment).AddScopeWatch().AddSkillBlocks(environment).AddSingleton<Core.Reviews.IReviewSummaries, Reviews.FileReviewSummaries>().AddSingleton<Core.Reviews.IFixTaskFiles, Reviews.FixTaskFiles>().AddSingleton<Core.Reviews.IFixSessions>(sp => new Reviews.GitFixSessions(sp.GetRequiredService<Core.Sessions.ISessionSnapshot>(), new ProcessToolRunner())).AddSingleton<Core.Reviews.IReviewPages, Reviews.FileReviewPages>().AddSingleton<Core.Reviews.IReviewEvidence>(_ => new Reviews.FileReviewEvidence(environment)).AddSingleton(_ => new Todos.NoteLinkCounter(new SandboxProcesses())).AddSingleton<Core.Todos.Note.ITodoNoteDisk>(sp => new Todos.FileTodoNoteDisk(sp.GetRequiredService<Todos.NoteLinkCounter>())).AddSingleton<Core.Todos.Note.ITodoNoteFiles>(sp => new Todos.FileTodoNoteFiles(sp.GetRequiredService<ISindriHome>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<Todos.NoteLinkCounter>()));
     }
 
     /// <summary>SB-3a: what 'session wrap --limits' watches a session's systemd scope through (systemctl --user and the cgroup files).</summary>
@@ -129,7 +132,10 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IWorktrees, GitWorktrees>()               // per-run worktrees (engine spec §6.5)
             .AddSingleton<IWorkflowStore, SqliteWorkflowStore>()    // workflow graphs and their revisions (#2258, PR 5): workflow and workflow_revision in ledger.db
             .AddSingleton<IWorkflowRunStore, SqliteWorkflowRunStore>()    // workflow runs and node runs (#2258, PR 6): workflow_run and workflow_node_run in ledger.db
+            .AddSingleton<IWorkflowDocs, WorkflowDocs.ShippedWorkflowDocs>()   // workflow_docs: the pages embedded in the binary
+            .AddSingleton<IGraphLaunchRuns, NoGraphLaunchRuns>()   // no graph run launches an agent session until PR 9
             .AddSingleton<IGraphBlockCatalog, EmptyGraphBlockCatalog>() // no graph blocks until PR 6 and 9
+            .AddSingleton<IResourceFiles>(static sp => new ResourceFiles(Path.Combine(sp.GetRequiredService<ISindriHome>().Path, "resources")))   // provisioned resources (agent-first PR 14): the files under <home>/resources
             .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
             .AddSingleton<IToolkitCalls, SqliteToolkitCalls>()       // toolkit call log (agent-first PR 16): toolkit_call in ledger.db
             .AddSingleton<ToolkitCallLog>()

@@ -994,12 +994,14 @@ Aw.Meta.Core.Ports.IHostResources.Read(System.Threading.CancellationToken cancel
 Aw.Meta.Core.Ports.IKeyValueStore
 Aw.Meta.Core.Ports.IKeyValueStore.Get(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Meta.Core.Ports.IKeyValueStore.Set(string! key, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.IKeyValueStore.SetIf(string! key, string? expected, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
 Aw.Meta.Core.Ports.ILaneFiles
 Aw.Meta.Core.Ports.ILaneFiles.Record(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneRecord?>!>
 Aw.Meta.Core.Ports.ILaneMail
 Aw.Meta.Core.Ports.ILaneMail.Deliver(System.Collections.Generic.IReadOnlyList<long>! seqs, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.ILaneMail.Owed(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Lanes.LaneMessage!>!>!>
 Aw.Meta.Core.Ports.ILaneMail.Reply(Aw.Meta.Core.Lanes.LaneIdentity! identity, string! text, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ids.MessageId>!>
+Aw.Meta.Core.Ports.ILaneMail.Settle(System.Collections.Generic.IReadOnlyList<long>! seqs, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.ILaneMail.Send(string! lane, string! text, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
 Aw.Meta.Core.Ports.ILanePane
 Aw.Meta.Core.Ports.ILanePane.Probe(string! session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.PaneState?>!>
@@ -2051,6 +2053,7 @@ static Aw.Meta.Core.Watch.ContextWatch.Step(System.Collections.Generic.IReadOnly
 static readonly Aw.Meta.Core.Coordination.PaneSubmitter.Pause -> System.TimeSpan
 static readonly Aw.Meta.Core.MetaErrors.RecycleRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Meta.Core.MetaErrors.RecycleTimedOut -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Meta.Core.MetaErrors.BoardContended -> Aw.Kernel.ErrorDefinition!
 Aw.Meta.Core.Coordination.LaneContextReader.ReadOrNull(Aw.Meta.Core.Config.TeamConfig? team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Lanes.LaneContext!>?>
 Aw.Meta.Core.Config.TeamConfig.Agent.get -> string?
 Aw.Meta.Core.Config.TeamConfig.Agent.init -> void
@@ -2393,3 +2396,46 @@ Aw.Meta.Core.Routing.RouteSuggestion.TargetKnown.get -> bool
 Aw.Meta.Core.Routing.RouteSuggestion.TargetKnown.init -> void
 Aw.Meta.Core.Coordination.ConsumerState
 static Aw.Meta.Core.Coordination.ConsumerState.Read(Aw.Meta.Core.Ports.IKeyValueStore! values, int? waiting, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(string! Line, bool Missing)>!>
+Aw.Meta.Core.Ports.BoardFacts
+Aw.Meta.Core.Ports.BoardFacts.At.get -> System.DateTimeOffset
+Aw.Meta.Core.Ports.BoardFacts.At.init -> void
+Aw.Meta.Core.Ports.BoardFacts.BoardFacts(string! MainSha, System.Collections.Generic.IReadOnlyList<int>! MergedPrs, System.DateTimeOffset At, int Version) -> void
+Aw.Meta.Core.Ports.BoardFacts.<Clone>$() -> Aw.Meta.Core.Ports.BoardFacts!
+Aw.Meta.Core.Ports.BoardFacts.Deconstruct(out string! MainSha, out System.Collections.Generic.IReadOnlyList<int>! MergedPrs, out System.DateTimeOffset At, out int Version) -> void
+Aw.Meta.Core.Ports.BoardFacts.Equals(Aw.Meta.Core.Ports.BoardFacts? other) -> bool
+Aw.Meta.Core.Ports.BoardFacts.MainSha.get -> string!
+Aw.Meta.Core.Ports.BoardFacts.MainSha.init -> void
+Aw.Meta.Core.Ports.BoardFacts.MergedPrs.get -> System.Collections.Generic.IReadOnlyList<int>!
+Aw.Meta.Core.Ports.BoardFacts.MergedPrs.init -> void
+Aw.Meta.Core.Ports.BoardFacts.Version.get -> int
+Aw.Meta.Core.Ports.BoardFacts.Version.init -> void
+Aw.Meta.Core.Ports.BoardSeen
+Aw.Meta.Core.Ports.BoardSeen.BoardSeen(int BoardVersion, int LaneMapVersion) -> void
+Aw.Meta.Core.Ports.BoardSeen.BoardVersion.get -> int
+Aw.Meta.Core.Ports.BoardSeen.BoardVersion.init -> void
+Aw.Meta.Core.Ports.BoardSeen.<Clone>$() -> Aw.Meta.Core.Ports.BoardSeen!
+Aw.Meta.Core.Ports.BoardSeen.Deconstruct(out int BoardVersion, out int LaneMapVersion) -> void
+Aw.Meta.Core.Ports.BoardSeen.Equals(Aw.Meta.Core.Ports.BoardSeen? other) -> bool
+Aw.Meta.Core.Ports.BoardSeen.LaneMapVersion.get -> int
+Aw.Meta.Core.Ports.BoardSeen.LaneMapVersion.init -> void
+Aw.Meta.Core.Ports.IBoardStore
+Aw.Meta.Core.Ports.IBoardStore.MarkSeen(string! lane, Aw.Meta.Core.Ports.BoardSeen! seen, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.IBoardStore.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.BoardFacts?>!>
+Aw.Meta.Core.Ports.IBoardStore.RecordMain(string! sha, System.Collections.Generic.IReadOnlyList<int>! mergedPrs, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.IBoardStore.SeedMain(string! sha, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Meta.Core.Ports.IBoardStore.SeenVersion(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.BoardSeen?>!>
+override Aw.Meta.Core.Ports.BoardFacts.Equals(object? obj) -> bool
+override Aw.Meta.Core.Ports.BoardFacts.GetHashCode() -> int
+override Aw.Meta.Core.Ports.BoardFacts.ToString() -> string!
+override Aw.Meta.Core.Ports.BoardSeen.Equals(object? obj) -> bool
+override Aw.Meta.Core.Ports.BoardSeen.GetHashCode() -> int
+override Aw.Meta.Core.Ports.BoardSeen.ToString() -> string!
+static Aw.Meta.Core.Ports.BoardFacts.operator !=(Aw.Meta.Core.Ports.BoardFacts? left, Aw.Meta.Core.Ports.BoardFacts? right) -> bool
+static Aw.Meta.Core.Ports.BoardFacts.operator ==(Aw.Meta.Core.Ports.BoardFacts? left, Aw.Meta.Core.Ports.BoardFacts? right) -> bool
+static Aw.Meta.Core.Ports.BoardSeen.operator !=(Aw.Meta.Core.Ports.BoardSeen? left, Aw.Meta.Core.Ports.BoardSeen? right) -> bool
+static Aw.Meta.Core.Ports.BoardSeen.operator ==(Aw.Meta.Core.Ports.BoardSeen? left, Aw.Meta.Core.Ports.BoardSeen? right) -> bool
+const Aw.Meta.Core.KvKeys.BoardMain = "board.main" -> string!
+const Aw.Meta.Core.KvKeys.BoardSeenPrefix = "board.seen." -> string!
+Aw.Meta.Core.Messages.NoticeRule
+static Aw.Meta.Core.Messages.NoticeRule.IsNotice(string! body) -> bool
+const Aw.Meta.Core.Messages.InboxState.Settled = "settled" -> string!

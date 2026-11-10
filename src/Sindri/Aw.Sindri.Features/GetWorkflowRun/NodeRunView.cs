@@ -11,4 +11,5 @@ namespace Aw.Sindri.Features.GetWorkflowRun;
 /// <param name="Output">What the block produced, or null.</param>
 /// <param name="Truncated">True when Sindri cut the input or the output to fit its size limit.</param>
 /// <param name="Error">Why it failed, or null.</param>
-internal sealed record NodeRunView(NodeId Node, int ItemIndex, string Status, JsonNode? Input, JsonNode? Output, bool Truncated, string? Error);
+/// <param name="Agent">Null unless the row is a 'run_agent' node the run waits on; then 'waiting' (a takeover applies) or 'taken_over' (a handback applies).</param>
+internal sealed record NodeRunView(NodeId Node, int ItemIndex, string Status, JsonNode? Input, JsonNode? Output, bool Truncated, string? Error, string? Agent = null);

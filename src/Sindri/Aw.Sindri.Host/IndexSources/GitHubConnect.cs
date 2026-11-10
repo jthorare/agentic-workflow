@@ -9,7 +9,7 @@ using Aw.Sindri.Core.Secrets;
 namespace Aw.Sindri.Host.IndexSources;
 
 /// <summary>
-/// 'sindri index connect github' (owned-index spec §5.4, §5.8): the human reads the token at the terminal with the echo off, and Sindri checks the token against every repo the profile lists before it saves anything, so a wrong scope
+/// 'sindri index connect github' (owned-index spec §5.4, §5.8): the token is read at the terminal with the echo off, and Sindri checks the token against every repo the profile lists before it saves anything, so a wrong scope
 /// fails here and not hours into a sync. Only then is the token stored where a secret pointer can read it back, and the pointer (never the token) written into the profile. The token is never printed, logged or put in an error.
 /// </summary>
 /// <param name="prompts">The terminal.</param>
@@ -35,19 +35,13 @@ internal sealed class GitHubConnect(
     internal const string TokenPrompt = "GitHub token (read-only: Issues, Pull requests and Metadata read on the listed repos; not shown, not stored in the profile): ";
 
     /// <summary>Connects GitHub.</summary>
-    /// <param name="human">Whether the caller is a person at their own terminal; a session is refused before anything is asked.</param>
     /// <param name="cancellationToken">Cancels the asking and the checks.</param>
-    /// <returns>The pointer now in the profile and how many repos were checked; SND-AUTH-002 for a session; SND-INDEX-011 when the profile lists no GitHub repo; SND-INDEX-009 when GitHub refuses the token or the stored pointer does not resolve; SND-INDEX-010 naming the repos the token cannot read.</returns>
-    internal async ValueTask<Result<GitHubConnected>> Run(bool human, CancellationToken cancellationToken)
+    /// <returns>The pointer now in the profile and how many repos were checked; SND-INDEX-011 when the profile lists no GitHub repo; SND-INDEX-009 when GitHub refuses the token or the stored pointer does not resolve; SND-INDEX-010 naming the repos the token cannot read.</returns>
+    internal async ValueTask<Result<GitHubConnected>> Run(CancellationToken cancellationToken)
     {
-        if (!human)
-        {
-            return SindriErrors.AuthRefused.With("`sindri index connect github` is the human's: run it in your own terminal, not from an agent session");
-        }
-
         if (!prompts.Interactive)
         {
-            return SindriErrors.InvalidInput.With("`sindri index connect github` reads the token at the terminal and there is none here (fix: run it in your own terminal)");
+            return SindriErrors.InvalidInput.With("`sindri index connect github` reads the token at the terminal and there is none here (fix: run it in a terminal, or give the token's environment variable with --token-env NAME)");
         }
 
         var source = await Listed(cancellationToken).ConfigureAwait(false);

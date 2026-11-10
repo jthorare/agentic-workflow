@@ -12,6 +12,23 @@ public static class LoopBody
     /// <summary>The block type that ends a loop.</summary>
     public const string CollectType = "collect";
 
+    /// <summary>The block type that runs an agent session.</summary>
+    public const string RunAgentType = "run_agent";
+
+    /// <summary>The finding code for a 'run_agent' node inside a loop body.</summary>
+    public const string AgentInLoopCode = "GRAPH-LOOP-003";
+
+    /// <summary>Says why a loop can't run when a 'run_agent' node sits in its body: the item path has no agent loop, so every item would fail.</summary>
+    /// <param name="shape">The loop.</param>
+    /// <returns>The refusal text, or null when no body node is a 'run_agent'.</returns>
+    public static string? AgentRefusal(LoopShape shape)
+    {
+        ArgumentNullException.ThrowIfNull(shape);
+        return shape.Body.FirstOrDefault(static n => string.Equals(n.Type, RunAgentType, StringComparison.Ordinal)) is { } agent
+            ? $"run_agent '{agent.Id.Value}' sits in the loop of '{shape.ForEach.Id.Value}'; an agent can't run once per item, so start another workflow with run_workflow for the agent"
+            : null;
+    }
+
     /// <summary>Reads the loop of one 'for_each' node.</summary>
     /// <param name="spec">The spec.</param>
     /// <param name="forEach">The 'for_each' node's id.</param>

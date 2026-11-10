@@ -12,6 +12,7 @@ using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.Api.Linear;
 using Aw.Sindri.Ui.Api.Memory;
 using Aw.Sindri.Ui.Api.Projects;
+using Aw.Sindri.Ui.Api.Resources;
 using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Api.Setup;
@@ -58,6 +59,9 @@ public sealed class GoldenContractTests
         ["context-concepts-glossary"] = As<ConceptGlossaryView>,   // GET /sindri/context/concepts/glossary: the concept cards' top terms (ui #1036); no-map-030 is a ProblemDetails
         ["context-pins"] = As<PinsView>,   // GET /sindri/context/pins: the live pins against the approved profile and the map, and the rebuild state
         ["context-pins-suggest"] = As<PinSuggestView>,   // GET /sindri/context/pins/suggest: the "Pin this" and "Add several" suggestions; invalid-179 is a ProblemDetails
+        ["workflows-blocks"] = As<WorkflowBlockList>,   // GET /sindri/workflows/blocks: the editor's block form (#2258 PR 17 part 2b)
+        ["workflows-slug-ops"] = As<WorkflowOpsApplied>,   // POST /workflows/{slug}/ops: ops-applied; ops-stale and ops-missing-fields are ProblemDetails
+        ["workflows-slug-activate"] = As<WorkflowActivated>,   // POST /workflows/{slug}/activate: activated; not-found is a ProblemDetails
         ["context-whole"] = As<WholeMapView>,   // GET /context/map/whole (whole-map spec §2.1); the refusals (006, 030, 044, 045, 120, 200) are ProblemDetails
         ["context-filemap"] = As<FileMapView>,
         ["context-code"] = As<CodeView>,   // GET /sindri/context/code: the code lens' callers and callees (S-9)
@@ -74,9 +78,12 @@ public sealed class GoldenContractTests
         ["jobs-id"] = As<JobView>,   // GET /jobs/{id}: the job sheet; the 404 is ProblemDetails
         ["workflows"] = As<WorkflowList>,   // GET /workflows: the Workflows page's list (#2258 PR 17 part 1); the refusals are ProblemDetails
         ["workflows-slug"] = As<WorkflowView>,   // GET /workflows/{slug}: the runs header; the spec stays raw
+        ["workflows-slug-pause"] = As<WorkflowPaused>,   // POST /workflows/{slug}/pause (the Pause button); the success is paused.json
         ["workflows-slug-runs"] = As<WorkflowRunList>,   // GET /workflows/{slug}/runs: a workflow's runs
         ["workflow-runs-run"] = As<WorkflowRunView>,   // GET /workflow-runs/{run}: a run's detail
-        ["workflow-runs-run-cancel"] = As<WorkflowRunCancelled>,   // POST /workflow-runs/{run}/cancel's cancelled body (spec-shaped: the API records only its refusals, bad-id, not-found, already-ended)
+        ["workflow-runs-run-cancel"] = As<WorkflowRunCancelled>,   // POST /workflow-runs/{run}/cancel's cancelled body (the API golden cancels a queued run)
+        ["workflow-runs-run-nodes-node-takeover"] = As<AgentNodeControlled>,   // POST /workflow-runs/{run}/nodes/{node}/takeover's taken-over body; the refusals are ProblemDetails
+        ["workflow-runs-run-nodes-node-handback"] = As<AgentNodeControlled>,   // POST .../handback's handed-back body; the refusals are ProblemDetails
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
         ["projects"] = As<ProjectList>,   // GET /projects: the Projects page's three groups (projects page spec §6.2)
         ["reviews"] = As<ReviewList>,   // GET /reviews: the Reviews tab, its badge and Home's waiting line (review page spec §6.1)
@@ -136,6 +143,8 @@ public sealed class GoldenContractTests
         ["memories"] = As<MemoryList>,   // GET /sindri/memories; created is POST's MemoryCreated (_readByScenario)
         ["memories-id-search"] = As<MemorySearchView>,   // GET /sindri/memories/{name}/search
         ["memories-id-facts"] = As<MemoryFactWritten>,   // POST /sindri/memories/{name}/facts; the forgot* scenarios are DELETE's MemoryForgotten (_readByScenario)
+        ["resources"] = As<ResourceList>,   // GET /sindri/resources: the Resources page's rows (#2258 PR18b); bad-owner is a ProblemDetails
+        ["resources-purge"] = As<PurgeResourcesResult>,   // POST /sindri/resources/purge: the purged count; the 409 SND-RES-003 and 400 SND-RES-006 bodies are ProblemDetails
     };
 
     // A scenario of a slug that holds files of another shape than the rest of its folder (todos-note/conflict.json is the TodoItem GET /todos/{id} serves).
@@ -146,11 +155,15 @@ public sealed class GoldenContractTests
         [("connections", "added-oauth")] = As<ConnectionAdded>,
         [("connections-id", "removed")] = As<ConnectionRemoved>,
         [("memories", "created")] = As<MemoryCreated>,
+        [("workflows-slug", "archived")] = As<WorkflowArchived>,   // DELETE /workflows/{slug}'s answer; the folder's found is GET's WorkflowView and archive-not-found, replace-stale and not-found are ProblemDetails
         [("workflows-slug-runs", "started")] = As<WorkflowRunStarted>,   // POST /workflows/{slug}/runs' answers (Run now); the folder's list-* are GET's WorkflowRunList and its refusals are ProblemDetails
         [("workflows-slug-runs", "queued")] = As<WorkflowRunStarted>,
         [("workflows-slug-runs", "skipped")] = As<WorkflowRunStarted>,
         [("memories-id-facts", "forgot")] = As<MemoryForgotten>,
         [("memories-id-facts", "forgot-tag")] = As<MemoryForgotten>,
+        [("workflows", "created")] = AsJsonObject,   // POST /workflows: { id, slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowList
+        [("workflows-slug", "replaced")] = AsJsonObject,   // PUT /workflows/{slug}: { slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowView
+        [("workflows-slug", "archived")] = AsJsonObject,   // DELETE /workflows/{slug}: { slug, archivedAt }, the CLI's and the MCP tools' answer; not a WorkflowView
     };
 
     // Routes the app never calls yet: stop is Health's (U4), and the
@@ -178,6 +191,7 @@ public sealed class GoldenContractTests
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
+        "workflows-validate",   // #2258 PR 8b: validate is the CLI's; ops and activate are read above
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
 
@@ -432,6 +446,9 @@ public sealed class GoldenContractTests
         var todo = (JsonNode.Parse(body) as JsonObject)?["todo"];
         return todo is null ? new Error("TEST-001", ErrorKind.Invalid, "no todo in the answer") : As<TodoView>(Encoding.UTF8.GetBytes(todo.ToJsonString()));
     }
+
+    private static Result<object> AsJsonObject(byte[] body) =>
+        JsonNode.Parse(body) is JsonObject node ? node : new Error("TEST-001", ErrorKind.Invalid, "the answer is not a JSON object");
 
     private static Result<object> As<T>(byte[] body)
         where T : class

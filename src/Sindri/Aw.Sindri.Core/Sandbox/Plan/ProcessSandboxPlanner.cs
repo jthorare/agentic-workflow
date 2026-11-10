@@ -18,7 +18,7 @@ public static class ProcessSandboxPlanner
     public static Result<SandboxPlan> Build(SandboxMechanism mechanism, ProcessSandboxRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (!IsAbsolute(request.Command) || request.ResourceMounts.Any(r => !IsAbsolute(r.HostPath)) || !IsAbsolute(request.RunArea))
+        if (!IsAbsolute(request.Command) || request.Command.LastIndexOf('/') == 0 || request.ResourceMounts.Any(r => !IsAbsolute(r.HostPath)) || !IsAbsolute(request.RunArea))
         {
             return SandboxRefusal.For(SindriErrors.LaunchUnconfinable, SandboxReasons.PathHidden, $"{request.Owner}: the command, its run area and every resource path must be absolute");
         }
@@ -46,6 +46,7 @@ public static class ProcessSandboxPlanner
         return plan with { PlanHash = PlanHasher.Hash(plan, [("$RUN_AREA", request.RunArea), ("$NET", request.Net.NetDir), ("$LAUNCH", request.Launch.Value)]) };
     }
 
+    // why: the command also needs a parent folder ("/tool" has none), because that folder is bound read-only as the binary's; an empty source would mount nothing
     private static bool IsAbsolute(string path) => path.Length > 1 && path[0] == '/';
 
     private static List<PlanMount> Mounts(ProcessSandboxRequest r, PlanLimits limits)

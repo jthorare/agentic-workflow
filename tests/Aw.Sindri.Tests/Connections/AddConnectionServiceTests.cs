@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
 
 namespace Aw.Sindri.Tests.Connections;
@@ -9,6 +10,22 @@ namespace Aw.Sindri.Tests.Connections;
 public sealed class AddConnectionServiceTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
+
+    [Fact]
+    public async Task A_launched_session_adding_a_connection_is_the_rows_creator()
+    {
+        var world = new ConnectionHarness();
+        world.Environment.Set("ACME_KEY", "sk-live-ACME-0001");
+        var caller = A.Caller().Launched("LCH-0000000000000000000000000000ff01").Build();
+        using var entered = world.Callers.Enter(caller);
+
+        var added = await world.Add().Handle(ConnectionHarness.Rest(), Token);
+
+        Assert.True(added.IsSuccess);
+        var row = Assert.Single(world.Store.Rows);
+        Assert.Equal(caller.Actor, row.CreatedBy);
+        Assert.Contains("LCH-0000000000000000000000000000ff01", row.CreatedBy, StringComparison.Ordinal);
+    }
 
     [Fact]
     public async Task An_oauth_add_without_waiting_returns_the_consent_url_at_once_and_writes_no_row_yet()

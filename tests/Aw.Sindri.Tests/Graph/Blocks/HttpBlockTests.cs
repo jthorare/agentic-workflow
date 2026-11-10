@@ -86,6 +86,59 @@ public sealed class HttpBlockTests
     }
 
     [Fact]
+    public async Task A_streamed_body_with_no_length_over_one_megabyte_fails_the_node_and_stops_reading_near_the_cap()
+    {
+        var endless = new EndlessStream();
+        var block = Block(new FlowFakes.ScriptedHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(endless) }), "api.example.com");
+
+        var result = await Run(block, new JsonObject { ["url"] = "https://api.example.com/x" });
+
+        Assert.Equal(SindriErrors.GraphHttpFailed.Code, result.Error.Code);
+        Assert.Contains("1 MB", result.Error.Message, StringComparison.Ordinal);
+        Assert.InRange(endless.BytesRead, GraphHttpClient.MaxBodyBytes + 1, GraphHttpClient.MaxBodyBytes + (64 * 1024));   // one chunk past the cap, never the whole (endless) stream
+    }
+
+    /// <summary>A non-seekable stream with no end: no Content-Length, and a read that never stops on its own.</summary>
+    private sealed class EndlessStream : Stream
+    {
+        public long BytesRead { get; private set; }
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            var n = Math.Min(count, 4096);
+            Array.Fill(buffer, (byte)'x', offset, n);
+            BytesRead += n;
+            return n;
+        }
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            var n = Math.Min(buffer.Length, 4096);
+            buffer.Span[..n].Fill((byte)'x');
+            BytesRead += n;
+            return ValueTask.FromResult(n);
+        }
+
+        public override void Flush() { }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    [Fact]
     public async Task The_status_text_and_json_body_come_back_and_a_status_outside_expect_fails_the_node()
     {
         var block = Block(new FlowFakes.ScriptedHandler(request => request.Method == HttpMethod.Post
@@ -136,5 +189,52 @@ public sealed class HttpBlockTests
         Assert.Empty(block.Config.Check(new JsonObject { ["url"] = "https://api.example.com" }));
         Assert.Contains(block.Config.Check([]), static p => p.Field == "url");
         Assert.Equal(["body", "status", "text"], block.OutputsFor([]).Fields.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_body_that_stalls_after_the_headers_fails_within_the_request_budget()
+    {
+        var handler = new FlowFakes.ScriptedHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new StalledBody()) });
+        var block = new HttpBlock(new GraphHttpClient(handler, FlowFakes.Hosts("api.example.com"), TimeSpan.FromMilliseconds(200)));
+        using var guard = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        guard.CancelAfter(TimeSpan.FromSeconds(5));   // why: without the fix the read hangs; the guard turns that into a failure instead of a stuck run
+
+        var result = await block.Execute(BlockFakes.Context(new JsonObject { ["url"] = "https://api.example.com/x" }), guard.Token).AsTask();
+
+        Assert.True(result.IsError);
+        Assert.Equal(SindriErrors.GraphHttpFailed.Code, result.Error.Code);
+        Assert.Contains("timed out", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>A response body that never delivers a byte until it is cancelled.</summary>
+    private sealed class StalledBody : Stream
+    {
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+            return 0;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 }

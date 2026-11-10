@@ -107,7 +107,7 @@ internal sealed class ConnectionHarness
     /// <summary>The sign-in-again slice over the harness's ports and the same sign-in flow Add builds.</summary>
     /// <returns>The service.</returns>
     public SignInConnectionService SignInAgain(ISignInSession? signIn = null)
-        => new(Store, Secrets, Presets, Callers, new OAuthSignInFlow(Store, Secrets, signIn ?? SignIn, new CommandGateAccess(Gate, Clock), Outcomes, Events(), new TypedLog<OAuthSignInFlow>(Logs)));
+        => new(Store, Secrets, Presets, Callers, new OAuthSignInFlow(Store, Secrets, signIn ?? SignIn, new CommandGateAccess(Gate, Clock), Outcomes, Events(), new TypedLog<OAuthSignInFlow>(Logs)), Events());
 
     /// <summary>The refresh service over the harness's ports, with the ledger and an event factory on the harness clock.</summary>
     /// <returns>The service.</returns>

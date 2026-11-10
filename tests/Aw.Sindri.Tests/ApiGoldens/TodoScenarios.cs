@@ -17,7 +17,7 @@ internal static class TodoScenarios
     private static readonly string[] _markSlugs = ["todos-done", "todos-reopen", "todos-remove", "todos-restore"];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
-    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged"), ("todos-keep", "sindri"), ("todos-keep", "obsidian"), ("todos-keep-undo", "accepted"), ("todos-hold-apply", "accepted"), ("todos-hold-undo", "accepted"), ("todos-note-import", "dry-run"), ("todos-note-import", "imported"), ("todos-note-import", "stale")];
+    public static IReadOnlyList<(string Slug, string Scenario)> All { get; } = [("todos", "list"), ("todos-id", "show"), ("todos-add", "accepted"), ("todos-change", "clear-due"), ("todos-done", "accepted"), ("todos-reopen", "accepted"), ("todos-remove", "accepted"), ("todos-restore", "accepted"), ("todos-note", "note"), ("todos-note", "hold"), ("todos-note", "conflict"), ("todos-note-check", "counts"), ("todos-note-set", "changed"), ("todos-note-set", "unchanged"), ("todos-note-set", "stale"), ("todos-note-stop", "changed"), ("todos-note-stop", "unchanged"), ("todos-keep", "sindri"), ("todos-keep", "obsidian"), ("todos-keep-undo", "accepted"), ("todos-hold-apply", "accepted"), ("todos-hold-undo", "accepted"), ("todos-note-import", "dry-run"), ("todos-note-import", "imported"), ("todos-note-import", "stale")];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
@@ -30,6 +30,7 @@ internal static class TodoScenarios
         GoldenHost.Start(temporary: true, ct, slug switch
         {
             "todos-note-check" => NoteVaultProfile(),
+            "todos-note" => NoteVaultProfile() + "todo:\n  obsidian:\n    vault: notes\n    note: Todo.md\n",
             "todos-note-import" => NoteVaultProfile() + "todo:\n  obsidian:\n    vault: notes\n    note: Todo.md\n",
             "todos-note-set" or "todos-note-stop" => ItemScenarios.ProfileYaml + "context:\n  sources:\n    library:\n      vaults:\n        - { name: notes, path: /work/notes }\n",
             _ => ItemScenarios.ProfileYaml,
@@ -50,9 +51,9 @@ internal static class TodoScenarios
         await ViewScenarios.Approve(host, ct);
         await ViewScenarios.CatchUp(host, ct);
         var human = ItemScenarios.Human(host);
-        if (slug.StartsWith("todos-note-", StringComparison.Ordinal))
+        if (slug.StartsWith("todos-note", StringComparison.Ordinal))
         {
-            return await NoteRoute(host, slug, scenario, human);
+            return slug == "todos-note" ? await NoteState(host, human, scenario, ct) : await NoteRoute(host, slug, scenario, human);
         }
 
         if (slug == "todos-add")
@@ -169,6 +170,90 @@ internal static class TodoScenarios
 
         await ViewScenarios.CatchUp(host, ct);
         return (await host.Http.Ask(Post("/sindri/todos/note/hold/undo", "{}", human))).Body;
+    }
+
+    // GET /sindri/todos/note: "note" has one open conflict, one conflict picked (Sindri's side) inside its Undo window, a last sync and the sample note's link line that can't sync; "hold" has an open hold of four changes over 20 open todos;
+    // "conflict" is the todo read of a both-places conflict (the TodoItem shape, same as the id route's golden)
+    private static async Task<string> NoteState(GoldenHost host, (string Name, string Value)[] human, string scenario, CancellationToken ct)
+    {
+        const string Hash = "sha256:3f1c0a9e5b7d2c4e6a8b0d1f3e5c7a9b2d4f6e8a0c1b3d5f7e9a2c4b6d8f0e1a";
+        if (string.Equals(scenario, "conflict", StringComparison.Ordinal))
+        {
+            return await Conflict(host, human, Hash, ct);
+        }
+
+        if (string.Equals(scenario, "hold", StringComparison.Ordinal))
+        {
+            return await Hold(host, human, Hash, ct);
+        }
+
+        var first = await Add(host, human, """{"text":"call the dentist","clientId":"c-1"}""", string.Empty, ct);
+        var picked = await Add(host, human, """{"text":"reply to Sam","clientId":"c-2"}""", string.Empty, ct);
+        var mine = new TodoSide("call the dentist", Due: null, Links: [], Done: false, Removed: false);
+        await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(first), mine, mine with { Text = "call the dentist about the crown" }, Hash), $"todo.conflicted:{first}:{Hash}", ct);
+        var other = new TodoSide("reply to Sam", Due: null, Links: [], Done: false, Removed: false);
+        await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(picked), other, other with { Text = "reply to Sam about the offsite" }, Hash), $"todo.conflicted:{picked}:{Hash}", ct);
+        await ViewScenarios.CatchUp(host, ct);
+        // why: Sindri's side, because this host names a real note (todo.obsidian) and a 'keep obsidian' re-reads it: the sample note has no line for this todo, so that keep is SND-TODO-409
+        var kept = await host.Http.Ask(Post($"/sindri/todos/{picked}/keep", Request("todos-keep", "sindri"), human));
+        if (kept.Status != System.Net.HttpStatusCode.OK)
+        {
+            throw new InvalidOperationException($"the note golden's keep was refused: {kept.Body}");
+        }
+
+        // why: the last sync is read from the ledger (the sync's check time is in memory and stays null on this host); appended last so the ids above do not move
+        await ViewScenarios.Append(host, EventTypes.TodoNoteSynced, new TodoNoteSynced("notes", "Todo.md", Hash, Hash, Read: 4, Wrote: 0, "service:todo-note"), "todo.note.synced:golden", ct);
+        await ViewScenarios.CatchUp(host, ct);
+        return (await host.Http.Ask(Get("/sindri/todos/note", human))).Body;
+    }
+
+    // the hold scenario: four held changes (two removed, one edited, one reopened) against 20 open todos, so the 10% rule's base is 20; the four held todos come first so their ids stay put
+    private static async Task<string> Hold(GoldenHost host, (string Name, string Value)[] human, string hash, CancellationToken ct)
+    {
+        // why: all seeding is the human's (AsHuman undoes a session run's header swap): an agent session may add 20 todos an hour (TodoAdds.MaxPerHour) and this adds 21,
+        // and the write-attribution sweep allows another actor only before the session's first call; the one call the golden records, the GET, stays the caller's
+        using (AsHuman())
+        {
+            var seed = Human(host.Token.Value);
+            var removedA = await Add(host, seed, """{"text":"reply to Sam about the offsite","clientId":"c-1"}""", string.Empty, ct);
+            var removedB = await Add(host, seed, """{"text":"rotate the staging key","clientId":"c-2"}""", string.Empty, ct);
+            var edited = await Add(host, seed, """{"text":"call the dentist","clientId":"c-3"}""", string.Empty, ct);
+            var reopened = await Add(host, seed, """{"text":"renew the cert","due":"2025-12-30","clientId":"c-4"}""", string.Empty, ct);
+            _ = await host.Http.Ask(Post($"/sindri/todos/{reopened}/done", "{}", seed));
+            await ViewScenarios.CatchUp(host, ct);
+            for (var i = 5; i <= 21; i++)
+            {
+                var n = i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                _ = await Add(host, seed, $$"""{"text":"filler todo {{n}}","clientId":"c-{{n}}"}""", string.Empty, ct);
+            }
+
+            var changes = new[]
+            {
+                new TodoHeldChange(Core.Ids.TodoId.From(removedA), "removed", NoteLine: null),
+                new TodoHeldChange(Core.Ids.TodoId.From(removedB), "removed", NoteLine: null),
+                new TodoHeldChange(Core.Ids.TodoId.From(edited), "edited", $"- [ ] call the dentist about the crown 📅 2026-01-05 ^td-{edited[3..]}"),
+                new TodoHeldChange(Core.Ids.TodoId.From(reopened), "reopened", $"- [ ] renew the cert 📅 2025-12-30 ^td-{reopened[3..]}"),
+            };
+            await ViewScenarios.Append(host, EventTypes.TodoNoteHeld, new TodoNoteHeld(changes, hash, "service:todo-note"), "todo.note.held:" + hash, ct);
+            await ViewScenarios.CatchUp(host, ct);
+        }
+
+        return (await host.Http.Ask(Get("/sindri/todos/note", human))).Body;
+    }
+
+    // GET /sindri/todos/{id} for a todo at version 3 (added, edited, done) whose done state conflicts with a note edit that changed its text, due date and link (the TodoItem shape with the open conflict)
+    private static async Task<string> Conflict(GoldenHost host, (string Name, string Value)[] human, string hash, CancellationToken ct)
+    {
+        var made = await Add(host, human, """{"text":"reply to Sam","clientId":"c-1"}""", string.Empty, ct);
+        _ = await host.Http.Ask(Post($"/sindri/todos/{made}/change", """{"version":1,"text":"reply to Sam about the offsite","due":"2026-01-02"}""", human));
+        await ViewScenarios.CatchUp(host, ct);
+        _ = await host.Http.Ask(Post($"/sindri/todos/{made}/done", """{"version":2}""", human));
+        await ViewScenarios.CatchUp(host, ct);
+        var sindri = new TodoSide("reply to Sam about the offsite", new DateOnly(2026, 1, 2), Links: [], Done: true, Removed: false);
+        var obsidian = new TodoSide("reply to Sam about the offsite venue", new DateOnly(2026, 1, 3), ["sindri://linear/ENG-12"], Done: false, Removed: false);
+        await ViewScenarios.Append(host, EventTypes.TodoConflicted, new TodoConflicted(Core.Ids.TodoId.From(made), sindri, obsidian, hash), $"todo.conflicted:{made}:{hash}", ct);
+        await ViewScenarios.CatchUp(host, ct);
+        return (await host.Http.Ask(Get($"/sindri/todos/{made}", human))).Body;
     }
 
     // GET /sindri/todos/{id} for a todo with two links and an open both-places conflict (#2355): the answer must be the list's TodoItem shape, links described, no internal fields

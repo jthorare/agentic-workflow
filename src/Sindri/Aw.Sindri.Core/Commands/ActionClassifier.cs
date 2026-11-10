@@ -4,8 +4,8 @@ namespace Aw.Sindri.Core.Commands;
 
 /// <summary>
 /// Finds the catalog row a command attempt runs as (API spec §2.1, UI spec E-12), fail-closed: a plain command takes its
-/// one row; a classified command takes '&lt;Command&gt;:&lt;Variant&gt;'; an unknown variant, protected fields on a row
-/// that isn't protected, or a command with no row of its own make it protected (a human at a terminal only).
+/// one row; a classified command takes '&lt;Command&gt;:&lt;Variant&gt;'; protected fields make the row a desk row; an unknown variant
+/// or a command with no row of its own is a local row, which no caller may run through the API.
 /// </summary>
 public static class ActionClassifier
 {
@@ -27,13 +27,11 @@ public static class ActionClassifier
 
         var row = rows.FirstOrDefault(r => string.Equals(r.Variant, classified.Variant, StringComparison.Ordinal));
         return row is null ? Unlisted(command.GetType(), rows, classified.Variant)
-            : classified.CarriesProtectedFields && row.Class != ActionClass.Protected ? Protect(row)
+            : classified.CarriesProtectedFields && row.Class != ActionClass.Desk ? row with { Class = ActionClass.Desk }
             : row;
     }
 
-    private static CommandRow Protect(CommandRow row) => row with { Class = ActionClass.Protected };
-
-    /// <summary>A protected row for an attempt the catalog has no row for, named '&lt;Command&gt;[:&lt;variant&gt;]' when that is an action id.</summary>
+    /// <summary>A local row (nobody runs it through the API) for an attempt the catalog has no row for, named '&lt;Command&gt;[:&lt;variant&gt;]' when that is an action id.</summary>
     private static CommandRow Unlisted(Type type, IReadOnlyList<CommandRow> rows, string? variant)
     {
         var known = rows.Count > 0 ? rows[0] : null;
@@ -41,9 +39,9 @@ public static class ActionClassifier
         var action = ActionId.TryFrom(variant is null ? name : name + ":" + variant, out var full) ? full
             : ActionId.TryFrom(name, out var plain) ? plain
             : ActionId.From(Unknown);
-        return Protect(new CommandRow(action, type, variant, ActionClass.Protected, ServiceGrants: [], NeedsTerminal: true, SelfAudited: false,
+        return new CommandRow(action, type, variant, ActionClass.Local, ServiceGrants: [], NeedsTerminal: false, SelfAudited: false,
             Destructive: false, ReadsViews: false, Shortcut: null, known?.Method, known?.Route, known?.Cli ?? CliForm.Parse("sindri").Value,
-            "cli-only:unclassified"));
+            "cli-only:unclassified");
     }
 
     private static string Name(Type type) =>

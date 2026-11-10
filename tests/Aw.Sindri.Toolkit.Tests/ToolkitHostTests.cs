@@ -21,7 +21,7 @@ public sealed class ToolkitHostTests
         var result = await session.Client.CallToolAsync(
             "diff_contracts", new Dictionary<string, object?>(StringComparer.Ordinal) { ["left"] = "a", ["right"] = "b" }, cancellationToken: ct);
 
-        Assert.Equal<string>(["diff_contracts", "explode"], tools.Select(t => t.Name).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["diff_contracts", "explode"], tools.Select(t => t.Name).Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.NotEqual(true, result.IsError);
         var response = result.StructuredContent!.Value.Deserialize(SampleJson.Default.DiffResponse);
         Assert.Equal(new DiffResponse("a vs b", 1), response);
