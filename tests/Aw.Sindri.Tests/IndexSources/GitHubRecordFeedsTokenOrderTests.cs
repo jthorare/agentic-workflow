@@ -20,7 +20,10 @@ public sealed class GitHubRecordFeedsTokenOrderTests
     private readonly InMemoryConnectionStore _connections = new();
     private readonly FakeConnectionSecrets _connectionSecrets = new();
 
-    public GitHubRecordFeedsTokenOrderTests() => _ = _pointers.Store("aw", "github", "ghp_profile").Value;
+    public GitHubRecordFeedsTokenOrderTests()
+    {
+        _ = _pointers.Store("aw", "github", "ghp_profile").Value;
+    }
 
     private static Scrubbers Scrub() => new(new PassFilter(), new PassFilter(), ScrubRuleset.From("0123456789abcdef"));
 
@@ -59,7 +62,7 @@ public sealed class GitHubRecordFeedsTokenOrderTests
 
         var feeds = Feeds(made).For(Settings(WithPointer), [], Scrub());
 
-        Assert.Single(feeds);
+        _ = Assert.Single(feeds);
         Assert.Equal("ghp_profile", Assert.Single(made));
     }
 
@@ -70,7 +73,7 @@ public sealed class GitHubRecordFeedsTokenOrderTests
 
         var feeds = Feeds(made).For(Settings(WithPointer), [], Scrub());
 
-        Assert.Single(feeds);
+        _ = Assert.Single(feeds);
         Assert.Equal("ghp_profile", Assert.Single(made));
     }
 
