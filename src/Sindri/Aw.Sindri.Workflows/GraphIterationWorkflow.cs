@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Loops;
@@ -133,6 +134,7 @@ internal sealed partial class GraphIterationWorkflow
         _item = item;
         await Record(Row(node, item, NodeRunStatus.Running)).ConfigureAwait(true);
         var outcome = await RunBlock(node, item).ConfigureAwait(true);
+        outcome = await Park(node, outcome).ConfigureAwait(true);
 
         // why: as in the run's walk, once the block has answered the node's result is decided, so the write is not cancelled with the workflow
         _current = null;
@@ -156,6 +158,24 @@ internal sealed partial class GraphIterationWorkflow
         {
             return new GraphBlockOutcome(NodeRunStatus.Failed, Input: null, Output: null, [], e.InnerException?.Message ?? e.Message);
         }
+    }
+
+    // why: a 'wait' parks after its block answered, while the node is still 'running', so a cancel ends it 'cancelled'; the patch keeps the commands of a body without a wait as before (#2490)
+    private static async Task<GraphBlockOutcome> Park(GraphNode node, GraphBlockOutcome outcome)
+    {
+        if (outcome.Status != NodeRunStatus.Succeeded || !string.Equals(node.Type, "wait", StringComparison.Ordinal) || !Workflow.Patched("graph-iteration-wait"))
+        {
+            return outcome;
+        }
+
+        // why: the block's own 'waitedSeconds', never wakeAt minus Workflow.UtcNow (see GraphWorkflow.Sleep)
+        var seconds = JsonNode.Parse(outcome.Output ?? "{}")?["waitedSeconds"] is JsonValue v && v.TryGetValue<double>(out var wait) ? wait : 0;
+        if (seconds > 0)
+        {
+            await Workflow.DelayAsync(TimeSpan.FromSeconds(seconds)).ConfigureAwait(true);
+        }
+
+        return outcome;
     }
 
     private NodeRun Row(GraphNode node, int item, NodeRunStatus status) => new(_run, node.Id, item, status, Input: null, Output: null, Truncated: false, Error: null, Usage: null);

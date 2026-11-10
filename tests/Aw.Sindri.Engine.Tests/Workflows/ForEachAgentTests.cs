@@ -10,7 +10,7 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>A 'run_agent' node in a 'for_each' body (#2470): one agent per item, each launch and each node row carrying the item's position (counted from 1).</summary>
 [Lane(TestLane.Integration)]
-public sealed class ForEachAgentTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class ForEachAgentTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -18,7 +18,7 @@ public sealed class ForEachAgentTests(SindriTimeSkippingServer server) : IClassF
     public async Task A_run_agent_in_the_body_launches_one_agent_per_item_with_the_items_launch_id()
     {
         var runtime = new FakeAgentNodeRuntime { Recovered = new AgentNodeRecovered("{}", Reason: null) };
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: new JsonObject { ["items"] = "{{trigger.items}}" }),
                 GraphRig.Node("work", "run_agent", config: new JsonObject { ["repo"] = "web", ["prompt"] = "{{item}}" }), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{work.status}}" })],

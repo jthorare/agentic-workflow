@@ -23,6 +23,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, Func<AgentWait?,
     // the workflow lets the launch return, then stops, so the close that follows sees the session the launch made (TryCancel let the close run first and left an orphan). Sending the cancel
     // anyway raced the launch's completion, and the server refused the whole workflow task ("ACTIVITY_UNKNOWN for scheduledEventId"). The one-shot reads and the close are retried without end like the writes
     private static readonly ActivityOptions _agentLaunch = new() { StartToCloseTimeout = TimeSpan.FromMinutes(10), RetryPolicy = GraphActivityOptions.Unbounded, CancellationToken = CancellationToken.None };
+    private static readonly ActivityOptions _agentLaunchAttempt = new() { StartToCloseTimeout = TimeSpan.FromMinutes(10), RetryPolicy = new Temporalio.Common.RetryPolicy { MaximumAttempts = 1 }, CancellationToken = CancellationToken.None };
     private static readonly ActivityOptions _agentRead = new() { StartToCloseTimeout = TimeSpan.FromMinutes(5), RetryPolicy = GraphActivityOptions.Unbounded };
     private static readonly ActivityOptions _detached = GraphActivityOptions.Detached;
 
@@ -43,9 +44,12 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, Func<AgentWait?,
         try
         {
             AgentNodeLaunched started;
+            var attempts = Workflow.Patched("agent-launch-attempts-1");   // why: histories from before this change keep the one unbounded retried call
             do
             {
-                started = await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.LaunchAsync(reference), _agentLaunch).ConfigureAwait(true);   // why: a full session cap makes the activity hand back after its slice, and the workflow asks again
+                started = attempts
+                    ? await LaunchOnce(reference).ConfigureAwait(true)
+                    : await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.LaunchAsync(reference), _agentLaunch).ConfigureAwait(true);   // why: a full session cap makes the activity hand back after its slice, and the workflow asks again
                 Workflow.CancellationToken.ThrowIfCancellationRequested();   // why: the launch is not cancelled with the workflow (_agentLaunch); a cancel that came during it stops here, and the catch closes what it made
             }
             while (started.Launched.Waiting);
@@ -135,6 +139,25 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, Func<AgentWait?,
         if (announce is not null)
         {
             await announce(wait).ConfigureAwait(true);
+        }
+    }
+
+    // One launch attempt per activity call, retried here: the launch is not cancelled with the workflow (it raced its own completion, #2469), so a launch that keeps throwing
+    // is only stoppable between attempts. After each failure the workflow checks for a cancel, and the back-off timer ends on one.
+    private static async Task<AgentNodeLaunched> LaunchOnce(AgentNodeRef reference)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                return await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.LaunchAsync(reference), _agentLaunchAttempt).ConfigureAwait(true);
+            }
+            catch (ActivityFailureException)
+            {
+                Workflow.CancellationToken.ThrowIfCancellationRequested();
+                var backoff = TimeSpan.FromMilliseconds(Math.Min(30_000, 100 * Math.Pow(2, Math.Min(attempt, 10))));
+                await Workflow.DelayAsync(backoff, Workflow.CancellationToken).ConfigureAwait(true);
+            }
         }
     }
 

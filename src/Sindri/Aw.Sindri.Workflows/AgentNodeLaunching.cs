@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
@@ -18,14 +17,13 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <see cref="RunAgentLaunches.RequestFor"/> in a fresh worktree on the node's branch, records the outcome, and reads the worktree's HEAD as the node's start. The launch id is the node run's,
 /// so a retry or a replay starts no second session.
 /// </summary>
-/// <param name="runs">Where the run and its earlier nodes' outputs are read from.</param>
-/// <param name="workflows">Where the run's spec is read from.</param>
+/// <param name="reading">Reads the run, the node's config and its prompt with every reference fenced as untrusted (#2447).</param>
 /// <param name="approved">The live profile: the repos and the default agent.</param>
 /// <param name="launcher">The launcher, waiting out a full session cap (SND-LAUNCH-020).</param>
 /// <param name="recorder">Records 'launch.started' and 'launch.failed'.</param>
 /// <param name="diff">Reads the start commit.</param>
 /// <param name="ended">Answers for a launch whose session already ended, so a retry starts no second agent.</param>
-internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore workflows, IApprovedProfile approved, AgentLaunchWaiting launcher, AgentLaunchRecorder recorder, IRunDiff diff, AgentLaunchEnded ended)
+internal sealed class AgentNodeLaunching(AgentNodeReading reading, IApprovedProfile approved, AgentLaunchWaiting launcher, AgentLaunchRecorder recorder, IRunDiff diff, AgentLaunchEnded ended)
 {
     /// <summary>Launches the node run's session.</summary>
     /// <param name="node">The node run.</param>
@@ -34,17 +32,16 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
     public async Task<AgentNodeLaunched> Launch(AgentNodeRef node, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(node);
-        var row = GraphFailures.Value(await runs.Get(node.Run, cancellationToken).ConfigureAwait(false));
-        var spec = GraphFailures.Value(await workflows.GetRevision(row.WorkflowId, row.Revision, cancellationToken).ConfigureAwait(false)).Spec;
-        var graphNode = spec.Nodes.FirstOrDefault(n => n.Id == node.Node) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
-        var nodeRuns = GraphFailures.Value(await runs.NodeRuns(node.Run, cancellationToken).ConfigureAwait(false));
-        var scope = OpenScope(row, spec, nodeRuns, node, out var cutNode);
-        if (cutNode is not null)
+        var read = await reading.Read(node, cancellationToken).ConfigureAwait(false);
+        var row = read.Run;
+        var spec = read.Spec;
+        var scope = read.Scope;
+        if (read.CutNode is { } cutNode)
         {
             return Failed("{}", SindriErrors.GraphOutputTruncated.With($"the output of '{cutNode}' was cut at 64 KB; refer to a smaller field"));
         }
 
-        var config = GraphConfig.Interpolate(graphNode.Config, scope.Lookup);
+        var config = read.Config;
         var input = config.ToJsonString();
         if (scope.Cut is { } cut)
         {
@@ -57,6 +54,8 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
             return Failed(input, parsed.Error);
         }
 
+        var task = read.Prompt is { } fenced ? parsed.Value with { Prompt = fenced } : parsed.Value;
+
         var placed = await Place(parsed.Value, row, cancellationToken).ConfigureAwait(false);
         if (placed.IsError)
         {
@@ -65,25 +64,10 @@ internal sealed class AgentNodeLaunching(IWorkflowRunStore runs, IWorkflowStore 
 
         var address = NodeRunAddress.Of(node.Run, node.Node, node.ItemIndex);
         var token = RunAgentWire.TokenOf(spec, node.Node, node.ItemIndex) ?? throw new ApplicationFailureException($"the spec has no node '{node.Node.Value}'", nonRetryable: true);
-        var brief = RunAgentBrief.Render(address, token, parsed.Value);
+        var brief = RunAgentBrief.Render(address, token, task);
         var groups = RunAgentLaunches.GroupsFor(parsed.Value, static _ => []);   // why: a connection's host group comes with the connection presets (PR 10); until then only the repo's 'github' applies
         var request = RunAgentLaunches.ReadingOnly(RunAgentLaunches.RequestFor(address, placed.Value.Target, parsed.Value, brief, groups), placed.Value.ReadOnlyPaths);
         return new AgentNodeLaunched(await Start(request, cancellationToken).ConfigureAwait(false), input, parsed.Value.Timeout);
-    }
-
-    // why: a node of a for_each body reads the item and the loop's nodes of its own item (#2470), the way the block activity opens them
-    private static GraphNodeScope OpenScope(WorkflowRun row, GraphSpec spec, IReadOnlyList<NodeRun> nodeRuns, AgentNodeRef node, out string? cutNode)
-    {
-        var scope = new GraphNodeScope(row, spec, nodeRuns);
-        cutNode = null;
-        if (node.ItemIndex <= 0)
-        {
-            return scope;
-        }
-
-        var (loop, cut) = GraphLoopScopes.Open(scope, spec, node.Node, node.ItemIndex);
-        cutNode = cut;
-        return cut is null ? new GraphNodeScope(row, spec, nodeRuns, loop) : scope;
     }
 
     // Asks the launcher for the session and records the outcome; the worktree and start commit, or the failure.
