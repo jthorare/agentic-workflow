@@ -2444,3 +2444,8 @@ Aw.Meta.Core.Ports.ILaneFiles.Waiter(string! lane, System.Threading.Cancellation
 Aw.Meta.Core.Ports.ILaneFiles.RecordWaiter(string! lane, (int Pid, System.DateTimeOffset StartedAt)? waiter, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.IWaiterLauncher
 Aw.Meta.Core.Ports.IWaiterLauncher.Start(System.Collections.Generic.IReadOnlyList<string!>! argv, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+const Aw.Meta.Core.KvKeys.WatchSnapshot = "watch.snapshot" -> string!
+const Aw.Meta.Core.KvKeys.WatchFailing = "watch.failing" -> string!
+Aw.Meta.Core.Watch.WatchMemory
+static Aw.Meta.Core.Watch.WatchMemory.Format(string! repo, Aw.Meta.Core.Watch.WatchState! state) -> string!
+static Aw.Meta.Core.Watch.WatchMemory.Parse(string? text, string! repo, Aw.Meta.Core.Watch.WatchResources! resources) -> Aw.Meta.Core.Watch.WatchState!

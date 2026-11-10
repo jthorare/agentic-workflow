@@ -22,6 +22,11 @@ internal static class WatchCommand
             return Task.FromResult(CommandOutput.Usage(context.Io, "--interval and --for take a duration such as 120, 90s, 29m or 2h", Entry.Spec.Usage));
         }
 
+        if (context.Line.Has("until-mail") && context.Line.Has("until-event"))
+        {
+            return Task.FromResult(CommandOutput.Usage(context.Io, "--until-mail and --until-event end the watch in different ways: pass one", Entry.Spec.Usage));
+        }
+
         async ValueTask Print(string line)
         {
             await context.Io.Out.WriteLineAsync(line.AsMemory(), context.Cancellation).ConfigureAwait(false);

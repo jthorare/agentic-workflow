@@ -70,11 +70,14 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
     {
         var reported = await values.Get(KvKeys.WatchResources, cancellationToken).ConfigureAwait(false);
         var high = await values.Get(KvKeys.WatchContext, cancellationToken).ConfigureAwait(false);
+        var snapshot = await values.Get(KvKeys.WatchSnapshot, cancellationToken).ConfigureAwait(false);
+        var failing = await values.Get(KvKeys.WatchFailing, cancellationToken).ConfigureAwait(false);
+        var resources = WatchResources.Parse(reported.IsSuccess ? reported.Value : null);
         return new WatchLoop(
             team,
             poller,
             emit,
-            WatchResources.Parse(reported.IsSuccess ? reported.Value : null),
+            resources,
             // Advisory: if this can't be kept, a re-armed watch announces a standing LOW again.
             async resources => _ = await values.Set(KvKeys.WatchResources, resources.ToString(), cancellationToken).ConfigureAwait(false),
             new ContextReported(
@@ -84,6 +87,13 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
             async () => await usage.Check(team, cancellationToken).ConfigureAwait(false))
         {
             // Advisory: a board write that fails is printed as a WATCH ERROR line; the watch keeps polling and the next move fixes the board.
+            // The last poll's pull requests and main, so a change between two runs is reported by the next run's first poll. Keyed by repo: another repo's snapshot is not used.
+            Baseline = WatchMemory.Parse(snapshot.IsSuccess ? snapshot.Value : null, team.Repo, resources),
+            // Advisory: if this can't be kept, the next run starts from a fresh baseline, as before.
+            KeepSnapshot = async state => _ = await values.Set(KvKeys.WatchSnapshot, WatchMemory.Format(team.Repo, state), cancellationToken).ConfigureAwait(false),
+            // Advisory: if this can't be kept, the next run reports its first error again.
+            Failing = failing.IsSuccess && string.Equals(failing.Value, "1", StringComparison.Ordinal),
+            KeepFailing = async now => _ = await values.Set(KvKeys.WatchFailing, now ? "1" : "0", cancellationToken).ConfigureAwait(false),
             MainMoved = async (sha, merged) => await board.RecordMain(sha, merged, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false),
             SeedMain = async sha => (await board.SeedMain(sha, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false)).Map(static _ => Unit.Value),
         };
