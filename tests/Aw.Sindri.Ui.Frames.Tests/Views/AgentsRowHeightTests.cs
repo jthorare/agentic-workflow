@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.VisualTree;
@@ -30,7 +31,12 @@ public sealed class AgentsRowHeightTests : FrameHost
         var height = Assert.Single(heights);
         Assert.True(height <= 40, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"a session row is {height} px high: more than one line"));
         var dashes = rows.SelectMany(r => r.GetVisualDescendants().OfType<TextBlock>()).Where(t => t.IsEffectivelyVisible && string.Equals(t.Text, "—", StringComparison.Ordinal) && t.GetVisualAncestors().OfType<Control>().Any(a => a.Name == "SessionRowDoing")).ToList();
+        Assert.NotEmpty(dashes);   // Assert.All passes on an empty list
         Assert.All(dashes, d => Assert.NotEqual(HorizontalAlignment.Center, d.HorizontalAlignment));
         Assert.All(dashes, d => Assert.Equal(default, d.Margin));
+        var tops = rows.Select(r => Named<Border>(r, "SessionRowFrame").TranslatePoint(default, window)!.Value.Y).Order().ToList();   // why: the frame is in the window
+        var pitches = tops.Zip(tops.Skip(1), static (a, b) => b - a).ToList();
+        Assert.Contains(pitches, p => Math.Abs(p - 33) <= 0.5);   // two rows in one group sit 33 px apart: a 32 px row and its 1 px line
+        Assert.DoesNotContain(pitches, p => p < 32.5);
     });
 }

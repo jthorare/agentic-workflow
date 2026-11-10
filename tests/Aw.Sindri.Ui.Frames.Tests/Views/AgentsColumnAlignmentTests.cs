@@ -28,7 +28,7 @@ public sealed class AgentsColumnAlignmentTests : FrameHost
 
         var heads = Named<Grid>(window, "AgentsColumnsGrid").Children.OfType<Control>().ToList();
         var row = window.GetVisualDescendants().OfType<SessionRow>().First(r => r.IsEffectivelyVisible);
-        var checkedColumns = 0;
+        var checkedColumns = new List<string>();
         foreach (var (head, cell) in _columns)
         {
             var value = Named<Control>(row, cell);
@@ -40,10 +40,11 @@ public sealed class AgentsColumnAlignmentTests : FrameHost
             var headX = heads[head].TranslatePoint(default, window)!.Value.X;   // why: both are in the window
             var valueX = value.TranslatePoint(default, window)!.Value.X;   // why: both are in the window
             Assert.True(Math.Abs(headX - valueX) <= 1, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{cell} starts at {valueX} but its header at {headX}"));
-            checkedColumns++;
+            checkedColumns.Add(cell);
         }
 
-        Assert.True(checkedColumns >= 3, "the status, where and doing columns show at this width");
+        Assert.True(checkedColumns.Count >= 3, "the status, where and doing columns show at this width");
+        Assert.Contains("SessionRowRepo", checkedColumns, StringComparer.Ordinal);   // the Repository column is one of the checked ones, so it cannot silently drop out
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"agents-columns-{width}"), "l2553-");
     });
 }

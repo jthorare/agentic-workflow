@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Agents;
 using static Aw.Sindri.Ui.Tests.Agents.Page.AgentsPageFixture;
 
@@ -53,6 +54,39 @@ public sealed class AgentsColumnsTests
         page.Resize(1280);
 
         Assert.Equal((false, true, false), (page.ShowsRepo, page.ShowsWhere, page.ShowsDoing));
+    }
+
+    [Fact]
+    public async Task A_resize_keeps_the_columns_of_the_filtered_rows_not_of_every_row()
+    {
+        var page = await _f.Shown(Token);
+        page.Resize(500);
+        page.FilterProvider(RowOf(page, "cursor/").Provider);   // the cursor session has no repository, the others do
+
+        page.Resize(1280);
+
+        Assert.False(page.ShowsRepo, "the Repository header must not come back over an empty column after a resize");
+    }
+
+    [Fact]
+    public async Task A_row_that_turns_estimated_in_place_raises_its_tooltip()
+    {
+        var page = await _f.Shown(Token);
+        var row = RowOf(page, Claude);
+        Assert.Equal(string.Empty, row.EstimatedTip);
+        var raised = new List<string?>();
+        row.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+        _f.Serve(Edited(l =>
+        {
+            Row(l, Claude)["stateSource"] = "transcript";
+            Row(l, Claude)["estimated"] = true;
+        }));
+
+        await page.Refresh(Url, Token);
+
+        Assert.Same(row, RowOf(page, Claude));   // updated in place, not replaced
+        Assert.Contains(nameof(SessionRowViewModel.EstimatedTip), raised, StringComparer.Ordinal);
+        Assert.Equal(Labels.SessionEstimatedTip, row.EstimatedTip);
     }
 
     [Fact]
