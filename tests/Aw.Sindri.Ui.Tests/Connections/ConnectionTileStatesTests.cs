@@ -35,7 +35,7 @@ public sealed class ConnectionTileStatesTests
         var page = await _f.Shown();
         string Primary(string id) => page.Tiles.Single(t => string.Equals(t.Id, id, StringComparison.Ordinal)).PrimaryText;
 
-        Assert.Equal(["Reconnect", string.Empty, "Add token", "Connect", "Connect"], new[] { Primary("github"), Primary("linear"), Primary("slack"), Primary("google"), Primary("spotify") }, StringComparer.Ordinal);
+        Assert.Equal(["Reconnect", string.Empty, "Add token", "Connect", "Connect"], [Primary("github"), Primary("linear"), Primary("slack"), Primary("google"), Primary("spotify")], StringComparer.Ordinal);
     }
 
     [Fact]
