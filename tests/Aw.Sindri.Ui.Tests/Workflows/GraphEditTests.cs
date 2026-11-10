@@ -139,6 +139,26 @@ public sealed class GraphEditTests
     }
 
     [Fact]
+    public async Task An_edit_after_Reload_is_sent_on_the_revision_the_reload_read()
+    {
+        var page = await Open("start");
+        await page.GraphEdit.BeginAdd(Token);
+        _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem("workflows-slug-ops", "ops-stale");
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        var newer = Golden("workflows-slug", "found");
+        newer["revision"] = 3;
+        newer["latestRevision"] = 3;
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newer.ToJsonString());
+        await page.GraphEdit.Reload(Token);
+        _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Api("workflows-slug-ops", "ops-applied");
+        Assert.True(page.Runs.Graph!.SelectNode("start"));
+
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+
+        Assert.Equal(3, _f.Server.AppliedWorkflowOps[^1].BaseRevision);
+    }
+
+    [Fact]
     public async Task Every_command_is_off_with_no_workflow_open_and_for_an_archived_one()
     {
         var closed = await _f.Shown(Token);

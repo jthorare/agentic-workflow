@@ -5,7 +5,7 @@ internal static class MemorySql
 {
     internal const string MemoryColumns = "name, description, created_by, created_at";
 
-    internal const string FactColumns = "id, memory_id, text, embedding, tags, workflow_id, run_id, item_id, session_id, expires_at, created_at, refreshed_at, model, dimension";
+    internal const string FactColumns = "id, memory_id, text, embedding, tags, workflow_id, run_id, item_id, session_id, expires_at, created_at, refreshed_at, model, dimension, written_by";
 
     internal const string InsertMemory = "INSERT INTO memory (id, name, description, created_by, created_at) VALUES ($name, $name, $description, $createdBy, $createdAt)";
 
@@ -20,8 +20,8 @@ internal static class MemorySql
     internal const string SelectFacts = "SELECT " + FactColumns + " FROM memory_fact WHERE memory_id = $name ORDER BY created_at, rowid";
 
     internal const string InsertFact =
-        "INSERT INTO memory_fact (id, memory_id, text, embedding, tags, workflow_id, run_id, item_id, session_id, expires_at, created_at, refreshed_at, model, dimension) " +
-        "VALUES ($key, $name, $text, $embedding, $tags, $workflow, $run, $item, $session, $expiresAt, $createdAt, $refreshedAt, $model, $dimension)";
+        "INSERT INTO memory_fact (id, memory_id, text, embedding, tags, workflow_id, run_id, item_id, session_id, expires_at, created_at, refreshed_at, model, dimension, written_by) " +
+        "VALUES ($key, $name, $text, $embedding, $tags, $workflow, $run, $item, $session, $expiresAt, $createdAt, $refreshedAt, $model, $dimension, $writtenBy)";
 
     internal const string Refresh =
         "UPDATE memory_fact SET refreshed_at = $refreshedAt, expires_at = COALESCE($expiresAt, expires_at) WHERE memory_id = $name AND id = $key";

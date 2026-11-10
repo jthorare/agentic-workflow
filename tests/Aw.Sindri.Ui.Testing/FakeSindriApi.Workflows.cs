@@ -162,13 +162,13 @@ internal sealed partial class FakeSindriApi
     public RouteAnswer WorkflowBlocksAnswer { get; set; } = RouteAnswer.Problem(System.Net.HttpStatusCode.NotFound, "SND-GRAPH-008", "no blocks served");
 
     /// <summary>POST .../ops's answer.</summary>
-    public RouteAnswer ApplyWorkflowOpsAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"slug":"morning-check","revision":3,"specHash":"sha256:x"}""");
+    public RouteAnswer ApplyWorkflowOpsAnswer { get; set; } = RouteAnswer.Api("workflows-slug-ops", "ops-applied");
 
     /// <summary>Holds POST .../ops until a test releases it (the call is recorded first).</summary>
     public TaskCompletionSource? ApplyWorkflowOpsGate { get; set; }
 
     /// <summary>POST .../activate's answer.</summary>
-    public RouteAnswer ActivateWorkflowAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"slug":"morning-check","revision":2,"specHash":"sha256:x"}""");
+    public RouteAnswer ActivateWorkflowAnswer { get; set; } = RouteAnswer.Api("workflows-slug-activate", "activated");
 
     /// <summary>POST .../pause's answer.</summary>
     public RouteAnswer PauseWorkflowAnswer { get; set; } = RouteAnswer.Api("workflows-slug-pause", "paused");

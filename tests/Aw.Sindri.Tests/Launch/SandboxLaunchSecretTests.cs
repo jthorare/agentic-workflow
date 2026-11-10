@@ -256,6 +256,10 @@ public sealed class SandboxLaunchSecretTests : IDisposable
             return plan with { Worktree = null, Mounts = mounts };
         }
 
+        public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => real.PlanProcess(request);
+
+        public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => real.WrapProcess(plan, argv);
+
         public Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct) => Task.FromResult<Result<Unit>>(Unit.Value);
 
         public Result<IReadOnlyList<string>> Wrap(SandboxPlan plan, IReadOnlyList<string> argv) => real.Wrap(plan, argv);
