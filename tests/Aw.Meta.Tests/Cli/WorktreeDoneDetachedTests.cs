@@ -118,16 +118,17 @@ public sealed class WorktreeDoneDetachedTests : IDisposable
         Assert.Contains("locked", sweep.Out, StringComparison.Ordinal);
     }
 
+    // --done waives "no previous sweep" as --discarded does (#2560): the owning lane said it is finished with the tree.
     [Fact, Trait("Lane", "integration")]
-    public async Task Without_a_previous_sweep_the_tree_is_kept()
+    public async Task Without_a_previous_sweep_done_still_removes_the_tree()
     {
         var (onMain, _, _) = await Box();
 
         _lab.Cli.Clock.SetUtcNow(RealTime.NowOffset.AddHours(1));
         var sweep = await _lab.Cli.Run("worktree-sweep", "--path", onMain, "--done");
 
-        Assert.True(Directory.Exists(onMain), sweep.Out);
-        Assert.Contains("no previous sweep to compare with", sweep.Out, StringComparison.Ordinal);
+        Assert.False(Directory.Exists(onMain), sweep.Out);
+        Assert.DoesNotContain("no previous sweep to compare with", sweep.Out, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]

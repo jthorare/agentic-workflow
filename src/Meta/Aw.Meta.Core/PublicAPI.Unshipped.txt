@@ -801,6 +801,8 @@ Aw.Meta.Core.Messages.InboxMessage.FromName.init -> void
 Aw.Meta.Core.Messages.InboxMessage.Id.get -> Aw.Meta.Core.Ids.MessageId
 Aw.Meta.Core.Messages.InboxMessage.Id.init -> void
 Aw.Meta.Core.Messages.InboxMessage.InboxMessage(Aw.Meta.Core.Ids.MessageId Id, string! From, string! FromName, string! Body, System.DateTimeOffset At, Aw.Meta.Core.Messages.Classification! Class) -> void
+Aw.Meta.Core.Messages.InboxMessage.ShownAt.get -> System.DateTimeOffset?
+Aw.Meta.Core.Messages.InboxMessage.ShownAt.init -> void
 Aw.Meta.Core.Messages.InboxMessage.Resolution.get -> Aw.Meta.Core.Messages.MessageResolution?
 Aw.Meta.Core.Messages.InboxMessage.Resolution.init -> void
 Aw.Meta.Core.Messages.MessageClassifier
@@ -1019,6 +1021,7 @@ Aw.Meta.Core.Ports.IMessageStore.Messages(System.Threading.CancellationToken can
 Aw.Meta.Core.Ports.IMessageStore.Offset(string! transcript, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
 Aw.Meta.Core.Ports.IMessageStore.RecordInbound(string! transcript, long offset, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! messages, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ids.MessageId>!>!>
 Aw.Meta.Core.Ports.IMessageStore.RecordOutbound(Aw.Meta.Core.Messages.Outbound! sent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Meta.Core.Ports.IMessageStore.MarkShown(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ids.MessageId>! ids, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.IMessageStore.Resolve(Aw.Meta.Core.Ids.MessageId id, Aw.Meta.Core.Messages.MessageResolution! resolution, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.IMessageStore.Role(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Messages.MetaRole?>!>
 Aw.Meta.Core.Ports.IMessageStore.Sent(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.Outbound!>!>!>
@@ -2444,3 +2447,8 @@ Aw.Meta.Core.Ports.ILaneFiles.Waiter(string! lane, System.Threading.Cancellation
 Aw.Meta.Core.Ports.ILaneFiles.RecordWaiter(string! lane, (int Pid, System.DateTimeOffset StartedAt)? waiter, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.IWaiterLauncher
 Aw.Meta.Core.Ports.IWaiterLauncher.Start(System.Collections.Generic.IReadOnlyList<string!>! argv, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+const Aw.Meta.Core.KvKeys.WatchSnapshot = "watch.snapshot" -> string!
+const Aw.Meta.Core.KvKeys.WatchFailing = "watch.failing" -> string!
+Aw.Meta.Core.Watch.WatchMemory
+static Aw.Meta.Core.Watch.WatchMemory.Format(string! repo, Aw.Meta.Core.Watch.WatchState! state) -> string!
+static Aw.Meta.Core.Watch.WatchMemory.Parse(string? text, string! repo, Aw.Meta.Core.Watch.WatchResources! resources) -> Aw.Meta.Core.Watch.WatchState!

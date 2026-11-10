@@ -1,6 +1,7 @@
 using Aw.Kernel.Data;
 using Aw.Meta.Core.Gate;
 using Aw.Meta.Core.Lanes;
+using Aw.Meta.Core.Messages;
 using Aw.Meta.Infrastructure.Sqlite;
 using Microsoft.Extensions.Time.Testing;
 
@@ -39,7 +40,7 @@ public sealed class LaneMailMigrationTests : IDisposable
         await using var check = (await connections.Open(CancellationToken.None)).Value;
         await using var version = check.CreateCommand();
         version.CommandText = "SELECT MAX(version) FROM schema_version";
-        Assert.Equal(4L, await version.ExecuteScalarAsync(CancellationToken.None));
+        Assert.Equal(5L, await version.ExecuteScalarAsync(CancellationToken.None));
         Assert.True(File.Exists(options.DatabasePath + ".bak-v2"));
     }
 
@@ -70,6 +71,35 @@ public sealed class LaneMailMigrationTests : IDisposable
         Assert.Equal("t1", latest.Tree);
         Assert.Equal([new StackedPr(5, "h5")], latest.Stack);
         Assert.True(File.Exists(options.DatabasePath + ".bak-v3"));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Migration_0005_upgrades_a_v4_database_keeps_its_messages_unshown_and_marks_them_shown()
+    {
+        var options = MetaDatabase.OptionsFor(_state.Path);
+        var clock = new FakeTimeProvider();
+        var migrations = EmbeddedMigrations.Load(typeof(MetaDatabase).Assembly, MetaDatabase.ResourcePrefix).Value;
+        var connections = new SqliteConnectionFactory(options);
+        _ = await new MigrationRunner(connections, clock).Migrate(migrations, CancellationToken.None, targetVersion: 4);
+        await using (var connection = (await connections.Open(CancellationToken.None)).Value)
+        {
+            await using var insert = connection.CreateCommand();
+            insert.CommandText = "INSERT INTO messages (id, from_socket, from_name, body, at, kind) VALUES ('m1', 's', 'peer', 'open message', '2026-10-15T05:00:00.0000000Z', 'Request');"
+                + "INSERT INTO messages (id, from_socket, from_name, body, at, kind, resolution, resolution_reason) VALUES ('m2', 's', 'peer', 'dismissed message', '2026-10-15T05:01:00.0000000Z', 'Request', 'Dismissed', 'done')";
+            _ = await insert.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+
+        var messages = new SqliteMessageStore(new MetaDatabase(options, clock));
+        var upgraded = (await messages.Messages(CancellationToken.None)).Value.OrderBy(m => m.Id.Value, StringComparer.Ordinal).ToList();
+        _ = await messages.MarkShown([upgraded[0].Id], clock.GetUtcNow(), CancellationToken.None);
+        var marked = (await messages.Messages(CancellationToken.None)).Value.Single(m => m.Id == upgraded[0].Id);
+
+        Assert.Equal(["open message", "dismissed message"], upgraded.Select(m => m.Body), StringComparer.Ordinal);
+        Assert.Null(upgraded[0].Resolution);
+        Assert.Equal(MessageResolutionKind.Dismissed, upgraded[1].Resolution?.Kind);
+        Assert.All(upgraded, m => Assert.Null(m.ShownAt));
+        Assert.Equal(clock.GetUtcNow(), marked.ShownAt);
+        Assert.True(File.Exists(options.DatabasePath + ".bak-v4"));
     }
 
     public void Dispose() => _state.Dispose();
