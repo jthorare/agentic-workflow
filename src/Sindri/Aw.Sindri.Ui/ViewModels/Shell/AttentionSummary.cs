@@ -15,6 +15,9 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// <param name="SummaryLine">Home's summary line; empty before the list is known.</param>
 internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, string SummaryLine)
 {
+    /// <summary>Home's Needs you header, beside its label: only the need-you count ("3 need you"), blank at zero or before the list is known.</summary>
+    public string NeedsYouLine { get; init; } = "";
+
     /// <summary>Works out the summary.</summary>
     /// <param name="feed">The needs-you list, or null before it is known.</param>
     /// <param name="state">The shell's state.</param>

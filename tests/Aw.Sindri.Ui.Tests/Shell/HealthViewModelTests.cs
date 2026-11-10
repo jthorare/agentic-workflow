@@ -592,7 +592,7 @@ public sealed class HealthViewModelTests : IDisposable
 
     // I4 (§4.2, §4.8): Home's strip is labelled cells, each value a word, in the health line's order.
     [Fact]
-    public async Task The_health_strip_is_labelled_cells_in_the_health_lines_order()
+    public async Task The_health_strip_is_status_dots_with_no_pid_epoch_lease_or_API()
     {
         _records.Write(A.Record());
         _server.Current = A.Status(profile: A.Live()) with { ApiVersion = 1 };
@@ -601,9 +601,7 @@ public sealed class HealthViewModelTests : IDisposable
         await Eventually(() => _vm.Headline == "Running", "headline");
         Assert.Equal(
             [
-                new HealthCell("Process", "Running · pid 4242"),
-                new HealthCell("Epoch · lease", "7 · held"),
-                new HealthCell("API", "v1"),
+                new HealthCell("Process", "Running", StateGlyph.Ok),
                 new HealthCell("Services", "1 service"),
                 new HealthCell("Profile", "live", StateGlyph.Ok),
             ],
@@ -617,7 +615,8 @@ public sealed class HealthViewModelTests : IDisposable
         Start();
 
         await Eventually(() => _vm.Headline == "Running", "headline");
-        Assert.DoesNotContain(_vm.Detail.Strip, c => c.Label == "API");
+        Assert.DoesNotContain(_vm.Detail.Strip, c => string.Equals(c.Label, "API", StringComparison.Ordinal) || string.Equals(c.Label, "Epoch · lease", StringComparison.Ordinal));
+        Assert.DoesNotContain(_vm.Detail.Strip, c => c.Value.Contains("pid", StringComparison.Ordinal));
         Assert.Equal(new HealthCell("Profile", "live", StateGlyph.Ok), _vm.Detail.Strip[^1]);
     }
 

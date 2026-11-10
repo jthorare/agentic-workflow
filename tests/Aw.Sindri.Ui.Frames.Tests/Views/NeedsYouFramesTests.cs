@@ -32,7 +32,7 @@ public sealed class NeedsYouFramesTests : FrameHost
         var titles = Rows(window).Select(r => Named<Button>(r, "NeedsYouTitle")).Select(b => Avalonia.Automation.AutomationProperties.GetName(b)).Count();
         Assert.Equal(GoldenFiles.Node("needs-you", "fixture")["rows"]!.AsArray().Count, Rows(window).Count);
         Assert.True(titles > 0);
-        Assert.Equal(shell.Attention.SummaryLine, Named<TextBlock>(window, "NeedsYouSummary").Text);
+        Assert.Equal(shell.Attention.NeedsYouLine, Named<TextBlock>(window, "NeedsYouSummary").Text);
         Frame(window, "needs-you-fixture");
     });
 

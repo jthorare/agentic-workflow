@@ -174,9 +174,9 @@ public sealed class FromElsewhereTests
 
         line.Open(ElsewherePart.Linear);
 
-        Assert.Equal("2 PRs waiting on your review · Linear not connected · 3 need you, below", line.Text);
+        Assert.Equal("2 PRs waiting on your review · Connect Linear · 3 need you, below", line.Text);
         Assert.Equal((1, 0), (connect, opened.Count));
-        Assert.Equal("Opens Settings, Connections: Linear not connected", line.Parts[1].Name);
+        Assert.Equal("Opens Connections: Connect Linear", line.Parts[1].Name);
     }
 
     [Fact]

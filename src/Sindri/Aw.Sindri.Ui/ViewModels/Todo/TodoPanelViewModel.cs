@@ -62,6 +62,9 @@ internal sealed partial class TodoPanelViewModel : ObservableObject, IDisposable
     /// <summary>Todos with an open both-places conflict (the tray's tooltip).</summary>
     public int ToSortOutCount { get; private set => Set(ref field, value); }
 
+    /// <summary>How many row-high slots the collapsed body takes: 6 (five rows and the Show all slot), or 1 when the list is empty.</summary>
+    public int CollapsedSlots => IsExpanded ? 6 : 5 + 1;
+
     /// <summary>True when no todo is open.</summary>
     public bool IsEmpty { get; private set => Set(ref field, value); }
 

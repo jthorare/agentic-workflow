@@ -344,7 +344,7 @@ public sealed class ShellWindowTests : IDisposable
         _records.Write(A.Record());
         var (window, shell) = await Show(s => s.State == ShellState.Normal);
         Assert.Equal(Brush("Success"), Named<StateIcon>(window, "PillGlyph").Foreground);
-        var profile = Named<ItemsControl>(window, "HealthCells").GetVisualDescendants().OfType<StateIcon>().Single(i => i.IsEffectivelyVisible);
+        var profile = Named<ItemsControl>(window, "HealthCells").GetVisualDescendants().OfType<StateIcon>().Last(i => i.IsEffectivelyVisible);
         Assert.Equal(Brush("Success"), profile.Foreground);
         shell.GoTo(PageId.System);
         Settle(window);
@@ -419,8 +419,6 @@ public sealed class ShellWindowTests : IDisposable
         try
         {
             Settle(window);
-            TheDotKeycapIsVisible(window, scale);
-
             var strip = Box(window, "HealthStrip");
             foreach (var value in Named<ItemsControl>(window, "HealthCells").GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible))
             {
@@ -429,7 +427,7 @@ public sealed class ShellWindowTests : IDisposable
                 Assert.True(box.Right <= strip.Right && box.Bottom <= strip.Bottom, value.Text + " runs out of the strip");
             }
 
-            Assert.Contains(Named<ItemsControl>(window, "HealthCells").GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "Running · pid 1234567");
+            Assert.Contains(Named<ItemsControl>(window, "HealthCells").GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "Running");
             Frame(window, string.Create(CultureInfo.InvariantCulture, $"strip-1000-{scale * 100:0}"));
         }
         finally
@@ -1357,10 +1355,11 @@ public sealed class ShellWindowTests : IDisposable
         // I4 (home.html): labelled cells, the G . hint and a trailing ›; still one button named by the health line.
         var cells = Named<ItemsControl>(window, "HealthCells");
         var texts = cells.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
-        Assert.Equal(["Process", "Running · pid 4242", "Epoch · lease", "7 · held", "Services", "1 service", "Profile", "live"], texts);
-        Assert.Equal([StateGlyph.Ok], cells.GetVisualDescendants().OfType<StateIcon>().Where(i => i.IsEffectivelyVisible).Select(i => i.Glyph));
+        Assert.Equal(["Process", "Running", "Services", "1 service", "Profile", "live"], texts);
+        Assert.Equal([StateGlyph.Ok, StateGlyph.Ok], cells.GetVisualDescendants().OfType<StateIcon>().Where(i => i.IsEffectivelyVisible).Select(i => i.Glyph));
         Assert.True(Visible(window, "HealthChevron"));
         Assert.True(Visible(window, "HealthKeys"));
+        Assert.DoesNotContain(window.GetVisualDescendants().OfType<Border>(), b => string.Equals(b.Name, "GoKeyCap", StringComparison.Ordinal) || string.Equals(b.Name, "HealthKeyCap", StringComparison.Ordinal));   // the bare G and . caps are gone from the strip
         var strip = window.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "HealthStrip");
         Assert.Equal(shell.Health.StripName, AutomationProperties.GetName(strip));
         EveryControlIsNamed(window);
@@ -1756,23 +1755,6 @@ public sealed class ShellWindowTests : IDisposable
         Assert.Equal(home.X, onSettings.X);
         Frame(window, "settings");
     });
-
-    // R6: the period is a vector dot of 4–5 pt at text scale 1 (scaled with the text), centred in a cap as tall as G's
-    // and at least as wide as it is tall (within the window's whole-pixel rounding).
-    private static void TheDotKeycapIsVisible(Window window, double scale)
-    {
-        var dot = Named<Avalonia.Controls.Shapes.Ellipse>(window, "HealthKeyDot");
-        Assert.InRange(dot.Bounds.Width, 4 * scale, 5 * scale);
-        Assert.Equal(dot.Bounds.Width, dot.Bounds.Height);
-        Assert.Equal(Brush("InkSubtle"), dot.Fill);
-        var dotBox = Box(window, "HealthKeyDot");
-        var cap = Box(window, "HealthKeyCap");
-        // Centred within the layout's whole-pixel rounding.
-        Assert.InRange(dotBox.Center.Y - cap.Center.Y, -1, 1);
-        Assert.InRange(dotBox.Center.X - cap.Center.X, -1, 1);
-        Assert.InRange(Box(window, "GoKeyCap").Height - cap.Height, -1, 1);
-        Assert.True(cap.Width >= cap.Height - 1, string.Create(CultureInfo.InvariantCulture, $"the . keycap is {cap.Width} × {cap.Height}"));
-    }
 
     // S2 and S3 on Health: each section head's state word sits on its eyebrow's baseline, and the profile's file is a
     // path in mono like the Not running card's.
