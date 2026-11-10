@@ -1,5 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Kernel.Ids;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Items.Vocabulary;
@@ -19,7 +21,7 @@ public sealed class GetItemTests
 {
     private readonly ItemQueryHarness _q = new();
 
-    private GetItemService Service() => new(new ViewItemResolver(_q.Views.Views), _q.Views.Progress, _q.Views.Slice.Callers, new EmptyLaunchSource());
+    private GetItemService Service() => new(new ViewItemResolver(_q.Views.Views), _q.Views.Progress, _q.Views.Slice.Callers, new EmptyLaunchSource(), _q.Views.Views);
 
     [Fact]
     public async Task GetItem_shows_the_item_with_its_version_and_actions()
@@ -74,6 +76,37 @@ public sealed class GetItemTests
 
         Expect.Equal("secret", result.Value.Title);
     }
+
+    [Fact]
+    public async Task Item_lists_its_runs_newest_first()
+    {
+        await _q.Item('1', "Ship it");
+        await Link('1', "sindri:run/nightly@1:1");
+        _q.Views.Slice.Clock.Advance(TimeSpan.FromMinutes(1));
+        await Link('1', "sindri:run/nightly@1:2");
+        await Link('1', "github:pr/acme-widgets-12");   // not a run
+        using var entered = _q.Human();
+
+        var item = (await Service().Handle(A.GetItemRequest().WithItem(ItemRef.To(ItemQueryHarness.Id('1'))).Build(), ItemQueryHarness.Token)).Value;
+
+        Expect.Sequence(["nightly@1:2", "nightly@1:1"], [.. item.Runs]);
+    }
+
+    [Fact]
+    public async Task Item_without_runs_has_an_empty_run_list()
+    {
+        await _q.Item('1', "Ship it");
+        await _q.Item('2', "Other");
+        await Link('2', "sindri:run/nightly@1:1");
+        using var entered = _q.Human();
+
+        var item = (await Service().Handle(A.GetItemRequest().WithItem(ItemRef.To(ItemQueryHarness.Id('1'))).Build(), ItemQueryHarness.Token)).Value;
+
+        Assert.Empty(item.Runs);
+    }
+
+    private async Task Link(char digit, string record) =>
+        await _q.Views.Fold(EventTypes.ItemLinked, new ItemLinked(_q.Views.Slice.Ids.New<CommandId>(), ItemQueryHarness.Id(digit), RecordKey.From(record), Alias: null), ItemQueryHarness.Id(digit));
 
     /// <summary>The launch block is decided elsewhere (LaunchOptionsTests); here an item only has to carry it.</summary>
     private sealed class EmptyLaunchSource : IItemLaunchSource
