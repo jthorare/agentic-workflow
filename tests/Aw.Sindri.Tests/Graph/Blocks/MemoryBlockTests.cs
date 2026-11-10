@@ -133,6 +133,20 @@ public sealed class MemoryBlockTests
         Assert.Equal(["count"], forget.OutputsFor([]).Fields.Keys, StringComparer.Ordinal);
     }
 
+    [Fact]
+    public void The_registry_adds_the_three_memory_blocks_and_each_examples_config_fits_its_schema()
+    {
+        var blocks = GraphBlockRegistry.MemoryBlocks(new RecordingMemoryPort());
+
+        Assert.Equal(["memory_forget", "memory_search", "memory_write"], blocks.Select(static b => b.Type).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        foreach (var block in blocks)
+        {
+            var example = (JsonObject)JsonNode.Parse(block.Example)!;
+            Assert.All(example.Select(static p => p.Key), key => Assert.Contains(key, block.Config.Fields.Select(static f => f.Name), StringComparer.Ordinal));
+            Assert.All(block.Config.Fields.Where(static f => f.Required), field => Assert.True(example.ContainsKey(field.Name), $"{block.Type} example lacks '{field.Name}'"));
+        }
+    }
+
     private sealed class RecordingMemoryPort : IGraphMemoryPort
     {
         public List<MemoryToRecall> Recalls { get; } = [];

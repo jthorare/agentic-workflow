@@ -35,9 +35,43 @@ public sealed class MemoryWriteBlock(IGraphMemoryPort memory) : IGraphBlock
     public BlockOutputs OutputsFor(JsonObject config) => _outputs;
 
     /// <inheritdoc />
-    public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
+    public async ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
     {
-        _ = memory;
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(context);
+        if (ConfigValues.Text(context.Config["memory"])?.Trim() is not { Length: > 0 } name)
+        {
+            return SindriErrors.GraphBlockFailed.With("memory_write needs a 'memory' name");
+        }
+
+        if (ConfigValues.Text(context.Config["fact"])?.Trim() is not { Length: > 0 } fact)
+        {
+            return SindriErrors.GraphBlockFailed.With("memory_write needs a non-empty 'fact'");
+        }
+
+        TimeSpan? expiresIn = null;
+        if (ConfigValues.Text(context.Config["expires"])?.Trim() is { Length: > 0 } expires)
+        {
+            var parsed = BlockDuration.Parse(expires);
+            if (parsed.IsError)
+            {
+                return SindriErrors.GraphBlockFailed.With($"memory_write's 'expires' is '{expires}'; write a length such as '30d', '12h' or '45m'");
+            }
+
+            expiresIn = parsed.Value;
+        }
+
+        var written = await memory.Remember(new MemoryToRemember(context.RunId, name, fact, Tags(context.Config["tags"]), expiresIn), cancellationToken).ConfigureAwait(false);
+        return written.IsError
+            ? written.Error
+            : new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["id"] = written.Value.Key, ["action"] = written.Value.Action });
     }
+
+    // why: a tag may arrive as a list or, from a whole reference to text, as one string; blank entries mean nothing
+    private static List<string> Tags(JsonNode? node) =>
+        node switch
+        {
+            JsonArray list => [.. list.Select(static t => ConfigValues.Text(t)?.Trim()).OfType<string>().Where(static t => t.Length > 0)],
+            null => [],
+            _ => ConfigValues.Text(node)?.Trim() is { Length: > 0 } one ? [one] : [],
+        };
 }

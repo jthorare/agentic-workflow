@@ -34,9 +34,26 @@ public sealed class MemoryForgetBlock(IGraphMemoryPort memory) : IGraphBlock
     public BlockOutputs OutputsFor(JsonObject config) => _outputs;
 
     /// <inheritdoc />
-    public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
+    public async ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
     {
-        _ = memory;
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(context);
+        if (ConfigValues.Text(context.Config["memory"])?.Trim() is not { Length: > 0 } name)
+        {
+            return SindriErrors.GraphBlockFailed.With("memory_forget needs a 'memory' name");
+        }
+
+        var fact = ConfigValues.Text(context.Config["fact"])?.Trim();
+        var tag = ConfigValues.Text(context.Config["tag"])?.Trim();
+        var hasFact = !string.IsNullOrEmpty(fact);
+        var hasTag = !string.IsNullOrEmpty(tag);
+        if (hasFact == hasTag)
+        {
+            return SindriErrors.GraphBlockFailed.With("memory_forget needs exactly one of 'fact' (a fact id) and 'tag'");
+        }
+
+        var forgotten = await memory.Forget(new MemoryToForget(name, hasFact ? fact : null, hasTag ? tag : null), cancellationToken).ConfigureAwait(false);
+        return forgotten.IsError
+            ? forgotten.Error
+            : new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["count"] = forgotten.Value });
     }
 }

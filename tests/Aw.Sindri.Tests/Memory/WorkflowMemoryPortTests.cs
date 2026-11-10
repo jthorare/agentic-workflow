@@ -26,7 +26,7 @@ public sealed class WorkflowMemoryPortTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private WorkflowMemoryPort Port() => new(_h.Search(), _h.Write(), _h.Forget(), _h.Callers, _runs);
+    private WorkflowMemoryPort Port() => new(_h.Search(), _h.Write(), _h.Forget(), _h.Callers, _runs, _h.Clock);
 
     private async Task SeedRun(WorkflowRunId run, ItemId? item)
     {

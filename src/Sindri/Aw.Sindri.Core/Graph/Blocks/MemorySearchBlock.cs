@@ -35,9 +35,27 @@ public sealed class MemorySearchBlock(IGraphMemoryPort memory) : IGraphBlock
     public BlockOutputs OutputsFor(JsonObject config) => _outputs;
 
     /// <inheritdoc />
-    public ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
+    public async ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
     {
-        _ = memory;
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(context);
+        if (ConfigValues.Text(context.Config["memory"])?.Trim() is not { Length: > 0 } name)
+        {
+            return SindriErrors.GraphBlockFailed.With("memory_search needs a 'memory' name");
+        }
+
+        if (ConfigValues.Text(context.Config["query"])?.Trim() is not { Length: > 0 } query)
+        {
+            return SindriErrors.GraphBlockFailed.With("memory_search needs a non-empty 'query'");
+        }
+
+        var level = ConfigValues.Text(context.Config["level"])?.Trim();
+        var recalled = await memory.Recall(new MemoryToRecall(name, query, string.IsNullOrEmpty(level) ? null : level, ConfigValues.Int(context.Config["limit"])), cancellationToken).ConfigureAwait(false);
+        if (recalled.IsError)
+        {
+            return recalled.Error;
+        }
+
+        var facts = new JsonArray([.. recalled.Value.Facts.Select(static f => (JsonNode?)JsonValue.Create(f))]);
+        return new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["facts"] = facts, ["mode"] = recalled.Value.Mode });
     }
 }
