@@ -51,6 +51,13 @@ check "ncat --listen N is a violation" "$(scan 'ncat --listen 8083 &')" "1:1"
 check "nc -lpN (no space) is a violation" "$(scan 'nc -lp8084 &')" "1:1"
 check "a lowercase socat tcp-listen:N is a violation" "$(scan 'socat tcp-listen:8085,reuseaddr -')" "1:1"
 
+# violation 4: a value derived from the pid modulo something (#2636)
+check "a pid-derived port PC=\$((20000 + \$\$ % 9000)) is a violation" "$(scan 'PC=$((20000 + $$ % 9000))')" "1:1"
+check "a pid modulo slot is a violation" "$(scan 'slot=$(($$ % 7))')" "1:1"
+check "a waived pid modulo passes" "$(scan '# test-ports: ok: claimed under a lock and checked free
+slot=$(($$ % 7))')" "0:0"
+check "a plain \$\$ (no modulo) is allowed" "$(scan 'echo $$ > "$dir/pid"')" "0:0"
+
 # allowed
 check "PORT=0 is allowed" "$(scan 'PORT=0')" "0:0"
 check "python bind to port 0 is allowed" "$(scan 's.bind(("127.0.0.1",0))')" "0:0"

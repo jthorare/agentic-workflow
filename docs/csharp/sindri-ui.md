@@ -882,6 +882,6 @@ Two list pages whose rows and actions are what the `connection_*` and `memory_*`
 
 **Routes.** `GET|POST /sindri/connections`, `GET|DELETE /sindri/connections/{name}`, `POST /sindri/connections/{name}/test|signin`; `GET|POST /sindri/memories`, `GET /sindri/memories/{name}/search`, `POST|DELETE /sindri/memories/{name}/facts`. Their served goldens are in `tests/Aw.Sindri.Tests/Golden/Api/connections*` and `memories*`. `AddConnectionBody` writes every required field, null ones too (`ConnectionsClientTests.AddConnection_writes_every_required_field_even_when_null`); without them the server answers `SND-CLI-003`.
 
-**Not yet.** The `Connection` Needs-you row's "Sign in again" (no such row kind on main yet), Slack in the preset list, fixture seeding and desktop evidence screens for these pages.
+**Not yet.** The `Connection` Needs-you row's "Sign in again" (no such row kind on main yet), Slack in the preset list and desktop evidence screens for these pages. Fixture seeding: `scripts/sindri-ui-fixture.sh connections empty|typical|error|down` writes the connection rows the page reads.
 
 **Tests.** Unit: `tests/Aw.Sindri.Ui.Tests/Connections/` (page, add form, sheet, shell wiring), `Memory/` (page, view), `Api/ConnectionsClientTests`, `Api/MemoryClientTests`. Integration: `Views/ConnectionsFramesTests`, `Views/MemoryFramesTests` (Frames.Tests), `ConnectionsApiGoldenTests`, `MemoriesApiGoldenTests` (Sindri.Tests).

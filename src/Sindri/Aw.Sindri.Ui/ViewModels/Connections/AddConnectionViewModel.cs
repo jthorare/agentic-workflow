@@ -3,8 +3,8 @@ using Aw.Sindri.Ui.Api.Connections;
 namespace Aw.Sindri.Ui.ViewModels.Connections;
 
 /// <summary>
-/// The Add connection form (PR 18a). A preset picker chooses what to connect: an OAuth provider (the browser opens the consent page and the form waits until the connection reads
-/// 'connected'), a service with a key (rest or cli), or an MCP server (its address). A pasted key or client secret goes into ONE request and is then gone: it is taken out of its
+/// The custom connection form: a picker chooses a service with a key (rest or cli) or an MCP server (its address; the browser opens the consent page and the form waits until the
+/// connection reads 'connected'). The services with a browser sign-in are tiles (<see cref="ServiceTileViewModel"/>), not here. A pasted key goes into ONE request and is then gone: it is taken out of its
 /// <see cref="SecretField"/> to build the body, never held in a property, a note or an error after that, and never written to the app's preferences.
 /// </summary>
 #pragma warning disable CA1001 // why: the source has no timer and holds no resource; Close disposes it and makes the next
@@ -22,7 +22,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
     internal AddConnectionViewModel(ConnectionActions actions, Func<Task> changed)
     {
         (_actions, _changed) = (actions, changed);
-        Key.PropertyChanged += (_, _) => OnChanged(nameof(CanSend));
+        Key.PropertyChanged += (_, _) => NotifyCanSend();
     }
 
     /// <summary>The form's copy.</summary>
@@ -35,9 +35,6 @@ internal sealed class AddConnectionViewModel : ObservableObject
 
     /// <summary>The pasted key (rest and cli).</summary>
     public SecretField Key { get; } = new();
-
-    /// <summary>The pasted OAuth client secret (only for a provider that asks for one).</summary>
-    public SecretField ClientSecret { get; } = new();
 
     /// <summary>True while the form is shown.</summary>
     public bool IsOpen { get; private set => Set(ref field, value); }
@@ -55,7 +52,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
 
             DropSecrets();
             field = value;
-            foreach (var name in (string[])[nameof(SelectedPreset), nameof(ShowClient), nameof(ShowClientSecret), nameof(ShowKey), nameof(ShowUrl), nameof(ShowSecretNote), nameof(CanSend)])
+            foreach (var name in (string[])[nameof(SelectedPreset), nameof(ShowKey), nameof(ShowUrl), nameof(ShowSecretNote), nameof(CanSend), nameof(SendBlockedReason), nameof(HasBlockedReason)])
             {
                 OnChanged(name);
             }
@@ -70,21 +67,9 @@ internal sealed class AddConnectionViewModel : ObservableObject
         {
             field = value ?? string.Empty;
             OnChanged(nameof(Name));
-            OnChanged(nameof(CanSend));
+            NotifyCanSend();
         }
-    } = string.Empty;
-
-    /// <summary>The OAuth client id (not a secret).</summary>
-    public string ClientId
-    {
-        get;
-        set
-        {
-            field = value ?? string.Empty;
-            OnChanged(nameof(ClientId));
-            OnChanged(nameof(CanSend));
-        }
-    } = string.Empty;
+    } = Labels.ConnectionDefaultName;
 
     /// <summary>The MCP server's address.</summary>
     public string Url
@@ -94,15 +79,9 @@ internal sealed class AddConnectionViewModel : ObservableObject
         {
             field = value ?? string.Empty;
             OnChanged(nameof(Url));
-            OnChanged(nameof(CanSend));
+            NotifyCanSend();
         }
     } = string.Empty;
-
-    /// <summary>True when the client id and secret fields show (OAuth).</summary>
-    public bool ShowClient => SelectedPreset.IsOAuth;
-
-    /// <summary>True when the client secret field shows (OAuth).</summary>
-    public bool ShowClientSecret => SelectedPreset.IsOAuth;
 
     /// <summary>True when the key field shows (rest and cli).</summary>
     public bool ShowKey => string.Equals(SelectedPreset.Kind, "rest", StringComparison.Ordinal) || string.Equals(SelectedPreset.Kind, "cli", StringComparison.Ordinal);
@@ -110,14 +89,26 @@ internal sealed class AddConnectionViewModel : ObservableObject
     /// <summary>True when the server address field shows (mcp).</summary>
     public bool ShowUrl => string.Equals(SelectedPreset.Kind, "mcp", StringComparison.Ordinal);
 
-    /// <summary>True when the note about where a pasted secret goes shows (a key or a client secret is asked for).</summary>
-    public bool ShowSecretNote => ShowKey || ShowClientSecret;
+    /// <summary>True when the note about where a pasted secret goes shows (a key is asked for).</summary>
+    public bool ShowSecretNote => ShowKey;
 
     /// <summary>True while a send runs.</summary>
     public bool IsWorking { get; private set => Set(ref field, value); }
 
     /// <summary>True when the form has what its kind needs and nothing is being sent.</summary>
     public bool CanSend => !IsWorking && Name.Trim().Length > 0 && Needed();
+
+    /// <summary>Why Add is disabled, in words; empty while it can send.</summary>
+    public string SendBlockedReason => CanSend ? string.Empty : IsWorking ? Labels.ConnectionAdding
+        : Name.Trim().Length == 0 ? Labels.ConnectNeedsName
+        : SelectedPreset.Kind switch
+        {
+            "mcp" => Labels.ConnectNeedsAddress,
+            _ => Labels.ConnectNeedsToken(SelectedPreset.Label),
+        };
+
+    /// <summary>True when the reason line shows.</summary>
+    public bool HasBlockedReason => IsOpen && SendBlockedReason.Length > 0;
 
     /// <summary>What the form says it is doing: sending, waiting for the browser, done; empty otherwise.</summary>
     public string StatusText
@@ -147,8 +138,19 @@ internal sealed class AddConnectionViewModel : ObservableObject
     /// <summary>True when there is an error.</summary>
     public bool HasError => ErrorText.Length > 0;
 
+    private void NotifyCanSend()
+    {
+        OnChanged(nameof(CanSend));
+        OnChanged(nameof(SendBlockedReason));
+        OnChanged(nameof(HasBlockedReason));
+    }
+
     /// <summary>Shows the form.</summary>
-    internal void Open() => IsOpen = true;
+    internal void Open()
+    {
+        IsOpen = true;
+        OnChanged(nameof(HasBlockedReason));
+    }
 
     /// <summary>Closes the form and drops anything pasted.</summary>
     internal void Close()
@@ -159,7 +161,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
         _run.Dispose();
         _run = new CancellationTokenSource();
         (IsWorking, StatusText, ErrorText) = (false, string.Empty, string.Empty);
-        OnChanged(nameof(CanSend));
+        NotifyCanSend();
     }
 
     /// <summary>
@@ -179,7 +181,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
         var run = _run;
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, run.Token);
         (IsWorking, ErrorText, StatusText) = (true, string.Empty, Labels.ConnectionAdding);
-        OnChanged(nameof(CanSend));
+        NotifyCanSend();
         try
         {
             // the body, with any pasted secret, lives only as this argument: after the POST the form holds the name and nothing else
@@ -201,7 +203,7 @@ internal sealed class AddConnectionViewModel : ObservableObject
             if (!run.IsCancellationRequested)
             {
                 IsWorking = false;
-                OnChanged(nameof(CanSend));
+                NotifyCanSend();
             }
         }
     }
@@ -230,17 +232,13 @@ internal sealed class AddConnectionViewModel : ObservableObject
         }
     }
 
-    private void DropSecrets()
-    {
-        _ = Key.Take();
-        _ = ClientSecret.Take();
-    }
+    private void DropSecrets() => _ = Key.Take();
 
     private void Ended(string name, SignInEnd end)
     {
         if (end.State == SignInState.Connected)
         {
-            (StatusText, Name, ClientId, Url) = (Labels.ConnectionAdded(name), string.Empty, string.Empty, string.Empty);
+            (StatusText, Name, Url) = (Labels.ConnectionAdded(name), Labels.ConnectionDefaultName, string.Empty);
             return;
         }
 
@@ -252,11 +250,6 @@ internal sealed class AddConnectionViewModel : ObservableObject
     {
         var choice = SelectedPreset;
         var name = Name.Trim();
-        if (choice.IsOAuth)
-        {
-            return new AddConnectionBody(name, choice.Id, Kind: null, OrEmpty(ClientId), KeyEnv: null, Scopes: [], Wait: false, ClientSecret: ClientSecret.Take());
-        }
-
         return choice.Kind switch
         {
             "mcp" => new AddConnectionBody(name, Preset: null, choice.Kind, Client: null, KeyEnv: null, Scopes: [], Wait: false, Url: OrEmpty(Url)),
@@ -266,7 +259,6 @@ internal sealed class AddConnectionViewModel : ObservableObject
 
     private bool Needed() => SelectedPreset.Kind switch
     {
-        "oauth" => ClientId.Trim().Length > 0,   // a preset ships no client id (SND-CONN-007)
         "mcp" => Url.Trim().Length > 0,
         _ => Key.HasValue,
     };

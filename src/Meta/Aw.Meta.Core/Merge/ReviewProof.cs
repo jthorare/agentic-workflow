@@ -41,10 +41,12 @@ public static partial class ReviewProof
         public static Qa None => default;
     }
 
-    // One reviewer message, line by line: "OK #pr at sha" (with the qa line right after it) or "HOLD #pr".
+    // One reviewer message, line by line: "OK #pr at sha" (with the qa line right after it) or "HOLD #pr". A STATUS: or ACTION: tag
+    // on the first line is read past (#2651).
     private static (string? Ok, Qa Qa) Replay(string body, int pr, (string? Ok, Qa Qa) standing)
     {
         var lines = body.Split('\n');
+        lines[0] = NoticeRule.StripTag(lines[0].Trim());
         try
         {
             for (var i = 0; i < lines.Length; i++)
@@ -77,7 +79,7 @@ public static partial class ReviewProof
         return !qa.Success ? Qa.None : qa.Groups["sha"].Success ? new Qa(NotYet: false, qa.Groups["sha"].Value) : new Qa(NotYet: true, Sha: null);
     }
 
-    /// <summary>Finds the sha on the first line of a ready message.</summary>
+    /// <summary>Finds the sha on the first line of a ready message, read past a STATUS: or ACTION: tag.</summary>
     /// <param name="body">The message text.</param>
     /// <returns>The sha, or null when the first line has none.</returns>
     public static string? ReadySha(string body)
@@ -85,7 +87,7 @@ public static partial class ReviewProof
         ArgumentNullException.ThrowIfNull(body);
         try
         {
-            var match = ReadyLine.Match(body.Trim());
+            var match = ReadyLine.Match(NoticeRule.StripTag(body.Trim()));
             return match.Success ? match.Groups["sha"].Value : null;
         }
         catch (RegexMatchTimeoutException)

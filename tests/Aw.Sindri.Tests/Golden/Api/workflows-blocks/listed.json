@@ -310,70 +310,82 @@
           }
         },
         {
-          "type": "workflow_result",
-          "title": "Workflow result",
+          "type": "call_tool",
+          "title": "Toolkit tool",
           "isTrigger": false,
           "config": [
             {
-              "name": "workflow",
+              "name": "tool",
               "type": "text",
               "required": true
             },
             {
-              "name": "run",
+              "name": "connection",
               "type": "text",
+              "required": false
+            },
+            {
+              "name": "arguments",
+              "type": "object",
               "required": false
             }
           ],
           "outputs": {
-            "runId": "string",
-            "status": "string",
-            "finishedAt": "string?",
-            "outputs": "any?"
+            "result": "any"
           },
           "branches": [
             "out"
           ],
           "exampleConfig": {
-            "workflow": "triage",
-            "run": "latest-succeeded"
+            "tool": "notes__add_note",
+            "arguments": {
+              "text": "{{triage.summary}}"
+            }
           },
           "exampleSpec": {
             "version": 1,
-            "name": "Report",
+            "name": "Note each new issue",
             "concurrency": "one-per-workflow",
             "nodes": [
               {
-                "id": "daily",
+                "id": "hourly",
                 "type": "schedule",
                 "config": {
-                  "cron": "0 8 * * *"
+                  "cron": "0 * * * *"
                 }
               },
               {
-                "id": "result",
-                "type": "workflow_result",
+                "id": "issues",
+                "type": "call_tool",
                 "config": {
-                  "workflow": "triage",
-                  "run": "latest-succeeded"
+                  "connection": "github:work",
+                  "tool": "list_issues",
+                  "arguments": {
+                    "owner": "acme",
+                    "repo": "web",
+                    "state": "open"
+                  }
                 }
               },
               {
-                "id": "tell",
-                "type": "notify",
+                "id": "save",
+                "type": "call_tool",
                 "config": {
-                  "title": "Triage last ran {{result.finishedAt}}"
+                  "tool": "notes__add_note",
+                  "arguments": {
+                    "text": "{{issues.result}}"
+                  }
                 }
               }
             ],
             "edges": [
               {
-                "from": "daily",
-                "to": "result"
+                "from": "hourly",
+                "to": "issues"
               },
               {
-                "from": "result",
-                "to": "tell"
+                "from": "issues",
+                "to": "save"
               }
             ]
           }

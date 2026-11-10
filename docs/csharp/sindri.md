@@ -685,7 +685,7 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-LEDGER-001` | The ledger's schema doesn't match this build |
 | `SND-LEDGER-002` | The ledger can't be opened or written, or the human token file can't be written |
 | `SND-API-001` | The control plane isn't running (no endpoint record, or nothing answers at it) |
-| `SND-API-002` | It didn't answer the ping within 2 s, the CLI couldn't connect within 5 s, or the call outlasted `AW_SINDRI_CLI_TIMEOUT` (no cap unless set) |
+| `SND-API-002` | It accepted the connection but didn't answer the ping within 15 s (the probe connects within 2 s; a refused or timed-out connect is `SND-API-001`), the CLI couldn't connect within 5 s, or the call outlasted `AW_SINDRI_CLI_TIMEOUT` (no cap unless set) |
 | `SND-API-003` | `sindri serve` can't listen on the API port: another program has it, it is refused, or the host failed to start listening (the stop is recorded and the lease released) |
 | `SND-API-004` | The API answered an error without a catalogue code (an unknown route, a wrong method or `Content-Type`; the HTTP status is named) |
 | `SND-API-005` | A handler failed with an unexpected exception; the control plane logged it |

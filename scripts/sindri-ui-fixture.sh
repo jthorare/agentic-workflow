@@ -32,6 +32,20 @@
 #                                  the Resources page's data (#2258 PR18b, #2494): files under <home>/resources, which is all
 #                                  GET /sindri/resources reads: workflow:morning-check gets a 1.2 MB database (state.db) and a
 #                                  300 KB disk (scratch/), toolkit:notes a 40 KB disk (cache/). Rewritten to the same sizes on a repeat
+#   sindri-ui-fixture.sh connections empty|typical|error|down  (run after 'up')
+#                                  the Connections page's data (#2537): rows of the 'connection' table of <home>/ledger.db, which is all
+#                                  GET /sindri/connections reads (the tile shows the label of the name as the account and last_refreshed_at
+#                                  as "last used"). empty removes every row (the five tiles all offer Connect). typical writes github:sam-rivera,
+#                                  linear:acme and google:sam-acme, connected, last used 30 minutes, 2 hours and 3 days ago, plus one custom
+#                                  connection, billing-api:prod (rest, no preset, a probe URL on an .invalid host). error is typical with
+#                                  linear:acme as needs-sign-in and the reason the refresh writes when the provider refuses the grant
+#                                  ("the provider refused the refresh (invalid_grant)"). Rows are keyed by name and written with INSERT OR
+#                                  REPLACE, so a repeat or a switch between states leaves one row each; the rows carry created_by
+#                                  'ui-fixture' and down removes only those. No secret is stored anywhere: the rows point at
+#                                  keychain:sindri-connection/<name> entries that do not exist, so the tiles read right but Test and a refresh
+#                                  fail with SND-CONN-006 (no stored sign-in). It writes no Needs-you event for the error row: the tile reads
+#                                  only the row. Run 'up' first (the table is made by the control plane's migrations). Needs sqlite3 or python3.
+#
 #   sindri-ui-fixture.sh fail      add a service the build cannot run to the live profile (a failure row)
 #   sindri-ui-fixture.sh unfail    remove it again (the row clears)
 #                                  (items --large also files 12 requests, in FIXTURE_REPO when set, else with no repo)
@@ -119,7 +133,7 @@
 #   sindri-ui-fixture.sh reviews up|down  (run after 'context up')
 #                                  a review page that opens on a fixture PR, for sending a fix from its fix sheet end to end
 #                                  (POST /sindri/reviews/acme/api/<N>/fix; PR review page spec 8.2). up adds what projects adds to the live
-#                                  profile (the SPL team, github repos acme/api and acme/web), review.login fx-viewer and workflow.forge
+#                                  profile (the SPL team, github repos acme/api and acme/web, and a github token pointer env:FIXTURE_GITHUB_TOKEN that nothing sets: without a token or a GitHub connection Reviews shows Connect GitHub and no rows, #2619), review.login fx-viewer and workflow.forge
 #                                  (adapter file, hosts github.com), It builds a file-backed forge world inside the home,
 #                                  <home>/ui-fixture-forge/state/forge/file (never the owner's $AW_STATE_DIR), with ONE open PR on
 #                                  github.com/acme/api (branch feat/retry-budget, authored by fx-viewer so the fix posts a sindri.fix thread):
@@ -416,6 +430,46 @@ resources() {
   seed_file "$root/workflow/morning-check/state.db" 1258291
   seed_file "$root/workflow/morning-check/scratch/notes.txt" 307200
   seed_file "$root/toolkit/notes/cache/index.bin" 40960
+}
+
+# A UTC timestamp N seconds ago in the store's text form (GNU date -d, else BSD date -r).
+ts_ago() {
+  local at=$(( $(date -u +%s) - $1 ))
+  date -u -d "@$at" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -r "$at" +%Y-%m-%dT%H:%M:%SZ
+}
+
+# One connection row: name kind preset|- config-json status reason|- refreshed-seconds-ago|-. The pointer names a keychain
+# entry nobody wrote: the fixture never stores a secret.
+conn_row() {
+  local name="$1" kind="$2" preset="$3" config="$4" status="$5" reason="$6" ago="$7"
+  local now pointer refreshed
+  now="$(ts_ago 0)"
+  pointer="keychain:sindri-connection/${name/:/.}"
+  [ "$preset" = - ] && preset="NULL" || preset="'$preset'"
+  [ "$reason" = - ] && reason="NULL" || reason="'$reason'"
+  [ "$ago" = - ] && refreshed="NULL" || refreshed="'$(ts_ago "$ago")'"
+  printf "INSERT OR REPLACE INTO connection (name, kind, preset, config_json, secret_pointer, status, status_reason, created_by, created_at, updated_at, last_refreshed_at) VALUES ('%s', '%s', %s, '%s', '%s', '%s', %s, 'ui-fixture', '%s', '%s', %s);" \
+    "$name" "$kind" "$preset" "$config" "$pointer" "$status" "$reason" "$now" "$now" "$refreshed"
+}
+
+connections() {
+  need_sql
+  local state="$1" sql
+  [ -f "$AW_SINDRI_HOME/ledger.db" ] || die "no ledger at $AW_SINDRI_HOME/ledger.db: run 'up' first"
+  [ "$(sql_on "$AW_SINDRI_HOME/ledger.db" "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'connection';")" = 1 ] \
+    || die "connections: the ledger has no connection table yet (the control plane makes it: run 'up' first)"
+  case "$state" in
+    empty) sql="DELETE FROM connection;" ;;
+    down) sql="DELETE FROM connection WHERE created_by = 'ui-fixture';" ;;
+    typical | error)
+      local linear=connected linear_reason=-
+      if [ "$state" = error ]; then linear=needs-sign-in; linear_reason="the provider refused the refresh (invalid_grant)"; fi
+      sql="$(conn_row github:sam-rivera oauth github '{"clientId":"fixture-client-id"}' connected - 1800)
+$(conn_row linear:acme oauth linear '{"clientId":"fixture-client-id"}' "$linear" "$linear_reason" 7200)
+$(conn_row google:sam-acme oauth google '{"clientId":"fixture-client-id"}' connected - 259200)
+$(conn_row billing-api:prod rest - '{"probeUrl":"https://billing.example.invalid/health"}' connected - -)" ;;
+  esac
+  sql_on "$AW_SINDRI_HOME/ledger.db" "$sql SELECT COUNT(*) || ' connection row(s)' FROM connection;"
 }
 
 close() {
@@ -975,7 +1029,7 @@ reviews_need_tmp_home() {
 }
 
 # review.login and workflow.forge (the file adapter on github.com) in the live profile, once each; approved afterwards when it isn't.
-# What 'reviews up' added (one word per line: review, forge, cursor), so 'reviews down' removes only that and never a block that was there before.
+# What 'reviews up' added (one word per line: review, forge, ghtoken, cursor), so 'reviews down' removes only that and never a block that was there before.
 reviews_marker() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-reviews-added"; }
 reviews_mark() { grep -qx "$1" "$(reviews_marker)" 2>/dev/null || printf '%s\n' "$1" >> "$(reviews_marker)"; }
 reviews_marked() { grep -qx "$1" "$(reviews_marker)" 2>/dev/null; }
@@ -998,6 +1052,14 @@ reviews_profile() {
       awk '{print} /^user:/ {print "workflow:\n  forge: { adapter: file, hosts: [github.com] }"}' "$profile" > "$profile.new"
     fi && mv "$profile.new" "$profile" || die "reviews: can't add workflow.forge to $profile"
     reviews_mark forge
+  fi
+  # Reviews shows "Connect GitHub" and no rows while there is no GitHub connection and no profile token (ReviewConnectRules.For, #2619), and this
+  # fixture has no connection (it uses the file forge). A token pointer is the one input that lets the list read the seeded PR. It names an env var nothing
+  # sets and no tick runs here (the only service is the heartbeat), so the github cursor's last_error stays NULL: no AW-CONNECTORS-006/-007 sign-in code.
+  if grep -q 'github: { repos: \[' "$profile" && ! grep -q 'github: {[^}]*token:' "$profile"; then
+    sed 's|\(github: { repos: \[[^]]*\]\) }|\1, token: "env:FIXTURE_GITHUB_TOKEN" }|' "$profile" > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't add the github token pointer to $profile"
+    grep -q 'token: "env:FIXTURE_GITHUB_TOKEN"' "$profile" || die "reviews: the profile's github line isn't 'github: { repos: [...] }'; add token: \"env:FIXTURE_GITHUB_TOKEN\" to it by hand"
+    reviews_mark ghtoken
   fi
   approve >&2 || return
 }
@@ -1101,6 +1163,9 @@ reviews_down() {
   if [ -f "$profile" ] && [ -n "$drop" ]; then
     grep -Ev "$drop" "$profile" \
       | awk '{l[NR]=$0} END {for (i=1;i<=NR;i++) if (!(l[i]=="workflow:" && (i==NR || l[i+1] !~ /^  /))) print l[i]}' > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't edit $profile"
+  fi
+  if [ -f "$profile" ] && reviews_marked ghtoken; then
+    sed 's|, token: "env:FIXTURE_GITHUB_TOKEN" }| }|' "$profile" > "$profile.new" && mv "$profile.new" "$profile" || die "reviews: can't remove the github token pointer from $profile"
   fi
   rm -f -- "$(reviews_marker)"
   # The dir is gone, so the restart no longer points AW_STATE_DIR at it.
@@ -1404,6 +1469,7 @@ case "$verb" in
   linear-catchup) { [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && case "$2" in empty | typical | error | read-error) true ;; *) false ;; esac; }; } || die "usage: linear-catchup [empty|typical|error|read-error]" ;;
   todos) [ "$#" -eq 1 ] || die "'todos' takes no arguments" ;;
   resources) [ "$#" -eq 1 ] || die "'resources' takes no arguments" ;;
+  connections) { [ "$#" -eq 2 ] && case "$2" in empty | typical | error | down) true ;; *) false ;; esac; } || die "usage: connections empty|typical|error|down" ;;
   reviews) { [ "$#" -eq 2 ] && { [ "$2" = up ] || [ "$2" = down ]; }; } || die "usage: reviews up|down" ;;
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
   context)

@@ -26,7 +26,7 @@ public sealed class ConnectionSheetTests
         await sheet.Open(ConnectionsFixture.Url, "notes:mcp", Token);
 
         Assert.Equal((FramePhase.Shown, "notes:mcp"), (sheet.Phase, sheet.Heading));
-        Assert.Equal(("! Needs sign-in", true), (sheet.Row!.ChipText, sheet.Row.CanSignIn));
+        Assert.Equal(("Needs sign-in", true), (sheet.Row!.ChipText, sheet.Row.CanSignIn));
         Assert.Equal(Labels.ConnectionSecretLine(has: true), sheet.SecretLine);
     }
 
