@@ -10,10 +10,12 @@ namespace Aw.Sindri.Ui.Views.Shell;
 
 /// <summary>
 /// The shell's top bar: binds to the shell, and passes the health pill's click to it. It also fits itself to the window
-/// (§3.2, minimum 1,000 px at text scale up to 1.3): with room the ⌘K field is 160–300 px wide; when the navigation, that
-/// field and the pill don't fit, the field folds to its magnifier; if that isn't enough the pill's age drops (the pill's
-/// accessible name keeps it), and then the brand keeps its mark alone (the window and the bar's region are still named
-/// Sindri). The pill's word always shows. This is layout only; the shell decides what the words are.
+/// (§3.2, minimum 1,000 px at text scale up to 1.3): with room the ⌘K field is 160–300 px wide. When the parts don't fit,
+/// they give way in this order: the field folds to its magnifier, the pill's age drops (the pill's accessible name keeps
+/// it), the selected tab's dot, the tabs' counts, the brand's word (the window and the bar's region are still named
+/// Sindri), the tabs' padding narrows to 3 px a side (#2547: never under QA's 6 px between two tabs' words), and last
+/// Refresh keeps only its icon (its name and tooltip still say Refresh). The pill's word always shows. This is layout
+/// only; the shell decides what the words are.
 /// </summary>
 internal sealed partial class TopBar : UserControl
 {
@@ -27,6 +29,7 @@ internal sealed partial class TopBar : UserControl
     private Fit _fit = Fit.Full;
     private double _ageWidth;
     private double _brandWordWidth;
+    private double _refreshWordWidth;
     private double _compactSearch = 60;
 
     // Refresh had focus when it was disabled (in flight) or hidden (recovered); see KeepRefreshFocus.
@@ -53,9 +56,11 @@ internal sealed partial class TopBar : UserControl
         Full,
         CompactSearch,
         NoAge,
-        TightNav,
-        NoBrandWord,
+        NoDot,
         NoCounts,
+        NoBrandWord,
+        TightNav,
+        NoRefreshWord,
     }
 
     /// <inheritdoc />
@@ -80,6 +85,7 @@ internal sealed partial class TopBar : UserControl
     protected override Size ArrangeOverride(Size finalSize)
     {
         // A part can grow after the bar was measured (a text-size change reaches it late); measure again to step down.
+        // Only a real change measures again: the step, the problem text's cap (by more than half a pixel), or the age.
         Remember();
         var cap = PillProblems.MaxWidth;
         var yielded = _ageYields;
@@ -89,17 +95,12 @@ internal sealed partial class TopBar : UserControl
             InvalidateMeasure();
         }
 
-        var arranged = base.ArrangeOverride(finalSize);
-        if (LowerCapByShortfall(finalSize.Width))
-        {
-            InvalidateMeasure();
-        }
-
-        return arranged;
+        return base.ArrangeOverride(finalSize);
     }
 
-    // The widest step that fits: the bar's padding, the brand and the navigation are fixed; then the ⌘K field (full or
-    // folded) and the pill with its age (measured while shown, remembered while dropped).
+    // The widest step that fits: the bar's padding and the brand's mark are fixed; then the navigation at the step, the
+    // ⌘K field (full or folded), and the pill without its problem text (which takes only what is left, TopBar.Problems.cs),
+    // with its age and Refresh's word as the step has them (measured while shown, remembered while dropped).
     private Fit Choose(double width)
     {
         if (double.IsInfinity(width))
@@ -108,31 +109,23 @@ internal sealed partial class TopBar : UserControl
         }
 
         var age = PillAgeText.Text is { Length: > 0 } && !_ageYields ? _ageWidth + PillGroup.Spacing : 0;
-        var pill = PillGroup.DesiredSize.Width - (PillAge.IsVisible ? age : 0);
+        var refresh = RefreshButton.IsVisible ? _refreshWordWidth : 0;
+        var pill = _pillRest - (PillAge.IsVisible ? age : 0) + (_fit >= Fit.NoRefreshWord ? refresh : 0);
         var word = _brandWordWidth + Brand.Spacing;
         var padding = Content is Border bar ? bar.Padding.Left + bar.Padding.Right : 0;
-        var navigation = NavigationWidthWithCounts;
         var fixedWidth = padding + Brand.DesiredSize.Width - (BrandWord.IsVisible ? word : 0);
-        bool Fits(double nav, double brand, double search, double pillAge, Fit step) => fixedWidth + nav + brand + search + pill + pillAge <= width - (step < _fit ? Slack : 0);
-
-        var tight = navigation - TightSaving;
-        (Fit Step, double Nav, double Brand, double Search, double PillAge)[] steps =
-        [
-            (Fit.Full, navigation, word, SearchMin, age),
-            (Fit.CompactSearch, navigation, word, _compactSearch, age),
-            (Fit.NoAge, navigation, word, _compactSearch, 0),
-            (Fit.TightNav, tight, word, _compactSearch, 0),
-            (Fit.NoBrandWord, tight, 0, _compactSearch, 0),
-        ];
-        foreach (var (step, nav, brand, search, pillAge) in steps)
+        foreach (var step in Enum.GetValues<Fit>())
         {
-            if (Fits(nav, brand, search, pillAge, step))
+            var search = step == Fit.Full ? SearchMin : _compactSearch;
+            var need = fixedWidth + NavigationWidthAt(step) + (step < Fit.NoBrandWord ? word : 0) + search + pill
+                + (step < Fit.NoAge ? age : 0) - (step >= Fit.NoRefreshWord ? refresh : 0);
+            if (need <= width - (step < _fit ? Slack : 0))
             {
                 return step;
             }
         }
 
-        return Fit.NoCounts;
+        return Fit.NoRefreshWord;
     }
 
     // The ⌘K field's column (the fifth).
@@ -147,10 +140,12 @@ internal sealed partial class TopBar : UserControl
         SearchColumn.MinWidth = compact ? 0 : SearchMin;
         SearchColumn.MaxWidth = compact ? double.PositiveInfinity : SearchMax;
         PillAge.IsVisible = fit < Fit.NoAge && !_ageYields;
+        NavigationList.Classes.Set("no-dot", fit >= Fit.NoDot);
+        NavigationList.Classes.Set("no-counts", fit >= Fit.NoCounts);
         BrandWord.IsVisible = fit < Fit.NoBrandWord;
         NavigationList.Classes.Set("tight", fit >= Fit.TightNav);
         ApplyTabGap(fit);
-        NavigationList.Classes.Set("no-counts", fit == Fit.NoCounts);
+        RefreshButton.Classes.Set("folded", fit >= Fit.NoRefreshWord);
     }
 
     // The widths a dropped part would need again.
@@ -166,7 +161,13 @@ internal sealed partial class TopBar : UserControl
             _brandWordWidth = BrandWord.DesiredSize.Width;
         }
 
+        if (RefreshWord.IsVisible && RefreshButton.IsVisible && RefreshWord.DesiredSize.Width > 0)
+        {
+            _refreshWordWidth = RefreshWord.DesiredSize.Width + SpacingBefore(RefreshWord);
+        }
+
         RememberCounts();
+        RememberPillRest();
         if (_fit != Fit.Full && SearchField.DesiredSize.Width > 0)
         {
             _compactSearch = SearchField.DesiredSize.Width;

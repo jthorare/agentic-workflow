@@ -115,7 +115,7 @@
                  Text="{Binding Health.SendingAnnouncement}" IsVisible="{Binding !Health.CanRefresh}" />
       <StackPanel x:Name="PillGroup" Grid.Column="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
         <Button x:Name="RefreshButton" Classes="refresh" IsVisible="{Binding Pill.IsRefreshShown}" IsEnabled="{Binding Health.CanRefresh}"
-                Click="OnRefresh" AutomationProperties.Name="{Binding Text.Refresh}">
+                Click="OnRefresh" AutomationProperties.Name="{Binding Text.Refresh}" ToolTip.Tip="{Binding Text.Refresh}">
           <StackPanel Orientation="Horizontal" Spacing="8">
             <!-- §4.1 "sending" (R2): in flight, Refresh is disabled with its label kept and a spinner in the icon's place
                  (still under reduced motion); its width never changes, so the bar doesn't move. -->
@@ -124,7 +124,7 @@
               <icons:StateIcon x:Name="RefreshSpinner" Icon="Spinner" IsVisible="{Binding !Health.CanRefresh}"
                                Spins="{Binding !Health.CanRefresh}" />
             </Panel>
-            <TextBlock Classes="caption" Text="{Binding Text.Refresh}" VerticalAlignment="Center" />
+            <TextBlock x:Name="RefreshWord" Classes="caption refresh-word" Text="{Binding Text.Refresh}" VerticalAlignment="Center" />
           </StackPanel>
         </Button>
         <Button x:Name="HealthPill" Classes="health-pill" Click="OnHealthPill" IsEnabled="{Binding IsNavigationEnabled}"
