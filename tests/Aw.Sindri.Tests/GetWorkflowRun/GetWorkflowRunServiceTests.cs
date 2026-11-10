@@ -1,8 +1,12 @@
+using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.GetWorkflowRun;
+using Aw.Sindri.Testing.Launch;
 using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.Time.Testing;
 
@@ -18,12 +22,16 @@ public sealed class GetWorkflowRunServiceTests
 
     private readonly FakeTimeProvider _clock = new();
     private readonly InMemoryWorkflowRunStore _runs;
+    private readonly InMemoryWorkflowStore _workflows;
+    private readonly FakeLaunchFiles _files = new();
+    private readonly FakeAgentNodeControl _control = new();
     private readonly GetWorkflowRunService _service;
 
     public GetWorkflowRunServiceTests()
     {
         _runs = new InMemoryWorkflowRunStore(_clock);
-        _service = new GetWorkflowRunService(_runs);
+        _workflows = new InMemoryWorkflowStore(_clock);
+        _service = new GetWorkflowRunService(_runs, _workflows, _files, _control);
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -80,6 +88,102 @@ public sealed class GetWorkflowRunServiceTests
         var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
 
         Assert.Equal(SindriErrors.GraphRunNotFound.Code, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task A_run_agent_node_the_run_waits_on_shows_waiting_and_every_other_row_shows_none()
+    {
+        await InsertAgentRun(WorkflowRunStatus.Running, NodeRunStatus.Running);
+        _control.Wait(NodeId.From("agent"));
+
+        var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
+
+        Assert.Equal([("agent", "waiting"), ("start", null)], result.Value.Nodes.Select(static n => (n.Node.Value, n.Agent)));
+    }
+
+    [Fact]
+    public async Task A_run_agent_node_a_person_holds_shows_taken_over()
+    {
+        await InsertAgentRun(WorkflowRunStatus.Running, NodeRunStatus.Running);
+        _control.Wait(NodeId.From("agent"), takenOver: true);
+
+        var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
+
+        Assert.Equal("taken_over", result.Value.Nodes.Single(static n => n.Node.Value == "agent").Agent);
+    }
+
+    [Fact]
+    public async Task A_read_right_after_a_takeover_says_taken_over_before_the_launch_marker_is_written()
+    {
+        await InsertAgentRun(WorkflowRunStatus.Running, NodeRunStatus.Running);
+        _control.Wait(NodeId.From("agent"));
+        _ = (await _control.Takeover(_run, NodeId.From("agent"), 0, Token)).Value;   // the workflow's update; its next round writes the launch marker, which is not there yet
+
+        var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
+
+        Assert.Equal("taken_over", result.Value.Nodes.Single(static n => n.Node.Value == "agent").Agent);
+    }
+
+    [Fact]
+    public async Task A_row_the_run_does_not_wait_on_shows_none_even_with_a_stale_held_marker()
+    {
+        await InsertAgentRun(WorkflowRunStatus.Running, NodeRunStatus.Running);   // the run waits on no agent node (the query answers null)
+        _files.MarkTakenOver(NodeRunAddress.Of(_run, NodeId.From("agent")).Launch(), taken: true);
+
+        var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
+
+        Assert.All(result.Value.Nodes, static n => Assert.Null(n.Agent));
+    }
+
+    [Theory]
+    [InlineData(false, "waiting")]
+    [InlineData(true, "taken_over")]
+    public async Task When_the_run_cannot_be_asked_the_launch_marker_answers(bool marked, string expected)
+    {
+        await InsertAgentRun(WorkflowRunStatus.Running, NodeRunStatus.Running);
+        _control.Fail = SindriErrors.EngineUnavailable.With("temporal is down");
+        _files.MarkTakenOver(NodeRunAddress.Of(_run, NodeId.From("agent")).Launch(), marked);
+
+        var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
+
+        Assert.Equal(expected, result.Value.Nodes.Single(static n => n.Node.Value == "agent").Agent);
+    }
+
+    [Theory]
+    [InlineData(NodeRunStatus.Succeeded)]
+    [InlineData(NodeRunStatus.Failed)]
+    [InlineData(NodeRunStatus.Cancelled)]
+    public async Task A_run_agent_node_that_ended_shows_none_even_with_a_stale_held_marker(NodeRunStatus status)
+    {
+        await InsertAgentRun(WorkflowRunStatus.Running, status);
+        _control.Wait(NodeId.From("agent"), takenOver: true);
+        _files.MarkTakenOver(NodeRunAddress.Of(_run, NodeId.From("agent")).Launch(), taken: true);
+
+        var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
+
+        Assert.All(result.Value.Nodes, static n => Assert.Null(n.Agent));
+    }
+
+    [Fact]
+    public async Task A_run_that_ended_shows_none_on_a_row_still_marked_running()
+    {
+        await InsertAgentRun(WorkflowRunStatus.Cancelled, NodeRunStatus.Running);
+        _control.Wait(NodeId.From("agent"));
+
+        var result = await _service.Handle(new GetWorkflowRunRequest(_run), Token);
+
+        Assert.All(result.Value.Nodes, static n => Assert.Null(n.Agent));
+    }
+
+    private async Task InsertAgentRun(WorkflowRunStatus status, NodeRunStatus agent)
+    {
+        var spec = new GraphSpec(Version: 1, Name: "Morning check", Description: null, Concurrency: null, Resources: null,
+            Nodes: [new GraphNode(NodeId.From("start"), "manual", Title: null, []), new GraphNode(NodeId.From("agent"), "run_agent", "Check", new JsonObject { ["prompt"] = "go" })],
+            Edges: [new GraphEdge(NodeId.From("start"), Output: null, NodeId.From("agent"))]);
+        _ = (await _workflows.Create(_id, _slug, spec, "owner", Token)).Value;
+        _ = (await _runs.Insert(Run(status, outputs: null, error: null) with { Revision = 1 }, Token)).Value;
+        _ = (await _runs.RecordNodeRun(new NodeRun(_run, NodeId.From("start"), 0, NodeRunStatus.Succeeded, Input: null, Output: "{}", Truncated: false, Error: null, Usage: null), Token)).Value;
+        _ = (await _runs.RecordNodeRun(new NodeRun(_run, NodeId.From("agent"), 0, agent, Input: "{\"prompt\":\"go\"}", Output: null, Truncated: false, Error: null, Usage: null), Token)).Value;
     }
 
     private WorkflowRun Run(WorkflowRunStatus status, string? outputs, string? error) =>

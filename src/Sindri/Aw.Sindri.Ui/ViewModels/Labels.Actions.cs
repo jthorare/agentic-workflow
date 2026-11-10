@@ -74,6 +74,8 @@ internal static partial class Labels
         ["RunContextBacktest"] = "Run map backtest",
         ["CancelJob"] = "Cancel job",
         ["CancelWorkflowRun"] = "Cancel workflow run",
+        ["TakeOverAgentNode"] = "Take over agent",
+        ["HandBackAgentNode"] = "Hand back agent",
         ["RunWorkflow"] = "Run workflow",
         ["ResumeJob"] = "Resume job",
         ["CloseItem:cancelled"] = "Close as cancelled",

@@ -19874,6 +19874,8 @@ Aw.Sindri.Core.Graph.Runs.IGraphRunCanceller.Cancel(Aw.Sindri.Core.Graph.Ids.Wor
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotActive -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphBadPayload -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.GraphRunEnded -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphNodeNotWaiting -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.GraphNodeNotTakenOver -> Aw.Kernel.ErrorDefinition!
 const Aw.Sindri.Core.Views.ViewNames.WorkflowRuns = "workflow-runs" -> string!
 Aw.Sindri.Core.Views.WorkflowRunRow
 Aw.Sindri.Core.Views.WorkflowRunRow.Id.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId

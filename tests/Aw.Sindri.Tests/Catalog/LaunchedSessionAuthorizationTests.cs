@@ -16,6 +16,8 @@ public sealed class LaunchedSessionAuthorizationTests
     [InlineData("Decide")]
     [InlineData("RunWorkflow")]
     [InlineData("CancelWorkflowRun")]
+    [InlineData("TakeOverAgentNode")]
+    [InlineData("HandBackAgentNode")]
     [InlineData("EndLearnMode")]
     public void A_launched_session_may_decide_pause_and_run_desk_actions(string action)
     {
@@ -40,6 +42,12 @@ public sealed class LaunchedSessionAuthorizationTests
 
         Assert.Null(Authorization.Decide(row.Class, A.Caller().Launched().Build(), row).Refusal);
     }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("TakeOverAgentNode")]
+    [InlineData("HandBackAgentNode")]
+    public void The_command_list_shows_a_human_and_a_session_for_the_agent_node_rows(string action) =>
+        Assert.Equal(["human+terminal", "human", "session"], Authorization.CallersFor(Row(action)));
 
     private static CommandRow Row(string action) => _catalog.Rows.Single(r => string.Equals(r.Action.Value, action, StringComparison.Ordinal));
 }

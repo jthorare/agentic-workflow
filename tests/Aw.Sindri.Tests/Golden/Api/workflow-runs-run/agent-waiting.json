@@ -1,0 +1,40 @@
+{
+  "id": "morning-check@1:1",
+  "slug": "morning-check",
+  "revision": 1,
+  "status": "running",
+  "trigger": {
+    "kind": "manual"
+  },
+  "outputs": null,
+  "error": null,
+  "itemId": null,
+  "startedAt": "2026-01-01T00:01:00.0000000Z",
+  "endedAt": null,
+  "nodes": [
+    {
+      "node": "agent",
+      "itemIndex": 0,
+      "status": "running",
+      "input": {
+        "prompt": "Look for drift"
+      },
+      "output": null,
+      "truncated": false,
+      "error": null,
+      "agent": "waiting"
+    },
+    {
+      "node": "start",
+      "itemIndex": 0,
+      "status": "succeeded",
+      "input": null,
+      "output": {
+        "kind": "manual"
+      },
+      "truncated": false,
+      "error": null,
+      "agent": null
+    }
+  ]
+}
