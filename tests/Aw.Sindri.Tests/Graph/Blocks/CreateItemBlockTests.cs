@@ -2,6 +2,9 @@ using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Interpolation;
+using Aw.Sindri.Core.Graph.Validation;
 
 namespace Aw.Sindri.Tests.Graph.Blocks;
 
@@ -71,6 +74,21 @@ public sealed class CreateItemBlockTests
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.Outputs.ContainsKey("warning"));
+    }
+
+    [Fact]
+    public void A_later_node_may_read_warning_and_on_the_happy_path_it_is_empty_not_an_error()
+    {
+        var blocks = new Dictionary<string, IGraphBlockType>(GraphFixtures.Blocks, StringComparer.Ordinal) { ["create_item"] = new CreateItemBlock(new FlowFakes.RecordingItemPort()) };
+        var spec = GraphFixtures.Spec(
+            [GraphFixtures.Trigger("daily"), new(NodeId.From("make"), "create_item", Title: null, new JsonObject { ["title"] = "Fix" }), GraphFixtures.Notify("tell", "item {{make.itemId}} warning: {{make.warning}}")],
+            [GraphFixtures.Edge("daily", "make"), GraphFixtures.Edge("make", "tell")]);
+
+        var validated = GraphFixtures.Validator(blocks: blocks).Validate(spec, GraphMode.Activate);
+        var happy = Template.Render("item {{make.itemId}} warning: {{make.warning}}", reference => reference == "make.itemId" ? JsonValue.Create("ITM-1") : null);   // the run's lookup gives null for an output the node did not set
+
+        Assert.DoesNotContain(validated.Findings, static f => f.Code.StartsWith("GRAPH-REF", StringComparison.Ordinal));
+        Assert.Equal("item ITM-1 warning: ", happy!.GetValue<string>());
     }
 
     [Fact]

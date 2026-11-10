@@ -106,7 +106,8 @@ public sealed class WorkflowItemMakerTests
         var item = Assert.Single(_h.Store.Events, static e => e.Envelope.Type == EventTypes.ItemCreated);
         Assert.Equal(item.Item, made.Value.ItemId.Value);
         Assert.Contains(_run.Value, made.Value.Warning, StringComparison.Ordinal);
-        Assert.Contains("2588", made.Value.Warning, StringComparison.Ordinal);
+        Assert.Contains("by hand", made.Value.Warning, StringComparison.Ordinal);
+        Assert.DoesNotContain("2588", made.Value.Warning, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

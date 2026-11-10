@@ -154,5 +154,6 @@ public sealed class CreateItemTests
         var recorded = Assert.Single(_h.Store.Events);
         Assert.Equal(EventTypes.ItemCreated, recorded.Envelope.Type);
         Assert.Contains("nightly@1:1", result.Value.Warning, StringComparison.Ordinal);
+        Assert.DoesNotContain("#", result.Value.Warning, StringComparison.Ordinal);   // product words, no issue number
     }
 }
