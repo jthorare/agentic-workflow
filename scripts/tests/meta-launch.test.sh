@@ -344,19 +344,19 @@ jq '.agent = "codex" | .routing = {models:{"claude-code":["opus"],codex:["gpt-5.
 OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
 check "a codex meta accepts a lane routed to codex" "$RC:$(grep -c "can't message" <<< "$OUT")" "0:0"
 # The lane script: the routed agent's argv, with the routed model as the CLI's own flag (codex -m, claude --model) right after the binary.
-cat > "$WORK/agent-model" <<'EOF2'
-#!/usr/bin/env bash
-printf '%s|' "$@" > "$CALLS.model"
-echo "$$" > "$CALLS.modelpid"
-exec sleep 600
-EOF2
-chmod +x "$WORK/agent-model"
-run_model_lane() { # lane: run meta-lane.sh against the stub until it has recorded its argv, then stop the stub by its recorded pid
+cp "$DIR/tests/fixtures/meta-launch/agent-model" "$WORK/agent-model"; chmod +x "$WORK/agent-model"
+run_model_lane() { # lane: run meta-lane.sh against the stub until it has recorded its argv, then stop the stub by its recorded pid; the lane script must then end (#2637)
   rm -f "$CALLS.model" "$CALLS.modelpid"
   AW_META_CLAUDE="$WORK/agent-model" AW_META_ID_WAIT=1 AW_META_ID_GRACE=0 AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 "$1" > "$WORK/lane.out" 2>&1 &
   local rp=$!
   waitfor '[ -s "$CALLS.modelpid" ]'
   [ -s "$CALLS.modelpid" ] && kill "$(cat "$CALLS.modelpid")" 2> /dev/null
+  waitfor '! kill -0 "$rp" 2> /dev/null'
+  check "run_model_lane $1: the lane script ends once its recorded stub is stopped (#2637)" "$(kill -0 "$rp" 2> /dev/null && echo running || echo ended)" "ended"
+  # the recorded pid may be a probe's while the real launch's sleep still runs: stop the pid recorded now, so the suite never blocks on it
+  kill -0 "$rp" 2> /dev/null && [ -s "$CALLS.modelpid" ] && kill "$(cat "$CALLS.modelpid")" 2> /dev/null
+  # a lane script that hangs on its own never runs the stub, so nothing above ends it: stop rp, the suite's own child, so the wait is bounded (#2643)
+  kill -0 "$rp" 2> /dev/null && kill "$rp" 2> /dev/null
   wait "$rp" 2> /dev/null
 }
 jq -n --arg c "$WORK/agent-model" '{schema:1, agents:{codex:{override:true, bin:$c}}}' > "$AW_STATE_DIR/launcher.json"

@@ -13,9 +13,11 @@ using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Features.ListWorkflowBlocks;
+using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Features.SearchWorkflowDocs;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Mcp;
+using Aw.Sindri.Testing.Workflow;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 
@@ -83,7 +85,9 @@ public sealed class WorkflowToolsTests
         var launch = LaunchId.From("LCH-" + new string('0', 31) + "1");
         var ids = new SequentialIdGenerator();
         var callers = new AsyncLocalCallerContextAccessor(ids);
-        await using var services = Services(s => s.AddSingleton<ICallerContextAccessor>(callers).AddSingleton<IGraphLaunchRuns>(new Launches(run)));
+        var clock = TimeProvider.System;
+        var service = new RunWorkflowService(new InMemoryWorkflowStore(clock), new InMemoryWorkflowRunStore(clock), new NeverStarter(), new Launches(run), callers);   // why: the guard lives in the service now (#2452); the tool must still answer its refusal
+        await using var services = Services(s => s.AddSingleton<ICallerContextAccessor>(callers).AddSingleton<IService<RunWorkflowRequest, RunWorkflowResponse>>(service));
         using var caller = callers.Enter(new CallerContext(CallerClass.Session, Terminal: false, "session:s1", ids.New<CommandId>(), ids.New<CorrelationId>(), Repo: null, launch));
 
         var result = await Host.Mcp.WorkflowTools.Call(Host.Mcp.WorkflowTools.Run, services, Arguments(("slug", "drift-check")), Token);
@@ -125,6 +129,12 @@ public sealed class WorkflowToolsTests
     private sealed class Docs(IReadOnlyList<WorkflowDocPage> pages) : IWorkflowDocs
     {
         public IReadOnlyList<WorkflowDocPage> Pages => pages;
+    }
+
+    // The loop guard refuses before any start, so a start here is a test failure.
+    private sealed class NeverStarter : IGraphRunStarter
+    {
+        public ValueTask<Result<GraphStart>> Start(GraphStartRequest request, CancellationToken cancellationToken) => throw new InvalidOperationException("the guard should have refused before a start");
     }
 
     private sealed class Launches(WorkflowRunId run) : IGraphLaunchRuns

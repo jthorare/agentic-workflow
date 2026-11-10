@@ -46,6 +46,33 @@ public sealed class TodoNoteReadsTests
     }
 
     [Fact]
+    public async Task The_hold_keeps_the_base_it_was_drawn_against_when_todos_are_added_later()
+    {
+        using var cli = _h.Cli();
+        await _h.Seed(_first, "reply to Sam");
+        await _h.Seed(_second, "call the dentist");
+        await _h.Record(EventTypes.TodoNoteHeld, new TodoNoteHeld([new TodoHeldChange(_first, "removed", NoteLine: null)], Hash, "service:todo-note", OpenInBase: 2), "todo.note.held:" + Hash);
+        await _h.Seed(TodoId.From("td_00000000000000000000000009"), "a third todo, added after the hold");
+
+        var note = await Read();
+
+        Assert.Equal(2, Assert.IsType<TodoNoteHold>(note.Hold).OpenInBase);
+    }
+
+    [Fact]
+    public async Task A_hold_from_before_the_base_was_stored_falls_back_to_the_open_todos_now()
+    {
+        using var cli = _h.Cli();
+        await _h.Seed(_first, "reply to Sam");
+        await _h.Seed(_second, "call the dentist");
+        await _h.Record(EventTypes.TodoNoteHeld, new TodoNoteHeld([new TodoHeldChange(_first, "removed", NoteLine: null)], Hash, "service:todo-note"), "todo.note.held:" + Hash);
+
+        var note = await Read();
+
+        Assert.Equal(2, Assert.IsType<TodoNoteHold>(note.Hold).OpenInBase);
+    }
+
+    [Fact]
     public async Task A_resolved_hold_is_not_served()
     {
         using var cli = _h.Cli();

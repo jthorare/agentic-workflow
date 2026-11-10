@@ -70,10 +70,10 @@
             </ListBox.Styles>
             <ListBox.ItemTemplate>
               <DataTemplate x:DataType="shell:NavEntry">
-                <StackPanel Orientation="Horizontal" Spacing="6">
+                <StackPanel Orientation="Horizontal" Spacing="8">
                   <Ellipse Classes="nav-dot" VerticalAlignment="Center" />
-                  <TextBlock Classes="body-strong nav-label" Text="{Binding DisplayLabel}" AutomationProperties.Name="{Binding Label}" />
-                  <TextBlock Classes="caption subtle nav-count" Classes.has="{Binding HasCount}" Text="{Binding Count}" AutomationProperties.Name="{Binding Count}" />
+                  <TextBlock Classes="body-strong nav-label" Text="{Binding DisplayLabel}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Label}" />
+                  <TextBlock Classes="caption subtle nav-count" Classes.has="{Binding HasCount}" VerticalAlignment="Center" Text="{Binding Count}" AutomationProperties.Name="{Binding Count}" />
                 </StackPanel>
               </DataTemplate>
             </ListBox.ItemTemplate>
@@ -114,7 +114,7 @@
       <StackPanel x:Name="PillGroup" Grid.Column="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
         <Button x:Name="RefreshButton" Classes="refresh" IsVisible="{Binding Pill.IsRefreshShown}" IsEnabled="{Binding Health.CanRefresh}"
                 Click="OnRefresh" AutomationProperties.Name="{Binding Text.Refresh}">
-          <StackPanel Orientation="Horizontal" Spacing="6">
+          <StackPanel Orientation="Horizontal" Spacing="8">
             <!-- §4.1 "sending" (R2): in flight, Refresh is disabled with its label kept and a spinner in the icon's place
                  (still under reduced motion); its width never changes, so the bar doesn't move. -->
             <Panel VerticalAlignment="Center">
@@ -129,16 +129,16 @@
                 AutomationProperties.Name="{Binding Pill.Text}" ToolTip.Tip="{Binding Pill.Text}">
           <!-- S1: the 6 px gaps are the glyph's and the age's own margins, so a state with neither (Connecting) centres its word. -->
           <StackPanel Orientation="Horizontal">
-            <icons:StateIcon x:Name="PillGlyph" Glyph="{Binding Pill.Glyph}" IsVisible="{Binding Pill.HasGlyph}" Margin="0,0,6,0"
+            <icons:StateIcon x:Name="PillGlyph" Glyph="{Binding Pill.Glyph}" IsVisible="{Binding Pill.HasGlyph}" Margin="0,0,8,0"
                              VerticalAlignment="Center" />
             <TextBlock x:Name="HealthPillText" Classes="body-strong" Text="{Binding Pill.Word}" VerticalAlignment="Center" />
             <Panel x:Name="PillAge" VerticalAlignment="Center">
               <TextBlock x:Name="PillAgeText" Classes="caption subtle" Text="{Binding Pill.Age}" IsVisible="{Binding Pill.HasAge}"
-                         Margin="6,0,0,0" VerticalAlignment="Center" />
+                         Margin="8,0,0,0" VerticalAlignment="Center" />
             </Panel>
             <!-- §3.2: any problem the status's health names, in words as served ("index failed"). -->
             <TextBlock x:Name="PillProblems" Classes="caption" Text="{Binding Pill.Problems}" IsVisible="{Binding Pill.HasProblems}"
-                       Margin="6,0,0,0" VerticalAlignment="Center" MaxWidth="220" TextTrimming="CharacterEllipsis" />
+                       Margin="8,0,0,0" VerticalAlignment="Center" MaxWidth="220" TextTrimming="CharacterEllipsis" />
           </StackPanel>
         </Button>
       </StackPanel>

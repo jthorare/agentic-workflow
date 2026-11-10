@@ -56,7 +56,7 @@ internal sealed class TodoNoteDoctorChecks(INoteLocator locator, ITodoNoteSync s
         var broken = NoteBrokenLines.Of(snapshot.Document);
         var numbers = string.Join(", ", broken.Select(static b => b.Line.ToString(CultureInfo.InvariantCulture)));
         var detail = $"{row.Detail}; lines that can't sync: {broken.Count.ToString(CultureInfo.InvariantCulture)}{(broken.Count > 0 ? $" ({numbers})" : string.Empty)}";
-        var full = Encoding.UTF8.GetByteCount(snapshot.Document.Render()) > NearlyFullBytes;
+        var full = (snapshot.RawBytes ?? Encoding.UTF8.GetByteCount(snapshot.Document.Render())) > NearlyFullBytes;
         if (full)
         {
             detail += "; note nearly full";

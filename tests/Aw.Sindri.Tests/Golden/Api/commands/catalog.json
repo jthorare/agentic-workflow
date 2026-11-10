@@ -185,6 +185,25 @@
       "confirm": null
     },
     {
+      "action": "BuildToolkit",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri toolkit build <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "CancelJob",
       "class": "job",
       "allowedCallers": [

@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -143,6 +144,42 @@ public sealed class QueueFramesTests : IDisposable
         Assert.Equal("4", shell.Navigation[3].Count);
         Frame(window, "queue-populated");
     });
+
+    // #2546: a row is Row.Height.Default tall on the page, not just at least that: content taller than the floor would hold it at 36.
+    [Fact]
+    public Task Work_rows_are_one_default_row_height_apart() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(s => !s.Queue.IsLoading);
+        shell.GoTo(PageId.Work);
+        Settle(window);
+
+        var row = Assert.IsType<double>(window.FindResource("Row.Height.Default"));
+        var page = Named<Control>(window, "QueuePage");
+        var tops = page.GetVisualDescendants().OfType<Ui.Views.Queue.ItemRow>().Where(r => r.IsEffectivelyVisible)
+            .Select(r => r.TranslatePoint(default, page)!.Value.Y).ToList();   // why: the rows are in the page's visual tree
+        Assert.Equal(4, tops.Count);
+        Assert.Equal([row, row, row], tops.Zip(tops.Skip(1), (a, b) => Math.Round(b - a, 2, MidpointRounding.AwayFromZero)));
+    });
+
+    // #2546: a caption count beside a body-strong label shares its centre (the label's line is 20, the count's 16), in the top bar and on a group header.
+    [Fact]
+    public Task A_count_sits_on_its_labels_centre() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(s => !s.Queue.IsLoading);
+        shell.GoTo(PageId.Work);
+        Settle(window);
+
+        var pairs = window.GetVisualDescendants().OfType<StackPanel>().Where(s => s.Orientation == Orientation.Horizontal && s.IsEffectivelyVisible)
+            .Select(s => s.Children.OfType<TextBlock>().Where(b => b.IsEffectivelyVisible).ToList())
+            .Where(b => b.Count >= 2 && b[^2].Classes.Contains("body-strong") && b[^1].Classes.Contains("caption"))
+            .ToList();
+        Assert.True(pairs.Count >= 2, "no label and count pair on the top bar and the Work page");
+        Assert.All(pairs, b => Assert.InRange(Centre(b[^1]) - Centre(b[^2]), -1, 1));
+    });
+
+    // The drawn line's centre, not the box's: a stretched TextBlock draws its line at the top of a taller box, so two stretched
+    // blocks share a box centre wherever their words are (the test passed before the fix). Both sit in one StackPanel, so Bounds share its origin.
+    private static double Centre(TextBlock block) => block.Bounds.Y + (block.TextLayout.Height / 2);
 
     [Fact]
     public Task An_empty_queue_shows_the_views_sentence() => OnUi(async () =>
