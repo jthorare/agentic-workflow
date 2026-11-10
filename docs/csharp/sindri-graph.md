@@ -31,7 +31,6 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 | `GRAPH-REPO-001`, `GRAPH-NAME-001` | repo, connection or memory that does not exist (`-002` is the warning when nobody can answer yet) |
 | `GRAPH-LOOP-003` | retired (#2470): a `run_agent` node in a `for_each` body runs one agent per item; only a run that started on the old walk still fails it |
 | `GRAPH-LOOP-001` / `-002` | a `for_each` that can't run as a loop: no `collect` after it, more than one, a loop inside it, or a node of the loop also fed from outside it / a `collect` no `for_each` reaches |
-| `GRAPH-LOOP-004` | an `ask_owner` node inside a loop: an answer can't yet find the question of one item (call a workflow with `run_workflow` for per-item questions) |
 | `GRAPH-NODE-001` / `-002`, `GRAPH-EDGE-001` / `-002` | repeated node id / a node id that is `trigger`, `item`, `itemIndex` or `workflow` (reserved reference roots), edge to a missing node, edge by an output the block lacks (an edge with no `output` leaves by `out`) |
 
 `GRAPH-TRIGGER-001` / `-002`, `GRAPH-CYCLE-001` and `GRAPH-WIRING-001` are node-level findings: they name nodes and have no field.
