@@ -54,6 +54,7 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton<IBugfixRecords>(new FileBugfixRecords(Path.Combine(Path.GetDirectoryName(settings.Layout.MetaRoot) ?? settings.Layout.MetaRoot, "bugfix")))
             .AddSingleton<IDelay>(sp => new ClockDelay(sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<ICommandRunner, SystemCommandRunner>()
+            .AddSingleton<IWaiterLauncher, DetachedWaiterLauncher>()
             .AddScoped<IRunningLog>(sp => new AppendRunningLog(async cancellationToken =>
             {
                 var config = await sp.GetRequiredService<IMetaConfig>().Load(cancellationToken).ConfigureAwait(false);
