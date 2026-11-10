@@ -10,47 +10,63 @@ public sealed class TokenTests
     private static readonly TokenFile _tokens = TokenFile.Load();
 
     // §14.1, every row with a resource key.
-    public static TheoryData<string, string> Colours => new()
+    private static readonly (string, string)[] _colourRows =
+    [
+        ("Canvas", "#010102"),
+        ("Surface1", "#0f1011"),
+        ("Surface2", "#141516"),
+        ("Surface3", "#18191a"),
+        ("Surface4", "#191a1b"),
+        ("Hairline", "#23252a"),
+        ("HairlineStrong", "#34343a"),
+        ("HairlineTertiary", "#3e3e44"),
+        ("Ink", "#f7f8f8"),
+        ("InkMuted", "#d0d6e0"),
+        ("InkSubtle", "#8a8f98"),
+        ("InkTertiary", "#62666d"),
+        ("Primary", "#5e6ad2"),
+        ("PrimaryHover", "#828fff"),
+        ("PrimaryHoverFill", "#535fc6"),
+        ("PrimaryPressed", "#4c57be"),
+        ("OnPrimary", "#ffffff"),
+        ("Success", "#27a644"),
+        ("Overlay", "#000000"),
+        ("Attention", "#f2994a"),
+        ("Error", "#eb5757"),
+        ("AttentionSoft", "#23160c"),
+        ("AttentionSoft.Hover", "#2c1f15"),   // an attention row lifts within its own colour: AttentionSoft one step up
+        ("AttentionSoft.Pressed", "#32251b"),   // and two steps up
+        ("AttentionFill", "#624328"),   // the hold button's fill: Attention at 35 % over Surface2
+        ("PrimarySoft", "#1d2036"),
+        ("ErrorSoft", "#220d0e"),
+        ("SuccessSoft", "#06180b"),
+        ("Wire", "#4a4a52"),
+        ("WireHi", "#8a8f98"),
+        ("LaneFill", "#05ffffff"),
+        ("RingAnchor", "#d0d6e0"),
+        ("Violet", "#a78bfa"),
+        ("VioletSoft", "#170f2a"),
+        ("Area1", "#7aa2f7"),
+        ("Area2", "#e0af68"),
+        ("Area3", "#7bd88f"),
+        ("Area4", "#c792ea"),
+        ("Area5", "#5fd4e0"),
+        ("Area6", "#ff9e8f"),
+    ];
+
+    public static TheoryData<string, string> Colours
     {
-        { "Canvas", "#010102" },
-        { "Surface1", "#0f1011" },
-        { "Surface2", "#141516" },
-        { "Surface3", "#18191a" },
-        { "Surface4", "#191a1b" },
-        { "Hairline", "#23252a" },
-        { "HairlineStrong", "#34343a" },
-        { "HairlineTertiary", "#3e3e44" },
-        { "Ink", "#f7f8f8" },
-        { "InkMuted", "#d0d6e0" },
-        { "InkSubtle", "#8a8f98" },
-        { "InkTertiary", "#62666d" },
-        { "Primary", "#5e6ad2" },
-        { "PrimaryHover", "#828fff" },
-        { "PrimaryHoverFill", "#535fc6" },
-        { "PrimaryPressed", "#4c57be" },
-        { "OnPrimary", "#ffffff" },
-        { "Success", "#27a644" },
-        { "Overlay", "#000000" },
-        { "Attention", "#f2994a" },
-        { "Error", "#eb5757" },
-        { "AttentionSoft", "#23160c" },
-        { "AttentionFill", "#624328" },   // the hold button's fill: Attention at 35 % over Surface2
-        { "PrimarySoft", "#1d2036" },
-        { "ErrorSoft", "#220d0e" },
-        { "SuccessSoft", "#06180b" },
-        { "Wire", "#4a4a52" },
-        { "WireHi", "#8a8f98" },
-        { "LaneFill", "#05ffffff" },
-        { "RingAnchor", "#d0d6e0" },
-        { "Violet", "#a78bfa" },
-        { "VioletSoft", "#170f2a" },
-        { "Area1", "#7aa2f7" },
-        { "Area2", "#e0af68" },
-        { "Area3", "#7bd88f" },
-        { "Area4", "#c792ea" },
-        { "Area5", "#5fd4e0" },
-        { "Area6", "#ff9e8f" },
-    };
+        get
+        {
+            var data = new TheoryData<string, string>();
+            foreach (var r in _colourRows)
+            {
+                data.Add(r.Item1, r.Item2);
+            }
+
+            return data;
+        }
+    }
 
     [Theory]
     [MemberData(nameof(Colours))]
