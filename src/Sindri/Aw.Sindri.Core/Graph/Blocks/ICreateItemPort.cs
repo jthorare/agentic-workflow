@@ -7,6 +7,6 @@ public interface ICreateItemPort
     /// <summary>Creates the item.</summary>
     /// <param name="item">The item and the run that asks for it.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
-    /// <returns>The new item's id, or why the item was not made.</returns>
-    public ValueTask<Result<string>> Create(ItemToCreate item, CancellationToken cancellationToken);
+    /// <returns>The new item and any warning, or why the item was not made.</returns>
+    public ValueTask<Result<ItemMade>> Create(ItemToCreate item, CancellationToken cancellationToken);
 }
