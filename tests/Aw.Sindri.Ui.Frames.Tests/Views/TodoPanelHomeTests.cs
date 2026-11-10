@@ -257,6 +257,7 @@ public sealed class TodoPanelHomeTests : IDisposable
         Assert.Equal(["Overdue · Thu"], Texts(overdue, "TodoDue"));
         var withChips = rows.Single(r => Texts(r, "TodoText")[0] == "prep the demo script");
         Assert.Equal(["acme/web#40", "acme/web#41", "acme/web#42"], Texts(withChips, "TodoChip"));
+        Assert.All(withChips.GetVisualDescendants().OfType<TextBlock>().Where(t => string.Equals(t.Name, "TodoChip", StringComparison.Ordinal)), c => Assert.DoesNotContain(c.GetVisualAncestors().OfType<Border>(), b => b.Classes.Contains("phrase-chip")));   // muted text after the title, not boxed
         Assert.Equal(["+2"], Texts(withChips, "TodoMoreChips"));
         var agent = rows.Single(r => Texts(r, "TodoText")[0] == "rotate the staging key");
         Assert.Equal(["agent"], Texts(agent, "TodoTag"));
@@ -462,7 +463,6 @@ public sealed class TodoPanelHomeTests : IDisposable
         var withParts = Panel(window).Bounds.Height;
 
         shell.Elsewhere.SetReviews(loading: false, waiting: 0, failed: false);
-        shell.Elsewhere.SetNeedsYou(0);
         Settle(window);
         var fewer = Panel(window).Bounds.Height;
         shell.Elsewhere.SetReviews(loading: true, waiting: 0, failed: false);

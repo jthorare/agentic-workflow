@@ -14,12 +14,11 @@ public sealed class FromElsewhereTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    // A line that has heard from Reviews, Linear (the fake serves 3 assigned issues) and Needs you.
-    private async Task<FromElsewhereViewModel> Ready(int reviews = 2, int needsYou = 3, bool reviewsFailed = false)
+    // A line that has heard from Reviews and Linear (the fake serves 3 assigned issues).
+    private async Task<FromElsewhereViewModel> Ready(int reviews = 2, bool reviewsFailed = false)
     {
         var line = new FromElsewhereViewModel(_server);
         line.SetReviews(loading: false, reviews, reviewsFailed);
-        line.SetNeedsYou(needsYou);
         await line.Refresh(_url, Token);
         return line;
     }
@@ -38,8 +37,8 @@ public sealed class FromElsewhereTests
 
         var line = await Ready();
 
-        Assert.Equal("2 PRs waiting on your review · 1 Linear issue assigned · 3 need you, below", line.Text);
-        Assert.Equal([ElsewherePart.Reviews, ElsewherePart.Linear, ElsewherePart.NeedsYou], line.Parts.Select(p => p.Part));
+        Assert.Equal("2 PRs waiting on your review · 1 Linear issue assigned", line.Text);
+        Assert.Equal([ElsewherePart.Reviews, ElsewherePart.Linear], line.Parts.Select(p => p.Part));
         Assert.False(line.IsLoading);
     }
 
@@ -48,9 +47,9 @@ public sealed class FromElsewhereTests
     {
         Assigned(1);
 
-        var line = await Ready(reviews: 1, needsYou: 1);
+        var line = await Ready(reviews: 1);
 
-        Assert.Equal("1 PR waiting on your review · 1 Linear issue assigned · 1 need you, below", line.Text);
+        Assert.Equal("1 PR waiting on your review · 1 Linear issue assigned", line.Text);
     }
 
     [Fact]
@@ -58,21 +57,20 @@ public sealed class FromElsewhereTests
     {
         Assigned(4);
 
-        var line = await Ready(reviews: 5, needsYou: 2);
+        var line = await Ready(reviews: 5);
 
-        Assert.Equal("5 PRs waiting on your review · 4 Linear issues assigned · 2 need you, below", line.Text);
+        Assert.Equal("5 PRs waiting on your review · 4 Linear issues assigned", line.Text);
     }
 
     [Theory]
-    [InlineData(0, 1, 3, "1 Linear issue assigned · 3 need you, below")]
-    [InlineData(2, 0, 3, "2 PRs waiting on your review · 3 need you, below")]
-    [InlineData(2, 1, 0, "2 PRs waiting on your review · 1 Linear issue assigned")]
-    [InlineData(0, 0, 3, "3 need you, below")]
-    public async Task A_part_with_a_zero_count_is_left_out(int reviews, int linear, int needsYou, string expected)
+    [InlineData(0, 1, "1 Linear issue assigned")]
+    [InlineData(2, 0, "2 PRs waiting on your review")]
+    [InlineData(2, 1, "2 PRs waiting on your review · 1 Linear issue assigned")]
+    public async Task A_part_with_a_zero_count_is_left_out(int reviews, int linear, string expected)
     {
         Assigned(linear);
 
-        var line = await Ready(reviews, needsYou);
+        var line = await Ready(reviews);
 
         Assert.Equal(expected, line.Text);
     }
@@ -82,7 +80,7 @@ public sealed class FromElsewhereTests
     {
         Assigned(0);
 
-        var line = await Ready(reviews: 0, needsYou: 0);
+        var line = await Ready(reviews: 0);
 
         Assert.Equal("Nothing waiting elsewhere", line.Text);
         Assert.Empty(line.Parts);
@@ -104,14 +102,13 @@ public sealed class FromElsewhereTests
     {
         Assigned(1);
         var line = new FromElsewhereViewModel(_server);
-        line.SetNeedsYou(3);
         await line.Refresh(_url, Token);
         Assert.True(line.IsLoading);   // Reviews has not answered
 
         line.SetReviews(loading: false, waiting: 2, failed: false);
 
         Assert.False(line.IsLoading);
-        Assert.Equal("2 PRs waiting on your review · 1 Linear issue assigned · 3 need you, below", line.Text);
+        Assert.Equal("2 PRs waiting on your review · 1 Linear issue assigned", line.Text);
     }
 
     [Fact]
@@ -121,7 +118,7 @@ public sealed class FromElsewhereTests
 
         var line = await Ready(reviewsFailed: true);
 
-        Assert.Equal("Reviews didn't load · 1 Linear issue assigned · 3 need you, below", line.Text);
+        Assert.Equal("Reviews didn't load · 1 Linear issue assigned", line.Text);
         var reviews = line.Parts[0];
         Assert.Equal((ElsewherePart.Reviews, true, "Retry Reviews"), (reviews.Part, reviews.CanRetry, reviews.RetryName));
         Assert.All(line.Parts.Skip(1), p => Assert.False(p.CanRetry));
@@ -134,7 +131,7 @@ public sealed class FromElsewhereTests
 
         var line = await Ready();
 
-        Assert.Equal("2 PRs waiting on your review · Linear didn't load · 3 need you, below", line.Text);
+        Assert.Equal("2 PRs waiting on your review · Linear didn't load", line.Text);
         Assert.Equal((ElsewherePart.Linear, true, "Retry Linear"), (line.Parts[1].Part, line.Parts[1].CanRetry, line.Parts[1].RetryName));
     }
 
@@ -147,7 +144,7 @@ public sealed class FromElsewhereTests
 
         await line.Retry(ElsewherePart.Linear);
 
-        Assert.Equal("2 PRs waiting on your review · 2 Linear issues assigned · 3 need you, below", line.Text);
+        Assert.Equal("2 PRs waiting on your review · 2 Linear issues assigned", line.Text);
     }
 
     [Fact]
@@ -174,7 +171,7 @@ public sealed class FromElsewhereTests
 
         line.Open(ElsewherePart.Linear);
 
-        Assert.Equal("2 PRs waiting on your review · Connect Linear · 3 need you, below", line.Text);
+        Assert.Equal("2 PRs waiting on your review · Connect Linear", line.Text);
         Assert.Equal((1, 0), (connect, opened.Count));
         Assert.Equal("Opens Connections: Connect Linear", line.Parts[1].Name);
     }
@@ -189,9 +186,8 @@ public sealed class FromElsewhereTests
 
         line.Open(ElsewherePart.Reviews);
         line.Open(ElsewherePart.Linear);
-        line.Open(ElsewherePart.NeedsYou);
 
-        Assert.Equal([ElsewherePart.Reviews, ElsewherePart.Linear, ElsewherePart.NeedsYou], opened);
+        Assert.Equal([ElsewherePart.Reviews, ElsewherePart.Linear], opened);
     }
 
     [Fact]
@@ -205,7 +201,6 @@ public sealed class FromElsewhereTests
             [
                 "Opens Reviews: 2 PRs waiting on your review",
                 "Opens Linear: 1 Linear issue assigned",
-                "Opens Needs you: 3 need you, below",
             ],
             line.Parts.Select(p => p.Name),
             StringComparer.Ordinal);
@@ -215,25 +210,58 @@ public sealed class FromElsewhereTests
     public async Task A_new_count_replaces_the_old_one()
     {
         Assigned(0);
-        var line = await Ready(reviews: 2, needsYou: 3);
+        var line = await Ready(reviews: 2);
 
         line.SetReviews(loading: false, waiting: 0, failed: false);
-        line.SetNeedsYou(1);
 
-        Assert.Equal("1 need you, below", line.Text);
+        Assert.Equal("Nothing waiting elsewhere", line.Text);
+    }
+
+    [Fact]
+    public async Task The_line_never_counts_the_Needs_you_rows_because_that_panel_is_right_below()
+    {
+        Assigned(1);
+
+        var line = await Ready();
+
+        Assert.DoesNotContain("need you", line.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void While_the_views_are_stalled_and_nothing_has_answered_the_line_says_what_is_stale_not_Checking()
+    {
+        var line = new FromElsewhereViewModel(_server);
+
+        line.SetViewsStalled(stalled: true);
+
+        Assert.Equal(("Reviews and Linear wait for Sindri to catch up", false, 0), (line.Text, line.IsLoading, line.Parts.Count));
+    }
+
+    [Fact]
+    public async Task A_stall_that_clears_goes_back_to_Checking_and_then_to_the_counts()
+    {
+        Assigned(1);
+        var line = new FromElsewhereViewModel(_server);
+        line.SetViewsStalled(stalled: true);
+
+        line.SetViewsStalled(stalled: false);
+        Assert.Equal(("Checking reviews and Linear…", true), (line.Text, line.IsLoading));
+        line.SetReviews(loading: false, waiting: 2, failed: false);
+        await line.Refresh(_url, Token);
+
+        Assert.Equal("2 PRs waiting on your review · 1 Linear issue assigned", line.Text);
     }
 
     [Fact]
     public async Task Feeding_the_same_values_again_raises_nothing()
     {
         Assigned(1);
-        var line = await Ready(reviews: 2, needsYou: 3);
+        var line = await Ready(reviews: 2);
         var parts = line.Parts;
         var raised = new List<string?>();
         line.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
 
         line.SetReviews(loading: false, waiting: 2, failed: false);
-        line.SetNeedsYou(3);
         await line.Refresh(_url, Token);
 
         Assert.Empty(raised);
@@ -244,11 +272,10 @@ public sealed class FromElsewhereTests
     public async Task A_changed_count_still_raises_Parts_and_Text()
     {
         Assigned(1);
-        var line = await Ready(reviews: 2, needsYou: 3);
+        var line = await Ready(reviews: 2);
         var raised = new List<string?>();
         line.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
 
-        line.SetNeedsYou(4);
 
         Assert.Contains(raised, r => string.Equals(r, nameof(FromElsewhereViewModel.Parts), StringComparison.Ordinal));
         Assert.Contains(raised, r => string.Equals(r, nameof(FromElsewhereViewModel.Text), StringComparison.Ordinal));
@@ -261,7 +288,7 @@ public sealed class FromElsewhereTests
 
         var line = await Ready();
 
-        Assert.Equal("2 PRs waiting on your review · 3 need you, below", line.Text);
+        Assert.Equal("2 PRs waiting on your review", line.Text);
         Assert.DoesNotContain(line.Parts, p => p.Part == ElsewherePart.Linear);
         Assert.False(line.IsLoading);
     }

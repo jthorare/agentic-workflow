@@ -609,6 +609,31 @@ public sealed class HealthViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task While_the_views_are_stalled_the_strip_says_so_in_the_attention_colour_and_is_not_all_green()
+    {
+        var at = DateTimeOffset.Parse("2026-01-01T09:14:00Z", System.Globalization.CultureInfo.InvariantCulture);
+        _records.Write(A.Record());
+        _server.Current = A.Status(profile: A.Live()) with { ApiVersion = 1, Views = new AsOfView(Cursor: 4, LedgerHead: 9, ProjectedAt: at, Rebuilding: false, Stalled: true) };
+        Start();
+
+        await Eventually(() => _vm.Detail.Strip.Count > 0, "strip");
+
+        var views = Assert.Single(_vm.Detail.Strip, c => string.Equals(c.Label, "Views", StringComparison.Ordinal));
+        Assert.Equal(new HealthCell("Views", "stalled at " + at.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture), StateGlyph.Warning, IsAttention: true), views);
+    }
+
+    [Fact]
+    public async Task The_strip_has_no_Views_cell_while_the_views_are_up_to_date()
+    {
+        _records.Write(A.Record());
+        Start();
+
+        await Eventually(() => _vm.Headline == "Running", "headline");
+
+        Assert.DoesNotContain(_vm.Detail.Strip, c => string.Equals(c.Label, "Views", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task The_strip_leaves_out_the_API_cell_when_the_status_has_no_version()
     {
         _records.Write(A.Record());

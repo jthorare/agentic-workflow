@@ -29,6 +29,9 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
     /// <summary>The id shown at rest; empty when the row shows none.</summary>
     public string ShownId => Entry.ShownId;
 
+    /// <summary>The title button's tooltip: the row's id (the title is the question, so the id is not drawn), then what the button opens.</summary>
+    public string IdTip => OpenLabel.Length > 0 ? IdShown + " · " + OpenLabel : IdShown;
+
     /// <summary>The row's title.</summary>
     public string Title => Entry.Title;
 
@@ -146,7 +149,7 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
 
     private static readonly string[] _content =
     [
-        nameof(Chip), nameof(Details), nameof(PrimaryDetails), nameof(MoreDetails), nameof(HasMoreDetails), nameof(ShowsCliUpFront), nameof(ShownId), nameof(Title), nameof(Repo), nameof(Label), nameof(Reason), nameof(HasReasonLine), nameof(Cli), nameof(Age), nameof(AccessibleName),
+        nameof(Chip), nameof(Details), nameof(PrimaryDetails), nameof(MoreDetails), nameof(HasMoreDetails), nameof(ShowsCliUpFront), nameof(ShownId), nameof(IdTip), nameof(Title), nameof(Repo), nameof(Label), nameof(Reason), nameof(HasReasonLine), nameof(Cli), nameof(Age), nameof(AccessibleName),
         nameof(CanOpenItem), nameof(ItemLink), nameof(OpenLabel), nameof(HasPr), nameof(OpenPrText), nameof(Notice), nameof(HasNotice), nameof(InboxLine), nameof(InboxName),
     ];
 

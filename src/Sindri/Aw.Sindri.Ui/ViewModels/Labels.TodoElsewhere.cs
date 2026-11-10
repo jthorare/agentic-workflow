@@ -8,7 +8,10 @@ internal static partial class Labels
     /// <summary>The line before the first reads answer.</summary>
     internal const string ElsewhereChecking = "Checking reviews and Linear…";
 
-    /// <summary>The line when nothing waits in any of the three places.</summary>
+    /// <summary>The line while the views are stalled and Reviews or Linear have not answered: what is stale, not a check that never ends.</summary>
+    internal const string ElsewhereStale = "Reviews and Linear wait for Sindri to catch up";
+
+    /// <summary>The line when nothing waits in any of the two places.</summary>
     internal const string ElsewhereNothing = "Nothing waiting elsewhere";
 
     /// <summary>The Reviews part when its read failed.</summary>
@@ -37,11 +40,6 @@ internal static partial class Labels
     /// <returns>"1 Linear issue assigned".</returns>
     internal static string ElsewhereLinear(int count) =>
         string.Create(CultureInfo.InvariantCulture, $"{count} Linear {(count == 1 ? "issue" : "issues")} assigned");
-
-    /// <summary>The Needs you part.</summary>
-    /// <param name="count">Rows in Needs you.</param>
-    /// <returns>"3 need you, below".</returns>
-    internal static string ElsewhereNeedsYou(int count) => string.Create(CultureInfo.InvariantCulture, $"{count} need you, below");
 
     /// <summary>A part's name for a screen reader.</summary>
     /// <param name="target">Where it goes: "Reviews", "Linear", "Settings, Connections" or "Needs you".</param>

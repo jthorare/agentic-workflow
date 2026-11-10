@@ -25,6 +25,9 @@
     <Style Selector="ProgressBar.home-meter">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface4}" />
     </Style>
+    <Style Selector="TextBlock.attention">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
+    </Style>
   </UserControl.Styles>
   <StackPanel Spacing="{StaticResource Size.PanelGap}">
     <TextBlock Classes="page-title" Text="{Binding Text.Home}" AutomationProperties.Name="{Binding Text.Home}" />
@@ -224,7 +227,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                   <icons:StateIcon Glyph="{Binding Glyph}" IsVisible="{Binding HasGlyph}" VerticalAlignment="Center" />
                   <TextBlock Classes="caption subtle" Text="{Binding Label}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                  <TextBlock Classes="caption" Text="{Binding Value}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  <TextBlock Classes="caption" Classes.attention="{Binding IsAttention}" Text="{Binding Value}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                 </StackPanel>
               </Border>
             </DataTemplate>

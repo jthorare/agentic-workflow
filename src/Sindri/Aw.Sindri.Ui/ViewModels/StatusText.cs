@@ -31,6 +31,11 @@ internal static class StatusText
     internal static IEnumerable<HealthCell> Strip(StatusView s)
     {
         yield return new(Labels.CellProcess, Labels.Running, StateGlyph.Ok);
+        if (s.Views is { Stalled: true } views)
+        {
+            yield return new(Labels.CellViews, Labels.ViewsStalledAt(views.ProjectedAt is { } at ? at.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture) : null), StateGlyph.Warning, IsAttention: true);
+        }
+
         yield return new(Labels.CellServices, Services(s));
         yield return new(Labels.CellProfile, ProfileHead(s.Profile), ProfileGlyph(s.Profile));
     }
