@@ -40,6 +40,12 @@ internal static class WorkflowRunScenarios
     /// <returns>True for the takeover and handback routes.</returns>
     public static bool NeedsAgentControl(string slug) => string.Equals(slug, TakeOverSlug, StringComparison.Ordinal) || string.Equals(slug, HandBackSlug, StringComparison.Ordinal);
 
+    /// <summary>Whether the scenario runs on <see cref="Start"/>'s host: the takeover and handback routes, and the answered question.</summary>
+    /// <param name="slug">The route.</param>
+    /// <param name="scenario">The scenario.</param>
+    /// <returns>True when it does.</returns>
+    public static bool NeedsHost(string slug, string scenario) => NeedsAgentControl(slug) || (slug, scenario) is (AnswerSlug, "answered");
+
     /// <summary>The golden host with a <see cref="FakeAgentNodeControl"/> and a <see cref="FakeGraphRunAnswerer"/> where Temporal's control and answerer would be.</summary>
     /// <param name="ct">Cancels the start.</param>
     /// <returns>The started host.</returns>

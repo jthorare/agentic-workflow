@@ -82,7 +82,7 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the answered workflow run, the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        WorkflowRunScenarios.NeedsAgentControl(slug) || (slug, scenario) is ("workflow-runs-run-nodes-node-answer", "answered")
+        WorkflowRunScenarios.NeedsHost(slug, scenario)
             ? await WorkflowRunScenarios.Start(ct)
             : IsSkillOrLinear(slug, scenario)
             ? await StartSkillOrLinear(slug, scenario, ct)
