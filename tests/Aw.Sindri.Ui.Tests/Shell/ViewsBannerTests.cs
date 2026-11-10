@@ -27,6 +27,17 @@ public sealed class ViewsBannerTests
         Assert.True(seen.IndexOf(nameof(ViewsBanner.IsShown)) < seen.IndexOf(nameof(ViewsBanner.Announcement)), "the flag changes before the text");
     }
 
+    // With no Rebuild button the command is the only way to rebuild, so the shown text keeps it.
+    [Fact]
+    public void A_stalled_view_without_a_button_shows_the_command()
+    {
+        var banner = new ViewsBanner();
+
+        banner.Show(View("stalled"), rebuild: null);
+
+        Assert.Equal("Views are stalled at 42: run `sindri views rebuild`", banner.ShownText);
+    }
+
     // The rebuilding sentence carries the cursor, which moves on every read: the live region says the state once.
     [Fact]
     public void Rebuilding_is_announced_once_not_on_every_cursor_move()

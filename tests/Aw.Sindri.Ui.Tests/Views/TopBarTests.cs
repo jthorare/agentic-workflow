@@ -136,6 +136,27 @@ public sealed class TopBarTests : IDisposable
         Assert.Equal(shell.Pill.Text, AutomationProperties.GetName(Named<Button>(window, "HealthPill")));
     });
 
+    // QA #2547: at 1280 px the pill showed its age and cut a short problem ("service ..."); the age is what gives way, so the problem reads in full.
+    [Fact]
+    public Task A_short_problem_reads_in_full_at_1280_because_the_age_gives_way() => OnUi(async () =>
+    {
+        _records.Write(A.Record());
+        _server.Current = A.Status() with
+        {
+            Health = new HealthView("degraded", [new HealthProblemView("SND-SERVICE-001", "service broken failed")]),
+        };
+        var (window, _) = await Show(s => s.State == ShellState.Normal && s.Pill.HasProblems);
+        window.Width = 1280;
+        Settle(window);
+
+        var problems = Named<TextBlock>(window, "PillProblems");
+        using var layout = new TextLayout(problems.Text, new Typeface(problems.FontFamily, problems.FontStyle, problems.FontWeight), problems.FontSize, foreground: null);
+        Assert.True(problems.IsEffectivelyVisible);
+        Assert.True(
+            problems.Bounds.Width >= layout.Width - 0.5,
+            string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the problem text got {problems.Bounds.Width} of its {layout.Width}"));
+    });
+
     [Fact]
     public Task The_search_field_is_exposed_to_assistive_tech_and_reachable_by_keyboard() => OnUi(async () =>
     {
