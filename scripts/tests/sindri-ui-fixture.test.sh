@@ -675,4 +675,32 @@ check "the toolkit's disk holds 40 KB" "$(wc -c < "$RS/resources/toolkit/notes/c
 rss >/dev/null 2>&1; check "a second resources exits 0" "$?" "0"
 check "a second resources keeps the same three files" "$(find "$RS/resources" -type f | wc -l | tr -d ' ') $(wc -c < "$RS/resources/workflow/morning-check/state.db" | tr -d ' ')" "3 1258291"
 
+# --- connections: the Connections page's data (#2537), rows of the connection table ---
+contains "the usage lists connections" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh connections"
+CN="$TMPDIR/connections"
+mkdir -p "$CN/profile"
+printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\n' > "$CN/profile/profile.yaml"
+cns() { AW_SINDRI_HOME="$CN" SINDRI="$STUB" bash "$FIXTURE" connections "$@"; }
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" connections typical >/dev/null 2>&1; check "connections refuses outside a guarded home" "$?" "2"
+cns bogus >/dev/null 2>&1; check "connections refuses an unknown state (exit 2)" "$?" "2"
+cns typical >/dev/null 2>&1; check "connections without a ledger exits 2" "$?" "2"
+migrate "$CN/ledger.db" "$ROOT/src/Sindri/Aw.Sindri.Infrastructure/Ledger/Migrations/0010_connections.sql"
+cns typical >/dev/null 2>&1; check "connections typical exits 0" "$?" "0"
+check "typical writes four rows" "$(sqlq "$CN/ledger.db" "SELECT COUNT(*) FROM connection")" "4"
+check "typical: three connected oauth presets and one custom rest row" "$(sqlq "$CN/ledger.db" "SELECT group_concat(name || ':' || status, ',') FROM (SELECT * FROM connection ORDER BY name)")" "billing-api:prod:connected,github:sam-rivera:connected,google:sam-acme:connected,linear:acme:connected"
+check "the custom row has no preset and no refresh time" "$(sqlq "$CN/ledger.db" "SELECT ifnull(preset, 'none') || ' ' || ifnull(last_refreshed_at, 'never') FROM connection WHERE name = 'billing-api:prod'")" "none never"
+check "last used is about 30 minutes for GitHub" "$(sqlq "$CN/ledger.db" "SELECT CAST((strftime('%s','now') - strftime('%s', last_refreshed_at)) / 60 AS INTEGER) FROM connection WHERE name = 'github:sam-rivera'")" "30"
+check "every timestamp is ISO UTC text the store reads" "$(sqlq "$CN/ledger.db" "SELECT COUNT(*) FROM connection WHERE created_at NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]Z'")" "0"
+check "the secret pointers name keychain entries and hold no token" "$(sqlq "$CN/ledger.db" "SELECT secret_pointer FROM connection WHERE name = 'linear:acme'")" "keychain:sindri-connection/linear.acme"
+cns error >/dev/null 2>&1; check "connections error exits 0" "$?" "0"
+check "error keeps four rows (no duplicates)" "$(sqlq "$CN/ledger.db" "SELECT COUNT(*) FROM connection")" "4"
+check "error: Linear needs sign-in with the provider's reason" "$(sqlq "$CN/ledger.db" "SELECT status || '|' || status_reason FROM connection WHERE name = 'linear:acme'")" "needs-sign-in|the provider refused the refresh (invalid_grant)"
+cns typical >/dev/null 2>&1
+check "typical after error clears the reason" "$(sqlq "$CN/ledger.db" "SELECT status || '|' || ifnull(status_reason, 'none') FROM connection WHERE name = 'linear:acme'")" "connected|none"
+sqlq "$CN/ledger.db" "INSERT INTO connection VALUES ('slack:hand', 'rest', NULL, '{}', NULL, 'connected', NULL, 'human', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z', NULL)" >/dev/null
+cns down >/dev/null 2>&1; check "connections down exits 0" "$?" "0"
+check "down removes only the fixture's rows" "$(sqlq "$CN/ledger.db" "SELECT group_concat(name) FROM connection")" "slack:hand"
+cns empty >/dev/null 2>&1; check "connections empty exits 0" "$?" "0"
+check "empty removes every row" "$(sqlq "$CN/ledger.db" "SELECT COUNT(*) FROM connection")" "0"
+
 exit "$fail"
