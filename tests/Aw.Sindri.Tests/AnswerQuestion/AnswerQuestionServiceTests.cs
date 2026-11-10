@@ -1,10 +1,10 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Redaction;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
-using Aw.Redaction;
 using Aw.Sindri.Features.AnswerQuestion;
 using Aw.Sindri.Infrastructure.Text;
 using Aw.Sindri.Testing.Workflow;

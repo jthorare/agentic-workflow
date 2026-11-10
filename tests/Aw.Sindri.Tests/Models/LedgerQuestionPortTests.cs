@@ -1,9 +1,9 @@
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
+using Aw.Redaction;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
-using Aw.Redaction;
 using Aw.Sindri.Host.Models;
 using Aw.Sindri.Infrastructure.Text;
 
