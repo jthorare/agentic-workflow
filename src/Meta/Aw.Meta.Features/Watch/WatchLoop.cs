@@ -127,7 +127,7 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         }
 
         Superseded = newer;
-        await Say($"WATCH superseded by pid {newer}").ConfigureAwait(false);
+        await Say($"WATCH superseded by pid {newer}: a newer watch runs, do not restart").ConfigureAwait(false);
         return true;
     }
 

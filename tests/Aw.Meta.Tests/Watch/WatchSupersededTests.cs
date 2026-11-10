@@ -95,7 +95,7 @@ public sealed class WatchSupersededTests : IDisposable
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         Assert.Equal(2, result.Value.Polls);
-        Assert.Equal("WATCH superseded by pid 200", _lines[^1]);
+        Assert.Equal("WATCH superseded by pid 200: a newer watch runs, do not restart", _lines[^1]);
         Assert.Equal("newer-baseline", Read(KvKeys.WatchSnapshot));
         Assert.Equal("200", Read(KvKeys.WatchOwner));
     }
@@ -119,7 +119,7 @@ public sealed class WatchSupersededTests : IDisposable
         var result = await Service().Handle(Request(Older, untilEvent), _cap.Token);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
-        Assert.Equal("WATCH superseded by pid 200", _lines[^1]);
+        Assert.Equal("WATCH superseded by pid 200: a newer watch runs, do not restart", _lines[^1]);
         Assert.NotNull(before);
         Assert.Equal(before, Read(KvKeys.WatchSnapshot));
     }
@@ -169,7 +169,7 @@ public sealed class WatchSupersededTests : IDisposable
         var result = await Service().Handle(Request(Older, untilEvent), _cap.Token);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
-        Assert.Equal("WATCH superseded by pid 200", _lines[^1]);
+        Assert.Equal("WATCH superseded by pid 200: a newer watch runs, do not restart", _lines[^1]);
         Assert.DoesNotContain(_lines, l => l.StartsWith("WATCH ERROR", StringComparison.Ordinal));
         Assert.Equal("0", Read(KvKeys.WatchFailing));
     }
