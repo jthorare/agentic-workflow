@@ -11,6 +11,7 @@
         xmlns:jv="using:Aw.Sindri.Ui.Views.Jobs"
         xmlns:cxv="using:Aw.Sindri.Ui.Views.Connections"
         xmlns:mmv="using:Aw.Sindri.Ui.Views.Memory"
+        xmlns:rsv="using:Aw.Sindri.Ui.Views.Resources"
         xmlns:wfv="using:Aw.Sindri.Ui.Views.Workflows"
         xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
         xmlns:lnv="using:Aw.Sindri.Ui.Views.Linear"
@@ -242,6 +243,10 @@
                     <Button x:Name="MemoryLink" Classes="row-title" Click="OnMemoryLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.MemoryLinkName}">
                       <TextBlock Classes="body" Text="{Binding Text.MemoryLink}" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
+                    <!-- Resources is not a tab either: System leads to it (G R and the palette too). -->
+                    <Button x:Name="ResourcesLink" Classes="row-title" Click="OnResourcesLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.ResourcesLinkName}">
+                      <TextBlock Classes="body" Text="{Binding Text.ResourcesLink}" AutomationProperties.AccessibilityView="Raw" />
+                    </Button>
                   </StackPanel>
                 </Panel>
                 <Panel IsVisible="{Binding IsConnections}">
@@ -256,6 +261,14 @@
                   <controls:Deferred DataContext="{Binding MemoryPage}">
                     <controls:Deferred.Template>
                       <DataTemplate><mmv:MemoryPage x:Name="MemoryPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </Panel>
+                <!-- The Resources page (PR 18b): not a tab; G R, the palette and System's Resources link open it. -->
+                <Panel IsVisible="{Binding IsResources}">
+                  <controls:Deferred DataContext="{Binding ResourcesPage}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><rsv:ResourcesPage x:Name="ResourcesPage" /></DataTemplate>
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </Panel>

@@ -32,7 +32,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     public WorkflowGraphViewModel? Graph { get; private set => Set(ref field, value); }
 
     /// <summary>The workflow as last read, or null: run detail draws its graph when the run walked this revision.</summary>
-    internal WorkflowView? Shown { get; private set; }
+    internal WorkflowView? Shown { get; private set => Set(ref field, value); }
 
     /// <summary>The runs, newest first.</summary>
     public ObservableCollection<RunRowViewModel> Rows { get; } = [];
