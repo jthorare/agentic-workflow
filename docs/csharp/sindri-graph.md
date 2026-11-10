@@ -100,6 +100,7 @@ The [`code`](../workflows/blocks/code.md) block runs a C# method body (`GraphBlo
 
 - **Validation.** `GraphValidationContext.CodeCheck` (set from `ICodeCheck` by `ProfileWorkflowChecker` and `sindri wf validate`) compiles every `code` node: `GRAPH-CODE-001` with line and column. The `code` field is not scanned for `{{ }}` references and is read from the raw config at run time.
 - **Memory.** `memoryMb` is a .NET heap cap the runner sets on itself (`GCHeapHardLimit`), not a cgroup limit.
+- **Smoke.** `src/Sindri/aot-smoke/run.sh` publishes `Aw.Sindri.CodeRunner` into the folder of the published host, makes and runs a one-node Code workflow (`return new JsonObject { ["sum"] = 1 + 2 };`) with `wf create`, `activate`, `run` and `run-show`, and pins the line `code-node: {"sum":3}` in `expected.txt`.
 - **Codes.** `SND-CODE-001` does not compile, `002` timeout, `003` memory, `004` threw or not JSON, `005` runner could not start.
 
 ## Reading workflows and runs (PR 8a)

@@ -215,6 +215,8 @@ setup  every 1m  last: ok  next: TIME
 todo-note  every 24h  last: ok  next: TIME
 workflow-poll  every 30s  last: ok  next: TIME
 workflow-schedule  every 1m  last: ok  next: TIME
+## sindri wf create, activate and run a one-node Code workflow (code-smoke), then wf run-show --json | jq (the node's result)
+code-node: {"sum":3}
 ## sindri stop (session)
 stopped (pid PID, epoch 1 released)
 ## sindri status
