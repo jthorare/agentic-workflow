@@ -25,17 +25,16 @@ public sealed class GraphAgentLaunchCapTests
         Assert.Equal(3, runtime.Launches.Count);
     }
 
-    // why: the lead sets the production cap from N, the history events one failed attempt adds; two runs with different caps give it as a difference (small caps: the back-off is real time, 100 ms doubling to 30 s)
+    // why: bounds the history events one failed attempt adds, which is what keeps the cap's attempts far under Temporal's 51,200 events; the count wobbles by one or two (Temporal folds an attempt's events into a shared workflow task), so it is an upper bound, not a constant
     [Fact]
-    public async Task A_failed_attempt_adds_a_constant_number_of_history_events()
+    public async Task A_failed_attempt_adds_at_most_20_history_events()
     {
         var few = await HistoryLength(4);
         var many = await HistoryLength(8);
 
-        var perAttempt = (many - few) / 4;
+        var perAttempt = (int)Math.Ceiling((many - few) / 4.0);
         var text = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"N = {perAttempt} ({few} events at 4 attempts, {many} at 8; the 4 extra attempts added {many - few})");
         TestContext.Current.SendDiagnosticMessage("history events per failed launch attempt: " + text);
-        Assert.True((many - few) % 4 == 0, "not a whole number of events per attempt: " + text);
         Assert.InRange(perAttempt, 1, 20);
     }
 
