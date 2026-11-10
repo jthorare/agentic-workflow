@@ -2,7 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- The Needs-you rows' tint (screens spec R8-13): the urgency, not a side bar. Tokens only. A pulse row that is unseen keeps
        the attention tint and pulses its tint between two tokens (the text is never faded: contrast); under reduced motion it keeps a steady outline instead (HasOutline). -->
-  <Style Selector="Border.needs-you-row.pulsing">
+  <!-- A tint is the row's resting look: under the pointer or a press it steps aside (the :not guards) so the shared clickable hover and
+       pressed background (Theme/ClickableStyles.axaml) shows, and the pulse stops (a running animation would beat any style setter). -->
+  <Style Selector="Border.needs-you-row.pulsing:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
     <Style.Animations>
       <Animation Duration="0:0:1.6" IterationCount="Infinite" Easing="SineEaseInOut">
@@ -13,10 +15,10 @@
     </Style.Animations>
   </Style>
   <!-- A failure keeps a steady attention tint, a calm row a subtle one (R8-13); the same tokens as the pulse, no motion. -->
-  <Style Selector="Border.needs-you-row.steady">
+  <Style Selector="Border.needs-you-row.steady:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
   </Style>
-  <Style Selector="Border.needs-you-row.subtle">
+  <Style Selector="Border.needs-you-row.subtle:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
   </Style>
   <!-- A row that arrives after the first list slides in over Motion.Base (180 ms); never under reduced motion (SlidesIn is false then). -->
@@ -29,7 +31,7 @@
       </Animation>
     </Style.Animations>
   </Style>
-  <Style Selector="Border.needs-you-row.outlined">
+  <Style Selector="Border.needs-you-row.outlined:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
     <Setter Property="BorderThickness" Value="2" />
@@ -48,7 +50,7 @@
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="Padding" Value="14,7,14,6" />
   </Style>
-  <Style Selector="Border.needs-you-row.stale">
+  <Style Selector="Border.needs-you-row.stale:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
   </Style>
   <!-- Two lines a row (the fold, screens spec §4.1): the row's buttons are as tall as their text plus a hairline, so a row stays near
