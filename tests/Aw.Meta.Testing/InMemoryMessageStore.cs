@@ -51,6 +51,22 @@ public sealed class InMemoryMessageStore : IMessageStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<Unit>> MarkShown(IReadOnlyList<MessageId> ids, DateTimeOffset at, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        foreach (var id in ids)
+        {
+            var index = _messages.FindIndex(m => m.Id == id);
+            if (index >= 0)
+            {
+                _messages[index] = _messages[index] with { ShownAt = at };
+            }
+        }
+
+        return Done.Unit();
+    }
+
+    /// <inheritdoc />
     public ValueTask<Result<Unit>> RecordOutbound(Outbound sent, CancellationToken cancellationToken)
     {
         _sent.Add(sent);

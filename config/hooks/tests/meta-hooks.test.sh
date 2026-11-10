@@ -408,7 +408,7 @@ check "role-set failing: the cause is logged" "$?" "0"
 
 : > "$CALLS"
 OUT="$(AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_OUT="a message" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/ups.json")"
-check "meta lane: UserPromptSubmit prints the meta inbox (aw-meta inbox) and runs no lane command" "$OUT:$(cat "$CALLS")" "a message:inbox"
+check "meta lane: UserPromptSubmit prints the meta inbox (aw-meta inbox --once) and runs no lane command" "$OUT:$(cat "$CALLS")" "a message:inbox --once"
 printf '%s' '{"hook_event_name":"Stop","session_id":"s-9","stop_hook_active":false,"last_assistant_message":"REPLY TO META: ok"}' > "$WORK/stop-meta.json"
 : > "$CALLS"
 AW_META_CONFIG="$WORK/team.json" LANE_NAME=meta STUB_RC=1 STUB_OUT="owes" bash "$WORK/lane-script.sh" "$HOOKS/meta-lane-gate.sh" "$WORK/stop-meta.json" 2> "$WORK/err"; RC=$?
