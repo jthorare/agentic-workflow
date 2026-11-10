@@ -57,7 +57,7 @@ public sealed class ActivateWorkflowServiceTests : IDisposable
     {
         await _rig.Seed();
         const string noTrigger = "{\"version\":1,\"name\":\"No trigger\",\"nodes\":[{\"id\":\"tell\",\"type\":\"notify\",\"config\":{\"title\":\"x\"}}],\"edges\":[]}";
-        _ = (await _rig.Workflows.Save(Id, 1, Core.Graph.GraphJson.Parse(noTrigger).Value, "owner", Token)).Value;
+        _ = (await _rig.Workflows.Save(Id, 1, GraphJson.Parse(noTrigger).Value, "owner", Token)).Value;
 
         var result = await _service.Handle(new ActivateWorkflowRequest(Slug, Revision: null, "owner"), Token);
 
