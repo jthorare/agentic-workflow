@@ -4,6 +4,7 @@ using Aw.Meta.Core;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Ids;
 using Aw.Meta.Core.Logs;
+using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Features.LaneRecycle;
@@ -19,11 +20,8 @@ namespace Aw.Meta.Features.LaneRecycle;
 /// <param name="delay">Waits between polls for the new session id.</param>
 /// <param name="clock">The current time.</param>
 /// <param name="messages">The inbox, where the lane's request for this recycle is settled.</param>
-internal sealed class RecycleRunner(PaneSubmitter pane, ILaneSessions sessions, ILaneFiles files, IRunningLog log, IDelay delay, TimeProvider clock, IMessageStore? messages = null)
+internal sealed class RecycleRunner(PaneSubmitter pane, ILaneSessions sessions, ILaneFiles files, IRunningLog log, IDelay delay, TimeProvider clock, IMessageStore messages)
 {
-    // Stub (#2533): the store the runner will settle the lane's recycle request in.
-    internal IMessageStore? Messages { get; } = messages;
-
     internal const string ClearLine = "/clear";
     internal static readonly TimeSpan Wait = TimeSpan.FromSeconds(180);
     private const string WaitSeconds = "180";
@@ -40,6 +38,7 @@ internal sealed class RecycleRunner(PaneSubmitter pane, ILaneSessions sessions, 
 
     internal async ValueTask<Result<LaneRecycleResponse>> Run(RecyclePlan plan, CancellationToken cancellationToken)
     {
+        var started = clock.GetUtcNow();
         var cleared = await pane.Submit(plan.Session, ClearLine, cancellationToken).ConfigureAwait(false);
         if (cleared.IsError && !IsInputBoxMisread(cleared.Error))
         {
@@ -68,7 +67,43 @@ internal sealed class RecycleRunner(PaneSubmitter pane, ILaneSessions sessions, 
         // The id is recorded, so the recycle worked; a continue line the pane check misreads is a warning, not a failure.
         var continued = await pane.Submit(plan.Session, plan.ContinueLine, cancellationToken).ConfigureAwait(false);
         var warning = continued.IsError ? ContinueWarning(newSession) : null;
-        return await LogRecycle(plan, newSession, warning, cancellationToken).ConfigureAwait(false);
+        var settled = await SettleRequests(plan, started, cancellationToken).ConfigureAwait(false);
+        if (settled.IsError)
+        {
+            return settled.Error;
+        }
+
+        return await LogRecycle(plan, newSession, warning, settled.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    // The lane's open messages from before this run that ask for a recycle are answered by it: dismiss them like `inbox-dismiss`.
+    private async ValueTask<Result<IReadOnlyList<string>>> SettleRequests(RecyclePlan plan, DateTimeOffset started, CancellationToken cancellationToken)
+    {
+        var all = await messages.Messages(cancellationToken).ConfigureAwait(false);
+        if (all.IsError)
+        {
+            return all.Error;
+        }
+
+        var now = clock.GetUtcNow();
+        var reason = string.Create(CultureInfo.InvariantCulture, $"settled by lane-recycle {plan.Lane} at {now.UtcDateTime:yyyy-MM-dd HH:mm:ss}Z");
+        var settled = new List<string>();
+        foreach (var message in all.Value.Where(m => m.At <= started
+            && string.Equals(m.FromName, plan.Session, StringComparison.OrdinalIgnoreCase)
+            && m.Resolution is null
+            && !NoticeRule.IsNotice(m.Body)
+            && m.Body.Contains("recycle", StringComparison.OrdinalIgnoreCase)))
+        {
+            var resolved = await messages.Resolve(message.Id, new MessageResolution(MessageResolutionKind.Dismissed, reason), cancellationToken).ConfigureAwait(false);
+            if (resolved.IsError)
+            {
+                return resolved.Error;
+            }
+
+            settled.Add(message.Id.Value);
+        }
+
+        return settled;
     }
 
     private static string ContinueWarning(string newSession) =>
@@ -76,13 +111,13 @@ internal sealed class RecycleRunner(PaneSubmitter pane, ILaneSessions sessions, 
 
     private static bool IsInputBoxMisread(Error error) => error.Message.Contains("still in the input box", StringComparison.Ordinal);
 
-    private async ValueTask<Result<LaneRecycleResponse>> LogRecycle(RecyclePlan plan, string newSession, string? warning, CancellationToken cancellationToken)
+    private async ValueTask<Result<LaneRecycleResponse>> LogRecycle(RecyclePlan plan, string newSession, string? warning, IReadOnlyList<string> settled, CancellationToken cancellationToken)
     {
         var size = plan.OldTokens is { } tokens ? (tokens / 1000).ToString(CultureInfo.InvariantCulture) + "k" : "unknown";
         var misread = warning is null ? string.Empty : " (the continue line's pane check misread it; check the pane)";
-        var note = LogLine.Event(LogKind.Note, clock.GetUtcNow(), $"recycled lane {plan.Lane}: session {plan.OldSession.Value} -> {newSession} (recorded in lane-sessions), context {size} tokens, digest {plan.Digest}{misread}");
+        var note = LogLine.Event(LogKind.Note, clock.GetUtcNow(), $"recycled lane {plan.Lane}: session {plan.OldSession.Value} -> {newSession} (recorded in lane-sessions), context {size} tokens, digest {plan.Digest}{misread}{(settled.Count == 0 ? string.Empty : $", settled requests {string.Join(", ", settled)}")}");
         var logged = await log.Append(note, cancellationToken).ConfigureAwait(false);
-        return logged.IsError ? logged.Error : new LaneRecycleResponse(plan.Lane, DryRun: false, plan.OldSession.Value, newSession, plan.OldTokens, plan.Digest, Steps(plan), warning);
+        return logged.IsError ? logged.Error : new LaneRecycleResponse(plan.Lane, DryRun: false, plan.OldSession.Value, newSession, plan.OldTokens, plan.Digest, Steps(plan), warning, SettledMessages: settled.Count == 0 ? null : settled);
     }
 
     private static Error TimedOut(RecyclePlan plan) =>
