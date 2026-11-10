@@ -46,6 +46,50 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    private void OnNewWorkflow(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            page.OpenCreate();
+            FocusLater(WorkflowsNewName);   // the form opens on its name field
+        }
+    }
+
+    private async void OnCreate(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.Create(CancellationToken.None).ConfigureAwait(true);
+            if (page.IsEditing)
+            {
+                Dispatcher.UIThread.Post(() => _ = (FirstTarget(WorkflowEditor, static c => c is TextBox or CheckBox or Button) ?? WorkflowEditor).Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);   // the new workflow's sheet takes focus, as Edit does
+            }
+        }
+    }
+
+    private void OnCancelCreate(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            page.CancelCreate();
+            FocusLater(WorkflowsNew);
+        }
+    }
+
+    private void OnCreateKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            OnCreate(sender, e);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            OnCancelCreate(sender, e);
+            e.Handled = true;
+        }
+    }
+
     private async void OnRetry(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)

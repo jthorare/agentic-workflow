@@ -69,10 +69,32 @@ public sealed class WorkflowsFramesTests : FrameHost
         Assert.False(Visible(window, "WorkflowsHead"));
         var button = Named<Button>(window, "WorkflowsNew");
         Assert.True(button.IsEffectivelyVisible);
-        Assert.False(button.IsEnabled);
-        Assert.True(Visible(window, "WorkflowsNewReason"));
+        Assert.True(button.IsEnabled);
+        Assert.False(Visible(window, "WorkflowsCreateForm"));
         Assert.Equal("sindri wf create", Named<TextBlock>(window, "WorkflowsAgentCommand").Text);
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"empty-{width}"), Prefix);
+    });
+
+    [Theory]
+    [InlineData(1440)]
+    [InlineData(900)]
+    public Task The_New_workflow_form_asks_for_a_name_and_a_template_and_says_why_Create_is_off(double width) => OnUi(async () =>
+    {
+        Server.WorkflowsAnswer = RouteAnswer.Api("workflows", "list-empty");
+        var (window, shell) = await Connected(width: width, height: 900);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.IsEmpty, "the Workflows page never read the empty list");
+
+        shell.Workflows.OpenCreate();
+        await Until(window, () => Visible(window, "WorkflowsCreateForm"), "the New workflow form never showed");
+
+        Assert.False(Visible(window, "WorkflowsNew"));
+        Assert.True(Visible(window, "WorkflowsNewName"));
+        Assert.True(Visible(window, "WorkflowsNewTemplate"));
+        Assert.False(Named<Button>(window, "WorkflowsCreate").IsEnabled);
+        Assert.True(Visible(window, "WorkflowsNewReason"));
+        Assert.True(Visible(window, "WorkflowsAgentCommand"));
+        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"empty-form-{width}"), Prefix);
     });
 
     [Theory]

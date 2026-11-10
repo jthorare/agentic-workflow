@@ -74,12 +74,6 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>The empty state's create action: "New workflow".</summary>
     public string NewWorkflowText => Labels.WfNew;
 
-    /// <summary>True when the app can create a workflow. It can't yet: the API client has no create call.</summary>
-    public bool CanCreateWorkflow => false;
-
-    /// <summary>Why the create action is off.</summary>
-    public string NewWorkflowReason => Labels.WfNewOff;
-
     /// <summary>The line before the agent command.</summary>
     public string AgentRouteLead => Labels.WfAgentRoute;
 

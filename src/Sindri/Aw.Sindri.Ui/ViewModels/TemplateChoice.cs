@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.ViewModels.Workflows;
+namespace Aw.Sindri.Ui.ViewModels;
 
 /// <summary>One starter template in the New workflow form.</summary>
 /// <param name="Name">The name Sindri accepts.</param>

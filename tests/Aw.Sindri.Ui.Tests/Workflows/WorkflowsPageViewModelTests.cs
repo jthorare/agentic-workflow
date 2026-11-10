@@ -61,15 +61,14 @@ public sealed class WorkflowsPageViewModelTests
     }
 
     [Fact]
-    public async Task The_empty_state_offers_a_New_workflow_action_that_says_why_it_is_off_and_names_the_agent_command()
+    public async Task The_empty_state_offers_a_New_workflow_action_with_the_form_closed_and_names_the_agent_command()
     {
         _f.ServeList(Golden("workflows", "list-empty"));
 
         var page = await _f.Shown(Token);
 
         Assert.Equal("New workflow", page.NewWorkflowText);
-        Assert.False(page.CanCreateWorkflow);   // the app has no create call yet
-        Assert.False(string.IsNullOrWhiteSpace(page.NewWorkflowReason));
+        Assert.False(page.IsCreating);
         Assert.Equal(("Agents can make one with", "sindri wf create"), (page.AgentRouteLead, page.AgentRouteCommand));
     }
 

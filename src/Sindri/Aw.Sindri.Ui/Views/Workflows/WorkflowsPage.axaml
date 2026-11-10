@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Aw.Sindri.Ui.ViewModels"
              xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
              xmlns:wv="using:Aw.Sindri.Ui.Views.Workflows"
              x:Class="Aw.Sindri.Ui.Views.Workflows.WorkflowsPage"
@@ -41,10 +42,30 @@
             <Border x:Name="WorkflowsEmptyName" HorizontalAlignment="Center" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
               <TextBlock Classes="body muted" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
             </Border>
-            <Button x:Name="WorkflowsNew" Classes="accent" HorizontalAlignment="Center" Content="{Binding NewWorkflowText}" IsEnabled="{Binding CanCreateWorkflow}" AutomationProperties.Name="{Binding NewWorkflowText}" />
-            <Border x:Name="WorkflowsNewReason" HorizontalAlignment="Center" AutomationProperties.Name="{Binding NewWorkflowReason}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-              <TextBlock Classes="caption subtle" Text="{Binding NewWorkflowReason}" TextWrapping="Wrap" TextAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-            </Border>
+            <Button x:Name="WorkflowsNew" Classes="accent" HorizontalAlignment="Center" Content="{Binding NewWorkflowText}" Click="OnNewWorkflow" IsVisible="{Binding !IsCreating}" AutomationProperties.Name="{Binding NewWorkflowText}" />
+            <StackPanel x:Name="WorkflowsCreateForm" Width="360" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsCreating}">
+              <TextBlock Classes="caption subtle" Text="{Binding NewSlugLabel}" AutomationProperties.AccessibilityView="Raw" />
+              <TextBox x:Name="WorkflowsNewName" Text="{Binding NewSlug, Mode=TwoWay}" KeyDown="OnCreateKey" AutomationProperties.Name="{Binding NewSlugLabel}" />
+              <TextBlock Classes="caption subtle" Text="{Binding TemplateLabel}" AutomationProperties.AccessibilityView="Raw" />
+              <ComboBox x:Name="WorkflowsNewTemplate" ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedChoice, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding TemplateLabel}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:TemplateChoice">
+                    <TextBlock Text="{Binding Name}" />
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+              <TextBlock Classes="caption subtle" Text="{Binding SelectedDescription}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              <Border x:Name="WorkflowsNewReason" AutomationProperties.Name="{Binding CreateReasonText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" IsVisible="{Binding !CanCreate}">
+                <TextBlock Classes="caption subtle" Text="{Binding CreateReasonText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
+              <Border x:Name="WorkflowsCreateError" AutomationProperties.Name="{Binding CreateError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" IsVisible="{Binding HasCreateError}">
+                <TextBlock Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding CreateError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </Border>
+              <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+                <Button x:Name="WorkflowsCreate" Classes="accent" Content="{Binding CreateText}" Click="OnCreate" IsEnabled="{Binding CanCreate}" AutomationProperties.Name="{Binding CreateText}" />
+                <Button x:Name="WorkflowsCreateCancel" Content="{Binding CancelCreateText}" Click="OnCancelCreate" AutomationProperties.Name="{Binding CancelCreateText}" />
+              </StackPanel>
+            </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XXS}" HorizontalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
               <TextBlock Classes="caption subtle" Text="{Binding AgentRouteLead}" VerticalAlignment="Center" />
               <TextBlock x:Name="WorkflowsAgentCommand" Classes="caption mono" Text="{Binding AgentRouteCommand}" VerticalAlignment="Center" />
