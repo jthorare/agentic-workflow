@@ -54,15 +54,14 @@
       </StackPanel>
     </Border>
 
-    <Panel x:Name="ReviewsConnect" IsVisible="{Binding IsConnect}">
-      <Rectangle Stroke="{DynamicResource Brush.HairlineStrong}" StrokeDashArray="4,3" StrokeThickness="1" RadiusX="8" RadiusY="8" IsHitTestVisible="False" AutomationProperties.AccessibilityView="Raw" />
+    <Border x:Name="ReviewsConnect" Classes="panel" IsVisible="{Binding IsConnect}">
       <StackPanel Margin="32" Spacing="{StaticResource Space.MD}" HorizontalAlignment="Center">
         <Border x:Name="ReviewsConnectLine" AutomationProperties.Name="{Binding ConnectLine}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body muted" Text="{Binding ConnectLine}" TextWrapping="Wrap" TextAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <Button x:Name="ReviewsConnectButton" Classes="command-control primary" HorizontalAlignment="Center" Content="{Binding ConnectText}" Click="OnConnect" AutomationProperties.Name="{Binding ConnectText}" />
       </StackPanel>
-    </Panel>
+    </Border>
 
     <Border x:Name="ReviewsEmpty" Classes="panel" IsVisible="{Binding EmptyLines, Converter={x:Static ObjectConverters.IsNotNull}}">
       <ItemsControl Margin="32" ItemsSource="{Binding EmptyLines}" HorizontalAlignment="Center">
