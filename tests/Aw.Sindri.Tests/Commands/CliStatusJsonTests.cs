@@ -30,12 +30,13 @@ public sealed class CliStatusJsonTests : IDisposable
         var probe = app.Services.GetRequiredService<IControlPlaneProbe>();
         using var client = new ControlPlaneClient(probe, SliceHarness.Json);
         var stdout = new StringWriter();
+        var stderr = new StringWriter();
 
-        var code = await new Verbs(client, probe, new Output(stdout, TextWriter.Null, SliceHarness.Json), scope.ServiceProvider).Status(json: true, ct);
+        var code = await new Verbs(client, probe, new Output(stdout, stderr, SliceHarness.Json), scope.ServiceProvider).Status(json: true, ct);
         using var http = new HttpClient();
         var served = await http.GetStringAsync(new Uri(url, "/sindri/status"), ct);
 
-        Assert.Equal((1, served + "\n"), (code, stdout.ToString()));   // exit 1: no profile is approved
+        Assert.Equal((1, served + "\n", string.Empty), (code, stdout.ToString(), stderr.ToString()));   // exit 1: no profile is approved; a failure shows the CLI's error text (#2641)
         await app.StopAsync(ct);
     }
 }
