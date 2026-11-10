@@ -50,6 +50,11 @@ check "python bind with a run-time port is allowed" "$(scan 's.bind(("127.0.0.1"
 check "nc -z is a client probe, allowed" "$(scan 'nc -z localhost 4100')" "0:0"
 check "a port only inside a URL is allowed" "$(scan 'curl http://127.0.0.1:7480/x')" "0:0"
 check "a comment line is skipped" "$(scan '# PORT=39917 was pinned before')" "0:0"
+check "an indented listener with a trailing comment is a violation" "$(scan '  nc -l 39917 &  # start a listener')" "1:1"
+check "an indented PORT=digits with a trailing comment is a violation" "$(scan '  PORT=4100 run x  # pass it on')" "1:1"
+check "a listener after a \${#x} on an indented line is a violation" "$(scan '  echo "${#a[@]}"; nc -l 39918 &')" "1:1"
+check "an indented code line with a waiver does not waive the line below" "$(scan '  echo hi  # test-ports: ok: not a comment line
+  PORT=4100')" "1:1"
 
 # waiver
 check "a same-line waiver with a reason passes" "$(scan 'UI_EVIDENCE_API_PORT=4100   # test-ports: ok: an env value, nc is a stub')" "0:0"
