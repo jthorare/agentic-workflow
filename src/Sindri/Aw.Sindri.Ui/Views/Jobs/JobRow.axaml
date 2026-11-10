@@ -7,7 +7,7 @@
   <!-- One job on the Jobs page (API P6): the state as a word with its glyph, the kind and what it works on (a button: it opens the job's sheet), when it started or
        ended and who started it, how it ended, and Cancel while it runs. The row's name is its title, state, when, who and summary; every named line is a Border
        wrapper (a TextBlock's peer ignores AutomationProperties.Name). The row draws its own focus border (item-row), not the adorner. -->
-  <Border x:Name="JobRowFrame" Classes="item-row job-row" Focusable="True"
+  <Border x:Name="JobRowFrame" Classes="item-row job-row clickable" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <Grid x:Name="JobRowGrid" ColumnDefinitions="1.6*,110,150,1.2*,130,56,120" RowDefinitions="Auto,Auto" VerticalAlignment="Center" MinHeight="{StaticResource Row.Height.Default}">
       <DockPanel LastChildFill="True" Margin="0,0,8,0" VerticalAlignment="Center">

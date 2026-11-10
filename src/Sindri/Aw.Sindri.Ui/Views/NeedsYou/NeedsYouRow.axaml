@@ -8,7 +8,7 @@
        age, then the reason and repo, then the row's controls. The tint is the urgency (R8-13): an unseen pulse row pulses (a
        steady outline and the word "new" under reduced motion), a failure keeps a steady tint, a calm row a subtle one. The row
        draws its own focus border (item-row), not the adorner. -->
-  <Border x:Name="RowFrame" Classes="item-row needs-you-row" Classes.selected="{Binding IsSelected}" Classes.pulsing="{Binding IsPulsing}" Classes.steady="{Binding IsSteady}" Classes.subtle="{Binding IsSubtle}" Classes.slides-in="{Binding SlidesIn}"
+  <Border x:Name="RowFrame" Classes="item-row needs-you-row clickable" Classes.selected="{Binding IsSelected}" Classes.pulsing="{Binding IsPulsing}" Classes.steady="{Binding IsSteady}" Classes.subtle="{Binding IsSubtle}" Classes.slides-in="{Binding SlidesIn}"
           Classes.outlined="{Binding HasOutline}" Classes.stale="{Binding IsStale}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <StackPanel Spacing="2">
