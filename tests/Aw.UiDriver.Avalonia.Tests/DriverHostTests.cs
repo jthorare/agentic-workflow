@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using Aw.Kernel.Json;
 using Aw.UiDriver.Core;
 using Aw.UiDriver.Core.Protocol;
 
@@ -109,6 +110,21 @@ public sealed class DriverHostTests
         Assert.Equal("save", on.Value.Node.AutomationId);
         Assert.True(off.IsSuccess);
         Assert.Equal((true, false), (during, after));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task The_hover_verb_reads_its_request_and_writes_its_response_through_the_source_generated_context()
+    {
+        var screen = await TestScreen.OpenAsync();
+        var host = Host(screen);
+        var body = System.Text.Encoding.UTF8.GetBytes("""{"selector":{"automationId":"save"},"off":false}""");
+
+        var reply = await Verbs.RunAsync("hover", body, host, CancellationToken.None);
+
+        Assert.Equal(200, reply.Status);
+        var read = AwJson.Deserialize<ActedResponse>(reply.Body.Span, UiDriverJson.Options);
+        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
+        Assert.Equal("save", read.Value.Node.AutomationId);
     }
 
     [Fact, Trait("Lane", "integration")]
