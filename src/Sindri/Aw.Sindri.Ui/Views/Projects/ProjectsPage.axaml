@@ -37,7 +37,7 @@
     <Border x:Name="ProjectsBanner" Classes="card" Background="{DynamicResource Brush.ErrorSoft}" BorderBrush="{DynamicResource Brush.Error}" IsVisible="{Binding IsBanner}">
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
         <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Error}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-        <Border x:Name="ProjectsBannerName" AutomationProperties.Name="{Binding Sentence}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <Border x:Name="ProjectsBannerName" VerticalAlignment="Center" AutomationProperties.Name="{Binding Sentence}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body" Foreground="{DynamicResource Brush.Ink}" Text="{Binding Sentence}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
         <Button x:Name="ProjectsConnectBanner" Content="{Binding ConnectText}" Click="OnConnect" IsVisible="{Binding ShowsConnect}" VerticalAlignment="Center" AutomationProperties.Name="{Binding ConnectText}" />
