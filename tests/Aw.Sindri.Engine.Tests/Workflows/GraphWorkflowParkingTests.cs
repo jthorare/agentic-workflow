@@ -13,7 +13,7 @@ namespace Aw.Sindri.Tests.Workflows;
 /// sent through the 'Answer' update before the timeout wins. The server skips time while the test awaits the run's result.
 /// </summary>
 [Lane(TestLane.Integration)]
-public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed partial class GraphWorkflowParkingTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -37,12 +37,12 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     }
 
     // why: the server did not skip time on its own while GetResultAsync waited (both timer tests hung), so the test skips it; again until the run ends, because the timer may start after the first skip
-    private async Task SkipUntilEnded(GraphRig rig, WorkflowRunId run, TimeSpan step)
+    private static async Task SkipUntilEnded(GraphRig rig, WorkflowRunId run, TimeSpan step)
     {
         using var limit = Limit();
         while ((await rig.Runs.Get(run, limit.Token)).Value.Status is not (WorkflowRunStatus.Succeeded or WorkflowRunStatus.Failed or WorkflowRunStatus.Cancelled))
         {
-            await server.Environment.DelayAsync(step);
+            await rig.Environment.DelayAsync(step);
             await Task.Delay(TimeSpan.FromMilliseconds(100), limit.Token);
         }
     }
@@ -61,7 +61,7 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     [Fact]
     public async Task A_wait_node_sleeps_on_a_timer_and_the_run_then_goes_on()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("hold", "wait", config: new JsonObject { ["duration"] = "15m" }), GraphRig.Node("after", "echo")],
             [GraphRig.Edge("start", "hold"), GraphRig.Edge("hold", "after")]));
@@ -85,7 +85,7 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     [Fact]
     public async Task A_cancel_ends_a_wait_node_cancelled_and_skips_the_rest()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("hold", "wait", config: new JsonObject { ["duration"] = "1d" }), GraphRig.Node("after", "echo")],
             [GraphRig.Edge("start", "hold"), GraphRig.Edge("hold", "after")]));
@@ -105,7 +105,7 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     [Fact]
     public async Task An_unanswered_question_takes_the_timeout_branch_with_the_default()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(AskSpec());
 
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
@@ -125,7 +125,7 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     [Fact]
     public async Task An_answer_before_the_timeout_wins_and_is_attributed_to_the_session_that_gave_it()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(AskSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
 
@@ -144,7 +144,7 @@ public sealed partial class GraphWorkflowParkingTests(SindriTimeSkippingServer s
     [Fact]
     public async Task An_answer_that_is_not_a_choice_and_an_answer_to_a_node_that_does_not_wait_are_refused()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(AskSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         var handle = rig.Client.GetWorkflowHandle(started.RunId.Value);
