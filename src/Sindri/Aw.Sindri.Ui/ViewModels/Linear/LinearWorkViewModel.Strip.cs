@@ -128,7 +128,6 @@ internal sealed partial class LinearWorkViewModel
         var now = _clock.GetUtcNow();
         var kept = new Dictionary<string, LinearSinceRowViewModel>(StringComparer.Ordinal);
         var groups = new List<LinearSinceGroupViewModel>();
-        var open = StripGroups.Where(static g => g.IsExpanded).Select(static g => g.Heading).ToHashSet(StringComparer.Ordinal);   // every read makes new groups: keep what Show all opened
         var flat = new List<LinearSinceRowViewModel>();
         var perIssue = (_since?.Items ?? []).GroupBy(static i => i.Key, StringComparer.Ordinal);
         List<LinearSinceRowViewModel> rows = [.. perIssue.Select(g => Row([.. g], now))];
@@ -140,7 +139,9 @@ internal sealed partial class LinearWorkViewModel
                 continue;
             }
 
-            groups.Add(new LinearSinceGroupViewModel(heading, inGroup, open.Contains(heading)));
+            var reused = StripGroups.FirstOrDefault(g => string.Equals(g.Heading, heading, StringComparison.Ordinal)) ?? new LinearSinceGroupViewModel(heading);
+            reused.Update(inGroup);   // the group keeps its open state and its row containers across reads
+            groups.Add(reused);
             flat.AddRange(inGroup);
         }
 
@@ -160,7 +161,13 @@ internal sealed partial class LinearWorkViewModel
     private LinearSinceRowViewModel Row(List<LinearSinceItem> changes, DateTimeOffset now)
     {
         var fresh = new LinearSinceRowViewModel(changes, now);
-        return _stripShown.TryGetValue(fresh.Key, out var shown) && string.Equals(shown.Detail, fresh.Detail, StringComparison.Ordinal) && shown.At == fresh.At ? shown : fresh;
+        if (_stripShown.TryGetValue(fresh.Key, out var shown) && shown.Group == fresh.Group && string.Equals(shown.Detail, fresh.Detail, StringComparison.Ordinal) && shown.At == fresh.At)
+        {
+            shown.Tick(now);
+            return shown;
+        }
+
+        return fresh;
     }
 
     // Priority, project and assignee come from the issue list; a row of an issue the list doesn't hold yet shows no such chip.

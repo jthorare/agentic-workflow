@@ -10,6 +10,7 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
 {
     private static readonly string[] _issueBound = [nameof(StateChip), nameof(HasStateChip), nameof(PriorityChip), nameof(HasPriorityChip), nameof(Project), nameof(HasProject), nameof(Initials), nameof(HasInitials), nameof(IsUrgent)];
 
+    private readonly string _said;
     private readonly string? _movedChip;   // from the state change; null without one
 
     /// <summary>Builds the row of one issue.</summary>
@@ -26,7 +27,7 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
         Group = changes.Any(static c => string.Equals(c.Kind, "assigned", StringComparison.Ordinal)) ? LinearSinceGroup.Assigned
             : changes.Any(static c => string.Equals(c.Kind, "state", StringComparison.Ordinal)) ? LinearSinceGroup.Moved
             : LinearSinceGroup.Other;
-        var said = newestFirst.Select(Labels.LinearSinceChange).ToList();
+        _said = string.Join(", ", newestFirst.Select(Labels.LinearSinceChange));
         // Two or more moves read as one span, first From to last To ("Todo → In Review"), so no move is lost. A move away and back
         // ("Todo → In Progress → Todo") would span "Todo → Todo": the chip is then the state alone and the second line says how often it moved.
         var moves = newestFirst.Where(static c => string.Equals(c.Kind, "state", StringComparison.Ordinal)).ToList();
@@ -34,7 +35,7 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
         var notShown = newestFirst.Where(c => !IsShownElsewhere(c)).Select(Labels.LinearSinceChange);
         Detail = Labels.LinearSinceDetail(Key, roundTrip ? notShown.Prepend(Labels.LinearMovedTimes(moves.Count)) : notShown);
         TimeText = Labels.AgoWords(now - At);
-        Name = Key + ", " + Title + ", " + string.Join(", ", said) + ", " + TimeText;
+        Name = NameOf(TimeText);
         _movedChip = moves.Count == 0 ? null : roundTrip ? moves[0].To : Labels.LinearStateChip(moves[^1].From, moves[0].To);
         Apply(issue: null);
     }
@@ -55,10 +56,10 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
     public string Detail { get; }
 
     /// <summary>"2h ago".</summary>
-    public string TimeText { get; }
+    public string TimeText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The row's accessible name.</summary>
-    public string Name { get; }
+    public string Name { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>"Todo → In Progress" (several moves: the first From to the last To; "Todo" for a move away and back), or the issue's state from the list when the row has no state change; empty when neither is known.</summary>
     public string StateChip { get; private set => Set(ref field, value); } = string.Empty;
@@ -87,13 +88,13 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
     /// <summary>True when the avatar shows: the assignee is known, and the row is not in "Assigned to you" (there it is always the viewer).</summary>
     public bool HasInitials => Initials.Length > 0 && Group != LinearSinceGroup.Assigned;
 
-#pragma warning disable CA1822, MA0041, IDE0060 // red stub: the real Tick recomputes TimeText and Name
-    /// <summary>Recomputes the "ago" words and the accessible name as of a later instant.</summary>
+    /// <summary>Recomputes the "ago" words and the accessible name as of a later instant: a kept row doesn't say "2h ago" forever.</summary>
     /// <param name="now">The instant "ago" counts from.</param>
     internal void Tick(DateTimeOffset now)
     {
+        TimeText = Labels.AgoWords(now - At);
+        Name = NameOf(TimeText);
     }
-#pragma warning restore CA1822, MA0041, IDE0060
 
     /// <summary>Takes what the issue list knows of this issue (or nothing, when it isn't listed).</summary>
     /// <param name="issue">The listed issue.</param>
@@ -109,6 +110,8 @@ internal sealed class LinearSinceRowViewModel : ObservableObject
             OnChanged(name);
         }
     }
+
+    private string NameOf(string ago) => Key + ", " + Title + ", " + _said + ", " + ago;
 
     // A state move is the state chip; an assignment is the group's heading.
     private static bool IsShownElsewhere(LinearSinceItem change) => string.Equals(change.Kind, "state", StringComparison.Ordinal) || string.Equals(change.Kind, "assigned", StringComparison.Ordinal);
