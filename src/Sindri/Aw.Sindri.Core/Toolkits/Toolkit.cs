@@ -14,7 +14,7 @@ public sealed record Toolkit(string Name, string Dir, ToolkitState State, string
     /// <param name="currentSourceHash">The hash of the source on disk now.</param>
     /// <returns>True when a good build exists for exactly this source.</returns>
     public bool IsBuiltFor(string currentSourceHash) =>
-        State is ToolkitState.Built or ToolkitState.Running or ToolkitState.Paused
+        State is ToolkitState.Built or ToolkitState.Running or ToolkitState.Paused or ToolkitState.Failed   // failed keeps its hash and manifest only when the supervisor gave up; a failed build clears both
         && SourceHash is not null
         && Manifest is not null
         && string.Equals(SourceHash, currentSourceHash, StringComparison.Ordinal);
