@@ -36,6 +36,7 @@ internal sealed class ToolkitProcess(ISandbox sandbox, ISandboxLaunchInputs inpu
         var wrapped = sandbox.WrapProcess(plan.Value, [binary]);
         if (wrapped.IsError)
         {
+            sandbox.Discard(plan.Value);
             return SindriErrors.ToolkitSandboxUnavailable.With(wrapped.Error.Message);
         }
 
