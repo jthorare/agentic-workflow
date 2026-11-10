@@ -89,7 +89,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
         var snapshot = await values.Get(KvKeys.WatchSnapshot, cancellationToken).ConfigureAwait(false);
         var failing = await values.Get(KvKeys.WatchFailing, cancellationToken).ConfigureAwait(false);
         var kept = snapshot.IsSuccess ? snapshot.Value : null;
-        var ownership = new WatchOwnership(values, team.Repo, owner, kept);
+        var ownership = new WatchOwnership(values, team.Repo, owner, kept, failing.IsSuccess ? failing.Value : null);
         await ownership.Claim(cancellationToken).ConfigureAwait(false);
         var resources = WatchResources.Parse(reported.IsSuccess ? reported.Value : null);
         return new WatchLoop(
@@ -114,7 +114,8 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
             NewerOwner = () => ownership.NewerOwner(cancellationToken),
             // Advisory: if this can't be kept, the next run reports its first error again.
             Failing = failing.IsSuccess && string.Equals(failing.Value, "1", StringComparison.Ordinal),
-            KeepFailing = async now => _ = await values.Set(KvKeys.WatchFailing, now ? "1" : "0", cancellationToken).ConfigureAwait(false),
+            // A compare-and-set like the snapshot's: a newer watch that wrote the flag meanwhile ends this one (#2564).
+            KeepFailing = now => ownership.KeepFailing(now, cancellationToken),
             MainMoved = async (sha, merged) => await board.RecordMain(sha, merged, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false),
             SeedMain = async sha => (await board.SeedMain(sha, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false)).Map(static _ => Unit.Value),
         };

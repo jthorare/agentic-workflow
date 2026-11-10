@@ -6,15 +6,17 @@ namespace Aw.Meta.Features.Watch;
 
 /// <summary>
 /// One watch's claim on the shared watch keys (#2564). The newest watch owns them: it writes its pid to watch.owner when it starts,
-/// and an older watch that finds another pid there, or loses a compare-and-set on the snapshot, ends as superseded.
+/// and an older watch that finds another pid there, or loses a compare-and-set on watch.snapshot or watch.failing, ends as superseded.
 /// </summary>
-/// <param name="values">Holds watch.owner and watch.snapshot.</param>
+/// <param name="values">Holds watch.owner, watch.snapshot and watch.failing.</param>
 /// <param name="repo">The repo the snapshot is keyed by.</param>
 /// <param name="owner">This watch's pid.</param>
-/// <param name="initial">The snapshot this watch last read or wrote (the value the next write must still find).</param>
-internal sealed class WatchOwnership(IKeyValueStore values, string repo, string owner, string? initial)
+/// <param name="snapshot">The snapshot this watch read at its start (the value its first write must still find).</param>
+/// <param name="failing">The failing flag this watch read at its start (the value its first write must still find).</param>
+internal sealed class WatchOwnership(IKeyValueStore values, string repo, string owner, string? snapshot, string? failing)
 {
-    private string? _kept = initial;
+    private string? _snapshot = snapshot;
+    private string? _failing = failing;
 
     /// <summary>Writes this watch's pid to watch.owner. Advisory: a write that fails leaves the older watch running, as before.</summary>
     internal async ValueTask Claim(CancellationToken cancellationToken) =>
@@ -27,35 +29,44 @@ internal sealed class WatchOwnership(IKeyValueStore values, string repo, string 
         return current.IsSuccess && current.Value is { } pid && !string.Equals(pid, owner, StringComparison.Ordinal) ? pid : null;
     }
 
-    /// <summary>
-    /// Keeps the snapshot. When another watch wrote it since this one last did, watch.owner tells who: a different pid means a newer watch
-    /// (this one is superseded); this watch's own pid, or an unreadable owner, means an older watch wrote before it saw the claim, so this watch overwrites it.
-    /// </summary>
-    /// <returns>Null when it kept it (or the store failed: advisory, the next run starts fresh); else the pid of the watch that superseded this one.</returns>
+    /// <summary>Keeps the snapshot (see <see cref="Keep"/>).</summary>
+    /// <returns>Null when it kept it; else the pid of the watch that superseded this one.</returns>
     internal async ValueTask<string?> KeepSnapshot(WatchState state, CancellationToken cancellationToken)
     {
         var text = WatchMemory.Format(repo, state);
-        var wrote = await values.SetIf(KvKeys.WatchSnapshot, _kept, text, cancellationToken).ConfigureAwait(false);
-        if (wrote.IsError)
+        var newer = await Keep(KvKeys.WatchSnapshot, _snapshot, text, cancellationToken).ConfigureAwait(false);
+        _snapshot = newer is null ? text : _snapshot;
+        return newer;
+    }
+
+    /// <summary>Keeps whether polls are failing (see <see cref="Keep"/>).</summary>
+    /// <returns>Null when it kept it; else the pid of the watch that superseded this one.</returns>
+    internal async ValueTask<string?> KeepFailing(bool now, CancellationToken cancellationToken)
+    {
+        var text = now ? "1" : "0";
+        var newer = await Keep(KvKeys.WatchFailing, _failing, text, cancellationToken).ConfigureAwait(false);
+        _failing = newer is null ? text : _failing;
+        return newer;
+    }
+
+    // A compare-and-set against what this watch last read or wrote. When another watch wrote the key meanwhile, watch.owner tells who:
+    // a different pid is a newer watch (this one is superseded, and writes nothing); this watch's own pid, or an owner that can't be read,
+    // is an older watch that wrote before it saw the claim, so this watch overwrites it. A store error is advisory, as before.
+    private async ValueTask<string?> Keep(string key, string? expected, string text, CancellationToken cancellationToken)
+    {
+        var wrote = await values.SetIf(key, expected, text, cancellationToken).ConfigureAwait(false);
+        if (wrote.IsError || wrote.Value)
         {
             return null;
         }
 
-        if (wrote.Value)
+        if (await NewerOwner(cancellationToken).ConfigureAwait(false) is { } newer)
         {
-            _kept = text;
-            return null;
-        }
-
-        var current = await values.Get(KvKeys.WatchOwner, cancellationToken).ConfigureAwait(false);
-        if (current.IsSuccess && current.Value is { } pid && !string.Equals(pid, owner, StringComparison.Ordinal))
-        {
-            return pid;
+            return newer;
         }
 
         // Still the owner: the writer was an older watch that has not seen the claim yet. It ends at its next owner check.
-        _ = await values.Set(KvKeys.WatchSnapshot, text, cancellationToken).ConfigureAwait(false);
-        _kept = text;
+        _ = await values.Set(key, text, cancellationToken).ConfigureAwait(false);
         return null;
     }
 }

@@ -34,8 +34,11 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// <summary>The pid of the newer watch that ended this one, or null while this watch is still the newest. A superseded watch writes nothing more.</summary>
     internal string? Superseded { get; private set; }
 
-    /// <summary>Keeps whether polls are failing, whenever that changes (a failing streak spans runs).</summary>
-    internal Func<bool, ValueTask> KeepFailing { get; init; } = static _ => ValueTask.CompletedTask;
+    /// <summary>
+    /// Keeps whether polls are failing, whenever that changes (a failing streak spans runs).
+    /// Returns the pid of the newer watch when another watch wrote the flag meanwhile, and null when it kept it.
+    /// </summary>
+    internal Func<bool, ValueTask<string?>> KeepFailing { get; init; } = static _ => ValueTask.FromResult<string?>(null);
 
     /// <summary>The state the first poll diffs against: the last poll of an earlier run, or the state before any poll.</summary>
     internal WatchState Baseline { init => _state = value; }
@@ -71,7 +74,10 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
             return;
         }
 
-        await Recovered().ConfigureAwait(false);
+        if (await Recovered().ConfigureAwait(false))
+        {
+            return;
+        }
 
         var step = await SayPoll(polled.Value).ConfigureAwait(false);
 
@@ -134,17 +140,24 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         }
 
         _failing = true;
-        await KeepFailing(true).ConfigureAwait(false);
+        if (await Supersede(await KeepFailing(true).ConfigureAwait(false)).ConfigureAwait(false))
+        {
+            return;
+        }
+
         await Say($"WATCH ERROR: {error.Code}: {error.Message.ReplaceLineEndings(" ")}").ConfigureAwait(false);
     }
 
-    private async ValueTask Recovered()
+    // A good poll ends the failing streak. True when keeping that showed a newer watch (this one is then superseded).
+    private async ValueTask<bool> Recovered()
     {
-        if (_failing)
+        if (!_failing)
         {
-            _failing = false;
-            await KeepFailing(false).ConfigureAwait(false);
+            return false;
         }
+
+        _failing = false;
+        return await Supersede(await KeepFailing(false).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     // The lanes' standing: context sizes, then usage limits. Neither can fail the poll.

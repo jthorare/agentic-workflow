@@ -173,4 +173,27 @@ public sealed class WatchSupersededTests : IDisposable
         Assert.DoesNotContain(_lines, l => l.StartsWith("WATCH ERROR", StringComparison.Ordinal));
         Assert.Equal("0", Read(KvKeys.WatchFailing));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_older_watch_writing_before_it_sees_the_claim_never_ends_the_newest_one()
+    {
+        // Poll 1 of the newest watch: an older watch that has not yet seen the claim saves its own baseline. The newest watch still owns
+        // watch.owner, so it overwrites that baseline and keeps polling to the end of its window.
+        Script(n =>
+        {
+            if (n == 1)
+            {
+                Write(KvKeys.WatchSnapshot, "older-baseline");
+            }
+        });
+        await _world.Ready();
+
+        var result = await Service().Handle(Request(Newer, untilEvent: false), _cap.Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.DoesNotContain(_lines, l => l.StartsWith("WATCH superseded", StringComparison.Ordinal));
+        Assert.Equal("WATCH EXPIRING: rerun aw-meta watch", _lines[^1]);
+        Assert.NotEqual("older-baseline", Read(KvKeys.WatchSnapshot), StringComparer.Ordinal);
+        Assert.Equal("200", Read(KvKeys.WatchOwner));
+    }
 }
