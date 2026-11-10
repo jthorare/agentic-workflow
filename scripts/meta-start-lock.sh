@@ -32,6 +32,8 @@ live_pid() {
 # of the mkdir has no file for a moment, so a waiter can scan the guard without seeing it; the winner's own scan after its
 # announce sees that waiter and backs off. An empty guard is a holder between its mkdir and its pid file, and is cleared only
 # once over a minute old (_start_guard_rmdir_if_old), never because it looked empty twice.
+# A waiter that finds the guard empty checks its age BEFORE it writes its pid file: the write would touch the guard and keep it
+# young forever (#2613).
 _start_guard_rmdir_if_old() {
   [ -n "$(find "$1" -maxdepth 0 -mmin +1 2> /dev/null)" ] && rmdir "$1" 2> /dev/null
   return 0
@@ -59,7 +61,11 @@ _start_guard_nap() {
 take_over_dead() { # <owner seen dead>
   local guard="$start_lock.takeover" f p dead="" winner=1
   # a held guard is held by a taker that finishes in microseconds, or by a dead one: back off a little, then announce and scan
-  mkdir "$guard" 2> /dev/null || { winner=0; _start_guard_nap; }
+  mkdir "$guard" 2> /dev/null || {
+    winner=0; _start_guard_nap
+    # an empty guard: announcing would touch it and keep it young, so an old one would never clear. Check it, don't write.
+    if [ -z "$(find "$guard" -mindepth 1 -maxdepth 1 2> /dev/null | head -n 1)" ]; then _start_guard_rmdir_if_old "$guard"; return 0; fi
+  }
   : > "$guard/$lane_pid" 2> /dev/null || return 0
   for f in "$guard"/*; do
     p="${f##*/}"
