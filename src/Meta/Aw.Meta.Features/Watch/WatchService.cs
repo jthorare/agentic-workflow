@@ -105,6 +105,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
             // Advisory: a pane or transcript that can't be read leaves usage out of the poll.
             async () => await usage.Check(team, cancellationToken).ConfigureAwait(false))
         {
+            Clock = clock,
             // Advisory: a board write that fails is printed as a WATCH ERROR line; the watch keeps polling and the next move fixes the board.
             // The last poll's pull requests and main, so a change between two runs is reported by the next run's first poll. Keyed by repo: another repo's snapshot is not used.
             Baseline = WatchMemory.Parse(kept, team.Repo, resources),
