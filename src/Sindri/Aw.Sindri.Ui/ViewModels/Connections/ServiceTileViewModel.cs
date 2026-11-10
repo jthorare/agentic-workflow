@@ -5,7 +5,7 @@ namespace Aw.Sindri.Ui.ViewModels.Connections;
 /// <summary>
 /// One service tile on the Connections page (#2537): a service with a real sign-in path. Connect runs it and names the connection itself ('github:work'). A service whose
 /// provider needs a client id asks for it on the tile; Slack has no browser sign-in, so its tile takes a pasted token. Once connected the tile shows the account, last use,
-/// Sign in again and a menu with Disconnect. A failed or cancelled sign-in shows on the tile with Try again. A pasted token goes into one request and is gone.
+/// a status chip and a menu with Reconnect and Disconnect. A failed or cancelled sign-in shows on the tile with Try again. A pasted token goes into one request and is gone.
 /// </summary>
 internal sealed class ServiceTileViewModel : ObservableObject
 {
@@ -19,7 +19,7 @@ internal sealed class ServiceTileViewModel : ObservableObject
     internal ServiceTileViewModel(ServiceTile service, ConnectionActions actions, Func<Task> changed, TimeProvider clock)
     {
         (Service, _actions, _changed, _clock) = (service, actions, changed, clock);
-        Token.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason));
+        Token.PropertyChanged += (_, _) => Raise(nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
     }
 
     /// <summary>The service this tile is for.</summary>
@@ -47,7 +47,7 @@ internal sealed class ServiceTileViewModel : ObservableObject
         set
         {
             field = value ?? string.Empty;
-            Raise(nameof(ClientId), nameof(CanSend), nameof(BlockedReason));
+            Raise(nameof(ClientId), nameof(CanSend), nameof(BlockedReason), nameof(CanPress));
         }
     } = string.Empty;
 
@@ -61,19 +61,16 @@ internal sealed class ServiceTileViewModel : ObservableObject
     public bool IsOffered => _row is null;
 
     /// <summary>True while the tile asks for its input before it connects.</summary>
-    public bool IsAsking { get; private set => Set(ref field, value); }
+    public bool IsAsking { get; private set { Set(ref field, value); RaiseState(); } }
 
     /// <summary>True while a sign-in runs.</summary>
-    public bool IsWorking { get; private set => Set(ref field, value); }
+    public bool IsWorking { get; private set { Set(ref field, value); RaiseState(); } }
 
     /// <summary>True when the connection reads 'connected'.</summary>
     public bool IsConnected => _row is { IsConnected: true };
 
     /// <summary>True when the connection exists but needs a sign-in or reads an error.</summary>
     public bool NeedsAttention => _row is { IsConnected: false };
-
-    /// <summary>True when Connect shows (no connection, nothing running).</summary>
-    public bool ShowConnect => IsOffered && !IsWorking && !HasError;
 
     /// <summary>The connection's name ('github:work'), or empty.</summary>
     public string ConnectionName => _row?.Name ?? string.Empty;
@@ -109,7 +106,7 @@ internal sealed class ServiceTileViewModel : ObservableObject
     public bool HasStatus => StatusText.Length > 0;
 
     /// <summary>Why the last try failed, in words; empty otherwise.</summary>
-    public string ErrorText { get; private set { Set(ref field, value); Raise(nameof(HasError), nameof(ShowConnect)); } } = string.Empty;
+    public string ErrorText { get; private set { Set(ref field, value); Raise(nameof(HasError)); RaiseState(); } } = string.Empty;
 
     /// <summary>True when the last try failed or was cancelled.</summary>
     public bool HasError => ErrorText.Length > 0;
@@ -120,48 +117,65 @@ internal sealed class ServiceTileViewModel : ObservableObject
     /// <summary>The tile's accessible name.</summary>
     public string AccessibleName => IsConnected ? Title + ", connected as " + Account : Title + ", " + (HasError ? ErrorText : Service.Blurb);
 
-#pragma warning disable CA1822, MA0041, IDE0060 // red commit: stubs, replaced by the green commit
     /// <summary>The status chip: Connected, Needs reconnect or Not connected.</summary>
-    public string StatusChip => string.Empty;
+    public string StatusChip => IsConnected ? Labels.TileConnected : NeedsAttention ? Labels.TileNeedsReconnect : Labels.TileNotConnected;
 
     /// <summary>Why the tile needs a reconnect, in words; empty otherwise.</summary>
-    public string ReasonText => string.Empty;
+    public string ReasonText => !NeedsAttention ? string.Empty : _row is { HasReason: true } ? _row.ReasonText : Labels.TileSignInExpired;
 
-    /// <summary>The label of the tile's one primary button; empty when it has none.</summary>
-    public string PrimaryText => string.Empty;
+    /// <summary>True when the tile says why it needs a reconnect.</summary>
+    public bool HasReason => ReasonText.Length > 0;
 
-    /// <summary>True when the primary button can be pressed.</summary>
-    public bool CanPress => false;
+    /// <summary>The label of the tile's one primary button; empty when it has none (a connected tile, or a sign-in running).</summary>
+    public string PrimaryText => IsWorking ? string.Empty : NeedsAttention ? Labels.TileReconnect : IsOffered ? (HasError ? Labels.TryAgain : ConnectText) : string.Empty;
+
+    /// <summary>True when the tile has a primary button.</summary>
+    public bool HasPrimary => PrimaryText.Length > 0;
+
+    /// <summary>True when the primary button can be pressed: while the input is open it waits for the input.</summary>
+    public bool CanPress => !IsWorking && (!IsAsking || CanSend);
 
     /// <summary>The one help line under the input: where the client id or the token comes from.</summary>
-    public string HelpText => string.Empty;
+    public string HelpText => Labels.TileHelp(Id).Line;
 
     /// <summary>The help link's words; empty when the tile has none.</summary>
-    public string HelpLinkText => string.Empty;
+    public string HelpLinkText => Labels.TileHelp(Id).LinkText;
 
     /// <summary>The provider page the help link opens; empty when the tile has none.</summary>
-    public string HelpUrl => string.Empty;
+    public string HelpUrl => Labels.TileHelp(Id).Url;
 
-    /// <summary>True when the menu offers Reconnect.</summary>
-    public bool CanReconnect => false;
+    /// <summary>True when the help link shows.</summary>
+    public bool HasHelpLink => IsAsking && HelpUrl.Length > 0;
+
+    /// <summary>True when the menu offers Reconnect: the connection signs in through a browser.</summary>
+    public bool CanReconnect => _row is { CanSignIn: true };
 
     /// <summary>Opens the provider's page in the browser.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>A task that ends when the system answered.</returns>
-    internal Task OpenHelp(CancellationToken cancellationToken) => throw new NotSupportedException();
+    internal async Task OpenHelp(CancellationToken cancellationToken)
+    {
+        if (Uri.TryCreate(HelpUrl, UriKind.Absolute, out var page))
+        {
+            _ = await _actions.OpenLink(page, cancellationToken).ConfigureAwait(true);
+        }
+    }
 
-    /// <summary>The primary button was pressed.</summary>
+    /// <summary>The primary button was pressed: Reconnect on a tile that needs it, otherwise Connect or Try again.</summary>
     /// <param name="cancellationToken">Cancels the wait.</param>
     /// <returns>A task that ends with the action.</returns>
-    internal Task Primary(CancellationToken cancellationToken) => throw new NotSupportedException();
-#pragma warning restore CA1822, MA0041, IDE0060
+    internal Task Primary(CancellationToken cancellationToken) => NeedsAttention ? SignInAgain(cancellationToken) : Connect(cancellationToken);
+
+    // Everything the chip, the primary button and the menu read from the connection and the input.
+    private void RaiseState() => Raise(nameof(StatusChip), nameof(ReasonText), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(HasHelpLink));
 
     /// <summary>The connection this tile shows, or null: the page sets it on every read.</summary>
     /// <param name="row">The matching row.</param>
     internal void Bind(ConnectionRowViewModel? row)
     {
         _row = row;
-        Raise(nameof(IsOffered), nameof(IsConnected), nameof(NeedsAttention), nameof(ShowConnect), nameof(ConnectionName), nameof(Account), nameof(LastUsedText), nameof(Subtitle), nameof(AccessibleName));
+        Raise(nameof(IsOffered), nameof(IsConnected), nameof(NeedsAttention), nameof(ConnectionName), nameof(Account), nameof(LastUsedText), nameof(Subtitle), nameof(AccessibleName));
+        RaiseState();
     }
 
     /// <summary>Connect or Try again was pressed: asks for the input first when the service needs one, then signs in.</summary>
@@ -188,7 +202,7 @@ internal sealed class ServiceTileViewModel : ObservableObject
         }
 
         IsWorking = true;
-        Raise(nameof(CanSend), nameof(ShowConnect));
+        Raise(nameof(CanSend));
         StatusText = Labels.ConnectionAdding;
         try
         {
@@ -201,7 +215,7 @@ internal sealed class ServiceTileViewModel : ObservableObject
         finally
         {
             (IsWorking, StatusText) = (false, string.Empty);
-            Raise(nameof(CanSend), nameof(ShowConnect), nameof(HasBlockedReason));
+            Raise(nameof(CanSend), nameof(HasBlockedReason));
         }
     }
 

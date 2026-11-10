@@ -49,15 +49,6 @@ internal sealed class ConnectionsText
     /// <summary><see cref="Labels.ConnectionNameLabel"/>.</summary>
     public string NameLabel { get; } = Labels.ConnectionNameLabel;
 
-    /// <summary><see cref="Labels.ConnectionNameHint"/>.</summary>
-    public string NameHint { get; } = Labels.ConnectionNameHint;
-
-    /// <summary><see cref="Labels.ConnectionClientLabel"/>.</summary>
-    public string ClientLabel { get; } = Labels.ConnectionClientLabel;
-
-    /// <summary><see cref="Labels.ConnectionClientSecretLabel"/>.</summary>
-    public string ClientSecretLabel { get; } = Labels.ConnectionClientSecretLabel;
-
     /// <summary><see cref="Labels.ConnectionKeyLabel"/>.</summary>
     public string KeyLabel { get; } = Labels.ConnectionKeyLabel;
 
@@ -72,9 +63,6 @@ internal sealed class ConnectionsText
 
     /// <summary><see cref="Labels.ConnectionAddCancel"/>.</summary>
     public string Cancel { get; } = Labels.ConnectionAddCancel;
-
-    /// <summary><see cref="Labels.ConnectionSlackNote"/>.</summary>
-    public string SlackNote { get; } = Labels.ConnectionSlackNote;
 
     /// <summary><see cref="Labels.ReadingConnection"/>.</summary>
     public string ReadingOne { get; } = Labels.ReadingConnection;
@@ -97,6 +85,6 @@ internal sealed class ConnectionsText
     /// <summary><see cref="Labels.ConnectionKeyLabel"/> for a tile.</summary>
     public string TileTokenLabel { get; } = "Token";
 
-    /// <summary><see cref="Labels.ConnectTile"/>.</summary>
-    public string Connect { get; } = Labels.ConnectTile;
+    /// <summary><see cref="Labels.TileReconnect"/>.</summary>
+    public string Reconnect { get; } = Labels.TileReconnect;
 }

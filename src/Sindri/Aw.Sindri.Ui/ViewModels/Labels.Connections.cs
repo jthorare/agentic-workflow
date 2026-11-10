@@ -176,15 +176,6 @@ internal static partial class Labels
     /// <summary>The form's name label.</summary>
     internal const string ConnectionNameLabel = "Name";
 
-    /// <summary>The form's name hint.</summary>
-    internal const string ConnectionNameHint = "linear:work";
-
-    /// <summary>The OAuth client id label.</summary>
-    internal const string ConnectionClientLabel = "Client id";
-
-    /// <summary>The OAuth client secret label.</summary>
-    internal const string ConnectionClientSecretLabel = "Client secret (only if the provider asks for one)";
-
     /// <summary>The key label.</summary>
     internal const string ConnectionKeyLabel = "Key";
 
@@ -215,9 +206,6 @@ internal static partial class Labels
         ("rest", "A service with a key", "rest"),
         ("cli", "A command-line tool with a key", "cli"),
     ];
-
-    /// <summary>The note for Slack, which has no browser sign-in.</summary>
-    internal const string ConnectionSlackNote = "Slack has no browser sign-in. Choose \"A service with a key\" and paste a user token.";
 
     /// <summary>The sheet's section for the settings Sindri keeps (never a secret).</summary>
     internal const string ConnectionSettings = "Settings";
@@ -294,6 +282,34 @@ internal static partial class Labels
         ("google", "Google", "Calendar", false),
         ("spotify", "Spotify", "Playback", false),
     ];
+
+    /// <summary>The status chip of a connected tile.</summary>
+    internal const string TileConnected = "Connected";
+
+    /// <summary>The status chip of a tile whose sign-in needs doing again.</summary>
+    internal const string TileNeedsReconnect = "Needs reconnect";
+
+    /// <summary>The status chip of a tile with no connection.</summary>
+    internal const string TileNotConnected = "Not connected";
+
+    /// <summary>The reason on a tile that needs a reconnect when Sindri gave none.</summary>
+    internal const string TileSignInExpired = "The sign-in ran out.";
+
+    /// <summary>The primary button of a tile that needs a reconnect, and the menu's item.</summary>
+    internal const string TileReconnect = "Reconnect";
+
+    /// <summary>The help under a tile's input: one line, and a link to the provider's page where the client id is made.</summary>
+    /// <param name="id">The tile's service id.</param>
+    /// <returns>The line, the link's words and the link; the link is empty when there is none.</returns>
+    internal static (string Line, string LinkText, string Url) TileHelp(string id) => id switch
+    {
+        "github" => ("Create an OAuth app in GitHub, then paste its client id here.", "Open GitHub's OAuth apps", "https://github.com/settings/developers"),
+        "linear" => ("Create an OAuth app in Linear, then paste its client id here.", "Open Linear's API settings", "https://linear.app/settings/api"),
+        "google" => ("Create an OAuth client in Google, then paste its client id here.", "Open Google's credentials page", "https://console.cloud.google.com/apis/credentials"),
+        "spotify" => ("Create an app in Spotify, then paste its client id here.", "Open Spotify's developer dashboard", "https://developer.spotify.com/dashboard"),
+        "slack" => ("In Slack, open your app's OAuth & Permissions page and copy the user token.", string.Empty, string.Empty),
+        _ => (string.Empty, string.Empty, string.Empty),
+    };
 
     /// <summary>The custom connection link's hint.</summary>
     internal const string ConnectionOthers = "Other connections";

@@ -9,7 +9,7 @@
        chips and actions. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
   <StackPanel x:Name="ConnectionsRoot" Spacing="{StaticResource Size.PanelGap}">
     <Grid x:Name="ConnectionsHeadRegion" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-      <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+      <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}" VerticalAlignment="Center">
         <TextBlock Classes="page-title" Text="{Binding Text.Title}" AutomationProperties.Name="{Binding Text.Title}" />
         <Border x:Name="ConnectionsHeadName" AutomationProperties.Name="{Binding HeadName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" VerticalAlignment="Center">
           <TextBlock x:Name="ConnectionsHead" Classes="caption subtle" Text="{Binding Head}" AutomationProperties.AccessibilityView="Raw" />
@@ -23,7 +23,7 @@
 
     <ItemsControl x:Name="ConnectionTiles" ItemsSource="{Binding Tiles}">
       <ItemsControl.ItemsPanel>
-        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+        <ItemsPanelTemplate><WrapPanel ItemSpacing="{StaticResource Space.SM}" LineSpacing="{StaticResource Space.SM}" /></ItemsPanelTemplate>
       </ItemsControl.ItemsPanel>
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="cb:ServiceTileViewModel">
@@ -34,7 +34,7 @@
 
     <cv:AddConnectionForm x:Name="ConnectionsAddForm" DataContext="{Binding Add}" />
 
-    <StackPanel x:Name="ConnectionsStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsStale}">
+    <StackPanel x:Name="ConnectionsStale" Orientation="Horizontal" Spacing="{StaticResource Space.XXS}" IsVisible="{Binding IsStale}">
       <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
       <TextBlock Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
     </StackPanel>
@@ -47,7 +47,7 @@
         <Border x:Name="ConnectionsUnreadableName" Margin="16,8" IsVisible="{Binding IsUnreadable}" AutomationProperties.Name="{Binding Text.Unreadable}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption quiet" Text="{Binding Text.Unreadable}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <StackPanel x:Name="ConnectionsFailed" Margin="16,8" Spacing="8" IsVisible="{Binding ShowRetry}">
+        <StackPanel x:Name="ConnectionsFailed" Margin="16,8" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowRetry}">
           <Border x:Name="ConnectionsFailedName" AutomationProperties.Name="{Binding FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption quiet" Text="{Binding FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>

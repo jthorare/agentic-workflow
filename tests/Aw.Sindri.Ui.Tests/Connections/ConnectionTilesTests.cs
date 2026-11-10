@@ -98,7 +98,7 @@ public sealed class ConnectionTilesTests
         await _f.Drive(tile.Connect(Token));
 
         Assert.True(tile.HasError);
-        Assert.False(tile.ShowConnect);
+        Assert.Equal("Try again", tile.PrimaryText);
         Assert.False(page.Tiles.Single(t => t.Id == "linear").HasError);
     }
 
@@ -144,6 +144,6 @@ public sealed class ConnectionTilesTests
         await tile.Disconnect(Token);
 
         Assert.False(tile.IsConnected);
-        Assert.True(tile.ShowConnect);
+        Assert.Equal("Connect", tile.PrimaryText);
     }
 }

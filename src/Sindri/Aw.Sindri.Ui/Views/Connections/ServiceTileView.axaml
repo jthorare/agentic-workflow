@@ -3,42 +3,47 @@
              xmlns:cb="using:Aw.Sindri.Ui.ViewModels.Connections"
              x:Class="Aw.Sindri.Ui.Views.Connections.ServiceTileView"
              x:DataType="cb:ServiceTileViewModel">
-  <!-- One service tile (#2537): the service, what Connect does, and Connect. Connected, it shows the account, last use, Sign in again and a menu with Disconnect. A service that needs
-       a client id or a token asks for it on the tile, with the reason Connect waits. A failed or cancelled sign-in shows here with Try again. Hover and pressed come from the shared classes. -->
-  <Border x:Name="ServiceTileFrame" Classes="card" Width="260" Margin="0,0,12,12" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
-    <StackPanel Spacing="8">
+  <!-- One service tile (#2537): the service, a status chip, and ONE primary button (Connect, Add token, Try again or Reconnect; a connected tile has none). Connected, it shows the account
+       and the last use, with a menu for Reconnect and Disconnect. A service that needs a client id or a token asks for it on the tile, with one help line, a link to the provider's page and
+       the reason the button waits. A failed or cancelled sign-in shows here. Hover and pressed come from the shared clickable class. -->
+  <UserControl.Styles>
+    <Style Selector="TextBlock.tile-chip.ok"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="TextBlock.tile-chip.attention"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+  </UserControl.Styles>
+  <Border x:Name="ServiceTileFrame" Classes="card clickable" Width="260" AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+    <StackPanel Spacing="{StaticResource Space.XS}">
       <Grid ColumnDefinitions="*,Auto">
         <TextBlock Classes="body-strong" Text="{Binding Title}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
         <Button x:Name="ServiceTileMenu" Grid.Column="1" Classes="command-control" Content="⋯" IsVisible="{Binding !IsOffered}" AutomationProperties.Name="{Binding Text.More}">
           <Button.Flyout>
             <MenuFlyout Placement="BottomEdgeAlignedRight">
+              <MenuItem x:Name="ServiceTileReconnect" Header="{Binding Text.Reconnect}" IsVisible="{Binding CanReconnect}" Click="OnSignIn" />
               <MenuItem x:Name="ServiceTileDisconnect" Header="{Binding Text.Disconnect}" Click="OnDisconnect" />
             </MenuFlyout>
           </Button.Flyout>
         </Button>
       </Grid>
+      <Border x:Name="ServiceTileChip" AutomationProperties.Name="{Binding StatusChip}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" HorizontalAlignment="Left">
+        <TextBlock Classes="caption tile-chip" Classes.ok="{Binding IsConnected}" Classes.attention="{Binding NeedsAttention}" Text="{Binding StatusChip}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
       <TextBlock Classes="caption subtle" Text="{Binding Subtitle}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       <TextBlock x:Name="ServiceTileLastUsed" Classes="caption subtle" Text="{Binding LastUsedText}" IsVisible="{Binding IsConnected}" AutomationProperties.AccessibilityView="Raw" />
-      <TextBlock x:Name="ServiceTileAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="Needs sign-in" IsVisible="{Binding NeedsAttention}" />
+      <TextBlock x:Name="ServiceTileAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding ReasonText}" IsVisible="{Binding HasReason}" TextWrapping="Wrap" />
 
-      <StackPanel x:Name="ServiceTileInput" Spacing="6" IsVisible="{Binding IsAsking}">
+      <StackPanel x:Name="ServiceTileInput" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsAsking}">
         <TextBox x:Name="ServiceTileClientId" Text="{Binding ClientId, Mode=TwoWay}" PlaceholderText="{Binding Text.TileClientLabel}" IsVisible="{Binding NeedsClientId}" AutomationProperties.Name="{Binding Text.TileClientLabel}" />
         <TextBox x:Name="ServiceTileToken" PasswordChar="●" Text="{Binding Token.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileTokenLabel}" IsVisible="{Binding TakesToken}" AutomationProperties.Name="{Binding Text.TileTokenLabel}" />
+        <TextBlock x:Name="ServiceTileHelp" Classes="caption subtle" Text="{Binding HelpText}" TextWrapping="Wrap" />
+        <Button x:Name="ServiceTileHelpLink" Classes="link" Content="{Binding HelpLinkText}" IsVisible="{Binding HasHelpLink}" Click="OnHelp" HorizontalAlignment="Left" />
         <TextBlock x:Name="ServiceTileReason" Classes="caption subtle" Text="{Binding BlockedReason}" IsVisible="{Binding HasBlockedReason}" TextWrapping="Wrap" />
-        <StackPanel Orientation="Horizontal" Spacing="8">
-          <Button x:Name="ServiceTileSend" Classes="command-control primary" Content="{Binding Text.Connect}" IsEnabled="{Binding CanSend}" Click="OnConnect" ToolTip.Tip="{Binding BlockedReason}" />
-          <Button x:Name="ServiceTileCancel" Classes="command-control" Content="{Binding Text.Cancel}" Click="OnCancel" />
-        </StackPanel>
       </StackPanel>
 
       <TextBlock x:Name="ServiceTileStatus" Classes="caption" Text="{Binding StatusText}" IsVisible="{Binding HasStatus}" TextWrapping="Wrap" />
       <TextBlock x:Name="ServiceTileError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
 
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <Button x:Name="ServiceTileConnect" Classes="command-control primary" Content="{Binding ConnectText}" IsVisible="{Binding ShowConnect}" Click="OnConnect" IsEnabled="{Binding !IsAsking}" />
-        <Button x:Name="ServiceTileRetry" Classes="command-control" Content="{Binding Text.TryAgain}" IsVisible="{Binding HasError}" Click="OnConnect" />
-        <Button x:Name="ServiceTileSignIn" Classes="command-control" Content="{Binding Text.SignIn}" IsVisible="{Binding IsConnected}" Click="OnSignIn" />
-        <Button x:Name="ServiceTileFix" Classes="command-control primary" Content="{Binding Text.SignIn}" IsVisible="{Binding NeedsAttention}" Click="OnSignIn" />
+      <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+        <Button x:Name="ServiceTilePrimary" Classes="command-control primary" Content="{Binding PrimaryText}" IsVisible="{Binding HasPrimary}" IsEnabled="{Binding CanPress}" Click="OnPrimary" ToolTip.Tip="{Binding BlockedReason}" />
+        <Button x:Name="ServiceTileCancel" Classes="link" Content="{Binding Text.Cancel}" IsVisible="{Binding IsAsking}" Click="OnCancel" />
       </StackPanel>
     </StackPanel>
   </Border>

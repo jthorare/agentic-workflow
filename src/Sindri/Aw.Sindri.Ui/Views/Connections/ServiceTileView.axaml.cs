@@ -15,7 +15,9 @@ internal sealed partial class ServiceTileView : UserControl
 
     private ServiceTileViewModel? Tile => DataContext as ServiceTileViewModel;
 
-    private void OnConnect(object? sender, RoutedEventArgs e) => _ = Tile?.Connect(CancellationToken.None);
+    private void OnPrimary(object? sender, RoutedEventArgs e) => _ = Tile?.Primary(CancellationToken.None);
+
+    private void OnHelp(object? sender, RoutedEventArgs e) => _ = Tile?.OpenHelp(CancellationToken.None);
 
     private void OnCancel(object? sender, RoutedEventArgs e) => Tile?.Cancel();
 
