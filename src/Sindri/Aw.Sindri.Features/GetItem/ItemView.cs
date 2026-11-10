@@ -23,7 +23,7 @@ namespace Aw.Sindri.Features.GetItem;
 /// <param name="UpdatedAt">When it last changed.</param>
 /// <param name="Body">Its body, scrubbed (only here: never on a list row or a public event).</param>
 /// <param name="Link">The tracker record it is linked to, or null.</param>
-/// <param name="Runs">The workflow runs linked to it (ids, as 'sindri:run/&lt;id&gt;' links hold them), newest first; empty when it has none or the links can't be read.</param>
+/// <param name="Runs">The workflow runs linked to it (ids, as 'sindri:run/&lt;id&gt;' links hold them), newest first; empty when it has none. An unreadable 'item-links' view fails the read instead.</param>
 /// <param name="Launch">What the app may offer to open, attach or resume (UI spec E-2), from projections only.</param>
 /// <param name="AsOf">How fresh the answer is.</param>
 public sealed record ItemView(

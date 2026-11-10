@@ -1,6 +1,7 @@
 using Aw.Kernel;
-using Aw.Kernel.Testing;
 using Aw.Kernel.Ids;
+using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
@@ -103,6 +104,38 @@ public sealed class GetItemTests
         var item = (await Service().Handle(A.GetItemRequest().WithItem(ItemRef.To(ItemQueryHarness.Id('1'))).Build(), ItemQueryHarness.Token)).Value;
 
         Assert.Empty(item.Runs);
+    }
+
+    [Fact]
+    public async Task Item_read_fails_when_the_item_links_view_is_unreadable()
+    {
+        await _q.Item('1', "Ship it");
+        using var entered = _q.Human();
+        var service = new GetItemService(new ViewItemResolver(_q.Views.Views), _q.Views.Progress, _q.Views.Slice.Callers, new EmptyLaunchSource(), new LinksUnreadable(_q.Views.Views));
+
+        var result = await service.Handle(A.GetItemRequest().WithItem(ItemRef.To(ItemQueryHarness.Id('1'))).Build(), ItemQueryHarness.Token);
+
+        Assert.True(result.IsError);   // never an empty Runs: an agent can't tell "no runs" from "views broken"
+    }
+
+    /// <summary>The real reader for every view but 'item-links', whose reads fail.</summary>
+    private sealed class LinksUnreadable(IViewReader inner) : IViewReader
+    {
+        private static Result<T> Fail<T>() => SindriErrors.ViewsStalled.With("item-links can't be read (fixture)");
+
+        public ValueTask<Result<TRow?>> Get<TRow>(string view, string key, CancellationToken cancellationToken)
+            where TRow : class => view == ViewNames.ItemLinks ? ValueTask.FromResult(Fail<TRow?>()) : inner.Get<TRow>(view, key, cancellationToken);
+
+        public ValueTask<Result<IReadOnlyList<TRow>>> List<TRow>(string view, CancellationToken cancellationToken)
+            where TRow : class => view == ViewNames.ItemLinks ? ValueTask.FromResult(Fail<IReadOnlyList<TRow>>()) : inner.List<TRow>(view, cancellationToken);
+
+        public ValueTask<Result<IReadOnlyList<TRow>>> Range<TRow>(string view, string afterKey, string? beforeKey, int max, CancellationToken cancellationToken)
+            where TRow : class => view == ViewNames.ItemLinks ? ValueTask.FromResult(Fail<IReadOnlyList<TRow>>()) : inner.Range<TRow>(view, afterKey, beforeKey, max, cancellationToken);
+
+        public ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
+            where TRow : class => view == ViewNames.ItemLinks ? ValueTask.FromResult(Fail<IReadOnlyList<TRow>>()) : inner.Where<TRow>(view, column, value, cancellationToken);
+
+        public ValueTask<Result<ProjectorState?>> State(CancellationToken cancellationToken) => inner.State(cancellationToken);
     }
 
     private async Task Link(char digit, string record) =>
