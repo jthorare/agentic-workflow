@@ -43,9 +43,9 @@ public sealed class StatusChipTests
             return (drawnColours, tokens, chip.CornerRadius, chip.Bounds.Height, chip.BorderThickness);
         });
 
-        Assert.NotNull(expected.Item1);
-        Assert.NotNull(expected.Item2);
-        Assert.NotNull(expected.Item3);
+        _ = Assert.NotNull(expected.Item1);
+        _ = Assert.NotNull(expected.Item2);
+        _ = Assert.NotNull(expected.Item3);
         Assert.Equal(expected, drawn);
         Assert.Equal(new CornerRadius(4), radius);
         Assert.Equal(20, height);
