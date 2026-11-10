@@ -130,7 +130,8 @@ A lane queues a pull request with exactly `ready #N <sha>` on the **first line**
    alone and on plain main, and records `flake` or `real`. Only `real` reds go back to the lane.
 4. `aw-meta merge-check N` again (the PR head and main must not have moved since the gate), then `aw-meta merge-run N`.
 5. Send nothing about main moving: `merge-run` recorded the new sha and the PR on the board, and each lane's prompt hook
-   shows it once. `merge-run` has already swept that PR's worktrees (its
+   shows it once, on its next prompt or tool call. A lane that is waiting on that merge (to restack, say) still gets a direct
+   message. `merge-run` has already swept that PR's worktrees (its
    branch's and its gate trees); the `WORKTREES …` line it printed says what was removed and what was kept and why. A kept
    one is not an error: it has work, a process or an unpushed commit in it, and nothing removes it by age.
 

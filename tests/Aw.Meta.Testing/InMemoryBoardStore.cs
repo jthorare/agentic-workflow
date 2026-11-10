@@ -12,7 +12,10 @@ public sealed class InMemoryBoardStore : IBoardStore
     /// <inheritdoc />
     public ValueTask<Result<Unit>> RecordMain(string sha, IReadOnlyList<int> mergedPrs, DateTimeOffset at, CancellationToken cancellationToken)
     {
-        _board = new BoardFacts(sha, [.. mergedPrs], at, (_board?.Version ?? 0) + 1);
+        // The same sha again (merge-run, then the watch seeing main move) is not a new move: same version, the pull requests joined.
+        _board = _board is { } same && string.Equals(same.MainSha, sha, StringComparison.Ordinal)
+            ? same with { MergedPrs = [.. same.MergedPrs.Union(mergedPrs)] }
+            : new BoardFacts(sha, [.. mergedPrs], at, (_board?.Version ?? 0) + 1);
         return Done.Unit();
     }
 

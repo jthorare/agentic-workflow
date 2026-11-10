@@ -18,9 +18,12 @@ internal sealed class SqliteBoardStore(IKeyValueStore values) : IBoardStore
             return current.Error;
         }
 
-        var version = (current.Value?.Version ?? 0) + 1;
-        var prs = string.Join(',', mergedPrs.Select(pr => pr.ToString(CultureInfo.InvariantCulture)));
-        var text = string.Create(CultureInfo.InvariantCulture, $"{version}|{sha}|{at.UtcTicks}|{prs}");
+        // The same sha again (merge-run, then the watch seeing main move) is not a new move: it keeps the version, so no lane sees a second line, and joins the pull requests.
+        var facts = current.Value is { } board && string.Equals(board.MainSha, sha, StringComparison.Ordinal)
+            ? board with { MergedPrs = [.. board.MergedPrs.Union(mergedPrs)] }
+            : new BoardFacts(sha, mergedPrs, at, (current.Value?.Version ?? 0) + 1);
+        var prs = string.Join(',', facts.MergedPrs.Select(pr => pr.ToString(CultureInfo.InvariantCulture)));
+        var text = string.Create(CultureInfo.InvariantCulture, $"{facts.Version}|{facts.MainSha}|{facts.At.UtcTicks}|{prs}");
         return await values.Set(KvKeys.BoardMain, text, cancellationToken).ConfigureAwait(false);
     }
 
@@ -65,7 +68,8 @@ internal sealed class SqliteBoardStore(IKeyValueStore values) : IBoardStore
             return null;
         }
 
-        var prs = parts[3].Length == 0 ? [] : parts[3].Split(',').Select(p => int.Parse(p, NumberStyles.None, CultureInfo.InvariantCulture)).ToList();
+        // A bad entry (a hand edit, a half write) is skipped, not an error.
+        var prs = parts[3].Split(',').Where(p => int.TryParse(p, NumberStyles.None, CultureInfo.InvariantCulture, out _)).Select(p => int.Parse(p, NumberStyles.None, CultureInfo.InvariantCulture)).ToList();
         return new BoardFacts(parts[1], prs, new DateTimeOffset(ticks, TimeSpan.Zero), version);
     }
 }
