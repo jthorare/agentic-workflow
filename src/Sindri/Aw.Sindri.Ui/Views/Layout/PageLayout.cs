@@ -63,6 +63,13 @@ internal static class PageLayout
         return widths;
     }
 
+    /// <summary>The six column widths for a table width. Red stub: the real rule follows.</summary>
+    /// <param name="width">The table's width.</param>
+    /// <param name="hasRepo">False when no shown row has a repo.</param>
+    /// <param name="hasAction">False when no shown row has an action.</param>
+    /// <returns>The widths.</returns>
+    internal static double[] Widths(double width, bool hasRepo, bool hasAction) => Widths(For(width), hasRepo && hasAction);
+
     /// <summary>The class a page region of this width has.</summary>
     /// <param name="width">The page region's width.</param>
     /// <returns>The tier.</returns>

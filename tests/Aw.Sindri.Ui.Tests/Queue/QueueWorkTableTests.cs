@@ -71,7 +71,7 @@ public sealed class QueueWorkTableTests
 
         Assert.False(none.ShowsClosed);
         Assert.True(some.ShowsClosed);
-        Assert.Equal("Closed (3)", some.ClosedHeader);
+        Assert.Equal(("Closed 3", "3"), (some.ClosedHeader, some.ClosedCount));
     }
 
     [Fact]
@@ -105,30 +105,35 @@ public sealed class QueueWorkTableTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
-    public void Age_is_kept_at_every_width_with_or_without_a_repo_column(int tierIndex)
+    [InlineData(400)]
+    [InlineData(700)]
+    [InlineData(950)]
+    [InlineData(1400)]
+    public void Age_is_kept_at_every_width_with_or_without_a_repo_column(int width)
     {
-        var tier = (PageTier)tierIndex;
-        Assert.True(PageLayout.Widths(tier, hasRepo: true)[4] > 0);
-        Assert.True(PageLayout.Widths(tier, hasRepo: false)[4] > 0);
+        Assert.True(PageLayout.Widths(width, hasRepo: true, hasAction: true)[4] > 0);
+        Assert.True(PageLayout.Widths(width, hasRepo: false, hasAction: false)[4] > 0);
     }
 
     [Fact]
-    public void Narrower_pages_drop_the_empty_column_then_stage_then_repo()
+    public void Stage_stays_while_the_columns_fit_the_table_width()
     {
-        Assert.Equal(0, PageLayout.Widths(PageTier.Wide, hasRepo: false)[1]);
-        Assert.True(PageLayout.Widths(PageTier.Wide, hasRepo: true)[1] > 0);
-        Assert.True(PageLayout.Widths(PageTier.Wide, hasRepo: true)[3] > 0);
+        // 160 (title) + 130 (status) + 110 (stage) + 70 (age) + 260 (action) = 730: a 950 px table has room for all of them.
+        Assert.True(PageLayout.Widths(950, hasRepo: false, hasAction: true)[3] > 0);
+        // With no row offering an action there is no action column at all.
+        Assert.Equal(0d, PageLayout.Widths(950, hasRepo: false, hasAction: false)[5]);
+    }
 
-        var mid = PageLayout.Widths(PageTier.Mid, hasRepo: true);
-        Assert.True(mid[1] > 0);
-        Assert.Equal(0d, mid[3]);
+    [Fact]
+    public void A_table_too_narrow_drops_the_empty_repo_first_then_stage_then_repo_and_never_age()
+    {
+        Assert.Equal(0d, PageLayout.Widths(1400, hasRepo: false, hasAction: true)[1]);
+        Assert.True(PageLayout.Widths(1400, hasRepo: true, hasAction: true)[1] > 0);
 
-        var narrow = PageLayout.Widths(PageTier.Narrow, hasRepo: true);
-        Assert.Equal(0d, narrow[1]);
-        Assert.Equal(0d, narrow[3]);
+        var tight = PageLayout.Widths(800, hasRepo: true, hasAction: true);   // 160+150+130+110+70+260 = 880 > 800: Stage goes, 770 fits
+        Assert.Equal((true, 0d), (tight[1] > 0, tight[3]));
+
+        var tighter = PageLayout.Widths(700, hasRepo: true, hasAction: true);   // 770 > 700: Repo goes too
+        Assert.Equal((0d, 0d, true), (tighter[1], tighter[3], tighter[4] > 0));
     }
 }

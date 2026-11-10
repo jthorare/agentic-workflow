@@ -1,3 +1,5 @@
+using Avalonia.Layout;
+using Avalonia;
 using System.Text.RegularExpressions;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -42,15 +44,35 @@ public sealed partial class QueueWorkTableWidthTests : FrameHost
         Frame(window, "work-table-1280");
     });
 
+    // #2551 qa: at 1000 px Stage was dropped while ~270 px of the table sat empty. The drop follows the room the columns need, not the window's width.
     [Fact]
-    public Task At_1000_px_stage_goes_before_age_and_age_is_right_aligned_and_muted() => OnUi(async () =>
+    public Task At_1000_px_stage_stays_when_there_is_room_and_age_is_right_aligned_and_muted() => OnUi(async () =>
     {
-        var (window, header) = await Table(1000);   // the fixture's rows have repos, so Repo stays
+        Server.QueueView = NoRepos();
+        var (window, header) = await Table(1000);
 
-        Assert.Equal(["Title", "Repo", "Status", "Age"], Shown(header), StringComparer.Ordinal);
+        Assert.Equal(["Title", "Status", "Stage", "Age"], Shown(header), StringComparer.Ordinal);
         var age = window.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "AgeText" && t.IsEffectivelyVisible);
         Assert.Equal(TextAlignment.Right, age.TextAlignment);
         Assert.Contains("subtle", age.Classes, StringComparer.Ordinal);
         Frame(window, "work-table-1000");
+    });
+
+    // #2551 qa: Age's header was left-aligned while its values were right-aligned: the header's right edge is the values'.
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(1280)]
+    public Task Age_header_and_values_share_their_right_edge_at(int width) => OnUi(async () =>
+    {
+        Server.QueueView = NoRepos();
+        var (window, header) = await Table(width);
+
+        var head = header.Children.OfType<TextBlock>().First(t => string.Equals(t.Text, "Age", StringComparison.Ordinal));
+        var value = window.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "AgeText" && t.IsEffectivelyVisible);
+        var headEdge = head.TranslatePoint(new Point(head.Bounds.Width, 0), window)!.Value.X;
+        var valueEdge = value.TranslatePoint(new Point(value.Bounds.Width, 0), window)!.Value.X;
+        Assert.InRange(Math.Abs(headEdge - valueEdge), 0, 1);
+        Assert.Equal(HorizontalAlignment.Right, head.HorizontalAlignment);
+        Assert.Equal(HorizontalAlignment.Right, value.HorizontalAlignment);
     });
 }

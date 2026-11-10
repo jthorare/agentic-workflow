@@ -22,6 +22,9 @@ internal sealed partial class QueueViewModel
     // The queue's size when the closed items were last read: a refresh that finds another size reads them again.
     private int _closedTotal = -1;
 
+    /// <summary>The closed count shown beside the label. Red stub.</summary>
+    public string ClosedCount { get; private set => Set(ref field, value); } = string.Empty;
+
     /// <summary>The closed items, newest first; they carry no actions.</summary>
     public ObservableCollection<ItemRowViewModel> ClosedRows { get; } = [];
 
