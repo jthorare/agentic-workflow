@@ -13,7 +13,7 @@
     <Style Selector="TextBlock.dot.working"><Setter Property="Foreground" Value="{DynamicResource Brush.Success}" /></Style>
     <Style Selector="TextBlock.dot.waiting"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
   </UserControl.Styles>
-  <Border x:Name="SessionRowFrame" Classes="item-row session-row" Classes.selected="{Binding IsSelected}" Focusable="True"
+  <Border x:Name="SessionRowFrame" Classes="item-row session-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <!-- The columns are one definition with the header's: the Auto ones are shared size groups under the page's scope, so a value starts where its head does, and a column nobody shows is zero wide (#2553). -->
     <Grid x:Name="SessionRowGrid" MinHeight="{StaticResource Size.Row}" VerticalAlignment="Center">

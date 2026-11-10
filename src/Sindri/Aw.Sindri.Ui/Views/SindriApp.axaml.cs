@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.Theme;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Settings;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -95,7 +96,12 @@ public sealed partial class SindriApp : Application, IDisposable
 
 #pragma warning restore CA2000
     /// <inheritdoc />
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        // Before the theme loads: the slide-in rows key-frame RenderTransform, which Avalonia 12 has no animator for (#2535).
+        TransformKeyFrames.Register();
+        AvaloniaXamlLoader.Load(this);
+    }
 
     /// <inheritdoc />
     public override void OnFrameworkInitializationCompleted()

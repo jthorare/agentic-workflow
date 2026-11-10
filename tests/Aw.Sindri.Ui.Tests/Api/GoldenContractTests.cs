@@ -139,6 +139,7 @@ public sealed class GoldenContractTests
         ["connections"] = As<ConnectionList>,   // GET /sindri/connections; the added-* scenarios are POST's ConnectionAdded (_readByScenario)
         ["connections-id"] = As<ConnectionOne>,   // GET /sindri/connections/{name}; removed is DELETE's ConnectionRemoved (_readByScenario)
         ["connections-id-test"] = As<ConnectionTested>,   // POST /sindri/connections/{name}/test
+        ["connections-id-rename"] = As<ConnectionRenamed>,   // POST /sindri/connections/{name}/rename (the Rename action)
         ["connections-id-signin"] = As<ConnectionAdded>,   // POST /sindri/connections/{name}/signin (the Sign in again action)
         ["memories"] = As<MemoryList>,   // GET /sindri/memories; created is POST's MemoryCreated (_readByScenario)
         ["memories-id-search"] = As<MemorySearchView>,   // GET /sindri/memories/{name}/search

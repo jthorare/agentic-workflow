@@ -1,6 +1,7 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Kernel;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Core.Setup;
@@ -8,13 +9,14 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Features.SetupSources;
 
 /// <summary>
-/// What the sources step reads: the github, slack and linear sources the approved profile names (linear once it names a token, a url or a team), and whether each token pointer resolves, decided by
-/// <see cref="SourceTokens"/> as doctor does. A read; no source is called and no token value is kept.
+/// What the sources step reads: the github, slack and linear sources the approved profile names (linear once it names a token, a url or a team), and whether each reads with a connected connection of its
+/// preset on the Connections page or else its token pointer resolves (decided by <see cref="SourceTokens"/>), the feeds' order since #2508, as doctor does. A read; no source is called and no token value is kept.
 /// </summary>
 /// <param name="approvals">The approved profile.</param>
 /// <param name="engine">The context engine, which checks the profile's context section.</param>
 /// <param name="secrets">Resolves a token pointer.</param>
-internal sealed class SourcesSetupReader(IApprovedProfile approvals, IContextEngine engine, ISecretPointers secrets)
+/// <param name="credentials">The feeds' token order (#2508): a connected connection of the preset first.</param>
+internal sealed class SourcesSetupReader(IApprovedProfile approvals, IContextEngine engine, ISecretPointers secrets, IConnectionCredentials credentials)
 {
     internal async ValueTask<Result<SourcesFact>> Read(CancellationToken cancellationToken)
     {
@@ -59,7 +61,7 @@ internal sealed class SourcesSetupReader(IApprovedProfile approvals, IContextEng
         return new SourcesFact(lines.Count) { Items = new SetupItems(lines) };
     }
 
-    private SetupItem Line(string source, string? pointer) => SourceTokens.Connected(pointer, secrets)
+    private SetupItem Line(string source, string? pointer) => credentials.TokenFor(source, profilePointer: null) is not null || SourceTokens.Connected(pointer, secrets)
         ? new SetupItem(source, SetupState.Done, "connected")
         : new SetupItem(source, SetupState.Todo, "needs token");
 }

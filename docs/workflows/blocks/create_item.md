@@ -12,6 +12,7 @@ Makes a work item through the same create-item handler as `sindri item add` and 
 | Output | Type | Meaning |
 |---|---|---|
 | `itemId` | string | The new item's id. |
+| `warning` | string, only when set | The item was made, but a write after it failed (its link to the run, or the run store's record of it). The node still succeeds, so nothing retries it into a second item; issue 2588 repairs the link. |
 
 Inside a `for_each`, every pass makes an item, but the run is linked to the first one made; later items keep their own ids in the node outputs.
 

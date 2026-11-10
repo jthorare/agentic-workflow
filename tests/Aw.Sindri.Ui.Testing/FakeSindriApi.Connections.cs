@@ -213,6 +213,40 @@ internal sealed partial class FakeSindriApi
         }
     }
 
+    public Task<Result<ConnectionRenamed>> RenameConnection(Uri api, string name, RenameConnectionBody body, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        Record("rename " + name + " " + body.Label);
+        if (NotReceived<ConnectionRenamed>(api) is { } unanswered)
+        {
+            return Task.FromResult(unanswered);
+        }
+
+        lock (_gate)
+        {
+            if (ConnectionWriteError is { } error)
+            {
+                return Task.FromResult<Result<ConnectionRenamed>>(error);
+            }
+
+            if (!_connections.TryGetValue(name, out var found))
+            {
+                return Task.FromResult<Result<ConnectionRenamed>>(NoConnection(name));
+            }
+
+            var service = name[..name.IndexOf(':', StringComparison.Ordinal)];
+            var renamed = service + ":" + body.Label;
+            if (_connections.ContainsKey(renamed))
+            {
+                return Task.FromResult<Result<ConnectionRenamed>>(new Error("SND-CONN-010", ErrorKind.Conflict, $"a connection named {renamed} already exists"));
+            }
+
+            _ = _connections.Remove(name);
+            _connections[renamed] = found with { Name = renamed };
+            return Task.FromResult<Result<ConnectionRenamed>>(new ConnectionRenamed(renamed, name, found.HasSecret));
+        }
+    }
+
     public Task<Result<ConnectionRemoved>> RemoveConnection(Uri api, string name, CancellationToken cancellationToken)
     {
         Record("remove " + name);
