@@ -35,13 +35,20 @@ public sealed class DetachedWaiterLauncherTests
         Assert.Contains("--detach needs the published aw-meta binary", result.Error.Message, StringComparison.Ordinal);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_path_that_only_contains_dotnet_is_not_taken_for_the_dotnet_host()
+    {
+        var launcher = new DetachedWaiterLauncher(() => "/bin/true", () => "/home/x/.dotnet-tools/aw-meta");
+
+        var result = await launcher.Start(["aw-meta", "lane-recycle", "meta", "--wait-idle"], TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+    }
+
     [Fact, Trait("Lane", "integration")]
     public async Task The_real_launcher_starts_the_command_in_its_own_session()
     {
-        if (!OperatingSystem.IsLinux() || (!File.Exists("/usr/bin/setsid") && !File.Exists("/bin/setsid")))
-        {
-            return;
-        }
+        Assert.SkipUnless(OperatingSystem.IsLinux() && (File.Exists("/usr/bin/setsid") || File.Exists("/bin/setsid")), "Linux with setsid only");
 
         var result = await new DetachedWaiterLauncher().Start(["sleep", "30"], TestContext.Current.CancellationToken);
 

@@ -98,6 +98,7 @@ internal sealed class RecycleWaiter(IWaiterLauncher launcher, ILaneFiles files, 
     }
 
     /// <summary>The guard refused at the start of the waiter: logs why (nothing else shows it, the waiter's output goes to /dev/null) and clears the lane's waiter record, which the waiter's own exit path never reaches.</summary>
+    // Clears the record because only the detached waiter runs --wait-idle; a hand-run --wait-idle would clear a live waiter's record.
     internal async ValueTask<Error> RefusedAtStart(string lane, Error error, CancellationToken cancellationToken)
     {
         var failed = await Failed(lane, error, cancellationToken).ConfigureAwait(false);

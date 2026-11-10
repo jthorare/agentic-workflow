@@ -82,7 +82,7 @@ internal sealed class DetachedWaiterLauncher(Func<string?> setsidLocator, Func<s
         var self = selfLocator();
         return self is { Length: > 0 } && !string.Equals(Path.GetFileNameWithoutExtension(self), "dotnet", StringComparison.Ordinal)
             ? self
-            : MetaErrors.CommandNotStarted.With("--detach needs the published aw-meta binary (this is dotnet run)");
+            : MetaErrors.CommandNotStarted.With("--detach needs the published aw-meta binary (this is dotnet run): run the installed aw-meta, or recycle the meta by hand");
     }
 
     private static string? FindOnPath(string name) =>
