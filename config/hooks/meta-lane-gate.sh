@@ -156,7 +156,7 @@ case "$EVENT" in
     if [ -n "$OUT" ]; then
       unlink "$REPLIED" 2> /dev/null; unlink "$OWED" 2> /dev/null   # new mail: the next reply is a new one, even if its text repeats
     fi
-    if [ -n "$BOARD" ]; then OUT="${OUT:+$OUT$'\n'}$BOARD"; fi
+    if [ -n "$BOARD" ] && [ -n "$OUT" ]; then OUT="$OUT"$'\n'"$BOARD"; elif [ -n "$BOARD" ]; then OUT="$BOARD"; fi
     if [ "$EVENT" = UserPromptSubmit ]; then
       printf '%s\n' "$OUT"
     else
