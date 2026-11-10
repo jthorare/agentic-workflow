@@ -63,7 +63,7 @@ public sealed class ContextPlainWordsTests
     [Fact]
     public async Task The_note_tip_is_null_when_the_note_has_no_code()
     {
-        var page = await ConceptPage.Shown(ConceptPage.Serving(AConcepts.Without("building", null)));
+        var page = await ConceptPage.Shown(ConceptPage.Serving(AConcepts.Without("building", code: null)));
 
         Assert.Null(page.Concepts.NoteTip);
     }
