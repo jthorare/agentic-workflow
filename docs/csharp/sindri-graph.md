@@ -52,7 +52,7 @@ saving on a revision that is no longer the latest is `SND-GRAPH-007`; `Activate`
 
 ## Error codes
 
-`SND-GRAPH-001..011` (definitions) and `SND-GRAPH-100..108` (runs, below), listed in `docs/sindri/errors.md`.
+`SND-GRAPH-001..011` (definitions) and `SND-GRAPH-100..111` (runs, below), listed in `docs/sindri/errors.md`.
 
 ## The `prompt` block's `output` schema
 
@@ -68,9 +68,9 @@ A run is a row in `workflow_run` (ledger migration `0009_workflow_runs`; the num
 
 **The queue moves on.** When a run ends, and when a launch fails, `IGraphQueueAdvance.StartNextQueued` starts the oldest `queued` run of the workflow, once nothing else of it is in flight. `IWorkflowRunStore.PromoteOldestQueued` checks and promotes in one transaction, so two runs ending together start one queued run, not two. A queued run whose own launch fails is marked `failed` and the next one gets the turn. Queued runs are not in `view_workflow_runs` until they start.
 
-**By hand.** `sindri wf run <slug> [--payload JSON] [--json]` (`POST /sindri/workflows/{slug}/runs`) starts a run of the active revision with trigger `{"kind":"manual",...}`: it answers started, queued or skipped by the concurrency. `sindri wf cancel <run> [--json]` (`POST /sindri/workflow-runs/{run}/cancel`) asks a run in flight to stop (Temporal cancel); a queued run is cancelled in place and never starts.
+**By hand.** `sindri wf run <slug> [--payload JSON] [--json]` (`POST /sindri/workflows/{slug}/runs`) starts a run of the active revision with trigger `{"kind":"manual",...}`: it answers started, queued or skipped by the concurrency. `sindri wf cancel <run> [--json]` (`POST /sindri/workflow-runs/{run}/cancel`) asks a run in flight to stop (Temporal cancel); a queued run is cancelled in place and never starts. `sindri wf takeover <run> <node> [--item <index>] [--json]` (`POST /sindri/workflow-runs/{run}/nodes/{node}/takeover`) takes over the `run_agent` node the run waits on (its timeout pauses, only the human reports it) and `sindri wf handback ...` (`.../handback`) gives it back; both answer `{"run","node","itemIndex","agent"}` with `agent` `taken_over` or `waiting`, and both are open to a human and to an agent session alike. A node the run isn't waiting on is `SND-GRAPH-110`, a handback of a node nobody holds `SND-GRAPH-111`. `GET /sindri/workflow-runs/{run}` marks such a node row with `agent`: `waiting`, `taken_over` or null.
 
-**Codes.** `SND-GRAPH-100` the run id is used, `101` no such run, `102` a block could not finish, `103` a prompt answer does not fit its schema, `105` the workflow is not active, `106` a manual payload is not a JSON object, `107` the run already ended, `108` a referenced node output was cut at 64 KB.
+**Codes.** `SND-GRAPH-100` the run id is used, `101` no such run, `102` a block could not finish, `103` a prompt answer does not fit its schema, `105` the workflow is not active, `106` a manual payload is not a JSON object, `107` the run already ended, `108` a referenced node output was cut at 64 KB, `109` a run of this workflow can't start the workflow again, `110` the run is not waiting on an agent at that node, `111` that agent node is not taken over.
 
 ## The `run_agent` block (PR 7)
 
@@ -106,6 +106,31 @@ Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkfl
 
 An unknown slug is `SND-GRAPH-008` (404), an unknown run `SND-GRAPH-101`, a slug or run id of the wrong shape invalid input. "Who changed it last" is the `createdBy` of the newest revision (`owner` or `session:<id>`). Node payloads the store cut at its size limit come back as a string with `truncated: true` on the node run. Over MCP, names, descriptions, node titles and every string of a node config (prompts), failure text, trigger payloads, outputs and node inputs and outputs are fenced as untrusted. `IWorkflowRunStore.Recent` is the new store read behind the run list.
 
+## Writing workflows (PR 8b)
+
+Seven writes, each one slice (`Features/CreateWorkflow`, `ApplyWorkflowOps`, `ReplaceWorkflow`, `ValidateWorkflow`, `ActivateWorkflow`, `PauseWorkflow`, `DeleteWorkflow`) behind a route, an MCP tool and a `sindri wf` verb. `workflow_run` and `workflow_cancel` are the existing run and cancel slices (PR 6) as tools. Every write is a catalog row (`Host/Catalog/WorkflowRows.cs`) an agent session may run. The CLI verbs start the control plane first, like `wf run`.
+
+| Write | Route | MCP tool | CLI |
+|---|---|---|---|
+| Make a workflow (off, revision 1) from a spec or a starter template | `POST /sindri/workflows` | `workflow_create` | `sindri wf create <slug> (--template <name> \| --file <spec.json>)` |
+| Edit by ops against `baseRevision` | `POST /sindri/workflows/{slug}/ops` | `workflow_apply_ops` | `sindri wf edit <slug> --base <n> (--ops <json> \| --ops-file <file>)` |
+| Replace the whole graph against `baseRevision` | `PUT /sindri/workflows/{slug}` | `workflow_replace` | `sindri wf edit <slug> --base <n> --file <spec.json>` |
+| Check as for activation (writes nothing) | `POST /sindri/workflows/validate` | `workflow_validate` | `sindri wf validate --slug <slug> [--revision <n>]` (a file still runs in process) |
+| Turn triggers on at a revision (newest by default) | `POST /sindri/workflows/{slug}/activate` | `workflow_activate` | `sindri wf activate <slug> [--revision <n>]` |
+| Turn triggers off; revisions stay | `POST /sindri/workflows/{slug}/pause` | `workflow_pause` | `sindri wf pause <slug>` |
+| Archive (hidden, off for good; revisions and runs stay) | `DELETE /sindri/workflows/{slug}` | `workflow_delete` | `sindri wf delete <slug>` |
+| The block types, grouped as the picker shows them (Triggers, Data, AI, Logic, Outputs), with titles, config fields, outputs, branches and examples | `GET /sindri/workflows/blocks` | `workflow_blocks` | `sindri wf blocks` |
+| The workflow docs: rank a question, read a page (`--page block-schedule`) or list the pages | `GET /sindri/workflows/docs?question=&page=` | `workflow_docs` | `sindri wf docs [<words>] [--page <slug>]` |
+| Start / stop a run | `POST /sindri/workflows/{slug}/runs`, `POST /sindri/workflow-runs/{run}/cancel` | `workflow_run`, `workflow_cancel` | `sindri wf run`, `sindri wf cancel` |
+
+**Docs and blocks.** The pages in `docs/workflows/*.md` are embedded in the binary (`IWorkflowDocs`) and searched by `WorkflowDocSearch`; `blocks` and `docs` are reserved, since the literal routes win over `/workflows/{slug}`. Each block says its picker `Group` and `Title` (`IGraphBlockType`; a block that says nothing is Logic, shown by its type), and the block list is read from the block definitions only.
+
+**Conflicts.** An edit or replace names the newest revision it read. If a newer one exists, nothing is written and the answer is `409 SND-GRAPH-007` with `currentRevision`; the caller reads the workflow again and retries. A batch of ops applies all or none (`SND-GRAPH-012` names the failing op). Create, edit and replace check the graph in draft mode and refuse blocking findings (`SND-GRAPH` findings); activate checks in activate mode. The checks use the running Sindri's block catalog and the repos of the approved profile (`IWorkflowChecker`, `Host/Commands/ProfileWorkflowChecker.cs`).
+
+**Events.** `workflow.created`, `workflow.revised`, `workflow.activated`, `workflow.paused` and `workflow.archived` (payload `WorkflowChangedPayload`: workflow, slug, revision, spec hash, `By`). The write slices check the lease before they touch the store, then append the event through `WorkflowChangeLog` once the store accepts the change; `By` is `owner` or `session:<id>`. The app's "changed by session X" tag reads them.
+
+**Loop guard.** `workflow_run` refuses with `SND-GRAPH-109` (naming the run) when the calling session was launched by a run of the same workflow (`WorkflowLoopGuard`, `IGraphLaunchRuns`). Until PR 9's agent blocks record which launch belongs to which run, `NoGraphLaunchRuns` answers "none", so the guard cannot fire in production yet.
+
 ## Connection events
 
 The built-in service `workflow-poll` (`Features/PollConnections`, every 30 seconds) starts runs for `connection_event` nodes. What the node takes, the intervals and what a catch-up does are in [workflows/blocks/poll.md](../workflows/blocks/poll.md).
@@ -127,7 +152,7 @@ The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every min
 
 ## Loops (`for_each`, `collect`; PR 9)
 
-Pages: `docs/workflows/blocks/for_each.md` and `collect.md`. A `for_each` node and the one `collect` it reaches bound a loop; the loop is every node between them (`LoopBody.Find`).
+Pages: `docs/workflows/block-for_each.md` and `block-collect.md` (top level, so they are embedded and searched like the other `block-*` pages). A `for_each` node and the one `collect` it reaches bound a loop; the loop is every node between them (`LoopBody.Find`).
 
 How it runs, in order:
 

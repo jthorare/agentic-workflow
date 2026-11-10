@@ -165,6 +165,30 @@ public sealed class InMemorySindriStore(TimeProvider clock, IProcessProbe probe)
         }
     }
 
+    /// <inheritdoc cref="ILedgerReader.LatestByKeyPrefix"/>
+    public ValueTask<Result<LedgerEvent?>> LatestByKeyPrefix(string keyPrefix, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(keyPrefix);
+        if (keyPrefix[^1] >= 0x7F)
+        {
+            throw new ArgumentException("the key prefix must end in an ASCII character", nameof(keyPrefix));
+        }
+
+        lock (_gate)
+        {
+            LedgerEvent? greatest = null;
+            foreach (var e in _events)
+            {
+                if (e.IdempotencyKey.StartsWith(keyPrefix, StringComparison.Ordinal) && (greatest is null || string.CompareOrdinal(e.IdempotencyKey, greatest.IdempotencyKey) > 0))
+                {
+                    greatest = e;
+                }
+            }
+
+            return ValueTask.FromResult<Result<LedgerEvent?>>(greatest);
+        }
+    }
+
     /// <inheritdoc cref="ILedgerStore.Head"/>
     public ValueTask<Result<long>> Head(CancellationToken cancellationToken)
     {

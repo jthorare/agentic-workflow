@@ -23,6 +23,12 @@ public sealed class RunAgentBlock : IGraphBlock
     public string Type => "run_agent";
 
     /// <inheritdoc />
+    public string Title => "Run agent";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.AI;
+
+    /// <inheritdoc />
     public bool IsTrigger => false;
 
     /// <inheritdoc />

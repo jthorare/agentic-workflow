@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Lanes;
+using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Core.Coordination;
@@ -105,12 +106,14 @@ public sealed class LaneHealthReader(ILaneFiles files, LaneBeats beats, ILaneMai
 
     private async ValueTask<Result<(string State, bool Attention)>> Delivery(string lane, LaneRecord record, LaneAgent agent, CancellationToken cancellationToken)
     {
-        var owed = await mail.Owed(lane, cancellationToken).ConfigureAwait(false);
-        if (owed.IsError)
+        var all = await mail.Owed(lane, cancellationToken).ConfigureAwait(false);
+        if (all.IsError)
         {
-            return owed.Error;
+            return all.Error;
         }
 
+        // A notice owes no reply, so it never counts as an obligation left undelivered.
+        var owed = Results.Success<IReadOnlyList<LaneMessage>>([.. all.Value.Where(static m => !NoticeRule.IsNotice(m.Text))]);
         var state = await guard.State(lane, owed.Value, cancellationToken).ConfigureAwait(false);
         if (state.IsError)
         {

@@ -29,11 +29,15 @@
     <!-- the built-in style packs (line spec §5.1): config/packs/style/<id>/..., embedded as style-packs/<id>/<path> -->
     <StylePackFile Include="../../../config/packs/style/**/*" />
     <EmbeddedResource Include="@(StylePackFile)" LogicalName="style-packs/$([System.String]::Copy('%(RecursiveDir)').Replace('\', '/'))%(Filename)%(Extension)" />
+    <!-- the workflow docs (PR 8): docs/workflows/<slug>.md, embedded as workflow-docs/<slug>.md and searched by 'workflow_docs' -->
+    <WorkflowDocFile Include="../../../docs/workflows/*.md" />
+    <EmbeddedResource Include="@(WorkflowDocFile)" LogicalName="workflow-docs/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- An empty glob embeds nothing and every pack lookup fails at run time (a publish copy tree without config/packs did): make it a build error. -->
   <Target Name="RequireLensPacks" BeforeTargets="BeforeBuild">
     <Error Condition="'@(LensPackFile)' == ''" Text="No lens pack to embed: ../../../config/packs/lenses/** matched nothing. A publish copy tree must carry config/packs (scripts/lib/sindri-build-inputs.sh)." />
+    <Error Condition="'@(WorkflowDocFile)' == ''" Text="No workflow doc to embed: ../../../docs/workflows/*.md matched nothing. A publish copy tree must carry docs/workflows (scripts/lib/sindri-build-inputs.sh)." />
     <Error Condition="'@(StylePackFile)' == ''" Text="No style pack to embed: ../../../config/packs/style/** matched nothing. A publish copy tree must carry config/packs (scripts/lib/sindri-build-inputs.sh)." />
   </Target>
 

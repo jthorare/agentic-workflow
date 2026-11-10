@@ -18,4 +18,12 @@ internal static class WorkflowRoutes
     internal static string TakeOver(string runId, string node) => $"{Run(runId)}/nodes/{Uri.EscapeDataString(node)}/takeover";
 
     internal static string HandBack(string runId, string node) => $"{Run(runId)}/nodes/{Uri.EscapeDataString(node)}/handback";
+
+    internal static string Blocks() => $"{Root}/blocks";
+
+    internal static string Ops(string slug) => $"{One(slug)}/ops";
+
+    internal static string Activate(string slug) => $"{One(slug)}/activate";
+
+    internal static string Pause(string slug) => $"{One(slug)}/pause";
 }

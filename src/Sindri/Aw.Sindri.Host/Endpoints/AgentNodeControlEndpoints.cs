@@ -15,24 +15,25 @@ internal static class AgentNodeControlEndpoints
     internal static RouteGroupBuilder MapAgentNodeControl(this RouteGroupBuilder group)
     {
         _ = group.MapPost("/workflow-runs/{run}/nodes/{node}/takeover", static async (string run, string node, AgentNodeBody? body, IService<TakeOverAgentNodeRequest, AgentNodeControlled> service, CancellationToken ct) =>
-            await Call(run, node, (r, n) => service.Handle(new TakeOverAgentNodeRequest(r, n, body?.ItemIndex ?? 0), ct)).ConfigureAwait(false));
+            (await Call(run, node, (r, n) => service.Handle(new TakeOverAgentNodeRequest(r, n, body?.ItemIndex ?? 0), ct)).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapPost("/workflow-runs/{run}/nodes/{node}/handback", static async (string run, string node, AgentNodeBody? body, IService<HandBackAgentNodeRequest, AgentNodeControlled> service, CancellationToken ct) =>
-            await Call(run, node, (r, n) => service.Handle(new HandBackAgentNodeRequest(r, n, body?.ItemIndex ?? 0), ct)).ConfigureAwait(false));
+            (await Call(run, node, (r, n) => service.Handle(new HandBackAgentNodeRequest(r, n, body?.ItemIndex ?? 0), ct)).ConfigureAwait(false)).ToHttpResult());
         return group;
     }
 
-    private static async Task<IResult> Call(string run, string node, Func<WorkflowRunId, NodeId, ValueTask<Result<AgentNodeControlled>>> handle)
+    // why: the answer turns into an IResult in the route lambdas, as CancelWorkflowRunEndpoint does; a named method calling HttpResults makes Host.Endpoints depend on Aw.Sindri.Host (ARCH-CYCLE-001)
+    private static async ValueTask<Result<AgentNodeControlled>> Call(string run, string node, Func<WorkflowRunId, NodeId, ValueTask<Result<AgentNodeControlled>>> handle)
     {
         if (!WorkflowRunId.TryFrom(run, out var runId))
         {
-            return ((Result<AgentNodeControlled>)SindriErrors.InvalidInput.With($"'{run}' is not a run id ('<slug>@<revision>:<occurrence>')")).ToHttpResult();
+            return SindriErrors.InvalidInput.With($"'{run}' is not a run id ('<slug>@<revision>:<occurrence>')");
         }
 
         if (!NodeId.TryFrom(node, out var nodeId))
         {
-            return ((Result<AgentNodeControlled>)SindriErrors.InvalidInput.With($"'{node}' is not a node id (a lowercase letter, then lowercase letters, digits and '_')")).ToHttpResult();
+            return SindriErrors.InvalidInput.With($"'{node}' is not a node id (a lowercase letter, then lowercase letters, digits and '_')");
         }
 
-        return (await handle(runId, nodeId).ConfigureAwait(false)).ToHttpResult();
+        return await handle(runId, nodeId).ConfigureAwait(false);
     }
 }

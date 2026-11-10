@@ -233,31 +233,63 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfCancelRefused(Error error) => "Couldn't cancel the run. " + InstanceRefused(error);
 
-    /// <summary>The button on a waiting agent node that takes its agent over.</summary>
-    internal const string WfTakeOver = "Take over";
+    /// <summary>The button on a workflow that is off: turns its newest revision on.</summary>
+    internal const string WfActivate = "Activate";
 
     /// <summary>The same button while its call is on the way.</summary>
-    internal const string WfTakeOverBusy = "Taking over…";
+    internal const string WfActivateBusy = "Activating…";
 
-    /// <summary>The button on a taken-over agent node that gives it back.</summary>
-    internal const string WfHandBack = "Hand back";
+    /// <summary>The button on a workflow that is on: turns it off. Its revisions stay saved.</summary>
+    internal const string WfPause = "Pause";
 
     /// <summary>The same button while its call is on the way.</summary>
-    internal const string WfHandBackBusy = "Handing back…";
+    internal const string WfPauseBusy = "Pausing…";
 
-    /// <summary>The note after a take over was accepted.</summary>
-    internal const string WfTakeOverDone = "You have the agent. The workflow waits until you hand it back.";
-
-    /// <summary>The note after a hand back was accepted.</summary>
-    internal const string WfHandBackDone = "Handed back. The agent carries on.";
-
-    /// <summary>The note when a take over was refused or failed: the reason follows.</summary>
+    /// <summary>The note when Activate was refused or failed: the reason follows.</summary>
     /// <param name="error">The failure.</param>
     /// <returns>The words.</returns>
-    internal static string WfTakeOverRefused(Error error) => "Couldn't take over the agent. " + InstanceRefused(error);
+    internal static string WfActivateRefused(Error error) => "Couldn't activate the workflow. " + InstanceRefused(error);
 
-    /// <summary>The note when a hand back was refused or failed: the reason follows.</summary>
+    /// <summary>The note when Pause was refused or failed: the reason follows.</summary>
     /// <param name="error">The failure.</param>
     /// <returns>The words.</returns>
-    internal static string WfHandBackRefused(Error error) => "Couldn't hand the agent back. " + InstanceRefused(error);
+    internal static string WfPauseRefused(Error error) => "Couldn't pause the workflow. " + InstanceRefused(error);
+
+    /// <summary>The note when Activate or Pause got no answer from Sindri: it may have applied, so the list is read again.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string WfStateUnsure(Error error) => "Sindri didn't answer, so the change may have applied; check the state before you press again. " + InstanceRefused(error);
+
+    /// <summary>The editor's command that reads the workflow again after it changed elsewhere.</summary>
+    internal const string WfReload = "Reload";
+
+    /// <summary>The editor's prompt when the workflow changed elsewhere: the edit was not saved and nothing is retried.</summary>
+    internal const string WfEditChangedElsewhere = "This workflow changed elsewhere, so your edit was not saved. Reload to see the new version, then make the edit again.";
+
+    /// <summary>The editor's note when an edit was refused or failed: the reason follows.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string WfEditRefused(Error error) => "Couldn't save the edit. " + InstanceRefused(error);
+
+    /// <summary>The editor's note when Sindri did not answer an edit: it may have been saved.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string WfEditUnsure(Error error) => "Sindri didn't answer, so the edit may have been saved. Reload to check before you edit again. " + InstanceRefused(error);
+
+    /// <summary>The editor's note when the workflow or the block list can't be read: the reason follows.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string WfEditLoadFailed(Error error) => "Couldn't read the workflow to edit. " + InstanceRefused(error);
+
+    /// <summary>The line under a required field left empty.</summary>
+    internal const string WfFieldNeeded = "This field is required.";
+
+    /// <summary>The line under a number field that isn't a number.</summary>
+    internal const string WfFieldNotNumber = "Enter a number.";
+
+    /// <summary>The line under a boolean field that isn't true or false.</summary>
+    internal const string WfFieldNotBoolean = "Enter true or false.";
+
+    /// <summary>The line under an object field that isn't a JSON object.</summary>
+    internal const string WfFieldNotObject = "Enter a JSON object, such as {\"key\": \"value\"}.";
 }

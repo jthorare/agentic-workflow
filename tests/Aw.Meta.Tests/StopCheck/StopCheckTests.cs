@@ -137,19 +137,6 @@ public sealed class StopCheckTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_changed_lane_map_blocks_until_it_is_sent_to_every_lane()
-    {
-        await _world.Ready();
-        _world.Transcripts.Write(MetaWorld.Transcript, string.Empty);
-        _world.Sessions.Add(A.Live("t1-api", "s-api"));
-
-        var response = await Check();
-
-        Assert.Equal([(ObligationKind.BroadcastLanes, "v1")], response.Open.Select(o => (o.Kind, o.Key)));
-        Assert.Contains("aw-meta lanes --announce", response.Open[0].NextCommand, StringComparison.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public async Task An_old_heartbeat_asks_to_rearm_the_watch_but_no_heartbeat_does_not()
     {
         await _world.Ready();

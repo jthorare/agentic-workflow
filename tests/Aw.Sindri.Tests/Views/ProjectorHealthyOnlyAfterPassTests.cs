@@ -73,6 +73,8 @@ public sealed class ProjectorHealthyOnlyAfterPassTests
 
         public ValueTask<Result<LedgerEvent?>> ByKey(string idempotencyKey, CancellationToken cancellationToken) => inner.ByKey(idempotencyKey, cancellationToken);
 
+        public ValueTask<Result<LedgerEvent?>> LatestByKeyPrefix(string keyPrefix, CancellationToken cancellationToken) => inner.LatestByKeyPrefix(keyPrefix, cancellationToken);
+
         public ValueTask<Result<long>> Head(CancellationToken cancellationToken) =>
             Throw ? throw new InvalidOperationException("the head read blew up (fixture)") : inner.Head(cancellationToken);
     }

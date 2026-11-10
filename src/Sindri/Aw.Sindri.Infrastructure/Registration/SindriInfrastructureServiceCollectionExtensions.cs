@@ -13,6 +13,7 @@ using Aw.Sindri.Core.EngineReads;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Docs;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Launch;
@@ -24,6 +25,7 @@ using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Core.Scheduling;
@@ -55,6 +57,7 @@ using Aw.Sindri.Infrastructure.Memory;
 using Aw.Sindri.Infrastructure.Notifications;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Profile;
+using Aw.Sindri.Infrastructure.Resources;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Infrastructure.Sessions;
@@ -127,7 +130,10 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IWorktrees, GitWorktrees>()               // per-run worktrees (engine spec §6.5)
             .AddSingleton<IWorkflowStore, SqliteWorkflowStore>()    // workflow graphs and their revisions (#2258, PR 5): workflow and workflow_revision in ledger.db
             .AddSingleton<IWorkflowRunStore, SqliteWorkflowRunStore>()    // workflow runs and node runs (#2258, PR 6): workflow_run and workflow_node_run in ledger.db
+            .AddSingleton<IWorkflowDocs, WorkflowDocs.ShippedWorkflowDocs>()   // workflow_docs: the pages embedded in the binary
+            .AddSingleton<IGraphLaunchRuns, NoGraphLaunchRuns>()   // no graph run launches an agent session until PR 9
             .AddSingleton<IGraphBlockCatalog, EmptyGraphBlockCatalog>() // no graph blocks until PR 6 and 9
+            .AddSingleton<IResourceFiles>(static sp => new ResourceFiles(Path.Combine(sp.GetRequiredService<ISindriHome>().Path, "resources")))   // provisioned resources (agent-first PR 14): the files under <home>/resources
             .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
             .AddSingleton<IGraphSeenStore, SqliteSeenStore>()      // what 'only_new' nodes have passed on (agent-first PR 9): workflow_seen in ledger.db
             .AddSingleton<IGraphHttpPort>(static sp => new GraphHttpClient(GraphHttpHandler.Create(), ct => GraphHttpClient.HostsOf(sp.GetRequiredService<IApprovedProfile>(), ct)))   // the 'http' block's client: only 'workflow.http.hosts'

@@ -1,7 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Features.AgentNodeControl;
@@ -12,8 +12,8 @@ using Microsoft.Extensions.Time.Testing;
 namespace Aw.Sindri.Tests.AgentNodeControl;
 
 /// <summary>
-/// POST /sindri/workflow-runs/{run}/nodes/{node}/takeover and /handback (#2472): the human takes a 'run_agent' node over and hands it back. An agent session is refused,
-/// and so is a node the run does not wait on, a handback of a node nobody holds and a run that is unknown or ended.
+/// POST /sindri/workflow-runs/{run}/nodes/{node}/takeover and /handback (#2472): a person or an agent session takes a 'run_agent' node over and hands it back. A call with no caller is refused,
+/// A human and an agent session may both do it (agent-first D2). A node the run does not wait on is refused,, a handback of a node nobody holds and a run that is unknown or ended.
 /// </summary>
 [Lane(TestLane.Unit)]
 public sealed class AgentNodeControlServiceTests
@@ -74,16 +74,17 @@ public sealed class AgentNodeControlServiceTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task An_agent_session_is_refused_and_touches_nothing(bool takeover)
+    public async Task An_agent_session_may_take_over_and_hand_back(bool takeover)
     {
         await Insert(WorkflowRunStatus.Running);
         _control.Wait(_agent, takenOver: !takeover);
         var session = A.Caller().Launched().Build();
 
-        var code = takeover ? (await TakeOver(session)).Error.Code : (await HandBack(session)).Error.Code;
+        var result = takeover ? await TakeOver(session) : await HandBack(session);
 
-        Assert.Equal(SindriErrors.AuthRefused.Code, code);
-        Assert.Empty(_control.Calls);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(takeover ? "taken_over" : "waiting", result.Value.Agent);
+        _ = Assert.Single(_control.Calls);
     }
 
     [Theory]
