@@ -1,5 +1,4 @@
 using System.Text.Json.Nodes;
-using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Blocks;
@@ -15,7 +14,7 @@ public sealed class MemoryBlockTests
     [Fact]
     public async Task Recall_passes_the_memory_query_level_and_limit_and_hands_on_the_fact_texts_and_the_mode()
     {
-        var port = new RecordingMemoryPort { Recalled = new MemoryRecalled(["Checked api at abc", "PR 12 is open"], "semantic") };
+        var port = new BlockFakes.RecordingMemoryPort { Recalled = new MemoryRecalled(["Checked api at abc", "PR 12 is open"], "semantic") };
 
         var result = await new MemorySearchBlock(port).Execute(BlockFakes.Context(new JsonObject { ["memory"] = "drift-check", ["query"] = "last commit", ["level"] = "strict", ["limit"] = 3 }), Token);
 
@@ -32,7 +31,7 @@ public sealed class MemoryBlockTests
     public async Task Recall_without_a_memory_or_a_query_fails_the_node_with_the_reason(string? memory, string? query)
     {
         var config = new JsonObject { ["memory"] = memory, ["query"] = query };
-        var port = new RecordingMemoryPort();
+        var port = new BlockFakes.RecordingMemoryPort();
 
         var result = await new MemorySearchBlock(port).Execute(BlockFakes.Context(config), Token);
 
@@ -43,7 +42,7 @@ public sealed class MemoryBlockTests
     [Fact]
     public async Task A_recall_the_port_refuses_fails_the_node_with_the_port_error()
     {
-        var port = new RecordingMemoryPort { Fail = SindriErrors.InvalidInput.With("no such memory") };
+        var port = new BlockFakes.RecordingMemoryPort { Fail = SindriErrors.InvalidInput.With("no such memory") };
 
         var result = await new MemorySearchBlock(port).Execute(BlockFakes.Context(new JsonObject { ["memory"] = "nope", ["query"] = "q" }), Token);
 
@@ -53,7 +52,7 @@ public sealed class MemoryBlockTests
     [Fact]
     public async Task Remember_passes_the_run_memory_fact_tags_and_expiry_and_hands_on_the_id_and_action()
     {
-        var port = new RecordingMemoryPort { Remembered = new MemoryRemembered("mf_1", "refreshed") };
+        var port = new BlockFakes.RecordingMemoryPort { Remembered = new MemoryRemembered("mf_1", "refreshed") };
         var config = new JsonObject { ["memory"] = "drift-check", ["fact"] = "  Checked api at abc  ", ["tags"] = new JsonArray("checks", "api"), ["expires"] = "30d" };
 
         var result = await new MemoryWriteBlock(port).Execute(BlockFakes.Context(config), Token);
@@ -68,7 +67,7 @@ public sealed class MemoryBlockTests
     [Fact]
     public async Task Remember_with_no_tags_and_no_expiry_writes_a_fact_that_never_expires()
     {
-        var port = new RecordingMemoryPort();
+        var port = new BlockFakes.RecordingMemoryPort();
 
         var result = await new MemoryWriteBlock(port).Execute(BlockFakes.Context(new JsonObject { ["memory"] = "m", ["fact"] = "f" }), Token);
 
@@ -84,7 +83,7 @@ public sealed class MemoryBlockTests
     [InlineData(null, "f", null)]
     public async Task Remember_refuses_a_missing_memory_a_blank_fact_and_an_expiry_that_is_not_a_duration(string? memory, string? fact, string? expires)
     {
-        var port = new RecordingMemoryPort();
+        var port = new BlockFakes.RecordingMemoryPort();
 
         var result = await new MemoryWriteBlock(port).Execute(BlockFakes.Context(new JsonObject { ["memory"] = memory, ["fact"] = fact, ["expires"] = expires }), Token);
 
@@ -95,7 +94,7 @@ public sealed class MemoryBlockTests
     [Fact]
     public async Task Forget_by_fact_id_and_forget_by_tag_hand_on_the_count()
     {
-        var port = new RecordingMemoryPort { Forgotten = 2 };
+        var port = new BlockFakes.RecordingMemoryPort { Forgotten = 2 };
         var block = new MemoryForgetBlock(port);
 
         var byFact = await block.Execute(BlockFakes.Context(new JsonObject { ["memory"] = "m", ["fact"] = "mf_1" }), Token);
@@ -110,7 +109,7 @@ public sealed class MemoryBlockTests
     [InlineData("mf_1", "stale")]
     public async Task Forget_needs_exactly_one_of_fact_and_tag(string? fact, string? tag)
     {
-        var port = new RecordingMemoryPort();
+        var port = new BlockFakes.RecordingMemoryPort();
 
         var result = await new MemoryForgetBlock(port).Execute(BlockFakes.Context(new JsonObject { ["memory"] = "m", ["fact"] = fact, ["tag"] = tag }), Token);
 
@@ -121,7 +120,7 @@ public sealed class MemoryBlockTests
     [Fact]
     public void The_three_blocks_carry_their_picker_labels_groups_and_output_fields()
     {
-        var port = new RecordingMemoryPort();
+        var port = new BlockFakes.RecordingMemoryPort();
         var search = new MemorySearchBlock(port);
         var write = new MemoryWriteBlock(port);
         var forget = new MemoryForgetBlock(port);
@@ -136,7 +135,7 @@ public sealed class MemoryBlockTests
     [Fact]
     public void The_registry_adds_the_three_memory_blocks_and_each_examples_config_fits_its_schema()
     {
-        var blocks = GraphBlockRegistry.MemoryBlocks(new RecordingMemoryPort());
+        var blocks = GraphBlockRegistry.MemoryBlocks(new BlockFakes.RecordingMemoryPort());
 
         Assert.Equal(["memory_forget", "memory_search", "memory_write"], blocks.Select(static b => b.Type).Order(StringComparer.Ordinal), StringComparer.Ordinal);
         foreach (var block in blocks)
@@ -144,41 +143,6 @@ public sealed class MemoryBlockTests
             var example = (JsonObject)JsonNode.Parse(block.Example)!;
             Assert.All(example.Select(static p => p.Key), key => Assert.Contains(key, block.Config.Fields.Select(static f => f.Name), StringComparer.Ordinal));
             Assert.All(block.Config.Fields.Where(static f => f.Required), field => Assert.True(example.ContainsKey(field.Name), $"{block.Type} example lacks '{field.Name}'"));
-        }
-    }
-
-    private sealed class RecordingMemoryPort : IGraphMemoryPort
-    {
-        public List<MemoryToRecall> Recalls { get; } = [];
-
-        public List<MemoryToRemember> Writes { get; } = [];
-
-        public List<MemoryToForget> Forgets { get; } = [];
-
-        public MemoryRecalled Recalled { get; init; } = new([], "semantic");
-
-        public MemoryRemembered Remembered { get; init; } = new("mf_1", "added");
-
-        public int Forgotten { get; init; }
-
-        public Error? Fail { get; init; }
-
-        public ValueTask<Result<MemoryRecalled>> Recall(MemoryToRecall request, CancellationToken cancellationToken)
-        {
-            Recalls.Add(request);
-            return ValueTask.FromResult<Result<MemoryRecalled>>(Fail is { } error ? error : Recalled);
-        }
-
-        public ValueTask<Result<MemoryRemembered>> Remember(MemoryToRemember request, CancellationToken cancellationToken)
-        {
-            Writes.Add(request);
-            return ValueTask.FromResult<Result<MemoryRemembered>>(Fail is { } error ? error : Remembered);
-        }
-
-        public ValueTask<Result<int>> Forget(MemoryToForget request, CancellationToken cancellationToken)
-        {
-            Forgets.Add(request);
-            return ValueTask.FromResult<Result<int>>(Fail is { } error ? error : Forgotten);
         }
     }
 }

@@ -20,7 +20,8 @@ public sealed class WorkflowDocsTests
         new BlockFakes.RecordingNotifyPort(),
         new BlockFakes.ScriptedModelPort("{}"),
         more: [.. GraphBlockRegistry.FlowBlocks(new FlowFakes.MemorySeenStore(), new FlowFakes.RecordingItemPort(), new FlowFakes.ScriptedCallPort(), new FlowFakes.ScriptedHttpPort()),
-            .. GraphBlockRegistry.ParkingBlocks(new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider())]);
+            .. GraphBlockRegistry.ParkingBlocks(new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider()),
+            .. GraphBlockRegistry.MemoryBlocks(new BlockFakes.RecordingMemoryPort())]);
 
     private static GraphValidator Validator() => new(new GraphValidationContext(
         Registry().Types,
