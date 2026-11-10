@@ -12,6 +12,7 @@ using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.Api.Linear;
 using Aw.Sindri.Ui.Api.Memory;
 using Aw.Sindri.Ui.Api.Projects;
+using Aw.Sindri.Ui.Api.Resources;
 using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Api.Setup;
@@ -142,6 +143,8 @@ public sealed class GoldenContractTests
         ["memories"] = As<MemoryList>,   // GET /sindri/memories; created is POST's MemoryCreated (_readByScenario)
         ["memories-id-search"] = As<MemorySearchView>,   // GET /sindri/memories/{name}/search
         ["memories-id-facts"] = As<MemoryFactWritten>,   // POST /sindri/memories/{name}/facts; the forgot* scenarios are DELETE's MemoryForgotten (_readByScenario)
+        ["resources"] = As<ResourceList>,   // GET /sindri/resources: the Resources page's rows (#2258 PR18b); bad-owner is a ProblemDetails
+        ["resources-purge"] = As<PurgeResourcesResult>,   // POST /sindri/resources/purge: the purged count; the 409 SND-RES-003 and 400 SND-RES-006 bodies are ProblemDetails
     };
 
     // A scenario of a slug that holds files of another shape than the rest of its folder (todos-note/conflict.json is the TodoItem GET /todos/{id} serves).
@@ -189,7 +192,6 @@ public sealed class GoldenContractTests
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
         "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
         "workflows-validate",   // #2258 PR 8b: validate is the CLI's; ops and activate are read above
-        "resources", "resources-purge",   // #2258 PR14 part 2: GET /sindri/resources and POST /sindri/resources/purge; the Resources page (PR18b, UI lane) reads them with its own views
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
 

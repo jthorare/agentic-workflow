@@ -37,6 +37,15 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    private async void OnEdit(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.Edit(CancellationToken.None).ConfigureAwait(true);   // the fields exist only once the form is read: focus the first one after
+            Dispatcher.UIThread.Post(() => _ = (FirstTarget(WorkflowEditor, static c => c is TextBox or CheckBox or Button) ?? WorkflowEditor).Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+        }
+    }
+
     private async void OnRetry(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
@@ -109,6 +118,9 @@ internal sealed partial class WorkflowsPage : UserControl
             () => _ = (FirstTarget(rows, static b => b is Button) ?? FirstTarget(level, static c => c.Focusable) ?? level).Focus(NavigationMethod.Tab),
             DispatcherPriority.Loaded);
     }
+
+    /// <summary>Returns focus to the Edit button (the sheet was closed).</summary>
+    internal void FocusEdit() => FocusLater(WorkflowEdit);
 
     private static Control? FirstTarget(Control within, Func<Control, bool> wanted) =>
         within.GetVisualDescendants().OfType<Control>().FirstOrDefault(c => wanted(c) && c.Focusable && c.IsEffectivelyVisible && c.IsEffectivelyEnabled);

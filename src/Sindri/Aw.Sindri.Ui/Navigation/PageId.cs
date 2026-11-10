@@ -36,6 +36,9 @@ internal enum PageId
     /// <summary>The workflows, their runs and a run's detail, read-only (#2258 PR 17 part 1). A tab, third after Home and Projects (PR 17 part 2a); G W and the palette open it.</summary>
     Workflows,
 
+    /// <summary>What each owner holds on disk (kind, name, size against its limit) with a Purge per owner (PR 18b). Not a tab: G R, the palette and System's Resources link open it.</summary>
+    Resources,
+
     /// <summary>Local preferences only (⌘,).</summary>
     Settings,
 }
