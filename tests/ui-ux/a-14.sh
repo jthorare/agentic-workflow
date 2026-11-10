@@ -33,7 +33,7 @@ sleep 2
 # $@ = selector args (--name is AutomationProperties.Name first, else x:Name); prints that node's whole subtree as JSON.
 subtree() {
   local id
-  if [ "$1" = closed-toggle ]; then   # the fold's own header: its name is "Closed" or "Closed (n)"
+  if [ "$1" = closed-toggle ]; then   # the fold's own header: its name is "Closed" or "Closed n"
     id="$(dt search --type ToggleButton --limit 200 | jq -r '[.matches[] | select((.name // "") | startswith("Closed"))][0].id // empty')"
   else
     id="$(dt search "$@" | jq -r '.matches[0].id // empty')"
@@ -47,7 +47,7 @@ export UXU_DRIVER AW_UI_DRIVER_DIR
 expect "the open Closed group's arrow points down, not right" \
   bash -c 'out="$(subtree closed-toggle)" || exit 1; echo "$out" | grep -q "▾" && ! echo "$out" | grep -q "▸"'
 expect "the Closed rows lie inside the Work card" \
-  bash -c 'subtree --type Border --name Work | grep -q "Closed ("'
+  bash -c 'subtree --type Border --name Work | grep -qE "Closed [0-9]"'
 expect "a closed item's Stage does not say 'Not started'" \
   bash -c 'out="$(subtree --name QueueClosedRows)" || exit 1; echo "$out" | grep -q "Not started" && exit 1; [ -n "$out" ]'
 

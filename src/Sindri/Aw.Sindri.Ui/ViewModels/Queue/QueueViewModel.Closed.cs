@@ -16,13 +16,18 @@ internal sealed partial class QueueViewModel
     /// <summary>The fold's arrow: down while it is open, right while it is closed (one glyph, so the tree never holds both).</summary>
     public string ClosedArrow => IsClosedOpen ? "▾" : "▸";
 
-    /// <summary>"Closed" before the first read, then "Closed (3)".</summary>
+    /// <summary>"Closed" before the first read, then "Closed 3" (the name; the view draws the label and the count apart).</summary>
     public string ClosedHeader { get; private set => Set(ref field, value); } = Labels.ClosedHeader(count: null);
 
     // The queue's size when the closed items were last read: a refresh that finds another size reads them again.
     private int _closedTotal = -1;
 
-    /// <summary>The closed count shown beside the label. Red stub.</summary>
+    /// <summary>The fold's label.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string ClosedLabel => "Closed";
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>The closed count, muted beside the label; empty before the first read.</summary>
     public string ClosedCount { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The closed items, newest first; they carry no actions.</summary>
@@ -60,6 +65,7 @@ internal sealed partial class QueueViewModel
         var items = (done.IsSuccess ? done.Value.Items : []).Concat(cancelled.IsSuccess ? cancelled.Value.Items : []).OrderByDescending(i => i.Since);
         Patch.To(ClosedRows, [.. items.Select(i => new ItemRowViewModel(i, "closed", primaryAction: null, now))]);
         ClosedHeader = Labels.ClosedHeader(ClosedRows.Count);
+        ClosedCount = ClosedRows.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
         ShowsClosed = ClosedRows.Count > 0;
         Columns();
     }

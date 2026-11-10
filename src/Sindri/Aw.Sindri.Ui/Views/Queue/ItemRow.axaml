@@ -26,7 +26,7 @@
         </Border>
       </StackPanel>
       <TextBlock x:Name="StepText" AutomationProperties.Name="{Binding Stage}" Grid.Column="3" Classes="body" Classes.raw="{Binding StageIsRaw}" Text="{Binding Stage}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-      <TextBlock x:Name="AgeText" AutomationProperties.Name="{Binding Age}" Grid.Column="4" Classes="caption subtle" Text="{Binding Age}" TextAlignment="Right" VerticalAlignment="Center" />
+      <TextBlock x:Name="AgeText" AutomationProperties.Name="{Binding Age}" Grid.Column="4" Classes="caption subtle" Text="{Binding Age}" HorizontalAlignment="Right" TextAlignment="Right" VerticalAlignment="Center" />
       <Panel Grid.Column="5" IsVisible="{Binding HasPrimaryAction}">
         <controls:CommandControl x:Name="PrimaryAction" DataContext="{Binding PrimaryAction}" />
       </Panel>

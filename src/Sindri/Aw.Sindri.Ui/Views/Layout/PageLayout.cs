@@ -20,55 +20,57 @@ internal static class PageLayout
     /// <returns>The class.</returns>
     internal static PageTier GetTier(Control control) => control.GetValue(TierProperty);
 
-    /// <summary>Reads whether the Repo column shows under a control.</summary>
-    /// <param name="control">The control.</param>
-    /// <returns>True when it does.</returns>
-    public static bool GetHasRepoColumn(Control control) => control.GetValue(HasRepoColumnProperty);
-
-    /// <summary>Sets whether the Repo column shows under a control.</summary>
-    /// <param name="control">The control.</param>
-    /// <param name="value">True when it shows.</param>
-    public static void SetHasRepoColumn(Control control, bool value) => control.SetValue(HasRepoColumnProperty, value);
-
     /// <summary>Sets the page region's width class on a control (and so on everything under it).</summary>
     /// <param name="control">The page region.</param>
     /// <param name="tier">The class.</param>
     internal static void SetTier(Control control, PageTier tier) => control.SetValue(TierProperty, tier);
 
-    /// <summary>Whether the Repo column has anything to show; the queue sets it from its rows, and the rows and the header read it.</summary>
-    public static readonly AttachedProperty<bool> HasRepoColumnProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, bool>("HasRepoColumn", defaultValue: true, inherits: true);
+    /// <summary>What the Work table's header and rows need to lay their columns out: the table's width and which optional columns have anything in them.</summary>
+    internal readonly record struct ColumnPlan(double Width, bool HasRepo, bool HasAction);
 
-    // Title, Repo, Status, Stage, Age, action. Narrower pages drop Stage, then Repo; Age never goes.
-    private static readonly double[][] _widths =
-    [
-        [0, 150, 130, 110, 70, 260],
-        [0, 150, 130, 0, 70, 260],
-        [0, 0, 130, 0, 70, 260],
-        [0, 0, 130, 0, 70, 170],
-    ];
+    /// <summary>The Work table's column plan, set by the page and read by its header and rows.</summary>
+    internal static readonly AttachedProperty<ColumnPlan> PlanProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, ColumnPlan>("Plan", new ColumnPlan(1200, HasRepo: true, HasAction: true), inherits: true);
 
-    /// <summary>The six column widths of a tier; a 0 is a dropped column.</summary>
-    /// <param name="tier">The tier.</param>
-    /// <param name="hasRepo">False when no shown row has a repo: the Repo column is dropped first.</param>
+    /// <summary>Reads the column plan under a control.</summary>
+    /// <param name="control">The control.</param>
+    /// <returns>The plan.</returns>
+    internal static ColumnPlan GetPlan(Control control) => control.GetValue(PlanProperty);
+
+    /// <summary>Sets the column plan on a control (and so on everything under it).</summary>
+    /// <param name="control">The control.</param>
+    /// <param name="plan">The plan.</param>
+    internal static void SetPlan(Control control, ColumnPlan plan) => control.SetValue(PlanProperty, plan);
+
+    /// <summary>
+    /// The six column widths (title, repo, status, stage, age, action) for a table width; a 0 is a dropped column. A column with nothing in it is dropped first;
+    /// then, only when the columns do not fit with the title's 160 px, Stage, then Repo, then the action column narrows. Age never goes.
+    /// </summary>
+    /// <param name="width">The table's width.</param>
+    /// <param name="hasRepo">False when no shown row has a repo.</param>
+    /// <param name="hasAction">False when no shown row has an action.</param>
     /// <returns>The widths, title column first (0 for the star).</returns>
-    internal static double[] Widths(PageTier tier, bool hasRepo)
+    internal static double[] Widths(double width, bool hasRepo, bool hasAction)
     {
-        var widths = (double[])_widths[(int)tier].Clone();
-        if (!hasRepo)
+        double[] widths = [0, hasRepo ? 150 : 0, 130, 110, 70, hasAction ? 260 : 0];
+        const double TitleMin = 160;
+        if (TitleMin + widths.Sum() > width)
+        {
+            widths[3] = 0;
+        }
+
+        if (TitleMin + widths.Sum() > width)
         {
             widths[1] = 0;
         }
 
+        if (TitleMin + widths.Sum() > width && widths[5] > 170)
+        {
+            widths[5] = 170;
+        }
+
         return widths;
     }
-
-    /// <summary>The six column widths for a table width. Red stub: the real rule follows.</summary>
-    /// <param name="width">The table's width.</param>
-    /// <param name="hasRepo">False when no shown row has a repo.</param>
-    /// <param name="hasAction">False when no shown row has an action.</param>
-    /// <returns>The widths.</returns>
-    internal static double[] Widths(double width, bool hasRepo, bool hasAction) => Widths(For(width), hasRepo && hasAction);
 
     /// <summary>The class a page region of this width has.</summary>
     /// <param name="width">The page region's width.</param>
@@ -76,13 +78,12 @@ internal static class PageLayout
     internal static PageTier For(double width) =>
         width >= 1120 ? PageTier.Wide : width >= 1000 ? PageTier.Mid : width >= 760 ? PageTier.Narrow : PageTier.Tight;
 
-    /// <summary>Sets a table's columns (the queue's header and rows) for a tier; the title column (0) stays a star, and a dropped column's cells are hidden.</summary>
+    /// <summary>Sets a table's columns (the queue's header and rows) from the plan; the title column (0) stays a star, and a dropped column's cells are hidden.</summary>
     /// <param name="table">The grid with the six queue columns.</param>
-    /// <param name="tier">The tier.</param>
-    /// <param name="hasRepo">False when no shown row has a repo.</param>
-    internal static void Apply(Grid table, PageTier tier, bool hasRepo)
+    /// <param name="plan">The plan.</param>
+    internal static void Apply(Grid table, ColumnPlan plan)
     {
-        var widths = Widths(tier, hasRepo);
+        var widths = Widths(plan.Width, plan.HasRepo, plan.HasAction);
         for (var i = 0; i < table.ColumnDefinitions.Count; i++)
         {
             table.ColumnDefinitions[i].Width = i == 0 ? new GridLength(1, GridUnitType.Star) : new GridLength(widths[i]);

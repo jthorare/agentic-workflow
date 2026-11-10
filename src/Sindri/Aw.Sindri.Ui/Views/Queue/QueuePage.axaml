@@ -6,8 +6,6 @@
              xmlns:controls="using:Aw.Sindri.Ui.Views.Controls"
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
              xmlns:linear="using:Aw.Sindri.Ui.Views.Linear"
-             xmlns:layout="using:Aw.Sindri.Ui.Views.Layout"
-             layout:PageLayout.HasRepoColumn="{Binding Queue.ShowsRepoColumn}"
              x:Class="Aw.Sindri.Ui.Views.Queue.QueuePage"
              x:DataType="shell:ShellViewModel">
   <!-- The Queue page (UI spec §4.5, queue.html): the API's groups in its order, each a collapsible section with its
@@ -86,7 +84,7 @@
             <TextBlock Grid.Column="1" Classes="eyebrow" Text="{Binding Text.Items.ColumnRepo}" />
             <TextBlock Grid.Column="2" Classes="eyebrow" Text="{Binding Text.Items.ColumnState}" />
             <TextBlock Grid.Column="3" Classes="eyebrow" Text="{Binding Text.Items.ColumnStep}" />
-            <TextBlock Grid.Column="4" Classes="eyebrow" TextAlignment="Right" Text="{Binding Text.Items.ColumnSince}" />
+            <TextBlock Grid.Column="4" Classes="eyebrow" HorizontalAlignment="Right" TextAlignment="Right" Text="{Binding Text.Items.ColumnSince}" />
           </Grid>
         </Border>
 
@@ -133,7 +131,8 @@
           <ToggleButton x:Name="QueueClosedToggle" Classes="group-head" IsChecked="{Binding Queue.IsClosedOpen, Mode=OneWay}" Click="OnClosedToggle" AutomationProperties.Name="{Binding Queue.ClosedHeader}">
             <StackPanel Orientation="Horizontal" Spacing="8">
               <TextBlock Classes="caption subtle" Text="{Binding Queue.ClosedArrow}" AutomationProperties.AccessibilityView="Raw" />
-              <TextBlock Classes="body-strong" Text="{Binding Queue.ClosedHeader}" />
+              <TextBlock Classes="body-strong" Text="{Binding Queue.ClosedLabel}" VerticalAlignment="Center" />
+              <TextBlock Classes="caption subtle" Text="{Binding Queue.ClosedCount}" VerticalAlignment="Center" />
             </StackPanel>
           </ToggleButton>
           <ItemsControl x:Name="QueueClosedRows" ItemsSource="{Binding Queue.ClosedRows}" IsVisible="{Binding Queue.IsClosedOpen}">

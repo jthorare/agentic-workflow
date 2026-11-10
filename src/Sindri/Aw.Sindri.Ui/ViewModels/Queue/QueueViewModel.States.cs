@@ -34,6 +34,9 @@ internal sealed partial class QueueViewModel
     /// <summary>True when some shown row has a repo: the Repo column shows only then.</summary>
     public bool ShowsRepoColumn { get; private set => Set(ref field, value); }
 
+    /// <summary>True when some shown row has an action: the action column shows only then.</summary>
+    public bool ShowsActionColumn { get; private set => Set(ref field, value); }
+
     /// <summary>True when at least one closed item exists: the Closed fold shows only then.</summary>
     public bool ShowsClosed { get; private set => Set(ref field, value); }
 
@@ -65,6 +68,7 @@ internal sealed partial class QueueViewModel
         var shown = Visible().ToList();
         ShowsColumns = shown.Count > 0 || (IsClosedOpen && ClosedRows.Count > 0);
         ShowsRepoColumn = shown.Concat(IsClosedOpen ? ClosedRows : []).Any(r => r.Repo.Length > 0);
+        ShowsActionColumn = shown.Exists(r => r.HasPrimaryAction);
     }
 
     // While the views rebuild every group but the queued one says so instead of its own sentence. Stalled wins over Rebuilding (a rebuild that

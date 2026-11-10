@@ -42,9 +42,9 @@ internal sealed partial class ItemRow : UserControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if ((change.Property == PageLayout.TierProperty || change.Property == PageLayout.HasRepoColumnProperty) && this.FindControl<Grid>("TableRow") is { } table)
+        if (change.Property == PageLayout.PlanProperty && this.FindControl<Grid>("TableRow") is { } table)
         {
-            PageLayout.Apply(table, PageLayout.GetTier(this), PageLayout.GetHasRepoColumn(this));
+            PageLayout.Apply(table, PageLayout.GetPlan(this));
         }
     }
 

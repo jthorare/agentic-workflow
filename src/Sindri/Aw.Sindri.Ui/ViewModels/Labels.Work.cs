@@ -48,8 +48,8 @@ internal static partial class Labels
 
     /// <summary>The Closed fold's row.</summary>
     /// <param name="count">How many closed items were read; null before the first read.</param>
-    /// <returns>"Closed" or "Closed (3)".</returns>
-    internal static string ClosedHeader(int? count) => count is { } n ? string.Create(CultureInfo.InvariantCulture, $"Closed ({n})") : "Closed";
+    /// <returns>"Closed" or "Closed 3": the count has no brackets, like the other group heads.</returns>
+    internal static string ClosedHeader(int? count) => count is { } n ? string.Create(CultureInfo.InvariantCulture, $"Closed {n}") : "Closed";
 
     /// <summary>The fold arrow of an open group: down.</summary>
     internal const string FoldOpen = "▾";
