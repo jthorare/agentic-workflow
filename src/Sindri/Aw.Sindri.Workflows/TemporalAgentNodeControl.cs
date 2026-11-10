@@ -13,8 +13,11 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// A run Temporal no longer knows has ended, and so has its node.
 /// </summary>
 /// <param name="connect">Gives the Temporal client (a seam so a test passes its own).</param>
-internal sealed class TemporalAgentNodeControl(Func<CancellationToken, ValueTask<Result<ITemporalClient>>> connect) : IAgentNodeControl
+/// <param name="queryLimit">How long the 'agent-node' query, connecting included, may take before it answers SND-API-001 (default 2 s): the run view asks it on every read, so a stuck server can't hang a read.</param>
+internal sealed class TemporalAgentNodeControl(Func<CancellationToken, ValueTask<Result<ITemporalClient>>> connect, TimeSpan? queryLimit = null) : IAgentNodeControl
 {
+    private static readonly TimeSpan _defaultQueryLimit = TimeSpan.FromSeconds(2);
+
     /// <summary>A control that connects to the dev server 'sindri serve' started, once per call.</summary>
     /// <param name="frontend">Finds and connects to it.</param>
     public TemporalAgentNodeControl(TemporalFrontend frontend)
@@ -25,7 +28,9 @@ internal sealed class TemporalAgentNodeControl(Func<CancellationToken, ValueTask
     /// <inheritdoc />
     public async ValueTask<Result<RunningAgentNode?>> Running(WorkflowRunId run, CancellationToken cancellationToken)
     {
-        var asked = await Ask(run, async handle => await handle.QueryAsync<AgentNodeView?>("agent-node", []).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        limit.CancelAfter(queryLimit ?? _defaultQueryLimit);
+        var asked = await Ask(run, async (handle, token) => await handle.QueryAsync<AgentNodeView?>("agent-node", [], new WorkflowQueryOptions { Rpc = new RpcOptions { CancellationToken = token } }).ConfigureAwait(false), (limit.Token, cancellationToken)).ConfigureAwait(false);
         if (asked.IsError)
         {
             return asked.Error;
@@ -51,21 +56,26 @@ internal sealed class TemporalAgentNodeControl(Func<CancellationToken, ValueTask
 
     private async ValueTask<Result<Unit>> Update(WorkflowRunId run, string name, object argument, CancellationToken cancellationToken)
     {
-        var done = await Ask(run, async handle => await handle.ExecuteUpdateAsync<bool>(name, [argument]).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+        var done = await Ask(run, async (handle, _) => await handle.ExecuteUpdateAsync<bool>(name, [argument]).ConfigureAwait(false), (cancellationToken, cancellationToken)).ConfigureAwait(false);
         return done.IsError ? done.Error : Unit.Value;
     }
 
-    private async ValueTask<Result<T>> Ask<T>(WorkflowRunId run, Func<WorkflowHandle, Task<T>> call, CancellationToken cancellationToken)
+    // tokens.Limit stops the call (the caller's token plus a time limit for the query); tokens.Caller is the caller's own: a stop from the limit alone is SND-API-001, a stop the caller asked for propagates.
+    private async ValueTask<Result<T>> Ask<T>(WorkflowRunId run, Func<WorkflowHandle, CancellationToken, Task<T>> call, (CancellationToken Limit, CancellationToken Caller) tokens)
     {
-        var client = await connect(cancellationToken).ConfigureAwait(false);
-        if (client.IsError)
-        {
-            return SindriErrors.EngineUnavailable.With(client.Error.Message);
-        }
-
         try
         {
-            return await call(client.Value.GetWorkflowHandle(run.Value)).ConfigureAwait(false);
+            var client = await connect(tokens.Limit).ConfigureAwait(false);
+            if (client.IsError)
+            {
+                return SindriErrors.EngineUnavailable.With(client.Error.Message);
+            }
+
+            return await call(client.Value.GetWorkflowHandle(run.Value), tokens.Limit).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!tokens.Caller.IsCancellationRequested)   // boundary: the query's time limit ran out, so the server is stuck or unreachable
+        {
+            return SindriErrors.EngineUnavailable.With("Temporal did not answer in time");
         }
         catch (WorkflowUpdateFailedException e)   // boundary: the workflow's validator refused the update, and its message says why
         {
