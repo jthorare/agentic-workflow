@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Resources;
 
 namespace Aw.Sindri.Infrastructure.Resources;

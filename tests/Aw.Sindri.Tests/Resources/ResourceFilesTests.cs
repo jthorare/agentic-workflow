@@ -23,7 +23,7 @@ public sealed class ResourceFilesTests : IDisposable
         _ = Directory.CreateDirectory(disk);
         for (var i = 0; i < 5; i++)
         {
-            File.WriteAllText(Path.Combine(disk, $"f{i}.txt"), "x");
+            File.WriteAllText(Path.Combine(disk, $"f{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}.txt"), "x");
         }
 
         var listed = new ResourceFiles(Root, entryCap: 3).List(owner: null).Value;
