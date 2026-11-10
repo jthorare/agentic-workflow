@@ -64,6 +64,8 @@ internal sealed partial class LinearWorkView : UserControl
 
     private void OnReconnect(object? sender, RoutedEventArgs e) => Work?.Reconnect();
 
+    private void OnRetryStrip(object? sender, RoutedEventArgs e) => _ = Work?.RetryStrip();
+
     private void OnOpenStripRow(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { DataContext: LinearSinceRowViewModel row })

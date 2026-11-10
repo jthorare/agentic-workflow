@@ -66,7 +66,7 @@ internal static partial class Labels
     internal const string LinearConnectTitle = "Linear isn't connected";
 
     /// <summary>The card's sentence.</summary>
-    internal const string LinearConnectBody = "Paste a Linear key and tick your teams in Settings, Connections, Linear.";
+    internal const string LinearConnectBody = "Paste a Linear key and tick your teams under Connections, Linear.";
 
     /// <summary>The card's button.</summary>
     internal const string LinearConnect = "Connect Linear";
@@ -184,6 +184,60 @@ internal static partial class Labels
         (_, { Length: > 0 } to) => $"moved to {to}",
         _ => "moved to a new state",
     };
+
+    /// <summary>One change of an issue, without its key.</summary>
+    /// <param name="item">The change.</param>
+    /// <returns>"assigned to you", "moved from Todo to In Progress", "Sam Lee mentioned you", "you were mentioned" or "changed".</returns>
+    internal static string LinearSinceChange(LinearSinceItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        var by = item.Actor is { } actor ? " by " + actor.Name : string.Empty;
+        return item.Kind switch
+        {
+            "assigned" => "assigned to you" + by,
+            "mentioned" when item.Actor is { } author => author.Name + " mentioned you",
+            "mentioned" => "you were mentioned",
+            "state" => StateMove(item) + by,
+            _ => "changed" + by,
+        };
+    }
+
+    /// <summary>The state chip of a move.</summary>
+    /// <param name="from">The old state's name; null when unknown.</param>
+    /// <param name="to">The new state's name; null when unknown.</param>
+    /// <returns>"Todo → In Progress", "→ In Progress" or "New state".</returns>
+    internal static string LinearStateChip(string? from, string? to) => (from, to) switch
+    {
+        ({ Length: > 0 } a, { Length: > 0 } b) => a + " → " + b,
+        (_, { Length: > 0 } b) => "→ " + b,
+        _ => "New state",
+    };
+
+    /// <summary>A person's initials for a row.</summary>
+    /// <param name="name">The display name.</param>
+    /// <returns>"JE" for "Joi Example", "J" for "Joi"; empty for a blank name.</returns>
+    internal static string LinearInitials(string name)
+    {
+        var words = (name ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return words.Length == 0 ? string.Empty : string.Concat(words.Take(2).Select(static w => char.ToUpperInvariant(w[0])));
+    }
+
+    /// <summary>The reason a Linear feed failed, in words.</summary>
+    /// <param name="code">The feed's error code; may be empty.</param>
+    /// <returns>The sentence the card shows.</returns>
+    internal static string LinearFeedReason(string? code) => code switch
+    {
+        "SND-CONTEXT-071" => "Linear refused the key. It may have expired or been revoked.",
+        "SND-CONTEXT-010" => "Linear is rate-limiting Sindri or is down. Sindri keeps trying.",
+        "SND-CONTEXT-072" => "Linear sent a reply Sindri couldn't read.",
+        _ => "Linear sync is failing.",
+    };
+
+    /// <summary>The Retry button of the card's smaller states.</summary>
+    internal const string LinearStripRetry = "Retry";
+
+    /// <summary>New issue's tooltip while Linear is not connected.</summary>
+    internal const string LinearNewIssueNeedsConnection = "Connect Linear first: New issue needs a Linear connection.";
 
     /// <summary>The card's one action: moves the marker.</summary>
     internal const string LinearMarkAllSeen = "Mark all seen";

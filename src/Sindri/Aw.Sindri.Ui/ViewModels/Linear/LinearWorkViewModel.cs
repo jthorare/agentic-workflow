@@ -21,7 +21,7 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
     private static readonly string[] _derived =
     [
         nameof(IsLoading), nameof(ShowsConnect), nameof(ShowsFinding), nameof(ShowsNoMatch), nameof(UpdatingText), nameof(FeedText), nameof(IsSindriDown), nameof(IsSindriOlder), nameof(OlderText), nameof(AsOfText),
-        nameof(HasMore), nameof(HasFilters),
+        nameof(HasMore), nameof(HasFilters), nameof(ShowsStrip), nameof(ShowsNothingNew), nameof(StripNeedsReconnect), nameof(StripFeedFailing), nameof(StripReason), nameof(CanCreate), nameof(CreateTip),
     ];
 
     private readonly ISindriApi _api;
@@ -70,8 +70,11 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
     /// <summary>The strip's line when the changes cannot be read.</summary>
     public string StripFailedText => Labels.LinearStripFailed;
 
-    /// <summary>The card's one button when the read failed.</summary>
+    /// <summary>The card's one button when Linear refused the key.</summary>
     public string ReconnectText => Labels.LinearReconnect;
+
+    /// <summary>The card's button for its smaller states.</summary>
+    public string RetryText => Labels.LinearStripRetry;
 
     /// <summary>The Connect Linear card's title.</summary>
     public string ConnectTitle => Labels.LinearConnectTitle;
@@ -100,6 +103,12 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
     /// <summary>The filter bar's accessible name.</summary>
     public string FilterBarName => Labels.LinearFilterBar;
 #pragma warning restore CA1822, MA0041
+
+    /// <summary>False on the Linear view while Linear is not connected: New issue has nothing to write to.</summary>
+    public bool CanCreate => !(IsLinear && ShowsConnect);
+
+    /// <summary>New issue's tooltip: why it is off; null while it is on, so no empty tip shows.</summary>
+    public string? CreateTip => CanCreate ? null : Labels.LinearNewIssueNeedsConnection;
 
     /// <summary>The Linear tab's text: "Linear · 3 new" when the strip has changes.</summary>
     public string LinearTabText => Labels.LinearTab(NewCount);
@@ -137,7 +146,7 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
         }
 
         IsLinear = linear;
-        foreach (var name in new[] { nameof(IsLinear), nameof(IsSindri), nameof(CreateText), nameof(ShowsStrip) })
+        foreach (var name in new[] { nameof(IsLinear), nameof(IsSindri), nameof(CreateText), nameof(ShowsStrip), nameof(CanCreate), nameof(CreateTip) })
         {
             OnChanged(name);
         }
@@ -192,7 +201,7 @@ internal sealed partial class LinearWorkViewModel : ObservableObject, IDisposabl
         if (stored.WorkView == UiPreferences.LinearView && !IsLinear)
         {
             IsLinear = true;
-            foreach (var name in new[] { nameof(IsLinear), nameof(IsSindri), nameof(CreateText), nameof(ShowsStrip) })
+            foreach (var name in new[] { nameof(IsLinear), nameof(IsSindri), nameof(CreateText), nameof(ShowsStrip), nameof(CanCreate), nameof(CreateTip) })
             {
                 OnChanged(name);
             }

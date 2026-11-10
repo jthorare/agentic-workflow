@@ -1,63 +1,97 @@
+using System.Globalization;
 using Aw.Sindri.Ui.Api.Linear;
 
 namespace Aw.Sindri.Ui.ViewModels.Linear;
 
-/// <summary>One issue of the since-you-looked card: its title, everything that changed on it, when, and the chips the list already knows.</summary>
+/// <summary>
+/// One issue of the since-you-looked card: its title as the main line, everything that changed on it (newest first) as the second line, when, and the chips.
+/// The state chip comes from the state change itself; priority, project and assignee come from the issue list once it holds the issue, so a row never prints a blank chip.
+/// </summary>
 internal sealed class LinearSinceRowViewModel : ObservableObject
 {
+    private static readonly string[] _issueBound = [nameof(StateChip), nameof(HasStateChip), nameof(PriorityChip), nameof(HasPriorityChip), nameof(Project), nameof(HasProject), nameof(Initials), nameof(HasInitials)];
+
+    private readonly string? _movedChip;   // from the state change; null without one
+
+    /// <summary>Builds the row of one issue.</summary>
+    /// <param name="changes">Every change on the issue; at least one.</param>
+    /// <param name="now">The instant "ago" counts from.</param>
     internal LinearSinceRowViewModel(IReadOnlyList<LinearSinceItem> changes, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(changes);
-        _ = now;
-        Key = changes.Count > 0 ? changes[0].Key : string.Empty;
+        var newestFirst = changes.OrderByDescending(static c => c.At).ToList();
+        var latest = newestFirst[0];
+        Key = latest.Key;
+        At = latest.At;
+        Title = string.IsNullOrWhiteSpace(latest.Title) ? latest.Key : latest.Title;
+        Group = changes.Any(static c => string.Equals(c.Kind, "assigned", StringComparison.Ordinal)) ? LinearSinceGroup.Assigned
+            : changes.Any(static c => string.Equals(c.Kind, "state", StringComparison.Ordinal)) ? LinearSinceGroup.Moved
+            : LinearSinceGroup.Other;
+        var said = newestFirst.Select(Labels.LinearSinceChange).ToList();
+        Detail = Key + " · " + string.Join(" · ", said);
+        TimeText = Labels.AgoWords(now - At);
+        Name = Key + ", " + Title + ", " + string.Join(", ", said) + ", " + TimeText;
+        var moved = newestFirst.FirstOrDefault(static c => string.Equals(c.Kind, "state", StringComparison.Ordinal));
+        _movedChip = moved is null ? null : Labels.LinearStateChip(moved.From, moved.To);
+        Apply(issue: null);
     }
 
     /// <summary>The issue key.</summary>
     public string Key { get; }
 
     /// <summary>The group the row sits in.</summary>
-    public LinearSinceGroup Group { get; private set; }
+    public LinearSinceGroup Group { get; }
 
     /// <summary>The newest change's instant.</summary>
-    public DateTimeOffset At { get; private set; }
+    public DateTimeOffset At { get; }
 
     /// <summary>The issue's title: the row's main line.</summary>
-    public string Title { get; private set; } = string.Empty;
+    public string Title { get; }
 
     /// <summary>The second line: the key, then each change, newest first.</summary>
-    public string Detail { get; private set; } = string.Empty;
+    public string Detail { get; }
 
     /// <summary>"2h ago".</summary>
-    public string TimeText { get; private set; } = string.Empty;
-
-    /// <summary>"Todo → In Progress"; empty without a state change or a known state.</summary>
-    public string StateChip { get; private set; } = string.Empty;
-
-    /// <summary>"Urgent"; empty until the list knows the issue, and for no priority.</summary>
-    public string PriorityChip { get; private set; } = string.Empty;
-
-    /// <summary>The project's name; empty when the list doesn't know the issue or it has none.</summary>
-    public string Project { get; private set; } = string.Empty;
-
-    /// <summary>The assignee's initials; empty when the list doesn't know the issue or it is unassigned.</summary>
-    public string Initials { get; private set; } = string.Empty;
+    public string TimeText { get; }
 
     /// <summary>The row's accessible name.</summary>
-    public string Name { get; private set; } = string.Empty;
+    public string Name { get; }
+
+    /// <summary>"Todo → In Progress", or the issue's state from the list when the row has no state change; empty when neither is known.</summary>
+    public string StateChip { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>"Urgent"; empty until the list holds the issue, and for no priority.</summary>
+    public string PriorityChip { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The project's name; empty until the list holds the issue, and when it has none.</summary>
+    public string Project { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The assignee's initials; empty until the list holds the issue, and when it is unassigned.</summary>
+    public string Initials { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when there is a state chip.</summary>
-    public bool HasStateChip { get; private set; }
+    public bool HasStateChip => StateChip.Length > 0;
 
     /// <summary>True when there is a priority chip.</summary>
-    public bool HasPriorityChip { get; private set; }
+    public bool HasPriorityChip => PriorityChip.Length > 0;
 
     /// <summary>True when there is a project chip.</summary>
-    public bool HasProject { get; private set; }
+    public bool HasProject => Project.Length > 0;
 
     /// <summary>True when there are initials.</summary>
-    public bool HasInitials { get; private set; }
+    public bool HasInitials => Initials.Length > 0;
 
     /// <summary>Takes what the issue list knows of this issue (or nothing, when it isn't listed).</summary>
     /// <param name="issue">The listed issue.</param>
-    internal void Apply(LinearIssueRow? issue) => HasProject = issue is null;   // stub: the red commit
+    internal void Apply(LinearIssueRow? issue)
+    {
+        StateChip = _movedChip ?? issue?.State.Name ?? string.Empty;
+        PriorityChip = issue is { Priority: > 0 } ? Labels.LinearPriority(issue.Priority) : string.Empty;
+        Project = issue?.Project?.Name ?? string.Empty;
+        Initials = issue?.Assignee is { } who ? Labels.LinearInitials(who.Name) : string.Empty;
+        foreach (var name in _issueBound)
+        {
+            OnChanged(name);
+        }
+    }
 }

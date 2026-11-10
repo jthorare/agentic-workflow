@@ -17,6 +17,9 @@ internal sealed class LinearIssueRowViewModel : ObservableObject
         _row = row;
     }
 
+    /// <summary>The issue as last read: the since-you-looked card takes its priority, project and assignee from it.</summary>
+    internal LinearIssueRow Issue => _row;
+
     /// <summary>The issue key.</summary>
     public string Key => _row.Key;
 
