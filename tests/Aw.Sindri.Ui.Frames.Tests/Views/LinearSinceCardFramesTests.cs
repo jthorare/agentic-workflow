@@ -93,15 +93,38 @@ public sealed class LinearSinceCardFramesTests : FrameHost
     });
 
     [Fact]
-    public Task A_failed_read_shows_the_reason_and_one_Reconnect_button() => OnUi(async () =>
+    public Task A_refused_key_shows_the_reason_and_one_Reconnect_button() => OnUi(async () =>
     {
-        Server.LinearSinceAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.ServiceUnavailable, "SND-LINEAR-001", "The store can't be read.");
+        var mine = JsonNode.Parse(GoldenFiles.Api("linear-issues", "mine"))!.AsObject();   // why: the golden is a JSON object
+        mine["feed"] = new JsonObject { ["state"] = "failing", ["lastSyncedAt"] = "2025-12-31T22:05:00.0000000Z", ["code"] = "SND-CONTEXT-071", ["reread"] = null };
+        Server.LinearIssuesAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, mine.ToJsonString());
         var (window, _) = await OnLinear();
 
-        Assert.True(Visible(window, "LinearStripFailed"));
         Assert.True(Visible(window, "LinearStripReason"));
         Assert.Equal("Reconnect", Named<Button>(window, "LinearStripReconnect").Content);
         Assert.False(Visible(window, "LinearStripMarkAllSeen"));
         Frame(window, "linear-since-error-900", "l2536-");
     });
+
+    [Fact]
+    public Task Not_connected_is_one_card_as_wide_as_the_page_and_New_issue_is_disabled() => OnUi(async () =>
+    {
+        Server.LinearIssuesAnswer = RouteAnswer.Api("linear-issues", "not-connected");
+        var (window, _) = await OnLinearConnect();
+
+        var card = Named<Border>(window, "LinearConnect");
+        var page = Named<StackPanel>(window, "LinearFilterBar").GetVisualAncestors().OfType<StackPanel>().First();
+        Assert.True(card.Bounds.Width >= page.Bounds.Width - 1, "the card runs the page's width");
+        Assert.False(Named<Button>(window, "CreateButton").IsEnabled);
+        Frame(window, "linear-not-connected-900", "l2536-");
+    });
+
+    private async Task<(Ui.Views.Shell.ShellWindow Window, ViewModels.Shell.ShellViewModel Shell)> OnLinearConnect()
+    {
+        var (window, shell) = await Connected(width: 900, height: 700);
+        shell.GoTo(PageId.Work);
+        shell.Linear.Choose(linear: true);
+        await Until(window, () => Visible(window, "LinearConnect"), "the connect card never showed");
+        return (window, shell);
+    }
 }

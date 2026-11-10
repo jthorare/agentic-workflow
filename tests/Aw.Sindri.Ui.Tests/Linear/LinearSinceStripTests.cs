@@ -123,7 +123,7 @@ public sealed class LinearSinceStripTests
         var work = await _f.Shown(Token);
 
         Assert.Equal((true, true, 3), (work.ShowsStrip, work.StripFailed, work.Mine.Rows.Count));
-        Assert.Equal(("Couldn't load what changed", "Reconnect"), (Labels.LinearStripFailed, Labels.LinearReconnect));
+        Assert.Equal(("Couldn't load what changed", "Retry"), (Labels.LinearStripFailed, Labels.LinearStripRetry));
     }
 
     [Fact]

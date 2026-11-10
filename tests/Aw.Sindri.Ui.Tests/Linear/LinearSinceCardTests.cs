@@ -134,19 +134,47 @@ public sealed class LinearSinceCardTests
         Assert.Equal((true, string.Empty), (work.ShowsNothingNew, work.NothingNewWhen));
     }
 
+    private static RouteAnswer FeedFailing(string code)
+    {
+        var mine = LinearFixture.Golden("mine");
+        mine["feed"] = new JsonObject { ["state"] = "failing", ["lastSyncedAt"] = "2025-12-31T22:05:00.0000000Z", ["code"] = code, ["reread"] = null };
+        return LinearFixture.Served(mine);
+    }
+
     [Fact]
-    public async Task A_failed_read_shows_a_card_with_the_reason_and_not_the_empty_message()
+    public async Task A_feed_that_failed_with_a_refused_key_shows_the_Reconnect_card_with_the_reason_in_words()
+    {
+        _f.Mine = FeedFailing("SND-CONTEXT-071");
+
+        var work = await _f.Shown(Token);
+
+        Assert.Equal((true, true, false, false, "Linear refused the key. It may have expired or been revoked."), (work.ShowsStrip, work.StripNeedsReconnect, work.StripFeedFailing, work.ShowsNothingNew, work.StripReason));
+    }
+
+    [Theory]
+    [InlineData("SND-CONTEXT-010", "Linear is rate-limiting Sindri or is down. Sindri keeps trying.")]
+    [InlineData("SND-CONTEXT-072", "Linear sent a reply Sindri couldn't read.")]
+    public async Task Any_other_feed_failure_shows_the_reason_and_Retry_and_no_Reconnect(string code, string reason)
+    {
+        _f.Mine = FeedFailing(code);
+
+        var work = await _f.Shown(Token);
+
+        Assert.Equal((true, false, true, reason), (work.ShowsStrip, work.StripNeedsReconnect, work.StripFeedFailing, work.StripReason));
+    }
+
+    [Fact]
+    public async Task A_failed_read_of_the_changes_is_its_own_small_state_with_Retry_and_no_Reconnect()
     {
         _f.Server.LinearSinceAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.ServiceUnavailable, "SND-LINEAR-001", "The store can't be read.");
 
         var work = await _f.Shown(Token);
 
-        Assert.Equal((true, true, false), (work.ShowsStrip, work.StripFailed, work.ShowsNothingNew));
-        Assert.NotEmpty(work.StripReason);
+        Assert.Equal((true, true, false, false, false), (work.ShowsStrip, work.StripFailed, work.StripNeedsReconnect, work.StripFeedFailing, work.ShowsNothingNew));
     }
 
     [Fact]
-    public async Task Reconnect_asks_for_the_Linear_connection()
+    public async Task Reconnect_asks_for_the_Connections_page()
     {
         var work = await _f.Shown(Token);
         var asked = 0;
@@ -155,6 +183,25 @@ public sealed class LinearSinceCardTests
         work.Reconnect();
 
         Assert.Equal(1, asked);
+    }
+
+    [Fact]
+    public async Task Not_connected_shows_no_card_and_disables_New_issue_with_the_reason()
+    {
+        _f.Mine = RouteAnswer.Api("linear-issues", "not-connected");
+        _f.Teams = RouteAnswer.Api("linear-issues", "not-connected");
+
+        var work = await _f.Shown(Token);
+
+        Assert.Equal((false, false, "Connect Linear first: New issue needs a Linear connection."), (work.ShowsStrip, work.CanCreate, work.CreateTip));
+    }
+
+    [Fact]
+    public async Task New_issue_is_enabled_while_Linear_is_connected()
+    {
+        var work = await _f.Shown(Token);
+
+        Assert.Equal((true, string.Empty), (work.CanCreate, work.CreateTip));
     }
 
     [Fact]
