@@ -20533,6 +20533,10 @@ Aw.Sindri.Core.Launch.AgentTask.HostGroups.get -> System.Collections.Generic.IRe
 Aw.Sindri.Core.Launch.AgentTask.Outputs.init -> void
 Aw.Sindri.Core.Launch.AgentTask.Model.get -> string?
 Aw.Sindri.Core.Launch.AgentTask.Model.init -> void
+Aw.Sindri.Core.Launch.AgentTask.ResourceMounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>?
+Aw.Sindri.Core.Launch.AgentTask.ResourceMounts.init -> void
+Aw.Sindri.Core.Launch.AgentTask.ResourceLimits.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Launch.AgentTask.ResourceLimits.init -> void
 Aw.Sindri.Core.Launch.AgentTask.HostGroups.init -> void
 Aw.Sindri.Core.Launch.AgentTask
 override Aw.Sindri.Core.Launch.AgentTask.ToString() -> string!
@@ -20542,7 +20546,7 @@ override Aw.Sindri.Core.Launch.AgentTask.GetHashCode() -> int
 override Aw.Sindri.Core.Launch.AgentTask.Equals(object? obj) -> bool
 Aw.Sindri.Core.Launch.AgentTask.Equals(Aw.Sindri.Core.Launch.AgentTask? other) -> bool
 Aw.Sindri.Core.Launch.AgentTask.<Clone>$() -> Aw.Sindri.Core.Launch.AgentTask!
-Aw.Sindri.Core.Launch.AgentTask.Deconstruct(out string! Brief, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, out System.Collections.Generic.IReadOnlyList<string!>! HostGroups, out string? Model) -> void
+Aw.Sindri.Core.Launch.AgentTask.Deconstruct(out string! Brief, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, out System.Collections.Generic.IReadOnlyList<string!>! HostGroups, out string? Model, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>? ResourceMounts, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? ResourceLimits) -> void
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.RunAgentBlock() -> void
 Aw.Sindri.Core.Graph.Blocks.RunAgentBrief
@@ -20621,7 +20625,7 @@ Aw.Sindri.Core.Launch.LaunchRequest.Node.get -> Aw.Sindri.Core.Launch.NodeRunAdd
 Aw.Sindri.Core.Launch.LaunchRequest.Node.init -> void
 Aw.Sindri.Core.Launch.LaunchRequest.Task.init -> void
 Aw.Sindri.Core.Launch.LaunchRequest.Task.get -> Aw.Sindri.Core.Launch.AgentTask?
-Aw.Sindri.Core.Launch.AgentTask.AgentTask(string! Brief, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, System.Collections.Generic.IReadOnlyList<string!>! HostGroups, string? Model = null) -> void
+Aw.Sindri.Core.Launch.AgentTask.AgentTask(string! Brief, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, System.Collections.Generic.IReadOnlyList<string!>! HostGroups, string? Model = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>? ResourceMounts = null, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? ResourceLimits = null) -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.AddGroups.init -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.AddGroups.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Sandbox.Plan.GroupsInput.AddGroups.get -> System.Collections.Generic.IReadOnlyList<string!>?

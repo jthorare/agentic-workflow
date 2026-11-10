@@ -110,6 +110,17 @@ public sealed class SandboxLaunchStagesTests : IDisposable
     }
 
     [Fact]
+    public async Task A_node_launch_carries_the_workflows_resource_mounts_and_limits_into_the_plan()
+    {
+        var task = new AgentTask("brief", new Dictionary<string, string>(StringComparer.Ordinal), [], ResourceMounts: [new ResourceMount("resources", SandboxRequests.SindriHome + "/resources/workflow/web")], ResourceLimits: new ResourceLimitOverride(Memory: "1GiB"));
+
+        var plan = await PlanOf(PlannedStep() with { Task = task });
+
+        Expect.True(plan.Mounts.Any(m => m.Kind == PlanMountKind.State && string.Equals(m.Path, SandboxRequests.SindriHome + "/resources/workflow/web", StringComparison.Ordinal)));   // rw State mount
+        Expect.Equal(1024L * 1024 * 1024, plan.Limits.MemoryMaxBytes);   // the declared size, under the box's and the profile's
+    }
+
+    [Fact]
     public async Task A_skill_launch_with_a_pr_input_sets_the_branch_the_host_fetched_the_PR_head_to_inside_the_sandbox()
     {
         var request = SkillStep(new Dictionary<string, string>(StringComparer.Ordinal) { ["pr"] = "2148" });
