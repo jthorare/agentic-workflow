@@ -83,7 +83,7 @@ internal sealed partial class NotePass
         }
 
         var outcome = Outcome(decision.Held, counted);
-        return new NoteMergeResult(intents, _edits, NextBase(), outcome, decision.Held ? new NoteHold(counted) : null, _adopted, _deferred);
+        return new NoteMergeResult(intents, _edits, NextBase(), outcome, decision.Held ? new NoteHold(counted, baseOpen) : null, _adopted, _deferred);
     }
 
     private NoteHoldOutcome Outcome(bool held, List<HeldChange> counted)

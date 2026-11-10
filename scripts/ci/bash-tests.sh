@@ -83,6 +83,7 @@ cd "$ROOT" || exit 2
 EXCLUDED=(
   "config/lib/tests/judge-cs-hook-surface.test.sh	needs the .NET SDK to build the C# judge; CI runs it in the dotnet job (step: Hook contract), which changed-areas.sh also selects for a hook, statusline or hook-library change; the local gate runs it directly"
   "config/lib/tests/sindri-cs-hook-surface.test.sh	needs the .NET SDK to build the C# sindri; CI runs it in the dotnet job (step: Hook contract, sindri), which changed-areas.sh also selects for a hook change; the local gate runs it directly"
+  "scripts/tests/lane-cap-sindri.test.sh	runs dotnet test on three heavy Sindri test classes (40 shards and ConnectionRefresh) and checks their per-test lane cap; the dotnet job's lane-cap check covers it on CI; run it by hand under heavy (#2534)"
   "config/tests/statusline-judge.test.sh	stale on main: it extracts only judge_segment() from statusline.sh, which now calls judge_health(), so all 3 cases fail; config/lib/tests/statusline.test.sh covers the judge column"
 )
 

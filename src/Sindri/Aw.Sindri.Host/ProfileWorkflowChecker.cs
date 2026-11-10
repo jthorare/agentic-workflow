@@ -3,6 +3,8 @@ using Aw.Sindri.Core.Graph.Expressions;
 using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Resources;
+using Aw.Sindri.Core.Sandbox.Plan;
 
 namespace Aw.Sindri.Host;
 
@@ -14,7 +16,21 @@ internal sealed class ProfileWorkflowChecker(IApprovedProfile profile, IGraphBlo
     public async ValueTask<GraphValidator> Validator(CancellationToken cancellationToken)
     {
         var world = await ProfileGraphWorld.Load(profile, cancellationToken).ConfigureAwait(false);
-        return new GraphValidator(new GraphValidationContext(blocks.Types, world, (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem, ParseCondition));
+        var context = new GraphValidationContext(blocks.Types, world, (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem, ParseCondition)
+        {
+            BoxCap = await BoxCap(cancellationToken).ConfigureAwait(false),
+        };
+        return new GraphValidator(context);
+    }
+
+    /// <summary>The cap from the profile's 'sandbox.limits.memory' (#2531); null when the profile sets none, or sets 'auto' (the box's RAM decides that at launch). The profile has no wall limit, so the wall is unbounded here.</summary>
+    private async ValueTask<ResourceBoxCap?> BoxCap(CancellationToken cancellationToken)
+    {
+        var latest = await profile.Latest(cancellationToken).ConfigureAwait(false);
+        var memory = latest.IsSuccess ? latest.Value?.Profile.Sandbox?.Limits?.Memory : null;
+        return memory is null || string.Equals(memory, SandboxDefaults.Memory, StringComparison.Ordinal) || !SandboxUnits.TryParseSize(memory, out var bytes)
+            ? null   // why: a size the profile rules would refuse caps nothing here; the profile check reports it
+            : new ResourceBoxCap(bytes, TimeSpan.MaxValue);
     }
 
     private static ConditionParse ParseCondition(string text) =>
