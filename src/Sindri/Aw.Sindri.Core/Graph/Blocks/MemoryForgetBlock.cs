@@ -34,6 +34,9 @@ public sealed class MemoryForgetBlock(IGraphMemoryPort memory) : IGraphBlock
     public BlockOutputs OutputsFor(JsonObject config) => _outputs;
 
     /// <inheritdoc />
+    public IReadOnlyList<(string Field, string Problem)> CheckConfig(JsonObject config) => [];
+
+    /// <inheritdoc />
     public async ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
