@@ -75,6 +75,8 @@ public sealed class ShellReviewsTests
         shell.Reviews.PressConnect();
 
         Assert.Equal((PageId.Connections, true, "github:work"), (shell.CurrentPage, shell.IsConnectionSheet, shell.SheetSubject));
+        await ShellWait.Until(shell, () => shell.ConnectionSheet.Phase is not (FramePhase.Empty or FramePhase.Loading), Token);
+        Assert.Equal(FramePhase.Shown, shell.ConnectionSheet.Phase);   // a sheet that opens and then errors must not pass
     }, Token);
 
     [Fact]
