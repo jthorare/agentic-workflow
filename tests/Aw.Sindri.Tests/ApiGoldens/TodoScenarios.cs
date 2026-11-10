@@ -210,28 +210,34 @@ internal static class TodoScenarios
     // the hold scenario: four held changes (two removed, one edited, one reopened) against 20 open todos, so the 10% rule's base is 20; the four held todos come first so their ids stay put
     private static async Task<string> Hold(GoldenHost host, (string Name, string Value)[] human, string hash, CancellationToken ct)
     {
-        var removedA = await Add(host, human, """{"text":"reply to Sam about the offsite","clientId":"c-1"}""", string.Empty, ct);
-        var removedB = await Add(host, human, """{"text":"rotate the staging key","clientId":"c-2"}""", string.Empty, ct);
-        var edited = await Add(host, human, """{"text":"call the dentist","clientId":"c-3"}""", string.Empty, ct);
-        var reopened = await Add(host, human, """{"text":"renew the cert","due":"2025-12-30","clientId":"c-4"}""", string.Empty, ct);
-        _ = await host.Http.Ask(Post($"/sindri/todos/{reopened}/done", "{}", human));
-        await ViewScenarios.CatchUp(host, ct);
-        for (var i = 5; i <= 21; i++)
+        // why: all seeding is the human's (AsHuman undoes a session run's header swap): an agent session may add 20 todos an hour (TodoAdds.MaxPerHour) and this adds 21,
+        // and the write-attribution sweep allows another actor only before the session's first call; the one call the golden records, the GET, stays the caller's
+        using (AsHuman())
         {
-            var n = i.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            // why: as the human, because an agent session may add 20 todos an hour (TodoAdds.MaxPerHour) and this scenario adds 21; the session runs of the goldens use the same scenario
-            _ = await Add(host, Human(host.Token.Value), $$"""{"text":"filler todo {{n}}","clientId":"c-{{n}}"}""", string.Empty, ct);
+            var seed = Human(host.Token.Value);
+            var removedA = await Add(host, seed, """{"text":"reply to Sam about the offsite","clientId":"c-1"}""", string.Empty, ct);
+            var removedB = await Add(host, seed, """{"text":"rotate the staging key","clientId":"c-2"}""", string.Empty, ct);
+            var edited = await Add(host, seed, """{"text":"call the dentist","clientId":"c-3"}""", string.Empty, ct);
+            var reopened = await Add(host, seed, """{"text":"renew the cert","due":"2025-12-30","clientId":"c-4"}""", string.Empty, ct);
+            _ = await host.Http.Ask(Post($"/sindri/todos/{reopened}/done", "{}", seed));
+            await ViewScenarios.CatchUp(host, ct);
+            for (var i = 5; i <= 21; i++)
+            {
+                var n = i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                _ = await Add(host, seed, $$"""{"text":"filler todo {{n}}","clientId":"c-{{n}}"}""", string.Empty, ct);
+            }
+
+            var changes = new[]
+            {
+                new TodoHeldChange(Core.Ids.TodoId.From(removedA), "removed", NoteLine: null),
+                new TodoHeldChange(Core.Ids.TodoId.From(removedB), "removed", NoteLine: null),
+                new TodoHeldChange(Core.Ids.TodoId.From(edited), "edited", $"- [ ] call the dentist about the crown 📅 2026-01-05 ^td-{edited[3..]}"),
+                new TodoHeldChange(Core.Ids.TodoId.From(reopened), "reopened", $"- [ ] renew the cert 📅 2025-12-30 ^td-{reopened[3..]}"),
+            };
+            await ViewScenarios.Append(host, EventTypes.TodoNoteHeld, new TodoNoteHeld(changes, hash, "service:todo-note"), "todo.note.held:" + hash, ct);
+            await ViewScenarios.CatchUp(host, ct);
         }
 
-        var changes = new[]
-        {
-            new TodoHeldChange(Core.Ids.TodoId.From(removedA), "removed", NoteLine: null),
-            new TodoHeldChange(Core.Ids.TodoId.From(removedB), "removed", NoteLine: null),
-            new TodoHeldChange(Core.Ids.TodoId.From(edited), "edited", $"- [ ] call the dentist about the crown 📅 2026-01-05 ^td-{edited[3..]}"),
-            new TodoHeldChange(Core.Ids.TodoId.From(reopened), "reopened", $"- [ ] renew the cert 📅 2025-12-30 ^td-{reopened[3..]}"),
-        };
-        await ViewScenarios.Append(host, EventTypes.TodoNoteHeld, new TodoNoteHeld(changes, hash, "service:todo-note"), "todo.note.held:" + hash, ct);
-        await ViewScenarios.CatchUp(host, ct);
         return (await host.Http.Ask(Get("/sindri/todos/note", human))).Body;
     }
 
