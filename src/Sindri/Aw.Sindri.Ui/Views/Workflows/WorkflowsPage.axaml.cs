@@ -59,10 +59,11 @@ internal sealed partial class WorkflowsPage : UserControl
     {
         if (DataContext is WorkflowsPageViewModel page)
         {
-            await page.Create(CancellationToken.None).ConfigureAwait(true);
-            if (page.IsEditing)
+            var create = page.Create(CancellationToken.None);
+            await create.ConfigureAwait(true);
+            if (page.IsRuns)
             {
-                Dispatcher.UIThread.Post(() => _ = (FirstTarget(WorkflowEditor, static c => c is TextBox or CheckBox or Button) ?? WorkflowEditor).Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);   // the new workflow's sheet takes focus, as Edit does
+                FocusLater(WorkflowsBack);   // the new workflow's page opens on its Back button, as any workflow does
             }
         }
     }
@@ -72,7 +73,7 @@ internal sealed partial class WorkflowsPage : UserControl
         if (DataContext is WorkflowsPageViewModel page)
         {
             page.CancelCreate();
-            FocusLater(WorkflowsNew);
+            FocusLater(WorkflowsNewHeader);
         }
     }
 
@@ -87,6 +88,18 @@ internal sealed partial class WorkflowsPage : UserControl
         {
             OnCancelCreate(sender, e);
             e.Handled = true;
+        }
+    }
+
+    // The row is the focus stop: Enter or Space on it (not on a control inside it) opens the workflow, as clicking its title does.
+    private async void OnWorkflowRowKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Source == sender && e.Key is Key.Enter or Key.Space && DataContext is WorkflowsPageViewModel page && sender is Control { DataContext: WorkflowRowViewModel row })
+        {
+            e.Handled = true;
+            var open = page.OpenWorkflow(row.Slug, CancellationToken.None);
+            FocusLater(WorkflowsBack);
+            await open.ConfigureAwait(true);
         }
     }
 

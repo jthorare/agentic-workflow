@@ -9,6 +9,7 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     {
         Slug = row.Slug;
         NameText = row.Name;
+        IdText = string.Equals(row.Slug, row.Name, StringComparison.Ordinal) ? string.Empty : row.Slug;
         IsActive = row.ActiveRevision is not null;
         HasNewerRevision = row.ActiveRevision is { } active && active < row.LatestRevision;
         var (glyph, word) = Labels.WfState(IsActive);
@@ -24,13 +25,22 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     /// <summary>The name for people.</summary>
     public string NameText { get; }
 
+    /// <summary>The short id, shown first on the second line; empty when it is the title already.</summary>
+    public string IdText { get; }
+
+    /// <summary>True when the second line leads with the short id.</summary>
+    public bool HasIdText => IdText.Length > 0;
+
+    /// <summary>True when there is a revision to say (from the second revision on).</summary>
+    public bool HasRevisionText => RevisionText.Length > 0;
+
     /// <summary>The state: glyph and word.</summary>
     public string StateText { get; }
 
-    /// <summary>"Revision 1", "Revision 1 active, 3 newest" or "Newest revision 1".</summary>
+    /// <summary>"Revision 2", "Revision 1 active, 3 newest" or "Newest revision 2"; empty for a first revision.</summary>
     public string RevisionText { get; }
 
-    /// <summary>"Changed by owner, 5m ago"; "session:abc" is shown as served.</summary>
+    /// <summary>"Changed by you, 5m ago" for the person's own actor, "Changed by owner, 5m ago" or "session:abc" as served.</summary>
     public string ChangedText { get; }
 
     /// <summary>The row's accessible name.</summary>

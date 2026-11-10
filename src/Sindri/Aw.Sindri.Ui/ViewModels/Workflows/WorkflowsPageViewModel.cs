@@ -234,6 +234,8 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Patch.To(Rows, rows);
         (HasHead, Head) = rows.Count == 0 ? (false, string.Empty) : (true, Labels.WfHead(rows.Count, rows.Count(r => r.IsActive)));
         (IsEmpty, EmptyText) = rows.Count == 0 ? (true, Labels.WfNone) : (false, string.Empty);
+        OnChanged(nameof(ShowsEmpty));
+        NotifyCreate();   // a short id the list now holds is taken
         NotifyStateButtons();
     }
 }
