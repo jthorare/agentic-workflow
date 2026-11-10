@@ -85,6 +85,12 @@
   <!-- derived: Attention at 14 % over Canvas, the needs-you chip background -->
   <Color x:Key="Color.AttentionSoft">#23160c</Color>
   <SolidColorBrush x:Key="Brush.AttentionSoft" Color="{StaticResource Color.AttentionSoft}" />
+  <!-- derived: AttentionSoft lifted one and two steps (about +9 and +15 per channel, hue kept). An attention row lifts within its own
+       colour under the pointer and a press; the grey clickable hover would drop the urgency (#2611). -->
+  <Color x:Key="Color.AttentionSoft.Hover">#2c1f15</Color>
+  <SolidColorBrush x:Key="Brush.AttentionSoft.Hover" Color="{StaticResource Color.AttentionSoft.Hover}" />
+  <Color x:Key="Color.AttentionSoft.Pressed">#32251b</Color>
+  <SolidColorBrush x:Key="Brush.AttentionSoft.Pressed" Color="{StaticResource Color.AttentionSoft.Pressed}" />
   <!-- derived: Attention at 35 % over Surface2, opaque: the hold button's fill -->
   <Color x:Key="Color.AttentionFill">#624328</Color>
   <SolidColorBrush x:Key="Brush.AttentionFill" Color="{StaticResource Color.AttentionFill}" />

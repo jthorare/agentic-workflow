@@ -60,7 +60,17 @@ internal sealed partial class LinearWorkView : UserControl
             .FirstOrDefault(b => string.Equals(b.Name, "LinearRowTitle", StringComparison.Ordinal) && b.DataContext is LinearIssueRowViewModel row && string.Equals(row.Key, key, StringComparison.Ordinal))
             ?.Focus();
 
-    private void OnDismiss(object? sender, RoutedEventArgs e) => _ = Work?.Dismiss();
+    private void OnToggleGroup(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: LinearSinceGroupViewModel group })
+        {
+            group.Toggle();
+        }
+    }
+
+    private void OnMarkAllSeen(object? sender, RoutedEventArgs e) => _ = Work?.MarkAllSeen();
+
+    private void OnReconnect(object? sender, RoutedEventArgs e) => Work?.Reconnect();
 
     private void OnRetryStrip(object? sender, RoutedEventArgs e) => _ = Work?.RetryStrip();
 

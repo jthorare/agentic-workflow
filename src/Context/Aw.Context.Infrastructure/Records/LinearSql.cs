@@ -3,6 +3,8 @@ namespace Aw.Context.Infrastructure.Records;
 /// <summary>The Linear hub's side-row SQL (migration 0032_s1l_linear_hub). Values are always bound, never formatted in.</summary>
 internal static class LinearSql
 {
+    internal const string StoredStateName = "SELECT state_name FROM linear_issue WHERE key = @key AND state_name IS NOT NULL";
+
     internal const string StoredIssue =
         "SELECT team_id, identifier, state_id, state_type, assignee_id, priority, estimate, cycle_id, project_id, parent_id, labels, due_date, sort_order, updated_at FROM linear_issue WHERE key = @key";
 
@@ -15,9 +17,9 @@ internal static class LinearSql
         "SELECT id, author_id, created_at, body, sindri FROM linear_comment WHERE issue_key = @key ORDER BY created_at DESC, id ASC";
 
     internal const string UpsertIssue =
-        "INSERT INTO linear_issue (key, team_id, identifier, state_id, state_type, assignee_id, priority, estimate, cycle_id, project_id, parent_id, labels, due_date, sort_order, updated_at, description) " +
-        "VALUES (@key, @team, @identifier, @stateId, @stateType, @assignee, @priority, @estimate, @cycle, @project, @parent, @labels, @due, @sortOrder, @updated, @description) " +
-        "ON CONFLICT (key) DO UPDATE SET team_id = excluded.team_id, identifier = excluded.identifier, state_id = excluded.state_id, state_type = excluded.state_type, assignee_id = excluded.assignee_id, " +
+        "INSERT INTO linear_issue (key, team_id, identifier, state_id, state_name, state_type, assignee_id, priority, estimate, cycle_id, project_id, parent_id, labels, due_date, sort_order, updated_at, description) " +
+        "VALUES (@key, @team, @identifier, @stateId, @stateName, @stateType, @assignee, @priority, @estimate, @cycle, @project, @parent, @labels, @due, @sortOrder, @updated, @description) " +
+        "ON CONFLICT (key) DO UPDATE SET team_id = excluded.team_id, identifier = excluded.identifier, state_id = excluded.state_id, state_name = excluded.state_name, state_type = excluded.state_type, assignee_id = excluded.assignee_id, " +
         "priority = excluded.priority, estimate = excluded.estimate, cycle_id = excluded.cycle_id, project_id = excluded.project_id, parent_id = excluded.parent_id, labels = excluded.labels, " +
         "due_date = excluded.due_date, sort_order = excluded.sort_order, updated_at = excluded.updated_at, description = excluded.description";
 
@@ -27,7 +29,7 @@ internal static class LinearSql
         "INSERT INTO linear_comment (id, issue_key, author_id, created_at, body, sindri) VALUES (@id, @key, @author, @created, @body, @sindri) " +
         "ON CONFLICT (id) DO UPDATE SET issue_key = excluded.issue_key, author_id = excluded.author_id, created_at = excluded.created_at, body = excluded.body, sindri = excluded.sindri";
 
-    internal const string InsertChange = "INSERT INTO linear_issue_change (issue_key, field, \"old\", \"new\", at, via) VALUES (@key, @field, @old, @new, @at, @via)";
+    internal const string InsertChange = "INSERT INTO linear_issue_change (issue_key, field, \"old\", \"new\", at, via, old_name, new_name) VALUES (@key, @field, @old, @new, @at, @via, @oldName, @newName)";
 
     internal const string PruneChanges = "DELETE FROM linear_issue_change WHERE at < @cutoff";
 
@@ -80,7 +82,7 @@ internal static class LinearSql
 
     /// <summary>Assignments to the viewer that a sync saw (the owner's own save is not news to them), and state moves a sync saw on issues assigned to them, after a marker.</summary>
     internal const string SinceChanges =
-        "SELECT ch.issue_key, i.identifier, ch.field, ch.\"old\", ch.\"new\", ch.at, ch.via FROM linear_issue_change ch " +
+        "SELECT ch.issue_key, i.identifier, ch.field, ch.\"old\", ch.\"new\", ch.at, ch.via, ch.old_name, ch.new_name FROM linear_issue_change ch " +
         "JOIN linear_issue i ON i.key = ch.issue_key JOIN source_record r ON r.key = ch.issue_key " +
         "WHERE ch.at > @marker AND " + Visible + " " +
         "AND ((ch.field = 'assignee' AND ch.via = 'feed' AND ch.\"new\" = @viewer) OR (ch.field = 'state' AND ch.via = 'feed' AND i.assignee_id = @viewer)) ORDER BY ch.at ASC, ch.seq ASC";
