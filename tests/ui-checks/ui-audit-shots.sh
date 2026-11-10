@@ -16,15 +16,21 @@ WIDTHS="${WIDTHS:-1280 900}"
 export AW_UI_DRIVER_BIN="${AW_UI_DRIVER_BIN:-$CTX_ROOT/artifacts/bin/Aw.UiDriver.Cli/debug/aw-ui-driver}"
 [ -x "$AW_UI_DRIVER_BIN" ] || setup_fail "no aw-ui-driver at $AW_UI_DRIVER_BIN (heavy --light dotnet build src/UiDriver/Aw.UiDriver.Cli)"
 d() { timeout 60 "$DRIVER" "$@"; }
-# Waits (1 s apart, 60 s at most) until two reads of the window's tree in a row are identical, so a page still loading is not shot. Writes "unsettled: <label>" to missing.txt on a timeout and goes on.
+# A fingerprint of the window: each element's type and name (never its text) with a count per pair, times stripped from the names ("7m", "23 s ago", "just now", "updated ..."), so a clock ticking is not a change.
+shape() {
+  d tree 2>/dev/null | jq -r '.root | .. | objects | select(has("children")) | "\(.type)|\(.name // "")"' 2>/dev/null \
+    | sed -E 's/[0-9]+ ?(s|sec|m|min|h|d)( ago)?\b//g; s/just now//g; s/updated [^|]*//g' | sort | uniq -c | sha256sum
+}
+# Waits (1 s apart, 60 s at most) until two reads of shape in a row match, so a page still loading is not shot. Logs "<label> stable <N>s" or "<label> gave-up 60s" to settle.txt (gave-up also to missing.txt as "unsettled: <label>") and goes on. label is "<page> <width>".
 settle() {
   local label="$1" prev="" cur i
   for i in $(seq 1 60); do
-    cur="$(d tree 2>/dev/null | sha256sum)"
-    [ -n "$prev" ] && [ "$cur" = "$prev" ] && return 0
+    cur="$(shape)"
+    if [ -n "$prev" ] && [ "$cur" = "$prev" ]; then echo "$label stable ${i}s" >>"$OUT/settle.txt"; return 0; fi
     prev="$cur"
     sleep 1
   done
+  echo "$label gave-up 60s" >>"$OUT/settle.txt"
   echo "unsettled: $label" >>"$OUT/missing.txt"
 }
 
@@ -57,7 +63,7 @@ for page in $PAGES; do
   else
     d click --type ListBoxItem --name Home >/dev/null 2>&1 || true
   fi
-  settle "$page"
+  settle "$page -"
   for w in $WIDTHS; do
     d window --width "$w" --height 900 >/dev/null 2>&1
     settle "$page $w"
