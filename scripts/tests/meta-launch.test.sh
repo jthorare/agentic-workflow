@@ -499,8 +499,16 @@ if command -v script > /dev/null 2>&1; then
   jq --arg c "$WORK/codex-quiet" '.agents.codex.bin = $c' "$LCFG" > "$WORK/l5.json"
   find "$AW_STATE_DIR/meta/lane-sessions" -mindepth 1 -delete 2> /dev/null
   pty_cmd="env AW_LAUNCHER_CONFIG=$WORK/l5.json AW_META_NO_SHELL=1 AW_META_ID_WAIT=20 AW_META_ID_GRACE=1 bash $DIR/meta-lane.sh t1 api"
-  if script --version 2>&1 | grep -q util-linux; then script -qfec "$pty_cmd" /dev/null < /dev/null > /dev/null 2>&1 &   # util-linux
-  else script -q /dev/null bash -c "$pty_cmd" < /dev/null > /dev/null 2>&1 & fi   # BSD (macOS)
+  # why: a suite started under `setsid nohup` hands script(1) SIGHUP ignored, and the lane inherits it, so the pty's hangup
+  # can't end the lane (#2566). A signal ignored on entry can't be reset from bash: this python exec puts HUP, INT and TERM
+  # back to the default (the #2377 way). It execs, so `$!` is still script's pid.
+  dfl=(env)
+  command -v python3 > /dev/null 2>&1 && dfl=(python3 -c 'import os, signal, sys
+for s in (signal.SIGHUP, signal.SIGINT, signal.SIGTERM):
+    signal.signal(s, signal.SIG_DFL)
+os.execvp(sys.argv[1], sys.argv[1:])')
+  if script --version 2>&1 | grep -q util-linux; then "${dfl[@]}" script -qfec "$pty_cmd" /dev/null < /dev/null > /dev/null 2>&1 &   # util-linux
+  else "${dfl[@]}" script -q /dev/null bash -c "$pty_cmd" < /dev/null > /dev/null 2>&1 & fi   # BSD (macOS)
   sp=$!
   waitfor '[ "$(pgrep -f "^bash $DIR/meta-lane.sh t1 api$" | wc -l | tr -d " ")" -ge 2 ] && pgrep -f "^codex 60$" > /dev/null'
   lane_pids="$(pgrep -f "^bash $DIR/meta-lane.sh t1 api$")"; agent_pid="$(pgrep -f '^codex 60$' | head -1)"
