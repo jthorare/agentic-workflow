@@ -1,14 +1,75 @@
+using System.Globalization;
 using Aw.Kernel;
-using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Toolkits;
+using Aw.Sindri.Infrastructure.Processes;
 
 namespace Aw.Sindri.Infrastructure.Toolkits;
 
-/// <summary>The toolkits root on disk, and the generator run that fills it.</summary>
-/// <param name="home">The Sindri home the root lives under.</param>
-internal sealed class FileToolkitFolders(ISindriHome home) : IToolkitFolders
+/// <summary>
+/// The toolkits root on disk ($AW_SINDRI_HOME/toolkits: one folder per toolkit, named after it), and the generator run that fills it: 'node scripts/scaffold/new-toolkit.mjs' from the installed toolkit
+/// ($AW_TOOLKIT, else ~/.agentic-workflow/toolkit), into the new folder, with the SDK feed Sindri packs ($AW_SINDRI_SDK_FEED, else $AW_SINDRI_HOME/sdk/packages).
+/// </summary>
+/// <param name="sindriHome">Sindri's home folder.</param>
+/// <param name="environment">Reads an environment variable.</param>
+/// <param name="runner">Runs node.</param>
+internal sealed class FileToolkitFolders(string sindriHome, Func<string, string?> environment, IToolRunner runner) : IToolkitFolders
 {
-    public IReadOnlyList<ToolkitFolder> Folders() => throw new NotSupportedException(home.Path);
+    private static readonly TimeSpan _timeout = TimeSpan.FromMinutes(30);   // restore, a build and one test run, queued behind other heavy jobs
 
-    public ValueTask<Result<ToolkitFolder>> Generate(string name, string tool, string? needs, CancellationToken cancellationToken) => throw new NotSupportedException();
+    private const int OutputCap = 800;
+
+    private readonly string _root = Path.Combine(sindriHome, "toolkits");
+
+    public IReadOnlyList<ToolkitFolder> Folders()
+    {
+        try
+        {
+            return Directory.Exists(_root)
+                ? [.. Directory.EnumerateDirectories(_root)
+                    .Where(static d => Directory.EnumerateFiles(d, "*.Toolkit.csproj", SearchOption.TopDirectoryOnly).Any())
+                    .Select(static d => new ToolkitFolder(Path.GetFileName(d), d))
+                    .OrderBy(static f => f.Name, StringComparer.Ordinal)]
+                : [];
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return [];   // an unreadable root adopts nothing; the next serve start looks again
+        }
+    }
+
+    public async ValueTask<Result<ToolkitFolder>> Generate(string name, string tool, string? needs, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        var toolkit = environment("AW_TOOLKIT") is { Length: > 0 } set ? set : Path.Combine(environment("HOME") ?? string.Empty, ".agentic-workflow", "toolkit");
+        var script = Path.Combine(toolkit, "scripts", "scaffold", "new-toolkit.mjs");
+        if (!File.Exists(script))
+        {
+            return SindriErrors.ToolkitCreateFailed.With($"the generator isn't at {script} (fix: run setup.sh, or set AW_TOOLKIT to the toolkit checkout)");
+        }
+
+        var dir = Path.Combine(_root, name);
+        var feed = environment("AW_SINDRI_SDK_FEED") is { Length: > 0 } given ? given : Path.Combine(sindriHome, "sdk", "packages");
+        List<string> arguments = [script, "--name", Pascal(name), "--tool", tool, "--dir", dir, "--feed", feed];
+        if (!string.IsNullOrEmpty(needs))
+        {
+            arguments.AddRange(["--needs", needs]);
+        }
+
+        var ran = await Task.Run(() => runner.Run("node", arguments, _timeout, new ToolRunOptions(WorkingDirectory: toolkit), cancellationToken), cancellationToken).ConfigureAwait(false);
+        return ran.Outcome switch
+        {
+            ToolOutcome.Exited when ran.ExitCode == 0 => new ToolkitFolder(name, dir),
+            ToolOutcome.Missing => SindriErrors.ToolkitCreateFailed.With("node isn't installed (fix: install Node, see .nvmrc)"),
+            ToolOutcome.TimedOut => SindriErrors.ToolkitCreateFailed.With($"the generator ran past {_timeout.TotalMinutes.ToString("0", CultureInfo.InvariantCulture)} minutes"),
+            ToolOutcome.Cancelled or ToolOutcome.Exited => SindriErrors.ToolkitCreateFailed.With(Tail(string.IsNullOrWhiteSpace(ran.Error) ? ran.Output : ran.Error)),
+            _ => SindriErrors.ToolkitCreateFailed.With("the generator didn't finish"),
+        };
+    }
+
+    /// <summary>'github-triage' as the generator's PascalCase 'GithubTriage'; its own kebab function turns that back into the folder name.</summary>
+    private static string Pascal(string name) =>
+        string.Concat(name.Split('-').Select(static w => char.ToUpperInvariant(w[0]) + w[1..]));
+
+    private static string Tail(string text) => text.Length <= OutputCap ? text.Trim() : "..." + text[^OutputCap..].Trim();
 }

@@ -14,9 +14,27 @@ internal sealed class ToolkitAdoption(IToolkitStore store, IToolkitFolders folde
     /// <summary>Adds the missing rows.</summary>
     /// <param name="cancellationToken">Cancels the pass.</param>
     /// <returns>How many rows it added, or the store's error.</returns>
-    internal ValueTask<Result<int>> Run(CancellationToken cancellationToken)
+    internal async ValueTask<Result<int>> Run(CancellationToken cancellationToken)
     {
-        _ = (store, folders, cancellationToken);
-        throw new NotSupportedException();
+        var all = await store.List(cancellationToken).ConfigureAwait(false);
+        if (all.IsError)
+        {
+            return all.Error;
+        }
+
+        var known = all.Value.Select(static t => t.Name).ToHashSet(StringComparer.Ordinal);
+        var adopted = 0;
+        foreach (var folder in folders.Folders().Where(f => ToolNames.IsToolkitName(f.Name) && !known.Contains(f.Name)))
+        {
+            var saved = await store.Save(new Toolkit(folder.Name, folder.Dir, ToolkitState.Off, SourceHash: null, BuiltAt: null, Manifest: null, Adopter), cancellationToken).ConfigureAwait(false);
+            if (saved.IsError)
+            {
+                return saved.Error;
+            }
+
+            adopted++;
+        }
+
+        return adopted;
     }
 }

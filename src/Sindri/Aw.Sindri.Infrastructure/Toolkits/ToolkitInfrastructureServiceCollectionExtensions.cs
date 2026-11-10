@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Toolkits;
 using Aw.Sindri.Infrastructure.Processes;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,14 +10,15 @@ internal static class ToolkitInfrastructureServiceCollectionExtensions
 {
     /// <summary>Adds the toolkit adapters. The supervisor is a singleton: when the container is disposed on a serve shutdown it stops every toolkit process.</summary>
     /// <param name="services">The service collection.</param>
+    /// <param name="environment">Reads an environment variable (the generator's paths); null reads none.</param>
     /// <returns>The same collection.</returns>
-    internal static IServiceCollection AddToolkitInfrastructure(this IServiceCollection services)
+    internal static IServiceCollection AddToolkitInfrastructure(this IServiceCollection services, Func<string, string?>? environment = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddSingleton<IToolkitStore, SqliteToolkitStore>()
             .AddSingleton<IToolkitWorkspace, FileToolkitWorkspace>()
-            .AddSingleton<IToolkitFolders, FileToolkitFolders>()
+            .AddSingleton<IToolkitFolders>(sp => new FileToolkitFolders(sp.GetRequiredService<ISindriHome>().Path, environment ?? (static _ => null), new ProcessToolRunner()))
             .AddSingleton<IToolkitCommands>(static _ => new ProcessToolkitCommands(new ProcessToolRunner()))
             .AddSingleton<IToolkitProcessLauncher, ToolkitProcess>()
             .AddSingleton(static sp => new ToolkitSupervisor(sp.GetRequiredService<IToolkitProcessLauncher>(), sp.GetRequiredService<IToolkitStore>(), sp.GetRequiredService<TimeProvider>()))
