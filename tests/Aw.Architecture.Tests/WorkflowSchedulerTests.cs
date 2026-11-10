@@ -9,6 +9,47 @@ public sealed class WorkflowSchedulerTests
 {
     private static readonly string[] _realWorkflows = ["GraphWorkflow", "GraphIterationWorkflow"];
 
+    // One row per planted member: the member, its workflow type and the banned call it makes.
+    private static readonly string[] _plantedExpected =
+    [
+        Planted("CancelAsyncCall", "CancellationTokenSource.CancelAsync"),
+        Planted("CancelAfterCall", "CancellationTokenSource.CancelAfter"),
+        Planted("TimeSpanCtor", "CancellationTokenSource(TimeSpan)"),
+        Planted("IntCtor", "CancellationTokenSource(int)"),
+        Planted("TaskRunCall", "Task.Run"),
+        Planted("TaskDelayCall", "Task.Delay"),
+        Planted("WhenAnyCall", "Task.WhenAny"),
+        Planted("WhenAllCall", "Task.WhenAll"),
+        Planted("ConfigureAwaitFalse", "ConfigureAwait(false)"),
+        Planted("LambdaDelay", "Task.Delay"),
+        Planted("TaskYield", "Task.Yield"),
+        Planted("StartNewCall", "Task.Factory.StartNew"),
+        Planted("StartNewOfT", "Task.Factory.StartNew"),          // TaskFactory<T>.StartNew
+        Planted("WaitAsyncTimeout", "Task.WaitAsync(TimeSpan)"),
+        Planted("WaitAsyncTimeoutOfT", "Task.WaitAsync(TimeSpan)"), // Task<T>.WaitAsync
+        Planted("DateTimeNow", "DateTime.Now"),
+        Planted("DateTimeUtcNow", "DateTime.UtcNow"),
+        Planted("DateTimeToday", "DateTime.Today"),
+        Planted("DateTimeOffsetNow", "DateTimeOffset.Now"),
+        Planted("DateTimeOffsetUtcNow", "DateTimeOffset.UtcNow"),
+        Planted("NewGuidCall", "Guid.NewGuid"),
+        Planted("NewRandom", "new Random"),
+        Planted("SharedRandom", "Random.Shared"),
+        Planted("SleepCall", "Thread.Sleep"),
+        Planted("StopwatchCall", "Stopwatch"),
+        Planted("SystemTimeProvider", "TimeProvider.System"),
+        Planted("TickCount", "Environment.TickCount"),
+        Planted("TickCount64", "Environment.TickCount"),
+        Planted("ParallelFor", "Parallel.For"),
+        Planted("ParallelForEach", "Parallel.ForEach"),
+        Planted("ParallelForAsync", "Parallel.ForAsync"),
+        Planted("ParallelForEachAsync", "Parallel.ForEachAsync"),
+        Planted("ParallelInvoke", "Parallel.Invoke"),
+        Planted("ThreadingTimer", "System.Threading.Timer"),
+        Planted("Helper.Wait", "Task.Delay"),   // a type nested in the workflow type
+        Planted("InPartialPart", "Task.Delay"), // the part of the workflow type that carries no [Workflow]
+    ];
+
     [Fact]
     public void No_workflow_type_in_the_real_tree_calls_a_scheduler_escaping_API() =>
         Verify.None(WorkflowSchedulerRules.Check(RealTypes()));
@@ -23,47 +64,8 @@ public sealed class WorkflowSchedulerTests
     [Fact]
     public void Each_banned_call_in_a_workflow_type_is_reported_with_its_replacement()
     {
-        string[] expected =
-        [
-            Planted("CancelAsyncCall", "CancellationTokenSource.CancelAsync"),
-            Planted("CancelAfterCall", "CancellationTokenSource.CancelAfter"),
-            Planted("TimeSpanCtor", "CancellationTokenSource(TimeSpan)"),
-            Planted("IntCtor", "CancellationTokenSource(int)"),
-            Planted("TaskRunCall", "Task.Run"),
-            Planted("TaskDelayCall", "Task.Delay"),
-            Planted("WhenAnyCall", "Task.WhenAny"),
-            Planted("WhenAllCall", "Task.WhenAll"),
-            Planted("ConfigureAwaitFalse", "ConfigureAwait(false)"),
-            Planted("LambdaDelay", "Task.Delay"),
-            Planted("TaskYield", "Task.Yield"),
-            Planted("StartNewCall", "Task.Factory.StartNew"),
-            Planted("StartNewOfT", "Task.Factory.StartNew"),          // TaskFactory<T>.StartNew
-            Planted("WaitAsyncTimeout", "Task.WaitAsync(TimeSpan)"),
-            Planted("WaitAsyncTimeoutOfT", "Task.WaitAsync(TimeSpan)"), // Task<T>.WaitAsync
-            Planted("DateTimeNow", "DateTime.Now"),
-            Planted("DateTimeUtcNow", "DateTime.UtcNow"),
-            Planted("DateTimeToday", "DateTime.Today"),
-            Planted("DateTimeOffsetNow", "DateTimeOffset.Now"),
-            Planted("DateTimeOffsetUtcNow", "DateTimeOffset.UtcNow"),
-            Planted("NewGuidCall", "Guid.NewGuid"),
-            Planted("NewRandom", "new Random"),
-            Planted("SharedRandom", "Random.Shared"),
-            Planted("SleepCall", "Thread.Sleep"),
-            Planted("StopwatchCall", "Stopwatch"),
-            Planted("SystemTimeProvider", "TimeProvider.System"),
-            Planted("TickCount", "Environment.TickCount"),
-            Planted("TickCount64", "Environment.TickCount"),
-            Planted("ParallelFor", "Parallel.For"),
-            Planted("ParallelForEach", "Parallel.ForEach"),
-            Planted("ParallelForAsync", "Parallel.ForAsync"),
-            Planted("ParallelForEachAsync", "Parallel.ForEachAsync"),
-            Planted("ParallelInvoke", "Parallel.Invoke"),
-            Planted("ThreadingTimer", "System.Threading.Timer"),
-            Planted("Helper.Wait", "Task.Delay"),   // a type nested in the workflow type
-            Planted("InPartialPart", "Task.Delay"), // the part of the workflow type that carries no [Workflow]
-        ];
         var violations = WorkflowSchedulerRules.Check([typeof(PlantedWorkflow)]).ToList();
-        Verify.Exactly(violations, WorkflowSchedulerRules.Id, expected);
+        Verify.Exactly(violations, WorkflowSchedulerRules.Id, _plantedExpected);
         var fixes = violations.Select(static v => v.Fix).ToList();
         foreach (var replacement in new[] { "Workflow.DelayAsync", "Workflow.WhenAnyAsync", "Workflow.WhenAllAsync", "Workflow.UtcNow", "Workflow.NewGuid", "Workflow.Random", "ConfigureAwait(true)" })
         {
