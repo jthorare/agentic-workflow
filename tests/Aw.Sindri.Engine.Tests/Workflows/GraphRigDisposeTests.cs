@@ -35,7 +35,8 @@ public sealed class GraphRigDisposeTests
         limit.CancelAfter(TimeSpan.FromSeconds(30));
         while ((await rig.Runs.Get(started.RunId, limit.Token)).Value.Status is not (WorkflowRunStatus.Succeeded or WorkflowRunStatus.Failed or WorkflowRunStatus.Cancelled))
         {
-            // why: the first skip passes the left run's 10 minute timer; with that run still open, its timer fires into a queue nobody polls and this call hangs
+            // why: on one shared server the stopped rig's worker left a started task (an activity or workflow task) behind, which keeps time skipping locked, so this call
+            // hung (issue 2574); on the rig's own server that task died with the left rig's server
             await rig.Environment.DelayAsync(TimeSpan.FromMinutes(16), limit.Token);
             await Task.Delay(TimeSpan.FromMilliseconds(100), limit.Token);
         }
