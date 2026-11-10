@@ -33,6 +33,13 @@ internal sealed partial class SindriApiClient
         Call<WorkflowRunCancelled>(api, HttpMethod.Post, WorkflowRoutes.Cancel(runId), cancellationToken);
 
     /// <inheritdoc />
+    public Task<Result<AgentNodeControlled>> TakeOverAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken) =>
+        Call<AgentNodeControlled>(api, HttpMethod.Post, WorkflowRoutes.TakeOver(runId, node), cancellationToken, new CallOptions(Content: AwJson.Serialize(new AgentNodeBody(itemIndex), Json)));
+
+    /// <inheritdoc />
+    public Task<Result<AgentNodeControlled>> HandBackAgentNode(Uri api, string runId, string node, int itemIndex, CancellationToken cancellationToken) =>
+        Call<AgentNodeControlled>(api, HttpMethod.Post, WorkflowRoutes.HandBack(runId, node), cancellationToken, new CallOptions(Content: AwJson.Serialize(new AgentNodeBody(itemIndex), Json)));
+
     public Task<Result<WorkflowBlockList>> WorkflowBlocks(Uri api, CancellationToken cancellationToken) =>
         Get<WorkflowBlockList>(api, WorkflowRoutes.Blocks(), cancellationToken);
 
