@@ -73,6 +73,9 @@ internal static partial class Labels
     /// <summary>The ⌘K field's key chip.</summary>
     internal const string SearchKey = "⌘K";
 
+    /// <summary>The key chip's words before its letter where there is no Command icon.</summary>
+    internal const string SearchKeyModifier = "Ctrl+";
+
     /// <summary>The ⌘K chip's letter, drawn after the ⌘ icon.</summary>
     internal const string SearchKeyLetter = "K";
 

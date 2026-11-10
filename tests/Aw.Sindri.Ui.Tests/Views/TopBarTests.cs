@@ -176,7 +176,7 @@ public sealed class TopBarTests : IDisposable
         _records.Write(A.Record());
         var (window, _) = await Show(s => s.State == ShellState.Normal);
 
-        Assert.Equal("Search or run a command (⌘K)", ToolTip.GetTip(window.Get<TopBar>("TopBar").Get<Control>("SearchField")));
+        Assert.Equal(OperatingSystem.IsMacOS() ? "Search or run a command (⌘K)" : "Search or run a command (Ctrl+K)", ToolTip.GetTip(window.Get<TopBar>("TopBar").Get<Control>("SearchField")));
     });
 
     [Fact]

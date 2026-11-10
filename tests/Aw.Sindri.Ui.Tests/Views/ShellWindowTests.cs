@@ -1603,6 +1603,14 @@ public sealed class ShellWindowTests : IDisposable
         Assert.Equal(9, tabs.Count);
         Assert.DoesNotContain(tabs, t => t.Classes.Contains(":focus-visible"));
         Assert.False(Named<Border>(window, "Page").Classes.Contains(":focus-visible"), "the page region draws a ring");
+
+        // The keyboard half: once a key was pressed, the focus the window puts on a tab a command just selected draws the ring.
+        window.KeyPress(Key.LeftShift, RawInputModifiers.None, PhysicalKey.ShiftLeft, keySymbol: null);
+        shell.SelectedNav = shell.Navigation.First(n => n.Page == PageId.Agents);
+        Settle(window);
+        Settle(window);
+        var selected = tabs.Single(t => t.IsSelected);
+        Assert.True(selected.Classes.Contains(":focus-visible"), "the selected tab has no ring after a key press and a tab selection");
     });
 
     // The folded search icon keeps the shortcut in its tooltip.
@@ -1615,7 +1623,7 @@ public sealed class ShellWindowTests : IDisposable
 
         var field = Named<Border>(window, "SearchField");
         Assert.True(field.Classes.Contains("compact"), "the field did not fold at 900 px");
-        Assert.Contains(Labels.SearchKey, ToolTip.GetTip(field) as string ?? string.Empty, StringComparison.Ordinal);
+        Assert.Contains(OperatingSystem.IsMacOS() ? "⌘K" : "Ctrl+K", ToolTip.GetTip(field) as string ?? string.Empty, StringComparison.Ordinal);
     });
 
     // Sending… beside Refresh, and the not-responding sentence in full in its banner.

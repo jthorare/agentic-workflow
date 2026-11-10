@@ -9,6 +9,20 @@ internal sealed class ShellText
     /// <summary>The one instance.</summary>
     internal static ShellText Instance { get; } = new();
 
+    /// <summary>Makes the copy for a platform.</summary>
+    /// <param name="macOS">Whether the app runs on macOS; null asks the OS.</param>
+    internal ShellText(bool? macOS = null)
+    {
+        ShowCommandIcon = macOS ?? OperatingSystem.IsMacOS();
+        SearchKeyModifier = ShowCommandIcon ? string.Empty : Labels.SearchKeyModifier;
+    }
+
+    /// <summary>True when the search keycap draws the Command icon (macOS); elsewhere it draws <see cref="SearchKeyModifier"/>.</summary>
+    public bool ShowCommandIcon { get; }
+
+    /// <summary>The words before the keycap's letter where there is no Command icon: "Ctrl+".</summary>
+    public string SearchKeyModifier { get; }
+
     /// <summary>U2's copy: the queue and the item sheet.</summary>
     public Item.ItemText Items { get; } = Item.ItemText.Instance;
 
