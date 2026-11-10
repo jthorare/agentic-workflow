@@ -37,8 +37,8 @@ public sealed class GraphAgentLaunchCapTests
         await using var rig = await GraphRig.StartAsync(runtime, agentLaunchAttempts: 3);
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: new JsonObject { ["items"] = "{{trigger.items}}" }),
-                GraphRig.Node("work", "run_agent", config: new JsonObject { ["repo"] = "web", ["prompt"] = "{{item}}" })],
-            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "work")]));
+                GraphRig.Node("work", "run_agent", config: new JsonObject { ["repo"] = "web", ["prompt"] = "{{item}}" }), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{work.status}}" })],
+            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "work"), GraphRig.Edge("work", "gather")]));
 
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, new JsonObject { ["kind"] = "manual", ["items"] = new JsonArray("a", "b") }.ToJsonString());
         var final = await rig.Final(started.RunId);
@@ -96,10 +96,10 @@ public sealed class GraphAgentLaunchCapTests
     // Rewrites the 'AgentLaunchAttempts' of the workflow's start input in the recorded history.
     private static WorkflowHistory WithCap(WorkflowHistory history, int cap)
     {
-        var json = System.Text.Json.Nodes.JsonNode.Parse(history.ToJson())!;
+        var json = JsonNode.Parse(history.ToJson())!;
         var started = json["events"]!.AsArray().First(static e => e!["workflowExecutionStartedEventAttributes"] is not null)!["workflowExecutionStartedEventAttributes"]!;
         var payload = started["input"]!["payloads"]![0]!;
-        var input = System.Text.Json.Nodes.JsonNode.Parse(Convert.FromBase64String(payload["data"]!.GetValue<string>()))!.AsObject();
+        var input = JsonNode.Parse(Convert.FromBase64String(payload["data"]!.GetValue<string>()))!.AsObject();
         var key = input.Select(static p => p.Key).First(static k => string.Equals(k, "agentLaunchAttempts", StringComparison.OrdinalIgnoreCase));
         input[key] = cap;
         payload["data"] = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(input.ToJsonString()));
