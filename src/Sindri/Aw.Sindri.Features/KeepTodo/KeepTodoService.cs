@@ -86,7 +86,7 @@ internal sealed class KeepTodoService(TodoPickWrites writes, TodoConverger conve
             return appended.Error;
         }
 
-        window.Remember(request.Id, new TodoPick(who.Now, row, version.Value));
+        window.Remember(request.Id, new TodoPick(who.Now, row, version.Value, request.Side == TodoSideName.Obsidian ? "obsidian" : "sindri", who.By));
         var after = TodoConverger.After(row, target, version.Value, who.Now, "obsidian") with { Conflict = null, PickedConflict = conflict };
         return new KeepTodoResponse(after, TodoPickWindow.Until(who.Now));
     }
