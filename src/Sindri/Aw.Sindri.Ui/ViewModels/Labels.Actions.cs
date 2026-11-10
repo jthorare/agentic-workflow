@@ -73,6 +73,7 @@ internal static partial class Labels
         ["ScanContextConcepts"] = "Scan for concepts",
         ["RunContextBacktest"] = "Run map backtest",
         ["CancelJob"] = "Cancel job",
+        ["AnswerQuestion"] = "Answer question",
         ["CancelWorkflowRun"] = "Cancel workflow run",
         ["TakeOverAgentNode"] = "Take over agent",
         ["HandBackAgentNode"] = "Hand back agent",

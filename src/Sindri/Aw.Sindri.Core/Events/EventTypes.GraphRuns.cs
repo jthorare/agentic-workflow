@@ -23,4 +23,10 @@ public static partial class EventTypes
 
     /// <summary>A graph 'notify' node posted a note for the owner (issue 2258, PR 6).</summary>
     public const string WorkflowNotify = "workflow.notify";
+
+    /// <summary>A graph 'ask_owner' node asked a question for the owner (issue 2258, PR 9).</summary>
+    public const string WorkflowQuestion = "workflow.question";
+
+    /// <summary>An 'ask_owner' node's question was answered, by the owner or by a session (issue 2258, PR 9).</summary>
+    public const string WorkflowAnswered = "workflow.answered";
 }

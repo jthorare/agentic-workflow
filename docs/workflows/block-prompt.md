@@ -14,7 +14,7 @@ Group: AI. Type: `prompt`. Ask the model a question and get JSON back, checked a
 One field for each key in `output.properties`. A property that is not in `required` may be missing, and the validator knows it.
 A property type is `string`, `number`, `integer` (read as number), `boolean`, `object` or `array`.
 
-## What counts as a good answer
+## What counts as a good JSON answer from the model
 
 1. The answer is a JSON object. A Markdown fence around it is fine.
 2. Every `required` field is there.
