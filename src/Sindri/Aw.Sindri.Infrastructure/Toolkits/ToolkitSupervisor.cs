@@ -217,30 +217,33 @@ internal sealed class ToolkitSupervisor(IToolkitProcessLauncher launcher, IToolk
         }
     }
 
-    /// <summary>Drops this watcher's entry, so a later start launches a new process, then marks the toolkit 'failed' on the row as it is now (a rebuild since the start keeps its hash and manifest).</summary>
+    /// <summary>Drops this watcher's entry and disposes its token source, so a later start launches a new process, then marks the toolkit 'failed' on the row as it is now (a rebuild since the start keeps its hash and manifest).</summary>
     private async Task GiveUp(string name, Running running)
     {
-        if (await Enter(CancellationToken.None).ConfigureAwait(false))
+        if (!await Enter(CancellationToken.None).ConfigureAwait(false))
         {
-            try
-            {
-                _ = _running.TryRemove(new KeyValuePair<string, Running>(name, running));
-            }
-            finally
-            {
-                _ = _gate.Release();
-            }
+            return;   // shut down: the dispose ends everything
         }
 
-        if (_running.ContainsKey(name))
+        try
         {
-            return;   // a newer start owns the row now
-        }
+            _ = _running.TryRemove(new KeyValuePair<string, Running>(name, running));
+            running.Stopping.Dispose();   // nothing will End() this entry
+            if (_running.ContainsKey(name))
+            {
+                return;   // a newer start owns the row now
+            }
 
-        var fresh = await store.Find(name, CancellationToken.None).ConfigureAwait(false);
-        if (fresh.IsSuccess && fresh.Value is { } current)
+            // Still under the gate: a start can't land between the check and the save, so the row never says 'failed' while a process runs.
+            var fresh = await store.Find(name, CancellationToken.None).ConfigureAwait(false);
+            if (fresh.IsSuccess && fresh.Value is { } current)
+            {
+                _ = await store.Save(current with { State = ToolkitState.Failed }, CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+        finally
         {
-            _ = await store.Save(current with { State = ToolkitState.Failed }, CancellationToken.None).ConfigureAwait(false);
+            _ = _gate.Release();
         }
     }
 
