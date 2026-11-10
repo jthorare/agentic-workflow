@@ -28,6 +28,16 @@ internal static class PageLayout
         [0, 0, 130, 0, 70, 170],
     ];
 
+    /// <summary>The six column widths of a tier; a 0 is a dropped column.</summary>
+    /// <param name="tier">The tier.</param>
+    /// <param name="hasRepo">False when no shown row has a repo: the Repo column is dropped first.</param>
+    /// <returns>The widths, title column first (0 for the star).</returns>
+    internal static double[] Widths(PageTier tier, bool hasRepo)
+    {
+        _ = hasRepo;   // red stub: the real rule follows
+        return [.. _widths[(int)tier]];
+    }
+
     /// <summary>The class a page region of this width has.</summary>
     /// <param name="width">The page region's width.</param>
     /// <returns>The tier.</returns>
