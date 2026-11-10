@@ -81,7 +81,7 @@ public sealed class CliToolkitVerbsTests : IDisposable
     [Fact]
     public async Task A_refused_pause_prints_the_error_and_exits_1()
     {
-        var api = new RoutedApi().OnRaw("/sindri/toolkits/notes/pause", HttpStatusCode.Conflict, """{"title":"SND-TK-001","detail":"Toolkit 'notes' isn't running (fix: toolkit_start)"}""");
+        var api = new RoutedApi().OnRaw("/sindri/toolkits/notes/pause", HttpStatusCode.Conflict, """{"type":"about:blank","title":"SND-TK-001","status":409,"detail":"Toolkit 'notes' isn't running (fix: toolkit_start)"}""");
 
         var exit = await Run(api, "pause", "notes");
 
