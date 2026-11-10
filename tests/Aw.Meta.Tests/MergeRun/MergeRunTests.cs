@@ -14,7 +14,7 @@ public sealed class MergeRunTests
 {
     private readonly MetaWorld _world = new();
 
-    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles), _world.Repo, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock);
+    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles), _world.Repo, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board);
 
     private async Task Ready(bool gated = true, bool mergeFails = false, bool fetchFails = false, string state = "OPEN", string? mergeCommit = null)
     {
@@ -66,8 +66,21 @@ public sealed class MergeRunTests
         Assert.Equal(["gh pr merge 190 --merge"], _world.Runner.Lines.Where(l => l.StartsWith("gh pr merge", StringComparison.Ordinal)), StringComparer.Ordinal);
         Assert.Equal(new MergeRecord(190, "newmainsha1234", _world.Clock.GetUtcNow()), (await _world.Gates.LatestMerge(CancellationToken.None)).Value);
         Assert.Equal("- MERGE 2026-10-15 05:00: #190 Add x merged; main is now newmain", Assert.Single(_world.Log.Lines));
-        var open = await _world.Open();
-        Assert.Contains(open, o => o.Kind == ObligationKind.AnnounceMain && o.Key == "newmain");
+        Assert.DoesNotContain(await _world.Open(), o => o.Kind == ObligationKind.AnnounceMain);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_merge_records_main_and_the_pull_request_on_the_board()
+    {
+        await Ready();
+        await AssignApiLane();
+
+        _ = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        var board = (await _world.Board.Read(CancellationToken.None)).Value;
+        Assert.NotNull(board);
+        Assert.Equal("newmainsha1234", board.MainSha);
+        Assert.Equal([190], board.MergedPrs);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -83,6 +96,7 @@ public sealed class MergeRunTests
         Assert.Null(result.Value.Announce);
         Assert.DoesNotContain(_world.Runner.Lines, l => l.StartsWith("gh pr merge", StringComparison.Ordinal));
         Assert.Null((await _world.Gates.LatestMerge(CancellationToken.None)).Value);
+        Assert.Null((await _world.Board.Read(CancellationToken.None)).Value);
         Assert.Empty(_world.Log.Lines);
     }
 
@@ -108,7 +122,7 @@ public sealed class MergeRunTests
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         Assert.Equal((true, "abcdef1234567"), (result.Value.Merged, result.Value.Sha));
         Assert.Equal("abcdef1234567", (await _world.Gates.LatestMerge(CancellationToken.None)).Value!.Sha);
-        Assert.Contains(await _world.Open(), o => o.Kind == ObligationKind.AnnounceMain);
+        Assert.Equal("abcdef1234567", (await _world.Board.Read(CancellationToken.None)).Value!.MainSha);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -122,8 +136,7 @@ public sealed class MergeRunTests
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         Assert.Equal((true, null, "main moved (#190 Add x merged). Merge main into your branches."), (result.Value.Merged, result.Value.Sha, result.Value.Announce));
         Assert.Equal(MergeRecord.Unknown, (await _world.Gates.LatestMerge(CancellationToken.None)).Value!.Sha);
-        var announce = Assert.Single(await _world.Open(), o => o.Kind == ObligationKind.AnnounceMain);
-        Assert.Contains("main moved", announce.Summary, StringComparison.Ordinal);
+        Assert.DoesNotContain(await _world.Open(), o => o.Kind == ObligationKind.AnnounceMain);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -138,7 +151,7 @@ public sealed class MergeRunTests
         Assert.True(result.Value.Merged);
         Assert.DoesNotContain(_world.Runner.Lines, l => l.StartsWith("gh pr merge", StringComparison.Ordinal));
         Assert.Equal("abcdef1234567", (await _world.Gates.LatestMerge(CancellationToken.None)).Value!.Sha);
-        Assert.Contains(await _world.Open(), o => o.Kind == ObligationKind.AnnounceMain);
+        Assert.Equal("abcdef1234567", (await _world.Board.Read(CancellationToken.None)).Value!.MainSha);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -27,7 +27,8 @@
 #    installed binary is older than the Meta sources it is launched from. A failed publish exits 1 and leaves the installed binary alone.
 # 2. Hooks, per provider:
 #    claude: Stop → meta-stop-gate.sh, PostToolUse with matcher SendMessage → meta-outbox.sh. Both pass straight through for
-#      every session but the registered meta one.
+#      every session but the registered meta one. UserPromptSubmit and PostToolUse (every tool) → meta-board-line.sh, which prints
+#      `aw-meta board-line` as additionalContext in a lane (AW_META_TEAM and AW_META_LANE set) and passes through elsewhere.
 #    codex, cursor (the lane hooks for non-Claude Meta lanes, docs/csharp/meta.md "Non-Claude lanes"; user-wide, through the
 #      provider adapters in $AW_STATE_DIR/hooks): session-id-report.sh at SessionStart, meta-lane-gate.sh at UserPromptSubmit
 #      and Stop (Codex) or sessionStart, postToolUse, afterAgentResponse (the reply text) and stop (Cursor). Both pass straight through for every session that is
@@ -161,17 +162,20 @@ aw_hooks_init "$AW_PROVIDER"
 hooks_before="$(cat "$AW_HOOKS_CONFIG" 2> /dev/null || true)"
 if [ "$AW_PROVIDER" = claude ]; then
   if dry; then
-    echo "  [dry-run] would install meta-stop-gate (Stop) and meta-outbox (PostToolUse SendMessage) in $AW_HOOKS_CONFIG"
+    echo "  [dry-run] would install meta-stop-gate (Stop), meta-outbox (PostToolUse SendMessage) and meta-board-line (UserPromptSubmit, PostToolUse) in $AW_HOOKS_CONFIG"
   else
     mkdir -p "$AW_HOOKS_INSTALL_DIR/lib"
-    for h in meta-stop-gate.sh meta-outbox.sh; do
+    for h in meta-stop-gate.sh meta-outbox.sh meta-board-line.sh; do
       cp "$SCRIPT_DIR/config/hooks/$h" "$AW_HOOKS_INSTALL_DIR/$h"
       chmod +x "$AW_HOOKS_INSTALL_DIR/$h"
     done
     cp "$SCRIPT_DIR/config/lib/failopen.sh" "$AW_HOOKS_INSTALL_DIR/lib/failopen.sh"
     stop=$(jq -nc --arg c "$(sq "$AW_HOOKS_INSTALL_DIR/meta-stop-gate.sh") # aw:meta-stop-gate" '{hooks:[{type:"command",command:$c,timeout:20}]}')
     out=$(jq -nc --arg c "$(sq "$AW_HOOKS_INSTALL_DIR/meta-outbox.sh") # aw:meta-outbox" '{matcher:"SendMessage",hooks:[{type:"command",command:$c,timeout:10}]}')
+    board=$(jq -nc --arg c "$(sq "$AW_HOOKS_INSTALL_DIR/meta-board-line.sh") # aw:meta-board-line" '{hooks:[{type:"command",command:$c,timeout:10}]}')
     merge_hook "$AW_HOOKS_CONFIG" Stop aw:meta-stop-gate "$stop"
+    merge_hook "$AW_HOOKS_CONFIG" UserPromptSubmit aw:meta-board-line "$board"
+    merge_hook "$AW_HOOKS_CONFIG" PostToolUse aw:meta-board-line "$board"
     merge_hook "$AW_HOOKS_CONFIG" PostToolUse aw:meta-outbox "$out"
     echo "  meta: hooks installed in $AW_HOOKS_CONFIG"
   fi
