@@ -12,6 +12,7 @@
 # Run: bash scripts/tests/heavy.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$DIR/lib/test-portable.sh"   # timeout for macOS
 HEAVY="$DIR/heavy.sh"
 fail=0
 check() {
