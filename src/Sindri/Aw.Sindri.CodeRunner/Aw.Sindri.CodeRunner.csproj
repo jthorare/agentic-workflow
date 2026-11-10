@@ -6,6 +6,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- It loads an assembly by path and serializes whatever the code returns: reflection by design, so the trim and AOT analyzers are off (see Aw.Sindri.Workflows) -->
+    <AwAotCompatible>false</AwAotCompatible>
     <AssemblyName>sindri-code-runner</AssemblyName>
     <RootNamespace>Aw.Sindri.CodeRunner</RootNamespace>
   </PropertyGroup>

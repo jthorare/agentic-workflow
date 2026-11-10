@@ -1,4 +1,7 @@
-// why: the red commit holds stubs only; the registration that uses this type comes with the implementation
+using System.Security.Cryptography;
+using System.Text;
+
+// why: nothing in the product uses this type until the Code block (the next PR) registers it; the tests reach it through InternalsVisibleTo
 #pragma warning disable MA0182
 namespace Aw.Sindri.Infrastructure.Workflow.Code;
 
@@ -10,5 +13,26 @@ internal sealed class CompiledCodeCache(ICodeCompiler compiler, string directory
     /// <summary>Gives the assembly for the body, compiling it only when it is not cached.</summary>
     /// <param name="body">The method body.</param>
     /// <returns>The assembly's path, or the compile errors.</returns>
-    public CachedCode Resolve(string body) => throw new NotSupportedException($"{compiler.ReferenceSet} {directory}");
+    public CachedCode Resolve(string body)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        var key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{compiler.ReferenceSet}\n{body}"))).ToLowerInvariant();
+        var path = Path.Combine(directory, key + ".dll");
+        if (File.Exists(path))
+        {
+            return new CachedCode(path, []);
+        }
+
+        var compiled = compiler.Compile(body);
+        if (compiled.Assembly is not { } bytes)
+        {
+            return new CachedCode(AssemblyPath: null, compiled.Diagnostics);
+        }
+
+        _ = Directory.CreateDirectory(directory);
+        var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        File.WriteAllBytes(temporary, bytes);
+        File.Move(temporary, path, overwrite: true);   // a second writer of the same key writes the same bytes
+        return new CachedCode(path, []);
+    }
 }
