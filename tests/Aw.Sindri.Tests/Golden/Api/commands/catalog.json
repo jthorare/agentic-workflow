@@ -1351,7 +1351,7 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/connections/{name}/rename",
-      "cli": "sindri connection rename <name> <new-label>",
+      "cli": "sindri connection rename <name> <label>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

@@ -27,7 +27,7 @@ internal static class ConnectionRows
             "POST", "/sindri/connections/{name}/signin", ShellRows.Form("sindri connection signin <name>"), "ready", SessionOk: true),
         new(ActionId.From("RenameConnection"), typeof(RenameConnectionRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/connections/{name}/rename", ShellRows.Form("sindri connection rename <name> <new-label>"), "ready", SessionOk: true),
+            "POST", "/sindri/connections/{name}/rename", ShellRows.Form("sindri connection rename <name> <label>"), "ready", SessionOk: true),
         new(ActionId.From("RemoveConnection"), typeof(RemoveConnectionRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: true, ReadsViews: false, Shortcut: null,
             "DELETE", "/sindri/connections/{name}", ShellRows.Form("sindri connection remove <name>"), "ready", SessionOk: true),
