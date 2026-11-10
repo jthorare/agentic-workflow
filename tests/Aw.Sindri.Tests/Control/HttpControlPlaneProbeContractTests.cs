@@ -50,6 +50,20 @@ public sealed class HttpControlPlaneProbeContractTests : ControlPlaneProbeContra
     }
 
     [Fact(Timeout = 10_000)]
+    public async Task A_slow_but_healthy_answer_is_found()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var server = new PingServer(new Ping(42, 3), delay: TimeSpan.FromSeconds(2.5));   // over the 2 s connect budget: a cold app's first ping on a loaded box (#2641)
+        _servers.Add(server);
+        _ = await _endpoints.Write(new ControlEndpoint(server.Url, 42, 3), ct);
+
+        var found = await Probe().Check(ct);
+
+        Assert.True(found.IsSuccess, found.IsError ? found.Error.Message : null);
+        Assert.Equal(new Ping(42, 3), found.Value.Ping);
+    }
+
+    [Fact(Timeout = 10_000)]
     public async Task A_listener_that_never_answers_is_a_timeout()
     {
         var ct = TestContext.Current.CancellationToken;
