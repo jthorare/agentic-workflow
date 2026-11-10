@@ -40,6 +40,9 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// </summary>
     internal Func<bool, ValueTask<string?>> KeepFailing { get; init; } = static _ => ValueTask.FromResult<string?>(null);
 
+    /// <summary>Batches the status lines (#2651).</summary>
+    internal required StatusBatch Status { get; init; }
+
     /// <summary>The state the first poll diffs against: the last poll of an earlier run, or the state before any poll.</summary>
     internal WatchState Baseline { init => _state = value; }
 
@@ -108,14 +111,21 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
             await Say(line).ConfigureAwait(false);
         }
 
-        if (_inbox is { } before && poll.Inbox > before)
-        {
-            await Say(string.Create(CultureInfo.InvariantCulture, $"INBOX {poll.Inbox - before} new message(s)")).ConfigureAwait(false);
-        }
+        await SayInbox(poll).ConfigureAwait(false);
 
         await ReportLanes(poll.Context).ConfigureAwait(false);
 
         return step;
+    }
+
+    // New mail is an INBOX line; status lines ride on it or print batched (StatusBatch).
+    private async ValueTask SayInbox(Polled poll)
+    {
+        var mail = _inbox is { } before && poll.Inbox > before ? string.Create(CultureInfo.InvariantCulture, $"INBOX {poll.Inbox - before} new message(s)") : null;
+        if (await Status.Line(poll.Status, mail).ConfigureAwait(false) is { } line)
+        {
+            await Say(line).ConfigureAwait(false);
+        }
     }
 
     // A newer watch owns the team's watch keys: say so once and stop writing them.

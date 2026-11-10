@@ -2029,6 +2029,7 @@ Aw.Meta.Core.Watch.ContextWatch
 const Aw.Meta.Core.Coordination.LaneContextReader.TailBytes = 1048576 -> int
 const Aw.Meta.Core.Coordination.PaneSubmitter.Retries = 3 -> int
 const Aw.Meta.Core.KvKeys.WatchContext = "watch.context" -> string!
+const Aw.Meta.Core.KvKeys.WatchStatus = "watch.status" -> string!
 override Aw.Meta.Core.Config.ContextConfig.Equals(object? obj) -> bool
 override Aw.Meta.Core.Config.ContextConfig.GetHashCode() -> int
 override Aw.Meta.Core.Config.ContextConfig.ToString() -> string!
@@ -2214,7 +2215,7 @@ static Aw.Meta.Core.Coordination.LaneHealthOptions.operator !=(Aw.Meta.Core.Coor
 static Aw.Meta.Core.Coordination.LaneHealthOptions.operator ==(Aw.Meta.Core.Coordination.LaneHealthOptions? left, Aw.Meta.Core.Coordination.LaneHealthOptions? right) -> bool
 Aw.Meta.Core.Coordination.InboxCounts
 Aw.Meta.Core.Coordination.InboxCounts.InboxCounts(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Coordination.ObligationReader! reader, System.TimeProvider! clock) -> void
-Aw.Meta.Core.Coordination.InboxCounts.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(int Total, int Open)>!>
+Aw.Meta.Core.Coordination.InboxCounts.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(int Total, int Open, System.Collections.Generic.IReadOnlyList<(string! Id, string! Lane)>! Status)>!>
 const Aw.Meta.Core.Messages.InboxState.Open = "open" -> string!
 static Aw.Meta.Core.Messages.InboxState.IsDeferred(Aw.Meta.Core.Messages.InboxMessage! message, System.DateTimeOffset now) -> bool
 static Aw.Meta.Core.Messages.InboxState.Of(Aw.Meta.Core.Messages.InboxMessage! message, bool owed, System.DateTimeOffset now) -> string!
@@ -2441,6 +2442,9 @@ const Aw.Meta.Core.KvKeys.BoardMain = "board.main" -> string!
 const Aw.Meta.Core.KvKeys.BoardSeenPrefix = "board.seen." -> string!
 Aw.Meta.Core.Messages.NoticeRule
 static Aw.Meta.Core.Messages.NoticeRule.IsNotice(string! body) -> bool
+static Aw.Meta.Core.Messages.NoticeRule.IsStatusTagged(string! body) -> bool
+static Aw.Meta.Core.Messages.NoticeRule.StripTag(string! text) -> string!
+static Aw.Meta.Core.Messages.NoticeRule.UntaggedIsStatus.get -> bool
 const Aw.Meta.Core.Messages.InboxState.Settled = "settled" -> string!
 Aw.Meta.Core.Ports.ILaneFiles.Waiter(string! lane, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<(int Pid, System.DateTimeOffset StartedAt)?>!>
 Aw.Meta.Core.Ports.ILaneFiles.RecordWaiter(string! lane, (int Pid, System.DateTimeOffset StartedAt)? waiter, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
