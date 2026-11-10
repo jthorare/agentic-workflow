@@ -12114,6 +12114,7 @@ static Aw.Sindri.Core.Sandbox.Plan.SandboxUnits.FormatDuration(System.TimeSpan d
 static Aw.Sindri.Core.Sandbox.Plan.SandboxUnits.FormatSize(long bytes) -> string!
 static Aw.Sindri.Core.Sandbox.Plan.SandboxUnits.ParsePercent(string! percent) -> int
 static Aw.Sindri.Core.Sandbox.Plan.SandboxUnits.ParseSize(string! size) -> long
+static Aw.Sindri.Core.Sandbox.Plan.SandboxUnits.TryParseSize(string? size, out long bytes) -> bool
 static Aw.Sindri.Core.Sandbox.Plan.StatePathEntry.operator !=(Aw.Sindri.Core.Sandbox.Plan.StatePathEntry? left, Aw.Sindri.Core.Sandbox.Plan.StatePathEntry? right) -> bool
 static Aw.Sindri.Core.Sandbox.Plan.StatePathEntry.operator ==(Aw.Sindri.Core.Sandbox.Plan.StatePathEntry? left, Aw.Sindri.Core.Sandbox.Plan.StatePathEntry? right) -> bool
 Aw.Sindri.Core.Sandbox.Plan.HookScript.Source.get -> string!
@@ -18406,9 +18407,11 @@ Aw.Sindri.Core.Todos.Note.NoteHold
 Aw.Sindri.Core.Todos.Note.NoteHold.Changes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
 Aw.Sindri.Core.Todos.Note.NoteHold.Changes.init -> void
 Aw.Sindri.Core.Todos.Note.NoteHold.<Clone>$() -> Aw.Sindri.Core.Todos.Note.NoteHold!
-Aw.Sindri.Core.Todos.Note.NoteHold.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes) -> void
+Aw.Sindri.Core.Todos.Note.NoteHold.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes, out int? OpenInBase) -> void
 Aw.Sindri.Core.Todos.Note.NoteHold.Equals(Aw.Sindri.Core.Todos.Note.NoteHold? other) -> bool
-Aw.Sindri.Core.Todos.Note.NoteHold.NoteHold(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes) -> void
+Aw.Sindri.Core.Todos.Note.NoteHold.NoteHold(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes, int? OpenInBase = null) -> void
+Aw.Sindri.Core.Todos.Note.NoteHold.OpenInBase.get -> int?
+Aw.Sindri.Core.Todos.Note.NoteHold.OpenInBase.init -> void
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.Dissolved = 4 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
 Aw.Sindri.Core.Todos.Note.NoteHoldOutcome.None = 0 -> Aw.Sindri.Core.Todos.Note.NoteHoldOutcome
@@ -20121,11 +20124,13 @@ Aw.Sindri.Core.Events.TodoNoteHeld.By.get -> string!
 Aw.Sindri.Core.Events.TodoNoteHeld.By.init -> void
 Aw.Sindri.Core.Events.TodoNoteHeld.Changes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>!
 Aw.Sindri.Core.Events.TodoNoteHeld.Changes.init -> void
-Aw.Sindri.Core.Events.TodoNoteHeld.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>! Changes, out string! NoteHash, out string! By, out string? Via) -> void
+Aw.Sindri.Core.Events.TodoNoteHeld.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>! Changes, out string! NoteHash, out string! By, out string? Via, out int? OpenInBase) -> void
 Aw.Sindri.Core.Events.TodoNoteHeld.Equals(Aw.Sindri.Core.Events.TodoNoteHeld? other) -> bool
 Aw.Sindri.Core.Events.TodoNoteHeld.NoteHash.get -> string!
 Aw.Sindri.Core.Events.TodoNoteHeld.NoteHash.init -> void
-Aw.Sindri.Core.Events.TodoNoteHeld.TodoNoteHeld(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>! Changes, string! NoteHash, string! By, string? Via = null) -> void
+Aw.Sindri.Core.Events.TodoNoteHeld.TodoNoteHeld(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.TodoHeldChange!>! Changes, string! NoteHash, string! By, string? Via = null, int? OpenInBase = null) -> void
+Aw.Sindri.Core.Events.TodoNoteHeld.OpenInBase.get -> int?
+Aw.Sindri.Core.Events.TodoNoteHeld.OpenInBase.init -> void
 Aw.Sindri.Core.Events.TodoNoteHeld.Via.get -> string?
 Aw.Sindri.Core.Events.TodoNoteHeld.Via.init -> void
 Aw.Sindri.Core.Events.TodoNoteHeldReopened
@@ -20173,24 +20178,28 @@ Aw.Sindri.Core.Todos.TodoHolds.TodoHolds(Aw.Sindri.Core.Ledger.ILedgerStore! led
 Aw.Sindri.Core.Todos.TodoNoteSides
 Aw.Sindri.Core.Todos.TodoNoteSnapshot
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.<Clone>$() -> Aw.Sindri.Core.Todos.TodoNoteSnapshot!
-Aw.Sindri.Core.Todos.TodoNoteSnapshot.Deconstruct(out string! Hash, out Aw.Sindri.Core.Todos.Note.NoteDocument! Document) -> void
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.Deconstruct(out string! Hash, out Aw.Sindri.Core.Todos.Note.NoteDocument! Document, out long? RawBytes) -> void
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.Document.get -> Aw.Sindri.Core.Todos.Note.NoteDocument!
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.Document.init -> void
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.Equals(Aw.Sindri.Core.Todos.TodoNoteSnapshot? other) -> bool
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.Hash.get -> string!
 Aw.Sindri.Core.Todos.TodoNoteSnapshot.Hash.init -> void
-Aw.Sindri.Core.Todos.TodoNoteSnapshot.TodoNoteSnapshot(string! Hash, Aw.Sindri.Core.Todos.Note.NoteDocument! Document) -> void
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.TodoNoteSnapshot(string! Hash, Aw.Sindri.Core.Todos.Note.NoteDocument! Document, long? RawBytes = null) -> void
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.RawBytes.get -> long?
+Aw.Sindri.Core.Todos.TodoNoteSnapshot.RawBytes.init -> void
 Aw.Sindri.Core.Todos.TodoOpenHold
 Aw.Sindri.Core.Todos.TodoOpenHold.<Clone>$() -> Aw.Sindri.Core.Todos.TodoOpenHold!
 Aw.Sindri.Core.Todos.TodoOpenHold.Changes.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>!
 Aw.Sindri.Core.Todos.TodoOpenHold.Changes.init -> void
-Aw.Sindri.Core.Todos.TodoOpenHold.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes, out string! NoteHash, out long Sequence) -> void
+Aw.Sindri.Core.Todos.TodoOpenHold.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes, out string! NoteHash, out long Sequence, out int? OpenInBase) -> void
 Aw.Sindri.Core.Todos.TodoOpenHold.Equals(Aw.Sindri.Core.Todos.TodoOpenHold? other) -> bool
 Aw.Sindri.Core.Todos.TodoOpenHold.NoteHash.get -> string!
 Aw.Sindri.Core.Todos.TodoOpenHold.NoteHash.init -> void
 Aw.Sindri.Core.Todos.TodoOpenHold.Sequence.get -> long
 Aw.Sindri.Core.Todos.TodoOpenHold.Sequence.init -> void
-Aw.Sindri.Core.Todos.TodoOpenHold.TodoOpenHold(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes, string! NoteHash, long Sequence) -> void
+Aw.Sindri.Core.Todos.TodoOpenHold.TodoOpenHold(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Todos.Note.HeldChange!>! Changes, string! NoteHash, long Sequence, int? OpenInBase = null) -> void
+Aw.Sindri.Core.Todos.TodoOpenHold.OpenInBase.get -> int?
+Aw.Sindri.Core.Todos.TodoOpenHold.OpenInBase.init -> void
 Aw.Sindri.Core.Todos.TodoPick
 Aw.Sindri.Core.Todos.TodoPick.<Clone>$() -> Aw.Sindri.Core.Todos.TodoPick!
 Aw.Sindri.Core.Todos.TodoPick.At.get -> System.DateTimeOffset
@@ -20671,6 +20680,10 @@ Aw.Sindri.Core.Launch.AgentTask.HostGroups.get -> System.Collections.Generic.IRe
 Aw.Sindri.Core.Launch.AgentTask.Outputs.init -> void
 Aw.Sindri.Core.Launch.AgentTask.Model.get -> string?
 Aw.Sindri.Core.Launch.AgentTask.Model.init -> void
+Aw.Sindri.Core.Launch.AgentTask.ResourceMounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>?
+Aw.Sindri.Core.Launch.AgentTask.ResourceMounts.init -> void
+Aw.Sindri.Core.Launch.AgentTask.ResourceLimits.get -> Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride?
+Aw.Sindri.Core.Launch.AgentTask.ResourceLimits.init -> void
 Aw.Sindri.Core.Launch.AgentTask.HostGroups.init -> void
 Aw.Sindri.Core.Launch.AgentTask
 override Aw.Sindri.Core.Launch.AgentTask.ToString() -> string!
@@ -20680,7 +20693,7 @@ override Aw.Sindri.Core.Launch.AgentTask.GetHashCode() -> int
 override Aw.Sindri.Core.Launch.AgentTask.Equals(object? obj) -> bool
 Aw.Sindri.Core.Launch.AgentTask.Equals(Aw.Sindri.Core.Launch.AgentTask? other) -> bool
 Aw.Sindri.Core.Launch.AgentTask.<Clone>$() -> Aw.Sindri.Core.Launch.AgentTask!
-Aw.Sindri.Core.Launch.AgentTask.Deconstruct(out string! Brief, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, out System.Collections.Generic.IReadOnlyList<string!>! HostGroups, out string? Model) -> void
+Aw.Sindri.Core.Launch.AgentTask.Deconstruct(out string! Brief, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, out System.Collections.Generic.IReadOnlyList<string!>! HostGroups, out string? Model, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>? ResourceMounts, out Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? ResourceLimits) -> void
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock
 Aw.Sindri.Core.Graph.Blocks.RunAgentBlock.RunAgentBlock() -> void
 Aw.Sindri.Core.Graph.Blocks.RunAgentBrief
@@ -20759,7 +20772,7 @@ Aw.Sindri.Core.Launch.LaunchRequest.Node.get -> Aw.Sindri.Core.Launch.NodeRunAdd
 Aw.Sindri.Core.Launch.LaunchRequest.Node.init -> void
 Aw.Sindri.Core.Launch.LaunchRequest.Task.init -> void
 Aw.Sindri.Core.Launch.LaunchRequest.Task.get -> Aw.Sindri.Core.Launch.AgentTask?
-Aw.Sindri.Core.Launch.AgentTask.AgentTask(string! Brief, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, System.Collections.Generic.IReadOnlyList<string!>! HostGroups, string? Model = null) -> void
+Aw.Sindri.Core.Launch.AgentTask.AgentTask(string! Brief, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, System.Collections.Generic.IReadOnlyList<string!>! HostGroups, string? Model = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>? ResourceMounts = null, Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? ResourceLimits = null) -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.AddGroups.init -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.AddGroups.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Sandbox.Plan.GroupsInput.AddGroups.get -> System.Collections.Generic.IReadOnlyList<string!>?
@@ -20771,6 +20784,7 @@ static Aw.Sindri.Core.Graph.Blocks.RunAgentOutput.Compose(System.Collections.Gen
 Aw.Sindri.Core.Graph.Blocks.AgentNodeEnd.AgentNodeEnd(string! Branch, string? Commit, string? AgentSession, int Tokens, bool EmptyDiff) -> void
 static Aw.Sindri.Core.Graph.Blocks.RunAgentLaunches.WorktreeFor(Aw.Sindri.Core.Launch.NodeRunAddress! address, string! repoPath) -> string!
 static Aw.Sindri.Core.Graph.Blocks.RunAgentLaunches.GroupsFor(Aw.Sindri.Core.Graph.Blocks.RunAgentConfig! config, System.Func<string!, System.Collections.Generic.IReadOnlyList<string!>!>! connectionGroups) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Graph.Blocks.RunAgentLaunches.WithResources(Aw.Sindri.Core.Launch.LaunchRequest! request, Aw.Sindri.Core.Resources.ProvisionedResources? resources) -> Aw.Sindri.Core.Launch.LaunchRequest!
 static Aw.Sindri.Core.Graph.Blocks.RunAgentLaunches.RequestFor(Aw.Sindri.Core.Launch.NodeRunAddress! address, Aw.Sindri.Core.Workflow.Engine.Runtime.AgentStepTarget! target, Aw.Sindri.Core.Graph.Blocks.RunAgentConfig! config, string! brief, System.Collections.Generic.IReadOnlyList<string!>! groups) -> Aw.Sindri.Core.Launch.LaunchRequest!
 Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.RunAgentConfig(string! Repo, System.Collections.Generic.IReadOnlyList<string!>! ReadOnlyRepos, string? Agent, string! Prompt, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Outputs, System.TimeSpan Timeout, System.Collections.Generic.IReadOnlyList<string!>! Connections, System.TimeSpan? Wall) -> void
 static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.Agents.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -20836,45 +20850,45 @@ static Aw.Sindri.Core.Graph.Blocks.RunAgentConfig.DeclaredOutputs(System.Text.Js
 Aw.Sindri.Core.Launches.ILaunchFiles.MarkTakenOver(Aw.Sindri.Core.Launch.LaunchId launch, bool taken) -> void
 Aw.Sindri.Core.Launches.ILaunchFiles.TakenOver(Aw.Sindri.Core.Launch.LaunchId launch) -> bool
 static Aw.Sindri.Core.Launch.LaunchFiles.TakenOverName(Aw.Sindri.Core.Launch.LaunchId launch) -> string!
-Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Deconstruct(out Aw.Sindri.Core.Profile.SandboxLimits? Limits, out Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, out bool Attended, out System.TimeSpan? StepTimeout, out System.TimeSpan? LongMax, out long RamBytes, out int Cores, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Override) -> void
-Aw.Sindri.Core.Sandbox.Plan.LimitsInput.LimitsInput(Aw.Sindri.Core.Profile.SandboxLimits? Limits, Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, bool Attended, System.TimeSpan? StepTimeout, System.TimeSpan? LongMax, long RamBytes, int Cores, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Override = null) -> void
-Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Override.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Deconstruct(out Aw.Sindri.Core.Profile.SandboxLimits? Limits, out Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, out bool Attended, out System.TimeSpan? StepTimeout, out System.TimeSpan? LongMax, out long RamBytes, out int Cores, out Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Override) -> void
+Aw.Sindri.Core.Sandbox.Plan.LimitsInput.LimitsInput(Aw.Sindri.Core.Profile.SandboxLimits? Limits, Aw.Sindri.Core.Profile.SandboxAttended? AttendedSettings, bool Attended, System.TimeSpan? StepTimeout, System.TimeSpan? LongMax, long RamBytes, int Cores, Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Override = null) -> void
+Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Override.get -> Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride?
 Aw.Sindri.Core.Sandbox.Plan.LimitsInput.Override.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.State = 8 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
-Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride
-Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride!
-Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Cpu.get -> string?
-Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Cpu.init -> void
-Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Deconstruct(out string? Memory, out string? Cpu, out System.TimeSpan? StepTimeout) -> void
-Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Equals(Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? other) -> bool
-Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Memory.get -> string?
-Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Memory.init -> void
-Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.ResourceLimitOverride(string? Memory = null, string? Cpu = null, System.TimeSpan? StepTimeout = null) -> void
-Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.StepTimeout.get -> System.TimeSpan?
-Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.StepTimeout.init -> void
-Aw.Sindri.Core.Sandbox.Plan.ResourceMount
-Aw.Sindri.Core.Sandbox.Plan.ResourceMount.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.ResourceMount!
-Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Deconstruct(out string! Name, out string! HostPath) -> void
-Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Equals(Aw.Sindri.Core.Sandbox.Plan.ResourceMount? other) -> bool
-Aw.Sindri.Core.Sandbox.Plan.ResourceMount.HostPath.get -> string!
-Aw.Sindri.Core.Sandbox.Plan.ResourceMount.HostPath.init -> void
-Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Name.get -> string!
-Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Name.init -> void
-Aw.Sindri.Core.Sandbox.Plan.ResourceMount.ResourceMount(string! Name, string! HostPath) -> void
-Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceLimits.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride
+Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.<Clone>$() -> Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride!
+Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.Cpu.get -> string?
+Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.Cpu.init -> void
+Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.Deconstruct(out string? Memory, out string? Cpu, out System.TimeSpan? StepTimeout) -> void
+Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.Equals(Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? other) -> bool
+Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.Memory.get -> string?
+Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.Memory.init -> void
+Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.ResourceLimitOverride(string? Memory = null, string? Cpu = null, System.TimeSpan? StepTimeout = null) -> void
+Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.StepTimeout.get -> System.TimeSpan?
+Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.StepTimeout.init -> void
+Aw.Sindri.Core.Sandbox.Resources.ResourceMount
+Aw.Sindri.Core.Sandbox.Resources.ResourceMount.<Clone>$() -> Aw.Sindri.Core.Sandbox.Resources.ResourceMount!
+Aw.Sindri.Core.Sandbox.Resources.ResourceMount.Deconstruct(out string! Name, out string! HostPath) -> void
+Aw.Sindri.Core.Sandbox.Resources.ResourceMount.Equals(Aw.Sindri.Core.Sandbox.Resources.ResourceMount? other) -> bool
+Aw.Sindri.Core.Sandbox.Resources.ResourceMount.HostPath.get -> string!
+Aw.Sindri.Core.Sandbox.Resources.ResourceMount.HostPath.init -> void
+Aw.Sindri.Core.Sandbox.Resources.ResourceMount.Name.get -> string!
+Aw.Sindri.Core.Sandbox.Resources.ResourceMount.Name.init -> void
+Aw.Sindri.Core.Sandbox.Resources.ResourceMount.ResourceMount(string! Name, string! HostPath) -> void
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceLimits.get -> Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride?
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceLimits.init -> void
-Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceMounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>?
+Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceMounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>?
 Aw.Sindri.Core.Sandbox.Plan.SandboxRequest.ResourceMounts.init -> void
-override Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.GetHashCode() -> int
-override Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.ToString() -> string!
-override Aw.Sindri.Core.Sandbox.Plan.ResourceMount.Equals(object? obj) -> bool
-override Aw.Sindri.Core.Sandbox.Plan.ResourceMount.GetHashCode() -> int
-override Aw.Sindri.Core.Sandbox.Plan.ResourceMount.ToString() -> string!
-static Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.operator !=(Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? left, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? right) -> bool
-static Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride.operator ==(Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? left, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? right) -> bool
-static Aw.Sindri.Core.Sandbox.Plan.ResourceMount.operator !=(Aw.Sindri.Core.Sandbox.Plan.ResourceMount? left, Aw.Sindri.Core.Sandbox.Plan.ResourceMount? right) -> bool
-static Aw.Sindri.Core.Sandbox.Plan.ResourceMount.operator ==(Aw.Sindri.Core.Sandbox.Plan.ResourceMount? left, Aw.Sindri.Core.Sandbox.Plan.ResourceMount? right) -> bool
+override Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.GetHashCode() -> int
+override Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.ToString() -> string!
+override Aw.Sindri.Core.Sandbox.Resources.ResourceMount.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sandbox.Resources.ResourceMount.GetHashCode() -> int
+override Aw.Sindri.Core.Sandbox.Resources.ResourceMount.ToString() -> string!
+static Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.operator !=(Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? left, Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? right) -> bool
+static Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride.operator ==(Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? left, Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? right) -> bool
+static Aw.Sindri.Core.Sandbox.Resources.ResourceMount.operator !=(Aw.Sindri.Core.Sandbox.Resources.ResourceMount? left, Aw.Sindri.Core.Sandbox.Resources.ResourceMount? right) -> bool
+static Aw.Sindri.Core.Sandbox.Resources.ResourceMount.operator ==(Aw.Sindri.Core.Sandbox.Resources.ResourceMount? left, Aw.Sindri.Core.Sandbox.Resources.ResourceMount? right) -> bool
 Aw.Sindri.Core.Graph.Blocks.CreateItemBlock
 Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
 Aw.Sindri.Core.Graph.Blocks.CreateItemBlock.CreateItemBlock(Aw.Sindri.Core.Graph.Blocks.ICreateItemPort! items) -> void
@@ -22171,15 +22185,15 @@ Aw.Sindri.Core.Resources.ResourcePlan
 Aw.Sindri.Core.Resources.ResourcePlan.<Clone>$() -> Aw.Sindri.Core.Resources.ResourcePlan!
 Aw.Sindri.Core.Resources.ResourcePlan.Create.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.PlannedResource!>!
 Aw.Sindri.Core.Resources.ResourcePlan.Create.init -> void
-Aw.Sindri.Core.Resources.ResourcePlan.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.PlannedResource!>! Create, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! Mounts, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Resources.ResourcePlan.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.PlannedResource!>! Create, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>! Mounts, out Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Limits) -> void
 Aw.Sindri.Core.Resources.ResourcePlan.Env.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 Aw.Sindri.Core.Resources.ResourcePlan.Env.init -> void
 Aw.Sindri.Core.Resources.ResourcePlan.Equals(Aw.Sindri.Core.Resources.ResourcePlan? other) -> bool
-Aw.Sindri.Core.Resources.ResourcePlan.Limits.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Resources.ResourcePlan.Limits.get -> Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride?
 Aw.Sindri.Core.Resources.ResourcePlan.Limits.init -> void
-Aw.Sindri.Core.Resources.ResourcePlan.Mounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>!
+Aw.Sindri.Core.Resources.ResourcePlan.Mounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>!
 Aw.Sindri.Core.Resources.ResourcePlan.Mounts.init -> void
-Aw.Sindri.Core.Resources.ResourcePlan.ResourcePlan(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.PlannedResource!>! Create, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! Mounts, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Resources.ResourcePlan.ResourcePlan(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.PlannedResource!>! Create, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>! Mounts, Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Limits) -> void
 Aw.Sindri.Core.Resources.ResourcePlanner
 Aw.Sindri.Core.Resources.ResourceSizes
 Aw.Sindri.Core.Resources.ResourceSpec
@@ -22347,9 +22361,9 @@ static Aw.Sindri.Core.Reviews.ReviewConnectRules.For(Aw.Sindri.Core.Connections.
 static Aw.Sindri.Core.Reviews.ReviewConnectRules.IsSignInCode(string? code) -> bool
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest!
-Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out string! Owner, out string! Command, out string! RunArea, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! ResourceMounts, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>! HostGroups, out Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts! Net, out Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts! Host, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out string! Owner, out string! Command, out string! RunArea, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>! ResourceMounts, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>! HostGroups, out Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts! Net, out Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts! Host, out Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Limits) -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Equals(Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest? other) -> bool
-Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ProcessSandboxRequest(Aw.Sindri.Core.Launch.LaunchId Launch, string! Owner, string! Command, string! RunArea, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! ResourceMounts, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>! HostGroups, Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts! Net, Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts! Host, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits = null) -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ProcessSandboxRequest(Aw.Sindri.Core.Launch.LaunchId Launch, string! Owner, string! Command, string! RunArea, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>! ResourceMounts, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>! HostGroups, Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts! Net, Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts! Host, Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Limits = null) -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Launch.init -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Owner.get -> string!
@@ -22358,7 +22372,7 @@ Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Command.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Command.init -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.RunArea.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.RunArea.init -> void
-Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ResourceMounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>!
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ResourceMounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>!
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ResourceMounts.init -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Environment.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Environment.init -> void
@@ -22368,7 +22382,7 @@ Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Net.get -> Aw.Sindri.Core.Sand
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Net.init -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Host.get -> Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts!
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Host.init -> void
-Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Limits.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Limits.get -> Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride?
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Limits.init -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxPlanner
 static Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxPlanner.Build(Aw.Sindri.Core.Sandbox.SandboxMechanism mechanism, Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest! request) -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Plan.SandboxPlan!>!
@@ -22682,15 +22696,15 @@ Aw.Sindri.Core.Resources.IResourceProvisioner
 Aw.Sindri.Core.Resources.IResourceProvisioner.Ensure(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceSpec! spec, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Resources.ProvisionedResources!>!>
 Aw.Sindri.Core.Resources.ProvisionedResources
 Aw.Sindri.Core.Resources.ProvisionedResources.<Clone>$() -> Aw.Sindri.Core.Resources.ProvisionedResources!
-Aw.Sindri.Core.Resources.ProvisionedResources.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! Mounts, out Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Resources.ProvisionedResources.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>! Mounts, out Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Limits) -> void
 Aw.Sindri.Core.Resources.ProvisionedResources.Env.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 Aw.Sindri.Core.Resources.ProvisionedResources.Env.init -> void
 Aw.Sindri.Core.Resources.ProvisionedResources.Equals(Aw.Sindri.Core.Resources.ProvisionedResources? other) -> bool
-Aw.Sindri.Core.Resources.ProvisionedResources.Limits.get -> Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride?
+Aw.Sindri.Core.Resources.ProvisionedResources.Limits.get -> Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride?
 Aw.Sindri.Core.Resources.ProvisionedResources.Limits.init -> void
-Aw.Sindri.Core.Resources.ProvisionedResources.Mounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>!
+Aw.Sindri.Core.Resources.ProvisionedResources.Mounts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>!
 Aw.Sindri.Core.Resources.ProvisionedResources.Mounts.init -> void
-Aw.Sindri.Core.Resources.ProvisionedResources.ProvisionedResources(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.ResourceMount!>! Mounts, Aw.Sindri.Core.Sandbox.Plan.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Resources.ProvisionedResources.ProvisionedResources(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Env, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>! Mounts, Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Limits) -> void
 override Aw.Sindri.Core.Resources.ProvisionedResources.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Resources.ProvisionedResources.GetHashCode() -> int
 override Aw.Sindri.Core.Resources.ProvisionedResources.ToString() -> string!
