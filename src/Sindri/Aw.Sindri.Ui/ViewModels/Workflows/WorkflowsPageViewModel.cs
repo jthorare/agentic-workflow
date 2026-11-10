@@ -68,23 +68,23 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     public string Head { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when the head has a count to show (at least one workflow).</summary>
-#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
-    public bool HasHead => true;
+    public bool HasHead { get; private set => Set(ref field, value); }
 
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
     /// <summary>The empty state's create action: "New workflow".</summary>
-    public string NewWorkflowText => string.Empty;
+    public string NewWorkflowText => Labels.WfNew;
 
     /// <summary>True when the app can create a workflow. It can't yet: the API client has no create call.</summary>
-    public bool CanCreateWorkflow => true;
+    public bool CanCreateWorkflow => false;
 
     /// <summary>Why the create action is off.</summary>
-    public string NewWorkflowReason => string.Empty;
+    public string NewWorkflowReason => Labels.WfNewOff;
 
     /// <summary>The line before the agent command.</summary>
-    public string AgentRouteLead => string.Empty;
+    public string AgentRouteLead => Labels.WfAgentRoute;
 
     /// <summary>The command an agent runs to make a workflow, shown as mono text.</summary>
-    public string AgentRouteCommand => string.Empty;
+    public string AgentRouteCommand => Labels.WfAgentCommand;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>True until the first answer.</summary>
@@ -238,7 +238,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         (IsReading, IsUnreadable, IsFailed, FailedText) = (false, false, false, string.Empty);
         var rows = list.Workflows.Select(w => new WorkflowRowViewModel(w, _clock)).ToList();
         Patch.To(Rows, rows);
-        Head = rows.Count == 0 ? Labels.WfHeadNone : Labels.WfHead(rows.Count, rows.Count(r => r.IsActive));
+        (HasHead, Head) = rows.Count == 0 ? (false, string.Empty) : (true, Labels.WfHead(rows.Count, rows.Count(r => r.IsActive)));
         (IsEmpty, EmptyText) = rows.Count == 0 ? (true, Labels.WfNone) : (false, string.Empty);
         NotifyStateButtons();
     }

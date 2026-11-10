@@ -23,9 +23,6 @@ internal static partial class Labels
     /// <summary>The list when there are none.</summary>
     internal const string WfNone = "No workflows yet.";
 
-    /// <summary>The head when there are none.</summary>
-    internal const string WfHeadNone = "No workflows";
-
     /// <summary>The action beside a failed read.</summary>
     internal const string WfTryAgain = "Try again";
 

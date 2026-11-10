@@ -14,7 +14,7 @@
   <StackPanel x:Name="WorkflowsRoot" Spacing="{StaticResource Size.PanelGap}">
     <StackPanel x:Name="WorkflowsHeadRegion" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
       <TextBlock Classes="page-title" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
-      <TextBlock x:Name="WorkflowsHead" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding IsList}" VerticalAlignment="Center" />
+      <TextBlock x:Name="WorkflowsHead" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
     </StackPanel>
     <Button x:Name="WorkflowsBack" Content="{Binding BackText}" Click="OnBack" IsVisible="{Binding !IsList}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding BackText}" />
 
@@ -37,9 +37,19 @@
             </Border>
             <Button x:Name="WorkflowsRetry" Content="{Binding RetryText}" Click="OnRetry" HorizontalAlignment="Left" AutomationProperties.Name="{Binding RetryText}" />
           </StackPanel>
-          <Border x:Name="WorkflowsEmptyName" Margin="16,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-            <TextBlock Classes="caption quiet" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-          </Border>
+          <StackPanel x:Name="WorkflowsEmpty" Margin="{StaticResource Space.LG.Thickness}" Spacing="{StaticResource Space.XS}" HorizontalAlignment="Center" IsVisible="{Binding IsEmpty}">
+            <Border x:Name="WorkflowsEmptyName" HorizontalAlignment="Center" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock Classes="body muted" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+            <Button x:Name="WorkflowsNew" Classes="accent" HorizontalAlignment="Center" Content="{Binding NewWorkflowText}" IsEnabled="{Binding CanCreateWorkflow}" AutomationProperties.Name="{Binding NewWorkflowText}" />
+            <Border x:Name="WorkflowsNewReason" HorizontalAlignment="Center" AutomationProperties.Name="{Binding NewWorkflowReason}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+              <TextBlock Classes="caption subtle" Text="{Binding NewWorkflowReason}" TextWrapping="Wrap" TextAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+            </Border>
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XXS}" HorizontalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
+              <TextBlock Classes="caption subtle" Text="{Binding AgentRouteLead}" VerticalAlignment="Center" />
+              <TextBlock x:Name="WorkflowsAgentCommand" Classes="caption mono" Text="{Binding AgentRouteCommand}" VerticalAlignment="Center" />
+            </StackPanel>
+          </StackPanel>
           <ItemsControl x:Name="WorkflowRows" ItemsSource="{Binding Rows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:WorkflowRowViewModel">
