@@ -27,7 +27,7 @@ public sealed partial class GraphWorkflowParkingTests
     [Fact]
     public async Task Two_items_of_one_batch_each_ask_and_an_answer_by_node_and_item_reaches_the_batch_child()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(AskInLoopSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, TwoItems);
         var child = $"{started.RunId.Value}/each/1";
@@ -51,7 +51,7 @@ public sealed partial class GraphWorkflowParkingTests
     [Fact]
     public async Task An_answer_for_the_wrong_item_is_refused_and_the_question_stays_open()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(AskInLoopSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, TwoItems);
         var first = await NthQuestion(rig, 1);
