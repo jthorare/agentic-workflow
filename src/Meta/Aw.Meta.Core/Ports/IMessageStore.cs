@@ -33,6 +33,13 @@ public interface IMessageStore
     /// <returns>Success, or AW-META-005 for an unknown message.</returns>
     public ValueTask<Result<Unit>> Resolve(MessageId id, MessageResolution resolution, CancellationToken cancellationToken);
 
+    /// <summary>Records that `inbox --once` showed these messages.</summary>
+    /// <param name="ids">The messages.</param>
+    /// <param name="at">When they were shown.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>Success; an unknown id is skipped.</returns>
+    public ValueTask<Result<Unit>> MarkShown(IReadOnlyList<MessageId> ids, DateTimeOffset at, CancellationToken cancellationToken);
+
     /// <summary>Stores a message the meta sent.</summary>
     /// <param name="sent">The send.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
