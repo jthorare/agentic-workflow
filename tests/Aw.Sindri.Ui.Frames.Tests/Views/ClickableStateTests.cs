@@ -114,19 +114,19 @@ public sealed class ClickableStateTests : FrameHost
         var point = Corner(window, card);
         var transition = Assert.Single((card.Transitions ?? throw new InvalidOperationException("no Transitions")).OfType<TransformOperationsTransition>());
         Assert.Equal(150, transition.Duration.TotalMilliseconds);
-        Assert.Equal(1.0, ((ITransform)card.RenderTransform!).Value.M11, 3); // at rest: no scale
+        Assert.Equal(1.0, card.RenderTransform!.Value.M11, 3); // at rest: no scale
 
         window.MouseMove(point, RawInputModifiers.None);
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
 
-        var pressed = ((ITransform)card.RenderTransform!).Value;
-        Assert.Equal((0.98, 0.98), (Math.Round(pressed.M11, 3), Math.Round(pressed.M22, 3)));
+        var pressed = card.RenderTransform!.Value;
+        Assert.Equal((0.98, 0.98), (Math.Round(pressed.M11, 3, MidpointRounding.AwayFromZero), Math.Round(pressed.M22, 3, MidpointRounding.AwayFromZero)));
         Assert.Equal(RelativePoint.Center, card.RenderTransformOrigin);
 
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
-        Assert.Equal(1.0, ((ITransform)card.RenderTransform!).Value.M11, 3);
+        Assert.Equal(1.0, card.RenderTransform!.Value.M11, 3);
     });
 
     [Fact]
@@ -154,7 +154,7 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
         var row = window.GetVisualDescendants().OfType<NeedsYouRow>().Where(r => r.IsEffectivelyVisible)
             .SelectMany(r => r.GetVisualDescendants().OfType<Border>()).First(b => b.Name == "RowFrame" && b.Classes.Contains("slides-in"));
-        await Task.Delay(TimeSpan.FromMilliseconds(250), Token); // past the 180 ms slide
+        await Task.Delay(250, Token); // past the 180 ms slide
         AvaloniaHeadlessPlatform.ForceRenderTimerTick(2); // headless moves the animation clock only on a forced tick
         Settle(window);
         Motion.Set(reduce: true); // the press lands at once; the row keeps its slides-in class (SlidesIn is read on arrival)
@@ -165,8 +165,8 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
 
         Assert.Contains(":pressed", row.Classes, StringComparer.Ordinal);
-        var pressed = ((ITransform)row.RenderTransform!).Value;
-        Assert.Equal((0.98, 0.98), (Math.Round(pressed.M11, 3), Math.Round(pressed.M22, 3)));
+        var pressed = row.RenderTransform!.Value;
+        Assert.Equal((0.98, 0.98), (Math.Round(pressed.M11, 3, MidpointRounding.AwayFromZero), Math.Round(pressed.M22, 3, MidpointRounding.AwayFromZero)));
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
     });
 
