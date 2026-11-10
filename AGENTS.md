@@ -254,6 +254,7 @@ bash scripts/tests/skill-evals-node-failure.test.sh   # scripts/skill-evals.sh -
 bash scripts/tests/eval-gh-wrapper.test.sh   # evals/stubs/bin/gh and curl: the readonly refusals (every form), canned answers from .aw-eval/*.json (match rules, first match, no match, no file, subdirectory), pass-through to a fake real gh
 bash scripts/tests/code-index-fixture.test.sh  # the code-index fixtures (tests/fixtures/code-index): verify.mjs, the sample check, the hostile generator
 bash scripts/tests/meta-launch.test.sh      # Linux and macOS (golden transcript; needs cc on macOS)
+bash scripts/tests/meta-start-lock-guard.test.sh   # scripts/meta-start-lock.sh's takeover guard (#2598): a taker never clears a guard a live taker holds, neither one between its mkdir and its pid file nor a fresh one made after a dead holder's guard was cleared (PATH rm/rmdir stubs start a real taker in the gap)
 bash scripts/tests/launcher-probe.test.sh   # launcher_cli_has_flag: finds a flag, answers no without it, ends a hanging CLI, leaves none of its children running (#2329)
 bash scripts/tests/meta-version.test.sh     # the installed aw-meta's version and the launcher's staleness warning (Linux and macOS)
 bash scripts/tests/install-meta.test.sh
