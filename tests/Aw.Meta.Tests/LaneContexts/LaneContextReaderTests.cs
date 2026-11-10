@@ -17,22 +17,28 @@ public sealed class LaneContextReaderTests
         return rows.Value;
     }
 
+    // The rows of the work lanes: the meta lane's own row is checked by the first test.
+    private async Task<IReadOnlyList<LaneContext>> Work(int? recycleAt = null) =>
+        [.. (await Read(recycleAt)).Where(r => !string.Equals(r.Lane, "meta", StringComparison.Ordinal))];
+
     private void Claude(string lane, string session) => _world.LaneFiles.Put(new LaneRecord(lane, SessionId.From(session), Agent: null, A.At(1)));
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_lane_under_the_threshold_is_ok_and_one_at_it_is_recycle_and_the_meta_lane_is_left_out()
+    public async Task A_lane_under_the_threshold_is_ok_and_one_at_it_is_recycle_and_the_meta_lane_is_measured_too()
     {
+        Claude("meta", "s-meta");
         Claude("api", "s-api");
         Claude("ui", "s-ui");
+        _world.ClaudeTranscripts.PutUsage("s-meta", 310_000, A.At(4));
         _world.ClaudeTranscripts.PutUsage("s-api", 299_999, A.At(5));
         _world.ClaudeTranscripts.PutUsage("s-ui", 300_000, A.At(6));
 
         var rows = await Read();
 
-        Assert.Equal(["api", "ui"], rows.Select(r => r.Lane), StringComparer.Ordinal);
-        Assert.Equal([ContextVerdict.Ok, ContextVerdict.Recycle], rows.Select(r => r.Verdict));
-        Assert.Equal(A.At(6), rows[1].LastActivity);
-        Assert.Equal("300k", rows[1].Compact());
+        Assert.Equal(["meta", "api", "ui"], rows.Select(r => r.Lane), StringComparer.Ordinal);
+        Assert.Equal([ContextVerdict.Recycle, ContextVerdict.Ok, ContextVerdict.Recycle], rows.Select(r => r.Verdict));
+        Assert.Equal(A.At(6), rows[2].LastActivity);
+        Assert.Equal("300k", rows[2].Compact());
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -43,7 +49,7 @@ public sealed class LaneContextReaderTests
         _world.ClaudeTranscripts.PutUsage("s-new", 12_000, A.At(9));
         _world.LaneSessions.Set("t1-api", "s-new");
 
-        var row = (await Read())[0];
+        var row = (await Work())[0];
 
         Assert.Equal(("s-new", 12_000L, ContextVerdict.Ok), (row.Session!.Value.Value, row.Tokens, row.Verdict));
     }
@@ -54,7 +60,7 @@ public sealed class LaneContextReaderTests
         Claude("api", "s-api");
         _world.ClaudeTranscripts.Put("s-api", "{\"type\":\"user\"}\n", A.At(5));
 
-        var rows = await Read();
+        var rows = await Work();
 
         Assert.Equal([ContextVerdict.Unknown, ContextVerdict.Unknown], rows.Select(r => r.Verdict));
         Assert.Contains("no usage", rows[0].Reason, StringComparison.Ordinal);
@@ -62,7 +68,7 @@ public sealed class LaneContextReaderTests
 
         _world.ClaudeTranscripts.Put("s-other", "x\n", A.At(5));
         Claude("api", "s-missing");
-        Assert.Contains("no transcript", (await Read())[0].Reason, StringComparison.Ordinal);
+        Assert.Contains("no transcript", (await Work())[0].Reason, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -70,7 +76,7 @@ public sealed class LaneContextReaderTests
     {
         _ = _world.PutLane("api", "codex");
 
-        var row = (await Read())[0];
+        var row = (await Work())[0];
 
         Assert.Equal(ContextVerdict.Unknown, row.Verdict);
         Assert.Contains("codex", row.Reason, StringComparison.Ordinal);
@@ -82,8 +88,8 @@ public sealed class LaneContextReaderTests
         Claude("api", "s-api");
         _world.ClaudeTranscripts.PutUsage("s-api", 120_000, A.At(5));
 
-        Assert.Equal(ContextVerdict.Recycle, (await Read(100_000))[0].Verdict);
-        Assert.Equal(100_000, (await Read(100_000))[0].Threshold);
+        Assert.Equal(ContextVerdict.Recycle, (await Work(100_000))[0].Verdict);
+        Assert.Equal(100_000, (await Work(100_000))[0].Threshold);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -94,7 +100,7 @@ public sealed class LaneContextReaderTests
         _world.ClaudeTranscripts.FailFor("s-api");
         _world.ClaudeTranscripts.PutUsage("s-ui", 50_000, A.At(6));
 
-        var rows = await Read();
+        var rows = await Work();
 
         Assert.Equal([ContextVerdict.Unknown, ContextVerdict.Ok], rows.Select(r => r.Verdict));
         Assert.Contains("can't be read", rows[0].Reason, StringComparison.Ordinal);
@@ -106,7 +112,7 @@ public sealed class LaneContextReaderTests
         Claude("api", "s-recorded");
         _world.ClaudeTranscripts.PutUsage("s-recorded", 77_000, A.At(5));
 
-        var row = (await Read())[0];
+        var row = (await Work())[0];
 
         Assert.Equal(("s-recorded", 77_000L), (row.Session!.Value.Value, row.Tokens));
     }
