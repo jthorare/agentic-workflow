@@ -136,7 +136,7 @@ internal sealed class LedgerDatabase : IDisposable
     internal const int WorkflowSeenVersion = 14;
 
     /// <summary>The first migration with 'memory_fact.written_by' (#2460); reads of an older file find no writer.</summary>
-    internal const int MemoryFactWrittenByVersion = 15;
+    internal const int MemoryFactWrittenByVersion = 16;
 
     private static IReadOnlyList<Migration> LoadMigrations()
     {
