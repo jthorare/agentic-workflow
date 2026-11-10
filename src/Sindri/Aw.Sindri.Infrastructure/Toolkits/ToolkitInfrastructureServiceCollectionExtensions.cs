@@ -20,7 +20,6 @@ internal static class ToolkitInfrastructureServiceCollectionExtensions
             .AddSingleton<IToolkitProcessLauncher, ToolkitProcess>()
             .AddSingleton(static sp => new ToolkitSupervisor(sp.GetRequiredService<IToolkitProcessLauncher>(), sp.GetRequiredService<IToolkitStore>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IToolkitRuntime>(static sp => sp.GetRequiredService<ToolkitSupervisor>())
-            .AddSingleton<ToolkitRecovery>()
             .AddSingleton<RunningToolkits>()
             .AddSingleton<IRunningToolkits>(static sp => sp.GetRequiredService<RunningToolkits>());   // what the MCP endpoint and call_tool resolve (agent-first PR 16); the workflow registry falls back to NoToolkits when absent
     }

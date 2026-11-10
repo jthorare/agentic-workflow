@@ -19,6 +19,7 @@ internal static class ToolkitServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddJob<BuildToolkitRequest, BuildToolkitResult, BuildToolkitService>(static r => JobKey.From("toolkit:" + r.Name), static r => "built " + r.Name)
+            .AddSingleton<ToolkitRecovery>()
             .AddScoped<IService<StartToolkitRequest, StartToolkitResponse>, StartToolkitService>()
             .AddScoped<IService<StopToolkitRequest, StopToolkitResponse>, StopToolkitService>()
             .AddScoped<IService<ListToolkitsRequest, ListToolkitsResponse>, ListToolkitsService>();
