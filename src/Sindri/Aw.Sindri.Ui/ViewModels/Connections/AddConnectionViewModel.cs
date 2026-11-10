@@ -119,6 +119,11 @@ internal sealed class AddConnectionViewModel : ObservableObject
     /// <summary>True when the form has what its kind needs and nothing is being sent.</summary>
     public bool CanSend => !IsWorking && Name.Trim().Length > 0 && Needed();
 
+    /// <summary>Why Add is disabled, in words; empty while it can send (red stub).</summary>
+#pragma warning disable CA1822, MA0041
+    public string SendBlockedReason => string.Empty;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>What the form says it is doing: sending, waiting for the browser, done; empty otherwise.</summary>
     public string StatusText
     {

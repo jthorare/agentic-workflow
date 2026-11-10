@@ -42,6 +42,11 @@ internal sealed class ConnectionsPageViewModel : ObservableObject, IDisposable
     /// <summary>The Add connection form.</summary>
     public AddConnectionViewModel Add { get; }
 
+    /// <summary>The service tiles: the page's default view (red stub).</summary>
+#pragma warning disable CA1822, MA0041
+    public IReadOnlyList<ServiceTileViewModel> Tiles => [];
+#pragma warning restore CA1822, MA0041
+
     /// <summary>The connections, as the API orders them.</summary>
     public ObservableCollection<ConnectionRowViewModel> Rows { get; } = [];
 
