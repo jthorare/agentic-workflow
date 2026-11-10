@@ -66,6 +66,11 @@ internal sealed partial class LinearWorkViewModel
     /// <summary>The card's reason, in words: why the feed fails, or that the changes could not be read; empty when neither.</summary>
     public string StripReason => FeedFailing ? Labels.LinearFeedReason(_list?.Feed.Code) : StripFailed ? Labels.LinearStripFailed : string.Empty;
 
+#pragma warning disable CA1822, MA0041 // red stub: the real line reads the failed answer's error
+    /// <summary>Why the changes could not be read, from the failed answer's own error; empty when they loaded.</summary>
+    public string StripDetail => string.Empty;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>Mark all seen: stores the answer's marker, so the next read asks after it. The one thing that moves the marker.</summary>
     /// <returns>A task that completes when the marker is written.</returns>
     internal async Task MarkAllSeen()

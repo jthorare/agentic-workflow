@@ -282,6 +282,24 @@ public sealed class LinearSinceCardTests
     }
 
     [Fact]
+    public async Task A_failed_read_of_the_changes_says_why_under_the_line()
+    {
+        _f.Server.LinearSinceAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.ServiceUnavailable, "SND-LINEAR-001", "The store can't be read.");
+
+        var work = await _f.Shown(Token);
+
+        Assert.Equal(("Couldn't load what changed", "The store can't be read. · SND-LINEAR-001"), (work.StripReason, work.StripDetail));
+    }
+
+    [Fact]
+    public async Task A_card_that_loaded_has_no_failure_detail()
+    {
+        var work = await _f.Shown(Token);
+
+        Assert.Equal(string.Empty, work.StripDetail);
+    }
+
+    [Fact]
     public async Task Reconnect_asks_for_the_Connections_page()
     {
         var work = await _f.Shown(Token);

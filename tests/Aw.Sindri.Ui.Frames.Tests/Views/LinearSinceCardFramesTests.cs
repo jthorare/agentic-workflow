@@ -102,6 +102,32 @@ public sealed class LinearSinceCardFramesTests : FrameHost
         Frame(window, "linear-since-1280", "l2536-");
     });
 
+    private static string SixAssignedAndOneMention()
+    {
+        var items = new JsonArray();
+        for (var i = 1; i <= 6; i++)
+        {
+            var n = i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            items.Add(new JsonObject { ["kind"] = "assigned", ["key"] = "ENG-" + n, ["title"] = "Issue " + n, ["actor"] = null, ["at"] = "2025-12-31T23:00:00Z", ["from"] = null, ["to"] = null });
+        }
+
+        items.Add(new JsonObject { ["kind"] = "mentioned", ["key"] = "OPS-40", ["title"] = "Rotate the key", ["actor"] = null, ["at"] = "2025-12-31T22:00:00Z", ["from"] = null, ["to"] = null });
+        return new JsonObject { ["marker"] = "lin_08de48c5e9b68800", ["count"] = 7, ["items"] = items }.ToJsonString();
+    }
+
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(1280)]
+    public Task Every_group_header_is_as_tall_with_the_Show_all_button_as_without(double width) => OnUi(async () =>
+    {
+        var (window, _) = await OnLinear(SixAssignedAndOneMention(), width);
+
+        Assert.True(Visible(window, "LinearSinceGroupToggle"), "a group has the Show all button");
+        var heights = window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "LinearSinceGroupHeader" && b.IsEffectivelyVisible).Select(b => b.Bounds.Height).ToList();
+        Assert.True(heights.Count >= 2, "a group with the button and one without");
+        _ = Assert.Single(heights.Distinct());
+    });
+
     [Fact]
     public Task Nothing_new_shows_the_empty_message_in_the_card_and_no_action() => OnUi(async () =>
     {
