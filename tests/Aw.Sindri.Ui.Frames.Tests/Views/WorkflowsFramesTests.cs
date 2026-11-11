@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -54,6 +55,86 @@ public sealed class WorkflowsFramesTests : FrameHost
         Assert.True(Visible(window, "WorkflowRows"));
         Assert.Equal(shell.Workflows.Head, Named<TextBlock>(window, "WorkflowsHead").Text);
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"list-{width}"), Prefix);
+    });
+
+    [Theory]
+    [InlineData(1440)]
+    [InlineData(900)]
+    public Task The_empty_state_offers_New_workflow_and_names_the_agent_command(double width) => OnUi(async () =>
+    {
+        Server.WorkflowsAnswer = RouteAnswer.Api("workflows", "list-empty");
+        var (window, shell) = await Connected(width: width, height: 900);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.IsEmpty, "the Workflows page never read the empty list");
+
+        Assert.False(Visible(window, "WorkflowsHead"));
+        var button = Named<Button>(window, "WorkflowsNew");
+        Assert.True(button.IsEffectivelyVisible);
+        Assert.True(button.IsEnabled);
+        Assert.False(Visible(window, "WorkflowsCreateForm"));
+        Assert.Equal("sindri wf create", Named<TextBlock>(window, "WorkflowsAgentCommand").Text);
+        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"empty-{width}"), Prefix);
+    });
+
+    [Theory]
+    [InlineData(1440)]
+    [InlineData(900)]
+    public Task The_New_workflow_form_asks_for_a_name_and_a_template_and_says_why_Create_is_off(double width) => OnUi(async () =>
+    {
+        Server.WorkflowsAnswer = RouteAnswer.Api("workflows", "list-empty");
+        var (window, shell) = await Connected(width: width, height: 900);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.IsEmpty, "the Workflows page never read the empty list");
+
+        shell.Workflows.OpenCreate();
+        await Until(window, () => Visible(window, "WorkflowsCreateForm"), "the New workflow form never showed");
+
+        Assert.False(Visible(window, "WorkflowsNew"));
+        Assert.True(Visible(window, "WorkflowsNewName"));
+        Assert.True(Visible(window, "WorkflowsNewTemplate"));
+        Assert.False(Named<Button>(window, "WorkflowsCreate").IsEnabled);
+        Assert.True(Visible(window, "WorkflowsNewReason"));
+        Assert.True(Visible(window, "WorkflowsAgentCommand"));
+        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"empty-form-{width}"), Prefix);
+    });
+
+    // qa round 2: a server refusal shows inside the form as a red sentence with no code; the code is the line's tooltip.
+    [Fact]
+    public Task A_refused_create_shows_a_red_sentence_in_the_form_and_the_code_in_its_tooltip() => OnUi(async () =>
+    {
+        Server.WorkflowsAnswer = RouteAnswer.Api("workflows", "list-empty");
+        Server.CreateWorkflowAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.Conflict, "SND-GRAPH-009", "Another workflow already has that slug");
+        var (window, shell) = await Connected(width: 1280, height: 900);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.IsEmpty, "the Workflows page never read the empty list");
+        shell.Workflows.OpenCreate();
+        shell.Workflows.NewName = "Morning check";
+        await shell.Workflows.Create(CancellationToken.None);
+        await Until(window, () => Visible(window, "WorkflowsCreateError"), "the refusal line never showed");
+
+        var form = Named<Control>(window, "WorkflowsCreateForm");
+        var line = Named<Border>(form, "WorkflowsCreateError");
+        var text = line.GetVisualDescendants().OfType<TextBlock>().Single();
+        Assert.True(line.IsEffectivelyVisible, "the refusal line is not visible inside the form");
+        Assert.DoesNotContain("SND-", text.Text, StringComparison.Ordinal);
+        Assert.Equal("SND-GRAPH-009", ToolTip.GetTip(line));
+        Assert.Equal(ThemeColor(window, "Brush.Error", window.ActualThemeVariant), ChipColor(text));
+        Frame(window, "create-refused-1280", Prefix);
+    });
+
+    [Fact]
+    public Task A_row_title_does_not_hug_the_rows_top_border_and_New_workflow_sits_in_the_header_beside_the_list() => OnUi(async () =>
+    {
+        var (window, _) = await OnWorkflows(1280);
+        Settle(window);
+
+        var header = Named<Button>(window, "WorkflowsNewHeader");
+        Assert.True(header.IsEffectivelyVisible && header.IsEnabled);
+        var list = Named<ItemsControl>(window, "WorkflowRows");
+        var row = list.GetVisualDescendants().OfType<Border>().First(b => b.Classes.Contains("item-row"));
+        var title = row.GetVisualDescendants().OfType<Button>().First(b => b.Classes.Contains("row-title"));
+        Assert.True(title.TranslatePoint(default, row)!.Value.Y >= 8, "the title is at least 8 px below the row's top");
+        Assert.False(title.Focusable, "the row draws the focus ring, not the title");
     });
 
     [Theory]
@@ -132,9 +213,9 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         var back = Named<Button>(window, "WorkflowsBack");
         Click(back);
-        await Until(window, () => shell.Workflows.IsList && Focused(window) is Button { DataContext: WorkflowRowViewModel }, "the first workflow never took focus when Back returned");
+        await Until(window, () => shell.Workflows.IsList && Focused(window) is Border { DataContext: WorkflowRowViewModel } focused && focused.Classes.Contains("item-row"), "the first workflow never took focus when Back returned");
 
-        var first = Assert.IsType<Button>(Focused(window));
+        var first = Assert.IsType<Border>(Focused(window));   // the row is the focus stop since #2550, not its title button
         Assert.Equal(shell.Workflows.Rows[0], first.DataContext);
         Assert.False(back.IsEffectivelyVisible);
     });

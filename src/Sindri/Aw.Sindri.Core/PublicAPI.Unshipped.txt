@@ -22721,6 +22721,123 @@ Aw.Sindri.Core.Resources.ResourceDoctorRule
 const Aw.Sindri.Core.Resources.ResourceDoctorRule.NearLimit = 0.9 -> double
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.Check(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>! entries, System.Collections.Generic.IReadOnlyDictionary<string!, long>! diskLimits) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.LimitKey(Aw.Sindri.Core.Resources.ResourceOwner! owner, string! name) -> string!
+Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort
+Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort.Forget(Aw.Sindri.Core.Graph.Blocks.MemoryToForget! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort.Recall(Aw.Sindri.Core.Graph.Blocks.MemoryToRecall! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.MemoryRecalled!>!>
+Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort.Remember(Aw.Sindri.Core.Graph.Blocks.MemoryToRemember! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.MemoryRemembered!>!>
+Aw.Sindri.Core.Graph.Blocks.MemoryForgetBlock
+Aw.Sindri.Core.Graph.Blocks.MemoryForgetBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.MemoryForgetBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryForgetBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.MemoryForgetBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.MemoryForgetBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.MemoryForgetBlock.MemoryForgetBlock(Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort! memory) -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryForgetBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.MemoryForgetBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryForgetBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryRecalled
+Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.MemoryRecalled!
+Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Facts, out string! Mode) -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.Equals(Aw.Sindri.Core.Graph.Blocks.MemoryRecalled? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.Facts.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.Facts.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.MemoryRecalled(System.Collections.Generic.IReadOnlyList<string!>! Facts, string! Mode) -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.Mode.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.Mode.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryRemembered
+Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.Action.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.Action.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.MemoryRemembered!
+Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.Deconstruct(out string! Key, out string! Action) -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.Equals(Aw.Sindri.Core.Graph.Blocks.MemoryRemembered? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.Key.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.Key.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.MemoryRemembered(string! Key, string! Action) -> void
+Aw.Sindri.Core.Graph.Blocks.MemorySearchBlock
+Aw.Sindri.Core.Graph.Blocks.MemorySearchBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.MemorySearchBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemorySearchBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.MemorySearchBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.MemorySearchBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.MemorySearchBlock.MemorySearchBlock(Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort! memory) -> void
+Aw.Sindri.Core.Graph.Blocks.MemorySearchBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.MemorySearchBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemorySearchBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryToForget
+Aw.Sindri.Core.Graph.Blocks.MemoryToForget.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.MemoryToForget!
+Aw.Sindri.Core.Graph.Blocks.MemoryToForget.Deconstruct(out string! Memory, out string? Fact, out string? Tag) -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToForget.Equals(Aw.Sindri.Core.Graph.Blocks.MemoryToForget? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.MemoryToForget.Fact.get -> string?
+Aw.Sindri.Core.Graph.Blocks.MemoryToForget.Fact.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToForget.Memory.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryToForget.Memory.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToForget.MemoryToForget(string! Memory, string? Fact, string? Tag) -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToForget.Tag.get -> string?
+Aw.Sindri.Core.Graph.Blocks.MemoryToForget.Tag.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.MemoryToRecall!
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.Deconstruct(out string! Memory, out string! Query, out string? Level, out int? Limit) -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.Equals(Aw.Sindri.Core.Graph.Blocks.MemoryToRecall? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.Level.get -> string?
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.Level.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.Limit.get -> int?
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.Limit.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.Memory.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.Memory.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.MemoryToRecall(string! Memory, string! Query, string? Level, int? Limit) -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.Query.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.Query.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.MemoryToRemember!
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out string! Memory, out string! Fact, out System.Collections.Generic.IReadOnlyList<string!>! Tags, out System.TimeSpan? ExpiresIn) -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.Equals(Aw.Sindri.Core.Graph.Blocks.MemoryToRemember? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.ExpiresIn.get -> System.TimeSpan?
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.ExpiresIn.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.Fact.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.Fact.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.Memory.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.Memory.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.MemoryToRemember(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, string! Memory, string! Fact, System.Collections.Generic.IReadOnlyList<string!>! Tags, System.TimeSpan? ExpiresIn) -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.Run.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.Tags.init -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryWriteBlock
+Aw.Sindri.Core.Graph.Blocks.MemoryWriteBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.MemoryWriteBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryWriteBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.MemoryWriteBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.MemoryWriteBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.MemoryWriteBlock.MemoryWriteBlock(Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort! memory) -> void
+Aw.Sindri.Core.Graph.Blocks.MemoryWriteBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.MemoryWriteBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.MemoryWriteBlock.Type.get -> string!
+override Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.MemoryToForget.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.MemoryToForget.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.MemoryToForget.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.operator !=(Aw.Sindri.Core.Graph.Blocks.MemoryRecalled? left, Aw.Sindri.Core.Graph.Blocks.MemoryRecalled? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.MemoryRecalled.operator ==(Aw.Sindri.Core.Graph.Blocks.MemoryRecalled? left, Aw.Sindri.Core.Graph.Blocks.MemoryRecalled? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.operator !=(Aw.Sindri.Core.Graph.Blocks.MemoryRemembered? left, Aw.Sindri.Core.Graph.Blocks.MemoryRemembered? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.MemoryRemembered.operator ==(Aw.Sindri.Core.Graph.Blocks.MemoryRemembered? left, Aw.Sindri.Core.Graph.Blocks.MemoryRemembered? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.MemoryToForget.operator !=(Aw.Sindri.Core.Graph.Blocks.MemoryToForget? left, Aw.Sindri.Core.Graph.Blocks.MemoryToForget? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.MemoryToForget.operator ==(Aw.Sindri.Core.Graph.Blocks.MemoryToForget? left, Aw.Sindri.Core.Graph.Blocks.MemoryToForget? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.operator !=(Aw.Sindri.Core.Graph.Blocks.MemoryToRecall? left, Aw.Sindri.Core.Graph.Blocks.MemoryToRecall? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.MemoryToRecall.operator ==(Aw.Sindri.Core.Graph.Blocks.MemoryToRecall? left, Aw.Sindri.Core.Graph.Blocks.MemoryToRecall? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.operator !=(Aw.Sindri.Core.Graph.Blocks.MemoryToRemember? left, Aw.Sindri.Core.Graph.Blocks.MemoryToRemember? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.MemoryToRemember.operator ==(Aw.Sindri.Core.Graph.Blocks.MemoryToRemember? left, Aw.Sindri.Core.Graph.Blocks.MemoryToRemember? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.MemoryBlocks(Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort! memory) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>!
 Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Item.get -> int?
 Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Item.init -> void
 Aw.Sindri.Core.Graph.Blocks.QuestionAsk.BatchWorkflow.get -> string?
