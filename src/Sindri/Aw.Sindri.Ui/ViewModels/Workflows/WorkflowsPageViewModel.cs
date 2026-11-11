@@ -67,6 +67,20 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>"2 workflows · 1 active"; empty until the first list.</summary>
     public string Head { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>True when the head has a count to show (at least one workflow).</summary>
+    public bool HasHead { get; private set => Set(ref field, value); }
+
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
+    /// <summary>The empty state's create action: "New workflow".</summary>
+    public string NewWorkflowText => Labels.WfNew;
+
+    /// <summary>The line before the agent command.</summary>
+    public string AgentRouteLead => Labels.WfAgentRoute;
+
+    /// <summary>The command an agent runs to make a workflow, shown as mono text.</summary>
+    public string AgentRouteCommand => Labels.WfAgentCommand;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>True until the first answer.</summary>
     public bool IsReading { get; private set => Set(ref field, value); } = true;
 
@@ -218,8 +232,10 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         (IsReading, IsUnreadable, IsFailed, FailedText) = (false, false, false, string.Empty);
         var rows = list.Workflows.Select(w => new WorkflowRowViewModel(w, _clock)).ToList();
         Patch.To(Rows, rows);
-        Head = rows.Count == 0 ? Labels.WfHeadNone : Labels.WfHead(rows.Count, rows.Count(r => r.IsActive));
+        (HasHead, Head) = rows.Count == 0 ? (false, string.Empty) : (true, Labels.WfHead(rows.Count, rows.Count(r => r.IsActive)));
         (IsEmpty, EmptyText) = rows.Count == 0 ? (true, Labels.WfNone) : (false, string.Empty);
+        OnChanged(nameof(ShowsEmpty));
+        NotifyCreate();   // a short id the list now holds is taken
         NotifyStateButtons();
     }
 }

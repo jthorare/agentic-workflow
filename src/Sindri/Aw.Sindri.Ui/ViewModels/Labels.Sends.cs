@@ -9,7 +9,17 @@ internal static partial class Labels
     /// <summary>What a view says when Sindri refuses or can't answer its read.</summary>
     /// <param name="error">The failure as served (a refusal's code and detail, or the client's own).</param>
     /// <returns>The detail and the code.</returns>
-    internal static string InstanceRefused(Error error) => $"{error.Message} · {error.Code}";
+    internal static string InstanceRefused(Error error) => $"{Capitalised(error.Message)} · {error.Code}";
+
+    /// <summary>A sentence with its first letter upper-case, so a reason reads right after a lead like "Couldn't create the workflow." Only a plain first word (letters only, up to the first space) changes.</summary>
+    /// <param name="text">The sentence.</param>
+    /// <returns>"no run 'x'" becomes "No run 'x'"; unchanged when the first word holds anything but letters: "review.login is ...", "workflow:triage ...", "gh_token ...", "gh-2550 ...", "'docs' ...", "v2 ...", "2 runs ...".</returns>
+    internal static string Capitalised(string text)
+    {
+        var space = text.IndexOf(' ', StringComparison.Ordinal);
+        var word = space < 0 ? text : text[..space];
+        return word.Length > 0 && word.All(char.IsLetter) && char.IsLower(word[0]) ? char.ToUpperInvariant(text[0]) + text[1..] : text;
+    }
 
     /// <summary>The link to a subject outside the app.</summary>
     /// <param name="host">The link's host.</param>

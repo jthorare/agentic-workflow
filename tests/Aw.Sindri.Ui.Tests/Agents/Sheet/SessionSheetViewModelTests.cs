@@ -61,7 +61,7 @@ public sealed class SessionSheetViewModelTests
     {
         var sheet = await Opened(CodexRef);
 
-        Assert.Equal(("Codex web/bbbbbbbb", "◐ Asking you · approval · Bash"), (sheet.Heading, sheet.StateLine));
+        Assert.Equal(("Codex web/bbbbbbbb", "● Waiting on you · approval · Bash"), (sheet.Heading, sheet.StateLine));
         Assert.Equal(["Shown in", "Terminal"], sheet.HostFields.Select(f => f.Label), StringComparer.Ordinal);
         Assert.Equal(("Warp", "warp", "/work/web"), (Value(sheet.HostFields, "Shown in"), Value(sheet.HostFields, "Terminal"), Value(sheet.Fields, "Working directory")));
         Assert.DoesNotContain(sheet.Fields, f => new[] { "Worktree", "Lane" }.Contains(f.Label, StringComparer.Ordinal));
@@ -73,9 +73,9 @@ public sealed class SessionSheetViewModelTests
     {
         var sheet = await Opened(ClaudeRef);
 
-        Assert.Equal(["○ Idle", "◐ Asking you", "● Working"], sheet.History.Select(h => h.Chip.Text), StringComparer.Ordinal);
+        Assert.Equal(["● Idle", "● Waiting on you", "● Working"], sheet.History.Select(h => h.Chip.Text), StringComparer.Ordinal);
         Assert.Equal([false, false, true], sheet.History.Select(h => h.IsNow));
-        Assert.Equal("◐ Asking you · approval · " + Labels.SheetTime(new DateTimeOffset(2026, 10, 16, 11, 59, 0, TimeSpan.Zero)) + " · hook", sheet.History[1].Name);
+        Assert.Equal("● Waiting on you · approval · " + Labels.SheetTime(new DateTimeOffset(2026, 10, 16, 11, 59, 0, TimeSpan.Zero)) + " · hook", sheet.History[1].Name);
         Assert.EndsWith("· now · record", sheet.History[2].Detail, StringComparison.Ordinal);
         Assert.True(sheet.HasHistory);
     }

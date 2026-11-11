@@ -58,6 +58,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>(), provider.GetRequiredService<IForEachLimitSource>(),
                 [.. GraphBlockRegistry.FlowBlocks(provider.GetRequiredService<IGraphSeenStore>(), provider.GetRequiredService<ICreateItemPort>(), provider.GetRequiredService<IGraphCallPort>(), provider.GetRequiredService<IGraphHttpPort>()),
                  .. GraphBlockRegistry.ParkingBlocks(provider.GetRequiredService<IQuestionPort>(), provider.GetRequiredService<TimeProvider>()),
+                 .. GraphBlockRegistry.MemoryBlocks(provider.GetRequiredService<IGraphMemoryPort>()),
                  new CallToolBlock(provider.GetService<IRunningToolkits>() ?? NoToolkits.Instance, provider.GetRequiredService<IConnectionToolPort>())]))   // 'call_tool' (PR 16b); with no toolkit runtime registered yet it reaches connections only
             .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
             .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog

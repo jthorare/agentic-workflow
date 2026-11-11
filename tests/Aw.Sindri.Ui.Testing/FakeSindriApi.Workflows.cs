@@ -17,6 +17,7 @@ internal sealed partial class FakeSindriApi
     private readonly List<string> _activatedWorkflows = [];
     private readonly List<string> _pausedWorkflows = [];
     private readonly List<AppliedOps> _appliedOps = [];
+    private readonly List<(string Slug, string Template)> _createdWorkflows = [];
 
     /// <summary>POST /sindri/workflows/{slug}/runs's answer: the started body by default (a refusal golden, such as workflows-slug-runs/not-active, to test a refusal).</summary>
     public RouteAnswer StartWorkflowRunAnswer { get; set; } = RouteAnswer.SpecShaped("workflows-slug-runs", "started");
@@ -161,6 +162,15 @@ internal sealed partial class FakeSindriApi
     /// <summary>GET /sindri/workflows/blocks's answer: a refusal until a test serves a block list.</summary>
     public RouteAnswer WorkflowBlocksAnswer { get; set; } = RouteAnswer.Problem(System.Net.HttpStatusCode.NotFound, "SND-GRAPH-008", "no blocks served");
 
+    /// <summary>POST /sindri/workflows's answer: the created golden by default (a ProblemDetails, such as SND-GRAPH-009 for a taken slug, to test a refusal).</summary>
+    public RouteAnswer CreateWorkflowAnswer { get; set; } = RouteAnswer.Api("workflows", "created");
+
+    /// <summary>Holds POST /sindri/workflows until a test releases it (the call is recorded first).</summary>
+    public TaskCompletionSource? CreateWorkflowGate { get; set; }
+
+    /// <summary>The slug and template of every create sent, in order.</summary>
+    public IReadOnlyList<(string Slug, string Template)> CreatedWorkflows { get { lock (_gate) { return [.. _createdWorkflows]; } } }
+
     /// <summary>POST .../ops's answer.</summary>
     public RouteAnswer ApplyWorkflowOpsAnswer { get; set; } = RouteAnswer.Api("workflows-slug-ops", "ops-applied");
 
@@ -187,6 +197,17 @@ internal sealed partial class FakeSindriApi
 
     public Task<Result<WorkflowBlockList>> WorkflowBlocks(Uri api, CancellationToken cancellationToken) =>
         Task.FromResult(Answer<WorkflowBlockList>(api, WorkflowRoutes.Blocks(), WorkflowBlocksAnswer));
+
+    public async Task<Result<WorkflowCreated>> CreateWorkflow(Uri api, string slug, string template, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _createdWorkflows.Add((slug, template));
+        }
+
+        await WaitFor(CreateWorkflowGate, cancellationToken).ConfigureAwait(false);
+        return Answer<WorkflowCreated>(api, WorkflowRoutes.Create(), CreateWorkflowAnswer);
+    }
 
     public async Task<Result<WorkflowOpsApplied>> ApplyWorkflowOps(Uri api, string slug, int baseRevision, string opsJson, CancellationToken cancellationToken)
     {
