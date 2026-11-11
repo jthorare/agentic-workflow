@@ -38,7 +38,7 @@ internal sealed class ConnectionRowViewModel : ObservableObject
     /// <summary>The kind in words.</summary>
     public string KindText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The chip: glyph and word.</summary>
+    /// <summary>The status as a plain word (Connected); the tiles use the same.</summary>
     public string ChipText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The status as served ('connected', 'needs-sign-in', 'error').</summary>
@@ -270,8 +270,8 @@ internal sealed class ConnectionRowViewModel : ObservableObject
 
     private void Derive()
     {
-        var (glyph, word) = Labels.ConnectionChip(View.Status);
-        (ChipText, KindText, ReasonText, RefreshedText) = (glyph + " " + word, Labels.ConnectionKind(View.Kind), View.StatusReason ?? string.Empty, Refreshed());
+        var (_, word) = Labels.ConnectionChip(View.Status);
+        (ChipText, KindText, ReasonText, RefreshedText) = (word, Labels.ConnectionKind(View.Kind), View.StatusReason ?? string.Empty, Refreshed());
         AccessibleName = Labels.ConnectionRowName(View.Name, KindText, word.ToLowerInvariant(), ReasonText);
         foreach (var name in (string[])[nameof(Status), nameof(IsConnected), nameof(NeedsSignIn), nameof(IsError), nameof(IsProblem), nameof(HasReason), nameof(HasRefreshed), nameof(CanSignIn)])
         {

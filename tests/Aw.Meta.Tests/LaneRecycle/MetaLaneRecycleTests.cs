@@ -34,7 +34,7 @@ public sealed class MetaLaneRecycleTests
     private LaneRecycleService Service(IDelay? delay = null)
     {
         var wait = delay ?? _world.Delay;
-        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, wait), _world.LaneSessions, _world.LaneFiles, _world.Log, wait, _world.Clock, _world.Messages);
+        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, wait), _world.LaneSessions, _world.LaneFiles, _world.Log, wait, _world.Clock, new RecycleSettler(_world.Messages, _world.Sync, _world.Clock));
         return new LaneRecycleService(
             _world.Config,
             new RecycleGuard(_world.LaneFiles, _world.LaneSessions, _world.Digests, _world.Context, _world.Clock),
@@ -107,6 +107,25 @@ public sealed class MetaLaneRecycleTests
         Assert.True(response.Blocked);
         Assert.False(beat?.Stopped ?? false);
         Assert.NotNull(beat);   // the blocked stop is still a beat: the hook ran, the turn did not end
+    }
+
+    // #2648
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task Another_lane_with_detach_or_wait_idle_is_refused_with_AW_META_021_and_starts_nothing(bool detach, bool waitIdle)
+    {
+        await Ready();
+        _world.LaneFiles.Put(new LaneRecord("ui", SessionId.From("s-ui"), Agent: null, A.At(1)));
+        _world.LaneSessions.Set("t1-ui", "s-ui");
+        _world.Panes.Put("t1-ui", "claude");
+
+        var result = await Service().Handle(new LaneRecycleRequest("ui", Digest, DryRun: false, detach, waitIdle), CancellationToken.None);
+
+        Assert.Equal(MetaErrors.RecycleRefused.Code, result.Error.Code);
+        Assert.Contains("without the flag", result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(_launcher.Started);
+        Assert.Empty(_world.Panes.Woken);
     }
 
     // d1
@@ -242,7 +261,7 @@ public sealed class MetaLaneRecycleTests
 
         Assert.Empty(_world.Panes.Woken);
         Assert.True(_world.Clock.GetUtcNow() - start >= _giveUpAfter);
-        Assert.Contains(_world.Log.Lines, l => l.Contains("gave up", StringComparison.Ordinal));
+        Assert.Contains(_world.Log.Lines, l => l.Contains("RECYCLE FAILED meta: recycle gave up", StringComparison.Ordinal));
         Assert.Null((await _world.LaneFiles.Waiter("meta", CancellationToken.None)).Value);
         Assert.Equal(OldSession, (await _world.LaneFiles.Record("meta", CancellationToken.None)).Value!.Session!.Value.Value);
     }

@@ -42,7 +42,7 @@ OUT="$(bash "$WORK/wt/scripts/install-meta.sh" --provider claude --allow-worktre
 check "install from a linked worktree with --allow-worktree: exit 0" "$RC" "0"
 [ "$RC" = 0 ] || printf '%s\n' "$OUT" | sed 's/^/  /'
 check "aw-meta-launch does not point into the worktree" \
-  "$(case "$(readlink "$CLAUDE_LOCAL_BIN/aw-meta-launch" 2> /dev/null)" in "$WORK/wt/"*) echo into-worktree ;; '') echo none ;; *) echo elsewhere ;; esac)" "elsewhere"
+  "$(case "$(readlink "$CLAUDE_LOCAL_BIN/aw-meta-launch" 2> /dev/null)" in ("$WORK/wt/"*) echo into-worktree ;; ('') echo none ;; (*) echo elsewhere ;; esac)" "elsewhere"
 
 # The sweep removes the tree the install ran from.
 git -C "$WORK/tree" worktree remove --force "$WORK/wt"

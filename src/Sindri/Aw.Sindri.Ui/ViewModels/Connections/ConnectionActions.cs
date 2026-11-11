@@ -44,6 +44,12 @@ internal sealed class ConnectionActions(ISindriApi api, Func<Uri?> url, ILaunche
         closing.Dispose();
     }
 
+    /// <summary>Opens a provider's web page in the browser.</summary>
+    /// <param name="page">The page.</param>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>True when the system opened it.</returns>
+    internal Task<bool> OpenLink(Uri page, CancellationToken cancellationToken) => _launch.Open(page, cancellationToken);
+
     /// <summary>Reads one connection (connection_get).</summary>
     /// <param name="name">The connection's name.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
