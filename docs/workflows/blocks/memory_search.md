@@ -7,7 +7,9 @@ Recalls facts from a Sindri memory by meaning (picker label **Recall**). It uses
 | `memory` | text | The memory's name (`sindri memory create` makes one). A memory that does not exist fails the node with the handler's error. |
 | `query` | text | What to recall; not blank. |
 | `level` | text, optional | `loose`, `balanced` (the default) or `strict`: how close a fact has to be. |
-| `limit` | number, optional | At most this many facts; the default is 10 and the most is 50. |
+| `limit` | number, optional | At most this many facts. The default is 10. A number above 50 becomes 50. A number below 1 (`0`, `-2`) or text that is not a whole number (`abc`, `3.5`) fails the node, and a literal one fails the workflow check. |
+
+A literal `level` that is not `loose`, `balanced` or `strict` also fails the workflow check; a `{{...}}` reference is checked when the node runs.
 
 | Output | Type | Meaning |
 |---|---|---|

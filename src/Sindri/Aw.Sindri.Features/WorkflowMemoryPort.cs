@@ -33,14 +33,15 @@ internal sealed class WorkflowMemoryPort(SearchMemoryService search, WriteMemory
     public async ValueTask<Result<MemoryRemembered>> Remember(MemoryToRemember request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        // why: the item is the run's own, set by whoever started it; a run that can't be read leaves the fact without one rather than failing a node whose work is done
+        // why: the item is the run's own, set by whoever started it; a run that can't be read leaves the fact without one, with a warning, rather than failing a node whose work is done
         var run = await runs.Get(request.Run, cancellationToken).ConfigureAwait(false);
         var item = run.IsSuccess ? run.Value.ItemId?.Value : null;
         var provenance = new MemoryProvenance(request.Run.Value[..request.Run.Value.IndexOf('@', StringComparison.Ordinal)], request.Run.Value, item, Session: null);
         DateTimeOffset? expiresAt = request.ExpiresIn is { } span ? time.GetUtcNow() + span : null;
         using var entered = callers.EnterService("workflow");
         var written = await write.Handle(new WriteMemoryFactRequest(request.Memory, request.Fact, request.Tags, expiresAt, provenance), cancellationToken).ConfigureAwait(false);
-        return written.IsError ? written.Error : new MemoryRemembered(written.Value.Key, written.Value.Action);
+        var warning = run.IsError ? $"the fact was written, but run {request.Run.Value} could not be read, so the fact carries no item ({run.Error.Message})" : null;
+        return written.IsError ? written.Error : new MemoryRemembered(written.Value.Key, written.Value.Action, warning);
     }
 
     public async ValueTask<Result<int>> Forget(MemoryToForget request, CancellationToken cancellationToken)
