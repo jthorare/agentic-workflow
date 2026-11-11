@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
@@ -18,7 +19,7 @@ namespace Aw.Sindri.Features.AnswerQuestion;
 /// <param name="runs">The runs.</param>
 /// <param name="views">Reads the needs-you row of a loop item's question, which records the workflow that waits for the answer.</param>
 /// <param name="answerer">Delivers the answer to the run's workflow.</param>
-/// <param name="ledger">Appends 'workflow.answered'.</param>
+/// <param name="ledger">Appends 'workflow.answered'; reads the item's 'workflow.question' when its needs-you row is not there yet.</param>
 /// <param name="held">The lease this process holds.</param>
 /// <param name="events">Builds the entry.</param>
 /// <param name="scrubber">Scrubs the answer before the ledger stores it; the workflow gets the answer as given.</param>
@@ -85,10 +86,78 @@ internal sealed class AnswerQuestionService(IWorkflowRunStore runs, IViewReader 
             return row.Error;
         }
 
-        return row.Value?.BatchWorkflow is { } batch
+        // why: the view is the cheap first read, but the projector may not have folded the question yet; the ledger is the truth
+        var batch = row.Value?.BatchWorkflow;
+        if (batch is null && row.Value is null)
+        {
+            var found = await BatchFromLedger(request, item, cancellationToken).ConfigureAwait(false);
+            if (found.IsError)
+            {
+                return found.Error;
+            }
+
+            batch = found.Value;
+        }
+
+        return batch is not null
             ? batch
             : SindriErrors.GraphNotWaiting.With($"'{request.Node.Value}' asked nothing for item {item.ToString(System.Globalization.CultureInfo.InvariantCulture)} (or it was answered already)");
     }
+
+    /// <summary>The batch workflow the item's latest 'workflow.question' names, or null when no question was asked or a later 'workflow.answered' closed it.</summary>
+    private async ValueTask<Result<string?>> BatchFromLedger(AnswerQuestionRequest request, int item, CancellationToken cancellationToken)
+    {
+        var head = await ledger.Head(cancellationToken).ConfigureAwait(false);
+        if (head.IsError)
+        {
+            return head.Error;
+        }
+
+        string? batch = null;
+        var cursor = Math.Max(0, head.Value - TailWindow);
+        while (true)
+        {
+            var page = await ledger.ReadAfter(cursor, PageSize, cancellationToken).ConfigureAwait(false);
+            if (page.IsError)
+            {
+                return page.Error;
+            }
+
+            if (page.Value.Count == 0)
+            {
+                return batch;
+            }
+
+            foreach (var recorded in page.Value)
+            {
+                batch = Fold(recorded, request, item, batch);
+            }
+
+            cursor = page.Value[^1].Sequence;
+        }
+    }
+
+    private string? Fold(LedgerEvent recorded, AnswerQuestionRequest request, int item, string? batch)
+    {
+        if (string.Equals(recorded.Envelope.Type, EventTypes.WorkflowQuestion, StringComparison.Ordinal))
+        {
+            var asked = events.Payload<WorkflowQuestionPayload>(recorded);
+            return asked.IsSuccess && IsItem(asked.Value.Run, asked.Value.Node, asked.Value.Item, request, item) ? asked.Value.BatchWorkflow : batch;
+        }
+
+        if (string.Equals(recorded.Envelope.Type, EventTypes.WorkflowAnswered, StringComparison.Ordinal))
+        {
+            var answered = events.Payload<WorkflowAnsweredPayload>(recorded);
+            return answered.IsSuccess && IsItem(answered.Value.Run, answered.Value.Node, answered.Value.Item, request, item) ? null : batch;
+        }
+
+        return batch;
+    }
+
+    private static bool IsItem(WorkflowRunId run, NodeId node, int? at, AnswerQuestionRequest request, int item) => run == request.Run && node == request.Node && at == item;
+
+    private const int TailWindow = 100_000;
+    private const int PageSize = 500;
 
     /// <summary>The answer: exactly one of text and choice, not blank and not over the cap.</summary>
     private static Result<string> AnswerOf(AnswerQuestionRequest request)
