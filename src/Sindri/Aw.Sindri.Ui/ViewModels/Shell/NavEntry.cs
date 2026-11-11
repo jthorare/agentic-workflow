@@ -17,6 +17,9 @@ internal sealed class NavEntry(PageId page, string label, string key, string cou
     /// <summary>The G-chord's second key (§8): H, W, Q, R, C, A, ..</summary>
     public string Key { get; } = key;
 
+    /// <summary>The count text's automation id ("NavCount.Reviews"), one per tab, so a driver reads a tab's count without matching text.</summary>
+    public string CountAutomationId => "NavCount." + Page;
+
     /// <summary>The count from the page's view rows, or empty until its route is served.</summary>
     public string Count
     {

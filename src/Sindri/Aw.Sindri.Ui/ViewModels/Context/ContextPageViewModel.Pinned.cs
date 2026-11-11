@@ -26,7 +26,7 @@ internal sealed partial class ContextPageViewModel
     /// <returns>When the item's repo map is drawn and the note is set.</returns>
     internal async Task OpenForItem(string itemId, CancellationToken cancellationToken = default)
     {
-        _itemOpened = itemId;
+        ItemOpened(itemId);
         if (Ports.ApiUrl() is not { } api)
         {
             NoteItem(Labels.ContextItemFailed(itemId, Labels.ContextItemUnreachable), failed: true);
@@ -65,6 +65,14 @@ internal sealed partial class ContextPageViewModel
     /// <returns>When the answer is drawn.</returns>
     internal Task RetryItem(CancellationToken cancellationToken = default) =>
         _itemOpened is { } item ? OpenForItem(item, cancellationToken) : Task.CompletedTask;
+
+    // The item the page is open for, or null on the bare page: the No map state's words follow it.
+    private void ItemOpened(string? itemId)
+    {
+        _itemOpened = itemId;
+        OnChanged(nameof(EmptyTitle));
+        OnChanged(nameof(EmptyBody));
+    }
 
     private void NoteItem(string note, bool failed = false)
     {

@@ -140,7 +140,7 @@ public sealed class SetupFramesTests : FrameHost
         Assert.True(line.IsEffectivelyVisible);
         Assert.Equal("Finish setting up Sindri, 2 of 5 done. Next: Connect your coding agents", Heard.Name(line));
         var next = Named<Button>(window, "SetupHomeContinue");
-        Assert.Equal(("Continue, Connect your coding agents", true), (Heard.Name(next), next.IsEffectivelyVisible));
+        Assert.Equal(("Connect your coding agents", true), (Heard.Name(next), next.IsEffectivelyVisible));
         Assert.True(line.Bounds.Height <= 48, string.Create(CultureInfo.InvariantCulture, $"the line is {line.Bounds.Height} px high"));
         next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);

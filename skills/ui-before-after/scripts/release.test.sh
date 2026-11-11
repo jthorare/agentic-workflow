@@ -62,12 +62,23 @@ test_a_missing_main_worktree_is_not_stopped() {
   [ -e "$dir/calls.log" ] && fail "missing: stack called"
 }
 
+test_without_a_path_the_last_release_stops_main_at_the_worktree_root() {
+  local dir out
+  dir=$(make_fixture)
+  git init -q "$dir/repo"
+  mkdir -p "$dir/wt/proof-main"
+  lease "$dir" a
+  out=$(WEB_APP_ROOT="$dir/repo" AW_WORKTREE_ROOT="$dir/wt" release "$dir" a)
+  grep -q "^stack down $dir/wt/proof-main\$" "$dir/calls.log" 2>/dev/null || fail "root: main not stopped: $out"
+}
+
 test_the_last_release_stops_main
+test_without_a_path_the_last_release_stops_main_at_the_worktree_root
 test_a_release_with_another_live_lease_leaves_main_running
 test_a_missing_main_worktree_is_not_stopped
 
 if [ "$FAILURES" -eq 0 ]; then
-  echo "3 passed"
+  echo "4 passed"
 else
   echo "$FAILURES failed"
   exit 1

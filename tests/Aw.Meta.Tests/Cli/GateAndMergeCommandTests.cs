@@ -4,14 +4,14 @@ using Aw.Meta.Tests.MergeRun;
 
 namespace Aw.Meta.Tests.Cli;
 
-/// <summary>gate-run, merge-check and merge-run end to end: real git (a bare origin, a clone, a pull request head ref) and a stub gh.</summary>
+/// <summary>gate-run, merge-check and merge-run end to end: real git (a bare origin, a clone, a pull request head ref) and a stub gh. Pull request 7's head branch "feat" is the team's (watch.prBranchPrefixes), so the watch reports it.</summary>
 [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
 public sealed class GateAndMergeCommandTests : IDisposable
 {
     private static readonly string[] _gitIdentity = ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", "-c", "init.defaultBranch=main"];
 
     private static readonly string _config = string.Concat(
-        """{"team":"t","repo":"REPO","lanes":["api"],"metaLane":"meta","gate":{"always":["repo"],"docsOnly":["**/*.md"],"scopes":{""",
+        """{"team":"t","repo":"REPO","lanes":["api"],"metaLane":"meta","watch":{"prBranchPrefixes":["feat"]},"gate":{"always":["repo"],"docsOnly":["**/*.md"],"scopes":{""",
         """" "repo":{"paths":["**"],"steps":[{"name":"merged","run":["sh","-c","test -f feature.txt && test -f main.txt && echo both-present"]}]},"""",
         """" "extra":{"paths":["src/**"],"steps":[{"name":"red","run":["sh","-c","echo boom; exit 3"]}]}}}}"""");
 
@@ -78,7 +78,7 @@ public sealed class GateAndMergeCommandTests : IDisposable
     {
         var script = _cli.File("gh");
         var view = string.Concat("""'{"headRefOid":""", "\"", _head, "\"", ""","headRefName":"feat","isDraft":""", draft ? "true" : "false", ""","title":"Add feature","state":"OPEN"}'""");
-        var list = string.Concat("""'[{"number":7,"state":"OPEN","isDraft":false,"headRefOid":""", "\"", _head, "\"", ""","mergeable":"MERGEABLE","title":"Add feature"}]'""");
+        var list = string.Concat("""'[{"number":7,"state":"OPEN","isDraft":false,"headRefOid":""", "\"", _head, "\"", ""","headRefName":"feat","mergeable":"MERGEABLE","title":"Add feature"}]'""");
         _ = ExecutableScript.Write(
             script,
             string.Join('\n',

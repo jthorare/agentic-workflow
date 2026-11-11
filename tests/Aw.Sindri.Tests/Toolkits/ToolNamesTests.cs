@@ -31,7 +31,7 @@ public sealed class ToolNamesTests
         Assert.Equal(("kit", "a__b"), (toolkit, tool));
     }
 
-    [Theory]
+    [Theory, Trait("Lane", "unit")]
     [InlineData("notes", "Notes")]
     [InlineData("github-triage", "GithubTriage")]
     [InlineData("a1-b", "A1B")]
@@ -39,7 +39,7 @@ public sealed class ToolNamesTests
     public void The_generator_name_is_the_pascal_name_its_kebab_turns_back_into_the_same_name(string name, string pascal) =>
         Assert.Equal(pascal, ToolNames.GeneratorName(name));
 
-    [Theory]
+    [Theory, Trait("Lane", "unit")]
     [InlineData("x-ray")]
     [InlineData("x-rays")]
     [InlineData("my-a-tool")]

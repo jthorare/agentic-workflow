@@ -38,6 +38,17 @@ public sealed class AttentionSummaryTests
     }
 
     [Fact]
+    public void Homes_header_line_is_only_the_need_you_count_and_blank_at_zero()
+    {
+        var feed = Feed(NeedsYouRows.Park(), NeedsYouRows.Failure());   // the feed also serves 3 running, 1 with you, 4 queued
+
+        Assert.Equal("2 need you", For(feed).NeedsYouLine);
+        Assert.Equal("1 need you", AttentionSummary.For(feed, ShellState.Normal, A.Noon, sessions: null, listed: 1).NeedsYouLine);
+        Assert.Equal("", For(Feed()).NeedsYouLine);
+        Assert.Equal("", For(feed: null).NeedsYouLine);
+    }
+
+    [Fact]
     public void Badge_counts_every_row_including_calm()
     {
         Assert.Equal(3, For(Feed(NeedsYouRows.Park(), NeedsYouRows.Failure(), NeedsYouRows.Profile())).Badge);
