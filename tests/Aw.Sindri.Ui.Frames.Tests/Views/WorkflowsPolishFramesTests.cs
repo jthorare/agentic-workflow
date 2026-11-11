@@ -107,6 +107,28 @@ public sealed class WorkflowsPolishFramesTests : FrameHost
     });
 
     [Fact]
+    public Task A_top_row_conditions_done_words_stay_inside_the_world_when_a_card_sits_under_it() => OnUi(async () =>
+    {
+        var workflow = Golden("workflows-slug", "found");
+        var spec = workflow["spec"]!;
+        spec["nodes"]!.AsArray().Insert(1, JsonNode.Parse("""{"id":"check","type":"condition","title":"Flagged?","config":{"if":"true"}}"""));
+        spec["edges"] = JsonNode.Parse("""[{"from":"start","to":"check"},{"from":"check","to":"agent","output":"true"}]""");
+        workflow["positions"] = JsonNode.Parse("""[{"node":"check","x":0,"y":0},{"node":"start","x":0,"y":96},{"node":"agent","x":280,"y":0}]""");   // a card straight under the top-row condition blocks "below"
+        var (window, shell) = await OnList();
+        Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, workflow.ToJsonString());
+
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Runs.Graph is not null, "the graph never showed");
+
+        var end = Assert.Single(shell.Workflows.Runs.Graph!.Ends);
+        Assert.True(end.Label.Y >= 0, string.Create(CultureInfo.InvariantCulture, $"'{end.Text}' is drawn at y={end.Label.Y}, above the world's top, so the canvas clips it"));
+        foreach (var node in shell.Workflows.Runs.Graph.Nodes)
+        {
+            Assert.False(end.Label.Overlaps(new GraphBox(node.X, node.Y, WorkflowGraphViewModel.CardWidth, WorkflowGraphViewModel.CardHeight)), $"'{end.Text}' is drawn under the '{node.Title}' card");
+        }
+    });
+
+    [Fact]
     public Task A_change_seconds_ago_reads_just_now() => OnUi(async () =>
     {
         var (window, shell) = await OnList(Clock.GetUtcNow().ToString("o", CultureInfo.InvariantCulture));

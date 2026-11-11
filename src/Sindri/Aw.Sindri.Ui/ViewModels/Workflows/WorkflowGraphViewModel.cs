@@ -15,7 +15,6 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>A node card's height in the world.</summary>
     internal const double CardHeight = 64;
 
-
     /// <summary>The length of a missing branch's dotted stub.</summary>
     internal const double EndStub = 22;
 
@@ -268,7 +267,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <param name="text">The words.</param>
     /// <param name="across">How far along the card the stub leaves it: true on the left half, false on the right, so both fit side by side.</param>
     /// <param name="cards">Every step card.</param>
-    /// <returns>The first place whose stub and words clear every card.</returns>
+    /// <returns>The first place whose stub and words clear every card and stay inside the world (Y at or below 0).</returns>
     private static GraphEnd PlaceEnd(GraphNodeViewModel node, string text, double across, List<GraphBox> cards)
     {
         var x = node.X + across;
@@ -281,7 +280,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
             new(node.Id, text, above, above with { Y = above.Y - EndStub }, new GraphBox(x - (EndLabelWidth / 2), above.Y - EndStub - 2 - EndLabelHeight, EndLabelWidth, EndLabelHeight)),
             new(node.Id, text, right, right with { X = right.X + EndStub }, new GraphBox(right.X + EndStub + 6, right.Y - (EndLabelHeight / 2), EndLabelWidth, EndLabelHeight)),
         ];
-        return places.FirstOrDefault(p => !cards.Exists(c => c.Overlaps(p.Label) || c.Overlaps(StubBox(p)))) ?? places[0];
+        return places.FirstOrDefault(p => !cards.Exists(c => c.Overlaps(p.Label) || c.Overlaps(StubBox(p)))) ?? places[0];   // why Y >= 0: the world starts at 0, so words above a top-row card would be clipped
     }
 
     private static GraphBox StubBox(GraphEnd end) =>
