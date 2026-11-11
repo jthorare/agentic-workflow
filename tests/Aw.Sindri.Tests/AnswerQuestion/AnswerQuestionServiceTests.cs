@@ -71,6 +71,33 @@ public sealed class AnswerQuestionServiceTests
     }
 
     [Fact]
+    public async Task A_loop_items_answer_finds_its_batch_workflow_in_the_ledger_when_the_needs_you_row_is_not_there_yet()
+    {
+        var grant = await _h.HoldLease();
+        var run = await Insert(9, WorkflowRunStatus.Running);
+        _ = await _h.Store.Append(_h.Events.Entry(EventTypes.WorkflowQuestion, new WorkflowQuestionPayload(run.Id, _ask, "Ship b?", [], Default: null, TimeoutAt: null, "service:workflow") { Item = 2, BatchWorkflow = $"{run.Id.Value}/each/1" }, $"workflow.question:{run.Id.Value}:ask:2"), grant, Token);
+
+        var result = await _service.Handle(new AnswerQuestionRequest(run.Id, _ask, "yes", Choice: null, "owner", Item: 2), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal($"{run.Id.Value}/each/1", Assert.Single(_answerer.Answers).BatchWorkflow);
+    }
+
+    [Fact]
+    public async Task A_loop_items_question_answered_already_is_refused_even_when_the_ledger_still_has_the_question()
+    {
+        var grant = await _h.HoldLease();
+        var run = await Insert(10, WorkflowRunStatus.Running);
+        _ = await _h.Store.Append(_h.Events.Entry(EventTypes.WorkflowQuestion, new WorkflowQuestionPayload(run.Id, _ask, "Ship b?", [], Default: null, TimeoutAt: null, "service:workflow") { Item = 2, BatchWorkflow = $"{run.Id.Value}/each/1" }, $"workflow.question:{run.Id.Value}:ask:2"), grant, Token);
+        _ = await _h.Store.Append(_h.Events.Entry(EventTypes.WorkflowAnswered, new WorkflowAnsweredPayload(run.Id, _ask, "yes", "owner") { Item = 2 }, $"workflow.answered:{run.Id.Value}:ask:2"), grant, Token);
+
+        var result = await _service.Handle(new AnswerQuestionRequest(run.Id, _ask, "no", Choice: null, "owner", Item: 2), Token);
+
+        Assert.Equal(SindriErrors.GraphNotWaiting.Code, result.Error.Code);
+        Assert.Empty(_answerer.Answers);
+    }
+
+    [Fact]
     public async Task An_answer_for_an_item_nobody_asked_for_is_refused_and_records_nothing()
     {
         _ = await _h.HoldLease();
