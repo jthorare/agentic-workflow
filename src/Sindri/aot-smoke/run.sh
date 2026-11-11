@@ -212,15 +212,15 @@ code_node_run() { # a one-node Code workflow (manual trigger, then code returnin
   echo "## sindri wf create, activate and run a one-node Code workflow (code-smoke), then wf run-show --json | jq (the node's result)"
   local spec="$work/code-smoke.json" run_id="" status="" shown="" deadline=$((SECONDS + 60))
   cat >"$spec" <<'JSON'
-{
-  "version": 1,
-  "name": "Code smoke",
-  "nodes": [
-    { "id": "start", "type": "manual", "config": {} },
-    { "id": "sum", "type": "code", "config": { "code": "return new JsonObject { [\"sum\"] = 1 + 2 };" } }
-  ],
-  "edges": [ { "from": "start", "to": "sum" } ]
-}
+  {
+    "version": 1,
+    "name": "Code smoke",
+    "nodes": [
+      { "id": "start", "type": "manual", "config": {} },
+      { "id": "sum", "type": "code", "config": { "code": "return new JsonObject { [\"sum\"] = 1 + 2 };" } }
+    ],
+    "edges": [ { "from": "start", "to": "sum" } ]
+  }
 JSON
   bounded "$bin" wf create code-smoke --file "$spec" </dev/null >/dev/null 2>&1 || { echo "code-node: wf create failed"; return 0; }
   bounded "$bin" wf activate code-smoke </dev/null >/dev/null 2>&1 || { echo "code-node: wf activate failed"; return 0; }
