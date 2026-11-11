@@ -70,12 +70,6 @@ internal static partial class Labels
     /// <summary>The brand mark's name.</summary>
     internal const string Sindri = "Sindri";
 
-    /// <summary>The ⌘K field's key chip.</summary>
-    internal const string SearchKey = "⌘K";
-
-    /// <summary>The ⌘K chip's letter, drawn after the ⌘ icon.</summary>
-    internal const string SearchKeyLetter = "K";
-
     /// <summary>Home's Needs you panel.</summary>
     internal const string NeedsYouPanel = "NEEDS YOU";
 

@@ -12,6 +12,7 @@ using Avalonia.Media.TextFormatting;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.Testing;
@@ -1484,6 +1485,12 @@ public sealed class ShellWindowTests : IDisposable
 
         /// <summary>First load.</summary>
         Connecting,
+
+        /// <summary>Degraded, with a problem long enough that its text has to give way (#2547). Last, so the frame names of the others don't move.</summary>
+        DegradedLongProblems,
+
+        /// <summary>Degraded, with a short problem ("service broken failed") that reads in full at 1280 px (#2547). Last, as above.</summary>
+        DegradedShortProblem,
     }
 
     public static TheoryData<BarState, double> MinimumWidthStates()
@@ -1549,7 +1556,7 @@ public sealed class ShellWindowTests : IDisposable
             var shell = (ShellViewModel)window.DataContext!;
             var labels = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")).ToList();
 
-            Assert.Equal(shell.Navigation.Select(n => n.DisplayLabel), labels.Select(t => t.Text), StringComparer.Ordinal);   // the short label where the tab has one
+            Assert.Equal(shell.Navigation.Select(n => n.Label), labels.Select(t => t.Text), StringComparer.Ordinal);
             Assert.Equal(9, labels.Count);
             foreach (var label in labels)
             {
@@ -1568,21 +1575,62 @@ public sealed class ShellWindowTests : IDisposable
         }
     });
 
-    // Below 1,100 px the Reviews tab draws "PRs"; its name for assistive tech stays full. With room it draws the full label.
+    // One page, one name: every tab draws its full label at 900 px and at 1,280 px (the bar shrinks padding, never the words).
     [Theory]
-    [InlineData(1000, "PRs")]
-    [InlineData(1440, "Reviews")]
-    public Task Narrow_windows_shorten_the_Reviews_tab_and_keep_its_name(int width, string reviews) => OnUi(async () =>
+    [InlineData(900)]
+    [InlineData(1280)]
+    public Task Nav_tab_labels_are_the_same_at_900_and_1280(int width) => OnUi(async () =>
     {
         await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, width, 600) });
         var window = await ShowIn(BarState.Normal);
         Settle(window);
 
+        var shell = (ShellViewModel)window.DataContext!;
         var labels = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")).ToList();
-        string[] shown = [.. labels.Select(t => t.Text!)];
-        Assert.Contains(reviews, shown, StringComparer.Ordinal);
-        var names = labels.Select(t => AutomationProperties.GetName(t)).ToList();
-        Assert.Contains(Labels.ReviewsTab, names, StringComparer.Ordinal);
+        Assert.Equal(shell.Navigation.Select(n => n.Label), labels.Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Contains("Workflows", labels.Select(t => t.Text), StringComparer.Ordinal);
+        Assert.Contains(Labels.ReviewsTab, labels.Select(t => t.Text), StringComparer.Ordinal);
+    });
+
+    // Focus rings are for the keyboard: opening the window and clicking or driving to another page with no key pressed leaves no tab with a ring.
+    [Fact]
+    public Task Only_keyboard_focus_draws_a_ring_on_the_tabs_and_the_page() => OnUi(async () =>
+    {
+        var window = await ShowIn(BarState.Normal);
+        var shell = (ShellViewModel)window.DataContext!;
+        Settle(window);
+        Assert.False(Named<Border>(window, "Page").Classes.Contains(":focus-visible"), "the page region draws a ring");   // Home's page region: no outline after the window opens
+
+        shell.GoTo(PageId.Work);
+        Settle(window);
+        shell.GoTo(PageId.Projects);
+        Settle(window);
+
+        var tabs = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<ListBoxItem>().ToList();
+        Assert.Equal(9, tabs.Count);
+        Assert.DoesNotContain(tabs, t => t.Classes.Contains(":focus-visible"));
+        Assert.False(Named<Border>(window, "Page").Classes.Contains(":focus-visible"), "the page region draws a ring");
+
+        // The keyboard half: once a key was pressed, the focus the window puts on a tab a command just selected draws the ring.
+        window.KeyPress(Key.LeftShift, RawInputModifiers.None, PhysicalKey.ShiftLeft, keySymbol: null);
+        shell.SelectedNav = shell.Navigation.First(n => n.Page == PageId.Agents);
+        Settle(window);
+        Settle(window);
+        var selected = tabs.Single(t => t.IsSelected);
+        Assert.True(selected.Classes.Contains(":focus-visible"), "the selected tab has no ring after a key press and a tab selection");
+    });
+
+    // The folded search icon keeps the shortcut in its tooltip.
+    [Fact]
+    public Task The_folded_search_icon_names_its_shortcut_in_its_tooltip() => OnUi(async () =>
+    {
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 900, 600) });
+        var window = await ShowIn(BarState.Normal);
+        Settle(window);
+
+        var field = Named<Border>(window, "SearchField");
+        Assert.True(field.Classes.Contains("compact"), "the field did not fold at 900 px");
+        Assert.Contains(OperatingSystem.IsMacOS() ? "⌘K" : "Ctrl+K", ToolTip.GetTip(field) as string ?? string.Empty, StringComparison.Ordinal);
     });
 
     // Sending… beside Refresh, and the not-responding sentence in full in its banner.
@@ -1625,11 +1673,11 @@ public sealed class ShellWindowTests : IDisposable
 
         _records.Write(A.Record());
         _server.UnreadableStatus = state == BarState.Unreadable;
-        _server.Current = state == BarState.VersionMismatch ? A.Status() with { ApiVersion = 2 } : A.Status();
+        _server.Current = StatusIn(state);
         var expected = state == BarState.Unreadable ? ShellState.Unreadable
             : state == BarState.VersionMismatch ? ShellState.VersionMismatch
             : ShellState.Normal;
-        var (window, shell) = await Show(s => s.State == expected);
+        var (window, shell) = await Show(s => s.State == expected && (state is not (BarState.DegradedLongProblems or BarState.DegradedShortProblem) || s.Pill.HasProblems));
         if (state is BarState.Stale or BarState.NotResponding or BarState.Sending)
         {
             await GoStale(window, shell, state);
@@ -1638,6 +1686,13 @@ public sealed class ShellWindowTests : IDisposable
         Settle(window);
         return window;
     }
+
+    // The status the server answers in a bar state: version 2 for the mismatch, a problem for the two degraded states.
+    private static StatusView StatusIn(BarState state) =>
+        state == BarState.VersionMismatch ? A.Status() with { ApiVersion = 2 }
+        : state == BarState.DegradedLongProblems ? A.Status() with { Health = new HealthView("degraded", [new HealthProblemView("SND-PROFILE-001", "the profile changed since approval", "the profile changed since approval and a much longer clause")]) }
+        : state == BarState.DegradedShortProblem ? A.Status() with { Health = new HealthView("degraded", [new HealthProblemView("SND-SERVICE-001", "service broken failed")]) }
+        : A.Status();
 
     // Stale (no ping for 30 s); then a refresh in flight past 300 ms, or three failed refreshes.
     private async Task GoStale(Window window, ShellViewModel shell, BarState state)
@@ -1672,8 +1727,10 @@ public sealed class ShellWindowTests : IDisposable
         var pill = bar[^1];
         Assert.Equal("HealthPill", pill.Name);
         Assert.True(Visible(window, "HealthPillText"), $"{at}: the pill's word is hidden");
-        Assert.True(pill.Box.Right <= window.ClientSize.Width - 4,
-            string.Create(CultureInfo.InvariantCulture, $"{at}: the pill ends at {pill.Box.Right}, past the window's {window.ClientSize.Width} less its ring"));
+        var padding = ((Border)Named<TopBar>(window, "TopBar").Content!).Padding.Right;
+        Assert.True(pill.Box.Right <= window.ClientSize.Width - padding,
+            string.Create(CultureInfo.InvariantCulture, $"{at}: the pill ends at {pill.Box.Right}, past the window's {window.ClientSize.Width} less the bar's {padding} px padding"));
+        Assert.True(pill.Box.Right <= window.ClientSize.Width - 4, $"{at}: the pill's ring is cut");
         for (var i = 1; i < bar.Count; i++)
         {
             Assert.True(bar[i - 1].Box.Right <= bar[i].Box.Left, $"{at}: {bar[i - 1].Name} {bar[i - 1].Box} overlaps {bar[i].Name} {bar[i].Box}");
@@ -1703,6 +1760,225 @@ public sealed class ShellWindowTests : IDisposable
             .ToList();
         Assert.True(outside.Count == 0, string.Create(CultureInfo.InvariantCulture, $"{state} at {scale:0.0}: outside the window: {string.Join(", ", outside)}"));
     }
+
+    private static readonly string[] _settledParts = ["BarGrid", "Brand", "BrandWord", "NavSegments", "Navigation", "SearchField", "SearchText", "SearchKeycap", "PillGroup", "PillProblems", "PillAge"];
+
+    public static TheoryData<BarState, double, double> BarWidthsAndScales()
+    {
+        var data = new TheoryData<BarState, double, double>();
+        // VersionMismatch shows VersionMismatchPanel in place of the bar, so it has no tabs, field or pill to check.
+        foreach (var state in Enum.GetValues<BarState>().Where(s => s != BarState.VersionMismatch))
+        {
+            foreach (var width in new[] { 1000.0, 1099.0, 1280.0 })
+            {
+                data.Add(state, width, 1.0);
+                data.Add(state, width, 1.3);
+            }
+        }
+
+        return data;
+    }
+
+    // Shows the window in a state at a width and a text scale, runs the check, and puts the scale back.
+    private async Task WithBar(BarState state, double width, double scale, Action<ShellWindow> check)
+    {
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, width, 600) });
+        var window = await ShowIn(state);
+        var resources = Application.Current!.Resources;
+        TextScale.Apply(resources, scale);
+        try
+        {
+            Settle(window);
+            check(window);
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+            _ = _server.StatusGate?.TrySetResult();
+            Settle(window);
+        }
+    }
+
+    private static List<(string Name, Rect Box)> PartBoxes(Window window)
+    {
+        var names = _settledParts.Select(n => (Name: n, Control: Named<Control>(window, n)))
+            .Concat(Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<ListBoxItem>().Select((t, i) => (Name: "Tab" + i.ToString(CultureInfo.InvariantCulture), Control: (Control)t)));
+        return [.. names.Select(p => (p.Name, new Rect(p.Control.TranslatePoint(new Point(0, 0), window) ?? default, p.Control.Bounds.Size)))];
+    }
+
+    // #2547: a bar that has settled is still after one more layout pass: no part moves, and no part is left waiting for a pass.
+    [Theory]
+    [MemberData(nameof(BarWidthsAndScales))]
+    public Task The_top_bar_has_settled_and_another_layout_pass_moves_no_part(BarState state, double width, double scale) => OnUi(() => WithBar(state, width, scale, window =>
+    {
+        var at = string.Create(CultureInfo.InvariantCulture, $"{state} at {width} px, {scale:0.0}");
+        var stale = _settledParts.Select(n => Named<Control>(window, n))
+            .Concat(Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<ListBoxItem>())
+            .Where(c => c.IsEffectivelyVisible && !(c.IsMeasureValid && c.IsArrangeValid))
+            .Select(c => c.Name ?? c.GetType().Name)
+            .ToList();
+        Assert.True(stale.Count == 0, $"{at}: still waiting for a layout pass after Settle: {string.Join(", ", stale)}");
+
+        // One UpdateLayout drains Avalonia's layout queues, so a bar that keeps measuring itself still ends still; the pass
+        // count is what pins the loop (13 passes at 1280 before the fix).
+        var before = PartBoxes(window);
+        var topBar = Named<TopBar>(window, "TopBar");
+        topBar.ResetMeasurePasses();
+        topBar.InvalidateMeasure();
+        window.UpdateLayout();
+        Assert.True(topBar.MeasurePasses <= 2, string.Create(CultureInfo.InvariantCulture, $"{at}: the bar measured {topBar.MeasurePasses} times for one pass"));
+        var after = PartBoxes(window);
+        var moved = before.Zip(after, (b, a) => (b.Name, Before: b.Box, After: a.Box))
+            .Where(p => Math.Abs(p.Before.X - p.After.X) > 0.5 || Math.Abs(p.Before.Y - p.After.Y) > 0.5
+                || Math.Abs(p.Before.Width - p.After.Width) > 0.5 || Math.Abs(p.Before.Height - p.After.Height) > 0.5)
+            .Select(p => $"{p.Name} {p.Before} -> {p.After}")
+            .ToList();
+        Assert.True(before.Count == after.Count && moved.Count == 0, $"{at}: moved on one more pass: {string.Join("; ", moved)}");
+    }));
+
+    // A tab's content, in order: the dot, the label and the count (the item template's stack).
+    private static List<Control> TabContent(ListBoxItem tab) =>
+        [.. tab.GetVisualDescendants().OfType<StackPanel>().First(p => p.Children.OfType<TextBlock>().Any()).Children.Where(c => c.IsEffectivelyVisible)];
+
+    // The empty room between the tabs' texts must not close up: the label's (or count's) right edge to the next tab's dot.
+    // QA's floor: 8 px bounds. 6 px bounds measured 7 px ink at 130% (#2547 shots), under QA's 8 px ink.
+    private const double TabGapFloor = 8;
+
+    // A tab's selected (or hover) fill covers the whole tab, so its edge must stay this far from the next tab's word, or the
+    // fill reads as part of that word (QA, #2547: 4 px at the tight step before).
+    private const double FillClearFloor = 6;
+
+    // #2547 (QA): at 1000, 1099 and 1280 px, text scale 1.0 and 1.3, every pill state fits: the pill ends inside the bar's
+    // 16 px padding, the bar has settled, two tabs keep the gap floor, a tab's fill stays 6 px from its neighbour's word, and
+    // the tabs keep their normal padding at 1.0 (the tight step is only for when normal padding can't fit). Placeholder whole
+    // at Full in Normal at every width, and in Degraded (short problem) at 1280 px, 1.0, the case the 4 px slack is for; in
+    // the other states Full keeps the field at its 184 px minimum and the placeholder trims, as on main (#2710 lists those rows).
+    [Theory]
+    [MemberData(nameof(BarWidthsAndScales))]
+    public Task The_top_bar_fits_and_keeps_the_gap_floor_in_every_pill_state(BarState state, double width, double scale) => OnUi(() => WithBar(state, width, scale, window =>
+    {
+        var at = string.Create(CultureInfo.InvariantCulture, $"{state} at {width} px, {scale:0.0}");
+        TopBarFits(window, state, scale);
+        Assert.True(Box(window, "HealthPill").Right <= width - 16, string.Create(CultureInfo.InvariantCulture, $"{at}: the pill ends at {Box(window, "HealthPill").Right}"));
+
+        TabsKeepTheirSpacing(window, at);
+
+        if ((state is BarState.Normal || (state is BarState.DegradedShortProblem && width == 1280 && scale == 1.0)) && !Named<Border>(window, "SearchField").Classes.Contains("compact"))
+        {
+            var placeholder = Named<TextBlock>(window, "SearchText");
+            using var layout = new TextLayout(placeholder.Text, new Typeface(placeholder.FontFamily, placeholder.FontStyle, placeholder.FontWeight), placeholder.FontSize, foreground: null);
+            Assert.True(layout.Width <= placeholder.Bounds.Width + 0.5, string.Create(CultureInfo.InvariantCulture, $"{at}: the placeholder needs {layout.Width}, laid out {placeholder.Bounds.Width}"));
+        }
+
+        if (scale == 1.0)
+        {
+            Assert.False(Named<ListBox>(window, "Navigation").Classes.Contains("tight"), $"{at}: the tabs went tight at text scale 1.0");
+        }
+    }));
+
+    // Between every two tabs: the words keep the gap floor, and either tab's fill (selected or hover covers the whole tab)
+    // stays the fill floor from the other tab's word.
+    private static void TabsKeepTheirSpacing(Window window, string at)
+    {
+        static double X(Visual v, Visual root) => (v.TranslatePoint(new Point(0, 0), root) ?? default).X;
+        var tabs = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<ListBoxItem>().ToList();
+        var gaps = new List<(string Pair, double Gap)>();
+        var fills = new List<(string Pair, double Clear)>();
+        for (var i = 0; i + 1 < tabs.Count; i++)
+        {
+            var lastWord = TabContent(tabs[i]).OfType<TextBlock>().Last();
+            var nextWord = TabContent(tabs[i + 1])[0];
+            var wordRight = X(lastWord, window) + lastWord.Bounds.Width;
+            var pair = $"{AutomationProperties.GetName(tabs[i].GetVisualDescendants().OfType<TextBlock>().First())}|{AutomationProperties.GetName(tabs[i + 1].GetVisualDescendants().OfType<TextBlock>().First())}";
+            gaps.Add((pair, X(nextWord, window) - wordRight));
+            fills.Add((pair + " fill->word", X(nextWord, window) - (X(tabs[i], window) + tabs[i].Bounds.Width)));
+            fills.Add((pair + " word->fill", X(tabs[i + 1], window) - wordRight));
+        }
+
+        var all = string.Join(", ", gaps.Select(g => string.Create(CultureInfo.InvariantCulture, $"{g.Pair} {g.Gap:0.#}")));
+        Assert.True(gaps.TrueForAll(g => g.Gap >= TabGapFloor - 0.01), string.Create(CultureInfo.InvariantCulture, $"{at}: a gap is under {TabGapFloor} px: {all}"));
+        var clears = string.Join(", ", fills.Select(f => string.Create(CultureInfo.InvariantCulture, $"{f.Pair} {f.Clear:0.#}")));
+        Assert.True(fills.TrueForAll(f => f.Clear >= FillClearFloor - 0.01), string.Create(CultureInfo.InvariantCulture, $"{at}: a tab's fill is under {FillClearFloor} px from the next word: {clears}"));
+    }
+
+    // #2547 (ideas): the problem text's 8 px margin stays even when its cap reaches 0, so the step the bar picks counts it. Narrowing
+    // the window 2 px at a time through the steps, the pill never runs into the bar's 16 px right padding.
+    [Theory]
+    [InlineData(BarState.DegradedShortProblem)]
+    [InlineData(BarState.DegradedLongProblems)]
+    public Task Narrowing_a_degraded_bar_at_130_percent_keeps_the_pill_inside_the_padding(BarState state) => OnUi(() => WithBar(state, 1100, 1.3, window =>
+    {
+        var past = new List<string>();
+        for (var width = 1100.0; width >= 1000; width -= 2)
+        {
+            window.Width = width;
+            Settle(window);
+            var right = Box(window, "HealthPill").Right;
+            if (right > width - 16 + 0.5)
+            {
+                past.Add(string.Create(CultureInfo.InvariantCulture, $"{width}: {right}"));
+            }
+        }
+
+        Assert.True(past.Count == 0, $"{state}: the pill ran into the padding at {string.Join(", ", past)}");
+    }));
+
+    // #2547 (ideas): a bar that has to fold Refresh's word folds it before the word is ever laid out. The measure Refresh first
+    // shows in learns the word's width (Remember) before Choose runs, and folds in that same measure. The stale pill's wider
+    // word and age take the bar up to three measures in that one layout update.
+    [Fact]
+    public Task Refresh_that_first_shows_on_a_folding_bar_folds_before_its_word_is_laid_out() => OnUi(async () =>
+    {
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
+        var window = await ShowIn(BarState.Normal);
+        var resources = Application.Current!.Resources;
+        TextScale.Apply(resources, 1.3);
+        try
+        {
+            Settle(window);
+            var bar = Named<TopBar>(window, "TopBar");
+            var shell = (ShellViewModel)window.DataContext!;
+            Assert.False(Named<Button>(window, "RefreshButton").IsVisible, "Refresh shows before the bar went stale");
+            bar.ResetMeasurePasses();
+            var laidOut = 0.0;
+            window.LayoutUpdated += (_, _) =>
+            {
+                // Refresh's content joins the visual tree only once Refresh shows.
+                var word = window.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Name == "RefreshWord");
+                laidOut = Math.Max(laidOut, word is { IsEffectivelyVisible: true } ? word.Bounds.Width : 0);
+            };
+            _server.FailPing = true;
+            _clock.Advance(ShellViewModel.StaleAfter);
+            await Until(() => shell.State == ShellState.Stale);
+            Settle(window);
+
+            Assert.True(Named<Button>(window, "RefreshButton").Classes.Contains("folded"), "Refresh did not fold at 1000 px, 1.3");
+            Assert.True(laidOut == 0, string.Create(CultureInfo.InvariantCulture, $"Refresh's word was laid out {laidOut} px wide before it folded"));
+            Assert.True(bar.MeasurePasses <= 3, string.Create(CultureInfo.InvariantCulture, $"the bar measured {bar.MeasurePasses} times when Refresh first showed"));
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+            Settle(window);
+        }
+    });
+
+    // #2547 (QA): Refresh's word is the last thing the bar drops; folded, Refresh keeps its name, its tooltip and its tab stop.
+    [Theory]
+    [InlineData(1000.0, 1.3, true)]
+    [InlineData(1000.0, 1.0, false)]
+    [InlineData(1280.0, 1.3, false)]
+    public Task Refresh_folds_to_its_icon_only_when_nothing_else_is_left_to_drop(double width, double scale, bool folded) => OnUi(() => WithBar(BarState.Stale, width, scale, window =>
+    {
+        var refresh = Named<Button>(window, "RefreshButton");
+        var at = string.Create(CultureInfo.InvariantCulture, $"Stale at {width} px, {scale:0.0}");
+        Assert.True(refresh.IsEffectivelyVisible, $"{at}: Refresh is hidden");
+        Assert.Equal(folded, refresh.Classes.Contains("folded"));
+        Assert.Equal(!folded, Named<TextBlock>(window, "RefreshWord").IsEffectivelyVisible);
+        Assert.Equal(Labels.Refresh, AutomationProperties.GetName(refresh));
+        Assert.Equal(Labels.Refresh, ToolTip.GetTip(refresh));
+        Assert.True(refresh.Focusable && refresh.IsTabStop, $"{at}: Refresh is not a tab stop");
+    }));
 
     // With room the ⌘K field keeps its full 300 px and the pill sits at the right edge (inside the top bar's 16 px padding).
     [Fact]
