@@ -34,7 +34,7 @@ public sealed class DiscardedCandidateRulesTests
         var verdict = WorktreeRules.Judge(Loser());
 
         Assert.Equal(WorktreeDecision.Kept, verdict.Decision);
-        Assert.Contains(verdict.Reasons, reason => reason.Contains("work not finished", StringComparison.Ordinal));
+        Assert.Contains(verdict.Reasons, reason => reason.Contains("unmerged branch, no PR", StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -45,7 +45,7 @@ public sealed class DiscardedCandidateRulesTests
         var first = WorktreeRules.Judge(Loser() with { Discarded = "c1", NoPreviousSweep = true });
 
         Assert.Equal(WorktreeDecision.Kept, dirty.Decision);
-        Assert.DoesNotContain(dirty.Reasons, reason => reason.Contains("work not finished", StringComparison.Ordinal));
+        Assert.DoesNotContain(dirty.Reasons, reason => reason.Contains("unmerged branch, no PR", StringComparison.Ordinal));
         Assert.Equal(WorktreeDecision.Removable, changed.Decision);
         Assert.Equal(WorktreeDecision.Removable, first.Decision);
     }
@@ -65,6 +65,6 @@ public sealed class DiscardedCandidateRulesTests
 
         Assert.Equal(WorktreeDecision.Kept, verdict.Decision);
         Assert.Contains(verdict.Reasons, reason => string.Equals(reason, "--discarded: HEAD moved past the evaluated commit", StringComparison.Ordinal));
-        Assert.Contains(verdict.Reasons, reason => reason.Contains("work not finished", StringComparison.Ordinal));
+        Assert.Contains(verdict.Reasons, reason => reason.Contains("unmerged branch, no PR", StringComparison.Ordinal));
     }
 }

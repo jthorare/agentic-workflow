@@ -117,6 +117,7 @@ public sealed class ProjectsPageViewTests : FrameHost
     {
         var list = Golden("mixed");
         list["empty"] = "Linear needs a token. Run sindri index connect linear in your terminal to connect it.";
+        list["emptyCode"] = "linear-key-missing";   // the page branches on the code, not on the sentence
         Server.ProjectsAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, list.ToJsonString());
         var (window, shell) = await Connected();
         shell.GoTo(PageId.Projects);

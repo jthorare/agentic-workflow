@@ -8,19 +8,27 @@ using Aw.Sindri.Ui.ViewModels.Projects;
 
 namespace Aw.Sindri.Ui.Tests.Projects;
 
-/// <summary>Ties the page's Connect Linear offer to the sentence the server really serves, since <see cref="ProjectsLinear.OffersConnect"/> matches that text.</summary>
+/// <summary>Ties the page's Connect Linear offer to the code the server really serves (<see cref="ProjectsLinear.OffersConnect"/> reads the code, never the sentence).</summary>
 [Lane(TestLane.Unit)]
 public sealed class ProjectsLinearGoldenTests
 {
-    /// <summary>
-    /// The served "Linear isn't connected" sentence (Golden/Api/projects/empty-no-linear.json) offers Connect Linear. Rewording the Core sentence
-    /// (LinearToken.Missing, ProjectCards.cs:198) fails this test until the app's match follows; the real fix is #2625.
-    /// </summary>
-    [Fact]
-    public void The_served_no_linear_sentence_offers_Connect_Linear()
+    /// <summary>The served codes of the two Linear empty goldens (empty-no-linear, empty-key-missing) offer Connect Linear; the sentence beside them is only displayed (#2625).</summary>
+    [Theory]
+    [InlineData("empty-no-linear", "linear-missing", false)]
+    [InlineData("empty-key-missing", "linear-key-missing", true)]
+    public void The_served_Linear_empty_codes_offer_Connect_Linear(string scenario, string code, bool keyMissing)
     {
-        var list = AwJson.Deserialize<ProjectList>(Encoding.UTF8.GetBytes(GoldenFiles.Api("projects", "empty-no-linear")), SindriApiClient.Json).Value;
+        var list = AwJson.Deserialize<ProjectList>(Encoding.UTF8.GetBytes(GoldenFiles.Api("projects", scenario)), SindriApiClient.Json).Value;
 
-        Assert.True(ProjectsLinear.OffersConnect(list.Empty));
+        Assert.Equal((code, true, keyMissing), (list.EmptyCode, ProjectsLinear.OffersConnect(list), ProjectsLinear.IsKeyMissing(list)));
+    }
+
+    /// <summary>A golden with no code (the syncing one) offers nothing, whatever its sentence says.</summary>
+    [Fact]
+    public void A_served_list_with_no_code_does_not_offer_Connect_Linear()
+    {
+        var list = AwJson.Deserialize<ProjectList>(Encoding.UTF8.GetBytes(GoldenFiles.Api("projects", "syncing")), SindriApiClient.Json).Value;
+
+        Assert.False(ProjectsLinear.OffersConnect(list));
     }
 }

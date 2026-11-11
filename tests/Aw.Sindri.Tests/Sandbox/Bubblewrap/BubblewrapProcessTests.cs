@@ -28,7 +28,9 @@ public sealed class BubblewrapProcessTests : IDisposable
 
     private static BubblewrapSandbox Sandbox() => new(_options, new FakeProcesses(), new HostPaths(), new LaunchSecretRegistry(), new FakeTimeProvider());
 
-    private SandboxPlan Plan(params PlanGroup[] groups) => ProcessSandboxPlanner.Build(
+    private SandboxPlan Plan(params PlanGroup[] groups) => PlanWith(readOnlyPaths: null, groups);
+
+    private SandboxPlan PlanWith(IReadOnlyList<string>? readOnlyPaths, params PlanGroup[] groups) => ProcessSandboxPlanner.Build(
         SandboxMechanism.Bubblewrap,
         new ProcessSandboxRequest(
             LaunchId.From("LCH-" + new string('d', 32)),
@@ -39,7 +41,8 @@ public sealed class BubblewrapProcessTests : IDisposable
             new Dictionary<string, string>(StringComparer.Ordinal) { [ResourceEnv.Database("state")] = SandboxRequests.SindriHome + "/resources/toolkit/triage/db/state.sqlite" },
             groups,
             new SandboxNetFacts("/run/user/1000/sindri/cd34ab12", 7480, 41235),
-            SandboxRequests.Host)).Value;
+            SandboxRequests.Host,
+            ReadOnlyPaths: readOnlyPaths)).Value;
 
     [Fact]
     public void Wrap_keeps_stdio_piped_and_adds_no_launch_secret()
@@ -54,6 +57,16 @@ public sealed class BubblewrapProcessTests : IDisposable
         Assert.Contains("--unshare-net", argv, StringComparer.Ordinal);
         Assert.Equal(["--", "/x/triage", "--serve"], argv.TakeLast(3), StringComparer.Ordinal);   // no init: this process has no host group, so nothing to forward
         Assert.DoesNotContain(argv, a => a.Contains("AW_SINDRI_LAUNCH_SECRET", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Wrap_binds_a_read_only_path_read_only()
+    {
+        var plan = PlanWith(["/work/app"]);
+
+        var argv = Sandbox().WrapProcess(plan, ["/x/triage"]).Value;
+
+        Assert.Contains(argv.Zip(argv.Skip(1), argv.Skip(2)), t => t.First == "--ro-bind" && t.Second == "/work/app" && t.Third == "/work/app");
     }
 
     [Fact]
