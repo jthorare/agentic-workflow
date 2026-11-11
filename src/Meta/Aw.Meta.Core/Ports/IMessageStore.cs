@@ -13,6 +13,11 @@ public interface IMessageStore
     /// <returns>The offset, 0 when the transcript was never read.</returns>
     public ValueTask<Result<long>> Offset(string transcript, CancellationToken cancellationToken);
 
+    /// <summary>Every transcript path that has a stored offset, ordered by path.</summary>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The paths.</returns>
+    public ValueTask<Result<IReadOnlyList<string>>> Transcripts(CancellationToken cancellationToken);
+
     /// <summary>Stores new messages and the new offset together; a message whose id is already stored is skipped.</summary>
     /// <param name="transcript">The transcript path.</param>
     /// <param name="offset">The new offset.</param>

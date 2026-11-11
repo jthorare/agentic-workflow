@@ -12,6 +12,8 @@
 #     number is a socket backlog), with N literal digits;
 #   - a word that is port or ends in _port, in any case, assigned literal non-zero digits (PORT=39917, port=39917, AW_PORT=3100,
 #     export X_PORT=1, local srv_port=5, X_PORT=7410 cmd), or given one as a dollar-brace default (PORT:-39918, AW_PORT-3100) (#2635).
+#   - a value derived from the pid modulo something: shell arithmetic with `$$` followed by `%` (PC=$((20000 + $$ % 9000)),
+#     slot=$(($$ % N))). Nothing checks the result is free, and two runs whose pids differ by N collide (#2636).
 # Allowed: port 0, anything with a `$` (a variable, a substitution, arithmetic), `nc -z` probes, ports inside URLs, comment lines.
 # Waiver: `test-ports: ok` plus a reason (text after it; a leading `:` is fine) on the flagged line, or on the comment line directly
 # above it. A bare marker does not waive. A waiver covers one line. Use it for a value no process binds (a stub, a dry run).
@@ -29,6 +31,8 @@ cd "$ROOT" || exit 2
 
 SELF="scripts/ci/test-ports.sh"
 SELF_TEST="scripts/tests/test-ports.test.sh"   # its fixtures are the violations
+# The frozen check for #2636 holds port 20000 + pid % 9000 on purpose, to prove the headroom suite survives a taken port.
+EXEMPT_PID_PORT="scripts/tests/install-headroom-port-taken.test.sh"
 # The file list: inside a git checkout, what git tracks or would track; outside one, a find that skips .git, .claude/worktrees,
 # node_modules, obj and bin. The root comparison is physical (macOS /var is a symlink to /private/var).
 git_top="$(git -C "$ROOT" rev-parse --show-toplevel 2> /dev/null || true)"
@@ -55,6 +59,8 @@ NODE_LISTEN='\.listen\([[:space:]]*[1-9][0-9]{3,}[[:space:]]*[,)]'
 PORT_ASSIGN='(^|[^A-Za-z0-9])([A-Za-z0-9_]*_)?[Pp][Oo][Rr][Tt]=["'"'"']?[1-9][0-9]*(["'"'"']|[^0-9A-Za-z_$.]|$)'
 # a literal default for such a word, in dollar-brace form: PORT:-1, AW_PORT-1, port:=1
 PORT_DEFAULT='\$\{([A-Za-z0-9_]*_)?[Pp][Oo][Rr][Tt]:?[-=]["'"'"']?[1-9][0-9]*["'"'"']?\}'
+# shell arithmetic that takes the pid modulo something: $(( ... $$ % N ...)) (#2636)
+PID_MOD='\$\$[[:space:]]*%'
 WAIVER='test-ports: ok:?[[:space:]]*[^[:space:]:]'
 
 while IFS= read -r f; do
@@ -71,7 +77,8 @@ while IFS= read -r f; do
       continue
     fi
     if [[ "$line" =~ $NC_LISTEN ]] || [[ "$line" =~ $SOCAT_LISTEN ]] || [[ "$line" =~ $HTTP_SERVER ]] \
-      || [[ "$line" =~ $PY_BIND ]] || [[ "$line" =~ $NODE_LISTEN ]] || [[ "$line" =~ $PORT_ASSIGN ]] || [[ "$line" =~ $PORT_DEFAULT ]]; then
+      || [[ "$line" =~ $PY_BIND ]] || [[ "$line" =~ $NODE_LISTEN ]] || [[ "$line" =~ $PORT_ASSIGN ]] || [[ "$line" =~ $PORT_DEFAULT ]] \
+      || { [ "$f" != "$EXEMPT_PID_PORT" ] && [[ "$line" =~ $PID_MOD ]]; }; then
       [ "$waived_above" = 1 ] && continue
       [[ "$line" =~ $WAIVER ]] && continue
       report "$f" "$n" "$line"

@@ -22,13 +22,16 @@ internal static class StatusCommand
                 .. status.MergeQueue.Select(static p => string.Create(CultureInfo.InvariantCulture, $"  #{p.Pr} ready (from {p.From}); gate {p.Gate}")),
                 status.OwnerQueue.Count == 0 ? "owner queue: empty" : "owner queue:",
                 .. status.OwnerQueue.Select(static q => string.Create(CultureInfo.InvariantCulture, $"  q{q.Number} ({q.AskedBy}): {q.Text}")),
+                .. Optional(status.Defects),
                 string.Create(CultureInfo.InvariantCulture, $"lanes: v{status.Lanes.Version} ")
                     + (status.Lanes.Entries.Count == 0 ? "(none mapped)" : string.Join(", ", status.Lanes.Entries.Select(static e => $"{e.Lane}={e.SessionName}"))),
                 .. status.Train is { Length: > 0 } train ? train.Split('\n') : [],
                 .. ContextLine.Of(status.Context),
                 status.Consumer is { } consumer ? "consumer: " + consumer : "consumer: not computed",
                 "health: " + (status.LastHealth ?? "never run (aw-meta health)"),
-                .. status.Heavy is { } heavy ? [heavy.Line()] : Array.Empty<string>(),
-                .. status.Builders is { } builders ? [builders.Line()] : Array.Empty<string>(),
+                .. Optional(status.Heavy?.Line()),
+                .. Optional(status.Builders?.Line()),
             ]);
+
+    private static string[] Optional(string? line) => line is null ? [] : [line];
 }

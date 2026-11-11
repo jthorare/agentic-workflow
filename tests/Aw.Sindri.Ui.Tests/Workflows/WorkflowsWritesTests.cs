@@ -201,7 +201,7 @@ public sealed class WorkflowsWritesTests
 
         await page.CancelRun(Token);
 
-        Assert.StartsWith("Couldn't cancel the run. no run 'morning-check@1:1'", page.Run.NoticeText, StringComparison.Ordinal);
+        Assert.StartsWith("Couldn't cancel the run. No run 'morning-check@1:1'", page.Run.NoticeText, StringComparison.Ordinal);
         Assert.Equal(reads, _f.Server.WorkflowRunCalls);
     }
 
