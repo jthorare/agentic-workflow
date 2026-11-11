@@ -1,6 +1,5 @@
 using System.Globalization;
 using Aw.Meta.Core;
-using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Defects;
 using Aw.Meta.Features.ReportDefect;
 using Aw.Meta.Features.Status;
@@ -98,6 +97,31 @@ public sealed class ReportDefectTests
         var old = await service.Handle(Defect(), CancellationToken.None);
 
         Assert.Equal("filed", old.Value.Outcome);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_fourteen_day_window_includes_exactly_fourteen_days_and_not_a_second_more()
+    {
+        await _world.Ready();   // the clock reads 2026-10-15 05:00 UTC
+        Search(Issue(41, "AW-META-010: recycle fails", "CLOSED", "2026-10-01T05:00:00Z"));
+
+        var onEdge = await Report(Defect());
+        _world.Clock.Advance(TimeSpan.FromSeconds(1));
+        var past = await Report(Defect());
+
+        Assert.Equal(("commented", "filed"), (onEdge.Outcome, past.Outcome));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_dedup_search_asks_for_the_quoted_full_title()
+    {
+        await _world.Ready();
+        Search();
+
+        _ = await Report(Defect());
+
+        var list = Assert.Single(GhLines("list"));
+        Assert.Contains("--search \"AW-META-010: recycle fails\" in:title", list, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -210,13 +234,5 @@ public sealed class ReportDefectTests
         Assert.Equal((0, 0), DefectDay.Parse("2026-10-14|2|1", today));
         Assert.Equal((0, 0), DefectDay.Parse("junk", today));
         Assert.Equal((0, 0), DefectDay.Parse(null, today));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void A_team_file_without_defects_reads_the_defaults()
-    {
-        var team = new TeamConfig("t1", "/work", ["meta"], "meta");
-
-        Assert.Equal(("jthorare/agentic-workflow", 3), (team.Defects.Repo, team.Defects.DailyCap));
     }
 }

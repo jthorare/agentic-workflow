@@ -33,7 +33,7 @@ internal sealed class ReportDefectService(IMetaConfig config, RepoCommands repo,
         var now = clock.GetUtcNow();
         var title = DefectText.Title(request.Code, request.Title);
         var body = DefectText.Body(request.What, request.ErrorLine, request.Path);
-        var search = await repo.Gh(team.Repo, "issue", "list", "-R", team.Defects.Repo, "--state", "all", "--search", $"{request.Code.Trim()} in:title", "--limit", "50", "--json", "number,title,state,closedAt,url").ConfigureAwait(false);
+        var search = await repo.Gh(team.Repo, "issue", "list", "-R", team.Defects.Repo, "--state", "all", "--search", $"\"{title}\" in:title", "--limit", "50", "--json", "number,title,state,closedAt,url").ConfigureAwait(false);
         if (search.IsError)
         {
             return search.Error;
