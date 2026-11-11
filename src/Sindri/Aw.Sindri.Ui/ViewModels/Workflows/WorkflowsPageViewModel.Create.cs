@@ -186,7 +186,7 @@ internal sealed partial class WorkflowsPageViewModel
         ClearCreateError();
         try
         {
-            var made = await Api.CreateWorkflow(url, NewSlug, SelectedTemplate, cancellationToken).ConfigureAwait(true);
+            var made = await Api.CreateWorkflow(url, slug, SelectedTemplate, cancellationToken).ConfigureAwait(true);
             if (made.IsError)
             {
                 await CreateRefused(url, made.Error, slug, cancellationToken).ConfigureAwait(true);
@@ -254,6 +254,9 @@ internal sealed partial class WorkflowsPageViewModel
         }
     }
 
+    // A short id the page lists, or one Sindri just refused as taken: the reason stays on screen as long as Create stays off for it, whatever cleared the refusal line.
+    private bool IsTaken(string id) => IsRefusedId || Rows.Any(r => string.Equals(r.Slug, id, StringComparison.Ordinal));
+
     // What stops Create, in words: a hint until a name is typed, then the short id's problems (the rule Sindri holds: WorkflowSlug; "docs" and "blocks" are routes of their own).
     private string ReasonFor()
     {
@@ -278,6 +281,6 @@ internal sealed partial class WorkflowsPageViewModel
             return Labels.WfShortIdShape;
         }
 
-        return Rows.Any(r => string.Equals(r.Slug, id, StringComparison.Ordinal)) ? Labels.WfShortIdTaken(id) : string.Empty;
+        return IsTaken(id) ? Labels.WfShortIdTaken(id) : string.Empty;
     }
 }
