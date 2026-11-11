@@ -108,7 +108,12 @@ internal sealed partial class ServiceTileViewModel
         var renamed = await _actions.Rename(row.Name, label, cancellationToken).ConfigureAwait(true);
         if (!ReferenceEquals(_row, row))
         {
-            return;   // the tile shows another connection now: this answer is not for what is on screen
+            if (!renamed.IsError)
+            {
+                await _changed().ConfigureAwait(true);   // the tile shows another connection now, but the rename happened: read again so the renamed connection's own tile shows its new name
+            }
+
+            return;   // this answer says nothing to the field on screen
         }
 
         if (renamed.IsError)
