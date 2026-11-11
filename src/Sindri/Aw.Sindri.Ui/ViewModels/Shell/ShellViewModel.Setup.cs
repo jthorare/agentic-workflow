@@ -50,12 +50,15 @@ internal sealed partial class ShellViewModel
         };
     }
 
+    // The one rule for "this setup row is already on screen in Home's setup line": the title, badge, tray and announcement skip it, and Home's list drops it.
+    private bool IsNamedByHomeLine(NeedsYouEntry row) =>
+        Setup.IsHomeLineShown && string.Equals(row.Kind, SetupRowKind, StringComparison.Ordinal) && string.Equals(row.Id, SetupRowKind + ":" + Setup.HomeStepId, StringComparison.Ordinal);
+
     // Home's list: the decisions filter, and no setup row for the step Home's line names (setup-once spec 5.7: a row is hidden only for a step the line draws; every other setup row, like Approve all workflows, stays).
     // The inbox lists every row, whatever Home's filter says and whatever the line names.
     private bool ShownOnHome(NeedsYouEntry row) =>
         IsNeedsYouInbox
-        || ((HomeFilter != HomeFilter.Decisions || row.DecisionId is not null)
-            && !(Setup.IsHomeLineShown && string.Equals(row.Kind, SetupRowKind, StringComparison.Ordinal) && string.Equals(row.Id, SetupRowKind + ":" + Setup.HomeStepId, StringComparison.Ordinal)));
+        || ((HomeFilter != HomeFilter.Decisions || row.DecisionId is not null) && !IsNamedByHomeLine(row));
 
     /// <summary>
     /// Esc on Settings over the Not running card: back to the page it was opened from, so the card shows again. While
