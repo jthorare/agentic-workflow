@@ -21,6 +21,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     internal WorkflowGraphViewModel(WorkflowView workflow, IReadOnlyDictionary<string, string>? statuses = null)
     {
         Slug = workflow.Slug;
+        _summaries = (workflow.Summaries ?? []).ToDictionary(x => x.Node, StringComparer.Ordinal);
         var positions = new Dictionary<string, GraphPoint>(StringComparer.Ordinal);
         foreach (var p in workflow.Positions)
         {
@@ -47,6 +48,13 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
     }
 
+    private readonly Dictionary<string, NodeSummaryView> _summaries;
+
+    /// <summary>The selected step's title and what it does ("Every weekday at 7:00: ..."), from the lines the API serves; empty when no step is selected or the API sent none for it.</summary>
+    public string StepLine => SelectedId is { } id && _summaries.TryGetValue(id, out var line) && Nodes.FirstOrDefault(n => string.Equals(n.Id, id, StringComparison.Ordinal)) is { } node
+        ? Labels.WfStepLine(node.Title, line.Summary, line.SummaryProblem)
+        : string.Empty;
+
     /// <summary>Raised with the node's id when a node is selected or activated.</summary>
     internal event EventHandler<ValueEventArgs<string>>? NodeSelected;
 
@@ -69,7 +77,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     public IReadOnlyList<GraphEdgeViewModel> Edges { get; }
 
     /// <summary>Gets the id of the selected node, or null.</summary>
-    public string? SelectedId { get; private set => Set(ref field, value); }
+    public string? SelectedId { get; private set { Set(ref field, value); OnChanged(nameof(StepLine)); } }
 
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     /// <summary>The graph's accessible name.</summary>

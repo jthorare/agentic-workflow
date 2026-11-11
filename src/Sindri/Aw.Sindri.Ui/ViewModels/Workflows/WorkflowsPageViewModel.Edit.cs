@@ -12,7 +12,13 @@ internal sealed partial class WorkflowsPageViewModel
     internal OpsEditor Editor { get; }
 
     /// <summary>True while the editor sheet is open.</summary>
-    public bool IsEditing { get; private set => Set(ref field, value); }
+    public bool IsEditing { get; private set { Set(ref field, value); OnChanged(nameof(StepSummaryText)); OnChanged(nameof(HasStepSummary)); } }
+
+    /// <summary>The selected step's title and summary, shown under the graph while Edit is off; empty otherwise.</summary>
+    public string StepSummaryText => IsEditing ? string.Empty : Runs.Graph?.StepLine ?? string.Empty;
+
+    /// <summary>True when the line under the graph shows.</summary>
+    public bool HasStepSummary => StepSummaryText.Length > 0;
 
     /// <summary>True when the open workflow can be edited: a workflow is open on its runs and it is not archived.</summary>
     public bool CanEdit => IsRuns && Runs.Shown is { ArchivedAt: null };
@@ -110,8 +116,23 @@ internal sealed partial class WorkflowsPageViewModel
                 OnChanged(nameof(CanEdit));
                 OnChanged(nameof(CanSave));
                 OnChanged(nameof(EditorHeading));
+                OnChanged(nameof(StepSummaryText));
+                OnChanged(nameof(HasStepSummary));
+                if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) && Runs.Graph is { } graph)
+                {
+                    graph.PropertyChanged += OnGraphChanged;
+                }
             }
         };
+    }
+
+    private void OnGraphChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(WorkflowGraphViewModel.StepLine), StringComparison.Ordinal))
+        {
+            OnChanged(nameof(StepSummaryText));
+            OnChanged(nameof(HasStepSummary));
+        }
     }
 
     private void OnEditorChanged(object? sender, PropertyChangedEventArgs e)
