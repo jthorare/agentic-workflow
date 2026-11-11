@@ -1,6 +1,9 @@
 using System.Globalization;
 using System.Net;
 using System.Text.Json;
+using Avalonia;
+using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
@@ -39,5 +42,30 @@ public sealed class QueueVirtualizationTests : FrameHost
         var built = window.GetVisualDescendants().OfType<Ui.Views.Queue.ItemRow>().Count();
 
         Assert.True(built < 100, string.Create(CultureInfo.InvariantCulture, $"{built} of {Rows} rows were built"));
+    });
+
+    // J moves the selection down the whole list, built or not: the row far below the built window is selected, built and scrolled into view.
+    [Fact]
+    public Task J_selects_a_row_far_below_the_built_window_and_scrolls_it_into_view() => OnUi(async () =>
+    {
+        Server.QueueView = Thousand();
+        var (window, shell) = await Connected(s => !s.Queue.IsLoading && s.Queue.Total >= Rows, width: 1280, height: 800);
+        shell.GoTo(PageId.Work);
+        Settle(window);
+
+        for (var i = 0; i < 300; i++)
+        {
+            window.KeyPressQwerty(PhysicalKey.J, RawInputModifiers.None);
+        }
+
+        Settle(window);
+
+        Assert.Equal("ITM-0300", shell.Queue.SelectedId);
+        var rows = window.GetVisualDescendants().OfType<Ui.Views.Queue.ItemRow>().ToList();
+        var row = rows.FirstOrDefault(r => string.Equals(r.ItemId, "ITM-0300", StringComparison.Ordinal));
+        Assert.NotNull(row);
+        var top = row.TranslatePoint(default, window)!.Value.Y;
+        Assert.InRange(top, 0, window.Height - row.Bounds.Height);
+        Assert.True(rows.Count < 100, "scrolling built every row");
     });
 }
