@@ -132,8 +132,6 @@ internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOpti
             return ViewsDatabase.Translate(begun.Error);
         }
 
-        ViewsDatabase.NoCheckpointOnClose(begun.Value.Connection);
-
         await using (begun.Value.ConfigureAwait(false))
         {
             var result = await work(begun.Value).ConfigureAwait(false);

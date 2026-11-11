@@ -70,19 +70,6 @@ internal sealed class ViewsDatabase : IDisposable
         }
     }
 
-    /// <summary>
-    /// Stops <paramref name="connection"/> from checkpointing the WAL when it closes. The projector opens and closes a writer per page, and it is
-    /// usually the only connection, so each close copied the whole log into views.db and synced it: about a second of a 100k catch-up's
-    /// 100 pages, three under disk load (#2890). The log is still checkpointed as it grows (wal_autocheckpoint, inside a commit) and
-    /// truncated to journal_size_limit; a log left at exit stays valid and is read on the next open.
-    /// </summary>
-    /// <param name="connection">An open read-write connection to views.db.</param>
-    public static void NoCheckpointOnClose(Microsoft.Data.Sqlite.SqliteConnection connection)
-    {
-        ArgumentNullException.ThrowIfNull(connection);
-        _ = SQLitePCL.raw.sqlite3_db_config(connection.Handle, SQLitePCL.raw.SQLITE_DBCONFIG_NO_CKPT_ON_CLOSE, 1, out _);
-    }
-
     /// <summary>Maps a store failure to Sindri's catalogue: views.db that can't be used stalls the read side (SND-VIEW-001).</summary>
     /// <param name="error">The Kernel.Data error.</param>
     /// <returns>The Sindri error, keeping the original code in the message.</returns>
