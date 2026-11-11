@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // tdd: one entry for the skill's commands. Each subcommand lives in bin/<name>.ts and is loaded only when asked for,
 // so a command that is not ported yet reports so instead of failing on import. The Python scripts remain the
-// documented path until the cutover (research/bun-port-2026.md §5.3); during the overlap both must agree byte for byte.
+// documented path until the cutover (D33); during the overlap both must agree byte for byte.
 const COMMANDS: Record<string, { file: string; python: string; help: string }> = {
   build:    { file: "build-tdd.ts",        python: "scripts/build_tdd.py",         help: "compile <slug>.md + lanes into build/content.json" },
   lint:     { file: "lint-packet.ts",      python: "scripts/lint_packet.py",       help: "lint a packet (eleven rules, errors first)" },
@@ -13,12 +13,13 @@ const COMMANDS: Record<string, { file: string; python: string; help: string }> =
   eval:     { file: "eval-packet.ts",      python: "scripts/eval_packet.py",       help: "score a revision; push to Braintrust only with --push" },
   "load-db":{ file: "tdd-load-db.ts",      python: "",                             help: "load a built, linted packet into the system database (D24)" },
   rev:      { file: "rev.ts",              python: "",                             help: "run one revision end to end" },
+  components: { file: "components.ts",     python: "",                             help: "list the components a source can use; --gallery writes a packet that shows them" },
 };
 
 const [cmd, ...rest] = Bun.argv.slice(2);
 if (!cmd || cmd === "--help" || cmd === "-h") {
   console.log("usage: tdd <command> [args]\n");
-  for (const [name, c] of Object.entries(COMMANDS)) console.log(`  ${name.padEnd(9)} ${c.help}`);
+  for (const [name, c] of Object.entries(COMMANDS)) console.log(`  ${name.padEnd(10)} ${c.help}`);
   process.exit(cmd ? 0 : 2);
 }
 const c = COMMANDS[cmd];

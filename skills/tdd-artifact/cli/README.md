@@ -1,7 +1,7 @@
 # tdd-cli
 
-The tdd skill's command line under bun (TypeScript 7, Effect 4 where a program is effectful). It is the target of the
-bun port designed in the architecture packet's `research/bun-port-2026.md` (D19) and the home of the system-database
+The tdd skill's command line under bun (TypeScript 7, Effect 4 where a program is effectful). It is the port of the
+skill's Python scripts (D19; the numbers are in `../references/decisions.md`) and the home of the system-database
 loader (D17, D23, D24) and the revision runner.
 
 - `bin/tdd.ts` dispatches `tdd <command>`; each command is a `bin/<name>.ts` with a `main(argv): Promise<number>`.
@@ -12,6 +12,9 @@ loader (D17, D23, D24) and the revision runner.
   are the ports and the new programs.
 - `parity/` holds the Python oracle and `gate.ts`, which runs both implementations into the same path and diffs.
 - `sql/schema.sql` is the system database (eight tables); `tdd load-db <packet>` fills it after lint passes.
+- `src/components/` reads the component catalog (`../templates/components.json`): `tdd components [name] [--json]` prints
+  it, `tdd components --gallery <dir>` writes a packet whose page shows every component beside its markdown, and
+  `test/components` keeps the catalog, both compilers and the renderer's node types in step.
 
 Setup once: `bun install` here, and `bun install` in `../app` (the `tdd rev` tests build the page). Check:
 `bun run check`. Tests: `bun test`. The kernel's golden tests (`test/py`, `test/sd`) compare against a live `python3`

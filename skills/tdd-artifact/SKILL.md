@@ -69,7 +69,7 @@ Before writing a claim, have its source. Code claims are `path:line` at the sha 
 | 5 | Decisions and open questions | What is still open, and what did the owner decide? | `decisions` grid, `decision` cards, `options` |
 | 6 | For agents and additional context | What does a reviewer or an implementer need beyond that? | `group`s of `fold`s: scope, sizing (`cards {stat}`), rollout (`callout`), SQL, PR order (`<!-- PR-CARDS -->`), `glossary` |
 
-`templates/tdd-template.md` shows every container once with guidance comments; the exact syntax (attributes such as `{chip: ...; #id; lead: no}`, `{small}`, `[chip:tone text]`, nesting with longer `::::` fences) is the docstring of `scripts/build_tdd.py`. Guidance comments must stay on one line each (a multi-line `<!-- -->` renders as text). The lead of each section is the finding, not the topic. A complete real example: `~/.system-design/<org>-web-app/system-design/<slug>/<slug>.md`.
+`templates/tdd-template.md` shows every container once with guidance comments, and `templates/components.json` is the catalog of all of them (`bun "$T/cli/bin/tdd.ts" components <name>` prints one with its attributes and an example); the exact syntax (attributes such as `{chip: ...; #id; lead: no}`, `{small}`, `[chip:tone text]`, nesting with longer `::::` fences) is the docstring of `scripts/build_tdd.py`. Guidance comments must stay on one line each (a multi-line `<!-- -->` renders as text). The lead of each section is the finding, not the topic. A complete real example: `~/.system-design/<org>-web-app/system-design/<slug>/<slug>.md`.
 
 PR deep dives are `prs/pr-NN.md` in system-design's shape (`$S/templates/pr-cards.md`); the `<!-- PR-CARDS -->` line in section 6 becomes the cards.
 
@@ -132,7 +132,9 @@ Every published change bumps `rev` by one, sets `updated` to today and says what
 |---|---|
 | `templates/tdd-template.md` | the six-section skeleton, every container once, guidance as one-line comments |
 | `templates/meta.template.json` | every header field the compiler reads, each explained in `_doc` |
+| `templates/components.json` | the component catalog: per component its markdown, attributes, placement and an example; `bun "$T/cli/bin/tdd.ts" components [name]` prints it, `components --gallery <dir>` writes a packet that renders every one |
 | `templates/tdd-system/README.md` | the design system: tokens (light, dark), type scale, class vocabulary, states |
+| `references/decisions.md` | what each design decision cited by number in this skill's code and docs (`D7`, `D26`) decided |
 | `references/evidence-rules.md` | sha and date, `path:line` with aliases, dated counts, "not measured", what the linter checks |
 | `references/diagram-conventions.md` | tldraw drawing, legend tones, hotspots: which boxes, the JSON shape |
 | `references/mock-conventions.md` | mocks from real components, shot sizes, captions, `cols3`, the `today` fold |

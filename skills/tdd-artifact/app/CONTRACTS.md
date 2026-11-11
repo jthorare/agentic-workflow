@@ -1,4 +1,4 @@
-# tdd/app contracts (read before writing anything here)
+# tdd-artifact app contracts (read before changing the page, a component or a lane)
 
 The page is React 19.3.1, server-rendered by `build.ts` under bun into the claude.ai artifact page, hydrated by one inline production IIFE. Type-checks with TypeScript 7 (`typescript@7.0.2`). Content comes from `build/content.json`, written by `../scripts/build_tdd.py` (read its docstring and `Compiler` class for the exact node shapes; `src/types.ts` mirrors them).
 
@@ -13,17 +13,17 @@ The page is React 19.3.1, server-rendered by `build.ts` under bun into the claud
 ```
 No doctype/html/head/body (the host wraps the file). External scripts: none (React is inline). Stylesheets: only the Google Fonts @import already in tdd.css. No iframes, alert, print, download links. 16 MB limit. Must read correctly with JavaScript off: every block is real HTML, `<details>` are native and uncontrolled (never pass a changing `open` prop), the rail is plain `<a href="#id">`.
 
-## Files and owners
-| Path | Owner | Notes | Eval duty (D18): what it scores, when |
+## What lives where
+| Path | Area | Notes | Eval duty (D18): what it scores, when |
 |---|---|---|---|
-| `build.ts`, `check_hydrate.ts`, `package.json`, `tsconfig.json`, `src/App.tsx`, `src/client.tsx`, `src/components/{Blocks,Diagram,Shot,Prs,Rail,Masthead,Overlays}.tsx`, `src/lib/*` | app-core worker | overlays = RefPop, RefPanel, HsPop, TipPop, Lightbox; delegation lives in App. Diagram.tsx draws a TableNode over each hotspot whose table has a schema card (D26). HsPop shows the table brief (TableBrief, D28) when the hotspot names a schema table (`.hs-pop.has-brief`), so a focused or hovered table card reads its purpose, measures, trade-offs and place; TipPop shows one `[data-tip]` element's lines under the pointer, or on a tap on touch screens (`.tn-tip`) | output 1 (`scripts/eval/ev_artifact.py`): `page_exists`, `page_size`, `check_hydrate`, `artifact_check`, `refs_linked`, `diagram_hotspots`; after every change, before returning |
-| `src/components/{SchemaDrawer,DataGrid,TableNode,TableBrief}.tsx`, `src/schema.css`, `harness/**` | schema worker (D7, D26, D28, D30) | the drawer (SchemaDrawer: one-row head, Expand view); DataGrid: the tabs, the grid drawn as bands of columns with a stats badge per header (D30), Columns and Details; TableNode: the table card on a schema-diagram box (keys, change marks, the one-row rows/cols/writes/cost strip with a `[data-tip]` per measure, a compact card for small boxes); TableBrief: the table brief (purpose, measures table, trade-offs, mini diagram) shared by the hover card and the Details tab; harness renders the drawer standalone (`render.tsx`, `shoot.mjs`) and checks a built page (`shoot-d26.mjs`) | `schema_ddl` (output 1), `schema_md` (output 2, `ev_packet.py`), the table and column questions in `probe_answerable` (`ev_probe.py`); after every drawer or harness change |
-| `../templates/tdd-system/tdd.css` | app-core worker | small additive fixes only; the generated FONTS/TOKENS blocks are never hand-edited | `artifact_check` (its 1440/390 light/dark renders) and `check_hydrate`; after every stylesheet change |
-| `../scripts/write_agents.py`, `../scripts/strip_page.py`, `../references/agents-lane.md`, `../templates/agents/**` | agents-lane worker (D6, D8) | reads content.json and the built page; writes `agents/` | output 2 (`ev_packet.py`): `agents_present`, `agents_current`, `readme_bytes`, `largest_slice`, `anchors_sliced_once`, `sql_extracted`, `map_edges_resolve`, `images_indexed`, `prs_copied`, `probe_answerable`; `lane_size` and `build_sizes` (output 6, `ev_tokens.py`); after every generator or template change |
-| `../scripts/lint_packet.py`, `../references/validators.md` | lint worker | reads content.json, content.files.json, the packet on disk, git | `lint` (output 1; the eval writes `build/eval/lint.json`), and `refs_linked` or `cites_href` when a rule about them changes; after every rule change |
-| `SKILL.md`, `../templates/tdd-template.md`, `../templates/meta.template.json`, `../scripts/new_packet.py`, `../references/{evidence-rules,diagram-conventions,mock-conventions,publish-and-mirror}.md`, `../templates/tdd-system/README.md` | skill-docs worker | documents the CLIs as declared here and in each script's docstring | `sections_house`, `decisions_status`, `refs_linked`, `cites_href` (output 1) when a template changes; runs the eval exactly as SKILL.md step 5 writes it, so the documented command is the one that ran; after every doc or template change |
-| `../scripts/eval_packet.py`, `../scripts/eval/**`, `../references/eval-loop.md`, `../templates/eval/**` | eval worker (D10, D12) | scores are measurements, not gates; `--push` is gated (below) | all six outputs, before and after its change; no scorer turns `not run` or `error` without a stated reason; never `--push` |
-Nobody edits another owner's files; a needed change in another scope is written into the return as a request.
+| `build.ts`, `check_hydrate.ts`, `package.json`, `tsconfig.json`, `src/App.tsx`, `src/client.tsx`, `src/components/{Blocks,Diagram,Shot,Prs,Rail,Masthead,Overlays}.tsx`, `src/lib/*` | app core | overlays = RefPop, RefPanel, HsPop, TipPop, Lightbox; delegation lives in App. Diagram.tsx draws a TableNode over each hotspot whose table has a schema card (D26). HsPop shows the table brief (TableBrief, D28) when the hotspot names a schema table (`.hs-pop.has-brief`), so a focused or hovered table card reads its purpose, measures, trade-offs and place; TipPop shows one `[data-tip]` element's lines under the pointer, or on a tap on touch screens (`.tn-tip`) | output 1 (`scripts/eval/ev_artifact.py`): `page_exists`, `page_size`, `check_hydrate`, `artifact_check`, `refs_linked`, `diagram_hotspots`; after every change, before returning |
+| `src/components/{SchemaDrawer,DataGrid,TableNode,TableBrief}.tsx`, `src/schema.css`, `harness/**` | schema lane (D7, D26, D28, D30) | the drawer (SchemaDrawer: one-row head, Expand view); DataGrid: the tabs, the grid drawn as bands of columns with a stats badge per header (D30), Columns and Details; TableNode: the table card on a schema-diagram box (keys, change marks, the one-row rows/cols/writes/cost strip with a `[data-tip]` per measure, a compact card for small boxes); TableBrief: the table brief (purpose, measures table, trade-offs, mini diagram) shared by the hover card and the Details tab; harness renders the drawer standalone (`render.tsx`, `shoot.mjs`) and checks a built page (`shoot-d26.mjs`) | `schema_ddl` (output 1), `schema_md` (output 2, `ev_packet.py`), the table and column questions in `probe_answerable` (`ev_probe.py`); after every drawer or harness change |
+| `../templates/tdd-system/tdd.css` | app core | small additive fixes only; the generated FONTS/TOKENS blocks are never hand-edited | `artifact_check` (its 1440/390 light/dark renders) and `check_hydrate`; after every stylesheet change |
+| `../scripts/write_agents.py`, `../scripts/strip_page.py`, `../references/agents-lane.md`, `../templates/agents/**` | agents lane (D6, D8) | reads content.json and the built page; writes `agents/` | output 2 (`ev_packet.py`): `agents_present`, `agents_current`, `readme_bytes`, `largest_slice`, `anchors_sliced_once`, `sql_extracted`, `map_edges_resolve`, `images_indexed`, `prs_copied`, `probe_answerable`; `lane_size` and `build_sizes` (output 6, `ev_tokens.py`); after every generator or template change |
+| `../scripts/lint_packet.py`, `../references/validators.md` | lint | reads content.json, content.files.json, the packet on disk, git | `lint` (output 1; the eval writes `build/eval/lint.json`), and `refs_linked` or `cites_href` when a rule about them changes; after every rule change |
+| `SKILL.md`, `../templates/tdd-template.md`, `../templates/meta.template.json`, `../scripts/new_packet.py`, `../references/{evidence-rules,diagram-conventions,mock-conventions,publish-and-mirror}.md`, `../templates/tdd-system/README.md` | skill docs | documents the CLIs as declared here and in each script's docstring | `sections_house`, `decisions_status`, `refs_linked`, `cites_href` (output 1) when a template changes; runs the eval exactly as SKILL.md step 5 writes it, so the documented command is the one that ran; after every doc or template change |
+| `../scripts/eval_packet.py`, `../scripts/eval/**`, `../references/eval-loop.md`, `../templates/eval/**` | eval lane (D10, D12) | scores are measurements, not gates; `--push` is gated (below) | all six outputs, before and after its change; no scorer turns `not run` or `error` without a stated reason; never `--push` |
+A change that crosses areas (a new block type always does) follows the checklist below.
 
 ## Eval duty (D18)
 The eval runs as part of the work, not after it (`../SKILL.md`, step 5; `../references/eval-loop.md`, Who runs it and when).
@@ -38,6 +38,22 @@ The eval runs as part of the work, not after it (`../SKILL.md`, step 5; `../refe
   `BRAINTRUST_API_KEY` is in the environment (never in a file) and the owner has said go.
 - Never pass `--run-tests` unattended where the repo's test command loads secrets (eval-loop.md, output 4).
 
+## Components: finding one, adding one
+`../templates/components.json` is the catalog of what a source can use: per component its purpose, markdown, attributes,
+where it may sit, the `content.json` node type it compiles to, what draws it, and an example.
+```
+bun "$T/cli/bin/tdd.ts" components                  # one line per component
+bun "$T/cli/bin/tdd.ts" components persona          # one in full (add --json for the entry as data)
+bun "$T/cli/bin/tdd.ts" components --gallery <dir>  # a packet whose page shows every component beside its markdown
+```
+A block type exists in six places, and `cli/test/components` fails when they disagree:
+1. **Compiler, twice**: `../scripts/build_tdd.py` (`node`, `node_box`, a `box_<kind>`) and `../cli/src/compile/compiler.ts`, the same change in both, then the pin (`BUILD_TDD_SHA256`); the parity gate must stay green.
+2. **Type**: an interface in `src/types.ts`, added to the `Node` union and to `NODE_TYPES` (the compiler fails the build if one is missing from the other).
+3. **Renderer**: a `case` in `src/components/Blocks.tsx`; its `default` is typed `never`, so a missing case does not compile. `build.ts` warns when `content.json` holds a type this renderer does not know.
+4. **Classes**: `../templates/tdd-system/tdd.css` (or `src/schema.css` for the drawer), tokens only, both themes; listed in `../templates/tdd-system/README.md`.
+5. **Agents lane**: `kids()` and `r_node` in `../scripts/write_agents.py` and `../cli/src/agents/lane.ts`, so the block reaches `tdd.md`, the slices and `images/`.
+6. **Catalog**: an entry in `../templates/components.json` with an example that compiles without a warning; then the template (`../templates/tdd-template.md`) if authors should meet it there.
+
 ## Bus events (src/lib/bus.ts), emitted only in the browser
 | Event | Payload | Who emits | Who listens |
 |---|---|---|---|
@@ -50,9 +66,9 @@ The eval runs as part of the work, not after it (`../SKILL.md`, step 5; `../refe
 `reveal(id)` in bus.ts does the DOM work; `bus.emit` is a no-op on the server.
 
 ## Class vocabulary
-`../templates/tdd-system/tdd.css` is the contract; the summary of classes per component is in `../templates/tdd-system/README.md` (skill-docs worker writes it from the stylesheet). Components use these classes exactly; new classes go into tdd.css (app-core) or schema.css (schema worker).
+`../templates/tdd-system/tdd.css` is the contract; the summary of classes per component is in `../templates/tdd-system/README.md` (written from the stylesheet). Components use these classes exactly; new classes go into tdd.css or schema.css (the drawer).
 
-schema.css (schema worker) adds these families; components use them exactly:
+schema.css adds these families; components use them exactly:
 - **Drawer** (SchemaDrawer.tsx): `dialog.drawer.schema` (`.expanded` for the Expand view, 95% of the window), `.drawer-head`, `.drawer-name`, `.drawer-acts`, `.drawer-expand`, `.drawer-close`, `.drawer-body`, `.drawer-summary` (the brief's purpose in Details), `.drawer-sec`, `.drawer-notes`.
 - **Grid** (DataGrid.tsx, `dg-*`): `.dg-tabs`, `.dg-tab`, `.dg-panel`, `.dg-preview`, `.dg-bar`, `.dg-filter`, `.dg-count`, `.dg-shown`, `.dg-actions`, `.dg-btn`, `.dg-toast`, `.dg-bands`, `.dg-band`, `.dg-band-cap`, `.dg-band-names`, `.dg-ghost-box`, `.dg-ghost` (the hidden table that measures column widths), `.dg-grid`, `.dg-head` (`th.num` right-aligned), `.dg-hc` (a header's sort button and badge), `.dg-h`, `.dg-glyph`, `.dg-sort`, `.dg-sb` (the stats badge: `.nulls` dot, `.on` while its popover shows; a span in the ghost grid), `.dg-spop` (the one stats popover: `.show`, `.open` when pinned) with `.dg-sp-h`, `.dg-sp-n`, `.dg-sp-r`, `.dg-sp-d`, `.dg-sp-note`, `.dg-mini`, `.dg-hist`, `.dg-freq`, `.dg-meter`, `.dg-range`, `.dg-empty`, `.dg-more`, `.dg-cap`, `.dg-cols`, `.dg-details`, `.dg-kv`.
 - **Table card** (TableNode.tsx, `tn-*`) on `a.hs.has-table.tnode` with `tone-<green|grey|blue|amber|red|violet>`, `dashed`, `st-<state>` and `compact` (no strip): `.tn-in`, `.tn-head`, `.tn-name`, `.tn-chip`, `.tn-desc`, `.tn-hidden` (the "+N cols" count), `.tn-cols`, `.tn-col` (`.tn-key` for a PK or FK line, `ch-new|changed|dropped`), `.tn-k` (`.pk`, `.fk`), `.tn-cn`, `.tn-ref`, `.tn-ty`, `.tn-tag`, `.tn-more`, `.tn-strip` (one row, `.tight` drops the icons), `.tn-m` (`k-rows|cols|writes|cost`, carries `[data-tip]`), `.tn-ico`, `.tn-v` (`.none` for "–"), `.tn-d` (`.up` red, `.down` and `.same` green, `.unknown` grey; absent when not estimated), `.tn-dir-ico`. Never `.key` on a card line: tdd.css owns `.key` (the legend).
@@ -67,7 +83,7 @@ Colours come from the theme tokens (`--fg`, `--muted`, `--surface`, `--surface-2
 - `diagram.hotspots[] = {label,x,y,w,h (percent), href, note, image, table (schema id), tone}`.
 - `nav[]`, `decisions[]`, `cites[]`, `glossary{term:id}`, `refs{linked, unlinked[]}`, `stats{}`.
 
-## Proof commands (every worker runs what applies, records output in its return)
+## Proof commands (run what applies; report the output, counts not prose)
 ```
 T="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/tdd-artifact"; S="${SYSTEM_DESIGN_SKILL:-$T/vendor/system-design}"   # T and S as SKILL.md sets them
 cd "$T/app" && bun install && bunx tsc -p . --noEmit                         # TypeScript 7
@@ -75,11 +91,11 @@ bun run build.ts ~/.system-design/<org>-web-app/system-design/<slug>/build
 bun run check_hydrate.ts  <same build dir>/tdd.html                                # jsdom hydrate: zero console errors
 node "$S/scripts/artifact_check.mjs" <build dir>/tdd.html                        # contract + 1440/390 light/dark renders
 python3 -I "$T/scripts/build_tdd.py" <slug>.md build  # in the reference packet dir
-~/.local/share/tdd-skill/venv/bin/python -I "$T/scripts/eval_packet.py" <packet dir>   # eval lane -> <packet>/build/eval/ (D18: every worker, every reviewer)
+~/.local/share/tdd-skill/venv/bin/python -I "$T/scripts/eval_packet.py" <packet dir>   # eval lane -> <packet>/build/eval/ (D18: every writer, every reviewer)
 ```
 Screenshots: playwright-core is installed under `~/.local/share/system-design-skills/node_modules`; the helper `<scratchpad>/shoot.mjs (a playwright-core screenshot helper; any equivalent works) <file.html> <out-prefix> [width]` writes `<prefix>-top.png` and `<prefix>-full.png`. Reference screenshots to match: `~/.system-design/house/system-design/tdd-system/shots/reference-1440-*.png`.
 
-## Rules for every worker
-- Commit nothing, push nothing, switch no branch. The skill folder may hold other sessions' uncommitted edits: do not touch files outside your scope.
-- Never invent a measurement, a screenshot, a count or a test result. Unverified claims are marked unverified in the return.
-- Typed return at the end: `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED | NEEDS_HUMAN`, with the files written, the proof output (counts, not prose), the eval summary line and the scorers that moved (a reviewer: the score diff), and open requests for other owners.
+## Rules
+- Never invent a measurement, a screenshot, a count or a test result. A claim you did not verify is marked unverified.
+- A report on a change names the files written, the proof output (counts, not prose), the eval summary line and the scorers that moved (a reviewer: the score diff).
+- Git follows the repository's own rules (`AGENTS.md`); nothing here grants a commit, a push or a PR.

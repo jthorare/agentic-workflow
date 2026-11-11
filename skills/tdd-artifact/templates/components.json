@@ -1,0 +1,399 @@
+{
+ "_about": "The components a TDD source can use: what each is for, its markdown, its attributes, where it may sit, what it compiles to (the content.json node type) and what draws it. One entry per authoring construct; `tdd components` prints this file and `tdd components --gallery <dir>` writes a packet that renders every example. cli/test/components keeps it true: every example compiles to the node it names, and every node type the renderer draws (app/src/types.ts NODE_TYPES) is listed here.",
+ "internal": {
+  "placeholder": "what the compiler leaves where a diagram, an image or the PR cards are missing (it also warns)",
+  "box": "an unknown ::: kind: the compiler warns and keeps the blocks in a plain div",
+  "col": "a ::: col written outside ::: cols"
+ },
+ "components": [
+  {
+   "name": "section",
+   "kind": "markdown",
+   "node": null,
+   "what": "A numbered section. The house template has six, always in the same order.",
+   "syntax": "## Title {chip: text; #id; lead: no}",
+   "attrs": {
+    "#id": "the section's anchor; default: a slug of the title",
+    "chip": "a chip beside the title",
+    "lead: no": "the first paragraph is not styled as the lead"
+   },
+   "where": "top level only",
+   "renders": "App.tsx Section: section > h2 (.sec-no, .chip); the contents rail lists it",
+   "notes": [
+    "The first paragraph is the lead (the finding, not the topic) unless lead: no."
+   ],
+   "top": true,
+   "example": "## Retries move out of the request {#retries; chip: First pass}\n\nA failed delivery is retried by a worker, not by the request that failed."
+  },
+  {
+   "name": "subsection",
+   "kind": "markdown",
+   "node": "heading",
+   "what": "A heading inside a section. A level-3 heading gets an anchor and a line in the contents rail.",
+   "syntax": "### Title {#id; nav: no}",
+   "attrs": {
+    "#id": "the anchor; default for ###: a slug of the title",
+    "nav": "no keeps it out of the rail; any other text is the rail label"
+   },
+   "where": "anywhere a block can go",
+   "renders": "Blocks.tsx: h3..h6",
+   "example": "### What the worker reads {#worker-reads}\n\nThe worker reads `webhook_deliveries` and nothing else."
+  },
+  {
+   "name": "paragraph",
+   "kind": "markdown",
+   "node": "p",
+   "what": "Running text. A trailing {…} sets its class or anchor.",
+   "syntax": "Text. {small; muted; lead; #id; class: name}",
+   "attrs": {
+    "small": "smaller text",
+    "muted": "secondary colour",
+    "lead": "lead paragraph style",
+    "#id": "an anchor other blocks can reference",
+    "class": "extra class names"
+   },
+   "where": "anywhere a block can go",
+   "renders": "Blocks.tsx: p (.small, .muted, .lead)",
+   "example": "Counts are from the read replica on 2026-01-12. {small; muted}"
+  },
+  {
+   "name": "chip",
+   "kind": "inline",
+   "node": null,
+   "what": "A status chip inside any text.",
+   "syntax": "[chip:tone text]",
+   "attrs": {
+    "tone": "new, good, done, built, open, draft, proposed, rec, held, blocked, danger, violet, brand, ruled, or plain for no colour"
+   },
+   "where": "inside any paragraph, heading, cell or list item",
+   "renders": "span.chip.<tone>",
+   "example": "The retry worker [chip:new new] replaces the inline retry [chip:held removed]."
+  },
+  {
+   "name": "reference-token",
+   "kind": "inline",
+   "node": null,
+   "what": "Tokens such as `D7`, `Q1`, `R2`, `PR 3` or `F3.2`, and glossary terms, link to their definition on the page; hover shows a card, click opens a panel.",
+   "syntax": "D7 · Q1 · R2 · PR 3 · TERM",
+   "where": "any text outside code, links and headings",
+   "renders": "a.ref[data-ref] (delegate.ts, Overlays.tsx RefPop and RefPanel)",
+   "notes": [
+    "A token links only when the page defines it: a decision, a table row whose first cell is the token, a PR card, a glossary term, or a refs family in meta.json.",
+    "The linter fails a token with no definition (REFS)."
+   ],
+   "example": "| # | Requirement | Status |\n|---|---|---|\n| R1 | A delivery is retried at most five times | Planned |\n\nThe cap in R1 comes from the provider's own limit."
+  },
+  {
+   "name": "citation",
+   "kind": "inline",
+   "node": null,
+   "what": "A path:line in backticks is a citation; with repo_url and sha in meta.json it links to that line at that commit.",
+   "syntax": "`path/to/file.ts:12-40`",
+   "where": "any text",
+   "renders": "a.cite-link > code.cite",
+   "notes": [
+    "Path aliases (meta.json path_aliases) shorten long prefixes, for example `API/send.ts:88`."
+   ],
+   "example": "The request retries inline today (`src/webhooks/send.ts:88-120`)."
+  },
+  {
+   "name": "list",
+   "kind": "markdown",
+   "node": "list",
+   "what": "Bullets, numbers or a checklist. A leading [new], [changed], [done], [open] or [held] tags an item.",
+   "syntax": "- item\n1. item\n- [x] done item\n- [new] tagged item",
+   "where": "anywhere a block can go",
+   "renders": "Blocks.tsx List: ul or ol, li (.new, .changed, .done, .todo)",
+   "notes": [
+    "A list is a checklist only when every item has a [ ] or [x] box."
+   ],
+   "example": "- [new] The worker claims a row with `FOR UPDATE SKIP LOCKED`.\n- The request path no longer sleeps.\n  - It returns as soon as the row is written."
+  },
+  {
+   "name": "steps",
+   "kind": "container",
+   "node": "steps",
+   "what": "A numbered flow with step numbers drawn as badges.",
+   "syntax": "::: steps\n1. step\n2. [new] step\n:::",
+   "where": "anywhere; usually inside a col of a Step by step fold",
+   "renders": "ol.steps",
+   "example": "::: steps\n1. The request writes the delivery row.\n2. [new] The worker picks it up within a second.\n3. [new] After five failures the row is parked.\n:::"
+  },
+  {
+   "name": "table",
+   "kind": "markdown",
+   "node": "table",
+   "what": "A table. A first cell that is a reference token (`R1`, `F2`) makes the row an anchor; a column named Status or State turns its words into chips; all-number columns are right-aligned.",
+   "syntax": "| # | Requirement | Status |\n|---|---|---|\n| R1 | text | Planned |",
+   "where": "anywhere a block can go",
+   "renders": "Blocks.tsx Table: div.tbl > table (td.num, td.tok, tr[id])",
+   "example": "| # | Requirement | Status | How the design meets it |\n|---|---|---|---|\n| R1 | A delivery is retried at most five times | Planned | The worker's attempt counter |\n| R2 | A parked delivery can be replayed | Open | Waiting on the owner's answer |"
+  },
+  {
+   "name": "code",
+   "kind": "markdown",
+   "node": "code",
+   "what": "A fenced code block. sql fences get keyword and comment marks; the agents lane extracts every block.",
+   "syntax": "```lang\ncode\n```",
+   "where": "anywhere a block can go",
+   "renders": "pre[data-lang] > code.lang-<lang> (span.k keywords, span.c comments)",
+   "notes": [
+    "A ::: line inside a fence is still read as a container: indent it by a space when quoting template syntax."
+   ],
+   "example": "```sql\nCREATE TABLE webhook_deliveries (\n  id       uuid PRIMARY KEY,\n  attempts int  NOT NULL DEFAULT 0   -- at most five\n);\n```"
+  },
+  {
+   "name": "callout",
+   "kind": "container",
+   "node": "callout",
+   "what": "A tinted aside.",
+   "syntax": "::: callout warn\ntext\n:::",
+   "attrs": {
+    "title word": "note (default), warn, good, danger, violet or blue",
+    "tone": "the same, as an attribute"
+   },
+   "where": "anywhere a block can go",
+   "renders": "aside.callout.<tone>",
+   "example": "::: callout warn\n**Rollback:** turn the flag off; rows already written stay and are ignored.\n:::"
+  },
+  {
+   "name": "quote",
+   "kind": "markdown",
+   "node": "callout",
+   "what": "A markdown quote, for an owner's words.",
+   "syntax": "> text",
+   "where": "anywhere a block can go",
+   "renders": "blockquote",
+   "example": "> Retry in the background, never in the request."
+  },
+  {
+   "name": "diagram",
+   "kind": "marker",
+   "node": "diagram",
+   "what": "A figure from diagrams/<key>.svg (or .png). The legend and reading lines that follow belong to it; diagrams/<key>.hotspots.json adds hover cards and schema-table cards over its boxes.",
+   "syntax": "[diagram: key · Figure title {fit; #id; alt: text}]\n[legend: label = tone | label = tone]\n[reading: one sentence on where to start]",
+   "attrs": {
+    "fit": "scale the figure to the column (a button toggles actual size)",
+    "#id": "the anchor, also listed in the rail; default fig-<key>",
+    "alt": "alt text; default: the title",
+    "nav": "no keeps it out of the rail"
+   },
+   "where": "anywhere a block can go",
+   "renders": "Diagram.tsx: figure.diagram (.bar, .stage, a.hs hotspots, TableNode cards, figcaption .key .reading)",
+   "notes": [
+    "Legend tones: new, changed, app, existing, engine, data, alert, violet, dashed, proposed.",
+    "A missing file renders a placeholder line and the compiler warns."
+   ],
+   "example": "[diagram: redesign · Redesign: retries move to a worker {fit; #fig-retries}]\n[legend: new or changed = new | the app = app | proposed = proposed]\n[reading: Start at the request on the left; green boxes are new.]"
+  },
+  {
+   "name": "legend",
+   "kind": "marker",
+   "node": "legend",
+   "what": "A legend on its own, away from a diagram.",
+   "syntax": "[legend: label = tone | label = tone]",
+   "where": "anywhere a block can go",
+   "renders": "span.key > i.sw.<tone>",
+   "example": "Colours on every diagram on this page:\n\n[legend: new or changed = new | the app = app | needs a data source = data]"
+  },
+  {
+   "name": "shot",
+   "kind": "markdown",
+   "node": "shot",
+   "what": "A mock or a still, with the quoted text as its caption. Click opens the lightbox.",
+   "syntax": "![alt](mockups/file.png \"Caption\")",
+   "where": "anywhere a block can go",
+   "renders": "Shot.tsx: figure.shot.<phone|col|mid|wide> > img, figcaption",
+   "notes": [
+    "Mocks are built from the project's real components (references/mock-conventions.md)."
+   ],
+   "example": "![The deliveries list with a parked row](mockups/moment-a-1.svg \"Parked: the fifth attempt failed\")"
+  },
+  {
+   "name": "shots",
+   "kind": "markdown",
+   "node": "shots",
+   "what": "Two or more images in one paragraph: the stills side by side.",
+   "syntax": "![alt](a.png \"Caption\") ![alt](b.png \"Caption\")",
+   "where": "anywhere a block can go",
+   "renders": "Blocks.tsx Media: div.fe-media > figure.shot",
+   "example": "![Before the retry](mockups/moment-a-1.svg \"Queued\") ![After the retry](mockups/moment-a-2.svg \"Delivered\")"
+  },
+  {
+   "name": "cards",
+   "kind": "container",
+   "node": "cards",
+   "what": "A row of cards; each #### heading starts one.",
+   "syntax": "::: cards {four; stat}\n#### Card title {#id}\ntext\n:::",
+   "attrs": {
+    "four": "four columns instead of three",
+    "stat": "stat cards: the heading is the number",
+    "#id on a heading": "makes that card an anchor"
+   },
+   "where": "anywhere a block can go",
+   "renders": "div.cards(.four .stat) > div.card",
+   "notes": [
+    "No comment before the first #### of a cards block."
+   ],
+   "example": "::: cards {four}\n#### What is new\nOne table and one worker.\n\n#### What doesn't change\nThe payload and its signature.\n\n#### The one deliberate change\nThe request no longer waits for the retry.\n\n#### Who it reaches first\nThe 40 merchants on the beta flag.\n:::"
+  },
+  {
+   "name": "persona",
+   "kind": "container",
+   "node": "persona",
+   "what": "One person at one moment: text first, then the mocked states, then a today fold.",
+   "syntax": "::: persona Role · Moment {chip: changed; tone: new; #id; shots: cols3}\ntext {small}\n\n![alt](mockups/a.png \"Caption\")\n\n:::: today What it does today\n![alt](mockups/today.png \"Today\")\n::::\n:::",
+   "attrs": {
+    "chip": "the chip text beside the title",
+    "tone": "the chip's tone; default new",
+    "#id": "the anchor; default fe-<slug>",
+    "shots": "auto (default), cols3, cols2, or one size for every shot: phone, mid, wide, col",
+    "nav": "no keeps it out of the rail"
+   },
+   "where": "in a section, or inside ::: duo",
+   "renders": "Blocks.tsx Persona: article.fe-box (.fe-text, .fe-media, details.more.today)",
+   "example": "::: persona Support agent · A delivery failed five times {chip: changed; #fe-parked; shots: cols3}\nThe agent sees the parked row and why it stopped. {small}\n\n![The parked row](mockups/moment-a-1.svg \"Parked\")\n\n![The attempt log](mockups/moment-a-2.svg \"Five attempts\")\n\n![Replay confirmed](mockups/moment-a-3.svg \"Replayed\")\n\n:::: today No parked state: the row just says failed\n![Today's list](mockups/today-moment-a.svg \"Today: failed, with no reason\")\n::::\n:::"
+  },
+  {
+   "name": "today",
+   "kind": "container",
+   "node": "today",
+   "what": "The screen as it is now, folded under a persona box for comparison.",
+   "syntax": ":::: today One-line summary {label: Today, for comparison}\n![alt](mockups/today.png \"Caption\")\n::::",
+   "attrs": {
+    "label": "the fold's label; default: Today, for comparison"
+   },
+   "where": "inside ::: persona (one per box)",
+   "renders": "details.more.today",
+   "example": "::: persona Merchant · Checking a delivery {chip: new; #fe-check}\nThe merchant sees each attempt with its response code. {small}\n\n:::: today One line per delivery, no attempts\n![Today's list](mockups/today-moment-a.svg \"Today: one line, no history\")\n::::\n:::"
+  },
+  {
+   "name": "duo",
+   "kind": "container",
+   "node": "duo",
+   "what": "Two persona boxes side by side.",
+   "syntax": "::: duo\n:::: persona A · Moment {chip: changed}\ntext\n::::\n:::: persona B · Moment {chip: new}\ntext\n::::\n:::",
+   "where": "anywhere a block can go",
+   "renders": "div.fe-duo",
+   "example": "::: duo\n:::: persona Merchant · Reading the log {chip: changed; #fe-log}\nEach attempt is one line. {small}\n::::\n\n:::: persona Support agent · Replaying {chip: new; #fe-replay}\nReplay is one button on a parked row. {small}\n::::\n:::"
+  },
+  {
+   "name": "fold",
+   "kind": "container",
+   "node": "fold",
+   "what": "A reference block that is closed until opened. The title's text after · is its one-line summary.",
+   "syntax": "::: fold Title · one-line summary {#id; open}\nblocks\n:::",
+   "attrs": {
+    "#id": "the anchor; an explicit id also lists the fold in the rail",
+    "open": "open on load",
+    "nav": "no keeps it out of the rail"
+   },
+   "where": "anywhere a block can go",
+   "renders": "details.more > summary (.t, .one) + div.more-body",
+   "notes": [
+    "A section with three or more folds gets Expand all and Collapse all."
+   ],
+   "example": "::: fold Rollout · Flag, order of steps, rollback {#rollout}\n- Dark behind `webhook_retry_worker`.\n- On for the beta merchants, then everyone.\n:::"
+  },
+  {
+   "name": "group",
+   "kind": "container",
+   "node": "group",
+   "what": "A titled set of folds.",
+   "syntax": "::: group Title · one-line summary {#id}\n:::: fold …\n::::\n:::",
+   "attrs": {
+    "#id": "an anchor for the group"
+   },
+   "where": "anywhere a block can go",
+   "renders": "div.group > h3.group-h",
+   "example": "::: group Engineering reference · The SQL and the PR order\n:::: fold Schema · One new table {#schema-sql}\n`webhook_deliveries` holds one row per delivery.\n::::\n:::"
+  },
+  {
+   "name": "decisions",
+   "kind": "container",
+   "node": "decisions",
+   "what": "The grid that holds decision cards.",
+   "syntax": "::: decisions\n:::: decision …\n::::\n:::",
+   "where": "anywhere a block can go",
+   "renders": "div.dec-grid",
+   "example": "::: decisions\n:::: decision D1 · Retries run in a worker {status: Owner, 2026-01-12}\n\"Retry in the background, never in the request.\" The request path returns after one attempt.\n::::\n:::"
+  },
+  {
+   "name": "decision",
+   "kind": "container",
+   "node": "decision",
+   "what": "One decision or open question. A Q-number is open; a D-number is the owner's answer, in their words, with the date.",
+   "syntax": ":::: decision D1 · The decision in one line {status: Owner, YYYY-MM-DD; state: done; wide; #id}\ntext\n::::",
+   "attrs": {
+    "status": "who and when, or why it is open; a date makes it done, Open/Provisional/Proposed/Waiting keeps it open, Held/Blocked/Rejected holds it",
+    "state": "done, open or held, to override what the status implies",
+    "wide": "span both columns",
+    "#id": "the anchor; default: the token (d1, q1)",
+    "nav": "no keeps it out of the rail"
+   },
+   "where": "inside ::: decisions",
+   "renders": "article.dec.<state> (.head, .id, .chip)",
+   "example": "::: decisions\n:::: decision Q1 · Who may replay a parked delivery? {status: Open · waiting on the owner; wide}\nSupport can see parked rows today but cannot act on them.\n\n::::: options\n#### A · Support and the merchant {rec}\nBoth get the button; every replay is logged with who pressed it.\n#### B · Support only\nThe merchant has to ask.\n:::::\n::::\n:::"
+  },
+  {
+   "name": "options",
+   "kind": "container",
+   "node": "options",
+   "what": "The options of an open question; each #### heading starts one and {rec} marks the recommendation.",
+   "syntax": "::::: options\n#### A · Option {rec}\ntext\n#### B · Option\ntext\n:::::",
+   "where": "inside a decision",
+   "renders": "div.opts > div.opt(.rec)",
+   "notes": [
+    "No comment inside an options block."
+   ],
+   "example": "::: decisions\n:::: decision Q2 · How long is a parked delivery kept? {status: Open · waiting on the owner}\n::::: options\n#### A · 30 days {rec}\nMatches the log retention.\n#### B · Forever\nThe table grows without bound.\n:::::\n::::\n:::"
+  },
+  {
+   "name": "cols",
+   "kind": "container",
+   "node": "cols",
+   "what": "Two columns; each ::: col is one.",
+   "syntax": ":::: cols\n::::: col\nblocks\n:::::\n::::: col\nblocks\n:::::\n::::",
+   "where": "anywhere a block can go",
+   "renders": "div.two-col > div",
+   "notes": [
+    "No comment directly inside a cols block."
+   ],
+   "example": "::: cols\n:::: col\n### Request\n\nWrites the row and returns.\n::::\n\n:::: col\n### Worker\n\nClaims the row and sends.\n::::\n:::"
+  },
+  {
+   "name": "glossary",
+   "kind": "container",
+   "node": "glossary",
+   "what": "Terms and definitions. Every later use of a term on the page links to its entry.",
+   "syntax": "::: glossary\n- **TERM** — definition\n:::",
+   "where": "anywhere a block can go",
+   "renders": "dl.glossary > div[id] (dt, dd)",
+   "example": "::: glossary\n- **DLQ** — dead-letter queue: where a delivery waits after its last attempt\n:::"
+  },
+  {
+   "name": "prs",
+   "kind": "marker",
+   "node": "prs",
+   "what": "The PR cards: one card per prs/pr-NN.md, grouped by milestone.",
+   "syntax": "<!-- PR-CARDS -->",
+   "where": "usually inside the PR order fold",
+   "renders": "Prs.tsx: div.prs (.ms, details.pr)",
+   "notes": [
+    "Each prs/pr-NN.md has front matter (milestone, title, change, rollback) and a body; see vendor/system-design/templates/pr-cards.md.",
+    "With no prs/ folder the compiler leaves a placeholder line and warns."
+   ],
+   "example": "Sized by dependency, not by date. {small; muted}\n\n<!-- PR-CARDS -->"
+  },
+  {
+   "name": "rule",
+   "kind": "markdown",
+   "node": "hr",
+   "what": "A horizontal rule.",
+   "syntax": "---",
+   "where": "anywhere a block can go",
+   "renders": "hr",
+   "example": "Above the rule.\n\n---\n\nBelow the rule."
+  }
+ ]
+}
