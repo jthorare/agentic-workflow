@@ -75,13 +75,13 @@ internal sealed partial class TopBar : UserControl
     {
         MeasurePasses++;
         CapProblems(availableSize.Width);
-        var size = base.MeasureOverride(availableSize);
+        var size = MeasureParts(availableSize);
         Remember();
         var fit = Choose(availableSize.Width);
         if (fit != _fit)
         {
             Apply(fit);
-            size = base.MeasureOverride(availableSize);
+            size = MeasureParts(availableSize);
             Remember();
         }
 
