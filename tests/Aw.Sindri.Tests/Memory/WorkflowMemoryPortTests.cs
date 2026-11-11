@@ -1,10 +1,13 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features;
 using Aw.Sindri.Testing.Workflow;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.Memory;
 
@@ -14,7 +17,6 @@ public sealed class WorkflowMemoryPortTests
 {
     private static readonly WorkflowId _id = WorkflowId.From("WF-00000000000000000000000000000001");
     private static readonly WorkflowRunId _first = WorkflowRunId.From("drift-check@1:1");
-    private static readonly WorkflowRunId _second = WorkflowRunId.From("drift-check@1:2");
 
     private readonly MemoryHarness _h = new();
     private readonly InMemoryWorkflowRunStore _runs;
@@ -42,7 +44,6 @@ public sealed class WorkflowMemoryPortTests
     {
         await _h.Memory("drift-check");
         await SeedRun(_first, ItemId.From("ITM-00000000000000000000000000000001"));
-        await SeedRun(_second, item: null);
         var port = Port();
 
         var written = await port.Remember(new MemoryToRemember(_first, "drift-check", "Checked api-repo at abc123", ["checks"], ExpiresIn: null), Token);
@@ -81,6 +82,8 @@ public sealed class WorkflowMemoryPortTests
         var forgotten = await port.Forget(new MemoryToForget("drift-check", Fact: null, Tag: "stale"), Token);
 
         Assert.Equal(1, forgotten.Value);
+        var recorded = Assert.Single(_h.Ledger.Events, static e => e.Envelope.Type == EventTypes.MemoryFactsForgotten);
+        Assert.Equal("service:workflow", recorded.Envelope.Actor);
         Assert.Equal(["Keep this"], _h.Store.AllFacts.Select(static f => f.Text), StringComparer.Ordinal);
     }
 
@@ -91,6 +94,76 @@ public sealed class WorkflowMemoryPortTests
 
         var recalled = await Port().Recall(new MemoryToRecall("nope", "anything", Level: null, Limit: null), Token);
 
-        Assert.True(recalled.IsError);
+        Assert.Equal(SindriErrors.MemoryNotFound.Code, recalled.Error.Code);
+    }
+
+    [Fact]
+    public async Task A_recall_passes_its_limit_through_to_the_search()
+    {
+        await _h.Memory("drift-check");
+        await SeedRun(_first, item: null);
+        var port = Port();
+        _ = await port.Remember(new MemoryToRemember(_first, "drift-check", "Checked api-repo at abc", [], ExpiresIn: null), Token);
+        _ = await port.Remember(new MemoryToRemember(_first, "drift-check", "Checked web-repo at def", ["web"], ExpiresIn: null), Token);
+
+        var all = await port.Recall(new MemoryToRecall("drift-check", "Checked", Level: null, Limit: null), Token);
+        var one = await port.Recall(new MemoryToRecall("drift-check", "Checked", Level: null, Limit: 1), Token);
+
+        Assert.Equal(2, all.Value.Facts.Count);
+        _ = Assert.Single(one.Value.Facts);
+    }
+
+    [Fact]
+    public async Task A_recall_passes_its_level_through_to_the_search()
+    {
+        await _h.Memory("drift-check");
+
+        var recalled = await Port().Recall(new MemoryToRecall("drift-check", "anything", Level: "stricter", Limit: null), Token);
+
+        Assert.Equal(SindriErrors.MemoryMatchLevelInvalid.Code, recalled.Error.Code);
+    }
+
+    [Fact]
+    public async Task A_run_that_cannot_be_read_still_gets_its_fact_written_with_a_warning()
+    {
+        await _h.Memory("drift-check");
+
+        var written = await Port().Remember(new MemoryToRemember(_first, "drift-check", "Checked api-repo at abc123", [], ExpiresIn: null), Token);
+
+        Assert.True(written.IsSuccess, written.IsError ? written.Error.ToString() : null);
+        Assert.Equal("added", written.Value.Action);
+        Assert.Contains(_first.Value, written.Value.Warning, StringComparison.Ordinal);
+        var stored = Assert.Single(_h.Store.AllFacts);
+        Assert.Null(stored.Provenance.Item);
+    }
+
+    [Fact]
+    public async Task A_run_that_is_read_leaves_no_warning()
+    {
+        await _h.Memory("drift-check");
+        await SeedRun(_first, ItemId.From("ITM-00000000000000000000000000000001"));
+
+        var written = await Port().Remember(new MemoryToRemember(_first, "drift-check", "Checked api-repo at abc123", [], ExpiresIn: null), Token);
+
+        Assert.Null(written.Value.Warning);
+    }
+
+    [Fact]
+    public async Task The_graph_port_resolved_from_the_real_registration_writes_and_recalls_as_the_workflow_service()
+    {
+        await _h.Memory("drift-check");
+        await SeedRun(_first, item: null);
+        var services = new ServiceCollection().AddMemorySlices()
+            .AddSingleton(_h.Search()).AddSingleton(_h.Write()).AddSingleton(_h.Forget())
+            .AddSingleton(_h.Callers).AddSingleton<IWorkflowRunStore>(_runs).AddSingleton<TimeProvider>(_h.Clock);
+        await using var provider = services.BuildServiceProvider();
+        var port = provider.GetRequiredService<IGraphMemoryPort>();
+
+        var written = await port.Remember(new MemoryToRemember(_first, "drift-check", "Checked api-repo at abc123", [], ExpiresIn: null), Token);
+        var recalled = await port.Recall(new MemoryToRecall("drift-check", "Checked api-repo", Level: null, Limit: null), Token);
+
+        Assert.True(written.IsSuccess, written.IsError ? written.Error.ToString() : null);
+        Assert.Equal(["Checked api-repo at abc123"], recalled.Value.Facts);
+        Assert.Contains("service:workflow", Assert.Single(_h.Store.AllFacts).WrittenBy, StringComparison.Ordinal);
     }
 }
