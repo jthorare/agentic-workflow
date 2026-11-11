@@ -139,7 +139,7 @@ public sealed class ShellWindowTests : IDisposable
     // §14.2: every text is a step of the type ramp, so the Text size preference reaches all of it. At scale 1.3 each
     // visible TextBlock's size is a ramp size × 1.3 (a literal size, or one Fluent's own default sets, stays put). The
     // scale is applied, checked and reset without yielding the UI thread, so no other test sees it.
-    private static readonly double[] _ramp = [24, 20, 15, 13, 12, 11];   // PageTitle, DetailTitle, SectionTitle, Body, Caption/Mono, Eyebrow/Kbd (#2546)
+    private static readonly double[] _ramp = [40, 24, 20, 15, 13, 12, 11];   // Display, PageTitle, DetailTitle, SectionTitle, Body, Caption/Mono, Eyebrow/Kbd (#2546, #2779)
 
     private static void EveryTextIsOnTheRampAt130(Window window)
     {
@@ -1286,7 +1286,8 @@ public sealed class ShellWindowTests : IDisposable
         Settle(window);
 
         // I5 (services-health.html HEALTH): label/value rows at Body size under section heads that carry the state's
-        // glyph and word; no display-size values and no badge repeating the pill.
+        // glyph and word; no badge repeating the pill. #2779: the health word is the page's one display number, and the
+        // card titles are section titles; every other text is Body size or smaller.
         List<string?> Rows(string name) => [.. Named<ItemsControl>(window, name).GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)];
         Assert.Equal(["pid · epoch", "4242 · 7", "Host lease", "held · expires " + A.Noon.AddSeconds(60).ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture), "API", "127.0.0.1:7410"], Rows("ProcessRows"));
         Assert.Equal((StateGlyph.Ok, Labels.Running), (Glyph(window, "ProcessGlyph"), Text(window, "ProcessWord")));
@@ -1295,7 +1296,9 @@ public sealed class ShellWindowTests : IDisposable
         HealthHeadsAndPathsAreAligned(window);
         Assert.False(Visible(window, "HeadlineText"));
         var page = Named<Control>(window, "HealthPage");
-        Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.FontSize > 13 && !t.Classes.Contains("page-title"));
+        Assert.Equal(["HeadlineWord"], page.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible && t.Classes.Contains("display")).Select(t => t.Name));
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.FontSize > 13
+            && !t.Classes.Contains("page-title") && !t.Classes.Contains("display") && !t.Classes.Contains("section-title"));
         Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "last run " + DateTimeOffset.Parse("2026-01-01T00:00:55Z", CultureInfo.InvariantCulture).ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture));   // the Services card reads the services view
         EveryControlIsNamed(window);
         Frame(window, "health");
