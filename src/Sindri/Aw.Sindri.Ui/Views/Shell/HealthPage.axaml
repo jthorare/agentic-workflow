@@ -28,15 +28,26 @@
     <Style Selector="RadioButton.segment:checked /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
     </Style>
-    <!-- The headline: one card; the border takes the tone (amber: something needs a look, red: stalled or not running). -->
+    <!-- The headline: one card, its text Space.LG in like every card under it. A toned headline (and the stale line) is a tinted
+         fill with a 1 px edge in the tone (amber: something needs a look, red: stalled or not running); Padding 23 + the edge keeps
+         the text at 24. Panels have no border (ShellStyles Border.panel), so the edge is set here, never left to the brush alone. -->
+    <Style Selector="Border.headline">
+      <Setter Property="Padding" Value="{StaticResource Space.LG.Thickness}" />
+    </Style>
     <Style Selector="Border.headline.warn">
+      <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="23" />
     </Style>
     <Style Selector="TextBlock.warn">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
     </Style>
     <Style Selector="Border.headline.bad">
+      <Setter Property="Background" Value="{DynamicResource Brush.ErrorSoft}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Error}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="23" />
     </Style>
   </UserControl.Styles>
 

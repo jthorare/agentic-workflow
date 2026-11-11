@@ -233,26 +233,25 @@
     <Setter Property="Padding" Value="12,8" />
   </Style>
 
-  <!-- Panels (home.html .panel): Surface1 with a hairline; a header row (.phead, 36 px, the eyebrow over a hairline) and
-       a body on the spacing scale. -->
+  <!-- Panels (home.html .panel): a Surface1 step over Canvas and no outer border (inspora note §3 Surfaces: the surface step groups,
+       hairlines only divide inside a card); a header row (.phead, 36 px, the eyebrow over a hairline) and a body inset Space.LG 24. -->
   <Style Selector="Border.panel">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.LG}" />
   </Style>
   <Style Selector="Border.phead">
     <Setter Property="MinHeight" Value="{StaticResource Size.PanelHeader}" />
-    <Setter Property="Padding" Value="16,0" />
+    <Setter Property="Padding" Value="24,0" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
   </Style>
   <Style Selector="Border.phead > TextBlock">
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
-  <!-- The Health page's sections: 16 px insets, a hairline between them; label/value rows 28 px apart. -->
+  <!-- The Health page's sections: Space.LG 24 insets, a hairline between them; label/value rows 28 px apart. -->
   <Style Selector="Border.section">
-    <Setter Property="Padding" Value="{StaticResource Space.MD.Thickness}" />
+    <Setter Property="Padding" Value="{StaticResource Space.LG.Thickness}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
   </Style>
