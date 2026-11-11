@@ -3,10 +3,17 @@ using Aw.Sindri.Infrastructure.Workflow.Code;
 
 namespace Aw.Sindri.Tests.Workflow.Code;
 
-/// <summary>The Code block's compile step (agent-first PR 9c): Roslyn over a fixed reference set, errors in the body's own line and column. No process is started.</summary>
+/// <summary>The Code block's compile step (agent-first PR 9c): Roslyn over a fixed reference set, errors in the body's own line and column. No process is started. <see cref="RoslynWarmup"/> pays Roslyn's first compile outside every fact (#2822).</summary>
 [Lane(TestLane.Unit)]
-public sealed class CodeCompilerTests
+public sealed class CodeCompilerTests : IClassFixture<RoslynWarmup>
 {
+    /// <summary>Takes the warm-up so xUnit builds it before the first fact; the fixture's work is done in its constructor.</summary>
+    /// <param name="warmup">The warm-up, already run.</param>
+    public CodeCompilerTests(RoslynWarmup warmup)
+    {
+        ArgumentNullException.ThrowIfNull(warmup);
+    }
+
     [Fact]
     public void A_body_with_a_typo_returns_a_diagnostic_with_line_and_column()
     {
