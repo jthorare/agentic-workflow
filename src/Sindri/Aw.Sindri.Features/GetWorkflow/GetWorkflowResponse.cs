@@ -17,6 +17,7 @@ namespace Aw.Sindri.Features.GetWorkflow;
 /// <param name="SpecHash">The shown revision's hash.</param>
 /// <param name="Spec">The shown revision's graph, the stored document; GraphJson.Parse reads it back.</param>
 /// <param name="Positions">Where each node of the graph is drawn.</param>
+/// <param name="Summaries">The line each node shows on the canvas, one per node, built from its config.</param>
 internal sealed record GetWorkflowResponse(
     WorkflowId Id,
     WorkflowSlug Slug,
@@ -30,4 +31,5 @@ internal sealed record GetWorkflowResponse(
     DateTimeOffset ChangedAt,
     string SpecHash,
     JsonNode Spec,
-    IReadOnlyList<NodePosition> Positions);
+    IReadOnlyList<NodePosition> Positions,
+    IReadOnlyList<NodeSummary>? Summaries = null);

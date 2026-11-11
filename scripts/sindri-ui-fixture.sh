@@ -151,8 +151,8 @@
 #                                  control plane when it is running. Needs jq and sqlite3 or python3.
 #
 #   sindri-ui-fixture.sh sessions up|ask <pid>|end <pid>|back <pid>|disable|enable|down
-#                                  the Agents page's data (U11a; run after 'up', and run 'sessions up' right after every 'up': a
-#                                  control plane started without it reads the real box). up copies tests/fixtures/sessions/
+#                                  the Agents page's data (U11a; run after 'up'. Without it the control plane reads an empty
+#                                  tree, <home>/ui-fixture-no-sessions/, so the Agents page shows no session). up copies tests/fixtures/sessions/
 #                                  (the /proc-shaped tree and the Claude records) to <home>/ui-fixture-sessions/ with cp -a,
 #                                  makes its fleet/ (0700, with the .aw-fleet marker), writes a bare launcher.json there and
 #                                  restarts the control plane (stop, then --headless) with AW_SESSIONS_PROC_ROOT,
@@ -163,7 +163,7 @@
 #                                  from its stat; end moves proc/<pid>/ to <copy>/ended/ and back moves it back (the row
 #                                  leaves to Recently ended after two passes); disable and enable set sessions.enabled in
 #                                  the copy's launcher.json and restart (SND-SESSION-002); down stops the control plane and
-#                                  removes the copy. Every restart re-exports the four variables while the copy exists, and
+#                                  removes the copy. Every start exports the four variables (the copy while it exists, else the empty tree), and
 #                                  down never restarts. Needs jq.
 #
 #   sindri-ui-fixture.sh model-calls fell-back|no-answer|paused|none
@@ -266,8 +266,8 @@ services:
 api: { port: 0 }
 YAML
   approve || return
-  # The fleet hook's state files are the box's real sessions: an empty directory in the temp home keeps the Agents shots repeatable.
-  mkdir -p "$AW_SINDRI_HOME/ui-fixture-fleet" && export AW_FLEET_DIR="$AW_SINDRI_HOME/ui-fixture-fleet"
+  # The collector reads the box's real /proc, ~/.claude/sessions, fleet and launcher.json unless all four overrides point into the home.
+  sessions_export || return
   "$PROVE" human --headless
 }
 
@@ -1215,12 +1215,25 @@ context_sources() {
 }
 
 SESSIONS_DIRNAME="ui-fixture-sessions"
+NO_SESSIONS_DIRNAME="ui-fixture-no-sessions"
 sessions_dir() { printf '%s\n' "$AW_SINDRI_HOME/$SESSIONS_DIRNAME"; }
 
-# The collector's overrides, pointed at the copy. AW_LAUNCHER_CONFIG keeps the owner's launcher.json (under $AW_STATE_DIR) out too.
+# The collector's four overrides, pointed at the copy when 'sessions up' made one, else at an empty tree in the home
+# (no process, no Claude record, an empty fleet, a bare launcher.json), so no control-plane start reads the real box.
+# AW_LAUNCHER_CONFIG keeps the owner's launcher.json (under $AW_STATE_DIR) out too.
 sessions_export() {
   local d
   d="$(sessions_dir)"
+  if [ ! -d "$d/proc" ]; then
+    d="$AW_SINDRI_HOME/$NO_SESSIONS_DIRNAME"
+    mkdir -p "$d/proc/2" "$d/claude-sessions" && { [ -d "$d/fleet" ] || mkdir -m 700 "$d/fleet"; } && : > "$d/fleet/.aw-fleet" \
+      || die "can't make the empty sessions tree at $d"
+    # One plain shell of this uid and no agent: a table with no process of ours reads as SND-SESSION-002 proc-unreadable.
+    printf 'Name:\tbash\nPid:\t2\nPPid:\t1\nUid:\t%s\t%s\t%s\t%s\n' "$(id -u)" "$(id -u)" "$(id -u)" "$(id -u)" > "$d/proc/2/status" \
+      && printf '2 (bash) S 1 2 2 0 -1 4194304 0 0 0 0 0 0 0 0 20 0 1 0 100%s\n' "$(printf ' 0%.0s' {1..32})" > "$d/proc/2/stat" \
+      && printf 'bash\0' > "$d/proc/2/cmdline" && : > "$d/proc/2/environ" || die "can't write the shell under $d/proc/2"
+    [ -f "$d/launcher.json" ] || printf '{"schema":1}\n' > "$d/launcher.json" || die "can't write $d/launcher.json"
+  fi
   export AW_SESSIONS_PROC_ROOT="$d/proc" AW_SESSIONS_CLAUDE_DIR="$d/claude-sessions" AW_FLEET_DIR="$d/fleet" AW_LAUNCHER_CONFIG="$d/launcher.json"
   # 'sandbox blocked|clear' keeps AW_SANDBOX_BWRAP across restarts.
   if [ -s "$(sandbox_dir)/bwrap" ]; then export AW_SANDBOX_BWRAP="$(cat "$(sandbox_dir)/bwrap")"; else unset AW_SANDBOX_BWRAP; fi
@@ -1315,7 +1328,7 @@ sessions_toggle() {
   sessions_restart
 }
 
-# Stops the control plane and removes the copy. It does not restart: a later 'up' without 'sessions up' would read the real box.
+# Stops the control plane and removes the copy. It does not restart: a later start reads the empty tree, never the real box.
 sessions_down() {
   "$PROVE" human stop >/dev/null 2>&1 || true
   sessions_remove "$(sessions_dir)"

@@ -151,6 +151,24 @@ AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1; check "up
 contains "up writes a profile with a heartbeat" "$(cat "$U/profile/profile.yaml")" "heartbeat: { every: 5s }"
 check "up validates the profile (no approval: edits apply on save), then starts headless" "$(tr '\n' ';' < "$STUB_LOG")" \
   "profile validate --json;--headless;"
+# #2863: without `sessions up`, the control plane reads an empty tree in the temp home, never the box's /proc,
+# ~/.claude/sessions or $AW_STATE_DIR/launcher.json (all four collector overrides set, each under the home).
+E="$U/ui-fixture-no-sessions"
+check "up starts the control plane with the four overrides on an empty tree" "$(tail -1 "$STUB_LOG.env")" \
+  "headless proc=$E/proc claude=$E/claude-sessions fleet=$E/fleet launcher=$E/launcher.json"
+check "the empty tree has no Claude record" "$(ls -A "$E/claude-sessions" 2>&1)" ""
+# A table with no process of ours reads as SND-SESSION-002 proc-unreadable, so the tree holds one plain shell and no agent.
+check "the empty tree's only process is one shell" "$(ls -A "$E/proc" 2>&1 | tr '\n' ';')" "2;"
+check "the shell is bash" "$(cut -d' ' -f2 "$E/proc/2/stat" 2>&1)" "(bash)"
+check "the shell is this uid's" "$(awk '/^Uid:/ {print $2}' "$E/proc/2/status" 2>&1)" "$(id -u)"
+check "the shell's stat has the fields the collector reads" "$([ "$(wc -w < "$E/proc/2/stat" 2>/dev/null || echo 0)" -ge 22 ] && echo yes || echo no)" "yes"
+check "the empty launcher.json names only the schema" "$(cat "$E/launcher.json" 2>&1)" '{"schema":1}'
+printf '{"url":"http://127.0.0.1:7999"}\n' > "$U/control.json"
+AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" reviews down >/dev/null 2>&1
+check "a restart without sessions up keeps the four overrides on the empty tree" "$(tail -1 "$STUB_LOG.env")" \
+  "headless proc=$E/proc claude=$E/claude-sessions fleet=$E/fleet launcher=$E/launcher.json"
+rm -f "$U/control.json"
+: > "$STUB_LOG"
 AW_SINDRI_HOME="$U" bash "$FIXTURE" drift >/dev/null 2>&1; check "drift exits 0" "$?" "0"
 contains "drift changes the cadence" "$(cat "$U/profile/profile.yaml")" "every: 7s"
 AW_SINDRI_HOME="$U" bash "$FIXTURE" drift >/dev/null 2>&1

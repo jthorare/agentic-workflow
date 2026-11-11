@@ -26,6 +26,7 @@ internal sealed partial class Projector(
     private string? _problem;
     private long _seenHead;
     private bool _healing;
+    private long? _recordedResetThrough;
     private ViewsStatus _last = new(0, 0, ProjectedAt: null, Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null, Starting: true);
 
     /// <summary>The ledger head the last pass saw; the host waits for an append past it.</summary>
@@ -79,13 +80,21 @@ internal sealed partial class Projector(
         }
 
         var state = opened.Value;
-        var recorded = await ledger.Latest(EventTypes.ViewsRebuilt, ct).ConfigureAwait(false);   // an accepted rebuild is in the ledger even when serve died before its reset (#2054)
+        var recorded = await RecordedThrough(ct).ConfigureAwait(false);
         if (recorded.IsError)
         {
             return recorded.Error;
         }
 
-        var through = recorded.Value?.Sequence ?? 0;
+        var through = recorded.Value;
+        if (requested && _recordedResetThrough == through)
+        {
+            // #2861: the pass the views.rebuilt append woke already reset for this record, so its request is taken without a second reset. A request with no new record (through unchanged since a non-recorded reset) still rebuilds.
+            _ = feed.TakeRebuildRequest();
+            _recordedResetThrough = null;
+            return state;
+        }
+
         var reason = requested ? "requested" : RebuildReason(state, through);
         if (reason is null)
         {
@@ -101,6 +110,12 @@ internal sealed partial class Projector(
         return reset;
     }
 
+    private async ValueTask<Kernel.Result<long>> RecordedThrough(CancellationToken ct)
+    {
+        var recorded = await ledger.Latest(EventTypes.ViewsRebuilt, ct).ConfigureAwait(false);   // an accepted rebuild is in the ledger even when serve died before its reset (#2054)
+        return recorded.IsError ? recorded.Error : recorded.Value?.Sequence ?? 0;
+    }
+
     private string? RebuildReason(ProjectorState state, long through) =>
         state.RebuiltThrough is { } done && through > done ? "recorded rebuild" : _healing ? "unreadable rows" : state.Fresh ? "views.db created" : state.SchemaVersion != ViewSchema.Version ? "schema version changed" : state.RebuiltThrough is null ? "no rebuild record" : null;
 
@@ -113,6 +128,7 @@ internal sealed partial class Projector(
         {
             _stalledSince = null;
             _healing = false;
+            _recordedResetThrough = string.Equals(reason, "recorded rebuild", StringComparison.Ordinal) ? through : null;
         }
 
         return reset;

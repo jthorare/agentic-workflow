@@ -21,7 +21,7 @@ public sealed class WatchGithubQueueTests
         _world.Values,
         _world.Delay,
         _world.Clock,
-        _world.Monitor,
+        new LaneReport(_world.Monitor, _world.Values),
         _world.Board);
 
     // PR 190 was handed to the queue; the poll lists it in `state`, the queue read answers `queue` (or fails), and a state read after

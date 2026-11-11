@@ -23,7 +23,7 @@ public sealed class WatchUsageTests
             w.Values,
             w.Delay,
             w.Clock,
-            _u.Monitor,
+            new LaneReport(_u.Monitor, _u.World.Values),
             w.Board);
     }
 
