@@ -237,6 +237,28 @@ public sealed class WorkflowsFramesTests : FrameHost
         Frame(window, "run-light-1440", Prefix);
     });
 
+    // #2807: the runs level binds the Activate and Pause commands the view model already has.
+    [Fact]
+    public Task Activate_and_Pause_buttons_are_bound_on_the_runs_level() => OnUi(async () =>
+    {
+        const string off = "weekly-report";
+        var (window, shell) = await OnWorkflows(1280);
+        Server.WorkflowRunsAnswers[off] = RouteAnswer.Api("workflows-slug-runs", "list-three");
+
+        await shell.Workflows.OpenWorkflow(off, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Runs.Rows.Count > 0, "the runs never showed");
+        var activate = Named<Button>(window, "WorkflowActivate");
+        Assert.True(activate.IsEffectivelyVisible, "Activate is not visible on an off workflow");
+        Assert.False(Visible(window, "WorkflowPause"));
+        Click(activate);
+        await Until(window, () => Server.ActivatedWorkflows.Count > 0, "Activate never sent its call");
+        Assert.Equal([off], Server.ActivatedWorkflows);
+
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await Until(window, () => shell.Workflows.CanPause, "the active workflow never offered Pause");
+        Assert.True(Named<Button>(window, "WorkflowPause").IsEffectivelyVisible, "Pause is not visible on an active workflow");
+    });
+
     // A level opens on its Back button, and Back lands on the first row of the level it returns to, never on the hidden Back button.
     [Fact]
     public Task Focus_goes_to_Back_when_a_level_opens_and_to_the_first_row_when_Back_returns() => OnUi(async () =>
