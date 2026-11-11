@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -165,7 +166,7 @@ public sealed class QueueFocusTests : IDisposable
     // The queue served with one queued item moved to the running group (its row is rebuilt in the other group).
     private static RouteAnswer Moved(string id)
     {
-        var view = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.SpecShaped("queue", "fixture"))!.AsObject();
+        var view = JsonNode.Parse(GoldenFiles.SpecShaped("queue", "fixture"))!.AsObject();
         var groups = view["groups"]!.AsArray();
         var queued = groups.First(g => g!["group"]!.GetValue<string>() == "queued")!["items"]!.AsArray();
         var running = groups.First(g => g!["group"]!.GetValue<string>() == "running")!["items"]!.AsArray();
@@ -225,7 +226,7 @@ public sealed class QueueFocusTests : IDisposable
         var queued = shell.Queue.QueuedRows.Select(r => r.Id).ToList();
         var next = queued[queued.IndexOf(gone) + 1];
 
-        var view = System.Text.Json.Nodes.JsonNode.Parse(GoldenFiles.SpecShaped("queue", "fixture"))!;
+        var view = JsonNode.Parse(GoldenFiles.SpecShaped("queue", "fixture"))!;
         foreach (var group in view["groups"]!.AsArray())
         {
             var items = group!["items"]!.AsArray();
@@ -315,6 +316,10 @@ public sealed class QueueFocusTests : IDisposable
     [Fact]
     public Task J_on_home_focuses_the_compact_rows_it_draws() => OnUi(async () =>
     {
+        // The "empty" golden carries the setup:mcp row since the profile applies on save (fd26e2052d); J walks Needs you first, so serve no rows at all.
+        var noRows = JsonNode.Parse(GoldenFiles.Api("needs-you", "empty"))!;
+        noRows["rows"] = new JsonArray();
+        _server.NeedsYouView = new RouteAnswer(System.Net.HttpStatusCode.OK, noRows.ToJsonString());
         var (window, shell) = await Connected();
         Settle(window);
 

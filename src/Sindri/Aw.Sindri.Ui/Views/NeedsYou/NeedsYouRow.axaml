@@ -8,7 +8,7 @@
        age, then the reason and repo, then the row's controls. The tint is the urgency (R8-13): an unseen pulse row pulses (a
        steady outline and the word "new" under reduced motion), a failure keeps a steady tint, a calm row a subtle one. The row
        draws its own focus border (item-row), not the adorner. -->
-  <Border x:Name="RowFrame" Classes="item-row needs-you-row" Classes.selected="{Binding IsSelected}" Classes.pulsing="{Binding IsPulsing}" Classes.steady="{Binding IsSteady}" Classes.subtle="{Binding IsSubtle}" Classes.slides-in="{Binding SlidesIn}"
+  <Border x:Name="RowFrame" Classes="item-row needs-you-row clickable" Classes.selected="{Binding IsSelected}" Classes.pulsing="{Binding IsPulsing}" Classes.steady="{Binding IsSteady}" Classes.subtle="{Binding IsSubtle}" Classes.slides-in="{Binding SlidesIn}"
           Classes.outlined="{Binding HasOutline}" Classes.stale="{Binding IsStale}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <StackPanel Spacing="2">
@@ -30,7 +30,7 @@
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="ny:NeedsYouActionControl">
-              <StackPanel Orientation="Horizontal" Spacing="6" Margin="8,0,0,0">
+              <StackPanel Orientation="Horizontal" Spacing="8" Margin="8,0,0,0">
                 <Button Classes="command-control" Classes.primary="{Binding IsPrimary}" IsEnabled="{Binding IsEnabled}" Content="{Binding Action.Label}"
                         Click="OnAction" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" AutomationProperties.HelpText="{Binding Tooltip}" AutomationProperties.Name="{Binding Name}" />
               </StackPanel>

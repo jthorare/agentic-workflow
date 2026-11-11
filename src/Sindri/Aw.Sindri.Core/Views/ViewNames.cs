@@ -36,9 +36,6 @@ public static class ViewNames
     /// <summary>The newest built code index per repo (code index spec §8), folded from 'codeindex.built'.</summary>
     public const string CodeIndex = "code-index";
 
-    /// <summary>The recipe stats cache, keyed '&lt;recipe&gt;/&lt;window&gt;/&lt;hash or -&gt;' (API P12): a read-through the stats reads fill and a run's start or end empties.</summary>
-    public const string RecipeStats = "recipe-stats";
-
     /// <summary>How each model has done at each state of each recipe version (model-pick spec §7.2), keyed by ModelHistoryKeys.For.</summary>
     public const string ModelHistory = "model-history";
 
@@ -51,9 +48,15 @@ public static class ViewNames
     /// <summary>Whether a led Linear project is hidden, keyed by its Linear key (projects page spec §5.2).</summary>
     public const string ProjectHidden = "project-hidden";
 
+    /// <summary>Graph runs, keyed by run id (issue 2258, PR 6), folded from the six 'workflow.run.*' and 'workflow.node.*' events.</summary>
+    public const string WorkflowRuns = "workflow-runs";
+
     /// <summary>The owner's todos (todo spec §4.2): a row per todo, keyed by its id.</summary>
     public const string Todo = "todo";
 
+    /// <summary>What each item is linked to (a tracker issue, a pull request, a graph run), keyed '&lt;item&gt;/&lt;kind&gt;/&lt;record&gt;'.</summary>
+    public const string ItemLinks = "item-links";
+
     /// <summary>Every view that has a table.</summary>
-    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, RecipeStats, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, Todo];
+    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden, WorkflowRuns, ItemLinks, Todo];
 }

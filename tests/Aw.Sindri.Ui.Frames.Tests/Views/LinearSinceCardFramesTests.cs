@@ -1,0 +1,197 @@
+using System.Text.Json.Nodes;
+using Avalonia;
+using Avalonia.Automation;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.VisualTree;
+using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Views;
+
+namespace Aw.Sindri.Ui.Frames.Tests.Views;
+
+/// <summary>The Work > Linear "Since you last looked" card in the window at 900 px (#2536): the card header with its one action, grouped rows with a long title that trims, and the empty and error states.</summary>
+[Lane(TestLane.Integration)]
+public sealed class LinearSinceCardFramesTests : FrameHost
+{
+    private static string LongTitle => "Retry budget for the sync worker: cap the retries at five per hour, log each one, and stop paging the owner at night";
+
+    private static readonly string[] _chipSlots = ["LinearSinceRowState", "LinearSinceRowPriority", "LinearSinceRowProject"];
+
+    private async Task<(Ui.Views.Shell.ShellWindow Window, ViewModels.Shell.ShellViewModel Shell)> OnLinear(string? since = null, double width = 900)
+    {
+        if (since is not null)
+        {
+            Server.LinearSinceAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, since);
+        }
+
+        var (window, shell) = await Connected(width: width, height: 700);
+        shell.GoTo(PageId.Work);
+        shell.Linear.Choose(linear: true);
+        await Until(window, () => Visible(window, "LinearStrip"), "the card never showed");
+        return (window, shell);
+    }
+
+    private static string ThreeWithALongTitle()
+    {
+        var since = JsonNode.Parse(GoldenFiles.Api("linear-since", "three"))!.AsObject();   // why: the golden is a JSON object
+        foreach (var item in since["items"]!.AsArray())
+        {
+            if (string.Equals(item!["key"]!.GetValue<string>(), "ENG-31", StringComparison.Ordinal))
+            {
+                item["title"] = LongTitle;
+            }
+        }
+
+        return since.ToJsonString();
+    }
+
+    [Fact]
+    public Task The_card_header_carries_the_count_and_one_Mark_all_seen_action_on_its_right() => OnUi(async () =>
+    {
+        var (window, _) = await OnLinear(ThreeWithALongTitle());
+
+        var card = Named<Border>(window, "LinearStrip");
+        var markAll = Named<Button>(window, "LinearStripMarkAllSeen");
+        Assert.Equal("Since you last looked, 2 items", AutomationProperties.GetName(card));
+        Assert.Equal("Mark all seen", markAll.Content);
+        Assert.True(markAll.TranslatePoint(new Point(markAll.Bounds.Width, 0), card)!.Value.X <= card.Bounds.Width, "the action is inside the card");
+        Assert.True(markAll.TranslatePoint(default, card)!.Value.X > card.Bounds.Width / 2, "the action sits at the right");
+        Frame(window, "linear-since-900", "l2536-");
+    });
+
+    [Fact]
+    public Task A_row_keeps_its_time_and_chips_inside_the_card_and_trims_a_long_title_at_900_px() => OnUi(async () =>
+    {
+        var (window, _) = await OnLinear(ThreeWithALongTitle());
+        Settle(window);
+
+        var card = Named<Border>(window, "LinearStrip");
+        var rows = window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "LinearSinceRowFrame").ToList();
+        Assert.Equal(2, rows.Count);
+        foreach (var row in rows)
+        {
+            var right = row.TranslatePoint(new Point(row.Bounds.Width, 0), card)!.Value.X;
+            Assert.True(right <= card.Bounds.Width + 0.5, "a row never runs past the card");
+        }
+
+        var title = window.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "LinearSinceRowTitle" && t.Text == LongTitle);
+        Assert.Equal(TextTrimming.CharacterEllipsis, title.TextTrimming);
+        Assert.True(title.TranslatePoint(new Point(title.Bounds.Width, 0), card)!.Value.X <= card.Bounds.Width, "the title ends inside the card");
+        foreach (var time in window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "LinearSinceRowTime"))
+        {
+            Assert.True(time.IsEffectivelyVisible && time.Bounds.Width > 0, "the time shows on every row");
+        }
+    });
+
+    [Fact]
+    public Task The_state_priority_and_project_chips_of_two_rows_line_up_at_1280_px() => OnUi(async () =>
+    {
+        var (window, _) = await OnLinear(width: 1280);
+        Settle(window);
+
+        var card = Named<Border>(window, "LinearStrip");
+        foreach (var slot in _chipSlots)
+        {
+            var xs = window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == slot && b.IsEffectivelyVisible).Select(b => Math.Round(b.TranslatePoint(default, card)!.Value.X, 1, MidpointRounding.AwayFromZero)).ToList();
+            Assert.True(xs.Count >= 2, slot + " shows on two rows");
+            _ = Assert.Single(xs.Distinct());
+        }
+
+        Frame(window, "linear-since-1280", "l2536-");
+    });
+
+    private static string SixAssignedAndOneMention()
+    {
+        var items = new JsonArray();
+        for (var i = 1; i <= 6; i++)
+        {
+            var n = i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            items.Add(new JsonObject { ["kind"] = "assigned", ["key"] = "ENG-" + n, ["title"] = "Issue " + n, ["actor"] = null, ["at"] = "2025-12-31T23:00:00Z", ["from"] = null, ["to"] = null });
+        }
+
+        items.Add(new JsonObject { ["kind"] = "mentioned", ["key"] = "OPS-40", ["title"] = "Rotate the key", ["actor"] = null, ["at"] = "2025-12-31T22:00:00Z", ["from"] = null, ["to"] = null });
+        return new JsonObject { ["marker"] = "lin_08de48c5e9b68800", ["count"] = 7, ["items"] = items }.ToJsonString();
+    }
+
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(1280)]
+    public Task Every_group_header_is_as_tall_with_the_Show_all_button_as_without(double width) => OnUi(async () =>
+    {
+        var (window, _) = await OnLinear(SixAssignedAndOneMention(), width);
+
+        Assert.True(Visible(window, "LinearSinceGroupToggle"), "a group has the Show all button");
+        var heights = window.GetVisualDescendants().OfType<Border>().Where(b => b.Name == "LinearSinceGroupHeader" && b.IsEffectivelyVisible).Select(b => b.Bounds.Height).ToList();
+        Assert.True(heights.Count >= 2, "a group with the button and one without");
+        _ = Assert.Single(heights.Distinct());
+    });
+
+    [Fact]
+    public Task A_re_read_keeps_keyboard_focus_on_a_Show_fewer_button() => OnUi(async () =>
+    {
+        var (window, shell) = await OnLinear(SixAssignedAndOneMention());
+        var toggle = Named<Button>(window, "LinearSinceGroupToggle");
+        toggle.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+        Assert.Equal("Show fewer", toggle.Content);
+        Assert.True(toggle.Focus());
+        Settle(window);
+
+        var again = JsonNode.Parse(SixAssignedAndOneMention())!.AsObject();   // why: the helper's own JSON object
+        again["items"]!.AsArray()[6]!["at"] = "2025-12-31T22:30:00Z";   // the mention changed: a read with one changed row
+        Server.LinearSinceAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, again.ToJsonString());
+        await shell.Linear.Refresh(new Uri("http://127.0.0.1:7410/"), TestContext.Current.CancellationToken);
+        Settle(window);
+
+        Assert.Same(toggle, Named<Button>(window, "LinearSinceGroupToggle"));
+        Assert.True(toggle.IsFocused);
+    });
+
+    [Fact]
+    public Task Nothing_new_shows_the_empty_message_in_the_card_and_no_action() => OnUi(async () =>
+    {
+        var (window, _) = await OnLinear(GoldenFiles.Api("linear-since", "empty"));
+
+        Assert.True(Visible(window, "LinearSinceNothing"));
+        Assert.False(Visible(window, "LinearStripMarkAllSeen"));
+        Frame(window, "linear-since-empty-900", "l2536-");
+    });
+
+    [Fact]
+    public Task A_refused_key_shows_the_reason_and_one_Reconnect_button() => OnUi(async () =>
+    {
+        var mine = JsonNode.Parse(GoldenFiles.Api("linear-issues", "mine"))!.AsObject();   // why: the golden is a JSON object
+        mine["feed"] = new JsonObject { ["state"] = "failing", ["lastSyncedAt"] = "2025-12-31T22:05:00.0000000Z", ["code"] = "SND-CONTEXT-071", ["reread"] = null };
+        Server.LinearIssuesAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, mine.ToJsonString());
+        var (window, _) = await OnLinear();
+
+        Assert.True(Visible(window, "LinearStripReason"));
+        Assert.Equal("Reconnect", Named<Button>(window, "LinearStripReconnect").Content);
+        Assert.True(Visible(window, "LinearStripGroups"));   // the stored changes stay under the reason
+        Frame(window, "linear-since-error-900", "l2536-");
+    });
+
+    [Fact]
+    public Task Not_connected_is_one_card_as_wide_as_the_page_and_New_issue_is_disabled() => OnUi(async () =>
+    {
+        Server.LinearIssuesAnswer = RouteAnswer.Api("linear-issues", "not-connected");
+        var (window, _) = await OnLinearConnect();
+
+        var card = Named<Border>(window, "LinearConnect");
+        var page = Named<StackPanel>(window, "LinearFilterBar").GetVisualAncestors().OfType<StackPanel>().First();
+        Assert.True(card.Bounds.Width >= page.Bounds.Width - 1, "the card runs the page's width");
+        Assert.False(Named<Button>(window, "CreateButton").IsEnabled);
+        Frame(window, "linear-not-connected-900", "l2536-");
+    });
+
+    private async Task<(Ui.Views.Shell.ShellWindow Window, ViewModels.Shell.ShellViewModel Shell)> OnLinearConnect()
+    {
+        var (window, shell) = await Connected(width: 900, height: 700);
+        shell.GoTo(PageId.Work);
+        shell.Linear.Choose(linear: true);
+        await Until(window, () => Visible(window, "LinearConnect"), "the connect card never showed");
+        return (window, shell);
+    }
+}

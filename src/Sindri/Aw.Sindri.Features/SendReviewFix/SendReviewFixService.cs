@@ -11,7 +11,7 @@ namespace Aw.Sindri.Features.SendReviewFix;
 /// <summary>
 /// Sends a finding as a fix task (PR review page spec §8.2). In order: the PR is checked (<see cref="FixTargets"/>); the item is made in Work (a retry reuses it); the finding is posted as a thread when the PR is
 /// the owner's or an agent's (a failure is the half-done answer, never an error); the lane is found; the fix-task file of the head gets the item (a retry writes it again, once; a write that fails is a note on the answer, never an error); 'review.fix-sent' is recorded.
-/// The owner's own action: a launched session is refused (SND-AUTH-002).
+/// The owner or an agent session may send it (agent-first PR 2); only a missing caller is refused (SND-AUTH-002).
 /// </summary>
 /// <param name="callers">The caller.</param>
 /// <param name="targets">Checks the PR.</param>
@@ -26,9 +26,9 @@ internal sealed class SendReviewFixService(ICallerContextAccessor callers, FixTa
     public async ValueTask<Result<SendReviewFixResponse>> Handle(SendReviewFixRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (callers.Current is not { } caller || caller.Class == CallerClass.Session)
+        if (callers.Current is not { } caller)
         {
-            return SindriErrors.AuthRefused.With("sending a fix task is the owner's; a session can't (fix: use the Send button on the review page)");
+            return SindriErrors.AuthRefused.With("sending a fix task needs a caller");
         }
 
         var resolved = await targets.Resolve(request, cancellationToken).ConfigureAwait(false);
@@ -46,7 +46,7 @@ internal sealed class SendReviewFixService(ICallerContextAccessor callers, FixTa
 
         var item = made.Value;
         var posted = target.PostsThread ? await poster.Post(FixItemText.Review(request, target.Link, item.Value), item.Value, request.Number, cancellationToken).ConfigureAwait(false) : FixPosted.Skipped;
-        var (went, session) = await route.Find(target.Link, target.HeadRepo, target.Branch, cancellationToken).ConfigureAwait(false);
+        var (went, session) = await route.Find(target.HeadRepo, target.Branch, cancellationToken).ConfigureAwait(false);
         string? fileError = null;
         if (Head(target) is { } head && (await files.Add(head, item, request.Number, cancellationToken).ConfigureAwait(false)) is { IsError: true } filed)
         {

@@ -39,7 +39,7 @@ public sealed class SendReviewFixServiceTests
         _pull.Files = [new PullFile("src/Sync.cs", PreviousPath: null, PullFileStatus.Modified, 3, 0, "@@ -40,0 +41,3 @@\n+a\n+b\n+c")];
         var facts = new FakeReviewFacts().With(new ReviewFactsSnapshot([Pull()], Github: null, new ReviewLibraryFacts(Reading: false, Docs: 0, WithErrors: 0, [])));
         var targets = new FixTargets(_h.Profiles, new Repos(), facts, _forge, NullLogger<FixTargets>.Instance);
-        _service = new SendReviewFixService(_h.Callers, targets, _items, new FixThreadPoster(_forge), new FixRoute(new Babysitters(), new Sessions()), _flaky, new FixSentRecorder(_h.Held, _h.Store, _h.Events));
+        _service = new SendReviewFixService(_h.Callers, targets, _items, new FixThreadPoster(_forge), new FixRoute(new Sessions()), _flaky, new FixSentRecorder(_h.Held, _h.Store, _h.Events));
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -125,11 +125,6 @@ public sealed class SendReviewFixServiceTests
         private static readonly string[] _synced = ["acme/api"];
 
         public ValueTask<Result<IReadOnlyList<string>>> Synced(CancellationToken cancellationToken) => ValueTask.FromResult<Result<IReadOnlyList<string>>>(_synced);
-    }
-
-    private sealed class Babysitters : IFixBabysitters
-    {
-        public ValueTask<bool> Watching(string link, CancellationToken cancellationToken) => ValueTask.FromResult(false);
     }
 
     private sealed class Sessions : IFixSessions

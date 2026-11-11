@@ -80,6 +80,9 @@ internal sealed partial class FakeSindriApi : ISindriApi
 
     private readonly List<long> _cursors = [];
 
+    /// <summary>When set, each event stream waits for this task before it records its cursor and opens, so a test can make a stream open late. Null opens at once.</summary>
+    public Func<Task>? BeforeStreamOpens { get; set; }
+
     /// <summary>Appends an event to the ledger and sends it to every open stream.</summary>
     /// <param name="events">The events.</param>
     public void Push(params EventView[] events)
@@ -166,6 +169,11 @@ internal sealed partial class FakeSindriApi : ISindriApi
 
     public async IAsyncEnumerable<EventView> Events(Uri api, long after, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        if (BeforeStreamOpens is { } gate)
+        {
+            await gate().WaitAsync(cancellationToken);
+        }
+
         if (Down || StreamsEndAtOnce || Refusal is not null)
         {
             lock (_gate)

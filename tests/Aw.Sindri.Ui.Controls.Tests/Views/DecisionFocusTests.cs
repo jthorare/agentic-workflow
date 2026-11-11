@@ -17,7 +17,7 @@ namespace Aw.Sindri.Ui.Controls.Tests.Views;
 [Collection(HeadlessWindows.Name)]
 public sealed class DecisionFocusTests : FrameHost
 {
-    private const string Pending = "DEC-00000000000000000000000000000012";
+    private const string Pending = "DEC-00000000000000000000000000000009";
 
     private async Task<(Window Window, ShellViewModel Shell)> WithDecisionOpen(double width = 1400)
     {

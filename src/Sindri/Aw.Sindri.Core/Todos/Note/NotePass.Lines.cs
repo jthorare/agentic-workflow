@@ -15,11 +15,12 @@ internal sealed partial class NotePass
         }
 
         _ = _sindri.TryGetValue(id, out var todo);
-        if (line.Break != NoteBreak.None)
+        var broken = BreakOf(line);
+        if (broken != NoteBreak.None)
         {
             if (todo is not null || _base.ContainsKey(id))
             {
-                AddSlot(id, [new NoteLineBlocked(id, line.Number, NoteBreakReasons.Of(line.Break))], candidate: null, OldBaseLine(id));
+                AddSlot(id, [new NoteLineBlocked(id, line.Number, NoteBreakReasons.Of(broken))], candidate: null, OldBaseLine(id));
             }
 
             return;
@@ -58,7 +59,7 @@ internal sealed partial class NotePass
 
     private void NewLine(NoteTodoLine line)
     {
-        if (line.Break != NoteBreak.None || !TryAdopt())
+        if (BreakOf(line) != NoteBreak.None || !TryAdopt())
         {
             return;
         }

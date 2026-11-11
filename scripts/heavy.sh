@@ -37,7 +37,15 @@ case $MIN_FREE_MB in ""|*[!0-9]*) MIN_FREE_MB=10240 ;; esac
 # Slot k (k >= 2) needs MIN_FREE_MB + (k-2) * STEP_MB available (owner, 2026-10-15: slot 3 needs 14 GB by default).
 STEP_MB="${AW_HEAVY_MIN_FREE_STEP_MB:-4096}"
 case $STEP_MB in ""|*[!0-9]*) STEP_MB=4096 ;; esac
-mem_ok() { local kb need; need=$((MIN_FREE_MB + (${1:-2} - 2) * STEP_MB)); kb="$(awk '/^MemAvailable:/ {print $2; exit}' /proc/meminfo 2>/dev/null)"; [ -n "$kb" ] && [ "$((kb / 1024))" -ge "$need" ]; }
+# Without /proc/meminfo (macOS), the available figure is vm_stat's free + inactive + speculative pages times its page size,
+# the figure aw-meta reads there; an unreadable figure keeps the guard closed (#2584: macOS had one slot and no meta reserve).
+avail_kb() {
+  local kb; kb="$(awk '/^MemAvailable:/ {print $2; exit}' /proc/meminfo 2> /dev/null)"
+  [ -n "$kb" ] || kb="$(vm_stat 2> /dev/null | awk '/page size of/ {for (i = 1; i <= NF; i++) if ($i == "of") ps = $(i + 1)}
+    /^Pages (free|inactive|speculative):/ {gsub(/\./, "", $NF); n += $NF} END {if (ps > 0 && n > 0) printf "%d", n * ps / 1024}')"
+  printf '%s' "$kb"
+}
+mem_ok() { local kb need; need=$((MIN_FREE_MB + (${1:-2} - 2) * STEP_MB)); kb="$(avail_kb)"; [ -n "$kb" ] && [ "$((kb / 1024))" -ge "$need" ]; }
 TIMEOUT=5400
 # Meta gate reservation (owner, 2026-10-17): the meta orchestrator writes how many box-wide slots its gates reserve
 # (0..SLOTS; every reader caps it at SLOTS-1, so a lane job always has a slot, #2060) to <state>/heavy-meta-reserve, scaled to its merge-queue depth. A job run with AW_HEAVY_PRIORITY=meta may
@@ -180,7 +188,8 @@ if [ -n "$is_dotnet_test" ] && [ "$run_max" -gt 0 ]; then
 fi
 # This relies on job control being off (non-interactive bash): the background child is not a group leader, so setsid
 # execs in place, $! is the job's pid and its group id. Under job control setsid would fork and $! would exit at once.
-if command -v setsid >/dev/null 2>&1; then setsid "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' "$@" & fi
+# macOS has no setsid: perl does the same. Its `--` stops perl from reading a command word that starts with - as a perl switch.
+if command -v setsid >/dev/null 2>&1; then setsid "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' -- "$@" & fi
 job=$!
 reason="$(mktemp "${TMPDIR:-/tmp}/heavy-reason.XXXXXX")"
 (

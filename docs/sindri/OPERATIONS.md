@@ -1,7 +1,6 @@
 # Operating Sindri (C#) from the CLI
 
-What you do with Sindri once [SETUP.md](SETUP.md) is done: sync context, build and review the product map, register and
-approve recipes, and run the factory line (`workflow.line`). These are CLI chores today; they move into the Sindri app
+What you do with Sindri once [SETUP.md](SETUP.md) is done: sync context, build and review the product map and run graph workflows. These are CLI chores today; they move into the Sindri app
 as its pages land, and this page shrinks with them.
 
 Every command is `sindri`. **Human-only** commands
@@ -79,114 +78,18 @@ sindri context query "how a user exports a report"
 sindri context lenses feature:reports.export
 ```
 
-## 2. Recipes
+## 2. Recipes and the factory line (retired)
 
-The recipes live in `recipes/sindri/`. A recipe runs only once it is registered and approved, and a parent can only be
-approved once every child it starts has an approved version to pin, so approve **children first**.
+The recipe engine is gone (issue 2258): there is no recipe to register or approve and no factory line, and the old
+recipe, scoping and workflow-instance commands are removed. Workflows are graphs now (`docs/csharp/sindri-graph.md`).
 
-```bash
-cd ~/code/agentic-workflow/recipes/sindri
-sindri recipe validate workflow.line.yaml      # Agent OK: rule lines, then the hash; checks children beside it
-```
+What is left of the old verbs:
 
-The order for the line:
-
-```text
-idea-to-brief
-evidence-api evidence-db evidence-ui evidence-desktop evidence-other evidence-all evidence
-hand-test verify prove
-build review-loop pr-babysitter ship phase
-design plan docs-sync
-scoping
-line
-```
-
-For each `workflow.<name>.yaml` in that order (**Human-only**):
-
-```bash
-sindri recipe register workflow.prove.yaml   # optional ('approve' registers an unknown file itself): 'registered workflow.prove@<hash12> (unapproved)'
-sindri recipe approve workflow.prove.yaml    # preview, then type 'approve workflow.prove 1'
-```
-
-The approve preview shows the id, version, hash, the diff against the last approved version, the capabilities and
-effects it uses, the pinned blocks and children, and the eval files. Read it, then type the action text it asks for.
-A small loop that registers and approves the list in order, stopping at the first failure, saves typing; re-running
-it is safe (already registered or approved recipes are reported and skipped).
-
-Check (**Agent OK**):
-
-```bash
-sindri recipe list              # every recipe 'approved (desk)'
-sindri recipe list --stale      # approved ones that drifted or pin a stale child
-```
-
-## 3. Run the line
-
-**To be confirmed by the demo.**
-
-`workflow.line` runs four stations as child workflows: scoping, design, plan, and one phase (build, prove, review,
-ship, then the PR babysitter). It stops for you after scoping, after design and before the merge.
-
-> **What runs by itself today.** On this build only one block Step has a runtime. Every other block Step (intake,
-> check, evidence, freeze, build, prove, ship and the rest) parks with `SND-WF-010` and becomes a **desk task**: you
-> do the work, then report it with `sindri workflow complete <address> --run <token> --outcome <o> --output
-> fact:<key>=<file>` (**Human-only**). Scoping has a desk helper that runs a block's code and writes the report for
-> you (`sindri scoping desk <block> --facts <dir> --out <dir>`, **Agent OK**; it refuses to write inside a git
-> worktree); the other stations don't have one yet. Expect to drive the line from your desk, not to watch it run
-> hands-off. An agent may prepare a desk task's output files, but only you can submit them (an agent Step's own
-> launched session reports its run with its launch secret, class `step-report`).
-
-1. Make an item for the work (**Human-only**):
-
-   ```bash
-   cd ~/code/my-app
-   sindri item add "Let admins toggle the export step per profile"    # 'ITM-… created (sequence N)'
-   ```
-
-2. Write the two input facts as JSON files, outside the repo:
-
-   `scope.json` (`fact:scopeInput`), one of four kinds:
-
-   ```json
-   { "kind": "tracker", "repo": "my-app", "key": "APP-123" }
-   ```
-
-   The other kinds: `{ "kind": "brief", "repo": "my-app", "path": "docs/briefs/export.md" }`,
-   `{ "kind": "idea", "repo": "my-app", "text": "…" }` and `{ "kind": "change", "repo": "my-app", "ref": "1234" }`
-   (a PR number or a branch).
-
-   `line.json` (`fact:lineContext`): `{ line, phase, attempt, base, stackParent?, runArea }`; see the line spec
-   (`docs/superpowers/specs/2026-10-15-sindri-spec-to-proven-pr-line-design.md` §7.1) for the exact fields.
-
-3. Start it (**Human-only**):
-
-   ```bash
-   sindri workflow start workflow.line --item ITM-… \
-     --fact fact:scopeInput=scope.json --fact fact:lineContext=line.json
-   ```
-
-4. Watch it. The app's Workflows page shows the instance and its children live. From a terminal (**Agent OK**):
-
-   ```bash
-   sindri workflow list --needs-me          # what waits for you: decisions, then tasks
-   sindri workflow status <address>         # one instance: state, open runs, waits
-   sindri workflow events <address> --follow
-   ```
-
-5. Answer it when it parks or asks (**Human-only**): `sindri workflow answer <address> --text "…"`, or
-   `--accept`, `--reject`, `--resume`; a grant or accept asks you to type a challenge.
-
-6. Take over and hand back. To work on an instance yourself, `sindri workflow takeover <address>` pauses its timer
-   (an agent session may take over, so an attached session can). `sindri handback <item-or-address>`
-   (**Human-only**) resumes the timer with the time that was left. Sindri reminds you after 2 hours taken over; it never
-   hands back by itself.
-
-7. Finish desk tasks. `workflow list --needs-me` lists each parked Step with its run token. Do the work (for scoping,
-   `scoping desk <block>` writes the outputs and `report.json`), then submit it (**Human-only**):
-
-   ```bash
-   sindri workflow complete <address> --run <token> --outcome <outcome> --output fact:<key>=<file>
-   ```
+- `sindri workflow complete <address> --run <token> --outcome <o>` and `sindri workflow takeover|handback <address>` answer
+  `SND-GRAPH-104`. The short forms `sindri takeover|handback <run> <node>` now run `sindri wf takeover|handback`: they take over
+  or hand back the `run_agent` node a run waits on (`docs/csharp/sindri-graph.md`).
+- An instance the old engine left running gets a `workflow.retired` note the next time Sindri starts, once; the pass ends with a `workflow.retire.done` marker (private, written even when it retired nothing) so a later start reads no ledger page. Its item reads
+  cancelled and its Needs-you rows are gone; the ledger keeps the old rows.
 
 ## Model choice and what Jev reads
 
@@ -200,10 +103,6 @@ With `workflow.agent.pick: on` in the live profile, each agent step's brief and 
 | `SND-CONTEXT-046` | `promote` refused: undecided items or no draft | `context map review`, then promote |
 | `SND-CONTEXT-133` | A graphify limit isn't a whole number in range | Write a whole number, or `0` for no limit |
 | `SND-JOB-409` | That job is already running | `sindri jobs`; wait for it |
-| `SND-RECIPE-003` | A child has no approved version to pin | Approve the children first (section 2) |
-| `SND-RECIPE-008` | The recipe declares no evals, or an eval file is missing | Keep the `evals/` folder beside the recipe |
-| `SND-RECIPE-009` | The typed approval was wrong, expired (5 min) or the file changed while you read | Run `recipe approve` again |
-| `SND-WF-010` | A Step has no runtime here (no agent target, or a desk-only block) | Do it at your desk and complete it, or set `workflow.agent.target` |
 
 ## Gotchas
 

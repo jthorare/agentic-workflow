@@ -17,9 +17,7 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="status">How fresh the views are.</param>
 /// <param name="callers">The caller; a read needs one.</param>
 /// <param name="live">The rows read at request time, not from the view (the setup rows).</param>
-/// <param name="clock">The time the timeouts are measured at.</param>
-/// <param name="joins">Adds the stop and the timeout to the desk and park rows.</param>
-internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, NeedsYouLiveRows live, TimeProvider clock, NeedsYouJoins joins) : IService<GetNeedsYouRequest, GetNeedsYouResponse>
+internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, NeedsYouLiveRows live) : IService<GetNeedsYouRequest, GetNeedsYouResponse>
 {
     public async ValueTask<Result<GetNeedsYouResponse>> Handle(GetNeedsYouRequest request, CancellationToken cancellationToken)
     {
@@ -39,7 +37,7 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
         var folded = records.Value.Select(static r => r.Row).ToList();
         var seen = folded.Select(static r => r.Id).ToHashSet();
         var read = (await live.Read(cancellationToken).ConfigureAwait(false)).Where(r => !seen.Contains(r.Id));   // a stalled run's row gives way to the park row the run's own failure folds
-        var rows = await joins.Apply(NeedsYouOrder.Sort([.. folded, .. read]), clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        var rows = NeedsYouOrder.Sort([.. folded, .. read]);
         var empty = current.Text;
         if (empty is null && rows.Count == 0)
         {

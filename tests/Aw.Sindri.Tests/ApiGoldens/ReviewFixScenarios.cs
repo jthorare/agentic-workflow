@@ -27,7 +27,7 @@ internal static class ReviewFixScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("reviews-fix", "done"), ("reviews-fix", "half-done"), ("reviews-fix", "item-only"), ("reviews-fix", "to-babysitter"), ("reviews-fix", "to-session"), ("reviews-fix", "waiting"), ("reviews-fix", "old-side"), ("reviews-fix", "session-refused"), ("reviews-fix", "file-not-written"),
+        ("reviews-fix", "done"), ("reviews-fix", "half-done"), ("reviews-fix", "item-only"), ("reviews-fix", "to-session"), ("reviews-fix", "waiting"), ("reviews-fix", "old-side"), ("reviews-fix", "session"), ("reviews-fix", "file-not-written"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -46,7 +46,6 @@ internal static class ReviewFixScenarios
 
             _ = services.Replace(ServiceDescriptor.Singleton<IPullRequests>(forge));
             _ = services.Replace(ServiceDescriptor.Singleton<IReviewFacts>(new FakeReviewFacts().With(new ReviewFactsSnapshot([Pull(1, Owner), Pull(2, "sam-dev")], Github: null, new ReviewLibraryFacts(Reading: false, Docs: 0, WithErrors: 0, [])))));
-            _ = services.Replace(ServiceDescriptor.Singleton<IFixBabysitters>(new Babysitters(scenario == "to-babysitter")));
             if (string.Equals(scenario, "file-not-written", StringComparison.Ordinal))
             {
                 _ = services.Replace(ServiceDescriptor.Singleton<IFixTaskFiles>(new UnwritableTaskFiles()));
@@ -66,7 +65,7 @@ internal static class ReviewFixScenarios
             "half-done" => await Send(host, "1", $$"""{"kind":"line","text":"Guard the null.","head":"{{new string('b', 40)}}","path":"src/Sync.cs","line":42}"""),
             "item-only" => await Send(host, "2", line + "}"),
             "old-side" => await Send(host, "1", line + ",\"side\":\"old\"}"),
-            "session-refused" => (await host.Http.Ask(Post(Route + "1/fix", line + "}", ItemScenarios.Session("demo")))).Body,
+            "session" => (await host.Http.Ask(Post(Route + "1/fix", line + "}", ItemScenarios.Session("demo")))).Body,
             _ => await Send(host, "1", line + "}"),
         };
         static async Task<string> Send(GoldenHost h, string number, string body) => (await h.Http.Ask(Post(Route + number + "/fix", body, ItemScenarios.Human(h)))).Body;
@@ -75,11 +74,6 @@ internal static class ReviewFixScenarios
     private static ReviewPull Pull(int number, string author) =>
         new("acme/api", number, "Add retry budget", author, Draft: false, new DateTimeOffset(2025, 12, 29, 12, 0, 0, TimeSpan.Zero), new DateTimeOffset(2025, 12, 31, 12, 0, 0, TimeSpan.Zero), _head, [], [], ReviewersRead: true, [],
             Url: "https://github.com/acme/api/pull/" + number.ToString(System.Globalization.CultureInfo.InvariantCulture));
-
-    private sealed class Babysitters(bool watching) : IFixBabysitters
-    {
-        public ValueTask<bool> Watching(string link, CancellationToken cancellationToken) => ValueTask.FromResult(watching);
-    }
 
     private sealed class UnwritableTaskFiles : IFixTaskFiles
     {

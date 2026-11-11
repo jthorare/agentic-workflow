@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-RES-003",
+  "status": 409,
+  "detail": "the run 'morning-check@1:1' of workflow 'morning-check' is still in flight; let it end or cancel it, then purge workflow:morning-check",
+  "traceId": "<trace>"
+}

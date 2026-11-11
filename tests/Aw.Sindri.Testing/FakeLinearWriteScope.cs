@@ -10,6 +10,6 @@ namespace Aw.Sindri.Testing;
 internal sealed class FakeLinearWriteScope : ILinearWriteScope
 {
     /// <inheritdoc/>
-    public ValueTask<Result<ContextScope>> Owner(CancellationToken cancellationToken) =>
+    public ValueTask<Result<ContextScope>> Write(CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<ContextScope>>(new ContextScope(Settings: null, [], new ContextCaller(ContextCallerKind.Human, Repo: null, ContextClient.Http)));
 }

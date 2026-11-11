@@ -131,11 +131,12 @@ FAKE_JAVA=oom fj
 expect "an out-of-memory TLC is an ERROR naming OutOfMemoryError and TLC_HEAP" 2 '^tlc: ERROR .*java\.lang\.OutOfMemoryError: Java heap space.*TLC_HEAP=2g'
 # a TERM, INT or HUP to tlc.sh alone (not its group) stops the java it started and removes its temp dir. Job control on:
 # without it bash starts a background child with INT ignored, and an ignored-at-start signal can't be trapped. perl puts
-# INT back to default before the exec: this suite itself starts with INT ignored when bash-tests.sh runs it in the background.
+# INT, TERM and HUP back to default before the exec: this suite itself starts with INT ignored when bash-tests.sh runs it
+# in the background, and with HUP ignored when the gate runs under nohup (#2377).
 set -m
 for sig in TERM INT HUP; do
   rm -f "$FJ/pid"; TT="$TMPROOT/tt-$sig"; mkdir -p "$TT"
-  FAKE_JAVA=hang TMPDIR="$TT" PATH="$FJ/bin:$OLDPATH" perl -e '$SIG{INT} = "DEFAULT"; exec @ARGV' bash "$SCRIPT" check "$TMPROOT/spec/M.tla" --jar "$FJ/fake.jar" >/dev/null 2>&1 &
+  FAKE_JAVA=hang TMPDIR="$TT" PATH="$FJ/bin:$OLDPATH" perl -e '$SIG{INT} = "DEFAULT"; $SIG{TERM} = "DEFAULT"; $SIG{HUP} = "DEFAULT"; exec @ARGV' bash "$SCRIPT" check "$TMPROOT/spec/M.tla" --jar "$FJ/fake.jar" >/dev/null 2>&1 &
   tp=$!
   for _ in $(seq 1 300); do [ -s "$FJ/pid" ] && break; sleep 0.1; done
   jp="$(cat "$FJ/pid" 2>/dev/null || true)"

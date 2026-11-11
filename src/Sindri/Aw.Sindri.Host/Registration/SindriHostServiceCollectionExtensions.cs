@@ -1,12 +1,9 @@
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
-using Aw.Sindri.Core.Setup;
-using Aw.Sindri.Core.Workflow.Shipped;
 using Aw.Sindri.Host.Catalog;
 using Aw.Sindri.Host.ContextVectors;
 using Aw.Sindri.Host.Memory;
 using Aw.Sindri.Host.Server;
-using Aw.Sindri.Host.Shipped;
 
 namespace Aw.Sindri.Host.Registration;
 
@@ -21,8 +18,6 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<IShutdown>(static sp => sp.GetRequiredService<ProcessShutdown>())
         .AddSingleton<IExitCode, ProcessExitCode>()
         .AddSingleton<ICommandCatalog, CommandCatalog>()
-        .AddSingleton<IShippedEffects, EmbeddedShippedEffects>()   // the default profile allows the effects the embedded recipes declare (setup-once §5.1)
-        .AddSingleton<IEmbeddedRecipes>(static _ => new ManifestEmbeddedRecipes(typeof(ManifestEmbeddedRecipes).Assembly))   // the recipes this build ships; nothing at run time reads recipes/sindri from disk
         .AddSingleton<Projector>()
         .AddSingleton<Endpoints.IProjectFencing, Mcp.ProjectFencing>()   // a session's Projects answer is fenced like sindri_projects' (the fence is in Mcp; Endpoints cannot name it)
         .AddSingleton<Endpoints.IMemoryFencing, Mcp.MemoryFencing>()   // a session memory read is fenced like the memory tools answers
@@ -32,8 +27,9 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<Endpoints.ILinearIssueFencing, Mcp.LinearIssueFencing>()   // and the Linear issue list's titles and names
         .AddSingleton<ScheduleInputs>()
         .AddScoped<Features.LinearConnection.ILinearKeyChecks>(static sp => new IndexSources.LinearKeyChecks(sp.GetRequiredService<Core.Profile.IProfileSource>(), sp.GetRequiredService<Context.Core.Facade.IContextEngine>(), IndexSources.LinearTeamReader.Create))   // Settings, Connections, Linear asks Linear about a pasted key
-        .AddSingleton<Context.Core.Sync.IExternalRecordFeeds>(static sp => new IndexSources.GitHubRecordFeeds(sp.GetRequiredService<Core.Secrets.ISecretPointers>(), sp.GetRequiredService<Connectors.Core.GitHub.IGitHubConnectorFactory>(), IndexSources.GitHubReaders.Create))   // the GitHub feed `index sync` picks up through the record-feed catalog
-        .AddSingleton<Context.Core.Sync.IExternalRecordFeeds>(static sp => new IndexSources.SlackRecordFeeds(sp.GetRequiredService<Core.Secrets.ISecretPointers>(), sp.GetRequiredService<Connectors.Core.Slack.ISlackConnectorFactory>(), IndexSources.SlackReaders.Create))   // the Slack feed, present only when the profile lists channels, a workspace and a token that resolves
+        .AddSingleton<Context.Core.Linear.ILinearReadCredential>(static sp => new IndexSources.LinearReadCredential(sp.GetRequiredService<Core.Connections.IConnectionCredentials>()))   // the Linear feed, viewer and lookups read with the connected Linear connection first (#2508)
+        .AddSingleton<Context.Core.Sync.IExternalRecordFeeds>(static sp => new IndexSources.GitHubRecordFeeds(sp.GetRequiredService<Core.Secrets.ISecretPointers>(), sp.GetRequiredService<Connectors.Core.GitHub.IGitHubConnectorFactory>(), sp.GetRequiredService<Core.Connections.IConnectionStore>(), sp.GetRequiredService<Core.Connections.IConnectionSecrets>(), IndexSources.GitHubReaders.Create))   // the GitHub feed `index sync` picks up through the record-feed catalog
+        .AddSingleton<Context.Core.Sync.IExternalRecordFeeds>(static sp => new IndexSources.SlackRecordFeeds(sp.GetRequiredService<Core.Connections.IConnectionCredentials>(), sp.GetRequiredService<Connectors.Core.Slack.ISlackConnectorFactory>(), IndexSources.SlackReaders.Create))   // the Slack feed, present only when the profile lists channels, a workspace and a token that resolves
         .AddMemoryEmbedder()   // memory's embedding port over the same pinned model (agent-first PR 13)
         .AddContextVectors()   // Context's query embedder and vector scan over Aw.Embeddings (owned-index spec §9.2)
         .AddScoped<CodeIndexHost.ICodeIndexScopeSource, CodeIndexHost.ProfileCodeIndexScopeSource>()
@@ -52,9 +48,14 @@ internal static class SindriHostServiceCollectionExtensions
         .AddHostedService<SchedulerHost>()
         .AddHostedService<ProjectorHost>()
         .AddHostedService<JobRecoveryHost>()
+        .AddHostedService<ToolkitRecoveryHost>()
+        .AddHostedService<GraphRunRecoveryHost>()
+        .AddHostedService<RunItemRepairHost>()
         .AddHostedService<LostSessionsHost>()
         .AddHostedService<SessionUsageHost>()
         .AddHostedService<ProfileWatch>()
+        .AddSingleton<IFolderWatch, FileFolderWatch>().AddSingleton<NoteFolder>().AddSingleton<NotePasses>().AddSingleton<TodoEventTail>()
+        .AddHostedService<TodoNoteWatch>()
         .AddHostedService<SessionCollectorHost>()
         .AddHostedService<ContextWarmHost>()
         .AddHostedService<LauncherHost>()

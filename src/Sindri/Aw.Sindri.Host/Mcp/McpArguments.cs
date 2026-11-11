@@ -103,22 +103,23 @@ internal static class McpArguments
             : ContextErrors.McpArgumentsInvalid.With($"'{name}' must be a string, got {Kind(raw)} (fix: see {tool}'s input schema)");
     }
 
-    /// <summary>An optional whole number of at least <paramref name="min"/>; null counts as absent.</summary>
+    /// <summary>An optional whole number from <paramref name="min"/> to <paramref name="max"/>; null counts as absent.</summary>
     /// <param name="tool">The tool's name.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="name">The argument's name.</param>
     /// <param name="min">The least value.</param>
+    /// <param name="max">The greatest value.</param>
     /// <returns>The number, null when absent, or the refusal.</returns>
-    internal static Result<long?> OptionalLong(string tool, IDictionary<string, JsonElement>? arguments, string name, long min = 0)
+    internal static Result<long?> OptionalLong(string tool, IDictionary<string, JsonElement>? arguments, string name, long min = 0, long max = long.MaxValue)
     {
         if (arguments is null || !arguments.TryGetValue(name, out var raw) || raw.ValueKind == JsonValueKind.Null)
         {
             return (long?)null;
         }
 
-        return raw.ValueKind == JsonValueKind.Number && raw.TryGetInt64(out var number) && number >= min
+        return raw.ValueKind == JsonValueKind.Number && raw.TryGetInt64(out var number) && number >= min && number <= max
             ? number
-            : ContextErrors.McpArgumentsInvalid.With($"'{name}' must be a whole number of {min.ToString(CultureInfo.InvariantCulture)} or more, got {Kind(raw)} {raw.GetRawText()} (fix: see {tool}'s input schema)");
+            : ContextErrors.McpArgumentsInvalid.With($"'{name}' must be a whole number of {min.ToString(CultureInfo.InvariantCulture)}{(max == long.MaxValue ? " or more" : " to " + max.ToString(CultureInfo.InvariantCulture))}, got {Kind(raw)} {raw.GetRawText()} (fix: see {tool}'s input schema)");
     }
 
     /// <summary>An optional true or false; null counts as absent.</summary>

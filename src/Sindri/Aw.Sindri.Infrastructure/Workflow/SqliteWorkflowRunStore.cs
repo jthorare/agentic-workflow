@@ -4,6 +4,7 @@ using Aw.Kernel.Data;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Infrastructure.Ledger;
 
 namespace Aw.Sindri.Infrastructure.Workflow;
@@ -73,6 +74,32 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
         }, cancellationToken);
     }
 
+    public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken) =>
+        // why: the in-flight read and the status change share one write transaction, so two runs ending together cannot both promote one.
+        RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun?>> (session, token) =>
+        {
+            var inFlight = await RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.InFlight, c => c.Bind("$workflow", workflow.Value)), WorkflowRunMapper.Instance, token).ConfigureAwait(false);
+            if (inFlight.IsError)
+            {
+                return inFlight.Error;
+            }
+
+            if (inFlight.Value.Count == 0 || inFlight.Value.Any(static r => r.Status != WorkflowRunStatus.Queued))
+            {
+                return (WorkflowRun?)null;
+            }
+
+            var oldest = inFlight.Value[0];
+            var moved = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.FromQueued,
+                c => c.Bind("$id", oldest.Id.Value).Bind("$status", RunStatusText.Of(WorkflowRunStatus.Running)).Bind("$outputs", (string?)null).Bind("$error", (string?)null).Bind("$ended", (string?)null)), token).ConfigureAwait(false);
+            if (moved.IsError)
+            {
+                return moved.Error;
+            }
+
+            return oldest with { Status = WorkflowRunStatus.Running };
+        }, cancellationToken);
+
     public async ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)
     {
         var found = await RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, empty: null, (session, token) => FindRun(session, id, token), cancellationToken).ConfigureAwait(false);
@@ -82,6 +109,14 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> InFlight(WorkflowId workflow, CancellationToken cancellationToken) =>
         RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
             (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.InFlight, c => c.Bind("$workflow", workflow.Value)), WorkflowRunMapper.Instance, token), cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int offset, int limit, CancellationToken cancellationToken) =>
+        RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
+            (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.Recent, c => c.Bind("$workflow", workflow.Value).Bind("$limit", Math.Max(limit, 1)).Bind("$offset", Math.Max(offset, 0))), WorkflowRunMapper.Instance, token), cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken) =>
+        RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
+            (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.Running, static _ => { }), WorkflowRunMapper.Instance, token), cancellationToken);
 
     public async ValueTask<Result<int?>> LatestOccurrence(WorkflowId workflow, string triggerKind, CancellationToken cancellationToken)
     {
@@ -113,6 +148,9 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
             }, cancellationToken);
 
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
+        Move(id, new Change(status, outputs, error, status == WorkflowRunStatus.Queued ? WorkflowRunSql.Requeue : WorkflowRunSql.SetStatus), cancellationToken);
+
+    public ValueTask<Result<WorkflowRun>> SetItem(WorkflowRunId id, ItemId item, CancellationToken cancellationToken) =>
         RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>
         {
             var existing = await FindRun(session, id, token).ConfigureAwait(false);
@@ -121,9 +159,46 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
                 return existing.IsError ? existing.Error : NotFound(id);
             }
 
-            var ended = RunStatusText.IsFinal(status) ? clock.GetUtcNow().UtcDateTime.ToString("O", CultureInfo.InvariantCulture) : null;
-            var moved = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.SetStatus,
-                c => c.Bind("$id", id.Value).Bind("$status", RunStatusText.Of(status)).Bind("$outputs", outputs).Bind("$error", error).Bind("$ended", ended)), token).ConfigureAwait(false);
+            var linked = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.SetItem, c => c.Bind("$id", id.Value).Bind("$item", item.Value)), token).ConfigureAwait(false);
+            if (linked.IsError)
+            {
+                return linked.Error;
+            }
+
+            var after = await FindRun(session, id, token).ConfigureAwait(false);
+            return after.IsError ? after.Error : after.Value ?? (Result<WorkflowRun>)NotFound(id);
+        }, cancellationToken);
+
+    public ValueTask<Result<WorkflowRun>> CancelQueued(WorkflowRunId id, string? error, CancellationToken cancellationToken) =>
+        Move(id, new Change(WorkflowRunStatus.Cancelled, Outputs: null, error, WorkflowRunSql.FromQueued), cancellationToken);
+
+    public ValueTask<Result<bool>> Discard(WorkflowRunId id, CancellationToken cancellationToken) =>
+        RecipeSessions.Write(database, async ValueTask<Result<bool>> (session, token) =>
+        {
+            var existing = await FindRun(session, id, token).ConfigureAwait(false);
+            if (existing.IsError || existing.Value is not { Status: WorkflowRunStatus.Running })
+            {
+                return existing.IsError ? existing.Error : (Result<bool>)false;
+            }
+
+            var removed = await RecipeSessions.Execute(session, new SqlStatement(WorkflowRunSql.Discard, c => c.Bind("$id", id.Value)), token).ConfigureAwait(false);
+            return removed.IsError ? removed.Error : true;
+        }, cancellationToken);
+
+    private sealed record Change(WorkflowRunStatus Status, string? Outputs, string? Error, string Sql);
+
+    private ValueTask<Result<WorkflowRun>> Move(WorkflowRunId id, Change change, CancellationToken cancellationToken) =>
+        RecipeSessions.Write(database, async ValueTask<Result<WorkflowRun>> (session, token) =>
+        {
+            var existing = await FindRun(session, id, token).ConfigureAwait(false);
+            if (existing.IsError || existing.Value is null)
+            {
+                return existing.IsError ? existing.Error : NotFound(id);
+            }
+
+            var ended = RunStatusText.IsFinal(change.Status) ? clock.GetUtcNow().UtcDateTime.ToString("O", CultureInfo.InvariantCulture) : null;
+            var moved = await RecipeSessions.Execute(session, new SqlStatement(change.Sql,
+                c => c.Bind("$id", id.Value).Bind("$status", RunStatusText.Of(change.Status)).Bind("$outputs", change.Outputs).Bind("$error", change.Error).Bind("$ended", ended)), token).ConfigureAwait(false);
             if (moved.IsError)
             {
                 return moved.Error;
@@ -158,6 +233,10 @@ internal sealed class SqliteWorkflowRunStore(LedgerDatabase database, TimeProvid
     public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRuns(WorkflowRunId id, CancellationToken cancellationToken) =>
         RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
             (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.SelectNodeRuns, c => c.Bind("$run", id.Value)), NodeRunMapper.Instance, token), cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRunsForItem(WorkflowRunId id, int itemIndex, CancellationToken cancellationToken) =>
+        RecipeSessions.Read(database, LedgerDatabase.WorkflowRunsVersion, [],
+            (session, token) => RecipeSessions.List(session, new SqlStatement(WorkflowRunSql.SelectNodeRunsForItem, c => c.Bind("$run", id.Value).Bind("$item", itemIndex)), NodeRunMapper.Instance, token), cancellationToken);
 
     private static async ValueTask<Result<GraphStartKind>> Decide(ISqliteSession session, WorkflowRun run, GraphConcurrency mode, CancellationToken token)
     {

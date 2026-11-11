@@ -7,7 +7,7 @@ internal sealed record AgentRuntimeOptions(TimeSpan PollInterval)
     /// <summary>How long the launch activity waits before it asks again when the session cap is reached (SND-LAUNCH-020; sandbox spec §6).</summary>
     public TimeSpan SlotRetry { get; init; } = TimeSpan.FromSeconds(30);
 
-    /// <summary>How long one launch activity keeps waiting for a free slot before it hands back to the workflow, which starts another (the activity's own limit is <see cref="ActivityBounds.Long"/>).</summary>
+    /// <summary>How long one launch activity keeps waiting for a free slot before it hands back to the workflow, which starts another.</summary>
     public TimeSpan SlotSlice { get; init; } = TimeSpan.FromSeconds(90);
 
     /// <summary>The production options.</summary>

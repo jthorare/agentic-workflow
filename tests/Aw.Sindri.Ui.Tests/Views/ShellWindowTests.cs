@@ -138,7 +138,7 @@ public sealed class ShellWindowTests : IDisposable
     // §14.2: every text is a step of the type ramp, so the Text size preference reaches all of it. At scale 1.3 each
     // visible TextBlock's size is a ramp size × 1.3 (a literal size, or one Fluent's own default sets, stays put). The
     // scale is applied, checked and reset without yielding the UI thread, so no other test sees it.
-    private static readonly double[] _ramp = [20, 18, 13, 12, 11];
+    private static readonly double[] _ramp = [24, 20, 15, 13, 12, 11];   // PageTitle, DetailTitle, SectionTitle, Body, Caption/Mono, Eyebrow/Kbd (#2546)
 
     private static void EveryTextIsOnTheRampAt130(Window window)
     {
@@ -197,7 +197,7 @@ public sealed class ShellWindowTests : IDisposable
         EveryTextIsOnTheRampAt130(window);
     });
 
-    // I6: the sheet's heading is DetailTitle (18/500) in the mono family; .mono's later size doesn't win.
+    // I6: the sheet's heading is DetailTitle (20, SemiBold since #2546) in the mono family; .mono's later size doesn't win.
     [Fact]
     public Task The_sheet_heading_is_a_mono_detail_title() => OnUi(async () =>
     {
@@ -208,8 +208,8 @@ public sealed class ShellWindowTests : IDisposable
         Settle(window);
 
         var title = window.Get<TextBlock>("SheetSubjectText");
-        Assert.Equal(18, title.FontSize);
-        Assert.Equal(FontWeight.Medium, title.FontWeight);
+        Assert.Equal(20, title.FontSize);
+        Assert.Equal(FontWeight.SemiBold, title.FontWeight);
         Assert.Contains("JetBrains Mono", title.FontFamily.ToString(), StringComparison.Ordinal);
     });
 
@@ -1532,12 +1532,12 @@ public sealed class ShellWindowTests : IDisposable
         }
     });
 
-    // The Projects page spec §7: seven tabs at the 1,000 px minimum, each label whole (not trimmed, not past the window's edge)
+    // The Projects page spec §7: every tab (nine since Workflows, PR 17 part 2a) at the 1,000 px minimum, each label whole (not trimmed, not past the window's edge)
     // at text scale 1.0 and 1.3. The counts may give way first (TopBar.Counts); the labels never do.
     [Theory]
     [InlineData(1.0)]
     [InlineData(1.3)]
-    public Task At_the_1000_px_minimum_all_seven_tab_labels_are_whole(double scale) => OnUi(async () =>
+    public Task At_the_1000_px_minimum_all_nine_tab_labels_are_whole(double scale) => OnUi(async () =>
     {
         await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
         var window = await ShowIn(BarState.Normal);
@@ -1550,7 +1550,7 @@ public sealed class ShellWindowTests : IDisposable
             var labels = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")).ToList();
 
             Assert.Equal(shell.Navigation.Select(n => n.DisplayLabel), labels.Select(t => t.Text), StringComparer.Ordinal);   // the short label where the tab has one
-            Assert.Equal(7, labels.Count);
+            Assert.Equal(9, labels.Count);
             foreach (var label in labels)
             {
                 using var layout = new TextLayout(label.Text, new Typeface(label.FontFamily, label.FontStyle, label.FontWeight), label.FontSize, foreground: null);

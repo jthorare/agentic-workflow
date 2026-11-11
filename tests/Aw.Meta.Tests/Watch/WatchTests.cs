@@ -1,7 +1,10 @@
 using System.Globalization;
+using Aw.Kernel;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
 using Aw.Meta.Core.Health;
+using Aw.Meta.Core.Ports;
+using Aw.Meta.Features.BoardLine;
 using Aw.Meta.Features.Watch;
 using Aw.Meta.Testing;
 using Aw.Meta.Tests.Reserve;
@@ -14,13 +17,14 @@ public sealed class WatchTests
     private readonly MetaWorld _world = new();
     private readonly List<string> _lines = [];
 
-    private WatchService Service() => new(
+    private WatchService Service(IBoardStore? board = null) => new(
         _world.Config,
         new WatchPoller(_world.Repo, _world.Resources, _world.InboxCounts, _world.Values, new WatchSweeper(_world.Config, _world.Sweeper, _world.Values), Worlds.Reservation(_world), _world.Context),
         _world.Values,
         _world.Delay,
         _world.Clock,
-        _world.Monitor);
+        _world.Monitor,
+        board ?? _world.Board);
 
     private static string Pr(int number, string state, string head, string mergeable = "MERGEABLE", bool draft = false) =>
         string.Create(CultureInfo.InvariantCulture, $$"""{"number":{{number}},"state":"{{state}}","isDraft":{{(draft ? "true" : "false")}},"headRefOid":"{{head}}","mergeable":"{{mergeable}}","title":"t{{number}}"}""");
@@ -44,9 +48,9 @@ public sealed class WatchTests
             .When("git ls-remote origin main", _ => new CommandResult(0, main[Math.Min(Math.Max(polls, 0), main.Length - 1)] + "\trefs/heads/main\n", string.Empty, TimedOut: false));
     }
 
-    private async Task<WatchResponse> Watch(TimeSpan duration)
+    private async Task<WatchResponse> Watch(TimeSpan duration, IBoardStore? board = null)
     {
-        var result = await Service().Handle(new WatchRequest(_interval, duration, line => { _lines.Add(line); return ValueTask.CompletedTask; }), CancellationToken.None);
+        var result = await Service(board).Handle(new WatchRequest(_interval, duration, line => { _lines.Add(line); return ValueTask.CompletedTask; }), CancellationToken.None);
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         return result.Value;
     }
@@ -80,6 +84,117 @@ public sealed class WatchTests
             _lines);
         Assert.Equal((5, 7), (response.Polls, response.Lines));
         Assert.DoesNotContain(_lines, l => l.Contains("UNKNOWN", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_poll_that_sees_main_move_records_the_sha_and_the_pull_requests_that_merged()
+    {
+        await _world.Ready();
+        Script(
+            [
+                List(Pr(190, "OPEN", "aaa1111"), Pr(191, "OPEN", "bbb2222")),
+                List(Pr(190, "MERGED", "aaa1111"), Pr(191, "OPEN", "bbb2222")),
+            ],
+            mains: ["aaaaaaa1111111", "bbbbbbb2222222"]);
+
+        _ = await Watch(TimeSpan.FromSeconds(300));
+
+        var board = (await _world.Board.Read(CancellationToken.None)).Value;
+        Assert.NotNull(board);
+        Assert.Equal("bbbbbbb2222222", board.MainSha);
+        Assert.Equal([190], board.MergedPrs);
+        Assert.Equal(2, board.Version);   // the start recorded aaaaaaa1111111 as version 1
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_watch_whose_board_seed_fails_prints_one_watch_error_and_keeps_polling()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], mains: ["aaaaaaa1111111"]);
+
+        var response = await Watch(TimeSpan.FromSeconds(300), new FailingBoard(_world.Board, failSeed: true, failRecord: false));
+
+        var errors = _lines.Where(l => l.StartsWith("WATCH ERROR: ", StringComparison.Ordinal)).ToList();
+        var error = Assert.Single(errors);
+        Assert.Contains(MetaErrors.BoardContended.Code, error, StringComparison.Ordinal);
+        Assert.True(response.Polls > 1);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_watch_whose_board_record_fails_prints_one_watch_error()
+    {
+        await _world.Ready();
+        Script(
+            [
+                List(Pr(190, "OPEN", "aaa1111")),
+                List(Pr(190, "MERGED", "aaa1111")),
+            ],
+            mains: ["aaaaaaa1111111", "bbbbbbb2222222"]);
+
+        _ = await Watch(TimeSpan.FromSeconds(300), new FailingBoard(_world.Board, failSeed: false, failRecord: true));
+
+        var errors = _lines.Where(l => l.StartsWith("WATCH ERROR: ", StringComparison.Ordinal)).ToList();
+        var error = Assert.Single(errors);
+        Assert.StartsWith("WATCH ERROR: AW-META-023", error, StringComparison.Ordinal);
+    }
+
+    private sealed class FailingBoard(IBoardStore inner, bool failSeed, bool failRecord) : IBoardStore
+    {
+        public ValueTask<Result<Unit>> RecordMain(string sha, IReadOnlyList<int> mergedPrs, DateTimeOffset at, CancellationToken cancellationToken) =>
+            failRecord
+                ? ValueTask.FromResult<Result<Unit>>(MetaErrors.BoardContended.With("record failed"))
+                : inner.RecordMain(sha, mergedPrs, at, cancellationToken);
+
+        public ValueTask<Result<bool>> SeedMain(string sha, DateTimeOffset at, CancellationToken cancellationToken) =>
+            failSeed
+                ? ValueTask.FromResult<Result<bool>>(MetaErrors.BoardContended.With("seed failed"))
+                : inner.SeedMain(sha, at, cancellationToken);
+
+        public ValueTask<Result<BoardFacts?>> Read(CancellationToken cancellationToken) => inner.Read(cancellationToken);
+
+        public ValueTask<Result<BoardSeen?>> SeenVersion(string lane, CancellationToken cancellationToken) => inner.SeenVersion(lane, cancellationToken);
+
+        public ValueTask<Result<Unit>> MarkSeen(string lane, BoardSeen seen, CancellationToken cancellationToken) => inner.MarkSeen(lane, seen, cancellationToken);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_watch_that_starts_records_the_main_it_starts_at_once()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], mains: ["aaaaaaa1111111"]);
+
+        _ = await Watch(TimeSpan.FromSeconds(120));
+        var first = (await _world.Board.Read(CancellationToken.None)).Value;
+        _ = await Watch(TimeSpan.FromSeconds(120));
+        var second = (await _world.Board.Read(CancellationToken.None)).Value;
+
+        Assert.NotNull(first);
+        Assert.Equal(("aaaaaaa1111111", 1), (first.MainSha, first.Version));
+        Assert.Empty(first.MergedPrs);
+        Assert.NotNull(second);
+        Assert.Equal(("aaaaaaa1111111", 1), (second.MainSha, second.Version));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_watch_seeing_main_move_to_a_sha_merge_run_recorded_shows_the_lane_one_line()
+    {
+        await _world.Ready();
+        var lane = _world.PutLane("api");
+        var board = new BoardLineService(_world.Config, _world.Board, _world.Lanes);
+        Script(
+            [
+                List(Pr(190, "OPEN", "aaa1111")),
+                List(Pr(190, "MERGED", "aaa1111")),
+            ],
+            mains: ["aaaaaaa1111111", "bbbbbbb2222222"]);
+        _ = await _world.Board.RecordMain("bbbbbbb2222222", [190], A.At(5), CancellationToken.None);   // merge-run's record
+        var first = await board.Handle(new BoardLineRequest(lane), CancellationToken.None);
+
+        _ = await Watch(TimeSpan.FromSeconds(300));
+        var second = await board.Handle(new BoardLineRequest(lane), CancellationToken.None);
+
+        Assert.Contains("#190", first.Value.Line, StringComparison.Ordinal);
+        Assert.Null(second.Value.Line);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -280,6 +395,100 @@ public sealed class WatchTests
         _ = await Watch(TimeSpan.FromSeconds(360));
 
         Assert.Equal(["INBOX 2 new message(s)"], _lines.Where(l => l.StartsWith("INBOX", StringComparison.Ordinal)), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_is_no_inbox_event_only_a_batched_status_line()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], onPoll: poll =>
+        {
+            if (poll == 1)
+            {
+                _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123").GetAwaiter().GetResult();
+            }
+        });
+
+        _ = await Watch(TimeSpan.FromSeconds(360));
+
+        Assert.Equal(["STATUS 1 new (lanes: ideas)"], _lines.Where(l => l.StartsWith("INBOX", StringComparison.Ordinal) || l.StartsWith("STATUS", StringComparison.Ordinal)), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_that_came_while_no_watch_ran_is_announced_once_and_never_again_by_the_next_watch()
+    {
+        await _world.Ready();
+        await _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123");
+        Script([List(Pr(190, "OPEN", "aaa1111"))]);
+
+        _ = await Watch(TimeSpan.FromSeconds(240));
+        _ = await Watch(TimeSpan.FromSeconds(240));
+
+        Assert.Equal(["STATUS 1 new (lanes: ideas)"], _lines.Where(l => l.StartsWith("STATUS", StringComparison.Ordinal)), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_held_by_the_15_minute_timer_is_announced_by_the_next_watch_once_due()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], onPoll: poll =>
+        {
+            if (poll == 1)
+            {
+                _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123").GetAwaiter().GetResult();
+            }
+            else if (poll == 2)
+            {
+                _world.Receive("m2", "t1-ui", "STATUS: gate started on #12").GetAwaiter().GetResult();
+            }
+        });
+
+        _ = await Watch(TimeSpan.FromSeconds(360));
+        _world.Clock.Advance(TimeSpan.FromMinutes(15));
+        _ = await Watch(TimeSpan.FromSeconds(240));
+
+        Assert.Equal(["STATUS 1 new (lanes: ideas)", "STATUS 1 new (lanes: ui)"], _lines.Where(l => l.StartsWith("STATUS", StringComparison.Ordinal)), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_read_with_inbox_status_is_never_announced()
+    {
+        await _world.Ready();
+        await _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123");
+        _ = await _world.Messages.MarkShown([Core.Ids.MessageId.From("m1")], _world.Clock.GetUtcNow(), CancellationToken.None);
+        Script([List(Pr(190, "OPEN", "aaa1111"))]);
+
+        _ = await Watch(TimeSpan.FromSeconds(240));
+
+        Assert.DoesNotContain(_lines, l => l.StartsWith("STATUS", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Status_lines_print_at_most_every_15_minutes_and_ride_on_the_next_inbox_event()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], onPoll: poll =>
+        {
+            var message = poll switch
+            {
+                1 => ("m1", "t1-ideas", "STATUS: review clean on #123"),
+                2 => ("m2", "t1-ui", "STATUS: gate started on #12"),
+                3 => ("m3", "t1-api", "please rebase #12"),
+                4 => ("m4", "t1-api", "STATUS: rebased"),
+                _ => default,
+            };
+            if (message.Item1 is not null)
+            {
+                _world.Receive(message.Item1, message.Item2, message.Item3).GetAwaiter().GetResult();
+            }
+        });
+
+        _ = await Watch(TimeSpan.FromSeconds(1200));
+
+        Assert.Equal(
+            ["STATUS 1 new (lanes: ideas)", "INBOX 1 new message(s); STATUS 1 new (lanes: ui)", "STATUS 1 new (lanes: api)"],
+            _lines.Where(l => l.StartsWith("INBOX", StringComparison.Ordinal) || l.StartsWith("STATUS", StringComparison.Ordinal)),
+            StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

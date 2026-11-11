@@ -73,7 +73,7 @@ internal sealed partial class LinearWorkViewModel
     /// <summary>Focus should move to a row (Show more: the first new one).</summary>
     internal event EventHandler<FocusRequestedEventArgs>? FocusRequested;
 
-    /// <summary>The Connect Linear button was pressed: the shell opens Settings.</summary>
+    /// <summary>The Connect Linear button was pressed: the shell opens the Connections page.</summary>
     internal event EventHandler? ConnectRequested;
 
     /// <summary>A row or a strip row asked for its issue: the shell opens its sheet.</summary>
@@ -215,6 +215,7 @@ internal sealed partial class LinearWorkViewModel
 
         Mine.Show(mineRows, mine.Total, MineEmpty(mine));
         Teams.Show(teamRows, teams.Total, string.Empty);
+        EnrichStrip();
         KeepSelection();
         if (!SelectPending())
         {

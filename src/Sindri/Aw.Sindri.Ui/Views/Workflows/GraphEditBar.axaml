@@ -1,0 +1,83 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
+             xmlns:wa="using:Aw.Sindri.Ui.Api.Workflows"
+             x:Class="Aw.Sindri.Ui.Views.Workflows.GraphEditBar"
+             x:DataType="wf:GraphEditViewModel">
+  <!-- The graph edits of the open workflow (#2258 PR 17 part 3b): Add step, Connect to and Remove on the selected node, with the block picker, the target list, the remove confirm
+       and the reload prompt under them. Every named line is a Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
+  <StackPanel x:Name="GraphEditRoot" Spacing="8" AutomationProperties.Name="{Binding BarName}">
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <Button x:Name="EditAdd" Content="{Binding AddText}" Click="OnAdd" IsEnabled="{Binding CanAdd}" AutomationProperties.Name="{Binding AddText}" />
+      <Button x:Name="EditConnect" Content="{Binding ConnectText}" Click="OnConnect" IsEnabled="{Binding CanConnect}" AutomationProperties.Name="{Binding ConnectText}" />
+      <Button x:Name="EditRemove" Content="{Binding RemoveText}" Click="OnRemove" IsEnabled="{Binding CanRemove}" AutomationProperties.Name="{Binding RemoveText}" />
+    </StackPanel>
+
+    <Border x:Name="EditSheetOpenName" IsVisible="{Binding SheetOpen}" AutomationProperties.Name="{Binding SheetOpenText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="caption" Text="{Binding SheetOpenText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
+    <StackPanel x:Name="EditReloadPrompt" Orientation="Horizontal" Spacing="12" IsVisible="{Binding HasReloadPrompt}">
+      <Border x:Name="EditReloadPromptName" VerticalAlignment="Center" AutomationProperties.Name="{Binding ReloadPromptText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption" Text="{Binding ReloadPromptText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Button x:Name="EditReload" Content="{Binding ReloadText}" Click="OnReload" AutomationProperties.Name="{Binding ReloadText}" />
+    </StackPanel>
+    <Border x:Name="EditFailureName" IsVisible="{Binding HasFailure}" AutomationProperties.Name="{Binding FailureText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+      <TextBlock Classes="caption" Text="{Binding FailureText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+
+    <!-- The block picker. -->
+    <Border x:Name="EditPicker" Classes="panel" IsVisible="{Binding IsAdding}" AutomationProperties.Name="{Binding PickBlockText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+      <StackPanel Spacing="8" Margin="16,8">
+        <TextBlock Classes="body-strong" Text="{Binding PickBlockText}" />
+        <ItemsControl x:Name="EditGroups" ItemsSource="{Binding Groups}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="wa:WorkflowBlockGroup">
+              <StackPanel Spacing="4" Margin="0,0,0,8">
+                <TextBlock Classes="caption subtle" Text="{Binding Group}" />
+                <ItemsControl ItemsSource="{Binding Blocks}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="wa:WorkflowBlock">
+                      <Button Content="{Binding Title}" Click="OnPickBlock" Margin="0,0,8,4" AutomationProperties.Name="{Binding Title}" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button Content="{Binding CancelText}" Click="OnCancel" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CancelText}" />
+      </StackPanel>
+    </Border>
+
+    <!-- The target list of Connect to. -->
+    <Border x:Name="EditTargets" Classes="panel" IsVisible="{Binding IsConnecting}" AutomationProperties.Name="{Binding PickTargetText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+      <StackPanel Spacing="8" Margin="16,8">
+        <TextBlock Classes="body-strong" Text="{Binding PickTargetText}" />
+        <ItemsControl x:Name="EditTargetRows" ItemsSource="{Binding Targets}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="wf:ConnectTarget">
+              <Button Content="{Binding Text}" Click="OnPickTarget" Margin="0,0,0,4" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button Content="{Binding CancelText}" Click="OnCancel" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CancelText}" />
+      </StackPanel>
+    </Border>
+
+    <!-- The remove confirm, naming the node. -->
+    <Border x:Name="EditConfirm" Classes="panel" IsVisible="{Binding IsConfirmingRemove}" AutomationProperties.Name="{Binding ConfirmText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+      <StackPanel Spacing="8" Margin="16,8">
+        <TextBlock Classes="body" Text="{Binding ConfirmText}" TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button x:Name="EditConfirmYes" Content="{Binding ConfirmYesText}" Click="OnConfirmRemove" AutomationProperties.Name="{Binding ConfirmYesText}" />
+          <Button Content="{Binding CancelText}" Click="OnCancel" AutomationProperties.Name="{Binding CancelText}" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

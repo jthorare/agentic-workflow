@@ -3,8 +3,8 @@ using Aw.Sindri.Core.Commands;
 namespace Aw.Sindri.Features.ContextCalls;
 
 /// <summary>
-/// POST /sindri/index/purge: what one record source holds, and with <paramref name="Confirm"/> its deletion (owned-index spec §5.8, §10). A desk command, so a session is refused
-/// (SND-AUTH-002): a purge cannot be undone for anything the source has since deleted. Without <paramref name="Confirm"/> nothing is deleted; the answer is the preview.
+/// POST /sindri/index/purge: what one record source holds, and with <paramref name="Confirm"/> its deletion (owned-index spec §5.8, §10). A desk command an agent session may also
+/// call with <paramref name="Confirm"/> true (the CLI still asks for a typed yes at a terminal): a purge cannot be undone for anything the source has since deleted. Without <paramref name="Confirm"/> nothing is deleted; the answer is the preview.
 /// </summary>
 /// <param name="Source">The source id, e.g. 'github'.</param>
 /// <param name="Confirm">True to delete; false to count only.</param>

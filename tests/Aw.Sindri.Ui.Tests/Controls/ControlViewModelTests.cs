@@ -144,7 +144,7 @@ public sealed class ControlViewModelTests
         Assert.Equal((true, false, CommandPhase.Idle), (control.IsCopyOnly, control.CanRun, control.Phase));
     }
 
-    // The lane decision of 2026-10-12: Grant is two protected rows, each with its own label.
+    // The lane decision of 2026-10-12: Grant is two rows, each with its own label.
     [Theory]
     [InlineData("ApplyCommand:answer-grant", "Grant rounds")]
     [InlineData("ApplyCommand:answer-grant-tokens", "Grant tokens")]

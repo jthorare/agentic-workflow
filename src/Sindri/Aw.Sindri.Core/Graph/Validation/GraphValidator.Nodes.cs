@@ -9,6 +9,11 @@ public sealed partial class GraphValidator
     private void Node(GraphNode node, List<GraphFinding> found)
     {
         var id = node.Id.Value;
+        if (node.OnFailure is { } onFailure && !string.Equals(onFailure, "stop", StringComparison.Ordinal) && !string.Equals(onFailure, "continue", StringComparison.Ordinal))
+        {
+            found.Add(Found.At("GRAPH-NODE-003", id, "onFailure", $"'{onFailure}' is not an 'onFailure' value", "write 'stop' (halt the run when this node fails, the default) or 'continue' (keep walking)"));
+        }
+
         if (!context.Blocks.TryGetValue(node.Type, out var block))
         {
             found.Add(Found.At("GRAPH-BLOCK-001", id, "type", $"there is no block type '{node.Type}'", $"use one of: {string.Join(", ", context.Blocks.Keys.Order(StringComparer.Ordinal))}"));
@@ -57,6 +62,7 @@ public sealed partial class GraphValidator
         }
 
         Lookup(node, new NameCheck("connection", context.World.Connection, "GRAPH-NAME", "connection"), found);
+        Lookup(node, new NameCheck("connections", context.World.Connection, "GRAPH-NAME", "connection"), found);   // a 'run_agent' node names its connections as a list (PR 7)
         Lookup(node, new NameCheck("memory", context.World.Memory, "GRAPH-NAME", "memory"), found);
     }
 

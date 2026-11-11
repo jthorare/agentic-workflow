@@ -18,6 +18,7 @@ public sealed partial class GraphValidator(GraphValidationContext context)
         var found = new List<GraphFinding>();
         var structure = new GraphStructure(spec);
         Duplicates(spec, found);
+        ResourceDeclarations(spec, found);
         Edges(spec, structure, found);
         foreach (var node in spec.Nodes)
         {
@@ -26,6 +27,7 @@ public sealed partial class GraphValidator(GraphValidationContext context)
 
         Triggers(spec, structure, found);
         Cycles(structure, found);
+        Loops(spec, found);
         foreach (var node in spec.Nodes)
         {
             References(new NodeScope(node, structure, structure.Upstream(node.Id.Value)), found);
@@ -38,7 +40,7 @@ public sealed partial class GraphValidator(GraphValidationContext context)
     {
         foreach (var node in spec.Nodes.Where(static n => _scopeRoots.Contains(n.Id.Value)))
         {
-            found.Add(Found.Error("GRAPH-NODE-002", [node.Id.Value], $"node id '{node.Id.Value}' is reserved: references read 'trigger', 'item' and 'workflow' as themselves", "rename the node"));
+            found.Add(Found.Error("GRAPH-NODE-002", [node.Id.Value], $"node id '{node.Id.Value}' is reserved: references read 'trigger', 'item', 'itemIndex' and 'workflow' as themselves", "rename the node"));
         }
 
         foreach (var group in spec.Nodes.GroupBy(static n => n.Id.Value, StringComparer.Ordinal).Where(static g => g.Skip(1).Any()))

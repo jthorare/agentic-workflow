@@ -9,6 +9,5 @@
   "hostGroup": "linear",
   "loopbackAllowed": true,
   "signInNote": "Create an OAuth application in Linear's API settings and add the callback http://127.0.0.1 to it.",
-  "pollableEvents": [],
   "probeUrl": null
 }

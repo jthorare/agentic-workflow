@@ -96,6 +96,34 @@ internal sealed class BubblewrapSandbox(BubblewrapOptions options, ISandboxProce
     }
 
     /// <inheritdoc />
+    public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, request);
+
+    /// <inheritdoc />
+    public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(argv);
+        var inside = plan.Network.Groups.Count == 0
+            ? argv   // nothing to reach: the process runs in an empty network namespace, with no forwarder to start
+            : ["/bin/sh", "-c", EgressInit.Render(plan.Network, options.Socat, EgressInit.InsideLog), EgressInit.Name, .. argv];
+        try
+        {
+            // The process's private /tmp is the only per-process directory; stdin and stdout stay the caller's pipes and no launch secret exists, so the command is plain.
+            var tmp = plan.Mounts.FirstOrDefault(SeatbeltProcessPlan.IsPrivateTmp)?.Source;
+            if (tmp is not null)
+            {
+                _ = Directory.CreateDirectory(tmp);
+            }
+
+            return Results.Success<IReadOnlyList<string>>([options.Bwrap, .. BubblewrapArgv.Build(plan, host, secretsFd: false), "--", .. inside]);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.FsWrite, "the process's run area could not be prepared: " + e.Message);
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(plan);

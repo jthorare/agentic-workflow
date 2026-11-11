@@ -2,13 +2,14 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Reviews;
 
 namespace Aw.Sindri.Features.GetReviewPage;
 
 /// <summary>
-/// The PR review page (PR review page spec §6.2, §6.3, §9). Path segments are checked against GitHub's name rules first (400), then <c language="text">review.login</c> (SND-REVIEW-007) and the synced repos (SND-REVIEW-004).
+/// The PR review page (PR review page spec §6.2, §6.3, §9). Path segments are checked against GitHub's name rules first (400), then the login (<c language="text">review.login</c>, else the GitHub connection's; SND-REVIEW-007) and the synced repos (SND-REVIEW-004).
 /// The forge is read by <see cref="ReviewPageReader"/> (a head that moves is read again), the page is built by <see cref="ReviewPageBuilder"/> and cached by <see cref="ReviewPageCache"/>;
 /// when the forge can't be reached the newest cached page answers, and with none cached the answer is SND-REVIEW-503. A PR the forge does not have is SND-REVIEW-404.
 /// </summary>
@@ -17,7 +18,8 @@ namespace Aw.Sindri.Features.GetReviewPage;
 /// <param name="reader">The forge reads.</param>
 /// <param name="facts">The facts the page is built from.</param>
 /// <param name="cache">The page snapshots and list summaries.</param>
-internal sealed class GetReviewPageService(IApprovedProfile approvals, IReviewPageStore store, ReviewPageReader reader, ReviewPageFactsReader facts, ReviewPageCache cache) : IService<GetReviewPageRequest, ReviewPageModel>
+/// <param name="account">The GitHub connection, whose login stands in when 'review.login' is not set.</param>
+internal sealed class GetReviewPageService(IApprovedProfile approvals, IReviewPageStore store, ReviewPageReader reader, ReviewPageFactsReader facts, ReviewPageCache cache, IGitHubAccount account) : IService<GetReviewPageRequest, ReviewPageModel>
 {
     public async ValueTask<Result<ReviewPageModel>> Handle(GetReviewPageRequest request, CancellationToken cancellationToken)
     {
@@ -35,7 +37,8 @@ internal sealed class GetReviewPageService(IApprovedProfile approvals, IReviewPa
         }
 
         var review = approved.Value?.Profile.Review;
-        if (review?.Login is not { } login || string.IsNullOrWhiteSpace(login))
+        var login = await Login(review, cancellationToken).ConfigureAwait(false);
+        if (login is null)
         {
             return SindriErrors.ReviewNoLogin.With("Set your GitHub login on the Reviews tab first.");
         }
@@ -46,7 +49,19 @@ internal sealed class GetReviewPageService(IApprovedProfile approvals, IReviewPa
             return stored.Error;
         }
 
-        return await Page(new ReviewPageAsk(pull, login, review, stored.Value, stored.Value.Url ?? string.Create(CultureInfo.InvariantCulture, $"https://github.com/{pull.Owner}/{pull.Repo}/pull/{pull.Number}")), cancellationToken).ConfigureAwait(false);
+        return await Page(new ReviewPageAsk(pull, login, review ?? new PrReviewSettings(), stored.Value, stored.Value.Url ?? string.Create(CultureInfo.InvariantCulture, $"https://github.com/{pull.Owner}/{pull.Repo}/pull/{pull.Number}")), cancellationToken).ConfigureAwait(false);
+    }
+
+    // why: 'review.login' is the owner's override; without it the GitHub connection's login stands in
+    private async ValueTask<string?> Login(PrReviewSettings? review, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(review?.Login))
+        {
+            return review.Login;
+        }
+
+        var connection = await account.Current(cancellationToken).ConfigureAwait(false);
+        return connection.IsSuccess && !string.IsNullOrWhiteSpace(connection.Value.Login) ? connection.Value.Login : null;
     }
 
     private async ValueTask<Result<ReviewPageModel>> Page(ReviewPageAsk ask, CancellationToken cancellationToken)

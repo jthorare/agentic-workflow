@@ -27,7 +27,6 @@ internal static class CommandTelemetry
         [ActionClass.Job] = "job",
         [ActionClass.Decision] = "decision",
         [ActionClass.Desk] = "desk",
-        [ActionClass.Protected] = "protected",
         [ActionClass.Local] = "local",
         [ActionClass.Issue] = "issue",
     };

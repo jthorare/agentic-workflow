@@ -1,4 +1,5 @@
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Forge;
 using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Reviews;
@@ -43,6 +44,7 @@ internal static class ReviewPageScenarios
         {
             var forge = Forge(scenario);
             _ = services.Replace(ServiceDescriptor.Singleton<IPullRequests>(forge));
+            _ = services.Replace(ServiceDescriptor.Singleton<IGitHubAccount>(ReviewScenarios.Account(scenario)));   // #2499: connected as github:work; login null for 'no-login'
             _ = services.Replace(ServiceDescriptor.Singleton<IReviewPageStore>(new FakeReviewPageStore().Syncing("acme/api", "acme/web").With(Stored(scenario))));
             _ = services.Replace(ServiceDescriptor.Singleton<IReviewEvidence>(new FakeReviewEvidence().With(Evidence(scenario))));
             _ = services.Replace(ServiceDescriptor.Singleton<IReviewProjects>(new FakeReviewProjects().With(ReviewScenarios.SindriProject, "Sindri")));

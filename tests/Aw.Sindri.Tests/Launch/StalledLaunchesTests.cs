@@ -3,7 +3,6 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
-using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Tests.Launch;
 
@@ -55,35 +54,4 @@ public sealed class StalledLaunchesTests
         Assert.Empty(StalledLaunches.Find([old], _now));
         Assert.Equal(_instance, Assert.Single(StalledLaunches.Find([old], now: null)).Instance);
     }
-
-    private static StalledLaunch Stalled(InstanceAddress? instance = null) => Assert.Single(StalledLaunches.Find([Row(1, SessionEndReason.Idle, TimeSpan.FromMinutes(10), instance ?? _instance)], _now));
-
-    private static EngineItemPart Part(string address, string state = "draft", bool ended = false, bool cancelled = false) =>
-        new(address, state, RunOpen: true, StepRuntime.Agent, Suspension: null, ended, cancelled);
-
-    [Fact]
-    public void An_item_with_no_engine_part_keeps_the_launch() => Assert.False(StalledLaunches.MovedPast(Stalled(), engine: null));
-
-    [Fact]
-    public void An_instance_still_in_the_launchs_step_keeps_it() => Assert.False(StalledLaunches.MovedPast(Stalled(), Part(_instance.Value)));
-
-    [Fact]
-    public void An_instance_that_ended_drops_it() => Assert.True(StalledLaunches.MovedPast(Stalled(), Part(_instance.Value, ended: true)));
-
-    [Fact]
-    public void An_instance_that_was_cancelled_drops_it() => Assert.True(StalledLaunches.MovedPast(Stalled(), Part(_instance.Value, ended: true, cancelled: true)));
-
-    [Fact]
-    public void An_instance_in_another_state_drops_it() => Assert.True(StalledLaunches.MovedPast(Stalled(), Part(_instance.Value, state: "review")));
-
-    [Fact]
-    public void A_root_that_is_no_longer_one_of_the_items_live_roots_drops_it() => Assert.True(StalledLaunches.MovedPast(Stalled(), Part(_item.Value + "/other/1")));
-
-    [Fact]
-    public void A_child_of_an_ended_root_drops_it() =>
-        Assert.True(StalledLaunches.MovedPast(Stalled(InstanceAddress.From(_item.Value + "/step/1/child.1")), Part(_instance.Value, ended: true)));
-
-    [Fact]
-    public void A_child_of_a_live_root_is_kept_whatever_state_the_root_is_in() =>
-        Assert.False(StalledLaunches.MovedPast(Stalled(InstanceAddress.From(_item.Value + "/step/1/child.1")), Part(_instance.Value, state: "review")));
 }

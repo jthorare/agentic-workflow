@@ -1,5 +1,0 @@
-{"start":{"inputs":{"fact:request":"Export the June report."}}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"june-report.csv"}},"expect":{"state":"import"}}
-{"trigger":{"kind":"step.completed","outcome":"failed","outputs":{"fact:findings":"Row 12 has no date."}},"expect":{"state":"export"}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"june-report-fixed.csv"}},"expect":{"state":"import"}}
-{"trigger":{"kind":"step.completed","outcome":"passed"},"expect":{"state":"done","outcome":"resolved"}}

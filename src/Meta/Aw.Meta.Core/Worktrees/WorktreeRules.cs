@@ -7,7 +7,7 @@ namespace Aw.Meta.Core.Worktrees;
 /// The rules that decide whether a worktree may be removed. All must hold, so every failing one is reported. The work must be
 /// proven finished: an ended pull request, or, with no pull request, everything pushed or in origin/main (a live tree on a fresh branch is protected by rules 4 and 7).
 /// Nothing about age is among them (a worktree untouched for weeks may still be work in progress); the one time rule is a change
-/// trigger, "changed since the last sweep".
+/// trigger, "changed since the last full sweep (when it started)".
 /// </summary>
 internal static class WorktreeRules
 {
@@ -150,12 +150,12 @@ internal static class WorktreeRules
         }
     }
 
-    // Only the owning lane's --done frees a detached tree (the unpushed-commits reason in Judge checks its HEAD); rule 7 needs a recorded sweep.
+    // Only the owning lane's --done frees a detached tree (the unpushed-commits reason in Judge checks its HEAD); like --discarded it waives rule 7 and "no previous sweep" (#2544, #2560).
     private static void DetachedReasons(WorktreeFacts facts, List<string> reasons)
     {
-        if (!facts.Done || facts.NoPreviousSweep)
+        if (!facts.Done)
         {
-            reasons.Add(facts.Done ? "no previous sweep to compare with" : "detached, not a gate tree");
+            reasons.Add("detached, not a gate tree");
         }
     }
 
@@ -205,10 +205,10 @@ internal static class WorktreeRules
         }
     }
 
-    // Rule 7's reason: a tree whose pull request ended is compared with that time, any other with the last sweep's start.
+    // Rule 7's reason (waived for a gate tree, --discarded and --done: the owning lane said it is finished): a tree whose pull request ended is compared with that time, any other with the last sweep's start.
     private static void Changed(WorktreeFacts facts, List<string> reasons)
     {
-        if (facts.GatePr is not null || facts.Discarded is not null)
+        if (facts.GatePr is not null || facts.Discarded is not null || facts.Done)
         {
             return;
         }
@@ -221,9 +221,15 @@ internal static class WorktreeRules
         {
             reasons.Add(facts.ChangedSinceEnd
                 ? string.Create(CultureInfo.InvariantCulture, $"changed since PR #{facts.PrNumber} {(facts.PrState == PrState.Merged ? "merged" : "closed")}")
-                : "changed since the last sweep");
+                : SinceFullSweep(facts.SweepStartedAt));
         }
     }
+
+    // A --path or --pr pass never moves the marker, so the reason says it is the last full sweep, and when that started.
+    private static string SinceFullSweep(DateTimeOffset? started) =>
+        started is { } at
+            ? "changed since the last full sweep (" + at.ToUniversalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + "Z)"
+            : "changed since the last full sweep";
 
     private static string Short(string command) => command.Length > 60 ? command[..60] + "..." : command;
 }

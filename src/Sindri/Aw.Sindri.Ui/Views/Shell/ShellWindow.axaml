@@ -9,6 +9,10 @@
         xmlns:queue="using:Aw.Sindri.Ui.Views.Queue"
         xmlns:agv="using:Aw.Sindri.Ui.Views.Agents"
         xmlns:jv="using:Aw.Sindri.Ui.Views.Jobs"
+        xmlns:cxv="using:Aw.Sindri.Ui.Views.Connections"
+        xmlns:mmv="using:Aw.Sindri.Ui.Views.Memory"
+        xmlns:rsv="using:Aw.Sindri.Ui.Views.Resources"
+        xmlns:wfv="using:Aw.Sindri.Ui.Views.Workflows"
         xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
         xmlns:lnv="using:Aw.Sindri.Ui.Views.Linear"
         xmlns:rwv="using:Aw.Sindri.Ui.Views.Reviews"
@@ -74,7 +78,7 @@
               AutomationProperties.Name="{Binding Text.NotResponding}">
         <!-- A WrapPanel, like Unreadable's below: at the 1,000 px minimum or a large text scale the command moves to its
              own line instead of running past the window's edge. -->
-        <WrapPanel ItemSpacing="10" LineSpacing="6">
+        <WrapPanel ItemSpacing="10" LineSpacing="8">
           <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
             <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
             <TextBlock x:Name="NotRespondingText" Classes="body" Text="{Binding Text.NotRespondingLead}" VerticalAlignment="Center"
@@ -92,7 +96,7 @@
            while they fit; a longer reason takes the full width and wraps, and the command moves to the next line whole,
            so nothing runs past the window's edge at the 1,000 px minimum. -->
       <Border x:Name="UnreadableBanner" DockPanel.Dock="Top" Classes="banner" IsVisible="{Binding IsUnreadable}">
-        <WrapPanel ItemSpacing="12" LineSpacing="6">
+        <WrapPanel ItemSpacing="12" LineSpacing="8">
           <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
             <icons:StateIcon Glyph="Down" VerticalAlignment="Center" />
             <TextBlock x:Name="UnreadableHeading" Classes="body-strong" Text="{Binding Text.Unreadable}" VerticalAlignment="Center"
@@ -115,7 +119,7 @@
            stalled one carries Rebuild views, the catalog's RebuildViews row through the control renderer. Rows stay. -->
       <Border x:Name="ViewsBanner" DockPanel.Dock="Top" Classes="banner" DataContext="{Binding Health.Banner}" x:DataType="shell:ViewsBanner"
               IsVisible="{Binding IsShown}" AutomationProperties.Name="{Binding Text}">
-        <WrapPanel ItemSpacing="12" LineSpacing="6">
+        <WrapPanel ItemSpacing="12" LineSpacing="8">
           <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
             <icons:StateIcon x:Name="StalledGlyph" Glyph="Down" Classes="error" IsVisible="{Binding IsStalled}" VerticalAlignment="Center" />
             <icons:StateIcon x:Name="RebuildingGlyph" Icon="Spinner" Spins="{Binding IsRebuilding}" IsVisible="{Binding IsRebuilding}"
@@ -235,12 +239,50 @@
                     <Button x:Name="JobsLink" Classes="row-title" Click="OnJobsLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.JobsLinkName}">
                       <TextBlock Classes="body" Text="{Binding Text.JobsLink}" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
+                    <!-- Memory is not a tab either: System leads to it (G M and the palette too). -->
+                    <Button x:Name="MemoryLink" Classes="row-title" Click="OnMemoryLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.MemoryLinkName}">
+                      <TextBlock Classes="body" Text="{Binding Text.MemoryLink}" AutomationProperties.AccessibilityView="Raw" />
+                    </Button>
+                    <!-- Resources is not a tab either: System leads to it (G R and the palette too). -->
+                    <Button x:Name="ResourcesLink" Classes="row-title" Click="OnResourcesLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.ResourcesLinkName}">
+                      <TextBlock Classes="body" Text="{Binding Text.ResourcesLink}" AutomationProperties.AccessibilityView="Raw" />
+                    </Button>
                   </StackPanel>
+                </Panel>
+                <Panel IsVisible="{Binding IsConnections}">
+                  <controls:Deferred DataContext="{Binding Connections}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><cxv:ConnectionsPage x:Name="ConnectionsPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </Panel>
+                <!-- The Memory page (PR 18a): not a tab; G M, the palette, System's Memory link and a memory/<name> link open it. -->
+                <Panel IsVisible="{Binding IsMemory}">
+                  <controls:Deferred DataContext="{Binding MemoryPage}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><mmv:MemoryPage x:Name="MemoryPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </Panel>
+                <!-- The Resources page (PR 18b): not a tab; G R, the palette and System's Resources link open it. -->
+                <Panel IsVisible="{Binding IsResources}">
+                  <controls:Deferred DataContext="{Binding ResourcesPage}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><rsv:ResourcesPage x:Name="ResourcesPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
                 </Panel>
                 <Panel IsVisible="{Binding IsJobs}">
                   <controls:Deferred DataContext="{Binding Jobs}">
                     <controls:Deferred.Template>
                       <DataTemplate><jv:JobsPage x:Name="JobsPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </Panel>
+                <Panel IsVisible="{Binding IsWorkflows}">
+                  <controls:Deferred DataContext="{Binding Workflows}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><wfv:WorkflowsPage x:Name="WorkflowsPage" /></DataTemplate>
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </Panel>
@@ -297,7 +339,7 @@
                 </Border>
                 <Button x:Name="SheetClose" Grid.Column="2" Click="OnCloseSheet" Margin="12,0,0,0"
                         AutomationProperties.Name="{Binding Text.CloseSheetName}">
-                  <StackPanel Orientation="Horizontal" Spacing="6">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
                     <icons:StateIcon Icon="Close" VerticalAlignment="Center" />
                     <TextBlock Text="{Binding Text.CloseSheet}" VerticalAlignment="Center" />
                   </StackPanel>
@@ -338,6 +380,13 @@
                   <controls:Deferred DataContext="{Binding JobSheet}">
                     <controls:Deferred.Template>
                       <DataTemplate><jv:JobSheetView x:Name="JobSheetContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </ScrollViewer>
+                <ScrollViewer x:Name="ConnectionSheetScroll" IsVisible="{Binding IsConnectionSheet}">
+                  <controls:Deferred DataContext="{Binding ConnectionSheet}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><cxv:ConnectionSheetView x:Name="ConnectionSheetContent" /></DataTemplate>
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </ScrollViewer>

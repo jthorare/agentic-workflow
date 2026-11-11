@@ -17,6 +17,16 @@ public interface IProfileKeyWriter
     /// <returns>As <see cref="Plan"/>.</returns>
     public Result<ProfileKeyEdit> PlanText(string keyPath, string value);
 
+    /// <summary>Plans several string keys set in one edit: the file is read once, each key is edited in turn like <see cref="PlanText"/>, and the result is one plan (one validation, one atomic write).</summary>
+    /// <param name="values">Each dotted key with its string value, in the order they are applied.</param>
+    /// <returns>As <see cref="Plan"/>; the first key that can't be edited names the error.</returns>
+    public Result<ProfileKeyEdit> PlanTexts(IReadOnlyList<(string KeyPath, string Value)> values);
+
+    /// <summary>Plans the removal of <paramref name="keyPath"/> (a scalar, a map or a list) and writes nothing: the key's lines go, comments and every other line stay, and a parent map left empty goes too.</summary>
+    /// <param name="keyPath">The dotted key, such as `todo.obsidian`.</param>
+    /// <returns>The file, the edited text and whether it differs (a key that is already absent is unchanged); SND-CLI-003 for a key that isn't a dotted path; SND-PROFILE-002 for a layout Sindri won't edit; SND-PROFILE-001 when the file can't be read.</returns>
+    public Result<ProfileKeyEdit> PlanRemove(string keyPath);
+
     /// <summary>Writes a planned edit atomically (a temporary file renamed over the profile), keeping the file's mode. Nothing is written when the edit is unchanged.</summary>
     /// <param name="edit">The plan from <see cref="Plan"/>.</param>
     /// <returns>The profile file's path; SND-PROFILE-001 when it can't be written.</returns>

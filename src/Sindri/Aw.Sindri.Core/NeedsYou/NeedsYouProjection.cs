@@ -28,8 +28,9 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
     private static readonly HashSet<string> _handled = new(StringComparer.Ordinal)
     {
         EventTypes.RequestFiled, EventTypes.DecisionRecorded, EventTypes.ItemStateChanged, EventTypes.ServiceRan, EventTypes.ProfileChecked,
-        EventTypes.WorkflowStarted, EventTypes.WorkflowTransition, EventTypes.WorkflowRefused, EventTypes.WorkflowNotified,
         EventTypes.ConnectionNeedsSignIn, EventTypes.ConnectionSignedIn,
+        EventTypes.WorkflowNotify, EventTypes.WorkflowRunFinished, EventTypes.WorkflowRunCancelled,
+        EventTypes.WorkflowQuestion, EventTypes.WorkflowAnswered, EventTypes.WorkflowNodeFinished, EventTypes.WorkflowNodeFailed,
     };
 
     /// <inheritdoc />
@@ -47,7 +48,12 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
             EventTypes.ServiceRan => await Ran(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProfileChecked => await Checked(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ConnectionNeedsSignIn or EventTypes.ConnectionSignedIn => await ConnectionRow(recorded, rows, cancellationToken).ConfigureAwait(false),
-            _ => await Engine(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.WorkflowNotify => await Notified(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.WorkflowQuestion => await Asked(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.WorkflowAnswered => await Answered(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.WorkflowNodeFinished or EventTypes.WorkflowNodeFailed => await NodeEnded(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.WorkflowRunFinished or EventTypes.WorkflowRunCancelled => await RunEnded(recorded, rows, cancellationToken).ConfigureAwait(false),
+            _ => Results.Success(Unit.Value),
         };
     }
 
@@ -91,6 +97,109 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
         return concerned.IsError
             ? concerned.Error
             : await DeleteAll(rows, concerned.Value.Where(static r => r.Row.Kind == NeedsYouKind.Decision), cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<Unit>> Notified(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var note = events.Payload<WorkflowNotifyPayload>(recorded);
+        return note.IsError
+            ? note.Error
+            : await Put(rows, NeedsYouRows.ForWorkflowNotify(note.Value, recorded.Envelope.OccurredAt, scrubber), recorded, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<Unit>> Asked(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var asked = events.Payload<WorkflowQuestionPayload>(recorded);
+        if (asked.IsError)
+        {
+            return asked.Error;
+        }
+
+        var row = NeedsYouRows.ForWorkflowQuestion(asked.Value, recorded.Envelope.OccurredAt, scrubber);
+        return row.IsError
+            ? row.Error
+            : await rows.Put(ViewNames.NeedsYou, row.Value.Id.Value, new NeedsYouRowRecord(row.Value, recorded.Sequence) { BatchWorkflow = asked.Value.BatchWorkflow }, cancellationToken).ConfigureAwait(false);   // why: the record keeps the waiting workflow off the wire row; the answer reads it to find a loop item's child
+    }
+
+    private async ValueTask<Result<Unit>> Answered(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var answered = events.Payload<WorkflowAnsweredPayload>(recorded);
+        return answered.IsError
+            ? answered.Error
+            : await rows.Delete(ViewNames.NeedsYou, NeedsYouRowIds.WorkflowQuestion(answered.Value.Run, answered.Value.Node, answered.Value.Item).Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>A node that finished or failed no longer asks: an 'ask_owner' node ends by an answer, by its timeout or by failing, and the row goes with it.</summary>
+    private async ValueTask<Result<Unit>> NodeEnded(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        Graph.Ids.WorkflowRunId run;
+        Graph.Ids.NodeId node;
+        int item;
+        if (string.Equals(recorded.Envelope.Type, EventTypes.WorkflowNodeFinished, StringComparison.Ordinal))
+        {
+            var finished = events.Payload<WorkflowNodeFinishedPayload>(recorded);
+            if (finished.IsError)
+            {
+                return finished.Error;
+            }
+
+            (run, node, item) = (finished.Value.RunId, finished.Value.NodeId, finished.Value.ItemIndex);
+        }
+        else
+        {
+            var failed = events.Payload<WorkflowNodeFailedPayload>(recorded);
+            if (failed.IsError)
+            {
+                return failed.Error;
+            }
+
+            (run, node, item) = (failed.Value.RunId, failed.Value.NodeId, failed.Value.ItemIndex);
+        }
+
+        return await rows.Delete(ViewNames.NeedsYou, NeedsYouRowIds.WorkflowQuestion(run, node, item > 0 ? item : null).Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>A run that ended (finished or cancelled) takes its notes and questions with it; other runs' rows stay.</summary>
+    private async ValueTask<Result<Unit>> RunEnded(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        Graph.Ids.WorkflowRunId run;
+        if (string.Equals(recorded.Envelope.Type, EventTypes.WorkflowRunFinished, StringComparison.Ordinal))
+        {
+            var finished = events.Payload<WorkflowRunFinishedPayload>(recorded);
+            if (finished.IsError)
+            {
+                return finished.Error;
+            }
+
+            run = finished.Value.RunId;
+        }
+        else
+        {
+            var cancelled = events.Payload<WorkflowRunCancelledPayload>(recorded);
+            if (cancelled.IsError)
+            {
+                return cancelled.Error;
+            }
+
+            run = cancelled.Value.RunId;
+        }
+
+        foreach (var kind in new[] { "workflow-notify", "question" })
+        {
+            var held = await rows.Where<NeedsYouRowRecord>(ViewNames.NeedsYou, ViewColumn.Kind, kind, cancellationToken).ConfigureAwait(false);
+            if (held.IsError)
+            {
+                return held.Error;
+            }
+
+            var deleted = await DeleteAll(rows, held.Value.Where(r => r.Row.Subject.Id == NeedsYouRows.RunSubject(run)), cancellationToken).ConfigureAwait(false);
+            if (deleted.IsError)
+            {
+                return deleted;
+            }
+        }
+
+        return Unit.Value;
     }
 
     private async ValueTask<Result<Unit>> Ran(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)

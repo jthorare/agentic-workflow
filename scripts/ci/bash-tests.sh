@@ -83,6 +83,7 @@ cd "$ROOT" || exit 2
 EXCLUDED=(
   "config/lib/tests/judge-cs-hook-surface.test.sh	needs the .NET SDK to build the C# judge; CI runs it in the dotnet job (step: Hook contract), which changed-areas.sh also selects for a hook, statusline or hook-library change; the local gate runs it directly"
   "config/lib/tests/sindri-cs-hook-surface.test.sh	needs the .NET SDK to build the C# sindri; CI runs it in the dotnet job (step: Hook contract, sindri), which changed-areas.sh also selects for a hook change; the local gate runs it directly"
+  "scripts/tests/lane-cap-sindri.test.sh	runs dotnet test on three heavy Sindri test classes (40 shards and ConnectionRefresh) and checks their per-test lane cap; the dotnet job's lane-cap check covers it on CI; run it by hand under heavy (#2534)"
   "config/tests/statusline-judge.test.sh	stale on main: it extracts only judge_segment() from statusline.sh, which now calls judge_health(), so all 3 cases fail; config/lib/tests/statusline.test.sh covers the judge column"
 )
 
@@ -90,10 +91,11 @@ EXCLUDED=(
 # their own sandbox: they run after the pool, one at a time, so CPU contention or another
 # suite's writes can't turn a pass into a failure.
 # Everything else must be safe to run beside any other suite (its own mktemp dirs, its
-# own HOME or AW_STATE_DIR, stubs on PATH, no fixed ports).
+# own HOME or AW_STATE_DIR, stubs on PATH, no fixed ports: scripts/ci/test-ports.sh checks it).
 SERIAL=(
   "scripts/tests/agent-token.test.sh	starts a fake HTTP server under a 30 s start budget and sends signals mid-request, asserting the script exits before the fake answers and its curl is gone"
   "scripts/tests/formal-verify-tlc.test.sh	SIGHUPs and TERMs tlc.sh while a real TLC java run is going and asserts the signal exit code (129) and that java and the temp dir are gone; a loaded box lets the run finish first or exit 2"
+  "scripts/tests/signal-suites-ignored-hup.test.sh	runs agent-token.test.sh, formal-verify-tlc.test.sh and meta-launch.test.sh again with SIGHUP ignored, so it carries all three timing budgets (#2377, #2566)"
   "scripts/tests/meta-launch.test.sh	drives a pty and asserts the agent, the lane script and the id watcher are gone right after the pty closes; under load they are still alive at the check"
   "config/hooks/tests/failopen.test.sh	SIGTERMs hooks 0.5 s into a 4 s fake-judge wait and runs each hook under a 10 s watchdog; a loaded machine shifts both"
   "config/lib/tests/failopen.test.sh	runs hooks against hung and slow fake judges under a short watchdog (rc=hung) and checks the fail-open path within the hook's own timeout"
@@ -115,6 +117,7 @@ SERIAL=(
   "scripts/tests/heavy-dead-holder.test.sh	bounds each take at 6 s and needs the \"kept\" rows to time out; a loaded machine can push a real take past it"
   "scripts/tests/heavy-cap-reserve.test.sh	bounds the wrapper row at 5 s and needs it to time out while waiting; a loaded machine can push a real take past it"
   "scripts/tests/heavy-full-reserve.test.sh	bounds each locks.sh take at 5 s from outside; a loaded machine can push a real take past it"
+  "scripts/tests/ci-runner-parity.test.sh	runs heavy-cap-reserve.test.sh (timing-bound, see its row) under a stripped PATH and without /proc/meminfo; in the parallel pool its wrapper row timed out once in 6 runs (#2584)"
   "scripts/tests/readiness-baseline.test.sh	asserts a 200 ms gh timeout (READINESS_GH_TIMEOUT_MS) fires against a 3 s stub and is reported as the timeout, not a parse error"
 )
 

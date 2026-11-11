@@ -5,36 +5,32 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Reviews;
 using Aw.Sindri.Core.Scheduling;
-using Aw.Sindri.Core.Scoping;
-using Aw.Sindri.Core.Workflow.ApproveAll;
-using Aw.Sindri.Core.Workflow.Engine.Runtime;
-using Aw.Sindri.Core.Workflow.Stats;
-using Aw.Sindri.Core.Workflow.Views;
-using Aw.Sindri.Features.ApplyCommand;
-using Aw.Sindri.Features.ApproveAllRecipes;
-using Aw.Sindri.Features.ApproveRecipe;
-using Aw.Sindri.Features.Blocks;
+using Aw.Sindri.Features.ActivateWorkflow;
+using Aw.Sindri.Features.AgentNodeControl;
+using Aw.Sindri.Features.AnswerQuestion;
+using Aw.Sindri.Features.ApplyWorkflowOps;
 using Aw.Sindri.Features.CancelJob;
+using Aw.Sindri.Features.CancelWorkflowRun;
 using Aw.Sindri.Features.CheckProfile;
 using Aw.Sindri.Features.CloseItem;
 using Aw.Sindri.Features.Commands;
 using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Features.CreateHandoffItem;
 using Aw.Sindri.Features.CreateItem;
+using Aw.Sindri.Features.CreateWorkflow;
 using Aw.Sindri.Features.Decide;
+using Aw.Sindri.Features.DeleteWorkflow;
 using Aw.Sindri.Features.FileRequest;
-using Aw.Sindri.Features.GetApproveAllPlan;
 using Aw.Sindri.Features.GetEventCatalog;
-using Aw.Sindri.Features.GetInstance;
-using Aw.Sindri.Features.GetInstanceEvents;
-using Aw.Sindri.Features.GetInstanceFact;
 using Aw.Sindri.Features.GetItem;
-using Aw.Sindri.Features.GetItemScope;
 using Aw.Sindri.Features.GetItemTimeline;
 using Aw.Sindri.Features.GetJob;
 using Aw.Sindri.Features.GetLaunch;
@@ -42,60 +38,60 @@ using Aw.Sindri.Features.GetLaunchTargets;
 using Aw.Sindri.Features.GetNeedsYou;
 using Aw.Sindri.Features.GetProfile;
 using Aw.Sindri.Features.GetQueue;
-using Aw.Sindri.Features.GetRecipeStats;
 using Aw.Sindri.Features.GetRepoStatus;
 using Aw.Sindri.Features.GetRunSuspension;
 using Aw.Sindri.Features.GetSession;
 using Aw.Sindri.Features.GetSessionPreview;
 using Aw.Sindri.Features.GetStatus;
+using Aw.Sindri.Features.GetWorkflow;
+using Aw.Sindri.Features.GetWorkflowRun;
 using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.IssueChallenge;
-using Aw.Sindri.Features.IssueNonce;
 using Aw.Sindri.Features.Items;
 using Aw.Sindri.Features.JobProbe;
 using Aw.Sindri.Features.Jobs;
 using Aw.Sindri.Features.Launching;
 using Aw.Sindri.Features.ListCommands;
 using Aw.Sindri.Features.ListDecisions;
-using Aw.Sindri.Features.ListInstances;
 using Aw.Sindri.Features.ListItems;
 using Aw.Sindri.Features.ListJobs;
-using Aw.Sindri.Features.ListOutbox;
-using Aw.Sindri.Features.ListRecipes;
 using Aw.Sindri.Features.ListRequests;
+using Aw.Sindri.Features.ListResources;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
+using Aw.Sindri.Features.ListWorkflowBlocks;
+using Aw.Sindri.Features.ListWorkflowRuns;
+using Aw.Sindri.Features.ListWorkflows;
 using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
+using Aw.Sindri.Features.PauseWorkflow;
 using Aw.Sindri.Features.PingProcess;
-using Aw.Sindri.Features.PrWatch;
-using Aw.Sindri.Features.ReadInjection;
+using Aw.Sindri.Features.PurgeResources;
 using Aw.Sindri.Features.ReadLedger;
 using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.RecordHeartbeat;
 using Aw.Sindri.Features.RegisterMcp;
-using Aw.Sindri.Features.RegisterRecipe;
-using Aw.Sindri.Features.Repos;
+using Aw.Sindri.Features.ReplaceWorkflow;
 using Aw.Sindri.Features.ResumeJob;
 using Aw.Sindri.Features.ResumeService;
-using Aw.Sindri.Features.RevokeRecipe;
+using Aw.Sindri.Features.RetireInstancesOnStart;
 using Aw.Sindri.Features.RunDoctor;
+using Aw.Sindri.Features.RunWorkflow;
 using Aw.Sindri.Features.SampleSessionUsage;
-using Aw.Sindri.Features.Scoping;
 using Aw.Sindri.Features.Scrub;
+using Aw.Sindri.Features.SearchWorkflowDocs;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
 using Aw.Sindri.Features.Sessions;
 using Aw.Sindri.Features.SetProfileKey;
 using Aw.Sindri.Features.SetupWatch;
-using Aw.Sindri.Features.ShowRecipe;
-using Aw.Sindri.Features.StartInstance;
 using Aw.Sindri.Features.StartProcess;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.StreamEvents;
 using Aw.Sindri.Features.SweepLostSessions;
 using Aw.Sindri.Features.ValidateProfile;
-using Aw.Sindri.Features.WorkflowStats;
+using Aw.Sindri.Features.ValidateWorkflow;
+using Aw.Sindri.Features.WorkflowSchedule;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -120,11 +116,16 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IItemResolver, ViewItemResolver>()
             .AddScoped<RequestTarget>()
             .AddScoped<IService<StartProcessRequest, StartProcessResponse>, StartProcessService>()
+            .AddWorkflowServices()
+            .AddScoped<IValidator<AnswerQuestionRequest>, AcceptAllValidator<AnswerQuestionRequest>>().AddCommand<AnswerQuestionRequest, AnswerQuestionResponse, AnswerQuestionService>()   // 'sindri answer' (#2258, PR 9)
+            .AddScoped<IValidator<ListResourcesRequest>, AcceptAllValidator<ListResourcesRequest>>().AddQuery<ListResourcesRequest, ListResourcesResponse, ListResourcesService>()   // agent-first PR 14: the owner is parsed in the service (SND-RES-006)
+            .AddScoped<IValidator<PurgeResourcesRequest>, AcceptAllValidator<PurgeResourcesRequest>>().AddCommand<PurgeResourcesRequest, PurgeResourcesResponse, PurgeResourcesService>()
             .AddScoped<IService<RecordHeartbeatRequest, RecordHeartbeatResponse>, RecordHeartbeatService>()
+            .AddScoped<IService<RetireInstancesOnStartRequest, RetireInstancesOnStartResponse>, RetireInstancesOnStartService>()
             .AddRecordServiceRun()
             .AddScoped<IService<CheckProfileRequest, CheckProfileResponse>, CheckProfileService>()
             .AddScoped<IService<ValidateProfileRequest, ValidateProfileResponse>, ValidateProfileService>()
-            .AddPlanSandbox().AddRecordLimitHit().AddEndLearnMode().AddListDenials().AddAllowDenial().AddCheckSandbox().AddWorkspacePrepare().AddGetSkills().AddStartSkillRun()
+            .AddPlanSandbox().AddRecordLimitHit().AddEndLearnMode().AddListDenials().AddAllowDenial().AddCheckSandbox().AddWorkspacePrepare().AddGetSkills()
             .AddScoped<IService<InitProfileRequest, InitProfileResponse>, InitProfileService>()
             .AddScoped<IService<SetProfileKeyRequest, SetProfileKeyResponse>, SetProfileKeyService>()
             .AddScoped<IService<ScrubRequest, ScrubResponse>, ScrubService>()
@@ -136,9 +137,6 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddSetupWatch(static sp => sp.GetRequiredService<IJobRunner>().Running)
             .AddScoped<IScheduledService, JobProbeService>()   // opt-in: not a BuiltInService, so only a profile that names it schedules it
             .AddJobRuntime()
-            .AddRecipeTools()
-            .AddRecipeBlocks()
-            .AddRegistrySlices()
             .AddContextSlices().AddCodeIndexReads().AddEngineReads()
             .AddContextJobs()
             .AddCodeIndexJobs()
@@ -146,9 +144,31 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddSessionSlices()
             .AddLaunchSlices()
             .AddLaunchTargetJob()
-            .AddScoped<IRepoCheckouts, ProfileRepoCheckouts>()
-            .AddAddRepo().AddPinConcepts().AddSetPages().AddRegisterMcpJob().AddOnboardRepo()
-            .AddStationSlices();
+            .AddAddRepo().AddToolkits().AddPinConcepts().AddSetPages().AddRegisterMcpJob().AddOnboardRepo();
+        return services;
+    }
+
+    private static IServiceCollection AddWorkflowServices(this IServiceCollection services)
+    {
+        _ = services
+            .AddScoped<IScheduledService, WorkflowScheduleService>().AddSingleton(WorkflowScheduleService.BuiltIn)   // the built-in 'workflow-schedule' service (#2258, PR 6): runs without a profile entry, every minute
+            .AddScoped<IValidator<RunWorkflowRequest>, AcceptAllValidator<RunWorkflowRequest>>().AddCommand<RunWorkflowRequest, RunWorkflowResponse, RunWorkflowService>()   // 'sindri wf run' and 'wf cancel' (#2258, PR 6): behind the command chain; the slug and payload are checked by the service
+            .AddScoped<IValidator<CancelWorkflowRunRequest>, AcceptAllValidator<CancelWorkflowRunRequest>>().AddCommand<CancelWorkflowRunRequest, CancelWorkflowRunResponse, CancelWorkflowRunService>()
+            .AddScoped<IValidator<TakeOverAgentNodeRequest>, AcceptAllValidator<TakeOverAgentNodeRequest>>().AddCommand<TakeOverAgentNodeRequest, AgentNodeControlled, TakeOverAgentNodeService>()   // the human takes a run_agent node over and hands it back (#2472): behind the command chain; the services check the caller, the run and the node
+            .AddScoped<IValidator<HandBackAgentNodeRequest>, AcceptAllValidator<HandBackAgentNodeRequest>>().AddCommand<HandBackAgentNodeRequest, AgentNodeControlled, HandBackAgentNodeService>()
+            .AddScoped<IValidator<ListWorkflowsRequest>, AcceptAllValidator<ListWorkflowsRequest>>().AddQuery<ListWorkflowsRequest, ListWorkflowsResponse, ListWorkflowsService>()   // the workflow reads (#2258, PR 8a): 'sindri wf list|show|runs|run-show'; the slug and the run id are typed, the services say what is missing
+            .AddScoped<IValidator<GetWorkflowRequest>, AcceptAllValidator<GetWorkflowRequest>>().AddQuery<GetWorkflowRequest, GetWorkflowResponse, GetWorkflowService>()
+            .AddScoped<IValidator<ListWorkflowRunsRequest>, AcceptAllValidator<ListWorkflowRunsRequest>>().AddQuery<ListWorkflowRunsRequest, ListWorkflowRunsResponse, ListWorkflowRunsService>()
+            .AddScoped<IValidator<GetWorkflowRunRequest>, AcceptAllValidator<GetWorkflowRunRequest>>().AddQuery<GetWorkflowRunRequest, GetWorkflowRunResponse, GetWorkflowRunService>()   // PR 8b below: the workflow writes
+            .AddScoped<IValidator<CreateWorkflowRequest>, AcceptAllValidator<CreateWorkflowRequest>>().AddCommand<CreateWorkflowRequest, CreateWorkflowResponse, CreateWorkflowService>()
+            .AddScoped<IValidator<ApplyWorkflowOpsRequest>, AcceptAllValidator<ApplyWorkflowOpsRequest>>().AddCommand<ApplyWorkflowOpsRequest, ApplyWorkflowOpsResponse, ApplyWorkflowOpsService>()
+            .AddScoped<IValidator<ReplaceWorkflowRequest>, AcceptAllValidator<ReplaceWorkflowRequest>>().AddCommand<ReplaceWorkflowRequest, ReplaceWorkflowResponse, ReplaceWorkflowService>()
+            .AddScoped<IValidator<ValidateWorkflowRequest>, AcceptAllValidator<ValidateWorkflowRequest>>().AddCommand<ValidateWorkflowRequest, ValidateWorkflowResponse, ValidateWorkflowService>()
+            .AddScoped<IValidator<ActivateWorkflowRequest>, AcceptAllValidator<ActivateWorkflowRequest>>().AddCommand<ActivateWorkflowRequest, ActivateWorkflowResponse, ActivateWorkflowService>()
+            .AddScoped<IValidator<PauseWorkflowRequest>, AcceptAllValidator<PauseWorkflowRequest>>().AddCommand<PauseWorkflowRequest, PauseWorkflowResponse, PauseWorkflowService>()
+            .AddScoped<IValidator<DeleteWorkflowRequest>, AcceptAllValidator<DeleteWorkflowRequest>>().AddCommand<DeleteWorkflowRequest, DeleteWorkflowResponse, DeleteWorkflowService>()
+            .AddScoped<IValidator<ListWorkflowBlocksRequest>, AcceptAllValidator<ListWorkflowBlocksRequest>>().AddQuery<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse, ListWorkflowBlocksService>()   // 'wf blocks' and 'wf docs'
+            .AddScoped<IValidator<SearchWorkflowDocsRequest>, AcceptAllValidator<SearchWorkflowDocsRequest>>().AddQuery<SearchWorkflowDocsRequest, SearchWorkflowDocsResponse, SearchWorkflowDocsService>();
         return services;
     }
 
@@ -170,7 +190,15 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IValidator<SessionHeartbeatRequest>, AcceptAllValidator<SessionHeartbeatRequest>>().AddIssue<SessionHeartbeatRequest, SessionHeartbeatResponse, SessionHeartbeatService>().AddScoped<IValidator<SessionExitRequest>, AcceptAllValidator<SessionExitRequest>>().AddIssue<SessionExitRequest, SessionExitResponse, SessionExitService>();
         _ = services.AddScoped<IValidator<DecideRequest>, DecideValidator>().AddCommand<DecideRequest, CommandAccepted, DecideService>();
         _ = services.AddScoped<IValidator<FileRequestRequest>, FileRequestValidator>().AddCommand<FileRequestRequest, RequestFiledResponse, FileRequestService>();
-        _ = services.AddProjectCommands().AddConnectionSlices().AddMemorySlices().AddTodoSlices().AddLinearReads().AddLinearConnection().AddReviewCommands().AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>();
+        _ = services.AddProjectCommands().AddConnectionSlices().AddMemorySlices().AddToolkitCallSlices().AddTodoSlices().AddLinearReads().AddLinearConnection().AddReviewCommands().AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>().AddScoped<IItemMaker, FixItemMaker>().AddScoped<IValidator<CreateHandoffItemRequest>, CreateHandoffItemValidator>().AddCommand<CreateHandoffItemRequest, HandoffItemCreatedResponse, CreateHandoffItemService>().AddScoped<WorkflowItemMaker>().AddScoped<RunItemLinker>().AddScoped<RunItemRepair>().AddRunItemRepair()
+            .AddSingleton<ICreateItemPort>(static sp => new ScopedCreateItemPort(async (item, ct) =>
+            {
+                var scope = sp.CreateAsyncScope();   // why: the engine's blocks are singletons, the create-item handler is scoped
+                await using (scope.ConfigureAwait(false))
+                {
+                    return await scope.ServiceProvider.GetRequiredService<WorkflowItemMaker>().Create(item, ct).ConfigureAwait(false);
+                }
+            }));
         _ = services.AddScoped<IValidator<RebuildViewsRequest>, AcceptAllValidator<RebuildViewsRequest>>().AddCommand<RebuildViewsRequest, CommandAccepted, RebuildViewsService>();
         _ = services.AddScoped<IValidator<ImportContextMapRequest>, AcceptAllValidator<ImportContextMapRequest>>().AddCommand<ImportContextMapRequest, ImportContextMapResponse, ImportContextMapService>();
         _ = services.AddScoped<Core.Profile.ModelKeyChecks>();
@@ -182,7 +210,7 @@ public static class SindriFeaturesServiceCollectionExtensions
     {
         // ---- queries (one line per slice) ----
         _ = services.AddScoped<IValidator<GetEventCatalogRequest>, AcceptAllValidator<GetEventCatalogRequest>>().AddQuery<GetEventCatalogRequest, EventCatalogView, GetEventCatalogService>();
-        _ = services.AddScoped<IValidator<GetNeedsYouRequest>, AcceptAllValidator<GetNeedsYouRequest>>().AddQuery<GetNeedsYouRequest, GetNeedsYouResponse, GetNeedsYouService>().AddScoped<NeedsYouJoins>().AddScoped<NeedsYouLiveRows>().AddScoped<OwnerStopReader>().AddScoped<NeedsYouOwnerStops>();
+        _ = services.AddScoped<IValidator<GetNeedsYouRequest>, AcceptAllValidator<GetNeedsYouRequest>>().AddQuery<GetNeedsYouRequest, GetNeedsYouResponse, GetNeedsYouService>().AddScoped<NeedsYouLiveRows>();
         _ = services.AddScoped<IValidator<ListDecisionsRequest>, AcceptAllValidator<ListDecisionsRequest>>().AddQuery<ListDecisionsRequest, ListDecisionsResponse, ListDecisionsService>();
         _ = services.AddScoped<IValidator<ListRequestsRequest>, AcceptAllValidator<ListRequestsRequest>>().AddQuery<ListRequestsRequest, ListRequestsResponse, ListRequestsService>();
         _ = services.AddScoped<IValidator<GetJobRequest>, AcceptAllValidator<GetJobRequest>>().AddQuery<GetJobRequest, JobView, GetJobService>();
@@ -191,7 +219,6 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<ListJobsRequest>, AcceptAllValidator<ListJobsRequest>>().AddQuery<ListJobsRequest, JobList, ListJobsService>();
         _ = services.AddScoped<IValidator<GetItemRequest>, AcceptAllValidator<GetItemRequest>>().AddQuery<GetItemRequest, ItemView, GetItemService>().AddScoped<LaunchTargetsReader>().AddScoped<IItemLaunchSource, ItemLaunchSource>();
         _ = services.AddScoped<IValidator<GetItemTimelineRequest>, AcceptAllValidator<GetItemTimelineRequest>>().AddQuery<GetItemTimelineRequest, TimelineResponse, GetItemTimelineService>();
-        _ = services.AddScoped<IValidator<GetItemScopeRequest>, AcceptAllValidator<GetItemScopeRequest>>().AddQuery<GetItemScopeRequest, ItemScopeResponse, GetItemScopeService>();
         _ = services.AddScoped<IValidator<GetQueueRequest>, AcceptAllValidator<GetQueueRequest>>().AddQuery<GetQueueRequest, QueueResponse, GetQueueService>();
         _ = services.AddScoped<IValidator<ExportContextMapRequest>, AcceptAllValidator<ExportContextMapRequest>>().AddQuery<ExportContextMapRequest, MapExported, ExportContextMapService>();
         _ = services.AddScoped<IValidator<GetContextMapRequest>, AcceptAllValidator<GetContextMapRequest>>().AddQuery<GetContextMapRequest, MapStatusView, GetContextMapService>();
@@ -220,23 +247,11 @@ public static class SindriFeaturesServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>The engine's instance slices (engine P4): start, command and complete (commands), the nonce (an issue), get, list and events (queries).</summary>
+    /// <summary>The report of a launched agent run; refuses with SND-GRAPH-104 until the graph engine's agent block (PR 7).</summary>
     private static IServiceCollection AddEngineSlices(this IServiceCollection services)
     {
-        _ = services.AddScoped<IValidator<StartInstanceRequest>, AcceptAllValidator<StartInstanceRequest>>().AddCommand<StartInstanceRequest, StartInstanceResponse, StartInstanceService>();
-        _ = services.AddScoped<IValidator<RerunInstanceRequest>, AcceptAllValidator<RerunInstanceRequest>>().AddCommand<RerunInstanceRequest, StartInstanceResponse, RerunInstanceService>();
-        _ = services.AddScoped<StartFacts>().AddSingleton<IStartFactCheck, ScopeInputStartCheck>().AddScoped<ClaimHolders>().AddScoped<EngineFilledReport>().AddSingleton<ReportOutputTypes>().AddSingleton<IReportOutputChecks, ReportOutputChecker>();
-        services.TryAddSingleton<ReportRefusals>();   // the Workflows watch takes what the check records; one instance, whichever registers first   // engine P6 unit (d): SND-WF-012 against workflow_claims
-        _ = services.AddScoped<IValidator<ApplyCommandRequest>, ApplyCommandValidator>().AddScoped<ApplyCommandService>().AddScoped<TakeoverViewing>().AddCommand<ApplyCommandRequest, ApplyCommandResponse, TakeoverViewingCommand>()
-            .AddScoped(static sp => new TakeoverViewingCommand(sp.GetRequiredService<ApplyCommandService>(), sp.GetRequiredService<TakeoverViewing>()));   // the last registration wins: the inner service is the apply service, not the chain around this one
         _ = services.AddScoped<IValidator<CompleteStepRequest>, AcceptAllValidator<CompleteStepRequest>>().AddCommand<CompleteStepRequest, CompleteStepResponse, CompleteStepService>();
-        _ = services.AddScoped<IValidator<IssueNonceRequest>, AcceptAllValidator<IssueNonceRequest>>().AddIssue<IssueNonceRequest, IssueNonceResponse, IssueNonceService>();
-        _ = services.AddScoped<IStepRunSource, LedgerStepRunSource>();
-        _ = services.AddScoped<StepRunReader>();
-        _ = services.AddScoped<IValidator<GetInstanceRequest>, AcceptAllValidator<GetInstanceRequest>>().AddQuery<GetInstanceRequest, InstanceDetail, GetInstanceService>();
-        _ = services.AddScoped<InstanceRows>().AddScoped<DetailContexts>().AddScoped<InstanceJoins>();
-        _ = services.AddScoped<IValidator<ListInstancesRequest>, AcceptAllValidator<ListInstancesRequest>>().AddQuery<ListInstancesRequest, InstanceList, ListInstancesService>();
-        _ = services.AddScoped<IValidator<GetInstanceEventsRequest>, AcceptAllValidator<GetInstanceEventsRequest>>().AddQuery<GetInstanceEventsRequest, GetInstanceEventsResponse, GetInstanceEventsService>().AddScoped<LimitEndingReader>();
+        _ = services.AddScoped<IValidator<IssueChallengeRequest>, AcceptAllValidator<IssueChallengeRequest>>().AddIssue<IssueChallengeRequest, IssueChallengeResponse, IssueChallengeService>();   // refuses every action until #2373 removes the route
         return services;
     }
 
@@ -251,32 +266,23 @@ public static class SindriFeaturesServiceCollectionExtensions
             new WithMoreChecks(sp.GetRequiredService<RunDoctorService>(), sp.GetServices<IDoctorChecks>()))
         .AddScoped<IDoctorChecks, ContextDoctorChecks>().AddIndexDoctor()   // AddIndexDoctor: owned index (#1394), context:index-*
         .AddScoped<IDoctorChecks, LauncherDoctorChecks>().AddScoped<IDoctorChecks, AgentTargetDoctor>()   // #1428: `agent:target`
-        .AddScoped<IDoctorChecks, PrWatchDoctorChecks>()                                   // PB spec API15: the PR watcher's last run
-        .AddScoped<IDoctorChecks, SetupDoctor>()                                           // SO-A6: `setup`, ok when every step is done or skipped
+        .AddScoped<IDoctorChecks, SyncTodoNote.TodoNoteDoctorChecks>()                    // the Obsidian note's sync (spec §6): the `todo` row
+        .AddScoped<IDoctorChecks, PollConnections.CatchUpDoctorChecks>()                   // #2437: `connections:catchup`, the last capped or gapped read per connection and kind
+        .AddScoped<IDoctorChecks, SetupDoctor>()                                          // SO-A6: `setup`, ok when every step is done or skipped
         .AddScoped<IDoctorChecks, Leftovers.OnyxLeftoverDoctor>();                                // #1598: `index:onyx-leftover`, only while an old `onyx up` left something
 
-
-    /// <summary>The registry's slices (engine P2): register, approve and revoke (commands), the challenge (an issue), list and show (queries).</summary>
-    private static IServiceCollection AddRegistrySlices(this IServiceCollection services)
-    {
-        _ = services.AddScoped<IValidator<RegisterRecipeRequest>, AcceptAllValidator<RegisterRecipeRequest>>().AddCommand<RegisterRecipeRequest, RegisterRecipeResponse, RegisterRecipeService>();
-        _ = services.AddScoped<IValidator<ApproveRecipeRequest>, AcceptAllValidator<ApproveRecipeRequest>>().AddCommand<ApproveRecipeRequest, ApproveRecipeResponse, ApproveRecipeService>();
-        _ = services.AddScoped<IValidator<RevokeRecipeRequest>, AcceptAllValidator<RevokeRecipeRequest>>().AddCommand<RevokeRecipeRequest, RevokeRecipeResponse, RevokeRecipeService>();
-        _ = services.AddScoped<IValidator<IssueChallengeRequest>, AcceptAllValidator<IssueChallengeRequest>>().AddIssue<IssueChallengeRequest, IssueChallengeResponse, IssueChallengeService>();
-        services.TryAddSingleton<IRecipeDisplayNames, NoRecipeDisplayNames>();   // until the engine supplies the recipes' names and its shipped set
-        _ = services.AddShippedRecipes();   // the recipes this build embeds, against the registry and the approvals (setup-once spec §5.3)
-        _ = services.AddScoped<ApproveAllPlanReader>().AddSingleton<RedeemedPlans>();   // setup-once spec §5.3: approve-all is a query for the plan and a job for the hold
-        _ = services.AddScoped<IValidator<GetApproveAllPlanRequest>, AcceptAllValidator<GetApproveAllPlanRequest>>().AddQuery<GetApproveAllPlanRequest, ApproveAllPlan, GetApproveAllPlanService>();
-        _ = services.AddScoped<IJobAdmission<ApproveAllRecipesRequest>, ApproveAllRecipesAdmission>()
-            .AddJob<ApproveAllRecipesRequest, ApproveAllResult, ApproveAllRecipesService>(static _ => ApproveAllRecipesAdmission.Key, static r => ApproveAllRecipesService.Summary(r));
-        _ = services.AddScoped<IValidator<ListRecipesRequest>, AcceptAllValidator<ListRecipesRequest>>().AddQuery<ListRecipesRequest, ListRecipesResponse, ListRecipesService>();
-        _ = services.AddScoped<IValidator<ShowRecipeRequest>, AcceptAllValidator<ShowRecipeRequest>>().AddQuery<ShowRecipeRequest, RecipeView, ShowRecipeService>();
-        _ = services.AddScoped<WorkflowStatRows>().AddScoped<IWorkflowStatRows>(static sp => sp.GetRequiredService<WorkflowStatRows>()).AddScoped<RecipeStatsSource>().AddScoped<BabysitterStatsSource>().AddScoped<IValidator<GetRecipeStatsRequest>, AcceptAllValidator<GetRecipeStatsRequest>>().AddQuery<GetRecipeStatsRequest, RecipeStats, GetRecipeStatsService>();   // API P12
-        _ = services.AddScoped<IValidator<ReadInjectionRequest>, AcceptAllValidator<ReadInjectionRequest>>().AddQuery<ReadInjectionRequest, InjectionView, ReadInjectionService>();
-        _ = services.AddScoped<IValidator<GetInstanceFactRequest>, AcceptAllValidator<GetInstanceFactRequest>>().AddQuery<GetInstanceFactRequest, FactView, GetInstanceFactService>();
-        _ = services.AddScoped<IValidator<GetInstanceScopingRequest>, AcceptAllValidator<GetInstanceScopingRequest>>().AddQuery<GetInstanceScopingRequest, ScopingView, GetInstanceScopingService>();
-        _ = services.AddScoped<IValidator<GetPacketFileRequest>, AcceptAllValidator<GetPacketFileRequest>>().AddQuery<GetPacketFileRequest, PacketFile, GetPacketFileService>();
-        _ = services.AddScoped<IValidator<ListOutboxRequest>, AcceptAllValidator<ListOutboxRequest>>().AddQuery<ListOutboxRequest, ListOutboxResponse, ListOutboxService>();   // engine P6 unit (c)
-        return services;
-    }
+    /// <summary>The engine's singleton <see cref="IRunItemRepair"/>: each call runs the scoped <see cref="RunItemRepair"/> in its own scope (#2588).</summary>
+    private static IServiceCollection AddRunItemRepair(this IServiceCollection services) => services
+        .AddSingleton<IRunItemRepair>(static sp =>
+        {
+            var scopes = sp.GetRequiredService<IServiceScopeFactory>();
+            return new ScopedRunItemRepair(async work =>
+            {
+                var scope = scopes.CreateAsyncScope();
+                await using (scope.ConfigureAwait(false))
+                {
+                    return await work(scope.ServiceProvider.GetRequiredService<RunItemRepair>()).ConfigureAwait(false);
+                }
+            });
+        });
 }

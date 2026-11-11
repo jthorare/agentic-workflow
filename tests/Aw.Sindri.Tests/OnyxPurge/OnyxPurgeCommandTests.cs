@@ -25,7 +25,7 @@ public sealed class OnyxPurgeCommandTests : IDisposable
     {
         Seed();
 
-        var exit = await _rig.Run(human: true, answer: "no");
+        var exit = await _rig.Run(answer: "no");
 
         Assert.Equal(0, exit);
         Assert.Contains($"{Label}-api-1", _rig.Out, StringComparison.Ordinal);
@@ -41,24 +41,11 @@ public sealed class OnyxPurgeCommandTests : IDisposable
     {
         Seed();
 
-        var exit = await _rig.Run(human: true, answer: "yes");
+        var exit = await _rig.Run(answer: "yes");
 
         Assert.Equal(0, exit);
         Assert.Equal([$"{Label}-lookalike-1"], _rig.Docker.Containers.Keys, StringComparer.Ordinal);
         Assert.Equal([$"{Label}_unlabelled"], _rig.Docker.Volumes.Keys, StringComparer.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task An_agent_session_is_refused_and_nothing_is_listed_or_deleted()
-    {
-        Seed();
-
-        var exit = await _rig.Run(human: false, answer: "yes");
-
-        Assert.Equal(2, exit);
-        Assert.Contains("SND-AUTH-002", _rig.Error, StringComparison.Ordinal);
-        Assert.Empty(_rig.Calls);
-        Assert.True(Directory.Exists(_rig.OnyxDirectory));
     }
 
     [Theory, Trait("Lane", "unit")]
@@ -69,7 +56,7 @@ public sealed class OnyxPurgeCommandTests : IDisposable
     {
         Seed();
 
-        var exit = await _rig.Run(human: true, answer);
+        var exit = await _rig.Run(answer);
 
         Assert.Equal(0, exit);
         Assert.Empty(_rig.Calls);
@@ -78,11 +65,23 @@ public sealed class OnyxPurgeCommandTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_piped_yes_without_a_terminal_is_refused_and_deletes_nothing()
+    {
+        Seed();
+
+        var exit = await _rig.Run(answer: "yes", terminal: false);
+
+        Assert.Equal((2, true, 3), (exit, _rig.Error.Contains("needs a terminal", StringComparison.Ordinal), _rig.Docker.Containers.Count));
+        Assert.Empty(_rig.Calls);
+        Assert.True(File.Exists(Path.Combine(_rig.OnyxDirectory, ".env")));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Yes_deletes_containers_then_volumes_then_the_keychain_entry_then_the_directory()
     {
         Seed();
 
-        var exit = await _rig.Run(human: true, answer: "y");
+        var exit = await _rig.Run(answer: "y");
 
         Assert.Equal(0, exit);
         Assert.Equal([$"rm {Label}-api-1", $"rm {Label}-db-1", $"volume rm {Label}_db", "keychain onyx/sindri-onyx"], _rig.Calls);
@@ -92,7 +91,7 @@ public sealed class OnyxPurgeCommandTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task No_state_and_nothing_labelled_says_nothing_is_left()
     {
-        var exit = await _rig.Run(human: true, answer: null);
+        var exit = await _rig.Run(answer: null);
 
         Assert.Equal(0, exit);
         Assert.Contains("nothing left", _rig.Out, StringComparison.OrdinalIgnoreCase);
@@ -104,7 +103,7 @@ public sealed class OnyxPurgeCommandTests : IDisposable
     {
         _rig.WriteState($$"""{"project":"{{Label}}","keyPointer":"file:/home/x/.sindri/secrets/onyx-sindri-onyx"}""");
 
-        var exit = await _rig.Run(human: true, answer: "yes");
+        var exit = await _rig.Run(answer: "yes");
 
         Assert.Equal(0, exit);
         Assert.DoesNotContain(_rig.Calls, c => c.StartsWith("keychain", StringComparison.Ordinal));
@@ -119,7 +118,7 @@ public sealed class OnyxPurgeCommandTests : IDisposable
         _rig.Docker.Containers["mine"] = name;
         _rig.Docker.Containers["other"] = Label;
 
-        var exit = await _rig.Run(human: true, answer: "yes");
+        var exit = await _rig.Run(answer: "yes");
 
         Assert.Equal(0, exit);
         Assert.Equal(["other"], _rig.Docker.Containers.Keys, StringComparer.Ordinal);

@@ -447,6 +447,20 @@
       "invalidates": [
         "setup"
       ]
+    },
+    {
+      "type": "workflow.answered",
+      "keyShape": "workflow.answered:<run id>:<node id>[:<item index>]",
+      "invalidates": [
+        "needs-you"
+      ]
+    },
+    {
+      "type": "workflow.question",
+      "keyShape": "workflow.question:<run id>:<node id>[:<item index>]",
+      "invalidates": [
+        "needs-you"
+      ]
     }
   ]
 }

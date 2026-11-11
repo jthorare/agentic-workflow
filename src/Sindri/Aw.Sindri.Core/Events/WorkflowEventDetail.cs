@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Workflow.Engine.Events;
 using Aw.Sindri.Core.Workflow.Engine.Instances;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
-using Aw.Sindri.Core.Workflow.Recipes;
 
 namespace Aw.Sindri.Core.Events;
 
@@ -88,34 +87,9 @@ public sealed record WorkflowEventDetail(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<InputTiming>? Inputs { get; init; }
 
-    /// <summary>
-    /// The detail with its opened run described (actor, attempt, max attempts), for a row whose frame opens a Step run; any other detail comes back unchanged.
-    /// </summary>
-    /// <param name="after">The instance after the row.</param>
-    /// <param name="recipe">Its recipe, which names the state's loop.</param>
-    /// <returns>The detail the ledger row carries.</returns>
-    public WorkflowEventDetail WithRunOpening(WorkflowInstance after, Recipe recipe)
-    {
-        ArgumentNullException.ThrowIfNull(after);
-        ArgumentNullException.ThrowIfNull(recipe);
-        if (Delta.Frame is not { Run: not null } frame || after.Frame.Run is not { } open)
-        {
-            return this;
-        }
-
-        var loop = recipe.States.TryGetValue(after.Frame.State, out var state) && state.Loop is { } name && after.Loops.TryGetValue(name, out var counter) ? counter : null;
-        var opened = frame with { Actor = OpenerOf(after, open), Attempt = loop?.Round, MaxAttempts = loop?.Allowed };
-        return this with { Delta = Delta with { Frame = opened } };
-    }
 
     // The agent's launch id (the session is not started yet when the row is written; the id is a pure function of the instance and the run), 'block', or the human desk.
-    private string OpenerOf(WorkflowInstance after, OpenRun open) => open.Runtime switch
-    {
-        StepRuntime.Agent => AgentLaunches.LaunchIdFor(after.Id, open.Token, open.Escalation).Value,
-        StepRuntime.Block => "block",
-        StepRuntime.Desk => TriggerActor.StartsWith("human:", StringComparison.Ordinal) ? TriggerActor : "human",
-        _ => throw new ArgumentOutOfRangeException(nameof(open), open.Runtime, "an unknown runtime"),
-    };
+
 
     /// <summary>
     /// The detail of a row mirrored without a decision: a desk timeout's park, or a held event's expiry. It names the trigger

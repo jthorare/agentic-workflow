@@ -39,6 +39,21 @@ internal sealed class ShellText
     /// <summary><see cref="Labels.JobsLink"/>.</summary>
     public string JobsLink { get; } = Labels.JobsLink;
 
+    /// <summary><see cref="Labels.MemoryPageName"/>.</summary>
+    public string MemoryPage { get; } = Labels.MemoryPageName;
+
+    /// <summary><see cref="Labels.MemoryLink"/>.</summary>
+    public string MemoryLink { get; } = Labels.MemoryLink;
+
+    /// <summary><see cref="Labels.MemoryLinkName"/>.</summary>
+    public string MemoryLinkName { get; } = Labels.MemoryLinkName;
+
+    /// <summary><see cref="Labels.ResourcesLink"/>.</summary>
+    public string ResourcesLink { get; } = Labels.ResourcesLink;
+
+    /// <summary><see cref="Labels.ResourcesLinkName"/>.</summary>
+    public string ResourcesLinkName { get; } = Labels.ResourcesLinkName;
+
     /// <summary><see cref="Labels.JobsLinkName"/>.</summary>
     public string JobsLinkName { get; } = Labels.JobsLinkName;
 

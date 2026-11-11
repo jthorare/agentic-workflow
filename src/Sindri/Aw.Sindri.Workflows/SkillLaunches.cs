@@ -60,7 +60,7 @@ internal static class SkillLaunches
     }
 
     // A literal as the text it prints; a fact as its stored text (a JSON string unwrapped), scrubbed; a profile value is no input.
-    private static async ValueTask<Result<string?>> ValueOf(Core.Workflow.Recipes.WithValue given, AgentLaunchRun run, AgentLaunchInputs inputs, CancellationToken cancellationToken)
+    private static async ValueTask<Result<string?>> ValueOf(Core.Workflow.Engine.WithValue given, AgentLaunchRun run, AgentLaunchInputs inputs, CancellationToken cancellationToken)
     {
         if (given.Literal is { } literal)
         {

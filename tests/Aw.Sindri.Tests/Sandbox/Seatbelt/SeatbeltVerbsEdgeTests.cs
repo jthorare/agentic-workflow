@@ -155,6 +155,10 @@ public sealed class SeatbeltVerbsEdgeTests : IDisposable
 
         public Result<SandboxPlan> Plan(SandboxRequest request) => throw new NotSupportedException();
 
+        public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => throw new NotSupportedException();
+
+        public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => throw new NotSupportedException();
+
         public Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct) => throw new NotSupportedException();
 
         public Result<IReadOnlyList<string>> Wrap(SandboxPlan plan, IReadOnlyList<string> argv) => Results.Success<IReadOnlyList<string>>(["/bin/sh", "-c", "exit 0"]);

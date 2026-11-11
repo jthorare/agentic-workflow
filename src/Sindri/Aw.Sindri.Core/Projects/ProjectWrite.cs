@@ -13,10 +13,9 @@ public static class ProjectWrite
     /// <param name="callers">The caller.</param>
     /// <param name="held">The lease this process holds.</param>
     /// <param name="action">The write, for the message.</param>
-    /// <returns>Both, SND-AUTH-002 for no caller or an agent session (the desk class lets a session through, but the Projects page is the owner's own), or not running for no lease.</returns>
+    /// <returns>Both, SND-AUTH-002 for no caller (an agent session writes like the owner, and the event's actor names it), or not running for no lease.</returns>
     public static Result<(CallerContext Caller, LeaseGrant Grant)> Begin(ICallerContextAccessor callers, HeldLease held, string action) =>
         callers.Current is not { } caller ? SindriErrors.AuthRefused.With(action + " needs a caller")
-        : caller.Class == CallerClass.Session ? SindriErrors.AuthRefused.With(action + " is the owner's: an agent session can't change the Projects page (fix: the human runs the sindri project command)")
         : held.Current is not { } grant ? SindriErrors.NotRunning.With("the control plane doesn't hold the lease (fix: sindri)")
         : (caller, grant);
 

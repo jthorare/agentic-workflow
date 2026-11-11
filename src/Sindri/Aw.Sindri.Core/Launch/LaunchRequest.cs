@@ -38,6 +38,14 @@ public sealed record LaunchRequest(
     /// </summary>
     public string? BaseCommit { get; init; }
 
+    /// <summary>Null for an attended open and for every recipe Step; the node run an unattended graph launch belongs to (PR 7). Never serialized.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public NodeRunAddress? Node { get; init; }
+
+    /// <summary>Null, or what a graph node's session is asked to do (PR 7). Never serialized.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public AgentTask? Task { get; init; }
+
     /// <summary>Null, or the skill block this Step runs (skill flows spec §3.3): its seed is the skill's invocation alone, and its session gets AW_RESULT, AW_RESULT_SKILL, AW_RESULT_FILE and AW_DIR. Never serialized.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public Skills.SkillLaunch? Skill { get; init; }

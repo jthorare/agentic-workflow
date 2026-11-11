@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Features.AddConnection;
 using Aw.Sindri.Features.GetConnection;
 using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
 
 namespace Aw.Sindri.Tests.Connections;
@@ -44,6 +45,21 @@ public sealed class SignInConnectionServiceTests
         Assert.Equal("new-access", world.Secrets.Tokens(stored.SecretPointer!.ToString())!.AccessToken);
         Assert.Equal("cs-stored", world.Secrets.Tokens(stored.SecretPointer.ToString())!.ClientSecret);
         Assert.Contains(EventTypes.ConnectionSignedIn, world.Ledger.Events.Select(static e => e.Envelope.Type), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task SignIn_again_records_who_signed_in_and_leaves_the_rows_creator_alone()
+    {
+        var (world, row) = await NeedingSignIn();
+        var caller = A.Caller().Launched("LCH-0000000000000000000000000000ff01").Build();
+        using var entered = world.Callers.Enter(caller);
+
+        var signed = await world.SignInAgain().Handle(new SignInConnectionRequest("linear:work"), Token);
+
+        Assert.True(signed.IsSuccess);
+        var recorded = Assert.Single(world.Ledger.Events, static e => e.Envelope.Type == EventTypes.ConnectionSignInRequested);
+        Assert.Equal(caller.Actor, recorded.Envelope.Actor);
+        Assert.Equal(row.CreatedBy, Assert.Single(world.Store.Rows).CreatedBy);
     }
 
     [Fact]
@@ -116,6 +132,94 @@ public sealed class SignInConnectionServiceTests
         Assert.Equal("old-access", world.Secrets.Tokens(row.SecretPointer!.ToString())!.AccessToken);
         var got = await world.Get().Handle(new GetConnectionRequest("linear:work"), Token);   // the row exists, so Get still says why the last try failed
         Assert.Equal(SindriErrors.ConnectionConsentDenied.Code, got.Error.Code);
+    }
+
+    [Fact]
+    public async Task A_failed_sign_in_again_on_a_connected_row_keeps_the_row_working_and_get_reports_the_failure_beside_it()
+    {
+        var world = new ConnectionHarness();
+        await world.Hold();
+        var row = ConnectionSamples.Oauth(status: ConnectionStatus.Connected);
+        _ = world.Secrets.Store(row.Name, new TokenSet("old-access", "old-refresh", ExpiresAt: null, ClientSecret: "cs-stored"));
+        _ = await world.Store.Upsert(row, Token);
+        world.SignIn.Fail(SindriErrors.ConnectionConsentDenied.With("denied"));
+
+        var signed = await world.SignInAgain().Handle(new SignInConnectionRequest("linear:work", Wait: true), Token);
+        var got = await world.Get().Handle(new GetConnectionRequest("linear:work"), Token);
+
+        Assert.Equal(SindriErrors.ConnectionConsentDenied.Code, signed.Error.Code);
+        Assert.True(got.IsSuccess);   // the row still works on its old tokens
+        Assert.Equal("connected", got.Value.Connection.Status);
+        Assert.Equal(new SignInFailureView(SindriErrors.ConnectionConsentDenied.Code, world.Clock.GetUtcNow()), got.Value.LastSignInFailure);
+    }
+
+    [Fact]
+    public async Task A_stale_sign_in_try_that_fails_after_a_newer_one_started_leaves_no_failure_beside_a_connected_row()
+    {
+        var world = new ConnectionHarness();
+        await world.Hold();
+        var row = ConnectionSamples.Oauth(status: ConnectionStatus.Connected);
+        _ = world.Secrets.Store(row.Name, new TokenSet("old-access", "old-refresh", ExpiresAt: null, ClientSecret: "cs-stored"));
+        _ = await world.Store.Upsert(row, Token);
+        var a = new FakeSignInSession();
+        var b = new FakeSignInSession();
+        _ = await world.SignInAgain(a).Handle(new SignInConnectionRequest("linear:work"), Token);
+        _ = await world.SignInAgain(b).Handle(new SignInConnectionRequest("linear:work"), Token);
+
+        a.Fail(SindriErrors.ConnectionSignInTimeout.With("timed out"));
+        for (var i = 0; i < 100 && world.Logs.Lines.Count == 0; i++)
+        {
+            await Task.Delay(20, Token);
+        }
+        _ = Assert.Single(world.Logs.Lines);   // the stale try's failure is still logged
+        var got = await world.Get().Handle(new GetConnectionRequest("linear:work"), Token);
+
+        Assert.True(got.IsSuccess);
+        Assert.Null(got.Value.LastSignInFailure);
+    }
+
+    [Fact]
+    public async Task A_stale_sign_in_try_that_fails_after_a_newer_one_started_does_not_end_the_newer_try_on_a_row_that_is_not_connected()
+    {
+        var world = new ConnectionHarness();
+        await world.Hold();
+        var row = ConnectionSamples.Oauth(status: ConnectionStatus.NeedsSignIn);
+        _ = world.Secrets.Store(row.Name, new TokenSet("old-access", "old-refresh", ExpiresAt: null, ClientSecret: "cs-stored"));
+        _ = await world.Store.Upsert(row, Token);
+        var a = new FakeSignInSession();
+        var b = new FakeSignInSession();
+        _ = await world.SignInAgain(a).Handle(new SignInConnectionRequest("linear:work"), Token);
+        _ = await world.SignInAgain(b).Handle(new SignInConnectionRequest("linear:work"), Token);
+
+        a.Fail(SindriErrors.ConnectionSignInTimeout.With("timed out"));
+        for (var i = 0; i < 100 && world.Logs.Lines.Count == 0; i++)
+        {
+            await Task.Delay(20, Token);
+        }
+        _ = Assert.Single(world.Logs.Lines);   // the stale try's failure is still logged
+        var got = await world.Get().Handle(new GetConnectionRequest("linear:work"), Token);
+
+        Assert.True(got.IsSuccess);   // the row, not the stale try's SND-CONN-003
+        Assert.Equal("needs-sign-in", got.Value.Connection.Status);
+    }
+
+    [Fact]
+    public async Task A_connected_row_whose_last_sign_in_worked_reports_no_failure()
+    {
+        var world = new ConnectionHarness();
+        await world.Hold();
+        var row = ConnectionSamples.Oauth(status: ConnectionStatus.Connected);
+        _ = world.Secrets.Store(row.Name, new TokenSet("old-access", "old-refresh", ExpiresAt: null, ClientSecret: "cs-stored"));
+        _ = await world.Store.Upsert(row, Token);
+        world.SignIn.Fail(SindriErrors.ConnectionConsentDenied.With("denied"));
+        _ = await world.SignInAgain().Handle(new SignInConnectionRequest("linear:work", Wait: true), Token);
+        var second = new FakeSignInSession();   // a sign-in session ends once: the next try is a new one
+        second.Succeed(new TokenSet("new-access", "new-refresh", ExpiresAt: null));
+
+        _ = await world.SignInAgain(second).Handle(new SignInConnectionRequest("linear:work", Wait: true), Token);
+        var got = await world.Get().Handle(new GetConnectionRequest("linear:work"), Token);
+
+        Assert.Null(got.Value.LastSignInFailure);
     }
 
     [Fact]

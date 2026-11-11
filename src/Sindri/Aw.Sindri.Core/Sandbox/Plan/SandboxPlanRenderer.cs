@@ -101,6 +101,7 @@ public static partial class SandboxPlanRenderer
         PlanMountKind.Dev => "device",
         PlanMountKind.Proc => "process",
         PlanMountKind.Link => "link",
+        PlanMountKind.State => "writable (resource)",
         _ => kind.ToString(),
     };
 

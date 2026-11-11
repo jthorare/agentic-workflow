@@ -1,8 +1,6 @@
 using System.Reflection;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Workflow.Engine.Events;
-using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Catalog;
@@ -50,25 +48,26 @@ public sealed class EventCatalogTests
         Expect.Sequence([ApiViews.Job, ApiViews.Jobs], Assert.Single(EventCatalog.All, e => e.Type == EventTypes.JobProgress).Invalidates);
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData(WorkflowEventType.Started, "workflow.started")]
-    [InlineData(WorkflowEventType.Transition, "workflow.transition")]
-    [InlineData(WorkflowEventType.Refused, "workflow.refused")]
-    [InlineData(WorkflowEventType.Shifted, "workflow.shifted")]
-    [InlineData(WorkflowEventType.Notified, "workflow.notified")]
-    [InlineData(WorkflowEventType.Expired, "workflow.expired")]
-    [InlineData(WorkflowEventType.Heavy, "workflow.heavy")]
-    public void Every_type_the_interpreter_mirrors_is_catalogued_under_the_engines_name(WorkflowEventType type, string name)
+    [InlineData("workflow.run.started", "workflow.run.started:<run id>")]
+    [InlineData("workflow.run.finished", "workflow.run.finished:<run id>")]
+    [InlineData("workflow.run.cancelled", "workflow.run.cancelled:<run id>")]
+    [InlineData("workflow.created", "workflow.created:<workflow id>")]
+    [InlineData("workflow.revised", "workflow.revised:<command id>")]
+    [InlineData("workflow.activated", "workflow.activated:<command id>")]
+    [InlineData("workflow.paused", "workflow.paused:<command id>")]
+    [InlineData("workflow.archived", "workflow.archived:<workflow id>")]
+    [InlineData("workflow.node.started", "workflow.node.started:<run id>:<node id>:<item index>")]
+    [InlineData("workflow.node.finished", "workflow.node.finished:<run id>:<node id>:<item index>")]
+    [InlineData("workflow.node.failed", "workflow.node.failed:<run id>:<node id>:<item index>")]
+    public void Each_graph_run_event_is_catalogued_privately_under_its_name_and_key_shape(string type, string keyShape)
     {
-        var mirrored = RecipeWorkflow.TypeOf(type);
+        var entry = Assert.Single(EventCatalog.All, e => e.Type == type);
 
-        Assert.Equal(name, mirrored);
-        Assert.Contains(mirrored, EventCatalog.All.Select(e => e.Type), StringComparer.Ordinal);
+        Assert.False(entry.Public);   // the trigger JSON and error text stay in the ledger; the runs view serves them
+        Assert.Null(entry.PublicPayload);
+        Assert.Equal(keyShape, entry.KeyShape);
+        Assert.Contains(type, typeof(EventTypes).GetFields(BindingFlags.Public | BindingFlags.Static).Select(f => (string)f.GetRawConstantValue()!), StringComparer.Ordinal);
     }
-
-    [Fact, Trait("Lane", "unit")]
-    public void An_effect_refusal_is_not_mirrored_before_the_effect_phase() =>
-        // why: spec 5.7 names the dispatch refusal outbox.refused (P6); P4 has no effects, so no made-up kind is emitted
-        Assert.Throws<NotSupportedException>(() => RecipeWorkflow.TypeOf(WorkflowEventType.EffectRefused));
 
     [Fact, Trait("Lane", "unit")]
     public void The_four_project_events_are_public_and_invalidate_only_the_projects_view()
@@ -84,5 +83,19 @@ public sealed class EventCatalogTests
         }
 
         Assert.Contains(ApiViews.Projects, ApiViews.All, StringComparer.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("linear.issue.created", "linear.issue.created:<clientId>")]
+    [InlineData("linear.comment.posted", "linear.comment.posted:<clientId>")]
+    [InlineData("linear.issue.changed", "linear.issue.changed:<issue key>:<commandId>")]
+    public void Each_linear_write_event_is_catalogued_privately_under_its_name_and_key_shape(string type, string keyShape)
+    {
+        var entry = Assert.Single(EventCatalog.All, e => e.Type == type);
+
+        Assert.False(entry.Public);   // the actor and the issue key stay in the ledger; Linear's own pages show the write
+        Assert.Null(entry.PublicPayload);
+        Assert.Equal(keyShape, entry.KeyShape);
+        Assert.Contains(type, typeof(EventTypes).GetFields(BindingFlags.Public | BindingFlags.Static).Select(f => (string)f.GetRawConstantValue()!), StringComparer.Ordinal);
     }
 }

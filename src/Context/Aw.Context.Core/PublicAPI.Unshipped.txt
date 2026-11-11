@@ -6717,7 +6717,7 @@ override Aw.Context.Core.Linear.LinearSettings.Equals(object? obj) -> bool
 Aw.Context.Core.Linear.LinearSettings.Equals(Aw.Context.Core.Linear.LinearSettings? other) -> bool
 Aw.Context.Core.Linear.LinearSettings.<Clone>$() -> Aw.Context.Core.Linear.LinearSettings!
 Aw.Context.Core.Linear.LinearSettings.Url.get -> System.Uri!
-Aw.Context.Core.Linear.LinearSettings.Token.get -> string!
+Aw.Context.Core.Linear.LinearSettings.Token.get -> string?
 Aw.Context.Core.Linear.LinearSettings.WriteToken.get -> string?
 Aw.Context.Core.Linear.LinearSettings.Teams.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Linear.LinearSettings.Address.get -> string!
@@ -11686,7 +11686,7 @@ Aw.Context.Core.Linear.LinearSinceChange
 Aw.Context.Core.Linear.LinearSinceChange.<Clone>$() -> Aw.Context.Core.Linear.LinearSinceChange!
 Aw.Context.Core.Linear.LinearSinceChange.At.get -> System.DateTimeOffset
 Aw.Context.Core.Linear.LinearSinceChange.At.init -> void
-Aw.Context.Core.Linear.LinearSinceChange.Deconstruct(out Aw.Context.Core.Sources.RecordKey Issue, out string! Identifier, out string! Field, out Aw.Context.Core.Sources.ExternalId? Old, out Aw.Context.Core.Sources.ExternalId? New, out System.DateTimeOffset At, out string! Via) -> void
+Aw.Context.Core.Linear.LinearSinceChange.Deconstruct(out Aw.Context.Core.Sources.RecordKey Issue, out string! Identifier, out string! Field, out Aw.Context.Core.Sources.ExternalId? Old, out Aw.Context.Core.Sources.ExternalId? New, out System.DateTimeOffset At, out string! Via, out string? OldName, out string? NewName) -> void
 Aw.Context.Core.Linear.LinearSinceChange.Equals(Aw.Context.Core.Linear.LinearSinceChange? other) -> bool
 Aw.Context.Core.Linear.LinearSinceChange.Field.get -> string!
 Aw.Context.Core.Linear.LinearSinceChange.Field.init -> void
@@ -11694,9 +11694,13 @@ Aw.Context.Core.Linear.LinearSinceChange.Identifier.get -> string!
 Aw.Context.Core.Linear.LinearSinceChange.Identifier.init -> void
 Aw.Context.Core.Linear.LinearSinceChange.Issue.get -> Aw.Context.Core.Sources.RecordKey
 Aw.Context.Core.Linear.LinearSinceChange.Issue.init -> void
-Aw.Context.Core.Linear.LinearSinceChange.LinearSinceChange(Aw.Context.Core.Sources.RecordKey Issue, string! Identifier, string! Field, Aw.Context.Core.Sources.ExternalId? Old, Aw.Context.Core.Sources.ExternalId? New, System.DateTimeOffset At, string! Via) -> void
+Aw.Context.Core.Linear.LinearSinceChange.LinearSinceChange(Aw.Context.Core.Sources.RecordKey Issue, string! Identifier, string! Field, Aw.Context.Core.Sources.ExternalId? Old, Aw.Context.Core.Sources.ExternalId? New, System.DateTimeOffset At, string! Via, string? OldName = null, string? NewName = null) -> void
 Aw.Context.Core.Linear.LinearSinceChange.New.get -> Aw.Context.Core.Sources.ExternalId?
 Aw.Context.Core.Linear.LinearSinceChange.New.init -> void
+Aw.Context.Core.Linear.LinearSinceChange.NewName.get -> string?
+Aw.Context.Core.Linear.LinearSinceChange.NewName.init -> void
+Aw.Context.Core.Linear.LinearSinceChange.OldName.get -> string?
+Aw.Context.Core.Linear.LinearSinceChange.OldName.init -> void
 Aw.Context.Core.Linear.LinearSinceChange.Old.get -> Aw.Context.Core.Sources.ExternalId?
 Aw.Context.Core.Linear.LinearSinceChange.Old.init -> void
 Aw.Context.Core.Linear.LinearSinceChange.Via.get -> string!
@@ -11949,14 +11953,18 @@ Aw.Context.Core.Linear.LinearIssueRow.Deconstruct(out Aw.Context.Core.Sources.Re
 Aw.Context.Core.Linear.LinearIssueRow.Description.get -> string?
 Aw.Context.Core.Linear.LinearIssueRow.Description.init -> void
 Aw.Context.Core.Linear.LinearIssueRow.LinearIssueRow(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Url, string? StateRaw, string? Author, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? ClosedAt, string? TeamKey, Aw.Context.Core.Linear.LinearIssueFields! Fields, string? Description = null) -> void
-Aw.Context.Core.Linear.LinearIssueSide.Deconstruct(out Aw.Context.Core.Linear.LinearIssueFields! Fields, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, out string? Description) -> void
+Aw.Context.Core.Linear.LinearIssueSide.Deconstruct(out Aw.Context.Core.Linear.LinearIssueFields! Fields, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, out string? Description, out string? StateName) -> void
+Aw.Context.Core.Linear.LinearIssueSide.StateName.get -> string?
+Aw.Context.Core.Linear.LinearIssueSide.StateName.init -> void
 Aw.Context.Core.Linear.LinearIssueSide.Description.get -> string?
 Aw.Context.Core.Linear.LinearIssueSide.Description.init -> void
-Aw.Context.Core.Linear.LinearIssueSide.LinearIssueSide(Aw.Context.Core.Linear.LinearIssueFields! Fields, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, string? Description = null) -> void
+Aw.Context.Core.Linear.LinearIssueSide.LinearIssueSide(Aw.Context.Core.Linear.LinearIssueFields! Fields, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linear.LinearCommentRow!>! Comments, string? Description = null, string? StateName = null) -> void
 const Aw.Context.Core.Sync.RecordBatches.MaxIssueDescription = 65536 -> int
 Aw.Context.Core.Facade.IContextPulls
 Aw.Context.Core.Facade.IContextPulls.OpenPulls(Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.StoredRecord!>!>!>
 Aw.Context.Core.Facade.IContextLibrary.Roots(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRootStatus!>!>!>
+Aw.Context.Core.Library.ILibrarySkips
+Aw.Context.Core.Library.ILibrarySkips.In(string! root, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
 Aw.Context.Core.Library.ILibraryStatus
 Aw.Context.Core.Library.ILibraryStatus.Read() -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRootReport!>!
 Aw.Context.Core.Library.ILibraryStatus.Write(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Library.LibraryRootReport!>! reports) -> void
@@ -12452,3 +12460,5 @@ static Aw.Context.Core.Concepts.PinMembership.Moves(int fromVersion, int toVersi
 Aw.Context.Core.Facade.IContextMap.PinMoves(Aw.Context.Core.Map.MapVersion! from, Aw.Context.Core.Map.MapVersion! to, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinMove!>!>!>
 Aw.Context.Core.Engine.ModelKind.WorkflowPrompt = 7 -> Aw.Context.Core.Engine.ModelKind
 Aw.Context.Core.Models.ModelPurpose.WorkflowPrompt = 9 -> Aw.Context.Core.Models.ModelPurpose
+Aw.Context.Core.Linear.ILinearReadCredential
+Aw.Context.Core.Linear.ILinearReadCredential.TokenFor(string? profilePointer) -> string?

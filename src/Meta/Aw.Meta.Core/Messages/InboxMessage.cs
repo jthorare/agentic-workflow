@@ -14,6 +14,9 @@ public sealed record InboxMessage(MessageId Id, string From, string FromName, st
     /// <summary>Set when the reply obligation was dismissed or deferred.</summary>
     public MessageResolution? Resolution { get; init; }
 
+    /// <summary>When `inbox --once` last showed the message; null when it never did.</summary>
+    public DateTimeOffset? ShownAt { get; init; }
+
     /// <summary>Stores <paramref name="peer"/> with its classification.</summary>
     /// <param name="peer">The parsed message.</param>
     /// <returns>The inbox message, unresolved.</returns>

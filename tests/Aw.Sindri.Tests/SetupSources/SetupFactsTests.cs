@@ -263,21 +263,6 @@ public sealed class SetupFactsTests
         Assert.Equal(ContextErrors.SettingsInvalid.Code, (await rig.Facts.Map(Token)).Error.Code);
     }
 
-    [Fact, Trait("Lane", "unit")]
-    public async Task Recipes_count_each_recipe_once_and_approval_moves_it_to_approved()
-    {
-        await using var rig = new SetupFactsRig();
-        _ = await rig.Registry.H.HoldLease();
-        var empty = (await rig.Facts.Recipes(Token)).Value;
-        var step = await rig.Registry.Shipped("sindri/workflow.step.yaml");
-        var registered = (await rig.Facts.Recipes(Token)).Value;
-        _ = (await rig.Registry.Approve(step)).Value;
-
-        var approved = (await rig.Facts.Recipes(Token)).Value;
-
-        Assert.Equal([(0, 0), (1, 0), (1, 1)], [(empty.Total, empty.Approved), (registered.Total, registered.Approved), (approved.Total, approved.Approved)]);
-    }
-
     private const string BothSources = """{"sources":{"github":{"repos":["owner/name"],"token":"env:GH_KEY"},"slack":{"channels":[{"id":"C0001GEN","name":"eng"}],"token":"env:SLACK_KEY"}}}""";
 
     [Fact, Trait("Lane", "unit")]
@@ -303,6 +288,21 @@ public sealed class SetupFactsTests
         var fact = (await rig.Facts.Sources(Token)).Value;
 
         Assert.Equal([("linear", SetupState.Todo, "needs token")], fact.Items.Lines.Select(static i => (i.Repo, i.State, i.Detail)));
+    }
+
+    // #2508: a source the profile names with no token reads with a connected connection of its preset, so setup lists no to-do for it
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_source_with_no_token_pointer_and_a_connected_connection_is_connected()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithContext("""{"sources":{"linear":{"teams":["ENG"]},"slack":{"channels":[{"id":"C0001GEN","name":"eng"}]}}}"""));
+        await rig.Connect("linear", Core.Connections.ConnectionStatus.Connected);
+        await rig.Connect("slack", Core.Connections.ConnectionStatus.NeedsSignIn);
+
+        var fact = (await rig.Facts.Sources(Token)).Value;
+
+        Assert.Equal([("slack", SetupState.Todo, "needs token"), ("linear", SetupState.Done, "connected")], fact.Items.Lines.Select(static i => (i.Repo, i.State, i.Detail)));
+        Assert.DoesNotContain("connection-token", string.Join('|', fact.Items.Lines.Select(static i => i.Detail)), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

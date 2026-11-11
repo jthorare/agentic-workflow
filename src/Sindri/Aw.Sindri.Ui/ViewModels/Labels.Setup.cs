@@ -12,7 +12,6 @@ internal static partial class Labels
     private static readonly FrozenDictionary<string, (string First, string Again)> _setupActions = new Dictionary<string, (string First, string Again)>(StringComparer.Ordinal)
     {
         ["AddRepo"] = ("Add a repo", "Add another repo"),
-        ["ApproveAllRecipes"] = ("Approve all workflows", "Approve again"),
         ["RegisterMcp"] = ("Connect your agents", "Connect again"),
         ["RefreshContextMap"] = ("Retry", "Retry"),
     }.ToFrozenDictionary(StringComparer.Ordinal);
@@ -22,7 +21,6 @@ internal static partial class Labels
     {
         ["repo"] = "Add your repository",
         ["profile"] = "Your settings",
-        ["recipes"] = "Approve the workflows",
         ["mcp"] = "Connect your coding agents",
         ["map"] = "Build the product map",
     }.ToFrozenDictionary(StringComparer.Ordinal);
@@ -138,9 +136,6 @@ internal static partial class Labels
         ("profile", "todo") when waiting => "Waits for a repository.",
         ("profile", "needs-you") => "Your settings changed. Sindri works only inside what you approve here.",
         ("profile", "done") => "Sindri works only inside what you approved.",
-        ("recipes", "todo") when waiting => "Waits for your settings.",
-        ("recipes", "needs-you") => "The workflows are loaded and waiting. Read what each may do, then approve them all at once.",
-        ("recipes", "done") => "All the workflows can run.",
         ("mcp", "todo") when waiting => "Waits for your settings.",
         ("mcp", "running") => "Sindri is adding itself to this repository for Claude Code, Codex and Cursor.",
         ("mcp", "done") => "Claude Code, Codex and Cursor can reach Sindri in this repository.",
@@ -174,26 +169,8 @@ internal static partial class Labels
     internal static string SetupCli(string action) => action switch
     {
         "AddRepo" => "sindri repo add <path>",
-        "ApproveAllRecipes" => "sindri recipe approve-all",
         "RegisterMcp" => "sindri mcp register --apply",
         "RefreshContextMap" => "sindri context map refresh",
         _ => string.Empty,
     };
-
-    /// <summary>The action over the list of outdated workflows.</summary>
-    internal const string SetupReapproveAll = "Re-approve all updated workflows";
-
-    /// <summary>A workflow that is approved at its shipped version and hash.</summary>
-    internal const string SetupRecipeApproved = "approved";
-
-    /// <summary>A workflow that is approved but changed since, without a version to name.</summary>
-    internal const string SetupRecipeOutOfDate = "Out of date";
-
-    /// <summary>"approved v4, v5 available": the approved version and the shipped one.</summary>
-    internal static string SetupRecipeNewer(int approved, int shipped) =>
-        string.Create(CultureInfo.InvariantCulture, $"approved v{approved}, v{shipped} available");
-
-    /// <summary>The line under the workflows row when some approvals are older than what ships.</summary>
-    internal static string SetupOutdatedSub(int count) =>
-        string.Create(CultureInfo.InvariantCulture, $"{count} {(count == 1 ? "workflow has a newer version" : "workflows have a newer version")} waiting for your approval.");
 }

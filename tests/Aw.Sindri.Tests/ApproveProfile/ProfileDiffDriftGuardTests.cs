@@ -13,7 +13,7 @@ public sealed class ProfileDiffDriftGuardTests
 {
     private static readonly (Type Type, string[] Properties)[] _pinned =
     [
-        (typeof(SindriProfile), ["SchemaVersion", "User", "Tenant", "Repos", "Services", "Api", "Workflow", "Context", "Index", "Launch", "Agents", "Setup", "Sandbox", "Review"]),
+        (typeof(SindriProfile), ["SchemaVersion", "User", "Tenant", "Repos", "Services", "Api", "Workflow", "Context", "Index", "Launch", "Agents", "Setup", "Sandbox", "Review", "Todo"]),
         (typeof(RepoEntry), ["Name", "Path", "Index", "Workflow"]),
         (typeof(RepoWorkflowSettings), ["Judge"]),
         (typeof(IndexSettings), ["DenyPaths", "UtilityGlobs", "MaxFileKB", "MaxTotalMB", "Embeddings", "Graph", "Roles", "Concepts", "Ignore", "Demote", "Pages"]),
@@ -29,11 +29,16 @@ public sealed class ProfileDiffDriftGuardTests
         (typeof(LaunchRepoSettings), ["Default"]),
         (typeof(AgentSettings), ["SoftLimit", "Targets"]),
         (typeof(AgentLimits), ["DailyBudget", "StepArgvHash"]),
-        (typeof(WorkflowSettings), ["DeskTimeout", "EventHold", "Effects", "DispatchDelay", "Judge", "Agent", "Forge", "Route", "Packs", "Line", "Plan", "Prove", "Build", "Ship", "Design", "Review", "Steps", "Docs", "Pr", "Scoping"]),
+        (typeof(WorkflowSettings), ["DeskTimeout", "EventHold", "Effects", "DispatchDelay", "Judge", "Agent", "Forge", "Route", "Packs", "Line", "Plan", "Prove", "Build", "Ship", "Design", "Review", "Steps", "Docs", "Pr", "Scoping", "Poll", "Http", "CallDepth", "ForEach"]),
+        (typeof(PollSettings), ["IntervalSeconds", "CatchUpPages"]),
+        (typeof(HttpSettings), ["Hosts"]),
         (typeof(ScopingSettings), ["HistoryWindow"]),
+        (typeof(ForEachSettings), ["MaxItems", "BatchSize"]),
         (typeof(HistoryWindowSettings), ["Since", "Before"]),
         (typeof(PrReviewSettings), ["Login", "Credential", "Settings", "Projects"]),
         (typeof(PrReviewSettingsEntry), ["Extends", "Panels", "Groups", "Collapse", "Risky", "Checks"]),
+        (typeof(TodoSettings), ["Obsidian"]),
+        (typeof(TodoObsidianSettings), ["Vault", "Note"]),
         (typeof(PrReviewProject), ["Project", "Repos", "Settings"]),
         (typeof(PrReviewGroup), ["Name", "Globs"]),
         (typeof(PrReviewRisky), ["Globs", "Why"]),

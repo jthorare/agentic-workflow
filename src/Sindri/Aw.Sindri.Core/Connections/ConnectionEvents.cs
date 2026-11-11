@@ -37,6 +37,38 @@ public sealed class ConnectionEvents(HeldLease held, ILedgerStore ledger, EventF
         _ = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Appends 'connection.removed' for <paramref name="name"/>; the envelope's actor is the caller's (#2460).</summary>
+    /// <param name="name">The connection.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>A task that ends when the event is recorded or skipped.</returns>
+    public async ValueTask Removed(ConnectionName name, CancellationToken cancellationToken)
+    {
+        if (held.Current is not { } grant)
+        {
+            return;
+        }
+
+        var at = Now;
+        var entry = events.Entry(EventTypes.ConnectionRemoved, new ConnectionRemoved(name.ToString(), at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionRemoved}:{name}:{at.UtcTicks}"));
+        _ = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Appends 'connection.sign-in-requested' for <paramref name="name"/>; the envelope's actor is who signed in (#2460).</summary>
+    /// <param name="name">The connection.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>A task that ends when the event is recorded or skipped.</returns>
+    public async ValueTask SignInRequested(ConnectionName name, CancellationToken cancellationToken)
+    {
+        if (held.Current is not { } grant)
+        {
+            return;
+        }
+
+        var at = Now;
+        var entry = events.Entry(EventTypes.ConnectionSignInRequested, new ConnectionSignInRequested(name.ToString(), at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionSignInRequested}:{name}:{at.UtcTicks}"));
+        _ = await ledger.Append(entry, grant, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Appends 'connection.needs-sign-in' for <paramref name="name"/>, which projects its Needs-you row. Like <see cref="SignedIn"/> it is skipped when no lease is held and ignores a failed append: the status row is already written.</summary>
     /// <param name="name">The connection.</param>
     /// <param name="reason">Why (a provider's error code or fixed text, never a token).</param>
@@ -52,6 +84,57 @@ public sealed class ConnectionEvents(HeldLease held, ILedgerStore ledger, EventF
 
         var at = Now;
         var entry = events.Entry(EventTypes.ConnectionNeedsSignIn, new ConnectionNeedsSignIn(name.ToString(), reason, at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionNeedsSignIn}:{name}:{at.UtcTicks}"));
+        _ = await ledger.Append(entry, lease, cancellationToken).ConfigureAwait(false);
+    }
+    /// <summary>Appends 'connection.polled' (counts only) for a poll that returned events. Skipped when no lease is held; a failed append is ignored: the runs already started.</summary>
+    /// <param name="counts">The connection, the event kind and the counts.</param>
+    /// <param name="grant">The lease to append under; null uses the one this process holds.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>A task that ends when the event is recorded or skipped.</returns>
+    public async ValueTask Polled(PollCounts counts, LeaseGrant? grant, CancellationToken cancellationToken)
+    {
+        if ((grant ?? held.Current) is not { } lease)
+        {
+            return;
+        }
+
+        var at = Now;
+        var entry = events.Entry(EventTypes.ConnectionPolled, new ConnectionPolled(counts.Name.ToString(), counts.Kind, counts.Count, counts.Started, counts.Skipped, at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.ConnectionPolled}:{counts.Name}:{counts.Kind}:{at.UtcTicks}"));
+        _ = await ledger.Append(entry, lease, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Appends 'workflow.trigger.skipped' for a polled event that started no run. The key holds the workflow, the delivery id and the reason, so a repeat of the same skip writes one event.</summary>
+    /// <param name="skipped">The workflow, the connection, the event kind, the delivery id and the reason.</param>
+    /// <param name="grant">The lease to append under; null uses the one this process holds.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>A task that ends when the event is recorded or skipped.</returns>
+    public async ValueTask TriggerSkipped(SkippedTrigger skipped, LeaseGrant? grant, CancellationToken cancellationToken)
+    {
+        if ((grant ?? held.Current) is not { } lease)
+        {
+            return;
+        }
+
+        var entry = events.Entry(EventTypes.WorkflowTriggerSkipped, new WorkflowTriggerSkipped(skipped.Workflow, skipped.Name.ToString(), skipped.Kind, skipped.DeliveryKey, skipped.Reason, Now), $"{EventTypes.WorkflowTriggerSkipped}:{skipped.Workflow}:{skipped.DeliveryKey}:{skipped.Reason}");
+        _ = await ledger.Append(entry, lease, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Appends 'catchup.capped' once for a capped read of (connection, event kind).</summary>
+    /// <param name="name">The connection.</param>
+    /// <param name="kind">The event kind's key (EventKind.Key).</param>
+    /// <param name="reason">Why, in words for the owner.</param>
+    /// <param name="grant">The lease to append under; null uses the one this process holds.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>A task that ends when the event is recorded or skipped.</returns>
+    public async ValueTask CatchUpStopped(ConnectionName name, string kind, string reason, LeaseGrant? grant, CancellationToken cancellationToken)
+    {
+        if ((grant ?? held.Current) is not { } lease)
+        {
+            return;
+        }
+
+        var at = Now;
+        var entry = events.Entry(EventTypes.CatchUpCapped, new CatchUpCapped(name.ToString(), kind, reason, at), string.Create(CultureInfo.InvariantCulture, $"{EventTypes.CatchUpCapped}:{name}:{kind}:{at.UtcTicks}"));
         _ = await ledger.Append(entry, lease, cancellationToken).ConfigureAwait(false);
     }
 }

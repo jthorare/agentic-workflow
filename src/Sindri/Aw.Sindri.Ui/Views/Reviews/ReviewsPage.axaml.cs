@@ -19,6 +19,8 @@ internal sealed partial class ReviewsPage : UserControl
 
     private void OnSaveLogin(object? sender, RoutedEventArgs e) => _ = Page?.SaveLogin(CancellationToken.None);
 
+    private void OnConnect(object? sender, RoutedEventArgs e) => Page?.PressConnect();
+
     private void OnLoginKey(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter && Page is { CanSaveLogin: true } page)

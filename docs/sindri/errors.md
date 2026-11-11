@@ -91,6 +91,17 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-009` | Consent was denied at the provider. | run the command again and allow access |
 | `SND-CONN-010` | A connection with that name exists. | pick another label, or `sindri connection remove` it first |
 | `SND-CONN-011` | The connection uses a key, so it has no browser sign-in to run again. | `sindri connection remove` it, then add it with a new `--key-env` |
+| `SND-CONN-012` | The provider's answer is not the shape Sindri expects, or a redirect left the preset's host. | run `sindri doctor`; if it repeats, the provider changed its API |
+| `SND-CONN-013` | The provider rejected the saved poll cursor. | ask for a full re-read (the owner's call); Sindri does not re-read on its own |
+| `SND-CONN-014` | The provider is rate limiting this connection (429 or 5xx on a poll). | nothing: the next poll waits for Retry-After, then doubles the wait on each repeat |
+| `SND-CONN-015` | A rename was refused: an active workflow's `connection_event` trigger watches the connection, and the old name would stop it firing. The message names the workflows. | pause those workflows (`sindri wf pause <slug>`), rename, point their triggers at the new name, then activate them again |
+| `SND-CONN-101` | A polled event found its run ids, five in a row, held by runs of other events. | nothing: the cursor stays and the next poll tries again; the event is never dropped |
+| `SND-CONN-201` | The handoff inbox's answer breaks the inbox contract; the message names the field. | fix the inbox so it answers as `schemas/handoff/inbox.openapi.yaml` says (docs/sindri/handoff.md) |
+| `SND-CONN-202` | Another caller claimed the offer first. Informational: nothing starts. | none; the next poll lists what is still open |
+| `SND-CONN-203` | The handoff inbox has no such offer any more (unknown or expired). | none; the offer is gone |
+| `SND-CONN-204` | The handoff inbox did not take the result. | check the inbox is up and the claim id is the one the claim returned; the submit is retried |
+| `SND-CONN-205` | The handoff inbox is out of reach, did not answer in 30 seconds, or kept answering 429 or 5xx. | check the connection's base URL and that the inbox is up; list is tried again on the next poll |
+| `SND-CONN-206` | The handoff inbox's host is not on the allowlist, or its URL is not https (http is allowed for loopback only). | use the inbox's https URL and add its host to the allowlist |
 | `SND-MEM-001` | No memory has that name. | `sindri memory list` shows the names |
 | `SND-MEM-002` | A memory with that name exists. | pick another name |
 | `SND-MEM-003` | A fact is empty or longer than 2,000 characters. | shorten the text |
@@ -98,6 +109,24 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-MEM-005` | The match level is not loose, balanced or strict. | use one of the three |
 | `SND-MEM-006` | The memory name is not lowercase letters, digits and `-`. | use 1 to 48 of them, starting with a letter or digit |
 | `SND-MEM-007` | A fact's expiry is not in the future. | give a later `--expires-at`, or none |
+| `SND-RES-001` | A disk holds more than its size limit (the message names the bytes used and the limit). | delete files from the disk, or raise its `size` |
+| `SND-RES-002` | Two databases, disks or connections of one owner share a name. | rename one |
+| `SND-RES-003` | A purge was refused: the owner is still active or has a run going. | archive the owner, or wait for the run to end |
+| `SND-RES-004` | A resource path leaves its owner's folder, or a symlink sits where a resource folder or file goes. | remove the symlink or the stray path, then run again |
+| `SND-RES-005` | A sandbox size is above the box's cap. | lower the `sandbox` memory or wall in the declaration to the cap the message names |
+| `SND-RES-006` | A resource owner, name or size is malformed, or a path exists as the wrong type (a folder where a database goes). | fix the declaration, or move the stray path away |
+| `SND-RES-007` | A disk holds too many files and folders to measure (over 100,000). | delete files you don't need from the disk |
+| `SND-TK-001` | The toolkit is unbuilt, or its source changed since the last good build. | `sindri toolkit build <name>` |
+| `SND-TK-002` | The toolkit's `dotnet build -warnaserror` or its tests failed; it stays `failed` and can't start. | read the build job's output, fix, build again |
+| `SND-TK-003` | `toolkit.json` isn't the SDK's manifest, or a tool name can't become a client tool name. | rebuild with the toolkit SDK; keep `<toolkit>__<tool>` within 64 characters |
+| `SND-TK-004` | The toolkit's process ended during a call. | `sindri toolkit start <name>`; three crashes in ten minutes mark it `failed` |
+| `SND-TK-005` | The toolkit is paused; its process is kept and calls are refused. | `toolkit_stop`, then `toolkit_start` |
+| `SND-TK-006` | A tool call didn't answer within its timeout (60 s by default). | retry, or make the tool faster |
+| `SND-TK-007` | The toolkit has no tool with that name. | `sindri toolkit list` shows the tools |
+| `SND-TK-008` | This box has no sandbox for a plain process (no bubblewrap or Seatbelt), so a toolkit can't start. | `sindri doctor` names the missing piece |
+| `SND-TK-009` | No toolkit has that name. | `sindri toolkit list` |
+| `SND-TK-010` | A toolkit name (lowercase letters, digits, `-`) or tool name (lowercase letters, digits, `_`) is malformed, or `<toolkit>__<tool>` is over 64 characters. | shorten the name |
+| `SND-TK-011` | A toolkit tool ran and answered with an error; the toolkit's own message is in the result. | read the message; fix the arguments or the toolkit |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml. |
 | `SND-TRACKER-002` | The tracker's source holds no items to read (for plan-file: no plan file matches tracker.include). | Fix tracker.include in profile.yaml (or restore the plan files). |
 | `SND-TRACKER-003` | A plan file is too big to read (over 2 MiB). | Split the plan file into smaller plans. |
@@ -139,8 +168,22 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-008` | No such workflow |
 | `SND-GRAPH-009` | Another workflow already has that slug |
 | `SND-GRAPH-010` | A workflow with that id already exists |
-| `SND-GRAPH-011` | This workflow is archived; it can't be activated |
+| `SND-GRAPH-011` | This workflow is archived; it can't be activated, edited or paused. Its slug stays reserved, so a copy needs another slug |
+| `SND-GRAPH-012` | A graph edit could not be applied (the message names the op's number and kind) |
 | `SND-GRAPH-100` | A run with that id already exists |
 | `SND-GRAPH-101` | No such workflow run |
 | `SND-GRAPH-102` | A block could not finish |
 | `SND-GRAPH-103` | The model's answer does not fit the prompt's output schema |
+| `SND-GRAPH-104` | Run controls that come back with the graph engine (`sindri workflow takeover` and `handback` of an instance); a `run_agent` node uses `sindri wf takeover` and `wf handback` |
+| `SND-GRAPH-105` | This workflow is not active; activate a revision to run it |
+| `SND-GRAPH-106` | A manual run's payload must be a JSON object |
+| `SND-GRAPH-107` | This run already ended |
+| `SND-GRAPH-108` | A referenced node output was cut at 64 KB |
+| `SND-GRAPH-109` | A run of this workflow can't start the workflow again |
+| `SND-GRAPH-110` | The run is not waiting on an agent at that node, so there is nothing to take over |
+| `SND-GRAPH-111` | That agent node is not taken over, so there is nothing to hand back |
+| `SND-GRAPH-120` | A workflow call is nested too deep: the call would be past `workflow.callDepth` (default 3) |
+| `SND-GRAPH-121` | A run can't start its own workflow, or the workflow that called it |
+| `SND-GRAPH-122` | An `http` node's request was refused before it was sent: host not on `workflow.http.hosts`, an address that is this machine, plain http, or a credential header |
+| `SND-GRAPH-123` | An `http` node's request got no acceptable answer: status outside `expect`, a redirect loop, an answer over 1 MB, or a network failure |
+| `SND-GRAPH-130` | No question waits at that node |

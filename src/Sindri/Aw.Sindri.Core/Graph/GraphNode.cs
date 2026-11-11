@@ -9,5 +9,6 @@ namespace Aw.Sindri.Core.Graph;
 /// <param name="Type">The block type, such as 'schedule' or 'run_agent'.</param>
 /// <param name="Title">What the canvas shows, or null.</param>
 /// <param name="Config">The block's config; its strings may hold '{{node.field}}' references.</param>
+/// <param name="OnFailure">'stop' (the default when null) halts the walk when the node fails; 'continue' keeps walking.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
-public sealed record GraphNode(NodeId Id, string Type, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Title, JsonObject Config);
+public sealed record GraphNode(NodeId Id, string Type, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Title, JsonObject Config, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? OnFailure = null);

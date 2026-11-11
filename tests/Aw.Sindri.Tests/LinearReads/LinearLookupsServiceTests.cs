@@ -1,6 +1,5 @@
 using Aw.Context.Core;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Features.GetLinearLookups;
 using Aw.Sindri.Testing;
@@ -19,27 +18,26 @@ public sealed class LinearLookupsServiceTests
     private GetLinearLookupsService Service() => new(_facts, _slice.Callers);
 
     [Fact]
-    public async Task A_session_is_refused_SND_AUTH_002_and_nothing_is_read()
+    public async Task A_session_reads_the_lookups_too()
     {
         using var entered = _slice.Callers.Enter(A.Caller().Build());
+        _ = _facts.WithTeam(new LinearLookupsResponse(new LinearTeamRef(Uuid: null, "ENG", Name: null), SyncedAt: null, [], [], [], []));
 
         var result = await Service().Handle(new GetLinearLookupsRequest("ENG"), Token);
 
-        Assert.True(result.IsError);
-        Expect.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
-        Assert.Empty(_facts.AskedTeams);
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Assert.Equal(["ENG"], _facts.AskedTeams);
     }
 
     [Fact]
-    public async Task Contexts_session_refusal_SND_CONTEXT_020_is_SND_AUTH_002()
+    public async Task Contexts_own_refusal_SND_CONTEXT_020_comes_through_as_it_is()
     {
         using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
         _ = _facts.Failing(ContextErrors.SessionsDisabled.With("the pickers' lists are the owner's"));
 
         var result = await Service().Handle(new GetLinearLookupsRequest("ENG"), Token);
 
-        Expect.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
-        Expect.Equal(GetLinearLookupsService.Refusal, result.Error.Message);
+        Expect.Equal(ContextErrors.SessionsDisabled.Code, result.Error.Code);
     }
 
     [Fact]

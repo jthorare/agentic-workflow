@@ -3,6 +3,7 @@ using Aw.Context.Core.Lenses;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
+#pragma warning disable MA0182 // used by Host's verbs through InternalsVisibleTo; MA0182 only looks inside this assembly
 /// <summary>The words the CLI puts after a symbols state: the reason in parentheses, or "from abcdef0, not 1234567" when the code index and the map are at different commits (S-9a).</summary>
 internal static class SymbolWords
 {
@@ -35,3 +36,4 @@ internal static class SymbolWords
 
     private static string Short(string commit) => commit.Length <= ShortLength ? commit : commit[..ShortLength];
 }
+#pragma warning restore MA0182

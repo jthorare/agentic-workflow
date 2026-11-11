@@ -163,30 +163,6 @@
       ]
     },
     {
-      "name": "pr-watch",
-      "every": "5s",
-      "paused": false,
-      "lastRun": null,
-      "nextSlot": null,
-      "job": null,
-      "actions": [
-        "run"
-      ],
-      "description": "Watches the pull requests that wait on the forge."
-    },
-    {
-      "name": "router-stub",
-      "every": "5s",
-      "paused": false,
-      "lastRun": null,
-      "nextSlot": null,
-      "job": null,
-      "actions": [
-        "run"
-      ],
-      "description": "Routes each started item to its workflow."
-    },
-    {
       "name": "setup",
       "every": "1m",
       "paused": false,
@@ -211,8 +187,8 @@
       ]
     },
     {
-      "name": "workflow-events",
-      "every": "5s",
+      "name": "todo-note",
+      "every": "24h",
       "paused": false,
       "lastRun": null,
       "nextSlot": null,
@@ -220,7 +196,43 @@
       "actions": [
         "run"
       ],
-      "description": "Passes ledger events to the running workflows."
+      "description": "Syncs the Obsidian todo note with your todos."
+    },
+    {
+      "name": "toolkit-calls-expire",
+      "every": "1h",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Deletes toolkit calls older than 30 days."
+    },
+    {
+      "name": "workflow-poll",
+      "every": "30s",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Polls connections for events that start workflows (connection_event triggers), and reads missed events after a start or a wake."
+    },
+    {
+      "name": "workflow-schedule",
+      "every": "1m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Starts a run of each active workflow whose schedule has a tick to fire, once for the latest missed tick."
     }
   ],
   "empty": null,

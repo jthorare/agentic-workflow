@@ -1,0 +1,1551 @@
+{
+  "groups": [
+    {
+      "group": "Triggers",
+      "blocks": [
+        {
+          "type": "workflow_call",
+          "title": "Called by a workflow",
+          "isTrigger": true,
+          "config": [],
+          "outputs": {
+            "payload": "object?",
+            "parentRun": "string",
+            "callDepth": "number",
+            "by": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {},
+          "exampleSpec": {
+            "version": 1,
+            "name": "Triage",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Triage for {{start.payload.source}}",
+                  "body": "called by {{start.parentRun}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
+          "type": "connection_event",
+          "title": "Connection event",
+          "isTrigger": true,
+          "config": [
+            {
+              "name": "connection",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "event",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "filter",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "deliveryId": "string",
+            "occurredAt": "string",
+            "connection": "string",
+            "event": "string",
+            "repo?": "string",
+            "number?": "string",
+            "title?": "string",
+            "url?": "string",
+            "author?": "string",
+            "ref?": "string",
+            "identifier?": "string",
+            "label?": "string",
+            "to?": "string",
+            "channel?": "string",
+            "ts?": "string",
+            "user?": "string",
+            "text?": "string",
+            "start?": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "connection": "github:work",
+            "event": "github.pr.merged",
+            "filter": "trigger.repo == \"acme/api\""
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Tell me when an API pull request merges",
+            "nodes": [
+              {
+                "id": "merged",
+                "type": "connection_event",
+                "config": {
+                  "connection": "github:work",
+                  "event": "github.pr.merged",
+                  "filter": "trigger.repo == \"acme/api\""
+                }
+              },
+              {
+                "id": "hello",
+                "type": "notify",
+                "config": {
+                  "title": "Merged",
+                  "body": "{{merged.title}} ({{merged.url}})"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "merged",
+                "to": "hello"
+              }
+            ]
+          }
+        },
+        {
+          "type": "schedule",
+          "title": "Schedule",
+          "isTrigger": true,
+          "config": [
+            {
+              "name": "cron",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "timezone",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "scheduledFor": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "cron": "0 7 * * 1-5",
+            "timezone": "America/Los_Angeles"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Weekday morning ping",
+            "nodes": [
+              {
+                "id": "daily",
+                "type": "schedule",
+                "config": {
+                  "cron": "0 7 * * 1-5",
+                  "timezone": "America/Los_Angeles"
+                }
+              },
+              {
+                "id": "hello",
+                "type": "notify",
+                "config": {
+                  "title": "Good morning",
+                  "body": "Tick for {{daily.scheduledFor}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "daily",
+                "to": "hello"
+              }
+            ]
+          }
+        },
+        {
+          "type": "manual",
+          "title": "When called",
+          "isTrigger": true,
+          "config": [],
+          "outputs": {
+            "payload": "object?"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {},
+          "exampleSpec": {
+            "version": 1,
+            "name": "Echo the payload",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "echo",
+                "type": "notify",
+                "config": {
+                  "title": "Started by hand",
+                  "body": "Payload: {{trigger.payload}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "echo"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "group": "Data",
+      "blocks": [
+        {
+          "type": "http",
+          "title": "HTTP request",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "url",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "method",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "headers",
+              "type": "object",
+              "required": false
+            },
+            {
+              "name": "body",
+              "type": "object",
+              "required": false
+            },
+            {
+              "name": "expect",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "status": "number",
+            "body": "any?",
+            "text": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "url": "https://api.example.com/items",
+            "method": "POST",
+            "body": {
+              "name": "{{triage.summary}}"
+            },
+            "expect": "200,201"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Ping status page",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "hourly",
+                "type": "schedule",
+                "config": {
+                  "cron": "0 * * * *"
+                }
+              },
+              {
+                "id": "ask",
+                "type": "http",
+                "config": {
+                  "url": "https://status.example.com/api/v2/status.json",
+                  "expect": "200"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Status: {{ask.status}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "hourly",
+                "to": "ask"
+              },
+              {
+                "from": "ask",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
+          "type": "memory_search",
+          "title": "Recall",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "memory",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "query",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "level",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "limit",
+              "type": "number",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "facts": "array",
+            "mode": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "memory": "drift-check",
+            "query": "last checked commit and open PR",
+            "level": "balanced",
+            "limit": 5
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Recall what we checked",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "recall",
+                "type": "memory_search",
+                "config": {
+                  "memory": "drift-check",
+                  "query": "last checked commit and open PR"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "What we know",
+                  "body": "{{recall.facts}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "recall"
+              },
+              {
+                "from": "recall",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
+          "type": "call_tool",
+          "title": "Toolkit tool",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "tool",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "connection",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "arguments",
+              "type": "object",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "result": "any"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "tool": "notes__add_note",
+            "arguments": {
+              "text": "{{triage.summary}}"
+            }
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Note each new issue",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "hourly",
+                "type": "schedule",
+                "config": {
+                  "cron": "0 * * * *"
+                }
+              },
+              {
+                "id": "issues",
+                "type": "call_tool",
+                "config": {
+                  "connection": "github:work",
+                  "tool": "list_issues",
+                  "arguments": {
+                    "owner": "acme",
+                    "repo": "web",
+                    "state": "open"
+                  }
+                }
+              },
+              {
+                "id": "save",
+                "type": "call_tool",
+                "config": {
+                  "tool": "notes__add_note",
+                  "arguments": {
+                    "text": "{{issues.result}}"
+                  }
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "hourly",
+                "to": "issues"
+              },
+              {
+                "from": "issues",
+                "to": "save"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "group": "AI",
+      "blocks": [
+        {
+          "type": "prompt",
+          "title": "Prompt",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "prompt",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "output",
+              "type": "object",
+              "required": true
+            }
+          ],
+          "outputs": {
+            "summary": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "prompt": "Summarize {{search.facts}}",
+            "output": {
+              "type": "object",
+              "required": [
+                "summary"
+              ],
+              "properties": {
+                "summary": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Ask the model for a summary",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "summarize",
+                "type": "prompt",
+                "config": {
+                  "prompt": "Summarize this: {{trigger.payload}}",
+                  "output": {
+                    "type": "object",
+                    "required": [
+                      "summary"
+                    ],
+                    "properties": {
+                      "summary": {
+                        "type": "string"
+                      },
+                      "score": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Summary",
+                  "body": "{{summarize.summary}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "summarize"
+              },
+              {
+                "from": "summarize",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
+          "type": "run_agent",
+          "title": "Run agent",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "repo",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "prompt",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "readOnlyRepos",
+              "type": "text list",
+              "required": false
+            },
+            {
+              "name": "agent",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "outputs",
+              "type": "object",
+              "required": false
+            },
+            {
+              "name": "timeout",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "connections",
+              "type": "text list",
+              "required": false
+            },
+            {
+              "name": "resources",
+              "type": "object",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "drifted": "boolean",
+            "summary": "string",
+            "status": "string",
+            "branch": "string",
+            "commit": "string",
+            "sessionId": "string?",
+            "usage": "object"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "repo": "web",
+            "prompt": "Check {{trigger.ref}} for contract drift and fix what you can",
+            "outputs": {
+              "drifted": "boolean",
+              "summary": "string"
+            },
+            "timeout": "45m"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Check a branch for contract drift",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "check",
+                "type": "run_agent",
+                "config": {
+                  "repo": "web",
+                  "prompt": "Check {{trigger.payload}} for contract drift and fix what you can",
+                  "outputs": {
+                    "drifted": "boolean",
+                    "summary": "string"
+                  },
+                  "timeout": "45m"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Drift check",
+                  "body": "{{check.summary}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "check"
+              },
+              {
+                "from": "check",
+                "to": "tell"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "group": "Logic",
+      "blocks": [
+        {
+          "type": "collect",
+          "title": "Collect",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "value",
+              "type": "text",
+              "required": true
+            }
+          ],
+          "outputs": {
+            "items": "array",
+            "count": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "value": "{{summarize.text}}"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Summarize new issues",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "each",
+                "type": "for_each",
+                "config": {
+                  "items": "{{trigger.payload}}",
+                  "maxItems": 50
+                }
+              },
+              {
+                "id": "summary",
+                "type": "prompt",
+                "config": {
+                  "prompt": "Summarize in one line: {{item}}",
+                  "output": {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "line"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "gather",
+                "type": "collect",
+                "config": {
+                  "value": "{{summary.line}}"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Issues",
+                  "body": "{{gather.items}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "each"
+              },
+              {
+                "from": "each",
+                "to": "summary"
+              },
+              {
+                "from": "summary",
+                "to": "gather"
+              },
+              {
+                "from": "gather",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
+          "type": "for_each",
+          "title": "For each",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "items",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "maxItems",
+              "type": "number",
+              "required": false
+            },
+            {
+              "name": "batchSize",
+              "type": "number",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "count": "number",
+            "batchSize": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "items": "{{search.results}}",
+            "maxItems": 100
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Summarize new issues",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "each",
+                "type": "for_each",
+                "config": {
+                  "items": "{{trigger.payload}}",
+                  "maxItems": 50
+                }
+              },
+              {
+                "id": "summary",
+                "type": "prompt",
+                "config": {
+                  "prompt": "Summarize in one line: {{item}}",
+                  "output": {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "line"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "gather",
+                "type": "collect",
+                "config": {
+                  "value": "{{summary.line}}"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Issues",
+                  "body": "{{gather.items}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "each"
+              },
+              {
+                "from": "each",
+                "to": "summary"
+              },
+              {
+                "from": "summary",
+                "to": "gather"
+              },
+              {
+                "from": "gather",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
+          "type": "memory_forget",
+          "title": "Forget",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "memory",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "fact",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "tag",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "count": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "memory": "drift-check",
+            "tag": "stale"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Forget stale notes",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "forget",
+                "type": "memory_forget",
+                "config": {
+                  "memory": "drift-check",
+                  "tag": "stale"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "forget"
+              }
+            ]
+          }
+        },
+        {
+          "type": "condition",
+          "title": "If",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "when",
+              "type": "text",
+              "required": true
+            }
+          ],
+          "outputs": {
+            "result": "boolean"
+          },
+          "branches": [
+            "true",
+            "false"
+          ],
+          "exampleConfig": {
+            "when": "agent.drifted"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Notify only when urgent",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "ask",
+                "type": "prompt",
+                "config": {
+                  "prompt": "Is this urgent? {{trigger.payload}}",
+                  "output": {
+                    "type": "object",
+                    "required": [
+                      "urgent"
+                    ],
+                    "properties": {
+                      "urgent": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "id": "gate",
+                "type": "condition",
+                "config": {
+                  "when": "ask.urgent"
+                }
+              },
+              {
+                "id": "page",
+                "type": "notify",
+                "config": {
+                  "title": "Urgent",
+                  "body": "Look at this now."
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "ask"
+              },
+              {
+                "from": "ask",
+                "to": "gate"
+              },
+              {
+                "from": "gate",
+                "output": "true",
+                "to": "page"
+              }
+            ]
+          }
+        },
+        {
+          "type": "only_new",
+          "title": "Only new",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "items",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "key",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "items": "array",
+            "count": "number",
+            "skipped": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "items": "{{search.results}}",
+            "key": "id"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "New issues",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "fresh",
+                "type": "only_new",
+                "config": {
+                  "items": "{{trigger.payload.issues}}",
+                  "key": "number"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "{{fresh.count}} new issues"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "fresh"
+              },
+              {
+                "from": "fresh",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
+          "type": "memory_write",
+          "title": "Remember",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "memory",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "fact",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "tags",
+              "type": "text list",
+              "required": false
+            },
+            {
+              "name": "expires",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "id": "string",
+            "action": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "memory": "drift-check",
+            "fact": "Checked api-repo at {{agent.checkedCommit}}",
+            "tags": [
+              "checks"
+            ],
+            "expires": "30d"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Remember a check",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "remember",
+                "type": "memory_write",
+                "config": {
+                  "memory": "drift-check",
+                  "fact": "Checked api-repo at {{trigger.payload.commit}}",
+                  "tags": [
+                    "checks"
+                  ],
+                  "expires": "30d"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "remember"
+              }
+            ]
+          }
+        },
+        {
+          "type": "run_workflow",
+          "title": "Run workflow",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "workflow",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "payload",
+              "type": "object",
+              "required": false
+            },
+            {
+              "name": "wait",
+              "type": "boolean",
+              "required": false
+            },
+            {
+              "name": "waitSeconds",
+              "type": "number",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "runId": "string",
+            "status": "string",
+            "outputs": "any?"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "workflow": "triage",
+            "payload": {
+              "pr": "{{trigger.payload.pr}}"
+            },
+            "wait": true
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Nightly",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "daily",
+                "type": "schedule",
+                "config": {
+                  "cron": "0 2 * * *"
+                }
+              },
+              {
+                "id": "triage",
+                "type": "run_workflow",
+                "config": {
+                  "workflow": "triage",
+                  "payload": {
+                    "source": "nightly"
+                  },
+                  "wait": true,
+                  "waitSeconds": 300
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Triage {{triage.status}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "daily",
+                "to": "triage"
+              },
+              {
+                "from": "triage",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
+          "type": "wait",
+          "title": "Wait",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "duration",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "until",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "timezone",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "wakeAt": "string",
+            "waitedSeconds": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "until": "07:00",
+            "timezone": "America/Los_Angeles"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Morning nudge",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "hold",
+                "type": "wait",
+                "config": {
+                  "until": "07:00",
+                  "timezone": "America/Los_Angeles"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Good morning",
+                  "body": "Woke at {{hold.wakeAt}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "hold"
+              },
+              {
+                "from": "hold",
+                "to": "tell"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "group": "Outputs",
+      "blocks": [
+        {
+          "type": "ask_owner",
+          "title": "Ask owner",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "question",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "choices",
+              "type": "text list",
+              "required": false
+            },
+            {
+              "name": "timeout",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "default",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "answer": "string",
+            "answeredBy": "string"
+          },
+          "branches": [
+            "answered",
+            "timeout"
+          ],
+          "exampleConfig": {
+            "question": "Ship the release?",
+            "choices": [
+              "yes",
+              "no"
+            ],
+            "timeout": "2h",
+            "default": "no"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Ship gate",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "ask",
+                "type": "ask_owner",
+                "config": {
+                  "question": "Ship the release?",
+                  "choices": [
+                    "yes",
+                    "no"
+                  ],
+                  "timeout": "2h",
+                  "default": "no"
+                }
+              },
+              {
+                "id": "go",
+                "type": "notify",
+                "config": {
+                  "title": "Shipping",
+                  "body": "{{ask.answeredBy}} said {{ask.answer}}"
+                }
+              },
+              {
+                "id": "stop",
+                "type": "notify",
+                "config": {
+                  "title": "Held back",
+                  "body": "Nobody answered in 2 hours"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "ask"
+              },
+              {
+                "from": "ask",
+                "output": "answered",
+                "to": "go"
+              },
+              {
+                "from": "ask",
+                "output": "timeout",
+                "to": "stop"
+              }
+            ]
+          }
+        },
+        {
+          "type": "create_item",
+          "title": "Create item",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "title",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "repo",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "body",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "linearIssue",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "itemId": "string",
+            "warning": "string?"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "title": "Fix {{triage.summary}}",
+            "repo": "web",
+            "body": "{{triage.details}}"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "File follow-ups",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "make",
+                "type": "create_item",
+                "config": {
+                  "title": "Follow up: {{trigger.payload.subject}}",
+                  "repo": "web",
+                  "body": "{{trigger.payload.details}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "make"
+              }
+            ]
+          }
+        },
+        {
+          "type": "notify",
+          "title": "Send notification",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "title",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "body",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {},
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "title": "Drifted",
+            "body": "{{agent.summary}}"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Summarize and notify",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "summarize",
+                "type": "prompt",
+                "config": {
+                  "prompt": "Summarize this in one line: {{trigger.payload}}",
+                  "output": {
+                    "type": "object",
+                    "required": [
+                      "summary"
+                    ],
+                    "properties": {
+                      "summary": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Summary ready",
+                  "body": "{{summarize.summary}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "summarize"
+              },
+              {
+                "from": "summarize",
+                "to": "tell"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -24,7 +24,7 @@ cp -a "$REAL/evals/plugin" "$REAL/evals/stubs" "$REAL/evals/_lib" "$REAL/evals/m
 cp "$REAL/skills/_shared/repo-slug.sh" "$REPO/skills/_shared/"
 printf -- '---\nname: alpha\ndescription: Use when the cart total looks wrong after a bulk order. Not for new features.\n---\nalpha body\n' >"$REPO/skills/alpha/SKILL.md"
 printf 'preamble\n' >"$REPO/skills/_preamble.md"
-echo "voice" >"$REPO/config/voice/joi.md"
+echo "voice" >"$REPO/config/voice/reply.md"
 
 r="$REPO/evals/alpha/routing/alpha-natural-1" b="$REPO/evals/alpha/behaviour/alpha-forced"
 mkdir -p "$r/graders/_selftest" "$b/graders/_selftest"

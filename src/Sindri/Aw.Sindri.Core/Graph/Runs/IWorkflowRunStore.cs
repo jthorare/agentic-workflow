@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Core.Graph.Runs;
 
@@ -22,6 +23,15 @@ public interface IWorkflowRunStore
     /// <returns>What happened, or SND-GRAPH-100 when the id is used.</returns>
     public ValueTask<Result<GraphStartKind>> Admit(WorkflowRun run, GraphConcurrency mode, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Starts the next queued run in one write: when nothing of <paramref name="workflow"/> is running or waiting, the oldest queued run becomes running and is returned.
+    /// The check and the change are one step, so two runs ending together cannot both promote one.
+    /// </summary>
+    /// <param name="workflow">The workflow whose run just ended.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>The run, now running; null when none is queued or another run is running or waiting.</returns>
+    public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken);
+
     /// <summary>One run.</summary>
     /// <param name="id">The run.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -33,6 +43,19 @@ public interface IWorkflowRunStore
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The runs.</returns>
     public ValueTask<Result<IReadOnlyList<WorkflowRun>>> InFlight(WorkflowId workflow, CancellationToken cancellationToken);
+
+    /// <summary>A workflow's runs in every status, newest first (by start time, then by occurrence number, so occurrence 10 comes before 9), one page.</summary>
+    /// <param name="workflow">The workflow.</param>
+    /// <param name="offset">How many of the newest runs to skip, 0 or more.</param>
+    /// <param name="limit">How many runs to keep, 1 or more.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The runs; none when the workflow has none.</returns>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int offset, int limit, CancellationToken cancellationToken);
+
+    /// <summary>Every run in 'running', over all workflows, oldest first (serve start reads it to find runs whose Temporal workflow was never started).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The runs.</returns>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken);
 
     /// <summary>The highest occurrence among a workflow's runs started by one kind of trigger, over every revision and every status (a schedule reads its last fired tick from it).</summary>
     /// <param name="workflow">The workflow.</param>
@@ -54,14 +77,37 @@ public interface IWorkflowRunStore
     /// <returns>The tick, or null when none was recorded.</returns>
     public ValueTask<Result<DateTimeOffset?>> LastTick(WorkflowId workflow, CancellationToken cancellationToken);
 
-    /// <summary>Moves a run to a new status; a final status also sets its end time.</summary>
+    /// <summary>
+    /// Moves a run that has not ended to a new status; a final status also sets its end time. The change is conditional and the answer is the row as it stands afterwards:
+    /// a run that already ended is not touched (the caller sees a status other than the one it asked for and writes no event), and a move to 'queued' applies only to a running run.
+    /// </summary>
     /// <param name="id">The run.</param>
     /// <param name="status">The new status.</param>
     /// <param name="outputs">The run's outputs as JSON, or null to keep what is there.</param>
     /// <param name="error">Why it failed, or null.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
-    /// <returns>The run after the change, or SND-GRAPH-101.</returns>
+    /// <returns>The run after the call (changed or not), or SND-GRAPH-101.</returns>
     public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken);
+
+    /// <summary>Links a run to the item its work made (a 'create_item' node). The first link wins: a run that already has an item keeps it (a 'create_item' in a loop links the first item made). It applies to a run in any status.</summary>
+    /// <param name="id">The run.</param>
+    /// <param name="item">The item.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>The run after the call, or SND-GRAPH-101.</returns>
+    public ValueTask<Result<WorkflowRun>> SetItem(WorkflowRunId id, ItemId item, CancellationToken cancellationToken);
+
+    /// <summary>Cancels a run only while it is still queued. A run that was promoted to running meanwhile is left alone.</summary>
+    /// <param name="id">The run.</param>
+    /// <param name="error">Why, or null.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>The run after the call: 'cancelled' when this call did it, any other status when it did not; or SND-GRAPH-101.</returns>
+    public ValueTask<Result<WorkflowRun>> CancelQueued(WorkflowRunId id, string? error, CancellationToken cancellationToken);
+
+    /// <summary>Removes a run that was recorded as running but never reached Temporal (the server was unreachable), so the same run id can be tried again. A run in any other status is left alone.</summary>
+    /// <param name="id">The run.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>True when the row was removed; false when it was not running or does not exist.</returns>
+    public ValueTask<Result<bool>> Discard(WorkflowRunId id, CancellationToken cancellationToken);
 
     /// <summary>Writes one node run, replacing the row with the same run, node and item index. Input and output over <see cref="NodeRunLimits.PayloadBytes"/> are cut and 'Truncated' is set.</summary>
     /// <param name="nodeRun">The node run.</param>
@@ -74,4 +120,11 @@ public interface IWorkflowRunStore
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The node runs.</returns>
     public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRuns(WorkflowRunId id, CancellationToken cancellationToken);
+
+    /// <summary>The rows a node inside a 'for_each' reads: every row at item index 0 (the trigger side, the 'for_each' and the nodes outside the loop) and the rows of one item. Not the other items' rows, so a loop of N items does not read N squared rows.</summary>
+    /// <param name="id">The run.</param>
+    /// <param name="itemIndex">The item's position counted from 1.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The node runs, by node id then item index.</returns>
+    public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRunsForItem(WorkflowRunId id, int itemIndex, CancellationToken cancellationToken);
 }

@@ -78,7 +78,7 @@
       <Border x:Name="ReviewSettingsGroupsError" IsVisible="{Binding GroupsKey.Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding GroupsKey.Error}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding GroupsKey.Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <StackPanel Spacing="6" IsVisible="{Binding GroupsKey.ShowEditor}">
+      <StackPanel Spacing="8" IsVisible="{Binding GroupsKey.ShowEditor}">
         <Border x:Name="ReviewSettingsGroupsByFolder" IsVisible="{Binding ShowGroupsByFolder}" AutomationProperties.Name="{Binding Words.GroupsByFolder}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body muted" Text="{Binding Words.GroupsByFolder}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
@@ -128,7 +128,7 @@
       <Border x:Name="ReviewSettingsRiskyError" IsVisible="{Binding RiskyKey.Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding RiskyKey.Error}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding RiskyKey.Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <StackPanel Spacing="6" IsVisible="{Binding RiskyKey.ShowEditor}">
+      <StackPanel Spacing="8" IsVisible="{Binding RiskyKey.ShowEditor}">
         <ItemsControl x:Name="ReviewSettingsRiskList" IsEnabled="{Binding CanEdit}" ItemsSource="{Binding RiskRows}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="pvm:SettingsRiskRow">
@@ -157,7 +157,7 @@
       <Border x:Name="ReviewSettingsChecksError" IsVisible="{Binding ChecksKey.Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding ChecksKey.Error}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding ChecksKey.Error}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <StackPanel Spacing="6" IsVisible="{Binding ChecksKey.ShowEditor}">
+      <StackPanel Spacing="8" IsVisible="{Binding ChecksKey.ShowEditor}">
         <ItemsControl x:Name="ReviewSettingsCheckList" IsEnabled="{Binding CanEdit}" ItemsSource="{Binding CheckRows}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="pvm:SettingsCheckRow">
@@ -182,7 +182,7 @@
       <Button x:Name="ReviewSettingsSave" Content="{Binding SaveText}" IsEnabled="{Binding !IsSaving}" Click="OnSave" AutomationProperties.Name="{Binding SaveText}" />
       <Button x:Name="ReviewSettingsDiscard" Content="{Binding Words.Discard}" IsEnabled="{Binding !IsSaving}" Click="OnDiscard" AutomationProperties.Name="{Binding Words.Discard}" />
     </StackPanel>
-    <StackPanel Spacing="6" IsVisible="{Binding IsStale}">
+    <StackPanel Spacing="8" IsVisible="{Binding IsStale}">
       <Border x:Name="ReviewSettingsStale" AutomationProperties.Name="{Binding StaleText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding StaleText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>

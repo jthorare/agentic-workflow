@@ -10,7 +10,7 @@
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="sv:SetupAgentViewModel">
           <Border Classes="agent-line" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-            <Grid ColumnDefinitions="*,Auto" MinHeight="32" AutomationProperties.AccessibilityView="Raw">
+            <Grid ColumnDefinitions="*,Auto" MinHeight="{StaticResource Row.Height.Default}" AutomationProperties.AccessibilityView="Raw">
               <TextBlock Classes="body" Text="{Binding Agent}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
               <controls:StateChipView Grid.Column="1" Chip="{Binding Chip}" VerticalAlignment="Center" />
             </Grid>

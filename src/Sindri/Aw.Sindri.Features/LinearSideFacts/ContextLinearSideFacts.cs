@@ -20,17 +20,25 @@ namespace Aw.Sindri.Features.LinearSideFacts;
 /// <param name="callers">The current caller.</param>
 /// <param name="engine">Context's facade.</param>
 /// <param name="clock">Decides which cycle is running.</param>
-internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine, TimeProvider clock) : ILinearSideFacts
+/// <param name="writeScope">Reads the scope a write runs under, for <see cref="LookupsForWrite"/>.</param>
+internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICallerContextAccessor callers, IContextEngine engine, TimeProvider clock, LinearWriteScopeRead writeScope) : ILinearSideFacts
 {
     public async ValueTask<Result<LinearLookupsResponse?>> Lookups(string team, CancellationToken cancellationToken)
     {
         var scope = await Scope(cancellationToken).ConfigureAwait(false);
-        if (scope.IsError)
-        {
-            return scope.Error;
-        }
+        return scope.IsError ? scope.Error : await LookupsUnder(team, scope.Value, cancellationToken).ConfigureAwait(false);
+    }
 
-        var found = await engine.IssueLookups(team, scope.Value, cancellationToken).ConfigureAwait(false);
+    // why: a write checks the caller first, then reads the pickers as the owner (the pickers' read is owner-only in Context, which is why a session's own scope can't be used here)
+    public async ValueTask<Result<LinearLookupsResponse?>> LookupsForWrite(string team, CancellationToken cancellationToken)
+    {
+        var scope = await writeScope(cancellationToken).ConfigureAwait(false);
+        return scope.IsError ? scope.Error : await LookupsUnder(team, scope.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<LinearLookupsResponse?>> LookupsUnder(string team, ContextScope scope, CancellationToken cancellationToken)
+    {
+        var found = await engine.IssueLookups(team, scope, cancellationToken).ConfigureAwait(false);
         if (found.IsError)
         {
             return found.Error;
@@ -129,9 +137,9 @@ internal sealed class ContextLinearSideFacts(IApprovedProfile approvals, ICaller
         }
 
         var assigned = string.Equals(change.Field, "assignee", StringComparison.Ordinal);
-        // why: Context keeps no actor for an assignment or a state move, so those items carry none
+        // why: Context keeps no actor for an assignment or a state move, so those items carry none; a state move names its states from what the sync recorded with the change, and only an older change falls back to the team's state list (#2536)
         return new LinearSinceItem(assigned ? "assigned" : "state", change.Identifier, title.Value, Actor: null, change.At,
-            assigned ? null : StateName(lookups.Value, change.Old), assigned ? null : StateName(lookups.Value, change.New));
+            assigned ? null : change.OldName ?? StateName(lookups.Value, change.Old), assigned ? null : change.NewName ?? StateName(lookups.Value, change.New));
     }
 
     private async ValueTask<Result<LinearSinceItem>> Mention(LinearSinceMention mention, Dictionary<string, LinearTeamLookups?> teams, Dictionary<RecordKey, string> titles, ContextScope scope, CancellationToken cancellationToken)

@@ -1,3 +1,0 @@
-{"start":{"inputs":{"fact:phasePacket":{"phase":"1","goal":"Export works"},"fact:workspace":"/work/tree"}}}
-{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:evidencePack":"pack-4"}},"expect":{"state":"design"}}
-{"trigger":{"kind":"step.completed","outcome":"fail","outputs":{"fact:designCheck":"header drifts 6px"}},"expect":{"state":"failed","outcome":"unresolved"}}

@@ -4,11 +4,17 @@ using Aw.Kernel;
 
 namespace Aw.Sindri.Core.Graph.Blocks;
 
-/// <summary>The 'prompt' block: asks the model and checks the answer against the 'output' JSON schema; a bad answer fails the node with the reason.</summary>
+/// <summary>The 'prompt' block: asks the model, with every trigger and node-output reference fenced as untrusted, and checks the answer against the 'output' JSON schema; a bad answer fails the node with the reason.</summary>
 public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
 {
     /// <inheritdoc />
     public string Type => "prompt";
+
+    /// <inheritdoc />
+    public string Title => "Prompt";
+
+    /// <inheritdoc />
+    public BlockGroup Group => BlockGroup.AI;
 
     /// <inheritdoc />
     public bool IsTrigger => false;
@@ -48,10 +54,13 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
     public async ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        if (context.Config["prompt"] is not JsonValue { } promptValue || !promptValue.TryGetValue<string>(out var prompt))
+        // why: the raw config is used because the interpolated one has lost which text came from the trigger
+        if (context.RawConfig["prompt"] is not JsonValue { } promptValue || !promptValue.TryGetValue<string>(out var raw))
         {
             return SindriErrors.GraphBlockFailed.With("prompt needs a 'prompt' text");
         }
+
+        var prompt = FencedPrompt.Render(raw, context.Resolve, model.Untrusted);
 
         var schema = context.Config["output"] as JsonObject;
         if (schema is not null && SchemaProblem(schema) is { } unusable)

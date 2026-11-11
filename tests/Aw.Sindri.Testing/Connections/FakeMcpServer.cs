@@ -13,10 +13,11 @@ namespace Aw.Sindri.Testing.Connections;
 /// </summary>
 public sealed class FakeMcpServer : IDisposable
 {
-    private readonly HttpListener _listener = new();
+    private readonly HttpListener _listener;
     private readonly Lock _gate = new();
     private readonly List<string> _methods = [];
     private readonly List<string> _registered = [];
+    private readonly List<(string Tool, string Arguments)> _calls = [];
 
     /// <summary>Starts the server on a free loopback port.</summary>
     /// <param name="key">The bearer key it accepts.</param>
@@ -27,13 +28,9 @@ public sealed class FakeMcpServer : IDisposable
         Key = key;
         Tools = tools;
         OAuth = oauth;
-        using var probe = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
-        probe.Start();
-        var port = ((IPEndPoint)probe.LocalEndpoint).Port;
-        probe.Stop();
-        Url = "http://127.0.0.1:" + port.ToString(CultureInfo.InvariantCulture);
-        _listener.Prefixes.Add(Url + "/");
-        _listener.Start();
+        var (listener, baseUri) = LoopbackListener.Start();
+        _listener = listener;
+        Url = baseUri.AbsoluteUri.TrimEnd('/');
         _ = Serve();
     }
 
@@ -60,6 +57,18 @@ public sealed class FakeMcpServer : IDisposable
             lock (_gate)
             {
                 return [.. _methods];
+            }
+        }
+    }
+
+    /// <summary>Gets the tools/call requests received: the tool name and its arguments as JSON text.</summary>
+    public IReadOnlyList<(string Tool, string Arguments)> Calls
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return [.. _calls];
             }
         }
     }
@@ -146,7 +155,7 @@ public sealed class FakeMcpServer : IDisposable
 
         var request = JsonNode.Parse(body)!.AsObject();
         var method = request["method"]!.GetValue<string>();
-        if (request["id"] is { } unknownId && method is not ("initialize" or "tools/list"))
+        if (request["id"] is { } unknownId && method is not ("initialize" or "tools/list" or "tools/call"))
         {
             MethodNotFound(context, unknownId);   // newer clients try 'server/discover' first and fall back; it is not one of the methods this fake records
             return;
@@ -163,14 +172,40 @@ public sealed class FakeMcpServer : IDisposable
             return;
         }
 
-        JsonNode result = method switch
+        RecordCall(method, request);
+
+        var result = ResultOf(method, request);
+        Reply(context, 200, new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id.DeepClone(), ["result"] = result });
+    }
+
+    private JsonObject ResultOf(string method, JsonObject request)
+        => method switch
         {
             "initialize" => new JsonObject { ["protocolVersion"] = request["params"]?["protocolVersion"]?.GetValue<string>() ?? "2025-03-26", ["capabilities"] = new JsonObject { ["tools"] = new JsonObject() }, ["serverInfo"] = new JsonObject { ["name"] = "fake-mcp", ["version"] = "1.0.0" } },
             "tools/list" => new JsonObject { ["tools"] = new JsonArray([.. Tools.Select(static t => (JsonNode)new JsonObject { ["name"] = t, ["description"] = t, ["inputSchema"] = new JsonObject { ["type"] = "object" } })]) },
+            "tools/call" => CallResult(CallOf(request).Tool, CallOf(request).Arguments),
             _ => [],
         };
-        Reply(context, 200, new JsonObject { ["jsonrpc"] = "2.0", ["id"] = id.DeepClone(), ["result"] = result });
+
+    private static (string Tool, string Arguments) CallOf(JsonObject request)
+        => (request["params"]?["name"]?.GetValue<string>() ?? string.Empty, request["params"]?["arguments"]?.ToJsonString() ?? "{}");
+
+    private void RecordCall(string method, JsonObject request)
+    {
+        if (method != "tools/call")
+        {
+            return;
+        }
+
+        lock (_gate)
+        {
+            _calls.Add(CallOf(request));
+        }
     }
+
+    // a tool that answers with its own name, its arguments and the server's key (a server that echoes a credential back)
+    private JsonObject CallResult(string tool, string arguments)
+        => new() { ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = $"{{\"tool\":\"{tool}\",\"arguments\":{arguments},\"echo\":\"{Key}\"}}" }), ["isError"] = false };
 
     private static void Status(HttpListenerContext context, int status)
     {

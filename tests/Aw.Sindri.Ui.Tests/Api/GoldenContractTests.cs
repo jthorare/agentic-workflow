@@ -6,14 +6,18 @@ using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.CodeIndex;
+using Aw.Sindri.Ui.Api.Connections;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.Api.Linear;
+using Aw.Sindri.Ui.Api.Memory;
 using Aw.Sindri.Ui.Api.Projects;
+using Aw.Sindri.Ui.Api.Resources;
 using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Api.Setup;
 using Aw.Sindri.Ui.Api.Sources;
+using Aw.Sindri.Ui.Api.Workflows;
 using Aw.Sindri.Ui.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Api;
@@ -55,6 +59,9 @@ public sealed class GoldenContractTests
         ["context-concepts-glossary"] = As<ConceptGlossaryView>,   // GET /sindri/context/concepts/glossary: the concept cards' top terms (ui #1036); no-map-030 is a ProblemDetails
         ["context-pins"] = As<PinsView>,   // GET /sindri/context/pins: the live pins against the approved profile and the map, and the rebuild state
         ["context-pins-suggest"] = As<PinSuggestView>,   // GET /sindri/context/pins/suggest: the "Pin this" and "Add several" suggestions; invalid-179 is a ProblemDetails
+        ["workflows-blocks"] = As<WorkflowBlockList>,   // GET /sindri/workflows/blocks: the editor's block form (#2258 PR 17 part 2b)
+        ["workflows-slug-ops"] = As<WorkflowOpsApplied>,   // POST /workflows/{slug}/ops: ops-applied; ops-stale and ops-missing-fields are ProblemDetails
+        ["workflows-slug-activate"] = As<WorkflowActivated>,   // POST /workflows/{slug}/activate: activated; not-found is a ProblemDetails
         ["context-whole"] = As<WholeMapView>,   // GET /context/map/whole (whole-map spec §2.1); the refusals (006, 030, 044, 045, 120, 200) are ProblemDetails
         ["context-filemap"] = As<FileMapView>,
         ["context-code"] = As<CodeView>,   // GET /sindri/context/code: the code lens' callers and callees (S-9)
@@ -69,6 +76,14 @@ public sealed class GoldenContractTests
         ["items-id-open"] = As<OpenAcceptedView>,   // POST /items/{id}/open: the accepted answer (the refusals are ProblemDetails)
         ["jobs"] = As<JobList>,   // GET /jobs: the Jobs page's list; the 400 SND-CLI-003 bodies are ProblemDetails
         ["jobs-id"] = As<JobView>,   // GET /jobs/{id}: the job sheet; the 404 is ProblemDetails
+        ["workflows"] = As<WorkflowList>,   // GET /workflows: the Workflows page's list (#2258 PR 17 part 1); the refusals are ProblemDetails
+        ["workflows-slug"] = As<WorkflowView>,   // GET /workflows/{slug}: the runs header; the spec stays raw
+        ["workflows-slug-pause"] = As<WorkflowPaused>,   // POST /workflows/{slug}/pause (the Pause button); the success is paused.json
+        ["workflows-slug-runs"] = As<WorkflowRunList>,   // GET /workflows/{slug}/runs: a workflow's runs
+        ["workflow-runs-run"] = As<WorkflowRunView>,   // GET /workflow-runs/{run}: a run's detail
+        ["workflow-runs-run-cancel"] = As<WorkflowRunCancelled>,   // POST /workflow-runs/{run}/cancel's cancelled body (the API golden cancels a queued run)
+        ["workflow-runs-run-nodes-node-takeover"] = As<AgentNodeControlled>,   // POST /workflow-runs/{run}/nodes/{node}/takeover's taken-over body; the refusals are ProblemDetails
+        ["workflow-runs-run-nodes-node-handback"] = As<AgentNodeControlled>,   // POST .../handback's handed-back body; the refusals are ProblemDetails
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
         ["projects"] = As<ProjectList>,   // GET /projects: the Projects page's three groups (projects page spec §6.2)
         ["reviews"] = As<ReviewList>,   // GET /reviews: the Reviews tab, its badge and Home's waiting line (review page spec §6.1)
@@ -117,13 +132,39 @@ public sealed class GoldenContractTests
         ["todos-reopen"] = As<TodoAcceptedView>,   // POST /todos/{id}/reopen's 200 (api Ph1a)
         ["todos-remove"] = As<TodoAcceptedView>,   // POST /todos/{id}/remove's 200 (api Ph1a)
         ["todos-restore"] = As<TodoAcceptedView>,   // POST /todos/{id}/restore's 200 (api Ph1a)
+        ["todos-note-check"] = As<TodoNoteCheckView>,   // POST /todos/note/check: the Settings card's Check note (todo Ph3b); a bad key is ProblemDetails
+        ["todos-note-set"] = As<TodoNoteChangedView>,   // POST /todos/note/set: Start syncing (changed, unchanged); the stale 409 is ProblemDetails
+        ["todos-note-stop"] = As<TodoNoteChangedView>,   // POST /todos/note/stop: Stop syncing (changed, unchanged)
         ["todos-note"] = As<TodoNoteView>,   // GET /sindri/todos/note (note, hold); conflict.json is a todo, read as TodoView by _readByScenario
+        ["connections"] = As<ConnectionList>,   // GET /sindri/connections; the added-* scenarios are POST's ConnectionAdded (_readByScenario)
+        ["connections-id"] = As<ConnectionOne>,   // GET /sindri/connections/{name}; removed is DELETE's ConnectionRemoved (_readByScenario)
+        ["connections-id-test"] = As<ConnectionTested>,   // POST /sindri/connections/{name}/test
+        ["connections-id-rename"] = As<ConnectionRenamed>,   // POST /sindri/connections/{name}/rename (the Rename action)
+        ["connections-id-signin"] = As<ConnectionAdded>,   // POST /sindri/connections/{name}/signin (the Sign in again action)
+        ["memories"] = As<MemoryList>,   // GET /sindri/memories; created is POST's MemoryCreated (_readByScenario)
+        ["memories-id-search"] = As<MemorySearchView>,   // GET /sindri/memories/{name}/search
+        ["memories-id-facts"] = As<MemoryFactWritten>,   // POST /sindri/memories/{name}/facts; the forgot* scenarios are DELETE's MemoryForgotten (_readByScenario)
+        ["resources"] = As<ResourceList>,   // GET /sindri/resources: the Resources page's rows (#2258 PR18b); bad-owner is a ProblemDetails
+        ["resources-purge"] = As<PurgeResourcesResult>,   // POST /sindri/resources/purge: the purged count; the 409 SND-RES-003 and 400 SND-RES-006 bodies are ProblemDetails
     };
 
     // A scenario of a slug that holds files of another shape than the rest of its folder (todos-note/conflict.json is the TodoItem GET /todos/{id} serves).
     private static readonly Dictionary<(string Slug, string Scenario), Func<byte[], Result<object>>> _readByScenario = new()
     {
         [("todos-note", "conflict")] = AsShownTodo,   // { asOf, todo }: the app reads the todo inside (the panel takes it from the list, not from this route)
+        [("connections", "added-key")] = As<ConnectionAdded>,
+        [("connections", "added-oauth")] = As<ConnectionAdded>,
+        [("connections-id", "removed")] = As<ConnectionRemoved>,
+        [("memories", "created")] = As<MemoryCreated>,
+        [("workflows-slug", "archived")] = As<WorkflowArchived>,   // DELETE /workflows/{slug}'s answer; the folder's found is GET's WorkflowView and archive-not-found, replace-stale and not-found are ProblemDetails
+        [("workflows-slug-runs", "started")] = As<WorkflowRunStarted>,   // POST /workflows/{slug}/runs' answers (Run now); the folder's list-* are GET's WorkflowRunList and its refusals are ProblemDetails
+        [("workflows-slug-runs", "queued")] = As<WorkflowRunStarted>,
+        [("workflows-slug-runs", "skipped")] = As<WorkflowRunStarted>,
+        [("memories-id-facts", "forgot")] = As<MemoryForgotten>,
+        [("memories-id-facts", "forgot-tag")] = As<MemoryForgotten>,
+        [("workflows", "created")] = As<WorkflowCreated>,   // POST /workflows: { id, slug, revision, specHash }; not a WorkflowList
+        [("workflows-slug", "replaced")] = AsJsonObject,   // PUT /workflows/{slug}: { slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowView
+        [("workflows-slug", "archived")] = AsJsonObject,   // DELETE /workflows/{slug}: { slug, archivedAt }, the CLI's and the MCP tools' answer; not a WorkflowView
     };
 
     // Routes the app never calls yet: stop is Health's (U4), and the
@@ -131,13 +172,16 @@ public sealed class GoldenContractTests
     private static readonly HashSet<string> _notRead = new(StringComparer.Ordinal)
     {
         "stop",
+        "workflow-runs-run-nodes-node-answer",   // #2425: POST .../nodes/{node}/answer, the engine's answer to an ask_owner question; the app calls it once the Needs-you question row has its answer form (UI lane)
         "todos-id",   // the app never calls GET /sindri/todos/{id}; the CLI's `todo show` does
-        "workflow-instances", "workflow-instance", "workflow-instance-fact", "workflow-status", "workflow-recipe", "workflow-recipes", "workflow-recipes-id-stats", "workflow-instances-start", "workflow-recipes-approve-all",   // v2 PR 4: the app has no Recipes, Workflows or run pages; the routes stay served until the backend PR removes them
+        "todos-keep", "todos-keep-undo", "todos-hold-apply", "todos-hold-undo",   // the picks (todo Ph3b): the conflict and hold rows that call them are ui's Ph4
+        "workflow-instances", "workflow-instance", "workflow-instance-fact", "workflow-status", "workflow-recipe", "workflow-recipes", "workflow-recipes-id-stats", "workflow-instances-start", "workflow-recipes-approve-all",   // the app has no Recipes or workflow-instance pages (the Workflows page reads only workflows, workflows-slug, workflows-slug-runs and workflow-runs-run); these routes stay served until the backend PR removes them
         "workflow-challenges-app",   // q93: the app asks for no challenge any more; the route stays served until api removes it
         "setup-repos",   // POST /setup/repos (Add repo): the app's call and the job's progress are U3's (SO-U3)
         "context-concepts-id-members",   // GET /sindri/context/concepts/{id}/members: the band reads sizes from the concepts answer, never a concept's member list
         "context-eval", "context-map-proposals", "context-query", "context-history", "context-subgraph", "context-search",   // not U9's: eval, proposals (U13) and the query routes are read by the phases that call them
         "items",   // GET /items (the list) is never called; POST /items' created* goldens are read (see the loop)
+        "handoff",   // POST /sindri/handoff (#2258 PR 12): a local app or script's call; the CLI's `handoff send`, never the app's
         "ledger",   // API P5: the audit read is the CLI's; the app follows the stream and re-queries
         "services-name-run", "services-name-pause", "services-name-resume",   // API P6: the services calls are U4's (Services); the job calls are read below
         "sessions-id-heartbeat", "sessions-id-exit", "launch-targets", "launch-targets-probe",   // API P10a (U8): U10's session wrap's own calls and the launch-target reads, never the app's
@@ -148,7 +192,8 @@ public sealed class GoldenContractTests
         "sandbox-status", "sandbox-check", "sandbox-denials", "sandbox-allow",   // SB-6a serves them; the app reads them in SB-6b (Health, Settings, the park card and the item sheet)
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
-        "connections-id-signin",   // POST /connections/{name}/signin (#2349): the CLI's `connection signin` and the MCP tool; the app has no Connections page yet
+        "todos-note-import",   // POST /todos/note/import (todo Ph3b): dry-run, imported and the stale 409; the app's Import and start syncing reads it with its own view once the card's golden contract lists it
+        "workflows-validate",   // #2258 PR 8b: validate is the CLI's; ops and activate are read above
         "library-doc",   // PR review page Ph5b: GET /sindri/library/{doc} is the CLI's `library show` for now; the app reads it when its doc sheet lands (UI lane)
     };
 
@@ -403,6 +448,9 @@ public sealed class GoldenContractTests
         var todo = (JsonNode.Parse(body) as JsonObject)?["todo"];
         return todo is null ? new Error("TEST-001", ErrorKind.Invalid, "no todo in the answer") : As<TodoView>(Encoding.UTF8.GetBytes(todo.ToJsonString()));
     }
+
+    private static Result<object> AsJsonObject(byte[] body) =>
+        JsonNode.Parse(body) is JsonObject node ? node : new Error("TEST-001", ErrorKind.Invalid, "the answer is not a JSON object");
 
     private static Result<object> As<T>(byte[] body)
         where T : class

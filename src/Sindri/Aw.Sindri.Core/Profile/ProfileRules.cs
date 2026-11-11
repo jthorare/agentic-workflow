@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Workflow.Recipes;
 
 namespace Aw.Sindri.Core.Profile;
 
@@ -21,6 +20,7 @@ public static class ProfileRules
     public static Result<SindriProfile> Check(SindriProfile profile, BoxLimits? box)
     {
         ArgumentNullException.ThrowIfNull(profile);
+        _ = box;   // why: the heavy-slot cap limited 'workflow.line.parallel', which went with the line; the parameter stays so callers keep their signature
         if (profile.SchemaVersion != SindriProfile.CurrentSchemaVersion)
         {
             return Invalid("schemaVersion", string.Create(CultureInfo.InvariantCulture,
@@ -37,7 +37,7 @@ public static class ProfileRules
             return Invalid("api.port", "must be 0 (a free port) or 1024 to 65535");
         }
 
-        var invalid = Sections(profile) ?? LineProfileRules.Check(profile.Workflow, box);
+        var invalid = Sections(profile);
         if (invalid is not null)
         {
             return invalid;
@@ -47,7 +47,9 @@ public static class ProfileRules
     }
 
     private static Error? Sections(SindriProfile profile) =>
-        OnyxLeftover(profile.Context) ?? Services(profile.Services) ?? Workflow(profile) ?? ProfileGlobRules.Check(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup) ?? SandboxRules.Check(profile.Sandbox) ?? PrReviewRules.Check(profile);
+        OnyxLeftover(profile.Context) ?? Services(profile.Services) ?? Workflow(profile) ?? ProfileGlobRules.Check(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup) ?? SandboxRules.Check(profile.Sandbox) ?? Later(profile);
+
+    private static Error? Later(SindriProfile profile) => PrReviewRules.Check(profile) ?? TodoObsidianRules.Check(profile);
 
     /// <summary>A 'context.sources.onyx' section left from before Onyx was removed is refused for one release, never ignored (owned-index spec Q15).</summary>
     private static Error? OnyxLeftover(JsonElement? context) =>
@@ -187,9 +189,24 @@ public static class ProfileRules
             : null;
     }
 
-    private static Error? Workflow(SindriProfile profile) => DurationsAndAgent(profile.Workflow) ?? Effects(profile.Workflow) ?? Judges(profile) ?? ForgeRules.Check(profile.Workflow?.Forge) ?? PrRules.Check(profile.Workflow?.Pr, profile.Workflow?.Docs) ?? Route(profile.Workflow?.Route);
+    private static Error? Workflow(SindriProfile profile) => DurationsAndAgent(profile.Workflow) ?? Effects(profile.Workflow) ?? Judges(profile) ?? ForgeRules.Check(profile.Workflow?.Forge) ?? PrRules.Check(profile.Workflow?.Pr, profile.Workflow?.Docs) ?? RouteAndPoll(profile.Workflow);
 
-    private static Error? DurationsAndAgent(WorkflowSettings? workflow) => Durations(workflow) ?? ModelKeyRules.Shape(workflow?.Agent);
+    private static Error? RouteAndPoll(WorkflowSettings? workflow) => Route(workflow?.Route) ?? Poll(workflow?.Poll);
+
+    private static Error? DurationsAndAgent(WorkflowSettings? workflow) => Durations(workflow) ?? ModelKeyRules.Shape(workflow?.Agent) ?? ForEachRules.Check(workflow?.ForEach) ?? FlowRules.Check(workflow);
+
+    /// <summary>The poll keys (#2258, PR 11): 'workflow.poll.intervalSeconds' is at least 30, 'workflow.poll.catchUpPages' is 1 to 100.</summary>
+    private static Error? Poll(PollSettings? poll)
+    {
+        if (poll?.IntervalSeconds is < PollSettings.MinIntervalSeconds)
+        {
+            return Invalid("workflow.poll.intervalSeconds", string.Create(CultureInfo.InvariantCulture, $"{poll.IntervalSeconds} is below the least interval, {PollSettings.MinIntervalSeconds} seconds"));
+        }
+
+        return poll?.CatchUpPages is < 1 or > PollSettings.MaxCatchUpPages
+            ? Invalid("workflow.poll.catchUpPages", string.Create(CultureInfo.InvariantCulture, $"{poll.CatchUpPages} is not between 1 and {PollSettings.MaxCatchUpPages}"))
+            : null;
+    }
 
     /// <summary>The router stub's key (engine P7 plan D8): 'workflow.route.startable' is all or none.</summary>
     private static Error? Route(RouteSettings? route) =>

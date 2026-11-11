@@ -3,13 +3,19 @@ using Aw.Sindri.Core.Ids;
 namespace Aw.Sindri.Core.Events;
 
 /// <summary>The event types Sindri records (each one is in EventCatalog).</summary>
-public static class EventTypes
+public static partial class EventTypes
 {
     /// <summary>The control plane took the lease and started.</summary>
     public const string ProcessStarted = "process.started";
 
     /// <summary>The control plane released the lease and stopped.</summary>
     public const string ProcessStopped = "process.stopped";
+
+    /// <summary>An instance still open when the recipe engine was removed was cancelled, once, with this note (issue 2258 PR 3).</summary>
+    public const string WorkflowRetired = "workflow.retired";
+
+    /// <summary>The retire pass finished (issue 2258 PR 3): written once, even when it retired nothing, so a later start reads no ledger page.</summary>
+    public const string WorkflowRetireDone = "workflow.retire.done";
 
     /// <summary>A recipe instance started (mirrored from its RecipeWorkflow; engine spec rev 8.1 §5.6).</summary>
     public const string WorkflowStarted = "workflow.started";
@@ -107,6 +113,9 @@ public static class EventTypes
     /// <summary>A human created a work item.</summary>
     public const string ItemCreated = "item.created";
 
+    /// <summary>A handoff (an outside offer or a local script) made an item and left its whole payload (not public).</summary>
+    public const string ItemHandoff = "item.handoff";
+
     /// <summary>An item moved from one state to another.</summary>
     public const string ItemStateChanged = "item.state-changed";
 
@@ -128,32 +137,14 @@ public static class EventTypes
     /// <summary>The owner wrote or cleared the notes on a Linear project they lead.</summary>
     public const string ProjectLedNoted = "project.led.noted";
 
-    /// <summary>A todo was added (todo spec §4.1).</summary>
-    public const string TodoAdded = "todo.added";
+    /// <summary>A caller created a Linear issue through Sindri.</summary>
+    public const string LinearIssueCreated = "linear.issue.created";
 
-    /// <summary>A todo's text, due date or links were edited.</summary>
-    public const string TodoChanged = "todo.changed";
+    /// <summary>A caller posted a comment on a Linear issue through Sindri.</summary>
+    public const string LinearCommentPosted = "linear.comment.posted";
 
-    /// <summary>A todo was checked off.</summary>
-    public const string TodoDone = "todo.done";
-
-    /// <summary>A done todo was reopened.</summary>
-    public const string TodoReopened = "todo.reopened";
-
-    /// <summary>A todo was deleted (soft).</summary>
-    public const string TodoRemoved = "todo.removed";
-
-    /// <summary>A removed todo came back.</summary>
-    public const string TodoRestored = "todo.restored";
-
-    /// <summary>A sync found a todo changed in Sindri and in the Obsidian note.</summary>
-    public const string TodoConflicted = "todo.conflicted";
-
-    /// <summary>A caller picked a side of an open both-places conflict.</summary>
-    public const string TodoConflictResolved = "todo.conflict.resolved";
-
-    /// <summary>A conflict pick was undone, so the conflict is open again.</summary>
-    public const string TodoConflictReopened = "todo.conflict.reopened";
+    /// <summary>A caller changed fields of a Linear issue through Sindri.</summary>
+    public const string LinearIssueChanged = "linear.issue.changed";
 
     /// <summary>A session or a human filed a request; a decision was created with it.</summary>
     public const string RequestFiled = "request.filed";
@@ -230,6 +221,12 @@ public static class EventTypes
     /// <summary>A sandbox limit was reached without ending the session: pids, memory high or disk growth (sandbox spec §8).</summary>
     public const string SandboxLimitHit = "sandbox.limit-hit";
 
+    /// <summary>A caller saved 'review.login' in the live profile (PR review page spec); the actor says who.</summary>
+    public const string ReviewLoginSet = "review.login-set";
+
+    /// <summary>A caller allowed a blocked host or home path for a run's repo in the live profile (sandbox spec §3.6); the actor says who.</summary>
+    public const string SandboxAllowed = "sandbox.allowed";
+
     /// <summary>The owner ended network learn mode early, for one repo or every repo (sandbox spec §3.6).</summary>
     public const string SandboxLearnEnded = "sandbox.learn-ended";
 
@@ -268,6 +265,24 @@ public static class EventTypes
 
     /// <summary>A connection that needed a new sign-in is connected again (connections PR 10b); it clears the connection's needs-you row.</summary>
     public const string ConnectionSignedIn = "connection.signed-in";
+
+    /// <summary>A connection was removed (#2460): its secret and row are gone. The envelope's actor is who removed it. Not public.</summary>
+    public const string ConnectionRemoved = "connection.removed";
+
+    /// <summary>A sign-in (or sign-in again) was started for a connection (#2460). The envelope's actor is who signed in; the row keeps its original creator. Not public.</summary>
+    public const string ConnectionSignInRequested = "connection.sign-in-requested";
+
+    /// <summary>Facts were deleted from a memory (#2460). The envelope's actor is who forgot them. Not public.</summary>
+    public const string MemoryFactsForgotten = "memory.facts.forgotten";
+
+    /// <summary>A poll of a connection for one event kind returned events (#2258, PR 11). Counts only. Not public.</summary>
+    public const string ConnectionPolled = "connection.polled";
+
+    /// <summary>A polled event matched a workflow's trigger but started no run: a run is in flight, or the delivery already had its run (#2258, PR 11). Not public.</summary>
+    public const string WorkflowTriggerSkipped = "workflow.trigger.skipped";
+
+    /// <summary>A catch-up hit its page cap, so older events were skipped (#2258, PR 11). Not public.</summary>
+    public const string CatchUpCapped = "catchup.capped";
 
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>

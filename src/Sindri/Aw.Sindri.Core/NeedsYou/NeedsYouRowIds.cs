@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 
@@ -20,4 +21,18 @@ public static class NeedsYouRowIds
     /// <param name="address">The instance's address.</param>
     /// <returns>The row id.</returns>
     public static NeedsYouRowId Takeover(InstanceAddress address) => NeedsYouRowId.From("takeover:" + WorkflowInstanceId.Of(address).Value);
+
+    /// <summary>The row id of a graph 'notify' node's note: one row per run and node.</summary>
+    /// <param name="run">The run.</param>
+    /// <param name="node">The notify node.</param>
+    /// <returns>The id.</returns>
+    public static NeedsYouRowId WorkflowNotify(WorkflowRunId run, NodeId node) => NeedsYouRowId.From($"workflow-notify:{run.Value}:{node.Value}");
+
+    /// <summary>The row id of a graph 'ask_owner' node's question: one row per run and node, and per item for a node in a 'for_each' body.</summary>
+    /// <param name="run">The run.</param>
+    /// <param name="node">The 'ask_owner' node.</param>
+    /// <param name="item">The item's position inside the loop (counted from 1), or null for a node outside a loop; the id of such a node has no item part.</param>
+    /// <returns>The id.</returns>
+    public static NeedsYouRowId WorkflowQuestion(WorkflowRunId run, NodeId node, int? item = null) =>
+        NeedsYouRowId.From($"question:{run.Value}:{node.Value}" + (item is { } at ? ":" + at.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty));
 }

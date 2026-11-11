@@ -1,0 +1,9 @@
+{
+  "store": {
+    "name": "team-notes",
+    "description": "What the team agreed on",
+    "createdBy": "human:cli",
+    "createdAt": "2026-01-01T00:00:00.0000000Z",
+    "facts": 0
+  }
+}

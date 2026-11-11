@@ -31,7 +31,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     private static readonly string[] _pageProperties =
     [
         nameof(CurrentPage), nameof(PageName), nameof(SelectedNav), nameof(IsHome), nameof(IsProjects), nameof(IsWork), nameof(IsContext),
-        nameof(IsAgents), nameof(IsSystem), nameof(IsReviews), nameof(IsJobs), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown),
+        nameof(IsAgents), nameof(IsSystem), nameof(IsReviews), nameof(IsConnections), nameof(IsJobs), nameof(IsMemory), nameof(IsResources), nameof(IsWorkflows), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown),
     ];
 
     private readonly Preferences _store;
@@ -104,19 +104,21 @@ internal sealed partial class ShellViewModel : ObservableObject
     /// <summary>The connection and the Health page's status card.</summary>
     public HealthViewModel Health { get; }
 
-    /// <summary>The top bar's segments, in order: Home, Projects, Work, Context, Agents, System (screens spec §3, Projects page spec §7).</summary>
+    /// <summary>The top bar's segments, in order: Home, Projects, Workflows, Work, Context, Agents, System, Reviews, Connections (screens spec §3, Projects page spec §7).</summary>
     public IReadOnlyList<NavEntry> Navigation { get; } =
     [
         new(PageId.Home, Labels.Home, "H", string.Empty),
         new(PageId.Projects, Labels.Projects, "P", string.Empty),
+        new(PageId.Workflows, Labels.Workflows, "W", string.Empty, Labels.WorkflowsTabShort),
         new(PageId.Work, Labels.Work, "Q", string.Empty),
         new(PageId.Context, Labels.Context, "C", string.Empty),
         new(PageId.Agents, Labels.Agents, "A", string.Empty),
         new(PageId.System, Labels.System, ".", string.Empty),
         new(PageId.Reviews, Labels.ReviewsTab, "V", string.Empty, Labels.ReviewsTabShort),
+        new(PageId.Connections, Labels.ConnectionsPage, "O", string.Empty),
     ];
 
-    /// <summary>Every page the window can show, in order: the eight tabs, then Jobs and Settings.</summary>
+    /// <summary>Every page the window can show, in order: the tabs, then Jobs, Memory and Settings.</summary>
     public IReadOnlyList<PageId> Pages { get; } = Enum.GetValues<PageId>();
 
     /// <summary>The page shown.</summary>
