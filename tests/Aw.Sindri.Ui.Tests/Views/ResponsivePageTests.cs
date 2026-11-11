@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -5,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
@@ -69,8 +72,13 @@ public sealed class ResponsivePageTests : IDisposable
         Assert.True(condition(), "the view never reached the expected state");
     }
 
-    private async Task<(ShellWindow Window, ShellViewModel Shell)> Open(double sheetWidth, PageId page, double windowWidth = 1280)
+    private async Task<(ShellWindow Window, ShellViewModel Shell)> Open(double sheetWidth, PageId page, double windowWidth = 1280, bool rowsOfferAnAction = false)
     {
+        if (rowsOfferAnAction)
+        {
+            await GiveEveryRowAnAction();
+        }
+
         _records.Write(A.Record());
         var shell = new ShellViewModel(_records, _server, _clock, new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
         await shell.Restore(Token);
@@ -92,6 +100,18 @@ public sealed class ResponsivePageTests : IDisposable
         shell.GoTo(page);
         Settle(window);
         return (window, shell);
+    }
+
+    // The fake's default queue has no row with a primary action, so the action column is (rightly) dropped: this gives every row one.
+    private async Task GiveEveryRowAnAction()
+    {
+        var api = new Uri("http://127.0.0.1:7410/");
+        var queue = (await _server.Queue(api, Token)).Value;
+        var withAction = queue with
+        {
+            Groups = [.. queue.Groups.Select(g => g with { Items = [.. g.Items.Select(i => i with { PrimaryAction = "CloseItem:done", Actions = ["CloseItem:done"] })] })],
+        };
+        _server.QueueView = new RouteAnswer(HttpStatusCode.OK, JsonSerializer.Serialize(withAction, SindriApiClient.Json));
     }
 
     private static Control Named(Window window, string name) => window.GetVisualDescendants().OfType<Control>().First(c => c.Name == name);
@@ -124,7 +144,7 @@ public sealed class ResponsivePageTests : IDisposable
     [InlineData(760)]
     public Task A_queue_row_keeps_its_title_at_160_and_ends_before_the_sheet(double sheetWidth) => OnUi(async () =>
     {
-        var (window, _) = await Open(sheetWidth, PageId.Work);
+        var (window, _) = await Open(sheetWidth, PageId.Work, rowsOfferAnAction: true);
         var sheetLeft = Left(window.Get<Border>("Sheet"), window);
         var grid = window.GetVisualDescendants().OfType<Grid>().First(g => g.Name == "TableRow");
         var title = grid.GetVisualDescendants().OfType<Button>().First(b => b.Name == "TitleButton");
