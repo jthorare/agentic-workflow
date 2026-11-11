@@ -106,6 +106,11 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         }
 
         await SayStep(step, poll.Snapshot).ConfigureAwait(false);
+        foreach (var line in poll.Queue)
+        {
+            await Say(line).ConfigureAwait(false);
+        }
+
         foreach (var line in poll.Worktrees)
         {
             await Say(line).ConfigureAwait(false);

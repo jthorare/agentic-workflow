@@ -302,9 +302,7 @@ Aw.Meta.Features.MergeRun.MergeRunResponse.Announce.get -> string?
 Aw.Meta.Features.MergeRun.MergeRunResponse.Announce.init -> void
 Aw.Meta.Features.MergeRun.MergeRunResponse.Checks.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.MergeCheck!>!
 Aw.Meta.Features.MergeRun.MergeRunResponse.Checks.init -> void
-Aw.Meta.Features.MergeRun.MergeRunResponse.Deconstruct(out int Pr, out bool Merged, out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.MergeCheck!>! Checks, out string? Sha, out string? Announce, out string? Worktrees) -> void
 Aw.Meta.Features.MergeRun.MergeRunResponse.Equals(Aw.Meta.Features.MergeRun.MergeRunResponse? other) -> bool
-Aw.Meta.Features.MergeRun.MergeRunResponse.MergeRunResponse(int Pr, bool Merged, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.MergeCheck!>! Checks, string? Sha, string? Announce, string? Worktrees = null) -> void
 Aw.Meta.Features.MergeRun.MergeRunResponse.Merged.get -> bool
 Aw.Meta.Features.MergeRun.MergeRunResponse.Merged.init -> void
 Aw.Meta.Features.MergeRun.MergeRunResponse.Pr.get -> int
@@ -1223,3 +1221,9 @@ static Aw.Meta.Features.ReportDefect.ReportDefectRequest.operator !=(Aw.Meta.Fea
 static Aw.Meta.Features.ReportDefect.ReportDefectRequest.operator ==(Aw.Meta.Features.ReportDefect.ReportDefectRequest? left, Aw.Meta.Features.ReportDefect.ReportDefectRequest? right) -> bool
 static Aw.Meta.Features.ReportDefect.ReportDefectResponse.operator !=(Aw.Meta.Features.ReportDefect.ReportDefectResponse? left, Aw.Meta.Features.ReportDefect.ReportDefectResponse? right) -> bool
 static Aw.Meta.Features.ReportDefect.ReportDefectResponse.operator ==(Aw.Meta.Features.ReportDefect.ReportDefectResponse? left, Aw.Meta.Features.ReportDefect.ReportDefectResponse? right) -> bool
+Aw.Meta.Features.MergeRun.MergeRunResponse.Deconstruct(out int Pr, out bool Merged, out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.MergeCheck!>! Checks, out string? Sha, out string? Announce, out string? Worktrees, out bool Queued, out int? Position) -> void
+Aw.Meta.Features.MergeRun.MergeRunResponse.MergeRunResponse(int Pr, bool Merged, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.MergeCheck!>! Checks, string? Sha, string? Announce, string? Worktrees = null, bool Queued = false, int? Position = null) -> void
+Aw.Meta.Features.MergeRun.MergeRunResponse.Position.get -> int?
+Aw.Meta.Features.MergeRun.MergeRunResponse.Position.init -> void
+Aw.Meta.Features.MergeRun.MergeRunResponse.Queued.get -> bool
+Aw.Meta.Features.MergeRun.MergeRunResponse.Queued.init -> void
