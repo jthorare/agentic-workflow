@@ -40,8 +40,14 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// </summary>
     internal Func<bool, ValueTask<string?>> KeepFailing { get; init; } = static _ => ValueTask.FromResult<string?>(null);
 
+    /// <summary>The lanes' live sessions for LANE DOWN / LANE UP (#2856); null leaves them out.</summary>
+    internal LaneSessions? Sessions { get; init; }
+
     /// <summary>Batches the status lines (#2651).</summary>
     internal required StatusBatch Status { get; init; }
+
+    /// <summary>Report every pull request, not only the team's.</summary>
+    internal bool AllPrs { get; init; }
 
     /// <summary>The state the first poll diffs against: the last poll of an earlier run, or the state before any poll.</summary>
     internal WatchState Baseline { init => _state = value; }
@@ -65,7 +71,7 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// <summary>Takes a snapshot and emits what changed. A failed poll is reported once per streak.</summary>
     internal async ValueTask Tick(CancellationToken cancellationToken)
     {
-        var polled = await poller.Poll(team, cancellationToken).ConfigureAwait(false);
+        var polled = await poller.Poll(team, AllPrs, cancellationToken).ConfigureAwait(false);
         if (await Supersede(await NewerOwner().ConfigureAwait(false)).ConfigureAwait(false))
         {
             return;
@@ -175,11 +181,21 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
         return await Supersede(await KeepFailing(false).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
-    // The lanes' standing: context sizes, then usage limits. Neither can fail the poll.
+    // The lanes' standing: live sessions, context sizes, then usage limits. None can fail the poll.
     private async ValueTask ReportLanes(IReadOnlyList<LaneContext>? contexts)
     {
+        await ReportSessions().ConfigureAwait(false);
         await ReportContext(contexts).ConfigureAwait(false);
         foreach (var line in await usage().ConfigureAwait(false))
+        {
+            await Say(line).ConfigureAwait(false);
+        }
+    }
+
+    // LANE DOWN once when a lane that had a session has none for two polls, LANE UP when it is back (LaneSessions).
+    private async ValueTask ReportSessions()
+    {
+        foreach (var line in Sessions is null ? [] : await Sessions.Poll().ConfigureAwait(false))
         {
             await Say(line).ConfigureAwait(false);
         }

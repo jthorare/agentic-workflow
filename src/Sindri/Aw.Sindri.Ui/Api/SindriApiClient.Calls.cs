@@ -44,7 +44,7 @@ internal sealed partial class SindriApiClient
             }
 
             return code is < HttpStatusCode.OK or >= HttpStatusCode.MultipleChoices
-                ? SindriUiErrors.BadStatus.With(string.Create(CultureInfo.InvariantCulture, $"{path} answered {(int)code}"))
+                ? SindriUiErrors.BadStatus.With(SindriErrorReading.BadStatusMessage(path, code))
                 : Read<T>(path, body);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)

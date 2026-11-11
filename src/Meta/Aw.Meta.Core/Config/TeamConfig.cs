@@ -11,6 +11,7 @@ public sealed record TeamConfig
 #pragma warning disable IDE0032 // the deserializer skips the initializer of a property that is not a constructor parameter, so a file without "routing" must still read as the defaults
     private RoutingConfig? _routing;
     private DefectsConfig? _defects;
+    private WatchConfig? _watch;
 #pragma warning restore IDE0032
 
     /// <summary>Creates a config.</summary>
@@ -135,5 +136,13 @@ public sealed record TeamConfig
         // A file without the block leaves the property unset: the deserializer skips initializers.
         get => _routing ??= new RoutingConfig();
         init => _routing = value;
+    }
+
+    /// <summary>The watch's settings.</summary>
+    public WatchConfig Watch
+    {
+        // Like Routing: a file without the block reads as the defaults here.
+        get => _watch ??= new WatchConfig();
+        init => _watch = value;
     }
 }

@@ -216,7 +216,7 @@ public sealed class SetupViewModelTests
         setup.ChecklistRequested += (_, _) => asked++;
         Step(setup, "mcp").IsOpen = false;
 
-        Assert.Equal(("Connect your coding agents", "Continue", "Finish setting up Sindri, 2 of 5 done. Next: Connect your coding agents"), (setup.HomeStepText, setup.ContinueText, setup.HomeLineName));
+        Assert.Equal(("Connect your coding agents", "Connect your coding agents", "Connect your coding agents", "Finish setting up Sindri, 2 of 5 done. Next: Connect your coding agents"), (setup.HomeStepText, setup.ContinueText, setup.ContinueName, setup.HomeLineName));
         setup.Continue();
 
         Assert.Equal((1, true), (asked, Step(setup, "mcp").IsOpen));

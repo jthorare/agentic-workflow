@@ -3,7 +3,6 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Config;
-using Aw.Meta.Core.Poll;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Watch;
 
@@ -18,9 +17,9 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="values">Keeps the heartbeat.</param>
 /// <param name="delay">Waits between polls.</param>
 /// <param name="clock">The current time.</param>
-/// <param name="usage">Looks for lanes and the meta stopped at a usage limit, and resumes the idle ones.</param>
+/// <param name="lanes">Reports on the lanes: usage limits (resuming the idle ones), and lanes that lost their session.</param>
 /// <param name="board">Records main's new sha and the pull requests that merged when a poll sees main move.</param>
-internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyValueStore values, IDelay delay, TimeProvider clock, UsageMonitor usage, IBoardStore board)
+internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyValueStore values, IDelay delay, TimeProvider clock, LaneReport lanes, IBoardStore board)
     : IService<WatchRequest, WatchResponse>
 {
     public async ValueTask<Result<WatchResponse>> Handle(WatchRequest request, CancellationToken cancellationToken)
@@ -33,7 +32,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
         }
 
         var end = clock.GetUtcNow() + request.Duration;
-        var loop = await NewLoop(team.Value, request.Emit, request.Owner.ToString(CultureInfo.InvariantCulture), cancellationToken).ConfigureAwait(false);
+        var loop = await NewLoop(team.Value, request.Emit, request.Owner.ToString(CultureInfo.InvariantCulture), request.AllPrs, cancellationToken).ConfigureAwait(false);
         for (var polls = 1; ; polls++)
         {
             await loop.Tick(cancellationToken).ConfigureAwait(false);
@@ -92,7 +91,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
             async kept => _ = await values.Set(KvKeys.WatchStatus, kept.Format(), cancellationToken).ConfigureAwait(false));
     }
 
-    private async ValueTask<WatchLoop> NewLoop(TeamConfig team, Func<string, ValueTask> emit, string owner, CancellationToken cancellationToken)
+    private async ValueTask<WatchLoop> NewLoop(TeamConfig team, Func<string, ValueTask> emit, string owner, bool allPrs, CancellationToken cancellationToken)
     {
         var reported = await values.Get(KvKeys.WatchResources, cancellationToken).ConfigureAwait(false);
         var high = await values.Get(KvKeys.WatchContext, cancellationToken).ConfigureAwait(false);
@@ -113,8 +112,10 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
                 ContextWatch.Parse(high.IsSuccess ? high.Value : null),
                 async lanes => _ = await values.Set(KvKeys.WatchContext, ContextWatch.Format(lanes), cancellationToken).ConfigureAwait(false)),
             // Advisory: a pane or transcript that can't be read leaves usage out of the poll.
-            async () => await usage.Check(team, cancellationToken).ConfigureAwait(false))
+            async () => await lanes.Usage.Check(team, cancellationToken).ConfigureAwait(false))
         {
+            AllPrs = allPrs,
+            Sessions = await lanes.Sessions(team, cancellationToken).ConfigureAwait(false),
             Status = await StatusBatch(cancellationToken).ConfigureAwait(false),
             // Advisory: a board write that fails is printed as a WATCH ERROR line; the watch keeps polling and the next move fixes the board.
             // The last poll's pull requests and main, so a change between two runs is reported by the next run's first poll. Keyed by repo: another repo's snapshot is not used.

@@ -27,6 +27,7 @@ public static class MetaCoreServiceCollectionExtensions
         .AddScoped<LaneStopGuard>()
         .AddScoped<LaneHealthReader>()
         .AddScoped<LaneContextReader>()
+        .AddScoped<MissingLanes>()
         .AddScoped<PaneSubmitter>()
         .AddScoped<UsageReader>()
         .AddScoped<UsageWatcher>()

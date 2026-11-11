@@ -35,4 +35,9 @@ public interface IGraphBlockType
     /// <param name="config">The node's config.</param>
     /// <returns>One problem per field: the field's name and what to change.</returns>
     public IReadOnlyList<(string Field, string Problem)> CheckConfig(JsonObject config) => [];
+
+    /// <summary>The line the canvas shows on a node of this type, built from its config. The block's title by default.</summary>
+    /// <param name="config">The node's config.</param>
+    /// <returns>The line and, when something required is missing, what.</returns>
+    public BlockSummary Summarize(JsonObject config) => new(Title);
 }

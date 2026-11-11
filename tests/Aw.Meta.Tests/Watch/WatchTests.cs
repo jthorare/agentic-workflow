@@ -23,7 +23,7 @@ public sealed class WatchTests
         _world.Values,
         _world.Delay,
         _world.Clock,
-        _world.Monitor,
+        new LaneReport(_world.Monitor, _world.Values),
         board ?? _world.Board);
 
     private static string Pr(int number, string state, string head, string mergeable = "MERGEABLE", bool draft = false) =>

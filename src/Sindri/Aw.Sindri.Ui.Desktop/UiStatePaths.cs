@@ -24,7 +24,7 @@ internal sealed record UiStatePaths(string Directory, string Preferences, string
     /// <param name="userHome">The user's home directory.</param>
     /// <returns>The paths.</returns>
     internal static UiStatePaths From(Func<string, string?> environment, string userHome) =>
-        In(Path.Combine(Path.GetDirectoryName(ControlFilePath.From(environment, userHome))!, "ui")); // why: ControlFilePath always joins a directory and a file
+        In(Path.Combine(Path.GetDirectoryName(ControlFilePath.From(environment, userHome))!, "ui"), Path.GetTempPath(), environment("XDG_RUNTIME_DIR")); // why: ControlFilePath always joins a directory and a file
 
     /// <summary>The paths in <paramref name="directory"/>, a long socket path falling back under the user's temp directory.</summary>
     /// <param name="directory">The 'ui' directory.</param>
@@ -34,11 +34,12 @@ internal sealed record UiStatePaths(string Directory, string Preferences, string
     /// <summary>The paths in <paramref name="directory"/>.</summary>
     /// <param name="directory">The 'ui' directory.</param>
     /// <param name="tempRoot">Where a socket path too long for sun_path goes instead.</param>
+    /// <param name="runtimeDir">XDG_RUNTIME_DIR, tried when <paramref name="tempRoot"/> is too long; null or empty when there is none.</param>
     /// <returns>The paths.</returns>
-    internal static UiStatePaths In(string directory, string tempRoot) => new(
+    internal static UiStatePaths In(string directory, string tempRoot, string? runtimeDir = null) => new(
         directory,
         Path.Combine(directory, "preferences.json"),
-        SocketIn(Path.Combine(directory, "instance.sock"), tempRoot),
+        SocketIn(Path.Combine(directory, "instance.sock"), tempRoot, runtimeDir),
         Path.Combine(directory, "instance.lock"));
 
     /// <summary>
@@ -47,8 +48,9 @@ internal sealed record UiStatePaths(string Directory, string Preferences, string
     /// </summary>
     /// <param name="preferred">The socket's path in the 'ui' directory.</param>
     /// <param name="tempRoot">The user's temp directory.</param>
+    /// <param name="runtimeDir">XDG_RUNTIME_DIR, or null or empty. When <paramref name="tempRoot"/> is too long too (an agent's scratchpad is 99 bytes), the first of it, <paramref name="runtimeDir"/> and /tmp whose path fits is used.</param>
     /// <returns>The path to bind.</returns>
-    internal static string SocketIn(string preferred, string tempRoot)
+    internal static string SocketIn(string preferred, string tempRoot, string? runtimeDir = null)
     {
         if (Encoding.UTF8.GetByteCount(preferred) <= MaxSocketPath)
         {
@@ -56,6 +58,8 @@ internal sealed record UiStatePaths(string Directory, string Preferences, string
         }
 
         var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(preferred)))[..16];
-        return Path.Combine(tempRoot, "sindri-ui-" + hash, "instance.sock");
+        var roots = new[] { tempRoot, runtimeDir ?? "", "/tmp" }.Where(static r => r.Length > 0);
+        var candidates = roots.Select(r => Path.Combine(r, "sindri-ui-" + hash, "instance.sock")).ToList();
+        return candidates.FirstOrDefault(static c => Encoding.UTF8.GetByteCount(c) <= MaxSocketPath) ?? candidates[0];
     }
 }

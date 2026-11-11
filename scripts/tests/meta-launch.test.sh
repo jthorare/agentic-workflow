@@ -21,7 +21,7 @@ AW_TEST_TMUX=t1
 # normalized transcript: the dry-run, the Warp YAML, every tmux command the launcher issues (a recording shim in front of
 # tmux), and the claude command lines meta-lane.sh runs (fresh with a multi-line prompt, resumed, no prompt, with
 # AW_META_CLAUDE_ARGS, the meta lane's role-set). The committed golden began as the scripts' output before SL-1 and
-# has since gained only the team's `-L <team>` and the legacy-socket check lines (`bash meta-launch.test.sh --print-golden
+# has since gained only the team's `-L <team>`, the legacy-socket check lines and remain-on-exit (#2856) (`bash meta-launch.test.sh --print-golden
 # <scripts dir>` regenerates it; review the diff); the test compares the current scripts to it.
 golden_transcript() {
   local S="$1" G; G="$(mktemp -d)"
@@ -184,6 +184,17 @@ tmux kill-session -t t1-api; tmux new-session -d -s t1-api bash   # claude exite
 : > "$AW_STATE_DIR/meta/lane-sessions/api.exited"                       # as meta-lane.sh leaves it
 OUT="$(bash "$DIR/meta-launch.sh" --no-open --lanes api)"
 check "rerun: a lane whose claude exited is restarted in place" "$(head -1 <<< "$OUT")" "tmux t1-api: restarted (claude had exited)"
+check "rerun: the restarted pane keeps remain-on-exit" "$(tmux show-options -w -t =t1-api: remain-on-exit)" "remain-on-exit on"
+# #2856: the pane's process is killed (an OOM kill stops the whole pane); remain-on-exit keeps the dead pane and its session,
+# with no .exited marker (meta-lane.sh never got to write one), and the rerun restarts it in place.
+rm -f "$AW_STATE_DIR/meta/lane-sessions/api.exited"
+tmux kill-session -t t1-api; tmux new-session -d -s t1-api "sleep 600"; tmux set-option -w -t =t1-api: remain-on-exit on
+kill -9 "$(tmux display-message -p -t =t1-api: '#{pane_pid}')"
+for _ in $(seq 50); do [ "$(tmux display-message -p -t =t1-api: '#{pane_dead}')" = 1 ] && break; sleep 0.1; done
+check "killed pane: the session is kept, the pane dead" "$(tmux has-session -t =t1-api && tmux display-message -p -t =t1-api: '#{pane_dead}')" "1"
+OUT="$(bash "$DIR/meta-launch.sh" --no-open --lanes api)"
+check "rerun: a lane whose pane was killed is restarted in place" "$(head -1 <<< "$OUT")" "tmux t1-api: restarted (its pane had died)"
+check "rerun: the restarted pane is alive" "$(tmux display-message -p -t =t1-api: '#{pane_dead}')" "0"
 tmux kill-server 2> /dev/null
 OUT="$(bash "$DIR/meta-launch.sh" --no-open --lanes api)"
 check "after tmux died: recreated" "$(printf '%s\n' "$OUT" | head -1)" "tmux t1-api: started"
@@ -649,7 +660,7 @@ chmod +x "$WORK/codex-idle"
 jq -n --arg c "$WORK/codex-idle" '{schema:1, agents:{codex:{override:true, bin:$c}}, meta:{lanesAgent:"codex", lanes:{meta:"codex"}}}' > "$WORK/idle.json"
 rm -f "$ids/idle" "$ids/idle.settled" "$ids/idle.ambiguous"
 OUT="$(AW_META_CONFIG="$WORK/team2.json" AW_LAUNCHER_CONFIG="$WORK/idle.json" AW_META_ID_WAIT=1 bash "$DIR/meta-launch.sh" --no-open --lanes idle,amb 2>&1)"; RC=$?
-check "an id that never arrives: the timeout message, exit 0, the next lane started" "$RC:$(grep -c 'lane idle has not reported its session id after 1s' <<< "$OUT"):$(grep -c 'tmux t1-amb: started' <<< "$OUT")" "0:1:1"
+check "an id that never arrives: the timeout message, exit 0, the next lane started" "$RC:$(grep -c 'lane idle has not reported its session id after 1s' <<< "$OUT"):$(grep -cE 'tmux t1-amb: (started|restarted \(its pane had died\))' <<< "$OUT")" "0:1:1"   # killstubs above left amb's dead pane (remain-on-exit, #2856)
 check "an id that never arrives: nothing recorded" "$(test -s "$ids/idle" && echo id || echo none)" "none"
 tmux kill-server 2> /dev/null; killstubs
 
