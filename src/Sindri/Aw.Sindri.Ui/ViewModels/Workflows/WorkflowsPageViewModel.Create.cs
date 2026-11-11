@@ -97,6 +97,9 @@ internal sealed partial class WorkflowsPageViewModel
     /// <summary>Why Create is off because of the name or short id; empty when both are fine.</summary>
     public string CreateReasonText => ReasonFor();
 
+    /// <summary>True when the reason line shows: there is a reason and no refusal line already says it (a refused id has both, in the same words), so no empty or doubled line sits above the buttons.</summary>
+    public bool ShowsCreateReason => CreateReasonText.Length > 0 && !HasCreateError;
+
     /// <summary>True when the reason is a problem with what was typed (an error colour), false for the hint before a name is typed.</summary>
     public bool CreateReasonIsError => CreateReasonText.Length > 0 && NewName.Trim().Length > 0;
 
@@ -104,7 +107,7 @@ internal sealed partial class WorkflowsPageViewModel
     public bool ShortIdInvalid => CreateReasonIsError || HasCreateError;
 
     /// <summary>Sindri's reason when the last create was refused, without its code; empty otherwise.</summary>
-    public string CreateError { get; private set { Set(ref field, value); OnChanged(nameof(HasCreateError)); OnChanged(nameof(ShortIdInvalid)); } } = string.Empty;
+    public string CreateError { get; private set { Set(ref field, value); OnChanged(nameof(HasCreateError)); OnChanged(nameof(ShowsCreateReason)); OnChanged(nameof(ShortIdInvalid)); } } = string.Empty;
 
     /// <summary>The refusal's code (SND-…): the line's tooltip, never part of the sentence.</summary>
     public string CreateErrorCode { get; private set => Set(ref field, value); } = string.Empty;
@@ -248,7 +251,7 @@ internal sealed partial class WorkflowsPageViewModel
 
     private void NotifyCreate()
     {
-        foreach (var name in new[] { nameof(CreateReasonText), nameof(CreateReasonIsError), nameof(ShortIdInvalid), nameof(CanCreate) })
+        foreach (var name in new[] { nameof(CreateReasonText), nameof(ShowsCreateReason), nameof(CreateReasonIsError), nameof(ShortIdInvalid), nameof(CanCreate) })
         {
             OnChanged(name);
         }
