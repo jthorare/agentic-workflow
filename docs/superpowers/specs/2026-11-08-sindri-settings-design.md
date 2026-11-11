@@ -372,7 +372,7 @@ broken file and no last good settings runs nothing, as today.
   banner. A 410 on a bulk save shows "These pages changed on disk. Reload to see them." (or "These pins ..."), and
   **Reload** refreshes the list and keeps the ticks for items still on disk. **Keep mine** and **Load theirs** exist
   on one-item sheets only.
-- **The file path, always.** One **Copy file path** link sits in the Settings heading row and is always shown, with or
+- **The file path, always.** One **Copy file path** link per page: the Settings page's sits in its heading row and is always shown, with or
   without an audit line and not only when the file is broken. "Copied" uses the page's polite live region, not a
   sheet's.
   Agents and the person's editor are the normal way to change the read-only parts, and the Setup step "profile" was
@@ -417,7 +417,9 @@ broken file and no last good settings runs nothing, as today.
   - 023: the secret message in §3.3.
 - **A broken file.** Every sheet in the table above shows the Health text from §3.5 at its top, above any stale banner. Its
   save button stays focusable but inactive (`aria-disabled`), with "Fix the settings file first" as plain text
-  above it. The heading's **Copy file path** copies the path of `settings.yaml` and shows "Copied" for 2 s. When the file
+  above it. The Settings heading's **Copy file path** copies the path of `settings.yaml` and shows "Copied" for 2 s. On any
+  other page (Context, Reviews, and so on), a broken-file sheet or card shows the settings file path as text with its
+  own **Copy file path** button. That is the only Copy button on that page, and its accessible name is the same. When the file
   validates again, the text goes and the save button comes back without reopening the sheet. Last changed adds
   "(the file has a mistake now)" while it's broken.
 - **A stale open sheet** (PR 2, §8). Every one-item sheet in the table above watches `settings.changed`. When an event touches the item the sheet
@@ -433,6 +435,9 @@ broken file and no last good settings runs nothing, as today.
   - A change to another item shows nothing.
 - **One voice.** The busy message, refusals, "Copied" and the stale banner share one polite live region on the
   sheet. A newer message replaces an older one, so two never announce at once.
+- **One message at the top of a sheet, in this order.** The Health broken-file text wins. Then the 410 "changed on disk.
+  Reload". Then the stale banner. Only the first that applies shows. A 410 on a broken file can't happen: the writer
+  refuses a broken file first (`SND-SETTINGS-024`), and the sheet then shows only the broken-file text.
 
 ## 4. Renames
 
@@ -684,12 +689,14 @@ keep the old words). Known today, by group:
   group; a settings write with an `Origin` header is 403 `SND-API-008`; a settings write with a form content type
   is refused; the new route's catalog row, action id, API golden and Ui `GoldenContract` slug; and, in PR 2, `GET /sindri/ledger` with `newest=true`.
 - UI (Frames tests), PR 1a: Setup without the profile step (its count states on a first run with no repo), NeedsYou
-  without the profile row, and no "approve" wording; the read-only lines say "Change it in the profile file".
+  without the profile row, and no "approve" wording; the read-only lines say "Change it in the profile file". That wording is intended: in 1a the file is still
+  `profile/profile.yaml`, so "settings.yaml" would name a file that doesn't exist yet, and 1b swaps the words when it
+  moves the file.
 - UI (Frames tests), PR 1b: the read-only lines say "Change it in settings.yaml"; the Health "Settings" row with its broken-file,
   leftover and missing-checkout warnings; the loading and can't-reach states; Last changed reading "Created with the
   defaults" on a fresh home, and after the person's own save, with a day when not today; both busy messages keeping
   typed values; a 410 on an item the outside edit touched showing Reload with no Try again; a field refusal with
-  focus on the field; and a sheet on a broken file, with its save coming back
+  focus on the field; a sheet open on a broken file showing only the broken-file text (no 410 text, no stale banner), and its save coming back
   once the file is fixed.
 - UI (Frames tests), PR 2: See changes with its empty and error states; a 410 on an item the outside edit
   touched showing the banner instead of Reload; and the stale-sheet banner for a change, a removal, Keep mine leaving the other
@@ -726,7 +733,7 @@ That is about 25% less in `src`, 50% less in tests and 80% less in docs than the
      its carriers, `SND-PROFILE-003`, the `profile.checked` writer with `ProfileWatch`, `ProfileRow` and
      `ProfileProjection`, the profile Setup step and NeedsYou row, the stale words in the UI (the `sindri profile
      validate` copy, "Waits for your settings", "Change it in the profile") and `ApprovedServices` read from the live
-     profile. Its read-only lines say "Change it in the profile file", with no approve wording; 1b swaps that to
+     profile. Its read-only lines say "Change it in the profile file" on purpose (the file is still `profile.yaml` in 1a), with no approve wording; 1b swaps that to
      `settings.yaml`. The per-writer "file is still the text I read" check stays in 1a, so writes keep a guard until 1b
      replaces it with the lock.
   2. **1b, the move.** The renames, the lock with the in-lock edit callbacks, the hash-keyed cache, the write route,
