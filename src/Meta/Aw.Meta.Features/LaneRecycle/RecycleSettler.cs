@@ -48,6 +48,24 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
     // request is not stored yet (#2647): read the meta session's own transcript first, as stop-check would.
     private async ValueTask<Result<Unit>> SyncMetaTranscript(CancellationToken cancellationToken)
     {
+        // The live session carrying the registered name, found without an offsets row: the meta's first turn after /clear (#2683).
+        var own = await sync.RunMeta(cancellationToken).ConfigureAwait(false);
+        if (own.IsError)
+        {
+            return own.Error;
+        }
+
+        if (own.Value)
+        {
+            return Results.Ok();
+        }
+
+        // No resolver or no file found: fall back to the transcripts the store already knows by the role's session id.
+        return await SyncKnownTranscripts(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<Unit>> SyncKnownTranscripts(CancellationToken cancellationToken)
+    {
         var role = await messages.Role(cancellationToken).ConfigureAwait(false);
         if (role.IsError)
         {
@@ -65,8 +83,8 @@ internal sealed class RecycleSettler(IMessageStore messages, InboxSync sync, Tim
             return transcripts.Error;
         }
 
-        var own = "/" + meta.Session.Value + ".jsonl";
-        foreach (var transcript in transcripts.Value.Where(t => t.EndsWith(own, StringComparison.Ordinal)))
+        var suffix = "/" + meta.Session.Value + ".jsonl";
+        foreach (var transcript in transcripts.Value.Where(t => t.EndsWith(suffix, StringComparison.Ordinal)))
         {
             var read = await sync.Run(transcript, cancellationToken).ConfigureAwait(false);
             if (read.IsError)

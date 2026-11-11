@@ -22,4 +22,18 @@ public sealed class ListToolkitsTests
 
         Assert.Equal([("a", ToolkitState.Built), ("b", ToolkitState.Running), ("c", ToolkitState.Built)], listed.Value.Toolkits.Select(static t => (t.Name, t.State)));
     }
+
+    [Fact]
+    public async Task A_toolkit_with_a_live_paused_process_shows_paused_and_a_stale_paused_row_without_one_shows_built()
+    {
+        var store = new ToolkitRig.FakeStore();
+        foreach (var name in new[] { "a", "b" })
+        {
+            store.Items[name] = new Toolkit(name, "/tk/" + name, ToolkitState.Paused, SourceHash: "h", BuiltAt: DateTimeOffset.UnixEpoch, Manifest: null, CreatedBy: "human");
+        }
+
+        var listed = await new ListToolkitsService(store, new FakeRunningToolkits([FakeRunningToolkits.Make("a", ToolkitState.Paused)])).Handle(new ListToolkitsRequest(), TestContext.Current.CancellationToken);
+
+        Assert.Equal([("a", ToolkitState.Paused), ("b", ToolkitState.Built)], listed.Value.Toolkits.Select(static t => (t.Name, t.State)));
+    }
 }

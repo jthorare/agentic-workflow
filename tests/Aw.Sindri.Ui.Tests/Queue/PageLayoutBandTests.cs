@@ -6,7 +6,7 @@ using Aw.Sindri.Ui.Views.Layout;
 
 namespace Aw.Sindri.Ui.Tests.Queue;
 
-/// <summary>The Work table's width bands (F3 spec work §3): under 760 px the compact band keeps Title, Status and Age (and the row's action), and drops Repo and Stage. The grid tests run on the headless session's thread so they never take the UI thread from it (#1640).</summary>
+/// <summary>The Work table's columns (F3 spec work §3, #2551): a table too narrow for them keeps Title, Status and Age (and the row's action), and drops Repo and Stage. The grid tests run on the headless session's thread so they never take the UI thread from it (#1640).</summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
 public sealed class PageLayoutBandTests
@@ -28,25 +28,37 @@ public sealed class PageLayoutBandTests
     {
         var grid = SixColumns();
 
-        PageLayout.Apply(grid, PageTier.Tight);
+        PageLayout.Apply(grid, new PageLayout.ColumnPlan(700, HasRepo: true, HasAction: true));   // 880 px of columns do not fit 700: Stage then Repo go
 
         Assert.Equal([true, false, true, false, true, true], grid.Children.Select(c => c.IsVisible));
         return true;
     });
 
     [Theory]
-    [InlineData("Wide", 1120)]
-    [InlineData("Mid", 1000)]
-    [InlineData("Narrow", 760)]
-    public async Task The_columns_beside_the_title_leave_it_160_px_at_the_start_of_each_tier(string tier, double width) => await OnUi(() =>
+    [InlineData(1120)]
+    [InlineData(1000)]
+    [InlineData(760)]
+    public async Task The_columns_beside_the_title_leave_it_160_px_whenever_the_table_is_wide_enough_for_them(double width) => await OnUi(() =>
     {
         var grid = SixColumns();
 
-        PageLayout.Apply(grid, Enum.Parse<PageTier>(tier));
+        PageLayout.Apply(grid, new PageLayout.ColumnPlan(width, HasRepo: true, HasAction: true));
 
         var fixedWidth = grid.ColumnDefinitions.Skip(1).Sum(c => c.Width.Value);
-        Assert.True(width - fixedWidth >= 160, string.Create(CultureInfo.InvariantCulture, $"{tier}: the title column gets {width - fixedWidth} px"));
+        Assert.True(width - fixedWidth >= 160, string.Create(CultureInfo.InvariantCulture, $"{width}: the title column gets {width - fixedWidth} px"));
         Assert.Equal(Avalonia.Controls.GridUnitType.Star, grid.ColumnDefinitions[0].Width.GridUnitType);
+        return true;
+    });
+
+    [Fact]
+    public async Task A_table_under_620_px_drops_stage_and_repo_and_narrows_the_action_but_keeps_age() => await OnUi(() =>
+    {
+        var grid = SixColumns();
+
+        PageLayout.Apply(grid, new PageLayout.ColumnPlan(500, HasRepo: true, HasAction: true));
+
+        Assert.Equal([true, false, true, false, true, true], grid.Children.Select(c => c.IsVisible));
+        Assert.Equal(170, grid.ColumnDefinitions[5].Width.Value);
         return true;
     });
 

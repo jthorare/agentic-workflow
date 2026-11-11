@@ -93,6 +93,15 @@ Five more blocks, each with an example spec page under `docs/workflows/blocks/`:
 - **Seen memory.** `workflow_seen(workflow_id, key, first_seen_at)` in ledger.db (migration 0014; renumbered at the final main merge). Read only by `only_new`.
 - **Codes.** `SND-GRAPH-120` call too deep, `121` self-start, `122` an http request refused before it was sent, `123` an http request that got no acceptable answer.
 
+## Code block (agent-first PR 9c)
+
+The [`code`](../workflows/blocks/code.md) block runs a C# method body (`GraphBlockRegistry.CodeBlocks`). `Core/Graph/Blocks/CodeBlock` reads the config and calls `ICodeRunPort`; `Infrastructure/Workflow/Code` holds the adapter: `CodeCompiler` (Roslyn, fixed references), `CompiledCodeCache` (`<home>/code-cache/<sha256>.dll`), `CodeRunSandbox` (the `ProcessSandboxRequest`: no host group, the repo in `ReadOnlyPaths`) and `CodeRunnerProcess`, which starts the `sindri-code-runner` binary that sits beside `sindri` (the framework-dependent `Aw.Sindri.CodeRunner` project, argv: assembly path and `--memory-mb`; stdin the input, stdout the result; exit 2 unusable, 3 memory, 4 the code threw). The assembly is copied into the run's private `/tmp`, so the sandbox needs no other path to it.
+
+- **Validation.** `GraphValidationContext.CodeCheck` (set from `ICodeCheck` by `ProfileWorkflowChecker` and `sindri wf validate`) compiles every `code` node: `GRAPH-CODE-001` with line and column. The `code` field is not scanned for `{{ }}` references and is read from the raw config at run time.
+- **Memory.** `memoryMb` is a .NET heap cap the runner sets on itself (`GCHeapHardLimit`), not a cgroup limit.
+- **Smoke.** `src/Sindri/aot-smoke/run.sh` publishes `Aw.Sindri.CodeRunner` into the folder of the published host, makes and runs a one-node Code workflow (`return new JsonObject { ["sum"] = 1 + 2 };`) with `wf create`, `activate`, `run` and `run-show`, and pins the line `code-node: {"sum":3}` in `expected.txt`.
+- **Codes.** `SND-CODE-001` does not compile, `002` timeout, `003` memory, `004` threw or not JSON, `005` runner could not start.
+
 ## Reading workflows and runs (PR 8a)
 
 Four reads, each one slice (`Features/ListWorkflows`, `GetWorkflow`, `ListWorkflowRuns`, `GetWorkflowRun`) behind an HTTP route, an MCP tool and a `sindri wf` verb. They read the routes and never start the control plane; any caller may use them.

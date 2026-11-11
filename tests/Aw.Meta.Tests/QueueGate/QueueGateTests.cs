@@ -4,6 +4,7 @@ using Aw.Meta.Core.Commands;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Gate;
+using Aw.Meta.Core.Merge;
 using Aw.Meta.Features.QueueGate;
 using Aw.Meta.Infrastructure.Files;
 using Aw.Meta.Testing;
@@ -17,7 +18,7 @@ public sealed class QueueGateTests
     private readonly MetaWorld _world = new();
 
     private QueueGateService Service() => new(
-        new TrainSelection(_world.Config, Worlds.Queue(_world)),
+        new TrainSelection(_world.Config, Worlds.Queue(_world), _world.Values),
         new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, _world.LogFiles),
         new GateStepRunner(_world.Runner, _world.Paths),
         _world.Gates,
@@ -217,7 +218,7 @@ public sealed class QueueGateTests
         ScriptGit();
         var paths = new MetaPaths("/state/meta", disk.Path, "/bin/heavy", "gh");
         var service = new QueueGateService(
-            new TrainSelection(_world.Config, Worlds.Queue(_world)),
+            new TrainSelection(_world.Config, Worlds.Queue(_world), _world.Values),
             new GateWorkspace(_world.Repo, _world.Trees, paths, new FileLogFiles()),
             new GateStepRunner(_world.Runner, paths),
             _world.Gates,
@@ -304,6 +305,25 @@ public sealed class QueueGateTests
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         Assert.Equal([11, 12], result.Value.Gates.Select(g => g.Pr));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Without_pull_requests_given_the_train_leaves_out_one_already_in_githubs_merge_queue()
+    {
+        await SaveGate(parallel: null, new StepConfig("check", ["scripts/check.sh"]));
+        foreach (var pr in new[] { 11, 12, 13 })
+        {
+            await _world.Receive($"m{N(pr)}", "t1-api", $"ready #{N(pr)} 079c25{N(pr)}");
+        }
+
+        _ = await _world.Values.Set(KvKeys.MergeQueued, MergeQueued.With(stored: null, new QueuedMerge(12, _world.Clock.GetUtcNow(), "head12")), TestContext.Current.CancellationToken);
+        ScriptPr(11, 12, 13);
+        ScriptGit();
+
+        var result = await Service().Handle(new QueueGateRequest([], 3), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal([11, 13], result.Value.Gates.Select(g => g.Pr));
     }
 
     [Fact, Trait("Lane", "unit")]
