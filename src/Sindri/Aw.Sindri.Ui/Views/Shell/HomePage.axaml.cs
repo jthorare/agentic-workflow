@@ -49,7 +49,7 @@ internal sealed partial class HomePage : UserControl
             return;
         }
 
-        columns.ColumnDefinitions = stacked ? [new ColumnDefinition(GridLength.Star)] : [new ColumnDefinition(GridLength.Star), new ColumnDefinition(16, GridUnitType.Pixel), new ColumnDefinition(GridLength.Star)];
+        columns.ColumnDefinitions = stacked ? [new ColumnDefinition(GridLength.Star)] : [new ColumnDefinition(3, GridUnitType.Star), new ColumnDefinition(16, GridUnitType.Pixel), new ColumnDefinition(2, GridUnitType.Star)];
         columns.RowDefinitions = stacked ? [new RowDefinition(GridLength.Auto), new RowDefinition(GridLength.Auto)] : [];
         Grid.SetColumn(right, stacked ? 0 : 2);
         Grid.SetRow(right, stacked ? 1 : 0);

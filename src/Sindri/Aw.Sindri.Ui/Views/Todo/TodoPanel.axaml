@@ -95,7 +95,7 @@
             </Border>
           </StackPanel>
 
-          <TextBlock x:Name="TodoEmpty" Classes="caption quiet" Text="{Binding EmptyText}" Margin="16,12" HorizontalAlignment="Left" TextAlignment="Left"
+          <TextBlock x:Name="TodoEmpty" Classes="caption quiet" Text="{Binding EmptyText}" Margin="16,8" HorizontalAlignment="Left" TextAlignment="Left"
                      IsVisible="{Binding EmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding EmptyText}" />
 
           <ItemsControl x:Name="TodoRows" ItemsSource="{Binding Rows}" IsVisible="{Binding !IsExpanded}">
@@ -106,7 +106,7 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
-        <Grid x:Name="TodoShowAllSlot" Grid.Row="1" ColumnDefinitions="Auto,*" Height="{StaticResource Row.Height.Default}">
+        <Grid x:Name="TodoShowAllSlot" Grid.Row="1" ColumnDefinitions="Auto,*" Height="{StaticResource Row.Height.Default}" IsVisible="{Binding HasFootSlot}">
           <Button x:Name="TodoShowAll" HorizontalAlignment="Left" VerticalAlignment="Center" Classes="copy" Click="OnShowAll" IsVisible="{Binding ShowsShowAll}" Margin="16,0"
                   AutomationProperties.Name="{Binding ShowAllText}">
             <TextBlock x:Name="TodoShowAllText" Classes="caption" Text="{Binding ShowAllText}" AutomationProperties.AccessibilityView="Raw" />
@@ -189,7 +189,7 @@
         </StackPanel>
       </Border>
 
-      <!-- The "From elsewhere" line (2 PRs waiting on your review · 1 Linear issue assigned · 3 need you, below): read-only counts under the
+      <!-- The "From elsewhere" line (2 PRs waiting on your review · 1 Linear issue assigned, or Connect Linear when Linear is not set up): read-only counts under the
            rows, in a slot one row tall in every state (D13), so the collapsed panel's height never follows the line's words. Its view model
            is the shell's, not the panel's. -->
       <Border x:Name="TodoElsewhereSlot" Grid.Row="2" Height="{StaticResource Row.Height.Default}" ClipToBounds="True" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
