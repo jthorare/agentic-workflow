@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using Aw.Sindri.Ui.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Architecture.Tests;
 
@@ -20,6 +19,7 @@ public sealed class UiClientRoutesTests : IDisposable
 {
     private const string ClientType = "Aw.Sindri.Ui.Api.SindriApiClient";
     private const int MaxDepth = 4;
+    private const int MinMappedRoutes = 50;
 
     private static readonly Uri _api = new("http://127.0.0.1:7410/");
 
@@ -48,6 +48,7 @@ public sealed class UiClientRoutesTests : IDisposable
         var (calls, silent) = await RecordClientCalls(token);
         await using var app = BuildHost();
         var mapped = Mapped(app);
+        Assert.True(mapped.Count >= MinMappedRoutes, $"The host's endpoint table holds {mapped.Count} routes (fewer than {MinMappedRoutes}); it was read empty, so no route result below means anything.");
 
         var unmatched = calls
             .Where(c => !mapped.Exists(m => m.Matches(c.Method, c.Path)))
@@ -229,7 +230,7 @@ public sealed class UiClientRoutesTests : IDisposable
     }
 
     private static List<MappedRoute> Mapped(WebApplication app) =>
-        [.. app.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
+        [.. new CompositeEndpointDataSource(((IEndpointRouteBuilder)app).DataSources).Endpoints.OfType<RouteEndpoint>()
             .Select(e => new MappedRoute(
                 e.Metadata.GetMetadata<IHttpMethodMetadata>()?.HttpMethods ?? [],
                 new Regex("^" + Template(e.RoutePattern.RawText ?? string.Empty) + "/?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1))))];
