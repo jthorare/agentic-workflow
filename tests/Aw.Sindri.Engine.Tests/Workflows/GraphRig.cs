@@ -184,6 +184,12 @@ internal sealed class GraphRig : IAsyncDisposable
     public async Task<GraphStart> Trigger((WorkflowId Id, WorkflowSlug Slug) workflow, int occurrence, GraphConcurrency mode, string trigger = """{"kind":"manual"}""") =>
         (await _starter.Start(new GraphStartRequest(workflow.Id, workflow.Slug, Revision: 1, occurrence, trigger, mode), Token)).Value;
 
+    /// <summary>
+    /// Cancels the run through its Temporal handle and waits on the workflow's own result, expecting the cancel, bounded only by a hang limit;
+    /// then returns the final run row (issue 2678).
+    /// </summary>
+    public Task<WorkflowRun> Cancel(WorkflowRunId id) => throw new NotSupportedException("GraphRig.Cancel is not written yet (issue 2678)");
+
     /// <summary>Waits until the run has a final status.</summary>
     public async Task<WorkflowRun> Final(WorkflowRunId id, TimeSpan? patience = null)
     {
