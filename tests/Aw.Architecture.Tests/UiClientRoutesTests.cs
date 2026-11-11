@@ -27,6 +27,18 @@ public sealed class UiClientRoutesTests : IDisposable
     // every method is expected to send at least one request.
     private static readonly Dictionary<string, string> _skipped = new(StringComparer.Ordinal);
 
+    // why: routes the client calls that the host doesn't map yet, each with the issue that tracks it. An entry the host maps fails
+    // Every_pending_route_is_still_unmapped, so it is removed the day its route lands. GET /sindri/items/{id}/scope stays out: it is the red line (#2798).
+    private static readonly Dictionary<string, string> _pendingRoutes = new(StringComparer.Ordinal)
+    {
+        ["POST /sindri/workflow/instances/{id}/commands"] = "#2829 takeover posts to a route #2258 removed",
+        ["POST /sindri/library/roots"] = "#2830 host route not built yet",
+        ["DELETE /sindri/library/roots/{id}"] = "#2830 host route not built yet",
+        ["POST /sindri/library/aw"] = "#2830 host route not built yet",
+        ["GET /sindri/reviews/settings"] = "#2830 host route not built yet",
+        ["PUT /sindri/reviews/settings"] = "#2830 host route not built yet",
+    };
+
     private readonly string _home = Directory.CreateTempSubdirectory("aw-arch-ui-routes-").FullName;
 
     public void Dispose()
@@ -51,7 +63,7 @@ public sealed class UiClientRoutesTests : IDisposable
         Assert.True(mapped.Count >= MinMappedRoutes, $"The host's endpoint table holds {mapped.Count} routes (fewer than {MinMappedRoutes}); it was read empty, so no route result below means anything.");
 
         var unmatched = calls
-            .Where(c => !mapped.Exists(m => m.Matches(c.Method, c.Path)))
+            .Where(c => !mapped.Exists(m => m.Matches(c.Method, c.Path)) && !Pending().Exists(m => m.Matches(c.Method, c.Path)))
             .Select(c => $"{c.Method} {c.Path}  (client method {c.Client}; the dummy id is x)")
             .Distinct(StringComparer.Ordinal)
             .ToList();
@@ -62,6 +74,27 @@ public sealed class UiClientRoutesTests : IDisposable
             (unmatched.Count == 0 ? string.Empty : "The client calls routes the host doesn't map:" + Environment.NewLine + string.Join(Environment.NewLine, unmatched) + Environment.NewLine)
             + (silent.Count == 0 ? string.Empty : "These client methods sent no request with dummy arguments; fix the dummy or list them in _skipped with a reason: " + string.Join(", ", silent)));
     }
+
+    [Fact]
+    public async Task Every_pending_route_is_still_unmapped()
+    {
+        await using var app = BuildHost();
+        var mapped = Mapped(app);
+        Assert.True(mapped.Count >= MinMappedRoutes, $"The host's endpoint table holds {mapped.Count} routes (fewer than {MinMappedRoutes}); it was read empty.");
+
+        var stale = _pendingRoutes.Keys
+            .Where(key => mapped.Exists(m => m.Matches(key[..key.IndexOf(' ', StringComparison.Ordinal)], Regex.Replace(key[(key.IndexOf(' ', StringComparison.Ordinal) + 1)..], @"\{[^}]*\}", "x", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1)))))
+            .Select(key => $"{key}  ({_pendingRoutes[key]})")
+            .ToList();
+
+        Assert.True(stale.Count == 0, "The host maps these routes now; remove them from _pendingRoutes:" + Environment.NewLine + string.Join(Environment.NewLine, stale));
+    }
+
+    private static List<MappedRoute> Pending() =>
+        [.. _pendingRoutes.Keys.Select(key => new MappedRoute([key[..key.IndexOf(' ', StringComparison.Ordinal)]], PathRegex(key[(key.IndexOf(' ', StringComparison.Ordinal) + 1)..])))];
+
+    private static Regex PathRegex(string template) =>
+        new("^" + Template(template) + "/?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
 
     private static async Task<(List<(string Method, string Path, string Client)> Calls, List<string> Silent)> RecordClientCalls(CancellationToken token)
     {
@@ -132,7 +165,10 @@ public sealed class UiClientRoutesTests : IDisposable
 
     // why: a string parameter named ...Json is parsed before anything is sent (ApplyWorkflowOps' opsJson), so it gets an empty JSON array.
     private static object? DummyFor(ParameterInfo parameter, CancellationToken token) =>
-        parameter.ParameterType == typeof(string) && parameter.Name!.EndsWith("Json", StringComparison.Ordinal) ? "[]" : Dummy(parameter.ParameterType, 0, token);
+        parameter.ParameterType != typeof(string) ? Dummy(parameter.ParameterType, 0, token)
+        : parameter.Name!.EndsWith("Json", StringComparison.Ordinal) ? "[]"
+        : parameter.Name == "repo" ? "o/r"   // why: /reviews/{owner}/{repo}/{number} is built from it, so "x" leaves the path a segment short
+        : "x";
 
     private static object? Dummy(Type type, int depth, CancellationToken token)
     {
@@ -233,7 +269,7 @@ public sealed class UiClientRoutesTests : IDisposable
         [.. new CompositeEndpointDataSource(((IEndpointRouteBuilder)app).DataSources).Endpoints.OfType<RouteEndpoint>()
             .Select(e => new MappedRoute(
                 e.Metadata.GetMetadata<IHttpMethodMetadata>()?.HttpMethods ?? [],
-                new Regex("^" + Template(e.RoutePattern.RawText ?? string.Empty) + "/?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1))))];
+                PathRegex(e.RoutePattern.RawText ?? string.Empty)))];
 
     // {param} and {param:constraint} are one path segment; {*rest} and {**rest} are the remainder.
     private static string Template(string raw) =>
