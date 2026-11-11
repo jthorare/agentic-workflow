@@ -20,8 +20,9 @@ internal sealed partial class FakeSindriApi
     /// <summary>GET /sindri/context/lenses's answer per query (the goldens by default).</summary>
     public Func<LensesQuery, RouteAnswer> LensesAnswer { get; set; } = ContextAnswers.Lenses;
 
-    /// <summary>GET /sindri/items/{id}/scope's answer per item (the no-scope golden by default: nothing frozen yet).</summary>
-    public Func<string, RouteAnswer> ItemScopeAnswer { get; set; } = _ => RouteAnswer.Api("items-id-scope", "no-scope");
+    /// <summary>GET /sindri/items/{id}/scope's answer per item (a 404 with no body by default).</summary>
+    // The host has no such route since #2258, so the fake answers like it.
+    public Func<string, RouteAnswer> ItemScopeAnswer { get; set; } = _ => new RouteAnswer(HttpStatusCode.NotFound, string.Empty);
 
     /// <summary>The items whose scope was asked for, in order.</summary>
     public IReadOnlyList<string> ScopeAsked { get { lock (_gate) { return [.. _scopeAsked]; } } }
