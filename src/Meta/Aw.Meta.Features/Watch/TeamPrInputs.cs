@@ -46,11 +46,6 @@ internal sealed class TeamPrInputs(RepoCommands repo, IKeyValueStore values, IMe
         }
 
         var roots = team.Worktrees.EffectiveRoots(team.Repo, paths.GatesDirectory, paths.Home);
-        IReadOnlySet<string> branches = PorcelainWorktrees.Parse(listed.Value)
-            .Where(entry => WorktreeRoots.Contains(roots, entry.Path))
-            .Select(entry => entry.Branch ?? string.Empty)
-            .Where(branch => branch.Length > 0)
-            .ToHashSet(StringComparer.Ordinal);
-        return Results.Success(branches);
+        return Results.Success(CheckedOutBranches.Under(listed.Value, roots));
     }
 }
