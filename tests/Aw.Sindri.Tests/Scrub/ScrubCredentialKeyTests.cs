@@ -12,7 +12,7 @@ public sealed class ScrubCredentialKeyTests
 
     public static TheoryData<string> NameShapedCredentialLines() =>
     [
-        "DB_" + "PASSWORD=" + "staging-db-password-123",
+        "DB_" + "PASSWORD=" + "staging-db-password-v123",
         "API_" + "TOKEN=" + "team-dev-token-abc-v12",
         "API_" + "KEY=" + "team-dev-apikey-abc-v12",
     ];
