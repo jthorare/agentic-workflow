@@ -154,6 +154,12 @@
             <TextBlock Classes="caption quiet" Text="{Binding Runs.EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
           <ItemsControl x:Name="RunRows" ItemsSource="{Binding Runs.Rows}">
+            <!-- #2776: only the rows in view are built (a workflow can hold thousands of runs); the page's shared ScrollViewer is the viewport. -->
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <VirtualizingStackPanel />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:RunRowViewModel">
                 <Border Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
