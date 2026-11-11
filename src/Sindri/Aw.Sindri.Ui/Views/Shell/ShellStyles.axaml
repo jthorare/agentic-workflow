@@ -263,15 +263,18 @@
   <Style Selector="Grid.row">
     <Setter Property="MinHeight" Value="24" />
   </Style>
-  <!-- R12: a row's label sits on its value's baseline: both top-aligned on the value's line height (Body, or Mono for
-       the last event), so the smaller label's half-leading lines its baseline up with the value's. -->
-  <!-- The System cards' rows: Row.Height.Data tall, label and value centred in it. -->
+  <!-- The System cards' rows: Row.Height.Data (36) tall. Label and value stay top-aligned (R12, below) and both move down 8 px,
+       so a 20 px Body line sits in the middle of the row (8 + 20 + 8). Centring them broke R12: the row-label style below
+       wins over a centre setter, so only the value moved and sat 8 px under its label. -->
   <Style Selector="Grid.row.data-row">
     <Setter Property="MinHeight" Value="{StaticResource Row.Height.Data}" />
   </Style>
-  <Style Selector="Grid.row.data-row > TextBlock, Grid.row.data-row > TextBlock.row-label">
-    <Setter Property="VerticalAlignment" Value="Center" />
+  <Style Selector="Grid.row.data-row > TextBlock">
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Margin" Value="0,8,0,8" />
   </Style>
+  <!-- R12: a row's label sits on its value's baseline: both top-aligned on the value's line height (Body, or Mono for
+       the last event), so the smaller label's half-leading lines its baseline up with the value's. -->
   <Style Selector="Grid.row > TextBlock.row-label">
     <Setter Property="VerticalAlignment" Value="Top" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Body.LineHeight}" />
