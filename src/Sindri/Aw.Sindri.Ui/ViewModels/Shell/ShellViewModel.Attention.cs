@@ -87,7 +87,7 @@ internal sealed partial class ShellViewModel
     private string? Observe()
     {
         var before = _announcer.Announcements;
-        Attention = AttentionSummary.For(_needsYou, State, _clock.GetUtcNow(), Health.Sessions, _needsYou?.Rows.Count(ShownOnHome)).WithLinearNew(Linear.NewCount).WithTodos(Todo.OverdueCount, Todo.ToSortOutCount);
+        Attention = AttentionSummary.For(_needsYou is { } all ? all with { Rows = [.. all.Rows.Where(r => !IsNamedByHomeLine(r))] } : null, State, _clock.GetUtcNow(), Health.Sessions, _needsYou?.Rows.Count(ShownOnHome)).WithLinearNew(Linear.NewCount).WithTodos(Todo.OverdueCount, Todo.ToSortOutCount);
         _announcer.Observe(Attention.Badge, AttentionSummary.IsCounted(State));
         Elsewhere.SetNeedsYou(_needsYou?.Rows.Count(ShownOnHome) ?? 0);   // the From elsewhere line counts the rows Home lists
         Changed(nameof(Attention), nameof(WindowTitle));
