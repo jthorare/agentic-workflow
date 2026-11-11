@@ -27,13 +27,42 @@ internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, 
         var rows = feed?.Rows ?? [];
         var counts = feed?.Counts ?? new HomeCounts(Running: 0, WithYou: 0, Queued: 0);
 
+        // The rows Home doesn't list are hidden for one of two reasons: its filter, or the setup row its setup line already shows. Only a setup row leaves the title, badge and tray (#2781); a filter never does.
+        var counted = WithoutHiddenSetupRows(feed, listed);
+
         // Rows are kept while the views are stale; with no running Sindri, or none yet answering, there are none to count.
-        var badge = IsCounted(state) ? rows.Count : 0;
+        var badge = BadgeOf(state, counted);
         return new AttentionSummary(
             badge > 0 ? Labels.TitleNeedsYou(badge) : Labels.Sindri,
             badge,
-            TrayFor(feed, state, now, sessions),
+            TrayFor(counted, state, now, sessions),
             feed is null ? "" : Labels.Summary(listed ?? rows.Count, counts.Running, counts.WithYou, counts.Queued));
+    }
+
+    private static int BadgeOf(ShellState state, NeedsYouFeed? counted) => IsCounted(state) ? counted?.Rows.Count ?? 0 : 0;
+
+    // Drops up to (rows - listed) setup rows from the count: the shell hides at most one, the row of the step Home's line names, and a filter's hidden rows are not setup rows by this rule's reading, so the count only gives up setup rows.
+    private static NeedsYouFeed? WithoutHiddenSetupRows(NeedsYouFeed? feed, int? listed)
+    {
+        var hidden = listed is { } n && feed is not null ? feed.Rows.Count - n : 0;
+        if (feed is null || hidden <= 0)
+        {
+            return feed;
+        }
+
+        var kept = new List<NeedsYouEntry>(feed.Rows.Count);
+        foreach (var row in feed.Rows)
+        {
+            if (hidden > 0 && string.Equals(row.Kind, "setup", StringComparison.Ordinal))
+            {
+                hidden--;
+                continue;
+            }
+
+            kept.Add(row);
+        }
+
+        return feed with { Rows = kept };
     }
 
     /// <summary>Adds the Linear strip's count to the tray's tooltip as a line, the way the session counts do; the badge and the title stay.</summary>
