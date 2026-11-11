@@ -25,7 +25,23 @@ public sealed class ReviewDiffVirtualizationTests : FrameHost
     private static RouteAnswer BigDiff()
     {
         var page = JsonNode.Parse(GoldenFiles.Api("reviews-pr", "full"))!;   // why: the golden is a JSON document
-        // twenty hunks of fifty context lines, ten lines apart
+        var patch = new StringBuilder("@@ -1,").Append(Lines.ToString(CultureInfo.InvariantCulture)).Append(" +1,").Append(Lines.ToString(CultureInfo.InvariantCulture)).Append(" @@");
+        for (var i = 1; i <= Lines; i++)
+        {
+            _ = patch.Append("\n line ").Append(i.ToString(CultureInfo.InvariantCulture));
+        }
+
+        var file = page["diff"]!["groups"]![0]!["files"]![0]!;
+        file["patch"] = patch.ToString();
+        file["additions"] = 0;
+        file["deletions"] = 0;
+        return new RouteAnswer(HttpStatusCode.OK, page.ToJsonString());
+    }
+
+    // The same golden with its first file's patch as twenty hunks of fifty context lines, ten lines apart (for the jump to a far hunk).
+    private static RouteAnswer ManyHunksDiff()
+    {
+        var page = JsonNode.Parse(GoldenFiles.Api("reviews-pr", "full"))!;   // why: the golden is a JSON document
         var patch = new StringBuilder();
         for (var hunk = 0; hunk < Lines / HunkLines; hunk++)
         {
@@ -63,7 +79,7 @@ public sealed class ReviewDiffVirtualizationTests : FrameHost
     [Fact]
     public Task A_jump_to_a_far_hunk_focuses_its_line_and_scrolls_it_into_view() => OnUi(async () =>
     {
-        Server.ReviewPageAnswer = BigDiff();
+        Server.ReviewPageAnswer = ManyHunksDiff();
         var (window, shell) = await Connected(width: 1280, height: 800);
         shell.Navigate(DeepLink.ForReview("acme/api", 2071));
         await Until(window, () => shell.IsReviewPageShown && shell.ReviewPage.State == ReviewPageState.Ready, "the review page never reached Ready");
