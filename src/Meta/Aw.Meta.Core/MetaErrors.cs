@@ -77,7 +77,13 @@ public static class MetaErrors
     /// <summary>AW-META-024.</summary>
     public static readonly ErrorDefinition NoRequiredChecks = new("AW-META-024", ErrorKind.Conflict, "The base branch has no required checks, so a CI gate has nothing to read");
 
+    /// <summary>AW-META-025.</summary>
+    public static readonly ErrorDefinition WorktreeRootInRepo = new("AW-META-025", ErrorKind.Invalid, "The worktree root is inside the repo");
+
+    /// <summary>AW-META-026.</summary>
+    public static readonly ErrorDefinition WorktreeHomeUnknown = new("AW-META-026", ErrorKind.Invalid, "The home directory is unknown, so the worktree root can't be placed");
+
     /// <summary>Every Meta error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
-        [Invalid, NoTeamConfig, ConfigInvalid, TranscriptUnreadable, MessageNotFound, QuestionNotFound, GateStepNotFound, LogUnwritable, CommandNotStarted, HostUnreadable, ConfigExists, CommandFailed, LogUnreadable, LaneVariablesUnset, LaneNotRecorded, UnknownLane, ClaudeLane, QueueEntryNotFound, TeamAmbiguous, TeamMigrationRefused, RecycleRefused, RecycleTimedOut, BoardContended, NoRequiredChecks];
+        [Invalid, NoTeamConfig, ConfigInvalid, TranscriptUnreadable, MessageNotFound, QuestionNotFound, GateStepNotFound, LogUnwritable, CommandNotStarted, HostUnreadable, ConfigExists, CommandFailed, LogUnreadable, LaneVariablesUnset, LaneNotRecorded, UnknownLane, ClaudeLane, QueueEntryNotFound, TeamAmbiguous, TeamMigrationRefused, RecycleRefused, RecycleTimedOut, BoardContended, NoRequiredChecks, WorktreeRootInRepo, WorktreeHomeUnknown];
 }

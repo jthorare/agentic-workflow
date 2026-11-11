@@ -54,8 +54,7 @@ public sealed partial class GraphWorkflowParkingTests
         await ItemRunning(rig, started.RunId, "hold");
         await WaitUntilTimerStarted(rig, $"{started.RunId.Value}/each/1");   // why: the item's wait runs in the batch's child workflow, so that is where its timer shows
 
-        await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
-        _ = await rig.Final(started.RunId);   // why: wait for the cancel to finish, so the rig does not stop its worker with a workflow task still in flight; the rig's own time-skipping server dies with it (issue 2574)
+        _ = await rig.Cancel(started.RunId);   // why: wait for the cancel to finish, so the rig does not stop its worker with a workflow task still in flight; the rig's own time-skipping server dies with it (issue 2574)
         var holds = await rig.ItemRuns(started.RunId, "hold");
 
         Assert.Equal(NodeRunStatus.Cancelled, holds[1].Status);
