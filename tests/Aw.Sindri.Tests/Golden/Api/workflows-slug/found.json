@@ -47,5 +47,17 @@
       "x": 280,
       "y": 0
     }
+  ],
+  "summaries": [
+    {
+      "node": "start",
+      "summary": "When called",
+      "summaryProblem": null
+    },
+    {
+      "node": "agent",
+      "summary": "Run agent",
+      "summaryProblem": null
+    }
   ]
 }
