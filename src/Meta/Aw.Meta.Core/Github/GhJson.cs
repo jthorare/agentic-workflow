@@ -197,7 +197,11 @@ public static class GhJson
         State(Text(item, "state")),
         Flag(item, "isDraft"),
         Text(item, "headRefOid"),
-        Text(item, "mergeable"));
+        Text(item, "mergeable"))
+    {
+        HeadBranch = Text(item, "headRefName"),
+        BaseBranch = Text(item, "baseRefName"),
+    };
 
     private static PrDetails Details(JsonElement item) => new(Text(item, "headRefOid"), Text(item, "headRefName"), Flag(item, "isDraft"), Text(item, "title"), State(Text(item, "state")), Ended(item));
 
