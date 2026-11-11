@@ -103,4 +103,24 @@ public sealed class ProcessSandboxPlannerTests
     [Fact, Trait("Lane", "unit")]
     public void A_relative_read_only_path_is_refused() =>
         Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { ReadOnlyPaths = ["repo"] }).IsError);
+
+    [Fact, Trait("Lane", "unit")]
+    public void Read_only_paths_are_deduplicated_and_an_ancestor_is_mounted_before_its_descendants()
+    {
+        var plan = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { ReadOnlyPaths = ["/work/app/src", "/work/app/", "/work/app", "/work/app/src/"] }).Value;
+        var paths = plan.Mounts.Where(m => m.Kind == PlanMountKind.ReadOnly && m.Path.StartsWith("/work/app", StringComparison.Ordinal)).Select(m => m.Path).ToList();
+
+        Assert.Equal(["/work/app", "/work/app/src"], paths);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_read_only_ancestor_comes_before_a_writable_resource_under_it()
+    {
+        var request = Request() with { ResourceMounts = [new ResourceMount("state", "/a/b/c")], ReadOnlyPaths = ["/a"] };
+        var mounts = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, request).Value.Mounts.ToList();
+
+        var ancestor = mounts.FindIndex(m => m.Kind == PlanMountKind.ReadOnly && m.Path == "/a");
+        var writable = mounts.FindIndex(m => m.Kind == PlanMountKind.State && m.Path == "/a/b/c");
+        Assert.True(ancestor >= 0 && writable > ancestor);   // bwrap applies mounts in order: a later read-only /a would shadow /a/b/c
+    }
 }

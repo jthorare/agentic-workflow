@@ -27,6 +27,21 @@ public sealed class CompiledCodeCacheTests : IDisposable
     }
 
     [Fact]
+    public void An_empty_cached_assembly_is_a_miss_and_is_compiled_again()
+    {
+        var compiler = new CountingCompiler("refs-1");
+        var cache = new CompiledCodeCache(compiler, _directory.FullName);
+        var first = cache.Resolve("return 1;", TestContext.Current.CancellationToken);
+        File.WriteAllBytes(first.AssemblyPath!, []);   // what a crash mid-write leaves
+
+        var second = cache.Resolve("return 1;", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, compiler.Calls);
+        Assert.Equal(first.AssemblyPath, second.AssemblyPath);
+        Assert.True(new FileInfo(second.AssemblyPath!).Length > 0);
+    }
+
+    [Fact]
     public void Different_code_or_a_different_reference_set_compiles_again()
     {
         var one = new CountingCompiler("refs-1");
