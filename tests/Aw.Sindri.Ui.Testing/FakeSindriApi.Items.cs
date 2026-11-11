@@ -11,6 +11,9 @@ internal sealed partial class FakeSindriApi
     private int _itemCalls;
     private int _timelineCalls;
 
+    /// <summary>When set, every queue read answers this very instance (what the client returns for a 304), ahead of <see cref="QueueView"/>.</summary>
+    public QueueView? QueueSame { get; set; }
+
     /// <summary>GET /sindri/queue's answer.</summary>
     public RouteAnswer QueueView { get; set; } = RouteAnswer.SpecShaped("queue", "fixture");
 
@@ -93,7 +96,7 @@ internal sealed partial class FakeSindriApi
     /// <param name="cancellationToken">Cancels the wait.</param>
     /// <returns>The answer.</returns>
     internal Task<Result<QueueView>> Queue(Uri api, long? sequence, CancellationToken cancellationToken) =>
-        View<QueueView>(api, "/sindri/queue", QueueView, sequence, QueueGate, cancellationToken);
+        QueueSame is { } same ? Task.FromResult<Result<QueueView>>(same) : View<QueueView>(api, "/sindri/queue", QueueView, sequence, QueueGate, cancellationToken);
 
     /// <summary>The body GET /sindri/items?state= answers, by state; null serves an empty list.</summary>
     public Func<string, RouteAnswer?>? ListItemsBody { get; set; }
