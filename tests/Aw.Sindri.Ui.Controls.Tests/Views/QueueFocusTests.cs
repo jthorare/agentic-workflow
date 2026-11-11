@@ -129,8 +129,11 @@ public sealed class QueueFocusTests : IDisposable
         var (window, shell) = await Connected();
         shell.OpenItem(A.NewItem);
         await Until(window, () => shell.Item.HasItem && shell.Item.Timeline.Count > 2);
-        var rows = Named<Control>(window, "TimelineList").GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("timeline-row")).ToList();
-        var row = rows[1];
+        // The timeline is virtualized (#2776): build the second row by scrolling it into view, as the sheet's own FocusRow does.
+        var list = Named<ItemsControl>(window, "TimelineList");
+        list.ScrollIntoView(1);
+        Settle(window);
+        var row = list.ContainerFromIndex(1)!.GetSelfAndVisualDescendants().OfType<Border>().First(b => b.Classes.Contains("timeline-row"));
         Assert.True(row.Focus(NavigationMethod.Tab));
         var calls = _server.TimelineCalls;
 
