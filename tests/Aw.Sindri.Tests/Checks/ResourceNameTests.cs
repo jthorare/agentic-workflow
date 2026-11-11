@@ -37,8 +37,8 @@ public sealed class ResourceNameTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("ESO_SECRET")]
     [InlineData("db-secret")]
-    [InlineData("clientSecret")]
     [InlineData("SECRET")]
+    [InlineData("eso.secret")]
     public void KeyNamesASecret_is_true_for_a_key_ending_in_SECRET(string key) =>
         Assert.True(ResourceName.KeyNamesASecret(key));
 
@@ -49,6 +49,18 @@ public sealed class ResourceNameTests
     [InlineData("AWS_ACCESS_KEY")]
     [InlineData("SSH_PRIVATE_KEY")]
     [InlineData("APP_SECRET_KEY")]
+    [InlineData("JWT_SECRET")]
+    [InlineData("CLIENT_SECRET")]
+    [InlineData("SESSION_SECRET")]
+    [InlineData("WEBHOOK_SECRET")]
+    [InlineData("APP_SECRET")]
+    [InlineData("SIGNING_SECRET")]
+    [InlineData("COOKIE_SECRET")]
+    [InlineData("jwtSecret")]
+    [InlineData("clientSecret")]
+    [InlineData("my-app-secret")]
+    [InlineData("OAUTH_CLIENT_SECRET")]
+    [InlineData("cookie.secret")]
     [InlineData("")]
     public void KeyNamesASecret_is_false_for_a_key_that_holds_the_credential_itself(string key) =>
         Assert.False(ResourceName.KeyNamesASecret(key));
