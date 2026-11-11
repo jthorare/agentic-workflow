@@ -20,7 +20,7 @@ public sealed class LedgerItemScanPlanTests : IDisposable
         var path = Path.Combine(_home.Path, "item-plan.db");
         var runner = new MigrationRunner(new SqliteConnectionFactory(new SqliteOptions(path)), new FakeTimeProvider(), backupBeforeUpgrade: false);
         Assert.True((await runner.Migrate(LedgerDatabase.Migrations, TestContext.Current.CancellationToken)).IsSuccess);
-        var statement = LedgerSql.ScanAfter(0, 500, new LedgerFilter(Types: null, Item: ItemId.From("T-1")));
+        var statement = LedgerSql.ScanAfter(0, 500, new LedgerFilter(Types: null, Item: ItemId.From("ITM-" + new string('a', 32))));
 
         using var connection = new SqliteConnection($"Data Source={path};Mode=ReadOnly;Pooling=False");
         connection.Open();
