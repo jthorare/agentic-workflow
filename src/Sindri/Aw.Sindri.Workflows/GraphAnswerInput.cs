@@ -5,4 +5,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Text">A free-text answer, or null.</param>
 /// <param name="Choice">A picked choice, or null.</param>
 /// <param name="By">Who answers: the caller's actor: 'human:&lt;client&gt;', 'session:launch:&lt;launch id&gt;' or 'session:&lt;client&gt;'.</param>
-internal sealed record GraphAnswerInput(string Node, string? Text, string? Choice, string By);
+internal sealed record GraphAnswerInput(string Node, string? Text, string? Choice, string By)
+{
+    /// <summary>The item inside a 'for_each' body the answer is for; 0 for a node outside a loop (items count from 1).</summary>
+    public int Item { get; init; }
+}

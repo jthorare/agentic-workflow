@@ -310,6 +310,84 @@
           }
         },
         {
+          "type": "memory_search",
+          "title": "Recall",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "memory",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "query",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "level",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "limit",
+              "type": "number",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "facts": "array",
+            "mode": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "memory": "drift-check",
+            "query": "last checked commit and open PR",
+            "level": "balanced",
+            "limit": 5
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Recall what we checked",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "recall",
+                "type": "memory_search",
+                "config": {
+                  "memory": "drift-check",
+                  "query": "last checked commit and open PR"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "What we know",
+                  "body": "{{recall.facts}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "recall"
+              },
+              {
+                "from": "recall",
+                "to": "tell"
+              }
+            ]
+          }
+        },
+        {
           "type": "call_tool",
           "title": "Toolkit tool",
           "isTrigger": false,
@@ -793,6 +871,64 @@
           }
         },
         {
+          "type": "memory_forget",
+          "title": "Forget",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "memory",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "fact",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "tag",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "count": "number"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "memory": "drift-check",
+            "tag": "stale"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Forget stale notes",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "forget",
+                "type": "memory_forget",
+                "config": {
+                  "memory": "drift-check",
+                  "tag": "stale"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "forget"
+              }
+            ]
+          }
+        },
+        {
           "type": "condition",
           "title": "If",
           "isTrigger": false,
@@ -935,6 +1071,78 @@
               {
                 "from": "fresh",
                 "to": "tell"
+              }
+            ]
+          }
+        },
+        {
+          "type": "memory_write",
+          "title": "Remember",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "memory",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "fact",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "tags",
+              "type": "text list",
+              "required": false
+            },
+            {
+              "name": "expires",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "id": "string",
+            "action": "string"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "memory": "drift-check",
+            "fact": "Checked api-repo at {{agent.checkedCommit}}",
+            "tags": [
+              "checks"
+            ],
+            "expires": "30d"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Remember a check",
+            "concurrency": "unlimited",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "workflow_call",
+                "config": {}
+              },
+              {
+                "id": "remember",
+                "type": "memory_write",
+                "config": {
+                  "memory": "drift-check",
+                  "fact": "Checked api-repo at {{trigger.payload.commit}}",
+                  "tags": [
+                    "checks"
+                  ],
+                  "expires": "30d"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "remember"
               }
             ]
           }

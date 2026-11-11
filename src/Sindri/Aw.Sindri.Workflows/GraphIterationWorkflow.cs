@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Loops;
 using Aw.Sindri.Core.Graph.Runs;
@@ -27,6 +28,9 @@ internal sealed partial class GraphIterationWorkflow
     private LoopShape? _shape;
     private int _last;
     private List<GraphNode> _left = [];
+    private readonly Dictionary<(string Node, int Item), GraphAnswerInput> _answers = [];
+    private (string Node, int Item)? _asking;
+    private IReadOnlyList<string> _choices = [];
 
     /// <summary>Runs the batch.</summary>
     /// <param name="input">The batch.</param>
@@ -162,22 +166,105 @@ internal sealed partial class GraphIterationWorkflow
         }
     }
 
-    // why: a 'wait' parks after its block answered, while the node is still 'running', so a cancel ends it 'cancelled'; the patch keeps the commands of a body without a wait as before (#2490)
-    private static async Task<GraphBlockOutcome> Park(GraphNode node, GraphBlockOutcome outcome)
+    // why: a 'wait' or an 'ask_owner' parks after its block answered, while the node is still 'running', so a cancel ends it 'cancelled'; the patches keep the commands of a body without one as before (#2490, #2543)
+    private async Task<GraphBlockOutcome> Park(GraphNode node, GraphBlockOutcome outcome)
     {
-        if (outcome.Status != NodeRunStatus.Succeeded || !string.Equals(node.Type, "wait", StringComparison.Ordinal) || !Workflow.Patched("graph-iteration-wait"))
+        if (outcome.Status != NodeRunStatus.Succeeded)
         {
             return outcome;
         }
 
-        // why: the block's own 'waitedSeconds', never wakeAt minus Workflow.UtcNow (see GraphWorkflow.Sleep)
-        var seconds = JsonNode.Parse(outcome.Output ?? "{}")?["waitedSeconds"] is JsonValue v && v.TryGetValue<double>(out var wait) ? wait : 0;
-        if (seconds > 0)
+        if (string.Equals(node.Type, "wait", StringComparison.Ordinal) && Workflow.Patched("graph-iteration-wait"))
         {
-            await Workflow.DelayAsync(TimeSpan.FromSeconds(seconds)).ConfigureAwait(true);
+            return await GraphWorkflow.Sleep(outcome).ConfigureAwait(true);   // why: the clock comment lives once, on Sleep
         }
 
-        return outcome;
+        return string.Equals(node.Type, "ask_owner", StringComparison.Ordinal) && Workflow.Patched("graph-iteration-ask")
+            ? await Ask(node, outcome).ConfigureAwait(true)
+            : outcome;
+    }
+
+    /// <summary>
+    /// Takes the answer to the 'ask_owner' node of the item now waiting; the question recorded this workflow's id, so an answer comes here by node and item. An item whose question is posted but whose wait
+    /// has not started yet (the block activity is still returning) gets a short bounded wait first, like the run's own 'Answer'.
+    /// </summary>
+    /// <param name="input">The answer.</param>
+    /// <returns>Who answered.</returns>
+    [WorkflowUpdate("Answer")]
+    public async Task<string> AnswerAsync(GraphAnswerInput input)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        if (_asking != (input.Node, input.Item))
+        {
+            _ = await Workflow.WaitConditionAsync(() => _asking == (input.Node, input.Item), _askingGrace).ConfigureAwait(true);
+        }
+
+        Refuse(input);   // why: the state may have moved while the update waited
+        _answers[(input.Node, input.Item)] = input;
+        return input.By;
+    }
+
+    /// <summary>Refuses an answer when no question waits or can soon wait at that node and item, it was answered already, or (once the node is waiting) the answer is not one it takes.</summary>
+    /// <param name="input">The answer.</param>
+    [WorkflowUpdateValidator(nameof(AnswerAsync))]
+    public void CheckAnswer(GraphAnswerInput input)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        var starting = _current is { } current && string.Equals(current.Type, "ask_owner", StringComparison.Ordinal) && string.Equals(current.Id.Value, input.Node, StringComparison.Ordinal) && _item == input.Item;
+        if (!starting && _asking != (input.Node, input.Item))
+        {
+            throw NotWaiting(input);
+        }
+
+        Refuse(input, requireAsking: false);
+    }
+
+    private static readonly TimeSpan _askingGrace = TimeSpan.FromSeconds(5);
+
+    private static ApplicationFailureException NotWaiting(GraphAnswerInput input) =>
+        new($"'{input.Node}' is not waiting for an answer for item {input.Item.ToString(System.Globalization.CultureInfo.InvariantCulture)}", errorType: AnswerRefusal.NotWaiting, nonRetryable: true);
+
+    private void Refuse(GraphAnswerInput input, bool requireAsking = true)
+    {
+        var waiting = _asking == (input.Node, input.Item);
+        if (_answers.ContainsKey((input.Node, input.Item)) || (requireAsking && !waiting))
+        {
+            throw NotWaiting(input);
+        }
+
+        if (waiting && AskOwnerBlock.CheckAnswer(_choices, input.Text, input.Choice) is { } problem)
+        {
+            throw new ApplicationFailureException(problem, errorType: AnswerRefusal.BadAnswer, nonRetryable: true);
+        }
+    }
+
+    private async Task<GraphBlockOutcome> Ask(GraphNode node, GraphBlockOutcome outcome)
+    {
+        var config = JsonNode.Parse(outcome.Input ?? "{}") as JsonObject ?? [];
+        var key = (node.Id.Value, _item);
+        _asking = key;
+        _choices = AskOwnerBlock.ChoicesOf(config);
+        try
+        {
+            if (AskOwnerBlock.TimeoutOf(config) is { } limit)
+            {
+                _ = await Workflow.WaitConditionAsync(() => _answers.ContainsKey(key), limit).ConfigureAwait(true);
+            }
+            else
+            {
+                await Workflow.WaitConditionAsync(() => _answers.ContainsKey(key)).ConfigureAwait(true);
+            }
+        }
+        finally
+        {
+            _asking = null;
+        }
+
+        // why: an answer that arrived as the timer fired still wins; the update handler ran, so the map has it
+        var resolved = _answers.TryGetValue(key, out var given)
+            ? AskOwnerBlock.Resolve(config, given.Text ?? given.Choice, given.By)
+            : AskOwnerBlock.Resolve(config, answer: null, answeredBy: "timeout");
+        return outcome with { Output = resolved.Outputs.ToJsonString(), Taken = [resolved.Branch] };
     }
 
     private NodeRun Row(GraphNode node, int item, NodeRunStatus status) => new(_run, node.Id, item, status, Input: null, Output: null, Truncated: false, Error: null, Usage: null);
