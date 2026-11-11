@@ -19,6 +19,7 @@
           <Button.Flyout>
             <MenuFlyout Placement="BottomEdgeAlignedRight">
               <MenuItem x:Name="ServiceTileReconnect" Header="{Binding Text.Reconnect}" IsVisible="{Binding CanReconnect}" Click="OnSignIn" />
+              <MenuItem x:Name="ServiceTileRename" Header="{Binding Text.Rename}" IsVisible="{Binding CanRename}" Click="OnRename" />
               <MenuItem x:Name="ServiceTileDisconnect" Header="{Binding Text.Disconnect}" Click="OnDisconnect" />
             </MenuFlyout>
           </Button.Flyout>
@@ -27,7 +28,15 @@
       <Border x:Name="ServiceTileChip" AutomationProperties.Name="{Binding StatusChip}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" HorizontalAlignment="Left">
         <TextBlock Classes="caption tile-chip" Classes.ok="{Binding IsConnected}" Classes.attention="{Binding NeedsAttention}" Text="{Binding StatusChip}" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <TextBlock Classes="caption subtle" Text="{Binding Subtitle}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock x:Name="ServiceTileSubtitle" Classes="caption subtle" Text="{Binding Subtitle}" IsVisible="{Binding ShowSubtitle}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      <StackPanel x:Name="ServiceTileRenameBox" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsRenaming}">
+        <TextBox x:Name="ServiceTileRenameField" Text="{Binding RenameText, Mode=TwoWay}" PlaceholderText="{Binding Text.RenameLabel}" KeyDown="OnRenameKey" AutomationProperties.Name="{Binding Text.RenameLabel}" />
+        <TextBlock x:Name="ServiceTileRenameError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding RenameReason}" IsVisible="{Binding HasRenameReason}" TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+          <Button x:Name="ServiceTileRenameSave" Classes="command-control primary" Content="{Binding Text.RenameSave}" IsEnabled="{Binding CanSaveRename}" Click="OnRenameSave" />
+          <Button x:Name="ServiceTileRenameCancel" Classes="link" Content="{Binding Text.Cancel}" Click="OnRenameCancel" />
+        </StackPanel>
+      </StackPanel>
       <TextBlock x:Name="ServiceTileLastUsed" Classes="caption subtle" Text="{Binding LastUsedText}" IsVisible="{Binding IsConnected}" AutomationProperties.AccessibilityView="Raw" />
       <TextBlock x:Name="ServiceTileAttention" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding ReasonText}" IsVisible="{Binding HasReason}" TextWrapping="Wrap" ToolTip.Tip="{Binding ReasonTip}" />
 
