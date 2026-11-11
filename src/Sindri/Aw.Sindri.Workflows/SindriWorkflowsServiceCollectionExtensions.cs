@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Toolkits;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
@@ -59,6 +60,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
                 [.. GraphBlockRegistry.FlowBlocks(provider.GetRequiredService<IGraphSeenStore>(), provider.GetRequiredService<ICreateItemPort>(), provider.GetRequiredService<IGraphCallPort>(), provider.GetRequiredService<IGraphHttpPort>()),
                  .. GraphBlockRegistry.ResultBlocks(provider.GetRequiredService<IGraphResultPort>()),
                  .. GraphBlockRegistry.ParkingBlocks(provider.GetRequiredService<IQuestionPort>(), provider.GetRequiredService<TimeProvider>()),
+                 .. GraphBlockRegistry.MemoryBlocks(provider.GetRequiredService<IGraphMemoryPort>()),
                  new CallToolBlock(provider.GetService<IRunningToolkits>() ?? NoToolkits.Instance, provider.GetRequiredService<IConnectionToolPort>())]))   // 'call_tool' (PR 16b); with no toolkit runtime registered yet it reaches connections only
             .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
             .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog
@@ -72,6 +74,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IGraphRunProbe>(static provider => new TemporalGraphRunProbe(provider.GetRequiredService<TemporalFrontend>()))
             .AddSingleton<GraphRunRecovery>()
             .AddSingleton<IGraphRunRecovery>(static provider => provider.GetRequiredService<GraphRunRecovery>())
+            .AddSingleton(static provider => new GraphRunItemRepair(provider.GetService<IRunItemRepair>(), provider.GetRequiredService<ILogger<GraphRunItemRepair>>()))
             .AddSingleton<GraphRunActivities>().AddSingleton<GraphBlockActivities>().AddSingleton<GraphActivities>();
     }
 

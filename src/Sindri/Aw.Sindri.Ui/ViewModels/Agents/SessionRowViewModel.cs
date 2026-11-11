@@ -43,6 +43,15 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     /// <summary>The chip: glyph and word.</summary>
     public string ChipText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The state's word without its dot ("Working", "Waiting on you").</summary>
+    public string StateWord { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when the dot takes the Working colour.</summary>
+    public bool IsWorking { get; private set => Set(ref field, value); }
+
+    /// <summary>True when the dot takes the Waiting on you colour.</summary>
+    public bool IsWaiting { get; private set => Set(ref field, value); }
+
     /// <summary>The state glyph.</summary>
     public string Glyph { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -51,6 +60,9 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
 
     /// <summary>"estimated" when the state was worked out from the transcript.</summary>
     public string EstimatedText { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The tooltip on "estimated": what is estimated and why; empty when the row is not estimated.</summary>
+    public string EstimatedTip => IsEstimated ? Labels.SessionEstimatedTip : string.Empty;
 
     /// <summary>The worktree as served, or empty.</summary>
     public string WorktreeText { get; private set => Set(ref field, value); } = string.Empty;
@@ -72,6 +84,30 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
 
     /// <summary>True when every column shows.</summary>
     public bool IsWide => !IsCompact;
+
+    /// <summary>True when the row has something for the Repository column.</summary>
+    internal bool HasRepoValue => !string.Equals(RepoText, Labels.EmptyCell, StringComparison.Ordinal);
+
+    /// <summary>True when the row says where it runs.</summary>
+    internal bool HasWhereValue => WhereText.Length > 0;
+
+    /// <summary>True when the row asks something or runs a Step.</summary>
+    internal bool HasDoingValue => HasAsking || HasStep;
+
+    /// <summary>True when the Repository cell shows (the page drops a column every row leaves empty).</summary>
+    public bool ShowsRepo { get; private set => Set(ref field, value); } = true;
+
+    /// <summary>True when the Where it runs cell shows.</summary>
+    public bool ShowsWhere { get; private set => Set(ref field, value); } = true;
+
+    /// <summary>True when the What it is doing cell shows.</summary>
+    public bool ShowsDoing { get; private set => Set(ref field, value); } = true;
+
+    /// <summary>Takes which optional columns the page shows.</summary>
+    /// <param name="repo">The Repository column.</param>
+    /// <param name="where">The Where it runs column.</param>
+    /// <param name="doing">The What it is doing column.</param>
+    internal void SetColumns(bool repo, bool where, bool doing) => (ShowsRepo, ShowsWhere, ShowsDoing) = (repo, where, doing);
 
     /// <summary>Sets the row's layout for the page's width.</summary>
     /// <param name="compact">True under the width where only three columns stay.</param>
@@ -141,7 +177,8 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     {
         var chip = SessionChips.For(Row.State);
         var title = TitleOf(Row);
-        (Glyph, ChipText) = (chip.Glyph, chip.Text);
+        (Glyph, ChipText, StateWord) = (chip.Glyph, chip.Text, chip.Word);
+        (IsWorking, IsWaiting) = (string.Equals(chip.Tone, "working", StringComparison.Ordinal), string.Equals(chip.Tone, "waiting", StringComparison.Ordinal));
         TitleText = title;
         (AskingText, EstimatedText) = (AskingOf(Row), EstimatedOf(Row));
         (WorktreeText, SinceText) = (Row.Worktree ?? string.Empty, Labels.Age(_clock.GetUtcNow() - Row.Since));
@@ -153,7 +190,7 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
         Name = Labels.SessionName(Row.ProviderLabel, title, chip.Word.ToLowerInvariant() + (EstimatedText.Length > 0 ? " (" + EstimatedText + ")" : string.Empty), string.Join(", ", new[] { AskingText, StepText }.Where(p => p.Length > 0)), HostText);
         Signature = string.Join('|', Row.State, AskingText, EstimatedText, title, WorktreeText, HostText, LaneText, StepText, Row.Focus.Method, Row.Repo);
         Focus.Show(Row.Ref);
-        foreach (var name in (string[])[nameof(IsAsking), nameof(HasAsking), nameof(IsEstimated), nameof(HasWorktree), nameof(HasLane), nameof(IsLaunched), nameof(HasStep), nameof(HasNoStep)])
+        foreach (var name in (string[])[nameof(IsAsking), nameof(HasAsking), nameof(IsEstimated), nameof(EstimatedTip), nameof(HasWorktree), nameof(HasLane), nameof(IsLaunched), nameof(HasStep), nameof(HasNoStep)])
         {
             OnChanged(name);
         }

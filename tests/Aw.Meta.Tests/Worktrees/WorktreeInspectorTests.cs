@@ -167,15 +167,16 @@ public sealed class WorktreeInspectorTests
 
     private const string Lane = "/work/.claude/worktrees/lane";
 
-    // The shared checkout plus one branch worktree "feat" of pull request 7 (merged), clean and idle.
-    private void ScriptBranch()
+    // The shared checkout plus one branch worktree "feat" (HEAD bbbbbbb, `notInMain` commits main lacks: a squash merge leaves some) of pull
+    // request 7 (merged at head `prHead`), clean and idle.
+    private void ScriptBranch(string prHead = "bbbbbbb", int notInMain = 0)
     {
         _ = _world.Runner
             .When("git fetch", string.Empty)
             .When("rev-parse --verify --quiet origin/main", "mainsha\n")
             .When("worktree list --porcelain", "worktree /work\nHEAD aaaaaaa\nbranch refs/heads/main\n\nworktree " + Lane + "\nHEAD bbbbbbb\nbranch refs/heads/feat\n")
-            .When("gh pr list", "[{\"number\":7,\"state\":\"MERGED\",\"headRefName\":\"feat\",\"headRefOid\":\"bbbbbbb\",\"mergedAt\":\"" + A.At(5).ToString("O", CultureInfo.InvariantCulture) + "\"}]")
-            .When("--not origin/main", "0\n")
+            .When("gh pr list", "[{\"number\":7,\"state\":\"MERGED\",\"headRefName\":\"feat\",\"headRefOid\":\"" + prHead + "\",\"mergedAt\":\"" + A.At(5).ToString("O", CultureInfo.InvariantCulture) + "\"}]")
+            .When("--not origin/main", notInMain.ToString(CultureInfo.InvariantCulture) + "\n")
             .When("--not --remotes", "0\n")
             .When("status --porcelain", string.Empty)
             .When("rev-parse --show-toplevel", _ => new CommandResult(0, Lane + "\n", string.Empty, TimedOut: false));
@@ -241,5 +242,44 @@ public sealed class WorktreeInspectorTests
 
         Assert.Equal(WorktreeDecision.Kept, report.Decision);
         Assert.Contains(report.Reasons, r => r.Contains("could not inspect", StringComparison.Ordinal));
+    }
+
+    // Ideas' review of #2740: a tree that never pulled the last push to its branch (pushed from another tree, GitHub's "update branch")
+    // is behind the merged head, not past it, so it holds no new work.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_tree_behind_its_merged_pull_requests_head_is_removable()
+    {
+        ScriptBranch(prHead: "ccccccc", notInMain: 3);
+        _world.WorktreeFiles.Touch(Lane, A.At(1));
+        _ = _world.Runner.When("rev-list --count ccccccc..bbbbbbb", "0\n");
+
+        Assert.Equal(WorktreeDecision.Removable, (await LaneReport()).Decision);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_tree_with_commits_after_its_merged_pull_requests_head_is_kept()
+    {
+        ScriptBranch(prHead: "ccccccc", notInMain: 3);
+        _world.WorktreeFiles.Touch(Lane, A.At(1));
+        _ = _world.Runner.When("rev-list --count ccccccc..bbbbbbb", "2\n");
+
+        var report = await LaneReport();
+
+        Assert.Equal(WorktreeDecision.Kept, report.Decision);
+        Assert.Contains("HEAD bbbbbbb is not PR #7's head ccccccc (commits after it merged)", report.Reasons, StringComparer.Ordinal);
+    }
+
+    // The merged head is not a local object (the fetch didn't bring it), so git can't count: keep the tree.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_tree_whose_merged_pull_request_head_git_cannot_find_is_kept()
+    {
+        ScriptBranch(prHead: "ccccccc", notInMain: 3);
+        _world.WorktreeFiles.Touch(Lane, A.At(1));
+        _ = _world.Runner.When("rev-list --count ccccccc..bbbbbbb", exitCode: 128);
+
+        var report = await LaneReport();
+
+        Assert.Equal(WorktreeDecision.Kept, report.Decision);
+        Assert.Contains("HEAD bbbbbbb is not PR #7's head ccccccc (commits after it merged)", report.Reasons, StringComparer.Ordinal);
     }
 }

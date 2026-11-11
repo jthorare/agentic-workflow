@@ -31,7 +31,6 @@ A workflow is a JSON document Sindri stores as revisions. This page covers what 
 | `GRAPH-REPO-001`, `GRAPH-NAME-001` | repo, connection or memory that does not exist (`-002` is the warning when nobody can answer yet) |
 | `GRAPH-LOOP-003` | retired (#2470): a `run_agent` node in a `for_each` body runs one agent per item; only a run that started on the old walk still fails it |
 | `GRAPH-LOOP-001` / `-002` | a `for_each` that can't run as a loop: no `collect` after it, more than one, a loop inside it, or a node of the loop also fed from outside it / a `collect` no `for_each` reaches |
-| `GRAPH-LOOP-004` | an `ask_owner` node inside a loop: an answer can't yet find the question of one item (call a workflow with `run_workflow` for per-item questions) |
 | `GRAPH-NODE-001` / `-002`, `GRAPH-EDGE-001` / `-002` | repeated node id / a node id that is `trigger`, `item`, `itemIndex` or `workflow` (reserved reference roots), edge to a missing node, edge by an output the block lacks (an edge with no `output` leaves by `out`) |
 
 `GRAPH-TRIGGER-001` / `-002`, `GRAPH-CYCLE-001` and `GRAPH-WIRING-001` are node-level findings: they name nodes and have no field.
@@ -152,6 +151,10 @@ The built-in service `workflow-schedule` (`Features/WorkflowSchedule`, every min
 - **A failed launch does not use up its tick.** When the starter returns any other error (the engine is down, say), the tick is not marked, the pass logs a warning, and the next pass tries the same tick again (as long as it is still the latest). A pass keeps going over the other workflows after one fails and returns the first error at the end.
 - **One schedule node.** A workflow has exactly one trigger (`GRAPH-TRIGGER-001`), so the service reads only the first `schedule` node (up to six crons inside it).
 - **Known gap:** nothing stores when a revision was activated, so the floor is `WorkflowRevision.CreatedAt`. A tick between saving and activating a revision can fire once on activation.
+
+## Memory blocks (agent-first PR 13 follow-up)
+
+`memory_search` (picker label Recall, group Data), `memory_write` (Remember, Logic) and `memory_forget` (Forget, Logic) reach the Sindri memory stores through `IGraphMemoryPort` (Core), the way `create_item` reaches the item handler. `WorkflowMemoryPort` (Features root, beside the slices because it joins three of them) calls the `SearchMemory`, `WriteMemoryFact` and `ForgetMemoryFact` handlers directly as `service:workflow`; `ScopedMemoryPort` is the engine's singleton and opens a scope per call. Pages: `docs/workflows/blocks/memory_search.md`, `memory_write.md`, `memory_forget.md`. `memory_search` outputs `facts` (the fact texts, an array, so `{{recall.facts}}` renders compact JSON and `prompt` fences it as untrusted) and `mode` (`semantic` or `keyword`, the slice's own words). `memory_write` takes `tags` and `expires` (a length such as `30d`, counted from the write), writes the run's workflow, run and item as the fact's provenance, and outputs `id` and `action` (`added` or `refreshed`). `memory_forget` takes exactly one of `fact` (an id) and `tag` and outputs `count`. Not built yet: the validator does not check that the memory name exists (a missing memory fails the node at run time with the slice's error), and `prompt` / `run_agent` have no `memory` field.
 
 ## Parking blocks (PR 9)
 

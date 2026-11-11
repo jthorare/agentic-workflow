@@ -12,6 +12,14 @@ internal partial interface ISindriApi
     /// <returns>The list, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowList>> Workflows(Uri api, CancellationToken cancellationToken);
 
+    /// <summary>POST /sindri/workflows: makes a workflow, off, from a starter template. A human action, sent once, never retried.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="slug">The new workflow's slug.</param>
+    /// <param name="template">The starter template's name.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The new workflow, SND-GRAPH-009 for a slug that is taken, SND-CLI-003 for a bad slug or template, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowCreated>> CreateWorkflow(Uri api, string slug, string template, CancellationToken cancellationToken);
+
     /// <summary>GET /sindri/workflows/{slug}: one workflow with its shown revision.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="slug">The workflow.</param>

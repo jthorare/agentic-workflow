@@ -30,7 +30,6 @@ internal sealed partial class AgentsPage : UserControl
         if (Page is { } page)
         {
             page.Resize(e.NewSize.Width);
-            AgentsColumnsGrid.ColumnDefinitions = ColumnDefinitions.Parse(page.IsCompact ? AgentColumnsLayout.Compact : AgentColumnsLayout.Wide);
         }
     }
 

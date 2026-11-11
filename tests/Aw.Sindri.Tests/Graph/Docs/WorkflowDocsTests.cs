@@ -25,6 +25,7 @@ public sealed class WorkflowDocsTests
         more: [.. GraphBlockRegistry.FlowBlocks(new FlowFakes.MemorySeenStore(), new FlowFakes.RecordingItemPort(), new FlowFakes.ScriptedCallPort(), new FlowFakes.ScriptedHttpPort()),
             .. GraphBlockRegistry.ParkingBlocks(new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider()),
             .. GraphBlockRegistry.ResultBlocks(new FlowFakes.ScriptedResultPort()),
+            .. GraphBlockRegistry.MemoryBlocks(new BlockFakes.RecordingMemoryPort()),
             new CallToolBlock(new FakeRunningToolkits([]), new NoConnections())]);
 
     // why: the docs only need 'call_tool' registered; no example reaches a connection, so every call is refused
