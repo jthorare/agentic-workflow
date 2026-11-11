@@ -20,7 +20,7 @@ internal static class WorkflowRunRows
             "POST", "/sindri/workflow-runs/{run}/cancel", ShellRows.Form("sindri wf cancel <run>"), "ready", SessionOk: true),
         new(ActionId.From("AnswerQuestion"), typeof(AnswerQuestionRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/workflow-runs/{run}/nodes/{node}/answer", ShellRows.Form("sindri answer <question> [--text <text>] [--choice <choice>]"), "ready", SessionOk: true),
+            "POST", "/sindri/workflow-runs/{run}/nodes/{node}/answer", ShellRows.Form("sindri answer <question> [--text <text>] [--choice <choice>] [--item <index>]"), "ready", SessionOk: true),
         new(ActionId.From("TakeOverAgentNode"), typeof(TakeOverAgentNodeRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/workflow-runs/{run}/nodes/{node}/takeover", ShellRows.Form("sindri wf takeover <run> <node> [--item <index>]"), "ready"),

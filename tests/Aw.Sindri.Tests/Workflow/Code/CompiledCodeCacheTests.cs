@@ -17,8 +17,8 @@ public sealed class CompiledCodeCacheTests : IDisposable
         var compiler = new CountingCompiler("refs-1");
         var cache = new CompiledCodeCache(compiler, _directory.FullName);
 
-        var first = cache.Resolve("return 1;");
-        var second = cache.Resolve("return 1;");
+        var first = cache.Resolve("return 1;", TestContext.Current.CancellationToken);
+        var second = cache.Resolve("return 1;", TestContext.Current.CancellationToken);
 
         Assert.Equal(1, compiler.Calls);
         Assert.NotNull(first.AssemblyPath);
@@ -30,10 +30,10 @@ public sealed class CompiledCodeCacheTests : IDisposable
     public void Different_code_or_a_different_reference_set_compiles_again()
     {
         var one = new CountingCompiler("refs-1");
-        _ = new CompiledCodeCache(one, _directory.FullName).Resolve("return 1;");
-        _ = new CompiledCodeCache(one, _directory.FullName).Resolve("return 2;");
+        _ = new CompiledCodeCache(one, _directory.FullName).Resolve("return 1;", TestContext.Current.CancellationToken);
+        _ = new CompiledCodeCache(one, _directory.FullName).Resolve("return 2;", TestContext.Current.CancellationToken);
         var other = new CountingCompiler("refs-2");
-        _ = new CompiledCodeCache(other, _directory.FullName).Resolve("return 1;");
+        _ = new CompiledCodeCache(other, _directory.FullName).Resolve("return 1;", TestContext.Current.CancellationToken);
 
         Assert.Equal(2, one.Calls);
         Assert.Equal(1, other.Calls);
@@ -45,8 +45,8 @@ public sealed class CompiledCodeCacheTests : IDisposable
         var compiler = new CountingCompiler("refs-1", fail: true);
         var cache = new CompiledCodeCache(compiler, _directory.FullName);
 
-        var first = cache.Resolve("nonsense");
-        _ = cache.Resolve("nonsense");
+        var first = cache.Resolve("nonsense", TestContext.Current.CancellationToken);
+        _ = cache.Resolve("nonsense", TestContext.Current.CancellationToken);
 
         Assert.Null(first.AssemblyPath);
         Assert.Equal("CS0000", Assert.Single(first.Diagnostics).Id);
@@ -60,7 +60,7 @@ public sealed class CompiledCodeCacheTests : IDisposable
 
         public string Fingerprint { get; } = fingerprint;
 
-        public CodeCompilation Compile(string body)
+        public CodeCompilation Compile(string body, CancellationToken cancellationToken)
         {
             Calls++;
             return fail

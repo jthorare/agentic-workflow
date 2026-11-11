@@ -14,7 +14,7 @@ namespace Aw.Meta.Core.Worktrees;
 /// <param name="paths">Where the gate trees live; the home directory.</param>
 /// <param name="values">Holds when the last sweep started.</param>
 /// <param name="files">When a worktree's files last changed.</param>
-/// <param name="bugfix">The bugfix runs' records, for --discarded.</param>
+/// <param name="bugfix">The bugfix runs' records: --discarded, and the trees of runs whose issue a merged pull request closed.</param>
 public sealed partial class WorktreeInspector(RepoCommands repo, IProcessLocations processes, MetaPaths paths, IKeyValueStore values, IWorktreeFiles files, IBugfixRecords bugfix)
 {
     private const string GateCommitter = "aw-meta@localhost";
@@ -95,7 +95,7 @@ public sealed partial class WorktreeInspector(RepoCommands repo, IProcessLocatio
             }
         }
 
-        return false;
+        return await ClosedByOneOf(inspection, entry, prs).ConfigureAwait(false);
     }
 
     // A pull request from the list, else one `gh pr view` away (an old one fell off the newest 200); null when GitHub doesn't know it.
@@ -153,13 +153,7 @@ public sealed partial class WorktreeInspector(RepoCommands repo, IProcessLocatio
 
         var ahead = await AheadOfPrHead(inspection.Team.Repo, entry, gatePr is null ? pull : null).ConfigureAwait(false);
         var composed = Compose(inspection, entry, gatePr, pull, git.Value with { Changed = changed.Value, Ahead = ahead });
-        if (!inspection.Scope.Discarded)
-        {
-            return composed;
-        }
-
-        var rows = await bugfix.Naming(entry.Path, inspection.Cancellation).ConfigureAwait(false);
-        return rows.IsError ? rows.Error : composed with { Discarded = DiscardedCandidates.Match(entry, rows.Value), NotDiscarded = DiscardedCandidates.WhyNot(entry, rows.Value) };
+        return await WithBugfix(inspection, entry, composed).ConfigureAwait(false);
     }
 
     // The time rule 7 compares a tree with: the later of the last sweep's start and (for a tree whose pull request merged or closed) when it ended; null when there is nothing to compare with.

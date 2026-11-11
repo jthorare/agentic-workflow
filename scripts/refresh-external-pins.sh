@@ -9,7 +9,8 @@ PINS_FILE="$REPO_ROOT/EXTERNAL_PINS.env"
 # macOS's stock bash 3.2.
 PACKS="IMPECCABLE_PIN pbakaus/impeccable
 EMIL_PIN emilkowalski/skill
-TASTE_PIN Leonxlnx/taste-skill"
+TASTE_PIN Leonxlnx/taste-skill
+TDD_ARTIFACT_PIN heyitsalec/tdd-artifact"
 
 while read -r var repo; do
   [ -n "$var" ] || continue

@@ -2139,6 +2139,8 @@ static Aw.Meta.Core.Usage.UsageStop.operator !=(Aw.Meta.Core.Usage.UsageStop? le
 static Aw.Meta.Core.Usage.UsageStop.operator ==(Aw.Meta.Core.Usage.UsageStop? left, Aw.Meta.Core.Usage.UsageStop? right) -> bool
 Aw.Meta.Core.Ports.BugfixCandidate
 Aw.Meta.Core.Ports.BugfixCandidate.<Clone>$() -> Aw.Meta.Core.Ports.BugfixCandidate!
+Aw.Meta.Core.Ports.BugfixCandidate.Baseline.get -> bool
+Aw.Meta.Core.Ports.BugfixCandidate.Baseline.init -> void
 Aw.Meta.Core.Ports.BugfixCandidate.Branch.get -> string!
 Aw.Meta.Core.Ports.BugfixCandidate.Branch.init -> void
 Aw.Meta.Core.Ports.BugfixCandidate.BugfixCandidate(string! Run, string! Candidate, string! Worktree, string! Branch, string! Commit, bool Evaluated, bool Resolves, bool Finished, string? ResolvedBy) -> void
@@ -2152,6 +2154,8 @@ Aw.Meta.Core.Ports.BugfixCandidate.Evaluated.get -> bool
 Aw.Meta.Core.Ports.BugfixCandidate.Evaluated.init -> void
 Aw.Meta.Core.Ports.BugfixCandidate.Finished.get -> bool
 Aw.Meta.Core.Ports.BugfixCandidate.Finished.init -> void
+Aw.Meta.Core.Ports.BugfixCandidate.Issue.get -> int?
+Aw.Meta.Core.Ports.BugfixCandidate.Issue.init -> void
 Aw.Meta.Core.Ports.BugfixCandidate.ResolvedBy.get -> string?
 Aw.Meta.Core.Ports.BugfixCandidate.ResolvedBy.init -> void
 Aw.Meta.Core.Ports.BugfixCandidate.Resolves.get -> bool
