@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/ui-checks/gh-1544-pill-search.sh — regression check for #1544 (a long health message in the top-bar pill squeezes the ⌘K search box).
 # At 1280x800, in the real sindri-ui on the guarded fixture, after `fixture drift` (the pill reads "Degraded ... the profile changed since approval"):
-#   1. the search field (the Border named "Search or run a command") is at least 184 px wide (SearchMin) and its placeholder TextBlock shows the whole
+#   1. the search field (the Border named "Search or run a command") is at least 160 px wide (the field's minimum; SearchMin 184 is its column, margins included) and its placeholder TextBlock shows the whole
 #      short copy "Search…" (#2710), not a trimmed one;
 #   2. the pill still names the problem in full (its accessible name) and a visible TextBlock named PillProblems shows the (maybe trimmed) text.
 # All parts run, every FAIL is printed, and the exit is 1 when any failed.
@@ -89,7 +89,8 @@ sleep 2
 "$DRIVER" tree --depth 64 >"$OUT/tree.json" 2>/dev/null || setup_fail "the driver gave no tree"
 
 # ---- Part 1: the search field keeps its width and the placeholder is whole ---------------------------------------------------------
-# The placeholder TextBlock sits inside the Border of the same name. a) the field is at least SearchMin (184 px) wide while the pill names a problem;
+# The placeholder TextBlock sits inside the Border of the same name. a) the field is at least 160 px wide while the pill names a problem: the Border is the field, whose minimum
+#    is 160 px; SearchMin (184 px) is its column, which adds the field's two 12 px margins;
 # b) the TextBlock is the short copy "Search…" (#2710) and it is not trimmed. The tree's `text` is the TextBlock's Text, which stays
 #    whole even when the ellipsis trims it on screen, so b) also needs its laid-out width: the check runs at
 #    text scale 1.0, where "Search…" needs about 49 px, so the 64 px laid-out floor still catches a squeezed field (the #1544 bug);
@@ -99,14 +100,14 @@ width="$(jq -r '[.. | objects | select(.type == "Border" and .visible and (.name
 shown="$(jq -r '[.. | objects | select(.type == "TextBlock" and .visible and (.name // "") == "Search or run a command")][0].text // empty' "$OUT/tree.json")"
 text_width="$(jq -r '[.. | objects | select(.type == "TextBlock" and .visible and (.name // "") == "Search or run a command")][0].width // empty' "$OUT/tree.json")"
 [ -n "$shown" ] || setup_fail "no visible TextBlock named 'Search or run a command' (see $OUT/tree.json)"
-if ! awk -v w="$width" 'BEGIN { exit !(w >= 184) }'; then
-  fail "the search field is squeezed to $width px (needs 184) while the pill names a problem (screenshot in $OUT)"
+if ! awk -v w="$width" 'BEGIN { exit !(w >= 160) }'; then
+  fail "the search field is squeezed to $width px (the floor is 160) while the pill names a problem (screenshot in $OUT)"
 fi
 if [ "$shown" != "Search…" ]; then
   fail "the search placeholder shows '$shown', not the whole 'Search…' (screenshot in $OUT)"
 fi
 if ! awk -v w="${text_width:-0}" 'BEGIN { exit !(w >= 64) }'; then
-  fail "the search placeholder is laid out at ${text_width:-0} px (needs 64 for the whole 'Search…') (screenshot in $OUT)"
+  fail "the search placeholder is laid out at ${text_width:-0} px (the floor is 64; 'Search…' needs about 49) (screenshot in $OUT)"
 fi
 
 # ---- Part 2: the pill still names the problem ------------------------------------------------------------------------------------
