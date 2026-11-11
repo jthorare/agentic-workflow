@@ -29,4 +29,7 @@ public sealed record SandboxHostFacts(
 {
     /// <summary>Null, or the host's listing of a directory (the names of its entries, empty when it can't be read), which the builder walks to keep a Step's writable paths out of a denied Sindri home; null keeps every denied path denied whole.</summary>
     public Func<string, IReadOnlyList<string>>? DirectoryEntries { get; init; }
+
+    /// <summary>Null, or the real live profile file (absolute): AW_SINDRI_PROFILE, else &lt;SindriHome&gt;/profile/profile.yaml. The plan binds its folder read-only so the CLI inside reads the profile in process; null binds nothing.</summary>
+    public string? ProfilePath { get; init; }
 }
