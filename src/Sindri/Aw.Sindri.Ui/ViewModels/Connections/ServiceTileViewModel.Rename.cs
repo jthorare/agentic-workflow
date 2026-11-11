@@ -68,7 +68,7 @@ internal sealed partial class ServiceTileViewModel
     internal async Task Rename(CancellationToken cancellationToken)
     {
         var label = RenameText.Trim();
-        if (!IsRenaming || _renameSending || label.Length == 0 || _row is null)
+        if (!IsRenaming || _renameSending || label.Length == 0 || _row is not { } row)
         {
             return;
         }
@@ -84,13 +84,13 @@ internal sealed partial class ServiceTileViewModel
         OnChanged(nameof(CanSaveRename));
         try
         {
-            await Send(label, cancellationToken).ConfigureAwait(true);
+            await Send(row, label, cancellationToken).ConfigureAwait(true);
         }
 #pragma warning disable CA1031 // a dropped call or a failed re-read must show a sentence on the tile, not vanish in the discarded task
         catch (Exception) when (!cancellationToken.IsCancellationRequested)
 #pragma warning restore CA1031
         {
-            if (IsRenaming)
+            if (IsRenaming && ReferenceEquals(_row, row))
             {
                 RenameError = Labels.RenameFailed;
             }
@@ -103,21 +103,33 @@ internal sealed partial class ServiceTileViewModel
     }
 
     // The call and its answer: a refusal keeps the field and its text; a success shows the name the server answered with now, the re-read only confirms it.
-    private async Task Send(string label, CancellationToken cancellationToken)
+    private async Task Send(ConnectionRowViewModel row, string label, CancellationToken cancellationToken)
     {
-        var renamed = await _actions.Rename(ConnectionName, label, cancellationToken).ConfigureAwait(true);
+        var renamed = await _actions.Rename(row.Name, label, cancellationToken).ConfigureAwait(true);
+        if (!ReferenceEquals(_row, row))
+        {
+            return;   // the tile shows another connection now: this answer is not for what is on screen
+        }
+
         if (renamed.IsError)
         {
-            _refusedLabel = label;
+            if (!IsRenaming)
+            {
+                return;   // the field closed meanwhile: nothing to say a refusal under
+            }
+
+            _refusedLabel = RefusesThisLabel(renamed.Error) ? label : null;   // an unknown failure says "Try again": Save stays on
             RenameError = RenameRefused(renamed.Error, label);
             return;
         }
 
-        _row?.Update(_row.View with { Name = renamed.Value.Name });
+        row.Update(row.View with { Name = renamed.Value.Name });
         Raise(nameof(ConnectionName), nameof(Account), nameof(Subtitle), nameof(AccessibleName));
         IsRenaming = false;
         await _changed().ConfigureAwait(true);
     }
+
+    private static bool RefusesThisLabel(Error error) => string.Equals(error.Code, RenameTaken, StringComparison.Ordinal) || string.Equals(error.Code, RenameBad, StringComparison.Ordinal) || string.Equals(error.Code, RenameSame, StringComparison.Ordinal);
 
     private string RenameRefused(Error error, string label) => error.Code switch
     {
