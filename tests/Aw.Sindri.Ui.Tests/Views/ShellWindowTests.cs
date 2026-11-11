@@ -1488,6 +1488,9 @@ public sealed class ShellWindowTests : IDisposable
 
         /// <summary>Degraded, with a problem long enough that its text has to give way (#2547). Last, so the frame names of the others don't move.</summary>
         DegradedLongProblems,
+
+        /// <summary>Degraded, with a short problem ("service broken failed") that reads in full at 1280 px (#2547). Last, as above.</summary>
+        DegradedShortProblem,
     }
 
     public static TheoryData<BarState, double> MinimumWidthStates()
@@ -1670,13 +1673,11 @@ public sealed class ShellWindowTests : IDisposable
 
         _records.Write(A.Record());
         _server.UnreadableStatus = state == BarState.Unreadable;
-        _server.Current = state == BarState.VersionMismatch ? A.Status() with { ApiVersion = 2 }
-            : state == BarState.DegradedLongProblems ? A.Status() with { Health = new HealthView("degraded", [new HealthProblemView("SND-PROFILE-001", "the profile changed since approval", "the profile changed since approval and a much longer clause")]) }
-            : A.Status();
+        _server.Current = StatusIn(state);
         var expected = state == BarState.Unreadable ? ShellState.Unreadable
             : state == BarState.VersionMismatch ? ShellState.VersionMismatch
             : ShellState.Normal;
-        var (window, shell) = await Show(s => s.State == expected && (state != BarState.DegradedLongProblems || s.Pill.HasProblems));
+        var (window, shell) = await Show(s => s.State == expected && (state is not (BarState.DegradedLongProblems or BarState.DegradedShortProblem) || s.Pill.HasProblems));
         if (state is BarState.Stale or BarState.NotResponding or BarState.Sending)
         {
             await GoStale(window, shell, state);
@@ -1685,6 +1686,13 @@ public sealed class ShellWindowTests : IDisposable
         Settle(window);
         return window;
     }
+
+    // The status the server answers in a bar state: version 2 for the mismatch, a problem for the two degraded states.
+    private static StatusView StatusIn(BarState state) =>
+        state == BarState.VersionMismatch ? A.Status() with { ApiVersion = 2 }
+        : state == BarState.DegradedLongProblems ? A.Status() with { Health = new HealthView("degraded", [new HealthProblemView("SND-PROFILE-001", "the profile changed since approval", "the profile changed since approval and a much longer clause")]) }
+        : state == BarState.DegradedShortProblem ? A.Status() with { Health = new HealthView("degraded", [new HealthProblemView("SND-SERVICE-001", "service broken failed")]) }
+        : A.Status();
 
     // Stale (no ping for 30 s); then a refresh in flight past 300 ms, or three failed refreshes.
     private async Task GoStale(Window window, ShellViewModel shell, BarState state)
@@ -1837,8 +1845,10 @@ public sealed class ShellWindowTests : IDisposable
     private const double TabGapFloor = 6;
 
     // #2547 (QA): at 1000, 1099 and 1280 px, text scale 1.0 and 1.3, every pill state fits: the pill ends inside the bar's
-    // 16 px padding, the bar has settled, two tabs keep the gap floor, the ⌘K field's placeholder is whole while the field is
-    // full, and the tabs keep their normal padding at 1.0 (the tight step is only for when normal padding can't fit).
+    // 16 px padding, the bar has settled, two tabs keep the gap floor, and the tabs keep their normal padding at 1.0 (the tight
+    // step is only for when normal padding can't fit). Placeholder whole at Full in Normal and Degraded (short problem): the
+    // 4 px slack is for these; in the other states Full keeps the field at its 184 px minimum and the placeholder trims, as on
+    // main (#2655 follow-up issue).
     [Theory]
     [MemberData(nameof(BarWidthsAndScales))]
     public Task The_top_bar_fits_and_keeps_the_gap_floor_in_every_pill_state(BarState state, double width, double scale) => OnUi(() => WithBar(state, width, scale, window =>
@@ -1861,7 +1871,7 @@ public sealed class ShellWindowTests : IDisposable
         var all = string.Join(", ", gaps.Select(g => string.Create(CultureInfo.InvariantCulture, $"{g.Pair} {g.Gap:0.#}")));
         Assert.True(gaps.TrueForAll(g => g.Gap >= TabGapFloor), string.Create(CultureInfo.InvariantCulture, $"{at}: a gap is under {TabGapFloor} px: {all}"));
 
-        if (!Named<Border>(window, "SearchField").Classes.Contains("compact"))
+        if (state is BarState.Normal or BarState.DegradedShortProblem && !Named<Border>(window, "SearchField").Classes.Contains("compact"))
         {
             var placeholder = Named<TextBlock>(window, "SearchText");
             using var layout = new TextLayout(placeholder.Text, new Typeface(placeholder.FontFamily, placeholder.FontStyle, placeholder.FontWeight), placeholder.FontSize, foreground: null);
@@ -1873,6 +1883,59 @@ public sealed class ShellWindowTests : IDisposable
             Assert.False(Named<ListBox>(window, "Navigation").Classes.Contains("tight"), $"{at}: the tabs went tight at text scale 1.0");
         }
     }));
+
+    // #2547 (ideas): the problem text's 8 px margin stays even when its cap reaches 0, so the step the bar picks counts it. Narrowing
+    // the window 2 px at a time through the steps, the pill never runs into the bar's 16 px right padding.
+    [Theory]
+    [InlineData(BarState.DegradedShortProblem)]
+    [InlineData(BarState.DegradedLongProblems)]
+    public Task Narrowing_a_degraded_bar_at_130_percent_keeps_the_pill_inside_the_padding(BarState state) => OnUi(() => WithBar(state, 1100, 1.3, window =>
+    {
+        var past = new List<string>();
+        for (var width = 1100.0; width >= 1000; width -= 2)
+        {
+            window.Width = width;
+            Settle(window);
+            var right = Box(window, "HealthPill").Right;
+            if (right > width - 16 + 0.5)
+            {
+                past.Add(string.Create(CultureInfo.InvariantCulture, $"{width}: {right}"));
+            }
+        }
+
+        Assert.True(past.Count == 0, $"{state}: the pill ran into the padding at {string.Join(", ", past)}");
+    }));
+
+    // #2547 (ideas): Refresh's word is measured before Refresh first shows, so a bar that has to fold it folds it in the same
+    // pass, instead of laying the word out, measuring, and folding it in the next.
+    [Fact]
+    public Task Refresh_that_first_shows_on_a_folding_bar_folds_in_one_pass() => OnUi(async () =>
+    {
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
+        var window = await ShowIn(BarState.Normal);
+        var resources = Application.Current!.Resources;
+        TextScale.Apply(resources, 1.3);
+        try
+        {
+            Settle(window);
+            var bar = Named<TopBar>(window, "TopBar");
+            var shell = (ShellViewModel)window.DataContext!;
+            Assert.False(Named<Button>(window, "RefreshButton").IsVisible, "Refresh shows before the bar went stale");
+            bar.ResetMeasurePasses();
+            _server.FailPing = true;
+            _clock.Advance(ShellViewModel.StaleAfter);
+            await Until(() => shell.State == ShellState.Stale);
+            Settle(window);
+
+            Assert.True(Named<Button>(window, "RefreshButton").Classes.Contains("folded"), "Refresh did not fold at 1000 px, 1.3");
+            Assert.True(bar.MeasurePasses <= 2, string.Create(CultureInfo.InvariantCulture, $"the bar measured {bar.MeasurePasses} times when Refresh first showed"));
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+            Settle(window);
+        }
+    });
 
     // #2547 (QA): Refresh's word is the last thing the bar drops; folded, Refresh keeps its name, its tooltip and its tab stop.
     [Theory]
