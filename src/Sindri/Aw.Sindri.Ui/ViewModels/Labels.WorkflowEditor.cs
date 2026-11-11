@@ -34,9 +34,12 @@ internal static partial class Labels
 
     /// <summary>The editor sheet's heading for the selected step: its title and what kind of step it is.</summary>
     /// <param name="title">The step's own title, or its block's title when it has none.</param>
-    /// <param name="kind">"trigger", or the block's title.</param>
+    /// <param name="kind"><see cref="WfEditorTriggerKind"/>, or the block's title.</param>
     /// <returns>The words.</returns>
     internal static string WfEditorStep(string title, string kind) => title + " \u00b7 " + kind;
+
+    /// <summary>The kind word in the editor heading of a trigger step.</summary>
+    internal const string WfEditorTriggerKind = "trigger";
 
     /// <summary>The Advanced toggle under a field whose presets hide its raw text.</summary>
     internal const string WfFieldAdvanced = "Advanced";

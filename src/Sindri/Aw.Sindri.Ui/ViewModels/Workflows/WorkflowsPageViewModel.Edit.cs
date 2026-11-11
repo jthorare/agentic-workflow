@@ -148,13 +148,18 @@ internal sealed partial class WorkflowsPageViewModel
                 OnChanged(nameof(EditorHeading));
                 OnChanged(nameof(StepSummaryText));
                 OnChanged(nameof(HasStepSummary));
-                if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) && Runs.Graph is { } graph)
+                if (string.Equals(e.PropertyName, nameof(RunsViewModel.Graph), StringComparison.Ordinal) && !ReferenceEquals(_watchedGraph, Runs.Graph))
                 {
-                    graph.PropertyChanged += OnGraphChanged;
+                    _watchedGraph?.PropertyChanged -= OnGraphChanged;   // the old workflow's graph stops reaching this page
+                    _watchedGraph = Runs.Graph;
+                    _watchedGraph?.PropertyChanged += OnGraphChanged;
                 }
             }
         };
     }
+
+    // The graph whose StepLine and SelectedId this page follows; swapped, never stacked, when another workflow opens.
+    private WorkflowGraphViewModel? _watchedGraph;
 
     private void OnGraphChanged(object? sender, PropertyChangedEventArgs e)
     {
