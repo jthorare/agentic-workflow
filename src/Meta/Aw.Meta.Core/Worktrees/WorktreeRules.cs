@@ -136,11 +136,7 @@ internal static class WorktreeRules
 
         if (facts.PrState is PrState.Closed or PrState.Merged)
         {
-            // A squash or rebase merge never leaves the branch head in origin/main, so GitHub's state decides, not ancestry (#2659).
-            if (facts.UnpushedCommits > 0)
-            {
-                reasons.Add($"{pr} is {facts.PrState.Value.ToString().ToLowerInvariant()} but its head is not merged into origin/main and not on any remote");
-            }
+            EndedReasons(facts, pr, facts.PrState.Value.ToString().ToLowerInvariant(), reasons);
         }
         else
         {
@@ -228,6 +224,25 @@ internal static class WorktreeRules
         started is { } at
             ? "changed since the last full sweep (" + at.ToUniversalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + "Z)"
             : "changed since the last full sweep";
+
+    // An ended (merged or closed) pull request's branch whose head is not in origin/main. A squash or rebase merge never leaves the
+    // branch head in origin/main, so GitHub's state decides, not ancestry (#2659); unpushed commits, or pushed ones made after the
+    // pull request ended (HEAD has commits the head GitHub recorded lacks), are new work. A tree behind that head (it never pulled
+    // the last push) has none and may go; when git can't tell, the tree is kept.
+    private static void EndedReasons(WorktreeFacts facts, string pr, string ended, List<string> reasons)
+    {
+        if (facts.UnpushedCommits > 0)
+        {
+            reasons.Add($"{pr} is {ended} but its head is not merged into origin/main and not on any remote");
+        }
+
+        if (facts.PrHead.Length > 0 && !string.Equals(facts.Head, facts.PrHead, StringComparison.Ordinal) && facts.CommitsAfterPrHead is not 0)
+        {
+            reasons.Add($"HEAD {Sha7(facts.Head)} is not {pr}'s head {Sha7(facts.PrHead)} (commits after it {ended})");
+        }
+    }
+
+    private static string Sha7(string sha) => sha.Length > 7 ? sha[..7] : sha;
 
     private static string Short(string command) => command.Length > 60 ? command[..60] + "..." : command;
 }
