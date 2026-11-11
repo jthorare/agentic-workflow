@@ -75,11 +75,19 @@ A lane queues a pull request with exactly `ready #N <sha>` on the **first line**
 4. `aw-meta merge-check N` again (head and main must not have moved since the gate), then `aw-meta merge-run N`.
 5. Send nothing about main moving: `merge-run` recorded it on the board, and each lane's prompt hook shows it once. Re-gate every other queued pull request after a merge. The `WORKTREES ...` line `merge-run` printed says what was removed and what was kept; a kept worktree is not an error.
 
+**CI gate (`gate.mode` is `ci` in the team config).** Step 2 changes: `aw-meta gate-run N` runs nothing on this box. It reads the pull request's required checks, review decision and merge state from GitHub and records the answer against the head sha. It passes only when every required check is green, the review is `APPROVED` and the merge state is `CLEAN`; a pending check is a fail (`pending`), so run it again once CI finishes. **Skip every `meta-gate-reserve` step**: no gate tree is built and no heavy slot is taken. Skip step 3 (there are no local test reds to rerun; a red required check goes back to the lane). Then `aw-meta merge-check N` and `aw-meta merge-run N` as before: `merge-check` needs a passing CI record at the head the pull request has now, so a push after `gate-run` means run it again. If `gate-run` refuses with `AW-META-024` (`no required checks on <base>`), the base has no branch protection: ask the owner, never merge on it. `queue-gate` (the train) is a local gate and does not apply.
+
 With several ready pull requests use `aw-meta queue-gate` (a train); the steps are in the reference.
 
 ## OWNER QUESTION messages
 
 `aw-meta owner` lists the queue. Ask the user each question (the lane's recommended default first), then `aw-meta owner-answer <q> --answer "<the owner's words>"`, and send the printed `OWNER ANSWER` text back to the asking lane. Your own question for the owner: `aw-meta owner-ask --text "..."`.
+
+## Toolkit defects
+
+Whenever you'd write a NOTE that says you did something by hand, or you hit an aw-meta or harness defect, run `aw-meta report-defect --code <code> --title <title> --what <what happened> --error <exact error line> [--path <path>]` instead of only logging it. Lanes send you a `DEFECT:` line for aw-meta and harness defects; run `report-defect` for them. Lanes still file their own product bugs and UX issues; this command is only for toolkit defects.
+
+The CLI dedups against open issues (and ones closed in the last 14 days), comments instead of filing a twin, files at most 3 new issues a UTC day, writes the NOTE and queues the owner FYI. Exit 1 means the cap held it back: the defect is in the log, and `aw-meta status` shows `issue cap hit`.
 
 ## Next steps
 

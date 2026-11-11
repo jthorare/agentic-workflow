@@ -1,0 +1,35 @@
+{
+  "asOf": {
+    "cursor": 1,
+    "ledgerHead": 1,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "empty": "Linear needs a token. Run sindri index connect linear in your terminal to connect it.",
+  "viewer": "Jo Smith",
+  "freshness": [
+    {
+      "source": "linear-projects",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    },
+    {
+      "source": "linear",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    },
+    {
+      "source": "github",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    }
+  ],
+  "projects": [],
+  "finished": [],
+  "hidden": [],
+  "emptyCode": "linear-key-missing"
+}

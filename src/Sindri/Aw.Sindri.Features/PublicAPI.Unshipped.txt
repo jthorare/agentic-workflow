@@ -3866,6 +3866,8 @@ Aw.Sindri.Features.ListProjects.ListProjectsRequest.Deconstruct(out bool All) ->
 Aw.Sindri.Features.ListProjects.ListProjectsRequest.Equals(Aw.Sindri.Features.ListProjects.ListProjectsRequest? other) -> bool
 Aw.Sindri.Features.ListProjects.ListProjectsRequest.ListProjectsRequest(bool All) -> void
 Aw.Sindri.Features.ListProjects.ListProjectsResponse
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.EmptyCode.get -> Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode?
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.EmptyCode.init -> void
 Aw.Sindri.Features.ListProjects.ListProjectsResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
 Aw.Sindri.Features.ListProjects.ListProjectsResponse.AsOf.init -> void
 Aw.Sindri.Features.ListProjects.ListProjectsResponse.<Clone>$() -> Aw.Sindri.Features.ListProjects.ListProjectsResponse!

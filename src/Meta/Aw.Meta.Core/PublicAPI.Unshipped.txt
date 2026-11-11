@@ -1821,8 +1821,6 @@ Aw.Meta.Core.Commands.CommandRequest.UnsetEnv.get -> System.Collections.Generic.
 Aw.Meta.Core.Commands.CommandRequest.UnsetEnv.init -> void
 Aw.Meta.Core.Coordination.GateWorkspace.RerunLogPath(int pr, int run, string! step, string! test, string! where) -> string!
 static Aw.Meta.Core.Gate.GatePriority.Scrubbed.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Meta.Core.Config.GateConfig.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Always, out System.Collections.Generic.IReadOnlyList<string!>! DocsOnly, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Meta.Core.Config.ScopeConfig!>! Scopes, out int? ParallelSteps) -> void
-Aw.Meta.Core.Config.GateConfig.GateConfig(System.Collections.Generic.IReadOnlyList<string!>! Always, System.Collections.Generic.IReadOnlyList<string!>! DocsOnly, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Meta.Core.Config.ScopeConfig!>! Scopes, int? ParallelSteps = null) -> void
 Aw.Meta.Core.Config.GateConfig.ParallelSteps.get -> int?
 Aw.Meta.Core.Config.GateConfig.ParallelSteps.init -> void
 Aw.Meta.Core.Config.StepConfig.After.get -> System.Collections.Generic.IReadOnlyList<string!>?
@@ -2517,3 +2515,111 @@ static Aw.Meta.Core.Merge.ReviewProof.Collect(System.Collections.Generic.IReadOn
 static Aw.Meta.Core.Merge.ReviewProof.Counts(string! body) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.CountLine!>!
 static Aw.Meta.Core.Merge.ReviewProof.IsHead(string? sha, string! head) -> bool
 static Aw.Meta.Core.Merge.ReviewProof.ReadySha(string! body) -> string?
+Aw.Meta.Core.Config.GateConfig.GateConfig(System.Collections.Generic.IReadOnlyList<string!>? always = null, System.Collections.Generic.IReadOnlyList<string!>? docsOnly = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Meta.Core.Config.ScopeConfig!>? scopes = null, int? parallelSteps = null, string! mode = "local") -> void
+Aw.Meta.Core.Config.GateConfig.IsCi.get -> bool
+Aw.Meta.Core.Config.GateConfig.Mode.get -> string!
+Aw.Meta.Core.Config.GateConfig.Mode.init -> void
+Aw.Meta.Core.Merge.MergeFacts.CiGate.get -> bool
+Aw.Meta.Core.Merge.MergeFacts.CiGate.init -> void
+Aw.Meta.Core.Merge.MergeFacts.LiveError.get -> string?
+Aw.Meta.Core.Merge.MergeFacts.LiveError.init -> void
+Aw.Meta.Core.Merge.MergeFacts.LiveMergeState.get -> string?
+Aw.Meta.Core.Merge.MergeFacts.LiveMergeState.init -> void
+Aw.Meta.Core.Merge.MergeFacts.LiveReviewDecision.get -> string?
+Aw.Meta.Core.Merge.MergeFacts.LiveReviewDecision.init -> void
+const Aw.Meta.Core.Config.GateConfig.CiMode = "ci" -> string!
+const Aw.Meta.Core.Config.GateConfig.CiScope = "ci" -> string!
+const Aw.Meta.Core.Config.GateConfig.LocalMode = "local" -> string!
+Aw.Meta.Core.Coordination.RepoCommands.CiView(string! repo, int pr) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Github.PrCiState!>!>
+Aw.Meta.Core.Coordination.RepoCommands.RequiredChecks(string! repo, int pr) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>!>!>
+Aw.Meta.Core.Gate.CiGate
+Aw.Meta.Core.Github.PrCiState
+Aw.Meta.Core.Github.PrCiState.<Clone>$() -> Aw.Meta.Core.Github.PrCiState!
+Aw.Meta.Core.Github.PrCiState.Base.get -> string!
+Aw.Meta.Core.Github.PrCiState.Base.init -> void
+Aw.Meta.Core.Github.PrCiState.Deconstruct(out string! Head, out string! Base, out string! ReviewDecision, out string! MergeState) -> void
+Aw.Meta.Core.Github.PrCiState.Equals(Aw.Meta.Core.Github.PrCiState? other) -> bool
+Aw.Meta.Core.Github.PrCiState.Head.get -> string!
+Aw.Meta.Core.Github.PrCiState.Head.init -> void
+Aw.Meta.Core.Github.PrCiState.MergeState.get -> string!
+Aw.Meta.Core.Github.PrCiState.MergeState.init -> void
+Aw.Meta.Core.Github.PrCiState.PrCiState(string! Head, string! Base, string! ReviewDecision, string! MergeState) -> void
+Aw.Meta.Core.Github.PrCiState.ReviewDecision.get -> string!
+Aw.Meta.Core.Github.PrCiState.ReviewDecision.init -> void
+Aw.Meta.Core.Github.RequiredCheck
+Aw.Meta.Core.Github.RequiredCheck.<Clone>$() -> Aw.Meta.Core.Github.RequiredCheck!
+Aw.Meta.Core.Github.RequiredCheck.Bucket.get -> string!
+Aw.Meta.Core.Github.RequiredCheck.Bucket.init -> void
+Aw.Meta.Core.Github.RequiredCheck.Deconstruct(out string! Name, out string! State, out string! Bucket) -> void
+Aw.Meta.Core.Github.RequiredCheck.Equals(Aw.Meta.Core.Github.RequiredCheck? other) -> bool
+Aw.Meta.Core.Github.RequiredCheck.Name.get -> string!
+Aw.Meta.Core.Github.RequiredCheck.Name.init -> void
+Aw.Meta.Core.Github.RequiredCheck.RequiredCheck(string! Name, string! State, string! Bucket) -> void
+Aw.Meta.Core.Github.RequiredCheck.State.get -> string!
+Aw.Meta.Core.Github.RequiredCheck.State.init -> void
+const Aw.Meta.Core.Gate.CiGate.MergeStateStep = "merge-state" -> string!
+const Aw.Meta.Core.Gate.CiGate.ReviewStep = "review" -> string!
+override Aw.Meta.Core.Github.PrCiState.Equals(object? obj) -> bool
+override Aw.Meta.Core.Github.PrCiState.GetHashCode() -> int
+override Aw.Meta.Core.Github.PrCiState.ToString() -> string!
+override Aw.Meta.Core.Github.RequiredCheck.Equals(object? obj) -> bool
+override Aw.Meta.Core.Github.RequiredCheck.GetHashCode() -> int
+override Aw.Meta.Core.Github.RequiredCheck.ToString() -> string!
+static Aw.Meta.Core.Gate.CiGate.IsCiRecord(Aw.Meta.Core.Gate.GateRecord! gate) -> bool
+static Aw.Meta.Core.Gate.CiGate.Overall(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Gate.GateStep!>! steps) -> Aw.Meta.Core.Gate.GateVerdict
+static Aw.Meta.Core.Gate.CiGate.Steps(Aw.Meta.Core.Github.PrCiState! pull, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>! checks) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Gate.GateStep!>!
+static Aw.Meta.Core.Github.GhJson.Checks(string! json) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>?
+static Aw.Meta.Core.Github.GhJson.ChecksFromText(string! text) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>?
+static Aw.Meta.Core.Github.GhJson.CiView(string! json) -> Aw.Meta.Core.Github.PrCiState?
+static Aw.Meta.Core.Github.PrCiState.operator !=(Aw.Meta.Core.Github.PrCiState? left, Aw.Meta.Core.Github.PrCiState? right) -> bool
+static Aw.Meta.Core.Github.PrCiState.operator ==(Aw.Meta.Core.Github.PrCiState? left, Aw.Meta.Core.Github.PrCiState? right) -> bool
+static Aw.Meta.Core.Github.RequiredCheck.operator !=(Aw.Meta.Core.Github.RequiredCheck? left, Aw.Meta.Core.Github.RequiredCheck? right) -> bool
+static Aw.Meta.Core.Github.RequiredCheck.operator ==(Aw.Meta.Core.Github.RequiredCheck? left, Aw.Meta.Core.Github.RequiredCheck? right) -> bool
+static readonly Aw.Meta.Core.MetaErrors.NoRequiredChecks -> Aw.Kernel.ErrorDefinition!
+Aw.Meta.Core.Config.DefectsConfig
+Aw.Meta.Core.Config.DefectsConfig.<Clone>$() -> Aw.Meta.Core.Config.DefectsConfig!
+Aw.Meta.Core.Config.DefectsConfig.DailyCap.get -> int
+Aw.Meta.Core.Config.DefectsConfig.DailyCap.init -> void
+Aw.Meta.Core.Config.DefectsConfig.Deconstruct(out string! Repo, out int DailyCap) -> void
+Aw.Meta.Core.Config.DefectsConfig.DefectsConfig(string! Repo = "jthorare/agentic-workflow", int DailyCap = 3) -> void
+Aw.Meta.Core.Config.DefectsConfig.Equals(Aw.Meta.Core.Config.DefectsConfig? other) -> bool
+Aw.Meta.Core.Config.DefectsConfig.Repo.get -> string!
+Aw.Meta.Core.Config.DefectsConfig.Repo.init -> void
+Aw.Meta.Core.Config.TeamConfig.Defects.get -> Aw.Meta.Core.Config.DefectsConfig!
+Aw.Meta.Core.Config.TeamConfig.Defects.init -> void
+Aw.Meta.Core.Defects.DefectDay
+Aw.Meta.Core.Defects.DefectText
+Aw.Meta.Core.Github.GhIssues
+Aw.Meta.Core.Github.IssueRef
+Aw.Meta.Core.Github.IssueRef.<Clone>$() -> Aw.Meta.Core.Github.IssueRef!
+Aw.Meta.Core.Github.IssueRef.ClosedAt.get -> System.DateTimeOffset?
+Aw.Meta.Core.Github.IssueRef.ClosedAt.init -> void
+Aw.Meta.Core.Github.IssueRef.Deconstruct(out int Number, out string! Title, out bool IsOpen, out System.DateTimeOffset? ClosedAt, out string! Url) -> void
+Aw.Meta.Core.Github.IssueRef.Equals(Aw.Meta.Core.Github.IssueRef? other) -> bool
+Aw.Meta.Core.Github.IssueRef.IsOpen.get -> bool
+Aw.Meta.Core.Github.IssueRef.IsOpen.init -> void
+Aw.Meta.Core.Github.IssueRef.IssueRef(int Number, string! Title, bool IsOpen, System.DateTimeOffset? ClosedAt, string! Url) -> void
+Aw.Meta.Core.Github.IssueRef.Number.get -> int
+Aw.Meta.Core.Github.IssueRef.Number.init -> void
+Aw.Meta.Core.Github.IssueRef.Title.get -> string!
+Aw.Meta.Core.Github.IssueRef.Title.init -> void
+Aw.Meta.Core.Github.IssueRef.Url.get -> string!
+Aw.Meta.Core.Github.IssueRef.Url.init -> void
+const Aw.Meta.Core.KvKeys.DefectsDay = "defects.day" -> string!
+override Aw.Meta.Core.Config.DefectsConfig.Equals(object? obj) -> bool
+override Aw.Meta.Core.Config.DefectsConfig.GetHashCode() -> int
+override Aw.Meta.Core.Config.DefectsConfig.ToString() -> string!
+override Aw.Meta.Core.Github.IssueRef.Equals(object? obj) -> bool
+override Aw.Meta.Core.Github.IssueRef.GetHashCode() -> int
+override Aw.Meta.Core.Github.IssueRef.ToString() -> string!
+static Aw.Meta.Core.Config.DefectsConfig.operator !=(Aw.Meta.Core.Config.DefectsConfig? left, Aw.Meta.Core.Config.DefectsConfig? right) -> bool
+static Aw.Meta.Core.Config.DefectsConfig.operator ==(Aw.Meta.Core.Config.DefectsConfig? left, Aw.Meta.Core.Config.DefectsConfig? right) -> bool
+static Aw.Meta.Core.Defects.DefectDay.Format(System.DateOnly today, int filed, int skipped) -> string!
+static Aw.Meta.Core.Defects.DefectDay.Parse(string? stored, System.DateOnly today) -> (int Filed, int Skipped)
+static Aw.Meta.Core.Defects.DefectText.Body(string! what, string! errorLine, string? path) -> string!
+static Aw.Meta.Core.Defects.DefectText.ClosedWindow.get -> System.TimeSpan
+static Aw.Meta.Core.Defects.DefectText.Match(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.IssueRef!>! issues, string! title, System.DateTimeOffset now) -> Aw.Meta.Core.Github.IssueRef?
+static Aw.Meta.Core.Defects.DefectText.Title(string! code, string! title) -> string!
+static Aw.Meta.Core.Github.GhIssues.List(string! json) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.IssueRef!>?
+static Aw.Meta.Core.Github.IssueRef.operator !=(Aw.Meta.Core.Github.IssueRef? left, Aw.Meta.Core.Github.IssueRef? right) -> bool
+static Aw.Meta.Core.Github.IssueRef.operator ==(Aw.Meta.Core.Github.IssueRef? left, Aw.Meta.Core.Github.IssueRef? right) -> bool

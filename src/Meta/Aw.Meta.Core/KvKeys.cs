@@ -65,4 +65,7 @@ public static class KvKeys
 
     /// <summary>The route suggestions the watch has announced (so a re-armed watch does not repeat them).</summary>
     public const string RouteWatch = "route.watch";
+
+    /// <summary>Today's report-defect counts as "yyyy-MM-dd|filed|skipped" (the UTC date); another date means 0|0.</summary>
+    public const string DefectsDay = "defects.day";
 }

@@ -191,7 +191,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IHarnessVersions, CommandHarnessVersions>()
             .AddSingleton<IOsNotifier, OsascriptNotifier>()          // engine P6 unit (c): the only OS notifier (README X5, X50)
             .AddSingleton<IDeskNotices, FileDeskNotices>()           // engine P6 unit (c): notifications.jsonl
-            .AddSingleton<ITextScrubber>(new RedactingScrubber(Redactor.Default));
+            .AddSingleton<ITextScrubber>(new RedactingScrubber(Redactor.Default))
+            .AddSingleton<ISecretFinder>(new RedactingSecretFinder(Redactor.Default));
     }
 
     /// <summary>The doctor's adapter-backed check sets.</summary>
