@@ -1,3 +1,4 @@
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox;
@@ -135,14 +136,39 @@ public sealed class ProcessSandboxPlannerTests
         Assert.True(writable >= 0 && readOnly > writable);   // the later, deeper mount keeps the path read-only; the other order made it writable again
     }
 
-    [Fact, Trait("Lane", "unit")]
-    public void A_read_only_path_equal_to_a_resource_is_mounted_after_it_and_stays_read_only()
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("/x/res")]
+    [InlineData("/x/res/")]
+    public void A_read_only_path_equal_to_a_resource_is_refused(string readOnly)
     {
-        var request = Request() with { ResourceMounts = [new ResourceMount("state", "/x/res")], ReadOnlyPaths = ["/x/res"] };
-        var mounts = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, request).Value.Mounts.ToList();
+        var request = Request() with { ResourceMounts = [new ResourceMount("state", "/x/res")], ReadOnlyPaths = [readOnly] };
+        var result = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, request);
 
-        var writable = mounts.FindIndex(m => m.Kind == PlanMountKind.State && m.Path == "/x/res");
-        var readOnly = mounts.FindIndex(m => m.Kind == PlanMountKind.ReadOnly && m.Path == "/x/res");
-        Assert.True(writable >= 0 && readOnly > writable);   // read-only wins on an equal path, as before #2706; #2815 decides whether it should
+        Assert.True(result.IsError);
+        Assert.Equal(SindriErrors.LaunchUnconfinable.Code, result.Error.Code);
+        Assert.Contains("/x/res", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("resource", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("read-only", result.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_resource_written_with_a_trailing_slash_equals_the_read_only_path_without_one()
+    {
+        var request = Request() with { ResourceMounts = [new ResourceMount("state", "/x/res/")], ReadOnlyPaths = ["/x/res"] };
+
+        Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, request).IsError);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("/tmp")]
+    [InlineData("/tmp/")]
+    public void A_read_only_tmp_is_refused(string readOnly)
+    {
+        var result = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { ReadOnlyPaths = [readOnly] });
+
+        Assert.True(result.IsError);
+        Assert.Equal(SindriErrors.LaunchUnconfinable.Code, result.Error.Code);
+        Assert.Contains("/tmp", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("private /tmp", result.Error.Message, StringComparison.Ordinal);
     }
 }

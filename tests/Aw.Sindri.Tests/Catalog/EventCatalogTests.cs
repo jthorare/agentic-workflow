@@ -48,23 +48,23 @@ public sealed class EventCatalogTests
         Expect.Sequence([ApiViews.Job, ApiViews.Jobs], Assert.Single(EventCatalog.All, e => e.Type == EventTypes.JobProgress).Invalidates);
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("workflow.run.started", "workflow.run.started:<run id>")]
-    [InlineData("workflow.run.finished", "workflow.run.finished:<run id>")]
-    [InlineData("workflow.run.cancelled", "workflow.run.cancelled:<run id>")]
-    [InlineData("workflow.created", "workflow.created:<workflow id>")]
-    [InlineData("workflow.revised", "workflow.revised:<command id>")]
-    [InlineData("workflow.activated", "workflow.activated:<command id>")]
-    [InlineData("workflow.paused", "workflow.paused:<command id>")]
-    [InlineData("workflow.archived", "workflow.archived:<workflow id>")]
-    [InlineData("workflow.node.started", "workflow.node.started:<run id>:<node id>:<item index>")]
-    [InlineData("workflow.node.finished", "workflow.node.finished:<run id>:<node id>:<item index>")]
-    [InlineData("workflow.node.failed", "workflow.node.failed:<run id>:<node id>:<item index>")]
-    public void Each_graph_run_event_is_catalogued_privately_under_its_name_and_key_shape(string type, string keyShape)
+    [InlineData("workflow.run.started", "workflow.run.started:<run id>", typeof(WorkflowRunPublic))]
+    [InlineData("workflow.run.finished", "workflow.run.finished:<run id>", typeof(WorkflowRunPublic))]
+    [InlineData("workflow.run.cancelled", "workflow.run.cancelled:<run id>", typeof(WorkflowRunPublic))]
+    [InlineData("workflow.created", "workflow.created:<workflow id>", typeof(WorkflowChangedPublic))]
+    [InlineData("workflow.revised", "workflow.revised:<command id>", typeof(WorkflowChangedPublic))]
+    [InlineData("workflow.activated", "workflow.activated:<command id>", typeof(WorkflowChangedPublic))]
+    [InlineData("workflow.paused", "workflow.paused:<command id>", typeof(WorkflowChangedPublic))]
+    [InlineData("workflow.archived", "workflow.archived:<workflow id>", typeof(WorkflowChangedPublic))]
+    [InlineData("workflow.node.started", "workflow.node.started:<run id>:<node id>:<item index>", typeof(WorkflowNodePublic))]
+    [InlineData("workflow.node.finished", "workflow.node.finished:<run id>:<node id>:<item index>", typeof(WorkflowNodePublic))]
+    [InlineData("workflow.node.failed", "workflow.node.failed:<run id>:<node id>:<item index>", typeof(WorkflowNodePublic))]
+    public void Each_graph_run_event_is_catalogued_publicly_with_ids_only_under_its_name_and_key_shape(string type, string keyShape, Type payload)
     {
         var entry = Assert.Single(EventCatalog.All, e => e.Type == type);
 
-        Assert.False(entry.Public);   // the trigger JSON and error text stay in the ledger; the runs view serves them
-        Assert.Null(entry.PublicPayload);
+        Assert.True(entry.Public);   // #2823: the app re-reads the Workflows page and runs on these; the payload carries ids only, the trigger JSON and error text stay in the ledger
+        Assert.Equal(payload, entry.PublicPayload);
         Assert.Equal(keyShape, entry.KeyShape);
         Assert.Contains(type, typeof(EventTypes).GetFields(BindingFlags.Public | BindingFlags.Static).Select(f => (string)f.GetRawConstantValue()!), StringComparer.Ordinal);
     }
