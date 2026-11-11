@@ -2716,7 +2716,7 @@ Aw.Meta.Core.Watch.LaneWatch.LaneWatch(System.Collections.Generic.IReadOnlySet<s
 Aw.Meta.Core.Watch.LaneWatch.Up.get -> System.Collections.Generic.IReadOnlySet<string!>!
 static Aw.Meta.Core.Watch.LaneWatch.Parse(string? text) -> Aw.Meta.Core.Watch.LaneWatch?
 static Aw.Meta.Core.Watch.LaneWatch.Step(Aw.Meta.Core.Watch.LaneWatch? kept, System.Collections.Generic.IReadOnlySet<string!>! pending, System.Collections.Generic.IReadOnlyList<string!>! lanes, System.Collections.Generic.IReadOnlyList<string!>! missing) -> (System.Collections.Generic.IReadOnlyList<string!>! Lines, Aw.Meta.Core.Watch.LaneWatch! State, System.Collections.Generic.IReadOnlySet<string!>! Pending)
-Aw.Meta.Core.Lanes.MissingLanes
-Aw.Meta.Core.Lanes.MissingLanes.Find(Aw.Meta.Core.Config.TeamConfig! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
-Aw.Meta.Core.Lanes.MissingLanes.MissingLanes(Aw.Meta.Core.Ports.ISessionDirectory! sessions, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.ILaneStore! lanes) -> void
-static Aw.Meta.Core.Lanes.MissingLanes.Wanted(Aw.Meta.Core.Config.TeamConfig! team) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Coordination.MissingLanes
+Aw.Meta.Core.Coordination.MissingLanes.Find(Aw.Meta.Core.Config.TeamConfig! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Meta.Core.Coordination.MissingLanes.MissingLanes(Aw.Meta.Core.Ports.ISessionDirectory! sessions, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.ILaneStore! lanes) -> void
+static Aw.Meta.Core.Coordination.MissingLanes.Wanted(Aw.Meta.Core.Config.TeamConfig! team) -> System.Collections.Generic.IReadOnlyList<string!>!

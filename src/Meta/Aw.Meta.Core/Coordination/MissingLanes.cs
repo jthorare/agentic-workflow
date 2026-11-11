@@ -1,9 +1,10 @@
 using Aw.Kernel;
 using Aw.Meta.Core.Config;
+using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 
-namespace Aw.Meta.Core.Lanes;
+namespace Aw.Meta.Core.Coordination;
 
 /// <summary>Finds the configured lanes that have no live session (health's missing lanes, the watch's LANE DOWN). Read-only: the lane map itself is not changed.</summary>
 /// <param name="sessions">Live sessions.</param>
