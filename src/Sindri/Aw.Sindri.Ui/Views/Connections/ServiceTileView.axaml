@@ -35,7 +35,7 @@
           <DataTemplate x:DataType="cb:ConnectionRowViewModel">
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock Classes="caption" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-              <Button Grid.Column="1" Classes="link" Content="{Binding Text.Rename}" Click="OnRenameRow" />
+              <Button Grid.Column="1" Classes="link" Content="{Binding Text.Rename}" AutomationProperties.Name="{Binding RenameName}" AutomationProperties.AutomationId="{Binding RenameId}" Click="OnRenameRow" />
             </Grid>
           </DataTemplate>
         </ItemsControl.ItemTemplate>

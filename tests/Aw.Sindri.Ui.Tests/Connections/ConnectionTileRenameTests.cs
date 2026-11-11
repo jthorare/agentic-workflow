@@ -80,6 +80,19 @@ public sealed class ConnectionTileRenameTests
         Assert.Equal(["rename linear:work zebra"], [.. _f.Server.ConnectionCallLog.Where(c => c.StartsWith("rename", StringComparison.Ordinal))]);
     }
 
+    // #2708: with two lines, a screen reader and the UI driver tell the Rename buttons apart.
+    [Fact]
+    public async Task Each_connection_line_has_its_own_Rename_name_and_id()
+    {
+        _ = _f.Server.SeedConnection(FakeSindriApi.ConnectionRow("linear:work2"));
+        var tile = await Connected();
+
+        var rows = tile.Connections.OrderBy(r => r.Name, StringComparer.Ordinal).ToArray();
+
+        Assert.Equal(["Rename linear:work", "Rename linear:work2"], [.. rows.Select(r => r.RenameName)]);
+        Assert.Equal(["ServiceTileRename.linear:work", "ServiceTileRename.linear:work2"], [.. rows.Select(r => r.RenameId)]);
+    }
+
     [Fact]
     public async Task A_name_that_is_taken_keeps_the_field_open_and_says_so_without_a_code()
     {

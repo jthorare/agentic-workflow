@@ -157,6 +157,7 @@ internal sealed partial class ServiceTileViewModel
         row.Update(row.View with { Name = renamed.Value.Name });
         Raise(nameof(ConnectionName), nameof(Account), nameof(Subtitle), nameof(AccessibleName));
         IsRenaming = false;
+        _target = null;
         OnChanged(nameof(RenamingName));
         await _changed().ConfigureAwait(true);
     }
