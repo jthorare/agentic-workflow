@@ -1,6 +1,7 @@
 using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
@@ -78,5 +79,34 @@ public sealed class WorkflowsCreateFormTests
         page.NewName = "Weekly";
 
         Assert.Equal("my-id", page.NewSlug);
+    }
+
+    [Fact]
+    public async Task Changing_the_name_after_a_refusal_with_a_hand_edited_short_id_keeps_the_taken_reason_on_screen()
+    {
+        var page = await Opened();
+        ServerHoldsTheSlug();
+        page.NewName = "Morning check";
+        page.NewSlug = "my-id";
+        await page.Create(Token);
+
+        page.NewName = "Morning checks";
+
+        Assert.Equal(("my-id", false, Labels.WfShortIdTaken("my-id"), true), (page.NewSlug, page.CanCreate, page.CreateReasonText, page.CreateReasonIsError));
+    }
+
+    [Fact]
+    public async Task Typing_the_refused_short_id_back_after_changing_it_says_taken_again()
+    {
+        var page = await Opened();
+        ServerHoldsTheSlug();
+        page.NewName = "Morning check";
+        await page.Create(Token);
+
+        page.NewSlug = "other-id";
+        Assert.True(page.CanCreate);
+        page.NewSlug = "morning-check";
+
+        Assert.Equal((false, Labels.WfShortIdTaken("morning-check"), true), (page.CanCreate, page.CreateReasonText, page.CreateReasonIsError));
     }
 }
