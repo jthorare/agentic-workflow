@@ -56,8 +56,10 @@ public sealed class UiClientRoutesTests : IDisposable
             .ToList();
 
         Assert.NotEmpty(calls);
-        Assert.True(silent.Count == 0, "These client methods sent no request with dummy arguments; fix the dummy or list them in _skipped with a reason: " + string.Join(", ", silent));
-        Assert.True(unmatched.Count == 0, "The client calls routes the host doesn't map:" + Environment.NewLine + string.Join(Environment.NewLine, unmatched));
+        Assert.True(
+            silent.Count == 0 && unmatched.Count == 0,
+            (unmatched.Count == 0 ? string.Empty : "The client calls routes the host doesn't map:" + Environment.NewLine + string.Join(Environment.NewLine, unmatched) + Environment.NewLine)
+            + (silent.Count == 0 ? string.Empty : "These client methods sent no request with dummy arguments; fix the dummy or list them in _skipped with a reason: " + string.Join(", ", silent)));
     }
 
     private static async Task<(List<(string Method, string Path, string Client)> Calls, List<string> Silent)> RecordClientCalls(CancellationToken token)
@@ -82,7 +84,7 @@ public sealed class UiClientRoutesTests : IDisposable
             var before = recorder.Seen.Count;
             try
             {
-                var args = method.GetParameters().Select(p => Dummy(p.ParameterType, 0, token)).ToArray();
+                var args = method.GetParameters().Select(p => DummyFor(p, token)).ToArray();
                 await Run(method.Invoke(client, args), token);
             }
             catch (Exception e) when (e is not OutOfMemoryException)
@@ -126,6 +128,10 @@ public sealed class UiClientRoutesTests : IDisposable
             _ = item;
         }
     }
+
+    // why: a string parameter named ...Json is parsed before anything is sent (ApplyWorkflowOps' opsJson), so it gets an empty JSON array.
+    private static object? DummyFor(ParameterInfo parameter, CancellationToken token) =>
+        parameter.ParameterType == typeof(string) && parameter.Name!.EndsWith("Json", StringComparison.Ordinal) ? "[]" : Dummy(parameter.ParameterType, 0, token);
 
     private static object? Dummy(Type type, int depth, CancellationToken token)
     {
