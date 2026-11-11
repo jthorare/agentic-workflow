@@ -13,8 +13,8 @@ internal sealed partial class TopBar
     private const double ProblemsMax = 220;
 
     // The placeholder's target width is its text plus this: an exact fit trims on font rounding, and the pill's problem
-    // text gives way instead.
-    internal const double PlaceholderSlack = 12;
+    // text gives way instead. 4 px, not 12 (QA #2547): at 1280 px a short problem ("service broken failed") was 8 px short.
+    internal const double PlaceholderSlack = 4;
 
     // The pill without its problem text (the Refresh button, the glyph, the word, the age while shown), from the last
     // whole measure of the bar, so every part of it comes from one layout (#2547: the group's width from one pass less

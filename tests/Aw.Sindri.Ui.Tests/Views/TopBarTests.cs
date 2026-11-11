@@ -210,12 +210,16 @@ public sealed class TopBarTests : IDisposable
 
     // #2547: TopBar.Counts counted 6 px before a count; the tabs' stack spaces its label and count by 8. The bar's estimate of
     // what the counts take must equal what hiding them gives back (the estimate is what every step of the fit is measured from).
+    // The estimate is read while the counts show: hiding them measures the bar again, and that measure remembers nothing.
+    // No counts is the control row: it passes whatever the spacing is (0 estimated, 0 given back).
     [Theory]
-    [InlineData(1.0, true)]
-    [InlineData(1.3, true)]
-    [InlineData(1.0, false)]
-    [InlineData(1.3, false)]
-    public Task The_bars_estimate_of_the_counts_matches_the_width_they_take(double scale, bool withCounts) => OnUi(async () =>
+    [InlineData(1.0, 0)]
+    [InlineData(1.3, 0)]
+    [InlineData(1.0, 1)]
+    [InlineData(1.3, 1)]
+    [InlineData(1.0, 3)]
+    [InlineData(1.3, 3)]
+    public Task The_bars_estimate_of_the_counts_matches_the_width_they_take(double scale, int counts) => OnUi(async () =>
     {
         _records.Write(A.Record());
         var (window, shell) = await Show(s => s.State == ShellState.Normal);
@@ -224,14 +228,20 @@ public sealed class TopBarTests : IDisposable
         try
         {
             window.Width = 1700;
-            if (withCounts)
+            foreach (var entry in shell.Navigation)
             {
-                shell.Navigation.First(n => n.Page == PageId.Work).Count = "12";
-                shell.Navigation.First(n => n.Page == PageId.Agents).Count = "3";
+                entry.Count = string.Empty;
+            }
+
+            var given = new (PageId Page, string Count)[] { (PageId.Work, "12"), (PageId.Agents, "3"), (PageId.Reviews, "2") };
+            foreach (var (page, count) in given.Take(counts))
+            {
+                shell.Navigation.First(n => n.Page == page).Count = count;
             }
 
             Settle(window);
             var bar = window.Get<TopBar>("TopBar");
+            var estimate = bar.CountsWidth;
             var list = Named<ListBox>(window, "Navigation");
             var shown = list.Bounds.Width;
             list.Classes.Set("no-counts", value: true);
@@ -239,8 +249,8 @@ public sealed class TopBarTests : IDisposable
             var taken = shown - list.Bounds.Width;
 
             Assert.True(
-                Math.Abs(bar.CountsWidth - taken) <= 0.5,
-                string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at {scale:0.0} {(withCounts ? "with" : "without")} counts: the bar estimates {bar.CountsWidth} px, hiding them gives back {taken} px"));
+                Math.Abs(estimate - taken) <= 0.5,
+                string.Create(System.Globalization.CultureInfo.InvariantCulture, $"at {scale:0.0} with {counts} counts: the bar estimates {estimate} px, hiding them gives back {taken} px"));
         }
         finally
         {
