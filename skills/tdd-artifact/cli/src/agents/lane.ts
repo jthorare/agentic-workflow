@@ -102,6 +102,7 @@ export function kids(n: PyDict): Py[] {
   if (t === "cards") return L(get(n, "cards", [])).flatMap((c: Py) => L(get(c, "blocks", [])));
   if (t === "persona") return [...L(or(get(n, "text"), [])), ...L(or(get(n, "media"), [])), ...(truthy(get(n, "today")) ? [n.get("today")] : [])];
   if (t === "today") return [...L(or(get(n, "media"), [])), ...L(or(get(n, "blocks"), []))];
+  if (t === "shots") return [...L(or(get(n, "media"), []))];
   if (t === "duo") return [...L(or(get(n, "items"), []))];
   if (t === "cols") return L(get(n, "cols", [])).flatMap((col: Py) => L(col));
   if (t === "options") return L(get(n, "options", [])).flatMap((o: Py) => L(get(o, "blocks", [])));
@@ -445,6 +446,7 @@ export class Lane {
       for (const m of L(or(get(n, "media"), []))) out.push(...this.rNode(m, d, cx));
       return [...out, ...this.rNodes(get(n, "blocks"), d, cx)];
     }
+    if (t === "shots") return L(or(get(n, "media"), [])).flatMap((m: Py) => this.rNode(m, d, cx));
     if (t === "fold" || t === "group" || t === "decision") return [...this.rHead(n, d, cx), ...this.rNodes(get(n, "blocks"), d + 1, cx)];
     if (t === "decisions" || t === "steps" || t === "col" || t === "box") return this.rNodes(get(n, "blocks"), d, cx);
     if (t === "duo") return this.rNodes(get(n, "items"), d, cx);

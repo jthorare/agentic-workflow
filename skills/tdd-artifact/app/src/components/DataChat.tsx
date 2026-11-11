@@ -10,7 +10,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useContent } from "../lib/context";
 import { cx } from "../lib/raw";
-import type { Content, Node, SchemaTable } from "../types";
+import type { Content, SchemaTable } from "../types";
+
+/** Any value inside content.json: these two walks read the tree by key, whatever the node type. */
+type Json = any;
 import { Ticks, sourceTag } from "./DataGrid";
 
 /* ------------------------------------------------------------------------------------------------ runtime shapes */
@@ -94,7 +97,7 @@ function plain(s: string) {
 }
 
 /** The plain text of a content node (a section, a block, an anchored row), in document order. */
-function nodeText(n: Node, out: string[]) {
+function nodeText(n: Json, out: string[]) {
   if (n == null) return;
   if (typeof n === "string") { const p = plain(n); if (p) out.push(p); return; }
   if (Array.isArray(n)) { for (const x of n) nodeText(x, out); return; }
@@ -102,7 +105,7 @@ function nodeText(n: Node, out: string[]) {
   for (const k in n) if (!SKIP.has(k)) nodeText(n[k], out);
 }
 
-function findNode(n: Node, id: string): Node | null {
+function findNode(n: Json, id: string): Json | null {
   if (!n || typeof n !== "object") return null;
   if (Array.isArray(n)) { for (const x of n) { const r = findNode(x, id); if (r) return r; } return null; }
   if (n.id === id) return n;

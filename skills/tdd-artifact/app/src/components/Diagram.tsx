@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useContent } from "../lib/context";
 import { Raw, cx } from "../lib/raw";
-import type { Hotspot, Node, SchemaTable } from "../types";
+import type { DiagramNode, Hotspot, SchemaTable } from "../types";
 import { TableNode } from "./TableNode";
 
 export function Legend({ items }: { items: { label: string; tone: string }[] }) {
@@ -10,7 +10,7 @@ export function Legend({ items }: { items: { label: string; tone: string }[] }) 
 
 /** A diagram figure: the SVG/PNG as <img>, hotspot anchors in percent over it, a zoom toggle, legend and reading line.
  *  A hotspot whose `table` has a schema card is drawn as that table's card (TableNode, D26) over its box. */
-export function Diagram({ node: n }: { node: Node }) {
+export function Diagram({ node: n }: { node: DiagramNode }) {
   const [zoomed, setZoomed] = useState(false);
   const schema: SchemaTable[] = useContent()?.schema || [];
   const card = (h: Hotspot) => (h.table ? schema.find((t) => t.id === h.table || t.table === h.table) : undefined);
@@ -24,7 +24,7 @@ export function Diagram({ node: n }: { node: Node }) {
       <div className="view">
         <div className="stage">
           <img src={n.src} alt={n.alt} width={n.width || undefined} height={n.height || undefined} loading="lazy" decoding="async" />
-          {(n.hotspots || []).map((h: Hotspot, i: number) => {
+          {(n.hotspots || []).map((h, i) => {
             const t = card(h);
             return t ? <TableNode h={h} t={t} natW={natW} natH={natH} idBase={n.id} key={i} /> : <HotspotA h={h} key={i} />;
           })}

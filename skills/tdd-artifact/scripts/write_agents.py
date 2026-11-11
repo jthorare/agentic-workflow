@@ -42,7 +42,7 @@ from the page through strip_page.py. Prints one summary line.
 Library: check(build_dir, out=None) -> list[str]   problems; empty when the lane is current
          write(build_dir, packet=None, out=None, budget=8000, copy_images=True, force=False) -> dict summary
 python3 -I, standard library only; imports nothing from system-design."""
-import datetime, hashlib, importlib.util, json, os, re, shutil, sys
+import hashlib, importlib.util, json, os, re, shutil, sys
 sys.dont_write_bytecode = True
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -151,6 +151,8 @@ def kids(n):
         return list(n.get("text") or []) + list(n.get("media") or []) + ([n["today"]] if n.get("today") else [])
     if t == "today":
         return list(n.get("media") or []) + list(n.get("blocks") or [])
+    if t == "shots":
+        return list(n.get("media") or [])
     if t == "duo":
         return list(n.get("items") or [])
     if t == "cols":
@@ -437,6 +439,8 @@ class Lane:
             for m in n.get("media") or []:
                 out += self.r_node(m, d, cx)
             return out + self.r_nodes(n.get("blocks"), d, cx)
+        if t == "shots":
+            return [line for m in n.get("media") or [] for line in self.r_node(m, d, cx)]
         if t in ("fold", "group", "decision"):
             return self.r_head(n, d, cx) + self.r_nodes(n.get("blocks"), d + 1, cx)
         if t in ("decisions", "steps", "col", "box"):
@@ -1110,7 +1114,7 @@ class Lane:
     def write_images(self):
         copied = set()
         for img in self.images:
-            row, n = img["row"], img["node"]
+            row = img["row"]
             if self.copy_images and img["src_abs"] and row["path"] not in copied:
                 self.files[row["path"]] = ("copy", img["src_abs"])
                 copied.add(row["path"])

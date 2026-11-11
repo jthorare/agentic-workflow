@@ -23,7 +23,7 @@ import { ContentCtx } from "../src/lib/context";
 import { SchemaDrawer } from "../src/components/SchemaDrawer";
 import { TableNode } from "../src/components/TableNode";
 import { cx } from "../src/lib/raw";
-import type { Content, Hotspot, Node } from "../src/types";
+import type { Content, DiagramNode, Hotspot } from "../src/types";
 
 const HERE = dirname(new URL(import.meta.url).pathname);
 const TDD_CSS = resolve(HERE, "../../templates/tdd-system/tdd.css");
@@ -93,7 +93,7 @@ const STUB = `(() => {
   window.claude = Object.freeze({ use: async (name) => (name === "sample" ? sample : name === "mcp" && ds ? mcp : null) });
 })();`;
 
-function findDiagram(n: any): Node | null {
+function findDiagram(n: any): DiagramNode | null {
   if (!n || typeof n !== "object") return null;
   if (Array.isArray(n)) { for (const x of n) { const r = findDiagram(x); if (r) return r; } return null; }
   if (n.type === "diagram" && n.key === key) return n;
@@ -103,7 +103,7 @@ function findDiagram(n: any): Node | null {
 
 /** The same figure markup Diagram.tsx renders (classes from tdd.css), static, so the harness owns no app-core file:
  *  a box whose table has a schema card is that table's card (TableNode, D26), any other box a plain hotspot. */
-function Fig({ n, base }: { n: Node; base: string }) {
+function Fig({ n, base }: { n: DiagramNode; base: string }) {
   const natW = Number(n.width) || 1600, natH = Number(n.height) || natW / 2;
   const card = (h: Hotspot) => (h.table ? content.schema.find((t) => t.id === h.table || t.table === h.table) : undefined);
   return (

@@ -16,7 +16,7 @@
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
 import { App } from "./src/App";
-import type { Content } from "./src/types";
+import { NODE_TYPES, type Content } from "./src/types";
 
 const APP = import.meta.dir;
 const usage = "usage: bun run build.ts <build-dir> [--css <path>] [--out <file>]";
@@ -59,6 +59,20 @@ function checkContent(c: any, path: string): asserts c is Content {
   if (missing.length) die(`${path} is not a build_tdd.py content.json (missing ${missing.join(", ")})`);
   if (!Array.isArray(c.sections) || !Array.isArray(c.nav)) die(`${path}: sections and nav must be arrays`);
   if (c.template && !String(c.template).startsWith("tdd/")) die(`${path}: template ${c.template} is not tdd/*`);
+}
+
+/** Block types in the content that this renderer has no case for (a newer compiler): they would be left out of the page. */
+function unknownNodeTypes(c: Content): string[] {
+  const known = new Set<string>(NODE_TYPES), seen = new Set<string>();
+  const walk = (v: unknown) => {
+    if (Array.isArray(v)) { v.forEach(walk); return; }
+    if (!v || typeof v !== "object") return;
+    const o = v as Record<string, unknown>;
+    if (typeof o.type === "string" && !known.has(o.type)) seen.add(o.type); // inside the block tree only nodes carry a string `type`
+    for (const k in o) walk(o[k]);
+  };
+  walk(c.lede); walk(c.sections.map((s) => s.blocks));
+  return [...seen].sort();
 }
 
 const escHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -121,6 +135,8 @@ const firstRule = css.replace(/\/\*[\s\S]*?\*\//g, "").trimStart();
 if (/@import\b/.test(css) && !firstRule.startsWith("@import")) die("the Google Fonts @import is not the first rule in the stylesheet");
 if (/<\/style/i.test(css)) die("stylesheet contains </style");
 
+const strangers = unknownNodeTypes(content);
+if (strangers.length) console.warn(`build.ts: warning: content.json has block type(s) this renderer does not draw: ${strangers.join(", ")} (they are left out of the page; update the app)`);
 const ssr = serverRender(content);
 if (ssr.includes("<!--$!-->")) die("server render contains a client-render fallback (<!--$!-->): a component suspended");
 const js = await bundleClient();

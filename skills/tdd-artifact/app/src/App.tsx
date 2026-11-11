@@ -1,7 +1,7 @@
 // The TDD page: masthead, lede, numbered sections of blocks, footer in one .wrap column; the contents rail and the
 // overlays outside it. Pure render from content (no Date, random or window during render), hydrated by client.tsx.
 import { useRef } from "react";
-import type { Content, Node, Section as SectionT } from "./types";
+import type { BlockList, Content, Section as SectionT } from "./types";
 import { ContentCtx } from "./lib/context";
 import { useDelegation } from "./lib/delegate";
 import { Raw, cx } from "./lib/raw";
@@ -29,11 +29,11 @@ export function App({ content }: { content: Content }) {
 }
 
 /** Fold blocks at a section's top level and directly inside its groups. */
-function foldCount(blocks: Node[]) {
+function foldCount(blocks: BlockList) {
   let n = 0;
   for (const b of blocks || []) {
     if (b?.type === "fold") n++;
-    else if (b?.type === "group") n += (b.blocks || []).filter((x: Node) => x?.type === "fold").length;
+    else if (b?.type === "group") n += (b.blocks || []).filter((x) => x?.type === "fold").length;
   }
   return n;
 }

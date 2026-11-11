@@ -1,5 +1,5 @@
 // Minimal ambient types for the two bun scripts (build.ts, check_hydrate.ts). The app installs neither @types/bun nor
-// @types/jsdom (bun.lock is not the app-core worker's to change), so these declare exactly the calls the scripts make.
+// @types/jsdom (adding them would change bun.lock), so these declare exactly the calls the scripts make.
 // Delete this file if those packages are added to devDependencies.
 interface BunFile { text(): Promise<string>; json(): Promise<any>; exists(): Promise<boolean>; readonly size: number }
 interface BunBuildArtifact { path: string; kind: string; text(): Promise<string> }
