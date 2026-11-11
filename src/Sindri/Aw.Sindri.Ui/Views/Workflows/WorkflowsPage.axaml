@@ -115,11 +115,12 @@
 
     <!-- Level 2: one workflow's runs, newest first. -->
     <StackPanel x:Name="WorkflowRunsLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsRuns}">
+      <!-- One row, every item centred on it: the title used to stay top-aligned (Stretch) and sat 3 px above the status text and the buttons (#2689). -->
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <TextBlock x:Name="RunsTitle" Classes="body-strong" Text="{Binding Runs.Title}" AutomationProperties.Name="{Binding Runs.Title}" />
+        <TextBlock x:Name="RunsTitle" Classes="body-strong" VerticalAlignment="Center" Text="{Binding Runs.Title}" AutomationProperties.Name="{Binding Runs.Title}" />
         <TextBlock x:Name="RunsHead" Classes="caption subtle" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
-        <Button x:Name="RunNow" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
-        <Button x:Name="WorkflowEdit" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
+        <Button x:Name="RunNow" VerticalAlignment="Center" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
+        <Button x:Name="WorkflowEdit" VerticalAlignment="Center" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
       </StackPanel>
       <Border x:Name="RunsNoticeName" IsVisible="{Binding Runs.HasNotice}" AutomationProperties.Name="{Binding Runs.NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding Runs.NoticeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
