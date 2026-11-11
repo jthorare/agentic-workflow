@@ -18,6 +18,48 @@ public abstract class WorktreeFilesContract
     /// <returns>The directory.</returns>
     protected abstract string Arrange(IReadOnlyDictionary<string, DateTimeOffset> entries);
 
+    /// <summary>A repo with the worktree root set the ways the owner can: in worktrees.json, in the environment, both or neither.</summary>
+    /// <param name="fileRoot">The "root" the repo's .agentic-workflow/worktrees.json holds; null means no file.</param>
+    /// <param name="environmentRoot">The AW_WORKTREE_ROOT value the adapter will see; null means unset.</param>
+    /// <returns>The repo directory.</returns>
+    protected abstract string ArrangeRoot(string? fileRoot, string? environmentRoot);
+
+    /// <summary>Nothing set gives null, not an error.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task No_configured_root_is_null()
+    {
+        var repo = ArrangeRoot(fileRoot: null, environmentRoot: null);
+
+        var result = await Create().ConfiguredRoot(repo, CancellationToken.None);
+
+        Expect.That(result.IsSuccess && result.Value is null, "nothing set reads as null");
+    }
+
+    /// <summary>The file's root comes back as written.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task The_root_in_the_file_is_returned()
+    {
+        var repo = ArrangeRoot(fileRoot: "~/trees/app", environmentRoot: null);
+
+        var result = await Create().ConfiguredRoot(repo, CancellationToken.None);
+
+        Expect.That(result.IsSuccess && result.Value == "~/trees/app", "the file's root is returned");
+    }
+
+    /// <summary>The environment beats the file.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task The_environment_wins_over_the_file()
+    {
+        var repo = ArrangeRoot(fileRoot: "/from/file", environmentRoot: "/from/env");
+
+        var result = await Create().ConfiguredRoot(repo, CancellationToken.None);
+
+        Expect.That(result.IsSuccess && result.Value == "/from/env", "AW_WORKTREE_ROOT wins");
+    }
+
     /// <summary>The newest time of the directory and its first two levels wins.</summary>
     /// <returns>A task.</returns>
     [Fact]

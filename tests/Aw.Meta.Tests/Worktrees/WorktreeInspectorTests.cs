@@ -212,6 +212,18 @@ public sealed class WorktreeInspectorTests
         Assert.Equal(WorktreeDecision.Removable, (await LaneReport()).Decision);
     }
 
+    // Ideas' review of #2847: a refused worktree root ("trees" is inside the repo /work) is left out, and the default roots still count.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_refused_worktree_root_is_skipped_and_the_default_roots_still_count()
+    {
+        ScriptBranch();
+        _ = await _world.Values.Set(KvKeys.WorktreesSweepStart, A.At(10).ToString("O", CultureInfo.InvariantCulture), CancellationToken.None);
+        _world.WorktreeFiles.Touch(Lane, A.At(9));
+        _world.WorktreeFiles.ConfigureRoot("/work", "trees");
+
+        Assert.Equal(WorktreeDecision.Removable, (await LaneReport()).Decision);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Without_a_recorded_sweep_the_change_trigger_has_nothing_to_compare_with()
     {
