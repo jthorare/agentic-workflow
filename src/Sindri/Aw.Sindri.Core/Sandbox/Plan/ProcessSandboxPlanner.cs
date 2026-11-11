@@ -81,9 +81,7 @@ public static class ProcessSandboxPlanner
         m.Add(new PlanMount("/root", PlanMountKind.Deny, Reason: Always + "not the process's"));
         m.AddRange(host.OtherHomes.Select(h => new PlanMount(h, PlanMountKind.Deny, Reason: Always + "other users' files")));
 
-        // why: above the denies, because the binary and the resources live under Sindri's home; bwrap applies mounts in order, so a read-only ancestor mounted after a writable path under it would shadow that path; read-only first, ancestors before descendants, then the writable resources
-        m.AddRange(ReadOnly(r));
-        m.AddRange(r.ResourceMounts.Select(x => new PlanMount(x.HostPath.TrimEnd('/'), PlanMountKind.State, Reason: $"the {x.Name} resource of {r.Owner}")));
+        m.AddRange(Resources(r));
         if (r.HostGroups.Count > 0)
         {
             m.Add(new PlanMount("/run/sindri/net", PlanMountKind.ReadOnly, r.Net.NetDir, Reason: "the sockets to the egress proxy: the only way out"));
@@ -92,13 +90,17 @@ public static class ProcessSandboxPlanner
         return m;
     }
 
-    private static IEnumerable<PlanMount> ReadOnly(ProcessSandboxRequest r)
+    // why: above the denies, because the binary and the resources live under Sindri's home. bwrap applies mounts in order, so the list is sorted by depth, whatever the kind:
+    // an ancestor comes first, a writable resource is never shadowed by a read-only ancestor, and a read-only path under a resource is mounted after it and stays read-only.
+    // Within one depth the order is the binary, the read-only paths, then the resources (the sort is stable).
+    private static IEnumerable<PlanMount> Resources(ProcessSandboxRequest r)
     {
         var binary = r.Command[..r.Command.LastIndexOf('/')];
         var paths = (r.ReadOnlyPaths ?? []).Select(static x => x.TrimEnd('/')).Where(static x => x.Length > 0).Distinct(StringComparer.Ordinal).Where(x => !string.Equals(x, binary, StringComparison.Ordinal));
         return new[] { new PlanMount(binary, PlanMountKind.ReadOnly, Reason: $"the binary of {r.Owner}") }
             .Concat(paths.Select(x => new PlanMount(x, PlanMountKind.ReadOnly, Reason: $"read-only for {r.Owner}")))
-            .OrderBy(static x => x.Path.Count(static c => c == '/'));   // stable: an ancestor has fewer slashes than its descendants
+            .Concat(r.ResourceMounts.Select(x => new PlanMount(x.HostPath.TrimEnd('/'), PlanMountKind.State, Reason: $"the {x.Name} resource of {r.Owner}")))
+            .OrderBy(static x => x.Path.Count(static c => c == '/'));
     }
 
     private static List<PlanEnvVar> Environment(ProcessSandboxRequest r)
