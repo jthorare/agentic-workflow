@@ -41,7 +41,8 @@ public sealed class SystemInsporaFramesTests : FrameHost
         Assert.All(panels, p =>
         {
             Assert.Equal(new Thickness(0), p.BorderThickness);
-            Assert.Equal(new Thickness(24), p.Padding);
+            var inset = p.Child is Border section && section.Classes.Contains("section") ? section.Padding : p.Padding;   // why: a card's inset is on its section (#2842); the headline carries its own
+            Assert.Equal(new Thickness(24), inset);
         });
 
         var titles = overview.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible && t.Classes.Contains("section-title")).ToList();
