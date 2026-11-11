@@ -124,7 +124,7 @@ public sealed class DriverServerTests : IAsyncLifetime
 
     [Fact, Trait("Lane", "integration")]
     public void The_verbs_are_the_ones_the_command_line_sends() =>
-        Assert.Equal(["tree", "search", "props", "click", "type", "key", "scroll", "wait-for", "screenshot", "window", "action"], Verbs.Names);
+        Assert.Equal(["tree", "search", "props", "click", "type", "key", "scroll", "hover", "wait-for", "screenshot", "window", "action"], Verbs.Names);
 
     [Fact(Timeout = 30_000), Trait("Lane", "integration")]
     public async Task A_verb_that_throws_answers_500_and_the_next_call_is_still_served()

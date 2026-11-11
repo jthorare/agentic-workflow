@@ -4,12 +4,12 @@ using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Core.Graph.Blocks;
 
-/// <summary>The 'create_item' block: makes an item through the same create-item handler as 'sindri item add' and hands on its id.</summary>
+/// <summary>The 'create_item' block: makes an item through the same create-item handler as 'sindri item add' and hands on its id (and a 'warning' when something after the item wasn't written).</summary>
 public sealed class CreateItemBlock(ICreateItemPort items) : IGraphBlock
 {
     private const string LinearPrefix = "linear:issue/";
 
-    private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal) { ["itemId"] = "string" });
+    private static readonly BlockOutputs _outputs = new(new Dictionary<string, string>(StringComparer.Ordinal) { ["itemId"] = "string", ["warning"] = "string?" });
 
     /// <inheritdoc />
     public string Type => "create_item";
@@ -55,7 +55,18 @@ public sealed class CreateItemBlock(ICreateItemPort items) : IGraphBlock
 
         var repo = ConfigValues.Text(context.Config["repo"]);
         var made = await items.Create(new ItemToCreate(context.RunId, title, string.IsNullOrWhiteSpace(repo) ? null : repo.Trim(), ConfigValues.Text(context.Config["body"]), link.Value), cancellationToken).ConfigureAwait(false);
-        return made.IsError ? made.Error : new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["itemId"] = made.Value });
+        if (made.IsError)
+        {
+            return made.Error;
+        }
+
+        var outputs = new Dictionary<string, JsonNode?>(StringComparer.Ordinal) { ["itemId"] = made.Value.ItemId.Value };
+        if (made.Value.Warning is { } warning)
+        {
+            outputs["warning"] = warning;   // only when something wasn't written: the item exists, so the node still succeeds
+        }
+
+        return new BlockResult(outputs);
     }
 
     /// <summary>The record key of a 'linearIssue' value: a whole 'linear:issue/&lt;id&gt;' key as it is, a bare id with the prefix; null when none.</summary>

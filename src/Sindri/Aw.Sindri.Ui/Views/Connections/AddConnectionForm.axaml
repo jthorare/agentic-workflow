@@ -4,9 +4,9 @@
              x:Class="Aw.Sindri.Ui.Views.Connections.AddConnectionForm"
              x:DataType="cb:AddConnectionViewModel">
   <!-- The Add connection form: a picker for what to connect, then the fields its kind needs. A pasted key or client secret sits in a masked box, goes out in one request and is cleared;
-       the frame never shows it. An OAuth connection opens the browser and the form says it is waiting. -->
-  <Border x:Name="AddConnectionPanel" Classes="panel" Padding="16" IsVisible="{Binding IsOpen}">
-    <StackPanel Spacing="8" MaxWidth="560" HorizontalAlignment="Left">
+       the frame never shows it. A custom server opens the browser and the form says it is waiting. -->
+  <Border x:Name="AddConnectionPanel" Classes="panel" Padding="{StaticResource Space.MD.Thickness}" IsVisible="{Binding IsOpen}">
+    <StackPanel Spacing="{StaticResource Space.XS}" MaxWidth="560" HorizontalAlignment="Left">
       <TextBlock Classes="body-strong" Text="{Binding Text.Add}" AutomationProperties.Name="{Binding Text.Add}" />
       <TextBlock Classes="caption subtle" Text="{Binding Text.PresetLabel}" />
       <ComboBox x:Name="AddConnectionPreset" ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset, Mode=TwoWay}" MinWidth="280" AutomationProperties.Name="{Binding Text.PresetLabel}">
@@ -17,28 +17,20 @@
         </ComboBox.ItemTemplate>
       </ComboBox>
       <TextBlock Classes="caption subtle" Text="{Binding Text.NameLabel}" />
-      <TextBox x:Name="AddConnectionName" Text="{Binding Name, Mode=TwoWay}" PlaceholderText="{Binding Text.NameHint}" AutomationProperties.Name="{Binding Text.NameLabel}" />
-      <StackPanel x:Name="AddConnectionClient" Spacing="8" IsVisible="{Binding ShowClient}">
-        <TextBlock Classes="caption subtle" Text="{Binding Text.ClientLabel}" />
-        <TextBox x:Name="AddConnectionClientId" Text="{Binding ClientId, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.ClientLabel}" />
-      </StackPanel>
-      <StackPanel x:Name="AddConnectionClientSecretBox" Spacing="8" IsVisible="{Binding ShowClientSecret}">
-        <TextBlock Classes="caption subtle" Text="{Binding Text.ClientSecretLabel}" TextWrapping="Wrap" />
-        <TextBox x:Name="AddConnectionClientSecret" PasswordChar="●" Text="{Binding ClientSecret.Text, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.ClientSecretLabel}" />
-      </StackPanel>
-      <StackPanel x:Name="AddConnectionKeyBox" Spacing="8" IsVisible="{Binding ShowKey}">
+      <TextBox x:Name="AddConnectionName" Text="{Binding Name, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.NameLabel}" />
+      <StackPanel x:Name="AddConnectionKeyBox" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowKey}">
         <TextBlock Classes="caption subtle" Text="{Binding Text.KeyLabel}" />
         <TextBox x:Name="AddConnectionKey" PasswordChar="●" Text="{Binding Key.Text, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.KeyLabel}" />
       </StackPanel>
-      <StackPanel x:Name="AddConnectionUrlBox" Spacing="8" IsVisible="{Binding ShowUrl}">
+      <StackPanel x:Name="AddConnectionUrlBox" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowUrl}">
         <TextBlock Classes="caption subtle" Text="{Binding Text.UrlLabel}" />
         <TextBox x:Name="AddConnectionUrl" Text="{Binding Url, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.UrlLabel}" />
       </StackPanel>
       <Border x:Name="AddConnectionSecretNote" IsVisible="{Binding ShowSecretNote}" AutomationProperties.Name="{Binding Text.SecretNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption subtle" Text="{Binding Text.SecretNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <Border x:Name="AddConnectionSlack" IsVisible="{Binding ShowClient}" AutomationProperties.Name="{Binding Text.SlackNote}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <TextBlock Classes="caption subtle" Text="{Binding Text.SlackNote}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      <Border x:Name="AddConnectionReason" IsVisible="{Binding HasBlockedReason}" AutomationProperties.Name="{Binding SendBlockedReason}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption subtle" Text="{Binding SendBlockedReason}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <Border x:Name="AddConnectionStatus" IsVisible="{Binding HasStatus}" AutomationProperties.Name="{Binding StatusText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -46,9 +38,9 @@
       <Border x:Name="AddConnectionError" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <Button x:Name="AddConnectionSend" Content="{Binding Text.Send}" Click="OnSend" IsEnabled="{Binding CanSend}" AutomationProperties.Name="{Binding Text.Add}" />
-        <Button x:Name="AddConnectionClose" Content="{Binding Text.Cancel}" Click="OnClose" AutomationProperties.Name="{Binding Text.Cancel}" />
+      <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+        <Button x:Name="AddConnectionSend" Classes="command-control primary" ToolTip.Tip="{Binding SendBlockedReason}" Content="{Binding Text.Send}" Click="OnSend" IsEnabled="{Binding CanSend}" AutomationProperties.Name="{Binding Text.Add}" />
+        <Button x:Name="AddConnectionClose" Classes="command-control" Content="{Binding Text.Cancel}" Click="OnClose" AutomationProperties.Name="{Binding Text.Cancel}" />
       </StackPanel>
     </StackPanel>
   </Border>

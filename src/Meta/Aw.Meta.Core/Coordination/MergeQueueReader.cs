@@ -1,4 +1,6 @@
+using System.Globalization;
 using Aw.Kernel;
+using Aw.Meta.Core.Github;
 using Aw.Meta.Core.Merge;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
@@ -12,13 +14,16 @@ namespace Aw.Meta.Core.Coordination;
 /// </summary>
 /// <param name="messages">The inbox.</param>
 /// <param name="gates">The gate runs and merges.</param>
-/// <param name="values">Holds the pull requests the watch saw end and the queue entries dropped.</param>
-public sealed class MergeQueueReader(IMessageStore messages, IGateStore gates, IKeyValueStore values)
+/// <param name="values">Holds the pull requests the watch saw end, the queue entries dropped and the pull requests handed to GitHub's merge queue.</param>
+/// <param name="repo">Reads GitHub's merge queue.</param>
+/// <param name="config">The team config, for the repo.</param>
+public sealed class MergeQueueReader(IMessageStore messages, IGateStore gates, IKeyValueStore values, RepoCommands repo, IMetaConfig config)
 {
     /// <summary>The queue as it stands, lowest pull request number first.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
+    /// <param name="withGithub">Whether to ask GitHub where each pull request in its merge queue stands (one gh call each); false leaves QueuedPr.Github empty.</param>
     /// <returns>The queued pull requests, or the store's error.</returns>
-    public async ValueTask<Result<IReadOnlyList<QueuedPr>>> Read(CancellationToken cancellationToken)
+    public async ValueTask<Result<IReadOnlyList<QueuedPr>>> Read(CancellationToken cancellationToken, bool withGithub = false)
     {
         var ended = await values.Get(KvKeys.EndedPrs, cancellationToken).ConfigureAwait(false);
         var dropped = await values.Get(KvKeys.QueueDropped, cancellationToken).ConfigureAwait(false);
@@ -43,7 +48,40 @@ public sealed class MergeQueueReader(IMessageStore messages, IGateStore gates, I
             }
         }
 
-        return queued;
+        return withGithub ? await WithGithub(queued, cancellationToken).ConfigureAwait(false) : queued;
+    }
+
+    // Only the pull requests merge-run handed to GitHub's merge queue cost a gh call.
+    private async ValueTask<Result<IReadOnlyList<QueuedPr>>> WithGithub(List<QueuedPr> queued, CancellationToken cancellationToken)
+    {
+        var handed = await values.Get(KvKeys.MergeQueued, cancellationToken).ConfigureAwait(false);
+        if (handed.IsError)
+        {
+            return handed.Error;
+        }
+
+        var inGithub = MergeQueued.Parse(handed.Value);
+        var result = new List<QueuedPr>();
+        foreach (var entry in queued)
+        {
+            result.Add(inGithub.ContainsKey(entry.Pr) ? entry with { Github = await GithubText(entry.Pr, cancellationToken).ConfigureAwait(false) } : entry);
+        }
+
+        return result;
+    }
+
+    // "queued 2 (AWAITING_CHECKS)" from GitHub now; "queued (unknown)" when the read fails.
+    private async ValueTask<string> GithubText(int pr, CancellationToken cancellationToken)
+    {
+        var team = await config.Load(cancellationToken).ConfigureAwait(false);
+        var view = team.IsError ? Results.Failure<MergeQueueView>(team.Error) : await repo.QueueView(team.Value.Repo, pr).ConfigureAwait(false);
+        if (view.IsError)
+        {
+            return "queued (unknown)";
+        }
+
+        var place = view.Value.Position is { } number ? " " + number.ToString(CultureInfo.InvariantCulture) : string.Empty;
+        return view.Value.EntryState is { } state ? $"queued{place} ({state})" : $"queued{place}";
     }
 
     // A ready pull request with its latest gate verdict; null once any merge is recorded for it.

@@ -50,6 +50,22 @@ public abstract class MessageStoreContract
         Expect.That(offset.Value == 250 && other.Value == 0, "the offset is per transcript");
     }
 
+    /// <summary>Every transcript with a stored offset is listed once, ordered by path.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Transcripts_lists_each_read_transcript_once_ordered_by_path()
+    {
+        var store = await Create(_none);
+        var none = await store.Transcripts(_none);
+        _ = await store.RecordInbound("/t/b.jsonl", 10, [A.Inbox("m1", minute: 1)], _none);
+        _ = await store.RecordInbound("/t/a.jsonl", 20, [], _none);
+        _ = await store.RecordInbound("/t/b.jsonl", 30, [], _none);
+        var listed = await store.Transcripts(_none);
+
+        Expect.That(none.IsSuccess && none.Value.Count == 0, "no transcript before the first read");
+        Expect.That(listed.IsSuccess && listed.Value.SequenceEqual(["/t/a.jsonl", "/t/b.jsonl"], StringComparer.Ordinal), "each transcript once, ordered by path");
+    }
+
     /// <summary>Messages read back with their classification, oldest first.</summary>
     /// <returns>A task.</returns>
     [Fact]
@@ -84,6 +100,21 @@ public abstract class MessageStoreContract
         Expect.That(one.IsSuccess && two.IsSuccess, "known messages resolve");
         Expect.That(read.Value[0].Resolution == dismissed && read.Value[1].Resolution == deferred, "resolutions read back");
         Expect.That(missing.IsError && missing.Error.Code == MetaErrors.MessageNotFound.Code, "AW-META-005 for an unknown message");
+    }
+
+    /// <summary>Marking messages shown stores the time on those messages only; an unknown id is skipped.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Shown_messages_keep_the_time_they_were_shown()
+    {
+        var store = await Create(_none);
+        _ = await store.RecordInbound("/t/a.jsonl", 1, [A.Inbox("m1"), A.Inbox("m2", minute: 1)], _none);
+
+        var marked = await store.MarkShown([MessageId.From("m1"), MessageId.From("nope")], A.At(30), _none);
+        var read = await store.Messages(_none);
+
+        Expect.That(marked.IsSuccess, "marking succeeds, an unknown id is skipped");
+        Expect.That(read.Value[0].ShownAt == A.At(30) && read.Value[1].ShownAt is null, "only the marked message has a shown time");
     }
 
     /// <summary>Sent messages read back in order, with their message id when known.</summary>

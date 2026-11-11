@@ -6,12 +6,14 @@ using Aw.Context.Core.Sync;
 using Aw.Context.Testing.Engine;
 using Aw.Kernel;
 using Aw.Kernel.Json;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Connections;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -23,6 +25,8 @@ public sealed class IndexDoctorChecksTests
     private static readonly PointerSecrets _githubOnly = new(name => name == "GH_KEY" ? "ghp_live-secret-0123" : null, new FakeToolRunner(ToolRun.Missing));
     private static readonly RepoEntry[] _repos = [new RepoEntry("split-panes", "/repos/split-panes")];
     private readonly SliceHarness _h = new();
+    private readonly InMemoryConnectionStore _connections = new();
+    private readonly FakeConnectionSecrets _connectionSecrets = new();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -55,7 +59,48 @@ public sealed class IndexDoctorChecksTests
 
         var linear = (await Checks(_noSecrets, new FakeProbe(Answer: Unit.Value)).Run(Token)).Single(r => r.Name == "context:index-linear");
 
-        Assert.Equal((CheckState.Warn, "context.sources.linear.token is not set, so linear can't sync", "set context.sources.linear.token to a secret pointer (sindri index connect linear)"), (linear.State, linear.Detail, linear.Fix));
+        Assert.Equal((CheckState.Warn, "context.sources.linear.token is not set and no linear connection is connected, so linear can't sync",
+            "connect linear on the Connections page, or set context.sources.linear.token to a secret pointer (sindri index connect linear)"), (linear.State, linear.Detail, linear.Fix));
+    }
+
+    // #2508: the feeds read a connected connection before the pointer, so doctor does too: no "can't sync" for a source that syncs
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_source_with_no_pointer_and_a_connected_connection_is_ok_and_never_shows_the_token()
+    {
+        await Approve("""{"sources":{"linear":{"teams":["ENG"]},"slack":{"channels":[{"id":"C0001GEN","name":"eng"}]}}}""");
+        await Connect("linear", ConnectionStatus.Connected);
+        await Connect("slack", ConnectionStatus.Connected);
+
+        var rows = await Checks(_noSecrets, new FakeProbe(Answer: Unit.Value)).Run(Token);
+
+        Assert.Equal((CheckState.Ok, "reads with the connected linear connection on the Connections page (not probed: the source is read by sindri index sync)", null),
+            rows.Where(r => r.Name == "context:index-linear").Select(r => (r.State, r.Detail, r.Fix)).Single());
+        Assert.Equal((CheckState.Ok, "reads with the connected slack connection on the Connections page (not probed: the source is read by sindri index sync)", null),
+            rows.Where(r => r.Name == "context:index-slack").Select(r => (r.State, r.Detail, r.Fix)).Single());
+        Assert.DoesNotContain(rows, r => r.Detail.Contains("connection-token", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pointer_that_does_not_resolve_is_ok_while_a_connection_is_connected_and_says_the_pointer_is_unused()
+    {
+        await Approve(AllSources);
+        await Connect("slack", ConnectionStatus.Connected);
+
+        var slack = (await Checks(_noSecrets, new FakeProbe(Answer: Unit.Value)).Run(Token)).Single(r => r.Name == "context:index-slack");
+
+        Assert.Equal((CheckState.Ok, "reads with the connected slack connection on the Connections page; context.sources.slack.token is not used while it is connected (not probed: the source is read by sindri index sync)"),
+            (slack.State, slack.Detail));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_connection_that_needs_sign_in_does_not_count_and_the_pointer_row_stays()
+    {
+        await Approve("""{"sources":{"linear":{"teams":["ENG"]}}}""");
+        await Connect("linear", ConnectionStatus.NeedsSignIn);
+
+        var linear = (await Checks(_noSecrets, new FakeProbe(Answer: Unit.Value)).Run(Token)).Single(r => r.Name == "context:index-linear");
+
+        Assert.Equal(CheckState.Warn, linear.State);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -243,7 +288,14 @@ public sealed class IndexDoctorChecksTests
             DateTimeOffset.UnixEpoch, ClosedAt: null, OpenIssues: 0, OpenPrs: null, LastActivity: null, Repos: null, Counting: false);
 
     private IndexDoctorChecks Checks(PointerSecrets secrets, FakeProbe probe, TimeSpan? limit = null) =>
-        new(_h.Profiles, new ContextScopes(_h.Profiles, _h.Callers), FakeContextEngine.Instance, secrets, probe, limit ?? TimeSpan.FromSeconds(3));
+        new(_h.Profiles, new ContextScopes(_h.Profiles, _h.Callers), FakeContextEngine.Instance, secrets, new ConnectionCredentials(_connections, _connectionSecrets, secrets), probe, limit ?? TimeSpan.FromSeconds(3));
+
+    private async Task Connect(string preset, ConnectionStatus status)
+    {
+        var connection = ConnectionSamples.Oauth(ConnectionSamples.Name(preset, "work"), status);
+        _ = (await _connections.Insert(connection, Token)).Value;
+        _ = _connectionSecrets.Store(connection.Name, new TokenSet(preset + "-connection-token", RefreshToken: null, ExpiresAt: null)).Value;
+    }
 
     private async Task Approve(string context)
     {

@@ -6,34 +6,106 @@
              x:DataType="lvm:LinearWorkViewModel">
   <!-- The Work page's Linear view (Linear hub spec §3): the since-you-looked strip as a band above the filter bar (owner's pick), the filter bar, the feed's
        states (updating, failing, unreachable), then the rows in two groups with Show more. The Connect Linear card replaces it all while no Linear source is set up. -->
+  <UserControl.Styles>
+    <Style Selector="Border.avatar">
+      <Setter Property="Width" Value="24" />
+      <Setter Property="Height" Value="24" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Border.badge.urgent">
+      <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
+    </Style>
+    <Style Selector="Border.badge.urgent TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
+    </Style>
+  </UserControl.Styles>
   <StackPanel Spacing="{StaticResource Size.PanelGap}">
     <Border x:Name="LinearStrip" Classes="panel" IsVisible="{Binding ShowsStrip}" AutomationProperties.Name="{Binding StripName}"
             AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
-      <StackPanel Margin="16,10" Spacing="6">
-        <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasNew}">
-          <TextBlock Classes="body-strong" Text="{Binding StripName}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-          <Button x:Name="LinearStripDismiss" Grid.Column="1" Content="{Binding DismissText}" Click="OnDismiss" AutomationProperties.Name="{Binding DismissText}" />
+      <StackPanel>
+        <Grid ColumnDefinitions="*,Auto" Margin="16,12" IsVisible="{Binding HasNew}">
+          <TextBlock x:Name="LinearStripHeading" Classes="body-strong" Text="{Binding StripName}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+          <Button x:Name="LinearStripMarkAllSeen" Grid.Column="1" Content="{Binding MarkAllSeenText}" Click="OnMarkAllSeen" AutomationProperties.Name="{Binding MarkAllSeenText}" />
         </Grid>
-        <ItemsControl x:Name="LinearStripRows" ItemsSource="{Binding StripRows}">
+
+        <StackPanel x:Name="LinearSinceNothing" IsVisible="{Binding ShowsNothingNew}" Margin="16,12" Spacing="4">
+          <TextBlock Classes="body-strong" Text="{Binding NothingNewText}" AutomationProperties.Name="{Binding NothingNewText}" />
+          <TextBlock Classes="caption subtle" Text="{Binding NothingNewWhen}" IsVisible="{Binding NothingNewWhen, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                     AutomationProperties.Name="{Binding NothingNewWhen}" />
+        </StackPanel>
+
+        <StackPanel x:Name="LinearStripProblem" IsVisible="{Binding StripReason, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Margin="16,12" Spacing="8">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <icons:StateIcon Glyph="Down" Classes="error" VerticalAlignment="Top" />
+            <TextBlock x:Name="LinearStripReason" Classes="body" Text="{Binding StripReason}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StripReason}" />
+          </StackPanel>
+          <TextBlock x:Name="LinearStripDetail" Classes="caption subtle" Text="{Binding StripDetail}" TextWrapping="Wrap" IsVisible="{Binding StripDetail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                     AutomationProperties.Name="{Binding StripDetail}" />
+          <Button x:Name="LinearStripReconnect" Classes="accent" IsVisible="{Binding StripNeedsReconnect}" HorizontalAlignment="Left" Content="{Binding ReconnectText}" Click="OnReconnect"
+                  AutomationProperties.Name="{Binding ReconnectText}" />
+          <Button x:Name="LinearStripRetry" IsVisible="{Binding !StripNeedsReconnect}" HorizontalAlignment="Left" Content="{Binding RetryText}" Click="OnRetryStrip"
+                  AutomationProperties.Name="{Binding RetryText}" />
+        </StackPanel>
+
+        <ItemsControl x:Name="LinearStripGroups" ItemsSource="{Binding StripGroups}">
           <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="lvm:LinearSinceRowViewModel">
-              <Button Classes="row-title" Margin="0,2" Click="OnOpenStripRow" AutomationProperties.Name="{Binding Text}">
-                <TextBlock Classes="body" Text="{Binding Text}" TextDecorations="Underline" AutomationProperties.AccessibilityView="Raw" />
-              </Button>
+            <DataTemplate x:DataType="lvm:LinearSinceGroupViewModel">
+              <StackPanel>
+                <Border x:Name="LinearSinceGroupHeader" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="16,4" MinHeight="{StaticResource Row.Height.Default}">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                      <TextBlock Classes="body-strong" Text="{Binding Heading}" />
+                      <TextBlock Classes="caption subtle" Text="{Binding Count}" />
+                    </StackPanel>
+                    <Button x:Name="LinearSinceGroupToggle" Grid.Column="1" MinHeight="0" Padding="8,2" VerticalAlignment="Center" IsVisible="{Binding HasMore}" Content="{Binding ToggleText}" Click="OnToggleGroup" AutomationProperties.Name="{Binding ToggleText}" />
+                  </Grid>
+                </Border>
+                <ItemsControl ItemsSource="{Binding ShownRows}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="lvm:LinearSinceRowViewModel">
+                      <Border x:Name="LinearSinceRowFrame" Classes="item-row clickable">
+                        <Button x:Name="LinearSinceRowOpen" Classes="row-title" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ClipToBounds="True"
+                                Click="OnOpenStripRow" AutomationProperties.Name="{Binding Name}">
+                          <Grid ColumnDefinitions="*,168,72,132,24,64" Margin="0,8">
+                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                              <TextBlock x:Name="LinearSinceRowTitle" Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                              <TextBlock Classes="caption subtle" Text="{Binding Detail}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                            </StackPanel>
+                            <Border x:Name="LinearSinceRowState" Grid.Column="1" Classes="badge" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0" MaxWidth="160" IsVisible="{Binding HasStateChip}">
+                              <TextBlock Classes="caption" Text="{Binding StateChip}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                            </Border>
+                            <Border x:Name="LinearSinceRowPriority" Grid.Column="2" Classes="badge" Classes.urgent="{Binding IsUrgent}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0" IsVisible="{Binding HasPriorityChip}">
+                              <TextBlock Classes="caption" Text="{Binding PriorityChip}" AutomationProperties.AccessibilityView="Raw" />
+                            </Border>
+                            <Border x:Name="LinearSinceRowProject" Grid.Column="3" Classes="badge" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0" MaxWidth="124" IsVisible="{Binding HasProject}">
+                              <TextBlock Classes="caption" Text="{Binding Project}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+                            </Border>
+                            <Border x:Name="LinearSinceRowAvatar" Grid.Column="4" Classes="avatar" VerticalAlignment="Center" Margin="8,0,0,0" IsVisible="{Binding HasInitials}">
+                              <TextBlock Classes="caption" Text="{Binding Initials}" HorizontalAlignment="Center" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                            </Border>
+                            <TextBlock x:Name="LinearSinceRowTime" Grid.Column="5" Classes="caption subtle" Text="{Binding TimeText}" TextAlignment="Right" VerticalAlignment="Center"
+                                       AutomationProperties.AccessibilityView="Raw" />
+                          </Grid>
+                        </Button>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <StackPanel x:Name="LinearStripFailed" Orientation="Horizontal" Spacing="8" IsVisible="{Binding StripFailed}">
-          <TextBlock Classes="body" Text="{Binding StripFailedText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding StripFailedText}" />
-          <Button x:Name="LinearStripRetry" Content="{Binding RetryText}" Click="OnRetryStrip" AutomationProperties.Name="{Binding RetryText}" />
-        </StackPanel>
       </StackPanel>
     </Border>
 
-    <Border x:Name="LinearConnect" Classes="card" IsVisible="{Binding ShowsConnect}" HorizontalAlignment="Left">
+    <Border x:Name="LinearConnect" Classes="card" IsVisible="{Binding ShowsConnect}" HorizontalAlignment="Stretch">
       <StackPanel Spacing="8">
         <TextBlock x:Name="LinearConnectTitle" Classes="body-strong" Text="{Binding ConnectTitle}" AutomationProperties.Name="{Binding ConnectTitle}" />
-        <TextBlock x:Name="LinearConnectBody" Classes="caption quiet" TextWrapping="Wrap" MaxWidth="480" Text="{Binding ConnectBody}"
+        <TextBlock x:Name="LinearConnectBody" Classes="caption quiet" TextWrapping="Wrap" Text="{Binding ConnectBody}"
                    AutomationProperties.Name="{Binding ConnectBody}" />
         <Button x:Name="LinearConnectButton" Classes="accent" Content="{Binding ConnectText}" HorizontalAlignment="Left" Click="OnConnect" AutomationProperties.Name="{Binding ConnectText}" />
       </StackPanel>
@@ -102,7 +174,7 @@
                 <ItemsControl ItemsSource="{Binding Rows}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="lvm:LinearIssueRowViewModel">
-                      <Border x:Name="LinearRowFrame" Classes="item-row" Classes.selected="{Binding IsSelected}" Focusable="True" GotFocus="OnRowFocused" AutomationProperties.Name="{Binding Name}"
+                      <Border x:Name="LinearRowFrame" Classes="item-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True" GotFocus="OnRowFocused" AutomationProperties.Name="{Binding Name}"
                               AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
                         <Grid ColumnDefinitions="*,130,130,100,Auto,Auto" VerticalAlignment="Center">
                           <Button x:Name="LinearRowTitle" Classes="row-title" Margin="0,0,8,0" ClipToBounds="True" Click="OnOpenIssue" AutomationProperties.Name="{Binding Title}">

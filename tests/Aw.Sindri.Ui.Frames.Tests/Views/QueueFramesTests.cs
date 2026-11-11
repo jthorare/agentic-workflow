@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -144,6 +145,42 @@ public sealed class QueueFramesTests : IDisposable
         Frame(window, "queue-populated");
     });
 
+    // #2546: a row is Row.Height.Default tall on the page, not just at least that: content taller than the floor would hold it at 36.
+    [Fact]
+    public Task Work_rows_are_one_default_row_height_apart() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(s => !s.Queue.IsLoading);
+        shell.GoTo(PageId.Work);
+        Settle(window);
+
+        var row = Assert.IsType<double>(window.FindResource("Row.Height.Default"));
+        var page = Named<Control>(window, "QueuePage");
+        var tops = page.GetVisualDescendants().OfType<Ui.Views.Queue.ItemRow>().Where(r => r.IsEffectivelyVisible)
+            .Select(r => r.TranslatePoint(default, page)!.Value.Y).ToList();   // why: the rows are in the page's visual tree
+        Assert.Equal(4, tops.Count);
+        Assert.Equal([row, row, row], tops.Zip(tops.Skip(1), (a, b) => Math.Round(b - a, 2, MidpointRounding.AwayFromZero)));
+    });
+
+    // #2546: a caption count beside a body-strong label shares its centre (the label's line is 20, the count's 16), in the top bar and on a group header.
+    [Fact]
+    public Task A_count_sits_on_its_labels_centre() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(s => !s.Queue.IsLoading);
+        shell.GoTo(PageId.Work);
+        Settle(window);
+
+        var pairs = window.GetVisualDescendants().OfType<StackPanel>().Where(s => s.Orientation == Orientation.Horizontal && s.IsEffectivelyVisible)
+            .Select(s => s.Children.OfType<TextBlock>().Where(b => b.IsEffectivelyVisible).ToList())
+            .Where(b => b.Count >= 2 && b[^2].Classes.Contains("body-strong") && b[^1].Classes.Contains("caption"))
+            .ToList();
+        Assert.True(pairs.Count >= 2, "no label and count pair on the top bar and the Work page");
+        Assert.All(pairs, b => Assert.InRange(Centre(b[^1]) - Centre(b[^2]), -1, 1));
+    });
+
+    // The drawn line's centre, not the box's: a stretched TextBlock draws its line at the top of a taller box, so two stretched
+    // blocks share a box centre wherever their words are (the test passed before the fix). Both sit in one StackPanel, so Bounds share its origin.
+    private static double Centre(TextBlock block) => block.Bounds.Y + (block.TextLayout.Height / 2);
+
     [Fact]
     public Task An_empty_queue_shows_the_views_sentence() => OnUi(async () =>
     {
@@ -153,7 +190,11 @@ public sealed class QueueFramesTests : IDisposable
         Settle(window);
 
         var empty = Named<TextBlock>(window, "QueueEmpty");
-        Assert.Equal((true, "Nothing in the queue. Add one with `sindri item add`."), (empty.IsEffectivelyVisible, empty.Text));
+        Assert.Equal((true, "Nothing in the queue."), (empty.IsEffectivelyVisible, empty.Text));
+        Assert.Equal("Create item", Named<Button>(window, "QueueCreateLink").Content);
+        Assert.False(Visible(window, "QueueHeader"));
+        Assert.False(Visible(window, "QueueClosed"));
+        Assert.False(Visible(window, "QueueFooter"));
         Assert.Equal("Nothing running.", Named<TextBlock>(window, "RunningEmpty").Text);
         Frame(window, "queue-empty");
     });
@@ -172,16 +213,18 @@ public sealed class QueueFramesTests : IDisposable
         Frame(window, "queue-loading");
     });
 
-    // F3 spec work §1 Q2: the title leads each row; the id is a small grey string beside it, never a column or a header.
+    // Issue 2551: the title leads each row; the id is its tooltip, never drawn in the row, a column or a header.
     [Fact]
-    public Task The_queue_leads_with_the_title_and_draws_the_id_beside_it_not_as_a_column() => OnUi(async () =>
+    public Task The_queue_leads_with_the_title_and_keeps_the_id_as_its_tooltip_not_a_column() => OnUi(async () =>
     {
         var (window, shell) = await Connected(s => !s.Queue.IsLoading);
         shell.GoTo(PageId.Work);
         Settle(window);
 
         var page = Named<Control>(window, "QueuePage");
-        Assert.Contains(page.GetVisualDescendants().OfType<Control>(), c => c.Name == "IdText");
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Control>(), c => c.Name == "IdText");
+        var title = page.GetVisualDescendants().OfType<Button>().First(b => b.Name == "TitleButton" && b.IsEffectivelyVisible);
+        Assert.StartsWith("ITM-", (string)ToolTip.GetTip(title)!, StringComparison.Ordinal);
         var header = page.GetVisualDescendants().OfType<Grid>().First(g => g.Name == "QueueHeader");
         Assert.Equal(["Title", "Repo", "Status", "Stage", "Age"], header.Children.OfType<TextBlock>().Select(t => t.Text), StringComparer.Ordinal);
         Assert.Equal(0, Grid.GetColumn(header.Children.OfType<TextBlock>().First()));

@@ -9,7 +9,7 @@ namespace Aw.Sindri.Tests.Scrub;
 /// <summary>The real scrub service and hook slot over the real git adapter and the built-in redaction patterns.</summary>
 internal static class ScrubRig
 {
-    internal static ScrubService Service() => new(new RedactingScrubber(Redactor.Default), new GitPreCommit(), Installer());
+    internal static ScrubService Service() => new(new RedactingScrubber(Redactor.Default), new RedactingSecretFinder(Redactor.Default), new GitPreCommit(), Installer());
 
     internal static PreCommitRepoHooks Hooks() => new(Installer(), new GitPreCommit());
 

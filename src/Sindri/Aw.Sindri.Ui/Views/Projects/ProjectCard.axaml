@@ -34,7 +34,7 @@
       <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
     </Style>
   </UserControl.Styles>
-  <Border x:Name="ProjectCardFrame" Classes="card pcard" Classes.gone="{Binding IsGone}" Focusable="True"
+  <Border x:Name="ProjectCardFrame" Classes="card pcard clickable" Classes.gone="{Binding IsGone}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
     <StackPanel Spacing="{StaticResource Space.SM}">
       <Grid ColumnDefinitions="*,Auto" AutomationProperties.AccessibilityView="Raw">
@@ -59,11 +59,11 @@
       <StackPanel IsVisible="{Binding !NamesOnly}" Spacing="{StaticResource Space.SM}" AutomationProperties.AccessibilityView="Raw">
         <StackPanel x:Name="ProjectCardStats" Orientation="Horizontal" Spacing="{StaticResource Space.LG}" IsVisible="{Binding HasCounts}">
           <StackPanel IsVisible="{Binding IssuesValue, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-            <TextBlock FontSize="22" FontWeight="SemiBold" LetterSpacing="-0.4" Text="{Binding IssuesValue}" />
+            <TextBlock Classes="detail-title" Text="{Binding IssuesValue}" />
             <TextBlock Classes="caption subtle" Text="{Binding IssuesLabel}" />
           </StackPanel>
           <StackPanel IsVisible="{Binding PrsValue, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-            <TextBlock FontSize="22" FontWeight="SemiBold" LetterSpacing="-0.4" Text="{Binding PrsValue}" />
+            <TextBlock Classes="detail-title" Text="{Binding PrsValue}" />
             <TextBlock Classes="caption subtle" Text="{Binding PrsLabel}" />
           </StackPanel>
         </StackPanel>

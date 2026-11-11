@@ -4,9 +4,11 @@ using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Toolkits;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
 
@@ -55,7 +57,10 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IGraphCallPort, GraphWorkflowCaller>()   // 'run_workflow' starts the other workflow's active revision (agent-first PR 9)
             .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>(), provider.GetRequiredService<IForEachLimitSource>(),
                 [.. GraphBlockRegistry.FlowBlocks(provider.GetRequiredService<IGraphSeenStore>(), provider.GetRequiredService<ICreateItemPort>(), provider.GetRequiredService<IGraphCallPort>(), provider.GetRequiredService<IGraphHttpPort>()),
-                 .. GraphBlockRegistry.ParkingBlocks(provider.GetRequiredService<IQuestionPort>(), provider.GetRequiredService<TimeProvider>())]))
+                 .. GraphBlockRegistry.ParkingBlocks(provider.GetRequiredService<IQuestionPort>(), provider.GetRequiredService<TimeProvider>()),
+                 .. GraphBlockRegistry.MemoryBlocks(provider.GetRequiredService<IGraphMemoryPort>()),
+                 new CallToolBlock(provider.GetService<IRunningToolkits>() ?? NoToolkits.Instance, provider.GetRequiredService<IConnectionToolPort>()),   // 'call_tool' (PR 16b); with no toolkit runtime registered yet it reaches connections only
+                 .. GraphBlockRegistry.CodeBlocks(provider.GetRequiredService<ICodeRunPort>())]))   // 'code' (PR 9c): C# in the sandboxed sindri-code-runner
             .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
             .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog
             .AddSingleton<IGraphRunLauncher>(static provider => provider.GetRequiredService<TemporalGraphRunLauncher>())
@@ -68,6 +73,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<IGraphRunProbe>(static provider => new TemporalGraphRunProbe(provider.GetRequiredService<TemporalFrontend>()))
             .AddSingleton<GraphRunRecovery>()
             .AddSingleton<IGraphRunRecovery>(static provider => provider.GetRequiredService<GraphRunRecovery>())
+            .AddSingleton(static provider => new GraphRunItemRepair(provider.GetService<IRunItemRepair>(), provider.GetRequiredService<ILogger<GraphRunItemRepair>>()))
             .AddSingleton<GraphRunActivities>().AddSingleton<GraphBlockActivities>().AddSingleton<GraphActivities>();
     }
 
@@ -83,7 +89,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
         .AddSingleton<AgentRecovering>().AddSingleton<SkillStepWatching>().AddSingleton<AgentStepSelection>().AddSingleton<IStepOutputs, DiskStepOutputs>()
         .AddSingleton<UsageFlush>(static provider => (launch, ct) => FlushScoped(provider, launch, ct))
         .AddSingleton<AgentTargetResolver>().AddSingleton<AgentLaunchRecorder>().AddSingleton(AgentRuntimeOptions.Default)
-        .AddSingleton<AgentLaunchEnded>().AddSingleton<AgentNodeLaunching>().AddSingleton<AgentSessionWatch>().AddSingleton<AgentNodeRecovering>().AddSingleton<AgentNodeClosing>()   // PR 7: a 'run_agent' node's runtime
+        .AddSingleton<AgentLaunchEnded>().AddSingleton<AgentLaunchStart>().AddSingleton<AgentNodeReading>().AddSingleton<AgentNodeLaunching>().AddSingleton<AgentSessionWatch>().AddSingleton<AgentNodeRecovering>().AddSingleton<AgentNodeClosing>()   // PR 7: a 'run_agent' node's runtime
         .AddSingleton<IAgentNodeRuntime, AgentNodeRuntime>().AddSingleton<AgentNodeActivities>()
         .AddSingleton<WorkerActivities>();
     }

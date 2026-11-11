@@ -139,6 +139,7 @@ public sealed class GoldenContractTests
         ["connections"] = As<ConnectionList>,   // GET /sindri/connections; the added-* scenarios are POST's ConnectionAdded (_readByScenario)
         ["connections-id"] = As<ConnectionOne>,   // GET /sindri/connections/{name}; removed is DELETE's ConnectionRemoved (_readByScenario)
         ["connections-id-test"] = As<ConnectionTested>,   // POST /sindri/connections/{name}/test
+        ["connections-id-rename"] = As<ConnectionRenamed>,   // POST /sindri/connections/{name}/rename (the Rename action)
         ["connections-id-signin"] = As<ConnectionAdded>,   // POST /sindri/connections/{name}/signin (the Sign in again action)
         ["memories"] = As<MemoryList>,   // GET /sindri/memories; created is POST's MemoryCreated (_readByScenario)
         ["memories-id-search"] = As<MemorySearchView>,   // GET /sindri/memories/{name}/search
@@ -161,7 +162,7 @@ public sealed class GoldenContractTests
         [("workflows-slug-runs", "skipped")] = As<WorkflowRunStarted>,
         [("memories-id-facts", "forgot")] = As<MemoryForgotten>,
         [("memories-id-facts", "forgot-tag")] = As<MemoryForgotten>,
-        [("workflows", "created")] = AsJsonObject,   // POST /workflows: { id, slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowList
+        [("workflows", "created")] = As<WorkflowCreated>,   // POST /workflows: { id, slug, revision, specHash }; not a WorkflowList
         [("workflows-slug", "replaced")] = AsJsonObject,   // PUT /workflows/{slug}: { slug, revision, specHash }, the CLI's and the MCP tools' answer; not a WorkflowView
         [("workflows-slug", "archived")] = AsJsonObject,   // DELETE /workflows/{slug}: { slug, archivedAt }, the CLI's and the MCP tools' answer; not a WorkflowView
     };
@@ -171,6 +172,7 @@ public sealed class GoldenContractTests
     private static readonly HashSet<string> _notRead = new(StringComparer.Ordinal)
     {
         "stop",
+        "toolkits", "toolkits-build", "toolkits-name-start", "toolkits-name-stop", "toolkits-name-pause", "toolkits-name-resume", "toolkits-name-calls",   // agent-first PR 16c: the app has no Toolkits page; the CLI's `toolkit` verbs and the toolkit_* MCP tools call these
         "workflow-runs-run-nodes-node-answer",   // #2425: POST .../nodes/{node}/answer, the engine's answer to an ask_owner question; the app calls it once the Needs-you question row has its answer form (UI lane)
         "todos-id",   // the app never calls GET /sindri/todos/{id}; the CLI's `todo show` does
         "todos-keep", "todos-keep-undo", "todos-hold-apply", "todos-hold-undo",   // the picks (todo Ph3b): the conflict and hold rows that call them are ui's Ph4

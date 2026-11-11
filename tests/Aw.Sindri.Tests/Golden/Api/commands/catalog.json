@@ -185,6 +185,25 @@
       "confirm": null
     },
     {
+      "action": "BuildToolkit",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/toolkits/build",
+      "cli": "sindri toolkit build <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "CancelJob",
       "class": "job",
       "allowedCallers": [
@@ -481,6 +500,25 @@
       "method": "POST",
       "route": "/sindri/memories",
       "cli": "sindri memory create <name> [--description <text>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "CreateToolkit",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/toolkits",
+      "cli": "sindri toolkit create <name> --tool <tool>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -1026,6 +1064,24 @@
       "confirm": null
     },
     {
+      "action": "PauseToolkit",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/toolkits/{name}/pause",
+      "cli": "sindri toolkit pause <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "PauseWorkflow",
       "class": "desk",
       "allowedCallers": [
@@ -1341,6 +1397,24 @@
       "confirm": null
     },
     {
+      "action": "RenameConnection",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/connections/{name}/rename",
+      "cli": "sindri connection rename <name> <label>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ReplaceWorkflow",
       "class": "desk",
       "allowedCallers": [
@@ -1388,6 +1462,24 @@
       "method": "POST",
       "route": "/sindri/services/{name}/resume",
       "cli": "sindri services resume <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ResumeToolkit",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/toolkits/{name}/resume",
+      "cli": "sindri toolkit resume <name>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -1860,6 +1952,24 @@
       "confirm": null
     },
     {
+      "action": "StartToolkit",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/toolkits/{name}/start",
+      "cli": "sindri toolkit start <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "StopProcess",
       "class": "desk",
       "allowedCallers": [
@@ -1891,6 +2001,24 @@
       "method": "POST",
       "route": "/sindri/todos/note/stop",
       "cli": "sindri todo note stop [--json]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "StopToolkit",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/toolkits/{name}/stop",
+      "cli": "sindri toolkit stop <name>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,

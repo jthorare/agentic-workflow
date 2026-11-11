@@ -94,7 +94,7 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
         var sweep = await Sweep("--path", loser);
 
         Assert.True(Directory.Exists(loser), sweep.Out);
-        Assert.Contains("work not finished", sweep.Out, StringComparison.Ordinal);
+        Assert.Contains("unmerged branch, no PR", sweep.Out, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]
