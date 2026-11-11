@@ -23,8 +23,15 @@ public sealed class ServeCallerTests : IDisposable
 {
     private static readonly TimeSpan _prompt = TimeSpan.FromSeconds(10);
     private readonly TempHome _home = new();
+    private readonly StringWriter _said = new(System.Globalization.CultureInfo.InvariantCulture);   // why: #2881 answered 500 on CI with nothing to say why; serve's own lines go in the failure message
+    private readonly ListLoggerFactory _logs = new();   // why: a 500's cause is only in serve's log; fields, not locals, so they outlive serve's task (CA2025)
 
-    public void Dispose() => _home.Dispose();
+    public void Dispose()
+    {
+        _said.Dispose();
+        _logs.Dispose();
+        _home.Dispose();
+    }
 
     private SindriSettings Settings => new(_home.Path, Path.Combine(_home.Path, "profile", "profile.yaml"));
 
@@ -34,12 +41,10 @@ public sealed class ServeCallerTests : IDisposable
     public async Task Serve_mints_the_token_only_after_taking_the_lease()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var said = new StringWriter(System.Globalization.CultureInfo.InvariantCulture);   // why: #2881 answered 500 on CI with nothing to say why; serve's own lines go in the failure message
-        using var logs = new ListLoggerFactory();
-        var serve = ServeCommand.Run(Environment, TimeProvider.System, said, services =>
+        var serve = ServeCommand.Run(Environment, TimeProvider.System, _said, services =>
         {
             NoTemporal.Use(services);
-            _ = services.Replace(ServiceDescriptor.Singleton<ILoggerFactory>(logs));   // why: a 500's cause is only in serve's log
+            _ = services.Replace(ServiceDescriptor.Singleton<ILoggerFactory>(_logs));
         });
         var url = await Endpoint(ct);
         var token = (await new FileHumanToken(Settings).Read(ct)).Value;
@@ -55,7 +60,7 @@ public sealed class ServeCallerTests : IDisposable
         Assert.Equal(1, second);
         Assert.Equal(token, afterRefusal);
         Assert.True(status.Status == HttpStatusCode.OK && stop.Status == HttpStatusCode.OK,
-            $"status {status.Status}: {status.Body}\nstop {stop.Status}: {stop.Body}\nserve said: {said}\nserve logged:\n{string.Join('\n', logs.Logger.Lines)}\n{string.Join('\n', logs.Logger.Exceptions)}");
+            $"status {status.Status}: {status.Body}\nstop {stop.Status}: {stop.Body}\nserve said: {_said}\nserve logged:\n{string.Join('\n', _logs.Logger.Lines)}\n{string.Join('\n', _logs.Logger.Exceptions)}");
         Assert.Equal(0, code);
         Assert.Null((await new FileHumanToken(Settings).Read(ct)).Value);   // removed with control.json
     }
