@@ -1,6 +1,7 @@
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Ports;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
 
@@ -13,8 +14,19 @@ internal sealed class RepoHealths(IRepoHeads heads, IJobViews jobs, TimeProvider
     internal async ValueTask<IReadOnlyList<RepoHealth>> Of(CodeIndexScope scope, IReadOnlyList<RepoStatus> repos, CancellationToken cancellationToken)
     {
         var live = await heads.Heads(scope.Repos, cancellationToken).ConfigureAwait(false);
-        var builds = await jobs.List(state: null, JobKind.From("BuildCodeIndex"), cancellationToken).ConfigureAwait(false);
+        var running = await jobs.Running(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<JobRow> runningOf(string repo) => running.IsError ? [] : [.. running.Value.Where(j => IndexBuildWords.IsBuildOf(j, repo))];
+        Aw.CodeIndex.Core.Model.RepoHead? headOf(RepoStatus r) => live.IsError ? null : live.Value.FirstOrDefault(h => h.Repo == r.Repo);
+
+        // The ended builds are read once, and only when some repo is behind with no build running (issue #2786).
+        IReadOnlyList<JobRow> ended = [];
+        if (repos.Any(r => RepoHealth.NeedsEnded(r, headOf(r), runningOf(r.Repo.Value))))
+        {
+            var all = await jobs.List(state: null, JobKind.From("BuildCodeIndex"), cancellationToken).ConfigureAwait(false);
+            ended = all.IsError ? [] : all.Value;
+        }
+
         var now = clock.GetUtcNow();
-        return [.. repos.Select(r => RepoHealth.Of(r, live.IsError ? null : live.Value.FirstOrDefault(h => h.Repo == r.Repo), builds.IsError ? [] : [.. builds.Value.Where(j => IndexBuildWords.IsBuildOf(j, r.Repo.Value))], now))];
+        return [.. repos.Select(r => RepoHealth.Of(r, headOf(r), runningOf(r.Repo.Value), [.. ended.Where(j => IndexBuildWords.IsBuildOf(j, r.Repo.Value))], now))];
     }
 }
