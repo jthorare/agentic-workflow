@@ -367,12 +367,12 @@ broken file and no last good settings runs nothing, as today.
 
   The three read-only lines and the Sandbox section today say "Change it in the profile" (`SettingsView.axaml:19-71`).
   They say "Change it in settings.yaml" instead, with no button of their own (the Settings heading row has the one
-  Copy file path link, below). The stale banner's kinds are source, setting, page and pin: the kinds that have a sheet or
+  Copy file path button, below). The stale banner's kinds are source, setting, page and pin: the kinds that have a sheet or
   card. "Sheet" below means a sheet or a card. **Bulk sheets** (add several pages, pin several): they show no stale
   banner. A 410 on a bulk save shows "These pages changed on disk. Reload to see them." (or "These pins ..."), and
   **Reload** refreshes the list and keeps the ticks for items still on disk. **Keep mine** and **Load theirs** exist
   on one-item sheets only.
-- **The file path, always.** One **Copy file path** link per page: the Settings page's sits in its heading row and is always shown, with or
+- **The file path, always.** One **Copy file path** button per page: the Settings page's sits in its heading row and is always shown, with or
   without an audit line and not only when the file is broken. "Copied" uses the page's polite live region, not a
   sheet's.
   Agents and the person's editor are the normal way to change the read-only parts, and the Setup step "profile" was
@@ -434,7 +434,9 @@ broken file and no last good settings runs nothing, as today.
     when it changed in the gap.
   - A change to another item shows nothing.
 - **One voice.** The busy message, refusals, "Copied" and the stale banner share one polite live region on the
-  sheet. A newer message replaces an older one, so two never announce at once.
+  sheet. A newer message replaces an older one only at the same priority. A lower-priority message that arrives while
+  a higher one shows goes to the live region only, never to the top slot. For example, a stale event during the
+  broken-file text is announced, and the broken-file text stays. So two never announce at once.
 - **One message at the top of a sheet, in this order.** The Health broken-file text wins. Then the 410 "changed on disk.
   Reload". Then the stale banner. Only the first that applies shows. A 410 on a broken file can't happen: the writer
   refuses a broken file first (`SND-SETTINGS-024`), and the sheet then shows only the broken-file text.
@@ -738,7 +740,7 @@ That is about 25% less in `src`, 50% less in tests and 80% less in docs than the
      replaces it with the lock.
   2. **1b, the move.** The renames, the lock with the in-lock edit callbacks, the hash-keyed cache, the write route,
      the audit line with its outside-Sindri check (without it the ledger misses edits), `settings.changed`, the
-     migration and defaults, `settings cleanup`, and in the UI Last changed, the file path link, the busy messages with
+     migration and defaults, `settings cleanup`, and in the UI Last changed, the file path button, the busy messages with
      **Try again**, field refusals and the broken-file state.
   3. **2, the two UI pieces.** See changes (with `newest=true` on `GET /sindri/ledger`) and the stale-sheet banner, with
      their Frames tests. See changes shows the last 50 changes only; a filter by who or by path is a later change.
@@ -775,7 +777,7 @@ full findings are in `plans/sindri-settings-spec/round1` to `round4`, each with 
 | 1 | the 2026-11-08 draft before `a20c1272b7` | product pass; arch, design, devex and security needed work | audit key collided when `changes.jsonl` shrank (file id in the key); a copier could spend a torn line's key (copy complete lines only, schema and 64 KB cap); `settings set` before serve skipped the migration (`Run` under the lock, resumable); "validate" was undefined (rules `020..023`); about 13 scripts and a hook still called `sindri profile` (caller list, widened grep); `AW_SINDRI_PROFILE` not renamed; the downgrade claim was wrong; "Last changed" lagged the person's own save (response carries `by` and `at`); a stale open sheet got no signal (banner) |
 | 2 | `a20c1272b7` | product ship, security pass; arch, design, devex needed work | a hand edit had no diff base (`.last-saved.yaml`); a broken file left every save failing with no state (`024`, Health text, disabled save); caller list incomplete; the closing grep couldn't come back clean; `install-cs.sh` hint (`settings_hint`) |
 | 3 | `e38e2dc8e1` | product ship, security pass, devex pass; arch and design needed work | a hand revert to an older text was missed (compare the last parseable line only); a crash between the base copy and the append gave an empty `outside` line (append first, base second); the migration re-locked inside the write lock (`RunLocked` and `Run`); Keep mine reverted fields the person never edited (send edited fields only) |
-| 4 | `5221f47032`, after the rebase on main | product ship, security pass; arch, design and devex needed work | **R4-1** the edit planned before the lock turned an unrelated save into a 410 (the edit is a callback inside the lock, no Plan/Save split, §3.2); **R4-2** `settings set` had no route and no way to read `by` (one `POST /sindri/settings/edit`, `Job` class, §3.2); the MEDIUM rows: the hash-keyed cache (§3.1), the lock beside the file (§3.1), one async routine in place of `_gate` (§3.2), the real code mappings (§3.2), reads wait 5 s for a due migration (§5), no `001` and a code for the init refusal (§4), the missed callers and UI words (§6), `profile approve` exit 2 on purpose (§4), connection-token keys refused to sessions (§3.4), the 403 for a human without a token (§3.4), the sheet table and the file path link (§3.6), and the 1a/1b/2 split (§8) |
+| 4 | `5221f47032`, after the rebase on main | product ship, security pass; arch, design and devex needed work | **R4-1** the edit planned before the lock turned an unrelated save into a 410 (the edit is a callback inside the lock, no Plan/Save split, §3.2); **R4-2** `settings set` had no route and no way to read `by` (one `POST /sindri/settings/edit`, `Job` class, §3.2); the MEDIUM rows: the hash-keyed cache (§3.1), the lock beside the file (§3.1), one async routine in place of `_gate` (§3.2), the real code mappings (§3.2), reads wait 5 s for a due migration (§5), no `001` and a code for the init refusal (§4), the missed callers and UI words (§6), `profile approve` exit 2 on purpose (§4), connection-token keys refused to sessions (§3.4), the 403 for a human without a token (§3.4), the sheet table and the file path button (§3.6), and the 1a/1b/2 split (§8) |
 
 Round 4 found nothing that contradicts a settled item in §10.
 
@@ -789,7 +791,7 @@ work on four medium findings. There is no HIGH. What changed, by group:
   exclusions, 1a lands before 1b, who deletes `SND-PROFILE-001`, and the route's catalog row and golden.
 - Remove, cleanup and credentials (R5-7, R5-22): `op: "remove"` is dropped, `026` covers any edit that touches a
   credential key, `settings cleanup` is human-only, and serve-down `person` is said to be best effort.
-- UI words and layout (R5-9 to R5-11, R5-23): the missed UI strings, one always-shown Copy file path link, PR names
+- UI words and layout (R5-9 to R5-11, R5-23): the missed UI strings, one always-shown Copy file path button, PR names
   1a/1b/2 with a 1a Frames line, and the kinds and bulk-sheet wording.
 - Scope (R5-12, R5-13): no MCP settings tools in v1, and the tombstone goes in PR 2.
 
