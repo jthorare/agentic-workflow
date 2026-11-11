@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Sindri.CodeRunner: the 'sindri-code-runner' process a Code node runs its compiled C# in (agent-first PR 9c). It loads an assembly
+       the control plane compiled, so it can't be NativeAOT; it is framework-dependent like 'sindri'. It references no Aw project: the
+       contract is its argv (the assembly path), stdin (the input JSON), stdout (the result JSON) and its exit code. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- It loads an assembly by path and serializes whatever the code returns: reflection by design, so the trim and AOT analyzers are off (see Aw.Sindri.Workflows) -->
+    <AwAotCompatible>false</AwAotCompatible>
+    <AssemblyName>sindri-code-runner</AssemblyName>
+    <RootNamespace>Aw.Sindri.CodeRunner</RootNamespace>
+  </PropertyGroup>
+</Project>

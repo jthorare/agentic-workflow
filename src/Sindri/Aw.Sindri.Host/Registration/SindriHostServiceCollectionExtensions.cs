@@ -50,6 +50,7 @@ internal static class SindriHostServiceCollectionExtensions
         .AddHostedService<JobRecoveryHost>()
         .AddHostedService<ToolkitRecoveryHost>()
         .AddHostedService<GraphRunRecoveryHost>()
+        .AddHostedService<RunItemRepairHost>()
         .AddHostedService<LostSessionsHost>()
         .AddHostedService<SessionUsageHost>()
         .AddHostedService<ProfileWatch>()

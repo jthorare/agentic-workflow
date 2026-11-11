@@ -90,7 +90,7 @@ internal sealed partial class GraphWorkflow
     // why: the sleep is the block's own 'waitedSeconds' (wakeAt minus the block's clock), never wakeAt minus Workflow.UtcNow: the block and
     // the Temporal server keep separate clocks, so comparing them can end a wait at once (it did: the parking tests' fake clock sat months
     // behind the server and every wait node finished before anyone saw it running)
-    private static async Task<GraphBlockOutcome> Sleep(GraphBlockOutcome outcome)
+    internal static async Task<GraphBlockOutcome> Sleep(GraphBlockOutcome outcome)
     {
         var seconds = JsonNode.Parse(outcome.Output ?? "{}")?["waitedSeconds"] is JsonValue v && v.TryGetValue<double>(out var wait) ? wait : 0;
         if (seconds > 0)

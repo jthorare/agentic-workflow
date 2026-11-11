@@ -187,6 +187,7 @@ public sealed class ProjectsPageTests
     {
         var list = Golden("mixed");
         list["empty"] = ServedMissingKey;
+        list["emptyCode"] = "linear-key-missing";
         edit?.Invoke(list);
         _f.Serve(list);
         return await _f.Shown(Token);

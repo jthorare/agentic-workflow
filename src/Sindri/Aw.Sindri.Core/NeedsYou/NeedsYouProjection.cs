@@ -110,9 +110,15 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
     private async ValueTask<Result<Unit>> Asked(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
         var asked = events.Payload<WorkflowQuestionPayload>(recorded);
-        return asked.IsError
-            ? asked.Error
-            : await Put(rows, NeedsYouRows.ForWorkflowQuestion(asked.Value, recorded.Envelope.OccurredAt, scrubber), recorded, cancellationToken).ConfigureAwait(false);
+        if (asked.IsError)
+        {
+            return asked.Error;
+        }
+
+        var row = NeedsYouRows.ForWorkflowQuestion(asked.Value, recorded.Envelope.OccurredAt, scrubber);
+        return row.IsError
+            ? row.Error
+            : await rows.Put(ViewNames.NeedsYou, row.Value.Id.Value, new NeedsYouRowRecord(row.Value, recorded.Sequence) { BatchWorkflow = asked.Value.BatchWorkflow }, cancellationToken).ConfigureAwait(false);   // why: the record keeps the waiting workflow off the wire row; the answer reads it to find a loop item's child
     }
 
     private async ValueTask<Result<Unit>> Answered(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
@@ -120,7 +126,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
         var answered = events.Payload<WorkflowAnsweredPayload>(recorded);
         return answered.IsError
             ? answered.Error
-            : await rows.Delete(ViewNames.NeedsYou, NeedsYouRowIds.WorkflowQuestion(answered.Value.Run, answered.Value.Node).Value, cancellationToken).ConfigureAwait(false);
+            : await rows.Delete(ViewNames.NeedsYou, NeedsYouRowIds.WorkflowQuestion(answered.Value.Run, answered.Value.Node, answered.Value.Item).Value, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>A node that finished or failed no longer asks: an 'ask_owner' node ends by an answer, by its timeout or by failing, and the row goes with it.</summary>
@@ -128,6 +134,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
     {
         Graph.Ids.WorkflowRunId run;
         Graph.Ids.NodeId node;
+        int item;
         if (string.Equals(recorded.Envelope.Type, EventTypes.WorkflowNodeFinished, StringComparison.Ordinal))
         {
             var finished = events.Payload<WorkflowNodeFinishedPayload>(recorded);
@@ -136,7 +143,7 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
                 return finished.Error;
             }
 
-            (run, node) = (finished.Value.RunId, finished.Value.NodeId);
+            (run, node, item) = (finished.Value.RunId, finished.Value.NodeId, finished.Value.ItemIndex);
         }
         else
         {
@@ -146,10 +153,10 @@ internal sealed partial class NeedsYouProjection(EventFactory events, ITextScrub
                 return failed.Error;
             }
 
-            (run, node) = (failed.Value.RunId, failed.Value.NodeId);
+            (run, node, item) = (failed.Value.RunId, failed.Value.NodeId, failed.Value.ItemIndex);
         }
 
-        return await rows.Delete(ViewNames.NeedsYou, NeedsYouRowIds.WorkflowQuestion(run, node).Value, cancellationToken).ConfigureAwait(false);
+        return await rows.Delete(ViewNames.NeedsYou, NeedsYouRowIds.WorkflowQuestion(run, node, item > 0 ? item : null).Value, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>A run that ended (finished or cancelled) takes its notes and questions with it; other runs' rows stay.</summary>

@@ -24,6 +24,7 @@
 # files never change):
 #   sindri       src/Sindri/Aw.Sindri.Host        framework-dependent (the Temporal worker cannot be trimmed)
 #   sindri-ui    src/Sindri/Aw.Sindri.Ui.Desktop  NativeAOT, with its native libraries
+#   sindri-code-runner  src/Sindri/Aw.Sindri.CodeRunner  framework-dependent (it loads an assembly the control plane compiled); no wrapper: sindri starts it from beside itself
 #   judge        src/Judge/Aw.Judge.Host          NativeAOT, with libe_sqlite3.* beside it
 #   aw-packets   src/Packets/Aw.Packets.App       NativeAOT
 #   bugfix-state src/BugFix/Aw.BugFix.Host        NativeAOT
@@ -182,7 +183,7 @@ rename_over() { # rename_over <tmp> <final>: an atomic replace (rename(2)), also
 publish() {
   # 1. The pinned SDK and temporal.
   if [ "$dry" = 1 ]; then
-    say "[dry-run] would ensure the .NET SDK $sdk, fetch the pinned temporal CLI, and publish ${BINARIES[*]} sindri-ui into $base/$stamp"
+    say "[dry-run] would ensure the .NET SDK $sdk, fetch the pinned temporal CLI, and publish ${BINARIES[*]} sindri-ui sindri-code-runner into $base/$stamp"
     return 0
   fi
   local dotnet_root_given="${DOTNET_ROOT:-}" sdk_line sdk_dir
@@ -267,6 +268,7 @@ publish() {
   }
   local aot=(-r "$platform" -p:RestoreLockedMode=false)
   pub sindri src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj --no-self-contained
+  pub sindri-code-runner src/Sindri/Aw.Sindri.CodeRunner/Aw.Sindri.CodeRunner.csproj --no-self-contained
   pub ui-evidence src/Evidence/Aw.Evidence.Host/Aw.Evidence.Host.csproj --no-self-contained
   # Keep sindri-ui BEFORE judge: pub() keeps the first file of a name, so the staged libSkiaSharp.so is sindri-ui's (SkiaSharp.NativeAssets.Linux,
   # which links fontconfig, so Avalonia finds system fonts), not judge's NoDependencies build. check_skia_fontconfig fails the install if that flips.
@@ -314,7 +316,7 @@ check_skia_fontconfig() { # check_skia_fontconfig <dir>
 verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source>
   local d="$1" rev="$2" src="$3" rsrc="$4" scratch b out rc
   scratch="$(mktemp -d "$cache/verify.XXXXXX")"
-  for b in "${BINARIES[@]}" sindri-ui; do
+  for b in "${BINARIES[@]}" sindri-ui sindri-code-runner; do
     [ -x "$d/$b" ] || { rm -rf "$scratch"; die "install didn't take: $d/$b is missing or not executable"; }
   done
   run() { env -i HOME="$scratch" PATH="/usr/bin:/bin" DOTNET_ROOT="$DOTNET_ROOT" AW_STATE_DIR="$scratch/state" AW_JUDGE_PROVIDERS=rules \

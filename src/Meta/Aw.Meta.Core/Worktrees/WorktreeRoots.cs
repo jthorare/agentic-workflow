@@ -21,4 +21,14 @@ internal static class WorktreeRoots
     /// <param name="path">The path.</param>
     /// <returns>The normalized path.</returns>
     internal static string Normalize(string path) => WorktreeConfig.NormalizePath(path);
+
+    /// <summary>Whether a path a process reports (a deleted file's " (deleted)" suffix dropped) is the directory or inside it.</summary>
+    /// <param name="directory">The normalized directory.</param>
+    /// <param name="path">The reported path.</param>
+    /// <returns>True when it is the directory or under it.</returns>
+    internal static bool Inside(string directory, string path)
+    {
+        var normalized = Normalize(path.EndsWith(" (deleted)", StringComparison.Ordinal) ? path[..^" (deleted)".Length] : path);
+        return normalized == directory || normalized.StartsWith(directory + "/", StringComparison.Ordinal);
+    }
 }

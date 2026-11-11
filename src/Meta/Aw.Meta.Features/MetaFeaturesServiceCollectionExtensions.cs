@@ -26,6 +26,7 @@ using Aw.Meta.Features.OwnerAnswer;
 using Aw.Meta.Features.OwnerAsk;
 using Aw.Meta.Features.QueueDrop;
 using Aw.Meta.Features.QueueGate;
+using Aw.Meta.Features.ReportDefect;
 using Aw.Meta.Features.Roles;
 using Aw.Meta.Features.Routing;
 using Aw.Meta.Features.ShowVersion;
@@ -106,6 +107,7 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Plain<LanesContextService, LanesContextRequest, LanesContextResponse>()
         .AddScoped<RecycleGuard>()
         .AddScoped<RecycleRunner>()
+        .AddScoped<RecycleSettler>()
         .AddScoped<SwitchRunner>()
         .AddScoped<RecycleWaiter>()
         .AddScoped<LaneRecycleService>()
@@ -135,6 +137,9 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<AppendLogService>()
         .AddScoped<IValidator<AppendLogRequest>, AppendLogValidator>()
         .Validated<AppendLogService, AppendLogRequest, AppendLogResponse>()
+        .AddScoped<ReportDefectService>()
+        .AddScoped<IValidator<ReportDefectRequest>, ReportDefectValidator>()
+        .Validated<ReportDefectService, ReportDefectRequest, ReportDefectResponse>()
         .AddScoped<QueueDropService>()
         .AddScoped<IValidator<QueueDropRequest>, QueueDropValidator>()
         .Validated<QueueDropService, QueueDropRequest, QueueDropResponse>()

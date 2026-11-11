@@ -5,12 +5,12 @@ using Aw.Sindri.Host.Endpoints;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri answer &lt;run&gt;/&lt;node&gt; (--text T | --choice C) [--json]': a client of POST /sindri/workflow-runs/{run}/nodes/{node}/answer. Starts the control plane first, like the other workflow writes.
+/// 'sindri answer &lt;run&gt;/&lt;node&gt; (--text T | --choice C) [--item N] [--json]': a client of POST /sindri/workflow-runs/{run}/nodes/{node}/answer. Starts the control plane first, like the other workflow writes.
 /// Exit 0 answered, 1 not running, 2 refused or error.
 /// </summary>
 internal static class WfAnswerCommand
 {
-    private const string Usage = "usage: sindri answer <run>/<node> (--text T | --choice C) [--json]";
+    private const string Usage = "usage: sindri answer <run>/<node> (--text T | --choice C) [--item N] [--json]";
 
     internal static async Task<int> Run(string[] args, RecipeDesk desk, Output output, CancellationToken ct)
     {
@@ -43,8 +43,7 @@ internal static class WfAnswerCommand
     {
         var json = args.Contains("--json", StringComparer.Ordinal);
         var rest = args.Where(static a => !string.Equals(a, "--json", StringComparison.Ordinal)).ToList();
-        string? text = null;
-        string? choice = null;
+        var fields = new Fields();
         var targets = new List<string>();
         for (var i = 0; i < rest.Count; i++)
         {
@@ -55,8 +54,11 @@ internal static class WfAnswerCommand
                     return Refused($"'{rest[i]}' needs a value");
                 }
 
-                var value = rest[i + 1];
-                (text, choice) = string.Equals(rest[i], "--text", StringComparison.Ordinal) ? (value, choice) : (text, value);
+                if (Apply(fields, rest[i], rest[i + 1]) is { } wrong)
+                {
+                    return Refused(wrong);
+                }
+
                 i++;
             }
             else if (rest[i].StartsWith('-'))
@@ -69,13 +71,46 @@ internal static class WfAnswerCommand
             }
         }
 
-        var body = new AnswerQuestionBody(text, choice);
+        var body = new AnswerQuestionBody(fields.Text, fields.Choice, fields.Item);
         return Check(targets, body) is { } bad ? Refused(bad) : (targets[0], body, json, null);
 
-        (string?, AnswerQuestionBody, bool, string?) Refused(string reason) => (targets.Count > 0 ? targets[0] : null, new AnswerQuestionBody(text, choice), json, reason);
+        (string?, AnswerQuestionBody, bool, string?) Refused(string reason) => (targets.Count > 0 ? targets[0] : null, new AnswerQuestionBody(fields.Text, fields.Choice, fields.Item), json, reason);
     }
 
-    private static bool IsValueFlag(string arg) => string.Equals(arg, "--text", StringComparison.Ordinal) || string.Equals(arg, "--choice", StringComparison.Ordinal);
+    private sealed class Fields
+    {
+        public string? Text { get; set; }
+
+        public string? Choice { get; set; }
+
+        public int? Item { get; set; }
+    }
+
+    // why: items of a loop count from 1; 0 is a node outside a loop and is never typed
+    private static string? Apply(Fields fields, string flag, string value)
+    {
+        if (string.Equals(flag, "--item", StringComparison.Ordinal))
+        {
+            if (!int.TryParse(value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var at) || at < 1)
+            {
+                return $"'--item' needs a number from 1 (the item's position in the loop), not '{value}'";
+            }
+
+            fields.Item = at;
+        }
+        else if (string.Equals(flag, "--text", StringComparison.Ordinal))
+        {
+            fields.Text = value;
+        }
+        else
+        {
+            fields.Choice = value;
+        }
+
+        return null;
+    }
+
+    private static bool IsValueFlag(string arg) => string.Equals(arg, "--text", StringComparison.Ordinal) || string.Equals(arg, "--choice", StringComparison.Ordinal) || string.Equals(arg, "--item", StringComparison.Ordinal);
 
     private static string? Check(List<string> targets, AnswerQuestionBody body) => targets switch
     {

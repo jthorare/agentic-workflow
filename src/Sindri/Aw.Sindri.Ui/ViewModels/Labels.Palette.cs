@@ -3,6 +3,18 @@ namespace Aw.Sindri.Ui.ViewModels;
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the command palette and the shortcuts sheet (§8, §12.4).</summary>
 internal static partial class Labels
 {
+    /// <summary>The ⌘K field's key chip on macOS.</summary>
+    internal const string SearchKey = "⌘K";
+
+    /// <summary>The key chip where the command key is Ctrl (Linux, Windows).</summary>
+    internal const string SearchKeyCtrl = "Ctrl+K";
+
+    /// <summary>The key chip's words before its letter where there is no Command icon.</summary>
+    internal const string SearchKeyModifier = "Ctrl+";
+
+    /// <summary>The ⌘K chip's letter, drawn after the ⌘ icon.</summary>
+    internal const string SearchKeyLetter = "K";
+
     /// <summary>The palette's accessible name.</summary>
     internal const string Palette = "Command palette";
 

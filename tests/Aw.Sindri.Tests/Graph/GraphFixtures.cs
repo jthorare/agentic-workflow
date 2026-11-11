@@ -22,8 +22,8 @@ internal static class GraphFixtures
     };
 
     /// <summary>A context where every name is known and cron and conditions parse (unless a test says otherwise).</summary>
-    public static GraphValidator Validator(IGraphWorld? world = null, Func<string, string?, string?>? cron = null, Func<string, ConditionParse>? condition = null, IReadOnlyDictionary<string, IGraphBlockType>? blocks = null, ResourceBoxCap? boxCap = null) =>
-        new(new GraphValidationContext(blocks ?? Blocks, world ?? new KnownWorld(), cron ?? ((_, _) => null), condition ?? (text => new ConditionParse(Error: null, References: Template(text)))) { BoxCap = boxCap });
+    public static GraphValidator Validator(IGraphWorld? world = null, Func<string, string?, string?>? cron = null, Func<string, ConditionParse>? condition = null, IReadOnlyDictionary<string, IGraphBlockType>? blocks = null, ResourceBoxCap? boxCap = null, Func<string, IReadOnlyList<CodeProblem>>? codeCheck = null) =>
+        new(new GraphValidationContext(blocks ?? Blocks, world ?? new KnownWorld(), cron ?? ((_, _) => null), condition ?? (text => new ConditionParse(Error: null, References: Template(text)))) { BoxCap = boxCap, CodeCheck = codeCheck });
 
     public static GraphNode Trigger(string id) => new(NodeId.From(id), "schedule", Title: null, new JsonObject { ["cron"] = "0 7 * * 1-5", ["timezone"] = "America/Los_Angeles" });
 
