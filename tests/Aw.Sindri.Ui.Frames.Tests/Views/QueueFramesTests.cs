@@ -265,7 +265,7 @@ public sealed class QueueFramesTests : IDisposable
 
         Named<Button>(window, "LoadMoreButton").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await Until(window, () => !shell.Item.HasMore);
-        Assert.Equal(101, Named<Control>(window, "TimelineList").GetVisualDescendants().OfType<Border>().Count(b => b.Classes.Contains("timeline-row")));
+        Assert.Equal(101, shell.Item.Timeline.Count);   // the list is virtualized (#2776): count the rows it holds, not the ones it built
         Frame(window, "item-timeline");
     });
 
