@@ -29,6 +29,10 @@ public sealed class WorkflowGoldenContractTests
         Assert.Null(list.Workflows[1].ActiveRevision);
         Assert.Empty(Read<WorkflowList>("workflows", "list-empty").Workflows);
 
+        // includeArchived (#2702): the same two rows, the archived one marked.
+        var held = Read<WorkflowList>("workflows", "list-include-archived").Workflows;
+        Assert.Equal(["morning-check:", "weekly-report:True"], [.. held.Select(w => w.Slug + ":" + w.Archived)], StringComparer.Ordinal);
+
         var one = Read<WorkflowView>("workflows-slug", "found");
         Assert.Equal(("WF-00000000000000000000000000000001", "morning-check", "Morning check", 1, 1, 2), (one.Id, one.Slug, one.Name, one.Revision, one.ActiveRevision, one.LatestRevision));
         Assert.Equal(("owner", "session:golden"), (one.CreatedBy, one.ChangedBy));

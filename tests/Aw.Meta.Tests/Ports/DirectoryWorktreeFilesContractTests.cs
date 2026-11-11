@@ -10,7 +10,42 @@ public sealed class DirectoryWorktreeFilesContractTests : WorktreeFilesContract,
 {
     private readonly List<string> _directories = [];
 
-    protected override IWorktreeFiles Create() => new DirectoryWorktreeFiles();
+    private string? _environmentRoot;
+
+    protected override IWorktreeFiles Create() => new DirectoryWorktreeFiles(name => string.Equals(name, "AW_WORKTREE_ROOT", StringComparison.Ordinal) ? _environmentRoot : null);
+
+    protected override string ArrangeRoot(string? fileRoot, string? environmentRoot)
+    {
+        var repo = Directory.CreateTempSubdirectory("aw-meta-root-").FullName;
+        _directories.Add(repo);
+        _environmentRoot = environmentRoot;
+        if (fileRoot is not null)
+        {
+            _ = Directory.CreateDirectory(Path.Combine(repo, ".agentic-workflow"));
+            File.WriteAllText(Path.Combine(repo, ".agentic-workflow", "worktrees.json"), System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string>(StringComparer.Ordinal) { ["root"] = fileRoot }));
+        }
+
+        return repo;
+    }
+
+    // Ideas' review of #2847: a malformed file reads as "not configured", so the caller falls back to the default root. Only the
+    // file adapter reads a file, so these cases live here, not in the shared contract.
+    [Theory]
+    [InlineData("{not json")]
+    [InlineData("{\"root\": 5}")]
+    [InlineData("{\"root\": \"\"}")]
+    [InlineData("[\"/a\"]")]
+    [InlineData("{}")]
+    public async Task A_malformed_worktrees_file_reads_as_not_configured(string text)
+    {
+        var repo = ArrangeRoot(fileRoot: null, environmentRoot: null);
+        _ = Directory.CreateDirectory(Path.Combine(repo, ".agentic-workflow"));
+        await File.WriteAllTextAsync(Path.Combine(repo, ".agentic-workflow", "worktrees.json"), text, TestContext.Current.CancellationToken);
+
+        var result = await Create().ConfiguredRoot(repo, TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess && result.Value is null, text);
+    }
 
     protected override string Arrange(IReadOnlyDictionary<string, DateTimeOffset> entries)
     {

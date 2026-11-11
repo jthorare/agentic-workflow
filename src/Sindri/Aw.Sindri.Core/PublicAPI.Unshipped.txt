@@ -1273,11 +1273,9 @@ Aw.Sindri.Core.Items.ItemSummary
 Aw.Sindri.Core.Items.ItemSummary.<Clone>$() -> Aw.Sindri.Core.Items.ItemSummary!
 Aw.Sindri.Core.Items.ItemSummary.Actions.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>!
 Aw.Sindri.Core.Items.ItemSummary.Actions.init -> void
-Aw.Sindri.Core.Items.ItemSummary.Deconstruct(out Aw.Sindri.Core.Ids.ItemId Id, out string! Title, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Items.Vocabulary.ItemState State, out string? Step, out System.DateTimeOffset Since, out Aw.Sindri.Core.Ids.ActionId? PrimaryAction, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string? Owner) -> void
 Aw.Sindri.Core.Items.ItemSummary.Equals(Aw.Sindri.Core.Items.ItemSummary? other) -> bool
 Aw.Sindri.Core.Items.ItemSummary.Id.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Core.Items.ItemSummary.Id.init -> void
-Aw.Sindri.Core.Items.ItemSummary.ItemSummary(Aw.Sindri.Core.Ids.ItemId Id, string! Title, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Items.Vocabulary.ItemState State, string? Step, System.DateTimeOffset Since, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string? Owner) -> void
 Aw.Sindri.Core.Items.ItemSummary.Owner.get -> string?
 Aw.Sindri.Core.Items.ItemSummary.Owner.init -> void
 Aw.Sindri.Core.Items.ItemSummary.PrimaryAction.get -> Aw.Sindri.Core.Ids.ActionId?
@@ -13979,7 +13977,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 34 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 35 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -23058,3 +23056,51 @@ Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.Deconstruct(out Aw.Sindri.Co
 Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.WorkflowNodeHandedBackPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! By) -> void
 const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeTakenOver = "workflow.node.taken-over" -> string!
 const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeHandedBack = "workflow.node.handed-back" -> string!
+Aw.Sindri.Core.Items.ItemSummary.Deconstruct(out Aw.Sindri.Core.Ids.ItemId Id, out string! Title, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Items.Vocabulary.ItemState State, out string? Step, out System.DateTimeOffset Since, out Aw.Sindri.Core.Ids.ActionId? PrimaryAction, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string? Owner, out bool Parked) -> void
+Aw.Sindri.Core.Items.ItemSummary.ItemSummary(Aw.Sindri.Core.Ids.ItemId Id, string! Title, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Items.Vocabulary.ItemState State, string? Step, System.DateTimeOffset Since, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string? Owner, bool Parked = false) -> void
+Aw.Sindri.Core.Items.ItemSummary.Parked.get -> bool
+Aw.Sindri.Core.Items.ItemSummary.Parked.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPublic
+Aw.Sindri.Core.Events.WorkflowChangedPublic.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowChangedPublic!
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, out Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, out int Revision) -> void
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Equals(Aw.Sindri.Core.Events.WorkflowChangedPublic? other) -> bool
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Revision.get -> int
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Revision.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Slug.get -> Aw.Sindri.Core.Graph.Ids.WorkflowSlug
+Aw.Sindri.Core.Events.WorkflowChangedPublic.Slug.init -> void
+Aw.Sindri.Core.Events.WorkflowChangedPublic.WorkflowChangedPublic(Aw.Sindri.Core.Graph.Ids.WorkflowId WorkflowId, Aw.Sindri.Core.Graph.Ids.WorkflowSlug Slug, int Revision) -> void
+Aw.Sindri.Core.Events.WorkflowChangedPublic.WorkflowId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowId
+Aw.Sindri.Core.Events.WorkflowChangedPublic.WorkflowId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodePublic
+Aw.Sindri.Core.Events.WorkflowNodePublic.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowNodePublic!
+Aw.Sindri.Core.Events.WorkflowNodePublic.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex) -> void
+Aw.Sindri.Core.Events.WorkflowNodePublic.Equals(Aw.Sindri.Core.Events.WorkflowNodePublic? other) -> bool
+Aw.Sindri.Core.Events.WorkflowNodePublic.ItemIndex.get -> int
+Aw.Sindri.Core.Events.WorkflowNodePublic.ItemIndex.init -> void
+Aw.Sindri.Core.Events.WorkflowNodePublic.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowNodePublic.NodeId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodePublic.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowNodePublic.RunId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodePublic.WorkflowNodePublic(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex) -> void
+Aw.Sindri.Core.Events.WorkflowRunPublic
+Aw.Sindri.Core.Events.WorkflowRunPublic.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowRunPublic!
+Aw.Sindri.Core.Events.WorkflowRunPublic.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId) -> void
+Aw.Sindri.Core.Events.WorkflowRunPublic.Equals(Aw.Sindri.Core.Events.WorkflowRunPublic? other) -> bool
+Aw.Sindri.Core.Events.WorkflowRunPublic.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowRunPublic.RunId.init -> void
+Aw.Sindri.Core.Events.WorkflowRunPublic.WorkflowRunPublic(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId) -> void
+override Aw.Sindri.Core.Events.WorkflowChangedPublic.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowChangedPublic.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowChangedPublic.ToString() -> string!
+override Aw.Sindri.Core.Events.WorkflowNodePublic.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowNodePublic.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowNodePublic.ToString() -> string!
+override Aw.Sindri.Core.Events.WorkflowRunPublic.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.WorkflowRunPublic.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowRunPublic.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowChangedPublic.operator !=(Aw.Sindri.Core.Events.WorkflowChangedPublic? left, Aw.Sindri.Core.Events.WorkflowChangedPublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowChangedPublic.operator ==(Aw.Sindri.Core.Events.WorkflowChangedPublic? left, Aw.Sindri.Core.Events.WorkflowChangedPublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowNodePublic.operator !=(Aw.Sindri.Core.Events.WorkflowNodePublic? left, Aw.Sindri.Core.Events.WorkflowNodePublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowNodePublic.operator ==(Aw.Sindri.Core.Events.WorkflowNodePublic? left, Aw.Sindri.Core.Events.WorkflowNodePublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowRunPublic.operator !=(Aw.Sindri.Core.Events.WorkflowRunPublic? left, Aw.Sindri.Core.Events.WorkflowRunPublic? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowRunPublic.operator ==(Aw.Sindri.Core.Events.WorkflowRunPublic? left, Aw.Sindri.Core.Events.WorkflowRunPublic? right) -> bool

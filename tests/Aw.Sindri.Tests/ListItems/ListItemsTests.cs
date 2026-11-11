@@ -46,6 +46,18 @@ public sealed class ListItemsTests
     }
 
     [Fact]
+    public async Task A_parked_item_says_parked_and_an_open_one_does_not()
+    {
+        await _q.Item('1', "waiting", state: ItemState.Parked);
+        await _q.Item('2', "going", state: ItemState.Running);
+        using var entered = _q.Human();
+
+        var items = (await Service().Handle(new ListItemsRequest(State: null, Repo: null), ItemQueryHarness.Token)).Value.Items;
+
+        Expect.Sequence([("waiting", true), ("going", false)], [.. items.Select(static i => (i.Title, i.Parked))]);
+    }
+
+    [Fact]
     public async Task Items_repo_filter()
     {
         await _q.Item('1', "web", repo: "web");
