@@ -85,7 +85,7 @@ public sealed class WorkflowsStepEditorFramesTests : FrameHost
     });
 
     [Fact]
-    public Task Cron_offers_its_presets_and_keeps_the_raw_cron_under_Advanced() => OnUi(async () =>
+    public Task Cron_offers_its_presets_and_keeps_the_raw_cron_under_Advanced_while_the_time_zone_shows_its_text() => OnUi(async () =>
     {
         var (window, shell) = await OnTheTriggerEditor();
         await OpenEditorOnTrigger(window, shell);
@@ -107,6 +107,11 @@ public sealed class WorkflowsStepEditorFramesTests : FrameHost
         advanced.IsChecked = true;
         await Until(window, () => raw.IsEffectivelyVisible, "Advanced never showed the raw cron");
         Assert.Equal("0 7 * * 1-5", raw.Text);
+
+        // a time zone's preset labels equal their values, so there is nothing to hide: its text sits next to the preset list, with no Advanced toggle
+        var zone = shell.Workflows.Editor.Fields[1];
+        Assert.True(fields.GetVisualDescendants().OfType<TextBox>().Single(t => t.Name == "EditorFieldText" && t.DataContext == zone).IsEffectivelyVisible, "the time zone's text is hidden");
+        Assert.DoesNotContain(fields.GetVisualDescendants().OfType<ToggleButton>(), b => b.Name == "EditorFieldAdvanced" && b.DataContext == zone && b.IsEffectivelyVisible);
     });
 
     [Fact]
