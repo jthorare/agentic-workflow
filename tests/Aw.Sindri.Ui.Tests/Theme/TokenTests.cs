@@ -12,40 +12,40 @@ public sealed class TokenTests
     // §14.1, every row with a resource key.
     private static readonly (string, string)[] _colourRows =
     [
-        ("Canvas", "#010102"),
-        ("Surface1", "#0f1011"),
-        ("Surface2", "#141516"),
-        ("Surface3", "#18191a"),
-        ("Surface4", "#191a1b"),
-        ("Hairline", "#23252a"),
+        ("Canvas", "#08090a"),
+        ("Surface1", "#141517"),
+        ("Surface2", "#1c1d20"),
+        ("Surface3", "#222326"),
+        ("Surface4", "#26272a"),
+        ("Hairline", "#0fffffff"),
         ("HairlineStrong", "#34343a"),
         ("HairlineTertiary", "#3e3e44"),
         ("Ink", "#f7f8f8"),
         ("InkMuted", "#d0d6e0"),
         ("InkSubtle", "#8a8f98"),
-        ("InkTertiary", "#62666d"),
+        ("InkTertiary", "#74787f"),
         ("Primary", "#5e6ad2"),
         ("PrimaryHover", "#828fff"),
         ("PrimaryHoverFill", "#535fc6"),
         ("PrimaryPressed", "#4c57be"),
         ("OnPrimary", "#ffffff"),
-        ("Success", "#27a644"),
+        ("Success", "#2eb75b"),
         ("Overlay", "#000000"),
         ("Attention", "#f2994a"),
         ("Error", "#eb5757"),
-        ("AttentionSoft", "#23160c"),
-        ("AttentionSoft.Hover", "#2c1f15"),   // an attention row lifts within its own colour: AttentionSoft one step up
-        ("AttentionSoft.Pressed", "#32251b"),   // and two steps up
-        ("AttentionFill", "#624328"),   // the hold button's fill: Attention at 35 % over Surface2
-        ("PrimarySoft", "#1d2036"),
-        ("ErrorSoft", "#220d0e"),
-        ("SuccessSoft", "#06180b"),
+        ("AttentionSoft", "#291d13"),
+        ("AttentionSoft.Hover", "#32261c"),   // an attention row lifts within its own colour: AttentionSoft one step up
+        ("AttentionSoft.Pressed", "#382c22"),   // and two steps up
+        ("AttentionFill", "#67482f"),   // the hold button's fill: Attention at 35 % over Surface2
+        ("PrimarySoft", "#202442"),
+        ("ErrorSoft", "#281415"),
+        ("SuccessSoft", "#0d2115"),
         ("Wire", "#4a4a52"),
         ("WireHi", "#8a8f98"),
         ("LaneFill", "#05ffffff"),
         ("RingAnchor", "#d0d6e0"),
         ("Violet", "#a78bfa"),
-        ("VioletSoft", "#170f2a"),
+        ("VioletSoft", "#1d1a29"),
         ("Area1", "#7aa2f7"),
         ("Area2", "#e0af68"),
         ("Area3", "#7bd88f"),
@@ -124,15 +124,16 @@ public sealed class TokenTests
     // §14.2 and the 2026-11 measured pass (docs/csharp/sindri-ui-design.md): size, line height and weight at scale 1.0.
     public static TheoryData<string, double, double, string> Ramp => new()
     {
+        { "Display", 40, 44, "SemiBold" },
         { "PageTitle", 24, 32, "SemiBold" },
-        { "SectionTitle", 15, 24, "SemiBold" },
+        { "SectionTitle", 15, 22, "SemiBold" },
         { "DetailTitle", 20, 28, "SemiBold" },
         { "Body", 13, 20, "Normal" },
         { "BodyStrong", 13, 20, "Medium" },
-        { "Caption", 12, 16, "Normal" },
-        { "Eyebrow", 11, 16, "Medium" },
+        { "Caption", 12, 18, "Normal" },
+        { "Eyebrow", 11, 16, "Normal" },
         { "Button", 13, 15.6, "Medium" },
-        { "Mono", 12, 16, "Normal" },
+        { "Mono", 12, 18, "Normal" },
         { "Kbd", 11, 16, "Medium" },
     };
 
@@ -148,11 +149,13 @@ public sealed class TokenTests
     [Theory]
     [InlineData("Compact", 28)]
     [InlineData("Default", 32)]
+    [InlineData("Data", 36)]
     [InlineData("Comfortable", 40)]
     public void Each_row_height_has_its_value(string name, double height) => Assert.Equal(height, _tokens.Number($"Row.Height.{name}"));
 
     // Every TextBlock class reads its step's size, line height and weight from the tokens; no literal size is left.
     [Theory]
+    [InlineData("display", "Display")]
     [InlineData("page-title", "PageTitle")]
     [InlineData("section-title", "SectionTitle")]
     [InlineData("detail-title", "DetailTitle")]
@@ -171,6 +174,44 @@ public sealed class TokenTests
         Assert.Equal($"{{DynamicResource Type.{step}.Size}}", Setter("FontSize"));
         Assert.Equal($"{{DynamicResource Type.{step}.LineHeight}}", Setter("LineHeight"));
         Assert.Equal($"{{DynamicResource Type.{step}.Weight}}", Setter("FontWeight"));
+    }
+
+    // The inspora pass: tracking (px) per class, from the token PR spec.
+    [Theory]
+    [InlineData("display", "-0.8")]
+    [InlineData("page-title", "-0.24")]
+    [InlineData("section-title", "0")]
+    [InlineData("body", "-0.13")]
+    [InlineData("caption", "-0.24")]
+    [InlineData("mono", "0")]
+    public void Each_type_class_has_its_tracking(string name, string tracking)
+    {
+        var style = TypographyStyles().Single(s => s.Attribute("Selector")?.Value == "TextBlock." + name);
+
+        Assert.Equal(tracking, style.Elements().Single(e => Attr(e, "Property") == "LetterSpacing").Attribute("Value")?.Value);
+    }
+
+    [Fact]
+    public void The_chart_inset_is_Surface2_and_a_floating_layer_has_its_shadow()
+    {
+        Assert.Equal("{StaticResource Color.Surface2}", _tokens.Resources["Brush.Chart.Inset"].Attribute("Color")?.Value);
+        Assert.Equal("0 8 24 0 #66000000", _tokens.Resources["Shadow.Float"].Value.Trim());
+    }
+
+    [Fact]
+    public void A_card_has_no_border_and_Space_LG_padding_and_a_status_chip_is_Radius_SM()
+    {
+        var app = XDocument.Load(Path.Combine(UiSource.Library, "Views", "SindriApp.axaml"));
+        var card = app.Descendants().Single(e => e.Name.LocalName == "Style" && e.Attribute("Selector")?.Value == "Border.card");
+        string? Setter(string property) => card.Elements().Single(e => Attr(e, "Property") == property).Attribute("Value")?.Value;
+
+        Assert.Equal("0", Setter("BorderThickness"));
+        Assert.Equal("{StaticResource Space.LG.Thickness}", Setter("Padding"));
+        Assert.DoesNotContain(card.Elements(), e => Attr(e, "Property") == "BorderBrush");
+
+        var chip = XDocument.Load(Path.Combine(UiSource.Theme, "StatusChip.axaml")).Descendants()
+            .First(e => e.Name.LocalName == "Style" && e.Attribute("Selector")?.Value == "Border.status-chip");
+        Assert.Equal("{StaticResource Radius.SM}", chip.Elements().Single(e => Attr(e, "Property") == "CornerRadius").Attribute("Value")?.Value);
     }
 
     [Fact]
@@ -234,6 +275,7 @@ public sealed class TokenTests
 
     // §14.2: one TextBlock style class per type step.
     [Theory]
+    [InlineData("display")]
     [InlineData("page-title")]
     [InlineData("section-title")]
     [InlineData("detail-title")]

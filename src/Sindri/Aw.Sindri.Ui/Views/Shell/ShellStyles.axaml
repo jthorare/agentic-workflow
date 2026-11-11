@@ -233,12 +233,13 @@
     <Setter Property="Padding" Value="12,8" />
   </Style>
 
-  <!-- Panels (home.html .panel): Surface1 with a hairline; a header row (.phead, 36 px, the eyebrow over a hairline) and
-       a body on the spacing scale. -->
+  <!-- Panels (home.html .panel): a Surface1 step over Canvas and no outer border (inspora note §3 Surfaces: the surface step groups,
+       hairlines only divide inside a card); a header row (.phead, 36 px, the eyebrow over a hairline). The phead stays 16 in: the
+       Home, Work and Todo rows under it are 16 in, and they move to 24 together in the Home pass (#2780); the System cards are
+       sections, inset Space.LG 24 below. -->
   <Style Selector="Border.panel">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.LG}" />
   </Style>
   <Style Selector="Border.phead">
@@ -250,9 +251,9 @@
   <Style Selector="Border.phead > TextBlock">
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
-  <!-- The Health page's sections: 16 px insets, a hairline between them; label/value rows 28 px apart. -->
+  <!-- The Health page's sections: Space.LG 24 insets, a hairline between them; label/value rows 28 px apart. -->
   <Style Selector="Border.section">
-    <Setter Property="Padding" Value="{StaticResource Space.MD.Thickness}" />
+    <Setter Property="Padding" Value="{StaticResource Space.LG.Thickness}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
   </Style>

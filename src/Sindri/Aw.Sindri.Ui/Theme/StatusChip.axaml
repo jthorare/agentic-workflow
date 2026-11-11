@@ -4,7 +4,7 @@
        attention, error, neutral, draft. Each reads Brush.Status.<Variant>.Fg / .Bg / .Border (Tokens.axaml). A chip always carries its word. -->
   <Style Selector="Border.status-chip">
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.XS}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
     <Setter Property="Padding" Value="6,0" />
     <!-- MinHeight, not Height: at the 1.3 text size the caption line is 20.8 px, which a fixed 20 px chip with its 1 px border cut (#2674) -->
     <Setter Property="MinHeight" Value="20" />
