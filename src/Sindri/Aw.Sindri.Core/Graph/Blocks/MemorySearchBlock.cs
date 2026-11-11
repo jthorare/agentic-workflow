@@ -94,7 +94,7 @@ public sealed class MemorySearchBlock(IGraphMemoryPort memory) : IGraphBlock
             return (int?)null;
         }
 
-        return ConfigValues.Int(config["limit"]) is { } number
+        return ConfigValues.Int(config["limit"]) is { } number and > 0
             ? number
             : SindriErrors.GraphBlockFailed.With($"memory_search's 'limit' is '{text}'; write a whole number from 1 to {MaxLimit}");
     }
