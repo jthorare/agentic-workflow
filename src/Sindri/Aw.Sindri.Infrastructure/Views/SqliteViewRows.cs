@@ -13,7 +13,9 @@ namespace Aw.Sindri.Infrastructure.Views;
 /// <param name="sequence">The sequence of the event being folded (0 for reads).</param>
 /// <param name="options">The package's AwJson options.</param>
 /// <param name="unreadable">When given, a stored row that can't be deserialized (written under an older shape) reads as absent and is counted here; when null it is an error.</param>
-internal sealed class SqliteViewRows(ISqliteSession session, long sequence, JsonSerializerOptions options, UnreadableRows? unreadable = null) : IViewRows
+/// <param name="savepoint">When given, opened before the first write (the projector's per-event savepoint).</param>
+internal sealed class SqliteViewRows(ISqliteSession session, long sequence, JsonSerializerOptions options, UnreadableRows? unreadable = null,
+    EventSavepoint? savepoint = null) : IViewRows
 {
     public async ValueTask<Result<TRow?>> Get<TRow>(string view, string key, CancellationToken cancellationToken)
         where TRow : class
@@ -144,6 +146,11 @@ internal sealed class SqliteViewRows(ISqliteSession session, long sequence, Json
         if (ViewSql.Table(view) is not { } table)
         {
             return Unknown(view);
+        }
+
+        if (savepoint is not null)
+        {
+            await savepoint.Open(cancellationToken).ConfigureAwait(false);
         }
 
         var written = await SqliteQueries.Execute(session, statement(table), cancellationToken).ConfigureAwait(false);

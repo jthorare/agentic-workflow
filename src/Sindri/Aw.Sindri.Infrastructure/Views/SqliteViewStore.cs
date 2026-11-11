@@ -11,6 +11,8 @@ namespace Aw.Sindri.Infrastructure.Views;
 /// <summary>
 /// The projector's writer over views.db (API spec §2.3): one transaction per page and a savepoint per event, so a
 /// failing event (an Error or a throw) is rolled back alone, the events before it commit and the stall is recorded.
+/// The savepoint opens at the event's first write: an event no projection writes for has nothing to roll back (#2890).
+/// A page runs its statements through one <see cref="SqliteStatementCache"/>, so each is parsed once per page (#2890).
 /// </summary>
 internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOptions options) : IViewStore
 {
@@ -32,8 +34,9 @@ internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOpti
 
     public ValueTask<Result<PageApplied>> Apply(IReadOnlyList<LedgerEvent> page, IReadOnlyList<IProjection> projections, DateTimeOffset at,
         CancellationToken cancellationToken) =>
-        InSession<PageApplied>(async session =>
+        InSession<PageApplied>(async unitOfWork =>
         {
+            using var session = new SqliteStatementCache(unitOfWork);
             var read = await ReadState(session, cancellationToken).ConfigureAwait(false);
             if (read.IsError)
             {
@@ -84,12 +87,13 @@ internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOpti
             return done.IsError ? ViewsDatabase.Translate(done.Error) : Results.Success(Unit.Value);
         }, cancellationToken);
 
-    /// <summary>Folds one event under a savepoint; returns the failure (an Error or a throw) after rolling the event back, else null.</summary>
-    private async ValueTask<Error?> FoldOne(SqliteUnitOfWork session, LedgerEvent recorded, IReadOnlyList<IProjection> projections, UnreadableRows unreadable,
+    /// <summary>Folds one event under a savepoint opened at its first write; returns the failure (an Error or a throw) after rolling the event back, else null.</summary>
+    private async ValueTask<Error?> FoldOne(SqliteStatementCache session, LedgerEvent recorded, IReadOnlyList<IProjection> projections, UnreadableRows unreadable,
         CancellationToken cancellationToken)
     {
-        await session.Transaction.SaveAsync(Savepoint, cancellationToken).ConfigureAwait(false);
-        var rows = new SqliteViewRows(session, recorded.Sequence, options, unreadable);
+        var transaction = session.Transaction ?? throw new InvalidOperationException("The projector folds inside its page transaction");
+        var savepoint = new EventSavepoint(transaction, Savepoint);
+        var rows = new SqliteViewRows(session, recorded.Sequence, options, unreadable, savepoint);
         Error? failure = null;
         foreach (var projection in projections.Where(p => p.Handles(recorded.Envelope.Type)))
         {
@@ -105,12 +109,12 @@ internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOpti
 
             if (failure is not null)
             {
-                await session.Transaction.RollbackAsync(Savepoint, cancellationToken).ConfigureAwait(false);
+                await savepoint.Rollback(cancellationToken).ConfigureAwait(false);
                 return failure;
             }
         }
 
-        await session.Transaction.ReleaseAsync(Savepoint, cancellationToken).ConfigureAwait(false);
+        await savepoint.Release(cancellationToken).ConfigureAwait(false);
         return null;
     }
 
@@ -127,6 +131,8 @@ internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOpti
         {
             return ViewsDatabase.Translate(begun.Error);
         }
+
+        ViewsDatabase.NoCheckpointOnClose(begun.Value.Connection);
 
         await using (begun.Value.ConfigureAwait(false))
         {
