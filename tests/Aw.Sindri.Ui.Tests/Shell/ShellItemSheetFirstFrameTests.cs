@@ -43,7 +43,7 @@ public sealed class ShellItemSheetFirstFrameTests
     }, Token);
 
     [Fact]
-    public Task Item_sheet_fills_while_events_keep_coming() => UiThread.Run(async () =>
+    public Task Item_sheet_fills_while_events_keep_coming_guard() => UiThread.Run(async () =>
     {
         var shell = await Connected();
         _server.ItemDelay = TimeSpan.FromMilliseconds(30);   // a real answer takes time: each event's pass cancels the read in flight
