@@ -73,12 +73,12 @@ public sealed class WorkflowsCreateTests
     }
 
     [Fact]
-    public async Task Clearing_the_name_lets_the_short_id_follow_again()
+    public async Task Emptying_the_short_id_lets_it_follow_the_name_again()
     {
         var page = await Opened();
         page.NewName = "Daily";
         page.NewSlug = "my-id";
-        page.NewName = string.Empty;
+        page.NewSlug = string.Empty;
 
         page.NewName = "Weekly";
 
@@ -243,11 +243,11 @@ public sealed class WorkflowsCreateTests
 
         await page.Create(Token);
 
-        Assert.Equal("Couldn't create the workflow. Another workflow already has that slug", page.CreateError);
+        Assert.Equal("A workflow already uses 'morning-check'; pick another short id.", page.CreateError);
         Assert.DoesNotContain("SND-", page.CreateError, StringComparison.Ordinal);
         Assert.Equal("SND-GRAPH-009", page.CreateErrorCode);
         Assert.Equal((true, "Morning check", Slug, false, false, false), (page.IsCreating, page.NewName, page.NewSlug, page.IsRuns, page.IsEditing, page.IsCreateSending));
-        Assert.True(page.CanCreate);
+        Assert.False(page.CanCreate);   // the same short id would be refused again
         Assert.True(page.ShortIdInvalid);
         Assert.Empty(_f.Server.AppliedWorkflowOps);
     }

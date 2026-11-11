@@ -13,10 +13,13 @@ internal sealed partial class WorkflowsPageViewModel
 {
     private string _newName = string.Empty;
     private string _newSlug = string.Empty;
+    private const string SlugTaken = "SND-GRAPH-009";
+
+    private string? _refusedId;   // the short id Sindri refused as taken: Create stays off until the short id changes
     private bool _slugEdited;   // once the person types in the short id, the name no longer overwrites it
 
     /// <summary>True while the New workflow form is open.</summary>
-    public bool IsCreating { get; private set { Set(ref field, value); OnChanged(nameof(ShowsCreateForm)); } }
+    public bool IsCreating { get; private set { Set(ref field, value); OnChanged(nameof(ShowsCreateForm)); OnChanged(nameof(ShowsEmpty)); } }
 
     /// <summary>The starter templates the form offers.</summary>
     public ObservableCollection<TemplateChoice> Templates { get; } = [];
@@ -28,12 +31,7 @@ internal sealed partial class WorkflowsPageViewModel
         set
         {
             Set(ref _newName, value);
-            if (value.Trim().Length == 0)
-            {
-                _slugEdited = false;
-            }
-
-            if (!_slugEdited)
+            if (!_slugEdited)   // a hand-edited short id survives the name being cleared and retyped: only emptying the short id itself gives it back to the name
             {
                 _newSlug = WorkflowSlugs.From(value);
                 OnChanged(nameof(NewSlug));
@@ -92,7 +90,9 @@ internal sealed partial class WorkflowsPageViewModel
     public string SelectedDescription => SelectedChoice?.Description ?? string.Empty;
 
     /// <summary>True when Create does something: a name and a valid short id, and no create on the way.</summary>
-    public bool CanCreate => CreateReasonText.Length == 0 && !IsCreateSending && SelectedTemplate.Length > 0;
+    public bool CanCreate => CreateReasonText.Length == 0 && !IsCreateSending && SelectedTemplate.Length > 0 && !IsRefusedId;
+
+    private bool IsRefusedId => string.Equals(NewSlug, _refusedId, StringComparison.Ordinal);
 
     /// <summary>Why Create is off because of the name or short id; empty when both are fine.</summary>
     public string CreateReasonText => ReasonFor();
@@ -181,7 +181,7 @@ internal sealed partial class WorkflowsPageViewModel
             return;
         }
 
-        var name = NewName.Trim();
+        var (name, slug) = (NewName.Trim(), NewSlug);
         IsCreateSending = true;
         ClearCreateError();
         try
@@ -189,7 +189,7 @@ internal sealed partial class WorkflowsPageViewModel
             var made = await Api.CreateWorkflow(url, NewSlug, SelectedTemplate, cancellationToken).ConfigureAwait(true);
             if (made.IsError)
             {
-                await CreateRefused(url, made.Error, cancellationToken).ConfigureAwait(true);
+                await CreateRefused(url, made.Error, slug, cancellationToken).ConfigureAwait(true);
                 return;
             }
 
@@ -214,13 +214,21 @@ internal sealed partial class WorkflowsPageViewModel
     private static string SetName(string name) => new JsonArray((JsonNode)new JsonObject { ["op"] = "set_meta", ["name"] = name }).ToJsonString();
 
     // A refusal says why. When Sindri didn't answer, the workflow may exist, so the list is read again and the line says so: a second press could be refused as a taken id.
-    private async Task CreateRefused(Uri url, Error error, CancellationToken cancellationToken)
+    private async Task CreateRefused(Uri url, Error error, string slug, CancellationToken cancellationToken)
     {
         CreateErrorCode = error.Code;
         if (string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal))
         {
             CreateError = Labels.WfCreateUnsure(error);
             await ReadList(url, cancellationToken).ConfigureAwait(true);
+            return;
+        }
+
+        if (string.Equals(error.Code, SlugTaken, StringComparison.Ordinal))
+        {
+            _refusedId = slug;   // the same short id would be refused again: Create waits for it to change
+            CreateError = Labels.WfShortIdTaken(slug);
+            NotifyCreate();
             return;
         }
 
@@ -231,7 +239,7 @@ internal sealed partial class WorkflowsPageViewModel
 
     private void Forget()
     {
-        (_newName, _newSlug, _slugEdited) = (string.Empty, string.Empty, false);
+        (_newName, _newSlug, _slugEdited, _refusedId) = (string.Empty, string.Empty, false, null);
         ClearCreateError();
         OnChanged(nameof(NewName));
         OnChanged(nameof(NewSlug));
