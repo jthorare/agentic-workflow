@@ -103,7 +103,7 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/workflow-runs/{run}/nodes/{node}/answer",
-      "cli": "sindri answer <question> [--text <text>] [--choice <choice>]",
+      "cli": "sindri answer <question> [--text <text>] [--choice <choice>] [--item <index>]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
