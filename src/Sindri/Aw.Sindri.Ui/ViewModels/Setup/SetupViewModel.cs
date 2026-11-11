@@ -94,6 +94,9 @@ internal sealed partial class SetupViewModel : ObservableObject
     /// <summary>True when Home shows its one line: there are steps, and one is still open. Home then hides the setup row of the step the line names, and no other.</summary>
     public bool IsHomeLineShown { get; private set => Set(ref field, value); }
 
+    /// <summary>True once the first answer has been folded into Home's line (<see cref="HomeStepId"/> and <see cref="IsHomeLineShown"/> are final); never reset. <see cref="IsReading"/> clears before that fold, so it can't tell a listener the line is settled.</summary>
+    public bool HasAnswered { get; private set => Set(ref field, value); }
+
     /// <summary>True until the first answer.</summary>
     public bool IsReading { get; private set => Set(ref field, value); } = true;
 
@@ -257,5 +260,6 @@ internal sealed partial class SetupViewModel : ObservableObject
         ContinueText = next is null ? string.Empty : Labels.SetupContinue;
         OnChanged(nameof(HomeLineName));
         OnChanged(nameof(ContinueName));
+        HasAnswered = true;   // last: a listener of this flag reads the final step and flag
     }
 }
