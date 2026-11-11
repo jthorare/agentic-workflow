@@ -23,7 +23,10 @@ internal sealed class ListWorkflowBlocksService(IGraphBlockCatalog catalog, IWor
 
     private static BlockView View(GraphBlockEntry entry) =>
         new(entry.Type, entry.Title, entry.IsTrigger,
-            [.. entry.Config.Fields.Select(static f => new BlockFieldView(f.Name, Word(f.Type), f.Required))], entry.Outputs.Fields, entry.Outputs.BranchNames, Json(entry.ExampleConfig), Json(entry.ExampleSpec));
+            [.. entry.Config.Fields.Select(static f => FieldView(f))], entry.Outputs.Fields, entry.Outputs.BranchNames, Json(entry.ExampleConfig), Json(entry.ExampleSpec));
+
+    // red stub (#2807): the caption is the name and the lists are never shown yet
+    private static BlockFieldView FieldView(BlockField f) => new(f.Name, Word(f.Type), f.Required, f.Name, Choices: null, Presets: null, f.Advanced);
 
     private static JsonNode? Json(string? text)
     {
