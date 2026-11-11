@@ -15,10 +15,13 @@
     <Style Selector="ToggleButton.done-toggle:checked /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.done-toggle:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="Transparent" />
     </Style>
+    <!-- The 2 px selected border takes its extra 1 px back from the padding (base: 1 px + 6,2), so selecting a chip
+         changes colours only: the text stays put and the chip keeps its size (#2761). -->
     <Style Selector="Border.phrase-chip.selected">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
       <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="Padding" Value="5,1" />
     </Style>
     <Style Selector="TextBlock.caption.warning">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
