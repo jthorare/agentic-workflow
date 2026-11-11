@@ -72,7 +72,7 @@
               <DataTemplate x:DataType="shell:NavEntry">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                   <Ellipse Classes="nav-dot" VerticalAlignment="Center" />
-                  <TextBlock Classes="body-strong nav-label" Text="{Binding DisplayLabel}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Label}" />
+                  <TextBlock Classes="body-strong nav-label" Text="{Binding Label}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Label}" />
                   <TextBlock Classes="caption subtle nav-count" Classes.has="{Binding HasCount}" VerticalAlignment="Center" Text="{Binding Count}" AutomationProperties.Name="{Binding Count}" />
                 </StackPanel>
               </DataTemplate>
@@ -84,7 +84,7 @@
       <!-- The ⌘K field (home.html): a magnifier, the placeholder, and the ⌘K keycap at the right; folded ("compact"), the
            magnifier alone, still named "Search or run a command". -->
       <Border x:Name="SearchField" Grid.Column="4" Classes="search" Margin="12,0,12,0" Focusable="True" Cursor="Hand"
-              PointerPressed="OnSearch" KeyDown="OnSearchKey"
+              PointerPressed="OnSearch" KeyDown="OnSearchKey" ToolTip.Tip="{Binding Text.SearchTip}"
               AutomationProperties.Name="{Binding Text.Search}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Button">
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
           <Path Classes="magnifier" Data="M5.5,1 A4.5,4.5 0 1 1 5.5,10 A4.5,4.5 0 1 1 5.5,1 Z M8.8,8.8 L12,12" VerticalAlignment="Center" />
@@ -92,7 +92,9 @@
                      TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
           <Border x:Name="SearchKeycap" Grid.Column="2" Classes="kbd search-key" AutomationProperties.Name="{Binding Text.SearchKey}" AutomationProperties.AccessibilityView="Raw">
             <StackPanel Orientation="Horizontal" Spacing="1" AutomationProperties.AccessibilityView="Raw">
-              <icons:StateIcon Classes="kbd" Icon="Command" VerticalAlignment="Center" />
+              <icons:StateIcon Classes="kbd" Icon="Command" IsVisible="{Binding Text.ShowCommandIcon}" VerticalAlignment="Center" />
+              <TextBlock Classes="kbd" Text="{Binding Text.SearchKeyModifier}" IsVisible="{Binding !Text.ShowCommandIcon}" VerticalAlignment="Center"
+                         AutomationProperties.AccessibilityView="Raw" />
               <TextBlock Classes="kbd" Text="{Binding Text.SearchKeyLetter}" VerticalAlignment="Center"
                          AutomationProperties.Name="{Binding Text.SearchKey}" AutomationProperties.AccessibilityView="Raw" />
             </StackPanel>
@@ -113,7 +115,7 @@
                  Text="{Binding Health.SendingAnnouncement}" IsVisible="{Binding !Health.CanRefresh}" />
       <StackPanel x:Name="PillGroup" Grid.Column="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
         <Button x:Name="RefreshButton" Classes="refresh" IsVisible="{Binding Pill.IsRefreshShown}" IsEnabled="{Binding Health.CanRefresh}"
-                Click="OnRefresh" AutomationProperties.Name="{Binding Text.Refresh}">
+                Click="OnRefresh" AutomationProperties.Name="{Binding Text.Refresh}" ToolTip.Tip="{Binding Text.Refresh}">
           <StackPanel Orientation="Horizontal" Spacing="8">
             <!-- §4.1 "sending" (R2): in flight, Refresh is disabled with its label kept and a spinner in the icon's place
                  (still under reduced motion); its width never changes, so the bar doesn't move. -->
@@ -122,7 +124,7 @@
               <icons:StateIcon x:Name="RefreshSpinner" Icon="Spinner" IsVisible="{Binding !Health.CanRefresh}"
                                Spins="{Binding !Health.CanRefresh}" />
             </Panel>
-            <TextBlock Classes="caption" Text="{Binding Text.Refresh}" VerticalAlignment="Center" />
+            <TextBlock x:Name="RefreshWord" Classes="caption refresh-word" Text="{Binding Text.Refresh}" VerticalAlignment="Center" />
           </StackPanel>
         </Button>
         <Button x:Name="HealthPill" Classes="health-pill" Click="OnHealthPill" IsEnabled="{Binding IsNavigationEnabled}"
