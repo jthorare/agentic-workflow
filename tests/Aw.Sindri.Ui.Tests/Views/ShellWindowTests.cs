@@ -1319,7 +1319,7 @@ public sealed class ShellWindowTests : IDisposable
         Assert.Equal((StateGlyph.Stale, "Held for the code index", Labels.ContextMapCard), (Glyph(window, "ContextMapGlyph"), Text(window, "ContextMapState"), Text(window, "ContextMapEyebrow")));
         Assert.Equal(["Map v14 is held for the code index until 12:15Z.", "aw-split-panes: building (the map is for 1234567, the index is at abcdef0)"],
             [.. Named<ItemsControl>(window, "ContextMapLines").GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text ?? string.Empty)]);
-        Assert.StartsWith("CONTEXT MAP: Held for the code index. Map v14", AutomationProperties.GetName(Named<Border>(window, "ContextMapPanel")), StringComparison.Ordinal);
+        Assert.StartsWith("Context map: Held for the code index. Map v14", AutomationProperties.GetName(Named<Border>(window, "ContextMapPanel")), StringComparison.Ordinal);
         EveryControlIsNamed(window);
     });
 
