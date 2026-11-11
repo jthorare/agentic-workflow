@@ -13,7 +13,14 @@
   </UserControl.Styles>
   <Border x:Name="ConnectionRowFrame" Classes="item-row clickable" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <Grid ColumnDefinitions="1.4*,140,170,Auto" RowDefinitions="Auto,Auto" VerticalAlignment="Center" MinHeight="{StaticResource Row.Height.Default}">
+    <!-- The actions column is a shared size group under the list's scope (#2784): it is as wide as the widest row's buttons in EVERY row, so the name, status and refreshed columns start at one x. -->
+    <Grid RowDefinitions="Auto,Auto" VerticalAlignment="Center" MinHeight="{StaticResource Row.Height.Default}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="1.4*" />
+        <ColumnDefinition Width="140" />
+        <ColumnDefinition Width="170" />
+        <ColumnDefinition Width="Auto" SharedSizeGroup="ConnActions" />
+      </Grid.ColumnDefinitions>
       <DockPanel LastChildFill="True" Margin="0,0,8,0" VerticalAlignment="Center">
         <Button x:Name="ConnectionRowOpen" DockPanel.Dock="Left" Classes="row-title" Click="OnOpen" HorizontalAlignment="Left" AutomationProperties.Name="{Binding AccessibleName}">
           <TextBlock Classes="body-strong mono" Text="{Binding Name}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />

@@ -67,7 +67,7 @@
         <Border x:Name="ConnectionsEmptyName" Margin="16,8" IsVisible="{Binding IsEmpty}" AutomationProperties.Name="{Binding EmptyText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock x:Name="ConnectionsEmpty" Classes="caption quiet" Text="{Binding EmptyText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <ItemsControl x:Name="ConnectionRows" ItemsSource="{Binding OtherRows}">
+        <ItemsControl x:Name="ConnectionRows" Grid.IsSharedSizeScope="True" ItemsSource="{Binding OtherRows}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="cb:ConnectionRowViewModel">
               <cv:ConnectionRow />
