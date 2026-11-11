@@ -15,7 +15,8 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="values">Holds the pull requests handed to the merge queue.</param>
 /// <param name="messages">The inbox, where "ready #N" lands.</param>
 /// <param name="paths">Where the gate trees live; the home directory.</param>
-internal sealed class TeamPrInputs(RepoCommands repo, IKeyValueStore values, IMessageStore messages, MetaPaths paths)
+/// <param name="files">Reads the configured worktree root.</param>
+internal sealed class TeamPrInputs(RepoCommands repo, IKeyValueStore values, IMessageStore messages, MetaPaths paths, IWorktreeFiles files)
 {
     /// <summary>Reads the facts.</summary>
     /// <param name="team">The team config (the repo and the worktree roots).</param>
@@ -33,11 +34,11 @@ internal sealed class TeamPrInputs(RepoCommands repo, IKeyValueStore values, IMe
 
         // Every ready message counts, even for a pull request that has since ended: its last PR line still belongs to the team.
         var ready = inbound.Value.Where(m => m.Class is { Kind: MessageKind.Ready, Pr: not null }).Select(m => m.Class.Pr.GetValueOrDefault()).ToHashSet();
-        var branches = await CheckedOut(team).ConfigureAwait(false);
+        var branches = await CheckedOut(team, cancellationToken).ConfigureAwait(false);
         return branches.IsError ? branches.Error : new TeamPrFacts(MergeQueued.Parse(handed.Value).Keys.ToHashSet(), ready, branches.Value);
     }
 
-    private async ValueTask<Result<IReadOnlySet<string>>> CheckedOut(TeamConfig team)
+    private async ValueTask<Result<IReadOnlySet<string>>> CheckedOut(TeamConfig team, CancellationToken cancellationToken)
     {
         var listed = await repo.Git(team.Repo, "worktree", "list", "--porcelain").ConfigureAwait(false);
         if (listed.IsError)
@@ -45,7 +46,8 @@ internal sealed class TeamPrInputs(RepoCommands repo, IKeyValueStore values, IMe
             return listed.Error;
         }
 
-        var roots = team.Worktrees.EffectiveRoots(team.Repo, paths.GatesDirectory, paths.Home, repoRoot: null);
+        var repoRoot = await WorktreeRoot.ResolveOrNull(files, team.Repo, paths.Home, cancellationToken).ConfigureAwait(false);
+        var roots = team.Worktrees.EffectiveRoots(team.Repo, paths.GatesDirectory, paths.Home, repoRoot);
         return Results.Success(CheckedOutBranches.Under(listed.Value, roots));
     }
 }

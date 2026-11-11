@@ -1047,6 +1047,7 @@ Aw.Meta.Core.Ports.ITranscriptReader
 Aw.Meta.Core.Ports.ITranscriptReader.ReadFrom(string! path, long offset, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Messages.TranscriptChunk!>!>
 Aw.Meta.Core.Config.WorktreeRoot
 static Aw.Meta.Core.Config.WorktreeRoot.Resolve(string? configured, string! repo, string! home) -> Aw.Kernel.Result<string!>!
+static Aw.Meta.Core.Config.WorktreeRoot.ResolveOrNull(Aw.Meta.Core.Ports.IWorktreeFiles! files, string! repo, string! home, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
 Aw.Meta.Core.Ports.IWorktreeFiles
 Aw.Meta.Core.Ports.IWorktreeFiles.ConfiguredRoot(string! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Meta.Core.Ports.IWorktreeFiles.NewestChange(string! directory, System.Collections.Generic.IReadOnlyCollection<string!>! skipNames, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset>!>

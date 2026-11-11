@@ -9,7 +9,7 @@ namespace Aw.Meta.Core.Worktrees;
 public sealed partial class WorktreeInspector
 {
     // What one inspection shares between its worktrees.
-    private sealed class Inspection(TeamConfig team, MetaPaths paths, List<PrBranch> pulls, IReadOnlyList<ProcessLocation> scan, DateTimeOffset? since, CancellationToken cancellation)
+    private sealed class Inspection(TeamConfig team, MetaPaths paths, string? repoRoot, List<PrBranch> pulls, IReadOnlyList<ProcessLocation> scan, DateTimeOffset? since, CancellationToken cancellation)
     {
         internal DateTimeOffset? Since { get; } = since;
 
@@ -26,7 +26,7 @@ public sealed partial class WorktreeInspector
         // The merged pull requests that closed each GitHub issue a bugfix run names, asked once per inspection.
         internal Dictionary<int, IReadOnlyList<int>> Closers { get; } = [];
 
-        internal IReadOnlyList<string> Roots { get; } = team.Worktrees.EffectiveRoots(team.Repo, paths.GatesDirectory, paths.Home, repoRoot: null);
+        internal IReadOnlyList<string> Roots { get; } = team.Worktrees.EffectiveRoots(team.Repo, paths.GatesDirectory, paths.Home, repoRoot);
 
         private static bool IsGateTreeName(string name) => string.Equals(name, "tree", StringComparison.Ordinal) || string.Equals(name, "main-tree", StringComparison.Ordinal);
 

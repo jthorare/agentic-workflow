@@ -45,7 +45,8 @@ public sealed partial class WorktreeInspector(RepoCommands repo, IProcessLocatio
         }
 
         var (entries, pulls, scan) = world.Value;
-        var inspection = new Inspection(team, paths, pulls, scan, DateTimeOffset.TryParse(since.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var start) ? start : null, cancellationToken)
+        var repoRoot = await WorktreeRoot.ResolveOrNull(files, team.Repo, paths.Home, cancellationToken).ConfigureAwait(false);
+        var inspection = new Inspection(team, paths, repoRoot, pulls, scan, DateTimeOffset.TryParse(since.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var start) ? start : null, cancellationToken)
         {
             Scope = scope,
         };
