@@ -74,7 +74,7 @@ public sealed class WorktreeCommandTests : IDisposable
         Assert.Equal("removable", report["merged-clean"].GetProperty("decision").GetString(), ignoreCase: true);
         Assert.Equal("removable", report["closed-pushed"].GetProperty("decision").GetString(), ignoreCase: true);
         Assert.Contains("NOTES.md", Reasons(report["merged-notes"]), StringComparison.Ordinal);
-        Assert.Contains("not merged", Reasons(report["unmerged-nopr"]), StringComparison.Ordinal);
+        Assert.Contains("unmerged branch, no PR", Reasons(report["unmerged-nopr"]), StringComparison.Ordinal);
         Assert.Contains("open", Reasons(report["unmerged-open"]), StringComparison.Ordinal);
         Assert.Contains("sleep", Reasons(report["merged-busy"]), StringComparison.Ordinal);
         Assert.Contains("locked", Reasons(report["merged-locked"]), StringComparison.Ordinal);

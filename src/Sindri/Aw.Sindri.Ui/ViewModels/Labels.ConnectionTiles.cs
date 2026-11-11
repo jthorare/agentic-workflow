@@ -13,6 +13,36 @@ internal static partial class Labels
         ("spotify", "Spotify", "Playback", ServiceTileMode.ClientId),
     ];
 
+    /// <summary>The tile menu's Rename.</summary>
+    internal const string TileRename = "Rename";
+
+    /// <summary>The rename field's name and placeholder.</summary>
+    internal const string TileRenameLabel = "Name";
+
+    /// <summary>The rename field's Save.</summary>
+    internal const string TileRenameSave = "Save";
+
+    /// <summary>Why a rename was refused: the new name is another connection's.</summary>
+    /// <param name="service">The service's title.</param>
+    /// <param name="label">The label typed.</param>
+    /// <returns>The words.</returns>
+    internal static string RenameTaken(string service, string label) => $"Another {service} connection is already called '{label}'. Pick another name.";
+
+    /// <summary>The line under the rename field while it is empty.</summary>
+    internal const string RenameEmpty = "Type a name.";
+
+    /// <summary>Why a rename was refused: the label is not allowed.</summary>
+    internal const string RenameBadLabel = "Use lowercase letters, digits and '-' for the name.";
+
+    /// <summary>Why a rename was refused: the connection is gone.</summary>
+    internal const string RenameGone = "This connection no longer exists. Reload the page.";
+
+    /// <summary>Why a rename was refused: the label is the one it has.</summary>
+    internal const string RenameSame = "That's already its name.";
+
+    /// <summary>Any other refusal or failure of a rename: one fixed sentence, none of the server's or the transport's text.</summary>
+    internal const string RenameFailed = "Couldn't rename it. Try again.";
+
     /// <summary>The status chip of a connected tile.</summary>
     internal const string TileConnected = "Connected";
 

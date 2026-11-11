@@ -1187,7 +1187,8 @@
           ],
           "outputs": {
             "id": "string",
-            "action": "string"
+            "action": "string",
+            "warning": "string?"
           },
           "branches": [
             "out"

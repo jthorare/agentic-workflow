@@ -10,10 +10,12 @@ namespace Aw.Sindri.Ui.Views.Shell;
 
 /// <summary>
 /// The shell's top bar: binds to the shell, and passes the health pill's click to it. It also fits itself to the window
-/// (§3.2, minimum 1,000 px at text scale up to 1.3): with room the ⌘K field is 160–300 px wide; when the navigation, that
-/// field and the pill don't fit, the field folds to its magnifier; if that isn't enough the pill's age drops (the pill's
-/// accessible name keeps it), and then the brand keeps its mark alone (the window and the bar's region are still named
-/// Sindri). The pill's word always shows. This is layout only; the shell decides what the words are.
+/// (§3.2, minimum 1,000 px at text scale up to 1.3): with room the ⌘K field is 160–300 px wide. When the parts don't fit,
+/// they give way in this order: the field folds to its magnifier, the pill's age drops (the pill's accessible name keeps
+/// it), the selected tab's dot, the tabs' counts, the brand's word (the window and the bar's region are still named
+/// Sindri), the tabs' padding narrows to 3 px a side (#2547: never under QA's 6 px between two tabs' words), and last
+/// Refresh keeps only its icon (its name and tooltip still say Refresh). The pill's word always shows. This is layout
+/// only; the shell decides what the words are.
 /// </summary>
 internal sealed partial class TopBar : UserControl
 {
@@ -21,20 +23,27 @@ internal sealed partial class TopBar : UserControl
     private const double SearchMin = 184;
     private const double SearchMax = 324;
 
-    // The window width under which the long tab labels shorten.
-    private const double ShortLabelsBelow = 1100;
-
     // Growing back takes this much more room than shrinking did, so a ticking age ("9s" to "10s") can't make the bar flicker.
     private const double Slack = 8;
+
+    // The steps, widest first.
+    private static readonly Fit[] _steps = Enum.GetValues<Fit>();
 
     private Fit _fit = Fit.Full;
     private double _ageWidth;
     private double _brandWordWidth;
+    private double _refreshWordWidth;
     private double _compactSearch = 60;
 
     // Refresh had focus when it was disabled (in flight) or hidden (recovered); see KeepRefreshFocus.
     private bool _refreshHeldFocus;
     private NavigationMethod _refreshMethod = NavigationMethod.Tab;
+
+    /// <summary>How many times the bar was measured since the last reset; a bar that never settles measures again and again.</summary>
+    internal int MeasurePasses { get; private set; }
+
+    /// <summary>Sets <see cref="MeasurePasses"/> back to 0.</summary>
+    internal void ResetMeasurePasses() => MeasurePasses = 0;
 
     public TopBar()
     {
@@ -50,16 +59,18 @@ internal sealed partial class TopBar : UserControl
         Full,
         CompactSearch,
         NoAge,
-        TightNav,
-        NoBrandWord,
+        NoDot,
         NoCounts,
+        NoBrandWord,
+        TightNav,
+        NoRefreshWord,
     }
 
     /// <inheritdoc />
     protected override Size MeasureOverride(Size availableSize)
     {
+        MeasurePasses++;
         CapProblems(availableSize.Width);
-        UseShortLabels(availableSize.Width);
         var size = base.MeasureOverride(availableSize);
         Remember();
         var fit = Choose(availableSize.Width);
@@ -77,40 +88,22 @@ internal sealed partial class TopBar : UserControl
     protected override Size ArrangeOverride(Size finalSize)
     {
         // A part can grow after the bar was measured (a text-size change reaches it late); measure again to step down.
+        // Only a real change measures again: the step, the problem text's cap (by more than half a pixel), or the age.
         Remember();
         var cap = PillProblems.MaxWidth;
+        var yielded = _ageYields;
         CapProblems(finalSize.Width);
-        UseShortLabels(finalSize.Width);
-        if (Choose(finalSize.Width) != _fit || Math.Abs(PillProblems.MaxWidth - cap) > 0.5)
+        if (Choose(finalSize.Width) != _fit || Math.Abs(PillProblems.MaxWidth - cap) > 0.5 || yielded != _ageYields)
         {
             InvalidateMeasure();
         }
 
-        var arranged = base.ArrangeOverride(finalSize);
-        if (LowerCapByShortfall(finalSize.Width))
-        {
-            InvalidateMeasure();
-        }
-
-        return arranged;
+        return base.ArrangeOverride(finalSize);
     }
 
-    // Below 1,100 px nine full labels don't fit at 130% text, so the tabs that have a short label draw it ("Flows", "PRs"); names for assistive tech stay full.
-    private void UseShortLabels(double width)
-    {
-        if (double.IsInfinity(width) || DataContext is not ShellViewModel shell)
-        {
-            return;
-        }
-
-        foreach (var entry in shell.Navigation)
-        {
-            entry.UseShort = width < ShortLabelsBelow;
-        }
-    }
-
-    // The widest step that fits: the bar's padding, the brand and the navigation are fixed; then the ⌘K field (full or
-    // folded) and the pill with its age (measured while shown, remembered while dropped).
+    // The widest step that fits: the bar's padding and the brand's mark are fixed; then the navigation at the step, the
+    // ⌘K field (full or folded), and the pill without its problem text (which takes only what is left, TopBar.Problems.cs),
+    // with its age and Refresh's word as the step has them (measured while shown, remembered while dropped).
     private Fit Choose(double width)
     {
         if (double.IsInfinity(width))
@@ -118,32 +111,38 @@ internal sealed partial class TopBar : UserControl
             return Fit.Full;
         }
 
-        var age = PillAgeText.Text is { Length: > 0 } ? _ageWidth + PillGroup.Spacing : 0;
-        var pill = PillGroup.DesiredSize.Width - (PillAge.IsVisible ? age : 0);
-        var word = _brandWordWidth + Brand.Spacing;
-        var padding = Content is Border bar ? bar.Padding.Left + bar.Padding.Right : 0;
-        var navigation = NavigationWidthWithCounts;
-        var fixedWidth = padding + Brand.DesiredSize.Width - (BrandWord.IsVisible ? word : 0);
-        bool Fits(double nav, double brand, double search, double pillAge, Fit step) => fixedWidth + nav + brand + search + pill + pillAge <= width - (step < _fit ? Slack : 0);
-
-        var tight = navigation - TightSaving;
-        (Fit Step, double Nav, double Brand, double Search, double PillAge)[] steps =
-        [
-            (Fit.Full, navigation, word, SearchMin, age),
-            (Fit.CompactSearch, navigation, word, _compactSearch, age),
-            (Fit.NoAge, navigation, word, _compactSearch, 0),
-            (Fit.TightNav, tight, word, _compactSearch, 0),
-            (Fit.NoBrandWord, tight, 0, _compactSearch, 0),
-        ];
-        foreach (var (step, nav, brand, search, pillAge) in steps)
+        var parts = new StepWidths(FixedWidth(), _brandWordWidth + Brand.Spacing, _compactSearch, PillWithoutProblems(),
+            AgeWidth(), RefreshButton.IsVisible ? _refreshWordWidth : 0);
+        foreach (var step in _steps)
         {
-            if (Fits(nav, brand, search, pillAge, step))
+            if (parts.Need(step, NavigationWidthAt(step)) <= width - (step < _fit ? Slack : 0))
             {
                 return step;
             }
         }
 
-        return Fit.NoCounts;
+        return Fit.NoRefreshWord;
+    }
+
+    // The age with the pill's spacing before it, when the pill shows one and it hasn't yielded to the problem text.
+    private double AgeWidth() =>
+        PillAgeText.Text is { Length: > 0 } && !_ageYields ? _ageWidth + PillGroup.Spacing : 0;
+
+    // The pill without its problem text, age and Refresh's word, whatever the current step shows of them. The problem text's
+    // margin stays in: it shows even when the text's cap is 0, so a step that leaves it no room overruns the bar (#2547).
+    private double PillWithoutProblems()
+    {
+        var age = PillAge.IsVisible ? AgeWidth() : 0;
+        var refresh = RefreshButton.IsVisible && _fit >= Fit.NoRefreshWord ? _refreshWordWidth : 0;
+        var margin = PillProblems.IsVisible ? PillProblems.Margin.Left + PillProblems.Margin.Right : 0;
+        return _pillRest - age + refresh + margin;
+    }
+
+    // The bar's padding and the brand without its word.
+    private double FixedWidth()
+    {
+        var padding = Content is Border bar ? bar.Padding.Left + bar.Padding.Right : 0;
+        return padding + Brand.DesiredSize.Width - (BrandWord.IsVisible ? _brandWordWidth + Brand.Spacing : 0);
     }
 
     // The ⌘K field's column (the fifth).
@@ -157,10 +156,13 @@ internal sealed partial class TopBar : UserControl
         SearchColumn.Width = compact ? GridLength.Auto : new GridLength(100, GridUnitType.Star);
         SearchColumn.MinWidth = compact ? 0 : SearchMin;
         SearchColumn.MaxWidth = compact ? double.PositiveInfinity : SearchMax;
-        PillAge.IsVisible = fit < Fit.NoAge;
+        PillAge.IsVisible = fit < Fit.NoAge && !_ageYields;
+        NavigationList.Classes.Set("no-dot", fit >= Fit.NoDot);
+        NavigationList.Classes.Set("no-counts", fit >= Fit.NoCounts);
         BrandWord.IsVisible = fit < Fit.NoBrandWord;
         NavigationList.Classes.Set("tight", fit >= Fit.TightNav);
-        NavigationList.Classes.Set("no-counts", fit == Fit.NoCounts);
+        ApplyTabGap(fit);
+        RefreshButton.Classes.Set("folded", fit >= Fit.NoRefreshWord);
     }
 
     // The widths a dropped part would need again.
@@ -176,7 +178,13 @@ internal sealed partial class TopBar : UserControl
             _brandWordWidth = BrandWord.DesiredSize.Width;
         }
 
+        if (RefreshWord.IsVisible && RefreshButton.IsVisible && RefreshWord.DesiredSize.Width > 0)
+        {
+            _refreshWordWidth = RefreshWord.DesiredSize.Width + SpacingBefore(RefreshWord);
+        }
+
         RememberCounts();
+        RememberPillRest();
         if (_fit != Fit.Full && SearchField.DesiredSize.Width > 0)
         {
             _compactSearch = SearchField.DesiredSize.Width;
@@ -255,5 +263,14 @@ internal sealed partial class TopBar : UserControl
             shell.Palette.Open();
             e.Handled = true;
         }
+    }
+
+    // What a step needs, from the parts that change between steps (Choose).
+    private sealed record StepWidths(
+        double Fixed, double BrandWord, double CompactSearch, double Pill, double Age, double RefreshWord)
+    {
+        public double Need(Fit step, double navigation) =>
+            Fixed + navigation + (step < Fit.NoBrandWord ? BrandWord : 0) + (step == Fit.Full ? SearchMin : CompactSearch)
+            + Pill + (step < Fit.NoAge ? Age : 0) - (step >= Fit.NoRefreshWord ? RefreshWord : 0);
     }
 }
