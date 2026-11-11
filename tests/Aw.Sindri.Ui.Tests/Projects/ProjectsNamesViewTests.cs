@@ -1,0 +1,59 @@
+using Avalonia.Controls;
+using Avalonia.VisualTree;
+using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Views;
+
+namespace Aw.Sindri.Ui.Tests.Projects;
+
+/// <summary>The Projects page in the window (#2805): what a screen reader says for the notes buttons and the folds, and how many cards sit across at 1,280 px.</summary>
+[Lane(TestLane.Integration)]
+[Collection(HeadlessWindows.Name)]
+public sealed class ProjectsNamesViewTests : FrameHost
+{
+    [Fact]
+    public Task Notes_buttons_have_names_with_project() => OnUi(async () =>
+    {
+        Server.ProjectsAnswer = RouteAnswer.Api("projects", "mixed");
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.Projects);
+        await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
+        var card = shell.Projects.Groups[0].Cards[0];
+        var frame = window.GetVisualDescendants().OfType<Border>().First(b => b.Name == "ProjectCardFrame" && b.DataContext == card);
+
+        Assert.Equal("Edit notes for Checkout rewrite", Heard.Name(frame.GetVisualDescendants().OfType<Button>().First(b => b.Name == "ProjectNotesEdit")));
+
+        card.BeginEdit();
+        await Until(window, () => frame.GetVisualDescendants().OfType<Button>().Any(b => b.Name == "ProjectNotesSave" && b.IsEffectivelyVisible), "the editor never showed");
+        Assert.EndsWith(" for Checkout rewrite", Heard.Name(frame.GetVisualDescendants().OfType<Button>().First(b => b.Name == "ProjectNotesSave")), StringComparison.Ordinal);
+        Assert.EndsWith(" for Checkout rewrite", Heard.Name(frame.GetVisualDescendants().OfType<Button>().First(b => b.Name == "ProjectNotesCancel")), StringComparison.Ordinal);
+    });
+
+    [Fact]
+    public Task Fold_header_name_has_count_and_state() => OnUi(async () =>
+    {
+        Server.ProjectsAnswer = RouteAnswer.Api("projects", "mixed");
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.Projects);
+        await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
+
+        Assert.Equal("Finished, 1 project, collapsed", Heard.Name(Named<Expander>(window, "ProjectsFinished")));
+
+        shell.Projects.Finished.Toggle();
+        await Until(window, () => Named<Expander>(window, "ProjectsFinished").IsExpanded, "the fold never opened");
+
+        Assert.Equal("Finished, 1 project, expanded", Heard.Name(Named<Expander>(window, "ProjectsFinished")));
+    });
+
+    [Fact]
+    public Task SetPageWidth_gives_three_columns_at_1280_window() => OnUi(async () =>
+    {
+        Server.ProjectsAnswer = RouteAnswer.Api("projects", "mixed");
+        var (window, shell) = await Connected(width: 1280, height: 900);
+        shell.GoTo(PageId.Projects);
+        await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
+
+        Assert.Equal(3, shell.Projects.Columns);
+    });
+}
