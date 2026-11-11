@@ -40,6 +40,32 @@ public sealed class LedgerQuestionPortTests
     }
 
     [Fact]
+    public async Task A_loop_items_question_names_its_item_and_waiting_workflow_and_each_item_is_its_own_event()
+    {
+        _ = await _h.HoldLease();
+        var port = Port();
+
+        _ = await port.Post(new QuestionAsk(_run, _node, "Ship a?", [], Default: null, TimeoutAt: null) { Item = 1, BatchWorkflow = "nightly@3:12/each/1" }, Token);
+        _ = await port.Post(new QuestionAsk(_run, _node, "Ship b?", [], Default: null, TimeoutAt: null) { Item = 2, BatchWorkflow = "nightly@3:12/each/1" }, Token);
+
+        Assert.Equal(["workflow.question:nightly@3:12:ask:1", "workflow.question:nightly@3:12:ask:2"], _h.Store.Events.Select(static e => e.IdempotencyKey), StringComparer.Ordinal);
+        var payload = JsonNode.Parse(_h.Store.Events[1].Envelope.Payload)!;
+        Assert.Equal((2, "nightly@3:12/each/1"), (payload["item"]!.GetValue<int>(), payload["batchWorkflow"]!.GetValue<string>()));
+    }
+
+    [Fact]
+    public async Task A_question_outside_a_loop_has_no_item_or_workflow_in_its_event()
+    {
+        _ = await _h.HoldLease();
+
+        _ = await Port().Post(new QuestionAsk(_run, _node, "Ship?", [], Default: null, TimeoutAt: null), Token);
+
+        var payload = JsonNode.Parse(Assert.Single(_h.Store.Events).Envelope.Payload)!.AsObject();
+        Assert.False(payload.ContainsKey("item"));
+        Assert.False(payload.ContainsKey("workflowId"));
+    }
+
+    [Fact]
     public async Task A_secret_in_the_question_choices_or_default_is_scrubbed_in_the_ledger_row()
     {
         _ = await _h.HoldLease();
