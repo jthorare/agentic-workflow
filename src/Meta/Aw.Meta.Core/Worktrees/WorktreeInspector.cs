@@ -223,7 +223,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             HeadMerged = git.NotInMain == 0,
             UnpushedCommits = git.Unpushed,
             DirtyEntries = StatusPorcelain.Significant(git.Status, inspection.Team.Worktrees.EffectiveBuildOutputs),
-            Occupants = [.. inspection.Scan.Where(p => places.Exists(place => p.Paths.Any(path => Inside(place, path))))],
+            Occupants = [.. inspection.Scan.Where(p => places.Exists(place => p.Paths.Any(path => WorktreeRoots.Inside(place, path))))],
             ChangedSinceSweep = git.Changed,
             ChangedSinceEnd = gatePr is null && pull is { State: PrState.Merged or PrState.Closed, EndedAt: { } ended } && !(inspection.Since > ended),
             EndedAtUnknown = gatePr is null && pull is { State: PrState.Merged or PrState.Closed, EndedAt: null },
@@ -231,6 +231,8 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             NoPreviousSweep = inspection.Since is null,
             PrNumber = gatePr is null ? pull?.Number : null,
             PrState = pull?.State,
+            Head = entry.Head,
+            PrHead = HeadOf(pull),
             Done = inspection.Scope.Done,
             KeepNoPr = !inspection.Scope.IncludeNoPr,
             GatePr = gatePr,
@@ -241,13 +243,9 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
 
     private sealed record GitFacts(int NotInMain, int Unpushed, string Status, string Physical, string Committer, bool Changed = false);
 
-    private static int Count(string text) => int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var count) ? count : 0;
+    private static string HeadOf(PrBranch? pull) => pull?.Head ?? string.Empty;
 
-    private static bool Inside(string directory, string path)
-    {
-        var normalized = WorktreeRoots.Normalize(path.EndsWith(" (deleted)", StringComparison.Ordinal) ? path[..^" (deleted)".Length] : path);
-        return normalized == directory || normalized.StartsWith(directory + "/", StringComparison.Ordinal);
-    }
+    private static int Count(string text) => int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var count) ? count : 0;
 
     private static bool Same(string a, string b) => WorktreeRoots.Normalize(a) == WorktreeRoots.Normalize(b);
 

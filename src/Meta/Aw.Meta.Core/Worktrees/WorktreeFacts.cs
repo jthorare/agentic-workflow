@@ -63,6 +63,12 @@ internal sealed record WorktreeFacts
     /// <summary>That pull request's state.</summary>
     public PrState? PrState { get; init; }
 
+    /// <summary>The worktree's HEAD commit.</summary>
+    public string Head { get; init; } = string.Empty;
+
+    /// <summary>The head commit GitHub records for that pull request (for an ended one, its head when it ended); empty when unknown.</summary>
+    public string PrHead { get; init; } = string.Empty;
+
     /// <summary>Set by a `--discarded` sweep when a finished bugfix run names this tree as a losing candidate at its HEAD: says which (e.g. "bugfix gh-9 candidate c1, resolved by c2"). Its unpushed commits and "no pull request" don't keep it.</summary>
     public string? Discarded { get; init; }
 
