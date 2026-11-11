@@ -114,7 +114,7 @@ public sealed class GetStatusReadsNoWholeViewTests
     }
 
     private static LaunchRow Row(int n, LaunchStep step, DateTimeOffset requestedAt, LaunchEnd? end) =>
-        new(LaunchId.From(Launch(n)), Aw.Sindri.Testing.A.FirstItemId, Repo: null, LaunchMode.Open, AgentId.From("claude-code"), "engine", LaunchState.Started, requestedAt, OutcomeAt: requestedAt,
+        new(LaunchId.From(Launch(n)), Testing.A.FirstItemId, Repo: null, LaunchMode.Open, AgentId.From("claude-code"), "engine", LaunchState.Started, requestedAt, OutcomeAt: requestedAt,
             Code: null, Message: null, Stage: null, SessionId: null, ReportedSessionId: null, TabTitle: null, Viewer: null, Late: false, Attach: null, CatalogSource: null, ArgvHash: null,
             end, step, Sequence: n + 1L);
 

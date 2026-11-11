@@ -106,14 +106,14 @@ public sealed class SqliteLaunchViewsTests : IDisposable
 
         public bool Handles(string eventType) => eventType == "test.seed";
 
-        public async ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>> Apply(LedgerEvent recorded, IViewRows viewRows, CancellationToken cancellationToken)
+        public async ValueTask<Kernel.Result<Kernel.Unit>> Apply(LedgerEvent recorded, IViewRows viewRows, CancellationToken cancellationToken)
         {
             foreach (var row in rows)
             {
                 _ = await viewRows.Put(ViewNames.Launches, row.Id.Value, row, cancellationToken);
             }
 
-            return Aw.Kernel.Unit.Value;
+            return Kernel.Unit.Value;
         }
     }
 }

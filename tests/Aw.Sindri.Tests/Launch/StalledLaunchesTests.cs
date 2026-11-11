@@ -75,33 +75,33 @@ public sealed class StalledLaunchesTests
         Assert.Equal(2, read.Count);
     }
 
-    private sealed class LaunchReader(List<LaunchRow> rows) : Aw.Sindri.Core.Views.IViewReader
+    private sealed class LaunchReader(List<LaunchRow> rows) : Core.Views.IViewReader
     {
         public int InstanceLookups { get; private set; }
 
-        public ValueTask<Aw.Kernel.Result<IReadOnlyList<TRow>>> Where<TRow>(string view, Aw.Sindri.Core.Views.ViewColumn column, string value, CancellationToken cancellationToken)
+        public ValueTask<Kernel.Result<IReadOnlyList<TRow>>> Where<TRow>(string view, Core.Views.ViewColumn column, string value, CancellationToken cancellationToken)
             where TRow : class
         {
-            if (column == Aw.Sindri.Core.Views.ViewColumn.Instance)
+            if (column == Core.Views.ViewColumn.Instance)
             {
                 InstanceLookups++;
             }
 
-            IReadOnlyList<LaunchRow> found = column == Aw.Sindri.Core.Views.ViewColumn.Reason
+            IReadOnlyList<LaunchRow> found = column == Core.Views.ViewColumn.Reason
                 ? [.. rows.Where(static r => r.Ended?.Reason == SessionEndReason.Idle)]
                 : [.. rows.Where(r => string.Equals(r.Step.Instance?.Value, value, StringComparison.Ordinal))];
-            return ValueTask.FromResult(Aw.Kernel.Results.Success((IReadOnlyList<TRow>)(object)found));
+            return ValueTask.FromResult(Kernel.Results.Success((IReadOnlyList<TRow>)(object)found));
         }
 
-        public ValueTask<Aw.Kernel.Result<TRow?>> Get<TRow>(string view, string key, CancellationToken cancellationToken)
+        public ValueTask<Kernel.Result<TRow?>> Get<TRow>(string view, string key, CancellationToken cancellationToken)
             where TRow : class => throw new NotSupportedException();
 
-        public ValueTask<Aw.Kernel.Result<IReadOnlyList<TRow>>> List<TRow>(string view, CancellationToken cancellationToken)
+        public ValueTask<Kernel.Result<IReadOnlyList<TRow>>> List<TRow>(string view, CancellationToken cancellationToken)
             where TRow : class => throw new NotSupportedException();
 
-        public ValueTask<Aw.Kernel.Result<IReadOnlyList<TRow>>> Range<TRow>(string view, string afterKey, string? beforeKey, int max, CancellationToken cancellationToken)
+        public ValueTask<Kernel.Result<IReadOnlyList<TRow>>> Range<TRow>(string view, string afterKey, string? beforeKey, int max, CancellationToken cancellationToken)
             where TRow : class => throw new NotSupportedException();
 
-        public ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState?>> State(CancellationToken cancellationToken) => throw new NotSupportedException();
+        public ValueTask<Kernel.Result<Core.Views.ProjectorState?>> State(CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

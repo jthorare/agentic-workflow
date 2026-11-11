@@ -46,7 +46,7 @@ public sealed class RepoHealthsReadsTests
         var history = new InMemoryJobViews();
         for (var n = 1; n <= failedBuilds; n++)
         {
-            var job = Aw.Sindri.Testing.A.Job().WithId(JobId.From("JOB-" + n.ToString("x32", System.Globalization.CultureInfo.InvariantCulture))).OfKind(JobKind.From("BuildCodeIndex"), JobKey.From("index:demo")).Ended(JobState.Failed).Build();
+            var job = Testing.A.Job().WithId(JobId.From("JOB-" + n.ToString("x32", System.Globalization.CultureInfo.InvariantCulture))).OfKind(JobKind.From("BuildCodeIndex"), JobKey.From("index:demo")).Ended(JobState.Failed).Build();
             history.Put(job with { StartedAt = _now.AddMinutes((-10 * (failedBuilds - n)) - 3), EndedAt = _now.AddMinutes((-10 * (failedBuilds - n)) - 2) });
         }
 

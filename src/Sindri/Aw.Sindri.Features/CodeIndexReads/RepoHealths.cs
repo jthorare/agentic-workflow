@@ -16,7 +16,7 @@ internal sealed class RepoHealths(IRepoHeads heads, IJobViews jobs, TimeProvider
         var live = await heads.Heads(scope.Repos, cancellationToken).ConfigureAwait(false);
         var running = await jobs.Running(cancellationToken).ConfigureAwait(false);
         IReadOnlyList<JobRow> runningOf(string repo) => running.IsError ? [] : [.. running.Value.Where(j => IndexBuildWords.IsBuildOf(j, repo))];
-        Aw.CodeIndex.Core.Model.RepoHead? headOf(RepoStatus r) => live.IsError ? null : live.Value.FirstOrDefault(h => h.Repo == r.Repo);
+        CodeIndex.Core.Model.RepoHead? headOf(RepoStatus r) => live.IsError ? null : live.Value.FirstOrDefault(h => h.Repo == r.Repo);
 
         // The ended builds are read once, and only when some repo is behind with no build running (issue #2786).
         IReadOnlyList<JobRow> ended = [];
