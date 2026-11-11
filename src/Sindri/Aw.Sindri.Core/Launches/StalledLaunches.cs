@@ -60,7 +60,7 @@ public static class StalledLaunches
         }
 
         var rows = new Dictionary<string, LaunchRow>(StringComparer.Ordinal);
-        foreach (var instance in idle.Value.Select(static r => r.Step.Instance?.Value).OfType<string>().Distinct(StringComparer.Ordinal))
+        foreach (var instance in idle.Value.Where(r => r.Ended is { } end && (now is not { } at || at - end.At <= Window)).Select(static r => r.Step.Instance?.Value).OfType<string>().Distinct(StringComparer.Ordinal))
         {
             var launches = await reader.Where<LaunchRow>(ViewNames.Launches, ViewColumn.Instance, instance, cancellationToken).ConfigureAwait(false);
             if (launches.IsError)
