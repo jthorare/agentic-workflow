@@ -16,7 +16,7 @@ public static class MetaCoreServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     public static IServiceCollection AddMetaCore(this IServiceCollection services) => services
         .AddScoped<MetaTranscriptResolver>()
-        .AddScoped<InboxSync>(sp => new InboxSync(sp.GetRequiredService<ITranscriptReader>(), sp.GetRequiredService<IMessageStore>(), sp.GetRequiredService<IOwnerStore>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<MetaTranscriptResolver>()))
+        .AddScoped(sp => new InboxSync(sp.GetRequiredService<ITranscriptReader>(), sp.GetRequiredService<IMessageStore>(), sp.GetRequiredService<IOwnerStore>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<MetaTranscriptResolver>()))
         .AddScoped<InboxCounts>()
         .AddScoped<LaneRefresher>()
         .AddScoped<ObligationReader>()

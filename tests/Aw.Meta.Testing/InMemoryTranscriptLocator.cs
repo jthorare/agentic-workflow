@@ -12,6 +12,6 @@ public sealed class InMemoryTranscriptLocator(InMemoryTranscriptReader transcrip
     public ValueTask<Result<string?>> Find(SessionId session, CancellationToken cancellationToken)
     {
         var suffix = "/" + session.Value + ".jsonl";
-        return Done.Of<string?>(transcripts.Paths.FirstOrDefault(p => p.EndsWith(suffix, StringComparison.Ordinal)));
+        return Done.Of(transcripts.Paths.FirstOrDefault(p => p.EndsWith(suffix, StringComparison.Ordinal)));
     }
 }
