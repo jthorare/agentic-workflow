@@ -2,6 +2,7 @@ using Aw.Kernel.Events;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Requests;
@@ -248,7 +249,7 @@ public abstract class ViewStoreContract
             ViewColumn.Item => _hitItem.Value,
             ViewColumn.Repo => HitRepo,
             ViewColumn.Kind => "failure",
-            ViewColumn.State => view == ViewNames.Requests ? "accepted" : "decided",
+            ViewColumn.State => view switch { ViewNames.Requests => "accepted", ViewNames.Items => "running", _ => "decided" },
             ViewColumn.Reason or ViewColumn.Instance => throw new InvalidOperationException("the launches view's columns are pinned by SqliteLaunchViewsTests"),
             _ => throw new ArgumentOutOfRangeException(nameof(column), column, "not a view column"),
         };
@@ -257,9 +258,10 @@ public abstract class ViewStoreContract
             ViewNames.Requests => (await reader.Where<RequestRow>(view, column, value, Token)).Value.Select(r => r.Id.Value),
             ViewNames.Decisions => (await reader.Where<HumanDecisionRow>(view, column, value, Token)).Value.Select(r => r.Id.Value),
             ViewNames.NeedsYou => (await reader.Where<NeedsYouRowRecord>(view, column, value, Token)).Value.Select(r => r.Row.Id.Value),
+            ViewNames.Items => (await reader.Where<ItemRow>(view, column, value, Token)).Value.Select(r => r.Id.Value),
             _ => throw new InvalidOperationException($"{view} indexes no column"),
         };
-        Expect.Sequence([view switch { ViewNames.Requests => _hitRequest.Value, ViewNames.Decisions => _hitDecision.Value, _ => _hitNeedsYou.Value }], found);
+        Expect.Sequence([view switch { ViewNames.Requests => _hitRequest.Value, ViewNames.Decisions => _hitDecision.Value, ViewNames.Items => _hitItem.Value, _ => _hitNeedsYou.Value }], found);
     }
 
     private static IReadOnlyList<IProjection> Projections() =>
@@ -275,7 +277,7 @@ public abstract class ViewStoreContract
     /// <summary>Puts a row that matches every filter value and one that matches none into each view that indexes columns.</summary>
     private sealed class PutRealRows : IProjection
     {
-        public IReadOnlyList<string> Views => [ViewNames.Requests, ViewNames.Decisions, ViewNames.NeedsYou];
+        public IReadOnlyList<string> Views => [ViewNames.Requests, ViewNames.Decisions, ViewNames.NeedsYou, ViewNames.Items];
 
         public bool Handles(string eventType) => string.Equals(eventType, PutRows, StringComparison.Ordinal);
 
@@ -291,6 +293,8 @@ public abstract class ViewStoreContract
                 (ViewNames.Decisions, A.FirstDecisionId.Value, A.Decision().About(A.FirstItemId, 1, RepoName.From("miss-repo")).Build()),
                 (ViewNames.NeedsYou, _hitNeedsYou.Value, new NeedsYouRowRecord(A.NeedsYouRow().InRepo(repo).Build() with { Id = _hitNeedsYou, Kind = NeedsYouKind.Failure, Item = _hitItem }, 1)),
                 (ViewNames.NeedsYou, "decision:miss", new NeedsYouRowRecord(A.NeedsYouRow().InRepo(RepoName.From("miss-repo")).Build() with { Item = A.FirstItemId }, 1)),
+                (ViewNames.Items, _hitItem.Value, A.Item().WithId(_hitItem).InRepo(repo).InState(ItemState.Running, KnownInstants.Epoch).Build()),
+                (ViewNames.Items, A.FirstItemId.Value, A.Item().WithId(A.FirstItemId).InRepo(RepoName.From("miss-repo")).InState(ItemState.Queued, KnownInstants.Epoch).Build()),
             };
             foreach (var (view, key, row) in rows)
             {
@@ -299,6 +303,7 @@ public abstract class ViewStoreContract
                     RequestRow r => await target.Put(view, key, r, cancellationToken).ConfigureAwait(false),
                     HumanDecisionRow d => await target.Put(view, key, d, cancellationToken).ConfigureAwait(false),
                     NeedsYouRowRecord n => await target.Put(view, key, n, cancellationToken).ConfigureAwait(false),
+                    ItemRow i => await target.Put(view, key, i, cancellationToken).ConfigureAwait(false),
                     _ => throw new InvalidOperationException("not a row of these views"),
                 };
                 if (put.IsError)
