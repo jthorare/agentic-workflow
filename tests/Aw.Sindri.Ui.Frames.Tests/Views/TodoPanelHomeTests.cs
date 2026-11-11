@@ -479,6 +479,9 @@ public sealed class TodoPanelHomeTests : IDisposable
         var (window, shell) = await Connected();
         window.Width = width;
         await Until(window, () => !shell.Elsewhere.IsLoading && Shown(Panel(window), "ElsewhereFrame"));
+        shell.Elsewhere.SetReviews(loading: false, waiting: 0, failed: false);   // why: with no PRs waiting, Connect Linear is the line's first part, as in the empty Home shot
+        Settle(window);
+        Assert.Equal([Labels.ElsewhereLinearNotConnected], Panel(window).GetVisualDescendants().OfType<Button>().Where(x => x.IsEffectivelyVisible && x.Classes.Contains("elsewhere-part")).Select(x => (x.Content as TextBlock)?.Text), StringComparer.Ordinal);
 
         var empty = Named<TextBlock>(Panel(window), "TodoEmpty");
         var link = Panel(window).GetVisualDescendants().OfType<TextBlock>().First(t => t.IsEffectivelyVisible && string.Equals(t.Text, Labels.ElsewhereLinearNotConnected, StringComparison.Ordinal));
