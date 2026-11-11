@@ -11,7 +11,9 @@ STACK="${UI_BEFORE_AFTER_STACK:-bash $HERE/stack.sh}"
 LEASE="${UI_BEFORE_AFTER_LEASE:-bash $HERE/lease.sh}"
 
 [ $# -ge 1 ] || { echo "usage: release.sh <n> [<main-worktree>]" >&2; exit 64; }
-main_worktree="${2:-$WEB_APP_ROOT/.claude/worktrees/proof-main}"
+# Without a path, proof-main is where main-worktree.sh made it: the repo's one worktree root (shared helper, #2765).
+main_worktree="${2:-}"
+[ -n "$main_worktree" ] || main_worktree="$(cd "$WEB_APP_ROOT" 2>/dev/null && bash "$HERE/../../_shared/worktree-path.sh" proof-main)" || main_worktree=""
 
 remaining=$($LEASE release "$1") || exit $?
 if [ "$remaining" -gt 0 ]; then

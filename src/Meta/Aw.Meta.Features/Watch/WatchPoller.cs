@@ -18,19 +18,25 @@ namespace Aw.Meta.Features.Watch;
 /// <param name="reservation">Keeps the heavy-slot reservation in step with the merge queue on every poll.</param>
 internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, InboxCounts inbox, IKeyValueStore values, PollFollowUps followUps, HeavyReservation reservation, LaneContextReader contexts)
 {
-    internal async ValueTask<Result<Polled>> Poll(TeamConfig team, CancellationToken cancellationToken)
+    internal async ValueTask<Result<Polled>> Poll(TeamConfig team, bool allPrs, CancellationToken cancellationToken)
     {
         var repoDirectory = team.Repo;
         var prs = await repo.List(repoDirectory).ConfigureAwait(false);
         var main = prs.IsError ? Results.Failure<string>(prs.Error) : await repo.RemoteMain(repoDirectory).ConfigureAwait(false);
         var disk = await resources.Read(cancellationToken).ConfigureAwait(false);
         var counts = await inbox.Read(cancellationToken).ConfigureAwait(false);
-        if (prs.IsError || main.IsError || disk.IsError || counts.IsError)
+        if (FirstError(prs, main, disk, counts) is { } failed)
         {
-            return prs.IsError ? prs.Error : main.IsError ? main.Error : disk.IsError ? disk.Error : counts.Error;
+            return failed;
         }
 
-        var remembered = await Remember(prs.Value, cancellationToken).ConfigureAwait(false);
+        var kept = allPrs ? Results.Success(prs.Value) : await followUps.Owned(team, prs.Value, cancellationToken).ConfigureAwait(false);
+        if (kept.IsError)
+        {
+            return kept.Error;
+        }
+
+        var remembered = await Remember(kept.Value, cancellationToken).ConfigureAwait(false);
         if (remembered.IsError)
         {
             return remembered.Error;
@@ -38,11 +44,14 @@ internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, I
 
         // Advisory: the queue changes with ready messages, drops and pull requests that end, so every poll follows it (and renews the time).
         _ = await reservation.Apply(team, cancellationToken).ConfigureAwait(false);
-        var snapshot = new WatchSnapshot(prs.Value, main.Value, ResourceRules.DiskLow(disk.Value, team.Resources), ResourceRules.MemoryLow(disk.Value, team.Resources));
+        var snapshot = new WatchSnapshot(kept.Value, main.Value, ResourceRules.DiskLow(disk.Value, team.Resources), ResourceRules.MemoryLow(disk.Value, team.Resources));
         var (worktrees, queue) = await followUps.Run(team, remembered.Value, snapshot, cancellationToken).ConfigureAwait(false);
         // Advisory: a transcript that can't be read leaves the poll's context out instead of failing it.
         return new Polled(snapshot, counts.Value.Total, worktrees, await contexts.ReadOrNull(team, cancellationToken).ConfigureAwait(false)) { Open = counts.Value.Open, Status = counts.Value.Status, Queue = queue };
     }
+
+    private static Error? FirstError(Result<IReadOnlyList<PrView>> prs, Result<string> main, Result<HostResources> disk, Result<(int Total, int Open, IReadOnlyList<(string Id, string Lane)> Status)> counts) =>
+        prs.IsError ? prs.Error : main.IsError ? main.Error : disk.IsError ? disk.Error : counts.IsError ? counts.Error : null;
 
     // Keeps the pull requests GitHub shows merged or closed, so the merge queue can drop them; returns the ones not seen ended before.
     private async ValueTask<Result<IReadOnlyList<int>>> Remember(IReadOnlyList<PrView> prs, CancellationToken cancellationToken)

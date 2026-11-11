@@ -43,6 +43,9 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// <summary>Batches the status lines (#2651).</summary>
     internal required StatusBatch Status { get; init; }
 
+    /// <summary>Report every pull request, not only the team's.</summary>
+    internal bool AllPrs { get; init; }
+
     /// <summary>The state the first poll diffs against: the last poll of an earlier run, or the state before any poll.</summary>
     internal WatchState Baseline { init => _state = value; }
 
@@ -65,7 +68,7 @@ internal sealed class WatchLoop(TeamConfig team, WatchPoller poller, Func<string
     /// <summary>Takes a snapshot and emits what changed. A failed poll is reported once per streak.</summary>
     internal async ValueTask Tick(CancellationToken cancellationToken)
     {
-        var polled = await poller.Poll(team, cancellationToken).ConfigureAwait(false);
+        var polled = await poller.Poll(team, AllPrs, cancellationToken).ConfigureAwait(false);
         if (await Supersede(await NewerOwner().ConfigureAwait(false)).ConfigureAwait(false))
         {
             return;

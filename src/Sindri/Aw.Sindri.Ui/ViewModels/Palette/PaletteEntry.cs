@@ -35,6 +35,9 @@ internal sealed class PaletteEntry : ObservableObject
     /// <summary>Its id: the catalog action id, or "go:" and the page.</summary>
     public string Id { get; }
 
+    /// <summary>The row's automation id ("PaletteEntry.go:Queue"), one per entry.</summary>
+    public string AutomationId => "PaletteEntry." + Id;
+
     /// <summary>Its label.</summary>
     public string Label { get; }
 
