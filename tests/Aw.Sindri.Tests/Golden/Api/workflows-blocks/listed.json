@@ -1195,7 +1195,7 @@
           ],
           "exampleConfig": {
             "memory": "drift-check",
-            "fact": "Checked api-repo at {{agent.checkedCommit}}",
+            "fact": "Checked api-repo at {{trigger.payload.commit}}",
             "tags": [
               "checks"
             ],
