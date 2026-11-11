@@ -11,7 +11,7 @@ namespace Aw.Sindri.Ui.ViewModels.Setup;
 /// </summary>
 internal sealed class SetupActionViewModel
 {
-    private static readonly HashSet<string> _protected = new(["ApproveProfile", "ApproveRecipe", "ApproveAllRecipes"], StringComparer.Ordinal);
+    private static readonly HashSet<string> _protected = new(StringComparer.Ordinal);   // none left: recipe approval (v2 PR 4b) and profile approval (main) are gone
 
     private readonly Action<string>? _open;
 

@@ -54,7 +54,7 @@
               </DataTemplate>
             </ctl:StickyGroupList.ItemTemplate>
           </ctl:StickyGroupList>
-          <WrapPanel x:Name="NeedsYouKeyHints" Grid.Row="4" Orientation="Horizontal" ItemSpacing="6" LineSpacing="4" Margin="16,8" AutomationProperties.AccessibilityView="Raw">
+          <WrapPanel x:Name="NeedsYouKeyHints" Grid.Row="4" Orientation="Horizontal" ItemSpacing="8" LineSpacing="4" Margin="16,8" AutomationProperties.AccessibilityView="Raw">
             <Border Classes="kbd"><TextBlock Classes="kbd" Text="J" /></Border>
             <Border Classes="kbd"><TextBlock Classes="kbd" Text="K" /></Border>
             <TextBlock Classes="caption subtle" Text="{Binding KeyMoveWord}" VerticalAlignment="Center" />
@@ -91,14 +91,14 @@
                           AutomationProperties.Name="{Binding OpenItemWord}">
                     <TextBlock Classes="caption muted" Text="{Binding OpenItemWord}" AutomationProperties.AccessibilityView="Raw" />
                   </Button>
-                  <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding Reference, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                  <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding Reference, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                     <TextBlock x:Name="NeedsYouCardReference" Classes="mono subtle" Text="{Binding Reference}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Reference}" />
                     <Button x:Name="NeedsYouCardCopy" Classes="copy" Click="OnCopyReference" AutomationProperties.Name="{Binding CopyReferenceWord}">
                       <TextBlock Classes="caption" Text="{Binding CopyWord}" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
                   </StackPanel>
                 </StackPanel>
-                <StackPanel Grid.Column="2" Spacing="6" HorizontalAlignment="Right">
+                <StackPanel Grid.Column="2" Spacing="8" HorizontalAlignment="Right">
                   <TextBlock x:Name="NeedsYouCardKind" Classes="eyebrow attention" Text="{Binding KindWord}" HorizontalAlignment="Right" AutomationProperties.AccessibilityView="Raw" />
                 </StackPanel>
               </Grid>
@@ -140,7 +140,7 @@
                 <ItemsControl ItemsSource="{Binding Card.MoreDetails}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="ny:SheetDetail">
-                      <StackPanel Spacing="2" Margin="0,0,0,6">
+                      <StackPanel Spacing="2" Margin="0,0,0,8">
                         <TextBlock Classes="caption subtle" Text="{Binding Label}" />
                         <TextBlock Classes="mono" Text="{Binding Value}" TextWrapping="Wrap" />
                       </StackPanel>
@@ -152,12 +152,12 @@
               <ItemsControl x:Name="NeedsYouCardControls" ItemsSource="{Binding Card.Controls}" IsEnabled="{Binding !IsCleared}" IsVisible="{Binding Bar.ShowsRowControls}" Margin="20,8">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate>
-                    <WrapPanel Orientation="Horizontal" ItemSpacing="8" LineSpacing="6" />
+                    <WrapPanel Orientation="Horizontal" ItemSpacing="8" LineSpacing="8" />
                   </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="ny:NeedsYouActionControl">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                       <Button Classes="command-control" Classes.primary="{Binding IsPrimary}" IsEnabled="{Binding IsEnabled}" Content="{Binding Action.Label}"
                               Click="OnAction" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" AutomationProperties.HelpText="{Binding Tooltip}" AutomationProperties.Name="{Binding Name}" />
                     </StackPanel>
@@ -166,7 +166,7 @@
               </ItemsControl>
               <Border x:Name="NeedsYouFooter" Classes="card-footer" AutomationProperties.Name="{Binding FooterName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                  <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                     <icons:StateIcon Glyph="Stale" Foreground="{DynamicResource Brush.Attention}" VerticalAlignment="Center" />
                     <TextBlock x:Name="NeedsYouFooterLeft" Classes="caption attention" Text="{Binding FooterLeft}" AutomationProperties.AccessibilityView="Raw" />
                   </StackPanel>
@@ -187,7 +187,7 @@
        <!-- The action bar (F3 needs-you spec §2, §5): fixed under the card, outside it, always in view. A and D reach the same methods as its buttons. -->
        <Border x:Name="NeedsYouActionBar" Grid.Row="1" Classes="action-bar" IsVisible="{Binding Bar.HasBar}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group" AutomationProperties.Name="{Binding Bar.BarName}">
         <StackPanel MaxWidth="760" Spacing="8">
-          <WrapPanel x:Name="NeedsYouBarButtons" Orientation="Horizontal" ItemSpacing="8" LineSpacing="6" IsVisible="{Binding ShowsBarButtons}">
+          <WrapPanel x:Name="NeedsYouBarButtons" Orientation="Horizontal" ItemSpacing="8" LineSpacing="8" IsVisible="{Binding ShowsBarButtons}">
             <Button x:Name="NeedsYouApprove" Classes="bar-button primary" Classes.asking="{Binding Bar.IsAsking}" IsVisible="{Binding Bar.ShowsPrimary}" IsEnabled="{Binding Bar.PrimaryEnabled}"
                     Click="OnApprove" AutomationProperties.Name="{Binding Bar.ApproveName}">
               <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
@@ -196,14 +196,14 @@
               </StackPanel>
             </Button>
             <Button x:Name="NeedsYouSendBack" Classes="bar-button" IsVisible="{Binding Bar.ShowsSendBack}" IsEnabled="{Binding Bar.SendBackEnabled}" Click="OnSendBack"
-                    ToolTip.Tip="{Binding Bar.SendBackTooltip}" ToolTip.ShowOnDisabled="True" AutomationProperties.Name="{Binding Bar.SendBackName}" AutomationProperties.HelpText="{Binding Bar.SendBackTooltip}">
+                    AutomationProperties.Name="{Binding Bar.SendBackName}">
               <StackPanel Orientation="Horizontal" Spacing="8" AutomationProperties.AccessibilityView="Raw">
                 <TextBlock Text="{Binding Bar.SendBackWord}" VerticalAlignment="Center" />
                 <Border Classes="kbd"><TextBlock Classes="kbd" Text="D" /></Border>
               </StackPanel>
             </Button>
           </WrapPanel>
-          <StackPanel x:Name="NeedsYouReasonBox" Spacing="6" IsVisible="{Binding Bar.IsSendingBack}">
+          <StackPanel x:Name="NeedsYouReasonBox" Spacing="8" IsVisible="{Binding Bar.IsSendingBack}">
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock Classes="body-strong" Text="{Binding Bar.ReasonLabel}" />
               <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Bar.ReasonRequired}" />

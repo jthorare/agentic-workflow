@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CONN-011",
+  "status": 400,
+  "detail": "acme:key uses a key, not a browser sign-in (fix: sindri connection remove acme:key, then sindri connection add acme:key --key-env NAME with a new key)",
+  "traceId": "<trace>"
+}

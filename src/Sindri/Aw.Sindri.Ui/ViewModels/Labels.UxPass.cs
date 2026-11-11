@@ -12,7 +12,10 @@ internal static partial class Labels
     internal const string SheetShownIn = "Shown in";
 
     /// <summary>What the Agents page's doing cell says for a session that neither asks nor runs a Step.</summary>
-    internal const string SessionNoStep = "None";
+    internal const string SessionNoStep = "—";
+
+    /// <summary>The tooltip on "estimated": the state was guessed because the session reported none (Aw.Sindri.Core SessionStateRules.Estimate).</summary>
+    internal const string SessionEstimatedTip = "The agent reported no state, so Sindri guessed it from when the session's transcript was last written.";
 
     /// <summary>The Agents head while a filter is on: "2 of 7 agents · 1 asking you" (shown, served live, asking among the shown).</summary>
     /// <param name="shown">Agents the filters keep.</param>

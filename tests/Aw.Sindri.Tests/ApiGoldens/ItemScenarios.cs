@@ -31,23 +31,19 @@ internal static class ItemScenarios
         ("queue", "fixture"), ("queue", "empty"), ("queue", "stalled"), ("queue", "large"), ("queue", "session-scoped"), ("queue", "rebuilding"),
         ("items", "list-empty"), ("items", "list-open"), ("items", "list-state-done"), ("items", "list-repo"), ("items", "list-session-other-repo"), ("items", "list-bad-state"),
         ("items", "created"), ("items", "created-repo"), ("items", "created-link"), ("items", "invalid-title"), ("items", "unknown-repo"), ("items", "refused-origin"),
-        ("items-id", "new"), ("items-id", "needs-decision"), ("items-id", "after-decide"), ("items-id", "after-close"), ("items-id", "not-found"), ("items-id", "cancelled"), ("items-id", "alias"), ("items-id", "with-body"), ("items-id", "session-other-repo"), ("items-id", "bad-id"),
+        ("items-id", "new"), ("items-id", "needs-decision"), ("items-id", "after-decide"), ("items-id", "after-close"), ("items-id", "not-found"), ("items-id", "cancelled"), ("items-id", "alias"), ("items-id", "with-body"), ("items-id", "with-runs"), ("items-id", "session-other-repo"), ("items-id", "bad-id"),
         ("items-id-timeline", "fixture"), ("items-id-timeline", "page-2"), ("items-id-timeline", "closed"), ("items-id-timeline", "not-found"),
         ("items-id-close", "accepted"), ("items-id-close", "stale-version"), ("items-id-close", "accepted-cancelled"), ("items-id-close", "already-closed"), ("items-id-close", "not-found"),
-        ("items-id-close", "while-stalled"), ("items-id-close", "while-rebuilding"), ("items-id-close", "refused-active-instance"),
+        ("items-id-close", "while-stalled"), ("items-id-close", "while-rebuilding"),
+        ("handoff", "created"), ("handoff", "duplicate"), ("handoff", "refused"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
-    public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario)) || ItemScopeScenarios.Handles(slug, scenario);
+    public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
 
     /// <summary>Runs the scenario against <paramref name="host"/> (started on <see cref="ProfileYaml"/>) and returns the body to compare.</summary>
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
     {
-        if (ItemScopeScenarios.Handles(slug, scenario))
-        {
-            return await ItemScopeScenarios.Body(host, scenario, ct);
-        }
-
         await ViewScenarios.Approve(host, ct);
         return slug switch
         {
@@ -56,6 +52,7 @@ internal static class ItemScenarios
             "items" => await CreateBody(host, scenario),
             "items-id" => await DetailBody(host, scenario, ct),
             "items-id-timeline" => await TimelineBody(host, scenario, ct),
+            "handoff" => await HandoffBody(host, scenario),
             _ => await CloseBody(host, scenario, ct),
         };
     }
@@ -144,6 +141,23 @@ internal static class ItemScenarios
         };
     }
 
+    private const string HandoffJson = """{"title":"Fix the login timeout","source":"ci-bot","offerKey":"offer-7","prompt":"Run the suite twice."}""";
+
+    /// <summary>POST /sindri/handoff: a new item, the same offer sent twice (one item, the earlier answer), and a call without the per-start token.</summary>
+    private static async Task<string> HandoffBody(GoldenHost host, string scenario)
+    {
+        switch (scenario)
+        {
+            case "created":
+                return await Send(host, Post("/sindri/handoff", HandoffJson, Human(host)));
+            case "duplicate":
+                _ = await Send(host, Post("/sindri/handoff", HandoffJson, Human(host)));
+                return await Send(host, Post("/sindri/handoff", HandoffJson, Human(host)));
+            default:
+                return await Send(host, Post("/sindri/handoff", HandoffJson));   // 'refused': no token
+        }
+    }
+
     private static async Task<string> DetailBody(GoldenHost host, string scenario, CancellationToken ct)
     {
         if (scenario == "not-found")
@@ -172,6 +186,10 @@ internal static class ItemScenarios
             case "alias":
                 await AppendFor(host, id, EventTypes.ItemLinked, new ItemLinked(Command(0xb1), ItemId.From(id), RecordKey.From("linear:issue/abc-123"), ItemAlias.From("ENG-142")), "item.linked:golden:alias", ct);
                 id = "ENG-142";
+                break;
+            case "with-runs":
+                await AppendFor(host, id, EventTypes.ItemLinked, new ItemLinked(Command(0xb2), ItemId.From(id), RecordKey.From("sindri:run/nightly@1:1"), Alias: null), "item.linked:golden:run-1", ct);
+                await AppendFor(host, id, EventTypes.ItemLinked, new ItemLinked(Command(0xb3), ItemId.From(id), RecordKey.From("sindri:run/nightly@1:2"), Alias: null), "item.linked:golden:run-2", ct);
                 break;
             default:
                 break;   // 'new', 'with-body', 'session-other-repo'
@@ -247,10 +265,6 @@ internal static class ItemScenarios
                 _ = await Close(host, id, "done", 1);
                 await ViewScenarios.CatchUp(host, ct);
                 return await Close(host, id, "done", 2);
-            case "refused-active-instance":
-                await AppendFor(host, id, EventTypes.WorkflowStarted, ActiveInstance(id), "workflow:golden:started", ct);   // a root instance's desk task is open
-                await ViewScenarios.CatchUp(host, ct);
-                return await Close(host, id, "done", 1);
             case "while-stalled":
                 await Stall(host, ct);
                 return await Close(host, id, "done", 1);
@@ -307,11 +321,4 @@ internal static class ItemScenarios
         _ = appended.Value;
     }
 
-    private static WorkflowEventPayload ActiveInstance(string item)
-    {
-        var delta = new WorkflowEventDelta(new FrameSummary("produce", 1, "1.1", Child: null, Core.Launch.StepRuntime.Desk), Suspension: null, PendingPark: null, Loops: null, TokensSpent: null, TokensGranted: null, Facts: null, Outcome: null);
-        var detail = new WorkflowEventDetail(Core.Workflow.Engine.TriggerKey.For(Core.Launch.WorkflowInstanceId.From("WFI-" + new string('a', 32)), "t"), "human:cli",
-            SourceSequence: null, ArgumentsSha256: null, ReportSha256: null, Answer: null, Amount: null, Reason: null, [], [], Grant: null, Override: null, Refusal: null, [], delta);
-        return new WorkflowEventPayload(item + "/step/1", "start", "produce", "start", Outcome: null, Run: null, detail);
-    }
 }

@@ -319,7 +319,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; color: var(--ink-
   var USING = [
     { id: "U1", ic: "☀️", name: "Start your day", lanes: ["you", "cli", "api", "temporal", "app"], hops: [
       { l: "you", t: "run sindri", c: "$ sindri", s: "built", r: "A §17.29.1", d: "One command starts everything. Every other sindri verb is a client of the running process.", scr: term("zsh", ["$ sindri"]) },
-      { l: "api", t: "take the lease", c: "host lease · ledger.db", s: "built", r: "S1 #163", d: "One process per host, under the host lease. It opens the ledger and the approved profile.", scr: term("zsh", ["$ sindri", "~ lease acquired", "~ profile approved 3f1c…"]) },
+      { l: "api", t: "take the lease", c: "host lease · ledger.db", s: "built", r: "S1 #163", d: "One process per host, under the host lease. It opens the ledger and the live profile.", scr: term("zsh", ["$ sindri", "~ lease acquired", "~ profile loaded 3f1c…"]) },
       { l: "temporal", t: "start Temporal", c: "temporal server start-dev", s: "building", r: "WF §0 · P4a #188", d: "A local Temporal server on loopback, with its own SQLite file. Workflow instances survive restarts.", scr: term("zsh", ["$ sindri", "~ lease acquired", "~ temporal 127.0.0.1 (sqlite)"]) },
       { l: "app", t: "open the app", c: "Sindri.app", s: "building", r: "UI U0 #184", d: "The Avalonia app opens as a client of the API. sindri --headless skips it on an always-on box.", scr: app("Sindri", [["Queue", ""], ["Needs you", "3"], ["Running", "2"]]) },
       { l: "cli", t: "what's running", c: "sindri status", s: "built", r: "S1 · A §17.29.1", d: "The CLI prints the profile, the API address, services and what needs you.", scr: term("zsh", ["$ sindri status", "profile   approved 3f1c…", "api       127.0.0.1:7410", "services  index · intake · evolve", "ready     3 need you · 2 running"]) },
@@ -406,7 +406,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; color: var(--ink-
     { id: "B4", ic: "🧾", name: "Prove a phase", lanes: ["prove", "home", "gold"], hops: [
       { l: "prove", t: "as the agent", c: "scripts/sindri-prove.sh <verb>", s: "built", r: "API §12", d: "Every proof runs through the prover, never against your real Sindri home.", scr: term("zsh", ["$ scripts/sindri-prove.sh status"]) },
       { l: "home", t: "temp home", c: "$AW_SINDRI_HOME=tmp", s: "built", r: "API §12 · README X24", d: "A throwaway home per run; setup.sh, providers and MCP registration are never touched.", scr: big("🗂️", "/tmp/sindri-prove.x7Q") },
-      { l: "prove", t: "as the human", c: "sindri-prove.sh human <verb>", s: "built", r: "README X40", d: "Acts as the owner using the guarded token, honoured only for a temp home.", scr: term("zsh", ["$ scripts/sindri-prove.sh human profile approve"]) },
+      { l: "prove", t: "as the human", c: "sindri-prove.sh human <verb>", s: "built", r: "README X40", d: "Acts as the owner using the guarded token, honoured only for a temp home.", scr: term("zsh", ["$ scripts/sindri-prove.sh human recipe approve"]) },
       { l: "gold", t: "goldens", c: "per route · per scenario", s: "built", r: "README X51", d: "JSON goldens per route and scenario; the UI's contract tests read them.", scr: term("diff", ["goldens/items.answer.ok.json  match"]) },
       { l: "prove", t: "AOT smoke", c: "src/Sindri/aot-smoke/run.sh", s: "built", r: "AGENTS.md", d: "Publishes the native binary and drives it end to end against expected output.", scr: term("zsh", ["$ bash src/Sindri/aot-smoke/run.sh", "matches expected.txt"]) }
     ] },

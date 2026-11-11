@@ -12,6 +12,7 @@
 # Run: bash scripts/tests/heavy.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$DIR/lib/test-portable.sh"   # timeout for macOS
 HEAVY="$DIR/heavy.sh"
 fail=0
 check() {
@@ -51,11 +52,12 @@ check "the copies differ from the wrapper only in TIMEOUT" "$(diff "$HEAVY" "$FA
 
 # The wrapper's watchdog leaves a `sleep 5` holding its stdout after the job ends, so a $(...) around it would wait up to 5 s for
 # the pipe to close (pinned as is). H and F (the wrapper, and the TIMEOUT=0 copy) write to a file and cat it: the sleep holds the file.
-H() { local f="$WORK/h.$BASHPID"; bash "$HEAVY" "$@" > "$f" 2>&1; local rc=$?; cat "$f"; return $rc; }
-F() { local f="$WORK/f.$BASHPID"; bash "$FAST" "$@" > "$f" 2>&1; local rc=$?; cat "$f"; return $rc; }
+H() { local f; f="$(mktemp "$WORK/h.XXXXXX")"; bash "$HEAVY" "$@" > "$f" 2>&1; local rc=$?; cat "$f"; return $rc; }
+F() { local f; f="$(mktemp "$WORK/f.XXXXXX")"; bash "$FAST" "$@" > "$f" 2>&1; local rc=$?; cat "$f"; return $rc; }
 reset() { find "$STATE" -mindepth 1 -delete 2> /dev/null; mkdir -p "$STATE"; }
-dead_pid() { sleep 0 & local p=$!; wait "$p"; echo "$p"; }
-DEAD="$(dead_pid)"
+# A pid above any pid_max (Linux 4194304, macOS 99998): never a live process. A pid of an exited child can be reused by the
+# time a row reads it on a busy runner ("a lock whose owner pid is dead is reclaimed" kept the slot on macos-15, #2757).
+DEAD=99999999
 # hold <lock dir> [pid]: a lock dir some live (or the given) pid owns, as another job would leave it.
 hold() { mkdir -p "$1"; echo "${2:-$$} 2026-01-01T00:00:00Z session=x held" > "$1/owner"; }
 wait_file() { local i; for i in $(seq 1 60); do [ -s "$1" ] && return 0; sleep 0.1; done; return 1; }
@@ -76,8 +78,11 @@ AW_HEAVY_LOCK_HELD=1 H > /dev/null 2>&1; check "usage is checked before the nest
 check "stdout passes through" "$(H --light echo hello)" "hello"
 H --light sh -c 'exit 7' > /dev/null 2>&1; check "the job's exit code is the wrapper's" "$?" "7"
 H --light no-such-command-here > /dev/null 2>&1; check "a command that does not exist: 127" "$?" "127"
-H --light --expensive echo x > /dev/null 2>&1
-check "a second flag is taken as the command (pinned as is): setsid rejects it, exit 1" "$?" "1"
+out="$(H --light --expensive echo x 2>&1)"; rc=$?
+# setsid refuses the unknown option (1); without setsid (macOS) the perl fallback can't exec a `--expensive` command (127).
+if command -v setsid > /dev/null 2>&1; then want=1; else want=127; fi
+check "a second flag is taken as the command (pinned as is): setsid or perl rejects it, exit $want" "$rc" "$want"
+check "a second flag is taken as the command: echo never runs" "$(printf '%s\n' "$out" | grep -cx 'x')" "0"
 reset
 
 # --- lock files while a job runs, and after ---
@@ -313,8 +318,9 @@ echo $$ > "$1"; exec sleep 60
 EOF
 for sig in INT TERM; do
   reset
-  # perl resets SIGINT: a background job of a non-interactive shell would otherwise start with INT ignored
-  perl -e '$SIG{INT}="DEFAULT"; exec @ARGV' bash "$HEAVY" --expensive bash "$WORK/job.sh" "$WORK/job.pid" > /dev/null 2> "$WORK/sig.err" &
+  # perl resets SIGINT and SIGTERM: a background job of a non-interactive shell would otherwise start with INT ignored,
+  # and a suite started with TERM ignored would hand that on too (#2377)
+  perl -e '$SIG{INT}="DEFAULT"; $SIG{TERM}="DEFAULT"; exec @ARGV' bash "$HEAVY" --expensive bash "$WORK/job.sh" "$WORK/job.pid" > /dev/null 2> "$WORK/sig.err" &
   hp=$!; bgpids+=("$hp")
   wait_file "$WORK/job.pid" || echo "  (job did not start)"
   jp="$(cat "$WORK/job.pid" 2> /dev/null)"

@@ -2,7 +2,6 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Challenges;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Testing.Workflow.Registry;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
@@ -15,8 +14,10 @@ namespace Aw.Sindri.Testing.Challenges;
 /// </summary>
 public abstract class ChallengesContract
 {
+    private static RecipeHash Hash(string seed) => RecipeHash.From("sha256:" + seed.PadRight(64, '0'));
+
     private static readonly ChallengeAction _approve = ChallengeAction.Approve(RecipeId.From("workflow.step"), 1);
-    private static readonly ChallengeSubject _subject = ChallengeSubject.ForRecipe(RegistryData.Hash("step"), 1, pinsDigest: null);
+    private static readonly ChallengeSubject _subject = ChallengeSubject.ForRecipe(Hash("step"), 1, pinsDigest: null);
 
     /// <summary>The clock the challenges read; tests advance it.</summary>
     protected FakeTimeProvider Clock { get; } = new(KnownInstants.Epoch);
@@ -59,7 +60,7 @@ public abstract class ChallengesContract
     {
         var challenges = Create();
         var other = ChallengeAction.Approve(RecipeId.From("workflow.step"), 2);
-        var moved = ChallengeSubject.ForRecipe(RegistryData.Hash("step"), 1, pinsDigest: "sha256:changed");
+        var moved = ChallengeSubject.ForRecipe(Hash("step"), 1, pinsDigest: "sha256:changed");
 
         Expect.True(challenges.Redeem(new ChallengeAnswer(challenges.Issue(_approve, _subject).Id, "approve workflow.step"), _approve, _subject, WorkflowErrors.RecipeChallengeStale).IsError);
         Expect.True(challenges.Redeem(new ChallengeAnswer(challenges.Issue(_approve, _subject).Id, _approve.Text), other, _subject, WorkflowErrors.RecipeChallengeStale).IsError);
@@ -98,7 +99,7 @@ public abstract class ChallengesContract
         Expect.True(challenges.Redeem(new ChallengeAnswer(issued.Id, _approve.Text), _approve, _subject, WorkflowErrors.RecipeChallengeStale).IsSuccess);
     }
 
-    private static readonly ChallengeSubject _stale = ChallengeSubject.ForRecipe(RegistryData.Hash("step"), 1, pinsDigest: "sha256:changed");
+    private static readonly ChallengeSubject _stale = ChallengeSubject.ForRecipe(Hash("step"), 1, pinsDigest: "sha256:changed");
     private static readonly TimeSpan _slipGuard = IssuedChallenge.EarliestAnswer;
 
     private static IssuedChallenge IssueFor(IChallenges challenges, ChallengeMode mode, ChallengeChannel channel = ChallengeChannel.App) =>

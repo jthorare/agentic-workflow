@@ -12,7 +12,8 @@ namespace Aw.Sindri.Infrastructure.Profile;
 /// found or created, and the entry is appended once. The result must parse and hold the entry, and replaces the file only if the file is still the text that was read (one retry, as <see cref="YamlProfileRepoWriter"/>).
 /// </summary>
 /// <param name="settings">Where the profile is.</param>
-internal sealed class YamlProfileSandboxWriter(SindriSettings settings) : IProfileSandboxWriter
+/// <param name="cache">Told right after a write, so the next read parses the file.</param>
+internal sealed class YamlProfileSandboxWriter(SindriSettings settings, IProfileCache cache) : IProfileSandboxWriter
 {
     private const int Attempts = 2;
 
@@ -103,7 +104,7 @@ internal sealed class YamlProfileSandboxWriter(SindriSettings settings) : IProfi
         return written switch
         {
             YamlProfileRepoWriter.Written.Conflict => null,
-            YamlProfileRepoWriter.Written.Done => new SandboxAllowed(entry, Added: true),
+            YamlProfileRepoWriter.Written.Done => Applied(new SandboxAllowed(entry, Added: true)),
             YamlProfileRepoWriter.Written.Failed => SindriErrors.ProfileInvalid.With($"{path} can't be written: {reason} (fix: make the file and its folder writable, then press Allow again)"),
             _ => throw new InvalidOperationException("unknown write outcome"),
         };
@@ -123,5 +124,12 @@ internal sealed class YamlProfileSandboxWriter(SindriSettings settings) : IProfi
             kind == DenialKind.Path
                 ? item.ValueKind == JsonValueKind.Object && item.TryGetProperty("path", out var p) && p.ValueKind == JsonValueKind.String && string.Equals(p.GetString(), entry, StringComparison.Ordinal)
                 : item.ValueKind == JsonValueKind.String && string.Equals(item.GetString(), entry, StringComparison.Ordinal));
+    }
+
+    // The file changed: tell the cache, then hand the answer back.
+    private SandboxAllowed Applied(SandboxAllowed answer)
+    {
+        cache.Invalidate();
+        return answer;
     }
 }

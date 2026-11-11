@@ -211,12 +211,12 @@ packages:
     tier: 3
     projectPrefix: Aw.Sindri
     src: src/Sindri
-    bins: [sindri]
+    bins: [sindri, sindri-code-runner]
     db: [sindri-app/ledger.db, sindri-app/views.db]
     files: [sindri-app/control.json, sindri-app/auth/human.token, fleet]
     namespace: sindri
     routes: [/sindri/]
-    note: "built new in C# as an application (control plane, workflow engine, context retrieval; addendum §17.29, Q7), not ported; S1 (app shell: CLI and control plane, host lease, ledger, profile, API, scheduler, doctor) and workflow engine P1 (the recipe model and validator, `sindri recipe validate`) are in src/Sindri; API P2 adds the projector and its views (views.db: services, profile; read-your-writes, health, `sindri views rebuild`); API P3 adds items and the queue (views.db: items, item-aliases, item-timeline; `sindri queue`, `items`, `item add`, `item close`); API P5 adds the event stream, the ledger read and the events catalog (`GET /events`, `/ledger`, `/events/catalog`; `sindri ledger`, `status --follow`); API P6: jobs and services (the job runtime, `GET /jobs`, `POST /services/{name}/run|pause|resume`, `view_jobs`, the opt-in job-probe service; `sindri services`, `jobs`); Aw.Sindri.Workflows is the Temporal adapter (Infrastructure layer, namespace Aw.Sindri.Infrastructure.Workflows, AwAotCompatible=false for temporalio/sdk-dotnet#286; engine rev 8 §0); reaches lower tiers only through Core contracts, CLIs and the compose edges to Context and Judge (registration only), plus the tier-0 Redaction edge (RecordEvent's ledger scrub and, in Infrastructure, the desk notices' text); P6 adds effects (EffectActivities: RecordEffect, RecheckEffect, RunEffect with the outbox retry policy, outbox.* rows), the registry wake (TemporalRecipeWake over the RecipeHash search attribute), effect.notify.desk (notifications.jsonl, digest, OS banner) and effect.claim.ref (git update-ref through GitClaimRefs)"
+    note: "built new in C# as an application (control plane, workflow engine, context retrieval; addendum §17.29, Q7), not ported; Aw.Sindri.CodeRunner is the second binary, sindri-code-runner (agent-first PR 9c): the process a Code node runs its compiled C# in, framework-dependent, referencing no Aw project (its contract is argv, stdin, stdout and the exit code), started by Infrastructure (Workflow/Code/SandboxedCodeRunner) through the process sandbox, from beside the sindri binary, and built before Aw.Sindri.Tests by a build-order reference; a process spawn inside one package, so no cli edge; S1 (app shell: CLI and control plane, host lease, ledger, profile, API, scheduler, doctor) are in src/Sindri (the YAML recipe engine and the factory line were removed in issue 2258; workflow graphs replace them, `docs/csharp/sindri-graph.md`); API P2 adds the projector and its views (views.db: services, profile; read-your-writes, health, `sindri views rebuild`); API P3 adds items and the queue (views.db: items, item-aliases, item-timeline; `sindri queue`, `items`, `item add`, `item close`); API P5 adds the event stream, the ledger read and the events catalog (`GET /events`, `/ledger`, `/events/catalog`; `sindri ledger`, `status --follow`); API P6: jobs and services (the job runtime, `GET /jobs`, `POST /services/{name}/run|pause|resume`, `view_jobs`, the opt-in job-probe service; `sindri services`, `jobs`); Aw.Sindri.Workflows is the Temporal adapter (Infrastructure layer, namespace Aw.Sindri.Infrastructure.Workflows, AwAotCompatible=false for temporalio/sdk-dotnet#286; engine rev 8 §0); reaches lower tiers only through Core contracts, CLIs and the compose edges to Context and Judge (registration only), plus the tier-0 Redaction edge (RecordEvent's ledger scrub and, in Infrastructure, the desk notices' text)"
 
   # ---- tier 4 ----
   - id: SindriUi
@@ -286,6 +286,13 @@ packages:
     projectPrefix: Aw.Connectors
     src: src/Connectors
     note: "source readers (GitHub, Slack; later Notion, Jira): the IConnector contract, text cleaner, HTTP clients with a host allowlist; a port of ConnectAI's connector mechanics; no storage, no Context types (Sindri-owned index spec §9.2)"
+
+  - id: Toolkit
+    kind: package
+    tier: 1
+    projectPrefix: Aw.Sindri.Toolkit
+    src: src/Toolkit
+    note: "the SDK a toolkit project references (name, needs, typed tools, an MCP stdio host); packed alone into the SDK feed, so it has no repo references (no Kernel edge); toolkits live outside the repo and reference it through that feed, and Sindri never references it: Sindri talks to a toolkit over MCP stdio only (PR 15)"
 
 edges:
   # ---- current: found in the source today ----

@@ -1,7 +1,0 @@
-{
-  "name": "fixture-notes",
-  "version": "0.4.0",
-  "private": true,
-  "description": "A small team notes app. Synthetic: never compiled or run, it exists to be scoped.",
-  "scripts": { "test": "vitest run" }
-}

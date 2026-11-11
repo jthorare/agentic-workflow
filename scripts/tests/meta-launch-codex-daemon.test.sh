@@ -6,6 +6,7 @@
 # Run: bash scripts/tests/meta-launch-codex-daemon.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$DIR/lib/test-portable.sh"   # timeout for macOS
 ROOT="$(cd "$DIR/.." && pwd)"
 fail=0
 check() {
@@ -108,7 +109,7 @@ check "resume argv: --no-daemon before the resume subcommand" "$(head -1 "$WORK/
 LANES="api ui" run_lane codex fresh yes
 check "two lanes: each lane's prompt hook and reply resolved that lane in team t1" \
   "$(sort -u "$WORK/calls" | tr '\n' ';')" \
-  "Stop|t1/api|lane-reply|hi from api;Stop|t1/api|lane-stop-check|;Stop|t1/ui|lane-reply|hi from ui;Stop|t1/ui|lane-stop-check|;UserPromptSubmit|t1/api|lane-inbox|;UserPromptSubmit|t1/ui|lane-inbox|;"
+  "Stop|t1/api|lane-reply|hi from api;Stop|t1/api|lane-stop-check|;Stop|t1/ui|lane-reply|hi from ui;Stop|t1/ui|lane-stop-check|;UserPromptSubmit|t1/api|board-line|;UserPromptSubmit|t1/api|lane-inbox|;UserPromptSubmit|t1/ui|board-line|;UserPromptSubmit|t1/ui|lane-inbox|;"
 check "two lanes: team A's state stays empty" "$(ls "$WORK/teamA/lane-sessions" | wc -l | tr -d ' ')" "0"
 run_lane codex fresh no
 check "without --no-daemon (the bug): no hook call is accepted for team t1 (or anyone: the daemon's hooks are not under the lane)" \

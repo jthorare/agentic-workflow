@@ -8,6 +8,7 @@ unset TMUX
 for v in $(compgen -e | grep -E '^AW_(HEAVY|SESSION_HEAVY|META_LANE)'); do unset "$v"; done   # this suite may itself run under a heavy job
 unset DOTNET_PROCESSOR_COUNT MSBUILDDISABLENODEREUSE
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "$DIR/../lib/test-portable.sh"   # timeout and touch_ago for macOS (no GNU timeout, no touch -d)
 HEAVY="$DIR/../heavy.sh"
 LOCKS="$DIR/../../config/lib/locks.sh"
 fail=0
@@ -52,6 +53,21 @@ check "locks.sh: reserve 1, AW_HEAVY_PRIORITY=meta, takes slot 1" "$(lockssh "$B
 
 scratch other 1 1; QA="$T/locks/qa-stack.lock"; hold "$QA"
 check "locks.sh: another lock ignores the cap and the reserve" "$(lockssh "$QA" 2 2)" "slot[.2]"
+
+# Take-then-check (#2718): an mkdir shim on PATH lowers the cap to 1 right before the real mkdir of slot 2, so the cap drops
+# between the pass's read and the take. The control shim leaves the cap alone.
+mkdir -p "$WORK/shim"
+cat > "$WORK/shim/mkdir" <<'SHIM'
+#!/usr/bin/env bash
+case "${@: -1}" in *.2) [ -z "${SHIM_LOWER:-}" ] || echo 1 > "$AW_STATE_DIR/heavy-slots-cap" ;; esac
+exec /bin/mkdir "$@"
+SHIM
+chmod +x "$WORK/shim/mkdir"
+scratch race-lower 2 ""; hold "$BASE"
+check "locks.sh: the cap drops to 1 between the read and the take of slot 2, the slot is given back (none)" "$(lockssh "$BASE" 2 2 PATH="$WORK/shim:$PATH" SHIM_LOWER=1)" "none"
+check "locks.sh: the slot 2 folder is gone after that" "$([ -d "$BASE.2" ] && echo present || echo gone)" "gone"
+scratch race-keep 2 ""; hold "$BASE"
+check "locks.sh: control, the shim leaves the cap at 2, slot 2 is taken" "$(lockssh "$BASE" 2 2 PATH="$WORK/shim:$PATH")" "slot[.2]"
 
 # Wrapper: cap 2 with both slots held; while it waits the cap drops to 1 and slot 2 is freed. It must keep waiting.
 scratch wrapper 2 ""; hold "$BASE"; hold "$BASE.2"

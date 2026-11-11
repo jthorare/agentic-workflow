@@ -101,5 +101,5 @@ internal sealed class StoreBriefSource(IRecordStore store) : IBriefSource
         ContextErrors.AllSourcesUnavailable.With($"the brief source can't be read ({cause.Code}); fix: sindri context sources status");
 
     private static Error NoSource() =>
-        ContextErrors.NoBriefSource.With("no configured source can supply issue briefs: needs 'context.sources.linear.teams' in the approved profile (fix: sindri context sources status)");
+        ContextErrors.NoBriefSource.With("no configured source can supply issue briefs: needs 'context.sources.linear.teams' in the profile (fix: sindri context sources status)");
 }

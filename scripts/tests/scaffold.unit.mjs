@@ -714,6 +714,169 @@ t("withHeavyLock takes slot 1, then slot 2 beside a plain holder of slot 1, and 
   for (const bad of ["0", "x", "1.5"]) assert.equal(common.heavySlots({ AW_HEAVY_SLOTS: bad }), 2);
 });
 
+// ---- /new-toolkit (scripts/scaffold/new-toolkit.mjs): no dotnet; the revert case runs a stub `dotnet` that fails ----
+const NEW_TOOLKIT = path.join(REPO, "scripts/scaffold/new-toolkit.mjs");
+const scratch = () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aw-toolkit-unit-"));
+  trees.push(dir);
+  return dir;
+};
+const toolkit = (args, { env = {}, filesOnly = true } = {}) => {
+  const r = spawnSync("node", [NEW_TOOLKIT, "--root", REPO, ...(filesOnly ? ["--files-only"] : []), ...args], {
+    encoding: "utf8",
+    env: { ...process.env, AW_HEAVY_LOCK_HELD: "1", ...env },
+  });
+  return { code: r.status, out: `${r.stdout}${r.stderr}` };
+};
+const tkArgs = (dir, extra = {}) => Object.entries({ name: "Contracts", tool: "diff_contracts", dir, ...extra }).flatMap(([k, v]) => (v === undefined ? [] : [`--${k}`, v]));
+
+t("new-toolkit writes the project, a test project with one sample test and its own build rails", () => {
+  const home = scratch();
+  const dir = path.join(home, "toolkits", "contracts");
+  const r = toolkit(tkArgs(dir, { needs: "database:cache,disk:1g,connection:github:me" }));
+  assert.equal(r.code, 0, r.out);
+  for (const f of ["global.json", "nuget.config", "Directory.Build.props", "Directory.Packages.props", ".editorconfig", "Contracts.Toolkit.csproj", "Program.cs", "ContractsTools.cs", "ContractsJson.cs", "Contracts.Toolkit.Tests/Contracts.Toolkit.Tests.csproj", "Contracts.Toolkit.Tests/DiffContractsTests.cs"]) {
+    assert.ok(fs.existsSync(path.join(dir, f)), `missing ${f}`);
+  }
+  const tools = fs.readFileSync(path.join(dir, "ContractsTools.cs"), "utf8");
+  assert.match(tools, /Toolkit\.Named\("contracts"\)/);
+  assert.match(tools, /Resources\.Database\("cache"\)/);
+  assert.match(tools, /Resources\.Disk\("data", "1GiB"\)/);
+  assert.match(tools, /Resources\.Connection\("me"\) \/\* github \*\//);
+  assert.match(tools, /\.Tool<DiffContractsRequest, DiffContractsResponse>\("diff_contracts", "[^"]+", DiffContracts\)/);
+  assert.ok(tools.indexOf(".UseJson(ContractsJson.Default)") > 0 && tools.indexOf(".UseJson(") < tools.indexOf(".Tool<"), "UseJson comes before Tool");
+  assert.match(tools, /Task<DiffContractsResponse> DiffContracts\(DiffContractsRequest request, ToolkitContext ctx, CancellationToken ct\)/);
+  const ctx = fs.readFileSync(path.join(dir, "ContractsJson.cs"), "utf8");
+  assert.match(ctx, /RespectNullableAnnotations = true/);
+  assert.match(ctx, /RespectRequiredConstructorParameters = true/);
+  assert.match(fs.readFileSync(path.join(dir, "Program.cs"), "utf8"), /ToolkitHost\.RunAsync\(ContractsTools\.Build\(\), args, CancellationToken\.None\)/);
+  assert.match(tools, /NotSupportedException\("DiffContracts: make DiffContractsTests pass"\)/);
+  const nuget = fs.readFileSync(path.join(dir, "nuget.config"), "utf8");
+  assert.match(nuget, /key="aw-sindri-sdk" value="[^"]*sdk[\\/]packages"/);
+  assert.match(nuget, /api\.nuget\.org/);
+  assert.equal(fs.readFileSync(path.join(dir, "global.json"), "utf8"), fs.readFileSync(path.join(REPO, "global.json"), "utf8").replace(/\s+$/, "") + "\n");
+  assert.match(fs.readFileSync(path.join(dir, "Directory.Packages.props"), "utf8"), /Include="xunit\.v3" Version="\[\d/);
+  assert.match(fs.readFileSync(path.join(dir, "Contracts.Toolkit.csproj"), "utf8"), /Contracts\.Toolkit\.Tests\/\*\*/);
+});
+
+t("new-toolkit accepts connection:<name> with no service", () => {
+  const dir = path.join(scratch(), "tk");
+  assert.equal(toolkit(tkArgs(dir, { needs: "connection:me" })).code, 0);
+  assert.match(fs.readFileSync(path.join(dir, "ContractsTools.cs"), "utf8"), /Resources\.Connection\("me"\)\s*\)/);
+});
+
+t("new-toolkit takes the folder feed from --feed, then AW_SINDRI_SDK_FEED, then AW_SINDRI_HOME", () => {
+  const home = scratch();
+  const nugetOf = (dir) => fs.readFileSync(path.join(dir, "nuget.config"), "utf8");
+  const a = path.join(home, "a");
+  assert.equal(toolkit(tkArgs(a, { feed: "/feeds/explicit" })).code, 0);
+  assert.match(nugetOf(a), /value="\/feeds\/explicit"/);
+  const b = path.join(home, "b");
+  assert.equal(toolkit(tkArgs(b), { env: { AW_SINDRI_SDK_FEED: "/feeds/env" } }).code, 0);
+  assert.match(nugetOf(b), /value="\/feeds\/env"/);
+  const c = path.join(home, "c");
+  assert.equal(toolkit(tkArgs(c), { env: { AW_SINDRI_SDK_FEED: "", AW_SINDRI_HOME: "/h/sindri" } }).code, 0);
+  assert.match(nugetOf(c), /value="\/h\/sindri\/sdk\/packages"/);
+});
+
+t("new-toolkit defaults --dir to $AW_SINDRI_HOME/toolkits/<name> in kebab case", () => {
+  const home = scratch();
+  const r = toolkit(["--name", "ContractDiff", "--tool", "diff_contracts"], { env: { AW_SINDRI_HOME: home } });
+  assert.equal(r.code, 0, r.out);
+  assert.ok(fs.existsSync(path.join(home, "toolkits", "contract-diff", "ContractDiff.Toolkit.csproj")));
+});
+
+for (const [label, extra, rule] of [
+  ["a lowercase name", { name: "contracts" }, "NT-NAME"],
+  ["a reserved name", { name: "Utils" }, "NT-NAME"],
+  ["a tool that is not snake_case", { tool: "DiffContracts" }, "NT-TOOL"],
+  ["an unknown need kind", { needs: "queue:jobs" }, "NT-NEEDS"],
+  ["a database name with capitals", { needs: "database:Cache" }, "NT-NEEDS"],
+  ["a disk size without a unit", { needs: "disk:100" }, "NT-NEEDS"],
+  ["a connection with three parts", { needs: "connection:a:b:c" }, "NT-NEEDS"],
+  ["a database name ending in '-'", { needs: "database:cache-" }, "NT-NEEDS"],
+  ["a connection name starting with '-'", { needs: "connection:-me" }, "NT-NEEDS"],
+  ["the same database twice", { needs: "database:cache,database:cache" }, "NT-NEEDS"],
+]) {
+  t(`new-toolkit refuses ${label} with ${rule} and writes nothing`, () => {
+    const home = scratch();
+    const dir = path.join(home, "tk");
+    const r = toolkit(tkArgs(dir, extra));
+    refused(r, rule);
+    assert.equal(fs.existsSync(dir), false);
+  });
+}
+
+t("new-toolkit refuses a missing name or tool (NT-INPUT) and an unknown option (usage, exit 2)", () => {
+  const home = scratch();
+  refused(toolkit(["--tool", "diff_contracts", "--dir", path.join(home, "x")]), "NT-INPUT");
+  refused(toolkit(["--name", "Contracts", "--dir", path.join(home, "x")]), "NT-INPUT");
+  const r = toolkit(["--name", "Contracts", "--bogus", "1"]);
+  assert.equal(r.code, 2, r.out);
+});
+
+t("new-toolkit refuses a folder that is not empty (NT-EXISTS) and leaves it alone", () => {
+  const home = scratch();
+  fs.writeFileSync(path.join(home, "keep.txt"), "mine");
+  const before = hashTree(home);
+  refused(toolkit(tkArgs(home)), "NT-EXISTS");
+  assert.equal(hashTree(home), before);
+});
+
+t("new-toolkit refuses when the SDK feed holds no Aw.Sindri.Toolkit package (NT-SDK), but not under --files-only", () => {
+  const home = scratch();
+  const feed = path.join(home, "feed");
+  fs.mkdirSync(feed);
+  fs.writeFileSync(path.join(feed, "Other.1.0.0.nupkg"), "");
+  const r = toolkit(tkArgs(path.join(home, "tk"), { feed }), { filesOnly: false });
+  refused(r, "NT-SDK");
+  assert.equal(fs.existsSync(path.join(home, "tk")), false);
+});
+
+t("new-toolkit reverts every file and folder it made when a dotnet step fails", () => {
+  const home = scratch();
+  const feed = path.join(home, "feed");
+  fs.mkdirSync(feed);
+  fs.writeFileSync(path.join(feed, "Aw.Sindri.Toolkit.0.1.0-local.1.nupkg"), "");
+  const bin = path.join(home, "bin");
+  fs.mkdirSync(bin);
+  const stub = path.join(bin, "dotnet");
+  fs.writeFileSync(stub, "#!/usr/bin/env bash\n# stub: restore writes a lock file, then the build fails\ncase \"$1\" in restore) echo '{}' > \"$(dirname \"$2\")/packages.lock.json\"; exit 0;; esac\necho 'error CS0000: stub build failure'; exit 1\n", { mode: 0o755 });
+  const dir = path.join(home, "deep", "er", "tk");
+  const r = toolkit(tkArgs(dir, { feed }), { filesOnly: false, env: { PATH: `${bin}:${process.env.PATH}` } });
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /^SCAFFOLD-BUILD: /m);
+  assert.match(r.out, /reverted \d+ files/);
+  assert.equal(fs.existsSync(path.join(home, "deep")), false, "the folders it made are gone");
+});
+
+t("new-toolkit leaves an existing empty --dir empty when a dotnet step fails (artifacts/ included)", () => {
+  const home = scratch();
+  const feed = path.join(home, "feed");
+  fs.mkdirSync(feed);
+  fs.writeFileSync(path.join(feed, "Aw.Sindri.Toolkit.0.1.0-local.1.nupkg"), "");
+  const bin = path.join(home, "bin");
+  fs.mkdirSync(bin);
+  fs.writeFileSync(path.join(bin, "dotnet"), "#!/usr/bin/env bash\ncase \"$1\" in restore) mkdir -p \"$(dirname \"$2\")/artifacts/x\"; exit 0;; esac\nexit 1\n", { mode: 0o755 });
+  const dir = path.join(home, "empty");
+  fs.mkdirSync(dir);
+  const r = toolkit(tkArgs(dir, { feed }), { filesOnly: false, env: { PATH: `${bin}:${process.env.PATH}` } });
+  assert.equal(r.code, 1, r.out);
+  assert.deepEqual(fs.readdirSync(dir), []);
+});
+
+// #2692: setup.sh links ~/.agentic-workflow/toolkit to the checkout, and Sindri runs the generator through that link. Each generator's
+// main check must hold there too, or node exits 0 having done nothing.
+for (const script of ["new-package.mjs", "new-slice.mjs", "new-toolkit.mjs"]) {
+  t(`${script} run through a symlinked checkout still runs its main and refuses an unknown option`, () => {
+    const link = path.join(tree(), "toolkit");
+    fs.symlinkSync(REPO, link);
+    const r = spawnSync(process.execPath, [path.join(link, "scripts", "scaffold", script), "--no-such-option"], { encoding: "utf8" });
+    assert.notEqual(r.status, 0, `exit ${r.status}, stdout ${JSON.stringify(r.stdout)}, stderr ${JSON.stringify(r.stderr)}`);
+    assert.match(r.stdout + r.stderr, /no-such-option/);
+  });
+}
+
 for (const dir of trees) fs.rmSync(dir, { recursive: true, force: true });
 if (failures.length) {
   for (const f of failures) console.error(`FAIL ${f}`);

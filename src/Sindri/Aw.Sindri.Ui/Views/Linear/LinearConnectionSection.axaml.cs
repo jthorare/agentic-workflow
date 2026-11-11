@@ -41,8 +41,6 @@ internal sealed partial class LinearConnectionSection : UserControl
             _ = target.Focus();
         }, DispatcherPriority.Loaded);
 
-    private void OnReview(object? sender, RoutedEventArgs e) => _card?.RequestReview();
-
     private void OnCancelRead(object? sender, RoutedEventArgs e) => _card?.CancelReplaceRead();
 
     private void OnCancelWrite(object? sender, RoutedEventArgs e) => _card?.CancelReplaceWrite();

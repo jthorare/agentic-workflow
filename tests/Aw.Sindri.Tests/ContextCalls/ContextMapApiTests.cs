@@ -166,6 +166,7 @@ public sealed class ContextMapApiTests
 
     internal static async Task Import(GoldenHost host, string? mapFile = null)
     {
+        using var seeding = AsHuman();   // why: an import is a scenario's seeding, the human's even inside a session run
         var file = mapFile ?? FixtureMap.WriteTo(host.Home);
         var hash = HashOf(await PreviewBody(host, file));
         var imported = await host.Http.Ask(Post("/sindri/context/map/import", Body(file, hash), Human(host.Token.Value)));
@@ -181,9 +182,6 @@ public sealed class ContextMapApiTests
         var yaml = $"schemaVersion: 1\nuser: golden\nrepos:\n  - {{ name: {FixtureMap.Repo}, path: /work/{FixtureMap.Repo} }}\n  - {{ name: other, path: /work/other }}\n"
             + $"context:\n  sessions: {{ enabled: {(sessions ? "true" : "false")} }}\n";
         var host = await GoldenHost.Start(temporary: true, ct, yaml);
-        var hash = await host.LiveHash(ct);
-        var approved = await host.Http.Ask(Post("/sindri/profile/approve", $$"""{"hash":"{{hash.Value}}"}""", Human(host.Token.Value)));
-        Assert.Equal(HttpStatusCode.OK, approved.Status);
         return host;
     }
 }

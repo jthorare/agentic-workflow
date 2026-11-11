@@ -58,6 +58,14 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
         }
     } = string.Empty;
 
+    /// <summary>True when the header's library button has something to open: not while the library is being read, and not when it holds no design docs.</summary>
+    public bool ShowLibrary => LibraryText.Length > 0 && _libraryState is not ("reading" or "empty");
+
+    /// <summary>True when the key hints show: the list has rows.</summary>
+    public bool ShowHints => Groups.Count > 0;
+
+    private string _libraryState = string.Empty;
+
     /// <summary>True when the header shows a warning (docs with errors, or a folder that can't be read).</summary>
     public bool LibraryWarns { get; private set => Set(ref field, value); }
 
@@ -138,7 +146,7 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
             return;
         }
 
-        (LoginError, LoginNote) = (string.Empty, saved.Value.Approved ? string.Empty : Labels.ReviewsLoginPending);   // not approved: written, but the prompt stays until the owner approves
+        (LoginError, LoginNote) = (string.Empty, string.Empty);
         await Read(url, cancellationToken).ConfigureAwait(true);
     }
 
@@ -250,6 +258,8 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
         var shown = ShowGroups(list, now);
         ShowHeader(list, shown.Count);
         (Notice, StaleText, LibraryText, WaitingCount) = (list.Notice, list.Stale?.Text, list.Library.Text, list.WaitingCount);
+        _libraryState = list.Library.State;
+        OnChanged(nameof(ShowLibrary));
         LibraryWarns = list.Library.WithErrors > 0 || list.Library.UnreadableRoots > 0;
         (IsLoginPrompt, LoginHeading) = (list.LoginPrompt is not null, list.LoginPrompt?.Text ?? string.Empty);
         if (list.LoginPrompt is { } prompt && !_loginTyped && string.IsNullOrEmpty(LoginField))
@@ -259,8 +269,10 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
             _prefilling = false;
         }
 
+        ShowConnect(list.Connect);
         EmptyLines = list.Empty is { } empty ? [empty.Text, empty.Hint, empty.Teams] : null;
         Patch.To(Groups, shown);
+        OnChanged(nameof(ShowHints));
     }
 
     // "GitHub synced 14 min ago · reviews as joi-example · 4 open PRs in 2 repos": the parts that exist.

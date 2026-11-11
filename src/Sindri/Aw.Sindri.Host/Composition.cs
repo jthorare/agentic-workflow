@@ -9,6 +9,9 @@ using Aw.Context.Infrastructure;
 using Aw.Kernel.Json;
 using Aw.Kernel.Telemetry;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Registration;
@@ -36,6 +39,7 @@ internal static class Composition
     internal static IServiceCollection Compose(IServiceCollection services, Func<string, string?> environment, TimeProvider clock)
         => services
             .AddSingleton(clock)
+            .AddSingleton<Endpoints.HandoffRateLimit>().AddSingleton<Endpoints.IHandoffPeer, Endpoints.ConnectionHandoffPeer>()   // where POST /sindri/handoff came from (#2258 PR 12)
             .AddSingleton(AwJson.CreateOptions(SindriJsonContext.Default))
             .AddKernelTelemetry(TelemetryOptions.FromEnvironment("sindri", environment, clock))   // JSON lines on stderr (AW_LOG_LEVEL); exports off
             .AddSindriCore()
@@ -58,18 +62,15 @@ internal static class Composition
             .AddSingleton(sp => new JudgeCatalog(environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<System.Text.Json.JsonSerializerOptions>()))   // Judge's provider catalog, built on first use; the router and the doctor's context:models row share it
             .AddSingleton<IModelPort>(sp => new RoutedModelPort(sp.GetRequiredService<JudgeCatalog>().Get,
                 sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJobContextAccessor>(), sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>()))
+            .AddScoped<IWorkflowChecker, ProfileWorkflowChecker>().AddScoped<WorkflowChangeLog>()   // the workflow write slices (#2258, PR 8b): the validator with this Sindri's blocks and repos, and the lifecycle events
+            .AddSingleton<IGraphModelPort, GraphModelPortAdapter>().AddSingleton<INotifyPort, LedgerNotifyPort>()   // the prompt and notify blocks of the graph engine (#2258, PR 6): the routed model port and a 'workflow.notify' event
+            .AddSingleton<IQuestionPort, LedgerQuestionPort>()   // the ask_owner block (#2258, PR 9): a 'workflow.question' event
             .AddChoicePort(environment)   // the Jev label pick: IChoicePort over the judge's batch classifier, and the route's prompt budget (model routing spec §6.7)
             .AddScoped<IDoctorChecks>(sp => new ModelPickDoctorChecks(sp.GetRequiredService<IModelPickSettings>(), environment))   // the 'model:pick' row (model-pick spec 8)
             .AddScoped<IDoctorChecks>(sp => new ModelRoutingDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IModelCatalog>(), () => RoutedModelPort.InstalledHarnesses(sp.GetRequiredService<JudgeCatalog>().Get()), HarnessLogins.Of(environment)))   // the 'context:models' row (model routing spec 8.4)
             .AddPullRequests(environment)   // IPullRequests over the forge the approved profile names (workflow.forge; compose edge to Aw.Forge.Infrastructure in Forge/ForgeAdapters)
             .AddScoped<IDoctorChecks, Skills.SkillsDoctorChecks>()   // the 'skills:' rows (skill flows spec §3.2)
-            .AddProveBlocks(environment)   // input.prove.echo, only under AW_SINDRI_PROVE_BLOCKS=1 in a prover home
             .AddSindriHost();
-
-    private static IServiceCollection AddProveBlocks(this IServiceCollection services, Func<string, string?> environment) =>
-        SindriProveInfrastructureServiceCollectionExtensions.ProveBlocksAllowed(environment)
-            ? services.AddSindriProveInfrastructure(environment).AddSindriProveBlocks()
-            : services;
 
     /// <summary>
     /// The environment function Composition passes to AddContextInfrastructure (context spec §4 "Secrets"): a name that is a

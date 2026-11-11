@@ -113,14 +113,13 @@ internal static class RequestScenarios
         return await RequestCalls.Read(host, "/sindri/needs-you", ItemScenarios.Human(host), ct);
     }
 
-    /// <summary>One decision, one failure and one profile row, in that order (UI lane: urgency pulse, colour, calm). The request is filed last, so the order is the urgency's, not recency.</summary>
+    /// <summary>One decision, one failure and the setup row, in that order (UI lane: the decision pulses first). The request is filed last, so the order is the urgency's, not recency. There is no profile row since #2258 PR 1: the profile is live on save.</summary>
     private static async Task<string> Fixture(GoldenHost host, CancellationToken ct)
     {
         await Failed(host, ct);
-        await ViewScenarios.Drift(host, ItemScenarios.ProfileYaml, ct);
         _ = await Filed(host, ct);
         var body = await RequestCalls.Read(host, "/sindri/needs-you", ItemScenarios.Human(host), ct);
-        Assert.Equal(["decision", "failure", "profile"], JsonDocument.Parse(body).RootElement.GetProperty("rows").EnumerateArray().Select(r => r.GetProperty("kind").GetString()), StringComparer.Ordinal);
+        Assert.Equal(["decision", "failure", "setup"], JsonDocument.Parse(body).RootElement.GetProperty("rows").EnumerateArray().Select(r => r.GetProperty("kind").GetString()), StringComparer.Ordinal);
         return body;
     }
 

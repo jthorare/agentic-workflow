@@ -126,13 +126,7 @@ cat > "$STUB" <<'EOF'
 echo "$*" >> "$STUB_LOG"
 case "$*" in
   "profile validate --json")
-    ok=false; [ "$(cat "$STUB_LOG.approved" 2>/dev/null)" = "$(cksum < "$AW_SINDRI_HOME/profile/profile.yaml")" ] && ok=true
-    echo "{\"valid\":true,\"hash\":\"abcdef0123456789\",\"approved\":$ok}" ;;
-  "profile approve abcdef0123456789")
-    IFS= read -r line; echo "typed=$line" >> "$STUB_LOG"; echo "approval text from the CLI"
-    echo "approve-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env"
-    [ -n "${STUB_FAIL_APPROVE:-}" ] && { echo "approve refused" >&2; exit 1; }
-    cksum < "$AW_SINDRI_HOME/profile/profile.yaml" > "$STUB_LOG.approved" ;;
+    echo "{\"valid\":true,\"hash\":\"abcdef0123456789\"}" ;;
   "--headless") echo "headless proc=${AW_SESSIONS_PROC_ROOT:-} claude=${AW_SESSIONS_CLAUDE_DIR:-} fleet=${AW_FLEET_DIR:-} launcher=${AW_LAUNCHER_CONFIG:-}" >> "$STUB_LOG.env"; echo "judge=${AW_SINDRI_JUDGE:-}" >> "$STUB_LOG.judge" ;;
   "context map status --json") [ -z "${STUB_NO_MAP:-}" ] || exit 1; echo '{"version":{"number":1}}' ;;
   "context map build") echo "build-env prover=${AW_SINDRI_PROVER:-} tty=$([ -t 0 ] && echo 1 || echo 0)" >> "$STUB_LOG.env" ;;
@@ -145,10 +139,6 @@ case "$*" in
   "todos --json --no-fence")
     printf '{"todos":['; sep=""; while IFS= read -r t; do grep -qx "$t" "$STUB_LOG.todos.done" 2>/dev/null || { printf '%s{"id":"%s"}' "$sep" "$t"; sep=","; }; done < "$STUB_LOG.todos"; echo ']}' ;;
   "todo done "*) echo "$3" >> "$STUB_LOG.todos.done" ;;
-  "workflow start "*)
-    for a in "$@"; do case "$a" in fact:*=*) echo "fact ${a%%=*} $(cat "${a#*=}")" >> "$STUB_LOG" ;; esac; done
-    if [ -n "${STUB_FAIL_START:-}" ]; then echo "SND-CLI-003 refused" >&2; exit 2; fi ;;
-  "recipe approve "*) IFS= read -r line; echo "typed=$line" >> "$STUB_LOG" ;;
   "ledger "*) sleep "${STUB_LEDGER_SLEEP:-0}" ;;
 esac
 exit 0
@@ -159,8 +149,8 @@ U="$TMPDIR/up"
 mkdir -p "$U"
 AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1; check "up exits 0" "$?" "0"
 contains "up writes a profile with a heartbeat" "$(cat "$U/profile/profile.yaml")" "heartbeat: { every: 5s }"
-check "up validates, approves by typing 'approve profile' and the hash's first six characters (K7a), then starts headless" "$(tr '\n' ';' < "$STUB_LOG")" \
-  "profile validate --json;profile approve abcdef0123456789;typed=approve profile abcdef;--headless;"
+check "up validates the profile (no approval: edits apply on save), then starts headless" "$(tr '\n' ';' < "$STUB_LOG")" \
+  "profile validate --json;--headless;"
 AW_SINDRI_HOME="$U" bash "$FIXTURE" drift >/dev/null 2>&1; check "drift exits 0" "$?" "0"
 contains "drift changes the cadence" "$(cat "$U/profile/profile.yaml")" "every: 7s"
 AW_SINDRI_HOME="$U" bash "$FIXTURE" drift >/dev/null 2>&1
@@ -223,11 +213,11 @@ AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" decide DEC-1 accept >/dev/null 
 : > "$STUB_LOG"
 AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" fail >/dev/null 2>&1; check "fail exits 0" "$?" "0"
 contains "fail_adds_a_service_the_build_cannot_run" "$(cat "$U/profile/profile.yaml")" "broken: { every: 5s }"
-contains "fail approves the changed profile" "$(tr '\n' ';' < "$STUB_LOG")" "profile approve abcdef0123456789;typed=approve profile abcdef;"
+check "fail validates the changed profile and approves nothing" "$(tr '\n' ';' < "$STUB_LOG")" "profile validate --json;"
 : > "$STUB_LOG"
 AW_SINDRI_HOME="$U" SINDRI="$STUB" bash "$FIXTURE" unfail >/dev/null 2>&1; check "unfail exits 0" "$?" "0"
 absent "unfail_removes_it" "$(cat "$U/profile/profile.yaml")" "broken"
-contains "unfail approves the profile again" "$(tr '\n' ';' < "$STUB_LOG")" "typed=approve profile abcdef;"
+check "unfail validates the profile and approves nothing" "$(tr '\n' ';' < "$STUB_LOG")" "profile validate --json;"
 AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" fail >/dev/null 2>&1; check "every_verb_refuses_an_unguarded_home: fail" "$?" "2"
 AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" unfail >/dev/null 2>&1; check "every_verb_refuses_an_unguarded_home: unfail" "$?" "2"
 
@@ -290,19 +280,17 @@ check "the repo's sha is the same on every run (fixed author and date)" "$(git -
 contains "the repo is one of the profile's repos" "$(cat "$C/profile/profile.yaml")" "name: aw-split-panes, path: $R"
 contains "the profile keeps its other keys" "$(cat "$C/profile/profile.yaml")" "heartbeat: { every: 5s }"
 calls="$(tr '\n' ';' < "$STUB_LOG")"
-contains "the changed profile is approved by typing the hash's first six characters" "$calls" "profile approve abcdef0123456789;typed=approve profile abcdef;"
+absent "the changed profile is not approved (edits apply on save)" "$calls" "profile approve"
 want="import map $(sha256sum "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" | cut -c1-6)"
 contains "the tabs map is imported by typing 'import map' and the file's hash6, under the human pty" "$calls" "context map import $C/ui-fixture-context/tabs-map.json;typed=$want;"
 check "the imported file is the tabs map" "$(cmp "$C/ui-fixture-context/tabs-map.json" "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" && echo same)" "same"
 envs="$(cat "$STUB_LOG.env")"
-contains "the approve runs as the owner under a pty (human mode, not a session)" "$envs" "approve-env prover=1 tty=1"
 contains "the import runs as the owner under a pty (human mode, not a session)" "$envs" "import-env prover=1 tty=1"
-check "context up's stdout is exactly the repo name even when approve prints text" "$out" "aw-split-panes"
+check "context up's stdout is exactly the repo name" "$out" "aw-split-panes"
 : > "$STUB_LOG"
 AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1; check "a second context up exits 0" "$?" "0"
 check "a second context up adds the repo to the profile once" "$(grep -c 'name: aw-split-panes' "$C/profile/profile.yaml")" "1"
 check "a second context up keeps one commit" "$(git -C "$R" rev-list --count main)" "1"
-absent "a second context up does not approve again" "$(cat "$STUB_LOG")" "profile approve"
 absent "a second context up does not import the map again (the current map is this file's)" "$(cat "$STUB_LOG")" "context map import"
 rm -f "$C/ui-fixture-context-imported"
 out="$(STUB_FAIL_IMPORT=1 AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up 2>&1)"; check "a refused import exits non-zero" "$([ "$?" -ne 0 ] && echo yes || echo no)" "yes"
@@ -319,12 +307,11 @@ check "context down removes the repo and the map copy" "$([ -e "$C/ui-fixture-co
 absent "context down removes the profile entry" "$(cat "$C/profile/profile.yaml")" "aw-split-panes"
 absent "context down leaves no empty repos: key" "$(cat "$C/profile/profile.yaml")" "repos:"
 contains "context down keeps the rest of the profile" "$(cat "$C/profile/profile.yaml")" "heartbeat: { every: 5s }"
-contains "context down approves the changed profile" "$(cat "$STUB_LOG")" "typed=approve profile abcdef"
+absent "context down approves nothing (edits apply on save)" "$(cat "$STUB_LOG")" "profile approve"
 before="$(cat "$C/profile/profile.yaml")"; : > "$STUB_LOG"
 AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context down >/dev/null 2>&1; check "context down twice exits 0 (idempotent)" "$?" "0"
 check "the second context down changes nothing" "$(cat "$C/profile/profile.yaml")" "$before"
-absent "the second context down approves nothing" "$(cat "$STUB_LOG")" "profile approve"
-# --- review run 1: re-import, approval retry, AW_SINDRI_PROFILE ---
+# --- review run 1: re-import, AW_SINDRI_PROFILE ---
 : > "$STUB_LOG"
 # The marker names this very file, so only the status check can send it back to the import.
 sha256sum "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" | cut -d' ' -f1 > "$C/ui-fixture-context-imported"
@@ -334,24 +321,6 @@ rm -f "$C/ui-fixture-context-imported"
 : > "$STUB_LOG"
 AW_SINDRI_HOME="$C" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1
 contains "a changed map file is imported again" "$(cat "$STUB_LOG")" "context map import"
-
-# A failed approve is retried by the next up, which approves because the profile says it isn't approved.
-D="$TMPDIR/ctx2"; mkdir -p "$D"
-AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1
-rm -f "$STUB_LOG.approved"; : > "$STUB_LOG"
-STUB_FAIL_APPROVE=1 AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1
-check "a refused approve fails context up" "$([ "$?" -ne 0 ] && echo yes || echo no)" "yes"
-contains "the profile already lists the repo" "$(cat "$D/profile/profile.yaml")" "name: aw-split-panes"
-absent "no import ran against the unapproved profile" "$(cat "$STUB_LOG")" "context map import"
-: > "$STUB_LOG"
-AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1; check "the next context up exits 0" "$?" "0"
-contains "the next context up approves although the entry is already there" "$(cat "$STUB_LOG")" "profile approve"
-contains "and then imports" "$(cat "$STUB_LOG")" "context map import"
-# down: a failed approve is warned about and the next down tries again
-STUB_FAIL_APPROVE=1 AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context down >/dev/null 2>&1
-: > "$STUB_LOG"
-AW_SINDRI_HOME="$D" SINDRI="$STUB" bash "$FIXTURE" context down >/dev/null 2>&1; check "the next context down exits 0" "$?" "0"
-contains "the next context down approves the profile it left unapproved" "$(cat "$STUB_LOG")" "profile approve"
 
 # AW_SINDRI_PROFILE outside the home: the real file is untouched, the home's profile is used
 G="$TMPDIR/ctx3"; mkdir -p "$G" "$WORK/realprofile"
@@ -384,13 +353,6 @@ AW_SINDRI_HOME="$S" bash "$FIXTURE" sessions ask >/dev/null 2>&1; check "session
 AW_SINDRI_HOME="$S" bash "$FIXTURE" sessions up 1 >/dev/null 2>&1; check "sessions up takes no argument (exit 2)" "$?" "2"
 AW_SINDRI_HOME="$S" SINDRI="$STUB" bash "$FIXTURE" sessions end 211 >/dev/null 2>&1; check "sessions end before up exits 2" "$?" "2"
 AW_SINDRI_HOME="$S" SINDRI="$STUB" bash "$FIXTURE" sessions ask x >/dev/null 2>&1; check "sessions ask refuses a non-pid (exit 2)" "$?" "2"
-
-# agent-run (issue #1004): the usage and the refusals that need no control plane.
-contains "the usage lists agent-run" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh agent-run"
-AW_SINDRI_HOME="$S" bash "$FIXTURE" agent-run extra >/dev/null 2>&1; check "agent-run takes no argument (exit 2)" "$?" "2"
-AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" agent-run >/dev/null 2>&1; check "agent-run refuses an unguarded home" "$?" "2"
-out="$(AW_SINDRI_HOME="$S" SINDRI="$STUB" bash "$FIXTURE" agent-run 2>&1)"; check "agent-run before sessions up exits 2" "$?" "2"
-contains "agent-run names the missing sessions copy" "$out" "run 'sessions up' first"
 
 own="$(jq -r '.ownUid' "$ROOT/tests/fixtures/sessions/manifest.json")"
 if [ "$(id -u)" != "$own" ]; then
@@ -590,21 +552,6 @@ check "paused says why in its last progress line" "$(sqlq "$H/ledger.db" "SELECT
 job="$(AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls none 2>/dev/null)"
 check "none writes a job and no call" "$(calls_rows job.started "$job")$(calls_rows context.model.called "$job")" "10"
 
-# agent-run's wait is wall-clock seconds, not loop passes (issue #1123): a ledger call that takes 2 s and never shows
-# launch.started must still end the wait after FIXTURE_AGENT_WAIT=3 s. The sessions copy is faked (no uid needed): agent-run
-# only checks that its proc folder exists and edits its launcher.json.
-A="$TMPDIR/agentwait"
-mkdir -p "$A"
-AW_SINDRI_HOME="$A" SINDRI="$STUB" bash "$FIXTURE" up >/dev/null 2>&1
-mkdir -p "$A/ui-fixture-sessions/proc"
-echo '{"schema":1}' > "$A/ui-fixture-sessions/launcher.json"
-start=$SECONDS
-out="$(STUB_LEDGER_SLEEP=2 FIXTURE_AGENT_WAIT=3 AW_SINDRI_HOME="$A" SINDRI="$STUB" bash "$FIXTURE" agent-run 2>&1 >/dev/null)"; rc=$?
-took=$((SECONDS - start))
-check "agent-run's wait is bounded in seconds: exits 1 when launch.started never comes" "$rc" "1"
-contains "agent-run's wait is bounded in seconds: names the missing launch.started" "$out" "no launch.started"
-check "agent-run's wait is bounded in seconds: a 2 s ledger call with FIXTURE_AGENT_WAIT=3 ends in under 10 s (took ${took}s)" "$([ "$took" -lt 10 ] && echo yes || echo no)" "yes"
-
 # sandbox (SB-6): the usage and the refusals that need no control plane.
 contains "the usage lists sandbox" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh sandbox blocked|clear"
 AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox >/dev/null 2>&1; check "sandbox needs a state (exit 2)" "$?" "2"
@@ -639,7 +586,7 @@ check "Checkout rewrite has 5 open issues" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM
 check "the viewer's identity row is stored" "$(sqlq "$PJDB" "SELECT user_ref, name FROM source_identity WHERE source = 'linear'")" "linear:user/fx-viewer|Sam Rivera"
 check "both Linear sources are past their first read" "$(sqlq "$PJDB" "SELECT GROUP_CONCAT(source || ':' || phase) FROM (SELECT source, phase FROM source_cursor WHERE repo = 'records' ORDER BY source)")" "linear:incremental,linear-projects:incremental"
 contains "projects puts the Linear team in the live profile" "$(cat "$PJ/profile/profile.yaml")" "linear: { teams: [SPL] }"
-contains "projects approves the changed profile" "$(cat "$STUB_LOG")" "profile approve"
+absent "projects runs no profile approve (edits apply on save)" "$(cat "$STUB_LOG")" "profile approve"
 contains "projects attaches the paused project as the owner" "$(cat "$STUB_LOG")" "project add --linear linear:project/fx-billing"
 contains "projects adds the hand-made project" "$(cat "$STUB_LOG")" "project add --name Hiring loop --state in-progress --notes Two onsite slots left this month --target "
 contains "projects hides a project the viewer leads" "$(cat "$STUB_LOG")" "project hide linear:project/fx-search"
@@ -649,7 +596,6 @@ proj >/dev/null 2>&1; check "a second projects exits 0" "$?" "0"
 check "a second projects adds no row" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record") $(sqlq "$PJDB" "SELECT COUNT(*) FROM record_link")" "30 30"
 check "a second projects adds the team to the profile once" "$(grep -c 'teams: \[SPL\]' "$PJ/profile/profile.yaml")" "1"
 absent "a second projects attaches, adds and hides nothing" "$(cat "$STUB_LOG")" "project "
-absent "a second projects approves nothing" "$(cat "$STUB_LOG")" "profile approve"
 # A run that stopped half way resumes: with only the attach marker left, only the add and the hide run.
 rm -f "$PJ/ui-fixture-projects-owner-add" "$PJ/ui-fixture-projects-owner-hide"
 : > "$STUB_LOG"
@@ -661,6 +607,51 @@ printf 'schemaVersion: 1\nuser: fixture\ncontext:\n  docs: { globs: [x] }\n' > "
 rm -f "$PJ"/ui-fixture-projects-owner-*
 out="$(proj 2>&1)"; check "projects refuses a profile with its own context: section (exit 2)" "$?" "2"
 contains "that refusal names the key to add" "$out" "teams: [SPL]"
+# --- linear-catchup: the Work > Linear "Since you last looked" strip (#2536) ---
+contains "the usage lists linear-catchup" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh linear-catchup"
+LC="$TMPDIR/lcatch"
+mkdir -p "$LC/profile" "$LC/context"
+printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\n' > "$LC/profile/profile.yaml"
+LCDB="$LC/context/context.db"
+lcatch() { AW_SINDRI_HOME="$LC" SINDRI="$STUB" bash "$FIXTURE" linear-catchup "$@"; }
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" linear-catchup >/dev/null 2>&1; check "linear-catchup refuses outside a guarded home" "$?" "2"
+lcatch nope >/dev/null 2>&1; check "linear-catchup refuses an unknown state (exit 2)" "$?" "2"
+lcatch typical extra >/dev/null 2>&1; check "linear-catchup takes one state at most (exit 2)" "$?" "2"
+out="$(lcatch 2>&1)"; check "linear-catchup with no context store exits 2" "$?" "2"
+contains "linear-catchup with no context store says to run context up" "$out" "run 'context up' first"
+for m in "$ROOT"/src/Context/Aw.Context.Infrastructure/Store/Migrations/00*.sql; do migrate "$LCDB" "$m"; done
+LCN="SELECT (SELECT COUNT(*) FROM linear_issue_change) + (SELECT COUNT(*) FROM linear_comment)"
+out="$(lcatch 2>&1)"; check "linear-catchup (typical) exits 0" "$?" "0"
+check "typical: 25 issues" "$(sqlq "$LCDB" "SELECT COUNT(*) FROM linear_issue")" "25"
+check "typical: 37 strip rows (changes and mentions)" "$(sqlq "$LCDB" "$LCN")" "37"
+check "typical: 8 or more issues have 2 or more rows" "$(sqlq "$LCDB" "SELECT COUNT(*) >= 8 FROM (SELECT i.key, (SELECT COUNT(*) FROM linear_issue_change c WHERE c.issue_key = i.key) + (SELECT COUNT(*) FROM linear_comment m WHERE m.issue_key = i.key) AS n FROM linear_issue i) WHERE n >= 2")" "1"
+check "typical: a third of the titles are over 60 characters" "$(sqlq "$LCDB" "SELECT COUNT(*) * 3 >= (SELECT COUNT(*) FROM source_record WHERE key LIKE 'linear:issue/fxc-%') FROM source_record WHERE key LIKE 'linear:issue/fxc-%' AND length(title) > 60")" "1"
+check "typical: three or more projects and four priorities" "$(sqlq "$LCDB" "SELECT COUNT(DISTINCT project_id) >= 3, COUNT(DISTINCT priority) >= 4 FROM linear_issue")" "1|1"
+check "typical: every change is within the last 3 days" "$(sqlq "$LCDB" "SELECT MIN(at) > strftime('%Y-%m-%dT%H:%M:%S', 'now', '-3 days') AND MAX(at) < strftime('%Y-%m-%dT%H:%M:%S', 'now') FROM linear_issue_change")" "1"
+check "typical: state moves keep their names" "$(sqlq "$LCDB" "SELECT old_name || ' > ' || new_name FROM linear_issue_change WHERE issue_key = 'linear:issue/fxc-1' AND field = 'state' ORDER BY at DESC LIMIT 1")" "In Progress > In Review"
+check "typical: assignments are to the viewer, state moves are on the viewer's issues" "$(sqlq "$LCDB" "SELECT (SELECT COUNT(*) FROM linear_issue_change WHERE field = 'assignee' AND \"new\" <> 'fx-viewer') + (SELECT COUNT(*) FROM linear_issue_change c JOIN linear_issue i ON i.key = c.issue_key WHERE c.field = 'state' AND i.assignee_id <> 'fx-viewer')")" "0"
+check "typical: every issue is in the profile team's audience" "$(sqlq "$LCDB" "SELECT DISTINCT audience_key FROM source_record WHERE key LIKE 'linear:issue/fxc-%'")" "linear:SPL"
+check "typical: the mentions name a viewer who is a stored member" "$(sqlq "$LCDB" "SELECT COUNT(*) FROM linear_comment WHERE body LIKE '@' || (SELECT name FROM linear_member WHERE id = 'fx-viewer') || '%'")" "5"
+contains "linear-catchup gives Linear a token pointer and a dead loopback url, so the page reads connected" "$(cat "$LC/profile/profile.yaml")" 'linear: { teams: [SPL], token: "env:FIXTURE_LINEAR_KEY", url: "http://127.0.0.1:9/graphql" }'
+check "typical: no marker is stored" "$(test -f "$LC/ui/preferences.json" && jq -r '.linearSince // "none"' "$LC/ui/preferences.json" || echo none)" "none"
+lcatch typical >/dev/null 2>&1; check "a second typical exits 0" "$?" "0"
+check "a second typical replaces the rows" "$(sqlq "$LCDB" "$LCN") $(sqlq "$LCDB" "SELECT COUNT(*) FROM linear_issue")" "37 25"
+lcatch empty >/dev/null 2>&1; check "linear-catchup empty exits 0" "$?" "0"
+check "empty: the marker is a lin_ marker newer than every change" "$(jq -r '.linearSince' "$LC/ui/preferences.json" | grep -Ec '^lin_[0-9a-f]{16}$')" "1"
+check "empty: the preferences file keeps its version" "$(jq -r .version "$LC/ui/preferences.json")" "1"
+check "empty: the marker's instant is within a minute of now" "$(( $(date -u +%s) - ( $(printf '%d' "0x$(jq -r '.linearSince' "$LC/ui/preferences.json" | cut -c5-)") - 621355968000000000 ) / 10000000 < 60 ))" "1"
+lcatch error >/dev/null 2>&1; check "linear-catchup error exits 0" "$?" "0"
+check "error: the feed's cursor row records the refused key" "$(sqlq "$LCDB" "SELECT last_error || '|' || failures || '|' || last_error_text || '|' || (last_sync > strftime('%Y-%m-%dT%H:%M:%S', 'now', '-10 minutes')) FROM source_cursor WHERE source = 'linear' AND repo = 'records'")" "SND-CONTEXT-071|3|Linear refused the key (401)|1"
+check "error: the earlier rows stay" "$(sqlq "$LCDB" "$LCN")" "37"
+lcatch typical >/dev/null 2>&1
+check "typical after error clears the failed sync" "$(sqlq "$LCDB" "SELECT ifnull(last_error, 'none') || '|' || failures || '|' || ifnull(last_error_text, 'none') FROM source_cursor WHERE source = 'linear' AND repo = 'records'")" "none|0|none"
+lcatch read-error >/dev/null 2>&1; check "linear-catchup read-error exits 0" "$?" "0"
+check "read-error: the cursor row is healthy" "$(sqlq "$LCDB" "SELECT ifnull(last_error, 'none') FROM source_cursor WHERE source = 'linear' AND repo = 'records'")" "none"
+check "read-error: the changes table is gone for the strip's read" "$(sqlq "$LCDB" "SELECT COUNT(*) FROM sqlite_master WHERE name = 'linear_issue_change'")" "0"
+check "read-error: the marker is cleared" "$(jq -r '.linearSince // "none"' "$LC/ui/preferences.json")" "none"
+lcatch typical >/dev/null 2>&1; check "typical after error exits 0" "$?" "0"
+check "typical after error has put the table back with its rows" "$(sqlq "$LCDB" "$LCN")" "37"
+
 # --- context sources: the node panel's source links (#1702) ---
 contains "the usage lists context sources" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh context sources"
 SX="$TMPDIR/srcs"
@@ -712,5 +703,49 @@ check "todos marks exactly one done" "$(grep -c '^todo done' "$STUB_LOG")" "1"
 tds >/dev/null 2>&1; check "a second todos exits 0" "$?" "0"
 check "a second todos leaves 11 todos (same client ids)" "$(wc -l < "$STUB_LOG.todos" | tr -d ' ')" "11"
 absent "a second todos marks nothing done again" "$(cat "$STUB_LOG")" "todo done"
+
+# --- resources: the Resources page's data (#2258 PR18b, #2494), files under <home>/resources ---
+contains "the usage lists resources" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh resources"
+RS="$TMPDIR/resources"
+mkdir -p "$RS/profile"
+printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\n' > "$RS/profile/profile.yaml"
+rss() { AW_SINDRI_HOME="$RS" SINDRI="$STUB" bash "$FIXTURE" resources "$@"; }
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" resources >/dev/null 2>&1; check "resources refuses outside a guarded home" "$?" "2"
+[ ! -e "$WORK/elsewhere/resources" ]; check "a refused resources writes nothing" "$?" "0"
+rss extra >/dev/null 2>&1; check "resources takes no arguments (exit 2)" "$?" "2"
+rss >/dev/null 2>&1; check "resources exits 0" "$?" "0"
+check "the workflow's database is 1.2 MB" "$(wc -c < "$RS/resources/workflow/morning-check/state.db" | tr -d ' ')" "1258291"
+check "the workflow's disk holds 300 KB" "$(wc -c < "$RS/resources/workflow/morning-check/scratch/notes.txt" | tr -d ' ')" "307200"
+check "the toolkit's disk holds 40 KB" "$(wc -c < "$RS/resources/toolkit/notes/cache/index.bin" | tr -d ' ')" "40960"
+rss >/dev/null 2>&1; check "a second resources exits 0" "$?" "0"
+check "a second resources keeps the same three files" "$(find "$RS/resources" -type f | wc -l | tr -d ' ') $(wc -c < "$RS/resources/workflow/morning-check/state.db" | tr -d ' ')" "3 1258291"
+
+# --- connections: the Connections page's data (#2537), rows of the connection table ---
+contains "the usage lists connections" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh connections"
+CN="$TMPDIR/connections"
+mkdir -p "$CN/profile"
+printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\n' > "$CN/profile/profile.yaml"
+cns() { AW_SINDRI_HOME="$CN" SINDRI="$STUB" bash "$FIXTURE" connections "$@"; }
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" connections typical >/dev/null 2>&1; check "connections refuses outside a guarded home" "$?" "2"
+cns bogus >/dev/null 2>&1; check "connections refuses an unknown state (exit 2)" "$?" "2"
+cns typical >/dev/null 2>&1; check "connections without a ledger exits 2" "$?" "2"
+migrate "$CN/ledger.db" "$ROOT/src/Sindri/Aw.Sindri.Infrastructure/Ledger/Migrations/0010_connections.sql"
+cns typical >/dev/null 2>&1; check "connections typical exits 0" "$?" "0"
+check "typical writes four rows" "$(sqlq "$CN/ledger.db" "SELECT COUNT(*) FROM connection")" "4"
+check "typical: three connected oauth presets and one custom rest row" "$(sqlq "$CN/ledger.db" "SELECT group_concat(name || ':' || status, ',') FROM (SELECT * FROM connection ORDER BY name)")" "billing-api:prod:connected,github:sam-rivera:connected,google:sam-acme:connected,linear:acme:connected"
+check "the custom row has no preset and no refresh time" "$(sqlq "$CN/ledger.db" "SELECT ifnull(preset, 'none') || ' ' || ifnull(last_refreshed_at, 'never') FROM connection WHERE name = 'billing-api:prod'")" "none never"
+check "last used is about 30 minutes for GitHub" "$(sqlq "$CN/ledger.db" "SELECT CAST((strftime('%s','now') - strftime('%s', last_refreshed_at)) / 60 AS INTEGER) FROM connection WHERE name = 'github:sam-rivera'")" "30"
+check "every timestamp is ISO UTC text the store reads" "$(sqlq "$CN/ledger.db" "SELECT COUNT(*) FROM connection WHERE created_at NOT GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]Z'")" "0"
+check "the secret pointers name keychain entries and hold no token" "$(sqlq "$CN/ledger.db" "SELECT secret_pointer FROM connection WHERE name = 'linear:acme'")" "keychain:sindri-connection/linear.acme"
+cns error >/dev/null 2>&1; check "connections error exits 0" "$?" "0"
+check "error keeps four rows (no duplicates)" "$(sqlq "$CN/ledger.db" "SELECT COUNT(*) FROM connection")" "4"
+check "error: Linear needs sign-in with the provider's reason" "$(sqlq "$CN/ledger.db" "SELECT status || '|' || status_reason FROM connection WHERE name = 'linear:acme'")" "needs-sign-in|the provider refused the refresh (invalid_grant)"
+cns typical >/dev/null 2>&1
+check "typical after error clears the reason" "$(sqlq "$CN/ledger.db" "SELECT status || '|' || ifnull(status_reason, 'none') FROM connection WHERE name = 'linear:acme'")" "connected|none"
+sqlq "$CN/ledger.db" "INSERT INTO connection VALUES ('slack:hand', 'rest', NULL, '{}', NULL, 'connected', NULL, 'human', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z', NULL)" >/dev/null
+cns down >/dev/null 2>&1; check "connections down exits 0" "$?" "0"
+check "down removes only the fixture's rows" "$(sqlq "$CN/ledger.db" "SELECT group_concat(name) FROM connection")" "slack:hand"
+cns empty >/dev/null 2>&1; check "connections empty exits 0" "$?" "0"
+check "empty removes every row" "$(sqlq "$CN/ledger.db" "SELECT COUNT(*) FROM connection")" "0"
 
 exit "$fail"

@@ -137,15 +137,6 @@ internal static partial class Labels
     /// <summary>A failure sheet's line for why.</summary>
     internal static string SheetWhy => "Why";
 
-    /// <summary>A profile sheet's line for what changed.</summary>
-    internal static string SheetChanged => "Changed";
-
-    /// <summary>A profile sheet's line for the profile's hash.</summary>
-    internal static string SheetHash => "Fingerprint";
-
-    /// <summary>A profile sheet's line for the command that approves it.</summary>
-    internal static string SheetApprove => "To approve, run";
-
     /// <summary>The words that name the placeholders a command still has open.</summary>
     /// <param name="names">The open placeholders, without their angle brackets.</param>
     /// <returns>For example "fill in name".</returns>

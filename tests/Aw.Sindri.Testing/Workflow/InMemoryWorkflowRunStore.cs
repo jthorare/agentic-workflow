@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Testing.Workflow;
 
@@ -64,6 +65,24 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
+    public ValueTask<Result<WorkflowRun?>> PromoteOldestQueued(WorkflowId workflow, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var inFlight = _runs.Where(r => r.WorkflowId == workflow && r.Status is WorkflowRunStatus.Queued or WorkflowRunStatus.Running or WorkflowRunStatus.Waiting).ToList();
+            if (inFlight.Count == 0 || inFlight.Exists(static r => r.Status != WorkflowRunStatus.Queued))
+            {
+                return Ok<WorkflowRun?>(value: null);
+            }
+
+            var oldest = inFlight.OrderBy(static r => r.StartedAt).ThenBy(static r => r.Id.Value, StringComparer.Ordinal).First();
+            var at = _runs.FindIndex(r => r.Id == oldest.Id);
+            _runs[at] = oldest with { Status = WorkflowRunStatus.Running };
+            return Ok<WorkflowRun?>(_runs[at]);
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<Result<WorkflowRun>> Get(WorkflowRunId id, CancellationToken cancellationToken)
     {
         lock (_gate)
@@ -83,6 +102,34 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 .OrderBy(static r => r.StartedAt)
                 .ThenBy(static r => r.Id.Value, StringComparer.Ordinal)];
             return Ok(inFlight);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Recent(WorkflowId workflow, int offset, int limit, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<WorkflowRun> recent = [.. _runs
+                .Where(r => r.WorkflowId == workflow)
+                .OrderByDescending(static r => r.StartedAt)
+                .ThenByDescending(static r => r.Id.Occurrence)
+                .Skip(Math.Max(offset, 0))
+                .Take(Math.Max(limit, 1))];
+            return Ok(recent);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<WorkflowRun>>> Running(CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<WorkflowRun> running = [.. _runs
+                .Where(static r => r.Status == WorkflowRunStatus.Running)
+                .OrderBy(static r => r.StartedAt)
+                .ThenBy(static r => r.Id.Value, StringComparer.Ordinal)];
+            return Ok(running);
         }
     }
 
@@ -121,7 +168,11 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken)
+    public ValueTask<Result<WorkflowRun>> SetStatus(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, CancellationToken cancellationToken) =>
+        Move(id, status, outputs, error, from => status == WorkflowRunStatus.Queued ? from == WorkflowRunStatus.Running : !IsFinal(from));
+
+    /// <inheritdoc/>
+    public ValueTask<Result<WorkflowRun>> SetItem(WorkflowRunId id, ItemId item, CancellationToken cancellationToken)
     {
         lock (_gate)
         {
@@ -131,11 +182,44 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
                 return Done<WorkflowRun>(NotFound(id));
             }
 
-            var final = status is WorkflowRunStatus.Succeeded or WorkflowRunStatus.Failed or WorkflowRunStatus.Cancelled;
-            _runs[at] = _runs[at] with { Status = status, Outputs = outputs ?? _runs[at].Outputs, Error = error, EndedAt = final ? clock.GetUtcNow() : null };
+            _runs[at] = _runs[at] with { ItemId = _runs[at].ItemId ?? item };
             return Done<WorkflowRun>(_runs[at]);
         }
     }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<WorkflowRun>> CancelQueued(WorkflowRunId id, string? error, CancellationToken cancellationToken) =>
+        Move(id, WorkflowRunStatus.Cancelled, outputs: null, error, static from => from == WorkflowRunStatus.Queued);
+
+    /// <inheritdoc/>
+    public ValueTask<Result<bool>> Discard(WorkflowRunId id, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Ok(_runs.RemoveAll(r => r.Id == id && r.Status == WorkflowRunStatus.Running) > 0);
+        }
+    }
+
+    private ValueTask<Result<WorkflowRun>> Move(WorkflowRunId id, WorkflowRunStatus status, string? outputs, string? error, Func<WorkflowRunStatus, bool> allowedFrom)
+    {
+        lock (_gate)
+        {
+            var at = _runs.FindIndex(r => r.Id == id);
+            if (at < 0)
+            {
+                return Done<WorkflowRun>(NotFound(id));
+            }
+
+            if (allowedFrom(_runs[at].Status))
+            {
+                _runs[at] = _runs[at] with { Status = status, Outputs = outputs ?? _runs[at].Outputs, Error = error, EndedAt = IsFinal(status) ? clock.GetUtcNow() : null };
+            }
+
+            return Done<WorkflowRun>(_runs[at]);
+        }
+    }
+
+    private static bool IsFinal(WorkflowRunStatus status) => status is WorkflowRunStatus.Succeeded or WorkflowRunStatus.Failed or WorkflowRunStatus.Cancelled;
 
     /// <inheritdoc/>
     public ValueTask<Result<NodeRun>> RecordNodeRun(NodeRun nodeRun, CancellationToken cancellationToken)
@@ -163,6 +247,19 @@ public sealed class InMemoryWorkflowRunStore(TimeProvider clock) : IWorkflowRunS
         {
             IReadOnlyList<NodeRun> rows = [.. _nodeRuns.Values
                 .Where(n => n.RunId == id)
+                .OrderBy(static n => n.NodeId.Value, StringComparer.Ordinal)
+                .ThenBy(static n => n.ItemIndex)];
+            return Ok(rows);
+        }
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<NodeRun>>> NodeRunsForItem(WorkflowRunId id, int itemIndex, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<NodeRun> rows = [.. _nodeRuns.Values
+                .Where(n => n.RunId == id && (n.ItemIndex == 0 || n.ItemIndex == itemIndex))
                 .OrderBy(static n => n.NodeId.Value, StringComparer.Ordinal)
                 .ThenBy(static n => n.ItemIndex)];
             return Ok(rows);

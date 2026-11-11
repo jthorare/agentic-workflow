@@ -180,11 +180,14 @@ public sealed class SindriApiClientLinearTests
     [Fact]
     public async Task A_session_is_refused_the_lookups_and_the_since_strip_with_SND_AUTH_002()
     {
-        var lookups = await Client(new Canned(HttpStatusCode.Forbidden, GoldenFiles.Api("linear-lookups", "session-refused"))).LinearLookups(_api, "ENG", Token);
-        var since = await Client(new Canned(HttpStatusCode.Forbidden, GoldenFiles.Api("linear-since", "session-refused"))).LinearSince(_api, after: null, Token);
+        var lookups = await Client(Refused()).LinearLookups(_api, "ENG", Token);
+        var since = await Client(Refused()).LinearSince(_api, after: null, Token);
 
         Assert.Equal(("SND-AUTH-002", "SND-AUTH-002"), (lookups.Error.Code, since.Error.Code));
     }
+
+    // A served SND-AUTH-002 built here: the server no longer sends one to a session, the app still reads it.
+    private static Canned Refused() { var a = RouteAnswer.Refused(); return new(a.Status, a.Body); }
 
     // A golden as served: a ProblemDetails keeps the status it names, anything else is a 200.
     private static Canned Served(string slug, string scenario)
@@ -205,7 +208,7 @@ public sealed class SindriApiClientLinearTests
     [InlineData("session-write-refused", false, "SND-AUTH-002")]
     [InlineData("full", true, null)]
     [InlineData("removed", false, null)]
-    [InlineData("session", false, "SND-AUTH-002")]
+    [InlineData("session", true, null)]
     public async Task The_issue_goldens_carry_whether_the_sheet_may_write(string scenario, bool allowed, string? code)
     {
         var issue = (await Client(Ok("linear-issue", scenario)).LinearIssue(_api, "ENG-12", Token)).Value;
@@ -230,6 +233,7 @@ public sealed class SindriApiClientLinearTests
     [InlineData("applied", null, null)]
     [InlineData("applied-store-failed", "SND-LINEAR-013", null)]
     [InlineData("already-applied", null, true)]
+    [InlineData("session", null, null)]
     public async Task LinearChange_reads_an_applied_edit_with_the_re_read_issue(string scenario, string? warning, bool? already)
     {
         var result = await Client(Served("linear-change", scenario)).LinearChange(_api, "ENG-12", _noFields, _noFields, Token);
@@ -264,7 +268,6 @@ public sealed class SindriApiClientLinearTests
     [InlineData("no-write-key", "SND-LINEAR-002")]
     [InlineData("team-not-picked", "SND-LINEAR-003")]
     [InlineData("bad-value", "SND-LINEAR-006")]
-    [InlineData("session-refused", "SND-AUTH-002")]
     public async Task LinearChange_hands_any_other_refusal_back_as_the_error(string scenario, string code)
     {
         var result = await Client(Served("linear-change", scenario)).LinearChange(_api, "ENG-12", _noFields, _noFields, Token);
@@ -293,7 +296,7 @@ public sealed class SindriApiClientLinearTests
     public async Task LinearComment_reads_an_unknown_outcome_with_its_client_id_and_hands_a_session_refusal_back()
     {
         var unknown = await Client(Served("linear-comment", "unknown")).LinearComment(_api, "ENG-12", "c-1", "hi", Token);
-        var refused = await Client(Served("linear-comment", "session-refused")).LinearComment(_api, "ENG-12", "c-1", "hi", Token);
+        var refused = await Client(Refused()).LinearComment(_api, "ENG-12", "c-1", "hi", Token);
 
         Assert.Equal(new LinearWriteUnknown("5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01"), unknown.Value);
         Assert.Equal("SND-AUTH-002", refused.Error.Code);
@@ -319,26 +322,25 @@ public sealed class SindriApiClientLinearTests
     {
         var unknown = await Client(Served("linear-create", "unknown")).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token);
         var bad = await Client(Served("linear-create", "bad-value")).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token);
-        var refused = await Client(Served("linear-create", "session-refused")).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token);
+        var refused = await Client(Refused()).LinearCreate(_api, new LinearCreateBody("c-1", "ENG", "T"), Token);
 
         Assert.Equal(new LinearWriteUnknown("5d0a4f6e-3b1c-4c0e-9a57-2f1d8c9b7e01"), unknown.Value);
         Assert.Equal(("SND-LINEAR-006", "SND-AUTH-002"), (bad.Error.Code, refused.Error.Code));
     }
 
     [Theory]
-    [InlineData("connected", "resolves", "resolves", 2, false)]
-    [InlineData("not-connected", "notSet", "notSet", 0, false)]
-    [InlineData("read-only", "resolves", "notSet", 2, false)]
-    [InlineData("scope-unknown", "resolves", "scopeUnknown", 2, false)]
-    [InlineData("pending", "resolves", "notSet", 2, true)]
-    public async Task LinearConnection_gets_the_route_and_reads_both_keys_the_teams_and_pending(string scenario, string read, string write, int teams, bool pending)
+    [InlineData("connected", "resolves", "resolves", 2)]
+    [InlineData("not-connected", "notSet", "notSet", 0)]
+    [InlineData("read-only", "resolves", "notSet", 2)]
+    [InlineData("scope-unknown", "resolves", "scopeUnknown", 2)]
+    public async Task LinearConnection_gets_the_route_and_reads_both_keys_and_the_teams(string scenario, string read, string write, int teams)
     {
         var canned = Served("linear-connection", scenario);
 
         var connection = (await Client(canned).LinearConnection(_api, Token)).Value;
 
         Assert.Equal((HttpMethod.Get, "/sindri/linear/connection"), (canned.Methods[0], canned.Seen[0].AbsolutePath));
-        Assert.Equal((read, write, teams, pending), (connection.Read.State, connection.Write.State, connection.Teams.Count, connection.Pending));
+        Assert.Equal((read, write, teams), (connection.Read.State, connection.Write.State, connection.Teams.Count));
         Assert.Equal(scenario == "not-connected", connection.Read.CheckedAt is null);
     }
 
@@ -367,7 +369,7 @@ public sealed class SindriApiClientLinearTests
     [Fact]
     public async Task LinearConnect_posts_a_read_key_with_its_teams_and_a_write_key_without()
     {
-        var read = Served("linear-connect", "read-saved-approved");
+        var read = Served("linear-connect", "read-saved");
         var write = Served("linear-connect", "write-saved");
 
         var saved = (await Client(read).LinearConnect(_api, "read", "k1", ["ENG", "OPS"], Token)).Value;
@@ -376,17 +378,15 @@ public sealed class SindriApiClientLinearTests
         Assert.Equal((HttpMethod.Post, "/sindri/linear/connection"), (read.Methods[0], read.Seen[0].AbsolutePath));
         Assert.Equal("""{"kind":"read","key":"k1","teams":["ENG","OPS"]}""", read.Bodies[0]);
         Assert.Equal("""{"kind":"write","key":"k2"}""", write.Bodies[0]);
-        Assert.Equal((true, true, null), (saved.Saved, saved.Approved, saved.Write));
+        Assert.Equal((true, null), (saved.Saved, saved.Write));
         Assert.Equal("resolves", wrote.Write!.State);
     }
 
     [Fact]
-    public async Task LinearConnect_reads_a_save_that_waits_on_other_profile_changes_and_a_write_key_of_unknown_scope()
+    public async Task LinearConnect_reads_a_write_key_of_unknown_scope()
     {
-        var waiting = (await Client(Served("linear-connect", "read-saved-waiting")).LinearConnect(_api, "read", "k", ["ENG"], Token)).Value;
         var scope = (await Client(Served("linear-connect", "write-scope-unknown")).LinearConnect(_api, "write", "k", teams: null, Token)).Value;
 
-        Assert.Equal((true, false, 64), (waiting.Saved, waiting.Approved, waiting.ProfileHash.Length));
         Assert.Equal("scopeUnknown", scope.Write!.State);
     }
 
@@ -410,7 +410,7 @@ public sealed class SindriApiClientLinearTests
         var removed = (await Client(canned).LinearDisconnectWrite(_api, Token)).Value;
 
         Assert.Equal((HttpMethod.Delete, "/sindri/linear/connection/write", null), (canned.Methods[0], canned.Seen[0].AbsolutePath, canned.Bodies[0]));
-        Assert.Equal((true, true), (removed.Removed, removed.Approved));
+        Assert.True(removed.Removed);
     }
 
     [Fact]

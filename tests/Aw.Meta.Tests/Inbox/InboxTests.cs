@@ -1,5 +1,6 @@
 using Aw.Meta.Core;
 using Aw.Meta.Core.Ids;
+using Aw.Meta.Core.Messages;
 using Aw.Meta.Features.Inbox;
 using Aw.Meta.Features.InboxDefer;
 using Aw.Meta.Features.InboxDismiss;
@@ -48,9 +49,9 @@ public sealed class InboxTests
     {
         await _world.Ready();
         await Receive(("m1", "t1-api", "a"), ("m2", "t1-ui", "b"), ("m3", "t1-api", "c"), ("m4", "t1-ui", "d"));
-        _ = await _world.Messages.Resolve(MessageId.From("m2"), new(Core.Messages.MessageResolutionKind.Dismissed, "fyi"), CancellationToken.None);
+        _ = await _world.Messages.Resolve(MessageId.From("m2"), new(MessageResolutionKind.Dismissed, "fyi"), CancellationToken.None);
         var until = _world.Clock.GetUtcNow().AddHours(1);
-        _ = await _world.Messages.Resolve(MessageId.From("m3"), new(Core.Messages.MessageResolutionKind.Deferred, "later", until), CancellationToken.None);
+        _ = await _world.Messages.Resolve(MessageId.From("m3"), new(MessageResolutionKind.Deferred, "later", until), CancellationToken.None);
         _ = await _world.Messages.RecordOutbound(A.Sent("t1-api", "ok", 61), CancellationToken.None);
 
         var all = await Items(all: true);
@@ -108,7 +109,7 @@ public sealed class InboxTests
 
         Assert.Equal(_world.Clock.GetUtcNow().AddMinutes(-1), deferred.Value.Until);
         Assert.Empty(snoozed);
-        Assert.Equal(["m1"], due.Select(o => o.Key), StringComparer.Ordinal);
+        Assert.Equal(["m1", "watch"], due.Select(o => o.Key), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -127,4 +128,17 @@ public sealed class InboxTests
     [InlineData("+30m", "")]
     public void A_deferral_needs_a_reason_and_a_time_that_can_be_read(string until, string reason) =>
         Assert.True(new DeferInboxValidator().Validate(new DeferInboxRequest(MessageId.From("m1"), reason, until)).IsError);
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_notice_is_still_listed_but_is_not_marked_as_owing_a_reply()
+    {
+        await _world.Ready();
+        await Receive(("m1", "t1-api", "ack, thanks"));
+
+        var all = await Items(all: true);
+
+        var item = Assert.Single(all);
+        Assert.NotEqual(InboxState.Open, item.State, StringComparer.Ordinal);
+        Assert.Empty(await Items(all: false));
+    }
 }

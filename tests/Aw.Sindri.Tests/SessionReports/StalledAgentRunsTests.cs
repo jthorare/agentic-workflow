@@ -33,7 +33,7 @@ public sealed class StalledAgentRunsTests
             }
 
             var recipe = new RecipeVersion(RecipeId.From("workflow.step"), 1, RecipeHash.From("sha256:" + new string('a', 64)));
-            return ValueTask.FromResult<Result<InstanceView>>(new InstanceView(address, recipe, "produce", Detail: null, KnownInstants.Epoch, string.Empty, [], Question: null, Task: null, Run: null, Children: [], Outcome: null)
+            return ValueTask.FromResult<Result<InstanceView>>(new InstanceView(address, recipe, "produce", KnownInstants.Epoch)
             {
                 Id = WorkflowInstanceId.Of(address),
                 TakenOverBy = TakenOverBy,
@@ -114,6 +114,31 @@ public sealed class StalledAgentRunsTests
         _instances.Fail = true;
 
         _ = Assert.Single(await Runs().Find(Token));
+    }
+
+    [Fact]
+    public async Task A_node_session_idle_for_the_idle_time_is_stalled_with_its_run_and_node_and_no_instance()
+    {
+        await _s.Started(run: "walk@1:2", node: "check");
+        _s.Liveness.Beat(A.FirstLaunchId, _s.Now);
+        _s.Files.EndTurn(A.FirstLaunchId, _s.Now);
+        _s.Views.Slice.Clock.Advance(TimeSpan.FromSeconds(120));
+
+        var run = Assert.Single(await Runs().Find(Token));
+
+        Expect.Equal((A.FirstLaunchId, null, "walk@1:2", "check"), (run.Launch, run.Instance?.Value, run.Run, run.Node));
+    }
+
+    [Fact]
+    public async Task A_node_session_a_person_holds_is_not_stalled()
+    {
+        await _s.Started(run: "walk@1:2", node: "check");
+        _s.Liveness.Beat(A.FirstLaunchId, _s.Now);
+        _s.Files.EndTurn(A.FirstLaunchId, _s.Now);
+        _s.Files.MarkTakenOver(A.FirstLaunchId, taken: true);
+        _s.Views.Slice.Clock.Advance(TimeSpan.FromMinutes(5));
+
+        Assert.Empty(await Runs().Find(Token));
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;

@@ -24,7 +24,15 @@ internal sealed class GetConnectionService(IConnectionStore store, SignInOutcome
         var found = await _store.Get(name.Value, cancellationToken).ConfigureAwait(false);
         if (found.IsSuccess)
         {
-            return new GetConnectionResponse(ConnectionView.From(found.Value));
+            // why: a sign-in again that failed leaves the row as it was, so a caller that waits for it would otherwise see the old state until it gave up
+            if (found.Value.Status != ConnectionStatus.Connected && outcomes.Last(name.Value.ToString()) is { } failedAgain)
+            {
+                return failedAgain;
+            }
+
+            // why: a connected row keeps working on its old tokens after a failed sign-in again, so the failure goes beside the row instead of replacing it
+            var failure = outcomes.LastFailure(name.Value.ToString()) is { } f ? new SignInFailureView(f.Error.Code, f.At) : null;
+            return new GetConnectionResponse(ConnectionView.From(found.Value), failure);
         }
 
         // why: a sign-in that failed left no row, so the caller that waits for it (the CLI, an agent) would otherwise see "not found" until it gave up

@@ -48,10 +48,10 @@ public sealed class ControlViewModelTests
     [Fact]
     public void A_row_without_a_sender_is_a_copy_block_that_never_runs()
     {
-        var control = new ControlViewModel(Row("ApproveProfile", "ready", "sindri profile approve [<hash>]"), send: null, _clipboard, _clock);
+        var control = new ControlViewModel(Row("StopProcess", "ready", "sindri stop"), send: null, _clipboard, _clock);
 
         Assert.Equal((true, false, true), (control.IsCopyOnly, control.CanRun, control.CanCopy));
-        Assert.Equal("sindri profile approve [<hash>]", control.Cli);
+        Assert.Equal("sindri stop", control.Cli);
     }
 
     // §7 backstop: a cli with a control or bidi character is neither shown nor copied (E-16 makes this never happen).
@@ -72,11 +72,11 @@ public sealed class ControlViewModelTests
     [Fact]
     public async Task Copy_puts_the_cli_on_the_clipboard_and_says_copied_for_1_5_s()
     {
-        var control = Control(Row("ApproveProfile", "cli-only:typed-confirmation", "sindri profile approve [<hash>]"));
+        var control = Control(Row("StopProcess", "cli-only:typed-confirmation", "sindri stop"));
 
         await control.Copy(Token);
 
-        Assert.Equal("sindri profile approve [<hash>]", _clipboard.Text);
+        Assert.Equal("sindri stop", _clipboard.Text);
         Assert.Equal(("Copied", "Copied"), (control.CopyLabel, control.Announcement));
         _clock.Advance(TimeSpan.FromMilliseconds(1499));
         Assert.Equal("Copied", control.CopyLabel);
@@ -144,7 +144,7 @@ public sealed class ControlViewModelTests
         Assert.Equal((true, false, CommandPhase.Idle), (control.IsCopyOnly, control.CanRun, control.Phase));
     }
 
-    // The lane decision of 2026-10-12: Grant is two protected rows, each with its own label.
+    // The lane decision of 2026-10-12: Grant is two rows, each with its own label.
     [Theory]
     [InlineData("ApplyCommand:answer-grant", "Grant rounds")]
     [InlineData("ApplyCommand:answer-grant-tokens", "Grant tokens")]

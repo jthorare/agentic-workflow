@@ -1,0 +1,65 @@
+using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Expressions;
+using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Schedule;
+using Aw.Sindri.Core.Graph.Validation;
+using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Testing.Workflow;
+using Aw.Sindri.Tests.Graph.Blocks;
+using static Aw.Sindri.Tests.Graph.GraphFixtures;
+
+namespace Aw.Sindri.Tests.WorkflowWrites;
+
+/// <summary>The ports the workflow write slices share: the in-memory workflow store, the lease and ledger of <see cref="SliceHarness"/>, a caller, and a checker over the real block types or the small fixture ones.</summary>
+internal sealed class WorkflowWriteRig : IDisposable
+{
+    public static readonly WorkflowId Id = WorkflowId.From("WF-00000000000000000000000000000001");
+    public static readonly WorkflowSlug Slug = WorkflowSlug.From("drift-check");
+
+    private readonly IDisposable _caller;
+
+    public WorkflowWriteRig(bool realBlocks = false)
+    {
+        Harness = new SliceHarness();
+        Workflows = new InMemoryWorkflowStore(Harness.Clock);
+        Checker = new FixedChecker(realBlocks ? RealValidator() : Validator());
+        Log = new WorkflowChangeLog(Harness.Store, Harness.Held, Harness.Events, Harness.Callers);
+        _caller = Harness.Callers.EnterService("workflow-write-test");
+    }
+
+    public SliceHarness Harness { get; }
+
+    public InMemoryWorkflowStore Workflows { get; }
+
+    public IWorkflowChecker Checker { get; }
+
+    public WorkflowChangeLog Log { get; }
+
+    public static CancellationToken Token => TestContext.Current.CancellationToken;
+
+    /// <summary>daily -> a -> tell, over the fixture block types.</summary>
+    public static GraphSpec SampleGraph() => Spec([Trigger("daily"), Search("a"), Notify("tell", "{{a.facts}}")], [Edge("daily", "a"), Edge("a", "tell")]);
+
+    /// <summary>The ledger events of one type, oldest first.</summary>
+    public IReadOnlyList<LedgerEvent> Recorded(string type) => [.. Harness.Store.Events.Where(e => string.Equals(e.Envelope.Type, type, StringComparison.Ordinal))];
+
+    /// <summary>Makes the workflow at revision 1 by the owner.</summary>
+    public async Task Seed()
+    {
+        _ = await Harness.HoldLease();
+        _ = (await Workflows.Create(Id, Slug, SampleGraph(), "owner", Token)).Value;
+    }
+
+    public void Dispose() => _caller.Dispose();
+
+    private static GraphValidator RealValidator() => Validator(
+        blocks: GraphBlockRegistry.Standard(new BlockFakes.RecordingNotifyPort(), new BlockFakes.ScriptedModelPort("{}")).Types,
+        cron: (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem,
+        condition: text => ConditionExpression.TryParse(text, out var expression, out var error) ? new ConditionParse(Error: null, expression!.References) : new ConditionParse(error, []));
+
+    private sealed class FixedChecker(GraphValidator validator) : IWorkflowChecker
+    {
+        public ValueTask<GraphValidator> Validator(CancellationToken cancellationToken) => ValueTask.FromResult(validator);
+    }
+}

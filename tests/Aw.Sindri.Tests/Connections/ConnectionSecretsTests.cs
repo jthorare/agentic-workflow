@@ -124,6 +124,8 @@ public sealed class ConnectionSecretsTests
             }
         }
 
+        await DriveFailedRefresh(world);
+
         var pending = world.Add().Handle(ConnectionHarness.Oauth(name: "linear:other") with { ClientSecret = _secretCanary }, Token).AsTask();
         world.SignIn.Fail(SindriErrors.ConnectionConsentDenied.With($"denied for {_canary} and {_secretCanary}"));
         var failed = await pending;
@@ -139,15 +141,23 @@ public sealed class ConnectionSecretsTests
         return (world, outputs);
     }
 
+    // a refresh the provider refuses, whose error text repeats the canary: the event it writes must hold the code only
+    private static async Task DriveFailedRefresh(ConnectionHarness world)
+    {
+        world.OAuth.RefuseWith = "invalid_grant";
+        var expiring = ConnectionSamples.Name("linear", "expiring");
+        var expiringPointer = world.Secrets.Store(expiring, new TokenSet(_canary, _canary + "-refresh", world.Clock.GetUtcNow().AddMinutes(1))).Value;
+        _ = await world.Store.Upsert(ConnectionSamples.Oauth(expiring) with { SecretPointer = expiringPointer }, Token);
+        _ = await world.Refresh().Run(await world.Tick(), Token);
+    }
+
     [Fact]
     public async Task Secret_never_reaches_the_ledger()
     {
         var (world, _) = await DriveEveryPath();
 
         var events = world.Ledger.Events;
-        // 10a writes no ledger events, so this canary has nothing to check yet. PR 10b flips it to NotEmpty with its
-        // connection.needs-sign-in event; until then a 10a change that starts writing events fails here instead of passing quietly.
-        Assert.Empty(events);
+        Assert.NotEmpty(events);   // a failed refresh wrote 'connection.needs-sign-in': the leak check below reads real events (10a passed with none)
         Assert.All(events, e => AssertNoCanary(JsonSerializer.Serialize(e.Envelope) + e.IdempotencyKey + e.Item));
         Assert.All(events, e => AssertNoCanary(e.Envelope.Payload));
     }
@@ -224,12 +234,12 @@ public sealed class ConnectionSecretsTests
         using var database = new LedgerDatabase(new SindriSettings(home.Path, Path.Combine(home.Path, "profile.yaml")), new FakeTimeProvider(KnownInstants.Epoch));
         var world = new ConnectionHarness();
         var store = new SqliteConnectionStore(database);
-        var oauth = new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, world.SignIn, world.Clock, world.Outcomes);
+        var oauth = new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, world.SignIn, new Features.Commands.CommandGateAccess(world.Gate, world.Clock), world.Outcomes, world.Events());
         var service = new Features.AddConnection.AddConnectionService(store, world.Secrets, world.Presets, world.Environment, world.Clock, world.Callers, oauth);
 
         var added = await service.Handle(ConnectionHarness.Rest("acme:sql") with { KeyEnv = null, Key = _canary }, Token);
         var signed = new FakeSignInSession();
-        var oauthService = new Features.AddConnection.AddConnectionService(store, world.Secrets, world.Presets, world.Environment, world.Clock, world.Callers, new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, signed, world.Clock, world.Outcomes));
+        var oauthService = new Features.AddConnection.AddConnectionService(store, world.Secrets, world.Presets, world.Environment, world.Clock, world.Callers, new Features.AddConnection.OAuthSignInFlow(store, world.Secrets, signed, new Features.Commands.CommandGateAccess(world.Gate, world.Clock), world.Outcomes, world.Events()));
         var oauthAdd = oauthService.Handle(ConnectionHarness.Oauth(name: "linear:sql") with { ClientSecret = _secretCanary }, Token).AsTask();
         signed.Succeed(new TokenSet("access-sql", "refresh-sql", ExpiresAt: null));
         var oauthAdded = await oauthAdd;
@@ -298,6 +308,21 @@ public sealed class ConnectionSecretsTests
         Assert.True(exchanged.IsError);
         AssertClean(exchanged.Error.Message);
         Assert.DoesNotContain("code-not-issued", exchanged.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact(Timeout = 60_000)]
+    public async Task A_busy_provider_gives_no_provider_code_so_the_refresh_is_retried_not_refused()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var server = new FakeOAuthServer { BusyRefresh = true };
+        using var http = new HttpClient();
+        var client = new HttpOAuthClient(http, new FakeTimeProvider(KnownInstants.Epoch));
+
+        var refreshed = await client.Refresh(server.Preset(), "client-123", Refresh, clientSecret: null, ct);
+
+        Assert.Equal(SindriErrors.ConnectionRefreshFailed.Code, refreshed.Error.Code);
+        Assert.Contains("503", refreshed.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(refreshed.Error.Extensions ?? ErrorExtensions.Empty, static e => e.Key == "providerCode");   // only a 400 or 401 carries the provider's code
     }
 
     [Fact(Timeout = 60_000)]

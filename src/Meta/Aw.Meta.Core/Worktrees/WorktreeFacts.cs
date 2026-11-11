@@ -51,7 +51,10 @@ internal sealed record WorktreeFacts
     /// <summary>Whether the tree's pull request merged or closed but GitHub gave no time for it, so "changed since" can't be judged (the tree is kept).</summary>
     public bool EndedAtUnknown { get; init; }
 
-    /// <summary>Whether no removing sweep has been recorded yet, so "changed since the last sweep" has nothing to compare with.</summary>
+    /// <summary>When the last full sweep started (the cutoff a tree with no ended pull request is compared with); null when none has been recorded.</summary>
+    public DateTimeOffset? SweepStartedAt { get; init; }
+
+    /// <summary>Whether no removing sweep has been recorded yet, so "changed since the last full sweep" has nothing to compare with.</summary>
     public bool NoPreviousSweep { get; init; }
 
     /// <summary>The number of the pull request whose head branch this is.</summary>
@@ -60,8 +63,20 @@ internal sealed record WorktreeFacts
     /// <summary>That pull request's state.</summary>
     public PrState? PrState { get; init; }
 
+    /// <summary>The worktree's HEAD commit.</summary>
+    public string Head { get; init; } = string.Empty;
+
+    /// <summary>The head commit GitHub records for that pull request (for an ended one, its head when it ended); empty when unknown.</summary>
+    public string PrHead { get; init; } = string.Empty;
+
+    /// <summary>How many commits HEAD has that <see cref="PrHead"/> lacks (0 when HEAD is that head or behind it); null when git could not tell.</summary>
+    public int? CommitsAfterPrHead { get; init; }
+
     /// <summary>Set by a `--discarded` sweep when a finished bugfix run names this tree as a losing candidate at its HEAD: says which (e.g. "bugfix gh-9 candidate c1, resolved by c2"). Its unpushed commits and "no pull request" don't keep it.</summary>
     public string? Discarded { get; init; }
+
+    /// <summary>Set by any sweep when a bugfix run names this tree at its HEAD (its red tree, or a candidate on its branch) and the run's GitHub issue is closed by a merged pull request: says which (e.g. "bugfix gh-9 red tree, #9 closed by merged #12"). "No pull request", "unmerged branch", unpushed commits and being detached don't keep it; the live-tree rules still do (#2753).</summary>
+    public string? FinishedBugfix { get; init; }
 
     /// <summary>Set by a `--discarded` sweep when the tree is not a discarded candidate: why not (no run names it, HEAD moved, it won, the run isn't over).</summary>
     public string? NotDiscarded { get; init; }

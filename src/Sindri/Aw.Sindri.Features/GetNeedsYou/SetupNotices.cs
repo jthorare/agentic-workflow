@@ -5,22 +5,19 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.ApproveAll;
 
 namespace Aw.Sindri.Features.GetNeedsYou;
 
 /// <summary>
 /// The setup rows the needs-you list adds to the views' (setup-once spec §7.3). 'setup:repo' stands while the profile names no repo and the last AddRepo job failed; it is cleared when a new AddRepo job runs
-/// or succeeds. The sentence is the job's own, the fix in it. 'setup:recipes' and 'recipe:' come from the approve-all plan.
+/// or succeeds. The sentence is the job's own, the fix in it.
 /// </summary>
 /// <param name="jobs">The jobs view.</param>
 /// <param name="live">The live profile: a repo in it means the step is done.</param>
-/// <param name="plans">The approve-all plan, which the 'setup:recipes' and 'recipe:' rows are read from; a plan that can't be read drops those rows only.</param>
 /// <param name="scrubber">Scrubs the text.</param>
-/// <param name="clock">Stamps the recipe rows.</param>
+/// <param name="clock">Stamps the rows.</param>
 /// <param name="mcp">Says whether the owner is to be asked once to turn the automatic registration on.</param>
-/// <param name="approved">The approved profile, which the live one is compared with for the profile drift row.</param>
-internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveAllPlanReader plans, ITextScrubber scrubber, TimeProvider clock, McpAutoGate mcp, IApprovedProfile approved)
+internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ITextScrubber scrubber, TimeProvider clock, McpAutoGate mcp)
 {
     private static readonly JobKind _addRepo = JobKind.From("AddRepo");
     private static readonly JobKind _registerMcp = JobKind.From("RegisterMcp");
@@ -36,22 +33,6 @@ internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveA
         return row.IsSuccess ? row.Value : null;
     }
 
-    // The 'profile:drift' row from the live profile against the approved one, as the status compares them, so it shows when the pill does and not when the next
-    // profile.checked is recorded (up to 30 s later). The stored row has the same id; the service keeps that one when both exist.
-    internal async ValueTask<NeedsYouRow?> Drift(CancellationToken cancellationToken)
-    {
-        var before = await approved.Latest(cancellationToken).ConfigureAwait(false);
-        var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
-        if (before is not { IsSuccess: true, Value: { } approvedProfile } || loaded.IsError || loaded.Value.Hash == approvedProfile.Hash)
-        {
-            return null;
-        }
-
-        var drifted = new ProfileRow(approvedProfile.Hash, ApprovedAt: null, loaded.Value.Hash, CheckedAt: null, Changed: true, ProfileDiff.Between(approvedProfile.Profile, loaded.Value.Profile), ApprovedServices: [], Sequence: 0);
-        var row = NeedsYouRows.ForProfile(drifted, clock.GetUtcNow(), scrubber);
-        return row is { IsSuccess: true, Value: { } found } ? found : null;
-    }
-
     // 'setup:mcp' stands while the newest RegisterMcp job failed and none is running: the job's own sentence, the provider's fix in it. A new run clears it; a success replaces the failed job as the newest.
     internal async ValueTask<NeedsYouRow?> Mcp(CancellationToken cancellationToken)
     {
@@ -63,29 +44,6 @@ internal sealed class SetupNotices(IJobViews jobs, IProfileSource live, ApproveA
 
         var row = NeedsYouRows.ForSetupMcp(failed.Summary ?? "Sindri could not register itself with your agents. Press Connect again.", failed.EndedAt ?? failed.StartedAt, scrubber);
         return row.IsSuccess ? row.Value : null;
-    }
-
-    // The approve-all plan's rows (setup-once spec §7.3): read at request time from the registry and the approvals, and absent when the plan can't be read
-    // (no approved profile yet, or the read failed): the list never fails for them.
-    internal async ValueTask<IReadOnlyList<NeedsYouRow>> Recipes(CancellationToken cancellationToken)
-    {
-        try
-        {
-            var plan = await plans.Read(cancellationToken).ConfigureAwait(false);
-            if (plan.IsError)
-            {
-                return [];
-            }
-
-            var rows = NeedsYouRows.ForRecipes(plan.Value, clock.GetUtcNow(), scrubber);
-            return rows.IsSuccess ? rows.Value : [];
-        }
-#pragma warning disable CA1031 // boundary: a registry that throws drops these rows, never the list
-        catch (Exception e) when (e is not OperationCanceledException)
-#pragma warning restore CA1031
-        {
-            return [];
-        }
     }
 
     // The newest job of a kind when it failed and none of that kind is running now; else null.

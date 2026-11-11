@@ -21,7 +21,7 @@ public sealed class AcceptAllNoConceptTests
 
     private static async Task<(AddSeveralPagesViewModel Sheet, FakePageWrites Writes)> Opened(IReadOnlyList<ConceptChoice> known, params PageDraft[] pages)
     {
-        var writes = new FakePageWrites { Profile = new ProfileWaiting("live", [], "file") };
+        var writes = new FakePageWrites { Profile = new ProfileHashes("live", "file") };
         foreach (var page in pages)
         {
             writes.Add(page.Surface!, page);

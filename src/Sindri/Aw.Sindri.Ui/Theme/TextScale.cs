@@ -37,11 +37,11 @@ internal static class TextScale
         resources["Type.Scale"] = clamped;
     }
 
-    // Sizes that follow the text: the icon box (Theme/Icons.axaml), so a glyph stays as tall as its word, and the "."
-    // keycap's dot.
-    private static readonly string[] _sizes = ["Size.Icon", "Size.KeyDot"];
+    // Sizes that follow the text: the icon box (Theme/Icons.axaml), so a glyph stays as tall as its word, the "."
+    // keycap's dot and a keycap's narrowest width.
+    private static readonly string[] _sizes = ["Size.Icon", "Size.KeyDot", "Size.KeyCap"];
 
-    private static readonly string[] _steps = ["PageTitle", "DetailTitle", "Body", "BodyStrong", "Caption", "Eyebrow", "Button", "Mono", "Kbd"];
+    private static readonly string[] _steps = ["PageTitle", "SectionTitle", "DetailTitle", "Body", "BodyStrong", "Caption", "Eyebrow", "Button", "Mono", "Kbd"];
 
     // The unscaled value, from the merged token dictionary (the app's own dictionary holds the scaled copy).
     private static double Base(IResourceDictionary resources, string key) =>

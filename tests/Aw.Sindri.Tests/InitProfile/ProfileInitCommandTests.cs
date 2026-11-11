@@ -33,7 +33,7 @@ public sealed class ProfileInitCommandTests : IDisposable
     private Task<int> Run(params string[] args) => CommandTable.Run(args, Environment, TimeProvider.System);
 
     [Fact, Trait("Lane", "integration")]
-    public async Task The_first_run_writes_the_profile_and_names_the_next_steps_and_the_second_is_refused()
+    public async Task The_first_run_writes_the_profile_and_names_the_next_step_and_the_second_is_refused()
     {
         var first = await Run("profile", "init");
         var written = await File.ReadAllTextAsync(ProfilePath, TestContext.Current.CancellationToken);
@@ -41,7 +41,7 @@ public sealed class ProfileInitCommandTests : IDisposable
 
         Assert.Equal(0, first);
         Assert.Contains(ProfilePath, _out.ToString(), StringComparison.Ordinal);
-        Assert.Contains("sindri repo add <path>, then sindri profile approve", _out.ToString(), StringComparison.Ordinal);
+        Assert.Contains("next: sindri repo add <path>", _out.ToString(), StringComparison.Ordinal);
         Assert.Equal(2, second);
         Assert.Contains("SND-PROFILE-002", _error.ToString(), StringComparison.Ordinal);
         Assert.Equal(written, await File.ReadAllTextAsync(ProfilePath, TestContext.Current.CancellationToken));

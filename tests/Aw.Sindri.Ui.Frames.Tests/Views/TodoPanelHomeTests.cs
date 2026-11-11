@@ -199,11 +199,24 @@ public sealed class TodoPanelHomeTests : IDisposable
         Serve(Eight());
         var (window, _) = await Connected();
 
-        var body = Named<Control>(window, "TodoCollapsed");
+        var body = Named<Grid>(window, "TodoCollapsed");
         var fifth = Rows(window)[4];
         var bottom = fifth.TranslatePoint(new Point(0, fifth.Bounds.Height), body)!.Value.Y;   // why: both are in the same visual tree
+        var slots = body.RowDefinitions[0].ActualHeight;   // the rows' part: the Show all slot below is not theirs
 
-        Assert.True(bottom <= body.Bounds.Height, string.Create(CultureInfo.InvariantCulture, $"the fifth row ends at {bottom}, the body at {body.Bounds.Height}"));
+        Assert.True(bottom <= slots, string.Create(CultureInfo.InvariantCulture, $"the fifth row ends at {bottom}, the rows' part at {slots}"));
+    });
+
+    // #2546: the collapsed body is six Row.Height.Default slots, and a row is drawn exactly that tall (QueueStyles' item-row MinHeight).
+    [Fact]
+    public Task The_collapsed_body_is_six_rows_of_the_rows_own_height() => OnUi(async () =>
+    {
+        Serve(Eight());
+        var (window, _) = await Connected();
+
+        var row = Assert.IsType<double>(window.FindResource("Row.Height.Default"));
+        Assert.Equal(row * 6, Named<Control>(window, "TodoCollapsed").Bounds.Height);
+        Assert.All(Rows(window).Take(5), r => Assert.Equal(row, r.Bounds.Height));
     });
 
     [Fact]

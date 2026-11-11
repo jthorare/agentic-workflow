@@ -57,7 +57,7 @@ public sealed class OutboxRecordTests
         Assert.True(response.Recorded);
         Assert.Equal([(ObligationKind.Reply, "m1")], response.Closed.Select(o => (o.Kind, o.Key)));
         Assert.Equal(("t1-api", "done", "out-1"), (sent.To, sent.Message, sent.Id?.Value));
-        Assert.Equal(["m2"], (await _world.Open()).Select(o => o.Key), StringComparer.Ordinal);
+        Assert.Equal(["m2", "watch"], (await _world.Open()).Select(o => o.Key), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -68,40 +68,7 @@ public sealed class OutboxRecordTests
 
         var response = await Send("uds:/run/t1-api.sock", "done");
 
-        _ = Assert.Single(response.Closed);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task The_lane_map_broadcast_closes_only_when_every_lane_has_the_new_version()
-    {
-        await _world.Ready();
-        _world.Sessions.Add(A.Live("t1-api", "s-api"));
-        _world.Sessions.Add(A.Live("t1-ui", "s-ui"));
-        _ = await _world.Refresher.Run((await _world.Config.Load(CancellationToken.None)).Value, _world.Clock.GetUtcNow(), CancellationToken.None);
-
-        var first = await Send("t1-api", "LANE MAP v1: api=t1-api, ui=t1-ui");
-        var second = await Send("t1-ui", "LANE MAP v1: api=t1-api, ui=t1-ui");
-
-        Assert.Empty(first.Closed);
-        Assert.Equal([ObligationKind.BroadcastLanes], second.Closed.Select(o => o.Kind));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Telling_every_lane_where_main_moved_closes_the_announce_obligation()
-    {
-        await _world.Ready();
-        _world.Sessions.Add(A.Live("t1-api", "s-api"));
-        _world.Sessions.Add(A.Live("t1-ui", "s-ui"));
-        _ = await _world.Refresher.Run((await _world.Config.Load(CancellationToken.None)).Value, _world.Clock.GetUtcNow(), CancellationToken.None);
-        _ = await _world.Gates.RecordMerge(new MergeRecord(190, "abc1234def", _world.Clock.GetUtcNow()), CancellationToken.None);
-        _ = await Send("t1-api", "LANE MAP v1: x");
-        _ = await Send("t1-ui", "LANE MAP v1: x");
-
-        var first = await Send("t1-api", "main moved to abc1234: #190 merged. Merge main into your branches.");
-        var second = await Send("t1-ui", "main moved to abc1234: #190 merged. Merge main into your branches.");
-
-        Assert.Empty(first.Closed);
-        Assert.Equal([ObligationKind.AnnounceMain], second.Closed.Select(o => o.Kind));
+        Assert.Equal([ObligationKind.Reply, ObligationKind.RearmWatch], response.Closed.Select(o => o.Kind));
     }
 
     [Fact, Trait("Lane", "unit")]

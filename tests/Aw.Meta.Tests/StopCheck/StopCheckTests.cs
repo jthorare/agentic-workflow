@@ -10,7 +10,7 @@ public sealed class StopCheckTests
 {
     private readonly MetaWorld _world = new();
 
-    private StopCheckService Service() => new(_world.Session, _world.Sweep, _world.Guard, _world.Clock);
+    private StopCheckService Service() => new(_world.Session, _world.Sweep, _world.Guard, _world.Clock, _world.Beats);
 
     private async Task<StopCheckResponse> Check(string session = MetaWorld.MetaSessionId, bool hookActive = false)
     {
@@ -99,7 +99,7 @@ public sealed class StopCheckTests
 
         var response = await Check();
 
-        var reply = Assert.Single(response.Open);
+        var reply = Assert.Single(response.Open, o => o.Kind == ObligationKind.Reply);
         Assert.True(response.Blocked);
         Assert.Equal((ObligationKind.Reply, "m1"), (reply.Kind, reply.Key));
         Assert.Contains("aw-meta inbox-dismiss m1", reply.NextCommand, StringComparison.Ordinal);
@@ -133,20 +133,7 @@ public sealed class StopCheckTests
         var due = await Check();
 
         Assert.False(snoozed.Blocked);
-        Assert.Equal(["m2"], due.Open.Select(o => o.Key), StringComparer.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_changed_lane_map_blocks_until_it_is_sent_to_every_lane()
-    {
-        await _world.Ready();
-        _world.Transcripts.Write(MetaWorld.Transcript, string.Empty);
-        _world.Sessions.Add(A.Live("t1-api", "s-api"));
-
-        var response = await Check();
-
-        Assert.Equal([(ObligationKind.BroadcastLanes, "v1")], response.Open.Select(o => (o.Kind, o.Key)));
-        Assert.Contains("aw-meta lanes --announce", response.Open[0].NextCommand, StringComparison.Ordinal);
+        Assert.Equal(["m2", "watch"], due.Open.Select(o => o.Key), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

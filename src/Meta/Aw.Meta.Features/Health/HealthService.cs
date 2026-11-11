@@ -62,9 +62,17 @@ internal sealed class HealthService(HostProbe probe, LaneCheck lanes, OrphanKill
         // Advisory: lanes whose context can't be measured are left out; a recycle verdict does not make the box unhealthy.
         var context = await lanes.Context(cancellationToken).ConfigureAwait(false);
         var response = new HealthResponse(
-            ProcessGroups.Group(processes), processes.Count, host.Resources, orphans, killed, HostRules.Duplicates(processes), missing, host.Locks, low, NeedsAttention(remaining, low, missing, standing), standing, advice.Value.Heavy, advice.Value.Builders, context);
+            ProcessGroups.Group(processes), processes.Count, host.Resources, orphans, killed, HostRules.Duplicates(processes), missing, host.Locks, low, NeedsAttention(remaining, low, missing, standing), standing, advice.Value.Heavy, advice.Value.Builders, context)
+        { Consumer = await Consumer(cancellationToken).ConfigureAwait(false) };
         var kept = await values.Set(KvKeys.HealthLast, Summary(response, remaining), cancellationToken).ConfigureAwait(false);
         return kept.IsError ? kept.Error : response;
+    }
+
+    // Health reads no mail, so the line says whether a watch beats and never raises attention; status adds the waiting count.
+    private async ValueTask<string?> Consumer(CancellationToken cancellationToken)
+    {
+        var line = await ConsumerState.Read(values, waiting: null, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        return line.IsError ? null : line.Value.Line;
     }
 
     private static bool NeedsAttention(int orphans, bool memoryLow, IReadOnlyList<string>? missingLanes, IReadOnlyList<Core.Lanes.LaneHealth>? standing) =>

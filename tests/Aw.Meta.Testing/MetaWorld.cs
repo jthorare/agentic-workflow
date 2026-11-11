@@ -39,6 +39,9 @@ public sealed class MetaWorld
     /// <summary>Small values.</summary>
     public InMemoryKeyValueStore Values { get; } = new();
 
+    /// <summary>Main's latest move and what each lane saw of the board.</summary>
+    public InMemoryBoardStore Board { get; } = new();
+
     /// <summary>The team config.</summary>
     public InMemoryMetaConfig Config { get; } = new();
 
@@ -152,7 +155,7 @@ public sealed class MetaWorld
     public LaneHealthReader LaneHealth => new(LaneFiles, Beats, LaneMail, LaneGuard, Clock, LaneHealthOptions.Default);
 
     /// <summary>The inbox sync.</summary>
-    public InboxSync Sync => new(Transcripts, Messages, Owner, Clock);
+    public InboxSync Sync => new(Transcripts, Messages, Owner, Clock, new MetaTranscriptResolver(Messages, Sessions, new InMemoryTranscriptLocator(Transcripts)));
 
     /// <summary>The lane refresher.</summary>
     public LaneRefresher Refresher => new(Sessions, Messages, Lanes);

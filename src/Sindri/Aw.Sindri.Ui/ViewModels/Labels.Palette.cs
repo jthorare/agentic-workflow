@@ -3,6 +3,18 @@ namespace Aw.Sindri.Ui.ViewModels;
 /// <summary>The app's own copy (<see cref="Labels"/>, continued): the command palette and the shortcuts sheet (§8, §12.4).</summary>
 internal static partial class Labels
 {
+    /// <summary>The ⌘K field's key chip on macOS.</summary>
+    internal const string SearchKey = "⌘K";
+
+    /// <summary>The key chip where the command key is Ctrl (Linux, Windows).</summary>
+    internal const string SearchKeyCtrl = "Ctrl+K";
+
+    /// <summary>The key chip's words before its letter where there is no Command icon.</summary>
+    internal const string SearchKeyModifier = "Ctrl+";
+
+    /// <summary>The ⌘K chip's letter, drawn after the ⌘ icon.</summary>
+    internal const string SearchKeyLetter = "K";
+
     /// <summary>The palette's accessible name.</summary>
     internal const string Palette = "Command palette";
 
@@ -45,7 +57,7 @@ internal static partial class Labels
     internal static IReadOnlyList<(string Keys, string Action)> FixedKeys { get; } =
     [
         ("⌘K / Ctrl+K", Palette),
-        ("G then H N D T P Q C A . S V J U", "Go to a page: H or N Home, D Decisions on Home, T Todo on Home, P Projects, Q Work, C Context, A Agents, . or S System, V Reviews, J Jobs, U Settings"),
+        ("G then H N D T P Q C A . S V J O M W R U", "Go to a page: H or N Home, D Decisions on Home, T Todo on Home, P Projects, Q Work, C Context, A Agents, . or S System, V Reviews, J Jobs, O Connections, M Memory, W Workflows, R Resources, U Settings"),
         ("J / K", "Next / previous row"),
         ("Enter / Esc", "Open the details panel / close the top layer"),
         ("O", "Open the linked page"),

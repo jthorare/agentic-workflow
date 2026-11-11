@@ -1,8 +1,0 @@
-[
-  {
-    "phase": "p1",
-    "question": "files",
-    "objection": "Allowed files omit the route's test project.",
-    "change": "Add tests/Links.Tests/** to p1's write scope."
-  }
-]

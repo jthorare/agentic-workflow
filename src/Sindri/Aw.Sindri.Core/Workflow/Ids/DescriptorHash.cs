@@ -14,8 +14,8 @@ namespace Aw.Sindri.Core.Workflow.Ids;
 [JsonConverter(typeof(StringIdJsonConverter<DescriptorHash>))]
 public readonly partial struct DescriptorHash : ITypedId<DescriptorHash, string>
 {
-    private static Vogen.Validation Validate(string value) =>
-        Shape.IsMatch(value) ? Vogen.Validation.Ok : Vogen.Validation.Invalid("A descriptor hash is 'sha256:' and 64 lower-case hex digits");
+    private static Validation Validate(string value) =>
+        Shape.IsMatch(value) ? Validation.Ok : Validation.Invalid("A descriptor hash is 'sha256:' and 64 lower-case hex digits");
 
     [GeneratedRegex("^sha256:[0-9a-f]{64}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

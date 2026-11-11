@@ -15,10 +15,9 @@ public static class HealthSummary
     /// <param name="running">Whether this process holds the lease.</param>
     /// <param name="views">The projector's status.</param>
     /// <param name="services">The services view's rows, or null when the views can't be read.</param>
-    /// <param name="profile">Where the profile stands against its approval.</param>
     /// <param name="context">The code index's problems and the clock's reading; none by default.</param>
     /// <returns>The health.</returns>
-    public static HealthReport For(bool running, ViewsStatus views, IReadOnlyList<ServiceRow>? services, ProfileApproval profile, HealthContext? context = null)
+    public static HealthReport For(bool running, ViewsStatus views, IReadOnlyList<ServiceRow>? services, HealthContext? context = null)
     {
         ArgumentNullException.ThrowIfNull(views);
         List<HealthProblem> problems = [];
@@ -34,7 +33,6 @@ public static class HealthSummary
         }
 
         problems.AddRange(FailedServices(services, context));
-        problems.AddRange(Profile(profile));
         var word = views.Stalled ? HealthWord.Stalled : views.Rebuilding || views.Starting ? HealthWord.Rebuilding : (problems.Count > 0 ? HealthWord.Degraded : HealthWord.Healthy);
         return new HealthReport(word, [.. problems], Sentence(word, problems));
     }
@@ -53,24 +51,6 @@ public static class HealthSummary
 
         var clause = stuck == 1 ? "1 workflow instance is stuck waiting" : string.Create(CultureInfo.InvariantCulture, $"{stuck} workflow instances are stuck waiting");
         var problems = report.Problems.Append(new HealthProblem("SND-ENGINE-002", $"{clause} on a signal or update with no timer: open the engine screen", clause)).ToList();
-        var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
-        return new HealthReport(word, problems, Sentence(word, problems));
-    }
-
-    /// <summary>A report that also counts the workflow instances parked as unavailable: a dependency a Step needs stayed down through its retries (API spec §3.8).</summary>
-    /// <param name="report">The report <see cref="For"/> folded.</param>
-    /// <param name="unavailable">The live instances parked with the reason 'unavailable'.</param>
-    /// <returns>The report; the same one when none are parked.</returns>
-    public static HealthReport WithUnavailable(HealthReport report, int unavailable)
-    {
-        ArgumentNullException.ThrowIfNull(report);
-        if (unavailable <= 0)
-        {
-            return report;
-        }
-
-        var clause = unavailable == 1 ? "1 workflow instance waits on a dependency that is down" : string.Create(CultureInfo.InvariantCulture, $"{unavailable} workflow instances wait on a dependency that is down");
-        var problems = report.Problems.Append(new HealthProblem("SND-ENGINE-003", $"{clause}: fix it, then run each again with `sindri workflow answer <address> --resume`", clause)).ToList();
         var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
         return new HealthReport(word, problems, Sentence(word, problems));
     }
@@ -127,18 +107,6 @@ public static class HealthSummary
         var problems = report.Problems.Append(new HealthProblem("SND-ENGINE-005", $"{clause}: its session was ended and the Step has not run again (sindri doctor names it)", clause)).ToList();
         var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
         return new HealthReport(word, problems, Sentence(word, problems));
-    }
-
-    private static IEnumerable<HealthProblem> Profile(ProfileApproval profile)
-    {
-        if (profile == ProfileApproval.Changed)
-        {
-            yield return new("SND-PROFILE-003", "The live profile changed since approval: run `sindri profile approve`", "the profile changed since approval");
-        }
-        else if (profile == ProfileApproval.NeedsApproval)
-        {
-            yield return new("SND-PROFILE-005", "Not approved: run `sindri profile approve`", "the profile isn't approved");
-        }
     }
 
     private static IEnumerable<HealthProblem> Views(ViewsStatus views)

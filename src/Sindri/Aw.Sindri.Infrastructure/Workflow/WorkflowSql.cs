@@ -20,9 +20,13 @@ internal static class WorkflowSql
 
     internal const string SlugTaken = "SELECT EXISTS (SELECT 1 FROM workflow WHERE slug = $slug)";
 
+    internal const string SlugTakenByArchived = "SELECT EXISTS (SELECT 1 FROM workflow WHERE slug = $slug AND archived_at IS NOT NULL)";
+
     internal const string Rename = "UPDATE workflow SET name = $name WHERE id = $id";
 
     internal const string Pin = "UPDATE workflow SET active_revision = $revision WHERE id = $id";
+
+    internal const string Unpin = "UPDATE workflow SET active_revision = NULL WHERE id = $id";
 
     internal const string Archive = "UPDATE workflow SET archived_at = $at, active_revision = NULL WHERE id = $id";
 

@@ -9,12 +9,6 @@ internal static partial class Labels
     /// <summary>The ninth tab's label.</summary>
     internal const string ReviewsTab = "Reviews";
 
-    /// <summary>The Reviews tab's label below 1,100 px (the screen-reader name keeps "Reviews").</summary>
-    internal const string ReviewsTabShort = "PRs";
-
-    /// <summary>The Workflows tab's label below 1,100 px (the screen-reader name keeps "Workflows").</summary>
-    internal const string WorkflowsTabShort = "Flows";
-
     /// <summary>The page's name.</summary>
     internal const string ReviewsPageTitle = "Reviews";
 
@@ -51,11 +45,11 @@ internal static partial class Labels
     /// <summary>The login prompt's Save button.</summary>
     internal const string ReviewsLoginSave = "Save";
 
-    /// <summary>Under the field after a save that waits for the profile approval (the answer's approved: false).</summary>
-    internal const string ReviewsLoginPending = "Saved. It takes effect once you approve the waiting profile change: sindri profile approve";
-
     /// <summary>The login field's name.</summary>
     internal const string ReviewsLoginFieldName = "GitHub login";
+
+    /// <summary>The line over the Connect GitHub action: what the page shows.</summary>
+    internal const string ReviewsConnectLine = "Pull requests waiting on your review, with their threads and checks.";
 
     /// <summary>The hint line under the list.</summary>
     internal const string ReviewsHint = "J K next / previous PR · Enter open · G V go to Reviews";

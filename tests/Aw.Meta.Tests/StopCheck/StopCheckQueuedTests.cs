@@ -10,7 +10,7 @@ public sealed class StopCheckQueuedTests
 {
     private readonly MetaWorld _world = new();
 
-    private StopCheckService Service() => new(_world.Session, _world.Sweep, _world.Guard, _world.Clock);
+    private StopCheckService Service() => new(_world.Session, _world.Sweep, _world.Guard, _world.Clock, _world.Beats);
 
     private async Task<StopCheckResponse> Check()
     {
@@ -29,7 +29,7 @@ public sealed class StopCheckQueuedTests
         _ = await _world.Messages.RecordOutbound(A.Sent("t1-api", "ack", 30), CancellationToken.None);
         var released = await Check();
 
-        Assert.Equal((true, ObligationKind.Reply, "m-2"), (blocked.Blocked, blocked.Open.Single().Kind, blocked.Open.Single().Key));
+        Assert.Equal((true, ObligationKind.Reply, "m-2"), (blocked.Blocked, blocked.Open.Single(o => o.Kind == ObligationKind.Reply).Kind, blocked.Open.Single(o => o.Kind == ObligationKind.Reply).Key));
         Assert.False(released.Blocked);
     }
 
@@ -64,6 +64,6 @@ public sealed class StopCheckQueuedTests
 
         var response = await Check();
 
-        Assert.Equal("d-9", response.Open.Single().Key);
+        Assert.Equal("d-9", response.Open.Single(o => o.Kind == ObligationKind.Reply).Key);
     }
 }

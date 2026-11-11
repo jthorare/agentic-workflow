@@ -1,7 +1,7 @@
 {
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
-  "title": "SND-SETUP-007",
+  "title": "SND-SETUP-004",
   "status": 409,
-  "detail": "no profile is approved yet (fix: sindri profile approve)",
+  "detail": "that folder is not in a repo the profile names (fix: sindri repo add <path>, then try again)",
   "traceId": "<trace>"
 }

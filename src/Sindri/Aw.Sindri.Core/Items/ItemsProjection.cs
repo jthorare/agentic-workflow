@@ -9,7 +9,7 @@ using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Core.Items;
 
-/// <summary>Folds 'item.created', 'item.state-changed', 'item.linked' and the requests and decisions about an item into the 'items' view (API spec §3.1): one row per item, keyed by its id, its text scrubbed and escaped. A 'new' item with a pending decision reads 'needs-decision'.</summary>
+/// <summary>Folds 'item.created', 'item.state-changed', 'item.linked', the requests and decisions about an item, and the end of a recipe-era root instance (state only) into the 'items' view (API spec §3.1): one row per item, keyed by its id, its text scrubbed and escaped. A 'new' item with a pending decision reads 'needs-decision'.</summary>
 /// <param name="events">Reads the payloads through the package's AwJson options.</param>
 /// <param name="scrubber">Scrubs secrets out of the text a row stores.</param>
 internal sealed partial class ItemsProjection(EventFactory events, ITextScrubber scrubber) : IProjection
@@ -26,9 +26,7 @@ internal sealed partial class ItemsProjection(EventFactory events, ITextScrubber
         || string.Equals(eventType, EventTypes.RequestFiled, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.DecisionRecorded, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.WorkflowStarted, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowTransition, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowRefused, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.WorkflowNotified, StringComparison.Ordinal);
+        || string.Equals(eventType, EventTypes.WorkflowTransition, StringComparison.Ordinal);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
@@ -52,9 +50,10 @@ internal sealed partial class ItemsProjection(EventFactory events, ITextScrubber
             return await Decided(recorded, rows, cancellationToken).ConfigureAwait(false);
         }
 
-        if (recorded.Envelope.Type.StartsWith("workflow.", StringComparison.Ordinal))
+        if (string.Equals(recorded.Envelope.Type, EventTypes.WorkflowStarted, StringComparison.Ordinal)
+            || string.Equals(recorded.Envelope.Type, EventTypes.WorkflowTransition, StringComparison.Ordinal))
         {
-            return await Engine(recorded, rows, cancellationToken).ConfigureAwait(false);
+            return await RecipeEra(recorded, rows, cancellationToken).ConfigureAwait(false);
         }
 
         var next = string.Equals(recorded.Envelope.Type, EventTypes.ItemStateChanged, StringComparison.Ordinal)
@@ -170,6 +169,12 @@ internal sealed partial class ItemsProjection(EventFactory events, ITextScrubber
         ArgumentNullException.ThrowIfNull(row);
         ArgumentNullException.ThrowIfNull(linked);
         ArgumentNullException.ThrowIfNull(recorded);
+        if (linked.Record.Value.StartsWith("sindri:run/", StringComparison.Ordinal))
+        {
+            // a run is shown in the 'item-links' view; it must not replace the item's tracker link or alias
+            return row with { UpdatedAt = recorded.Envelope.OccurredAt, Sequence = recorded.Sequence };
+        }
+
         return row with { Link = linked.Record, Alias = linked.Alias, UpdatedAt = recorded.Envelope.OccurredAt, Sequence = recorded.Sequence };
     }
 

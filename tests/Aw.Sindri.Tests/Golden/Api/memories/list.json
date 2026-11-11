@@ -1,0 +1,18 @@
+{
+  "memories": [
+    {
+      "name": "release-log",
+      "description": null,
+      "createdBy": "human:cli",
+      "createdAt": "2026-01-01T00:00:00.0000000Z",
+      "facts": 2
+    },
+    {
+      "name": "team-notes",
+      "description": null,
+      "createdBy": "human:cli",
+      "createdAt": "2026-01-01T00:00:00.0000000Z",
+      "facts": 1
+    }
+  ]
+}

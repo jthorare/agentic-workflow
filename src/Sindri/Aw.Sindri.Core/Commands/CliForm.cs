@@ -8,7 +8,7 @@ namespace Aw.Sindri.Core.Commands;
 
 /// <summary>
 /// A catalog row's CLI form (UI spec E-16): 'sindri' and checked parts only, so a copied command can't carry a newline,
-/// a bidi override or a second command. Parts are lower-case words, a fixed '--flag', a '&lt;placeholder&gt;' (or '&lt;id&gt;@&lt;hash&gt;', two of them joined by an '@') or an
+/// a bidi override or a second command. Parts are lower-case words, a fixed '--flag', a '&lt;placeholder&gt;' (or '&lt;id&gt;@&lt;hash&gt;' or '&lt;run&gt;/&lt;node&gt;', two of them joined by an '@' or a '/') or an
 /// '[optional part]' made of those; no control, bidi or invisible character anywhere. <see cref="Fill"/> puts typed
 /// ids in place of placeholders, and only ids whose text is safe on a command line.
 /// </summary>
@@ -92,7 +92,7 @@ public sealed partial record CliForm
     /// <summary>A placeholder name for an error message: itself when it is a plain name, else a fixed word.</summary>
     private static string Printable(string placeholder) => Placeholder.IsMatch(placeholder) ? placeholder : "that placeholder";
 
-    private const string Part = "(?:[a-z][a-z-]*|--[a-z][a-z-]*|<[a-zA-Z]+>(?:@<[a-zA-Z]+>)?)";
+    private const string Part = "(?:[a-z][a-z-]*|--[a-z][a-z-]*|<[a-zA-Z]+>(?:[@/]<[a-zA-Z]+>)?)";
 
     [GeneratedRegex("^sindri(?: " + Part + "| \\[" + Part + "(?: " + Part + ")*\\])*\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Shape { get; }

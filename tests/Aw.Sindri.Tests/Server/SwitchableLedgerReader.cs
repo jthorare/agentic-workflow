@@ -22,6 +22,9 @@ internal sealed class SwitchableLedgerReader(ILedgerReader inner) : ILedgerReade
     public ValueTask<Result<LedgerEvent?>> ByKey(string idempotencyKey, CancellationToken cancellationToken) =>
         Failing ? Failed<LedgerEvent?>() : inner.ByKey(idempotencyKey, cancellationToken);
 
+    public ValueTask<Result<LedgerEvent?>> LatestByKeyPrefix(string keyPrefix, CancellationToken cancellationToken) =>
+        Failing ? Failed<LedgerEvent?>() : inner.LatestByKeyPrefix(keyPrefix, cancellationToken);
+
     public ValueTask<Result<long>> Head(CancellationToken cancellationToken) =>
         Failing ? Failed<long>() : inner.Head(cancellationToken);
 

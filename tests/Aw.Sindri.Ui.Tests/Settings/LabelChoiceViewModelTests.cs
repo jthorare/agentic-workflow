@@ -11,7 +11,7 @@ public sealed class LabelChoiceViewModelTests
     private static LabelChoiceViewModel Line(string labelPick)
     {
         var line = new LabelChoiceViewModel();
-        line.Show(new ProfileView("a", "b", ChangedSinceApproval: false, Problem: null, Source: "/home/thor/profile.yaml", NeedsApproval: false, LabelPick: labelPick));
+        line.Show(new ProfileView("b", Problem: null, Source: "/home/thor/profile.yaml", LabelPick: labelPick));
         return line;
     }
 
@@ -29,7 +29,7 @@ public sealed class LabelChoiceViewModelTests
 
     [Fact]
     public void A_status_without_the_field_reads_as_off() =>
-        Assert.Equal("Label choice: off", Line(new ProfileView("a", "b", ChangedSinceApproval: false, Problem: null, Source: null, NeedsApproval: false).LabelPick).Line);
+        Assert.Equal("Label choice: off", Line(new ProfileView("b", Problem: null, Source: null).LabelPick).Line);
 
     [Fact]
     public void The_title_and_the_sentence_say_what_jev_reads_and_where_to_change_it()

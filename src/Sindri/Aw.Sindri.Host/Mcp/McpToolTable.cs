@@ -2,6 +2,7 @@ using System.Collections.Frozen;
 using System.Diagnostics;
 using Aw.Context.Core;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Toolkits;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
@@ -16,18 +17,18 @@ namespace Aw.Sindri.Host.Mcp;
 internal static class McpToolTable
 {
     private static readonly IReadOnlyList<Tool> _tools = [ContextTools.QueryTool, ContextTools.SourcesTool, ContextTools.LensesTool, ConceptTools.Tool, PageTools.Tool, GraphTools.NodeTool, GraphTools.NeighborsTool,
-        SindriTools.StatusTool, SindriTools.QueueTool, SindriTools.ItemTool, SindriTools.TimelineTool, SindriTools.PendingDecisionsTool, SindriTools.JobTool, SindriTools.ProjectsTool, SindriTools.RequestTool, .. ConnectionTools.All, .. MemoryTools.All];
+        SindriTools.StatusTool, SindriTools.QueueTool, SindriTools.ItemTool, SindriTools.TimelineTool, SindriTools.PendingDecisionsTool, SindriTools.JobTool, SindriTools.ProjectsTool, SindriTools.RequestTool, SindriTools.HandoffTool, SindriTools.TodosTool, SindriTools.TodoTool, .. ConnectionTools.All, .. MemoryTools.All, .. WorkflowReadTools.All, .. WorkflowTools.All, WorkflowAnswerTool.Tool, .. ResourceTools.All, .. ToolkitTools.Management];
 
     // why: only the context and graph tools read one repo's map; the sindri_* tools answer for every repo, as the same call does for a human
     private static readonly FrozenSet<string> _repoScoped = FrozenSet.Create(StringComparer.Ordinal,
         ContextTools.Query, ContextTools.Sources, ContextTools.Lenses, ConceptTools.Name, PageTools.Name, GraphTools.Node, GraphTools.Neighbors);
 
     /// <summary>tools/list: every tool, whatever the profile says (a refused call explains itself; context spec §8.6).</summary>
-    /// <param name="_">The request (unused).</param>
-    /// <param name="__">Unused.</param>
-    /// <returns>The tool list.</returns>
-    internal static ValueTask<ListToolsResult> List(RequestContext<ListToolsRequestParams> _, CancellationToken __)
-        => ValueTask.FromResult(new ListToolsResult { Tools = [.. _tools] });
+    /// <param name="request">The request.</param>
+    /// <param name="_">Unused.</param>
+    /// <returns>The static tools, then the tools of every running, unpaused toolkit.</returns>
+    internal static ValueTask<ListToolsResult> List(RequestContext<ListToolsRequestParams> request, CancellationToken _)
+        => ValueTask.FromResult(new ListToolsResult { Tools = [.. _tools, .. ToolkitTools.Running(request.Services?.GetService<IRunningToolkits>())] });
 
     /// <summary>tools/call: the named tool, or SND-CONTEXT-023.</summary>
     /// <param name="request">The request.</param>
@@ -37,17 +38,20 @@ internal static class McpToolTable
     {
         var call = request.Params!;           // why: the SDK sets Params on every tools/call
         var services = request.Services!;     // why: the SDK sets the request's services on every request
+        if (_tools.All(t => t.Name != call.Name) && ToolkitTools.IsToolkitTool(call.Name))
+        {
+            return ToolkitTools.Call(services, call.Name, call.Arguments, cancellationToken);
+        }
+
         if (_tools.All(t => t.Name != call.Name))
         {
             return ValueTask.FromResult(McpResults.Failure(services, ContextErrors.McpToolUnknown.With(
                 $"'{call.Name}' is not a Sindri MCP tool (fix: tools/list names them)")));
         }
 
-        if (_repoScoped.Contains(call.Name)
-            && services.GetRequiredService<ICallerContextAccessor>().Current?.Repo is null)
+        if (RepoMissing(call.Name, services) is { } refused)
         {
-            return ValueTask.FromResult(McpResults.Failure(services, ContextErrors.McpRepoMissing.With(
-                "the call has no X-Sindri-Repo header, so it has no repo scope (fix: run 'sindri mcp register' in the work repo and use that registration)")));
+            return ValueTask.FromResult(refused);
         }
 
         return Dispatch(services, call, cancellationToken);
@@ -77,11 +81,16 @@ internal static class McpToolTable
             SindriTools.Job => SindriTools.CallJob(services, call.Arguments, cancellationToken),
             SindriTools.Projects => SindriTools.CallProjects(services, call.Arguments, cancellationToken),
             SindriTools.Request => SindriTools.CallRequest(services, call.Arguments, cancellationToken),
-            ConnectionTools.List => ConnectionTools.CallList(services, call.Arguments, cancellationToken),
-            ConnectionTools.Get => ConnectionTools.CallGet(services, call.Arguments, cancellationToken),
-            ConnectionTools.Add => ConnectionTools.CallAdd(services, call.Arguments, cancellationToken),
-            ConnectionTools.Test => ConnectionTools.CallTest(services, call.Arguments, cancellationToken),
-            ConnectionTools.Remove => ConnectionTools.CallRemove(services, call.Arguments, cancellationToken),
+            SindriTools.Handoff => SindriTools.CallHandoff(services, call.Arguments, cancellationToken),
+            SindriTools.Todos => SindriTools.CallTodos(services, call.Arguments, cancellationToken),
+            SindriTools.Todo => SindriTools.CallTodo(services, call.Arguments, cancellationToken),
+            ConnectionTools.List or ConnectionTools.Get or ConnectionTools.Add or ConnectionTools.SignIn or ConnectionTools.Test or ConnectionTools.Remove => ConnectionTools.Call(call.Name, services, call.Arguments, cancellationToken),
+            WorkflowAnswerTool.Name => WorkflowAnswerTool.Call(services, call.Arguments, cancellationToken),
+            WorkflowTools.Create or WorkflowTools.ApplyOps or WorkflowTools.Replace or WorkflowTools.Validate or WorkflowTools.Activate or WorkflowTools.Pause or WorkflowTools.Delete or WorkflowTools.Run or WorkflowTools.Cancel or WorkflowTools.Docs or WorkflowTools.Blocks
+                => WorkflowTools.Call(call.Name, services, call.Arguments, cancellationToken),
+            WorkflowReadTools.List or WorkflowReadTools.Get or WorkflowReadTools.Runs or WorkflowReadTools.RunGet => WorkflowReadTools.Call(call.Name, services, call.Arguments, cancellationToken),
+            ToolkitTools.List or ToolkitTools.Create or ToolkitTools.Build or ToolkitTools.Start or ToolkitTools.Stop or ToolkitTools.Pause or ToolkitTools.Resume or ToolkitTools.Calls => ToolkitTools.CallManagement(call.Name, services, call.Arguments, cancellationToken),
+            ResourceTools.List or ResourceTools.Purge => ResourceTools.Call(call.Name, services, call.Arguments, cancellationToken),
             MemoryTools.List => MemoryTools.CallList(services, call.Arguments, cancellationToken),
             MemoryTools.Create => MemoryTools.CallCreate(services, call.Arguments, cancellationToken),
             MemoryTools.Search => MemoryTools.CallSearch(services, call.Arguments, cancellationToken),
@@ -90,4 +99,10 @@ internal static class McpToolTable
             _ => throw new UnreachableException($"McpToolTable lists '{call.Name}' but has no handler for it"),
         };
     }
+
+    private static CallToolResult? RepoMissing(string tool, IServiceProvider services) =>
+        _repoScoped.Contains(tool) && services.GetRequiredService<ICallerContextAccessor>().Current?.Repo is null
+            ? McpResults.Failure(services, ContextErrors.McpRepoMissing.With(
+                "the call has no X-Sindri-Repo header, so it has no repo scope (fix: run 'sindri mcp register' in the work repo and use that registration)"))
+            : null;
 }

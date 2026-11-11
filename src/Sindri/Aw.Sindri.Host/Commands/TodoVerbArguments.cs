@@ -5,10 +5,10 @@ using Aw.Sindri.Core;
 
 namespace Aw.Sindri.Host.Commands;
 
-/// <summary>Reads the arguments of 'sindri todos' and 'sindri todo show|add|edit|done|reopen|remove|restore|note' (todo spec §4.4) into one <see cref="Parsed"/>, or the usage error.</summary>
+/// <summary>Reads the arguments of 'sindri todos' and 'sindri todo show|add|edit|done|reopen|remove|restore|keep|note' (todo spec §4.4) into one <see cref="Parsed"/>, or the usage error.</summary>
 internal static class TodoVerbArguments
 {
-    internal const string Usage = "todos [--done | --all] [--json] [--fence | --no-fence] [--no-start] | todo show <id> [--json] | todo add <text> [--due DAY] [--link REF]... [--client-id ID] [--json] | todo edit <id> [--text T] [--due DAY | --no-due] [--link REF]... [--no-links] [--version N] | todo done|reopen|remove|restore <id> [--version N] | todo note [--json]";
+    internal const string Usage = "todos [--done | --all] [--json] [--fence | --no-fence] [--no-start] | todo show <id> [--json] | todo add <text> [--due DAY] [--link REF]... [--client-id ID] [--json] | todo edit <id> [--text T] [--due DAY | --no-due] [--link REF]... [--no-links] [--version N] | todo done|reopen|remove|restore <id> [--version N] | todo keep <id> sindri|obsidian [--json] | todo note [--json] | todo note import [--expect N] [--dry-run] [--json] [--no-start]";
 
     internal enum Verb
     {
@@ -21,7 +21,9 @@ internal static class TodoVerbArguments
         Reopen,
         Remove,
         Restore,
+        Keep,
         Note,
+        NoteImport,
     }
 
     internal static Result<Parsed> Parse(string[] args, DateOnly today)
@@ -36,6 +38,8 @@ internal static class TodoVerbArguments
             ["todo", "reopen", .. var r] => (Verb.Reopen, r),
             ["todo", "remove", .. var r] => (Verb.Remove, r),
             ["todo", "restore", .. var r] => (Verb.Restore, r),
+            ["todo", "keep", .. var r] => (Verb.Keep, r),
+            ["todo", "note", "import", .. var r] => (Verb.NoteImport, r),
             ["todo", "note", .. var r] => (Verb.Note, r),
             _ => (Verb.None, args),
         };
@@ -60,7 +64,7 @@ internal static class TodoVerbArguments
         return Shape(parsed, words, today) is { } wrong ? wrong : parsed;
     }
 
-    private static readonly HashSet<string> _valueFlags = new(StringComparer.Ordinal) { "--text", "--due", "--link", "--client-id", "--version" };
+    private static readonly HashSet<string> _valueFlags = new(StringComparer.Ordinal) { "--text", "--due", "--link", "--client-id", "--version", "--expect" };
 
     private static Result<int> Flag(Parsed parsed, string[] rest, int i, List<string> words, DateOnly today)
     {
@@ -101,6 +105,9 @@ internal static class TodoVerbArguments
             case "--done" or "--all" when parsed.Verb == Verb.List:
                 parsed.State = flag == "--done" ? "done" : "all";
                 return true;
+            case "--dry-run" when parsed.Verb == Verb.NoteImport:
+                parsed.DryRun = true;
+                return true;
             case "--no-due" when parsed.Verb == Verb.Edit:
                 parsed.ClearDue = true;
                 return true;
@@ -117,6 +124,7 @@ internal static class TodoVerbArguments
         "--text" => verb == Verb.Edit,
         "--due" or "--link" => verb is Verb.Add or Verb.Edit,
         "--client-id" => verb == Verb.Add,
+        "--expect" => verb == Verb.NoteImport,
         _ => verb is Verb.Edit or Verb.Done or Verb.Reopen or Verb.Remove or Verb.Restore,   // --version
     };
 
@@ -142,6 +150,14 @@ internal static class TodoVerbArguments
             case "--client-id":
                 parsed.ClientId = value;
                 break;
+            case "--expect":
+                if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var expect))
+                {
+                    return SindriErrors.InvalidInput.With($"--expect is a whole number, not '{value}': {Usage}");
+                }
+
+                parsed.Expect = expect;
+                break;
             default:
                 if (!long.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var version))
                 {
@@ -159,6 +175,8 @@ internal static class TodoVerbArguments
     {
         Verb.List or Verb.Note => words.Count > 0 ? SindriErrors.InvalidInput.With($"'{string.Join(' ', words)}' isn't expected here: {Usage}") : null,
         Verb.Add => AddShape(parsed, words, today),
+        Verb.Keep => KeepShape(parsed, words),
+        Verb.NoteImport => ImportShape(parsed, words),
         Verb.Show or Verb.Edit or Verb.Done or Verb.Reopen or Verb.Remove or Verb.Restore => IdShape(parsed, words),
         Verb.None => null,
         _ => null,
@@ -179,6 +197,23 @@ internal static class TodoVerbArguments
 
         parsed.Text = split.Value.Text;
         parsed.Due ??= split.Value.Due;
+        return null;
+    }
+
+    private static Error? ImportShape(Parsed parsed, List<string> words) =>
+        words.Count > 0 ? SindriErrors.InvalidInput.With($"'{string.Join(' ', words)}' isn't expected here: {Usage}")
+        : parsed.Expect is null && !parsed.DryRun ? SindriErrors.InvalidInput.With($"import needs --expect <n>, the count a --dry-run printed (fix: sindri todo note import --dry-run): {Usage}")
+        : null;
+
+    private static Error? KeepShape(Parsed parsed, List<string> words)
+    {
+        if (words.Count != 2 || words[1] is not ("sindri" or "obsidian"))
+        {
+            return SindriErrors.InvalidInput.With($"keep takes a todo id and the side to keep, sindri or obsidian: {Usage}");
+        }
+
+        parsed.Id = words[0];
+        parsed.Side = words[1];
         return null;
     }
 
@@ -221,6 +256,12 @@ internal static class TodoVerbArguments
 
         internal string? ClientId { get; set; }
 
+        internal string Side { get; set; } = string.Empty;
+
         internal long? Version { get; set; }
+
+        internal int? Expect { get; set; }
+
+        internal bool DryRun { get; set; }
     }
 }

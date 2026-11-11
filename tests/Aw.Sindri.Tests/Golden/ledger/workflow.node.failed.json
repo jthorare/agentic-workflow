@@ -1,0 +1,7 @@
+{
+  "runId": "nightly@3:12",
+  "nodeId": "notify",
+  "itemIndex": 0,
+  "error": "no channel",
+  "by": "service:workflow"
+}

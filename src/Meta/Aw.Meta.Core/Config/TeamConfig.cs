@@ -10,6 +10,7 @@ public sealed record TeamConfig
 {
 #pragma warning disable IDE0032 // the deserializer skips the initializer of a property that is not a constructor parameter, so a file without "routing" must still read as the defaults
     private RoutingConfig? _routing;
+    private DefectsConfig? _defects;
 #pragma warning restore IDE0032
 
     /// <summary>Creates a config.</summary>
@@ -29,6 +30,7 @@ public sealed record TeamConfig
     /// <param name="context">The lane context-window threshold for recycling; the defaults when absent.</param>
     /// <param name="usage">The usage-limit monitor's margin, probe interval and auto-resume; the defaults when absent.</param>
     /// <param name="agent">The catalog agent every lane runs, including the meta lane. Null leaves the choice to launcher.json.</param>
+    /// <param name="review">The reviewer lane; null means a pull request merges on a meta gate run only.</param>
     [JsonConstructor]
     public TeamConfig(
         string team,
@@ -46,7 +48,8 @@ public sealed record TeamConfig
         HeavyConfig? heavy = null,
         ContextConfig? context = null,
         UsageConfig? usage = null,
-        string? agent = null)
+        string? agent = null,
+        ReviewConfig? review = null)
     {
         Team = team;
         Repo = repo;
@@ -64,6 +67,7 @@ public sealed record TeamConfig
         Context = context ?? new ContextConfig();
         Usage = usage ?? new UsageConfig();
         Agent = agent;
+        Review = review;
     }
 
     /// <summary>The team name; session names are "team-lane".</summary>
@@ -113,6 +117,17 @@ public sealed record TeamConfig
 
     /// <summary>The catalog agent every lane runs, including the meta lane. Null leaves the choice to launcher.json.</summary>
     public string? Agent { get; init; }
+
+    /// <summary>The reviewer lane; null means a pull request merges on a meta gate run only.</summary>
+    public ReviewConfig? Review { get; init; }
+
+    /// <summary>Where toolkit defects are filed and the daily cap.</summary>
+    public DefectsConfig Defects
+    {
+        // Like Routing: kept out of the constructor (its complexity is at the limit), so a file without the block reads as the defaults here.
+        get => _defects ??= new DefectsConfig();
+        init => _defects = value;
+    }
 
     /// <summary>Which models each provider offers, which are equivalent, and when a lane should move.</summary>
     public RoutingConfig Routing

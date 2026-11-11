@@ -13,7 +13,7 @@ namespace Aw.Sindri.Ui.Tests.Projects;
 [Lane(TestLane.Unit)]
 public sealed class ProjectAddShellTests
 {
-    private const string Kitchen = "prj_0000000000000000000000000R";
+    private const string Kitchen = "prj_0000000000000000000000000F";
 
     private readonly InMemoryEndpointRecords _records = new();
     private readonly FakeSindriApi _server = new() { Catalog = RouteAnswer.Api("commands", "catalog"), NeedsYouView = RouteAnswer.Api("needs-you", "empty") };

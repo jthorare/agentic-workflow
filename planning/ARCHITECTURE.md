@@ -363,7 +363,7 @@ scheduled inside that process as services. Agent work stays in Claude Code sessi
 human's terminal; the human interjects by attaching or with `sindri open <item>`, and sessions reach Sindri through
 the CLI and a Sindri MCP server, as requests, never decisions. Overview: `docs/sindri/README.md`.
 
-Sindri is C# (`src/Sindri`), installed by `scripts/install-cs.sh` as `sindri` (framework-dependent; the Temporal worker cannot be trimmed) and `sindri-ui` (NativeAOT). State lives in `$AW_SINDRI_HOME` (ledger, views, the Temporal dev server's file); the reference for each part is `docs/csharp/sindri.md` (app shell), `docs/csharp/sindri-workflow.md` (the workflow engine and recipes), `docs/csharp/sindri-context.md` and `docs/sindri/context.md` (context retrieval), `docs/csharp/code-index.md` (the code index) and `docs/csharp/sindri-ui.md` (the app). The TypeScript Sindri (profile, ledger, observe, index, scope, evolve) is gone; its observe, scope and evolve ideas return as recipes, not commands.
+Sindri is C# (`src/Sindri`), installed by `scripts/install-cs.sh` as `sindri` (framework-dependent; the Temporal worker cannot be trimmed) and `sindri-ui` (NativeAOT). State lives in `$AW_SINDRI_HOME` (ledger, views, the Temporal dev server's file); the reference for each part is `docs/csharp/sindri.md` (app shell), `docs/csharp/sindri-graph.md` (the workflow graph engine), `docs/csharp/sindri-context.md` and `docs/sindri/context.md` (context retrieval), `docs/csharp/code-index.md` (the code index) and `docs/csharp/sindri-ui.md` (the app). The TypeScript Sindri (profile, ledger, observe, index, scope, evolve) is gone; its observe, scope and evolve ideas return as recipes, not commands.
 
 ## Key Rules
 

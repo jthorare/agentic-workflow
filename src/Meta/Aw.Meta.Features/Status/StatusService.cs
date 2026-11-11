@@ -2,7 +2,9 @@ using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Coordination;
+using Aw.Meta.Core.Defects;
 using Aw.Meta.Core.Gate;
+using Aw.Meta.Core.Obligations;
 using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Features.Status;
@@ -35,7 +37,27 @@ internal sealed class StatusService(IMetaConfig config, StatusReader status, IKe
         // The reservation and the advice are extras: a host or file that can't be read leaves them out instead of failing the status.
         var host = await resources.Read(cancellationToken).ConfigureAwait(false);
         var advice = host.IsError ? null : await advisor.Advise(team.Value, host.Value, refresh: true, cancellationToken).ConfigureAwait(false);
-        return read.Value with { Context = await status.Context(team.Value, cancellationToken).ConfigureAwait(false), LastHealth = stored.Value.Health, Train = await Train(stored.Value.Train, cancellationToken).ConfigureAwait(false), Heavy = advice?.IsSuccess == true ? advice.Value.Heavy : null, Builders = advice?.IsSuccess == true ? advice.Value.Builders : null };
+        return read.Value with { Context = await status.Context(team.Value, cancellationToken).ConfigureAwait(false), LastHealth = stored.Value.Health, Train = await Train(stored.Value.Train, cancellationToken).ConfigureAwait(false), Heavy = advice?.IsSuccess == true ? advice.Value.Heavy : null, Builders = advice?.IsSuccess == true ? advice.Value.Builders : null, Consumer = await Consumer(read.Value, cancellationToken).ConfigureAwait(false), Defects = await Defects(cancellationToken).ConfigureAwait(false) };
+    }
+
+    // An unreadable count leaves the line out rather than failing the status.
+    private async ValueTask<string?> Defects(CancellationToken cancellationToken)
+    {
+        var stored = await values.Get(KvKeys.DefectsDay, cancellationToken).ConfigureAwait(false);
+        if (stored.IsError)
+        {
+            return null;
+        }
+
+        var (_, skipped) = DefectDay.Parse(stored.Value, DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime));
+        return skipped > 0 ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"issue cap hit ({skipped} skipped)") : null;
+    }
+
+    // An unreadable heartbeat leaves the line out rather than failing the status.
+    private async ValueTask<string?> Consumer(StatusResponse read, CancellationToken cancellationToken)
+    {
+        var line = await ConsumerState.Read(values, read.Obligations.Count(static o => o.Kind == ObligationKind.Reply), clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        return line.IsError ? null : line.Value.Line;
     }
 
     // A board with a start and no end whose process is gone is a train that died without writing its end line (a SIGKILL, a power loss).

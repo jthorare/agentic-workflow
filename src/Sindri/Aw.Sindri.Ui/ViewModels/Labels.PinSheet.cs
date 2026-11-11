@@ -86,7 +86,7 @@ internal static partial class Labels
         string.Create(CultureInfo.InvariantCulture, $"{count} folder {(count == 1 ? "rule" : "rules")} (paths, dependsOn, owns). Set outside the app; kept as is.");
 
     /// <summary>The submit button at rest.</summary>
-    internal static string PinSheetSubmit(bool edit, bool approve) => (edit ? "Save" : "Pin") + (approve ? " and approve" : string.Empty);
+    internal static string PinSheetSubmit(bool edit) => edit ? "Save" : "Pin";
 
     /// <summary>The submit button while the write is in flight.</summary>
     internal static string PinSheetSubmitting(bool edit) => edit ? "Saving…" : "Pinning…";
@@ -95,7 +95,7 @@ internal static partial class Labels
     internal const string PinSheetUnpin = "Unpin";
 
     /// <summary>The Unpin question's confirm button at rest.</summary>
-    internal static string PinSheetUnpinConfirm(bool approve) => approve ? "Unpin and approve" : "Unpin";
+    internal const string PinSheetUnpinConfirm = "Unpin";
 
     /// <summary>The Unpin question's confirm button while the write is in flight.</summary>
     internal const string PinSheetUnpinning = "Unpinning…";
@@ -104,11 +104,9 @@ internal static partial class Labels
     internal const string PinSheetKeepPin = "Keep pin";
 
     /// <summary>The Unpin question.</summary>
-    internal static string PinSheetUnpinQuestion(string name, bool neverApproved, int folderRules)
+    internal static string PinSheetUnpinQuestion(string name, int folderRules)
     {
-        var text = neverApproved
-            ? "Drop the pin " + name + "? It was never approved, so nothing in the map changes."
-            : "Unpin " + name + "? It comes back as a suggestion once the map rebuilds.";
+        var text = "Unpin " + name + "? It comes back as a suggestion once the map rebuilds.";
         return folderRules > 0
             ? text + string.Create(CultureInfo.InvariantCulture, $" It also has {folderRules} folder {(folderRules == 1 ? "rule" : "rules")} set outside the app; Unpin removes {(folderRules == 1 ? "it" : "them")} too.")
             : text;

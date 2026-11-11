@@ -1,7 +1,5 @@
 using System.Globalization;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Core.Workflow.Blocks;
-using Aw.Sindri.Core.Workflow.Ids;
 
 namespace Aw.Sindri.Features.GetProfile;
 
@@ -19,16 +17,14 @@ internal sealed record ProfileChanges(IReadOnlyList<RepoEntry> NewRepos, IReadOn
     /// <summary>What <paramref name="live"/> asks for that <paramref name="approved"/> does not.</summary>
     /// <param name="approved">The approved profile, or null when nothing is approved yet.</param>
     /// <param name="live">The live profile.</param>
-    /// <param name="sentences">The plain sentence of each effect block.</param>
     /// <returns>The changes.</returns>
-    public static ProfileChanges Between(SindriProfile? approved, SindriProfile live, IBlockSentences sentences)
+    public static ProfileChanges Between(SindriProfile? approved, SindriProfile live)
     {
         ArgumentNullException.ThrowIfNull(live);
-        ArgumentNullException.ThrowIfNull(sentences);
         return new ProfileChanges(
             AbsentRepos(approved, live),
             [.. ServiceSentences(approved?.Services ?? SindriProfile.NoServices, live.Services ?? SindriProfile.NoServices)],
-            [.. NewEffects(approved, live, sentences).Concat(ProfileGroups.Allowance(approved, live))],
+            [.. NewEffects(approved, live).Concat(ProfileGroups.Allowance(approved, live))],
             [.. ProfileGroups.Connections(approved, live)],
             [.. ProfileGroups.HumanOnly(approved, live)]);
     }
@@ -50,10 +46,10 @@ internal sealed record ProfileChanges(IReadOnlyList<RepoEntry> NewRepos, IReadOn
         return [.. (live.Repos ?? []).Where(r => !named.Contains(r.Name))];
     }
 
-    private static IEnumerable<string> NewEffects(SindriProfile? approved, SindriProfile live, IBlockSentences sentences)
+    private static IEnumerable<string> NewEffects(SindriProfile? approved, SindriProfile live)
     {
         var allowed = (approved?.Workflow?.Effects ?? []).ToHashSet(StringComparer.Ordinal);
-        return (live.Workflow?.Effects ?? []).Where(e => !allowed.Contains(e)).Distinct(StringComparer.Ordinal).Select(e => EffectSentence(e, sentences));
+        return (live.Workflow?.Effects ?? []).Where(e => !allowed.Contains(e)).Distinct(StringComparer.Ordinal).Select(EffectSentence);
     }
 
     private static IEnumerable<string> ServiceSentences(IReadOnlyDictionary<string, ServiceSettings> approved, IReadOnlyDictionary<string, ServiceSettings> live)
@@ -71,10 +67,7 @@ internal sealed record ProfileChanges(IReadOnlyList<RepoEntry> NewRepos, IReadOn
         }
     }
 
-    private static string EffectSentence(string effect, IBlockSentences sentences) =>
-        BlockId.TryFrom(effect, out var id) && sentences.For(id) is { } sentence
-            ? sentence
-            : $"Allows the effect \"{Humanise(effect)}\"";
+    private static string EffectSentence(string effect) => $"Allows the effect \"{Humanise(effect)}\"";
 
     private static string Humanise(string effect) =>
         (effect.StartsWith("effect.", StringComparison.Ordinal) ? effect["effect.".Length..] : effect).Replace('.', ' ').Replace('-', ' ').Replace('_', ' ');

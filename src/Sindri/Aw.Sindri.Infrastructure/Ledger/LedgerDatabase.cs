@@ -123,9 +123,29 @@ internal sealed class LedgerDatabase : IDisposable
 
     /// <summary>The first migration with 'connection' (connections PR 10a); reads of an older file find no connection.</summary>
     internal const int ConnectionsVersion = 10;
+    /// <summary>The migration that dropped the recipe-era tables (issue 2258, PR 3).</summary>
+    internal const int RetireRecipesVersion = 12;
 
     /// <summary>The first migration with 'memory' and 'memory_fact' (agent-first PR 13); reads of an older file find no memory.</summary>
     internal const int MemoryVersion = 11;
+
+    /// <summary>The first migration with 'poll_cursor' (connections PR 11); reads of an older file find no cursor.</summary>
+    internal const int PollCursorsVersion = 13;
+
+    /// <summary>The first migration with 'workflow_seen' (agent-first PR 9); reads of an older file find nothing seen. The number is renumbered at the final main merge.</summary>
+    internal const int WorkflowSeenVersion = 14;
+
+    /// <summary>The first migration with 'resource' (agent-first PR 14); reads of an older file find no rows.</summary>
+    internal const int ResourcesVersion = 15;
+
+    /// <summary>The first migration with 'memory_fact.written_by' (#2460); reads of an older file find no writer.</summary>
+    internal const int MemoryFactWrittenByVersion = 16;
+
+    /// <summary>The first migration with 'memory_fact.refreshed_by' (#2505); reads of an older file find no refresher.</summary>
+    internal const int MemoryFactRefreshedByVersion = 17;
+
+    /// <summary>The first migration with 'toolkit' and 'toolkit_call' (agent-first PR 16); reads of an older file find no toolkit.</summary>
+    internal const int ToolkitsVersion = 18;
 
     private static IReadOnlyList<Migration> LoadMigrations()
     {

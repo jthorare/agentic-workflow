@@ -28,7 +28,13 @@ internal sealed class SqliteWorkflowStore(LedgerDatabase database, TimeProvider 
             var taken = await RecipeSessions.Exists(session, new SqlStatement(WorkflowSql.SlugTaken, c => c.Bind("$slug", slug.Value)), token).ConfigureAwait(false);
             if (taken.IsError || taken.Value)
             {
-                return taken.IsError ? taken.Error : SindriErrors.GraphSlugTaken.With($"the slug '{slug.Value}' belongs to another workflow; pick another");
+                if (taken.IsError)
+                {
+                    return taken.Error;
+                }
+
+                var archived = await RecipeSessions.Exists(session, new SqlStatement(WorkflowSql.SlugTakenByArchived, c => c.Bind("$slug", slug.Value)), token).ConfigureAwait(false);
+                return archived.IsError ? archived.Error : SindriErrors.GraphSlugTaken.With($"The short id '{slug.Value}' is taken by {(archived.Value ? "an archived" : "another")} workflow. Pick another.");
             }
 
             var inserted = await RecipeSessions.Execute(session, new SqlStatement(WorkflowSql.InsertWorkflow, c => c.Bind("$id", id.Value).Bind("$slug", slug.Value).Bind("$name", spec.Name).Bind("$by", createdBy), $"workflow {slug.Value}"), token).ConfigureAwait(false);
@@ -45,6 +51,12 @@ internal sealed class SqliteWorkflowStore(LedgerDatabase database, TimeProvider 
             if (record.IsError)
             {
                 return record.Error;
+            }
+
+            // why: the service read the record in an earlier transaction, so a delete can land in between; the archived check is repeated here
+            if (record.Value.ArchivedAt is not null)
+            {
+                return SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec under another slug (an archived slug stays reserved)");
             }
 
             if (record.Value.LatestRevision != baseRevision)
@@ -85,11 +97,24 @@ internal sealed class SqliteWorkflowStore(LedgerDatabase database, TimeProvider 
             var record = await RecordIn(session, id, token).ConfigureAwait(false);
             if (record.IsError || record.Value.ArchivedAt is not null)
             {
-                return record.IsError ? record.Error : SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec to run it again");
+                return record.IsError ? record.Error : SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec under another slug (an archived slug stays reserved) to run it again");
             }
 
             var pinned = await RecipeSessions.Execute(session, new SqlStatement(WorkflowSql.Pin, c => c.Bind("$id", id.Value).Bind("$revision", revision)), token).ConfigureAwait(false);
             return pinned.IsError ? pinned.Error : await RecordIn(session, id, token).ConfigureAwait(false);
+        }, cancellationToken);
+
+    public ValueTask<Result<WorkflowRecord>> Pause(WorkflowId id, CancellationToken cancellationToken) =>
+        RecipeSessions.Write(database, async ValueTask<Result<WorkflowRecord>> (session, token) =>
+        {
+            var record = await RecordIn(session, id, token).ConfigureAwait(false);
+            if (record.IsError)
+            {
+                return record;
+            }
+
+            var unpinned = await RecipeSessions.Execute(session, new SqlStatement(WorkflowSql.Unpin, c => c.Bind("$id", id.Value)), token).ConfigureAwait(false);
+            return unpinned.IsError ? unpinned.Error : await RecordIn(session, id, token).ConfigureAwait(false);
         }, cancellationToken);
 
     public ValueTask<Result<WorkflowRecord>> Archive(WorkflowId id, CancellationToken cancellationToken) =>

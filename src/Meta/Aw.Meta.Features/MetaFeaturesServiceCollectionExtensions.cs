@@ -3,6 +3,7 @@ using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Worktrees;
+using Aw.Meta.Features.BoardLine;
 using Aw.Meta.Features.CheckMerge;
 using Aw.Meta.Features.GateRerun;
 using Aw.Meta.Features.GateRun;
@@ -25,6 +26,7 @@ using Aw.Meta.Features.OwnerAnswer;
 using Aw.Meta.Features.OwnerAsk;
 using Aw.Meta.Features.QueueDrop;
 using Aw.Meta.Features.QueueGate;
+using Aw.Meta.Features.ReportDefect;
 using Aw.Meta.Features.Roles;
 using Aw.Meta.Features.Routing;
 using Aw.Meta.Features.ShowVersion;
@@ -105,10 +107,14 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Plain<LanesContextService, LanesContextRequest, LanesContextResponse>()
         .AddScoped<RecycleGuard>()
         .AddScoped<RecycleRunner>()
+        .AddScoped<RecycleSettler>()
         .AddScoped<SwitchRunner>()
+        .AddScoped<RecycleWaiter>()
         .AddScoped<LaneRecycleService>()
         .AddScoped<IValidator<LaneRecycleRequest>, LaneRecycleValidator>()
         .Validated<LaneRecycleService, LaneRecycleRequest, LaneRecycleResponse>()
+        .AddScoped<BoardLineService>()
+        .Plain<BoardLineService, BoardLineRequest, BoardLineResponse>()
         .AddScoped<LaneInboxService>()
         .Plain<LaneInboxService, LaneInboxRequest, LaneInboxResponse>()
         .AddScoped<LaneStopCheckService>()
@@ -131,6 +137,9 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<AppendLogService>()
         .AddScoped<IValidator<AppendLogRequest>, AppendLogValidator>()
         .Validated<AppendLogService, AppendLogRequest, AppendLogResponse>()
+        .AddScoped<ReportDefectService>()
+        .AddScoped<IValidator<ReportDefectRequest>, ReportDefectValidator>()
+        .Validated<ReportDefectService, ReportDefectRequest, ReportDefectResponse>()
         .AddScoped<QueueDropService>()
         .AddScoped<IValidator<QueueDropRequest>, QueueDropValidator>()
         .Validated<QueueDropService, QueueDropRequest, QueueDropResponse>()
@@ -152,6 +161,7 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<CheckMergeService>()
         .AddScoped<IValidator<CheckMergeRequest>, CheckMergeValidator>()
         .Validated<CheckMergeService, CheckMergeRequest, CheckMergeResponse>()
+        .AddScoped<MergeRecorder>()
         .AddScoped<MergeRunService>()
         .AddScoped<IValidator<MergeRunRequest>, MergeRunValidator>()
         .AddScoped<IService<MergeRunRequest, MergeRunResponse>>(static sp => new ValidatingService<MergeRunRequest, MergeRunResponse>(
@@ -173,6 +183,8 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Validated<UsageWaitService, UsageWaitRequest, UsageWaitResponse>()
         .AddScoped<WatchSweeper>()
         .AddScoped<WatchPoller>()
+        .AddScoped<GithubQueueWatch>()
+        .AddScoped<PollFollowUps>()
         .AddScoped<WatchService>()
         .AddScoped<IValidator<WatchRequest>, WatchValidator>()
         .Validated<WatchService, WatchRequest, WatchResponse>();

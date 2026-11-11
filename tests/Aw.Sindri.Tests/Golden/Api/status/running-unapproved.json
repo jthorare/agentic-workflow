@@ -4,17 +4,20 @@
   "epoch": 1,
   "leaseExpiresAt": "2026-01-01T00:01:00.0000000Z",
   "profile": {
-    "approved": null,
     "live": "70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261",
-    "changedSinceApproval": false,
     "problem": null,
     "source": "<home>/profile/profile.yaml",
-    "needsApproval": true,
     "modelPick": "off",
     "labelPick": "off",
     "surfacePick": "off"
   },
-  "services": [],
+  "services": [
+    {
+      "name": "heartbeat",
+      "every": "5s",
+      "lastRun": null
+    }
+  ],
   "apiVersion": 1,
   "views": {
     "cursor": 0,
@@ -27,15 +30,9 @@
     "text": null
   },
   "health": {
-    "word": "degraded",
-    "problems": [
-      {
-        "code": "SND-PROFILE-005",
-        "text": "Not approved: run `sindri profile approve`",
-        "clause": "the profile isn't approved"
-      }
-    ],
-    "sentence": "Sindri is degraded: the profile isn't approved."
+    "word": "healthy",
+    "problems": [],
+    "sentence": null
   },
   "sessions": {
     "live": 0,

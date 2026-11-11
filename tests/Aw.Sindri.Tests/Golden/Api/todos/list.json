@@ -1,7 +1,7 @@
 {
   "asOf": {
-    "cursor": 23,
-    "ledgerHead": 23,
+    "cursor": 19,
+    "ledgerHead": 19,
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
@@ -14,7 +14,7 @@
   },
   "todos": [
     {
-      "id": "td_0000000000000000000000000h",
+      "id": "td_00000000000000000000000008",
       "text": "renew the cert",
       "due": "2025-12-30",
       "links": [],
@@ -31,7 +31,7 @@
       "conflict": null
     },
     {
-      "id": "td_0000000000000000000000000r",
+      "id": "td_0000000000000000000000000f",
       "text": "reply to Sam about the offsite",
       "due": "2026-01-02",
       "links": [],
@@ -48,7 +48,7 @@
       "conflict": null
     },
     {
-      "id": "td_0000000000000000000000000z",
+      "id": "td_0000000000000000000000000p",
       "text": "rotate the staging key",
       "due": "2025-12-31",
       "links": [
@@ -76,7 +76,7 @@
       "conflict": null
     },
     {
-      "id": "td_00000000000000000000000016",
+      "id": "td_0000000000000000000000000x",
       "text": "check the flaky sync test",
       "due": null,
       "links": [],
@@ -93,7 +93,7 @@
       "conflict": null
     },
     {
-      "id": "td_0000000000000000000000001d",
+      "id": "td_00000000000000000000000014",
       "text": "answer the review comments on acme/web#40",
       "due": "2026-01-09",
       "links": [],
@@ -110,7 +110,7 @@
       "conflict": null
     },
     {
-      "id": "td_0000000000000000000000001m",
+      "id": "td_0000000000000000000000001b",
       "text": "book the offsite room",
       "due": null,
       "links": [],

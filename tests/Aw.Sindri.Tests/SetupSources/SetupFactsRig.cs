@@ -11,8 +11,7 @@ using Aw.Sindri.Features.SetupSources;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Testing;
-using Aw.Sindri.Tests.ApproveRecipe;
-using Microsoft.Extensions.DependencyInjection;
+using Aw.Sindri.Testing.Connections;
 
 namespace Aw.Sindri.Tests.SetupSources;
 
@@ -21,28 +20,42 @@ internal sealed class SetupFactsRig : IAsyncDisposable
 {
     internal const string Checkout = "/work/demo";
 
-    private readonly AsyncServiceScope _scope;
     private int _jobs;
 
     internal SetupFactsRig(FakeProviderHost? host = null)
     {
         Host = host ?? new FakeProviderHost().WithoutProvider(Core.Mcp.ProviderFile.Codex).WithoutProvider(Core.Mcp.ProviderFile.Cursor);
         Engine = MapEngineProxy.Create();
-        Registry = new RegistryHarness();
-        _scope = Registry.Services.CreateAsyncScope();
         Facts = new SetupFacts(
-            new ProfileSetupReader(Profiles, Profiles, new Core.Setup.RepoGitCache(Inspector, Clock)),
-            _scope.ServiceProvider.GetRequiredService<Core.Workflow.Registry.RecipeRegistryReader>(),
-            new Testing.Workflow.ApproveAll.FakeShippedRecipes([]),
-            new SourcesSetupReader(Profiles, FakeContextEngine.Instance, new PointerSecrets(name => Env.GetValueOrDefault(name), new FakeToolRunner(ToolRun.Missing))),
+            new ProfileSetupReader(Profiles, new Core.Setup.RepoGitCache(Inspector, Clock)),
+            Sources(new PointerSecrets(name => Env.GetValueOrDefault(name), new FakeToolRunner(ToolRun.Missing))),
             new McpSetupReader(Profiles, Host, Jobs, Queue),
             new MapSetupReader(Profiles, Engine.Proxy, Jobs));
     }
+
+    /// <summary>The Connections page's rows the sources step asks first (#2508).</summary>
+    internal InMemoryConnectionStore Connections { get; } = new();
+
+    /// <summary>The connections' tokens.</summary>
+    internal FakeConnectionSecrets ConnectionSecrets { get; } = new();
 
     /// <summary>The environment variables the token pointers (env:NAME) resolve against.</summary>
     internal Dictionary<string, string> Env { get; } = new(StringComparer.Ordinal);
 
     internal SliceHarness Slice { get; } = new();
+
+    /// <summary>Adds a connection of the preset with a stored token.</summary>
+    /// <param name="preset">The preset ('github', 'slack', 'linear').</param>
+    /// <param name="status">Its status.</param>
+    /// <returns>A task.</returns>
+    internal async Task Connect(string preset, Core.Connections.ConnectionStatus status)
+    {
+        var connection = ConnectionSamples.Oauth(ConnectionSamples.Name(preset, "work"), status);
+        _ = (await Connections.Insert(connection, Token)).Value;
+        _ = ConnectionSecrets.Store(connection.Name, new Core.Connections.TokenSet(preset + "-connection-token", RefreshToken: null, ExpiresAt: null)).Value;
+    }
+
+    private SourcesSetupReader Sources(PointerSecrets secrets) => new(Profiles, FakeContextEngine.Instance, secrets, new Core.Connections.ConnectionCredentials(Connections, ConnectionSecrets, secrets));
 
     internal InMemoryProfiles Profiles { get; } = new();
 
@@ -57,8 +70,6 @@ internal sealed class SetupFactsRig : IAsyncDisposable
     internal Features.SetupWatch.SetupJobQueue Queue { get; } = new(() => 0);
 
     internal MapEngineProxy Engine { get; }
-
-    internal RegistryHarness Registry { get; }
 
     internal SetupFacts Facts { get; }
 
@@ -132,10 +143,9 @@ internal sealed class SetupFactsRig : IAsyncDisposable
     internal static MapStatusView CurrentMap() =>
         new(new MapVersion(1, ContextRepoName.From("demo"), Commit: null, KeyVersion: 1, new DateTimeOffset(2026, 10, 19, 9, 0, 0, TimeSpan.Zero), MapVersionStatus.Current), new MapCounts(10, 5, 2, 1, 0), Orphaned: 0, Retained: 0, ScopedTo: null);
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         Queue.Dispose();
-        await _scope.DisposeAsync();
-        await Registry.DisposeAsync();
+        return ValueTask.CompletedTask;
     }
 }

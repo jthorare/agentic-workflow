@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
@@ -13,63 +12,80 @@ internal sealed partial class TopBar
     private const double ProblemsMax = 220;
 
     // The placeholder's target width is its text plus this: an exact fit trims on font rounding, and the pill's problem
-    // text gives way instead.
-    internal const double PlaceholderSlack = 12;
+    // text gives way instead. 4 px, not 12 (QA #2547): at 1280 px a short problem ("service broken failed") was 8 px short.
+    internal const double PlaceholderSlack = 4;
 
-    // What an arrange found the placeholder short by, taken off the cap for this width; reset when the width changes.
-    private double _loweredCap = double.PositiveInfinity;
-    private double _loweredFor = double.NaN;
+    // The pill without its problem text (the Refresh button, the glyph, the word, the age while shown), from the last
+    // whole measure of the bar, so every part of it comes from one layout (#2547: the group's width from one pass less
+    // the problem text's from the next swung the room by 180 px, and the bar never settled).
+    private double _pillRest;
+
+    // The age gives way before the problem text is trimmed (QA #2547): a short problem reads in full at 1280 px.
+    private bool _ageYields;
+
+    // What Full reserves for the ⌘K field: the column the field needs to show its whole placeholder (#2710), between SearchMin
+    // and SearchMax. "Full always means the whole placeholder". It must not read the field's size now: folded, the field's
+    // placeholder and keycap are hidden and it measures as its magnifier. So it is two parts that hold in both steps: the
+    // field's chrome (SearchChrome, summed from its fixed parts: the field's inner grid has a star column, so the field's own
+    // size would grow with the column it is given and Full would grow its own column), and the placeholder's own width from a TextLayout on
+    // SearchText's font, which follows a text-size change even while folded. The keycap's width is taken the next time it shows.
+    private double FullSearch()
+    {
+        var text = SearchText.Text ?? string.Empty;
+        using var layout = new TextLayout(text, new Typeface(SearchText.FontFamily, SearchText.FontStyle, SearchText.FontWeight), SearchText.FontSize, foreground: null);
+        return Math.Clamp(SearchChrome() + Math.Ceiling(layout.Width) + PlaceholderSlack, SearchMin, SearchMax);
+    }
+
+    private double NaturalProblems()
+    {
+        if (!PillProblems.IsVisible || PillProblems.Text is not { Length: > 0 } text)
+        {
+            return 0;
+        }
+
+        using var layout = new TextLayout(text, new Typeface(PillProblems.FontFamily, PillProblems.FontStyle, PillProblems.FontWeight), PillProblems.FontSize, foreground: null);
+        return Math.Min(ProblemsMax, Math.Ceiling(layout.Width) + 1);
+    }
 
     private void CapProblems(double width)
     {
-        if (width != _loweredFor)
-        {
-            _loweredCap = double.PositiveInfinity;
-        }
-
         if (double.IsInfinity(width) || Content is not Border bar)
         {
-            PillProblems.MaxWidth = ProblemsMax;
+            SetProblemsCap(ProblemsMax);
             return;
         }
 
-        double search;
-        if (_fit == Fit.Full)
-        {
-            SearchField.Measure(Size.Infinity);
-            search = Math.Clamp(SearchField.DesiredSize.Width + PlaceholderSlack, SearchMin, SearchMax);
-        }
-        else
-        {
-            search = _compactSearch;
-        }
+        var search = _fit == Fit.Full ? FullSearch() : _compactSearch;
 
-        var problems = PillProblems.IsVisible ? PillProblems.DesiredSize.Width + PillProblems.Margin.Left + PillProblems.Margin.Right : 0;
-        var others = bar.Padding.Left + bar.Padding.Right + Brand.DesiredSize.Width
-            + NavigationWidthWithCounts + search + PillGroup.DesiredSize.Width - problems;
-        PillProblems.MaxWidth = Math.Min(Math.Clamp(width - others - PillProblems.Margin.Left - PillProblems.Margin.Right, 0, ProblemsMax), _loweredCap);
+        var others = bar.Padding.Left + bar.Padding.Right + Brand.DesiredSize.Width + NavigationWidthAt(_fit) + search + _pillRest;
+        var room = width - others - PillProblems.Margin.Left - PillProblems.Margin.Right;
+        SetProblemsCap(Math.Clamp(YieldAge(room), 0, ProblemsMax));
     }
 
-    // After an arrange: if the placeholder is narrower than its text, the estimate above was short; take the shortfall
-    // (and 1 px) off the problem text and measure again. It only ever lowers the cap, so it ends when the text fits or
-    // the problem text is gone.
-    private bool LowerCapByShortfall(double width)
+    // A cap that moves by less than half a pixel stays: every new value measures the bar again.
+    private void SetProblemsCap(double cap)
     {
-        if (!SearchText.IsEffectivelyVisible || !PillProblems.IsEffectivelyVisible || PillProblems.MaxWidth <= 0 || SearchText.Text is not { Length: > 0 } text
-            || SearchColumn.ActualWidth >= SearchMax - 0.5)
+        if (Math.Abs(PillProblems.MaxWidth - cap) > 0.5)
         {
-            return false;
+            PillProblems.MaxWidth = cap;
         }
+    }
 
-        using var layout = new TextLayout(text, new Typeface(SearchText.FontFamily, SearchText.FontStyle, SearchText.FontWeight), SearchText.FontSize, foreground: null);
-        var shortfall = layout.Width + PlaceholderSlack - SearchText.Bounds.Width;
-        if (shortfall <= 0.5)
-        {
-            return false;
-        }
+    // Remembered after a whole measure: the pill's width less its problem text and that text's margin.
+    private void RememberPillRest()
+    {
+        var problems = PillProblems.IsVisible ? PillProblems.DesiredSize.Width : 0;
+        _pillRest = Math.Max(0, PillGroup.DesiredSize.Width - problems);
+    }
 
-        _loweredFor = width;
-        _loweredCap = Math.Max(0, Math.Min(PillProblems.MaxWidth, PillProblems.Bounds.Width) - shortfall - 1);
-        return true;
+    // Decides whether the age gives way to the problem text, applies it, and returns the room the problem text then has.
+    private double YieldAge(double room)
+    {
+        var ageSize = PillAgeText.Text is { Length: > 0 } ? _ageWidth + PillGroup.Spacing : 0;
+        var roomWithAge = room - (PillAge.IsVisible ? 0 : ageSize);
+        var natural = NaturalProblems();
+        _ageYields = natural > 0 && ageSize > 0 && natural > roomWithAge - (_ageYields ? Slack : 0);
+        PillAge.IsVisible = _fit < Fit.NoAge && !_ageYields;
+        return roomWithAge + (PillAge.IsVisible ? 0 : ageSize);
     }
 }

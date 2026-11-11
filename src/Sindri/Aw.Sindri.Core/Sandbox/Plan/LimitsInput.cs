@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Sandbox.Resources;
 
 namespace Aw.Sindri.Core.Sandbox.Plan;
 
@@ -10,4 +11,5 @@ namespace Aw.Sindri.Core.Sandbox.Plan;
 /// <param name="LongMax">'workflow.steps.longMax'.</param>
 /// <param name="RamBytes">The box's RAM.</param>
 /// <param name="Cores">The number of cores.</param>
-public sealed record LimitsInput(SandboxLimits? Limits, SandboxAttended? AttendedSettings, bool Attended, TimeSpan? StepTimeout, TimeSpan? LongMax, long RamBytes, int Cores);
+/// <param name="Override">A block's own per-run limits, or null; clamped to the profile and the box.</param>
+public sealed record LimitsInput(SandboxLimits? Limits, SandboxAttended? AttendedSettings, bool Attended, TimeSpan? StepTimeout, TimeSpan? LongMax, long RamBytes, int Cores, ResourceLimitOverride? Override = null);

@@ -6,31 +6,24 @@ namespace Aw.Sindri.Tests.Commands;
 public sealed class UsageTests
 {
     [Theory, Trait("Lane", "unit")]
-    [InlineData("start")]
-    [InlineData("status")]
-    [InlineData("list")]
-    [InlineData("events")]
-    [InlineData("answer")]
-    [InlineData("command")]
-    [InlineData("cancel")]
     [InlineData("complete")]
     public void Help_lists_every_workflow_verb(string verb) =>
         Assert.Single(Lines(), l => l.StartsWith($"sindri workflow {verb} ", StringComparison.Ordinal));
 
     [Fact, Trait("Lane", "unit")]
-    public void Help_lists_index_connect_linear_as_the_humans_verb() =>
-        Assert.Contains("SND-AUTH-002", Assert.Single(Lines(), l => l.TrimStart().StartsWith("sindri index connect linear", StringComparison.Ordinal)), StringComparison.Ordinal);
+    public void Help_lists_index_connect_linear_with_the_token_pointer_a_session_uses() =>
+        Assert.Contains("--token-env NAME", Assert.Single(Lines(), l => l.TrimStart().StartsWith("sindri index connect linear", StringComparison.Ordinal)), StringComparison.Ordinal);
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("takeover")]
     [InlineData("handback")]
     public void Help_lists_the_short_form_of_takeover_and_handback(string verb) =>
-        Assert.Single(Lines(), l => l.StartsWith($"sindri {verb} <item-or-address>", StringComparison.Ordinal));
+        Assert.Single(Lines(), l => l.StartsWith($"sindri {verb} <run> <node> [--item <index>]", StringComparison.Ordinal));
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("sindri repo onboard ", "never approves the profile")]
+    [InlineData("sindri repo onboard ", "never edits the profile")]
     [InlineData("sindri profile init ", "refuses when one exists")]
-    [InlineData("sindri profile set ", "never approves")]
+    [InlineData("sindri profile set ", "the edit is live at once")]
     public void Help_lists_repo_onboard_and_profile_init(string start, string says) =>
         Assert.Contains(says, Assert.Single(Lines(), l => l.StartsWith(start, StringComparison.Ordinal)), StringComparison.Ordinal);
 
@@ -91,61 +84,13 @@ public sealed class UsageTests
 
     /// <summary>Output.Error exits 1 only for 'not running' and 2 for everything else, malformed input included (review run 1).</summary>
     [Theory, Trait("Lane", "unit")]
-    [InlineData("start")]
-    [InlineData("status")]
-    [InlineData("list")]
-    [InlineData("events")]
-    [InlineData("answer")]
-    [InlineData("command")]
-    [InlineData("cancel")]
     [InlineData("complete")]
     public void Help_gives_every_workflow_verb_the_exit_codes_the_output_uses(string verb) =>
         Assert.Contains("1 not running, 2 invalid, refused or error", Assert.Single(Lines(), l => l.StartsWith($"sindri workflow {verb} ", StringComparison.Ordinal)), StringComparison.Ordinal);
 
-    [Theory, Trait("Lane", "unit")]
-    [InlineData("start", "[--json]")]
-    [InlineData("answer", "[--nonce <n>] [--json]")]
-    [InlineData("command", "[--nonce <n>] [--json]")]
-    [InlineData("cancel", "[--nonce <n>] [--json]")]
-    public void The_workflow_error_usage_names_the_flags_each_verb_takes(string verb, string flags)
-    {
-        var usage = WorkflowCommandTable.UsageText;
-        var verbs = new[] { "start", "status", "list", "events", "answer", "command", "cancel", "complete" };
-        var from = usage.IndexOf(verb == "start" ? "workflow start " : $" | {verb} ", StringComparison.Ordinal);
-        var end = verbs.Select(v => usage.IndexOf($" | {v} ", from + 1, StringComparison.Ordinal)).Where(i => i > 0).DefaultIfEmpty(usage.Length).Min();
-        var part = usage[from..end];
-
-        Assert.Contains(flags, part, StringComparison.Ordinal);
-    }
-
     [Fact, Trait("Lane", "unit")]
     public void Usage_lists_only_the_onyx_purge_verb() =>
         Assert.Equal(["sindri onyx down --purge"], Lines().Where(static l => l.Contains("sindri onyx", StringComparison.Ordinal)).Select(static l => l[..l.IndexOf("   ", StringComparison.Ordinal)]), StringComparer.Ordinal);
-
-    [Theory, Trait("Lane", "unit")]
-    [InlineData("pr babysit")]
-    [InlineData("docs sync")]
-    public void Usage_lists_the_hand_start_verbs_with_the_workflow_start_exit_codes(string verb)
-    {
-        var line = Assert.Single(Lines(), l => l.StartsWith($"sindri {verb} <url> [--item <id>] [--json]", StringComparison.Ordinal));
-
-        Assert.Contains("1 not running, 2 invalid, refused or error", line, StringComparison.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void Help_lists_the_skill_verbs_with_the_exit_codes_of_a_followed_run()
-    {
-        _ = Assert.Single(Lines(), l => l.StartsWith("sindri skills [--json] ", StringComparison.Ordinal));
-        var run = Assert.Single(Lines(), l => l.StartsWith("sindri skill run <id> ", StringComparison.Ordinal));
-
-        Assert.Contains("3 on another mapped outcome, 4 when the Step failed", run, StringComparison.Ordinal);
-        Assert.Contains("--skills <dir>", run, StringComparison.Ordinal);
-    }
-
-    [Theory, Trait("Lane", "unit")]
-    [InlineData("sindri recipe validate <file> [--json] [--skills <dir>]")]
-    [InlineData("sindri recipe eval <file> [--json] [--skills <dir>]")]
-    public void Help_lists_the_skills_flag_of_the_in_process_recipe_verbs(string start) => Assert.Single(Lines(), l => l.StartsWith(start, StringComparison.Ordinal));
 
     private static IEnumerable<string> Lines() => Usage.Text.Split('\n').Select(static l => l.Trim().Replace("usage: ", string.Empty, StringComparison.Ordinal));
 }

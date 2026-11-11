@@ -101,7 +101,7 @@ public sealed class CatalogFramesTests : IDisposable
 
         var banner = Named<Control>(window, "ViewsBanner");
         Assert.True(banner.IsEffectivelyVisible);
-        Assert.Equal("Views are stalled at 42: run `sindri views rebuild`", Named<TextBlock>(banner, "ViewsBannerText").Text);
+        Assert.Equal("Views are stalled at 42.", Named<TextBlock>(banner, "ViewsBannerText").Text);   // the button does what the command would: no command text beside it, and the sentence still ends
         Assert.True(Visible(banner, "StalledGlyph"));
         var run = Named<Button>(banner, "RunButton");
         Assert.Equal((true, "Rebuild views"), (run.IsEffectivelyEnabled, AutomationProperties.GetName(run)));
@@ -165,7 +165,7 @@ public sealed class CatalogFramesTests : IDisposable
         Assert.Contains("Copy: Run doctor", copies, StringComparer.Ordinal);
         Assert.All(page.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "TerminalGlyph"), g => Assert.Equal(AccessibilityView.Raw, AutomationProperties.GetAccessibilityView(g)));
         var blocks = page.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "CliText" && t.IsEffectivelyVisible).Select(t => t.Text).ToList();
-        Assert.All(["sindri profile init", "sindri launch init [--viewer <name>] [--force] [--stdout]", "sindri launch show [<id>] [--json]", "sindri doctor", "sindri line holdout show <line> <phase>", "sindri profile validate"], cli => Assert.Contains(cli, blocks, StringComparer.Ordinal));   // every row the app has no form for is a block, the cli-only ones among them
+        Assert.All(["sindri profile init", "sindri launch init [--viewer <name>] [--force] [--stdout]", "sindri launch show [<id>] [--json]", "sindri doctor", "sindri profile validate"], cli => Assert.Contains(cli, blocks, StringComparer.Ordinal));   // every row the app has no form for is a block, the cli-only ones among them
         Frame(window, "health-controls");
     });
 

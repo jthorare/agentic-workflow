@@ -30,6 +30,7 @@ internal static class HealthCommand
                 },
                 .. (health.Lanes ?? []).Select(static l => $"lane {l.Lane} ({l.Agent}): {l.State}"),
                 .. ContextLine.Of(health.Context),
+                .. health.Consumer is { } consumer ? [$"consumer: {consumer}"] : Array.Empty<string>(),
                 .. HeavyLocks(health),
                 .. Adaptation(health),
                 health.Attention ? "HEALTH ATTENTION" : "HEALTH OK",

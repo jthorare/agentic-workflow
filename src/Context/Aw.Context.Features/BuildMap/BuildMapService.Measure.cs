@@ -49,7 +49,7 @@ internal sealed partial class BuildMapService
         }
 
         return mapped.Value.Repos.Count == 0
-            ? ContextErrors.SettingsInvalid.With("context.repos: the profile maps no repo to build from (fix: add a repo to the profile and approve it)")
+            ? ContextErrors.SettingsInvalid.With("context.repos: the profile maps no repo to build from (fix: add a repo to the profile)")
             : mapped.Value;
     }
 

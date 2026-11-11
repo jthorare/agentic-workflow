@@ -12,7 +12,7 @@ using Aw.Sindri.Features.RecordServiceRun;
 namespace Aw.Sindri.Host.Server;
 
 /// <summary>
-/// Runs the background services the approved profile names, and the build's built-in services (engine spec §7.2 S1-D8),
+/// Runs the background services the profile names, and the build's built-in services (engine spec §7.2 S1-D8),
 /// on their cadence (factory addendum §17.29.1). It re-reads the approval once a second, so an approval takes effect
 /// without a restart; a failed run is logged and the next slot still runs, and an approval it can't read is logged once
 /// (SND-SCHED-001) while the current schedule keeps running. Each service runs on its own loop (S1-D10): a run still in
@@ -26,7 +26,6 @@ internal sealed partial class SchedulerHost(
     IServiceScopeFactory scopes, ScheduleInputs inputs, ServiceRunGuard guard, HeldLease held, ICallerContextAccessor callers, TimeProvider clock, ILogger<SchedulerHost> log)
     : BackgroundService
 {
-    private static readonly TimeSpan _tick = TimeSpan.FromSeconds(1);
     private readonly Dictionary<ServiceName, Task> _running = [];
     private IReadOnlyList<ServiceSchedule> _schedules = [];
     private LoadedProfile? _approved;
@@ -40,6 +39,7 @@ internal sealed partial class SchedulerHost(
     {
         while (!stoppingToken.IsCancellationRequested)
         {
+            AfterSleep();
             await Refresh(stoppingToken).ConfigureAwait(false);
             var grant = held.Current;
             if (grant is not null)
@@ -76,7 +76,7 @@ internal sealed partial class SchedulerHost(
         }
         catch (Exception e) when (!ct.IsCancellationRequested)   // boundary: a broken read (its own timeout too) must not stop the schedule
         {
-            approved = SindriErrors.ApprovalsUnavailable.With(e.Message);
+            approved = SindriErrors.ProfileInvalid.With(e.Message);
         }
 
         if (approved.IsError)
@@ -280,10 +280,10 @@ internal sealed partial class SchedulerHost(
         }
     }
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Schedule loaded from approved profile {Profile}: {Count} services")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Schedule loaded from profile {Profile}: {Count} services")]
     private static partial void LogSchedule(ILogger logger, string profile, int count);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "SND-SCHED-001 the approved profile couldn't be read: {Code} {Detail}; keeping the current schedule")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "SND-SCHED-001 the profile couldn't be read: {Code} {Detail}; keeping the current schedule")]
     private static partial void LogRefreshFailed(ILogger logger, string code, string detail);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "SND-SCHED-001 the paused services couldn't be read ({Detail}); keeping the last known set")]

@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text.Json;
 using Aw.Context.Testing.Fakes;
 using Aw.Context.Testing.Fixtures;
@@ -81,9 +80,6 @@ public sealed class ContextSyncGapsHostTests : IDisposable
             + "context:\n  docs: { globs: [\"docs/**/*.md\"] }\n  sources:\n"
             + $"    linear: {{ url: \"{linear.Url}\", token: \"env:{KeyVariable}\", teams: [SPL] }}\n";
         var host = await GoldenHost.Start(temporary: true, ct, yaml, new Dictionary<string, string>(StringComparer.Ordinal) { [KeyVariable] = linear.Token });
-        var hash = (await host.LiveHash(ct)).Value;
-        var approved = await host.Http.Ask(Post("/sindri/profile/approve", await ApiScenarios.Confirmed(host, hash), Human(host.Token.Value)));
-        Assert.Equal(HttpStatusCode.OK, approved.Status);
         await ContextMapApiTests.Import(host);
         return host;
     }

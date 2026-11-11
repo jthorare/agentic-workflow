@@ -13,6 +13,8 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="YamlDotNet" />
     <PackageReference Include="ModelContextProtocol.Core" />
+    <!-- the Code block's compiler (agent-first PR 9c): Roslyn at the central pin; Infrastructure is referenced only by the framework-dependent Host and the test projects, never by a NativeAOT binary -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,11 +31,18 @@
     <!-- the built-in style packs (line spec §5.1): config/packs/style/<id>/..., embedded as style-packs/<id>/<path> -->
     <StylePackFile Include="../../../config/packs/style/**/*" />
     <EmbeddedResource Include="@(StylePackFile)" LogicalName="style-packs/$([System.String]::Copy('%(RecursiveDir)').Replace('\', '/'))%(Filename)%(Extension)" />
+    <!-- the workflow docs (PR 8): docs/workflows/<slug>.md, embedded as workflow-docs/<slug>.md and searched by 'workflow_docs' -->
+    <WorkflowDocFile Include="../../../docs/workflows/*.md" />
+    <EmbeddedResource Include="@(WorkflowDocFile)" LogicalName="workflow-docs/%(Filename)%(Extension)" />
+    <!-- the pages of blocks outside the standard registry (flow and parking blocks): docs/workflows/blocks/<type>.md, embedded as workflow-docs/block-<type>.md so the picker reads their example spec; poll.md is the poll service's page, not a block -->
+    <WorkflowBlockDocFile Include="../../../docs/workflows/blocks/*.md" Exclude="../../../docs/workflows/blocks/poll.md" />
+    <EmbeddedResource Include="@(WorkflowBlockDocFile)" LogicalName="workflow-docs/block-%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- An empty glob embeds nothing and every pack lookup fails at run time (a publish copy tree without config/packs did): make it a build error. -->
   <Target Name="RequireLensPacks" BeforeTargets="BeforeBuild">
     <Error Condition="'@(LensPackFile)' == ''" Text="No lens pack to embed: ../../../config/packs/lenses/** matched nothing. A publish copy tree must carry config/packs (scripts/lib/sindri-build-inputs.sh)." />
+    <Error Condition="'@(WorkflowDocFile)' == ''" Text="No workflow doc to embed: ../../../docs/workflows/*.md matched nothing. A publish copy tree must carry docs/workflows (scripts/lib/sindri-build-inputs.sh)." />
     <Error Condition="'@(StylePackFile)' == ''" Text="No style pack to embed: ../../../config/packs/style/** matched nothing. A publish copy tree must carry config/packs (scripts/lib/sindri-build-inputs.sh)." />
   </Target>
 

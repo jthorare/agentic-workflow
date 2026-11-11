@@ -11,8 +11,8 @@ Examples use `~/code/my-app` as the work repo and `my-app` as its name in the pr
 
 ## Who runs what
 
-Some commands only a person may run, at a real terminal. Sindri refuses them to a CLI that can't read its token with
-`SND-AUTH-002` (see [Troubleshooting](#9-troubleshooting)). Each command below is marked:
+Some commands are best typed by a person at a real terminal (they ask you to confirm or paste a secret). An agent session is
+no longer refused them; `SND-AUTH-002` now means no caller context (see [Troubleshooting](#9-troubleshooting)). Each command below is marked:
 
 - **Human-only**: you type it in your own terminal (Terminal, iTerm, Warp), not inside Claude Code, Codex or Cursor.
 - **Agent OK**: read-only or harmless; an agent session may run it for you.
@@ -29,9 +29,9 @@ Some commands only a person may run, at a real terminal. Sindri refuses them to 
   │  context engine  ──► context.db: repo docs, product map; index.db: GitHub, Slack, Linear │
   │  MCP endpoint /sindri/mcp ◄── agent sessions in your work repo                           │
   └──────────────────────────────────────────────────────────────────────────────────────────┘
-        ▲ reads only the approved profile             │ searches
+        ▲ reads the live profile                      │ searches
         │                                             ▼
-   profile.yaml ── `profile approve` ──►     sources: GitHub, Slack, Linear (read-only tokens)
+   profile.yaml ── applies on save ────►     sources: GitHub, Slack, Linear (read-only tokens)
    recipes/*.yaml ── `recipe approve` ──►    the registry (workflow.line and its children)
 ```
 
@@ -40,7 +40,7 @@ Some commands only a person may run, at a real terminal. Sindri refuses them to 
 | Control plane | One process per box (`sindri serve`), holding the host lease. Every other command is a client of its API on `127.0.0.1` | `$AW_SINDRI_HOME/control.json`, `logs/serve.log` |
 | Ledger | Append-only SQLite log of every event; the views are rebuilt from it | `ledger.db`, `views.db` |
 | Temporal | The pinned `temporal server start-dev` that runs workflow instances. `serve` starts it and adopts it after a restart | `temporal.db`, `logs/temporal.log` |
-| Profile | Your config: repos, services, the context section. Sindri runs only an approved snapshot of it | `profile/profile.yaml`, `approved/` |
+| Profile | Your config: repos, services, the context section. Edits apply on save | `profile/profile.yaml` |
 | Record index | Sindri's own store of GitHub issues and PRs, Slack threads and Linear issues, fed by its own connectors with read-only tokens | `$AW_SINDRI_HOME` (one SQLite store), tokens in the OS keychain |
 | Product map | The graph of features, surfaces and code that Sindri proposes from the repo and you review | `context/context.db` |
 | Recipes | Declarative YAML workflows. `workflow.line` runs scoping, design, plan and a phase (build, prove, review, ship) as children | `recipes/sindri/` in this repo |
@@ -144,22 +144,14 @@ sindri profile validate
 
 ```text
 Profile valid: /Users/you/.agentic-workflow/sindri-app/profile/profile.yaml
-hash 73ce99109634266e86f2ee0bb4ad01f18604e53d0ded764669241d13ce95470b, not approved
+hash 73ce99109634266e86f2ee0bb4ad01f18604e53d0ded764669241d13ce95470b
 ```
 
-Approve it (**Human-only**). Without a hash it shows the hash and what changed; with the hash it asks you to type a
-challenge back:
+There is nothing to approve: edits apply on save. A valid profile is live as soon as it is written, and the running
+Sindri reads the live file. (`sindri profile approve` only prints `removed: edits apply on save`.) A bad edit is refused
+with its finding and changes nothing.
 
-```bash
-sindri profile approve              # preview: the live hash and the key paths changed since the last approval
-sindri profile approve 73ce9910…    # the full 64-digit hash; type 'approve profile 73ce99' when asked
-```
-
-Approving starts the control plane if it isn't running. Every later change to the profile (a new repo, a deny path, a
-limit) needs another `profile approve`; until then Sindri keeps running the previous approved snapshot, and `doctor`
-shows `warn profile` with the fix.
-
-**Add a repo** by adding an entry under `repos:` (and its name to `context.repos`), then validate and approve.
+**Add a repo** by adding an entry under `repos:` (and its name to `context.repos`), then validate.
 A repo's name must be letters, digits, `.`, `_` or `-`.
 
 ## 4. Start, status and doctor
@@ -175,7 +167,7 @@ A repo's name must be letters, digits, `.`, `_` or `-`.
 `status` when all is well:
 
 ```text
-  profile   /Users/you/.agentic-workflow/sindri-app/profile/profile.yaml (approved, hash 73ce99)
+  profile   /Users/you/.agentic-workflow/sindri-app/profile/profile.yaml (hash 73ce99)
   services  context-docs-refresh every 5m
   views     cursor 809 of 809
   health    healthy
@@ -190,7 +182,7 @@ A repo's name must be letters, digits, `.`, `_` or `-`.
 ok    lease             held by my-mac/53290 since 2026-10-19T18:32:02Z, epoch 6
 ok    ledger            schema 6/6
 ok    views             cursor 809 of head 809
-ok    profile           approved, hash 73ce99
+ok    profile           hash 73ce99
 ok    api               127.0.0.1:7410 answers (pid 53290, epoch 6)
 ok    temporal          127.0.0.1:53876 answers (pid 53346), version 1.9.1 as pinned, namespace sindri present
 ok    context:map       map v2 current (my-app, 412 nodes, 655 edges)
@@ -209,7 +201,7 @@ warn  codex:read-only   pending: owner probe (fix: …)
 | `lease` | One control plane holds the host lease | `warn` when nothing runs: start it |
 | `ledger` | The ledger's schema matches this build | `fail` `SND-LEDGER-001/002`: a build from another branch, or a disk problem |
 | `views` | The views have caught up with the ledger | `fail` stalled: `sindri views rebuild` |
-| `profile` | The live profile is the approved one | `warn` changed since approval: `sindri profile approve` |
+| `profile` | The live profile loads and validates | `fail`: the file is missing or has a finding; `sindri profile validate` names it |
 | `api` | The control plane answers on its port | not running: `sindri` |
 | `temporal` | The dev server answers, at the pinned version, with the `sindri` namespace | `fail`: `sindri stop`, then start again; see `logs/temporal.log` |
 | `context:map` | A current product map exists | none yet: [OPERATIONS.md](OPERATIONS.md) |
@@ -249,7 +241,7 @@ context:
 
 `context.index.windowDays` (default 183) is how many days back a first sync reads.
 
-**2. Connect** (**Human-only**: an agent session is refused, `SND-AUTH-002`):
+**2. Connect** (**Human-only**: it asks for the token at a terminal, or reads `--token-env`):
 
 ```bash
 sindri index connect github
@@ -266,7 +258,7 @@ keychain) and writes the secret pointer into the profile's `token` key. Make the
   listed private channels), in an app you install.
 - **Linear**: see [linear.md](linear.md).
 
-**3. Approve** (**Human-only**). Adding a token pointer or a source changes the profile, so approve again (step 3).
+**3. Save.** Adding a token pointer or a source changes the profile; the change applies on save.
 
 **4. Sync.** The built-in `index-sync` service runs it every 5 minutes while `serve` runs. By hand:
 
@@ -309,7 +301,7 @@ names. Without both, agent Steps fall to your desk too.
      agent: { target: claude-code }    # or codex, cursor, or an id you added to launcher.json
    ```
 
-3. Validate (**Agent OK**) and approve (**Human-only**) the profile, as in step 3.
+3. Validate (**Agent OK**) the profile, as in step 3.
 
 `doctor`'s `launcher` line shows the change. Before:
 
@@ -356,21 +348,15 @@ running the line) is in [OPERATIONS.md](OPERATIONS.md) until those move into the
 
 ## 9. Troubleshooting
 
-### `SND-AUTH-002`: a command only a person may run
+### `SND-AUTH-002`: no caller, or a local-only row
 
 ```text
-SND-AUTH-002 … (this CLI ran as a session: CLAUDE_CODE_ENTRYPOINT is set | parent process claude | no terminal)
+SND-AUTH-002 …
 ```
 
-Sindri splits its commands into classes. Approving config and recipes, starting, answering and completing workflows
-(`workflow start`, `answer`, `complete`, `command`, `cancel`, `handback`), building, reviewing and promoting the map,
-syncing sources, connecting and purging them, registering MCP, deciding, and starting or stopping the control plane are a person's
-decisions. An agent that could run them could approve its own recipes, widen its own config, sign off its own desk
-tasks and merge its own work. That is also why desk tasks are human-only by design: an agent may prepare a desk task's
-output files, but only you submit them with `workflow complete`. (An agent Step's own launched session reports its
-run with its launch secret; that is a different path, class `step-report`.)
-The CLI calls as `human` whenever it can read Sindri's per-start token file, so an agent session you start uses it as you
-would. A CLI that can't read the token calls as `session`, and the API refuses those classes with `SND-AUTH-002`.
+An agent session may run every command, so this code no longer means "a person only". The API answers it when a call carries
+no caller context (the CLI couldn't read Sindri's per-start token, or Sindri runs under another `AW_SINDRI_HOME`) or the
+action is a local-only row that never goes through the API. The ledger records who ran each command.
 
 Fix: run Sindri first (`sindri`), then run the command.
 
@@ -383,8 +369,7 @@ Fix: run Sindri first (`sindri`), then run the command.
 | `SND-AUTH-001` | The per-start human token is missing or stale | Rerun the command, or restart the app, after a restart of the control plane |
 | `SND-LEASE-001` | Another live process holds the host lease | One control plane per box: use the running one, or `sindri stop` |
 | `SND-CLI-002` | `serve` didn't come up, or Temporal didn't | `logs/serve.log`, `logs/temporal.log`; `scripts/binaries-lock.sh fetch temporal` |
-| `SND-PROFILE-003` | The hash you approved isn't the live profile's | Run `profile approve` without a hash and copy the new one |
-| `SND-PROFILE-006` | The approved snapshots can't be read or written | Check the permissions and free disk under `~/.agentic-workflow/sindri-app/approved/` |
+| `SND-PROFILE-003` | The `--if-hash` you passed isn't the live profile's: the file changed since you read it | Run `sindri profile validate` and use the new hash |
 | `SND-VIEW-001` | The views stalled | `sindri views rebuild` |
 | `SND-INDEX-009` | A source's token pointer doesn't resolve, or the source refused the token | `sindri index connect <source>` again |
 | `SND-INDEX-010` | A listed repo can't be read with that token | Give the token access to it, or take it out of the profile |
@@ -404,4 +389,4 @@ The full catalogue is in `docs/csharp/sindri.md` ("Errors") and `docs/sindri/con
 - How the pieces fit: [`docs/sindri-architecture.html`](../sindri-architecture.html).
 - Every feature, with status: [`docs/sindri.html`](../sindri.html).
 - References: `docs/csharp/sindri.md` (the CLI and control plane), `docs/csharp/sindri-profile.md`,
-  `docs/sindri/context.md`, `docs/sindri/sources.md`, `docs/csharp/sindri-workflow.md`, `docs/csharp/sindri-ui.md`.
+  `docs/sindri/context.md`, `docs/sindri/sources.md`, `docs/csharp/sindri-ui.md`.

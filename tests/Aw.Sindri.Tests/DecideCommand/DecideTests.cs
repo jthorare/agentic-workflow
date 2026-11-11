@@ -70,15 +70,16 @@ public sealed class DecideTests
     }
 
     [Fact]
-    public async Task A_session_Sindri_launched_cant_decide_and_records_nothing()
+    public async Task A_session_Sindri_launched_can_decide_and_the_event_names_it()
     {
         await Pending();
         using var entered = _h.Slice.Callers.Enter(A.Caller().Session().Build() with { Launch = LaunchId.From("LCH-00000000000000000000000000000001") });
 
         var result = await Service().Handle(A.DecideRequest().Choosing(_accept).Build(), Token);
 
-        Assert.Equal("SND-AUTH-002", result.IsError ? result.Error.Code : "accepted");
-        Assert.Empty(_h.Slice.Store.Events);
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        var recorded = Assert.Single(_h.Slice.Store.Events);
+        Assert.StartsWith("session:", recorded.Envelope.Actor, StringComparison.Ordinal);
     }
 
     [Fact]

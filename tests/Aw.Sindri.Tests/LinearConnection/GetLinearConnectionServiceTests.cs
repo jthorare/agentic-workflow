@@ -33,7 +33,7 @@ public sealed class GetLinearConnectionServiceTests
     public async Task The_owner_gets_the_facts_as_they_are()
     {
         using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
-        var view = new LinearConnectionView(new LinearKeyStateView("resolves", DateTimeOffset.UnixEpoch), new LinearKeyStateView("notSet", CheckedAt: null), [new LinearConnectionTeamView("t1", "ENG", "Engineering")], Pending: true);
+        var view = new LinearConnectionView(new LinearKeyStateView("resolves", DateTimeOffset.UnixEpoch), new LinearKeyStateView("notSet", CheckedAt: null), [new LinearConnectionTeamView("t1", "ENG", "Engineering")]);
         _ = _facts.Answering(view);
 
         var result = await Service().Handle(new GetLinearConnectionRequest(), Token);

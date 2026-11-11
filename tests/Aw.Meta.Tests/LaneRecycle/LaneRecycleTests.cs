@@ -26,11 +26,13 @@ public sealed class LaneRecycleTests
     private LaneRecycleService Service(Action? onWait = null)
     {
         var delay = onWait is null ? (IDelay)_world.Delay : new ClearTakesEffect(_world.Delay, onWait);
+        var runner = new RecycleRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.LaneFiles, _world.Log, delay, _world.Clock, new RecycleSettler(_world.Messages, _world.Sync, _world.Clock));
         return new LaneRecycleService(
             _world.Config,
             new RecycleGuard(_world.LaneFiles, _world.LaneSessions, _world.Digests, _world.Context, _world.Clock),
-            new RecycleRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.LaneFiles, _world.Log, delay, _world.Clock),
-            new SwitchRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.Runner, _world.Log, delay, _world.Clock));
+            runner,
+            new SwitchRunner(new PaneSubmitter(_world.Panes, delay), _world.LaneSessions, _world.Runner, _world.Log, delay, _world.Clock),
+            new RecycleWaiter(new InMemoryWaiterLauncher(), _world.LaneFiles, new InMemoryProcessLiveness(), new LaneBeats(_world.Values, delay), runner, _world.Log, _world.Clock));
     }
 
     private async Task Ready()
@@ -186,7 +188,7 @@ public sealed class LaneRecycleTests
         _ = _world.PutLane("ui", "codex");
 
         Assert.Equal(MetaErrors.RecycleRefused.Code, (await Run(lane: "ui")).Error.Code);
-        Assert.Equal(MetaErrors.UnknownLane.Code, (await Run(lane: "meta")).Error.Code);
+        Assert.Equal(MetaErrors.UnknownLane.Code, (await Run(lane: "nope")).Error.Code);
         Assert.Empty(_world.Panes.Woken);
     }
 
@@ -205,10 +207,67 @@ public sealed class LaneRecycleTests
         Assert.Equal(487_000L, result.Value.OldTokens);
     }
 
+    // #2661: one digest path per lane per day, so a second recycle that day finds the previous session's digest, under 2 hours old.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_digest_written_before_the_lanes_current_session_started_is_refused_naming_both_times()
+    {
+        await Ready();
+        _world.LaneFiles.Put(new LaneRecord("api", SessionId.From("s-old"), Agent: null, A.At(40)));
+        _world.Digests.Put(Digest, 1200, A.At(20));
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.Equal(MetaErrors.RecycleRefused.Code, result.Error.Code);
+        Assert.Contains(A.At(20).UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "Z", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains(A.At(40).UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "Z", result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(_world.Panes.Woken);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_digest_written_after_the_lanes_current_session_started_is_accepted()
+    {
+        await Ready();
+        _world.LaneFiles.Put(new LaneRecord("api", SessionId.From("s-old"), Agent: null, A.At(40)));
+        _world.Digests.Put(Digest, 1200, A.At(41));
+
+        var result = await Run(dryRun: true);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_dry_run_names_when_the_digest_was_last_written_and_when_the_lanes_session_started()
+    {
+        await Ready();
+        _world.LaneFiles.Put(new LaneRecord("api", SessionId.From("s-old"), Agent: null, A.At(40)));
+        _world.Digests.Put(Digest, 1200, A.At(41));
+
+        var result = await Run(dryRun: true);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal(
+            "digest last written " + A.At(41).UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "Z; lane's current session since " + A.At(40).UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "Z",
+            result.Value.DigestTimes);
+        Assert.Empty(_world.Panes.Woken);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_lane_with_no_recorded_session_time_is_checked_by_the_digests_age_only()
+    {
+        await Ready();
+        _world.LaneFiles.Put(new LaneRecord("api", SessionId.From("s-old"), Agent: null));
+        _world.Digests.Put(Digest, 1200, A.At(20));
+
+        var result = await Run(dryRun: true);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_digest_exactly_two_hours_old_is_accepted_and_one_second_older_is_refused()
     {
         await Ready();
+        _world.LaneFiles.Put(new LaneRecord("api", SessionId.From("s-old"), Agent: null, A.At(-120)));
         _world.Digests.Put("/at.md", 10, _world.Clock.GetUtcNow().AddHours(-2));
         _world.Digests.Put("/past.md", 10, _world.Clock.GetUtcNow().AddHours(-2).AddSeconds(-1));
 

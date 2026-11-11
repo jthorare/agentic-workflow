@@ -73,46 +73,13 @@ public sealed class ReviewsLoginTests
     public async Task A_session_refusal_shows_its_text()
     {
         var page = await Prompt();
-        _f.Server.ReviewLoginAnswer = RouteAnswer.Problem("reviews-login", "session");
+        _f.Server.ReviewLoginAnswer = RouteAnswer.Refused("review.login is the owner's to set; a session can't change it (fix: use Settings -> Reviews)");
 
         await page.SaveLogin(Token);
 
         Assert.Contains("review.login is the owner's to set", page.LoginError, StringComparison.Ordinal);
         Assert.Contains("SND-AUTH-002", page.LoginError, StringComparison.Ordinal);
         Assert.True(page.IsLoginPrompt);
-    }
-
-    [Fact]
-    public async Task A_save_that_waits_for_the_profile_approval_says_so_and_keeps_the_login()
-    {
-        var page = await Prompt();
-        page.LoginField = "joi-example";
-        _f.Server.ReviewLoginAnswer = RouteAnswer.Api("reviews-login", "pending");   // written, not in effect: the list still asks
-
-        await page.SaveLogin(Token);
-
-        Assert.Equal(Labels.ReviewsLoginPending, page.LoginNote);
-        Assert.Contains("sindri profile approve", page.LoginNote, StringComparison.Ordinal);
-        Assert.Equal(string.Empty, page.LoginError);
-        Assert.True(page.IsLoginPrompt);
-        Assert.Equal("joi-example", page.LoginField);
-    }
-
-    [Fact]
-    public async Task An_approved_save_or_a_refusal_clears_the_waiting_line()
-    {
-        var page = await Prompt();
-        _f.Server.ReviewLoginAnswer = RouteAnswer.Api("reviews-login", "pending");
-        await page.SaveLogin(Token);
-        _f.Server.ReviewLoginAnswer = RouteAnswer.Problem("reviews-login", "bad-login");
-
-        await page.SaveLogin(Token);
-
-        Assert.Equal(string.Empty, page.LoginNote);
-        _f.Server.ReviewLoginAnswer = RouteAnswer.Api("reviews-login", "saved");
-        _f.Serve("some");
-        await page.SaveLogin(Token);
-        Assert.Equal(string.Empty, page.LoginNote);
     }
 
     [Fact]

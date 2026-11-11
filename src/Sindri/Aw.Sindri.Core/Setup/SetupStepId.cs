@@ -14,10 +14,6 @@ public enum SetupStepId
     [JsonStringEnumMemberName("profile")]
     Profile,
 
-    /// <summary>The workflow recipes are approved.</summary>
-    [JsonStringEnumMemberName("recipes")]
-    Recipes,
-
     /// <summary>The agent is told where Sindri is, for each repo.</summary>
     [JsonStringEnumMemberName("mcp")]
     Mcp,

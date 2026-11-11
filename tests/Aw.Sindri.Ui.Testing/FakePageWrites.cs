@@ -11,26 +11,26 @@ internal sealed class FakePageWrites : IPageWrites
     private readonly Queue<PagesPreviewRead> _previews = new();
 
     /// <summary>Gets or sets the profile the fake reports; null makes it unreadable.</summary>
-    public ProfileWaiting? Profile { get; set; } = new("hash-1", []);
+    public ProfileHashes? Profile { get; set; } = new("hash-1");
 
     /// <summary>Gets every save asked for, in order.</summary>
     public List<SavedCall> Saves { get; } = [];
 
     /// <summary>Gets how many times the profile was read.</summary>
-    public int WaitingReads { get; private set; }
+    public int HashReads { get; private set; }
 
     /// <summary>Makes a page readable by its node key.</summary>
     /// <param name="key">The node key.</param>
     /// <param name="page">The page.</param>
     public void Add(string key, PageDraft page) => _pages[key] = page;
 
-    /// <summary>Queues the answer of the next save; once the queue is empty, saves answer Approved.</summary>
+    /// <summary>Queues the answer of the next save; once the queue is empty, saves answer Applied.</summary>
     /// <param name="saved">The answer.</param>
     public void Answer(PageSaved saved) => _answers.Enqueue(saved);
 
-    public Task<ProfileWaiting?> Waiting(CancellationToken cancellationToken)
+    public Task<ProfileHashes?> Hashes(CancellationToken cancellationToken)
     {
-        WaitingReads++;
+        HashReads++;
         return Task.FromResult(Profile);
     }
 
@@ -144,9 +144,9 @@ internal sealed class FakePageWrites : IPageWrites
         return ActionsFail ? null : ActionMatches;
     }
 
-    public Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken)
+    public Task<PageSaved> Save(PageSave save, string? ifHash, CancellationToken cancellationToken)
     {
-        Saves.Add(new SavedCall(save, ifHash, approve));
-        return Task.FromResult(_answers.Count > 0 ? _answers.Dequeue() : new PageSaved(approve ? PageSavedState.Approved : PageSavedState.Waiting));
+        Saves.Add(new SavedCall(save, ifHash));
+        return Task.FromResult(_answers.Count > 0 ? _answers.Dequeue() : new PageSaved(PageSavedState.Applied));
     }
 }

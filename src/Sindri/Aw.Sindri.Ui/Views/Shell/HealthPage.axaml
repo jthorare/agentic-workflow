@@ -68,15 +68,6 @@
         </StackPanel>
       </Border>
 
-      <!-- What the person must act on stays up front: the profile's approve command, and the problems with their codes. -->
-      <Border Classes="panel" IsVisible="{Binding HasProfileFix}">
-        <Border Classes="section last" IsVisible="{Binding HasProfileFix}">
-          <Border Classes="command" IsVisible="{Binding HasProfileFix}">
-            <TextBlock x:Name="ProfileFixText" Classes="mono" Text="{Binding ProfileFix}"
-                       AutomationProperties.Name="{Binding ProfileFix}" />
-          </Border>
-        </Border>
-      </Border>
       <!-- Code index spec 6.4 (F1P-c): the Context map card. The state is a glyph and a word, never colour alone; the sentences under it are Sindri's.
            It shows once the map's publish state has been read (a map exists), and stays up front: whether a map waits for the code index is what the person looks for. -->
       <Border x:Name="ContextMapPanel" Classes="panel" IsVisible="{Binding ContextMap.IsVisible}" AutomationProperties.Name="{Binding ContextMap.Name}">
@@ -85,7 +76,7 @@
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock x:Name="ContextMapEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Text.ContextMapCard}"
                          AutomationProperties.Name="{Binding Text.ContextMapCard}" />
-              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                 <icons:StateIcon x:Name="ContextMapGlyph" Glyph="{Binding ContextMap.Glyph}" VerticalAlignment="Center" />
                 <TextBlock x:Name="ContextMapState" Classes="body-strong" Text="{Binding ContextMap.State}" TextWrapping="Wrap"
                            AutomationProperties.Name="{Binding ContextMap.State}" />
@@ -164,7 +155,7 @@
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock x:Name="ControlPlaneEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Text.ControlPlaneCard}"
                            AutomationProperties.Name="{Binding Text.ControlPlaneCard}" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                   <icons:StateIcon x:Name="ProcessGlyph" Glyph="{Binding Pill.Glyph}" VerticalAlignment="Center" />
                   <TextBlock x:Name="ProcessWord" Classes="body-strong" Text="{Binding Pill.Word}" AutomationProperties.Name="{Binding Pill.Text}" />
                 </StackPanel>
@@ -194,7 +185,7 @@
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock x:Name="ProfileEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Text.ProfileCard}"
                            AutomationProperties.Name="{Binding Text.ProfileCard}" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                   <icons:StateIcon x:Name="ProfileHeadGlyph" Glyph="{Binding Detail.ProfileGlyph}" VerticalAlignment="Center" />
                   <TextBlock x:Name="ProfileHeadText" Classes="body-strong" Text="{Binding Detail.ProfileHead}"
                              AutomationProperties.Name="{Binding Detail.ProfileHead}" />
@@ -204,7 +195,8 @@
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:HealthCell">
                     <Grid Classes="row" ColumnDefinitions="130,*" AutomationProperties.Name="{Binding Label}">
-                      <TextBlock Classes="caption subtle row-label" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
+                      <!-- R12: a path's label takes the Mono line, as the value it sits beside does. -->
+                      <TextBlock Classes="caption subtle row-label" Classes.on-mono="{Binding IsPath}" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
                       <!-- S3: a path (the profile's file) is mono, as the Not running card's path is; other values are Body. -->
                       <TextBlock Grid.Column="1" Classes.body="{Binding !IsPath}" Classes.mono="{Binding IsPath}" Text="{Binding Value}"
                                  TextTrimming="PrefixCharacterEllipsis" AutomationProperties.Name="{Binding Value}" ToolTip.Tip="{Binding Value}" />

@@ -87,6 +87,27 @@ public sealed class TodoEventsTests
         Check(new TodoConflictReopened(_id, "session:mcp", "pipe"), ["id", "by", "via"]);
 
     [Fact, Trait("Lane", "unit")]
+    public void Held_names_changes_note_hash_by_and_via() =>
+        Check(new TodoNoteHeld([new TodoHeldChange(_id, "edited", "- [ ] x ^td-01jc5a8xq0n4w7ms2t9r3vbk6e")], "sha256:aa", "service:todo-note", "pipe"), ["changes", "noteHash", "by", "via"]);
+
+    [Fact, Trait("Lane", "unit")]
+    public void Held_resolved_names_kept_note_hash_count_by_and_via() =>
+        Check(new TodoNoteHeldResolved("applied", "sha256:aa", 2, "session:mcp", "pipe"), ["kept", "noteHash", "count", "by", "via"]);
+
+    [Fact, Trait("Lane", "unit")]
+    public void Held_reopened_names_by_and_via() =>
+        Check(new TodoNoteHeldReopened("human:cli", "pipe"), ["by", "via"]);
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_hold_event_types_are_the_spec_names_and_are_in_the_catalog()
+    {
+        string[] types = [EventTypes.TodoNoteHeld, EventTypes.TodoNoteHeldResolved, EventTypes.TodoNoteHeldReopened];
+
+        Assert.Equal(["todo.note.held", "todo.note.held.resolved", "todo.note.held.reopened"], types);
+        Assert.All(types, t => Assert.False(Assert.Single(EventCatalog.All, e => e.Type == t).Public));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void The_nine_event_types_are_the_spec_names_and_are_in_the_catalog()
     {
         string[] types =

@@ -37,15 +37,7 @@ internal sealed partial class ContextPageViewModel
         }
 
         var sheet = new PageSheetViewModel(writes, known: Known(), otherNames: section.NamesExcept(key), openConcept: concept is null ? null : ConceptChoice.BareId(concept));
-        sheet.Saved += (_, _) =>
-        {
-            if (key is not null && sheet.SavedId is { } id)
-            {
-                section.Remember(key, id);
-            }
-
-            _ = reread();
-        };
+        sheet.Saved += (_, _) => _ = reread();
         Show(sheet);
         _ = key is null ? sheet.OpenNew(CancellationToken.None) : sheet.OpenPage(key, CancellationToken.None);
     }

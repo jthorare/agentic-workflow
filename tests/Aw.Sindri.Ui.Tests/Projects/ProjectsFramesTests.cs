@@ -1,3 +1,5 @@
+using System.Globalization;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -37,7 +39,7 @@ public sealed class ProjectsFramesTests : FrameHost
         var (window, shell) = await OnProjects("mixed", width, height);
 
         Shown(window, shell);
-        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"projects-mixed-{width}"), prefix: string.Empty);
+        Frame(window, string.Create(CultureInfo.InvariantCulture, $"projects-mixed-{width}"), prefix: string.Empty);
     });
 
     [Fact]
@@ -79,8 +81,44 @@ public sealed class ProjectsFramesTests : FrameHost
         var (window, shell) = await OnProjects("empty-leads-nothing", 1440, 900);
 
         Shown(window, shell);
-        Assert.True(Visible(window, "ProjectsEmptyBlock"));
+        Assert.True(Visible(window, "ProjectsEmptyCard"));
         Frame(window, "projects-empty-leads-nothing-1440", prefix: string.Empty);
+    });
+
+    private static string ThreeInOneState()
+    {
+        var list = ProjectsFixture.Golden("mixed");
+        var projects = list["projects"]!.AsArray();
+        for (var i = 0; i < 2; i++)
+        {
+            var copy = projects[0]!.DeepClone();
+            copy["id"] = string.Create(CultureInfo.InvariantCulture, $"linear:project/00000000-0000-4000-8000-0000000000b{i}");
+            copy["name"] = string.Create(CultureInfo.InvariantCulture, $"Extra {i}");
+            projects.Insert(1, copy);
+        }
+
+        return list.ToJsonString();
+    }
+
+    [Theory]
+    [InlineData(1280, 900, 3)]
+    [InlineData(900, 900, 2)]
+    public Task Cards_fill_the_width_and_share_a_row_height_at(int width, int height, int across) => OnUi(async () =>
+    {
+        Server.ProjectsAnswer = new RouteAnswer(System.Net.HttpStatusCode.OK, ThreeInOneState());
+        var (window, shell) = await Connected(width: width, height: height);
+        shell.GoTo(PageId.Projects);
+        await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
+        Settle(window);
+
+        var group = Named<ItemsControl>(window, "ProjectsGroups").GetVisualDescendants().OfType<Border>().Where(b => b.Name == "ProjectCardFrame" && b.IsEffectivelyVisible).Take(3).ToList();
+        var tops = group.Select(c => Math.Round(c.TranslatePoint(default, window)!.Value.Y, MidpointRounding.AwayFromZero)).ToList();
+        var first = group.Where((_, i) => Math.Abs(tops[i] - tops[0]) < 1).ToList();
+        Assert.Equal(across, first.Count);
+        _ = Assert.Single(first.Select(c => Math.Round(c.Bounds.Height, MidpointRounding.AwayFromZero)).Distinct());
+        var right = first.Max(c => c.TranslatePoint(new Point(c.Bounds.Width, 0), window)!.Value.X);
+        var page = Named<StackPanel>(window, "ProjectsRoot").TranslatePoint(new Point(Named<StackPanel>(window, "ProjectsRoot").Bounds.Width, 0), window)!.Value.X;
+        Assert.InRange(page - right, 0, 14);   // the last card ends at the page's right edge, less its own 12 px margin
     });
 
     [Fact]
@@ -101,19 +139,19 @@ public sealed class ProjectsFramesTests : FrameHost
     public Task A_cards_sheet_at(int width, int height) => OnUi(async () =>
     {
         var (window, shell) = await OnProjects("mixed", width, height);
-        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_0000000000000000000000000H"));
+        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_00000000000000000000000008"));
         await Until(window, () => shell.ProjectSheet.IsShown, "the sheet never showed");
         Settle(window);
 
         Assert.True(shell.IsProjectSheet);
-        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"projects-sheet-{width}"), prefix: string.Empty);
+        Frame(window, string.Create(CultureInfo.InvariantCulture, $"projects-sheet-{width}"), prefix: string.Empty);
     });
 
     [Fact]
     public Task The_sheet_asking_to_remove() => OnUi(async () =>
     {
         var (window, shell) = await OnProjects("mixed", 1440, 900);
-        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_0000000000000000000000000H"));
+        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_00000000000000000000000008"));
         await Until(window, () => shell.ProjectSheet.IsShown && shell.ProjectSheet.CanRemove, "the sheet never offered Remove");
         shell.ProjectSheet.AskRemove();
         Settle(window);

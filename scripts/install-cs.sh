@@ -24,21 +24,18 @@
 # files never change):
 #   sindri       src/Sindri/Aw.Sindri.Host        framework-dependent (the Temporal worker cannot be trimmed)
 #   sindri-ui    src/Sindri/Aw.Sindri.Ui.Desktop  NativeAOT, with its native libraries
+#   sindri-code-runner  src/Sindri/Aw.Sindri.CodeRunner  framework-dependent (it loads an assembly the control plane compiled); no wrapper: sindri starts it from beside itself
 #   judge        src/Judge/Aw.Judge.Host          NativeAOT, with libe_sqlite3.* beside it
 #   aw-packets   src/Packets/Aw.Packets.App       NativeAOT
 #   bugfix-state src/BugFix/Aw.BugFix.Host        NativeAOT
 #   ui-evidence  src/Evidence/Aw.Evidence.Host    framework-dependent
 #   aw-readiness src/Readiness/Aw.Readiness.App   NativeAOT
-#   tlc/         the model-check runner, copied (scripts/tlc-check.sh, skills/formal-verify/scripts/tlc.sh and tla2tools.lock, at
-#                their repo-relative paths)
 # aw-meta is not here: it stays opt-in through scripts/install-meta.sh.
 #
 # Every published binary answers one state-free call before the build is made a candidate ("install didn't take" otherwise):
 #   sindri `help`; judge `health` (scratch AW_STATE_DIR, rules only); ui-evidence `version` (names the commit); aw-packets,
 #   bugfix-state and aw-readiness have no help or version route, so a no-argument call must exit below 126 with a usage line
 #   (scratch AW_STATE_DIR); sindri-ui is checked by presence only (any argument opens a window).
-# The shipped recipes are staged from HEAD (git archive) and embedded; their eval gate runs when the manifest digest differs
-# from the last successful publish's.
 #
 # Wrappers (~/.local/bin/{sindri,judge,bugfix-state,ui-evidence,aw-packets,aw-readiness}, each written to a temp file and
 # moved over any TS wrapper of the same name): export DOTNET_ROOT and exec bin/cs/current/<name> by its resolved path. The
@@ -55,8 +52,16 @@
 # (mode 755, part of the stamp, checked by verify), --link points $AW_STATE_DIR/bin-r1b/meta-gate-reserve at
 # bin/cs/current/meta-gate-reserve, refuses a build without it, and moves a real file there to meta-gate-reserve.pre-repo.
 #
+# The toolkit SDK (src/Toolkit/Aw.Sindri.Toolkit, package id Aw.Sindri.Toolkit): after the publish step (also when the build is
+# current) it is `dotnet pack`ed from a copy of the sources into the folder feed $AW_SINDRI_SDK_FEED (default
+# $AW_SINDRI_HOME/sdk/packages) as version 0.1.0-local.<UTC yyyyMMddHHmmss>, but only when its own inputs (src/Toolkit and the
+# root build files; the SDK has no Aw.Kernel dependency) changed since the stamp in <feed>/.sdk-stamp. The two
+# newest packages stay in the feed. Toolkits made by /new-toolkit restore it from there (floating 0.1.0-local.*). A checkout
+# without src/Toolkit/Aw.Sindri.Toolkit skips the step. `--dry-run` prints it. --link does not pack.
+#
 # Environment: AW_STATE_DIR (default ~/.agentic-workflow), CLAUDE_LOCAL_BIN (default ~/.local/bin), DOTNET_ROOT,
 #   AW_SINDRI_HOME (control.json for the running-serve guard; default $AW_STATE_DIR/sindri-app),
+#   AW_SINDRI_SDK_FEED (the toolkit SDK folder feed; default $AW_SINDRI_HOME/sdk/packages),
 #   AW_CS_SKIP_DOWNLOADS=1 skip the network steps (SDK install, temporal fetch, Chromium); the test's seam.
 set -euo pipefail
 
@@ -89,9 +94,6 @@ reserve="$state/bin-r1b/meta-gate-reserve"
 link_dir="${CLAUDE_LOCAL_BIN:-$HOME/.local/bin}"
 skip_dl="${AW_CS_SKIP_DOWNLOADS:-0}"
 BINARIES=(sindri judge bugfix-state ui-evidence aw-packets aw-readiness)
-# The model-check step's runner (sindri's step.model.check runs tlc/scripts/tlc-check.sh beside the binary). tlc.sh finds the
-# lock one directory above itself, so the repo's relative layout is kept. Each is also in SINDRI_BUILD_PATHSPECS.
-TLC_FILES=(scripts/tlc-check.sh skills/formal-verify/scripts/tlc.sh skills/formal-verify/tla2tools.lock)
 
 case "$(uname -s)/$(uname -m)" in
   Darwin/arm64) platform=osx-arm64 ;; Darwin/x86_64) platform=osx-x64 ;;
@@ -104,7 +106,6 @@ sdk="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$root/global.json" | head -1
 # The stamp: what the build is made of.
 commit="$(git -C "$root" rev-parse --verify -q HEAD 2> /dev/null || true)"
 [ -n "$commit" ] || die "the C# binaries can only be published from a git checkout"
-recipes_tree="$(git -C "$root" rev-parse --verify -q HEAD:recipes/sindri 2> /dev/null || true)"
 # shellcheck source=lib/sindri-build-inputs.sh
 source "$here/lib/sindri-build-inputs.sh"
 PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh scripts/meta-gate-reserve.sh config/lib/heavy-config.sh)
@@ -114,7 +115,7 @@ inputs="$(mktemp "${TMPDIR:-/tmp}/install-cs-inputs.XXXXXX")"
 git -C "$root" ls-files -z --cached --others --exclude-standard -- "${PATHSPECS[@]}" \
   | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$inputs"
 [ -s "$inputs" ] || die "no build inputs found under $root"
-stamp="$( { printf '%s\n' "$sdk" "$platform" "$commit" "$recipes_tree"; cat "$inputs"; (cd "$root" && git hash-object --stdin-paths < "$inputs"); } | sha256 | cut -c1-16)"
+stamp="$( { printf '%s\n' "$sdk" "$platform" "$commit"; cat "$inputs"; (cd "$root" && git hash-object --stdin-paths < "$inputs"); } | sha256 | cut -c1-16)"
 dirty=""
 if [ -n "$(git -C "$root" status --porcelain -- "${PATHSPECS[@]}" 2> /dev/null)" ]; then dirty="-dirty"; fi
 revision="$commit$dirty"
@@ -182,8 +183,7 @@ rename_over() { # rename_over <tmp> <final>: an atomic replace (rename(2)), also
 publish() {
   # 1. The pinned SDK and temporal.
   if [ "$dry" = 1 ]; then
-    say "[dry-run] would ensure the .NET SDK $sdk, fetch the pinned temporal CLI, and publish ${BINARIES[*]} sindri-ui into $base/$stamp"
-    say "[dry-run] would copy the model-check runner (${TLC_FILES[*]}) into $base/$stamp/tlc/, keeping the repo's layout"
+    say "[dry-run] would ensure the .NET SDK $sdk, fetch the pinned temporal CLI, and publish ${BINARIES[*]} sindri-ui sindri-code-runner into $base/$stamp"
     return 0
   fi
   local dotnet_root_given="${DOTNET_ROOT:-}" sdk_line sdk_dir
@@ -251,14 +251,6 @@ publish() {
   stage="$base/.stage.$$"
   rm -rf "$stage"; mkdir -p "$stage"
   (cd "$root" && tar -cf - -T "$inputs") | tar -xf - -C "$tree"
-  # The shipped recipes are HEAD's: an edited or untracked working-tree recipe is never embedded.
-  rm -rf "$tree/recipes/sindri"
-  if [ -n "$recipes_tree" ]; then
-    if ! git -C "$root" archive HEAD recipes/sindri 2>> "$log" | tar -xf - -C "$tree" 2>> "$log"; then
-      rm -rf "$tree/recipes/sindri"; tail -5 "$log" >&2
-      die "could not stage recipes/sindri from HEAD (git archive failed)"
-    fi
-  fi
   if [ -n "$dirty" ]; then say "the working tree has uncommitted changes under the build paths; the build is stamped $revision"; fi
 
   local stampargs=(-p:SourceRevisionId="$revision" -p:AwBuildTime="$when")
@@ -275,7 +267,8 @@ publish() {
     rm -rf "$out"
   }
   local aot=(-r "$platform" -p:RestoreLockedMode=false)
-  pub sindri src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj --no-self-contained -p:AwRecipesDir="$tree/recipes/sindri"
+  pub sindri src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj --no-self-contained
+  pub sindri-code-runner src/Sindri/Aw.Sindri.CodeRunner/Aw.Sindri.CodeRunner.csproj --no-self-contained
   pub ui-evidence src/Evidence/Aw.Evidence.Host/Aw.Evidence.Host.csproj --no-self-contained
   # Keep sindri-ui BEFORE judge: pub() keeps the first file of a name, so the staged libSkiaSharp.so is sindri-ui's (SkiaSharp.NativeAssets.Linux,
   # which links fontconfig, so Avalonia finds system fonts), not judge's NoDependencies build. check_skia_fontconfig fails the install if that flips.
@@ -284,13 +277,6 @@ publish() {
   pub aw-packets src/Packets/Aw.Packets.App/Aw.Packets.App.csproj "${aot[@]}"
   pub bugfix-state src/BugFix/Aw.BugFix.Host/Aw.BugFix.Host.csproj "${aot[@]}"
   pub aw-readiness src/Readiness/Aw.Readiness.App/Aw.Readiness.App.csproj "${aot[@]}"
-
-  local t
-  for t in "${TLC_FILES[@]}"; do
-    [ -f "$tree/$t" ] || die "the model-check runner file $t is missing from the build inputs"
-    mkdir -p "$stage/tlc/$(dirname "$t")"
-    cp -p "$tree/$t" "$stage/tlc/$t"
-  done
 
   check_skia_fontconfig "$stage"
 
@@ -306,31 +292,10 @@ publish() {
   # 3. "Install didn't take": each binary answers its state-free call, in a scratch state dir and with no inherited environment.
   verify "$stage" "$revision" "$tree/scripts/heavy.sh" "$tree/scripts/meta-gate-reserve.sh"
 
-  # 4. The recipe evals, with the published binary over the staged set, before the build becomes a candidate. --skills: a recipe that names a skill block is checked against the manifests this checkout ships.
-  local digest="" manifest evals staged_count embedded_count
-  if [ -n "$recipes_tree" ]; then
-    manifest="$(AW_STATE_DIR="$tree/.state" "$stage/sindri" recipe manifest "$tree/recipes/sindri" --json 2>> "$log" < /dev/null)" \
-      || { tail -20 "$log" >&2; die "reading the shipped recipes' manifest failed"; }
-    digest="$(printf '%s' "$manifest" | jq -r '.digest // empty' 2> /dev/null || true)"
-    [ -n "$digest" ] || die "the shipped recipes' manifest has no digest (a recipe does not read)"
-    if [ "$digest" = "$(cat "$base/recipes-digest" 2> /dev/null || true)" ]; then
-      say "the shipped recipes are unchanged since the last publish; evals skipped"
-    else
-      say "running the shipped recipes' evals"
-      evals="$(AW_STATE_DIR="$tree/.state" "$stage/sindri" recipe eval --shipped --skills "$root/skills" --json 2>> "$log" < /dev/null)" \
-        || { printf '%s\n' "$evals" >&2; tail -20 "$log" >&2; die "recipe evals failed; no build was made (sindri recipe eval --shipped)"; }
-      staged_count="$(find "$tree/recipes/sindri" -maxdepth 1 -name '*.yaml' | wc -l | tr -d ' ')"
-      embedded_count="$(printf '%s' "$evals" | jq -r '.recipes | length' 2> /dev/null || true)"
-      [ "$embedded_count" = "$staged_count" ] \
-        || die "the build embeds ${embedded_count:-?} recipes but recipes/sindri has $staged_count (AwRecipesDir); eval output: $(printf '%s' "$evals" | head -c 300)"
-    fi
-  fi
-
-  printf 'commit=%s\nrecipes-tree=%s\nbuilt=%s\n' "$revision" "$recipes_tree" "$when" > "$stage/build-info"
+  printf 'commit=%s\nbuilt=%s\n' "$revision" "$when" > "$stage/build-info"
   rm -rf "$tree"; tree=""
   rm -rf "$base/$stamp"
   mv "$stage" "$base/$stamp"; stage=""
-  if [ -n "$digest" ]; then printf '%s\n' "$digest" > "$base/recipes-digest"; fi
   say "built $base/$stamp ($revision)"
   prune
 }
@@ -351,7 +316,7 @@ check_skia_fontconfig() { # check_skia_fontconfig <dir>
 verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source>
   local d="$1" rev="$2" src="$3" rsrc="$4" scratch b out rc
   scratch="$(mktemp -d "$cache/verify.XXXXXX")"
-  for b in "${BINARIES[@]}" sindri-ui; do
+  for b in "${BINARIES[@]}" sindri-ui sindri-code-runner; do
     [ -x "$d/$b" ] || { rm -rf "$scratch"; die "install didn't take: $d/$b is missing or not executable"; }
   done
   run() { env -i HOME="$scratch" PATH="/usr/bin:/bin" DOTNET_ROOT="$DOTNET_ROOT" AW_STATE_DIR="$scratch/state" AW_JUDGE_PROVIDERS=rules \
@@ -411,15 +376,14 @@ write_wrapper() { # write_wrapper <name>
   mv -f "$tmp" "$target"
 }
 
-# A build swap can leave the stored profile approval unreadable or not current (#1143): say the one command, never fail the install over it.
+# A build swap can leave the live profile unreadable by the new build: say the one command, never fail the install over it.
 profile_hint() {
   local out rc=0
   [ -x "$link_dir/sindri" ] || return 0
   out="$(cd / && "$link_dir/sindri" profile validate < /dev/null 2>&1)" || rc=$?
   case "$rc:$out" in
     0:*) ;;
-    *:*SND-PROFILE-005*) say "the profile approval can't be read by build $stamp; run \`sindri profile approve\` to see the live hash, then \`sindri profile approve <hash>\`" ;;
-    1:*) say "the profile isn't approved by this build; run \`sindri profile approve\`" ;;
+    *) say "the profile doesn't validate with this build; run \`sindri profile validate\` to see why (edits apply on save, there is nothing to approve)" ;;
   esac
   return 0
 }
@@ -477,6 +441,54 @@ link_through_current() { # link_through_current <name> <target path>; through cu
   say "$name -> $want"
 }
 
+# --- toolkit SDK package ---------------------------------------------------------------------------------------------
+sdk_feed="${AW_SINDRI_SDK_FEED:-${AW_SINDRI_HOME:-$state/sindri-app}/sdk/packages}"
+SDK_PROJECT=src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj
+# why: Directory.Build.targets gives every production project an analyzer reference to src/Aw.Analyzers, so the copy needs it
+SDK_PATHSPECS=(global.json nuget.config .editorconfig 'Directory.*' 'BannedSymbols*.txt' CodeMetricsConfig.txt src/Aw.Analyzers src/Toolkit)
+pack_sdk() {
+  [ -f "$root/$SDK_PROJECT" ] || return 0   # a checkout without the SDK has nothing to pack
+  if [ "$dry" = 1 ]; then
+    say "[dry-run] would pack $SDK_PROJECT into $sdk_feed (only when src/Toolkit or its build inputs changed since the last pack)"
+    return 0
+  fi
+  local list want have
+  list="$(mktemp "${TMPDIR:-/tmp}/install-cs-sdk.XXXXXX")"
+  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${SDK_PATHSPECS[@]}" \
+    | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$list"
+  want="$( { printf '%s\n' "$sdk"; cat "$list"; (cd "$root" && git hash-object --stdin-paths < "$list"); } | sha256 | cut -c1-16)"
+  have="$(cat "$sdk_feed/.sdk-stamp" 2> /dev/null || true)"
+  if [ "$rebuild" = 0 ] && [ "$want" = "$have" ] && ls "$sdk_feed"/Aw.Sindri.Toolkit.*.nupkg > /dev/null 2>&1; then
+    say "toolkit SDK package is current ($sdk_feed)"
+    rm -f "$list"; return 0
+  fi
+  export DOTNET_ROOT="${DOTNET_ROOT:-$HOME/.dotnet}"
+  export PATH="$DOTNET_ROOT:$PATH"
+  mkdir -p "$cache" "$sdk_feed"
+  local ptree version out="$cache/pack-sdk.log" pre=()
+  ptree="$(mktemp -d "$cache/sdk-tree.XXXXXX")"
+  version="0.1.0-local.$(date -u +%Y%m%d%H%M%S)"
+  (cd "$root" && tar -cf - -T "$list") | tar -xf - -C "$ptree"
+  rm -f "$list"
+  if [ -x "$heavy" ]; then pre=("$heavy" --expensive); fi
+  say "packing the toolkit SDK $version"
+  if ! (cd "$ptree" && ${pre[@]+"${pre[@]}"} dotnet pack "$SDK_PROJECT" -c Release -p:Version="$version" -p:RestoreLockedMode=false -o "$ptree/out") < /dev/null > "$out" 2>&1; then
+    tail -20 "$out" >&2; rm -rf "$ptree"; warn "packing the toolkit SDK failed; the next install retries (log: $out)"; return 0
+  fi
+  ls "$ptree"/out/Aw.Sindri.Toolkit."$version".nupkg > /dev/null 2>&1 || { rm -rf "$ptree"; warn "the pack left no Aw.Sindri.Toolkit.$version.nupkg; the next install retries (log: $out)"; return 0; }
+  cp "$ptree"/out/*.nupkg "$sdk_feed/"
+  printf '%s\n' "$want" > "$sdk_feed/.sdk-stamp"
+  rm -rf "$ptree"
+  # keep the two newest Aw.Sindri.Toolkit packages (the version sorts by its timestamp)
+  local old
+  old="$(ls "$sdk_feed"/Aw.Sindri.Toolkit.*.nupkg | LC_ALL=C sort | sed '$d' | sed '$d')"
+  if [ -n "$old" ]; then printf '%s\n' "$old" | while IFS= read -r f; do rm -f "$f"; done; fi
+  say "packed Aw.Sindri.Toolkit $version into $sdk_feed"
+}
+
 if [ "$do_publish" = 1 ]; then publish; fi
 if [ "$do_link" = 1 ]; then link; fi
+# why: the SDK package is optional and packs after the link, so a failed pack (a warning; the stamp stays, so the next
+# install retries) never leaves a box without its wrappers
+if [ "$do_publish" = 1 ]; then pack_sdk; fi
 exit 0

@@ -1,6 +1,20 @@
 {
   "types": [
     {
+      "type": "connection.needs-sign-in",
+      "keyShape": "connection.needs-sign-in:<name>:<atTicks>",
+      "invalidates": [
+        "needs-you"
+      ]
+    },
+    {
+      "type": "connection.signed-in",
+      "keyShape": "connection.signed-in:<name>:<atTicks>",
+      "invalidates": [
+        "needs-you"
+      ]
+    },
+    {
       "type": "context.map.published",
       "keyShape": "context.map.published:<repo>:v<version>",
       "invalidates": [
@@ -432,6 +446,20 @@
       "keyShape": "setup.step.changed:<id>:<state>:<n>",
       "invalidates": [
         "setup"
+      ]
+    },
+    {
+      "type": "workflow.answered",
+      "keyShape": "workflow.answered:<run id>:<node id>[:<item index>]",
+      "invalidates": [
+        "needs-you"
+      ]
+    },
+    {
+      "type": "workflow.question",
+      "keyShape": "workflow.question:<run id>:<node id>[:<item index>]",
+      "invalidates": [
+        "needs-you"
       ]
     }
   ]

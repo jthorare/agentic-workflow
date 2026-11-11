@@ -5,6 +5,7 @@ using Aw.Context.Core.Sources;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
+#pragma warning disable MA0182 // used by Host's verbs through InternalsVisibleTo; MA0182 only looks inside this assembly
 /// <summary>
 /// The text of a context answer as a Step reads it (context spec §8.4 "Text output"): the anchors and map version, a DEGRADED line per missing source, conflicts before the sections, sections as headings with [Cn] markers, then the
 /// sources the markers cite. Every state is a word. It leaves out what changes with the clock (the query id, the as-of instant, a citation's checked state), so a re-fill gives the same text. Record text arrives already fenced by the engine.
@@ -94,3 +95,4 @@ internal static class ContextRetrieveText
 
     private static string Invariant(FormattableString text) => text.ToString(CultureInfo.InvariantCulture);
 }
+#pragma warning restore MA0182

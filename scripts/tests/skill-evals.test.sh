@@ -9,13 +9,17 @@ set -euo pipefail
 REAL="$(cd "$(dirname "$0")/../.." && pwd)"
 PASS=0
 FAIL=0
-TMPROOT="$(mktemp -d "${TMPDIR:-/tmp}/skill-evals-test.XXXXXX")"
+# pwd -P: on macOS mktemp -d gives /var/folders/..., a symlink to /private/var, and repo-slug.sh (git rev-parse) resolves it (#2584)
+TMPROOT="$(cd "$(mktemp -d "${TMPDIR:-/tmp}/skill-evals-test.XXXXXX")" && pwd -P)"
 # why: the state dirs sit in /tmp, not under TMPDIR: the script refuses an eval temp dir too long for claude's sandbox socket (#1931)
-SHORT="$(mktemp -d /tmp/se.XXXXXX)"
+# pwd -P: macOS /tmp is a symlink to /private/tmp, and the stub claude (env -i) records the physical cwd (#2757)
+SHORT="$(cd "$(mktemp -d /tmp/se.XXXXXX)" && pwd -P)"
 LIVE_PID=""
 cleanup() { [ -z "$LIVE_PID" ] || kill "$LIVE_PID" 2>/dev/null || true; find "$TMPROOT" "$SHORT" -delete 2>/dev/null || true; }
 trap cleanup EXIT
 
+# sedi EXPR FILE: in-place edit that works with GNU and BSD sed (`sed -i EXPR` reads EXPR as the backup suffix on macOS).
+sedi() { sed "$1" "$2" > "$2.new" && mv "$2.new" "$2"; }
 ok()   { PASS=$((PASS + 1)); echo "  ok   $1"; }
 fail() { FAIL=$((FAIL + 1)); echo "  FAIL $1"; }
 show() { printf '%s\n' "$OUT" | sed 's/^/      | /' | head -30; }
@@ -35,7 +39,7 @@ mkrepo() {
   printf -- '---\nname: alpha\ndescription: Use when the cart total looks wrong after a bulk order. Not for new features.\n---\nState: ${AW_STATE_DIR:-$HOME/.agentic-workflow}\nMode: ${AW_GIT_MODE:-full}\n' >"$REPO/skills/alpha/SKILL.md"
   printf -- '---\nname: beta\ndescription: >-\n  Use BEFORE shipping a release to check every\n  deploy gate.\n---\nbeta body\n' >"$REPO/skills/beta/SKILL.md"
   printf 'Preamble ${AW_PREAMBLE:-on} and ${AW_RESULT:-0} and ${AW_GIT_MODE:-full}; ${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}\n' >"$REPO/skills/_preamble.md"
-  echo "voice" >"$REPO/config/voice/joi.md"
+  echo "voice" >"$REPO/config/voice/reply.md"
 
   local r="$REPO/evals/alpha/routing" b="$REPO/evals/alpha/behaviour"
   mkdir -p "$r/alpha-natural-1/graders/_selftest" "$r/alpha-near-miss/graders/_selftest" "$b/alpha-forced/graders/_selftest"
@@ -189,7 +193,7 @@ has -F -- 'scaffold_script: _aw-scaffold.sh' "$STAGE_B/evals/alpha/behaviour/alp
 has -F -- 'scaffold_script: _aw-scaffold.sh' "$STAGE_R/evals/alpha/routing/alpha-natural-1/case.yaml" && ok "a prompt-only case gets a case.yaml with the scaffold" || fail "routing case.yaml"
 H="$TMPROOT/h$N"; mkdir -p "$H"
 (cd "$TMPROOT" && env -i PATH="$PATH" HOME="$H" bash "$STAGE_B/evals/alpha/behaviour/alpha-forced/_aw-scaffold.sh")
-[ -f "$H/.agentic-workflow/toolkit/skills/_preamble.md" ] && [ -f "$H/.agentic-workflow/toolkit/skills/_shared/repo-slug.sh" ] && [ -f "$H/.agentic-workflow/toolkit/config/voice/joi.md" ] &&
+[ -f "$H/.agentic-workflow/toolkit/skills/_preamble.md" ] && [ -f "$H/.agentic-workflow/toolkit/skills/_shared/repo-slug.sh" ] && [ -f "$H/.agentic-workflow/toolkit/config/voice/reply.md" ] &&
   [ "$(cat "$H/own-marker")" = own-scaffold-ran ] && ok "the scaffold puts the toolkit at the default path, then chains the case's own" || fail "scaffold run"
 # claude plugin eval denies the agent every read under the stage's evals/ (so it can't see the graders), and a stub there is
 # invisible to its shell: the stubs are staged at the stage root instead.
@@ -205,7 +209,7 @@ grep -q 'AW_GIT_MODE:-readonly' "$STAGE_R/stubs/bin/gh" && ok "the staged gh stu
 WS="$TMPROOT/ws$N"; mkdir -p "$WS/.aw-eval" "$WS/src/deep"
 slug() { (cd "$1" && env -i PATH="$PATH" HOME="$H" bash -c '. "$0"; printf %s "$AW_DIR"' "$STAGE_R/skills/_shared/repo-slug.sh"); }
 r1="$(dirname "$(slug "$WS")")"; r2="$(dirname "$(slug "$WS/src/deep")")"
-[ -n "$r1" ] && [ "$r1" = "$r2" ] && [ "$r1" = "$WS/.aw-state" ] && ok "the staged state root is the same from a subdirectory ($r1)" || fail "AW_DIR differs: '$r1' vs '$r2'"
+[ -n "$r1" ] && [ "$r1" = "$r2" ] && [ "$r1" = "$WS/.aw-state" ] && ok "the staged state root is the same from a subdirectory ($r1)" || fail "AW_DIR differs: '$r1' vs '$r2' (want '$WS/.aw-state')"
 [ ! -s "$STATE/skill-evals/spend.jsonl" ] && ok "a dry run writes no tally row" || fail "dry run wrote the tally"
 
 echo "a staged path outside the repo"
@@ -396,7 +400,7 @@ echo "a kind's spend at its ceiling, and one failed call (#2023)"
 mkrepo; mkclaude; mkresult 1 true 9
 run --skills alpha --kind routing
 expect "spend past the kind's ceiling stops the loop and the run is partial" 2 'PARTIAL'
-[ "$(wc -l <"$BIN/cases.txt")" = 1 ] && ok "the next call never starts once the ceiling is reached" || { fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"; }
+[ "$(wc -l <"$BIN/cases.txt" | tr -d ' ')" = 1 ] && ok "the next call never starts once the ceiling is reached" || { fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"; }
 has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && ok "the case that never ran is listed as skipped" || { fail "skipped listing"; show; }
 mkrepo; mkclaude; mkresult 1 true 1
 jq '.cases += [(.cases[0] | .name = "alpha-zz-3")]' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
@@ -406,7 +410,7 @@ echo alpha-near-miss >"$BIN/no-result-case"
 run --skills alpha --kind routing
 expect "a failed call keeps the earlier case's row and exits 3" 3 '\| alpha-natural-1 \|'
 has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && has -F 'skipped (no result): alpha / alpha-zz-3' <<<"$OUT" && ok "the failed case and the one after it are skipped" || { fail "skipped after failed call"; show; }
-[ "$(wc -l <"$BIN/cases.txt")" = 2 ] && ok "no call after the failed one" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
+[ "$(wc -l <"$BIN/cases.txt" | tr -d ' ')" = 2 ] && ok "no call after the failed one" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
 
 echo "a refused call writes cases: [] (#2044)"
 mkrepo; mkclaude; mkresult 1 true 1
@@ -474,7 +478,7 @@ lacks "no gate line on a good result" 'ROUTING GATE MISSED'
 
 echo "the routing gate and slash-only skills (#1947)"
 slashonly() { # make alpha slash-only and commit (the script refuses uncommitted changes under skills/)
-  sed -i 's/^name: alpha$/name: alpha\ndisable-model-invocation: true/' "$REPO/skills/alpha/SKILL.md"
+  awk '{ print } /^name: alpha$/ { print "disable-model-invocation: true" }' "$REPO/skills/alpha/SKILL.md" > "$REPO/skills/alpha/SKILL.new" && mv "$REPO/skills/alpha/SKILL.new" "$REPO/skills/alpha/SKILL.md"
   git -C "$REPO" commit -qam "alpha is slash-only"
 }
 notfired() { # the natural case did not fire, and its grader passed (skill-not-fired passed=true is fired=false)
@@ -575,7 +579,7 @@ pattern: '^(?:(?!"skill"\s*:)[\s\S])*"skill"\s*:\s*"(?:[\w-]+:)?MEMBER"'
 
 The first Skill call names MEMBER.
 EOF
-    sed -i "s/MEMBER/$m/g" "$F/$m/graders/first-skill.md"
+    sedi "s/MEMBER/$m/g" "$F/$m/graders/first-skill.md"
     trace_reply "aw-evals:$m" >"$F/$m/graders/_selftest/first-skill.pass.trace"
     { trace_reply zzz; trace_reply "$m"; } >"$F/$m/graders/_selftest/first-skill.fail.trace"
   done
@@ -631,7 +635,7 @@ run --changed --dry-run
 expect "a body-only change picks the skill" 0 'skills: alpha'
 lacks "a body-only change does not pull in its family" 'family plan'
 git -C "$REPO" checkout -q -- skills/alpha/SKILL.md
-sed -i 's/^description: Use when the cart total looks wrong/description: Use when the cart total looks off/' "$REPO/skills/alpha/SKILL.md"
+sedi 's/^description: Use when the cart total looks wrong/description: Use when the cart total looks off/' "$REPO/skills/alpha/SKILL.md"
 run --changed --dry-run
 expect "a description change pulls in the member's family" 0 'family plan: grp \(2 case\(s\), ablation none, cap \$12\): description of alpha changed'
 has -E 'staged family-grp' <<<"$OUT" && has -E -- '--ablation none .*--max-cost-usd 12' <<<"$OUT" && ok "the dry run shows the family stage, ablation none and the \$12 ceiling" || { fail "family dry-run command"; show; }
@@ -772,7 +776,7 @@ jq --arg a "$TMPROOT/tr/1/trace.jsonl" --arg b "$TMPROOT/tr/2/trace.jsonl" --arg
   | .cases[1].arms.with[0].tracePath = $c | .cases[1].arms.with[1].tracePath = null' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
 run --skills alpha --kind routing --keep-temp
 TD="$(find "$STATE/skill-evals" -type d -name traces | head -1)"
-[ "$(ls "$TD" 2>/dev/null | wc -l)" = 3 ] && ok "three traced runs of two cases leave three files" || { fail "trace files: $(ls "$TD" 2>/dev/null | tr '\n' ' ')"; show; }
+[ "$(ls "$TD" 2>/dev/null | wc -l | tr -d ' ')" = 3 ] && ok "three traced runs of two cases leave three files" || { fail "trace files: $(ls "$TD" 2>/dev/null | tr '\n' ' ')"; show; }
 [ -f "$TD/alpha-natural-1-with-1.jsonl" ] && [ -f "$TD/alpha-natural-1-with-2.jsonl" ] && [ -f "$TD/alpha-near-miss-with-1.jsonl" ] && ok "traces are named <case>-<arm>-<run>.jsonl" || { fail "trace names"; ls "$TD"; }
 grep -q assistant "$TD/alpha-natural-1-with-2.jsonl" && ok "each file holds its own run's trace" || fail "trace content"
 KEPT_TMP="$(sed -n 's/^TMPDIR=//p' "$BIN"/env.*.txt | head -1)"
@@ -838,7 +842,7 @@ if [ -s "$BIN/cases.txt" ] && [ -n "$S" ] && [ -d "$S/evals/mocks/playwright" ] 
   ok "a run killed mid-call puts the mock dirs back (the trap)"
 else fail "killed run's stage: cases=$(cat "$BIN/cases.txt" 2>/dev/null) $(ls -a "$S/evals" "$S/evals/mocks" 2>&1 | tr '\n' ' ')"; fi
 mkrepo
-sed -i '/^allowed_tools:/d' "$REPO/evals/alpha/routing/alpha-near-miss/prompt.md"
+sedi '/^allowed_tools:/d' "$REPO/evals/alpha/routing/alpha-near-miss/prompt.md"
 git -C "$REPO" commit -qam "no list"
 run --skills alpha --selftest
 expect "a case without allowed_tools is a selftest error" 1 'SELFTEST-CASE: .*alpha-near-miss: no allowed_tools'
@@ -847,7 +851,7 @@ echo "the ceiling: no case it can't afford, no PARTIAL when every case ran (#209
 mkrepo; mkclaude; mkresult 1 true 5
 run --skills alpha --kind routing
 expect "a case the money left can't pay for is not launched, and the run is partial" 2 'PARTIAL'
-[ "$(wc -l <"$BIN/cases.txt")" = 1 ] && ok "one call: \$3 left is less than the \$5 a case cost" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
+[ "$(wc -l <"$BIN/cases.txt" | tr -d ' ')" = 1 ] && ok "one call: \$3 left is less than the \$5 a case cost" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
 has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && ok "the unaffordable case is listed as skipped" || { fail "skipped listing"; show; }
 has -E 'stopped before alpha-near-miss: \$3\.00 left, a case cost \$5\.00' <<<"$OUT" && ok "the stop line names the money left and the case cost" || { fail "stop line"; show; }
 [ "$(jq -s '[.[]|select(.t=="settle")]|last|.usd*1' "$STATE/skill-evals/spend.jsonl")" = 5 ] && ok "the settle row is 5" || { fail "settle: $(cat "$STATE/skill-evals/spend.jsonl")"; }

@@ -5,19 +5,24 @@ using Aw.Sindri.Tests.ContextCalls;
 
 namespace Aw.Sindri.Tests.Mcp;
 
-/// <summary>/sindri/mcp tools/list after API P8: the seven context tools first, then the eight sindri_* tools (API spec §8; sindri_projects from the Projects page spec §6.2), then the five connection_* tools (connections PR 10a), then the five memory_* tools (agent-first PR 13).</summary>
+/// <summary>/sindri/mcp tools/list after API P8: the seven context tools first, then the eleven sindri_* tools (API spec §8; sindri_projects from the Projects page spec §6.2; sindri_todos and sindri_todo from the todo spec §4.4), then the six connection_* tools (connections PR 10a), then the five memory_* tools (agent-first PR 13), then the four workflow reads and workflow_answer (agent-first PR 8 and PR 9).</summary>
 public sealed class SindriToolsListTests(PlainMcpHost plain) : IClassFixture<PlainMcpHost>
 {
     private static readonly string[] _expected =
     [
         "context_query", "context_sources", "context_lenses", "context_concepts", "context_pages", "context_node", "context_neighbors",
-        "sindri_status", "sindri_queue", "sindri_item", "sindri_item_timeline", "sindri_pending_decisions", "sindri_job", "sindri_projects", "sindri_request",
-        "connection_list", "connection_get", "connection_add", "connection_test", "connection_remove",
+        "sindri_status", "sindri_queue", "sindri_item", "sindri_item_timeline", "sindri_pending_decisions", "sindri_job", "sindri_projects", "sindri_request", "sindri_handoff", "sindri_todos", "sindri_todo",
+        "connection_list", "connection_get", "connection_add", "connection_signin", "connection_test", "connection_remove",
         "memory_list", "memory_create", "memory_search", "memory_write", "memory_forget",
+        "workflow_list", "workflow_get", "workflow_runs", "workflow_run_get",
+        "workflow_create", "workflow_apply_ops", "workflow_replace", "workflow_validate", "workflow_activate", "workflow_pause", "workflow_delete", "workflow_run", "workflow_cancel", "workflow_docs", "workflow_blocks",
+        "workflow_answer",
+        "resources_list", "resources_purge",
+        "toolkit_list", "toolkit_create", "toolkit_build", "toolkit_start", "toolkit_stop", "toolkit_pause", "toolkit_resume", "toolkit_calls",
     ];
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Tools_list_names_the_context_tools_first_then_the_eight_sindri_tools_then_the_five_connection_tools()
+    public async Task Tools_list_names_the_context_tools_first_then_the_eleven_sindri_tools_then_the_six_connection_tools()
     {
         var ct = TestContext.Current.CancellationToken;
         var host = plain.Host;
@@ -54,7 +59,7 @@ public sealed class SindriToolsListTests(PlainMcpHost plain) : IClassFixture<Pla
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Every_sindri_query_tool_is_read_only_and_sindri_request_is_not()
+    public async Task Every_sindri_query_tool_is_read_only_and_the_request_and_todo_writes_are_not()
     {
         var ct = TestContext.Current.CancellationToken;
         var host = plain.Host;
@@ -62,13 +67,21 @@ public sealed class SindriToolsListTests(PlainMcpHost plain) : IClassFixture<Pla
 
         var tools = (await mcp.Client.ListToolsAsync(cancellationToken: ct)).Where(t => t.Name.StartsWith("sindri_", StringComparison.Ordinal)).ToList();
 
-        Assert.Equal(8, tools.Count);
-        Assert.All(tools.Where(t => t.Name != "sindri_request"), t => Assert.True(t.ProtocolTool.Annotations?.ReadOnlyHint, t.Name));
+        Assert.Equal(11, tools.Count);
+        Assert.All(tools.Where(t => t.Name is not ("sindri_request" or "sindri_handoff" or "sindri_todo")), t => Assert.True(t.ProtocolTool.Annotations?.ReadOnlyHint, t.Name));
         var request = tools.Single(t => t.Name == "sindri_request").ProtocolTool.Annotations!;
         Assert.False(request.ReadOnlyHint);
         Assert.False(request.DestructiveHint);
         Assert.False(request.IdempotentHint);
         Assert.False(request.OpenWorldHint);
+        var handoff = tools.Single(t => t.Name == "sindri_handoff").ProtocolTool.Annotations!;
+        Assert.False(handoff.ReadOnlyHint);
+        Assert.False(handoff.DestructiveHint);
+        Assert.False(handoff.OpenWorldHint);
+        var todo = tools.Single(t => t.Name == "sindri_todo").ProtocolTool.Annotations!;
+        Assert.False(todo.ReadOnlyHint);
+        Assert.True(todo.DestructiveHint);
+        Assert.False(todo.OpenWorldHint);
     }
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]

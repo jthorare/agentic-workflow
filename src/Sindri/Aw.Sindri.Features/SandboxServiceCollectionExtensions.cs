@@ -56,7 +56,7 @@ internal static class SandboxServiceCollectionExtensions
     internal static IServiceCollection AddAllowDenial(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        return services.AddScoped<IValidator<AllowDenialRequest>, AcceptAllValidator<AllowDenialRequest>>().AddCommand<AllowDenialRequest, AllowDenialResponse, AllowDenialService>();
+        return services.AddScoped<SandboxAllowedRecorder>().AddScoped<IValidator<AllowDenialRequest>, AcceptAllValidator<AllowDenialRequest>>().AddCommand<AllowDenialRequest, AllowDenialResponse, AllowDenialService>();
     }
 
     /// <summary>Adds ListDenials, the query behind 'sindri sandbox denials'.</summary>
@@ -81,7 +81,7 @@ internal static class SandboxServiceCollectionExtensions
             .AddSingleton<LastSandboxCheck>().AddScoped<SandboxChecks>().AddScoped<SandboxResumeList>()
             .AddScoped<ISandboxChecks>(static sp => new RecordingSandboxChecks(sp.GetRequiredService<SandboxChecks>(), sp.GetRequiredService<LastSandboxCheck>(), sp.GetRequiredService<TimeProvider>()))
             .AddScoped<ISandboxFormCheck, SandboxFormCheck>().AddScoped<ISandboxLoginCheck, SandboxLoginCheck>().AddScoped<ISandboxFixtureLogin, SandboxFixtureLogin>()
-            .AddScoped<ISandboxParks, SandboxParkedInstances>().AddScoped<ISandboxSlots, SandboxSlots>()
+            .AddScoped<ISandboxParks, NoSandboxParks>().AddScoped<ISandboxSlots, SandboxSlots>()
             .AddSingleton<ISandboxFixture, NoSandboxFixture>().AddSingleton<ISandboxMachine, ProcessSandboxMachine>()
             .AddScoped<IDoctorChecks, SandboxDoctorChecks>();
     }

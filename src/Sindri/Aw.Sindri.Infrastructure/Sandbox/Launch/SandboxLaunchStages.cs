@@ -8,7 +8,6 @@ using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Skills;
-using Aw.Sindri.Core.Workflow.Recipes;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Skills;
 
@@ -47,7 +46,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
         var common = await inputs.GitCommonDir(request.RepoPath, cancellationToken).ConfigureAwait(false);
         var run = RunDirectory(request);
         var skill = await SkillEnvironment(request, run, cancellationToken).ConfigureAwait(false);
-        return new SandboxRequest(
+        var built = new SandboxRequest(
             request.Launch, request.Item, request.Agent, repo, request.Instance,
             new SandboxPaths(request.RepoPath, common, request.Worktree, run, inputs.RunAreaFor(request.Launch)),
             RunNamespace(request),
@@ -62,7 +61,12 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
             SkillPushes = SkillPushes(request),
             GithubPushApproved = request.GithubPushApproved,
         };
+        return WithTask(built, request.Task);
     }
+
+    // A graph node's own asks (PR 7, PR 14): its host groups, the workflow's rw State mounts and its declared limits, which the plan clamps to the profile and the box (#2532).
+    private static SandboxRequest WithTask(SandboxRequest built, AgentTask? task) =>
+        task is null ? built : built with { AddGroups = task.HostGroups, ResourceMounts = task.ResourceMounts, ResourceLimits = task.ResourceLimits };
 
     // The skill block's variables: AW_DIR is computed here, once, from the repo's origin remote, the way skills/_shared/repo-slug.sh would (D8). A 'pr' input adds the branch PrHeadFetch fetched the PR head to, which the cleared sandbox environment would otherwise lose.
     private async ValueTask<IReadOnlyDictionary<string, string>?> SkillEnvironment(LaunchRequest request, string run, CancellationToken cancellationToken)
@@ -128,6 +132,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
     // The branch namespace the session may write refs in: an open's own, a Step's run, or none.
     private static string RunNamespace(LaunchRequest request) =>
         request.Attended ? AttendedOpen.RunNamespace(request.Launch)
+        : request.Node is { } node ? node.RefNamespace   // why: the node's work branch 'wf/<slug>/<short run>/work' sits inside it, so the session can commit and push it and no other branch
         : request.Instance is { } instance && request.Run is { } token ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"sindri/{WorkflowInstanceId.Of(instance).Value}/{token.Number}")
         : string.Empty;
 
@@ -188,7 +193,7 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
     private static ValueTask<Result<PolicyFiles>> Done(PolicyFiles files) => ValueTask.FromResult(Results.Success(files));
 
     private static TimeSpan? LongMax(SindriProfile? loaded) =>
-        loaded is not null && RecipeDuration.TryFrom(LineProfile.LongMax(loaded), out var duration) ? duration.Span : null;
+        loaded is not null && RecipeDuration.TryFrom(loaded.Workflow?.Steps?.LongMax ?? "2h", out var duration) ? duration.Span : null;
 
     private static RepoName RepoNameOf(SindriProfile? loaded, string repoPath) =>
         RepoName.From(loaded?.Repos?.FirstOrDefault(r => string.Equals(r.Path.TrimEnd('/'), repoPath.TrimEnd('/'), StringComparison.Ordinal))?.Name ?? Path.GetFileName(repoPath.TrimEnd('/')));

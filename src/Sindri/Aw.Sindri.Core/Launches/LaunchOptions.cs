@@ -1,10 +1,9 @@
 using System.Globalization;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Core.Workflow.Engine.Instances;
-using Aw.Sindri.Core.Workflow.Recipes;
 
 namespace Aw.Sindri.Core.Launches;
 
@@ -21,9 +20,8 @@ public static class LaunchOptions
         var inFlight = launches.FirstOrDefault(row => LaunchRules.InFlight(row, inputs.Now));
         var live = launches.FirstOrDefault(static row => row.Live);
         var lastStarted = launches.FirstOrDefault(static row => row.StartedProcess);
-        var takenOver = inputs.Item.Engine?.Suspension == SuspensionKind.Takeover;
         var (target, chosenBy) = Choose(inputs);
-        var resumable = ResumableFor(inputs, takenOver);
+        var resumable = ResumableFor(inputs);
         var closed = ItemStates.IsClosed(inputs.Item.State);
 
         return new ItemLaunch(
@@ -34,7 +32,7 @@ public static class LaunchOptions
             ResumeOf(resumable),
             inFlight?.Id,
             LastOf(lastStarted),
-            closed || takenOver ? null : ConfirmFor(inputs),
+            closed ? null : ConfirmFor(inputs),
             inputs.RepoPath,
             closed ? [] : Blockers(inputs, target));
     }
@@ -73,10 +71,7 @@ public static class LaunchOptions
     private static string? Sentence(TerminalDetail? detail) =>
         detail is null ? null : (detail.Line is { } line ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"line {line}: ") : string.Empty) + detail.Reason;
 
-    private static LaunchRow? ResumableFor(LaunchOptionInputs inputs, bool takenOver) =>
-        inputs.Item.Engine is null || takenOver
-            ? null
-            : LaunchRules.ResumeCandidate(inputs.Launches);
+    private static LaunchRow? ResumableFor(LaunchOptionInputs inputs) => LaunchRules.ResumeCandidate(inputs.Launches);
 
     private static (AgentId Target, string ChosenBy) Choose(LaunchOptionInputs inputs)
     {
@@ -124,7 +119,7 @@ public static class LaunchOptions
         var blockers = new List<LaunchBlocker>();
         if (inputs.RepoPath is null)
         {
-            blockers.Add(new LaunchBlocker(SindriErrors.LaunchRepoMissing.Code, "the item's repo has no path in the approved profile (fix: add it to repos and approve)"));
+            blockers.Add(new LaunchBlocker(SindriErrors.LaunchRepoMissing.Code, "the item's repo has no path in the profile (fix: add it to repos)"));
         }
 
         if (inputs.Probe is not { Probed: true } probe)

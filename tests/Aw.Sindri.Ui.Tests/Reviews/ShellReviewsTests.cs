@@ -7,7 +7,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Reviews;
 
-/// <summary>The Reviews tab in the shell (review page spec §3, §6.1, §16 pick 5): the seventh tab, G V, the deep link, the badge and Home's line.</summary>
+/// <summary>The Reviews tab in the shell (review page spec §3, §6.1, §16 pick 5): the eighth tab, G V, the deep link, the badge and Home's line.</summary>
 [Lane(TestLane.Unit)]
 public sealed class ShellReviewsTests
 {
@@ -29,12 +29,12 @@ public sealed class ShellReviewsTests
     private static NavEntry Tab(ShellViewModel shell) => shell.Navigation.Single(n => n.Page == PageId.Reviews);
 
     [Fact]
-    public Task Reviews_is_the_seventh_tab_after_System() => UiThread.Run(async () =>
+    public Task Reviews_is_the_eighth_tab_after_System() => UiThread.Run(async () =>
     {
         var shell = await Shell();
 
         Assert.Equal(
-            [PageId.Home, PageId.Projects, PageId.Work, PageId.Context, PageId.Agents, PageId.System, PageId.Reviews],
+            [PageId.Home, PageId.Projects, PageId.Workflows, PageId.Work, PageId.Context, PageId.Agents, PageId.System, PageId.Reviews, PageId.Connections],   // Connections (PR 18a) comes after Reviews, Workflows (PR 17) sits third, so Reviews is the eighth
             shell.Navigation.Select(n => n.Page));
         Assert.Equal(("Reviews", "V"), (Tab(shell).Label, Tab(shell).Key));
     }, Token);
@@ -50,6 +50,33 @@ public sealed class ShellReviewsTests
         Assert.True(shell.IsReviews);
         await ShellWait.Until(shell, () => !shell.Reviews.IsLoading, Token);
         Assert.Equal(2, shell.Reviews.Groups.Count);
+    }, Token);
+
+    [Fact]
+    public Task Connect_GitHub_lands_on_the_Connections_page() => UiThread.Run(async () =>
+    {
+        _server.ReviewsAnswer = RouteAnswer.Api("reviews", "connect-github");
+        var shell = await Shell();
+        await ShellWait.Until(shell, () => shell.Reviews.IsConnect, Token);
+
+        shell.Reviews.PressConnect();
+
+        Assert.Equal(PageId.Connections, shell.CurrentPage);
+    }, Token);
+
+    [Fact]
+    public Task Sign_in_again_opens_the_github_work_sheet() => UiThread.Run(async () =>
+    {
+        _ = _server.SeedConnection(FakeSindriApi.ConnectionRow("github:work"));
+        _server.ReviewsAnswer = RouteAnswer.Api("reviews", "sign-in-again");
+        var shell = await Shell();
+        await ShellWait.Until(shell, () => shell.Reviews.IsConnect, Token);
+
+        shell.Reviews.PressConnect();
+
+        Assert.Equal((PageId.Connections, true, "github:work"), (shell.CurrentPage, shell.IsConnectionSheet, shell.SheetSubject));
+        await ShellWait.Until(shell, () => shell.ConnectionSheet.Phase is not (FramePhase.Empty or FramePhase.Loading), Token);
+        Assert.Equal(FramePhase.Shown, shell.ConnectionSheet.Phase);   // a sheet that opens and then errors must not pass
     }, Token);
 
     [Fact]

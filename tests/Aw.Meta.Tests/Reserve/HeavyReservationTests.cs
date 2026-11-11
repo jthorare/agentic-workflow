@@ -316,10 +316,10 @@ public sealed class HeavyReservationTests
     }
 
     private GateRunService GateRun() =>
-        new(_world.Config, new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, _world.LogFiles), new GateStepRunner(_world.Runner, _world.Paths), _world.Gates, Worlds.Reservation(_world), _world.Clock);
+        new(_world.Config, new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, _world.LogFiles), new GateStepRunner(_world.Runner, _world.Paths), _world.Gates, Worlds.Reservation(_world), _world.Clock, _world.Repo);
 
     private MergeRunService MergeRun() =>
-        new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles), _world.Repo, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock);
+        new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages), _world.Repo, _world.Gates, new MergeRecorder(_world.Repo, _world.Values, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board));
 
     // PR 190 is gated green and ready to merge; main moves when gh merges it.
     private async Task ScriptMerge()
@@ -327,6 +327,7 @@ public sealed class HeavyReservationTests
         _ = await _world.Gates.Save(new GateRecord(190, "headsha", "mainsha", ["repo"], [new GateStep("sync-rules", GateVerdict.Pass, "/l/sync.log")], GateVerdict.Pass, _world.Clock.GetUtcNow()), CancellationToken.None);
         var merged = false;
         _ = _world.Runner
+            .When("gh api graphql", Tests.MergeRun.QueueAnswers.Off)
             .When("gh pr view 190 --json headRefOid,isDraft,title,state", """{"headRefOid":"headsha","isDraft":false,"title":"Add x","state":"OPEN"}""")
             .When("gh pr merge 190 --merge", _ => { merged = true; return new Core.Commands.CommandResult(0, string.Empty, string.Empty, TimedOut: false); })
             .When("rev-parse --verify --quiet origin/main", _ => new Core.Commands.CommandResult(0, merged ? "newmainsha1234\n" : "mainsha\n", string.Empty, TimedOut: false))

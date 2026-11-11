@@ -24,9 +24,10 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
                 return Done<WorkflowRevision>(IdTaken(id));
             }
 
-            if (_workflows.Values.Any(e => e.Slug == slug))
+            var taker = _workflows.Values.FirstOrDefault(e => e.Slug == slug);
+            if (taker is not null)
             {
-                return Done<WorkflowRevision>(SindriErrors.GraphSlugTaken.With($"the slug '{slug.Value}' belongs to another workflow; pick another"));
+                return Done<WorkflowRevision>(SindriErrors.GraphSlugTaken.With($"The short id '{slug.Value}' is taken by {(taker.ArchivedAt is not null ? "an archived" : "another")} workflow. Pick another."));
             }
 
             var entry = new Entry(slug, spec.Name, createdBy);
@@ -44,6 +45,11 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
             if (!_workflows.TryGetValue(id, out var entry))
             {
                 return Done<WorkflowRevision>(NotFound(id));
+            }
+
+            if (entry.ArchivedAt is not null)
+            {
+                return Done<WorkflowRevision>(Archived(id));
             }
 
             if (entry.Revisions.Count != baseRevision)
@@ -110,6 +116,21 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
     }
 
     /// <inheritdoc/>
+    public ValueTask<Result<WorkflowRecord>> Pause(WorkflowId id, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            if (!_workflows.TryGetValue(id, out var entry))
+            {
+                return Done<WorkflowRecord>(NotFound(id));
+            }
+
+            entry.Active = null;
+            return Ok(entry.Record(id));
+        }
+    }
+
+    /// <inheritdoc/>
     public ValueTask<Result<WorkflowRecord>> Archive(WorkflowId id, CancellationToken cancellationToken)
     {
         lock (_gate)
@@ -127,7 +148,7 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
 
     private static Error IdTaken(WorkflowId id) => SindriErrors.GraphIdTaken.With($"the id '{id.Value}' belongs to another workflow; read it or pick a new id");
 
-    private static Error Archived(WorkflowId id) => SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec to run it again");
+    private static Error Archived(WorkflowId id) => SindriErrors.GraphArchived.With($"'{id.Value}' is archived; create a new workflow from its spec under another slug (an archived slug stays reserved) to run it again");
 
     private static Error NotFound(WorkflowId id) => SindriErrors.GraphNotFound.With($"no workflow or revision for '{id.Value}'; list the workflows to see what exists");
 

@@ -20,7 +20,7 @@ public sealed class AwaitingStartingViewsTests : IAsyncDisposable
         var views = _c.Progress.Current;
 
         Assert.True(views is { Starting: true, Rebuilding: false, Stalled: false });
-        Assert.NotEqual(HealthWord.Healthy, HealthSummary.For(running: true, views, [], ProfileApproval.Approved).Word);
+        Assert.NotEqual(HealthWord.Healthy, HealthSummary.For(running: true, views, []).Word);
     }
 
     [Fact, Trait("Lane", "unit")]

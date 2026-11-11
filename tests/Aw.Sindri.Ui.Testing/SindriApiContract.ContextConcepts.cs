@@ -187,7 +187,7 @@ public abstract partial class SindriApiContract
         var view = (await api.ContextPins(_api, "aw-split-panes", Token)).Value;
 
         Expect.Equal(new string('b', 64), view.FileHash);
-        Expect.Sequence(["approved", "waiting", "removing"], view.Pins.Select(p => p.State));
+        Expect.Sequence(["approved", "approved", "approved"], view.Pins.Select(p => p.State));
         Expect.Equal(("v4", "idle"), (view.MapVersion, view.Rebuild.Phase));
         Expect.Equal("aw-split-panes", server.ContextPinsAsked[^1]);
     }

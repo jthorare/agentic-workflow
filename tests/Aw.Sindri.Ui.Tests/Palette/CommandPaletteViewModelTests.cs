@@ -74,7 +74,7 @@ public sealed partial class CommandPaletteViewModelTests
         _palette.Open();
 
         Assert.Equal(
-            ["Home G H", "Todo G T", "Projects G P", "Work G Q", "Context G C", "Agents G A", "System G .", "Reviews G V", "Jobs G J", "Settings ⌘,"],
+            ["Home G H", "Todo G T", "Projects G P", "Work G Q", "Context G C", "Agents G A", "System G .", "Reviews G V", "Jobs G J", "Connections G O", "Memory G M", "Workflows G W", "Resources G R", "Settings ⌘,"],
             _palette.Sections[1].Entries.Select(e => e.Label + " " + e.Key),
             StringComparer.Ordinal);
     }
@@ -84,7 +84,7 @@ public sealed partial class CommandPaletteViewModelTests
     [InlineData("rebuild", new[] { "RebuildViews" })]
     [InlineData("REBVIEWS", new[] { "RebuildViews" })]
     [InlineData("probelaunch", new[] { "ProbeLaunchTargets" })]
-    [InlineData("stop sin", new[] { "StopProcess" })]
+    [InlineData("stop sindri", new[] { "StopProcess" })]
     public void Typing_filters_by_label_and_id(string query, string[] ids)
     {
         _palette.Open();
@@ -93,6 +93,17 @@ public sealed partial class CommandPaletteViewModelTests
 
         Assert.Equal(ids, _palette.Entries.Select(e => e.Id), StringComparer.Ordinal);
         Assert.All(_palette.Sections, s => Assert.NotEmpty(s.Entries));
+    }
+
+    // a partial phrase with a space ranks the label that starts with it first (#2385)
+    [Fact]
+    public void Typing_stop_sin_ranks_stop_sindri_first()
+    {
+        _palette.Open();
+
+        _palette.Query = "stop sin";
+
+        Assert.Equal("StopProcess", _palette.Entries[0].Id);
     }
 
     [Fact]
@@ -603,14 +614,14 @@ public sealed partial class CommandPaletteViewModelTests
     public async Task A_cli_only_entry_copies_its_cli()
     {
         _palette.Open();
-        _palette.Query = "showlineholdout";
+        _palette.Query = "setprofilekey";
 
         await _palette.Run(_palette.Selected, Token);
 
-        Assert.Equal("sindri line holdout show <line> <phase>", _clipboard.Text);
-        Assert.Equal(("Copied", true), (Entry("ShowLineHoldout").Status, _palette.IsOpen));
+        Assert.Equal("sindri profile set <key> <value> [--json]", _clipboard.Text);
+        Assert.Equal(("Copied", true), (Entry("SetProfileKey").Status, _palette.IsOpen));
         _clock.Advance(ControlViewModel.CopiedFor);
-        Assert.Equal("Copy: sindri line holdout show <line> <phase>", Entry("ShowLineHoldout").Status);
+        Assert.Equal("Copy: sindri profile set <key> <value> [--json]", Entry("SetProfileKey").Status);
     }
 
     [Fact]
@@ -673,7 +684,7 @@ public sealed partial class CommandPaletteViewModelTests
     public async Task A_copy_changes_the_announcement()
     {
         _palette.Open();
-        _palette.Query = "show line holdout";
+        _palette.Query = "set profile key";
 
         await _palette.Run(_palette.Selected, Token);
 

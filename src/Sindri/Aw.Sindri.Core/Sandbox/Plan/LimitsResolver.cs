@@ -1,5 +1,5 @@
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Core.Workflow.Recipes;
 
 namespace Aw.Sindri.Core.Sandbox.Plan;
 
@@ -17,7 +17,7 @@ public static class LimitsResolver
         ArgumentNullException.ThrowIfNull(input);
         var sized = Sized(input.Limits ?? new SandboxLimits(), input.RamBytes, input.Cores);
         var (wall, runtimeMax) = input.Attended ? AttendedWall(input.AttendedSettings) : StepWall(input, sized.WallGrace, sized.ParkMax);
-        return sized with { Wall = wall, RuntimeMax = runtimeMax };
+        return Clamped(sized, input) with { Wall = wall, RuntimeMax = runtimeMax };
     }
 
     private static PlanLimits Sized(SandboxLimits limits, long ram, int cores)
@@ -35,6 +35,25 @@ public static class LimitsResolver
             Duration(limits.ParkMax ?? SandboxDefaults.ParkMax),
             Wall: null,
             RuntimeMax: null);
+    }
+
+    // PR 14: a block's own limits only tighten: each is clamped to what the profile resolved to (and the box's RAM and cores).
+    private static PlanLimits Clamped(PlanLimits sized, LimitsInput input)
+    {
+        if (input.Override is not { } over)
+        {
+            return sized;
+        }
+
+        var memory = over.Memory is null ? sized.MemoryMaxBytes : Math.Min(Math.Min(SandboxUnits.ParseSize(over.Memory), sized.MemoryMaxBytes), input.RamBytes);
+        var cpu = over.Cpu is null ? sized.CpuQuotaPercent : Math.Min(input.Cores * SandboxUnits.ParsePercent(over.Cpu), sized.CpuQuotaPercent);
+        return sized with { MemoryMaxBytes = memory, MemoryHighBytes = memory * 8 / 10, CpuQuotaPercent = cpu };
+    }
+
+    private static TimeSpan StepTimeout(LimitsInput input)
+    {
+        var step = input.StepTimeout ?? _stepDefault;
+        return input.Override?.StepTimeout is { } over && over < step ? over : step;
     }
 
     private static long MemoryBytes(string? memory, long ram) =>
@@ -60,7 +79,7 @@ public static class LimitsResolver
 
     private static (TimeSpan? Wall, TimeSpan? RuntimeMax) StepWall(LimitsInput input, TimeSpan grace, TimeSpan parkMax)
     {
-        var wall = (input.StepTimeout ?? _stepDefault) + grace;
+        var wall = StepTimeout(input) + grace;
         if (input.LongMax is { } longMax && longMax + grace < wall)
         {
             wall = longMax + grace;

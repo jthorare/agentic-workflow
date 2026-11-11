@@ -6,20 +6,20 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Aw.Meta.Host.Commands;
 
 /// <summary>
-/// The 'lane-recycle' command: /clear a Claude lane that wrote a digest, then have it continue from the digest. A refusal (AW-META-021) or a
+/// The 'lane-recycle' command: /clear a Claude lane that wrote a digest, then have it continue from the digest. The meta lane takes --detach (a waiter recycles it after its turn ends); --wait-idle is that waiter. A refusal (AW-META-021) or a
 /// lane that never reported a new session (AW-META-022) exits 1 with the reason on stderr; other errors exit 2.
 /// </summary>
 internal static class LaneRecycleCommand
 {
     internal static CommandEntry Entry { get; } = new(
         "lane-recycle",
-        new CommandSpec("lane-recycle <lane> --digest <path> [--dry-run] [--json]", ["digest"], [], ["dry-run"], Positionals: 1),
+        new CommandSpec("lane-recycle <lane> --digest <path> [--detach | --wait-idle] [--dry-run] [--json]", ["digest"], [], ["dry-run", "detach", "wait-idle"], Positionals: 1),
         NeedsConfig: true,
         Run);
 
     private static async Task<int> Run(CommandContext context)
     {
-        var request = new LaneRecycleRequest(context.Line.Positional(0), Absolute(context.Line.Value("digest")), context.Line.Has("dry-run"));
+        var request = new LaneRecycleRequest(context.Line.Positional(0), Absolute(context.Line.Value("digest")), context.Line.Has("dry-run"), context.Line.Has("detach"), context.Line.Has("wait-idle"));
         var result = await context.Services.GetRequiredService<IService<LaneRecycleRequest, LaneRecycleResponse>>().Handle(request, context.Cancellation).ConfigureAwait(false);
         if (result.IsError)
         {
@@ -37,7 +37,8 @@ internal static class LaneRecycleCommand
         string.Join(
             Environment.NewLine,
             [
-                (response.DryRun ? "dry run: would recycle lane " : "recycled lane ") + response.Lane + " (session " + response.OldSession + (response.NewSession is { } fresh ? " -> " + fresh : string.Empty) + ")",
+                (response.DryRun ? "dry run: would recycle lane " : response.WaiterPid is not null ? "started a detached recycle waiter for lane " : "recycled lane ") + response.Lane + " (session " + response.OldSession + (response.NewSession is { } fresh ? " -> " + fresh : string.Empty) + ")" + (response.WaiterPid is { } pid ? ", waiter pid " + pid.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty),
+                .. response.DigestTimes is { } times ? (string[])["  " + times] : [],
                 .. response.Steps.Select(static (s, i) => "  " + (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) + ". " + s),
                 .. response.Warning is { } warning ? (string[])["warning: " + warning] : [],
             ]);

@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 
 /// <summary>
 /// The 'index-sync' background service (owned-index spec §5.5, §5.8): every 5 minutes while serve runs it asks Context to run one tick of each record feed, through
-/// <see cref="IContextEngine"/> only. A source that is down is a row with its code in the run's summary, never a failed run, and one that stopped at its time cap or a rate limit makes the summary lead with 'partial:' (<see cref="SourceStops"/>); a missing or unapproved profile is a quiet run.
+/// <see cref="IContextEngine"/> only. A source that is down is a row with its code in the run's summary, never a failed run, and one that stopped at its time cap or a rate limit makes the summary lead with 'partial:' (<see cref="SourceStops"/>); a missing or unprofile is a quiet run.
 /// Where each source stands (phase, last tick, last code, the milestones usable and complete) is the facade's Progress, which the CLI and the app read.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
@@ -33,7 +33,7 @@ internal sealed class IndexSyncService(ContextScopes scopes, IContextEngine engi
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
         if (scope.IsError || scope.Value.Settings is null)
         {
-            return scope.IsError && scope.Error.Code != SindriErrors.ProfileNotApproved.Code ? scope.Error : ScheduledResult.Quiet;
+            return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
         }
 
         var report = await engine.Tick(scope.Value, cancellationToken).ConfigureAwait(false);

@@ -24,8 +24,9 @@ public static class ContextWatch
     /// <summary>Compares a poll with the lanes already reported high. A lane whose size can't be told keeps its state.</summary>
     /// <param name="high">The lanes reported high so far.</param>
     /// <param name="now">This poll's lane contexts.</param>
+    /// <param name="metaLane">The meta lane's name: it reports META RECYCLE instead of CONTEXT HIGH; null for none.</param>
     /// <returns>The lines to report and the lanes now reported high.</returns>
-    public static (IReadOnlyList<string> Lines, IReadOnlySet<string> High) Step(IReadOnlySet<string> high, IReadOnlyList<LaneContext> now)
+    public static (IReadOnlyList<string> Lines, IReadOnlySet<string> High) Step(IReadOnlySet<string> high, IReadOnlyList<LaneContext> now, string? metaLane = null)
     {
         ArgumentNullException.ThrowIfNull(high);
         ArgumentNullException.ThrowIfNull(now);
@@ -35,7 +36,9 @@ public static class ContextWatch
         {
             if (lane.Verdict == ContextVerdict.Recycle && kept.Add(lane.Lane))
             {
-                lines.Add(string.Create(CultureInfo.InvariantCulture, $"CONTEXT HIGH {lane.Lane} {lane.Tokens / 1000}k"));
+                lines.Add(metaLane is not null && string.Equals(lane.Lane, metaLane, StringComparison.OrdinalIgnoreCase)
+                    ? string.Create(CultureInfo.InvariantCulture, $"META RECYCLE {lane.Tokens / 1000}k")
+                    : string.Create(CultureInfo.InvariantCulture, $"CONTEXT HIGH {lane.Lane} {lane.Tokens / 1000}k"));
             }
             else if (lane.Verdict == ContextVerdict.Ok && kept.Remove(lane.Lane))
             {

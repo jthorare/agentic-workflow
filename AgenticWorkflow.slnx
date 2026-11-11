@@ -6,6 +6,9 @@
     <Project Path="src/Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />
     <Project Path="src/Redaction/Aw.Redaction/Aw.Redaction.csproj" />
   </Folder>
+  <Folder Name="/src/Toolkit/">
+    <Project Path="src/Toolkit/Aw.Sindri.Toolkit/Aw.Sindri.Toolkit.csproj" />
+  </Folder>
   <Folder Name="/src/Embeddings/">
     <Project Path="src/Embeddings/Aw.Embeddings/Aw.Embeddings.csproj" />
   </Folder>
@@ -40,6 +43,7 @@
     <Project Path="src/Sindri/Aw.Sindri.Features/Aw.Sindri.Features.csproj" />
     <Project Path="src/Sindri/Aw.Sindri.Infrastructure/Aw.Sindri.Infrastructure.csproj" />
     <Project Path="src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj" />
+    <Project Path="src/Sindri/Aw.Sindri.CodeRunner/Aw.Sindri.CodeRunner.csproj" />
     <Project Path="src/Sindri/Aw.Sindri.Ui/Aw.Sindri.Ui.csproj" />
     <Project Path="src/Sindri/Aw.Sindri.Ui.Desktop/Aw.Sindri.Ui.Desktop.csproj" />
     <Project Path="src/Sindri/Aw.Sindri.Workflows/Aw.Sindri.Workflows.csproj" />
@@ -119,5 +123,7 @@
     <Project Path="tests/Aw.Connectors.Testing/Aw.Connectors.Testing.csproj" />
     <Project Path="tests/Aw.Embeddings.Tests/Aw.Embeddings.Tests.csproj" />
     <Project Path="tests/Aw.Embeddings.Testing/Aw.Embeddings.Testing.csproj" />
+    <Project Path="tests/Aw.Sindri.Toolkit.Testing/Aw.Sindri.Toolkit.Testing.csproj" />
+    <Project Path="tests/Aw.Sindri.Toolkit.Tests/Aw.Sindri.Toolkit.Tests.csproj" />
   </Folder>
 </Solution>

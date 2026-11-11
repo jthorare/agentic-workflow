@@ -40,39 +40,12 @@ public sealed class ActionCommandTests
     }
 
     [Fact]
-    public void StartInstance_fills_the_item_and_leaves_the_recipe_to_fill_in()
-    {
-        var (cli, hint) = For("StartInstance", subject: null, Item);
-
-        Assert.Equal(CatalogCli("StartInstance").Replace("<itemId>", Item, StringComparison.Ordinal), cli);
-        Assert.Equal(Labels.FillInHint(["recipe"]), hint);
-    }
-
-    [Fact]
     public void An_id_placeholder_is_not_the_item_and_stays_as_served()
     {
         var (cli, hint) = For("ReviewContextMap:drop", subject: null, Item);
 
         Assert.Equal(CatalogCli("ReviewContextMap:drop"), cli);
         Assert.Equal(Labels.FillInHint(["id"]), hint);
-    }
-
-    [Fact]
-    public void An_optional_group_whose_placeholder_is_filled_loses_its_brackets()
-    {
-        var (cli, hint) = For("ApproveProfile", new NeedsYouSubject(NeedsYouKinds.Profile, "932d"), item: null);
-
-        Assert.Equal(CatalogCli("ApproveProfile").Replace("[<hash>]", "932d", StringComparison.Ordinal), cli);
-        Assert.Empty(hint);
-    }
-
-    [Fact]
-    public void An_optional_group_whose_placeholder_is_not_filled_is_shown_as_served()
-    {
-        var (cli, hint) = For("ApproveProfile", subject: null, item: null);
-
-        Assert.Equal(CatalogCli("ApproveProfile"), cli);
-        Assert.Empty(hint);
     }
 
     [Fact]

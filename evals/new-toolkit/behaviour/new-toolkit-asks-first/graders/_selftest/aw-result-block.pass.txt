@@ -1,0 +1,5 @@
+```aw-result
+{"skill": "new-toolkit", "artifacts": [], "summary": "asked for the name and the first tool"}
+```
+
+What should the toolkit be called?

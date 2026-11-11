@@ -21,7 +21,7 @@
     },
     {
       "action": "ApplyCommand:answer-accept",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
         "human+terminal",
         "human",
@@ -39,7 +39,7 @@
     },
     {
       "action": "ApplyCommand:answer-grant",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
         "human+terminal",
         "human",
@@ -57,7 +57,7 @@
     },
     {
       "action": "ApplyCommand:answer-grant-tokens",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
         "human+terminal",
         "human",
@@ -238,26 +238,8 @@
       "confirm": null
     },
     {
-      "action": "ApproveProfile",
-      "class": "protected",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/profile/approve",
-      "cli": "sindri profile approve [<hash>]",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
       "action": "ApproveRecipe",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
         "human+terminal",
         "human",
@@ -474,7 +456,7 @@
     },
     {
       "action": "ImportContextMap",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
         "human+terminal",
         "human",
@@ -1028,7 +1010,7 @@
     },
     {
       "action": "RevokeRecipe",
-      "class": "protected",
+      "class": "desk",
       "allowedCallers": [
         "human+terminal",
         "human",

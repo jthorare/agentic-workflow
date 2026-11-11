@@ -8,7 +8,6 @@ using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Views;
-using Aw.Sindri.Core.Workflow.Stats;
 
 namespace Aw.Sindri.Tests.Views;
 
@@ -19,14 +18,14 @@ namespace Aw.Sindri.Tests.Views;
 /// </summary>
 public sealed class ViewRowShapeTests
 {
-    private const int PinnedVersion = 26;
-    private const string PinnedShape = "38a39df5747002f794e9a7569660464f4dc7f5618876d2590a568eff59407add";
+    private const int PinnedVersion = 33;
+    private const string PinnedShape = "3c2e4978e203e20bd2f73d93ee53fa22513f409f5440edd88ebdee647adc95a1";
 
     private static readonly Type[] _rows =
     [
         typeof(ServiceRow), typeof(ProfileRow), typeof(ItemRow), typeof(AliasRow), typeof(TimelineRow), typeof(RequestRow),
-        typeof(HumanDecisionRow), typeof(NeedsYouRowRecord), typeof(JobRow), typeof(LaunchRow), typeof(CodeIndexRow), typeof(RecipeStatsRow),
-        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder), typeof(ProjectAttachedRow), typeof(ProjectHiddenRow), typeof(TodoRow),
+        typeof(HumanDecisionRow), typeof(NeedsYouRowRecord), typeof(JobRow), typeof(LaunchRow), typeof(CodeIndexRow),
+        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder), typeof(ProjectAttachedRow), typeof(ProjectHiddenRow), typeof(WorkflowRunRow), typeof(ItemLinkRow), typeof(TodoRow),
     ];
 
     [Fact, Trait("Lane", "unit")]

@@ -1,0 +1,61 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- The shared status chip (#2545): <Border Classes="status-chip ok"><TextBlock Text="..." /></Border>. Variants: ok, running, waiting,
+       attention, error, neutral, draft. Each reads Brush.Status.<Variant>.Fg / .Bg / .Border (Tokens.axaml). A chip always carries its word. -->
+  <Style Selector="Border.status-chip">
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.XS}" />
+    <Setter Property="Padding" Value="6,0" />
+    <!-- MinHeight, not Height: at the 1.3 text size the caption line is 20.8 px, which a fixed 20 px chip with its 1 px border cut (#2674) -->
+    <Setter Property="MinHeight" Value="20" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <!-- a chip with no variant is the neutral one -->
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Neutral.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Neutral.Border}" />
+  </Style>
+  <Style Selector="Border.status-chip > TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Neutral.Fg}" />
+    <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
+    <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
+    <Setter Property="LineHeight" Value="{DynamicResource Type.Caption.LineHeight}" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.status-chip.ok">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Ok.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Ok.Border}" />
+  </Style>
+  <Style Selector="Border.status-chip.ok > TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Ok.Fg}" /></Style>
+  <Style Selector="Border.status-chip.running">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Running.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Running.Border}" />
+  </Style>
+  <Style Selector="Border.status-chip.running > TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Running.Fg}" /></Style>
+  <Style Selector="Border.status-chip.waiting">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Waiting.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Waiting.Border}" />
+  </Style>
+  <Style Selector="Border.status-chip.waiting > TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Waiting.Fg}" /></Style>
+  <Style Selector="Border.status-chip.attention">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Attention.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Attention.Border}" />
+  </Style>
+  <Style Selector="Border.status-chip.attention > TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Attention.Fg}" /></Style>
+  <Style Selector="Border.status-chip.error">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Error.Border}" />
+  </Style>
+  <Style Selector="Border.status-chip.error > TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Error.Fg}" /></Style>
+  <Style Selector="Border.status-chip.neutral">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Neutral.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Neutral.Border}" />
+  </Style>
+  <Style Selector="Border.status-chip.neutral > TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Neutral.Fg}" /></Style>
+  <Style Selector="Border.status-chip.draft">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Draft.Bg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Draft.Border}" />
+  </Style>
+  <Style Selector="Border.status-chip.draft > TextBlock"><Setter Property="Foreground" Value="{DynamicResource Brush.Status.Draft.Fg}" /></Style>
+</Styles>

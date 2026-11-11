@@ -3,6 +3,7 @@ using Aw.Context.Core.Library;
 namespace Aw.Context.Tests.Library;
 
 /// <summary>Which files the library feed reads, decided from their first 4 KiB (PR review page spec 2026-11-04 §4.1).</summary>
+[Trait("Lane", "unit")]
 public sealed class LibraryAdmissionTests
 {
     private const string Rest = "id: ferry-booking\nkind: plan\ntitle: \"Harbor ferry booking\"\nstatus: draft\n---\n\n# Harbor ferry booking\n";

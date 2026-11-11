@@ -7,10 +7,12 @@ namespace Aw.Sindri.Features.RemoveConnection;
 /// <summary>Removes a connection: deletes its secret first, then its row. An unknown name is SND-CONN-001. A secret that cannot be deleted keeps the row (SND-CONN-006), so the pointer is not lost.</summary>
 /// <param name="store">The connections.</param>
 /// <param name="secrets">Deletes the secret.</param>
-internal sealed class RemoveConnectionService(IConnectionStore store, IConnectionSecrets secrets) : IService<RemoveConnectionRequest, RemoveConnectionResponse>
+/// <param name="events">Records that a removed connection no longer needs a sign-in, so its Needs-you row clears.</param>
+internal sealed class RemoveConnectionService(IConnectionStore store, IConnectionSecrets secrets, ConnectionEvents events) : IService<RemoveConnectionRequest, RemoveConnectionResponse>
 {
     private readonly IConnectionStore _store = store;
     private readonly IConnectionSecrets _secrets = secrets;
+    private readonly ConnectionEvents _events = events;
 
     public async ValueTask<Result<RemoveConnectionResponse>> Handle(RemoveConnectionRequest request, CancellationToken cancellationToken)
     {
@@ -40,6 +42,17 @@ internal sealed class RemoveConnectionService(IConnectionStore store, IConnectio
         }
 
         var removed = await _store.Remove(name.Value, cancellationToken).ConfigureAwait(false);
-        return removed.IsError ? ConnectionFailures.Safe(removed.Error) : new RemoveConnectionResponse(name.Value.ToString(), secretDeleted);
+        if (removed.IsError)
+        {
+            return ConnectionFailures.Safe(removed.Error);
+        }
+
+        await _events.Removed(name.Value, cancellationToken).ConfigureAwait(false);
+        if (found.Value.Status == ConnectionStatus.NeedsSignIn)
+        {
+            await _events.SignedIn(name.Value, cancellationToken).ConfigureAwait(false);   // why: a 'sign in again' row for a connection that is gone would point at nothing
+        }
+
+        return new RemoveConnectionResponse(name.Value.ToString(), secretDeleted);
     }
 }

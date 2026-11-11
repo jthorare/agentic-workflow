@@ -4,12 +4,13 @@ using Aw.Context.Core.Sources;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Linear;
 
 namespace Aw.Sindri.Features.LinearIssues;
 
 /// <summary>
-/// Creates an issue as the owner (Linear hub spec §5.2; desk). In order: a session is refused (SND-AUTH-002); the client id is read (SND-CLI-003); the team must be a picked one (SND-LINEAR-003); every id in the body must be one of the team's stored
+/// Creates an issue as the owner (Linear hub spec §5.2; desk). In order (an agent session may create too, agent-first PR 2): the client id is read (SND-CLI-003); the team must be a picked one (SND-LINEAR-003); every id in the body must be one of the team's stored
 /// lookups (SND-LINEAR-006), the parent key a stored issue; then Context creates it with the client id, so a retry never creates twice. The answer is the new issue as the list shows it, read back through <see cref="GetLinearIssueService"/>.
 /// A write that Linear never confirmed is SND-LINEAR-011 with the client id to retry with.
 /// </summary>
@@ -18,7 +19,8 @@ namespace Aw.Sindri.Features.LinearIssues;
 /// <param name="teams">The picked-team check and the team's lookups.</param>
 /// <param name="facts">The stored issues, for the parent.</param>
 /// <param name="issues">The issue read the answer is taken from.</param>
-internal sealed class CreateLinearIssueService(LinearScopes scopes, IContextLinearWrites engine, LinearTeamGate teams, ILinearIssueFacts facts, IService<GetLinearIssueRequest, GetLinearIssueResponse> issues)
+/// <param name="recorder">Records the write under the caller's actor.</param>
+internal sealed class CreateLinearIssueService(LinearScopes scopes, IContextLinearWrites engine, LinearTeamGate teams, ILinearIssueFacts facts, IService<GetLinearIssueRequest, GetLinearIssueResponse> issues, ILinearWriteRecorder recorder)
     : IService<CreateLinearIssueRequest, CreateLinearIssueResponse>
 {
     private const string IssueRecord = "linear:issue/";
@@ -27,11 +29,6 @@ internal sealed class CreateLinearIssueService(LinearScopes scopes, IContextLine
     public async ValueTask<Result<CreateLinearIssueResponse>> Handle(CreateLinearIssueRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (scopes.IsSession())
-        {
-            return SindriErrors.AuthRefused.With(LinearWriteFailures.Refusal);
-        }
-
         var client = LinearClientId.Parse(request.ClientId);
         if (client.IsError)
         {
@@ -43,6 +40,13 @@ internal sealed class CreateLinearIssueService(LinearScopes scopes, IContextLine
             return SindriErrors.InvalidInput.With("team is the team's key, 'ENG'");
         }
 
+        // why: the caller's own check comes first, so a session the owner switched off or a repo the profile doesn't map learns nothing about teams or ids
+        var scope = await scopes.Write(cancellationToken).ConfigureAwait(false);
+        if (scope.IsError)
+        {
+            return scope.Error;
+        }
+
         var team = await teams.Picked(request.Team.Trim().ToUpperInvariant(), cancellationToken).ConfigureAwait(false);
         if (team.IsError)
         {
@@ -50,10 +54,9 @@ internal sealed class CreateLinearIssueService(LinearScopes scopes, IContextLine
         }
 
         var draft = await Draft(request, team.Value, cancellationToken).ConfigureAwait(false);
-        var scope = await scopes.Read(owner: true, cancellationToken).ConfigureAwait(false);
-        if (draft.IsError || scope.IsError)
+        if (draft.IsError)
         {
-            return draft.IsError ? draft.Error : scope.Error;
+            return draft.Error;
         }
 
         var sent = await engine.Create(draft.Value, client.Value, scope.Value, cancellationToken).ConfigureAwait(false);
@@ -65,13 +68,30 @@ internal sealed class CreateLinearIssueService(LinearScopes scopes, IContextLine
     private static Error Unconfirmed(string team, LinearClientId client) =>
         LinearWriteFailures.NoAnswer($"Linear didn't confirm the new {team} issue (fix: retry; the same client id never creates it twice)", client.Value);
 
-    private async ValueTask<Result<CreateLinearIssueResponse>> Outcome(LinearWriteOutcome outcome, LinearLookupsResponse lookups, LinearClientId client, CancellationToken cancellationToken) => outcome switch
+    private async ValueTask<Result<CreateLinearIssueResponse>> Outcome(LinearWriteOutcome outcome, LinearLookupsResponse lookups, LinearClientId client, CancellationToken cancellationToken)
     {
-        LinearWriteApplied applied => await Created(applied.Stored, lookups, client, warning: null, cancellationToken).ConfigureAwait(false),
-        LinearWriteAppliedNotStored { Live: { } live } => await Created(live, lookups, client, NotStored, cancellationToken).ConfigureAwait(false),
-        LinearWriteAppliedNotStored => LinearHubErrors.NotStored.With("Saved in Linear; Sindri shows it after the next sync"),
-        _ => Unconfirmed(lookups.Team.Key, client),
-    };
+        var made = outcome switch
+        {
+            LinearWriteApplied applied => applied.Stored,
+            LinearWriteAppliedNotStored { Live: { } live } => live,
+            _ => null,
+        };
+
+        if (outcome is not (LinearWriteApplied or LinearWriteAppliedNotStored))
+        {
+            return Unconfirmed(lookups.Team.Key, client);
+        }
+
+        // why: the write is done in Linear, so it is recorded (under the caller's actor) before the answer is built, whatever the store holds
+        if (await recorder.Record(new LinearWrite(EventTypes.LinearIssueCreated, lookups.Team.Key, made?.Key.ToString(), client.Value, Fields: null), cancellationToken).ConfigureAwait(false) is { } failed)
+        {
+            return failed;
+        }
+
+        return made is null
+            ? LinearHubErrors.NotStored.With("Saved in Linear; Sindri shows it after the next sync")
+            : await Created(made, lookups, client, outcome is LinearWriteApplied ? null : NotStored, cancellationToken).ConfigureAwait(false);
+    }
 
     private async ValueTask<Result<CreateLinearIssueResponse>> Created(LinearIssueView view, LinearLookupsResponse lookups, LinearClientId client, string? warning, CancellationToken cancellationToken)
     {

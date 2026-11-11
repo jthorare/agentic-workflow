@@ -5,9 +5,10 @@ namespace Aw.Meta.Core.Worktrees;
 
 /// <summary>
 /// The rules that decide whether a worktree may be removed. All must hold, so every failing one is reported. The work must be
-/// proven finished: an ended pull request, or, with no pull request, everything pushed or in origin/main (a live tree on a fresh branch is protected by rules 4 and 7).
+/// proven finished: an ended pull request (merged or closed) with nothing unpushed, or, with no pull request, its head in origin/main (a live tree on a fresh branch is protected by rules 4 and 7),
+/// or a bugfix run naming it at its HEAD whose GitHub issue a merged pull request closed (#2753).
 /// Nothing about age is among them (a worktree untouched for weeks may still be work in progress); the one time rule is a change
-/// trigger, "changed since the last sweep".
+/// trigger, "changed since the last full sweep (when it started)".
 /// </summary>
 internal static class WorktreeRules
 {
@@ -33,7 +34,7 @@ internal static class WorktreeRules
         else
         {
             Merged(facts, reasons);
-            if (facts.Discarded is null && facts.UnpushedCommits > 0 && !(facts.PrState is null && facts.HeadMerged))
+            if (facts.Discarded is null && facts.FinishedBugfix is null && facts.UnpushedCommits > 0 && !(facts.PrState is null && facts.HeadMerged))
             {
                 reasons.Add(string.Create(CultureInfo.InvariantCulture, $"{facts.UnpushedCommits} commit(s) are on no remote branch"));
             }
@@ -80,7 +81,7 @@ internal static class WorktreeRules
     // The main checkout is not a pull request branch; calling it "no pull request" reads like unfinished work.
     private static string NoPullRequest(WorktreeFacts facts) => facts.IsMainWorktree ? "main checkout" : "no pull request";
 
-    // A branch with no pull request is finished when everything of it is safe elsewhere (its head is in origin/main, or no commit is unpushed); idle and unchanged-since-the-last-sweep still guard a live tree.
+    // A branch with no pull request is finished only when its head is in origin/main (pushed is not enough, #2703); idle and unchanged-since-the-last-sweep still guard a live tree.
     private static void NoPullRequestReasons(WorktreeFacts facts, List<string> reasons)
     {
         if (facts.IsMainWorktree)
@@ -90,29 +91,26 @@ internal static class WorktreeRules
         else
         {
             // A fresh branch cut from main looks finished (head in origin/main, nothing inside at this instant); only an explicit --include-no-pr sweep may remove one.
-            if (facts.KeepNoPr && facts.Discarded is null)
+            if (facts.KeepNoPr && facts.Discarded is null && facts.FinishedBugfix is null)
             {
                 reasons.Add("kept: no PR (pass --include-no-pr to remove)");
             }
 
-            if (facts.Discarded is null && !facts.HeadMerged && facts.UnpushedCommits > 0)
+            // Pushed is not finished: a lane pushes its fix branch before the PR opens, and its gates run in the tree (#2703). Only --discarded or a finished bugfix run (its issue closed by a merged PR, #2753) removes an unmerged one.
+            if (facts.Discarded is null && facts.FinishedBugfix is null && !facts.HeadMerged)
             {
-                reasons.Add("no pull request: work not finished (not all of it is pushed)");
+                reasons.Add("unmerged branch, no PR (in-progress work)");
             }
 
             // Rule 7 needs a recorded sweep; without one a live tree on a fresh branch would look unchanged.
             if (facts.NoPreviousSweep && facts.Discarded is null)
             {
                 reasons.Add("no previous sweep to compare with");
-                if (!facts.HeadMerged)
-                {
-                    reasons.Add("not merged into origin/main (no pull request)");
-                }
             }
         }
     }
 
-    // Rule 1: a detached worktree that is not a gate tree is removed only by --done (see DetachedReasons); a branch with a pull request only when it ended (merged, or closed with everything on the remote); a branch with none when everything of it is pushed or in origin/main.
+    // Rule 1: a detached worktree that is not a gate tree is removed only by --done (see DetachedReasons); a branch with a pull request only when it ended (merged or closed) with nothing unpushed (a squash-merged head is never in origin/main, #2659); a branch with none when its head is in origin/main.
     private static void Merged(WorktreeFacts facts, List<string> reasons)
     {
         if (facts.Branch is null)
@@ -137,12 +135,9 @@ internal static class WorktreeRules
             return;
         }
 
-        if (facts.PrState == PrState.Closed)
+        if (facts.PrState is PrState.Closed or PrState.Merged)
         {
-            if (facts.UnpushedCommits > 0)
-            {
-                reasons.Add($"{pr} is closed but its head is not merged into origin/main and not on any remote");
-            }
+            EndedReasons(facts, pr, facts.PrState.Value.ToString().ToLowerInvariant(), reasons);
         }
         else
         {
@@ -150,12 +145,12 @@ internal static class WorktreeRules
         }
     }
 
-    // Only the owning lane's --done frees a detached tree (the unpushed-commits reason in Judge checks its HEAD); rule 7 needs a recorded sweep.
+    // Only the owning lane's --done (or a finished bugfix run naming it, #2753) frees a detached tree (the unpushed-commits reason in Judge checks its HEAD). --done also waives rule 7, like --discarded (#2544, #2560); a finished bugfix run does not, so rule 7 still guards its tree.
     private static void DetachedReasons(WorktreeFacts facts, List<string> reasons)
     {
-        if (!facts.Done || facts.NoPreviousSweep)
+        if (!facts.Done && facts.FinishedBugfix is null)
         {
-            reasons.Add(facts.Done ? "no previous sweep to compare with" : "detached, not a gate tree");
+            reasons.Add("detached, not a gate tree");
         }
     }
 
@@ -205,10 +200,10 @@ internal static class WorktreeRules
         }
     }
 
-    // Rule 7's reason: a tree whose pull request ended is compared with that time, any other with the last sweep's start.
+    // Rule 7's reason (waived for a gate tree, --discarded and --done: the owning lane said it is finished): a tree whose pull request ended is compared with that time, any other with the last sweep's start.
     private static void Changed(WorktreeFacts facts, List<string> reasons)
     {
-        if (facts.GatePr is not null || facts.Discarded is not null)
+        if (facts.GatePr is not null || facts.Discarded is not null || facts.Done)
         {
             return;
         }
@@ -221,9 +216,34 @@ internal static class WorktreeRules
         {
             reasons.Add(facts.ChangedSinceEnd
                 ? string.Create(CultureInfo.InvariantCulture, $"changed since PR #{facts.PrNumber} {(facts.PrState == PrState.Merged ? "merged" : "closed")}")
-                : "changed since the last sweep");
+                : SinceFullSweep(facts.SweepStartedAt));
         }
     }
+
+    // A --path or --pr pass never moves the marker, so the reason says it is the last full sweep, and when that started.
+    private static string SinceFullSweep(DateTimeOffset? started) =>
+        started is { } at
+            ? "changed since the last full sweep (" + at.ToUniversalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + "Z)"
+            : "changed since the last full sweep";
+
+    // An ended (merged or closed) pull request's branch whose head is not in origin/main. A squash or rebase merge never leaves the
+    // branch head in origin/main, so GitHub's state decides, not ancestry (#2659); unpushed commits, or pushed ones made after the
+    // pull request ended (HEAD has commits the head GitHub recorded lacks), are new work. A tree behind that head (it never pulled
+    // the last push) has none and may go; when git can't tell, the tree is kept.
+    private static void EndedReasons(WorktreeFacts facts, string pr, string ended, List<string> reasons)
+    {
+        if (facts.UnpushedCommits > 0)
+        {
+            reasons.Add($"{pr} is {ended} but its head is not merged into origin/main and not on any remote");
+        }
+
+        if (facts.PrHead.Length > 0 && !string.Equals(facts.Head, facts.PrHead, StringComparison.Ordinal) && facts.CommitsAfterPrHead is not 0)
+        {
+            reasons.Add($"HEAD {Sha7(facts.Head)} is not {pr}'s head {Sha7(facts.PrHead)} (commits after it {ended})");
+        }
+    }
+
+    private static string Sha7(string sha) => sha.Length > 7 ? sha[..7] : sha;
 
     private static string Short(string command) => command.Length > 60 ? command[..60] + "..." : command;
 }

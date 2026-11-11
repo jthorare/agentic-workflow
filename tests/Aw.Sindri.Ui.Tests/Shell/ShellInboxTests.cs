@@ -67,17 +67,6 @@ public sealed class ShellInboxTests
     }, Token);
 
     [Fact]
-    public Task The_Linear_cards_Review_changes_opens_the_inbox_on_the_profile_row() => UiThread.Run(async () =>
-    {
-        var shell = await Shell(NeedsYouRows.Failure(), NeedsYouRows.Profile());
-
-        shell.LinearConnection.RequestReview();
-
-        Assert.True(shell.IsNeedsYouInbox);
-        Assert.Equal("profile:drift", shell.NeedsYou.SelectedId);
-    }, Token);
-
-    [Fact]
     public Task A_link_to_a_row_the_list_does_not_have_still_opens_the_inbox_on_the_first_row() => UiThread.Run(async () =>
     {
         var shell = await Shell(NeedsYouRows.Decision());

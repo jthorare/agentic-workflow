@@ -2,6 +2,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
+using Aw.Sindri.Core.Ids;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
@@ -88,6 +89,75 @@ public abstract class WorkflowRunStoreContract
         Expect.Sequence([Run(2).Id, Run(3).Id], inFlight.Select(static r => r.Id));
     }
 
+    /// <summary>The recent list holds runs of every status, newest first, cut at the limit, and none of another workflow's.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Recent_lists_the_newest_runs_of_every_status_cut_at_the_limit()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1, WorkflowRunStatus.Succeeded) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(1) }, Token)).Value;
+        _ = (await store.Insert(Run(2, WorkflowRunStatus.Failed) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(2) }, Token)).Value;
+        _ = (await store.Insert(Run(3, WorkflowRunStatus.Running) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(3) }, Token)).Value;
+        var other = WorkflowId.From("WF-00000000000000000000000000000002");
+        _ = (await store.Insert(Run(4) with { WorkflowId = other, Id = WorkflowRunId.Of(WorkflowSlug.From("another"), 1, 1) }, Token)).Value;
+
+        var all = (await store.Recent(_workflow, 0, 10, Token)).Value;
+        var two = (await store.Recent(_workflow, 0, 2, Token)).Value;
+
+        Expect.Sequence([Run(3).Id, Run(2).Id, Run(1).Id], all.Select(static r => r.Id));
+        Expect.Sequence([Run(3).Id, Run(2).Id], two.Select(static r => r.Id));
+        Expect.Equal(0, (await store.Recent(WorkflowId.From("WF-00000000000000000000000000000009"), 0, 10, Token)).Value.Count);
+    }
+
+    /// <summary>An offset skips the newest runs: of three, offset 1 and limit 1 is the middle one, and an offset past the end is empty.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Recent_pages_with_an_offset()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        for (var n = 1; n <= 3; n++)
+        {
+            _ = (await store.Insert(Run(n, WorkflowRunStatus.Succeeded) with { StartedAt = KnownInstants.Epoch + TimeSpan.FromMinutes(n) }, Token)).Value;
+        }
+
+        var middle = (await store.Recent(_workflow, 1, 1, Token)).Value;
+        var past = (await store.Recent(_workflow, 3, 5, Token)).Value;
+
+        Expect.Sequence([Run(2).Id], middle.Select(static r => r.Id));
+        Expect.Equal(0, past.Count);
+    }
+
+    /// <summary>Runs that started at the same instant list by occurrence number, so 10 comes before 9 (text order would put 9 first).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Recent_breaks_a_start_time_tie_by_occurrence_number()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(9, WorkflowRunStatus.Succeeded), Token)).Value;
+        _ = (await store.Insert(Run(10, WorkflowRunStatus.Succeeded), Token)).Value;
+
+        var runs = (await store.Recent(_workflow, 0, 10, Token)).Value;
+
+        Expect.Sequence([Run(10).Id, Run(9).Id], runs.Select(static r => r.Id));
+    }
+
+    /// <summary>Only running runs are listed, over every workflow, oldest first.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Running_lists_only_running_runs_oldest_first()
+    {
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var store = Create(clock);
+        _ = (await store.Insert(Run(1, WorkflowRunStatus.Succeeded), Token)).Value;
+        _ = (await store.Insert(Run(2), Token)).Value;
+        _ = (await store.Insert(Run(3, WorkflowRunStatus.Queued), Token)).Value;
+        _ = (await store.Insert(Run(4), Token)).Value;
+
+        var running = (await store.Running(Token)).Value;
+
+        Expect.Sequence([Run(2).Id, Run(4).Id], running.Select(static r => r.Id));
+    }
+
     /// <summary>A final status sets the end time from the clock and keeps the outputs and the error given.</summary>
     /// <returns>The test.</returns>
     [Fact]
@@ -118,6 +188,45 @@ public abstract class WorkflowRunStoreContract
         Expect.Equal(SindriErrors.GraphRunNotFound.Code, result.Error.Code);
     }
 
+    /// <summary>A run is linked to the first item its work made; linking a run that does not exist is SND-GRAPH-101.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Setting_the_item_of_a_run_reads_back_and_a_missing_run_is_not_found()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        var run = Run(1);
+        _ = (await store.Insert(run, Token)).Value;
+        var first = ItemId.From("ITM-" + new string('a', 32));
+        var second = ItemId.From("ITM-" + new string('b', 32));
+
+        var set = await store.SetItem(run.Id, first, Token);
+        var replaced = await store.SetItem(run.Id, second, Token);
+        var missing = await store.SetItem(Run(9).Id, first, Token);
+
+        Expect.Equal(first.Value, set.Value.ItemId?.Value);
+        Expect.Equal(first.Value, (await store.Get(run.Id, Token)).Value.ItemId?.Value);
+        Expect.Equal(first.Value, replaced.Value.ItemId?.Value);
+        Expect.Equal(SindriErrors.GraphRunNotFound.Code, missing.Error.Code);
+    }
+
+    /// <summary>A run keeps the first item linked to it; later links (a create_item in a loop) do not replace it.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task SetItem_keeps_the_first_item()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        var run = Run(1);
+        _ = (await store.Insert(run, Token)).Value;
+        var first = ItemId.From("ITM-" + new string('a', 32));
+        var second = ItemId.From("ITM-" + new string('b', 32));
+
+        _ = await store.SetItem(run.Id, first, Token);
+        var again = await store.SetItem(run.Id, second, Token);
+
+        Expect.Equal(first.Value, again.Value.ItemId?.Value);
+        Expect.Equal(first.Value, (await store.Get(run.Id, Token)).Value.ItemId?.Value);
+    }
+
     /// <summary>Writing a node run twice for one node and item keeps the second; another item is another row.</summary>
     /// <returns>The test.</returns>
     [Fact]
@@ -134,6 +243,26 @@ public abstract class WorkflowRunStoreContract
         var rows = (await store.NodeRuns(Run(1).Id, Token)).Value;
         Expect.Sequence([(0, NodeRunStatus.Succeeded), (1, NodeRunStatus.Running)], rows.Select(static r => (r.ItemIndex, r.Status)));
         Expect.Equal("{\"n\":3}", rows[0].Output);
+    }
+
+    /// <summary>The rows for one item are every index 0 row plus that item's rows; other items' rows are left out.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Node_runs_for_an_item_hold_index_zero_and_that_item_only()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1), Token)).Value;
+        var row = new NodeRun(Run(1).Id, NodeId.From("fetch"), 0, NodeRunStatus.Succeeded, Input: null, Output: "{}", Truncated: false, Error: null, Usage: null);
+        foreach (var index in new[] { 0, 1, 2, 3 })
+        {
+            _ = (await store.RecordNodeRun(row with { ItemIndex = index }, Token)).Value;
+        }
+
+        _ = (await store.RecordNodeRun(row with { NodeId = NodeId.From("each") }, Token)).Value;
+
+        var rows = (await store.NodeRunsForItem(Run(1).Id, 2, Token)).Value;
+
+        Expect.Sequence([("each", 0), ("fetch", 0), ("fetch", 2)], rows.Select(static r => (r.NodeId.Value, r.ItemIndex)));
     }
 
     /// <summary>A node run of a run nobody recorded is SND-GRAPH-101.</summary>
@@ -210,6 +339,187 @@ public abstract class WorkflowRunStoreContract
         Expect.Equal(1, results.Count(static r => r.IsSuccess && r.Value == GraphStartKind.Started));
         Expect.Equal(19, results.Count(static r => r.IsSuccess && r.Value == GraphStartKind.Skipped));
         _ = Expect.Only((await store.InFlight(_workflow, Token)).Value);
+    }
+
+    /// <summary>The oldest queued run becomes running once nothing of the workflow is in flight.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Promote_moves_the_oldest_queued_run_to_running_and_only_one_at_a_time()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Admit(Run(1), GraphConcurrency.Queue, Token)).Value;
+        _ = (await store.Admit(Run(2), GraphConcurrency.Queue, Token)).Value;
+        _ = (await store.Admit(Run(3), GraphConcurrency.Queue, Token)).Value;
+        _ = (await store.SetStatus(Run(1).Id, WorkflowRunStatus.Succeeded, outputs: null, error: null, Token)).Value;
+
+        var promoted = await store.PromoteOldestQueued(_workflow, Token);
+        var again = await store.PromoteOldestQueued(_workflow, Token);
+
+        Expect.Equal(Run(2).Id, promoted.Value?.Id);
+        Expect.Equal(WorkflowRunStatus.Running, promoted.Value?.Status);
+        Expect.Equal(WorkflowRunStatus.Running, (await store.Get(Run(2).Id, Token)).Value.Status);
+        Expect.Equal(WorkflowRunStatus.Queued, (await store.Get(Run(3).Id, Token)).Value.Status);
+        Expect.Equal(expected: null, again.Value);   // run 2 is now in flight
+    }
+
+    /// <summary>A run still running holds the queue.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Promote_does_nothing_while_a_run_is_in_flight_or_none_is_queued()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        var empty = await store.PromoteOldestQueued(_workflow, Token);
+        _ = (await store.Admit(Run(1), GraphConcurrency.Queue, Token)).Value;
+        _ = (await store.Admit(Run(2), GraphConcurrency.Queue, Token)).Value;
+
+        var busy = await store.PromoteOldestQueued(_workflow, Token);
+
+        Expect.Equal(expected: null, empty.Value);
+        Expect.Equal(expected: null, busy.Value);
+        Expect.Equal(WorkflowRunStatus.Queued, (await store.Get(Run(2).Id, Token)).Value.Status);
+    }
+
+    /// <summary>The check and the change are one step: 20 promotes racing over 5 queued runs start exactly one.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Twenty_promotes_racing_start_exactly_one_queued_run()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        foreach (var n in Enumerable.Range(1, 5))
+        {
+            _ = (await store.Insert(Run(n, WorkflowRunStatus.Queued), Token)).Value;
+        }
+
+        var results = await Task.WhenAll(Enumerable.Range(1, 20).Select(_ => Task.Run(async () => await store.PromoteOldestQueued(_workflow, Token), Token)));
+
+        Expect.Equal(1, results.Count(static r => r.IsSuccess && r.Value is not null));
+        Expect.Equal(1, (await store.InFlight(_workflow, Token)).Value.Count(static r => r.Status == WorkflowRunStatus.Running));
+        Expect.Equal(4, (await store.InFlight(_workflow, Token)).Value.Count(static r => r.Status == WorkflowRunStatus.Queued));
+    }
+
+    /// <summary>A run that ended is final: a later move (a cancel after the success, a begin after the cancel) answers the row as it stands and changes nothing.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_run_that_ended_is_not_moved_again()
+    {
+        var clock = new FakeTimeProvider(KnownInstants.Epoch);
+        var store = Create(clock);
+        _ = (await store.Insert(Run(1), Token)).Value;
+        var ended = (await store.SetStatus(Run(1).Id, WorkflowRunStatus.Succeeded, outputs: "{}", error: null, Token)).Value;
+        clock.Advance(TimeSpan.FromMinutes(5));
+
+        var cancelled = (await store.SetStatus(Run(1).Id, WorkflowRunStatus.Cancelled, outputs: null, error: "cancelled", Token)).Value;
+        var begun = (await store.SetStatus(Run(1).Id, WorkflowRunStatus.Running, outputs: null, error: null, Token)).Value;
+
+        Expect.Equal(ended, cancelled);
+        Expect.Equal(ended, begun);
+        Expect.Equal(ended, (await store.Get(Run(1).Id, Token)).Value);
+    }
+
+    /// <summary>A cancelled run is not started by a late begin, so one-per-workflow still sees it as not in flight.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_cancelled_run_is_not_flipped_back_to_running()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1, WorkflowRunStatus.Queued), Token)).Value;
+        _ = (await store.SetStatus(Run(1).Id, WorkflowRunStatus.Cancelled, outputs: null, error: "cancelled", Token)).Value;
+
+        var begun = (await store.SetStatus(Run(1).Id, WorkflowRunStatus.Running, outputs: null, error: null, Token)).Value;
+
+        Expect.Equal(WorkflowRunStatus.Cancelled, begun.Status);
+        Expect.Equal(0, (await store.InFlight(_workflow, Token)).Value.Count);
+    }
+
+    /// <summary>Two ends racing for one run (a success and a cancel): exactly one wins, both calls answer the winner's row, and the store keeps it.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Two_ends_racing_for_one_run_leave_one_winner_that_both_calls_report()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1), Token)).Value;
+
+        var ends = await Task.WhenAll(
+            Task.Run(async () => await store.SetStatus(Run(1).Id, WorkflowRunStatus.Succeeded, outputs: null, error: null, Token), Token),
+            Task.Run(async () => await store.SetStatus(Run(1).Id, WorkflowRunStatus.Cancelled, outputs: null, error: "cancelled", Token), Token));
+
+        var stored = (await store.Get(Run(1).Id, Token)).Value;
+        Expect.Equal(stored.Status, ends[0].Value.Status);
+        Expect.Equal(stored.Status, ends[1].Value.Status);
+    }
+
+    /// <summary>A launch that never reached Temporal puts a promoted run back to queued, but only a running one moves to queued.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_running_run_goes_back_to_queued_and_an_ended_one_does_not()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1), Token)).Value;
+        _ = (await store.Insert(Run(2), Token)).Value;
+        _ = (await store.SetStatus(Run(2).Id, WorkflowRunStatus.Failed, outputs: null, error: "x", Token)).Value;
+
+        var back = (await store.SetStatus(Run(1).Id, WorkflowRunStatus.Queued, outputs: null, error: null, Token)).Value;
+        var stays = (await store.SetStatus(Run(2).Id, WorkflowRunStatus.Queued, outputs: null, error: null, Token)).Value;
+
+        Expect.Equal(WorkflowRunStatus.Queued, back.Status);
+        Expect.Equal(WorkflowRunStatus.Failed, stays.Status);
+    }
+
+    /// <summary>A queued cancel applies only while the run is queued: a run that was promoted to running meanwhile is left alone, and the answer shows it.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_queued_cancel_leaves_a_run_that_was_promoted_meanwhile_running()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1, WorkflowRunStatus.Queued), Token)).Value;
+        _ = (await store.Insert(Run(2, WorkflowRunStatus.Queued), Token)).Value;
+        _ = (await store.PromoteOldestQueued(_workflow, Token)).Value;   // run 1 is running now
+
+        var promoted = (await store.CancelQueued(Run(1).Id, "cancelled while queued", Token)).Value;
+        var queued = (await store.CancelQueued(Run(2).Id, "cancelled while queued", Token)).Value;
+
+        Expect.Equal(WorkflowRunStatus.Running, promoted.Status);
+        Expect.Equal(WorkflowRunStatus.Cancelled, queued.Status);
+        Expect.Equal("cancelled while queued", queued.Error);
+        Expect.Equal(WorkflowRunStatus.Running, (await store.Get(Run(1).Id, Token)).Value.Status);
+    }
+
+    /// <summary>A queued cancel racing a promote: whichever wins, the run is either cancelled and never promoted, or running and never cancelled.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_queued_cancel_racing_a_promote_never_leaves_a_cancelled_run_that_also_runs()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1, WorkflowRunStatus.Queued), Token)).Value;
+
+        var promote = Task.Run(async () => (await store.PromoteOldestQueued(_workflow, Token)).Value, Token);   // started together with the cancel
+        var cancel = Task.Run(async () => (await store.CancelQueued(Run(1).Id, "cancelled while queued", Token)).Value, Token);
+        var promotedRun = await promote;
+        _ = await cancel;
+
+        var stored = (await store.Get(Run(1).Id, Token)).Value;
+        var promoted = promotedRun is not null;
+        Expect.Equal(promoted ? WorkflowRunStatus.Running : WorkflowRunStatus.Cancelled, stored.Status);
+    }
+
+    /// <summary>A run that never reached Temporal is removed only while it is running.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task Discard_removes_a_running_run_and_nothing_else()
+    {
+        var store = Create(new FakeTimeProvider(KnownInstants.Epoch));
+        _ = (await store.Insert(Run(1), Token)).Value;
+        _ = (await store.Insert(Run(2, WorkflowRunStatus.Queued), Token)).Value;
+
+        var removed = (await store.Discard(Run(1).Id, Token)).Value;
+        var kept = (await store.Discard(Run(2).Id, Token)).Value;
+        var missing = (await store.Discard(Run(3).Id, Token)).Value;
+
+        Expect.Equal(expected: true, removed);
+        Expect.Equal(expected: false, kept);
+        Expect.Equal(expected: false, missing);
+        Expect.Equal(SindriErrors.GraphRunNotFound.Code, (await store.Get(Run(1).Id, Token)).Error.Code);
+        Expect.Equal(WorkflowRunStatus.Queued, (await store.Get(Run(2).Id, Token)).Value.Status);
     }
 
     /// <summary>No tick is recorded until one is marked, and a tick belongs to its workflow.</summary>

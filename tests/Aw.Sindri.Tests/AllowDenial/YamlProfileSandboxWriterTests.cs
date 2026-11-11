@@ -29,7 +29,7 @@ public sealed class YamlProfileSandboxWriterTests : IDisposable
         }
     }
 
-    private YamlProfileSandboxWriter Writer() => new(new SindriSettings(_dir, ProfilePath)) { Home = Home };
+    private YamlProfileSandboxWriter Writer() => new(new SindriSettings(_dir, ProfilePath), NoProfileCache.Instance) { Home = Home };
 
     private void Put(string text)
     {

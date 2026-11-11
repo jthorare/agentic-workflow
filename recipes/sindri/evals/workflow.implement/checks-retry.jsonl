@@ -1,4 +1,0 @@
-{"start":{"inputs":{"fact:issue":"Export button does nothing.","fact:rootCause":"The click handler is never bound."}}}
-{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:output":"Bound the handler."}},"expect":{"state":"checks"}}
-{"trigger":{"kind":"deadline"},"expect":{"state":"checks"}}
-{"trigger":{"kind":"step.completed","outcome":"passed"},"expect":{"state":"built","outcome":"resolved"}}

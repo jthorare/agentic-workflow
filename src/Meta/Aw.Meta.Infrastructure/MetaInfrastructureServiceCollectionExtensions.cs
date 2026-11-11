@@ -34,16 +34,13 @@ public static class MetaInfrastructureServiceCollectionExtensions
                 ? new LaneHealthOptions(TimeSpan.FromMinutes(limit))
                 : LaneHealthOptions.Default)
             .AddSingleton(sp => new MetaDatabase(MetaDatabase.OptionsFor(settings.StateDirectory), sp.GetRequiredService<TimeProvider>()))
-            .AddScoped<IMessageStore, SqliteMessageStore>()
-            .AddScoped<ILaneStore, SqliteLaneStore>()
-            .AddScoped<IOwnerStore, SqliteOwnerStore>()
-            .AddScoped<IGateStore, SqliteGateStore>()
-            .AddScoped<IKeyValueStore, SqliteKeyValueStore>()
-            .AddScoped<ILaneMail, SqliteLaneMail>()
+            .AddSqliteStores()
             .AddScoped<IMetaConfig>(sp => new FileMetaConfig(settings.ConfigPath, new JsonSerializerOptions(sp.GetRequiredService<JsonSerializerOptions>()) { WriteIndented = true }))
             .AddSingleton<ITranscriptReader, FileTranscriptReader>()
             .AddScoped<ILaneSessions>(sp => new PaneLaneSessions(sp.GetRequiredService<ILanePane>(), sp.GetRequiredService<IProcessTable>(), settings.SessionsDirectory))
-            .AddSingleton<IClaudeTranscripts>(new ClaudeProjectsTranscripts(Path.Combine(settings.Paths.Home, ".claude", "projects")))
+            .AddSingleton(new ClaudeProjectsTranscripts(Path.Combine(settings.Paths.Home, ".claude", "projects")))
+            .AddSingleton<IClaudeTranscripts>(sp => sp.GetRequiredService<ClaudeProjectsTranscripts>())
+            .AddSingleton<ITranscriptLocator>(sp => sp.GetRequiredService<ClaudeProjectsTranscripts>())
             .AddCodexFiles(settings.Paths.Home)
             .AddSingleton<IDigestFiles, FileDigestFiles>()
             .AddSingleton<ILaneFiles>(new DirectoryLaneFiles(settings.LaneSessionsDirectory))
@@ -59,12 +56,22 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton<IBugfixRecords>(new FileBugfixRecords(Path.Combine(Path.GetDirectoryName(settings.Layout.MetaRoot) ?? settings.Layout.MetaRoot, "bugfix")))
             .AddSingleton<IDelay>(sp => new ClockDelay(sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<ICommandRunner, SystemCommandRunner>()
+            .AddSingleton<IWaiterLauncher, DetachedWaiterLauncher>()
             .AddScoped<IRunningLog>(sp => new AppendRunningLog(async cancellationToken =>
             {
                 var config = await sp.GetRequiredService<IMetaConfig>().Load(cancellationToken).ConfigureAwait(false);
                 return config.IsSuccess && config.Value.Log is { Length: > 0 } log ? log : Path.Combine(settings.StateDirectory, DefaultLogFile);
             }));
     }
+
+    private static IServiceCollection AddSqliteStores(this IServiceCollection services) => services
+        .AddScoped<IMessageStore, SqliteMessageStore>()
+        .AddScoped<ILaneStore, SqliteLaneStore>()
+        .AddScoped<IOwnerStore, SqliteOwnerStore>()
+        .AddScoped<IGateStore, SqliteGateStore>()
+        .AddScoped<IKeyValueStore, SqliteKeyValueStore>()
+        .AddScoped<IBoardStore, SqliteBoardStore>()
+        .AddScoped<ILaneMail, SqliteLaneMail>();
 
     // Codex's own files, read-only: its session rollouts and its model list.
     private static IServiceCollection AddCodexFiles(this IServiceCollection services, string home) =>

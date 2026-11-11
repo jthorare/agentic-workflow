@@ -49,11 +49,7 @@ cat > "$STUB" <<'EOF'
 echo "$*" >> "$STUB_LOG"
 case "$*" in
   "profile validate --json")
-    ok=false; [ "$(cat "$STUB_LOG.approved" 2>/dev/null)" = "$(cksum < "$AW_SINDRI_HOME/profile/profile.yaml")" ] && ok=true
-    echo "{\"valid\":true,\"hash\":\"abcdef0123456789\",\"approved\":$ok}" ;;
-  "profile approve abcdef0123456789")
-    IFS= read -r line; echo "typed=$line" >> "$STUB_LOG"
-    cksum < "$AW_SINDRI_HOME/profile/profile.yaml" > "$STUB_LOG.approved" ;;
+    echo "{\"valid\":true,\"hash\":\"abcdef0123456789\"}" ;;
 esac
 exit 0
 EOF

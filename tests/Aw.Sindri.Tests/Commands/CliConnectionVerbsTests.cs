@@ -5,6 +5,8 @@ using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.AddConnection;
+using Aw.Sindri.Features.GetConnection;
+using Aw.Sindri.Features.RenameConnection;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
 
@@ -113,5 +115,73 @@ public sealed class CliConnectionVerbsTests : IDisposable
         Assert.Contains("NOT_IN_THIS_SHELL", _error.ToString(), StringComparison.Ordinal);
         Assert.DoesNotContain(api.Calls, static c => c.Method == "POST");
         AssertNeitherPrinted();
+    }
+
+    [Fact]
+    public async Task Signin_posts_to_the_connection_prints_the_consent_url_and_waits_for_its_own_sign_in()
+    {
+        var before = Added("linear:work", "oauth").Connection with { Status = "needs-sign-in", StatusReason = "refresh failed", LastRefreshedAt = DateTimeOffset.UnixEpoch };
+        var after = before with { Status = "connected", StatusReason = null, LastRefreshedAt = DateTimeOffset.UnixEpoch.AddHours(1), Config = new Dictionary<string, string>(StringComparer.Ordinal) { ["signedInAt"] = "2026-11-08T10:00:00.0000000+00:00" } };
+        var api = new RoutedApi()
+            .OnPost("/sindri/connections/linear%3Awork/signin", HttpStatusCode.OK, new AddConnectionResponse(before, "https://provider.example.test/authorize?state=x"))
+            .On("/sindri/connections/linear%3Awork", HttpStatusCode.OK, new GetConnectionResponse(after));
+
+        var code = await Verbs(api).Run(["connection", "signin", "linear:work"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("https://provider.example.test/authorize", _error.ToString(), StringComparison.Ordinal);
+        Assert.Contains("connected", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Rename_posts_the_new_label_to_the_connection_and_prints_both_names()
+    {
+        var api = new RoutedApi().OnPost("/sindri/connections/slack%3Aold/rename", HttpStatusCode.OK, new RenameConnectionResponse("slack:new", "slack:old", SecretMoved: true));
+
+        var code = await Verbs(api).Run(["connection", "rename", "slack:old", "new"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("""{"label":"new"}""", api.Calls.Single(static c => c.Method == "POST").Body, StringComparison.Ordinal);
+        Assert.Contains("Renamed slack:old to slack:new", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Rename_needs_the_name_and_the_new_label_and_sends_nothing_without_both()
+    {
+        var api = new RoutedApi();
+
+        var code = await Verbs(api).Run(["connection", "rename", "slack:old"], Token);
+
+        Assert.Equal(2, code);
+        Assert.Empty(api.Calls);
+    }
+
+    [Fact]
+    public async Task A_refused_rename_prints_the_servers_code_and_exits_nonzero()
+    {
+        var api = new RoutedApi().OnRaw("/sindri/connections/slack%3Aold/rename", HttpStatusCode.Conflict, """{"type":"about:blank","title":"SND-CONN-010","status":409,"detail":"a connection named slack:new already exists"}""");
+
+        var code = await Verbs(api).Run(["connection", "rename", "slack:old", "new"], Token);
+
+        Assert.NotEqual(0, code);
+        Assert.Contains("SND-CONN-010", _error.ToString(), StringComparison.Ordinal);
+    }
+
+    private static Dictionary<string, string> Stamp(string at) => new(StringComparer.Ordinal) { ["signedInAt"] = at };
+
+    [Fact]
+    public async Task Signin_does_not_report_done_when_a_refresh_tick_touches_a_connected_row()
+    {
+        var before = Added("linear:work", "oauth").Connection with { Config = Stamp("2026-11-08T09:00:00.0000000+00:00"), LastRefreshedAt = DateTimeOffset.UnixEpoch };
+        var refreshed = before with { LastRefreshedAt = DateTimeOffset.UnixEpoch.AddMinutes(5) };   // a tick refreshed the token: connected, newer last-refreshed time, same sign-in
+        var signedIn = refreshed with { Config = Stamp("2026-11-08T10:00:00.0000000+00:00") };
+        var api = new RoutedApi()
+            .OnPost("/sindri/connections/linear%3Awork/signin", HttpStatusCode.OK, new AddConnectionResponse(before, "https://provider.example.test/authorize?state=x"))
+            .OnSequence("/sindri/connections/linear%3Awork", [new GetConnectionResponse(refreshed), new GetConnectionResponse(signedIn)]);
+
+        var code = await Verbs(api).Run(["connection", "signin", "linear:work"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Equal(2, api.Calls.Count(static c => c.Method == "GET" && c.Path == "/sindri/connections/linear%3Awork"));   // the first read (the refresh) did not end the wait
     }
 }

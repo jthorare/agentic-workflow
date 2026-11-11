@@ -229,6 +229,10 @@ public sealed class SandboxChecksTests
 
         public Result<SandboxPlan> Plan(SandboxRequest request) => _inner.Plan(request);
 
+        public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => _inner.PlanProcess(request);
+
+        public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => _inner.WrapProcess(plan, argv);
+
         public Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct) => Task.FromResult<Result<Unit>>(failure);
 
         public Result<IReadOnlyList<string>> Wrap(SandboxPlan plan, IReadOnlyList<string> argv) => _inner.Wrap(plan, argv);

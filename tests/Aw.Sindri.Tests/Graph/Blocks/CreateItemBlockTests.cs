@@ -1,0 +1,104 @@
+using System.Text.Json.Nodes;
+using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
+using Aw.Sindri.Core.Graph.Blocks;
+using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Interpolation;
+using Aw.Sindri.Core.Graph.Validation;
+
+namespace Aw.Sindri.Tests.Graph.Blocks;
+
+[Lane(TestLane.Unit)]
+public sealed class CreateItemBlockTests
+{
+    private static Task<Kernel.Result<BlockResult>> Run(CreateItemBlock block, JsonObject config) =>
+        block.Execute(BlockFakes.Context(config), TestContext.Current.CancellationToken).AsTask();
+
+    [Fact]
+    public async Task The_block_makes_the_item_through_the_port_and_hands_on_its_id()
+    {
+        var port = new FlowFakes.RecordingItemPort();
+
+        var result = await Run(new CreateItemBlock(port), new JsonObject { ["title"] = "  Fix login  ", ["repo"] = "web", ["body"] = "details" });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("ITM-00000000000000000000000000000001", result.Value.Outputs["itemId"]!.GetValue<string>());
+        var (title, repo, body, link) = Assert.Single(port.Created);
+        Assert.Equal(("Fix login", "web", "details"), (title, repo, body));
+        Assert.Null(link);
+        Assert.Equal(["wf@1:1"], port.Runs, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_bare_linear_issue_id_becomes_a_record_key_and_a_whole_key_is_kept()
+    {
+        var port = new FlowFakes.RecordingItemPort();
+        var block = new CreateItemBlock(port);
+
+        _ = await Run(block, new JsonObject { ["title"] = "a", ["linearIssue"] = "abc-1" });
+        _ = await Run(block, new JsonObject { ["title"] = "b", ["linearIssue"] = "linear:issue/abc-2" });
+
+        Assert.Equal(["linear:issue/abc-1", "linear:issue/abc-2"], port.Created.Select(static c => c.Link), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_blank_title_a_bad_linear_issue_and_a_port_that_refuses_fail_the_node_with_the_reason()
+    {
+        var port = new FlowFakes.RecordingItemPort();
+        var blank = await Run(new CreateItemBlock(port), new JsonObject { ["title"] = "   " });
+        var badLink = await Run(new CreateItemBlock(port), new JsonObject { ["title"] = "x", ["linearIssue"] = "not a key!" });
+        var refused = await Run(new CreateItemBlock(new FlowFakes.RecordingItemPort { Fail = SindriErrors.InvalidInput.With("'web' isn't a repo of the profile") }), new JsonObject { ["title"] = "x", ["repo"] = "web" });
+
+        Assert.Contains("title", blank.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("linearIssue", badLink.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("isn't a repo", refused.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(port.Created);
+    }
+
+    [Fact]
+    public async Task A_warning_from_the_port_is_a_node_output_beside_the_item_id()
+    {
+        var port = new FlowFakes.RecordingItemPort { Warning = "the item was made, but its link to run wf@1:1 wasn't written" };
+
+        var result = await Run(new CreateItemBlock(port), new JsonObject { ["title"] = "Fix login" });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("ITM-00000000000000000000000000000001", result.Value.Outputs["itemId"]!.GetValue<string>());
+        Assert.Equal("the item was made, but its link to run wf@1:1 wasn't written", result.Value.Outputs["warning"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task Without_a_warning_the_output_has_no_warning_key()
+    {
+        var result = await Run(new CreateItemBlock(new FlowFakes.RecordingItemPort()), new JsonObject { ["title"] = "Fix login" });
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value.Outputs.ContainsKey("warning"));
+    }
+
+    [Fact]
+    public void A_later_node_may_read_warning_and_on_the_happy_path_it_is_empty_not_an_error()
+    {
+        var blocks = new Dictionary<string, IGraphBlockType>(GraphFixtures.Blocks, StringComparer.Ordinal) { ["create_item"] = new CreateItemBlock(new FlowFakes.RecordingItemPort()) };
+        var spec = GraphFixtures.Spec(
+            [GraphFixtures.Trigger("daily"), new(NodeId.From("make"), "create_item", Title: null, new JsonObject { ["title"] = "Fix" }), GraphFixtures.Notify("tell", "item {{make.itemId}} warning: {{make.warning}}")],
+            [GraphFixtures.Edge("daily", "make"), GraphFixtures.Edge("make", "tell")]);
+
+        var validated = GraphFixtures.Validator(blocks: blocks).Validate(spec, GraphMode.Activate);
+        var happy = Template.Render("item {{make.itemId}} warning: {{make.warning}}", reference => reference == "make.itemId" ? JsonValue.Create("ITM-1") : null);   // the run's lookup gives null for an output the node did not set
+
+        Assert.DoesNotContain(validated.Findings, static f => f.Code.StartsWith("GRAPH-REF", StringComparison.Ordinal));
+        Assert.Equal("item ITM-1 warning: ", happy!.GetValue<string>());
+    }
+
+    [Fact]
+    public void The_block_takes_a_title_and_optional_repo_body_and_linear_issue()
+    {
+        var block = new CreateItemBlock(new FlowFakes.RecordingItemPort());
+
+        Assert.Equal("create_item", block.Type);
+        Assert.Empty(block.Config.Check(new JsonObject { ["title"] = "t" }));
+        Assert.Contains(block.Config.Check(new JsonObject { ["repo"] = "web" }), static p => p.Field == "title");
+        Assert.Equal(["itemId", "warning"], block.OutputsFor([]).Fields.Keys, StringComparer.Ordinal);   // warning is declared so a later node can read it; it is only set when something was not written
+    }
+}

@@ -1,0 +1,18 @@
+{
+  "note": "Conformance examples for schemas/handoff/inbox.openapi.yaml. 'schema' names a components.schemas entry; 'valid' is the verdict an implementation must reach. FakeInbox and HttpInboxClient's tests read the same files.",
+  "fixtures": [
+    { "file": "offer-full.json", "schema": "Offer", "valid": true },
+    { "file": "offer-minimal.json", "schema": "Offer", "valid": true },
+    { "file": "offer-no-title.json", "schema": "Offer", "valid": false, "names": "title" },
+    { "file": "offer-extra-field.json", "schema": "Offer", "valid": false },
+    { "file": "offer-bad-link.json", "schema": "Offer", "valid": false, "names": "url" },
+    { "file": "page-first.json", "schema": "OfferPage", "valid": true },
+    { "file": "page-last.json", "schema": "OfferPage", "valid": true },
+    { "file": "page-no-token-field.json", "schema": "OfferPage", "valid": false, "names": "nextPageToken" },
+    { "file": "claim-response.json", "schema": "ClaimResponse", "valid": true },
+    { "file": "claim-response-no-claim-id.json", "schema": "ClaimResponse", "valid": false, "names": "claimId" },
+    { "file": "result-succeeded.json", "schema": "ResultRequest", "valid": true },
+    { "file": "result-failed.json", "schema": "ResultRequest", "valid": true },
+    { "file": "result-no-claim-id.json", "schema": "ResultRequest", "valid": false, "names": "claimId" }
+  ]
+}

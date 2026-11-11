@@ -7,12 +7,11 @@
 # framework-dependent and carries the Temporal SDK with its native bridge, then drives the published apphost 'sindri'
 # (DOTNET_ROOT set from the 'dotnet' on PATH when unset) through the S1 and API P1 journeys against a temp home (serve
 # brings up the pinned Temporal dev server, so the temporal CLI must be installed: scripts/binaries-lock.sh fetch
-# temporal): doctor with nothing running, start headless with an unapproved profile, a second serve refused by the lease,
-# the approve preview, a session's approve and the human's approve (no typed challenge, owner decision q93), status (text and --json's apiVersion), /sindri/mcp's initialize and tools/list as a stateless MCP client, then the 12 tools' calls (sindri_queue, sindri_request filed as session:mcp, sindri_item refused, sindri_decide absent),
+# temporal): doctor with nothing running, start headless with a live profile, a second serve refused by the lease,
+# the removed `profile approve` (a human's and a session's both print the removal line, exit 0), status (text and --json's apiVersion), /sindri/mcp's initialize and tools/list as a stateless MCP client, then the 12 tools' calls (sindri_queue, sindri_request filed as session:mcp, sindri_item refused, sindri_decide absent),
 # the views rebuild requested by a session and by the human, status's views and health lines, the item verbs (API P3: a human's item add, the queue and the item list, a session's item add, the human's item close, the done list and the queue again), the request verbs (API P4: a session's request, the needs-you list, a session's decide, the list again and the accepted requests), the ledger read (API P5: the human's lists command.handled, a session's doesn't, one item's events, and GET /events/catalog), QUERY /context/subgraph with a JSON body on the published host (POST is 405), the service and job verbs (API P6: the services list as JSON, a manual run of heartbeat followed to its end, a session's run, jobs show and the jobs list, pause and resume with a session's pause, and the services list after each), a session's stop, status and doctor again (doctor with HOME on an empty scratch dir, so its
-# context:mcp-scope row never reads the real provider files);
-# then recipe validate on the shipped recipes (their hashes; workflow.item reads its child beside it) and on an invalid
-# fixture (RCP-REACH-001, exit 1). The normalized output (pids, ports, hashes, times, the host name and the temp path
+# context:mcp-scope row never reads the real provider files), and a one-node Code workflow (wf create, activate, run, run-show) whose node returns {"sum":3}, run by sindri-code-runner published into the same folder as the host (the sandbox must be able to confine it: a box that can't prints the failed run's error in the 'code-node:' line and the diff fails);
+# The normalized output (pids, ports, hashes, times, the host name and the temp path
 # masked) must equal expected.txt.
 # The apphost, not 'dotnet sindri.dll': start re-launches its own executable as 'serve' (Environment.ProcessPath), which
 # under 'dotnet sindri.dll' is the dotnet muxer.
@@ -133,6 +132,11 @@ source "$root/scripts/lib/sindri-build-inputs.sh"
 git -C "$root" ls-files -z --cached --others --exclude-standard -- "${SINDRI_BUILD_PATHSPECS[@]}" | (cd "$root" && tar --null -T - -cf -) | tar -xf - -C "$tree"
 dotnet publish "$tree/src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj" -c Release --no-self-contained -warnaserror   -o "$out/bin" </dev/null >"$out/publish.log" 2>&1 || { tail -20 "$out/publish.log" >&2; exit 1; }
 
+# The Code node's runner: published framework-dependent into the same folder, as scripts/install-cs.sh stages it, so the host finds
+# 'sindri-code-runner' beside itself (AppContext.BaseDirectory) the way an installed box does. The files both publishes share are the same builds.
+dotnet publish "$tree/src/Sindri/Aw.Sindri.CodeRunner/Aw.Sindri.CodeRunner.csproj" -c Release --no-self-contained -warnaserror -o "$out/bin" </dev/null >"$out/publish-code-runner.log" 2>&1 || { tail -20 "$out/publish-code-runner.log" >&2; exit 1; }
+[ -e "$out/bin/sindri-code-runner" ] || { echo "aot-sindri-smoke: sindri-code-runner is missing from the publish output" >&2; exit 1; }
+
 # Framework-dependent: the runtimeconfig names the shared framework and no runtime ships beside the host.
 pub="$out/bin"
 grep -q '"name": "Microsoft.AspNetCore.App"' "$pub/sindri.runtimeconfig.json" || { echo "aot-sindri-smoke: sindri.runtimeconfig.json names no shared framework" >&2; exit 1; }
@@ -158,7 +162,7 @@ export AW_SINDRI_HOME="$work/home" AW_SINDRI_PORT=0 AW_SINDRI_APP_NO_MCP=1   # n
 export AW_SINDRI_SKILLS_DIR="$work/no-skills"   # a folder that does not exist: the doctor's skills row says so the same way wherever the smoke runs, not by the checkout or toolkit it happens to find
 mkdir -p "$AW_SINDRI_HOME/profile"
 : >"$AW_SINDRI_HOME/.prover-scratch"   # the smoke runs as the prover in a home it created (setup-once spec §4 item 6): the marker lets it confirm, as sindri-prove.sh does
-mkdir -p "$work/repo"   # the repo 'smoke' the mcp() helper names in X-Sindri-Repo (sindri_request files against an approved profile's repo)
+mkdir -p "$work/repo"   # the repo 'smoke' the mcp() helper names in X-Sindri-Repo (sindri_request files against the profile's repo)
 printf 'schemaVersion: 1\nuser: smoke\nrepos:\n  - { name: smoke, path: %s }\nservices:\n  heartbeat: { every: 5s }\n' "$work/repo" >"$AW_SINDRI_HOME/profile/profile.yaml"
 
 run() { # the human, no terminal
@@ -202,6 +206,38 @@ items_in() { # $1 = state, $2 = count: the items view lists that many in that st
   done
   echo "## items_in: the items view didn't list $2 '$1' item(s) after 60 s"
 }
+code_node_run() { # a one-node Code workflow (manual trigger, then code returning {"sum":3}) made, activated and run through the CLI; the node's
+  # result is the one line printed. The run is polled to its end by wall time like settle; a failed run (a sandbox that can't confine the
+  # runner is SND-CODE-005) prints the status and the node's error in that line, so the diff says why. A verb that fails prints its own code-node line, so the diff fails.
+  echo "## sindri wf create, activate and run a one-node Code workflow (code-smoke), then wf run-show --json | jq (the node's result)"
+  local spec="$work/code-smoke.json" run_id="" status="" shown="" deadline=$((SECONDS + 60))
+  cat >"$spec" <<'JSON'
+  {
+    "version": 1,
+    "name": "Code smoke",
+    "nodes": [
+      { "id": "start", "type": "manual", "config": {} },
+      { "id": "sum", "type": "code", "config": { "code": "return new JsonObject { [\"sum\"] = 1 + 2 };" } }
+    ],
+    "edges": [ { "from": "start", "to": "sum" } ]
+  }
+JSON
+  bounded "$bin" wf create code-smoke --file "$spec" </dev/null >/dev/null 2>&1 || { echo "code-node: wf create failed"; return 0; }
+  bounded "$bin" wf activate code-smoke </dev/null >/dev/null 2>&1 || { echo "code-node: wf activate failed"; return 0; }
+  run_id="$(bounded "$bin" wf run code-smoke --json </dev/null 2>/dev/null | jq -r '.run // empty')"
+  [ -n "$run_id" ] || { echo "code-node: wf run started no run"; return 0; }
+  while ((SECONDS < deadline)); do
+    shown="$(bounded "$bin" wf run-show "$run_id" --json </dev/null 2>/dev/null || true)"
+    status="$(jq -r '.status // empty' <<<"$shown" 2>/dev/null || true)"
+    case "$status" in succeeded|failed|cancelled) break ;; esac
+    sleep 0.5
+  done
+  if [ "$status" = succeeded ]; then
+    printf 'code-node: %s\n' "$(jq -c '[.nodes[] | select(.node == "sum")][0].output.result' <<<"$shown")"
+  else
+    printf 'code-node: %s %s\n' "${status:-no status after 60 s}" "$(jq -r '[.error, ([.nodes[] | select(.node == "sum")][0].error)] | map(select(. != null)) | join("; ")' <<<"$shown" 2>/dev/null)"
+  fi
+}
 session_tty() { # a CLI that can't read the token, at a terminal (the server decides)
   echo "## sindri $* (session, terminal)"
   local rc=0
@@ -214,11 +250,8 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   remember_servers
   run serve
   remember_servers
-  human profile approve </dev/null
-  hash="$({ bounded "$bin" profile validate --json </dev/null || true; } | sed -E 's/.*"hash":"([0-9a-f]{64})".*/\1/')"
-  run profile approve "$hash"
-  printf '%s\n' "approve profile ${hash:0:6}" | session_tty profile approve "$hash"
-  printf '%s\n' "approve profile ${hash:0:6}" | human profile approve "$hash"
+  human profile approve </dev/null   # removed: edits apply on save (exit 0)
+  session_tty profile approve </dev/null
   settle
   run status
   echo "## sindri status --json | jq '{running, apiVersion}'"
@@ -281,14 +314,10 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   human services resume heartbeat </dev/null
   settle
   run services
+  code_node_run
   session stop
   run status
   doctor
-  run recipe validate "$root/recipes/sindri/workflow.step.yaml"
-  run recipe validate "$root/recipes/sindri/workflow.item.yaml"
-  run recipe validate "$root/recipes/sindri/workflow.review-loop.yaml"
-  run recipe validate "$root/recipes/sindri/workflow.evidence.yaml"
-  run recipe validate "$root/tests/Aw.Sindri.Testing/Workflow/Recipes/invalid/RCP-REACH-001.yaml"
 } >"$out/actual.raw"
 
 bash "$here/normalize.sh" "$work" "$root" <"$out/actual.raw" >"$out/actual.txt"

@@ -1,5 +1,3 @@
-using Aw.Sindri.Core;
-
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>The verb groups Dispatch hands a whole family to.</summary>
@@ -25,14 +23,13 @@ internal static partial class CommandTable
     };
 
     /// <summary>'sindri agents|skill|skills|setup|code-index|index|library …': the verbs that only call the control plane (the reads never start it; 'index sync' and 'library sync' may).</summary>
-    private static async Task<int> ReadVerbs(string[] args, (ControlPlaneClient Client, Output Output) api, (IServiceProvider Services, StartCommand Start) host, (CancellationToken Interrupt, CancellationToken Again) signals, Func<string, string?> environment)
+    private static async Task<int> ReadVerbs(string[] args, (ControlPlaneClient Client, Output Output) api, (IServiceProvider Services, StartCommand Start) host, (CancellationToken Interrupt, CancellationToken Again) signals)
     {
         var (client, output) = api;
         var ct = signals.Interrupt;
         return args switch
         {
             ["agents", .. var rest] => await new AgentsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
-            ["skill", "run", .. var rest] => await new SkillRunVerb(client, output, environment, host.Services.GetRequiredService<TimeProvider>()).Run(rest, ct).ConfigureAwait(false),
             ["skills", .. var rest] => await new SkillsVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["setup", .. var rest] => await new SetupVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
             ["code-index", .. var rest] => await new CodeIndexVerbs(client, output).Run(rest, ct).ConfigureAwait(false),
@@ -44,11 +41,4 @@ internal static partial class CommandTable
 
     private static IndexVerbs Index(ControlPlaneClient client, Output output, (IServiceProvider Services, StartCommand Start) host) =>
         new(client, output, new JobFollower(client, output, host.Services.GetRequiredService<TimeProvider>()), Interactive(), Console.In, host.Start.EnsureRunning);
-
-    /// <summary>'sindri pr babysit &lt;url&gt; …': the hand start of the PR babysitter (API16).</summary>
-    private static async Task<int> Pr(string[] args, IServiceProvider services, Output output, RecipeDesk desk, CancellationToken ct) => args switch
-    {
-        ["pr", "babysit", .. var rest] => await HandStartCommand.Babysit(rest, desk, services, output, ct).ConfigureAwait(false),
-        _ => await output.Error(SindriErrors.UnknownVerb.With($"'{string.Join(' ', args)}' is not a sindri command ({HandStartCommand.BabysitUsage})")).ConfigureAwait(false),
-    };
 }

@@ -15,6 +15,12 @@ public sealed class UnavailableSandbox : ISandbox
     public Result<SandboxPlan> Plan(SandboxRequest request) => Refusal();
 
     /// <inheritdoc />
+    public Result<SandboxPlan> PlanProcess(ProcessSandboxRequest request) => Refusal();
+
+    /// <inheritdoc />
+    public Result<IReadOnlyList<string>> WrapProcess(SandboxPlan plan, IReadOnlyList<string> argv) => Refusal();
+
+    /// <inheritdoc />
     public Task<Result<Unit>> SelfCheck(SandboxPlan plan, CancellationToken ct) => Task.FromResult<Result<Unit>>(Refusal());
 
     /// <inheritdoc />

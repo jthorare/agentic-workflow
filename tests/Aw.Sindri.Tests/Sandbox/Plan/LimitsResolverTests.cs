@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Sandbox.Resources;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
 
@@ -13,6 +14,34 @@ public sealed class LimitsResolverTests
 
     private static LimitsInput Attended(SandboxAttended? settings = null) =>
         new(Limits: null, AttendedSettings: settings, Attended: true, StepTimeout: null, LongMax: null, RamBytes: 32 * Gib, Cores: 8);
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_block_sandbox_resource_is_clamped_to_the_profile_and_box_limits()
+    {
+        var profile = new SandboxLimits(Memory: "4GiB", Cpu: "50%");
+        LimitsInput With(ResourceLimitOverride over, long ram = 32 * Gib, TimeSpan? timeout = null, TimeSpan? longMax = null) =>
+            Step(profile, timeout ?? TimeSpan.FromHours(1), ram, longMax: longMax) with { Override = over };
+
+        // above the profile: clamped down to it
+        var high = LimitsResolver.Resolve(With(new ResourceLimitOverride(Memory: "16GiB", Cpu: "90%", StepTimeout: TimeSpan.FromHours(3))));
+        Assert.Equal(4 * Gib, high.MemoryMaxBytes);
+        Assert.Equal(400, high.CpuQuotaPercent);
+        Assert.Equal(TimeSpan.FromHours(1) + high.WallGrace, high.Wall);
+
+        // below the profile: the block's own number wins
+        var low = LimitsResolver.Resolve(With(new ResourceLimitOverride(Memory: "2GiB", Cpu: "25%", StepTimeout: TimeSpan.FromMinutes(10))));
+        Assert.Equal(2 * Gib, low.MemoryMaxBytes);
+        Assert.Equal(2 * Gib * 8 / 10, low.MemoryHighBytes);
+        Assert.Equal(200, low.CpuQuotaPercent);
+        Assert.Equal(TimeSpan.FromMinutes(10) + low.WallGrace, low.Wall);
+
+        // the box is a cap too: a profile bigger than the RAM does not lift the block above it
+        var small = LimitsResolver.Resolve(Step(new SandboxLimits(Memory: "64GiB"), ram: 8 * Gib) with { Override = new ResourceLimitOverride(Memory: "48GiB") });
+        Assert.Equal(8 * Gib, small.MemoryMaxBytes);
+
+        // no override: nothing changes
+        Assert.Equal(LimitsResolver.Resolve(Step(profile)), LimitsResolver.Resolve(Step(profile) with { Override = new ResourceLimitOverride() }));
+    }
 
     [Fact, Trait("Lane", "unit")]
     public void Cpu_quota_is_cores_times_share()

@@ -138,6 +138,7 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     internal void Event(EventView e)
     {
         LastEvent = StatusText.Event(e);
+        CountWorkflowEvent(e.Type);
         Heard();
     }
 
@@ -172,7 +173,6 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
         Lease = StatusText.Lease(status);
         ProfileState = StatusText.ProfileState(status.Profile);
         ProfileDetail = StatusText.ProfileDetail(status.Profile);
-        ProfileFix = StatusText.ProfileFix(status.Profile);
         LiveProfile = status.Profile.Live;
         ModelChoice.Show(status.Profile);
         LabelChoice.Show(status.Profile);

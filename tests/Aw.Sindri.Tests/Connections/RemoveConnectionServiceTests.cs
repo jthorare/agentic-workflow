@@ -1,7 +1,9 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Connections;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Connections;
 
 namespace Aw.Sindri.Tests.Connections;
@@ -25,6 +27,23 @@ public sealed class RemoveConnectionServiceTests
         Assert.Equal([stored.ToString()], world.Secrets.Deleted);
         Assert.Empty(world.Secrets.Pointers);
         Assert.Empty(world.Store.Rows);
+    }
+
+    [Fact]
+    public async Task Remove_appends_an_event_carrying_the_callers_actor()
+    {
+        var world = new ConnectionHarness();
+        await world.Hold();
+        _ = world.Secrets.Store(ConnectionSamples.Name(), new TokenSet("access-1", "refresh-1", ExpiresAt: null));
+        _ = await world.Store.Upsert(ConnectionSamples.Oauth(), Token);
+        var caller = A.Caller().Launched("LCH-0000000000000000000000000000ff01").Build();
+        using var entered = world.Callers.Enter(caller);
+
+        var removed = await world.Remove().Handle(new RemoveConnectionRequest("linear:work"), Token);
+
+        Assert.True(removed.IsSuccess);
+        var recorded = Assert.Single(world.Ledger.Events, static e => e.Envelope.Type == EventTypes.ConnectionRemoved);
+        Assert.Equal(caller.Actor, recorded.Envelope.Actor);
     }
 
     [Fact]

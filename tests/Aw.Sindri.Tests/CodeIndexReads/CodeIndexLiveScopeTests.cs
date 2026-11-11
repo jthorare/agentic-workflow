@@ -1,7 +1,6 @@
 using Aw.CodeIndex.Core.Facade;
 using Aw.Kernel;
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.CodeIndexJobs;
 using Aw.Sindri.Features.CodeIndexReads;
@@ -121,17 +120,5 @@ public sealed class CodeIndexLiveScopeTests
         var scope = Scope(copy, Approved(), live: null).Value;
 
         Assert.Equal(["demo"], scope.Repos.Select(static r => r.Name.Value), StringComparer.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task With_no_approved_profile_nothing_is_indexed_even_when_the_live_file_has_repos()
-    {
-        var harness = new SliceHarness();
-        harness.Profiles.Live = new LoadedProfile(Approved(), ProfileHash.From(new string('a', 64)), "/home/profile.yaml");
-
-        var read = await new CodeIndexScopes(harness.Profiles, harness.Profiles, harness.Callers).Current(TestContext.Current.CancellationToken);
-        var job = await new CodeIndexJobScopes(harness.Profiles, harness.Profiles, harness.Callers).Current(TestContext.Current.CancellationToken);
-
-        Assert.Equal(["SND-PROFILE-005", "SND-PROFILE-005"], [read.Error.Code, job.Error.Code]);
     }
 }

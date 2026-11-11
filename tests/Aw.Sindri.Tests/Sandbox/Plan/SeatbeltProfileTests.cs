@@ -1,9 +1,11 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Sandbox.Resources;
 using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
@@ -25,6 +27,49 @@ public sealed class SeatbeltProfileTests
     private static string[] Lines(string profile) => profile.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
     private static void Match(string text, string golden) => Golden.Match(text, typeof(SeatbeltProfileTests).Assembly, "Sandbox/Plan/Golden/" + golden, Normalization.None);
+
+    private static SandboxPlan ProcessPlan(params PlanGroup[] groups) => ProcessSandboxPlanner.Build(
+        SandboxMechanism.Seatbelt,
+        new ProcessSandboxRequest(
+            LaunchId.From("LCH-" + new string('c', 32)),
+            "toolkit:triage",
+            Req.SindriHome + "/toolkits/triage/bin/triage",
+            Req.RunArea,
+            [new ResourceMount("state", Req.SindriHome + "/resources/toolkit/triage/db/state.sqlite")],
+            new Dictionary<string, string>(StringComparer.Ordinal) { [ResourceEnv.Database("state")] = Req.SindriHome + "/resources/toolkit/triage/db/state.sqlite" },
+            groups,
+            new SandboxNetFacts("/run/user/1000/sindri/cd34ab12", 7480, 41235),
+            Req.Host)).Value;
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_process_profile_matches_its_golden() =>
+        Match(SeatbeltProfile.RenderProcess(ProcessPlan(new PlanGroup("github", ["api.github.com"])), Req.RunArea), "seatbelt-process.sb");
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_process_profile_names_the_resolved_path_of_its_run_area() =>
+        Assert.Contains(
+            Lines(SeatbeltProfile.RenderProcess(ProcessPlan() with { Mounts = [.. ProcessPlan().Mounts.Select(m => SeatbeltProcessPlan.IsPrivateTmp(m) ? m with { Source = "/var/run-area/tmp" } : m)] }, "/var/run-area", p => p.StartsWith("/var", StringComparison.Ordinal) ? "/private" + p : p)),
+            l => l.StartsWith("(allow ", StringComparison.Ordinal) && l.EndsWith("(subpath \"/private/var/run-area/tmp\"))", StringComparison.Ordinal));   // why: no deny covers /var here, so the rule is the write-only form; the point is the resolved path
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_read_only_path_of_a_process_under_the_emptied_home_is_readable_and_never_writable()
+    {
+        var repo = Req.Host.Home + "/repos/app";
+        var plan = ProcessPlan() with { Mounts = [.. ProcessPlan().Mounts, new PlanMount(repo, PlanMountKind.ReadOnly, Reason: "read-only for toolkit:triage")] };
+
+        var lines = Lines(SeatbeltProfile.RenderProcess(plan, Req.RunArea));
+
+        Assert.Contains($"(allow file-read* (subpath \"{repo}\"))", lines, StringComparer.Ordinal);   // the home is denied first; the path is let back in for reading only
+        Assert.DoesNotContain(lines, l => l.StartsWith("(allow file-write*", StringComparison.Ordinal) && l.Contains(repo, StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_process_with_no_connection_opens_no_loopback_port()
+    {
+        var lines = Lines(SeatbeltProfile.RenderProcess(ProcessPlan(), Req.RunArea));
+
+        Assert.DoesNotContain(lines, l => l.Contains("remote ip", StringComparison.Ordinal));
+    }
 
     [Fact, Trait("Lane", "unit")]
     public void The_profile_allows_by_default_denies_the_network_and_all_writes_first()

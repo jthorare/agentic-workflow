@@ -268,21 +268,6 @@ public sealed class CommandChainTests : IAsyncDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_service_can_not_approve_a_profile_and_nothing_but_the_audit_is_written()
-    {
-        _c.H.Profiles.Live = SliceHarness.Profile();
-        _ = await _c.H.HoldLease();
-
-        var refused = await _c.Run<Features.ApproveProfile.ApproveProfileRequest, Features.ApproveProfile.ApproveProfileResponse>(
-            new(_c.H.Profiles.Live.Value.Hash, _c.H.Confirm(_c.H.Profiles.Live.Value.Hash)), Refused);
-
-        Assert.Equal(SindriErrors.AuthRefused.Code, refused.Error.Code);
-        Assert.Equal("ApproveProfile is not available to this caller: sindri profile approve [<hash>]", refused.Error.Message);
-        Assert.Equal(EventTypes.CommandHandled, Assert.Single(_c.Events).Envelope.Type);
-        Assert.Null((await _c.H.Profiles.Latest(TestContext.Current.CancellationToken)).Value);
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public async Task A_failed_stop_keeps_its_own_reason_when_its_audit_row_can_not_be_written()
     {
         await using var c = new ChainHarness(endpoints: new UnremovableEndpointFile());

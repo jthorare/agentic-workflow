@@ -1,5 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Linear;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
@@ -7,10 +8,10 @@ using Aw.Sindri.Core.Secrets;
 namespace Aw.Sindri.Features.RunDoctor;
 
 /// <summary>
-/// Doctor's 'context:linear' check (context spec §8.8, D-6): whether the approved profile names the native Linear source, which teams it reads, and whether
+/// Doctor's 'context:linear' check (context spec §8.8, D-6): whether the profile names the native Linear source, which teams it reads, and whether
 /// 'context.sources.linear.token' resolves through <paramref name="secrets"/> (a pointer that doesn't fails with its SND-SECRET code, which names the scheme and the
 /// target, never a value). It makes no call to Linear: reading projects, documents and issues is 'sindri context sources status'.
-/// A profile that lists teams but names no Linear token warns 'Linear needs a token' and names 'sindri index connect linear'; a profile with no Linear entry, or no approved profile, is 'ok: not configured'.
+/// A profile that lists teams but names no Linear token warns 'Linear needs a token' and names 'sindri index connect linear'; a profile with no Linear entry, or no profile, is 'ok: not configured'.
 /// </summary>
 /// <param name="engine">The context engine (checks the settings).</param>
 /// <param name="secrets">Resolves the key's pointer, as Sindri Host does for the engine.</param>
@@ -21,8 +22,8 @@ internal sealed class LinearDoctor(IContextEngine engine, ISecretPointers secret
 
     private const string Setup = "docs/sindri/linear.md";
 
-    /// <summary>Judges the linear source the approved profile names.</summary>
-    /// <param name="approved">The approved profile, or null.</param>
+    /// <summary>Judges the linear source the profile names.</summary>
+    /// <param name="approved">The profile, or null.</param>
     /// <param name="cancellationToken">Cancels the check.</param>
     /// <returns>The check.</returns>
     internal ValueTask<DoctorCheck> Check(LoadedProfile? approved, CancellationToken cancellationToken)
@@ -35,7 +36,7 @@ internal sealed class LinearDoctor(IContextEngine engine, ISecretPointers secret
     {
         if (approved is null)
         {
-            return new DoctorCheck(Name, CheckState.Ok, "not configured (no profile is approved)", Fix: null);
+            return new DoctorCheck(Name, CheckState.Ok, "not configured (no profile yet)", Fix: null);
         }
 
         ProfileRepoEntry[] entries = [.. (approved.Profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path))];
@@ -50,15 +51,25 @@ internal sealed class LinearDoctor(IContextEngine engine, ISecretPointers secret
             if (settings.Value.LinearTeams.Count > 0)
             {
                 return new DoctorCheck(Name, CheckState.Warn,
-                    $"{LinearToken.Missing}: the approved profile lists teams {string.Join(", ", settings.Value.LinearTeams)} but no context.sources.linear.token", LinearToken.Connect);
+                    $"{LinearToken.Missing}: the profile lists teams {string.Join(", ", settings.Value.LinearTeams)} but no context.sources.linear.token", LinearToken.Connect);
             }
 
-            return new DoctorCheck(Name, CheckState.Ok, "not configured (the approved profile names no context.sources.linear.token)", Fix: null);
+            return new DoctorCheck(Name, CheckState.Ok, "not configured (the profile names no context.sources.linear.token)", Fix: null);
         }
 
         if (ScopeRules.Usable(entries).Count == 0)
         {
-            return new DoctorCheck(Name, CheckState.Warn, "the approved profile maps no repo, so no context source runs, linear included", "map a repo in the profile's repos and context.repos");
+            return new DoctorCheck(Name, CheckState.Warn, "the profile maps no repo, so no context source runs, linear included", "map a repo in the profile's repos and context.repos");
+        }
+
+        return KeyCheck(linear);
+    }
+
+    private DoctorCheck KeyCheck(LinearSettings linear)
+    {
+        if (linear.Token is null)
+        {
+            return new DoctorCheck(Name, CheckState.Ok, "configured: the profile names no context.sources.linear.token, so the feed reads with the Linear connection on the Connections page (not probed here)", Fix: null);
         }
 
         var key = SecretPointer.Parse(linear.Token).Bind(secrets.Resolve);

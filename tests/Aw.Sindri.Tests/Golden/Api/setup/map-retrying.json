@@ -19,28 +19,13 @@
     },
     {
       "id": "profile",
-      "title": "Approve the profile",
+      "title": "Save the profile",
       "state": "done",
-      "why": "Your profile is approved.",
+      "why": "Your profile is saved and live.",
       "detail": null,
       "error": null,
       "action": null,
       "progress": null,
-      "items": []
-    },
-    {
-      "id": "recipes",
-      "title": "Approve the workflows",
-      "state": "done",
-      "why": "Every workflow that ships with Sindri is approved.",
-      "detail": "26 workflows.",
-      "error": null,
-      "action": null,
-      "progress": {
-        "done": 26,
-        "total": 26,
-        "unit": "workflows"
-      },
       "items": []
     },
     {

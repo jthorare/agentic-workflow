@@ -72,12 +72,12 @@ public sealed class GetContextPagesServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Pages_without_an_approved_profile_is_refused()
+    public async Task Pages_without_a_profile_is_refused()
     {
         var service = new GetContextPagesService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy);
 
         var answer = await service.Handle(new GetContextPagesRequest(), Ct);
 
-        Assert.Equal("SND-PROFILE-005", answer.Error.Code);
+        Assert.Equal("SND-PROFILE-001", answer.Error.Code);
     }
 }

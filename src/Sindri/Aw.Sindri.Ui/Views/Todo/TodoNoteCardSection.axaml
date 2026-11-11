@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:todo="using:Aw.Sindri.Ui.ViewModels.Todo"
+             x:Class="Aw.Sindri.Ui.Views.Todo.TodoNoteCardSection"
+             x:DataType="todo:TodoNoteCardViewModel">
+  <!-- Settings → Connections → Obsidian todo note (todo spec §3.4 "Settings card", §3.5): the status line is a polite live region that is always in the tree (its flag is set before any text). Vault, note and
+       Check note come first; what a check found comes under them, with the one or two buttons that follow from it; a running sync shows one line with Change and Stop syncing (which asks first). -->
+  <Border x:Name="TodoNoteCardFrame" IsVisible="{Binding IsAvailable}" AutomationProperties.Name="{Binding Text.Name}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+          BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
+    <StackPanel Spacing="{StaticResource Space.MD}">
+      <StackPanel Spacing="{StaticResource Space.XS}">
+        <TextBlock x:Name="TodoNoteName" Classes="body-strong" Text="{Binding Text.Name}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBlock Classes="caption subtle" Text="{Binding Text.Intro}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.Intro}" />
+      </StackPanel>
+
+      <TextBlock x:Name="TodoNoteStatus" Classes="caption" AutomationProperties.LiveSetting="Polite" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" />
+      <TextBlock x:Name="TodoNoteError" Classes="caption" AutomationProperties.LiveSetting="Polite" Foreground="{DynamicResource Brush.Error}" Text="{Binding ErrorText}" TextWrapping="Wrap"
+                 AutomationProperties.Name="{Binding ErrorText}" />
+
+      <TextBlock x:Name="TodoNoteReading" Classes="caption subtle" Text="{Binding Text.Reading}" IsVisible="{Binding ShowReading}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.Reading}" />
+
+      <StackPanel x:Name="TodoNoteNoVaultsLine" Orientation="Horizontal" Spacing="{StaticResource Space.SM}" IsVisible="{Binding ShowNoVaults}">
+        <TextBlock x:Name="TodoNoteNoVaults" Classes="body" Text="{Binding Text.NoVaults}" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text.NoVaults}" />
+        <Button x:Name="TodoNoteOpenLibrary" Classes="command-control" Content="{Binding Text.OpenLibrary}" Click="OnOpenLibrary" AutomationProperties.Name="{Binding Text.OpenLibrary}" />
+      </StackPanel>
+
+      <StackPanel x:Name="TodoNoteFields" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowForm}">
+        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="{StaticResource Space.SM}" RowSpacing="{StaticResource Space.XS}">
+          <TextBlock Classes="caption subtle" Text="{Binding Text.Vault}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+          <ComboBox x:Name="TodoNoteVault" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Vaults}" SelectedItem="{Binding SelectedVault, Mode=TwoWay}" IsEnabled="{Binding !IsBusy}" AutomationProperties.Name="{Binding Text.VaultName}" />
+          <TextBlock Grid.Row="1" Classes="caption subtle" Text="{Binding Text.Note}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+          <TextBox x:Name="TodoNoteField" Grid.Row="1" Grid.Column="1" Text="{Binding NoteText, Mode=TwoWay}" IsEnabled="{Binding !IsBusy}" PlaceholderText="{Binding Text.NotePlaceholder}" KeyDown="OnNoteKey"
+                   AutomationProperties.Name="{Binding Text.NoteName}" />
+          <Button x:Name="TodoNoteCheck" Grid.Row="1" Grid.Column="2" Classes="command-control" Content="{Binding Text.Check}" IsEnabled="{Binding CanCheck}" Click="OnCheck" AutomationProperties.Name="{Binding Text.Check}" />
+        </Grid>
+      </StackPanel>
+
+      <StackPanel x:Name="TodoNoteResultBox" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowResult}">
+        <TextBlock x:Name="TodoNoteResult" Classes="body" Text="{Binding ResultText}" IsVisible="{Binding ResultText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ResultText}" />
+        <TextBlock x:Name="TodoNoteCounts" Classes="body" Text="{Binding CountsText}" IsVisible="{Binding HasCounts}" TextWrapping="Wrap" AutomationProperties.Name="{Binding CountsText}" />
+        <TextBlock x:Name="TodoNoteCantImport" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding CantImportText}" IsVisible="{Binding HasCantImport}" TextWrapping="Wrap"
+                   AutomationProperties.Name="{Binding CantImportText}" />
+        <TextBlock x:Name="TodoNoteOverCap" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding OverCapText}" IsVisible="{Binding HasOverCap}" TextWrapping="Wrap"
+                   AutomationProperties.Name="{Binding OverCapText}" />
+        <TextBlock x:Name="TodoNoteOneWay" Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding OneWayText}" IsVisible="{Binding HasOneWay}" TextWrapping="Wrap"
+                   AutomationProperties.Name="{Binding OneWayText}" />
+        <TextBlock x:Name="TodoNoteImportLater" Classes="caption" Text="{Binding ImportLaterText}" IsVisible="{Binding ShowImportLater}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ImportLaterText}" />
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+          <Button x:Name="TodoNoteStart" Classes="command-control primary" Content="{Binding Text.Start}" IsVisible="{Binding ShowStart}" IsEnabled="{Binding !IsBusy}" Click="OnStart" AutomationProperties.Name="{Binding Text.Start}" />
+          <Button x:Name="TodoNoteStartOneWay" Classes="command-control primary" Content="{Binding Text.StartOneWay}" IsVisible="{Binding ShowStartOneWay}" IsEnabled="{Binding !IsBusy}" Click="OnStart"
+                  AutomationProperties.Name="{Binding Text.StartOneWay}" />
+          <Button x:Name="TodoNoteImport" Classes="command-control primary" Content="{Binding Text.Import}" IsVisible="{Binding ShowImport}" IsEnabled="{Binding !IsBusy}" Click="OnImport" AutomationProperties.Name="{Binding Text.Import}" />
+          <Button x:Name="TodoNoteCancel" Classes="command-control" Content="{Binding Text.Cancel}" IsVisible="{Binding ShowCancel}" IsEnabled="{Binding !IsBusy}" Click="OnCancel" AutomationProperties.Name="{Binding Text.Cancel}" />
+        </StackPanel>
+      </StackPanel>
+
+      <StackPanel x:Name="TodoNoteSettled" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowSyncing}">
+        <TextBlock x:Name="TodoNoteSyncing" Classes="body" Text="{Binding SyncingText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding SyncingText}" />
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}" IsVisible="{Binding !IsConfirmingStop}">
+          <Button x:Name="TodoNoteChange" Classes="command-control" Content="{Binding Text.Change}" IsEnabled="{Binding !IsBusy}" Click="OnChange" AutomationProperties.Name="{Binding Text.Change}" />
+          <Button x:Name="TodoNoteStop" Classes="command-control" Content="{Binding Text.Stop}" IsEnabled="{Binding !IsBusy}" Click="OnAskStop" AutomationProperties.Name="{Binding Text.Stop}" />
+        </StackPanel>
+        <StackPanel x:Name="TodoNoteStopBox" Orientation="Horizontal" Spacing="{StaticResource Space.SM}" IsVisible="{Binding IsConfirmingStop}">
+          <TextBlock x:Name="TodoNoteStopAsk" Classes="caption" Text="{Binding StopAskText}" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.Name="{Binding StopAskText}" />
+          <Button x:Name="TodoNoteKeep" Classes="command-control" Content="{Binding Text.Keep}" Click="OnKeepSyncing" AutomationProperties.Name="{Binding Text.Keep}" />
+          <Button x:Name="TodoNoteStopConfirm" Classes="command-control destructive" Content="{Binding Text.Stop}" IsEnabled="{Binding !IsBusy}" Click="OnStop" AutomationProperties.Name="{Binding Text.Stop}" />
+        </StackPanel>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

@@ -39,7 +39,7 @@ internal sealed class NoForgePullRequests : IPullRequests
 
     public ValueTask<Result<IReadOnlyList<PullDigest>>> Digest(IReadOnlyList<string> links, CancellationToken cancellationToken) => None<IReadOnlyList<PullDigest>>();
 
-    private static ValueTask<Result<T>> None<T>() => ValueTask.FromResult<Result<T>>(SindriErrors.NoForge.With("the approved profile has no workflow.forge.adapter"));
+    private static ValueTask<Result<T>> None<T>() => ValueTask.FromResult<Result<T>>(SindriErrors.NoForge.With("the profile has no workflow.forge.adapter"));
 
     public ValueTask<Result<PullFiles>> Files(string link, CancellationToken cancellationToken) => None<PullFiles>();
 

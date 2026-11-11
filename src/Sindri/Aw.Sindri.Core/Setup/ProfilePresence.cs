@@ -1,17 +1,11 @@
 namespace Aw.Sindri.Core.Setup;
 
-/// <summary>Where the profile stands against its approval.</summary>
+/// <summary>Whether there is a profile file (edits apply on save, #2258 PR 1: no approval states).</summary>
 public enum ProfilePresence
 {
     /// <summary>There is no profile file.</summary>
     Missing,
 
-    /// <summary>A profile that was never approved.</summary>
-    Unapproved,
-
-    /// <summary>Approved once, and the live profile has changed since.</summary>
-    Drifted,
-
-    /// <summary>The live profile is the approved one.</summary>
-    Approved,
+    /// <summary>The profile file is there; it is live.</summary>
+    Present,
 }

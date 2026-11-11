@@ -12,6 +12,7 @@ namespace Aw.Sindri.Features.CompleteStep;
 /// while the run isn't taken over. While it is taken over only the human may, via the desk, whose report the service never reads the view for. A secret on
 /// a report for a run that no agent runs is refused too. The secret is checked, never stored, logged or echoed.
 /// </summary>
+#pragma warning disable MA0182 // the recipe-engine overload, until the recipe code around it is removed
 internal static class AgentReportAuthority
 {
     /// <summary>Decides a non-human caller's report.</summary>
@@ -46,4 +47,37 @@ internal static class AgentReportAuthority
         var proven = files.Verify(launch, secret);
         return proven.IsError ? proven.Error : StepRuntime.Agent;
     }
+
+    /// <summary>Decides a non-human caller's report for a graph node run (PR 7), by the same rules as <see cref="Decide"/>: only the launched session reports, with its launch secret, and only while a person has not taken the node over.</summary>
+    /// <param name="view">The node run's open agent launch; null when the report names no running 'run_agent' node.</param>
+    /// <param name="request">The report.</param>
+    /// <param name="files">The launches' stored secrets.</param>
+    /// <returns>Success with the runtime the report is recorded as; SND-AUTH-002 for a session that isn't the launched one or a taken-over node, SND-AUTH-003 for a secret that doesn't match.</returns>
+    internal static Result<StepRuntime> DecideNode(NodeReportView? view, CompleteStepRequest request, ILaunchFiles files)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(files);
+        if (view is null)
+        {
+            return request.LaunchSecret is null
+                ? StepRuntime.Desk
+                : SindriErrors.AuthRefused.With($"run {request.Instance} has no running agent node for token {request.Run.Value}, so a launch secret has nothing to prove (fix: report a desk node from a terminal or the Sindri app)");
+        }
+
+        if (view.TakenOver)
+        {
+            return request.LaunchSecret is null
+                ? StepRuntime.Desk
+                : SindriErrors.AuthRefused.With($"{request.Instance} is taken over: only the human reports its node (fix: run 'sindri workflow complete' in a terminal or the Sindri app, or hand it back)");
+        }
+
+        if (request.LaunchSecret is not { } secret)
+        {
+            return SindriErrors.AuthRefused.With($"node {request.Run.Value} of {request.Instance} is an agent node: only the session launched for it reports it, with its launch secret");
+        }
+
+        var proven = files.Verify(view.Launch, secret);
+        return proven.IsError ? proven.Error : StepRuntime.Agent;
+    }
 }
+#pragma warning restore MA0182

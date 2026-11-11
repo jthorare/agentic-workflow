@@ -33,4 +33,9 @@ public sealed record HealthResponse(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<LaneHealth>? Lanes = null,
     HeavySlots? Heavy = null,
     BuilderAdvice? Builders = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<LaneContext>? Context = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<LaneContext>? Context = null)
+{
+    /// <summary>Whether a beating watch consumes the meta's mail; null when not computed.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Consumer { get; init; }
+}

@@ -27,7 +27,8 @@
 #    installed binary is older than the Meta sources it is launched from. A failed publish exits 1 and leaves the installed binary alone.
 # 2. Hooks, per provider:
 #    claude: Stop → meta-stop-gate.sh, PostToolUse with matcher SendMessage → meta-outbox.sh. Both pass straight through for
-#      every session but the registered meta one.
+#      every session but the registered meta one. UserPromptSubmit and PostToolUse (every tool) → meta-board-line.sh, which prints
+#      `aw-meta board-line` as additionalContext in a lane (AW_META_TEAM and AW_META_LANE set) and passes through elsewhere.
 #    codex, cursor (the lane hooks for non-Claude Meta lanes, docs/csharp/meta.md "Non-Claude lanes"; user-wide, through the
 #      provider adapters in $AW_STATE_DIR/hooks): session-id-report.sh at SessionStart, meta-lane-gate.sh at UserPromptSubmit
 #      and Stop (Codex) or sessionStart, postToolUse, afterAgentResponse (the reply text) and stop (Cursor). Both pass straight through for every session that is
@@ -36,8 +37,10 @@
 # 3. Links aw-meta and aw-meta-launch (scripts/meta-launch.sh) into CLAUDE_LOCAL_BIN. aw-meta-launch points into the canonical
 #    checkout only. Before anything is built or written: when the team config (team.json, $AW_META_CONFIG or
 #    $AW_STATE_DIR/meta/team.json) names a repo with scripts/meta-launch.sh, this script must run from that repo; with no team repo, a
-#    linked git worktree (git-dir differs from git-common-dir) is refused. --allow-worktree permits either and
-#    links this tree.
+#    linked git worktree (git-dir differs from git-common-dir) is refused. --allow-worktree permits either, and then
+#    aw-meta-launch is linked to a copy of the launcher set (META_LAUNCH_SET below) in $AW_STATE_DIR/bin/meta-launch/<commit>/,
+#    never into this tree: a throwaway worktree is removed by the sweep later, and a link into it would dangle (#2640). The copy is
+#    frozen at the installed commit, like the binary; a tree with changes in the set gets <commit>-dirty, copied fresh each time.
 # The /meta skill itself is linked by setup.sh with the other skills.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -67,8 +70,13 @@ esac
 
 # Never silently install an unmerged build. The team config's repo (when it has the launcher) is the canonical checkout: this
 # script must run from it; from any other tree (a worktree, a second clone) it refuses. With no team repo, a linked git worktree
-# is refused. --allow-worktree is the explicit override, and then aw-meta-launch is linked into this tree.
+# is refused. --allow-worktree is the explicit override, and then aw-meta-launch is linked to a copy of the launcher set.
 LAUNCH_DIR="$SCRIPT_DIR"
+# Everything aw-meta-launch and the lanes read, relative to the tree: the scripts meta-launch.sh and meta-lane.sh source, the
+# build-path list meta-version-lib.sh reads, and the launcher schema and data launcher-lib.sh reads from its parent directory.
+# scripts/tests/install-meta-launch-snapshot.test.sh runs the copy with the tree removed, so a file missing here fails there.
+META_LAUNCH_SET=(scripts/meta-launch.sh scripts/meta-lane.sh scripts/launcher-lib.sh scripts/meta-team-lib.sh scripts/meta-version-lib.sh
+  scripts/meta-start-lock.sh scripts/meta-build-paths.txt schemas/launcher.schema.json config/launcher/builtins.json config/launcher/terminals.json)
 # shellcheck source=meta-team-lib.sh
 . "$SCRIPT_DIR/scripts/meta-team-lib.sh"
 meta_amb=0
@@ -161,17 +169,20 @@ aw_hooks_init "$AW_PROVIDER"
 hooks_before="$(cat "$AW_HOOKS_CONFIG" 2> /dev/null || true)"
 if [ "$AW_PROVIDER" = claude ]; then
   if dry; then
-    echo "  [dry-run] would install meta-stop-gate (Stop) and meta-outbox (PostToolUse SendMessage) in $AW_HOOKS_CONFIG"
+    echo "  [dry-run] would install meta-stop-gate (Stop), meta-outbox (PostToolUse SendMessage) and meta-board-line (UserPromptSubmit, PostToolUse) in $AW_HOOKS_CONFIG"
   else
     mkdir -p "$AW_HOOKS_INSTALL_DIR/lib"
-    for h in meta-stop-gate.sh meta-outbox.sh; do
+    for h in meta-stop-gate.sh meta-outbox.sh meta-board-line.sh; do
       cp "$SCRIPT_DIR/config/hooks/$h" "$AW_HOOKS_INSTALL_DIR/$h"
       chmod +x "$AW_HOOKS_INSTALL_DIR/$h"
     done
     cp "$SCRIPT_DIR/config/lib/failopen.sh" "$AW_HOOKS_INSTALL_DIR/lib/failopen.sh"
     stop=$(jq -nc --arg c "$(sq "$AW_HOOKS_INSTALL_DIR/meta-stop-gate.sh") # aw:meta-stop-gate" '{hooks:[{type:"command",command:$c,timeout:20}]}')
     out=$(jq -nc --arg c "$(sq "$AW_HOOKS_INSTALL_DIR/meta-outbox.sh") # aw:meta-outbox" '{matcher:"SendMessage",hooks:[{type:"command",command:$c,timeout:10}]}')
+    board=$(jq -nc --arg c "$(sq "$AW_HOOKS_INSTALL_DIR/meta-board-line.sh") # aw:meta-board-line" '{hooks:[{type:"command",command:$c,timeout:10}]}')
     merge_hook "$AW_HOOKS_CONFIG" Stop aw:meta-stop-gate "$stop"
+    merge_hook "$AW_HOOKS_CONFIG" UserPromptSubmit aw:meta-board-line "$board"
+    merge_hook "$AW_HOOKS_CONFIG" PostToolUse aw:meta-board-line "$board"
     merge_hook "$AW_HOOKS_CONFIG" PostToolUse aw:meta-outbox "$out"
     echo "  meta: hooks installed in $AW_HOOKS_CONFIG"
   fi
@@ -213,6 +224,22 @@ if dry; then
 else
   mkdir -p "$LOCAL_BIN"
   ln -sfn "$BIN/aw-meta" "$LOCAL_BIN/aw-meta"
+  if [ "$allow_worktree" = 1 ]; then
+    # a copy, never this tree (#2640): $BIN/meta-launch/<commit>/ holds the launcher set at the paths it has in the tree
+    snap_id="$(git -C "$SCRIPT_DIR" rev-parse HEAD 2> /dev/null || echo unknown)"
+    [ -z "$(git -C "$SCRIPT_DIR" status --porcelain -- "${META_LAUNCH_SET[@]}" 2> /dev/null)" ] || snap_id="$snap_id-dirty"
+    LAUNCH_DIR="$BIN/meta-launch/$snap_id"
+    # a clean commit's copy never changes, so it is left alone (a running lane may be reading it); an unknown or dirty one is redone
+    if [ ! -f "$LAUNCH_DIR/scripts/meta-launch.sh" ] || [ "$snap_id" = unknown ] || [ "${snap_id%-dirty}" != "$snap_id" ]; then
+      snap_tmp="$LAUNCH_DIR.tmp.$$"
+      for f in "${META_LAUNCH_SET[@]}"; do
+        mkdir -p "$snap_tmp/$(dirname "$f")"
+        cp -p "$SCRIPT_DIR/$f" "$snap_tmp/$f"
+      done
+      [ ! -d "$LAUNCH_DIR" ] || rm -r "$LAUNCH_DIR"
+      mv "$snap_tmp" "$LAUNCH_DIR"
+    fi
+  fi
   ln -sfn "$LAUNCH_DIR/scripts/meta-launch.sh" "$LOCAL_BIN/aw-meta-launch"
   echo "  meta: aw-meta and aw-meta-launch in $LOCAL_BIN"
   [ -f "$META_CONFIG" ] || [ "$meta_amb" = 1 ] || echo "  meta: next, write a team config: aw-meta team-init --team <t> --repo <dir> --lanes a,b,c (example: skills/meta/examples/agentic-workflow.team.json)"
