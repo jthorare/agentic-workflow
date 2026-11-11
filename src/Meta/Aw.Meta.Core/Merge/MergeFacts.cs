@@ -18,6 +18,15 @@ public sealed record MergeFacts
     /// <summary>Whether the team gates in CI (gate.mode "ci"): the gate record is a read of the pull request's required checks, so the scope, main and test-log checks don't apply.</summary>
     public bool CiGate { get; init; }
 
+    /// <summary>In ci mode: GitHub's merge state of the pull request now, read at merge time (null when the read failed, see <see cref="LiveError"/>).</summary>
+    public string? LiveMergeState { get; init; }
+
+    /// <summary>In ci mode: GitHub's review decision of the pull request now, read at merge time (null when the read failed).</summary>
+    public string? LiveReviewDecision { get; init; }
+
+    /// <summary>In ci mode: why the live read of the merge state and review decision failed; null when it worked.</summary>
+    public string? LiveError { get; init; }
+
     /// <summary>The pull request's head now.</summary>
     public required string CurrentHead { get; init; }
 

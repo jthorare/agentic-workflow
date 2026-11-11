@@ -106,10 +106,11 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
         return new MergeAssessment(team, [.. MergeGate.Evaluate(facts with { MergedTree = await MergedTree(team.Repo, gate, main).ConfigureAwait(false) }), State(view)], view);
     }
 
-    // gate.mode ci: the newest record is the read of the required checks. The scopes, main, merged-tree and test-log facts are not gathered.
+    // gate.mode ci: the newest record is the read of the required checks; the merge state and review decision are read live. The scopes, main, merged-tree and test-log facts are not gathered.
     private async ValueTask<MergeAssessment> CiGated(TeamConfig team, int pr, GateRecord gate, ReviewFacts? review, (PrDetails View, string Main) current)
     {
         var (view, main) = current;
+        var live = await repo.CiView(team.Repo, pr).ConfigureAwait(false);   // the gate-time record is not trusted for the merge state or the review
         var facts = new MergeFacts
         {
             Pr = pr,
@@ -121,6 +122,9 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
             OpenPrs = await OpenBefore(team, pr).ConfigureAwait(false),
             MergeOrder = team.MergeOrder,
             CiGate = true,
+            LiveMergeState = live.IsSuccess ? live.Value.MergeState : null,
+            LiveReviewDecision = live.IsSuccess ? live.Value.ReviewDecision : null,
+            LiveError = live.IsError ? live.Error.Message : null,
         };
         return new MergeAssessment(team, [.. MergeGate.Evaluate(facts), State(view)], view);
     }

@@ -25,8 +25,9 @@ public sealed class CiMergeCheckTests
         _ = await _world.Gates.Save(new GateRecord(190, head, "oldmain", scopes, steps, verdict, A.At(5)), CancellationToken.None);
     }
 
-    private void Script(string head = "headsha", string earlier = "MERGED") =>
+    private void Script(string head = "headsha", string earlier = "MERGED", string merge = "CLEAN", string review = "APPROVED", bool liveFails = false) =>
         _ = _world.Runner
+            .When("gh pr view 190 --json headRefOid,baseRefName,reviewDecision,mergeStateStatus", liveFails ? string.Empty : $$"""{"headRefOid":"{{head}}","baseRefName":"main","reviewDecision":"{{review}}","mergeStateStatus":"{{merge}}"}""", liveFails ? 1 : 0)
             .When("gh pr view 190 --json headRefOid,isDraft,title,state", $$"""{"headRefOid":"{{head}}","isDraft":false,"title":"Add x","state":"OPEN"}""")
             .When("gh pr view 189 --json state", $$"""{"state":"{{earlier}}"}""")
             .When("rev-parse --verify --quiet origin/main", "newmain\n")
@@ -65,6 +66,47 @@ public sealed class CiMergeCheckTests
 
         Assert.False(response.Ready);
         Assert.Equal(["head"], Failed(response));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_head_that_moved_after_the_gate_refuses_on_head_even_when_github_is_clean_and_approved()
+    {
+        await CiTeam();
+        await Save("headsha", GateVerdict.Pass, "ci");
+        Script(head: "head2");
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal(["head"], Failed(response));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("DIRTY", "APPROVED", "merge-state")]
+    [InlineData("CLEAN", "REVIEW_REQUIRED", "review-decision")]
+    public async Task A_gate_that_passed_is_refused_when_github_is_no_longer_clean_and_approved_at_merge_time(string merge, string review, string failed)
+    {
+        await CiTeam();
+        await Save("headsha", GateVerdict.Pass, "ci");
+        Script(merge: merge, review: review);
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal([failed], Failed(response));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_failed_live_read_of_the_merge_state_refuses()
+    {
+        await CiTeam();
+        await Save("headsha", GateVerdict.Pass, "ci");
+        Script(liveFails: true);
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal(["merge-state", "review-decision"], Failed(response));
     }
 
     [Fact, Trait("Lane", "unit")]

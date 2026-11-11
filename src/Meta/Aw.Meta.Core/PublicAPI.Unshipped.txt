@@ -2521,6 +2521,12 @@ Aw.Meta.Core.Config.GateConfig.Mode.get -> string!
 Aw.Meta.Core.Config.GateConfig.Mode.init -> void
 Aw.Meta.Core.Merge.MergeFacts.CiGate.get -> bool
 Aw.Meta.Core.Merge.MergeFacts.CiGate.init -> void
+Aw.Meta.Core.Merge.MergeFacts.LiveError.get -> string?
+Aw.Meta.Core.Merge.MergeFacts.LiveError.init -> void
+Aw.Meta.Core.Merge.MergeFacts.LiveMergeState.get -> string?
+Aw.Meta.Core.Merge.MergeFacts.LiveMergeState.init -> void
+Aw.Meta.Core.Merge.MergeFacts.LiveReviewDecision.get -> string?
+Aw.Meta.Core.Merge.MergeFacts.LiveReviewDecision.init -> void
 const Aw.Meta.Core.Config.GateConfig.CiMode = "ci" -> string!
 const Aw.Meta.Core.Config.GateConfig.CiScope = "ci" -> string!
 const Aw.Meta.Core.Config.GateConfig.LocalMode = "local" -> string!

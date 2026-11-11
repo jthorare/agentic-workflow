@@ -34,8 +34,9 @@ public static class MergeGate
     }
 
     // A CI gate: the newest record must be the read of the pull request's required checks, passing, at the head now. Nothing is
-    // checked against main (CI and the merge state already did), no scope is planned and no test log is read. The review path
-    // adds the reviewer's OK, the ready line and the counts when the team has a reviewer lane.
+    // checked against main, no scope is planned and no test log is read. The record is from gate time, so the merge state and the
+    // review decision are read from GitHub again at merge time and must be CLEAN and APPROVED now; a failed read refuses. The
+    // review path adds the reviewer's OK, the ready line and the counts when the team has a reviewer lane.
     private static MergeCheck[] CiChecks(MergeFacts facts)
     {
         var rest = facts.Review is null ? [Order(facts), Draft(facts)] : ReviewChecks(facts, facts.Review);
@@ -59,7 +60,29 @@ public static class MergeGate
             gate.Head == facts.CurrentHead
                 ? new MergeCheck("head", Ok: true, "head unchanged since the CI gate")
                 : new MergeCheck("head", Ok: false, $"head moved from {gate.Head} to {facts.CurrentHead} since the CI gate"),
+            .. Live(facts),
             .. rest,
+        ];
+    }
+
+    private static MergeCheck[] Live(MergeFacts facts)
+    {
+        if (facts.LiveError is not null || facts.LiveMergeState is null || facts.LiveReviewDecision is null)
+        {
+            var why = $"could not read the live state from GitHub: {facts.LiveError ?? "no answer"}";
+            return [new MergeCheck("merge-state", Ok: false, why), new MergeCheck("review-decision", Ok: false, why)];
+        }
+
+        var state = facts.LiveMergeState;
+        var decision = facts.LiveReviewDecision;
+        return
+        [
+            string.Equals(state, "CLEAN", StringComparison.Ordinal)
+                ? new MergeCheck("merge-state", Ok: true, "CLEAN now")
+                : new MergeCheck("merge-state", Ok: false, $"GitHub's merge state is {(state.Length == 0 ? "unknown" : state)} now, not CLEAN"),
+            string.Equals(decision, "APPROVED", StringComparison.Ordinal)
+                ? new MergeCheck("review-decision", Ok: true, "APPROVED now")
+                : new MergeCheck("review-decision", Ok: false, $"GitHub's review decision is {(decision.Length == 0 ? "none" : decision)} now, not APPROVED"),
         ];
     }
 
