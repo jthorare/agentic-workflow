@@ -8532,7 +8532,28 @@ static Aw.Sindri.Core.Checks.RuleFinding.operator !=(Aw.Sindri.Core.Checks.RuleF
 static Aw.Sindri.Core.Checks.RuleFinding.operator ==(Aw.Sindri.Core.Checks.RuleFinding? left, Aw.Sindri.Core.Checks.RuleFinding? right) -> bool
 static Aw.Sindri.Core.Checks.ScopeGlobs.Allows(System.Collections.Generic.IReadOnlyList<string!>! entries, string! path) -> bool
 static Aw.Sindri.Core.Checks.ScopeGlobs.IsPackPath(string! path) -> bool
-static Aw.Sindri.Core.Checks.SecretScan.Findings(string! rule, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Checks.AddedLine!>! lines, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Checks.RuleFinding!>!
+static Aw.Sindri.Core.Checks.SecretScan.Findings(string! rule, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Checks.AddedLine!>! lines, Aw.Sindri.Core.Text.ISecretFinder! finder) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Checks.RuleFinding!>!
+Aw.Sindri.Core.Checks.ResourceName
+static Aw.Sindri.Core.Checks.ResourceName.Looks(string! value) -> bool
+static Aw.Sindri.Core.Checks.ResourceName.KeyNamesASecret(string! key) -> bool
+Aw.Sindri.Core.Text.ISecretFinder
+Aw.Sindri.Core.Text.ISecretFinder.Find(string! text, out bool complete) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Text.SecretHit!>!
+Aw.Sindri.Core.Text.SecretHit
+Aw.Sindri.Core.Text.SecretHit.Key.get -> string!
+Aw.Sindri.Core.Text.SecretHit.Key.init -> void
+Aw.Sindri.Core.Text.SecretHit.SecretHit(string! Rule, string! Key, string! Value) -> void
+Aw.Sindri.Core.Text.SecretHit.Rule.get -> string!
+Aw.Sindri.Core.Text.SecretHit.Rule.init -> void
+Aw.Sindri.Core.Text.SecretHit.Value.get -> string!
+Aw.Sindri.Core.Text.SecretHit.Value.init -> void
+override Aw.Sindri.Core.Text.SecretHit.ToString() -> string!
+static Aw.Sindri.Core.Text.SecretHit.operator !=(Aw.Sindri.Core.Text.SecretHit? left, Aw.Sindri.Core.Text.SecretHit? right) -> bool
+static Aw.Sindri.Core.Text.SecretHit.operator ==(Aw.Sindri.Core.Text.SecretHit? left, Aw.Sindri.Core.Text.SecretHit? right) -> bool
+override Aw.Sindri.Core.Text.SecretHit.GetHashCode() -> int
+override Aw.Sindri.Core.Text.SecretHit.Equals(object? obj) -> bool
+Aw.Sindri.Core.Text.SecretHit.Equals(Aw.Sindri.Core.Text.SecretHit? other) -> bool
+Aw.Sindri.Core.Text.SecretHit.<Clone>$() -> Aw.Sindri.Core.Text.SecretHit!
+Aw.Sindri.Core.Text.SecretHit.Deconstruct(out string! Rule, out string! Key, out string! Value) -> void
 static Aw.Sindri.Core.Checks.TestPaths.IsTest(string! path) -> bool
 Aw.Sindri.Core.Setup.ISetupFacts
 Aw.Sindri.Core.Setup.ISetupFacts.Map(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.MapFact!>!>
@@ -14080,7 +14101,12 @@ Aw.Sindri.Core.Projects.Cards.ProjectOrigin
 Aw.Sindri.Core.Projects.Cards.ProjectOrigin.Attached = 1 -> Aw.Sindri.Core.Projects.Cards.ProjectOrigin
 Aw.Sindri.Core.Projects.Cards.ProjectOrigin.HandMade = 2 -> Aw.Sindri.Core.Projects.Cards.ProjectOrigin
 Aw.Sindri.Core.Projects.Cards.ProjectOrigin.Led = 0 -> Aw.Sindri.Core.Projects.Cards.ProjectOrigin
+Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode
+Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode.LinearKeyMissing = 1 -> Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode
+Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode.LinearMissing = 0 -> Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode
 Aw.Sindri.Core.Projects.Cards.ProjectsPage
+Aw.Sindri.Core.Projects.Cards.ProjectsPage.EmptyCode.get -> Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode?
+Aw.Sindri.Core.Projects.Cards.ProjectsPage.EmptyCode.init -> void
 Aw.Sindri.Core.Projects.Cards.ProjectsPage.<Clone>$() -> Aw.Sindri.Core.Projects.Cards.ProjectsPage!
 Aw.Sindri.Core.Projects.Cards.ProjectsPage.Deconstruct(out string? Empty, out string? Viewer, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>! Freshness, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Projects, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Finished, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Hidden) -> void
 Aw.Sindri.Core.Projects.Cards.ProjectsPage.Empty.get -> string?
@@ -22508,6 +22534,7 @@ Aw.Sindri.Core.Toolkits.IToolkitStore
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace.BinaryOf(string! dir) -> Aw.Kernel.Result<string!>!
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace.SourceHash(string! dir, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Toolkits.IToolkitWorkspace.TestsProjectOf(string! dir) -> Aw.Kernel.Result<string!>!
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult.<Clone>$() -> Aw.Sindri.Core.Toolkits.ToolkitCommandResult!
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult.Deconstruct(out int ExitCode, out string! Output, out string! Error) -> void
