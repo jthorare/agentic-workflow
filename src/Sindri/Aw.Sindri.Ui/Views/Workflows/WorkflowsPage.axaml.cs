@@ -46,6 +46,63 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    private void OnNewWorkflow(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            page.OpenCreate();
+            FocusLater(WorkflowsNewName);   // the form opens on its name field
+        }
+    }
+
+    private async void OnCreate(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            var create = page.Create(CancellationToken.None);
+            await create.ConfigureAwait(true);
+            if (page.IsRuns)
+            {
+                FocusLater(WorkflowsBack);   // the new workflow's page opens on its Back button, as any workflow does
+            }
+        }
+    }
+
+    private void OnCancelCreate(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            page.CancelCreate();
+            FocusLater(WorkflowsNewHeader);
+        }
+    }
+
+    private void OnCreateKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            OnCreate(sender, e);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            OnCancelCreate(sender, e);
+            e.Handled = true;
+        }
+    }
+
+    // The row is the focus stop: Enter or Space on it (not on a control inside it) opens the workflow, as clicking its title does.
+    private async void OnWorkflowRowKey(object? sender, KeyEventArgs e)
+    {
+        if (e.Source == sender && e.Key is Key.Enter or Key.Space && DataContext is WorkflowsPageViewModel page && sender is Control { DataContext: WorkflowRowViewModel row })
+        {
+            e.Handled = true;
+            var open = page.OpenWorkflow(row.Slug, CancellationToken.None);
+            FocusLater(WorkflowsBack);
+            await open.ConfigureAwait(true);
+        }
+    }
+
     private async void OnRetry(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
@@ -103,7 +160,7 @@ internal sealed partial class WorkflowsPage : UserControl
     }
 #pragma warning restore MA0155
 
-    // Back lands on the level it returns to: the first row's button, else the first thing on that level that takes focus (Try again, Run now), never the Back button it just hid.
+    // Back lands on the level it returns to: the first row's focus stop (the workflow row itself, or a run row's button), else the first thing on that level that takes focus (Try again, Run now), never the Back button it just hid.
     private void OnBack(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not WorkflowsPageViewModel page)
@@ -114,8 +171,9 @@ internal sealed partial class WorkflowsPage : UserControl
         page.Back();
         var rows = page.IsList ? WorkflowRows : RunRows;
         Control level = page.IsList ? WorkflowsListLevel : WorkflowRunsLevel;
+        Func<Control, bool> stop = page.IsList ? static c => c is Border b && b.Classes.Contains("item-row") : static c => c is Button;   // a workflow row is its own focus stop (#2550); a run row's title button is still one
         Dispatcher.UIThread.Post(
-            () => _ = (FirstTarget(rows, static b => b is Button) ?? FirstTarget(level, static c => c.Focusable) ?? level).Focus(NavigationMethod.Tab),
+            () => _ = (FirstTarget(rows, stop) ?? FirstTarget(level, static c => c.Focusable) ?? level).Focus(NavigationMethod.Tab),
             DispatcherPriority.Loaded);
     }
 

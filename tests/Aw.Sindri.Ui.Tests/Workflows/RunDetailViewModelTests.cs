@@ -137,7 +137,7 @@ public sealed class RunDetailViewModelTests
 
         Assert.True(page.Run.IsFailed);
         Assert.StartsWith("Couldn't read the run just now.", page.Run.FailedText, StringComparison.Ordinal);
-        Assert.Contains("no run 'morning-check@1:9'", page.Run.FailedText, StringComparison.Ordinal);
+        Assert.Contains("No run 'morning-check@1:9'", page.Run.FailedText, StringComparison.Ordinal);
     }
 
     [Fact]

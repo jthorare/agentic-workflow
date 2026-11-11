@@ -23,9 +23,6 @@ internal static partial class Labels
     /// <summary>The list when there are none.</summary>
     internal const string WfNone = "No workflows yet.";
 
-    /// <summary>The head when there are none.</summary>
-    internal const string WfHeadNone = "No workflows";
-
     /// <summary>The action beside a failed read.</summary>
     internal const string WfTryAgain = "Try again";
 
@@ -50,7 +47,8 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string WfRevision(int? active, int latest) => active switch
     {
-        null => string.Create(CultureInfo.InvariantCulture, $"Newest revision {latest}"),
+        _ when latest < 2 => string.Empty,   // a first revision is not news: "Revision 1" says nothing the row doesn't
+        null => string.Empty,   // no active revision: no revision words, so a new workflow doesn't say "Newest revision 2" for the rename's bump
         { } a when a == latest => string.Create(CultureInfo.InvariantCulture, $"Revision {a}"),
         { } a => string.Create(CultureInfo.InvariantCulture, $"Revision {a} active, {latest} newest"),
     };
@@ -59,7 +57,7 @@ internal static partial class Labels
     /// <param name="by">"owner" or "session:&lt;id&gt;".</param>
     /// <param name="age">How long since.</param>
     /// <returns>The words.</returns>
-    internal static string WfChangedBy(string by, TimeSpan age) => "Changed by " + by + ", " + Age(age) + " ago";
+    internal static string WfChangedBy(string by, TimeSpan age) => "Changed by " + WfActor(by) + ", " + Age(age) + " ago";
 
     /// <summary>A workflow row's accessible name.</summary>
     /// <param name="name">The workflow's name.</param>
@@ -67,7 +65,7 @@ internal static partial class Labels
     /// <param name="revision">The revision words in lower case.</param>
     /// <param name="changed">Who changed it, in lower case.</param>
     /// <returns>The words.</returns>
-    internal static string WfRowName(string name, string word, string revision, string changed) => string.Join(", ", name, word, revision, changed);
+    internal static string WfRowName(string name, string word, string revision, string changed) => string.Join(", ", new[] { name, word, revision, changed }.Where(static p => p.Length > 0));
 
     /// <summary>The runs list before its first answer.</summary>
     internal const string WfRunsReading = "Reading runs…";
@@ -97,11 +95,12 @@ internal static partial class Labels
     /// <param name="shown">The revision shown.</param>
     /// <param name="latest">The newest revision.</param>
     /// <param name="nodes">How many nodes the graph has.</param>
-    /// <param name="createdBy">Who made the workflow.</param>
+    /// <param name="createdBy">Who made the workflow, as served: the person's own actor reads "you".</param>
+    /// <param name="hasActive">True when a revision is active; without one the line says no revision.</param>
     /// <returns>The words.</returns>
-    internal static string WfDetail(int shown, int latest, int nodes, string createdBy) => string.Create(
+    internal static string WfDetail(int shown, int latest, int nodes, string createdBy, bool hasActive) => string.Create(
         CultureInfo.InvariantCulture,
-        $"{(shown == latest ? $"Revision {shown}" : $"Revision {shown} of {latest}")} · {nodes} {(nodes == 1 ? "node" : "nodes")} · created by {createdBy}");
+        $"{(hasActive ? (shown == latest ? $"Revision {shown} · " : $"Revision {shown} of {latest} · ") : string.Empty)}{nodes} {(nodes == 1 ? "node" : "nodes")} · created by {WfActor(createdBy)}");
 
     /// <summary>A trigger kind as a word ("manual" is "Manual").</summary>
     /// <param name="kind">The kind as served.</param>
