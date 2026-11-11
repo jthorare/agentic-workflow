@@ -94,7 +94,11 @@ HELD=()
 release() { local d; for d in "${HELD[@]+"${HELD[@]}"}"; do unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null || true; done; }
 trap release EXIT
 job=""; dog=""
-stop_job() { [ -n "$job" ] && kill -TERM -- "-$job" 2>/dev/null; [ -n "$dog" ] && kill "$dog" 2>/dev/null; return 0; }
+# signal_job <SIG>: the job's process group, or its pid while the group doesn't exist yet (setsid or perl hasn't made it, #2799).
+signal_job() { kill "-$1" -- "-$job" 2>/dev/null || kill "-$1" "$job" 2>/dev/null; }
+# job_alive: the group (test hosts outlive the job's own pid) or the pid (no group yet) is still there.
+job_alive() { kill -0 -- "-$job" 2>/dev/null || kill -0 "$job" 2>/dev/null; }
+stop_job() { [ -n "$job" ] && signal_job TERM; [ -n "$dog" ] && kill "$dog" 2>/dev/null; return 0; }
 trap 'stop_job; release; exit 130' INT TERM
 
 # reclaim_slot <dir>: free a slot whose holder pid is dead. The holder file is <dir>/owner (this wrapper, ui-evidence), else
@@ -206,6 +210,10 @@ fi
 # macOS has no setsid: perl does the same. Its `--` stops perl from reading a command word that starts with - as a perl switch.
 if command -v setsid >/dev/null 2>&1; then setsid "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' -- "$@" & fi
 job=$!
+# Arm the watchdog only once the job's group exists (#2799): setsid or perl makes it some time after the fork, and a kill sent
+# to "-$job" before then reaches nothing. Wait up to ~5 s in 0.05 s steps, or until the job is gone; past that, signal_job
+# falls back to the pid.
+for _ in $(seq 1 100); do kill -0 -- "-$job" 2>/dev/null && break; kill -0 "$job" 2>/dev/null || break; sleep 0.05; done
 reason="$(mktemp "${TMPDIR:-/tmp}/heavy-reason.XXXXXX")"
 (
   start=$SECONDS
@@ -215,9 +223,9 @@ reason="$(mktemp "${TMPDIR:-/tmp}/heavy-reason.XXXXXX")"
     [ -z "$why" ] && [ -n "$claude_found" ] && ! kill -0 "$session" 2>/dev/null && why="session $session ended"
     if [ -n "$why" ]; then
       echo "$why" > "$reason"
-      kill -TERM -- "-$job" 2>/dev/null
-      for _ in $(seq 1 30); do kill -0 -- "-$job" 2>/dev/null || exit 0; sleep 1; done
-      kill -KILL -- "-$job" 2>/dev/null
+      signal_job TERM
+      for _ in $(seq 1 30); do job_alive || exit 0; sleep 1; done
+      signal_job KILL
       exit 0
     fi
     sleep 5
