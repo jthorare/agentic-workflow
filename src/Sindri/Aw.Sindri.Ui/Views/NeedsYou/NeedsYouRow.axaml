@@ -4,22 +4,21 @@
              xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              x:Class="Aw.Sindri.Ui.Views.NeedsYou.NeedsYouRow"
              x:DataType="ny:NeedsYouRowViewModel">
-  <!-- One Needs-you row (UI spec §5, screens spec §4.1): the chip, the id, the title (a button: it opens the row's sheet), the
+  <!-- One Needs-you row (UI spec §5, screens spec §4.1): the chip, the title (the question, up to two lines; the id is its tooltip) (a button: it opens the row's sheet), the
        age, then the reason and repo, then the row's controls. The tint is the urgency (R8-13): an unseen pulse row pulses (a
        steady outline and the word "new" under reduced motion), a failure keeps a steady tint, a calm row a subtle one. The row
        draws its own focus border (item-row), not the adorner. -->
-  <Border x:Name="RowFrame" Classes="item-row needs-you-row clickable" Classes.selected="{Binding IsSelected}" Classes.pulsing="{Binding IsPulsing}" Classes.steady="{Binding IsSteady}" Classes.subtle="{Binding IsSubtle}" Classes.slides-in="{Binding SlidesIn}"
+  <Border x:Name="RowFrame" AutomationProperties.AutomationId="{Binding AutomationId}" Classes="item-row needs-you-row clickable" Classes.selected="{Binding IsSelected}" Classes.pulsing="{Binding IsPulsing}" Classes.steady="{Binding IsSteady}" Classes.subtle="{Binding IsSubtle}" Classes.slides-in="{Binding SlidesIn}"
           Classes.outlined="{Binding HasOutline}" Classes.stale="{Binding IsStale}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <StackPanel Spacing="2">
-      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" VerticalAlignment="Center">
+    <StackPanel Spacing="2" Margin="0,8">
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
         <ctl:StateChipView x:Name="NeedsYouChip" Chip="{Binding Chip}" VerticalAlignment="Center" Margin="0,0,8,0" />
-        <TextBlock Grid.Column="1" Classes="mono subtle" Text="{Binding ShownId}" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.AccessibilityView="Raw" />
-        <Button x:Name="NeedsYouTitle" Grid.Column="2" Classes="row-title" Click="OnOpen" AutomationProperties.Name="{Binding OpenName}" ToolTip.Tip="{Binding OpenLabel}">
-          <TextBlock Classes="body-strong" Text="{Binding Title}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
+        <Button x:Name="NeedsYouTitle" Grid.Column="1" Classes="row-title" Click="OnOpen" AutomationProperties.Name="{Binding OpenName}" ToolTip.Tip="{Binding IdTip}">
+          <TextBlock Classes="body-strong" Text="{Binding Title}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
         </Button>
-        <TextBlock x:Name="NewWord" Grid.Column="3" Classes="caption" Text="{Binding NewWord}" IsVisible="{Binding HasNewWord}" AutomationProperties.AccessibilityView="Raw" Margin="8,0" VerticalAlignment="Center" />
-        <TextBlock Grid.Column="4" Classes="caption subtle" Text="{Binding Age}" VerticalAlignment="Center" TextAlignment="Right" AutomationProperties.AccessibilityView="Raw" />
+        <TextBlock x:Name="NewWord" Grid.Column="2" Classes="caption" Text="{Binding NewWord}" IsVisible="{Binding HasNewWord}" AutomationProperties.AccessibilityView="Raw" Margin="8,0" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="3" Classes="caption subtle" Text="{Binding Age}" VerticalAlignment="Center" TextAlignment="Right" AutomationProperties.AccessibilityView="Raw" />
       </Grid>
       <DockPanel LastChildFill="True">
         <ItemsControl x:Name="NeedsYouControls" DockPanel.Dock="Right" Margin="12,0,0,0" ItemsSource="{Binding Controls}">

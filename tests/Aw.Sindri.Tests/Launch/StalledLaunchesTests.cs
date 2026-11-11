@@ -54,4 +54,54 @@ public sealed class StalledLaunchesTests
         Assert.Empty(StalledLaunches.Find([old], _now));
         Assert.Equal(_instance, Assert.Single(StalledLaunches.Find([old], now: null)).Instance);
     }
+
+    [Fact]
+    public async Task The_read_looks_up_only_steps_that_ended_inside_the_window_and_answers_as_Find_does()
+    {
+        var rows = new List<LaunchRow>();
+        for (var i = 0; i < 50; i++)
+        {
+            rows.Add(Row(i, SessionEndReason.Idle, TimeSpan.FromDays(3), InstanceAddress.From(_item.Value + "/old/" + (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture)), endedAgo: TimeSpan.FromDays(2)));
+        }
+
+        rows.Add(Row(100, SessionEndReason.Idle, TimeSpan.FromHours(2), InstanceAddress.From(_item.Value + "/new/1"), endedAgo: TimeSpan.FromHours(1)));
+        rows.Add(Row(101, SessionEndReason.Idle, TimeSpan.FromHours(2), InstanceAddress.From(_item.Value + "/new/2"), endedAgo: TimeSpan.FromHours(1)));
+        var reader = new LaunchReader(rows);
+
+        var read = (await StalledLaunches.Read(reader, _now, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal(2, reader.InstanceLookups);
+        Assert.Equal(StalledLaunches.Find(rows, _now).Select(static s => s.Launch), read.Select(static s => s.Launch));
+        Assert.Equal(2, read.Count);
+    }
+
+    private sealed class LaunchReader(List<LaunchRow> rows) : Core.Views.IViewReader
+    {
+        public int InstanceLookups { get; private set; }
+
+        public ValueTask<Kernel.Result<IReadOnlyList<TRow>>> Where<TRow>(string view, Core.Views.ViewColumn column, string value, CancellationToken cancellationToken)
+            where TRow : class
+        {
+            if (column == Core.Views.ViewColumn.Instance)
+            {
+                InstanceLookups++;
+            }
+
+            IReadOnlyList<LaunchRow> found = column == Core.Views.ViewColumn.Reason
+                ? [.. rows.Where(static r => r.Ended?.Reason == SessionEndReason.Idle)]
+                : [.. rows.Where(r => string.Equals(r.Step.Instance?.Value, value, StringComparison.Ordinal))];
+            return ValueTask.FromResult(Kernel.Results.Success((IReadOnlyList<TRow>)(object)found));
+        }
+
+        public ValueTask<Kernel.Result<TRow?>> Get<TRow>(string view, string key, CancellationToken cancellationToken)
+            where TRow : class => throw new NotSupportedException();
+
+        public ValueTask<Kernel.Result<IReadOnlyList<TRow>>> List<TRow>(string view, CancellationToken cancellationToken)
+            where TRow : class => throw new NotSupportedException();
+
+        public ValueTask<Kernel.Result<IReadOnlyList<TRow>>> Range<TRow>(string view, string afterKey, string? beforeKey, int max, CancellationToken cancellationToken)
+            where TRow : class => throw new NotSupportedException();
+
+        public ValueTask<Kernel.Result<Core.Views.ProjectorState?>> State(CancellationToken cancellationToken) => throw new NotSupportedException();
+    }
 }

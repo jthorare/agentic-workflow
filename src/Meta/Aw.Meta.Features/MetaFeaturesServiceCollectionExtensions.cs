@@ -184,6 +184,7 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<WatchSweeper>()
         .AddScoped<WatchPoller>()
         .AddScoped<GithubQueueWatch>()
+        .AddScoped<TeamPrInputs>()
         .AddScoped<PollFollowUps>()
         .AddScoped<WatchService>()
         .AddScoped<IValidator<WatchRequest>, WatchValidator>()

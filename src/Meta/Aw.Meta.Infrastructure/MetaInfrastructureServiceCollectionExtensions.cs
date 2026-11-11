@@ -52,7 +52,7 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton<IBuildInfo, AssemblyBuildInfo>()
             .AddSingleton<IHeavyReserve>(new FileHeavyReserve(settings.StateDirectory))
             .AddSingleton<ILogFiles, FileLogFiles>()
-            .AddSingleton<IWorktreeFiles, DirectoryWorktreeFiles>()
+            .AddSingleton<IWorktreeFiles>(_ => new DirectoryWorktreeFiles(environment))
             .AddSingleton<IBugfixRecords>(new FileBugfixRecords(Path.Combine(Path.GetDirectoryName(settings.Layout.MetaRoot) ?? settings.Layout.MetaRoot, "bugfix")))
             .AddSingleton<IDelay>(sp => new ClockDelay(sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<ICommandRunner, SystemCommandRunner>()

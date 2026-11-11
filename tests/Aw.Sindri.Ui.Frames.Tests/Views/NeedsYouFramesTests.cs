@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -32,8 +33,37 @@ public sealed class NeedsYouFramesTests : FrameHost
         var titles = Rows(window).Select(r => Named<Button>(r, "NeedsYouTitle")).Select(b => Avalonia.Automation.AutomationProperties.GetName(b)).Count();
         Assert.Equal(GoldenFiles.Node("needs-you", "fixture")["rows"]!.AsArray().Count, Rows(window).Count);
         Assert.True(titles > 0);
-        Assert.Equal(shell.Attention.SummaryLine, Named<TextBlock>(window, "NeedsYouSummary").Text);
+        Assert.Equal(shell.Attention.NeedsYouLine, Named<TextBlock>(window, "NeedsYouSummary").Text);
         Frame(window, "needs-you-fixture");
+    });
+
+    // #2548: the question leads (its id is the tooltip), and no notice or button touches the bottom of its row's tint.
+    [Theory]
+    [InlineData(900)]
+    [InlineData(1280)]
+    public Task No_row_shows_its_id_and_no_notice_or_button_is_clipped_by_its_row(double width) => OnUi(async () =>
+    {
+        var (window, _) = await Connected(s => s.NeedsYou.Count > 0, width: width, height: 900);
+        Settle(window);
+
+        foreach (var row in Rows(window))
+        {
+            var vm = (ViewModels.NeedsYou.NeedsYouRowViewModel)row.DataContext!;
+            var frame = row.GetVisualDescendants().OfType<Border>().First(b => b.Name == "RowFrame");
+            var texts = row.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).ToList();
+            Assert.DoesNotContain(texts, t => vm.ShownId.Length > 0 && string.Equals(t.Text, vm.ShownId, StringComparison.Ordinal));
+            var inside = texts.Where(t => string.Equals(t.Name, "NeedsYouNotice", StringComparison.Ordinal)).Cast<Control>()
+                .Concat(Named<ItemsControl>(row, "NeedsYouControls").GetVisualDescendants().OfType<Button>().Where(b => b.IsEffectivelyVisible));
+            foreach (var control in inside)
+            {
+                var bottom = control.TranslatePoint(new Point(0, control.Bounds.Height), frame)!.Value.Y;
+                Assert.True(bottom <= frame.Bounds.Height - 4, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{control.Name} of {vm.Id} ends {bottom} in a row {frame.Bounds.Height} tall"));
+            }
+        }
+
+        var panel = Named<Control>(window, "NeedsYouPanel");
+        var last = Rows(window)[^1].GetVisualDescendants().OfType<Border>().First(b => b.Name == "RowFrame");
+        Assert.True(last.TranslatePoint(new Point(0, last.Bounds.Height), panel)!.Value.Y <= panel.Bounds.Height, "the card grows with its rows");
     });
 
     // review run 1, K10: what a screen reader lists says which row each control belongs to.
@@ -100,7 +130,8 @@ public sealed class NeedsYouFramesTests : FrameHost
         Server.NeedsYouView = RouteAnswer.SpecShaped("needs-you", "extra-nothing");   // the API's empty golden holds the setup:mcp row now
         var (window, _) = await Connected();
 
-        Assert.Equal((true, (string)Nothing()["empty"]!), (Visible(window, "NeedsYouEmpty"), Named<TextBlock>(window, "NeedsYouEmpty").Text));
+        var served = (string)Nothing()["empty"]!;   // #2548: Home shows only its first sentence; the running and queued counts have their own cards
+        Assert.Equal((true, served[..(served.IndexOf(". ", StringComparison.Ordinal) + 1)]), (Visible(window, "NeedsYouEmpty"), Named<TextBlock>(window, "NeedsYouEmpty").Text));
         Assert.Empty(Rows(window));
         Frame(window, "needs-you-empty");
     });

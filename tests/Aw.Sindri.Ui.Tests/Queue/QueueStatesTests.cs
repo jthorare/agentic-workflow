@@ -74,11 +74,12 @@ public sealed class QueueStatesTests
     }
 
     [Fact]
-    public async Task Stalled_views_mark_the_panels_stale_instead_of_repeating_the_banners_sentence()
+    public async Task Stalled_views_mark_the_panels_stale_and_keep_their_plain_empty_line_not_the_banners_sentence()
     {
+        // Intended change of expectation (#2548): a stalled card keeps a body, so it keeps its full border instead of collapsing to its header.
         var queue = await Queue([], new AsOfView(588, 601, A.Noon, Rebuilding: false, Stalled: true));
 
         Assert.True(queue.IsStale);
-        Assert.Equal(string.Empty, queue.RunningEmpty);
+        Assert.Equal(("Nothing running.", "Nothing queued."), (queue.RunningEmpty, queue.QueuedEmpty));
     }
 }

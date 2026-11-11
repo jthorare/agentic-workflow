@@ -39,7 +39,11 @@
       </Setter>
     </Style>
     <Style Selector="RadioButton.segment:checked /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.HairlineStrong}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    </Style>
+    <Style Selector="RadioButton.segment:unchecked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
     </Style>
     <!-- The refusal banner and the two overlays (F3 spec 1 §3): a refusal draws an Attention outline with its glyph and words, never colour alone. -->
     <Style Selector="Border.refusal">
@@ -132,7 +136,7 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
-        <TextBlock x:Name="ConceptsNote" Classes="caption subtle" Text="{Binding Concepts.Note}" IsVisible="{Binding Concepts.HasNote}" TextWrapping="Wrap"
+        <TextBlock x:Name="ConceptsNote" Classes="caption subtle" Text="{Binding Concepts.Note}" ToolTip.Tip="{Binding Concepts.NoteTip}" IsVisible="{Binding Concepts.HasNote}" TextWrapping="Wrap"
                    AutomationProperties.Name="{Binding Concepts.Note}" />
         <ItemsControl x:Name="ContextMissing" ItemsSource="{Binding Missing}" ItemTemplate="{StaticResource LineTemplate}" />
       </StackPanel>
@@ -167,7 +171,7 @@
         <!-- The Building and No map overlays cover the map view only; the Files view has its own states. -->
         <Panel x:Name="ContextOverlays" IsVisible="{Binding ShowMap}">
           <Border x:Name="ContextBuilding" Classes="overlay" IsVisible="{Binding ShowBuilding}" AutomationProperties.Name="{Binding BuildingTitle}" AutomationProperties.AccessibilityView="Control">
-            <StackPanel Spacing="16" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="560">
+            <StackPanel Spacing="16" VerticalAlignment="Top" Margin="0,96,0,0" HorizontalAlignment="Center" MaxWidth="560">
               <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
                 <icons:StateIcon Icon="Spinner" Spins="True" VerticalAlignment="Center" />
                 <TextBlock x:Name="ContextBuildingTitle" Classes="detail-title" Text="{Binding BuildingTitle}" VerticalAlignment="Center" />
@@ -183,7 +187,7 @@
             </StackPanel>
           </Border>
           <Border x:Name="ContextEmpty" Classes="overlay" IsVisible="{Binding ShowEmpty}" AutomationProperties.Name="{Binding EmptyTitle}" AutomationProperties.AccessibilityView="Control">
-            <StackPanel Spacing="12" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="560">
+            <StackPanel Spacing="12" VerticalAlignment="Top" Margin="0,96,0,0" HorizontalAlignment="Center" MaxWidth="560">
               <TextBlock x:Name="ContextEmptyTitle" Classes="detail-title" Text="{Binding EmptyTitle}" TextAlignment="Center" />
               <TextBlock x:Name="ContextEmptyBody" Classes="body subtle" Text="{Binding EmptyBody}" TextWrapping="Wrap" TextAlignment="Center" />
               <Panel IsVisible="{Binding BuildControl, Converter={x:Static ObjectConverters.IsNotNull}}">

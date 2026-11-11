@@ -166,8 +166,7 @@ public sealed class ForEachWorkflowTests
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, Trigger(Numbers(3)));
         await rig.Blocks.Entered.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
 
-        await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
-        var run = await rig.Final(started.RunId);
+        var run = await rig.Cancel(started.RunId);
         var waits = await rig.ItemRuns(started.RunId, "wait");
         var gathers = await rig.ItemRuns(started.RunId, "gather");
 

@@ -25,28 +25,57 @@ public sealed record RepoHealth(string Repo, string State, int? EmbeddingsPercen
     /// <returns>The health.</returns>
     public static RepoHealth Of(RepoStatus status, IndexRepoHead? live, IReadOnlyList<JobRow> builds, DateTimeOffset now)
     {
-        ArgumentNullException.ThrowIfNull(status);
         ArgumentNullException.ThrowIfNull(builds);
+        return Of(status, live, builds, builds, now);
+    }
+
+    /// <summary>Lays the heads and jobs over one repo's status, with the ended builds read apart from the running ones (issue #2786).</summary>
+    /// <param name="status">The repo's index status, from the files.</param>
+    /// <param name="live">The repo's live head, or null when unread.</param>
+    /// <param name="running">The repo's running build jobs.</param>
+    /// <param name="ended">The repo's ended build jobs; read only when <see cref="NeedsEnded"/> says so, otherwise it may be empty.</param>
+    /// <param name="now">The time.</param>
+    /// <returns>The health.</returns>
+    public static RepoHealth Of(RepoStatus status, IndexRepoHead? live, IReadOnlyList<JobRow> running, IReadOnlyList<JobRow> ended, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(status);
+        ArgumentNullException.ThrowIfNull(running);
+        ArgumentNullException.ThrowIfNull(ended);
         var percent = Percent(status.Layers.FirstOrDefault(static l => l.Layer == LayerName.Embeddings)?.Detail);
-        var (state, waiting) = Overlay(status, live, builds, now);
+        var (state, waiting) = Overlay(status, live, running, ended, now);
         return new RepoHealth(status.Repo.Value, state, percent, waiting);
     }
 
-    private static (string State, string? Waiting) Overlay(RepoStatus status, IndexRepoHead? live, IReadOnlyList<JobRow> builds, DateTimeOffset now)
+    /// <summary>Whether the repo's health words need its ended builds: the index isn't damaged, no build runs, and the repo is behind or has a pending layer.</summary>
+    /// <param name="status">The repo's index status.</param>
+    /// <param name="live">The repo's live head, or null when unread.</param>
+    /// <param name="running">The repo's running build jobs.</param>
+    /// <returns>True when <see cref="Of(RepoStatus, IndexRepoHead?, IReadOnlyList{JobRow}, IReadOnlyList{JobRow}, DateTimeOffset)"/> reads the ended builds.</returns>
+    public static bool NeedsEnded(RepoStatus status, IndexRepoHead? live, IReadOnlyList<JobRow> running)
+    {
+        ArgumentNullException.ThrowIfNull(status);
+        ArgumentNullException.ThrowIfNull(running);
+        return status.State != IndexState.Damaged && !running.Any(static j => j.State == JobState.Running) && Behind(status, live);
+    }
+
+    private static bool Behind(RepoStatus status, IndexRepoHead? live) =>
+        status.State == IndexState.Missing || Moved(status, live) || status.Layers.Any(static l => l.State == LayerState.Pending);
+
+    private static (string State, string? Waiting) Overlay(RepoStatus status, IndexRepoHead? live, IReadOnlyList<JobRow> running, IReadOnlyList<JobRow> ended, DateTimeOffset now)
     {
         if (status.State == IndexState.Damaged)
         {
             return ("damaged", null);
         }
 
-        if (builds.Any(static j => j.State == JobState.Running))
+        if (running.Any(static j => j.State == JobState.Running))
         {
             return ("building", null);
         }
 
         var missing = status.State == IndexState.Missing;
         var behind = missing || Moved(status, live);
-        var waiting = behind || status.Layers.Any(static l => l.State == LayerState.Pending) ? WaitingWords(builds, now) : null;
+        var waiting = Behind(status, live) ? WaitingWords(ended, now) : null;
         return (Word(waiting, missing, behind), waiting);
     }
 

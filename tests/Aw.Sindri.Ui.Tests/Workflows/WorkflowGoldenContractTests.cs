@@ -29,6 +29,10 @@ public sealed class WorkflowGoldenContractTests
         Assert.Null(list.Workflows[1].ActiveRevision);
         Assert.Empty(Read<WorkflowList>("workflows", "list-empty").Workflows);
 
+        // includeArchived (#2702): the same two rows, the archived one marked.
+        var held = Read<WorkflowList>("workflows", "list-include-archived").Workflows;
+        Assert.Equal(["morning-check:", "weekly-report:True"], [.. held.Select(w => w.Slug + ":" + w.Archived)], StringComparer.Ordinal);
+
         var one = Read<WorkflowView>("workflows-slug", "found");
         Assert.Equal(("WF-00000000000000000000000000000001", "morning-check", "Morning check", 1, 1, 2), (one.Id, one.Slug, one.Name, one.Revision, one.ActiveRevision, one.LatestRevision));
         Assert.Equal(("owner", "session:golden"), (one.CreatedBy, one.ChangedBy));
@@ -113,7 +117,7 @@ public sealed class WorkflowGoldenContractTests
         var prompt = read.Groups[2].Blocks[0];
         Assert.Equal(new WorkflowBlockField("prompt", "text", Required: true), prompt.Config[0]);
         Assert.Equal("Summarize {{search.facts}}", prompt.ExampleConfig!.Value.GetProperty("prompt").GetString());
-        Assert.Equal(["http", "memory_search", "call_tool"], read.Groups[1].Blocks.Select(b => b.Type), StringComparer.Ordinal);
+        Assert.Equal(["http", "memory_search", "call_tool", "workflow_result"], read.Groups[1].Blocks.Select(b => b.Type), StringComparer.Ordinal);
         Assert.Equal(["code", "collect", "for_each", "memory_forget", "condition", "only_new", "memory_write", "run_workflow", "wait"], read.Groups[3].Blocks.Select(b => b.Type), StringComparer.Ordinal);
         Assert.Equal(["ask_owner", "create_item", "notify"], read.Groups[4].Blocks.Select(b => b.Type), StringComparer.Ordinal);
     }
