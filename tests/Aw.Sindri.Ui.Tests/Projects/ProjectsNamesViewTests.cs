@@ -1,4 +1,6 @@
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -30,20 +32,40 @@ public sealed class ProjectsNamesViewTests : FrameHost
         Assert.EndsWith(" for Checkout rewrite", Heard.Name(frame.GetVisualDescendants().OfType<Button>().First(b => b.Name == "ProjectNotesCancel")), StringComparison.Ordinal);
     });
 
+    // Guard: passes today and must keep passing; the fix sets Name only, so drivers and the perf inventory still find the button by its id.
     [Fact]
-    public Task Fold_header_name_has_count_and_state() => OnUi(async () =>
+    public Task Notes_edit_button_keeps_its_automation_id() => OnUi(async () =>
+    {
+        Server.ProjectsAnswer = RouteAnswer.Api("projects", "mixed");
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.Projects);
+        await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
+        var card = shell.Projects.Groups[0].Cards[0];
+        var frame = window.GetVisualDescendants().OfType<Border>().First(b => b.Name == "ProjectCardFrame" && b.DataContext == card);
+        var button = frame.GetVisualDescendants().OfType<Button>().First(b => b.Name == "ProjectNotesEdit");
+
+        Assert.Equal("ProjectNotesEdit", ControlAutomationPeer.CreatePeerForElement(button).GetAutomationId());
+    });
+
+    // ux rule: a name is the visible label; the toggle already announces expanded or collapsed, so no state word and no Show/Hide verb.
+    [Fact]
+    public Task Fold_toggle_is_named_by_its_heading() => OnUi(async () =>
     {
         Server.ProjectsAnswer = RouteAnswer.Api("projects", "mixed");
         var (window, shell) = await Connected();
         shell.GoTo(PageId.Projects);
         await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
 
-        Assert.Equal("Finished, 1 project, collapsed", Heard.Name(Named<Expander>(window, "ProjectsFinished")));
+        static ToggleButton Toggle(Window window, string fold) =>
+            Named<Expander>(window, fold).GetVisualDescendants().OfType<ToggleButton>().First(b => b.Name == "ExpanderHeader");
+
+        Assert.Equal(shell.Projects.Finished.Heading, Heard.Name(Toggle(window, "ProjectsFinished")));
+        Assert.Equal(shell.Projects.Hidden.Heading, Heard.Name(Toggle(window, "ProjectsHidden")));
 
         shell.Projects.Finished.Toggle();
         await Until(window, () => Named<Expander>(window, "ProjectsFinished").IsExpanded, "the fold never opened");
 
-        Assert.Equal("Finished, 1 project, expanded", Heard.Name(Named<Expander>(window, "ProjectsFinished")));
+        Assert.Equal(shell.Projects.Finished.Heading, Heard.Name(Toggle(window, "ProjectsFinished")));
     });
 
     [Fact]
