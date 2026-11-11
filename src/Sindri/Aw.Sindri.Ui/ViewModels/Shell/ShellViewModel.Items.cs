@@ -71,6 +71,11 @@ internal sealed partial class ShellViewModel
         }
 
         Item.Show(link.Subject);
+        if (Queue.Groups.SelectMany(g => g.Rows).FirstOrDefault(r => string.Equals(r.Id, link.Subject, StringComparison.Ordinal)) is { } row)
+        {
+            Item.Seed(link.Subject, row.Title, row.Repo, row.StateWord);
+        }
+
         if (Health.ApiUrl() is { } url)
         {
             _ = Item.Open(url, link.Subject, CancellationToken.None);

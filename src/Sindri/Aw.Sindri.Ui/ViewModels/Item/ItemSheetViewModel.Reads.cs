@@ -10,6 +10,8 @@ internal sealed partial class ItemSheetViewModel
     private int _generation;   // bumped by every read and by a change of subject: an answer from an older one is dropped
     private int? _loadingMore;   // the subject (ItemSheetViewModel.Clear bumps it) a Load more is in flight for
     private CancellationTokenSource? _reads;
+    private int _opens;   // Opens in flight: a followed Refresh never cancels their read (#2777)
+    private bool _missedEvent;   // an event came while an Open was reading: one re-read follows it
 
     /// <summary>Opens an item: reads it and its timeline's first page.</summary>
     /// <param name="url">The API's base URL.</param>
@@ -20,7 +22,40 @@ internal sealed partial class ItemSheetViewModel
     {
         Show(itemId);
         (_url, _pages) = (url, Math.Max(_pages, 1));
-        await ReadAndSettle(cancellationToken).ConfigureAwait(true);
+        _opens++;
+        try
+        {
+            await ReadAndSettle(cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            _opens--;
+        }
+
+        if (_opens == 0 && _missedEvent && ItemId.Length > 0)
+        {
+            _missedEvent = false;
+            await ReadAndSettle(cancellationToken).ConfigureAwait(true);
+        }
+    }
+
+    /// <summary>
+    /// Shows what the list row already holds, at once, so the sheet opens on a title and a state and never on a skeleton
+    /// for an item the list has (#2777). Does nothing once an answer is shown or for another item.
+    /// </summary>
+    /// <param name="itemId">The item's id.</param>
+    /// <param name="title">The row's title.</param>
+    /// <param name="repo">The row's repo, or empty.</param>
+    /// <param name="stateWord">The row's state as a word.</param>
+    internal void Seed(string itemId, string title, string repo, string stateWord)
+    {
+        if (HasItem || !string.Equals(itemId, ItemId, StringComparison.Ordinal) || title.Length == 0)
+        {
+            return;
+        }
+
+        (Title, Repo, StateWord) = (title, repo, stateWord);
+        (HasItem, IsLoading) = (true, false);
     }
 
     /// <summary>
@@ -52,6 +87,12 @@ internal sealed partial class ItemSheetViewModel
 
         _url = url;
         _pages = Math.Max(_pages, 1);
+        if (_opens > 0)
+        {
+            _missedEvent = true;   // the Open's read is not cancelled; Open re-reads once when it ends
+            return Task.CompletedTask;
+        }
+
         return ReadAndSettle(cancellationToken);
     }
 
