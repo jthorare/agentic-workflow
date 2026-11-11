@@ -32,6 +32,8 @@ internal sealed class FileToolkitWorkspace : IToolkitWorkspace
 
     public Result<string> BinaryOf(string dir) => ResolveBinary(dir);
 
+    public Result<string> TestsProjectOf(string dir) => throw new NotSupportedException("#2711: find the tests project");
+
     /// <summary>The toolkit's apphost: the file named by the folder's one *.Toolkit.csproj (its AssemblyName, else the csproj's own name) under bin, the newest when a build left several.</summary>
     /// <param name="dir">The toolkit's folder.</param>
     /// <returns>The absolute path, or SND-TK-003 saying which part is missing.</returns>
