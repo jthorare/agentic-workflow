@@ -15,13 +15,29 @@ public static class ResourceName
         return segments.Length >= 2 && segments.All(SegmentLooksLikeWord) && char.IsAsciiLetterLower(value[0]);
     }
 
-    /// <summary>True when the key's secret word is SECRET (ESO_SECRET, db-secret): such a key may hold the name of a k8s Secret. PASSWORD, TOKEN, API_KEY, ACCESS_KEY, PRIVATE_KEY and SECRET_KEY keys hold the credential itself, so they are never exempt.</summary>
+    private static readonly string[] _credentialPrefixes = ["JWT", "CLIENT", "SESSION", "WEBHOOK", "APP", "SIGNING", "COOKIE"];
+
+    /// <summary>True when the key's secret word is SECRET (ESO_SECRET, db-secret): such a key may hold the name of a k8s Secret. PASSWORD, TOKEN, API_KEY, ACCESS_KEY, PRIVATE_KEY and SECRET_KEY keys hold the credential itself, so they are never exempt. Neither is a SECRET key with a credential prefix (JWT, CLIENT, SESSION, WEBHOOK, APP, SIGNING, COOKIE: JWT_SECRET, OAUTH_CLIENT_SECRET, cookie.secret), which holds the credential itself too (#2722).</summary>
     /// <param name="key">The name the value is assigned to.</param>
-    /// <returns>True for a key ending in SECRET, in any case.</returns>
+    /// <returns>True for a key ending in SECRET, in any case, without a credential prefix before it.</returns>
     public static bool KeyNamesASecret(string key)
     {
         ArgumentNullException.ThrowIfNull(key);
-        return key.EndsWith("SECRET", StringComparison.OrdinalIgnoreCase);
+        if (!key.EndsWith("SECRET", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var before = key.AsSpan(0, key.Length - "SECRET".Length).TrimEnd("_-.");
+        foreach (var prefix in _credentialPrefixes)
+        {
+            if (before.EndsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static bool SegmentLooksLikeWord(string segment)

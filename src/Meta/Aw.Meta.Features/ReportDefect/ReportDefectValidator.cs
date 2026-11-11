@@ -5,7 +5,7 @@ using Aw.Meta.Core;
 
 namespace Aw.Meta.Features.ReportDefect;
 
-/// <summary>Checks the fields. The length limits are the scrub: a digest, a transcript or a code paste does not fit.</summary>
+/// <summary>Checks the fields. The length limits are the scrub: a digest, a transcript or a code paste does not fit. A title holds no double quote: the duplicate search puts the title inside a quoted phrase (#2715).</summary>
 internal sealed class ReportDefectValidator : IValidator<ReportDefectRequest>
 {
     private const int TitleLimit = 120;
@@ -34,6 +34,7 @@ internal sealed class ReportDefectValidator : IValidator<ReportDefectRequest>
 
     private static string? Lengths(ReportDefectRequest value) =>
         Line(value.Title, TitleLimit, "--title")
+        ?? (value.Title.Contains('"', StringComparison.Ordinal) ? "--title can't hold a double quote: the duplicate search puts the title inside one" : null)
         ?? Line(value.ErrorLine, ErrorLimit, "--error")
         ?? (value.What.Trim().Length > WhatLimit ? $"--what is at most {WhatLimit.ToString(CultureInfo.InvariantCulture)} characters" : null)
         ?? (value.Path is null ? null : Line(value.Path, PathLimit, "--path"));

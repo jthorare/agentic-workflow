@@ -32,6 +32,7 @@ internal static class ToolkitScenarios
         ("toolkits-name-resume", "not-found", [], "POST", "/sindri/toolkits/missing/resume", null),
         ("toolkits-name-resume", "not-running", _notes, "POST", "/sindri/toolkits/notes/resume", null),
         ("toolkits-name-calls", "empty", _notes, "GET", "/sindri/toolkits/notes/calls?limit=5", null),
+        ("toolkits-name-calls", "not-found", [], "GET", "/sindri/toolkits/missing/calls", null),
     ];
 
     /// <summary>The (slug, scenario) pairs of this class.</summary>
