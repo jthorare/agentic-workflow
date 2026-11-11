@@ -79,13 +79,13 @@ public sealed class CliToolkitVerbsTests : IDisposable
     }
 
     [Fact]
-    public async Task A_refused_pause_prints_the_error_and_exits_1()
+    public async Task A_refused_pause_prints_the_error_and_exits_2_like_every_refused_sindri_verb()
     {
         var api = new RoutedApi().OnRaw("/sindri/toolkits/notes/pause", HttpStatusCode.Conflict, """{"type":"about:blank","title":"SND-TK-001","status":409,"detail":"Toolkit 'notes' isn't running (fix: toolkit_start)"}""");
 
         var exit = await Run(api, "pause", "notes");
 
-        Assert.NotEqual(0, exit);
+        Assert.Equal(2, exit);
         Assert.Contains("SND-TK-001", _error.ToString(), StringComparison.Ordinal);
     }
 

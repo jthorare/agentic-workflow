@@ -35,12 +35,13 @@ public sealed class ToolNamesTests
     [InlineData("notes", "Notes")]
     [InlineData("github-triage", "GithubTriage")]
     [InlineData("a1-b", "A1B")]
-    [InlineData("x-rays", "XRays")]
+    [InlineData("xray-scan", "XrayScan")]
     public void The_generator_name_is_the_pascal_name_its_kebab_turns_back_into_the_same_name(string name, string pascal) =>
         Assert.Equal(pascal, ToolNames.GeneratorName(name));
 
     [Theory]
     [InlineData("x-ray")]
+    [InlineData("x-rays")]
     [InlineData("my-a-tool")]
     [InlineData("a-b")]
     [InlineData("shared")]

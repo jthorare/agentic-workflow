@@ -56,7 +56,23 @@ internal sealed class ToolkitRig : IDisposable
 
         public ValueTask<Result<Toolkit?>> Find(string name, CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(Items.GetValueOrDefault(name)));
 
-        public ValueTask<Result<IReadOnlyList<Toolkit>>> List(CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<IReadOnlyList<Toolkit>>([.. Items.Values.OrderBy(static t => t.Name, StringComparer.Ordinal)]));
+        /// <summary>How many of the next List calls answer an error before the store works.</summary>
+        internal int ListFailures { get; set; }
+
+        /// <summary>How many List calls were made.</summary>
+        internal int ListCalls { get; private set; }
+
+        public ValueTask<Result<IReadOnlyList<Toolkit>>> List(CancellationToken cancellationToken)
+        {
+            ListCalls++;
+            if (ListFailures > 0)
+            {
+                ListFailures--;
+                return ValueTask.FromResult<Result<IReadOnlyList<Toolkit>>>(SindriErrors.ViewsRebuilding.With("store not ready"));
+            }
+
+            return ValueTask.FromResult(Results.Success<IReadOnlyList<Toolkit>>([.. Items.Values.OrderBy(static t => t.Name, StringComparer.Ordinal)]));
+        }
 
         public ValueTask<Result<Unit>> Save(Toolkit toolkit, CancellationToken cancellationToken)
         {

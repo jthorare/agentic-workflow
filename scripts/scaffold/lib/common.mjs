@@ -273,7 +273,9 @@ export function isMain(metaUrl) {
   if (!process.argv[1]) return false;
   try {
     return fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(metaUrl));
-  } catch {
-    return false;
+  } catch (err) {
+    // A silent false here makes the generator exit 0 having done nothing (#2692): say why and fail.
+    process.stderr.write(`could not resolve the script path ${process.argv[1]}: ${err.message}\n`);
+    process.exit(1);
   }
 }

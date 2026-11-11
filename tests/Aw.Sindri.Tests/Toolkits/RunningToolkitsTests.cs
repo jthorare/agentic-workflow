@@ -145,6 +145,19 @@ public sealed class RunningToolkitsTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task A_resume_of_a_running_toolkit_that_is_not_paused_succeeds_and_changes_nothing()
+    {
+        _ = await _supervisor.Start(_triage, Token);
+        var process = _launcher.Last;
+
+        var resumed = await _supervisor.Resume("triage", Token);
+
+        Assert.True(resumed.IsSuccess);
+        Assert.Equal(ToolkitState.Running, Assert.Single(_runtime.Toolkits()).State);
+        Assert.False(process.Disposed);
+    }
+
+    [Fact]
     public async Task A_stop_ends_a_paused_toolkit_and_a_new_start_runs_unpaused()
     {
         _ = await _supervisor.Start(_triage, Token);

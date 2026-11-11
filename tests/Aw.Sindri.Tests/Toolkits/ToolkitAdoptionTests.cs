@@ -4,6 +4,7 @@ using Aw.Sindri.Features.AdoptToolkits;
 using Aw.Sindri.Host.Server;
 using Aw.Sindri.Tests.BuildToolkit;
 using Aw.Sindri.Tests.Server;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Toolkits;
 
@@ -72,4 +73,36 @@ public sealed class ToolkitAdoptionTests
 
         Assert.Equal(ToolkitState.Off, store.Items["loose"].State);
     }
+
+    [Fact]
+    public async Task A_refused_pass_is_logged_once_and_retried_until_the_store_answers()
+    {
+        var store = new ToolkitRig.FakeStore { ListFailures = 3 };
+        var folders = new ToolkitRig.FakeFolders();
+        folders.Existing.Add(new ToolkitFolder("loose", "/tk/loose"));
+        var clock = new FakeTimeProvider();
+        var log = new ListLogger<ToolkitAdoptionHost>();
+        using var host = new ToolkitAdoptionHost(new ToolkitAdoption(store, folders), clock, log);
+
+        await host.StartAsync(Token);
+        while (!host.ExecuteTask!.IsCompleted)
+        {
+            clock.Advance(TimeSpan.FromSeconds(1));
+            await Task.Yield();
+        }
+
+        await host.ExecuteTask.WaitAsync(Token);
+
+        Assert.Equal(4, store.ListCalls);
+        Assert.Equal(ToolkitState.Off, store.Items["loose"].State);
+        _ = Assert.Single(log.Lines, static l => l.Contains("SND-API-010", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(1, 2)]
+    [InlineData(2, 4)]
+    [InlineData(32, 60)]
+    [InlineData(60, 60)]
+    public void The_retry_wait_doubles_and_stops_at_60_seconds(int seconds, int next) =>
+        Assert.Equal(TimeSpan.FromSeconds(next), ToolkitAdoptionHost.NextWait(TimeSpan.FromSeconds(seconds)));
 }
