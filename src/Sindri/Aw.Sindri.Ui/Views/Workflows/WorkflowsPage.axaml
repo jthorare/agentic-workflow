@@ -123,9 +123,14 @@
         <TextBlock x:Name="RunsHead" Classes="caption subtle" LineHeight="{DynamicResource Type.BodyStrong.LineHeight}" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
         <Button x:Name="RunNow" VerticalAlignment="Center" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
         <Button x:Name="WorkflowEdit" VerticalAlignment="Center" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
+        <Button x:Name="WorkflowActivate" VerticalAlignment="Center" IsVisible="{Binding CanActivate}" Content="{Binding ActivateText}" Click="OnActivate" AutomationProperties.AutomationId="WorkflowActivate" AutomationProperties.Name="{Binding ActivateText}" />
+        <Button x:Name="WorkflowPause" VerticalAlignment="Center" IsVisible="{Binding CanPause}" Content="{Binding PauseText}" Click="OnPause" AutomationProperties.AutomationId="WorkflowPause" AutomationProperties.Name="{Binding PauseText}" />
       </StackPanel>
       <Border x:Name="RunsNoticeName" IsVisible="{Binding Runs.HasNotice}" AutomationProperties.Name="{Binding Runs.NoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding Runs.NoticeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Border x:Name="StateNotice" IsVisible="{Binding HasStateNotice}" AutomationProperties.Name="{Binding StateNoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="caption" Text="{Binding StateNoticeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <wv:WorkflowEditorSheet x:Name="WorkflowEditor" IsVisible="{Binding IsEditing}" />
       <TextBlock x:Name="RunsDetail" Classes="caption subtle" Text="{Binding Runs.DetailText}" TextWrapping="Wrap" />
