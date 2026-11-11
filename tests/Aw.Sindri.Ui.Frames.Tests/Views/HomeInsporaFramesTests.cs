@@ -41,6 +41,7 @@ public sealed class HomeInsporaFramesTests : FrameHost
         SentenceCaseTitles(home);
         OnePrimaryButton(window, home);
         SixPixelChips(home);
+        ElsewhereLineStartsUnderTheTodoTitle(home);
 
         Frame(window, string.Create(CultureInfo.InvariantCulture, $"home-inspora-{width:0}-{(typical ? "typical" : "empty")}"), prefix: "");
     });
@@ -104,6 +105,21 @@ public sealed class HomeInsporaFramesTests : FrameHost
     {
         var chips = home.GetVisualDescendants().OfType<Border>().Where(b => b.IsEffectivelyVisible && (b is StateChipView || b.Classes.Contains("badge") || b.Classes.Contains("phrase-chip"))).ToList();
         Assert.All(chips, chip => Assert.Equal(new CornerRadius(6), chip.CornerRadius));
+    }
+
+    // The Todo card's "From elsewhere" footer starts where its title does.
+    private static void ElsewhereLineStartsUnderTheTodoTitle(HomePage home)
+    {
+        var title = home.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Name == "TodoTitle" && t.IsEffectivelyVisible);
+        var words = home.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "ElsewhereFrame" && b.IsEffectivelyVisible)?.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.IsEffectivelyVisible);
+        if (title is null || words is null)
+        {
+            return;
+        }
+
+        var titleLeft = title.TranslatePoint(default, home)!.Value.X;   // why: both are in Home's visual tree
+        var wordsLeft = words.TranslatePoint(default, home)!.Value.X;
+        Assert.InRange(Math.Abs(titleLeft - wordsLeft), 0, 1);
     }
 
     private static Color? Fill(Button button) =>
