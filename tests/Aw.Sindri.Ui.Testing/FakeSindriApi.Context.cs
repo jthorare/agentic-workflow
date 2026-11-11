@@ -20,15 +20,6 @@ internal sealed partial class FakeSindriApi
     /// <summary>GET /sindri/context/lenses's answer per query (the goldens by default).</summary>
     public Func<LensesQuery, RouteAnswer> LensesAnswer { get; set; } = ContextAnswers.Lenses;
 
-    /// <summary>GET /sindri/items/{id}/scope's answer per item (a 404 with no body by default).</summary>
-    // The host has no such route since #2258, so the fake answers like it.
-    public Func<string, RouteAnswer> ItemScopeAnswer { get; set; } = _ => new RouteAnswer(HttpStatusCode.NotFound, string.Empty);
-
-    /// <summary>The items whose scope was asked for, in order.</summary>
-    public IReadOnlyList<string> ScopeAsked { get { lock (_gate) { return [.. _scopeAsked]; } } }
-
-    private readonly List<string> _scopeAsked = [];
-
     /// <summary>GET /sindri/context/map/whole's answer per query (the context-whole goldens by what was asked).</summary>
     public Func<WholeMapQuery, RouteAnswer> WholeMapAnswer { get; set; } = ContextAnswers.WholeMap;
 
@@ -144,16 +135,6 @@ internal sealed partial class FakeSindriApi
         }
 
         return Context<CodeView>(api, "/sindri/context/code", CodeFor(query), CodeGate, cancellationToken);
-    }
-
-    public Task<Result<ItemScopeView>> ItemScope(Uri api, string itemId, CancellationToken cancellationToken)
-    {
-        lock (_gate)
-        {
-            _scopeAsked.Add(itemId);
-        }
-
-        return Context<ItemScopeView>(api, "/sindri/items/{id}/scope", ItemScopeAnswer(itemId), gate: null, cancellationToken);
     }
 
     // Counted apart from ContextCalls (like the publish state), which the Context page's tests hold at zero before a read of the lenses.
