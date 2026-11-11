@@ -35,6 +35,8 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         Run = new RunDetailViewModel(api, clock);
         Editor = new OpsEditor(api);
         GraphEdit = new GraphEditViewModel(Editor, Runs, () => _url);   // made with the page, not on first read: the canvas's Delete key raises on the graph, and the edit bar must already be listening
+        Runs.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Runs.Title)) { NotifyCrumb(); } };
+        Run.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Run.Id)) { NotifyCrumb(); } };
         WatchEditor();
     }
 
@@ -57,8 +59,18 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>The retry action's words.</summary>
     public string RetryText => Labels.WfTryAgain;
 
-    /// <summary>The way back up a level.</summary>
-    public string BackText => Labels.WfBack;
+    /// <summary>The header's big title: the page on the list, the workflow's name on its runs, the run's id on a run.</summary>
+    public string PageTitle => _level switch { Level.Runs => Runs.Title, Level.Run => Run.Id, Level.List => Labels.Workflows, _ => Labels.Workflows };
+
+    /// <summary>The crumb above the title: "Workflows" from a workflow's runs, the workflow's name from a run.</summary>
+    public string CrumbText => _level == Level.Run ? Runs.Title : Labels.Workflows;
+
+    private void NotifyCrumb()
+    {
+        OnChanged(nameof(PageTitle));
+        OnChanged(nameof(CrumbText));
+    }
+
 #pragma warning restore CA1822, MA0041
 
     /// <summary>The workflows, by slug as the API serves them.</summary>
@@ -198,6 +210,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         CloseEditor();   // the sheet edits the workflow it was opened on: leaving the runs level ends it, so Save never writes to the wrong one
         OnChanged(nameof(IsList));
         OnChanged(nameof(ShowsHeaderNew));
+        NotifyCrumb();
         OnChanged(nameof(IsRuns));
         OnChanged(nameof(IsRun));
         NotifyStateButtons();

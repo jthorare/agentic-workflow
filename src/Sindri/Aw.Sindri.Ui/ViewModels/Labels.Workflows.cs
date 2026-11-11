@@ -26,9 +26,6 @@ internal static partial class Labels
     /// <summary>The action beside a failed read.</summary>
     internal const string WfTryAgain = "Try again";
 
-    /// <summary>The action that goes up one level.</summary>
-    internal const string WfBack = "Back";
-
     /// <summary>The list's head: "2 workflows · 1 active".</summary>
     /// <param name="total">Workflows listed.</param>
     /// <param name="active">Workflows with an active revision.</param>

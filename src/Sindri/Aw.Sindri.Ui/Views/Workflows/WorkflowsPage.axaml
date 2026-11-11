@@ -15,13 +15,14 @@
   <StackPanel x:Name="WorkflowsRoot" Spacing="{StaticResource Size.PanelGap}">
     <Grid ColumnDefinitions="*,Auto">
       <StackPanel x:Name="WorkflowsHeadRegion" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <TextBlock Classes="page-title" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
+        <Button x:Name="WorkflowsBack" Content="{Binding CrumbText}" Click="OnBack" IsVisible="{Binding !IsList}" VerticalAlignment="Center" AutomationProperties.Name="{Binding CrumbText}" />
+        <TextBlock Classes="caption subtle" Text="/" IsVisible="{Binding !IsList}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        <TextBlock x:Name="WorkflowsTitle" Classes="page-title" Text="{Binding PageTitle}" AutomationProperties.Name="{Binding PageTitle}" />
         <TextBlock x:Name="WorkflowsHead" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
       </StackPanel>
       <Button x:Name="WorkflowsNewHeader" Grid.Column="1" Content="{Binding NewWorkflowText}" Click="OnNewWorkflow" IsVisible="{Binding ShowsHeaderNew}" IsEnabled="{Binding CanOpenCreate}"
               ToolTip.Tip="{Binding NewWorkflowTip}" VerticalAlignment="Top" AutomationProperties.Name="{Binding NewWorkflowText}" />
     </Grid>
-    <Button x:Name="WorkflowsBack" Content="{Binding BackText}" Click="OnBack" IsVisible="{Binding !IsList}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding BackText}" />
 
     <!-- Level 1: the workflows. -->
     <StackPanel x:Name="WorkflowsListLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsList}">
@@ -119,7 +120,6 @@
            Avalonia has no baseline alignment, so the smaller status text takes the title's line height (as Health's labels do, R12): centred on equal line boxes
            its baseline lands within a pixel of the title's and the buttons' text, at any text scale. -->
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <TextBlock x:Name="RunsTitle" Classes="body-strong" VerticalAlignment="Center" Text="{Binding Runs.Title}" AutomationProperties.Name="{Binding Runs.Title}" />
         <TextBlock x:Name="RunsHead" Classes="caption subtle" LineHeight="{DynamicResource Type.BodyStrong.LineHeight}" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
         <Button x:Name="RunNow" VerticalAlignment="Center" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
         <Button x:Name="WorkflowEdit" VerticalAlignment="Center" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
