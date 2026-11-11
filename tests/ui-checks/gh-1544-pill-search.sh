@@ -90,16 +90,22 @@ sleep 2
 
 # ---- Part 1: the search field keeps its width and the placeholder is whole ---------------------------------------------------------
 # The placeholder TextBlock sits inside the Border of the same name. a) the field is at least SearchMin (184 px) wide while the pill names a problem;
-# b) the TextBlock shows the whole short copy: the driver tree's `text` is what it shows, and the copy is "Search…" (#2710).
+# b) the TextBlock is the short copy "Search…" (#2710) and it is not trimmed. The tree's `text` is the TextBlock's Text, which stays
+#    whole even when the ellipsis trims it on screen, so b) also needs its laid-out width: the copy needs about 45 px at text scale 1,
+#    and 64 px leaves room for font rounding while a squeezed field (the #1544 bug) still fails.
 width="$(jq -r '[.. | objects | select(.type == "Border" and .visible and (.name // "") == "Search or run a command")][0].width // empty' "$OUT/tree.json")"
 [ -n "$width" ] || setup_fail "no visible Border named 'Search or run a command' (see $OUT/tree.json)"
 shown="$(jq -r '[.. | objects | select(.type == "TextBlock" and .visible and (.name // "") == "Search or run a command")][0].text // empty' "$OUT/tree.json")"
+text_width="$(jq -r '[.. | objects | select(.type == "TextBlock" and .visible and (.name // "") == "Search or run a command")][0].width // empty' "$OUT/tree.json")"
 [ -n "$shown" ] || setup_fail "no visible TextBlock named 'Search or run a command' (see $OUT/tree.json)"
 if ! awk -v w="$width" 'BEGIN { exit !(w >= 184) }'; then
   fail "the search field is squeezed to $width px (needs 184) while the pill names a problem (screenshot in $OUT)"
 fi
 if [ "$shown" != "Search…" ]; then
   fail "the search placeholder shows '$shown', not the whole 'Search…' (screenshot in $OUT)"
+fi
+if ! awk -v w="${text_width:-0}" 'BEGIN { exit !(w >= 64) }'; then
+  fail "the search placeholder is laid out at ${text_width:-0} px (needs 64 for the whole 'Search…') (screenshot in $OUT)"
 fi
 
 # ---- Part 2: the pill still names the problem ------------------------------------------------------------------------------------
@@ -109,7 +115,7 @@ if ! jq -e '[.. | objects | select(.type == "TextBlock" and .visible and (.name 
 fi
 
 if [ "$FAILED" = 0 ]; then
-  echo "PASS: the search field is $width px wide, its placeholder shows '$shown' and the pill still shows its problem text (screenshot in $OUT)"
+  echo "PASS: the search field is $width px wide, its placeholder shows '$shown' at $text_width px and the pill still shows its problem text (screenshot in $OUT)"
   exit 0
 fi
 exit 1
