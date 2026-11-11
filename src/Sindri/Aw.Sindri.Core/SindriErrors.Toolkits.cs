@@ -17,7 +17,7 @@ public static partial class SindriErrors
     public static readonly ErrorDefinition ToolkitProcessDied = new("SND-TK-004", ErrorKind.Unavailable, "The toolkit's process ended");
 
     /// <summary>SND-TK-005: the toolkit is paused.</summary>
-    public static readonly ErrorDefinition ToolkitPaused = new("SND-TK-005", ErrorKind.Conflict, "The toolkit is paused (fix: toolkit_stop, then toolkit_start)");
+    public static readonly ErrorDefinition ToolkitPaused = new("SND-TK-005", ErrorKind.Conflict, "The toolkit is paused (fix: toolkit_resume)");
 
     /// <summary>SND-TK-006: a tool call ran past its timeout.</summary>
     public static readonly ErrorDefinition ToolkitCallTimedOut = new("SND-TK-006", ErrorKind.Unavailable, "The toolkit tool didn't answer in time");
@@ -36,4 +36,10 @@ public static partial class SindriErrors
 
     /// <summary>SND-TK-011: the toolkit's tool ran and answered with an error.</summary>
     public static readonly ErrorDefinition ToolkitToolFailed = new("SND-TK-011", ErrorKind.Unavailable, "The toolkit tool returned an error");
+
+    /// <summary>SND-TK-012: a toolkit with that name exists already.</summary>
+    public static readonly ErrorDefinition ToolkitExists = new("SND-TK-012", ErrorKind.Conflict, "A toolkit with that name exists already");
+
+    /// <summary>SND-TK-013: the toolkit generator failed.</summary>
+    public static readonly ErrorDefinition ToolkitCreateFailed = new("SND-TK-013", ErrorKind.Unavailable, "The toolkit generator failed");
 }

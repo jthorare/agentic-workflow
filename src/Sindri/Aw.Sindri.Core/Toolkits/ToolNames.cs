@@ -33,6 +33,35 @@ public static partial class ToolNames
             : SindriErrors.ToolkitNameInvalid.With($"'{name}' is {name.Length} characters; clients allow {MaxLength}. Shorten the toolkit or the tool name.");
     }
 
+    /// <summary>Whether <paramref name="name"/> is a toolkit name: lowercase letters, digits and '-', at most 64 characters, starting with a letter or digit.</summary>
+    /// <param name="name">A folder or toolkit name.</param>
+    /// <returns>True when it is one.</returns>
+    public static bool IsToolkitName(string? name) => name is not null && ToolkitName.IsMatch(name);
+
+    /// <summary>
+    /// The PascalCase name the toolkit generator (scripts/scaffold/new-toolkit.mjs) takes for a new toolkit, or null when the generator would refuse it or turn it into a
+    /// different folder name. The generator wants <c lang="text">^[A-Z][A-Za-z0-9]{2,30}$</c>, not one of its reserved names, and writes <c lang="csharp">Toolkit.Named(kebab(pascal))</c>;
+    /// its kebab splits only before an upper-case letter that follows a lower-case letter or a digit, so 'x-ray' ("XRay") comes back as "xray" and is refused here.
+    /// </summary>
+    /// <param name="name">A new toolkit's name: lowercase words joined by '-', each starting with a letter.</param>
+    /// <returns>The generator's name, or null.</returns>
+    public static string? GeneratorName(string? name)
+    {
+        if (name is null || !Words.IsMatch(name))
+        {
+            return null;
+        }
+
+        var pascal = string.Concat(name.Split('-').Select(static w => char.ToUpperInvariant(w[0]) + w[1..]));
+        return GeneratorPascal.IsMatch(pascal) && !_reserved.Contains(pascal, StringComparer.Ordinal) && string.Equals(Kebab(pascal), name, StringComparison.Ordinal) ? pascal : null;
+    }
+
+    private static readonly string[] _reserved = ["Common", "Shared", "Utils", "Helpers"];   // new-toolkit.mjs RESERVED
+
+#pragma warning disable CA1308 // the generator's kebab lower-cases; the name is ASCII by the Words rule
+    private static string Kebab(string pascal) => KebabSplit.Replace(pascal, "${before}-${upper}").ToLowerInvariant();
+#pragma warning restore CA1308
+
     /// <summary>Splits a client-facing name back into the toolkit and the tool.</summary>
     /// <param name="name">The name as a client sent it.</param>
     /// <param name="toolkit">The toolkit name when this returns true.</param>
@@ -58,6 +87,15 @@ public static partial class ToolNames
         tool = right;
         return true;
     }
+
+    [GeneratedRegex("^[a-z][a-z0-9]*(-[a-z][a-z0-9]*)*\\z", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex Words { get; }
+
+    [GeneratedRegex("^[A-Z][A-Za-z0-9]{2,30}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex GeneratorPascal { get; }
+
+    [GeneratedRegex("(?<before>[a-z0-9])(?<upper>[A-Z])", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex KebabSplit { get; }
 
     [GeneratedRegex("^[a-z0-9][a-z0-9-]{0,63}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex ToolkitName { get; }
