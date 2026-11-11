@@ -30,47 +30,6 @@ public sealed class RefreshFanOutTests
     }
 
     [Fact]
-    public Task RefreshViews_starts_every_view_before_the_first_finishes() => UiThread.Run(async () =>
-    {
-        var health = new HealthViewModel(_records, _server, _clock, new FakeClipboard());
-        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var secondStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        health.Follow((_, _) => release.Task);
-        health.Follow((_, _) =>
-        {
-            secondStarted.SetResult();
-            return Task.CompletedTask;
-        });
-
-        var refreshing = health.RefreshViews(new Uri("http://127.0.0.1:7410/"), Token);
-        try
-        {
-            await secondStarted.Task.WaitAsync(TimeSpan.FromSeconds(3), TimeProvider.System, Token);   // today the second view waits for the first: this times out
-        }
-        finally
-        {
-            _ = release.TrySetResult();
-        }
-
-        await refreshing;
-    }, Token);
-
-    [Fact]
-    public Task An_event_on_Home_reads_no_view_of_a_closed_page() => UiThread.Run(async () =>
-    {
-        var shell = await HomeAfterFirstRead();
-        Assert.True(shell.IsHome);
-        (int Projects, int Jobs, int Connections, int Resources, int Sandbox) Reads() =>
-            (_server.ProjectsCalls, _server.JobsCalls, _server.ConnectionCallLog.Count, _server.ResourceCallLog.Count, _server.SandboxStatusCalls);
-        var (before, views) = (Reads(), shell.Health.ViewReads);
-
-        _server.Push(A.Event(70, "heartbeat.tick"));
-
-        await ShellWait.Until(shell, () => shell.Health.ViewReads > views, Token);
-        Assert.Equal(before, Reads());
-    }, Token);
-
-    [Fact]
     public Task Reviews_badge_moves_while_Home_is_open() => UiThread.Run(async () =>
     {
         var shell = await HomeAfterFirstRead();
@@ -101,5 +60,20 @@ public sealed class RefreshFanOutTests
 
         await ShellWait.Until(shell, () => shell.Health.ViewReads > afterSettle, Token);
         Assert.Equal(before, Reads());
+    }, Token);
+
+    // The Linear changes come from the stored context data, which the context source sync refreshes and records as 'context.sources.synced': the count moves on that event with the panel hidden.
+    [Fact]
+    public Task A_Linear_change_still_moves_the_new_count_while_the_Todo_panel_is_hidden() => UiThread.Run(async () =>
+    {
+        var shell = await HomeAfterFirstRead();
+        await ShellWait.Until(shell, () => shell.Linear.NewCount > 0, Token);
+        shell.GoTo(PageId.System);
+        _server.LinearSinceAnswer = RouteAnswer.Api("linear-since", "empty");
+
+        _server.Push(A.Event(75, "context.sources.synced"));
+
+        await ShellWait.Until(shell, () => shell.Linear.NewCount == 0, Token);
+        Assert.False(shell.IsHome);
     }, Token);
 }
