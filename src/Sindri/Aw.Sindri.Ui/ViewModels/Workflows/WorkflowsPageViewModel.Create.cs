@@ -13,6 +13,7 @@ internal sealed partial class WorkflowsPageViewModel
 {
     private string _newName = string.Empty;
     private string _newSlug = string.Empty;
+    private HashSet<string> _held = new(StringComparer.Ordinal);   // every short id Sindri holds, archived ones too (an archived slug stays reserved)
     private bool _slugEdited;   // once the person types in the short id, the name no longer overwrites it
 
     /// <summary>True while the New workflow form is open.</summary>
@@ -159,6 +160,26 @@ internal sealed partial class WorkflowsPageViewModel
         SelectedTemplate = Templates[0].Name;
         Forget();
         IsCreating = true;
+        HeldRead = ReadHeld();
+    }
+
+    /// <summary>The read of every short id Sindri holds (the page's list shows live workflows only), started when the form opens.</summary>
+    internal Task HeldRead { get; private set; } = Task.CompletedTask;
+
+    // The taken-id check also needs the archived ids: asked with includeArchived, for this check only. A read that fails leaves the check on the live list, and the server's refusal is the fallback.
+    private async Task ReadHeld()
+    {
+        if (_url is not { } url)
+        {
+            return;
+        }
+
+        var all = await Api.WorkflowsIncludingArchived(url, CancellationToken.None).ConfigureAwait(true);
+        if (all.IsSuccess)
+        {
+            _held = [.. all.Value.Workflows.Select(static w => w.Slug)];
+            NotifyCreate();
+        }
     }
 
     /// <summary>Closes the form and forgets what was typed.</summary>
@@ -246,6 +267,9 @@ internal sealed partial class WorkflowsPageViewModel
         }
     }
 
+    // A short id the page lists, or one Sindri holds (archived workflows keep theirs reserved).
+    private bool IsTaken(string id) => _held.Contains(id) || Rows.Any(r => string.Equals(r.Slug, id, StringComparison.Ordinal));
+
     // What stops Create, in words: a hint until a name is typed, then the short id's problems (the rule Sindri holds: WorkflowSlug; "docs" and "blocks" are routes of their own).
     private string ReasonFor()
     {
@@ -270,6 +294,6 @@ internal sealed partial class WorkflowsPageViewModel
             return Labels.WfShortIdShape;
         }
 
-        return Rows.Any(r => string.Equals(r.Slug, id, StringComparison.Ordinal)) ? Labels.WfShortIdTaken(id) : string.Empty;
+        return IsTaken(id) ? Labels.WfShortIdTaken(id) : string.Empty;
     }
 }

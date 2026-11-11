@@ -180,6 +180,20 @@ public sealed class WorkflowsCreateTests
     }
 
     [Fact]
+    public async Task A_short_id_only_an_archived_workflow_holds_is_said_taken_before_Create_and_the_page_list_stays_live_only()
+    {
+        _f.Server.AllWorkflowsAnswer = new RouteAnswer(HttpStatusCode.OK, """{"workflows":[{"slug":"old-report","name":"Old report","activeRevision":null,"latestRevision":1,"changedBy":"owner","changedAt":"2026-01-01T00:00:00Z","archived":true}]}""");
+        var page = await Opened();
+        await page.HeldRead;
+
+        page.NewName = "Old report";
+
+        Assert.Equal(("old-report", false, "A workflow already uses 'old-report'; pick another short id.", true), (page.NewSlug, page.CanCreate, page.CreateReasonText, page.CreateReasonIsError));
+        Assert.Empty(page.Rows);
+        Assert.Equal(1, _f.Server.AllWorkflowsCalls);
+    }
+
+    [Fact]
     public async Task Create_sends_the_short_id_and_template_once_then_sets_the_name_and_opens_the_page_with_the_editor_closed()
     {
         var page = await Opened();

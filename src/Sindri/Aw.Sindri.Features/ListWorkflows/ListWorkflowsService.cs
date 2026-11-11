@@ -4,14 +4,14 @@ using Aw.Sindri.Core.Graph;
 
 namespace Aw.Sindri.Features.ListWorkflows;
 
-/// <summary>The workflows that are not archived, by slug, each with who saved its newest revision.</summary>
+/// <summary>The workflows that are not archived (or, asked, all of them with the archived ones marked), by slug, each with who saved its newest revision.</summary>
 /// <param name="workflows">The workflows and their revisions.</param>
 internal sealed class ListWorkflowsService(IWorkflowStore workflows) : IService<ListWorkflowsRequest, ListWorkflowsResponse>
 {
     public async ValueTask<Result<ListWorkflowsResponse>> Handle(ListWorkflowsRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var listed = await workflows.List(includeArchived: false, cancellationToken).ConfigureAwait(false);
+        var listed = await workflows.List(request.IncludeArchived, cancellationToken).ConfigureAwait(false);
         if (listed.IsError)
         {
             return listed.Error;
@@ -26,7 +26,7 @@ internal sealed class ListWorkflowsService(IWorkflowStore workflows) : IService<
                 return newest.Error;
             }
 
-            rows.Add(new WorkflowSummary(record.Slug, record.Name, record.ActiveRevision, record.LatestRevision, newest.Value.CreatedBy, newest.Value.CreatedAt));
+            rows.Add(new WorkflowSummary(record.Slug, record.Name, record.ActiveRevision, record.LatestRevision, newest.Value.CreatedBy, newest.Value.CreatedAt) { Archived = record.ArchivedAt is null ? null : true });
         }
 
         return new ListWorkflowsResponse(rows);
