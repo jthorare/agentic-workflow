@@ -34,12 +34,15 @@ public sealed class WatchGithubQueueTests
         _ = _world.Runner
             .When("gh pr list", list)
             .When("git ls-remote origin main", "bbbbbbb2222222\trefs/heads/main\n")
-            .When("gh api graphql", _ => new CommandResult(queueFails ? 1 : 0, queueFails ? string.Empty : queue, queueFails ? "HTTP 502" : string.Empty, TimedOut: false))
-            .When("gh pr view 190 --json mergeCommit", commitFails ? string.Empty : """{"mergeCommit":{"oid":"ddddddd4444444"}}""", commitFails ? 1 : 0)
+            .When("gh api graphql", _ => Answer(queue, queueFails))
+            .When("gh pr view 190 --json mergeCommit", _ => Answer("""{"mergeCommit":{"oid":"ddddddd4444444"}}""", commitFails))
             .When("gh pr view 191 --json mergeCommit", """{"mergeCommit":{"oid":"eeeeeee5555555"}}""")
-            .When("gh pr view 190 --json state", stateFails ? string.Empty : $$"""{"state":"{{stateNow ?? state}}"}""", stateFails ? 1 : 0)
-            .When("gh pr view 190", titleFails ? string.Empty : """{"title":"Add x"}""", titleFails ? 1 : 0);
+            .When("gh pr view 190 --json state", _ => Answer($$"""{"state":"{{stateNow ?? state}}"}""", stateFails))
+            .When("gh pr view 190", _ => Answer("""{"title":"Add x"}""", titleFails));
     }
+
+    private static CommandResult Answer(string stdout, bool fails) =>
+        fails ? new CommandResult(1, string.Empty, "HTTP 502", TimedOut: false) : new CommandResult(0, stdout, string.Empty, TimedOut: false);
 
     private async Task Watch()
     {

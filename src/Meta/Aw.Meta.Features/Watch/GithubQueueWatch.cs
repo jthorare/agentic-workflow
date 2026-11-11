@@ -44,17 +44,13 @@ internal sealed class GithubQueueWatch(RepoCommands repo, IKeyValueStore values,
     {
         var state = await State(repoDirectory, pr, snapshot).ConfigureAwait(false);
         var number = pr.ToString(CultureInfo.InvariantCulture);
-        switch (state)
+        return state switch
         {
-            case PrState.Merged:
-                return await Merged(repoDirectory, pr, snapshot.MainSha, cancellationToken).ConfigureAwait(false);
-            case PrState.Closed:
-                return await Dropped(pr, $"QUEUE OUT #{number}: closed on GitHub; send the lane NOT OK", cancellationToken).ConfigureAwait(false);
-            case PrState.Open:
-                return await LeftQueue(repoDirectory, pr, snapshot.MainSha, cancellationToken).ConfigureAwait(false);
-            default:
-                return null;
-        }
+            PrState.Merged => await Merged(repoDirectory, pr, snapshot.MainSha, cancellationToken).ConfigureAwait(false),
+            PrState.Closed => await Dropped(pr, $"QUEUE OUT #{number}: closed on GitHub; send the lane NOT OK", cancellationToken).ConfigureAwait(false),
+            PrState.Open => await LeftQueue(repoDirectory, pr, snapshot.MainSha, cancellationToken).ConfigureAwait(false),
+            _ => null,
+        };
     }
 
     // Open in the poll's list, which is read before the queue: a pull request the queue merged in between reads "not in the queue",
