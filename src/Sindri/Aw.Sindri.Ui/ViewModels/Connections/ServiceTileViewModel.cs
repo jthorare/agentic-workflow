@@ -178,15 +178,6 @@ internal sealed partial class ServiceTileViewModel : ObservableObject
     // Everything the chip, the primary button and the menu read from the connection and the input.
     private void RaiseState() => Raise(nameof(StatusChip), nameof(ReasonText), nameof(ReasonTip), nameof(HasReason), nameof(PrimaryText), nameof(HasPrimary), nameof(CanPress), nameof(CanReconnect), nameof(CanRename), nameof(HasHelpLink));
 
-    /// <summary>The connection this tile shows, or null: the page sets it on every read.</summary>
-    /// <param name="row">The matching row.</param>
-    internal void Bind(ConnectionRowViewModel? row)
-    {
-        _row = row;
-        Raise(nameof(IsOffered), nameof(IsConnected), nameof(NeedsAttention), nameof(ConnectionName), nameof(Account), nameof(LastUsedText), nameof(Subtitle), nameof(AccessibleName));
-        RaiseState();
-    }
-
     /// <summary>Connect or Try again was pressed: asks for the input first when the service needs one, then signs in.</summary>
     /// <param name="cancellationToken">Cancels the wait.</param>
     /// <returns>A task that ends when the tile has its answer.</returns>

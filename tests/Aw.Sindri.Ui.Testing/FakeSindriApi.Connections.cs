@@ -101,7 +101,7 @@ internal sealed partial class FakeSindriApi
     {
         Record("list");
         var gate = ConnectionListGate;
-        var answer = NotReceived<ConnectionList>(api) ?? (Result<ConnectionList>?)TakeListError() ?? new ConnectionList([.. Snapshot()]);   // the rows as they are at call time, even when the answer is held back
+        var answer = NotReceived<ConnectionList>(api) ?? (TakeListError() is { } listError ? listError : new ConnectionList([.. Snapshot()]));   // the rows as they are at call time, even when the answer is held back
         if (gate is not null)
         {
             await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);

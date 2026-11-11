@@ -183,7 +183,7 @@ public sealed class ConnectionTileRenameTests
         tile.StartRename();
         tile.RenameText = "half-typed";
 
-        tile.Bind(null);
+        tile.Bind(row: null);
 
         Assert.Equal((false, false), (tile.IsRenaming, tile.CanSaveRename));
     }

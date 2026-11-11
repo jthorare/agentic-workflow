@@ -28,6 +28,9 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string RenameTaken(string service, string label) => $"Another {service} connection is already called '{label}'. Pick another name.";
 
+    /// <summary>The line under the rename field while it is empty.</summary>
+    internal const string RenameEmpty = "Type a name.";
+
     /// <summary>Why a rename was refused: the label is not allowed.</summary>
     internal const string RenameBadLabel = "Use lowercase letters, digits and '-' for the name.";
 
@@ -35,12 +38,10 @@ internal static partial class Labels
     internal const string RenameGone = "This connection no longer exists. Reload the page.";
 
     /// <summary>Why a rename was refused: the label is the one it has.</summary>
-    internal const string RenameSame = "That is already its name.";
+    internal const string RenameSame = "That's already its name.";
 
-    /// <summary>Any other refusal of a rename, in words.</summary>
-    /// <param name="reason">What Sindri said.</param>
-    /// <returns>The words.</returns>
-    internal static string RenameFailed(string reason) => "Couldn't rename it. " + (reason.Length > 0 && char.IsLower(reason[0]) ? char.ToUpperInvariant(reason[0]) + reason[1..] : reason);
+    /// <summary>Any other refusal or failure of a rename: one fixed sentence, none of the server's or the transport's text.</summary>
+    internal const string RenameFailed = "Couldn't rename it. Try again.";
 
     /// <summary>The status chip of a connected tile.</summary>
     internal const string TileConnected = "Connected";
