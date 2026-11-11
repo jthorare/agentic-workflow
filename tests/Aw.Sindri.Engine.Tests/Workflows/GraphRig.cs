@@ -33,14 +33,15 @@ internal sealed class GraphRig : IAsyncDisposable
     private readonly CancellationTokenSource _stop = new();
     private readonly TemporalWorker _worker;
     private readonly Task _loop;
-    private readonly RigLog _log = new();
+    private readonly RigLog _log;
     private readonly GraphRunStarter _starter;
     private readonly InMemorySindriStore _ledger;
     private readonly SindriTimeSkippingServer _server;
 
-    private GraphRig(SindriTimeSkippingServer server, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0)
+    private GraphRig(SindriTimeSkippingServer server, RigLog log, IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0)
     {
         _server = server;
+        _log = log;
         var environment = server.Environment;
         // why: a run id or task queue can be used once on a server, and the counter keeps the slugs of one process apart
         var number = Interlocked.Increment(ref _count).ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -124,11 +125,13 @@ internal sealed class GraphRig : IAsyncDisposable
 
     private static async Task<GraphRig> StartAsync(IAgentNodeRuntime? agents, ForEachLimits? forEachLimits, int agentLaunchAttempts = 0)
     {
-        var server = new SindriTimeSkippingServer();
+        // why: the SDK core's own warnings (e.g. 'Error while completing workflow activation ... ACTIVITY_UNKNOWN') go to the runtime of the server's client, so the rig's log is that runtime's logger (issue 2877)
+        var log = new RigLog();
+        var server = new SindriTimeSkippingServer { CoreLogger = log.CreateLogger("temporal-core") };
         await server.InitializeAsync();
         try
         {
-            return new GraphRig(server, agents, forEachLimits, agentLaunchAttempts);
+            return new GraphRig(server, log, agents, forEachLimits, agentLaunchAttempts);
         }
         catch
         {
@@ -191,8 +194,20 @@ internal sealed class GraphRig : IAsyncDisposable
     /// Cancels the run through its Temporal handle, then polls the run row until it has a final status, under the hang limit (5 min)
     /// and not the check patience, so box load cannot fail the wait and only a real hang does; returns the final run row (issue 2678).
     /// </summary>
-    public async Task<WorkflowRun> Cancel(WorkflowRunId id)
+    /// <param name="id">The run.</param>
+    /// <param name="whenParked">
+    /// True (the default) sends the cancel only once the run is parked: its history ends at a completed workflow task or a started timer (check patience, else it throws).
+    /// False sends it at once, for a test that cancels a held or retried activity on purpose.
+    /// why: a cancel that lands while a short activity returns makes the time-skipping server refuse the workflow's answer (ACTIVITY_UNKNOWN) and never retry it, so the run hangs (issue 2877); a held activity never parks, so those tests opt out
+    /// </param>
+    /// <returns>The final run row.</returns>
+    public async Task<WorkflowRun> Cancel(WorkflowRunId id, bool whenParked = true)
     {
+        if (whenParked)
+        {
+            await Parked(id);
+        }
+
         await Client.GetWorkflowHandle(id.Value).CancelAsync();
         try
         {
@@ -201,6 +216,32 @@ internal sealed class GraphRig : IAsyncDisposable
         catch (OperationCanceledException e) when (!Token.IsCancellationRequested)
         {
             throw new InvalidOperationException($"Run {id.Value} never reached a final status within {_cancelHangLimit} after the cancel (hang limit). {await HistoryOf(id)}", e);
+        }
+    }
+
+    // why: see Cancel's whenParked; the run is parked when nothing runs after its last completed workflow task: the history ends there or at a timer the workflow started
+    private async Task Parked(WorkflowRunId id)
+    {
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        limit.CancelAfter(_patience);
+        var last = new List<string>();
+        try
+        {
+            while (true)
+            {
+                var history = await Client.GetWorkflowHandle(id.Value).FetchHistoryAsync(new WorkflowHistoryEventFetchOptions { Rpc = new RpcOptions { CancellationToken = limit.Token } });
+                if (history.Events.LastOrDefault()?.EventType is Temporalio.Api.Enums.V1.EventType.WorkflowTaskCompleted or Temporalio.Api.Enums.V1.EventType.TimerStarted)
+                {
+                    return;
+                }
+
+                last = [.. history.Events.TakeLast(5).Select(static e => e.EventType.ToString())];
+                await Task.Delay(TimeSpan.FromMilliseconds(25), limit.Token);
+            }
+        }
+        catch (OperationCanceledException e) when (limit.IsCancellationRequested && !Token.IsCancellationRequested)
+        {
+            throw new InvalidOperationException($"Run {id.Value} never parked within {_patience} (history ends at: {string.Join(", ", last)}); pass whenParked: false to cancel a held activity on purpose.", e);
         }
     }
 
