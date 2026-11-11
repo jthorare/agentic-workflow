@@ -29,6 +29,17 @@
         <TextBlock Classes="caption tile-chip" Classes.ok="{Binding IsConnected}" Classes.attention="{Binding NeedsAttention}" Text="{Binding StatusChip}" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <TextBlock x:Name="ServiceTileSubtitle" Classes="caption subtle" Text="{Binding Subtitle}" IsVisible="{Binding ShowSubtitle}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      <!-- #2708: a service with several connections lists each under the one tile, each with its own Rename (the field below renames the row that was asked). -->
+      <ItemsControl ItemsSource="{Binding Connections}" IsVisible="{Binding HasMany}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="cb:ConnectionRowViewModel">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Classes="caption" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Classes="link" Content="{Binding Text.Rename}" Click="OnRenameRow" />
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
       <StackPanel x:Name="ServiceTileRenameBox" Spacing="{StaticResource Space.XS}" IsVisible="{Binding IsRenaming}">
         <TextBox x:Name="ServiceTileRenameField" Text="{Binding RenameText, Mode=TwoWay}" PlaceholderText="{Binding Text.RenameLabel}" KeyDown="OnRenameKey" AutomationProperties.Name="{Binding Text.RenameLabel}" />
         <TextBlock x:Name="ServiceTileRenameError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding RenameReason}" IsVisible="{Binding HasRenameReason}" TextWrapping="Wrap" />

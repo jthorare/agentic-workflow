@@ -38,6 +38,22 @@ internal sealed partial class ServiceTileView : UserControl
             DispatcherPriority.Loaded);
     }
 
+    // A line of the connection list: the field opens on that connection, not on the tile's first.
+    private void OnRenameRow(object? sender, RoutedEventArgs e)
+    {
+        if ((sender as Control)?.DataContext is ConnectionRowViewModel row)
+        {
+            Tile?.StartRename(row);
+            Dispatcher.UIThread.Post(
+                () =>
+                {
+                    _ = ServiceTileRenameField.Focus(NavigationMethod.Tab);
+                    ServiceTileRenameField.SelectAll();
+                },
+                DispatcherPriority.Loaded);
+        }
+    }
+
     private void OnRenameSave(object? sender, RoutedEventArgs e) => _ = Tile?.Rename(CancellationToken.None);
 
     private void OnRenameCancel(object? sender, RoutedEventArgs e) => Tile?.CancelRename();
