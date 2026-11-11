@@ -23,7 +23,7 @@ internal static class WorkflowAnswerTool
     internal static Tool Tool { get; } = new()
     {
         Name = Name,
-        Description = "Answer the question a workflow's ask_owner node is waiting on. Give the run id (<slug>@<revision>:<occurrence>), the node id and exactly one of text or choice. "
+        Description = "Answer the question a workflow's ask_owner node is waiting on. Give the run id (<slug>@<revision>:<occurrence>), the node id and exactly one of text or choice; a node inside a for_each loop also needs the item. "
             + "The answer is recorded under your session. The workflow takes it only while that node waits, and a choice must be one the node offers.",
         InputSchema = ContextTools.Schema(new JsonObject
         {
@@ -31,6 +31,7 @@ internal static class WorkflowAnswerTool
             ["node"] = ContextTools.Property("string", "The ask_owner node's id, e.g. ask"),
             ["text"] = ContextTools.Property("string", "A free-text answer (when the node offers no choices)"),
             ["choice"] = ContextTools.Property("string", "One of the node's choices"),
+            ["item"] = ContextTools.Property("integer", "For an ask_owner node inside a for_each loop: the item's position in the loop, counted from 1", minimum: 1),
         }, required: ["run", "node"]),
         Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = false, IdempotentHint = false, OpenWorldHint = false },
     };
@@ -42,30 +43,41 @@ internal static class WorkflowAnswerTool
     /// <returns>The tool result.</returns>
     internal static async ValueTask<CallToolResult> Call(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
-        var refused = McpArguments.Only(Name, arguments, "run", "node", "text", "choice");
+        var refused = McpArguments.Only(Name, arguments, "run", "node", "text", "choice", "item");
         var run = McpArguments.RequiredString(Name, arguments, "run", "nightly@3:12");
         var node = McpArguments.RequiredString(Name, arguments, "node", "ask");
         var text = McpArguments.OptionalString(Name, arguments, "text");
         var choice = McpArguments.OptionalString(Name, arguments, "choice");
-        if ((refused ?? run.E() ?? node.E() ?? text.E() ?? choice.E()) is { } error)
+        var item = McpArguments.OptionalLong(Name, arguments, "item", min: 1, max: int.MaxValue);
+        if (FirstError(refused, run.E(), node.E(), text.E(), choice.E(), item.E()) is { } error)
         {
             return McpResults.Failure(services, error);
         }
 
-        if (!WorkflowRunId.TryFrom(run.Value, out var parsedRun))
+        var ids = Ids(run.Value, node.Value);
+        if (ids.IsError)
         {
-            return McpResults.Failure(services, SindriErrors.InvalidInput.With($"'{run.Value}' is not a run id ('<slug>@<revision>:<occurrence>'; fix: use the run id workflow runs list gives)"));
-        }
-
-        if (!NodeId.TryFrom(node.Value, out var parsedNode))
-        {
-            return McpResults.Failure(services, SindriErrors.InvalidInput.With($"'{node.Value}' is not a node id (a lowercase letter, then lowercase letters, digits and '_')"));
+            return McpResults.Failure(services, ids.Error);
         }
 
         var by = services.GetRequiredService<ICallerContextAccessor>().Current?.Actor ?? "service:host";
         var answer = await services.GetRequiredService<IService<AnswerQuestionRequest, AnswerQuestionResponse>>()
-            .Handle(new AnswerQuestionRequest(parsedRun, parsedNode, text.Value, choice.Value, by), ct).ConfigureAwait(false);
+            .Handle(new AnswerQuestionRequest(ids.Value.Run, ids.Value.Node, text.Value, choice.Value, by, item.Value is { } at ? (int)at : null), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static a => $"answered {a.Run.Value}/{a.Node.Value} as {a.AnsweredBy}");
+    }
+
+    private static Error? FirstError(params Error?[] errors) => errors.FirstOrDefault(static e => e is not null);
+
+    private static Result<(WorkflowRunId Run, NodeId Node)> Ids(string run, string node)
+    {
+        if (!WorkflowRunId.TryFrom(run, out var parsedRun))
+        {
+            return SindriErrors.InvalidInput.With($"'{run}' is not a run id ('<slug>@<revision>:<occurrence>'; fix: use the run id workflow runs list gives)");
+        }
+
+        return NodeId.TryFrom(node, out var parsedNode)
+            ? (parsedRun, parsedNode)
+            : SindriErrors.InvalidInput.With($"'{node}' is not a node id (a lowercase letter, then lowercase letters, digits and '_')");
     }
 
     private static Error? E<T>(this Result<T> result) => result.IsError ? result.Error : null;

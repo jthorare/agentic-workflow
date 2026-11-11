@@ -37,8 +37,8 @@ internal sealed class WorkflowItemMaker(CreateItemService service, ICallerContex
 
         // the item exists from here on: a failure below is a warning, since failing the node would retry it into a second item
         var linked = await runs.SetItem(run, made.Value.ItemId, cancellationToken).ConfigureAwait(false);
-        // issue 2588 repairs a missing link; until then the person can link it by hand
-        var storeWarning = linked.IsError ? $"the item was made, but the run store didn't record it on run {run.Value} ({linked.Error.Message}); link it by hand from the item" : null;
+        // issue 2588: the repair pass writes the run item again when the run finishes and at serve start
+        var storeWarning = linked.IsError ? $"the item was made, but the run store didn't record it on run {run.Value} ({linked.Error.Message}); the repair pass at the run's end and at serve start links it" : null;
         var warning = made.Value.Warning is { } first && storeWarning is { } second ? first + "; " + second : made.Value.Warning ?? storeWarning;
         return new ItemMade(made.Value.ItemId, warning);
     }

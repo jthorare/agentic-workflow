@@ -1019,6 +1019,7 @@ Aw.Meta.Core.Ports.ILogFiles.Tail(string! path, int maxCharacters, System.Thread
 Aw.Meta.Core.Ports.IMessageStore
 Aw.Meta.Core.Ports.IMessageStore.Messages(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>!>!>
 Aw.Meta.Core.Ports.IMessageStore.Offset(string! transcript, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
+Aw.Meta.Core.Ports.IMessageStore.Transcripts(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
 Aw.Meta.Core.Ports.IMessageStore.RecordInbound(string! transcript, long offset, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Messages.InboxMessage!>! messages, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ids.MessageId>!>!>
 Aw.Meta.Core.Ports.IMessageStore.RecordOutbound(Aw.Meta.Core.Messages.Outbound! sent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.IMessageStore.MarkShown(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ids.MessageId>! ids, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
@@ -2443,6 +2444,7 @@ const Aw.Meta.Core.KvKeys.BoardSeenPrefix = "board.seen." -> string!
 Aw.Meta.Core.Messages.NoticeRule
 static Aw.Meta.Core.Messages.NoticeRule.IsNotice(string! body) -> bool
 static Aw.Meta.Core.Messages.NoticeRule.IsStatusTagged(string! body) -> bool
+static Aw.Meta.Core.Messages.NoticeRule.StripSender(string! text) -> string!
 static Aw.Meta.Core.Messages.NoticeRule.StripTag(string! text) -> string!
 static Aw.Meta.Core.Messages.NoticeRule.UntaggedIsStatus.get -> bool
 const Aw.Meta.Core.Messages.InboxState.Settled = "settled" -> string!
@@ -2515,3 +2517,50 @@ static Aw.Meta.Core.Merge.ReviewProof.Collect(System.Collections.Generic.IReadOn
 static Aw.Meta.Core.Merge.ReviewProof.Counts(string! body) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.CountLine!>!
 static Aw.Meta.Core.Merge.ReviewProof.IsHead(string? sha, string! head) -> bool
 static Aw.Meta.Core.Merge.ReviewProof.ReadySha(string! body) -> string?
+Aw.Meta.Core.Config.DefectsConfig
+Aw.Meta.Core.Config.DefectsConfig.<Clone>$() -> Aw.Meta.Core.Config.DefectsConfig!
+Aw.Meta.Core.Config.DefectsConfig.DailyCap.get -> int
+Aw.Meta.Core.Config.DefectsConfig.DailyCap.init -> void
+Aw.Meta.Core.Config.DefectsConfig.Deconstruct(out string! Repo, out int DailyCap) -> void
+Aw.Meta.Core.Config.DefectsConfig.DefectsConfig(string! Repo = "jthorare/agentic-workflow", int DailyCap = 3) -> void
+Aw.Meta.Core.Config.DefectsConfig.Equals(Aw.Meta.Core.Config.DefectsConfig? other) -> bool
+Aw.Meta.Core.Config.DefectsConfig.Repo.get -> string!
+Aw.Meta.Core.Config.DefectsConfig.Repo.init -> void
+Aw.Meta.Core.Config.TeamConfig.Defects.get -> Aw.Meta.Core.Config.DefectsConfig!
+Aw.Meta.Core.Config.TeamConfig.Defects.init -> void
+Aw.Meta.Core.Defects.DefectDay
+Aw.Meta.Core.Defects.DefectText
+Aw.Meta.Core.Github.GhIssues
+Aw.Meta.Core.Github.IssueRef
+Aw.Meta.Core.Github.IssueRef.<Clone>$() -> Aw.Meta.Core.Github.IssueRef!
+Aw.Meta.Core.Github.IssueRef.ClosedAt.get -> System.DateTimeOffset?
+Aw.Meta.Core.Github.IssueRef.ClosedAt.init -> void
+Aw.Meta.Core.Github.IssueRef.Deconstruct(out int Number, out string! Title, out bool IsOpen, out System.DateTimeOffset? ClosedAt, out string! Url) -> void
+Aw.Meta.Core.Github.IssueRef.Equals(Aw.Meta.Core.Github.IssueRef? other) -> bool
+Aw.Meta.Core.Github.IssueRef.IsOpen.get -> bool
+Aw.Meta.Core.Github.IssueRef.IsOpen.init -> void
+Aw.Meta.Core.Github.IssueRef.IssueRef(int Number, string! Title, bool IsOpen, System.DateTimeOffset? ClosedAt, string! Url) -> void
+Aw.Meta.Core.Github.IssueRef.Number.get -> int
+Aw.Meta.Core.Github.IssueRef.Number.init -> void
+Aw.Meta.Core.Github.IssueRef.Title.get -> string!
+Aw.Meta.Core.Github.IssueRef.Title.init -> void
+Aw.Meta.Core.Github.IssueRef.Url.get -> string!
+Aw.Meta.Core.Github.IssueRef.Url.init -> void
+const Aw.Meta.Core.KvKeys.DefectsDay = "defects.day" -> string!
+override Aw.Meta.Core.Config.DefectsConfig.Equals(object? obj) -> bool
+override Aw.Meta.Core.Config.DefectsConfig.GetHashCode() -> int
+override Aw.Meta.Core.Config.DefectsConfig.ToString() -> string!
+override Aw.Meta.Core.Github.IssueRef.Equals(object? obj) -> bool
+override Aw.Meta.Core.Github.IssueRef.GetHashCode() -> int
+override Aw.Meta.Core.Github.IssueRef.ToString() -> string!
+static Aw.Meta.Core.Config.DefectsConfig.operator !=(Aw.Meta.Core.Config.DefectsConfig? left, Aw.Meta.Core.Config.DefectsConfig? right) -> bool
+static Aw.Meta.Core.Config.DefectsConfig.operator ==(Aw.Meta.Core.Config.DefectsConfig? left, Aw.Meta.Core.Config.DefectsConfig? right) -> bool
+static Aw.Meta.Core.Defects.DefectDay.Format(System.DateOnly today, int filed, int skipped) -> string!
+static Aw.Meta.Core.Defects.DefectDay.Parse(string? stored, System.DateOnly today) -> (int Filed, int Skipped)
+static Aw.Meta.Core.Defects.DefectText.Body(string! what, string! errorLine, string? path) -> string!
+static Aw.Meta.Core.Defects.DefectText.ClosedWindow.get -> System.TimeSpan
+static Aw.Meta.Core.Defects.DefectText.Match(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.IssueRef!>! issues, string! title, System.DateTimeOffset now) -> Aw.Meta.Core.Github.IssueRef?
+static Aw.Meta.Core.Defects.DefectText.Title(string! code, string! title) -> string!
+static Aw.Meta.Core.Github.GhIssues.List(string! json) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.IssueRef!>?
+static Aw.Meta.Core.Github.IssueRef.operator !=(Aw.Meta.Core.Github.IssueRef? left, Aw.Meta.Core.Github.IssueRef? right) -> bool
+static Aw.Meta.Core.Github.IssueRef.operator ==(Aw.Meta.Core.Github.IssueRef? left, Aw.Meta.Core.Github.IssueRef? right) -> bool

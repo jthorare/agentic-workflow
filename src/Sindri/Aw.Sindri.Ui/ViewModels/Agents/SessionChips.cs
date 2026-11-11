@@ -10,11 +10,11 @@ internal static class SessionChips
     /// <returns>The glyph and the word.</returns>
     internal static SessionChip For(string state) => state switch
     {
-        "running" => new("●", "Working"),
-        "asking" => new("◐", "Asking you"),
-        "idle" => new("○", "Idle"),
-        "unknown" => new("○", "Unknown"),
-        _ => new("○", state),
+        "running" => new("●", "Working", "working"),
+        "asking" => new("●", "Waiting on you", "waiting"),
+        "idle" => new("●", "Idle"),
+        "unknown" => new("●", "Unknown"),
+        _ => new("●", state),
     };
 
     /// <summary>The state's word in lower case, for an accessible name ("running").</summary>

@@ -56,10 +56,10 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return cutConfig;   // why: the config read an output the store cut at 64 KB; the block never runs on a partial value
         }
 
-        return await Execute(row, spec, new Prepared(graphNode, block, scope, config), cancel).ConfigureAwait(false);
+        return await Execute(row, spec, new Prepared(graphNode, block, scope, config), itemIndex, cancel).ConfigureAwait(false);
     }
 
-    private async Task<GraphBlockOutcome> Execute(WorkflowRun row, GraphSpec spec, Prepared node, CancellationToken cancel)
+    private async Task<GraphBlockOutcome> Execute(WorkflowRun row, GraphSpec spec, Prepared node, int itemIndex, CancellationToken cancel)
     {
         var (graphNode, block, scope, config) = (node.Node, node.Block, node.Scope, node.Config);
         // why: idempotent, so it runs before every node and the activity keeps no state across a retry; each call is a workflow read plus one ledger upsert transaction (a 20-node run makes 20), acceptable because a graph declares no disk, so a repeat changes no data and creates no files
@@ -69,7 +69,13 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return Failed(config, ensured.Error);
         }
 
-        var context = new BlockContext(row.Id, graphNode.Id, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup) { Resources = ensured.Value.Env };
+        var context = new BlockContext(row.Id, graphNode.Id, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup)
+        {
+            Resources = ensured.Value.Env,
+            // why: a loop item's batch is a child workflow of the run, so its question names the workflow that waits and the item (items count from 1; 0 is a node outside a loop)
+            Item = itemIndex > 0 ? itemIndex : null,
+            BatchWorkflow = itemIndex > 0 ? ActivityExecutionContext.Current.Info.WorkflowId : null,
+        };
         var result = await block.Execute(context, cancel).ConfigureAwait(false);   // a condition reads its references inside Execute
         if (Cut(scope, config) is { } cutAfter)
         {

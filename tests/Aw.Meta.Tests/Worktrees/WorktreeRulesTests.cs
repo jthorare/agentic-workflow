@@ -99,13 +99,7 @@ public sealed class WorktreeRulesTests
     private static WorktreeFacts NoPr() => new() { Path = "/wt/idea", Branch = "docs/idea", HeadMerged = false };
 
     [Fact, Trait("Lane", "unit")]
-    public void No_pr_branch_fully_pushed_clean_idle_is_removed()
-    {
-        var verdict = Judge(NoPr() with { UnpushedCommits = 0 });
-
-        Assert.Equal(WorktreeDecision.Removable, verdict.Decision);
-        Assert.Empty(verdict.Reasons);
-    }
+    public void No_pr_branch_fully_pushed_clean_idle_but_unmerged_is_kept() => AssertKept(Judge(NoPr() with { UnpushedCommits = 0 }), "unmerged branch, no PR");
 
     [Fact, Trait("Lane", "unit")]
     public void No_pr_branch_with_head_in_origin_main_is_removed()
@@ -117,7 +111,7 @@ public sealed class WorktreeRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void No_pr_branch_with_unpushed_commit_is_kept() => AssertKept(Judge(NoPr() with { UnpushedCommits = 2 }), "2 commit", "no pull request");
+    public void No_pr_branch_with_unpushed_commit_is_kept() => AssertKept(Judge(NoPr() with { UnpushedCommits = 2 }), "2 commit", "unmerged branch, no PR");
 
     [Fact, Trait("Lane", "unit")]
     public void No_pr_branch_is_kept_when_there_is_no_previous_sweep()

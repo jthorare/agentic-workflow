@@ -19,9 +19,9 @@ public sealed class WorkflowsPageViewModelTests
 
         Assert.Equal(2, page.Rows.Count);
         var (active, off) = (page.Rows[0], page.Rows[1]);
-        Assert.Equal(("Morning check", "● Active", "Revision 1", "Changed by owner, 5m ago"), (active.NameText, active.StateText, active.RevisionText, active.ChangedText));
-        Assert.Equal(("Weekly report", "○ Off", "Newest revision 1"), (off.NameText, off.StateText, off.RevisionText));
-        Assert.Equal("Morning check, active, revision 1, changed by owner, 5m ago", active.Name);
+        Assert.Equal(("Morning check", "● Active", string.Empty, "Changed by owner, 5m ago"), (active.NameText, active.StateText, active.RevisionText, active.ChangedText));
+        Assert.Equal(("Weekly report", "○ Off", string.Empty), (off.NameText, off.StateText, off.RevisionText));
+        Assert.Equal("Morning check, active, changed by owner, 5m ago", active.Name);
         Assert.Equal("2 workflows · 1 active", page.Head);
         Assert.Equal((false, true, false, false), (page.IsReading, page.IsList, page.IsRuns, page.IsRun));
     }
@@ -57,7 +57,30 @@ public sealed class WorkflowsPageViewModelTests
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal((true, "No workflows yet.", "No workflows", false), (page.IsEmpty, page.EmptyText, page.Head, page.IsReading));
+        Assert.Equal((true, "No workflows yet.", false), (page.IsEmpty, page.EmptyText, page.IsReading));
+    }
+
+    [Fact]
+    public async Task The_empty_state_offers_a_New_workflow_action_with_the_form_closed_and_names_the_agent_command()
+    {
+        _f.ServeList(Golden("workflows", "list-empty"));
+
+        var page = await _f.Shown(Token);
+
+        Assert.Equal("New workflow", page.NewWorkflowText);
+        Assert.False(page.IsCreating);
+        Assert.Equal(("Agents can make one with", "sindri wf create"), (page.AgentRouteLead, page.AgentRouteCommand));
+    }
+
+    [Fact]
+    public async Task The_head_is_hidden_when_empty_and_counts_when_there_are_workflows()
+    {
+        _f.ServeList(Golden("workflows", "list-empty"));
+        var empty = await _f.Shown(Token);
+        var some = await new WorkflowsFixture().Shown(Token);
+
+        Assert.Equal((false, string.Empty), (empty.HasHead, empty.Head));
+        Assert.Equal((true, "2 workflows · 1 active"), (some.HasHead, some.Head));
     }
 
     [Fact]
@@ -138,7 +161,7 @@ public sealed class WorkflowsPageViewModelTests
         await page.OpenWorkflow("nope", Token);
 
         Assert.True(page.Runs.IsFailed);
-        Assert.Contains("no workflow 'nope'", page.Runs.FailedText, StringComparison.Ordinal);
+        Assert.Contains("No workflow 'nope'", page.Runs.FailedText, StringComparison.Ordinal);
     }
 
     [Fact]
