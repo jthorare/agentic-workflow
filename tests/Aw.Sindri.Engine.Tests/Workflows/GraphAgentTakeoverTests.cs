@@ -124,7 +124,7 @@ public sealed class GraphAgentTakeoverTests
         await runtime.Launching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
         var cancelling = rig.Cancel(run);   // why: Cancel waits for the final row, which needs the launch to return, so the gate opens while it waits; the cancel is confirmed requested in the history before the gate opens, so it really arrives during the launch
-        await CancelRequested(rig, run);
+        await rig.CancelRequested(run);
 
         _ = gate.TrySetResult();
         var final = await cancelling;
@@ -145,28 +145,5 @@ public sealed class GraphAgentTakeoverTests
         var final = await rig.Cancel(run);
 
         Assert.Equal(WorkflowRunStatus.Cancelled, final.Status);
-    }
-
-    private static async Task CancelRequested(GraphRig rig, WorkflowRunId run)
-    {
-        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
-        limit.CancelAfter(TimeSpan.FromSeconds(30));
-        try
-        {
-            while (true)
-            {
-                var history = await rig.Client.GetWorkflowHandle(run.Value).FetchHistoryAsync();
-                if (history.Events.Any(static e => e.WorkflowExecutionCancelRequestedEventAttributes != null))
-                {
-                    return;
-                }
-
-                await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
-            }
-        }
-        catch (OperationCanceledException e) when (limit.IsCancellationRequested && !Token.IsCancellationRequested)
-        {
-            throw new InvalidOperationException($"The history of run {run.Value} never showed WorkflowExecutionCancelRequested within 30 s.", e);
-        }
     }
 }

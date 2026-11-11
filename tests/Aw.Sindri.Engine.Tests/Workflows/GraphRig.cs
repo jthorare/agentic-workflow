@@ -195,6 +195,33 @@ internal sealed class GraphRig : IAsyncDisposable
         return await Final(id, _cancelHangLimit);
     }
 
+    /// <summary>
+    /// Waits until the run's Temporal history shows the cancel request, under the hang limit (5 min) and not the check patience,
+    /// so a loaded box cannot fail the wait and only a lost cancel does (issue 2678).
+    /// </summary>
+    public async Task CancelRequested(WorkflowRunId id)
+    {
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        limit.CancelAfter(_cancelHangLimit);
+        try
+        {
+            while (true)
+            {
+                var history = await Client.GetWorkflowHandle(id.Value).FetchHistoryAsync();
+                if (history.Events.Any(static e => e.WorkflowExecutionCancelRequestedEventAttributes != null))
+                {
+                    return;
+                }
+
+                await Task.Delay(TimeSpan.FromMilliseconds(50), limit.Token);
+            }
+        }
+        catch (OperationCanceledException e) when (limit.IsCancellationRequested && !Token.IsCancellationRequested)
+        {
+            throw new InvalidOperationException($"The history of run {id.Value} never showed WorkflowExecutionCancelRequested within {_cancelHangLimit} (hang limit).", e);
+        }
+    }
+
     /// <summary>Waits until the run has a final status.</summary>
     public async Task<WorkflowRun> Final(WorkflowRunId id, TimeSpan? patience = null)
     {
