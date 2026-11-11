@@ -31,6 +31,7 @@ internal sealed class ViewsHarness
             new RequestsProjection(Slice.Events, new PassThroughScrubber()),
             new ItemsProjection(Slice.Events, new PassThroughScrubber()),
             new ItemAliasesProjection(Slice.Events),
+            new ItemLinksProjection(Slice.Events),
             new ItemTimelineProjection(SliceHarness.Json, new PassThroughScrubber()),
             new NeedsYouProjection(Slice.Events, new PassThroughScrubber(), builtIns),
             new JobsProjection(Slice.Events),

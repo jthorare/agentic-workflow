@@ -2,6 +2,7 @@ using System.Collections.Frozen;
 using System.Diagnostics;
 using Aw.Context.Core;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Toolkits;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
@@ -16,18 +17,18 @@ namespace Aw.Sindri.Host.Mcp;
 internal static class McpToolTable
 {
     private static readonly IReadOnlyList<Tool> _tools = [ContextTools.QueryTool, ContextTools.SourcesTool, ContextTools.LensesTool, ConceptTools.Tool, PageTools.Tool, GraphTools.NodeTool, GraphTools.NeighborsTool,
-        SindriTools.StatusTool, SindriTools.QueueTool, SindriTools.ItemTool, SindriTools.TimelineTool, SindriTools.PendingDecisionsTool, SindriTools.JobTool, SindriTools.ProjectsTool, SindriTools.RequestTool, SindriTools.HandoffTool, SindriTools.TodosTool, SindriTools.TodoTool, .. ConnectionTools.All, .. MemoryTools.All, .. WorkflowReadTools.All, .. WorkflowTools.All, WorkflowAnswerTool.Tool, .. ResourceTools.All];
+        SindriTools.StatusTool, SindriTools.QueueTool, SindriTools.ItemTool, SindriTools.TimelineTool, SindriTools.PendingDecisionsTool, SindriTools.JobTool, SindriTools.ProjectsTool, SindriTools.RequestTool, SindriTools.HandoffTool, SindriTools.TodosTool, SindriTools.TodoTool, .. ConnectionTools.All, .. MemoryTools.All, .. WorkflowReadTools.All, .. WorkflowTools.All, WorkflowAnswerTool.Tool, .. ResourceTools.All, .. ToolkitTools.Management];
 
     // why: only the context and graph tools read one repo's map; the sindri_* tools answer for every repo, as the same call does for a human
     private static readonly FrozenSet<string> _repoScoped = FrozenSet.Create(StringComparer.Ordinal,
         ContextTools.Query, ContextTools.Sources, ContextTools.Lenses, ConceptTools.Name, PageTools.Name, GraphTools.Node, GraphTools.Neighbors);
 
     /// <summary>tools/list: every tool, whatever the profile says (a refused call explains itself; context spec §8.6).</summary>
-    /// <param name="_">The request (unused).</param>
-    /// <param name="__">Unused.</param>
-    /// <returns>The tool list.</returns>
-    internal static ValueTask<ListToolsResult> List(RequestContext<ListToolsRequestParams> _, CancellationToken __)
-        => ValueTask.FromResult(new ListToolsResult { Tools = [.. _tools] });
+    /// <param name="request">The request.</param>
+    /// <param name="_">Unused.</param>
+    /// <returns>The static tools, then the tools of every running, unpaused toolkit.</returns>
+    internal static ValueTask<ListToolsResult> List(RequestContext<ListToolsRequestParams> request, CancellationToken _)
+        => ValueTask.FromResult(new ListToolsResult { Tools = [.. _tools, .. ToolkitTools.Running(request.Services?.GetService<IRunningToolkits>())] });
 
     /// <summary>tools/call: the named tool, or SND-CONTEXT-023.</summary>
     /// <param name="request">The request.</param>
@@ -37,6 +38,11 @@ internal static class McpToolTable
     {
         var call = request.Params!;           // why: the SDK sets Params on every tools/call
         var services = request.Services!;     // why: the SDK sets the request's services on every request
+        if (_tools.All(t => t.Name != call.Name) && ToolkitTools.IsToolkitTool(call.Name))
+        {
+            return ToolkitTools.Call(services, call.Name, call.Arguments, cancellationToken);
+        }
+
         if (_tools.All(t => t.Name != call.Name))
         {
             return ValueTask.FromResult(McpResults.Failure(services, ContextErrors.McpToolUnknown.With(
@@ -83,6 +89,7 @@ internal static class McpToolTable
             WorkflowTools.Create or WorkflowTools.ApplyOps or WorkflowTools.Replace or WorkflowTools.Validate or WorkflowTools.Activate or WorkflowTools.Pause or WorkflowTools.Delete or WorkflowTools.Run or WorkflowTools.Cancel or WorkflowTools.Docs or WorkflowTools.Blocks
                 => WorkflowTools.Call(call.Name, services, call.Arguments, cancellationToken),
             WorkflowReadTools.List or WorkflowReadTools.Get or WorkflowReadTools.Runs or WorkflowReadTools.RunGet => WorkflowReadTools.Call(call.Name, services, call.Arguments, cancellationToken),
+            ToolkitTools.List or ToolkitTools.Create or ToolkitTools.Build or ToolkitTools.Start or ToolkitTools.Stop or ToolkitTools.Pause or ToolkitTools.Resume or ToolkitTools.Calls => ToolkitTools.CallManagement(call.Name, services, call.Arguments, cancellationToken),
             ResourceTools.List or ResourceTools.Purge => ResourceTools.Call(call.Name, services, call.Arguments, cancellationToken),
             MemoryTools.List => MemoryTools.CallList(services, call.Arguments, cancellationToken),
             MemoryTools.Create => MemoryTools.CallCreate(services, call.Arguments, cancellationToken),

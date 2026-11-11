@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Aw.Kernel.Testing;
+using Aw.Meta.Tests.MergeRun;
 
 namespace Aw.Meta.Tests.Cli;
 
@@ -84,6 +85,7 @@ public sealed class GateAndMergeCommandTests : IDisposable
             [
                 "case \"$1 $2\" in",
                 "  \"pr view\") echo " + view + " ;;",
+                "  \"api graphql\") echo '" + QueueAnswers.Off + "' ;;",   // no merge queue on main
                 "  \"pr merge\") exit 0 ;;",
                 "  \"pr list\") echo " + list + " ;;",
                 "  *) echo \"unexpected gh $*\" >&2; exit 9 ;;",

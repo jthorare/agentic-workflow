@@ -16,7 +16,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="workflows">Where the revisions live.</param>
 /// <param name="queue">Starts the next queued run when one ends.</param>
 /// <param name="mirror">Appends the events to the ledger.</param>
-internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore workflows, IGraphQueueAdvance queue, GraphMirror mirror)
+/// <param name="itemRepair">Repairs the item links of a run that ended (issue 2588); null does nothing.</param>
+internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore workflows, IGraphQueueAdvance queue, GraphMirror mirror, GraphRunItemRepair? itemRepair = null)
 {
     /// <summary>Reads the spec of the revision the run walks.</summary>
     /// <param name="run">The run.</param>
@@ -144,6 +145,12 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
             {
                 await mirror.Append(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(finish.Run, GraphMirror.Name(finish.Status), mirror.Clean(finish.Error), GraphMirror.By), $"{EventTypes.WorkflowRunFinished}:{finish.Run.Value}", ended.ItemId?.Value, cancel).ConfigureAwait(false);
             }
+        }
+
+        // why: best effort and never an error here (issue 2588): a repair that fails must not retry the finish
+        if (itemRepair is not null)
+        {
+            await itemRepair.AfterFinish(finish.Run, cancel).ConfigureAwait(false);
         }
 
         var next = await queue.StartNextQueued(ended.WorkflowId, cancel).ConfigureAwait(false);

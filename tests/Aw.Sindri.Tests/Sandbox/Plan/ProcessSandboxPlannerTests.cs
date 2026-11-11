@@ -2,6 +2,7 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Sandbox.Resources;
 using Aw.Sindri.Testing.Sandbox;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
@@ -84,4 +85,22 @@ public sealed class ProcessSandboxPlannerTests
         Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { Command = "/tool" }).IsError);   // no parent folder to bind as the binary's
         Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { ResourceMounts = [new ResourceMount("state", "db/state.sqlite")] }).IsError);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_read_only_path_is_a_read_only_mount_above_the_deny_of_Sindri_home_and_changes_the_plan_hash()
+    {
+        const string Repo = "/work/app";
+        var plain = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request()).Value;
+        var plan = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { ReadOnlyPaths = [Repo + "/"] }).Value;
+        var mounts = plan.Mounts.ToList();
+
+        Assert.Contains(mounts, m => m.Kind == PlanMountKind.ReadOnly && m.Path == Repo);   // the trailing slash is trimmed
+        Assert.True(mounts.FindIndex(m => m.Path == Repo) > mounts.FindIndex(m => m.Kind == PlanMountKind.Deny && m.Path == Sindri));
+        Assert.DoesNotContain(plain.Mounts, m => m.Path == Repo);
+        Assert.False(string.Equals(plain.PlanHash, plan.PlanHash, StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_relative_read_only_path_is_refused() =>
+        Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { ReadOnlyPaths = ["repo"] }).IsError);
 }

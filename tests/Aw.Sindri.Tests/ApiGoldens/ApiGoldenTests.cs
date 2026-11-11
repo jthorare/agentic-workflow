@@ -62,11 +62,35 @@ public sealed class ApiGoldenTests
     /// A session's answer may differ from the human's golden (text is fenced, writes name the session), so this checks the one thing PR 2 promises:
     /// no case answers SND-AUTH-002 as a session unless its human golden is that refusal too. It only reads goldens, so AW_GOLDEN_UPDATE never writes one.
     /// </summary>
-    [Fact(Timeout = 900_000), Trait("Lane", "integration")]
-    public async Task The_API_goldens_pass_when_run_as_a_session()
+    internal const int SessionShards = 20;   // #2534: one test over every row took 147 s on CI (315 s on a loaded box); 10 shards still took 65-69 s each under the full integration lane
+
+    internal static List<(string Slug, string Scenario)> SessionRows() =>
+        [.. ApiScenarios.All.Where(r => !IsHumanCredentialRow(r) && !IsPending(r.Slug + "/") && !IsStillOwnerOnly(r.Slug))];
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_session_shards_partition_the_session_rows_exactly_once()
+    {
+        var all = SessionRows();
+        var union = Enumerable.Range(0, SessionShards).SelectMany(s => ApiGoldenRows.Slice(all, s, SessionShards)).ToList();
+
+        Assert.NotEmpty(all);
+        Assert.Equal(all.Count, union.Count);
+        Assert.Equal(all.Order(), union.Order());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Every_session_shard_has_its_class()
+    {
+        var shards = typeof(ApiGoldenTests).Assembly.GetTypes().Select(static t => t.Name).Where(static n => n.StartsWith("SessionGoldenShard", StringComparison.Ordinal)).Order(StringComparer.Ordinal);
+
+        Assert.Equal(Enumerable.Range(0, SessionShards).Select(static i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"SessionGoldenShard{i}Tests")).Order(StringComparer.Ordinal), shards);   // why: a shard with no class would skip its rows silently
+    }
+
+    internal static async Task RunSessionShard(int shard)
     {
         var ct = TestContext.Current.CancellationToken;
-        var rows = ApiScenarios.All.Where(r => !IsHumanCredentialRow(r) && !IsPending(r.Slug + "/") && !IsStillOwnerOnly(r.Slug)).ToList();
+        var rows = ApiGoldenRows.Slice(SessionRows(), shard, SessionShards);
+        Assert.NotEmpty(rows);
         var refused = new System.Collections.Concurrent.ConcurrentBag<string>();
         var broken = new System.Collections.Concurrent.ConcurrentBag<string>();
 

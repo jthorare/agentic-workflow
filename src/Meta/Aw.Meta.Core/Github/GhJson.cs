@@ -99,6 +99,99 @@ public static class GhJson
         }
     }
 
+    /// <summary>Reads `gh pr view --json headRefOid,baseRefName,reviewDecision,mergeStateStatus`.</summary>
+    /// <param name="json">The output.</param>
+    /// <returns>What a CI gate reads, or null when the output is not a JSON object.</returns>
+    public static PrCiState? CiView(string json)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            var item = document.RootElement;
+            return item.ValueKind == JsonValueKind.Object
+                ? new PrCiState(Text(item, "headRefOid"), Text(item, "baseRefName"), Text(item, "reviewDecision"), Text(item, "mergeStateStatus"))
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Reads `gh pr checks --required --json name,state,bucket`.</summary>
+    /// <param name="json">The output.</param>
+    /// <returns>The checks, or null when the output is not a JSON array.</returns>
+    public static IReadOnlyList<RequiredCheck>? Checks(string json)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.ValueKind == JsonValueKind.Array
+                ? [.. document.RootElement.EnumerateArray()
+                    .Where(item => item.ValueKind == JsonValueKind.Object)
+                    .Select(item => new RequiredCheck(Text(item, "name"), Text(item, "state"), Text(item, "bucket")))]
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Reads the plain output of `gh pr checks --required` (older gh has no --json): one line per check, "name&lt;tab&gt;bucket&lt;tab&gt;elapsed&lt;tab&gt;url".</summary>
+    /// <param name="text">The output.</param>
+    /// <returns>The checks; the bucket stands in for the state. Null when a line has no name or no bucket: a required check must not be dropped by a misread.</returns>
+    public static IReadOnlyList<RequiredCheck>? ChecksFromText(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var rows = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(line => line.Split('\t')).ToList();
+        return rows.Exists(parts => parts.Length < 2 || parts[0].Trim().Length == 0)
+            ? null
+            : [.. rows.Select(parts => new RequiredCheck(parts[0].Trim(), parts[1].Trim(), parts[1].Trim()))];
+    }
+
+    /// <summary>Reads the GraphQL answer of the merge-queue query (`gh api graphql`).</summary>
+    /// <param name="json">The output: {"data":{"repository":{"pullRequest":{...}}}}.</param>
+    /// <returns>The queue facts, or null when the output has no pull request.</returns>
+    public static MergeQueueView? QueueView(string json)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return Child(document.RootElement, "data") is { } data && Child(data, "repository") is { } repository && Child(repository, "pullRequest") is { } pull
+                ? QueueView(pull)
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static MergeQueueView QueueView(JsonElement pull)
+    {
+        var entry = Child(pull, "mergeQueueEntry");
+        var state = entry is { } found ? Text(found, "state") : string.Empty;
+        var reason = RemovedReason(pull);
+        return new MergeQueueView(Flag(pull, "isMergeQueueEnabled"), Flag(pull, "isInMergeQueue"), entry is { } e ? Whole(e, "position") : null, state.Length > 0 ? state : null, reason.Length > 0 ? reason : null);
+    }
+
+    // The reason of the latest "removed from the merge queue" event; empty when there is none.
+    private static string RemovedReason(JsonElement pull)
+    {
+        var nodes = Child(pull, "timelineItems") is { } items && items.TryGetProperty("nodes", out var list) && list.ValueKind == JsonValueKind.Array ? list.EnumerateArray().ToList() : [];
+        return nodes.Count > 0 && nodes[^1].ValueKind == JsonValueKind.Object ? Text(nodes[^1], "reason") : string.Empty;
+    }
+
+    private static int? Whole(JsonElement item, string name) =>
+        item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number) ? number : null;
+
+    private static JsonElement? Child(JsonElement item, string name) =>
+        item.ValueKind == JsonValueKind.Object && item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Object ? value : null;
+
     private static PrView View(JsonElement item) => new(
         item.GetProperty("number").GetInt32(),
         State(Text(item, "state")),

@@ -129,8 +129,11 @@ id="$(cat "$AW_STATE_DIR/meta/lane-sessions/api")"
 check "fresh: id recorded" "$(printf '%s' "$id" | grep -cE '^[0-9a-f-]{36}$')" "1"
 check "fresh: session id, stable name, kickoff prompt" "$(cat "$CALLS")" "--session-id|$id|-n|t1-api|API kickoff|"
 : > "$CALLS"; touch "$HOME/.claude/projects/p/$id.jsonl"
+# The resume must not rewrite lane-sessions/<lane>: its mtime is the session's start, which lane-recycle checks a digest against (#2691).
+touch -t 200101010000 "$AW_STATE_DIR/meta/lane-sessions/api"; touch -t 200101010001 "$WORK/api-recorded-ref"
 bash "$DIR/meta-lane.sh" t1 api
 check "transcript exists: resumes the same id" "$(cat "$CALLS")" "--resume|$id|-n|t1-api|"
+check "resume of the recorded id: lane-sessions/<lane> not rewritten (mtime kept)" "$([ "$AW_STATE_DIR/meta/lane-sessions/api" -nt "$WORK/api-recorded-ref" ] && echo rewritten || echo kept)" "kept"
 : > "$CALLS"
 bash "$DIR/meta-lane.sh" t1 ui
 check "no prompt file: starts without a prompt" "$(cut -d'|' -f3,4 "$CALLS")" "-n|t1-ui"
@@ -344,19 +347,19 @@ jq '.agent = "codex" | .routing = {models:{"claude-code":["opus"],codex:["gpt-5.
 OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
 check "a codex meta accepts a lane routed to codex" "$RC:$(grep -c "can't message" <<< "$OUT")" "0:0"
 # The lane script: the routed agent's argv, with the routed model as the CLI's own flag (codex -m, claude --model) right after the binary.
-cat > "$WORK/agent-model" <<'EOF2'
-#!/usr/bin/env bash
-printf '%s|' "$@" > "$CALLS.model"
-echo "$$" > "$CALLS.modelpid"
-exec sleep 600
-EOF2
-chmod +x "$WORK/agent-model"
-run_model_lane() { # lane: run meta-lane.sh against the stub until it has recorded its argv, then stop the stub by its recorded pid
+cp "$DIR/tests/fixtures/meta-launch/agent-model" "$WORK/agent-model"; chmod +x "$WORK/agent-model"
+run_model_lane() { # lane: run meta-lane.sh against the stub until it has recorded its argv, then stop the stub by its recorded pid; the lane script must then end (#2637)
   rm -f "$CALLS.model" "$CALLS.modelpid"
   AW_META_CLAUDE="$WORK/agent-model" AW_META_ID_WAIT=1 AW_META_ID_GRACE=0 AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 "$1" > "$WORK/lane.out" 2>&1 &
   local rp=$!
   waitfor '[ -s "$CALLS.modelpid" ]'
   [ -s "$CALLS.modelpid" ] && kill "$(cat "$CALLS.modelpid")" 2> /dev/null
+  waitfor '! kill -0 "$rp" 2> /dev/null'
+  check "run_model_lane $1: the lane script ends once its recorded stub is stopped (#2637)" "$(kill -0 "$rp" 2> /dev/null && echo running || echo ended)" "ended"
+  # the recorded pid may be a probe's while the real launch's sleep still runs: stop the pid recorded now, so the suite never blocks on it
+  kill -0 "$rp" 2> /dev/null && [ -s "$CALLS.modelpid" ] && kill "$(cat "$CALLS.modelpid")" 2> /dev/null
+  # a lane script that hangs on its own never runs the stub, so nothing above ends it: stop rp, the suite's own child, so the wait is bounded (#2643)
+  kill -0 "$rp" 2> /dev/null && kill "$rp" 2> /dev/null
   wait "$rp" 2> /dev/null
 }
 jq -n --arg c "$WORK/agent-model" '{schema:1, agents:{codex:{override:true, bin:$c}}}' > "$AW_STATE_DIR/launcher.json"
@@ -499,8 +502,16 @@ if command -v script > /dev/null 2>&1; then
   jq --arg c "$WORK/codex-quiet" '.agents.codex.bin = $c' "$LCFG" > "$WORK/l5.json"
   find "$AW_STATE_DIR/meta/lane-sessions" -mindepth 1 -delete 2> /dev/null
   pty_cmd="env AW_LAUNCHER_CONFIG=$WORK/l5.json AW_META_NO_SHELL=1 AW_META_ID_WAIT=20 AW_META_ID_GRACE=1 bash $DIR/meta-lane.sh t1 api"
-  if script --version 2>&1 | grep -q util-linux; then script -qfec "$pty_cmd" /dev/null < /dev/null > /dev/null 2>&1 &   # util-linux
-  else script -q /dev/null bash -c "$pty_cmd" < /dev/null > /dev/null 2>&1 & fi   # BSD (macOS)
+  # why: a suite started under `setsid nohup` hands script(1) SIGHUP ignored, and the lane inherits it, so the pty's hangup
+  # can't end the lane (#2566). A signal ignored on entry can't be reset from bash: this python exec puts HUP, INT and TERM
+  # back to the default (the #2377 way). It execs, so `$!` is still script's pid.
+  dfl=(env)
+  command -v python3 > /dev/null 2>&1 && dfl=(python3 -c 'import os, signal, sys
+for s in (signal.SIGHUP, signal.SIGINT, signal.SIGTERM):
+    signal.signal(s, signal.SIG_DFL)
+os.execvp(sys.argv[1], sys.argv[1:])')
+  if script --version 2>&1 | grep -q util-linux; then "${dfl[@]}" script -qfec "$pty_cmd" /dev/null < /dev/null > /dev/null 2>&1 &   # util-linux
+  else "${dfl[@]}" script -q /dev/null bash -c "$pty_cmd" < /dev/null > /dev/null 2>&1 & fi   # BSD (macOS)
   sp=$!
   waitfor '[ "$(pgrep -f "^bash $DIR/meta-lane.sh t1 api$" | wc -l | tr -d " ")" -ge 2 ] && pgrep -f "^codex 60$" > /dev/null'
   lane_pids="$(pgrep -f "^bash $DIR/meta-lane.sh t1 api$")"; agent_pid="$(pgrep -f '^codex 60$' | head -1)"

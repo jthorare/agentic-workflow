@@ -27,8 +27,9 @@ internal static class SindriHostServiceCollectionExtensions
         .AddSingleton<Endpoints.ILinearIssueFencing, Mcp.LinearIssueFencing>()   // and the Linear issue list's titles and names
         .AddSingleton<ScheduleInputs>()
         .AddScoped<Features.LinearConnection.ILinearKeyChecks>(static sp => new IndexSources.LinearKeyChecks(sp.GetRequiredService<Core.Profile.IProfileSource>(), sp.GetRequiredService<Context.Core.Facade.IContextEngine>(), IndexSources.LinearTeamReader.Create))   // Settings, Connections, Linear asks Linear about a pasted key
+        .AddSingleton<Context.Core.Linear.ILinearReadCredential>(static sp => new IndexSources.LinearReadCredential(sp.GetRequiredService<Core.Connections.IConnectionCredentials>()))   // the Linear feed, viewer and lookups read with the connected Linear connection first (#2508)
         .AddSingleton<Context.Core.Sync.IExternalRecordFeeds>(static sp => new IndexSources.GitHubRecordFeeds(sp.GetRequiredService<Core.Secrets.ISecretPointers>(), sp.GetRequiredService<Connectors.Core.GitHub.IGitHubConnectorFactory>(), sp.GetRequiredService<Core.Connections.IConnectionStore>(), sp.GetRequiredService<Core.Connections.IConnectionSecrets>(), IndexSources.GitHubReaders.Create))   // the GitHub feed `index sync` picks up through the record-feed catalog
-        .AddSingleton<Context.Core.Sync.IExternalRecordFeeds>(static sp => new IndexSources.SlackRecordFeeds(sp.GetRequiredService<Core.Secrets.ISecretPointers>(), sp.GetRequiredService<Connectors.Core.Slack.ISlackConnectorFactory>(), IndexSources.SlackReaders.Create))   // the Slack feed, present only when the profile lists channels, a workspace and a token that resolves
+        .AddSingleton<Context.Core.Sync.IExternalRecordFeeds>(static sp => new IndexSources.SlackRecordFeeds(sp.GetRequiredService<Core.Connections.IConnectionCredentials>(), sp.GetRequiredService<Connectors.Core.Slack.ISlackConnectorFactory>(), IndexSources.SlackReaders.Create))   // the Slack feed, present only when the profile lists channels, a workspace and a token that resolves
         .AddMemoryEmbedder()   // memory's embedding port over the same pinned model (agent-first PR 13)
         .AddContextVectors()   // Context's query embedder and vector scan over Aw.Embeddings (owned-index spec §9.2)
         .AddScoped<CodeIndexHost.ICodeIndexScopeSource, CodeIndexHost.ProfileCodeIndexScopeSource>()
@@ -47,7 +48,10 @@ internal static class SindriHostServiceCollectionExtensions
         .AddHostedService<SchedulerHost>()
         .AddHostedService<ProjectorHost>()
         .AddHostedService<JobRecoveryHost>()
+        .AddHostedService<ToolkitRecoveryHost>()
+        .AddHostedService<ToolkitAdoptionHost>()
         .AddHostedService<GraphRunRecoveryHost>()
+        .AddHostedService<RunItemRepairHost>()
         .AddHostedService<LostSessionsHost>()
         .AddHostedService<SessionUsageHost>()
         .AddHostedService<ProfileWatch>()

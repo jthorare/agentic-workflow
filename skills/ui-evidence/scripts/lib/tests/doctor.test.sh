@@ -80,7 +80,7 @@ test_docker_invoked_exactly_once_with_the_configured_container_and_user() {
 test_configured_api_port_not_open_fails_naming_the_port() {
   local skill bin_dir out; skill="$(new_skill)"; bin_dir="$(mktemp -d)"
   setup_fake_bins "$bin_dir" "<title>TestApp</title>" 1 0
-  if out="$(run_doctor "$skill" "$bin_dir" UI_EVIDENCE_APP_TITLE="TestApp" UI_EVIDENCE_API_PORT="5100")"; then echo "FAIL: expected non-zero when the API port isn't open"; exit 1; fi
+  if out="$(run_doctor "$skill" "$bin_dir" UI_EVIDENCE_APP_TITLE="TestApp" UI_EVIDENCE_API_PORT="5100")"; then echo "FAIL: expected non-zero when the API port isn't open"; exit 1; fi  # test-ports: ok: nc is a stub, nothing binds the port
   echo "$out" | has "api-server (:5100)" || { echo "FAIL: expected the api port named in the failure, got: $out"; exit 1; }
   grep -q "^nc -z localhost 5100$" "$bin_dir/calls" || { echo "FAIL: expected nc on the configured port, got: $(cat "$bin_dir/calls")"; exit 1; }
   echo "PASS: test_configured_api_port_not_open_fails_naming_the_port"
@@ -103,10 +103,11 @@ test_deployment_env_supplies_settings_and_local_file_and_environment_win() {
 # committed deployment defaults
 UI_EVIDENCE_APP_TITLE="Deployed App"
 export UI_EVIDENCE_DB_CONTAINER=deployed_db
+# test-ports: ok: an env value in a fixture file, nc is a stub and nothing binds it
 UI_EVIDENCE_API_PORT=4100
 EOF
   printf 'UI_EVIDENCE_APP_TITLE='"'"'Local App'"'"'\n' > "$skill/.ui-evidence.local.env"
-  out="$(run_doctor "$skill" "$bin_dir" UI_EVIDENCE_API_PORT="6000")" || { echo "FAIL: expected the local title to win over deployment.env, got: $out"; exit 1; }
+  out="$(run_doctor "$skill" "$bin_dir" UI_EVIDENCE_API_PORT="6000")" || { echo "FAIL: expected the local title to win over deployment.env, got: $out"; exit 1; }  # test-ports: ok: nc is a stub, nothing binds the port
   grep -q "^docker exec deployed_db pg_isready -U postgres$" "$bin_dir/calls" || { echo "FAIL: expected deployment.env's container, got: $(cat "$bin_dir/calls")"; exit 1; }
   grep -q "^nc -z localhost 6000$" "$bin_dir/calls" || { echo "FAIL: expected the environment's port to win, got: $(cat "$bin_dir/calls")"; exit 1; }
   echo "PASS: test_deployment_env_supplies_settings_and_local_file_and_environment_win"
@@ -148,7 +149,7 @@ SLOT_SETTINGS=(UI_EVIDENCE_SLOT_FILE=.stack-slot UI_EVIDENCE_SLOT_KEY=STACK_SLOT
 # run_worktree_doctor <bin> <worktree> [VAR=value ...]: a slot run with a configured database container and API port.
 run_worktree_doctor() {
   local bin_dir="$1" wt="$2"; shift 2
-  run_doctor "$(new_skill)" "$bin_dir" UI_EVIDENCE_APP_TITLE="TestApp" UI_EVIDENCE_DB_CONTAINER=db UI_EVIDENCE_API_PORT=4100 UI_EVIDENCE_WORKTREE="$wt" "${SLOT_SETTINGS[@]}" "$@"
+  run_doctor "$(new_skill)" "$bin_dir" UI_EVIDENCE_APP_TITLE="TestApp" UI_EVIDENCE_DB_CONTAINER=db UI_EVIDENCE_API_PORT=4100 UI_EVIDENCE_WORKTREE="$wt" "${SLOT_SETTINGS[@]}" "$@"  # test-ports: ok: nc is a stub, nothing binds the port
 }
 
 test_worktree_slot_targets_its_own_ports_and_prints_host() {

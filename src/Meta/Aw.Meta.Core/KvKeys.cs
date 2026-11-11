@@ -42,8 +42,23 @@ public static class KvKeys
     /// <summary>The lanes the last watch reported CONTEXT HIGH for (comma-separated), so a re-armed watch does not announce a standing one again.</summary>
     public const string WatchContext = "watch.context";
 
+    /// <summary>The status lines a watch announced and when its last STATUS line printed (StatusMemory), so the next watch run neither repeats nor drops one (#2651).</summary>
+    public const string WatchStatus = "watch.status";
+
+    /// <summary>The pull requests and main's sha the last watch poll settled on (WatchMemory), so the next watch run diffs its first poll against them instead of seeding silently.</summary>
+    public const string WatchSnapshot = "watch.snapshot";
+
+    /// <summary>"1" while the watch's polls are failing (set by the first failed poll, cleared by a good one): a repeat error in a later run is not a new event.</summary>
+    public const string WatchFailing = "watch.failing";
+
+    /// <summary>The pid of the newest watch (#2564). Only that watch keeps watch.snapshot and watch.failing; an older one prints WATCH superseded and ends.</summary>
+    public const string WatchOwner = "watch.owner";
+
     /// <summary>When the owner or meta dropped a pull request's merge-queue entry (aw-meta queue-drop), as "pr=ticks" pairs; a ready message newer than the drop queues it again.</summary>
     public const string QueueDropped = "queue.dropped";
+
+    /// <summary>The pull requests merge-run handed to GitHub's merge queue that the watch has not seen end yet, as "pr=ticks=head" triples (MergeQueued).</summary>
+    public const string MergeQueued = "merge.queued";
 
     /// <summary>The running (or last) merge-train's summary lines, as the status shows them.</summary>
     public const string Train = "train.state";
@@ -53,4 +68,7 @@ public static class KvKeys
 
     /// <summary>The route suggestions the watch has announced (so a re-armed watch does not repeat them).</summary>
     public const string RouteWatch = "route.watch";
+
+    /// <summary>Today's report-defect counts as "yyyy-MM-dd|filed|skipped" (the UTC date); another date means 0|0.</summary>
+    public const string DefectsDay = "defects.day";
 }

@@ -30,12 +30,12 @@ public sealed partial class GraphWorkflowParkingTests
     }
 
     // why: waits for the 'timeout' branch to be taken; the timer may start after the first skip, so skip until the node after the question runs
-    private async Task SkipUntilRunning(GraphRig rig, WorkflowRunId run, string node, TimeSpan step)
+    private static async Task SkipUntilRunning(GraphRig rig, WorkflowRunId run, string node, TimeSpan step)
     {
         using var limit = Limit();
         while (!(await rig.NodeStatuses(run)).TryGetValue(node, out var status) || status != NodeRunStatus.Running)
         {
-            await server.Environment.DelayAsync(step);
+            await rig.Environment.DelayAsync(step);
             await Task.Delay(TimeSpan.FromMilliseconds(100), limit.Token);
         }
     }
@@ -52,10 +52,11 @@ public sealed partial class GraphWorkflowParkingTests
     [Fact]
     public async Task A_cancel_ends_an_ask_owner_node_cancelled_and_skips_the_rest()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(AskSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         await WaitUntilAsked(rig);
+        await WaitUntilTimerStarted(rig, started.RunId.Value);
 
         await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
         var run = await rig.Final(started.RunId);
@@ -72,7 +73,7 @@ public sealed partial class GraphWorkflowParkingTests
     [Fact]
     public async Task An_answer_sent_as_soon_as_the_question_is_posted_is_accepted_without_a_retry()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(AskSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         await WaitUntilAsked(rig);
@@ -90,7 +91,7 @@ public sealed partial class GraphWorkflowParkingTests
     [Fact]
     public async Task A_second_answer_to_the_same_question_is_refused_and_the_first_stands()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(HoldSpec("answered"));
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         var handle = rig.Client.GetWorkflowHandle(started.RunId.Value);
@@ -100,7 +101,7 @@ public sealed partial class GraphWorkflowParkingTests
         var second = await Refused(handle, new GraphAnswerInput("ask", Text: null, Choice: "no", "session:second"));
         var kept = await AskOutput(rig, started.RunId);
         await handle.CancelAsync();
-        _ = await rig.Final(started.RunId);   // why: a cancel left open when the rig stops its worker is a workflow task nobody polls, and the shared time-skipping server stops skipping time for every later test in the class
+        _ = await rig.Final(started.RunId);   // why: wait for the cancel to finish, so the rig does not stop its worker with a workflow task still in flight; the rig's own time-skipping server dies with it (issue 2574)
 
         Assert.Contains("not waiting", second.InnerException!.Message, StringComparison.Ordinal);
         Assert.Equal(("yes", "session:first"), kept);
@@ -109,7 +110,7 @@ public sealed partial class GraphWorkflowParkingTests
     [Fact]
     public async Task An_answer_after_the_timeout_branch_was_taken_is_refused_and_the_default_stands()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(HoldSpec("timeout"));
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         var handle = rig.Client.GetWorkflowHandle(started.RunId.Value);
@@ -119,7 +120,7 @@ public sealed partial class GraphWorkflowParkingTests
         var kept = await AskOutput(rig, started.RunId);
         var nodes = await rig.NodeStatuses(started.RunId);
         await handle.CancelAsync();
-        _ = await rig.Final(started.RunId);   // why: a cancel left open when the rig stops its worker is a workflow task nobody polls, and the shared time-skipping server stops skipping time for every later test in the class
+        _ = await rig.Final(started.RunId);   // why: wait for the cancel to finish, so the rig does not stop its worker with a workflow task still in flight; the rig's own time-skipping server dies with it (issue 2574)
 
         Assert.Contains("not waiting", late.InnerException!.Message, StringComparison.Ordinal);
         Assert.Equal(("no", "timeout"), kept);
@@ -131,7 +132,7 @@ public sealed partial class GraphWorkflowParkingTests
     [Fact]
     public async Task An_answer_at_the_moment_of_the_timeout_gives_one_outcome_and_the_row_says_which()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(AskSpec());
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
 

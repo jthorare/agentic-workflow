@@ -94,6 +94,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-CONN-012` | The provider's answer is not the shape Sindri expects, or a redirect left the preset's host. | run `sindri doctor`; if it repeats, the provider changed its API |
 | `SND-CONN-013` | The provider rejected the saved poll cursor. | ask for a full re-read (the owner's call); Sindri does not re-read on its own |
 | `SND-CONN-014` | The provider is rate limiting this connection (429 or 5xx on a poll). | nothing: the next poll waits for Retry-After, then doubles the wait on each repeat |
+| `SND-CONN-015` | A rename was refused: an active workflow's `connection_event` trigger watches the connection, and the old name would stop it firing. The message names the workflows. | pause those workflows (`sindri wf pause <slug>`), rename, point their triggers at the new name, then activate them again |
 | `SND-CONN-101` | A polled event found its run ids, five in a row, held by runs of other events. | nothing: the cursor stays and the next poll tries again; the event is never dropped |
 | `SND-CONN-201` | The handoff inbox's answer breaks the inbox contract; the message names the field. | fix the inbox so it answers as `schemas/handoff/inbox.openapi.yaml` says (docs/sindri/handoff.md) |
 | `SND-CONN-202` | Another caller claimed the offer first. Informational: nothing starts. | none; the next poll lists what is still open |
@@ -115,6 +116,19 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-RES-005` | A sandbox size is above the box's cap. | lower the `sandbox` memory or wall in the declaration to the cap the message names |
 | `SND-RES-006` | A resource owner, name or size is malformed, or a path exists as the wrong type (a folder where a database goes). | fix the declaration, or move the stray path away |
 | `SND-RES-007` | A disk holds too many files and folders to measure (over 100,000). | delete files you don't need from the disk |
+| `SND-TK-001` | The toolkit is unbuilt, or its source changed since the last good build. | `sindri toolkit build <name>` |
+| `SND-TK-002` | The toolkit's `dotnet build -warnaserror` or its tests failed; it stays `failed` and can't start. | read the build job's output, fix, build again |
+| `SND-TK-003` | `toolkit.json` isn't the SDK's manifest, or a tool name can't become a client tool name. | rebuild with the toolkit SDK; keep `<toolkit>__<tool>` within 64 characters |
+| `SND-TK-004` | The toolkit's process ended during a call. | `sindri toolkit start <name>`; three crashes in ten minutes mark it `failed` |
+| `SND-TK-005` | The toolkit is paused; its process is kept and calls are refused. | `toolkit_resume` (or `sindri toolkit resume <name>`) |
+| `SND-TK-006` | A tool call didn't answer within its timeout (60 s by default). | retry, or make the tool faster |
+| `SND-TK-007` | The toolkit has no tool with that name. | `sindri toolkit list` shows the tools |
+| `SND-TK-008` | This box has no sandbox for a plain process (no bubblewrap or Seatbelt), so a toolkit can't start. | `sindri doctor` names the missing piece |
+| `SND-TK-009` | No toolkit has that name. | `sindri toolkit list` |
+| `SND-TK-010` | A toolkit name (lowercase letters, digits, `-`) or tool name (lowercase letters, digits, `_`) is malformed, or `<toolkit>__<tool>` is over 64 characters. | shorten the name |
+| `SND-TK-011` | A toolkit tool ran and answered with an error; the toolkit's own message is in the result. | read the message; fix the arguments or the toolkit |
+| `SND-TK-012` | A toolkit with that name exists already. | pick another name, or `sindri toolkit list` |
+| `SND-TK-013` | The toolkit generator failed; its own message is in the result. | read the message (no SDK package in the feed: run `scripts/install-cs.sh`) |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml. |
 | `SND-TRACKER-002` | The tracker's source holds no items to read (for plan-file: no plan file matches tracker.include). | Fix tracker.include in profile.yaml (or restore the plan files). |
 | `SND-TRACKER-003` | A plan file is too big to read (over 2 MiB). | Split the plan file into smaller plans. |

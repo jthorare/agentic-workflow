@@ -6,13 +6,23 @@ using Aw.Sindri.Core.Control;
 
 namespace Aw.Sindri.Infrastructure.Control;
 
-/// <summary>Pings the recorded endpoint over loopback HTTP (no proxy), with a 2 s budget.</summary>
-internal sealed class HttpControlPlaneProbe(IEndpointFile endpoints, JsonSerializerOptions options) : IControlPlaneProbe, IDisposable
+/// <summary>
+/// Pings the recorded endpoint over loopback HTTP (no proxy). The connect is bounded by <see cref="Connect"/>, so a dead
+/// port fails fast; the answer gets <see cref="Answer"/>, so a cold control plane's first ping on a loaded box still
+/// completes (#2641) while one that accepts and never answers is still reported.
+/// </summary>
+/// <param name="endpoints">Reads the endpoint record.</param>
+/// <param name="options">The JSON options for the ping.</param>
+/// <param name="answer">The cap on the whole ping call; null means <see cref="Answer"/>.</param>
+internal sealed class HttpControlPlaneProbe(IEndpointFile endpoints, JsonSerializerOptions options, TimeSpan? answer = null) : IControlPlaneProbe, IDisposable
 {
-    /// <summary>How long a client waits for the control plane.</summary>
-    internal static readonly TimeSpan Budget = TimeSpan.FromSeconds(2);
+    /// <summary>How long the probe waits to connect to the recorded port.</summary>
+    internal static readonly TimeSpan Connect = TimeSpan.FromSeconds(2);
 
-    private readonly HttpClient _http = new(new SocketsHttpHandler { UseProxy = false, ConnectTimeout = Budget }) { Timeout = Budget };
+    /// <summary>How long the probe waits for the whole ping, answer included: well above a cold first request on a loaded box.</summary>
+    internal static readonly TimeSpan Answer = TimeSpan.FromSeconds(15);
+
+    private readonly HttpClient _http = new(new SocketsHttpHandler { UseProxy = false, ConnectTimeout = Connect }) { Timeout = answer ?? Answer };
 
     public void Dispose() => _http.Dispose();
 
@@ -39,7 +49,7 @@ internal sealed class HttpControlPlaneProbe(IEndpointFile endpoints, JsonSeriali
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return SindriErrors.ApiTimeout.With(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{endpoint.Url.Authority} didn't answer within {Budget.TotalSeconds:0} s"));
+            return SindriErrors.ApiTimeout.With(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{endpoint.Url.Authority} didn't answer the ping within {_http.Timeout.TotalSeconds:0} s"));
         }
     }
 }

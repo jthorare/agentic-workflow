@@ -44,7 +44,7 @@ public sealed class HostTests
 
         var hosted = provider.GetServices<IHostedService>().ToList();
 
-        Assert.Equal(13, hosted.Count);
+        Assert.Equal(16, hosted.Count);
         _ = Assert.Single(hosted.OfType<ServeListenerCheck>());
         _ = Assert.Single(hosted.OfType<SchedulerHost>());
         _ = Assert.Single(hosted.OfType<ProjectorHost>());
@@ -56,8 +56,11 @@ public sealed class HostTests
         _ = Assert.Single(hosted.OfType<LauncherHost>());
         _ = Assert.Single(hosted.OfType<LeaseRenewer>());
         _ = Assert.Single(hosted.OfType<JobRecoveryHost>());
+        _ = Assert.Single(hosted.OfType<ToolkitRecoveryHost>());
+        _ = Assert.Single(hosted.OfType<ToolkitAdoptionHost>());
         _ = Assert.Single(hosted.OfType<GraphRunRecoveryHost>());
         _ = Assert.Single(hosted.OfType<ContextWarmHost>());
+        _ = Assert.Single(hosted.OfType<RunItemRepairHost>());
     }
 
     [Fact, Trait("Lane", "unit")]

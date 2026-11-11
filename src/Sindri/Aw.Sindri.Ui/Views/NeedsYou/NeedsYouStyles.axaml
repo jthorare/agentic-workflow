@@ -2,7 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- The Needs-you rows' tint (screens spec R8-13): the urgency, not a side bar. Tokens only. A pulse row that is unseen keeps
        the attention tint and pulses its tint between two tokens (the text is never faded: contrast); under reduced motion it keeps a steady outline instead (HasOutline). -->
-  <Style Selector="Border.needs-you-row.pulsing">
+  <!-- An attention tint (pulsing, steady, outlined) lifts within its own amber under the pointer and a press (Brush.AttentionSoft.Hover and
+       .Pressed), so the urgency stays; the pulse runs only at rest (a running animation would beat any style setter). Those rules live in Theme/ClickableStyles.axaml,
+       which loads last, so they beat its grey hover. A calm row (subtle, stale) steps aside to that shared clickable hover and pressed background. -->
+  <Style Selector="Border.needs-you-row.pulsing:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
     <Style.Animations>
       <Animation Duration="0:0:1.6" IterationCount="Infinite" Easing="SineEaseInOut">
@@ -13,27 +16,31 @@
     </Style.Animations>
   </Style>
   <!-- A failure keeps a steady attention tint, a calm row a subtle one (R8-13); the same tokens as the pulse, no motion. -->
-  <Style Selector="Border.needs-you-row.steady">
+  <Style Selector="Border.needs-you-row.steady:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
   </Style>
-  <Style Selector="Border.needs-you-row.subtle">
+  <Style Selector="Border.needs-you-row.subtle:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
   </Style>
-  <!-- A row that arrives after the first list slides in over Motion.Base (180 ms); never under reduced motion (SlidesIn is false then). -->
+  <!-- A row that arrives after the first list slides in over Motion.Base (180 ms); never under reduced motion (SlidesIn is false then).
+       The slide animates RenderTransform itself and sets no transform of its own, so once it ends the clickable press scale
+       (Theme/ClickableStyles.axaml) applies to a row that slid in like any other. -->
   <Style Selector="Border.needs-you-row.slides-in">
-    <Setter Property="RenderTransform"><TranslateTransform /></Setter>
     <Style.Animations>
       <Animation Duration="0:0:0.18" Easing="CubicEaseOut">
-        <KeyFrame Cue="0%"><Setter Property="TranslateTransform.Y" Value="-12" /></KeyFrame>
-        <KeyFrame Cue="100%"><Setter Property="TranslateTransform.Y" Value="0" /></KeyFrame>
+        <KeyFrame Cue="0%"><Setter Property="RenderTransform" Value="translateY(-12px)" /></KeyFrame>
+        <KeyFrame Cue="100%"><Setter Property="RenderTransform" Value="translateY(0px)" /></KeyFrame>
       </Animation>
     </Style.Animations>
   </Style>
+  <!-- The outline's shape (border and padding) holds under the pointer and a press, so the row never changes height; only its colours step aside. -->
   <Style Selector="Border.needs-you-row.outlined">
-    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="Padding" Value="14,7,14,6" />
+  </Style>
+  <Style Selector="Border.needs-you-row.outlined:not(:pointerover):not(:pressed)">
+    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
   </Style>
   <!-- Avalonia picks between matching styles by the order they are declared, and this file is included after the queue's: the focus
        ring and the selection bar are restated after the outline so they win over it. A selected row keeps the selection's shape, a thicker
@@ -48,7 +55,7 @@
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="Padding" Value="14,7,14,6" />
   </Style>
-  <Style Selector="Border.needs-you-row.stale">
+  <Style Selector="Border.needs-you-row.stale:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
   </Style>
   <!-- Two lines a row (the fold, screens spec §4.1): the row's buttons are as tall as their text plus a hairline, so a row stays near
