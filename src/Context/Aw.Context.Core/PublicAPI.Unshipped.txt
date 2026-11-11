@@ -12462,3 +12462,21 @@ Aw.Context.Core.Engine.ModelKind.WorkflowPrompt = 7 -> Aw.Context.Core.Engine.Mo
 Aw.Context.Core.Models.ModelPurpose.WorkflowPrompt = 9 -> Aw.Context.Core.Models.ModelPurpose
 Aw.Context.Core.Linear.ILinearReadCredential
 Aw.Context.Core.Linear.ILinearReadCredential.TokenFor(string? profilePointer) -> string?
+Aw.Context.Core.Results.AnchorChoice
+Aw.Context.Core.Results.AnchorChoice.<Clone>$() -> Aw.Context.Core.Results.AnchorChoice!
+Aw.Context.Core.Results.AnchorChoice.AnchorChoice(string! Key, string! Label, string! Kind) -> void
+Aw.Context.Core.Results.AnchorChoice.Deconstruct(out string! Key, out string! Label, out string! Kind) -> void
+Aw.Context.Core.Results.AnchorChoice.Equals(Aw.Context.Core.Results.AnchorChoice? other) -> bool
+Aw.Context.Core.Results.AnchorChoice.Key.get -> string!
+Aw.Context.Core.Results.AnchorChoice.Key.init -> void
+Aw.Context.Core.Results.AnchorChoice.Kind.get -> string!
+Aw.Context.Core.Results.AnchorChoice.Kind.init -> void
+Aw.Context.Core.Results.AnchorChoice.Label.get -> string!
+Aw.Context.Core.Results.AnchorChoice.Label.init -> void
+override Aw.Context.Core.Results.AnchorChoice.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.AnchorChoice.GetHashCode() -> int
+override Aw.Context.Core.Results.AnchorChoice.ToString() -> string!
+static Aw.Context.Core.Results.AnchorChoice.operator !=(Aw.Context.Core.Results.AnchorChoice? left, Aw.Context.Core.Results.AnchorChoice? right) -> bool
+static Aw.Context.Core.Results.AnchorChoice.operator ==(Aw.Context.Core.Results.AnchorChoice? left, Aw.Context.Core.Results.AnchorChoice? right) -> bool
+Aw.Context.Core.Results.ContextResult.Suggestions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.AnchorChoice!>?
+Aw.Context.Core.Results.ContextResult.Suggestions.init -> void
