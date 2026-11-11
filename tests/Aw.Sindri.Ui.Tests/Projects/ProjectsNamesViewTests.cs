@@ -1,3 +1,4 @@
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -28,6 +29,21 @@ public sealed class ProjectsNamesViewTests : FrameHost
         await Until(window, () => frame.GetVisualDescendants().OfType<Button>().Any(b => b.Name == "ProjectNotesSave" && b.IsEffectivelyVisible), "the editor never showed");
         Assert.EndsWith(" for Checkout rewrite", Heard.Name(frame.GetVisualDescendants().OfType<Button>().First(b => b.Name == "ProjectNotesSave")), StringComparison.Ordinal);
         Assert.EndsWith(" for Checkout rewrite", Heard.Name(frame.GetVisualDescendants().OfType<Button>().First(b => b.Name == "ProjectNotesCancel")), StringComparison.Ordinal);
+    });
+
+    // Guard: passes today and must keep passing; the fix sets Name only, so drivers and the perf inventory still find the button by its id.
+    [Fact]
+    public Task Notes_edit_button_keeps_its_automation_id() => OnUi(async () =>
+    {
+        Server.ProjectsAnswer = RouteAnswer.Api("projects", "mixed");
+        var (window, shell) = await Connected();
+        shell.GoTo(PageId.Projects);
+        await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
+        var card = shell.Projects.Groups[0].Cards[0];
+        var frame = window.GetVisualDescendants().OfType<Border>().First(b => b.Name == "ProjectCardFrame" && b.DataContext == card);
+        var button = frame.GetVisualDescendants().OfType<Button>().First(b => b.Name == "ProjectNotesEdit");
+
+        Assert.Equal("ProjectNotesEdit", ControlAutomationPeer.CreatePeerForElement(button).GetAutomationId());
     });
 
     [Fact]
