@@ -80,7 +80,7 @@ public sealed class RunDetailTakeoverTests
 
         await node.TakeOver(Token);
 
-        Assert.StartsWith("Couldn't take over the agent. the run 'morning-check@1:2' is not waiting on an agent", page.Run.NoticeText, StringComparison.Ordinal);
+        Assert.StartsWith("Couldn't take over the agent. The run 'morning-check@1:2' is not waiting on an agent", page.Run.NoticeText, StringComparison.Ordinal);
         Assert.Equal((reads, false), (_f.Server.WorkflowRunCalls, node.IsBusy));
     }
 

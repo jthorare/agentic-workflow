@@ -28,6 +28,6 @@ internal sealed class ListProjectsService(IProjectPages pages, IProjectorStatus 
         }
 
         var page = read.Value;
-        return new ListProjectsResponse(status.Current.AsOf, page.Empty, page.Viewer, page.Freshness, page.Projects, page.Finished, page.Hidden);
+        return new ListProjectsResponse(status.Current.AsOf, page.Empty, page.Viewer, page.Freshness, page.Projects, page.Finished, page.Hidden) { EmptyCode = page.EmptyCode };
     }
 }

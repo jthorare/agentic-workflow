@@ -129,8 +129,11 @@ id="$(cat "$AW_STATE_DIR/meta/lane-sessions/api")"
 check "fresh: id recorded" "$(printf '%s' "$id" | grep -cE '^[0-9a-f-]{36}$')" "1"
 check "fresh: session id, stable name, kickoff prompt" "$(cat "$CALLS")" "--session-id|$id|-n|t1-api|API kickoff|"
 : > "$CALLS"; touch "$HOME/.claude/projects/p/$id.jsonl"
+# The resume must not rewrite lane-sessions/<lane>: its mtime is the session's start, which lane-recycle checks a digest against (#2691).
+touch -t 200101010000 "$AW_STATE_DIR/meta/lane-sessions/api"; touch -t 200101010001 "$WORK/api-recorded-ref"
 bash "$DIR/meta-lane.sh" t1 api
 check "transcript exists: resumes the same id" "$(cat "$CALLS")" "--resume|$id|-n|t1-api|"
+check "resume of the recorded id: lane-sessions/<lane> not rewritten (mtime kept)" "$([ "$AW_STATE_DIR/meta/lane-sessions/api" -nt "$WORK/api-recorded-ref" ] && echo rewritten || echo kept)" "kept"
 : > "$CALLS"
 bash "$DIR/meta-lane.sh" t1 ui
 check "no prompt file: starts without a prompt" "$(cut -d'|' -f3,4 "$CALLS")" "-n|t1-ui"

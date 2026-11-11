@@ -18,4 +18,8 @@ public sealed record ListProjectsResponse(
     IReadOnlyList<ProjectFreshnessRow> Freshness,
     IReadOnlyList<ProjectCard> Projects,
     IReadOnlyList<ProjectCard> Finished,
-    IReadOnlyList<ProjectCard> Hidden);
+    IReadOnlyList<ProjectCard> Hidden)
+{
+    /// <summary>Why the page speaks of Linear (no Linear, or no key), or null: what a client branches on, never the sentence.</summary>
+    public ProjectsEmptyCode? EmptyCode { get; init; }
+}
