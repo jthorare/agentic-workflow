@@ -20,7 +20,7 @@ internal sealed class CodeCompiler : ICodeCompiler
     private static readonly Lazy<(ImmutableArray<MetadataReference> References, string Set)> _references = new(Load);
 
     /// <inheritdoc />
-    public string ReferenceSet => _references.Value.Set;
+    public string Fingerprint => _references.Value.Set;
 
     /// <inheritdoc />
     public CodeCompilation Compile(string body)
