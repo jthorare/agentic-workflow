@@ -1296,7 +1296,7 @@ public sealed class ShellWindowTests : IDisposable
         HealthHeadsAndPathsAreAligned(window);
         Assert.False(Visible(window, "HeadlineText"));
         var page = Named<Control>(window, "HealthPage");
-        Assert.Equal(["HeadlineWord"], page.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible && t.Classes.Contains("display")).Select(t => t.Name));
+        Assert.Equal("HeadlineWord", Assert.Single(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Classes.Contains("display")).Name);
         Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.FontSize > 13
             && !t.Classes.Contains("page-title") && !t.Classes.Contains("display") && !t.Classes.Contains("section-title"));
         Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "last run " + DateTimeOffset.Parse("2026-01-01T00:00:55Z", CultureInfo.InvariantCulture).ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture));   // the Services card reads the services view
