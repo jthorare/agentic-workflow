@@ -10,7 +10,7 @@ public sealed class MergeGateCiTests
         new(7, head, "oldmain", scopes, [new GateStep("build", verdict, "x")], verdict, A.At(1)) { Run = 3 };
 
     private static MergeFacts Facts(GateRecord? gate, string head = "h1") =>
-        new() { Pr = 7, Gate = gate, CurrentHead = head, CurrentMain = "newmain", CiGate = true };
+        new() { Pr = 7, Gate = gate, CurrentHead = head, CurrentMain = "newmain", CiGate = true, LiveMergeState = "CLEAN", LiveReviewDecision = "APPROVED" };
 
     private static string[] Failed(IReadOnlyList<MergeCheck> checks) => [.. checks.Where(c => !c.Ok).Select(c => c.Name)];
 
@@ -20,7 +20,7 @@ public sealed class MergeGateCiTests
         var checks = MergeGate.Evaluate(Facts(Record("h1", GateVerdict.Pass, "ci")));
 
         Assert.Empty(Failed(checks));
-        Assert.Equal(["gate", "gate-result", "head", "order", "draft"], checks.Select(c => c.Name), StringComparer.Ordinal);
+        Assert.Equal(["gate", "gate-result", "head", "merge-state", "review-decision", "order", "draft"], checks.Select(c => c.Name), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
