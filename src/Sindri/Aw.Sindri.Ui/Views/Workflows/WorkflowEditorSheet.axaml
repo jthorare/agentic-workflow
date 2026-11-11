@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:wf="using:Aw.Sindri.Ui.ViewModels.Workflows"
+             xmlns:api="using:Aw.Sindri.Ui.Api.Workflows"
              x:Class="Aw.Sindri.Ui.Views.Workflows.WorkflowEditorSheet"
              x:DataType="wf:WorkflowsPageViewModel">
   <!-- The workflow editor (#2258 PR 17 part 3a): the settings of the node selected on the graph, one input per field type, Save, and the reload prompt when the workflow changed elsewhere.
@@ -9,9 +10,6 @@
     <StackPanel Spacing="{StaticResource Space.MD}">
       <Border x:Name="EditorHeadingName" AutomationProperties.Name="{Binding EditorHeading}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body-strong" Text="{Binding EditorHeading}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-      </Border>
-      <Border x:Name="EditorNodeName" IsVisible="{Binding EditorNodeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding EditorNodeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <TextBlock Classes="caption subtle" Text="{Binding EditorNodeText}" AutomationProperties.AccessibilityView="Raw" />
       </Border>
       <Border x:Name="EditorNoFieldsName" IsVisible="{Binding HasNoFields}" AutomationProperties.Name="{Binding NoFieldsText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption quiet" Text="{Binding NoFieldsText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -30,8 +28,16 @@
           <DataTemplate x:DataType="wf:ConfigFieldViewModel">
             <StackPanel Spacing="2" Margin="0,0,0,8">
               <TextBlock Classes="caption subtle" Text="{Binding Caption}" AutomationProperties.AccessibilityView="Raw" />
-              <TextBox Name="EditorFieldText" IsVisible="{Binding IsSingleLine}" Text="{Binding Text, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
-              <CheckBox Name="EditorFieldCheck" IsVisible="{Binding IsBoolean}" IsChecked="{Binding IsOn, Mode=TwoWay}" Content="{Binding Name}" AutomationProperties.Name="{Binding Caption}" />
+              <ComboBox Name="EditorFieldPresets" IsVisible="{Binding HasPresets}" ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding Caption}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="api:WorkflowBlockChoice">
+                    <TextBlock Text="{Binding Label}" />
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+              <ToggleButton Name="EditorFieldAdvanced" IsVisible="{Binding HasAdvanced}" IsChecked="{Binding ShowAdvanced, Mode=TwoWay}" Content="{Binding AdvancedText}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding AdvancedText}" />
+              <TextBox Name="EditorFieldText" IsVisible="{Binding IsRawVisible}" Text="{Binding Text, Mode=TwoWay}" AutomationProperties.Name="{Binding Caption}" />
+              <CheckBox Name="EditorFieldCheck" IsVisible="{Binding IsBoolean}" IsChecked="{Binding IsOn, Mode=TwoWay}" Content="{Binding Caption}" AutomationProperties.Name="{Binding Caption}" />
               <TextBox Name="EditorFieldLines" IsVisible="{Binding IsMultiline}" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding Caption}" />
               <Border Name="EditorFieldError" IsVisible="{Binding HasError}" AutomationProperties.Name="{Binding ErrorText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                 <TextBlock Classes="caption" Text="{Binding ErrorText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

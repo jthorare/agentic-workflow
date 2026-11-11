@@ -28,11 +28,8 @@ internal sealed partial class WorkflowsPageViewModel
     public string NoFieldsText => Labels.WfEditorNoFields;
 #pragma warning restore CA1822, MA0041
 
-    /// <summary>The sheet's heading: the workflow and the revision the edits are sent on.</summary>
-    public string EditorHeading => Labels.WfEditorHeading(Runs.Title, Editor.BaseRevision);
-
-    /// <summary>The line naming the node whose settings are shown; empty when none is selected.</summary>
-    public string EditorNodeText { get; private set => Set(ref field, value); } = string.Empty;
+    /// <summary>The sheet's heading: the selected step and its kind, or the workflow's name when none is selected.</summary>
+    public string EditorHeading => Editor.NodeHeading.Length > 0 ? Editor.NodeHeading : Labels.WfEditorHeading(Runs.Title);
 
     /// <summary>True when the form has no fields.</summary>
     public bool HasNoFields => Editor.Fields.Count == 0;
@@ -56,7 +53,6 @@ internal sealed partial class WorkflowsPageViewModel
         (IsEditing, GraphEdit.SheetOpen) = (true, true);
         var (edit, slug) = (++_edits, Runs.Slug);
         var node = Runs.Graph?.SelectedId ?? string.Empty;
-        EditorNodeText = node.Length == 0 ? string.Empty : Labels.WfEditorNode(node);
         await Editor.Load(url, slug, cancellationToken).ConfigureAwait(true);
         if (edit != _edits || !IsEditing || !string.Equals(Editor.Slug, slug, StringComparison.Ordinal))
         {
@@ -122,8 +118,11 @@ internal sealed partial class WorkflowsPageViewModel
     {
         if (string.Equals(e.PropertyName, nameof(OpsEditor.BaseRevision), StringComparison.Ordinal))
         {
-            OnChanged(nameof(EditorHeading));
             OnChanged(nameof(CanSave));
+        }
+        else if (string.Equals(e.PropertyName, nameof(OpsEditor.NodeHeading), StringComparison.Ordinal))
+        {
+            OnChanged(nameof(EditorHeading));
         }
         else if (string.Equals(e.PropertyName, nameof(OpsEditor.Slug), StringComparison.Ordinal))
         {
