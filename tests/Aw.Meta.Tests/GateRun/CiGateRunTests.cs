@@ -186,4 +186,29 @@ public sealed class CiGateRunTests
         Assert.Equal(["types"], Failed(gate));
         Assert.Equal(["build", "types", "review", "merge-state"], gate.Steps.Select(s => s.Name), StringComparer.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_gh_error_with_no_output_is_an_error_not_a_base_with_no_required_checks()
+    {
+        await Script(string.Empty, checksExit: 1, checksError: "HTTP 401: Bad credentials (https://api.github.com/graphql)");
+
+        var result = await Service().Handle(new GateRunRequest(190, []), CancellationToken.None);
+
+        Assert.True(result.IsError);
+        Assert.False(string.Equals("AW-META-024", result.Error.Code, StringComparison.Ordinal));
+        Assert.Null((await _world.Gates.Latest(190, CancellationToken.None)).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_plain_output_row_with_no_bucket_fails_the_whole_read_and_records_nothing()
+    {
+        await Script(string.Empty, checksExit: 1, checksError: "unknown flag: --json");
+        _ = _world.Runner.When("gh pr checks 190 --required", _ => new CommandResult(0, "build\tpass\t5s\thttps://x/1\ntypes\n", string.Empty, TimedOut: false));
+
+        var result = await Service().Handle(new GateRunRequest(190, []), CancellationToken.None);
+
+        Assert.True(result.IsError);
+        Assert.False(string.Equals("AW-META-024", result.Error.Code, StringComparison.Ordinal));
+        Assert.Null((await _world.Gates.Latest(190, CancellationToken.None)).Value);
+    }
 }

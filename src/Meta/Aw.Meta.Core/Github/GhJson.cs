@@ -142,17 +142,14 @@ public static class GhJson
 
     /// <summary>Reads the plain output of `gh pr checks --required` (older gh has no --json): one line per check, "name&lt;tab&gt;bucket&lt;tab&gt;elapsed&lt;tab&gt;url".</summary>
     /// <param name="text">The output.</param>
-    /// <returns>The checks; the bucket stands in for the state.</returns>
-    public static IReadOnlyList<RequiredCheck> ChecksFromText(string text)
+    /// <returns>The checks; the bucket stands in for the state. Null when a line has no name or no bucket: a required check must not be dropped by a misread.</returns>
+    public static IReadOnlyList<RequiredCheck>? ChecksFromText(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
-        return
-        [
-            .. text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(line => line.Split('\t'))
-                .Where(parts => parts.Length >= 2 && parts[0].Length > 0)
-                .Select(parts => new RequiredCheck(parts[0].Trim(), parts[1].Trim(), parts[1].Trim())),
-        ];
+        var rows = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(line => line.Split('\t')).ToList();
+        return rows.Exists(parts => parts.Length < 2 || parts[0].Trim().Length == 0)
+            ? null
+            : [.. rows.Select(parts => new RequiredCheck(parts[0].Trim(), parts[1].Trim(), parts[1].Trim()))];
     }
 
     private static PrView View(JsonElement item) => new(

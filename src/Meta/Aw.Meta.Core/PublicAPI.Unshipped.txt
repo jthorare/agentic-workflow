@@ -2569,7 +2569,7 @@ static Aw.Meta.Core.Gate.CiGate.IsCiRecord(Aw.Meta.Core.Gate.GateRecord! gate) -
 static Aw.Meta.Core.Gate.CiGate.Overall(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Gate.GateStep!>! steps) -> Aw.Meta.Core.Gate.GateVerdict
 static Aw.Meta.Core.Gate.CiGate.Steps(Aw.Meta.Core.Github.PrCiState! pull, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>! checks) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Gate.GateStep!>!
 static Aw.Meta.Core.Github.GhJson.Checks(string! json) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>?
-static Aw.Meta.Core.Github.GhJson.ChecksFromText(string! text) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>!
+static Aw.Meta.Core.Github.GhJson.ChecksFromText(string! text) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>?
 static Aw.Meta.Core.Github.GhJson.CiView(string! json) -> Aw.Meta.Core.Github.PrCiState?
 static Aw.Meta.Core.Github.PrCiState.operator !=(Aw.Meta.Core.Github.PrCiState? left, Aw.Meta.Core.Github.PrCiState? right) -> bool
 static Aw.Meta.Core.Github.PrCiState.operator ==(Aw.Meta.Core.Github.PrCiState? left, Aw.Meta.Core.Github.PrCiState? right) -> bool
