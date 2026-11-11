@@ -1,8 +1,8 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Toolkits;
-using Aw.Sindri.Tests.BuildToolkit;
 using Aw.Sindri.Features.ListToolkitCalls;
 using Aw.Sindri.Testing.Toolkits;
+using Aw.Sindri.Tests.BuildToolkit;
 
 namespace Aw.Sindri.Tests.Toolkits;
 
