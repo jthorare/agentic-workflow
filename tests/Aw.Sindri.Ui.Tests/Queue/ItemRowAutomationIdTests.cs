@@ -16,8 +16,6 @@ public sealed class ItemRowAutomationIdTests
         new(new ItemSummaryView("ITM-01JN2", "Try the queue", "agentic-workflow", "done", Step: null, A.Noon.AddMinutes(-12), PrimaryAction: null, Actions: []), group, primaryAction: null, A.Noon);
 
     [Fact]
-    public void An_open_row_and_a_closed_row_of_one_item_get_different_ids()
-    {
+    public void An_open_row_and_a_closed_row_of_one_item_get_different_ids() =>
         Assert.Equal(("ItemRow.ITM-01JN2", "ItemRow.closed.ITM-01JN2"), (Row("running").AutomationId, Row("closed").AutomationId));
-    }
 }
