@@ -52,41 +52,25 @@ internal sealed class DirectoryHeavySlots(HeavyLockSettings settings, TimeProvid
 
         var deadline = clock.GetUtcNow() + timeout;
         var announced = false;
-        var lookedAgain = false;
         while (true)
         {
             // The cap and the meta reserve are read again on every pass, so a lowered cap or a raised reserve applies to a waiting job too (#2061).
             var slots = Slots();
-            var reserve = settings.CurrentReserve(slots.Length);
-            var taken = TryTakeAny(slots, reserve, holder);
-            if (taken.IsError)
+            var taken = TryTakeAny(slots, settings.CurrentReserve(slots.Length), holder, lookAgain: true);
+            if (taken.IsError || taken.Value is not null)
             {
-                return taken.Error;
+                return taken.IsError ? taken.Error : new HeavySlotTaken(taken.Value, string.Empty);
             }
-
-            if (taken.Value.Lease is { } lease)
-            {
-                return new HeavySlotTaken(lease, string.Empty);
-            }
-
-            // A slot given back on the second read: look once more right away, since another slot may be within the new cap and reserve.
-            if (taken.Value.GaveBack && !lookedAgain)
-            {
-                lookedAgain = true;
-                continue;
-            }
-
-            lookedAgain = false;
 
             var left = deadline - clock.GetUtcNow();
             if (left <= TimeSpan.Zero)
             {
-                return new HeavySlotTaken(Lease: null, Holders(slots));
+                return new HeavySlotTaken(Lease: null, HeavySlotHolders.Describe(Slots()));
             }
 
             if (!announced && waiting is not null)
             {
-                waiting.Report($"waiting for heavy-job lock ({Holders(slots)})");
+                waiting.Report($"waiting for heavy-job lock ({HeavySlotHolders.Describe(Slots())})");
                 announced = true;
             }
 
@@ -102,8 +86,9 @@ internal sealed class DirectoryHeavySlots(HeavyLockSettings settings, TimeProvid
     private string[] Slots() =>
         [.. Enumerable.Range(1, settings.CurrentSlots()).Select(k => k == 1 ? settings.Lock : string.Create(CultureInfo.InvariantCulture, $"{settings.Lock}.{k}"))];
 
-    // Slots 1 to <reserve> are meta's: a Sindri job is never meta, so it starts above them.
-    private Result<Pass> TryTakeAny(string[] slots, int reserve, string holder)
+    // Slots 1 to <reserve> are meta's: a Sindri job is never meta, so it starts above them. A slot given back on the second read
+    // means the cap or reserve just changed, so the slots are read again and tried once more right away.
+    private Result<HeavySlotLease?> TryTakeAny(string[] slots, int reserve, string holder, bool lookAgain)
     {
         for (var k = Math.Max(reserve, 0) + 1; k <= slots.Length; k++)
         {
@@ -121,20 +106,19 @@ internal sealed class DirectoryHeavySlots(HeavyLockSettings settings, TimeProvid
 
             if (!StillAllowed(k))
             {
-                return TryRemove(slot)
-                    ? new Pass(Lease: null, GaveBack: true)
-                    : SindriErrors.ServiceFailed.With(string.Create(CultureInfo.InvariantCulture, $"slot {k} is no longer allowed after the cap or reserve changed and couldn't be removed: it stays held until {slot} is removed by hand"));
+                if (!TryRemove(slot))
+                {
+                    return SindriErrors.ServiceFailed.With(string.Create(CultureInfo.InvariantCulture, $"slot {k} is no longer allowed after the cap or reserve changed and couldn't be removed: it stays held until {slot} is removed by hand"));
+                }
+
+                var again = Slots();
+                return lookAgain ? TryTakeAny(again, settings.CurrentReserve(again.Length), holder, lookAgain: false) : (HeavySlotLease?)null;
             }
 
-            if (WriteOwner(slot, holder) is { } refusal)
-            {
-                return SindriErrors.ServiceFailed.With(refusal);
-            }
-
-            return new Pass(new HeavySlotLease(slot), GaveBack: false);
+            return WriteOwner(slot, holder) is { } refusal ? SindriErrors.ServiceFailed.With(refusal) : new HeavySlotLease(slot);
         }
 
-        return new Pass(Lease: null, GaveBack: false);
+        return (HeavySlotLease?)null;
     }
 
     // Take, then check (#2726, as scripts/heavy.sh and config/lib/locks.sh do since #2718): the cap and the reserve are read again after the mkdir,
@@ -305,28 +289,4 @@ internal sealed class DirectoryHeavySlots(HeavyLockSettings settings, TimeProvid
             return false;
         }
     }
-
-    /// <summary>'slot 1/2 held by 4242 sindri context-map-build, slot 2/2 held by 77 heavy …': what the waiter and the refusal say.</summary>
-    private static string Holders(string[] slots) => string.Join(", ", slots.Select((slot, i) =>
-    {
-        var owner = Path.Combine(slot, OwnerFile);
-        var by = File.Exists(owner) ? SafeRead(owner) : "an unknown holder";
-        return string.Create(CultureInfo.InvariantCulture, $"slot {i + 1}/{slots.Length} held by {by}");
-    }));
-
-    private static string SafeRead(string owner)
-    {
-        try
-        {
-            var parts = File.ReadAllText(owner).Trim().Split(' ', 3);
-            return parts.Length == 3 ? $"{parts[0]} ({parts[2]}, since {parts[1]})" : string.Join(' ', parts);
-        }
-        catch (IOException)
-        {
-            return "an unknown holder";
-        }
-    }
-
-    /// <summary>One pass over the slots: the lease taken, or none; GaveBack when a slot was taken and given back on the second read.</summary>
-    private readonly record struct Pass(HeavySlotLease? Lease, bool GaveBack);
 }
