@@ -83,6 +83,12 @@ With several ready pull requests use `aw-meta queue-gate` (a train); the steps a
 
 `aw-meta owner` lists the queue. Ask the user each question (the lane's recommended default first), then `aw-meta owner-answer <q> --answer "<the owner's words>"`, and send the printed `OWNER ANSWER` text back to the asking lane. Your own question for the owner: `aw-meta owner-ask --text "..."`.
 
+## Toolkit defects
+
+Whenever you'd write a NOTE that says you did something by hand, or you hit an aw-meta or harness defect, run `aw-meta report-defect --code <code> --title <title> --what <what happened> --error <exact error line> [--path <path>]` instead of only logging it. Lanes send you a `DEFECT:` line for aw-meta and harness defects; run `report-defect` for them. Lanes still file their own product bugs and UX issues; this command is only for toolkit defects.
+
+The CLI dedups against open issues (and ones closed in the last 14 days), comments instead of filing a twin, files at most 3 new issues a UTC day, writes the NOTE and queues the owner FYI. Exit 1 means the cap held it back: the defect is in the log, and `aw-meta status` shows `issue cap hit`.
+
 ## Next steps
 
 - `/review`: when a lane asks for a review run on its PR

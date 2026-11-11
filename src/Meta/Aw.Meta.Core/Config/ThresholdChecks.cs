@@ -11,7 +11,7 @@ public static class ThresholdChecks
     public static string? Problem(TeamConfig team)
     {
         ArgumentNullException.ThrowIfNull(team);
-        var (resources, builders, heavy) = (team.Resources, team.Builders, team.Heavy);
+        var (resources, builders) = (team.Resources, team.Builders);
         return resources.DiskFloorGb < 0 ? Message("resources.diskFloorGb", "0 or more", resources.DiskFloorGb)
             : resources.MemFloorGb < 0 ? Message("resources.memFloorGb", "0 or more", resources.MemFloorGb)
             : resources.SwapHighPct is < 1 or > 100 ? Message("resources.swapHighPct", "1 to 100", resources.SwapHighPct)
@@ -20,12 +20,19 @@ public static class ThresholdChecks
             : team.Context.RecycleAt < 1 ? Message("context.recycleAt", "1 or more", team.Context.RecycleAt)
             : team.Usage.ResumeMarginSeconds < 0 ? Message("usage.resumeMarginSeconds", "0 or more", team.Usage.ResumeMarginSeconds)
             : team.Usage.ProbeMinutes < 1 ? Message("usage.probeMinutes", "1 or more", team.Usage.ProbeMinutes)
-            : heavy.Cap < 1 ? Message("heavy.cap", "1 or more", heavy.Cap)
-            : AgentAndRoutingProblem(team);
+            : HeavyAndDefectsProblem(team) ?? AgentAndRoutingProblem(team);
     }
 
     private static string? GateModeProblem(GateConfig gate) =>
         string.Equals(gate.Mode, GateConfig.LocalMode, StringComparison.Ordinal) || gate.IsCi ? null : $"gate.mode must be \"{GateConfig.LocalMode}\" or \"{GateConfig.CiMode}\", not \"{gate.Mode}\"";
+
+    private static string? HeavyAndDefectsProblem(TeamConfig team) =>
+        team.Heavy.Cap < 1 ? Message("heavy.cap", "1 or more", team.Heavy.Cap) : DefectsProblem(team.Defects);
+
+    private static string? DefectsProblem(DefectsConfig defects) =>
+        defects.DailyCap < 1 ? Message("defects.dailyCap", "1 or more", defects.DailyCap)
+            : string.IsNullOrWhiteSpace(defects.Repo) ? "defects.repo must not be blank"
+            : null;
 
     private static string? AgentAndRoutingProblem(TeamConfig team) => GateModeProblem(team.Gate) ?? AgentProblem(team.Agent) ?? RoutingChecks.Problem(team);
 
