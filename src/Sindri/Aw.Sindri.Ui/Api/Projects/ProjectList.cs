@@ -7,10 +7,12 @@ namespace Aw.Sindri.Ui.Api.Projects;
 /// <param name="Projects">The live cards.</param>
 /// <param name="Finished">The Done and Canceled cards.</param>
 /// <param name="Hidden">The cards the owner hid (filled with ?all=true).</param>
+/// <param name="EmptyCode">Why the page speaks of Linear: "linear-missing" or "linear-key-missing"; null otherwise. The app branches on this, never on the sentence.</param>
 internal sealed record ProjectList(
     string? Empty,
     string? Viewer,
     IReadOnlyList<ProjectFreshnessView> Freshness,
     IReadOnlyList<ProjectCardView> Projects,
     IReadOnlyList<ProjectCardView> Finished,
-    IReadOnlyList<ProjectCardView> Hidden);
+    IReadOnlyList<ProjectCardView> Hidden,
+    string? EmptyCode = null);

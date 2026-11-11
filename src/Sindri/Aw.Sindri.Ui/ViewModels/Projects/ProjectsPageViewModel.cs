@@ -237,7 +237,7 @@ internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposa
         FreshnessFailing = failing;
         Freshness = ProjectsLinear.Freshness(list);
         NamesOnly = list.Freshness.Any(f => string.Equals(f.Source, "context", StringComparison.Ordinal) && string.Equals(f.State, "failing", StringComparison.Ordinal));
-        (Sentence, ShowsConnect) = (ProjectsLinear.Sentence(list, _clock.GetUtcNow()), ProjectsLinear.OffersConnect(list.Empty));
+        (Sentence, ShowsConnect) = (ProjectsLinear.Sentence(list, _clock.GetUtcNow()), ProjectsLinear.OffersConnect(list));
         IsEmptyBlock = list.Projects.Count == 0 && list.Empty is not null;
         IsBanner = list.Projects.Count > 0 && list.Empty is not null;
 
