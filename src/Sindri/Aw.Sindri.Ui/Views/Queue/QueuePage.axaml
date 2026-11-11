@@ -74,7 +74,7 @@
     <Border x:Name="QueuePanel" Classes="panel" AutomationProperties.Name="{Binding Text.Work}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group"
             PointerEntered="OnPanelEntered" PointerExited="OnPanelExited">
       <StackPanel>
-        <Border Classes="phead">
+        <Border Classes="phead" IsVisible="{Binding Queue.ShowsColumns}">
           <Grid x:Name="QueueHeader">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" MinWidth="160" /><ColumnDefinition Width="150" /><ColumnDefinition Width="130" />
@@ -84,7 +84,7 @@
             <TextBlock Grid.Column="1" Classes="eyebrow" Text="{Binding Text.Items.ColumnRepo}" />
             <TextBlock Grid.Column="2" Classes="eyebrow" Text="{Binding Text.Items.ColumnState}" />
             <TextBlock Grid.Column="3" Classes="eyebrow" Text="{Binding Text.Items.ColumnStep}" />
-            <TextBlock Grid.Column="4" Classes="eyebrow" Text="{Binding Text.Items.ColumnSince}" />
+            <TextBlock Grid.Column="4" Classes="eyebrow" HorizontalAlignment="Right" TextAlignment="Right" Text="{Binding Text.Items.ColumnSince}" />
           </Grid>
         </Border>
 
@@ -94,9 +94,10 @@
           <Grid Classes="skrow" ColumnDefinitions="*,60"><Border Classes="skeleton" Width="420" /><Border Grid.Column="1" Classes="skeleton" Width="40" /></Grid>
         </StackPanel>
 
-        <StackPanel x:Name="QueueNothing" IsVisible="{Binding Queue.ShowsNothing}" Spacing="4" Margin="16,12">
-          <TextBlock Classes="body-strong" Text="{Binding Queue.NothingTitle}" AutomationProperties.Name="{Binding Queue.NothingTitle}" />
-          <TextBlock x:Name="QueueEmpty" Classes="caption quiet" Text="{Binding Queue.EmptyText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Queue.EmptyText}" />
+        <StackPanel x:Name="QueueNothing" IsVisible="{Binding Queue.ShowsNothing}" Orientation="Horizontal" Spacing="{StaticResource Space.XS}" Margin="{StaticResource Space.MD.Thickness}">
+          <TextBlock x:Name="QueueEmpty" Classes="body" Text="{Binding Queue.NothingText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Queue.NothingText}" />
+          <Button x:Name="QueueCreateLink" Classes="clickable" Content="{Binding Queue.CreateLinkText}" Click="OnCreate" Background="Transparent" BorderThickness="0" Padding="0"
+                  Foreground="{DynamicResource Brush.Primary}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Queue.CreateLinkText}" />
         </StackPanel>
         <StackPanel x:Name="QueueNoMatch" IsVisible="{Binding Queue.ShowsNoMatch}" Spacing="8" Margin="16,12">
           <TextBlock Classes="body-strong" Text="{Binding Queue.NoMatchTitle}" AutomationProperties.Name="{Binding Queue.NoMatchTitle}" />
@@ -126,11 +127,12 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <StackPanel x:Name="QueueClosed">
+        <StackPanel x:Name="QueueClosed" IsVisible="{Binding Queue.ShowsClosed}">
           <ToggleButton x:Name="QueueClosedToggle" Classes="group-head" IsChecked="{Binding Queue.IsClosedOpen, Mode=OneWay}" Click="OnClosedToggle" AutomationProperties.Name="{Binding Queue.ClosedHeader}">
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <TextBlock Classes="caption subtle" Text="{Binding Queue.ClosedArrow}" AutomationProperties.AccessibilityView="Raw" />
-              <TextBlock Classes="body-strong" Text="{Binding Queue.ClosedHeader}" />
+              <TextBlock Classes="caption subtle" Text="{Binding Queue.ClosedArrow}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+              <TextBlock Classes="body-strong" Text="{Binding Queue.ClosedLabel}" VerticalAlignment="Center" />
+              <TextBlock Classes="caption subtle" Text="{Binding Queue.ClosedCount}" VerticalAlignment="Center" />
             </StackPanel>
           </ToggleButton>
           <ItemsControl x:Name="QueueClosedRows" ItemsSource="{Binding Queue.ClosedRows}" IsVisible="{Binding Queue.IsClosedOpen}">
@@ -143,7 +145,7 @@
         </StackPanel>
       </StackPanel>
     </Border>
-    <TextBlock x:Name="QueueFooter" Classes="caption subtle" Text="{Binding Queue.FooterText}" AutomationProperties.Name="{Binding Queue.FooterText}" />
+    <TextBlock x:Name="QueueFooter" Classes="caption subtle" IsVisible="{Binding Queue.HasFooter}" Text="{Binding Queue.FooterText}" AutomationProperties.Name="{Binding Queue.FooterText}" />
     </StackPanel>
   </StackPanel>
 </UserControl>

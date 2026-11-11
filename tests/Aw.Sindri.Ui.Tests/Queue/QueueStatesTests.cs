@@ -38,16 +38,6 @@ public sealed class QueueStatesTests
     }
 
     [Fact]
-    public async Task An_empty_queue_shows_the_nothing_box_with_the_add_command()
-    {
-        var queue = await Queue([]);
-
-        Assert.True(queue.ShowsNothing);
-        Assert.False(queue.ShowsNoMatch);
-        Assert.Equal((Labels.NothingInQueue, Labels.ItemAddCommand), (queue.NothingTitle, queue.AddCommand));
-    }
-
-    [Fact]
     public async Task A_filter_that_matches_nothing_shows_no_items_match_and_clear_filter_empties_it()
     {
         var queue = await Queue([Item("ITM-1", "Try the queue")]);
@@ -90,12 +80,5 @@ public sealed class QueueStatesTests
 
         Assert.True(queue.IsStale);
         Assert.Equal(string.Empty, queue.RunningEmpty);
-    }
-
-    [Fact]
-    public async Task The_footer_says_up_to_date_or_how_far_behind()
-    {
-        Assert.Equal(Labels.QueueUpToDate(214), (await Queue([])).FooterText);
-        Assert.Equal(Labels.QueueBehind(8, 9), (await Queue([], new AsOfView(8, 9, A.Noon, Rebuilding: false, Stalled: false))).FooterText);
     }
 }

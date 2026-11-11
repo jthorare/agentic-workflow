@@ -48,6 +48,30 @@ public sealed class CodeRunnerTests : IDisposable
         Assert.Contains("boom", result.Error.Message, StringComparison.Ordinal);
     }
 
+    [Fact(Timeout = 60_000)]
+    public async Task Code_that_exits_before_writing_a_result_fails_the_node()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("Environment.Exit(0);\nreturn 1;");
+        var runner = new CodeRunnerProcess(BuiltRunner());
+
+        var result = await runner.Run(code.AssemblyPath!, "null", new CodeLimits(TimeSpan.FromSeconds(30), MemoryMb: 256), ct);
+
+        Assert.Equal("SND-CODE-004", result.Error.Code);
+    }
+
+    [Fact(Timeout = 60_000)]
+    public async Task What_the_code_writes_to_the_console_does_not_reach_the_result()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("Console.Write(\"noise\");\nreturn 1;");
+        var runner = new CodeRunnerProcess(BuiltRunner());
+
+        var result = await runner.Run(code.AssemblyPath!, "null", new CodeLimits(TimeSpan.FromSeconds(30), MemoryMb: 256), ct);
+
+        Assert.Equal("1", result.Value);
+    }
+
     // The build-order reference of Aw.Sindri.Tests builds the runner into artifacts/bin/Aw.Sindri.CodeRunner/<configuration>/.
     private static string[] BuiltRunner()
     {

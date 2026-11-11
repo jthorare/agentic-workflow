@@ -1,11 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
 
-// why: nothing in the product uses this type until the Code block (the next PR) registers it; the tests reach it through InternalsVisibleTo
-#pragma warning disable MA0182
 namespace Aw.Sindri.Infrastructure.Workflow.Code;
 
-/// <summary>Compiled assemblies on disk, keyed by the sha256 of the body and the compiler's reference set, so the same code compiles once.</summary>
+/// <summary>Compiled assemblies on disk, keyed by the sha256 of the body and the compiler's fingerprint, so the same code compiles once.</summary>
 /// <param name="compiler">Compiles a body that is not cached.</param>
 /// <param name="directory">The folder the assemblies live in.</param>
 internal sealed class CompiledCodeCache(ICodeCompiler compiler, string directory)
@@ -16,7 +14,7 @@ internal sealed class CompiledCodeCache(ICodeCompiler compiler, string directory
     public CachedCode Resolve(string body)
     {
         ArgumentNullException.ThrowIfNull(body);
-        var key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{compiler.ReferenceSet}\n{body}"))).ToLowerInvariant();
+        var key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{compiler.Fingerprint}\n{body}"))).ToLowerInvariant();
         var path = Path.Combine(directory, key + ".dll");
         if (File.Exists(path))
         {

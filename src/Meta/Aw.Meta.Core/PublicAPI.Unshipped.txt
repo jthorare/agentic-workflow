@@ -228,8 +228,6 @@ Aw.Meta.Core.Coordination.MergeAssessment.Ready.get -> bool
 Aw.Meta.Core.Coordination.MergeAssessment.Team.get -> Aw.Meta.Core.Config.TeamConfig!
 Aw.Meta.Core.Coordination.MergeAssessment.Team.init -> void
 Aw.Meta.Core.Coordination.MergeQueueReader
-Aw.Meta.Core.Coordination.MergeQueueReader.MergeQueueReader(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
-Aw.Meta.Core.Coordination.MergeQueueReader.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.QueuedPr!>!>!>
 Aw.Meta.Core.Coordination.MergeReadiness
 Aw.Meta.Core.Coordination.MergeReadiness.Assess(int pr, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Coordination.MergeAssessment!>!>
 Aw.Meta.Core.Coordination.MergeReadiness.MergeReadiness(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.ILogFiles! logs, Aw.Meta.Core.Ports.IMessageStore! messages) -> void
@@ -763,7 +761,6 @@ Aw.Meta.Core.Merge.MergeGate
 Aw.Meta.Core.Merge.QueueDrops
 Aw.Meta.Core.Merge.QueuedPr
 Aw.Meta.Core.Merge.QueuedPr.<Clone>$() -> Aw.Meta.Core.Merge.QueuedPr!
-Aw.Meta.Core.Merge.QueuedPr.Deconstruct(out int Pr, out string! From, out string! Gate) -> void
 Aw.Meta.Core.Merge.QueuedPr.Equals(Aw.Meta.Core.Merge.QueuedPr? other) -> bool
 Aw.Meta.Core.Merge.QueuedPr.From.get -> string!
 Aw.Meta.Core.Merge.QueuedPr.From.init -> void
@@ -771,7 +768,6 @@ Aw.Meta.Core.Merge.QueuedPr.Gate.get -> string!
 Aw.Meta.Core.Merge.QueuedPr.Gate.init -> void
 Aw.Meta.Core.Merge.QueuedPr.Pr.get -> int
 Aw.Meta.Core.Merge.QueuedPr.Pr.init -> void
-Aw.Meta.Core.Merge.QueuedPr.QueuedPr(int Pr, string! From, string! Gate) -> void
 Aw.Meta.Core.Messages.Classification
 Aw.Meta.Core.Messages.Classification.<Clone>$() -> Aw.Meta.Core.Messages.Classification!
 Aw.Meta.Core.Messages.Classification.Classification(Aw.Meta.Core.Messages.MessageKind Kind, int? Pr = null, string? Lane = null) -> void
@@ -1932,7 +1928,6 @@ static Aw.Meta.Core.Coordination.TrainCandidates.operator !=(Aw.Meta.Core.Coordi
 static Aw.Meta.Core.Coordination.TrainCandidates.operator ==(Aw.Meta.Core.Coordination.TrainCandidates? left, Aw.Meta.Core.Coordination.TrainCandidates? right) -> bool
 Aw.Meta.Core.Coordination.TrainSelection
 Aw.Meta.Core.Coordination.TrainSelection.Choose(System.Collections.Generic.IReadOnlyList<int>! named, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Coordination.TrainCandidates!>!>
-Aw.Meta.Core.Coordination.TrainSelection.TrainSelection(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.MergeQueueReader! queue) -> void
 Aw.Meta.Core.Coordination.GateStepRunner.Run(Aw.Meta.Core.Config.StepConfig! step, string! tree, string! log, int heavySlots, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Gate.GateStep!>!>
 const Aw.Meta.Core.Gate.GatePriority.LockTimeout = 75 -> int
 const Aw.Meta.Core.Gate.GatePriority.SessionSlots = "AW_SESSION_HEAVY_SLOTS" -> string!
@@ -2630,3 +2625,53 @@ Aw.Meta.Core.Coordination.MetaTranscriptResolver.Find(System.Threading.Cancellat
 Aw.Meta.Core.Coordination.MetaTranscriptResolver.MetaTranscriptResolver(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.ISessionDirectory! sessions, Aw.Meta.Core.Ports.ITranscriptLocator! locator) -> void
 Aw.Meta.Core.Ports.ITranscriptLocator
 Aw.Meta.Core.Ports.ITranscriptLocator.Find(Aw.Meta.Core.Ids.SessionId session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
+Aw.Meta.Core.Coordination.MergeQueueReader.MergeQueueReader(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IGateStore! gates, Aw.Meta.Core.Ports.IKeyValueStore! values, Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.IMetaConfig! config) -> void
+Aw.Meta.Core.Coordination.MergeQueueReader.Read(System.Threading.CancellationToken cancellationToken, bool withGithub = false) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.QueuedPr!>!>!>
+Aw.Meta.Core.Coordination.RepoCommands.QueueView(string! repo, int pr) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Github.MergeQueueView!>!>
+Aw.Meta.Core.Github.MergeQueueView
+Aw.Meta.Core.Github.MergeQueueView.<Clone>$() -> Aw.Meta.Core.Github.MergeQueueView!
+Aw.Meta.Core.Github.MergeQueueView.Deconstruct(out bool Enabled, out bool InQueue, out int? Position, out string? EntryState, out string? RemovedReason) -> void
+Aw.Meta.Core.Github.MergeQueueView.Enabled.get -> bool
+Aw.Meta.Core.Github.MergeQueueView.Enabled.init -> void
+Aw.Meta.Core.Github.MergeQueueView.EntryState.get -> string?
+Aw.Meta.Core.Github.MergeQueueView.EntryState.init -> void
+Aw.Meta.Core.Github.MergeQueueView.Equals(Aw.Meta.Core.Github.MergeQueueView? other) -> bool
+Aw.Meta.Core.Github.MergeQueueView.InQueue.get -> bool
+Aw.Meta.Core.Github.MergeQueueView.InQueue.init -> void
+Aw.Meta.Core.Github.MergeQueueView.MergeQueueView(bool Enabled, bool InQueue, int? Position, string? EntryState, string? RemovedReason) -> void
+Aw.Meta.Core.Github.MergeQueueView.Position.get -> int?
+Aw.Meta.Core.Github.MergeQueueView.Position.init -> void
+Aw.Meta.Core.Github.MergeQueueView.RemovedReason.get -> string?
+Aw.Meta.Core.Github.MergeQueueView.RemovedReason.init -> void
+Aw.Meta.Core.Merge.MergeQueued
+Aw.Meta.Core.Merge.QueuedMerge
+Aw.Meta.Core.Merge.QueuedMerge.<Clone>$() -> Aw.Meta.Core.Merge.QueuedMerge!
+Aw.Meta.Core.Merge.QueuedMerge.At.get -> System.DateTimeOffset
+Aw.Meta.Core.Merge.QueuedMerge.At.init -> void
+Aw.Meta.Core.Merge.QueuedMerge.Deconstruct(out int Pr, out System.DateTimeOffset At, out string! Head) -> void
+Aw.Meta.Core.Merge.QueuedMerge.Equals(Aw.Meta.Core.Merge.QueuedMerge? other) -> bool
+Aw.Meta.Core.Merge.QueuedMerge.Head.get -> string!
+Aw.Meta.Core.Merge.QueuedMerge.Head.init -> void
+Aw.Meta.Core.Merge.QueuedMerge.Pr.get -> int
+Aw.Meta.Core.Merge.QueuedMerge.Pr.init -> void
+Aw.Meta.Core.Merge.QueuedMerge.QueuedMerge(int Pr, System.DateTimeOffset At, string! Head) -> void
+Aw.Meta.Core.Merge.QueuedPr.Deconstruct(out int Pr, out string! From, out string! Gate, out string? Github) -> void
+Aw.Meta.Core.Merge.QueuedPr.Github.get -> string?
+Aw.Meta.Core.Merge.QueuedPr.Github.init -> void
+Aw.Meta.Core.Merge.QueuedPr.QueuedPr(int Pr, string! From, string! Gate, string? Github = null) -> void
+const Aw.Meta.Core.KvKeys.MergeQueued = "merge.queued" -> string!
+override Aw.Meta.Core.Github.MergeQueueView.Equals(object? obj) -> bool
+override Aw.Meta.Core.Github.MergeQueueView.GetHashCode() -> int
+override Aw.Meta.Core.Github.MergeQueueView.ToString() -> string!
+override Aw.Meta.Core.Merge.QueuedMerge.Equals(object? obj) -> bool
+override Aw.Meta.Core.Merge.QueuedMerge.GetHashCode() -> int
+override Aw.Meta.Core.Merge.QueuedMerge.ToString() -> string!
+static Aw.Meta.Core.Github.GhJson.QueueView(string! json) -> Aw.Meta.Core.Github.MergeQueueView?
+static Aw.Meta.Core.Github.MergeQueueView.operator !=(Aw.Meta.Core.Github.MergeQueueView? left, Aw.Meta.Core.Github.MergeQueueView? right) -> bool
+static Aw.Meta.Core.Github.MergeQueueView.operator ==(Aw.Meta.Core.Github.MergeQueueView? left, Aw.Meta.Core.Github.MergeQueueView? right) -> bool
+static Aw.Meta.Core.Merge.MergeQueued.Parse(string? stored) -> System.Collections.Generic.IReadOnlyDictionary<int, Aw.Meta.Core.Merge.QueuedMerge!>!
+static Aw.Meta.Core.Merge.MergeQueued.With(string? stored, Aw.Meta.Core.Merge.QueuedMerge! entry) -> string!
+static Aw.Meta.Core.Merge.MergeQueued.Without(string? stored, int pr) -> string!
+static Aw.Meta.Core.Merge.QueuedMerge.operator !=(Aw.Meta.Core.Merge.QueuedMerge? left, Aw.Meta.Core.Merge.QueuedMerge? right) -> bool
+static Aw.Meta.Core.Merge.QueuedMerge.operator ==(Aw.Meta.Core.Merge.QueuedMerge? left, Aw.Meta.Core.Merge.QueuedMerge? right) -> bool
+Aw.Meta.Core.Coordination.TrainSelection.TrainSelection(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.MergeQueueReader! queue, Aw.Meta.Core.Ports.IKeyValueStore! values) -> void

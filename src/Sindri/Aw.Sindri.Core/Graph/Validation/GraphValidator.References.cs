@@ -18,7 +18,7 @@ public sealed partial class GraphValidator
     private void References(NodeScope scope, List<GraphFinding> found)
     {
         var seen = new HashSet<(string, string)>();
-        foreach (var (field, text) in Strings(scope.Node.Config, "config"))
+        foreach (var (field, text) in Strings(scope.Node.Config, "config").Where(f => !IsCodeBody(scope.Node, f.Field)))
         {
             if (Template.HasUnclosed(IsCondition(scope.Node, field) ? StringLiteral.Replace(text, "\"\"") : text))
             {

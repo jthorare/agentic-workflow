@@ -47,6 +47,10 @@ public sealed class McpSurfaceTests
         "Aw.Sindri.Features.BuildToolkit.BuildToolkitRequest",
         "Aw.Sindri.Features.StartToolkit.StartToolkitRequest",
         "Aw.Sindri.Features.StopToolkit.StopToolkitRequest",
+        // why: agent parity (G8, agent-first PR 16c): agents make (a job: the generator), pause and resume the toolkits they write (toolkit_create, toolkit_pause, toolkit_resume); a pause keeps the process inside its sandbox and only refuses calls
+        "Aw.Sindri.Features.CreateToolkit.CreateToolkitRequest",
+        "Aw.Sindri.Features.PauseToolkit.PauseToolkitRequest",
+        "Aw.Sindri.Features.ResumeToolkit.ResumeToolkitRequest",
         // why: agent parity (G8, agent-first PR 14): resources_purge reaches PurgeResources, Desk class with SessionOk; the service still refuses an active owner or a run in flight (SND-RES-003)
         "Aw.Sindri.Features.PurgeResources.PurgeResourcesRequest",   // internal to Features (no public API rows for one slice), so named by its full name
         // why: todo spec D2 (Ph1b): a todo list can't change anything outside Sindri, so agents get the six todo writes (add, change, done, reopen, remove, restore), all request class; MarkTodoRequest carries the last four

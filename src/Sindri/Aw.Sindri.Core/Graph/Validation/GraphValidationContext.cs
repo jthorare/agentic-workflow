@@ -16,4 +16,7 @@ public sealed record GraphValidationContext(
 {
     /// <summary>Gets the box's cap on a sandbox's memory and wall clock, or null to skip the check (PR 14).</summary>
     public ResourceBoxCap? BoxCap { get; init; }
+
+    /// <summary>Compiles a 'code' node's body and lists its errors, or null to skip the check (agent-first PR 9c).</summary>
+    public Func<string, IReadOnlyList<CodeProblem>>? CodeCheck { get; init; }
 }

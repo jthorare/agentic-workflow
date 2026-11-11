@@ -2,6 +2,8 @@
 
 Group: AI. Type: `prompt`. Ask the model a question and get JSON back, checked against a schema you write.
 
+Use it for a question the model can answer from what the run already holds. For a question only a person can answer, use `ask_owner`.
+
 ## Config
 
 | Field | Type | Needed | Meaning |

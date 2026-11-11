@@ -14,8 +14,7 @@
 // Exit codes: 0 done (only the first slice's test is red), 1 refused or a check failed, 2 usage error.
 
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { Journal, ScaffoldError, UsageError, trapSignals, list, lower, parseArgs, withHeavyLock } from "./lib/common.mjs";
+import { Journal, ScaffoldError, UsageError, trapSignals, list, lower, parseArgs, withHeavyLock, isMain } from "./lib/common.mjs";
 import * as P from "./lib/package-templates.mjs";
 import * as R from "./lib/repo.mjs";
 import { build, checkScope, declarePublicApi, depsClean, expectOnlyRed, formatClean, mustPass, noStrayChanges, strayChanges } from "./lib/checks.mjs";
@@ -261,6 +260,6 @@ export async function main(argv, { log = (line) => console.error(line), out = (l
   }
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   process.exitCode = await main(process.argv.slice(2));
 }
