@@ -4,19 +4,26 @@
        Tokens.axaml as DynamicResource, so the text scale (TextScale.Apply, Settings) restyles every text at once. Avalonia
        has no text-transform: eyebrow text is written in capitals by the app's labels. A Styles file, because a
        ResourceDictionary can't hold styles. -->
+  <Style Selector="TextBlock.display">
+    <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
+    <Setter Property="FontSize" Value="{DynamicResource Type.Display.Size}" />
+    <Setter Property="LineHeight" Value="{DynamicResource Type.Display.LineHeight}" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.Display.Weight}" />
+    <Setter Property="LetterSpacing" Value="-0.8" />
+  </Style>
   <Style Selector="TextBlock.page-title">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.PageTitle.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.PageTitle.LineHeight}" />
     <Setter Property="FontWeight" Value="{DynamicResource Type.PageTitle.Weight}" />
-    <Setter Property="LetterSpacing" Value="-0.3" />
+    <Setter Property="LetterSpacing" Value="-0.24" />
   </Style>
   <Style Selector="TextBlock.section-title">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.SectionTitle.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.SectionTitle.LineHeight}" />
     <Setter Property="FontWeight" Value="{DynamicResource Type.SectionTitle.Weight}" />
-    <Setter Property="LetterSpacing" Value="-0.15" />
+    <Setter Property="LetterSpacing" Value="0" />
   </Style>
   <Style Selector="TextBlock.detail-title">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
@@ -44,7 +51,7 @@
     <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Caption.LineHeight}" />
     <Setter Property="FontWeight" Value="{DynamicResource Type.Caption.Weight}" />
-    <Setter Property="LetterSpacing" Value="0" />
+    <Setter Property="LetterSpacing" Value="-0.24" />
   </Style>
   <Style Selector="TextBlock.eyebrow">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />

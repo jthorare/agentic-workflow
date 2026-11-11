@@ -7,15 +7,15 @@
   <Styles.Resources>
     <!-- Buttons: secondary is Surface1 with a Hairline border; the accent (primary) hover darkens (§11.1: white on
          PrimaryHover is 2.87:1, on PrimaryHoverFill 5.5:1). -->
-    <SolidColorBrush x:Key="ButtonBackground" Color="#0f1011" />
-    <SolidColorBrush x:Key="ButtonBorderBrush" Color="#23252a" />
+    <SolidColorBrush x:Key="ButtonBackground" Color="#141517" />
+    <SolidColorBrush x:Key="ButtonBorderBrush" Color="#0fffffff" />
     <SolidColorBrush x:Key="ButtonForeground" Color="#f7f8f8" />
-    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#141516" />
+    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#1c1d20" />
     <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#34343a" />
     <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#f7f8f8" />
     <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#18191a" />
     <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#f7f8f8" />
-    <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#62666d" />
+    <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#74787f" />
     <SolidColorBrush x:Key="AccentButtonBackground" Color="#5e6ad2" />
     <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#535fc6" />
     <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#4c57be" />
@@ -24,10 +24,10 @@
     <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#ffffff" />
     <!-- Combo boxes: Fluent fills a focused one from the palette accent (solid purple); it keeps the Surface1 face and Ink text, and the
          focus ring is the cue. -->
-    <SolidColorBrush x:Key="ComboBoxBackground" Color="#0f1011" />
-    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#141516" />
+    <SolidColorBrush x:Key="ComboBoxBackground" Color="#141517" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#1c1d20" />
     <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#18191a" />
-    <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="#0f1011" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="#141517" />
     <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="#34343a" />
     <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#f7f8f8" />
     <SolidColorBrush x:Key="ComboBoxForegroundFocusedPressed" Color="#f7f8f8" />
@@ -38,7 +38,7 @@
     <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
     <!-- Tooltips on Surface3. -->
     <SolidColorBrush x:Key="ToolTipBackground" Color="#18191a" />
-    <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#23252a" />
+    <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#0fffffff" />
     <SolidColorBrush x:Key="ToolTipForeground" Color="#f7f8f8" />
   </Styles.Resources>
 
@@ -46,13 +46,13 @@
     <FluentTheme.Palettes>
       <ColorPaletteResources x:Key="Dark"
                              Accent="#5e6ad2"
-                             RegionColor="#010102"
-                             AltHigh="#010102" AltMedium="#0f1011" AltLow="#141516"
-                             BaseHigh="#f7f8f8" BaseMediumHigh="#d0d6e0" BaseMedium="#8a8f98" BaseLow="#23252a"
-                             ChromeHigh="#3e3e44" ChromeMedium="#18191a" ChromeLow="#141516" ChromeMediumLow="#0f1011"
+                             RegionColor="#08090a"
+                             AltHigh="#08090a" AltMedium="#141517" AltLow="#1c1d20"
+                             BaseHigh="#f7f8f8" BaseMediumHigh="#d0d6e0" BaseMedium="#8a8f98" BaseLow="#0fffffff"
+                             ChromeHigh="#3e3e44" ChromeMedium="#18191a" ChromeLow="#1c1d20" ChromeMediumLow="#141517"
                              ChromeAltLow="#d0d6e0" ChromeGray="#8a8f98"
-                             ChromeDisabledHigh="#23252a" ChromeDisabledLow="#62666d"
-                             ListLow="#141516" ListMedium="#18191a"
+                             ChromeDisabledHigh="#0fffffff" ChromeDisabledLow="#74787f"
+                             ListLow="#1c1d20" ListMedium="#18191a"
                              ErrorText="#eb5757" />
     </FluentTheme.Palettes>
   </FluentTheme>
