@@ -7,7 +7,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 
 /// <summary>
 /// A launch's session home (sandbox spec §3.1, rev 7): <c lang="text">&lt;real home&gt;-sessions/&lt;launch&gt;/</c>, 0700, beside the real home. It holds the links the CLI and the hooks follow
-/// (<c lang="text">launches</c>, <c lang="text">approved</c>), the control.json that names Sindri, the launch's one-read secret file and an empty <c lang="text">gh-config/</c>. The launcher makes it
+/// (<c lang="text">launches</c>), the control.json that names Sindri, the launch's one-read secret file and an empty <c lang="text">gh-config/</c>. The launcher makes it
 /// before the sandbox and removes it at run close and in the crash sweep. The Step's policy file and MCP config are written into it by their own writers.
 /// </summary>
 internal static class SessionHome
@@ -49,7 +49,6 @@ internal static class SessionHome
         }
 
         _ = Directory.CreateSymbolicLink($"{path}/launches", $"{sindriHome}/launches");
-        _ = Directory.CreateSymbolicLink($"{path}/approved", $"{sindriHome}/approved");
         OwnerOnly.EnsureDirectory($"{path}/{GhConfigName}");
         OwnerOnly.WriteAtomically(SecretFile(path), System.Text.Encoding.UTF8.GetBytes(secret));
         if (control is null)
