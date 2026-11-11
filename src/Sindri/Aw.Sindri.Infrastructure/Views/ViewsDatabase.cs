@@ -74,7 +74,7 @@ internal sealed class ViewsDatabase : IDisposable
     /// Stops <paramref name="connection"/> from checkpointing the WAL when it closes. The projector opens and closes a writer per page, and it is
     /// usually the only connection, so each close copied the whole log into views.db and synced it: about a second of a 100k catch-up's
     /// 100 pages, three under disk load (#2890). The log is still checkpointed as it grows (wal_autocheckpoint, inside a commit) and
-    /// truncated to journal_size_limit; a log left at exit is replayed on the next open.
+    /// truncated to journal_size_limit; a log left at exit stays valid and is read on the next open.
     /// </summary>
     /// <param name="connection">An open read-write connection to views.db.</param>
     public static void NoCheckpointOnClose(Microsoft.Data.Sqlite.SqliteConnection connection)
