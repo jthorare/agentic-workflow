@@ -75,4 +75,63 @@ public sealed partial class QueueWorkTableWidthTests : FrameHost
         Assert.Equal(HorizontalAlignment.Right, head.HorizontalAlignment);
         Assert.Equal(HorizontalAlignment.Right, value.HorizontalAlignment);
     });
+
+    // qa (#2551): FooterText changed without telling the view, so a footer that came with a LATER read never showed.
+    [Fact]
+    public Task The_footer_shows_when_a_later_read_finds_the_views_behind() => OnUi(async () =>
+    {
+        var (window, shell) = await Connected(s => !s.Queue.IsLoading, width: 1280, height: 800);
+        shell.GoTo(PageId.Work);
+        Settle(window);
+        Assert.False(Visible(window, "QueueFooter"));
+
+        var behind = BehindJson(GoldenFiles.SpecShaped("queue", "fixture"));
+        Server.QueueView = new RouteAnswer(System.Net.HttpStatusCode.OK, behind);
+        await shell.Queue.Refresh(shell.Queue.LastUrl!, Token);
+        Settle(window);
+
+        Assert.True(Visible(window, "QueueFooter"), "the footer never showed");
+        Assert.StartsWith("Updated ", Named<TextBlock>(window, "QueueFooter").Text, StringComparison.Ordinal);
+    });
+
+    private static string BehindJson(string queueJson)
+    {
+        var node = System.Text.Json.Nodes.JsonNode.Parse(queueJson)!;   // why: the golden is a JSON document
+        var asOf = node["asOf"]!.AsObject();
+        asOf["cursor"] = 1;
+        asOf["ledgerHead"] = 5;
+        asOf["projectedAt"] = "2026-10-11T11:55:00.0000000Z";
+        return node.ToJsonString();
+    }
+
+    // The Create item link under the empty line does what the button at the top right does.
+    [Fact]
+    public Task The_create_item_link_in_the_empty_state_opens_the_form() => OnUi(async () =>
+    {
+        Server.QueueView = new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.SpecShaped("queue", "empty"));
+        var (window, shell) = await Connected(s => !s.Queue.IsLoading, width: 1280, height: 800);
+        shell.GoTo(PageId.Work);
+        Settle(window);
+
+        Named<Button>(window, "QueueCreateLink").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Assert.True(shell.Create.IsOpen);
+    });
+
+    // The header follows a refresh that brings the first repo: the page replans when ShowsRepoColumn changes.
+    [Fact]
+    public Task The_header_gains_the_repo_column_when_a_later_read_brings_a_repo() => OnUi(async () =>
+    {
+        Server.QueueView = NoRepos();
+        var (window, header) = await Table(1280);
+        Assert.DoesNotContain("Repo", Shown(header), StringComparer.Ordinal);
+
+        Server.QueueView = new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.SpecShaped("queue", "fixture"));
+        var shell = (Aw.Sindri.Ui.ViewModels.Shell.ShellViewModel)window.DataContext!;
+        await shell.Queue.Refresh(shell.Queue.LastUrl!, Token);
+        Settle(window);
+
+        Assert.Contains("Repo", Shown(header), StringComparer.Ordinal);
+    });
 }

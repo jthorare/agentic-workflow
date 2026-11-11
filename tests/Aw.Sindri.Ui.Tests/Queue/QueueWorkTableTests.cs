@@ -24,7 +24,19 @@ public sealed class QueueWorkTableTests
     private static ItemSummaryView Item(string id, string? repo) =>
         new(id, "Title " + id, repo, "new", Step: null, A.Noon.AddMinutes(-5), PrimaryAction: null, Actions: []);
 
-    private async Task<QueueViewModel> Queue(IReadOnlyList<ItemSummaryView> queued, AsOfView? asOf = null, int closed = 0)
+    public QueueWorkTableTests()
+    {
+        _clock.SetLocalTimeZone(TimeZoneInfo.Utc);   // the footer says a local time: pin it
+    }
+
+    private int _closed;
+    private string? _closedRepo;
+
+    private static ItemSummaryView ItemWithAction(string id) =>
+        new(id, "Title " + id, Repo: null, State: "new", Step: null, Since: A.Noon.AddMinutes(-5), PrimaryAction: "CloseItem:done", Actions: ["CloseItem:done"]);
+
+    // What the server serves from now on: the queue, and as many closed items as _closed says.
+    private void Serve(IReadOnlyList<ItemSummaryView> queued, AsOfView? asOf = null)
     {
         var view = new QueueView(
             [new QueueGroupView("queued", queued, "Nothing is queued.")],
@@ -34,11 +46,17 @@ public sealed class QueueWorkTableTests
         _server.ListItemsBody = state =>
         {
             var items = string.Equals(state, "done", StringComparison.Ordinal)
-                ? Enumerable.Range(1, closed).Select(i => new ItemSummaryView(string.Create(CultureInfo.InvariantCulture, $"ITM-C{i}"), string.Create(CultureInfo.InvariantCulture, $"Closed {i}"), Repo: null, State: "done", Step: null, Since: A.Noon.AddHours(-i), PrimaryAction: null, Actions: [])).ToArray()
+                ? Enumerable.Range(1, _closed).Select(i => new ItemSummaryView(string.Create(CultureInfo.InvariantCulture, $"ITM-C{i}"), string.Create(CultureInfo.InvariantCulture, $"Closed {i}"), Repo: _closedRepo, State: "done", Step: null, Since: A.Noon.AddHours(-i), PrimaryAction: null, Actions: [])).ToArray()
                 : [];
             var list = new ItemListView(items, Empty: null, new AsOfView(1, 1, A.Noon, Rebuilding: false, Stalled: false));
             return new RouteAnswer(HttpStatusCode.OK, JsonSerializer.Serialize(list, SindriApiClient.Json));
         };
+    }
+
+    private async Task<QueueViewModel> Queue(IReadOnlyList<ItemSummaryView> queued, AsOfView? asOf = null, int closed = 0, string? closedRepo = null)
+    {
+        (_closed, _closedRepo) = (closed, closedRepo);
+        Serve(queued, asOf);
         var catalog = new CatalogViewModel(new FakeClipboard(), _clock);
         catalog.Show(_api, _server, (await _server.Commands(_api, Token)).Value);
         var queue = new QueueViewModel(_server, catalog, _clock);
@@ -135,5 +153,47 @@ public sealed class QueueWorkTableTests
 
         var tighter = PageLayout.Widths(700, hasRepo: true, hasAction: true);   // 770 > 700: Repo goes too
         Assert.Equal((0d, 0d, true), (tighter[1], tighter[3], tighter[4] > 0));
+    }
+
+    [Fact]
+    public async Task The_footer_re_words_its_age_as_time_passes_without_a_refresh()
+    {
+        var queue = await Queue([Item("ITM-1", repo: "alpha")], new AsOfView(336, 337, A.Noon.AddMinutes(-5), Rebuilding: false, Stalled: false));
+        Assert.Equal("Updated 11:55, 5 min ago", queue.FooterText);
+
+        _clock.Advance(TimeSpan.FromMinutes(5));
+
+        Assert.Equal("Updated 11:55, 10 min ago", queue.FooterText);
+    }
+
+    [Fact]
+    public async Task The_closed_list_is_read_again_when_the_queue_changes_but_its_size_does_not()
+    {
+        var queue = await Queue([Item("ITM-1", repo: "alpha")], closed: 1);
+        Assert.Equal("1", queue.ClosedCount);
+
+        _closed = 2;   // ITM-1 was closed (it is no longer queued) while ITM-2 was added: the queue is still one item
+        Serve([Item("ITM-2", repo: "alpha")]);
+        await queue.Refresh(_api, Token);
+
+        Assert.Equal(("2", true), (queue.ClosedCount, queue.ShowsClosed));
+    }
+
+    [Fact]
+    public async Task The_action_column_shows_only_while_a_shown_row_has_an_action()
+    {
+        Assert.True((await Queue([ItemWithAction("ITM-1")])).ShowsActionColumn);
+        Assert.False((await Queue([Item("ITM-2", repo: "alpha")])).ShowsActionColumn);
+    }
+
+    [Fact]
+    public async Task A_closed_row_with_a_repo_brings_the_repo_column_back_while_the_fold_is_open()
+    {
+        var queue = await Queue([Item("ITM-1", repo: null)], closed: 1, closedRepo: "alpha");
+        Assert.False(queue.ShowsRepoColumn);
+
+        await queue.ToggleClosed(_api, Token);
+
+        Assert.True(queue.ShowsRepoColumn);
     }
 }

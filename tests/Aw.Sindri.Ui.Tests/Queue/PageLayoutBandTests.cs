@@ -38,7 +38,6 @@ public sealed class PageLayoutBandTests
     [InlineData(1120)]
     [InlineData(1000)]
     [InlineData(760)]
-    [InlineData(500)]
     public async Task The_columns_beside_the_title_leave_it_160_px_whenever_the_table_is_wide_enough_for_them(double width) => await OnUi(() =>
     {
         var grid = SixColumns();
@@ -46,8 +45,20 @@ public sealed class PageLayoutBandTests
         PageLayout.Apply(grid, new PageLayout.ColumnPlan(width, HasRepo: true, HasAction: true));
 
         var fixedWidth = grid.ColumnDefinitions.Skip(1).Sum(c => c.Width.Value);
-        Assert.True(width - fixedWidth >= 160 || width < 620, string.Create(CultureInfo.InvariantCulture, $"{width}: the title column gets {width - fixedWidth} px"));
+        Assert.True(width - fixedWidth >= 160, string.Create(CultureInfo.InvariantCulture, $"{width}: the title column gets {width - fixedWidth} px"));
         Assert.Equal(Avalonia.Controls.GridUnitType.Star, grid.ColumnDefinitions[0].Width.GridUnitType);
+        return true;
+    });
+
+    [Fact]
+    public async Task A_table_under_620_px_drops_stage_and_repo_and_narrows_the_action_but_keeps_age() => await OnUi(() =>
+    {
+        var grid = SixColumns();
+
+        PageLayout.Apply(grid, new PageLayout.ColumnPlan(500, HasRepo: true, HasAction: true));
+
+        Assert.Equal([true, false, true, false, true, true], grid.Children.Select(c => c.IsVisible));
+        Assert.Equal(170, grid.ColumnDefinitions[5].Width.Value);
         return true;
     });
 
