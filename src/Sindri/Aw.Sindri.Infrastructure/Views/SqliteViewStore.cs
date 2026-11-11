@@ -11,8 +11,9 @@ namespace Aw.Sindri.Infrastructure.Views;
 /// <summary>
 /// The projector's writer over views.db (API spec §2.3): one transaction per page and a savepoint per event, so a
 /// failing event (an Error or a throw) is rolled back alone, the events before it commit and the stall is recorded.
-/// The savepoint opens at the event's first write: an event no projection writes for has nothing to roll back (#2890).
-/// A page runs its statements through one <see cref="SqliteStatementCache"/>, so each is parsed once per page (#2890).
+/// A page holds the rows it reads and writes in a <see cref="PageRows"/> and writes each changed row once at its end; an event's
+/// savepoint opens only when a Where query needs its staged rows in views.db mid-page (#2890). The page's statements run through one
+/// <see cref="SqliteStatementCache"/>, so each is parsed once per page (#2890).
 /// </summary>
 internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOptions options) : IViewStore
 {
@@ -45,17 +46,30 @@ internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOpti
 
             var state = read.Value;
             var unreadable = new UnreadableRows();
+            var rows = new PageRows(session);
             foreach (var recorded in page)
             {
-                var failure = await FoldOne(session, recorded, projections, unreadable, cancellationToken).ConfigureAwait(false);
+                var failure = await FoldOne(rows, recorded, projections, unreadable, cancellationToken).ConfigureAwait(false);
                 if (failure is not null)
                 {
+                    var folded = await rows.Finish(cancellationToken).ConfigureAwait(false);
+                    if (folded.IsError)
+                    {
+                        return folded.Error;
+                    }
+
                     var stalled = state with { StalledAt = recorded.Sequence, StalledType = recorded.Envelope.Type };
                     var kept = await WriteState(session, stalled, cancellationToken).ConfigureAwait(false);
                     return kept.IsError ? kept.Error : new PageApplied(stalled, new ViewStall(recorded.Sequence, recorded.Envelope.Type, failure.Code, failure.Message), unreadable.Count);
                 }
 
                 state = state with { Cursor = recorded.Sequence, ProjectedAt = at, StalledAt = null, StalledType = null };
+            }
+
+            var finished = await rows.Finish(cancellationToken).ConfigureAwait(false);
+            if (finished.IsError)
+            {
+                return finished.Error;
             }
 
             var written = await WriteState(session, state, cancellationToken).ConfigureAwait(false);
@@ -88,12 +102,14 @@ internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOpti
         }, cancellationToken);
 
     /// <summary>Folds one event under a savepoint opened at its first write; returns the failure (an Error or a throw) after rolling the event back, else null.</summary>
-    private async ValueTask<Error?> FoldOne(SqliteStatementCache session, LedgerEvent recorded, IReadOnlyList<IProjection> projections, UnreadableRows unreadable,
+    private async ValueTask<Error?> FoldOne(PageRows page, LedgerEvent recorded, IReadOnlyList<IProjection> projections, UnreadableRows unreadable,
         CancellationToken cancellationToken)
     {
+        var session = page.Session;
         var transaction = session.Transaction ?? throw new InvalidOperationException("The projector folds inside its page transaction");
         var savepoint = new EventSavepoint(transaction, Savepoint);
-        var rows = new SqliteViewRows(session, recorded.Sequence, options, unreadable, savepoint);
+        page.Begin(savepoint);
+        var rows = new SqliteViewRows(session, recorded.Sequence, options, unreadable, page);
         Error? failure = null;
         foreach (var projection in projections.Where(p => p.Handles(recorded.Envelope.Type)))
         {
@@ -110,11 +126,13 @@ internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOpti
             if (failure is not null)
             {
                 await savepoint.Rollback(cancellationToken).ConfigureAwait(false);
+                page.Drop();
                 return failure;
             }
         }
 
         await savepoint.Release(cancellationToken).ConfigureAwait(false);
+        page.Keep();
         return null;
     }
 

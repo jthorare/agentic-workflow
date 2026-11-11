@@ -3,8 +3,8 @@ using Microsoft.Data.Sqlite;
 namespace Aw.Sindri.Infrastructure.Views;
 
 /// <summary>
-/// The savepoint around one event's writes, opened at the first write (#2890): most events (a 'fleet.changed') write nothing, and an event
-/// that only reads has nothing to roll back, so it costs no SAVEPOINT and RELEASE.
+/// The savepoint around one event's writes to views.db (#2890). An event's rows are staged in its <see cref="PageRows"/>, so it opens only
+/// when a Where query needs them written mid-page; most events never reach views.db before the page ends and cost no SAVEPOINT and RELEASE.
 /// </summary>
 /// <param name="transaction">The page transaction.</param>
 /// <param name="name">The savepoint's name.</param>
