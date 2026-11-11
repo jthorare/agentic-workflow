@@ -44,7 +44,7 @@ internal static class Wcag
         {
             var fg = int.Parse(f.AsSpan(2 + (i * 2), 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
             var bg = int.Parse(back.AsSpan(back.Length - 6 + (i * 2), 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-            return ((int)Math.Round((fg * alpha) + (bg * (1 - alpha)))).ToString("x2", CultureInfo.InvariantCulture);
+            return ((int)Math.Round((fg * alpha) + (bg * (1 - alpha)), MidpointRounding.AwayFromZero)).ToString("x2", CultureInfo.InvariantCulture);
         }));
         return "#" + blended;
     }
