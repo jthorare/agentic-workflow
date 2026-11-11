@@ -173,4 +173,124 @@ public sealed class ConnectionTileRenameTests
 
         Assert.True(tile.CanSaveRename);
     }
+
+    private static int Renames(FakeSindriApi server) => server.ConnectionCallLog.Count(c => c.StartsWith("rename", StringComparison.Ordinal));
+
+    [Fact]
+    public async Task When_the_connection_goes_away_the_open_field_closes()
+    {
+        var tile = await Connected();
+        tile.StartRename();
+        tile.RenameText = "half-typed";
+
+        tile.Bind(null);
+
+        Assert.Equal((false, false), (tile.IsRenaming, tile.CanSaveRename));
+    }
+
+    [Fact]
+    public async Task When_the_tile_rebinds_to_another_connection_the_open_field_closes_and_nothing_is_renamed()
+    {
+        var tile = await Connected();
+        tile.StartRename();
+        tile.RenameText = "half-typed";
+
+        tile.Bind(new ConnectionRowViewModel(FakeSindriApi.ConnectionRow("linear:home"), _f.Actions(), _f.Clock));
+        await tile.Rename(Token);
+
+        Assert.Equal((false, 0), (tile.IsRenaming, Renames(_f.Server)));
+    }
+
+    [Fact]
+    public async Task A_read_that_binds_the_same_connection_again_keeps_the_field_and_the_typed_text()
+    {
+        var tile = await Connected();
+        tile.StartRename();
+        tile.RenameText = "half-typed";
+
+        tile.Bind(new ConnectionRowViewModel(FakeSindriApi.ConnectionRow("linear:work"), _f.Actions(), _f.Clock));
+
+        Assert.Equal((true, "half-typed"), (tile.IsRenaming, tile.RenameText));
+    }
+
+    [Fact]
+    public async Task Save_pressed_twice_before_the_answer_sends_one_rename()
+    {
+        var tile = await Connected();
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _f.Server.RenameGate = gate;
+        tile.StartRename();
+        tile.RenameText = "home";
+
+        var first = tile.Rename(Token);
+        await tile.Rename(Token);
+        gate.SetResult();
+        await first;
+
+        Assert.Equal(1, Renames(_f.Server));
+    }
+
+    [Fact]
+    public async Task Saving_the_label_with_spaces_around_it_sends_nothing()
+    {
+        var tile = await Connected();
+        tile.StartRename();
+        tile.RenameText = "  work  ";
+
+        await tile.Rename(Token);
+
+        Assert.Equal((false, 0), (tile.IsRenaming, Renames(_f.Server)));
+    }
+
+    [Fact]
+    public async Task An_error_code_the_app_does_not_know_shows_one_fixed_sentence_with_none_of_the_server_text()
+    {
+        var tile = await Connected();
+        tile.StartRename();
+        tile.RenameText = "home";
+        _f.Server.ConnectionWriteError = new Error("SND-X-999", ErrorKind.Invalid, "boom at 10.0.0.7:9000 stack trace");
+
+        await tile.Rename(Token);
+
+        Assert.Equal((true, "Couldn't rename it. Try again."), (tile.IsRenaming, tile.RenameError));
+    }
+
+    [Fact]
+    public async Task A_call_that_throws_shows_the_fixed_sentence_keeps_the_field_and_lets_Save_try_again()
+    {
+        var tile = await Connected();
+        tile.StartRename();
+        tile.RenameText = "home";
+        _f.Server.RenameThrows = new HttpRequestException("connection reset 10.0.0.7");
+
+        await tile.Rename(Token);
+
+        Assert.Equal((true, "Couldn't rename it. Try again.", true), (tile.IsRenaming, tile.RenameError, tile.CanSaveRename));
+    }
+
+    [Fact]
+    public async Task The_tile_shows_the_new_name_from_the_answer_even_when_the_re_read_fails()
+    {
+        var tile = await Connected();
+        tile.StartRename();
+        tile.RenameText = "home";
+        _f.Server.NextConnectionListError = new Error("SND-X-001", ErrorKind.Invalid, "down");
+
+        await tile.Rename(Token);
+
+        Assert.Equal((false, "linear:home", "home"), (tile.IsRenaming, tile.ConnectionName, tile.Account));
+    }
+
+    [Fact]
+    public async Task A_case_only_change_the_server_calls_the_same_name_reads_as_a_plain_sentence()
+    {
+        var tile = await Connected();
+        tile.StartRename();
+        tile.RenameText = "Work";
+        _f.Server.ConnectionWriteError = new Error("SND-CLI-003", ErrorKind.Invalid, "the new name is the current one");
+
+        await tile.Rename(Token);
+
+        Assert.Equal((true, "That's already its name."), (tile.IsRenaming, tile.RenameError));
+    }
 }

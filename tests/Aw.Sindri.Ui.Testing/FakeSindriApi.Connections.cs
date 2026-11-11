@@ -25,6 +25,15 @@ internal sealed partial class FakeSindriApi
     /// <summary>When set, every connection write (add, test, sign-in, remove) answers this error.</summary>
     public Error? ConnectionWriteError { get; set; }
 
+    /// <summary>When set, the next ListConnections answers this error (once).</summary>
+    public Error? NextConnectionListError { get; set; }
+
+    /// <summary>When set, RenameConnection waits for it after it logged the call, so a test can press Save again meanwhile.</summary>
+    public TaskCompletionSource? RenameGate { get; set; }
+
+    /// <summary>When set, RenameConnection throws it, as a dropped transport would.</summary>
+    public Exception? RenameThrows { get; set; }
+
     /// <summary>The outcome of TestConnection per name; a name not here passes with no tools.</summary>
     public Dictionary<string, ConnectionTested> ConnectionTests { get; } = new(StringComparer.Ordinal);
 
@@ -92,7 +101,7 @@ internal sealed partial class FakeSindriApi
     {
         Record("list");
         var gate = ConnectionListGate;
-        var answer = NotReceived<ConnectionList>(api) ?? new ConnectionList([.. Snapshot()]);   // the rows as they are at call time, even when the answer is held back
+        var answer = NotReceived<ConnectionList>(api) ?? (Result<ConnectionList>?)TakeListError() ?? new ConnectionList([.. Snapshot()]);   // the rows as they are at call time, even when the answer is held back
         if (gate is not null)
         {
             await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -213,37 +222,62 @@ internal sealed partial class FakeSindriApi
         }
     }
 
-    public Task<Result<ConnectionRenamed>> RenameConnection(Uri api, string name, RenameConnectionBody body, CancellationToken cancellationToken)
+    private Error? TakeListError()
+    {
+        lock (_gate)
+        {
+            var error = NextConnectionListError;
+            NextConnectionListError = null;
+            return error;
+        }
+    }
+
+    public async Task<Result<ConnectionRenamed>> RenameConnection(Uri api, string name, RenameConnectionBody body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
         Record("rename " + name + " " + body.Label);
+        if (RenameThrows is { } thrown)
+        {
+            throw thrown;
+        }
+
+        if (RenameGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return RenameNow(api, name, body);
+    }
+
+    private Result<ConnectionRenamed> RenameNow(Uri api, string name, RenameConnectionBody body)
+    {
         if (NotReceived<ConnectionRenamed>(api) is { } unanswered)
         {
-            return Task.FromResult(unanswered);
+            return unanswered;
         }
 
         lock (_gate)
         {
             if (ConnectionWriteError is { } error)
             {
-                return Task.FromResult<Result<ConnectionRenamed>>(error);
+                return error;
             }
 
             if (!_connections.TryGetValue(name, out var found))
             {
-                return Task.FromResult<Result<ConnectionRenamed>>(NoConnection(name));
+                return NoConnection(name);
             }
 
             var service = name[..name.IndexOf(':', StringComparison.Ordinal)];
             var renamed = service + ":" + body.Label;
             if (_connections.ContainsKey(renamed))
             {
-                return Task.FromResult<Result<ConnectionRenamed>>(new Error("SND-CONN-010", ErrorKind.Conflict, $"a connection named {renamed} already exists"));
+                return new Error("SND-CONN-010", ErrorKind.Conflict, $"a connection named {renamed} already exists");
             }
 
             _ = _connections.Remove(name);
             _connections[renamed] = found with { Name = renamed };
-            return Task.FromResult<Result<ConnectionRenamed>>(new ConnectionRenamed(renamed, name, found.HasSecret));
+            return new ConnectionRenamed(renamed, name, found.HasSecret);
         }
     }
 
