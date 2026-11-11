@@ -56,6 +56,7 @@ public sealed class SystemHeadlineToneTests : FrameHost
 
         Assert.True(box.Frame.Near(box.InsideX, box.InsideY, Tone("ErrorSoft")), box.Frame.Describe(box.InsideX, box.InsideY));
         Assert.True(box.Frame.Near(box.EdgeX, box.EdgeY, Tone("Error"), tolerance: 24), box.Frame.Describe(box.EdgeX, box.EdgeY));
+        GlyphSits24In(window);
     });
 
     [Fact]
