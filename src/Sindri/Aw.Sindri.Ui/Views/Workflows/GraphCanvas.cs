@@ -39,6 +39,7 @@ internal sealed partial class GraphCanvas : Control
     private WorkflowGraphViewModel? _watched;
     private Point? _panFrom;
     private Point _panStart;
+    private bool _fitPending;   // a workflow just opened and the person has not moved the view: fit it to the canvas
 
     static GraphCanvas()
     {
@@ -102,6 +103,7 @@ internal sealed partial class GraphCanvas : Control
     public GraphCanvas()
     {
         ActualThemeVariantChanged += (_, _) => InvalidateVisual();   // the brushes are looked up while drawing, so a theme switch needs a new pass
+        SizeChanged += (_, _) => FitIfPending();
     }
 
     /// <inheritdoc/>
@@ -128,6 +130,7 @@ internal sealed partial class GraphCanvas : Control
         }
         else
         {
+            _fitPending = false;
             _panFrom = at;
             _panStart = Pan;
             e.Pointer.Capture(this);
@@ -168,6 +171,7 @@ internal sealed partial class GraphCanvas : Control
         }
 
         // Zoom about the pointer: the world point under it stays under it.
+        _fitPending = false;
         var at = e.GetPosition(this);
         var world = ToWorld(at);
         Zoom *= Math.Pow(ZoomStep, e.Delta.Y);
@@ -225,6 +229,7 @@ internal sealed partial class GraphCanvas : Control
         {
             Zoom = 1;
             Pan = _defaultPan;
+            _fitPending = true;
         }
 
         _watched = graph;
@@ -232,7 +237,30 @@ internal sealed partial class GraphCanvas : Control
 
         AutomationProperties.SetName(this, graph?.Name ?? string.Empty);
         (ControlAutomationPeer.FromElement(this) as GraphCanvasAutomationPeer)?.Refresh();
+        FitIfPending();
         InvalidateVisual();
+    }
+
+    // A graph wider or taller than the canvas is shrunk (never below the minimum zoom) so every card shows; one that fits keeps the default view (#2668).
+    private void FitIfPending()
+    {
+        if (!_fitPending || Graph is not { Nodes.Count: > 0 } graph || Bounds.Width <= 0 || Bounds.Height <= 0)
+        {
+            return;
+        }
+
+        var world = graph.Nodes.Select(WorldRect).Aggregate(static (a, b) => a.Union(b));
+        var room = new Size(Math.Max(1, Bounds.Width - (2 * ViewMargin)), Math.Max(1, Bounds.Height - (2 * ViewMargin)));
+        var zoom = Math.Min(1, Math.Min(room.Width / world.Width, room.Height / world.Height));
+        if (zoom >= 1)
+        {
+            Zoom = 1;
+            Pan = _defaultPan;
+            return;
+        }
+
+        Zoom = zoom;
+        Pan = new Point(ViewMargin - (world.X * Zoom), ViewMargin - (world.Y * Zoom));
     }
 
     private void OnGraphProperty(object? sender, PropertyChangedEventArgs e)

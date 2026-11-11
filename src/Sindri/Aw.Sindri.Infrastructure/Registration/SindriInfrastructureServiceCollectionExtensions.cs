@@ -147,7 +147,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IGraphSeenStore, SqliteSeenStore>()      // what 'only_new' nodes have passed on (agent-first PR 9): workflow_seen in ledger.db
             .AddSingleton<IGraphHttpPort>(static sp => new GraphHttpClient(GraphHttpHandler.Create(), ct => GraphHttpClient.HostsOf(sp.GetRequiredService<IApprovedProfile>(), ct)))   // the 'http' block's client: only 'workflow.http.hosts'
             .AddSingleton<ICodeCompiler, CodeCompiler>().AddSingleton<ICodeCheck, CodeChecker>()   // the 'code' block's Roslyn compiler (agent-first PR 9c)
-            .AddSingleton(static sp => new CompiledCodeCache(sp.GetRequiredService<ICodeCompiler>(), Path.Combine(sp.GetRequiredService<SindriSettings>().Home, "code-cache")))   // compiled assemblies by sha256 of the code and the reference set
+            .AddSingleton(static sp => new CompiledCodeCache(sp.GetRequiredService<ICodeCompiler>(), Path.Combine(sp.GetRequiredService<SindriSettings>().Home, "code-cache"), sp.GetRequiredService<TimeProvider>()))   // compiled assemblies by sha256 of the code and the reference set
             .AddSingleton<ICodeRunPort>(sp => new SandboxedCodeRunner(
                 sp.GetRequiredService<CompiledCodeCache>(), sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<ISandbox>(),
                 () => BoxHostFacts.Read(environment, sp.GetRequiredService<SindriSettings>().Home, sp.GetRequiredService<ISandboxMachine>()),
