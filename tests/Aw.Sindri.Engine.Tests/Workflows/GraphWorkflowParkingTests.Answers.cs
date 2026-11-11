@@ -58,8 +58,7 @@ public sealed partial class GraphWorkflowParkingTests
         await WaitUntilAsked(rig);
         await WaitUntilTimerStarted(rig, started.RunId.Value);
 
-        await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
-        var run = await rig.Final(started.RunId);
+        var run = await rig.Cancel(started.RunId);
         var nodes = await rig.NodeStatuses(started.RunId);
 
         Assert.Equal(WorkflowRunStatus.Cancelled, run.Status);
@@ -100,8 +99,7 @@ public sealed partial class GraphWorkflowParkingTests
 
         var second = await Refused(handle, new GraphAnswerInput("ask", Text: null, Choice: "no", "session:second"));
         var kept = await AskOutput(rig, started.RunId);
-        await handle.CancelAsync();
-        _ = await rig.Final(started.RunId);   // why: wait for the cancel to finish, so the rig does not stop its worker with a workflow task still in flight; the rig's own time-skipping server dies with it (issue 2574)
+        _ = await rig.Cancel(started.RunId);   // why: wait for the cancel to finish, so the rig does not stop its worker with a workflow task still in flight; the rig's own time-skipping server dies with it (issue 2574)
 
         Assert.Contains("not waiting", second.InnerException!.Message, StringComparison.Ordinal);
         Assert.Equal(("yes", "session:first"), kept);
@@ -119,8 +117,7 @@ public sealed partial class GraphWorkflowParkingTests
         var late = await Refused(handle, new GraphAnswerInput("ask", Text: null, Choice: "yes", "owner"));
         var kept = await AskOutput(rig, started.RunId);
         var nodes = await rig.NodeStatuses(started.RunId);
-        await handle.CancelAsync();
-        _ = await rig.Final(started.RunId);   // why: wait for the cancel to finish, so the rig does not stop its worker with a workflow task still in flight; the rig's own time-skipping server dies with it (issue 2574)
+        _ = await rig.Cancel(started.RunId);   // why: wait for the cancel to finish, so the rig does not stop its worker with a workflow task still in flight; the rig's own time-skipping server dies with it (issue 2574)
 
         Assert.Contains("not waiting", late.InnerException!.Message, StringComparison.Ordinal);
         Assert.Equal(("no", "timeout"), kept);

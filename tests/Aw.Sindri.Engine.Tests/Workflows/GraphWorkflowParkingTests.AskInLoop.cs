@@ -60,8 +60,7 @@ public sealed partial class GraphWorkflowParkingTests
         using var limit = Limit();
         _ = await Answer(rig.Client.GetWorkflowHandle(first.BatchWorkflow!), new GraphAnswerInput("ask", Text: null, "yes", "human:test") { Item = 1 }, limit.Token);
         _ = await NthQuestion(rig, 2);
-        await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
-        _ = await rig.Final(started.RunId);
+        _ = await rig.Cancel(started.RunId);
 
         Assert.Contains("not waiting", refused.InnerException!.Message, StringComparison.Ordinal);
     }
