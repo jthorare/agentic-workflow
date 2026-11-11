@@ -58,7 +58,7 @@ internal sealed partial class CreateToolkitService(IToolkitStore store, IToolkit
 
         if (ToolNames.GeneratorName(request.Name) is null)
         {
-            return SindriErrors.ToolkitNameInvalid.With($"'{request.Name}' can't be a new toolkit: the generator needs 3 to 31 letters and digits once the '-' are dropped, not Common, Shared, Utils or Helpers, and each word after the first must follow a word of 2 or more characters ('x-ray' would come back as 'xray'). Try a name like 'x-rays' -> 'xrays' or 'github-triage'.");
+            return SindriErrors.ToolkitNameInvalid.With($"'{request.Name}' can't be a new toolkit: the generator needs 3 to 31 letters and digits once the '-' are dropped, not Common, Shared, Utils or Helpers, and each word after the first must follow a word of 2 or more characters ('x-ray' would come back as 'xray'). Try 'xrays' instead of 'x-rays', or a name like 'github-triage'.");
         }
 
         var named = ToolNames.For(request.Name, request.Tool);

@@ -106,6 +106,21 @@ public sealed class CliToolkitVerbsTests : IDisposable
     }
 
     [Fact]
+    public async Task Create_of_an_existing_name_follows_the_job_to_its_SND_TK_012_and_exits_1_like_every_failed_job()
+    {
+        using var rig = new JobRig();
+        var api = new JobApi().Ok("POST", "/sindri/toolkits", JobRig.Body(JobRig.Started));
+        var verbs = new ToolkitVerbs(JobRig.Client(api), rig.Output(), rig.Follower(api));
+        var run = Task.Run(() => verbs.Run(["toolkit", "create", "notes", "--tool", "add_note"], rig.Interrupted, rig.Again), Token);
+        await api.Until(() => api.Streams == 1);
+
+        await api.Frame(11, "job.finished", JobRig.Finished("failed", "A toolkit with that name exists already: 'notes'", "SND-TK-012"));
+
+        Assert.Equal(1, await JobRig.Finished(run));
+        Assert.EndsWith("failed: A toolkit with that name exists already: 'notes' SND-TK-012\n", rig.Out.ToString().ReplaceLineEndings("\n"), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Build_posts_the_name_to_the_build_route_and_with_detach_prints_the_job()
     {
         var api = new RoutedApi().OnRaw("/sindri/toolkits/build", HttpStatusCode.OK, Started);
