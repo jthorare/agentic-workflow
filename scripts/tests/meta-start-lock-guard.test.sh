@@ -106,7 +106,7 @@ check "the live holder's pid file is still in the guard" "$([ -e "$G3/$V_PID" ] 
 # --- case 4: an old empty guard with a dead owner is cleared and the lock taken over (#2613) ---
 L4="$WORK/d.lock"; G4="$L4.takeover"
 ln -s "$(dead_pid)" "$L4"
-mkdir "$G4"; touch -d '5 minutes ago' "$G4"
+mkdir "$G4"; touch -d '5 minutes ago' "$G4" 2> /dev/null || touch -t "$(date -v-5M +%Y%m%d%H%M 2> /dev/null)" "$G4"
 ( start_lock="$L4"; lane_pid=$$; lane=x; . "$MSL"; take_over_dead x; take_over_dead x ) 2> /dev/null
 check "an old empty guard does not block the takeover: the lock is gone after two calls" "$([ -L "$L4" ] && echo kept || echo unlinked)" "unlinked"
 
