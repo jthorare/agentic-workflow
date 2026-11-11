@@ -39,8 +39,14 @@ internal sealed partial class NeedsYouPage : UserControl
     /// <returns>True when focus moved to the row, or was already in it.</returns>
     internal bool FocusRow(string rowId)
     {
-        var row = NeedsYouGroups.GetVisualDescendants().OfType<NeedsYouInboxRow>()
+        NeedsYouInboxRow? Drawn() => NeedsYouGroups.GetVisualDescendants().OfType<NeedsYouInboxRow>()
             .FirstOrDefault(r => r.IsEffectivelyVisible && string.Equals(r.RowId, rowId, StringComparison.Ordinal));
+        var row = Drawn();
+        if (row is null && NeedsYouGroups.ScrollToRow(r => r is NeedsYouRowViewModel vm && string.Equals(vm.Id, rowId, StringComparison.Ordinal)))
+        {
+            row = Drawn();   // only the rows in view are built: a row out of view is built by scrolling to it
+        }
+
         if (row is null)
         {
             return false;

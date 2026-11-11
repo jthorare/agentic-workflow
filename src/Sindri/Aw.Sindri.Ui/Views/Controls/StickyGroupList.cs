@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Automation;
@@ -13,12 +14,12 @@ namespace Aw.Sindri.Ui.Views.Controls;
 
 /// <summary>
 /// A scrolling list of groups under sticky headers (Needs-you spec §2): each group is a header and its rows, and while a group's
-/// rows are in view its header stays at the top, pushed out by the next group's header as it arrives. The groups' rows are bound
-/// live, so a row that comes or goes changes nothing else; the groups themselves are kept across a re-read, so a row that stays
-/// keeps its controls and focus. Nothing is measured on every layout pass: the sticky header follows the scroll, and a group
-/// change, never its own move.
+/// rows are in view its header stays at the top, pushed out by the next group's header as it arrives. The groups' headers and rows
+/// are laid out as ONE flat list in a virtualizing panel (#2776), so only the rows in view are built, however many groups and rows
+/// there are. The flat list is patched in place when a group or a row comes or goes, so a row that stays keeps its controls and
+/// focus. The sticky header follows the scroll and the layout: it is the header of the group of the first row in view.
 /// </summary>
-internal sealed class StickyGroupList : UserControl
+internal sealed partial class StickyGroupList : UserControl
 {
     /// <summary>The groups, each an <see cref="IRowGroup"/>.</summary>
     public static readonly StyledProperty<IEnumerable?> ItemsSourceProperty = AvaloniaProperty.Register<StickyGroupList, IEnumerable?>(nameof(ItemsSource));
@@ -30,16 +31,22 @@ internal sealed class StickyGroupList : UserControl
     public static readonly StyledProperty<IDataTemplate?> ItemTemplateProperty = AvaloniaProperty.Register<StickyGroupList, IDataTemplate?>(nameof(ItemTemplate));
 
     private readonly ScrollViewer _scroll = new() { HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled };
-    private readonly StackPanel _stack = new();
+    private readonly ItemsControl _items = new();
     private readonly ContentControl _sticky = new() { VerticalAlignment = VerticalAlignment.Top };
     private readonly TranslateTransform _push = new();
-    private readonly Dictionary<object, Block> _blocks = new(ReferenceEqualityComparer.Instance);
-    private readonly List<object> _order = [];
+    private readonly ObservableCollection<object> _flat = [];
+    private readonly List<object> _order = [];                       // the groups, in order
+    private readonly List<object> _groupOf = [];                     // for each flat index, the group it belongs to
+    private readonly Dictionary<object, int> _headerAt = new(ReferenceEqualityComparer.Instance);   // a group's header's flat index
+    private readonly Dictionary<object, INotifyCollectionChanged> _watchedRows = new(ReferenceEqualityComparer.Instance);
     private INotifyCollectionChanged? _watched;
 
     public StickyGroupList()
     {
-        _scroll.Content = _stack;
+        _items.ItemsPanel = new FuncTemplate<Panel?>(() => new VirtualizingStackPanel());
+        _items.ItemTemplate = new FlatTemplate(this);
+        _items.ItemsSource = _flat;
+        _scroll.Content = _items;
         _sticky.RenderTransform = _push;
         _sticky.Classes.Add("sticky-header");
         AutomationProperties.SetAccessibilityView(_sticky, AccessibilityView.Raw);   // the real header, below it, is what is read
@@ -78,23 +85,43 @@ internal sealed class StickyGroupList : UserControl
     /// <param name="row">A row of the list.</param>
     internal static void EnsureVisible(Control row) => row.FindAncestorOfType<StickyGroupList>()?.Reveal(row);
 
+    /// <summary>Scrolls the first row the test accepts into view and lays it out, so it is built when this returns true (a row out of view has no control until then).</summary>
+    /// <param name="isRow">True for the wanted row (not a group).</param>
+    /// <returns>True when a row matched and the list scrolled to it.</returns>
+    internal bool ScrollToRow(Func<object, bool> isRow)
+    {
+        ArgumentNullException.ThrowIfNull(isRow);
+        for (var i = 0; i < _flat.Count; i++)
+        {
+            if (_flat[i] is not IRowGroup && isRow(_flat[i]))
+            {
+                _items.ScrollIntoView(i);
+                _scroll.UpdateLayout();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // The row's top clears the header height, its bottom the viewport's: the focus's own bring-into-view lines the row up with the viewport's top, under the header.
+    // Positions are read against the scroll viewer, so they are the same whatever the virtualizing panel does with its own coordinates.
     private void Reveal(Control row)
     {
-        if (row.TranslatePoint(default, _stack) is not { } at)
+        if (row.TranslatePoint(default, _scroll) is not { } at)
         {
             return;
         }
 
-        var header = _order.Count > 0 ? _blocks[_order[0]].Header.Bounds.Height : 0;
+        var header = HeaderHeight(Realized());
         var offset = _scroll.Offset.Y;
-        if (at.Y < offset + header)
+        if (at.Y < header)
         {
-            ScrollTo(Math.Max(0, at.Y - header));
+            ScrollTo(Math.Max(0, offset + at.Y - header));
         }
-        else if (at.Y + row.Bounds.Height > offset + _scroll.Viewport.Height)
+        else if (at.Y + row.Bounds.Height > _scroll.Viewport.Height)
         {
-            ScrollTo(at.Y + row.Bounds.Height - _scroll.Viewport.Height);
+            ScrollTo(offset + at.Y + row.Bounds.Height - _scroll.Viewport.Height);
         }
     }
 
@@ -114,12 +141,26 @@ internal sealed class StickyGroupList : UserControl
         else if (change.Property == HeaderTemplateProperty || change.Property == ItemTemplateProperty)
         {
             _sticky.ContentTemplate = HeaderTemplate;
-            foreach (var block in _blocks.Values)
-            {
-                block.Apply(HeaderTemplate, ItemTemplate);
-            }
+            _items.ItemTemplate = new FlatTemplate(this);   // a new template instance makes the realized rows draw again
         }
     }
+
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        LayoutUpdated += OnLayoutUpdated;
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        LayoutUpdated -= OnLayoutUpdated;
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    // The panel builds the rows of a new offset during layout, so the header that sticks is worked out again after it.
+    private void OnLayoutUpdated(object? sender, EventArgs e) => FollowScroll();
 
     private void Watch(IEnumerable? source)
     {
@@ -130,100 +171,68 @@ internal sealed class StickyGroupList : UserControl
 
     private void OnGroupsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Sync();
 
-    // Keeps the block of every group that stays, drops the ones that went, builds the new, and puts them in the groups' order.
+    private void OnRowsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        Rebuild();
+        FollowScroll();
+    }
+
+    // Follows the rows of every group that stays, drops the ones that went, and lays the headers and rows out again in the groups' order.
     private void Sync()
     {
         var groups = ItemsSource?.Cast<object>().Where(g => g is IRowGroup).ToList() ?? [];
-        foreach (var gone in _blocks.Keys.Where(k => !groups.Contains(k, ReferenceEqualityComparer.Instance)).ToList())
+        foreach (var gone in _watchedRows.Keys.Where(k => !groups.Contains(k, ReferenceEqualityComparer.Instance)).ToList())
         {
-            _ = _stack.Children.Remove(_blocks[gone].Root);
-            _ = _blocks.Remove(gone);
+            _watchedRows[gone].CollectionChanged -= OnRowsChanged;
+            _ = _watchedRows.Remove(gone);
         }
 
-        foreach (var group in groups.Where(g => !_blocks.ContainsKey(g)))
+        foreach (var group in groups.Where(g => !_watchedRows.ContainsKey(g)))
         {
-            var block = new Block(group, ((IRowGroup)group).Items);
-            block.Apply(HeaderTemplate, ItemTemplate);
-            _blocks[group] = block;
+            if (((IRowGroup)group).Items is INotifyCollectionChanged live)
+            {
+                live.CollectionChanged += OnRowsChanged;
+                _watchedRows[group] = live;
+            }
         }
 
         _order.Clear();
         _order.AddRange(groups);
-        for (var i = 0; i < groups.Count; i++)
-        {
-            var root = _blocks[groups[i]].Root;
-            var at = _stack.Children.IndexOf(root);
-            if (at < 0)
-            {
-                _stack.Children.Insert(i, root);
-            }
-            else if (at != i)
-            {
-                _stack.Children.Move(at, i);
-            }
-        }
-
+        Rebuild();
         FollowScroll();
     }
 
-    // The header that sticks is the last one whose block has reached the top; the next block's header pushes it out as it arrives.
-    private void FollowScroll()
+    // The flat list is the headers and rows in order; it is patched, so the controls of what stays are kept.
+    private void Rebuild()
     {
-        var offset = _scroll.Offset.Y;
-        if (_order.Count == 0 || offset <= 0.5)
+        var target = new List<object>();
+        _groupOf.Clear();
+        _headerAt.Clear();
+        foreach (var group in _order)
         {
-            ShowSticky(group: null, push: 0);
-            return;
-        }
-
-        var active = 0;
-        for (var i = 0; i < _order.Count; i++)
-        {
-            if (_blocks[_order[i]].Root.Bounds.Top <= offset + 0.5)
+            _headerAt[group] = target.Count;
+            target.Add(group);
+            _groupOf.Add(group);
+            foreach (var row in ((IRowGroup)group).Items.Cast<object>())
             {
-                active = i;
+                target.Add(row);
+                _groupOf.Add(group);
             }
         }
 
-        var height = _blocks[_order[active]].Header.Bounds.Height;
-        var next = active + 1 < _order.Count ? _blocks[_order[active + 1]].Root.Bounds.Top : double.PositiveInfinity;
-        ShowSticky(_order[active], Math.Min(0, next - offset - height));
-    }
-
-    private void ShowSticky(object? group, double push)
-    {
-        if (!ReferenceEquals(_sticky.Content, group))
+        if (_flat.Count == 0)
         {
-            _sticky.Content = group;
+            _items.ItemsSource = null;   // a first fill is one change, not one per row
+            foreach (var item in target)
+            {
+                _flat.Add(item);
+            }
+
+            _items.ItemsSource = _flat;
         }
-
-        _sticky.IsVisible = group is not null;
-        if (Math.Abs(_push.Y - push) > 0.01)
+        else
         {
-            _push.Y = push;
-        }
-    }
-
-    // A group's header and its rows, kept as one control while the group stays.
-    private sealed class Block
-    {
-        private readonly ItemsControl _items;
-
-        internal Block(object group, IEnumerable items)
-        {
-            Header = new ContentControl { Content = group };
-            _items = new ItemsControl { ItemsSource = items };
-            Root = new StackPanel { Children = { Header, _items } };
-        }
-
-        internal StackPanel Root { get; }
-
-        internal ContentControl Header { get; }
-
-        internal void Apply(IDataTemplate? header, IDataTemplate? item)
-        {
-            Header.ContentTemplate = header;
-            _items.ItemTemplate = item;
+            Patch.To(_flat, target);
         }
     }
 }
