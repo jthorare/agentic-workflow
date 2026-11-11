@@ -37,11 +37,28 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
-    private async void OnEdit(object? sender, RoutedEventArgs e)
+    private void OnEdit(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)
         {
-            await page.Edit(CancellationToken.None).ConfigureAwait(true);   // the fields exist only once the form is read: focus the first one after
+            page.Edit();
+        }
+    }
+
+    private void OnDone(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            page.CloseEditor();
+            FocusEdit();
+        }
+    }
+
+    private async void OnStepSettings(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.OpenSettings(CancellationToken.None).ConfigureAwait(true);   // the fields exist only once the form is read: focus the first one after
             Dispatcher.UIThread.Post(() => _ = (FirstTarget(WorkflowEditor, static c => c is TextBox or CheckBox or Button) ?? WorkflowEditor).Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
         }
     }

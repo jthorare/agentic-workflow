@@ -49,7 +49,7 @@ public sealed class WorkflowsStepEditorFramesTests : FrameHost
     private static async Task OpenEditorOnTrigger(Window window, ShellViewModel shell)
     {
         Assert.True(shell.Workflows.Runs.Graph!.SelectNode("start"));
-        await shell.Workflows.Edit(CancellationToken.None);
+        await shell.Workflows.OpenSettings(CancellationToken.None);
         await Until(window, () => shell.Workflows.Editor.Fields.Count > 0 && Visible(window, "EditorFields"), "the editor never showed the trigger's fields");
     }
 
@@ -146,7 +146,7 @@ public sealed class WorkflowsStepEditorFramesTests : FrameHost
         Assert.Contains(Title, line, StringComparison.Ordinal);
         Assert.Contains(Summary, line, StringComparison.Ordinal);
 
-        await shell.Workflows.Edit(CancellationToken.None);
-        await Until(window, () => !Visible(window, "StepSummary"), "the summary stayed while Edit is on");
+        await shell.Workflows.OpenSettings(CancellationToken.None);
+        await Until(window, () => !Visible(window, "StepSummary"), "the summary stayed while step settings are open");
     });
 }

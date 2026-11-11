@@ -132,18 +132,24 @@
       <Border x:Name="StateNotice" IsVisible="{Binding HasStateNotice}" AutomationProperties.Name="{Binding StateNoticeText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption" Text="{Binding StateNoticeText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>
-      <wv:WorkflowEditorSheet x:Name="WorkflowEditor" IsVisible="{Binding IsEditing}" />
+      <wv:WorkflowEditorSheet x:Name="WorkflowEditor" IsVisible="{Binding IsSettingsOpen}" />
       <TextBlock x:Name="RunsDetail" Classes="caption subtle" Text="{Binding Runs.DetailText}" TextWrapping="Wrap" />
       <!-- The graph at the positions Sindri served (the app lays nothing out); a node with no position is named, not drawn. -->
       <StackPanel x:Name="RunsGraph" Spacing="4" IsVisible="{Binding Runs.Graph, Converter={x:Static ObjectConverters.IsNotNull}}">
-        <wv:GraphEditBar x:Name="RunsEdit" DataContext="{Binding GraphEdit}" />
+        <Grid x:Name="RunsEditPanel" ColumnDefinitions="*,Auto" IsVisible="{Binding IsEditing}">
+          <wv:GraphEditBar x:Name="RunsEdit" DataContext="{Binding GraphEdit}" />
+          <Button x:Name="WorkflowEditDone" Grid.Column="1" VerticalAlignment="Top" Content="{Binding DoneText}" Click="OnDone" AutomationProperties.Name="{Binding DoneText}" />
+        </Grid>
         <Border Classes="panel" Height="320">
           <wv:GraphCanvas x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" />
         </Border>
         <!-- What the selected step is and does, read-only, while Edit is off (#2807). -->
-        <Border x:Name="StepSummary" IsVisible="{Binding HasStepSummary}" AutomationProperties.Name="{Binding StepSummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-          <TextBlock Classes="caption" Text="{Binding StepSummaryText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-        </Border>
+        <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding CanOpenSettings}">
+          <Border x:Name="StepSummary" VerticalAlignment="Center" IsVisible="{Binding HasStepSummary}" AutomationProperties.Name="{Binding StepSummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+            <TextBlock Classes="caption" Text="{Binding StepSummaryText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <Button x:Name="StepSettings" VerticalAlignment="Center" Content="{Binding StepSettingsText}" Click="OnStepSettings" AutomationProperties.Name="{Binding StepSettingsText}" />
+        </StackPanel>
         <Border x:Name="RunsUnplacedName" IsVisible="{Binding Runs.Graph.HasUnplaced}" AutomationProperties.Name="{Binding Runs.Graph.UnplacedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption subtle" Text="{Binding Runs.Graph.UnplacedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>

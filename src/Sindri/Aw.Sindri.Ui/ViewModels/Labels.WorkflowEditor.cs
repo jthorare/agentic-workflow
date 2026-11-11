@@ -12,14 +12,20 @@ internal static partial class Labels
     /// <summary>The editor sheet's Save button while the edit is on the way.</summary>
     internal const string WfEditSaving = "Saving\u2026";
 
+    /// <summary>The Done button that leaves graph edit mode.</summary>
+    internal const string WfEditDone = "Done";
+
+    /// <summary>The button that opens the selected step's settings.</summary>
+    internal const string WfStepSettings = "Step settings";
+
     /// <summary>The editor sheet's Close button.</summary>
     internal const string WfEditClose = "Close";
 
     /// <summary>The editor sheet's line when no node is selected, or the selected node has no settings.</summary>
-    internal const string WfEditorNoFields = "Select a node on the graph that has settings, then press Edit.";
+    internal const string WfEditorNoFields = "Select a step on the graph that has settings, then press Step settings.";
 
     /// <summary>The graph edit bar's line while the editor sheet is open: graph edits wait for the sheet to close.</summary>
-    internal const string WfEditSheetOpenNote = "Close the editor sheet to edit steps on the graph.";
+    internal const string WfEditSheetOpenNote = "Close step settings to change the graph.";
 
     /// <summary>The editor sheet's heading when no step is selected.</summary>
     /// <param name="name">The workflow's name.</param>
