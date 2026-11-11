@@ -19,8 +19,8 @@ internal static class WorkflowReadEndpoints
 {
     internal static RouteGroupBuilder MapWorkflowReads(this RouteGroupBuilder group)
     {
-        _ = group.MapGet("/workflows", static async (IService<ListWorkflowsRequest, ListWorkflowsResponse> service, CancellationToken ct)
-            => (await service.Handle(new ListWorkflowsRequest(), ct).ConfigureAwait(false)).ToHttpResult());
+        _ = group.MapGet("/workflows", static async (bool? includeArchived, IService<ListWorkflowsRequest, ListWorkflowsResponse> service, CancellationToken ct)
+            => (await service.Handle(new ListWorkflowsRequest { IncludeArchived = includeArchived == true }, ct).ConfigureAwait(false)).ToHttpResult());
         // why: the literal routes below win over '/workflows/{slug}', so 'blocks' and 'docs' can't be slugs
         _ = group.MapGet("/workflows/blocks", static async (IService<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse> service, CancellationToken ct)
             => (await service.Handle(new ListWorkflowBlocksRequest(), ct).ConfigureAwait(false)).ToHttpResult());

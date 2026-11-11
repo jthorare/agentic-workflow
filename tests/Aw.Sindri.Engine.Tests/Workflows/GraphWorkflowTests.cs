@@ -110,8 +110,7 @@ public sealed class GraphWorkflowTests
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         await rig.Blocks.Entered.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
-        await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
-        var run = await rig.Final(started.RunId);
+        var run = await rig.Cancel(started.RunId, whenParked: false);   // why: the hold block keeps its activity running, so the run never parks; a held activity never returns mid-cancel, so the issue 2877 race cannot happen
         var nodes = await rig.NodeStatuses(started.RunId);
 
         Assert.Equal(WorkflowRunStatus.Cancelled, run.Status);

@@ -84,8 +84,7 @@ public sealed class GraphAgentLaunchCapTests
 
         var handle = rig.Client.GetWorkflowHandle(run.Value);
         var recorded = await handle.FetchHistoryAsync();
-        await handle.CancelAsync();
-        _ = await rig.Final(run);
+        _ = await rig.Cancel(run, whenParked: false);
 
         var replayer = new WorkflowReplayer(new WorkflowReplayerOptions().AddWorkflow<GraphWorkflow>());
         var result = await replayer.ReplayWorkflowAsync(WithCap(recorded, 3), throwOnReplayFailure: false, TestContext.Current.CancellationToken);

@@ -8,7 +8,9 @@ namespace Aw.Sindri.Host.Server;
 /// <summary>
 /// Folds the ledger into views.db (API spec §2.3), one pass at a time under one gate, as the caller 'service:projector'.
 /// A pass opens the store (rebuilding when views.db was just created, its schema version is old, or a rebuild was
-/// requested), reads the head, publishes it, then applies pages of 100 until the cursor reaches that head. A failing
+/// requested), reads the head, publishes it, then applies pages until the cursor reaches that head: 1,000 events per
+/// transaction while more than 1,000 are behind (a start after a long time away, a rebuild: one commit per page was a third of a 100k catch-up,
+/// #2783), then 100 so a live page holds the write lock briefly. A failing
 /// event stalls it (SND-VIEW-001, logged); a stalled projector retries 30 s later, or at once on a rebuild. A fold that
 /// read back a stored row it could not deserialize (an older build's shape, #959) saw it as absent; the projector then
 /// rebuilds the views from the ledger on its own, once, right after the pass.
@@ -18,6 +20,7 @@ internal sealed partial class Projector(
     TimeProvider clock, ILogger<Projector> log) : IDisposable
 {
     internal const int PageSize = 100;
+    internal const int CatchUpPageSize = 1000;
     internal static readonly TimeSpan StallRetry = TimeSpan.FromSeconds(30);
 
     private readonly IReadOnlyList<IProjection> _projections = [.. projections];
@@ -26,6 +29,7 @@ internal sealed partial class Projector(
     private string? _problem;
     private long _seenHead;
     private bool _healing;
+    private long? _recordedResetThrough;
     private ViewsStatus _last = new(0, 0, ProjectedAt: null, Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null, Starting: true);
 
     /// <summary>The ledger head the last pass saw; the host waits for an append past it.</summary>
@@ -79,13 +83,21 @@ internal sealed partial class Projector(
         }
 
         var state = opened.Value;
-        var recorded = await ledger.Latest(EventTypes.ViewsRebuilt, ct).ConfigureAwait(false);   // an accepted rebuild is in the ledger even when serve died before its reset (#2054)
+        var recorded = await RecordedThrough(ct).ConfigureAwait(false);
         if (recorded.IsError)
         {
             return recorded.Error;
         }
 
-        var through = recorded.Value?.Sequence ?? 0;
+        var through = recorded.Value;
+        if (requested && _recordedResetThrough == through)
+        {
+            // #2861: the pass the views.rebuilt append woke already reset for this record, so its request is taken without a second reset. A request with no new record (through unchanged since a non-recorded reset) still rebuilds.
+            _ = feed.TakeRebuildRequest();
+            _recordedResetThrough = null;
+            return state;
+        }
+
         var reason = requested ? "requested" : RebuildReason(state, through);
         if (reason is null)
         {
@@ -101,6 +113,12 @@ internal sealed partial class Projector(
         return reset;
     }
 
+    private async ValueTask<Kernel.Result<long>> RecordedThrough(CancellationToken ct)
+    {
+        var recorded = await ledger.Latest(EventTypes.ViewsRebuilt, ct).ConfigureAwait(false);   // an accepted rebuild is in the ledger even when serve died before its reset (#2054)
+        return recorded.IsError ? recorded.Error : recorded.Value?.Sequence ?? 0;
+    }
+
     private string? RebuildReason(ProjectorState state, long through) =>
         state.RebuiltThrough is { } done && through > done ? "recorded rebuild" : _healing ? "unreadable rows" : state.Fresh ? "views.db created" : state.SchemaVersion != ViewSchema.Version ? "schema version changed" : state.RebuiltThrough is null ? "no rebuild record" : null;
 
@@ -113,6 +131,7 @@ internal sealed partial class Projector(
         {
             _stalledSince = null;
             _healing = false;
+            _recordedResetThrough = string.Equals(reason, "recorded rebuild", StringComparison.Ordinal) ? through : null;
         }
 
         return reset;
@@ -123,7 +142,7 @@ internal sealed partial class Projector(
         Publish(state, head);
         while (state.Cursor < head)
         {
-            var page = await ledger.ReadAfter(state.Cursor, PageSize, ct).ConfigureAwait(false);
+            var page = await ledger.ReadAfter(state.Cursor, PageFor(state.Cursor, head), ct).ConfigureAwait(false);
             var applied = page.IsError ? page.Error
                 : page.Value.Count == 0 ? new PageApplied(state, Stall: null)
                 : await store.Apply(page.Value, _projections, clock.GetUtcNow(), ct).ConfigureAwait(false);
@@ -148,6 +167,9 @@ internal sealed partial class Projector(
 
         return await Finish(state, head, ct).ConfigureAwait(false);
     }
+
+    /// <summary>The page size for the next read: 1,000 while more than 1,000 events are behind the head, else 100.</summary>
+    internal static int PageFor(long cursor, long head) => head - cursor > CatchUpPageSize ? CatchUpPageSize : PageSize;
 
     private async ValueTask<ProjectorPass> Finish(ProjectorState state, long head, CancellationToken ct)
     {

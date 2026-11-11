@@ -1,7 +1,7 @@
 namespace Aw.Meta.Core.Config;
 
 /// <summary>How the worktree sweep behaves; every field is optional.</summary>
-/// <param name="Roots">Directories whose worktrees may be removed; null means the defaults (~/repos/aw-wt, the repo's .claude/worktrees). The gate directory always counts.</param>
+/// <param name="Roots">Directories whose worktrees may be removed; null means the defaults (~/repos/aw-wt, the repo's .claude/worktrees, and the repo's worktree root when it is set elsewhere). The gate directory always counts.</param>
 /// <param name="BuildOutputs">Directory names whose untracked files don't keep a worktree; null means bin, obj, artifacts, node_modules, dist.</param>
 /// <param name="Enabled">Whether the triggers (merge-run, the watch) remove worktrees; false makes them only report. The explicit worktree-sweep always removes.</param>
 public sealed record WorktreeConfig(IReadOnlyList<string>? Roots = null, IReadOnlyList<string>? BuildOutputs = null, bool Enabled = true)
@@ -16,13 +16,14 @@ public sealed record WorktreeConfig(IReadOnlyList<string>? Roots = null, IReadOn
     /// <param name="repo">The team's shared checkout.</param>
     /// <param name="gatesDirectory">Where the gate trees live.</param>
     /// <param name="home">The home directory; empty when unknown (a "~" root is then left out).</param>
+    /// <param name="repoRoot">The repo's resolved worktree root (<see cref="WorktreeRoot"/>), or null when unknown; added to the defaults, ignored when <see cref="Roots"/> is set.</param>
     /// <returns>Absolute directories.</returns>
-    public IReadOnlyList<string> EffectiveRoots(string repo, string gatesDirectory, string home)
+    public IReadOnlyList<string> EffectiveRoots(string repo, string gatesDirectory, string home, string? repoRoot)
     {
         ArgumentNullException.ThrowIfNull(repo);
         ArgumentNullException.ThrowIfNull(gatesDirectory);
         ArgumentNullException.ThrowIfNull(home);
-        string[] defaults = ["~/repos/aw-wt", repo + "/.claude/worktrees"];
+        string[] defaults = repoRoot is { Length: > 0 } ? ["~/repos/aw-wt", repo + "/.claude/worktrees", repoRoot] : ["~/repos/aw-wt", repo + "/.claude/worktrees"];
         var configured = Roots ?? defaults;
         var roots = new List<string>();
         foreach (var root in configured)

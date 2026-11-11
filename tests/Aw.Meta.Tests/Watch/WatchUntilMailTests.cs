@@ -20,7 +20,7 @@ public sealed class WatchUntilMailTests
         _world.Values,
         _world.Delay,
         _world.Clock,
-        _world.Monitor,
+        new LaneReport(_world.Monitor, _world.Values),
         _world.Board);
 
     // Mail arrives while poll number `mailAtPoll` (from 0) runs, so that poll sees it; -1 sends none.
