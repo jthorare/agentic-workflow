@@ -23,6 +23,8 @@ internal static class MessageSql
 
     internal static readonly SqlStatement SelectRole = new("SELECT session_id, name FROM role WHERE singleton = 1", Subject: "role");
 
+    internal static readonly SqlStatement AllTranscripts = new("SELECT transcript FROM offsets ORDER BY transcript ASC", Subject: "offsets");
+
     internal static SqlStatement Offset(string transcript) =>
         new("SELECT byte_offset FROM offsets WHERE transcript = $transcript", c => c.Bind("$transcript", transcript), "offset " + transcript);
 

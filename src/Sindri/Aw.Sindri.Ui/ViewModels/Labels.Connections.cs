@@ -18,8 +18,11 @@ internal static partial class Labels
     /// <summary>The link's accessible name: its visible words first.</summary>
     internal const string MemoryLinkName = "Memory stores, opens the Memory page";
 
+    /// <summary>The label above the connections that have no tile.</summary>
+    internal const string ConnectionsCustom = "Custom";
+
     /// <summary>The page's one-line purpose.</summary>
-    internal const string ConnectionsPurpose = "Names that workflows and agents use instead of a token. The secret stays in your keychain; this page never shows it.";
+    internal const string ConnectionsPurpose = "Connect the services Sindri works with. Your sign-in stays in your keychain; this page never shows it.";
 
     /// <summary>The page before its first answer.</summary>
     internal const string ReadingConnections = "Reading connections…";
@@ -33,7 +36,7 @@ internal static partial class Labels
     internal static string ConnectionsFailed(Error error) => "Couldn't read the connections just now. " + InstanceRefused(error);
 
     /// <summary>The page with no connection.</summary>
-    internal const string ConnectionsEmpty = "No connections yet. Add one so a workflow can sign in by name.";
+    internal const string ConnectionsEmpty = "";
 
     /// <summary>The sheet before its first answer.</summary>
     internal const string ReadingConnection = "Reading the connection…";
@@ -78,7 +81,7 @@ internal static partial class Labels
         "oauth" => "OAuth sign-in",
         "rest" => "Key (REST)",
         "cli" => "Key (CLI)",
-        "mcp" => "MCP server",
+        "mcp" => "Custom server",
         _ => kind,
     };
 
@@ -167,8 +170,8 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string ConnectionWriteFailed(Error error) => "Couldn't do that. " + InstanceRefused(error);
 
-    /// <summary>The Add connection button and the form's heading.</summary>
-    internal const string AddConnection = "Add connection";
+    /// <summary>The secondary link that opens the advanced form, and the form's heading.</summary>
+    internal const string AddConnection = "Custom connection";
 
     /// <summary>The form's preset picker label.</summary>
     internal const string ConnectionPresetLabel = "What to connect";
@@ -176,20 +179,11 @@ internal static partial class Labels
     /// <summary>The form's name label.</summary>
     internal const string ConnectionNameLabel = "Name";
 
-    /// <summary>The form's name hint.</summary>
-    internal const string ConnectionNameHint = "service:label, such as linear:work";
-
-    /// <summary>The OAuth client id label.</summary>
-    internal const string ConnectionClientLabel = "Client id";
-
-    /// <summary>The OAuth client secret label.</summary>
-    internal const string ConnectionClientSecretLabel = "Client secret (only if the provider asks for one)";
-
     /// <summary>The key label.</summary>
     internal const string ConnectionKeyLabel = "Key";
 
     /// <summary>The MCP server label.</summary>
-    internal const string ConnectionUrlLabel = "Server address";
+    internal const string ConnectionUrlLabel = "Address";
 
     /// <summary>The note under a pasted secret.</summary>
     internal const string ConnectionSecretNote = "Sent once to Sindri, which keeps it in your keychain. This app doesn't keep it.";
@@ -198,7 +192,7 @@ internal static partial class Labels
     internal const string ConnectionAddSend = "Add";
 
     /// <summary>The form's close button.</summary>
-    internal const string ConnectionAddCancel = "Close";
+    internal const string ConnectionAddCancel = "Cancel";
 
     /// <summary>The form's note while it sends.</summary>
     internal const string ConnectionAdding = "Adding…";
@@ -211,17 +205,10 @@ internal static partial class Labels
     /// <summary>The preset picker's rows.</summary>
     internal static readonly (string Id, string Label, string Kind)[] ConnectionPresets =
     [
-        ("github", "GitHub (sign in)", "oauth"),
-        ("linear", "Linear (sign in)", "oauth"),
-        ("google", "Google (sign in)", "oauth"),
-        ("spotify", "Spotify (sign in)", "oauth"),
-        ("rest", "A service with a key (REST)", "rest"),
+        ("mcp", "A custom server", "mcp"),
+        ("rest", "A service with a key", "rest"),
         ("cli", "A command-line tool with a key", "cli"),
-        ("mcp", "An MCP server", "mcp"),
     ];
-
-    /// <summary>The note for Slack, which has no browser sign-in.</summary>
-    internal const string ConnectionSlackNote = "Slack has no browser sign-in. Choose \"A service with a key\" and paste a user token.";
 
     /// <summary>The sheet's section for the settings Sindri keeps (never a secret).</summary>
     internal const string ConnectionSettings = "Settings";
@@ -233,4 +220,67 @@ internal static partial class Labels
 
     /// <summary>The Memory page tab-less palette name for the sheet's edge tab.</summary>
     internal const string EdgeTabConnection = "Connection";
+
+    /// <summary>The Connect button on a service tile.</summary>
+    internal const string ConnectTile = "Connect";
+
+    /// <summary>The Slack tile's button: Slack has no browser sign-in.</summary>
+    internal const string ConnectAddToken = "Add token";
+
+    /// <summary>The tile's Connect inline line when the client id is missing.</summary>
+    /// <param name="service">The service.</param>
+    /// <returns>The words.</returns>
+    internal static string ConnectNeedsClientId(string service) => $"Enter your {service} app's client id";
+
+    /// <summary>The tile's inline line when the client secret is missing.</summary>
+    /// <param name="service">The service.</param>
+    /// <returns>The words.</returns>
+    internal static string ConnectNeedsClientSecret(string service) => $"Paste your {service} app's client secret";
+
+    /// <summary>The tile's inline line when the token is missing.</summary>
+    /// <param name="service">The service.</param>
+    /// <returns>The words.</returns>
+    internal static string ConnectNeedsToken(string service) => $"Paste a {service} token";
+
+    /// <summary>The reason line under a disabled Add in the custom form.</summary>
+    internal const string ConnectionDefaultName = "custom:work";
+
+    /// <summary>The reason line under a disabled Add in the custom form.</summary>
+    internal const string ConnectNeedsAddress = "Enter a server address";
+
+    /// <summary>The custom form's reason when the name is missing.</summary>
+    internal const string ConnectNeedsName = "Enter a name";
+
+    /// <summary>The tile error when the person cancelled.</summary>
+    internal const string ConnectCancelled = "Sign-in cancelled.";
+
+    /// <summary>The tile error for a refused connect: the keychain is named, never a code.</summary>
+    /// <param name="error">The failure.</param>
+    /// <returns>The words.</returns>
+    internal static string ConnectTileFailed(Error error) => string.Equals(error.Code, "SND-CONN-006", StringComparison.Ordinal)
+        ? "Couldn't save the sign-in to your keychain. Unlock it, then try again."
+        : "Couldn't connect. " + InstanceRefused(error);
+
+    /// <summary>A tile's last use.</summary>
+    /// <param name="age">How long ago.</param>
+    /// <returns>The words.</returns>
+    internal static string ConnectionLastUsed(TimeSpan age) => "Last used " + Age(age) + " ago";
+
+    /// <summary>A tile never used.</summary>
+    internal const string ConnectionNeverUsed = "Not used yet";
+
+    /// <summary>The tile menu's Disconnect.</summary>
+    internal const string ConnectionDisconnect = "Disconnect";
+
+    /// <summary>The tile menu's button name.</summary>
+    internal const string ConnectionMore = "More";
+
+    /// <summary>The count: "2 of 5 connected".</summary>
+    /// <param name="connected">How many tiles are connected.</param>
+    /// <param name="total">How many tiles.</param>
+    /// <returns>The words.</returns>
+    internal static string ConnectedOf(int connected, int total) => string.Create(CultureInfo.InvariantCulture, $"{connected} of {total} connected");
+
+    /// <summary>The custom connection link's hint.</summary>
+    internal const string ConnectionOthers = "Other connections";
 }

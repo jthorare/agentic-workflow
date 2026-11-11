@@ -170,6 +170,18 @@
       "description": "Syncs the Obsidian todo note with your todos."
     },
     {
+      "name": "toolkit-calls-expire",
+      "every": "1h",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Deletes toolkit calls older than 30 days."
+    },
+    {
       "name": "workflow-poll",
       "every": "30s",
       "paused": false,

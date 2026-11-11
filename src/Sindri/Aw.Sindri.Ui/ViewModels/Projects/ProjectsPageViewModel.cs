@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.ViewModels.Projects;
 /// The Projects page (projects page spec §3): the owner's projects in state groups, two folds, and the served sentence for an empty or unavailable list.
 /// It reads while it is the page shown, on every event, and keeps its cards by id across reads. The server owns the order and the sentence.
 /// </summary>
-internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
+internal sealed partial class ProjectsPageViewModel : ObservableObject, IDisposable
 {
     private static readonly string[] _stateOrder = ["inProgress", "planned", "paused", "backlog"];
 
@@ -36,6 +36,9 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
 
     /// <summary>The button that adds a project.</summary>
     public string AddText => Labels.ProjectsAddButton;
+
+    /// <summary>The button that opens Connections to connect Linear.</summary>
+    public string ConnectText => Labels.LinearConnect;
 #pragma warning restore CA1822, MA0041
 
     /// <summary>True until the first answer.</summary>
@@ -50,14 +53,14 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
     /// <summary>The served empty sentence, as served; null when none.</summary>
     public string? Sentence { get; private set => Set(ref field, value); }
 
+    /// <summary>True when the sentence is about a missing Linear key or Linear not connected: the empty card or the banner offers Connect Linear.</summary>
+    public bool ShowsConnect { get; private set => Set(ref field, value); }
+
     /// <summary>True when there are no cards and a sentence: the dashed block.</summary>
     public bool IsEmptyBlock { get; private set => Set(ref field, value); }
 
     /// <summary>True when there are cards and a sentence: the banner.</summary>
     public bool IsBanner { get; private set => Set(ref field, value); }
-
-    /// <summary>True when the dashed block offers Add project (not while Linear is syncing).</summary>
-    public bool ShowsAddInEmpty { get; private set => Set(ref field, value); }
 
     /// <summary>True when Context is failing: cards show their name and origin chip only.</summary>
     public bool NamesOnly { get; private set => Set(ref field, value); }
@@ -232,12 +235,11 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
         (IsLoading, Error) = (false, string.Empty);
         var failing = list.Freshness.Any(f => string.Equals(f.State, "failing", StringComparison.Ordinal));
         FreshnessFailing = failing;
-        Freshness = string.Join(" · ", list.Freshness.Select(f => Labels.ProjectFreshnessPart(f.Source, f.Text)).Concat(list.Viewer is { } viewer ? [Labels.ProjectViewer(viewer)] : []));
+        Freshness = ProjectsLinear.Freshness(list);
         NamesOnly = list.Freshness.Any(f => string.Equals(f.Source, "context", StringComparison.Ordinal) && string.Equals(f.State, "failing", StringComparison.Ordinal));
-        Sentence = list.Empty;
+        (Sentence, ShowsConnect) = (ProjectsLinear.Sentence(list, _clock.GetUtcNow()), ProjectsLinear.OffersConnect(list.Empty));
         IsEmptyBlock = list.Projects.Count == 0 && list.Empty is not null;
         IsBanner = list.Projects.Count > 0 && list.Empty is not null;
-        ShowsAddInEmpty = IsEmptyBlock && !list.Freshness.Any(f => string.Equals(f.State, "syncing", StringComparison.Ordinal));
 
         var present = new HashSet<string>(list.Projects.Concat(list.Finished).Concat(list.Hidden).Select(c => c.Id), StringComparer.Ordinal);
         foreach (var gone in _cards.Keys.Where(k => !present.Contains(k)).ToList())

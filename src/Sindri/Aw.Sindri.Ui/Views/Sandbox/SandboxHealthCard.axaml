@@ -17,7 +17,7 @@
           <TextBlock x:Name="SandboxEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
           <TextBlock x:Name="SandboxWord" Grid.Column="1" Classes="body-strong" Text="{Binding StateWord}" AutomationProperties.Name="{Binding StateWord}" />
         </Grid>
-        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6" AutomationProperties.Name="{Binding RowText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" AutomationProperties.Name="{Binding RowText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
           <icons:StateIcon x:Name="SandboxGlyph" Glyph="{Binding Glyph}" VerticalAlignment="Top" Margin="0,2,0,0" />
           <TextBlock x:Name="SandboxRow" Grid.Column="1" Classes="body" Text="{Binding RowText}" TextWrapping="Wrap"
                      AutomationProperties.Name="{Binding RowText}" />

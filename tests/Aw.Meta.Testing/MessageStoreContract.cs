@@ -50,6 +50,22 @@ public abstract class MessageStoreContract
         Expect.That(offset.Value == 250 && other.Value == 0, "the offset is per transcript");
     }
 
+    /// <summary>Every transcript with a stored offset is listed once, ordered by path.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Transcripts_lists_each_read_transcript_once_ordered_by_path()
+    {
+        var store = await Create(_none);
+        var none = await store.Transcripts(_none);
+        _ = await store.RecordInbound("/t/b.jsonl", 10, [A.Inbox("m1", minute: 1)], _none);
+        _ = await store.RecordInbound("/t/a.jsonl", 20, [], _none);
+        _ = await store.RecordInbound("/t/b.jsonl", 30, [], _none);
+        var listed = await store.Transcripts(_none);
+
+        Expect.That(none.IsSuccess && none.Value.Count == 0, "no transcript before the first read");
+        Expect.That(listed.IsSuccess && listed.Value.SequenceEqual(["/t/a.jsonl", "/t/b.jsonl"], StringComparer.Ordinal), "each transcript once, ordered by path");
+    }
+
     /// <summary>Messages read back with their classification, oldest first.</summary>
     /// <returns>A task.</returns>
     [Fact]

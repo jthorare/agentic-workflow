@@ -40,7 +40,7 @@ internal sealed class WatchPoller(RepoCommands repo, IHostResources resources, I
         _ = await reservation.Apply(team, cancellationToken).ConfigureAwait(false);
         var worktrees = await sweeper.Sweep(remembered.Value, cancellationToken).ConfigureAwait(false);
         // Advisory: a transcript that can't be read leaves the poll's context out instead of failing it.
-        return new Polled(new WatchSnapshot(prs.Value, main.Value, ResourceRules.DiskLow(disk.Value, team.Resources), ResourceRules.MemoryLow(disk.Value, team.Resources)), counts.Value.Total, worktrees, await contexts.ReadOrNull(team, cancellationToken).ConfigureAwait(false)) { Open = counts.Value.Open };
+        return new Polled(new WatchSnapshot(prs.Value, main.Value, ResourceRules.DiskLow(disk.Value, team.Resources), ResourceRules.MemoryLow(disk.Value, team.Resources)), counts.Value.Total, worktrees, await contexts.ReadOrNull(team, cancellationToken).ConfigureAwait(false)) { Open = counts.Value.Open, Status = counts.Value.Status };
     }
 
     // Keeps the pull requests GitHub shows merged or closed, so the merge queue can drop them; returns the ones not seen ended before.

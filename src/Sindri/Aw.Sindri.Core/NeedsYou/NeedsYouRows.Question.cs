@@ -20,13 +20,13 @@ public static partial class NeedsYouRows
     {
         ArgumentNullException.ThrowIfNull(question);
         ArgumentNullException.ThrowIfNull(scrubber);
-        var cli = CliForm.Parse("sindri answer <run>/<node> [--text <text>] [--choice <choice>]");   // why: the form is a template (a run id holds an '@', which a filled form refuses); the reason names the real run and node
+        var cli = CliForm.Parse(question.Item is null ? "sindri answer <run>/<node> [--text <text>] [--choice <choice>]" : "sindri answer <run>/<node> --item <item> [--text <text>] [--choice <choice>]");   // why: the form is a template (a run id holds an '@', which a filled form refuses); the reason names the real run and node
         if (cli.IsError)
         {
             return cli.Error;
         }
 
-        var reason = new List<string> { $"Answer {question.Run.Value}/{question.Node.Value}." };
+        var reason = new List<string> { $"Answer {question.Run.Value}/{question.Node.Value}" + (question.Item is { } item ? $" item {item.ToString(System.Globalization.CultureInfo.InvariantCulture)}." : ".") };
         if (question.Choices.Count > 0)
         {
             reason.Add("Choices: " + string.Join(", ", question.Choices) + ".");
@@ -38,7 +38,7 @@ public static partial class NeedsYouRows
         }
 
         return new NeedsYouRow(
-            NeedsYouRowIds.WorkflowQuestion(question.Run, question.Node),
+            NeedsYouRowIds.WorkflowQuestion(question.Run, question.Node, question.Item),
             NeedsYouKind.Question,
             "workflow · question",
             new NeedsYouSubject(SubjectKind.WorkflowRun, RunSubject(question.Run)),

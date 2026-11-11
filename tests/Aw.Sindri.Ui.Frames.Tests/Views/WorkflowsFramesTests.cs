@@ -97,7 +97,7 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         Assert.True(Visible(window, "RunNow"));
         await Until(window, () => window.ActualThemeVariant == ThemeVariant.Light, "the window never took the light theme");
-        var chip = window.GetVisualDescendants().OfType<TextBlock>().First(t => t.IsEffectivelyVisible && t.Classes.Contains("wf-chip") && t.Classes.Contains("ok"));
+        var chip = window.GetVisualDescendants().OfType<Border>().First(b => b.IsEffectivelyVisible && b.Classes.Contains("status-chip") && b.Classes.Contains("ok")).GetVisualDescendants().OfType<TextBlock>().First();
         Assert.Equal(ThemeColor(window, "Brush.Success", ThemeVariant.Light), ChipColor(chip));   // the theme token (Success is one colour in both variants, Theme/Tokens.axaml)
         Frame(window, "runs-light-1440", Prefix);
     });
