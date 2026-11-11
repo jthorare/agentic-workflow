@@ -12,7 +12,8 @@ FAIL=0
 # pwd -P: on macOS mktemp -d gives /var/folders/..., a symlink to /private/var, and repo-slug.sh (git rev-parse) resolves it (#2584)
 TMPROOT="$(cd "$(mktemp -d "${TMPDIR:-/tmp}/skill-evals-test.XXXXXX")" && pwd -P)"
 # why: the state dirs sit in /tmp, not under TMPDIR: the script refuses an eval temp dir too long for claude's sandbox socket (#1931)
-SHORT="$(mktemp -d /tmp/se.XXXXXX)"
+# pwd -P: macOS /tmp is a symlink to /private/tmp, and the stub claude (env -i) records the physical cwd (#2757)
+SHORT="$(cd "$(mktemp -d /tmp/se.XXXXXX)" && pwd -P)"
 LIVE_PID=""
 cleanup() { [ -z "$LIVE_PID" ] || kill "$LIVE_PID" 2>/dev/null || true; find "$TMPROOT" "$SHORT" -delete 2>/dev/null || true; }
 trap cleanup EXIT
@@ -399,7 +400,7 @@ echo "a kind's spend at its ceiling, and one failed call (#2023)"
 mkrepo; mkclaude; mkresult 1 true 9
 run --skills alpha --kind routing
 expect "spend past the kind's ceiling stops the loop and the run is partial" 2 'PARTIAL'
-[ "$(wc -l <"$BIN/cases.txt")" = 1 ] && ok "the next call never starts once the ceiling is reached" || { fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"; }
+[ "$(wc -l <"$BIN/cases.txt" | tr -d ' ')" = 1 ] && ok "the next call never starts once the ceiling is reached" || { fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"; }
 has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && ok "the case that never ran is listed as skipped" || { fail "skipped listing"; show; }
 mkrepo; mkclaude; mkresult 1 true 1
 jq '.cases += [(.cases[0] | .name = "alpha-zz-3")]' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
@@ -409,7 +410,7 @@ echo alpha-near-miss >"$BIN/no-result-case"
 run --skills alpha --kind routing
 expect "a failed call keeps the earlier case's row and exits 3" 3 '\| alpha-natural-1 \|'
 has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && has -F 'skipped (no result): alpha / alpha-zz-3' <<<"$OUT" && ok "the failed case and the one after it are skipped" || { fail "skipped after failed call"; show; }
-[ "$(wc -l <"$BIN/cases.txt")" = 2 ] && ok "no call after the failed one" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
+[ "$(wc -l <"$BIN/cases.txt" | tr -d ' ')" = 2 ] && ok "no call after the failed one" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
 
 echo "a refused call writes cases: [] (#2044)"
 mkrepo; mkclaude; mkresult 1 true 1
@@ -775,7 +776,7 @@ jq --arg a "$TMPROOT/tr/1/trace.jsonl" --arg b "$TMPROOT/tr/2/trace.jsonl" --arg
   | .cases[1].arms.with[0].tracePath = $c | .cases[1].arms.with[1].tracePath = null' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
 run --skills alpha --kind routing --keep-temp
 TD="$(find "$STATE/skill-evals" -type d -name traces | head -1)"
-[ "$(ls "$TD" 2>/dev/null | wc -l)" = 3 ] && ok "three traced runs of two cases leave three files" || { fail "trace files: $(ls "$TD" 2>/dev/null | tr '\n' ' ')"; show; }
+[ "$(ls "$TD" 2>/dev/null | wc -l | tr -d ' ')" = 3 ] && ok "three traced runs of two cases leave three files" || { fail "trace files: $(ls "$TD" 2>/dev/null | tr '\n' ' ')"; show; }
 [ -f "$TD/alpha-natural-1-with-1.jsonl" ] && [ -f "$TD/alpha-natural-1-with-2.jsonl" ] && [ -f "$TD/alpha-near-miss-with-1.jsonl" ] && ok "traces are named <case>-<arm>-<run>.jsonl" || { fail "trace names"; ls "$TD"; }
 grep -q assistant "$TD/alpha-natural-1-with-2.jsonl" && ok "each file holds its own run's trace" || fail "trace content"
 KEPT_TMP="$(sed -n 's/^TMPDIR=//p' "$BIN"/env.*.txt | head -1)"
@@ -850,7 +851,7 @@ echo "the ceiling: no case it can't afford, no PARTIAL when every case ran (#209
 mkrepo; mkclaude; mkresult 1 true 5
 run --skills alpha --kind routing
 expect "a case the money left can't pay for is not launched, and the run is partial" 2 'PARTIAL'
-[ "$(wc -l <"$BIN/cases.txt")" = 1 ] && ok "one call: \$3 left is less than the \$5 a case cost" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
+[ "$(wc -l <"$BIN/cases.txt" | tr -d ' ')" = 1 ] && ok "one call: \$3 left is less than the \$5 a case cost" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
 has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && ok "the unaffordable case is listed as skipped" || { fail "skipped listing"; show; }
 has -E 'stopped before alpha-near-miss: \$3\.00 left, a case cost \$5\.00' <<<"$OUT" && ok "the stop line names the money left and the case cost" || { fail "stop line"; show; }
 [ "$(jq -s '[.[]|select(.t=="settle")]|last|.usd*1' "$STATE/skill-evals/spend.jsonl")" = 5 ] && ok "the settle row is 5" || { fail "settle: $(cat "$STATE/skill-evals/spend.jsonl")"; }

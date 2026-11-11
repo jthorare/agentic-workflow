@@ -40,11 +40,15 @@
       <Setter Property="MinHeight" Value="{StaticResource Row.Height.Comfortable}" />
     </Style>
     <!-- The selection: PrimarySoft (the selected nav's background) and a 2 px PrimaryHover bar (6.1:1 on the card): the fill alone
-         is 1.1:1, so the bar is what tells the selected row apart (WCAG 1.4.11). -->
+         is 1.1:1, so the bar is what tells the selected row apart (WCAG 1.4.11). Every row reserves the 2 px bar in Transparent,
+         so selecting a row changes colours only and the label stays at the same x (#2751). -->
+    <Style Selector="Button.palette-entry /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="2,0,0,0" />
+    </Style>
     <Style Selector="Button.palette-entry.selected /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource Brush.PrimarySoft}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
-      <Setter Property="BorderThickness" Value="2,0,0,0" />
     </Style>
     <!-- A pending entry is disabled, but its phase is information: it keeps InkSubtle, never the disabled ink. -->
     <Style Selector="Button.palette-entry:disabled /template/ ContentPresenter#PART_ContentPresenter">
