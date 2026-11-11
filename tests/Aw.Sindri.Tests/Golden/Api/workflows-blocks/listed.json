@@ -164,8 +164,8 @@
               "name": "timezone",
               "type": "text",
               "required": false,
-              "caption": "Timezone",
-              "choices": [
+              "caption": "Time zone",
+              "presets": [
                 {
                   "value": "UTC",
                   "label": "UTC"

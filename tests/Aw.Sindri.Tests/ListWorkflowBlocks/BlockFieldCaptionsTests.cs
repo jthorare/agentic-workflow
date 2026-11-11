@@ -28,13 +28,13 @@ public sealed class BlockFieldCaptionsTests
     }
 
     [Fact]
-    public async Task Schedule_timezone_field_offers_zone_ids_labelled_by_the_id()
+    public async Task Schedule_timezone_field_offers_zone_ids_as_presets_not_a_closed_list()
     {
         var timezone = await Field("schedule", "timezone");
 
-        Assert.Equal("Timezone", timezone.Caption);
-        Assert.Contains(timezone.Choices!, static c => c.Value == "America/Los_Angeles" && c.Label == "America/Los_Angeles");
-        Assert.Null(timezone.Presets);
+        Assert.Equal("Time zone", timezone.Caption);
+        Assert.Contains(timezone.Presets!, static c => c.Value == "America/Los_Angeles" && c.Label == "America/Los_Angeles");
+        Assert.Null(timezone.Choices);   // the engine takes any IANA zone (WaitSchedule.Zone), so the list only fills, it never limits
     }
 
     [Fact]

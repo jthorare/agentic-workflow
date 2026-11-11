@@ -42,7 +42,7 @@ public sealed class ScheduleBlock : IGraphBlock
     public BlockSchema Config { get; } = new(
     [
         new("cron", BlockFieldType.Text, Caption: "Runs at", Presets: [.. _presets.Select(static p => new BlockChoice(p.Cron, p.Label))]),
-        new("timezone", BlockFieldType.Text, Required: false, Caption: "Timezone", Choices: [.. _zones.Select(static z => new BlockChoice(z, z))]),
+        new("timezone", BlockFieldType.Text, Required: false, Caption: "Time zone", Presets: [.. _zones.Select(static z => new BlockChoice(z, z))]),
     ]);
 
     /// <inheritdoc />
