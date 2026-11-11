@@ -62,4 +62,29 @@ public sealed class UiStatePathsTests
 
         Assert.Matches("^/t/sindri-ui-[0-9a-f]{16}/instance\\.sock$", socket);
     }
+
+    [Fact]
+    public void A_long_temp_root_falls_back_to_the_runtime_directory_when_it_is_set_and_short()
+    {
+        var deep = Path.Combine("/h", new string('d', 120), "ui");
+        var longRoot = "/" + new string('t', 98);
+
+        var socket = UiStatePaths.In(deep, longRoot, "/run/user/1000").InstanceSocket;
+
+        Assert.Matches("^/run/user/1000/sindri-ui-[0-9a-f]{16}/instance\\.sock$", socket);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("/run/user/" + "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu")]
+    public void A_long_temp_root_falls_back_to_tmp_when_the_runtime_directory_is_unset_or_too_long(string? runtimeDir)
+    {
+        var deep = Path.Combine("/h", new string('d', 120), "ui");
+        var longRoot = "/" + new string('t', 98);
+
+        var socket = UiStatePaths.In(deep, longRoot, runtimeDir).InstanceSocket;
+
+        Assert.Matches("^/tmp/sindri-ui-[0-9a-f]{16}/instance\\.sock$", socket);
+    }
 }
