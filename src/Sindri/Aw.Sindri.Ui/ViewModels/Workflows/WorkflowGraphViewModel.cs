@@ -54,7 +54,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         Nodes = nodes;
         Unplaced = unplaced;
         Edges = BuildEdges(workflow.Spec, nodes);
-        Ends = BuildEnds(nodes, Edges);
+        Ends = GraphEnds.Build(nodes, Edges);
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
     }
 
@@ -243,48 +243,6 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
 
         return edges;
     }
-
-    private static List<GraphEnd> BuildEnds(List<GraphNodeViewModel> nodes, IReadOnlyList<GraphEdgeViewModel> edges)
-    {
-        var ends = new List<GraphEnd>();
-        var cards = nodes.Select(n => new GraphBox(n.X, n.Y, CardWidth, CardHeight)).ToList();
-        foreach (var node in nodes.Where(n => string.Equals(n.Type, "condition", StringComparison.Ordinal)))
-        {
-            foreach (var (branch, across) in new[] { ("true", 50.0), ("false", CardWidth - 50) })
-            {
-                if (!edges.Any(e => string.Equals(e.From, node.Id, StringComparison.Ordinal) && string.Equals(e.Label, branch, StringComparison.Ordinal)))
-                {
-                    ends.Add(PlaceEnd(node, branch + " \u2192 done", across, cards));
-                }
-            }
-        }
-
-        return ends;
-    }
-
-    /// <summary>Puts a missing branch's stub and words under the card, above it when a card is there, and right of it as the last choice.</summary>
-    /// <param name="node">The condition step.</param>
-    /// <param name="text">The words.</param>
-    /// <param name="across">How far along the card the stub leaves it: true on the left half, false on the right, so both fit side by side.</param>
-    /// <param name="cards">Every step card.</param>
-    /// <returns>The first place whose stub and words clear every card and stay inside the world (Y at or below 0).</returns>
-    private static GraphEnd PlaceEnd(GraphNodeViewModel node, string text, double across, List<GraphBox> cards)
-    {
-        var x = node.X + across;
-        var below = new GraphPoint(x, node.Y + CardHeight);
-        var above = new GraphPoint(x, node.Y);
-        var right = new GraphPoint(node.X + CardWidth, node.Y + (CardHeight / 2));
-        GraphEnd[] places =
-        [
-            new(node.Id, text, below, below with { Y = below.Y + EndStub }, new GraphBox(x - (EndLabelWidth / 2), below.Y + EndStub + 2, EndLabelWidth, EndLabelHeight)),
-            new(node.Id, text, above, above with { Y = above.Y - EndStub }, new GraphBox(x - (EndLabelWidth / 2), above.Y - EndStub - 2 - EndLabelHeight, EndLabelWidth, EndLabelHeight)),
-            new(node.Id, text, right, right with { X = right.X + EndStub }, new GraphBox(right.X + EndStub + 6, right.Y - (EndLabelHeight / 2), EndLabelWidth, EndLabelHeight)),
-        ];
-        return places.FirstOrDefault(p => !cards.Exists(c => c.Overlaps(p.Label) || c.Overlaps(StubBox(p)))) ?? places[0];   // why Y >= 0: the world starts at 0, so words above a top-row card would be clipped
-    }
-
-    private static GraphBox StubBox(GraphEnd end) =>
-        new(Math.Min(end.At.X, end.To.X), Math.Min(end.At.Y, end.To.Y), Math.Max(Math.Abs(end.To.X - end.At.X), 1), Math.Max(Math.Abs(end.To.Y - end.At.Y), 1));
 
     private static string Text(JsonElement element, string name) =>
         element.ValueKind == JsonValueKind.Object && element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? string.Empty : string.Empty;
