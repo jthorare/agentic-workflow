@@ -255,6 +255,15 @@ jobs:
             echo "== $smoke"
             bash "$smoke"
           done
+      - name: Remove bubblewrap after the smoke steps
+        if: always() && steps.sln.outputs.run == 'true'
+        # Only the smokes get bwrap. The later "Lane budgets per package" step reruns the Sindri tests, and with bwrap
+        # present the BubblewrapSandbox* contract tests stop skipping and need a network forwarder and hooks this
+        # runner doesn't have (7 failed on run 42977822531). They stay owner-box tests, as before this step existed.
+        run: |
+          sudo apt-get remove -y -qq bubblewrap
+          sudo rm -f /etc/apparmor.d/bwrap
+          ! command -v bwrap && echo "bwrap: removed"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: steps.sln.outputs.run == 'true'
         with:
