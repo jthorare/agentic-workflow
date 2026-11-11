@@ -41,7 +41,6 @@ public static class MetaCoreServiceCollectionExtensions
         .AddScoped<TrainSelection>()
         .AddScoped<MergeReadiness>()
         .AddScoped<MergeQueueReader>()
-        .AddScoped<TeamPrInputs>()
         .AddScoped<HeavyReservation>()
         .AddScoped<ResourceAdvisor>()
         .AddScoped<WorktreeInspector>()

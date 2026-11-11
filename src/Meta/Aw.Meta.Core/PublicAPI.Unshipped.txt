@@ -2699,22 +2699,3 @@ override Aw.Meta.Core.Config.WatchConfig.ToString() -> string!
 static Aw.Meta.Core.Config.WatchConfig.operator !=(Aw.Meta.Core.Config.WatchConfig? left, Aw.Meta.Core.Config.WatchConfig? right) -> bool
 static Aw.Meta.Core.Config.WatchConfig.operator ==(Aw.Meta.Core.Config.WatchConfig? left, Aw.Meta.Core.Config.WatchConfig? right) -> bool
 static Aw.Meta.Core.Watch.TeamPrs.Owned(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Watch.PrView!>! prs, System.Collections.Generic.IReadOnlySet<int>! queued, System.Collections.Generic.IReadOnlySet<int>! ready, System.Collections.Generic.IReadOnlyList<string!>? prefixes, System.Collections.Generic.IReadOnlySet<string!>! checkedOutBranches) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Watch.PrView!>!
-Aw.Meta.Core.Watch.TeamPrFacts
-Aw.Meta.Core.Watch.TeamPrFacts.<Clone>$() -> Aw.Meta.Core.Watch.TeamPrFacts!
-Aw.Meta.Core.Watch.TeamPrFacts.CheckedOut.get -> System.Collections.Generic.IReadOnlySet<string!>!
-Aw.Meta.Core.Watch.TeamPrFacts.CheckedOut.init -> void
-Aw.Meta.Core.Watch.TeamPrFacts.Deconstruct(out System.Collections.Generic.IReadOnlySet<int>! Queued, out System.Collections.Generic.IReadOnlySet<int>! Ready, out System.Collections.Generic.IReadOnlySet<string!>! CheckedOut) -> void
-Aw.Meta.Core.Watch.TeamPrFacts.Equals(Aw.Meta.Core.Watch.TeamPrFacts? other) -> bool
-Aw.Meta.Core.Watch.TeamPrFacts.Queued.get -> System.Collections.Generic.IReadOnlySet<int>!
-Aw.Meta.Core.Watch.TeamPrFacts.Queued.init -> void
-Aw.Meta.Core.Watch.TeamPrFacts.Ready.get -> System.Collections.Generic.IReadOnlySet<int>!
-Aw.Meta.Core.Watch.TeamPrFacts.Ready.init -> void
-Aw.Meta.Core.Watch.TeamPrFacts.TeamPrFacts(System.Collections.Generic.IReadOnlySet<int>! Queued, System.Collections.Generic.IReadOnlySet<int>! Ready, System.Collections.Generic.IReadOnlySet<string!>! CheckedOut) -> void
-Aw.Meta.Core.Watch.TeamPrInputs
-Aw.Meta.Core.Watch.TeamPrInputs.Read(Aw.Meta.Core.Config.TeamConfig! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Watch.TeamPrFacts!>!>
-Aw.Meta.Core.Watch.TeamPrInputs.TeamPrInputs(Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.IKeyValueStore! values, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.MetaPaths! paths) -> void
-override Aw.Meta.Core.Watch.TeamPrFacts.Equals(object? obj) -> bool
-override Aw.Meta.Core.Watch.TeamPrFacts.GetHashCode() -> int
-override Aw.Meta.Core.Watch.TeamPrFacts.ToString() -> string!
-static Aw.Meta.Core.Watch.TeamPrFacts.operator !=(Aw.Meta.Core.Watch.TeamPrFacts? left, Aw.Meta.Core.Watch.TeamPrFacts? right) -> bool
-static Aw.Meta.Core.Watch.TeamPrFacts.operator ==(Aw.Meta.Core.Watch.TeamPrFacts? left, Aw.Meta.Core.Watch.TeamPrFacts? right) -> bool

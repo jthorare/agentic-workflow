@@ -1,25 +1,27 @@
 using Aw.Kernel;
+using Aw.Meta.Core;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Merge;
 using Aw.Meta.Core.Messages;
 using Aw.Meta.Core.Ports;
+using Aw.Meta.Core.Watch;
 using Aw.Meta.Core.Worktrees;
 
-namespace Aw.Meta.Core.Watch;
+namespace Aw.Meta.Features.Watch;
 
 /// <summary>What <see cref="TeamPrs"/> needs besides the pull request list: the merge queue, the pull requests lanes sent as ready, and the branches checked out in the team's worktrees.</summary>
 /// <param name="repo">Runs git in the team's repo.</param>
 /// <param name="values">Holds the pull requests handed to the merge queue.</param>
 /// <param name="messages">The inbox, where "ready #N" lands.</param>
 /// <param name="paths">Where the gate trees live; the home directory.</param>
-public sealed class TeamPrInputs(RepoCommands repo, IKeyValueStore values, IMessageStore messages, MetaPaths paths)
+internal sealed class TeamPrInputs(RepoCommands repo, IKeyValueStore values, IMessageStore messages, MetaPaths paths)
 {
     /// <summary>Reads the facts.</summary>
     /// <param name="team">The team config (the repo and the worktree roots).</param>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The facts, or the first read that failed.</returns>
-    public async ValueTask<Result<TeamPrFacts>> Read(TeamConfig team, CancellationToken cancellationToken)
+    internal async ValueTask<Result<TeamPrFacts>> Read(TeamConfig team, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(team);
         var handed = await values.Get(KvKeys.MergeQueued, cancellationToken).ConfigureAwait(false);
