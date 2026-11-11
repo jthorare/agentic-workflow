@@ -14,6 +14,7 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// pipe of serve's, a terminal's Ctrl-C doesn't reach it, it outlives a serve that dies, and serve gets no SIGCHLD from it
 /// (a stopped child made the runtime's child reaping spin and hang every later Process wait). A start first looks for a
 /// server already running on the home's database: one that answers is adopted, one that doesn't is killed and replaced.
+/// A failed setsid or exec stops the start, and the reason is in the log.
 /// </summary>
 internal sealed class TemporalDevServer
 {
@@ -203,7 +204,7 @@ internal sealed class TemporalDevServer
     private int Detach(string executable, string[] server, string log)
     {
         const string Script = "umask 077; log=$1; shift; "
-            + "if [ -x /usr/bin/perl ]; then /usr/bin/perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV or die \"exec $ARGV[0]: $!\\n\"' \"$@\" </dev/null >>\"$log\" 2>&1 & "
+            + "if [ -x /usr/bin/perl ]; then /usr/bin/perl -MPOSIX -e 'POSIX::setsid() == -1 and die \"setsid: $!\\n\"; exec @ARGV or die \"exec $ARGV[0]: $!\\n\"' \"$@\" </dev/null >>\"$log\" 2>&1 & "
             + "else \"$@\" </dev/null >>\"$log\" 2>&1 & fi; echo $!";
         string[] arguments = [.. new[] { "-c", Script, "sh", log, executable }, .. server];
         var printed = DevServerProcesses.Capture(_start, "/bin/sh", arguments).Trim();
