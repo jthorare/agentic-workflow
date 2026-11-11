@@ -2623,3 +2623,10 @@ static Aw.Meta.Core.Defects.DefectText.Title(string! code, string! title) -> str
 static Aw.Meta.Core.Github.GhIssues.List(string! json) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.IssueRef!>?
 static Aw.Meta.Core.Github.IssueRef.operator !=(Aw.Meta.Core.Github.IssueRef? left, Aw.Meta.Core.Github.IssueRef? right) -> bool
 static Aw.Meta.Core.Github.IssueRef.operator ==(Aw.Meta.Core.Github.IssueRef? left, Aw.Meta.Core.Github.IssueRef? right) -> bool
+Aw.Meta.Core.Coordination.InboxSync.InboxSync(Aw.Meta.Core.Ports.ITranscriptReader! transcripts, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.IOwnerStore! owner, System.TimeProvider! clock, Aw.Meta.Core.Coordination.MetaTranscriptResolver? meta) -> void
+Aw.Meta.Core.Coordination.InboxSync.RunMeta(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Meta.Core.Coordination.MetaTranscriptResolver
+Aw.Meta.Core.Coordination.MetaTranscriptResolver.Find(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
+Aw.Meta.Core.Coordination.MetaTranscriptResolver.MetaTranscriptResolver(Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.ISessionDirectory! sessions, Aw.Meta.Core.Ports.ITranscriptLocator! locator) -> void
+Aw.Meta.Core.Ports.ITranscriptLocator
+Aw.Meta.Core.Ports.ITranscriptLocator.Find(Aw.Meta.Core.Ids.SessionId session, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>

@@ -22,6 +22,9 @@ public sealed class InMemoryTranscriptReader : ITranscriptReader
     public void Append(string path, string content) =>
         _files[path] = [.. _files.GetValueOrDefault(path, []), .. Encoding.UTF8.GetBytes(content)];
 
+    /// <summary>The paths of the transcripts that exist.</summary>
+    public IReadOnlyCollection<string> Paths => _files.Keys;
+
     /// <inheritdoc />
     public ValueTask<Result<TranscriptChunk>> ReadFrom(string path, long offset, CancellationToken cancellationToken)
     {

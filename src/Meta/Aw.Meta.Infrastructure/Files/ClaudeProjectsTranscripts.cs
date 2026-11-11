@@ -10,12 +10,33 @@ namespace Aw.Meta.Infrastructure.Files;
 /// holds it. Only the last bytes are read, and the file is opened for sharing because Claude Code is appending to it.
 /// </summary>
 /// <param name="projects">The projects directory.</param>
-internal sealed class ClaudeProjectsTranscripts(string projects) : IClaudeTranscripts
+internal sealed class ClaudeProjectsTranscripts(string projects) : IClaudeTranscripts, ITranscriptLocator
 {
+    public ValueTask<Result<string?>> Find(SessionId session, CancellationToken cancellationToken)
+    {
+        var id = session.Value;
+        if (!IsFileName(id))
+        {
+            return ValueTask.FromResult(Results.Success<string?>(value: null));
+        }
+
+        try
+        {
+            return ValueTask.FromResult(Results.Success(Find(id + ".jsonl")));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return ValueTask.FromResult<Result<string?>>(MetaErrors.TranscriptUnreadable.With($"{id}: {exception.Message}"));
+        }
+    }
+
+    private static bool IsFileName(string id) =>
+        id.Length > 0 && id.All(static c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.') && !id.All(static c => c == '.');
+
     public async ValueTask<Result<TranscriptTail?>> Tail(SessionId session, int maxBytes, CancellationToken cancellationToken)
     {
         var id = session.Value;
-        if (id.Length == 0 || id.Any(static c => !(char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.')) || id.All(static c => c == '.'))
+        if (!IsFileName(id))
         {
             return Results.Success<TranscriptTail?>(value: null);   // not a name that could be a transcript file
         }
