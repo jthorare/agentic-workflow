@@ -79,6 +79,17 @@ public sealed class ContextIndexCardTests
     }
 
     [Fact]
+    public async Task With_no_records_embedded_or_pending_there_is_no_bar()
+    {
+        var card = await ReadWithConcepts(
+            """{"enabled":true,"concepts":0,"multiSource":0,"queued":0,"covered":0,"embedded":0,"pending":0,"coverage":0,"watermark":0,"code":null}""",
+            Source("github", "running", 0));
+
+        Assert.Null(card.Backlog);
+        Assert.False(card.HasBacklog);
+    }
+
+    [Fact]
     public async Task Concepts_that_cannot_be_read_say_so_with_their_code_show_no_counts_and_need_a_look()
     {
         var card = await ReadWithConcepts("""{"enabled":true,"concepts":0,"multiSource":0,"queued":0,"covered":0,"embedded":null,"pending":null,"coverage":0,"watermark":0,"code":"SND-CONTEXT-090"}""", Source("github", "running", 200));
