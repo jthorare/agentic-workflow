@@ -4,6 +4,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
 
 namespace Aw.Sindri.Infrastructure.Workflow.Code;
@@ -24,10 +25,10 @@ internal sealed class SandboxedCodeRunner(CompiledCodeCache cache, IApprovedProf
     public async ValueTask<Result<string>> Run(CodeRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
-        var code = cache.Resolve(run.Code);
-        if (code.AssemblyPath is not { } assembly)
+        var assembly = Compiled(run);
+        if (assembly.IsError)
         {
-            return SindriErrors.CodeCompileFailed.With(string.Join("; ", code.Diagnostics.Select(static d => string.Create(CultureInfo.InvariantCulture, $"line {d.Line}, column {d.Column}: {d.Id} {d.Message}"))));
+            return assembly.Error;
         }
 
         var repo = await RepoPath(run.Repo, cancellationToken).ConfigureAwait(false);
@@ -41,7 +42,7 @@ internal sealed class SandboxedCodeRunner(CompiledCodeCache cache, IApprovedProf
         try
         {
             _ = Directory.CreateDirectory(Path.Combine(area, "tmp"));
-            File.Copy(assembly, Path.Combine(area, "tmp", "code.dll"), overwrite: true);
+            File.Copy(assembly.Value, Path.Combine(area, "tmp", "code.dll"), overwrite: true);
             var plan = sandbox.PlanProcess(CodeRunSandbox.Request(launch, runnerPath, area, repo.Value, host()));
             if (plan.IsError)
             {
@@ -49,7 +50,7 @@ internal sealed class SandboxedCodeRunner(CompiledCodeCache cache, IApprovedProf
             }
 
             var process = new CodeRunnerProcess([runnerPath], argv => sandbox.WrapProcess(plan.Value, argv));
-            return await process.Run("/tmp/code.dll", run.InputJson, new CodeLimits(run.Timeout, run.MemoryMb), cancellationToken).ConfigureAwait(false);
+            return await process.Run(DllPath(plan.Value, area), run.InputJson, new CodeLimits(run.Timeout, run.MemoryMb), cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)   // boundary: the run area could not be made
         {
@@ -62,6 +63,24 @@ internal sealed class SandboxedCodeRunner(CompiledCodeCache cache, IApprovedProf
                 Directory.Delete(area, recursive: true);
             }
         }
+    }
+
+    // why: bubblewrap mounts <area>/tmp at /tmp, but Seatbelt has no mount namespace and WrapProcess rewrites env only, so there the runner must get the dll's real path
+    private static string DllPath(SandboxPlan plan, string area) =>
+        plan.Mechanism == SandboxMechanism.Seatbelt ? Path.Combine(area, "tmp", "code.dll") : "/tmp/code.dll";
+
+    // why: the runner must exist before anything is planned, or bubblewrap exits 1 and the user sees SND-CODE-004 instead of SND-CODE-005
+    private Result<string> Compiled(CodeRun run)
+    {
+        var code = cache.Resolve(run.Code);
+        if (code.AssemblyPath is not { } assembly)
+        {
+            return SindriErrors.CodeCompileFailed.With(string.Join("; ", code.Diagnostics.Select(static d => string.Create(CultureInfo.InvariantCulture, $"line {d.Line}, column {d.Column}: {d.Id} {d.Message}"))));
+        }
+
+        return File.Exists(runnerPath)
+            ? assembly
+            : SindriErrors.CodeRunnerUnavailable.With($"the runner binary is not at {runnerPath} (fix: install it beside the Sindri host)");
     }
 
     // why: a node with no repo reads no files; a named repo must be in the live profile
