@@ -1841,14 +1841,18 @@ public sealed class ShellWindowTests : IDisposable
         [.. tab.GetVisualDescendants().OfType<StackPanel>().First(p => p.Children.OfType<TextBlock>().Any()).Children.Where(c => c.IsEffectivelyVisible)];
 
     // The empty room between the tabs' texts must not close up: the label's (or count's) right edge to the next tab's dot.
-    // QA's floor: 6 px bounds = about 8 px ink (two side bearings), #2547.
-    private const double TabGapFloor = 6;
+    // QA's floor: 8 px bounds. 6 px bounds measured 7 px ink at 130% (#2547 shots), under QA's 8 px ink.
+    private const double TabGapFloor = 8;
+
+    // A tab's selected (or hover) fill covers the whole tab, so its edge must stay this far from the next tab's word, or the
+    // fill reads as part of that word (QA, #2547: 4 px at the tight step before).
+    private const double FillClearFloor = 6;
 
     // #2547 (QA): at 1000, 1099 and 1280 px, text scale 1.0 and 1.3, every pill state fits: the pill ends inside the bar's
-    // 16 px padding, the bar has settled, two tabs keep the gap floor, and the tabs keep their normal padding at 1.0 (the tight
-    // step is only for when normal padding can't fit). Placeholder whole at Full in Normal at every width, and in Degraded
-    // (short problem) at 1280 px, 1.0, the case the 4 px slack is for; in the other states Full keeps the field at its 184 px
-    // minimum and the placeholder trims, as on main (#2710 lists those rows).
+    // 16 px padding, the bar has settled, two tabs keep the gap floor, a tab's fill stays 6 px from its neighbour's word, and
+    // the tabs keep their normal padding at 1.0 (the tight step is only for when normal padding can't fit). Placeholder whole
+    // at Full in Normal at every width, and in Degraded (short problem) at 1280 px, 1.0, the case the 4 px slack is for; in
+    // the other states Full keeps the field at its 184 px minimum and the placeholder trims, as on main (#2710 lists those rows).
     [Theory]
     [MemberData(nameof(BarWidthsAndScales))]
     public Task The_top_bar_fits_and_keeps_the_gap_floor_in_every_pill_state(BarState state, double width, double scale) => OnUi(() => WithBar(state, width, scale, window =>
@@ -1857,19 +1861,7 @@ public sealed class ShellWindowTests : IDisposable
         TopBarFits(window, state, scale);
         Assert.True(Box(window, "HealthPill").Right <= width - 16, string.Create(CultureInfo.InvariantCulture, $"{at}: the pill ends at {Box(window, "HealthPill").Right}"));
 
-        var tabs = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<ListBoxItem>().ToList();
-        var gaps = new List<(string Pair, double Gap)>();
-        for (var i = 0; i + 1 < tabs.Count; i++)
-        {
-            var last = TabContent(tabs[i]).OfType<TextBlock>().Last();
-            var next = TabContent(tabs[i + 1])[0];
-            var right = (last.TranslatePoint(new Point(0, 0), window) ?? default).X + last.Bounds.Width;
-            var left = (next.TranslatePoint(new Point(0, 0), window) ?? default).X;
-            gaps.Add(($"{AutomationProperties.GetName(tabs[i].GetVisualDescendants().OfType<TextBlock>().First())}|{AutomationProperties.GetName(tabs[i + 1].GetVisualDescendants().OfType<TextBlock>().First())}", left - right));
-        }
-
-        var all = string.Join(", ", gaps.Select(g => string.Create(CultureInfo.InvariantCulture, $"{g.Pair} {g.Gap:0.#}")));
-        Assert.True(gaps.TrueForAll(g => g.Gap >= TabGapFloor), string.Create(CultureInfo.InvariantCulture, $"{at}: a gap is under {TabGapFloor} px: {all}"));
+        TabsKeepTheirSpacing(window, at);
 
         if ((state is BarState.Normal || (state is BarState.DegradedShortProblem && width == 1280 && scale == 1.0)) && !Named<Border>(window, "SearchField").Classes.Contains("compact"))
         {
@@ -1883,6 +1875,31 @@ public sealed class ShellWindowTests : IDisposable
             Assert.False(Named<ListBox>(window, "Navigation").Classes.Contains("tight"), $"{at}: the tabs went tight at text scale 1.0");
         }
     }));
+
+    // Between every two tabs: the words keep the gap floor, and either tab's fill (selected or hover covers the whole tab)
+    // stays the fill floor from the other tab's word.
+    private static void TabsKeepTheirSpacing(Window window, string at)
+    {
+        static double X(Visual v, Visual root) => (v.TranslatePoint(new Point(0, 0), root) ?? default).X;
+        var tabs = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<ListBoxItem>().ToList();
+        var gaps = new List<(string Pair, double Gap)>();
+        var fills = new List<(string Pair, double Clear)>();
+        for (var i = 0; i + 1 < tabs.Count; i++)
+        {
+            var lastWord = TabContent(tabs[i]).OfType<TextBlock>().Last();
+            var nextWord = TabContent(tabs[i + 1])[0];
+            var wordRight = X(lastWord, window) + lastWord.Bounds.Width;
+            var pair = $"{AutomationProperties.GetName(tabs[i].GetVisualDescendants().OfType<TextBlock>().First())}|{AutomationProperties.GetName(tabs[i + 1].GetVisualDescendants().OfType<TextBlock>().First())}";
+            gaps.Add((pair, X(nextWord, window) - wordRight));
+            fills.Add((pair + " fill->word", X(nextWord, window) - (X(tabs[i], window) + tabs[i].Bounds.Width)));
+            fills.Add((pair + " word->fill", X(tabs[i + 1], window) - wordRight));
+        }
+
+        var all = string.Join(", ", gaps.Select(g => string.Create(CultureInfo.InvariantCulture, $"{g.Pair} {g.Gap:0.#}")));
+        Assert.True(gaps.TrueForAll(g => g.Gap >= TabGapFloor - 0.01), string.Create(CultureInfo.InvariantCulture, $"{at}: a gap is under {TabGapFloor} px: {all}"));
+        var clears = string.Join(", ", fills.Select(f => string.Create(CultureInfo.InvariantCulture, $"{f.Pair} {f.Clear:0.#}")));
+        Assert.True(fills.TrueForAll(f => f.Clear >= FillClearFloor - 0.01), string.Create(CultureInfo.InvariantCulture, $"{at}: a tab's fill is under {FillClearFloor} px from the next word: {clears}"));
+    }
 
     // #2547 (ideas): the problem text's 8 px margin stays even when its cap reaches 0, so the step the bar picks counts it. Narrowing
     // the window 2 px at a time through the steps, the pill never runs into the bar's 16 px right padding.

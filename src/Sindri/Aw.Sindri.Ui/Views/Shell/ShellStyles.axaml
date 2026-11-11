@@ -63,7 +63,7 @@
     <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
   <!-- The bar's tight step (TopBar.Counts.cs): narrower tabs, only once the dot, the counts and the brand word are gone.
-       3 px a side and no gap keep 6 px between two tabs' words (#2547, QA's floor). -->
+       3 px a side and a 3 px gap: 9 px between two tabs' words, 6 px from a selected fill to the next word (#2547). -->
   <Style Selector="ListBox.nav.tight > ListBoxItem">
     <Setter Property="Padding" Value="3,0" />
   </Style>
