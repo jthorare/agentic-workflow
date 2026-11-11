@@ -40,27 +40,30 @@ public sealed class ResourceDoctorChecksTests : IDisposable
     [Fact]
     public async Task A_failed_bookkeeping_read_gives_a_warn_row_with_the_error()
     {
-        // Ensure migrates ledger.db to the resources version; dropping the table then makes the SELECT fail.
+        // Ensure migrates ledger.db to the resources version; overwriting it with bytes that aren't a database then makes the read
+        // fail as Damaged (SQLITE_NOTADB). A dropped table would not do: SQLITE_ERROR is unmapped on purpose and throws.
         var owner = ResourceOwner.Parse("workflow:triage").Value;
         var spec = new ResourceSpec([new DatabaseResource("state")], [], Sandbox: null, []);
         Assert.True((await _provisioner.Ensure(owner, spec, Token)).IsSuccess);
-        await DropResourceTable();
+        await BreakLedger();
         var checks = new ResourceDoctorChecks(new ResourceFiles(Root), _provisioner);
 
         var rows = await checks.Run(Token);
 
         var row = Assert.Single(rows);
         Assert.Equal(("resources", CheckState.Warn), (row.Name, row.State));
-        Assert.Contains("resource", row.Detail, StringComparison.Ordinal);
+        Assert.StartsWith("AW-DATA-008: ", row.Detail, StringComparison.Ordinal);
         Assert.Equal("check that ledger.db under the Sindri home is readable, then run sindri doctor again", row.Fix);
     }
 
-    private async Task DropResourceTable()
+    private async Task BreakLedger()
     {
-        await using var connection = new SqliteConnection($"Data Source={_settings.LedgerPath};Pooling=False");
-        await connection.OpenAsync(Token);
-        await using var command = connection.CreateCommand();
-        command.CommandText = "DROP TABLE resource";
-        await command.ExecuteNonQueryAsync(Token);
+        SqliteConnection.ClearAllPools();
+        foreach (var suffix in new[] { "-wal", "-shm" })
+        {
+            File.Delete(_settings.LedgerPath + suffix);
+        }
+
+        await File.WriteAllTextAsync(_settings.LedgerPath, string.Concat(Enumerable.Repeat("this is not a SQLite database\n", 200)), Token);
     }
 }
