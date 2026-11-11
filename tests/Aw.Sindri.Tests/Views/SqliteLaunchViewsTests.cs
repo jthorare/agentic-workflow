@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Ledger;
@@ -71,5 +72,48 @@ public sealed class SqliteLaunchViewsTests : IDisposable
         Assert.Null(missing);
         Expect.Sequence([Id(2), Id(1)], ofItem.Select(r => r.Id));
         Expect.Sequence([Id(2), Id(1)], ofRepo.Select(r => r.Id));
+    }
+
+    [Fact]
+    public async Task Launches_are_read_by_how_they_ended_and_by_their_step_instance()
+    {
+        var at = _h.Clock.GetUtcNow();
+        var instance = InstanceAddress.From(A.FirstItemId.Value + "/spec/1");
+        LaunchRow Row(int n, LaunchEnd? end, LaunchStep step) =>
+            new(Id(n), A.FirstItemId, Repo: null, LaunchMode.Open, AgentId.From("claude-code"), "engine", LaunchState.Started, at, OutcomeAt: at, Code: null, Message: null, Stage: null, SessionId: null,
+                ReportedSessionId: null, TabTitle: null, Viewer: null, Late: false, Attach: null, CatalogSource: null, ArgvHash: null, end, step, Sequence: n);
+        var idle = new LaunchEnd(SessionEndReason.Idle, ExitCode: null, at);
+        var rows = new[]
+        {
+            Row(1, idle, new LaunchStep(instance, "build", 1)),
+            Row(2, end: null, new LaunchStep(instance, "build", 2)),
+            Row(3, new LaunchEnd(SessionEndReason.Exit, ExitCode: 0, at), LaunchStep.None),
+        };
+        _ = (await _views.Store.Open(ViewSchema.Version, Token)).Value;
+        _ = (await _views.Store.Apply([Recorded.Of(_h.Events, "test.seed", new ServiceRan(_h.Ids.New<CommandId>(), ServiceName.From("heartbeat"), at, ServiceOutcome.Ok, Code: null), 1)],
+            [new PutLaunches(rows)], at, Token)).Value;
+
+        var ended = (await _views.Reader.Where<LaunchRow>(ViewNames.Launches, ViewColumn.Reason, "idle", Token)).Value;
+        var ofInstance = (await _views.Reader.Where<LaunchRow>(ViewNames.Launches, ViewColumn.Instance, instance.Value, Token)).Value;
+
+        Expect.Sequence([Id(1)], ended.Select(r => r.Id));
+        Expect.Sequence([Id(1), Id(2)], ofInstance.Select(r => r.Id));
+    }
+
+    private sealed class PutLaunches(LaunchRow[] rows) : IProjection
+    {
+        public IReadOnlyList<string> Views => [ViewNames.Launches];
+
+        public bool Handles(string eventType) => eventType == "test.seed";
+
+        public async ValueTask<Kernel.Result<Kernel.Unit>> Apply(LedgerEvent recorded, IViewRows viewRows, CancellationToken cancellationToken)
+        {
+            foreach (var row in rows)
+            {
+                _ = await viewRows.Put(ViewNames.Launches, row.Id.Value, row, cancellationToken);
+            }
+
+            return Kernel.Unit.Value;
+        }
     }
 }

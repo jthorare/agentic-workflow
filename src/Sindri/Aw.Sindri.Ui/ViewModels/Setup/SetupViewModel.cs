@@ -254,7 +254,7 @@ internal sealed partial class SetupViewModel : ObservableObject
         HomeStepId = next?.Id ?? string.Empty;   // before the flag: whoever hears the flag reads the step it names
         IsHomeLineShown = !IsReading && !IsNotServed && !IsUnreadable && HasSteps && !IsFinished;
         HomeStepText = next?.Title ?? string.Empty;
-        ContinueText = next is null ? string.Empty : Labels.SetupContinue;
+        ContinueText = HomeStepText;   // the button names the step it opens
         OnChanged(nameof(HomeLineName));
         OnChanged(nameof(ContinueName));
     }

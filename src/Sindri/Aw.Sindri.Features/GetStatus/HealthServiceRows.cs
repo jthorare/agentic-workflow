@@ -32,13 +32,13 @@ internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInSe
     /// <returns>The count; 0 when this build has no launcher.</returns>
     public async ValueTask<int> Stalled(CancellationToken cancellationToken) => stalled is null ? 0 : (await stalled.Find(cancellationToken).ConfigureAwait(false)).Count;
 
-    /// <summary>How many agent sessions sat idle and were ended with no report, and were not relaunched (issue #1265), from the launches view.</summary>
+    /// <summary>How many agent sessions sat idle and were ended with no report, and were not relaunched (issue #1265), from the launches view, read by the idle launches (issue #2786).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The count; 0 when the launches view can't be read (status is where that is reported).</returns>
     public async ValueTask<int> IdleAgents(CancellationToken cancellationToken)
     {
-        var launches = await views.List<LaunchRow>(ViewNames.Launches, cancellationToken).ConfigureAwait(false);
-        return launches.IsSuccess ? StalledLaunches.Find(launches.Value, clock?.GetUtcNow()).Count : 0;
+        var found = await StalledLaunches.Read(views, clock?.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        return found.IsSuccess ? found.Value.Count : 0;
     }
 
     /// <summary>The rows that count for health.</summary>

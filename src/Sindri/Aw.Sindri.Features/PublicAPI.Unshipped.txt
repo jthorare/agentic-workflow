@@ -2891,6 +2891,8 @@ Aw.Sindri.Features.CodeIndexReads.RepoHealth.Waiting.init -> void
 override Aw.Sindri.Features.CodeIndexReads.RepoHealth.Equals(object? obj) -> bool
 override Aw.Sindri.Features.CodeIndexReads.RepoHealth.GetHashCode() -> int
 override Aw.Sindri.Features.CodeIndexReads.RepoHealth.ToString() -> string!
+static Aw.Sindri.Features.CodeIndexReads.RepoHealth.NeedsEnded(Aw.CodeIndex.Core.Facade.RepoStatus! status, Aw.CodeIndex.Core.Model.RepoHead? live, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobRow!>! running) -> bool
+static Aw.Sindri.Features.CodeIndexReads.RepoHealth.Of(Aw.CodeIndex.Core.Facade.RepoStatus! status, Aw.CodeIndex.Core.Model.RepoHead? live, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobRow!>! running, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobRow!>! ended, System.DateTimeOffset now) -> Aw.Sindri.Features.CodeIndexReads.RepoHealth!
 static Aw.Sindri.Features.CodeIndexReads.RepoHealth.Of(Aw.CodeIndex.Core.Facade.RepoStatus! status, Aw.CodeIndex.Core.Model.RepoHead? live, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobRow!>! builds, System.DateTimeOffset now) -> Aw.Sindri.Features.CodeIndexReads.RepoHealth!
 static Aw.Sindri.Features.CodeIndexReads.RepoHealth.operator !=(Aw.Sindri.Features.CodeIndexReads.RepoHealth? left, Aw.Sindri.Features.CodeIndexReads.RepoHealth? right) -> bool
 static Aw.Sindri.Features.CodeIndexReads.RepoHealth.operator ==(Aw.Sindri.Features.CodeIndexReads.RepoHealth? left, Aw.Sindri.Features.CodeIndexReads.RepoHealth? right) -> bool
