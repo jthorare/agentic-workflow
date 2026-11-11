@@ -133,10 +133,20 @@ pointer("pointerover", hs); await sleep(300);
 const hsPop = d.querySelector(".hs-pop");
 const hsShown = !!hsPop?.classList.contains("show");
 check(hsShown, `hovering [data-hs]${synthetic ? " (synthetic probe)" : ""} did not show .hs-pop.show`);
-// A box that carries a schema table shows the table's brief (its name in .tb-title), not the label card.
+// Which card is right follows from the hotspot, not from what the card happens to show. A box whose data-table names
+// a schema table the page has (by id or by table name, as the page's findTable resolves it) shows that table's brief,
+// its name in .tb-title; every other box shows its label card and no brief.
+const hsTables: { id?: string; table?: string }[] = Array.isArray(content?.schema) ? content.schema : [];
+const hsKey = hs.dataset.table || "";
+const hsTable = hsKey ? hsTables.find((t) => t.id === hsKey) || hsTables.find((t) => t.table === hsKey) || null : null;
 const hsBrief = hsPop?.querySelector(".tb-title code");
-if (hsBrief) check((hsBrief.textContent || "") !== "" && hsPop!.classList.contains("has-brief"), "hotspot card for a table box has no table name or is not marked has-brief");
-else check((hsPop?.querySelector("b")?.textContent || "") === (hs.dataset.label || ""), "hotspot card label does not match data-label");
+const hsMarked = !!hsPop?.classList.contains("has-brief");
+if (hsTable) {
+  check(hsMarked && (hsBrief?.textContent || "") === (hsTable.table || ""), `hotspot card for the table box "${hsKey}" does not show that table's brief`);
+} else {
+  check(!hsMarked && !hsBrief, "hotspot card for a box without a schema table shows a table brief");
+  check((hsPop?.querySelector("b")?.textContent || "") === (hs.dataset.label || ""), "hotspot card label does not match data-label");
+}
 pointer("pointerout", hs); await sleep(300);
 check(!hsPop?.classList.contains("show"), "hotspot card did not hide after the pointer left");
 if (synthetic) hs.remove();
