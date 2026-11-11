@@ -51,5 +51,9 @@ public sealed class SystemInsporaFramesTests : FrameHost
         Assert.Equal(typical, Visible(window, "ContextIndexBacklog"));
 
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"system-inspora-{width:0}-{(typical ? "typical" : "empty")}"), prefix: "");
+
+        Named<Control>(window, "ContextIndexPanel").BringIntoView();   // why: the card with the backlog bar sits below the first 800 px
+        Settle(window);
+        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"system-inspora-{width:0}-{(typical ? "typical" : "empty")}-index"), prefix: "");
     });
 }
