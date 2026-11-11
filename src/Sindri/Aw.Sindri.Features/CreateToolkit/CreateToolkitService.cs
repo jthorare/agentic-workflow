@@ -56,6 +56,11 @@ internal sealed partial class CreateToolkitService(IToolkitStore store, IToolkit
             return SindriErrors.ToolkitNameInvalid.With("A new toolkit's name is lowercase words joined by '-', each starting with a letter (github-triage).");
         }
 
+        if (ToolNames.GeneratorName(request.Name) is null)
+        {
+            return SindriErrors.ToolkitNameInvalid.With($"'{request.Name}' can't be a new toolkit: the generator needs 3 to 31 letters and digits once the '-' are dropped, not Common, Shared, Utils or Helpers, and each word after the first must follow a word of 2 or more characters ('x-ray' would come back as 'xray'). Try a name like 'x-rays' -> 'xrays' or 'github-triage'.");
+        }
+
         var named = ToolNames.For(request.Name, request.Tool);
         return named.IsError ? named.Error : null;
     }

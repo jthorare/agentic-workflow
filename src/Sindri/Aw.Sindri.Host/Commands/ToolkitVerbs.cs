@@ -34,7 +34,7 @@ internal sealed class ToolkitVerbs(ControlPlaneClient client, Output output, Job
             return await output.Error(SindriErrors.InvalidInput.With(Usage)).ConfigureAwait(false);
         }
 
-        var down = ensureRunning is null ? null : await ensureRunning(true, interrupt).ConfigureAwait(false);
+        var down = ensureRunning is null ? null : await ensureRunning(line.Verb is not ("list" or "calls"), interrupt).ConfigureAwait(false);
         if (down is not null)
         {
             return await output.Error(down).ConfigureAwait(false);

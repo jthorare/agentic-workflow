@@ -66,14 +66,15 @@ public sealed class RunningToolkitsTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task A_paused_toolkits_refusal_names_a_tool_that_exists()
+    public async Task A_paused_row_with_no_process_answers_not_running_and_names_start_not_resume()
     {
-        _store.Items["triage"] = _triage with { State = ToolkitState.Paused };
+        _store.Items["triage"] = _triage with { State = ToolkitState.Paused };   // a Stop landed between the pause and its save: resume would fail SND-TK-001
 
         var answer = await _runtime.CallTool("triage", "ping", "{}", "session:abc", Token);
 
-        Assert.Equal(SindriErrors.ToolkitPaused.Code, answer.Error.Code);
-        Assert.Contains("toolkit_resume", answer.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(SindriErrors.ToolkitNotBuilt.Code, answer.Error.Code);
+        Assert.Contains("toolkit_start", answer.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("toolkit_resume", answer.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact]

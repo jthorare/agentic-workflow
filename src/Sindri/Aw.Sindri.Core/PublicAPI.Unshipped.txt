@@ -22504,6 +22504,7 @@ override Aw.Sindri.Core.Toolkits.ToolkitResource.ToString() -> string!
 override Aw.Sindri.Core.Toolkits.ToolkitTool.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Toolkits.ToolkitTool.GetHashCode() -> int
 override Aw.Sindri.Core.Toolkits.ToolkitTool.ToString() -> string!
+static Aw.Sindri.Core.Toolkits.ToolNames.GeneratorName(string? name) -> string?
 static Aw.Sindri.Core.Toolkits.ToolNames.For(string! toolkit, string! tool) -> Aw.Kernel.Result<string!>!
 static Aw.Sindri.Core.Toolkits.ToolNames.TryParse(string? name, out string! toolkit, out string! tool) -> bool
 static Aw.Sindri.Core.Toolkits.Toolkit.operator !=(Aw.Sindri.Core.Toolkits.Toolkit? left, Aw.Sindri.Core.Toolkits.Toolkit? right) -> bool

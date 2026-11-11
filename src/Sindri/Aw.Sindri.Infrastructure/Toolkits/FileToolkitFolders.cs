@@ -48,15 +48,25 @@ internal sealed class FileToolkitFolders(string sindriHome, Func<string, string?
             return SindriErrors.ToolkitCreateFailed.With($"the generator isn't at {script} (fix: run setup.sh, or set AW_TOOLKIT to the toolkit checkout)");
         }
 
+        if (ToolNames.GeneratorName(name) is not { } pascal)
+        {
+            return SindriErrors.ToolkitNameInvalid.With($"'{name}' isn't a name the generator keeps (fix: pick another name)");
+        }
+
         var dir = Path.Combine(_root, name);
         var feed = environment("AW_SINDRI_SDK_FEED") is { Length: > 0 } given ? given : Path.Combine(sindriHome, "sdk", "packages");
-        List<string> arguments = [script, "--name", Pascal(name), "--tool", tool, "--dir", dir, "--feed", feed];
+        List<string> arguments = [script, "--name", pascal, "--tool", tool, "--dir", dir, "--feed", feed];
         if (!string.IsNullOrEmpty(needs))
         {
             arguments.AddRange(["--needs", needs]);
         }
 
         var ran = await Task.Run(() => runner.Run("node", arguments, _timeout, new ToolRunOptions(WorkingDirectory: toolkit), cancellationToken), cancellationToken).ConfigureAwait(false);
+        if (ran.Outcome is ToolOutcome.TimedOut or ToolOutcome.Cancelled)
+        {
+            Remove(dir);   // a killed generator skips its own revert; a half-made folder would be adopted at the next serve start and block a retried create
+        }
+
         return ran.Outcome switch
         {
             ToolOutcome.Exited when ran.ExitCode == 0 && HoldsProject(dir) => new ToolkitFolder(name, dir),
@@ -80,9 +90,20 @@ internal sealed class FileToolkitFolders(string sindriHome, Func<string, string?
         }
     }
 
-    /// <summary>'github-triage' as the generator's PascalCase 'GithubTriage'; its own kebab function turns that back into the folder name.</summary>
-    private static string Pascal(string name) =>
-        string.Concat(name.Split('-').Select(static w => char.ToUpperInvariant(w[0]) + w[1..]));
+    private static void Remove(string dir)
+    {
+        try
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // best effort: the error the caller gets already says the generator didn't finish
+        }
+    }
 
     private static string Tail(string text) => text.Length <= OutputCap ? text.Trim() : "..." + text[^OutputCap..].Trim();
 }

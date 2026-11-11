@@ -51,6 +51,11 @@ public sealed class CreateToolkitTests : IDisposable
     [InlineData("a-2b")]
     [InlineData("trailing-")]
     [InlineData("")]
+    [InlineData("x-ray")]       // "XRay" comes back from the generator's kebab as "xray"
+    [InlineData("my-a-tool")]   // "MyATool" -> "my-atool"
+    [InlineData("a-b")]         // "AB" is under the generator's 3 characters
+    [InlineData("common")]      // a generator reserved name
+    [InlineData("a-very-long-toolkit-name-that-goes-on")]   // over the generator's 31 characters once the '-' are dropped
     public async Task A_name_the_generator_could_not_turn_back_into_the_same_folder_is_refused_before_it_runs(string name)
     {
         var made = await Create().Handle(new CreateToolkitRequest(name, "add_note"), Token);
