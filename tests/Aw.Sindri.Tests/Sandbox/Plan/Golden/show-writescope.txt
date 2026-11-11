@@ -46,7 +46,6 @@ Files, bottom to top (a later line wins):
   empty     /home/owner/.agentic-workflow/sindri-app  (Sindri's real home is empty here: only the entries below exist)
   empty     /home/owner/.agentic-workflow/sindri-app-sessions  (other launches' session homes are absent)
   writable  /home/owner/.agentic-workflow/sindri-app/launches  (the session home's launches link resolves here; session-id-report and the turn-ended marker write to it)
-  read-only /home/owner/.agentic-workflow/sindri-app/approved  (the session home's approved link resolves here: the CLI finds its repo in the approved profile snapshot)
   read-only /home/owner/.agentic-workflow/sindri-app-sessions/LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  (this launch's session home: the Step's policy file and MCP config; the agent can't rewrite its own policy)
   read-only /home/owner/.agentic-workflow/sindri-app-sessions/LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/control.json  (written by the launcher: the endpoint record with the forwarder's URL)
   writable  /home/owner/.agentic-workflow/sindri-app-sessions/LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/gh-config  (the GitHub CLI's empty config directory, so gh finds no login)
