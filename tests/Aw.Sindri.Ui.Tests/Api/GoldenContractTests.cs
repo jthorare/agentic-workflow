@@ -120,7 +120,6 @@ public sealed class GoldenContractTests
         ["launch-picks"] = As<LaunchPicksView>,   // GET /launch/picks: the model picks of the runs (model-pick spec §6.1)
         ["launches-id"] = As<LaunchView>,   // GET /launches/{id}: the launch an Open started (Attach, the run line)
         ["profile"] = As<ProfileRead>,   // GET /profile: the approval's plain-words summary is the part the Setup profile step reads (api #782)
-        ["workflow-complete"] = As<ApplyCommandAccepted>,   // POST /workflow/instances/{id}/commands' accepted answer (the takeover; spec-shaped, the engine has no golden for it)
         ["sandbox-status"] = As<Ui.Api.Sandbox.SandboxStatusView>,   // GET /sandbox/status: Health and Settings (SB-6; spec-shaped until the server's golden is recorded)
         ["sandbox-check"] = As<Ui.Api.Sandbox.SandboxCheckView>,   // GET /sandbox/check: Check again and the resume list (SB-6, spec-shaped)
         ["sandbox-denials"] = As<Ui.Api.Sandbox.DenialsView>,   // GET /sandbox/denials?item=: the item sheet's Blocked list (SB-6, spec-shaped)
