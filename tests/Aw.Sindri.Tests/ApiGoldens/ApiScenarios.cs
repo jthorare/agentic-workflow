@@ -51,6 +51,7 @@ internal static class ApiScenarios
         ["WorkflowRuns"] = WorkflowRunScenarios.All,
         ["WorkflowReads"] = WorkflowReadScenarios.All,
         ["Resources"] = ResourceScenarios.All,
+        ["Toolkits"] = ToolkitScenarios.All,
         ["WorkflowWrites"] = WorkflowWriteScenarios.All,
     };
 
@@ -188,6 +189,7 @@ internal static class ApiScenarios
         WorkflowRunScenarios.Handles(slug, scenario) ? () => WorkflowRunScenarios.Body(host, slug, scenario, ct)
         : WorkflowReadScenarios.Handles(slug, scenario) ? () => WorkflowReadScenarios.Body(host, slug, scenario, ct)
         : ResourceScenarios.Handles(slug, scenario) ? () => ResourceScenarios.Body(host, slug, scenario, ct)
+        : ToolkitScenarios.Handles(slug, scenario) ? () => ToolkitScenarios.Body(host, slug, scenario, ct)
         : WorkflowWriteScenarios.Handles(slug, scenario) ? () => WorkflowWriteScenarios.Body(host, slug, scenario, ct)
         : Delegated(host, slug, scenario, ct);
 

@@ -89,7 +89,7 @@ internal static class McpToolTable
             WorkflowTools.Create or WorkflowTools.ApplyOps or WorkflowTools.Replace or WorkflowTools.Validate or WorkflowTools.Activate or WorkflowTools.Pause or WorkflowTools.Delete or WorkflowTools.Run or WorkflowTools.Cancel or WorkflowTools.Docs or WorkflowTools.Blocks
                 => WorkflowTools.Call(call.Name, services, call.Arguments, cancellationToken),
             WorkflowReadTools.List or WorkflowReadTools.Get or WorkflowReadTools.Runs or WorkflowReadTools.RunGet => WorkflowReadTools.Call(call.Name, services, call.Arguments, cancellationToken),
-            ToolkitTools.List or ToolkitTools.Build or ToolkitTools.Start or ToolkitTools.Stop or ToolkitTools.Calls => ToolkitTools.CallManagement(call.Name, services, call.Arguments, cancellationToken),
+            ToolkitTools.List or ToolkitTools.Create or ToolkitTools.Build or ToolkitTools.Start or ToolkitTools.Stop or ToolkitTools.Pause or ToolkitTools.Resume or ToolkitTools.Calls => ToolkitTools.CallManagement(call.Name, services, call.Arguments, cancellationToken),
             ResourceTools.List or ResourceTools.Purge => ResourceTools.Call(call.Name, services, call.Arguments, cancellationToken),
             MemoryTools.List => MemoryTools.CallList(services, call.Arguments, cancellationToken),
             MemoryTools.Create => MemoryTools.CallCreate(services, call.Arguments, cancellationToken),

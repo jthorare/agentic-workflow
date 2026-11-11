@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Aw.Kernel.Testing;
+using Aw.Meta.Tests.MergeRun;
 
 namespace Aw.Meta.Tests.Cli;
 
@@ -164,6 +165,7 @@ internal sealed class WorktreeLab : IDisposable
                 "case \"$1 $2\" in",
                 "  \"pr list\") cat \"$S/list.json\" ;;",
                 "  \"pr view\") cat \"$S/view-$3.json\" ;;",
+                "  \"api graphql\") echo '" + QueueAnswers.Off + "' ;;",   // no merge queue on main
                 "  \"pr merge\") if [ -f \"$S/merge-$3.sh\" ]; then sh \"$S/merge-$3.sh\"; fi ;;",
                 "  *) echo \"unexpected gh $*\" >&2; exit 9 ;;",
                 "esac",

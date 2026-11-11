@@ -30,4 +30,42 @@ public sealed class SquashMergedWorktreeTests
         Assert.Equal(WorktreeDecision.Kept, verdict.Decision);
         Assert.Contains(verdict.Reasons, reason => reason.Contains("PR #21 is merged", StringComparison.Ordinal) && reason.Contains("not on any remote", StringComparison.Ordinal));
     }
+
+    // Ideas' review of part 2: a lane that keeps committing on a merged pull request's branch and pushes has nothing unpushed,
+    // but its HEAD is no longer the head GitHub merged. That is new work, not the finished branch.
+    [Fact, Trait("Lane", "unit")]
+    public void A_merged_pull_request_branch_pushed_past_the_merged_head_is_kept()
+    {
+        var verdict = WorktreeRules.Judge(SquashMerged() with { UnpushedCommits = 0, Head = "bbbbbbbbbbbb", PrHead = "aaaaaaaaaaaa" });
+
+        Assert.Equal(WorktreeDecision.Kept, verdict.Decision);
+        Assert.Contains("HEAD bbbbbbb is not PR #21's head aaaaaaa (commits after it merged)", verdict.Reasons, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_closed_pull_request_branch_pushed_past_its_head_is_kept()
+    {
+        var verdict = WorktreeRules.Judge(SquashMerged() with { PrState = PrState.Closed, Head = "bbbbbbbbbbbb", PrHead = "aaaaaaaaaaaa" });
+
+        Assert.Equal(WorktreeDecision.Kept, verdict.Decision);
+        Assert.Contains("HEAD bbbbbbb is not PR #21's head aaaaaaa (commits after it closed)", verdict.Reasons, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_merged_pull_request_branch_behind_the_merged_head_is_removable()
+    {
+        var verdict = WorktreeRules.Judge(SquashMerged() with { Head = "bbbbbbbbbbbb", PrHead = "aaaaaaaaaaaa", CommitsAfterPrHead = 0 });
+
+        Assert.Equal(WorktreeDecision.Removable, verdict.Decision);
+        Assert.Empty(verdict.Reasons);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_merged_pull_request_branch_at_the_merged_head_is_removable()
+    {
+        var verdict = WorktreeRules.Judge(SquashMerged() with { Head = "aaaaaaaaaaaa", PrHead = "aaaaaaaaaaaa" });
+
+        Assert.Equal(WorktreeDecision.Removable, verdict.Decision);
+        Assert.Empty(verdict.Reasons);
+    }
 }

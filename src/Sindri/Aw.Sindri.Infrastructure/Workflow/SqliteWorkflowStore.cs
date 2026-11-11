@@ -28,7 +28,13 @@ internal sealed class SqliteWorkflowStore(LedgerDatabase database, TimeProvider 
             var taken = await RecipeSessions.Exists(session, new SqlStatement(WorkflowSql.SlugTaken, c => c.Bind("$slug", slug.Value)), token).ConfigureAwait(false);
             if (taken.IsError || taken.Value)
             {
-                return taken.IsError ? taken.Error : SindriErrors.GraphSlugTaken.With($"the slug '{slug.Value}' belongs to another workflow; pick another");
+                if (taken.IsError)
+                {
+                    return taken.Error;
+                }
+
+                var archived = await RecipeSessions.Exists(session, new SqlStatement(WorkflowSql.SlugTakenByArchived, c => c.Bind("$slug", slug.Value)), token).ConfigureAwait(false);
+                return archived.IsError ? archived.Error : SindriErrors.GraphSlugTaken.With($"The short id '{slug.Value}' is taken by {(archived.Value ? "an archived" : "another")} workflow. Pick another.");
             }
 
             var inserted = await RecipeSessions.Execute(session, new SqlStatement(WorkflowSql.InsertWorkflow, c => c.Bind("$id", id.Value).Bind("$slug", slug.Value).Bind("$name", spec.Name).Bind("$by", createdBy), $"workflow {slug.Value}"), token).ConfigureAwait(false);

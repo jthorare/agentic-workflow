@@ -261,7 +261,7 @@ public sealed class ContextConceptsTests
 
         var page = await ConceptPage.Shown(api);
 
-        Expect.Equal((Labels.ContextConceptsUnavailable("SND-CONTEXT-041"), false, true), (page.Concepts.Note, page.ShowConcepts, page.ShowWhole));
+        Expect.Equal((Labels.ContextConceptsUnavailable, false, true), (page.Concepts.Note, page.ShowConcepts, page.ShowWhole));
         Assert.Null(api.WholeMapAsked[0].Concept);
     }
 

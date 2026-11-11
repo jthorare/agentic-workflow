@@ -55,8 +55,9 @@ check "the copies differ from the wrapper only in TIMEOUT" "$(diff "$HEAVY" "$FA
 H() { local f; f="$(mktemp "$WORK/h.XXXXXX")"; bash "$HEAVY" "$@" > "$f" 2>&1; local rc=$?; cat "$f"; return $rc; }
 F() { local f; f="$(mktemp "$WORK/f.XXXXXX")"; bash "$FAST" "$@" > "$f" 2>&1; local rc=$?; cat "$f"; return $rc; }
 reset() { find "$STATE" -mindepth 1 -delete 2> /dev/null; mkdir -p "$STATE"; }
-dead_pid() { sleep 0 & local p=$!; wait "$p"; echo "$p"; }
-DEAD="$(dead_pid)"
+# A pid above any pid_max (Linux 4194304, macOS 99998): never a live process. A pid of an exited child can be reused by the
+# time a row reads it on a busy runner ("a lock whose owner pid is dead is reclaimed" kept the slot on macos-15, #2757).
+DEAD=99999999
 # hold <lock dir> [pid]: a lock dir some live (or the given) pid owns, as another job would leave it.
 hold() { mkdir -p "$1"; echo "${2:-$$} 2026-01-01T00:00:00Z session=x held" > "$1/owner"; }
 wait_file() { local i; for i in $(seq 1 60); do [ -s "$1" ] && return 0; sleep 0.1; done; return 1; }

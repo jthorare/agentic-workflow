@@ -28,8 +28,8 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-008: no such workflow or revision.</summary>
     public static readonly ErrorDefinition GraphNotFound = new("SND-GRAPH-008", ErrorKind.NotFound, "No such workflow");
 
-    /// <summary>SND-GRAPH-009: another workflow already has that slug.</summary>
-    public static readonly ErrorDefinition GraphSlugTaken = new("SND-GRAPH-009", ErrorKind.Conflict, "Another workflow already has that slug");
+    /// <summary>SND-GRAPH-009: another workflow already has that short id.</summary>
+    public static readonly ErrorDefinition GraphSlugTaken = new("SND-GRAPH-009", ErrorKind.Conflict, "Another workflow already has that short id");
 
     /// <summary>SND-GRAPH-010: a workflow with that id already exists.</summary>
     public static readonly ErrorDefinition GraphIdTaken = new("SND-GRAPH-010", ErrorKind.Conflict, "A workflow with that id already exists");
@@ -90,4 +90,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-GRAPH-130: no 'ask_owner' node of the run waits for an answer now.</summary>
     public static readonly ErrorDefinition GraphNotWaiting = new("SND-GRAPH-130", ErrorKind.Conflict, "No question waits at that node");
+
+    /// <summary>SND-GRAPH-124: a 'workflow_result' node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run.</summary>
+    public static readonly ErrorDefinition GraphResultUnavailable = new("SND-GRAPH-124", ErrorKind.Invalid, "No finished run to read a result from");
 }

@@ -1,6 +1,6 @@
 # Agentic Workflow
 
-A portable, provider-agnostic workflow toolkit for AI coding agents. It works the same way in **Claude Code**, **Codex**, and **Cursor**: 59 native skills plus 3 fetched external design packs (impeccable, emil-design-eng, taste-skill), a repo bootstrapper, safety hooks, a cheap-decision judge, Sindri (the C# control plane and workflow engine), and a token-efficiency tool (the rtk command rewriter).
+A portable, provider-agnostic workflow toolkit for AI coding agents. It works the same way in **Claude Code**, **Codex**, and **Cursor**: 59 native skills plus 4 fetched external packs (impeccable, emil-design-eng, taste-skill, tdd-artifact), a repo bootstrapper, safety hooks, a cheap-decision judge, Sindri (the C# control plane and workflow engine), and a token-efficiency tool (the rtk command rewriter).
 
 There is one canonical core: skills, hook logic, MCP servers, and judge. Each provider gets a thin adapter on top. Skills describe *capabilities* ("ask the user", "spawn a subagent", "call an MCP tool"), and each provider maps those to its own tools. See [Providers](#providers) and [`planning/PROVIDERS.md`](planning/PROVIDERS.md).
 
@@ -93,7 +93,7 @@ The toolkit treats Claude Code, Codex, and Cursor as equal hosts. `setup.sh` ins
 
 | Feature | Claude Code | Codex | Cursor |
 |---------|-------------|-------|--------|
-| Native skills + external design packs | Yes | Yes | Yes |
+| Native skills + external packs | Yes | Yes | Yes |
 | Invocation | `/<name>` | `$<name>` | `/<name>` |
 | Skills installed to | `~/.claude/skills/` | `~/.codex/skills/` | `~/.cursor/skills/` |
 | Repo instructions | `CLAUDE.md` (symlink to `AGENTS.md`) + `.claude/rules` (symlink) | `AGENTS.md` (Rules Index) | `AGENTS.md` + `.cursor/rules/*.mdc` (symlinks) |
@@ -150,7 +150,7 @@ cd ~/repos/agentic-workflow
 The setup script:
 - Checks hard prerequisites (`jq`, Docker) and detects which provider CLIs are installed (or uses `--providers`)
 - Creates the `~/.agentic-workflow/toolkit` symlink and writes the `~/.agentic-workflow/providers` registry
-- Symlinks native skills, `/bootstrap`, and the external design packs (cloned at pinned commits from `EXTERNAL_PINS.env`) into each selected provider's skills directory
+- Symlinks native skills, `/bootstrap`, and the external packs (cloned at pinned commits from `EXTERNAL_PINS.env`) into each selected provider's skills directory
 - Installs the safety hooks (`block-destructive.sh`, `block-push-main.sh`, `detect-secrets.sh`, `rtk-rewrite.sh`) and session-context hooks for each provider. Claude Code uses them natively; Codex and Cursor go through their hook adapters.
 - Publishes the C# binaries (`sindri`, `sindri-ui`, `judge`, `aw-packets`, `bugfix-state`, `ui-evidence`, `aw-readiness`) with `scripts/install-cs.sh` into `$AW_STATE_DIR/bin/cs/` and links them into `~/.local/bin`; removes what an older TypeScript install left (`scripts/cutover-clean-ts.sh`)
 - Builds the Serena Docker images (base TS/Python image; opt-in C# and Swift extensions) and installs the `serena-docker` wrapper to `~/.local/bin/`
@@ -168,7 +168,7 @@ The setup script:
 
 | Stage | Skills |
 |-------|--------|
-| Ideation & planning | `withInterview`, `enhancePrompt`, `officeHours`, `autoplan`, `productReview`, `archReview`, `planDesignReview`, `planDevexReview`, `system-design`, `system-design-video` |
+| Ideation & planning | `withInterview`, `enhancePrompt`, `officeHours`, `autoplan`, `productReview`, `archReview`, `planDesignReview`, `planDevexReview`, `system-design`, `system-design-video`, `tdd-artifact` (external pack) |
 | Design | `design-analyze`, `design-language`, `design-evolve`, `design-shotgun`, `clickable-prototype`, `design-mockup`, `design-implement`, `design-refine`, `design-verify` (dispatchers auto-detect web/iOS and route to their `-web` / `-ios` sub-skills) |
 | Build & verify | `specToProvenPR`, `verify-app` (→ `verify-web`, `verify-ios`, `verify-desktop`), `ui-evidence`, `ui-before-after`, `formal-verify` |
 | C# scaffolds | `new-package`, `new-slice`, `new-toolkit` |

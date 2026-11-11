@@ -55,11 +55,14 @@ public static class SindriWorkflowsServiceCollectionExtensions
             .AddSingleton<GraphMirror>()
             .AddSingleton<IForEachLimitSource, ProfileForEachLimits>()
             .AddSingleton<IGraphCallPort, GraphWorkflowCaller>()   // 'run_workflow' starts the other workflow's active revision (agent-first PR 9)
+            .AddSingleton<IGraphResultPort, GraphRunResults>()   // 'workflow_result' reads a finished run (agent-first PR 9)
             .AddSingleton(static provider => GraphBlockRegistry.Standard(provider.GetRequiredService<INotifyPort>(), provider.GetRequiredService<IGraphModelPort>(), provider.GetRequiredService<IForEachLimitSource>(),
                 [.. GraphBlockRegistry.FlowBlocks(provider.GetRequiredService<IGraphSeenStore>(), provider.GetRequiredService<ICreateItemPort>(), provider.GetRequiredService<IGraphCallPort>(), provider.GetRequiredService<IGraphHttpPort>()),
+                 .. GraphBlockRegistry.ResultBlocks(provider.GetRequiredService<IGraphResultPort>()),
                  .. GraphBlockRegistry.ParkingBlocks(provider.GetRequiredService<IQuestionPort>(), provider.GetRequiredService<TimeProvider>()),
                  .. GraphBlockRegistry.MemoryBlocks(provider.GetRequiredService<IGraphMemoryPort>()),
-                 new CallToolBlock(provider.GetService<IRunningToolkits>() ?? NoToolkits.Instance, provider.GetRequiredService<IConnectionToolPort>())]))   // 'call_tool' (PR 16b); with no toolkit runtime registered yet it reaches connections only
+                 new CallToolBlock(provider.GetService<IRunningToolkits>() ?? NoToolkits.Instance, provider.GetRequiredService<IConnectionToolPort>()),   // 'call_tool' (PR 16b); with no toolkit runtime registered yet it reaches connections only
+                 .. GraphBlockRegistry.CodeBlocks(provider.GetRequiredService<ICodeRunPort>())]))   // 'code' (PR 9c): C# in the sandboxed sindri-code-runner
             .AddSingleton(static provider => new TemporalGraphRunLauncher(provider.GetRequiredService<TemporalFrontend>(), provider.GetRequiredService<TemporalSettings>()))
             .AddSingleton<IGraphBlockCatalog>(static provider => provider.GetRequiredService<GraphBlockRegistry>())   // the validator reads what the engine runs, replacing the empty catalog
             .AddSingleton<IGraphRunLauncher>(static provider => provider.GetRequiredService<TemporalGraphRunLauncher>())

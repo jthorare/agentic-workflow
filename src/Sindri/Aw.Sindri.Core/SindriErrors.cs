@@ -277,7 +277,7 @@ public static partial class SindriErrors
         NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound, InvalidQuery, RouteRemoved, HandoffTooLarge, HandoffRateLimited,
         ScrubStagedSecrets, ScrubForeignHook, ScrubNotARepo, ScrubGitFailed,
         ProjectAlreadyOnPage, ProjectFactsUnavailable, ProjectNotSynced, ProjectInvalid, ProjectNotFound, ProjectConflict,
-        GraphInvalid, GraphFindings, GraphUnknownBlock, GraphBadReference, GraphBadExpression, GraphBadCron, GraphStaleRevision, GraphNotFound, GraphSlugTaken, GraphIdTaken, GraphArchived, GraphRunIdTaken, GraphRunNotFound, GraphBlockFailed, GraphPromptAnswer, GraphRunControlsPending, GraphNotActive, GraphBadPayload, GraphRunEnded, GraphOutputTruncated, GraphOpInvalid, GraphRunLoop, GraphNodeNotWaiting, GraphNodeNotTakenOver, GraphNotWaiting,
+        GraphInvalid, GraphFindings, GraphUnknownBlock, GraphBadReference, GraphBadExpression, GraphBadCron, GraphStaleRevision, GraphNotFound, GraphSlugTaken, GraphIdTaken, GraphArchived, GraphRunIdTaken, GraphRunNotFound, GraphBlockFailed, GraphPromptAnswer, GraphRunControlsPending, GraphNotActive, GraphBadPayload, GraphRunEnded, GraphOutputTruncated, GraphOpInvalid, GraphRunLoop, GraphResultUnavailable, GraphNodeNotWaiting, GraphNodeNotTakenOver, GraphNotWaiting,
         SkillResultUnreadable, SkillResultWrongSkill, SkillVerdictUnmapped, SkillOutputInvalid, SkillRequirementMissing, SkillPrInputInvalid, SkillAgentCopyDiffers, SkillPrFetchFailed,
         ReviewInvalid, ReviewProjectUnknown, ReviewCommandCheck, ReviewNotSynced, ReviewFixNotPosted, ReviewRepoUnsynced, ReviewNoLogin, ReviewNoConnection, ReviewSignInAgain, ReviewPrNotFound, ReviewOfflineUncached,
         LibraryDocNotFound, LinearTeamNotPicked, LinearNothingStored, LinearNoWriteKey, LinearBadValue, LinearNoAnswer, LinearWriteKeySameAsRead, LinearNoKeychain,
@@ -288,7 +288,7 @@ public static partial class SindriErrors
         ResourceDiskOverSize, ResourceNameClash, ResourcePurgeRefused, ResourcePathEscapes, ResourceSandboxOverCap, ResourceInvalid, ResourceDiskUnmeasured,
         GraphCallDepth, GraphSelfStart, GraphHttpRefused, GraphHttpFailed,
         CodeCompileFailed, CodeTimeout, CodeMemory, CodeFailed, CodeRunnerUnavailable,
-        ToolkitNotBuilt, ToolkitTestsFailed, ToolkitManifestInvalid, ToolkitProcessDied, ToolkitPaused, ToolkitCallTimedOut, ToolkitToolUnknown, ToolkitSandboxUnavailable, ToolkitNotFound, ToolkitNameInvalid, ToolkitToolFailed,
+        ToolkitNotBuilt, ToolkitTestsFailed, ToolkitManifestInvalid, ToolkitProcessDied, ToolkitPaused, ToolkitCallTimedOut, ToolkitToolUnknown, ToolkitSandboxUnavailable, ToolkitNotFound, ToolkitNameInvalid, ToolkitToolFailed, ToolkitExists, ToolkitCreateFailed,
         .. EveryTodo(),
     ];
 }

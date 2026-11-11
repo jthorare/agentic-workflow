@@ -75,6 +75,10 @@ A lane queues a pull request with exactly `ready #N <sha>` on the **first line**
 4. `aw-meta merge-check N` again (head and main must not have moved since the gate), then `aw-meta merge-run N`.
 5. Send nothing about main moving: `merge-run` recorded it on the board, and each lane's prompt hook shows it once. Re-gate every other queued pull request after a merge. The `WORKTREES ...` line `merge-run` printed says what was removed and what was kept; a kept worktree is not an error.
 
+**GitHub merge queue.** When the base branch has one, `merge-run` prints `QUEUED #N in GitHub's merge queue (position P)` instead of `MERGED`. That is not a merge yet: don't announce, and don't re-gate the other pull requests. The watch prints `MERGED #N from GitHub's merge queue: main is now <sha>` when it lands; announce as usual then. A `QUEUE OUT #N: <reason>; send the lane NOT OK` line means GitHub dropped it (or it was closed): send the lane `NOT OK #N` with that reason.
+
+**CI gate (`gate.mode` is `ci` in the team config).** Step 2 changes: `aw-meta gate-run N` runs nothing on this box. It reads the pull request's required checks, review decision and merge state from GitHub and records the answer against the head sha. It passes only when every required check is green, the review is `APPROVED` and the merge state is `CLEAN`; a pending check is a fail (`pending`), so run it again once CI finishes. **Skip every `meta-gate-reserve` step**: no gate tree is built and no heavy slot is taken. Skip step 3 (there are no local test reds to rerun; a red required check goes back to the lane). Then `aw-meta merge-check N` and `aw-meta merge-run N` as before: `merge-check` needs a passing CI record at the head the pull request has now, so a push after `gate-run` means run it again. If `gate-run` refuses with `AW-META-024` (`no required checks on <base>`), the base has no branch protection: ask the owner, never merge on it. `queue-gate` (the train) is a local gate and does not apply.
+
 With several ready pull requests use `aw-meta queue-gate` (a train); the steps are in the reference.
 
 ## OWNER QUESTION messages

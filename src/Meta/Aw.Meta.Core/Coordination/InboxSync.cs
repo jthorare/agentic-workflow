@@ -14,8 +14,44 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="messages">Stores the messages and the offset.</param>
 /// <param name="owner">Queues owner questions.</param>
 /// <param name="clock">Dates a record that carries no timestamp.</param>
-public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock)
+/// <param name="meta">Finds the meta's live transcript; null when the caller never syncs the meta's own transcript.</param>
+public sealed class InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock, MetaTranscriptResolver? meta)
 {
+    /// <summary>Creates a sync that can't find the meta's own transcript.</summary>
+    /// <param name="transcripts">Reads the transcript.</param>
+    /// <param name="messages">Stores the messages and the offset.</param>
+    /// <param name="owner">Queues owner questions.</param>
+    /// <param name="clock">Dates a record that carries no timestamp.</param>
+    public InboxSync(ITranscriptReader transcripts, IMessageStore messages, IOwnerStore owner, TimeProvider clock)
+        : this(transcripts, messages, owner, clock, meta: null)
+    {
+    }
+
+    /// <summary>Syncs the transcript of the meta's live session, found by its registered name, whether or not a hook has stored an offset for it yet.</summary>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>True when the meta's transcript was found and read; false when no meta is registered, no resolver is wired or no transcript file exists.</returns>
+    public async ValueTask<Result<bool>> RunMeta(CancellationToken cancellationToken)
+    {
+        if (meta is null)
+        {
+            return false;
+        }
+
+        var path = await meta.Find(cancellationToken).ConfigureAwait(false);
+        if (path.IsError)
+        {
+            return path.Error;
+        }
+
+        if (path.Value is not { } transcript)
+        {
+            return false;
+        }
+
+        var read = await Run(transcript, cancellationToken).ConfigureAwait(false);
+        return read.IsError ? read.Error : true;
+    }
+
     /// <summary>Syncs one transcript.</summary>
     /// <param name="transcript">The transcript path.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
