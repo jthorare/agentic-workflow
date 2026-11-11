@@ -26,6 +26,9 @@ internal sealed class QueueGroupViewModel : ObservableObject
     /// <summary>The API's group name.</summary>
     public string Group { get; }
 
+    /// <summary>The fold header's automation id ("QueueGroupHeader.queued"), one per group.</summary>
+    public string AutomationId => "QueueGroupHeader." + Group;
+
     /// <summary>The group's heading.</summary>
     public string Label { get; }
 

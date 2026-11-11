@@ -162,8 +162,9 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="wf:RunRowViewModel">
                 <Border Classes="item-row clickable" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" MinHeight="{StaticResource Row.Height.Default}" VerticalAlignment="Center">
-                    <Button Classes="row-title" Click="OnOpenRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
+                  <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" MinHeight="{StaticResource Row.Height.Default}" Margin="0,8" VerticalAlignment="Center">
+                    <!-- The same vertical padding and title margin as a workflow list row (#2700): the shared row-title style's -2 would otherwise pull the title up out of the row's padding. -->
+                    <Button Classes="row-title" Margin="-2,0" Click="OnOpenRun" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
                       <TextBlock Classes="body-strong mono" Text="{Binding Id}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
                     <Border Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Classes="status-chip" Classes.ok="{Binding IsOk}" Classes.attention="{Binding IsAttention}" Classes.error="{Binding IsError}" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
