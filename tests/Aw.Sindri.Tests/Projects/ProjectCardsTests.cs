@@ -320,16 +320,20 @@ public sealed class ProjectCardsTests
     [Fact]
     public void Build_has_no_empty_code_for_the_other_sentences()
     {
-        var unavailable = Page(factsResult: SindriErrors.ProjectFactsUnavailable.With("context is down"));
-        var syncing = Page(firstRead: false);
-        var leadsNothing = Page();
-        var leadsNothingUnnamed = Page(owner: new ProjectPerson("linear:user/me", Name: null));
-        var cards = Page([Fact()]);
-        var attachedOnly = Page(attached: [Row(ProjectRows.HandMadeId, linear: null, name: "Kitchen")], configured: false);
+        (string Case, ProjectsPage Page, bool HasSentence)[] cases =
+        [
+            ("no snapshot", Page(factsResult: SindriErrors.ProjectFactsUnavailable.With("context is down")), true),
+            ("still syncing", Page(firstRead: false), true),
+            ("leads nothing, owner named", Page(), true),
+            ("leads nothing, owner unnamed", Page(owner: new ProjectPerson("linear:user/me", Name: null)), true),
+            ("cards shown", Page([Fact()]), false),
+            ("attached only", Page(attached: [Row(ProjectRows.HandMadeId, linear: null, name: "Kitchen")], configured: false), false),
+        ];
 
-        Expect.True(unavailable.Empty is not null && syncing.Empty is not null && leadsNothing.Empty is not null && leadsNothingUnnamed.Empty is not null);
-        Expect.True(unavailable.EmptyCode is null && syncing.EmptyCode is null && leadsNothing.EmptyCode is null && leadsNothingUnnamed.EmptyCode is null);
-        Expect.True(cards.Empty is null && cards.EmptyCode is null && attachedOnly.Empty is null && attachedOnly.EmptyCode is null);
+        foreach (var (name, page, hasSentence) in cases)
+        {
+            Expect.Equal((name, hasSentence, null), (name, page.Empty is not null, page.EmptyCode));
+        }
     }
 
     [Fact]
