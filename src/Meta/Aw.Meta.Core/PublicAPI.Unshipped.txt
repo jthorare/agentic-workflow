@@ -163,7 +163,7 @@ Aw.Meta.Core.Config.WorktreeConfig.BuildOutputs.get -> System.Collections.Generi
 Aw.Meta.Core.Config.WorktreeConfig.BuildOutputs.init -> void
 Aw.Meta.Core.Config.WorktreeConfig.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Roots, out System.Collections.Generic.IReadOnlyList<string!>? BuildOutputs, out bool Enabled) -> void
 Aw.Meta.Core.Config.WorktreeConfig.EffectiveBuildOutputs.get -> System.Collections.Generic.IReadOnlyList<string!>!
-Aw.Meta.Core.Config.WorktreeConfig.EffectiveRoots(string! repo, string! gatesDirectory, string! home) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Meta.Core.Config.WorktreeConfig.EffectiveRoots(string! repo, string! gatesDirectory, string! home, string? repoRoot) -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Meta.Core.Config.WorktreeConfig.Enabled.get -> bool
 Aw.Meta.Core.Config.WorktreeConfig.Enabled.init -> void
 Aw.Meta.Core.Config.WorktreeConfig.Equals(Aw.Meta.Core.Config.WorktreeConfig? other) -> bool
@@ -1045,7 +1045,10 @@ Aw.Meta.Core.Ports.ITeamCatalog.List(System.Threading.CancellationToken cancella
 Aw.Meta.Core.Ports.ITeamCatalog.Migrate(bool dryRun, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Ports.TeamMigration!>!>
 Aw.Meta.Core.Ports.ITranscriptReader
 Aw.Meta.Core.Ports.ITranscriptReader.ReadFrom(string! path, long offset, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Messages.TranscriptChunk!>!>
+Aw.Meta.Core.Config.WorktreeRoot
+static Aw.Meta.Core.Config.WorktreeRoot.Resolve(string? configured, string! repo, string! home) -> Aw.Kernel.Result<string!>!
 Aw.Meta.Core.Ports.IWorktreeFiles
+Aw.Meta.Core.Ports.IWorktreeFiles.ConfiguredRoot(string! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Meta.Core.Ports.IWorktreeFiles.NewestChange(string! directory, System.Collections.Generic.IReadOnlyCollection<string!>! skipNames, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset>!>
 Aw.Meta.Core.Ports.ProcessLocation
 Aw.Meta.Core.Ports.ProcessLocation.<Clone>$() -> Aw.Meta.Core.Ports.ProcessLocation!
@@ -2575,6 +2578,8 @@ static Aw.Meta.Core.Github.PrCiState.operator ==(Aw.Meta.Core.Github.PrCiState? 
 static Aw.Meta.Core.Github.RequiredCheck.operator !=(Aw.Meta.Core.Github.RequiredCheck? left, Aw.Meta.Core.Github.RequiredCheck? right) -> bool
 static Aw.Meta.Core.Github.RequiredCheck.operator ==(Aw.Meta.Core.Github.RequiredCheck? left, Aw.Meta.Core.Github.RequiredCheck? right) -> bool
 static readonly Aw.Meta.Core.MetaErrors.NoRequiredChecks -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Meta.Core.MetaErrors.WorktreeHomeUnknown -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Meta.Core.MetaErrors.WorktreeRootInRepo -> Aw.Kernel.ErrorDefinition!
 Aw.Meta.Core.Config.DefectsConfig
 Aw.Meta.Core.Config.DefectsConfig.<Clone>$() -> Aw.Meta.Core.Config.DefectsConfig!
 Aw.Meta.Core.Config.DefectsConfig.DailyCap.get -> int
