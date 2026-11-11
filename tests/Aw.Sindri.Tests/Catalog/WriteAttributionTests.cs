@@ -47,6 +47,10 @@ public sealed class WriteAttributionTests
         ["POST /sindri/memories"] = "the store row carries the caller (MemoryInfo.CreatedBy, CreateMemoryService.cs:30); proven by MemoryReadsAndCreateTests.A_launched_session_creating_a_memory_is_its_creator",
         ["POST /sindri/memories/{name}/facts"] = "the store row carries the caller (MemoryFact.WrittenBy, WriteMemoryFactService.cs); proven by WriteMemoryFactTests.A_launched_session_writing_a_fact_is_its_writer_whatever_the_request_says (#2460)",
         ["POST /sindri/resources/purge"] = AuditOnlyReason,
+        ["POST /sindri/toolkits/{name}/start"] = AuditOnlyReason,
+        ["POST /sindri/toolkits/{name}/stop"] = AuditOnlyReason,
+        ["POST /sindri/toolkits/{name}/pause"] = AuditOnlyReason,
+        ["POST /sindri/toolkits/{name}/resume"] = AuditOnlyReason,
         ["POST /sindri/handoff"] = "the golden scenarios send it as the human; a launched session's handoff is proven by HandoffEndpointTests.A_launched_session_hands_off_without_the_human_token_and_keeps_its_actor (item.handoff's actor is session:launch:<id>)",
     };
 

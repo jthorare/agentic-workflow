@@ -48,7 +48,10 @@ public sealed class BuildToolkitTests : IDisposable
 
         Assert.True(built.IsSuccess);
         Assert.Equal("hash-1", built.Value.SourceHash);
-        Assert.Equal(["dotnet build -warnaserror", "dotnet test", "/tk/triage/bin/triage --manifest"], _rig.Commands.Ran);
+        // #2711: the folder holds the toolkit project and its tests in a sub-folder, with no solution, so both commands name the tests project.
+        Assert.Equal(
+            ["dotnet build Triage.Toolkit.Tests/Triage.Toolkit.Tests.csproj -warnaserror", "dotnet test --project Triage.Toolkit.Tests/Triage.Toolkit.Tests.csproj", "/tk/triage/bin/triage --manifest"],
+            _rig.Commands.Ran);
         Assert.Equal(1, _rig.Slots.Taken);
         Assert.Equal(0, _rig.Slots.Held);
         Assert.True(started.IsSuccess);

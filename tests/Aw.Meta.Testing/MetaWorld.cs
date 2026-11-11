@@ -155,7 +155,7 @@ public sealed class MetaWorld
     public LaneHealthReader LaneHealth => new(LaneFiles, Beats, LaneMail, LaneGuard, Clock, LaneHealthOptions.Default);
 
     /// <summary>The inbox sync.</summary>
-    public InboxSync Sync => new(Transcripts, Messages, Owner, Clock);
+    public InboxSync Sync => new(Transcripts, Messages, Owner, Clock, new MetaTranscriptResolver(Messages, Sessions, new InMemoryTranscriptLocator(Transcripts)));
 
     /// <summary>The lane refresher.</summary>
     public LaneRefresher Refresher => new(Sessions, Messages, Lanes);

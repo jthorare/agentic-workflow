@@ -1,6 +1,8 @@
 # `memory_forget`
 
-Forgets facts of a Sindri memory (picker label **Forget**), as `service:workflow`. Give exactly one of `fact` and `tag`; a memory that does not exist fails the node with the handler's error.
+Forgets facts of a Sindri memory (picker label **Forget**), as `service:workflow`. Give exactly one of `fact` and `tag`; a memory that does not exist fails the node with the handler's error. An empty `fact` (for example a reference that came out empty) fails the node; it never falls back to the `tag`.
+
+**Who it can forget.** A workflow forgets as `service:workflow`, and forgetting has no service grants to check. So any active workflow can forget any fact in any memory, by id or by tag, including facts a person wrote. The same holds for `create_item`. Read a workflow that has this node as you would read a person with write access to every memory.
 
 | Config | Type | Meaning |
 |---|---|---|

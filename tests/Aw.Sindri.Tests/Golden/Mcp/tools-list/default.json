@@ -1575,6 +1575,38 @@
     }
   },
   {
+    "name": "toolkit_create",
+    "description": "Make a new toolkit: the generator writes a toolkit project with one sample tool under Sindri's toolkits folder, and the toolkit is listed as off. A job; build it next with toolkit_build.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The toolkit's name: lowercase words joined by '-', each starting with a letter, e.g. github-triage"
+        },
+        "tool": {
+          "type": "string",
+          "description": "The first tool's name: lowercase letters, digits and '_', e.g. list_issues"
+        },
+        "needs": {
+          "type": "string",
+          "description": "What the toolkit needs, comma separated: database:<name>, disk:<size>, connection:<name>, e.g. database:state,connection:github"
+        }
+      },
+      "required": [
+        "name",
+        "tool"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "toolkit_build",
     "description": "Build a toolkit (zero warnings and its tests passing) so it can start. A job; it takes a heavy slot.",
     "inputSchema": {
@@ -1623,6 +1655,52 @@
   {
     "name": "toolkit_stop",
     "description": "Switch a running toolkit off; its process stops and its tools leave tools/list.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The toolkit's name, e.g. github-triage"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "toolkit_pause",
+    "description": "Pause a running toolkit: its process keeps running, its tools leave tools/list and calls to it are refused until toolkit_resume.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The toolkit's name, e.g. github-triage"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "toolkit_resume",
+    "description": "Resume a paused toolkit: its tools are listed and callable again.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,

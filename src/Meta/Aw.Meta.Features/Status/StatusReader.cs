@@ -21,7 +21,7 @@ internal sealed class StatusReader(ObligationReader reader, MergeQueueReader que
         var open = await reader.Open(metaLane, now, cancellationToken).ConfigureAwait(false);
         var questions = await owner.List(includeAnswered: false, cancellationToken).ConfigureAwait(false);
         var map = await lanes.Current(cancellationToken).ConfigureAwait(false);
-        var ready = await queue.Read(cancellationToken).ConfigureAwait(false);
+        var ready = await queue.Read(cancellationToken, withGithub: true).ConfigureAwait(false);
         if (open.IsError || questions.IsError || map.IsError || ready.IsError)
         {
             return open.IsError ? open.Error : questions.IsError ? questions.Error : map.IsError ? map.Error : ready.Error;

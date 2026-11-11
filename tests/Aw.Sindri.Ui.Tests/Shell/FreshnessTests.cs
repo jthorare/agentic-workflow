@@ -339,7 +339,8 @@ public sealed partial class FreshnessTests : IDisposable
         _server.Push(A.Event(1, "service.ran"));
         await Until(() => _vm.Banner.HasRebuild);
 
-        Assert.Equal((115, true, ShellState.Normal), (_vm.Catalog.Controls.Count, _vm.Banner.HasRebuild, _vm.State));
+        var rows = System.Text.Json.JsonDocument.Parse(RouteAnswer.Api("commands", "catalog").Body).RootElement.GetProperty("rows").GetArrayLength();   // why: read from the catalog golden, so the next lane's rows don't break the count
+        Assert.Equal((rows, true, ShellState.Normal), (_vm.Catalog.Controls.Count, _vm.Banner.HasRebuild, _vm.State));
     }
 
     // F13: the pill words come from the goldens, not from records built by hand.

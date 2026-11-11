@@ -57,6 +57,9 @@ public static class KvKeys
     /// <summary>When the owner or meta dropped a pull request's merge-queue entry (aw-meta queue-drop), as "pr=ticks" pairs; a ready message newer than the drop queues it again.</summary>
     public const string QueueDropped = "queue.dropped";
 
+    /// <summary>The pull requests merge-run handed to GitHub's merge queue that the watch has not seen end yet, as "pr=ticks=head" triples (MergeQueued).</summary>
+    public const string MergeQueued = "merge.queued";
+
     /// <summary>The running (or last) merge-train's summary lines, as the status shows them.</summary>
     public const string Train = "train.state";
 
@@ -65,4 +68,7 @@ public static class KvKeys
 
     /// <summary>The route suggestions the watch has announced (so a re-armed watch does not repeat them).</summary>
     public const string RouteWatch = "route.watch";
+
+    /// <summary>Today's report-defect counts as "yyyy-MM-dd|filed|skipped" (the UTC date); another date means 0|0.</summary>
+    public const string DefectsDay = "defects.day";
 }

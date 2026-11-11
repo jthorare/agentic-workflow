@@ -648,6 +648,35 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
         }
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_cap_lowered_between_the_read_and_the_take_gives_the_slot_back_and_keeps_waiting()
+    {
+        Directory.CreateDirectory(Lock);
+        await File.WriteAllTextAsync(Path.Combine(Lock, "owner"), $"{Pid} {Now} the job on slot 1\n", TestContext.Current.CancellationToken);
+        var reads = 0;
+        var settings = new HeavyLockSettings(Lock, 2, Held: false) { LiveSlots = () => ++reads == 1 ? 2 : 1 };   // 2 on the pass's read, 1 once someone lowered it
+        var slots = new DirectoryHeavySlots(settings, TimeProvider.System);
+
+        var taken = (await slots.Take("test", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Null(taken.Lease);
+        Assert.False(Directory.Exists(Lock + ".2"));
+        Assert.Contains("slot 1/1 held by " + Pid, taken.Busy, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_reserve_raised_between_the_read_and_the_take_gives_the_slot_back_and_takes_one_above_it()
+    {
+        var reads = 0;
+        var settings = new HeavyLockSettings(Lock, 2, Held: false) { LiveReserve = _ => ++reads == 1 ? 0 : 1 };   // no reserve on the pass's read, slot 1 is meta's after
+        var slots = new DirectoryHeavySlots(settings, TimeProvider.System);
+
+        await using var lease = await Taken(slots);
+
+        Assert.False(Directory.Exists(Lock));
+        Assert.True(File.Exists(Path.Combine(Lock + ".2", "owner")));
+    }
+
     private static Process Run(string script)
     {
         var info = new ProcessStartInfo("bash") { RedirectStandardOutput = true, UseShellExecute = false };

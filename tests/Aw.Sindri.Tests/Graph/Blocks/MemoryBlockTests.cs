@@ -117,6 +117,129 @@ public sealed class MemoryBlockTests
         Assert.Empty(port.Forgets);
     }
 
+    [Theory]
+    [InlineData("level", "stricter")]
+    [InlineData("limit", "abc")]
+    [InlineData("limit", "0")]
+    [InlineData("limit", "-2")]
+    public void Recall_checks_a_literal_level_and_limit_before_the_run(string field, string value)
+    {
+        var config = new JsonObject { ["memory"] = "m", ["query"] = "q", [field] = value };
+
+        var problems = new MemorySearchBlock(new BlockFakes.RecordingMemoryPort()).CheckConfig(config);
+
+        Assert.Equal(field, Assert.Single(problems).Field);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-2)]
+    public void Recall_checks_a_literal_limit_number_below_1_before_the_run(int limit)
+    {
+        var config = new JsonObject { ["memory"] = "m", ["query"] = "q", ["limit"] = JsonValue.Create(limit) };
+
+        var problems = new MemorySearchBlock(new BlockFakes.RecordingMemoryPort()).CheckConfig(config);
+
+        Assert.Equal("limit", Assert.Single(problems).Field);
+    }
+
+    [Fact]
+    public async Task Recall_with_a_limit_that_resolves_to_0_fails_the_node_and_never_recalls()
+    {
+        var port = new BlockFakes.RecordingMemoryPort();
+        var config = new JsonObject { ["memory"] = "m", ["query"] = "q", ["limit"] = "0" };
+
+        var result = await new MemorySearchBlock(port).Execute(BlockFakes.Context(config), Token);
+
+        Assert.Equal(SindriErrors.GraphBlockFailed.Code, result.Error.Code);
+        Assert.Contains("limit", result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(port.Recalls);
+    }
+
+    [Fact]
+    public void Recall_accepts_a_literal_number_and_skips_references_and_a_known_level()
+    {
+        var block = new MemorySearchBlock(new BlockFakes.RecordingMemoryPort());
+
+        Assert.Empty(block.CheckConfig(new JsonObject { ["memory"] = "m", ["query"] = "q", ["level"] = "Strict", ["limit"] = 5 }));
+        Assert.Empty(block.CheckConfig(new JsonObject { ["memory"] = "m", ["query"] = "q", ["level"] = "{{start.level}}", ["limit"] = "{{start.limit}}" }));
+    }
+
+    [Theory]
+    [InlineData("abc")]
+    [InlineData(3.5)]
+    public async Task Recall_with_a_limit_that_is_not_a_whole_number_fails_the_node_and_never_recalls(object limit)
+    {
+        var port = new BlockFakes.RecordingMemoryPort();
+        var config = new JsonObject { ["memory"] = "m", ["query"] = "q", ["limit"] = limit is double d ? JsonValue.Create(d) : JsonValue.Create((string)limit) };
+
+        var result = await new MemorySearchBlock(port).Execute(BlockFakes.Context(config), Token);
+
+        Assert.Equal(SindriErrors.GraphBlockFailed.Code, result.Error.Code);
+        Assert.Empty(port.Recalls);
+    }
+
+    [Fact]
+    public void Remember_checks_a_literal_expiry_before_the_run_and_skips_a_reference()
+    {
+        var block = new MemoryWriteBlock(new BlockFakes.RecordingMemoryPort());
+
+        Assert.Equal("expires", Assert.Single(block.CheckConfig(new JsonObject { ["memory"] = "m", ["fact"] = "f", ["expires"] = "soon" })).Field);
+        Assert.Empty(block.CheckConfig(new JsonObject { ["memory"] = "m", ["fact"] = "f", ["expires"] = "30d" }));
+        Assert.Empty(block.CheckConfig(new JsonObject { ["memory"] = "m", ["fact"] = "f", ["expires"] = "{{start.ttl}}" }));
+    }
+
+    [Fact]
+    public async Task Remember_hands_on_the_ports_warning_and_still_succeeds()
+    {
+        var port = new BlockFakes.RecordingMemoryPort { Remembered = new MemoryRemembered("mf_1", "added", "the run could not be read") };
+
+        var result = await new MemoryWriteBlock(port).Execute(BlockFakes.Context(new JsonObject { ["memory"] = "m", ["fact"] = "f" }), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        Assert.Equal("the run could not be read", result.Value.Outputs["warning"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task Remember_with_no_warning_hands_on_none()
+    {
+        var result = await new MemoryWriteBlock(new BlockFakes.RecordingMemoryPort()).Execute(BlockFakes.Context(new JsonObject { ["memory"] = "m", ["fact"] = "f" }), Token);
+
+        Assert.False(result.Value.Outputs.ContainsKey("warning"));
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData("mf_1", "stale")]
+    [InlineData("", "stale")]
+    public void Forget_checks_that_exactly_one_of_fact_and_tag_is_set_before_the_run(string? fact, string? tag)
+    {
+        var problems = new MemoryForgetBlock(new BlockFakes.RecordingMemoryPort()).CheckConfig(new JsonObject { ["memory"] = "m", ["fact"] = fact, ["tag"] = tag });
+
+        Assert.NotEmpty(problems);
+    }
+
+    [Fact]
+    public void Forget_accepts_one_of_fact_and_tag_and_skips_a_reference()
+    {
+        var block = new MemoryForgetBlock(new BlockFakes.RecordingMemoryPort());
+
+        Assert.Empty(block.CheckConfig(new JsonObject { ["memory"] = "m", ["fact"] = "mf_1" }));
+        Assert.Empty(block.CheckConfig(new JsonObject { ["memory"] = "m", ["tag"] = "stale" }));
+        Assert.Empty(block.CheckConfig(new JsonObject { ["memory"] = "m", ["fact"] = "{{recall.id}}", ["tag"] = "stale" }));
+    }
+
+    [Fact]
+    public async Task Forget_with_an_explicit_empty_fact_is_refused_and_never_forgets_the_tag()
+    {
+        var port = new BlockFakes.RecordingMemoryPort();
+
+        var result = await new MemoryForgetBlock(port).Execute(BlockFakes.Context(new JsonObject { ["memory"] = "m", ["fact"] = "", ["tag"] = "stale" }), Token);
+
+        Assert.Equal(SindriErrors.GraphBlockFailed.Code, result.Error.Code);
+        Assert.Empty(port.Forgets);
+    }
+
     [Fact]
     public void The_three_blocks_carry_their_picker_labels_groups_and_output_fields()
     {
@@ -128,7 +251,7 @@ public sealed class MemoryBlockTests
         Assert.Equal([("memory_search", "Recall", BlockGroup.Data), ("memory_write", "Remember", BlockGroup.Logic), ("memory_forget", "Forget", BlockGroup.Logic)],
             new IGraphBlock[] { search, write, forget }.Select(static b => (b.Type, b.Title, b.Group)));
         Assert.Equal(["facts", "mode"], search.OutputsFor([]).Fields.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
-        Assert.Equal(["action", "id"], write.OutputsFor([]).Fields.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["action", "id", "warning"], write.OutputsFor([]).Fields.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.Equal(["count"], forget.OutputsFor([]).Fields.Keys, StringComparer.Ordinal);
     }
 

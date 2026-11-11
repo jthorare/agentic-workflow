@@ -287,7 +287,8 @@ public static partial class SindriErrors
         MemoryNotFound, MemoryNameTaken, MemoryFactInvalid, MemoryEmbedUnavailable, MemoryMatchLevelInvalid, MemoryNameInvalid, MemoryExpiryPast,
         ResourceDiskOverSize, ResourceNameClash, ResourcePurgeRefused, ResourcePathEscapes, ResourceSandboxOverCap, ResourceInvalid, ResourceDiskUnmeasured,
         GraphCallDepth, GraphSelfStart, GraphHttpRefused, GraphHttpFailed,
-        ToolkitNotBuilt, ToolkitTestsFailed, ToolkitManifestInvalid, ToolkitProcessDied, ToolkitPaused, ToolkitCallTimedOut, ToolkitToolUnknown, ToolkitSandboxUnavailable, ToolkitNotFound, ToolkitNameInvalid, ToolkitToolFailed,
+        CodeCompileFailed, CodeTimeout, CodeMemory, CodeFailed, CodeRunnerUnavailable,
+        ToolkitNotBuilt, ToolkitTestsFailed, ToolkitManifestInvalid, ToolkitProcessDied, ToolkitPaused, ToolkitCallTimedOut, ToolkitToolUnknown, ToolkitSandboxUnavailable, ToolkitNotFound, ToolkitNameInvalid, ToolkitToolFailed, ToolkitExists, ToolkitCreateFailed,
         .. EveryTodo(),
     ];
 }
