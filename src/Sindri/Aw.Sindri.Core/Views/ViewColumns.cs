@@ -10,12 +10,23 @@ public static class ViewColumns
     public static IReadOnlyList<string>? JsonPath(string view, ViewColumn column)
     {
         ArgumentNullException.ThrowIfNull(view);
+        if (view == ViewNames.Launches && column == ViewColumn.Reason)
+        {
+            return ["ended", "reason"];
+        }
+
+        if (view == ViewNames.Launches && column == ViewColumn.Instance)
+        {
+            return ["step", "instance"];
+        }
+
         var name = column switch
         {
             ViewColumn.Item => "item",
             ViewColumn.State => "state",
             ViewColumn.Repo => "repo",
             ViewColumn.Kind => "kind",
+            ViewColumn.Reason or ViewColumn.Instance => null,
             _ => null,
         };
         return name is null

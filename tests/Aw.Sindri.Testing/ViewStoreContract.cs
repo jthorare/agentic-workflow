@@ -249,6 +249,7 @@ public abstract class ViewStoreContract
             ViewColumn.Repo => HitRepo,
             ViewColumn.Kind => "failure",
             ViewColumn.State => view == ViewNames.Requests ? "accepted" : "decided",
+            ViewColumn.Reason or ViewColumn.Instance => throw new InvalidOperationException("the launches view's columns are pinned by SqliteLaunchViewsTests"),
             _ => throw new ArgumentOutOfRangeException(nameof(column), column, "not a view column"),
         };
         var found = view switch

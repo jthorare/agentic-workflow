@@ -170,8 +170,12 @@ Choose the mode, then `bugfix-state start-attempt --state "$STATE" --mode <A|B|C
 Create each worktree from the **baseline commit** (`bugfix-state status --state "$STATE"` shows
 `baseline.commit`), never from a failed attempt:
 
-- A and C: `git worktree add -b bugfix/<ticket-slug>-a<attempt> <path> <baseline-commit>`
-- B: `git worktree add -b bugfix/<ticket-slug>-a<attempt>-h<hypothesis#> <path> <baseline-commit>`
+Get each path from the shared helper, which keeps every skill's worktrees under one root per repo
+(`AW_WORKTREE_ROOT`, or `.agentic-workflow/worktrees.json`, or `~/repos/aw-wt/<repo>`):
+`WT=$("${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/worktree-path.sh" bugfix-<ticket-slug>-a<attempt>)`. If it exits non-zero, stop and show its message.
+
+- A and C: `git worktree add -b bugfix/<ticket-slug>-a<attempt> "$WT" <baseline-commit>`
+- B: `git worktree add -b bugfix/<ticket-slug>-a<attempt>-h<hypothesis#> "$WT" <baseline-commit>` (use `bugfix-<ticket-slug>-a<attempt>-h<hypothesis#>` as the name)
 
 A fresh worktree has no installed dependencies. If the implementer needs them to run the check,
 install once per worktree under `locked`.
