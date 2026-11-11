@@ -4,8 +4,21 @@ import { PyFloat } from "../../src/py/num";
 import type { PyValue } from "../../src/py/value";
 
 export const ORACLE = new URL("../../parity/oracle.py", import.meta.url).pathname;
-export const hasPython = Bun.which("python3") !== null;
-export const SKIP_REASON = "python3 is not on PATH: the CPython golden tests cannot run";
+/** The CPython the kernel reproduces: its error texts, reprs and Unicode tables (15.1.0, src/py/ucd.ts) are 3.13's. */
+export const PINNED_PYTHON = "3.13";
+/** [major.minor, Unicode version] of python3 on PATH, or null when there is none. */
+const FOUND: [string, string] | null = (() => {
+  if (Bun.which("python3") === null) return null;
+  const r = spawnSync(["python3", "-I", "-c", "import sys, unicodedata; print('%d.%d' % sys.version_info[:2], unicodedata.unidata_version)"], { stdout: "pipe", stderr: "pipe" });
+  const [version, unicode] = r.stdout.toString().trim().split(" ");
+  return r.exitCode === 0 && version && unicode ? [version, unicode] : null;
+})();
+/** True when python3 on PATH is the pinned CPython. A golden test against any other version compares the kernel with a
+ *  different specification (newer Unicode tables, reworded exceptions), so those suites skip and say why. */
+export const hasPython = FOUND !== null && FOUND[0] === PINNED_PYTHON;
+export const SKIP_REASON = FOUND === null
+  ? "python3 is not on PATH: the CPython golden tests cannot run"
+  : `python3 is CPython ${FOUND[0]} (Unicode ${FOUND[1]}), and the kernel reproduces CPython ${PINNED_PYTHON}: the CPython golden tests are skipped. Put python${PINNED_PYTHON} first on PATH to run them.`;
 
 const cache = new Map<string, unknown>();
 
