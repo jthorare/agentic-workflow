@@ -82,6 +82,7 @@ internal sealed class CodeRunnerProcess(IReadOnlyList<string> runner, Func<IRead
         var message = (await error.ConfigureAwait(false)).Trim();
         return process.ExitCode switch
         {
+            0 when stdout.Length == 0 => SindriErrors.CodeFailed.With("the code ended without a result (did it call Environment.Exit?)"),
             0 => stdout,
             2 => SindriErrors.CodeRunnerUnavailable.With(message),
             3 => SindriErrors.CodeMemory.With("the code ran out of memory"),

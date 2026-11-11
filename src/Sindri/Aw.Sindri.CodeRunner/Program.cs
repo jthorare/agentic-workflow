@@ -47,8 +47,11 @@ internal static class Program
         try
         {
             var input = JsonNode.Parse(Console.In.ReadToEnd());
+            var output = Console.Out;
+            Console.SetOut(Console.Error);   // why: stdout carries only the result; what the code prints goes to stderr
             var result = run.Invoke(null, [input]);
-            Console.Out.Write(result is null ? "null" : JsonSerializer.Serialize(result, result.GetType()));
+            output.Write(result is null ? "null" : JsonSerializer.Serialize(result, result.GetType()));
+            output.Flush();
             return 0;
         }
         catch (TargetInvocationException e) when (e.InnerException is OutOfMemoryException)
