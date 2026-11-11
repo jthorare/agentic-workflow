@@ -75,7 +75,7 @@ public sealed class FollowStartTests : IDisposable
     public async Task A_connect_to_a_new_epoch_starts_at_the_new_ledger_head()
     {
         _records.Write(A.Record(epoch: 7));
-        _server.Current = WithHead(A.Status(epoch: 7), 50);
+        _server.Current = WithHead(A.Status(epoch: 7), 20);   // event 30 lies past the head, so the first stream (opened at 19) delivers it
         _server.Push(A.Event(30));
         Start();
         await Eventually(() => _vm.LastEvent.EndsWith("#30", StringComparison.Ordinal), "event 30");
@@ -97,7 +97,7 @@ public sealed class FollowStartTests : IDisposable
     {
         _records.Write(A.Record(pid: 4242, epoch: 1));
         _server.Pong = new(4242, 1);
-        _server.Current = WithHead(A.Status(epoch: 1), 40);
+        _server.Current = WithHead(A.Status(epoch: 1), 20);   // as above
         _server.Push(A.Event(30));
         Start();
         await Eventually(() => _vm.LastEvent.EndsWith("#30", StringComparison.Ordinal), "event 30");
