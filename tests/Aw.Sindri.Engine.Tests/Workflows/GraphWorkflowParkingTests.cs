@@ -94,8 +94,7 @@ public sealed partial class GraphWorkflowParkingTests
         await WaitUntilRunning(rig, started.RunId, "hold");
         await WaitUntilTimerStarted(rig, started.RunId.Value);
 
-        await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
-        var run = await rig.Final(started.RunId);
+        var run = await rig.Cancel(started.RunId);
         var nodes = await rig.NodeStatuses(started.RunId);
 
         Assert.Equal(WorkflowRunStatus.Cancelled, run.Status);
