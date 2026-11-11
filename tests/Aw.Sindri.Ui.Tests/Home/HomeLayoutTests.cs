@@ -78,7 +78,7 @@ public sealed class HomeLayoutTests
 
             foreach (var head in heads)
             {
-                var text = head.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("eyebrow"));
+                var text = head.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("section-title"));
                 var centre = text.TranslatePoint(new Point(0, text.Bounds.Height / 2), head)!.Value.Y;
                 Assert.True(Math.Abs(centre - (head.Bounds.Height / 2)) <= 1, "the header text is vertically centred in its header");
             }

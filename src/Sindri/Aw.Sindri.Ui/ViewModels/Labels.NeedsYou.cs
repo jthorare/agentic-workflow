@@ -114,7 +114,10 @@ internal static partial class Labels
     internal static string TrayRow(string chip, string id, string title, string age) =>
         string.Join(' ', new[] { chip, id, title }.Where(part => part.Length > 0)) + (age.Length > 0 ? " · " + age : "");
 
-    /// <summary>Home's Needs you header count, beside the label.</summary>
+    /// <summary>The words beside Home's need-you number.</summary>
+    internal const string NeedYouWord = "need you";
+
+    /// <summary>Home's Needs you count and its words.</summary>
     /// <param name="count">Rows that need the user.</param>
     /// <returns>"3 need you".</returns>
     internal static string NeedYouCount(int count) => string.Create(CultureInfo.InvariantCulture, $"{count} need you");

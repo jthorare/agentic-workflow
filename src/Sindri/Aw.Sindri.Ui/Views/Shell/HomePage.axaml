@@ -8,6 +8,7 @@
              xmlns:nyv="using:Aw.Sindri.Ui.Views.NeedsYou"
              xmlns:rows="using:Aw.Sindri.Ui.Views.Queue"
              xmlns:tv="using:Aw.Sindri.Ui.Views.Todo"
+             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              x:Class="Aw.Sindri.Ui.Views.Shell.HomePage"
              x:DataType="shell:ShellViewModel">
   <!-- Home (UI spec §3.2, §4.2): four panels in a fixed order. Each panel is a header row (the eyebrow over a hairline,
@@ -28,6 +29,27 @@
     <Style Selector="TextBlock.attention">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
     </Style>
+    <!-- One accent (#2780): Primary is the nav selection and the page's ONE primary button, the first Needs-you row's primary action. Every other row's
+         primary action draws as a secondary button, and an attention tag on a Needs-you row is a neutral chip (its word still says what it is). -->
+    <Style Selector="ItemsControl#NeedsYouRows > ContentPresenter:nth-child(n+2) Button.command-control.primary:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    </Style>
+    <Style Selector="ItemsControl#NeedsYouRows > ContentPresenter:nth-child(n+2) Button.command-control.primary:pointerover:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
+    </Style>
+    <Style Selector="ItemsControl#NeedsYouRows > ContentPresenter:nth-child(n+2) Button.command-control.primary:pressed:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface3}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
+    </Style>
+    <Style Selector="Border.needs-you-row ctl|StateChipView.attn">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    </Style>
+    <Style Selector="Border.needs-you-row ctl|StateChipView.attn > TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
+    </Style>
   </UserControl.Styles>
   <StackPanel Spacing="{StaticResource Size.PanelGap}">
     <TextBlock Classes="page-title" Text="{Binding Text.Home}" AutomationProperties.Name="{Binding Text.Home}" />
@@ -43,7 +65,7 @@
         </Button>
         <!-- F3 home spec §1 Q6: the 120 px meter after the words, done steps of all of them; the words above carry the same count. -->
         <ProgressBar x:Name="SetupHomeMeter" Grid.Column="1" Classes="map-meter home-meter" Width="120" MinWidth="0" VerticalAlignment="Center" Minimum="0" Maximum="{Binding Setup.MeterMax}" Value="{Binding Setup.MeterDone}" AutomationProperties.AccessibilityView="Raw" />
-        <Button x:Name="SetupHomeContinue" Grid.Column="2" Classes="command-control primary" Click="OnSetupContinue" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.Name="{Binding Setup.ContinueName}">
+        <Button x:Name="SetupHomeContinue" Grid.Column="2" Classes="command-control" Click="OnSetupContinue" VerticalAlignment="Center" Margin="0,0,24,0" AutomationProperties.Name="{Binding Setup.ContinueName}">
           <TextBlock Classes="button" Text="{Binding Setup.ContinueText}" AutomationProperties.AccessibilityView="Raw" />
         </Button>
       </Grid>
@@ -64,11 +86,7 @@
             <Border Classes="phead">
               <Grid ColumnDefinitions="*,Auto">
                 <!-- A Grid, not a StackPanel: a horizontal StackPanel measures the summary at its full width, so in a narrow cell it was drawn under the right cell (#1061). -->
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                  <TextBlock Classes="eyebrow" Classes.region-focus="{Binding IsNeedsYouFocused}" Text="{Binding Text.NeedsYouPanel}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" />
-                  <TextBlock x:Name="NeedsYouSummary" Grid.Column="1" Classes="caption subtle" Text="{Binding Attention.NeedsYouLine}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" IsVisible="{Binding Attention.NeedsYouLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                             ToolTip.Tip="{Binding Attention.NeedsYouLine}" AutomationProperties.Name="{Binding Attention.NeedsYouLine}" />
-                </Grid>
+                <TextBlock Classes="section-title" Classes.region-focus="{Binding IsNeedsYouFocused}" Text="{Binding Text.NeedsYouPanel}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                   <!-- B2: "N marked seen · Undo" for 5 min after Mark all seen; the Undo button is a plain tab stop, and its words are spoken once by NeedsYouSeenLive. -->
                   <StackPanel x:Name="NeedsYouUndo" Orientation="Horizontal" Spacing="8" IsVisible="{Binding NeedsYou.Seen.UndoOffered}" VerticalAlignment="Center">
@@ -85,7 +103,13 @@
                 </StackPanel>
               </Grid>
             </Border>
-            <TextBlock x:Name="NeedsYouBanner" Classes="caption" Text="{Binding NeedsYou.Banner}" IsVisible="{Binding NeedsYou.HasBanner}" Margin="16,8"
+            <!-- Home's one display number (#2780): how many need you. Nothing at zero; the empty sentence below says so. -->
+            <StackPanel x:Name="NeedsYouCountLine" Orientation="Horizontal" Spacing="8" Margin="24,16,24,8" IsVisible="{Binding Attention.NeedsYouNumber, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                        AutomationProperties.Name="{Binding Attention.NeedsYouLine}">
+              <TextBlock x:Name="NeedsYouNumber" Classes="display" Text="{Binding Attention.NeedsYouNumber}" VerticalAlignment="Bottom" AutomationProperties.AccessibilityView="Raw" />
+              <TextBlock x:Name="NeedsYouSummary" Classes="caption subtle" Text="{Binding Attention.NeedsYouWord}" VerticalAlignment="Bottom" Margin="0,0,0,6" AutomationProperties.AccessibilityView="Raw" />
+            </StackPanel>
+            <TextBlock x:Name="NeedsYouBanner" Classes="caption" Text="{Binding NeedsYou.Banner}" IsVisible="{Binding NeedsYou.HasBanner}" Margin="24,8"
                        TextWrapping="Wrap" AutomationProperties.Name="{Binding NeedsYou.Banner}" />
             <Button x:Name="NeedsYouHeld" Classes="held-pill" Click="OnShowNeedsYouHeld" IsVisible="{Binding NeedsYou.HasHeld}" HorizontalAlignment="Center"
                     AutomationProperties.Name="{Binding NeedsYou.HeldText}">
@@ -103,7 +127,7 @@
               <Grid Classes="skrow" ColumnDefinitions="70,*,40"><Border Classes="skeleton" Width="60" /><Border Grid.Column="1" Classes="skeleton" Width="220" /><Border Grid.Column="2" Classes="skeleton" Width="32" /></Grid>
               <Grid Classes="skrow" ColumnDefinitions="70,*,40"><Border Classes="skeleton" Width="60" /><Border Grid.Column="1" Classes="skeleton" Width="260" /><Border Grid.Column="2" Classes="skeleton" Width="32" /></Grid>
             </StackPanel>
-            <TextBlock x:Name="NeedsYouEmpty" Classes="caption quiet" Text="{Binding NeedsYou.EmptyLine}" Margin="16,8"
+            <TextBlock x:Name="NeedsYouEmpty" Classes="caption quiet" Text="{Binding NeedsYou.EmptyLine}" Margin="24,8"
                        IsVisible="{Binding NeedsYou.EmptyLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding NeedsYou.EmptyLine}" />
             <Button x:Name="NeedsYouShowAll" HorizontalAlignment="Left" Classes="copy" Click="OnShowAllNeedsYou" IsVisible="{Binding NeedsYou.HasOverflow}"
                     AutomationProperties.Name="{Binding NeedsYou.OverflowText}" Margin="16,8">
@@ -115,13 +139,13 @@
         <!-- Review page spec §16 pick 5: one line under Needs you, not counted in it; it opens Reviews. -->
         <Button x:Name="ReviewsWaitingLink" Classes="copy" HorizontalAlignment="Left" Click="OnOpenReviews" IsVisible="{Binding HasReviewsWaitingLine}"
                 AutomationProperties.Name="{Binding ReviewsWaitingLine}">
-          <TextBlock Classes="caption" Text="{Binding ReviewsWaitingLine}" Foreground="{DynamicResource Brush.Attention}" />
+          <TextBlock Classes="caption" Text="{Binding ReviewsWaitingLine}" />
         </Button>
 
         <!-- Linear hub spec §3, "With #2076": one more line under the PRs line; it opens Work on the Linear view. -->
         <Button x:Name="LinearNewLink" Classes="copy" HorizontalAlignment="Left" Click="OnOpenLinear" IsVisible="{Binding HasLinearNewLine}"
                 AutomationProperties.Name="{Binding LinearNewLine}">
-          <TextBlock Classes="caption" Text="{Binding LinearNewLine}" Foreground="{DynamicResource Brush.Attention}" />
+          <TextBlock Classes="caption" Text="{Binding LinearNewLine}" />
         </Button>
 
       </StackPanel>
@@ -139,7 +163,7 @@
             <DockPanel>
               <Border Classes="phead" DockPanel.Dock="Top">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                  <TextBlock Classes="eyebrow" VerticalAlignment="Center" Text="{Binding Queue.RunningHeader}" AutomationProperties.Name="{Binding Queue.RunningHeader}" />
+                  <TextBlock Classes="section-title" VerticalAlignment="Center" Text="{Binding Queue.RunningHeader}" AutomationProperties.Name="{Binding Queue.RunningHeader}" />
                   <StackPanel x:Name="RunningStale" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" IsVisible="{Binding Queue.IsStale}">
                     <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
                     <TextBlock Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
@@ -169,7 +193,7 @@
             <DockPanel>
               <Border Classes="phead" DockPanel.Dock="Top">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                  <TextBlock Classes="eyebrow" VerticalAlignment="Center" Text="{Binding Queue.QueuedHeader}" AutomationProperties.Name="{Binding Queue.QueuedHeader}" />
+                  <TextBlock Classes="section-title" VerticalAlignment="Center" Text="{Binding Queue.QueuedHeader}" AutomationProperties.Name="{Binding Queue.QueuedHeader}" />
                   <StackPanel x:Name="QueuedStale" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" IsVisible="{Binding Queue.IsStale}">
                     <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
                     <TextBlock Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
@@ -205,7 +229,7 @@
             AutomationProperties.Name="{Binding Health.StripName}">
       <Grid ColumnDefinitions="Auto,*,Auto">
         <StackPanel x:Name="HealthKeys" Classes="strip-head" Orientation="Horizontal" Spacing="8">
-          <TextBlock Classes="eyebrow" Text="{Binding Text.HealthPanel}" VerticalAlignment="Center" />
+          <TextBlock Classes="caption subtle" Text="{Binding Text.HealthPanel}" VerticalAlignment="Center" />
           <!-- R3 (§4.1): while the views are stale the strip's values are marked so, as the pill is. -->
           <StackPanel x:Name="StripStale" Orientation="Horizontal" Spacing="4" Margin="8,0,0,0" VerticalAlignment="Center"
                       IsVisible="{Binding Pill.IsDataStale}">
@@ -233,7 +257,7 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <TextBlock x:Name="HealthChevron" Grid.Column="2" Classes="body-strong subtle" Text="›" Margin="12,0,16,0"
+        <TextBlock x:Name="HealthChevron" Grid.Column="2" Classes="body-strong subtle" Text="›" Margin="12,0,24,0"
                    VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
       </Grid>
     </Button>

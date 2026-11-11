@@ -6,18 +6,18 @@
        .Pressed), so the urgency stays; the pulse runs only at rest (a running animation would beat any style setter). Those rules live in Theme/ClickableStyles.axaml,
        which loads last, so they beat its grey hover. A calm row (subtle, stale) steps aside to that shared clickable hover and pressed background. -->
   <Style Selector="Border.needs-you-row.pulsing:not(:pointerover):not(:pressed)">
-    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
     <Style.Animations>
       <Animation Duration="0:0:1.6" IterationCount="Infinite" Easing="SineEaseInOut">
-        <KeyFrame Cue="0%"><Setter Property="Background" Value="{StaticResource Brush.AttentionSoft}" /></KeyFrame>
+        <KeyFrame Cue="0%"><Setter Property="Background" Value="{StaticResource Brush.Surface2}" /></KeyFrame>
         <KeyFrame Cue="50%"><Setter Property="Background" Value="{StaticResource Brush.Surface1}" /></KeyFrame>
-        <KeyFrame Cue="100%"><Setter Property="Background" Value="{StaticResource Brush.AttentionSoft}" /></KeyFrame>
+        <KeyFrame Cue="100%"><Setter Property="Background" Value="{StaticResource Brush.Surface2}" /></KeyFrame>
       </Animation>
     </Style.Animations>
   </Style>
   <!-- A failure keeps a steady attention tint, a calm row a subtle one (R8-13); the same tokens as the pulse, no motion. -->
   <Style Selector="Border.needs-you-row.steady:not(:pointerover):not(:pressed)">
-    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
   </Style>
   <Style Selector="Border.needs-you-row.subtle:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
@@ -36,11 +36,11 @@
   <!-- The outline's shape (border and padding) holds under the pointer and a press, so the row never changes height; only its colours step aside. -->
   <Style Selector="Border.needs-you-row.outlined">
     <Setter Property="BorderThickness" Value="2" />
-    <Setter Property="Padding" Value="14,7,14,6" />
+    <Setter Property="Padding" Value="22,7,22,6" />
   </Style>
   <Style Selector="Border.needs-you-row.outlined:not(:pointerover):not(:pressed)">
-    <Setter Property="Background" Value="{DynamicResource Brush.AttentionSoft}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
   <!-- Avalonia picks between matching styles by the order they are declared, and this file is included after the queue's: the focus
        ring and the selection bar are restated after the outline so they win over it. A selected row keeps the selection's shape, a thicker
@@ -48,12 +48,12 @@
   <Style Selector="Border.needs-you-row.outlined.selected">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
     <Setter Property="BorderThickness" Value="4,2,2,2" />
-    <Setter Property="Padding" Value="12,7,14,6" />
+    <Setter Property="Padding" Value="20,7,22,6" />
   </Style>
   <Style Selector="Border.needs-you-row.outlined:focus-visible">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
     <Setter Property="BorderThickness" Value="2" />
-    <Setter Property="Padding" Value="14,7,14,6" />
+    <Setter Property="Padding" Value="22,7,22,6" />
   </Style>
   <Style Selector="Border.needs-you-row.stale:not(:pointerover):not(:pressed)">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
