@@ -73,6 +73,9 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>The nodes with a position, in the order the spec lists them.</summary>
     public IReadOnlyList<GraphNodeViewModel> Nodes { get; }
 
+    /// <summary>The branches of condition steps that have no edge, each drawn as "false → done".</summary>
+    public IReadOnlyList<GraphEnd> Ends { get; } = [];
+
     /// <summary>The arrows; an edge naming a node the spec lacks is left out.</summary>
     public IReadOnlyList<GraphEdgeViewModel> Edges { get; }
 
