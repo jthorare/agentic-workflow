@@ -113,7 +113,8 @@ public sealed class WorkflowGoldenContractTests
         var prompt = read.Groups[2].Blocks[0];
         Assert.Equal(new WorkflowBlockField("prompt", "text", Required: true), prompt.Config[0]);
         Assert.Equal("Summarize {{search.facts}}", prompt.ExampleConfig!.Value.GetProperty("prompt").GetString());
-        Assert.Equal(["collect", "for_each", "condition", "only_new", "run_workflow", "wait"], read.Groups[3].Blocks.Select(b => b.Type), StringComparer.Ordinal);
+        Assert.Equal(["http", "memory_search", "call_tool"], read.Groups[1].Blocks.Select(b => b.Type), StringComparer.Ordinal);
+        Assert.Equal(["collect", "for_each", "memory_forget", "condition", "only_new", "memory_write", "run_workflow", "wait"], read.Groups[3].Blocks.Select(b => b.Type), StringComparer.Ordinal);
         Assert.Equal(["ask_owner", "create_item", "notify"], read.Groups[4].Blocks.Select(b => b.Type), StringComparer.Ordinal);
     }
 
