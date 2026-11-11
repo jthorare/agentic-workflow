@@ -104,11 +104,17 @@
           <Button x:Name="QueueClearFilter" Content="{Binding Queue.ClearFilterText}" Click="OnClearFilter" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Queue.ClearFilterText}" />
         </StackPanel>
 
-        <ItemsControl x:Name="QueueGroups" ItemsSource="{Binding Queue.Groups}">
-          <ItemsControl.ItemTemplate>
+        <!-- One flat list of group headings and rows, so only the rows in view are built (#2776); a fold adds or removes its group's rows. -->
+        <ItemsControl x:Name="QueueGroups" ItemsSource="{Binding Queue.Flat}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <VirtualizingStackPanel />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.DataTemplates>
             <DataTemplate x:DataType="queue:QueueGroupViewModel">
-              <StackPanel IsVisible="{Binding IsVisible}">
-                <ToggleButton Classes="group-head" IsChecked="{Binding IsExpanded}" AutomationProperties.Name="{Binding Header}" AutomationProperties.AutomationId="{Binding AutomationId}">
+              <StackPanel>
+                <ToggleButton Classes="group-head" IsChecked="{Binding IsExpanded}" AutomationProperties.Name="{Binding Header}">
                   <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBlock Classes="caption subtle" Text="{Binding FoldGlyph}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
                     <TextBlock Classes="body-strong" Text="{Binding Label}" VerticalAlignment="Center" />
@@ -116,16 +122,12 @@
                   </StackPanel>
                 </ToggleButton>
                 <TextBlock Classes="caption quiet" Text="{Binding Empty}" IsVisible="{Binding ShowsEmpty}" AutomationProperties.Name="{Binding Empty}" />
-                <ItemsControl ItemsSource="{Binding Rows}" IsVisible="{Binding IsExpanded}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="queue:ItemRowViewModel">
-                      <rows:ItemRow />
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
               </StackPanel>
             </DataTemplate>
-          </ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="queue:ItemRowViewModel">
+              <rows:ItemRow />
+            </DataTemplate>
+          </ItemsControl.DataTemplates>
         </ItemsControl>
         <StackPanel x:Name="QueueClosed" IsVisible="{Binding Queue.ShowsClosed}">
           <ToggleButton x:Name="QueueClosedToggle" Classes="group-head" IsChecked="{Binding Queue.IsClosedOpen, Mode=OneWay}" Click="OnClosedToggle" AutomationProperties.Name="{Binding Queue.ClosedHeader}">
@@ -136,6 +138,11 @@
             </StackPanel>
           </ToggleButton>
           <ItemsControl x:Name="QueueClosedRows" ItemsSource="{Binding Queue.ClosedRows}" IsVisible="{Binding Queue.IsClosedOpen}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <VirtualizingStackPanel />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="queue:ItemRowViewModel">
                 <rows:ItemRow />
