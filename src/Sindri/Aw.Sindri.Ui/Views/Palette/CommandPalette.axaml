@@ -92,7 +92,7 @@
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="palette:PaletteEntry">
                         <Button Classes="palette-entry" Classes.selected="{Binding IsSelected}" IsEnabled="{Binding IsEnabled}"
-                                Focusable="False" Click="OnEntry" AutomationProperties.Name="{Binding Name}">
+                                Focusable="False" Click="OnEntry" AutomationProperties.Name="{Binding Name}" AutomationProperties.AutomationId="{Binding AutomationId}">
                           <!-- A ready command run from here shows §4.1's lifecycle in place (U1 F2): a spinner beside the
                                kept label while sending, the outcome or Sindri's code as the status, the detail under it. -->
                           <StackPanel>

@@ -5,7 +5,7 @@
              x:DataType="queue:ItemRowViewModel">
   <!-- An item row in Home's half-width panels (home.html): id, title, the state as a word, and the age. A title click
        opens the sheet, as on the Queue page. -->
-  <Border x:Name="RowFrame" Classes="item-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
+  <Border x:Name="RowFrame" AutomationProperties.AutomationId="{Binding AutomationId}" Classes="item-row clickable" Classes.selected="{Binding IsSelected}" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <Grid x:Name="CompactRow" ColumnDefinitions="120,*,Auto,50" VerticalAlignment="Center">
       <TextBlock Classes="mono subtle" Text="{Binding Id}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" AutomationProperties.Name="{Binding Id}" />

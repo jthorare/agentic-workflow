@@ -19,6 +19,9 @@ internal sealed class ItemRowViewModel : ObservableObject
     /// <summary>The item's id ('ITM-…').</summary>
     public string Id { get; }
 
+    /// <summary>The row's automation id ("ItemRow.ITM-…"), one per item.</summary>
+    public string AutomationId => "ItemRow." + Id;
+
     /// <summary>The API group the row came in.</summary>
     public string Group { get; private set; }
 
