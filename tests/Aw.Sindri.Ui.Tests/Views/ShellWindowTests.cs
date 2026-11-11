@@ -1906,10 +1906,11 @@ public sealed class ShellWindowTests : IDisposable
         Assert.True(past.Count == 0, $"{state}: the pill ran into the padding at {string.Join(", ", past)}");
     }));
 
-    // #2547 (ideas): Refresh's word is measured before Refresh first shows, so a bar that has to fold it folds it in the same
-    // pass, instead of laying the word out, measuring, and folding it in the next.
+    // #2547 (ideas): a bar that has to fold Refresh's word folds it before the word is ever laid out. The measure Refresh first
+    // shows in learns the word's width (Remember) before Choose runs, and folds in that same measure. The stale pill's wider
+    // word and age take the bar up to three measures in that one layout update.
     [Fact]
-    public Task Refresh_that_first_shows_on_a_folding_bar_folds_in_one_pass() => OnUi(async () =>
+    public Task Refresh_that_first_shows_on_a_folding_bar_folds_before_its_word_is_laid_out() => OnUi(async () =>
     {
         await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
         var window = await ShowIn(BarState.Normal);
@@ -1922,13 +1923,21 @@ public sealed class ShellWindowTests : IDisposable
             var shell = (ShellViewModel)window.DataContext!;
             Assert.False(Named<Button>(window, "RefreshButton").IsVisible, "Refresh shows before the bar went stale");
             bar.ResetMeasurePasses();
+            var laidOut = 0.0;
+            window.LayoutUpdated += (_, _) =>
+            {
+                // Refresh's content joins the visual tree only once Refresh shows.
+                var word = window.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Name == "RefreshWord");
+                laidOut = Math.Max(laidOut, word is { IsEffectivelyVisible: true } ? word.Bounds.Width : 0);
+            };
             _server.FailPing = true;
             _clock.Advance(ShellViewModel.StaleAfter);
             await Until(() => shell.State == ShellState.Stale);
             Settle(window);
 
             Assert.True(Named<Button>(window, "RefreshButton").Classes.Contains("folded"), "Refresh did not fold at 1000 px, 1.3");
-            Assert.True(bar.MeasurePasses <= 2, string.Create(CultureInfo.InvariantCulture, $"the bar measured {bar.MeasurePasses} times when Refresh first showed"));
+            Assert.True(laidOut == 0, string.Create(CultureInfo.InvariantCulture, $"Refresh's word was laid out {laidOut} px wide before it folded"));
+            Assert.True(bar.MeasurePasses <= 3, string.Create(CultureInfo.InvariantCulture, $"the bar measured {bar.MeasurePasses} times when Refresh first showed"));
         }
         finally
         {

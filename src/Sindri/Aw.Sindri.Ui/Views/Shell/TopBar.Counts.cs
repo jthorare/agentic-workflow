@@ -30,7 +30,8 @@ internal sealed partial class TopBar
         }
     }
 
-    // A tab's parts sit in a stack (TopBar.axaml); its Spacing comes before every shown part but the first.
+    // A tab's parts sit in a stack (TopBar.axaml): hiding one gives back its width and one Spacing (the one before it, or
+    // after it for the first part, the dot).
     private static double SpacingBefore(Control part) => part.Parent is StackPanel stack ? stack.Spacing : 0;
 
     // The navigation's width at the full step (its dot, its counts, its full tab padding): what every step measures from.

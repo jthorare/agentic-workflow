@@ -26,6 +26,9 @@ internal sealed partial class TopBar : UserControl
     // Growing back takes this much more room than shrinking did, so a ticking age ("9s" to "10s") can't make the bar flicker.
     private const double Slack = 8;
 
+    // The steps, widest first.
+    private static readonly Fit[] _steps = Enum.GetValues<Fit>();
+
     private Fit _fit = Fit.Full;
     private double _ageWidth;
     private double _brandWordWidth;
@@ -110,7 +113,7 @@ internal sealed partial class TopBar : UserControl
 
         var parts = new StepWidths(FixedWidth(), _brandWordWidth + Brand.Spacing, _compactSearch, PillWithoutProblems(),
             AgeWidth(), RefreshButton.IsVisible ? _refreshWordWidth : 0);
-        foreach (var step in Enum.GetValues<Fit>())
+        foreach (var step in _steps)
         {
             if (parts.Need(step, NavigationWidthAt(step)) <= width - (step < _fit ? Slack : 0))
             {
@@ -125,12 +128,14 @@ internal sealed partial class TopBar : UserControl
     private double AgeWidth() =>
         PillAgeText.Text is { Length: > 0 } && !_ageYields ? _ageWidth + PillGroup.Spacing : 0;
 
-    // The pill without its problem text, age and Refresh's word, whatever the current step shows of them.
+    // The pill without its problem text, age and Refresh's word, whatever the current step shows of them. The problem text's
+    // margin stays in: it shows even when the text's cap is 0, so a step that leaves it no room overruns the bar (#2547).
     private double PillWithoutProblems()
     {
         var age = PillAge.IsVisible ? AgeWidth() : 0;
         var refresh = RefreshButton.IsVisible && _fit >= Fit.NoRefreshWord ? _refreshWordWidth : 0;
-        return _pillRest - age + refresh;
+        var margin = PillProblems.IsVisible ? PillProblems.Margin.Left + PillProblems.Margin.Right : 0;
+        return _pillRest - age + refresh + margin;
     }
 
     // The bar's padding and the brand without its word.
