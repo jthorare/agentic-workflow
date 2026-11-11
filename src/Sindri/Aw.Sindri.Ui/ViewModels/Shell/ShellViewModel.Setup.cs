@@ -28,7 +28,7 @@ internal sealed partial class ShellViewModel
         Setup.ChecklistRequested += (_, _) => GoTo(PageId.Settings);
         Setup.PropertyChanged += (_, e) =>
         {
-            if (string.Equals(e.PropertyName, nameof(SetupViewModel.IsHomeLineShown), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(SetupViewModel.HomeStepId), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(SetupViewModel.IsReading), StringComparison.Ordinal))
+            if (string.Equals(e.PropertyName, nameof(SetupViewModel.IsHomeLineShown), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(SetupViewModel.HomeStepId), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(SetupViewModel.HasAnswered), StringComparison.Ordinal))
             {
                 UpdateNeedsYou();
                 Reattend();   // the line's step decides which setup row the card drops, and the summary counts the same rows (ShownOnHome)
