@@ -8,6 +8,7 @@ internal interface ICodeCompiler
 
     /// <summary>Compiles the body as a static method that gets 'JsonNode? input' and returns any value.</summary>
     /// <param name="body">The method body.</param>
+    /// <param name="cancellationToken">Stops the compile.</param>
     /// <returns>The assembly, or the errors with their line and column in the body.</returns>
-    public CodeCompilation Compile(string body);
+    public CodeCompilation Compile(string body, CancellationToken cancellationToken);
 }

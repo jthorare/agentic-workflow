@@ -25,7 +25,7 @@ internal sealed class SandboxedCodeRunner(CompiledCodeCache cache, IApprovedProf
     public async ValueTask<Result<string>> Run(CodeRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
-        var assembly = Compiled(run);
+        var assembly = Compiled(run, cancellationToken);
         if (assembly.IsError)
         {
             return assembly.Error;
@@ -70,9 +70,9 @@ internal sealed class SandboxedCodeRunner(CompiledCodeCache cache, IApprovedProf
         plan.Mechanism == SandboxMechanism.Seatbelt ? Path.Combine(area, "tmp", "code.dll") : "/tmp/code.dll";
 
     // why: the runner must exist before anything is planned, or bubblewrap exits 1 and the user sees SND-CODE-004 instead of SND-CODE-005
-    private Result<string> Compiled(CodeRun run)
+    private Result<string> Compiled(CodeRun run, CancellationToken cancellationToken)
     {
-        var code = cache.Resolve(run.Code);
+        var code = cache.Resolve(run.Code, cancellationToken);
         if (code.AssemblyPath is not { } assembly)
         {
             return SindriErrors.CodeCompileFailed.With(string.Join("; ", code.Diagnostics.Select(static d => string.Create(CultureInfo.InvariantCulture, $"line {d.Line}, column {d.Column}: {d.Id} {d.Message}"))));

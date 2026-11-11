@@ -15,7 +15,7 @@ public sealed class CodeRunnerTests : IDisposable
     public async Task A_loop_past_the_timeout_is_killed_and_the_node_fails_with_timeout()
     {
         var ct = TestContext.Current.CancellationToken;
-        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("while (true) { }");
+        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("while (true) { }", TestContext.Current.CancellationToken);
         var runner = new CodeRunnerProcess(BuiltRunner());
 
         var result = await runner.Run(code.AssemblyPath!, "null", new CodeLimits(TimeSpan.FromSeconds(1), MemoryMb: 256), ct);
@@ -27,7 +27,7 @@ public sealed class CodeRunnerTests : IDisposable
     public async Task The_result_comes_back_as_json()
     {
         var ct = TestContext.Current.CancellationToken;
-        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("return input![\"items\"]!.AsArray().Select(static i => i!.GetValue<int>() * 2).ToArray();");
+        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("return input![\"items\"]!.AsArray().Select(static i => i!.GetValue<int>() * 2).ToArray();", TestContext.Current.CancellationToken);
         var runner = new CodeRunnerProcess(BuiltRunner());
 
         var result = await runner.Run(code.AssemblyPath!, "{\"items\":[1,2,3]}", new CodeLimits(TimeSpan.FromSeconds(30), MemoryMb: 256), ct);
@@ -39,7 +39,7 @@ public sealed class CodeRunnerTests : IDisposable
     public async Task Code_that_throws_fails_the_node_with_the_exception_message()
     {
         var ct = TestContext.Current.CancellationToken;
-        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("throw new InvalidOperationException(\"boom\");");
+        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("throw new InvalidOperationException(\"boom\");", TestContext.Current.CancellationToken);
         var runner = new CodeRunnerProcess(BuiltRunner());
 
         var result = await runner.Run(code.AssemblyPath!, "null", new CodeLimits(TimeSpan.FromSeconds(30), MemoryMb: 256), ct);
@@ -52,7 +52,7 @@ public sealed class CodeRunnerTests : IDisposable
     public async Task Code_that_exits_before_writing_a_result_fails_the_node()
     {
         var ct = TestContext.Current.CancellationToken;
-        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("Environment.Exit(0);\nreturn 1;");
+        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("Environment.Exit(0);\nreturn 1;", TestContext.Current.CancellationToken);
         var runner = new CodeRunnerProcess(BuiltRunner());
 
         var result = await runner.Run(code.AssemblyPath!, "null", new CodeLimits(TimeSpan.FromSeconds(30), MemoryMb: 256), ct);
@@ -64,7 +64,7 @@ public sealed class CodeRunnerTests : IDisposable
     public async Task What_the_code_writes_to_the_console_does_not_reach_the_result()
     {
         var ct = TestContext.Current.CancellationToken;
-        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("Console.Write(\"noise\");\nreturn 1;");
+        var code = new CompiledCodeCache(new CodeCompiler(), _directory.FullName).Resolve("Console.Write(\"noise\");\nreturn 1;", TestContext.Current.CancellationToken);
         var runner = new CodeRunnerProcess(BuiltRunner());
 
         var result = await runner.Run(code.AssemblyPath!, "null", new CodeLimits(TimeSpan.FromSeconds(30), MemoryMb: 256), ct);

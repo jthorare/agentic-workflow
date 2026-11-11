@@ -20,7 +20,7 @@ internal sealed class ProfileWorkflowChecker(IApprovedProfile profile, IGraphBlo
         var context = new GraphValidationContext(blocks.Types, world, (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem, ParseCondition)
         {
             BoxCap = await BoxCap(cancellationToken).ConfigureAwait(false),
-            CodeCheck = codeCheck is null ? null : codeCheck.Check,
+            CodeCheck = codeCheck is null ? null : body => codeCheck.Check(body, cancellationToken),
         };
         return new GraphValidator(context);
     }
