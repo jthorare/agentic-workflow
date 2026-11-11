@@ -104,7 +104,7 @@ public sealed class WorkflowsFramesTests : FrameHost
     public Task A_refused_create_shows_a_red_sentence_in_the_form_and_the_code_in_its_tooltip() => OnUi(async () =>
     {
         Server.WorkflowsAnswer = RouteAnswer.Api("workflows", "list-empty");
-        Server.CreateWorkflowAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.Conflict, "SND-GRAPH-009", "Another workflow already has that slug");
+        Server.CreateWorkflowAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.Conflict, "SND-GRAPH-009", "The short id 'morning-check' is taken by another workflow. Pick another.");
         var (window, shell) = await Connected(width: 1280, height: 900);
         shell.GoTo(PageId.Workflows);
         await Until(window, () => shell.Workflows.IsEmpty, "the Workflows page never read the empty list");

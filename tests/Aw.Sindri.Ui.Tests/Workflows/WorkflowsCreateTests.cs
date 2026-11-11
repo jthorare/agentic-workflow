@@ -14,7 +14,7 @@ namespace Aw.Sindri.Ui.Tests.Workflows;
 [Lane(TestLane.Unit)]
 public sealed class WorkflowsCreateTests
 {
-    private const string Taken = "Another workflow already has that slug";
+    private const string Taken = "The short id 'morning-check' is taken by another workflow. Pick another.";
 
     private readonly WorkflowsFixture _f = new();
 
