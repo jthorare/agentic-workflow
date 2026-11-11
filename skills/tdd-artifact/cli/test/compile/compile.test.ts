@@ -7,7 +7,7 @@ import { chmodSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeF
 import { homedir, tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { spawnSync } from "bun";
-import { deprecationPair, gate, splitStderr } from "../../parity/gate";
+import { gate } from "../../parity/gate";
 import { BUILD_TDD_SHA256, DOC } from "../../src/compile";
 import { sha256Hex } from "../../src/py/io";
 import { CITE_SOURCE, LEGEND_TONES, LINK_KEYS, MARK_SOURCE, SKIP_TAGS, SQL_KW, TOKEN_SOURCE, token_id } from "../../src/vocab";
@@ -86,7 +86,6 @@ describe.skipIf(!hasPython)("the TypeScript compiler matches build_tdd.py", () =
       chmodSync(mutant, 0o755);
       const r = gate(packet, { b: mutant });
       expect(r.problems.some((p) => p.startsWith("stderr differs") && p.includes("Warning: z"))).toBe(true);
-      expect(r.notes.every((n) => n.includes("DeprecationWarning: 'maxsplit' is passed as positional argument"))).toBe(true);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -104,7 +103,7 @@ describe.skipIf(!hasPython)("the TypeScript compiler matches build_tdd.py", () =
     }, T);
   }
 
-  // argv errors: the same exit code, stdout and stderr (interpreter warnings aside), and nothing written
+  // argv errors: the same exit code, stdout and stderr and nothing written
   const cases: [string, (d: string) => string[]][] = [
     ["no arguments", () => []],
     ["one positional", () => ["edge.md"]],
@@ -123,7 +122,7 @@ describe.skipIf(!hasPython)("the TypeScript compiler matches build_tdd.py", () =
       try {
         const run = (cmd: string[]) => {
           const r = spawnSync(cmd, { cwd: packet, env: { ...process.env, TDD_GENERATED: "2000-01-01T00:00:00Z" }, stdout: "pipe", stderr: "pipe" });
-          return { exit: r.exitCode, stdout: r.stdout.toString(), stderr: splitStderr(r.stderr.toString(), cmd[0] === "python3" ? "python" : "ts").own };
+          return { exit: r.exitCode, stdout: r.stdout.toString(), stderr: r.stderr.toString() };
         };
         const a = argv(join(dir, "a"));
         const b = argv(join(dir, "b"));
@@ -213,19 +212,6 @@ print(json.dumps({"token": bt.TOKEN.pattern, "ev_token": ev.TOKEN.pattern, "cite
     expect(SQL_KW).toBe(g.sql);
     expect(["D7", "PR 7", "PR12a", "F3.2", "D-7", "OS-01", " pr 3 "].map(token_id)).toEqual(g.ids);
   }, T);
-});
-
-describe("the gate's stderr filter", () => {
-  test("only build_tdd.py's DeprecationWarning pair, only on Python runs", () => {
-    const pair = deprecationPair()!;
-    expect(pair[0]).toMatch(/build_tdd\.py:\d+: DeprecationWarning: 'maxsplit' is passed as positional argument$/);
-    const look = "warning: hotspot flow/'x:1: Warning: y': anchor #nowhere2 is not defined on the page";
-    const other = "/elsewhere/build_tdd.py:1: SyntaxWarning: invalid escape sequence";
-    const err = [pair[0], pair[1], look, other, ""].join("\n");
-    expect(splitStderr(err, "python")).toEqual({ own: [look, other, ""].join("\n"), interpreter: [pair[0], pair[1]] });
-    expect(splitStderr(err, "ts")).toEqual({ own: err, interpreter: [] });
-    expect(splitStderr([pair[0], "  something else", ""].join("\n"), "python").interpreter).toEqual([]);
-  });
 });
 
 describe("the port's pins", () => {

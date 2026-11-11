@@ -776,7 +776,7 @@ class Compiler:
         quote = first_p if first_p != reading else ""
         status_text = self.text_of(status)
         m_date = re.search(r"\d{4}-\d{2}-\d{2}", status_text)
-        by = re.split(r"[,·]", status_text, 1)[0].strip() if status_text else ""
+        by = re.split(r"[,·]", status_text, maxsplit=1)[0].strip() if status_text else ""
         self.define(anchor, "decision", f"{did} · {question}", first_p)
         self.decisions.append({"id": did, "anchor": anchor, "question": self.text_of(question), "status": status_text, "state": state, "section": self.cur_section["id"] if self.cur_section else None,
                                "quote": quote, "reading": reading, "decidedBy": by, "decidedOn": m_date.group(0) if m_date else None})

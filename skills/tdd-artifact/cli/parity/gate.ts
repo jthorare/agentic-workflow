@@ -4,9 +4,8 @@
 // content.files.json and every copied file by sha256, the stdout summary line, the stderr warnings, the exit code.
 // `generated` is pinned with TDD_GENERATED and TZ is fixed, so two runs of one compiler must be byte-identical.
 // A is the Python compiler and B the TypeScript one (bin/build-tdd.ts) unless --a / --b say otherwise.
-// One CPython interpreter warning is left out of the stderr comparison and reported as a note: the DeprecationWarning
-// for build_tdd.py's positional re.split maxsplit (box_decision), exactly its two lines, on Python runs only. The line is
-// found by content in the current build_tdd.py, so its number follows the file; every other stderr line is compared.
+// stderr is compared whole: an interpreter warning on one side (a DeprecationWarning from a newer CPython, say) is a
+// difference, so the Python scripts stay warning-free on the pinned CPython.
 //
 // usage: bun run parity/gate.ts <packet-dir> [--src <file.md>] [--a python|ts|<exe>] [--b python|ts|<exe>]   (A python, B ts)
 //        [--out <dir>] [--keep] [--generated <stamp>] [--expect-line <summary>] [--json <report.json>] [-- <flag>...]
@@ -42,7 +41,6 @@ export interface GateResult {
   out: string;
   summary: string;
   problems: string[];
-  notes: string[];
   a: Omit<Snapshot, "files" | "content" | "manifest"> & { files: number };
   b: Omit<Snapshot, "files" | "content" | "manifest"> & { files: number };
 }
@@ -136,32 +134,6 @@ export function runCompiler(which: string, packet: string, src: string, out: str
 }
 
 const BUILD_TDD = join(TDD, "scripts", "build_tdd.py");
-const DEPRECATED_SPLIT = 'by = re.split(r"[,·]", status_text, 1)';
-
-/**
- * The two stderr lines CPython prints for build_tdd.py's positional maxsplit, as warnings.formatwarning writes them
- * (`<file>:<line>: DeprecationWarning: <message>` and the stripped source line indented by two spaces); null once the
- * Python no longer has that call.
- */
-export function deprecationPair(script = BUILD_TDD): [string, string] | null {
-  const lines = readFileSync(script, "utf8").split("\n");
-  const k = lines.findIndex((l) => l.includes(DEPRECATED_SPLIT));
-  return k < 0 ? null : [`${script}:${k + 1}: DeprecationWarning: 'maxsplit' is passed as positional argument`, `  ${lines[k]!.trim()}`];
-}
-
-/** stderr without that one interpreter warning (Python runs only): the compiler's own lines, and what was taken out. */
-export function splitStderr(stderr: string, compiler = "python", pair: [string, string] | null = compiler === "python" ? deprecationPair() : null): { own: string; interpreter: string[] } {
-  const lines = stderr.split("\n");
-  if (!pair) return { own: stderr, interpreter: [] };
-  const own: string[] = [];
-  const interpreter: string[] = [];
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i] === pair[0] && lines[i + 1] === pair[1]) {
-      interpreter.push(lines[i]!, lines[++i]!);
-    } else own.push(lines[i]!);
-  }
-  return { own: own.join("\n"), interpreter };
-}
 
 function firstDiff(a: Buffer, b: Buffer): string {
   const n = Math.min(a.length, b.length);
@@ -185,8 +157,8 @@ export function compare(a: Snapshot, b: Snapshot): string[] {
   if (b.exit !== 0) p.push(`compiler B (${b.compiler}) exited ${b.exit}: ${b.stderr.trim().split("\n").slice(-3).join(" | ")}`);
   if (a.exit !== b.exit) p.push(`exit codes differ: ${a.exit} vs ${b.exit}`);
   if (a.stdout !== b.stdout) p.push(`stdout differs:\n  A ${JSON.stringify(a.stdout)}\n  B ${JSON.stringify(b.stdout)}`);
-  const ea = splitStderr(a.stderr, a.compiler).own;
-  const eb = splitStderr(b.stderr, b.compiler).own;
+  const ea = a.stderr;
+  const eb = b.stderr;
   if (ea !== eb) {
     const wa = ea.split("\n");
     const wb = eb.split("\n");
@@ -220,11 +192,10 @@ export function gate(packetDir: string, o: { src?: string; a?: string; b?: strin
     const B = runCompiler(o.b ?? "ts", packet, src, out, env, o.args);
     if (!created) recordOut(out);
     const problems = compare(A, B);
-    const notes = [A, B].flatMap((x) => splitStderr(x.stderr, x.compiler).interpreter.filter((l) => !l.startsWith("  ")).map((l) => `${x.compiler} interpreter warning (not compared): ${l}`));
     const summary = summaryLine(B.stdout);
     if (o.expectLine !== undefined && summary !== o.expectLine) problems.push(`summary line changed:\n  expected ${o.expectLine}\n  got      ${summary}`);
     const strip = ({ files, content, manifest, ...rest }: Snapshot) => ({ ...rest, files: files.size });
-    return { green: problems.length === 0, packet, out, summary, problems, notes, a: strip(A), b: strip(B) };
+    return { green: problems.length === 0, packet, out, summary, problems, a: strip(A), b: strip(B) };
   } finally {
     if (created && !o.keep) rmSync(dirname(out), { recursive: true, force: true });
   }
@@ -260,7 +231,6 @@ function main(argv: string[]): number {
   console.log(`gate ${name}: A=${r.a.compiler} (${r.a.seconds.toFixed(2)} s, exit ${r.a.exit}, ${r.a.files} files)  B=${r.b.compiler} (${r.b.seconds.toFixed(2)} s, exit ${r.b.exit}, ${r.b.files} files)  out=${o.keep ? r.out : "<temp>"}`);
   console.log(`  summary: ${r.summary}`);
   for (const p of r.problems) console.log(`  DIFF ${p}`);
-  for (const n of r.notes) console.log(`  note: ${n}`);
   console.log(r.green ? `gate ${name}: GREEN - content.json, content.files.json, ${r.b.files} files by sha256, stdout and stderr identical` : `gate ${name}: RED - ${r.problems.length} difference(s)`);
   if (o.json) Bun.write(o.json, JSON.stringify(r, null, 2) + "\n");
   return r.green ? 0 : 1;

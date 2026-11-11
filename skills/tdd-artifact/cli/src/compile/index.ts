@@ -12,6 +12,6 @@ export { sanitize_html } from "./sanitize";
 
 /**
  * sha256 of the scripts/build_tdd.py this port reproduces (the twin rule, research/bun-port-2026.md section 5.3): a
- * change to the Python lands with the same change here and a new pin, or test/compile/pin.test.ts fails.
+ * change to the Python lands with the same change here and a new pin, or the pin test in test/compile/compile.test.ts fails.
  */
-export const BUILD_TDD_SHA256 = "630ce50128deb1e0bdb89681c07242e1f0e42aa2ab385aca8bb17af0f38cf9aa";
+export const BUILD_TDD_SHA256 = "f4dce0cc4592ae637418babb61830cc83e2bed069a7b34f574f2c9dd182670a5";
