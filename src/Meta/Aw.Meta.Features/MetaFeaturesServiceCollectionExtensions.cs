@@ -183,6 +183,7 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Validated<UsageWaitService, UsageWaitRequest, UsageWaitResponse>()
         .AddScoped<WatchSweeper>()
         .AddScoped<WatchPoller>()
+        .AddScoped<LaneReport>()
         .AddScoped<GithubQueueWatch>()
         .AddScoped<TeamPrInputs>()
         .AddScoped<PollFollowUps>()

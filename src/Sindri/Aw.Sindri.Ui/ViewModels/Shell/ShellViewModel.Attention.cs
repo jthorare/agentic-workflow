@@ -87,8 +87,8 @@ internal sealed partial class ShellViewModel
     private string? Observe()
     {
         var before = _announcer.Announcements;
-        Attention = AttentionSummary.For(_needsYou, State, _clock.GetUtcNow(), Health.Sessions, _needsYou?.Rows.Count(ShownOnHome)).WithLinearNew(Linear.NewCount).WithTodos(Todo.OverdueCount, Todo.ToSortOutCount);
-        _announcer.Observe(Attention.Badge, AttentionSummary.IsCounted(State));
+        Attention = AttentionSummary.For(_needsYou is { } all ? all with { Rows = [.. all.Rows.Where(r => !IsNamedByHomeLine(r))] } : null, State, _clock.GetUtcNow(), Health.Sessions, _needsYou?.Rows.Count(ShownOnHome)).WithLinearNew(Linear.NewCount).WithTodos(Todo.OverdueCount, Todo.ToSortOutCount);
+        _announcer.Observe(Attention.Badge, AttentionSummary.IsCounted(State) && Setup.HasAnswered);   // until Setup's first answer is folded the setup row isn't known, so the count isn't final: announcing it would say N now need you with the row Home's line is about to take back
         Changed(nameof(Attention), nameof(WindowTitle));
         return _announcer.Announcements != before ? _announcer.Line : null;
     }
