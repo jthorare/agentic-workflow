@@ -105,6 +105,8 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Workflows.WorkflowOpsApplied))]
 [JsonSerializable(typeof(Workflows.WorkflowArchived))]
 [JsonSerializable(typeof(Workflows.WorkflowBlockList))]
+[JsonSerializable(typeof(Workflows.WorkflowBlockChoice))]
+[JsonSerializable(typeof(Workflows.NodeSummaryView))]
 [JsonSerializable(typeof(Workflows.ActivateWorkflowBody))]
 [JsonSerializable(typeof(Workflows.ApplyWorkflowOpsBody))]
 [JsonSerializable(typeof(Projects.ProjectList))]
