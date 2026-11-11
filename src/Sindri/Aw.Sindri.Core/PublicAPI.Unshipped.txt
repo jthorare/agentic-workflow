@@ -22755,6 +22755,63 @@ static readonly Aw.Sindri.Core.SindriErrors.CodeTimeout -> Aw.Kernel.ErrorDefini
 static readonly Aw.Sindri.Core.SindriErrors.CodeMemory -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.CodeFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.CodeRunnerUnavailable -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Blocks.CodeBlock
+Aw.Sindri.Core.Graph.Blocks.CodeBlock.CodeBlock(Aw.Sindri.Core.Graph.Blocks.ICodeRunPort! runner) -> void
+Aw.Sindri.Core.Graph.Blocks.CodeBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.CodeBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CodeBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.CodeBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.CodeBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.CodeBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.CodeBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CodeBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CodeProblem
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.CodeProblem!
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.CodeProblem(int Line, int Column, string! Rule, string! Message) -> void
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.Column.get -> int
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.Column.init -> void
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.Deconstruct(out int Line, out int Column, out string! Rule, out string! Message) -> void
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.Equals(Aw.Sindri.Core.Graph.Blocks.CodeProblem? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.Rule.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.Rule.init -> void
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.Line.get -> int
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.Line.init -> void
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.Message.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CodeProblem.Message.init -> void
+Aw.Sindri.Core.Graph.Blocks.CodeRun
+Aw.Sindri.Core.Graph.Blocks.CodeRun.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.CodeRun!
+Aw.Sindri.Core.Graph.Blocks.CodeRun.Branch.get -> string?
+Aw.Sindri.Core.Graph.Blocks.CodeRun.Branch.init -> void
+Aw.Sindri.Core.Graph.Blocks.CodeRun.Code.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CodeRun.Code.init -> void
+Aw.Sindri.Core.Graph.Blocks.CodeRun.CodeRun(string! Code, string! InputJson, string? Repo, string? Branch, System.TimeSpan Timeout, int MemoryMb) -> void
+Aw.Sindri.Core.Graph.Blocks.CodeRun.Deconstruct(out string! Code, out string! InputJson, out string? Repo, out string? Branch, out System.TimeSpan Timeout, out int MemoryMb) -> void
+Aw.Sindri.Core.Graph.Blocks.CodeRun.Equals(Aw.Sindri.Core.Graph.Blocks.CodeRun? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.CodeRun.InputJson.get -> string!
+Aw.Sindri.Core.Graph.Blocks.CodeRun.InputJson.init -> void
+Aw.Sindri.Core.Graph.Blocks.CodeRun.MemoryMb.get -> int
+Aw.Sindri.Core.Graph.Blocks.CodeRun.MemoryMb.init -> void
+Aw.Sindri.Core.Graph.Blocks.CodeRun.Repo.get -> string?
+Aw.Sindri.Core.Graph.Blocks.CodeRun.Repo.init -> void
+Aw.Sindri.Core.Graph.Blocks.CodeRun.Timeout.get -> System.TimeSpan
+Aw.Sindri.Core.Graph.Blocks.CodeRun.Timeout.init -> void
+Aw.Sindri.Core.Graph.Blocks.ICodeRunPort
+Aw.Sindri.Core.Graph.Blocks.ICodeRunPort.Run(Aw.Sindri.Core.Graph.Blocks.CodeRun! run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.CodeCheck.get -> System.Func<string!, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.CodeProblem!>!>?
+Aw.Sindri.Core.Graph.Validation.GraphValidationContext.CodeCheck.init -> void
+override Aw.Sindri.Core.Graph.Blocks.CodeProblem.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.CodeProblem.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.CodeProblem.ToString() -> string!
+override Aw.Sindri.Core.Graph.Blocks.CodeRun.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Graph.Blocks.CodeRun.GetHashCode() -> int
+override Aw.Sindri.Core.Graph.Blocks.CodeRun.ToString() -> string!
+static Aw.Sindri.Core.Graph.Blocks.CodeProblem.operator !=(Aw.Sindri.Core.Graph.Blocks.CodeProblem? left, Aw.Sindri.Core.Graph.Blocks.CodeProblem? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.CodeProblem.operator ==(Aw.Sindri.Core.Graph.Blocks.CodeProblem? left, Aw.Sindri.Core.Graph.Blocks.CodeProblem? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.CodeRun.operator !=(Aw.Sindri.Core.Graph.Blocks.CodeRun? left, Aw.Sindri.Core.Graph.Blocks.CodeRun? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.CodeRun.operator ==(Aw.Sindri.Core.Graph.Blocks.CodeRun? left, Aw.Sindri.Core.Graph.Blocks.CodeRun? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.CodeBlocks(Aw.Sindri.Core.Graph.Blocks.ICodeRunPort! code) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>!
+Aw.Sindri.Core.Graph.Blocks.ICodeCheck
+Aw.Sindri.Core.Graph.Blocks.ICodeCheck.Check(string! body) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.CodeProblem!>!
 Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort
 Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort.Forget(Aw.Sindri.Core.Graph.Blocks.MemoryToForget! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort.Recall(Aw.Sindri.Core.Graph.Blocks.MemoryToRecall! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.MemoryRecalled!>!>

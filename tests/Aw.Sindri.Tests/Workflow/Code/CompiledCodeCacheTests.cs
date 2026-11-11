@@ -3,7 +3,7 @@ using Aw.Sindri.Infrastructure.Workflow.Code;
 
 namespace Aw.Sindri.Tests.Workflow.Code;
 
-/// <summary>The compiled-assembly cache (agent-first PR 9c): the same code and reference set compile once.</summary>
+/// <summary>The compiled-assembly cache (agent-first PR 9c): the same code and compiler fingerprint compile once.</summary>
 [Lane(TestLane.Unit)]
 public sealed class CompiledCodeCacheTests : IDisposable
 {
@@ -54,11 +54,11 @@ public sealed class CompiledCodeCacheTests : IDisposable
         Assert.Empty(_directory.GetFiles());
     }
 
-    private sealed class CountingCompiler(string referenceSet, bool fail = false) : ICodeCompiler
+    private sealed class CountingCompiler(string fingerprint, bool fail = false) : ICodeCompiler
     {
         public int Calls { get; private set; }
 
-        public string ReferenceSet { get; } = referenceSet;
+        public string Fingerprint { get; } = fingerprint;
 
         public CodeCompilation Compile(string body)
         {

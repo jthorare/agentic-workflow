@@ -35,6 +35,11 @@ public sealed partial class GraphValidator
             Crons(node, found);
         }
 
+        if (string.Equals(node.Type, "code", StringComparison.Ordinal))
+        {
+            CodeBody(node, found);
+        }
+
         Names(node, found);
     }
 
