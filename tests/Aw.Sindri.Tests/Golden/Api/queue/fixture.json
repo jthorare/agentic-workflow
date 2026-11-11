@@ -15,20 +15,24 @@
             "CloseItem:done",
             "CloseItem:cancelled"
           ],
-          "owner": null
+          "owner": null,
+          "parked": false
         }
       ],
-      "empty": null
+      "empty": null,
+      "next": null
     },
     {
       "group": "withYou",
       "items": [],
-      "empty": "Nothing is with you."
+      "empty": "Nothing is with you.",
+      "next": null
     },
     {
       "group": "running",
       "items": [],
-      "empty": "Nothing running."
+      "empty": "Nothing running.",
+      "next": null
     },
     {
       "group": "queued",
@@ -45,7 +49,8 @@
             "CloseItem:done",
             "CloseItem:cancelled"
           ],
-          "owner": null
+          "owner": null,
+          "parked": false
         },
         {
           "id": "ITM-00000000000000000000000000000010",
@@ -59,7 +64,8 @@
             "CloseItem:done",
             "CloseItem:cancelled"
           ],
-          "owner": null
+          "owner": null,
+          "parked": false
         },
         {
           "id": "ITM-00000000000000000000000000000015",
@@ -73,10 +79,12 @@
             "CloseItem:done",
             "CloseItem:cancelled"
           ],
-          "owner": null
+          "owner": null,
+          "parked": false
         }
       ],
-      "empty": null
+      "empty": null,
+      "next": null
     }
   ],
   "empty": null,
@@ -86,5 +94,8 @@
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
-  }
+  },
+  "counts": null,
+  "tag": "fc777aa370db8645b23855d25f0b5193",
+  "notModified": false
 }

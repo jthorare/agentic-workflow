@@ -3,17 +3,20 @@
     {
       "group": "waitingOnYou",
       "items": [],
-      "empty": "Nothing is waiting on you."
+      "empty": "Nothing is waiting on you.",
+      "next": null
     },
     {
       "group": "withYou",
       "items": [],
-      "empty": "Nothing is with you."
+      "empty": "Nothing is with you.",
+      "next": null
     },
     {
       "group": "running",
       "items": [],
-      "empty": "Nothing running."
+      "empty": "Nothing running.",
+      "next": null
     },
     {
       "group": "queued",
@@ -30,7 +33,8 @@
             "CloseItem:done",
             "CloseItem:cancelled"
           ],
-          "owner": null
+          "owner": null,
+          "parked": false
         },
         {
           "id": "ITM-0000000000000000000000000000000b",
@@ -44,10 +48,12 @@
             "CloseItem:done",
             "CloseItem:cancelled"
           ],
-          "owner": null
+          "owner": null,
+          "parked": false
         }
       ],
-      "empty": null
+      "empty": null,
+      "next": null
     }
   ],
   "empty": null,
@@ -57,5 +63,8 @@
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
-  }
+  },
+  "counts": null,
+  "tag": "5a5bcdf8b910fe029724d54c40112a06",
+  "notModified": false
 }

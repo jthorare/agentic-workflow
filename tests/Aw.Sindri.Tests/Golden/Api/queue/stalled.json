@@ -3,17 +3,20 @@
     {
       "group": "waitingOnYou",
       "items": [],
-      "empty": "Views are stalled at 6: run `sindri views rebuild`"
+      "empty": "Views are stalled at 6: run `sindri views rebuild`",
+      "next": null
     },
     {
       "group": "withYou",
       "items": [],
-      "empty": "Views are stalled at 6: run `sindri views rebuild`"
+      "empty": "Views are stalled at 6: run `sindri views rebuild`",
+      "next": null
     },
     {
       "group": "running",
       "items": [],
-      "empty": "Views are stalled at 6: run `sindri views rebuild`"
+      "empty": "Views are stalled at 6: run `sindri views rebuild`",
+      "next": null
     },
     {
       "group": "queued",
@@ -30,7 +33,8 @@
             "CloseItem:done",
             "CloseItem:cancelled"
           ],
-          "owner": null
+          "owner": null,
+          "parked": false
         },
         {
           "id": "ITM-0000000000000000000000000000000b",
@@ -44,10 +48,12 @@
             "CloseItem:done",
             "CloseItem:cancelled"
           ],
-          "owner": null
+          "owner": null,
+          "parked": false
         }
       ],
-      "empty": "Views are stalled at 6: run `sindri views rebuild`"
+      "empty": "Views are stalled at 6: run `sindri views rebuild`",
+      "next": null
     }
   ],
   "empty": "Views are stalled at 6: run `sindri views rebuild`",
@@ -57,5 +63,8 @@
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": true
-  }
+  },
+  "counts": null,
+  "tag": "4c9055499546c8f62b71762e8ad645ea",
+  "notModified": false
 }

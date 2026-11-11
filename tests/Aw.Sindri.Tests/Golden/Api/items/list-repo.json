@@ -12,7 +12,8 @@
         "CloseItem:done",
         "CloseItem:cancelled"
       ],
-      "owner": null
+      "owner": null,
+      "parked": false
     }
   ],
   "empty": null,
