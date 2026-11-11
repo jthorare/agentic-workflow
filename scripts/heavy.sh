@@ -210,13 +210,13 @@ fi
 # macOS has no setsid: perl does the same. Its `--` stops perl from reading a command word that starts with - as a perl switch.
 if command -v setsid >/dev/null 2>&1; then setsid "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' -- "$@" & fi
 job=$!
-# Arm the watchdog only once the job's group exists (#2799): setsid or perl makes it some time after the fork, and a kill sent
-# to "-$job" before then reaches nothing. Wait up to ~5 s in 0.05 s steps, or until the job is gone; past that, signal_job
-# falls back to the pid.
-for _ in $(seq 1 100); do kill -0 -- "-$job" 2>/dev/null && break; kill -0 "$job" 2>/dev/null || break; sleep 0.05; done
 reason="$(mktemp "${TMPDIR:-/tmp}/heavy-reason.XXXXXX")"
 (
   start=$SECONDS
+  # Arm only once the job's group exists (#2799): setsid or perl makes it some time after the fork, and a kill sent to "-$job"
+  # before then reaches nothing. Wait up to ~5 s in 0.05 s steps, or until the job is gone; past that, signal_job falls back to
+  # the pid. This waits here, not in the wrapper: the wrapper must sit in `wait "$job"`, which reaps a quick job at once.
+  for _ in $(seq 1 100); do kill -0 -- "-$job" 2>/dev/null && break; kill -0 "$job" 2>/dev/null || break; sleep 0.05; done
   while kill -0 "$job" 2>/dev/null; do
     why=""
     [ "$run_max" -gt 0 ] && [ $((SECONDS - start)) -ge $((run_max * 60)) ] && why="ran past AW_HEAVY_RUN_MAX=${run_max}m"
