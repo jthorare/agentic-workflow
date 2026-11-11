@@ -51,13 +51,44 @@ internal sealed class GithubQueueWatch(RepoCommands repo, IKeyValueStore values,
             case PrState.Closed:
                 return await Dropped(pr, $"QUEUE OUT #{number}: closed on GitHub; send the lane NOT OK", cancellationToken).ConfigureAwait(false);
             case PrState.Open:
-                var view = await repo.QueueView(repoDirectory, pr).ConfigureAwait(false);
-                return view.IsError || view.Value.InQueue
-                    ? null
-                    : await Dropped(pr, $"QUEUE OUT #{number}: {view.Value.RemovedReason ?? "left GitHub's merge queue"}; send the lane NOT OK", cancellationToken).ConfigureAwait(false);
+                return await LeftQueue(repoDirectory, pr, snapshot.MainSha, cancellationToken).ConfigureAwait(false);
             default:
                 return null;
         }
+    }
+
+    // Open in the poll's list, which is read before the queue: a pull request the queue merged in between reads "not in the queue",
+    // so its state is read again and a merge is recorded as one, never dropped as QUEUE OUT.
+    private async ValueTask<IReadOnlyList<string>?> LeftQueue(string repoDirectory, int pr, string mainSha, CancellationToken cancellationToken)
+    {
+        var view = await repo.QueueView(repoDirectory, pr).ConfigureAwait(false);
+        if (view.IsError || view.Value.InQueue)
+        {
+            return null;
+        }
+
+        var now = await repo.View(repoDirectory, pr, "state").ConfigureAwait(false);
+        var number = pr.ToString(CultureInfo.InvariantCulture);
+        return now.IsError ? null : now.Value.State switch
+        {
+            PrState.Merged => await Merged(repoDirectory, pr, mainSha, cancellationToken).ConfigureAwait(false),
+            PrState.Closed => await Dropped(pr, $"QUEUE OUT #{number}: closed on GitHub; send the lane NOT OK", cancellationToken).ConfigureAwait(false),
+            PrState.Open => await Unready(pr, $"QUEUE OUT #{number}: {view.Value.RemovedReason ?? "left GitHub's merge queue"}; send the lane NOT OK", cancellationToken).ConfigureAwait(false),
+            _ => null,
+        };
+    }
+
+    // Still open but out of GitHub's queue: it also leaves the meta's ready queue (as queue-drop does), so merge-run is not run on it
+    // again until the lane sends a new ready.
+    private async ValueTask<IReadOnlyList<string>?> Unready(int pr, string line, CancellationToken cancellationToken)
+    {
+        var drops = await values.Get(KvKeys.QueueDropped, cancellationToken).ConfigureAwait(false);
+        if (drops.IsError || (await values.Set(KvKeys.QueueDropped, QueueDrops.With(drops.Value, pr, clock.GetUtcNow()), cancellationToken).ConfigureAwait(false)).IsError)
+        {
+            return null;
+        }
+
+        return await Dropped(pr, line, cancellationToken).ConfigureAwait(false);
     }
 
     // The poll's list holds the newest 50 pull requests; an older one is read on its own.

@@ -24,8 +24,9 @@ public sealed class WatchGithubQueueTests
         _world.Monitor,
         _world.Board);
 
-    // PR 190 was handed to the queue; the poll lists it in `state`, and the queue read answers `queue` (or fails).
-    private async Task Queued(string state, string queue, bool queueFails = false, bool commitFails = false, bool titleFails = false, string? list = null)
+    // PR 190 was handed to the queue; the poll lists it in `state`, the queue read answers `queue` (or fails), and a state read after
+    // the queue read answers `stateNow` (default: `state`; or fails).
+    private async Task Queued(string state, string queue, bool queueFails = false, bool commitFails = false, bool titleFails = false, string? list = null, string? stateNow = null, bool stateFails = false)
     {
         await _world.Ready();
         _ = await _world.Values.Set(KvKeys.MergeQueued, MergeQueued.With(stored: null, new QueuedMerge(190, _world.Clock.GetUtcNow(), "aaa1111")), CancellationToken.None);
@@ -36,6 +37,7 @@ public sealed class WatchGithubQueueTests
             .When("gh api graphql", _ => new CommandResult(queueFails ? 1 : 0, queueFails ? string.Empty : queue, queueFails ? "HTTP 502" : string.Empty, TimedOut: false))
             .When("gh pr view 190 --json mergeCommit", commitFails ? string.Empty : """{"mergeCommit":{"oid":"ddddddd4444444"}}""", commitFails ? 1 : 0)
             .When("gh pr view 191 --json mergeCommit", """{"mergeCommit":{"oid":"eeeeeee5555555"}}""")
+            .When("gh pr view 190 --json state", stateFails ? string.Empty : $$"""{"state":"{{stateNow ?? state}}"}""", stateFails ? 1 : 0)
             .When("gh pr view 190", titleFails ? string.Empty : """{"title":"Add x"}""", titleFails ? 1 : 0);
     }
 
@@ -85,6 +87,32 @@ public sealed class WatchGithubQueueTests
 
         Assert.Equal(["QUEUE OUT #190: FAILED_CHECKS; send the lane NOT OK"], QueueLines(), StringComparer.Ordinal);
         Assert.Empty(await StillQueued());
+        Assert.Null((await _world.Gates.FindMerge(190, CancellationToken.None)).Value);
+        Assert.Contains(190, QueueDrops.Parse((await _world.Values.Get(KvKeys.QueueDropped, CancellationToken.None)).Value).Keys);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pull_request_the_queue_merged_after_the_poll_listed_it_open_is_recorded_as_merged_not_dropped()
+    {
+        await Queued("OPEN", QueueAnswers.OnNotQueued, stateNow: "MERGED");
+
+        await Watch();
+
+        Assert.Equal(["MERGED #190 from GitHub's merge queue: main is now ddddddd"], QueueLines(), StringComparer.Ordinal);
+        Assert.Equal("ddddddd4444444", (await _world.Gates.FindMerge(190, CancellationToken.None)).Value!.Sha);
+        Assert.Empty(await StillQueued());
+        Assert.Null((await _world.Values.Get(KvKeys.QueueDropped, CancellationToken.None)).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_state_read_that_fails_after_the_queue_read_keeps_the_pull_request_for_the_next_poll()
+    {
+        await Queued("OPEN", QueueAnswers.OnNotQueued, stateFails: true);
+
+        await Watch();
+
+        Assert.Empty(QueueLines());
+        Assert.Equal([190], await StillQueued());
         Assert.Null((await _world.Gates.FindMerge(190, CancellationToken.None)).Value);
     }
 
