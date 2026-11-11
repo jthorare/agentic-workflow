@@ -1769,7 +1769,7 @@ public sealed class ShellWindowTests : IDisposable
         // VersionMismatch shows VersionMismatchPanel in place of the bar, so it has no tabs, field or pill to check.
         foreach (var state in Enum.GetValues<BarState>().Where(s => s != BarState.VersionMismatch))
         {
-            foreach (var width in new[] { 1000.0, 1099.0, 1280.0 })
+            foreach (var width in new[] { 1000.0, 1099.0, 1103.0, 1280.0 })
             {
                 data.Add(state, width, 1.0);
                 data.Add(state, width, 1.3);
