@@ -14,13 +14,16 @@ public sealed class SindriTimeSkippingServer : IAsyncLifetime
 {
     private WorkflowEnvironment? _environment;
 
+    /// <summary>Where the Temporal SDK core's own log lines go (it logs to stdout otherwise); null keeps the default runtime.</summary>
+    public Microsoft.Extensions.Logging.ILogger? CoreLogger { get; init; }
+
     /// <summary>The started environment.</summary>
     public WorkflowEnvironment Environment => _environment ?? throw new InvalidOperationException("the server has not started");
 
     /// <inheritdoc/>
     public async ValueTask InitializeAsync()
     {
-        _environment = await TemporalServerFixture.Start(ServerKind.TimeSkipping);
+        _environment = await TemporalServerFixture.Start(ServerKind.TimeSkipping, CoreLogger);
         var attributes = new AddSearchAttributesRequest { Namespace = _environment.Client.Options.Namespace };
         attributes.SearchAttributes.Add(SindriTemporal.SearchAttributes.ToDictionary(static a => a.Name, static a => a.Type, StringComparer.Ordinal));
         _ = await _environment.Client.OperatorService.AddSearchAttributesAsync(attributes);

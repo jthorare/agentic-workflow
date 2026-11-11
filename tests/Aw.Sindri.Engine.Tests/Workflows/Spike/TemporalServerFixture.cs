@@ -33,15 +33,16 @@ public abstract class TemporalServerFixture : IAsyncLifetime
     /// with a new port, three times at most.
     /// </summary>
     /// <param name="kind">The server.</param>
+    /// <param name="coreLogger">Where the SDK core's log lines of the client's runtime go, or null for the default runtime.</param>
     /// <returns>The environment.</returns>
-    public static async Task<WorkflowEnvironment> Start(ServerKind kind)
+    public static async Task<WorkflowEnvironment> Start(ServerKind kind, Microsoft.Extensions.Logging.ILogger? coreLogger = null)
     {
         const int Attempts = 3;
         for (var attempt = 1; ; attempt++)
         {
             try
             {
-                return await StartOnce(kind);
+                return await StartOnce(kind, coreLogger);
             }
             catch (Exception e) when (attempt < Attempts && IsPortTaken(e))
             {
@@ -56,10 +57,14 @@ public abstract class TemporalServerFixture : IAsyncLifetime
     internal static bool IsPortTaken(Exception e) =>
         e.ToString().Contains("address already in use", StringComparison.OrdinalIgnoreCase);
 
-    private static async Task<WorkflowEnvironment> StartOnce(ServerKind kind) => kind switch
+    private static async Task<WorkflowEnvironment> StartOnce(ServerKind kind, Microsoft.Extensions.Logging.ILogger? coreLogger) => kind switch
     {
         ServerKind.TimeSkipping => await WorkflowEnvironment.StartTimeSkippingAsync(new WorkflowEnvironmentStartTimeSkippingOptions
         {
+            Runtime = coreLogger is null ? null : new Temporalio.Runtime.TemporalRuntime(new Temporalio.Runtime.TemporalRuntimeOptions
+            {
+                Telemetry = new Temporalio.Runtime.TelemetryOptions { Logging = new Temporalio.Runtime.LoggingOptions { Forwarding = new Temporalio.Runtime.LogForwardingOptions(coreLogger) } },
+            }),
             TestServer = new TestServerOptions { ExistingPath = PinnedBinaries.Path("temporal-test-server") },
         }),
         ServerKind.Local => await WorkflowEnvironment.StartLocalAsync(new WorkflowEnvironmentStartLocalOptions
