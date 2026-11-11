@@ -2,6 +2,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Testing.Sandbox;
+using Aw.Sindri.Tests.Launch;
 
 namespace Aw.Sindri.Tests.Sandbox.Bubblewrap;
 
@@ -34,12 +35,7 @@ public sealed class SandboxProfileInsideTests
         var request = box.WriteScope() with { Host = box.Host() with { ProfilePath = profile } };
 
         var marker = Path.Combine(box.Worktree, "first-read.marker");   // the worktree is writable inside and visible outside
-        var script = $"first=$(cat \"$AW_SINDRI_PROFILE\"); echo \"first=$first\"\n"
-            + $"echo \"env=$AW_SINDRI_PROFILE\"\n"
-            + $"touch {Quote(marker)}\n"
-            + "second=$first\n"
-            + "for _ in $(seq 1 100); do second=$(cat \"$AW_SINDRI_PROFILE\"); [ \"$second\" != \"$first\" ] && break; sleep 0.1; done\n"
-            + "echo \"second=$second\"\n";
+        var script = Script(marker);
 
         // why: the save is what an owner's editor does: a temp file in the same folder, renamed over the profile. It starts once the session has read the first version.
         var save = Task.Run(
@@ -66,8 +62,17 @@ public sealed class SandboxProfileInsideTests
         Assert.Empty(ProcessListing.Under(box.Root));
     }
 
+    // Reads the profile, touches the marker so the host saves, then polls up to 10 s for the content to change.
+    private static string Script(string marker) =>
+        "first=$(cat \"$AW_SINDRI_PROFILE\"); echo \"first=$first\"\n"
+        + "echo \"env=$AW_SINDRI_PROFILE\"\n"
+        + $"touch {Quote(marker)}\n"
+        + "second=$first\n"
+        + "for _ in $(seq 1 100); do second=$(cat \"$AW_SINDRI_PROFILE\"); [ \"$second\" != \"$first\" ] && break; sleep 0.1; done\n"
+        + "echo \"second=$second\"\n";
+
     // Plans the box's write-scope request, starts the launch's egress forwarders and runs 'sh -c script' wrapped, on a private tmux server. Output and exit code come back through files.
-        private static async Task<Ran> RunInside(SandboxBox box, string script, SandboxRequest request)
+    private static async Task<Ran> RunInside(SandboxBox box, string script, SandboxRequest request)
     {
         using var tmux = new PrivateTmux();
         var ct = TestContext.Current.CancellationToken;
