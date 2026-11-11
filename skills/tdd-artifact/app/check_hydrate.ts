@@ -133,7 +133,10 @@ pointer("pointerover", hs); await sleep(300);
 const hsPop = d.querySelector(".hs-pop");
 const hsShown = !!hsPop?.classList.contains("show");
 check(hsShown, `hovering [data-hs]${synthetic ? " (synthetic probe)" : ""} did not show .hs-pop.show`);
-check((hsPop?.querySelector("b")?.textContent || "") === (hs.dataset.label || ""), "hotspot card label does not match data-label");
+// A box that carries a schema table shows the table's brief (its name in .tb-title), not the label card.
+const hsBrief = hsPop?.querySelector(".tb-title code");
+if (hsBrief) check((hsBrief.textContent || "") !== "" && hsPop!.classList.contains("has-brief"), "hotspot card for a table box has no table name or is not marked has-brief");
+else check((hsPop?.querySelector("b")?.textContent || "") === (hs.dataset.label || ""), "hotspot card label does not match data-label");
 pointer("pointerout", hs); await sleep(300);
 check(!hsPop?.classList.contains("show"), "hotspot card did not hide after the pointer left");
 if (synthetic) hs.remove();
