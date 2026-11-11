@@ -6,9 +6,15 @@
 //   tdd components --gallery <dir> write a packet whose page shows every component beside its markdown, then print
 //                                  the two commands that build it
 // Exit 0; 1 on an unknown name or a gallery folder that is not empty; 2 on bad usage.
+import { resolve } from "node:path";
 import { describe, listing, loadCatalog, writeGallery } from "../src/components";
 
 const USAGE = "usage: tdd components [<name>] [--json] | tdd components --gallery <dir>";
+
+/** `s` as one shell word: single-quoted, with each ' written as '\''. */
+function shellQuote(s: string): string {
+  return `'${s.split("'").join("'\\''")}'`;
+}
 
 export async function main(argv: string[]): Promise<number> {
   const args = [...argv];
@@ -21,7 +27,9 @@ export async function main(argv: string[]): Promise<number> {
     if (!dir || args.length !== 2) { process.stderr.write(`${USAGE}\n`); return 2; }
     try {
       const files = writeGallery(dir);
-      process.stdout.write(`wrote ${files.length} files into ${dir}\nnext:\n  (cd ${dir} && python3 -I "$T/scripts/build_tdd.py" gallery.md build)\n  (cd "$T/app" && bun run build.ts ${dir}/build)\n`);
+      // The second command runs from the app folder, so the packet is named by its absolute path, quoted for the shell.
+      const at = shellQuote(resolve(dir));
+      process.stdout.write(`wrote ${files.length} files into ${dir}\nnext:\n  (cd ${at} && python3 -I "$T/scripts/build_tdd.py" gallery.md build)\n  (cd "$T/app" && bun run build.ts ${at}/build)\n`);
       return 0;
     } catch (e) {
       process.stderr.write(`tdd components: ${e instanceof Error ? e.message : String(e)}\n`);

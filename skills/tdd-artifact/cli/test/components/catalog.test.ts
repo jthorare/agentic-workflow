@@ -2,7 +2,8 @@
 // without a warning, to the node type its entry names; every node type the renderer draws is in the catalog; the
 // renderer has a case for each; and the gallery packet built from the catalog is one both compilers agree on.
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NODE_TYPES } from "../../../app/src/types";
@@ -125,5 +126,26 @@ describe("tdd components", () => {
     expect([r.code, r.err.includes("one of: section")]).toEqual([1, true]);
     expect((await run(["--gallery"])).code).toBe(2);
     expect((await run(["a", "b"])).code).toBe(2);
+  });
+  test("--gallery into a relative folder prints commands that work from any folder, whatever the name holds", async () => {
+    const base = realpathSync(mkdtempSync(join(tmpdir(), "tdd-cat-")));
+    const name = "my gallery's";
+    const was = process.cwd();
+    try {
+      process.chdir(base);
+      const r = await run(["--gallery", name]);
+      expect(r.code).toBe(0);
+      const next = r.out.split("\n").filter((l) => l.startsWith("  (cd "));
+      expect(next.length).toBe(2);
+      // The packet's path, as the two commands spell it: one shell word that a shell reads back as the absolute folder.
+      const [first = "", second = ""] = next;
+      const word = first.slice("  (cd ".length, first.indexOf(" && "));
+      expect(second).toContain(`bun run build.ts ${word}/build)`);
+      const back = spawnSync("/bin/sh", ["-c", `cd / && cd ${word} && pwd -P`], { encoding: "utf8" });
+      expect([back.status, back.stdout.trim()]).toEqual([0, join(base, name)]);
+    } finally {
+      process.chdir(was);
+      rmSync(base, { recursive: true, force: true });
+    }
   });
 });
