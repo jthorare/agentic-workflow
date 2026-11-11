@@ -360,18 +360,22 @@ broken file and no last good settings runs nothing, as today.
   | page | the page sheet and the add-several-pages sheet (Context) | yes |
   | pin | the pin sheet and the pin-several sheet (Context) | yes |
   | source (connection, library) | the Connections card, Linear form and Library sheet | yes |
-  | setting | the todo note card, the review login field | yes |
+  | setting | the todo note card; the review login, through a **Change** link on the "reviews as <login>" line | yes |
   | repo | Add repo only; no edit sheet | add only |
   | sandbox host | none; the Sandbox section is read-only | no |
   | model, label and surface picks | none; read-only lines with Copy | no |
 
-  The three read-only lines and the Sandbox section today say "Change it in the profile" (`SettingsView.axaml:19-71`).
-  They say "Change it in settings.yaml" instead, with no button of their own (the Settings heading row has the one
+  The three read-only lines say "Change it in the profile" today (`SettingsView.axaml:19-71`); they say "Change it in
+  settings.yaml" instead. The Sandbox card has no such line today (the words are only in an XML comment,
+  `SandboxSettingsSection.axaml:6`), so that line is added under its heading, not swapped. Neither has a button of its own (the Settings heading row has the one
   Copy file path button, below). The stale banner's kinds are source, setting, page and pin: the kinds that have a sheet or
   card. "Sheet" below means a sheet or a card. **Bulk sheets** (add several pages, pin several): they show no stale
   banner. A 410 on a bulk save shows "These pages changed on disk. Reload to see them." (or "These pins ..."), and
   **Reload** refreshes the list and keeps the ticks for items still on disk. **Keep mine** and **Load theirs** exist
   on one-item sheets only.
+- **Review login.** Today the field disappears once a login is set, and Reviews shows only "reviews as <login>". That
+  line gets a **Change** link, which opens the same sheet the table gives the review login (stale banner, 409/410
+  messages). It is not file-only.
 - **The file path, always.** One **Copy file path** button per page: the Settings page's sits in its heading row and is always shown, with or
   without an audit line and not only when the file is broken. "Copied" uses the page's polite live region, not a
   sheet's.
@@ -589,18 +593,21 @@ keep the old words). Known today, by group:
   `scripts/tests/ci-changed-areas.test.sh:56`, which names `docs/csharp/sindri-profile.md`. `AW_PROFILE_DIR` is read
   only by the cleanup of the old TypeScript install, so it stays there under that name and is not renamed; the
   closing grep leaves it out of its pattern list for that reason.
-- **Words the person reads.** `Labels.ModelChoice.cs:19` copies `sindri profile validate` (which would exit 2), so it
-  becomes `sindri settings validate`. `Labels.Setup.cs:139,142` say "Waits for your settings" for rows that wait on a
+- **Words the person reads.** `ModelChoiceCopy` (`SettingsView.axaml:31`) and `ModelChoiceValidate`
+  (`Labels.ModelChoice.cs:19`) copy the profile path plus `sindri profile validate`, which would exit 2. They are
+  dropped, not renamed to `settings validate`: the Settings heading's Copy file path button is the one button, as §3.6
+  says. `Labels.Setup.cs:139,142` say "Waits for your settings" for rows that wait on a
   step the list no longer shows; they say "Waits for a repository" like the row above them. The NeedsYou empty page
   is checked for "approval" wording once its row goes.
-- **More words in the UI.** `Labels.ModelChoice.cs:16`, `Labels.LabelChoice.cs:19` and `Labels.SurfaceChoice.cs:19`
+- **More words in the UI.** `SetupRepoBody` (`Labels.SetupForms.cs:21`, "Adding it changes your settings, so you
+  approve them next.") is rewritten without "approve"; `Labels.ModelChoice.cs:16`, `Labels.LabelChoice.cs:19` and `Labels.SurfaceChoice.cs:19`
   say "Change it in the profile" and "once you approve"; the hash-clash strings `PageSheetClash` (`Labels.PageSheet.cs:121`),
   `AddSeveralPagesClash` and `AcceptAllProfileFull` (`Labels.AddSeveralPages.cs:81,45`), `SetupProfileChanged`
   (`Labels.SetupForms.cs:89`, also keyed on `SND-PROFILE-002` at line 99) and `ReviewSettingsStale`
   (`Labels.ReviewSettings.cs:51`) talk about "the profile changed" and are reworded or dropped with the hash guard;
   `ProfileCard` (`Labels.cs:95`) and `CellProfile` (`Labels.cs:188`, used by `StatusText.cs:41`) say "Profile"; and
   `Labels.Actions.cs:46,47,147` ("Create profile", "Set a profile key", "Validate profile"). The closing grep gets
-  `-e "the profile" -e "your profile"` for `src/Sindri/Aw.Sindri.Ui/ViewModels`.
+  `-e "the profile" -e "your profile" -e "approve"` for `src/Sindri/Aw.Sindri.Ui/ViewModels`.
 - **Text in code.** Strings that still say "re-approval" or "approved" (for example `SandboxCopy.cs:45`, the
   `SND-LAUNCH-019` row) are reworded in the Core commit of the rename.
 - **Not in scope.** `recipes/dev/profile.yaml` is a workflow recipe (retired by #2356), not settings.
@@ -712,7 +719,7 @@ keep the old words). Known today, by group:
     -e sindri-profile -e SND-PROFILE -- \
     src tests docs scripts config providers skills bootstrap evals setup.sh .env.example \
     ONBOARDING.md AGENTS.md .agents ':!docs/superpowers' ':!evals/planDevexReview' ':!tests/fixtures/backtest'
-  git grep -i -e "the profile" -e "your profile" -- src/Sindri/Aw.Sindri.Ui/ViewModels
+  git grep -i -e "the profile" -e "your profile" -e "approve" -- src/Sindri/Aw.Sindri.Ui/ViewModels
   ```
 
 ## 8. Size
