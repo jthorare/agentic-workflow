@@ -123,4 +123,15 @@ public sealed class ProcessSandboxPlannerTests
         var writable = mounts.FindIndex(m => m.Kind == PlanMountKind.State && m.Path == "/a/b/c");
         Assert.True(ancestor >= 0 && writable > ancestor);   // bwrap applies mounts in order: a later read-only /a would shadow /a/b/c
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_read_only_path_under_a_writable_resource_is_mounted_after_it()
+    {
+        var request = Request() with { ResourceMounts = [new ResourceMount("state", "/x/res")], ReadOnlyPaths = ["/x/res/ro"] };
+        var mounts = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, request).Value.Mounts.ToList();
+
+        var writable = mounts.FindIndex(m => m.Kind == PlanMountKind.State && m.Path == "/x/res");
+        var readOnly = mounts.FindIndex(m => m.Kind == PlanMountKind.ReadOnly && m.Path == "/x/res/ro");
+        Assert.True(writable >= 0 && readOnly > writable);   // the later, deeper mount keeps the path read-only; the other order made it writable again
+    }
 }
