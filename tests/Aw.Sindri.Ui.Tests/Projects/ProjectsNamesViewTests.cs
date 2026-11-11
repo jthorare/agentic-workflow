@@ -1,5 +1,6 @@
 using Avalonia.Automation.Peers;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -46,20 +47,25 @@ public sealed class ProjectsNamesViewTests : FrameHost
         Assert.Equal("ProjectNotesEdit", ControlAutomationPeer.CreatePeerForElement(button).GetAutomationId());
     });
 
+    // ux rule: a name is the visible label; the toggle already announces expanded or collapsed, so no state word and no Show/Hide verb.
     [Fact]
-    public Task Fold_header_name_has_count_and_state() => OnUi(async () =>
+    public Task Fold_toggle_is_named_by_its_heading() => OnUi(async () =>
     {
         Server.ProjectsAnswer = RouteAnswer.Api("projects", "mixed");
         var (window, shell) = await Connected();
         shell.GoTo(PageId.Projects);
         await Until(window, () => !shell.Projects.IsLoading, "the Projects page never read the list");
 
-        Assert.Equal("Finished, 1 project, collapsed", Heard.Name(Named<Expander>(window, "ProjectsFinished")));
+        static ToggleButton Toggle(Window window, string fold) =>
+            Named<Expander>(window, fold).GetVisualDescendants().OfType<ToggleButton>().First(b => b.Name == "ExpanderHeader");
+
+        Assert.Equal(shell.Projects.Finished.Heading, Heard.Name(Toggle(window, "ProjectsFinished")));
+        Assert.Equal(shell.Projects.Hidden.Heading, Heard.Name(Toggle(window, "ProjectsHidden")));
 
         shell.Projects.Finished.Toggle();
         await Until(window, () => Named<Expander>(window, "ProjectsFinished").IsExpanded, "the fold never opened");
 
-        Assert.Equal("Finished, 1 project, expanded", Heard.Name(Named<Expander>(window, "ProjectsFinished")));
+        Assert.Equal(shell.Projects.Finished.Heading, Heard.Name(Toggle(window, "ProjectsFinished")));
     });
 
     [Fact]
