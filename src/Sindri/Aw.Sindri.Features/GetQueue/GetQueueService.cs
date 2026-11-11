@@ -78,8 +78,7 @@ internal sealed class GetQueueService(IViewReader views, IProjectorStatus status
             next = EncodeCursor(items[^1]);
         }
 
-        IReadOnlyList<ItemSummary> shown = [.. items.Select(static i => i with { Parked = i.State == ItemState.Parked })];
-        return new QueueGroupView(group, shown, EmptyText.For(current, all.Count == 0, () => EmptyText.Group(group)), next);
+        return new QueueGroupView(group, items, EmptyText.For(current, all.Count == 0, () => EmptyText.Group(group)), next);
     }
 
     private static Result<Page> ParsePage(GetQueueRequest request)
