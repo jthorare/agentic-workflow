@@ -32,9 +32,7 @@ public sealed class CiGateRunTests
         _ = await _world.Config.Save(team with { Gate = GateConfig.Empty with { Mode = "ci" } }, CancellationToken.None);
         _ = _world.Runner
             .When(View, $$"""{"headRefOid":"headsha","baseRefName":"main","reviewDecision":"{{review}}","mergeStateStatus":"{{merge}}"}""")
-            .When(Checks, _ => new CommandResult(checksExit, checks, checksError, TimedOut: false))
-            .When("rev-parse --verify --quiet origin/main", "mainsha\n")
-            .When("git fetch");
+            .When(Checks, _ => new CommandResult(checksExit, checks, checksError, TimedOut: false));
     }
 
     private async Task<GateRecord> Run()
@@ -55,7 +53,7 @@ public sealed class CiGateRunTests
 
         var gate = await Run();
 
-        Assert.Equal((GateVerdict.Pass, "headsha", "mainsha"), (gate.Verdict, gate.Head, gate.Main));
+        Assert.Equal((GateVerdict.Pass, "headsha", string.Empty), (gate.Verdict, gate.Head, gate.Main));
         Assert.Equal(["ci"], gate.Scopes, StringComparer.Ordinal);
         Assert.Equal(["build", "types", "review", "merge-state"], gate.Steps.Select(s => s.Name), StringComparer.Ordinal);
         Assert.Empty(Failed(gate));
@@ -209,6 +207,30 @@ public sealed class CiGateRunTests
 
         Assert.True(result.IsError);
         Assert.False(string.Equals("AW-META-024", result.Error.Code, StringComparison.Ordinal));
+        Assert.Null((await _world.Gates.Latest(190, CancellationToken.None)).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_ci_gate_neither_fetches_nor_reads_origin_main_so_a_missing_origin_main_cannot_block_it()
+    {
+        await Script($"[{Pass}]");
+
+        _ = await Run();
+
+        Assert.DoesNotContain(_world.Runner.Lines, l => l.Contains("origin/main", StringComparison.Ordinal) || l.Contains("git fetch", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Scopes_given_in_ci_mode_are_refused_and_nothing_is_read_or_recorded()
+    {
+        await Script($"[{Pass}]");
+
+        var result = await Service().Handle(new GateRunRequest(190, ["repo"]), CancellationToken.None);
+
+        Assert.True(result.IsError);
+        Assert.Equal("AW-META-001", result.Error.Code);
+        Assert.Contains("scopes don't apply", result.Error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(_world.Runner.Lines, l => l.StartsWith("gh ", StringComparison.Ordinal));
         Assert.Null((await _world.Gates.Latest(190, CancellationToken.None)).Value);
     }
 }
