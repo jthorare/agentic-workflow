@@ -41,6 +41,13 @@ internal sealed partial class ServiceTileViewModel
     /// <summary>True when Save does something: a label is typed, no rename is on the way, and it is not the text the server just refused.</summary>
     public bool CanSaveRename => IsRenaming && !_renameSending && RenameText.Trim().Length > 0 && !string.Equals(RenameText.Trim(), _refusedLabel, StringComparison.Ordinal);
 
+    /// <summary>Every connection of this service, one line each (#2708). Stub: filled by the fix.</summary>
+    public IReadOnlyList<ConnectionRowViewModel> Connections { get; } = [];
+
+    /// <summary>Opens the field on one connection's label. Stub: filled by the fix.</summary>
+    /// <param name="row">The connection to rename.</param>
+    internal void StartRename(ConnectionRowViewModel row) => ArgumentNullException.ThrowIfNull(row);
+
     /// <summary>Opens the field with the current label.</summary>
     internal void StartRename()
     {
