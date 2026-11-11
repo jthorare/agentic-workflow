@@ -7,6 +7,13 @@ namespace Aw.Sindri.Tests.Workflow.Code;
 [Lane(TestLane.Unit)]
 public sealed class CodeCompilerTests : IClassFixture<RoslynWarmup>
 {
+    /// <summary>Takes the warm-up so xUnit builds it before the first fact; the fixture's work is done in its constructor.</summary>
+    /// <param name="warmup">The warm-up, already run.</param>
+    public CodeCompilerTests(RoslynWarmup warmup)
+    {
+        ArgumentNullException.ThrowIfNull(warmup);
+    }
+
     [Fact]
     public void A_body_with_a_typo_returns_a_diagnostic_with_line_and_column()
     {
