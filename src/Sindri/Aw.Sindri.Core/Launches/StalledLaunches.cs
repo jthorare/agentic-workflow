@@ -1,4 +1,6 @@
+using Aw.Kernel;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Core.Launches;
 
@@ -38,5 +40,40 @@ public static class StalledLaunches
         }
 
         return [.. stalled.OrderBy(static s => s.EndedAt)];
+    }
+
+    /// <summary>
+    /// The same answer as <see cref="Find"/> over the whole launches view, read without the whole view (issue #2786): the launches that ended idle, then the launches of
+    /// each of their Step instances, so the rows read follow the idle launches and not every launch ever made.
+    /// </summary>
+    /// <param name="reader">The views read side.</param>
+    /// <param name="now">The time to judge the window at; null counts every one however old.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The stalled launches, oldest end first, or the read's error.</returns>
+    public static async ValueTask<Result<IReadOnlyList<StalledLaunch>>> Read(IViewReader reader, DateTimeOffset? now, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(reader);
+        var idle = await reader.Where<LaunchRow>(ViewNames.Launches, ViewColumn.Reason, "idle", cancellationToken).ConfigureAwait(false);
+        if (idle.IsError)
+        {
+            return idle.Error;
+        }
+
+        var rows = new Dictionary<string, LaunchRow>(StringComparer.Ordinal);
+        foreach (var instance in idle.Value.Select(static r => r.Step.Instance?.Value).OfType<string>().Distinct(StringComparer.Ordinal))
+        {
+            var launches = await reader.Where<LaunchRow>(ViewNames.Launches, ViewColumn.Instance, instance, cancellationToken).ConfigureAwait(false);
+            if (launches.IsError)
+            {
+                return launches.Error;
+            }
+
+            foreach (var row in launches.Value)
+            {
+                rows[row.Id.Value] = row;
+            }
+        }
+
+        return Results.Success(Find([.. rows.Values], now));
     }
 }
