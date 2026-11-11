@@ -216,6 +216,7 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(BuildingBody));
         OnChanged(nameof(HasBuildingBody));
         OnChanged(nameof(EmptyTitle));
+        OnChanged(nameof(EmptyBody));
         OnChanged(nameof(HasBuildJob));
         OnChanged(nameof(Overlay));
         OnChanged(nameof(ShowEmpty));

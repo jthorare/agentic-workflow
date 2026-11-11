@@ -41,6 +41,9 @@ internal static partial class Labels
     /// <summary>The line when the concepts cannot be read; the map itself opens as before.</summary>
     internal const string ContextConceptsUnavailable = "No concepts yet, showing the whole map.";
 
+    /// <summary>The line when the concepts read failed (the code is in its tooltip); the map itself opens as before.</summary>
+    internal const string ContextConceptsReadFailed = "Concepts can't be read right now, showing the whole map.";
+
     /// <summary>What a concept holds, in people's words.</summary>
     /// <param name="features">Features.</param>
     /// <param name="records">Records.</param>

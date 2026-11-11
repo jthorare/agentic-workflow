@@ -146,11 +146,11 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
 
     /// <summary>The concepts cannot be read.</summary>
     /// <param name="code">The error code.</param>
-    internal void Unavailable(string code)
-    {
-        Say(Labels.ContextConceptsUnavailable);
-        NoteTip = code;
-    }
+    internal void Unavailable(string code) => Say(Labels.ContextConceptsUnavailable, code);
+
+    /// <summary>The concepts read failed: its own line, with the code in the tooltip.</summary>
+    /// <param name="code">The error code.</param>
+    internal void ReadFailed(string code) => Say(Labels.ContextConceptsReadFailed, code);
 
     /// <summary>Forgets everything (another repo is chosen).</summary>
     internal void Reset() => Say(string.Empty);
@@ -189,12 +189,12 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
         return true;
     }
 
-    private void Say(string note)
+    private void Say(string note, string? tip = null)
     {
         TermsNote = string.Empty;
         _all = [];
         (_pins, _wasBuilding, RebuildText) = (null, false, string.Empty);
-        (IsLoading, Note, NoteTip) = (false, note, null);
+        (IsLoading, Note, NoteTip) = (false, note, tip);
         ResetSearch();
         Changed();
     }
@@ -204,7 +204,7 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
     private void Changed()
     {
         Compose();
-        foreach (var name in (string[])[nameof(ShowNewPin), nameof(ShowAddSeveral), nameof(PinHeadText), nameof(HasPinHead), nameof(RebuildText), nameof(HasRebuildText), nameof(Tiles), nameof(IsLoading), nameof(Note), nameof(HasNote), nameof(SearchActive), nameof(NoMatches), nameof(TermsNote), nameof(HasTermsNote)])
+        foreach (var name in (string[])[nameof(ShowNewPin), nameof(ShowAddSeveral), nameof(PinHeadText), nameof(HasPinHead), nameof(RebuildText), nameof(HasRebuildText), nameof(Tiles), nameof(IsLoading), nameof(Note), nameof(NoteTip), nameof(HasNote), nameof(SearchActive), nameof(NoMatches), nameof(TermsNote), nameof(HasTermsNote)])
         {
             OnChanged(name);
         }
