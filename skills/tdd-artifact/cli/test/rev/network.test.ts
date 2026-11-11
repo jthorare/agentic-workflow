@@ -12,6 +12,8 @@
 //      there too; they carry no packet data and no key, and the run tolerates them.
 // Then: the recorder and the trap saw nothing, the push was skipped as not asked, the eval ran offline without
 // --push, no push.json exists, run.json says pushed: false, and no fake key is in any written file or output.
+// The end-to-end run includes the artifact-check step, which fails the run without Playwright and its Chromium (what
+// vendor/system-design/scripts/doctor.sh checks). On a machine without them the end-to-end test skips and says so.
 import { afterAll, describe, expect, test } from "bun:test";
 import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -30,6 +32,21 @@ const FAKES = {
 };
 const TEST_DB = process.env["TDD_TEST_DATABASE_URL"] ?? "postgres://localhost/tdd_system_test";
 const VENV_PY = join(process.env["HOME"] ?? "", ".local", "share", "tdd-skill", "venv", "bin", "python");
+
+/** artifact_check.mjs's own lookup ($PLAYWRIGHT_CORE, then playwright or playwright-core under $SYSTEM_DESIGN_DEPS),
+ *  asked through node: exit 0 when the package loads and its Chromium is on disk. */
+const PW_PROBE = [
+  'const { createRequire } = require("node:module"), path = require("node:path"), fs = require("node:fs");',
+  'const deps = process.env.SYSTEM_DESIGN_DEPS ?? path.join(process.env.HOME ?? "", ".local/share/system-design-skills");',
+  'const found = [...(process.env.PLAYWRIGHT_CORE ? [[process.cwd(), path.resolve(process.env.PLAYWRIGHT_CORE)]] : []), [deps, "playwright"], [deps, "playwright-core"]];',
+  'for (const [root, pkg] of found) {',
+  '  try { const { chromium } = createRequire(path.join(path.resolve(root), "x.js"))(pkg); process.exit(fs.existsSync(chromium.executablePath()) ? 0 : 1); } catch {}',
+  '}',
+  'process.exit(1);',
+].join("\n");
+const NODE = Bun.which("node");
+const PLAYWRIGHT = !!NODE && Bun.spawnSync([NODE, "-e", PW_PROBE], { stdout: "ignore", stderr: "ignore" }).exitCode === 0;
+if (!PLAYWRIGHT) console.warn("test/rev/network.test.ts: the end-to-end tdd rev test is skipped: no Playwright with its Chromium on this machine (vendor/system-design/scripts/doctor.sh names the install)");
 
 const root = mkdtempSync(join(tmpdir(), "tdd-rev-net-"));
 afterAll(() => rmSync(root, { recursive: true, force: true }));
@@ -110,7 +127,7 @@ describe("the watchers work", () => {
   }, 30_000);
 });
 
-describe("tdd rev with fake keys and no --push", () => {
+describe.skipIf(!PLAYWRIGHT)("tdd rev with fake keys and no --push", () => {
   test("nothing connects, nothing is pushed, no child gets a key, no key is written or printed", async () => {
     const packet = join(root, "house", "system-design", "demo-packet");
     mkdirSync(join(root, "house", "system-design"), { recursive: true });

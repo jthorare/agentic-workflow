@@ -19,7 +19,9 @@ loader (D17, D23, D24) and the revision runner.
 Setup once: `bun install` here, and `bun install` in `../app` (the `tdd rev` tests build the page). Check:
 `bun run check`. Tests: `bun test`. The tests that compare against a live `python3` (the kernel's golden tests in `test/py` and `test/sd`, and the
 compiler's own parity tests: `test/compile`, `test/parity` and the gallery gate in `test/components`) run only when it is CPython 3.13; on any other version they skip and print the version they found, so put
-`python3.13` first on PATH for the full run. During the overlap period the Python scripts
+`python3.13` first on PATH for the full run. The end-to-end `tdd rev` test in `test/rev/network.test.ts` runs only where
+Playwright and its Chromium are installed (`../vendor/system-design/scripts/doctor.sh` names the install); elsewhere it
+skips and says so. During the overlap period the Python scripts
 stay the documented path (SKILL.md); nothing here is required to build a TDD until the cutover PR.
 
 ## The Python-semantics kernel (`src/py`, PR 9)
