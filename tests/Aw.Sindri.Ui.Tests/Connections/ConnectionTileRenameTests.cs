@@ -295,7 +295,7 @@ public sealed class ConnectionTileRenameTests
     }
 
     [Fact]
-    public async Task A_late_success_after_the_tile_rebinds_does_not_rename_the_other_connections_row()
+    public async Task A_late_success_after_the_tile_rebinds_does_not_rename_the_other_connections_row_and_the_re_read_shows_the_new_name()
     {
         var tile = await Connected();
         var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -303,12 +303,14 @@ public sealed class ConnectionTileRenameTests
         tile.StartRename();
         tile.RenameText = "home";
         var sending = tile.Rename(Token);
-        tile.Bind(new ConnectionRowViewModel(FakeSindriApi.ConnectionRow("linear:other"), _f.Actions(), _f.Clock));
+        var other = new ConnectionRowViewModel(FakeSindriApi.ConnectionRow("linear:other"), _f.Actions(), _f.Clock);
+        tile.Bind(other);
 
         gate.SetResult();
         await sending;
 
-        Assert.Equal(("linear:other", false, string.Empty), (tile.ConnectionName, tile.IsRenaming, tile.RenameError));
+        Assert.Equal(("linear:other", false, string.Empty), (other.Name, tile.IsRenaming, tile.RenameError));
+        Assert.Equal("linear:home", tile.ConnectionName);   // the renamed connection's own tile took its new name from the re-read
     }
 
     [Fact]
