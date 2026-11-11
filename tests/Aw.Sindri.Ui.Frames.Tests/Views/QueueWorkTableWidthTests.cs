@@ -128,7 +128,7 @@ public sealed partial class QueueWorkTableWidthTests : FrameHost
         Assert.DoesNotContain("Repo", Shown(header), StringComparer.Ordinal);
 
         Server.QueueView = new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.SpecShaped("queue", "fixture"));
-        var shell = (Aw.Sindri.Ui.ViewModels.Shell.ShellViewModel)window.DataContext!;
+        var shell = (ViewModels.Shell.ShellViewModel)window.DataContext!;
         await shell.Queue.Refresh(shell.Queue.LastUrl!, Token);
         Settle(window);
 
