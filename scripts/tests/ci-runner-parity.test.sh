@@ -6,6 +6,7 @@
 #   2. the quick suites run with sed, touch and find that refuse the GNU-only forms the way the BSD ones do;
 #   3. heavy and install-cs run on a PATH without setsid and timeout, which macOS doesn't ship (main f936ef2d13 on the runner:
 #      heavy's perl fallback read `--expensive` as a perl switch, exit 25; install-cs's staged rows ran `timeout`, exit 127).
+# Parts 4 and 5 (#2584, #2757) add the forms found on the runner since.
 # A suite made portable passes every part on Linux and macOS alike; none of this weakens a suite's own assertions.
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -52,7 +53,7 @@ exec "$real_find" "\$@"
 SH
 chmod +x "$SHIM/sed" "$SHIM/touch" "$SHIM/find"
 
-for s in scripts/tests/check-skill-requires.test.sh scripts/tests/check-skill-blocks.test.sh scripts/tests/eval-av-fakes.test.sh config/hooks/tests/meta-hooks.test.sh; do
+for s in scripts/tests/check-skill-requires.test.sh scripts/tests/check-skill-blocks.test.sh scripts/tests/eval-av-fakes.test.sh config/hooks/tests/meta-hooks.test.sh scripts/tests/meta-start-lock-guard.test.sh; do
   if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$SHIM:$PATH" bash "$s" 2>&1)"; then
     ok "$s passes with BSD-style sed, touch and find"
   else
@@ -85,15 +86,42 @@ done
 #     `$(case X in ("$P"/*) ...` does (sindri-ui-fixture-reviews.test.sh:108 printed " echo inside ;; *) echo outside").
 FILES="$(cd "$ROOT" && git ls-files '*.sh' | tr '\n' ' ')" \
   scan "bash 3.2 ends \$( ) at a bare case pattern's ) (write the pattern as (pattern))" '\$\(case .* in +[^( ]'
-# 4b. /var -> /private/var: mktemp -d under a symlinked TMPDIR, as macOS's /var/folders is (skill-evals: "AW_DIR differs").
+# Part 5 (#2757): four more forms that passed on Linux and failed on the runner, scanned over every tracked .sh but this one.
+FILES="$(cd "$ROOT" && git ls-files '*.sh' | grep -v '^scripts/tests/ci-runner-parity.test.sh$' | tr '\n' ' ')"
+# 5a. 4a checks only the first pattern; a bare later one cuts the substitution too (sindri-ui-fixture-reviews.test.sh:113
+#     printed " echo outside ;; esac)").
+scan "bash 3.2 ends \$( ) at a bare case pattern after ;; too (write it as (*))" '\$\(case .*;;[[:space:]]*([^([:space:];e]|e[^s]|es[^a]|esa[^c])'
+# 5b. touch -d in any suite, unless the line falls back to touch -t (meta-start-lock-guard.test.sh:109: the "old" guard
+#     stayed young, so the takeover kept it). The Part 1 scan covers only its own suite list.
+hits="$(cd "$ROOT" && for f in $FILES; do grep -nE -- 'touch[[:space:]]+-d[[:space:]]' "$f" 2> /dev/null | grep -vE '^[0-9]+:[[:space:]]*#' | grep -v 'touch -t' | sed "s|^|$f:|"; done)"
+if [ -n "$hits" ]; then bad "BSD touch has no -d 'N minutes ago' in any suite (add a touch -t fallback)"; printf '%s\n' "$hits" | sed 's/^/      | /'
+else ok "BSD touch has no -d 'N minutes ago' in any suite (add a touch -t fallback)"; fi
+# 5c. BSD wc pads its count ("       1"), so "$(wc -l <f)" = 1 is false there (skill-evals: "calls: alpha-natural-1").
+scan "BSD wc pads counts: compare \$(wc ...) as a string only after tr -d ' '" 'wc -[lcw][^|)]*\)" *(!=|=) '
+# 5d. macOS /tmp is a symlink to /private/tmp, and the stub claude runs under env -i, so its $PWD is the physical path:
+#     skill-evals' /tmp roots must be taken through pwd -P ("claude cwd"). 4b moves only TMPDIR, which they ignore.
+hits="$(cd "$ROOT" && grep -nE 'mktemp -d /tmp/' scripts/tests/skill-evals.test.sh | grep -v 'pwd -P')"
+if [ -n "$hits" ]; then bad "skill-evals.test.sh takes its /tmp roots through pwd -P (macOS /tmp -> /private/tmp)"; printf '%s\n' "$hits" | sed 's/^/      | scripts\/tests\/skill-evals.test.sh:/'
+else ok "skill-evals.test.sh takes its /tmp roots through pwd -P (macOS /tmp -> /private/tmp)"; fi
+# 5e. the padding is behavioural too: 4b runs skill-evals with a wc that pads like BSD's.
+WCSHIM="$(mktemp -d)"
+cat > "$WCSHIM/wc" <<SH
+#!/bin/bash
+out="\$("$(command -v wc)" "\$@")" || exit \$?
+printf '%s\n' "\$out" | "$real_sed" -E 's/^ *([0-9]+)/       \1/'
+SH
+chmod +x "$WCSHIM/wc"
+
+# 4b. /var -> /private/var: mktemp -d under a symlinked TMPDIR, as macOS's /var/folders is (skill-evals: "AW_DIR differs"),
+#     with a wc that pads its count as BSD's does (5e).
 LINKTMP="$(mktemp -u "${TMPDIR:-/tmp}/parity-linktmp.XXXXXX")"; REALTMP="$(mktemp -d)"; ln -s "$REALTMP" "$LINKTMP"
-if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX TMPDIR="$LINKTMP" bash scripts/tests/skill-evals.test.sh 2>&1)"; then
-  ok "skill-evals.test.sh passes with TMPDIR behind a symlink (macOS /var -> /private/var)"
+if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX TMPDIR="$LINKTMP" PATH="$WCSHIM:$PATH" bash scripts/tests/skill-evals.test.sh 2>&1)"; then
+  ok "skill-evals.test.sh passes with TMPDIR behind a symlink (macOS /var -> /private/var) and BSD wc's padded counts"
 else
-  bad "skill-evals.test.sh fails with TMPDIR behind a symlink (macOS /var -> /private/var)"
+  bad "skill-evals.test.sh fails with TMPDIR behind a symlink (macOS /var -> /private/var) and BSD wc's padded counts"
   printf '%s\n' "$out" | grep -E 'FAIL' | head -5 | sed 's/^/      | /'
 fi
-command rm -f "$LINKTMP"; rmdir "$REALTMP" 2> /dev/null
+command rm -f "$LINKTMP" "$WCSHIM/wc"; rmdir "$REALTMP" "$WCSHIM" 2> /dev/null
 # 4c. heavy-cap-reserve on a PATH without timeout: test-portable.sh's fallback timeout must not leave its sleep holding
 #     the caller's stdout ("reserve 1, both slots busy, timeout 2 gives up inside 6 s": got "none slow 10s").
 if out="$(cd "$ROOT" && env -u AW_META_LANE -u AW_META_TEAM -u TMUX PATH="$NOTOOLS" bash scripts/tests/heavy-cap-reserve.test.sh 2>&1)"; then
