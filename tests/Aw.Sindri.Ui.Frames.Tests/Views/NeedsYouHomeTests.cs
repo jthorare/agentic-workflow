@@ -107,7 +107,7 @@ public sealed class NeedsYouHomeTests : IDisposable
 
         Assert.Equal(3, Rows(window).Count);
         Assert.DoesNotContain(Named<Control>(window, "NeedsYouPanel").GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Text == Labels.NotServedYet);
-        Assert.Equal(shell.Attention.SummaryLine, Named<TextBlock>(window, "NeedsYouSummary").Text);
+        Assert.Equal(shell.Attention.NeedsYouLine, Named<TextBlock>(window, "NeedsYouSummary").Text);
     });
 
     // B-1: after a row leaves, the card is shorter and still ends below its last row (its border and "all N" link are not cut off).

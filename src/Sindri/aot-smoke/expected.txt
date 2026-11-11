@@ -226,7 +226,7 @@ SND-API-001 not running: no control plane is recorded (fix: sindri)
 exit 1
 ## sindri doctor
 ok    lease             free (last epoch 1)
-ok    ledger            schema 18/18
+ok    ledger            schema 19/19
 ok    views             cursor N of head M
 ok    profile           hash HASH6
 fail  api               unreachable: no control plane is recorded (fix: sindri)

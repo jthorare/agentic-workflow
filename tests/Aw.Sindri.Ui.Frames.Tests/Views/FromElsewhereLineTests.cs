@@ -47,11 +47,10 @@ public sealed class FromElsewhereLineTests
 
     private static Border Frame(Window window) => window.GetVisualDescendants().OfType<Border>().First(b => string.Equals(b.Name, "ElsewhereFrame", StringComparison.Ordinal));
 
-    private async Task<FromElsewhereViewModel> Loaded(int reviews = 2, int needsYou = 3, bool reviewsFailed = false)
+    private async Task<FromElsewhereViewModel> Loaded(int reviews = 2, bool reviewsFailed = false)
     {
         var line = new FromElsewhereViewModel(_server);
         line.SetReviews(loading: false, reviews, reviewsFailed);
-        line.SetNeedsYou(needsYou);
         await line.Refresh(_url, Token);
         return line;
     }
@@ -64,7 +63,7 @@ public sealed class FromElsewhereLineTests
         var links = Links(window);
 
         Assert.Equal(
-            ["Opens Reviews: 2 PRs waiting on your review", "Opens Linear: 3 Linear issues assigned", "Opens Needs you: 3 need you, below"],
+            ["Opens Reviews: 2 PRs waiting on your review", "Opens Linear: 3 Linear issues assigned"],
             links.Select(AutomationProperties.GetName),
             StringComparer.Ordinal);
         Assert.All(links, b => Assert.True(b.IsEffectivelyVisible && b.Bounds.Width > 0));
@@ -99,7 +98,7 @@ public sealed class FromElsewhereLineTests
     public Task With_nothing_waiting_it_says_so_and_keeps_its_height() => OnUi(async () =>
     {
         _server.LinearIssuesAnswer = RouteAnswer.Api("linear-issues", "filtered-empty");
-        var line = await Loaded(reviews: 0, needsYou: 0);
+        var line = await Loaded(reviews: 0);
         var window = Host(new FromElsewhereViewModel(_server));
         var checking = Frame(window).Bounds.Height;
         window.Close();
@@ -124,7 +123,6 @@ public sealed class FromElsewhereLineTests
             [
                 "Opens Reviews: Reviews didn't load", "Retry Reviews",
                 "Opens Linear: Linear didn't load", "Retry Linear",
-                "Opens Needs you: 3 need you, below",
             ],
             names,
             StringComparer.Ordinal);

@@ -15,18 +15,34 @@ internal static class Program
     private const int OutOfMemory = 3;
     private const int Failed = 4;
 
+    // why: the runtime itself needs about this much managed heap to start and to run the compiler-free body; a hard limit below it makes GC.RefreshMemoryLimit throw (the process died with 134)
+    private const int MinMemoryMb = 16;
+
     private static int Main(string[] args)
     {
-        if (args.Length is not (1 or 3) || (args.Length == 3 && (args[1] != "--memory-mb" || !int.TryParse(args[2], out var mb) || mb < 1)))
+        var mb = 0;
+        if (args.Length is not (1 or 3) || (args.Length == 3 && (args[1] != "--memory-mb" || !int.TryParse(args[2], out mb))))
         {
             return Fail(Usage, "usage: sindri-code-runner <assembly> [--memory-mb N]");
         }
 
         if (args.Length == 3)
         {
-            // why: a managed-heap cap for this process; the sandbox does not bound a plain process's memory
-            AppContext.SetData("GCHeapHardLimit", (ulong)int.Parse(args[2], System.Globalization.CultureInfo.InvariantCulture) * 1024 * 1024);
-            GC.RefreshMemoryLimit();
+            if (mb < MinMemoryMb)
+            {
+                return Fail(Usage, $"--memory-mb must be at least {MinMemoryMb.ToString(System.Globalization.CultureInfo.InvariantCulture)}: the runtime can't run in less memory");
+            }
+
+            try
+            {
+                // why: a managed-heap cap for this process; the sandbox does not bound a plain process's memory
+                AppContext.SetData("GCHeapHardLimit", (ulong)mb * 1024 * 1024);
+                GC.RefreshMemoryLimit();
+            }
+            catch (Exception e) when (e is InvalidOperationException or ArgumentException)
+            {
+                return Fail(Usage, $"--memory-mb {mb.ToString(System.Globalization.CultureInfo.InvariantCulture)} is below what the process already uses: {e.Message}");
+            }
         }
 
         MethodInfo? run;

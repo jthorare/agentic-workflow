@@ -39,17 +39,6 @@ public sealed class ShellElsewhereTests
     }, Token);
 
     [Fact]
-    public Task The_line_counts_the_needs_you_rows_below() => UiThread.Run(async () =>
-    {
-        _server.NeedsYouView = RouteAnswer.Api("needs-you", "fixture");
-        var shell = await Shell();
-
-        await ShellWait.Until(shell, () => shell.Elsewhere.Text.Contains("need you, below", StringComparison.Ordinal), Token);
-
-        Assert.Contains(shell.Elsewhere.Parts, p => p.Part == ElsewherePart.NeedsYou);
-    }, Token);
-
-    [Fact]
     public Task The_reviews_part_opens_Reviews() => UiThread.Run(async () =>
     {
         var shell = await Shell();
@@ -82,23 +71,6 @@ public sealed class ShellElsewhereTests
         shell.Elsewhere.Open(ElsewherePart.Linear);
 
         Assert.Equal(PageId.Settings, shell.CurrentPage);
-    }, Token);
-
-    [Fact]
-    public Task The_needs_you_part_moves_focus_to_the_first_Needs_you_row() => UiThread.Run(async () =>
-    {
-        _server.NeedsYouView = RouteAnswer.Api("needs-you", "fixture");
-        var shell = await Shell();
-        await ShellWait.Until(shell, () => shell.NeedsYou.Rows.Count > 0, Token);
-        shell.GoTo(PageId.Agents);
-        var asked = new List<HomeFocusTarget>();
-        shell.HomeFocusRequested += (_, e) => asked.Add(e.Target);
-
-        shell.Elsewhere.Open(ElsewherePart.NeedsYou);
-
-        Assert.Equal(PageId.Home, shell.CurrentPage);
-        Assert.Equal(shell.NeedsYou.Rows[0].Id, shell.NeedsYou.SelectedId);
-        Assert.Equal([HomeFocusTarget.NeedsYou], asked);
     }, Token);
 
     [Fact]
