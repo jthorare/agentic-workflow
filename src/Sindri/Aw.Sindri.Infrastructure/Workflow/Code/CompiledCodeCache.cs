@@ -7,8 +7,19 @@ namespace Aw.Sindri.Infrastructure.Workflow.Code;
 /// <summary>Compiled assemblies on disk, keyed by the sha256 of the body and the compiler's fingerprint, so the same code compiles once.</summary>
 /// <param name="compiler">Compiles a body that is not cached.</param>
 /// <param name="directory">The folder the assemblies live in.</param>
-internal sealed class CompiledCodeCache(ICodeCompiler compiler, string directory)
+/// <param name="time">The clock that ages the cached assemblies; the system clock when null.</param>
+/// <param name="maxFiles">How many assemblies the folder keeps, the ones touched in the last hour aside.</param>
+internal sealed class CompiledCodeCache(ICodeCompiler compiler, string directory, TimeProvider? time = null, int maxFiles = CompiledCodeCache.DefaultMaxFiles)
 {
+    /// <summary>How many assemblies the folder keeps by default.</summary>
+    internal const int DefaultMaxFiles = 1000;
+
+    /// <summary>The clock that ages the cached assemblies.</summary>
+    internal TimeProvider Time { get; } = time ?? TimeProvider.System;
+
+    /// <summary>How many assemblies the folder keeps.</summary>
+    internal int MaxFiles { get; } = maxFiles;
+
     /// <summary>How many failing bodies the check remembers before it forgets them all.</summary>
     internal const int FailedLimit = 256;
 
