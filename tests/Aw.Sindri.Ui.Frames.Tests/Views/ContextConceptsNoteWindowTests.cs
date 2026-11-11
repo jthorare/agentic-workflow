@@ -6,6 +6,7 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
@@ -32,7 +33,7 @@ public sealed class ContextConceptsNoteWindowTests
             var api = new FakeSindriApi { ContextConceptsAnswer = _ => RouteAnswer.Problem(HttpStatusCode.InternalServerError, Code, "the concepts can't be read") };
             var shell = new ShellViewModel(records, api, new FakeTimeProvider(A.Noon), new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
             await shell.Restore(Token);
-            var window = new ShellWindow { DataContext = shell };
+            var window = new ShellWindow { DataContext = shell, Width = 1280, Height = 800 };
             try
             {
                 window.Show();
@@ -49,6 +50,7 @@ public sealed class ContextConceptsNoteWindowTests
                 Assert.NotNull(note);
                 Assert.Equal("Concepts can't be read right now, showing the whole map.", note.Text);
                 Assert.Equal(Code, ToolTip.GetTip(note));
+                SaveFrames(window, note);
             }
             finally
             {
@@ -59,6 +61,16 @@ public sealed class ContextConceptsNoteWindowTests
 
             return true;
         }, Token);
+    }
+
+    // The page with the failed-read line, then with its tooltip open (frames/c2552-*.png under AW_UI_FRAMES=1).
+    private static void SaveFrames(ShellWindow window, TextBlock note)
+    {
+        FrameFile.Save(window, "c2552-concepts-read-failed");
+        ToolTip.SetIsOpen(note, value: true);
+        Dispatcher.UIThread.RunJobs();
+        FrameFile.Save(window, "c2552-concepts-read-failed-tooltip");
+        ToolTip.SetIsOpen(note, value: false);
     }
 
     // The concepts line once it has words (the read is answered on the dispatcher), or null after two seconds.
