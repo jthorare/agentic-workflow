@@ -7,4 +7,5 @@ namespace Aw.Sindri.Ui.Api.Workflows;
 /// <param name="LatestRevision">The newest revision.</param>
 /// <param name="ChangedBy">Who saved the newest revision: "owner" or "session:&lt;id&gt;".</param>
 /// <param name="ChangedAt">When the newest revision was saved.</param>
-internal sealed record WorkflowRowView(string Slug, string Name, int? ActiveRevision, int LatestRevision, string ChangedBy, DateTimeOffset ChangedAt);
+/// <param name="Archived">True for an archived workflow; only a list asked with includeArchived carries it (#2702).</param>
+internal sealed record WorkflowRowView(string Slug, string Name, int? ActiveRevision, int LatestRevision, string ChangedBy, DateTimeOffset ChangedAt, bool? Archived = null);
