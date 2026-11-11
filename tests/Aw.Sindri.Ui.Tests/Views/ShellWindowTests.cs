@@ -139,7 +139,7 @@ public sealed class ShellWindowTests : IDisposable
     // §14.2: every text is a step of the type ramp, so the Text size preference reaches all of it. At scale 1.3 each
     // visible TextBlock's size is a ramp size × 1.3 (a literal size, or one Fluent's own default sets, stays put). The
     // scale is applied, checked and reset without yielding the UI thread, so no other test sees it.
-    private static readonly double[] _ramp = [24, 20, 15, 13, 12, 11];   // PageTitle, DetailTitle, SectionTitle, Body, Caption/Mono, Eyebrow/Kbd (#2546)
+    private static readonly double[] _ramp = [40, 24, 20, 15, 13, 12, 11];   // Display, PageTitle, DetailTitle, SectionTitle, Body, Caption/Mono, Eyebrow/Kbd (#2546, #2779)
 
     private static void EveryTextIsOnTheRampAt130(Window window)
     {
