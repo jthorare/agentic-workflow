@@ -14,6 +14,14 @@ namespace Aw.Sindri.Ui.Views.Shell;
 /// <summary>Home's panel frames and its health strip, which passes its click to the shell.</summary>
 internal sealed partial class HomePage : UserControl
 {
+    // The focus ring is drawn outside its control (Margin -4 in Theme/FluentOverrides.axaml: 4 px past the control, the layouts' 4 px of room). Scrolling a focused control into
+    // view uses its own bounds, so on a page taller than the window the ring landed past the viewport's edge and was cut off. Home grew taller with its count row (#2780),
+    // so it asks the scroller above for the control plus that room.
+    private const double FocusRingReach = 4;
+
+    private static void OnRequestBringIntoView(object? sender, RequestBringIntoViewEventArgs e) =>
+        e.TargetRect = e.TargetRect.Inflate(FocusRingReach);
+
     public HomePage()
     {
         InitializeComponent();
@@ -22,6 +30,7 @@ internal sealed partial class HomePage : UserControl
         AddHandler(NeedsYouRow.OpenEvent, OnNeedsYouOpen);
         AddHandler(NeedsYouRow.SelectEvent, OnNeedsYouSelect);
         AddHandler(NeedsYouRow.ActionEvent, OnNeedsYouAction);
+        AddHandler(RequestBringIntoViewEvent, OnRequestBringIntoView);
         AddHandler(GotFocusEvent, (_, e) => Look(e, looking: true), handledEventsToo: true);
         AddHandler(LostFocusEvent, (_, e) => Look(e, looking: false), handledEventsToo: true);
         AddHandler(GotFocusEvent, (_, e) => Region(e, on: true), handledEventsToo: true);

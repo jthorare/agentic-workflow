@@ -225,7 +225,7 @@
 
     <!-- Sindri health (home.html .strip): the eyebrow with its G . hint, the status as labelled cells, and a trailing ›;
          one button named by the health line, which opens Health (§4.2) on a click or Enter. -->
-    <Button x:Name="HealthStrip" Classes="health-strip" Margin="0,0,0,8" Click="OnHealthStrip"
+    <Button x:Name="HealthStrip" Classes="health-strip" Click="OnHealthStrip"
             AutomationProperties.Name="{Binding Health.StripName}">
       <Grid ColumnDefinitions="Auto,*,Auto">
         <StackPanel x:Name="HealthKeys" Classes="strip-head" Orientation="Horizontal" Spacing="8">
