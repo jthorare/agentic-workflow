@@ -19,7 +19,7 @@ export function App({ content }: { content: Content }) {
       <div className="wrap" ref={wrap}>
         <Masthead />
         {content.lede?.length ? <div className="lede"><Blocks nodes={content.lede} /></div> : null}
-        {content.sections.map((s) => <Section key={s.id} s={s} />)}
+        {content.sections.map((s) => <Section key={String(s.id)} s={s} />)}
         {content.meta.footer ? <Raw as="footer" className="muted small" html={content.meta.footer} /> : null}
       </div>
       <Guard name="contents rail"><Rail /></Guard>
@@ -42,7 +42,8 @@ function Section({ s }: { s: SectionT }) {
   const folds = foldCount(s.blocks);
   const lead = s.blocks[0]?.type === "p" && (s.blocks[0].cls || []).includes("lead") ? 1 : 0;
   return (
-    <section id={s.id}>
+    // A section id written bare ({#}) compiles to `true`; React refuses it and the build fails, so the author sees it.
+    <section id={s.id as string}>
       <h2>
         <span className="sec-no">{s.num}</span>
         <Raw html={s.title} />

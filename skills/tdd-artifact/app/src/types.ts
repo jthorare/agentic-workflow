@@ -4,6 +4,10 @@
 /** A trusted inline-HTML string (reference links, chips and citations already rendered by the compiler). */
 export type Html = string;
 export type Align = "left" | "center" | "right";
+/** The value of an attribute that expects text. `{tone: warn}` gives "warn"; the same key written bare (`{tone}`, nothing
+ *  after it) gives `true`, because parse_attrs in build_tdd.py stores a bare word as a flag. The compiler emits these
+ *  fields as it parsed them, so a bare one arrives here as `true`. */
+export type AttrText = string | true;
 export interface PNode { type: "p"; html: Html; cls?: string[]; id?: string }
 export interface HeadingNode { type: "heading"; level: number; html: Html; id?: string }
 export interface ListItem { html: Html; cls?: string[]; check: boolean | null; children?: ListNode[] }
@@ -12,7 +16,7 @@ export interface TableCell { html: Html; cls?: string[]; align: Align | null }
 export interface TableBlock { type: "table"; cols: number; head: { html: Html; align: Align | null }[]; rows: { id: string | null; cells: TableCell[] }[] }
 export interface CodeNode { type: "code"; lang: string; text: string; html: Html; section: string | null; anchor: string | null }
 /** `::: callout` (note, warn, good, danger, violet, blue) or a markdown quote (tone "quote", drawn as a blockquote). */
-export interface CalloutNode { type: "callout"; tone: string; blocks: BlockList }
+export interface CalloutNode { type: "callout"; tone: AttrText; blocks: BlockList }
 export interface HrNode { type: "hr" }
 /** What the compiler leaves where a diagram, image or the PR cards are missing. */
 export interface PlaceholderNode { type: "placeholder"; html: Html; id?: string }
@@ -28,12 +32,12 @@ export interface DiagramNode {
 export interface Card { title: Html; blocks: BlockList; id?: string }
 export interface CardsNode { type: "cards"; four: boolean; stat: boolean; cards: Card[] }
 export interface TodayNode { type: "today"; label: string; summary: Html; blocks: BlockList; media: ShotNode[]; grid: string }
-export interface PersonaNode { type: "persona"; id: string; title: Html; chip: string; chipTone: string; grid: string; text: BlockList; media: ShotNode[]; today: TodayNode | null }
+export interface PersonaNode { type: "persona"; id: string; title: Html; chip: AttrText; chipTone: AttrText; grid: string; text: BlockList; media: ShotNode[]; today: TodayNode | null }
 export interface DuoNode { type: "duo"; items: BlockList }
 export interface FoldNode { type: "fold"; id: string; title: Html; one: Html; open: boolean; blocks: BlockList }
 export interface GroupNode { type: "group"; id: string | null; title: Html; sub: Html; blocks: BlockList }
 export interface DecisionsNode { type: "decisions"; blocks: BlockList }
-export interface DecisionNode { type: "decision"; id: string; did: string; question: Html; status: Html; state: string; wide: boolean; blocks: BlockList }
+export interface DecisionNode { type: "decision"; id: string; did: string; question: Html; status: Html; state: AttrText; wide: boolean; blocks: BlockList }
 export interface Option { title: Html; rec: boolean; blocks: BlockList }
 export interface OptionsNode { type: "options"; options: Option[] }
 export interface StepsNode { type: "steps"; blocks: BlockList }
@@ -72,7 +76,7 @@ export interface SchemaTable {
   /** D28, optional: what the design gains and costs for this table, two or three terse lines */
   tradeoffs?: (string | { gain?: string; cost?: string })[];
 }
-export interface Section { id: string; num: number; title: string; titleText: string; chip: string; chipTone: string; hasGroup: boolean; blocks: BlockList; subs: { id: string; title: string }[] }
+export interface Section { id: AttrText; num: number; title: string; titleText: string; chip: AttrText; chipTone: AttrText; hasGroup: boolean; blocks: BlockList; subs: { id: string; title: string }[] }
 export interface Content {
   template: string; title: string; titleText: string; tabTitle: string;
   meta: { eyebrow: string; project?: { label: string; href?: string }; people: { role: string; name: string }[]; updated: string; rev?: number | string; revNote: string; status: string; statusTone: string; repoUrl?: string; sha?: string; shaDate?: string; footer: string; dataSources?: { name: string; server: string; tool: string; kind: "prod" | "local" | "render" | "seed"; note?: string }[] };
