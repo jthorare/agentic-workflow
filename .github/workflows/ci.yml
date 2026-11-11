@@ -230,6 +230,17 @@ jobs:
         # Each test's own time against its lane's budget (unit 10 s, integration 60 s), and exactly one
         # known Lane trait per test: the run above leaves out only Lane=heavy, so a test with none shows up (spec §4b.5).
         run: dotnet run --project tests/Aw.LaneCap.Testing --configuration Release --no-build -- TestResults
+      - name: Install bubblewrap for the sandboxed smoke steps
+        if: steps.sln.outputs.run == 'true'
+        # The Sindri smoke's code-node line runs a Code workflow node in the bubblewrap sandbox (#2725). Ubuntu
+        # runners ship without bwrap and block unprivileged user namespaces through AppArmor, so install it and
+        # load the same unconfined bwrap profile the sandbox doctor's SND-LAUNCH-014 fix prints (SandboxCopy.cs).
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bubblewrap
+          printf 'abi <abi/4.0>,\ninclude <tunables/global>\nprofile bwrap /usr/bin/bwrap flags=(unconfined) {\n  userns,\n  include if exists <local/bwrap>\n}\n' | sudo tee /etc/apparmor.d/bwrap >/dev/null
+          sudo apparmor_parser -r /etc/apparmor.d/bwrap
+          bwrap --ro-bind / / --unshare-user --unshare-net true && echo "bwrap: user namespace ok"
       - name: NativeAOT smoke tests
         if: steps.sln.outputs.run == 'true'
         # Each publishes for the runner's own RID (linux-x64), runs the native binary and
