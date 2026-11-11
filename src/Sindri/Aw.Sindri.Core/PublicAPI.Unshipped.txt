@@ -2057,6 +2057,7 @@ Aw.Sindri.Core.Views.IProjectorStatus.WaitFor(long sequence, System.TimeSpan lim
 Aw.Sindri.Core.Views.IViewReader
 Aw.Sindri.Core.Views.IViewReader.Get<TRow>(string! view, string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<TRow?>!>
 Aw.Sindri.Core.Views.IViewReader.List<TRow>(string! view, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<TRow!>!>!>
+Aw.Sindri.Core.Views.IViewReader.Mark(string! view, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Views.IViewReader.Range<TRow>(string! view, string! afterKey, string? beforeKey, int max, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<TRow!>!>!>
 Aw.Sindri.Core.Views.IViewReader.State(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState?>!>
 Aw.Sindri.Core.Views.IViewReader.Where<TRow>(string! view, Aw.Sindri.Core.Views.ViewColumn column, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<TRow!>!>!>

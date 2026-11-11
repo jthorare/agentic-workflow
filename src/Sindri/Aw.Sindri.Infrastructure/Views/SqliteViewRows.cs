@@ -97,6 +97,21 @@ internal sealed class SqliteViewRows(ISqliteSession session, long sequence, Json
         return Decode<TRow>(texts);
     }
 
+    /// <summary>The mark of <paramref name="view"/> (<see cref="ViewTable.SelectMark"/>): one aggregate query, no row read.</summary>
+    /// <param name="view">The view.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>The mark.</returns>
+    public async ValueTask<Result<string>> Mark(string view, CancellationToken cancellationToken)
+    {
+        if (ViewSql.Table(view) is not { } table)
+        {
+            return Unknown(view);
+        }
+
+        var mark = await SqliteQueries.One(session, new SqlStatement(table.SelectMark), RowJsonMapper.Instance, cancellationToken).ConfigureAwait(false);
+        return mark.IsError ? ViewsDatabase.Translate(mark.Error) : mark.Value;
+    }
+
     private Result<IReadOnlyList<TRow>> Decode<TRow>(Result<IReadOnlyList<string>> texts)
         where TRow : class
     {

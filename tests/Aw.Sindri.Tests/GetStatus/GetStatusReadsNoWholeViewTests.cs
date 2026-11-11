@@ -179,6 +179,8 @@ public sealed class GetStatusReadsNoWholeViewTests
         public async ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
             where TRow : class => Count(view, "Where", await inner.Where<TRow>(view, column, value, cancellationToken));
 
+        public ValueTask<Result<string>> Mark(string view, CancellationToken cancellationToken) => inner.Mark(view, cancellationToken);
+
         public ValueTask<Result<ProjectorState?>> State(CancellationToken cancellationToken) => inner.State(cancellationToken);
 
         private Result<IReadOnlyList<TRow>> Count<TRow>(string view, string method, Result<IReadOnlyList<TRow>> result)
