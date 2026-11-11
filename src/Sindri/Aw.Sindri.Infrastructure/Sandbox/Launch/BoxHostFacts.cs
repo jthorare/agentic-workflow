@@ -21,8 +21,16 @@ internal static class BoxHostFacts
         return new SandboxHostFacts(home, state, sindriHome, CsBinDir(state), OwnUid.Read(), machine.RamBytes, machine.Cores, IsMacOs: OperatingSystem.IsMacOS(), ProcessEnvironment(), OtherHomes(Path.GetDirectoryName(home) ?? "/home", home), BinaryLinks: AgentBinaryLinks(environment("PATH") ?? string.Empty))
         {
             DirectoryEntries = EntriesOf,
+            ProfilePath = ProfilePath(environment, sindriHome),
         };
     }
+
+    /// <summary>Gets the live profile file as SettingsFromEnvironment does: AW_SINDRI_PROFILE, else &lt;home&gt;/profile/profile.yaml.</summary>
+    /// <param name="environment">Reads an environment variable.</param>
+    /// <param name="sindriHome">The real AW_SINDRI_HOME.</param>
+    /// <returns>The absolute path.</returns>
+    internal static string ProfilePath(Func<string, string?> environment, string sindriHome) =>
+        Path.GetFullPath(environment("AW_SINDRI_PROFILE") is { Length: > 0 } explicitProfile ? explicitProfile : Path.Combine(sindriHome, "profile", "profile.yaml"));
 
     /// <summary>Lists a directory's entry names, sorted; empty when it is missing or can't be read.</summary>
     /// <param name="directory">The directory.</param>
