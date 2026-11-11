@@ -210,6 +210,9 @@ internal sealed partial class NeedsYouRowViewModel : ObservableObject
     /// <summary>The row's id.</summary>
     public string Id => Entry.Id;
 
+    /// <summary>The row's automation id ("NeedsYouRow.…"), one per entry.</summary>
+    public string AutomationId => "NeedsYouRow." + Id;
+
     /// <summary>The row's tint.</summary>
     public RowTint Tint => Entry.Urgency switch
     {

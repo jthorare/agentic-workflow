@@ -130,13 +130,13 @@ internal sealed partial class ContextPageViewModel
     {
         if (read.IsError)
         {
-            if (IsNotServed(read.Error))
+            if (IsNotServed(read.Error) || string.Equals(read.Error.Code, NoMapCode, StringComparison.Ordinal))
             {
-                Concepts.NotServed();
+                Concepts.NotServed();   // no map: the No map state says it, a line over it would only repeat it
             }
             else
             {
-                Concepts.Unavailable(read.Error.Code);
+                Concepts.ReadFailed(read.Error.Code);
             }
 
             return;
@@ -149,6 +149,9 @@ internal sealed partial class ContextPageViewModel
                 break;
             case "building":
                 Concepts.Building();
+                break;
+            case "unavailable" when string.Equals(read.Value.Code, NoMapCode, StringComparison.Ordinal):
+                Concepts.NotServed();   // the No map state says it
                 break;
             case "unavailable":
                 Concepts.Unavailable(read.Value.Code ?? SindriUiErrors.BadAnswer.Code);

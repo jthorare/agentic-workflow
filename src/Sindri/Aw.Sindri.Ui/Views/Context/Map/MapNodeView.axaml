@@ -6,7 +6,7 @@
              x:DataType="vm:MapNodeViewModel"
              Width="{Binding Width}" Height="{Binding Height}"
              Focusable="True" Opacity="{Binding Opacity}"
-             AutomationProperties.Name="{Binding Name}">
+             AutomationProperties.Name="{Binding Name}" AutomationProperties.AutomationId="{Binding AutomationId}">
   <!-- One node of the context map (F3 spec 1 §2): a chip or a card on Surface1 with a 1 px hairline, or, for a suggestion nobody
        confirmed, no fill and a dashed Wire outline. The anchor wears a 2 px RingAnchor ring with a 2 px gap and a "Starts here" pill. -->
   <Grid>
