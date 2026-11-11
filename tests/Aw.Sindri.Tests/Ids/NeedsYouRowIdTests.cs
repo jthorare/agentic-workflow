@@ -54,4 +54,17 @@ public sealed class NeedsYouRowIdTests
     [InlineData("setup:repo\n", false)]
     public void A_setup_row_id_names_repo_recipes_or_mcp_only(string text, bool valid) =>
         Assert.Equal(valid, NeedsYouRowId.TryParse(text, provider: null, out _));
+
+    // #2543: an 'ask_owner' node in a 'for_each' body has one row per item, so only 'question:' takes an item part, counted from 1
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("question:nightly@3:12:ask", true)]
+    [InlineData("question:nightly@3:12:ask:1", true)]
+    [InlineData("question:nightly@3:12:ask:42", true)]
+    [InlineData("question:nightly@3:12:ask:0", false)]
+    [InlineData("question:nightly@3:12:ask:01", false)]
+    [InlineData("question:nightly@3:12:ask:", false)]
+    [InlineData("question:nightly@3:12:ask:x", false)]
+    [InlineData("workflow-notify:nightly@3:12:note:1", false)]
+    public void A_question_row_id_may_name_its_loop_item(string text, bool valid) =>
+        Assert.Equal(valid, NeedsYouRowId.TryParse(text, provider: null, out _));
 }
