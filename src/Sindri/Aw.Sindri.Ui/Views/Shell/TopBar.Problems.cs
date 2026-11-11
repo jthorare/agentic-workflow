@@ -72,10 +72,30 @@ internal sealed partial class TopBar
     }
 
     // Remembered after a whole measure: the pill's width less its problem text and that text's margin.
+    // The group's own DesiredSize is clamped to its column when the bar is short of room, so it reads too small.
+    // The group measures its children with unlimited width, so the sum of their widths is the pill's real width.
     private void RememberPillRest()
     {
         var problems = PillProblems.IsVisible ? PillProblems.DesiredSize.Width : 0;
-        _pillRest = Math.Max(0, PillGroup.DesiredSize.Width - problems);
+        _pillRest = Math.Max(0, PillNaturalWidth() - problems);
+    }
+
+    private double PillNaturalWidth()
+    {
+        double total = 0;
+        var visible = 0;
+        foreach (var child in PillGroup.Children)
+        {
+            if (!child.IsVisible)
+            {
+                continue;
+            }
+
+            total += child.DesiredSize.Width;
+            visible++;
+        }
+
+        return total + (PillGroup.Spacing * Math.Max(0, visible - 1));
     }
 
     // Decides whether the age gives way to the problem text, applies it, and returns the room the problem text then has.
