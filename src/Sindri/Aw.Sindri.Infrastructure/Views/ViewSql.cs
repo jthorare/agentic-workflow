@@ -30,7 +30,7 @@ internal static class ViewSql
     {
         [ViewNames.Services] = new ViewTable("view_services"),
         [ViewNames.Profile] = new ViewTable("view_profile"),
-        [ViewNames.Items] = new ViewTable("view_items"),
+        [ViewNames.Items] = new ViewTable("view_items", Columns(ViewNames.Items)),
         [ViewNames.ItemAliases] = new ViewTable("view_item_aliases"),
         [ViewNames.ItemTimeline] = new ViewTable("view_item_timeline"),
         [ViewNames.Requests] = new ViewTable("view_requests", Columns(ViewNames.Requests)),
