@@ -123,6 +123,41 @@ public sealed class WorkflowsFramesTests : FrameHost
         Frame(window, "create-refused-1280", Prefix);
     });
 
+    // qa (#2719): a server refusal left an empty laid-out line above its red sentence (37 px below the template text against 13 px for the local taken-id line). Both red sentences start at the same y,
+    // with nothing empty between them and the template description.
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(1280)]
+    public Task A_server_refusal_and_the_local_taken_id_line_start_at_the_same_y(double width) => OnUi(async () =>
+    {
+        Server.WorkflowsAnswer = RouteAnswer.Api("workflows", "list-two");   // holds morning-check, so the form says it before Create
+        Server.CreateWorkflowAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.Conflict, "SND-GRAPH-009", "the slug 'evening-check' belongs to another workflow; pick another");
+        var (window, shell) = await Connected(width: width, height: 900);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.Rows.Count > 0, "the Workflows page never read the list");
+        shell.Workflows.OpenCreate();
+        shell.Workflows.NewName = "Morning check";
+        await Until(window, () => Visible(window, "WorkflowsNewReason"), "the local taken-id line never showed");
+        Settle(window);
+        var local = RedLineTop(window);
+
+        shell.Workflows.NewName = "Evening check";
+        await shell.Workflows.Create(CancellationToken.None);
+        await Until(window, () => Visible(window, "WorkflowsCreateError"), "the server refusal never showed");
+        Settle(window);
+        var server = RedLineTop(window);
+
+        Assert.True(Math.Abs(local - server) < 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the local line starts at y={local} and the server refusal at y={server}"));
+    });
+
+    // The top of the form's red sentence (the visible one of the local reason and the server refusal), measured inside the form.
+    private static double RedLineTop(Window window)
+    {
+        var form = Named<Control>(window, "WorkflowsCreateForm");
+        var text = form.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("invalid") && t.IsEffectivelyVisible && !string.IsNullOrEmpty(t.Text));
+        return text.TranslatePoint(default, form)!.Value.Y;   // why: the text is inside the form
+    }
+
     [Fact]
     public Task A_row_title_does_not_hug_the_rows_top_border_and_New_workflow_sits_in_the_header_beside_the_list() => OnUi(async () =>
     {
