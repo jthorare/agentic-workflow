@@ -22,7 +22,7 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     /// <summary>The workflow's name.</summary>
     public string Title { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>"Revision 1 of 2 · 2 nodes · created by owner"; empty when the workflow could not be read.</summary>
+    /// <summary>"Revision 1 of 2 · 2 nodes · created by owner" ("2 nodes · created by you" with no active revision); empty when the workflow could not be read.</summary>
     public string DetailText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>"1 running · 3 runs"; empty until the first answer.</summary>
@@ -166,6 +166,6 @@ internal sealed class RunsViewModel(ISindriApi api, TimeProvider clock) : Observ
     private static string Detail(WorkflowView workflow)
     {
         var nodes = workflow.Spec.ValueKind == JsonValueKind.Object && workflow.Spec.TryGetProperty("nodes", out var list) && list.ValueKind == JsonValueKind.Array ? list.GetArrayLength() : 0;
-        return Labels.WfDetail(workflow.Revision, workflow.LatestRevision, nodes, workflow.CreatedBy);
+        return Labels.WfDetail(workflow.Revision, workflow.LatestRevision, nodes, workflow.CreatedBy, workflow.ActiveRevision is not null);
     }
 }

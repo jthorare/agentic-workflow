@@ -17,6 +17,9 @@ internal sealed class SqliteMessageStore(MetaDatabase database) : IMessageStore
         return rows.IsError ? rows.Error : rows.Value.Count == 0 ? 0L : rows.Value[0];
     }
 
+    public ValueTask<Result<IReadOnlyList<string>>> Transcripts(CancellationToken cancellationToken) =>
+        database.Query(MessageSql.AllTranscripts, reader => reader.GetString(0), cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<MessageId>>> RecordInbound(string transcript, long offset, IReadOnlyList<InboxMessage> messages, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(messages);
