@@ -1,4 +1,5 @@
 using Aw.Meta.Core.Coordination;
+using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Poll;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Routing;
@@ -27,6 +28,7 @@ public static class MetaCoreServiceCollectionExtensions
         .AddScoped<LaneStopGuard>()
         .AddScoped<LaneHealthReader>()
         .AddScoped<LaneContextReader>()
+        .AddScoped<MissingLanes>()
         .AddScoped<PaneSubmitter>()
         .AddScoped<UsageReader>()
         .AddScoped<UsageWatcher>()
