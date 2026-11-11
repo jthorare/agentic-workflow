@@ -16,7 +16,7 @@
           <TextBlock x:Name="AgentsHead" Classes="caption subtle" Text="{Binding Head}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
       </StackPanel>
-      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsVisible="{Binding ShowsFilters}">
         <ComboBox x:Name="ProviderFilter" ItemsSource="{Binding ProviderChoices}" SelectedIndex="0" IsEnabled="{Binding FiltersEnabled}" SelectionChanged="OnProviderChosen"
                   MinWidth="150" AutomationProperties.Name="{Binding ProviderFilterName}" />
         <ComboBox x:Name="StateFilter" ItemsSource="{Binding StateChoices}" SelectedIndex="0" IsEnabled="{Binding FiltersEnabled}" SelectionChanged="OnStateChosen"
@@ -46,7 +46,7 @@
     </ItemsControl>
 
     <Border x:Name="AgentsPanel" Classes="panel" AutomationProperties.Name="Agents" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
-      <StackPanel>
+      <StackPanel Grid.IsSharedSizeScope="True">
         <Border x:Name="AgentsReadingName" Margin="16,8" IsVisible="{Binding IsReading}" AutomationProperties.Name="{Binding ReadingText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption quiet" Text="{Binding ReadingText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
@@ -69,12 +69,20 @@
         <Button x:Name="AgentsClearFilters" Margin="16,0,16,8" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Click="OnClearFilters" IsVisible="{Binding ShowsClearFilters}" Content="{Binding ClearFiltersText}"
                 AutomationProperties.Name="{Binding ClearFiltersText}" />
         <Border x:Name="AgentsColumns" Padding="16,4" IsVisible="{Binding HasColumns}" AutomationProperties.AccessibilityView="Raw">
-          <Grid x:Name="AgentsColumnsGrid" ColumnDefinitions="150,2*,1.2*,120,1.4*,56">
-            <TextBlock Classes="caption subtle" Text="{Binding Columns.Status}" />
-            <TextBlock Grid.Column="1" Classes="caption subtle" Text="{Binding Columns.Agent}" />
-            <TextBlock Grid.Column="2" Classes="caption subtle" Text="{Binding Columns.Repo}" IsVisible="{Binding IsWide}" />
-            <TextBlock Grid.Column="3" Classes="caption subtle" Text="{Binding Columns.Where}" IsVisible="{Binding IsWide}" />
-            <TextBlock Grid.Column="4" Classes="caption subtle" Text="{Binding Columns.Doing}" IsVisible="{Binding IsWide}" />
+          <Grid x:Name="AgentsColumnsGrid">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" MinWidth="136" SharedSizeGroup="AgStatus" />
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" SharedSizeGroup="AgRepo" />
+              <ColumnDefinition Width="Auto" SharedSizeGroup="AgWhere" />
+              <ColumnDefinition Width="Auto" SharedSizeGroup="AgDoing" />
+              <ColumnDefinition Width="Auto" MinWidth="56" SharedSizeGroup="AgFor" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Status}" />
+            <TextBlock Grid.Column="1" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Agent}" />
+            <TextBlock Grid.Column="2" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Repo}" IsVisible="{Binding ShowsRepo}" />
+            <TextBlock Grid.Column="3" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Where}" IsVisible="{Binding ShowsWhere}" />
+            <TextBlock Grid.Column="4" Margin="0,0,8,0" Classes="caption subtle" Text="{Binding Columns.Doing}" IsVisible="{Binding ShowsDoing}" />
             <TextBlock Grid.Column="5" Classes="caption subtle" Text="{Binding Columns.For}" HorizontalAlignment="Right" />
           </Grid>
         </Border>

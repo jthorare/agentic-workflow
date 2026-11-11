@@ -32,6 +32,9 @@ live_pid() {
 # of the mkdir has no file for a moment, so a waiter can scan the guard without seeing it; the winner's own scan after its
 # announce sees that waiter and backs off. An empty guard is a holder between its mkdir and its pid file, and is cleared only
 # once over a minute old (_start_guard_rmdir_if_old), never because it looked empty twice.
+# Every back-off removes the taker's own pid file and then tries `rmdir` on the guard: the last taker out removes it, and
+# `rmdir` of a guard that still holds a file fails harmlessly. Two overlapping takers that both backed off left an empty, young
+# guard that made every later taker leave for about a minute (#2631, as #2616).
 # A waiter that finds the guard empty checks its age BEFORE it writes its pid file: the write would touch the guard and keep it
 # young forever (#2613).
 _start_guard_rmdir_if_old() {
@@ -73,18 +76,18 @@ take_over_dead() { # <owner seen dead>
       '' | *[!0-9]*) rm -f "$f" ;;   # not a pid file (an older install's `owner`): nobody holds the guard through it
       "$lane_pid") ;;
       *)
-        if live_pid "$p"; then rm -f "$guard/$lane_pid"; return 0; fi
+        if live_pid "$p"; then rm -f "$guard/$lane_pid"; rmdir "$guard" 2> /dev/null; return 0; fi
         if [ -z "$dead" ]; then dead="$f"; else rm -f "$f"; fi
         ;;
     esac
   done
   if [ -n "$dead" ]; then
-    rm "$dead" 2> /dev/null || { rm -f "$guard/$lane_pid"; return 0; }   # another taker took that dead file
+    rm "$dead" 2> /dev/null || { rm -f "$guard/$lane_pid"; rmdir "$guard" 2> /dev/null; return 0; }   # another taker took that dead file
   elif [ "$winner" = 0 ]; then
     # only our own file: indistinguishable from the empty guard of a winner that has not announced yet, which scans after us
-    # and would see us live. Leave; the guard is cleared once it is over a minute old.
-    rm -f "$guard/$lane_pid"
-    _start_guard_rmdir_if_old "$guard"
+    # and would see us live. Leave. If we were the last file, remove the guard: a winner between its mkdir and its write
+    # fails its own write then and backs off, and the next taker starts on a clean slate.
+    rm -f "$guard/$lane_pid"; rmdir "$guard" 2> /dev/null
     return 0
   fi
   _start_guard_body "$guard"

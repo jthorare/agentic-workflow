@@ -63,11 +63,11 @@ public sealed class ProjectAddViewTests : FrameHost
     });
 
     [Fact]
-    public Task The_empty_blocks_button_opens_the_sheet_too() => OnUi(async () =>
+    public Task In_the_empty_state_the_header_Add_project_opens_the_sheet() => OnUi(async () =>
     {
         var (window, shell) = await OnProjects("empty-leads-nothing");
 
-        Click(window, "ProjectsAddEmpty");
+        Click(window, "ProjectsAdd");
 
         await Until(window, () => shell.IsProjectAddSheet, "the sheet never opened");
     });

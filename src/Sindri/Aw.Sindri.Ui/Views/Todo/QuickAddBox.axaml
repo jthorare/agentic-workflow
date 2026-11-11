@@ -19,7 +19,7 @@
     <Border x:Name="QuickAddCard" Classes="quick-add" Width="560" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,56,0,0"
             KeyboardNavigation.TabNavigation="Cycle" AutomationProperties.Name="{Binding Name}"
             AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Window">
-      <StackPanel Spacing="6">
+      <StackPanel Spacing="8">
         <TextBox x:Name="QuickAddField" Text="{Binding Text}" PlaceholderText="{Binding Placeholder}" AutomationProperties.Name="{Binding Name}" />
         <TextBlock x:Name="QuickAddPreview" Classes="caption subtle" Text="{Binding Preview}" AutomationProperties.Name="{Binding Preview}"
                    AutomationProperties.LiveSetting="Polite" />

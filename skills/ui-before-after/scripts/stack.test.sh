@@ -22,6 +22,7 @@ release_port_lock() {
 }
 
 claim_port_block() {
+  # test-ports: ok: the slot is only a starting point; the block is claimed under an mkdir lock and checked free with lsof (#2596)
   local slot=$(($$ % PORT_BLOCKS)) i base lock p free
   mkdir -p "$PORT_LOCKS"
   for ((i = 0; i < PORT_BLOCKS; i++)); do

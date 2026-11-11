@@ -1,4 +1,6 @@
+using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Docs;
@@ -7,6 +9,7 @@ using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Validation;
 using Aw.Sindri.Infrastructure.WorkflowDocs;
 using Aw.Sindri.Tests.Graph.Blocks;
+using Aw.Sindri.Tests.Toolkits;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Graph.Docs;
@@ -21,7 +24,19 @@ public sealed class WorkflowDocsTests
         new BlockFakes.ScriptedModelPort("{}"),
         more: [.. GraphBlockRegistry.FlowBlocks(new FlowFakes.MemorySeenStore(), new FlowFakes.RecordingItemPort(), new FlowFakes.ScriptedCallPort(), new FlowFakes.ScriptedHttpPort()),
             .. GraphBlockRegistry.ParkingBlocks(new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider()),
+            .. GraphBlockRegistry.MemoryBlocks(new BlockFakes.RecordingMemoryPort()),
+            new CallToolBlock(new FakeRunningToolkits([]), new NoConnections()),
             .. GraphBlockRegistry.CodeBlocks(new FlowFakes.ScriptedCodePort())]);
+
+    // why: the docs only need 'call_tool' registered; no example reaches a connection, so every call is refused
+    private sealed class NoConnections : IConnectionToolPort
+    {
+        public ValueTask<Result<IReadOnlyList<ConnectionTool>>> ListTools(string connection, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(Results.Failure<IReadOnlyList<ConnectionTool>>(SindriErrors.ConnectionNotFound.With($"no connection '{connection}'")));
+
+        public ValueTask<Result<string>> Call(string connection, string tool, string argumentsJson, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(Results.Failure<string>(SindriErrors.ConnectionNotFound.With($"no connection '{connection}'")));
+    }
 
     private static GraphValidator Validator() => new(new GraphValidationContext(
         Registry().Types,

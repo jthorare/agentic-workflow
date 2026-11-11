@@ -53,6 +53,12 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     public static IReadOnlyList<IGraphBlock> ParkingBlocks(IQuestionPort questions, TimeProvider clock) =>
         [new WaitBlock(clock), new AskOwnerBlock(questions, clock)];
 
+    /// <summary>The memory blocks: memory_search (Recall), memory_write (Remember) and memory_forget (Forget).</summary>
+    /// <param name="memory">Where the blocks reach the Sindri memory stores.</param>
+    /// <returns>The three blocks.</returns>
+    public static IReadOnlyList<IGraphBlock> MemoryBlocks(IGraphMemoryPort memory) =>
+        [new MemorySearchBlock(memory), new MemoryWriteBlock(memory), new MemoryForgetBlock(memory)];
+
     /// <summary>The 'code' block of agent-first PR 9 part C: C# through Roslyn in a sandboxed runner process.</summary>
     /// <param name="code">Compiles and runs a 'code' node's body.</param>
     /// <returns>The block.</returns>

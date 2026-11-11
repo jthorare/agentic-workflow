@@ -55,7 +55,7 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="lvm:LinearSinceGroupViewModel">
               <StackPanel>
-                <Border x:Name="LinearSinceGroupHeader" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="16,4" MinHeight="32">
+                <Border x:Name="LinearSinceGroupHeader" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="16,4" MinHeight="{StaticResource Row.Height.Default}">
                   <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                       <TextBlock Classes="body-strong" Text="{Binding Heading}" />
@@ -67,7 +67,7 @@
                 <ItemsControl ItemsSource="{Binding ShownRows}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="lvm:LinearSinceRowViewModel">
-                      <Border x:Name="LinearSinceRowFrame" Classes="item-row clickable" MinHeight="32">
+                      <Border x:Name="LinearSinceRowFrame" Classes="item-row clickable">
                         <Button x:Name="LinearSinceRowOpen" Classes="row-title" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ClipToBounds="True"
                                 Click="OnOpenStripRow" AutomationProperties.Name="{Binding Name}">
                           <Grid ColumnDefinitions="*,168,72,132,24,64" Margin="0,8">

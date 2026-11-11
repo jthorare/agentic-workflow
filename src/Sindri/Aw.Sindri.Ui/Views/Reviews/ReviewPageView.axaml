@@ -67,7 +67,7 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="rvm:ReviewStripSegmentViewModel">
             <Button x:Name="ReviewStripSegment" Click="OnStripSegment" Margin="0,0,8,4" AutomationProperties.Name="{Binding AutomationName}" IsEnabled="{Binding !IsLoading}">
-              <StackPanel Orientation="Horizontal" Spacing="6">
+              <StackPanel Orientation="Horizontal" Spacing="8">
                 <icons:StateIcon Glyph="{Binding Glyph}" VerticalAlignment="Center" IsVisible="{Binding !IsLoading}" />
                 <TextBlock Classes="caption" Text="{Binding Text}" />
               </StackPanel>
@@ -130,7 +130,7 @@
                         <ItemsControl.ItemTemplate>
                           <DataTemplate x:DataType="rvm:ReviewPanelLine">
                             <StackPanel Margin="0,2">
-                              <StackPanel Orientation="Horizontal" Spacing="6">
+                              <StackPanel Orientation="Horizontal" Spacing="8">
                                 <icons:StateIcon Glyph="{Binding Glyph}" VerticalAlignment="Center" />
                                 <TextBlock Classes="body" Text="{Binding Primary}" TextWrapping="Wrap" />
                               </StackPanel>

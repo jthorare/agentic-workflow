@@ -50,6 +50,20 @@ public sealed class HttpControlPlaneProbeContractTests : ControlPlaneProbeContra
     }
 
     [Fact(Timeout = 10_000)]
+    public async Task A_slow_but_healthy_answer_is_found()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var server = new PingServer(new Ping(42, 3), delay: TimeSpan.FromSeconds(2.5));   // over the 2 s connect budget: a cold app's first ping on a loaded box (#2641)
+        _servers.Add(server);
+        _ = await _endpoints.Write(new ControlEndpoint(server.Url, 42, 3), ct);
+
+        var found = await Probe().Check(ct);
+
+        Assert.True(found.IsSuccess, found.IsError ? found.Error.Message : null);
+        Assert.Equal(new Ping(42, 3), found.Value.Ping);
+    }
+
+    [Fact(Timeout = 10_000)]
     public async Task A_listener_that_never_answers_is_a_timeout()
     {
         var ct = TestContext.Current.CancellationToken;
@@ -57,12 +71,15 @@ public sealed class HttpControlPlaneProbeContractTests : ControlPlaneProbeContra
         _servers.Add(server);
         _ = await _endpoints.Write(new ControlEndpoint(server.Url, 42, 3), ct);
 
-        Assert.Equal(SindriErrors.ApiTimeout.Code, (await Probe().Check(ct)).Error.Code);
+        var found = await Probe(answer: TimeSpan.FromSeconds(1)).Check(ct);   // the default answer cap is 15 s; a short one keeps the test quick
+
+        Assert.Equal(SindriErrors.ApiTimeout.Code, found.Error.Code);
+        Assert.EndsWith("didn't answer the ping within 1 s", found.Error.Message, StringComparison.Ordinal);
     }
 
-    private HttpControlPlaneProbe Probe()
+    private HttpControlPlaneProbe Probe(TimeSpan? answer = null)
     {
-        var probe = new HttpControlPlaneProbe(_endpoints, SliceHarness.Json);
+        var probe = new HttpControlPlaneProbe(_endpoints, SliceHarness.Json, answer);
         _probes.Add(probe);
         return probe;
     }

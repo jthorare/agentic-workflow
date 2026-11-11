@@ -39,6 +39,8 @@ safe_name() { [[ "$1" =~ ^[A-Za-z0-9._-]+$ ]] && [[ "$1" =~ [^.] ]]; }
 # write_id <dir> <file>: atomically, 0600.
 write_id() {
   local tmp
+  # An unchanged id is not rewritten: the file's mtime is the session's start, which lane-recycle checks digests against (#2691).
+  [ "$(tr -d '[:space:]' 2> /dev/null < "$1/$2")" = "$ID" ] && return 0
   mkdir -p "$1" 2> /dev/null || return 1
   tmp="$(umask 077 && mktemp "$1/.$2.XXXXXX")" || return 1
   if printf '%s\n' "$ID" > "$tmp" && chmod 600 "$tmp" && mv -f "$tmp" "$1/$2"; then return 0; fi

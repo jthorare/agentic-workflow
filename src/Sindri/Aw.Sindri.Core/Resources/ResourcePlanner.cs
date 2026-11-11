@@ -108,7 +108,8 @@ public static partial class ResourcePlanner
     private static Error NameInvalid(string what) => SindriErrors.ResourceInvalid.With($"A {what} name is lowercase letters, digits and '-', 1 to 64 characters, starting with a letter or digit.");
 
     // Declared limits pass through as text: LimitsResolver clamps them to the profile and the box. They must be exactly what
-    // SandboxUnits.ParseSize (KiB, MiB, GiB, TiB only) and ParsePercent accept, or the resolver would throw on a launch.
+    // SandboxUnits.ParseSize (KiB, MiB, GiB, TiB only) and ParsePercent accept, or the resolver would throw on a launch:
+    // the short forms the graph validator accepts (4g) are converted to that KiB..TiB spelling here.
     private static Result<ResourceLimitOverride?> Limits(SandboxResource? sandbox)
     {
         if (sandbox is null)
@@ -116,9 +117,10 @@ public static partial class ResourcePlanner
             return (ResourceLimitOverride?)null;
         }
 
-        if (sandbox.Memory is not null && !(ResourceSizes.TryParse(sandbox.Memory, out _) && sandbox.Memory.EndsWith("iB", StringComparison.Ordinal)))
+        string? memory = null;
+        if (sandbox.Memory is not null && !ResourceSizes.TryNormalize(sandbox.Memory, out memory))
         {
-            return SindriErrors.ResourceInvalid.With("A sandbox memory is a whole number and KiB, MiB, GiB or TiB, such as 4GiB.");
+            return SindriErrors.ResourceInvalid.With("A sandbox memory is a whole number and k, m, g, t, KiB, MiB, GiB or TiB, such as 4g or 4GiB.");
         }
 
         if (sandbox.Cpu is not null && !CpuShape.IsMatch(sandbox.Cpu))
@@ -137,7 +139,7 @@ public static partial class ResourcePlanner
             wall = duration.Span;
         }
 
-        return new ResourceLimitOverride(sandbox.Memory, sandbox.Cpu, wall);
+        return new ResourceLimitOverride(memory, sandbox.Cpu, wall);
     }
 
     [GeneratedRegex("^[a-z0-9][a-z0-9-]{0,63}\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]

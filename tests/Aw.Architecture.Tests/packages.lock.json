@@ -947,6 +947,9 @@
           "SkiaSharp.NativeAssets.macOS": "[3.119.4, 3.119.4]"
         }
       },
+      "sindri-code-runner": {
+        "type": "Project"
+      },
       "sindri-ui": {
         "type": "Project",
         "dependencies": {

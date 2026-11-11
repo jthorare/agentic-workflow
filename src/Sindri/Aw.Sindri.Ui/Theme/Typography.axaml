@@ -8,42 +8,49 @@
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.PageTitle.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.PageTitle.LineHeight}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="LetterSpacing" Value="-0.4" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.PageTitle.Weight}" />
+    <Setter Property="LetterSpacing" Value="-0.3" />
+  </Style>
+  <Style Selector="TextBlock.section-title">
+    <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
+    <Setter Property="FontSize" Value="{DynamicResource Type.SectionTitle.Size}" />
+    <Setter Property="LineHeight" Value="{DynamicResource Type.SectionTitle.LineHeight}" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.SectionTitle.Weight}" />
+    <Setter Property="LetterSpacing" Value="-0.15" />
   </Style>
   <Style Selector="TextBlock.detail-title">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.DetailTitle.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.DetailTitle.LineHeight}" />
-    <Setter Property="FontWeight" Value="Medium" />
-    <Setter Property="LetterSpacing" Value="-0.3" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.DetailTitle.Weight}" />
+    <Setter Property="LetterSpacing" Value="-0.24" />
   </Style>
   <Style Selector="TextBlock.body">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Body.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Body.LineHeight}" />
-    <Setter Property="FontWeight" Value="Normal" />
-    <Setter Property="LetterSpacing" Value="0" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.Body.Weight}" />
+    <Setter Property="LetterSpacing" Value="-0.13" />
   </Style>
   <Style Selector="TextBlock.body-strong">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.BodyStrong.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.BodyStrong.LineHeight}" />
-    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.BodyStrong.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
   </Style>
   <Style Selector="TextBlock.caption">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Caption.LineHeight}" />
-    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.Caption.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
   </Style>
   <Style Selector="TextBlock.eyebrow">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Eyebrow.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Eyebrow.LineHeight}" />
-    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.Eyebrow.Weight}" />
     <Setter Property="LetterSpacing" Value="0.4" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
@@ -51,14 +58,14 @@
     <Setter Property="FontFamily" Value="{DynamicResource Font.Text}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Button.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Button.LineHeight}" />
-    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.Button.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
   </Style>
   <Style Selector="TextBlock.mono">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Mono.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Mono.LineHeight}" />
-    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.Mono.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
   </Style>
   <!-- A type selector matches the exact type, so the copyable mono text (a model trace) needs its own. -->
@@ -66,14 +73,14 @@
     <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Mono.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Mono.LineHeight}" />
-    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.Mono.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
   </Style>
   <Style Selector="TextBlock.kbd">
     <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.Kbd.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.Kbd.LineHeight}" />
-    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.Kbd.Weight}" />
     <Setter Property="LetterSpacing" Value="0" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
@@ -83,8 +90,8 @@
     <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
     <Setter Property="FontSize" Value="{DynamicResource Type.DetailTitle.Size}" />
     <Setter Property="LineHeight" Value="{DynamicResource Type.DetailTitle.LineHeight}" />
-    <Setter Property="FontWeight" Value="Medium" />
-    <Setter Property="LetterSpacing" Value="-0.3" />
+    <Setter Property="FontWeight" Value="{DynamicResource Type.DetailTitle.Weight}" />
+    <Setter Property="LetterSpacing" Value="-0.24" />
   </Style>
   <!-- Buttons whose content is a plain string: their text is a Button step, not Fluent's fixed 14. -->
   <Style Selector="Button">

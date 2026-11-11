@@ -140,7 +140,7 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.XS}" />
     <Setter Property="Padding" Value="4,1" />
-    <Setter Property="MinWidth" Value="{DynamicResource Size.Icon}" />
+    <Setter Property="MinWidth" Value="{DynamicResource Size.KeyCap}" />
   </Style>
   <Style Selector="Border.kbd > TextBlock">
     <Setter Property="HorizontalAlignment" Value="Center" />
@@ -153,11 +153,13 @@
   </Style>
 
   <!-- S2: a Health section head's eyebrow sits on the baseline of the state word at its right. Avalonia has no baseline
-       alignment: centred in the head row, the 11 px eyebrow's baseline sits about 1.3 px above the 13 px word's, and a
-       1 px top margin with the layout's whole-pixel rounding puts the two within half a pixel at text scale 1.0 and 1.3
-       (the Health view test measures it). -->
+       alignment, so the eyebrow takes the word's line (BodyStrong) and is top-aligned, as a row label is (R12). On that
+       line the 11 px eyebrow's baseline is 0.73 px above the 13 px word's (0.95 at text scale 1.3); a 1 px top margin puts
+       it 0.27 and 0.05 px below, within the half pixel the Health view test allows (#2677). Centred on its own line, the
+       margin it needed moved with every line height change. -->
   <Style Selector="TextBlock.head-eyebrow">
-    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="LineHeight" Value="{DynamicResource Type.BodyStrong.LineHeight}" />
     <Setter Property="Margin" Value="0,1,0,0" />
   </Style>
 
@@ -231,7 +233,7 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.LG}" />
   </Style>
   <Style Selector="Border.phead">
-    <Setter Property="MinHeight" Value="{StaticResource Size.Row}" />
+    <Setter Property="MinHeight" Value="{StaticResource Size.PanelHeader}" />
     <Setter Property="Padding" Value="16,0" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
