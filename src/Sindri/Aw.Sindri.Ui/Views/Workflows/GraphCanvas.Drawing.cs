@@ -12,6 +12,7 @@ internal sealed partial class GraphCanvas
     private const double ArrowSize = 9;
     private const double Radius = 8;
     private const double RingGap = 3;
+    private const double EndStub = 22;
 
     /// <inheritdoc/>
     public override void Render(DrawingContext context)
@@ -36,6 +37,11 @@ internal sealed partial class GraphCanvas
             foreach (var edge in graph.Edges)
             {
                 DrawEdge(context, edge);
+            }
+
+            foreach (var end in graph.Ends)
+            {
+                DrawEnd(context, end);
             }
 
             foreach (var node in graph.Nodes)
@@ -81,6 +87,15 @@ internal sealed partial class GraphCanvas
             context.DrawRectangle(Brush("Brush.Surface1"), new Pen(Brush("Brush.Hairline"), 1), pill, 4, 4);
             context.DrawText(text, new Point(pill.X + 6, pill.Y + 2));
         }
+    }
+
+    private void DrawEnd(DrawingContext context, GraphEnd end)
+    {
+        var faint = Brush("Brush.InkSubtle");
+        var (from, to) = (new Point(end.At.X, end.At.Y), new Point(end.At.X + EndStub, end.At.Y));
+        context.DrawLine(new Pen(faint, 1, DashStyle.Dash), from, to);
+        var text = Text(end.Text, 11, faint, 120, semiBold: false);
+        context.DrawText(text, new Point(to.X + 6, to.Y - (text.Height / 2)));
     }
 
     private void DrawNode(DrawingContext context, GraphNodeViewModel node)

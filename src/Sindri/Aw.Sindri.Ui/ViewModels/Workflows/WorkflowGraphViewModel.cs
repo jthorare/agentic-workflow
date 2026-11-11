@@ -15,6 +15,8 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     /// <summary>A node card's height in the world.</summary>
     internal const double CardHeight = 64;
 
+    private const double BranchGap = 14;   // a missing branch's end sits this far above (true) or below (false) the card's middle
+
     /// <summary>Builds the graph.</summary>
     /// <param name="workflow">The workflow as served.</param>
     /// <param name="statuses">The latest run's status word (as served) per node id, or null when no run is shown.</param>
@@ -45,6 +47,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         Nodes = nodes;
         Unplaced = unplaced;
         Edges = BuildEdges(workflow.Spec, nodes);
+        Ends = BuildEnds(nodes, Edges);
         Order = [.. nodes.OrderBy(n => n.X).ThenBy(n => n.Y).ThenBy(n => n.Id, StringComparer.Ordinal)];
     }
 
@@ -74,7 +77,7 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
     public IReadOnlyList<GraphNodeViewModel> Nodes { get; }
 
     /// <summary>The branches of condition steps that have no edge, each drawn as "false → done".</summary>
-    public IReadOnlyList<GraphEnd> Ends { get; } = [];
+    public IReadOnlyList<GraphEnd> Ends { get; }
 
     /// <summary>The arrows; an edge naming a node the spec lacks is left out.</summary>
     public IReadOnlyList<GraphEdgeViewModel> Edges { get; }
@@ -232,6 +235,23 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
         }
 
         return edges;
+    }
+
+    private static List<GraphEnd> BuildEnds(List<GraphNodeViewModel> nodes, IReadOnlyList<GraphEdgeViewModel> edges)
+    {
+        var ends = new List<GraphEnd>();
+        foreach (var node in nodes.Where(n => string.Equals(n.Type, "condition", StringComparison.Ordinal)))
+        {
+            foreach (var (branch, lift) in new[] { ("true", -BranchGap), ("false", BranchGap) })
+            {
+                if (!edges.Any(e => string.Equals(e.From, node.Id, StringComparison.Ordinal) && string.Equals(e.Label, branch, StringComparison.Ordinal)))
+                {
+                    ends.Add(new GraphEnd(node.Id, branch + " \u2192 done", new GraphPoint(node.X + CardWidth, node.Y + (CardHeight / 2) + lift)));
+                }
+            }
+        }
+
+        return ends;
     }
 
     private static string Text(JsonElement element, string name) =>
