@@ -14080,7 +14080,12 @@ Aw.Sindri.Core.Projects.Cards.ProjectOrigin
 Aw.Sindri.Core.Projects.Cards.ProjectOrigin.Attached = 1 -> Aw.Sindri.Core.Projects.Cards.ProjectOrigin
 Aw.Sindri.Core.Projects.Cards.ProjectOrigin.HandMade = 2 -> Aw.Sindri.Core.Projects.Cards.ProjectOrigin
 Aw.Sindri.Core.Projects.Cards.ProjectOrigin.Led = 0 -> Aw.Sindri.Core.Projects.Cards.ProjectOrigin
+Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode
+Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode.LinearKeyMissing = 1 -> Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode
+Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode.LinearMissing = 0 -> Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode
 Aw.Sindri.Core.Projects.Cards.ProjectsPage
+Aw.Sindri.Core.Projects.Cards.ProjectsPage.EmptyCode.get -> Aw.Sindri.Core.Projects.Cards.ProjectsEmptyCode?
+Aw.Sindri.Core.Projects.Cards.ProjectsPage.EmptyCode.init -> void
 Aw.Sindri.Core.Projects.Cards.ProjectsPage.<Clone>$() -> Aw.Sindri.Core.Projects.Cards.ProjectsPage!
 Aw.Sindri.Core.Projects.Cards.ProjectsPage.Deconstruct(out string? Empty, out string? Viewer, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>! Freshness, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Projects, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Finished, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Hidden) -> void
 Aw.Sindri.Core.Projects.Cards.ProjectsPage.Empty.get -> string?

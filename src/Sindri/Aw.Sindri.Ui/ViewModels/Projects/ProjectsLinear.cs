@@ -8,15 +8,15 @@ namespace Aw.Sindri.Ui.ViewModels.Projects;
 /// </summary>
 internal static class ProjectsLinear
 {
-    /// <summary>True when the served sentence says the profile has no Linear token.</summary>
-    /// <param name="empty">The served sentence, or null.</param>
-    /// <returns>True for the missing-key sentence.</returns>
-    internal static bool IsKeyMissing(string? empty) => empty?.StartsWith(Labels.ProjectsServedNoKey, StringComparison.Ordinal) == true;
+    /// <summary>True when the served code says the profile has no Linear token.</summary>
+    /// <param name="list">The served list.</param>
+    /// <returns>True for the missing-key code.</returns>
+    internal static bool IsKeyMissing(ProjectList list) => string.Equals(list.EmptyCode, "linear-key-missing", StringComparison.Ordinal);
 
     /// <summary>True when the page offers Connect Linear: no key, or Linear not connected at all.</summary>
-    /// <param name="empty">The served sentence, or null.</param>
+    /// <param name="list">The served list.</param>
     /// <returns>True when Connect Linear helps.</returns>
-    internal static bool OffersConnect(string? empty) => IsKeyMissing(empty) || empty?.StartsWith(Labels.ProjectsServedNoLinear, StringComparison.Ordinal) == true;
+    internal static bool OffersConnect(ProjectList list) => IsKeyMissing(list) || string.Equals(list.EmptyCode, "linear-missing", StringComparison.Ordinal);
 
     /// <summary>The sentence the page shows: the served one, except the missing-key one, which is said in plain words with the last read (no terminal command).</summary>
     /// <param name="list">The served list.</param>
@@ -24,7 +24,7 @@ internal static class ProjectsLinear
     /// <returns>The sentence, or null.</returns>
     internal static string? Sentence(ProjectList list, DateTimeOffset now)
     {
-        if (!IsKeyMissing(list.Empty))
+        if (!IsKeyMissing(list))
         {
             return list.Empty;
         }
@@ -42,7 +42,7 @@ internal static class ProjectsLinear
         var parts = list.Freshness.Select(f => Labels.ProjectFreshnessPart(f.Source, f.Text)).ToList();
         if (list.Viewer is { } viewer)
         {
-            parts.Add(IsKeyMissing(list.Empty) ? Labels.ProjectViewerLastSeen(viewer) : Labels.ProjectViewer(viewer));
+            parts.Add(IsKeyMissing(list) ? Labels.ProjectViewerLastSeen(viewer) : Labels.ProjectViewer(viewer));
         }
 
         return string.Join(" · ", parts);
