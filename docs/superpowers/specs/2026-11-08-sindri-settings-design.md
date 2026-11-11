@@ -1,7 +1,7 @@
 # Sindri v2: settings, no profile (#2373)
 
-Status: draft, for the owner's read. Part of #2258. Stacked after #2357 (which removes the approval step) and
-#2356 (which retires recipes).
+Status: draft, for the owner's read. Part of #2258. Rebased on main on 2026-11-10: #2357 (#2258 PR 1, "edits apply on
+save") and #2356 (retires recipes) are both merged, and this spec builds on them.
 
 ## 1. The decision
 
@@ -12,12 +12,21 @@ Owner, 2026-11-08, in three parts:
 3. Workflows keep their own versions as DB rows with an active flag. Any session, agents included, may change
    settings, and the ledger records who changed what.
 
+#2357 already removed the approval step. `IApprovals`, `ProfileChangeApproval` and `ApproveProfileService` are gone.
+`POST /sindri/profile/approve` is a tombstone (`ApproveProfileEndpoint.cs`): it answers 410 `SND-API-014`, "That
+route was removed", for one release, and this spec keeps it as is. `sindri profile approve` prints "removed: edits
+apply on save" and exits 0 (`Verbs.cs:143`); §5 changes that verb, like every `sindri profile` verb, to exit 2.
+
 What #2357 leaves behind:
 - the noun "profile"
-- a content hash (`profileHash`, `ifHash`) that every write sends as a guard
-- the `SND-AUTH-002` refusal on settings writes from a session
+- a content hash (`ProfileHash`, `profileHash` in responses, `IfHash` on write requests) that writes send as a guard
+  (the full list is in §4)
+- the `SND-AUTH-002` refusal on two local CLI verbs, `profile set` and `profile init` (`Verbs.cs:100-108`), and on
+  source-token, review-login and Linear connection writes (§3.4)
+- the `profile.checked` event, still written by `CheckProfileService`, and the profile view built from it (§4)
+- a dead Setup step and a dead NeedsYou row for the profile (§4)
 
-This spec removes all three. It adds no new database table. The new files are `settings/changes.jsonl` (the
+This spec removes all of these. It adds no new database table. The new files are `settings/changes.jsonl` (the
 audit lines) and `settings/.last-saved.yaml` (the diff base for edits made outside Sindri), both under §3.
 
 ## 2. Workflows: nothing to add
@@ -40,14 +49,26 @@ This spec changes none of it.
 - **Files and modes.** `settings.yaml`, `.last-saved.yaml`, `changes.jsonl` and `.lock` are 0600 in a 0700
   `settings/`. Every temp file is created 0600, so a rename never widens the mode. The migration (§5) creates the
   folder and files with the same modes. On Windows, modes don't apply; the folder sits under the user's profile.
-- **"Changed" means the sha256 changed.** Today `YamlProfileSource.Load` re-reads the file on every call, and it
-  keeps doing so, so a save is live for serve's next read with no cache to go stale.
-- **Serve's watcher is new.** Serve watches `settings/` (`FileSystemWatcher`, debounced 500 ms, plus a 30 s poll as
-  a fallback). On a change it runs the outside-edit check (§3.4) and copies new audit lines. When the lock is busy
+- **"Changed" means the sha256 changed.** Reads go through `LiveApprovedProfile` (becomes `LiveSettings`), which
+  keeps the parsed answer while the file's last-write time and length stay the same. Every writer calls
+  `IProfileCache.Invalidate()` after its rename (`ISettingsCache`); the lock design keeps that: the writer that holds
+  the lock invalidates the cache after step 4, so its own save is live for serve's next read. A hand edit is
+  different: a same-length edit inside one mtime tick keeps both numbers, so the cache would serve the old text. Serve's
+  watcher (below) invalidates the cache on every change it sees, and its 30 s poll compares the sha256, so such an
+  edit is read after the next watcher pass, not before. Sindri's own saves are never affected.
+- **Serve's watcher replaces `ProfileWatch`.** `ProfileWatch` (`Host/Server/ProfileWatch.cs`) is today's 30 s check as
+  caller `service:profile-watch`; it only exists to record `profile.checked`, so it is deleted (§4). Serve now watches `settings/` (`FileSystemWatcher`, debounced 500 ms, plus a 30 s poll as
+  a fallback). On a change it invalidates the settings cache, runs the outside-edit check (§3.4) and copies new audit lines. When the lock is busy
   it retries on the next tick, never waiting on a request thread. When `changes.jsonl`'s file id changes (the file
   was replaced), it rescans from the start.
 
 ### 3.2 A write
+
+Six writers change the file today, and none of them locks: `YamlProfileKeyWriter` (one scalar key, key removal, and
+the `todo.obsidian` plans), `YamlProfileIndexWriter` (pages and pins), `YamlProfileRepoWriter`,
+`YamlProfileSandboxWriter`, `YamlSourceTokenProfileWriter` and `FileProfileInitializer`. Each reads the file, edits the
+text and renames a temp file on its own. After this change they share one `SettingsFileLock` and one save routine
+(steps 1 to 6 below); each keeps only its own edit logic. All six go through that one lock.
 
 Every write takes an exclusive lock on `settings/.lock`. Each write opens its own handle (in-process writers never
 share one), and tries the lock without blocking every 50 ms for up to 5 s, so a waiting HTTP request never holds a
@@ -86,7 +107,7 @@ run out, the write fails with `SND-SETTINGS-409`: "Another change is being saved
 
 | Code | CLI exit | HTTP |
 |---|---|---|
-| `SND-SETTINGS-001..017`, `020..024` (a rule, a broken file) | 1 | 422 |
+| `SND-SETTINGS-001`, `002`, `020..024` (a rule, a broken file) | 1 | 422 |
 | `SND-SETTINGS-409` (busy), `410` (changed on disk) | 1 | 409 |
 
 The CLI prints the message on stderr; `--json` prints `{ "code", "path"?, "message" }` on stdout, with `path` set
@@ -94,11 +115,15 @@ when a rule names a key. The API answers with the same body. 409 and 410 share H
 
 **Every write is item-level.** A write sets or removes items in the current text and never replaces a whole list:
 - one scalar key (`settings set <key> <value>`)
+- one key removal, by key path (`todo note stop` removes `todo.obsidian`; the key's lines go, comments and other
+  lines stay, and a parent map left empty goes too). It is an item write like the others, so a concurrent save to
+  another key is kept
+- one todo note setting (`todo.obsidian` with its `vault` and `note`), set or removed, as above
 - one repo, by name
 - one page, by id
 - one pin, by id
 - one sandbox host
-- one connection or library source, by name
+- one connection or library source, by name (the source-token writer, `YamlSourceTokenProfileWriter`)
 
 `context page set --from-file` and `context pin set --from-file` are one write each: one lock hold, one save and
 one audit line, setting every item in the file. They never remove an item the file leaves out; removing is
@@ -106,7 +131,8 @@ one audit line, setting every item in the file. They never remove an item the fi
 
 Two saves only collide on the same item, and then the later one wins. That's the right answer for one person's
 app. Without the rule, a stale app form that replaces the whole pages list would drop a page an agent added in
-between. The hash check existed for approval (the approved text must not shift under you), and approval is gone.
+between. The hash check existed for approval (the approved text must not shift under you), and approval is gone. The
+`--if-hash` flag and the `IfHash` request fields on page, pin and todo note writes go with it (§4).
 
 **The write routes.** `SND-AUTH-002` goes, and with it the per-start human token on settings writes. What still
 guards the routes is what guards every command route today: serve listens on loopback only, `LoopbackGuard`
@@ -123,7 +149,12 @@ the rule. It never quotes the value, so a pasted secret never reaches the API, t
 
 | Rule | Runs on | Code |
 |---|---|---|
-| Schema: known keys, types and ranges, as `IProfileSource.Load` checks today | every read and every write | `SND-SETTINGS-001..017` (today's numbers) |
+| Schema: known keys, types and ranges, as `IProfileSource.Load` checks today | every read and every write | `SND-SETTINGS-002` (today's `SND-PROFILE-002`; the message names the key path) |
+| `workflow.http.hosts`: at most 50; each a lower-case DNS name (no scheme, port or path, no wildcard, no IP, no `localhost`); no repeats (`FlowRules.Hosts`) | every read and every write | `SND-SETTINGS-002` |
+| `workflow.callDepth`: a whole number from 1 to 10 (`FlowRules.CallDepth`) | every read and every write | `SND-SETTINGS-002` |
+| `workflow.poll`: `intervalSeconds` at least 30, `catchUpPages` 1 to 100 (`ProfileRules.Poll`) | every read and every write | `SND-SETTINGS-002` |
+| `workflow.forEach`: `maxItems` 1 to 10000, `batchSize` 1 to 100 (`ForEachRules`) | every read and every write | `SND-SETTINGS-002` |
+| `todo.obsidian`: `vault` names one of the `context` library vaults; `note` is a vault-relative `.md` path with no `.` or `..`, no dot folder and no deny glob of that vault (`TodoObsidianRules`) | every read and every write | `SND-TODO-002` (unchanged; it is a todo code, not a settings code) |
 | Repo add: the path exists and is a git checkout; not `/`, not `$HOME`, not a parent of `$AW_SINDRI_HOME`, not inside it | the repo add only | `SND-SETTINGS-020` |
 | Repo path shape: not `/`, `$HOME`, a parent of or inside `$AW_SINDRI_HOME` | every read and every write | `SND-SETTINGS-020` |
 | Sandbox host: a host name, or `*.` followed by at least two labels (`*.example.com`, never `*.com`); no bare `*`, IP literal or `localhost` | every read and every write | `SND-SETTINGS-021` |
@@ -132,9 +163,21 @@ the rule. It never quotes the value, so a pasted secret never reaches the API, t
 | Secrets: a free-text value, or a word after the first in a `command:argv`, that matches an `Aw.Redaction` pattern | every write | `SND-SETTINGS-023` |
 | The file itself is broken (doesn't parse or fails a rule above) | every write | `SND-SETTINGS-024` |
 
+- **Error codes: what is true today.** `SindriErrors.cs` defines three profile codes: `SND-PROFILE-001` (no
+  profile file), `002` (invalid: every schema, range and cross-key failure, with the key path in the message, so the
+  new flow, poll, forEach and call-depth rules above all answer 002) and `003` (the hash doesn't match). The
+  numbers `004` to `017` in `docs/sindri/errors.md` and `docs/csharp/sindri-profile.md` are old documentation that no
+  code throws (the one use in `SetupStepsTests.cs:143` is a made-up code), and several of those rows already say
+  "Removed". So the rename carries `001` (kept for a read that races a delete) and `002`, deletes `003` with the hash
+  guard, and adds `020..024`, `409` and `410`. It does not carry `004..017`, and the docs rows for them are removed.
+  Rules that already answer a code of another family (`SND-TODO-002`) keep it.
+- **Not checked at save today.** `sandbox.limits.memory` has no format rule in the settings checks. The workflow
+  check reads it as a cap (`ProfileWorkflowChecker.BoxCap`): `auto`, no value, or a size that doesn't parse caps
+  nothing there. This spec adds no rule; the other `sandbox.limits.*` sizes are the same.
 - **Which fields the secret check scans.** Free-text strings (titles, summaries, notes, aliases, labels and
   feature names) and the arguments of a `command:argv`. Id, hash, ulid, path, URL and `env:` fields are never
-  scanned, so a long id or a sha256 never trips it. The message: "This looks like a password or token. Reword it,
+  scanned (so `todo.obsidian.note`, a path the `todo.obsidian` rule already limits to a vault-relative `.md` file,
+  is not), so a long id or a sha256 never trips it. The message: "This looks like a password or token. Reword it,
   or leave the secret out." For a `command:` argument it adds: "Have the command read the secret itself, for
   example from an environment variable."
 - **A missing checkout is not a broken file.** The "exists and is a git checkout" check runs only when a repo is
@@ -144,12 +187,21 @@ the rule. It never quotes the value, so a pasted secret never reaches the API, t
   refused with `SND-SETTINGS-024`: "Your settings file has a mistake on line 14 (`sandbox.hosts[3]`: not a host
   name). Fix that line first; nothing was saved." It names the line, never blames the edit being saved, and never
   quotes the value. All writes stop until the file validates again.
+- **Agent reach.** `workflow.http.hosts` is a list of hosts an `http` node may send to, so it follows §10's rule for
+  sandbox hosts: no Needs-you row, shown in Last changed, See changes and the ledger. It keeps its own check
+  above, which has no wildcard, so `*.example.com` is refused there.
 - **Repo remove** drops the settings entry only. It never touches the checkout or its worktrees.
 
 ### 3.4 Who changed what
 
 - **Who may write:** any session, agents included (agent-first D2). `settings set`, `settings init`, the page, pin,
-  repo, sandbox and source writes all accept sessions.
+  repo, sandbox, source and todo note writes all accept sessions. What `SND-AUTH-002` covers today, so what changes:
+  - the two local CLI verbs `profile set` and `profile init` refuse a session Sindri launched, and a CLI with no
+    readable per-start human token (`Verbs.cs:100-108`). `settings set` and `settings init` drop that refusal;
+  - the HTTP writes for repo add, pages and pins are `MapJob` routes (`ContextJobEndpoints.cs`) in action class
+    `Job`, which already allows `Session` and `Launched` (`Authorization.cs:23`). They need no change;
+  - source-token, review-login and Linear connection writes (`LinearConnectionRules`, `SetReviewLoginService`)
+    refuse a caller they can't identify. They keep that refusal, because it is not about the settings file.
 - **`by`** comes from the caller rules serve and the CLI already share (`CallerClass`, `X-Sindri-Launch`). The
   per-start human token stops being a permission for settings writes, but it stays the test for `person`:
   - with serve running, `person` needs the token, as `CallerClass.Human` does today (the app, or a CLI that can
@@ -286,19 +338,26 @@ broken file and no last good settings runs nothing, as today.
 | `GET /sindri/profile` | `GET /sindri/settings` (`text`, `problem`, `source`) |
 | `status.profile { live, problem, source, modelPick, labelPick, surfacePick }` | `status.settings { problem, source, modelPick, labelPick, surfacePick }` |
 | `profileHash` in responses, `ifHash` in writes | gone |
-| events `profile.approved`, `profile.checked` | no new ones are written. The ledger is append-only, so old rows stay; the event catalog and the projector keep both types as legacy no-ops for `views rebuild` |
+| events `profile.approved`, `profile.checked`, `profile.approvals.removed` | `profile.approved` is already emitted nowhere (only the catalog and projector know it). `profile.checked` is still written by `CheckProfileService` (`ProfileCheck.Decide`: "drifted = approved != live", always false now), so this spec deletes that writer (`CheckProfileService`, `ProfileRecheck`, `RecheckingProfileIndexWriter`, `ProfileWatch` and the `profile.checked` payload writer), not just no-ops it. `profile.approvals.removed` was added by #2357 (`EventTypes.cs:48`, non-public) and is no longer written after the first start. The ledger is append-only, so old rows stay; the event catalog and the projector keep all three types as legacy no-ops for `views rebuild` |
+| `IOldApprovalsCleanup`, `ApprovalsDirectoryCleanup` (removes `<home>/approved` at serve start) | stays as it is, beside the migration (§5), because a home that has not started since #2357 still has the folder. `SindriSettings.ApprovalsDirectory` moves with the `SindriPaths` rename |
 | (new) | `settings.changed { file, line, at, by, saveId?, sha256, changes[] }`, key `settings.changed:<file>:<line>` |
-| `SND-PROFILE-001..017` | `SND-SETTINGS-001..017`, same numbers; new `020..024`, `409`, `410` (all free today) |
+| `SND-PROFILE-001`, `002`, `003` (the only three `SindriErrors.cs` defines; §3.3) | `SND-SETTINGS-001`, `002`; `003` is deleted with the hash guard; new `020..024`, `409`, `410` (all free today). `SND-PROFILE-004..017` exist only in old docs and are not carried |
 | `sindri profile init \| set \| validate` | `sindri settings init \| set \| validate \| cleanup`; `sindri profile *` exits 2 naming the new verb (§5) |
 | `AW_SINDRI_PROFILE` | `AW_SINDRI_SETTINGS`; a set `AW_SINDRI_PROFILE` is not read, and gives a warning naming the new variable (§6) |
 | `IProfileSource`, `IApprovedProfile`, `LoadedProfile`, `SindriProfile`, `ProfileHash`, `Profile/` folders | `ISettingsSource`, `ISettings`, `LoadedSettings`, `SindriSettings`, gone, `Settings/` folders |
-| the existing Infrastructure `SindriSettings(Home, ProfilePath)` (142 uses) | `SindriPaths(Home, SettingsPath)`, renamed first in its own commit so `SindriSettings` is free for the settings document |
-| Setup step `profile` | removed: the list is repo, mcp, map, sources |
-| NeedsYou: the profile drift row and the "approved before auto registration" row | removed; the MCP consent row keys on `setup.consent.given` alone |
+| the existing Infrastructure `SindriSettings(Home, ProfilePath)` (62 mentions in `src`, 71 in `tests`) | `SindriPaths(Home, SettingsPath)`, renamed first in its own commit so `SindriSettings` is free for the settings document |
+| Setup step `profile` (`SetupStepId.Profile`, `SetupSteps.Profile` "Your profile is saved and live", `ProfilePresence`, `ProfileFact`, `ProfileSetupReader`, its `SetupDoctor` line) | removed: the list is repo, mcp, map, sources |
+| NeedsYou: `NeedsYouKind.Profile` and its drift row (`DriftKey = "profile:drift"`) | removed. `ProfileRow` and `ProfileProjection` (the view `ViewNames.Profile`, table `view_profile`) are built from `profile.checked`, so they go too. `ProfileRow.ApprovedServices` feeds service-failure clearing (`NeedsYouClearing.FailureStands`, `NeedsYouProjection`, `HealthServiceRows`, `ApprovedServices.Of`): those read the services from the live settings instead (`ISettings`), and `GetProfileService` and `WholeMapNotReady` read the settings, not the view |
+| `setup.consent.given` (event key `setup.consent.given:<profileHash>`, payload field `ProfileHash`) and the "approved before auto registration" wording | the MCP consent row keys on `setup.consent.given` alone (`McpEvents.ConsentGiven` already ignores the hash). The key becomes `setup.consent.given`: `ConsentOnHumanPress` records once, so one key is enough. The payload field stays readable on old rows and is left empty on new ones |
+| other places that carry a `ProfileHash` | `RepoOnboarded.ApprovedHash`, `ContextPageWritten.Hash`, `ContextPinWritten.Hash`, `ProcessStarted.Profile`, `McpAutoMemory` (remembers the hash per repo and port), `StartProcessResponse` and the Linear connection responses: new rows and responses leave the field out, old rows keep it, and `McpAutoMemory` remembers the settings sha256 instead |
+| `IfHash` request fields, `--if-hash`, `SND-PROFILE-003`, `SND-TODO-409` | all gone: `IfHash` on `SetPagesRequest`, `PinConceptsRequest`, `SetTodoNoteRequest` and `StopTodoNoteRequest`; `--if-hash` in `Usage.cs:116,124` and the context page and pin verbs; `IProfileIndexWriter.Write(edits, ProfileHash? ifHash)`; `TodoNoteProfileEdit.Set/Stop(ifHash)`; `LoadedProfile.Hash`, `ProfileHashing`, `ProfileHash`. `SND-TODO-409` stays for the todo's own version check but no longer guards the note setting |
 | Health "Profile" row | "Settings" row: `ok` with the file, or `unreadable` with the problem; the three picks; a warning per repo whose checkout is gone |
-| API goldens `Golden/Api/profile/*` | `Golden/Api/settings/*`, re-recorded; `Golden/Api/profile-approve/*` deleted with the route |
+| API goldens `Golden/Api/profile/*` | `Golden/Api/settings/*`, re-recorded; `Golden/Api/profile-approve/removed.json` (the 410 answer) stays while the tombstone does |
 
-The UI's `ProfileWriteFlow`, `PagesSetBody` and `PinConceptsBody` and the todo note-setup stop sending `ifHash`.
+The UI's `ProfileWriteFlow`, `PagesSetBody` and `PinConceptsBody` and the todo note setup (`TodoNoteSetBody`,
+`TodoNoteStopBody`, `TodoNoteCard`; the slices `SetTodoNote`, `StopTodoNote`, `CheckTodoNote`, `SyncTodoNote` and
+`ImportTodoNote`; the routes `POST /sindri/todos/note/set` and `stop`; the MCP tool `SindriTools.Todos`) stop sending
+`ifHash`.
 Context and ui rename in the same PR, so the old names are never served beside the new ones and nothing needs a
 shim.
 
@@ -309,6 +368,11 @@ One helper, `SettingsMigration`, with two entry points:
 - `Run` is for serve's start and the reads (`settings validate`, `GET /sindri/settings`). It first checks without
   the lock whether the migration is due or the file is missing, and returns at once when it isn't, so reads never queue behind writers.
   When it is due, it takes the lock and calls `RunLocked`.
+
+The migration carries every section of the file as it is, which includes the sections added since this spec was first
+written (`workflow.http`, `workflow.poll`, `workflow.forEach`, `workflow.callDepth`, `todo.obsidian`,
+`sandbox.limits`): it copies the text and parses none of it, so a new section needs no migration code. The approvals
+folder cleanup (`ApprovalsDirectoryCleanup`) runs at serve start beside it and stays independent.
 
 A `settings set` before serve ever starts still migrates. The migration is due when `profile/profile.yaml` exists
 and `changes.jsonl` holds no `migrated` line. `RunLocked` then runs these steps:
@@ -373,7 +437,10 @@ keep the old words). Known today, by group:
   Known today: `docs/csharp/sindri.md`,
   `sindri-ui.md`, `sindri-context.md` and `packets.md`; `docs/sindri/SETUP.md`, `README.md`, `OPERATIONS.md`,
   `deploy.md`, `context.md`, `errors.md`, `sources.md`, `linear.md`, `first-context-run.md`, `demo-handoff.md`,
-  `connectai-live-check.md`, and `profile.md` (becomes `settings.md`). `errors.md` also drops `AW_PROFILE_DIR` and
+  `connectai-live-check.md`, `handoff.md`, and `profile.md` (becomes `settings.md`). Also `docs/csharp/code-index.md`,
+  `forge.md`, `sindri-launcher.md`, `sindri-sandbox.md` and `scaffolds/new-package.md`. #2357 already rewrote
+  parts of these (`sindri-profile.md` says "`--if-hash` stays as a check"; `sindri.md:69,137` has the `profile approve`
+  tombstone row and a "--if-hash only" sentence): those lines change again. `errors.md` also drops `AW_PROFILE_DIR` and
   `--profile`, which no code reads; `docs/onboarding.html`,
   `sindri-setup.html`, `ONBOARDING.md`, `.agents/rules/hooks.md`, and AGENTS.md's command lines.
 - **The doc checker.** `scripts/check-profile-doc.mjs` becomes `check-settings-doc.mjs` and reads
@@ -387,17 +454,20 @@ keep the old words). Known today, by group:
 - **Scripts and hooks** that call `sindri profile` or read `profile/profile.yaml`, each with its test:
   `config/hooks/sindri-nudge.sh`, `context-first-run.sh`, `cutover-clean-ts.sh`, `cutover-prove.sh`,
   `install-cs.sh`, `linear-probe.sh`, `model-limit-check.sh`, `owner-check.sh`, `probe-linear-projects.sh`,
-  `sindri-pod.sh`, `sindri-prove.sh`, `sindri-sandbox-e2e.sh`, `sindri-ui-fixture.sh` and
-  `tests/fixtures/scoping/proof.sh`. Also the
-  dry-run golden `scripts/tests/fixtures/context-first-run.up-dry-run.txt` and `sindri-smoke-normalize.test.sh`.
-- **UI checks.** `tests/ui-checks/gh-1069-settings-arrival.sh`, `gh-1071-settings-skipped-width.sh`,
-  `gh-1539-settings-leftovers.sh`, `gh-1701-proof.sh` and `pin-two-clicks.sh` move to `settings/settings.yaml`.
-  `ux-b4-approve-focus.sh` and `ux-b5-second-drift.sh` test approval and drift, which are gone, so they are
-  deleted.
-- **`install-cs.sh`'s `profile_hint`** (lines 414-422) becomes `settings_hint`. It runs `sindri settings validate`
-  and prints nothing on exit 0. On exit 1 it prints "your settings file has a mistake; run `sindri settings
-  validate` to see it". It gives no approve advice, and it never fails the install. It runs after install-cs's
+  `sindri-pod.sh`, `sindri-prove.sh` and `sindri-ui-fixture.sh`. Their tests are in `scripts/tests/`, including
+  `sindri-ui-fixture-prs.test.sh` and `sindri-ui-fixture-reviews.test.sh`. Also the dry-run golden
+  `scripts/tests/fixtures/context-first-run.up-dry-run.txt` and `sindri-smoke-normalize.test.sh`.
+  (`sindri-sandbox-e2e.sh` and `tests/fixtures/scoping/proof.sh` no longer exist.)
+- **UI checks.** `tests/ui-checks/gh-1071-settings-skipped-width.sh`, `gh-1539-settings-leftovers.sh`,
+  `gh-1701-proof.sh` and `pin-two-clicks.sh` move to `settings/settings.yaml`. The approval and drift checks
+  (`ux-b4-approve-focus.sh`, `ux-b5-second-drift.sh`) and `gh-1069-settings-arrival.sh` were already deleted by #2357.
+- **`install-cs.sh`'s `profile_hint`** (defined at lines 380-389, called at line 424) becomes `settings_hint`. It
+  runs `sindri settings validate` and prints nothing on exit 0. On exit 1 it prints "your settings file has a
+  mistake; run `sindri settings validate` to see it". Its text already says "edits apply on save, there is nothing to
+  approve", so the "no approve advice" part is true today, and it never fails the install. It runs after install-cs's
   running-serve guard, because `settings validate` may run the migration.
+- **Text in code.** Strings that still say "re-approval" or "approved" (for example `SandboxCopy.cs:45`, the
+  `SND-LAUNCH-019` row) are reworded in the Core commit of the rename.
 - **Not in scope.** `recipes/dev/profile.yaml` is a workflow recipe (retired by #2356), not settings.
   `tests/fixtures/backtest/pin-questions.md` and `evals/planDevexReview/...` use "profile" in their own sense and
   stay.
@@ -405,7 +475,9 @@ keep the old words). Known today, by group:
 ## 7. Proof
 
 - Unit:
-  - A save is live for serve's next read, including a same-length edit inside one mtime tick.
+  - A save is live for serve's next read (the writer invalidates the settings cache). A same-length hand edit inside
+    one mtime tick is read after the watcher's next pass, which invalidates the cache; the test writes both texts
+    with the same length and mtime.
   - An invalid edit writes nothing.
   - A save writes one line with its `by`, `sha256`, `changes[]` and, from the app, its `saveId`.
   - A session's save is accepted: a launched session's `by` is `launch:<id>`, another session's is `session`, and
@@ -485,11 +557,16 @@ keep the old words). Known today, by group:
 
 ## 8. Size
 
-About 6k lines in about 1000 `src/Sindri` files say profile, plus 4.5k in tests and 3k in docs.
+Counted at the rebase, as whole-word `profile` matches: about 4.5k lines in 957
+`src/Sindri` files, 2.3k in 698 files under `tests`, and 0.6k in 59 files under `docs` (outside `docs/superpowers`).
+That is about 25% less in `src`, 50% less in tests and 80% less in docs than the first count (6k, 4.5k, 3k), because
+#2357 and the recipe retirement deleted code and docs.
 - Almost all of it is a scripted rename, one commit per area (Core, Features, Infrastructure, Host, Ui, tests,
   docs), each building on its own.
-- The removals shrink the code: the hash guard (about 494 lines across src, tests and docs), `ProfileHash`, the
-  profile Setup step, two NeedsYou rows, and two UI checks.
+- The removals shrink the code: the hash guard (`IfHash` and `--if-hash` are spread over about 30 files in `src`, so
+  the old "about 494 lines" count is too low and is not repeated here), `ProfileHash`, the `profile.checked` writer
+  with `ProfileRow` and `ProfileProjection`, the profile Setup step, the NeedsYou profile row, and the UI checks for
+  approval and drift that #2357 already deleted.
 - The new code is the file lock, the audit line with its edits-outside-Sindri check, the `settings.changed` event,
   the migration with the defaults, `settings cleanup`, and the UI's Last changed line, See changes, and the
   stale-sheet banner.
@@ -513,7 +590,7 @@ None open. The heads-up question is settled in §10.
 - Who may change settings: any session, recorded in the ledger (owner).
 - Recipes: retired by #2356.
 - The optimistic check: none. A file lock orders writes, and the same key's later save wins (§3.2).
-- A change that widens agents' reach (a sandbox host, a repo, a connection or library source URL, a credential
+- A change that widens agents' reach (a sandbox host, a `workflow.http.hosts` host, a repo, a connection or library source URL, a credential
   reference) gets no Needs-you row: it shows only in Last changed, See changes and the ledger (owner, 2026-11-08).
-  Validation still refuses `*`, `*.com`, IP hosts and `localhost`; `/`, `$HOME` and the Sindri home as repos;
+  Validation still refuses `*`, `*.com`, IP hosts and `localhost` (and, for `workflow.http.hosts`, any wildcard); `/`, `$HOME` and the Sindri home as repos;
   non-https or credential-bearing URLs; secrets in `command:` arguments; and `command:` references Sindri can't find.
