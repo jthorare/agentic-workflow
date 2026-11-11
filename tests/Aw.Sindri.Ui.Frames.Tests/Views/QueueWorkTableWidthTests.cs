@@ -1,7 +1,7 @@
-using Avalonia.Layout;
-using Avalonia;
 using System.Text.RegularExpressions;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
