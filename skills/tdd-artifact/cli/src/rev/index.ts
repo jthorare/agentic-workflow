@@ -1,4 +1,4 @@
-// tdd rev: the revision runner (PR 16, research/bun-port-2026.md section 4.2). The program is run.ts; the live layer
+// tdd rev: the revision runner (cli/README.md, tdd rev). The program is run.ts; the live layer
 // below wires it to the file system, child processes, the in-process tools and the environment.
 import { Layer } from "effect";
 import type { RevArgs } from "./args";

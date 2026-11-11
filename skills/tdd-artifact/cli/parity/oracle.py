@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test-only oracle for the bun port (research/bun-port-2026.md, PR 9). CPython is the specification: every suite
+"""Test-only oracle for the bun port (cli/README.md). CPython is the specification: every suite
 prints golden JSON that the bun tests compare the TypeScript kernel (src/py) against. Nothing here runs in a build.
 
 Usage: python3 -I -B parity/oracle.py <suite> [--seed N] [--count N] [--out FILE]

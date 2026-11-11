@@ -1,4 +1,4 @@
-// The Python-semantics kernel (research/bun-port-2026.md section 3.1): `import * as py from "../py"`.
+// The Python-semantics kernel (cli/README.md): `import * as py from "../py"`.
 // Plain TypeScript, no Effect; CPython 3.13 is the specification (parity/oracle.py, test/py).
 export * as html from "./html";
 export * as io from "./io";

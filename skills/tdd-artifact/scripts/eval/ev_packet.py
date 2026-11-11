@@ -1,7 +1,7 @@
 """OUTPUT 2, the packet for implementation and agent handoff (build/agents/ as write_agents.py writes it, plus the
 packet files): lane present and current, budgets, anchors sliced once, SQL extracted, map edges resolve, images
 indexed, PRs copied, schema.md present, and the handoff probe (deterministic answerability; a model probe with a key)."""
-import glob, os, re
+import os, re
 import ev_common as C
 
 README_MAX = 8192            # write_agents.README_MAX; replaced by the writer's constant when it imports
@@ -75,7 +75,7 @@ def s_largest(agents, budget, exempt, files):
         return C.not_run("largest_slice", "no agents/ lane", method, "build/agents")
     tj = C.read_json(os.path.join(agents, "tokens.json")) or {}
     per = {r.get("path") or r.get("file"): r.get("tokens") for r in (tj.get("files") or []) if isinstance(r, dict)}
-    best, rows = None, []
+    rows = []
     for f in files:
         if f in exempt or not f.endswith(TEXT_EXT):
             continue

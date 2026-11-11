@@ -167,7 +167,7 @@ questions): they hold only that notation and are not flagged. To spell a date fo
 
 ## AGENTS: the agents lane (D6, D8)
 When `build/agents/` exists, the linter imports `scripts/write_agents.py` and calls `check(build_dir)`. The function
-belongs to the agents-lane worker. It may return a list of strings (each becomes an `AGENTS/problem` error), or a
+belongs to the agents lane. It may return a list of strings (each becomes an `AGENTS/problem` error), or a
 list of dicts `{severity, check, message, file, line}`. It may also return a dict holding such a list under
 `problems` or `findings`. If the module or its `check` is absent, the linter skips with a note. If the call raises,
 the finding is `AGENTS/check-failed` (error).

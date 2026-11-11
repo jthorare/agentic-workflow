@@ -1,4 +1,4 @@
-// The tdd vocabulary, one copy (research/bun-port-2026.md section 1.3, PR 11): the reference-token pattern and its
+// The tdd vocabulary, one copy (cli/README.md): the reference-token pattern and its
 // anchor id, the path:line citation pattern, the legend tones, the keys the reference linker walks, the tags it never
 // links inside, the tdd marker line and the SQL keywords the code renderer marks. Compiler, linter and eval import
 // these from here, so the drift between build_tdd.py, lint_packet.py and eval/ev_common.py cannot recur.

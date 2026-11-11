@@ -1,4 +1,4 @@
-// The Finding schema (research/bun-port-2026.md section 4.2): one lint result, in lint.json's key order
+// The Finding schema (cli/README.md, the linter): one lint result, in lint.json's key order
 // {rule, check, severity, file, line, message}. A Finding is validated when it is made; `toPy` gives the ordered dict
 // the JSON report dumps, so the key order is the schema's and never an accident of object construction.
 import { Schema } from "effect";

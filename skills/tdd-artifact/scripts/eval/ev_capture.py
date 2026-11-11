@@ -87,7 +87,6 @@ def decision_labels(content):
     for d in content.get("decisions", []):
         status = d.get("status", "")
         m = DATE.search(status)
-        who = re.split(r"[,·]", status)
         out.append({"kind": "decision", "id": d.get("id"), "anchor": d.get("anchor"), "section": d.get("section"),
                     "question": d.get("question"), "status": status, "state": d.get("state"),
                     "answer": (bodies.get(d.get("anchor")) or "")[:600],

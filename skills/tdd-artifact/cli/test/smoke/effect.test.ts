@@ -1,4 +1,4 @@
-// The TypeScript 7 + Effect 4 gate (research/bun-port-2026.md section 4.4): a Layer, a Schema class, Effect.forEach
+// The TypeScript 7 + Effect 4 gate (D19, D27): a Layer, a Schema class, Effect.forEach
 // with bounded concurrency and a scoped resource, on effect 4.1.2 under bun. `bun run check` type-checks this file
 // with typescript 7.0.2 (tsconfig includes test/); `bun test` runs it. If either fails, the linter and the eval are
 // written in plain TypeScript and the failure is recorded in README.md under "Effect smoke".

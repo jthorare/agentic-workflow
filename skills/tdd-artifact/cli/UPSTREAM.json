@@ -1,5 +1,5 @@
 {
-  "about": "The system-design files src/sd/ reimplements (research/bun-port-2026.md section 1.2, D1 option A, PR 10). test/sd/upstream.test.ts fails when a file's sha256 differs: re-run the oracle suites (test/sd), port the change, then update the hashes here. Each range's sha256 is over its lines, newline-terminated, so the failure says which ported part moved.",
+  "about": "The system-design files src/sd/ reimplements (README.md, the D1 surface; D1, D27). test/sd/upstream.test.ts fails when a file's sha256 differs: re-run the oracle suites (test/sd), port the change, then update the hashes here. Each range's sha256 is over its lines, newline-terminated, so the failure says which ported part moved.",
   "source": "skills/tdd-artifact/vendor/system-design/scripts",
   "verified": "2026-11-09",
   "python": "3.13",

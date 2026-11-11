@@ -17,7 +17,6 @@ SDK calls (braintrust 0.49.3, read in the installed source 2026-11-08; not exerc
   braintrust.Attachment(data=<path>, filename=, content_type=)  placed anywhere in the logged event; uploaded by the SDK
   Experiment.summarize() -> ExperimentSummary(experiment_url, comparison_experiment_name, comparison)  (flushes)"""
 import glob, os, re
-import ev_common as C
 
 KINDS = ("artifact", "packet", "implementation", "qa", "bugs", "tokens")
 MAX_SHOTS = 12

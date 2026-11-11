@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// The parity gate (research/bun-port-2026.md sections 3.2, 5.2 PR 9 and PR 11): compile one packet twice into the
+// The parity gate (cli/README.md): compile one packet twice into the
 // same out path, one compiler after the other, and compare everything the compile produces: content.json,
 // content.files.json and every copied file by sha256, the stdout summary line, the stderr warnings, the exit code.
 // `generated` is pinned with TDD_GENERATED and TZ is fixed, so two runs of one compiler must be byte-identical.

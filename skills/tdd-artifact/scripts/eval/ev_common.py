@@ -7,7 +7,7 @@ EVAL_DIR = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS = os.path.dirname(EVAL_DIR)
 SKILL = os.path.dirname(SCRIPTS)
 PAGE_LIMIT = 16 * 1024 * 1024
-CHARS_PER_TOKEN = 3.6          # the agents-lane convention (research/agent-files-2026.md 3: tokens_est = chars/3.6)
+CHARS_PER_TOKEN = 3.6          # the agents-lane convention (tokens_est = chars/3.6)
 IMAGE_EXT = (".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif")
 SQL_LANGS = ("sql", "psql", "postgres")
 # Mirror of build_tdd.TOKEN (also mirrored in lint_packet.py): reference tokens such as D7, E3, F3.2, R2, PR 7, OS-01.

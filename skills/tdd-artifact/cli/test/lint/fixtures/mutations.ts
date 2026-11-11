@@ -1,9 +1,9 @@
 // The lint mutation corpus: each case copies the built base packet (fixtures/base, built once per run), applies one
 // mutation, and names the check ids it must fire. Python and TypeScript must then agree byte for byte (corpus.test.ts).
 // Between them the cases fire every check id lint_packet.py can emit (inventory.test.ts reads the ids from the source).
-import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, truncateSync, utimesSync, writeFileSync, copyFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, truncateSync, utimesSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { SCRIPTS, T0, buildPacket, git, skillCopy, type Repo } from "../harness";
+import { T0, buildPacket, git, skillCopy, type Repo } from "../harness";
 
 export interface Ctx {
   /** the case folder (cwd of both runs); it holds demo-packet/, sibling-packet/ */

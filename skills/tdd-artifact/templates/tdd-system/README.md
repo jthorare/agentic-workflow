@@ -6,7 +6,7 @@ The look and the class vocabulary of every page the `tdd` skill builds. A white 
 |---|---|
 | `tokens.json` | the source of every value: colours (both themes), type, spacing, radius, layout, the component list |
 | `tdd.css` | the stylesheet `app/build.ts` inlines into the page. Its `FONTS` and `TOKENS` blocks are generated from `tokens.json`; everything after them is hand-written and is the class contract with the renderer (`app/src/components/*`) |
-| `../../app/src/schema.css` | the schema drawer (D7), layered on top by the schema worker: `dialog.drawer.schema` and its parts |
+| `../../app/src/schema.css` | the schema drawer (D7), layered on top: `dialog.drawer.schema` and its parts |
 | `README.md` | this reference |
 
 ## Keeping the CSS in step with the tokens
@@ -92,7 +92,7 @@ Spacing (4 px unit): `--sp-1` 4px · `--sp-2` 8px · `--sp-3` 12px · `--sp-4` 1
 
 ## Class vocabulary, section by section
 
-The renderer uses these classes exactly; a new class goes into `tdd.css` (app-core) or `schema.css` (schema worker), never inline. Source syntax for each block: `templates/tdd-template.md` and the `build_tdd.py` docstring.
+The renderer uses these classes exactly; a new class goes into `tdd.css` or `schema.css` (the drawer), never inline. Source syntax for each block: `templates/tdd-template.md` and the `build_tdd.py` docstring.
 
 ### Base
 

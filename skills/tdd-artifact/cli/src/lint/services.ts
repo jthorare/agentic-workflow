@@ -1,4 +1,4 @@
-// The linter's services (research/bun-port-2026.md section 4.2). Each is a Context.Service with a live layer; tests
+// The linter's services (cli/README.md, the linter). Each is a Context.Service with a live layer; tests
 // swap a layer for a fixture (a Git that answers from a table, a Clock in a pinned zone, an Agents check that raises).
 //   Fs        the file system with Python's semantics (os.listdir order, getmtime's float, realpath, os.walk)
 //   Git       read-only `git -C <repo> ...`, 60 s timeout, failures as (1, the text Python's subprocess gives)

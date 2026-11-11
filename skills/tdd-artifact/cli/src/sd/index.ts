@@ -1,4 +1,4 @@
-// The system-design surface the tdd compiler uses (research/bun-port-2026.md section 1.2, D1 option A), in plain
+// The system-design surface the tdd compiler uses (D1, D27), in plain
 // synchronous TypeScript on the kernel: 14 names from build_doc.py and 4 from build_prs.py, pinned by ../../UPSTREAM.json.
 //
 // Two ways in:

@@ -3,7 +3,7 @@
 // --reuse, the eval's not-run, load-db's unreachable skip, and the key rules (no key in a child or a file without
 // --push; with --push the eval's own push, read once).
 import { afterAll, describe, expect, test } from "bun:test";
-import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { args, CLI, FAKE_ANTHROPIC, FAKE_KEY, journal, makeWorld, outcomes, restoreEnv, runOnce, state, type World } from "./harness";
 

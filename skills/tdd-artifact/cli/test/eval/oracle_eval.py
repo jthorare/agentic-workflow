@@ -26,7 +26,7 @@ def ev(name):
 
 
 def suite_constants():
-    C, L, J, P, A, K = ev("ev_common"), ev("ev_llm"), ev("ev_judge"), ev("ev_probe"), ev("ev_artifact"), ev("ev_packet")
+    C, L, J, P, A = ev("ev_common"), ev("ev_llm"), ev("ev_judge"), ev("ev_probe"), ev("ev_artifact")
     lint = load(os.path.join(SCRIPTS, "lint_packet.py"), "tdd_eval_lint_packet")
     wa = load(os.path.join(SCRIPTS, "write_agents.py"), "tdd_eval_write_agents")
     ep = load(os.path.join(SCRIPTS, "eval_packet.py"), "tdd_eval_packet_main")

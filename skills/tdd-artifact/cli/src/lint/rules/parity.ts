@@ -1,4 +1,4 @@
-// PARITY, reversed (research/bun-port-2026.md sections 5.2 and 5.3). lint_packet.py's PARITY rule runs the TypeScript
+// PARITY, reversed (references/validators.md, PARITY). lint_packet.py's PARITY rule runs the TypeScript
 // compiler as a subprocess (bun cli/bin/build-tdd.ts) and compares it with the build; here the TypeScript compiler runs
 // in-process and python3 (build_tdd.py) is the external one. The checks, their order and every finding and note text
 // are the Python rule's (Lint.r_parity), so lint.json stays identical on both linters; only the skip note differs

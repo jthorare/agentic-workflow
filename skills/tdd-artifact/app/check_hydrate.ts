@@ -167,7 +167,7 @@ if (line) {
   check(blocks.every((b) => !b.open), "Collapse all left a block open");
 } else notes.push("no .expand-line on the page");
 
-// ---- 6b. a table hotspot reaches the schema drawer (the schema worker's component; reported, not judged here)
+// ---- 6b. a table hotspot reaches the schema drawer (the schema lane's component; reported, not judged here)
 let drawerInfo = "no [data-hs][data-table] on the page";
 const tableHs = d.querySelector("#tdd-root .wrap [data-hs][data-table]") as HTMLElement | null;
 if (tableHs) {

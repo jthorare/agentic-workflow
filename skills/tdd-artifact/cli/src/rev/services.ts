@@ -1,4 +1,4 @@
-// The runner's services (research/bun-port-2026.md section 4.2, "The revision runner"). Each has a live layer; the
+// The runner's services (cli/README.md, tdd rev). Each has a live layer; the
 // tests swap in recording or scripted ones.
 //   Out     where output goes: the steps' own output (stdout, or stderr under --json), progress, the final table
 //   Proc    a child process with the parent's output passed through, a timeout, and a kill on interrupt

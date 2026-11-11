@@ -1,5 +1,5 @@
 // Wall-clock stamps. `generated` in content.json is the one volatile field of a compile: TDD_GENERATED pins it for
-// both compilers (research/bun-port-2026.md R17), so two compiles of one source are byte-identical.
+// both compilers (the parity gate pins it), so two compiles of one source are byte-identical.
 
 const pad = (n: number, w = 2) => String(n).padStart(w, "0");
 

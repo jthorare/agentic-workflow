@@ -687,7 +687,7 @@ class Lint:
         for p in files:
             by_base.setdefault(p.rsplit("/", 1)[-1], []).append(p)
         sev = "error" if verified else "warn"
-        at = "" if verified else f" [HEAD fallback]"
+        at = "" if verified else " [HEAD fallback]"
         nlines = {}
         def count(path):
             if path not in nlines:

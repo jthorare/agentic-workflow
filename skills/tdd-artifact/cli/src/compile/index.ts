@@ -11,7 +11,7 @@ export { link_refs, type Link, type Stats } from "./refs";
 export { sanitize_html } from "./sanitize";
 
 /**
- * sha256 of the scripts/build_tdd.py this port reproduces (the twin rule, research/bun-port-2026.md section 5.3): a
+ * sha256 of the scripts/build_tdd.py this port reproduces (the twin rule, references/validators.md): a
  * change to the Python lands with the same change here and a new pin, or the pin test in test/compile/compile.test.ts fails.
  */
 export const BUILD_TDD_SHA256 = "f4dce0cc4592ae637418babb61830cc83e2bed069a7b34f574f2c9dd182670a5";

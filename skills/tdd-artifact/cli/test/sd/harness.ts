@@ -9,7 +9,7 @@ import { SdError } from "../../src/sd/errors";
 import { SystemExit } from "../../src/sd/page";
 import { PyError, qualifiedName } from "../../src/py/errors";
 import { PyFloat } from "../../src/py/num";
-import { ORACLE, fhex, hasPython, type Tagged } from "../py/oracle";
+import { ORACLE, fhex, type Tagged } from "../py/oracle";
 
 export { fromTag, hasPython, SKIP_REASON, type Tagged } from "../py/oracle";
 

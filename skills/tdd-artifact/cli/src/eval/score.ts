@@ -4,7 +4,7 @@
 // tool, key or datum is absent: never a zero) or "error". A scorer is an Effect that builds its record; when it
 // cannot, it fails with NotRun or Failed, and `settle` turns that, a thrown defect or a per-scorer timeout into the
 // typed Outcome (scored | not_run(reason) | failed(error)) and then into the record, so one scorer can never take
-// down another (research/bun-port-2026.md section 4.2).
+// down another (cli/README.md, the eval).
 import { Cause, Data, Duration, Effect, Exit, Option } from "effect";
 import { PyError } from "../py/errors";
 import { floatRepr } from "../py/num";

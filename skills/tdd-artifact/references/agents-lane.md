@@ -86,11 +86,11 @@ check of the lane.
 - **Tokens** are `ceil(chars / 4)`: an estimate, not a tokenizer. Slices are packed to 90% of the budget so links and footers fit.
 
 ## Budgets and their basis
-- README.md <= 8 KB: well under the 32 KiB that Codex reads from an AGENTS.md before it silently drops the rest (research/agent-files-2026.md 2.2), small enough to read on every task.
+- README.md <= 8 KB: well under the 32 KiB that Codex reads from an AGENTS.md before it silently drops the rest, small enough to read on every task.
 - Slice <= 8k tokens (`--budget-tokens`): a heuristic. The research marks the 2k-8k range unverified; the Skills guidance (body under about 5k tokens, bundled files free until read) is the nearest primary source.
 - The research suggests a task bundle (README + PR file + its decisions + its sql/code) under about 20k tokens; also a heuristic, and not computed per PR yet (PR files do not name their decisions structurally).
 
-## Anti-patterns (research/agent-files-2026.md section 4) and how the lane avoids them
+## Anti-patterns and how the lane avoids them
 1. One giant `llms-full.txt` as the only agent file: `tdd.md`/`tdd.txt` exist but sit under `## Optional`; slices are the default.
 2. Agents scraping `tdd.html`: the lane comes from content.json; `page/plain.html` is the stripped page for when the DOM itself matters.
 3. Slices that say "see above": every slice repeats the section heading, a continuation line and breadcrumb when split, and a "Defined elsewhere" footer.
