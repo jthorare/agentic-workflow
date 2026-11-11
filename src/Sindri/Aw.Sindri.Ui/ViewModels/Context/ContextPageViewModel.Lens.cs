@@ -18,6 +18,9 @@ internal sealed partial class ContextPageViewModel
     /// <summary>The served suggestions after a refusal, as choices (the anchors to pick).</summary>
     public IReadOnlyList<string> Choices { get; private set; } = [];
 
+    /// <summary>The <see cref="Choices"/> with their titles and kinds, as the "Did you mean" row draws them (#2809).</summary>
+    public IReadOnlyList<ContextChoice> ChoiceRows { get; private set; } = [];
+
     /// <summary>The refusal's own words, or empty.</summary>
     public string Problem { get; private set; } = string.Empty;
 
