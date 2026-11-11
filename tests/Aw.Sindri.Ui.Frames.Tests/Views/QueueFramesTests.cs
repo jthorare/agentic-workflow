@@ -338,8 +338,8 @@ public sealed class QueueFramesTests : IDisposable
         more.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await Until(window, () => !shell.Item.HasMore);
 
-        var rows = Named<Control>(window, "TimelineList").GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("timeline-row")).ToList();
-        Assert.Same(rows[100], Focused(window));
+        // The timeline is virtualized (#2776): the focused row is found by what it shows, not by its place among the built rows.
+        await Until(window, () => ReferenceEquals(shell.Item.Timeline[100], (Focused(window) as Control)?.DataContext));
     });
 
     // a11y-7: the item vanishes (404 on a refresh) while focus is inside its body: focus goes to the sheet's title, not to nothing.
@@ -369,8 +369,7 @@ public sealed class QueueFramesTests : IDisposable
         more.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await Until(window, () => !shell.Item.HasMore);
 
-        var rows = Named<Control>(window, "TimelineList").GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("timeline-row")).ToList();
-        await Until(window, () => ReferenceEquals(rows[^1], Focused(window)));
+        await Until(window, () => ReferenceEquals(shell.Item.Timeline[^1], (Focused(window) as Control)?.DataContext));   // by what the row shows: the list is virtualized (#2776)
     });
 
     // §18 U2's signal: Close with a stale version shows SND-ITEM-409's detail as served.
