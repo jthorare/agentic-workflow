@@ -119,7 +119,7 @@ skill that also wrote an unmapped `status` is still a waiting row.
 - A skill that is `waiting` on you is still ended by the 120 s idle sweep like any idle Step; skipping waiting skills is F-2a.
 - The PR fetch's local branch `sindri/<instance>/<run>/pr` is never deleted.
 - `providers/install-skills.sh` links only the toolkit's own skills into a separate login's home, not the external packs
-  (impeccable, emil-design-eng, taste-skill), so a skill whose `requires.yaml` names one fails SND-SKILL-005 there.
+  (impeccable, emil-design-eng, taste-skill, tdd-artifact), so a skill whose `requires.yaml` names one fails SND-SKILL-005 there.
 - The seed fills every `{input}` slot of a text item in turn, so an input whose value itself contains `{other}` gets that
   slot filled too.
 - `POST /sindri/skills/{id}/runs` has no API golden yet.
