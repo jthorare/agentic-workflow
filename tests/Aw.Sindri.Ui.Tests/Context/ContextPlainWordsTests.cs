@@ -42,7 +42,7 @@ public sealed class ContextPlainWordsTests
 
         await page.Submit(Token);
 
-        Assert.Equal(("No map yet. Build one to see what your repo is made of.", "Build it to see what your repo is made of and how its parts connect."), (page.EmptyTitle, page.EmptyBody));
+        Assert.Equal(("No map yet", "Build one to see what your repo is made of and how its parts connect."), (page.EmptyTitle, page.EmptyBody));
     }
 
     [Fact]
