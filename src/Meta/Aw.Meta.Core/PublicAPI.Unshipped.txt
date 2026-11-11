@@ -1047,7 +1047,7 @@ Aw.Meta.Core.Ports.ITranscriptReader
 Aw.Meta.Core.Ports.ITranscriptReader.ReadFrom(string! path, long offset, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Messages.TranscriptChunk!>!>
 Aw.Meta.Core.Config.WorktreeRoot
 static Aw.Meta.Core.Config.WorktreeRoot.Resolve(string? configured, string! repo, string! home) -> Aw.Kernel.Result<string!>!
-static Aw.Meta.Core.Config.WorktreeRoot.ResolveOrNull(Aw.Meta.Core.Ports.IWorktreeFiles! files, string! repo, string! home, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+static Aw.Meta.Core.Worktrees.RepoWorktreeRoot.ResolveOrNull(Aw.Meta.Core.Ports.IWorktreeFiles! files, string! repo, string! home, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
 Aw.Meta.Core.Ports.IWorktreeFiles
 Aw.Meta.Core.Ports.IWorktreeFiles.ConfiguredRoot(string! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Meta.Core.Ports.IWorktreeFiles.NewestChange(string! directory, System.Collections.Generic.IReadOnlyCollection<string!>! skipNames, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset>!>
@@ -2707,3 +2707,4 @@ static Aw.Meta.Core.Config.WatchConfig.operator ==(Aw.Meta.Core.Config.WatchConf
 static Aw.Meta.Core.Watch.TeamPrs.Owned(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Watch.PrView!>! prs, System.Collections.Generic.IReadOnlySet<int>! queued, System.Collections.Generic.IReadOnlySet<int>! ready, System.Collections.Generic.IReadOnlyList<string!>? prefixes, System.Collections.Generic.IReadOnlySet<string!>! checkedOutBranches) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Watch.PrView!>!
 Aw.Meta.Core.Worktrees.CheckedOutBranches
 static Aw.Meta.Core.Worktrees.CheckedOutBranches.Under(string! porcelain, System.Collections.Generic.IReadOnlyList<string!>! roots) -> System.Collections.Generic.IReadOnlySet<string!>!
+Aw.Meta.Core.Worktrees.RepoWorktreeRoot

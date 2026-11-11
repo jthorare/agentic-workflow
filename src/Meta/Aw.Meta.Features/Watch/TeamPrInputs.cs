@@ -46,7 +46,7 @@ internal sealed class TeamPrInputs(RepoCommands repo, IKeyValueStore values, IMe
             return listed.Error;
         }
 
-        var repoRoot = await WorktreeRoot.ResolveOrNull(files, team.Repo, paths.Home, cancellationToken).ConfigureAwait(false);
+        var repoRoot = await RepoWorktreeRoot.ResolveOrNull(files, team.Repo, paths.Home, cancellationToken).ConfigureAwait(false);
         var roots = team.Worktrees.EffectiveRoots(team.Repo, paths.GatesDirectory, paths.Home, repoRoot);
         return Results.Success(CheckedOutBranches.Under(listed.Value, roots));
     }
