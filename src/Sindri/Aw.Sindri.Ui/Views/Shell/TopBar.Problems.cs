@@ -26,14 +26,14 @@ internal sealed partial class TopBar
     // What Full reserves for the ⌘K field: the column the field needs to show its whole placeholder (#2710), between SearchMin
     // and SearchMax. "Full always means the whole placeholder". It must not read the field's size now: folded, the field's
     // placeholder and keycap are hidden and it measures as its magnifier. So it is two parts that hold in both steps: the
-    // field's chrome, remembered while Full is shown (Remember), and the placeholder's own width from a TextLayout on
-    // SearchText's font, which follows a text-size change even while folded. The chrome of a text-size change is taken
-    // the next time the bar is Full.
+    // field's chrome (SearchChrome, summed from its fixed parts: the field's inner grid has a star column, so the field's own
+    // size would grow with the column it is given and Full would grow its own column), and the placeholder's own width from a TextLayout on
+    // SearchText's font, which follows a text-size change even while folded. The keycap's width is taken the next time it shows.
     private double FullSearch()
     {
         var text = SearchText.Text ?? string.Empty;
         using var layout = new TextLayout(text, new Typeface(SearchText.FontFamily, SearchText.FontStyle, SearchText.FontWeight), SearchText.FontSize, foreground: null);
-        return Math.Clamp(_searchChrome + Math.Ceiling(layout.Width) + PlaceholderSlack, SearchMin, SearchMax);
+        return Math.Clamp(SearchChrome() + Math.Ceiling(layout.Width) + PlaceholderSlack, SearchMin, SearchMax);
     }
 
     private double NaturalProblems()

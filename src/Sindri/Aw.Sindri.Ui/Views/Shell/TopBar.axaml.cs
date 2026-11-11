@@ -35,8 +35,9 @@ internal sealed partial class TopBar : UserControl
     private double _refreshWordWidth;
     private double _compactSearch = 60;
 
-    // Everything in the ⌘K field except the placeholder's text (margins, padding, magnifier, keycap, spacing), seen while Full.
-    private double _searchChrome;
+    // The keycap's own width, seen while it was shown. It sits in an Auto column, so it does not depend on the field's column;
+    // it is hidden while folded, so SearchChrome uses the last width seen.
+    private double _keycapWidth;
 
     // Refresh had focus when it was disabled (in flight) or hidden (recovered); see KeepRefreshFocus.
     private bool _refreshHeldFocus;
@@ -191,18 +192,28 @@ internal sealed partial class TopBar : UserControl
         RememberSearch();
     }
 
-    // The folded field's width, or the full field's chrome (FullSearch).
+    // The folded field's width, and the keycap's width while it shows (SearchChrome). The field's own size can't measure its
+    // chrome while Full: its inner grid has a star column, so the field desires the whole column it is given.
     private void RememberSearch()
     {
+        if (SearchKeycap.IsVisible && SearchKeycap.DesiredSize.Width > 0)
+        {
+            _keycapWidth = SearchKeycap.DesiredSize.Width;
+        }
+
         if (_fit != Fit.Full && SearchField.DesiredSize.Width > 0)
         {
             _compactSearch = SearchField.DesiredSize.Width;
         }
-        else if (_fit == Fit.Full && SearchText.DesiredSize.Width > 0)
-        {
-            _searchChrome = SearchField.DesiredSize.Width - SearchText.DesiredSize.Width;
-        }
     }
+
+    // Everything in the ⌘K field except the placeholder's text, summed from parts whose size doesn't depend on the column:
+    // margin, border and padding, the magnifier, the keycap and the two gaps between the three cells.
+    private double SearchChrome() =>
+        SearchField.Margin.Left + SearchField.Margin.Right
+        + SearchField.BorderThickness.Left + SearchField.BorderThickness.Right
+        + SearchField.Padding.Left + SearchField.Padding.Right
+        + SearchMagnifier.Width + (2 * SearchCells.ColumnSpacing) + _keycapWidth;
 
     private void OnRefreshGotFocus(object? sender, FocusChangedEventArgs e)
     {
