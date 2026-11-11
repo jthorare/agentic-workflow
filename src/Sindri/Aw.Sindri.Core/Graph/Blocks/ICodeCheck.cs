@@ -5,6 +5,7 @@ public interface ICodeCheck
 {
     /// <summary>Compiles the body.</summary>
     /// <param name="body">The method body.</param>
+    /// <param name="cancellationToken">Stops the compile.</param>
     /// <returns>The compile errors with their line and column in the body; empty when it compiles.</returns>
-    public IReadOnlyList<CodeProblem> Check(string body);
+    public IReadOnlyList<CodeProblem> Check(string body, CancellationToken cancellationToken);
 }

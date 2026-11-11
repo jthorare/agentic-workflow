@@ -30,17 +30,17 @@ internal sealed class CodeCompiler : ICodeCompiler
     public string Fingerprint => _references.Value.Set + ";wrapper@" + _wrapper;
 
     /// <inheritdoc />
-    public CodeCompilation Compile(string body)
+    public CodeCompilation Compile(string body, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(body);
-        var tree = CSharpSyntaxTree.ParseText(Head + body + Tail);
+        var tree = CSharpSyntaxTree.ParseText(Head + body + Tail, cancellationToken: cancellationToken);
         var compilation = CSharpCompilation.Create(
             "sindri-code-" + Guid.NewGuid().ToString("N"),
             [tree],
             _references.Value.References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, optimizationLevel: OptimizationLevel.Release, nullableContextOptions: NullableContextOptions.Enable));
         using var stream = new MemoryStream();
-        var emitted = compilation.Emit(stream);
+        var emitted = compilation.Emit(stream, cancellationToken: cancellationToken);
         if (emitted.Success)
         {
             return new CodeCompilation([], stream.ToArray());
