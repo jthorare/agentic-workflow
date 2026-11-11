@@ -17,6 +17,7 @@ namespace Aw.Sindri.Core.Sandbox.Plan;
 /// <param name="Net">The network facts (the socket folder and the forwarders' ports).</param>
 /// <param name="Host">The host facts.</param>
 /// <param name="Limits">The process's own limits, clamped to the profile's, or null for the defaults.</param>
+/// <param name="ReadOnlyPaths">Absolute paths the process may read and not write, such as the repo a Code node reads (#2258); null or empty for none. Each is mounted above the denies.</param>
 public sealed record ProcessSandboxRequest(
     LaunchId Launch,
     string Owner,
@@ -27,4 +28,5 @@ public sealed record ProcessSandboxRequest(
     IReadOnlyList<PlanGroup> HostGroups,
     SandboxNetFacts Net,
     SandboxHostFacts Host,
-    ResourceLimitOverride? Limits = null);
+    ResourceLimitOverride? Limits = null,
+    IReadOnlyList<string>? ReadOnlyPaths = null);

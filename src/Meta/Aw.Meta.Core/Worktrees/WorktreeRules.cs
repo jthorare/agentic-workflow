@@ -5,7 +5,7 @@ namespace Aw.Meta.Core.Worktrees;
 
 /// <summary>
 /// The rules that decide whether a worktree may be removed. All must hold, so every failing one is reported. The work must be
-/// proven finished: an ended pull request, or, with no pull request, its head in origin/main (a live tree on a fresh branch is protected by rules 4 and 7).
+/// proven finished: an ended pull request (merged or closed) with nothing unpushed, or, with no pull request, its head in origin/main (a live tree on a fresh branch is protected by rules 4 and 7).
 /// Nothing about age is among them (a worktree untouched for weeks may still be work in progress); the one time rule is a change
 /// trigger, "changed since the last full sweep (when it started)".
 /// </summary>
@@ -109,7 +109,7 @@ internal static class WorktreeRules
         }
     }
 
-    // Rule 1: a detached worktree that is not a gate tree is removed only by --done (see DetachedReasons); a branch with a pull request only when it ended (merged, or closed with everything on the remote); a branch with none when its head is in origin/main.
+    // Rule 1: a detached worktree that is not a gate tree is removed only by --done (see DetachedReasons); a branch with a pull request only when it ended (merged or closed) with nothing unpushed (a squash-merged head is never in origin/main, #2659); a branch with none when its head is in origin/main.
     private static void Merged(WorktreeFacts facts, List<string> reasons)
     {
         if (facts.Branch is null)
@@ -134,11 +134,12 @@ internal static class WorktreeRules
             return;
         }
 
-        if (facts.PrState == PrState.Closed)
+        if (facts.PrState is PrState.Closed or PrState.Merged)
         {
+            // A squash or rebase merge never leaves the branch head in origin/main, so GitHub's state decides, not ancestry (#2659).
             if (facts.UnpushedCommits > 0)
             {
-                reasons.Add($"{pr} is closed but its head is not merged into origin/main and not on any remote");
+                reasons.Add($"{pr} is {facts.PrState.Value.ToString().ToLowerInvariant()} but its head is not merged into origin/main and not on any remote");
             }
         }
         else
