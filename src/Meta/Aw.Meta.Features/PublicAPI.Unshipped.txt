@@ -1183,3 +1183,43 @@ static Aw.Meta.Features.BoardLine.BoardLineRequest.operator !=(Aw.Meta.Features.
 static Aw.Meta.Features.BoardLine.BoardLineRequest.operator ==(Aw.Meta.Features.BoardLine.BoardLineRequest? left, Aw.Meta.Features.BoardLine.BoardLineRequest? right) -> bool
 static Aw.Meta.Features.BoardLine.BoardLineResponse.operator !=(Aw.Meta.Features.BoardLine.BoardLineResponse? left, Aw.Meta.Features.BoardLine.BoardLineResponse? right) -> bool
 static Aw.Meta.Features.BoardLine.BoardLineResponse.operator ==(Aw.Meta.Features.BoardLine.BoardLineResponse? left, Aw.Meta.Features.BoardLine.BoardLineResponse? right) -> bool
+Aw.Meta.Features.ReportDefect.ReportDefectRequest
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.<Clone>$() -> Aw.Meta.Features.ReportDefect.ReportDefectRequest!
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.Code.get -> string!
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.Code.init -> void
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.Deconstruct(out string! Code, out string! Title, out string! What, out string! ErrorLine, out string? Path) -> void
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.Equals(Aw.Meta.Features.ReportDefect.ReportDefectRequest? other) -> bool
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.ErrorLine.get -> string!
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.ErrorLine.init -> void
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.Path.get -> string?
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.Path.init -> void
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.ReportDefectRequest(string! Code, string! Title, string! What, string! ErrorLine, string? Path = null) -> void
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.Title.get -> string!
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.Title.init -> void
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.What.get -> string!
+Aw.Meta.Features.ReportDefect.ReportDefectRequest.What.init -> void
+Aw.Meta.Features.ReportDefect.ReportDefectResponse
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.<Clone>$() -> Aw.Meta.Features.ReportDefect.ReportDefectResponse!
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.Deconstruct(out string! Outcome, out string? Url, out string! LogLine, out int Skipped) -> void
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.Equals(Aw.Meta.Features.ReportDefect.ReportDefectResponse? other) -> bool
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.LogLine.get -> string!
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.LogLine.init -> void
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.Outcome.get -> string!
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.Outcome.init -> void
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.ReportDefectResponse(string! Outcome, string? Url, string! LogLine, int Skipped = 0) -> void
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.Skipped.get -> int
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.Skipped.init -> void
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.Url.get -> string?
+Aw.Meta.Features.ReportDefect.ReportDefectResponse.Url.init -> void
+Aw.Meta.Features.Status.StatusResponse.Defects.get -> string?
+Aw.Meta.Features.Status.StatusResponse.Defects.init -> void
+override Aw.Meta.Features.ReportDefect.ReportDefectRequest.Equals(object? obj) -> bool
+override Aw.Meta.Features.ReportDefect.ReportDefectRequest.GetHashCode() -> int
+override Aw.Meta.Features.ReportDefect.ReportDefectRequest.ToString() -> string!
+override Aw.Meta.Features.ReportDefect.ReportDefectResponse.Equals(object? obj) -> bool
+override Aw.Meta.Features.ReportDefect.ReportDefectResponse.GetHashCode() -> int
+override Aw.Meta.Features.ReportDefect.ReportDefectResponse.ToString() -> string!
+static Aw.Meta.Features.ReportDefect.ReportDefectRequest.operator !=(Aw.Meta.Features.ReportDefect.ReportDefectRequest? left, Aw.Meta.Features.ReportDefect.ReportDefectRequest? right) -> bool
+static Aw.Meta.Features.ReportDefect.ReportDefectRequest.operator ==(Aw.Meta.Features.ReportDefect.ReportDefectRequest? left, Aw.Meta.Features.ReportDefect.ReportDefectRequest? right) -> bool
+static Aw.Meta.Features.ReportDefect.ReportDefectResponse.operator !=(Aw.Meta.Features.ReportDefect.ReportDefectResponse? left, Aw.Meta.Features.ReportDefect.ReportDefectResponse? right) -> bool
+static Aw.Meta.Features.ReportDefect.ReportDefectResponse.operator ==(Aw.Meta.Features.ReportDefect.ReportDefectResponse? left, Aw.Meta.Features.ReportDefect.ReportDefectResponse? right) -> bool
