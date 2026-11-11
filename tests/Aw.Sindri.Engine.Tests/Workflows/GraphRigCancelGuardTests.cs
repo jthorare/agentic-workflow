@@ -11,8 +11,13 @@ namespace Aw.Sindri.Tests.Workflows;
 [Lane(TestLane.Unit)]
 public sealed partial class GraphRigCancelGuardTests
 {
-    [GeneratedRegex(@"GetWorkflowHandle\([^;]*\)\s*\.CancelAsync\(|\bhandle\s*\.CancelAsync\(", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex DirectCancel { get; }
+    // why: any receiver counts (issue 2843: 'var h = ...GetWorkflowHandle(id); h.CancelAsync()' slipped past a name-based match); ')' is a call result
+    [GeneratedRegex(@"(?<receiver>\w+|\))\s*\.CancelAsync\(", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex AnyCancel { get; }
+
+    // why: a token source's CancelAsync is not a run cancel; the file must declare the name as one ('CancellationTokenSource x', 'x = new CancellationTokenSource', 'x = CancellationTokenSource.Create...')
+    [GeneratedRegex(@"CancellationTokenSource\s+(?<name>\w+)|(?<name>\w+)\s*=\s*(?:new\s+CancellationTokenSource\b|CancellationTokenSource\.Create)", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex TokenSource { get; }
 
     [Fact]
     public void No_test_cancels_a_run_without_the_rig()
@@ -74,11 +79,12 @@ public sealed partial class GraphRigCancelGuardTests
     /// <summary>The 1-based lines of <paramref name="source"/> that cancel something other than a token source it declares.</summary>
     internal static IReadOnlyList<int> DirectCancels(string source)
     {
+        var sources = TokenSource.Matches(source).Select(static m => m.Groups["name"].Value).ToHashSet(StringComparer.Ordinal);
         var lines = source.Split('\n');
         var hits = new List<int>();
         for (var i = 0; i < lines.Length; i++)
         {
-            if (DirectCancel.IsMatch(lines[i]))
+            if (AnyCancel.Matches(lines[i]).Any(m => !sources.Contains(m.Groups["receiver"].Value)))
             {
                 hits.Add(i + 1);
             }
