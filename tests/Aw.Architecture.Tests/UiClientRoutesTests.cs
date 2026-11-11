@@ -32,7 +32,6 @@ public sealed class UiClientRoutesTests : IDisposable
     // Every_pending_route_is_still_called_by_the_client. GET /sindri/items/{id}/scope stays out: it is the red line (#2798).
     private static readonly Dictionary<string, string> _pendingRoutes = new(StringComparer.Ordinal)
     {
-        ["POST /sindri/workflow/instances/{id}/commands"] = "#2829 takeover posts to a route #2258 removed",
         ["POST /sindri/library/roots"] = "#2830 host route not built yet",
         ["DELETE /sindri/library/roots/{id}"] = "#2830 host route not built yet",
         ["POST /sindri/library/aw"] = "#2830 host route not built yet",
