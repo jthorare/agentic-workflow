@@ -1,5 +1,6 @@
 using Aw.Kernel.Json;
 using Aw.Meta.Core.Config;
+using Aw.Meta.Core.Gate;
 using Aw.Meta.Host;
 using Aw.Meta.Infrastructure.Config;
 using Aw.Meta.Tests.Adapters;
@@ -34,6 +35,33 @@ public sealed class GateModeTests
 
         Assert.True(loaded.IsSuccess, loaded.IsError ? loaded.Error.Message : string.Empty);
         Assert.Equal((mode, ci), (loaded.Value.Gate.Mode, loaded.Value.Gate.IsCi));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_local_gate_block_with_only_a_mode_loads_and_plans_like_a_file_without_a_gate_block()
+    {
+        var bare = await LoadGate(string.Empty);
+        var local = await LoadGate(""","gate":{"mode":"local"}""");
+        string[] changed = ["src/a.cs", "README.md", "docs/x.md"];
+
+        foreach (var gate in new[] { bare, local })
+        {
+            Assert.Equal(("local", false, 0, 0, 0), (gate.Mode, gate.IsCi, gate.Always.Count, gate.DocsOnly.Count, gate.Scopes.Count));
+            Assert.Null(gate.ParallelSteps);
+        }
+
+        Assert.Equal(ScopePlanner.Plan(changed, bare), ScopePlanner.Plan(changed, local), StringComparer.Ordinal);
+    }
+
+    private static async Task<GateConfig> LoadGate(string gate)
+    {
+        using var dir = new TempDirectory();
+        var path = Path.Combine(dir.Path, "team.json");
+        var config = new FileMetaConfig(path, AwJson.CreateOptions(MetaJsonContext.Default));
+        await File.WriteAllTextAsync(path, Head + gate + "}", TestContext.Current.CancellationToken);
+        var loaded = await config.Load(CancellationToken.None);
+        Assert.True(loaded.IsSuccess, loaded.IsError ? loaded.Error.Message : string.Empty);
+        return loaded.Value.Gate;
     }
 
     [Fact, Trait("Lane", "integration")]

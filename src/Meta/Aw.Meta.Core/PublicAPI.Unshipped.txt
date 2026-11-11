@@ -2515,8 +2515,7 @@ static Aw.Meta.Core.Merge.ReviewProof.Collect(System.Collections.Generic.IReadOn
 static Aw.Meta.Core.Merge.ReviewProof.Counts(string! body) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Merge.CountLine!>!
 static Aw.Meta.Core.Merge.ReviewProof.IsHead(string? sha, string! head) -> bool
 static Aw.Meta.Core.Merge.ReviewProof.ReadySha(string! body) -> string?
-Aw.Meta.Core.Config.GateConfig.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Always, out System.Collections.Generic.IReadOnlyList<string!>! DocsOnly, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Meta.Core.Config.ScopeConfig!>! Scopes, out int? ParallelSteps, out string! Mode) -> void
-Aw.Meta.Core.Config.GateConfig.GateConfig(System.Collections.Generic.IReadOnlyList<string!>! Always, System.Collections.Generic.IReadOnlyList<string!>! DocsOnly, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Meta.Core.Config.ScopeConfig!>! Scopes, int? ParallelSteps = null, string! Mode = "local") -> void
+Aw.Meta.Core.Config.GateConfig.GateConfig(System.Collections.Generic.IReadOnlyList<string!>? always = null, System.Collections.Generic.IReadOnlyList<string!>? docsOnly = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Meta.Core.Config.ScopeConfig!>? scopes = null, int? parallelSteps = null, string! mode = "local") -> void
 Aw.Meta.Core.Config.GateConfig.IsCi.get -> bool
 Aw.Meta.Core.Config.GateConfig.Mode.get -> string!
 Aw.Meta.Core.Config.GateConfig.Mode.init -> void
