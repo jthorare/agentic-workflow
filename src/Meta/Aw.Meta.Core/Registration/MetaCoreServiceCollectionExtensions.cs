@@ -3,6 +3,7 @@ using Aw.Meta.Core.Poll;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Routing;
 using Aw.Meta.Core.Usage;
+using Aw.Meta.Core.Watch;
 using Aw.Meta.Core.Worktrees;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -40,6 +41,7 @@ public static class MetaCoreServiceCollectionExtensions
         .AddScoped<TrainSelection>()
         .AddScoped<MergeReadiness>()
         .AddScoped<MergeQueueReader>()
+        .AddScoped<TeamPrInputs>()
         .AddScoped<HeavyReservation>()
         .AddScoped<ResourceAdvisor>()
         .AddScoped<WorktreeInspector>()

@@ -103,6 +103,12 @@ internal static class CommandTable
             return CommandOutput.Usage(io, $"unknown command '{args[0]}'", "<command> [arguments]");
         }
 
+        if (args.Skip(1).Any(a => string.Equals(a, "--help", StringComparison.Ordinal) || string.Equals(a, "-h", StringComparison.Ordinal)))
+        {
+            await io.Out.WriteLineAsync($"usage: aw-meta {entry.Spec.Usage}".AsMemory(), cancellationToken).ConfigureAwait(false);
+            return CommandOutput.Ok;
+        }
+
         if (CommandLine.Parse(args[1..], entry.Spec, out var problem) is not { } line)
         {
             return CommandOutput.Usage(io, problem, entry.Spec.Usage);

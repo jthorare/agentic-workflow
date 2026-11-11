@@ -15,6 +15,33 @@ public static class TeamPrs
         IReadOnlySet<int> queued,
         IReadOnlySet<int> ready,
         IReadOnlyList<string>? prefixes,
-        IReadOnlySet<string> checkedOutBranches) =>
-        throw new NotSupportedException("TeamPrs.Owned is not implemented (#2771).");
+        IReadOnlySet<string> checkedOutBranches)
+    {
+        ArgumentNullException.ThrowIfNull(prs);
+        ArgumentNullException.ThrowIfNull(queued);
+        ArgumentNullException.ThrowIfNull(ready);
+        ArgumentNullException.ThrowIfNull(checkedOutBranches);
+        var byPrefix = prefixes is { Count: > 0 } ? prefixes : null;
+        var owned = new HashSet<int>(prs.Where(pr => queued.Contains(pr.Number) || ready.Contains(pr.Number) || BranchIsTeams(pr.HeadBranch, byPrefix, checkedOutBranches)).Select(pr => pr.Number));
+        // A pull request stacked on an owned one is owned too, however deep the stack goes.
+        bool grew;
+        do
+        {
+            var heads = prs.Where(pr => owned.Contains(pr.Number) && pr.HeadBranch.Length > 0).Select(pr => pr.HeadBranch).ToHashSet(StringComparer.Ordinal);
+            grew = false;
+            foreach (var pr in prs)
+            {
+                if (pr.BaseBranch.Length > 0 && heads.Contains(pr.BaseBranch) && owned.Add(pr.Number))
+                {
+                    grew = true;
+                }
+            }
+        }
+        while (grew);
+
+        return [.. prs.Where(pr => owned.Contains(pr.Number))];
+    }
+
+    private static bool BranchIsTeams(string head, IReadOnlyList<string>? prefixes, IReadOnlySet<string> checkedOut) =>
+        head.Length > 0 && (prefixes is null ? checkedOut.Contains(head) : prefixes.Any(prefix => head.StartsWith(prefix, StringComparison.Ordinal)));
 }
