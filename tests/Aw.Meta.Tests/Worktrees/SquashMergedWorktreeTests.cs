@@ -52,6 +52,15 @@ public sealed class SquashMergedWorktreeTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_merged_pull_request_branch_behind_the_merged_head_is_removable()
+    {
+        var verdict = WorktreeRules.Judge(SquashMerged() with { Head = "bbbbbbbbbbbb", PrHead = "aaaaaaaaaaaa", CommitsAfterPrHead = 0 });
+
+        Assert.Equal(WorktreeDecision.Removable, verdict.Decision);
+        Assert.Empty(verdict.Reasons);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_merged_pull_request_branch_at_the_merged_head_is_removable()
     {
         var verdict = WorktreeRules.Judge(SquashMerged() with { Head = "aaaaaaaaaaaa", PrHead = "aaaaaaaaaaaa" });
