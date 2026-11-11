@@ -80,6 +80,30 @@ public sealed class RebuiltThroughTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_request_whose_recorded_rebuild_a_pass_already_covered_does_not_rebuild_again()
+    {
+        // #2861: the append wakes a pass that replays the views before RebuildViewsService calls RequestRebuild; that request must not replay a second time.
+        await Append(ToggleProjection.Put, 3);
+        var log = new ListLogger<Projector>();
+        var projector = Projector(out var progress, log);
+        _ = await projector.CatchUp(Token);
+        Assert.Equal(3, _projection.Calls);
+        await Append(EventTypes.ViewsRebuilt, 1);
+        _ = await projector.CatchUp(Token);   // the woken pass: resets for the recorded rebuild and replays
+        Assert.Equal(6, _projection.Calls);
+        Assert.Equal(4L, (await _memory.State(Token)).Value?.RebuiltThrough);
+
+        progress.RequestRebuild();
+        var before = log.Lines.Count;
+        _ = await projector.CatchUp(Token);
+
+        Assert.Equal(6, _projection.Calls);
+        Assert.Equal(4L, (await _memory.State(Token)).Value?.RebuiltThrough);
+        Assert.False(progress.RebuildRequested);
+        Assert.DoesNotContain(log.Lines.Skip(before), l => l.Contains("Views rebuilding", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_request_whose_reset_failed_rebuilds_after_a_restart()
     {
         await Append(ToggleProjection.Put, 3);
