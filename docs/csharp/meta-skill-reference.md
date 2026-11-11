@@ -73,6 +73,17 @@ kept worktree with every reason.
 - `aw-meta worktree-sweep --path <dir> --done`: you are finished with a detached leftover tree (kept otherwise as "detached, not a gate tree"). It goes when its HEAD is in origin/main or on a pushed branch, it is clean and idle, and a sweep ran since it last changed; otherwise the output says why it stayed. Never forced.
 - A lane that finds its worktree kept for a reason it can clear (stop the process, commit and push) can ask you for a sweep.
 
+## Which PRs the watch reports
+
+`aw-meta watch` reports only the team's PRs. A PR is the team's when any of these holds:
+
+1. It is in the merge queue (`merge.queued`).
+2. A lane sent `ready #N` for it.
+3. Its head branch starts with a prefix in `team.json` `watch.prBranchPrefixes`. With no prefixes set (the default), its head branch is checked out in a worktree under the team's worktree roots instead.
+4. It is stacked on a team PR, however deep the stack goes.
+
+`aw-meta watch --all-prs` restores the old output: every open PR in the repo.
+
 ## Health
 
 `aw-meta health` groups memory (Claude sessions, builds, Temporal, MCP servers, Docker, other), finds orphaned Temporal

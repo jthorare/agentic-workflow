@@ -1227,3 +1227,5 @@ Aw.Meta.Features.MergeRun.MergeRunResponse.Position.get -> int?
 Aw.Meta.Features.MergeRun.MergeRunResponse.Position.init -> void
 Aw.Meta.Features.MergeRun.MergeRunResponse.Queued.get -> bool
 Aw.Meta.Features.MergeRun.MergeRunResponse.Queued.init -> void
+Aw.Meta.Features.Watch.WatchRequest.AllPrs.get -> bool
+Aw.Meta.Features.Watch.WatchRequest.AllPrs.init -> void

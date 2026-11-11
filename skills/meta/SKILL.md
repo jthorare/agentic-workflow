@@ -22,6 +22,7 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 ### Card: Claude Code
 - Reply to a Claude lane with **Message a running agent** (SendMessage), to the name the inbox shows. The Stop and outbox hooks record the send.
 - Watch for mail: run `aw-meta watch --until-event` with the Bash tool's `run_in_background`. It prints nothing and costs no turn until a real line (PR change, `INBOX`, `DISK LOW`, `CONTEXT HIGH`, an error) makes it print and exit. Handle the lines, then start it again, except after `WATCH superseded by pid N`: a newer watch already runs, so don't start another. Don't use Monitor for it.
+  - It shows only the team's PRs (`--all-prs`: all; which: the reference). Don't look up the others.
 - A non-Claude lane gets `aw-meta lane-send --lane <lane> --text "..."`, never the message tool.
 
 ### Card: Codex
