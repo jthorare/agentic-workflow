@@ -3,7 +3,9 @@ using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.Controls;
 using Aw.Sindri.Ui.ViewModels.Shell;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Shell;
 
@@ -25,6 +27,32 @@ public sealed class ViewsBannerTests
 
         Assert.Equal("Views are stalled at 42: run `sindri views rebuild`", banner.Announcement);
         Assert.True(seen.IndexOf(nameof(ViewsBanner.IsShown)) < seen.IndexOf(nameof(ViewsBanner.Announcement)), "the flag changes before the text");
+    }
+
+    // With the Rebuild views button beside it the banner drops the command and ends its sentence at a full stop.
+    [Fact]
+    public void A_stalled_view_with_a_rebuild_button_shows_its_sentence_without_the_command()
+    {
+        var banner = new ViewsBanner();
+        var rebuild = new ControlViewModel(
+            new CommandRowView("RebuildViews", "desk", [], Terminal: false, Method: null, Route: null, "sindri views rebuild", "cli-only:test", Destructive: false, ReadsViews: false, Shortcut: null),
+            send: null, new FakeClipboard(), new FakeTimeProvider());
+
+        banner.Show(View("stalled"), rebuild);
+
+        Assert.Equal("Views are stalled at 42.", banner.ShownText);
+        Assert.Equal("Views are stalled at 42: run `sindri views rebuild`", banner.Announcement);
+    }
+
+    // With no Rebuild button the command is the only way to rebuild, so the shown text keeps it.
+    [Fact]
+    public void A_stalled_view_without_a_button_shows_the_command()
+    {
+        var banner = new ViewsBanner();
+
+        banner.Show(View("stalled"), rebuild: null);
+
+        Assert.Equal("Views are stalled at 42: run `sindri views rebuild`", banner.ShownText);
     }
 
     // The rebuilding sentence carries the cursor, which moves on every read: the live region says the state once.

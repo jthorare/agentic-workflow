@@ -32,6 +32,7 @@ internal static class CommandTable
         OwnerAnswerCommand.Entry,
         OwnerAskCommand.Entry,
         LogAppendCommand.Entry,
+        ReportDefectCommand.Entry,
         StatusCommand.Entry,
         QueueDropCommand.Entry,
         GateRunCommand.Entry,
