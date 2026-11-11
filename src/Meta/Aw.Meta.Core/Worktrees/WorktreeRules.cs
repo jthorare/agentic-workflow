@@ -145,7 +145,7 @@ internal static class WorktreeRules
         }
     }
 
-    // Only the owning lane's --done (or a finished bugfix run naming it, #2753) frees a detached tree (the unpushed-commits reason in Judge checks its HEAD); like --discarded it waives rule 7 and "no previous sweep" (#2544, #2560).
+    // Only the owning lane's --done (or a finished bugfix run naming it, #2753) frees a detached tree (the unpushed-commits reason in Judge checks its HEAD). --done also waives rule 7, like --discarded (#2544, #2560); a finished bugfix run does not, so rule 7 still guards its tree.
     private static void DetachedReasons(WorktreeFacts facts, List<string> reasons)
     {
         if (!facts.Done && facts.FinishedBugfix is null)
