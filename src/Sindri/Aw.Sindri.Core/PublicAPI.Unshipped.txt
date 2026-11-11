@@ -13955,7 +13955,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 32 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 33 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -20624,7 +20624,7 @@ static Aw.Sindri.Core.Graph.Blocks.AskOwnerOutcome.operator ==(Aw.Sindri.Core.Gr
 static Aw.Sindri.Core.Graph.Blocks.BlockDuration.Parse(string! text) -> Aw.Kernel.Result<System.TimeSpan>!
 static Aw.Sindri.Core.Graph.Blocks.WaitSchedule.Check(System.Text.Json.Nodes.JsonObject! config) -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Problem)>!
 static Aw.Sindri.Core.Graph.Blocks.WaitSchedule.WakeAt(System.Text.Json.Nodes.JsonObject! config, System.DateTimeOffset now) -> Aw.Kernel.Result<System.DateTimeOffset>!
-static Aw.Sindri.Core.NeedsYou.NeedsYouRowIds.WorkflowQuestion(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node) -> Aw.Sindri.Core.Ids.NeedsYouRowId
+static Aw.Sindri.Core.NeedsYou.NeedsYouRowIds.WorkflowQuestion(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, Aw.Sindri.Core.Graph.Ids.NodeId node, int? item = null) -> Aw.Sindri.Core.Ids.NeedsYouRowId
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForWorkflowQuestion(Aw.Sindri.Core.Events.WorkflowQuestionPayload! question, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotWaiting -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Graph.Blocks.IQuestionPort.Post(Aw.Sindri.Core.Graph.Blocks.QuestionAsk! ask, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
@@ -22728,6 +22728,33 @@ static readonly Aw.Sindri.Core.SindriErrors.CodeTimeout -> Aw.Kernel.ErrorDefini
 static readonly Aw.Sindri.Core.SindriErrors.CodeMemory -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.CodeFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.CodeRunnerUnavailable -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Item.get -> int?
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.Item.init -> void
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.BatchWorkflow.get -> string?
+Aw.Sindri.Core.Graph.Blocks.QuestionAsk.BatchWorkflow.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Item.get -> int?
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.Item.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.BatchWorkflow.get -> string?
+Aw.Sindri.Core.Events.WorkflowQuestionPayload.BatchWorkflow.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Item.get -> int?
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.Item.init -> void
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.BatchWorkflow.get -> string?
+Aw.Sindri.Core.Graph.Runs.GraphAnswer.BatchWorkflow.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Item.get -> int?
+Aw.Sindri.Core.Graph.Blocks.BlockContext.Item.init -> void
+Aw.Sindri.Core.Graph.Blocks.BlockContext.BatchWorkflow.get -> string?
+Aw.Sindri.Core.Graph.Blocks.BlockContext.BatchWorkflow.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Item.get -> int?
+Aw.Sindri.Core.Events.WorkflowAnsweredPayload.Item.init -> void
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Item.get -> int?
+Aw.Sindri.Core.Events.WorkflowQuestionPublic.Item.init -> void
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Item.get -> int?
+Aw.Sindri.Core.Events.WorkflowAnsweredPublic.Item.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.BatchWorkflow.get -> string?
+Aw.Sindri.Core.NeedsYou.NeedsYouRowRecord.BatchWorkflow.init -> void
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair.RepairAll(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Sindri.Core.Graph.Runs.IRunItemRepair.RepairRun(Aw.Sindri.Core.Graph.Ids.WorkflowRunId run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.RunId.init -> void
 Aw.Sindri.Core.Events.WorkflowNodeTakenOverPayload.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId

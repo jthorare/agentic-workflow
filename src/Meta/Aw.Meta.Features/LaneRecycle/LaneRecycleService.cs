@@ -38,7 +38,7 @@ internal sealed class LaneRecycleService(IMetaConfig config, RecycleGuard guard,
         var switching = plan.Value.SwitchTo is not null;
         if (request.DryRun)
         {
-            return new LaneRecycleResponse(plan.Value.Lane, DryRun: true, plan.Value.OldSession.Value, NewSession: null, plan.Value.OldTokens, plan.Value.Digest, switching ? SwitchRunner.Steps(plan.Value) : RecycleRunner.Steps(plan.Value));
+            return new LaneRecycleResponse(plan.Value.Lane, DryRun: true, plan.Value.OldSession.Value, NewSession: null, plan.Value.OldTokens, plan.Value.Digest, switching ? SwitchRunner.Steps(plan.Value) : RecycleRunner.Steps(plan.Value)) { DigestTimes = plan.Value.DigestTimes };
         }
 
         return switching
