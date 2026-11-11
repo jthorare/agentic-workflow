@@ -142,7 +142,7 @@
   <SolidColorBrush x:Key="Brush.RingAnchor" Color="{StaticResource Color.RingAnchor}" />
 
   <!-- workflow run status (F3 workflows spec §2): "you took over" is the one status with no colour of its own; violet glyph
-       and word on its soft pair (Violet at about 8 % over Canvas), never colour alone -->
+       and word on its soft pair (Violet at about 13 % over Canvas), never colour alone -->
   <Color x:Key="Color.Violet">#a78bfa</Color>
   <SolidColorBrush x:Key="Brush.Violet" Color="{StaticResource Color.Violet}" />
   <Color x:Key="Color.VioletSoft">#1d1a29</Color>
