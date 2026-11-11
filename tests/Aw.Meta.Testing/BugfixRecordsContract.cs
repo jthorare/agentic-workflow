@@ -40,6 +40,22 @@ public abstract class BugfixRecordsContract
         Expect.That(result.IsSuccess && result.Value.Count == 1, "the same directory matches");
     }
 
+    /// <summary>A run's GitHub issue comes back on every row, and its red tree comes back as a baseline row with no branch (#2753).</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task The_runs_issue_and_its_red_tree_come_back()
+    {
+        var candidate = Row("c1", "/wt/gh-9-a1") with { Issue = 9 };
+        var red = new BugfixCandidate("gh-9", "red", "/wt/gh-9", string.Empty, "sha-red", Evaluated: true, Resolves: false, Finished: true, ResolvedBy: "c2") { Issue = 9, Baseline = true };
+        var records = Create(candidate, red);
+
+        var named = await records.Naming("/wt/gh-9", CancellationToken.None);
+        var other = await records.Naming("/wt/gh-9-a1", CancellationToken.None);
+
+        Expect.That(named.IsSuccess && named.Value.Count == 1 && named.Value[0] == red, "the red tree is a baseline row with the issue");
+        Expect.That(other.IsSuccess && other.Value.Count == 1 && other.Value[0] == candidate, "the candidate carries the issue");
+    }
+
     /// <summary>No run names the worktree: an empty list, not an error.</summary>
     /// <returns>A task.</returns>
     [Fact]

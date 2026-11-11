@@ -24,9 +24,10 @@ public sealed class InMemoryWorkflowStore(TimeProvider clock) : IWorkflowStore
                 return Done<WorkflowRevision>(IdTaken(id));
             }
 
-            if (_workflows.Values.Any(e => e.Slug == slug))
+            var taker = _workflows.Values.FirstOrDefault(e => e.Slug == slug);
+            if (taker is not null)
             {
-                return Done<WorkflowRevision>(SindriErrors.GraphSlugTaken.With($"the slug '{slug.Value}' belongs to another workflow; pick another"));
+                return Done<WorkflowRevision>(SindriErrors.GraphSlugTaken.With($"The short id '{slug.Value}' is taken by {(taker.ArchivedAt is not null ? "an archived" : "another")} workflow. Pick another."));
             }
 
             var entry = new Entry(slug, spec.Name, createdBy);

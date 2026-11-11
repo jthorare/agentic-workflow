@@ -19,8 +19,8 @@ internal sealed partial class WorkflowsPageViewModel
     public string StalledText => Labels.WfStalled;
 #pragma warning restore CA1822, MA0041
 
-    /// <summary>True when the empty sentence and its actions show: the list is empty and the views are not stalled.</summary>
-    public bool ShowsEmpty => IsEmpty && !ViewsStalled;
+    /// <summary>True when the empty sentence and its actions show: the list is empty, the views are not stalled and the New workflow form is not open.</summary>
+    public bool ShowsEmpty => IsEmpty && !ViewsStalled && !IsCreating;
 
     /// <summary>True when the New workflow form shows.</summary>
     public bool ShowsCreateForm => IsCreating && !ViewsStalled;

@@ -23,6 +23,9 @@ public sealed partial class WorktreeInspector
 
         internal IReadOnlyList<ProcessLocation> Scan { get; } = scan;
 
+        // The merged pull requests that closed each GitHub issue a bugfix run names, asked once per inspection.
+        internal Dictionary<int, IReadOnlyList<int>> Closers { get; } = [];
+
         internal IReadOnlyList<string> Roots { get; } = team.Worktrees.EffectiveRoots(team.Repo, paths.GatesDirectory, paths.Home);
 
         private static bool IsGateTreeName(string name) => string.Equals(name, "tree", StringComparison.Ordinal) || string.Equals(name, "main-tree", StringComparison.Ordinal);

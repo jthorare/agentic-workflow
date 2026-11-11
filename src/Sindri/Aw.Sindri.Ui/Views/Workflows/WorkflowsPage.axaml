@@ -56,7 +56,7 @@
               </ComboBox.ItemTemplate>
             </ComboBox>
             <TextBlock Classes="caption subtle" Text="{Binding SelectedDescription}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-            <Border x:Name="WorkflowsNewReason" AutomationProperties.Name="{Binding CreateReasonText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" IsVisible="{Binding !CanCreate}">
+            <Border x:Name="WorkflowsNewReason" AutomationProperties.Name="{Binding CreateReasonText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" IsVisible="{Binding ShowsCreateReason}">
               <TextBlock Classes="caption subtle" Classes.invalid="{Binding CreateReasonIsError}" Text="{Binding CreateReasonText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
             </Border>
             <Border x:Name="WorkflowsCreateError" AutomationProperties.Name="{Binding CreateError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" IsVisible="{Binding HasCreateError}"
