@@ -37,6 +37,7 @@ internal sealed class CompiledCodeCache(ICodeCompiler compiler, string directory
         var path = Path.Combine(directory, Key(body) + ".dll");
         if (File.Exists(path))
         {
+            Touch(path);
             return new CachedCode(path, []);
         }
 
@@ -50,6 +51,8 @@ internal sealed class CompiledCodeCache(ICodeCompiler compiler, string directory
         var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         File.WriteAllBytes(temporary, bytes);
         File.Move(temporary, path, overwrite: true);   // a second writer of the same key writes the same bytes
+        Touch(path);
+        Prune();
         return new CachedCode(path, []);
     }
 
@@ -79,6 +82,74 @@ internal sealed class CompiledCodeCache(ICodeCompiler compiler, string directory
         }
 
         return resolved.Diagnostics;
+    }
+
+    /// <summary>How long an assembly stays after its last use.</summary>
+    internal static readonly TimeSpan MaxAge = TimeSpan.FromDays(30);
+
+    /// <summary>How long a file is safe from removal after its last write: it may be mid-write by another process or about to be copied by the runner.</summary>
+    internal static readonly TimeSpan Grace = TimeSpan.FromHours(1);
+
+    // why: the last-write time is the last use, so the age and the cap both drop the least recently used body first
+    private void Touch(string path)
+    {
+        try
+        {
+            File.SetLastWriteTimeUtc(path, Time.GetUtcNow().UtcDateTime);
+        }
+        catch (IOException)
+        {
+            // another writer holds the file; its own write makes it young
+        }
+    }
+
+    // why: only a new write grows the folder, so a hit never pays for the folder scan
+    private void Prune()
+    {
+        var now = Time.GetUtcNow().UtcDateTime;
+        var folder = new DirectoryInfo(directory);
+        foreach (var leftover in folder.EnumerateFiles("*.tmp"))
+        {
+            if (now - leftover.LastWriteTimeUtc > Grace)
+            {
+                Delete(leftover);
+            }
+        }
+
+        var kept = new List<FileInfo>();
+        foreach (var assembly in folder.EnumerateFiles("*.dll"))
+        {
+            var age = now - assembly.LastWriteTimeUtc;
+            if (age > MaxAge)
+            {
+                Delete(assembly);
+            }
+            else
+            {
+                kept.Add(assembly);
+            }
+        }
+
+        var over = kept.Count - MaxFiles;
+        foreach (var oldest in kept.OrderBy(file => file.LastWriteTimeUtc).Take(Math.Max(over, 0)))
+        {
+            if (now - oldest.LastWriteTimeUtc > Grace)
+            {
+                Delete(oldest);
+            }
+        }
+    }
+
+    private static void Delete(FileInfo file)
+    {
+        try
+        {
+            file.Delete();
+        }
+        catch (IOException)
+        {
+            // another writer or the runner holds it; the next write tries again
+        }
     }
 
     private string Key(string body) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{compiler.Fingerprint}\n{body}"))).ToLowerInvariant();
