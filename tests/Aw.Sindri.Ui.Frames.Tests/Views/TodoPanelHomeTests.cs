@@ -508,6 +508,7 @@ public sealed class TodoPanelHomeTests : IDisposable
         var empty = Named<TextBlock>(Panel(window), "TodoEmpty");
         var first = Panel(window).GetVisualDescendants().OfType<Button>().First(b => b.IsEffectivelyVisible && b.Classes.Contains("elsewhere-part"));
         var firstWords = first.GetVisualDescendants().OfType<TextBlock>().First();
+        Assert.StartsWith(Labels.ElsewhereReviews(2), firstWords.Text, StringComparison.Ordinal);   // why: a missing Reviews part would otherwise measure Connect Linear
         var emptyLeft = empty.TranslatePoint(default, Panel(window))!.Value.X;   // why: both are in the same visual tree
         var firstLeft = firstWords.TranslatePoint(default, Panel(window))!.Value.X;
 
