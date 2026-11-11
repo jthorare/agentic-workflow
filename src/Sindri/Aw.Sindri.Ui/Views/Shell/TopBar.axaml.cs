@@ -108,24 +108,36 @@ internal sealed partial class TopBar : UserControl
             return Fit.Full;
         }
 
-        var age = PillAgeText.Text is { Length: > 0 } && !_ageYields ? _ageWidth + PillGroup.Spacing : 0;
-        var refresh = RefreshButton.IsVisible ? _refreshWordWidth : 0;
-        var pill = _pillRest - (PillAge.IsVisible ? age : 0) + (_fit >= Fit.NoRefreshWord ? refresh : 0);
-        var word = _brandWordWidth + Brand.Spacing;
-        var padding = Content is Border bar ? bar.Padding.Left + bar.Padding.Right : 0;
-        var fixedWidth = padding + Brand.DesiredSize.Width - (BrandWord.IsVisible ? word : 0);
+        var parts = new StepWidths(FixedWidth(), _brandWordWidth + Brand.Spacing, _compactSearch, PillWithoutProblems(),
+            AgeWidth(), RefreshButton.IsVisible ? _refreshWordWidth : 0);
         foreach (var step in Enum.GetValues<Fit>())
         {
-            var search = step == Fit.Full ? SearchMin : _compactSearch;
-            var need = fixedWidth + NavigationWidthAt(step) + (step < Fit.NoBrandWord ? word : 0) + search + pill
-                + (step < Fit.NoAge ? age : 0) - (step >= Fit.NoRefreshWord ? refresh : 0);
-            if (need <= width - (step < _fit ? Slack : 0))
+            if (parts.Need(step, NavigationWidthAt(step)) <= width - (step < _fit ? Slack : 0))
             {
                 return step;
             }
         }
 
         return Fit.NoRefreshWord;
+    }
+
+    // The age with the pill's spacing before it, when the pill shows one and it hasn't yielded to the problem text.
+    private double AgeWidth() =>
+        PillAgeText.Text is { Length: > 0 } && !_ageYields ? _ageWidth + PillGroup.Spacing : 0;
+
+    // The pill without its problem text, age and Refresh's word, whatever the current step shows of them.
+    private double PillWithoutProblems()
+    {
+        var age = PillAge.IsVisible ? AgeWidth() : 0;
+        var refresh = RefreshButton.IsVisible && _fit >= Fit.NoRefreshWord ? _refreshWordWidth : 0;
+        return _pillRest - age + refresh;
+    }
+
+    // The bar's padding and the brand without its word.
+    private double FixedWidth()
+    {
+        var padding = Content is Border bar ? bar.Padding.Left + bar.Padding.Right : 0;
+        return padding + Brand.DesiredSize.Width - (BrandWord.IsVisible ? _brandWordWidth + Brand.Spacing : 0);
     }
 
     // The ⌘K field's column (the fifth).
@@ -246,5 +258,14 @@ internal sealed partial class TopBar : UserControl
             shell.Palette.Open();
             e.Handled = true;
         }
+    }
+
+    // What a step needs, from the parts that change between steps (Choose).
+    private sealed record StepWidths(
+        double Fixed, double BrandWord, double CompactSearch, double Pill, double Age, double RefreshWord)
+    {
+        public double Need(Fit step, double navigation) =>
+            Fixed + navigation + (step < Fit.NoBrandWord ? BrandWord : 0) + (step == Fit.Full ? SearchMin : CompactSearch)
+            + Pill + (step < Fit.NoAge ? Age : 0) - (step >= Fit.NoRefreshWord ? RefreshWord : 0);
     }
 }
