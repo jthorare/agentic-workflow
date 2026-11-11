@@ -26,7 +26,7 @@ internal sealed partial class QueueViewModel
 #pragma warning restore CA1822, MA0041
 
     /// <summary>Empty while the views are current (and before a read); "Updated 22:57, 2 min ago" while they are behind.</summary>
-    public string FooterText { get; private set => Set(ref field, value); } = string.Empty;
+    public string FooterText { get; private set { Set(ref field, value); OnChanged(nameof(HasFooter)); } } = string.Empty;
 
     /// <summary>True when the table has rows: the column headers show only then.</summary>
     public bool ShowsColumns { get; private set => Set(ref field, value); }
@@ -49,7 +49,33 @@ internal sealed partial class QueueViewModel
         ShowsNoMatch = unmatched;
         ShowsNothing = IsEmpty && !unmatched;
         FooterText = Footer(view.AsOf);
+        FooterTicking(FooterText.Length > 0);
         Columns();
+    }
+
+    // "2 min ago" ages while the views stay behind and no refresh comes: a timer on the clock re-words it, only while the footer shows.
+    private static readonly TimeSpan _footerTick = TimeSpan.FromSeconds(10);
+    private readonly UiContext _ui = new();
+    private ITimer? _footerTicker;
+
+    private void FooterTicking(bool on)
+    {
+        if (on)
+        {
+            _footerTicker ??= clock.CreateTimer(_ => _ui.PostOrInline(RewordFooter), state: null, _footerTick, _footerTick);
+            return;
+        }
+
+        _footerTicker?.Dispose();
+        _footerTicker = null;
+    }
+
+    private void RewordFooter()
+    {
+        if (_view is { } view)
+        {
+            FooterText = Footer(view.AsOf);
+        }
     }
 
     private string Footer(AsOfView asOf)

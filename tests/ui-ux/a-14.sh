@@ -24,9 +24,11 @@ if [ "$closed" != 1 ]; then
 fi
 
 dt click --type ListBoxItem --name Work >/dev/null || uxu_die "no Work tab"
-# Before its first opening the fold reads "Closed" (the count comes with the read), so select it by that name.
-dt wait-for --type ToggleButton --name Closed --state visible --wait-ms 30000 >/dev/null || uxu_die "the Closed group never showed"
-dt click --type ToggleButton --name Closed >/dev/null || uxu_die "could not open the Closed group"
+# The fold's name is "Closed" before its first read and "Closed n" after it, and the driver matches a name exactly: find the ToggleButton whose name starts with "Closed".
+closed_id() { dt search --type ToggleButton --limit 200 | jq -r '[.matches[] | select((.name // "") | startswith("Closed"))][0].id // empty'; }
+for _ in $(seq 1 30); do [ -n "$(closed_id)" ] && break; sleep 1; done
+[ -n "$(closed_id)" ] || uxu_die "the Closed group never showed"
+dt click --node-id "$(closed_id)" >/dev/null || uxu_die "could not open the Closed group"
 dt wait-for --name QueueClosedRows --state visible --wait-ms 10000 >/dev/null || uxu_die "the Closed rows never showed"
 sleep 2
 

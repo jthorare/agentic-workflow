@@ -51,12 +51,15 @@ internal sealed partial class QueuePage : UserControl
         }
     }
 
-    // The panel's border takes 2 px and each row pads 16 px a side.
+    // The room the columns have: the panel less its 1 px border a side and the rows' 16 px padding a side.
+    private const double PanelBorder = 2;
+    private const double RowPadding = 32;
+
     private void Replan()
     {
         if (_queue is not null && this.FindControl<Border>("QueuePanel") is { Bounds.Width: > 0 } panel)
         {
-            PageLayout.SetPlan(this, new PageLayout.ColumnPlan(panel.Bounds.Width - 34, _queue.ShowsRepoColumn, _queue.ShowsActionColumn));
+            PageLayout.SetPlan(this, new PageLayout.ColumnPlan(panel.Bounds.Width - PanelBorder - RowPadding, _queue.ShowsRepoColumn, _queue.ShowsActionColumn));
         }
     }
 
