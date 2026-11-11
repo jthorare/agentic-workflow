@@ -74,7 +74,10 @@ public static class MetaErrors
     /// <summary>AW-META-023.</summary>
     public static readonly ErrorDefinition BoardContended = new("AW-META-023", ErrorKind.Conflict, "The team board kept changing under the write");
 
+    /// <summary>AW-META-024.</summary>
+    public static readonly ErrorDefinition NoRequiredChecks = new("AW-META-024", ErrorKind.Conflict, "The base branch has no required checks, so a CI gate has nothing to read");
+
     /// <summary>Every Meta error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
-        [Invalid, NoTeamConfig, ConfigInvalid, TranscriptUnreadable, MessageNotFound, QuestionNotFound, GateStepNotFound, LogUnwritable, CommandNotStarted, HostUnreadable, ConfigExists, CommandFailed, LogUnreadable, LaneVariablesUnset, LaneNotRecorded, UnknownLane, ClaudeLane, QueueEntryNotFound, TeamAmbiguous, TeamMigrationRefused, RecycleRefused, RecycleTimedOut, BoardContended];
+        [Invalid, NoTeamConfig, ConfigInvalid, TranscriptUnreadable, MessageNotFound, QuestionNotFound, GateStepNotFound, LogUnwritable, CommandNotStarted, HostUnreadable, ConfigExists, CommandFailed, LogUnreadable, LaneVariablesUnset, LaneNotRecorded, UnknownLane, ClaudeLane, QueueEntryNotFound, TeamAmbiguous, TeamMigrationRefused, RecycleRefused, RecycleTimedOut, BoardContended, NoRequiredChecks];
 }

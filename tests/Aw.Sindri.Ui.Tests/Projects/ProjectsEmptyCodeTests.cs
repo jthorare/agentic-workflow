@@ -45,4 +45,15 @@ public sealed class ProjectsEmptyCodeTests
 
         Assert.False(page.ShowsConnect);
     }
+
+    [Fact]
+    public async Task An_unknown_empty_code_with_a_Linear_sentence_shows_the_served_sentence_and_no_Connect_Linear()
+    {
+        const string served = "Linear isn't set up yet, so there is nothing to show.";
+
+        var page = await ShownWith(served, "future-code");
+
+        Assert.False(page.ShowsConnect);
+        Assert.Equal(served, page.Sentence);
+    }
 }

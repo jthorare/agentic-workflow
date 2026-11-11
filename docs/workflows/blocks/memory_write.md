@@ -7,12 +7,13 @@ Writes a fact to a Sindri memory (picker label **Remember**), as `service:workfl
 | `memory` | text | The memory's name. A memory that does not exist fails the node with the handler's error. |
 | `fact` | text | The fact, 1 to 2,000 characters. |
 | `tags` | text list, optional | Tags. The same text under other tags is a different fact. |
-| `expires` | text, optional | How long the fact lives from now: `30d`, `12h`, `45m`. Left out, it never expires. |
+| `expires` | text, optional | How long the fact lives from now: `30d`, `12h`, `45m`. Left out, it never expires. A literal that is not a length fails the workflow check. |
 
 | Output | Type | Meaning |
 |---|---|---|
 | `id` | string | The fact's id; the existing fact's when it was refreshed. |
 | `action` | string | `added`, or `refreshed` when a near duplicate with the same tags was found. |
+| `warning` | string, optional | Only when the run could not be read: the fact was still written, without an item. The node succeeds. |
 
 ```json
 {
