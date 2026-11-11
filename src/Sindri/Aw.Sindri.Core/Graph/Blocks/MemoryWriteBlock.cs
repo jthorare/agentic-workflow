@@ -29,7 +29,7 @@ public sealed class MemoryWriteBlock(IGraphMemoryPort memory) : IGraphBlock
     ]);
 
     /// <inheritdoc />
-    public string Example => """{"memory":"drift-check","fact":"Checked api-repo at {{agent.checkedCommit}}","tags":["checks"],"expires":"30d"}""";
+    public string Example => """{"memory":"drift-check","fact":"Checked api-repo at {{trigger.payload.commit}}","tags":["checks"],"expires":"30d"}""";
 
     /// <inheritdoc />
     public BlockOutputs OutputsFor(JsonObject config) => _outputs;
