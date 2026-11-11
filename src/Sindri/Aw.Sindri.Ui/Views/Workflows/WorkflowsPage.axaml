@@ -18,7 +18,7 @@
         <TextBlock Classes="page-title" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
         <TextBlock x:Name="WorkflowsHead" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
       </StackPanel>
-      <Button x:Name="WorkflowsNewHeader" Grid.Column="1" Content="{Binding NewWorkflowText}" Click="OnNewWorkflow" IsVisible="{Binding IsList}" IsEnabled="{Binding CanOpenCreate}"
+      <Button x:Name="WorkflowsNewHeader" Grid.Column="1" Content="{Binding NewWorkflowText}" Click="OnNewWorkflow" IsVisible="{Binding ShowsHeaderNew}" IsEnabled="{Binding CanOpenCreate}"
               ToolTip.Tip="{Binding NewWorkflowTip}" VerticalAlignment="Top" AutomationProperties.Name="{Binding NewWorkflowText}" />
     </Grid>
     <Button x:Name="WorkflowsBack" Content="{Binding BackText}" Click="OnBack" IsVisible="{Binding !IsList}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding BackText}" />

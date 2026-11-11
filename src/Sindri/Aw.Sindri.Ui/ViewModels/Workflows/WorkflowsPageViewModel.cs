@@ -197,6 +197,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         _level = level;
         CloseEditor();   // the sheet edits the workflow it was opened on: leaving the runs level ends it, so Save never writes to the wrong one
         OnChanged(nameof(IsList));
+        OnChanged(nameof(ShowsHeaderNew));
         OnChanged(nameof(IsRuns));
         OnChanged(nameof(IsRun));
         NotifyStateButtons();
@@ -235,6 +236,7 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
         (HasHead, Head) = rows.Count == 0 ? (false, string.Empty) : (true, Labels.WfHead(rows.Count, rows.Count(r => r.IsActive)));
         (IsEmpty, EmptyText) = rows.Count == 0 ? (true, Labels.WfNone) : (false, string.Empty);
         OnChanged(nameof(ShowsEmpty));
+        OnChanged(nameof(ShowsHeaderNew));
         NotifyCreate();   // a short id the list now holds is taken
         NotifyStateButtons();
     }
