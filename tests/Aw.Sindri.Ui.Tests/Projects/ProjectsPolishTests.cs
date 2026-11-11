@@ -21,7 +21,7 @@ public sealed class ProjectsPolishTests
         var page = await _f.Shown(Token);
 
         var card = Assert.Single(page.Finished.Cards);
-        Assert.Equal((null, Aw.Sindri.Ui.Api.ChipTone.Neutral), (card.HealthWord, card.HealthTone));
+        Assert.Equal((null, Ui.Api.ChipTone.Neutral), (card.HealthWord, card.HealthTone));
     }
 
     // Guard: passes today and must keep passing; a live card keeps the health word the server gave it.
