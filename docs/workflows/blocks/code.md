@@ -27,7 +27,7 @@ Runs a C# method body on a value and hands on what it returns. Use it for the sm
   "nodes": [
     { "id": "start", "type": "manual", "config": {} },
     { "id": "filter", "type": "code", "config": {
-        "input": "{{trigger.items}}",
+        "input": "{{trigger.payload.items}}",
         "code": "return input!.AsArray().Where(i => i![\"score\"]!.GetValue<int>() > 100).Select(i => i![\"title\"]!.GetValue<string>()).ToArray();" } },
     { "id": "tell", "type": "notify", "config": { "title": "Over 100: {{filter.result}}" } }
   ],
