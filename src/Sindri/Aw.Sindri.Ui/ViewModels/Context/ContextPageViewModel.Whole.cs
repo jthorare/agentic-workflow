@@ -84,6 +84,7 @@ internal sealed partial class ContextPageViewModel
     internal Task Opened(CancellationToken cancellationToken = default)
     {
         _wholeWanted = true;
+        ItemOpened(itemId: null);   // the page entered bare is no longer an item's
         NoteItem(string.Empty);   // an earlier See its context is over once the page is entered again
         if (Whole.IsLoading || Concepts.IsOnStage)
         {
