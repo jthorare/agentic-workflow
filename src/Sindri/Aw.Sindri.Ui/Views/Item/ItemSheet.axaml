@@ -194,6 +194,12 @@
       <StackPanel x:Name="ItemTimeline" Spacing="8">
         <TextBlock Classes="eyebrow" Text="{Binding Text.Timeline}" />
         <ItemsControl x:Name="TimelineList" ItemsSource="{Binding Timeline}">
+          <!-- Only the rows in the sheet's viewport are built, however long the history is (#2776). -->
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <VirtualizingStackPanel />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="item:TimelineRow">
               <Border Classes="timeline-row" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
