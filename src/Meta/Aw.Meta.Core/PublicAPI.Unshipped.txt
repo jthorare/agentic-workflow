@@ -2451,6 +2451,8 @@ const Aw.Meta.Core.KvKeys.BoardSeenPrefix = "board.seen." -> string!
 Aw.Meta.Core.Messages.NoticeRule
 static Aw.Meta.Core.Messages.NoticeRule.IsNotice(string! body) -> bool
 static Aw.Meta.Core.Messages.NoticeRule.IsStatusTagged(string! body) -> bool
+const Aw.Meta.Core.Messages.NoticeRule.StatusAskText = "aw-meta: warning: this STATUS: message holds a \"?\", but nobody answers a status line. If you need an answer, send it again as ACTION:." -> string!
+static Aw.Meta.Core.Messages.NoticeRule.StatusAskWarning(string! body) -> string?
 static Aw.Meta.Core.Messages.NoticeRule.StripSender(string! text) -> string!
 static Aw.Meta.Core.Messages.NoticeRule.StripTag(string! text) -> string!
 static Aw.Meta.Core.Messages.NoticeRule.UntaggedIsStatus.get -> bool

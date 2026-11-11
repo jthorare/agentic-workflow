@@ -101,6 +101,10 @@ check "outbox: exit 0, silent" "$RC:$OUT" "0:"
 check "outbox: calls outbox-record" "$(cat "$CALLS")" "outbox-record"
 check "outbox: passes the hook payload on stdin" "$(cat "$STDIN_SEEN")" "$SEND"
 OUT="$(printf '%s' "$SEND" | STUB_RC=2 bash "$HOOKS/meta-outbox.sh")"; RC=$?
+OUT="$(printf '%s' "$SEND" | STUB_OUT="aw-meta: warning: x" bash "$HOOKS/meta-outbox.sh")"; RC=$?
+check "outbox: a warning line goes back to the sender" "$RC:$(printf '%s' "$OUT" | jq -r .hookSpecificOutput.additionalContext)" "0:aw-meta: warning: x"
+OUT="$(printf '%s' "$SEND" | STUB_OUT="recorded the send; no obligation closed" bash "$HOOKS/meta-outbox.sh")"; RC=$?
+check "outbox: a plain recorded line prints nothing" "$RC:$OUT" "0:"
 check "outbox: aw-meta failure never blocks" "$RC:$OUT" "0:"
 grep -q '"hook":"meta-outbox","cause":"meta-exit-2"' "$AW_STATE_DIR/logs/failopen.log"
 check "outbox: failure logged" "$?" "0"
