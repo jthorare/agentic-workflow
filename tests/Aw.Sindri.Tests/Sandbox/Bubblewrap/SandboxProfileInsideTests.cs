@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Infrastructure.Sandbox;
+using Aw.Sindri.Infrastructure.Sandbox.Launch;
 using Aw.Sindri.Testing.Sandbox;
 using Aw.Sindri.Tests.Launch;
 
@@ -60,6 +61,23 @@ public sealed class SandboxProfileInsideTests
         Assert.Contains("first=version: one", ran.Output, StringComparison.Ordinal);
         Assert.Contains("second=version: two", ran.Output, StringComparison.Ordinal);
         Assert.Contains("env=" + profile, ran.Output, StringComparison.Ordinal);
+        Assert.Empty(ProcessListing.Under(box.Root));
+    }
+
+    [Fact]
+    public async Task A_home_with_no_profile_folder_still_launches()
+    {
+        using var box = NewBox();
+
+        // why: this is the case that hid #2832: the real home has no profile/ folder, and bwrap fails on a bind whose source is missing. The host facts name no profile then.
+        var profile = BoxHostFacts.ProfilePath(static _ => null, box.SindriHome);
+        Assert.Null(profile);
+        var request = box.WriteScope() with { Host = box.Host() with { ProfilePath = profile } };
+
+        var ran = await RunInside(box, "echo \"env=[$AW_SINDRI_PROFILE]\"", request);
+
+        Assert.True(ran.Exit == 0, "the launch failed with no profile folder: " + ran.Output);
+        Assert.Contains("env=[]", ran.Output, StringComparison.Ordinal);
         Assert.Empty(ProcessListing.Under(box.Root));
     }
 
