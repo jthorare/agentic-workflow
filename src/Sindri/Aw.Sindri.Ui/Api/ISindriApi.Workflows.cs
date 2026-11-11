@@ -12,6 +12,12 @@ internal partial interface ISindriApi
     /// <returns>The list, or SND-UI-002/003.</returns>
     public Task<Result<WorkflowList>> Workflows(Uri api, CancellationToken cancellationToken);
 
+    /// <summary>GET /sindri/workflows?includeArchived=true: every workflow, archived ones too. An archived slug stays reserved, so the create form checks a new short id against these; the page's own list stays live workflows only.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The list with the archived rows, or SND-UI-002/003.</returns>
+    public Task<Result<WorkflowList>> WorkflowsIncludingArchived(Uri api, CancellationToken cancellationToken);
+
     /// <summary>POST /sindri/workflows: makes a workflow, off, from a starter template. A human action, sent once, never retried.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="slug">The new workflow's slug.</param>
