@@ -16,7 +16,7 @@ internal sealed class CodeCompiler : ICodeCompiler
 
     private static readonly string[] _assemblyNames =
     [
-        "System.Private.CoreLib", "System.Runtime", "System.Collections", "System.Linq", "System.Memory", "System.Text.Json", "System.Text.RegularExpressions",
+        "System.Private.CoreLib", "System.Runtime", "System.Collections", "System.Console", "System.Linq", "System.Memory", "System.Text.Json", "System.Text.RegularExpressions",
     ];
 
     // why: the body's own file name under '#line 1'; a diagnostic mapped anywhere else sits in the wrapper the user never sees
