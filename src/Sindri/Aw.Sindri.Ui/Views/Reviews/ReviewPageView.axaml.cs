@@ -125,7 +125,21 @@ internal sealed partial class ReviewPageView : UserControl
         }
 
         var all = this.GetVisualDescendants().OfType<Control>().Where(c => c.IsEffectivelyVisible).ToList();
-        _ = Find(all, focus)?.Focus(NavigationMethod.Tab);
+        if (Find(all, focus) is { } target)
+        {
+            _ = target.Focus(NavigationMethod.Tab);
+            return;
+        }
+
+        // The diff list is virtualized (#2776): a target far outside the rows built is not in the tree yet. Bring its row into view, build it, and look once more.
+        if (Page is { } page && this.FindControl<ItemsControl>("ReviewDiffRows") is { } rows && focus.Region is ReviewFocusRegion.DiffLine or ReviewFocusRegion.FileNote or ReviewFocusRegion.GroupHeader
+            && page.Diff.IndexOf(focus.Region, focus.Key) is var index and >= 0)
+        {
+            rows.ScrollIntoView(index);
+            rows.UpdateLayout();
+            all = [.. this.GetVisualDescendants().OfType<Control>().Where(c => c.IsEffectivelyVisible)];
+            _ = Find(all, focus)?.Focus(NavigationMethod.Tab);
+        }
     }
 
     private static Control? Find(List<Control> all, ReviewFocus focus) => focus.Region switch

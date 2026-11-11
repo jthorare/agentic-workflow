@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace Aw.Sindri.Ui.ViewModels.Reviews;
 
 /// <summary>The diff, the page's right pane (review page spec §6.2, §6.3): its state and words, the file count and the folded or open groups.</summary>
@@ -26,9 +28,17 @@ internal sealed class ReviewDiffViewModel : ObservableObject
     /// <summary>The groups, in order.</summary>
     public IReadOnlyList<ReviewDiffGroupViewModel> Groups { get; private set => Set(ref field, value); } = [];
 
+    /// <summary>The diff as one flat list (#2776): a header row per group, then, for each file of an open group, its header row, each hunk's header row and each hunk's line rows. A virtualized panel builds only the rows in view.</summary>
+    public ObservableCollection<ReviewDiffRow> Rows { get; } = [];
+
+    // One row per group, file, hunk or line, kept across rebuilds: a focused header or line keeps its container when another group folds.
+    private readonly Dictionary<object, ReviewDiffRow> _rowOf = new(ReferenceEqualityComparer.Instance);
+
     /// <summary>Back to the placeholder while the page is read.</summary>
     internal void ShowLoading()
     {
+        _rowOf.Clear();
+        Rows.Clear();
         (State, Text, CountText, CappedText, Groups) = (ReviewPanelState.Loading, Labels.ReviewDiffReading, string.Empty, string.Empty, []);
         (FocusedFile, FocusedHunk, FocusedLine) = (null, null, null);
     }
@@ -49,8 +59,15 @@ internal sealed class ReviewDiffViewModel : ObservableObject
             group.PropertyChanged += OnGroupChanged;
         }
 
+        foreach (var file in groups.SelectMany(g => g.Files))
+        {
+            file.PropertyChanged += OnFileChanged;
+        }
+
         (State, Text, Groups) = (state, diff.Text ?? string.Empty, groups);
         (FocusedFile, FocusedHunk, FocusedLine) = (null, null, null);
+        _rowOf.Clear();
+        Rebuild();
         (CountText, CappedText) = (state == ReviewPanelState.Ready ? Labels.ReviewFiles(diff.FileCount) : string.Empty, diff.CappedText ?? string.Empty);
     }
 
@@ -138,6 +155,80 @@ internal sealed class ReviewDiffViewModel : ObservableObject
 
     private void Focus(ReviewDiffFileViewModel file, ReviewDiffHunkViewModel? hunk) => (FocusedFile, FocusedHunk, FocusedLine) = (file, hunk, hunk is { Lines: [var line, ..] } ? line : null);
 
+    // The rows follow the groups and files: a fold hides a group's files, Show on a deleted file gives it hunks.
+    private void Rebuild()
+    {
+        var rows = new List<ReviewDiffRow>();
+        foreach (var group in Groups)
+        {
+            rows.Add(Row(group, static g => new ReviewDiffGroupRow(g)));
+            if (group.IsFolded)
+            {
+                continue;
+            }
+
+            foreach (var file in group.Files)
+            {
+                var start = rows.Count;
+                rows.Add(Row(file, static f => new ReviewDiffFileRow(f)));
+                foreach (var hunk in file.Hunks)
+                {
+                    rows.Add(Row(hunk, static h => new ReviewDiffHunkRow(h)));
+                    rows.AddRange(hunk.Lines.Select(line => Row(line, static l => new ReviewDiffLineRow(l))));
+                }
+
+                (rows[start].IsFirst, rows[^1].IsLast) = (true, true);   // the file's rows are one card: the first draws its top, the last its bottom
+            }
+        }
+
+        Patch.To(Rows, rows);
+    }
+
+    private TRow Row<TItem, TRow>(TItem item, Func<TItem, TRow> make)
+        where TItem : class
+        where TRow : ReviewDiffRow
+    {
+        if (!_rowOf.TryGetValue(item, out var known))
+        {
+            known = _rowOf[item] = make(item);
+        }
+
+        (known.IsFirst, known.IsLast) = (false, false);   // the caller marks a card's first and last rows after the list is built
+        return (TRow)known;
+    }
+
+    /// <summary>Where a focus target sits in the flat list, so a view can scroll it into view before it focuses it.</summary>
+    /// <param name="region">The kind of target: a diff line, a file's note or a group header.</param>
+    /// <param name="key">The target's key: a line's focus key, a file's path or a group's name.</param>
+    /// <returns>The row's index, or -1 when no row matches.</returns>
+    internal int IndexOf(ReviewFocusRegion region, string key)
+    {
+        for (var i = 0; i < Rows.Count; i++)
+        {
+            var found = Rows[i] switch
+            {
+                ReviewDiffLineRow row => region == ReviewFocusRegion.DiffLine && string.Equals(row.Line.Key, key, StringComparison.Ordinal),
+                ReviewDiffFileRow row => region == ReviewFocusRegion.FileNote && string.Equals(row.File.Path, key, StringComparison.Ordinal),
+                ReviewDiffGroupRow row => region == ReviewFocusRegion.GroupHeader && string.Equals(row.Group.Name, key, StringComparison.Ordinal),
+                _ => false,
+            };
+            if (found)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private void OnFileChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ReviewDiffFileViewModel.Hunks), StringComparison.Ordinal))
+        {
+            Rebuild();
+        }
+    }
+
     private void OnGroupChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (!string.Equals(e.PropertyName, nameof(ReviewDiffGroupViewModel.IsFolded), StringComparison.Ordinal))
@@ -146,6 +237,7 @@ internal sealed class ReviewDiffViewModel : ObservableObject
         }
 
         OnChanged(nameof(VisibleFiles));
+        Rebuild();
         if (FocusedFile is { } file && !VisibleFiles.Contains(file))
         {
             (FocusedFile, FocusedHunk, FocusedLine) = (null, null, null);
