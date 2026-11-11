@@ -94,7 +94,8 @@ public sealed class WorkflowsFramesTests : FrameHost
         Assert.True(Visible(window, "WorkflowsNewTemplate"));
         Assert.False(Named<Button>(window, "WorkflowsCreate").IsEnabled);
         Assert.True(Visible(window, "WorkflowsNewReason"));
-        Assert.True(Visible(window, "WorkflowsAgentCommand"));
+        Assert.False(Visible(window, "WorkflowsEmptyName"));   // #2688: the empty sentence and the agent route hide while the form is open
+        Assert.False(Visible(window, "WorkflowsAgentCommand"));
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"empty-form-{width}"), Prefix);
     });
 
