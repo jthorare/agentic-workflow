@@ -22751,6 +22751,39 @@ Aw.Sindri.Core.Resources.ResourceDoctorRule
 const Aw.Sindri.Core.Resources.ResourceDoctorRule.NearLimit = 0.9 -> double
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.Check(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>! entries, System.Collections.Generic.IReadOnlyDictionary<string!, long>! diskLimits) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.LimitKey(Aw.Sindri.Core.Resources.ResourceOwner! owner, string! name) -> string!
+static readonly Aw.Sindri.Core.SindriErrors.GraphResultUnavailable -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.Run.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult
+override Aw.Sindri.Core.Graph.Blocks.GraphRunResult.ToString() -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.Run.init -> void
+static Aw.Sindri.Core.Graph.Blocks.GraphRunResult.operator !=(Aw.Sindri.Core.Graph.Blocks.GraphRunResult? left, Aw.Sindri.Core.Graph.Blocks.GraphRunResult? right) -> bool
+static Aw.Sindri.Core.Graph.Blocks.GraphRunResult.operator ==(Aw.Sindri.Core.Graph.Blocks.GraphRunResult? left, Aw.Sindri.Core.Graph.Blocks.GraphRunResult? right) -> bool
+override Aw.Sindri.Core.Graph.Blocks.GraphRunResult.GetHashCode() -> int
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.FinishedAt.get -> System.DateTimeOffset?
+override Aw.Sindri.Core.Graph.Blocks.GraphRunResult.Equals(object? obj) -> bool
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.Outputs.get -> System.Text.Json.Nodes.JsonNode?
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.Equals(Aw.Sindri.Core.Graph.Blocks.GraphRunResult? other) -> bool
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.Status.get -> string!
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.Status.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.<Clone>$() -> Aw.Sindri.Core.Graph.Blocks.GraphRunResult!
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.FinishedAt.init -> void
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, out string! Status, out System.DateTimeOffset? FinishedAt, out System.Text.Json.Nodes.JsonNode? Outputs) -> void
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.Outputs.init -> void
+Aw.Sindri.Core.Graph.Blocks.IGraphResultPort
+Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock
+const Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.LatestSucceeded = "latest-succeeded" -> string!
+Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.WorkflowResultBlock(Aw.Sindri.Core.Graph.Blocks.IGraphResultPort! results) -> void
+Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.Type.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.Title.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.IsTrigger.get -> bool
+Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
+Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.Example.get -> string!
+Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.Execute(Aw.Sindri.Core.Graph.Blocks.BlockContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.BlockResult!>!>
+Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.Config.get -> Aw.Sindri.Core.Graph.Blocks.BlockSchema!
+Aw.Sindri.Core.Graph.Blocks.WorkflowResultBlock.OutputsFor(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockOutputs!
+Aw.Sindri.Core.Graph.Blocks.IGraphResultPort.Read(Aw.Sindri.Core.Graph.Ids.WorkflowSlug workflow, Aw.Sindri.Core.Graph.Ids.WorkflowRunId? run, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.GraphRunResult!>!>
+Aw.Sindri.Core.Graph.Blocks.GraphRunResult.GraphRunResult(Aw.Sindri.Core.Graph.Ids.WorkflowRunId Run, string! Status, System.DateTimeOffset? FinishedAt, System.Text.Json.Nodes.JsonNode? Outputs) -> void
+static Aw.Sindri.Core.Graph.Blocks.GraphBlockRegistry.ResultBlocks(Aw.Sindri.Core.Graph.Blocks.IGraphResultPort! results) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Graph.Blocks.IGraphBlock!>!
 Aw.Sindri.Core.Toolkits.IToolkitFolders
 Aw.Sindri.Core.Toolkits.IToolkitFolders.Folders() -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitFolder!>!
 Aw.Sindri.Core.Toolkits.IToolkitFolders.Generate(string! name, string! tool, string? needs, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Toolkits.ToolkitFolder!>!>

@@ -69,6 +69,23 @@ public sealed class CompiledCodeCacheTests : IDisposable
         Assert.Empty(_directory.GetFiles());
     }
 
+    [Fact]
+    public void The_check_forgets_its_failing_bodies_once_it_holds_the_limit()
+    {
+        var compiler = new CountingCompiler("refs-1", fail: true);
+        var cache = new CompiledCodeCache(compiler, _directory.FullName);
+        for (var i = 0; i < CompiledCodeCache.FailedLimit; i++)
+        {
+            _ = cache.Check("bad " + i.ToString(System.Globalization.CultureInfo.InvariantCulture), TestContext.Current.CancellationToken);
+        }
+
+        _ = cache.Check("bad 0", TestContext.Current.CancellationToken);   // still remembered: the map holds exactly the limit
+        _ = cache.Check("one more", TestContext.Current.CancellationToken);   // the map is full, so it starts over
+        _ = cache.Check("bad 0", TestContext.Current.CancellationToken);   // forgotten: compiles again
+
+        Assert.Equal(CompiledCodeCache.FailedLimit + 2, compiler.Calls);
+    }
+
     private sealed class CountingCompiler(string fingerprint, bool fail = false) : ICodeCompiler
     {
         public int Calls { get; private set; }
