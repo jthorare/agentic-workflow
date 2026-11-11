@@ -22513,6 +22513,7 @@ Aw.Sindri.Core.Toolkits.IToolkitStore
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace.BinaryOf(string! dir) -> Aw.Kernel.Result<string!>!
 Aw.Sindri.Core.Toolkits.IToolkitWorkspace.SourceHash(string! dir, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Sindri.Core.Toolkits.IToolkitWorkspace.TestsProjectOf(string! dir) -> Aw.Kernel.Result<string!>!
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult.<Clone>$() -> Aw.Sindri.Core.Toolkits.ToolkitCommandResult!
 Aw.Sindri.Core.Toolkits.ToolkitCommandResult.Deconstruct(out int ExitCode, out string! Output, out string! Error) -> void

@@ -58,6 +58,71 @@ public sealed class ToolkitBinaryTests : IDisposable
         Assert.Equal(SindriErrors.ToolkitManifestInvalid.Code, two.Error.Code);
     }
 
+    [Fact]
+    public void A_scaffolded_toolkit_s_binary_is_under_artifacts_bin_in_its_own_project_folder_not_the_tests_copy()
+    {
+        // #2711: the scaffold sets UseArtifactsOutput; the tests project's output holds a newer copy of the apphost, which is not the one to run.
+        Write("Notes.Toolkit.csproj", "<Project />");
+        Write("artifacts/bin/Notes.Toolkit/debug/Notes.Toolkit", string.Empty);
+        Write("artifacts/bin/Notes.Toolkit.Tests/debug/Notes.Toolkit", string.Empty);
+        File.SetLastWriteTimeUtc(Path.Combine(_dir, "artifacts/bin/Notes.Toolkit/debug/Notes.Toolkit"), new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        var expected = Path.Combine(_dir, "artifacts/bin/Notes.Toolkit/debug/Notes.Toolkit");
+
+        var forBuild = new FileToolkitWorkspace().BinaryOf(_dir);
+        var forStart = ToolkitProcess.BinaryOf(new Toolkit("notes", _dir, ToolkitState.Built, "h", DateTimeOffset.UnixEpoch, Manifest: null, "human"));
+
+        Assert.Equal(expected, forBuild.Value);
+        Assert.Equal(expected, forStart);
+    }
+
+    [Fact]
+    public void The_tests_project_is_the_one_toolkit_tests_csproj_one_folder_down()
+    {
+        Write("Notes.Toolkit.csproj", "<Project />");
+        Write("Notes.Toolkit.Tests/Notes.Toolkit.Tests.csproj", "<Project />");
+        Write("artifacts/obj/Notes.Toolkit.Tests/Other.Toolkit.Tests.csproj", "<Project />");   // deeper than one folder: not looked at
+
+        var found = new FileToolkitWorkspace().TestsProjectOf(_dir);
+
+        Assert.Equal("Notes.Toolkit.Tests/Notes.Toolkit.Tests.csproj", found.Value);
+    }
+
+    [Fact]
+    public void No_tests_project_or_two_of_them_is_SND_TK_002()
+    {
+        Write("Notes.Toolkit.csproj", "<Project />");
+        var none = new FileToolkitWorkspace().TestsProjectOf(_dir);
+        Write("A.Toolkit.Tests/A.Toolkit.Tests.csproj", "<Project />");
+        Write("B.Toolkit.Tests/B.Toolkit.Tests.csproj", "<Project />");
+        var two = new FileToolkitWorkspace().TestsProjectOf(_dir);
+
+        Assert.Equal(SindriErrors.ToolkitTestsFailed.Code, none.Error.Code);
+        Assert.Equal(SindriErrors.ToolkitTestsFailed.Code, two.Error.Code);
+    }
+
+    [Fact]
+    public async Task Build_output_and_test_results_do_not_change_the_source_hash_and_a_source_edit_does()
+    {
+        // #2711: every build rewrites artifacts/ and a test run writes TestResults/; neither is source, so a toolkit is unchanged right after its own build.
+        Write("Notes.Toolkit.csproj", "<Project />");
+        Write("NotesTools.cs", "class A;");
+        Write("Notes.Toolkit.Tests/AddNoteTests.cs", "class T;");
+        var workspace = new FileToolkitWorkspace();
+        var before = await workspace.SourceHash(_dir, TestContext.Current.CancellationToken);
+
+        Write("artifacts/bin/Notes.Toolkit/debug/Notes.Toolkit", "binary");
+        Write("artifacts/obj/Notes.Toolkit/project.assets.json", "{}");
+        Write("TestResults/run.log", "log");
+        Write("Notes.Toolkit.Tests/bin/Debug/x.dll", "dll");
+        Write("Notes.Toolkit.Tests/obj/project.assets.json", "{}");
+        var afterBuild = await workspace.SourceHash(_dir, TestContext.Current.CancellationToken);
+        Write("NotesTools.cs", "class B;");
+        var afterEdit = await workspace.SourceHash(_dir, TestContext.Current.CancellationToken);
+
+        Assert.Equal(before.Value, afterBuild.Value);
+        Assert.NotEqual(before.Value, afterEdit.Value, StringComparer.Ordinal);
+    }
+
     private void Write(string relative, string text)
     {
         var path = Path.Combine(_dir, relative);
