@@ -177,6 +177,15 @@ public sealed class FromElsewhereTests
     }
 
     [Fact]
+    public void A_part_is_an_action_by_its_flag_not_by_its_words()
+    {
+        var reworded = new ElsewherePartViewModel(ElsewherePart.Linear, "Hook up Linear", "Opens Settings: Hook up Linear", CanRetry: false, RetryName: string.Empty, IsAction: true);
+        var lookalike = new ElsewherePartViewModel(ElsewherePart.Linear, "Connect Linear", "Opens Connections: Connect Linear", CanRetry: false, RetryName: string.Empty);
+
+        Assert.Equal((true, false), (reworded.IsAction, lookalike.IsAction));
+    }
+
+    [Fact]
     public async Task Only_the_Connect_Linear_part_is_an_action_drawn_as_a_link()
     {
         _server.LinearIssuesAnswer = RouteAnswer.Api("linear-issues", "not-connected");

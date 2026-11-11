@@ -6,11 +6,9 @@ namespace Aw.Sindri.Ui.ViewModels.Todo;
 /// <param name="Name">The name for a screen reader: "Opens Reviews: 2 PRs waiting on your review".</param>
 /// <param name="CanRetry">True while the part says its read failed; the line draws Retry beside it.</param>
 /// <param name="RetryName">The Retry button's name: "Retry Reviews"; empty when there is no button.</param>
-internal sealed record ElsewherePartViewModel(ElsewherePart Part, string Text, string Name, bool CanRetry, string RetryName)
+/// <param name="IsAction">True when the part is an action (Connect Linear), drawn as a link in the primary colour; set by the part's maker, never read back from its words.</param>
+internal sealed record ElsewherePartViewModel(ElsewherePart Part, string Text, string Name, bool CanRetry, string RetryName, bool IsAction = false)
 {
-    /// <summary>True when the part is an action (Connect Linear), drawn as a link in the primary colour.</summary>
-    public bool IsAction => string.Equals(Name, Labels.ElsewhereOpens("Connections", Text), StringComparison.Ordinal);
-
     /// <summary>The Retry button's word.</summary>
     public string RetryText { get; } = Labels.ElsewhereRetry;
 }

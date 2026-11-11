@@ -48,7 +48,7 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     /// <summary>A part was pressed (Reviews or Linear connected); the shell moves there.</summary>
     internal event EventHandler<ElsewherePartEventArgs>? OpenRequested;
 
-    /// <summary>"Linear not connected" was pressed; the shell opens Settings, Connections.</summary>
+    /// <summary>Connect Linear was pressed; the shell opens Settings, Connections.</summary>
     internal event EventHandler? ConnectRequested;
 
     /// <summary>Retry on the Reviews part was pressed; the shell reads Reviews again.</summary>
@@ -158,12 +158,12 @@ internal sealed class FromElsewhereViewModel(ISindriApi api) : ObservableObject
     private ElsewherePartViewModel? LinearPart() => _linear switch
     {
         LinearState.Failed => Part(ElsewherePart.Linear, Labels.ElsewhereLinearFailed, "Linear", retryName: "Linear"),
-        LinearState.NotConnected => Part(ElsewherePart.Linear, Labels.ElsewhereLinearNotConnected, "Connections"),
+        LinearState.NotConnected => Part(ElsewherePart.Linear, Labels.ElsewhereLinearNotConnected, "Connections", isAction: true),
         LinearState.Ready when _assigned > 0 => Part(ElsewherePart.Linear, Labels.ElsewhereLinear(_assigned), "Linear"),
         LinearState.Loading or LinearState.Ready or LinearState.NotShown => null,
         _ => throw new InvalidOperationException(_linear.ToString()),
     };
 
-    private static ElsewherePartViewModel Part(ElsewherePart part, string text, string target, string? retryName = null) =>
-        new(part, text, Labels.ElsewhereOpens(target, text), retryName is not null, retryName is null ? string.Empty : Labels.ElsewhereRetryName(retryName));
+    private static ElsewherePartViewModel Part(ElsewherePart part, string text, string target, string? retryName = null, bool isAction = false) =>
+        new(part, text, Labels.ElsewhereOpens(target, text), retryName is not null, retryName is null ? string.Empty : Labels.ElsewhereRetryName(retryName), isAction);
 }

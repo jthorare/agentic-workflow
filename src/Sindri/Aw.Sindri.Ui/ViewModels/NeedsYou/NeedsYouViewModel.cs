@@ -83,14 +83,15 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
     /// <summary>True until the first list is read: Home shows skeleton rows instead of an empty line.</summary>
     internal bool IsLoading => !_loaded;
 
-    /// <summary>The empty line Home shows: the served sentence, or the app's own words when none was served; empty unless the list is read and empty.</summary>
     // The served sentence can carry the running and queued counts ("Nothing needs you. 0 running, 0 queued."); those live in their own cards, so only its first sentence shows.
+    // This depends on the API copy: the cut is at the first ". "; a sentence with no ". " (one sentence, or the end of a longer text) shows whole.
     private static string FirstSentence(string sentence)
     {
         var end = sentence.IndexOf(". ", StringComparison.Ordinal);
         return end < 0 ? sentence : sentence[..(end + 1)];
     }
 
+    /// <summary>The empty line Home shows: the served sentence, or the app's own words when none was served; empty unless the list is read and empty.</summary>
     internal string EmptyLine => !_loaded || !IsEmpty ? "" : _feed.Sentence.Length > 0 ? FirstSentence(_feed.Sentence) : Labels.HomeNothingNeedsYou;
 
     /// <summary>True while a stalled or rebuilding banner shows.</summary>

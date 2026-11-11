@@ -186,7 +186,7 @@
         </StackPanel>
       </Border>
 
-      <!-- The "From elsewhere" line (2 PRs waiting on your review · 1 Linear issue assigned · 3 need you, below): read-only counts under the
+      <!-- The "From elsewhere" line (2 PRs waiting on your review · 1 Linear issue assigned, or Connect Linear when Linear is not set up): read-only counts under the
            rows, in a slot one row tall in every state (D13), so the collapsed panel's height never follows the line's words. Its view model
            is the shell's, not the panel's. -->
       <Border x:Name="TodoElsewhereSlot" Grid.Row="2" Height="{StaticResource Row.Height.Default}" ClipToBounds="True" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">

@@ -344,7 +344,7 @@ public sealed class ShellWindowTests : IDisposable
         _records.Write(A.Record());
         var (window, shell) = await Show(s => s.State == ShellState.Normal);
         Assert.Equal(Brush("Success"), Named<StateIcon>(window, "PillGlyph").Foreground);
-        var profile = Named<ItemsControl>(window, "HealthCells").GetVisualDescendants().OfType<StateIcon>().Last(i => i.IsEffectivelyVisible);
+        var profile = Named<ItemsControl>(window, "HealthCells").GetVisualDescendants().OfType<StateIcon>().Single(i => i.IsEffectivelyVisible && i.DataContext is HealthCell cell && string.Equals(cell.Label, Labels.CellProfile, StringComparison.Ordinal));
         Assert.Equal(Brush("Success"), profile.Foreground);
         shell.GoTo(PageId.System);
         Settle(window);
