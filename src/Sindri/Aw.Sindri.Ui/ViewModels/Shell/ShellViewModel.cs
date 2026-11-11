@@ -109,12 +109,12 @@ internal sealed partial class ShellViewModel : ObservableObject
     [
         new(PageId.Home, Labels.Home, "H", string.Empty),
         new(PageId.Projects, Labels.Projects, "P", string.Empty),
-        new(PageId.Workflows, Labels.Workflows, "W", string.Empty, Labels.WorkflowsTabShort),
+        new(PageId.Workflows, Labels.Workflows, "W", string.Empty),
         new(PageId.Work, Labels.Work, "Q", string.Empty),
         new(PageId.Context, Labels.Context, "C", string.Empty),
         new(PageId.Agents, Labels.Agents, "A", string.Empty),
         new(PageId.System, Labels.System, ".", string.Empty),
-        new(PageId.Reviews, Labels.ReviewsTab, "V", string.Empty, Labels.ReviewsTabShort),
+        new(PageId.Reviews, Labels.ReviewsTab, "V", string.Empty),
         new(PageId.Connections, Labels.ConnectionsPage, "O", string.Empty),
     ];
 

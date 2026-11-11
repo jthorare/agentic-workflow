@@ -66,9 +66,7 @@ public sealed class ShellWorkflowsTests
         var shell = await Shell();
         Assert.Equal(2, shell.Navigation.ToList().FindIndex(n => n.Page == PageId.Workflows));
         var tab = shell.Navigation[2];
-        Assert.Equal(("W", "Workflows"), (tab.Key, tab.DisplayLabel));
-        tab.UseShort = true;
-        Assert.Equal("Flows", tab.DisplayLabel);
+        Assert.Equal(("W", "Workflows"), (tab.Key, tab.Label));
         Assert.Equal("Workflows", tab.AccessibleName);
         shell.GoTo(PageId.Workflows);
         await Until(() => shell.Workflows.Rows.Count == 2);

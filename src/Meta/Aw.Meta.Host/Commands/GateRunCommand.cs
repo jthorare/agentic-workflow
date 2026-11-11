@@ -28,7 +28,7 @@ internal static class GateRunCommand
         var under = stack && gate.Stack.Count > 0 ? " stacked on " + string.Join(", ", gate.Stack.Select(s => string.Create(CultureInfo.InvariantCulture, $"#{s.Pr}"))) : string.Empty;
         return
         [
-            string.Create(CultureInfo.InvariantCulture, $"gate #{gate.Pr} run {gate.Run}: head {Short(gate.Head)} on main {Short(gate.Main)}{under}; scopes: {(gate.Scopes.Count == 0 ? "none" : string.Join(", ", gate.Scopes))}"),
+            string.Create(CultureInfo.InvariantCulture, $"gate #{gate.Pr} run {gate.Run}: head {Short(gate.Head)}{(gate.Main.Length == 0 ? string.Empty : " on main " + Short(gate.Main))}{under}; scopes: {(gate.Scopes.Count == 0 ? "none" : string.Join(", ", gate.Scopes))}"),
             .. gate.Steps.Select(s => string.Concat("  ", s.Verdict == GateVerdict.Pass ? "PASS" : "FAIL", " ", s.Name.PadRight(width), "  ", s.Log)),
         ];
     }

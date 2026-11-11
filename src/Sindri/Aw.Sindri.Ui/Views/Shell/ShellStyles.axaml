@@ -62,9 +62,10 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.SM}" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
-  <!-- The bar's tight step (TopBar.Counts.cs): narrower tabs, before the brand word gives way. -->
+  <!-- The bar's tight step (TopBar.Counts.cs): narrower tabs, only once the dot, the counts and the brand word are gone.
+       3 px a side and a 3 px gap: 9 px between two tabs' words, 6 px from a selected fill to the next word (#2547). -->
   <Style Selector="ListBox.nav.tight > ListBoxItem">
-    <Setter Property="Padding" Value="2,0" />
+    <Setter Property="Padding" Value="3,0" />
   </Style>
   <Style Selector="ListBox.nav > ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
@@ -89,6 +90,10 @@
   </Style>
   <Style Selector="ListBox.nav > ListBoxItem:selected Ellipse.nav-dot">
     <Setter Property="IsVisible" Value="True" />
+  </Style>
+  <!-- The bar's first step down in the navigation (TopBar.Counts.cs): the selected tab keeps its fill and its label's colour. -->
+  <Style Selector="ListBox.nav.no-dot > ListBoxItem:selected Ellipse.nav-dot">
+    <Setter Property="IsVisible" Value="False" />
   </Style>
   <Style Selector="StackPanel:disabled TextBlock.nav-label">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkTertiary}" />
@@ -187,6 +192,10 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Padding" Value="10,4" />
+  </Style>
+  <!-- The bar's last step (TopBar.axaml.cs): Refresh keeps its icon; its name and tooltip still say Refresh. -->
+  <Style Selector="Button.refresh.folded TextBlock.refresh-word">
+    <Setter Property="IsVisible" Value="False" />
   </Style>
   <!-- In flight (§4.1 "sending"): its label kept, dimmed to InkTertiary (§11.1's disabled text) on its own surface. -->
   <Style Selector="Button.refresh:disabled /template/ ContentPresenter#PART_ContentPresenter">
