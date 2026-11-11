@@ -61,7 +61,7 @@ public sealed class StalledLaunchesTests
         var rows = new List<LaunchRow>();
         for (var i = 0; i < 50; i++)
         {
-            rows.Add(Row(i, SessionEndReason.Idle, TimeSpan.FromDays(3), InstanceAddress.From(_item.Value + "/old/" + i.ToString(System.Globalization.CultureInfo.InvariantCulture)), endedAgo: TimeSpan.FromDays(2)));
+            rows.Add(Row(i, SessionEndReason.Idle, TimeSpan.FromDays(3), InstanceAddress.From(_item.Value + "/old/" + (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture)), endedAgo: TimeSpan.FromDays(2)));
         }
 
         rows.Add(Row(100, SessionEndReason.Idle, TimeSpan.FromHours(2), InstanceAddress.From(_item.Value + "/new/1"), endedAgo: TimeSpan.FromHours(1)));
