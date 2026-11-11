@@ -24,7 +24,10 @@ public static class ThresholdChecks
             : AgentAndRoutingProblem(team);
     }
 
-    private static string? AgentAndRoutingProblem(TeamConfig team) => AgentProblem(team.Agent) ?? RoutingChecks.Problem(team);
+    private static string? GateModeProblem(GateConfig gate) =>
+        string.Equals(gate.Mode, GateConfig.LocalMode, StringComparison.Ordinal) || gate.IsCi ? null : $"gate.mode must be \"{GateConfig.LocalMode}\" or \"{GateConfig.CiMode}\", not \"{gate.Mode}\"";
+
+    private static string? AgentAndRoutingProblem(TeamConfig team) => GateModeProblem(team.Gate) ?? AgentProblem(team.Agent) ?? RoutingChecks.Problem(team);
 
     private static string? AgentProblem(string? agent) =>
         agent is null || IsAgentId(agent) ? null : $"agent must be an agent id (^[a-z][a-z0-9-]{{1,31}}$), not '{agent}'";

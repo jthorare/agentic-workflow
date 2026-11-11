@@ -145,4 +145,16 @@ public sealed class CiGateRunTests
         Assert.All(_world.Runner.Requests, r => Assert.Null(r.LogFile));
         Assert.Null(_world.Heavy.Record);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_gh_without_json_for_checks_is_read_from_its_plain_output()
+    {
+        await Script(string.Empty, checksExit: 1, checksError: "unknown flag: --json");
+        _ = _world.Runner.When("gh pr checks 190 --required", _ => new CommandResult(8, "build\tpass\t5s\thttps://x/1\ntypes\tpending\t0\thttps://x/2\n", string.Empty, TimedOut: false));
+
+        var gate = await Run();
+
+        Assert.Equal((GateVerdict.Fail, ["types"]), (gate.Verdict, Failed(gate)));
+        Assert.Equal(["build", "types", "review", "merge-state"], gate.Steps.Select(s => s.Name), StringComparer.Ordinal);
+    }
 }

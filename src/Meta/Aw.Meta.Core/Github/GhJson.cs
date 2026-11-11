@@ -99,6 +99,62 @@ public static class GhJson
         }
     }
 
+    /// <summary>Reads `gh pr view --json headRefOid,baseRefName,reviewDecision,mergeStateStatus`.</summary>
+    /// <param name="json">The output.</param>
+    /// <returns>What a CI gate reads, or null when the output is not a JSON object.</returns>
+    public static PrCiState? CiView(string json)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            var item = document.RootElement;
+            return item.ValueKind == JsonValueKind.Object
+                ? new PrCiState(Text(item, "headRefOid"), Text(item, "baseRefName"), Text(item, "reviewDecision"), Text(item, "mergeStateStatus"))
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Reads `gh pr checks --required --json name,state,bucket`.</summary>
+    /// <param name="json">The output.</param>
+    /// <returns>The checks, or null when the output is not a JSON array.</returns>
+    public static IReadOnlyList<RequiredCheck>? Checks(string json)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.ValueKind == JsonValueKind.Array
+                ? [.. document.RootElement.EnumerateArray()
+                    .Where(item => item.ValueKind == JsonValueKind.Object)
+                    .Select(item => new RequiredCheck(Text(item, "name"), Text(item, "state"), Text(item, "bucket")))]
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Reads the plain output of `gh pr checks --required` (older gh has no --json): one line per check, "name&lt;tab&gt;bucket&lt;tab&gt;elapsed&lt;tab&gt;url".</summary>
+    /// <param name="text">The output.</param>
+    /// <returns>The checks; the bucket stands in for the state.</returns>
+    public static IReadOnlyList<RequiredCheck> ChecksFromText(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return
+        [
+            .. text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(line => line.Split('\t'))
+                .Where(parts => parts.Length >= 2 && parts[0].Length > 0)
+                .Select(parts => new RequiredCheck(parts[0].Trim(), parts[1].Trim(), parts[1].Trim())),
+        ];
+    }
+
     private static PrView View(JsonElement item) => new(
         item.GetProperty("number").GetInt32(),
         State(Text(item, "state")),

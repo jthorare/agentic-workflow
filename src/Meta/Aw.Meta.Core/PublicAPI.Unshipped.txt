@@ -2525,3 +2525,49 @@ Aw.Meta.Core.Merge.MergeFacts.CiGate.init -> void
 const Aw.Meta.Core.Config.GateConfig.CiMode = "ci" -> string!
 const Aw.Meta.Core.Config.GateConfig.CiScope = "ci" -> string!
 const Aw.Meta.Core.Config.GateConfig.LocalMode = "local" -> string!
+Aw.Meta.Core.Coordination.RepoCommands.CiView(string! repo, int pr) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Github.PrCiState!>!>
+Aw.Meta.Core.Coordination.RepoCommands.RequiredChecks(string! repo, int pr) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>!>!>
+Aw.Meta.Core.Gate.CiGate
+Aw.Meta.Core.Github.PrCiState
+Aw.Meta.Core.Github.PrCiState.<Clone>$() -> Aw.Meta.Core.Github.PrCiState!
+Aw.Meta.Core.Github.PrCiState.Base.get -> string!
+Aw.Meta.Core.Github.PrCiState.Base.init -> void
+Aw.Meta.Core.Github.PrCiState.Deconstruct(out string! Head, out string! Base, out string! ReviewDecision, out string! MergeState) -> void
+Aw.Meta.Core.Github.PrCiState.Equals(Aw.Meta.Core.Github.PrCiState? other) -> bool
+Aw.Meta.Core.Github.PrCiState.Head.get -> string!
+Aw.Meta.Core.Github.PrCiState.Head.init -> void
+Aw.Meta.Core.Github.PrCiState.MergeState.get -> string!
+Aw.Meta.Core.Github.PrCiState.MergeState.init -> void
+Aw.Meta.Core.Github.PrCiState.PrCiState(string! Head, string! Base, string! ReviewDecision, string! MergeState) -> void
+Aw.Meta.Core.Github.PrCiState.ReviewDecision.get -> string!
+Aw.Meta.Core.Github.PrCiState.ReviewDecision.init -> void
+Aw.Meta.Core.Github.RequiredCheck
+Aw.Meta.Core.Github.RequiredCheck.<Clone>$() -> Aw.Meta.Core.Github.RequiredCheck!
+Aw.Meta.Core.Github.RequiredCheck.Bucket.get -> string!
+Aw.Meta.Core.Github.RequiredCheck.Bucket.init -> void
+Aw.Meta.Core.Github.RequiredCheck.Deconstruct(out string! Name, out string! State, out string! Bucket) -> void
+Aw.Meta.Core.Github.RequiredCheck.Equals(Aw.Meta.Core.Github.RequiredCheck? other) -> bool
+Aw.Meta.Core.Github.RequiredCheck.Name.get -> string!
+Aw.Meta.Core.Github.RequiredCheck.Name.init -> void
+Aw.Meta.Core.Github.RequiredCheck.RequiredCheck(string! Name, string! State, string! Bucket) -> void
+Aw.Meta.Core.Github.RequiredCheck.State.get -> string!
+Aw.Meta.Core.Github.RequiredCheck.State.init -> void
+const Aw.Meta.Core.Gate.CiGate.MergeStateStep = "merge-state" -> string!
+const Aw.Meta.Core.Gate.CiGate.ReviewStep = "review" -> string!
+override Aw.Meta.Core.Github.PrCiState.Equals(object? obj) -> bool
+override Aw.Meta.Core.Github.PrCiState.GetHashCode() -> int
+override Aw.Meta.Core.Github.PrCiState.ToString() -> string!
+override Aw.Meta.Core.Github.RequiredCheck.Equals(object? obj) -> bool
+override Aw.Meta.Core.Github.RequiredCheck.GetHashCode() -> int
+override Aw.Meta.Core.Github.RequiredCheck.ToString() -> string!
+static Aw.Meta.Core.Gate.CiGate.IsCiRecord(Aw.Meta.Core.Gate.GateRecord! gate) -> bool
+static Aw.Meta.Core.Gate.CiGate.Overall(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Gate.GateStep!>! steps) -> Aw.Meta.Core.Gate.GateVerdict
+static Aw.Meta.Core.Gate.CiGate.Steps(Aw.Meta.Core.Github.PrCiState! pull, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>! checks) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Gate.GateStep!>!
+static Aw.Meta.Core.Github.GhJson.Checks(string! json) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>?
+static Aw.Meta.Core.Github.GhJson.ChecksFromText(string! text) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Github.RequiredCheck!>!
+static Aw.Meta.Core.Github.GhJson.CiView(string! json) -> Aw.Meta.Core.Github.PrCiState?
+static Aw.Meta.Core.Github.PrCiState.operator !=(Aw.Meta.Core.Github.PrCiState? left, Aw.Meta.Core.Github.PrCiState? right) -> bool
+static Aw.Meta.Core.Github.PrCiState.operator ==(Aw.Meta.Core.Github.PrCiState? left, Aw.Meta.Core.Github.PrCiState? right) -> bool
+static Aw.Meta.Core.Github.RequiredCheck.operator !=(Aw.Meta.Core.Github.RequiredCheck? left, Aw.Meta.Core.Github.RequiredCheck? right) -> bool
+static Aw.Meta.Core.Github.RequiredCheck.operator ==(Aw.Meta.Core.Github.RequiredCheck? left, Aw.Meta.Core.Github.RequiredCheck? right) -> bool
+static readonly Aw.Meta.Core.MetaErrors.NoRequiredChecks -> Aw.Kernel.ErrorDefinition!

@@ -70,6 +70,7 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
             IsDraft = view.IsDraft,
             OpenPrs = await OpenBefore(team, pr).ConfigureAwait(false),
             MergeOrder = team.MergeOrder,
+            CiGate = team.Gate.IsCi,
         };
         return new MergeAssessment(team, [.. MergeGate.Evaluate(facts), State(view)], view);
     }
@@ -77,6 +78,11 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
     private async ValueTask<MergeAssessment> Gated(TeamConfig team, int pr, IReadOnlyList<GateRecord> history, ReviewFacts? review, (PrDetails View, string Main) current)
     {
         var (view, main) = current;
+        if (team.Gate.IsCi)
+        {
+            return await CiGated(team, pr, history[0], review, current).ConfigureAwait(false);
+        }
+
         var (gate, repoPassed, scopeRuns) = Choose(history, view.Head, team.Gate);
         var (names, counts) = await FailingTests(gate).ConfigureAwait(false);
         var facts = new MergeFacts
@@ -98,6 +104,25 @@ public sealed class MergeReadiness(IMetaConfig config, IGateStore gates, RepoCom
             FailureCounts = counts,
         };
         return new MergeAssessment(team, [.. MergeGate.Evaluate(facts with { MergedTree = await MergedTree(team.Repo, gate, main).ConfigureAwait(false) }), State(view)], view);
+    }
+
+    // gate.mode ci: the newest record is the read of the required checks. The scopes, main, merged-tree and test-log facts are not gathered.
+    private async ValueTask<MergeAssessment> CiGated(TeamConfig team, int pr, GateRecord gate, ReviewFacts? review, (PrDetails View, string Main) current)
+    {
+        var (view, main) = current;
+        var facts = new MergeFacts
+        {
+            Pr = pr,
+            Review = review,
+            Gate = gate,
+            CurrentHead = view.Head,
+            CurrentMain = main,
+            IsDraft = view.IsDraft,
+            OpenPrs = await OpenBefore(team, pr).ConfigureAwait(false),
+            MergeOrder = team.MergeOrder,
+            CiGate = true,
+        };
+        return new MergeAssessment(team, [.. MergeGate.Evaluate(facts), State(view)], view);
     }
 
     // Null when the team has no reviewer lane.
