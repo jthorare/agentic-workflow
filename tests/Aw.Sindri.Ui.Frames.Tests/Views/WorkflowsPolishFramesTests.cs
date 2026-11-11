@@ -95,7 +95,7 @@ public sealed class WorkflowsPolishFramesTests : FrameHost
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
         await Until(window, () => shell.Workflows.Runs.Rows.Count > 0, "the runs never showed");
 
-        var detail = Named<TextBlock>(window, "RunsDetail").Text!;
+        var detail = Named<TextBlock>(window, "RunsDetail").Text;
         Assert.Contains("2 steps", detail, StringComparison.Ordinal);
         Assert.DoesNotContain("node", detail, StringComparison.Ordinal);
     });

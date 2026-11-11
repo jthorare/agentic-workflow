@@ -84,7 +84,7 @@ public sealed class WorkflowsRowWordsTests
 
         await page.OpenWorkflow(Slug, Token);
 
-        Assert.Equal("2 nodes · created by owner", page.Runs.DetailText);
+        Assert.Equal("2 steps · created by owner", page.Runs.DetailText);
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public sealed class WorkflowsRowWordsTests
 
         await page.OpenWorkflow(Slug, Token);
 
-        Assert.Equal("Revision 1 of 2 · 2 nodes · created by you", page.Runs.DetailText);
+        Assert.Equal("Revision 1 of 2 · 2 steps · created by you", page.Runs.DetailText);
     }
 
     [Fact]
