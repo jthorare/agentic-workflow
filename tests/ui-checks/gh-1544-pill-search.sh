@@ -91,8 +91,9 @@ sleep 2
 # ---- Part 1: the search field keeps its width and the placeholder is whole ---------------------------------------------------------
 # The placeholder TextBlock sits inside the Border of the same name. a) the field is at least SearchMin (184 px) wide while the pill names a problem;
 # b) the TextBlock is the short copy "Search…" (#2710) and it is not trimmed. The tree's `text` is the TextBlock's Text, which stays
-#    whole even when the ellipsis trims it on screen, so b) also needs its laid-out width: the copy needs about 45 px at text scale 1,
-#    and 64 px leaves room for font rounding while a squeezed field (the #1544 bug) still fails.
+#    whole even when the ellipsis trims it on screen, so b) also needs its laid-out width: the check runs at
+#    text scale 1.0, where "Search…" needs about 49 px, so the 64 px laid-out floor still catches a squeezed field (the #1544 bug);
+#    64 is a floor, not the text's width.
 width="$(jq -r '[.. | objects | select(.type == "Border" and .visible and (.name // "") == "Search or run a command")][0].width // empty' "$OUT/tree.json")"
 [ -n "$width" ] || setup_fail "no visible Border named 'Search or run a command' (see $OUT/tree.json)"
 shown="$(jq -r '[.. | objects | select(.type == "TextBlock" and .visible and (.name // "") == "Search or run a command")][0].text // empty' "$OUT/tree.json")"

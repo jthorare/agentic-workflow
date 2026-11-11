@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
@@ -24,6 +23,19 @@ internal sealed partial class TopBar
     // The age gives way before the problem text is trimmed (QA #2547): a short problem reads in full at 1280 px.
     private bool _ageYields;
 
+    // What Full reserves for the ⌘K field: the column the field needs to show its whole placeholder (#2710), between SearchMin
+    // and SearchMax. "Full always means the whole placeholder". It must not read the field's size now: folded, the field's
+    // placeholder and keycap are hidden and it measures as its magnifier. So it is two parts that hold in both steps: the
+    // field's chrome, remembered while Full is shown (Remember), and the placeholder's own width from a TextLayout on
+    // SearchText's font, which follows a text-size change even while folded. The chrome of a text-size change is taken
+    // the next time the bar is Full.
+    private double FullSearch()
+    {
+        var text = SearchText.Text ?? string.Empty;
+        using var layout = new TextLayout(text, new Typeface(SearchText.FontFamily, SearchText.FontStyle, SearchText.FontWeight), SearchText.FontSize, foreground: null);
+        return Math.Clamp(_searchChrome + Math.Ceiling(layout.Width) + PlaceholderSlack, SearchMin, SearchMax);
+    }
+
     private double NaturalProblems()
     {
         if (!PillProblems.IsVisible || PillProblems.Text is not { Length: > 0 } text)
@@ -43,16 +55,7 @@ internal sealed partial class TopBar
             return;
         }
 
-        double search;
-        if (_fit == Fit.Full)
-        {
-            SearchField.Measure(Size.Infinity);
-            search = Math.Clamp(SearchField.DesiredSize.Width + PlaceholderSlack, SearchMin, SearchMax);
-        }
-        else
-        {
-            search = _compactSearch;
-        }
+        var search = _fit == Fit.Full ? FullSearch() : _compactSearch;
 
         var others = bar.Padding.Left + bar.Padding.Right + Brand.DesiredSize.Width + NavigationWidthAt(_fit) + search + _pillRest;
         var room = width - others - PillProblems.Margin.Left - PillProblems.Margin.Right;

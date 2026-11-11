@@ -35,6 +35,9 @@ internal sealed partial class TopBar : UserControl
     private double _refreshWordWidth;
     private double _compactSearch = 60;
 
+    // Everything in the ⌘K field except the placeholder's text (margins, padding, magnifier, keycap, spacing), seen while Full.
+    private double _searchChrome;
+
     // Refresh had focus when it was disabled (in flight) or hidden (recovered); see KeepRefreshFocus.
     private bool _refreshHeldFocus;
     private NavigationMethod _refreshMethod = NavigationMethod.Tab;
@@ -111,7 +114,7 @@ internal sealed partial class TopBar : UserControl
             return Fit.Full;
         }
 
-        var parts = new StepWidths(FixedWidth(), _brandWordWidth + Brand.Spacing, _compactSearch, PillWithoutProblems(),
+        var parts = new StepWidths(FixedWidth(), _brandWordWidth + Brand.Spacing, _compactSearch, FullSearch(), PillWithoutProblems(),
             AgeWidth(), RefreshButton.IsVisible ? _refreshWordWidth : 0);
         foreach (var step in _steps)
         {
@@ -154,7 +157,7 @@ internal sealed partial class TopBar : UserControl
         var compact = fit != Fit.Full;
         SearchField.Classes.Set("compact", compact);
         SearchColumn.Width = compact ? GridLength.Auto : new GridLength(100, GridUnitType.Star);
-        SearchColumn.MinWidth = compact ? 0 : SearchMin;
+        SearchColumn.MinWidth = compact ? 0 : FullSearch();
         SearchColumn.MaxWidth = compact ? double.PositiveInfinity : SearchMax;
         PillAge.IsVisible = fit < Fit.NoAge && !_ageYields;
         NavigationList.Classes.Set("no-dot", fit >= Fit.NoDot);
@@ -185,9 +188,19 @@ internal sealed partial class TopBar : UserControl
 
         RememberCounts();
         RememberPillRest();
+        RememberSearch();
+    }
+
+    // The folded field's width, or the full field's chrome (FullSearch).
+    private void RememberSearch()
+    {
         if (_fit != Fit.Full && SearchField.DesiredSize.Width > 0)
         {
             _compactSearch = SearchField.DesiredSize.Width;
+        }
+        else if (_fit == Fit.Full && SearchText.DesiredSize.Width > 0)
+        {
+            _searchChrome = SearchField.DesiredSize.Width - SearchText.DesiredSize.Width;
         }
     }
 
@@ -267,10 +280,10 @@ internal sealed partial class TopBar : UserControl
 
     // What a step needs, from the parts that change between steps (Choose).
     private sealed record StepWidths(
-        double Fixed, double BrandWord, double CompactSearch, double Pill, double Age, double RefreshWord)
+        double Fixed, double BrandWord, double CompactSearch, double FullSearch, double Pill, double Age, double RefreshWord)
     {
         public double Need(Fit step, double navigation) =>
-            Fixed + navigation + (step < Fit.NoBrandWord ? BrandWord : 0) + (step == Fit.Full ? SearchMin : CompactSearch)
+            Fixed + navigation + (step < Fit.NoBrandWord ? BrandWord : 0) + (step == Fit.Full ? FullSearch : CompactSearch)
             + Pill + (step < Fit.NoAge ? Age : 0) - (step >= Fit.NoRefreshWord ? RefreshWord : 0);
     }
 }
