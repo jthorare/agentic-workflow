@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Projects.Facts;
@@ -279,6 +280,57 @@ public sealed class ProjectCardsTests
     [Fact]
     public void Build_has_no_sentence_for_a_page_with_only_an_attached_project()
         => Expect.True(Page(attached: [Row(ProjectRows.HandMadeId, linear: null, name: "Kitchen")], configured: false).Empty is null);
+
+    private static ProjectsPage PageWith(bool configured, bool tokenMissing, bool firstRead = true, IReadOnlyList<ProjectAttachedRow>? attached = null, Result<ProjectFactsSnapshot>? factsResult = null) =>
+        ProjectCards.Build(new ProjectPageInputs(attached ?? [], [], factsResult ?? Snapshot([], firstRead, _owner), Synced(), configured, tokenMissing), _now, all: false);
+
+    [Fact]
+    public void Build_codes_the_no_Linear_sentence_as_linear_missing()
+    {
+        var page = Page(configured: false);
+
+        Expect.Equal(("No projects yet. Connect Linear or add one by hand.", ProjectsEmptyCode.LinearMissing), (page.Empty, page.EmptyCode));
+    }
+
+    [Fact]
+    public void Build_codes_the_missing_key_sentence_as_linear_key_missing()
+    {
+        var page = PageWith(configured: true, tokenMissing: true);
+
+        Expect.Equal(($"{LinearToken.Missing}. Run {LinearToken.Connect} in your terminal to connect it.", ProjectsEmptyCode.LinearKeyMissing), (page.Empty, page.EmptyCode));
+    }
+
+    [Fact]
+    public void Build_checks_not_configured_before_the_missing_key()
+    {
+        var page = PageWith(configured: false, tokenMissing: true);
+
+        Expect.Equal(("No projects yet. Connect Linear or add one by hand.", ProjectsEmptyCode.LinearMissing), (page.Empty, page.EmptyCode));
+    }
+
+    [Fact]
+    public void Build_checks_the_missing_key_before_still_syncing()
+    {
+        var page = PageWith(configured: true, tokenMissing: true, firstRead: false);
+
+        Expect.Equal(ProjectsEmptyCode.LinearKeyMissing, page.EmptyCode);
+        Expect.True(page.Empty is { } sentence && sentence.StartsWith(LinearToken.Missing, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Build_has_no_empty_code_for_the_other_sentences()
+    {
+        var unavailable = Page(factsResult: SindriErrors.ProjectFactsUnavailable.With("context is down"));
+        var syncing = Page(firstRead: false);
+        var leadsNothing = Page();
+        var leadsNothingUnnamed = Page(owner: new ProjectPerson("linear:user/me", Name: null));
+        var cards = Page([Fact()]);
+        var attachedOnly = Page(attached: [Row(ProjectRows.HandMadeId, linear: null, name: "Kitchen")], configured: false);
+
+        Expect.True(unavailable.Empty is not null && syncing.Empty is not null && leadsNothing.Empty is not null && leadsNothingUnnamed.Empty is not null);
+        Expect.True(unavailable.EmptyCode is null && syncing.EmptyCode is null && leadsNothing.EmptyCode is null && leadsNothingUnnamed.EmptyCode is null);
+        Expect.True(cards.Empty is null && cards.EmptyCode is null && attachedOnly.Empty is null && attachedOnly.EmptyCode is null);
+    }
 
     [Fact]
     public void Build_writes_the_freshness_line_in_source_order_with_minutes_and_hours()
