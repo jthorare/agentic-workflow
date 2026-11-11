@@ -12,6 +12,8 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="paths">Names the gh program.</param>
 public sealed class RepoCommands(ICommandRunner runner, MetaPaths paths)
 {
+    private const string QueueQuery = "query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){isMergeQueueEnabled isInMergeQueue mergeQueueEntry{position state} timelineItems(last:1,itemTypes:[REMOVED_FROM_MERGE_QUEUE_EVENT]){nodes{... on RemovedFromMergeQueueEvent{reason}}}}}}";
+
     private static readonly TimeSpan _limit = TimeSpan.FromMinutes(15);
     private CancellationToken _cancellation;
 
@@ -51,6 +53,16 @@ public sealed class RepoCommands(ICommandRunner runner, MetaPaths paths)
     {
         var json = await Gh(repo, "pr", "view", Number(pr), "--json", "headRefOid,baseRefName,reviewDecision,mergeStateStatus").ConfigureAwait(false);
         return json.IsError ? json.Error : GhJson.CiView(json.Value) is { } view ? view : Unexpected("gh pr view");
+    }
+
+    /// <summary>Reads whether the base branch has a merge queue and where a pull request stands in it. gh 2.45 has no JSON field for it, so this asks GraphQL; gh fills the owner and repo from the repo in the directory.</summary>
+    /// <param name="repo">The repo directory.</param>
+    /// <param name="pr">The pull request number.</param>
+    /// <returns>The queue facts, or an error.</returns>
+    public async ValueTask<Result<MergeQueueView>> QueueView(string repo, int pr)
+    {
+        var json = await Gh(repo, "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}", "-F", "number=" + Number(pr), "-f", "query=" + QueueQuery).ConfigureAwait(false);
+        return json.IsError ? json.Error : GhJson.QueueView(json.Value) is { } view ? view : Unexpected("gh api graphql");
     }
 
     /// <summary>Reads a pull request's required checks. gh exits 1 when a check failed and 8 when one is pending, and still prints them, so those exits are not errors here. A base with no required checks gives an empty list (gh prints "no required checks reported" and exits 1). Older gh has no --json for this command: the plain output is read instead.</summary>
