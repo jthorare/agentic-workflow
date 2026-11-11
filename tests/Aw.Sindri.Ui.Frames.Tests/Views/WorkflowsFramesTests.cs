@@ -256,7 +256,11 @@ public sealed class WorkflowsFramesTests : FrameHost
 
         await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
         await Until(window, () => shell.Workflows.CanPause, "the active workflow never offered Pause");
-        Assert.True(Named<Button>(window, "WorkflowPause").IsEffectivelyVisible, "Pause is not visible on an active workflow");
+        var pause = Named<Button>(window, "WorkflowPause");
+        Assert.True(pause.IsEffectivelyVisible, "Pause is not visible on an active workflow");
+        Click(pause);
+        await Until(window, () => Server.PausedWorkflows.Count > 0, "Pause never sent its call");
+        Assert.Equal([Slug], Server.PausedWorkflows);
     });
 
     // A level opens on its Back button, and Back lands on the first row of the level it returns to, never on the hidden Back button.
