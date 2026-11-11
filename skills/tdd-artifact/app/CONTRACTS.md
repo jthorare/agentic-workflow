@@ -46,12 +46,12 @@ bun "$T/cli/bin/tdd.ts" components                  # one line per component
 bun "$T/cli/bin/tdd.ts" components persona          # one in full (add --json for the entry as data)
 bun "$T/cli/bin/tdd.ts" components --gallery <dir>  # a packet whose page shows every component beside its markdown
 ```
-A block type exists in six places, and `cli/test/components` fails when they disagree:
+A block type exists in six places. `cli/test/components` holds places 2, 3 and 6 together (the catalog against `NODE_TYPES`, a `case` per type, every example compiling in both compilers); the parity gate holds place 1; the agents parity suite (`cli/test/agents`) holds the two lanes of place 5 to each other, not to the type list; nothing checks place 4, so look at the page.
 1. **Compiler, twice**: `../scripts/build_tdd.py` (`node`, `node_box`, a `box_<kind>`) and `../cli/src/compile/compiler.ts`, the same change in both, then the pin (`BUILD_TDD_SHA256`); the parity gate must stay green.
 2. **Type**: an interface in `src/types.ts`, added to the `Node` union and to `NODE_TYPES` (the compiler fails the build if one is missing from the other).
 3. **Renderer**: a `case` in `src/components/Blocks.tsx`; its `default` is typed `never`, so a missing case does not compile. `build.ts` warns when `content.json` holds a type this renderer does not know.
 4. **Classes**: `../templates/tdd-system/tdd.css` (or `src/schema.css` for the drawer), tokens only, both themes; listed in `../templates/tdd-system/README.md`.
-5. **Agents lane**: `kids()` and `r_node` in `../scripts/write_agents.py` and `../cli/src/agents/lane.ts`, so the block reaches `tdd.md`, the slices and `images/`.
+5. **Agents lane**: `kids()` and `r_node` in `../scripts/write_agents.py` and `../cli/src/agents/lane.ts`, so the block reaches `tdd.md`, the slices and `images/`; a container that should be cut into slices of its own also needs `expand()` and `r_head` (`rHead` in the port).
 6. **Catalog**: an entry in `../templates/components.json` with an example that compiles without a warning; then the template (`../templates/tdd-template.md`) if authors should meet it there.
 
 ## Bus events (src/lib/bus.ts), emitted only in the browser

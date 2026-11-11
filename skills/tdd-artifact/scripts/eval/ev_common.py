@@ -32,7 +32,7 @@ def load(relpath, name):
 
 
 def load_sibling_script(filename, name):
-    """Import a sibling script in scripts/ (another worker's file) defensively: (module, None) or (None, reason)."""
+    """Import a sibling script in scripts/ (a file this module does not own) defensively: (module, None) or (None, reason)."""
     path = os.path.join(SCRIPTS, filename)
     if not os.path.isfile(path):
         return None, f"{filename} is absent"
@@ -40,7 +40,7 @@ def load_sibling_script(filename, name):
         return load(path, name), None
     except SystemExit as e:
         return None, f"{filename} exited on import ({e})"
-    except Exception as e:  # another worker's file may be mid-edit
+    except Exception as e:  # the sibling file may be mid-edit
         return None, f"{filename} failed to import: {type(e).__name__}: {str(e)[:160]}"
 
 

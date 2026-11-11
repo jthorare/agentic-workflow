@@ -193,7 +193,7 @@
    "what": "A legend on its own, away from a diagram.",
    "syntax": "[legend: label = tone | label = tone]",
    "where": "anywhere a block can go",
-   "renders": "span.key > i.sw.<tone>",
+   "renders": "span.key > span > i.sw.<tone>",
    "example": "Colours on every diagram on this page:\n\n[legend: new or changed = new | the app = app | needs a data source = data]"
   },
   {
@@ -226,7 +226,7 @@
    "what": "A row of cards; each #### heading starts one.",
    "syntax": "::: cards {four; stat}\n#### Card title {#id}\ntext\n:::",
    "attrs": {
-    "four": "four columns instead of three",
+    "four": "wider cards: each at least 260 px wide instead of 230 px",
     "stat": "stat cards: the heading is the number",
     "#id on a heading": "makes that card an anchor"
    },

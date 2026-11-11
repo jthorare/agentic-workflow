@@ -63,7 +63,7 @@ later. Every role runs the command above. The roles differ in flags, in the scor
 
 | Who | When | Flags | Answers for | `--push` |
 |---|---|---|---|---|
-| Writer, packet or skill code (edits a TDD source or a file in this skill) | after the last rebuild, before returning | the local run; `--session <id>` when it knows its session id, so output 6 counts its tokens | the scorers its files feed (`app/CONTRACTS.md`, owners table); a source edit moves outputs 1, 2 and 6 | never |
+| Writer, packet or skill code (edits a TDD source or a file in this skill) | after the last rebuild, before returning | the local run; `--session <id>` when it knows its session id, so output 6 counts its tokens | the scorers its files feed (`app/CONTRACTS.md`, the "What lives where" table); a source edit moves outputs 1, 2 and 6 | never |
 | Writer, implementation (a PR in the code repo that builds part of the design) | before returning the PR | the local run; `--run-tests` only after reading the test command, never where it loads secrets (output 4) | the trailer `TDD: <slug> PR <n>` and a test file in the PR, so `implementation_merged` and `qa_tests_touched` count it once merged; output 6 with `--session` | never |
 | Reviewer of record (fresh context) | after reading the diff, on the writer's tree | the writer's flags | a score diff against the writer's run (below), not prose alone | never |
 | Integrator (the session that merges) | after merge, on the merged tree | the local run; `--with-judge` and `--with-agent-probe` only when their keys are set (cost notes under Push model) | outputs 3 to 5: a PR counts as implemented only once merged | only when `BRAINTRUST_API_KEY` is in the environment (never in a file) and the owner has said go |
