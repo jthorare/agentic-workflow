@@ -115,10 +115,12 @@
 
     <!-- Level 2: one workflow's runs, newest first. -->
     <StackPanel x:Name="WorkflowRunsLevel" Spacing="{StaticResource Size.PanelGap}" IsVisible="{Binding IsRuns}">
-      <!-- One row, every item centred on it: the title used to stay top-aligned (Stretch) and sat 3 px above the status text and the buttons (#2689). -->
+      <!-- One row, every item centred on it: the title used to stay top-aligned (Stretch) and sat 3 px above the status text and the buttons (#2689).
+           Avalonia has no baseline alignment, so the smaller status text takes the title's line height (as Health's labels do, R12): centred on equal line boxes
+           its baseline lands within a pixel of the title's and the buttons' text, at any text scale. -->
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="RunsTitle" Classes="body-strong" VerticalAlignment="Center" Text="{Binding Runs.Title}" AutomationProperties.Name="{Binding Runs.Title}" />
-        <TextBlock x:Name="RunsHead" Classes="caption subtle" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
+        <TextBlock x:Name="RunsHead" Classes="caption subtle" LineHeight="{DynamicResource Type.BodyStrong.LineHeight}" Text="{Binding Runs.Head}" VerticalAlignment="Center" />
         <Button x:Name="RunNow" VerticalAlignment="Center" Content="{Binding Runs.RunNowText}" Click="OnRunNow" IsEnabled="{Binding Runs.CanPressRunNow}" AutomationProperties.Name="{Binding Runs.RunNowText}" />
         <Button x:Name="WorkflowEdit" VerticalAlignment="Center" Content="{Binding EditText}" Click="OnEdit" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="{Binding EditText}" />
       </StackPanel>
