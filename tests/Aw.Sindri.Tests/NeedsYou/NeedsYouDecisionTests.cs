@@ -13,13 +13,12 @@ namespace Aw.Sindri.Tests.NeedsYou;
 /// </summary>
 public sealed class NeedsYouDecisionTests
 {
-    private static CancellationToken Token => TestContext.Current.CancellationToken;
-
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
     public async Task A_decision_row_carries_its_decision_as_the_pending_list_shows_it_and_other_rows_say_null()
     {
-        await using var host = await Host();
-        var (_, decision) = await RequestCalls.Filed(host, "Split the checkout work into two items.", ItemScenarios.Session("demo"), Token);
+        var token = TestContext.Current.CancellationToken;
+        await using var host = await Host(token);
+        var (_, decision) = await RequestCalls.Filed(host, "Split the checkout work into two items.", ItemScenarios.Session("demo"), token);
 
         using var needs = JsonDocument.Parse(await ViewScenarios.Read(host, "/sindri/needs-you"));
         using var pending = JsonDocument.Parse(await ViewScenarios.Read(host, "/sindri/decisions?pending=true"));
@@ -42,30 +41,31 @@ public sealed class NeedsYouDecisionTests
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
     public async Task The_same_tag_answers_304_with_no_body_and_a_new_request_brings_the_body_back()
     {
-        await using var host = await Host();
-        _ = await RequestCalls.Filed(host, "Split the checkout work into two items.", ItemScenarios.Session("demo"), Token);
-        await ViewScenarios.CatchUp(host, Token);
+        var token = TestContext.Current.CancellationToken;
+        await using var host = await Host(token);
+        _ = await RequestCalls.Filed(host, "Split the checkout work into two items.", ItemScenarios.Session("demo"), token);
+        await ViewScenarios.CatchUp(host, token);
 
-        using var first = await host.Http.SendAsync(Get("/sindri/needs-you", ItemScenarios.Human(host)), Token);
+        using var first = await host.Http.SendAsync(Get("/sindri/needs-you", ItemScenarios.Human(host)), token);
         var tag = first.Headers.ETag;
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         Assert.NotNull(tag);
 
-        using var same = await host.Http.SendAsync(Conditional(host, tag), Token);
+        using var same = await host.Http.SendAsync(Conditional(host, tag), token);
         Assert.Equal(HttpStatusCode.NotModified, same.StatusCode);
-        Assert.Equal(string.Empty, await same.Content.ReadAsStringAsync(Token));
+        Assert.Equal(string.Empty, await same.Content.ReadAsStringAsync(token));
 
-        _ = await RequestCalls.Filed(host, "Add a task for the logout flow.", ItemScenarios.Session("demo"), Token, kind: "add-task");
-        using var moved = await host.Http.SendAsync(Conditional(host, tag), Token);
+        _ = await RequestCalls.Filed(host, "Add a task for the logout flow.", ItemScenarios.Session("demo"), token, kind: "add-task");
+        using var moved = await host.Http.SendAsync(Conditional(host, tag), token);
         Assert.Equal(HttpStatusCode.OK, moved.StatusCode);
         Assert.NotEqual(tag, moved.Headers.ETag);
-        Assert.Equal(2, JsonDocument.Parse(await moved.Content.ReadAsStringAsync(Token)).RootElement.GetProperty("rows").EnumerateArray().Count(r => r.GetProperty("kind").GetString() == "decision"));
+        Assert.Equal(2, JsonDocument.Parse(await moved.Content.ReadAsStringAsync(token)).RootElement.GetProperty("rows").EnumerateArray().Count(r => r.GetProperty("kind").GetString() == "decision"));
     }
 
-    private static async Task<GoldenHost> Host()
+    private static async Task<GoldenHost> Host(CancellationToken token)
     {
-        var host = await GoldenHost.Start(temporary: true, Token, ItemScenarios.ProfileYaml);
-        await ViewScenarios.Approve(host, Token);
+        var host = await GoldenHost.Start(temporary: true, token, ItemScenarios.ProfileYaml);
+        await ViewScenarios.Approve(host, token);
         return host;
     }
 
