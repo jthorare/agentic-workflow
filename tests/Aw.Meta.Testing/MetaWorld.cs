@@ -170,7 +170,7 @@ public sealed class MetaWorld
     public MetaSession Session => new(Messages, Config, Sessions);
 
     /// <summary>The stop-check sweep.</summary>
-    public MetaSweep Sweep => new(Sync, Refresher, Reader);
+    public MetaSweep Sweep => new(Sync, Refresher, Reader, Context, LaneFiles);
 
     /// <summary>The loop guard.</summary>
     public StopGuard Guard => new(Values, Log);
