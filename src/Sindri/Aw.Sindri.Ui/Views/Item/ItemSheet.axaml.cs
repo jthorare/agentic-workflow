@@ -142,12 +142,24 @@ internal sealed partial class ItemSheet : UserControl
         }
     }
 
-    private void FocusRow(int index)
+    // The timeline is virtualized: the row may not be built yet. Scroll it into view by index, then focus the container the list built for it.
+    private void FocusRow(int index, bool retry = true)
     {
-        var rows = this.FindControl<ItemsControl>("TimelineList")?.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("timeline-row")).ToList();
-        if (rows is { } && index >= 0 && index < rows.Count)
+        if (this.FindControl<ItemsControl>("TimelineList") is not { } list || index < 0 || index >= list.ItemCount)
         {
-            _ = rows[index].Focus(NavigationMethod.Tab);
+            return;
+        }
+
+        list.ScrollIntoView(index);
+        list.UpdateLayout();
+        var row = list.ContainerFromIndex(index)?.GetSelfAndVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Classes.Contains("timeline-row"));
+        if (row is not null)
+        {
+            _ = row.Focus(NavigationMethod.Tab);
+        }
+        else if (retry)
+        {
+            Dispatcher.UIThread.Post(() => FocusRow(index, retry: false), DispatcherPriority.Loaded);   // the scroll's layout pass builds it
         }
     }
 }

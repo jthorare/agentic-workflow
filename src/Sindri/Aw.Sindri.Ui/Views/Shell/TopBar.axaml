@@ -73,7 +73,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="8">
                   <Ellipse Classes="nav-dot" VerticalAlignment="Center" />
                   <TextBlock Classes="body-strong nav-label" Text="{Binding Label}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Label}" />
-                  <TextBlock Classes="caption subtle nav-count" Classes.has="{Binding HasCount}" VerticalAlignment="Center" Text="{Binding Count}" AutomationProperties.Name="{Binding Count}" />
+                  <TextBlock Classes="caption subtle nav-count" Classes.has="{Binding HasCount}" VerticalAlignment="Center" Text="{Binding Count}" AutomationProperties.Name="{Binding Count}" AutomationProperties.AutomationId="{Binding CountAutomationId}" />
                 </StackPanel>
               </DataTemplate>
             </ListBox.ItemTemplate>
@@ -83,7 +83,7 @@
 
       <!-- The ⌘K field (home.html): a magnifier, the placeholder, and the ⌘K keycap at the right. The placeholder reads "Search…"
            (short, so it is whole at Full, #2710) and the field is still named "Search or run a command"; folded ("compact"), the magnifier alone. -->
-      <Border x:Name="SearchField" Grid.Column="4" Classes="search" Margin="12,0,12,0" Focusable="True" Cursor="Hand"
+      <Border x:Name="SearchField" AutomationProperties.AutomationId="TopBarPaletteField" Grid.Column="4" Classes="search" Margin="12,0,12,0" Focusable="True" Cursor="Hand"
               PointerPressed="OnSearch" KeyDown="OnSearchKey" ToolTip.Tip="{Binding Text.SearchTip}"
               AutomationProperties.Name="{Binding Text.Search}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Button">
         <Grid x:Name="SearchCells" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" VerticalAlignment="Center">

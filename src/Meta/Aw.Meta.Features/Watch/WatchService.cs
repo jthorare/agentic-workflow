@@ -33,7 +33,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
         }
 
         var end = clock.GetUtcNow() + request.Duration;
-        var loop = await NewLoop(team.Value, request.Emit, request.Owner.ToString(CultureInfo.InvariantCulture), cancellationToken).ConfigureAwait(false);
+        var loop = await NewLoop(team.Value, request.Emit, request.Owner.ToString(CultureInfo.InvariantCulture), request.AllPrs, cancellationToken).ConfigureAwait(false);
         for (var polls = 1; ; polls++)
         {
             await loop.Tick(cancellationToken).ConfigureAwait(false);
@@ -92,7 +92,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
             async kept => _ = await values.Set(KvKeys.WatchStatus, kept.Format(), cancellationToken).ConfigureAwait(false));
     }
 
-    private async ValueTask<WatchLoop> NewLoop(TeamConfig team, Func<string, ValueTask> emit, string owner, CancellationToken cancellationToken)
+    private async ValueTask<WatchLoop> NewLoop(TeamConfig team, Func<string, ValueTask> emit, string owner, bool allPrs, CancellationToken cancellationToken)
     {
         var reported = await values.Get(KvKeys.WatchResources, cancellationToken).ConfigureAwait(false);
         var high = await values.Get(KvKeys.WatchContext, cancellationToken).ConfigureAwait(false);
@@ -115,6 +115,7 @@ internal sealed class WatchService(IMetaConfig config, WatchPoller poller, IKeyV
             // Advisory: a pane or transcript that can't be read leaves usage out of the poll.
             async () => await usage.Check(team, cancellationToken).ConfigureAwait(false))
         {
+            AllPrs = allPrs,
             Status = await StatusBatch(cancellationToken).ConfigureAwait(false),
             // Advisory: a board write that fails is printed as a WATCH ERROR line; the watch keeps polling and the next move fixes the board.
             // The last poll's pull requests and main, so a change between two runs is reported by the next run's first poll. Keyed by repo: another repo's snapshot is not used.

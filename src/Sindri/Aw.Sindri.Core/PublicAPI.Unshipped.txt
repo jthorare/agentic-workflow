@@ -2240,7 +2240,9 @@ Aw.Sindri.Core.Views.TimelineRow.Type.get -> string!
 Aw.Sindri.Core.Views.TimelineRow.Type.init -> void
 Aw.Sindri.Core.Views.ViewColumn
 Aw.Sindri.Core.Views.ViewColumn.Item = 0 -> Aw.Sindri.Core.Views.ViewColumn
+Aw.Sindri.Core.Views.ViewColumn.Instance = 5 -> Aw.Sindri.Core.Views.ViewColumn
 Aw.Sindri.Core.Views.ViewColumn.Kind = 3 -> Aw.Sindri.Core.Views.ViewColumn
+Aw.Sindri.Core.Views.ViewColumn.Reason = 4 -> Aw.Sindri.Core.Views.ViewColumn
 Aw.Sindri.Core.Views.ViewColumn.Repo = 2 -> Aw.Sindri.Core.Views.ViewColumn
 Aw.Sindri.Core.Views.ViewColumn.State = 1 -> Aw.Sindri.Core.Views.ViewColumn
 Aw.Sindri.Core.Views.ViewColumns
@@ -12245,6 +12247,7 @@ Aw.Sindri.Core.Launches.StalledLaunch.State.get -> string?
 Aw.Sindri.Core.Launches.StalledLaunch.State.init -> void
 Aw.Sindri.Core.Launches.StalledLaunch.StalledLaunch(Aw.Sindri.Core.Launch.LaunchId Launch, Aw.Sindri.Core.Launch.InstanceAddress Instance, string? State, System.DateTimeOffset EndedAt, Aw.Sindri.Core.Ids.ItemId Item) -> void
 Aw.Sindri.Core.Launches.StalledLaunches
+static Aw.Sindri.Core.Launches.StalledLaunches.Read(Aw.Sindri.Core.Views.IViewReader! reader, System.DateTimeOffset? now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.StalledLaunch!>!>!>
 static Aw.Sindri.Core.Launches.StalledLaunches.Find(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.LaunchRow!>! rows, System.DateTimeOffset? now) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Launches.StalledLaunch!>!
 static readonly Aw.Sindri.Core.Launches.StalledLaunches.Window -> System.TimeSpan
 Aw.Sindri.Core.Launches.StalledLaunch.<Clone>$() -> Aw.Sindri.Core.Launches.StalledLaunch!
@@ -13976,7 +13979,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 33 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 34 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!

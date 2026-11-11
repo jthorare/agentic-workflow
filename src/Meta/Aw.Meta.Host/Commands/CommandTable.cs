@@ -103,6 +103,13 @@ internal static class CommandTable
             return CommandOutput.Usage(io, $"unknown command '{args[0]}'", "<command> [arguments]");
         }
 
+        // Only right after the command name: a value that reads "--help" (log-append --text --help) still runs the command.
+        if (args.Length > 1 && (string.Equals(args[1], "--help", StringComparison.Ordinal) || string.Equals(args[1], "-h", StringComparison.Ordinal)))
+        {
+            await io.Out.WriteLineAsync($"usage: aw-meta {entry.Spec.Usage}".AsMemory(), cancellationToken).ConfigureAwait(false);
+            return CommandOutput.Ok;
+        }
+
         if (CommandLine.Parse(args[1..], entry.Spec, out var problem) is not { } line)
         {
             return CommandOutput.Usage(io, problem, entry.Spec.Usage);

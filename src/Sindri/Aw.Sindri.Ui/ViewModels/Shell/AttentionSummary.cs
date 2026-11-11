@@ -15,6 +15,9 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// <param name="SummaryLine">Home's summary line; empty before the list is known.</param>
 internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, string SummaryLine)
 {
+    /// <summary>Home's Needs you header, beside its label: only the need-you count ("3 need you"), blank at zero or before the list is known.</summary>
+    public string NeedsYouLine { get; init; } = "";
+
     /// <summary>Works out the summary.</summary>
     /// <param name="feed">The needs-you list, or null before it is known.</param>
     /// <param name="state">The shell's state.</param>
@@ -33,8 +36,14 @@ internal sealed record AttentionSummary(string Title, int Badge, TrayView Tray, 
             badge > 0 ? Labels.TitleNeedsYou(badge) : Labels.Sindri,
             badge,
             TrayFor(feed, state, now, sessions),
-            feed is null ? "" : Labels.Summary(listed ?? rows.Count, counts.Running, counts.WithYou, counts.Queued));
+            feed is null ? "" : Labels.Summary(listed ?? rows.Count, counts.Running, counts.WithYou, counts.Queued))
+        {
+            NeedsYouLine = HeaderCount(feed, listed ?? rows.Count),
+        };
     }
+
+    // Home's header names only the need-you count, and nothing at zero: running and queued live in their own cards.
+    private static string HeaderCount(NeedsYouFeed? feed, int count) => feed is null || count == 0 ? "" : Labels.NeedYouCount(count);
 
     /// <summary>Adds the Linear strip's count to the tray's tooltip as a line, the way the session counts do; the badge and the title stay.</summary>
     /// <param name="count">How many changes the strip holds; 0 adds nothing.</param>

@@ -262,4 +262,35 @@ public sealed class TodoPanelEditTests : IDisposable
         Key(window, PhysicalKey.Escape);
         Assert.False(shell.Todo.IsExpanded);
     });
+
+    // #2761: selecting a link changes only its colours. Each chip's text sits at the same offset inside the chip, and the
+    // chip keeps its size, whether the chip is selected or not.
+    [Fact]
+    public Task Selecting_a_link_never_moves_its_text_or_resizes_its_chip() => OnUi(async () =>
+    {
+        Serve(Linked(), Todo("td_2", "water the plants"));
+        var (window, shell) = await Connected();
+        shell.Todo.Expand();
+        Settle(window);
+        FocusRow(window, 0);
+        Key(window, PhysicalKey.O);
+        Assert.True(ListShown(window));
+        var first = Chips(window)[0];
+        var second = Chips(window)[1];
+        var (selectedText, selectedSize) = (TextOffset(first), first.Bounds.Size);
+
+        Assert.Equal(selectedText, TextOffset(second));
+        Key(window, PhysicalKey.J);
+        Assert.Equal(1, shell.Todo.LinkList.SelectedIndex);
+        Assert.Equal(selectedText, TextOffset(first));
+        Assert.Equal(selectedSize, first.Bounds.Size);
+        Assert.Equal(selectedText, TextOffset(second));
+    });
+
+    private static List<Border> Chips(Window window) =>
+        [.. Named<Control>(window, "TodoLinkItems").GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("phrase-chip") && b.IsEffectivelyVisible)];
+
+    // Where the chip's text starts inside the chip.
+    private static Point TextOffset(Border chip) =>
+        chip.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "TodoLinkRef").TranslatePoint(default, chip)!.Value;
 }

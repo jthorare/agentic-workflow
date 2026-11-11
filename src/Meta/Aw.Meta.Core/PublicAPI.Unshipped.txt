@@ -2679,3 +2679,25 @@ static Aw.Meta.Core.Merge.MergeQueued.Without(string? stored, int pr) -> string!
 static Aw.Meta.Core.Merge.QueuedMerge.operator !=(Aw.Meta.Core.Merge.QueuedMerge? left, Aw.Meta.Core.Merge.QueuedMerge? right) -> bool
 static Aw.Meta.Core.Merge.QueuedMerge.operator ==(Aw.Meta.Core.Merge.QueuedMerge? left, Aw.Meta.Core.Merge.QueuedMerge? right) -> bool
 Aw.Meta.Core.Coordination.TrainSelection.TrainSelection(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.MergeQueueReader! queue, Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
+Aw.Meta.Core.Config.TeamConfig.Watch.get -> Aw.Meta.Core.Config.WatchConfig!
+Aw.Meta.Core.Config.TeamConfig.Watch.init -> void
+Aw.Meta.Core.Config.WatchConfig
+Aw.Meta.Core.Config.WatchConfig.<Clone>$() -> Aw.Meta.Core.Config.WatchConfig!
+Aw.Meta.Core.Config.WatchConfig.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? PrBranchPrefixes) -> void
+Aw.Meta.Core.Config.WatchConfig.Equals(Aw.Meta.Core.Config.WatchConfig? other) -> bool
+Aw.Meta.Core.Config.WatchConfig.PrBranchPrefixes.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Meta.Core.Config.WatchConfig.PrBranchPrefixes.init -> void
+Aw.Meta.Core.Config.WatchConfig.WatchConfig(System.Collections.Generic.IReadOnlyList<string!>? PrBranchPrefixes = null) -> void
+Aw.Meta.Core.Watch.PrView.BaseBranch.get -> string!
+Aw.Meta.Core.Watch.PrView.BaseBranch.init -> void
+Aw.Meta.Core.Watch.PrView.HeadBranch.get -> string!
+Aw.Meta.Core.Watch.PrView.HeadBranch.init -> void
+Aw.Meta.Core.Watch.TeamPrs
+override Aw.Meta.Core.Config.WatchConfig.Equals(object? obj) -> bool
+override Aw.Meta.Core.Config.WatchConfig.GetHashCode() -> int
+override Aw.Meta.Core.Config.WatchConfig.ToString() -> string!
+static Aw.Meta.Core.Config.WatchConfig.operator !=(Aw.Meta.Core.Config.WatchConfig? left, Aw.Meta.Core.Config.WatchConfig? right) -> bool
+static Aw.Meta.Core.Config.WatchConfig.operator ==(Aw.Meta.Core.Config.WatchConfig? left, Aw.Meta.Core.Config.WatchConfig? right) -> bool
+static Aw.Meta.Core.Watch.TeamPrs.Owned(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Watch.PrView!>! prs, System.Collections.Generic.IReadOnlySet<int>! queued, System.Collections.Generic.IReadOnlySet<int>! ready, System.Collections.Generic.IReadOnlyList<string!>? prefixes, System.Collections.Generic.IReadOnlySet<string!>! checkedOutBranches) -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Watch.PrView!>!
+Aw.Meta.Core.Worktrees.CheckedOutBranches
+static Aw.Meta.Core.Worktrees.CheckedOutBranches.Under(string! porcelain, System.Collections.Generic.IReadOnlyList<string!>! roots) -> System.Collections.Generic.IReadOnlySet<string!>!

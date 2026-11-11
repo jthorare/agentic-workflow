@@ -138,6 +138,22 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
+    private async void OnActivate(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.Activate(CancellationToken.None).ConfigureAwait(true);
+        }
+    }
+
+    private async void OnPause(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is WorkflowsPageViewModel page)
+        {
+            await page.Pause(CancellationToken.None).ConfigureAwait(true);
+        }
+    }
+
     private async void OnTakeOverNode(object? sender, RoutedEventArgs e)
     {
         if (sender is Control { DataContext: NodeRunViewModel node })
