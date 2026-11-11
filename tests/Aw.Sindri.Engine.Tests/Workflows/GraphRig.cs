@@ -26,6 +26,7 @@ namespace Aw.Sindri.Tests.Workflows;
 internal sealed class GraphRig : IAsyncDisposable
 {
     private static int _count;
+    private static readonly TimeSpan _cancelHangLimit = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan _patience = TimeSpan.FromSeconds(30);
     private readonly string _taskQueue;
     private readonly CancellationTokenSource _stop = new();
@@ -185,10 +186,14 @@ internal sealed class GraphRig : IAsyncDisposable
         (await _starter.Start(new GraphStartRequest(workflow.Id, workflow.Slug, Revision: 1, occurrence, trigger, mode), Token)).Value;
 
     /// <summary>
-    /// Cancels the run through its Temporal handle and waits on the workflow's own result, expecting the cancel, bounded only by a hang limit;
-    /// then returns the final run row (issue 2678).
+    /// Cancels the run through its Temporal handle, then polls the run row until it has a final status, under the hang limit (5 min)
+    /// and not the check patience, so box load cannot fail the wait and only a real hang does; returns the final run row (issue 2678).
     /// </summary>
-    public Task<WorkflowRun> Cancel(WorkflowRunId id) => throw new NotSupportedException("GraphRig.Cancel is not written yet (issue 2678)");
+    public async Task<WorkflowRun> Cancel(WorkflowRunId id)
+    {
+        await Client.GetWorkflowHandle(id.Value).CancelAsync();
+        return await Final(id, _cancelHangLimit);
+    }
 
     /// <summary>Waits until the run has a final status.</summary>
     public async Task<WorkflowRun> Final(WorkflowRunId id, TimeSpan? patience = null)
