@@ -465,6 +465,7 @@ broken file and no last good settings runs nothing, as today.
 | NeedsYou: `NeedsYouKind.Profile` and its drift row (`DriftKey = "profile:drift"`) | removed. `ProfileRow` and `ProfileProjection` (the view `ViewNames.Profile`, table `view_profile`) are built from `profile.checked`, so they go too. `ProfileRow.ApprovedServices` feeds service-failure clearing (`NeedsYouClearing.FailureStands`, `NeedsYouProjection`, `HealthServiceRows`, `ApprovedServices.Of`): those read the services from the live settings instead (`ISettings`), and `GetProfileService` and `WholeMapNotReady` read the settings, not the view |
 | `setup.consent.given` (event key `setup.consent.given:<profileHash>`, payload field `ProfileHash`) and the "approved before auto registration" wording | the MCP consent row keys on `setup.consent.given` alone (`McpEvents.ConsentGiven` already ignores the hash). The key becomes `setup.consent.given`: `ConsentOnHumanPress` records once, so one key is enough. The payload field stays readable on old rows and is left empty on new ones |
 | other places that carry a `ProfileHash` | `RepoOnboarded.ApprovedHash`, `ContextPageWritten.Hash`, `ContextPinWritten.Hash`, `ProcessStarted.Profile`, `McpAutoMemory` (remembers the hash per repo and port), `StartProcessResponse` and the Linear connection responses: new rows and responses leave the field out, old rows keep it, and `McpAutoMemory` remembers the settings sha256 instead |
+| `Approve` field on the Ui request bodies (`ReviewSettingsSave`, `LibraryRootAdd`, `LibraryAwSwitch`, and `RemoveLibraryRoot`'s `approve` argument) | the new write routes ignore an `Approve` field: it is accepted, has no effect and is not echoed, so a client from before the change keeps working. The UI PR that moves each of those senders stops sending it |
 | `IfHash` request fields, `--if-hash`, `SND-PROFILE-003`, `SND-TODO-409` | all gone: `IfHash` on `SetPagesRequest`, `PinConceptsRequest`, `SetTodoNoteRequest` and `StopTodoNoteRequest`; `--if-hash` in `Usage.cs:116,124` and the context page and pin verbs; `IProfileIndexWriter.Write(edits, ProfileHash? ifHash)`; `TodoNoteProfileEdit.Set/Stop(ifHash)`; `LoadedProfile.Hash`, `ProfileHashing`, `ProfileHash`. `SND-TODO-409` stays for the todo's own version check but no longer guards the note setting |
 | Health "Profile" row | "Settings" row: `ok` with the file, or `unreadable` with the problem; the three picks; a warning per repo whose checkout is gone |
 | API goldens `Golden/Api/profile/*` | `Golden/Api/settings/*`, re-recorded; `Golden/Api/profile-approve/removed.json` (the 410 answer) stays while the tombstone does |
@@ -600,14 +601,14 @@ keep the old words). Known today, by group:
   step the list no longer shows; they say "Waits for a repository" like the row above them. The NeedsYou empty page
   is checked for "approval" wording once its row goes.
 - **More words in the UI.** `SetupRepoBody` (`Labels.SetupForms.cs:21`, "Adding it changes your settings, so you
-  approve them next.") is rewritten without "approve"; `Labels.ModelChoice.cs:16`, `Labels.LabelChoice.cs:19` and `Labels.SurfaceChoice.cs:19`
+  approve them next.") is rewritten without "approve", like these others the phrase grep finds (checked at `origin/main`): `LibraryFoldersSave` "Add and approve" (`Labels.LibraryFolders.cs:52`), `LibraryFoldersFormNote` "asks for your approval" (`:49`), `LinearConnSaveHint` "approves just this change" (`Labels.LinearConnection.cs:58`), the "Pin all and approve" submit text (`PinSeveralViewModel.cs:112`), `SetupErr004` "approve your settings first" (`Labels.SetupForms.cs:42`) and `ApproveSettings` "Approve settings" (`Labels.Sends.cs:52`); `Labels.ModelChoice.cs:16`, `Labels.LabelChoice.cs:19` and `Labels.SurfaceChoice.cs:19`
   say "Change it in the profile" and "once you approve"; the hash-clash strings `PageSheetClash` (`Labels.PageSheet.cs:121`),
   `AddSeveralPagesClash` and `AcceptAllProfileFull` (`Labels.AddSeveralPages.cs:81,45`), `SetupProfileChanged`
   (`Labels.SetupForms.cs:89`, also keyed on `SND-PROFILE-002` at line 99) and `ReviewSettingsStale`
   (`Labels.ReviewSettings.cs:51`) talk about "the profile changed" and are reworded or dropped with the hash guard;
   `ProfileCard` (`Labels.cs:95`) and `CellProfile` (`Labels.cs:188`, used by `StatusText.cs:41`) say "Profile"; and
   `Labels.Actions.cs:46,47,147` ("Create profile", "Set a profile key", "Validate profile"). The closing grep gets
-  `-e "the profile" -e "your profile" -e "approve"` for `src/Sindri/Aw.Sindri.Ui/ViewModels`.
+  `-e "the profile" -e "your profile"` and the settings-approval phrases (`-e "and approve" -e "approve your settings" -e "approve them" -e "your approval" -e "approves just" -e "Approve settings" -e "once you approve"`) for `src/Sindri/Aw.Sindri.Ui/ViewModels`. A bare "approve" would match about 80 lines that stay on purpose (the decision bar's Approve, "Approve on GitHub", "Approve all workflows").
 - **Text in code.** Strings that still say "re-approval" or "approved" (for example `SandboxCopy.cs:45`, the
   `SND-LAUNCH-019` row) are reworded in the Core commit of the rename.
 - **Not in scope.** `recipes/dev/profile.yaml` is a workflow recipe (retired by #2356), not settings.
@@ -719,7 +720,8 @@ keep the old words). Known today, by group:
     -e sindri-profile -e SND-PROFILE -- \
     src tests docs scripts config providers skills bootstrap evals setup.sh .env.example \
     ONBOARDING.md AGENTS.md .agents ':!docs/superpowers' ':!evals/planDevexReview' ':!tests/fixtures/backtest'
-  git grep -i -e "the profile" -e "your profile" -e "approve" -- src/Sindri/Aw.Sindri.Ui/ViewModels
+  git grep -i -e "the profile" -e "your profile" -e "and approve" -e "approve your settings" -e "approve them" -e "your approval" -e "approves just" -e "Approve settings" -e "once you approve" \
+    -- src/Sindri/Aw.Sindri.Ui/ViewModels
   ```
 
 ## 8. Size
