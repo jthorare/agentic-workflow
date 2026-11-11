@@ -52,8 +52,27 @@ public sealed class SystemInsporaFramesTests : FrameHost
 
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"system-inspora-{width:0}-{(typical ? "typical" : "empty")}"), prefix: "");
 
-        Named<Control>(window, "ContextIndexPanel").BringIntoView();   // why: the card with the backlog bar sits below the first 800 px
+        var indexPanel = Named<Control>(window, "ContextIndexPanel");
+        indexPanel.BringIntoView();   // why: the card with the backlog bar sits below the first 800 px
         Settle(window);
+        if (typical)
+        {
+            BacklogEndsInsideTheCard(window, indexPanel);
+        }
+
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"system-inspora-{width:0}-{(typical ? "typical" : "empty")}-index"), prefix: "");
     });
+
+    // The ticks and their caption end inside the card's 24 px inset (side by side, the caption ran past the card and was clipped).
+    private static void BacklogEndsInsideTheCard(Window window, Control indexPanel)
+    {
+        var ticks = Named<Control>(window, "ContextIndexTicks");
+        var caption = Named<TextBlock>(window, "ContextIndexBacklogText");
+        var ticksRight = ticks.TranslatePoint(new Point(ticks.Bounds.Width, 0), indexPanel)!.Value.X;
+        var captionRight = caption.TranslatePoint(new Point(caption.TextLayout.Width, 0), indexPanel)!.Value.X;
+        var limit = indexPanel.Bounds.Width - 24;
+        var culture = System.Globalization.CultureInfo.InvariantCulture;
+        Assert.True(ticksRight <= limit + 0.5, string.Create(culture, $"ticks end at {ticksRight}, the card's content ends at {limit}"));
+        Assert.True(captionRight <= limit + 0.5, string.Create(culture, $"caption ends at {captionRight}, the card's content ends at {limit}"));
+    }
 }

@@ -275,11 +275,11 @@
                 <TextBlock x:Name="ContextIndexEyebrow" Classes="section-title head-title" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
                 <TextBlock x:Name="ContextIndexWord" Grid.Column="1" Classes="body-strong head-word" Text="{Binding Word}" AutomationProperties.Name="{Binding Word}" />
               </Grid>
-              <StackPanel x:Name="ContextIndexBacklog" Orientation="Horizontal" Spacing="{StaticResource Space.MD}" IsVisible="{Binding HasBacklog}"
-                          MinHeight="{StaticResource Row.Height.Data}">
-                <ccontrols:TickBar x:Name="ContextIndexTicks" Value="{Binding Backlog.Embedded}" Total="{Binding Backlog.Total}" VerticalAlignment="Center"
+              <StackPanel x:Name="ContextIndexBacklog" Spacing="{StaticResource Space.XS}" IsVisible="{Binding HasBacklog}"
+                          Margin="0,8">
+                <ccontrols:TickBar x:Name="ContextIndexTicks" Value="{Binding Backlog.Embedded}" Total="{Binding Backlog.Total}" HorizontalAlignment="Left"
                                    AutomationProperties.Name="{Binding Backlog.Text}" />
-                <TextBlock x:Name="ContextIndexBacklogText" Classes="mono subtle" Text="{Binding Backlog.Text}" VerticalAlignment="Center"
+                <TextBlock x:Name="ContextIndexBacklogText" Classes="mono subtle" Text="{Binding Backlog.Text}" TextWrapping="Wrap"
                            AutomationProperties.Name="{Binding Backlog.Text}" />
               </StackPanel>
               <ItemsControl x:Name="ContextIndexLines" ItemsSource="{Binding Lines}">
