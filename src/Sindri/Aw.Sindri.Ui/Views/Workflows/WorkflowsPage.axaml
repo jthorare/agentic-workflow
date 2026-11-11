@@ -15,9 +15,11 @@
   <StackPanel x:Name="WorkflowsRoot" Spacing="{StaticResource Size.PanelGap}">
     <Grid ColumnDefinitions="*,Auto">
       <StackPanel x:Name="WorkflowsHeadRegion" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <Button x:Name="WorkflowsBack" Content="{Binding CrumbText}" Click="OnBack" IsVisible="{Binding !IsList}" VerticalAlignment="Center" AutomationProperties.Name="{Binding CrumbText}" />
-        <TextBlock Classes="caption subtle" Text="/" IsVisible="{Binding !IsList}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-        <TextBlock x:Name="WorkflowsTitle" Classes="page-title" Text="{Binding PageTitle}" AutomationProperties.Name="{Binding PageTitle}" />
+        <!-- The crumb and the slash are top-aligned and WorkflowsPage.AlignCrumb sets their top margin from the measured baselines: Avalonia has no baseline
+             alignment, and 13 px text centred beside the 24 px title sits 4 px above its baseline (6 px at text scale 1.3), too far for the equal line box trick below. -->
+        <Button x:Name="WorkflowsBack" Content="{Binding CrumbText}" Click="OnBack" IsVisible="{Binding !IsList}" VerticalAlignment="Top" AutomationProperties.Name="{Binding CrumbText}" />
+        <TextBlock x:Name="WorkflowsCrumbSlash" Classes="caption subtle" Text="/" IsVisible="{Binding !IsList}" VerticalAlignment="Top" AutomationProperties.AccessibilityView="Raw" />
+        <TextBlock x:Name="WorkflowsTitle" Classes="page-title" Text="{Binding PageTitle}" VerticalAlignment="Top" AutomationProperties.Name="{Binding PageTitle}" />
         <TextBlock x:Name="WorkflowsHead" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
       </StackPanel>
       <Button x:Name="WorkflowsNewHeader" Grid.Column="1" Content="{Binding NewWorkflowText}" Click="OnNewWorkflow" IsVisible="{Binding ShowsHeaderNew}" IsEnabled="{Binding CanOpenCreate}"

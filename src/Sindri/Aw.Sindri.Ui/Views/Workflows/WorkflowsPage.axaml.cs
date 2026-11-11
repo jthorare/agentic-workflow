@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -14,6 +15,46 @@ internal sealed partial class WorkflowsPage : UserControl
     public WorkflowsPage()
     {
         InitializeComponent();
+    }
+
+    /// <inheritdoc/>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        LayoutUpdated += OnLayoutUpdated;   // the title's text, its scale or the crumb's text changed: the crumb follows the title's baseline
+    }
+
+    /// <inheritdoc/>
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        LayoutUpdated -= OnLayoutUpdated;
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    private void OnLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (WorkflowsBack.IsVisible)
+        {
+            AlignCrumb(WorkflowsBack, WorkflowsBack.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault());
+            AlignCrumb(WorkflowsCrumbSlash, WorkflowsCrumbSlash);
+        }
+    }
+
+    // Moves a top-aligned crumb part down by the gap between its text's baseline and the page title's (#2807).
+    // Under half a pixel is left alone, so the layout it causes settles on the next pass.
+    private void AlignCrumb(Control part, TextBlock? text)
+    {
+        if (text is null || text.TranslatePoint(default, this) is not { } at || WorkflowsTitle.TranslatePoint(default, this) is not { } title)
+        {
+            return;
+        }
+
+        var gap = title.Y + WorkflowsTitle.TextLayout.Baseline - (at.Y + text.TextLayout.Baseline);
+        if (Math.Abs(gap) >= 0.5)
+        {
+            var m = part.Margin;
+            part.Margin = new Thickness(m.Left, m.Top + gap, m.Right, m.Bottom);
+        }
     }
 
 #pragma warning disable MA0155 // why: an Avalonia RoutedEvent handler returns void, so it can only be async void
