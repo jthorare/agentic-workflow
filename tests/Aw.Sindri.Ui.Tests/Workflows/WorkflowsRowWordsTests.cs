@@ -101,6 +101,36 @@ public sealed class WorkflowsRowWordsTests
     }
 
     [Fact]
+    public async Task The_runs_line_names_no_revision_while_the_workflow_has_only_its_first()
+    {
+        var first = Golden("workflows-slug", "found");
+        first["revision"] = 1;
+        first["latestRevision"] = 1;
+        first["activeRevision"] = 1;
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, first.ToJsonString());
+        var page = await _f.Shown(Token);
+
+        await page.OpenWorkflow(Slug, Token);
+
+        Assert.Equal("2 nodes · created by owner", page.Runs.DetailText);   // #2845: like the list row, a first revision is not news
+    }
+
+    [Fact]
+    public async Task The_runs_line_names_the_revision_once_there_is_a_second()
+    {
+        var second = Golden("workflows-slug", "found");
+        second["revision"] = 2;
+        second["latestRevision"] = 2;
+        second["activeRevision"] = 2;
+        _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, second.ToJsonString());
+        var page = await _f.Shown(Token);
+
+        await page.OpenWorkflow(Slug, Token);
+
+        Assert.Equal("Revision 2 · 2 nodes · created by owner", page.Runs.DetailText);
+    }
+
+    [Fact]
     public void The_shared_refusal_line_starts_the_reason_with_a_capital_letter()
     {
         Assert.Equal("The slug is taken · SND-GRAPH-009", Labels.InstanceRefused(new Error("SND-GRAPH-009", ErrorKind.Conflict, "the slug is taken")));
