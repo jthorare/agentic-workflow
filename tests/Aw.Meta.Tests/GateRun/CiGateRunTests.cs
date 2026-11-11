@@ -85,6 +85,33 @@ public sealed class CiGateRunTests
         Assert.Contains("pending", gate.Steps.Single(s => s.Name == "types").Log, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("SKIPPED", "skipping", true)]
+    [InlineData("NEUTRAL", "skipping", true)]
+    [InlineData("CANCELLED", "cancel", false)]
+    public async Task A_skipped_required_check_passes_as_on_github_and_a_cancelled_one_fails(string state, string bucket, bool passes)
+    {
+        await Script($$"""[{{Pass}},{"name":"types","state":"{{state}}","bucket":"{{bucket}}"}]""");
+
+        var gate = await Run();
+
+        Assert.Equal(passes ? GateVerdict.Pass : GateVerdict.Fail, gate.Verdict);
+        string[] failed = passes ? [] : ["types"];
+        Assert.Equal(failed, Failed(gate));
+        Assert.Contains(state, gate.Steps.Single(s => s.Name == "types").Log, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Every_required_check_skipped_with_a_clean_merge_state_passes()
+    {
+        await Script("""[{"name":"build","state":"SKIPPED","bucket":"skipping"},{"name":"types","state":"NEUTRAL","bucket":"skipping"}]""");
+
+        var gate = await Run();
+
+        Assert.Equal(GateVerdict.Pass, gate.Verdict);
+        Assert.Empty(Failed(gate));
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_review_that_is_not_approved_fails_the_gate()
     {
@@ -131,7 +158,8 @@ public sealed class CiGateRunTests
 
         var gate = await Run();
 
-        Assert.Equal((GateVerdict.Fail, ["types"]), (gate.Verdict, Failed(gate)));
+        Assert.Equal(GateVerdict.Fail, gate.Verdict);
+        Assert.Equal(["types"], Failed(gate));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -154,7 +182,8 @@ public sealed class CiGateRunTests
 
         var gate = await Run();
 
-        Assert.Equal((GateVerdict.Fail, ["types"]), (gate.Verdict, Failed(gate)));
+        Assert.Equal(GateVerdict.Fail, gate.Verdict);
+        Assert.Equal(["types"], Failed(gate));
         Assert.Equal(["build", "types", "review", "merge-state"], gate.Steps.Select(s => s.Name), StringComparer.Ordinal);
     }
 }
