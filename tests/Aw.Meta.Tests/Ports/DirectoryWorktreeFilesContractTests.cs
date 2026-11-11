@@ -28,6 +28,25 @@ public sealed class DirectoryWorktreeFilesContractTests : WorktreeFilesContract,
         return repo;
     }
 
+    // Ideas' review of #2847: a malformed file reads as "not configured", so the caller falls back to the default root. Only the
+    // file adapter reads a file, so these cases live here, not in the shared contract.
+    [Theory]
+    [InlineData("{not json")]
+    [InlineData("{\"root\": 5}")]
+    [InlineData("{\"root\": \"\"}")]
+    [InlineData("[\"/a\"]")]
+    [InlineData("{}")]
+    public async Task A_malformed_worktrees_file_reads_as_not_configured(string text)
+    {
+        var repo = ArrangeRoot(fileRoot: null, environmentRoot: null);
+        _ = Directory.CreateDirectory(Path.Combine(repo, ".agentic-workflow"));
+        await File.WriteAllTextAsync(Path.Combine(repo, ".agentic-workflow", "worktrees.json"), text, TestContext.Current.CancellationToken);
+
+        var result = await Create().ConfiguredRoot(repo, TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess && result.Value is null, text);
+    }
+
     protected override string Arrange(IReadOnlyDictionary<string, DateTimeOffset> entries)
     {
         var root = Directory.CreateTempSubdirectory("aw-meta-files-").FullName;
