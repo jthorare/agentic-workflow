@@ -40,30 +40,27 @@ public sealed class BlockFieldCaptionsTests
     [Fact]
     public async Task A_field_with_no_lists_leaves_choices_and_presets_out_of_the_json()
     {
-        var plain = await Field("schedule", "cron", withLists: false);
+        var plain = await Field("wait", "duration");
 
         var json = JsonSerializer.SerializeToNode(plain, _web)!.AsObject();
 
         Assert.False(json.ContainsKey("choices"));
         Assert.False(json.ContainsKey("presets"));
-        Assert.Equal("Runs at", json["caption"]!.GetValue<string>());
+        Assert.Equal("duration", json["caption"]!.GetValue<string>());   // no caption set: the name stands in
     }
 
-    private static async Task<BlockFieldView> Field(string type, string name, bool withLists = true)
+    private static async Task<BlockFieldView> Field(string type, string name)
     {
-        var block = new ScheduleBlock();
-        var catalog = new Catalog(block);
+        var catalog = new Catalog(new ScheduleBlock(), new WaitBlock(TimeProvider.System));
         var service = new ListWorkflowBlocksService(catalog, new Docs());
         var listed = await service.Handle(new ListWorkflowBlocksRequest(), Token);
         Assert.True(listed.IsSuccess);
-        var field = listed.Value.Groups.SelectMany(static g => g.Blocks).Single(b => b.Type == type).Config.Single(f => f.Name == name);
-        // why: the third test needs a view that has neither list, which the real field has once the lists are dropped
-        return withLists ? field : field with { Choices = null, Presets = null };
+        return listed.Value.Groups.SelectMany(static g => g.Blocks).Single(b => b.Type == type).Config.Single(f => f.Name == name);
     }
 
-    private sealed class Catalog(IGraphBlockType block) : IGraphBlockCatalog
+    private sealed class Catalog(params IGraphBlockType[] blocks) : IGraphBlockCatalog
     {
-        public IReadOnlyDictionary<string, IGraphBlockType> Types { get; } = new Dictionary<string, IGraphBlockType>(StringComparer.Ordinal) { [block.Type] = block };
+        public IReadOnlyDictionary<string, IGraphBlockType> Types { get; } = blocks.ToDictionary(static b => b.Type, StringComparer.Ordinal);
     }
 
     private sealed class Docs : IWorkflowDocs

@@ -25,8 +25,10 @@ internal sealed class ListWorkflowBlocksService(IGraphBlockCatalog catalog, IWor
         new(entry.Type, entry.Title, entry.IsTrigger,
             [.. entry.Config.Fields.Select(static f => FieldView(f))], entry.Outputs.Fields, entry.Outputs.BranchNames, Json(entry.ExampleConfig), Json(entry.ExampleSpec));
 
-    // red stub (#2807): the caption is the name and the lists are never shown yet
-    private static BlockFieldView FieldView(BlockField f) => new(f.Name, Word(f.Type), f.Required, f.Name, Choices: null, Presets: null, f.Advanced);
+    // why: the caption falls back to the field's name, so the editor always has a label
+    private static BlockFieldView FieldView(BlockField f) => new(f.Name, Word(f.Type), f.Required, f.Caption ?? f.Name, Views(f.Choices), Views(f.Presets), f.Advanced);
+
+    private static List<BlockChoiceView>? Views(IReadOnlyList<BlockChoice>? choices) => choices is null ? null : [.. choices.Select(static c => new BlockChoiceView(c.Value, c.Label))];
 
     private static JsonNode? Json(string? text)
     {

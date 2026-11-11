@@ -23082,6 +23082,7 @@ Aw.Sindri.Core.Graph.Blocks.BlockSummary.Problem.init -> void
 Aw.Sindri.Core.Graph.Blocks.BlockSummary.Text.get -> string!
 Aw.Sindri.Core.Graph.Blocks.BlockSummary.Text.init -> void
 Aw.Sindri.Core.Graph.Blocks.IGraphBlockType.Summarize(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockSummary!
+Aw.Sindri.Core.Graph.Blocks.ScheduleBlock.Summarize(System.Text.Json.Nodes.JsonObject! config) -> Aw.Sindri.Core.Graph.Blocks.BlockSummary!
 override Aw.Sindri.Core.Graph.Blocks.BlockChoice.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Graph.Blocks.BlockChoice.GetHashCode() -> int
 override Aw.Sindri.Core.Graph.Blocks.BlockChoice.ToString() -> string!
