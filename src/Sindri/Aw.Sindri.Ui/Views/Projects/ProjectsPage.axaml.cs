@@ -1,3 +1,4 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -23,6 +24,25 @@ internal sealed partial class ProjectsPage : UserControl
             Watch();
         };
         AddHandler(ProjectCard.OpenEvent, OnOpen);
+    }
+
+    // The Expander's inner toggle is what a screen reader lands on, and it announces expanded or collapsed itself, so its name is just the fold's visible words ("Finished (1)").
+    // The Name is set here, not bound in the template, so the toggle keeps its ExpanderHeader name for drivers.
+    private void OnFoldTemplate(object? sender, TemplateAppliedEventArgs e)
+    {
+        if (sender is not Expander { DataContext: ProjectFoldViewModel fold } || e.NameScope.Find<ToggleButton>("ExpanderHeader") is not { } toggle)
+        {
+            return;
+        }
+
+        AutomationProperties.SetName(toggle, fold.Heading);
+        fold.PropertyChanged += (_, args) =>
+        {
+            if (string.Equals(args.PropertyName, nameof(ProjectFoldViewModel.Heading), StringComparison.Ordinal))
+            {
+                AutomationProperties.SetName(toggle, fold.Heading);
+            }
+        };
     }
 
     private void Resize(double width)
