@@ -79,13 +79,20 @@ internal sealed partial class Projector(
         }
 
         var state = opened.Value;
-        var recorded = await ledger.Latest(EventTypes.ViewsRebuilt, ct).ConfigureAwait(false);   // an accepted rebuild is in the ledger even when serve died before its reset (#2054)
+        var recorded = await RecordedThrough(ct).ConfigureAwait(false);
         if (recorded.IsError)
         {
             return recorded.Error;
         }
 
-        var through = recorded.Value?.Sequence ?? 0;
+        var through = recorded.Value;
+        if (requested && Covered(state, through))
+        {
+            // #2861: the ledger record decides, the flag only wakes. A pass already folded from 0 for this views.rebuilt (it saw the record before the flag), so take the request without a second reset.
+            _ = feed.TakeRebuildRequest();
+            return state;
+        }
+
         var reason = requested ? "requested" : RebuildReason(state, through);
         if (reason is null)
         {
@@ -100,6 +107,14 @@ internal sealed partial class Projector(
 
         return reset;
     }
+
+    private async ValueTask<Kernel.Result<long>> RecordedThrough(CancellationToken ct)
+    {
+        var recorded = await ledger.Latest(EventTypes.ViewsRebuilt, ct).ConfigureAwait(false);   // an accepted rebuild is in the ledger even when serve died before its reset (#2054)
+        return recorded.IsError ? recorded.Error : recorded.Value?.Sequence ?? 0;
+    }
+
+    private static bool Covered(ProjectorState state, long through) => state.RebuiltThrough is { } done && done >= through;
 
     private string? RebuildReason(ProjectorState state, long through) =>
         state.RebuiltThrough is { } done && through > done ? "recorded rebuild" : _healing ? "unreadable rows" : state.Fresh ? "views.db created" : state.SchemaVersion != ViewSchema.Version ? "schema version changed" : state.RebuiltThrough is null ? "no rebuild record" : null;
