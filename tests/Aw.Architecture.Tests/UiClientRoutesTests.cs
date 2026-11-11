@@ -28,7 +28,8 @@ public sealed class UiClientRoutesTests : IDisposable
     private static readonly Dictionary<string, string> _skipped = new(StringComparer.Ordinal);
 
     // why: routes the client calls that the host doesn't map yet, each with the issue that tracks it. An entry the host maps fails
-    // Every_pending_route_is_still_unmapped, so it is removed the day its route lands. GET /sindri/items/{id}/scope stays out: it is the red line (#2798).
+    // Every_pending_route_is_still_unmapped, so it is removed the day its route lands; an entry the client stops calling fails
+    // Every_pending_route_is_still_called_by_the_client. GET /sindri/items/{id}/scope stays out: it is the red line (#2798).
     private static readonly Dictionary<string, string> _pendingRoutes = new(StringComparer.Ordinal)
     {
         ["POST /sindri/workflow/instances/{id}/commands"] = "#2829 takeover posts to a route #2258 removed",
@@ -90,8 +91,24 @@ public sealed class UiClientRoutesTests : IDisposable
         Assert.True(stale.Count == 0, "The host maps these routes now; remove them from _pendingRoutes:" + Environment.NewLine + string.Join(Environment.NewLine, stale));
     }
 
-    private static List<MappedRoute> Pending() =>
-        [.. _pendingRoutes.Keys.Select(key => new MappedRoute([key[..key.IndexOf(' ', StringComparison.Ordinal)]], PathRegex(key[(key.IndexOf(' ', StringComparison.Ordinal) + 1)..])))];
+    [Fact]
+    public async Task Every_pending_route_is_still_called_by_the_client()
+    {
+        var (calls, _) = await RecordClientCalls(TestContext.Current.CancellationToken);
+        Assert.NotEmpty(calls);
+
+        var dead = _pendingRoutes.Keys
+            .Where(key => !calls.Exists(c => Pending([key])[0].Matches(c.Method, c.Path)))
+            .Select(key => $"{key}  ({_pendingRoutes[key]})")
+            .ToList();
+
+        Assert.True(dead.Count == 0, "The client no longer calls these routes; remove them from _pendingRoutes:" + Environment.NewLine + string.Join(Environment.NewLine, dead));
+    }
+
+    private static List<MappedRoute> Pending() => Pending(_pendingRoutes.Keys);
+
+    private static List<MappedRoute> Pending(IEnumerable<string> keys) =>
+        [.. keys.Select(key => new MappedRoute([key[..key.IndexOf(' ', StringComparison.Ordinal)]], PathRegex(key[(key.IndexOf(' ', StringComparison.Ordinal) + 1)..])))];
 
     private static Regex PathRegex(string template) =>
         new("^" + Template(template) + "/?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
