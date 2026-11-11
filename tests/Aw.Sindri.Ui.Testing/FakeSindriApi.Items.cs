@@ -34,6 +34,9 @@ internal sealed partial class FakeSindriApi
     /// <summary>Held open until set, per item id: that item's read waits for its gate (others answer at once).</summary>
     public Dictionary<string, TaskCompletionSource> ItemGates { get; } = new(StringComparer.Ordinal);
 
+    /// <summary>How long each item read takes to answer (real time, ahead of its gate); zero answers at once. A cancelled read stops waiting.</summary>
+    public TimeSpan ItemDelay { get; set; }
+
     /// <summary>GET /sindri/items/{id}/timeline's page for one item and 'after' (before <see cref="TimelinePages"/>).</summary>
     public Dictionary<(string Item, long After), RouteAnswer> ItemTimelinePages { get; } = [];
 
@@ -125,7 +128,13 @@ internal sealed partial class FakeSindriApi
     internal Task<Result<ItemView>> Item(Uri api, string itemId, long? sequence, CancellationToken cancellationToken)
     {
         _ = Interlocked.Increment(ref _itemCalls);
-        return View<ItemView>(api, "/sindri/items/{id}", ItemAnswer(itemId), sequence, ItemGates.GetValueOrDefault(itemId), cancellationToken);
+        return ItemDelay > TimeSpan.Zero ? DelayedItem(api, itemId, sequence, cancellationToken) : View<ItemView>(api, "/sindri/items/{id}", ItemAnswer(itemId), sequence, ItemGates.GetValueOrDefault(itemId), cancellationToken);
+    }
+
+    private async Task<Result<ItemView>> DelayedItem(Uri api, string itemId, long? sequence, CancellationToken cancellationToken)
+    {
+        await Task.Delay(ItemDelay, cancellationToken).ConfigureAwait(false);
+        return await View<ItemView>(api, "/sindri/items/{id}", ItemAnswer(itemId), sequence, ItemGates.GetValueOrDefault(itemId), cancellationToken).ConfigureAwait(false);
     }
 
     public Task<Result<TimelineView>> Timeline(Uri api, string itemId, long after, CancellationToken cancellationToken) =>
