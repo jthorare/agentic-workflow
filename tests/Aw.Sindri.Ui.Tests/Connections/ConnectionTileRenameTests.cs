@@ -120,4 +120,57 @@ public sealed class ConnectionTileRenameTests
         Assert.Equal((false, true), (tile.CanSaveRename, tile.IsRenaming));
         Assert.DoesNotContain(_f.Server.ConnectionCallLog, c => c.StartsWith("rename", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public async Task The_label_line_is_hidden_while_renaming_and_back_after_Cancel()
+    {
+        var tile = await Connected();
+        Assert.True(tile.ShowSubtitle);
+
+        tile.StartRename();
+        Assert.False(tile.ShowSubtitle);
+
+        tile.CancelRename();
+        Assert.True(tile.ShowSubtitle);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task An_empty_label_shows_the_reason_in_plain_words(string typed)
+    {
+        var tile = await Connected();
+        tile.StartRename();
+
+        tile.RenameText = typed;
+
+        Assert.Equal((true, "Type a name."), (tile.HasRenameReason, tile.RenameReason));
+    }
+
+    [Fact]
+    public async Task A_typed_label_has_no_reason_line()
+    {
+        var tile = await Connected();
+        tile.StartRename();
+
+        Assert.Equal((false, string.Empty), (tile.HasRenameReason, tile.RenameReason));
+    }
+
+    [Fact]
+    public async Task After_a_taken_name_is_refused_the_text_stays_the_reason_shows_and_Save_stays_off_until_the_text_changes()
+    {
+        _ = _f.Server.SeedConnection(FakeSindriApi.ConnectionRow("linear:work2"));
+        var tile = await Connected();
+        tile.StartRename();
+        tile.RenameText = "work2";
+
+        await tile.Rename(Token);
+
+        Assert.Equal(("work2", true, false), (tile.RenameText, tile.HasRenameReason, tile.CanSaveRename));
+        Assert.Contains("work2", tile.RenameReason, StringComparison.Ordinal);
+
+        tile.RenameText = "work3";
+
+        Assert.True(tile.CanSaveRename);
+    }
 }
