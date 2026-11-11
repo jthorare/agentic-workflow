@@ -24,7 +24,7 @@ internal sealed class CompiledCodeCache(ICodeCompiler compiler, string directory
         ArgumentNullException.ThrowIfNull(body);
         cancellationToken.ThrowIfCancellationRequested();
         var path = Path.Combine(directory, Key(body) + ".dll");
-        if (File.Exists(path))
+        if (new FileInfo(path) is { Exists: true, Length: > 0 })   // why: a crash can leave an empty file; it is a miss, so the next compile overwrites it
         {
             return new CachedCode(path, []);
         }
