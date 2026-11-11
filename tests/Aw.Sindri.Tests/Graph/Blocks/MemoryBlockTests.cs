@@ -131,6 +131,31 @@ public sealed class MemoryBlockTests
         Assert.Equal(field, Assert.Single(problems).Field);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-2)]
+    public void Recall_checks_a_literal_limit_number_below_1_before_the_run(int limit)
+    {
+        var config = new JsonObject { ["memory"] = "m", ["query"] = "q", ["limit"] = JsonValue.Create(limit) };
+
+        var problems = new MemorySearchBlock(new BlockFakes.RecordingMemoryPort()).CheckConfig(config);
+
+        Assert.Equal("limit", Assert.Single(problems).Field);
+    }
+
+    [Fact]
+    public async Task Recall_with_a_limit_that_resolves_to_0_fails_the_node_and_never_recalls()
+    {
+        var port = new BlockFakes.RecordingMemoryPort();
+        var config = new JsonObject { ["memory"] = "m", ["query"] = "q", ["limit"] = "0" };
+
+        var result = await new MemorySearchBlock(port).Execute(BlockFakes.Context(config), Token);
+
+        Assert.Equal(SindriErrors.GraphBlockFailed.Code, result.Error.Code);
+        Assert.Contains("limit", result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(port.Recalls);
+    }
+
     [Fact]
     public void Recall_accepts_a_literal_number_and_skips_references_and_a_known_level()
     {
