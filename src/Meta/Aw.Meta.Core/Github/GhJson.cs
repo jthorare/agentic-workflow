@@ -152,6 +152,46 @@ public static class GhJson
             : [.. rows.Select(parts => new RequiredCheck(parts[0].Trim(), parts[1].Trim(), parts[1].Trim()))];
     }
 
+    /// <summary>Reads the GraphQL answer of the merge-queue query (`gh api graphql`).</summary>
+    /// <param name="json">The output: {"data":{"repository":{"pullRequest":{...}}}}.</param>
+    /// <returns>The queue facts, or null when the output has no pull request.</returns>
+    public static MergeQueueView? QueueView(string json)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return Child(document.RootElement, "data") is { } data && Child(data, "repository") is { } repository && Child(repository, "pullRequest") is { } pull
+                ? QueueView(pull)
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static MergeQueueView QueueView(JsonElement pull)
+    {
+        var entry = Child(pull, "mergeQueueEntry");
+        var state = entry is { } found ? Text(found, "state") : string.Empty;
+        var reason = RemovedReason(pull);
+        return new MergeQueueView(Flag(pull, "isMergeQueueEnabled"), Flag(pull, "isInMergeQueue"), entry is { } e ? Whole(e, "position") : null, state.Length > 0 ? state : null, reason.Length > 0 ? reason : null);
+    }
+
+    // The reason of the latest "removed from the merge queue" event; empty when there is none.
+    private static string RemovedReason(JsonElement pull)
+    {
+        var nodes = Child(pull, "timelineItems") is { } items && items.TryGetProperty("nodes", out var list) && list.ValueKind == JsonValueKind.Array ? list.EnumerateArray().ToList() : [];
+        return nodes.Count > 0 && nodes[^1].ValueKind == JsonValueKind.Object ? Text(nodes[^1], "reason") : string.Empty;
+    }
+
+    private static int? Whole(JsonElement item, string name) =>
+        item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number) ? number : null;
+
+    private static JsonElement? Child(JsonElement item, string name) =>
+        item.ValueKind == JsonValueKind.Object && item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Object ? value : null;
+
     private static PrView View(JsonElement item) => new(
         item.GetProperty("number").GetInt32(),
         State(Text(item, "state")),

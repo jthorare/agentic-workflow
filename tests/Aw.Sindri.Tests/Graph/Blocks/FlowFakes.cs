@@ -103,6 +103,11 @@ internal static class FlowFakes
         }
     }
 
+    public sealed class ScriptedCodePort : ICodeRunPort
+    {
+        public ValueTask<Result<string>> Run(CodeRun run, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>("null");
+    }
+
     /// <summary>An <see cref="HttpMessageHandler"/> that answers from a script and never touches the network; it records every request it saw.</summary>
     public sealed class ScriptedHandler(Func<HttpRequestMessage, HttpResponseMessage> answer) : HttpMessageHandler
     {

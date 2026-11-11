@@ -120,13 +120,15 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-TK-002` | The toolkit's `dotnet build -warnaserror` or its tests failed; it stays `failed` and can't start. | read the build job's output, fix, build again |
 | `SND-TK-003` | `toolkit.json` isn't the SDK's manifest, or a tool name can't become a client tool name. | rebuild with the toolkit SDK; keep `<toolkit>__<tool>` within 64 characters |
 | `SND-TK-004` | The toolkit's process ended during a call. | `sindri toolkit start <name>`; three crashes in ten minutes mark it `failed` |
-| `SND-TK-005` | The toolkit is paused; its process is kept and calls are refused. | `toolkit_stop`, then `toolkit_start` |
+| `SND-TK-005` | The toolkit is paused; its process is kept and calls are refused. | `toolkit_resume` (or `sindri toolkit resume <name>`) |
 | `SND-TK-006` | A tool call didn't answer within its timeout (60 s by default). | retry, or make the tool faster |
 | `SND-TK-007` | The toolkit has no tool with that name. | `sindri toolkit list` shows the tools |
 | `SND-TK-008` | This box has no sandbox for a plain process (no bubblewrap or Seatbelt), so a toolkit can't start. | `sindri doctor` names the missing piece |
 | `SND-TK-009` | No toolkit has that name. | `sindri toolkit list` |
 | `SND-TK-010` | A toolkit name (lowercase letters, digits, `-`) or tool name (lowercase letters, digits, `_`) is malformed, or `<toolkit>__<tool>` is over 64 characters. | shorten the name |
 | `SND-TK-011` | A toolkit tool ran and answered with an error; the toolkit's own message is in the result. | read the message; fix the arguments or the toolkit |
+| `SND-TK-012` | A toolkit with that name exists already. | pick another name, or `sindri toolkit list` |
+| `SND-TK-013` | The toolkit generator failed; its own message is in the result. | read the message (no SDK package in the feed: run `scripts/install-cs.sh`) |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml. |
 | `SND-TRACKER-002` | The tracker's source holds no items to read (for plan-file: no plan file matches tracker.include). | Fix tracker.include in profile.yaml (or restore the plan files). |
 | `SND-TRACKER-003` | A plan file is too big to read (over 2 MiB). | Split the plan file into smaller plans. |
@@ -166,7 +168,7 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-006` | A cron or timezone can't be read |
 | `SND-GRAPH-007` | This workflow changed since you read it. Read it again and retry |
 | `SND-GRAPH-008` | No such workflow |
-| `SND-GRAPH-009` | Another workflow already has that slug |
+| `SND-GRAPH-009` | Another workflow already has that short id |
 | `SND-GRAPH-010` | A workflow with that id already exists |
 | `SND-GRAPH-011` | This workflow is archived; it can't be activated, edited or paused. Its slug stays reserved, so a copy needs another slug |
 | `SND-GRAPH-012` | A graph edit could not be applied (the message names the op's number and kind) |

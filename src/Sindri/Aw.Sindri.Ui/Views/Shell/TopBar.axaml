@@ -81,14 +81,14 @@
         </StackPanel>
       </Border>
 
-      <!-- The ⌘K field (home.html): a magnifier, the placeholder, and the ⌘K keycap at the right; folded ("compact"), the
-           magnifier alone, still named "Search or run a command". -->
+      <!-- The ⌘K field (home.html): a magnifier, the placeholder, and the ⌘K keycap at the right. The placeholder reads "Search…"
+           (short, so it is whole at Full, #2710) and the field is still named "Search or run a command"; folded ("compact"), the magnifier alone. -->
       <Border x:Name="SearchField" Grid.Column="4" Classes="search" Margin="12,0,12,0" Focusable="True" Cursor="Hand"
               PointerPressed="OnSearch" KeyDown="OnSearchKey" ToolTip.Tip="{Binding Text.SearchTip}"
               AutomationProperties.Name="{Binding Text.Search}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Button">
-        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
-          <Path Classes="magnifier" Data="M5.5,1 A4.5,4.5 0 1 1 5.5,10 A4.5,4.5 0 1 1 5.5,1 Z M8.8,8.8 L12,12" VerticalAlignment="Center" />
-          <TextBlock x:Name="SearchText" Grid.Column="1" Classes="caption subtle search-text" Text="{Binding Text.Search}" AutomationProperties.Name="{Binding Text.Search}" VerticalAlignment="Center"
+        <Grid x:Name="SearchCells" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
+          <Path x:Name="SearchMagnifier" Classes="magnifier" Data="M5.5,1 A4.5,4.5 0 1 1 5.5,10 A4.5,4.5 0 1 1 5.5,1 Z M8.8,8.8 L12,12" VerticalAlignment="Center" />
+          <TextBlock x:Name="SearchText" Grid.Column="1" Classes="caption subtle search-text" Text="{Binding Text.SearchPlaceholder}" AutomationProperties.Name="{Binding Text.Search}" VerticalAlignment="Center"
                      TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
           <Border x:Name="SearchKeycap" Grid.Column="2" Classes="kbd search-key" AutomationProperties.Name="{Binding Text.SearchKey}" AutomationProperties.AccessibilityView="Raw">
             <StackPanel Orientation="Horizontal" Spacing="1" AutomationProperties.AccessibilityView="Raw">

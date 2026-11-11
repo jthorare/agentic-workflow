@@ -81,8 +81,11 @@ internal sealed partial class WorkflowsPage : UserControl
     {
         if (e.Key == Key.Enter)
         {
-            OnCreate(sender, e);
-            e.Handled = true;
+            if (DataContext is WorkflowsPageViewModel { CanCreate: true })
+            {
+                OnCreate(sender, e);
+                e.Handled = true;   // only a submit swallows Enter
+            }
         }
         else if (e.Key == Key.Escape)
         {

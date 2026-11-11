@@ -64,6 +64,11 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     public static IReadOnlyList<IGraphBlock> MemoryBlocks(IGraphMemoryPort memory) =>
         [new MemorySearchBlock(memory), new MemoryWriteBlock(memory), new MemoryForgetBlock(memory)];
 
+    /// <summary>The 'code' block of agent-first PR 9 part C: C# through Roslyn in a sandboxed runner process.</summary>
+    /// <param name="code">Compiles and runs a 'code' node's body.</param>
+    /// <returns>The block.</returns>
+    public static IReadOnlyList<IGraphBlock> CodeBlocks(ICodeRunPort code) => [new CodeBlock(code)];
+
     /// <summary>Finds the block of a type.</summary>
     /// <param name="type">The type name, such as 'condition'.</param>
     /// <returns>The block, or null when this build has no such block.</returns>

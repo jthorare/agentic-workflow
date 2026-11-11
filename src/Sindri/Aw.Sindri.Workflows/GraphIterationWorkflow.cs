@@ -196,7 +196,11 @@ internal sealed partial class GraphIterationWorkflow
         ArgumentNullException.ThrowIfNull(input);
         if (_asking != (input.Node, input.Item))
         {
-            _ = await Workflow.WaitConditionAsync(() => _asking == (input.Node, input.Item), _askingGrace).ConfigureAwait(true);
+            var reached = await Workflow.WaitConditionAsync(() => _asking == (input.Node, input.Item), _askingGrace).ConfigureAwait(true);
+            if (!reached)
+            {
+                throw NotReached(input);
+            }
         }
 
         Refuse(input);   // why: the state may have moved while the update waited
@@ -220,6 +224,10 @@ internal sealed partial class GraphIterationWorkflow
     }
 
     private static readonly TimeSpan _askingGrace = TimeSpan.FromSeconds(5);
+
+    // why: the grace ran out before the item posted its question, so the answer is early, not late; the text says to retry
+    private static ApplicationFailureException NotReached(GraphAnswerInput input) =>
+        new($"'{input.Node}' is not waiting for an answer for item {input.Item.ToString(System.Globalization.CultureInfo.InvariantCulture)} yet: the run has not reached that question. Retry in a few seconds", errorType: AnswerRefusal.NotWaiting, nonRetryable: true);
 
     private static ApplicationFailureException NotWaiting(GraphAnswerInput input) =>
         new($"'{input.Node}' is not waiting for an answer for item {input.Item.ToString(System.Globalization.CultureInfo.InvariantCulture)}", errorType: AnswerRefusal.NotWaiting, nonRetryable: true);

@@ -65,6 +65,9 @@ internal static partial class Labels
     /// <summary>The ⌘K field's placeholder (functional from U1).</summary>
     internal const string Search = "Search or run a command";
 
+    /// <summary>The visible placeholder in the top bar; the ⌘K / Ctrl K hint is in the keycap chip (#2710).</summary>
+    internal const string SearchPlaceholder = "Search…";
+
     // The shell's chrome (§3.2; U0 Unit A). Eyebrows are written in capitals (Avalonia has no text-transform).
 
     /// <summary>The brand mark's name.</summary>

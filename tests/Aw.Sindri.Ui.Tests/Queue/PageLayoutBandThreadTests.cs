@@ -31,7 +31,7 @@ public sealed class PageLayoutBandThreadTests
             while (!stop.IsCancellationRequested)
             {
                 await Invoke(nameof(PageLayoutBandTests.The_compact_band_keeps_title_status_and_age));
-                await Invoke(nameof(PageLayoutBandTests.The_columns_beside_the_title_leave_it_160_px_at_the_start_of_each_tier), "Narrow", 760d);
+                await Invoke(nameof(PageLayoutBandTests.The_columns_beside_the_title_leave_it_160_px_whenever_the_table_is_wide_enough_for_them), 760d);
             }
         }, TestContext.Current.CancellationToken);
 

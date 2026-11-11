@@ -35,6 +35,10 @@ internal sealed partial class TopBar : UserControl
     private double _refreshWordWidth;
     private double _compactSearch = 60;
 
+    // The keycap's own width, seen while it was shown. It sits in an Auto column, so it does not depend on the field's column;
+    // it is hidden while folded, so SearchChrome uses the last width seen.
+    private double _keycapWidth;
+
     // Refresh had focus when it was disabled (in flight) or hidden (recovered); see KeepRefreshFocus.
     private bool _refreshHeldFocus;
     private NavigationMethod _refreshMethod = NavigationMethod.Tab;
@@ -71,13 +75,13 @@ internal sealed partial class TopBar : UserControl
     {
         MeasurePasses++;
         CapProblems(availableSize.Width);
-        var size = base.MeasureOverride(availableSize);
+        var size = MeasureParts(availableSize);
         Remember();
         var fit = Choose(availableSize.Width);
         if (fit != _fit)
         {
             Apply(fit);
-            size = base.MeasureOverride(availableSize);
+            size = MeasureParts(availableSize);
             Remember();
         }
 
@@ -111,7 +115,7 @@ internal sealed partial class TopBar : UserControl
             return Fit.Full;
         }
 
-        var parts = new StepWidths(FixedWidth(), _brandWordWidth + Brand.Spacing, _compactSearch, PillWithoutProblems(),
+        var parts = new StepWidths(FixedWidth(), _brandWordWidth + Brand.Spacing, _compactSearch, FullSearch(), PillWithoutProblems(),
             AgeWidth(), RefreshButton.IsVisible ? _refreshWordWidth : 0);
         foreach (var step in _steps)
         {
@@ -154,7 +158,7 @@ internal sealed partial class TopBar : UserControl
         var compact = fit != Fit.Full;
         SearchField.Classes.Set("compact", compact);
         SearchColumn.Width = compact ? GridLength.Auto : new GridLength(100, GridUnitType.Star);
-        SearchColumn.MinWidth = compact ? 0 : SearchMin;
+        SearchColumn.MinWidth = compact ? 0 : FullSearch();
         SearchColumn.MaxWidth = compact ? double.PositiveInfinity : SearchMax;
         PillAge.IsVisible = fit < Fit.NoAge && !_ageYields;
         NavigationList.Classes.Set("no-dot", fit >= Fit.NoDot);
@@ -185,11 +189,31 @@ internal sealed partial class TopBar : UserControl
 
         RememberCounts();
         RememberPillRest();
+        RememberSearch();
+    }
+
+    // The folded field's width, and the keycap's width while it shows (SearchChrome). The field's own size can't measure its
+    // chrome while Full: its inner grid has a star column, so the field desires the whole column it is given.
+    private void RememberSearch()
+    {
+        if (SearchKeycap.IsVisible && SearchKeycap.DesiredSize.Width > 0)
+        {
+            _keycapWidth = SearchKeycap.DesiredSize.Width;
+        }
+
         if (_fit != Fit.Full && SearchField.DesiredSize.Width > 0)
         {
             _compactSearch = SearchField.DesiredSize.Width;
         }
     }
+
+    // Everything in the ⌘K field except the placeholder's text, summed from parts whose size doesn't depend on the column:
+    // margin, border and padding, the magnifier, the keycap and the two gaps between the three cells.
+    private double SearchChrome() =>
+        SearchField.Margin.Left + SearchField.Margin.Right
+        + SearchField.BorderThickness.Left + SearchField.BorderThickness.Right
+        + SearchField.Padding.Left + SearchField.Padding.Right
+        + SearchMagnifier.Width + (2 * SearchCells.ColumnSpacing) + _keycapWidth;
 
     private void OnRefreshGotFocus(object? sender, FocusChangedEventArgs e)
     {
@@ -267,10 +291,10 @@ internal sealed partial class TopBar : UserControl
 
     // What a step needs, from the parts that change between steps (Choose).
     private sealed record StepWidths(
-        double Fixed, double BrandWord, double CompactSearch, double Pill, double Age, double RefreshWord)
+        double Fixed, double BrandWord, double CompactSearch, double FullSearch, double Pill, double Age, double RefreshWord)
     {
         public double Need(Fit step, double navigation) =>
-            Fixed + navigation + (step < Fit.NoBrandWord ? BrandWord : 0) + (step == Fit.Full ? SearchMin : CompactSearch)
+            Fixed + navigation + (step < Fit.NoBrandWord ? BrandWord : 0) + (step == Fit.Full ? FullSearch : CompactSearch)
             + Pill + (step < Fit.NoAge ? Age : 0) - (step >= Fit.NoRefreshWord ? RefreshWord : 0);
     }
 }
