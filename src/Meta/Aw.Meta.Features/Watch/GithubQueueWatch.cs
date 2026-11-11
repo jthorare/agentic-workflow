@@ -86,8 +86,11 @@ internal sealed class GithubQueueWatch(RepoCommands repo, IKeyValueStore values,
             return await Dropped(pr, line: null, cancellationToken).ConfigureAwait(false);
         }
 
+        // The pull request's own merge commit first: several queued pull requests can land in one poll, and main's tip is only the last one's.
+        var commit = await repo.MergeCommit(repoDirectory, pr).ConfigureAwait(false);
+        var sha = commit.IsSuccess ? commit.Value : mainSha.Length > 0 ? mainSha : MergeRecord.Unknown;
         var now = clock.GetUtcNow();
-        var record = new MergeRecord(pr, mainSha.Length > 0 ? mainSha : MergeRecord.Unknown, now);
+        var record = new MergeRecord(pr, sha, now);
         if ((await gates.RecordMerge(record, cancellationToken).ConfigureAwait(false)).IsError)
         {
             return null;
@@ -95,10 +98,10 @@ internal sealed class GithubQueueWatch(RepoCommands repo, IKeyValueStore values,
 
         // Advisory: the title is for the log line only.
         var details = await repo.View(repoDirectory, pr, "title").ConfigureAwait(false);
-        var title = details.IsSuccess ? details.Value.Title : string.Empty;
+        var title = details.IsSuccess && details.Value.Title.Length > 0 ? details.Value.Title + " " : string.Empty;
         var main = record.IsKnown ? record.ShortSha : "unknown";
         var number = pr.ToString(CultureInfo.InvariantCulture);
-        _ = await log.Append(LogLine.Event(LogKind.Merge, now, $"#{number} {title} merged; main is now {main}"), cancellationToken).ConfigureAwait(false);
+        _ = await log.Append(LogLine.Event(LogKind.Merge, now, $"#{number} {title}merged; main is now {main}"), cancellationToken).ConfigureAwait(false);
         return await Dropped(pr, $"MERGED #{number} from GitHub's merge queue: main is now {main}", cancellationToken).ConfigureAwait(false);
     }
 

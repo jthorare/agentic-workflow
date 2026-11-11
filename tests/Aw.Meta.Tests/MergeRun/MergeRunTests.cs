@@ -197,7 +197,7 @@ public sealed class MergeRunTests
         Assert.DoesNotContain(await _world.Open(), o => o.Kind == ObligationKind.AnnounceMain);
         var queued = Assert.Single(MergeQueued.Parse((await _world.Values.Get(KvKeys.MergeQueued, CancellationToken.None)).Value).Values);
         Assert.Equal(new QueuedMerge(190, _world.Clock.GetUtcNow(), "headsha"), queued);
-        Assert.Contains("- NOTE 2026-10-15 05:00: #190 Add x queued in GitHub's merge queue (position 3)", _world.Log.Lines);
+        Assert.Contains(_world.Log.Lines, l => string.Equals(l, "- NOTE 2026-10-15 05:00: #190 Add x queued in GitHub's merge queue (position 3)", StringComparison.Ordinal));
         Assert.DoesNotContain(_world.Log.Lines, l => l.StartsWith("- MERGE", StringComparison.Ordinal));
     }
 
@@ -212,7 +212,7 @@ public sealed class MergeRunTests
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         Assert.Equal((true, null), (result.Value.Queued, result.Value.Position));
-        Assert.Contains("- NOTE 2026-10-15 05:00: #190 Add x queued in GitHub's merge queue", _world.Log.Lines);
+        Assert.Contains(_world.Log.Lines, l => string.Equals(l, "- NOTE 2026-10-15 05:00: #190 Add x queued in GitHub's merge queue", StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -238,5 +238,19 @@ public sealed class MergeRunTests
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
         Assert.Equal((true, false), (result.Value.Merged, result.Value.Queued));
         Assert.Null((await _world.Values.Get(KvKeys.MergeQueued, CancellationToken.None)).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pull_request_already_in_githubs_merge_queue_is_not_merged_again()
+    {
+        await Ready(queue: QueueAnswers.Queued(2));
+        await AssignApiLane();
+
+        var result = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal((true, 2), (result.Value.Queued, result.Value.Position));
+        Assert.DoesNotContain(_world.Runner.Lines, l => l.StartsWith("gh pr merge", StringComparison.Ordinal));
+        Assert.Equal([190], MergeQueued.Parse((await _world.Values.Get(KvKeys.MergeQueued, CancellationToken.None)).Value).Keys);
     }
 }

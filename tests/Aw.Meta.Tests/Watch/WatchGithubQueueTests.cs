@@ -25,16 +25,18 @@ public sealed class WatchGithubQueueTests
         _world.Board);
 
     // PR 190 was handed to the queue; the poll lists it in `state`, and the queue read answers `queue` (or fails).
-    private async Task Queued(string state, string queue, bool queueFails = false)
+    private async Task Queued(string state, string queue, bool queueFails = false, bool commitFails = false, bool titleFails = false, string? list = null)
     {
         await _world.Ready();
         _ = await _world.Values.Set(KvKeys.MergeQueued, MergeQueued.With(stored: null, new QueuedMerge(190, _world.Clock.GetUtcNow(), "aaa1111")), CancellationToken.None);
-        var list = $$"""[{"number":190,"state":"{{state}}","isDraft":false,"headRefOid":"aaa1111","mergeable":"MERGEABLE","title":"Add x"}]""";
+        list ??= $$"""[{"number":190,"state":"{{state}}","isDraft":false,"headRefOid":"aaa1111","mergeable":"MERGEABLE","title":"Add x"}]""";
         _ = _world.Runner
             .When("gh pr list", list)
             .When("git ls-remote origin main", "bbbbbbb2222222\trefs/heads/main\n")
             .When("gh api graphql", _ => new CommandResult(queueFails ? 1 : 0, queueFails ? string.Empty : queue, queueFails ? "HTTP 502" : string.Empty, TimedOut: false))
-            .When("gh pr view 190", """{"title":"Add x"}""");
+            .When("gh pr view 190 --json mergeCommit", commitFails ? string.Empty : """{"mergeCommit":{"oid":"ddddddd4444444"}}""", commitFails ? 1 : 0)
+            .When("gh pr view 191 --json mergeCommit", """{"mergeCommit":{"oid":"eeeeeee5555555"}}""")
+            .When("gh pr view 190", titleFails ? string.Empty : """{"title":"Add x"}""", titleFails ? 1 : 0);
     }
 
     private async Task Watch()
@@ -55,9 +57,9 @@ public sealed class WatchGithubQueueTests
 
         await Watch();
 
-        Assert.Equal(["MERGED #190 from GitHub's merge queue: main is now bbbbbbb"], QueueLines(), StringComparer.Ordinal);
-        Assert.Equal("bbbbbbb2222222", (await _world.Gates.FindMerge(190, CancellationToken.None)).Value!.Sha);
-        Assert.Contains(_world.Log.Lines, l => l.Contains("MERGE", StringComparison.Ordinal) && l.Contains("#190 Add x merged; main is now bbbbbbb", StringComparison.Ordinal));
+        Assert.Equal(["MERGED #190 from GitHub's merge queue: main is now ddddddd"], QueueLines(), StringComparer.Ordinal);
+        Assert.Equal("ddddddd4444444", (await _world.Gates.FindMerge(190, CancellationToken.None)).Value!.Sha);
+        Assert.Contains(_world.Log.Lines, l => l.Contains("MERGE", StringComparison.Ordinal) && l.Contains("#190 Add x merged; main is now ddddddd", StringComparison.Ordinal));
         Assert.Empty(await StillQueued());
     }
 
@@ -127,5 +129,38 @@ public sealed class WatchGithubQueueTests
 
         Assert.Empty(QueueLines());
         Assert.Equal([190], await StillQueued());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Two_queued_pull_requests_that_land_in_one_poll_each_get_their_own_merge_commit()
+    {
+        const string both = """[{"number":190,"state":"MERGED","isDraft":false,"headRefOid":"aaa1111","mergeable":"MERGEABLE","title":"Add x"},{"number":191,"state":"MERGED","isDraft":false,"headRefOid":"bbb2222","mergeable":"MERGEABLE","title":"Add y"}]""";
+        await Queued("MERGED", QueueAnswers.OnNotQueued, list: both);
+        _ = await _world.Values.Set(KvKeys.MergeQueued, MergeQueued.With(MergeQueued.With(stored: null, new QueuedMerge(190, _world.Clock.GetUtcNow(), "aaa1111")), new QueuedMerge(191, _world.Clock.GetUtcNow(), "bbb2222")), CancellationToken.None);
+
+        await Watch();
+
+        Assert.Equal("ddddddd4444444", (await _world.Gates.FindMerge(190, CancellationToken.None)).Value!.Sha);
+        Assert.Equal("eeeeeee5555555", (await _world.Gates.FindMerge(191, CancellationToken.None)).Value!.Sha);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_merge_commit_that_cannot_be_read_falls_back_to_mains_tip()
+    {
+        await Queued("MERGED", QueueAnswers.OnNotQueued, commitFails: true);
+
+        await Watch();
+
+        Assert.Equal("bbbbbbb2222222", (await _world.Gates.FindMerge(190, CancellationToken.None)).Value!.Sha);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_title_that_cannot_be_read_leaves_the_merge_log_line_without_a_gap()
+    {
+        await Queued("MERGED", QueueAnswers.OnNotQueued, titleFails: true);
+
+        await Watch();
+
+        Assert.Contains("#190 merged; main is now ddddddd", _world.Log.Lines.Single(l => l.Contains("MERGE", StringComparison.Ordinal)), StringComparison.Ordinal);
     }
 }

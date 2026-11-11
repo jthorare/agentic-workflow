@@ -56,6 +56,12 @@ internal sealed class MergeRunService(MergeReadiness readiness, RepoCommands rep
             return view.Error;
         }
 
+        // Already in GitHub's queue (an earlier run enqueued it): merging again would only fail or re-enqueue, so refresh the entry.
+        if (view.Value is { Enabled: true, InQueue: true })
+        {
+            return await recorder.Enqueue(request.Pr, assessed, pull, cancellationToken).ConfigureAwait(false);
+        }
+
         var merged = await repo.Gh(repoDirectory, "pr", "merge", request.Pr.ToString(CultureInfo.InvariantCulture), "--merge").ConfigureAwait(false);
         if (merged.IsError)
         {

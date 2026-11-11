@@ -1928,7 +1928,6 @@ static Aw.Meta.Core.Coordination.TrainCandidates.operator !=(Aw.Meta.Core.Coordi
 static Aw.Meta.Core.Coordination.TrainCandidates.operator ==(Aw.Meta.Core.Coordination.TrainCandidates? left, Aw.Meta.Core.Coordination.TrainCandidates? right) -> bool
 Aw.Meta.Core.Coordination.TrainSelection
 Aw.Meta.Core.Coordination.TrainSelection.Choose(System.Collections.Generic.IReadOnlyList<int>! named, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Coordination.TrainCandidates!>!>
-Aw.Meta.Core.Coordination.TrainSelection.TrainSelection(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.MergeQueueReader! queue) -> void
 Aw.Meta.Core.Coordination.GateStepRunner.Run(Aw.Meta.Core.Config.StepConfig! step, string! tree, string! log, int heavySlots, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Gate.GateStep!>!>
 const Aw.Meta.Core.Gate.GatePriority.LockTimeout = 75 -> int
 const Aw.Meta.Core.Gate.GatePriority.SessionSlots = "AW_SESSION_HEAVY_SLOTS" -> string!
@@ -2668,3 +2667,4 @@ static Aw.Meta.Core.Merge.MergeQueued.With(string? stored, Aw.Meta.Core.Merge.Qu
 static Aw.Meta.Core.Merge.MergeQueued.Without(string? stored, int pr) -> string!
 static Aw.Meta.Core.Merge.QueuedMerge.operator !=(Aw.Meta.Core.Merge.QueuedMerge? left, Aw.Meta.Core.Merge.QueuedMerge? right) -> bool
 static Aw.Meta.Core.Merge.QueuedMerge.operator ==(Aw.Meta.Core.Merge.QueuedMerge? left, Aw.Meta.Core.Merge.QueuedMerge? right) -> bool
+Aw.Meta.Core.Coordination.TrainSelection.TrainSelection(Aw.Meta.Core.Ports.IMetaConfig! config, Aw.Meta.Core.Coordination.MergeQueueReader! queue, Aw.Meta.Core.Ports.IKeyValueStore! values) -> void
