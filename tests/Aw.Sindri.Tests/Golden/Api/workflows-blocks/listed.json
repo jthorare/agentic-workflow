@@ -53,17 +53,23 @@
             {
               "name": "connection",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "connection",
+              "advanced": false
             },
             {
               "name": "event",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "event",
+              "advanced": false
             },
             {
               "name": "filter",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "filter",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -132,12 +138,172 @@
             {
               "name": "cron",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "Runs at",
+              "presets": [
+                {
+                  "value": "0 7 * * 1-5",
+                  "label": "Every weekday at 7:00"
+                },
+                {
+                  "value": "0 9 * * *",
+                  "label": "Every day at 9:00"
+                },
+                {
+                  "value": "0 * * * *",
+                  "label": "Every hour"
+                },
+                {
+                  "value": "0 8 * * 1",
+                  "label": "Mondays at 8:00"
+                }
+              ],
+              "advanced": false
             },
             {
               "name": "timezone",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "Timezone",
+              "choices": [
+                {
+                  "value": "UTC",
+                  "label": "UTC"
+                },
+                {
+                  "value": "America/Anchorage",
+                  "label": "America/Anchorage"
+                },
+                {
+                  "value": "America/Chicago",
+                  "label": "America/Chicago"
+                },
+                {
+                  "value": "America/Denver",
+                  "label": "America/Denver"
+                },
+                {
+                  "value": "America/Halifax",
+                  "label": "America/Halifax"
+                },
+                {
+                  "value": "America/Los_Angeles",
+                  "label": "America/Los_Angeles"
+                },
+                {
+                  "value": "America/Mexico_City",
+                  "label": "America/Mexico_City"
+                },
+                {
+                  "value": "America/New_York",
+                  "label": "America/New_York"
+                },
+                {
+                  "value": "America/Phoenix",
+                  "label": "America/Phoenix"
+                },
+                {
+                  "value": "America/Sao_Paulo",
+                  "label": "America/Sao_Paulo"
+                },
+                {
+                  "value": "America/Toronto",
+                  "label": "America/Toronto"
+                },
+                {
+                  "value": "America/Vancouver",
+                  "label": "America/Vancouver"
+                },
+                {
+                  "value": "Asia/Dubai",
+                  "label": "Asia/Dubai"
+                },
+                {
+                  "value": "Asia/Hong_Kong",
+                  "label": "Asia/Hong_Kong"
+                },
+                {
+                  "value": "Asia/Kolkata",
+                  "label": "Asia/Kolkata"
+                },
+                {
+                  "value": "Asia/Seoul",
+                  "label": "Asia/Seoul"
+                },
+                {
+                  "value": "Asia/Shanghai",
+                  "label": "Asia/Shanghai"
+                },
+                {
+                  "value": "Asia/Singapore",
+                  "label": "Asia/Singapore"
+                },
+                {
+                  "value": "Asia/Tokyo",
+                  "label": "Asia/Tokyo"
+                },
+                {
+                  "value": "Australia/Melbourne",
+                  "label": "Australia/Melbourne"
+                },
+                {
+                  "value": "Australia/Sydney",
+                  "label": "Australia/Sydney"
+                },
+                {
+                  "value": "Europe/Amsterdam",
+                  "label": "Europe/Amsterdam"
+                },
+                {
+                  "value": "Europe/Berlin",
+                  "label": "Europe/Berlin"
+                },
+                {
+                  "value": "Europe/Dublin",
+                  "label": "Europe/Dublin"
+                },
+                {
+                  "value": "Europe/Helsinki",
+                  "label": "Europe/Helsinki"
+                },
+                {
+                  "value": "Europe/Lisbon",
+                  "label": "Europe/Lisbon"
+                },
+                {
+                  "value": "Europe/London",
+                  "label": "Europe/London"
+                },
+                {
+                  "value": "Europe/Madrid",
+                  "label": "Europe/Madrid"
+                },
+                {
+                  "value": "Europe/Paris",
+                  "label": "Europe/Paris"
+                },
+                {
+                  "value": "Europe/Stockholm",
+                  "label": "Europe/Stockholm"
+                },
+                {
+                  "value": "Europe/Warsaw",
+                  "label": "Europe/Warsaw"
+                },
+                {
+                  "value": "Europe/Zurich",
+                  "label": "Europe/Zurich"
+                },
+                {
+                  "value": "Pacific/Auckland",
+                  "label": "Pacific/Auckland"
+                },
+                {
+                  "value": "Pacific/Honolulu",
+                  "label": "Pacific/Honolulu"
+                }
+              ],
+              "advanced": false
             }
           ],
           "outputs": {
@@ -230,27 +396,37 @@
             {
               "name": "url",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "url",
+              "advanced": false
             },
             {
               "name": "method",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "method",
+              "advanced": false
             },
             {
               "name": "headers",
               "type": "object",
-              "required": false
+              "required": false,
+              "caption": "headers",
+              "advanced": false
             },
             {
               "name": "body",
               "type": "object",
-              "required": false
+              "required": false,
+              "caption": "body",
+              "advanced": false
             },
             {
               "name": "expect",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "expect",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -317,22 +493,30 @@
             {
               "name": "memory",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "memory",
+              "advanced": false
             },
             {
               "name": "query",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "query",
+              "advanced": false
             },
             {
               "name": "level",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "level",
+              "advanced": false
             },
             {
               "name": "limit",
               "type": "number",
-              "required": false
+              "required": false,
+              "caption": "limit",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -395,17 +579,23 @@
             {
               "name": "tool",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "tool",
+              "advanced": false
             },
             {
               "name": "connection",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "connection",
+              "advanced": false
             },
             {
               "name": "arguments",
               "type": "object",
-              "required": false
+              "required": false,
+              "caption": "arguments",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -476,12 +666,16 @@
             {
               "name": "workflow",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "workflow",
+              "advanced": false
             },
             {
               "name": "run",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "run",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -550,12 +744,16 @@
             {
               "name": "prompt",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "prompt",
+              "advanced": false
             },
             {
               "name": "output",
               "type": "object",
-              "required": true
+              "required": true,
+              "caption": "output",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -637,42 +835,58 @@
             {
               "name": "repo",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "repo",
+              "advanced": false
             },
             {
               "name": "prompt",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "prompt",
+              "advanced": false
             },
             {
               "name": "readOnlyRepos",
               "type": "text list",
-              "required": false
+              "required": false,
+              "caption": "readOnlyRepos",
+              "advanced": false
             },
             {
               "name": "agent",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "agent",
+              "advanced": false
             },
             {
               "name": "outputs",
               "type": "object",
-              "required": false
+              "required": false,
+              "caption": "outputs",
+              "advanced": false
             },
             {
               "name": "timeout",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "timeout",
+              "advanced": false
             },
             {
               "name": "connections",
               "type": "text list",
-              "required": false
+              "required": false,
+              "caption": "connections",
+              "advanced": false
             },
             {
               "name": "resources",
               "type": "object",
-              "required": false
+              "required": false,
+              "caption": "resources",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -752,32 +966,44 @@
             {
               "name": "input",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "input",
+              "advanced": false
             },
             {
               "name": "code",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "code",
+              "advanced": false
             },
             {
               "name": "repo",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "repo",
+              "advanced": false
             },
             {
               "name": "branch",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "branch",
+              "advanced": false
             },
             {
               "name": "timeout",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "timeout",
+              "advanced": false
             },
             {
               "name": "memoryMb",
               "type": "number",
-              "required": false
+              "required": false,
+              "caption": "memoryMb",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -836,7 +1062,9 @@
             {
               "name": "value",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "value",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -928,17 +1156,23 @@
             {
               "name": "items",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "items",
+              "advanced": false
             },
             {
               "name": "maxItems",
               "type": "number",
-              "required": false
+              "required": false,
+              "caption": "maxItems",
+              "advanced": false
             },
             {
               "name": "batchSize",
               "type": "number",
-              "required": false
+              "required": false,
+              "caption": "batchSize",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -1031,17 +1265,23 @@
             {
               "name": "memory",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "memory",
+              "advanced": false
             },
             {
               "name": "fact",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "fact",
+              "advanced": false
             },
             {
               "name": "tag",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "tag",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -1089,7 +1329,9 @@
             {
               "name": "when",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "when",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -1170,12 +1412,16 @@
             {
               "name": "items",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "items",
+              "advanced": false
             },
             {
               "name": "key",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "key",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -1236,22 +1482,30 @@
             {
               "name": "memory",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "memory",
+              "advanced": false
             },
             {
               "name": "fact",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "fact",
+              "advanced": false
             },
             {
               "name": "tags",
               "type": "text list",
-              "required": false
+              "required": false,
+              "caption": "tags",
+              "advanced": false
             },
             {
               "name": "expires",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "expires",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -1309,22 +1563,30 @@
             {
               "name": "workflow",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "workflow",
+              "advanced": false
             },
             {
               "name": "payload",
               "type": "object",
-              "required": false
+              "required": false,
+              "caption": "payload",
+              "advanced": false
             },
             {
               "name": "wait",
               "type": "boolean",
-              "required": false
+              "required": false,
+              "caption": "wait",
+              "advanced": false
             },
             {
               "name": "waitSeconds",
               "type": "number",
-              "required": false
+              "required": false,
+              "caption": "waitSeconds",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -1394,17 +1656,23 @@
             {
               "name": "duration",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "duration",
+              "advanced": false
             },
             {
               "name": "until",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "until",
+              "advanced": false
             },
             {
               "name": "timezone",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "timezone",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -1469,22 +1737,30 @@
             {
               "name": "question",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "question",
+              "advanced": false
             },
             {
               "name": "choices",
               "type": "text list",
-              "required": false
+              "required": false,
+              "caption": "choices",
+              "advanced": false
             },
             {
               "name": "timeout",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "timeout",
+              "advanced": false
             },
             {
               "name": "default",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "default",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -1569,22 +1845,30 @@
             {
               "name": "title",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "title",
+              "advanced": false
             },
             {
               "name": "repo",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "repo",
+              "advanced": false
             },
             {
               "name": "body",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "body",
+              "advanced": false
             },
             {
               "name": "linearIssue",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "linearIssue",
+              "advanced": false
             }
           ],
           "outputs": {
@@ -1635,12 +1919,16 @@
             {
               "name": "title",
               "type": "text",
-              "required": true
+              "required": true,
+              "caption": "title",
+              "advanced": false
             },
             {
               "name": "body",
               "type": "text",
-              "required": false
+              "required": false,
+              "caption": "body",
+              "advanced": false
             }
           ],
           "outputs": {},
