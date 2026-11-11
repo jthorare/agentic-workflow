@@ -3,7 +3,6 @@ using Aw.Meta.Core.Poll;
 using Aw.Meta.Core.Ports;
 using Aw.Meta.Core.Routing;
 using Aw.Meta.Core.Usage;
-using Aw.Meta.Core.Watch;
 using Aw.Meta.Core.Worktrees;
 using Microsoft.Extensions.DependencyInjection;
 
