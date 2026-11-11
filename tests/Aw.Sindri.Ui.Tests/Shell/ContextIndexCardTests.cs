@@ -45,13 +45,37 @@ public sealed class ContextIndexCardTests
             [
                 "github: pulling · 200 records · nothing committed yet",
                 "Concepts: 101 · 34 cite 2+ sources (33%)",
-                "Not embedded yet: 12 records",
                 "Waiting for a name: 3 groups",
                 "Not in any concept: 250 records (55% covered)",
             ],
             card.Lines.Select(l => l.Text),
             StringComparer.Ordinal);
         Assert.Equal(Labels.CodeIndexOk, card.Word);
+        Assert.Equal(new ContextBacklog(550, 562, "550 of 562 records embedded"), card.Backlog);
+    }
+
+    [Fact]
+    public async Task The_backlog_bar_replaces_the_not_embedded_line_when_both_counts_are_known()
+    {
+        var card = await ReadWithConcepts(
+            """{"enabled":true,"concepts":10,"multiSource":2,"queued":0,"covered":20,"embedded":30,"pending":30,"coverage":0.5,"watermark":1,"code":null}""",
+            Source("github", "running", 200));
+
+        Assert.Equal(new ContextBacklog(30, 60, "30 of 60 records embedded"), card.Backlog);
+        Assert.True(card.HasBacklog);
+        Assert.DoesNotContain(card.Lines, l => l.Text.StartsWith("Not embedded yet", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Without_an_embedded_count_there_is_no_bar_and_the_not_embedded_line_stays()
+    {
+        var card = await ReadWithConcepts(
+            """{"enabled":true,"concepts":10,"multiSource":2,"queued":0,"covered":20,"embedded":null,"pending":30,"coverage":0.5,"watermark":1,"code":null}""",
+            Source("github", "running", 200));
+
+        Assert.Null(card.Backlog);
+        Assert.False(card.HasBacklog);
+        Assert.Contains(card.Lines, l => l.Text == "Not embedded yet: 30 records");
     }
 
     [Fact]
