@@ -126,6 +126,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         Rest();
         Apply(Hold(answer.Value));
         IsLoading = false;   // after the rows are there: a waiter on the end of loading finds them
+        await LearnClosed(url, cancellationToken).ConfigureAwait(true);
     }
 
     /// <summary>Shows the running group (Home's "Show all N in Queue") or all of them (G Q, the Work tab); a selection the filter hides is cleared, silently.</summary>
