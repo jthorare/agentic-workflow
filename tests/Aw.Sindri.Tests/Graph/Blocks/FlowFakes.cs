@@ -86,6 +86,12 @@ internal static class FlowFakes
         }
     }
 
+    public sealed class ScriptedResultPort : IGraphResultPort
+    {
+        public ValueTask<Result<GraphRunResult>> Read(WorkflowSlug workflow, WorkflowRunId? run, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Result<GraphRunResult>>(new GraphRunResult(WorkflowRunId.Of(workflow, 1, 100_000_001), "succeeded", FinishedAt: null, Outputs: null));
+    }
+
     public sealed class ScriptedHttpPort(GraphHttpResponse? answer = null, Error? error = null) : IGraphHttpPort
     {
         public List<GraphHttpRequest> Sent { get; } = [];

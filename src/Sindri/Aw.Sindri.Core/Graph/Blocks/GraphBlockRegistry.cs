@@ -53,6 +53,11 @@ public sealed class GraphBlockRegistry : IGraphBlockCatalog
     public static IReadOnlyList<IGraphBlock> ParkingBlocks(IQuestionPort questions, TimeProvider clock) =>
         [new WaitBlock(clock), new AskOwnerBlock(questions, clock)];
 
+    /// <summary>The 'workflow_result' block of agent-first PR 9: it reads a finished run's outputs.</summary>
+    /// <param name="results">Where 'workflow_result' reads a run.</param>
+    /// <returns>The block.</returns>
+    public static IReadOnlyList<IGraphBlock> ResultBlocks(IGraphResultPort results) => [new WorkflowResultBlock(results)];
+
     /// <summary>The memory blocks: memory_search (Recall), memory_write (Remember) and memory_forget (Forget).</summary>
     /// <param name="memory">Where the blocks reach the Sindri memory stores.</param>
     /// <returns>The three blocks.</returns>
