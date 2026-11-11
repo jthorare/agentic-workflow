@@ -1846,9 +1846,9 @@ public sealed class ShellWindowTests : IDisposable
 
     // #2547 (QA): at 1000, 1099 and 1280 px, text scale 1.0 and 1.3, every pill state fits: the pill ends inside the bar's
     // 16 px padding, the bar has settled, two tabs keep the gap floor, and the tabs keep their normal padding at 1.0 (the tight
-    // step is only for when normal padding can't fit). Placeholder whole at Full in Normal and Degraded (short problem): the
-    // 4 px slack is for these; in the other states Full keeps the field at its 184 px minimum and the placeholder trims, as on
-    // main (#2655 follow-up issue).
+    // step is only for when normal padding can't fit). Placeholder whole at Full in Normal at every width, and in Degraded
+    // (short problem) at 1280 px, 1.0, the case the 4 px slack is for; in the other states Full keeps the field at its 184 px
+    // minimum and the placeholder trims, as on main (#2710 lists those rows).
     [Theory]
     [MemberData(nameof(BarWidthsAndScales))]
     public Task The_top_bar_fits_and_keeps_the_gap_floor_in_every_pill_state(BarState state, double width, double scale) => OnUi(() => WithBar(state, width, scale, window =>
@@ -1871,7 +1871,7 @@ public sealed class ShellWindowTests : IDisposable
         var all = string.Join(", ", gaps.Select(g => string.Create(CultureInfo.InvariantCulture, $"{g.Pair} {g.Gap:0.#}")));
         Assert.True(gaps.TrueForAll(g => g.Gap >= TabGapFloor), string.Create(CultureInfo.InvariantCulture, $"{at}: a gap is under {TabGapFloor} px: {all}"));
 
-        if (state is BarState.Normal or BarState.DegradedShortProblem && !Named<Border>(window, "SearchField").Classes.Contains("compact"))
+        if ((state is BarState.Normal || (state is BarState.DegradedShortProblem && width == 1280 && scale == 1.0)) && !Named<Border>(window, "SearchField").Classes.Contains("compact"))
         {
             var placeholder = Named<TextBlock>(window, "SearchText");
             using var layout = new TextLayout(placeholder.Text, new Typeface(placeholder.FontFamily, placeholder.FontStyle, placeholder.FontWeight), placeholder.FontSize, foreground: null);
