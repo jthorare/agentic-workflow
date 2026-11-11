@@ -22,8 +22,8 @@ public sealed class ScrubCredentialKeyTests
     public async Task Staged_refuses_a_name_shaped_value_under_a_credential_key_with_SND_SCRUB_002(string line)
     {
         using var repo = await TempGitRepo.Create();
-        var file = System.IO.Path.Combine(repo.Path, RelPath);
-        _ = Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file)!);
+        var file = Path.Combine(repo.Path, RelPath);
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(file)!);
         await File.WriteAllTextAsync(file, $"APP_NAME=demo\n{line}\n", Token);
         _ = await repo.Git("add", RelPath);
 
