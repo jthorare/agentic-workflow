@@ -75,6 +75,9 @@ internal sealed record WorktreeFacts
     /// <summary>Set by a `--discarded` sweep when a finished bugfix run names this tree as a losing candidate at its HEAD: says which (e.g. "bugfix gh-9 candidate c1, resolved by c2"). Its unpushed commits and "no pull request" don't keep it.</summary>
     public string? Discarded { get; init; }
 
+    /// <summary>Set by any sweep when a bugfix run names this tree at its HEAD (its red tree, or a candidate on its branch) and the run's GitHub issue is closed by a merged pull request: says which (e.g. "bugfix gh-9 red tree, #9 closed by merged #12"). "No pull request", "unmerged branch", unpushed commits and being detached don't keep it; the live-tree rules still do (#2753).</summary>
+    public string? FinishedBugfix { get; init; }
+
     /// <summary>Set by a `--discarded` sweep when the tree is not a discarded candidate: why not (no run names it, HEAD moved, it won, the run isn't over).</summary>
     public string? NotDiscarded { get; init; }
 
