@@ -129,7 +129,7 @@ internal static partial class Labels
     internal const string ContextMapDraftTag = "Draft map";
 
     /// <summary>The label of the starting points box.</summary>
-    internal const string ContextMapStartsAt = "Starts at";
+    internal const string ContextMapStartsAt = "Search";
 
     /// <summary>The map view's name in the view switch.</summary>
     internal const string ContextMapViewMap = "Map";
