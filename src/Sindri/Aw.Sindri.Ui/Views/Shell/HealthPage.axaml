@@ -173,21 +173,23 @@
                   <TextBlock x:Name="ProcessWord" Classes="body-strong head-word" Text="{Binding Pill.Word}" AutomationProperties.Name="{Binding Pill.Text}" />
                 </StackPanel>
               </Grid>
-              <ItemsControl x:Name="ProcessRows" ItemsSource="{Binding Detail.Process}" AutomationProperties.Name="{Binding Text.ControlPlaneCard}">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="vm:HealthCell">
-                    <Grid Classes="row data-row" ColumnDefinitions="130,*" AutomationProperties.Name="{Binding Label}">
-                      <TextBlock Classes="caption subtle row-label" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
-                      <TextBlock Grid.Column="1" Classes="body" Text="{Binding Value}" TextTrimming="CharacterEllipsis"
-                                 AutomationProperties.Name="{Binding Value}" />
-                    </Grid>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-              <Grid Classes="row data-row" ColumnDefinitions="130,*">
-                <TextBlock Classes="caption subtle row-label on-mono" Text="{Binding Text.LastEventCard}" AutomationProperties.Name="{Binding Text.LastEventCard}" />
-                <TextBlock x:Name="LastEventText" Grid.Column="1" Classes="mono" Text="{Binding LastEvent}" AutomationProperties.Name="{Binding LastEvent}" />
-              </Grid>
+              <StackPanel>
+                <ItemsControl x:Name="ProcessRows" ItemsSource="{Binding Detail.Process}" AutomationProperties.Name="{Binding Text.ControlPlaneCard}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:HealthCell">
+                      <Grid Classes="row data-row" ColumnDefinitions="130,*" AutomationProperties.Name="{Binding Label}">
+                        <TextBlock Classes="caption subtle row-label" Text="{Binding Label}" AutomationProperties.Name="{Binding Label}" />
+                        <TextBlock Grid.Column="1" Classes="body" Text="{Binding Value}" TextTrimming="CharacterEllipsis"
+                                   AutomationProperties.Name="{Binding Value}" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Grid x:Name="LastEventRow" Classes="row data-row" ColumnDefinitions="130,*">
+                  <TextBlock Classes="caption subtle row-label on-mono" Text="{Binding Text.LastEventCard}" AutomationProperties.Name="{Binding Text.LastEventCard}" />
+                  <TextBlock x:Name="LastEventText" Grid.Column="1" Classes="mono" Text="{Binding LastEvent}" AutomationProperties.Name="{Binding LastEvent}" />
+                </Grid>
+              </StackPanel>
             </StackPanel>
           </Border>
         </Border>

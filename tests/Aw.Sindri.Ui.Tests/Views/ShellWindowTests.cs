@@ -1294,6 +1294,7 @@ public sealed class ShellWindowTests : IDisposable
         Assert.Equal(("live", StateGlyph.Ok), (Text(window, "ProfileHeadText"), Glyph(window, "ProfileHeadGlyph")));
         Assert.Equal(["live", "ab12cd", "file", "/home/profile.yaml"], Rows("ProfileRows"));
         HealthHeadsAndPathsAreAligned(window);
+        LastEventRowKeepsTheRhythm(window);
         Assert.False(Visible(window, "HeadlineText"));
         var page = Named<Control>(window, "HealthPage");
         Assert.Equal("HeadlineWord", Assert.Single(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Classes.Contains("display")).Name);
@@ -2035,6 +2036,16 @@ public sealed class ShellWindowTests : IDisposable
         Assert.Equal(home.X, onSettings.X);
         Frame(window, "settings");
     });
+
+    // #2779: "Last event" sits outside ProcessRows but on the same 36 px rhythm (the card's 8 px stack gap made it 42).
+    private static void LastEventRowKeepsTheRhythm(Window window)
+    {
+        var card = Named<Control>(window, "ProcessRows").Parent as Visual ?? throw new InvalidOperationException("ProcessRows has no parent");
+        var api = Named<ItemsControl>(window, "ProcessRows").GetVisualDescendants().OfType<Grid>().Last(g => g.Classes.Contains("data-row"));
+        var apiTop = api.TranslatePoint(default, card)!.Value.Y;
+        var lastTop = Named<Control>(window, "LastEventRow").TranslatePoint(default, card)!.Value.Y;
+        Assert.True(Math.Abs(lastTop - apiTop - 36) < 0.5, string.Create(CultureInfo.InvariantCulture, $"Last event starts {lastTop - apiTop} px under the API row, not 36"));
+    }
 
     // S2 and S3 on Health: each section head's state word sits on its eyebrow's baseline, and the profile's file is a
     // path in mono like the Not running card's.
