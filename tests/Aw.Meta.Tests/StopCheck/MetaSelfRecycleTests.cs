@@ -61,10 +61,24 @@ public sealed class MetaSelfRecycleTests
     {
         await Team(577_000);
         _ = await _world.LaneFiles.RecordWaiter("meta", (4242, A.At(40)), CancellationToken.None);
+        _world.Liveness.Run(4242, A.At(39));
 
         var stop = await Stop();
 
         Assert.False(OwesRecycle(stop));
         Assert.False(stop.Blocked);
+    }
+
+    // A SIGKILL, an OOM kill or a reboot skips the waiter's finally and leaves its record: a dead pid still owes the recycle.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_meta_lane_over_the_mark_whose_recorded_waiter_is_dead_still_owes_a_recycle()
+    {
+        await Team(577_000);
+        _ = await _world.LaneFiles.RecordWaiter("meta", (4242, A.At(40)), CancellationToken.None);
+
+        var stop = await Stop();
+
+        Assert.True(OwesRecycle(stop));
+        Assert.True(stop.Blocked);
     }
 }
