@@ -4,7 +4,7 @@ using Aw.Sindri.Infrastructure.Text;
 
 namespace Aw.Sindri.Tests.Checks;
 
-/// <summary>#2644: the value shape that lets the staged scan treat a secret-assignment as a pointer.</summary>
+/// <summary>#2644: the key and value shape that let the staged scan treat a secret-assignment as a pointer.</summary>
 public sealed class ResourceNameTests
 {
     [Theory, Trait("Lane", "unit")]
@@ -33,6 +33,35 @@ public sealed class ResourceNameTests
     [InlineData("")]
     public void Looks_is_false_for_anything_that_could_be_a_credential(string value) =>
         Assert.False(ResourceName.Looks(value));
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("ESO_SECRET")]
+    [InlineData("db-secret")]
+    [InlineData("clientSecret")]
+    [InlineData("SECRET")]
+    public void KeyNamesASecret_is_true_for_a_key_ending_in_SECRET(string key) =>
+        Assert.True(ResourceName.KeyNamesASecret(key));
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("DB_PASSWORD")]
+    [InlineData("API_TOKEN")]
+    [InlineData("API_KEY")]
+    [InlineData("AWS_ACCESS_KEY")]
+    [InlineData("SSH_PRIVATE_KEY")]
+    [InlineData("APP_SECRET_KEY")]
+    [InlineData("")]
+    public void KeyNamesASecret_is_false_for_a_key_that_holds_the_credential_itself(string key) =>
+        Assert.False(ResourceName.KeyNamesASecret(key));
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("      - ESO_SECRET=", "ESO_SECRET")]
+    [InlineData("  ESO_SECRET: ", "ESO_SECRET")]
+    [InlineData("db.secret = \"", "db.secret")]
+    [InlineData("X-Api-Key: ", "X-Api-Key")]
+    [InlineData("?access_token=", "access_token")]
+    [InlineData("no assignment ", "")]
+    public void KeyBefore_reads_the_name_before_the_value(string prefix, string key) =>
+        Assert.Equal(key, RedactingSecretFinder.KeyBefore(prefix + "value", prefix.Length));
 
     [Fact, Trait("Lane", "unit")]
     public void Findings_still_flags_a_line_with_a_name_shaped_assignment_and_a_token_of_another_rule()
