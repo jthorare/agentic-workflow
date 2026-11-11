@@ -468,6 +468,26 @@ public sealed class TodoPanelHomeTests : IDisposable
         Assert.True(line.TranslatePoint(new Point(0, line.Bounds.Height), Panel(window))!.Value.Y <= Panel(window).Bounds.Height);
     });
 
+    // #2548: the Connect Linear link starts where the card's own text starts (the empty line's 16 px inset), not 6 px to its left.
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(1280)]
+    public Task Connect_Linear_starts_at_the_left_edge_of_the_empty_line(int width) => OnUi(async () =>
+    {
+        Serve();
+        _server.LinearIssuesAnswer = RouteAnswer.Api("linear-issues", "not-connected");
+        var (window, shell) = await Connected();
+        window.Width = width;
+        await Until(window, () => !shell.Elsewhere.IsLoading && Shown(Panel(window), "ElsewhereFrame"));
+
+        var empty = Named<TextBlock>(Panel(window), "TodoEmpty");
+        var link = Panel(window).GetVisualDescendants().OfType<TextBlock>().First(t => t.IsEffectivelyVisible && string.Equals(t.Text, Labels.ElsewhereLinearNotConnected, StringComparison.Ordinal));
+        var emptyLeft = empty.TranslatePoint(default, Panel(window))!.Value.X;   // why: both are in the same visual tree
+        var linkLeft = link.TranslatePoint(default, Panel(window))!.Value.X;
+
+        Assert.True(Math.Abs(emptyLeft - linkLeft) < 0.5, string.Create(CultureInfo.InvariantCulture, $"at {width} px the empty line starts at {emptyLeft}, the Connect Linear link at {linkLeft}"));
+    });
+
     [Fact]
     public Task The_panel_keeps_one_height_whatever_the_line_says() => OnUi(async () =>
     {
