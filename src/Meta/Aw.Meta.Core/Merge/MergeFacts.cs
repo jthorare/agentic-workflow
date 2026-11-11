@@ -15,6 +15,9 @@ public sealed record MergeFacts
     /// <summary>The reviewer's OK and the lane's counts from the inbox; null when the team has no reviewer lane.</summary>
     public ReviewFacts? Review { get; init; }
 
+    /// <summary>Whether the team gates in CI (gate.mode "ci"): the gate record is a read of the pull request's required checks, so the scope, main and test-log checks don't apply.</summary>
+    public bool CiGate { get; init; }
+
     /// <summary>The pull request's head now.</summary>
     public required string CurrentHead { get; init; }
 

@@ -23,7 +23,8 @@ public sealed class GateRunTests
         new GateStepRunner(_world.Runner, _world.Paths),
         _world.Gates,
         Worlds.Reservation(_world),
-        _world.Clock);
+        _world.Clock,
+        _world.Repo);
 
     private void Script(string changed = "src/a.cs\n", int unitExit = 1)
     {
@@ -197,7 +198,8 @@ public sealed class GateRunTests
         new GateStepRunner(_world.Runner, paths),
         _world.Gates,
         Worlds.Reservation(_world),
-        _world.Clock);
+        _world.Clock,
+        _world.Repo);
 
     private static void Leave(string gates, int run, string text)
     {

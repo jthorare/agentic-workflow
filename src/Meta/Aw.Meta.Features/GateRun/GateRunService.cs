@@ -19,7 +19,8 @@ namespace Aw.Meta.Features.GateRun;
 /// <param name="gates">Stores the run.</param>
 /// <param name="reservation">Computes the heavy-slot reservation from the merge-queue depth before the run.</param>
 /// <param name="clock">Dates the run.</param>
-internal sealed class GateRunService(IMetaConfig config, GateWorkspace workspace, GateStepRunner steps, IGateStore gates, HeavyReservation reservation, TimeProvider clock)
+/// <param name="repo">The git and gh calls a CI gate reads GitHub with.</param>
+internal sealed class GateRunService(IMetaConfig config, GateWorkspace workspace, GateStepRunner steps, IGateStore gates, HeavyReservation reservation, TimeProvider clock, RepoCommands repo)
     : IService<GateRunRequest, GateRunResponse>
 {
     public async ValueTask<Result<GateRunResponse>> Handle(GateRunRequest request, CancellationToken cancellationToken)
@@ -29,6 +30,12 @@ internal sealed class GateRunService(IMetaConfig config, GateWorkspace workspace
         if (team.IsError)
         {
             return team.Error;
+        }
+
+        if (team.Value.Gate.IsCi)
+        {
+            _ = repo;
+            throw new NotSupportedException("gate.mode ci is not implemented yet");
         }
 
         if (request.Scopes.FirstOrDefault(scope => !team.Value.Gate.Scopes.ContainsKey(scope)) is { } unknown)
