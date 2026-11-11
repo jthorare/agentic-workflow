@@ -136,7 +136,7 @@ internal sealed partial class ShellWindow
             return;
         }
 
-        if (RowFrame(request.ItemId) is not { } frame)
+        if (BuiltRowFrame(request.ItemId) is not { } frame)
         {
             KeepFocus();   // the row is not drawn: whoever KeepFocus waited for still gets its neighbour
             return;

@@ -63,6 +63,26 @@ internal sealed partial class QueuePage : UserControl
         }
     }
 
+    /// <summary>Brings a row of the Work table into view, building it when it was not built yet (the list builds only the rows in view, #2776).</summary>
+    /// <param name="itemId">The item's id.</param>
+    /// <returns>True when the row is in the table.</returns>
+    internal bool ScrollToRow(string itemId)
+    {
+        if (_queue is null || this.FindControl<ItemsControl>("QueueGroups") is not { } list)
+        {
+            return false;
+        }
+
+        var at = _queue.Flat.ToList().FindIndex(item => item is ViewModels.Queue.ItemRowViewModel row && string.Equals(row.Id, itemId, StringComparison.Ordinal));
+        if (at < 0)
+        {
+            return false;
+        }
+
+        list.ScrollIntoView(at);
+        return true;
+    }
+
     // Focus arriving on a row, or on a control in it, selects it: the selection is the focus (§3.3).
     private void OnSelect(object? sender, RoutedEventArgs e)
     {

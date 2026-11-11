@@ -26,6 +26,12 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
     /// <summary>The groups in the API's order (empty ones included, hidden by <see cref="QueueGroupViewModel.IsVisible"/>).</summary>
     public ObservableCollection<QueueGroupViewModel> Groups { get; } = [];
 
+    /// <summary>
+    /// The Work table as ONE list the page virtualizes (#2776): each visible group's heading (the <see cref="QueueGroupViewModel"/>), then its rows
+    /// while the group is open. A list of lists would build every row; this one builds the rows in view.
+    /// </summary>
+    public ObservableCollection<object> Flat { get; } = [];
+
     /// <summary>How many items the queue holds across its groups (the Queue tab's count).</summary>
     public int Total { get; private set => Set(ref field, value); }
 
@@ -153,6 +159,22 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         }
     }
 
+    // The visible groups' headings and the rows of the open ones, in the page's order.
+    private void Flatten()
+    {
+        List<object> flat = [];
+        foreach (var group in Groups.Where(g => g.IsVisible))
+        {
+            flat.Add(group);
+            if (group.IsExpanded)
+            {
+                flat.AddRange(group.Rows);
+            }
+        }
+
+        Patch.To(Flat, flat);
+    }
+
     private IEnumerable<ItemRowViewModel> Visible() => Groups.Where(g => g.IsVisible).SelectMany(g => g.Rows);
 
     private void Show()
@@ -167,6 +189,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         var all = view.Groups.ToDictionary(g => g.Group, g => g.Items.Select(i => Row(i, g.Group, now, fresh)).ToList(), StringComparer.Ordinal);
         _rows = fresh;
         Patch.To(Groups, [.. view.Groups.Select(g => Group(g, all[g.Group]))]);
+        Flatten();
         Total = all.Values.Sum(r => r.Count);
         var unmatched = (FilterText.Length > 0 || SelectedRepo.Length > 0) && !Visible().Any();
         IsEmpty = (Showing == QueueFilter.All && Total == 0) || unmatched;
@@ -208,6 +231,13 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
         if (!_groups.TryGetValue(group.Group, out var shown))
         {
             shown = _groups[group.Group] = new QueueGroupViewModel(group.Group);
+            shown.PropertyChanged += (_, e) =>
+            {
+                if (string.Equals(e.PropertyName, nameof(QueueGroupViewModel.IsExpanded), StringComparison.Ordinal))
+                {
+                    Flatten();   // a fold opens or closes the group's rows in the flat list
+                }
+            };
         }
 
         shown.Update([.. all.Where(r => Matches(r.Id, r.Title, r.Repo))], EmptyLine(group), picked, filtered: picked && Showing != QueueFilter.All);
