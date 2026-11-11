@@ -22,10 +22,6 @@ internal sealed class BuildToolkitService(IToolkitStore store, IToolkitWorkspace
     /// <summary>How long a build queues for a heavy-job slot: hours, like the map build, so a busy box waits with progress instead of failing.</summary>
     private static readonly TimeSpan _slotWait = TimeSpan.FromHours(12);
 
-    private static readonly string[] _build = ["dotnet", "build", "-warnaserror"];
-
-    private static readonly string[] _test = ["dotnet", "test"];
-
     public async ValueTask<Result<BuildToolkitResult>> Handle(BuildToolkitRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -67,18 +63,10 @@ internal sealed class BuildToolkitService(IToolkitStore store, IToolkitWorkspace
             return await Failed(toolkit, hash.Error.Message, cancellationToken).ConfigureAwait(false);
         }
 
-        progress?.Report("building (warnings are errors)");
-        var built = await commands.Run(toolkit.Dir, _build, cancellationToken).ConfigureAwait(false);
-        if (built.ExitCode != 0)
+        var failed = await BuildAndTest(toolkit, progress, cancellationToken).ConfigureAwait(false);
+        if (failed is not null)
         {
-            return await Failed(toolkit, "the build failed: " + Tail(Both(built)), cancellationToken).ConfigureAwait(false);
-        }
-
-        progress?.Report("running the toolkit's tests");
-        var tested = await commands.Run(toolkit.Dir, _test, cancellationToken).ConfigureAwait(false);
-        if (tested.ExitCode != 0)
-        {
-            return await Failed(toolkit, "the tests failed: " + Tail(Both(tested)), cancellationToken).ConfigureAwait(false);
+            return await Failed(toolkit, failed, cancellationToken).ConfigureAwait(false);
         }
 
         var manifest = await ReadManifest(toolkit, cancellationToken).ConfigureAwait(false);
@@ -96,6 +84,28 @@ internal sealed class BuildToolkitService(IToolkitStore store, IToolkitWorkspace
 
         progress?.Report("built");
         return new BuildToolkitResult(toolkit.Name, hash.Value);
+    }
+
+    /// <summary>Builds the toolkit with warnings as errors, then runs its tests. The folder holds the toolkit project and its tests one folder down, with no solution: building the tests project builds both (#2711).</summary>
+    /// <returns>Null when both passed, else why the build failed.</returns>
+    private async ValueTask<string?> BuildAndTest(Toolkit toolkit, IProgress<string>? progress, CancellationToken cancellationToken)
+    {
+        var tests = workspace.TestsProjectOf(toolkit.Dir);
+        if (tests.IsError)
+        {
+            return tests.Error.Message;
+        }
+
+        progress?.Report("building (warnings are errors)");
+        var built = await commands.Run(toolkit.Dir, ["dotnet", "build", tests.Value, "-warnaserror"], cancellationToken).ConfigureAwait(false);
+        if (built.ExitCode != 0)
+        {
+            return "the build failed: " + Tail(Both(built));
+        }
+
+        progress?.Report("running the toolkit's tests");
+        var tested = await commands.Run(toolkit.Dir, ["dotnet", "test", "--project", tests.Value], cancellationToken).ConfigureAwait(false);
+        return tested.ExitCode != 0 ? "the tests failed: " + Tail(Both(tested)) : null;
     }
 
     /// <summary>Runs the built binary with --manifest and parses what it prints; nothing is written to the toolkit's folder (a file there would change the source hash).</summary>
