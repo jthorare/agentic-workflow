@@ -26,6 +26,7 @@ internal sealed partial class Projector(
     private string? _problem;
     private long _seenHead;
     private bool _healing;
+    private long? _recordedResetThrough;
     private ViewsStatus _last = new(0, 0, ProjectedAt: null, Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null, Starting: true);
 
     /// <summary>The ledger head the last pass saw; the host waits for an append past it.</summary>
@@ -86,10 +87,11 @@ internal sealed partial class Projector(
         }
 
         var through = recorded.Value;
-        if (requested && Covered(state, through))
+        if (requested && _recordedResetThrough == through)
         {
-            // #2861: the ledger record decides, the flag only wakes. A pass already folded from 0 for this views.rebuilt (it saw the record before the flag), so take the request without a second reset.
+            // #2861: the pass the views.rebuilt append woke already reset for this record, so its request is taken without a second reset. A request with no new record (through unchanged since a non-recorded reset) still rebuilds.
             _ = feed.TakeRebuildRequest();
+            _recordedResetThrough = null;
             return state;
         }
 
@@ -114,8 +116,6 @@ internal sealed partial class Projector(
         return recorded.IsError ? recorded.Error : recorded.Value?.Sequence ?? 0;
     }
 
-    private static bool Covered(ProjectorState state, long through) => state.RebuiltThrough is { } done && done >= through;
-
     private string? RebuildReason(ProjectorState state, long through) =>
         state.RebuiltThrough is { } done && through > done ? "recorded rebuild" : _healing ? "unreadable rows" : state.Fresh ? "views.db created" : state.SchemaVersion != ViewSchema.Version ? "schema version changed" : state.RebuiltThrough is null ? "no rebuild record" : null;
 
@@ -128,6 +128,7 @@ internal sealed partial class Projector(
         {
             _stalledSince = null;
             _healing = false;
+            _recordedResetThrough = string.Equals(reason, "recorded rebuild", StringComparison.Ordinal) ? through : null;
         }
 
         return reset;
