@@ -25,6 +25,26 @@
       "open": {
         "route": "decision/DEC-00000000000000000000000000000013",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-00000000000000000000000000000013",
+        "question": "Accept this add task request?\nAdd a task for the logout flow.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-00000000000000000000000000000013 accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-00000000000000000000000000000013 decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -52,7 +72,8 @@
       "open": {
         "route": "setup",
         "label": "Open setup"
-      }
+      },
+      "decision": null
     }
   ],
   "empty": null,
@@ -62,5 +83,6 @@
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
-  }
+  },
+  "tag": "57cb281c75bc334df0a13264da7f96f0"
 }

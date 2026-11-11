@@ -25,7 +25,8 @@
       "open": {
         "route": "service/phantom",
         "label": "Open the service"
-      }
+      },
+      "decision": null
     },
     {
       "id": "setup:mcp",
@@ -52,7 +53,8 @@
       "open": {
         "route": "setup",
         "label": "Open setup"
-      }
+      },
+      "decision": null
     }
   ],
   "empty": null,
@@ -62,5 +64,6 @@
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
-  }
+  },
+  "tag": "9a0d80ddd7f5260d84665234ded224f6"
 }

@@ -25,6 +25,26 @@
       "open": {
         "route": "decision/DEC-0000000000000000000000000000000c",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-0000000000000000000000000000000c",
+        "question": "Accept this re-scope request?\nSplit the checkout work into two items.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-0000000000000000000000000000000c accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-0000000000000000000000000000000c decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -53,7 +73,8 @@
       "open": {
         "route": "service/heartbeat",
         "label": "Open the service"
-      }
+      },
+      "decision": null
     },
     {
       "id": "setup:mcp",
@@ -80,7 +101,8 @@
       "open": {
         "route": "setup",
         "label": "Open setup"
-      }
+      },
+      "decision": null
     }
   ],
   "empty": null,
@@ -90,5 +112,6 @@
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
-  }
+  },
+  "tag": "e4d63dd2ff24ef974a768ea845aa552b"
 }

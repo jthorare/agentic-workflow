@@ -25,6 +25,26 @@
       "open": {
         "route": "decision/DEC-00000000000000000000000000000009",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-00000000000000000000000000000009",
+        "question": "Accept this re-scope request?\nSplit the checkout work into two items.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-00000000000000000000000000000009 accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-00000000000000000000000000000009 decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -52,7 +72,8 @@
       "open": {
         "route": "setup",
         "label": "Open setup"
-      }
+      },
+      "decision": null
     }
   ],
   "empty": "Views are stalled at 4: run `sindri views rebuild`",
@@ -62,5 +83,6 @@
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": true
-  }
+  },
+  "tag": "20f1620e6edc80e57631070fe464b8c9"
 }

@@ -25,6 +25,26 @@
       "open": {
         "route": "decision/DEC-00000000000000000000000000000009",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-00000000000000000000000000000009",
+        "question": "Accept this re-scope request?\nRequest 1 for demo.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-00000000000000000000000000000009 accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-00000000000000000000000000000009 decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -52,6 +72,26 @@
       "open": {
         "route": "decision/DEC-00000000000000000000000000000013",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-00000000000000000000000000000013",
+        "question": "Accept this add task request?\nRequest 2 for other.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-00000000000000000000000000000013 accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-00000000000000000000000000000013 decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -79,6 +119,26 @@
       "open": {
         "route": "decision/DEC-0000000000000000000000000000001d",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-0000000000000000000000000000001d",
+        "question": "Accept this note request?\nRequest 3 for demo.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-0000000000000000000000000000001d accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-0000000000000000000000000000001d decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -106,6 +166,26 @@
       "open": {
         "route": "decision/DEC-00000000000000000000000000000027",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-00000000000000000000000000000027",
+        "question": "Accept this hand back request?\nRequest 4 for other.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-00000000000000000000000000000027 accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-00000000000000000000000000000027 decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -133,6 +213,26 @@
       "open": {
         "route": "decision/DEC-00000000000000000000000000000031",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-00000000000000000000000000000031",
+        "question": "Accept this re-scope request?\nRequest 5 for demo.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-00000000000000000000000000000031 accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-00000000000000000000000000000031 decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -160,6 +260,26 @@
       "open": {
         "route": "decision/DEC-0000000000000000000000000000003b",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-0000000000000000000000000000003b",
+        "question": "Accept this add task request?\nRequest 6 for other.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-0000000000000000000000000000003b accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-0000000000000000000000000000003b decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -187,6 +307,26 @@
       "open": {
         "route": "decision/DEC-00000000000000000000000000000045",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-00000000000000000000000000000045",
+        "question": "Accept this note request?\nRequest 7 for demo.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-00000000000000000000000000000045 accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-00000000000000000000000000000045 decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -214,6 +354,26 @@
       "open": {
         "route": "decision/DEC-0000000000000000000000000000004f",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-0000000000000000000000000000004f",
+        "question": "Accept this hand back request?\nRequest 8 for other.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-0000000000000000000000000000004f accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-0000000000000000000000000000004f decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -241,6 +401,26 @@
       "open": {
         "route": "decision/DEC-00000000000000000000000000000059",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-00000000000000000000000000000059",
+        "question": "Accept this re-scope request?\nRequest 9 for demo.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-00000000000000000000000000000059 accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-00000000000000000000000000000059 decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -268,6 +448,26 @@
       "open": {
         "route": "decision/DEC-00000000000000000000000000000063",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-00000000000000000000000000000063",
+        "question": "Accept this add task request?\nRequest 10 for other.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-00000000000000000000000000000063 accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-00000000000000000000000000000063 decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -295,6 +495,26 @@
       "open": {
         "route": "decision/DEC-0000000000000000000000000000006d",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-0000000000000000000000000000006d",
+        "question": "Accept this note request?\nRequest 11 for demo.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-0000000000000000000000000000006d accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-0000000000000000000000000000006d decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -322,6 +542,26 @@
       "open": {
         "route": "decision/DEC-00000000000000000000000000000077",
         "label": "Review and decide"
+      },
+      "decision": {
+        "id": "DEC-00000000000000000000000000000077",
+        "question": "Accept this hand back request?\nRequest 12 for other.",
+        "filedBy": "session:cli",
+        "recommended": "accept",
+        "options": [
+          {
+            "id": "accept",
+            "label": "Accept",
+            "cli": "sindri decide DEC-00000000000000000000000000000077 accept",
+            "rejectLike": false
+          },
+          {
+            "id": "decline",
+            "label": "Decline",
+            "cli": "sindri decide DEC-00000000000000000000000000000077 decline",
+            "rejectLike": true
+          }
+        ]
       }
     },
     {
@@ -350,7 +590,8 @@
       "open": {
         "route": "service/heartbeat",
         "label": "Open the service"
-      }
+      },
+      "decision": null
     },
     {
       "id": "setup:mcp",
@@ -377,7 +618,8 @@
       "open": {
         "route": "setup",
         "label": "Open setup"
-      }
+      },
+      "decision": null
     }
   ],
   "empty": null,
@@ -387,5 +629,6 @@
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
-  }
+  },
+  "tag": "ca6a79d3f6b5399282c5bee24b2228ff"
 }
