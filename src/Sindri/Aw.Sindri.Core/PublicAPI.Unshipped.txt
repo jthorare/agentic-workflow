@@ -22367,9 +22367,9 @@ static Aw.Sindri.Core.Reviews.ReviewConnectRules.For(Aw.Sindri.Core.Connections.
 static Aw.Sindri.Core.Reviews.ReviewConnectRules.IsSignInCode(string? code) -> bool
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest!
-Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out string! Owner, out string! Command, out string! RunArea, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>! ResourceMounts, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>! HostGroups, out Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts! Net, out Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts! Host, out Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Limits) -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Deconstruct(out Aw.Sindri.Core.Launch.LaunchId Launch, out string! Owner, out string! Command, out string! RunArea, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>! ResourceMounts, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>! HostGroups, out Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts! Net, out Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts! Host, out Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Limits, out System.Collections.Generic.IReadOnlyList<string!>? ReadOnlyPaths) -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Equals(Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest? other) -> bool
-Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ProcessSandboxRequest(Aw.Sindri.Core.Launch.LaunchId Launch, string! Owner, string! Command, string! RunArea, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>! ResourceMounts, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>! HostGroups, Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts! Net, Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts! Host, Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Limits = null) -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ProcessSandboxRequest(Aw.Sindri.Core.Launch.LaunchId Launch, string! Owner, string! Command, string! RunArea, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Resources.ResourceMount!>! ResourceMounts, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Environment, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.Plan.PlanGroup!>! HostGroups, Aw.Sindri.Core.Sandbox.Plan.SandboxNetFacts! Net, Aw.Sindri.Core.Sandbox.Plan.SandboxHostFacts! Host, Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride? Limits = null, System.Collections.Generic.IReadOnlyList<string!>? ReadOnlyPaths = null) -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Launch.get -> Aw.Sindri.Core.Launch.LaunchId
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Launch.init -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Owner.get -> string!
@@ -22390,6 +22390,8 @@ Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Host.get -> Aw.Sindri.Core.San
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Host.init -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Limits.get -> Aw.Sindri.Core.Sandbox.Resources.ResourceLimitOverride?
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.Limits.init -> void
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ReadOnlyPaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest.ReadOnlyPaths.init -> void
 Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxPlanner
 static Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxPlanner.Build(Aw.Sindri.Core.Sandbox.SandboxMechanism mechanism, Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest! request) -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Plan.SandboxPlan!>!
 Aw.Sindri.Core.Sandbox.Plan.ISandbox.PlanProcess(Aw.Sindri.Core.Sandbox.Plan.ProcessSandboxRequest! request) -> Aw.Kernel.Result<Aw.Sindri.Core.Sandbox.Plan.SandboxPlan!>!
@@ -22726,6 +22728,11 @@ Aw.Sindri.Core.Resources.ResourceDoctorRule
 const Aw.Sindri.Core.Resources.ResourceDoctorRule.NearLimit = 0.9 -> double
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.Check(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>! entries, System.Collections.Generic.IReadOnlyDictionary<string!, long>! diskLimits) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.LimitKey(Aw.Sindri.Core.Resources.ResourceOwner! owner, string! name) -> string!
+static readonly Aw.Sindri.Core.SindriErrors.CodeCompileFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.CodeTimeout -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.CodeMemory -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.CodeFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.CodeRunnerUnavailable -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort
 Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort.Forget(Aw.Sindri.Core.Graph.Blocks.MemoryToForget! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Sindri.Core.Graph.Blocks.IGraphMemoryPort.Recall(Aw.Sindri.Core.Graph.Blocks.MemoryToRecall! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Graph.Blocks.MemoryRecalled!>!>

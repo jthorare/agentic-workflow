@@ -13,6 +13,8 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="YamlDotNet" />
     <PackageReference Include="ModelContextProtocol.Core" />
+    <!-- the Code block's compiler (agent-first PR 9c): Roslyn at the central pin; Infrastructure is referenced only by the framework-dependent Host and the test projects, never by a NativeAOT binary -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
 
   <ItemGroup>
