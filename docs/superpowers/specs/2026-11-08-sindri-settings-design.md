@@ -608,7 +608,7 @@ keep the old words). Known today, by group:
   (`Labels.ReviewSettings.cs:51`) talk about "the profile changed" and are reworded or dropped with the hash guard;
   `ProfileCard` (`Labels.cs:95`) and `CellProfile` (`Labels.cs:188`, used by `StatusText.cs:41`) say "Profile"; and
   `Labels.Actions.cs:46,47,147` ("Create profile", "Set a profile key", "Validate profile"). The closing grep gets
-  `-e "the profile" -e "your profile"` and the settings-approval phrases (`-e "and approve" -e "approve your settings" -e "approve them" -e "your approval" -e "approves just" -e "Approve settings" -e "once you approve"`) for `src/Sindri/Aw.Sindri.Ui/ViewModels`. A bare "approve" would match about 80 lines that stay on purpose (the decision bar's Approve, "Approve on GitHub", "Approve all workflows").
+  `-e "the profile" -e "your profile"` and the settings-approval phrases (`-e "and approve" -e "approve your settings" -e "approve them" -e "asks for your approval" -e "approves just" -e "Approve settings" -e "once you approve"`) for `src/Sindri/Aw.Sindri.Ui/ViewModels`. A bare "approve" would match about 80 lines that stay on purpose (the decision bar's Approve, "Approve on GitHub", "Approve all workflows").
 - **Text in code.** Strings that still say "re-approval" or "approved" (for example `SandboxCopy.cs:45`, the
   `SND-LAUNCH-019` row) are reworded in the Core commit of the rename.
 - **Not in scope.** `recipes/dev/profile.yaml` is a workflow recipe (retired by #2356), not settings.
@@ -720,7 +720,7 @@ keep the old words). Known today, by group:
     -e sindri-profile -e SND-PROFILE -- \
     src tests docs scripts config providers skills bootstrap evals setup.sh .env.example \
     ONBOARDING.md AGENTS.md .agents ':!docs/superpowers' ':!evals/planDevexReview' ':!tests/fixtures/backtest'
-  git grep -i -e "the profile" -e "your profile" -e "and approve" -e "approve your settings" -e "approve them" -e "your approval" -e "approves just" -e "Approve settings" -e "once you approve" \
+  git grep -i -e "the profile" -e "your profile" -e "and approve" -e "approve your settings" -e "approve them" -e "asks for your approval" -e "approves just" -e "Approve settings" -e "once you approve" \
     -- src/Sindri/Aw.Sindri.Ui/ViewModels
   ```
 
