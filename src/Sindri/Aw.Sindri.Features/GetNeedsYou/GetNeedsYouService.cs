@@ -1,6 +1,6 @@
-using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
@@ -20,7 +20,8 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="status">How fresh the views are.</param>
 /// <param name="callers">The caller; a read needs one.</param>
 /// <param name="live">The rows read at request time, not from the view (the setup rows).</param>
-internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, NeedsYouLiveRows live) : IService<GetNeedsYouRequest, GetNeedsYouResponse>
+/// <param name="json">The host's JSON options: the tag hashes each row as the client receives it.</param>
+internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, NeedsYouLiveRows live, JsonSerializerOptions json) : IService<GetNeedsYouRequest, GetNeedsYouResponse>
 {
     public async ValueTask<Result<GetNeedsYouResponse>> Handle(GetNeedsYouRequest request, CancellationToken cancellationToken)
     {
@@ -54,7 +55,7 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
             return empty.Error;
         }
 
-        var tag = TagOf(rows, empty.Value, current);
+        var tag = TagOf(rows, empty.Value, current, json);
         return string.Equals(request.IfNoneMatch, tag, StringComparison.Ordinal)
             ? new GetNeedsYouResponse([], Empty: null, current.AsOf, Tag: tag, NotModified: true)
             : new GetNeedsYouResponse(rows, empty.Value, current.AsOf, tag);
@@ -137,33 +138,25 @@ internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus sta
         return (running, queued);
     }
 
-    /// <summary>A hash of what the answer shows: each row's content and its decision's option ids, the empty sentence, the projector's state word and whether the views are behind; never the as-of time or the cursor.</summary>
-    private static string TagOf(IReadOnlyList<NeedsYouRow> rows, string? empty, ViewsStatus current)
+    /// <summary>
+    /// A hash of what the answer shows: each row's JSON as the client receives it (every field, so a field added later is covered
+    /// without touching this), then the empty sentence, the projector's state word and whether the views are behind. A timeout's
+    /// inSeconds counts down every second, so it hashes as 0: a countdown alone never changes the tag. Never the as-of time.
+    /// </summary>
+    internal static string TagOf(IReadOnlyList<NeedsYouRow> rows, string? empty, ViewsStatus current, JsonSerializerOptions json)
     {
-        var text = new StringBuilder();
+        var info = json.GetTypeInfo(typeof(NeedsYouRow));
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         foreach (var row in rows)
         {
-            AppendRow(text, row);
+            var hashed = row.Timeout is { } timeout ? row with { Timeout = timeout with { InSeconds = 0 } } : row;
+            hash.AppendData(JsonSerializer.SerializeToUtf8Bytes(hashed, info));
+            hash.AppendData(";"u8);
         }
 
         var state = current.Stalled ? "stalled" : current.Rebuilding ? "rebuilding" : "ok";
         var behind = current.Cursor < current.LedgerHead;
-        _ = text.Append('|').Append(empty).Append('|').Append(state).Append('|').Append(behind ? "behind" : "current");
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString()));
-        return Convert.ToHexStringLower(hash.AsSpan(0, 16));
-    }
-
-    private static void AppendRow(StringBuilder text, NeedsYouRow row)
-    {
-        _ = text.Append(row.Id.Value).Append('~').Append(row.Kind).Append('~').Append(row.Label).Append('~').Append(row.Title).Append('~').Append(row.Reason)
-            .Append('~').Append(row.Urgency).Append('~').Append(row.Since.UtcTicks.ToString(CultureInfo.InvariantCulture)).Append('~').Append(row.RecordedOnly)
-            .Append('~').Append(row.PrimaryAction?.Value).AppendJoin(',', row.Actions.Select(static a => a.Value)).Append('~').Append(row.Cli)
-            .Append('~').Append(row.Stop).Append('~').Append(row.Timeout?.Kind).Append(row.Timeout?.On).Append('~').Append(row.Sandbox);
-        if (row.Decision is { } decision)
-        {
-            _ = text.Append("~d:").Append(decision.Id.Value).Append(':').Append(decision.Question).Append(':').AppendJoin(',', decision.Options.Select(static o => o.Id));
-        }
-
-        _ = text.Append(';');
+        hash.AppendData(Encoding.UTF8.GetBytes($"|{empty}|{state}|{(behind ? "behind" : "current")}"));
+        return Convert.ToHexStringLower(hash.GetHashAndReset().AsSpan(0, 16));
     }
 }
