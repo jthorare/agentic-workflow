@@ -18,6 +18,7 @@ public sealed class SandboxProfileInsideTests
     {
         Assert.SkipUnless(OperatingSystem.IsLinux(), "the bubblewrap sandbox is Linux-only");
         Assert.SkipUnless(BubblewrapBox.Unavailable is null, BubblewrapBox.Unavailable ?? string.Empty);
+        Assert.SkipUnless(SandboxBox.GitAvailable, "git is not installed");
         return SandboxBox.Create(BubblewrapBox.FixtureParent, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
     }
 
