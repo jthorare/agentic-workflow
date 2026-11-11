@@ -13,6 +13,7 @@ using Aw.Sindri.Tests.Server;
 using Aw.Sindri.Tests.Workflows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
 
 namespace Aw.Sindri.Tests.Callers;
@@ -33,7 +34,13 @@ public sealed class ServeCallerTests : IDisposable
     public async Task Serve_mints_the_token_only_after_taking_the_lease()
     {
         var ct = TestContext.Current.CancellationToken;
-        var serve = ServeCommand.Run(Environment, TimeProvider.System, TextWriter.Null, NoTemporal.Use);
+        using var said = new StringWriter(System.Globalization.CultureInfo.InvariantCulture);   // why: #2881 answered 500 on CI with nothing to say why; serve's own lines go in the failure message
+        using var logs = new ListLoggerFactory();
+        var serve = ServeCommand.Run(Environment, TimeProvider.System, said, services =>
+        {
+            NoTemporal.Use(services);
+            _ = services.Replace(ServiceDescriptor.Singleton<ILoggerFactory>(logs));   // why: a 500's cause is only in serve's log
+        });
         var url = await Endpoint(ct);
         var token = (await new FileHumanToken(Settings).Read(ct)).Value;
         Assert.NotNull(token);
@@ -47,7 +54,8 @@ public sealed class ServeCallerTests : IDisposable
 
         Assert.Equal(1, second);
         Assert.Equal(token, afterRefusal);
-        Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (status.Status, stop.Status));
+        Assert.True(status.Status == HttpStatusCode.OK && stop.Status == HttpStatusCode.OK,
+            $"status {status.Status}: {status.Body}\nstop {stop.Status}: {stop.Body}\nserve said: {said}\nserve logged:\n{string.Join('\n', logs.Logger.Lines)}\n{string.Join('\n', logs.Logger.Exceptions)}");
         Assert.Equal(0, code);
         Assert.Null((await new FileHumanToken(Settings).Read(ct)).Value);   // removed with control.json
     }
