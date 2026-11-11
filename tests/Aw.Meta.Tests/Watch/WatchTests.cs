@@ -19,7 +19,7 @@ public sealed class WatchTests
 
     private WatchService Service(IBoardStore? board = null) => new(
         _world.Config,
-        new WatchPoller(_world.Repo, _world.Resources, _world.InboxCounts, _world.Values, new WatchSweeper(_world.Config, _world.Sweeper, _world.Values), Worlds.Reservation(_world), _world.Context),
+        new WatchPoller(_world.Repo, _world.Resources, _world.InboxCounts, _world.Values, Worlds.FollowUps(_world), Worlds.Reservation(_world), _world.Context),
         _world.Values,
         _world.Delay,
         _world.Clock,

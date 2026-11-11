@@ -18,13 +18,13 @@ internal sealed class ListToolkitsService(IToolkitStore store, IRunningToolkits 
             return all.Error;
         }
 
-        var live = running.Toolkits().Where(static t => t.State == ToolkitState.Running).ToDictionary(static t => t.Name, StringComparer.Ordinal);
+        var live = running.Toolkits().Where(static t => t.State is ToolkitState.Running or ToolkitState.Paused).ToDictionary(static t => t.Name, StringComparer.Ordinal);
         return new ListToolkitsResponse([.. all.Value.Select(t => Reconcile(t, live))]);
     }
 
-    // The store can say 'running' for a process that is gone (a crash, a restart) or 'failed' for one that answers again; the live set is the truth for both.
+    // The store can say 'running' or 'paused' for a process that is gone (a crash, a restart) or 'failed' for one that answers again; the live set is the truth for both.
     private static Toolkit Reconcile(Toolkit row, Dictionary<string, Toolkit> live) =>
         live.TryGetValue(row.Name, out var now)
             ? row with { State = now.State }
-            : row.State == ToolkitState.Running ? row with { State = ToolkitState.Built } : row;
+            : row.State is ToolkitState.Running or ToolkitState.Paused ? row with { State = ToolkitState.Built } : row;
 }

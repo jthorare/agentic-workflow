@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Meta.Core.Merge;
 using Aw.Meta.Features.Status;
 
 namespace Aw.Meta.Host.Commands;
@@ -12,6 +13,9 @@ internal static class StatusCommand
         NeedsConfig: true,
         static context => CommandOutput.Call<StatusRequest, StatusResponse>(context, new StatusRequest(), Text, static r => r.Obligations.Count > 0));
 
+    private static string QueueLine(QueuedPr pr) =>
+        string.Create(CultureInfo.InvariantCulture, $"  #{pr.Pr} ready (from {pr.From}); gate {pr.Gate}") + (pr.Github is { } github ? $"; github {github}" : string.Empty);
+
     private static string Text(StatusResponse status) =>
         string.Join(
             Environment.NewLine,
@@ -19,7 +23,7 @@ internal static class StatusCommand
                 status.Obligations.Count == 0 ? "owed: nothing" : "owed:",
                 .. status.Obligations.Select(static o => $"  [{o.Kind}] {o.Summary}{Environment.NewLine}    next: {o.NextCommand}"),
                 status.MergeQueue.Count == 0 ? "merge queue: empty" : "merge queue:",
-                .. status.MergeQueue.Select(static p => string.Create(CultureInfo.InvariantCulture, $"  #{p.Pr} ready (from {p.From}); gate {p.Gate}")),
+                .. status.MergeQueue.Select(QueueLine),
                 status.OwnerQueue.Count == 0 ? "owner queue: empty" : "owner queue:",
                 .. status.OwnerQueue.Select(static q => string.Create(CultureInfo.InvariantCulture, $"  q{q.Number} ({q.AskedBy}): {q.Text}")),
                 .. Optional(status.Defects),

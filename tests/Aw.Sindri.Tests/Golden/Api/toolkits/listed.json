@@ -1,0 +1,34 @@
+{
+  "toolkits": [
+    {
+      "name": "notes",
+      "dir": "/toolkits/notes",
+      "state": "Built",
+      "sourceHash": "hash-1",
+      "builtAt": "2026-01-01T00:00:00.0000000Z",
+      "manifest": {
+        "name": "notes",
+        "version": "1.0.0",
+        "resources": [],
+        "tools": [
+          {
+            "name": "add_note",
+            "description": "Adds a note.",
+            "inputSchema": "{\"type\":\"object\"}",
+            "outputSchema": "{\"type\":\"object\"}"
+          }
+        ]
+      },
+      "createdBy": "owner"
+    },
+    {
+      "name": "scratch",
+      "dir": "/toolkits/scratch",
+      "state": "Off",
+      "sourceHash": null,
+      "builtAt": null,
+      "manifest": null,
+      "createdBy": "owner"
+    }
+  ]
+}

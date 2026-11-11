@@ -22504,6 +22504,7 @@ override Aw.Sindri.Core.Toolkits.ToolkitResource.ToString() -> string!
 override Aw.Sindri.Core.Toolkits.ToolkitTool.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Toolkits.ToolkitTool.GetHashCode() -> int
 override Aw.Sindri.Core.Toolkits.ToolkitTool.ToString() -> string!
+static Aw.Sindri.Core.Toolkits.ToolNames.GeneratorName(string? name) -> string?
 static Aw.Sindri.Core.Toolkits.ToolNames.For(string! toolkit, string! tool) -> Aw.Kernel.Result<string!>!
 static Aw.Sindri.Core.Toolkits.ToolNames.TryParse(string? name, out string! toolkit, out string! tool) -> bool
 static Aw.Sindri.Core.Toolkits.Toolkit.operator !=(Aw.Sindri.Core.Toolkits.Toolkit? left, Aw.Sindri.Core.Toolkits.Toolkit? right) -> bool
@@ -22750,6 +22751,28 @@ Aw.Sindri.Core.Resources.ResourceDoctorRule
 const Aw.Sindri.Core.Resources.ResourceDoctorRule.NearLimit = 0.9 -> double
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.Check(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>! entries, System.Collections.Generic.IReadOnlyDictionary<string!, long>! diskLimits) -> Aw.Sindri.Core.Doctor.DoctorCheck!
 static Aw.Sindri.Core.Resources.ResourceDoctorRule.LimitKey(Aw.Sindri.Core.Resources.ResourceOwner! owner, string! name) -> string!
+Aw.Sindri.Core.Toolkits.IToolkitFolders
+Aw.Sindri.Core.Toolkits.IToolkitFolders.Folders() -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Toolkits.ToolkitFolder!>!
+Aw.Sindri.Core.Toolkits.IToolkitFolders.Generate(string! name, string! tool, string? needs, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Toolkits.ToolkitFolder!>!>
+Aw.Sindri.Core.Toolkits.IToolkitRuntime.Pause(string! name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Toolkits.IToolkitRuntime.Resume(string! name, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Toolkits.ToolkitFolder
+Aw.Sindri.Core.Toolkits.ToolkitFolder.<Clone>$() -> Aw.Sindri.Core.Toolkits.ToolkitFolder!
+Aw.Sindri.Core.Toolkits.ToolkitFolder.Deconstruct(out string! Name, out string! Dir) -> void
+Aw.Sindri.Core.Toolkits.ToolkitFolder.Dir.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitFolder.Dir.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitFolder.Equals(Aw.Sindri.Core.Toolkits.ToolkitFolder? other) -> bool
+Aw.Sindri.Core.Toolkits.ToolkitFolder.Name.get -> string!
+Aw.Sindri.Core.Toolkits.ToolkitFolder.Name.init -> void
+Aw.Sindri.Core.Toolkits.ToolkitFolder.ToolkitFolder(string! Name, string! Dir) -> void
+override Aw.Sindri.Core.Toolkits.ToolkitFolder.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Toolkits.ToolkitFolder.GetHashCode() -> int
+override Aw.Sindri.Core.Toolkits.ToolkitFolder.ToString() -> string!
+static Aw.Sindri.Core.Toolkits.ToolkitFolder.operator !=(Aw.Sindri.Core.Toolkits.ToolkitFolder? left, Aw.Sindri.Core.Toolkits.ToolkitFolder? right) -> bool
+static Aw.Sindri.Core.Toolkits.ToolkitFolder.operator ==(Aw.Sindri.Core.Toolkits.ToolkitFolder? left, Aw.Sindri.Core.Toolkits.ToolkitFolder? right) -> bool
+static Aw.Sindri.Core.Toolkits.ToolNames.IsToolkitName(string? name) -> bool
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitCreateFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ToolkitExists -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.CodeCompileFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.CodeTimeout -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.CodeMemory -> Aw.Kernel.ErrorDefinition!
