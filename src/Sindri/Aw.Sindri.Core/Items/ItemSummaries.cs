@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Core.Items;
@@ -11,7 +12,7 @@ public static class ItemSummaries
     public static ItemSummary From(ItemRow row)
     {
         ArgumentNullException.ThrowIfNull(row);
-        return new ItemSummary(row.Id, row.Title, row.Repo, row.State, row.Step, row.Since, ItemActions.Primary(row.State), ItemActions.For(row.State), row.Owner);
+        return new ItemSummary(row.Id, row.Title, row.Repo, row.State, row.Step, row.Since, ItemActions.Primary(row.State), ItemActions.For(row.State), row.Owner, Parked: row.State == ItemState.Parked);
     }
 
     /// <summary>The rows that pass <paramref name="keep"/>, as summaries, the oldest 'since' first (ties by id).</summary>
