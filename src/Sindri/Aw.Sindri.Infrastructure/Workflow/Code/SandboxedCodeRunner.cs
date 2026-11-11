@@ -24,7 +24,7 @@ internal sealed class SandboxedCodeRunner(CompiledCodeCache cache, IApprovedProf
     public async ValueTask<Result<string>> Run(CodeRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
-        var code = cache.Resolve(run.Code);
+        var code = cache.Resolve(run.Code, cancellationToken);
         if (code.AssemblyPath is not { } assembly)
         {
             return SindriErrors.CodeCompileFailed.With(string.Join("; ", code.Diagnostics.Select(static d => string.Create(CultureInfo.InvariantCulture, $"line {d.Line}, column {d.Column}: {d.Id} {d.Message}"))));
