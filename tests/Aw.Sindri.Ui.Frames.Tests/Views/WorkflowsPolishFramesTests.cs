@@ -8,6 +8,7 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Shell;
+using Aw.Sindri.Ui.ViewModels.Workflows;
 using static Aw.Sindri.Ui.Tests.Workflows.WorkflowsFixture;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;
@@ -77,6 +78,32 @@ public sealed class WorkflowsPolishFramesTests : FrameHost
         Assert.Equal(("check", "false → done"), (end.Node, end.Text));
         Settle(window);
         Frame(window, "graph-false-end-1280", "workflows-");
+    });
+
+    [Fact]
+    public Task A_missing_branchs_done_words_clear_every_step_card_when_the_next_step_is_one_column_over() => OnUi(async () =>
+    {
+        var workflow = Golden("workflows-slug", "found");
+        var spec = workflow["spec"]!;
+        spec["nodes"]!.AsArray().Insert(1, JsonNode.Parse("""{"id":"check","type":"condition","title":"Flagged?","config":{"if":"true"}}"""));
+        spec["edges"] = JsonNode.Parse("""[{"from":"start","to":"check"},{"from":"check","to":"agent","output":"true"}]""");
+        workflow["positions"] = JsonNode.Parse("""[{"node":"start","x":0,"y":0},{"node":"check","x":280,"y":0},{"node":"agent","x":560,"y":0}]""");   // the layout's 80 px column gap
+        var (window, shell) = await OnList();
+        Server.WorkflowAnswers[Slug] = new RouteAnswer(System.Net.HttpStatusCode.OK, workflow.ToJsonString());
+
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Runs.Graph is not null, "the graph never showed");
+
+        var graph = shell.Workflows.Runs.Graph!;
+        var end = Assert.Single(graph.Ends);
+        foreach (var node in graph.Nodes)
+        {
+            var card = new GraphBox(node.X, node.Y, WorkflowGraphViewModel.CardWidth, WorkflowGraphViewModel.CardHeight);
+            Assert.False(end.Label.Overlaps(card), string.Create(CultureInfo.InvariantCulture, $"'{end.Text}' at ({end.Label.X}, {end.Label.Y}, {end.Label.Width}x{end.Label.Height}) is drawn under the '{node.Title}' card at ({card.X}, {card.Y})"));
+        }
+
+        Settle(window);
+        Frame(window, "graph-false-end-next-column-1280", "workflows-");
     });
 
     [Fact]

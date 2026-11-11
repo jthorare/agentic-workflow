@@ -17,6 +17,15 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
 
     private const double BranchGap = 14;   // a missing branch's end sits this far above (true) or below (false) the card's middle
 
+    /// <summary>The length of a missing branch's dotted stub.</summary>
+    internal const double EndStub = 22;
+
+    /// <summary>The width of the box a missing branch's words are drawn in.</summary>
+    internal const double EndLabelWidth = 84;
+
+    /// <summary>The height of the box a missing branch's words are drawn in.</summary>
+    internal const double EndLabelHeight = 16;
+
     /// <summary>Builds the graph.</summary>
     /// <param name="workflow">The workflow as served.</param>
     /// <param name="statuses">The latest run's status word (as served) per node id, or null when no run is shown.</param>
@@ -246,7 +255,9 @@ internal sealed class WorkflowGraphViewModel : ObservableObject
             {
                 if (!edges.Any(e => string.Equals(e.From, node.Id, StringComparison.Ordinal) && string.Equals(e.Label, branch, StringComparison.Ordinal)))
                 {
-                    ends.Add(new GraphEnd(node.Id, branch + " \u2192 done", new GraphPoint(node.X + CardWidth, node.Y + (CardHeight / 2) + lift)));
+                    var at = new GraphPoint(node.X + CardWidth, node.Y + (CardHeight / 2) + lift);
+                    var to = new GraphPoint(at.X + EndStub, at.Y);
+                    ends.Add(new GraphEnd(node.Id, branch + " \u2192 done", at, to, new GraphBox(to.X + 6, to.Y - (EndLabelHeight / 2), EndLabelWidth, EndLabelHeight)));
                 }
             }
         }
