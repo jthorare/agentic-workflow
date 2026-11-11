@@ -15,6 +15,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
     internal const int PanelCap = 5;
 
     private QueueView? _view;
+    private QueueView? _answered;   // the last answer read: a read that answers the same instance (a 304) changes nothing
     private QueueScope _scope;   // the rows' page: the one the shell shows (PageShown), else where the selection was last made (Select, J / K)
     private string? _reveal;   // a just-created item to select as soon as a refresh draws it (Reveal)
     private bool _onPage = true;   // false while the shell shows a page without rows
@@ -124,6 +125,13 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
 
         (IsStale, ProblemCode, ProblemDetail) = (answer.Value.AsOf.Stalled, string.Empty, string.Empty);   // stalled views: the rows are the last the projector made
         Rest();
+        if (ReferenceEquals(answer.Value, _answered))
+        {
+            IsLoading = false;   // the same view as the last read: the rows stand as they are, and nothing more is read
+            return;
+        }
+
+        _answered = answer.Value;
         Apply(Hold(answer.Value));
         IsLoading = false;   // after the rows are there: a waiter on the end of loading finds them
         await LearnClosed(url, cancellationToken).ConfigureAwait(true);

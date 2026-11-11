@@ -8,9 +8,6 @@ namespace Aw.Sindri.Ui.Api;
 internal sealed partial class SindriApiClient
 {
     /// <inheritdoc />
-    public Task<Result<QueueView>> Queue(Uri api, CancellationToken cancellationToken) => Get<QueueView>(api, "/sindri/queue", cancellationToken, view: true);
-
-    /// <inheritdoc />
     public Task<Result<ItemListView>> ListItems(Uri api, string state, CancellationToken cancellationToken) =>
         Get<ItemListView>(api, "/sindri/items?state=" + Uri.EscapeDataString(state), cancellationToken, view: true);
 

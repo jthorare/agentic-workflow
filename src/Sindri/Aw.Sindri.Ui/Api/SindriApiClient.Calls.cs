@@ -25,19 +25,24 @@ internal sealed partial class SindriApiClient
     private (int Pid, long Epoch)? _lease;
 
     // How a call differs from a plain one: a view query waits on the pending sequence; a command carries a JSON body.
-    private readonly record struct CallOptions(bool View = false, byte[]? Content = null);
+    // A conditional read also carries the tag it holds (If-None-Match, quoted as the server's ETag) and the view that tag stands for, which a 304 returns.
+    private readonly record struct CallOptions(bool View = false, byte[]? Content = null, string? IfNoneMatch = null, object? Kept = null);
 
     private Task<Result<T>> Get<T>(Uri api, string path, CancellationToken cancellationToken, bool view = false) =>
         Call<T>(api, HttpMethod.Get, path, cancellationToken, new CallOptions(view));
 
     private async Task<Result<T>> Call<T>(Uri api, HttpMethod method, string path, CancellationToken cancellationToken, CallOptions options = default)
     {
-        var (view, content) = options;
         using var timeout = new CancellationTokenSource(CallTimeout, clock);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
         try
         {
-            var (code, body) = await Exchange(method, new Uri(api, path), view, content, deadline.Token).ConfigureAwait(false);
+            var (code, body) = await Exchange(method, new Uri(api, path), options, deadline.Token).ConfigureAwait(false);
+            if (code == HttpStatusCode.NotModified && options.Kept is T same)
+            {
+                return same;   // the tag still stands: the view the caller holds is the answer
+            }
+
             if (Refusal(code, body) is { } refused)
             {
                 return refused;
@@ -126,13 +131,13 @@ internal sealed partial class SindriApiClient
     // A view query carries the pending sequence on both tries, and has used it once it got any answer, SND-API-011
     // included: read-your-writes is best effort (API §2.4), so the next read goes without it and shows what Sindri says
     // (a stalled projection would otherwise answer "behind" for ever).
-    private async Task<(HttpStatusCode Code, byte[] Body)> Exchange(HttpMethod method, Uri url, bool view, byte[]? content, CancellationToken cancellationToken)
+    private async Task<(HttpStatusCode Code, byte[] Body)> Exchange(HttpMethod method, Uri url, CallOptions options, CancellationToken cancellationToken)
     {
-        var after = view ? Volatile.Read(ref _after) : 0;
-        var answer = await Send(method, url, after, content, cancellationToken).ConfigureAwait(false);
+        var after = options.View ? Volatile.Read(ref _after) : 0;
+        var answer = await Send(method, url, after, options, cancellationToken).ConfigureAwait(false);
         if (StaleToken(answer.Code, answer.Body))
         {
-            answer = await Send(method, url, after, content, cancellationToken).ConfigureAwait(false);
+            answer = await Send(method, url, after, options, cancellationToken).ConfigureAwait(false);
         }
 
         if (after > 0)
@@ -144,10 +149,15 @@ internal sealed partial class SindriApiClient
     }
 
     // One call: the request with the token as it is now, and the answer's status and body.
-    private async Task<(HttpStatusCode Code, byte[] Body)> Send(HttpMethod method, Uri url, long after, byte[]? content, CancellationToken cancellationToken)
+    private async Task<(HttpStatusCode Code, byte[] Body)> Send(HttpMethod method, Uri url, long after, CallOptions options, CancellationToken cancellationToken)
     {
         using var request = await Request(method, url, after, cancellationToken).ConfigureAwait(false);
-        if (content is not null)
+        if (options.IfNoneMatch is not null)
+        {
+            _ = request.Headers.TryAddWithoutValidation("If-None-Match", options.IfNoneMatch);
+        }
+
+        if (options.Content is { } content)
         {
             // A command's JSON body (CreateItem, CloseItem); a retry after a stale token sends it again, unchanged.
             request.Content = new ByteArrayContent(content) { Headers = { ContentType = new("application/json") } };
