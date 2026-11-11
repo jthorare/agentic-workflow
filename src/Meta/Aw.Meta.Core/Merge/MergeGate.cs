@@ -88,13 +88,10 @@ public static class MergeGate
 
     private static MergeCheck Draft(MergeFacts facts) => new("draft", !facts.IsDraft, facts.IsDraft ? "the pull request is a draft" : "ready for review");
 
-    private static MergeCheck[] NoGateChecks(MergeFacts facts, MergeCheck[]? review)
-    {
-        var hint = NoGate + "; run aw-meta gate-run " + facts.Pr.ToString(CultureInfo.InvariantCulture);
-        return review is null ? [new MergeCheck("gate", Ok: false, hint)]
-            : review.All(check => check.Ok) ? review
-            : [.. review, new MergeCheck("gate", Ok: false, hint + ", or complete the review checks above")];
-    }
+    // With a reviewer lane no gate is required (merge direct, #2894): the review checks alone decide, and a failing one says
+    // what is missing, so no "gate" check is added that would send meta to gate-run.
+    private static MergeCheck[] NoGateChecks(MergeFacts facts, MergeCheck[]? review) =>
+        review ?? [new MergeCheck("gate", Ok: false, NoGate + "; run aw-meta gate-run " + facts.Pr.ToString(CultureInfo.InvariantCulture))];
 
     private static MergeCheck[] GateChecks(MergeFacts facts, GateRecord gate)
     {
