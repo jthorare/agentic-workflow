@@ -23,10 +23,20 @@ internal sealed partial class ShellWindow
     // focused again as a keyboard focus (Directional).
     private bool _navKey;
 
+    private bool _keyboardSeen;   // a key was pressed since the last pointer press: only then does focus the window moves draw a ring
+
+    // Focus the window places itself (the page region on open, a tab left selected by a command) draws a ring only once the keyboard has been used.
+    private NavigationMethod RestMethod() => _keyboardSeen ? NavigationMethod.Tab : NavigationMethod.Pointer;
+
     private void WatchNavigationKeys()
     {
+        AddHandler(KeyDownEvent, (_, _) => _keyboardSeen = true, RoutingStrategies.Tunnel);
         AddHandler(KeyDownEvent, OnNavigationKeyDown, RoutingStrategies.Tunnel);
-        AddHandler(PointerPressedEvent, (_, _) => _navArrowing = _navKey = false, RoutingStrategies.Tunnel);
+        AddHandler(PointerPressedEvent, (_, _) =>
+        {
+            _navArrowing = _navKey = false;
+            _keyboardSeen = false;
+        }, RoutingStrategies.Tunnel);
         TopBar.Get<ListBox>("Navigation").AddHandler(GotFocusEvent, OnNavigationGotFocus, RoutingStrategies.Bubble);
     }
 
@@ -169,7 +179,7 @@ internal sealed partial class ShellWindow
 
         _sheetOpener = null;
 
-        _ = FocusTarget(page).Focus(Method());
+        _ = FocusTarget(page).Focus(RestMethod());
     }
 
     // Arriving on Settings lands on its title, not on a control of the setup checklist or the bare region.
@@ -261,12 +271,13 @@ internal sealed partial class ShellWindow
     private void FocusSelectedTab()
     {
         var nav = TopBar.Get<ListBox>("Navigation");
-        if (FocusManager?.GetFocusedElement() is Visual focused && nav.IsVisualAncestorOf(focused))
+        var selected = nav.ContainerFromIndex(nav.SelectedIndex);
+        if (FocusManager?.GetFocusedElement() is Visual focused && nav.IsVisualAncestorOf(focused) && (ReferenceEquals(focused, selected) || selected is null))
         {
-            return;
+            return;   // already on the selected tab; focus left on another tab would show a second tab as active
         }
 
-        _ = Usable(nav.ContainerFromIndex(nav.SelectedIndex))?.Focus(Method());
+        _ = Usable(selected)?.Focus(RestMethod());
     }
 
     // The page region takes focus (named, so the page is spoken); the Context page then sends it on to its anchor box. One path for a page change and the window opening.
