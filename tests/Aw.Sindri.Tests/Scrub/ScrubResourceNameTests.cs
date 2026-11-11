@@ -49,8 +49,8 @@ public sealed class ScrubResourceNameTests
     private static async Task<TempGitRepo> Stage(string line)
     {
         var repo = await TempGitRepo.Create();
-        var file = System.IO.Path.Combine(repo.Path, RelPath);
-        _ = Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file)!);
+        var file = Path.Combine(repo.Path, RelPath);
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(file)!);
         var text = line.Contains('=', StringComparison.Ordinal)
             ? $"configMapGenerator:\n  - name: demo\n    literals:\n{line}\n"
             : $"configMapGenerator:\n  - name: demo\n{line}\n";
