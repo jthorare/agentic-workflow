@@ -134,4 +134,15 @@ public sealed class ProcessSandboxPlannerTests
         var readOnly = mounts.FindIndex(m => m.Kind == PlanMountKind.ReadOnly && m.Path == "/x/res/ro");
         Assert.True(writable >= 0 && readOnly > writable);   // the later, deeper mount keeps the path read-only; the other order made it writable again
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_read_only_path_equal_to_a_resource_is_mounted_after_it_and_stays_read_only()
+    {
+        var request = Request() with { ResourceMounts = [new ResourceMount("state", "/x/res")], ReadOnlyPaths = ["/x/res"] };
+        var mounts = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, request).Value.Mounts.ToList();
+
+        var writable = mounts.FindIndex(m => m.Kind == PlanMountKind.State && m.Path == "/x/res");
+        var readOnly = mounts.FindIndex(m => m.Kind == PlanMountKind.ReadOnly && m.Path == "/x/res");
+        Assert.True(writable >= 0 && readOnly > writable);   // read-only wins on an equal path, as before #2706; #2815 decides whether it should
+    }
 }
