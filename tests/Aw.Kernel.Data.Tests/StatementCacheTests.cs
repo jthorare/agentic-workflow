@@ -17,7 +17,7 @@ public sealed class StatementCacheTests
 
         for (var i = 0; i < 50; i++)
         {
-            Assert.True((await items.Add(new Item(new ItemId($"i{i:D2}"), $"name {i}", i), Ct)).IsSuccess);
+            Assert.True((await items.Add(new Item(new ItemId(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"i{i:D2}")), string.Create(System.Globalization.CultureInfo.InvariantCulture, $"name {i}"), i), Ct)).IsSuccess);
         }
 
         var read = await SqliteQueries.List(cache, new SqlStatement("SELECT id, name, size FROM items ORDER BY id"), ItemMapper.Instance, Ct);
