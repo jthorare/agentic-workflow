@@ -527,7 +527,7 @@ The rev-8 contract unit gives the shell its screens' skeleton; the pages fill in
 U3'.
 
 - **Navigation.** The top bar has six tabs, in order: Home, Projects, Work, Context, Agents, System. Settings is
-  not a tab (⌘, opens it). `PageId` names the ten pages (Jobs is reached by G J, the palette and System's link; Workflows (PR 17: list, a workflow's runs, a run's detail) is a tab, third after Home and Projects (key W, short label "Flows"), and G W and the palette open it too; Projects shows only its heading until its content lands); a page with no screen yet shows a placeholder that says what it
+  not a tab (⌘, opens it). `PageId` names the ten pages (Jobs is reached by G J, the palette and System's link; Workflows (PR 17: list, a workflow's runs, a run's detail) is a tab, third after Home and Projects (key W), and G W and the palette open it too; Projects shows only its heading until its content lands); a page with no screen yet shows a placeholder that says what it
   waits for. The last page is remembered in the preferences.
 - **Chords.** `G`, then a page's key within `ShellViewModel.ChordWait` (1 s): `H` or `N` Home, `D` Home filtered to
   decisions (`HomeFilter.Decisions`), `P` Projects (link `sindri://projects`), `Q` Work, `C` Context, `A` Agents, `.` or `S` System.
@@ -882,6 +882,6 @@ Two list pages whose rows and actions are what the `connection_*` and `memory_*`
 
 **Routes.** `GET|POST /sindri/connections`, `GET|DELETE /sindri/connections/{name}`, `POST /sindri/connections/{name}/test|signin`; `GET|POST /sindri/memories`, `GET /sindri/memories/{name}/search`, `POST|DELETE /sindri/memories/{name}/facts`. Their served goldens are in `tests/Aw.Sindri.Tests/Golden/Api/connections*` and `memories*`. `AddConnectionBody` writes every required field, null ones too (`ConnectionsClientTests.AddConnection_writes_every_required_field_even_when_null`); without them the server answers `SND-CLI-003`.
 
-**Not yet.** The `Connection` Needs-you row's "Sign in again" (no such row kind on main yet), Slack in the preset list, fixture seeding and desktop evidence screens for these pages.
+**Not yet.** The `Connection` Needs-you row's "Sign in again" (no such row kind on main yet), Slack in the preset list and desktop evidence screens for these pages. Fixture seeding: `scripts/sindri-ui-fixture.sh connections empty|typical|error|down` writes the connection rows the page reads.
 
 **Tests.** Unit: `tests/Aw.Sindri.Ui.Tests/Connections/` (page, add form, sheet, shell wiring), `Memory/` (page, view), `Api/ConnectionsClientTests`, `Api/MemoryClientTests`. Integration: `Views/ConnectionsFramesTests`, `Views/MemoryFramesTests` (Frames.Tests), `ConnectionsApiGoldenTests`, `MemoriesApiGoldenTests` (Sindri.Tests).

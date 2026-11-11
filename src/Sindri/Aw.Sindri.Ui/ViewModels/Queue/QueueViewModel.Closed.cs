@@ -16,8 +16,19 @@ internal sealed partial class QueueViewModel
     /// <summary>The fold's arrow: down while it is open, right while it is closed (one glyph, so the tree never holds both).</summary>
     public string ClosedArrow => IsClosedOpen ? "▾" : "▸";
 
-    /// <summary>"Closed" before the first read, then "Closed (3)".</summary>
+    /// <summary>"Closed" before the first read, then "Closed 3" (the name; the view draws the label and the count apart).</summary>
     public string ClosedHeader { get; private set => Set(ref field, value); } = Labels.ClosedHeader(count: null);
+
+    // The queue's item ids when the closed items were last read: a refresh that finds other ids reads them again (an item closed while another was added keeps the size, not the ids).
+    private string _closedKey = string.Empty;
+
+    /// <summary>The fold's label.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string ClosedLabel => "Closed";
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>The closed count, muted beside the label; empty before the first read.</summary>
+    public string ClosedCount { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The closed items, newest first; they carry no actions.</summary>
     public ObservableCollection<ItemRowViewModel> ClosedRows { get; } = [];
@@ -29,11 +40,18 @@ internal sealed partial class QueueViewModel
     internal async Task ToggleClosed(Uri url, CancellationToken cancellationToken)
     {
         IsClosedOpen = !IsClosedOpen;
+        Columns();
         if (!IsClosedOpen || _closedRead)
         {
             return;
         }
 
+        await ReadClosed(url, cancellationToken).ConfigureAwait(true);
+    }
+
+    // Reads done and cancelled; both failing leaves the fold as it was, so the next try reads again.
+    private async Task ReadClosed(Uri url, CancellationToken cancellationToken)
+    {
         var done = await api.ListItems(url, "done", cancellationToken).ConfigureAwait(true);
         var cancelled = await api.ListItems(url, "cancelled", cancellationToken).ConfigureAwait(true);
         if (done.IsError && cancelled.IsError)
@@ -42,9 +60,19 @@ internal sealed partial class QueueViewModel
         }
 
         _closedRead = true;
+        _closedKey = QueueKey();
         var now = clock.GetUtcNow();
         var items = (done.IsSuccess ? done.Value.Items : []).Concat(cancelled.IsSuccess ? cancelled.Value.Items : []).OrderByDescending(i => i.Since);
         Patch.To(ClosedRows, [.. items.Select(i => new ItemRowViewModel(i, "closed", primaryAction: null, now))]);
         ClosedHeader = Labels.ClosedHeader(ClosedRows.Count);
+        ClosedCount = ClosedRows.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        ShowsClosed = ClosedRows.Count > 0;
+        Columns();
     }
+
+    // After a refresh: learn whether there is anything closed, so the fold is hidden when there is not.
+    private Task LearnClosed(Uri url, CancellationToken cancellationToken) =>
+        _closedRead && string.Equals(_closedKey, QueueKey(), StringComparison.Ordinal) ? Task.CompletedTask : ReadClosed(url, cancellationToken);
+
+    private string QueueKey() => string.Join('|', _rows.Keys.Order(StringComparer.Ordinal));
 }

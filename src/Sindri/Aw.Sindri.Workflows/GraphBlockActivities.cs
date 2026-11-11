@@ -56,10 +56,10 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return cutConfig;   // why: the config read an output the store cut at 64 KB; the block never runs on a partial value
         }
 
-        return await Execute(row, spec, new Prepared(graphNode, block, scope, config), cancel).ConfigureAwait(false);
+        return await Execute(row, spec, new Prepared(graphNode, block, scope, config), itemIndex, cancel).ConfigureAwait(false);
     }
 
-    private async Task<GraphBlockOutcome> Execute(WorkflowRun row, GraphSpec spec, Prepared node, CancellationToken cancel)
+    private async Task<GraphBlockOutcome> Execute(WorkflowRun row, GraphSpec spec, Prepared node, int itemIndex, CancellationToken cancel)
     {
         var (graphNode, block, scope, config) = (node.Node, node.Block, node.Scope, node.Config);
         // why: idempotent, so it runs before every node and the activity keeps no state across a retry; each call is a workflow read plus one ledger upsert transaction (a 20-node run makes 20), acceptable because a graph declares no disk, so a repeat changes no data and creates no files
@@ -69,7 +69,13 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
             return Failed(config, ensured.Error);
         }
 
-        var context = new BlockContext(row.Id, graphNode.Id, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup) { Resources = ensured.Value.Env };
+        var context = new BlockContext(row.Id, graphNode.Id, config, (JsonObject)graphNode.Config.DeepClone(), scope.Lookup)
+        {
+            Resources = ensured.Value.Env,
+            // why: a loop item's batch is a child workflow of the run, so its question names the workflow that waits and the item (items count from 1; 0 is a node outside a loop)
+            Item = itemIndex > 0 ? itemIndex : null,
+            BatchWorkflow = itemIndex > 0 ? ActivityExecutionContext.Current.Info.WorkflowId : null,
+        };
         var result = await block.Execute(context, cancel).ConfigureAwait(false);   // a condition reads its references inside Execute
         if (Cut(scope, config) is { } cutAfter)
         {
@@ -155,15 +161,15 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
     // why: inside a 'for_each' a reference reads the item and the loop's nodes of the same item; the list is read the way the 'for_each' read it, from outputs that never change
     private static (GraphLoopContext? Loop, GraphBlockOutcome? Failure) Loop(GraphNodeScope outer, GraphSpec spec, NodeId node, int itemIndex)
     {
-        var shape = LoopBody.Enclosing(spec, node) ?? throw new ApplicationFailureException($"node '{node.Value}' is not inside a for_each", nonRetryable: true);
-        var config = GraphConfig.Interpolate(shape.ForEach.Config, outer.Lookup);
-        if (Cut(outer, config) is { } cut)
+        var (loop, cutNode) = GraphLoopScopes.Open(outer, spec, node, itemIndex);
+        if (cutNode is null)
         {
-            return (null, cut);
+            return (loop, null);
         }
 
-        var item = config["items"] is JsonArray items && itemIndex <= items.Count ? items[itemIndex - 1]?.DeepClone() : null;
-        return (new GraphLoopContext(shape, itemIndex, item), null);
+        // why: a node run with an item index sits in a loop body, so its enclosing loop exists
+        var config = GraphConfig.Interpolate(LoopBody.Enclosing(spec, node)!.ForEach.Config, outer.Lookup);
+        return (null, Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cutNode}' was cut at 64 KB; refer to a smaller field")));
     }
 
     private static GraphBlockOutcome? Cut(GraphNodeScope scope, JsonObject config) => scope.Cut is { } cut

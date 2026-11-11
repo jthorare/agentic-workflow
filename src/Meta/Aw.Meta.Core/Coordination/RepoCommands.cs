@@ -12,6 +12,8 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="paths">Names the gh program.</param>
 public sealed class RepoCommands(ICommandRunner runner, MetaPaths paths)
 {
+    private const string QueueQuery = "query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){isMergeQueueEnabled isInMergeQueue mergeQueueEntry{position state} timelineItems(last:1,itemTypes:[REMOVED_FROM_MERGE_QUEUE_EVENT]){nodes{... on RemovedFromMergeQueueEvent{reason}}}}}}";
+
     private static readonly TimeSpan _limit = TimeSpan.FromMinutes(15);
     private CancellationToken _cancellation;
 
@@ -43,12 +45,68 @@ public sealed class RepoCommands(ICommandRunner runner, MetaPaths paths)
         return json.IsError ? json.Error : GhJson.View(json.Value) is { } view ? view : Unexpected("gh pr view");
     }
 
+    /// <summary>Reads what a CI gate needs of a pull request: its head, base branch, review decision and merge state.</summary>
+    /// <param name="repo">The repo directory.</param>
+    /// <param name="pr">The pull request number.</param>
+    /// <returns>The state, or an error.</returns>
+    public async ValueTask<Result<PrCiState>> CiView(string repo, int pr)
+    {
+        var json = await Gh(repo, "pr", "view", Number(pr), "--json", "headRefOid,baseRefName,reviewDecision,mergeStateStatus").ConfigureAwait(false);
+        return json.IsError ? json.Error : GhJson.CiView(json.Value) is { } view ? view : Unexpected("gh pr view");
+    }
+
+    /// <summary>Reads whether the base branch has a merge queue and where a pull request stands in it. gh 2.45 has no JSON field for it, so this asks GraphQL; gh fills the owner and repo from the repo in the directory.</summary>
+    /// <param name="repo">The repo directory.</param>
+    /// <param name="pr">The pull request number.</param>
+    /// <returns>The queue facts, or an error.</returns>
+    public async ValueTask<Result<MergeQueueView>> QueueView(string repo, int pr)
+    {
+        var json = await Gh(repo, "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}", "-F", "number=" + Number(pr), "-f", "query=" + QueueQuery).ConfigureAwait(false);
+        return json.IsError ? json.Error : GhJson.QueueView(json.Value) is { } view ? view : Unexpected("gh api graphql");
+    }
+
+    /// <summary>Reads a pull request's required checks. gh exits 1 when a check failed and 8 when one is pending, and still prints them, so those exits are not errors here. A base with no required checks gives an empty list (gh prints "no required checks reported" and exits 1). Older gh has no --json for this command: the plain output is read instead.</summary>
+    /// <param name="repo">The repo directory.</param>
+    /// <param name="pr">The pull request number.</param>
+    /// <returns>The checks (empty when there are none), or an error.</returns>
+    public async ValueTask<Result<IReadOnlyList<RequiredCheck>>> RequiredChecks(string repo, int pr)
+    {
+        var json = await Checks(repo, pr, "--json", "name,state,bucket").ConfigureAwait(false);
+        if (json.IsError || !json.Value.Text.Contains("unknown flag: --json", StringComparison.Ordinal))
+        {
+            return json.IsError ? json.Error : Read(json.Value.Text, json.Value.Out, GhJson.Checks);
+        }
+
+        var plain = await Checks(repo, pr).ConfigureAwait(false);
+        return plain.IsError ? plain.Error : Read(plain.Value.Text, plain.Value.Out, GhJson.ChecksFromText);
+    }
+
+    private async ValueTask<Result<(string Out, string Text)>> Checks(string repo, int pr, params string[] extra)
+    {
+        string[] argv = [paths.Gh, "pr", "checks", Number(pr), "--required", .. extra];
+        var ran = await runner.Run(new CommandRequest(argv, _limit) { Cwd = repo }, _cancellation).ConfigureAwait(false);
+        if (ran.IsError)
+        {
+            return ran.Error;
+        }
+
+        var result = ran.Value;
+        return result.TimedOut || result.ExitCode is not (0 or 1 or 8)
+            ? MetaErrors.CommandFailed.With($"{string.Join(' ', argv.Take(4))}: {(result.TimedOut ? "timed out" : FirstLine(result.Stderr.Length > 0 ? result.Stderr : result.Stdout))}")
+            : (result.Stdout, result.Stderr + "\n" + result.Stdout);
+    }
+
+    private static Result<IReadOnlyList<RequiredCheck>> Read(string text, string stdout, Func<string, IReadOnlyList<RequiredCheck>?> parse) =>
+        string.IsNullOrWhiteSpace(stdout)
+            ? text.Contains("no required checks", StringComparison.OrdinalIgnoreCase) ? Results.Success<IReadOnlyList<RequiredCheck>>([]) : Unexpected("gh pr checks")
+            : parse(stdout) is { } checks ? Results.Success(checks) : Unexpected("gh pr checks");
+
     /// <summary>Lists the open and recently merged pull requests.</summary>
     /// <param name="repo">The repo directory.</param>
     /// <returns>The pull requests, or an error.</returns>
     public async ValueTask<Result<IReadOnlyList<PrView>>> List(string repo)
     {
-        var json = await Gh(repo, "pr", "list", "--state", "all", "--limit", "50", "--json", "number,state,isDraft,headRefOid,mergeable,title,updatedAt").ConfigureAwait(false);
+        var json = await Gh(repo, "pr", "list", "--state", "all", "--limit", "50", "--json", "number,state,isDraft,headRefOid,mergeable,title,updatedAt,headRefName,baseRefName").ConfigureAwait(false);
         return json.IsError ? json.Error : GhJson.List(json.Value) is { } list ? Results.Success(list) : Unexpected("gh pr list");
     }
 

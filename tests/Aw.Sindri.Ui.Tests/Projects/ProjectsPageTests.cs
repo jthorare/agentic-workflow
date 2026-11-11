@@ -1,6 +1,7 @@
 using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.Projects;
 using static Aw.Sindri.Ui.Tests.Projects.ProjectsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Projects;
@@ -155,7 +156,7 @@ public sealed class ProjectsPageTests
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal(("Linear is still syncing. Projects you lead show up when it's done.", true, false, false, false), (page.Sentence, page.IsEmptyBlock, page.IsBanner, page.ShowsAddInEmpty, page.NamesOnly));
+        Assert.Equal(("Linear is still syncing. Projects you lead show up when it's done.", true, false, false), (page.Sentence, page.IsEmptyBlock, page.IsBanner, page.NamesOnly));
         Assert.Empty(page.Groups);
     }
 
@@ -166,7 +167,7 @@ public sealed class ProjectsPageTests
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal((true, true, false), (page.IsEmptyBlock, page.ShowsAddInEmpty, page.IsBanner));
+        Assert.Equal((true, false), (page.IsEmptyBlock, page.IsBanner));
         Assert.StartsWith("You don't lead any Linear projects", page.Sentence, StringComparison.Ordinal);
     }
 
@@ -177,7 +178,103 @@ public sealed class ProjectsPageTests
 
         var page = await _f.Shown(Token);
 
-        Assert.Equal((true, true), (page.IsEmptyBlock, page.ShowsAddInEmpty));
+        Assert.True(page.IsEmptyBlock);
+    }
+
+    private const string ServedMissingKey = "Linear needs a token. Run sindri index connect linear in your terminal to connect it.";
+
+    private async Task<ProjectsPageViewModel> ShownWithMissingKey(Action<System.Text.Json.Nodes.JsonNode>? edit = null)
+    {
+        var list = Golden("mixed");
+        list["empty"] = ServedMissingKey;
+        list["emptyCode"] = "linear-key-missing";
+        edit?.Invoke(list);
+        _f.Serve(list);
+        return await _f.Shown(Token);
+    }
+
+    [Fact]
+    public async Task A_missing_key_banner_says_what_is_wrong_in_plain_words_with_the_last_read_and_offers_Connect_Linear()
+    {
+        var page = await ShownWithMissingKey();
+
+        Assert.Equal(("Sindri has no Linear key, so projects aren't refreshing. Last read 14m ago.", true, false, true), (page.Sentence, page.IsBanner, page.IsEmptyBlock, page.ShowsConnect));
+        Assert.Equal("Connect Linear", page.ConnectText);
+    }
+
+    [Fact]
+    public async Task The_last_read_counts_only_Linears_rows_never_a_newer_GitHub_row()
+    {
+        var page = await ShownWithMissingKey(list =>
+        {
+            foreach (var row in list["freshness"]!.AsArray().Where(r => string.Equals((string?)r!["source"], "github", StringComparison.Ordinal)))
+            {
+                row!["at"] = "2025-12-31T23:59:00.0000000Z";   // a minute ago: newer than every Linear row
+            }
+        });
+
+        Assert.Equal("Sindri has no Linear key, so projects aren't refreshing. Last read 14m ago.", page.Sentence);
+    }
+
+    [Fact]
+    public async Task A_missing_key_banner_with_no_last_read_leaves_the_last_read_out()
+    {
+        var page = await ShownWithMissingKey(list => list["freshness"] = new System.Text.Json.Nodes.JsonArray());
+
+        Assert.Equal("Sindri has no Linear key, so projects aren't refreshing.", page.Sentence);
+    }
+
+    [Fact]
+    public async Task Without_a_key_the_identity_reads_as_last_seen_not_as_a_live_answer()
+    {
+        var page = await ShownWithMissingKey();
+
+        Assert.EndsWith(" · last seen as Jo Smith", page.Freshness, StringComparison.Ordinal);
+        Assert.DoesNotContain("Linear says", page.Freshness, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_banner_that_is_not_about_the_key_offers_no_Connect_Linear()
+    {
+        _f.Serve("context-down");
+
+        var page = await _f.Shown(Token);
+
+        Assert.False(page.ShowsConnect);
+    }
+
+    [Fact]
+    public async Task Linear_not_connected_offers_Connect_Linear_in_the_empty_block()
+    {
+        _f.Serve("empty-no-linear");
+
+        var page = await _f.Shown(Token);
+
+        Assert.True(page.ShowsConnect);
+    }
+
+    [Theory]
+    [InlineData("syncing")]
+    [InlineData("empty-leads-nothing")]
+    public async Task Connect_Linear_is_not_offered_while_Linear_is_syncing_or_connected(string scenario)
+    {
+        _f.Serve(scenario);
+
+        var page = await _f.Shown(Token);
+
+        Assert.False(page.ShowsConnect);
+    }
+
+    [Fact]
+    public void Connect_Linear_asks_the_shell_once()
+    {
+        var page = _f.Page();
+        var asked = 0;
+        page.ConnectRequested += (_, _) => asked++;
+
+        page.RequestConnect();
+
+        Assert.Equal(1, asked);
     }
 
     [Fact]

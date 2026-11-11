@@ -2,7 +2,7 @@
 # Tests for scripts/install-cs.sh (cutover spec §7.1) on a fake `dotnet` and a miniature git repo, in a guarded temp dir:
 # AW_STATE_DIR, CLAUDE_LOCAL_BIN and TMPDIR all live under it, HOME is never changed and nothing real is read or written
 # (no temp HOME: a real dotnet under one leaks a NuGet cache; the fake dotnet needs none). Covers: dry run writes nothing;
-# --publish builds the seven binaries into bin/cs/<stamp>/ and touches neither `current` nor the wrappers; a second run is
+# --publish builds the eight binaries into bin/cs/<stamp>/ and touches neither `current` nor the wrappers; a second run is
 # current and does not publish; the verify step runs each binary in a scratch AW_STATE_DIR; a failed publish and a build that
 # does not answer leave nothing behind; --link needs a build for this source, switches `current`, writes the six wrappers over
 # an existing TS wrapper, and the sindri wrapper exports the three binary paths (AW_UI_EVIDENCE_BIN among them) as resolved
@@ -10,6 +10,7 @@
 # Run: bash scripts/tests/install-cs.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$DIR/lib/test-portable.sh"   # timeout for macOS (the staged-scripts rows)
 fail=0
 check() {
   if [ "$2" == "$3" ]; then echo "ok - $1"; else
@@ -79,7 +80,7 @@ done
 case "$proj" in
   *Aw.Sindri.Host*) name=sindri ;; *Ui.Desktop*) name=sindri-ui ;; *Aw.Judge.Host*) name=judge ;;
   *Aw.Packets.App*) name=aw-packets ;; *Aw.BugFix.Host*) name=bugfix-state ;; *Aw.Evidence.Host*) name=ui-evidence ;;
-  *Aw.Readiness.App*) name=aw-readiness ;; *) exit 3 ;;
+  *Aw.Readiness.App*) name=aw-readiness ;; *Aw.Sindri.CodeRunner*) name=sindri-code-runner ;; *) exit 3 ;;
 esac
 echo "$name rev=$rev" >> "$FAKE_LOG"
 [ "${FAKE_FAIL:-}" != "$name" ] || { echo "boom publishing $name" >&2; exit 1; }
@@ -148,11 +149,11 @@ check "--publish exits 0" "$rc" "0"
 S1="$(stamps | tr -d ' ')"
 if [ "$(uname -s)" = Linux ]; then check "the staged libSkiaSharp.so is sindri-ui's, the one that needs fontconfig" "$(readelf -d "$B/$S1/libSkiaSharp.so" | grep -c fontconfig)" "1"; fi
 check "one stamped build" "$(printf '%s' "$S1" | wc -c | tr -d ' ')" "16"
-for f in sindri sindri-ui judge aw-packets bugfix-state ui-evidence aw-readiness libe_sqlite3.so libSkiaSharp.so build-info; do
+for f in sindri sindri-code-runner sindri-ui judge aw-packets bugfix-state ui-evidence aw-readiness libe_sqlite3.so libSkiaSharp.so build-info; do
   check "build has $f" "$([ -e "$B/$S1/$f" ] && echo yes || echo no)" "yes"
 done
 check "the build keeps ui-evidence's Playwright driver (a dot folder)" "$(cat "$B/$S1/.playwright/package/cli.js" 2>/dev/null)" "driver"
-check "seven publishes, each stamped with the commit" "$(grep -c "rev=$(g rev-parse HEAD)$" "$FAKE_LOG")" "7"
+check "eight publishes, each stamped with the commit" "$(grep -c "rev=$(g rev-parse HEAD)$" "$FAKE_LOG")" "8"
 check "the build carries heavy, executable" "$([ -x "$B/$S1/heavy" ] && echo yes || echo no)" "yes"
 check "the build's heavy is scripts/heavy.sh" "$(cmp -s "$B/$S1/heavy" "$REPO/scripts/heavy.sh" && echo same || echo differs)" "same"
 check "the build carries meta-gate-reserve, executable" "$([ -x "$B/$S1/meta-gate-reserve" ] && echo yes || echo no)" "yes"
@@ -311,7 +312,7 @@ has "and says so" "$out" "AW_SINDRI_STOP_OK=1: going on"
 kill "$serve_pid" 2> /dev/null; serve_pid=""
 sleep 0.3
 bash "$INSTALL" --publish --rebuild > /dev/null 2>&1; check "--rebuild with no serve exits 0" "$?" "0"
-check "and publishes the seven binaries again" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "7"
+check "and publishes the eight binaries again" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "8"
 
 # A profile this build can't validate: --link says the one command and still exits 0.
 bash "$INSTALL" --publish > /dev/null 2>&1   # --link needs a build to link
@@ -337,7 +338,7 @@ cp "$DIR/heavy.sh" "$REPO/scripts/heavy.sh"; cp "$DIR/meta-gate-reserve.sh" "$RE
 cp "$DIR/../config/lib/"*.sh "$REPO/config/lib/"
 g add -A; ccommit -m "real heavy and meta-gate-reserve"
 bash "$INSTALL" --publish > /dev/null 2>&1; check "staged-scripts: the publish with the real scripts exits 0" "$?" "0"
-SB="$(find "$B" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -printf '%T@ %p\n' | sort -rn | head -1 | cut -d" " -f2-)"   # the build just published is the newest
+SB="$(ls -td "$B"/*/ | head -1)"; SB="${SB%/}"   # the build just published is the newest
 SCR="$WORK/staged-state"; mkdir -p "$SCR"
 errf="$WORK/staged.err"
 (cd / && AW_STATE_DIR="$SCR" timeout 20 "$SB/heavy" --expensive true > /dev/null 2> "$errf"); rc=$?

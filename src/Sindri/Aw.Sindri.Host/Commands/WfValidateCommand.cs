@@ -56,7 +56,7 @@ internal static class WfValidateCommand
         }
 
         var world = services.GetService<IGraphWorld>() ?? await ProfileGraphWorld.Load(services.GetService<IApprovedProfile>(), ct).ConfigureAwait(false);
-        var context = new GraphValidationContext(services.GetRequiredService<IGraphBlockCatalog>().Types, world, (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem, ParseCondition);
+        var context = new GraphValidationContext(services.GetRequiredService<IGraphBlockCatalog>().Types, world, (cron, zone) => CronExpression.TryParse(cron, zone, out _, out var problem) ? null : problem, ParseCondition) { CodeCheck = services.GetService<ICodeCheck>() is { } check ? body => check.Check(body, ct) : null };
         var result = new GraphValidator(context).Validate(spec.Value, GraphMode.Activate);
         return await Print(result.Findings, result.Passed ? GraphJson.Hash(spec.Value) : null, json, output).ConfigureAwait(false);
     }

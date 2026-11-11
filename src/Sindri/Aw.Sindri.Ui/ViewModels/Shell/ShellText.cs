@@ -9,6 +9,22 @@ internal sealed class ShellText
     /// <summary>The one instance.</summary>
     internal static ShellText Instance { get; } = new();
 
+    /// <summary>Makes the copy for a platform.</summary>
+    /// <param name="macOS">Whether the app runs on macOS; null asks the OS.</param>
+    internal ShellText(bool? macOS = null)
+    {
+        ShowCommandIcon = macOS ?? OperatingSystem.IsMacOS();
+        SearchKey = ShowCommandIcon ? Labels.SearchKey : Labels.SearchKeyCtrl;
+        SearchTip = Labels.Search + " (" + SearchKey + ")";
+        SearchKeyModifier = ShowCommandIcon ? string.Empty : Labels.SearchKeyModifier;
+    }
+
+    /// <summary>True when the search keycap draws the Command icon (macOS); elsewhere it draws <see cref="SearchKeyModifier"/>.</summary>
+    public bool ShowCommandIcon { get; }
+
+    /// <summary>The words before the keycap's letter where there is no Command icon: "Ctrl+".</summary>
+    public string SearchKeyModifier { get; }
+
     /// <summary>U2's copy: the queue and the item sheet.</summary>
     public Item.ItemText Items { get; } = Item.ItemText.Instance;
 
@@ -59,9 +75,6 @@ internal sealed class ShellText
 
     /// <summary><see cref="Labels.GoKey"/>.</summary>
     public string GoKey { get; } = Labels.GoKey;
-
-    /// <summary><see cref="Labels.HealthKey"/>.</summary>
-    public string HealthKey { get; } = Labels.HealthKey;
 
     /// <summary><see cref="Labels.Health"/>.</summary>
     public string Health { get; } = Labels.Health;
@@ -153,8 +166,14 @@ internal sealed class ShellText
     /// <summary><see cref="Labels.Search"/>.</summary>
     public string Search { get; } = Labels.Search;
 
-    /// <summary><see cref="Labels.SearchKey"/>.</summary>
-    public string SearchKey { get; } = Labels.SearchKey;
+    /// <summary><see cref="Labels.SearchPlaceholder"/>.</summary>
+    public string SearchPlaceholder { get; } = Labels.SearchPlaceholder;
+
+    /// <summary>The search field's tooltip: its name and the shortcut, so the folded icon keeps the hint.</summary>
+    public string SearchTip { get; }
+
+    /// <summary>The key chip as a screen reader says it: "⌘K" on macOS, "Ctrl+K" elsewhere.</summary>
+    public string SearchKey { get; }
 
     /// <summary><see cref="Labels.SearchKeyLetter"/>.</summary>
     public string SearchKeyLetter { get; } = Labels.SearchKeyLetter;

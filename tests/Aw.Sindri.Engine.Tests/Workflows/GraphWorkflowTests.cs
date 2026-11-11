@@ -10,7 +10,7 @@ namespace Aw.Sindri.Tests.Workflows;
 /// Each test starts its run the way a trigger does: through <see cref="GraphRunStarter"/> and <see cref="TemporalGraphRunLauncher"/>.
 /// </summary>
 [Lane(TestLane.Integration)]
-public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class GraphWorkflowTests
 {
     private static readonly string[] _walked = ["start", "a", "b", "c"];
 
@@ -19,7 +19,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
     [Fact]
     public async Task A_linear_spec_runs_each_node_once_in_order()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("a", "echo"), GraphRig.Node("b", "echo"), GraphRig.Node("c", "echo")],
             [GraphRig.Edge("start", "a"), GraphRig.Edge("a", "b"), GraphRig.Edge("b", "c")]));
@@ -47,7 +47,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
     [Fact]
     public async Task A_failed_node_halts_the_walk_and_marks_the_rest_skipped()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("a", "echo"), GraphRig.Node("bad", "fail"), GraphRig.Node("c", "echo"), GraphRig.Node("d", "echo")],
             [GraphRig.Edge("start", "a"), GraphRig.Edge("a", "bad"), GraphRig.Edge("bad", "c"), GraphRig.Edge("c", "d")]));
@@ -67,7 +67,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
     [Fact]
     public async Task On_failure_continue_keeps_walking()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("bad", "fail", onFailure: "continue"), GraphRig.Node("c", "echo")],
             [GraphRig.Edge("start", "bad"), GraphRig.Edge("bad", "c")]));
@@ -85,7 +85,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
     [Fact]
     public async Task A_false_condition_takes_only_the_false_edge()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("check", "condition", config: new JsonObject { ["when"] = "trigger.flag" }), GraphRig.Node("yes", "echo"), GraphRig.Node("no", "echo")],
             [GraphRig.Edge("start", "check"), GraphRig.Edge("check", "yes", "true"), GraphRig.Edge("check", "no", "false")]));
@@ -103,15 +103,14 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
     [Fact]
     public async Task A_cancelled_run_is_cancelled_and_mirrored()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("wait", "hold"), GraphRig.Node("after", "echo")],
             [GraphRig.Edge("start", "wait"), GraphRig.Edge("wait", "after")]));
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
         await rig.Blocks.Entered.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
-        await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
-        var run = await rig.Final(started.RunId);
+        var run = await rig.Cancel(started.RunId);
         var nodes = await rig.NodeStatuses(started.RunId);
 
         Assert.Equal(WorkflowRunStatus.Cancelled, run.Status);
@@ -128,7 +127,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
     [Fact]
     public async Task Queue_starts_the_oldest_queued_run_when_the_run_in_flight_ends()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("queue",
             [GraphRig.Node("start", "manual"), GraphRig.Node("wait", "hold")],
             [GraphRig.Edge("start", "wait")]));
@@ -151,7 +150,7 @@ public sealed class GraphWorkflowTests(SindriTimeSkippingServer server) : IClass
     [Fact]
     public async Task A_reference_to_a_cut_output_fails_the_node_and_never_uses_the_cut_text()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("big", "big"), GraphRig.Node("use", "echo", config: new JsonObject { ["text"] = "{{big.data}}" }), GraphRig.Node("after", "echo")],
             [GraphRig.Edge("start", "big"), GraphRig.Edge("big", "use"), GraphRig.Edge("use", "after")]));

@@ -37,6 +37,9 @@ public static partial class SindriErrors
     /// <summary>SND-CONN-011: the connection is key-based and has no browser sign-in to run again.</summary>
     public static readonly ErrorDefinition ConnectionKindNoSignIn = new("SND-CONN-011", ErrorKind.Invalid, "This connection uses a key, not a browser sign-in");
 
+    /// <summary>SND-CONN-015: an active workflow's connection_event trigger names the connection, so a rename would stop it firing.</summary>
+    public static readonly ErrorDefinition ConnectionWatched = new("SND-CONN-015", ErrorKind.Conflict, "An active workflow's trigger watches this connection");
+
     /// <summary>SND-CONN-014: the provider answered 429 or 5xx to a poll; the next poll waits.</summary>
     public static readonly ErrorDefinition ConnectionRateLimited = new("SND-CONN-014", ErrorKind.RateLimited, "The provider is rate limiting this connection");
 

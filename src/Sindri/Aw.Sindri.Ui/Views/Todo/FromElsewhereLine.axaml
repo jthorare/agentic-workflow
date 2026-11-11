@@ -5,8 +5,8 @@
              x:DataType="tvm:FromElsewhereViewModel">
   <!-- Todo spec 3.1, 3.4, 3.5 and D4: one line of read-only counts under the Todo panel's rows. It is a single focus stop: Left and Right walk its parts
        (and a failed part's Retry), Enter opens the one in front; X, Delete and Space are not taken. Its height is one line in every state, so Needs you never moves (D13). -->
-  <Border x:Name="ElsewhereFrame" Focusable="True" IsTabStop="True" FocusAdorner="{x:Null}" MinHeight="28" BorderBrush="Transparent" BorderThickness="2"
-          CornerRadius="{StaticResource Radius.XS}" Padding="6,0" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control"
+  <Border x:Name="ElsewhereFrame" Focusable="True" IsTabStop="True" FocusAdorner="{x:Null}" MinHeight="{StaticResource Row.Height.Compact}" BorderBrush="Transparent" BorderThickness="2"
+          CornerRadius="{StaticResource Radius.XS}" Padding="12,0" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control"
           AutomationProperties.ControlTypeOverride="Group">
     <WrapPanel x:Name="ElsewhereWords" Orientation="Horizontal" VerticalAlignment="Center" />
   </Border>
@@ -20,6 +20,10 @@
       <Setter Property="Padding" Value="2,2" />
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <!-- Connect Linear is an action, not a count: a link in the primary colour (#2548). -->
+    <Style Selector="Button.elsewhere-part.action-link TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Primary}" />
     </Style>
     <Style Selector="Button.elsewhere-part.active TextBlock">
       <Setter Property="TextDecorations" Value="Underline" />

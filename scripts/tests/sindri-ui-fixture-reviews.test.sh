@@ -95,6 +95,11 @@ contains "the profile has review.login" "$profile" "review:
   login: fx-viewer"
 contains "the profile has the file forge on github.com" "$profile" "forge: { adapter: file, hosts: [github.com] }"
 contains "the profile lists acme/api under github repos" "$profile" "acme/api"
+# #2619: GET /sindri/reviews answers "Connect GitHub" (and no rows) while there is no GitHub connection and no profile token (ReviewConnectRules.For).
+# This stub suite has no serve to ask, so it checks the input the rule reads: context.sources.github.token is a non-empty pointer. The pointer names an
+# env var nothing sets and no tick runs in the fixture, so the github cursor's last_error stays NULL (no AW-CONNECTORS-006/-007 sign-in code).
+contains "the profile's github source has a token pointer, so Reviews reads the seeded PR instead of Connect GitHub" "$profile" 'github: { repos: [acme/api, acme/web], token: "env:FIXTURE_GITHUB_TOKEN" }'
+check "the github cursor row has no error code (no sign-in code turns the connect panel back on)" "$(sqlq "$PJDB" "SELECT COALESCE(last_error, 'none') FROM source_cursor WHERE source = 'github' AND repo = 'records'")" "none"
 lacks "no profile approve is run (edits apply on save)" "$(cat "$STUB_LOG")" "profile approve"
 
 STATE="$PJ/ui-fixture-forge/state"
@@ -105,7 +110,7 @@ contains "seed checks names the failing run" "$calls" "seed checks https://githu
 contains "seed thread is on the changed file" "$calls" "seed thread https://github.com/acme/api/pull/7 --author reviewer-kai"
 contains "every forge call uses the world inside the home" "$calls" "[state=$STATE adapter=file hosts=github.com login=fx-viewer]"
 lacks "no forge call touches the real state dir" "$calls" "[state=$AW_STATE_DIR "
-check "the forge world is inside the guarded home" "$(case "$STATE/" in "$PJ"/*) echo inside ;; *) echo outside ;; esac)" "inside"
+check "the forge world is inside the guarded home" "$(case "$STATE/" in ("$PJ"/*) echo inside ;; (*) echo outside ;; esac)" "inside"
 check "the real state's cache/bin is linked into the forge state (serve finds Temporal there)" "$(readlink "$STATE/cache/bin")" "$AW_STATE_DIR/cache/bin"
 check "the seeded file is src/Sync.cs with 3 added lines" "$(jq -r '.[0].file | "\(.path) \(.status) +\(.additions) -\(.deletions)"' "$FORGE_LOG.files")" "src/Sync.cs Modified +3 -0"
 check "line 42 of the seeded text is an added line (on the new side)" "$(jq -r '.[0].text' "$FORGE_LOG.files" | sed -n 42p)" "    if (delay is null) return Retry.Stop;"
@@ -135,7 +140,7 @@ check "a second reviews up lists each repo once" "$(grep -c 'acme/api' "$PJ/prof
 
 # A later restart by another verb keeps the forge state while the folder exists.
 : > "$STUB_LOG"
-AW_SINDRI_HOME="$PJ" SINDRI="$STUB" bash -c 'source <(sed -n "/^sessions_export()/,/^}/p;/^reviews_state()/p;/^reviews_dir()/p;/^sessions_dir()/p;/^agent_dir()/p;/^sandbox_dir()/p;/^REVIEWS_DIRNAME=/p;/^SESSIONS_DIRNAME=/p;/^PROJECTS_VIEWER=/p" "$1"); sessions_export; echo "$AW_STATE_DIR $AW_FORGE_LOGIN"' _ "$FIXTURE" > "$WORK/export" 2>/dev/null
+AW_SINDRI_HOME="$PJ" SINDRI="$STUB" bash -c 'eval "$(sed -n "/^sessions_export()/,/^}/p;/^reviews_state()/p;/^reviews_dir()/p;/^sessions_dir()/p;/^agent_dir()/p;/^sandbox_dir()/p;/^REVIEWS_DIRNAME=/p;/^SESSIONS_DIRNAME=/p;/^PROJECTS_VIEWER=/p" "$1")"; sessions_export; echo "$AW_STATE_DIR $AW_FORGE_LOGIN"' _ "$FIXTURE" > "$WORK/export" 2>/dev/null
 check "sessions_export keeps AW_STATE_DIR and AW_FORGE_LOGIN on the forge state" "$(cat "$WORK/export")" "$STATE fx-viewer"
 
 # Guards.
@@ -149,6 +154,8 @@ rev down >/dev/null 2>&1; check "reviews down exits 0" "$?" "0"
 check "down removes the PR record" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record WHERE source = 'github' AND kind = 'pr'")" "0"
 check "down removes the forge world" "$([ -e "$PJ/ui-fixture-forge" ] && echo present || echo gone)" "gone"
 profile="$(cat "$PJ/profile/profile.yaml")"
+lacks "down removes the github token pointer up added" "$profile" "FIXTURE_GITHUB_TOKEN"
+contains "down leaves the github repos" "$profile" "repos: [acme/api, acme/web]"
 lacks "down removes review.login" "$profile" "review:"
 lacks "down removes workflow.forge and the empty workflow:" "$profile" "workflow:"
 check "down leaves the real state's cache/bin alone" "$([ -d "$AW_STATE_DIR/cache/bin" ] && echo present || echo gone)" "present"

@@ -3,22 +3,26 @@
     {
       "group": "waitingOnYou",
       "items": [],
-      "empty": "Nothing is waiting on you."
+      "empty": "Nothing is waiting on you.",
+      "next": null
     },
     {
       "group": "withYou",
       "items": [],
-      "empty": "Nothing is with you."
+      "empty": "Nothing is with you.",
+      "next": null
     },
     {
       "group": "running",
       "items": [],
-      "empty": "Nothing running."
+      "empty": "Nothing running.",
+      "next": null
     },
     {
       "group": "queued",
       "items": [],
-      "empty": "Nothing queued."
+      "empty": "Nothing queued.",
+      "next": null
     }
   ],
   "empty": "Nothing in the queue. Add one with `sindri item add`.",
@@ -28,5 +32,7 @@
     "projectedAt": "2026-01-01T00:00:00.0000000Z",
     "rebuilding": false,
     "stalled": false
-  }
+  },
+  "counts": null,
+  "tag": "6a6cb466a99ba6671d538e1e8cca9cb0"
 }

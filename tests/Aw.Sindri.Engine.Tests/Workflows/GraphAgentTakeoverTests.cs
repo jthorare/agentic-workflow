@@ -10,7 +10,7 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>Takeover and handback of a 'run_agent' node (PR 7): the timeout pauses while a person holds the node and resumes with what was left; the agent may not report a taken-over node.</summary>
 [Lane(TestLane.Integration)]
-public sealed class GraphAgentTakeoverTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class GraphAgentTakeoverTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -19,7 +19,7 @@ public sealed class GraphAgentTakeoverTests(SindriTimeSkippingServer server) : I
     public async Task A_takeover_pauses_the_node_timeout_and_handback_resumes_the_remainder()
     {
         var runtime = new FakeAgentNodeRuntime { Timeout = TimeSpan.FromSeconds(6) };
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
         var clock = Stopwatch.StartNew();
@@ -47,7 +47,7 @@ public sealed class GraphAgentTakeoverTests(SindriTimeSkippingServer server) : I
     public async Task The_agent_s_report_of_a_taken_over_node_is_refused_and_the_human_s_completes_it()
     {
         var runtime = new FakeAgentNodeRuntime();
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig, """{"ok":"boolean"}""");
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
         _ = await rig.Control.Takeover(run, AgentNodeRig.Agent, itemIndex: 0, Token);
@@ -67,7 +67,7 @@ public sealed class GraphAgentTakeoverTests(SindriTimeSkippingServer server) : I
     public async Task A_handback_of_a_node_nobody_holds_and_a_takeover_of_another_node_are_refused()
     {
         var runtime = new FakeAgentNodeRuntime();
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
@@ -83,7 +83,7 @@ public sealed class GraphAgentTakeoverTests(SindriTimeSkippingServer server) : I
     public async Task The_run_names_the_node_it_waits_on_and_whether_it_is_held()
     {
         var runtime = new FakeAgentNodeRuntime();
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
@@ -103,12 +103,11 @@ public sealed class GraphAgentTakeoverTests(SindriTimeSkippingServer server) : I
     public async Task A_cancel_stops_the_session_without_measuring_it()
     {
         var runtime = new FakeAgentNodeRuntime();
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
-        await rig.Client.GetWorkflowHandle(run.Value).CancelAsync();
-        var final = await rig.Final(run);
+        var final = await rig.Cancel(run);
 
         Assert.Equal(WorkflowRunStatus.Cancelled, final.Status);
         Assert.Equal(NodeRunStatus.Cancelled, (await AgentNodeRig.Row(rig, run)).Status);
@@ -120,16 +119,31 @@ public sealed class GraphAgentTakeoverTests(SindriTimeSkippingServer server) : I
     {
         var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var runtime = new FakeAgentNodeRuntime { LaunchGate = gate };
-        await using var rig = GraphRig.Start(server.Environment, runtime);
+        await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
         await runtime.Launching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
-        await rig.Client.GetWorkflowHandle(run.Value).CancelAsync();
+        var cancelling = rig.Cancel(run);   // why: Cancel waits for the final row, which needs the launch to return, so the gate opens while it waits; the cancel is confirmed requested in the history before the gate opens, so it really arrives during the launch
+        await rig.CancelRequested(run);
 
         _ = gate.TrySetResult();
-        var final = await rig.Final(run);
+        var final = await cancelling;
 
         Assert.Equal(WorkflowRunStatus.Cancelled, final.Status);
         Assert.Equal(["launch-returned", "close"], runtime.Order);
+    }
+
+    // why: the launch is retried for ever when it keeps throwing (#2495); a cancel has to end the run within one attempt
+    [Fact]
+    public async Task A_cancel_ends_a_run_whose_launch_keeps_throwing()
+    {
+        var runtime = new FakeAgentNodeRuntime { LaunchThrows = new InvalidOperationException("store error") };
+        await using var rig = await GraphRig.StartAsync(runtime);
+        var run = await AgentNodeRig.Start(rig);
+        await runtime.Launching.WaitAsync(TimeSpan.FromSeconds(30), Token);
+
+        var final = await rig.Cancel(run);
+
+        Assert.Equal(WorkflowRunStatus.Cancelled, final.Status);
     }
 }

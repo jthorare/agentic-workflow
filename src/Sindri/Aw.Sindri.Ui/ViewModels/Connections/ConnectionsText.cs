@@ -49,15 +49,6 @@ internal sealed class ConnectionsText
     /// <summary><see cref="Labels.ConnectionNameLabel"/>.</summary>
     public string NameLabel { get; } = Labels.ConnectionNameLabel;
 
-    /// <summary><see cref="Labels.ConnectionNameHint"/>.</summary>
-    public string NameHint { get; } = Labels.ConnectionNameHint;
-
-    /// <summary><see cref="Labels.ConnectionClientLabel"/>.</summary>
-    public string ClientLabel { get; } = Labels.ConnectionClientLabel;
-
-    /// <summary><see cref="Labels.ConnectionClientSecretLabel"/>.</summary>
-    public string ClientSecretLabel { get; } = Labels.ConnectionClientSecretLabel;
-
     /// <summary><see cref="Labels.ConnectionKeyLabel"/>.</summary>
     public string KeyLabel { get; } = Labels.ConnectionKeyLabel;
 
@@ -73,12 +64,39 @@ internal sealed class ConnectionsText
     /// <summary><see cref="Labels.ConnectionAddCancel"/>.</summary>
     public string Cancel { get; } = Labels.ConnectionAddCancel;
 
-    /// <summary><see cref="Labels.ConnectionSlackNote"/>.</summary>
-    public string SlackNote { get; } = Labels.ConnectionSlackNote;
-
     /// <summary><see cref="Labels.ReadingConnection"/>.</summary>
     public string ReadingOne { get; } = Labels.ReadingConnection;
 
     /// <summary><see cref="Labels.ConnectionSettings"/>.</summary>
     public string Settings { get; } = Labels.ConnectionSettings;
+
+    /// <summary><see cref="Labels.ConnectionOthers"/>.</summary>
+    public string Others { get; } = Labels.ConnectionOthers;
+
+    /// <summary><see cref="Labels.ConnectionDisconnect"/>.</summary>
+    public string Disconnect { get; } = Labels.ConnectionDisconnect;
+
+    /// <summary><see cref="Labels.ConnectionMore"/>.</summary>
+    public string More { get; } = Labels.ConnectionMore;
+
+    /// <summary>The label of a tile's client id field.</summary>
+    public string TileClientLabel { get; } = "Client id";
+
+    /// <summary>The label of a tile's client secret field.</summary>
+    public string TileSecretLabel { get; } = "Client secret";
+
+    /// <summary><see cref="Labels.ConnectionKeyLabel"/> for a tile.</summary>
+    public string TileTokenLabel { get; } = "Token";
+
+    /// <summary><see cref="Labels.TileRename"/>.</summary>
+    public string Rename { get; } = Labels.TileRename;
+
+    /// <summary><see cref="Labels.TileRenameLabel"/>.</summary>
+    public string RenameLabel { get; } = Labels.TileRenameLabel;
+
+    /// <summary><see cref="Labels.TileRenameSave"/>.</summary>
+    public string RenameSave { get; } = Labels.TileRenameSave;
+
+    /// <summary><see cref="Labels.TileReconnect"/>.</summary>
+    public string Reconnect { get; } = Labels.TileReconnect;
 }

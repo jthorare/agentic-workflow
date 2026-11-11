@@ -1,0 +1,47 @@
+{
+  "id": "ITM-00000000000000000000000000000006",
+  "title": "Try the queue",
+  "repo": "demo",
+  "state": "new",
+  "step": null,
+  "since": "2026-01-01T00:00:00.0000000Z",
+  "primaryAction": null,
+  "actions": [
+    "CloseItem:done",
+    "CloseItem:cancelled"
+  ],
+  "owner": null,
+  "version": 1,
+  "createdBy": "human:cli",
+  "waitingOn": null,
+  "instance": null,
+  "createdAt": "2026-01-01T00:00:00.0000000Z",
+  "updatedAt": "2026-01-01T00:00:00.0000000Z",
+  "body": null,
+  "link": null,
+  "runs": [
+    "nightly@1:2",
+    "nightly@1:1"
+  ],
+  "launch": {
+    "modes": [
+      "open"
+    ],
+    "defaultTarget": "claude-code",
+    "chosenBy": "builtIn",
+    "attach": null,
+    "resumable": null,
+    "inFlight": null,
+    "lastStarted": null,
+    "confirm": null,
+    "repoPath": "/work/demo",
+    "blockers": []
+  },
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}

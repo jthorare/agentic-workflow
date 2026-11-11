@@ -48,14 +48,16 @@ internal static class FlowFakes
 
         public Error? Fail { get; init; }
 
+        public string? Warning { get; init; }
+
         public List<string> Runs { get; } = [];
 
-        public ValueTask<Result<string>> Create(ItemToCreate item, CancellationToken cancellationToken)
+        public ValueTask<Result<ItemMade>> Create(ItemToCreate item, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(item);
             Runs.Add(item.Run.Value);
             Created.Add((item.Title, item.Repo, item.Body, item.LinearIssue));
-            return ValueTask.FromResult<Result<string>>(Fail is { } error ? error : string.Create(System.Globalization.CultureInfo.InvariantCulture, $"itm_{Created.Count}"));
+            return ValueTask.FromResult<Result<ItemMade>>(Fail is { } error ? error : new ItemMade(Aw.Sindri.Core.Ids.ItemId.From($"ITM-{Created.Count:x32}"), Warning));
         }
     }
 
@@ -84,6 +86,12 @@ internal static class FlowFakes
         }
     }
 
+    public sealed class ScriptedResultPort : IGraphResultPort
+    {
+        public ValueTask<Result<GraphRunResult>> Read(WorkflowSlug workflow, WorkflowRunId? run, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Result<GraphRunResult>>(new GraphRunResult(WorkflowRunId.Of(workflow, 1, 100_000_001), "succeeded", FinishedAt: null, Outputs: null));
+    }
+
     public sealed class ScriptedHttpPort(GraphHttpResponse? answer = null, Error? error = null) : IGraphHttpPort
     {
         public List<GraphHttpRequest> Sent { get; } = [];
@@ -93,6 +101,11 @@ internal static class FlowFakes
             Sent.Add(request);
             return ValueTask.FromResult<Result<GraphHttpResponse>>(error is { } failed ? failed : answer ?? new GraphHttpResponse(200, "{}"));
         }
+    }
+
+    public sealed class ScriptedCodePort : ICodeRunPort
+    {
+        public ValueTask<Result<string>> Run(CodeRun run, CancellationToken cancellationToken) => ValueTask.FromResult<Result<string>>("null");
     }
 
     /// <summary>An <see cref="HttpMessageHandler"/> that answers from a script and never touches the network; it records every request it saw.</summary>

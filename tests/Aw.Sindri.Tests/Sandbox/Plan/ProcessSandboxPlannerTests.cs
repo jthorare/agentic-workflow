@@ -2,6 +2,7 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Sandbox.Resources;
 using Aw.Sindri.Testing.Sandbox;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
@@ -83,5 +84,65 @@ public sealed class ProcessSandboxPlannerTests
         Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { Command = "triage" }).IsError);
         Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { Command = "/tool" }).IsError);   // no parent folder to bind as the binary's
         Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { ResourceMounts = [new ResourceMount("state", "db/state.sqlite")] }).IsError);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_read_only_path_is_a_read_only_mount_above_the_deny_of_Sindri_home_and_changes_the_plan_hash()
+    {
+        const string Repo = "/work/app";
+        var plain = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request()).Value;
+        var plan = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { ReadOnlyPaths = [Repo + "/"] }).Value;
+        var mounts = plan.Mounts.ToList();
+
+        Assert.Contains(mounts, m => m.Kind == PlanMountKind.ReadOnly && m.Path == Repo);   // the trailing slash is trimmed
+        Assert.True(mounts.FindIndex(m => m.Path == Repo) > mounts.FindIndex(m => m.Kind == PlanMountKind.Deny && m.Path == Sindri));
+        Assert.DoesNotContain(plain.Mounts, m => m.Path == Repo);
+        Assert.False(string.Equals(plain.PlanHash, plan.PlanHash, StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_relative_read_only_path_is_refused() =>
+        Assert.True(ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { ReadOnlyPaths = ["repo"] }).IsError);
+
+    [Fact, Trait("Lane", "unit")]
+    public void Read_only_paths_are_deduplicated_and_an_ancestor_is_mounted_before_its_descendants()
+    {
+        var plan = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, Request() with { ReadOnlyPaths = ["/work/app/src", "/work/app/", "/work/app", "/work/app/src/"] }).Value;
+        var paths = plan.Mounts.Where(m => m.Kind == PlanMountKind.ReadOnly && m.Path.StartsWith("/work/app", StringComparison.Ordinal)).Select(m => m.Path).ToList();
+
+        Assert.Equal(["/work/app", "/work/app/src"], paths);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_read_only_ancestor_comes_before_a_writable_resource_under_it()
+    {
+        var request = Request() with { ResourceMounts = [new ResourceMount("state", "/a/b/c")], ReadOnlyPaths = ["/a"] };
+        var mounts = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, request).Value.Mounts.ToList();
+
+        var ancestor = mounts.FindIndex(m => m.Kind == PlanMountKind.ReadOnly && m.Path == "/a");
+        var writable = mounts.FindIndex(m => m.Kind == PlanMountKind.State && m.Path == "/a/b/c");
+        Assert.True(ancestor >= 0 && writable > ancestor);   // bwrap applies mounts in order: a later read-only /a would shadow /a/b/c
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_read_only_path_under_a_writable_resource_is_mounted_after_it()
+    {
+        var request = Request() with { ResourceMounts = [new ResourceMount("state", "/x/res")], ReadOnlyPaths = ["/x/res/ro"] };
+        var mounts = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, request).Value.Mounts.ToList();
+
+        var writable = mounts.FindIndex(m => m.Kind == PlanMountKind.State && m.Path == "/x/res");
+        var readOnly = mounts.FindIndex(m => m.Kind == PlanMountKind.ReadOnly && m.Path == "/x/res/ro");
+        Assert.True(writable >= 0 && readOnly > writable);   // the later, deeper mount keeps the path read-only; the other order made it writable again
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_read_only_path_equal_to_a_resource_is_mounted_after_it_and_stays_read_only()
+    {
+        var request = Request() with { ResourceMounts = [new ResourceMount("state", "/x/res")], ReadOnlyPaths = ["/x/res"] };
+        var mounts = ProcessSandboxPlanner.Build(SandboxMechanism.Bubblewrap, request).Value.Mounts.ToList();
+
+        var writable = mounts.FindIndex(m => m.Kind == PlanMountKind.State && m.Path == "/x/res");
+        var readOnly = mounts.FindIndex(m => m.Kind == PlanMountKind.ReadOnly && m.Path == "/x/res");
+        Assert.True(writable >= 0 && readOnly > writable);   // read-only wins on an equal path, as before #2706; #2815 decides whether it should
     }
 }

@@ -55,6 +55,18 @@
   <!-- derived (§11.1): the primary button's pressed fill (white 6.2:1) -->
   <Color x:Key="Color.PrimaryPressed">#4c57be</Color>
   <SolidColorBrush x:Key="Brush.PrimaryPressed" Color="{StaticResource Color.PrimaryPressed}" />
+  <!-- Clickable surfaces (#2535, Theme/ClickableStyles.axaml): the lift under the pointer and the press. The surface ladder steps 4-5 per channel,
+       which nobody sees as a hover, so these sit above it: hover #1c1d20 (+13 over Surface1; Raycast's filled control measures #1b1c1e,
+       design/measured-linear-raycast-2026-11-10.md) with the strong hairline, pressed #222326 with the tertiary one. A row that rests on
+       Surface2 (selected, calm) lifts to the pressed fill under the pointer, so it still moves by a visible step. -->
+  <SolidColorBrush x:Key="Brush.Clickable.Hover" Color="#1c1d20" />
+  <!-- A clickable surface's rest fill: the hover colour at zero alpha (TokenTests pins the match). A Border with no background is not hit-tested,
+       and the colour ease blends each channel straight, so a rest of Transparent (#00FFFFFF) would pass through grey on the way to the hover;
+       this one only gains alpha. -->
+  <SolidColorBrush x:Key="Brush.Clickable.Rest" Color="#001c1d20" />
+  <SolidColorBrush x:Key="Brush.Clickable.HoverBorder" Color="{StaticResource Color.HairlineStrong}" />
+  <SolidColorBrush x:Key="Brush.Clickable.Pressed" Color="#222326" />
+  <SolidColorBrush x:Key="Brush.Clickable.PressedBorder" Color="{StaticResource Color.HairlineTertiary}" />
   <!-- on-primary: primary button text -->
   <Color x:Key="Color.OnPrimary">#ffffff</Color>
   <SolidColorBrush x:Key="Brush.OnPrimary" Color="{StaticResource Color.OnPrimary}" />
@@ -73,6 +85,12 @@
   <!-- derived: Attention at 14 % over Canvas, the needs-you chip background -->
   <Color x:Key="Color.AttentionSoft">#23160c</Color>
   <SolidColorBrush x:Key="Brush.AttentionSoft" Color="{StaticResource Color.AttentionSoft}" />
+  <!-- derived: AttentionSoft lifted one and two steps (about +9 and +15 per channel, hue kept). An attention row lifts within its own
+       colour under the pointer and a press; the grey clickable hover would drop the urgency (#2611). -->
+  <Color x:Key="Color.AttentionSoft.Hover">#2c1f15</Color>
+  <SolidColorBrush x:Key="Brush.AttentionSoft.Hover" Color="{StaticResource Color.AttentionSoft.Hover}" />
+  <Color x:Key="Color.AttentionSoft.Pressed">#32251b</Color>
+  <SolidColorBrush x:Key="Brush.AttentionSoft.Pressed" Color="{StaticResource Color.AttentionSoft.Pressed}" />
   <!-- derived: Attention at 35 % over Surface2, opaque: the hold button's fill -->
   <Color x:Key="Color.AttentionFill">#624328</Color>
   <SolidColorBrush x:Key="Brush.AttentionFill" Color="{StaticResource Color.AttentionFill}" />
@@ -85,6 +103,30 @@
   <!-- derived (S1b): the selected nav background, the running pill -->
   <Color x:Key="Color.PrimarySoft">#1d2036</Color>
   <SolidColorBrush x:Key="Brush.PrimarySoft" Color="{StaticResource Color.PrimarySoft}" />
+  <!-- status chip (#2545), one set per Sindri state: Fg is the state colour, Bg that colour at 14 %, Border at 30 %. Running is the
+       blue Area1 over a Primary tint; Waiting is an amber outline with no fill, so it never reads as Running or as Attention (filled amber).
+       Neutral and Draft stay in the ink greys. One dictionary, as the other tokens: the chip reads the same in both theme variants. -->
+  <SolidColorBrush x:Key="Brush.Status.Ok.Fg" Color="{StaticResource Color.Success}" />
+  <SolidColorBrush x:Key="Brush.Status.Ok.Bg" Color="{StaticResource Color.Success}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Ok.Border" Color="{StaticResource Color.Success}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Running.Fg" Color="{StaticResource Color.Area1}" />
+  <SolidColorBrush x:Key="Brush.Status.Running.Bg" Color="{StaticResource Color.Primary}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Running.Border" Color="{StaticResource Color.Primary}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.Fg" Color="{StaticResource Color.Attention}" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.Bg" Color="Transparent" />
+  <SolidColorBrush x:Key="Brush.Status.Waiting.Border" Color="{StaticResource Color.Attention}" Opacity="0.6" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.Fg" Color="{StaticResource Color.Attention}" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.Bg" Color="{StaticResource Color.Attention}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Attention.Border" Color="{StaticResource Color.Attention}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Fg" Color="{StaticResource Color.Error}" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Bg" Color="{StaticResource Color.Error}" Opacity="0.14" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Border" Color="{StaticResource Color.Error}" Opacity="0.3" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.Fg" Color="{StaticResource Color.InkMuted}" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.Bg" Color="{StaticResource Color.LaneFill}" />
+  <SolidColorBrush x:Key="Brush.Status.Neutral.Border" Color="{StaticResource Color.Hairline}" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.Fg" Color="{StaticResource Color.InkSubtle}" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.Bg" Color="Transparent" />
+  <SolidColorBrush x:Key="Brush.Status.Draft.Border" Color="{StaticResource Color.HairlineStrong}" />
   <!-- context map (F3 spec 1 §2): wire is an edge, a port and a suggested node's dashed border (decoration, 2.4:1 like the
        hairlines; a suggestion is carried by its dash and its words, never by this colour) -->
   <Color x:Key="Color.Wire">#4a4a52</Color>
@@ -120,27 +162,39 @@
   <Color x:Key="Color.Area6">#ff9e8f</Color>
   <SolidColorBrush x:Key="Brush.Area6" Color="{StaticResource Color.Area6}" />
 
-  <!-- §14.2 Type ramp at text scale 1.0: size and line height (px) per step. TextScale.Apply writes scaled copies over
+  <!-- §14.2 Type ramp at text scale 1.0: size and line height (px) and weight per step; values in docs/csharp/sindri-ui-design.md. TextScale.Apply writes scaled copies over
        these (0.9–1.3) and records the scale in Type.Scale; the Typography.axaml styles read them as DynamicResource. -->
   <x:Double x:Key="Type.Scale">1</x:Double>
-  <x:Double x:Key="Type.PageTitle.Size">20</x:Double>
-  <x:Double x:Key="Type.PageTitle.LineHeight">24</x:Double>
-  <x:Double x:Key="Type.DetailTitle.Size">18</x:Double>
-  <x:Double x:Key="Type.DetailTitle.LineHeight">22.5</x:Double>
+  <x:Double x:Key="Type.PageTitle.Size">24</x:Double>
+  <x:Double x:Key="Type.PageTitle.LineHeight">32</x:Double>
+  <FontWeight x:Key="Type.PageTitle.Weight">SemiBold</FontWeight>
+  <x:Double x:Key="Type.SectionTitle.Size">15</x:Double>
+  <x:Double x:Key="Type.SectionTitle.LineHeight">24</x:Double>
+  <FontWeight x:Key="Type.SectionTitle.Weight">SemiBold</FontWeight>
+  <x:Double x:Key="Type.DetailTitle.Size">20</x:Double>
+  <x:Double x:Key="Type.DetailTitle.LineHeight">28</x:Double>
+  <FontWeight x:Key="Type.DetailTitle.Weight">SemiBold</FontWeight>
   <x:Double x:Key="Type.Body.Size">13</x:Double>
-  <x:Double x:Key="Type.Body.LineHeight">19.5</x:Double>
+  <x:Double x:Key="Type.Body.LineHeight">20</x:Double>
+  <FontWeight x:Key="Type.Body.Weight">Normal</FontWeight>
   <x:Double x:Key="Type.BodyStrong.Size">13</x:Double>
-  <x:Double x:Key="Type.BodyStrong.LineHeight">19.5</x:Double>
+  <x:Double x:Key="Type.BodyStrong.LineHeight">20</x:Double>
+  <FontWeight x:Key="Type.BodyStrong.Weight">Medium</FontWeight>
   <x:Double x:Key="Type.Caption.Size">12</x:Double>
-  <x:Double x:Key="Type.Caption.LineHeight">16.8</x:Double>
+  <x:Double x:Key="Type.Caption.LineHeight">16</x:Double>
+  <FontWeight x:Key="Type.Caption.Weight">Normal</FontWeight>
   <x:Double x:Key="Type.Eyebrow.Size">11</x:Double>
-  <x:Double x:Key="Type.Eyebrow.LineHeight">14.3</x:Double>
+  <x:Double x:Key="Type.Eyebrow.LineHeight">16</x:Double>
+  <FontWeight x:Key="Type.Eyebrow.Weight">Medium</FontWeight>
   <x:Double x:Key="Type.Button.Size">13</x:Double>
   <x:Double x:Key="Type.Button.LineHeight">15.6</x:Double>
+  <FontWeight x:Key="Type.Button.Weight">Medium</FontWeight>
   <x:Double x:Key="Type.Mono.Size">12</x:Double>
-  <x:Double x:Key="Type.Mono.LineHeight">18</x:Double>
+  <x:Double x:Key="Type.Mono.LineHeight">16</x:Double>
+  <FontWeight x:Key="Type.Mono.Weight">Normal</FontWeight>
   <x:Double x:Key="Type.Kbd.Size">11</x:Double>
-  <x:Double x:Key="Type.Kbd.LineHeight">14.3</x:Double>
+  <x:Double x:Key="Type.Kbd.LineHeight">16</x:Double>
+  <FontWeight x:Key="Type.Kbd.Weight">Medium</FontWeight>
   <!-- Inter for Linear Display and Text (Avalonia.Fonts.Inter); JetBrains Mono (OFL, embedded under Theme/Fonts) for
        Linear Mono, falling back to the system's mono faces. -->
   <FontFamily x:Key="Font.Text">fonts:Inter#Inter</FontFamily>
@@ -169,9 +223,12 @@
   <CornerRadius x:Key="Radius.LG">12</CornerRadius>
   <CornerRadius x:Key="Radius.Pill">9999</CornerRadius>
 
+  <!-- List row heights (px): Compact is Linear's changelog and nav rows, Default its docs nav row, Comfortable a roomier row. -->
+  <x:Double x:Key="Row.Height.Compact">28</x:Double>
+  <x:Double x:Key="Row.Height.Default">32</x:Double>
+  <x:Double x:Key="Row.Height.Comfortable">40</x:Double>
   <!-- §14.3 Sizes (px). Row and control minimums are scaled with the text by the views that use them. -->
-  <x:Double x:Key="Size.Row">36</x:Double>
-  <x:Double x:Key="Size.RowComfortable">40</x:Double>
+  <x:Double x:Key="Size.PanelHeader">36</x:Double>
   <x:Double x:Key="Size.TopBar">48</x:Double>
   <x:Double x:Key="Size.Sheet">520</x:Double>
   <x:Double x:Key="Size.SheetMin">420</x:Double>
@@ -194,6 +251,8 @@
   <sys:TimeSpan x:Key="Motion.Instant">0:0:0</sys:TimeSpan>
   <sys:TimeSpan x:Key="Motion.Fast">0:0:0.120</sys:TimeSpan>
   <sys:TimeSpan x:Key="Motion.Base">0:0:0.180</sys:TimeSpan>
+  <!-- The ease of a hover or press on a clickable surface (#2535). Measured 150 ms on Linear (linear.app/docs) and Raycast (raycast.com/store): design/measured-linear-raycast-2026-11-10.md. -->
+  <sys:TimeSpan x:Key="Motion.Hover">0:0:0.150</sys:TimeSpan>
   <sys:TimeSpan x:Key="Motion.Pulse">0:0:1.600</sys:TimeSpan>
   <!-- One turn of the in-flight spinner (§4.1 "sending", R2); 0 under reduced motion, where the spinner stands still. -->
   <sys:TimeSpan x:Key="Motion.Spin">0:0:0.900</sys:TimeSpan>

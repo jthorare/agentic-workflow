@@ -24,7 +24,7 @@
       <Border Classes="skeleton" Width="260" />
     </StackPanel>
 
-    <StackPanel x:Name="ProblemLine" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasProblem}">
+    <StackPanel x:Name="ProblemLine" Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasProblem}">
       <icons:StateIcon Glyph="Down" Classes="error" VerticalAlignment="Top" />
       <TextBlock x:Name="ProblemCodeText" Classes="caption error" Text="{Binding ProblemCode}" AutomationProperties.Name="{Binding ProblemCode}" />
       <TextBlock x:Name="ProblemDetailText" Classes="caption" Text="{Binding ProblemDetail}" TextWrapping="Wrap" MaxWidth="440"
@@ -55,18 +55,18 @@
         </Grid>
         <!-- §4.6 (owner, 2026-10-12): the body as served (scrubbed, plain text) and the tracker link. -->
         <TextBlock x:Name="ItemBodyText" Classes="body" Text="{Binding Body}" TextWrapping="Wrap" IsVisible="{Binding HasBody}"
-                   Margin="0,6,0,6" AutomationProperties.Name="{Binding Body}" />
+                   Margin="0,8,0,8" AutomationProperties.Name="{Binding Body}" />
         <Grid Classes="row" ColumnDefinitions="110,*" IsVisible="{Binding HasLink}">
           <TextBlock Classes="caption subtle row-label" Text="{Binding Text.Link}" />
           <TextBlock x:Name="ItemLinkText" Grid.Column="1" Classes="mono" Text="{Binding Link}" AutomationProperties.Name="{Binding Link}" />
         </Grid>
       </StackPanel>
 
-      <StackPanel x:Name="ItemActions" Spacing="6" IsVisible="{Binding HasActions}">
+      <StackPanel x:Name="ItemActions" Spacing="8" IsVisible="{Binding HasActions}">
         <TextBlock Classes="eyebrow" Text="{Binding Text.Actions}" />
         <ItemsControl x:Name="ItemActionList" ItemsSource="{Binding Actions}">
           <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate>
+            <ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vmc:ControlViewModel">
@@ -77,7 +77,7 @@
       </StackPanel>
 
       <Border x:Name="ItemDecisionsCallout" Classes.callout="{Binding HasOpenDecision}">
-      <StackPanel x:Name="ItemDecisions" Spacing="6">
+      <StackPanel x:Name="ItemDecisions" Spacing="8">
         <TextBlock Classes="eyebrow" Text="{Binding Text.Decisions}" />
         <TextBlock x:Name="ItemDecisionsEmpty" Classes="body muted" Text="{Binding Needs.DecisionsEmpty}" TextWrapping="Wrap"
                    IsVisible="{Binding Needs.DecisionsEmpty, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -99,7 +99,7 @@
                 </ItemsControl>
                 <WrapPanel Orientation="Horizontal" IsVisible="{Binding DecideLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                   <Border Classes="pending-line" Focusable="True" AutomationProperties.Name="{Binding LineName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-                    <TextBlock Classes="caption subtle" TextWrapping="Wrap" Margin="0,0,6,0" Text="{Binding DecideLine}" AutomationProperties.AccessibilityView="Raw" />
+                    <TextBlock Classes="caption subtle" TextWrapping="Wrap" Margin="0,0,8,0" Text="{Binding DecideLine}" AutomationProperties.AccessibilityView="Raw" />
                   </Border>
                   <Button Classes="copy" Click="OnCopyDecide" IsVisible="{Binding CanCopy}" AutomationProperties.Name="{Binding CopyName}">
                     <TextBlock Classes="caption" Text="{Binding CopyLabel}" />
@@ -116,14 +116,14 @@
       </StackPanel>
       </Border>
 
-      <StackPanel x:Name="ItemRequests" Spacing="6">
+      <StackPanel x:Name="ItemRequests" Spacing="8">
         <TextBlock Classes="eyebrow" Text="{Binding Text.Requests}" />
         <TextBlock x:Name="ItemRequestsEmpty" Classes="body muted" Text="{Binding Needs.RequestsEmpty}" TextWrapping="Wrap"
                    IsVisible="{Binding Needs.RequestsEmpty, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
         <ItemsControl x:Name="ItemRequestList" ItemsSource="{Binding Needs.Requests}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="item:ItemRequestRow">
-              <StackPanel Spacing="2" Margin="0,0,0,6" AutomationProperties.Name="{Binding Id}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+              <StackPanel Spacing="2" Margin="0,0,0,8" AutomationProperties.Name="{Binding Id}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                   <TextBlock Classes="mono" Text="{Binding Kind}" />
                   <TextBlock Classes="caption subtle" Text="{Binding State}" />
@@ -137,7 +137,7 @@
       </StackPanel>
 
       <!-- The sandbox's Blocked list (SB-6b): what it denied the item's launches, one row per target by kind with its fix. One polite zero-width live region speaks every Allow step; Allow keeps the focus. -->
-      <StackPanel x:Name="ItemBlocked" Spacing="6" IsVisible="{Binding Blocked.IsShown}">
+      <StackPanel x:Name="ItemBlocked" Spacing="8" IsVisible="{Binding Blocked.IsShown}">
         <TextBlock Classes="eyebrow" Text="{Binding Blocked.Heading}" />
         <TextBlock x:Name="ItemBlockedAnnouncement" Classes="caption live-region" Classes.live="{Binding Blocked.Voice.IsAnnouncing}" Width="0" Opacity="0" IsHitTestVisible="False"
                    Text="{Binding Blocked.Voice.Announcement}" />
@@ -148,7 +148,7 @@
         <ItemsControl x:Name="ItemBlockedList" ItemsSource="{Binding Blocked.Rows}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="item:BlockedRowViewModel">
-              <StackPanel Spacing="2" Margin="0,0,0,6">
+              <StackPanel Spacing="2" Margin="0,0,0,8">
                 <Border x:Name="ItemBlockedText" AutomationProperties.Name="{Binding Text}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
                   <StackPanel AutomationProperties.AccessibilityView="Raw">
                     <TextBlock Classes="body-strong" Text="{Binding Line}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
@@ -191,9 +191,15 @@
         </StackPanel>
       </Expander>
 
-      <StackPanel x:Name="ItemTimeline" Spacing="6">
+      <StackPanel x:Name="ItemTimeline" Spacing="8">
         <TextBlock Classes="eyebrow" Text="{Binding Text.Timeline}" />
         <ItemsControl x:Name="TimelineList" ItemsSource="{Binding Timeline}">
+          <!-- Only the rows in the sheet's viewport are built, however long the history is (#2776). -->
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <VirtualizingStackPanel />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="item:TimelineRow">
               <Border Classes="timeline-row" Focusable="True" AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">

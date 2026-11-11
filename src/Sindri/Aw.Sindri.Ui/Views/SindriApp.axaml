@@ -22,7 +22,14 @@
   <Application.Styles>
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/FluentOverrides.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/Typography.axaml" />
+    <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/StatusChip.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Controls/ControlStyles.axaml" />
+    <!-- First of the surface looks: every clickable surface rests on a clear fill, not none. A Border with no background is not hit-tested, so the
+         pointer over its empty space would reach the panel behind and the surface would never be under the pointer (#2535). Each surface's own
+         fill declared below (Border.card, item-row.selected, inbox-row.selected, the Needs You tints) replaces it; ClickableStyles, last, lifts it. -->
+    <Style Selector="Border.clickable">
+      <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Rest}" />
+    </Style>
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Queue/QueueStyles.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/NeedsYou/NeedsYouStyles.axaml" />
     <StyleInclude Source="avares://Aw.Sindri.Ui/Views/Setup/SetupStyles.axaml" />
@@ -70,5 +77,7 @@
       <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.HairlineStrong}" />
     </Style>
+    <!-- Last: a later style wins in Avalonia, so the clickable hover and press beat each surface's resting fill above (Border.card) (#2535). -->
+    <StyleInclude Source="avares://Aw.Sindri.Ui/Theme/ClickableStyles.axaml" />
   </Application.Styles>
 </Application>

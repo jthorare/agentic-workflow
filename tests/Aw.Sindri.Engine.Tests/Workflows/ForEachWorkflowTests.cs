@@ -7,7 +7,7 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>'for_each' and 'collect' on the time-skipping server (PR 9): items run in batches as child workflows, the parent's history stays small, and the values come back in item order.</summary>
 [Lane(TestLane.Integration)]
-public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>
+public sealed class ForEachWorkflowTests
 {
     private static readonly TimeSpan _long = TimeSpan.FromMinutes(4);
 
@@ -21,7 +21,7 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
     [Fact]
     public async Task Two_hundred_items_run_in_batches_and_collect_in_item_order()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each()), GraphRig.Node("tag", "pass", config: new JsonObject { ["value"] = "{{item}}" }),
                 GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{tag.value}}" })],
@@ -45,7 +45,7 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
     public async Task Five_hundred_items_stay_under_the_history_budget()
     {
         // why: the profile's cap is the ceiling (a node's maxItems only lowers it), so 500 items need a profile cap of 500
-        await using var rig = GraphRig.Start(server.Environment, new ForEachLimits(500, ForEachLimits.DefaultBatchSize));
+        await using var rig = await GraphRig.StartAsync(new ForEachLimits(500, ForEachLimits.DefaultBatchSize));
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each(maxItems: 500)), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{item}}" })],
             [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "gather")]));
@@ -64,7 +64,7 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
     [Fact]
     public async Task An_empty_list_collects_an_empty_list()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each()), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{item}}" }), GraphRig.Node("after", "echo")],
             [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "gather"), GraphRig.Edge("gather", "after")]));
@@ -82,7 +82,7 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
     [Fact]
     public async Task An_item_that_skips_the_collect_adds_nothing_and_the_others_keep_their_order()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each()), GraphRig.Node("keep", "condition", config: new JsonObject { ["when"] = "item.keep" }),
                 GraphRig.Node("tag", "pass", config: new JsonObject { ["value"] = "{{item.n}}" }), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{tag.value}}" })],
@@ -103,7 +103,7 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
     [Fact]
     public async Task A_failing_item_stops_the_loop_fails_the_collect_and_skips_what_follows()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each()), GraphRig.Node("bad", "fail"), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{item}}" }), GraphRig.Node("after", "echo")],
             [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "bad"), GraphRig.Edge("bad", "gather"), GraphRig.Edge("gather", "after")]));
@@ -124,7 +124,7 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
     [Fact]
     public async Task More_items_than_maxItems_fail_the_for_each_before_any_item_runs()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each(maxItems: 2)), GraphRig.Node("tag", "pass", config: new JsonObject { ["value"] = "{{item}}" }), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{tag.value}}" })],
             [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "tag"), GraphRig.Edge("tag", "gather")]));
@@ -142,7 +142,7 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
     [Fact]
     public async Task A_for_each_with_no_collect_fails_before_it_runs()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each()), GraphRig.Node("tag", "pass")],
             [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "tag")]));
@@ -157,35 +157,16 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
     }
 
     [Fact]
-    public async Task A_run_agent_in_the_loop_body_fails_the_for_each_before_any_item_runs()
-    {
-        await using var rig = GraphRig.Start(server.Environment);
-        var workflow = await rig.Define(GraphRig.Spec("unlimited",
-            [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each()), GraphRig.Node("work", "run_agent", config: new JsonObject { ["repo"] = "app", ["prompt"] = "{{item}}" }), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{work.status}}" })],
-            [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "work"), GraphRig.Edge("work", "gather")]));
-
-        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, Trigger(Numbers(2)));
-        var run = await rig.Final(started.RunId);
-        var each = (await rig.ItemRuns(started.RunId, "each"))[0];
-
-        Assert.Equal(WorkflowRunStatus.Failed, run.Status);
-        Assert.Equal(NodeRunStatus.Failed, each.Status);
-        Assert.Contains("GRAPH-LOOP-003", each.Error, StringComparison.Ordinal);
-        Assert.False((await rig.ItemRuns(started.RunId, "work")).ContainsKey(1));
-    }
-
-    [Fact]
     public async Task Cancelling_during_an_item_leaves_no_running_row_and_marks_the_rest_skipped()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", config: Each()), GraphRig.Node("wait", "hold"), GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{item}}" })],
             [GraphRig.Edge("start", "each"), GraphRig.Edge("each", "wait"), GraphRig.Edge("wait", "gather")]));
         var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited, Trigger(Numbers(3)));
         await rig.Blocks.Entered.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
 
-        await rig.Client.GetWorkflowHandle(started.RunId.Value).CancelAsync();
-        var run = await rig.Final(started.RunId);
+        var run = await rig.Cancel(started.RunId);
         var waits = await rig.ItemRuns(started.RunId, "wait");
         var gathers = await rig.ItemRuns(started.RunId, "gather");
 
@@ -201,7 +182,7 @@ public sealed class ForEachWorkflowTests(SindriTimeSkippingServer server) : ICla
     [Fact]
     public async Task A_failed_for_each_that_continues_skips_its_body_and_collect_and_the_walk_goes_on()
     {
-        await using var rig = GraphRig.Start(server.Environment);
+        await using var rig = await GraphRig.StartAsync();
         var workflow = await rig.Define(GraphRig.Spec("unlimited",
             [GraphRig.Node("start", "manual"), GraphRig.Node("each", "for_each", onFailure: "continue", config: Each(maxItems: 2)), GraphRig.Node("tell", "echo"),
                 GraphRig.Node("gather", "collect", config: new JsonObject { ["value"] = "{{item}}" }), GraphRig.Node("after", "echo")],

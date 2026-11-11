@@ -216,12 +216,13 @@ check "pod missing: exit 2, state not found" "$RC:$(printf '%s' "$OUT" | grep -c
 rm -f "$POD/no-pod"
 if command -v python3 >/dev/null 2>&1; then
   python3 -I -c 'import socket,sys,time
-s=socket.socket(); s.bind(("127.0.0.1",48999)); s.listen(1); open(sys.argv[1],"w").write("up"); time.sleep(120)' "$WORK/listening" &
+s=socket.socket(); s.bind(("127.0.0.1",0)); s.listen(1); open(sys.argv[1],"w").write(str(s.getsockname()[1])); time.sleep(120)' "$WORK/listening" &
   echo $! > "$WORK/runs/listener.pid"
-  waitfor 10 test -e "$WORK/listening"
-  OUT="$(conn --port 48999)"; RC=$?
+  waitfor 10 test -s "$WORK/listening"
+  TAKEN="$(cat "$WORK/listening")"
+  OUT="$(conn --port "$TAKEN")"; RC=$?
   check "local port taken: exit 2, one line naming the port and --port" \
-    "$RC:$(lines "$OUT"):$(printf '%s' "$OUT" | grep -c 'local port 48999 is taken; pick another with --port'):$(count port-forward)" "2:1:1:0"
+    "$RC:$(lines "$OUT"):$(printf '%s' "$OUT" | grep -c "local port $TAKEN is taken; pick another with --port"):$(count port-forward)" "2:1:1:0"
   kill "$(cat "$WORK/runs/listener.pid")" 2>/dev/null
 fi
 

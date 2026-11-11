@@ -3,19 +3,23 @@ using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Graph;
+using Aw.Sindri.Core.Graph.Ids;
 using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Features.RunWorkflow;
 
 /// <summary>
 /// Starts a run of a workflow's active revision by hand: refuses an unknown workflow (SND-GRAPH-008), one with no active revision (SND-GRAPH-105)
-/// and a payload that is not a JSON object (SND-GRAPH-106), then asks <see cref="IGraphRunStarter"/>, which starts, queues or skips by the workflow's concurrency.
+/// and a payload that is not a JSON object (SND-GRAPH-106), and a loop (SND-GRAPH-109: the caller's session was launched by a run of this same workflow), then asks <see cref="IGraphRunStarter"/>, which starts, queues or skips by the workflow's concurrency.
 /// </summary>
 /// <param name="workflows">The workflows and their revisions.</param>
 /// <param name="runs">The runs; the next manual occurrence comes from them.</param>
 /// <param name="starter">Starts, queues or skips the run.</param>
-internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter) : IService<RunWorkflowRequest, RunWorkflowResponse>
+/// <param name="launches">Which run launched a session; the loop guard (SND-GRAPH-109) reads it.</param>
+/// <param name="callers">The caller; its launch is the session the guard looks up.</param>
+internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunStore runs, IGraphRunStarter starter, IGraphLaunchRuns launches, ICallerContextAccessor callers) : IService<RunWorkflowRequest, RunWorkflowResponse>
 {
     private const string TriggerKind = "manual";
 
@@ -26,6 +30,11 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
         if (payload.IsError)
         {
             return payload.Error;
+        }
+
+        if (await LoopRefusal(request.Slug, cancellationToken).ConfigureAwait(false) is { } loop)
+        {
+            return loop;
         }
 
         var listed = await workflows.List(includeArchived: false, cancellationToken).ConfigureAwait(false);
@@ -53,6 +62,17 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
 
         var trigger = new JsonObject { ["kind"] = TriggerKind, ["payload"] = payload.Value, ["by"] = request.By }.ToJsonString();
         return await Start(new Trigger(record, revision.Value, trigger), cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Error?> LoopRefusal(WorkflowSlug slug, CancellationToken cancellationToken)
+    {
+        if (callers.Current?.Launch is not { } launch)
+        {
+            return null;
+        }
+
+        var parent = await launches.RunOf(launch, cancellationToken).ConfigureAwait(false);
+        return parent.IsError ? parent.Error : WorkflowLoopRule.Decide(parent.Value, slug);
     }
 
     private static Result<JsonObject?> Payload(string? text)

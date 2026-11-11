@@ -142,7 +142,7 @@ internal sealed class SqliteLinearIssueStore(ContextDatabase database) : ILinear
     private static IRowMapper<KeyValuePair<string, int>> CountMapper { get; } = new Mapper<KeyValuePair<string, int>>(r => new KeyValuePair<string, int>(r.GetString(0), r.GetInt32(1)));
 
     private static IRowMapper<LinearSinceChange> ChangeMapper { get; } = new Mapper<LinearSinceChange>(r => new LinearSinceChange(
-        RecordKey.From(r.GetString(0)), r.GetString(1), r.GetString(2), LinearRowReads.Id(r, 3), LinearRowReads.Id(r, 4), SqliteRead.GetTimestamp(r, 5), r.GetString(6)));
+        RecordKey.From(r.GetString(0)), r.GetString(1), r.GetString(2), LinearRowReads.Id(r, 3), LinearRowReads.Id(r, 4), SqliteRead.GetTimestamp(r, 5), r.GetString(6), LinearRowReads.Text(r, 7), LinearRowReads.Text(r, 8)));
 
     private static IRowMapper<LinearSinceMention> MentionMapper { get; } = new Mapper<LinearSinceMention>(r =>
         new LinearSinceMention(RecordKey.From(r.GetString(5)), r.GetString(6), LinearRowReads.ReadComment(r, 0)));

@@ -181,7 +181,7 @@ public sealed class TodoPanelHomeTests : IDisposable
     }
 
     [Fact]
-    public Task The_collapsed_panel_keeps_one_height_whatever_it_holds() => OnUi(async () =>
+    public Task The_collapsed_panel_keeps_one_height_whatever_todos_it_holds_and_an_empty_one_is_shorter() => OnUi(async () =>
     {
         var skeleton = await CollapsedHeight(hold: true, Eight());
         var empty = await CollapsedHeight(hold: false);
@@ -189,7 +189,8 @@ public sealed class TodoPanelHomeTests : IDisposable
         var six = await CollapsedHeight(hold: false, Eight()[..6]);
 
         Assert.True(skeleton > 0);
-        Assert.Equal([skeleton, skeleton, skeleton], [empty, two, six]);
+        Assert.Equal([skeleton, skeleton], [two, six]);
+        Assert.True(empty > 0 && empty < skeleton, string.Create(CultureInfo.InvariantCulture, $"empty {empty} vs {skeleton}"));   // #2548: an empty list collapses to one line
     });
 
     // The collapsed body clips at five rows plus the Show all slot: a row drawn taller than its slot would hide the fifth.
@@ -199,11 +200,24 @@ public sealed class TodoPanelHomeTests : IDisposable
         Serve(Eight());
         var (window, _) = await Connected();
 
-        var body = Named<Control>(window, "TodoCollapsed");
+        var body = Named<Grid>(window, "TodoCollapsed");
         var fifth = Rows(window)[4];
         var bottom = fifth.TranslatePoint(new Point(0, fifth.Bounds.Height), body)!.Value.Y;   // why: both are in the same visual tree
+        var slots = body.RowDefinitions[0].ActualHeight;   // the rows' part: the Show all slot below is not theirs
 
-        Assert.True(bottom <= body.Bounds.Height, string.Create(CultureInfo.InvariantCulture, $"the fifth row ends at {bottom}, the body at {body.Bounds.Height}"));
+        Assert.True(bottom <= slots, string.Create(CultureInfo.InvariantCulture, $"the fifth row ends at {bottom}, the rows' part at {slots}"));
+    });
+
+    // #2546: the collapsed body is six Row.Height.Default slots, and a row is drawn exactly that tall (QueueStyles' item-row MinHeight).
+    [Fact]
+    public Task The_collapsed_body_is_six_rows_of_the_rows_own_height() => OnUi(async () =>
+    {
+        Serve(Eight());
+        var (window, _) = await Connected();
+
+        var row = Assert.IsType<double>(window.FindResource("Row.Height.Default"));
+        Assert.Equal(row * 6, Named<Control>(window, "TodoCollapsed").Bounds.Height);
+        Assert.All(Rows(window).Take(5), r => Assert.Equal(row, r.Bounds.Height));
     });
 
     [Fact]
@@ -257,6 +271,7 @@ public sealed class TodoPanelHomeTests : IDisposable
         Assert.Equal(["Overdue · Thu"], Texts(overdue, "TodoDue"));
         var withChips = rows.Single(r => Texts(r, "TodoText")[0] == "prep the demo script");
         Assert.Equal(["acme/web#40", "acme/web#41", "acme/web#42"], Texts(withChips, "TodoChip"));
+        Assert.All(withChips.GetVisualDescendants().OfType<TextBlock>().Where(t => string.Equals(t.Name, "TodoChip", StringComparison.Ordinal)), c => Assert.DoesNotContain(c.GetVisualAncestors().OfType<Border>(), b => b.Classes.Contains("phrase-chip")));   // muted text after the title, not boxed
         Assert.Equal(["+2"], Texts(withChips, "TodoMoreChips"));
         var agent = rows.Single(r => Texts(r, "TodoText")[0] == "rotate the staging key");
         Assert.Equal(["agent"], Texts(agent, "TodoTag"));
@@ -453,6 +468,53 @@ public sealed class TodoPanelHomeTests : IDisposable
         Assert.True(line.TranslatePoint(new Point(0, line.Bounds.Height), Panel(window))!.Value.Y <= Panel(window).Bounds.Height);
     });
 
+    // #2548: the Connect Linear link starts where the card's own text starts (the empty line's 16 px inset), not 6 px to its left.
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(1280)]
+    public Task Connect_Linear_starts_at_the_left_edge_of_the_empty_line(int width) => OnUi(async () =>
+    {
+        Serve();
+        _server.LinearIssuesAnswer = RouteAnswer.Api("linear-issues", "not-connected");
+        var (window, shell) = await Connected();
+        window.Width = width;
+        await Until(window, () => !shell.Elsewhere.IsLoading && Shown(Panel(window), "ElsewhereFrame"));
+        shell.Elsewhere.SetReviews(loading: false, waiting: 0, failed: false);   // why: with no PRs waiting, Connect Linear is the line's first part, as in the empty Home shot
+        Settle(window);
+        Assert.Equal([Labels.ElsewhereLinearNotConnected], Panel(window).GetVisualDescendants().OfType<Button>().Where(x => x.IsEffectivelyVisible && x.Classes.Contains("elsewhere-part")).Select(x => (x.Content as TextBlock)?.Text), StringComparer.Ordinal);
+
+        var empty = Named<TextBlock>(Panel(window), "TodoEmpty");
+        var link = Panel(window).GetVisualDescendants().OfType<TextBlock>().First(t => t.IsEffectivelyVisible && string.Equals(t.Text, Labels.ElsewhereLinearNotConnected, StringComparison.Ordinal));
+        var emptyLeft = empty.TranslatePoint(default, Panel(window))!.Value.X;   // why: both are in the same visual tree
+        var linkLeft = link.TranslatePoint(default, Panel(window))!.Value.X;
+
+        Assert.True(Math.Abs(emptyLeft - linkLeft) < 0.5, string.Create(CultureInfo.InvariantCulture, $"at {width} px the empty line starts at {emptyLeft}, the Connect Linear link at {linkLeft}"));
+    });
+
+    // #2548: whichever part leads the From elsewhere line starts at the card's text inset, not only Connect Linear.
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(1280)]
+    public Task The_first_elsewhere_part_starts_at_the_left_edge_of_the_empty_line(int width) => OnUi(async () =>
+    {
+        Serve();
+        _server.LinearIssuesAnswer = RouteAnswer.Api("linear-issues", "not-connected");
+        var (window, shell) = await Connected();
+        window.Width = width;
+        await Until(window, () => !shell.Elsewhere.IsLoading && Shown(Panel(window), "ElsewhereFrame"));
+        shell.Elsewhere.SetReviews(loading: false, waiting: 2, failed: false);
+        Settle(window);
+
+        var empty = Named<TextBlock>(Panel(window), "TodoEmpty");
+        var first = Panel(window).GetVisualDescendants().OfType<Button>().First(b => b.IsEffectivelyVisible && b.Classes.Contains("elsewhere-part"));
+        var firstWords = first.GetVisualDescendants().OfType<TextBlock>().First();
+        Assert.StartsWith(Labels.ElsewhereReviews(2), firstWords.Text, StringComparison.Ordinal);   // why: a missing Reviews part would otherwise measure Connect Linear
+        var emptyLeft = empty.TranslatePoint(default, Panel(window))!.Value.X;   // why: both are in the same visual tree
+        var firstLeft = firstWords.TranslatePoint(default, Panel(window))!.Value.X;
+
+        Assert.True(Math.Abs(emptyLeft - firstLeft) < 0.5, string.Create(CultureInfo.InvariantCulture, $"at {width} px the empty line starts at {emptyLeft}, the first From elsewhere part ({firstWords.Text}) at {firstLeft}"));
+    });
+
     [Fact]
     public Task The_panel_keeps_one_height_whatever_the_line_says() => OnUi(async () =>
     {
@@ -462,7 +524,6 @@ public sealed class TodoPanelHomeTests : IDisposable
         var withParts = Panel(window).Bounds.Height;
 
         shell.Elsewhere.SetReviews(loading: false, waiting: 0, failed: false);
-        shell.Elsewhere.SetNeedsYou(0);
         Settle(window);
         var fewer = Panel(window).Bounds.Height;
         shell.Elsewhere.SetReviews(loading: true, waiting: 0, failed: false);

@@ -106,7 +106,7 @@ expect "refuses a relative FIRST_RUN_HOME" 2 "absolute path"
 mkdir -p "$T/real/sindri-app-firstrun" && echo x > "$T/real/sindri-app-firstrun/ledger.db"
 OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_HOME="$T/real/sindri-app-firstrun" FIRST_RUN_REPO_PATH="$REPO" "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
 expect "refuses a first-run-named home that holds files and has no marker" 2 "no .first-run-scratch marker"
-OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_PORT=7410 FIRST_RUN_REPO_PATH="$REPO" "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
+OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_PORT=7410 FIRST_RUN_REPO_PATH="$REPO" "$SCRIPT" up --dry-run 2>&1)"; CODE=$?  # test-ports: ok: dry run, the script refuses or rewrites the port and binds nothing
 expect "refuses the real instance's port" 2 "7410"
 OUT="$(AW_STATE_DIR="$STATE" "$SCRIPT" up --bogus 2>&1)"; CODE=$?
 expect "an unknown option is a usage error" 2 "unknown option"
@@ -179,11 +179,12 @@ else
   if [ -f "$STATE/sindri-app-firstrun/.first-run-scratch" ]; then ok "the home carries the scratch marker"; else fail "the home carries the scratch marker"; fi
   P="$STATE/sindri-app-firstrun/profile/profile.yaml"
   if grep -q "path: $REPO" "$P" && grep -q 'context-docs-refresh' "$P" && grep -q 'enabled: false' "$P" && grep -q '^context:' "$P" && grep -q '^index:' "$P"; then ok "the profile onboards the repo with services, index and context"; else fail "the profile onboards the repo with services, index and context"; sed 's/^/       | /' "$P"; fi
+  # test-ports: ok: the port=N strings are what the stub sindri logged, matched as text; nothing binds them
   if logged "home=sindri-app-firstrun port=7481" && ! logged "port=7480" && ! logged "port=7410"; then ok "every call used the scratch home and port 7481"; else fail "every call used the scratch home and port 7481"; fi
-  before="$(wc -l < "$P")"
+  before="$(wc -l < "$P" | tr -d ' ')"
   run up --no-embeddings --no-graph --no-ui
   expect "a second up finishes too (exit 0)" 0 "context-first-run up: done"
-  if [ "$(wc -l < "$P")" = "$before" ]; then ok "the profile isn't written twice"; else fail "the profile isn't written twice"; fi
+  if [ "$(wc -l < "$P" | tr -d ' ')" = "$before" ]; then ok "the profile isn't written twice"; else fail "the profile isn't written twice"; fi
 
   if logged '--headless' && logged 'services run code-index-main-move' && logged 'context map refresh'; then ok "serve, the index build and the map refresh ran"; else fail "serve, the index build and the map refresh ran"; fi
   if [ -s "$STUB_LOG.mcp" ] && [ "$(sort -u "$STUB_LOG.mcp")" = 1 ]; then ok "every sindri call runs with AW_SINDRI_APP_NO_MCP=1 (no MCP registration in ~/.claude.json)"; else fail "every sindri call runs with AW_SINDRI_APP_NO_MCP=1"; sort "$STUB_LOG.mcp" | uniq -c | sed 's/^/       | /'; fi

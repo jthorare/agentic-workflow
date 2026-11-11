@@ -11,7 +11,7 @@ namespace Aw.Sindri.Infrastructure.Workflow;
 /// projector may lag. The launch's 'launch.started' row names the instance it ran for; that instance's mirrored 'workflow.*' rows, folded oldest first
 /// the way the items projection folds them, say who opened the run that is open now and whether a park, escalation or takeover holds it. The launch is
 /// suspended when it is the actor that opened the open run and that run is held. A failed or attended (click) launch, a replaced run and an ended
-/// instance are not suspended.
+/// instance are not suspended. A graph 'run_agent' node's launch (it names a run and a node, no instance) is suspended while its latest 'workflow.node.taken-over' row is newer than its latest 'workflow.node.handed-back' row.
 /// </summary>
 /// <param name="ledger">The ledger, read-only.</param>
 /// <param name="events">Reads a payload.</param>
@@ -41,9 +41,36 @@ internal sealed class LedgerRunSuspensions(ILedgerReader ledger, EventFactory ev
             return started.Error;
         }
 
-        return started.Value.Instance is { } instance
-            ? await Held(launch, instance, cancellationToken).ConfigureAwait(false)
-            : false;   // an attended (click) launch has no instance to hold it
+        if (started.Value.Instance is { } instance)
+        {
+            return await Held(launch, instance, cancellationToken).ConfigureAwait(false);
+        }
+
+        // why: a graph 'run_agent' node's launch has no instance; a person holding the node pauses its timeout, so the wall pauses too (#2471). An attended (click) launch has neither and is never suspended
+        return started.Value is { Run: { } run, Node: { } node }
+            ? await NodeHeld(run, node, cancellationToken).ConfigureAwait(false)
+            : false;
+    }
+
+    /// <summary>
+    /// Whether the 'run_agent' node (item 0: a loop holds no agent node) is taken over now: its latest 'workflow.node.taken-over' row (#2497) is newer than its latest 'workflow.node.handed-back' row, or no handback exists.
+    /// The rows are found by key, '&lt;type&gt;:&lt;run&gt;:&lt;node&gt;:0:', never by item: a run with no item writes them with none. The prefix ends at the separator, so node 'a' never reads node 'ab'.
+    /// </summary>
+    private async ValueTask<Result<bool>> NodeHeld(string run, string node, CancellationToken cancellationToken)
+    {
+        var taken = await ledger.LatestByKeyPrefix($"{EventTypes.WorkflowNodeTakenOver}:{run}:{node}:0:", cancellationToken).ConfigureAwait(false);
+        if (taken.IsError)
+        {
+            return taken.Error;
+        }
+
+        if (taken.Value is not { } takenOver)
+        {
+            return false;
+        }
+
+        var back = await ledger.LatestByKeyPrefix($"{EventTypes.WorkflowNodeHandedBack}:{run}:{node}:0:", cancellationToken).ConfigureAwait(false);
+        return back.IsError ? back.Error : back.Value is not { } handedBack || takenOver.Sequence > handedBack.Sequence;
     }
 
     /// <summary>Folds the instance's rows oldest first: who opened the run that is open now, and whether a suspension holds it.</summary>

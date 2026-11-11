@@ -11,7 +11,8 @@
 #                                         outside the agent's sandbox, so the agent never needs to write the state dir); exit 1
 #                                         from lane-stop-check = the lane still owes a reply -> exit 2 with the reason on stderr
 #                                         (Codex: the stop is blocked; Cursor: followup_message, capped by loop_limit)
-# The team's meta lane has no lane inbox: UserPromptSubmit / SessionStart / PostToolUse print `aw-meta inbox` the same way.
+# The team's meta lane has no lane inbox: UserPromptSubmit / SessionStart / PostToolUse print `aw-meta inbox --once` the same way
+# (silent when nothing is open; each open message once, a deferred one again when its deferral runs out).
 # Every aw-meta call carries AW_META_HOOK=<event>: only a hook's call counts as hook proof (a hand-typed run does not). Each run
 # writes one line to lane-sessions/<lane>.hook, "<UTC time> meta-lane-gate <event> <outcome>", which `aw-meta health` reads to name
 # why a lane's hooks are not verified (outcomes: ran, not-own-agent, aw-meta-missing, meta-lane, lane-inbox-failed,
@@ -105,7 +106,7 @@ if [ -n "${AW_META_CONFIG:-}" ] && [ -f "$AW_META_CONFIG" ] \
   trace meta-lane
   case "$EVENT" in
     UserPromptSubmit|SessionStart|PostToolUse)
-      OUT="$(AW_LOG_LEVEL=none "$META" inbox 2>&1)"; rc=$?
+      OUT="$(AW_LOG_LEVEL=none "$META" inbox --once 2>&1)"; rc=$?
       [ "$rc" = 0 ] || { failopen "inbox-exit-$rc$(code_of "$OUT")"; exit 0; }
       [ -n "$OUT" ] || exit 0
       if [ "$EVENT" = UserPromptSubmit ]; then

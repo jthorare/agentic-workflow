@@ -27,7 +27,7 @@
       </StackPanel>
     </Border>
 
-    <StackPanel x:Name="ProjectAddLinear" Spacing="6" IsVisible="{Binding IsFromLinear}">
+    <StackPanel x:Name="ProjectAddLinear" Spacing="8" IsVisible="{Binding IsFromLinear}">
       <TextBox x:Name="ProjectAddSearch" Text="{Binding LinearSearch, Mode=TwoWay}" PlaceholderText="{Binding SearchLabel}" AutomationProperties.Name="{Binding SearchLabel}" />
       <Border x:Name="ProjectAddLinearStatus" IsVisible="{Binding LinearStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
               AutomationProperties.Name="{Binding LinearStatus}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
@@ -55,7 +55,7 @@
       <TextBlock x:Name="ProjectAddLinearFootnote" Classes="caption subtle" Text="{Binding LinearFootnote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding LinearFootnote}" />
     </StackPanel>
 
-    <StackPanel x:Name="ProjectAddForm" Spacing="6" IsVisible="{Binding IsByHand}">
+    <StackPanel x:Name="ProjectAddForm" Spacing="8" IsVisible="{Binding IsByHand}">
       <StackPanel Spacing="2">
         <TextBlock Classes="caption subtle" Text="{Binding NameLabel}" AutomationProperties.AccessibilityView="Raw" />
         <TextBox x:Name="ProjectAddName" Text="{Binding Name, Mode=TwoWay}" AutomationProperties.Name="{Binding NameLabel}" />

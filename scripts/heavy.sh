@@ -37,7 +37,15 @@ case $MIN_FREE_MB in ""|*[!0-9]*) MIN_FREE_MB=10240 ;; esac
 # Slot k (k >= 2) needs MIN_FREE_MB + (k-2) * STEP_MB available (owner, 2026-10-15: slot 3 needs 14 GB by default).
 STEP_MB="${AW_HEAVY_MIN_FREE_STEP_MB:-4096}"
 case $STEP_MB in ""|*[!0-9]*) STEP_MB=4096 ;; esac
-mem_ok() { local kb need; need=$((MIN_FREE_MB + (${1:-2} - 2) * STEP_MB)); kb="$(awk '/^MemAvailable:/ {print $2; exit}' /proc/meminfo 2>/dev/null)"; [ -n "$kb" ] && [ "$((kb / 1024))" -ge "$need" ]; }
+# Without /proc/meminfo (macOS), the available figure is vm_stat's free + inactive + speculative pages times its page size,
+# the figure aw-meta reads there; an unreadable figure keeps the guard closed (#2584: macOS had one slot and no meta reserve).
+avail_kb() {
+  local kb; kb="$(awk '/^MemAvailable:/ {print $2; exit}' /proc/meminfo 2> /dev/null)"
+  [ -n "$kb" ] || kb="$(vm_stat 2> /dev/null | awk '/page size of/ {for (i = 1; i <= NF; i++) if ($i == "of") ps = $(i + 1)}
+    /^Pages (free|inactive|speculative):/ {gsub(/\./, "", $NF); n += $NF} END {if (ps > 0 && n > 0) printf "%d", n * ps / 1024}')"
+  printf '%s' "$kb"
+}
+mem_ok() { local kb need; need=$((MIN_FREE_MB + (${1:-2} - 2) * STEP_MB)); kb="$(avail_kb)"; [ -n "$kb" ] && [ "$((kb / 1024))" -ge "$need" ]; }
 TIMEOUT=5400
 # Meta gate reservation (owner, 2026-10-17): the meta orchestrator writes how many box-wide slots its gates reserve
 # (0..SLOTS; every reader caps it at SLOTS-1, so a lane job always has a slot, #2060) to <state>/heavy-meta-reserve, scaled to its merge-queue depth. A job run with AW_HEAVY_PRIORITY=meta may
@@ -86,7 +94,11 @@ HELD=()
 release() { local d; for d in "${HELD[@]+"${HELD[@]}"}"; do unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null || true; done; }
 trap release EXIT
 job=""; dog=""
-stop_job() { [ -n "$job" ] && kill -TERM -- "-$job" 2>/dev/null; [ -n "$dog" ] && kill "$dog" 2>/dev/null; return 0; }
+# signal_job <SIG>: the job's process group, or its pid while the group doesn't exist yet (setsid or perl hasn't made it, #2799).
+signal_job() { kill "-$1" -- "-$job" 2>/dev/null || kill "-$1" "$job" 2>/dev/null; }
+# job_alive: the group (test hosts outlive the job's own pid) or the pid (no group yet) is still there.
+job_alive() { kill -0 -- "-$job" 2>/dev/null || kill -0 "$job" 2>/dev/null; }
+stop_job() { [ -n "$job" ] && signal_job TERM; [ -n "$dog" ] && kill "$dog" 2>/dev/null; return 0; }
 trap 'stop_job; release; exit 130' INT TERM
 
 # reclaim_slot <dir>: free a slot whose holder pid is dead. The holder file is <dir>/owner (this wrapper, ui-evidence), else
@@ -125,13 +137,24 @@ reclaim_slot() {
   rmdir "$d" 2>/dev/null; return 0
 }
 
+# slot_still_allowed <k>: box-wide slot k is within the cap and, for a non-meta job, outside the reserve, as read now.
+# The reserve is clamped by the pass's usable count like the pass does (#2060).
+slot_still_allowed() {
+  local k="$1" cap res
+  cap="$(heavy_cap "$GIVEN_SLOTS")"; [ "$k" -le "$cap" ] || return 1
+  [ "$PRIORITY" = meta ] && return 0
+  res="$(heavy_reserve "$cap")"; [ "$res" -gt "$((usable - 1))" ] && res=$((usable - 1))
+  [ "$k" -gt "$res" ]
+}
+
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
   local label="$1" base="$2" slots="$3" waited=0 printed=0 k d got="" reserve_blocked usable
   while [ -z "$got" ]; do
     reserve_blocked=0
     # Re-read the cap and the reservation each pass: a drained queue releases waiting lane jobs promptly, and a lowered cap
-    # keeps them off the slots above it (nothing running is pre-empted).
+    # keeps them off the slots above it (nothing running is pre-empted). The memory guard below is slow (two vm_stat forks
+    # without /proc/meminfo), so a slot taken is checked again against the cap and reserve read after the take (#2718).
     if [ "$label" = box-wide ]; then
       slots="$(heavy_cap "$GIVEN_SLOTS")"; RESERVE="$(heavy_reserve "$slots")"
       # The reserve also stays below the slots free memory allows this pass, so a lane job keeps one (#2060).
@@ -143,8 +166,12 @@ acquire() {
       # Box-wide slots above 1 need the memory guard; the per-session pool doesn't.
       if [ "$label" = box-wide ] && [ "$PRIORITY" != meta ] && [ "$k" -le "$RESERVE" ]; then [ -d "$d" ] || reserve_blocked=1; continue; fi
       if [ "$k" -gt 1 ] && [ "$label" = box-wide ] && ! mem_ok "$k"; then continue; fi
-      if mkdir "$d" 2>/dev/null; then got="$d"; break; fi
-      if reclaim_slot "$d" && mkdir "$d" 2>/dev/null; then got="$d"; break; fi
+      if mkdir "$d" 2>/dev/null || { reclaim_slot "$d" && mkdir "$d" 2>/dev/null; }; then
+        # Take-then-check (#2718): read the cap and reserve again now the slot is ours. Over the cap, or inside the reserve
+        # for a non-meta job: give the empty slot back (before the owner write) and keep waiting.
+        if [ "$label" = box-wide ] && ! slot_still_allowed "$k"; then rmdir "$d" 2>/dev/null; continue; fi
+        got="$d"; break
+      fi
     done
     [ -n "$got" ] && break
     [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; }
@@ -180,20 +207,25 @@ if [ -n "$is_dotnet_test" ] && [ "$run_max" -gt 0 ]; then
 fi
 # This relies on job control being off (non-interactive bash): the background child is not a group leader, so setsid
 # execs in place, $! is the job's pid and its group id. Under job control setsid would fork and $! would exit at once.
-if command -v setsid >/dev/null 2>&1; then setsid "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' "$@" & fi
+# macOS has no setsid: perl does the same. Its `--` stops perl from reading a command word that starts with - as a perl switch.
+if command -v setsid >/dev/null 2>&1; then setsid "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' -- "$@" & fi
 job=$!
 reason="$(mktemp "${TMPDIR:-/tmp}/heavy-reason.XXXXXX")"
 (
   start=$SECONDS
+  # Arm only once the job's group exists (#2799): setsid or perl makes it some time after the fork, and a kill sent to "-$job"
+  # before then reaches nothing. Wait up to ~5 s in 0.05 s steps, or until the job is gone; past that, signal_job falls back to
+  # the pid. This waits here, not in the wrapper: the wrapper must sit in `wait "$job"`, which reaps a quick job at once.
+  for _ in $(seq 1 100); do kill -0 -- "-$job" 2>/dev/null && break; kill -0 "$job" 2>/dev/null || break; sleep 0.05; done
   while kill -0 "$job" 2>/dev/null; do
     why=""
     [ "$run_max" -gt 0 ] && [ $((SECONDS - start)) -ge $((run_max * 60)) ] && why="ran past AW_HEAVY_RUN_MAX=${run_max}m"
     [ -z "$why" ] && [ -n "$claude_found" ] && ! kill -0 "$session" 2>/dev/null && why="session $session ended"
     if [ -n "$why" ]; then
       echo "$why" > "$reason"
-      kill -TERM -- "-$job" 2>/dev/null
-      for _ in $(seq 1 30); do kill -0 -- "-$job" 2>/dev/null || exit 0; sleep 1; done
-      kill -KILL -- "-$job" 2>/dev/null
+      signal_job TERM
+      for _ in $(seq 1 30); do job_alive || exit 0; sleep 1; done
+      signal_job KILL
       exit 0
     fi
     sleep 5

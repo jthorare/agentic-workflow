@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Aw.Context.Tests.Engine;
 
 /// <summary>The profile check applies the library's home-dependent path rules when the host knows the machine's folders (PR review page spec 2026-11-04 §5.1): validate and approve refuse what the feed would.</summary>
+[Trait("Lane", "unit")]
 public sealed class LibraryCheckSettingsTests
 {
     private static readonly LibraryHost _host = new() { Home = "/home/harbor", SindriHome = "/home/harbor/.agentic-workflow/sindri-app", StateDefault = "/home/harbor/.agentic-workflow" };

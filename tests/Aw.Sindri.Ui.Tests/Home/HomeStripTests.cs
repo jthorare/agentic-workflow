@@ -83,9 +83,9 @@ public sealed class HomeStripTests
         {
             var cells = window.GetVisualDescendants().OfType<Border>().Where(b => b.Classes.Contains("cell")).ToList();
 
-            // Five cells when the status carries an API version; the fixture's has none, so the API cell is left out (HealthViewModelTests).
+            // Three cells: Process, Services, Profile (HealthViewModelTests).
             var served = ((ShellViewModel)window.DataContext!).Health.Detail.Strip.Count;
-            Assert.Equal((true, served), (served >= 4, cells.Count));
+            Assert.Equal((true, served), (served >= 3, cells.Count));
             Assert.True(cells.TrueForAll(c => Math.Abs(c.TranslatePoint(default, window)!.Value.Y - cells[0].TranslatePoint(default, window)!.Value.Y) < 1), "the cells share one row");
         });
     }

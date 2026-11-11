@@ -28,10 +28,12 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Denials;
+using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Text;
+using Aw.Sindri.Core.Toolkits;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine.Effects;
@@ -59,13 +61,16 @@ using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Profile;
 using Aw.Sindri.Infrastructure.Resources;
 using Aw.Sindri.Infrastructure.Sandbox;
+using Aw.Sindri.Infrastructure.Sandbox.Launch;
 using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Infrastructure.Sessions;
 using Aw.Sindri.Infrastructure.Setup;
 using Aw.Sindri.Infrastructure.Skills;
 using Aw.Sindri.Infrastructure.Text;
+using Aw.Sindri.Infrastructure.Toolkits;
 using Aw.Sindri.Infrastructure.Views;
 using Aw.Sindri.Infrastructure.Workflow;
+using Aw.Sindri.Infrastructure.Workflow.Code;
 using Aw.Sindri.Infrastructure.Worktrees;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -96,7 +101,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
         services.AddScopePorts(mac).AddSingleton<IHeavyLockSweep>(static sp => new HeavyLockSweep(sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IDenialFiles>(static sp => new DiskDenialFiles(sp.GetRequiredService<LauncherOptions>().LaunchDirectory, sp.GetRequiredService<JsonSerializerOptions>()))   // SB-4b: the launcher's denials folder
             .AddSingleton<ISessionSandboxes>(static sp => new DiskSessionSandboxes(
-                sp.GetRequiredService<LauncherOptions>().LaunchDirectory, sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<ICgroupStats>(), Sandbox.Launch.PlatformSandboxServiceCollectionExtensions.SliceRelativePath(OwnUid.Read())));   // SB-6a: a session row's sandbox
+                sp.GetRequiredService<LauncherOptions>().LaunchDirectory, sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<ICgroupStats>(), PlatformSandboxServiceCollectionExtensions.SliceRelativePath(OwnUid.Read())));   // SB-6a: a session row's sandbox
 
     /// <summary>systemd and cgroup files on Linux; on macOS (SB-9c) the process group's files, one object for the scope control and the memory kills.</summary>
     private static IServiceCollection AddScopePorts(this IServiceCollection services, bool mac) => mac
@@ -137,8 +142,16 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton(static sp => new ResourceProvisioner(new ResourceStore(Path.Combine(sp.GetRequiredService<ISindriHome>().Path, "resources")), sp.GetRequiredService<LedgerDatabase>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IResourceProvisioner>(static sp => sp.GetRequiredService<ResourceProvisioner>())   // makes an owner's resources exist before a run and books them in ledger.db
             .AddSingleton<IMemoryStore, SqliteMemoryStore>()       // memory stores and facts (agent-first PR 13): memory and memory_fact in ledger.db
+            .AddSingleton<IToolkitCalls, SqliteToolkitCalls>()       // toolkit call log (agent-first PR 16): toolkit_call in ledger.db
+            .AddSingleton<ToolkitCallLog>()
             .AddSingleton<IGraphSeenStore, SqliteSeenStore>()      // what 'only_new' nodes have passed on (agent-first PR 9): workflow_seen in ledger.db
             .AddSingleton<IGraphHttpPort>(static sp => new GraphHttpClient(GraphHttpHandler.Create(), ct => GraphHttpClient.HostsOf(sp.GetRequiredService<IApprovedProfile>(), ct)))   // the 'http' block's client: only 'workflow.http.hosts'
+            .AddSingleton<ICodeCompiler, CodeCompiler>().AddSingleton<ICodeCheck, CodeChecker>()   // the 'code' block's Roslyn compiler (agent-first PR 9c)
+            .AddSingleton(static sp => new CompiledCodeCache(sp.GetRequiredService<ICodeCompiler>(), Path.Combine(sp.GetRequiredService<SindriSettings>().Home, "code-cache"), sp.GetRequiredService<TimeProvider>()))   // compiled assemblies by sha256 of the code and the reference set
+            .AddSingleton<ICodeRunPort>(sp => new SandboxedCodeRunner(
+                sp.GetRequiredService<CompiledCodeCache>(), sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<ISandbox>(),
+                () => BoxHostFacts.Read(environment, sp.GetRequiredService<SindriSettings>().Home, sp.GetRequiredService<ISandboxMachine>()),
+                Path.Combine(sp.GetRequiredService<SindriSettings>().Home, "code-runs"), Path.Combine(AppContext.BaseDirectory, "sindri-code-runner")))   // runs the runner beside 'sindri' in the process sandbox
             .AddConnections();
 
     private static IServiceCollection AddSindriAdapters(this IServiceCollection services, Func<string, string?> environment)
@@ -174,10 +187,12 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IChallenges, ProcessChallenges>()
             .AddSingleton(sp => HeavyLockSettings.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory))
             .AddSingleton<IHeavySlots, DirectoryHeavySlots>()
+            .AddToolkitInfrastructure(environment)
             .AddSingleton<IHarnessVersions, CommandHarnessVersions>()
             .AddSingleton<IOsNotifier, OsascriptNotifier>()          // engine P6 unit (c): the only OS notifier (README X5, X50)
             .AddSingleton<IDeskNotices, FileDeskNotices>()           // engine P6 unit (c): notifications.jsonl
-            .AddSingleton<ITextScrubber>(new RedactingScrubber(Redactor.Default));
+            .AddSingleton<ITextScrubber>(new RedactingScrubber(Redactor.Default))
+            .AddSingleton<ISecretFinder>(new RedactingSecretFinder(Redactor.Default));
     }
 
     /// <summary>The doctor's adapter-backed check sets.</summary>
@@ -221,7 +236,9 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IConnectionProbe>(static _ => new HttpConnectionProbe(new HttpClient()))
             .AddSingleton<IOAuthClient>(static sp => new HttpOAuthClient(new HttpClient(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IMcpConnectionClient>(static _ => new McpConnectionClient(new HttpClient()))
+            .AddSingleton<IConnectionToolPort>(static sp => new ConnectionToolAdapter(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IMcpConnectionClient>(), NoRedirectClient(), sp.GetRequiredService<ITextScrubber>()))
             .AddSingleton<IBrowserOpener>(static _ => new BrowserOpener())
+            .AddSingleton<IConnectionCredentials>(static sp => new ConnectionCredentials(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<ISecretPointers>()))   // #2508: the one token order (connection first, profile pointer second) for the github, slack and linear feeds
             .AddSingleton<IGitHubAccount>(static sp => new Connections.GitHub.GitHubConnectionAccount(sp.GetRequiredService<IConnectionStore>(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<IConnectionPresetCatalog>(), NoRedirectClient(), sp.GetRequiredService<TimeProvider>()))   // #2499: the Reviews tab's GitHub account, from the Connections page
             .AddSingleton<IPollCursors, SqlitePollCursors>()   // PR 11: poll cursors in ledger.db
             .AddSingleton<IEventPoller>(static sp => new GitHubEventPoller(NoRedirectClient(), sp.GetRequiredService<IConnectionSecrets>(), sp.GetRequiredService<TimeProvider>()))

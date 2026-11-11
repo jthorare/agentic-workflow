@@ -32,7 +32,7 @@ public static class MetaErrors
     /// <summary>AW-META-009.</summary>
     public static readonly ErrorDefinition CommandNotStarted = new("AW-META-009", ErrorKind.Unavailable, "A command could not be started");
 
-    /// <summary>AW-META-010: a host figure or tool is unavailable on this OS (the process table, memory, a macOS tool, setsid for the detached recycle waiter).</summary>
+    /// <summary>AW-META-010: a host figure or tool is unavailable on this OS (the process table, memory, a macOS tool, setsid or perl for the detached recycle waiter).</summary>
     public static readonly ErrorDefinition HostUnreadable = new("AW-META-010", ErrorKind.Unavailable, "The process table can't be read");
 
     /// <summary>AW-META-011.</summary>
@@ -74,7 +74,16 @@ public static class MetaErrors
     /// <summary>AW-META-023.</summary>
     public static readonly ErrorDefinition BoardContended = new("AW-META-023", ErrorKind.Conflict, "The team board kept changing under the write");
 
+    /// <summary>AW-META-024.</summary>
+    public static readonly ErrorDefinition NoRequiredChecks = new("AW-META-024", ErrorKind.Conflict, "The base branch has no required checks, so a CI gate has nothing to read");
+
+    /// <summary>AW-META-025.</summary>
+    public static readonly ErrorDefinition WorktreeRootInRepo = new("AW-META-025", ErrorKind.Invalid, "The worktree root is inside the repo");
+
+    /// <summary>AW-META-026.</summary>
+    public static readonly ErrorDefinition WorktreeHomeUnknown = new("AW-META-026", ErrorKind.Invalid, "The home directory is unknown, so the worktree root can't be placed");
+
     /// <summary>Every Meta error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
-        [Invalid, NoTeamConfig, ConfigInvalid, TranscriptUnreadable, MessageNotFound, QuestionNotFound, GateStepNotFound, LogUnwritable, CommandNotStarted, HostUnreadable, ConfigExists, CommandFailed, LogUnreadable, LaneVariablesUnset, LaneNotRecorded, UnknownLane, ClaudeLane, QueueEntryNotFound, TeamAmbiguous, TeamMigrationRefused, RecycleRefused, RecycleTimedOut, BoardContended];
+        [Invalid, NoTeamConfig, ConfigInvalid, TranscriptUnreadable, MessageNotFound, QuestionNotFound, GateStepNotFound, LogUnwritable, CommandNotStarted, HostUnreadable, ConfigExists, CommandFailed, LogUnreadable, LaneVariablesUnset, LaneNotRecorded, UnknownLane, ClaudeLane, QueueEntryNotFound, TeamAmbiguous, TeamMigrationRefused, RecycleRefused, RecycleTimedOut, BoardContended, NoRequiredChecks, WorktreeRootInRepo, WorktreeHomeUnknown];
 }

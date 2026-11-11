@@ -29,7 +29,11 @@ internal sealed partial class GraphWorkflow
         ArgumentNullException.ThrowIfNull(input);
         if (!string.Equals(_asking, input.Node, StringComparison.Ordinal))
         {
-            _ = await Workflow.WaitConditionAsync(() => string.Equals(_asking, input.Node, StringComparison.Ordinal), _askingGrace).ConfigureAwait(true);
+            var reached = await Workflow.WaitConditionAsync(() => string.Equals(_asking, input.Node, StringComparison.Ordinal), _askingGrace).ConfigureAwait(true);
+            if (!reached)
+            {
+                throw NotReached(input.Node);
+            }
         }
 
         Refuse(input);   // why: the state may have moved while the update waited
@@ -53,6 +57,9 @@ internal sealed partial class GraphWorkflow
     }
 
     private static readonly TimeSpan _askingGrace = TimeSpan.FromSeconds(5);
+
+    // why: the grace ran out before the node posted its question, so the answer is early, not late; the text says to retry
+    private static ApplicationFailureException NotReached(string node) => new($"'{node}' is not waiting for an answer yet: the run has not reached that question. Retry in a few seconds", errorType: AnswerRefusal.NotWaiting, nonRetryable: true);
 
     private static ApplicationFailureException NotWaiting(string node) => new($"'{node}' is not waiting for an answer", errorType: AnswerRefusal.NotWaiting, nonRetryable: true);
 
@@ -90,7 +97,7 @@ internal sealed partial class GraphWorkflow
     // why: the sleep is the block's own 'waitedSeconds' (wakeAt minus the block's clock), never wakeAt minus Workflow.UtcNow: the block and
     // the Temporal server keep separate clocks, so comparing them can end a wait at once (it did: the parking tests' fake clock sat months
     // behind the server and every wait node finished before anyone saw it running)
-    private static async Task<GraphBlockOutcome> Sleep(GraphBlockOutcome outcome)
+    internal static async Task<GraphBlockOutcome> Sleep(GraphBlockOutcome outcome)
     {
         var seconds = JsonNode.Parse(outcome.Output ?? "{}")?["waitedSeconds"] is JsonValue v && v.TryGetValue<double>(out var wait) ? wait : 0;
         if (seconds > 0)

@@ -21,6 +21,13 @@
     <Style Selector="TextBlock.region-focus">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Primary}" />
     </Style>
+    <!-- The setup meter's track stays visible at 0 of 5: Surface3 vanishes on the card. -->
+    <Style Selector="ProgressBar.home-meter">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface4}" />
+    </Style>
+    <Style Selector="TextBlock.attention">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
+    </Style>
   </UserControl.Styles>
   <StackPanel Spacing="{StaticResource Size.PanelGap}">
     <TextBlock Classes="page-title" Text="{Binding Text.Home}" AutomationProperties.Name="{Binding Text.Home}" />
@@ -32,11 +39,10 @@
           <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw">
             <TextBlock Classes="body-strong" Text="{Binding Setup.HomeLineText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
             <TextBlock Classes="caption subtle" Text="{Binding Setup.CountText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
-            <TextBlock Classes="caption muted" Text="{Binding Setup.HomeStepText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
           </StackPanel>
         </Button>
         <!-- F3 home spec §1 Q6: the 120 px meter after the words, done steps of all of them; the words above carry the same count. -->
-        <ProgressBar x:Name="SetupHomeMeter" Grid.Column="1" Classes="map-meter" Width="120" MinWidth="0" VerticalAlignment="Center" Minimum="0" Maximum="{Binding Setup.MeterMax}" Value="{Binding Setup.MeterDone}" AutomationProperties.AccessibilityView="Raw" />
+        <ProgressBar x:Name="SetupHomeMeter" Grid.Column="1" Classes="map-meter home-meter" Width="120" MinWidth="0" VerticalAlignment="Center" Minimum="0" Maximum="{Binding Setup.MeterMax}" Value="{Binding Setup.MeterDone}" AutomationProperties.AccessibilityView="Raw" />
         <Button x:Name="SetupHomeContinue" Grid.Column="2" Classes="command-control primary" Click="OnSetupContinue" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.Name="{Binding Setup.ContinueName}">
           <TextBlock Classes="button" Text="{Binding Setup.ContinueText}" AutomationProperties.AccessibilityView="Raw" />
         </Button>
@@ -49,23 +55,23 @@
       <tv:TodoPanel DataContext="{Binding Todo}" />
     </Panel>
 
-    <!-- F3 home spec §2: Needs you on the left; Running (the workflow strip, then With you) and Queued on the right; the health strip across the bottom.
+    <!-- F3 home spec §2: Needs you on the left, the wider main column; Running (the workflow strip, then With you) and Queued on the right; the health strip across the bottom.
          Under 1100 px the columns stack (HomePage.axaml.cs). -->
-    <Grid x:Name="HomeColumns" ColumnDefinitions="*,16,*">
+    <Grid x:Name="HomeColumns" ColumnDefinitions="3*,16,2*">
       <StackPanel x:Name="HomeLeft" Spacing="{StaticResource Size.PanelGap}">
-        <Border x:Name="NeedsYouPanel" Classes="panel" Classes.region-focus="{Binding IsNeedsYouFocused}" PointerEntered="OnNeedsYouPanelEntered" PointerExited="OnNeedsYouPanelExited" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+        <Border x:Name="NeedsYouPanel" Classes="panel" ClipToBounds="True" Classes.region-focus="{Binding IsNeedsYouFocused}" PointerEntered="OnNeedsYouPanelEntered" PointerExited="OnNeedsYouPanelExited" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
           <StackPanel>
             <Border Classes="phead">
               <Grid ColumnDefinitions="*,Auto">
                 <!-- A Grid, not a StackPanel: a horizontal StackPanel measures the summary at its full width, so in a narrow cell it was drawn under the right cell (#1061). -->
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                  <TextBlock Classes="eyebrow" Classes.region-focus="{Binding IsNeedsYouFocused}" Text="{Binding Text.NeedsYouPanel}" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" />
-                  <TextBlock x:Name="NeedsYouSummary" Grid.Column="1" Classes="caption subtle" Text="{Binding Attention.SummaryLine}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                             ToolTip.Tip="{Binding Attention.SummaryLine}" AutomationProperties.Name="{Binding Attention.SummaryLine}" />
+                  <TextBlock Classes="eyebrow" Classes.region-focus="{Binding IsNeedsYouFocused}" Text="{Binding Text.NeedsYouPanel}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Text.NeedsYouPanel}" />
+                  <TextBlock x:Name="NeedsYouSummary" Grid.Column="1" Classes="caption subtle" Text="{Binding Attention.NeedsYouLine}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" IsVisible="{Binding Attention.NeedsYouLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                             ToolTip.Tip="{Binding Attention.NeedsYouLine}" AutomationProperties.Name="{Binding Attention.NeedsYouLine}" />
                 </Grid>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                   <!-- B2: "N marked seen · Undo" for 5 min after Mark all seen; the Undo button is a plain tab stop, and its words are spoken once by NeedsYouSeenLive. -->
-                  <StackPanel x:Name="NeedsYouUndo" Orientation="Horizontal" Spacing="6" IsVisible="{Binding NeedsYou.Seen.UndoOffered}" VerticalAlignment="Center">
+                  <StackPanel x:Name="NeedsYouUndo" Orientation="Horizontal" Spacing="8" IsVisible="{Binding NeedsYou.Seen.UndoOffered}" VerticalAlignment="Center">
                     <TextBlock x:Name="NeedsYouUndoText" Classes="caption subtle" Text="{Binding NeedsYou.Seen.UndoText}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
                     <TextBlock Classes="caption subtle" Text="·" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
                     <Button x:Name="NeedsYouUndoButton" Classes="copy" Click="OnUndoSeen" GotFocus="OnUndoHeld" LostFocus="OnUndoReleased" PointerEntered="OnUndoHeld" PointerExited="OnUndoReleased" AutomationProperties.Name="{Binding Text.UndoMarkAllSeen}">
@@ -79,7 +85,7 @@
                 </StackPanel>
               </Grid>
             </Border>
-            <TextBlock x:Name="NeedsYouBanner" Classes="caption" Text="{Binding NeedsYou.Banner}" IsVisible="{Binding NeedsYou.HasBanner}" Margin="16,6"
+            <TextBlock x:Name="NeedsYouBanner" Classes="caption" Text="{Binding NeedsYou.Banner}" IsVisible="{Binding NeedsYou.HasBanner}" Margin="16,8"
                        TextWrapping="Wrap" AutomationProperties.Name="{Binding NeedsYou.Banner}" />
             <Button x:Name="NeedsYouHeld" Classes="held-pill" Click="OnShowNeedsYouHeld" IsVisible="{Binding NeedsYou.HasHeld}" HorizontalAlignment="Center"
                     AutomationProperties.Name="{Binding NeedsYou.HeldText}">
@@ -100,7 +106,7 @@
             <TextBlock x:Name="NeedsYouEmpty" Classes="caption quiet" Text="{Binding NeedsYou.EmptyLine}" Margin="16,8"
                        IsVisible="{Binding NeedsYou.EmptyLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding NeedsYou.EmptyLine}" />
             <Button x:Name="NeedsYouShowAll" HorizontalAlignment="Left" Classes="copy" Click="OnShowAllNeedsYou" IsVisible="{Binding NeedsYou.HasOverflow}"
-                    AutomationProperties.Name="{Binding NeedsYou.OverflowText}" Margin="16,6">
+                    AutomationProperties.Name="{Binding NeedsYou.OverflowText}" Margin="16,8">
               <TextBlock Classes="caption" Text="{Binding NeedsYou.OverflowText}" />
             </Button>
           </StackPanel>
@@ -128,20 +134,20 @@
         </Button>
 
         <Grid x:Name="PanelGrid" ColumnDefinitions="*" RowDefinitions="Auto,16,Auto" PointerEntered="OnPanelEntered" PointerExited="OnPanelExited">
-          <Border x:Name="RunningPanel" Classes="panel" AutomationProperties.Name="{Binding Text.RunningPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <Border x:Name="RunningPanel" Classes="panel" ClipToBounds="True" AutomationProperties.Name="{Binding Text.RunningPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
             <!-- The panel stretches to its row's height; an empty group's sentence sits centred in the body (states.html .empty). -->
             <DockPanel>
               <Border Classes="phead" DockPanel.Dock="Top">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <TextBlock Classes="eyebrow" Text="{Binding Queue.RunningHeader}" AutomationProperties.Name="{Binding Queue.RunningHeader}" />
-                  <StackPanel x:Name="RunningStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding Queue.IsStale}">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                  <TextBlock Classes="eyebrow" VerticalAlignment="Center" Text="{Binding Queue.RunningHeader}" AutomationProperties.Name="{Binding Queue.RunningHeader}" />
+                  <StackPanel x:Name="RunningStale" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" IsVisible="{Binding Queue.IsStale}">
                     <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
                     <TextBlock Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
                   </StackPanel>
                 </StackPanel>
               </Border>
               <Button DockPanel.Dock="Bottom" HorizontalAlignment="Left" x:Name="RunningShowAll" Classes="copy" Tag="Running" Click="OnShowAll" IsVisible="{Binding Queue.HasMoreRunning}"
-                      AutomationProperties.Name="{Binding Queue.ShowAllRunning}" Margin="16,6">
+                      AutomationProperties.Name="{Binding Queue.ShowAllRunning}" Margin="16,8">
                 <TextBlock Classes="caption" Text="{Binding Queue.ShowAllRunning}" />
               </Button>
               <Panel>
@@ -158,20 +164,20 @@
               </Panel>
             </DockPanel>
           </Border>
-          <Border x:Name="QueuedPanel" Grid.Row="2" Classes="panel" AutomationProperties.Name="{Binding Text.QueuedPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <Border x:Name="QueuedPanel" Grid.Row="2" Classes="panel" ClipToBounds="True" AutomationProperties.Name="{Binding Text.QueuedPanel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
             <!-- The panel stretches to its row's height; an empty group's sentence sits centred in the body (states.html .empty). -->
             <DockPanel>
               <Border Classes="phead" DockPanel.Dock="Top">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <TextBlock Classes="eyebrow" Text="{Binding Queue.QueuedHeader}" AutomationProperties.Name="{Binding Queue.QueuedHeader}" />
-                  <StackPanel x:Name="QueuedStale" Orientation="Horizontal" Spacing="4" IsVisible="{Binding Queue.IsStale}">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                  <TextBlock Classes="eyebrow" VerticalAlignment="Center" Text="{Binding Queue.QueuedHeader}" AutomationProperties.Name="{Binding Queue.QueuedHeader}" />
+                  <StackPanel x:Name="QueuedStale" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" IsVisible="{Binding Queue.IsStale}">
                     <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />
                     <TextBlock Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
                   </StackPanel>
                 </StackPanel>
               </Border>
               <Button DockPanel.Dock="Bottom" HorizontalAlignment="Left" x:Name="QueuedShowAll" Classes="copy" Tag="All" Click="OnShowAll" IsVisible="{Binding Queue.HasMoreQueued}"
-                      AutomationProperties.Name="{Binding Queue.ShowAllQueued}" Margin="16,6">
+                      AutomationProperties.Name="{Binding Queue.ShowAllQueued}" Margin="16,8">
                 <TextBlock Classes="caption" Text="{Binding Queue.ShowAllQueued}" />
               </Button>
               <Panel>
@@ -198,20 +204,10 @@
     <Button x:Name="HealthStrip" Classes="health-strip" Click="OnHealthStrip"
             AutomationProperties.Name="{Binding Health.StripName}">
       <Grid ColumnDefinitions="Auto,*,Auto">
-        <StackPanel x:Name="HealthKeys" Classes="strip-head" Orientation="Horizontal" Spacing="6">
+        <StackPanel x:Name="HealthKeys" Classes="strip-head" Orientation="Horizontal" Spacing="8">
           <TextBlock Classes="eyebrow" Text="{Binding Text.HealthPanel}" VerticalAlignment="Center" />
-          <Border x:Name="GoKeyCap" Classes="kbd" VerticalAlignment="Center">
-            <TextBlock Classes="kbd" Text="{Binding Text.GoKey}" />
-          </Border>
-          <!-- R6: the period is a vector dot (Size.KeyDot, scaled with the text) centred in a cap as tall as G's: a font's
-               period sits on the baseline at speck size, and the cap read as empty. -->
-          <Border x:Name="HealthKeyCap" Classes="kbd" VerticalAlignment="Center" AutomationProperties.Name="{Binding Text.HealthKey}">
-            <Panel Height="{DynamicResource Type.Kbd.LineHeight}">
-              <Ellipse x:Name="HealthKeyDot" Classes="key-dot" HorizontalAlignment="Center" VerticalAlignment="Center" />
-            </Panel>
-          </Border>
           <!-- R3 (§4.1): while the views are stale the strip's values are marked so, as the pill is. -->
-          <StackPanel x:Name="StripStale" Orientation="Horizontal" Spacing="4" Margin="6,0,0,0" VerticalAlignment="Center"
+          <StackPanel x:Name="StripStale" Orientation="Horizontal" Spacing="4" Margin="8,0,0,0" VerticalAlignment="Center"
                       IsVisible="{Binding Pill.IsDataStale}">
             <icons:StateIcon x:Name="StripStaleGlyph" Glyph="Stale" VerticalAlignment="Center" />
             <TextBlock x:Name="StripStaleText" Classes="caption subtle" Text="{Binding Text.Stale}" VerticalAlignment="Center" />
@@ -228,12 +224,10 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vm:HealthCell">
               <Border Classes="cell">
-                <StackPanel>
-                  <TextBlock Classes="eyebrow" Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
-                  <StackPanel Orientation="Horizontal" Spacing="6">
-                    <icons:StateIcon Glyph="{Binding Glyph}" IsVisible="{Binding HasGlyph}" VerticalAlignment="Center" />
-                    <TextBlock Classes="body-strong" Text="{Binding Value}" TextTrimming="CharacterEllipsis" />
-                  </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                  <icons:StateIcon Glyph="{Binding Glyph}" IsVisible="{Binding HasGlyph}" VerticalAlignment="Center" />
+                  <TextBlock Classes="caption subtle" Text="{Binding Label}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  <TextBlock Classes="caption" Classes.attention="{Binding IsAttention}" Text="{Binding Value}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                 </StackPanel>
               </Border>
             </DataTemplate>

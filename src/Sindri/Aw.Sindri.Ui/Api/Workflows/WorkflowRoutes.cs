@@ -7,6 +7,10 @@ internal static class WorkflowRoutes
 
     internal static string List() => Root;
 
+    internal static string ListAll() => Root + "?includeArchived=true";
+
+    internal static string Create() => Root;
+
     internal static string One(string slug) => $"{Root}/{Uri.EscapeDataString(slug)}";
 
     internal static string Runs(string slug) => $"{One(slug)}/runs";

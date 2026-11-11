@@ -19,7 +19,7 @@ public sealed class WatchTests
 
     private WatchService Service(IBoardStore? board = null) => new(
         _world.Config,
-        new WatchPoller(_world.Repo, _world.Resources, _world.InboxCounts, _world.Values, new WatchSweeper(_world.Config, _world.Sweeper, _world.Values), Worlds.Reservation(_world), _world.Context),
+        new WatchPoller(_world.Repo, _world.Resources, _world.InboxCounts, _world.Values, Worlds.FollowUps(_world), Worlds.Reservation(_world), _world.Context),
         _world.Values,
         _world.Delay,
         _world.Clock,
@@ -395,6 +395,100 @@ public sealed class WatchTests
         _ = await Watch(TimeSpan.FromSeconds(360));
 
         Assert.Equal(["INBOX 2 new message(s)"], _lines.Where(l => l.StartsWith("INBOX", StringComparison.Ordinal)), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_is_no_inbox_event_only_a_batched_status_line()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], onPoll: poll =>
+        {
+            if (poll == 1)
+            {
+                _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123").GetAwaiter().GetResult();
+            }
+        });
+
+        _ = await Watch(TimeSpan.FromSeconds(360));
+
+        Assert.Equal(["STATUS 1 new (lanes: ideas)"], _lines.Where(l => l.StartsWith("INBOX", StringComparison.Ordinal) || l.StartsWith("STATUS", StringComparison.Ordinal)), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_that_came_while_no_watch_ran_is_announced_once_and_never_again_by_the_next_watch()
+    {
+        await _world.Ready();
+        await _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123");
+        Script([List(Pr(190, "OPEN", "aaa1111"))]);
+
+        _ = await Watch(TimeSpan.FromSeconds(240));
+        _ = await Watch(TimeSpan.FromSeconds(240));
+
+        Assert.Equal(["STATUS 1 new (lanes: ideas)"], _lines.Where(l => l.StartsWith("STATUS", StringComparison.Ordinal)), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_held_by_the_15_minute_timer_is_announced_by_the_next_watch_once_due()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], onPoll: poll =>
+        {
+            if (poll == 1)
+            {
+                _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123").GetAwaiter().GetResult();
+            }
+            else if (poll == 2)
+            {
+                _world.Receive("m2", "t1-ui", "STATUS: gate started on #12").GetAwaiter().GetResult();
+            }
+        });
+
+        _ = await Watch(TimeSpan.FromSeconds(360));
+        _world.Clock.Advance(TimeSpan.FromMinutes(15));
+        _ = await Watch(TimeSpan.FromSeconds(240));
+
+        Assert.Equal(["STATUS 1 new (lanes: ideas)", "STATUS 1 new (lanes: ui)"], _lines.Where(l => l.StartsWith("STATUS", StringComparison.Ordinal)), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_status_line_read_with_inbox_status_is_never_announced()
+    {
+        await _world.Ready();
+        await _world.Receive("m1", "t1-ideas", "STATUS: review clean on #123");
+        _ = await _world.Messages.MarkShown([Core.Ids.MessageId.From("m1")], _world.Clock.GetUtcNow(), CancellationToken.None);
+        Script([List(Pr(190, "OPEN", "aaa1111"))]);
+
+        _ = await Watch(TimeSpan.FromSeconds(240));
+
+        Assert.DoesNotContain(_lines, l => l.StartsWith("STATUS", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Status_lines_print_at_most_every_15_minutes_and_ride_on_the_next_inbox_event()
+    {
+        await _world.Ready();
+        Script([List(Pr(190, "OPEN", "aaa1111"))], onPoll: poll =>
+        {
+            var message = poll switch
+            {
+                1 => ("m1", "t1-ideas", "STATUS: review clean on #123"),
+                2 => ("m2", "t1-ui", "STATUS: gate started on #12"),
+                3 => ("m3", "t1-api", "please rebase #12"),
+                4 => ("m4", "t1-api", "STATUS: rebased"),
+                _ => default,
+            };
+            if (message.Item1 is not null)
+            {
+                _world.Receive(message.Item1, message.Item2, message.Item3).GetAwaiter().GetResult();
+            }
+        });
+
+        _ = await Watch(TimeSpan.FromSeconds(1200));
+
+        Assert.Equal(
+            ["STATUS 1 new (lanes: ideas)", "INBOX 1 new message(s); STATUS 1 new (lanes: ui)", "STATUS 1 new (lanes: api)"],
+            _lines.Where(l => l.StartsWith("INBOX", StringComparison.Ordinal) || l.StartsWith("STATUS", StringComparison.Ordinal)),
+            StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

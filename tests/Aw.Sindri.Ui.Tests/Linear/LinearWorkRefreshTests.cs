@@ -114,11 +114,12 @@ public sealed class LinearWorkRefreshTests
         _f.Server.LinearSinceGate = gate;
         var held = work.Refresh(LinearFixture.Url, Token);
 
-        await work.Dismiss();
+        await work.MarkAllSeen();
         gate.SetResult();
         await held;
 
-        Assert.Equal((false, 0, 0), (work.ShowsStrip, work.NewCount, work.StripRows.Count));
+        // The card stays and says nothing new.
+        Assert.Equal((true, true, 0, 0), (work.ShowsStrip, work.ShowsNothingNew, work.NewCount, work.StripRows.Count));
     }
 
     [Fact]

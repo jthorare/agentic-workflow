@@ -506,6 +506,7 @@ if [ -f "$SCRIPT_DIR/EXTERNAL_PINS.env" ]; then
   fetch_external_pack "pbakaus/impeccable"   "$(read_pin IMPECCABLE_PIN)"
   fetch_external_pack "emilkowalski/skill"   "$(read_pin EMIL_PIN)"
   fetch_external_pack "Leonxlnx/taste-skill" "$(read_pin TASTE_PIN)"
+  fetch_external_pack "heyitsalec/tdd-artifact" "$(read_pin TDD_ARTIFACT_PIN)"
 else
   echo "  WARN: EXTERNAL_PINS.env missing at $SCRIPT_DIR; skipping external pack install"
 fi

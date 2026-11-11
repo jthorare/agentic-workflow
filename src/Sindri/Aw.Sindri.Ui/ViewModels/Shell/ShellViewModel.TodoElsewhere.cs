@@ -9,7 +9,7 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// <summary>The Todo panel's other places in the shell (<see cref="ShellViewModel"/>, continued; todo spec §3, §5): the From elsewhere line, G T and the focus requests.</summary>
 internal sealed partial class ShellViewModel
 {
-    /// <summary>Focus should move to a list on Home (G T, the palette's Todo row, the From elsewhere line's Needs you part); the window honours it once Home is drawn.</summary>
+    /// <summary>Focus should move to a list on Home (G T, the palette's Todo row); the window honours it once Home is drawn.</summary>
     internal event EventHandler<HomeFocusRequestedEventArgs>? HomeFocusRequested;
 
     /// <summary>The From elsewhere line under the Todo panel's rows.</summary>
@@ -34,6 +34,14 @@ internal sealed partial class ShellViewModel
     {
         Reviews.PropertyChanged += OnReviewsForElsewhere;
         FeedReviews();
+        Health.Banner.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(ViewsBanner.IsStalled), StringComparison.Ordinal))
+            {
+                Elsewhere.SetViewsStalled(Health.Banner.IsStalled);   // Reviews and Linear read through the views: a stall is why they stay unanswered
+            }
+        };
+        Elsewhere.SetViewsStalled(Health.Banner.IsStalled);
         Elsewhere.OpenRequested += (_, e) => OpenElsewhere(e.Part);
         Elsewhere.ConnectRequested += (_, _) => OpenLinearConnection();
         Elsewhere.ReviewsRetryRequested += (_, _) =>
@@ -66,24 +74,9 @@ internal sealed partial class ShellViewModel
             case ElsewherePart.Linear:
                 OpenLinear();
                 break;
-            case ElsewherePart.NeedsYou:
-                FocusNeedsYou();
-                break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(part), part, message: null);
         }
-    }
-
-    // Home, with the first Needs-you row selected (the window moves focus to it).
-    private void FocusNeedsYou()
-    {
-        GoTo(PageId.Home);
-        if (NeedsYou.Rows.Count > 0)
-        {
-            SelectPanelRow(0);
-        }
-
-        HomeFocusRequested?.Invoke(this, new HomeFocusRequestedEventArgs(HomeFocusTarget.NeedsYou));
     }
 
     /// <summary>Shows Home and asks for focus on the Todo panel's first row (G T, the palette's Todo row).</summary>

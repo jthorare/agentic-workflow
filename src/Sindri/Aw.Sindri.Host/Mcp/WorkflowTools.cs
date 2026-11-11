@@ -5,7 +5,7 @@ namespace Aw.Sindri.Host.Mcp;
 
 /// <summary>
 /// The workflow write tools (#2258, PR 8b), plus workflow_docs and workflow_blocks: workflow_create, workflow_apply_ops, workflow_replace, workflow_validate, workflow_activate, workflow_pause, workflow_delete, workflow_run and workflow_cancel.
-/// Each is one call to the service its HTTP route calls, as the session that made the call. The read tools are <see cref="WorkflowReadTools"/>. workflow_run refuses a loop (<see cref="WorkflowLoopGuard"/>).
+/// Each is one call to the service its HTTP route calls, as the session that made the call. The read tools are <see cref="WorkflowReadTools"/>. workflow_run shares the loop guard (SND-GRAPH-109) with the HTTP route and the CLI: it lives in RunWorkflowService.
 /// </summary>
 internal static partial class WorkflowTools
 {
@@ -131,7 +131,7 @@ internal static partial class WorkflowTools
     private static Tool RunTool { get; } = new()
     {
         Name = Run,
-        Description = "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. A session that a run of this workflow launched can't start the workflow again.",
+        Description = "Start a run of a workflow's active revision by hand. It answers started, queued or skipped by the workflow's concurrency. A session that a run of this workflow launched can't start the workflow again (SND-GRAPH-109); that guard does nothing until graph runs launch agent sessions.",
         InputSchema = ContextTools.Schema(new JsonObject
         {
             ["slug"] = ContextTools.Property("string", SlugText),

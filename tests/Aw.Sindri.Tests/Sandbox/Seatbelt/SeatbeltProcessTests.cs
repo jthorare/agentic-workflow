@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Sandbox.Resources;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Testing.Sandbox;
 using Aw.Sindri.Tests.Sandbox.Bubblewrap;

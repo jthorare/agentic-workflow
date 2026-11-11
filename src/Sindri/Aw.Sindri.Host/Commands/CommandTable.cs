@@ -112,7 +112,7 @@ internal static partial class CommandTable
                 .RebuildViews(ct).ConfigureAwait(false),
             ["handoff", .. var rest] => await new HandoffVerbs(client, output, start.EnsureRunning).Run(rest, ct).ConfigureAwait(false),
             ["open", .. var rest] => await new OpenCommand(client, output, start.EnsureRunning, services.GetRequiredService<TimeProvider>()).Run(rest, ct).ConfigureAwait(false),
-            ["queue" or "items" or "item" or "project" or "projects" or "todos" or "todo" or "connection" or "connections" or "memory" or "memories" or "resources", ..] => await ItemOrProject(args, (client, output, services), start, ct).ConfigureAwait(false),
+            ["queue" or "items" or "item" or "project" or "projects" or "todos" or "todo" or "connection" or "connections" or "memory" or "memories" or "resources" or "toolkit" or "toolkits", ..] => await ItemOrProject(args, (client, output, services), start, ct, interrupt.Again).ConfigureAwait(false),
             ["request" or "requests" or "decisions" or "decide" or "needs-you", ..] => await new RequestVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct).ConfigureAwait(false),
             ["index", "connect", .. var rest] => await new IndexConnectVerbs(services, output, environment).Run(["connect", .. rest], ct).ConfigureAwait(false),
             ["services" or "jobs", ..] or ["index", "embed", ..] => await JobCommands.Run(args, (client, output), start.EnsureRunning, services.GetRequiredService<TimeProvider>(), (ct, interrupt.Again)).ConfigureAwait(false),
@@ -266,13 +266,14 @@ internal static partial class CommandTable
 
     private static bool Interactive() => !Console.IsInputRedirected && !Console.IsOutputRedirected;
 
-    private static Task<int> ItemOrProject(string[] args, (ControlPlaneClient Client, Output Output, IServiceProvider Services) host, StartCommand start, CancellationToken ct) => args switch
+    private static Task<int> ItemOrProject(string[] args, (ControlPlaneClient Client, Output Output, IServiceProvider Services) host, StartCommand start, CancellationToken ct, CancellationToken again) => args switch
     {
         ["todo", "note", "set" or "stop", ..] => new TodoNoteVerbs(host.Services, host.Output).Run(args, ct),
         ["todos" or "todo", ..] => new TodoVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c), noteKey: c => TodoNoteTargets.Read(host.Services, c)).Run(args, ct),
         ["project" or "projects", ..] => new ProjectVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         ["connection" or "connections", ..] => new ConnectionVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         ["resources", ..] => new ResourceVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
+        ["toolkit" or "toolkits", ..] => new ToolkitVerbs(host.Client, host.Output, new JobFollower(host.Client, host.Output, host.Services.GetRequiredService<TimeProvider>()), (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct, again),
         ["memory" or "memories", ..] => new MemoryVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
         _ => new ItemVerbs(host.Client, host.Output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct),
     };
