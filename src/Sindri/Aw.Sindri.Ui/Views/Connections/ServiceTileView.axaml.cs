@@ -41,7 +41,7 @@ internal sealed partial class ServiceTileView : UserControl
     // A line of the connection list: the field opens on that connection, not on the tile's first.
     private void OnRenameRow(object? sender, RoutedEventArgs e)
     {
-        if ((sender as Control)?.DataContext is ConnectionRowViewModel row)
+        if (sender is Control { DataContext: ConnectionRowViewModel row })
         {
             Tile?.StartRename(row);
             Dispatcher.UIThread.Post(
