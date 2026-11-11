@@ -194,6 +194,26 @@ public sealed class ConnectionsFramesTests : FrameHost
         Frame(window, "custom-and-titles", Prefix);
     });
 
+    // #2784: each row sized its own columns to its content, so "Connected" started at x=811 on a row with "Refreshed 30m ago" and a third button and at x=708 on one without.
+    // OnConnections seeds three custom rows: linear:work has a refresh time, acme:key and notes:mcp have none (and different action buttons).
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(1280)]
+    public Task Custom_rows_put_the_status_in_one_column(double width) => OnUi(async () =>
+    {
+        var (window, _) = await OnConnections(width);
+        Settle(window);
+
+        var lefts = window.GetVisualDescendants().OfType<Border>()
+            .Where(b => string.Equals(b.Name, "ConnectionRowChip", StringComparison.Ordinal) && b.IsEffectivelyVisible)
+            .Select(b => b.TranslatePoint(new Point(0, 0), window)!.Value.X)
+            .ToList();
+
+        Assert.Equal(3, lefts.Count);
+        var said = string.Join(" vs ", lefts.Select(x => x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)));
+        Assert.True(lefts.Max() - lefts.Min() <= 1, $"the status starts at a different x in each custom row ({said}); expected one column within 1 px at {width.ToString(System.Globalization.CultureInfo.InvariantCulture)} px");
+    });
+
     // Every tile has the same element names, so a lookup by name alone finds the first tile's: look inside this tile's view only.
     private static bool VisibleIn(Window window, object tile, string name) =>
         window.GetVisualDescendants().OfType<Control>().Any(c => c.Name == name && c.IsEffectivelyVisible && c.GetVisualAncestors().OfType<Control>().Any(a => a.DataContext == tile));
