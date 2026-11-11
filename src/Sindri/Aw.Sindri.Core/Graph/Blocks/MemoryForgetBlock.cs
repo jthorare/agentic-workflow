@@ -34,6 +34,28 @@ public sealed class MemoryForgetBlock(IGraphMemoryPort memory) : IGraphBlock
     public BlockOutputs OutputsFor(JsonObject config) => _outputs;
 
     /// <inheritdoc />
+    public IReadOnlyList<(string Field, string Problem)> CheckConfig(JsonObject config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        var fact = ConfigValues.Text(config["fact"])?.Trim();
+        var tag = ConfigValues.Text(config["tag"])?.Trim();
+        // why: a reference may come out empty or full only at run time, so only literals are judged
+        if ((fact is not null && ConfigValues.IsReference(fact)) || (tag is not null && ConfigValues.IsReference(tag)))
+        {
+            return [];
+        }
+
+        if (fact is { Length: 0 })
+        {
+            return [("fact", "is empty; give a fact id, or leave 'fact' out and give a 'tag'")];
+        }
+
+        return (fact is not null) == (tag is { Length: > 0 })
+            ? [(fact is not null ? "fact" : "tag", "give exactly one of 'fact' (a fact id) and 'tag'")]
+            : [];
+    }
+
+    /// <inheritdoc />
     public async ValueTask<Result<BlockResult>> Execute(BlockContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -43,6 +65,12 @@ public sealed class MemoryForgetBlock(IGraphMemoryPort memory) : IGraphBlock
         }
 
         var fact = ConfigValues.Text(context.Config["fact"])?.Trim();
+        if (fact is { Length: 0 })
+        {
+            // why: an explicit empty fact (a reference that came out empty) must not turn into "forget the whole tag"
+            return SindriErrors.GraphBlockFailed.With("memory_forget's 'fact' is empty; give a fact id, or leave 'fact' out and give a 'tag'");
+        }
+
         var tag = ConfigValues.Text(context.Config["tag"])?.Trim();
         var hasFact = !string.IsNullOrEmpty(fact);
         var hasTag = !string.IsNullOrEmpty(tag);

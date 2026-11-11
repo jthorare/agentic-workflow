@@ -1,6 +1,9 @@
+using System.Text.Json.Serialization;
+
 namespace Aw.Sindri.Core.Toolkits;
 
 /// <summary>Where a toolkit stands: from its folder on disk to a running process.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ToolkitState>))]
 public enum ToolkitState
 {
     /// <summary>Not built, or its source changed since the last good build; it can't start.</summary>

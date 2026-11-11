@@ -14,8 +14,8 @@ namespace Aw.Meta.Core.Worktrees;
 /// <param name="paths">Where the gate trees live; the home directory.</param>
 /// <param name="values">Holds when the last sweep started.</param>
 /// <param name="files">When a worktree's files last changed.</param>
-/// <param name="bugfix">The bugfix runs' records, for --discarded.</param>
-public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations processes, MetaPaths paths, IKeyValueStore values, IWorktreeFiles files, IBugfixRecords bugfix)
+/// <param name="bugfix">The bugfix runs' records: --discarded, and the trees of runs whose issue a merged pull request closed.</param>
+public sealed partial class WorktreeInspector(RepoCommands repo, IProcessLocations processes, MetaPaths paths, IKeyValueStore values, IWorktreeFiles files, IBugfixRecords bugfix)
 {
     private const string GateCommitter = "aw-meta@localhost";
     private static readonly string[] _gateCommands = ["gate-run", "gate-rerun", "merge-run"];
@@ -95,7 +95,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             }
         }
 
-        return false;
+        return await ClosedByOneOf(inspection, entry, prs).ConfigureAwait(false);
     }
 
     // A pull request from the list, else one `gh pr view` away (an old one fell off the newest 200); null when GitHub doesn't know it.
@@ -151,14 +151,9 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             return changed.Error;
         }
 
-        var composed = Compose(inspection, entry, gatePr, pull, git.Value with { Changed = changed.Value });
-        if (!inspection.Scope.Discarded)
-        {
-            return composed;
-        }
-
-        var rows = await bugfix.Naming(entry.Path, inspection.Cancellation).ConfigureAwait(false);
-        return rows.IsError ? rows.Error : composed with { Discarded = DiscardedCandidates.Match(entry, rows.Value), NotDiscarded = DiscardedCandidates.WhyNot(entry, rows.Value) };
+        var ahead = await AheadOfPrHead(inspection.Team.Repo, entry, gatePr is null ? pull : null).ConfigureAwait(false);
+        var composed = Compose(inspection, entry, gatePr, pull, git.Value with { Changed = changed.Value, Ahead = ahead });
+        return await WithBugfix(inspection, entry, composed).ConfigureAwait(false);
     }
 
     // The time rule 7 compares a tree with: the later of the last sweep's start and (for a tree whose pull request merged or closed) when it ended; null when there is nothing to compare with.
@@ -176,6 +171,19 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
         var skip = inspection.Team.Worktrees.EffectiveBuildOutputs.Append(".git").ToList();
         var newest = await files.NewestChange(entry.Path, skip, inspection.Cancellation).ConfigureAwait(false);
         return newest.IsError ? newest.Error : newest.Value > since;
+    }
+
+    // How many commits HEAD has that the pull request's recorded head lacks (#2659). A tree that only lags behind that head (it never
+    // pulled the last push) has none. Null when git can't tell, for example when that head is not a local object. Only an ended pull request's branch tree asks (a gate tree passes null).
+    private async ValueTask<int?> AheadOfPrHead(string directory, WorktreeEntry entry, PrBranch? pull)
+    {
+        if (pull is not { State: PrState.Merged or PrState.Closed, Head.Length: > 0 } || string.Equals(pull.Head, entry.Head, StringComparison.Ordinal))
+        {
+            return 0;
+        }
+
+        var ahead = await repo.Git(directory, "rev-list", "--count", pull.Head + ".." + entry.Head).ConfigureAwait(false);
+        return ahead.IsSuccess && int.TryParse(ahead.Value, NumberStyles.None, CultureInfo.InvariantCulture, out var count) ? count : null;
     }
 
     // The git questions about one worktree; the first failure ends it (the worktree is then kept, unjudged).
@@ -223,7 +231,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             HeadMerged = git.NotInMain == 0,
             UnpushedCommits = git.Unpushed,
             DirtyEntries = StatusPorcelain.Significant(git.Status, inspection.Team.Worktrees.EffectiveBuildOutputs),
-            Occupants = [.. inspection.Scan.Where(p => places.Exists(place => p.Paths.Any(path => Inside(place, path))))],
+            Occupants = [.. inspection.Scan.Where(p => places.Exists(place => p.Paths.Any(path => WorktreeRoots.Inside(place, path))))],
             ChangedSinceSweep = git.Changed,
             ChangedSinceEnd = gatePr is null && pull is { State: PrState.Merged or PrState.Closed, EndedAt: { } ended } && !(inspection.Since > ended),
             EndedAtUnknown = gatePr is null && pull is { State: PrState.Merged or PrState.Closed, EndedAt: null },
@@ -231,6 +239,9 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             NoPreviousSweep = inspection.Since is null,
             PrNumber = gatePr is null ? pull?.Number : null,
             PrState = pull?.State,
+            Head = entry.Head,
+            PrHead = HeadOf(pull),
+            CommitsAfterPrHead = git.Ahead,
             Done = inspection.Scope.Done,
             KeepNoPr = !inspection.Scope.IncludeNoPr,
             GatePr = gatePr,
@@ -239,15 +250,11 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
         };
     }
 
-    private sealed record GitFacts(int NotInMain, int Unpushed, string Status, string Physical, string Committer, bool Changed = false);
+    private sealed record GitFacts(int NotInMain, int Unpushed, string Status, string Physical, string Committer, bool Changed = false, int? Ahead = 0);
+
+    private static string HeadOf(PrBranch? pull) => pull?.Head ?? string.Empty;
 
     private static int Count(string text) => int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var count) ? count : 0;
-
-    private static bool Inside(string directory, string path)
-    {
-        var normalized = WorktreeRoots.Normalize(path.EndsWith(" (deleted)", StringComparison.Ordinal) ? path[..^" (deleted)".Length] : path);
-        return normalized == directory || normalized.StartsWith(directory + "/", StringComparison.Ordinal);
-    }
 
     private static bool Same(string a, string b) => WorktreeRoots.Normalize(a) == WorktreeRoots.Normalize(b);
 
@@ -260,39 +267,5 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             && string.Equals(words[0][(words[0].LastIndexOf('/') + 1)..], GateHost, StringComparison.Ordinal)
             && _gateCommands.Contains(words[1], StringComparer.Ordinal)
             && words[2].TrimStart('#') == pr.ToString(CultureInfo.InvariantCulture);
-    }
-
-    // What one inspection shares between its worktrees.
-    private sealed class Inspection(TeamConfig team, MetaPaths paths, List<PrBranch> pulls, IReadOnlyList<ProcessLocation> scan, DateTimeOffset? since, CancellationToken cancellation)
-    {
-        internal DateTimeOffset? Since { get; } = since;
-
-        internal WorktreeScope Scope { get; init; } = WorktreeScope.All;
-
-        internal CancellationToken Cancellation { get; } = cancellation;
-
-        internal TeamConfig Team { get; } = team;
-
-        internal List<PrBranch> Pulls { get; } = pulls;
-
-        internal IReadOnlyList<ProcessLocation> Scan { get; } = scan;
-
-        internal IReadOnlyList<string> Roots { get; } = team.Worktrees.EffectiveRoots(team.Repo, paths.GatesDirectory, paths.Home);
-
-        private static bool IsGateTreeName(string name) => string.Equals(name, "tree", StringComparison.Ordinal) || string.Equals(name, "main-tree", StringComparison.Ordinal);
-
-        // gates/<pr>/tree and gates/<pr>/main-tree belong to that pull request's gate.
-        internal int? GatePr(string path)
-        {
-            var prefix = WorktreeRoots.Normalize(paths.GatesDirectory) + "/";
-            var normalized = WorktreeRoots.Normalize(path);
-            if (!normalized.StartsWith(prefix, StringComparison.Ordinal))
-            {
-                return null;
-            }
-
-            var parts = normalized[prefix.Length..].Split('/');
-            return parts.Length == 2 && IsGateTreeName(parts[1]) && int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var pr) ? pr : null;
-        }
     }
 }

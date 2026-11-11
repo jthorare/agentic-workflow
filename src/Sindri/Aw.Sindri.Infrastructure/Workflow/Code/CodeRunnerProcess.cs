@@ -5,8 +5,6 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Infrastructure.Processes;
 
-// why: nothing in the product uses this type until the Code block (the next PR) registers it; the tests reach it through InternalsVisibleTo
-#pragma warning disable MA0182
 namespace Aw.Sindri.Infrastructure.Workflow.Code;
 
 /// <summary>Runs a compiled body in a 'sindri-code-runner' process: the input goes in on stdin, the result comes back on stdout, and the process is killed at the timeout.</summary>
@@ -59,8 +57,8 @@ internal sealed class CodeRunnerProcess(IReadOnlyList<string> runner, Func<IRead
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(limits.Timeout);
-        var output = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
-        var error = process.StandardError.ReadToEndAsync(CancellationToken.None);
+        var output = Drain(process.StandardOutput.BaseStream, CodeLimits.MaxResultBytes, keepTail: false);
+        var error = Drain(process.StandardError.BaseStream, CodeLimits.MaxStderrBytes, keepTail: true);
         try
         {
             await process.StandardInput.WriteAsync(inputJson.AsMemory(), deadline.Token).ConfigureAwait(false);
@@ -72,7 +70,8 @@ internal sealed class CodeRunnerProcess(IReadOnlyList<string> runner, Func<IRead
             process.Kill(entireProcessTree: true);   // the timeout or the caller: never leave the runner running
             await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
             cancellationToken.ThrowIfCancellationRequested();
-            return SindriErrors.CodeTimeout.With($"the code ran past its limit of {limits.Timeout.TotalSeconds.ToString("0.###", CultureInfo.InvariantCulture)} s");
+            var partial = StderrText(await error.ConfigureAwait(false));   // what the code wrote before the kill shows that it ran
+            return SindriErrors.CodeTimeout.With($"the code ran past its limit of {limits.Timeout.TotalSeconds.ToString("0.###", CultureInfo.InvariantCulture)} s{(partial.Length == 0 ? string.Empty : ": " + partial)}");
         }
         catch (IOException)
         {
@@ -81,14 +80,66 @@ internal sealed class CodeRunnerProcess(IReadOnlyList<string> runner, Func<IRead
         }
 
         var stdout = await output.ConfigureAwait(false);
-        var message = (await error.ConfigureAwait(false)).Trim();
+        var message = StderrText(await error.ConfigureAwait(false));
         return process.ExitCode switch
         {
-            0 => stdout,
+            0 when stdout.Cut => SindriErrors.CodeFailed.With("the result is larger than the cap of 1 MiB"),
+            0 when stdout.Text.Length == 0 => SindriErrors.CodeFailed.With("the code ended without a result (did it call Environment.Exit?)"),
+            0 => stdout.Text,
             2 => SindriErrors.CodeRunnerUnavailable.With(message),
             3 => SindriErrors.CodeMemory.With("the code ran out of memory"),
             4 => SindriErrors.CodeFailed.With(message),
             var other => SindriErrors.CodeFailed.With($"the runner ended with code {other.ToString(CultureInfo.InvariantCulture)}{(message.Length == 0 ? string.Empty : ": " + message)}"),
         };
     }
+
+    private static string StderrText(Drained stderr)
+    {
+        var text = stderr.Text.Trim();
+        return stderr.Cut ? "(stderr cut at 8 KiB: only the last part is kept) " + text : text;
+    }
+
+    // why: the pipe is read to its end even past the cap, so the child never blocks on a full pipe; only the cap's worth is kept
+    private static async Task<Drained> Drain(Stream stream, int cap, bool keepTail)
+    {
+        var buffer = new byte[8192];
+        var kept = new MemoryStream();
+        var cut = false;
+        int read;
+        while ((read = await stream.ReadAsync(buffer, CancellationToken.None).ConfigureAwait(false)) > 0)
+        {
+            if (keepTail)
+            {
+                await kept.WriteAsync(buffer.AsMemory(0, read)).ConfigureAwait(false);
+                if (kept.Length > 2L * cap)
+                {
+                    kept = Tail(kept, cap);
+                    cut = true;
+                }
+            }
+            else
+            {
+                var room = Math.Max(0, cap - (int)kept.Length);
+                cut |= read > room;
+                await kept.WriteAsync(buffer.AsMemory(0, Math.Min(read, room))).ConfigureAwait(false);
+            }
+        }
+
+        if (keepTail && kept.Length > cap)
+        {
+            kept = Tail(kept, cap);
+            cut = true;
+        }
+
+        return new Drained(System.Text.Encoding.UTF8.GetString(kept.GetBuffer(), 0, (int)kept.Length), cut);
+    }
+
+    private static MemoryStream Tail(MemoryStream source, int count)
+    {
+        var tail = new MemoryStream(count);
+        tail.Write(source.GetBuffer(), (int)source.Length - count, count);
+        return tail;
+    }
+
+    private sealed record Drained(string Text, bool Cut);
 }

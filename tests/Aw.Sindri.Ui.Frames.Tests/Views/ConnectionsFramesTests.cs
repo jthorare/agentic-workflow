@@ -130,6 +130,52 @@ public sealed class ConnectionsFramesTests : FrameHost
         Frame(window, "tile-help-1000", Prefix);
     });
 
+    // #2556: Rename opens an inline field on the tile holding the current label; at 1000 px (the window's narrowest) the field, its Save and its error stay inside the tile.
+    [Fact]
+    public Task A_tile_in_rename_mode_shows_the_field_with_the_label_and_nothing_clips_at_1000() => OnUi(async () =>
+    {
+        var (window, shell) = await OnConnections(1000);
+        var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "linear", StringComparison.Ordinal));
+        tile.StartRename();
+        tile.RenameText = "home-office";
+        Server.ConnectionWriteError = new Kernel.Error("SND-CONN-010", Kernel.ErrorKind.Conflict, "A connection with that name already exists");
+        await tile.Rename(CancellationToken.None);
+        Settle(window);
+
+        Assert.True(VisibleIn(window, tile, "ServiceTileRenameField"), "the field is hidden");
+        Assert.True(VisibleIn(window, tile, "ServiceTileRenameSave"), "Save is hidden");
+        Assert.True(VisibleIn(window, tile, "ServiceTileRenameError"), "the refusal is hidden");
+        var field = window.GetVisualDescendants().OfType<TextBox>().Single(b => string.Equals(b.Name, "ServiceTileRenameField", StringComparison.Ordinal) && b.IsEffectivelyVisible);
+        Assert.Equal("home-office", field.Text);
+        var frame = field.GetVisualAncestors().OfType<Border>().First(b => string.Equals(b.Name, "ServiceTileFrame", StringComparison.Ordinal));
+        Assert.True(field.TranslatePoint(new Point(field.Bounds.Width, 0), frame)!.Value.X <= frame.Bounds.Width, "the field ends inside the tile");
+        Frame(window, "tile-rename-1000", Prefix);
+    });
+
+    // #2556 qa: the field takes the label line's place (between the chip and "Last used"); the label shows once and comes back on Cancel.
+    [Fact]
+    public Task Renaming_puts_the_field_where_the_label_line_was_and_Cancel_brings_the_line_back() => OnUi(async () =>
+    {
+        var (window, shell) = await OnConnections(1000);
+        var tile = shell.Connections.Tiles.Single(t => string.Equals(t.Id, "linear", StringComparison.Ordinal));
+        Settle(window);
+        Assert.True(VisibleIn(window, tile, "ServiceTileSubtitle"), "the label line is hidden before renaming");
+
+        tile.StartRename();
+        Settle(window);
+
+        Assert.False(VisibleIn(window, tile, "ServiceTileSubtitle"), "the label shows twice");
+        var field = window.GetVisualDescendants().OfType<TextBox>().Single(b => string.Equals(b.Name, "ServiceTileRenameField", StringComparison.Ordinal) && b.IsEffectivelyVisible);
+        var lastUsed = window.GetVisualDescendants().OfType<TextBlock>().Single(b => string.Equals(b.Name, "ServiceTileLastUsed", StringComparison.Ordinal) && b.IsEffectivelyVisible && b.GetVisualAncestors().OfType<Control>().Any(a => a.DataContext == tile));
+        Assert.True(field.TranslatePoint(new Point(0, 0), window)!.Value.Y < lastUsed.TranslatePoint(new Point(0, 0), window)!.Value.Y, "the field sits under Last used");
+        Assert.Equal(tile.Text.RenameLabel, Avalonia.Automation.AutomationProperties.GetName(field));
+
+        tile.CancelRename();
+        Settle(window);
+
+        Assert.True(VisibleIn(window, tile, "ServiceTileSubtitle"), "the label line did not come back");
+    });
+
     // qa (#2537): the custom row has ONE top edge (the panel's), a "Custom" label sits above it, and every tile's title sits at the same y with or without the menu button.
     [Fact]
     public Task The_custom_section_has_a_label_and_one_top_edge_and_the_tile_titles_line_up() => OnUi(async () =>

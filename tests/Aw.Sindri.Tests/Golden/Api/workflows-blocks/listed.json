@@ -467,6 +467,75 @@
               }
             ]
           }
+        },
+        {
+          "type": "workflow_result",
+          "title": "Workflow result",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "workflow",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "run",
+              "type": "text",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "runId": "string",
+            "status": "string",
+            "finishedAt": "string?",
+            "outputs": "any?"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "workflow": "triage",
+            "run": "latest-succeeded"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Report",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "daily",
+                "type": "schedule",
+                "config": {
+                  "cron": "0 8 * * *"
+                }
+              },
+              {
+                "id": "result",
+                "type": "workflow_result",
+                "config": {
+                  "workflow": "triage",
+                  "run": "latest-succeeded"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Triage last ran {{result.finishedAt}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "daily",
+                "to": "result"
+              },
+              {
+                "from": "result",
+                "to": "tell"
+              }
+            ]
+          }
         }
       ]
     },
@@ -675,6 +744,90 @@
     {
       "group": "Logic",
       "blocks": [
+        {
+          "type": "code",
+          "title": "Code",
+          "isTrigger": false,
+          "config": [
+            {
+              "name": "input",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "code",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "repo",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "branch",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "timeout",
+              "type": "text",
+              "required": false
+            },
+            {
+              "name": "memoryMb",
+              "type": "number",
+              "required": false
+            }
+          ],
+          "outputs": {
+            "result": "any?"
+          },
+          "branches": [
+            "out"
+          ],
+          "exampleConfig": {
+            "input": "{{triage.items}}",
+            "code": "return input!.AsArray().Where(i => i![\"score\"]!.GetValue<int>() > 100).Select(i => i![\"title\"]!.GetValue<string>()).ToArray();"
+          },
+          "exampleSpec": {
+            "version": 1,
+            "name": "Titles over 100",
+            "concurrency": "one-per-workflow",
+            "nodes": [
+              {
+                "id": "start",
+                "type": "manual",
+                "config": {}
+              },
+              {
+                "id": "filter",
+                "type": "code",
+                "config": {
+                  "input": "{{trigger.payload.items}}",
+                  "code": "return input!.AsArray().Where(i => i![\"score\"]!.GetValue<int>() > 100).Select(i => i![\"title\"]!.GetValue<string>()).ToArray();"
+                }
+              },
+              {
+                "id": "tell",
+                "type": "notify",
+                "config": {
+                  "title": "Over 100: {{filter.result}}"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "filter"
+              },
+              {
+                "from": "filter",
+                "to": "tell"
+              }
+            ]
+          }
+        },
         {
           "type": "collect",
           "title": "Collect",
@@ -1103,14 +1256,15 @@
           ],
           "outputs": {
             "id": "string",
-            "action": "string"
+            "action": "string",
+            "warning": "string?"
           },
           "branches": [
             "out"
           ],
           "exampleConfig": {
             "memory": "drift-check",
-            "fact": "Checked api-repo at {{agent.checkedCommit}}",
+            "fact": "Checked api-repo at {{trigger.payload.commit}}",
             "tags": [
               "checks"
             ],

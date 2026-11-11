@@ -3,7 +3,7 @@ using Aw.Sindri.Infrastructure.Workflow.Code;
 
 namespace Aw.Sindri.Tests.Workflow.Code;
 
-/// <summary>The compiled-assembly cache (agent-first PR 9c): the same code and reference set compile once.</summary>
+/// <summary>The compiled-assembly cache (agent-first PR 9c): the same code and compiler fingerprint compile once.</summary>
 [Lane(TestLane.Unit)]
 public sealed class CompiledCodeCacheTests : IDisposable
 {
@@ -17,8 +17,8 @@ public sealed class CompiledCodeCacheTests : IDisposable
         var compiler = new CountingCompiler("refs-1");
         var cache = new CompiledCodeCache(compiler, _directory.FullName);
 
-        var first = cache.Resolve("return 1;");
-        var second = cache.Resolve("return 1;");
+        var first = cache.Resolve("return 1;", TestContext.Current.CancellationToken);
+        var second = cache.Resolve("return 1;", TestContext.Current.CancellationToken);
 
         Assert.Equal(1, compiler.Calls);
         Assert.NotNull(first.AssemblyPath);
@@ -27,13 +27,28 @@ public sealed class CompiledCodeCacheTests : IDisposable
     }
 
     [Fact]
+    public void An_empty_cached_assembly_is_a_miss_and_is_compiled_again()
+    {
+        var compiler = new CountingCompiler("refs-1");
+        var cache = new CompiledCodeCache(compiler, _directory.FullName);
+        var first = cache.Resolve("return 1;", TestContext.Current.CancellationToken);
+        File.WriteAllBytes(first.AssemblyPath!, []);   // what a crash mid-write leaves
+
+        var second = cache.Resolve("return 1;", TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, compiler.Calls);
+        Assert.Equal(first.AssemblyPath, second.AssemblyPath);
+        Assert.True(new FileInfo(second.AssemblyPath!).Length > 0);
+    }
+
+    [Fact]
     public void Different_code_or_a_different_reference_set_compiles_again()
     {
         var one = new CountingCompiler("refs-1");
-        _ = new CompiledCodeCache(one, _directory.FullName).Resolve("return 1;");
-        _ = new CompiledCodeCache(one, _directory.FullName).Resolve("return 2;");
+        _ = new CompiledCodeCache(one, _directory.FullName).Resolve("return 1;", TestContext.Current.CancellationToken);
+        _ = new CompiledCodeCache(one, _directory.FullName).Resolve("return 2;", TestContext.Current.CancellationToken);
         var other = new CountingCompiler("refs-2");
-        _ = new CompiledCodeCache(other, _directory.FullName).Resolve("return 1;");
+        _ = new CompiledCodeCache(other, _directory.FullName).Resolve("return 1;", TestContext.Current.CancellationToken);
 
         Assert.Equal(2, one.Calls);
         Assert.Equal(1, other.Calls);
@@ -45,8 +60,8 @@ public sealed class CompiledCodeCacheTests : IDisposable
         var compiler = new CountingCompiler("refs-1", fail: true);
         var cache = new CompiledCodeCache(compiler, _directory.FullName);
 
-        var first = cache.Resolve("nonsense");
-        _ = cache.Resolve("nonsense");
+        var first = cache.Resolve("nonsense", TestContext.Current.CancellationToken);
+        _ = cache.Resolve("nonsense", TestContext.Current.CancellationToken);
 
         Assert.Null(first.AssemblyPath);
         Assert.Equal("CS0000", Assert.Single(first.Diagnostics).Id);
@@ -54,13 +69,30 @@ public sealed class CompiledCodeCacheTests : IDisposable
         Assert.Empty(_directory.GetFiles());
     }
 
-    private sealed class CountingCompiler(string referenceSet, bool fail = false) : ICodeCompiler
+    [Fact]
+    public void The_check_forgets_its_failing_bodies_once_it_holds_the_limit()
+    {
+        var compiler = new CountingCompiler("refs-1", fail: true);
+        var cache = new CompiledCodeCache(compiler, _directory.FullName);
+        for (var i = 0; i < CompiledCodeCache.FailedLimit; i++)
+        {
+            _ = cache.Check("bad " + i.ToString(System.Globalization.CultureInfo.InvariantCulture), TestContext.Current.CancellationToken);
+        }
+
+        _ = cache.Check("bad 0", TestContext.Current.CancellationToken);   // still remembered: the map holds exactly the limit
+        _ = cache.Check("one more", TestContext.Current.CancellationToken);   // the map is full, so it starts over
+        _ = cache.Check("bad 0", TestContext.Current.CancellationToken);   // forgotten: compiles again
+
+        Assert.Equal(CompiledCodeCache.FailedLimit + 2, compiler.Calls);
+    }
+
+    private sealed class CountingCompiler(string fingerprint, bool fail = false) : ICodeCompiler
     {
         public int Calls { get; private set; }
 
-        public string ReferenceSet { get; } = referenceSet;
+        public string Fingerprint { get; } = fingerprint;
 
-        public CodeCompilation Compile(string body)
+        public CodeCompilation Compile(string body, CancellationToken cancellationToken)
         {
             Calls++;
             return fail

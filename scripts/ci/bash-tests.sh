@@ -116,7 +116,9 @@ SERIAL=(
   "scripts/tests/heavy-reclaim-leftovers.test.sh	bounds each take at 6 s and needs the \"kept\" rows to time out; a loaded machine can push a real take past it"
   "scripts/tests/heavy-dead-holder.test.sh	bounds each take at 6 s and needs the \"kept\" rows to time out; a loaded machine can push a real take past it"
   "scripts/tests/heavy-cap-reserve.test.sh	bounds the wrapper row at 5 s and needs it to time out while waiting; a loaded machine can push a real take past it"
+  "scripts/tests/heavy-stale-cap.test.sh	bounds each wrapper row at 5 s and times the cap change against a 0.7 s awk shim; a loaded machine shifts the window"
   "scripts/tests/heavy-full-reserve.test.sh	bounds each locks.sh take at 5 s from outside; a loaded machine can push a real take past it"
+  "scripts/tests/heavy-pgid-race.test.sh	bounds each case at 10 s against a 1 s slow setsid/perl stub and the watchdog's 5 s group wait; a loaded machine shifts it (#2799)"
   "scripts/tests/ci-runner-parity.test.sh	runs heavy-cap-reserve.test.sh (timing-bound, see its row) under a stripped PATH and without /proc/meminfo; in the parallel pool its wrapper row timed out once in 6 runs (#2584)"
   "scripts/tests/readiness-baseline.test.sh	asserts a 200 ms gh timeout (READINESS_GH_TIMEOUT_MS) fires against a 3 s stub and is reported as the timeout, not a parse error"
 )

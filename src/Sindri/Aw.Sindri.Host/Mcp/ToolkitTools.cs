@@ -3,7 +3,6 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Kernel.Services;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Toolkits;
 using Aw.Sindri.Features.BuildToolkit;
@@ -19,7 +18,7 @@ namespace Aw.Sindri.Host.Mcp;
 /// Toolkits over /sindri/mcp (agent-first PR 16): every running, unpaused toolkit's tools are listed as '&lt;toolkit&gt;__&lt;tool&gt;' with the manifest's schema, and a call to one goes to the runtime
 /// (<see cref="IRunningToolkits"/>); the answer is untrusted text, so every string in it is fenced. The five toolkit_* management tools are listed always.
 /// </summary>
-internal static class ToolkitTools
+internal static partial class ToolkitTools
 {
     /// <summary>toolkit_list's name.</summary>
     internal const string List = "toolkit_list";
@@ -33,6 +32,15 @@ internal static class ToolkitTools
     /// <summary>toolkit_stop's name.</summary>
     internal const string Stop = "toolkit_stop";
 
+    /// <summary>toolkit_create's name.</summary>
+    internal const string Create = "toolkit_create";
+
+    /// <summary>toolkit_pause's name.</summary>
+    internal const string Pause = "toolkit_pause";
+
+    /// <summary>toolkit_resume's name.</summary>
+    internal const string Resume = "toolkit_resume";
+
     /// <summary>toolkit_calls's name.</summary>
     internal const string Calls = "toolkit_calls";
 
@@ -40,7 +48,7 @@ internal static class ToolkitTools
 
     private static JsonObject Name => ContextTools.Property("string", "The toolkit's name, e.g. github-triage");
 
-    /// <summary>The five management tools.</summary>
+    /// <summary>The eight management tools.</summary>
     internal static IReadOnlyList<Tool> Management { get; } =
     [
         new()
@@ -50,6 +58,7 @@ internal static class ToolkitTools
             InputSchema = ContextTools.Schema([]),
             Annotations = new ToolAnnotations { ReadOnlyHint = true, OpenWorldHint = false },
         },
+        CreateTool,
         new()
         {
             Name = Build,
@@ -71,6 +80,8 @@ internal static class ToolkitTools
             InputSchema = ContextTools.Schema(new JsonObject { ["name"] = Name }, required: ["name"]),
             Annotations = new ToolAnnotations { ReadOnlyHint = false, DestructiveHint = false, IdempotentHint = true, OpenWorldHint = false },
         },
+        PauseTool,
+        ResumeTool,
         new()
         {
             Name = Calls,
@@ -82,7 +93,7 @@ internal static class ToolkitTools
 
     /// <summary>Whether <paramref name="tool"/> is one of the management tools.</summary>
     /// <param name="tool">A tool name.</param>
-    /// <returns>True for toolkit_list, build, start, stop and calls.</returns>
+    /// <returns>True for toolkit_list, create, build, start, stop, pause, resume and calls.</returns>
     internal static bool IsManagement(string tool) => Management.Any(m => string.Equals(m.Name, tool, StringComparison.Ordinal));
 
     /// <summary>The tools of every running toolkit; a paused, off, built or failed toolkit offers none.</summary>
@@ -121,8 +132,8 @@ internal static class ToolkitTools
 
     private static readonly FencePlan _plain = new("sindri:toolkit", []);
 
-    /// <summary>Runs a management tool through its Features slice: toolkit_list, toolkit_start, toolkit_stop and toolkit_calls answer at once, toolkit_build starts the job and answers its id.</summary>
-    /// <param name="tool">One of the five management names.</param>
+    /// <summary>Runs a management tool through its Features slice: toolkit_list, start, stop, pause, resume and calls answer at once, toolkit_create and toolkit_build start a job and answer its id.</summary>
+    /// <param name="tool">One of the eight management names.</param>
     /// <param name="services">The request's services.</param>
     /// <param name="arguments">The call's arguments.</param>
     /// <param name="ct">Cancels the call.</param>
@@ -134,6 +145,11 @@ internal static class ToolkitTools
             return await ListAll(services, arguments, ct).ConfigureAwait(false);
         }
 
+        if (tool == Create)
+        {
+            return await CreateOne(services, arguments, ct).ConfigureAwait(false);
+        }
+
         var refused = McpArguments.Only(tool, arguments, tool == Calls ? ["name", "limit"] : ["name"]);
         var name = McpArguments.RequiredString(tool, arguments, "name", "github-triage");
         var limit = McpArguments.OptionalLong(tool, arguments, "limit", min: 1);
@@ -142,14 +158,18 @@ internal static class ToolkitTools
             return McpResults.Failure(services, error);
         }
 
-        return tool switch
-        {
-            Build => await BuildOne(services, name.Value, ct).ConfigureAwait(false),
-            Start => await StartOne(services, name.Value, ct).ConfigureAwait(false),
-            Stop => await StopOne(services, name.Value, ct).ConfigureAwait(false),
-            _ => await RecentCalls(services, name.Value, limit.Value, ct).ConfigureAwait(false),
-        };
+        return await ByName(tool, services, name.Value, limit.Value, ct).ConfigureAwait(false);
     }
+
+    private static async ValueTask<CallToolResult> ByName(string tool, IServiceProvider services, string name, long? limit, CancellationToken ct) => tool switch
+    {
+        Build => await BuildOne(services, name, ct).ConfigureAwait(false),
+        Start => await StartOne(services, name, ct).ConfigureAwait(false),
+        Stop => await StopOne(services, name, ct).ConfigureAwait(false),
+        Pause => await PauseOne(services, name, ct).ConfigureAwait(false),
+        Resume => await ResumeOne(services, name, ct).ConfigureAwait(false),
+        _ => await RecentCalls(services, name, limit, ct).ConfigureAwait(false),
+    };
 
     private static async ValueTask<CallToolResult> ListAll(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
@@ -223,67 +243,5 @@ internal static class ToolkitTools
     {
         using var document = JsonDocument.Parse(body.ToJsonString());
         return new CallToolResult { StructuredContent = McpFencing.Apply(document.RootElement, plan), Content = [new TextContentBlock { Text = summary }] };
-    }
-
-    /// <summary>Calls a toolkit tool through the runtime.</summary>
-    /// <param name="services">The request's services.</param>
-    /// <param name="name">The called name, '&lt;toolkit&gt;__&lt;tool&gt;'.</param>
-    /// <param name="arguments">The call's arguments.</param>
-    /// <param name="ct">Cancels the call.</param>
-    /// <returns>The fenced answer, or the runtime's error.</returns>
-    internal static async ValueTask<CallToolResult> Call(IServiceProvider services, string name, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
-    {
-        _ = ToolNames.TryParse(name, out var toolkitName, out var toolName);
-        var runtime = services.GetService<IRunningToolkits>();
-        if (Refusal(runtime, toolkitName, toolName) is { } refused)
-        {
-            return McpResults.Failure(services, refused);
-        }
-
-        var json = new JsonObject();
-        foreach (var (key, value) in arguments ?? new Dictionary<string, JsonElement>(StringComparer.Ordinal))
-        {
-            json[key] = JsonNode.Parse(value.GetRawText());
-        }
-
-        var answer = await runtime!.CallTool(toolkitName, toolName, json.ToJsonString(), "mcp-session", ct).ConfigureAwait(false);   // why: Refusal returned null, so a runtime exists
-        if (answer.IsError)
-        {
-            return McpResults.Failure(services, answer.Error);
-        }
-
-        var body = new JsonObject { ["toolkit"] = toolkitName, ["tool"] = toolName, ["result"] = Parse(answer.Value) };
-        using var document = JsonDocument.Parse(body.ToJsonString());
-        return new CallToolResult
-        {
-            StructuredContent = McpFencing.Apply(document.RootElement, _answer),
-            Content = [new TextContentBlock { Text = $"{name} answered" }],
-        };
-    }
-
-    private static Error? Refusal(IRunningToolkits? runtime, string toolkitName, string toolName)
-    {
-        var toolkit = runtime?.Toolkits().FirstOrDefault(t => string.Equals(t.Name, toolkitName, StringComparison.Ordinal));
-        return toolkit switch
-        {
-            null => SindriErrors.ToolkitNotFound.With($"No toolkit named '{toolkitName}' (fix: toolkit_list names them)"),
-            { State: ToolkitState.Paused } => SindriErrors.ToolkitPaused.With($"Toolkit '{toolkitName}' is paused (fix: toolkit_stop, then toolkit_start)"),
-            { State: not ToolkitState.Running } => SindriErrors.ToolkitNotBuilt.With($"Toolkit '{toolkitName}' isn't running (fix: toolkit_start)"),
-            _ when toolkit.Manifest is null || !toolkit.Manifest.Tools.Any(t => string.Equals(t.Name, toolName, StringComparison.Ordinal)) =>
-                SindriErrors.ToolkitToolUnknown.With($"Toolkit '{toolkitName}' has no tool '{toolName}' (fix: tools/list names them)"),
-            _ => null,
-        };
-    }
-
-    private static JsonNode? Parse(string text)
-    {
-        try
-        {
-            return string.IsNullOrWhiteSpace(text) ? null : JsonNode.Parse(text);
-        }
-        catch (JsonException)   // boundary: a tool may answer in plain words
-        {
-            return JsonValue.Create(text);
-        }
     }
 }

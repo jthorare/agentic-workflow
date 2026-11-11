@@ -117,6 +117,7 @@ public sealed class CreateWorkflowServiceTests : IDisposable
         var again = await _service.Handle(new CreateWorkflowRequest(Slug, "manual-notify", Spec: null, "owner"), Token);
 
         Assert.Equal(SindriErrors.GraphSlugTaken.Code, again.Error.Code);
+        Assert.Equal($"The short id '{Slug.Value}' is taken by another workflow. Pick another.", again.Error.Message);
         _ = Assert.Single(_rig.Recorded(EventTypes.WorkflowCreated));
     }
 

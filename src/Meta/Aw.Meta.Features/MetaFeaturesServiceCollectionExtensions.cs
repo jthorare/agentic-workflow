@@ -161,6 +161,7 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<CheckMergeService>()
         .AddScoped<IValidator<CheckMergeRequest>, CheckMergeValidator>()
         .Validated<CheckMergeService, CheckMergeRequest, CheckMergeResponse>()
+        .AddScoped<MergeRecorder>()
         .AddScoped<MergeRunService>()
         .AddScoped<IValidator<MergeRunRequest>, MergeRunValidator>()
         .AddScoped<IService<MergeRunRequest, MergeRunResponse>>(static sp => new ValidatingService<MergeRunRequest, MergeRunResponse>(
@@ -182,6 +183,9 @@ public static class MetaFeaturesServiceCollectionExtensions
         .Validated<UsageWaitService, UsageWaitRequest, UsageWaitResponse>()
         .AddScoped<WatchSweeper>()
         .AddScoped<WatchPoller>()
+        .AddScoped<GithubQueueWatch>()
+        .AddScoped<TeamPrInputs>()
+        .AddScoped<PollFollowUps>()
         .AddScoped<WatchService>()
         .AddScoped<IValidator<WatchRequest>, WatchValidator>()
         .Validated<WatchService, WatchRequest, WatchResponse>();

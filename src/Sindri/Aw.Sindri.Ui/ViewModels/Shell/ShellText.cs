@@ -76,9 +76,6 @@ internal sealed class ShellText
     /// <summary><see cref="Labels.GoKey"/>.</summary>
     public string GoKey { get; } = Labels.GoKey;
 
-    /// <summary><see cref="Labels.HealthKey"/>.</summary>
-    public string HealthKey { get; } = Labels.HealthKey;
-
     /// <summary><see cref="Labels.Health"/>.</summary>
     public string Health { get; } = Labels.Health;
 
@@ -168,6 +165,9 @@ internal sealed class ShellText
 
     /// <summary><see cref="Labels.Search"/>.</summary>
     public string Search { get; } = Labels.Search;
+
+    /// <summary><see cref="Labels.SearchPlaceholder"/>.</summary>
+    public string SearchPlaceholder { get; } = Labels.SearchPlaceholder;
 
     /// <summary>The search field's tooltip: its name and the shortcut, so the folded icon keeps the hint.</summary>
     public string SearchTip { get; }
