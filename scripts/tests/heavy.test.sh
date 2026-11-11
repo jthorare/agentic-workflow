@@ -288,6 +288,17 @@ check "a reserve above the slot count is capped to 0: a lane job runs (bounded f
 echo abc > "$STATE/heavy-meta-reserve"
 check "a garbage reserve is 0" "$(H --expensive echo ran 2>&1)" "ran"
 
+# --- the watchdog writes nothing to heavy's stderr (#2884) ---
+# Killed right after its fork, the watchdog subshell can make bash print "run_pending_traps: signal handler is SIG_DFL" on its
+# stderr, and every $(H ... 2>&1) check read "ran" plus that line (macOS main, 978acd5 and 796333c). The race is too narrow to
+# hit on purpose, so a `sleep` on PATH that writes to stderr stands in for it: the watchdog calls sleep while the job runs.
+reset
+mkdir -p "$WORK/dogbin"
+printf '#!/bin/sh\necho "watchdog-stderr" >&2\nexec %s "$@"\n' "$(command -v sleep)" > "$WORK/dogbin/sleep"
+chmod +x "$WORK/dogbin/sleep"
+check "nothing the watchdog writes to stderr reaches the job's output" \
+  "$(PATH="$WORK/dogbin:$PATH" H --expensive perl -e 'select(undef, undef, undef, 0.5); print "ran\n"' 2>&1)" "ran"
+
 # --- nested: a run under AW_HEAVY_LOCK_HELD=1 takes no lock ---
 reset
 out="$(AW_HEAVY_LOCK_HELD=1 H --expensive bash -c 'echo "mode=${AW_HEAVY_MODE-none}"')"
