@@ -807,6 +807,7 @@ Aw.Meta.Core.Messages.MessageKind.LaneAnnounce = 4 -> Aw.Meta.Core.Messages.Mess
 Aw.Meta.Core.Messages.MessageKind.OwnerQuestion = 2 -> Aw.Meta.Core.Messages.MessageKind
 Aw.Meta.Core.Messages.MessageKind.Ready = 3 -> Aw.Meta.Core.Messages.MessageKind
 Aw.Meta.Core.Messages.MessageKind.Request = 1 -> Aw.Meta.Core.Messages.MessageKind
+Aw.Meta.Core.Messages.MessagePreview
 Aw.Meta.Core.Messages.MessageResolution
 Aw.Meta.Core.Messages.MessageResolution.<Clone>$() -> Aw.Meta.Core.Messages.MessageResolution!
 Aw.Meta.Core.Messages.MessageResolution.Deconstruct(out Aw.Meta.Core.Messages.MessageResolutionKind Kind, out string! Reason, out System.DateTimeOffset? Until) -> void
@@ -1686,6 +1687,7 @@ static Aw.Meta.Core.Messages.InboxMessage.Of(Aw.Meta.Core.Messages.PeerMessage! 
 static Aw.Meta.Core.Messages.InboxMessage.operator !=(Aw.Meta.Core.Messages.InboxMessage? left, Aw.Meta.Core.Messages.InboxMessage? right) -> bool
 static Aw.Meta.Core.Messages.InboxMessage.operator ==(Aw.Meta.Core.Messages.InboxMessage? left, Aw.Meta.Core.Messages.InboxMessage? right) -> bool
 static Aw.Meta.Core.Messages.MessageClassifier.Classify(string! body) -> Aw.Meta.Core.Messages.Classification!
+static Aw.Meta.Core.Messages.MessagePreview.Of(string! body) -> string!
 static Aw.Meta.Core.Messages.MessageResolution.operator !=(Aw.Meta.Core.Messages.MessageResolution? left, Aw.Meta.Core.Messages.MessageResolution? right) -> bool
 static Aw.Meta.Core.Messages.MessageResolution.operator ==(Aw.Meta.Core.Messages.MessageResolution? left, Aw.Meta.Core.Messages.MessageResolution? right) -> bool
 static Aw.Meta.Core.Messages.MetaRole.operator !=(Aw.Meta.Core.Messages.MetaRole? left, Aw.Meta.Core.Messages.MetaRole? right) -> bool
