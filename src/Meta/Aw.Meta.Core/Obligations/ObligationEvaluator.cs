@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Messages;
 
 namespace Aw.Meta.Core.Obligations;
@@ -10,7 +11,7 @@ public static class ObligationEvaluator
 
     /// <summary>Evaluates the open set.</summary>
     /// <param name="facts">The recorded facts.</param>
-    /// <returns>The open obligations: replies in arrival order, then owner relay and watch.</returns>
+    /// <returns>The open obligations: replies in arrival order, then owner relay, watch and the meta lane's own recycle.</returns>
     public static IReadOnlyList<Obligation> Evaluate(ObligationFacts facts)
     {
         ArgumentNullException.ThrowIfNull(facts);
@@ -18,6 +19,7 @@ public static class ObligationEvaluator
         open.AddRange(Replies(facts));
         open.AddRange(Relays(facts));
         open.AddRange(Rearm(facts));
+        open.AddRange(Recycle(facts));
         return open;
     }
 
@@ -70,6 +72,20 @@ public static class ObligationEvaluator
     /// <summary>The rearm hint per provider (#2370): a Claude meta runs --until-event in the background (no window, no model turn until a real line), because --until-mail exits on its first
     /// poll whenever mail waits; a Codex or Cursor meta runs --until-mail in the foreground and rearms after each exit.</summary>
     internal const string WatchCommand = "Claude: aw-meta watch --until-event (run_in_background, ends on the first real line); Codex/Cursor: aw-meta watch --until-mail --for 29m in the foreground, rearm after each exit";
+
+    // Level-triggered: the META RECYCLE watch line fires once per crossing, this stays open on every stop until the waiter is recorded.
+    // The key carries no token count: the stop loop guard fingerprints Kind:Key, and a growing figure would never repeat.
+    private static IEnumerable<Obligation> Recycle(ObligationFacts facts)
+    {
+        if (facts.MetaContext is { Verdict: ContextVerdict.Recycle } context && !facts.MetaWaiter)
+        {
+            yield return new Obligation(
+                ObligationKind.RecycleSelf,
+                "context",
+                string.Create(CultureInfo.InvariantCulture, $"your context is {context.Compact()}, at or over the {context.Threshold / 1000}k recycle mark"),
+                $"write a digest, then aw-meta lane-recycle {facts.MetaLane} --digest <abs path> --detach");
+        }
+    }
 
     private static IEnumerable<Obligation> Rearm(ObligationFacts facts)
     {

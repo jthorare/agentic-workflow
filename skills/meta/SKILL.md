@@ -61,7 +61,7 @@ Every message a lane sends you opens an **obligation**: you owe that lane a repl
 
 Act on each line when it prints:
 - `DISK LOW`: tell every lane to stop starting new builders; run `aw-meta worktree-sweep`; if disk is still low, ask the owner before deleting anything else (`aw-meta owner-ask`). `MEMORY LOW`: tell every lane to pause builders and heavy jobs. `DISK OK` / `MEMORY OK`: tell the lanes to resume.
-- `CONTEXT HIGH <lane> <N>k`: ask the lane to write a digest at a safe point and reply `DIGEST READY <path>`, then `aw-meta lane-recycle <lane> --digest <path>`. For `META RECYCLE <N>k` (your own context) write a digest and run `aw-meta lane-recycle <meta lane> --digest <abs path> --detach`.
+- `CONTEXT HIGH <lane> <N>k`: ask the lane to write a digest at a safe point and reply `DIGEST READY <path>`, then `aw-meta lane-recycle <lane> --digest <path>`. For `META RECYCLE <N>k` (your own context) write a digest and run `aw-meta lane-recycle <meta lane> --digest <abs path> --detach`. The stop-check also opens `recycle-self` while your context is over the mark, until the detached waiter is recorded.
 - `USAGE LIMITED <lane|meta> ...`: don't retry in a loop; run `aw-meta usage-wait` in the background. `USAGE OK <lane>` needs nothing from you; on `USAGE OK meta` resume your subagents, restart the watch and run `aw-meta usage`.
 - `ROUTE SUGGEST ...`: run `aw-meta route` and follow the reference.
 - `builders: N per lane` changes: tell the lanes. Run gates only through `aw-meta gate-run`, one at a time, and before each one run `meta-gate-reserve A` with the argument `aw-meta status` prints.

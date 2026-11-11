@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Kernel;
+using Aw.Meta.Core.Lanes;
 using Aw.Meta.Core.Obligations;
 using Aw.Meta.Core.Ports;
 
@@ -19,8 +20,10 @@ public sealed class ObligationReader(IMessageStore messages, ILaneStore lanes, I
     /// <param name="metaLane">The meta lane's name; it is never sent broadcasts.</param>
     /// <param name="now">The current time.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
+    /// <param name="metaContext">The meta lane's measured context; null when not measured.</param>
+    /// <param name="metaWaiter">True when a detached recycle waiter is recorded for the meta lane.</param>
     /// <returns>The open obligations.</returns>
-    public async ValueTask<Result<IReadOnlyList<Obligation>>> Open(string metaLane, DateTimeOffset now, CancellationToken cancellationToken)
+    public async ValueTask<Result<IReadOnlyList<Obligation>>> Open(string metaLane, DateTimeOffset now, CancellationToken cancellationToken, LaneContext? metaContext = null, bool metaWaiter = false)
     {
         var inbound = await messages.Messages(cancellationToken).ConfigureAwait(false);
         var sent = await messages.Sent(cancellationToken).ConfigureAwait(false);
@@ -45,6 +48,8 @@ public sealed class ObligationReader(IMessageStore messages, ILaneStore lanes, I
             Answers = [.. answers.Value.Where(a => !string.Equals(a.AskedBy, metaLane, StringComparison.OrdinalIgnoreCase))],   // the meta's own questions need no relay
             Heartbeat = Beat(beat.Value),
             WatchInterval = Interval(interval.Value),
+            MetaContext = metaContext,
+            MetaWaiter = metaWaiter,
             Now = now,
         }));
     }
