@@ -30,6 +30,16 @@ public sealed class NoPrWorktreeKeptTests
         Assert.Empty(verdict.Reasons);
     }
 
+    // Issue 2703: a lane's fix branch is pushed (nothing unpushed) before its PR opens; --include-no-pr removed the tree between steps.
+    [Fact, Trait("Lane", "unit")]
+    public void With_include_no_pr_a_pushed_no_pr_branch_whose_head_is_not_in_origin_main_is_kept()
+    {
+        var verdict = WorktreeRules.Judge(NoPr() with { KeepNoPr = false, HeadMerged = false, UnpushedCommits = 0 });
+
+        Assert.Equal(WorktreeDecision.Kept, verdict.Decision);
+        Assert.Contains(verdict.Reasons, reason => string.Equals(reason, "unmerged branch, no PR (in-progress work)", StringComparison.Ordinal));
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void A_merged_pull_request_branch_is_still_removable_when_no_pr_worktrees_are_kept()
     {

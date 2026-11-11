@@ -15,4 +15,9 @@ public interface IToolkitWorkspace
     /// <param name="dir">The toolkit's folder.</param>
     /// <returns>The absolute path, or SND-TK-003 when the build left none.</returns>
     public Result<string> BinaryOf(string dir);
+
+    /// <summary>Finds the toolkit's tests project: the one *.Toolkit.Tests.csproj in a folder right under the toolkit's folder, which the scaffold writes and which references the toolkit project, so building it builds both.</summary>
+    /// <param name="dir">The toolkit's folder.</param>
+    /// <returns>The project's path relative to <paramref name="dir"/> with forward slashes, or SND-TK-002 when there is none or more than one.</returns>
+    public Result<string> TestsProjectOf(string dir);
 }

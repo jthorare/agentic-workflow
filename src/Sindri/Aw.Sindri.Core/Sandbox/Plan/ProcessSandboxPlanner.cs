@@ -18,9 +18,9 @@ public static class ProcessSandboxPlanner
     public static Result<SandboxPlan> Build(SandboxMechanism mechanism, ProcessSandboxRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (!IsAbsolute(request.Command) || request.Command.LastIndexOf('/') == 0 || request.ResourceMounts.Any(r => !IsAbsolute(r.HostPath)) || !IsAbsolute(request.RunArea))
+        if (!IsAbsolute(request.Command) || request.Command.LastIndexOf('/') == 0 || request.ResourceMounts.Any(r => !IsAbsolute(r.HostPath)) || (request.ReadOnlyPaths ?? []).Any(p => !IsAbsolute(p)) || !IsAbsolute(request.RunArea))
         {
-            return SandboxRefusal.For(SindriErrors.LaunchUnconfinable, SandboxReasons.PathHidden, $"{request.Owner}: the command, its run area and every resource path must be absolute");
+            return SandboxRefusal.For(SindriErrors.LaunchUnconfinable, SandboxReasons.PathHidden, $"{request.Owner}: the command, its run area, every resource path and every read-only path must be absolute");
         }
 
         var limits = LimitsResolver.Resolve(new LimitsInput(Limits: null, AttendedSettings: null, Attended: true, StepTimeout: null, LongMax: null, RamBytes: request.Host.TotalMemoryBytes, Cores: request.Host.CpuCores, Override: request.Limits));   // a toolkit is long-lived: no wall limit
@@ -83,7 +83,7 @@ public static class ProcessSandboxPlanner
 
         // Above the denies: the binary's folder and the resources live under Sindri's home.
         m.Add(new PlanMount(r.Command[..r.Command.LastIndexOf('/')], PlanMountKind.ReadOnly, Reason: $"the binary of {r.Owner}"));
-        m.AddRange(r.ResourceMounts.Select(x => new PlanMount(x.HostPath.TrimEnd('/'), PlanMountKind.State, Reason: $"the {x.Name} resource of {r.Owner}")));
+        m.AddRange(r.ResourceMounts.Select(x => new PlanMount(x.HostPath.TrimEnd('/'), PlanMountKind.State, Reason: $"the {x.Name} resource of {r.Owner}")).Concat(ReadOnly(r)));
         if (r.HostGroups.Count > 0)
         {
             m.Add(new PlanMount("/run/sindri/net", PlanMountKind.ReadOnly, r.Net.NetDir, Reason: "the sockets to the egress proxy: the only way out"));
@@ -91,6 +91,9 @@ public static class ProcessSandboxPlanner
 
         return m;
     }
+
+    private static IEnumerable<PlanMount> ReadOnly(ProcessSandboxRequest r) =>
+        (r.ReadOnlyPaths ?? []).Select(x => new PlanMount(x.TrimEnd('/'), PlanMountKind.ReadOnly, Reason: $"read-only for {r.Owner}"));
 
     private static List<PlanEnvVar> Environment(ProcessSandboxRequest r)
     {
