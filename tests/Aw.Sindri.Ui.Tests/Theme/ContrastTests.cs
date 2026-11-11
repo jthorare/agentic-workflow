@@ -22,17 +22,17 @@ public sealed partial class ContrastTests
     [
         ("Ink", "Canvas", 18.7, TextAa),
         ("Ink", "Surface1", 17.2, TextAa),
-        ("Ink", "Surface2", 17.2, TextAa),
+        ("Ink", "Surface2", 15.8, TextAa),
         ("InkMuted", "Canvas", 13.6, TextAa),
         ("InkMuted", "Surface1", 12.5, TextAa),
         ("InkSubtle", "Canvas", 6.1, TextAa),
         ("InkSubtle", "Surface1", 5.6, TextAa),
-        ("InkSubtle", "Surface2", 5.6, TextAa),
+        ("InkSubtle", "Surface2", 5.2, TextAa),
         ("InkTertiary", "Canvas", 4.5, 0),
         ("InkTertiary", "Surface1", 4.1, 0),
         ("PrimaryHover", "Canvas", 7.0, TextAa),
         ("PrimaryHover", "Surface1", 6.4, NonText),
-        ("PrimaryHover", "Surface3", 6.1, NonText),   // the palette's selected-row bar on its card (U1 run 1, a11y-4)
+        ("PrimaryHover", "Surface3", 5.5, NonText),   // the palette's selected-row bar on its card (U1 run 1, a11y-4)
         ("OnPrimary", "Primary", 4.70, TextAa),
         ("OnPrimary", "PrimaryHoverFill", 5.5, TextAa),
         ("OnPrimary", "PrimaryPressed", 6.2, TextAa),
@@ -41,13 +41,13 @@ public sealed partial class ContrastTests
         ("Success", "Canvas", 7.6, TextAa),
         ("Attention", "Canvas", 9.0, TextAa),
         ("Attention", "Surface1", 8.2, TextAa),
-        ("Attention", "AttentionSoft", 7.9, TextAa),   // the attn chip
-        ("Error", "ErrorSoft", 5.3, TextAa),   // the fail chip
-        ("Success", "SuccessSoft", 7.0, TextAa),   // the ok chip
+        ("Attention", "AttentionSoft", 7.4, TextAa),   // the attn chip
+        ("Error", "ErrorSoft", 5.0, TextAa),   // the fail chip
+        ("Success", "SuccessSoft", 6.5, TextAa),   // the ok chip
         ("InkMuted", "Surface2", 11.5, TextAa),   // the neutral chip
-        ("Ink", "AttentionSoft.Hover", 15.0, TextAa),   // a Needs You row's text under the pointer (#2611)
-        ("Ink", "AttentionSoft.Pressed", 13.9, TextAa),   // and while pressed
-        ("Ink", "AttentionFill", 8.4, TextAa),   // the hold button's label over its fill (setup spec §2.3 says about 9; the computed ratio is 8.4)
+        ("Ink", "AttentionSoft.Hover", 13.8, TextAa),   // a Needs You row's text under the pointer (#2611)
+        ("Ink", "AttentionSoft.Pressed", 12.7, TextAa),   // and while pressed
+        ("Ink", "AttentionFill", 7.8, TextAa),   // the hold button's label over its fill (setup spec §2.3 says about 9; the computed ratio is 7.8)
         ("AttentionFill", "Surface2", 2.05, 0),   // decoration: the fill against the button's own background
         ("Hairline", "Canvas", 1.1, 0),
         ("HairlineStrong", "Canvas", 1.6, 0),
@@ -89,16 +89,16 @@ public sealed partial class ContrastTests
     public static TheoryData<string, string, double, double> StatusPairs => new()
     {
         // The workflow run's "you took over" status (F3 workflows spec §2 "Tokens"): violet glyph and word on its soft pair.
-        { "Violet", "VioletSoft", 6.8, TextAa },
+        { "Violet", "VioletSoft", 6.3, TextAa },
         { "Violet", "Surface1", 6.7, TextAa },
         { "Violet", "Surface2", 6.2, TextAa },
         // The other status pairs the Workflows page draws on a card (Surface2) and in a drawer (Surface1).
-        { "PrimaryHover", "PrimarySoft", 5.6, TextAa },   // running
+        { "PrimaryHover", "PrimarySoft", 5.3, TextAa },   // running
         { "Attention", "Surface2", 7.6, TextAa },
         { "Error", "Surface2", 4.8, TextAa },
         { "Success", "Surface2", 6.5, TextAa },
-        { "InkMuted", "Surface3", 12.1, TextAa },   // cancelled
-        { "InkSubtle", "Surface3", 5.4, TextAa },   // not started
+        { "InkMuted", "Surface3", 10.8, TextAa },   // cancelled
+        { "InkSubtle", "Surface3", 4.8, TextAa },   // not started
     };
 
     [Theory]

@@ -13,7 +13,7 @@
     <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#1c1d20" />
     <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#34343a" />
     <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#f7f8f8" />
-    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#18191a" />
+    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#222326" />
     <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#f7f8f8" />
     <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#74787f" />
     <SolidColorBrush x:Key="AccentButtonBackground" Color="#5e6ad2" />
@@ -26,7 +26,7 @@
          focus ring is the cue. -->
     <SolidColorBrush x:Key="ComboBoxBackground" Color="#141517" />
     <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#1c1d20" />
-    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#18191a" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#222326" />
     <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="#141517" />
     <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="#34343a" />
     <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#f7f8f8" />
@@ -37,7 +37,7 @@
     <!-- Buttons and inputs: Radius.MD. -->
     <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
     <!-- Tooltips on Surface3. -->
-    <SolidColorBrush x:Key="ToolTipBackground" Color="#18191a" />
+    <SolidColorBrush x:Key="ToolTipBackground" Color="#222326" />
     <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#0fffffff" />
     <SolidColorBrush x:Key="ToolTipForeground" Color="#f7f8f8" />
   </Styles.Resources>
@@ -49,10 +49,10 @@
                              RegionColor="#08090a"
                              AltHigh="#08090a" AltMedium="#141517" AltLow="#1c1d20"
                              BaseHigh="#f7f8f8" BaseMediumHigh="#d0d6e0" BaseMedium="#8a8f98" BaseLow="#0fffffff"
-                             ChromeHigh="#3e3e44" ChromeMedium="#18191a" ChromeLow="#1c1d20" ChromeMediumLow="#141517"
+                             ChromeHigh="#3e3e44" ChromeMedium="#222326" ChromeLow="#1c1d20" ChromeMediumLow="#141517"
                              ChromeAltLow="#d0d6e0" ChromeGray="#8a8f98"
                              ChromeDisabledHigh="#0fffffff" ChromeDisabledLow="#74787f"
-                             ListLow="#1c1d20" ListMedium="#18191a"
+                             ListLow="#1c1d20" ListMedium="#222326"
                              ErrorText="#eb5757" />
     </FluentTheme.Palettes>
   </FluentTheme>

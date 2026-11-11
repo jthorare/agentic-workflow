@@ -17,10 +17,10 @@
   <Color x:Key="Color.Surface2">#1c1d20</Color>
   <SolidColorBrush x:Key="Brush.Surface2" Color="{StaticResource Color.Surface2}" />
   <!-- surface-3: menus, the palette, tooltips -->
-  <Color x:Key="Color.Surface3">#18191a</Color>
+  <Color x:Key="Color.Surface3">#222326</Color>
   <SolidColorBrush x:Key="Brush.Surface3" Color="{StaticResource Color.Surface3}" />
   <!-- surface-4: dialogs -->
-  <Color x:Key="Color.Surface4">#191a1b</Color>
+  <Color x:Key="Color.Surface4">#26272a</Color>
   <SolidColorBrush x:Key="Brush.Surface4" Color="{StaticResource Color.Surface4}" />
   <!-- hairline: dividers and panel borders (decoration only, 1.3:1) -->
   <Color x:Key="Color.Hairline">#0fffffff</Color>
@@ -83,25 +83,25 @@
   <Color x:Key="Color.Error">#eb5757</Color>
   <SolidColorBrush x:Key="Brush.Error" Color="{StaticResource Color.Error}" />
   <!-- derived: Attention at 14 % over Canvas, the needs-you chip background -->
-  <Color x:Key="Color.AttentionSoft">#23160c</Color>
+  <Color x:Key="Color.AttentionSoft">#291d13</Color>
   <SolidColorBrush x:Key="Brush.AttentionSoft" Color="{StaticResource Color.AttentionSoft}" />
   <!-- derived: AttentionSoft lifted one and two steps (about +9 and +15 per channel, hue kept). An attention row lifts within its own
        colour under the pointer and a press; the grey clickable hover would drop the urgency (#2611). -->
-  <Color x:Key="Color.AttentionSoft.Hover">#2c1f15</Color>
+  <Color x:Key="Color.AttentionSoft.Hover">#32261c</Color>
   <SolidColorBrush x:Key="Brush.AttentionSoft.Hover" Color="{StaticResource Color.AttentionSoft.Hover}" />
-  <Color x:Key="Color.AttentionSoft.Pressed">#32251b</Color>
+  <Color x:Key="Color.AttentionSoft.Pressed">#382c22</Color>
   <SolidColorBrush x:Key="Brush.AttentionSoft.Pressed" Color="{StaticResource Color.AttentionSoft.Pressed}" />
   <!-- derived: Attention at 35 % over Surface2, opaque: the hold button's fill -->
-  <Color x:Key="Color.AttentionFill">#624328</Color>
+  <Color x:Key="Color.AttentionFill">#67482f</Color>
   <SolidColorBrush x:Key="Brush.AttentionFill" Color="{StaticResource Color.AttentionFill}" />
   <!-- derived: Error at 14 % over Canvas, the fail chip background -->
-  <Color x:Key="Color.ErrorSoft">#220d0e</Color>
+  <Color x:Key="Color.ErrorSoft">#281415</Color>
   <SolidColorBrush x:Key="Brush.ErrorSoft" Color="{StaticResource Color.ErrorSoft}" />
   <!-- derived: Success at 14 % over Canvas, the ok chip background -->
-  <Color x:Key="Color.SuccessSoft">#06180b</Color>
+  <Color x:Key="Color.SuccessSoft">#0d2115</Color>
   <SolidColorBrush x:Key="Brush.SuccessSoft" Color="{StaticResource Color.SuccessSoft}" />
   <!-- derived (S1b): the selected nav background, the running pill -->
-  <Color x:Key="Color.PrimarySoft">#1d2036</Color>
+  <Color x:Key="Color.PrimarySoft">#202442</Color>
   <SolidColorBrush x:Key="Brush.PrimarySoft" Color="{StaticResource Color.PrimarySoft}" />
   <!-- status chip (#2545), one set per Sindri state: Fg is the state colour, Bg that colour at 14 %, Border at 30 %. Running is the
        blue Area1 over a Primary tint; Waiting is an amber outline with no fill, so it never reads as Running or as Attention (filled amber).
@@ -145,7 +145,7 @@
        and word on its soft pair (Violet at about 8 % over Canvas), never colour alone -->
   <Color x:Key="Color.Violet">#a78bfa</Color>
   <SolidColorBrush x:Key="Brush.Violet" Color="{StaticResource Color.Violet}" />
-  <Color x:Key="Color.VioletSoft">#170f2a</Color>
+  <Color x:Key="Color.VioletSoft">#1d1a29</Color>
   <SolidColorBrush x:Key="Brush.VioletSoft" Color="{StaticResource Color.VioletSoft}" />
 
   <!-- context whole map (whole-map spec §3.2): the bounded palette the areas are told apart by, each also by a pattern, never colour alone -->

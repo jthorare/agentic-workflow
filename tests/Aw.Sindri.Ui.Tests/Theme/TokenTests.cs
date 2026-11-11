@@ -15,8 +15,8 @@ public sealed class TokenTests
         ("Canvas", "#08090a"),
         ("Surface1", "#141517"),
         ("Surface2", "#1c1d20"),
-        ("Surface3", "#18191a"),
-        ("Surface4", "#191a1b"),
+        ("Surface3", "#222326"),
+        ("Surface4", "#26272a"),
         ("Hairline", "#0fffffff"),
         ("HairlineStrong", "#34343a"),
         ("HairlineTertiary", "#3e3e44"),
@@ -33,19 +33,19 @@ public sealed class TokenTests
         ("Overlay", "#000000"),
         ("Attention", "#f2994a"),
         ("Error", "#eb5757"),
-        ("AttentionSoft", "#23160c"),
-        ("AttentionSoft.Hover", "#2c1f15"),   // an attention row lifts within its own colour: AttentionSoft one step up
-        ("AttentionSoft.Pressed", "#32251b"),   // and two steps up
-        ("AttentionFill", "#624328"),   // the hold button's fill: Attention at 35 % over Surface2
-        ("PrimarySoft", "#1d2036"),
-        ("ErrorSoft", "#220d0e"),
-        ("SuccessSoft", "#06180b"),
+        ("AttentionSoft", "#291d13"),
+        ("AttentionSoft.Hover", "#32261c"),   // an attention row lifts within its own colour: AttentionSoft one step up
+        ("AttentionSoft.Pressed", "#382c22"),   // and two steps up
+        ("AttentionFill", "#67482f"),   // the hold button's fill: Attention at 35 % over Surface2
+        ("PrimarySoft", "#202442"),
+        ("ErrorSoft", "#281415"),
+        ("SuccessSoft", "#0d2115"),
         ("Wire", "#4a4a52"),
         ("WireHi", "#8a8f98"),
         ("LaneFill", "#05ffffff"),
         ("RingAnchor", "#d0d6e0"),
         ("Violet", "#a78bfa"),
-        ("VioletSoft", "#170f2a"),
+        ("VioletSoft", "#1d1a29"),
         ("Area1", "#7aa2f7"),
         ("Area2", "#e0af68"),
         ("Area3", "#7bd88f"),
