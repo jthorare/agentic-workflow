@@ -133,13 +133,24 @@ reclaim_slot() {
   rmdir "$d" 2>/dev/null; return 0
 }
 
+# slot_still_allowed <k>: box-wide slot k is within the cap and, for a non-meta job, outside the reserve, as read now.
+# The reserve is clamped by the pass's usable count like the pass does (#2060).
+slot_still_allowed() {
+  local k="$1" cap res
+  cap="$(heavy_cap "$GIVEN_SLOTS")"; [ "$k" -le "$cap" ] || return 1
+  [ "$PRIORITY" = meta ] && return 0
+  res="$(heavy_reserve "$cap")"; [ "$res" -gt "$((usable - 1))" ] && res=$((usable - 1))
+  [ "$k" -gt "$res" ]
+}
+
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
   local label="$1" base="$2" slots="$3" waited=0 printed=0 k d got="" reserve_blocked usable
   while [ -z "$got" ]; do
     reserve_blocked=0
     # Re-read the cap and the reservation each pass: a drained queue releases waiting lane jobs promptly, and a lowered cap
-    # keeps them off the slots above it (nothing running is pre-empted).
+    # keeps them off the slots above it (nothing running is pre-empted). The memory guard below is slow (two vm_stat forks
+    # without /proc/meminfo), so a slot taken is checked again against the cap and reserve read after the take (#2718).
     if [ "$label" = box-wide ]; then
       slots="$(heavy_cap "$GIVEN_SLOTS")"; RESERVE="$(heavy_reserve "$slots")"
       # The reserve also stays below the slots free memory allows this pass, so a lane job keeps one (#2060).
@@ -151,8 +162,12 @@ acquire() {
       # Box-wide slots above 1 need the memory guard; the per-session pool doesn't.
       if [ "$label" = box-wide ] && [ "$PRIORITY" != meta ] && [ "$k" -le "$RESERVE" ]; then [ -d "$d" ] || reserve_blocked=1; continue; fi
       if [ "$k" -gt 1 ] && [ "$label" = box-wide ] && ! mem_ok "$k"; then continue; fi
-      if mkdir "$d" 2>/dev/null; then got="$d"; break; fi
-      if reclaim_slot "$d" && mkdir "$d" 2>/dev/null; then got="$d"; break; fi
+      if mkdir "$d" 2>/dev/null || { reclaim_slot "$d" && mkdir "$d" 2>/dev/null; }; then
+        # Take-then-check (#2718): read the cap and reserve again now the slot is ours. Over the cap, or inside the reserve
+        # for a non-meta job: give the empty slot back (before the owner write) and keep waiting.
+        if [ "$label" = box-wide ] && ! slot_still_allowed "$k"; then rmdir "$d" 2>/dev/null; continue; fi
+        got="$d"; break
+      fi
     done
     [ -n "$got" ] && break
     [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; }
