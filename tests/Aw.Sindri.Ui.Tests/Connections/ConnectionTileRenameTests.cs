@@ -293,4 +293,57 @@ public sealed class ConnectionTileRenameTests
 
         Assert.Equal((true, "That's already its name."), (tile.IsRenaming, tile.RenameError));
     }
+
+    [Fact]
+    public async Task A_late_success_after_the_tile_rebinds_does_not_rename_the_other_connections_row()
+    {
+        var tile = await Connected();
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _f.Server.RenameGate = gate;
+        tile.StartRename();
+        tile.RenameText = "home";
+        var sending = tile.Rename(Token);
+        tile.Bind(new ConnectionRowViewModel(FakeSindriApi.ConnectionRow("linear:other"), _f.Actions(), _f.Clock));
+
+        gate.SetResult();
+        await sending;
+
+        Assert.Equal(("linear:other", false, string.Empty), (tile.ConnectionName, tile.IsRenaming, tile.RenameError));
+    }
+
+    [Fact]
+    public async Task A_late_refusal_after_the_tile_rebinds_leaves_the_new_binding_alone()
+    {
+        var tile = await Connected();
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _f.Server.RenameGate = gate;
+        tile.StartRename();
+        tile.RenameText = "home";
+        var sending = tile.Rename(Token);
+        tile.Bind(new ConnectionRowViewModel(FakeSindriApi.ConnectionRow("linear:other"), _f.Actions(), _f.Clock));
+        _f.Server.ConnectionWriteError = new Error("SND-CONN-010", ErrorKind.Conflict, "taken");
+
+        gate.SetResult();
+        await sending;
+        tile.StartRename();
+        tile.RenameText = "home";
+
+        Assert.Equal((string.Empty, true), (tile.RenameError, tile.CanSaveRename));
+    }
+
+    [Fact]
+    public async Task An_unknown_error_code_still_lets_Save_send_the_same_name_again()
+    {
+        var tile = await Connected();
+        tile.StartRename();
+        tile.RenameText = "home";
+        _f.Server.ConnectionWriteError = new Error("SND-X-999", ErrorKind.Invalid, "boom");
+        await tile.Rename(Token);
+
+        Assert.True(tile.CanSaveRename);
+        _f.Server.ConnectionWriteError = null;
+        await tile.Rename(Token);
+
+        Assert.Equal((2, "home"), (Renames(_f.Server), tile.Account));
+    }
 }
