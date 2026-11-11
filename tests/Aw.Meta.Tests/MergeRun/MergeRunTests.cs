@@ -3,6 +3,7 @@ using Aw.Meta.Core.Commands;
 using Aw.Meta.Core.Coordination;
 using Aw.Meta.Core.Gate;
 using Aw.Meta.Core.Lanes;
+using Aw.Meta.Core.Merge;
 using Aw.Meta.Core.Obligations;
 using Aw.Meta.Features.MergeRun;
 using Aw.Meta.Testing;
@@ -14,9 +15,9 @@ public sealed class MergeRunTests
 {
     private readonly MetaWorld _world = new();
 
-    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages), _world.Repo, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board);
+    private MergeRunService Service() => new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles, _world.Messages), _world.Repo, _world.Gates, new MergeRecorder(_world.Repo, _world.Values, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock, _world.Board));
 
-    private async Task Ready(bool gated = true, bool mergeFails = false, bool fetchFails = false, string state = "OPEN", string? mergeCommit = null)
+    private async Task Ready(bool gated = true, bool mergeFails = false, bool fetchFails = false, string state = "OPEN", string? mergeCommit = null, string queue = QueueAnswers.Off, bool queueFails = false, bool positionFails = false)
     {
         await _world.ReadyWithGate();
         if (gated)
@@ -24,7 +25,7 @@ public sealed class MergeRunTests
             await SaveGate();
         }
 
-        ScriptGitHub(mergeFails, fetchFails, state, mergeCommit);
+        ScriptGitHub(mergeFails, fetchFails, state, mergeCommit, queue, queueFails, positionFails);
     }
 
     private async Task AssignApiLane() =>
@@ -36,10 +37,20 @@ public sealed class MergeRunTests
         _ = await _world.Gates.Save(new GateRecord(190, "headsha", "mainsha", ["repo"], steps, GateVerdict.Pass, A.At(5)), CancellationToken.None);
     }
 
-    private void ScriptGitHub(bool mergeFails, bool fetchFails, string state, string? mergeCommit)
+    // The queue read before the merge, and the one after it for the position (which fails when positionFails).
+    private void ScriptQueue(string queue, bool queueFails, bool positionFails)
+    {
+        var reads = 0;
+        _ = _world.Runner.When("gh api graphql", _ => queueFails || (positionFails && ++reads > 1)
+            ? new CommandResult(1, string.Empty, "HTTP 502", TimedOut: false)
+            : new CommandResult(0, queue, string.Empty, TimedOut: false));
+    }
+
+    private void ScriptGitHub(bool mergeFails, bool fetchFails, string state, string? mergeCommit, string queue, bool queueFails, bool positionFails)
     {
         // origin/main is mainsha until the merge, newmainsha1234 after it.
         var merged = false;
+        ScriptQueue(queue, queueFails, positionFails);
         _ = _world.Runner
             .When("gh pr view 190 --json headRefOid,isDraft,title,state", """{"headRefOid":"headsha","isDraft":false,"title":"Add x","state":"{state}"}""".Replace("{state}", state, StringComparison.Ordinal))
             .When("gh pr view 190 --json mergeCommit", mergeCommit is null ? string.Empty : "{\"mergeCommit\":{\"oid\":\"" + mergeCommit + "\"}}", mergeCommit is null ? 1 : 0)
@@ -169,4 +180,63 @@ public sealed class MergeRunTests
     [Fact, Trait("Lane", "unit")]
     public void The_pull_request_number_must_be_positive() =>
         Assert.Equal(MetaErrors.Invalid.Code, new MergeRunValidator().Validate(new MergeRunRequest(-1)).Error.Code);
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task With_a_merge_queue_a_ready_pull_request_is_queued_with_its_position_and_no_merge_is_recorded()
+    {
+        await Ready(queue: QueueAnswers.Queued(3));
+        await AssignApiLane();
+
+        var result = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal((false, true, 3, null, null), (result.Value.Merged, result.Value.Queued, result.Value.Position, result.Value.Sha, result.Value.Announce));
+        Assert.Equal(["gh pr merge 190 --merge"], _world.Runner.Lines.Where(l => l.StartsWith("gh pr merge", StringComparison.Ordinal)), StringComparer.Ordinal);
+        Assert.Null((await _world.Gates.LatestMerge(CancellationToken.None)).Value);
+        Assert.Null((await _world.Board.Read(CancellationToken.None)).Value);
+        Assert.DoesNotContain(await _world.Open(), o => o.Kind == ObligationKind.AnnounceMain);
+        var queued = Assert.Single(MergeQueued.Parse((await _world.Values.Get(KvKeys.MergeQueued, CancellationToken.None)).Value).Values);
+        Assert.Equal(new QueuedMerge(190, _world.Clock.GetUtcNow(), "headsha"), queued);
+        Assert.Contains("- NOTE 2026-10-15 05:00: #190 Add x queued in GitHub's merge queue (position 3)", _world.Log.Lines);
+        Assert.DoesNotContain(_world.Log.Lines, l => l.StartsWith("- MERGE", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task With_a_merge_queue_an_unreadable_position_is_left_out_and_the_pull_request_is_still_queued()
+    {
+        // The first read (before the merge) works; the second one, for the position, fails.
+        await Ready(queue: QueueAnswers.Queued(1), positionFails: true);
+        await AssignApiLane();
+
+        var result = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal((true, null), (result.Value.Queued, result.Value.Position));
+        Assert.Contains("- NOTE 2026-10-15 05:00: #190 Add x queued in GitHub's merge queue", _world.Log.Lines);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_failed_queue_read_refuses_before_gh_merges_anything()
+    {
+        await Ready(queueFails: true);
+
+        var result = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.Equal(MetaErrors.CommandFailed.Code, result.Error.Code);
+        Assert.DoesNotContain(_world.Runner.Lines, l => l.StartsWith("gh pr merge", StringComparison.Ordinal));
+        Assert.Null((await _world.Gates.LatestMerge(CancellationToken.None)).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Without_a_merge_queue_the_merge_is_recorded_at_once_and_nothing_is_kept_as_queued()
+    {
+        await Ready();
+        await AssignApiLane();
+
+        var result = await Service().Handle(new MergeRunRequest(190), CancellationToken.None);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal((true, false), (result.Value.Merged, result.Value.Queued));
+        Assert.Null((await _world.Values.Get(KvKeys.MergeQueued, CancellationToken.None)).Value);
+    }
 }
