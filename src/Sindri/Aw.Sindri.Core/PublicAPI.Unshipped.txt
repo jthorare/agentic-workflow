@@ -1273,11 +1273,9 @@ Aw.Sindri.Core.Items.ItemSummary
 Aw.Sindri.Core.Items.ItemSummary.<Clone>$() -> Aw.Sindri.Core.Items.ItemSummary!
 Aw.Sindri.Core.Items.ItemSummary.Actions.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>!
 Aw.Sindri.Core.Items.ItemSummary.Actions.init -> void
-Aw.Sindri.Core.Items.ItemSummary.Deconstruct(out Aw.Sindri.Core.Ids.ItemId Id, out string! Title, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Items.Vocabulary.ItemState State, out string? Step, out System.DateTimeOffset Since, out Aw.Sindri.Core.Ids.ActionId? PrimaryAction, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string? Owner) -> void
 Aw.Sindri.Core.Items.ItemSummary.Equals(Aw.Sindri.Core.Items.ItemSummary? other) -> bool
 Aw.Sindri.Core.Items.ItemSummary.Id.get -> Aw.Sindri.Core.Ids.ItemId
 Aw.Sindri.Core.Items.ItemSummary.Id.init -> void
-Aw.Sindri.Core.Items.ItemSummary.ItemSummary(Aw.Sindri.Core.Ids.ItemId Id, string! Title, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Items.Vocabulary.ItemState State, string? Step, System.DateTimeOffset Since, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string? Owner) -> void
 Aw.Sindri.Core.Items.ItemSummary.Owner.get -> string?
 Aw.Sindri.Core.Items.ItemSummary.Owner.init -> void
 Aw.Sindri.Core.Items.ItemSummary.PrimaryAction.get -> Aw.Sindri.Core.Ids.ActionId?
@@ -23055,3 +23053,7 @@ Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.Deconstruct(out Aw.Sindri.Co
 Aw.Sindri.Core.Events.WorkflowNodeHandedBackPayload.WorkflowNodeHandedBackPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! By) -> void
 const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeTakenOver = "workflow.node.taken-over" -> string!
 const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeHandedBack = "workflow.node.handed-back" -> string!
+Aw.Sindri.Core.Items.ItemSummary.Deconstruct(out Aw.Sindri.Core.Ids.ItemId Id, out string! Title, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Items.Vocabulary.ItemState State, out string? Step, out System.DateTimeOffset Since, out Aw.Sindri.Core.Ids.ActionId? PrimaryAction, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, out string? Owner, out bool Parked) -> void
+Aw.Sindri.Core.Items.ItemSummary.ItemSummary(Aw.Sindri.Core.Ids.ItemId Id, string! Title, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Items.Vocabulary.ItemState State, string? Step, System.DateTimeOffset Since, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string? Owner, bool Parked = false) -> void
+Aw.Sindri.Core.Items.ItemSummary.Parked.get -> bool
+Aw.Sindri.Core.Items.ItemSummary.Parked.init -> void

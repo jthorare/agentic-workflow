@@ -580,10 +580,8 @@ Aw.Sindri.Features.GetProfile.GetProfileResponse.Live.init -> void
 Aw.Sindri.Features.GetQueue.GetQueueRequest
 Aw.Sindri.Features.GetQueue.GetQueueRequest.<Clone>$() -> Aw.Sindri.Features.GetQueue.GetQueueRequest!
 Aw.Sindri.Features.GetQueue.GetQueueRequest.Equals(Aw.Sindri.Features.GetQueue.GetQueueRequest? other) -> bool
-Aw.Sindri.Features.GetQueue.GetQueueRequest.GetQueueRequest() -> void
 Aw.Sindri.Features.GetQueue.QueueGroupView
 Aw.Sindri.Features.GetQueue.QueueGroupView.<Clone>$() -> Aw.Sindri.Features.GetQueue.QueueGroupView!
-Aw.Sindri.Features.GetQueue.QueueGroupView.Deconstruct(out Aw.Sindri.Core.Items.Vocabulary.QueueGroup Group, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Items.ItemSummary!>! Items, out string? Empty) -> void
 Aw.Sindri.Features.GetQueue.QueueGroupView.Empty.get -> string?
 Aw.Sindri.Features.GetQueue.QueueGroupView.Empty.init -> void
 Aw.Sindri.Features.GetQueue.QueueGroupView.Equals(Aw.Sindri.Features.GetQueue.QueueGroupView? other) -> bool
@@ -591,18 +589,15 @@ Aw.Sindri.Features.GetQueue.QueueGroupView.Group.get -> Aw.Sindri.Core.Items.Voc
 Aw.Sindri.Features.GetQueue.QueueGroupView.Group.init -> void
 Aw.Sindri.Features.GetQueue.QueueGroupView.Items.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Items.ItemSummary!>!
 Aw.Sindri.Features.GetQueue.QueueGroupView.Items.init -> void
-Aw.Sindri.Features.GetQueue.QueueGroupView.QueueGroupView(Aw.Sindri.Core.Items.Vocabulary.QueueGroup Group, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Items.ItemSummary!>! Items, string? Empty) -> void
 Aw.Sindri.Features.GetQueue.QueueResponse
 Aw.Sindri.Features.GetQueue.QueueResponse.<Clone>$() -> Aw.Sindri.Features.GetQueue.QueueResponse!
 Aw.Sindri.Features.GetQueue.QueueResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
 Aw.Sindri.Features.GetQueue.QueueResponse.AsOf.init -> void
-Aw.Sindri.Features.GetQueue.QueueResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.GetQueue.QueueGroupView!>! Groups, out string? Empty, out Aw.Sindri.Core.Views.AsOf! AsOf) -> void
 Aw.Sindri.Features.GetQueue.QueueResponse.Empty.get -> string?
 Aw.Sindri.Features.GetQueue.QueueResponse.Empty.init -> void
 Aw.Sindri.Features.GetQueue.QueueResponse.Equals(Aw.Sindri.Features.GetQueue.QueueResponse? other) -> bool
 Aw.Sindri.Features.GetQueue.QueueResponse.Groups.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.GetQueue.QueueGroupView!>!
 Aw.Sindri.Features.GetQueue.QueueResponse.Groups.init -> void
-Aw.Sindri.Features.GetQueue.QueueResponse.QueueResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.GetQueue.QueueGroupView!>! Groups, string? Empty, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
 Aw.Sindri.Features.GetStatus.GetStatusRequest
 Aw.Sindri.Features.GetStatus.GetStatusRequest.<Clone>$() -> Aw.Sindri.Features.GetStatus.GetStatusRequest!
 Aw.Sindri.Features.GetStatus.GetStatusRequest.Equals(Aw.Sindri.Features.GetStatus.GetStatusRequest? other) -> bool
@@ -5522,3 +5517,43 @@ override Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.GetHashCod
 override Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.ToString() -> string!
 static Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.operator !=(Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? left, Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? right) -> bool
 static Aw.Sindri.Features.RenameConnection.RenameConnectionResponse.operator ==(Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? left, Aw.Sindri.Features.RenameConnection.RenameConnectionResponse? right) -> bool
+Aw.Sindri.Features.GetQueue.GetQueueRequest.After.get -> string?
+Aw.Sindri.Features.GetQueue.GetQueueRequest.After.init -> void
+Aw.Sindri.Features.GetQueue.GetQueueRequest.Deconstruct(out int? Limit, out string? Group, out string? After, out string? IfNoneMatch) -> void
+Aw.Sindri.Features.GetQueue.GetQueueRequest.GetQueueRequest(int? Limit = null, string? Group = null, string? After = null, string? IfNoneMatch = null) -> void
+Aw.Sindri.Features.GetQueue.GetQueueRequest.Group.get -> string?
+Aw.Sindri.Features.GetQueue.GetQueueRequest.Group.init -> void
+Aw.Sindri.Features.GetQueue.GetQueueRequest.IfNoneMatch.get -> string?
+Aw.Sindri.Features.GetQueue.GetQueueRequest.IfNoneMatch.init -> void
+Aw.Sindri.Features.GetQueue.GetQueueRequest.Limit.get -> int?
+Aw.Sindri.Features.GetQueue.GetQueueRequest.Limit.init -> void
+Aw.Sindri.Features.GetQueue.QueueGroupView.Deconstruct(out Aw.Sindri.Core.Items.Vocabulary.QueueGroup Group, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Items.ItemSummary!>! Items, out string? Empty, out string? Next) -> void
+Aw.Sindri.Features.GetQueue.QueueGroupView.Next.get -> string?
+Aw.Sindri.Features.GetQueue.QueueGroupView.Next.init -> void
+Aw.Sindri.Features.GetQueue.QueueGroupView.QueueGroupView(Aw.Sindri.Core.Items.Vocabulary.QueueGroup Group, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Items.ItemSummary!>! Items, string? Empty, string? Next = null) -> void
+Aw.Sindri.Features.GetQueue.QueueResponse.Counts.init -> void
+Aw.Sindri.Features.GetQueue.QueueResponse.NotModified.get -> bool
+Aw.Sindri.Features.GetQueue.QueueResponse.NotModified.init -> void
+Aw.Sindri.Features.GetQueue.QueueResponse.Tag.get -> string?
+Aw.Sindri.Features.GetQueue.QueueResponse.Tag.init -> void
+Aw.Sindri.Features.GetQueue.QueueGroupCounts
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.<Clone>$() -> Aw.Sindri.Features.GetQueue.QueueGroupCounts!
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.Deconstruct(out int WaitingOnYou, out int WithYou, out int Running, out int Queued) -> void
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.Equals(Aw.Sindri.Features.GetQueue.QueueGroupCounts? other) -> bool
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.QueueGroupCounts(int WaitingOnYou, int WithYou, int Running, int Queued) -> void
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.Queued.get -> int
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.Queued.init -> void
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.Running.get -> int
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.Running.init -> void
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.WaitingOnYou.get -> int
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.WaitingOnYou.init -> void
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.WithYou.get -> int
+Aw.Sindri.Features.GetQueue.QueueGroupCounts.WithYou.init -> void
+Aw.Sindri.Features.GetQueue.QueueResponse.Counts.get -> Aw.Sindri.Features.GetQueue.QueueGroupCounts?
+Aw.Sindri.Features.GetQueue.QueueResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.GetQueue.QueueGroupView!>! Groups, out string? Empty, out Aw.Sindri.Core.Views.AsOf! AsOf, out Aw.Sindri.Features.GetQueue.QueueGroupCounts? Counts, out string? Tag, out bool NotModified) -> void
+Aw.Sindri.Features.GetQueue.QueueResponse.QueueResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.GetQueue.QueueGroupView!>! Groups, string? Empty, Aw.Sindri.Core.Views.AsOf! AsOf, Aw.Sindri.Features.GetQueue.QueueGroupCounts? Counts = null, string? Tag = null, bool NotModified = false) -> void
+override Aw.Sindri.Features.GetQueue.QueueGroupCounts.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetQueue.QueueGroupCounts.GetHashCode() -> int
+override Aw.Sindri.Features.GetQueue.QueueGroupCounts.ToString() -> string!
+static Aw.Sindri.Features.GetQueue.QueueGroupCounts.operator !=(Aw.Sindri.Features.GetQueue.QueueGroupCounts? left, Aw.Sindri.Features.GetQueue.QueueGroupCounts? right) -> bool
+static Aw.Sindri.Features.GetQueue.QueueGroupCounts.operator ==(Aw.Sindri.Features.GetQueue.QueueGroupCounts? left, Aw.Sindri.Features.GetQueue.QueueGroupCounts? right) -> bool
