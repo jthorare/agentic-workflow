@@ -30,7 +30,7 @@ public static class FailureSentences
         Row("SND-CODE-002", "{step} ran past its time limit.", "Open {step}"),
         Row("SND-CODE-003", "{step} used more memory than its limit.", "Open {step}"),
         Row("SND-CODE-004", "{step} stopped: {message}.", "Open {step}"),
-        Row("SND-CODE-005", "Sindri can't run code steps: sindri-code-runner isn't installed.", "Install the runner", "scripts/install-cs.sh --publish"),
+        Row("SND-CODE-005", "Sindri can't run code steps: the code runner couldn't start.\n{message}"),
         Row("SND-GRAPH-007", "Changed elsewhere.", "Reload", "sindri wf show <slug>"),
         Row("SND-API-001", "Sindri is not running.", "Start Sindri", "sindri serve"),
     }.ToDictionary(static r => r.Code, StringComparer.Ordinal);
@@ -72,7 +72,21 @@ public static class FailureSentences
                 throw new InvalidOperationException($"the sentence for '{code}' needs a value for {{{name}}}");
             }
 
-            _ = text.Append(string.Equals(name, "answer", StringComparison.Ordinal) ? Shown(value) : value);
+            if (string.Equals(name, "answer", StringComparison.Ordinal))
+            {
+                value = Shown(value);
+            }
+            else if (string.Equals(name, "message", StringComparison.Ordinal))
+            {
+                value = Shown(value);
+                // why: the template puts a period after {message}; a message that ends in one would show two
+                if (close + 1 < template.Length && template[close + 1] == '.' && value.EndsWith('.'))
+                {
+                    value = value[..^1];
+                }
+            }
+
+            _ = text.Append(value);
             i = close;
         }
 

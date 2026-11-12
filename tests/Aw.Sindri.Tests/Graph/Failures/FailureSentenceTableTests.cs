@@ -208,7 +208,7 @@ public sealed class FailureSentenceTableTests
     {
         var row = Row("SND-CODE-001");
 
-        Assert.Equal("Check doesn't compile: (3,5): error CS1002: ; expected.", FailureSentences.Say(row.Code, With(("step", "Check"), ("message", "(3,5): error CS1002: ; expected"))));
+        Assert.Equal("Check doesn't compile: line 3, column 5: CS1002 ; expected.", FailureSentences.Say(row.Code, With(("step", "Check"), ("message", "line 3, column 5: CS1002 ; expected"))));
         Assert.Equal("Open {step}", row.FixLabel);
     }
 
@@ -240,14 +240,30 @@ public sealed class FailureSentenceTableTests
     }
 
     [Fact]
-    public void SND_CODE_005_says_the_runner_is_not_installed_and_offers_the_install_command()
+    public void SND_CODE_005_says_the_runner_could_not_start_shows_the_reason_and_offers_no_install_button()
     {
         var row = Row("SND-CODE-005");
 
-        Assert.Equal("Sindri can't run code steps: sindri-code-runner isn't installed.", FailureSentences.Say(row.Code, With()));
-        Assert.Equal("Install the runner", row.FixLabel);
-        Assert.Contains("install-cs.sh", row.FixCommand, StringComparison.Ordinal);
+        Assert.Equal("Sindri can't run code steps: the code runner couldn't start.\nthe runner binary is not at /x/sindri-code-runner", FailureSentences.Say(row.Code, With(("message", "the runner binary is not at /x/sindri-code-runner"))));
+        Assert.Null(row.FixLabel);
+        Assert.Null(row.FixCommand);
     }
+
+    [Fact]
+    public void A_long_multi_line_message_is_cut_to_one_line_of_200_characters()
+    {
+        var message = "line 1, column 2: CS1002 first\nline 3, column 4: CS1002 " + new string('x', 300);
+
+        var said = FailureSentences.Say("SND-CODE-001", With(("step", "Check"), ("message", message)));
+
+        Assert.DoesNotContain('\n', said);
+        Assert.Equal("Check doesn't compile: ".Length + 200 + "….".Length, said.Length);
+        Assert.EndsWith("….", said, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_message_that_ends_in_a_period_does_not_double_it()
+        => Assert.Equal("Check stopped: Boom.", FailureSentences.Say("SND-CODE-004", With(("step", "Check"), ("message", "Boom."))));
 
     [Theory]
     [InlineData("SND-CODE-001")]
