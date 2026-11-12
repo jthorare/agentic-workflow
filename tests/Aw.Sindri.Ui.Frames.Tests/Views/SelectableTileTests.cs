@@ -167,11 +167,16 @@ public sealed class SelectableTileTests
         var (window, tile, _) = Show(row: true);
         var (plainWindow, plain, _) = Show();
         var peer = ControlAutomationPeer.CreatePeerForElement(tile);
-        var item = Assert.IsAssignableFrom<ISelectionItemProvider>(peer);
+        var item = Assert.IsType<ISelectionItemProvider>(peer, exactMatch: false);
 
         Assert.False(item.IsSelected);
+        var selectedPeer = Assert.IsType<SelectableTileAutomationPeer>(peer);
         tile.IsSelected = true;
         Assert.True(item.IsSelected);
+        Assert.Equal(1, selectedPeer.SelectedChangesRaised);
+        tile.IsSelected = false;
+        Assert.Equal(2, selectedPeer.SelectedChangesRaised);
+        tile.IsSelected = true;
         Assert.Equal(AutomationControlType.ListItem, peer.GetAutomationControlType());
         Assert.Equal(AutomationControlType.Button, ControlAutomationPeer.CreatePeerForElement(plain).GetAutomationControlType());
 
