@@ -39,7 +39,7 @@ public sealed class QueryFetchBoundTests
         Assert.True(result.IsSuccess);
         Assert.Equal(SourceQuery.DefaultLimit, Assert.Single(docs.Searches).Limit);   // no page limit
         Assert.Equal(Matching, docs.BatchedReads);   // all 500 matches read, through the batched call
-        Assert.Equal(Matching, result.Value.Sections.Count);   // and all 500 answered
+        Assert.Equal(Matching, result.Value.Sections.Sum(static s => s.Items.Count));   // and all 500 answered (a section is a named group; the records are its items)
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -72,7 +72,7 @@ public sealed class QueryFetchBoundTests
         Assert.True(result.IsSuccess);
         var read = inner.DocReads;
         Assert.InRange(read, 1, total - 1);
-        Assert.Equal(read, result.Value.Sections.Count);   // every record read is in the answer
+        Assert.Equal(read, result.Value.Sections.Sum(static s => s.Items.Count));   // every record read is in the answer
         var note = Assert.Single(result.Value.Degraded, d => d.Source == RepoDocs.Id);
         Assert.Contains((total - read).ToString(CultureInfo.InvariantCulture) + " matching record(s)", note.Message, StringComparison.Ordinal);
     }
