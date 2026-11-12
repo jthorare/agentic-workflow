@@ -39,7 +39,7 @@ fallback. Any login that ends in `[bot]` is a review bot, and every PR kind runs
    findings that keep coming back, and ask the user. A caller that has stricter review rules (for example
    specToProvenPR's re-proof after review fixes) applies them around this step.
 2. **Mark ready.** `gh pr ready <n>`. Skip when the PR is already ready.
-3. **Watch.** One pass reads three things:
+3. **Watch.** When `AW_RESULT_SKILL` is set (a Sindri Step), skip steps 3 and 4: run steps 1-2, then report `merge-ready` only if the checks you can read are green, and write "watch skipped: running as a Sindri Step" in the report, because a Step must not wait for hours and Sindri's workflow owns the watching. Otherwise one pass reads three things:
    ```bash
    gh pr view <n> --json headRefOid,mergeable,mergeStateStatus,reviewDecision,state
    gh pr checks <n>
