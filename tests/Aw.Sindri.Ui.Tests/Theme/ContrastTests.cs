@@ -102,19 +102,20 @@ public sealed partial class ContrastTests
     };
 
     // Control outlines are UI parts: 3:1 (WCAG 1.4.11, #3190). The rows name the brush the control draws (Brush.<name>), so the fix may
-    // repoint it at any colour; the ratio is the one #5f6369 or lighter has (the outline measures 3.25:1 on the canvas; #5e6268 gives
-    // 2.98 on Surface1, so the fix needs a step lighter for the panel).
+    // repoint it at any colour. The recorded ratios are the ones #70757c has on the canvas, the panel and the pressed fill (#222326);
+    // #5e6268 would pass the first two but measures only 2.6 on the pressed fill.
     public static TheoryData<string, string, double, double> OutlinePairs => new()
     {
-        { "Clickable.PressedBorder", "Canvas", 3.25, NonText },
-        { "Clickable.PressedBorder", "Surface1", 3.0, NonText },
+        { "Clickable.PressedBorder", "Canvas", 4.29, NonText },
+        { "Clickable.PressedBorder", "Surface1", 3.94, NonText },
+        { "Clickable.PressedBorder", "Brush.Clickable.Pressed", 3.39, NonText },
     };
 
     [Theory]
     [MemberData(nameof(OutlinePairs))]
     public void Each_control_outline_has_the_recorded_ratio_and_meets_the_non_text_minimum(string brush, string background, double recorded, double minimum)
     {
-        var ratio = Wcag.Contrast(BrushColor(brush), _tokens.Color(background));
+        var ratio = Wcag.Contrast(BrushColor(brush), Background(background));
 
         Assert.True(Math.Abs(ratio - recorded) <= 0.1, string.Create(CultureInfo.InvariantCulture, $"Brush.{brush} on {background} is {ratio:F2}, #3190 records {recorded}"));
         Assert.True(ratio >= minimum, string.Create(CultureInfo.InvariantCulture, $"Brush.{brush} on {background} is {ratio:F2}, below {minimum}"));
@@ -196,6 +197,10 @@ public sealed partial class ContrastTests
 
         return value.StartsWith(Reference, StringComparison.Ordinal) ? _tokens.Color(value[Reference.Length..^1]) : value.ToLowerInvariant();
     }
+
+    // A background row names a Color.* key, or a Brush.* resource when the fill has no colour key (Clickable.Pressed).
+    private static string Background(string name) =>
+        name.StartsWith("Brush.", StringComparison.Ordinal) ? BrushColor(name["Brush.".Length..]) : _tokens.Color(name);
 
     private static bool Disabled(XElement element, XAttribute attribute) =>
         attribute.Name.LocalName.Contains("Disabled", StringComparison.Ordinal)
