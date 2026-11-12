@@ -8,7 +8,7 @@ namespace Aw.Sindri.Ui.ViewModels.Connections;
 /// the API served to words and runs the row's actions: Test, Sign in again (oauth and mcp only; a key connection is refused, SND-CONN-011) and Remove, which asks first
 /// and leaves the row only after the API confirms. It holds no secret: the served view has none.
 /// </summary>
-internal sealed class ConnectionRowViewModel : ObservableObject
+internal sealed partial class ConnectionRowViewModel : ObservableObject
 {
     private readonly ConnectionActions _actions;
     private readonly TimeProvider _clock;
@@ -96,21 +96,6 @@ internal sealed class ConnectionRowViewModel : ObservableObject
 
     /// <summary>True when the three actions show (not while they ask to remove).</summary>
     public bool ShowActions => !IsConfirmingRemove;
-
-    /// <summary>The Test action's accessible name.</summary>
-    public string TestName => Labels.ConnectionActionName(Labels.ConnectionTest, Name);
-
-    /// <summary>The Sign in again action's accessible name.</summary>
-    public string SignInName => Labels.ConnectionActionName(Labels.ConnectionSignIn, Name);
-
-    /// <summary>The Remove action's accessible name.</summary>
-    public string RemoveName => Labels.ConnectionActionName(Labels.ConnectionRemove, Name);
-
-    /// <summary>The confirm's question.</summary>
-    public string RemoveAsk => Labels.ConnectionRemoveAsk(Name);
-
-    /// <summary>The confirm button's accessible name.</summary>
-    public string RemoveConfirmName => Labels.ConnectionActionName(Labels.ConnectionRemoveConfirm, Name);
 
     /// <summary>Takes a newer serving of the same connection and redraws only what changed.</summary>
     /// <param name="view">The connection as served now.</param>
@@ -273,7 +258,7 @@ internal sealed class ConnectionRowViewModel : ObservableObject
         var (_, word) = Labels.ConnectionChip(View.Status);
         (ChipText, KindText, ReasonText, RefreshedText) = (word, Labels.ConnectionKind(View.Kind), View.StatusReason ?? string.Empty, Refreshed());
         AccessibleName = Labels.ConnectionRowName(View.Name, KindText, word.ToLowerInvariant(), ReasonText);
-        foreach (var name in (string[])[nameof(Status), nameof(IsConnected), nameof(NeedsSignIn), nameof(IsError), nameof(IsProblem), nameof(HasReason), nameof(HasRefreshed), nameof(CanSignIn)])
+        foreach (var name in (string[])[nameof(Status), nameof(IsConnected), nameof(NeedsSignIn), nameof(IsError), nameof(IsProblem), nameof(HasReason), nameof(HasRefreshed), nameof(CanSignIn), nameof(Name), nameof(RenameName), nameof(RenameId)])
         {
             OnChanged(name);
         }

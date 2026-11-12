@@ -96,11 +96,11 @@ internal static partial class Labels
     /// <param name="latest">The newest revision.</param>
     /// <param name="nodes">How many nodes the graph has.</param>
     /// <param name="createdBy">Who made the workflow, as served: the person's own actor reads "you".</param>
-    /// <param name="hasActive">True when a revision is active; without one the line says no revision.</param>
+    /// <param name="hasActive">True when a revision is active; without one, or while the workflow has only its first revision (like the list row, #2845), the line says no revision.</param>
     /// <returns>The words.</returns>
     internal static string WfDetail(int shown, int latest, int nodes, string createdBy, bool hasActive) => string.Create(
         CultureInfo.InvariantCulture,
-        $"{(hasActive ? (shown == latest ? $"Revision {shown} · " : $"Revision {shown} of {latest} · ") : string.Empty)}{nodes} {(nodes == 1 ? "node" : "nodes")} · created by {WfActor(createdBy)}");
+        $"{(hasActive && latest >= 2 ? (shown == latest ? $"Revision {shown} · " : $"Revision {shown} of {latest} · ") : string.Empty)}{nodes} {(nodes == 1 ? "node" : "nodes")} · created by {WfActor(createdBy)}");
 
     /// <summary>A trigger kind as a word ("manual" is "Manual").</summary>
     /// <param name="kind">The kind as served.</param>

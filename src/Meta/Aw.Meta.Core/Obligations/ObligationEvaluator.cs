@@ -7,8 +7,6 @@ namespace Aw.Meta.Core.Obligations;
 /// <summary>Derives the open obligations from the recorded facts. Nothing is stored: sending a message closes the obligation it answers. A new lane map version and a merge owe the lanes nothing: they read both from the board (aw-meta board-line).</summary>
 public static class ObligationEvaluator
 {
-    private const int BodyPreview = 80;
-
     /// <summary>Evaluates the open set.</summary>
     /// <param name="facts">The recorded facts.</param>
     /// <returns>The open obligations: replies in arrival order, then owner relay, watch and the meta lane's own recycle.</returns>
@@ -39,7 +37,7 @@ public static class ObligationEvaluator
     private static Obligation Reply(InboxMessage message)
     {
         var who = message.FromName.Length > 0 ? message.FromName : message.From;
-        var body = message.Body.Length > BodyPreview ? message.Body[..BodyPreview] + "..." : message.Body;
+        var body = MessagePreview.Of(message.Body);
         var id = message.Id.Value;
         var send = LaneSendCommand(id) is { } lane ? $"aw-meta lane-send --lane {lane} --text \"<reply>\"" : $"SendMessage to {who}";
         return new Obligation(

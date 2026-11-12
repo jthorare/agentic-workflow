@@ -334,6 +334,8 @@ Aw.Meta.Features.OutboxRecord.OutboxRecordResponse.Equals(Aw.Meta.Features.Outbo
 Aw.Meta.Features.OutboxRecord.OutboxRecordResponse.OutboxRecordResponse(bool Recorded, System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Obligations.Obligation!>! Closed) -> void
 Aw.Meta.Features.OutboxRecord.OutboxRecordResponse.Recorded.get -> bool
 Aw.Meta.Features.OutboxRecord.OutboxRecordResponse.Recorded.init -> void
+Aw.Meta.Features.OutboxRecord.OutboxRecordResponse.Warning.get -> string?
+Aw.Meta.Features.OutboxRecord.OutboxRecordResponse.Warning.init -> void
 Aw.Meta.Features.OutboxRecord.PostToolUseParser
 Aw.Meta.Features.Owner.ListOwnerRequest
 Aw.Meta.Features.Owner.ListOwnerRequest.<Clone>$() -> Aw.Meta.Features.Owner.ListOwnerRequest!

@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Meta.Core.Lanes;
+using Aw.Meta.Core.Messages;
 using Aw.Meta.Features.LaneStopCheck;
 
 namespace Aw.Meta.Host.Commands;
@@ -43,7 +44,7 @@ internal static class LaneStopCheckCommand
                 Environment.NewLine,
                 [
                     string.Create(CultureInfo.InvariantCulture, $"aw-meta: lane {lane.Lane} owes the meta a reply ({response.Owed.Count} message(s)):"),
-                    .. response.Owed.Select(static m => "- " + m.Text.ReplaceLineEndings(" ")),
+                    .. response.Owed.Select(static m => "- " + (m.Delivered ? MessagePreview.Of(m.Text) : m.Text).ReplaceLineEndings(" ")),
                     LaneText.HowToReply,
                 ])
             : string.Empty;

@@ -26,9 +26,10 @@ internal sealed class OutboxRecordService(MetaSession session, IMessageStore mes
             return team.Error;
         }
 
+        var warning = NoticeRule.StatusAskWarning(request.Message);
         if (team.Value is not { } config)
         {
-            return new OutboxRecordResponse(Recorded: false, []);
+            return new OutboxRecordResponse(Recorded: false, []) { Warning = warning };
         }
 
         var before = await reader.Open(config.MetaLane, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
@@ -39,7 +40,7 @@ internal sealed class OutboxRecordService(MetaSession session, IMessageStore mes
         }
 
         var after = await reader.Open(config.MetaLane, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
-        return after.IsError ? after.Error : new OutboxRecordResponse(Recorded: true, Closed(before.Value, after.Value));
+        return after.IsError ? after.Error : new OutboxRecordResponse(Recorded: true, Closed(before.Value, after.Value)) { Warning = warning };
     }
 
     private static List<Obligation> Closed(IReadOnlyList<Obligation> before, IReadOnlyList<Obligation> after) =>

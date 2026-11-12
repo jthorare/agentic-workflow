@@ -157,15 +157,15 @@
     <Setter Property="Fill" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
 
-  <!-- S2: a Health section head's eyebrow sits on the baseline of the state word at its right. Avalonia has no baseline
-       alignment, so the eyebrow takes the word's line (BodyStrong) and is top-aligned, as a row label is (R12). On that
-       line the 11 px eyebrow's baseline is 0.73 px above the 13 px word's (0.95 at text scale 1.3); a 1 px top margin puts
-       it 0.27 and 0.05 px below, within the half pixel the Health view test allows (#2677). Centred on its own line, the
-       margin it needed moved with every line height change. -->
-  <Style Selector="TextBlock.head-eyebrow">
+  <!-- S2: a Health section head's title (Type.SectionTitle, 15 px) is top-aligned on its 22 px line and the state word at its right
+       is top-aligned with a 2 px margin: Avalonia has no baseline alignment, and on those lines the 13 px word's baseline lands
+       within half a pixel of the title's (checked by the Health view test, #2677). -->
+  <Style Selector="TextBlock.head-title">
     <Setter Property="VerticalAlignment" Value="Top" />
-    <Setter Property="LineHeight" Value="{DynamicResource Type.BodyStrong.LineHeight}" />
-    <Setter Property="Margin" Value="0,1,0,0" />
+  </Style>
+  <Style Selector="TextBlock.head-word">
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Margin" Value="0,2,0,0" />
   </Style>
 
   <!-- The health pill: a word in a pill; it opens Health. -->
@@ -260,6 +260,16 @@
   </Style>
   <Style Selector="Grid.row">
     <Setter Property="MinHeight" Value="24" />
+  </Style>
+  <!-- The System cards' rows: Row.Height.Data (36) tall. Label and value stay top-aligned (R12, below) and both move down 8 px,
+       so a 20 px Body line sits in the middle of the row (8 + 20 + 8). Centring them broke R12: the row-label style below
+       wins over a centre setter, so only the value moved and sat 8 px under its label. -->
+  <Style Selector="Grid.row.data-row">
+    <Setter Property="MinHeight" Value="{StaticResource Row.Height.Data}" />
+  </Style>
+  <Style Selector="Grid.row.data-row > TextBlock">
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Margin" Value="0,8,0,8" />
   </Style>
   <!-- R12: a row's label sits on its value's baseline: both top-aligned on the value's line height (Body, or Mono for
        the last event), so the smaller label's half-leading lines its baseline up with the value's. -->
