@@ -8,4 +8,7 @@ internal enum TerminalSide
 
     /// <summary>The live pane on the right: every key but the focus chords goes to the agent.</summary>
     Pane,
+
+    /// <summary>The first (or Tab-selected) button of a card or banner: states with nothing to type into never give focus to a pane.</summary>
+    Card,
 }

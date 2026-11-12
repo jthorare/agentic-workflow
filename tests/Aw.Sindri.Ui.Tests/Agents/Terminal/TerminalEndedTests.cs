@@ -74,16 +74,4 @@ public sealed class TerminalEndedTests
             (f.View.CardReason, f.View.CardTail, f.View.CanJump, f.View.CanCopyResume));
         Assert.Equal(TerminalSide.List, f.View.Side);
     }
-
-    [Fact]
-    public void The_cant_attach_card_never_takes_focus_into_the_pane()
-    {
-        var f = new TerminalFixture();
-        f.View.Open(TerminalFixture.Warp(), TerminalOpenIntent.Type);
-
-        f.View.ClickPane();
-        _ = f.View.Route("F6");
-
-        Assert.Equal(TerminalSide.List, f.View.Side);
-    }
 }

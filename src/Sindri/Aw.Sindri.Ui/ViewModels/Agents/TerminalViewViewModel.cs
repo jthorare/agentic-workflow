@@ -14,7 +14,8 @@ internal sealed partial class TerminalViewViewModel : ObservableObject
         nameof(IsPaneAccented), nameof(IsListAccented), nameof(IsCursorHollow), nameof(ShellKeysEnabled), nameof(PaletteEnabled),
         nameof(IsDimmed), nameof(Rows), nameof(CachedScreenCount), nameof(FlashCount), nameof(RetryIn), nameof(ShowRetryNow),
         nameof(ShowTakeItBack), nameof(HintText), nameof(EndedText), nameof(CanRemoveWorktree), nameof(CanDiscardSession),
-        nameof(CanCopyResume), nameof(CanJump), nameof(CardReason), nameof(CardTail),
+        nameof(CanCopyResume), nameof(CanJump), nameof(CardReason), nameof(CardTail), nameof(IsCardAccented), nameof(CardButtons),
+        nameof(FocusedButton), nameof(ShowStop),
     ];
 
     private int _otherClients;
@@ -36,6 +37,12 @@ internal sealed partial class TerminalViewViewModel : ObservableObject
 
     /// <summary>Raised by Discard session with the act id.</summary>
     internal event EventHandler<TerminalActEventArgs>? DiscardRequested;
+
+    /// <summary>Raised by Jump to it on the can't-attach card.</summary>
+    internal event EventHandler? JumpRequested;
+
+    /// <summary>Raised by Copy resume command.</summary>
+    internal event EventHandler? CopyResumeRequested;
 
     internal TimeProvider Clock { get; }
 
@@ -66,7 +73,7 @@ internal sealed partial class TerminalViewViewModel : ObservableObject
     public string HeaderName => Target?.Name ?? string.Empty;
 
     /// <summary>"tmux default · 1 other client"; empty for a host with no pane.</summary>
-    public string HostText => Target is { SocketKind.Length: > 0 } t ? Labels.TerminalHost(t.SocketKind, _otherClients) : string.Empty;
+    public string HostText => Target is { SocketKind.Length: > 0 } t ? Labels.TerminalHost(t.SocketKind, State is TerminalState.Ended or TerminalState.CantReachSindri ? 0 : _otherClients) : string.Empty;
 
     /// <summary>Where the 30 s rule shows "Esc closes the view"; empty otherwise.</summary>
     public string HintText => State == TerminalState.CantReachSindri ? Labels.TerminalEscCloses : string.Empty;
@@ -81,8 +88,17 @@ internal sealed partial class TerminalViewViewModel : ObservableObject
 
     private bool CanTakeFocus => State is TerminalState.Attached or TerminalState.Starting;
 
+    /// <summary>False in Can't reach Sindri and in a Can't attach card: there is no process Sindri can stop from here. Take it back keeps Stop (#3400).</summary>
+    public bool ShowStop => State is not (TerminalState.CantReachSindri or TerminalState.CantAttach);
+
     private void Refresh()
     {
+        if (Side == TerminalSide.Card && CardButtons.Count == 0)
+        {
+            Side = TerminalSide.List;
+        }
+
+        FocusedButton = Math.Clamp(FocusedButton, 0, Math.Max(0, CardButtons.Count - 1));
         foreach (var name in _allProperties)
         {
             OnChanged(name);

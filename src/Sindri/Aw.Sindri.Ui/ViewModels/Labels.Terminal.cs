@@ -36,6 +36,25 @@ internal static partial class Labels
 
     internal const string TerminalTakeItBack = "Take it back";
 
+    internal const string TerminalJump = "Jump to it";
+
+    internal const string TerminalCopyResume = "Copy resume command";
+
+    internal const string TerminalRemoveWorktree = "Remove worktree";
+
+    internal const string TerminalDiscardSession = "Discard session";
+
+    /// <summary>The footer while Reconnecting: no button, so F6 does nothing.</summary>
+    internal const string TerminalFooterReconnecting = "Reconnecting · Esc close · n new";
+
+    /// <summary>The list-focus footer of a card state.</summary>
+    /// <param name="button">The first button's label.</param>
+    internal static string TerminalFooterListCard(string button) => "F6 to " + button + " · Esc close · n new";
+
+    /// <summary>The card-focus footer.</summary>
+    /// <param name="button">The focused button's label.</param>
+    internal static string TerminalFooterCard(string button) => "Enter to " + button + " · F6 back to the list";
+
     /// <summary>The footer when the list has focus but there is nothing to type into (can't attach, ended, gone).</summary>
     internal const string TerminalFooterListOnly = "Esc close · n new";
 

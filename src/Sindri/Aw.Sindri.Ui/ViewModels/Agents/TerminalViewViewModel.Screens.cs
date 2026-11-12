@@ -37,6 +37,66 @@ internal sealed partial class TerminalViewViewModel
     /// <summary>The card's last screen: the transcript's tail.</summary>
     public string CardTail => State == TerminalState.CantAttach ? Target?.TailText ?? string.Empty : string.Empty;
 
+    /// <summary>The buttons of the card or banner in this state, in Tab order; empty when the state has none.</summary>
+    public IReadOnlyList<TerminalCardButton> CardButtons => State switch
+    {
+        TerminalState.CantReachSindri => [TerminalCardButton.RetryNow],
+        TerminalState.TakenOver => [TerminalCardButton.TakeItBack],
+        TerminalState.CantAttach => [TerminalCardButton.Jump, .. If(CanCopyResume, TerminalCardButton.CopyResume)],
+        TerminalState.Gone => [.. If(CanCopyResume, TerminalCardButton.CopyResume)],
+        TerminalState.Ended => [.. If(CanCopyResume, TerminalCardButton.CopyResume), .. If(CanRemoveWorktree, TerminalCardButton.RemoveWorktree), .. If(CanDiscardSession, TerminalCardButton.DiscardSession)],
+        TerminalState.Connecting or TerminalState.Reconnecting or TerminalState.Starting or TerminalState.Attached => [],
+        _ => [],
+    };
+
+    /// <summary>The index in <see cref="CardButtons"/> that has focus while <see cref="TerminalSide.Card"/> does.</summary>
+    public int FocusedButton { get; private set; }
+
+    /// <summary>The label of a card button.</summary>
+    /// <param name="button">The button.</param>
+    /// <returns>Its words.</returns>
+    public static string ButtonLabel(TerminalCardButton button) => button switch
+    {
+        TerminalCardButton.RetryNow => Labels.TerminalRetryNow,
+        TerminalCardButton.TakeItBack => Labels.TerminalTakeItBack,
+        TerminalCardButton.Jump => Labels.TerminalJump,
+        TerminalCardButton.CopyResume => Labels.TerminalCopyResume,
+        TerminalCardButton.RemoveWorktree => Labels.TerminalRemoveWorktree,
+        TerminalCardButton.DiscardSession => Labels.TerminalDiscardSession,
+        _ => string.Empty,
+    };
+
+    /// <summary>Presses a card button (a click, or Enter on the focused one).</summary>
+    /// <param name="button">The button.</param>
+    public void Press(TerminalCardButton button)
+    {
+        switch (button)
+        {
+            case TerminalCardButton.RetryNow:
+                RetryNow();
+                break;
+            case TerminalCardButton.TakeItBack:
+                TakeItBack();
+                break;
+            case TerminalCardButton.Jump:
+                Raise(JumpRequested);
+                break;
+            case TerminalCardButton.CopyResume:
+                Raise(CopyResumeRequested);
+                break;
+            case TerminalCardButton.RemoveWorktree:
+                RemoveWorktree();
+                break;
+            case TerminalCardButton.DiscardSession:
+                DiscardSession();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private static TerminalCardButton[] If(bool can, TerminalCardButton button) => can ? [button] : [];
+
     /// <summary>A screen came from the socket.</summary>
     /// <param name="rows">The ANSI lines of the whole screen.</param>
     /// <param name="dead">True when the pane's process has exited.</param>
