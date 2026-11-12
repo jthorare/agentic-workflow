@@ -60,7 +60,7 @@ Done-checks. Each is a test or a measured run in the real app (aw-ui-driver) on 
 
 ## 2. Decisions
 
-Taken for the owner. Each says where it came from. "Agent default" means nobody ruled on it and the spec picked.
+Taken for the owner. Each says where it came from. "Agent default" means nobody ruled on it and the spec picked. Every number in this spec that has no source named beside it is an agent default: the 8,000-character message cap, the 60 s stale mark, the 20 tool calls, the 40 pane lines, the 400 ms skeleton, the 2 s events cursor and the 15 s fallback tick. The owner rulings are the 10 min idle-owed and 30 min slot-wait thresholds, and the group order (lead, 2026-11-12).
 
 1. **Needs you is the first group.** Then Working, then Idle, then a folded Other group for one-shot `judge` sessions, then a folded Recently ended group. Group by workflow only for sessions that belong to one (#3082, expected 2). The default group "Not part of a workflow" goes away.
 2. **A row has one primary reason and counts the rest.** The reason with the lowest class number (§4.1) names the row and sets its place. The other reasons show as "+1" and fill the peek.
@@ -125,12 +125,12 @@ A reason holds while its trigger holds. The class number is its place in the ord
 | 1 | permission prompt | session state `asking` with reason `approval`; the tool name from the state file | "qa: asking to run Bash" | yes (`SessionAsking`) |
 | 1 | owner question | state `asking` with reason `input`; or a workflow node `waiting on you` with `owner question <id>` (engine) | "ux: asking you a question" | yes for sessions; node state from engine |
 | 1 | login | state `asking` with reason `auth` | "api: needs a login" | yes |
-| 2 | usage limit | an `aw-meta usage` subject in state `Limited`, with `ResetsAt` from its stop (`UsageStop.cs:9`); or a Sindri run paused on a model limit | "tools: hit its usage limit, resets 14:00" (no time: "reset time unknown") | no: needs tools' `usage.limited` event |
+| 2 | usage limit | an entry of `subjects[]` in `aw-meta usage --json` with `state` `"Limited"` (the enum name, as `verdict` is `"Ok"`; `Features/Usage/UsageRow.cs`, `UsageResponse.cs`). `subject` is the lane name (or `meta`); `resetsAt` is omitted when the text gave no time (`UsageStop.cs:9`); or a Sindri run paused on a model limit | "tools: hit its usage limit, resets 14:00" (no time: "reset time unknown") | no: needs tools' `usage.limited` event |
 | 3 | lane with no session | a lane in the team map has no live session | "design: no live session" | partly: `aw-meta health` prints it; no event yet |
 | 4 | at the recycle mark | `aw-meta lanes-context` verdict `Recycle` (`ContextVerdict.cs:9`): context tokens at or over `context.recycleAt` (`ContextConfig.cs:5`, default 300,000). For the meta lane, also the open `RecycleSelf` obligation (`ObligationKind.cs:21`). | "ideas: at 210k, recycle from a digest" | yes: CLI text and `status --json` `context[]` (`StatusResponse.cs:28`); no event yet |
 | 5 | idle with work owed | see the rule below | "qa: idle 14 min, PR #3067 failed its gate" | no |
 | 6 | slot wait over 30 min | a heavy waiter whose `since` is 30 min or more ago (`agents.slotWaitMinutes`, default 30) | "tools: waiting 39 min for a heavy slot (3 of 3 held)" | no: waiters are recorded nowhere today |
-| 7 | PR ready in the merge queue | a `mergeQueue[]` entry (`QueuedPr.cs:9`) whose `from` maps to this lane, with `Gate` Pass or "none", and `Github` null | "ideas: PR #3078 ready in the merge queue" | yes: `status --json` `mergeQueue[]` |
+| 7 | PR ready in the merge queue | a `mergeQueue[]` entry (`QueuedPr.cs:8`) whose `from` equals this lane's name (join rule below), with `Gate` Pass or "none", and `Github` null | "ideas: PR #3078 ready in the merge queue" | yes: `status --json` `mergeQueue[]` |
 
 **Idle with work owed, exactly.** A lane session qualifies when all of these hold:
 
@@ -139,11 +139,13 @@ A reason holds while its trigger holds. The class number is its place in the ord
 3. At least one of these is owed to it:
    - a. A PR it sent to the merge queue has `Gate` Fail or Conflict (`QueuedPr.cs:6`). Words: "PR #3067 failed its gate".
    - b. For the meta lane only: one or more open obligations of kind Reply or RelayOwner (`ObligationKind.cs:7,16`). Words: "2 open obligations". An obligation has no timestamp (`Obligation.cs:8`), so the idle clock is the only clock.
-   - c. For a non-Claude lane: `aw-meta health` reports the lane's state with Attention true and the text "mail not delivered for N min" (`LaneHealth.cs:6-8`). Words: "mail not delivered for 12 min".
+   - c. For a non-Claude lane: `aw-meta health` reports the lane's state with Attention true and the text "mail not delivered for N min" (`LaneHealth.cs:6-8`). Words: "mail not delivered for 12 min". Health lists non-Claude lanes only (`LaneHealthReader.cs`, `IsNonClaude`), and flags mail after 5 min (`AW_META_UNDELIVERED_MINUTES`). Both clocks must hold: the lane idle 10 min, and the health text present.
 
-An idle lane that owes nothing stays in Idle. A lane that is idle for 9 minutes does not qualify yet. A Claude lane's unread mail has no source on main, so nothing about mail counts for it (open question 4).
+An idle lane that owes nothing stays in Idle. A lane that is idle for 9 minutes does not qualify yet. A Claude lane's unread mail has no source on main (checked on origin/main 4fafac85b4: `aw-meta health` skips Claude lanes and no `unread` field exists in `status --json`), so nothing about mail counts for it (open question 4).
 
 **Slot wait, exactly.** The waiter record comes from `aw-meta heavy --json` (tools), which reads `locks/heavy-wait/<pid>` that `scripts/heavy.sh` will write while it waits (session, argv, since). Neither exists on main: `git grep heavy-wait` finds nothing in `scripts/` or `config/`, and no `heavy` command is in `src/Meta/Aw.Meta.Host/Commands/`. The row is the waiter itself (id `job:<pid>`), nested under its session when that session is live. Until tools ships the reader, this class is empty and the box strip says "heavy waits: not readable yet" (§6.4).
+
+**PR ready: the join.** `QueuedPr.From` is the sender of the latest `ready #N` message for that PR: the sender's name, or the raw peer id when the name is empty (`MergeQueueReader.cs`, `Ready(...)`). There is no lane-map lookup on main. The page matches `From` to a lane name by exact, ordinal compare. If no lane matches (a builder, an unnamed peer), the entry adds to the head's PR count and makes no row and no reason. If another lane sends a newer `ready #N` for the same PR, the reason moves to that lane at the next read.
 
 **PR ready.** The reason sits on the lane that sent the PR, because the lane is done and waits on the merge. The merge itself is Home's action (`pr-ready-merge`, Home §5.1). The row's action is "Open in Home". While meta is already merging the PR (`Github` is "queued 2 (AWAITING_CHECKS)"), the reason drops: nothing is left for the owner.
 
@@ -154,7 +156,7 @@ An idle lane that owes nothing stays in Idle. A lane that is idle for 9 minutes 
 | Source | Read through | New work |
 |---|---|---|
 | sessions, states, asking | `SessionDiscovery` (`Features/Sessions/SessionDiscovery.cs:13`): process table, Claude's records, the hook files; `GET /sindri/sessions` (`Host/Endpoints/ListSessionsEndpoint.cs:10`) | the row facts of §3.1; the state-file watch (§7) |
-| context, usage, queue, lanes, obligations | `aw-meta events --after N --json` behind one port (meta's decision 1); until tools ships the emitters, `aw-meta lanes-context --json`, `usage --json` and `status --json` on a service tick | tools T1 to T3; a `lanes` collector in the Sindri host (shared with Home's `home-lanes`, one collector, two readers) |
+| context, usage, queue, lanes, obligations | `aw-meta events --after N --json` behind one port (meta's decision 1). `events` is not on main: it is PR #3103 (open, branch `tools/gh-3018-events`). Until it and the emitters ship, `aw-meta lanes-context --json`, `usage --json` and `status --json` on a 15 s service tick (§7.2) | tools T1 to T3; a `lanes` collector in the Sindri host (shared with Home's `home-lanes`, one collector, two readers) |
 | heavy slots, waiters, detached jobs | `aw-meta heavy --json`, `aw-meta jobs --json` (tools) | tools T3, T4 |
 | memory, disk | `box.health` event (tools); until then `aw-meta health --json` (`HostSnapshot.MemAvailableKb`, `DiskFreeBytes`, `Aw.Meta.Core/Health/HostSnapshot.cs:8`) | tools T3 |
 | builder to lead | session discovery: a builder's parent process or launch is its lead | api: no parent field exists (`SessionRow.cs:27-29`) |
@@ -201,7 +203,7 @@ The bad case this stops: a lane's row jumps to the top as the owner presses Ente
 
 ### 4.3 The walk, rerun: meta 205k, ideas 210k, #3067 and #3078 ready
 
-The numbers for meta, ideas, #3067, #3078 and qa idle for 9 min come from the ux walk on #3018. Every other number is made up for this spec. On the owner's box the team config sets `context.recycleAt` to 200,000, and each lane row from `aw-meta lanes-context --json` carries `threshold: 200000` (checked by the lead on 2026-11-12). So 205k and 210k are past the mark. The 300,000 in `ContextConfig.cs:5` is only the code default.
+The numbers for meta, ideas, #3067, #3078 and qa idle for 9 min come from the ux walk on #3018. They are fixture values: on origin/main 4fafac85b4, #3067 is the merged context-scope spec PR (branch `docs/context-scope-spec`, author jthorare), and nothing on GitHub says which lane sent it, so "qa sent #3067" is the walk's claim, not checked. Every other number is made up for this spec. On the owner's box the team config sets `context.recycleAt` to 200,000, and each lane row from `aw-meta lanes-context --json` carries `threshold: 200000` (checked by the lead on 2026-11-12). So 205k and 210k are past the mark. The 300,000 in `ContextConfig.cs:5` is only the code default.
 
 Box at 09:10. Eleven lanes: context, design, ideas, ux, meta, ui, qa, engine, tools, perf, api.
 
@@ -257,13 +259,15 @@ One route steers a session: `POST /sindri/rows/{id}/ops` with `{op, version, act
 
 **Who may steer.** The person in the app or the terminal may steer any session. A lead session may steer only its own builders. Anything else is refused with SND-AUTH-002 (meta's decision 4). Today's table lets every caller run the Pause, Job, Decision and Desk classes (`Core/Commands/Authorization.cs:18-28`) and is by action class, not by target. So "own builders only" is a new rule on the target, and it needs the builder-to-lead parent that `SessionRow` lacks.
 
+**Who is the caller.** A lane session is not Sindri-launched, so it has no `X-Sindri-Launch` and `CallerContext` (`Core/Commands/CallerContext.cs:20`) names only its class, actor and repo. The route therefore cannot tell a lead from any other session today. Fix: a session caller names itself with an `X-Sindri-Session: <provider>/<id>` header (the CLI and MCP bridge add it from the session's own state file). The route accepts the op only when that session is live and the target's `parent` is that session. A session caller without the header, or naming another session, is refused with SND-AUTH-002. This guards against honest mistakes (a builder steering a sibling), not a forged header, as the team's threat model says.
+
 **Write-through.** The same pipeline as Home §5.2. The key paints the row at once ("sending"). The route returns the outcome. Within 2 s the row shows it: "sent", or "failed: <reason>" with Retry. Retry sends the same `actId`. A second op on a row that is still sending is refused (SND-AGENT-009). There is no Undo for a steer: a message was sent and a process was stopped.
 
 **Recycle from a digest, as the owner does it.**
 
 1. On the ideas row the owner presses `Ctrl+Enter`. The primary is Copy digest request, Home's action `home.digest`. It copies the standard line and jumps to the lane's terminal. It sends nothing, since `lane-send` refuses Claude lanes.
 2. The lane writes its digest to a file.
-3. The owner presses `.` then Recycle. A picker asks for the digest path (a text field and Browse). The page does not scan for digests: where a lane writes its digest is the lane's choice, and I did not find a fixed folder.
+3. The owner presses `.` then Recycle. A picker asks for the digest path (a text field and Browse). The picker prefills the path from the lane's latest `DIGEST READY <path>` message in meta's inbox (the protocol line of `skills/meta/SKILL.md:64`). The page does not scan folders: `config/digests-README.md` names `$AW_DIGEST_DIR` (default `$AW_STATE_DIR/digests/<task-slug>.md`) only as a convention, and the lane chooses the file. The path must be absolute and hold no NUL; the route passes it as one argv item after `--digest`, so a path that starts with `-` is refused (SND-AGENT-005). Before Go, the picker runs `lane-recycle --dry-run`, whose `DigestTimes` shows a digest older than the lane's session start (#2661).
 4. `Enter` sends `{op: "recycle", args: {digest: "/abs/path"}}`. The route runs `aw-meta lane-recycle ideas --digest /abs/path`. The row shows "recycling" until the lane reports a new session. The row leaves Needs you when its context falls under the mark.
 
 ## 6. The page
@@ -295,7 +299,7 @@ At 1440x900, compact, peek closed. Frame, group header and row numbers are Home'
 
 - **Row (32 px compact, 40 comfortable):** `[glyph 16] [title, flex, min 200] [why chip 120] [object 88] [lane or parent 112] [repo · branch 160] [context 64] [last activity 48] [heavy slot 40] [age in state 44, right-aligned]`, 12 px gap. The why chip carries the primary reason word or the state word. The object is the mono ref (`PR #3078`, `#3018`). The context cell shows k tokens, and "▲" when the session is at or over the recycle mark. Title is the only 13 px ink text. "Waits on you" rows weigh 500. "-" marks a fact the source does not give; it never shows a guess.
 - **Width check:** the fixed part is 692 px of columns plus 108 px of gaps plus 48 px of side inset: 848 px. The title gets `list width - 848`: 592 px at 1440 with the peek closed. With the peek open the list is 1000 px, and the title would get 152 px, under its 200 px minimum. So the columns drop in this order as the list narrows: repo · branch (below 1048 px), heavy slot (below 876), last activity (below 824), lane or parent (below 764). At 1000 px the repo · branch column is gone and the title gets 324 px. The title minimum never shrinks. Facts end in an ellipsis, never a mid-word clip.
-- **Rows per screen (D8):** body 784 minus 8 padding, minus the box strip (32), minus 5 group headers (140) leaves 604 px: 18 rows at 32 px, 14 at 40 (rounded down). The 11 lanes of the walk fit with 7 rows to spare. Builders folded under their lead take no row until opened.
+- **Rows per screen (D8):** body 784 minus 8 padding, minus the box strip (32), minus 5 group headers (140) leaves 604 px: 18 rows at 32 px, 15 at 40 (rounded down). The 11 lanes of the walk fit with 7 rows to spare. Builders folded under their lead take no row until opened.
 - **Head:** the count text is "N agents · M need you · P PRs ready to merge". M counts rows in Needs you, not sessions asking. P counts merge-queue entries with no GitHub queue state. The tab's nav count uses M. `Labels.Agents.cs:45` ("N asking you") is replaced.
 - **Filter box:** the `p:` `r:` `s:` `n:` `o:` tokens of #3024 (Claude's view uses the same tokens; ledger 7). `s:` takes `needs`, `working`, `idle`, `limited`, `down`. `Esc` clears. The token parser is a plain function that moves to the new page unchanged.
 - **Builders:** a lead with builders shows "▸ 2 builders" under its row. Right opens it, Left closes it. A folded group still counts in the head.
@@ -374,7 +378,7 @@ Every error row has a button that fixes it.
 
 ### 6.5 Steer frames
 
-Reply and message composer. It opens in the peek, `r` focuses it. `Ctrl+Enter` sends. The title says "Answer" when the session asks a question and "Message" otherwise.
+Reply and message composer. It opens in the peek, `r` focuses it. With focus in the composer, `Ctrl+Enter` sends; with focus in the list or the peek body, `Ctrl+Enter` opens the submit menu (§6.6). The title says "Answer" when the session asks a question and "Message" otherwise.
 
 ```
 ┌ Message ideas ──────────────────────────────────────────────┐
@@ -442,7 +446,7 @@ The tray count and the native alert are Home's (Home §6.3), not a second badge.
 
 ### 7.1 Why the page can't meet 1 s today
 
-Two waits stack. The page polls every 5 s (`AgentsPageViewModel.Poll.cs:10`). The server collector also reads on a timer: `SessionCollectorHost` runs a pass every `settings.PollSeconds`, clamped to 1 to 30 s, with a 500 ms budget (`Host/Server/SessionCollectorHost.cs:19-20,28`). I did not find the default of `PollSeconds`. So the snapshot can be stale by up to `PollSeconds`, and the page can be stale by up to 5 s on top. A faster page poll would not fix the first wait. This is perf's finding on #3018, plus the server timer.
+Two waits stack. The page polls every 5 s (`AgentsPageViewModel.Poll.cs:10`). The server collector also reads on a timer: `SessionCollectorHost` runs a pass every `settings.PollSeconds`, clamped to 1 to 30 s, with a 500 ms budget (`Host/Server/SessionCollectorHost.cs:19-20,28`). `PollSeconds` defaults to 2 (`SessionSettings.Defaults`, `Core/Sessions/SessionSettings.cs:13`; `LauncherStartup.cs:40` falls back to 2). So the snapshot can be stale by up to 2 s, and the page can be stale by up to 5 s on top: 7 s worst case, before any read time. A faster page poll would not fix the first wait. This is perf's finding on #3018, plus the server timer.
 
 `fleet.changed` does not help. It reports only `appeared`, `asking` (after 5 s) and `gone` (`Core/Events/FleetChanged.cs:19`, `FleetChangeRules.cs:6`). It says nothing for a session going from running to idle.
 
@@ -465,7 +469,7 @@ Time budget (a plan, not a measurement; perf measures it):
 | paint | 16 ms |
 | **total** | **about 220 ms**, leaving 780 ms of slack under D5 |
 
-Facts that come from `aw-meta` (context, usage, queue, heavy) arrive by `aw-meta events --after N`. Those producers write on their own cadence, so they carry no 1 s promise. The service reads the cursor every 2 s (agent default; the cost of a CLI call is not measured). A queue entry or a context mark shows within 2 s plus the producer's write.
+Facts that come from `aw-meta` (context, usage, queue, heavy) arrive by `aw-meta events --after N`. Those producers write on their own cadence, so they carry no 1 s promise. The service reads the cursor every 2 s (agent default). One `events` call is cheap by construction (PR #3103, read from the branch, not run): it starts one process, needs no team config (`NeedsConfig: false`), and runs one indexed `SELECT ... WHERE id > $after ... LIMIT 500` on `meta.db`; it prunes only on append. A queue entry or a context mark shows within 2 s plus the producer's write. The fallback is not cheap: `lanes-context`, `usage` (which reads panes and transcripts, `UsagePane.cs`) and `status` are three process starts that each load the team config. So until `events` ships, the fallback ticks every 15 s (agent default), and the head says "lane facts from 09:02" when older than 30 s. D5's 1 s promise covers session state only (§7.2 steps 1 to 4).
 
 ### 7.3 How perf measures it
 
@@ -503,10 +507,10 @@ Everything the page does, an agent can do. `sindri agents` is a client of `GET /
 
 | Verb | Arguments | Does | Refused with |
 |---|---|---|---|
-| `agents` | `[--needs-you] [--state S] [--lane L] [--json]` | rows in page order; `--needs-you` lists only that group, with `reasons[]` | none |
-| `agents show` | `<provider>/<id> [--json]` | one row, its reasons and its activity | 001 |
+| `agents` | `[--needs-you] [--state S] [--lane L] [--provider P] [--repo R] [--json]` | rows in page order; `--needs-you` lists only that group, with `reasons[]`. `--provider` and `--repo` are today's flags and stay. `--state` takes the page names (`needs`, `working`, `idle`, `limited`, `down`) and, for one release, today's `running`, `asking`, `idle`, `ended` as aliases | none |
+| `agents show` | `<provider>/<id> [--json]` (today's form; `session:<provider>/<id>` is accepted too) | one row, its reasons and its activity | 001 |
 | `agents box` | `[--json]` | the box strip | none |
-| `agents steer` | `<id> --op message\|answer\|recycle\|stop [--args JSON] --version N` | one op, the same call as the page | 001, 002, 003, 004, 005, 007, SND-AUTH-002 |
+| `agents steer` | `<row id> --op message\|answer\|recycle\|stop [--args JSON] --version N [--act-id ID]` | one op, the same call as the page. `<row id>` is the §3.1 id (`session:claude-code/ab12`, `lane:team/ideas`). Without `--act-id` the CLI makes one and prints it; a retry after a timeout passes the same id, so a message is not sent twice (SND-AGENT-009 on a changed body) | 001, 002, 003, 004, 005, 007, 009, SND-AUTH-002 |
 
 Over MCP the tools are `agents_list`, `agents_show`, `agents_box` and `agents_steer` at `/sindri/mcp`. A session reads the rows of the repos its `X-Sindri-Repo` header names, and the text is fenced as untrusted. A lead session may call `steer` on its own builders only. Exit codes follow the context family: `0` ok, `1` attention (a refusal, Sindri not running), `2` a tool or usage error.
 
@@ -520,7 +524,7 @@ Reserved now: SND-AGENT-001 to 029. No `SND-AGENT-` code exists on main (`git gr
 | 002 | the write names an old row version; carries the current one | 409 | 1 |
 | 003 | the op does not apply to this row; carries the reason sentence (for example "Claude lanes take mail through SendMessage") | 400 | 1 |
 | 004 | stop refused: the pid or start ticks changed since the row was read | 409 | 1 |
-| 005 | recycle refused: no digest, or the path is unreadable (AW-META-021) | 400 | 1 |
+| 005 | recycle refused: no digest, the path is unreadable or not absolute, or the digest is older than the lane's session (AW-META-021) | 400 | 1 |
 | 006 | `aw-meta` is unavailable (no team, no binary, exit 2) | 503 | 1 |
 | 007 | message empty or over 8,000 characters | 400 | 1 |
 | 008 | the activity could not be read (transcript missing or locked) | 502 | 1 |
@@ -629,8 +633,35 @@ Each has my recommended answer. None blocks the phases that start now.
 3. **Is "waiting on a tool" worth a hook change?** Recommend no. Make the hook write PreToolUse and PostToolUse and you spend a `jq` run per tool call (`fleet-state.sh:10-11` avoids that on purpose). Show the last-activity age instead.
 4. **Does a Claude lane have an unread-mail signal?** I found none, so "idle with work owed" ignores mail for Claude lanes. Recommend tools adds a `mail.unread` fact per lane to `aw-meta status --json`, and rule 3c uses it.
 5. **Should the head count PRs or rows?** Recommend PRs ("2 PRs ready to merge"), as in §6.1. The ux walk asked for the number of PRs, and a PR is the thing the owner merges.
-6. **Where does a lane write its digest?** I found no fixed folder. Recommend `aw-meta` records the digest path in the lane's status when `lane-recycle` is asked for, so the recycle picker can prefill it.
+6. **Where does a lane write its digest?** There is no fixed folder (round 1 check). The picker prefills from the lane's `DIGEST READY <path>` message. Recommend `aw-meta` also keeps that path in the lane's status, so the prefill survives the message being read and archived.
 
 ### Review notes
 
-Round 1: not run yet.
+Round 1 (autoplan, 2026-11-12, origin/main 4fafac85b4; files in `plans/agents-page-r1/`). Verdicts and MUST counts: product PASS (0), arch NEEDS_WORK (3), design PASS (0), devex NEEDS_WORK (2), security NEEDS_WORK (1, shared with arch). I ran the five lenses myself in one pass, not as five subagents.
+
+Fact checks:
+- `settings.PollSeconds` default is 2, not unknown. Applied (§7.1).
+- `QueuedPr.From` is the sender of the latest `ready #N` message: name, else raw peer id. No lane-map lookup exists. Applied (§3.2 "PR ready: the join").
+- Usage JSON: `subjects[].state` is `"Limited"`, `resetsAt` is omitted when unknown; the old text said "subject in state Limited ... UsageStop". Applied (§3.2).
+- #3067 is the merged context-scope spec PR by jthorare, not a qa gate PR. The walk's sender claim is unchecked. Applied (§4.3).
+- Digests: no fixed folder. `config/digests-README.md` gives a convention and the meta protocol has `DIGEST READY <path>`. Applied (§5, question 6).
+- Claude-lane unread mail: still none on main. Health skips Claude lanes. Applied (§3.2).
+- `aw-meta events`: not on main; PR #3103 is open. One call is one process start and one indexed SELECT with no config load. The CLI fallback is three calls, one of which reads panes. Applied (§3.3, §7.2).
+
+MUST (all applied):
+- M1 (arch, security): a lane has no `X-Sindri-Launch`, so "a lead steers its own builders" had no caller identity. Added the `X-Sindri-Session` header rule (§5 "Who is the caller").
+- M2 (arch): the PR-ready join had no source. Added the join rule and the unmatched case.
+- M3 (devex): `sindri agents` flags dropped `--provider` and `--repo`, and `--state` changed vocabulary. Kept both flags, added aliases (§8.1).
+- M4 (devex): `agents steer` had no `--act-id`, so a CLI retry could send a message twice. Added it.
+- M5 (arch): the 2 s fallback tick would run three CLI calls (one reads panes) 30 times a minute. Fallback is 15 s until `events` ships (§7.2).
+
+SHOULD and nits:
+- Round 1: D8 arithmetic said 14 rows at 40 px; 604 / 40 is 15. Applied.
+- Round 1: `Ctrl+Enter` sent in §6.5 and opened a menu in §6.6. Applied: send inside the composer, menu elsewhere.
+- Round 1: SND-AGENT-005 missed a stale digest and a path that starts with `-`. Applied.
+- Round 1: untagged numbers. Applied: one sentence in section 2 lists the agent defaults.
+- Round 1: `agents show` and `steer` id forms differed. Applied: steer takes the row id, show accepts both.
+- Round 1: head "3 need you · 2 PRs ready to merge" counts a PR twice for a reader. Not applied: the ux walk asked for both numbers, and the head defines each.
+- Round 1: Enter on the stop confirm stops, so a reflex Enter after `x` stops. Not applied: x + confirm is settled; the confirm shows the pid so the owner reads it first.
+- Round 1: pid reuse between the ticks check and SIGTERM. Not applied: one `/proc` read apart, and the threat model is honest mistakes.
+- Round 1: a third hook state ("waiting on a tool") for the sixth glyph. Not applied: question 3 already says no.
