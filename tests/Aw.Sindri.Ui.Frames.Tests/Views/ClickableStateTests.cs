@@ -273,7 +273,7 @@ public sealed class ClickableStateTests : FrameHost
         Assert.NotEqual(rest, ((ISolidColorBrush)row.Background!).Color);
     });
 
-    // #2780: a steady row is neutral (one accent): it rests on Surface2 and lifts to the pressed fill; the unseen pulse keeps its amber and lifts within it (#2611, #2749).
+    // #2780: a steady row is neutral (one accent): it rests on Surface2, takes the hover fill under the pointer and the pressed fill on a press; the unseen pulse keeps its amber and lifts within it (#2611, #2749).
     [Theory]
     [InlineData("pulsing")]
     [InlineData("steady")]
@@ -291,7 +291,7 @@ public sealed class ClickableStateTests : FrameHost
         var at = await PointAt(window, () => row.TranslatePoint(new Point(4, 4), window)!.Value, row);
         Frame(window, $"{tint}-hover", "gh2611-");
         Assert.True(row.IsPointerOver, $"at {at}, row bounds {row.Bounds}, hit {Describe(window.InputHitTest(at))}");
-        Assert.Equal(TokenColor(tint == "pulsing" ? "Brush.AttentionSoft.Hover" : "Brush.Clickable.Pressed"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.Equal(TokenColor(tint == "pulsing" ? "Brush.AttentionSoft.Hover" : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
 
         window.MouseDown(at, MouseButton.Left, RawInputModifiers.LeftMouseButton);
         Settle(window);
@@ -507,11 +507,11 @@ public sealed class ClickableStateTests : FrameHost
         var point = await PointAt(window, () => Corner(window, row), row);
 
         Assert.True(row.IsPointerOver, $"at {point}, hit {Describe(window.InputHitTest(point))}, chain {Chain(row)}");
-        Assert.Equal(TokenColor(IsAttention(row) ? (row.Classes.Contains("pulsing") ? "Brush.AttentionSoft.Hover" : "Brush.Clickable.Pressed") : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
+        Assert.Equal(TokenColor(IsAttention(row) ? (row.Classes.Contains("pulsing") ? "Brush.AttentionSoft.Hover" : "Brush.Clickable.Hover") : "Brush.Clickable.Hover"), ((ISolidColorBrush)row.Background!).Color);
         Frame(window, $"{stem}-row-hover", "gh2535-");
     });
 
-    // A steady or outlined Needs You row rests on Surface2 like a calm one, so it lifts to the pressed fill; the unseen pulse keeps its amber (#2780, #2611).
+    // A steady or outlined Needs You row rests on Surface2 like a calm one, so it takes the hover fill under the pointer and the pressed fill on a press; the unseen pulse keeps its amber (#2780, #2611).
     private static bool IsAttention(Border row) =>
         row.Classes.Contains("needs-you-row") && (row.Classes.Contains("pulsing") || row.Classes.Contains("steady") || row.Classes.Contains("outlined"));
 }

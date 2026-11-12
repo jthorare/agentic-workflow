@@ -28,10 +28,10 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Clickable.PressedBorder}" />
     <Setter Property="RenderTransform" Value="scale(0.98)" />
   </Style>
-  <!-- A Needs You row rests on Surface2 whatever its urgency (#2780: one accent, so no amber tint); under the pointer it lifts to the pressed fill like a calm row,
+  <!-- A Needs You row rests on Surface2 whatever its urgency (#2780: one accent, so no amber tint); under the pointer it takes the hover fill under the pointer and the pressed fill on a press,
        and an outlined row keeps its neutral border. Declared after the grey hover and press above so they win, and before the focus and selection borders below. -->
   <Style Selector="Border.clickable.needs-you-row.steady:pointerover, Border.clickable.needs-you-row.outlined:pointerover">
-    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Hover}" />
   </Style>
   <Style Selector="Border.clickable.needs-you-row.steady:pressed, Border.clickable.needs-you-row.outlined:pressed">
     <Setter Property="Background" Value="{DynamicResource Brush.Clickable.Pressed}" />

@@ -78,7 +78,7 @@ public sealed class NeedsYouOutlineTests : FrameHost
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
     });
 
-    // #2780: under the pointer an outlined row keeps its neutral border, and under the pointer and a press it takes the pressed fill (no amber, one accent).
+    // #2780: under the pointer an outlined row keeps its neutral border, and under the pointer and a press it takes the hover fill, and the pressed fill on a press (no amber, one accent).
     [Fact]
     public Task An_outlined_row_keeps_its_neutral_border_under_the_pointer_and_the_pressed_fill_while_pressed() => OnUi(async () =>
     {
@@ -93,7 +93,7 @@ public sealed class NeedsYouOutlineTests : FrameHost
         Settle(window);
         Assert.True(frame.IsPointerOver);
         Frame(window, "outlined-amber-hover", "gh2611-");
-        Assert.Equal((Brush("Brush.Clickable.Pressed"), Brush("Brush.InkSubtle")), (((ISolidColorBrush)frame.Background!).Color, ((ISolidColorBrush)frame.BorderBrush!).Color));
+        Assert.Equal((Brush("Brush.Clickable.Hover"), Brush("Brush.InkSubtle")), (((ISolidColorBrush)frame.Background!).Color, ((ISolidColorBrush)frame.BorderBrush!).Color));
 
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
         Settle(window);
