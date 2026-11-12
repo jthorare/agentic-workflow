@@ -23303,3 +23303,5 @@ static Aw.Sindri.Core.Setup.SetupSteps.FirstWorkflow(Aw.Sindri.Core.Setup.FirstW
 const Aw.Sindri.Core.Setup.SetupActions.RestartProcess = "RestartProcess" -> string!
 const Aw.Sindri.Core.Setup.SetupActions.ConnectAccount = "ConnectAccount" -> string!
 static Aw.Sindri.Core.Setup.SetupActions.CliFor(string? action) -> string?
+Aw.Sindri.Core.Setup.SetupTimeouts
+static Aw.Sindri.Core.Setup.SetupTimeouts.MapStoppedAfter.get -> System.TimeSpan
