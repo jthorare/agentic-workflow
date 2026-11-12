@@ -32,6 +32,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     [
         nameof(CurrentPage), nameof(PageName), nameof(SelectedNav), nameof(IsHome), nameof(IsProjects), nameof(IsWork), nameof(IsContext),
         nameof(IsAgents), nameof(IsSystem), nameof(IsReviews), nameof(IsConnections), nameof(IsJobs), nameof(IsMemory), nameof(IsResources), nameof(IsWorkflows), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown),
+        nameof(IsReviewPageShown), nameof(IsEdgeTabShown),
     ];
 
     private readonly Preferences _store;
