@@ -140,6 +140,10 @@
         <Border Classes="panel" Height="320">
           <wv:GraphCanvas x:Name="RunsCanvas" Graph="{Binding Runs.Graph}" />
         </Border>
+        <!-- What the selected step is and does, read-only, while Edit is off (#2807). -->
+        <Border x:Name="StepSummary" IsVisible="{Binding HasStepSummary}" AutomationProperties.Name="{Binding StepSummaryText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption" Text="{Binding StepSummaryText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
         <Border x:Name="RunsUnplacedName" IsVisible="{Binding Runs.Graph.HasUnplaced}" AutomationProperties.Name="{Binding Runs.Graph.UnplacedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption subtle" Text="{Binding Runs.Graph.UnplacedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
