@@ -14,3 +14,5 @@ Agent edits stay proposals. Editor keys stay chords.
 | #3037 | palette, palette-empty, palette-none, palette-reading, palette-nofolder |
 | #3038 | live-chips, live-chips-legend, live-chips-notlive, make-issue-picker, make-issue-noconn, make-issue-fail, make-issue-done |
 | #3039 | history, history-restore, history-stale, history-empty, history-error, history-loading, settings |
+
+Round 3: capture window titled by kind and the Issue kind drawn as the Projects window; checkbox border #70757c; not-live chips dim only the glyph and edge, with an "as of 14:02" tooltip; peek chip; legend has 11 states; day chords are Alt+PageUp / Alt+PageDown. The one-line preview in each list row stays plain text.
