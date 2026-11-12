@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 
@@ -5,9 +6,10 @@ namespace Aw.Sindri.Ui.Views.Controls;
 
 /// <summary>
 /// A button that is one choice out of several (#3234): the Add step block tile and the Connect target row of the Workflows editor. A button underneath, so Click, Command, Enter and Space,
-/// focus and the accessible name come from the content. It has five looks: rest, hover, pressed, focus (a ring, for the keyboard only), selected (<see cref="IsSelected"/>) and disabled. Class <c>row</c> turns the
+/// focus and the accessible name come from the content. It has five looks: rest, hover, pressed, focus (a ring, for the keyboard only), selected (<see cref="IsSelected"/>) and disabled. Class "row" turns the
 /// compact tile into a full-width row with left-aligned content. The template is in ControlStyles.axaml.
 /// </summary>
+[SuppressMessage("Design", "MA0182", Justification = "The Workflows editor adopts it in its own PR (#3234).")]
 internal sealed class SelectableTile : Button
 {
     /// <summary>True when this is the chosen one: a soft primary fill and a primary border.</summary>
