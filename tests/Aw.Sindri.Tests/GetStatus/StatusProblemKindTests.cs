@@ -15,7 +15,7 @@ public sealed class StatusProblemKindTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private GetStatusService Service(IProfileSource live, IApprovedProfile approved) => new(_h.Held, new ProfileReads(approved, live), _h.Store, new ProjectorProgress(_h.Clock), new HealthServiceRows(new InMemoryViewStore(SliceHarness.Json), []), new InMemorySessionSnapshot());
+    private GetStatusService Service(IProfileSource live, IApprovedProfile approved, IProfileFile? file = null) => new(_h.Held, new ProfileReads(approved, live, jevKey: null, file), _h.Store, new ProjectorProgress(_h.Clock), new HealthServiceRows(new InMemoryViewStore(SliceHarness.Json), []), new InMemorySessionSnapshot());
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_home_with_no_profile_file_says_missing()
@@ -69,6 +69,51 @@ public sealed class StatusProblemKindTests
         var status = (await Service(files.Source, new NoApproval()).Handle(new GetStatusRequest(), Token)).Value;
 
         Assert.Equal("missing", status.Profile.ProblemKind);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_profile_file_on_disk_that_the_source_cant_read_says_invalid_not_missing()
+    {
+        _h.Profiles.Live = SindriErrors.ProfileMissing.With("/home/thor/profile.yaml can't be read: Access to the path is denied.");
+
+        var status = (await Service(_h.Profiles, _h.Profiles, new FileProbe(exists: true)).Handle(new GetStatusRequest(), Token)).Value;
+
+        Assert.Equal("invalid", status.Profile.ProblemKind);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_missing_answer_with_no_file_on_disk_says_missing()
+    {
+        _h.Profiles.Live = SindriErrors.ProfileMissing.With("/home/thor/profile.yaml doesn't exist");
+
+        var status = (await Service(_h.Profiles, _h.Profiles, new FileProbe(exists: false)).Handle(new GetStatusRequest(), Token)).Value;
+
+        Assert.Equal("missing", status.Profile.ProblemKind);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_real_profile_file_with_no_read_permission_says_invalid_not_missing()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows() || Environment.IsPrivilegedProcess, "needs file permissions and a user they apply to");
+        using var files = new ProfileFiles();
+        files.Write("schemaVersion: 1\nuser: thor\n");
+        var path = files.Settings.ProfilePath;
+        File.SetUnixFileMode(path, UnixFileMode.None);
+        try
+        {
+            var status = (await Service(files.Source, new NoApproval(), new FileProbe(File.Exists(path))).Handle(new GetStatusRequest(), Token)).Value;
+
+            Assert.Equal("invalid", status.Profile.ProblemKind);
+        }
+        finally
+        {
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
+    }
+
+    private sealed class FileProbe(bool exists) : IProfileFile
+    {
+        public bool Exists() => exists;
     }
 
     /// <summary>An approval read that finds nothing approved, so the status goes on to the live read.</summary>

@@ -59,6 +59,14 @@ public sealed class FreshHomeWireTests
     }
 
     [Fact]
+    public void A_profile_file_the_server_cant_read_reads_unreadable_with_the_cross()
+    {
+        var profile = Read<ProfileView>("""{"live":null,"problem":"/home/thor/profile.yaml can't be read: Access to the path is denied.","source":null,"modelPick":"off","labelPick":"off","surfacePick":"off","problemKind":"invalid"}""");
+
+        Assert.Equal(("unreadable", StateGlyph.Down), (StatusText.ProfileState(profile), StatusText.ProfileGlyph(profile)));
+    }
+
+    [Fact]
     public void An_invalid_profile_keeps_its_Live_row()
     {
         var profile = Read<ProfileView>("""{"live":null,"problem":"line 3: unknown key","source":null,"modelPick":"off","labelPick":"off","surfacePick":"off","problemKind":"invalid"}""");

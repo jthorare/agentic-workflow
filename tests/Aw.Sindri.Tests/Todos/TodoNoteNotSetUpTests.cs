@@ -44,6 +44,17 @@ public sealed class TodoNoteNotSetUpTests
     }
 
     [Fact]
+    public async Task A_profile_file_on_disk_that_cant_be_read_stays_cant_read_not_set_up()
+    {
+        _h.NoteLocator.Fails = SindriErrors.ProfileMissing.With("/home/thor/profile.yaml can't be read: Access to the path is denied.");
+        _h.ProfileFile = new FileOnDisk();
+
+        var note = await Read();
+
+        Assert.Equal(("can't read", true), (note.State, note.LastError is not null));
+    }
+
+    [Fact]
     public async Task A_vault_that_is_set_and_cannot_be_resolved_stays_cant_read_with_its_error()
     {
         _h.NoteLocator.Fails = SindriErrors.TodoNoteKey.With("todo.obsidian.vault: 'notes' can't be resolved to a folder");
@@ -51,5 +62,10 @@ public sealed class TodoNoteNotSetUpTests
         var note = await Read();
 
         Assert.Equal(("can't read", true), (note.State, note.LastError is not null));
+    }
+
+    private sealed class FileOnDisk : Aw.Sindri.Core.Profile.IProfileFile
+    {
+        public bool Exists() => true;
     }
 }

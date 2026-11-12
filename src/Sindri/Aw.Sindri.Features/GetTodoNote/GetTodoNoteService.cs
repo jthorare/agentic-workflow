@@ -4,6 +4,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Core.Views;
@@ -18,7 +19,8 @@ namespace Aw.Sindri.Features.GetTodoNote;
 /// <param name="ledger">Reads the last sync.</param>
 /// <param name="views">The todos.</param>
 /// <param name="reads">The hold, the picks and the lines that can't sync.</param>
-internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContextAccessor callers, ITodoNoteSync note, INoteLocator locator, ILedgerReader ledger, IViewReader views, TodoNoteReads reads) : IService<GetTodoNoteRequest, GetTodoNoteResponse>
+/// <param name="profileFile">Says whether the profile file is on disk, to tell a new home from a file it can't read; null counts it absent.</param>
+internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContextAccessor callers, ITodoNoteSync note, INoteLocator locator, ILedgerReader ledger, IViewReader views, TodoNoteReads reads, IProfileFile? profileFile = null) : IService<GetTodoNoteRequest, GetTodoNoteResponse>
 {
     public async ValueTask<Result<GetTodoNoteResponse>> Handle(GetTodoNoteRequest request, CancellationToken cancellationToken)
     {
