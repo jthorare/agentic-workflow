@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -13,7 +14,43 @@ internal sealed partial class ReviewsPage : UserControl
     {
         InitializeComponent();
         AddHandler(KeyDownEvent, OnKeyDown);
-        this.FindControl<ItemsControl>("ReviewsGroups")!.SizeChanged += (_, e) => Views.Layout.PageLayout.SetReviewsWidth(this, e.NewSize.Width - PanelBorder - RowPadding);   // why: the groups fill the page, so a sheet beside it narrows them
+        // why: ReviewsGroups is in this page's own XAML
+        this.FindControl<ItemsControl>("ReviewsGroups")!.SizeChanged += (_, e) =>
+        {
+            _width = e.NewSize.Width - PanelBorder - RowPadding;   // why: the groups fill the page, so a sheet beside it narrows them
+            Replan();
+        };
+    }
+
+    private double _width;
+    private ViewModels.Shell.ShellViewModel? _shell;
+
+    // Grammar (#2978): with a sheet open the row keeps its first 3 facts; the plan carries the sheet state and the width.
+    private void Replan() => Views.Layout.PageLayout.SetReviewsPlan(this, new Views.Layout.PageLayout.ReviewsPlan(_width, _shell is { IsSheetShown: true }));
+
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _shell = TopLevel.GetTopLevel(this)?.DataContext as ViewModels.Shell.ShellViewModel;
+        _shell?.PropertyChanged += OnShellChanged;
+        Replan();
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        _shell?.PropertyChanged -= OnShellChanged;
+        _shell = null;
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    private void OnShellChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ViewModels.Shell.ShellViewModel.IsSheetShown), StringComparison.Ordinal))
+        {
+            Replan();
+        }
     }
 
     // The room the columns have: the group's width less the panel's 1 px border a side and the rows' 16 px padding a side.

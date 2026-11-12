@@ -81,8 +81,12 @@ internal static class PageLayout
     /// <returns>The widths, title column first (0 for the star).</returns>
     internal static double[] ReviewWidths(double width, bool peek = false)
     {
-        _ = peek;   // red: the peek rule is not built yet
         double[] widths = [0, 140, 70, 120, 160, 140];
+        if (peek)
+        {
+            widths[5] = 0;
+        }
+
         if (width <= 0)
         {
             return widths;
@@ -100,31 +104,36 @@ internal static class PageLayout
     }
 
     /// <summary>The Reviews table's width, set by the Reviews page; its grids (classed "reviews-table": the header and every row) lay their columns out from it.</summary>
-    internal static readonly AttachedProperty<double> ReviewsWidthProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, double>("ReviewsWidth", 0, inherits: true);
+    internal static readonly AttachedProperty<ReviewsPlan> ReviewsPlanProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, ReviewsPlan>("ReviewsPlan", default, inherits: true);
 
-    /// <summary>Sets the Reviews table's width on a control (and so on everything under it).</summary>
+    /// <summary>What the Reviews grids lay out from: the table's width and whether a sheet is open beside the list.</summary>
+    /// <param name="Width">The room the columns have.</param>
+    /// <param name="Peek">True while a sheet is open.</param>
+    internal readonly record struct ReviewsPlan(double Width, bool Peek);
+
+    /// <summary>Sets the Reviews plan on a control (and so on everything under it).</summary>
     /// <param name="control">The control.</param>
-    /// <param name="width">The room the columns have.</param>
-    internal static void SetReviewsWidth(Control control, double width) => control.SetValue(ReviewsWidthProperty, width);
+    /// <param name="plan">The plan.</param>
+    internal static void SetReviewsPlan(Control control, ReviewsPlan plan) => control.SetValue(ReviewsPlanProperty, plan);
 
     static PageLayout()
     {
-        _ = ReviewsWidthProperty.Changed.AddClassHandler<Grid>((grid, e) =>
+        _ = ReviewsPlanProperty.Changed.AddClassHandler<Grid>((grid, e) =>
         {
-            if (grid.Classes.Contains("reviews-table") && e.NewValue is double width)
+            if (grid.Classes.Contains("reviews-table") && e.NewValue is ReviewsPlan plan)
             {
-                ApplyReviews(grid, width);
+                ApplyReviews(grid, plan);
             }
         });
     }
 
-    /// <summary>Sets a Reviews grid's columns for a table width; a dropped column's cells are hidden.</summary>
+    /// <summary>Sets a Reviews grid's columns from the plan; a dropped column's cells are hidden.</summary>
     /// <param name="table">The grid with the six Reviews columns.</param>
-    /// <param name="width">The table's width.</param>
-    internal static void ApplyReviews(Grid table, double width)
+    /// <param name="plan">The plan.</param>
+    internal static void ApplyReviews(Grid table, ReviewsPlan plan)
     {
-        var widths = ReviewWidths(width);
+        var widths = ReviewWidths(plan.Width, plan.Peek);
         for (var i = 1; i < table.ColumnDefinitions.Count; i++)
         {
             table.ColumnDefinitions[i].Width = new GridLength(widths[i]);
