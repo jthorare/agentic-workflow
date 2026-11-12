@@ -16,6 +16,7 @@ internal sealed partial class TerminalViewViewModel : ObservableObject
         nameof(ShowTakeItBack), nameof(HintText), nameof(EndedText), nameof(CanRemoveWorktree), nameof(CanDiscardSession),
         nameof(CanCopyResume), nameof(CanJump), nameof(CardReason), nameof(CardTail), nameof(IsCardAccented), nameof(CardButtons),
         nameof(FocusedButton), nameof(ShowStop), nameof(CardButtonItems), nameof(HasCard), nameof(HasBanner), nameof(CardTitle), nameof(CardBody),
+        nameof(HeaderStateWord), nameof(IsStateAttention), nameof(IsStateError), nameof(IsStateEnded), nameof(HasCardTail),
     ];
 
     private int _otherClients;
@@ -68,6 +69,21 @@ internal sealed partial class TerminalViewViewModel : ObservableObject
         TerminalState.Ended => Labels.TerminalEnded,
         _ => Labels.TerminalEnded,
     };
+
+    /// <summary>The header's state word: <see cref="StateWord"/>, except that the open-in-another-window card carries its own sentence and the header stays blank (DG2 frame 5).</summary>
+    public string HeaderStateWord => State == TerminalState.TakenOver ? string.Empty : StateWord;
+
+    /// <summary>True when the state dot and word are orange (DG2: Connecting, Reconnecting, Starting, Can't attach).</summary>
+    public bool IsStateAttention => State is TerminalState.Connecting or TerminalState.Reconnecting or TerminalState.Starting or TerminalState.CantAttach;
+
+    /// <summary>True when the state dot and word are red (DG2: Can't reach Sindri, Gone).</summary>
+    public bool IsStateError => State is TerminalState.CantReachSindri or TerminalState.Gone;
+
+    /// <summary>True when the state dot is grey (DG2: Ended).</summary>
+    public bool IsStateEnded => State == TerminalState.Ended;
+
+    /// <summary>True when the card has a tail block to show.</summary>
+    public bool HasCardTail => !string.IsNullOrEmpty(CardTail);
 
     /// <summary>The target's name, drawn at 16 px.</summary>
     public string HeaderName => Target?.Name ?? string.Empty;
