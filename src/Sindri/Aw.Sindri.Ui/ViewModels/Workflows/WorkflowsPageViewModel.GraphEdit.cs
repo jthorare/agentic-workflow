@@ -5,4 +5,7 @@ internal sealed partial class WorkflowsPageViewModel
 {
     /// <summary>The graph edits (Add step, Remove, Connect) of the open workflow.</summary>
     public GraphEditViewModel GraphEdit { get; }
+
+    /// <summary>True while the editor sheet is open on a step that does not exist yet (Add step picked a kind; Save sends the add_node).</summary>
+    public bool IsNewStep { get { _ = IsEditing; throw new NotSupportedException(); } }
 }

@@ -76,6 +76,70 @@ public sealed class GraphEditTests
     }
 
     [Fact]
+    public async Task Picking_a_kind_opens_the_sheet_on_a_new_step_and_sends_nothing()
+    {
+        var page = await Open("start");
+        await page.GraphEdit.BeginAdd(Token);
+        var nodes = page.Runs.Graph!.Nodes.Count;
+
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+
+        Assert.Empty(_f.Server.AppliedWorkflowOps);
+        Assert.True(page.IsEditing);
+        Assert.True(page.IsNewStep);
+        Assert.Equal(["prompt"], page.Editor.Fields.Select(f => f.Name), StringComparer.Ordinal);
+        Assert.False(page.CanSave);   // the required prompt is empty
+        Assert.Equal(nodes, page.Runs.Graph.Nodes.Count);
+    }
+
+    [Fact]
+    public async Task Save_on_a_new_step_sends_one_add_node_with_the_filled_config_and_the_connect_after_the_selected_node()
+    {
+        var page = await Open("start");
+        await page.GraphEdit.BeginAdd(Token);
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        page.Editor.Fields[0].Text = "Check the repos";
+        Assert.True(page.CanSave);
+
+        await page.Save(Token);
+
+        _ = Assert.Single(_f.Server.AppliedWorkflowOps);
+        AssertSent(0, """[{"op":"add_node","id":"run_agent_1","type":"run_agent","config":{"prompt":"Check the repos"}},{"op":"connect","from":"start","to":"run_agent_1"}]""");
+        Assert.False(page.IsNewStep);
+        Assert.False(page.IsEditing);
+    }
+
+    [Fact]
+    public async Task Cancel_on_a_new_step_sends_nothing_and_adds_no_node()
+    {
+        var page = await Open("start");
+        await page.GraphEdit.BeginAdd(Token);
+        var nodes = page.Runs.Graph!.Nodes.Count;
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        page.Editor.Fields[0].Text = "half typed";
+
+        page.CloseEditor();
+
+        Assert.Empty(_f.Server.AppliedWorkflowOps);
+        Assert.False(page.IsNewStep);
+        Assert.False(page.IsEditing);
+        Assert.Equal(nodes, page.Runs.Graph.Nodes.Count);
+    }
+
+    [Fact]
+    public async Task A_step_with_no_required_settings_can_be_saved_at_once()
+    {
+        var page = await Open(selected: null);
+        await page.GraphEdit.BeginAdd(Token);
+
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[0].Blocks[0], Token);   // manual: no fields
+
+        Assert.True(page.CanSave);
+        await page.Save(Token);
+        AssertSent(0, """[{"op":"add_node","id":"manual_1","type":"manual"}]""");
+    }
+
+    [Fact]
     public async Task Removing_asks_first_naming_the_node_then_sends_remove_node()
     {
         var page = await Open("agent");
