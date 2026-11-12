@@ -1,6 +1,6 @@
 # Notes round 2 frames (Part of #2981)
 
-45 1440x900 PNGs (`notes-<name>.png`), same CSS tokens as round 1. Regenerate with `python3 gen.py && ./shoot.sh`.
+46 1440x900 PNGs (`notes-<name>.png`), same CSS tokens as round 1. Regenerate with `python3 gen.py && ./shoot.sh`.
 Settled calls applied: one hotkey Ctrl+Alt+I with an Issue / Note switch (Ctrl+Tab), a capture never loses its line, today's page opens with a
 "Needs you / Moved since yesterday" fold, the daily file has no heading (the view draws the long date), backlinks in the right pane, every issue / PR / run
 reference is a live chip with a "not live" state, no PR-body backlink row, make-issue is Ctrl+Shift+I, one Notes Settings frame, palette ranks title matches first.
@@ -8,7 +8,7 @@ Agent edits stay proposals. Editor keys stay chords.
 
 | Issue | Frames |
 |---|---|
-| #3034 | capture-bar, capture-bar-plain, capture-bar-issue, capture-empty, capture-error-down, capture-error-folder, capture-error-write, capture-saved, settings, settings-hotkey-refused |
+| #3034 | capture-bar, capture-bar-plain, capture-bar-issue, capture-empty, capture-error-down, capture-error-folder, capture-error-write, capture-no-folder-no-switch, capture-saved, settings, settings-hotkey-refused |
 | #3035 | today, today-folded, today-new, today-down, today-conflict, today-savefail, list, list-empty, list-loading |
 | #3036 | link-complete, link-complete-empty, link-complete-reading, link-rename, link-written, backlinks, backlinks-empty, backlinks-linked |
 | #3037 | palette, palette-empty, palette-none, palette-reading, palette-nofolder |
