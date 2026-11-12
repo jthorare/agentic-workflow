@@ -47,7 +47,9 @@ The job: **from nothing to a proven, running workflow in 4 steps: pick a trigger
 
 Nobody has a dry run with side effects fenced by block (ledger 7). That one is ours and has no prior art to lean on.
 
-**The bar in one line:** each of A, B and C reaches a passing test run from an empty scratch home in at most 4 steps and under 3 minutes; the test sends nothing; a run that ends changes on screen within 1 s; and "passed" means the same checks Activate runs.
+**The bar in one line:** each of A, B and C reaches a passing test run from an empty scratch home in at most 4 steps (pick the template, fill its fields, test, turn it on) and under 3 minutes, with the GitHub connection already made; the test sends nothing; a run that ends changes on screen within 1 s; and "passed" means the same checks Activate runs.
+
+Counting rule. A "step" is a stage of the loop, not a click. The clock starts on the empty home with a GitHub connection present; making the connection is measured on its own and reported next to W1 to W3 ("Connect GitHub" must take under 1 minute). Built from blank instead of from the template, A takes 5 operations, B 5 and C 6; ux times that path too and reports it, but the bar is the template path.
 
 Done-checks. Each is a test or a measured run in the real app (`aw-ui-driver`). Each names its lane in §14.
 
@@ -58,7 +60,7 @@ Done-checks. Each is a test or a measured run in the real app (`aw-ui-driver`). 
 | W3 | **The ux walk, C.** Schedule, a check, an If step, create an issue on red. | Same measure. |
 | W4 | Every stock template passes its first test run. | CI runs each template twice: with a fake model that returns the schema's example, and with one that returns plain text. The second case ends with a sentence and the first 200 characters of the answer (§6.2), never a parser message. |
 | W5 | Add step never saves an invalid step. | For each of the 10 kinds: pick it, the sheet opens, Cancel adds nothing (revision unchanged), Save with an empty required field is refused in the sheet and sends nothing, Save with the fields filled sends one `add_node` and the count goes up by 1. |
-| W6 | Test run sends nothing. | A test run of A, B and C against the fakes: zero notifications, zero HTTP writes, zero created items, zero agent launches, zero model calls (default mode). The run view lists each as "would do". |
+| W6 | Test run sends nothing. | A test run of A, B and C against the fakes: zero notifications, zero HTTP writes, zero created items, zero agent launches, zero model calls (default mode); a second case with agents on runs `run_agent` against the fakes and asserts no push and no write. The run view lists each as "would do". |
 | W7 | Activate means it runs. | Property: a revision that passes validate and has a passing test run never fails its first live run on a missing connection, repo or agent target (#2985, #2986, #2987, #3001 are the red tests). |
 | W8 | Run state is true. | A run ends, the row and header change within 1 s (p95 over 50 runs on the fakes); "N ago" ticks; no run stays "Running" after the engine closes it (#2999 sweep). |
 | W9 | First paint under 100 ms from the local store; key to visible change under 50 ms. | Window open to the workflow list painted, 200 workflows; keydown to repaint. |
@@ -69,33 +71,35 @@ Done-checks. Each is a test or a measured run in the real app (`aw-ui-driver`). 
 
 ## 2. Decisions
 
-1. **A step opens its form when you add it and is saved only when valid.** Pick Add step, pick a kind, the settings sheet opens with that kind's required fields and presets (#2891). Save sends ONE `add_node` with the filled config. Cancel adds nothing. *Why:* the server keeps checking required settings on every edit, so a saved revision always runs; the fix is in the editor only. This is meta's decision on #3072 and fixes it.
+1. **A step opens its form when you add it and is saved only when valid.** Pick Add step, pick a kind, the settings sheet opens with that kind's required fields and presets (#2891). Save sends ONE `add_node` with the filled config. Cancel adds nothing. *Why:* the server keeps checking required settings on every edit, so a saved revision always runs; the fix is in the editor only, in the shared view model, so both layouts get it. This is meta's decision on #3072 and fixes it.
 2. **Test run works on a draft.** A draft is the newest revision when it is not the active one. Test run needs no Activate. It takes a sample input or a picked real recent event, and it fences every effect step (§5). *Why:* the first try must not be a live run (fixes #2969). Meta accepted engine's split on that issue.
 3. **The run page shows each step's input AND output, and the model's raw text when the JSON parse fails.** The node run keeps the first 64 KB of the raw answer when `SND-GRAPH-103` fires, and the sentence quotes the first 200 characters (fixes #3079's second and third ask).
 4. **A run's state comes from the engine's terminal event, and "N ago" ticks.** The page reads `workflow.run.started`, `workflow.run.finished` and `workflow.run.cancelled` from the event stream and repaints the row and header within 1 s. One shared clock (1 s under a minute, 30 s after) drives every "N ago" (fixes #3080).
-5. **Replace the trigger is one op.** A new graph op `replace_node` swaps a node for another of the same slot, keeps its outgoing edges, and is checked as one edit. The trigger slot offers "Change trigger" (fixes #3075). *Why:* three client-side steps with a broken graph between them is the bug.
+5. **Replace the trigger is one op.** A new graph op `replace_node` swaps a node for another of the same slot, **keeps the node id and its outgoing edges**, and is checked as one edit. The trigger slot offers "Change trigger" (fixes #3075). *Why:* `GraphOps.Apply` already applies an op list atomically (`Core/Graph/Ops/GraphOps.cs`), so remove, add and connect in one list is atomic today; what that list loses is the node id, so every `{{trigger.*}}` reference downstream breaks. `replace_node` keeps the id; a reference to an output field the new trigger lacks becomes a `GRAPH-REF-*` finding, not a silent break. A non-trigger node is refused with `SND-GRAPH-110` ("Only the trigger can be replaced"; engine picks the final number in P0).
 6. **One word for the If step everywhere: "If".** The catalog `Title` (`ConditionBlock.cs:16`) is the only name shown. The canvas subtitle, the sheet ("Settings of Flagged?", the step's own title) and the run row use it. Type ids and node ids show only in the JSON view. Same rule for "Send notification". *Why:* the menu already says "If", and "condition" and "gate" are a type id and a node id (fixes #3074).
-7. **Four steps, in this order: trigger, action, test, turn it on.** The page's primary button follows the step the workflow is at: "Add a trigger", "Add an action", "Test run", "Activate". One decision per screen region, as Zapier does (Take on ledger 1).
-8. **Activate needs every validate finding gone; a passing test run is advised, not required.** An untested revision shows "Not tested" on the workflow row and the header, and Activate opens one confirm: "Not tested yet. Activate anyway?" (Enter / Esc). *Why:* a cron or a PR trigger may have no sample to test with, and a hard gate with no override strands those; the bar is building trivially easy. Settled (lead, 2026-11-12), open question 1.
+7. **Four steps, in this order: trigger, action, test, activate** ("turn it on" in prose; the button, chip, confirm and CLI all say Activate). The page's primary button follows the step the workflow is at: "Add a trigger", "Add an action", "Test run", "Activate". One decision per screen region, as Zapier does (Take on ledger 1).
+8. **Activate needs every validate finding gone; a passing test run is advised, not required.** An untested revision shows "Not tested" on the workflow row and the header, and Activate opens one confirm: "Not tested yet. Activate anyway?" (Enter / Esc). *Why:* a cron or a PR trigger may have no sample to test with, and a hard gate with no override strands those; the bar is building trivially easy. Activate sends the revision number the owner saw, and the server refuses (`SND-GRAPH-007`) if a newer one exists. A session never presses Activate or Pause (§8). Settled (lead, 2026-11-12), open question 1.
 9. **The test run is fenced by block, not by promise.** The block catalog says which blocks write; a test version of each write port records the call and returns a made-up result (§5). Model and agent steps are stubbed by default and opt in per run (§5.2).
 10. **Raw JSON is for the Advanced fold.** Fields show captions (#2925), presets, and the `/` picker. A Prompt step's output is a small form of named fields, not JSON Schema typed by hand (#2968).
 11. **The trigger step lists real events.** The last 10 events of its kind that Sindri saw on this box; pick one, edit it, pin it; a line says "would match" or "would not match: repo is not x" (#3032).
 12. **State is a chip.** "Active, next weekday 7:00" or "Off" beside the title, the same word and glyph as the list row (#2970).
 13. **Agents get the same verbs.** Every action here has a CLI verb and an MCP tool; a session reads and tests but never presses the owner's Activate (§8).
-14. **The old canvas-only editor stays until P5.** The profile key `workflows.editor` (`sheet` | `steps`) picks the editor. P1 to P4 ship `sheet` (today's) as the default and `steps` for the owner to try. P5 flips the default; P6 deletes the old path after one week with no miss of W1 to W3. After P6 the key is accepted and ignored for one release.
+14. **The old canvas-only editor stays until P5.** The new profile key `workflows.editor` (`sheet` | `steps`; added to the profile schema in P1, set with `sindri profile set workflows.editor steps`, error text lists both values) picks the canvas layout only. The three bug fixes (sheet-first Add step #3072, Change trigger #3075, step names #3074) live in `GraphEditViewModel` and ship in BOTH layouts from P1, so a default user never saves an empty step. P1 to P5 ship `sheet` as the default; P5ui flips it; P6 deletes the old path after one week with no miss of W1 to W3. W1 to W5 run on `steps` and W5 also runs on `sheet`. After P6 the key is accepted and ignored for one release.
 
 ## 3. The model
 
 ### 3.1 The draft and its checks
 
-There is no new store. A workflow already keeps immutable revisions (`docs/csharp/sindri-graph.md:48-51`: every save is a revision, `Activate` pins the one triggers run, a stale base is `SND-GRAPH-007`). Four facts hang off a revision:
+There is no new store for revisions. A workflow already keeps immutable revisions (`docs/csharp/sindri-graph.md:48-51`: every save is a revision, `Activate` pins the one triggers run, a stale base is `SND-GRAPH-007`). Four facts hang off a revision:
 
 | Fact | Where it lives | Set by |
 |---|---|---|
 | `findings[]` | computed on read by `POST /sindri/workflows/validate` (no write) | validate; each finding has a stable id, the node it belongs to, a cause line and a fix line |
-| `tested` | a `workflow.tested` ledger event naming workflow, revision, run id, mode | a test run that ends `succeeded` |
-| `pins` | `test.pins` on the revision: `{<node>: output}` | the owner pins a step's output, or a test request sends it |
+| `tested` | derived: the newest `workflow_run` row with `mode = test`, this revision and `status = succeeded`; no new event, because the run row already holds revision, mode and status | a test run that ends `succeeded` |
+| `pins` | a `workflow_pin` table keyed (workflow, revision, node) holding the output, written by a `workflow.pinned` ledger event (who, run, node). Not part of the revision's `spec_hash`, so pinning never makes a new revision and never un-tests it. A pin of an output the store cut at 64 KB (`SND-GRAPH-108`) is refused. Values pass `Aw.Redaction` before they are stored | the owner pins a step's output, or a test request sends it |
 | `active` | the pin `Activate` writes | Activate |
+
+Why not a column on the revision: revisions are immutable and hashed, and a pin must change after the revision exists.
 
 The page's step is derived, not stored:
 
@@ -113,7 +117,10 @@ A test run is a run row with `mode = test`. It follows the real graph walk (`Gra
 - The trigger is a payload, not an event. The payload is a picked real event, a hand edit of one, or the trigger block's schema example when nothing was seen.
 - Every write port is replaced by a recorder (§5.1).
 - `prompt` and `run_agent` return the pinned output, else the schema example (§5.2).
-- The run never counts as the workflow's last real run, never takes a `one-per-workflow` slot from a live run, and never shows in Home's run failures.
+- **Run row.** `mode` (`live` | `test`) is a new column on `workflow_run`, the one place that already holds revision and status (a ledger migration, numbered at final merge, plus the `ledger schema N/N` line in `src/Sindri/aot-smoke/expected.txt`). A test run's id is `slug@rev:test-N` with its own counter, so it never burns the manual counter or collides with manual run 1 (`SND-GRAPH-100`).
+- `Admit`, `InFlight` and `PromoteOldestQueued` skip `mode = test` rows, so a test never takes a `one-per-workflow` slot from a live run or queues behind one. It never counts as the workflow's last real run.
+- `WorkflowRunStartedPayload` and `WorkflowRunFinishedPayload` gain `Mode`. `NeedsYouProjection`, Home's `run-failed` row and the list's "last run" read `mode = live` only, so a failed test never reaches Home. This is the same unseen flag Home already needs (§12 gap 7); one flag, one filter.
+- `run_workflow` in a test run runs the callee as a test at the callee's newest revision, not its active one.
 - It runs validate first, so a test cannot pass what Activate would refuse.
 
 ### 3.3 A run's state
@@ -171,7 +178,7 @@ In any step field, `/` opens a picker of upstream outputs. Each row shows the na
 
 ### 4.5 Findings
 
-`POST /sindri/workflows/validate` runs after each edit (debounced 150 ms) and before Test and Activate. A finding sits on its step (a chip with the id, the cause line and the fix line), and the header says "2 things to fix" with a button that jumps to the first. Activate's tooltip lists them. Catalog style follows actionlint: a stable id, a cause, a fix, one example input.
+`POST /sindri/workflows/validate` runs after each edit (debounced 150 ms) and before Test and Activate. A finding sits on its step (a chip with the id, the cause line and the fix line), and the header says "2 things to fix" with a button that jumps to the first. Activate's tooltip lists them. Validate also runs a **preflight** for what a fenced test cannot prove: the connection exists and its token can do what the write steps do (for B, comment on issues), the repo is one the connection can see, and the agent target exists. Each failed check is a finding (`GRAPH-PREFLIGHT-*`); a check the connection cannot answer is a warning "Couldn't check" (as `GRAPH-NAME-002`), shown in the Test result. This is what makes "passed" mean "will run" (W7). Catalog style follows actionlint: a stable id, a cause, a fix, one example input.
 
 ### 4.6 Keyboard and focus
 
@@ -189,7 +196,16 @@ Grammar from #2978: rows and steps lead with mono ids; a bare letter never commi
 | Ctrl+Enter in the sheet | Save step | yes, one op |
 | Ctrl+Z | undo the last saved edit (a new revision restoring the old graph) | yes, one op |
 
-Activate, Pause, Delete and Remove are buttons or the `.` panel, not bare keys.
+Activate, Pause, Delete and Remove are buttons or the `.` panel, not bare keys. Activate has the canvas key Ctrl+Shift+A, which opens the same confirm. Bare `N`, `T` and `1` fire only when the canvas has focus, never inside a field. Ctrl+K opens Add step only on this page; it yields to the shell's command palette when the shell owns focus.
+
+**Focus contract.**
+
+1. Opening a sheet puts focus on its first empty required field; Esc or Save returns focus to the step that opened it.
+2. A test that ends moves focus to the first failed step, or to the header's Activate when it passed; the result is announced once through the live region ("Test passed, 4 steps" / "Test failed at Review").
+3. The "Activate anyway" confirm traps focus; focus starts on the default button (Enter = Activate anyway), Esc closes it and the workflow stays Off.
+4. While "Testing..." runs, step sheets open read-only (the test belongs to that revision) and Esc cancels the test.
+5. Test run with findings present is refused in place: the first finding is selected, nothing is sent.
+6. State changes (run ended, event stream down) are announced through the same live region.
 
 ### 4.7 The header
 
@@ -210,19 +226,33 @@ Title, then the state chip (decision 12), then the test fact ("Tested rev 4, pas
 | Active | chip "Active, next weekday 7:00"; Pause; Run now |
 | Conflict | a stale-base edit (`SND-GRAPH-007`) shows "Changed elsewhere. Reload" and keeps the owner's open sheet text |
 | Engine down | the page says serve is not running and keeps the last read; writes are off |
+| Active, never ran | chip "Active, waiting for the first PR"; after the first live run the header shows "First live run passed 2m ago. Open it" or its failure sentence |
+| Template gallery loading / failed | three skeleton cards under 100 ms; on a failed read: "Couldn't load templates. Retry", and Describe it and Blank still work |
+| Recent events loading / empty / failed | "Looking for recent events" / "None seen yet; the sample is used" / "Couldn't read events. Retry"; the sample stays pickable |
+| `/` picker loading / empty | upstream names show at once; values fill in; with no sample the type shows |
+| Save refused by the server | the sheet stays open, keeps the text, shows the sentence of §6.1 on the field or at its top |
+| Run page loading / failed | steps from the list's cache first; "Couldn't read this run. Retry" |
+| Describe it | "Thinking" with Esc to cancel; "No agent chosen. Choose one" (the fix line) when `workflow.agent.target` is unset; a failed agent shows its sentence and keeps the text typed |
 
 ## 5. Test run
 
 ### 5.1 What is fenced
 
-| Port | Test version | Run view shows |
+**The fence fails closed.** A test run binds every port to its test version by default. A port runs for real only when it is on a read-only allowlist. A new port nobody classified is recorded, never run.
+
+How: each block declares `fence: read | write | pure` in the block catalog (`Core/Graph/Blocks`). The engine picks the block registry by `run.mode`, so a test run builds its blocks from the test ports and the live singleton registry is never reached. An architecture test (`Aw.Architecture.Tests`) asserts that every `I*Port` in `Core/Graph` has a test binding and a row below. Recorder rows are stored per (run, node, item) in the run's node-run record, capped at 64 KB each like other node output.
+
+| Port or block | Test version | Run view shows |
 |---|---|---|
 | `INotifyPort` | records the call | "would have: notify 'Main gate red'" |
 | `ICreateItemPort` | records, returns a made-up item | "would have: create item 'X'" |
 | `IGraphHttpPort` non-GET | records | "would have: POST host/path" with the body |
-| `IGraphHttpPort` GET | runs for real | the real response |
-| `IConnectionToolPort` writes | records | "would have: comment on acme/api#12" |
-| `IGraphCallPort` (`run_workflow`) | runs the callee as a test | the callee's test run |
+| `IGraphHttpPort` GET | runs for real (read-only, and the host must be on the profile's allowed hosts, as a live run) | the real response |
+| `IConnectionToolPort` / `call_tool` | runs for real only for tools the connection's tool list marks read-only; any tool without that mark is recorded (unknown = write) | "would have: comment on acme/api#12" |
+| `ICodeRunPort` (`code`) | records, and returns the pinned output or the example; runs for real only if the block is marked `pure` and the runner has no network | "would have run code" |
+| `IGraphResultPort` (`workflow_result`) | records | "would have: return {...}" |
+| `IGraphModelPort` (`prompt`) | pinned output or example; real only with "With model" (§5.2) | "model not run" |
+| `IGraphCallPort` (`run_workflow`) | runs the callee as a test (§3.2) | the callee's test run |
 | `IQuestionPort` | auto-answers with the first choice | "would have asked: ..." |
 | `IGraphMemoryPort` writes, `IGraphSeenStore` | `only_new` reads the real store and writes nothing | "would remember: ..." |
 
@@ -233,9 +263,9 @@ Every "would have" row shows the exact payload so the owner can read what a live
 By default `prompt` and `run_agent` return their pinned output, else the schema's example, so a test spends no model time and no worktree. That proves the wiring and not the model's answer. Two switches change it, both per test run:
 
 - **With model** runs `prompt` steps for real (read-only, no side effects). Use it to catch #3079: the model answered text, not JSON.
-- **With agents** runs `run_agent` nodes in a sandbox with no push and no write (engine's `--real-agents`).
+- **With agents** runs `run_agent` nodes in the Sindri sandbox with no push and no write (engine's `--with-agents`; the claim is only as good as the sandbox plan, so W6 has a with-agents case against the fakes). It spends the owner's agent usage, so a session may not use it (§8).
 
-The Test button has a small menu: Test (fenced), Test with model, Test with model and agents. A step with a pin shows a pin glyph; "Pin this output" is in the run page (§7).
+The Test button has a small menu: Test (fenced), Test with model, Test with model and agents. A step with a pin shows a pin glyph; "Pin this output" is in the run page (§7). A live GET in a test (the read-only case above) is the only network read a fenced test makes.
 
 ### 5.3 What passing means
 
@@ -245,18 +275,25 @@ A test passes when validate passes and the walk ends `succeeded`. A step the tes
 
 ### 6.1 One table, one test per row
 
-Each failure code maps to a sentence and one button. The mapping lives in one catalog file in Core (not in the UI), so the CLI and MCP print the same words. One test per row asserts the sentence and that the named action exists.
+Each failure code maps to `{code, sentence template, fixAction}`. The mapping lives in one catalog file in Core (not in the UI), so the CLI and MCP print the same words. `fixAction` is a button in the UI and a command string for a session (`sindri wf edit S --base N ...`). Placeholders (`{step}`, `{repo}`, `{connection}`) are filled from the finding's node title and config, never from the node id; an unfilled placeholder fails the row's test. One test per row asserts the sentence and that the named action exists.
 
-| Code | Sentence | Button |
+| Code | Sentence | Button / command |
 |---|---|---|
-| `GRAPH-CONFIG-001` | "Check needs a repo." | Open the step |
-| `GRAPH-NAME-001` (once #3001 ships) | "github:home is not a connection on this box." | Connect GitHub |
-| `GRAPH-NAME-002` (today a warning) | "Couldn't check the connection yet." | Retry |
-| `GRAPH-TRIGGER-001` | "A workflow has one trigger." | Change trigger |
-| `SND-GRAPH-103` | "The model answered with text, not the JSON this step asks for: "Usage limit reached ..." (first 200 characters)." | Open the raw answer; Retry with model |
-| `SND-LAUNCH-003` (#2986, should be caught earlier) | "No agent is chosen for step Review and the profile has none." | Choose an agent |
-| `SND-GRAPH-105` | "This workflow is not on." | Activate |
-| `SND-GRAPH-007` | "Changed elsewhere." | Reload |
+| `GRAPH-CONFIG-001` | "{step} needs a repo." | Open the step / `wf edit` setting the field |
+| `GRAPH-NAME-001` (once #3001 ships) | "{connection} is not a connection on this box." | Connect GitHub / `sindri connection add` |
+| `GRAPH-NAME-002` (today a warning) | "Couldn't check the connection yet." | Retry / `wf validate` |
+| `GRAPH-TRIGGER-001` | "A workflow has one trigger." | Change trigger / `wf edit` with `replace_node` |
+| `SND-GRAPH-110` (new, §2 decision 5) | "Only the trigger can be replaced." | none |
+| `SND-GRAPH-103` | "The model answered with text, not the JSON this step asks for: "Usage limit reached ..." (first 200 characters)." | Open the raw answer; Retry with model / `wf test --with-model` |
+| `SND-LAUNCH-003` | "The agent for step {step} isn't available: its CLI is not installed or the target is not in the catalog." | Choose an agent / set `workflow.agent.target` |
+| `SND-LAUNCH-013` | "The agent entry can't express {step}'s model or policy." | Open the step |
+| `SND-GRAPH-105` | "This workflow is not on." | Activate / `wf activate S` |
+| `SND-GRAPH-106` | "A manual run's input must be a JSON object." | Edit the sample / `wf test --trigger f.json` |
+| `SND-GRAPH-107` | "This run already ended." | none |
+| `SND-GRAPH-108` | "The output of {step} was cut at 64 KB, so a later step can't read it." | Open the step |
+| `SND-GRAPH-109` | "A run of this workflow can't start the workflow again." | Open the step that does |
+| `SND-GRAPH-007` | "Changed elsewhere." | Reload / `wf show S` |
+| `SND-API-001` | "Sindri is not running." | Start Sindri / `sindri serve` |
 
 ### 6.2 The prompt step
 
@@ -271,7 +308,7 @@ The run page is the canvas with a status dot per step, and a bottom panel for th
 - **Header.** `<workflow> › run 3` (mono id left of the title), the run's state chip from the event (decision 4), mode (Live / Test / With model), trigger summary, "Started 4m ago · took 14s".
 - **Dots.** Queued, running (arc), succeeded, failed (x), skipped (grey), parked (pause), would-have (dashed ring). Colour is never the only signal.
 - **Panel.** Tabs: Input, Output, Raw answer (only when a model step kept text), Error, Time. Input and Output are the stored values (`NodeRunView.Input`, `.Output`, cut at 64 KB with a "truncated" badge). Large payloads fold. For a test run the panel also shows "would have" rows.
-- **Pin.** "Pin this output" on a succeeded step saves it as `test.pins[<node>]` for later test runs.
+- **Pin.** "Pin this output" on a succeeded step saves it as a `workflow_pin` row (§3.1) for later test runs of this revision.
 
 ### 7.2 State and age
 
@@ -283,34 +320,37 @@ The header sentence comes from the §6.1 table. Under it, one button chosen from
 
 ## 8. Agents
 
-Every action has a CLI verb and an MCP tool. A session may run `wf validate`, `wf test`, `wf create`, `wf edit` and read runs; it never presses Activate or Pause for the owner (`SND-AUTH-002`, as for profile writes).
+Every action has a CLI verb and an MCP tool. A session may run `wf validate`, `wf test`, `wf create`, `wf edit` and read runs; it never presses Activate or Pause for the owner. Today `workflow_activate`, `workflow_pause` and their routes (`WorkflowWriteEndpoints.cs:93-111`) carry no refusal: this spec adds `SND-AUTH-002` on both routes and both MCP tools, with a red test for each. A session also may not run `wf test --with-model` or `--with-agents` (owner usage; `SND-AUTH-002`). `wf activate` from the owner's terminal on an untested revision prints "Not tested yet" and needs `--untested-ok`.
+
+Exit codes of `wf test`, as the other `wf` verbs plus one: 0 test passed, 1 Sindri not running, 2 refused or invalid, 3 the test ran and failed. `--json` prints the run with its findings and "would have" rows. Verbs take the slug positionally (`wf validate S`, `wf test S`, as `wf run`); the existing `--slug` on validate stays as an alias.
 
 | Action | CLI | MCP tool |
 |---|---|---|
 | Validate a revision | `sindri wf validate --slug S [--revision N]` | `workflow_validate` |
-| Test run | `sindri wf test S [--revision N] [--trigger f.json \| --trigger-event ID] [--outputs f.json] [--with-model] [--real-agents]` | `workflow_test` |
+| Test run | `sindri wf test S [--revision N] [--trigger f.json \| --trigger-event ID] [--pin NODE=f.json] [--with-model] [--with-agents] [--json]` | `workflow_test` |
 | Replace the trigger | `sindri wf edit S --base N --ops '[{"op":"replace_node",...}]'` | `workflow_apply_ops` |
-| Recent events of a kind | `sindri wf events --kind K [--connection C]` | `workflow_events` |
+| Recent events of a kind | `sindri wf trigger-events --kind K [--connection C]` | `workflow_trigger_events` |
 | Templates | `sindri wf templates` | `workflow_templates` |
 | Pin an output | `sindri wf pin S --node X --run R` | `workflow_pin` |
 
-Text from a run's output, a PR title or a model answer is fenced as untrusted in every result.
+Text from a run's output, a PR title, a model answer, the raw answer and every "would have" payload is fenced as untrusted in every CLI and MCP result, and redacted before it is stored on a pin.
 
 ## 9. API and engine requirements
 
 | # | Need | Owner lane | Notes |
 |---|---|---|---|
-| E1 | Run `mode` (`live` or `test`) on the run row; test versions of the write ports; `workflow.tested` per revision; `test.pins` per revision | engine | #2969's engine plan, as meta accepted it; order: #2985 first, then ports and mode as one PR, then model and agent stubs |
-| E2 | `POST /sindri/workflows/{slug}/test` with `{revision?, trigger?, triggerEvent?, outputs?, withModel?, realAgents?}`; MCP `workflow_test`; `wf test` | api | the UI button waits on it |
-| E3 | `replace_node` op in `GraphOp` / `GraphOps` (`Core/Graph/Ops/GraphOp.cs`): same slot, keeps outgoing edges, one validate | engine | slot = trigger now; other kinds refused |
+| E1 | Run `mode` (`live` or `test`) on the run row and in both run payloads; test versions of every port, fail closed (§5.1); `tested` derived from the run row; `workflow_pin` table and `workflow.pinned` event (§3.1) | engine | #2969's engine plan, as meta accepted it; order: #2985 first, then ports and mode as one PR, then model and agent stubs |
+| E2 | `POST /sindri/workflows/{slug}/test` with `{revision?, trigger?, triggerEvent?, pins?, withModel?, withAgents?}`; MCP `workflow_test`; `wf test` | api | the UI button waits on it |
+| E3 | `replace_node` op in `GraphOp` / `GraphOps` (`Core/Graph/Ops/GraphOp.cs`): same slot, keeps node id and outgoing edges, one validate; `PublicAPI` entries and goldens | engine | slot = trigger now; other kinds refused with `SND-GRAPH-110` |
 | E4 | Prompt block: check exit code and text before parse; keep `raw` (cut at 64 KB) on the node run; `NodeRunView` gains `Raw` | engine, api | #3079 |
 | E5 | Every `Title` is the only display name; `NodeSummaryView` carries `kindTitle`; sheet titles come from the step title | engine, ui | #3074; the node id never goes to a label |
 | E6 | `GET /sindri/workflows/trigger-events?kind=&connection=` (last N with a one-line summary, the example, the would-match check); MCP and CLI | api | #3032; the forge poll keeps the last 20 real events per connection (#2988's engine comment) |
 | E7 | `GET /sindri/workflows/templates` (A, B and C in v1, each with trigger, step count, needs, last run) | engine | replaces the hard-coded list |
-| E8 | Event kinds `github.pr.opened`, `.updated`, `.ready_for_review`, `.review_requested`, `.review_submitted`, `.comment`, `.checks`, `.conflict`, each with a payload schema and a sample; an issue-labelled kind for B | api, engine | #2988; §12 gap 1 |
+| E8 | Event kinds `github.pr.opened`, `.updated`, `.ready_for_review`, `.review_requested`, `.review_submitted`, `.comment`, `.checks`, `.conflict`, each with a payload schema and a sample. `github.pr.opened`, `github.issue.opened` and `github.issue.labeled` already exist on main (`Core/Connections/PollableEvents.cs`, `GitHubEventMapper.cs`); the work is their payload schema, sample and the `label` filter | api, engine | #2988; §12 gap 1 |
 | E9 | Failure-to-sentence catalog (§6.1) in Core | engine | one test per row |
 | E10 | The holes that make "valid" not mean "will run": #2985, #2986, #2987, #3001, #2999 (sweep for stuck `running`), #3003, #3005 | engine | W7 depends on them |
 | E11 | Validate returns findings with node id, stable id, cause, fix | engine | the route exists; the shape is confirmed in P0 |
+| E13 | Pins: `POST /sindri/workflows/{slug}/pins`, `wf pin S --node X --run R`, MCP `workflow_pin`; templates `wf templates` / `workflow_templates`; trigger events `wf trigger-events` / `workflow_trigger_events`. Template files: folder `src/Sindri/Aw.Sindri.Infrastructure/Workflows/Templates/<id>.yaml` holding the spec, `needs`, and a first-run checklist; `wf create --template A` reads the same files | api, engine | one route, one verb, one tool per row |
 | E12 | Ui subscribes to `workflow.run.*` (payloads: `WorkflowRunFinishedPayload(RunId, Status, Error, By)`) | ui | no new route |
 
 ## 10. Goals and non-goals
@@ -343,7 +383,7 @@ Non-goals (this spec):
 
 ## 12. Gaps found
 
-1. **B needs an event #2988 does not list.** The list is all pull request kinds. "Issue labelled" has no kind. Recommend `github.issue.labeled` with `label` in its payload, polled from the issues feed (§open question 3).
+1. **B needs `github.issue.labeled` with `label` in its payload.** The kind exists on main (`PollableEvents.cs`); #2988's list names pull request kinds only, so its schema and sample are added there (settled, open question 3).
 2. **The test run and the "will run" promise can drift.** If validate and the test use different checks, a pass can still fail live. The test calls validate first; W7 is the property test.
 3. **A stubbed model hides #3079-type bugs.** Default test mode does not call the model. "With model" exists for that, and Activate accepts either (settled: "With model" is not required for a Prompt step), so a passing fenced test can still meet a model that answers text. The header names the mode (§5.3).
 4. **A draft has no "unsaved" state.** Every sheet Save is a revision. A long edit makes many revisions. Acceptable now; a "save as one revision" grouping is a later idea.
@@ -373,19 +413,20 @@ Phases are the PRs. Every lane has work from day one; the red and stubs of each 
 | Phase | What | Lane | Depends on |
 |---|---|---|---|
 | P0 | Contract PR: the new routes' request and response records, the `replace_node` op, `NodeRunView.Raw`, the findings shape, golden and `PublicAPI` entries, all as stubs | api | none |
-| P1 | Build: the sheet-first Add step (#3072), Change trigger (#3075), `GraphCanvas` elements (#3073), names (#3074), start screen with templates A, B and C | ui | P0 stubs |
-| P1e | `replace_node`, the Title rule, the templates route, the block checks for templates A, B and C | engine | P0 |
+| P1 | Build: the sheet-first Add step (#3072), Change trigger (#3075), `GraphCanvas` elements (#3073), names (#3074), start screen with templates A, B and C; the `workflows.editor` key. Structure builds on the P0 stubs; the visual pass (type scale, motion, density, dot tokens) waits for X1 frames | ui | P0 stubs; X1 for the visual pass |
+| P1e | `replace_node` (with `SND-GRAPH-110`), the Title rule, the templates route, the block checks for templates A, B and C | engine | P0 |
 | P2 | Live state: event subscription and shared clock (#3080); chip and header (#2970) | ui | P0 |
 | P3 | Engine truth: #2985, #2986, #2987, #3001, #2999, #3003, #3005 | engine | none (start now) |
 | P3e | Prompt block exit-code check, `raw`, sentence table (#3079, §6) | engine | none |
-| P4a | Test mode, write-port recorders, `workflow.tested`, pins | engine | P3 (#2985 first) |
+| P4a | Test mode, the fail-closed port bindings and the architecture test, `mode` column and migration, `workflow_pin`, Home filter | engine | P3 (#2985 first) |
 | P4b | `POST .../test`, `workflow_test`, `wf test`, trigger-events route, `wf events` | api | P4a |
+| P4a2 | Session refusals: `SND-AUTH-002` on `workflow_activate` and `workflow_pause` (routes and tools), and on `--with-model` / `--with-agents` for a session; red test each | api | none (start now) |
 | P4c | Test run UI: the button and menu, the run view with "would have" rows, the Activate confirm for an untested revision ("Not tested yet. Activate anyway?") | ui | P4b stubs |
 | P5 | GitHub kinds and samples (#2988, #3008), issue-labelled kind; the connection field with "Connect GitHub" | api, engine | P0 |
 | P5ui | Trigger step events picker (#3032), field picker (#3033), Prompt output as a form (#2968), flip `workflows.editor` default | ui | P4b, P5 |
 | P6 | Describe it; delete the old editor path | ui, engine | P5ui, one week of green W1 to W3 |
 | P7 | Re-run from here; undo | engine, ui | P4a |
-| X1 | Design: frames for §4.2, §4.8, §7.1 in the Inspora bar; token names for the dots | design | none |
+| X1 | Design: frames for §4.2, §4.8 (every state row, including loading and failed), §7.1 and the Activate confirm, in the Inspora bar; type scale, motion (state change, dot arc, sheet open) and density; token names for the dots. First frames (§4.2, §4.8) land before P1's visual pass | design | none |
 | X2 | UX: the walk of A, B and C at each phase's end; filing every miss as an issue `Part of #2978` | ux | each phase |
 | X3 | Perf: W9, W10 in the real app; the canvas at 200 steps | perf | P1, P2 |
 | X4 | QA: judge each phase against the owner's bar, the shots and W1 to W13 | qa | each phase |
@@ -394,7 +435,7 @@ Phases are the PRs. Every lane has work from day one; the red and stubs of each 
 
 Day one: api P0; engine P3 and P3e (no dependency); design X1; ux X2 baseline walk; ui P1 on the P0 stubs; context X6. Nothing waits on a dependency PR to start its red.
 
-Gate notes: P1 to P5ui add catalog rows, action ids and API goldens, so each gate runs the Sindri integration lane and the Ui goldens, as the team rules say. A PR with a doctor check change updates `src/Sindri/aot-smoke/expected.txt`.
+Gate notes: P1 to P5ui add catalog rows, action ids and API goldens, so each gate runs the Sindri integration lane and the Ui goldens, as the team rules say. A PR with a doctor check change updates `src/Sindri/aot-smoke/expected.txt`. Also: the `mode` migration bumps `ledger schema N/N` there and runs aot-smoke; new MCP tools add their `tools/list` lines; any `EventCatalog.cs` payload change runs `EventCatalogTests`; new POST routes run the full Sindri integration lane and `EndpointCqrsTests`; a `Usage.cs` or `PublicAPI` change runs the whole `Aw.Sindri.Tests` unit lane. This spec adds no environment variable, so `.env.example` is unchanged (`scripts/check-env-example.sh` still runs).
 
 ## Open questions
 
@@ -410,4 +451,36 @@ All seven are settled by the lead.
 
 ### Review notes
 
-Round 1: not run yet.
+Round 1 (/autoplan, 2026-11-12; files in `plans/workflows-page-r1/`). Verdicts: product RETHINK (3 HIGH), arch NEEDS_WORK (5 HIGH), design NEEDS_WORK (3 HIGH), devex NEEDS_WORK (4 HIGH), security NEEDS_WORK (3 HIGH). All HIGH are applied: P1 the bar's counting rule (§1); P2 preflight findings (§4.5); P3 and devex 3 the fixes ship in both layouts (decision 14); arch F1 and security 1 the fence fails closed (§5.1); arch F2 and F3 `mode` column, id, slots and Home filter (§3.2); arch F4 `tested` derived, pins in a table (§3.1); arch F5 `replace_node` keeps the id (decision 5); design 1 to 3 states, focus contract, X1 dependency; devex 1, 2, 4 exit codes, sentence rows, gate notes; security 2, 3 session refusals (§8).
+
+- Round 1 (product 4, stale event list): applied; E8 and gap 1 now say the kinds exist on main.
+- Round 1 (product 5, "First live run" undefined): applied; new "Active, never ran" state row.
+- Round 1 (product 6, scope beyond the proof): not applied; undo, `/` picker, Describe it and pins are the owner's #2960 asks, and they sit in later phases that do not block W1 to W3.
+- Round 1 (product 7, gallery is only the proof set): not applied; the lead settled A, B and C for v1, other jobs after the soak.
+- Round 1 (arch F6, unsourced numbers): partly applied; 64 KB is `SND-GRAPH-108`, "10 kinds" is the step menu (the other block classes are not user-added steps); the 4 and 3-minute figures are the owner's bar (#2960).
+- Round 1 (arch F7, recorder storage): applied in §5.1 (per run, node, item, 64 KB cap).
+- Round 1 (arch F8, "no push, no write" source): applied; §5.2 says it is only as good as the sandbox plan, W6 has a with-agents case.
+- Round 1 (arch F9, merge rule and resume cursor): applied as a note: the list is a cache and an event with a newer `At` wins; on reconnect the page re-reads the list (§7.2); the event cursor is the engine's detail in P2.
+- Round 1 (arch F10, `sindri-graph.md:44-46` says the catalog is empty): applied to X5 docs; fixed in the docs PR of P0.
+- Round 1 (design: "turn it on" vs Activate): applied in decision 7.
+- Round 1 (design: Test with findings present): applied in the focus contract (refused in place).
+- Round 1 (design: editing during "Testing..."): applied (sheets read-only).
+- Round 1 (design: Activate confirm default focus): applied (focus contract 3).
+- Round 1 (design: bare keys and Ctrl+K): applied in §4.6.
+- Round 1 (design: Activate has no key): applied; Ctrl+Shift+A.
+- Round 1 (devex: verb naming): applied; `wf trigger-events`, positional slug.
+- Round 1 (devex: pin, templates, events have no E row): applied as E13.
+- Round 1 (devex: `wf activate` on untested): applied in §8 (`--untested-ok`).
+- Round 1 (devex: `workflows.editor` not in the schema): applied in decision 14.
+- Round 1 (devex: docs pages in X5): partly applied; X5 names `docs/csharp/sindri-graph.md` ("Testing a workflow", "Pins") and the template folder (E13); `wf docs` topic left to X5.
+- Round 1 (devex: template folder and format): applied in E13.
+- Round 1 (devex: pins, --outputs, Pin this output): applied; `--pin NODE=file`.
+- Round 1 (devex LOW: `--real-agents`): applied; `--with-agents`.
+- Round 1 (devex LOW: "Round 1: not run yet"): applied (this section).
+- Round 1 (security: Activate pins the seen revision): applied in decision 8.
+- Round 1 (security: fence new result fields): applied in §8's last line.
+- Round 1 (security: Describe it scope): applied in the states table (needs `workflow.agent.target`); read-only scope left to P6's design.
+- Round 1 (security: pins and events hold secrets): applied; redaction before storing (§3.1).
+- Round 1 (security: raw text 64 KB): applied; fenced and redacted in §8.
+- Round 1 (security LOW: who tested and activated): not applied; the run row and `workflow.pinned` carry `By`, and the honest-agent threat model does not need more.
+- Round 1 (security LOW: GET runs for real in test): applied; GET is limited to the profile's allowed hosts (§5.1).
