@@ -135,7 +135,7 @@ The check is committed here; that commit is the **baseline**, and every candidat
 **Anything else:**
 
 1. **Spawn a subagent** of type `lean-coder` to write **only** a regression test for the expected
-   behaviour — no fix — and commit it on `bugfix/<ticket-slug>`. If the repo has a dedicated test
+   behaviour (no fix) and commit it on `bugfix/<ticket-slug>`. If the repo has a dedicated test
    directory (`tests/`, `__tests__/`, `spec/`), put the test there: the helper protects the check's
    whole directory, so a test colocated with product code would make every fix in that directory
    need the user's approval. (`Goal:` a failing regression test
@@ -145,7 +145,7 @@ The check is committed here; that commit is the **baseline**, and every candidat
    `locked bugfix-state run-test --state "$STATE" --check <test-file> --cwd "$REPO" -- <test runner command with the test file as its own argument>`
    Evidence = the printed `evidence` path. Use this **exact** command for every later run of the check.
    The helper refuses inline-code wrappers (`sh -c`, `node -e`, …) and non-runners (`grep`, `cat`, …):
-   the command must actually execute the test.
+   the command must execute the test.
 
 Then: `bugfix-state advance reproduce --state "$STATE" --evidence <evidence> --check <script-or-test-file> --cwd "$REPO"`
 

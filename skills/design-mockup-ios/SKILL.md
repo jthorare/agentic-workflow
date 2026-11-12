@@ -158,7 +158,7 @@ Add `"ios-dark": "mockup-ios-<screen-name>-dark.png"` to `baselines` if captured
 
 ## Step 9: Token Coverage
 
-Count distinct tokens in `design-tokens.json` (colors + spacing + typography) and search `$AW_DIR/design/Mockup-<screen-name>.swift` for how many are actually referenced. Report:
+Count distinct tokens in `design-tokens.json` (colors + spacing + typography) and search `$AW_DIR/design/Mockup-<screen-name>.swift` for how many are referenced. Report:
 
 ```
 token coverage: <used>/<total> (<pct>%)

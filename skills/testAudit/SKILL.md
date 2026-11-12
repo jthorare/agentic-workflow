@@ -160,7 +160,7 @@ Record every field below in the ledger before editing. A missing field means
 the candidate is not ready for deletion:
 
 - exact test name and location;
-- what failure it can actually detect;
+- what failure it can detect;
 - non-test callers of the covered production or support seam;
 - stronger remaining owner-boundary proof, or why no proof is needed;
 - relevant history and the reason the test or seam exists;
@@ -214,7 +214,7 @@ Write the report to the ledger file and show it to the user:
 - root cause and removed low-value categories;
 - production owner simplifications;
 - retained false positives and why they remain valuable;
-- focused and full proof actually run;
+- focused and full proof run;
 - production versus test LOC;
 - PR and merge state;
 - named follow-ups.
