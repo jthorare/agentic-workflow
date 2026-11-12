@@ -43,7 +43,7 @@ public sealed class ContextScopesTests
     public void The_scope_says_whether_the_profile_names_context_sync(bool named)
     {
         var profile = SliceHarness.Profile("5s").Profile;
-        profile = profile with { Services = named ? new Dictionary<string, Core.Profile.ServiceSettings>(StringComparer.Ordinal) { ["context-sync"] = new("15m") } : null };
+        profile = profile with { Services = named ? new Dictionary<string, ServiceSettings>(StringComparer.Ordinal) { ["context-sync"] = new("15m") } : null };
 
         var scope = ContextScopes.For(profile, ContextScopes.Caller(caller: null));
 
