@@ -10,7 +10,7 @@ namespace Aw.Sindri.Infrastructure.Connections.GitHub;
 /// <summary>
 /// <see cref="IGitHubAccount"/> over the Connections page: the first connected 'github' connection (by name) is the account, else one that needs sign-in, else none.
 /// The login is the 'login' of GET https://api.github.com/user sent with the connection's token (https only, api.github.com only, no redirect followed). It is kept per connection until
-/// the connection's refresh or update time changes; a failed call gives a null login with the reason (<see cref="GitHubLoginMiss"/>) and is not asked again for a minute. The token is in no error, log or exception.
+/// the connection's refresh or update time changes; a failed call gives a null login with the reason (<see cref="GitHubLoginMiss"/>) and is not asked again for a minute. A 401, and a 403 that is not a rate limit (a token missing a scope), give <see cref="GitHubLoginMiss.SignIn"/>; a 403 with <c>x-ratelimit-remaining: 0</c>, a <c>retry-after</c> header or a "rate limit" message, a 429 and every other failure give <see cref="GitHubLoginMiss.Unreachable"/>. The token is in no error, log or exception.
 /// </summary>
 /// <param name="store">The Connections page's rows.</param>
 /// <param name="secrets">Reads a connection's tokens.</param>
@@ -21,6 +21,7 @@ internal sealed class GitHubConnectionAccount(IConnectionStore store, IConnectio
 {
     private const string Host = "api.github.com";
     private const string Preset = "github";
+    private const int MaxBodyChars = 4096;
     private static readonly TimeSpan _retryAfter = TimeSpan.FromMinutes(1);
 
     private readonly ConcurrentDictionary<string, Known> _known = new(StringComparer.Ordinal);
@@ -87,11 +88,42 @@ internal sealed class GitHubConnectionAccount(IConnectionStore store, IConnectio
             using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
             return response.IsSuccessStatusCode
                 ? await ReadLogin(response, cancellationToken).ConfigureAwait(false) is { } login ? (login, GitHubLoginMiss.None) : (null, GitHubLoginMiss.Unreachable)
-                : (null, response.StatusCode == HttpStatusCode.Unauthorized ? GitHubLoginMiss.SignIn : GitHubLoginMiss.Unreachable);
+                : (null, await MissOf(response, cancellationToken).ConfigureAwait(false));
         }
         catch (Exception e) when (e is HttpRequestException or JsonException || (e is TaskCanceledException && !cancellationToken.IsCancellationRequested))
         {
             return (null, GitHubLoginMiss.Unreachable);
+        }
+    }
+
+    // why: 401 and a 403 about the token's scope are fixed by Reconnect; a rate-limit 403 (primary or secondary) and every other failure come back on their own
+    private static async ValueTask<GitHubLoginMiss> MissOf(HttpResponseMessage response, CancellationToken cancellationToken) =>
+        response.StatusCode == HttpStatusCode.Unauthorized ? GitHubLoginMiss.SignIn
+        : response.StatusCode == HttpStatusCode.Forbidden && !await IsRateLimit(response, cancellationToken).ConfigureAwait(false) ? GitHubLoginMiss.SignIn
+        : GitHubLoginMiss.Unreachable;
+
+    // why: GitHub marks a rate-limit 403 with x-ratelimit-remaining: 0 or retry-after, and its message says "rate limit"; any other 403 is a token that lacks a scope
+    private static async ValueTask<bool> IsRateLimit(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        if (response.Headers.Contains("retry-after") || (response.Headers.TryGetValues("x-ratelimit-remaining", out var left) && left.Any(static v => v.Trim() == "0")))
+        {
+            return true;
+        }
+
+        try
+        {
+            var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            await using (stream.ConfigureAwait(false))
+            {
+                using var reader = new StreamReader(stream);
+                var buffer = new char[MaxBodyChars];
+                var read = await reader.ReadBlockAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false);
+                return new string(buffer, 0, read).Contains("rate limit", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+        catch (Exception e) when (e is HttpRequestException or IOException)
+        {
+            return false;
         }
     }
 
