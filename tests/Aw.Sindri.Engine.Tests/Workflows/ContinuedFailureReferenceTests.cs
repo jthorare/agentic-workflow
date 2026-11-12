@@ -1,0 +1,62 @@
+using System.Text.Json.Nodes;
+using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
+using Aw.Sindri.Core.Graph.Runs;
+
+namespace Aw.Sindri.Tests.Workflows;
+
+/// <summary>A node that reads a field of a node that failed and continued: the reader fails with SND-GRAPH-131 instead of reading nothing (#3235).</summary>
+[Lane(TestLane.Integration)]
+public sealed class ContinuedFailureReferenceTests
+{
+    private static JsonObject Reads(string reference) => new() { ["text"] = $"got {{{{{reference}}}}}" };
+
+    [Fact]
+    public async Task A_reader_of_a_node_that_failed_and_continued_fails_with_a_named_error()
+    {
+        await using var rig = await GraphRig.StartAsync();
+        var workflow = await rig.Define(GraphRig.Spec("unlimited",
+            [GraphRig.Node("start", "manual"), GraphRig.Node("a", "fail", onFailure: "continue"), GraphRig.Node("b", "echo", config: Reads("a.x"))],
+            [GraphRig.Edge("start", "a"), GraphRig.Edge("a", "b")]));
+
+        var run = await rig.Final((await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited)).RunId);
+        var nodes = await rig.NodeStatuses(run.Id);
+
+        Assert.Equal(WorkflowRunStatus.Failed, run.Status);
+        Assert.Equal(NodeRunStatus.Failed, nodes["b"]);
+        Assert.Contains(SindriErrors.GraphReferenceToContinuedFailure.Code, run.Error, StringComparison.Ordinal);
+        Assert.Contains("'a' failed and continued, so '{{a.x}}' has no value", run.Error, StringComparison.Ordinal);
+        Assert.DoesNotContain($"{rig.Slug}@1:1/b", rig.Blocks.Log, StringComparer.Ordinal);   // why: the block never ran on a missing value
+    }
+
+    [Fact]
+    public async Task A_reader_of_a_node_that_succeeded_gets_its_value()
+    {
+        await using var rig = await GraphRig.StartAsync();
+        var workflow = await rig.Define(GraphRig.Spec("unlimited",
+            [GraphRig.Node("start", "manual"), GraphRig.Node("a", "echo"), GraphRig.Node("b", "echo", config: Reads("a.node"))],
+            [GraphRig.Edge("start", "a"), GraphRig.Edge("a", "b")]));
+
+        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
+        var run = await rig.Final(started.RunId);
+
+        Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
+        Assert.Equal("got a", (await rig.NodeInput(started.RunId, "b"))!["text"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task A_node_that_does_not_read_the_continued_failure_runs_fine()
+    {
+        await using var rig = await GraphRig.StartAsync();
+        var workflow = await rig.Define(GraphRig.Spec("unlimited",
+            [GraphRig.Node("start", "manual"), GraphRig.Node("a", "fail", onFailure: "continue"), GraphRig.Node("b", "echo")],
+            [GraphRig.Edge("start", "a"), GraphRig.Edge("a", "b")]));
+
+        var started = await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited);
+        var run = await rig.Final(started.RunId);
+        var nodes = await rig.NodeStatuses(started.RunId);
+
+        Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
+        Assert.Equal(NodeRunStatus.Succeeded, nodes["b"]);
+    }
+}

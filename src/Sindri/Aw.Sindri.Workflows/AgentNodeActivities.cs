@@ -45,4 +45,14 @@ internal sealed class AgentNodeActivities(IAgentNodeRuntime runtime)
     /// <returns>Done.</returns>
     [Activity("HoldAgentNode")]
     public Task HoldAsync(AgentNodeHeld held) => runtime.Hold(held, ActivityExecutionContext.Current.CancellationToken);
+
+    /// <summary>Long poll on whether the launch's session waits on a permission prompt (#3151): returns when the ask differs from the one the workflow saw, or at the cap.</summary>
+    /// <param name="watch">The launch, the ask seen, the read interval and the cap.</param>
+    /// <returns>The tool and when; null when it does not ask.</returns>
+    [Activity("AskingAgentNode")]
+    public Task<NodeSessionAsk?> AskingAsync(AgentNodeAskWatch watch)
+    {
+        var context = ActivityExecutionContext.Current;
+        return runtime.WatchAsking(watch, () => context.Heartbeat(), context.CancellationToken);
+    }
 }
