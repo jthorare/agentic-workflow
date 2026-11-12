@@ -11,7 +11,7 @@ Tier 3 in `deps.yaml` (`src/Sindri`, full shape: Core · Features · Infrastruct
 
 `scripts/install-cs.sh` publishes the host and the UI with the other binaries into `$AW_STATE_DIR/bin/cs/<stamp>/`; `--publish`
 stops after the publish and leaves `current` alone (exit 0 published or current, 1 a failed publish, 2 usage), and `--link`
-switches `current` and writes the `~/.local/bin` wrappers. The build stamp includes the commit, and the build dir holds it in `build-info`. A tree that is not a git checkout is refused.
+switches `current` and writes the `~/.local/bin` wrappers. The build stamp includes the commit, and the build dir holds it in `build-info`. The stamp covers every input, so any change makes a new build dir. Inside it, only the binaries whose own inputs changed are published (#3041): a binary's inputs are its project's `ProjectReference` closure plus the root build files, and each build keeps the hash per binary in `inputs/<name>.sha256`. A binary whose hash equals the one in the `current` build is copied from it (`install-cs: reusing judge from <stamp>`); `--rebuild` publishes all of them. A tree that is not a git checkout is refused.
 
 ## The binary
 
