@@ -40,6 +40,15 @@ public sealed class ClickableStateTests : FrameHost
     private static Color TokenColor(string key) =>
         Application.Current is { } app && app.TryFindResource(key, app.ActualThemeVariant, out var value) && value is ISolidColorBrush brush ? brush.Color : throw new InvalidOperationException($"{key} is not a brush token");
 
+    // The unseen pulse is a fixed 1.6 s loop between AttentionSoft and Surface1 that motion tokens don't stop, so a resting row is
+    // anywhere on that path when it is read: each channel lies between the two ends (a slow run read #281D13 for #291D13).
+    private static void AssertOnPulsePath(Color actual)
+    {
+        var (a, b) = (TokenColor("Brush.AttentionSoft"), TokenColor("Brush.Surface1"));
+        static bool Between(byte v, byte x, byte y) => v >= Math.Min(x, y) && v <= Math.Max(x, y);
+        Assert.True(actual.A == 255 && Between(actual.R, a.R, b.R) && Between(actual.G, a.G, b.G) && Between(actual.B, a.B, b.B), $"{actual} is not between AttentionSoft {a} and Surface1 {b}");
+    }
+
     /// <summary>
     /// Moves the pointer to <paramref name="at"/> until <paramref name="target"/> is under it, and returns the last point. The point is read
     /// again on every try: a row still sliding in (180 ms) sits higher than it ends, and a pressed card takes focus, which scrolls it into
@@ -285,7 +294,15 @@ public sealed class ClickableStateTests : FrameHost
         Settle(window);
         var row = window.GetVisualDescendants().OfType<NeedsYouRow>().Where(r => r.IsEffectivelyVisible)
             .SelectMany(r => r.GetVisualDescendants().OfType<Border>()).First(b => b.Name == "RowFrame" && b.Classes.Contains(tint));
-        Assert.Equal(TokenColor(tint == "pulsing" ? "Brush.AttentionSoft" : "Brush.Clickable.Rest"), ((ISolidColorBrush)row.Background!).Color);
+        if (tint == "pulsing")
+        {
+            AssertOnPulsePath(((ISolidColorBrush)row.Background!).Color);
+        }
+        else
+        {
+            Assert.Equal(TokenColor("Brush.Clickable.Rest"), ((ISolidColorBrush)row.Background!).Color);
+        }
+
         Frame(window, $"{tint}-rest", "gh2611-");
 
         var at = await PointAt(window, () => row.TranslatePoint(new Point(4, 4), window)!.Value, row);
