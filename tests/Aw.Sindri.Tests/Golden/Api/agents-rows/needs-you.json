@@ -1,0 +1,346 @@
+{
+  "rows": [
+    {
+      "id": "session:claude-code/s-ideas",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "ideas",
+      "facts": {
+        "lane": "ideas",
+        "repo": "agentic-workflow",
+        "branch": "docs/agents-page-spec",
+        "workRef": "PR #3078",
+        "contextTokens": 210000,
+        "contextAtMark": true,
+        "heavySlot": null
+      },
+      "reasons": [
+        {
+          "class": 4,
+          "kind": "recycle-mark",
+          "word": "recycle",
+          "text": "ideas: at 210k, recycle from a digest",
+          "since": "2026-11-12T08:50:00.0000000Z",
+          "source": "aw-meta"
+        },
+        {
+          "class": 7,
+          "kind": "pr-ready",
+          "word": "PR ready",
+          "text": "ideas: PR #3078 ready in the merge queue",
+          "since": "2026-11-12T08:52:00.0000000Z",
+          "source": "aw-meta"
+        }
+      ],
+      "parent": null,
+      "since": "2026-11-12T08:40:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "copy-digest-request",
+        "recycle",
+        "jump"
+      ],
+      "links": [
+        "pr:3078"
+      ]
+    },
+    {
+      "id": "session:claude-code/s-meta",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "meta",
+      "facts": {
+        "lane": "meta",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 205000,
+        "contextAtMark": true,
+        "heavySlot": null
+      },
+      "reasons": [
+        {
+          "class": 4,
+          "kind": "recycle-mark",
+          "word": "recycle",
+          "text": "meta: at 205k, recycle from a digest",
+          "since": "2026-11-12T08:55:00.0000000Z",
+          "source": "aw-meta"
+        }
+      ],
+      "parent": null,
+      "since": "2026-11-12T08:30:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "copy-digest-request",
+        "recycle",
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-qa",
+      "version": 1,
+      "state": "idle",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "qa",
+      "facts": {
+        "lane": "qa",
+        "repo": "agentic-workflow",
+        "branch": "docs/context-scope-spec",
+        "workRef": "PR #3067",
+        "contextTokens": 88000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [
+        {
+          "class": 7,
+          "kind": "pr-ready",
+          "word": "PR ready",
+          "text": "qa: PR #3067 ready in the merge queue",
+          "since": "2026-11-12T08:58:00.0000000Z",
+          "source": "aw-meta"
+        }
+      ],
+      "parent": null,
+      "since": "2026-11-12T09:01:00.0000000Z",
+      "lastActivity": "2026-11-12T09:01:00.0000000Z",
+      "blocks": null,
+      "actions": [
+        "open-in-home",
+        "jump"
+      ],
+      "links": [
+        "pr:3067"
+      ]
+    },
+    {
+      "id": "session:claude-code/s-context",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "context",
+      "facts": {
+        "lane": "context",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 40000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [],
+      "parent": null,
+      "since": "2026-11-12T07:55:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-design",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "design",
+      "facts": {
+        "lane": "design",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 90000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [],
+      "parent": null,
+      "since": "2026-11-12T08:20:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-engine",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "engine",
+      "facts": {
+        "lane": "engine",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 75000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [],
+      "parent": null,
+      "since": "2026-11-12T08:05:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-perf",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "perf",
+      "facts": {
+        "lane": "perf",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 55000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [],
+      "parent": null,
+      "since": "2026-11-12T08:45:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-tools",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "tools",
+      "facts": {
+        "lane": "tools",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 110000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [],
+      "parent": null,
+      "since": "2026-11-12T08:35:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-ui",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "ui",
+      "facts": {
+        "lane": "ui",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 150000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [],
+      "parent": null,
+      "since": "2026-11-12T08:25:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-ux",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "ux",
+      "facts": {
+        "lane": "ux",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 120000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [],
+      "parent": null,
+      "since": "2026-11-12T08:10:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-api",
+      "version": 1,
+      "state": "idle",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "api",
+      "facts": {
+        "lane": "api",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 61000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [],
+      "parent": null,
+      "since": "2026-11-12T08:39:00.0000000Z",
+      "lastActivity": "2026-11-12T08:39:00.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    }
+  ],
+  "degraded": []
+}

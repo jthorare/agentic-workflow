@@ -731,6 +731,17 @@ There is no decision, desk, protected, job or step-report tool, and no `sindri_c
 | `SND-TODO-409` | The todo changed since the caller read it (a stale version), or the note moved since the caller's view (409) |
 | `SND-TODO-423` | A write to a todo with an open both-places conflict; a version has to be picked first (423) |
 | `SND-TODO-429` | The 21st add in an hour from one session, or from one piped CLI caller; carries `retryAfter` (429) |
+| `SND-AGENT-001` | No Agents row has that id (404; Agents page spec §9) |
+| `SND-AGENT-002` | A steer names an old row version; carries the current one (409) |
+| `SND-AGENT-003` | The op does not apply to this row; the detail is the reason sentence (400) |
+| `SND-AGENT-004` | Stop refused: the process id or start ticks changed since the row was read (409) |
+| `SND-AGENT-005` | Recycle refused: the digest is missing, unreadable, not absolute, over 4,096 characters, starts with `-`, or is older than the lane's session or 2 hours (400) |
+| `SND-AGENT-006` | `aw-meta` is unavailable: no team, no binary, or exit 2 (503) |
+| `SND-AGENT-007` | The message is empty or over 8,000 characters (400) |
+| `SND-AGENT-008` | The session's activity could not be read: the transcript is missing or locked (502) |
+| `SND-AGENT-009` | An earlier op on this row is still sending, or an act id was replayed with a different body (409) |
+| `SND-AGENT-010` | An `agents.*` profile key is out of range (`idleOwedMinutes`, `slotWaitMinutes`) or `agents.page` is not `rows` or `legacy`; the detail names the key path |
+| `SND-AGENT-011` | A recycle job ended without a new session inside its wait (a job outcome, AW-META-022) |
 | `SND-REVIEW-001` | A bad `review` profile key: a login, panel, glob or regex, a duplicate check id, an unknown `settings` or `extends`, a cycle, `when: []`, or a `need` with other than one key (names the key path and the allowed values) |
 | `SND-REVIEW-002` | A `review.projects[].project` that isn't on the Projects page: "No project <id>. `sindri projects` lists them." (checked at approve) |
 | `SND-REVIEW-003` | A `command:` need: "Command checks wait for the sandbox. Use `ci:` with the CI job that runs it." |

@@ -1,0 +1,398 @@
+{
+  "rows": [
+    {
+      "id": "session:claude-code/s-ux",
+      "version": 1,
+      "state": "waiting-on-you",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "ux",
+      "facts": {
+        "lane": "ux",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 60000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [
+        {
+          "class": 1,
+          "kind": "owner-question",
+          "word": "question",
+          "text": "ux: asking you a question",
+          "since": "2026-11-12T09:06:00.0000000Z",
+          "source": "hook"
+        }
+      ],
+      "parent": null,
+      "since": "2026-11-12T09:06:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:codex/s-api",
+      "version": 1,
+      "state": "waiting-on-you",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "api",
+      "facts": {
+        "lane": "api",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 60000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [
+        {
+          "class": 1,
+          "kind": "login",
+          "word": "login",
+          "text": "api: needs a login",
+          "since": "2026-11-12T09:08:00.0000000Z",
+          "source": "hook"
+        }
+      ],
+      "parent": null,
+      "since": "2026-11-12T09:08:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-qa",
+      "version": 1,
+      "state": "waiting-on-you",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "qa",
+      "facts": {
+        "lane": "qa",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 60000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [
+        {
+          "class": 1,
+          "kind": "permission-prompt",
+          "word": "asking",
+          "text": "qa: asking to run Bash",
+          "since": "2026-11-12T09:09:30.0000000Z",
+          "source": "hook"
+        }
+      ],
+      "parent": null,
+      "since": "2026-11-12T09:09:30.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "lane:joi/design",
+      "version": 1,
+      "state": "down",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "design",
+      "facts": {
+        "lane": "design",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 60000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [
+        {
+          "class": 3,
+          "kind": "lane-no-session",
+          "word": "no session",
+          "text": "design: no live session",
+          "since": "2026-11-12T08:40:00.0000000Z",
+          "source": "aw-meta"
+        }
+      ],
+      "parent": null,
+      "since": "2026-11-12T08:40:00.0000000Z",
+      "lastActivity": null,
+      "blocks": null,
+      "actions": [
+        "copy-launch-command"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-ideas",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "ideas",
+      "facts": {
+        "lane": "ideas",
+        "repo": "agentic-workflow",
+        "branch": "docs/agents-page-spec",
+        "workRef": "PR #3078",
+        "contextTokens": 210000,
+        "contextAtMark": true,
+        "heavySlot": null
+      },
+      "reasons": [
+        {
+          "class": 4,
+          "kind": "recycle-mark",
+          "word": "recycle",
+          "text": "ideas: at 210k, recycle from a digest",
+          "since": "2026-11-12T08:50:00.0000000Z",
+          "source": "aw-meta"
+        },
+        {
+          "class": 7,
+          "kind": "pr-ready",
+          "word": "PR ready",
+          "text": "ideas: PR #3078 ready in the merge queue",
+          "since": "2026-11-12T08:52:00.0000000Z",
+          "source": "aw-meta"
+        }
+      ],
+      "parent": null,
+      "since": "2026-11-12T08:40:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "copy-digest-request",
+        "recycle",
+        "jump"
+      ],
+      "links": [
+        "pr:3078"
+      ]
+    },
+    {
+      "id": "session:claude-code/s-meta",
+      "version": 1,
+      "state": "idle",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "meta",
+      "facts": {
+        "lane": "meta",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 60000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [
+        {
+          "class": 5,
+          "kind": "idle-owed",
+          "word": "work owed",
+          "text": "meta: idle 15 min, 2 open obligations",
+          "since": "2026-11-12T09:05:00.0000000Z",
+          "source": "aw-meta"
+        }
+      ],
+      "parent": null,
+      "since": "2026-11-12T08:55:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-ui",
+      "version": 1,
+      "state": "idle",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "ui",
+      "facts": {
+        "lane": "ui",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": "PR #3067",
+        "contextTokens": 60000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [
+        {
+          "class": 5,
+          "kind": "idle-owed",
+          "word": "work owed",
+          "text": "ui: idle 14 min, PR #3067 failed its gate",
+          "since": "2026-11-12T09:06:00.0000000Z",
+          "source": "aw-meta"
+        }
+      ],
+      "parent": null,
+      "since": "2026-11-12T08:56:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump",
+        "open-in-home"
+      ],
+      "links": [
+        "pr:3067"
+      ]
+    },
+    {
+      "id": "session:claude-code/s-perf-b1",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "perf builder",
+      "facts": {
+        "lane": "perf",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 60000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [],
+      "parent": "session:claude-code/s-perf",
+      "since": "2026-11-12T08:45:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-tools",
+      "version": 1,
+      "state": "limited",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "tools",
+      "facts": {
+        "lane": "tools",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 60000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [
+        {
+          "class": 2,
+          "kind": "usage-limit",
+          "word": "back at 14:00",
+          "text": "tools: hit its usage limit, resets 14:00",
+          "since": "2026-11-12T08:50:00.0000000Z",
+          "source": "aw-meta"
+        }
+      ],
+      "parent": null,
+      "since": "2026-11-12T08:50:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "open-peek"
+      ],
+      "links": []
+    },
+    {
+      "id": "job:4242",
+      "version": 1,
+      "state": "working",
+      "stateSource": "hook",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": false,
+      "title": "heavy: dotnet test",
+      "facts": {
+        "lane": "tools",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 60000,
+        "contextAtMark": false,
+        "heavySlot": "3 of 3"
+      },
+      "reasons": [
+        {
+          "class": 6,
+          "kind": "slot-wait",
+          "word": "waiting for a slot",
+          "text": "tools: waiting 39 min for a heavy slot (3 of 3 held)",
+          "since": "2026-11-12T08:31:00.0000000Z",
+          "source": "aw-meta"
+        }
+      ],
+      "parent": "session:claude-code/s-tools",
+      "since": "2026-11-12T08:31:00.0000000Z",
+      "lastActivity": null,
+      "blocks": null,
+      "actions": [
+        "open-peek"
+      ],
+      "links": []
+    },
+    {
+      "id": "session:claude-code/s-engine",
+      "version": 1,
+      "state": "idle",
+      "stateSource": "transcript",
+      "stateReadAt": "2026-11-12T09:10:00.0000000Z",
+      "estimated": true,
+      "title": "engine",
+      "facts": {
+        "lane": "engine",
+        "repo": "agentic-workflow",
+        "branch": null,
+        "workRef": null,
+        "contextTokens": 60000,
+        "contextAtMark": false,
+        "heavySlot": null
+      },
+      "reasons": [],
+      "parent": null,
+      "since": "2026-11-12T09:00:00.0000000Z",
+      "lastActivity": "2026-11-12T09:09:40.0000000Z",
+      "blocks": null,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    }
+  ],
+  "degraded": []
+}

@@ -1,0 +1,287 @@
+{
+  "about": "The Agents page spec section 4.3 walk: the box at 09:10 with eleven lanes, then qa asks for approval at 09:12:03. Times and token counts are fixture values; only the lane state, the queue entries and the expected reasons are claimed by the spec. Read by tests/Aw.Sindri.Tests/Agents.",
+  "spec": "docs/superpowers/specs/2026-11-12-sindri-agents-page-design.md",
+  "team": "joi",
+  "repo": "agentic-workflow",
+  "settings": {
+    "recycleAt": 200000,
+    "idleOwedMinutes": 10,
+    "slotWaitMinutes": 30
+  },
+  "at": "2026-11-12T09:10:00Z",
+  "lanes": [
+    {
+      "lane": "context",
+      "session": "s-context",
+      "state": "running",
+      "stateSince": "2026-11-12T07:55:00Z",
+      "lastActivity": "2026-11-12T09:09:40Z",
+      "contextTokens": 40000,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "lane": "design",
+      "session": "s-design",
+      "state": "running",
+      "stateSince": "2026-11-12T08:20:00Z",
+      "lastActivity": "2026-11-12T09:09:40Z",
+      "contextTokens": 90000,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "lane": "ideas",
+      "session": "s-ideas",
+      "state": "running",
+      "stateSince": "2026-11-12T08:40:00Z",
+      "lastActivity": "2026-11-12T09:09:40Z",
+      "contextTokens": 210000,
+      "atRecycleMark": true,
+      "recycleSince": "2026-11-12T08:50:00Z",
+      "queuedPrs": [
+        {
+          "number": 3078,
+          "gate": "pass",
+          "readyAt": "2026-11-12T08:52:00Z"
+        }
+      ],
+      "workRef": "PR #3078",
+      "branch": "docs/agents-page-spec",
+      "actions": [
+        "copy-digest-request",
+        "recycle",
+        "jump"
+      ],
+      "links": [
+        "pr:3078"
+      ]
+    },
+    {
+      "lane": "ux",
+      "session": "s-ux",
+      "state": "running",
+      "stateSince": "2026-11-12T08:10:00Z",
+      "lastActivity": "2026-11-12T09:09:40Z",
+      "contextTokens": 120000,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "lane": "meta",
+      "session": "s-meta",
+      "state": "running",
+      "stateSince": "2026-11-12T08:30:00Z",
+      "lastActivity": "2026-11-12T09:09:40Z",
+      "contextTokens": 205000,
+      "isMeta": true,
+      "atRecycleMark": true,
+      "recycleSince": "2026-11-12T08:55:00Z",
+      "actions": [
+        "copy-digest-request",
+        "recycle",
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "lane": "ui",
+      "session": "s-ui",
+      "state": "running",
+      "stateSince": "2026-11-12T08:25:00Z",
+      "lastActivity": "2026-11-12T09:09:40Z",
+      "contextTokens": 150000,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "lane": "qa",
+      "session": "s-qa",
+      "state": "idle",
+      "stateSince": "2026-11-12T09:01:00Z",
+      "lastActivity": "2026-11-12T09:01:00Z",
+      "contextTokens": 88000,
+      "queuedPrs": [
+        {
+          "number": 3067,
+          "gate": "pass",
+          "readyAt": "2026-11-12T08:58:00Z"
+        }
+      ],
+      "workRef": "PR #3067",
+      "branch": "docs/context-scope-spec",
+      "actions": [
+        "open-in-home",
+        "jump"
+      ],
+      "links": [
+        "pr:3067"
+      ]
+    },
+    {
+      "lane": "engine",
+      "session": "s-engine",
+      "state": "running",
+      "stateSince": "2026-11-12T08:05:00Z",
+      "lastActivity": "2026-11-12T09:09:40Z",
+      "contextTokens": 75000,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "lane": "tools",
+      "session": "s-tools",
+      "state": "running",
+      "stateSince": "2026-11-12T08:35:00Z",
+      "lastActivity": "2026-11-12T09:09:40Z",
+      "contextTokens": 110000,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "lane": "perf",
+      "session": "s-perf",
+      "state": "running",
+      "stateSince": "2026-11-12T08:45:00Z",
+      "lastActivity": "2026-11-12T09:09:40Z",
+      "contextTokens": 55000,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    },
+    {
+      "lane": "api",
+      "session": "s-api",
+      "state": "idle",
+      "stateSince": "2026-11-12T08:39:00Z",
+      "lastActivity": "2026-11-12T08:39:00Z",
+      "contextTokens": 61000,
+      "actions": [
+        "jump"
+      ],
+      "links": []
+    }
+  ],
+  "events": [
+    {
+      "at": "2026-11-12T09:12:03Z",
+      "lane": "qa",
+      "state": "asking",
+      "reason": "approval",
+      "tool": "Bash"
+    }
+  ],
+  "expect": {
+    "at": {
+      "ideas": [
+        {
+          "class": 4,
+          "kind": "recycle-mark",
+          "text": "ideas: at 210k, recycle from a digest",
+          "since": "2026-11-12T08:50:00Z"
+        },
+        {
+          "class": 7,
+          "kind": "pr-ready",
+          "text": "ideas: PR #3078 ready in the merge queue",
+          "since": "2026-11-12T08:52:00Z"
+        }
+      ],
+      "meta": [
+        {
+          "class": 4,
+          "kind": "recycle-mark",
+          "text": "meta: at 205k, recycle from a digest",
+          "since": "2026-11-12T08:55:00Z"
+        }
+      ],
+      "qa": [
+        {
+          "class": 7,
+          "kind": "pr-ready",
+          "text": "qa: PR #3067 ready in the merge queue",
+          "since": "2026-11-12T08:58:00Z"
+        }
+      ]
+    },
+    "needsYouOrder": [
+      "ideas",
+      "meta",
+      "qa"
+    ],
+    "afterQaAsks": {
+      "qa": [
+        {
+          "class": 1,
+          "kind": "permission-prompt",
+          "text": "qa: asking to run Bash",
+          "since": "2026-11-12T09:12:03Z"
+        },
+        {
+          "class": 7,
+          "kind": "pr-ready",
+          "text": "qa: PR #3067 ready in the merge queue",
+          "since": "2026-11-12T08:58:00Z"
+        }
+      ],
+      "ideas": [
+        {
+          "class": 4,
+          "kind": "recycle-mark",
+          "text": "ideas: at 210k, recycle from a digest",
+          "since": "2026-11-12T08:50:00Z"
+        },
+        {
+          "class": 7,
+          "kind": "pr-ready",
+          "text": "ideas: PR #3078 ready in the merge queue",
+          "since": "2026-11-12T08:52:00Z"
+        }
+      ],
+      "meta": [
+        {
+          "class": 4,
+          "kind": "recycle-mark",
+          "text": "meta: at 205k, recycle from a digest",
+          "since": "2026-11-12T08:55:00Z"
+        }
+      ]
+    },
+    "needsYouOrderAfterQaAsks": [
+      "qa",
+      "ideas",
+      "meta"
+    ],
+    "rowOrder": [
+      "ideas",
+      "meta",
+      "qa",
+      "context",
+      "design",
+      "engine",
+      "perf",
+      "tools",
+      "ui",
+      "ux",
+      "api"
+    ],
+    "head": {
+      "agents": 11,
+      "needYou": 3,
+      "prsReady": 2
+    }
+  }
+}

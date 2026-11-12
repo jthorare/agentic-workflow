@@ -28,6 +28,7 @@ internal static class ApiScenarios
         ["Context"] = ContextApiScenarios.Rows,
         ["Views"] = ViewScenarios.All,
         ["Sessions"] = SessionScenarios.All,
+        ["Agents"] = AgentScenarios.All,
         ["Items"] = [.. ItemScenarios.All],
         ["Requests"] = RequestScenarios.All,
         ["Streams"] = StreamScenarios.All,
@@ -190,6 +191,7 @@ internal static class ApiScenarios
         : WorkflowReadScenarios.Handles(slug, scenario) ? () => WorkflowReadScenarios.Body(host, slug, scenario, ct)
         : ResourceScenarios.Handles(slug, scenario) ? () => ResourceScenarios.Body(host, slug, scenario, ct)
         : ToolkitScenarios.Handles(slug, scenario) ? () => ToolkitScenarios.Body(host, slug, scenario, ct)
+        : AgentScenarios.Handles(slug, scenario) ? () => AgentScenarios.Body(host, scenario, ct)
         : WorkflowWriteScenarios.Handles(slug, scenario) ? () => WorkflowWriteScenarios.Body(host, slug, scenario, ct)
         : Delegated(host, slug, scenario, ct);
 

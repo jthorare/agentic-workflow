@@ -6379,9 +6379,9 @@ Aw.Sindri.Core.Profile.AgentLimits.Equals(Aw.Sindri.Core.Profile.AgentLimits? ot
 Aw.Sindri.Core.Profile.AgentLimits.StepArgvHash.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Sindri.Core.Profile.AgentLimits.StepArgvHash.init -> void
 Aw.Sindri.Core.Profile.AgentSettings
-Aw.Sindri.Core.Profile.AgentSettings.AgentSettings(decimal? SoftLimit = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.AgentLimits!>? Targets = null) -> void
+Aw.Sindri.Core.Profile.AgentSettings.AgentSettings(decimal? SoftLimit = null, System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.AgentLimits!>? Targets = null, int? IdleOwedMinutes = null, int? SlotWaitMinutes = null, string? Page = null) -> void
 Aw.Sindri.Core.Profile.AgentSettings.<Clone>$() -> Aw.Sindri.Core.Profile.AgentSettings!
-Aw.Sindri.Core.Profile.AgentSettings.Deconstruct(out decimal? SoftLimit, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.AgentLimits!>? Targets) -> void
+Aw.Sindri.Core.Profile.AgentSettings.Deconstruct(out decimal? SoftLimit, out System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.AgentLimits!>? Targets, out int? IdleOwedMinutes, out int? SlotWaitMinutes, out string? Page) -> void
 Aw.Sindri.Core.Profile.AgentSettings.Equals(Aw.Sindri.Core.Profile.AgentSettings? other) -> bool
 Aw.Sindri.Core.Profile.AgentSettings.Targets.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Sindri.Core.Profile.AgentLimits!>?
 Aw.Sindri.Core.Profile.AgentSettings.Targets.init -> void
@@ -23220,3 +23220,266 @@ Aw.Sindri.Core.Reviews.ReviewRequiredState
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.Counted = "counted" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NoneNamed = "noneNamed" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NotRead = "notRead" -> string!
+Aw.Sindri.Core.Sessions.AgentState
+Aw.Sindri.Core.Sessions.AgentState.Working = 0 -> Aw.Sindri.Core.Sessions.AgentState
+Aw.Sindri.Core.Sessions.AgentState.WaitingOnYou = 1 -> Aw.Sindri.Core.Sessions.AgentState
+Aw.Sindri.Core.Sessions.AgentState.Idle = 2 -> Aw.Sindri.Core.Sessions.AgentState
+Aw.Sindri.Core.Sessions.AgentState.Limited = 3 -> Aw.Sindri.Core.Sessions.AgentState
+Aw.Sindri.Core.Sessions.AgentState.Down = 4 -> Aw.Sindri.Core.Sessions.AgentState
+Aw.Sindri.Core.Sessions.AgentStateSource
+Aw.Sindri.Core.Sessions.AgentStateSource.Hook = 0 -> Aw.Sindri.Core.Sessions.AgentStateSource
+Aw.Sindri.Core.Sessions.AgentStateSource.Record = 1 -> Aw.Sindri.Core.Sessions.AgentStateSource
+Aw.Sindri.Core.Sessions.AgentStateSource.Transcript = 2 -> Aw.Sindri.Core.Sessions.AgentStateSource
+Aw.Sindri.Core.Sessions.AgentStateSource.AwMeta = 3 -> Aw.Sindri.Core.Sessions.AgentStateSource
+Aw.Sindri.Core.Sessions.AgentStateSource.Engine = 4 -> Aw.Sindri.Core.Sessions.AgentStateSource
+Aw.Sindri.Core.Sessions.AgentReasonKind
+Aw.Sindri.Core.Sessions.AgentReasonKind.PermissionPrompt = 0 -> Aw.Sindri.Core.Sessions.AgentReasonKind
+Aw.Sindri.Core.Sessions.AgentReasonKind.OwnerQuestion = 1 -> Aw.Sindri.Core.Sessions.AgentReasonKind
+Aw.Sindri.Core.Sessions.AgentReasonKind.Login = 2 -> Aw.Sindri.Core.Sessions.AgentReasonKind
+Aw.Sindri.Core.Sessions.AgentReasonKind.UsageLimit = 3 -> Aw.Sindri.Core.Sessions.AgentReasonKind
+Aw.Sindri.Core.Sessions.AgentReasonKind.LaneNoSession = 4 -> Aw.Sindri.Core.Sessions.AgentReasonKind
+Aw.Sindri.Core.Sessions.AgentReasonKind.RecycleMark = 5 -> Aw.Sindri.Core.Sessions.AgentReasonKind
+Aw.Sindri.Core.Sessions.AgentReasonKind.IdleOwed = 6 -> Aw.Sindri.Core.Sessions.AgentReasonKind
+Aw.Sindri.Core.Sessions.AgentReasonKind.SlotWait = 7 -> Aw.Sindri.Core.Sessions.AgentReasonKind
+Aw.Sindri.Core.Sessions.AgentReasonKind.PrReady = 8 -> Aw.Sindri.Core.Sessions.AgentReasonKind
+Aw.Sindri.Core.Sessions.AgentGate
+Aw.Sindri.Core.Sessions.AgentGate.None = 0 -> Aw.Sindri.Core.Sessions.AgentGate
+Aw.Sindri.Core.Sessions.AgentGate.Pass = 1 -> Aw.Sindri.Core.Sessions.AgentGate
+Aw.Sindri.Core.Sessions.AgentGate.Fail = 2 -> Aw.Sindri.Core.Sessions.AgentGate
+Aw.Sindri.Core.Sessions.AgentGate.Conflict = 3 -> Aw.Sindri.Core.Sessions.AgentGate
+Aw.Sindri.Core.Sessions.AgentReason
+Aw.Sindri.Core.Sessions.AgentReason.<Clone>$() -> Aw.Sindri.Core.Sessions.AgentReason!
+Aw.Sindri.Core.Sessions.AgentReason.Deconstruct(out int Class, out Aw.Sindri.Core.Sessions.AgentReasonKind Kind, out string! Word, out string! Text, out System.DateTimeOffset Since, out Aw.Sindri.Core.Sessions.AgentStateSource Source) -> void
+Aw.Sindri.Core.Sessions.AgentReason.Equals(Aw.Sindri.Core.Sessions.AgentReason? other) -> bool
+Aw.Sindri.Core.Sessions.AgentReason.Class.get -> int
+Aw.Sindri.Core.Sessions.AgentReason.Class.init -> void
+Aw.Sindri.Core.Sessions.AgentReason.Kind.get -> Aw.Sindri.Core.Sessions.AgentReasonKind
+Aw.Sindri.Core.Sessions.AgentReason.Kind.init -> void
+Aw.Sindri.Core.Sessions.AgentReason.Word.get -> string!
+Aw.Sindri.Core.Sessions.AgentReason.Word.init -> void
+Aw.Sindri.Core.Sessions.AgentReason.Text.get -> string!
+Aw.Sindri.Core.Sessions.AgentReason.Text.init -> void
+Aw.Sindri.Core.Sessions.AgentReason.Since.get -> System.DateTimeOffset
+Aw.Sindri.Core.Sessions.AgentReason.Since.init -> void
+Aw.Sindri.Core.Sessions.AgentReason.Source.get -> Aw.Sindri.Core.Sessions.AgentStateSource
+Aw.Sindri.Core.Sessions.AgentReason.Source.init -> void
+Aw.Sindri.Core.Sessions.AgentReason.AgentReason(int Class, Aw.Sindri.Core.Sessions.AgentReasonKind Kind, string! Word, string! Text, System.DateTimeOffset Since, Aw.Sindri.Core.Sessions.AgentStateSource Source) -> void
+override Aw.Sindri.Core.Sessions.AgentReason.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sessions.AgentReason.GetHashCode() -> int
+override Aw.Sindri.Core.Sessions.AgentReason.ToString() -> string!
+static Aw.Sindri.Core.Sessions.AgentReason.operator !=(Aw.Sindri.Core.Sessions.AgentReason? left, Aw.Sindri.Core.Sessions.AgentReason? right) -> bool
+static Aw.Sindri.Core.Sessions.AgentReason.operator ==(Aw.Sindri.Core.Sessions.AgentReason? left, Aw.Sindri.Core.Sessions.AgentReason? right) -> bool
+Aw.Sindri.Core.Sessions.AgentQueuedPr
+Aw.Sindri.Core.Sessions.AgentQueuedPr.<Clone>$() -> Aw.Sindri.Core.Sessions.AgentQueuedPr!
+Aw.Sindri.Core.Sessions.AgentQueuedPr.Deconstruct(out int Number, out Aw.Sindri.Core.Sessions.AgentGate Gate, out bool InGithubQueue, out System.DateTimeOffset ReadyAt) -> void
+Aw.Sindri.Core.Sessions.AgentQueuedPr.Equals(Aw.Sindri.Core.Sessions.AgentQueuedPr? other) -> bool
+Aw.Sindri.Core.Sessions.AgentQueuedPr.Number.get -> int
+Aw.Sindri.Core.Sessions.AgentQueuedPr.Number.init -> void
+Aw.Sindri.Core.Sessions.AgentQueuedPr.Gate.get -> Aw.Sindri.Core.Sessions.AgentGate
+Aw.Sindri.Core.Sessions.AgentQueuedPr.Gate.init -> void
+Aw.Sindri.Core.Sessions.AgentQueuedPr.InGithubQueue.get -> bool
+Aw.Sindri.Core.Sessions.AgentQueuedPr.InGithubQueue.init -> void
+Aw.Sindri.Core.Sessions.AgentQueuedPr.ReadyAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Sessions.AgentQueuedPr.ReadyAt.init -> void
+Aw.Sindri.Core.Sessions.AgentQueuedPr.AgentQueuedPr(int Number, Aw.Sindri.Core.Sessions.AgentGate Gate, bool InGithubQueue, System.DateTimeOffset ReadyAt) -> void
+override Aw.Sindri.Core.Sessions.AgentQueuedPr.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sessions.AgentQueuedPr.GetHashCode() -> int
+override Aw.Sindri.Core.Sessions.AgentQueuedPr.ToString() -> string!
+static Aw.Sindri.Core.Sessions.AgentQueuedPr.operator !=(Aw.Sindri.Core.Sessions.AgentQueuedPr? left, Aw.Sindri.Core.Sessions.AgentQueuedPr? right) -> bool
+static Aw.Sindri.Core.Sessions.AgentQueuedPr.operator ==(Aw.Sindri.Core.Sessions.AgentQueuedPr? left, Aw.Sindri.Core.Sessions.AgentQueuedPr? right) -> bool
+Aw.Sindri.Core.Sessions.AgentHeavyWait
+Aw.Sindri.Core.Sessions.AgentHeavyWait.<Clone>$() -> Aw.Sindri.Core.Sessions.AgentHeavyWait!
+Aw.Sindri.Core.Sessions.AgentHeavyWait.Deconstruct(out System.DateTimeOffset Since, out int Held, out int Cap) -> void
+Aw.Sindri.Core.Sessions.AgentHeavyWait.Equals(Aw.Sindri.Core.Sessions.AgentHeavyWait? other) -> bool
+Aw.Sindri.Core.Sessions.AgentHeavyWait.Since.get -> System.DateTimeOffset
+Aw.Sindri.Core.Sessions.AgentHeavyWait.Since.init -> void
+Aw.Sindri.Core.Sessions.AgentHeavyWait.Held.get -> int
+Aw.Sindri.Core.Sessions.AgentHeavyWait.Held.init -> void
+Aw.Sindri.Core.Sessions.AgentHeavyWait.Cap.get -> int
+Aw.Sindri.Core.Sessions.AgentHeavyWait.Cap.init -> void
+Aw.Sindri.Core.Sessions.AgentHeavyWait.AgentHeavyWait(System.DateTimeOffset Since, int Held, int Cap) -> void
+override Aw.Sindri.Core.Sessions.AgentHeavyWait.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sessions.AgentHeavyWait.GetHashCode() -> int
+override Aw.Sindri.Core.Sessions.AgentHeavyWait.ToString() -> string!
+static Aw.Sindri.Core.Sessions.AgentHeavyWait.operator !=(Aw.Sindri.Core.Sessions.AgentHeavyWait? left, Aw.Sindri.Core.Sessions.AgentHeavyWait? right) -> bool
+static Aw.Sindri.Core.Sessions.AgentHeavyWait.operator ==(Aw.Sindri.Core.Sessions.AgentHeavyWait? left, Aw.Sindri.Core.Sessions.AgentHeavyWait? right) -> bool
+Aw.Sindri.Core.Sessions.AgentFacts
+Aw.Sindri.Core.Sessions.AgentFacts.<Clone>$() -> Aw.Sindri.Core.Sessions.AgentFacts!
+Aw.Sindri.Core.Sessions.AgentFacts.Deconstruct(out string? Lane, out string? Repo, out string? Branch, out string? WorkRef, out int? ContextTokens, out bool ContextAtMark, out string? HeavySlot) -> void
+Aw.Sindri.Core.Sessions.AgentFacts.Equals(Aw.Sindri.Core.Sessions.AgentFacts? other) -> bool
+Aw.Sindri.Core.Sessions.AgentFacts.Lane.get -> string?
+Aw.Sindri.Core.Sessions.AgentFacts.Lane.init -> void
+Aw.Sindri.Core.Sessions.AgentFacts.Repo.get -> string?
+Aw.Sindri.Core.Sessions.AgentFacts.Repo.init -> void
+Aw.Sindri.Core.Sessions.AgentFacts.Branch.get -> string?
+Aw.Sindri.Core.Sessions.AgentFacts.Branch.init -> void
+Aw.Sindri.Core.Sessions.AgentFacts.WorkRef.get -> string?
+Aw.Sindri.Core.Sessions.AgentFacts.WorkRef.init -> void
+Aw.Sindri.Core.Sessions.AgentFacts.ContextTokens.get -> int?
+Aw.Sindri.Core.Sessions.AgentFacts.ContextTokens.init -> void
+Aw.Sindri.Core.Sessions.AgentFacts.ContextAtMark.get -> bool
+Aw.Sindri.Core.Sessions.AgentFacts.ContextAtMark.init -> void
+Aw.Sindri.Core.Sessions.AgentFacts.HeavySlot.get -> string?
+Aw.Sindri.Core.Sessions.AgentFacts.HeavySlot.init -> void
+Aw.Sindri.Core.Sessions.AgentFacts.AgentFacts(string? Lane, string? Repo, string? Branch, string? WorkRef, int? ContextTokens, bool ContextAtMark, string? HeavySlot) -> void
+override Aw.Sindri.Core.Sessions.AgentFacts.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sessions.AgentFacts.GetHashCode() -> int
+override Aw.Sindri.Core.Sessions.AgentFacts.ToString() -> string!
+static Aw.Sindri.Core.Sessions.AgentFacts.operator !=(Aw.Sindri.Core.Sessions.AgentFacts? left, Aw.Sindri.Core.Sessions.AgentFacts? right) -> bool
+static Aw.Sindri.Core.Sessions.AgentFacts.operator ==(Aw.Sindri.Core.Sessions.AgentFacts? left, Aw.Sindri.Core.Sessions.AgentFacts? right) -> bool
+Aw.Sindri.Core.Sessions.AgentDegraded
+Aw.Sindri.Core.Sessions.AgentDegraded.<Clone>$() -> Aw.Sindri.Core.Sessions.AgentDegraded!
+Aw.Sindri.Core.Sessions.AgentDegraded.Deconstruct(out string! Code, out string! Detail) -> void
+Aw.Sindri.Core.Sessions.AgentDegraded.Equals(Aw.Sindri.Core.Sessions.AgentDegraded? other) -> bool
+Aw.Sindri.Core.Sessions.AgentDegraded.Code.get -> string!
+Aw.Sindri.Core.Sessions.AgentDegraded.Code.init -> void
+Aw.Sindri.Core.Sessions.AgentDegraded.Detail.get -> string!
+Aw.Sindri.Core.Sessions.AgentDegraded.Detail.init -> void
+Aw.Sindri.Core.Sessions.AgentDegraded.AgentDegraded(string! Code, string! Detail) -> void
+override Aw.Sindri.Core.Sessions.AgentDegraded.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sessions.AgentDegraded.GetHashCode() -> int
+override Aw.Sindri.Core.Sessions.AgentDegraded.ToString() -> string!
+static Aw.Sindri.Core.Sessions.AgentDegraded.operator !=(Aw.Sindri.Core.Sessions.AgentDegraded? left, Aw.Sindri.Core.Sessions.AgentDegraded? right) -> bool
+static Aw.Sindri.Core.Sessions.AgentDegraded.operator ==(Aw.Sindri.Core.Sessions.AgentDegraded? left, Aw.Sindri.Core.Sessions.AgentDegraded? right) -> bool
+Aw.Sindri.Core.Sessions.AgentRowList
+Aw.Sindri.Core.Sessions.AgentRowList.<Clone>$() -> Aw.Sindri.Core.Sessions.AgentRowList!
+Aw.Sindri.Core.Sessions.AgentRowList.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentRow!>! Rows, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentDegraded!>! Degraded) -> void
+Aw.Sindri.Core.Sessions.AgentRowList.Equals(Aw.Sindri.Core.Sessions.AgentRowList? other) -> bool
+Aw.Sindri.Core.Sessions.AgentRowList.Rows.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentRow!>!
+Aw.Sindri.Core.Sessions.AgentRowList.Rows.init -> void
+Aw.Sindri.Core.Sessions.AgentRowList.Degraded.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentDegraded!>!
+Aw.Sindri.Core.Sessions.AgentRowList.Degraded.init -> void
+Aw.Sindri.Core.Sessions.AgentRowList.AgentRowList(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentRow!>! Rows, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentDegraded!>! Degraded) -> void
+override Aw.Sindri.Core.Sessions.AgentRowList.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sessions.AgentRowList.GetHashCode() -> int
+override Aw.Sindri.Core.Sessions.AgentRowList.ToString() -> string!
+static Aw.Sindri.Core.Sessions.AgentRowList.operator !=(Aw.Sindri.Core.Sessions.AgentRowList? left, Aw.Sindri.Core.Sessions.AgentRowList? right) -> bool
+static Aw.Sindri.Core.Sessions.AgentRowList.operator ==(Aw.Sindri.Core.Sessions.AgentRowList? left, Aw.Sindri.Core.Sessions.AgentRowList? right) -> bool
+Aw.Sindri.Core.Sessions.AgentRow
+Aw.Sindri.Core.Sessions.AgentRow.<Clone>$() -> Aw.Sindri.Core.Sessions.AgentRow!
+Aw.Sindri.Core.Sessions.AgentRow.Deconstruct(out string! Id, out long Version, out Aw.Sindri.Core.Sessions.AgentState State, out Aw.Sindri.Core.Sessions.AgentStateSource StateSource, out System.DateTimeOffset StateReadAt, out bool Estimated, out string! Title, out Aw.Sindri.Core.Sessions.AgentFacts! Facts, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentReason!>! Reasons, out string? Parent, out System.DateTimeOffset Since, out System.DateTimeOffset? LastActivity, out int? Blocks, out System.Collections.Generic.IReadOnlyList<string!>! Actions, out System.Collections.Generic.IReadOnlyList<string!>! Links) -> void
+Aw.Sindri.Core.Sessions.AgentRow.Equals(Aw.Sindri.Core.Sessions.AgentRow? other) -> bool
+Aw.Sindri.Core.Sessions.AgentRow.Id.get -> string!
+Aw.Sindri.Core.Sessions.AgentRow.Id.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.Version.get -> long
+Aw.Sindri.Core.Sessions.AgentRow.Version.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.State.get -> Aw.Sindri.Core.Sessions.AgentState
+Aw.Sindri.Core.Sessions.AgentRow.State.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.StateSource.get -> Aw.Sindri.Core.Sessions.AgentStateSource
+Aw.Sindri.Core.Sessions.AgentRow.StateSource.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.StateReadAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Sessions.AgentRow.StateReadAt.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.Estimated.get -> bool
+Aw.Sindri.Core.Sessions.AgentRow.Estimated.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.Title.get -> string!
+Aw.Sindri.Core.Sessions.AgentRow.Title.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.Facts.get -> Aw.Sindri.Core.Sessions.AgentFacts!
+Aw.Sindri.Core.Sessions.AgentRow.Facts.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.Reasons.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentReason!>!
+Aw.Sindri.Core.Sessions.AgentRow.Reasons.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.Parent.get -> string?
+Aw.Sindri.Core.Sessions.AgentRow.Parent.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.Since.get -> System.DateTimeOffset
+Aw.Sindri.Core.Sessions.AgentRow.Since.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.LastActivity.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Sessions.AgentRow.LastActivity.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.Blocks.get -> int?
+Aw.Sindri.Core.Sessions.AgentRow.Blocks.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.Actions.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Sessions.AgentRow.Actions.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.Links.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Sessions.AgentRow.Links.init -> void
+Aw.Sindri.Core.Sessions.AgentRow.AgentRow(string! Id, long Version, Aw.Sindri.Core.Sessions.AgentState State, Aw.Sindri.Core.Sessions.AgentStateSource StateSource, System.DateTimeOffset StateReadAt, bool Estimated, string! Title, Aw.Sindri.Core.Sessions.AgentFacts! Facts, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentReason!>! Reasons, string? Parent, System.DateTimeOffset Since, System.DateTimeOffset? LastActivity, int? Blocks, System.Collections.Generic.IReadOnlyList<string!>! Actions, System.Collections.Generic.IReadOnlyList<string!>! Links) -> void
+override Aw.Sindri.Core.Sessions.AgentRow.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sessions.AgentRow.GetHashCode() -> int
+override Aw.Sindri.Core.Sessions.AgentRow.ToString() -> string!
+static Aw.Sindri.Core.Sessions.AgentRow.operator !=(Aw.Sindri.Core.Sessions.AgentRow? left, Aw.Sindri.Core.Sessions.AgentRow? right) -> bool
+static Aw.Sindri.Core.Sessions.AgentRow.operator ==(Aw.Sindri.Core.Sessions.AgentRow? left, Aw.Sindri.Core.Sessions.AgentRow? right) -> bool
+Aw.Sindri.Core.Sessions.AgentReasonInputs
+Aw.Sindri.Core.Sessions.AgentReasonInputs.<Clone>$() -> Aw.Sindri.Core.Sessions.AgentReasonInputs!
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Deconstruct(out System.DateTimeOffset Now, out string! Name, out System.DateTimeOffset StateSince) -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Equals(Aw.Sindri.Core.Sessions.AgentReasonInputs? other) -> bool
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Now.get -> System.DateTimeOffset
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Now.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Name.get -> string!
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Name.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.StateSince.get -> System.DateTimeOffset
+Aw.Sindri.Core.Sessions.AgentReasonInputs.StateSince.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Lane.get -> string?
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Lane.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.IsMetaLane.get -> bool
+Aw.Sindri.Core.Sessions.AgentReasonInputs.IsMetaLane.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.IsClaudeLane.get -> bool
+Aw.Sindri.Core.Sessions.AgentReasonInputs.IsClaudeLane.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.HasLiveSession.get -> bool
+Aw.Sindri.Core.Sessions.AgentReasonInputs.HasLiveSession.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.StoppedFromPage.get -> bool
+Aw.Sindri.Core.Sessions.AgentReasonInputs.StoppedFromPage.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.State.get -> Aw.Sindri.Core.Sessions.SessionState
+Aw.Sindri.Core.Sessions.AgentReasonInputs.State.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Estimated.get -> bool
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Estimated.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.StateSource.get -> Aw.Sindri.Core.Sessions.AgentStateSource
+Aw.Sindri.Core.Sessions.AgentReasonInputs.StateSource.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Asking.get -> Aw.Sindri.Core.Sessions.SessionAsking?
+Aw.Sindri.Core.Sessions.AgentReasonInputs.Asking.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.ContextTokens.get -> int?
+Aw.Sindri.Core.Sessions.AgentReasonInputs.ContextTokens.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.AtRecycleMark.get -> bool
+Aw.Sindri.Core.Sessions.AgentReasonInputs.AtRecycleMark.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.RecycleSince.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Sessions.AgentReasonInputs.RecycleSince.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.RecycleSelfOpen.get -> bool
+Aw.Sindri.Core.Sessions.AgentReasonInputs.RecycleSelfOpen.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.UsageLimited.get -> bool
+Aw.Sindri.Core.Sessions.AgentReasonInputs.UsageLimited.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.UsageResetsAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Sessions.AgentReasonInputs.UsageResetsAt.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.UsageSince.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Sessions.AgentReasonInputs.UsageSince.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.QueuedPrs.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentQueuedPr!>!
+Aw.Sindri.Core.Sessions.AgentReasonInputs.QueuedPrs.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.OpenObligations.get -> int
+Aw.Sindri.Core.Sessions.AgentReasonInputs.OpenObligations.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.MailUndeliveredMinutes.get -> int?
+Aw.Sindri.Core.Sessions.AgentReasonInputs.MailUndeliveredMinutes.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.HeavyWait.get -> Aw.Sindri.Core.Sessions.AgentHeavyWait?
+Aw.Sindri.Core.Sessions.AgentReasonInputs.HeavyWait.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.IdleOwedMinutes.get -> int
+Aw.Sindri.Core.Sessions.AgentReasonInputs.IdleOwedMinutes.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.SlotWaitMinutes.get -> int
+Aw.Sindri.Core.Sessions.AgentReasonInputs.SlotWaitMinutes.init -> void
+Aw.Sindri.Core.Sessions.AgentReasonInputs.AgentReasonInputs(System.DateTimeOffset Now, string! Name, System.DateTimeOffset StateSince) -> void
+override Aw.Sindri.Core.Sessions.AgentReasonInputs.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Sessions.AgentReasonInputs.GetHashCode() -> int
+override Aw.Sindri.Core.Sessions.AgentReasonInputs.ToString() -> string!
+static Aw.Sindri.Core.Sessions.AgentReasonInputs.operator !=(Aw.Sindri.Core.Sessions.AgentReasonInputs? left, Aw.Sindri.Core.Sessions.AgentReasonInputs? right) -> bool
+static Aw.Sindri.Core.Sessions.AgentReasonInputs.operator ==(Aw.Sindri.Core.Sessions.AgentReasonInputs? left, Aw.Sindri.Core.Sessions.AgentReasonInputs? right) -> bool
+Aw.Sindri.Core.Sessions.AgentReasons
+static Aw.Sindri.Core.Sessions.AgentReasons.Evaluate(Aw.Sindri.Core.Sessions.AgentReasonInputs! inputs) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sessions.AgentReason!>!
+static readonly Aw.Sindri.Core.SindriErrors.AgentRowNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentVersionStale -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentOpNotApplicable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentStopRefused -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentRecycleRefused -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentMetaUnavailable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentMessageInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentActivityUnreadable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentOpBusy -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentSettingInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.AgentRecycleTimedOut -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Profile.AgentSettings.IdleOwedMinutes.get -> int?
+Aw.Sindri.Core.Profile.AgentSettings.IdleOwedMinutes.init -> void
+Aw.Sindri.Core.Profile.AgentSettings.SlotWaitMinutes.get -> int?
+Aw.Sindri.Core.Profile.AgentSettings.SlotWaitMinutes.init -> void
+Aw.Sindri.Core.Profile.AgentSettings.Page.get -> string?
+Aw.Sindri.Core.Profile.AgentSettings.Page.init -> void
+const Aw.Sindri.Core.Profile.AgentSettings.IdleOwedMinutesKey = "idleOwedMinutes" -> string!
+const Aw.Sindri.Core.Profile.AgentSettings.SlotWaitMinutesKey = "slotWaitMinutes" -> string!
+const Aw.Sindri.Core.Profile.AgentSettings.PageKey = "page" -> string!
+const Aw.Sindri.Core.Profile.AgentSettings.DefaultIdleOwedMinutes = 10 -> int
+const Aw.Sindri.Core.Profile.AgentSettings.DefaultSlotWaitMinutes = 30 -> int
+const Aw.Sindri.Core.Profile.AgentSettings.MinMinutes = 1 -> int
+const Aw.Sindri.Core.Profile.AgentSettings.MaxMinutes = 1440 -> int
+const Aw.Sindri.Core.Profile.AgentSettings.PageRows = "rows" -> string!
+const Aw.Sindri.Core.Profile.AgentSettings.PageLegacy = "legacy" -> string!

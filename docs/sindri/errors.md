@@ -109,6 +109,17 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-MEM-005` | The match level is not loose, balanced or strict. | use one of the three |
 | `SND-MEM-006` | The memory name is not lowercase letters, digits and `-`. | use 1 to 48 of them, starting with a letter or digit |
 | `SND-MEM-007` | A fact's expiry is not in the future. | give a later `--expires-at`, or none |
+| `SND-AGENT-001` | No Agents row has that id. | `sindri agents` lists the rows |
+| `SND-AGENT-002` | The row changed since it was read. | read the row again and send the current version |
+| `SND-AGENT-003` | The op does not apply to this row. | the message says why |
+| `SND-AGENT-004` | Stop refused: the process is not the one the row showed. | read the row again |
+| `SND-AGENT-005` | Recycle refused: the digest is not usable. | write a fresh digest and pass its absolute path |
+| `SND-AGENT-006` | `aw-meta` is unavailable. | install it with `./setup.sh --with-meta` and check the team with `aw-meta team-init` |
+| `SND-AGENT-007` | A message is 1 to 8,000 characters. | shorten or fill it |
+| `SND-AGENT-008` | The session's activity could not be read. | try again; the transcript may be locked |
+| `SND-AGENT-009` | An earlier op on this row is still sending, or the act id was used with another body. | wait for it, or use a new act id |
+| `SND-AGENT-010` | An `agents.*` profile key is not valid. | `idleOwedMinutes` and `slotWaitMinutes` are 1 to 1440; `page` is `rows` or `legacy` |
+| `SND-AGENT-011` | The recycle ended without a new session. | check the lane's terminal and recycle again |
 | `SND-RES-001` | A disk holds more than its size limit (the message names the bytes used and the limit). | delete files from the disk, or raise its `size` |
 | `SND-RES-002` | Two databases, disks or connections of one owner share a name. | rename one |
 | `SND-RES-003` | A purge was refused: the owner is still active or has a run going. | archive the owner, or wait for the run to end |
