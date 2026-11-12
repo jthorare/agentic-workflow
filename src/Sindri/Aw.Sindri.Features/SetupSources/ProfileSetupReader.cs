@@ -14,9 +14,9 @@ namespace Aw.Sindri.Features.SetupSources;
 /// </summary>
 /// <param name="live">The live profile file.</param>
 /// <param name="git">The repos' git facts, kept 30 seconds, so reading the list runs no git per request.</param>
-/// <param name="workflows">The workflows, to find hello-sindri; null in a host that has none.</param>
-/// <param name="runs">The workflow runs, to find hello-sindri's succeeded one; null in a host that has none.</param>
-internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, IWorkflowStore? workflows = null, IWorkflowRunStore? runs = null)
+/// <param name="workflows">The workflows, to find hello-sindri.</param>
+/// <param name="runs">The workflow runs, to find hello-sindri's succeeded one.</param>
+internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, IWorkflowStore workflows, IWorkflowRunStore runs)
 {
     private const int RunsLooked = 50;
     private static readonly WorkflowSlug _hello = WorkflowSlug.From("hello-sindri");
@@ -88,11 +88,6 @@ internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, 
     // Derived, nothing stored: hello-sindri has a succeeded run. A read that fails counts as "not yet", so the step shows todo and the next read tries again.
     private async ValueTask<bool> HelloSucceeded(CancellationToken cancellationToken)
     {
-        if (workflows is null || runs is null)
-        {
-            return false;
-        }
-
         var listed = await workflows.List(includeArchived: false, cancellationToken).ConfigureAwait(false);
         if (listed.IsError || listed.Value.FirstOrDefault(static w => w.Slug == _hello) is not { } hello)
         {

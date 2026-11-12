@@ -27,7 +27,7 @@ internal sealed class SetupFactsRig : IAsyncDisposable
         Host = host ?? new FakeProviderHost().WithoutProvider(Core.Mcp.ProviderFile.Codex).WithoutProvider(Core.Mcp.ProviderFile.Cursor);
         Engine = MapEngineProxy.Create();
         Facts = new SetupFacts(
-            new ProfileSetupReader(Profiles, new Core.Setup.RepoGitCache(Inspector, Clock)),
+            new ProfileSetupReader(Profiles, new Core.Setup.RepoGitCache(Inspector, Clock), new Testing.Workflow.InMemoryWorkflowStore(Clock), new Testing.Workflow.InMemoryWorkflowRunStore(Clock)),
             Sources(new PointerSecrets(name => Env.GetValueOrDefault(name), new FakeToolRunner(ToolRun.Missing))),
             new McpSetupReader(Profiles, Host, Jobs, Queue),
             new MapSetupReader(Profiles, Engine.Proxy, Jobs));
