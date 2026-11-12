@@ -92,6 +92,7 @@ public sealed class StatusProblemKindTests
     }
 
     [Fact, Trait("Lane", "integration")]
+    [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
     public async Task A_real_profile_file_with_no_read_permission_says_invalid_not_missing()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows() || Environment.IsPrivilegedProcess, "needs file permissions and a user they apply to");

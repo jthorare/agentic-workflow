@@ -1,5 +1,6 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Features.GetTodoNote;
 
@@ -64,7 +65,7 @@ public sealed class TodoNoteNotSetUpTests
         Assert.Equal(("can't read", true), (note.State, note.LastError is not null));
     }
 
-    private sealed class FileOnDisk : Aw.Sindri.Core.Profile.IProfileFile
+    private sealed class FileOnDisk : IProfileFile
     {
         public bool Exists() => true;
     }

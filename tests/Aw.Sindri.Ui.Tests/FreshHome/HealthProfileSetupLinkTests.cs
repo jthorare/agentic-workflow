@@ -5,6 +5,7 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.Shell;
 
 namespace Aw.Sindri.Ui.Tests.FreshHome;
 
@@ -13,7 +14,7 @@ namespace Aw.Sindri.Ui.Tests.FreshHome;
 [Collection(HeadlessWindows.Name)]
 public sealed class HealthProfileSetupLinkTests : FrameHost
 {
-    private async Task<(Avalonia.Controls.Window Window, ViewModels.Shell.ShellViewModel Shell)> OnHealth(ProfileView profile)
+    private async Task<(Window Window, ShellViewModel Shell)> OnHealth(ProfileView profile)
     {
         Server.Current = A.Status(profile: profile);
         var (window, shell) = await Connected(width: 1600, height: 1000);

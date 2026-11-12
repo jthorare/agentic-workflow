@@ -4,7 +4,6 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ledger;
-using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Todos;
 using Aw.Sindri.Core.Todos.Note;
 using Aw.Sindri.Core.Views;
@@ -19,8 +18,7 @@ namespace Aw.Sindri.Features.GetTodoNote;
 /// <param name="ledger">Reads the last sync.</param>
 /// <param name="views">The todos.</param>
 /// <param name="reads">The hold, the picks and the lines that can't sync.</param>
-/// <param name="profileFile">Says whether the profile file is on disk, to tell a new home from a file it can't read; null counts it absent.</param>
-internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContextAccessor callers, ITodoNoteSync note, INoteLocator locator, ILedgerReader ledger, IViewReader views, TodoNoteReads reads, IProfileFile? profileFile = null) : IService<GetTodoNoteRequest, GetTodoNoteResponse>
+internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContextAccessor callers, ITodoNoteSync note, INoteLocator locator, ILedgerReader ledger, IViewReader views, TodoNoteReads reads) : IService<GetTodoNoteRequest, GetTodoNoteResponse>
 {
     public async ValueTask<Result<GetTodoNoteResponse>> Handle(GetTodoNoteRequest request, CancellationToken cancellationToken)
     {
@@ -33,14 +31,9 @@ internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContext
         var located = await locator.Locate(cancellationToken).ConfigureAwait(false);
         var asOf = status.Current.AsOf;
         var current = note.Status;
-        if (located.IsError && string.Equals(located.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) && profileFile?.Exists() != true)
+        if (Unready(asOf, located, current) is { } early)
         {
-            return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(TodoNoteState.NotSetUp), Vault: null, Note: null, current.LastCheckAt, LastSyncAt: null, LastError: null, [], Hold: null, [], []);   // no profile yet (#3113): not a failed read
-        }
-
-        if (located.IsSuccess && located.Value is null)
-        {
-            return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(TodoNoteState.NotSet), Vault: null, Note: null, current.LastCheckAt, LastSyncAt: null, LastError: null, [], Hold: null, [], []);
+            return early;
         }
 
         var rows = await views.List<TodoRow>(ViewNames.Todo, cancellationToken).ConfigureAwait(false);
@@ -60,6 +53,22 @@ internal sealed class GetTodoNoteService(IProjectorStatus status, ICallerContext
         var cantSync = await reads.CantSync(cancellationToken).ConfigureAwait(false);
         var answer = Answer(asOf, located, current, synced.IsSuccess ? synced.Value?.Envelope.OccurredAt : null, conflicts);
         return answer with { Hold = hold.Value, Picks = reads.Picks(), CantSync = cantSync };
+    }
+
+    // The two answers that need no read of the todos: no profile file yet, and a profile with no note set.
+    private GetTodoNoteResponse? Unready(AsOf asOf, Result<NotePlace?> located, TodoNoteStatus current)
+    {
+        if (located.IsError && string.Equals(located.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) && !reads.ProfileFileExists())
+        {
+            return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(TodoNoteState.NotSetUp), Vault: null, Note: null, current.LastCheckAt, LastSyncAt: null, LastError: null, [], Hold: null, [], []);   // no profile yet (#3113): not a failed read
+        }
+
+        if (located.IsSuccess && located.Value is null)
+        {
+            return new GetTodoNoteResponse(asOf, TodoNoteWords.Of(TodoNoteState.NotSet), Vault: null, Note: null, current.LastCheckAt, LastSyncAt: null, LastError: null, [], Hold: null, [], []);
+        }
+
+        return null;
     }
 
     private static GetTodoNoteResponse Answer(AsOf asOf, Result<NotePlace?> located, TodoNoteStatus current, DateTimeOffset? lastSync, List<string> conflicts)

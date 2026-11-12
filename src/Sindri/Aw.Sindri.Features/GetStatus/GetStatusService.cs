@@ -60,9 +60,9 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
     // 'on' when the APPROVED profile asks for model choice: that is what is in force, and the app never reads the word itself (model-pick spec 8).
     private static string ModelPick(LoadedProfile? approved) => approved?.Profile.Workflow?.Agent is { PickIsOn: true } ? "on" : "off";
 
-    private static ProfileStatus Profile(LoadedProfile? approved, Result<LoadedProfile> loaded, string labelPick, string surfacePick) =>
+    private ProfileStatus Profile(LoadedProfile? approved, Result<LoadedProfile> loaded, string labelPick, string surfacePick) =>
         new(loaded.IsSuccess ? loaded.Value.Hash : null, loaded.IsError ? loaded.Error.Message : null, loaded.IsSuccess ? loaded.Value.Source : null,
-            ModelPick(approved), labelPick, surfacePick, ProblemKind(loaded, profiles.FileExists));
+            ModelPick(approved), labelPick, surfacePick, ProblemKind(loaded, profiles.FileExists()));
 
     // 'missing' when there is no profile file yet, 'invalid' for any other reason it won't load (a file the source can't read answers SND-PROFILE-001 too, so the file must be absent), null when it loads (#3113): the app reads the word, not the message.
     private static string? ProblemKind(Result<LoadedProfile> loaded, bool fileExists) =>

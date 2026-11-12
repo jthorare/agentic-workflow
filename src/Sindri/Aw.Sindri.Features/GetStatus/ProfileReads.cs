@@ -7,8 +7,8 @@ namespace Aw.Sindri.Features.GetStatus;
 /// <param name="approvals">The approved profile.</param>
 /// <param name="source">The live file.</param>
 /// <param name="jevKey">Says whether Jev has a key; null counts it present (a host that registers no probe).</param>
-/// <param name="file">Says whether the profile file is on disk; null counts it absent (a host that registers no probe).</param>
-internal sealed class ProfileReads(IApprovedProfile approvals, IProfileSource source, IJevKeyProbe? jevKey = null, IProfileFile? file = null)
+/// <param name="profileFile">Says whether the profile file is on disk; null counts it absent (a host that registers no probe).</param>
+internal sealed class ProfileReads(IApprovedProfile approvals, IProfileSource source, IJevKeyProbe? jevKey = null, IProfileFile? profileFile = null)
 {
     /// <summary>The label-pick verdict of the approved profile: 'off', 'on' or 'needs-key'.</summary>
     /// <param name="approved">The approved profile, or null.</param>
@@ -25,7 +25,7 @@ internal sealed class ProfileReads(IApprovedProfile approvals, IProfileSource so
     internal ValueTask<Result<LoadedProfile?>> Approved(CancellationToken cancellationToken) => approvals.Latest(cancellationToken);
 
     /// <summary>Whether the profile file is on disk (readable or not).</summary>
-    internal bool FileExists => file?.Exists() ?? false;
+    internal bool FileExists() => profileFile?.Exists() ?? false;
 
     internal ValueTask<Result<LoadedProfile>> Live(CancellationToken cancellationToken) => source.Load(cancellationToken);
 }
