@@ -9,4 +9,5 @@ namespace Aw.Sindri.Features.GetStatus;
 /// <param name="ModelPick">'on' when the profile has model choice on (workflow.agent.pick), else 'off': computed here so the app never derives it (model-pick spec 8).</param>
 /// <param name="LabelPick">'off', 'on' or 'needs-key' for the Jev label pick (context.models.labeling.pick); 'needs-key' when it is on and Jev has no key. Computed here so the app never derives it (model routing spec §8.5).</param>
 /// <param name="SurfacePick">'off', 'on' or 'needs-key' for the Jev product-surface pick (context.models.productSurfaces.pick), computed the way <paramref name="LabelPick"/> is (model routing spec §8.5).</param>
-public sealed record ProfileStatus(ProfileHash? Live, string? Problem, string? Source, string ModelPick = "off", string LabelPick = "off", string SurfacePick = "off");
+/// <param name="ProblemKind">'missing' when there is no profile file yet (SND-PROFILE-001: a setup state, not a fault), 'invalid' for any other load error, null when it loaded. Computed here so no client reads error codes (issue 3114).</param>
+public sealed record ProfileStatus(ProfileHash? Live, string? Problem, string? Source, string ModelPick = "off", string LabelPick = "off", string SurfacePick = "off", string? ProblemKind = null);
