@@ -23326,3 +23326,5 @@ Aw.Sindri.Core.Setup.ISetupWorkflowCreator
 Aw.Sindri.Core.Setup.ISetupWorkflowCreator.Create(Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug, string! spec, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Setup.ISetupWorkflowActivator
 Aw.Sindri.Core.Setup.ISetupWorkflowActivator.Activate(Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Setup.ISetupWorkflowRunner
+Aw.Sindri.Core.Setup.ISetupWorkflowRunner.Run(Aw.Sindri.Core.Graph.Ids.WorkflowSlug slug, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>

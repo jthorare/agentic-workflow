@@ -1798,7 +1798,8 @@
       "allowedCallers": [
         "human+terminal",
         "human",
-        "session"
+        "session",
+        "service"
       ],
       "terminal": false,
       "method": "POST",

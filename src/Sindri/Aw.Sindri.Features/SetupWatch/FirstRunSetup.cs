@@ -11,15 +11,16 @@ namespace Aw.Sindri.Features.SetupWatch;
 
 /// <summary>
 /// The first-run steps the setup service does on its own once the profile names a repo (first-run spec decisions 10 and 19, E1 and E2): it sets 'workflow.agent.target' from the first agent the launcher finds,
-/// then makes and activates hello-sindri, once per box (the 'setup.first_workflow.created' event). Neither is a question for the owner.
+/// then makes, activates and runs hello-sindri once per box (the 'setup.first_workflow.created' event). Neither is a question for the owner.
 /// </summary>
 /// <param name="live">The live profile.</param>
 /// <param name="launch">The launcher's catalog: which agents are installed.</param>
 /// <param name="keys">Edits one key of the profile file in place.</param>
 /// <param name="create">Makes the workflow (the command, run as 'service:setup').</param>
 /// <param name="activate">Turns the workflow on (the command, run as 'service:setup').</param>
+/// <param name="runner">Starts the one run (the command, run as 'service:setup').</param>
 /// <param name="made">The ledger event that says hello-sindri was made once.</param>
-internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IProfileKeyWriter keys, ISetupWorkflowCreator create, ISetupWorkflowActivator activate, FirstWorkflowEvents made)
+internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IProfileKeyWriter keys, ISetupWorkflowCreator create, ISetupWorkflowActivator activate, ISetupWorkflowRunner runner, FirstWorkflowEvents made)
 {
     private const string TargetKey = "workflow.agent.target";
     private static readonly WorkflowSlug _hello = WorkflowSlug.From("hello-sindri");
@@ -91,6 +92,9 @@ internal sealed class FirstRunSetup(IProfileSource live, ILaunchSetup launch, IP
             return;
         }
 
-        _ = await made.Made(_hello, repo, cancellationToken).ConfigureAwait(false);
+        if ((await made.Made(_hello, repo, cancellationToken).ConfigureAwait(false)).IsSuccess)
+        {
+            _ = await runner.Run(_hello, cancellationToken).ConfigureAwait(false);   // once: the event is recorded first, so a failed start is not retried (Run again is the owner's)
+        }
     }
 }

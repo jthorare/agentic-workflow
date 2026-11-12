@@ -23,6 +23,7 @@ public sealed class FirstRunSetupTests : IDisposable
 
     private readonly WorkflowWriteRig _rig = new(realBlocks: true, flowAndCodeBlocks: true);
     private readonly RecordingKeys _keys = new();
+    private readonly RecordingRunner _runner = new();
     private Result<LaunchShowReport> _agents = Report(("claude-code", "/usr/bin/claude"));
 
     public void Dispose() => _rig.Dispose();
@@ -52,6 +53,7 @@ public sealed class FirstRunSetupTests : IDisposable
             _keys,
             Create(store),
             Activate(store),
+            _runner,
             new FirstWorkflowEvents(_rig.Harness.Held, _rig.Harness.Store, _rig.Harness.Store, _rig.Harness.Events, _rig.Harness.Callers));
     }
 
@@ -80,6 +82,31 @@ public sealed class FirstRunSetupTests : IDisposable
         Assert.Equal("demo", spec.Nodes.Single(static n => n.Type == "create_item").Config["repo"]!.GetValue<string>());
         var created = Assert.Single(_rig.Recorded(EventTypes.SetupFirstWorkflowCreated));
         Assert.Equal("setup.first_workflow.created", created.IdempotencyKey);
+    }
+
+    [Fact]
+    public async Task Setup_runs_hello_sindri_once_after_activating_it()
+    {
+        _ = await _rig.Harness.HoldLease();
+        Profile(repos: "demo");
+        var setup = Setup();
+
+        await setup.Run(Token);
+        await setup.Run(Token);
+
+        Assert.Equal(["hello-sindri"], _runner.Started);
+    }
+
+    [Fact]
+    public async Task A_hello_sindri_the_owner_deleted_is_not_run_again()
+    {
+        _ = await _rig.Harness.HoldLease();
+        Profile(repos: "demo");
+        await Setup().Run(Token);
+
+        await Setup(new InMemoryWorkflowStore(_rig.Harness.Clock)).Run(Token);
+
+        _ = Assert.Single(_runner.Started);
     }
 
     [Fact]
@@ -159,6 +186,17 @@ public sealed class FirstRunSetupTests : IDisposable
         await Setup().Run(Token);
 
         Assert.Empty(_keys.Calls);
+    }
+
+    private sealed class RecordingRunner : ISetupWorkflowRunner
+    {
+        public List<string> Started { get; } = [];
+
+        public ValueTask<Result<Unit>> Run(WorkflowSlug slug, CancellationToken cancellationToken)
+        {
+            Started.Add(slug.Value);
+            return ValueTask.FromResult<Result<Unit>>(Unit.Value);
+        }
     }
 
     private sealed class Creator(CreateWorkflowService service) : ISetupWorkflowCreator
