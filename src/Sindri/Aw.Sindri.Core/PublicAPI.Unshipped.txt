@@ -23197,3 +23197,45 @@ static Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.operator ==(Aw.Sindri.Core
 Aw.Sindri.Core.NeedsYou.NeedsYouDecisions
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.From(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouDecision!>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.Question(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> string!
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.RunId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.NodeId.get -> Aw.Sindri.Core.Graph.Ids.NodeId
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.NodeId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.ItemIndex.get -> int
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.ItemIndex.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.State.get -> string!
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.State.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.WaitingOn.get -> string?
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.WaitingOn.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.LastTool.get -> string?
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.LastTool.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.LastToolAt.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.LastToolAt.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.LaunchId.get -> Aw.Sindri.Core.Launch.LaunchId?
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.LaunchId.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.Branch.get -> string?
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.Branch.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.Deadline.get -> System.DateTimeOffset?
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.Deadline.init -> void
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.By.get -> string!
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.By.init -> void
+override Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.ToString() -> string!
+static Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.operator !=(Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload? left, Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload? right) -> bool
+static Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.operator ==(Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload? left, Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload? right) -> bool
+override Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.GetHashCode() -> int
+override Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.Equals(object? obj) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.Equals(Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload? other) -> bool
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.<Clone>$() -> Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload!
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.Deconstruct(out Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, out Aw.Sindri.Core.Graph.Ids.NodeId NodeId, out int ItemIndex, out string! State, out string? WaitingOn, out string? LastTool, out System.DateTimeOffset? LastToolAt, out Aw.Sindri.Core.Launch.LaunchId? LaunchId, out string? Branch, out System.DateTimeOffset? Deadline, out string! By) -> void
+Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.WorkflowNodeAgentChangedPayload(Aw.Sindri.Core.Graph.Ids.WorkflowRunId RunId, Aw.Sindri.Core.Graph.Ids.NodeId NodeId, int ItemIndex, string! State, string? WaitingOn, string? LastTool, System.DateTimeOffset? LastToolAt, Aw.Sindri.Core.Launch.LaunchId? LaunchId, string? Branch, System.DateTimeOffset? Deadline, string! By) -> void
+const Aw.Sindri.Core.Events.EventTypes.WorkflowNodeAgentChanged = "workflow.node.agent.changed" -> string!
+Aw.Sindri.Core.Graph.NodeAgentStates
+const Aw.Sindri.Core.Graph.NodeAgentStates.WaitingForSlot = "waiting-for-slot" -> string!
+const Aw.Sindri.Core.Graph.NodeAgentStates.Launching = "launching" -> string!
+const Aw.Sindri.Core.Graph.NodeAgentStates.Working = "working" -> string!
+const Aw.Sindri.Core.Graph.NodeAgentStates.WaitingOnYou = "waiting-on-you" -> string!
+const Aw.Sindri.Core.Graph.NodeAgentStates.Limited = "limited" -> string!
+const Aw.Sindri.Core.Graph.NodeAgentStates.EndedSucceeded = "ended-succeeded" -> string!
+const Aw.Sindri.Core.Graph.NodeAgentStates.EndedFailed = "ended-failed" -> string!
+const Aw.Sindri.Core.Graph.NodeAgentStates.EndedTimedOut = "ended-timed-out" -> string!

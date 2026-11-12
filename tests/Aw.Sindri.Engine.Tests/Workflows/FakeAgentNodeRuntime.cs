@@ -22,6 +22,9 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
     /// <summary>The timeout the launch reports; the real one comes from the node's config, whose smallest value is a minute.</summary>
     public TimeSpan Timeout { get; init; } = TimeSpan.FromMinutes(10);
 
+    /// <summary>How many launch calls answer "the session cap is full, ask again" before one starts (#3151).</summary>
+    public int SlotWaits { get; init; }
+
     /// <summary>Why the launch fails, or null for a launch that starts.</summary>
     public AgentLaunchFailure? Failure { get; init; }
 
@@ -68,6 +71,11 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
         if (LaunchGate is { } gate)
         {
             await gate.Task.ConfigureAwait(false);   // why: deliberately ignores the token, like a real launch in the middle of making a worktree
+        }
+
+        if (_launches.Count <= SlotWaits)
+        {
+            return new AgentNodeLaunched(new AgentLaunched(Worktree: null, StartHead: null, Failure: null, Waiting: true), Input: null, Timeout);
         }
 
         _order.Enqueue("launch-returned");
