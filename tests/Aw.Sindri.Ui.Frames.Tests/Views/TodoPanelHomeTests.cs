@@ -404,7 +404,7 @@ public sealed class TodoPanelHomeTests : IDisposable
 
         var error = Named<TextBlock>(window, "TodoError");
         var sync = Named<TextBlock>(window, "TodoSyncLive");
-        var head = Named<Control>(window, "TodoTitle").Parent!.Parent!;   // the header grid's border
+        var head = Named<Control>(window, "TodoTitle").Parent!.Parent! as Visual ?? throw new InvalidOperationException("no header");   // the header grid's border
         Assert.True(error.IsEffectivelyVisible);
         Assert.True(error.TranslatePoint(default, head)!.Value.X >= sync.TranslatePoint(default, head)!.Value.X, "the error follows the sync line");
         Assert.True(error.TranslatePoint(new Point(0, error.Bounds.Height), Panel(window))!.Value.Y <= body.TranslatePoint(default, Panel(window))!.Value.Y, "the error is above the body");
@@ -430,7 +430,7 @@ public sealed class TodoPanelHomeTests : IDisposable
         var errors = Panel(window).GetVisualDescendants().OfType<TextBlock>()
             .Where(t => t.IsEffectivelyVisible && t.Text == shell.Todo.Error)
             .ToList();
-        Assert.Single(errors);
+        _ = Assert.Single(errors);
     });
 
     [Theory]
@@ -454,6 +454,10 @@ public sealed class TodoPanelHomeTests : IDisposable
             var right = error.TranslatePoint(new Point(error.Bounds.Width, 0), window)!.Value.X;
             var hintLeft = hint.TranslatePoint(default, window)!.Value.X;
             Assert.True(error.IsEffectivelyVisible);
+            Assert.True(error.Bounds.Width > 0, "the error has a width");
+            var untrimmed = new TextBlock { Text = error.Text, FontSize = error.FontSize, FontFamily = error.FontFamily, FontWeight = error.FontWeight, FontStyle = error.FontStyle };
+            untrimmed.Measure(Size.Infinity);
+            Assert.True(untrimmed.DesiredSize.Width > error.Bounds.Width, string.Create(CultureInfo.InvariantCulture, $"the text is {untrimmed.DesiredSize.Width} wide untrimmed, the error draws {error.Bounds.Width}: it really trims"));
             Assert.True(right <= hintLeft, string.Create(CultureInfo.InvariantCulture, $"the error ends at {right}, New todo starts at {hintLeft}"));
             Assert.Equal(hintWidth, hint.Bounds.Width);
         }
@@ -461,6 +465,21 @@ public sealed class TodoPanelHomeTests : IDisposable
         {
             TextScale.Apply(Application.Current!.Resources, 1.0);
         }
+    });
+
+    [Fact]
+    public Task With_no_sync_text_the_error_sits_one_gap_after_the_count() => OnUi(async () =>
+    {
+        Serve(Eight());
+        var (window, shell) = await Connected();
+        await FailRead(window, shell, "The views are behind.");
+
+        Assert.True(string.IsNullOrEmpty(shell.Todo.SyncLive), "no sync text");
+        var count = Named<TextBlock>(window, "TodoCount");
+        var error = Named<TextBlock>(window, "TodoError");
+        var countRight = count.TranslatePoint(new Point(count.Bounds.Width, 0), window)!.Value.X;
+        var errorLeft = error.TranslatePoint(default, window)!.Value.X;
+        Assert.Equal(12, errorLeft - countRight, 0.5);
     });
 
     [Fact]

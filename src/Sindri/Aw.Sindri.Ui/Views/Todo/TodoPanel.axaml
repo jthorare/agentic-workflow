@@ -23,6 +23,10 @@
       <Setter Property="BorderThickness" Value="2" />
       <Setter Property="Padding" Value="5,1" />
     </Style>
+    <!-- The live sync text takes its gap only while it has text, so count -> error is one gap when it is empty. -->
+    <Style Selector="TextBlock.sync-gap">
+      <Setter Property="Margin" Value="0,0,12,0" />
+    </Style>
     <Style Selector="TextBlock.caption.warning">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
     </Style>
@@ -48,7 +52,7 @@
                        ToolTip.Tip="{Binding CountLine}" AutomationProperties.Name="{Binding CountLine}" />
             <TextBlock x:Name="TodoSyncQuiet" Grid.Column="1" Margin="0,0,12,0" Classes="caption subtle" Text="{Binding SyncQuiet}" IsVisible="{Binding SyncQuiet, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SyncQuiet}" AutomationProperties.Name="{Binding SyncQuiet}" />
-            <TextBlock x:Name="TodoSyncLive" Grid.Column="2" Margin="0,0,12,0" Classes="caption subtle" Classes.warning="{Binding SyncIsWarning}" AutomationProperties.LiveSetting="Polite" Text="{Binding SyncLive}"
+            <TextBlock x:Name="TodoSyncLive" Grid.Column="2" Classes="caption subtle" Classes.sync-gap="{Binding SyncLive, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Classes.warning="{Binding SyncIsWarning}" AutomationProperties.LiveSetting="Polite" Text="{Binding SyncLive}"
                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SyncLive}"
                        AutomationProperties.Name="{Binding SyncLive}" />
             <TextBlock x:Name="TodoError" Grid.Column="3" HorizontalAlignment="Left" Classes="caption warning" Text="{Binding Error}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Error}"
