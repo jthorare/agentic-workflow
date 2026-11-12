@@ -51,12 +51,12 @@ public sealed class CardGridArrangeHeightTests
             window.Show();
             window.UpdateLayout();
             Dispatcher.UIThread.RunJobs();
-            var narrow = (grid.DesiredSize.Height, card.Bounds.Bottom);
+            var (gridHeightNarrow, cardBottomNarrow) = (grid.DesiredSize.Height, card.Bounds.Bottom);
 
             host.Resize(measureWidth: 1000, arrangeWidth: 1000);
             window.UpdateLayout();
             Dispatcher.UIThread.RunJobs();
-            var result = (narrow.Height, narrow.Bottom, grid.DesiredSize.Height, card.Bounds.Bottom, card.Bounds.Width);
+            var result = (gridHeightNarrow, cardBottomNarrow, grid.DesiredSize.Height, card.Bounds.Bottom, card.Bounds.Width);
             window.Close();
             return result;
         });
