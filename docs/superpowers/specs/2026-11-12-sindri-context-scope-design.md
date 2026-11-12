@@ -61,8 +61,8 @@ can open.
 3. **Never draw more than the screen can label.** The neighbourhood view (§6.3) shows at most 40 nodes, every label whole. The whole repo is
    a treemap for orientation (§6.4), never a node-link graph.
 4. **Edges come from syntax, with no new parser in ship 1.** Each edge kind is a pass with a fixture and an answer key (§5.1). TS passes
-   build on the import scanner that ships today (`TsExports.cs`, `TsWorkspace.cs`, `TsResolver.cs`, which move into `Aw.CodeIndex.Core`,
-   §5.2); C# passes build on CodeIndex's Roslyn parser.
+   build on the import scanner that ships today (`TsExports.cs`, `TsWorkspace.cs`, `TsResolver.cs`, which move into `Aw.CodeIndex.Core` after
+   the §5.1 item 0 fixes land, §5.2); C# passes build on CodeIndex's Roslyn parser.
    tree-sitter is not in the repo. It is a later decision of its own, behind a spike (platforms, NativeAOT, locked restore) that has to
    beat the pattern passes on the benchmark. An LSP or SCIP index, when there is one, only adds precision; nothing waits on it.
 5. **One extract per commit, owned by CodeIndex.** The code index and the map read the same extract, stored in its own mutable SQLite file,
@@ -73,7 +73,8 @@ can open.
    answer, read and edit scopes. The app opens an agent's scope by id, and an agent opens the owner's (§8).
 8. **The page ships behind the floor.** The new page becomes the Context page only when the benchmark meets the §7 floor, measured on
    `scope ask` (`--via scope`), the verb the page uses. Until then, the card landing stays the default, and the new page is behind the
-   profile key `context.landing: scope` (default `cards`). Phase R1 (§14) flips the default to `scope` once the floor holds and Q1 passes;
+   profile key `context.landing: scope` (default `cards` until R1). The owner can set `scope` to try the page early, from Settings or
+   with `sindri profile set context.landing scope`. Phase R1 (§14) flips the default to `scope` once the floor holds and Q1 passes;
    the cards stay reachable with `context.landing: cards`. Phase R2 deletes the cards and the key, at least a week after R1, with the
    floor still holding. The bad case this stops: a ranker that misses the files to edit replaces a page that at least lets you browse, and
    leaves no way back.
@@ -93,7 +94,7 @@ A scope is a named, saved answer to one question.
 | `groups[]` | one per concept or area: `name`, `why` (one line), `rows[]` |
 | `rows[]` | one per file: `path`, `fileHash` (the extract's hash of the file at `commit`), `role` (`touch` / `read` / `test`), `why` (the edge or evidence that put it there, one line), `score`, `services` (provides / needs, Effect), `pinned`, `dropped` |
 | `edits[]` | what the person or agent changed: pin, drop, move to touch/read, "more like this", "what calls this", in order, with who |
-| `searched[]`, `degraded[]` | the legs that ran, and what was missing. Each `degraded` entry is `{code, detail}`: `semantic-off`, `edges-building` (`detail`: percent), `behind` (`detail`: commits), `parse-timeout` (`detail`: file count). Agents branch on `code`; the page and the CLI text print the label |
+| `searched[]`, `degraded[]` | the legs that ran, and what was missing. Each `degraded` entry is `{code, detail}`: `semantic-off`, `semantic-stalled` (`detail`: embedded of total, e.g. "8576 of 26249"), `edges-building` (`detail`: percent), `behind` (`detail`: commits), `parse-timeout` (`detail`: file count). Agents branch on `code`; the page and the CLI text print the label |
 | `asOf` | when it was answered; a row is `stale` when the file's hash at the indexed commit differs from `fileHash` |
 
 Roles: **touch** = the change edits it; **read** = needed to understand it (callers, the service it uses, the schema); **test** = the tests
@@ -137,8 +138,12 @@ The exact wire shape is S0's (§14): a JSON schema and an API golden, the first 
    `SqliteMapSearchIndex`, which keeps concept titles only.
 2. **Structural:** the seeds' definitions, then their edges (§5.1): who provides the service, who uses it, the layer that wires it, the
    tables a file reads and writes, the routes, the tests.
-3. **Semantic (optional):** embeddings over chunks of one top-level declaration each, cut by the same passes that make the edges, when
-   `index.embeddings` is on. Off, the scope says "meaning search off" in its footer and in `degraded[]`, not an error.
+3. **Semantic (optional):** embeddings over chunks of a file, when `index.embeddings` is on. Ship 1 cuts by size: 1,500 characters
+   (about 400 tokens), cut at a line break, with the last 200 characters repeated at the start of the next chunk. Why: one chunk holds
+   about one idea and sits far under the embedding model's context, and the overlap keeps a declaration that straddles a cut whole in one
+   of two chunks. At 10M lines (~400 MB of text) that is roughly 300k chunks (an estimate; F1 reports the real count and the embed time).
+   Chunks by top-level declaration wait for the parser spike (§5.1): the §5.1 passes are regexes over comment-stripped text and don't
+   know where a declaration starts or ends. Off, the scope says "meaning search off" in its footer and in `degraded[]`, not an error.
 
 ### 4.2 Ranking
 
@@ -171,7 +176,7 @@ Each is a pass with a fixture repo, an answer key and a test. Order is the conte
 
 | Pass | Parser |
 |---|---|
-| 0, 1, 5 (resolver, barrels, tests) | the TS import scanner that ships today (`TsExports.cs`, `TsWorkspace.cs`, `TsResolver.cs`), moved into `Aw.CodeIndex.Core` (§5.2) |
+| 0, 1, 5 (resolver, barrels, tests) | the TS import scanner that ships today (`TsExports.cs`, `TsWorkspace.cs`, `TsResolver.cs`), moved into `Aw.CodeIndex.Core` after item 0 below lands (§5.2) |
 | 2, 3, 4 (Effect services, schemas, SQL and routes) | regex passes over the same comment-stripped text (the scanner is regexes, not a token stream): each pattern below is a call shape, not a type fact |
 | 6 (C#) | CodeIndex's Roslyn parser (`CSharpParser`) |
 
@@ -184,6 +189,8 @@ on its answer key, so a tree-sitter or TS compiler spike has a number to beat. T
      namespace re-export, so `X.Foo` resolves to the file that defines `Foo`.
    - `TsWorkspace.cs:29` turns a package.json `exports` map into one entry file: `Target` follows the first condition key it knows and
      never keeps the subpath keys. Subpath entries (`"./sql"`, `"./*"`) become their own entries, so `@pkg/x/sql` lands on a file.
+   Item 0 lands first, in `Aw.Context.Core` where the files are today. P2's move PR (§5.2) starts after it merges and moves the fixed
+   files, so the two never edit `TsExports.cs`, `TsWorkspace.cs` and `TsResolver.cs` at the same time.
    scip-typescript stays opt-in and benchmarked (ledger 4); it is not on the default path.
 1. **Barrels collapse.** An import of `x/index.ts` that re-exports `Foo` becomes an edge to the file that defines `Foo` (#2983). Done first:
    every edge kind below depends on it. The walk follows at most 8 re-export hops, keeps a visited set (a cycle ends the walk with the
@@ -210,7 +217,8 @@ and copies nothing.
 - **Owner.** `Aw.CodeIndex` owns the extract file and is its only writer. It holds files (path, content hash, scrubbed text), symbols,
   file-level edges (provides, needs, uses, imports, tests, with node kinds for service, schema, route and table) and the lexical table
   (§4.1). The TS passes are the writer's, so they move: `TsExports`, `TsWorkspace`, `TsResolver` and the other readers of
-  `Aw.Context.Core/Extract/Imports/` go to `Aw.CodeIndex.Core` (a new `Imports/` folder; P2's first PR). `Aw.CodeIndex.Core` has one
+  `Aw.Context.Core/Extract/Imports/` go to `Aw.CodeIndex.Core` (a new `Imports/` folder; P2's first PR, which starts after P1's
+  item 0 has merged and moves the fixed files, §5.1). `Aw.CodeIndex.Core` has one
   project reference (`Aw.Kernel`), so `deps.yaml`'s `projectFanOut: 4` holds, and `Aw.CodeIndex.Infrastructure` (already at 4) gets no new
   reference. No new package is added. The Context callers of that scanner (`ImportEdges`, `DataStorePass`, `DrizzleAdapter`) read the
   extract through the port instead, in the same PR.
@@ -383,16 +391,21 @@ the list (with no list, under those two lines).
 
 | State | What shows |
 |---|---|
+| no repo in the profile | the question box disabled; one line, "No repository yet. Add one to ask about its code.", and an **Add repo** button that opens the existing repo add flow (the same one as `sindri repo add <path>`); after it, the next row |
 | first index building, lexical not ready | the question box disabled; a text line above it, "Indexing agentic-workflow: 41% · about 3 min left", in ink-subtle or darker (4.5:1) and a polite live region, so the progress doesn't live only in the box's placeholder; focus lands on the first enabled control (Map tools, then the saved list); the treemap (from U2) fills in as files land; no Build map button while a build runs |
 | lexical ready, edges building | questions work; the header says "Answers get better as indexing finishes · 41%"; rows have hollow dots until edges land |
 | index ready, no map | questions work (lexical + structural need no map); groups fall back to packages; a quiet line offers "Name areas" (the map) |
 | a question with no hits | "Nothing in agentic-workflow matches 'refund reason'" plus up to 3 near words that do match, as plain words, never raw keys (#2809) |
 | answer slower than 1 s | the lexical rows show first with "ranking…" in the header; the order settles once, no reshuffle after that; the cursor stays on the same file, not the same row index |
 | index behind the checkout | a line in the header: "answered at 7f01aca, 3 commits behind" with Refresh |
-| a failed read | "Couldn't read the code index" plus Retry and the log path; never an empty list that looks like "no matches" |
-| a row is `stale` (the file's hash changed since the answer) | the row shows "changed" in ink where the dot was; its actions are Refresh row (re-asks at the indexed commit, `r`), Drop and Open; Pin and role changes still work on the old row but the row keeps the word until a refresh; an edit that the server refuses with 265 shows "This file changed since the answer. Refresh the row." |
+| a failed read | "Couldn't read the code index" plus Retry and the log path; never an empty list that looks like "no matches". Retry asks the same question again against an index that exists |
+| index build failed | "Indexing failed: <reason and code>" in the header and a **Retry build** button that starts the index build job again. It differs from a failed read: a failed read means the index exists and one question couldn't read it (Retry re-asks); a failed build means there is no usable index yet, so the question box stays disabled. When an earlier extract exists, questions keep answering from it and the line sits in the header with the same button |
+| a row is `stale` (the file's hash changed since the answer) | the row shows "changed" in ink where the dot was; its actions are Refresh row (re-asks at the indexed commit; in the `.` menu, accelerator `r`), Drop and Open; Pin and role changes still work on the old row but the row keeps the word until a refresh; an edit that the server refuses with 265 shows "This file changed since the answer. Refresh the row." |
 | a pinned file is gone | the row shows "file gone"; Drop is the only action besides Refresh; the in-place open says which commit still has it |
-| meaning search off | one line in the header, "Meaning search is off · rows come from names and edges" (the `semantic-off` entry of `degraded[]`); no error colour, no dialog |
+| meaning search off | one line in the header, "Meaning search is off · rows come from names and edges" (the `semantic-off` entry of `degraded[]`) and a **Turn on** button that sets the profile key `index.embeddings` to on (it applies on save, then the embed job starts); no error colour, no dialog |
+| meaning search stalled or model-limited | the `semantic-stalled` entry: "Meaning search stopped at 8,576 of 26,249 · rows come from names and edges". Ollama failed: **Retry** starts the embed job now, without waiting for the failure backoff. Paused on a model limit: **Resume**. The real case is #3069 (Effect run: one Ollama error parked the layer as `unavailable`, `SND-CODEIDX-006`, and nothing retried it, so scoping answers held no code); #3069's fix makes the embed service retry that layer on its own, and the button covers the wait |
+| parse timeout on some files | one line in the header, "12 files couldn't be read in time · see files" (the `parse-timeout` entry of `degraded[]`); the link opens that file list in the Files view. Today this shows only in `sindri doctor` |
+| concept map older than the index | one line in the header, "Area names are from 7f01aca, 12 commits older" and the **Name areas** button, the same one as the "no map" row, re-running the map at the indexed commit. Groups keep the old names; files the old map doesn't know fall back to their package |
 | version conflict (264) while editing | the edit is not applied; a line in the header, "Changed by <who> while you were editing. Reload", with Reload (reads the current version and keeps the cursor on the same file) |
 | Hand to agent fails | the menu stays open and says why under the target: "<session> has ended" (270) or "Couldn't hand over. Try again"; nothing is recorded as handed |
 | an agent edits the scope that is open | no reshuffle under the cursor; a line in the header, "<session> changed this scope · 2 edits", with Reload; the open file stays selected |
@@ -401,7 +414,9 @@ the list (with no list, under those two lines).
 
 The keys follow the shared grammar on #2978, in short: a list of 32 px rows; Space opens a peek pane beside the list; Enter opens the
 full view; Esc goes back one layer. Its keys: `j`/`k` move, `/` filters, `c` creates, `.` opens the row's actions, Ctrl+K has every action
-by name. `e`, `m`, `w`, `n` and `s` are this page's own; the ui lane adds them to #2978's table of page keys in U1.
+by name. #2978's rule: a bare letter never commits a write, and may differ per surface only when it opens something you can cancel. So
+this page's bare keys only move, fold or open: Left / Right and `g` (design's page keys, #2959 comment 6818264541), `e`, `n` and `s`.
+More like this, what calls this and refresh are writes, so they live in the `.` menu. The ui lane adds the page keys to #2978's table in U1.
 
 | Key | Where | Does |
 |---|---|---|
@@ -413,18 +428,17 @@ by name. `e`, `m`, `w`, `n` and `s` are this page's own; the ui lane adds them t
 | `c` | rail | create: a new question, with focus in an empty question box |
 | `e` | rail | edit the current question (focus in the box, text kept) |
 | `/` | rail | filter the scope's rows by name |
-| `j` / `k`, arrows | rail | move the cursor; `h` / `l` fold and open groups |
+| `j` / `k`, Up / Down | rail | move the cursor |
+| Left / Right | rail | walk the selected file's edges: the previous or next edge lights up and its far file shows in the in-place open. Writes nothing |
+| `g` | rail | fold or unfold the group of the selected row. Writes nothing |
 | Space / Enter | rail | peek / open full, keeping the selection |
 | Esc | peek, full, neighbourhood | closes the topmost one, back to the rail on the same row |
-| `.` | rail | the row's actions: pin, drop, set touch / read |
-| `m` | rail | more like this |
-| `w` | rail | what calls this ("who uses it") |
+| `.` | rail | the row's actions: pin, drop, set touch / read, more like this (`m`), what calls this (`w`), refresh row (`r`, only when the row is `stale` or its file is gone). The letters in brackets work only while this menu is open; Esc closes it with nothing done |
 | `n` | rail | the neighbourhood (§6.3) |
-| `s` | rail | keep and rename the scope |
-| `r` | rail | refresh the selected row when it is `stale` or its file is gone |
+| `s` | rail | open the name field for the scope; Enter keeps it, Esc cancels, so the key itself writes nothing |
 
 Letters act only while focus is in the rail; in the question box they type. Tab order: question box, rail, Suggested tray, header
-(saved menu, Copy id, Hand to agent). The header sits above the rail on screen, so this order is not top to bottom; that is deliberate,
+(saved menu, Copy id, Hand to agent). Left / Right walk edges while focus is in the rail and move between files while it is in the tray. The header sits above the rail on screen, so this order is not top to bottom; that is deliberate,
 the question and the files come first. Every action has a menu item for mouse use and the same action id in Ctrl+K and in
 `context_scope_edit` (§8): `scope.pin`, `scope.drop`, `scope.touch`, `scope.read`, `scope.more`, `scope.callers`, `scope.add-suggested`,
 `scope.keep`, `scope.copy-id`, `scope.handoff`, `scope.delete` (with Sindri's usual confirm), `scope.refresh`, `scope.ask-again`,
@@ -485,8 +499,13 @@ P0 follow-ups the floor needs:
 6. The extra held-out questions, from 5 to 20 (§14, P4), and the decoy ceiling below.
 
 **Floor for decision 8**, read from `--via scope` on `scope ask`: touch recall at 25 >= 0.6, and decoys in the top 10 <= 1.0 per
-question, both averaged over the held-out questions of both fixtures together (10 questions to start). Before R1 flips the default,
-held-out grows to 10 per fixture (20 total), and both numbers must still hold. The target stays at 0.8 (§4.3). One miss on 5 questions
+question, both averaged over the held-out questions of both fixtures together (10 questions to start), and `scope ask` p95 under 5 s (§4.3) on the
+same run. Before R1 flips the default, held-out grows to 10 per fixture (20 total), and all three must still hold. The target stays at 0.8 (§4.3).
+
+**The "before".** No `--via query` baseline is posted on #2959 yet (the runner merged in #3068; the only number so far is touch recall 0.00
+on the Effect home in #3069, taken while embeddings were stalled, so it is not a baseline). The first `--via query` run, on both fixtures, goes
+on #2959 before P4 starts, and every later run quotes it.
+ One miss on 5 questions
 moves a fixture by 0.2; averaging over both fixtures and growing to 20 keeps a single question from deciding the ship.
 
 Why 1.0 decoys: the keys list 4 decoys per question in `effect` and 2 to 3 in `agentic-workflow`, and 10 rows is what the rail shows
@@ -610,20 +629,20 @@ issue, `Part of #2959`:
 | Phase | What | Lane | Starts | Needs |
 |---|---|---|---|---|
 | P0 | benchmark + answer keys + runner (merged, #3068); then the §7 follow-ups: split, floor flag, 10 per fixture, sizes | context | now | — |
-| P1 | wave 1: the two TS resolver fixes (§5.1 item 0), barrel collapse, the Effect services pass. Wave 2: C# DI registrations and endpoint maps (§5.1 item 6) | context | now (wave 2 on a second builder) | P0 for its delta |
-| P2 | one extract per commit in its own mutable SQLite file, owned by CodeIndex, lexical table first (§5.2, #2984); first PR moves the TS import readers into `Aw.CodeIndex.Core`; last PR deletes CodeIndex's `GraphifyRunner` and graph tables; `check-deps` stays green | context | with P1 (third builder) | — |
+| P1 | wave 1: the two TS resolver fixes (§5.1 item 0, which lands first, in `Aw.Context.Core`), barrel collapse, the Effect services pass. Wave 2: C# DI registrations and endpoint maps (§5.1 item 6) | context | now (wave 2 on a second builder) | P0 for its delta |
+| P2 | one extract per commit in its own mutable SQLite file, owned by CodeIndex, lexical table first (§5.2, #2984); first PR moves the TS import readers (with item 0's fixes) into `Aw.CodeIndex.Core`, and starts only after P1's item 0 merges; last PR deletes CodeIndex's `GraphifyRunner` and graph tables; `check-deps` stays green | context | with P1 (third builder); the move PR after P1's item 0 | P1 item 0 for the move PR |
 | P3 | the scope: events, view, retention and the `scope-sweeper` tick, `context_scope_*` MCP + `sindri context scope` CLI (`ask`, `show`, `list`, `handoff` first, §8); `context_query` unchanged; skills move to `ask`; the runner's `--via scope` | api (+ context for the ranker call) | now, against a stub ranker | the §3 fields |
 | P4 | ranking + touch/read/test split; also writes the extra held-out questions (5 to 20, 10 per fixture) with a builder who isn't tuning the ranker, so the keys don't bend to it | context | after P1 (both waves) and P2's lexical milestone | P0, P1, P2 |
 | D1 | design: the contact sheet is done (direction 3 picked, #2959). Left: the redraw with qa's 5 fixes (§6.1), then peek, neighbourhood and the §6.5 states | design | now | #2978 row tokens |
 | S0 | the wire shape as a JSON schema + API golden (scenario row + Ui GoldenContract slug), the ledger migration (aot-smoke `ledger schema N/N`), `scope.*` events (EventCatalogTests), PublicAPI files, `context_scope_*` in aot-smoke's tools/list, routes through the integration lane; the profile keys `context.landing` (`scope`\|`cards`) and `context.scopes.keepDays` (1 to 365): `ContextSettings` (`Aw.Context.Core/Engine/ContextSettings.cs`, an unknown or out-of-range value is SND-CONTEXT-001), their rows in `docs/csharp/sindri-profile.md`, `sindri profile set` accepting them, and `scripts/tests/check-profile-doc.test.sh` in the gate | api | first PR of P3 | §3, §8, §9 |
-| U1 | the page behind `context.landing: scope`: question box, ranked rail with in-place open, bands, Suggested tray, one cursor, peek, keys, states (§6.1, §6.2, §6.5, §6.6) and the no-question page with the saved list (§6.4) on a fake scope; the profile key `context.editor` (argv list; none exists on main today) with the same `ContextSettings`, profile-doc and `check-profile-doc.test.sh` rows as S0's; the Frames contrast check (§6.7); the page keys added to #2978. If U1 runs late, the bands move to U2: the rail, in-place open and peek already do the job | ui | after D1's redraw | the P3 wire shape |
-| U2 | neighbourhood + treemap (§6.3, §6.4) | ui | after U1 | P1 edges for real data |
-| F1 | perf: the §4.3 budgets on the 10M copy, one issue per broken budget; reports the scrub share of the lexical milestone and the ledger's growth per 1000 asks | perf | after P2 + U1 | — |
+| U1 | the page behind `context.landing: scope`: question box, ranked rail with in-place open, bands, Suggested tray, one cursor, peek, keys, states (§6.1, §6.2, §6.5, §6.6) and the no-question page with the saved list (§6.4) on a fake scope; the profile key `context.editor` (argv list; none exists on main today) with the same `ContextSettings`, profile-doc and `check-profile-doc.test.sh` rows as S0's; the Frames contrast check (§6.7); the page keys added to #2978. If U1 runs late, the bands move to U2: the rail, in-place open and peek already do the job | ui | after D1's redraw | the P3 wire shape; the #2978 row / peek controls (`RowList`, `Row`, `PeekPane`; design + ui, no PR number yet; design's plan on #2978 stacks it on #2952's `RowKeys`) |
+| U2 | neighbourhood + treemap (§6.3, §6.4) | ui | after U1 (the neighbourhood opens from U1's rows) | P1 edges for real data |
+| F1 | perf: the §4.3 budgets on the 10M copy, one issue per broken budget; reports the scrub share of the lexical milestone and the ledger's growth per 1000 asks | perf | after P2 + U1 (it measures the U1 page's first paint, §4.3) | — |
 | Q1 | ux + qa walk the held-out questions, person and agent | ux, qa | after P4 + U1 (U2 is not on its path) | — |
-| R1 | the default flips: `context.landing` defaults to `scope`; `cards` stays reachable | ui | after Q1, with the floor (recall and decoy ceiling, `--via scope`) holding on 20 held-out | §7 floor |
+| R1 | the default flips: `context.landing` defaults to `scope`; `cards` stays reachable | ui | after Q1, with the floor (recall, decoy ceiling and p95, `--via scope`) holding on 20 held-out | §7 floor |
 | R2 | the cards go: the card landing and the `context.landing` key are deleted | ui | at least one week after R1, floor still holding, no `cards` fallback used | R1 |
 
 The page becomes the default only in R1, on the §7 floor (decision 8); the cards are deleted only in R2. Each phase updates its docs: `docs/csharp/sindri-context.md`, `docs/sindri/context.md` and the CLAUDE.md Commands entries for new verbs.
 
-P0, P1, P2, P3 and D1 start the same day, so five lanes are busy from day one. U1 builds on a fake scope from the P3 wire shape, so it
+P0, P1, P2, P3 and D1 start the same day, so five lanes are busy from day one (P2's move PR waits for P1's item 0, which is one small PR; the rest of P2 doesn't). U1 builds on a fake scope from the P3 wire shape, so it
 never waits on ranking.
