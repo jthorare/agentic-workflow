@@ -107,9 +107,9 @@
 
 /* round 3d: qa's points. Row sub-lines come from grammar.css (.row .title .sub, ink-subtle). */
 .sect .chev{color:var(--ink-subtle)}
-/* progress track: #5e6268 = --ink-3 (#74787f) at 80% over canvas, 3.25:1 on canvas (hair-3 is 1.88:1 and --s4 1.2:1) */
+/* checkbox border #70757c (3.4:1 on the capture window #222326); progress track: #5e6268 = --ink-3 (#74787f) at 80% over canvas, 3.25:1 on canvas (hair-3 is 1.88:1 and --s4 1.2:1) */
 .bar{background:#5e6268}
-.g.box{border-color:#5e6268}
+.g.box{border-color:#70757c}
 /* cursor, selected and picked rows are inset to the 24 px content inset, not run edge to edge */
 .row.cursor,.row.sel,.group.cursor{box-shadow:none}
 .row.cursor::after,.row.sel::after{content:'';position:absolute;left:var(--inset);right:var(--inset);top:0;bottom:0;border:1px solid var(--primary-hi);border-radius:var(--r1);pointer-events:none}
