@@ -27,12 +27,12 @@ public sealed class CodeBlock(ICodeRunPort runner) : IGraphBlock
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("input", BlockFieldType.Text, Required: false),
-        new("code", BlockFieldType.Text),
-        new("repo", BlockFieldType.Text, Required: false),
-        new("branch", BlockFieldType.Text, Required: false),
-        new("timeout", BlockFieldType.Text, Required: false),
-        new("memoryMb", BlockFieldType.Number, Required: false),
+        new("input", BlockFieldType.Text, Required: false, Caption: "Input"),
+        new("code", BlockFieldType.Text, Caption: "Code"),
+        new("repo", BlockFieldType.Text, Required: false, Caption: "Repository"),
+        new("branch", BlockFieldType.Text, Required: false, Caption: "Branch"),
+        new("timeout", BlockFieldType.Text, Required: false, Caption: "Stop after"),
+        new("memoryMb", BlockFieldType.Number, Required: false, Caption: "Memory limit (MB)"),
     ]);
 
     /// <inheritdoc />

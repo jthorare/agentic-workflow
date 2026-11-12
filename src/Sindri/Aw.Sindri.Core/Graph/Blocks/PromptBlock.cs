@@ -20,7 +20,7 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
     public bool IsTrigger => false;
 
     /// <inheritdoc />
-    public BlockSchema Config { get; } = new([new("prompt", BlockFieldType.Text), new("output", BlockFieldType.Map)]);
+    public BlockSchema Config { get; } = new([new("prompt", BlockFieldType.Text, Caption: "Question for the model"), new("output", BlockFieldType.Map, Caption: "Answer shape")]);
 
     /// <inheritdoc />
     public string Example => """{"prompt":"Summarize {{search.facts}}","output":{"type":"object","required":["summary"],"properties":{"summary":{"type":"string"}}}}""";
