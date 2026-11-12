@@ -38,15 +38,8 @@ internal sealed partial class ContextPageViewModel
         if (!item.IsSuccess)
         {
             // The error's message names the route and the status, so the note never carries it.
-            if (item.Error.Kind == ErrorKind.NotFound || item.Error.IsNotFound())
-            {
-                NoteItem(Labels.ContextItemUnknown(itemId));
-            }
-            else
-            {
-                NoteItem(Labels.ContextItemFailed(itemId, Labels.ContextItemUnreachable), failed: true);
-            }
-
+            var (note, failed) = ItemReadFailureNote(itemId, item.Error);
+            NoteItem(note, failed);
             return;
         }
 
@@ -58,6 +51,22 @@ internal sealed partial class ContextPageViewModel
 
         // Starting points for an item are a future feature: no route serves them, so the page says it is not scoped yet.
         NoteItem(Labels.ContextItemUnscoped(itemId, repo));
+    }
+
+    // Only an error the client made because no answer came says "not reachable"; a refused or unknown id reads as unknown; any other answered error says Sindri couldn't read it.
+    private static (string Note, bool Failed) ItemReadFailureNote(string itemId, Error error)
+    {
+        if (string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal))
+        {
+            return (Labels.ContextItemFailed(itemId, Labels.ContextItemUnreachable), true);
+        }
+
+        if (error.Kind is ErrorKind.NotFound or ErrorKind.Invalid || error.IsNotFound() || error.IsBadRequest())
+        {
+            return (Labels.ContextItemUnknown(itemId), false);
+        }
+
+        return (Labels.ContextItemFailed(itemId, Labels.ContextItemUnreadable), true);
     }
 
     /// <summary>Retry on the item note: the open is made again.</summary>

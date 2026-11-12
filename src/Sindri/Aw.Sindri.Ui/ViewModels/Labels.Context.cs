@@ -64,6 +64,9 @@ internal static partial class Labels
     /// <summary>The reason when there is no connection to the control plane.</summary>
     internal const string ContextItemUnreachable = "the control plane is not reachable";
 
+    /// <summary>The reason when Sindri answered the item read with an error that is not "unknown id".</summary>
+    internal const string ContextItemUnreadable = "Sindri couldn't read it";
+
     /// <summary>The line when a question or a name is not on the map.</summary>
     /// <param name="asked">What was typed.</param>
     /// <returns>"Nothing on the map matches 'Tab groups'. Try a topic such as feature:name."</returns>
