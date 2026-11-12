@@ -50,7 +50,7 @@ internal sealed class SqliteViewReader(ViewsDatabase database, JsonSerializerOpt
 
         await using (read.Value.ConfigureAwait(false))
         {
-            var present = await HasTable(read.Value, ViewSql.StateTable, cancellationToken).ConfigureAwait(false);
+            var present = await Ready(read.Value, ViewSql.StateTable, cancellationToken).ConfigureAwait(false);
             if (present.IsError || !present.Value)
             {
                 return present.IsError ? ViewsDatabase.Translate(present.Error) : Results.Success<ProjectorState?>(value: null);
@@ -65,6 +65,29 @@ internal sealed class SqliteViewReader(ViewsDatabase database, JsonSerializerOpt
     private static async ValueTask<Result<bool>> HasTable(ISqliteSession session, string name, CancellationToken cancellationToken) =>
         await SqliteQueries.Exists(session, new SqlStatement(ViewSql.TableExists, c => c.Bind("$name", name)), cancellationToken).ConfigureAwait(false);
 
+    /// <summary>True when views.db is fully migrated and <paramref name="table"/> (when given) exists.</summary>
+    private static async ValueTask<Result<bool>> Ready(ISqliteSession session, string? table, CancellationToken cancellationToken)
+    {
+        var migrated = await Migrated(session, cancellationToken).ConfigureAwait(false);
+        return migrated.IsError || !migrated.Value || table is null ? migrated : await HasTable(session, table, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// True once every migration this build ships is applied. The projector applies them one transaction each, so a reader that arrives while views.db is being created sees a table
+    /// (view_launches, migration 5) without the columns a later migration adds (reason, migration 15): its query would throw SQLITE_ERROR, which no store maps (#2881).
+    /// A file with more migrations than this build ships (a newer build wrote it) counts as migrated, as before.
+    /// </summary>
+    private static async ValueTask<Result<bool>> Migrated(ISqliteSession session, CancellationToken cancellationToken)
+    {
+        var present = await HasTable(session, ViewSql.VersionTable, cancellationToken).ConfigureAwait(false);
+        if (present.IsError || !present.Value)
+        {
+            return present;
+        }
+
+        return await SqliteQueries.Exists(session, new SqlStatement(ViewSql.AllApplied, c => c.Bind("$count", ViewsDatabase.Migrations.Count)), cancellationToken).ConfigureAwait(false);
+    }
+
     /// <summary>Runs <paramref name="query"/>; <paramref name="empty"/> when the file exists but the view's table doesn't yet (the projector's migration hasn't committed).</summary>
     private async ValueTask<Result<T>> Read<T>(string view, Result<T> empty, Func<SqliteViewRows, ValueTask<Result<T>>> query, CancellationToken cancellationToken)
     {
@@ -76,13 +99,10 @@ internal sealed class SqliteViewReader(ViewsDatabase database, JsonSerializerOpt
 
         await using (read.Value.ConfigureAwait(false))
         {
-            if (ViewSql.Table(view) is { } table)
+            var present = await Ready(read.Value, ViewSql.Table(view)?.Name, cancellationToken).ConfigureAwait(false);
+            if (present.IsError || !present.Value)
             {
-                var present = await HasTable(read.Value, table.Name, cancellationToken).ConfigureAwait(false);
-                if (present.IsError || !present.Value)
-                {
-                    return present.IsError ? ViewsDatabase.Translate(present.Error) : empty;
-                }
+                return present.IsError ? ViewsDatabase.Translate(present.Error) : empty;
             }
 
             return await query(new SqliteViewRows(read.Value, 0, options)).ConfigureAwait(false);
