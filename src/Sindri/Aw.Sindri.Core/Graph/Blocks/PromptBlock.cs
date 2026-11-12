@@ -132,7 +132,7 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
     // why: the message lands in the one-line runs-list row, so line breaks go and a long answer shows its first 200 characters with "…"
     private static string Shown(string answer)
     {
-        var flat = WhitespaceRun().Replace(answer, " ").Trim();
+        var flat = WhitespaceRun.Replace(answer, " ").Trim();
         if (flat.Length <= ShownLength)
         {
             return flat;
@@ -143,7 +143,7 @@ public sealed partial class PromptBlock(IGraphModelPort model) : IGraphBlock
     }
 
     [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex WhitespaceRun();
+    private static partial Regex WhitespaceRun { get; }
 
     private static string WithInstruction(string prompt, JsonObject schema) => $"{prompt}\n\n{JsonInstruction}\n{schema.ToJsonString()}";
 
