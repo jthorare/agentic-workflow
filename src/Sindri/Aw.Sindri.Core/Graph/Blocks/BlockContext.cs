@@ -19,4 +19,11 @@ public sealed record BlockContext(WorkflowRunId RunId, NodeId Node, JsonObject C
 
     /// <summary>Gets the workflow's provisioned resources by environment name ('SINDRI_DB_STATE' is the path of the database 'state'); empty when it declares none (agent-first PR 14).</summary>
     public IReadOnlyDictionary<string, string> Resources { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>Gets what a failing block left for the run page, or null; the engine stores it as the node's output when the block returns an error.</summary>
+    public JsonObject? FailureOutput { get; private set; }
+
+    /// <summary>Leaves the output the engine stores when this block then returns an error (a prompt step leaves the model's raw answer); the engine cuts it to the stored-output cap.</summary>
+    /// <param name="output">The fields to show on the failed step.</param>
+    public void LeaveFailureOutput(JsonObject output) => FailureOutput = output;
 }

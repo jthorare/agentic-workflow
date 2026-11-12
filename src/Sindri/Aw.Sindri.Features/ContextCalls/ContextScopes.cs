@@ -31,6 +31,15 @@ internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAc
         return For(loaded.Profile, Caller(callers.Current));
     }
 
+    /// <summary>
+    /// Whether a scope read found no profile yet (SND-PROFILE-001): a background service's tick is then quiet, never a failed run. A profile with no
+    /// 'context:' section is a profile: the engine reads the missing section as the default settings, and so does every caller of this (#3126).
+    /// </summary>
+    /// <param name="scope">The read.</param>
+    /// <returns>True for no profile.</returns>
+    internal static bool NoProfile(Result<ContextScope> scope) =>
+        scope.IsError && scope.Error.Code == SindriErrors.ProfileMissing.Code;
+
     /// <summary>The scope a profile and a caller make; SyncConfigured is whether the profile names the context-sync service.</summary>
     /// <param name="profile">The profile.</param>
     /// <param name="caller">The engine's caller.</param>

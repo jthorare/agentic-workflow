@@ -80,7 +80,7 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
             return plain.IsError ? plain.Error : new BlockResult(new Dictionary<string, JsonNode?>(StringComparer.Ordinal));
         }
 
-        var read = await AskForObject(prompt, schema, cancellationToken).ConfigureAwait(false);
+        var read = await AskForObject(context, prompt, schema, cancellationToken).ConfigureAwait(false);
         if (read.IsError)
         {
             return read.Error;
@@ -95,7 +95,7 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
         return new BlockResult(Outputs(schema, fields));
     }
 
-    private async ValueTask<Result<JsonObject>> AskForObject(string prompt, JsonObject schema, CancellationToken cancellationToken)
+    private async ValueTask<Result<JsonObject>> AskForObject(BlockContext context, string prompt, JsonObject schema, CancellationToken cancellationToken)
     {
         var instructed = WithInstruction(prompt, schema);
         var asked = await model.Ask(instructed, cancellationToken).ConfigureAwait(false);
@@ -104,6 +104,8 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
             return asked.Error;
         }
 
+        // why: set before the parse, so a JSON answer the schema check then refuses also shows on the failed step; the engine reads it only when the block returns an error
+        context.LeaveFailureOutput(new JsonObject { ["answer"] = asked.Value });
         var read = Parse(asked.Value);
         if (read.IsSuccess)
         {
@@ -117,6 +119,8 @@ public sealed class PromptBlock(IGraphModelPort model) : IGraphBlock
             return again.Error;
         }
 
+        // why: the run page shows the failed step's output, so the raw answer stays there for the owner to read; the engine cuts it to the stored-output cap
+        context.LeaveFailureOutput(new JsonObject { ["answer"] = again.Value });
         read = Parse(again.Value);
         if (read.IsSuccess)
         {

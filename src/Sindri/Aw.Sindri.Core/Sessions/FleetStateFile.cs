@@ -13,8 +13,11 @@ public sealed record FleetStateFile(AgentId Provider, SessionId Session, HookSta
     /// <summary>Why the session is asking, when it is.</summary>
     public AskingReason? Reason { get; init; }
 
-    /// <summary>The tool an approval is for ('Bash'), never its input.</summary>
+    /// <summary>The tool name ('Bash'), never its input: the tool an approval is for, or, while the session runs, its last tool.</summary>
     public string? Tool { get; init; }
+
+    /// <summary>When the hook saw <see cref="Tool"/> as the session's last tool; null for an approval ask.</summary>
+    public DateTimeOffset? ToolAt { get; init; }
 
     /// <summary>The working directory.</summary>
     public string? Cwd { get; init; }
