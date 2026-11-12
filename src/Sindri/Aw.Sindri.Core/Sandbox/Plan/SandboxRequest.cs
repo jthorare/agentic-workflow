@@ -13,7 +13,7 @@ namespace Aw.Sindri.Core.Sandbox.Plan;
 /// <param name="Repo">The repo name (key of 'sandbox.repos').</param>
 /// <param name="Instance">The workflow instance, or null for an attended session.</param>
 /// <param name="Paths">The launch's paths.</param>
-/// <param name="RunNamespace">The run's ref namespace 'sindri/&lt;instance&gt;/&lt;run&gt;' (SB5).</param>
+/// <param name="RunNamespace">The run's ref namespace: 'sindri/&lt;instance&gt;/&lt;run&gt;' (SB5), or 'wf/&lt;workflow&gt;/&lt;short run&gt;' for a graph node.</param>
 /// <param name="Policy">The engine's Step policy; null for an attended session, which gets the fixed attended policy (§3.9).</param>
 /// <param name="Attended">True for a session the owner opened with 'sindri open'.</param>
 /// <param name="StepTimeout">The Step's timeout, or null.</param>
