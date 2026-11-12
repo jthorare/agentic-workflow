@@ -85,7 +85,7 @@ Taken for the owner. Each says where it came from. "Written to the lead's pick" 
 20. **The queue of notes is a list on the row / peek / full grammar.** `RowList`, `Row` and `PeekPane` on `RowKeys`, with no key handler of its own (#2978; Reviews spec decision 14). Space peeks, Enter opens the editor as the full view.
 21. **Day chords in the editor are Alt+PageUp (previous day) and Alt+PageDown (next day).** Alt+Left and Alt+Right jump a word on macOS, and Ctrl+Alt+Arrow switches workspace on GNOME. Previous and next mean the previous and next EXISTING day (Foam's rule). From the list, `g p`, `g n` and `g d` (today) work, since a bare letter types in the editor but not in the list. (Design, round 3; `guesses.md` 16.)
 22. **Where history lives: `$AW_SINDRI_HOME/notes-history/`, never in the vault.** A version is kept per save (and per accepted proposal, restore and capture). Written to the lead's pick. (Ledger 11; api plan left git versus copy open.)
-23. **Error codes are `SND-NOTE-001..029`.** The frames' `NOTES-WRITE-001`, `NOTES-HISTORY-001` and `LINEAR-CREATE-502` were placeholders (`guesses.md` 2). Reserved now; no `SND-NOTE-` code exists on main.
+23. **Error codes are `SND-NOTE-001..022`.** The frames' `NOTES-WRITE-001`, `NOTES-HISTORY-001` and `LINEAR-CREATE-502` were placeholders (`guesses.md` 2). Reserved now; no `SND-NOTE-` code exists on main.
 24. **Agents get the same verbs.** Every action has a CLI verb and an MCP tool; a session reads and proposes but never presses the owner's buttons (§7).
 
 ## 3. The model
