@@ -80,6 +80,8 @@
     <PackageVersion Include="Avalonia.Desktop" Version="[12.1.4]" />
     <PackageVersion Include="Avalonia.Headless" Version="[12.1.4]" />
     <PackageVersion Include="Avalonia.Skia" Version="[12.1.4]" />
+    <!-- #3335 spike only, branch spike/3335-terminal, never merged. 2026.3.6 was published 2026-10-28 (older than the 14-day rule); 2026.3.7 is from 2026-11-10. -->
+    <PackageVersion Include="Devolutions.Terminal.Control" Version="[2026.3.6]" />
     <!-- The judge downscales an image too big for Jev (images spec 3.3a). SkiaSharp 3.119.4 is the version Avalonia.Skia 12.1.4 resolves
          for sindri-ui, so the box has one SkiaSharp; the NoDependencies native asset keeps the NativeAOT judge off fontconfig on Linux. MIT. -->
     <PackageVersion Include="SkiaSharp" Version="[3.119.4]" />

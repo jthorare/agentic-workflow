@@ -1,0 +1,12 @@
+# T3335 spike (issue 3335): throwaway code, repo analyzer policy off. Compiler and AOT/trim warnings stay on.
+root = false
+
+[*.cs]
+dotnet_analyzer_diagnostic.severity = none
+dotnet_diagnostic.CA1502.severity = none
+dotnet_diagnostic.MA0009.severity = none
+dotnet_diagnostic.MA0048.severity = none
+dotnet_diagnostic.MA0051.severity = none
+dotnet_diagnostic.AW1006.severity = none
+dotnet_diagnostic.MA0042.severity = none
+dotnet_diagnostic.CA1031.severity = none
