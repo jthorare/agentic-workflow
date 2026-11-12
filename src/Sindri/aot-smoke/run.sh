@@ -307,6 +307,15 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   echo "## GET /sindri/events/catalog | jq (public types, their invalidates)"
   curl -s -m 30 "$(jq -r '.url' "$AW_SINDRI_HOME/control.json" | sed 's|/$||')/sindri/events/catalog" -H 'X-Sindri-Repo: smoke' \
     | jq -c '{commandHandled: any(.types[]; .type == "command.handled"), itemCreated: (.types[] | select(.type == "item.created") | .invalidates)}'
+  # The map is built by a context-map-refresh tick, and the smoke can't wait for the cadence (#3405), so it runs the service itself once the code
+  # index exists, silently; the poll below covers the job's finish (cap 120 s). human_run_service retries past SND-JOB-409, which the scheduler
+  # returns when its own context-map-refresh tick is in flight.
+  human_run_service context-map-refresh >/dev/null 2>&1 || true
+  local map_deadline=$((SECONDS + 120))
+  until jq -e '[.jobs[] | select(.kind == "RefreshContextMap")] | length > 0' <<<"$(bounded "$bin" jobs --state succeeded --json </dev/null 2>/dev/null)" >/dev/null 2>&1; do
+    if ((SECONDS >= map_deadline)); then echo "## map wait: no RefreshContextMap job had succeeded after 120 s"; break; fi
+    sleep 1
+  done
   echo "## QUERY /sindri/context/subgraph with a JSON body on the published host (the HTTP QUERY method; POST is not a route)"
   base="$(jq -r '.url' "$AW_SINDRI_HOME/control.json" | sed 's|/$||')"
   curl -s -m 30 -X QUERY "$base/sindri/context/subgraph" -H 'X-Sindri-Repo: smoke' -H 'Content-Type: application/json' -d '{"nodes":["feature:smoke.none"]}' \
