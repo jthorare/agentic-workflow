@@ -138,7 +138,7 @@ and ports to native apps without a rewrite:
      because TS had them, no TS structure mirrored file by file;
    - tests compare C# behavior with the C# contract, never with TS output.
    The tier-2 callers of a package's CLI (ui-evidence, bugfix) are ported too, so they follow the C# contract. The
-   one compatibility target is the **hook contract** (§4c): what the bash hooks and the statusline that keep running,
+   one compatibility target is the **hook contract** (§4c): what the bash hooks and the statusline that keep running
    read, and nothing more. `.agents/rules/csharp.md` "Porting a TS package" is the working checklist.
 2. **One package at a time,** lowest tier first, in the §10 R2 order: `Redaction` (ported in R1b, #130) → `judge`
    (the MCP bridge was retired on 2026-10-10 instead of ported: it was never used) → `skills/ui-evidence` and the
