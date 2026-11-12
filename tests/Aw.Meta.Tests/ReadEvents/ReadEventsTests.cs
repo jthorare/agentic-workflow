@@ -61,7 +61,7 @@ public sealed class ReadEventsTests
 
     [Theory, Trait("Lane", "unit")]
     [InlineData(0, true)]
-    [InlineData(1, true)]
+    [InlineData(1, false)]
     [InlineData(2, false)]
     [InlineData(3, false)]
     [InlineData(9, false)]
