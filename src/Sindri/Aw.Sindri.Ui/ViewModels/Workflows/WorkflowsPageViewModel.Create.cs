@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
@@ -108,13 +109,19 @@ internal sealed partial class WorkflowsPageViewModel
     public bool ShortIdInvalid => CreateReasonIsError || HasCreateError;
 
     /// <summary>Sindri's reason when the last create was refused, without its code; empty otherwise.</summary>
-    public string CreateError { get; private set { Set(ref field, value); OnChanged(nameof(HasCreateError)); OnChanged(nameof(ShowsCreateReason)); OnChanged(nameof(ShortIdInvalid)); } } = string.Empty;
+    public string CreateError { get; private set { Set(ref field, value); OnChanged(nameof(HasCreateError)); OnChanged(nameof(ShowsPlainCreateError)); OnChanged(nameof(ShowsCreateReason)); OnChanged(nameof(ShortIdInvalid)); } } = string.Empty;
 
     /// <summary>The refusal's code (SND-…): the line's tooltip, never part of the sentence.</summary>
     public string CreateErrorCode { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when the last create was refused.</summary>
     public bool HasCreateError => CreateError.Length > 0;
+
+    /// <summary>The refusal or the unsure answer as the shared failed line draws it (the sentence, Try again, the code behind Details); null for a taken short id, which the person fixes in the form.</summary>
+    public FailedRead? CreateFailure { get; private set => Set(ref field, value); }
+
+    /// <summary>True when the plain red sentence shows: a taken short id.</summary>
+    public bool ShowsPlainCreateError => HasCreateError && CreateFailure is null;
 
     /// <summary>True while a create is on the way.</summary>
     public bool IsCreateSending
@@ -227,6 +234,7 @@ internal sealed partial class WorkflowsPageViewModel
         if (string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal))
         {
             CreateError = Labels.WfCreateUnsure(error);
+            CreateFailure = new FailedRead(CreateError, Create) { Code = error.Code, PrimaryLabel = Labels.WfTryAgain };
             await ReadList(url, cancellationToken).ConfigureAwait(true);
             return;
         }
@@ -240,9 +248,10 @@ internal sealed partial class WorkflowsPageViewModel
         }
 
         CreateError = Labels.WfCreateRefused(error);
+        CreateFailure = new FailedRead(CreateError, Create) { Code = error.Code, PrimaryLabel = Labels.WfTryAgain };
     }
 
-    private void ClearCreateError() => (CreateError, CreateErrorCode) = (string.Empty, string.Empty);
+    private void ClearCreateError() => (CreateError, CreateErrorCode, CreateFailure) = (string.Empty, string.Empty, null);
 
     private void Forget()
     {

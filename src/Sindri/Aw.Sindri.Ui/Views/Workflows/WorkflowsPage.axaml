@@ -36,12 +36,7 @@
           <Border x:Name="WorkflowsUnreadableName" Margin="16,8" IsVisible="{Binding IsUnreadable}" AutomationProperties.Name="{Binding UnreadableText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption quiet" Text="{Binding UnreadableText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
           </Border>
-          <StackPanel x:Name="WorkflowsFailed" Margin="16,8" Spacing="8" IsVisible="{Binding IsFailed}">
-            <Border x:Name="WorkflowsFailedName" AutomationProperties.Name="{Binding FailedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-              <TextBlock Classes="caption quiet" Text="{Binding FailedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-            </Border>
-            <Button x:Name="WorkflowsRetry" Content="{Binding RetryText}" Click="OnRetry" HorizontalAlignment="Left" AutomationProperties.Name="{Binding RetryText}" />
-          </StackPanel>
+          <controls:FailedReadLine x:Name="WorkflowsFailed" DataContext="{Binding ReadFailure}" Margin="16,8" />
           <StackPanel x:Name="WorkflowsCreateForm" Margin="16,12" MaxWidth="420" HorizontalAlignment="Left" Spacing="{StaticResource Space.XS}" IsVisible="{Binding ShowsCreateForm}">
             <TextBlock Classes="caption subtle" Text="{Binding NewNameLabel}" AutomationProperties.AccessibilityView="Raw" />
             <TextBox x:Name="WorkflowsNewName" Text="{Binding NewName, Mode=TwoWay}" KeyDown="OnCreateKey" AutomationProperties.Name="{Binding NewNameLabel}" />
@@ -59,7 +54,8 @@
             <Border x:Name="WorkflowsNewReason" AutomationProperties.Name="{Binding CreateReasonText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" IsVisible="{Binding ShowsCreateReason}">
               <TextBlock Classes="caption subtle" Classes.invalid="{Binding CreateReasonIsError}" Text="{Binding CreateReasonText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
             </Border>
-            <Border x:Name="WorkflowsCreateError" AutomationProperties.Name="{Binding CreateError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" IsVisible="{Binding HasCreateError}"
+            <controls:FailedReadLine x:Name="WorkflowsCreateFailure" DataContext="{Binding CreateFailure}" />
+            <Border x:Name="WorkflowsCreateError" AutomationProperties.Name="{Binding CreateError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" IsVisible="{Binding ShowsPlainCreateError}"
                     ToolTip.Tip="{Binding CreateErrorCode}">
               <TextBlock Classes="caption invalid" Text="{Binding CreateError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
             </Border>

@@ -18,7 +18,6 @@ internal static partial class Labels
     /// <summary>The page when a read failed: the reason follows.</summary>
     /// <param name="error">The failure.</param>
     /// <returns>The words.</returns>
-    internal static string WfFailed(Error error) => "Couldn't read the workflows just now. " + InstanceRefused(error);
 
     /// <summary>The list when there are none.</summary>
     internal const string WfNone = "No workflows yet.";

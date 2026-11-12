@@ -106,14 +106,6 @@ internal sealed partial class WorkflowsPage : UserControl
         }
     }
 
-    private async void OnRetry(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is WorkflowsPageViewModel page)
-        {
-            await page.Retry(CancellationToken.None).ConfigureAwait(true);
-        }
-    }
-
     private async void OnRetryRuns(object? sender, RoutedEventArgs e)
     {
         if (DataContext is WorkflowsPageViewModel page)

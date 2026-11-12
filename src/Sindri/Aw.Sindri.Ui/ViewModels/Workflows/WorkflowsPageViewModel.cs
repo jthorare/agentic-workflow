@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflows;
+using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
@@ -54,9 +55,6 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>What the page says when an answer can't be read.</summary>
     public string UnreadableText => Labels.WfUnreadable;
 
-    /// <summary>The retry action's words.</summary>
-    public string RetryText => Labels.WfTryAgain;
-
     /// <summary>The way back up a level.</summary>
     public string BackText => Labels.WfBack;
 #pragma warning restore CA1822, MA0041
@@ -98,6 +96,9 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
 
     /// <summary>The sentence for a failed read.</summary>
     public string FailedText { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The failed list read as the shared failed-read line draws it (words, Retry, the code behind Details); null when the last read worked.</summary>
+    public FailedRead? ReadFailure { get; private set => Set(ref field, value); }
 
     /// <summary>True on the list of workflows.</summary>
     public bool IsList => _level == Level.List;
@@ -224,12 +225,14 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     {
         var unreadable = string.Equals(error.Code, SindriUiErrors.BadAnswer.Code, StringComparison.Ordinal);
         (IsReading, IsUnreadable) = (false, unreadable);
-        (IsFailed, FailedText) = unreadable ? (false, string.Empty) : (true, Labels.WfFailed(error));
+        (IsFailed, FailedText) = unreadable ? (false, string.Empty) : (true, Labels.PageReadFailed("Workflows"));
+        ReadFailure = unreadable ? null : new FailedRead(Labels.PageReadFailed("Workflows"), Retry) { Code = error.Code };
     }
 
     private void ShowList(WorkflowList list)
     {
         (IsReading, IsUnreadable, IsFailed, FailedText) = (false, false, false, string.Empty);
+        ReadFailure = null;
         var rows = list.Workflows.Select(w => new WorkflowRowViewModel(w, _clock)).ToList();
         Patch.To(Rows, rows);
         (HasHead, Head) = rows.Count == 0 ? (false, string.Empty) : (true, Labels.WfHead(rows.Count, rows.Count(r => r.IsActive)));

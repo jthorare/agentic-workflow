@@ -84,15 +84,15 @@ public sealed class WorkflowsPageViewModelTests
     }
 
     [Fact]
-    public async Task A_failed_first_read_says_so_with_nothing_to_show_and_offers_Try_again()
+    public async Task A_failed_first_read_says_so_with_nothing_to_show_and_offers_Retry_with_the_code_behind_Details()
     {
         _f.Server.Refusal = ("SND-API-500", "it broke");
 
         var page = await _f.Shown(Token);
 
         Assert.True(page.IsFailed);
-        Assert.StartsWith("Couldn't read the workflows just now.", page.FailedText, StringComparison.Ordinal);
-        Assert.Equal(("Try again", false), (page.RetryText, page.IsReading));
+        Assert.Equal((Labels.PageReadFailed("Workflows"), "Retry", "SND-API-500", false), (page.FailedText, page.ReadFailure?.PrimaryLabel, page.ReadFailure?.Code, page.IsReading));
+        Assert.DoesNotContain("SND-", page.FailedText, StringComparison.Ordinal);
     }
 
     [Fact]
