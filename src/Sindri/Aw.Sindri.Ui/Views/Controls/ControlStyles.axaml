@@ -29,6 +29,20 @@
     <Setter Property="Background" Value="{DynamicResource Brush.PrimaryPressed}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryPressed}" />
   </Style>
+  <!-- The danger primary button (the sheet's Remove): the ErrorFill, white text; hover and pressed use the darker fills. -->
+  <Style Selector="Button.command-control.destructive.primary:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorFill}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.ErrorFill}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.OnPrimary}" />
+  </Style>
+  <Style Selector="Button.command-control.destructive.primary:pointerover:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorFillHover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.ErrorFillHover}" />
+  </Style>
+  <Style Selector="Button.command-control.destructive.primary:pressed:not(:disabled) /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.ErrorFillPressed}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.ErrorFillPressed}" />
+  </Style>
   <Style Selector="Button.command-control:disabled TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Brush.InkTertiary}" />
   </Style>
