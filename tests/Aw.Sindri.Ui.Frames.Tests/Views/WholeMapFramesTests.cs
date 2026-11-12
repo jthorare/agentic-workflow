@@ -189,8 +189,11 @@ public sealed class WholeMapFramesTests : FrameHost
         Assert.True(Visible(window, "ContextEmpty"));
     });
 
+    // #2946: the 1 s wall clock red unrelated gates at box load 53-59 (1310, 1632 ms). The work is checked instead: the
+    // first frame of an over-budget map is its area tiles and no node. The time stays written for the proof frames and
+    // is bounded at 3 s, about twice the worst loaded run, so only a real slowdown (a wait or a read before the draw) reds it.
     [Fact]
-    public Task The_first_frame_of_an_over_budget_map_comes_within_a_second() => OnUi(async () =>
+    public Task The_first_frame_of_an_over_budget_map_draws_tiles_only_and_comes_within_3_s() => OnUi(async () =>
     {
         Server.WholeMapAnswer = _ => Draft("areas-over-budget");
         var (window, shell) = await Connected(width: 1440, height: 900);
@@ -204,7 +207,10 @@ public sealed class WholeMapFramesTests : FrameHost
         var dir = Path.Combine(AppContext.BaseDirectory, "frames");
         _ = Directory.CreateDirectory(dir);
         await File.WriteAllTextAsync(Path.Combine(dir, "w3-first-frame-ms.txt"), clock.ElapsedMilliseconds.ToString(CultureInfo.InvariantCulture), Token);
-        Assert.True(clock.ElapsedMilliseconds < 1000, string.Create(CultureInfo.InvariantCulture, $"first frame took {clock.ElapsedMilliseconds} ms"));
+        var shown = shell.Context.Whole.Shown;
+        Assert.NotNull(shown);
+        Assert.Equal((2, 0), (shown.Tiles.Count, shown.Nodes.Count));   // the golden's two areas, as tiles: no node is laid out or drawn
+        Assert.True(clock.ElapsedMilliseconds < 3000, string.Create(CultureInfo.InvariantCulture, $"first frame took {clock.ElapsedMilliseconds} ms"));
     });
 
     // The proof of whole-map spec §8 for W4: the camera on a query's answer with the rest dimmed behind it, then back on the whole map after Esc in the starting-point box.
