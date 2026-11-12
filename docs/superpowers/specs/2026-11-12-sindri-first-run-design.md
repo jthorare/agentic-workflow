@@ -95,6 +95,8 @@ Done-checks. Each is a test or a timed run in the real app (`aw-ui-driver`) on a
 | GitHub | github.com, Settings, Developer settings, OAuth Apps, New OAuth App | Sindri | `http://127.0.0.1` (GitHub requires one; the device flow never calls it) | "Enable Device Flow" ticked; no client secret is generated for Sindri's use | `repo`, `read:org` (the preset's `defaultScopes`, `config/connections/presets/github.json`) |
 | Linear | linear.app, Settings, API, OAuth applications, New | Sindri | `http://127.0.0.1` (the loopback sign-in adds the port) | public client with PKCE | `read`, `write` (the preset's `defaultScopes`, `config/connections/presets/linear.json`) |
 
+**Why GitHub `repo`, and why it is the smallest.** An OAuth app has no read-only scope for private repos: `public_repo` covers public repos only, and `repo` is the one scope that reads a private repo's PRs, issues and files. The first run needs that read (the index source and the `known` pre-tick on private repos), and the Reviews page also writes with the same account: it posts reviews (`POST .../pulls/{n}/reviews`, `GitHubForge.Review.cs:144`), replies and merges (`GitHubForge.Write.cs:122`). `read:org` is needed to see a review requested of a team the owner is in. So `repo` plus `read:org` is the floor for an OAuth app. A smaller grant (Pull requests read and write, Contents read, Issues read, Metadata read) needs a GitHub App or a fine-grained token, not an OAuth app. A GitHub App also supports the device flow, but an org admin must install it on each org, which breaks one click on a work org. So v1 keeps the OAuth app, and the paste fallback takes a fine-grained token with the smaller set; a Sindri GitHub App is listed for after v1 (gap 9). The gh login carries whatever scopes the owner gave `gh`, usually `repo`, `read:org` and `gist`; the row says so (decision 13). *agent default (lead, 2026-11-12)*, checked by the round 2 security addendum.
+
 The owner pastes each client id into the build's defaults once (P5 names the file); until then the profile key holds it.
 
 16. **An account an admin must approve has its own state.** A Slack app from a manifest in a company workspace, and a GitHub or Linear org that gates OAuth apps, can need an admin. The row then says "Waiting on your workspace admin to approve Sindri." with Check again, and question 1 still finishes with Continue. *agent default (lead, 2026-11-12)*; round 1 product C4.
@@ -499,6 +501,7 @@ Non-goals:
 6. **The 10-minute "stopped" timeout for the map is a guess.** It has no measured source. The rule counts time since the last progress line, not total time, because the first code index ran 18 minutes. P0 measures the longest gap between progress lines on this repo and sets the number.
 7. **`known` needs a GitHub read before the scan's rows show.** One call for the account's recent repos (pushes, PRs, review requests) runs when question 2 opens. If it fails, the rows show unticked and a line says "Couldn't read your GitHub repos. Retry". P4 measures whether it fits F10's 2 s.
 8. **Ticking many repos starts many first builds.** Each added repo starts its own code index. *agent default (lead, 2026-11-12)*: the first repo in the list builds first and the rest queue behind it, so the first map comes as early as one repo allows. The context lane confirms the queue rule in P6.
+9. **A Sindri GitHub App with fine-grained permissions** would replace `repo` with Pull requests read and write, Contents read, Issues read and Metadata read. It needs an org admin to install it, so it waits until after v1 and a probe of how often the owner's work org allows it.
 
 ## 12. Proof
 
@@ -664,4 +667,5 @@ Suggestions, resolved in writing:
 - security, Linear `read` only at first sign-in: not applied; meta's pick 1 takes the preset's scopes, and Linear writes (comments) are used by the Projects page.
 - security, device flow polling rules: applied (§4.2).
 - security, binary beside `sindri-ui`: already decision 2.
+- security addendum (lead's ask, 2026-11-12), is `repo` the smallest GitHub scope: yes for an OAuth app; written into decision 15a with the reason, and the GitHub App path is gap 9. No MUST.
 - security, actor on restart and connect events: applied in effect; both are catalog commands, and the command audit records the actor.
