@@ -42,3 +42,23 @@
 Frames redrawn: needs, needs-1200, needs-1000, needs-rail-collapsed, header-behind, header-offline, header-expired, header-scope, unread, conversation, conversation-focus, conversation-dm, snooze-picker, snoozed-rows, firstrun-1, firstrun-1-fail, firstrun-2, firstrun-2-blocked, firstrun-3, firstrun-3-wrong-token, firstrun-3-scope, firstrun-3-offline, firstrun-sync, firstrun-listening, empty-needs, empty-unread, loading, toast, footer-modes, states-hover-pressed. `snooze-picker-followup` moves to the Release 2 set and is not redrawn. Release 2 frames are untouched.
 
 Round 3 fixes: R1 MUSTs by the earlier UX pass (09f8e96689), R2 MUSTs and the hand-off frame (this push). See guesses 34 to 42. New frame: composer-hand-off.
+
+
+## UX pass (meta, 2026-11-12): frames redrawn or added
+
+No frame carries a Release badge or the word "Release": the release stays in the file name. One fixture everywhere: Ada's root at 07:30 with #3120 and three replies (Kim 08:20, Ada 08:41, Kim 08:55), so the thread is a direct question, blocks 2, and row 1 of Needs reply. `python3 gen.py && ./shoot2.sh $(cat frames.txt)` regenerates; `./clipcheck.sh <names>` reports any footer line that runs off its box.
+
+| MUST | Frames |
+|---|---|
+| 1, 2 | firstrun-1-fail, -2, -2-blocked, -3, -3-wrong-token, -3-scope, -3-offline, and new -3-invalid-token, -3-other-workspace, -3-slack-down |
+| 3 | firstrun-sync, firstrun-listening, and new firstrun-sync-done, firstrun-sync-done-zero, firstrun-sync-429 |
+| 4 | footer-modes (Needs, Unread and Message footers at 1,440 and 1,000), needs (Reply, Snooze, Done, More), and new needs-more-menu, handoff-dialog-r1, handoff-result, make-issue-sheet (no reply box), make-issue-sheet-r2 |
+| 5 | unread, and new unread-after-e, unread-mark-all |
+| 6 | needs, conversation, every peek, composer-* (peek lists root and 3 replies; "Copy link", no internal id), and new peek-replies-not-loaded (+ -wait, -offline), peek-no-replies |
+| 7 | new result-done, result-snooze, result-wrong, result-make-issue (and handoff-result, unread-after-e, unread-mark-all) |
+| 8 | all peeks say "Opens the thread in Slack."; the badge is gone from brief, search-*-r3, make-issue-sheet-r2, attach-picker |
+| 9 | needs and every Needs frame: ring and peek on row 1; new needs-return |
+| 10 | new search-local, search-empty, search-limited; search-messages-r3 and search-everything-r3 (renamed, no radios, plain highlight) |
+| 11 | new conv-empty-say-hi, conv-history-not-loaded, conv-connect-not-kept, conv-load-older-running, conv-load-older-offline |
+| 12 | states-hover-pressed: rest, hover and pressed look different for a row, a chip and a button |
+| nits | no DM chip; rail collapsed shows two letters and a count dot; snooze picker beside the cursor row; cursor ring inside the gutter; empty-needs has "Open Unread (14)"; composer-failed has one failure line and no banner; codes on one line |

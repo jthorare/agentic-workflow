@@ -241,3 +241,102 @@
 .comp .ln1 .btn{height:22px}
 .mrow .ti .t{overflow:hidden;text-overflow:ellipsis;min-width:0;white-space:nowrap}
 .mrow.n2.cmp.hasact .ti{margin-right:104px}
+
+/* ---- UX pass (meta, 2026-11-12) ---- */
+/* cursor ring: a ring 20 px inside the list gutter, never to the window edge */
+.mrow.cursor{box-shadow:none;border-radius:0}
+.mrow.cursor::after{content:'';position:absolute;left:16px;right:16px;top:0;bottom:0;border:1px solid var(--primary-hi);border-radius:var(--r1);pointer-events:none}
+.mrow.cursor.cm::after{display:none}
+.mrow.cursor .actions{right:calc(var(--inset) + 44px + var(--sp3) + 8px)}
+.mrow.hasact .actions{right:calc(var(--inset) + 44px + var(--sp3) + 8px)}
+/* cursor row: the reason column gives its room to the four buttons */
+.mrow.hasact:not(.narrow){grid-template-columns:var(--col-glyph) 92px 72px minmax(0,1fr) 0 44px}
+.mrow.hasact:not(.narrow) .rs{visibility:hidden;overflow:hidden;width:0}
+.mrow.hasact .ti{margin-right:334px}
+.mrow.narrow.hasact .ti{margin-right:0}
+.mrow.n2.hasact .ti{margin-right:0}
+.mrow .actions .dots{font-size:14px;line-height:12px;color:var(--ink-muted)}
+.mrow .actions.compact .btn{padding:0;width:24px;justify-content:center}
+.mrow .actions.compact .btn .dots{display:inline}
+.mrow .actions .rt2{align-self:center;font-size:12px;color:var(--ink);margin-right:4px;white-space:nowrap}
+.wch{font:500 11px/16px var(--font);color:var(--att);border:1px solid var(--att);border-radius:var(--r1);padding:0 6px;flex:none;white-space:nowrap}
+/* result line: replaces the row content in place */
+.mrow.res{display:flex;align-items:center;gap:12px;padding:0 var(--inset);background:var(--s2);font-size:13px;color:var(--ink)}
+.mrow.res.sel{background:var(--primary-soft)}
+.mrow.res .rt{white-space:nowrap}.mrow.res .sp{flex:1}.mrow.res .cd{font-size:11px;color:var(--ink-subtle)}
+.mrow.res .btn{height:22px;line-height:20px}
+.mrow.res.cursor::after{left:16px;right:16px}
+/* footer chip that is a button, not a key */
+.chipb{font:500 11px/16px var(--font);color:var(--ink-muted);border:1px solid var(--hair-strong);border-radius:var(--r1);padding:0 6px;background:var(--s2)}
+/* peek */
+.peek-head .btn{height:22px;line-height:20px;flex:none}
+.peek .ob{margin-top:12px}
+.rstate{display:flex;gap:10px;align-items:center;margin:8px 0 0 30px;font-size:12px;color:var(--ink-muted);min-height:28px}
+.rstate .cd{color:var(--ink-subtle)}
+/* collapsed rail: two letters or a glyph, and a count dot */
+.rail .it{position:relative}
+.rail .it .cdot{display:none}
+.rail.slim .it .cdot{display:block;position:absolute;right:7px;top:7px;width:6px;height:6px;border-radius:50%;background:var(--primary-hi)}
+.rail.slim .it .sym{display:none}
+.rail.slim .it .ic.hsh{width:auto}
+.rail.slim .it .ic b.l{font:600 12px/16px var(--font)}
+/* first sync progress */
+.pbar{height:6px;width:420px;border-radius:3px;background:var(--s3);margin:2px 0 10px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--primary-hi);border-radius:3px}
+.pbar.att i{background:var(--att)}
+/* conversation states */
+.cstate{display:flex;gap:10px;align-items:center;padding:12px var(--inset);background:var(--att-soft);font-size:13px;color:var(--ink)}
+.cstate .btn{margin-left:8px}
+.gapm .btn.off{opacity:.45}
+/* hover and pressed: three looks that differ */
+.sheet{max-width:1000px}
+.sheet .cap{width:230px;font-size:12px;color:var(--ink-muted);line-height:16px}
+.sheet .cap i{font-style:normal;font-size:11px;color:var(--ink-subtle)}
+.sheet .rowbox{width:700px}
+.sheet .rowbox .mrow{border:1px solid var(--hair-strong);border-radius:var(--r2)}
+.sheet .rowbox .mrow.cursor{border-color:transparent}
+.mrow.st-rest{background:var(--s1)}
+.mrow.st-hov{background:var(--s3)}
+.mrow.st-prs{background:var(--canvas);box-shadow:inset 0 3px 6px rgba(0,0,0,.95)}
+.mrow.st-prs>*{position:relative;top:1px}
+.btn.hov{background:var(--s4);border-color:var(--hair-3);color:var(--ink)}
+.btn.prs{background:var(--canvas);border-color:var(--hair-strong);color:var(--ink);box-shadow:inset 0 2px 4px rgba(0,0,0,.95);transform:translateY(1px)}
+.btn.primary.hov{background:#7480e6;border-color:#7480e6;color:#fff}
+.btn.primary.prs{background:#4650a8;border-color:#4650a8;color:#fff;box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
+.rx span.hov{background:var(--s4);border-color:var(--hair-3);color:var(--ink)}
+.rx span.prs{background:var(--canvas);box-shadow:inset 0 2px 4px rgba(0,0,0,.95);transform:translateY(1px)}
+.lc2{font:400 11px/16px var(--mono);border:1px solid var(--hair-strong);border-radius:var(--r1);padding:0 5px;color:var(--ink-subtle);background:var(--s2)}
+.lc2.hov{background:var(--s4);border-color:var(--hair-3);color:var(--ink)}
+.lc2.prs{background:var(--canvas);box-shadow:inset 0 2px 4px rgba(0,0,0,.95);transform:translateY(1px)}
+.mid .btn{margin-top:4px}
+.footmodes .fm{max-width:100%}
+
+.mrow{padding-right:var(--inset)}
+.mrow.narrow{padding:0 var(--inset) 0 var(--sp3)}
+.mrow.narrow.cursor::after,.mrow.narrow.res.cursor::after{left:4px;right:4px}
+.mrow.narrow.hasact .actions{right:calc(var(--inset) + 44px + var(--sp3) + 4px)}
+.mrow.res{padding-right:var(--inset)}
+
+.mrow.hasact.wr .ti{margin-right:236px}
+
+.thr{padding-left:calc(var(--inset) + 44px)}
+
+/* hover and pressed, stronger so the three looks read apart at a glance */
+.mrow.st-rest{background:var(--s1)}
+.sheet .rowbox .mrow.st-hov{background:#2e2f35;border-color:#5d5e68}
+.sheet .rowbox .mrow.st-prs{background:#040405;border-color:#1c1d20;box-shadow:inset 0 4px 10px #000}
+.btn.hov{background:#33343a;border-color:#5d5e68;color:#fff}
+.btn.prs{background:#040405;border-color:#1c1d20;color:var(--ink-muted);box-shadow:inset 0 3px 6px #000;transform:translateY(1px)}
+.btn.primary.hov{background:#8490f2;border-color:#8490f2;color:#fff}
+.btn.primary.prs{background:#363f92;border-color:#363f92;color:#dfe2ff;box-shadow:inset 0 3px 6px rgba(0,0,0,.55);transform:translateY(1px)}
+.rx span.hov{background:#33343a;border-color:#5d5e68;color:#fff}
+.rx span.prs{background:#040405;border-color:#1c1d20;color:var(--ink-muted);box-shadow:inset 0 3px 6px #000;transform:translateY(1px)}
+.lc2.hov{background:#33343a;border-color:#5d5e68;color:#fff}
+.lc2.prs{background:#040405;border-color:#1c1d20;color:var(--ink-subtle);box-shadow:inset 0 3px 6px #000;transform:translateY(1px)}
+
+.cl .fl{flex-wrap:wrap}
+.cl .fl .dt,.comp .ln1 .dt{white-space:nowrap;flex:none}
+/* the message focus ring also stays inside the gutter */
+.cl.cur{box-shadow:none;border-radius:0}
+.cl.cur::after{content:'';position:absolute;left:12px;right:12px;top:-2px;bottom:-2px;border:2px solid var(--primary-hi);border-radius:var(--r1);pointer-events:none}
+.peek .cl.cur::after{display:none}
