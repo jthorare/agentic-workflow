@@ -102,6 +102,6 @@ public sealed class CursorUsageTests : IDisposable
 
         Assert.NotEqual<ModelTokens>(first, again);
         Assert.Equal<ModelTokens>(await new CursorUsage(_files.Root).Between(_from, _from.AddDays(1), Token), again);
-        Assert.Equal<string>(["auto", "other"], again.Select(static m => m.Model).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["auto", "other"], again.Select(static m => m.Model).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 }

@@ -124,7 +124,7 @@ public sealed class CodexUsageTests : IDisposable
 
         Assert.NotEqual<ModelTokens>(first, again);
         Assert.Equal<ModelTokens>(await new CodexUsage(_files.Root).Between(_from, _to, Token), again);
-        Assert.Equal<string>(["gpt-5", "gpt-5-mini"], again.Select(static m => m.Model).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["gpt-5", "gpt-5-mini"], again.Select(static m => m.Model).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     [Fact]
