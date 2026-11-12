@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:rvm="using:Aw.Sindri.Ui.ViewModels.Reviews"
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             xmlns:ctl="using:Aw.Sindri.Ui.Views.Controls"
              x:Class="Aw.Sindri.Ui.Views.Reviews.ReviewsPage"
              x:DataType="rvm:ReviewsPageViewModel">
   <!-- The Reviews list (review page spec §6.1, §6.3, mockups list-main, list-state-*): the title with the sub line and the library header, the served notice
@@ -27,7 +28,7 @@
       </Button>
     </Grid>
 
-    <TextBlock x:Name="ReviewsError" Classes="caption subtle" Text="{Binding Error}" TextWrapping="Wrap" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <ctl:FailedReadLine x:Name="ReviewsReadFailure" DataContext="{Binding ReadFailure}" />
     <TextBlock x:Name="ReviewsNotice" Classes="caption subtle" Text="{Binding Notice}" TextWrapping="Wrap" IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Notice}" />
     <StackPanel x:Name="ReviewsStale" Orientation="Horizontal" Spacing="{StaticResource Space.XS}" IsVisible="{Binding StaleText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
       <icons:StateIcon Glyph="Stale" VerticalAlignment="Center" />

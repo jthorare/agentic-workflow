@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Reviews;
+using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Reviews;
 
@@ -112,7 +113,10 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
     public int WaitingCount { get; private set => Set(ref field, value); }
 
     /// <summary>The last read's failure line; empty when the last read worked.</summary>
-    public string Error { get; private set => Set(ref field, value); } = string.Empty;
+    public string Error => ReadFailure?.Words ?? string.Empty;
+
+    /// <summary>The last read's failure as the shared failed-read line draws it (words, Retry, the code behind Details); null when the last read worked.</summary>
+    public FailedRead? ReadFailure { get; private set { Set(ref field, value); OnChanged(nameof(Error)); } }
 
     /// <summary>The login prompt's failure under the field (the server's detail); empty when there is none.</summary>
     public string LoginError { get; private set => Set(ref field, value); } = string.Empty;
@@ -245,15 +249,18 @@ internal sealed partial class ReviewsPageViewModel : ObservableObject, IDisposab
         Fail(list.Error);
     }
 
+    // The Retry button of the failed line: the same read, at the address the page last used.
+    private Task RetryRead(CancellationToken cancellationToken) => _url is { } url ? Read(url, cancellationToken) : Task.CompletedTask;
+
     private void Fail(Error error)
     {
         IsLoading = false;   // the last good rows stay under the line
-        Error = Labels.ReviewsFailed(error);
+        ReadFailure = new FailedRead(Labels.PageReadFailed("Reviews"), RetryRead) { Code = error.Code };
     }
 
     private void Show(ReviewList list)
     {
-        (IsLoading, Error) = (false, string.Empty);
+        (IsLoading, ReadFailure) = (false, null);
         var now = _clock.GetUtcNow();
         var shown = ShowGroups(list, now);
         ShowHeader(list, shown.Count);

@@ -135,7 +135,4 @@ internal static partial class Labels
         age.TotalHours < 1 ? string.Create(CultureInfo.InvariantCulture, $"{Math.Max(0, (int)age.TotalMinutes)} min")
         : age.TotalDays < 1 ? string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalHours} h")
         : string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalDays} d");
-
-    /// <summary>The page when a read failed: the reason follows.</summary>
-    internal static string ReviewsFailed(Error error) => "Couldn't read your PRs just now. " + InstanceRefused(error);
 }
