@@ -139,7 +139,7 @@ public sealed class ShellWindowTests : IDisposable
     // §14.2: every text is a step of the type ramp, so the Text size preference reaches all of it. At scale 1.3 each
     // visible TextBlock's size is a ramp size × 1.3 (a literal size, or one Fluent's own default sets, stays put). The
     // scale is applied, checked and reset without yielding the UI thread, so no other test sees it.
-    private static readonly double[] _ramp = [24, 20, 15, 13, 12, 11];   // PageTitle, DetailTitle, SectionTitle, Body, Caption/Mono, Eyebrow/Kbd (#2546)
+    private static readonly double[] _ramp = [40, 24, 20, 15, 13, 12, 11];   // Display, PageTitle, DetailTitle, SectionTitle, Body, Caption/Mono, Eyebrow/Kbd (#2546, #2779)
 
     private static void EveryTextIsOnTheRampAt130(Window window)
     {
@@ -1286,16 +1286,20 @@ public sealed class ShellWindowTests : IDisposable
         Settle(window);
 
         // I5 (services-health.html HEALTH): label/value rows at Body size under section heads that carry the state's
-        // glyph and word; no display-size values and no badge repeating the pill.
+        // glyph and word; no badge repeating the pill. #2779: the health word is the page's one display number, and the
+        // card titles are section titles; every other text is Body size or smaller.
         List<string?> Rows(string name) => [.. Named<ItemsControl>(window, name).GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)];
         Assert.Equal(["pid · epoch", "4242 · 7", "Host lease", "held · expires " + A.Noon.AddSeconds(60).ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture), "API", "127.0.0.1:7410"], Rows("ProcessRows"));
         Assert.Equal((StateGlyph.Ok, Labels.Running), (Glyph(window, "ProcessGlyph"), Text(window, "ProcessWord")));
         Assert.Equal(("live", StateGlyph.Ok), (Text(window, "ProfileHeadText"), Glyph(window, "ProfileHeadGlyph")));
         Assert.Equal(["live", "ab12cd", "file", "/home/profile.yaml"], Rows("ProfileRows"));
         HealthHeadsAndPathsAreAligned(window);
+        LastEventRowKeepsTheRhythm(window);
         Assert.False(Visible(window, "HeadlineText"));
         var page = Named<Control>(window, "HealthPage");
-        Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.FontSize > 13 && !t.Classes.Contains("page-title"));
+        Assert.Equal("HeadlineWord", Assert.Single(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.Classes.Contains("display")).Name);
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && t.FontSize > 13
+            && !t.Classes.Contains("page-title") && !t.Classes.Contains("display") && !t.Classes.Contains("section-title"));
         Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "last run " + DateTimeOffset.Parse("2026-01-01T00:00:55Z", CultureInfo.InvariantCulture).ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture));   // the Services card reads the services view
         EveryControlIsNamed(window);
         Frame(window, "health");
@@ -1316,7 +1320,7 @@ public sealed class ShellWindowTests : IDisposable
         Assert.Equal((StateGlyph.Stale, "Held for the code index", Labels.ContextMapCard), (Glyph(window, "ContextMapGlyph"), Text(window, "ContextMapState"), Text(window, "ContextMapEyebrow")));
         Assert.Equal(["Map v14 is held for the code index until 12:15Z.", "aw-split-panes: building (the map is for 1234567, the index is at abcdef0)"],
             [.. Named<ItemsControl>(window, "ContextMapLines").GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text ?? string.Empty)]);
-        Assert.StartsWith("CONTEXT MAP: Held for the code index. Map v14", AutomationProperties.GetName(Named<Border>(window, "ContextMapPanel")), StringComparison.Ordinal);
+        Assert.StartsWith("Context map: Held for the code index. Map v14", AutomationProperties.GetName(Named<Border>(window, "ContextMapPanel")), StringComparison.Ordinal);
         EveryControlIsNamed(window);
     });
 
@@ -2032,6 +2036,16 @@ public sealed class ShellWindowTests : IDisposable
         Assert.Equal(home.X, onSettings.X);
         Frame(window, "settings");
     });
+
+    // #2779: "Last event" sits outside ProcessRows but on the same 36 px rhythm (the card's 8 px stack gap made it 42).
+    private static void LastEventRowKeepsTheRhythm(Window window)
+    {
+        var card = Named<Control>(window, "ProcessRows").Parent as Visual ?? throw new InvalidOperationException("ProcessRows has no parent");
+        var api = Named<ItemsControl>(window, "ProcessRows").GetVisualDescendants().OfType<Grid>().Last(g => g.Classes.Contains("data-row"));
+        var apiTop = api.TranslatePoint(default, card)!.Value.Y;
+        var lastTop = Named<Control>(window, "LastEventRow").TranslatePoint(default, card)!.Value.Y;
+        Assert.True(Math.Abs(lastTop - apiTop - 36) < 0.5, string.Create(CultureInfo.InvariantCulture, $"Last event starts {lastTop - apiTop} px under the API row, not 36"));
+    }
 
     // S2 and S3 on Health: each section head's state word sits on its eyebrow's baseline, and the profile's file is a
     // path in mono like the Not running card's.
