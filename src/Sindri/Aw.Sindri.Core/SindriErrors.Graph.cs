@@ -94,6 +94,6 @@ public static partial class SindriErrors
     /// <summary>SND-GRAPH-124: a 'workflow_result' node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run.</summary>
     public static readonly ErrorDefinition GraphResultUnavailable = new("SND-GRAPH-124", ErrorKind.Invalid, "No finished run to read a result from");
 
-    /// <summary>SND-GRAPH-113: the contract exists, the behaviour does not yet (Workflows page P0 stubs: the test, pin, trigger-events and templates routes, and the replace_node op).</summary>
-    public static readonly ErrorDefinition GraphNotBuilt = new("SND-GRAPH-113", ErrorKind.Unavailable, "That part of workflows is not built yet");
+    /// <summary>SND-GRAPH-119: the contract exists, the behaviour does not yet (Workflows page P0 stubs: the test, pin, trigger-events and templates routes, and the replace_node op).</summary>
+    public static readonly ErrorDefinition GraphNotBuilt = new("SND-GRAPH-119", ErrorKind.Unavailable, "That part of workflows is not built yet");
 }

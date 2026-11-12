@@ -5,7 +5,7 @@ using Aw.Sindri.Core.Graph.Ids;
 namespace Aw.Sindri.Core.Graph.Ops;
 
 /// <summary>
-/// Puts another block in a node's slot (Workflows page spec E3): the node keeps its id and its outgoing edges. Shape only for now: applying it is refused with SND-GRAPH-113
+/// Puts another block in a node's slot (Workflows page spec E3): the node keeps its id and its outgoing edges. Shape only for now: applying it is refused with SND-GRAPH-119
 /// until the engine lane builds it; then only a trigger can be replaced and any other kind is SND-GRAPH-112.
 /// </summary>
 /// <param name="Node">The node to replace.</param>
