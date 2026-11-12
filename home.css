@@ -1,0 +1,97 @@
+/* #3091 Home inbox: layout only. Sizes and colours come from ../grammar-2978/grammar.css.
+   Everything marked "grammar candidate" in the report could move there. */
+.app{position:relative}
+.w1000{width:1000px}
+.w1000 .filter{width:150px}
+.keys{overflow:hidden;white-space:nowrap}
+.keys span{flex:none}
+.keys .keys-div{flex:none}
+.keys .right{margin-left:auto}
+.keys .more{color:var(--ink-3)}
+
+/* header: snoozed toggle, health chip, quiet "Updating..." line (grammar candidate: .hchip, .htoggle) */
+.header .htoggle{margin-left:auto;font-size:12px;color:var(--ink-subtle);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.header .htoggle .sw{width:22px;height:12px;border-radius:6px;background:var(--s4);position:relative}
+.header .htoggle .sw::after{content:'';position:absolute;left:2px;top:2px;width:8px;height:8px;border-radius:50%;background:var(--ink-subtle)}
+.header .htoggle + .filter{margin-left:0}
+.header .hchip{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink-subtle);white-space:nowrap}
+.header .hchip::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.header .hchip.att{color:var(--att)}
+.header .hchip.att::before{background:var(--att)}
+.header .upd{font-size:12px;color:var(--ink-3);white-space:nowrap}
+.header .upd + .htoggle{margin-left:12px}
+.header .crumb + .count{margin-left:0}
+
+/* group headers: chevron hit area 28x28, cursor ring on a header (grammar candidate) */
+.group .chev{width:28px;height:28px;display:grid;place-items:center;margin-left:-9px;margin-right:-9px}
+.group.cursor{box-shadow:inset 0 0 0 1px var(--primary-hi);border-radius:var(--r1)}
+.group .n.blk{margin-left:2px}
+.group .right.ink{color:var(--ink-subtle)}
+
+/* New band and age marks */
+.age.mark{color:var(--ink);font-weight:500}
+.age.wide{white-space:nowrap}
+.row .title .sub{margin-left:var(--sp1)}
+.row .fact.blk{color:var(--ink-muted);font-weight:500}
+.row.stale .fact,.row.stale .age,.row.stale .title .t{color:var(--ink-3)}
+.row.stale .age{font-style:normal}
+.row .actions .btn{height:24px}
+
+/* brief lines + Todo line + "more" line */
+.row.brief .g{margin:0}
+.row.brief.sum .title .t{color:var(--ink)}
+.row.brief .fact.lk{font-family:var(--mono)}
+.more-line{height:var(--group-h);display:flex;align-items:center;padding:0 var(--inset) 0 calc(var(--inset) + var(--col-glyph) + var(--sp3));color:var(--ink-3);font-size:12px;gap:6px}
+.todoline{height:var(--group-h);margin-top:var(--sp2);display:flex;align-items:center;gap:var(--sp3);padding:0 var(--inset);color:var(--ink-subtle);font-size:12px;font-weight:500}
+.todoline .g{margin:0}
+.todoline .right{margin-left:auto;color:var(--ink-3);font-weight:400}
+
+/* big empty body */
+.bigdone{padding:var(--sp6) var(--inset) var(--sp4)}
+.bigdone h2{font:600 20px/28px var(--font);margin:0;color:var(--ink)}
+.bigdone p{margin:var(--sp1) 0 0;color:var(--ink-muted);font-size:13px;line-height:20px}
+
+/* menus: chip after a time (snooze), agent avatar entries */
+.menu .ment .when + kbd{margin-left:var(--sp3)}
+.menu .ment .when{margin-left:auto}
+.menu .ment .av{width:16px;height:16px}
+.menu .parse{white-space:normal;align-items:flex-start}
+.menu .mfield .ph{color:var(--ink-3)}
+.menu.wide{width:320px}
+
+/* peek bits */
+.peek .checks>div{display:flex;align-items:center;gap:8px;height:24px;font-size:12px;color:var(--ink-muted)}
+.peek .checks .r{margin-left:auto;color:var(--ink-subtle)}
+.peek .linkid{font:400 12px/18px var(--mono);color:var(--ink-muted)}
+.peek .note{font-size:12px;line-height:18px;color:var(--ink-muted);margin:0 0 var(--sp2)}
+.peek .note code{font:400 12px/18px var(--mono);color:var(--ink)}
+.peek .sha{font:400 12px/18px var(--mono);color:var(--ink)}
+.mono-files>div{display:flex;justify-content:space-between;align-items:center;height:24px;gap:8px}
+.mono-files .fact{min-width:0}
+
+/* scale 1.3: text only; columns, paddings and the 440 peek stay in px (guess) */
+.s13{font-size:17px;line-height:26px;--row-h:40px;--group-h:36px}
+.s13 .fact,.s13 .age,.s13 .wait,.s13 .group,.s13 .tabs a,.s13 .filter,.s13 .htoggle,.s13 .hchip,.s13 .more-line,.s13 .todoline,.s13 .row .title .id,.s13 .row .title .sub{font-size:15.6px;line-height:22px}
+.s13 .keys{font-size:14px;line-height:20px;--keys-h:28px}
+.s13 kbd{font-size:14px;line-height:20px}
+.s13 .nav a,.s13 .cmdk,.s13 .status-pill{font-size:16px}
+.s13 .header h1{font-size:19px}
+.s13 .btn{font-size:15.6px;height:30px}
+.s13 .row .actions{top:5px}
+.s13 .chip{font-size:14px;line-height:20px}
+.s13 .group .chev{height:36px}
+.tip{position:absolute;background:var(--s3);border:1px solid var(--hair-strong);border-radius:var(--r2);box-shadow:0 8px 24px rgba(0,0,0,.45);
+  padding:var(--sp2) var(--sp3);max-width:560px;font-size:15px;line-height:22px;color:var(--ink);z-index:6}
+.row.skbar .sk{display:block;height:8px;border-radius:2px;background:var(--s2)}
+.row.skbar .title .t{display:block;height:8px;border-radius:2px;background:var(--s2)}
+.state-line .what b{font-weight:600;color:var(--ink)}
+.state-line .btns .btn{height:24px}
+.state-line .det{cursor:default}
+.dimlist{opacity:1}
+
+/* review round 1 fixes */
+.fact .av{margin-right:6px !important}
+.g.done.muted{background:var(--ok);opacity:.5}
+.w1000 .keys{gap:10px}
+.s13 .cmdk{width:300px;white-space:nowrap;font-size:14px}
+.s13 .wordmark{font-size:14px}
