@@ -725,7 +725,10 @@ absent "a second todos marks nothing done again" "$(cat "$STUB_LOG")" "todo done
 tds nope >/dev/null 2>&1; check "todos refuses an unknown state (exit 2)" "$?" "2"
 tds read-error >/dev/null 2>&1; check "todos read-error with no views exits 2" "$?" "2"
 TDDB="$TD/views.db"
-sqlq "$TDDB" "CREATE TABLE view_todo (key TEXT); INSERT INTO view_todo VALUES ('a'); CREATE TABLE view_items (key TEXT);" >/dev/null
+# one statement per call: sqlq's python fallback (no sqlite3 CLI) runs a single statement
+sqlq "$TDDB" "CREATE TABLE view_todo (key TEXT)" >/dev/null
+sqlq "$TDDB" "INSERT INTO view_todo VALUES ('a')" >/dev/null
+sqlq "$TDDB" "CREATE TABLE view_items (key TEXT)" >/dev/null
 tds read-error >/dev/null 2>&1; check "todos read-error exits 0" "$?" "0"
 check "read-error: view_todo is gone for the route's read" "$(sqlq "$TDDB" "SELECT COUNT(*) FROM sqlite_master WHERE name = 'view_todo'")" "0"
 check "read-error: the other views stay" "$(sqlq "$TDDB" "SELECT COUNT(*) FROM sqlite_master WHERE name = 'view_items'")" "1"
