@@ -7,7 +7,7 @@
         "human+terminal",
         "human",
         "session",
-        "service"
+        "service:setup"
       ],
       "terminal": false,
       "method": "POST",
@@ -551,7 +551,7 @@
         "human+terminal",
         "human",
         "session",
-        "service"
+        "service:setup"
       ],
       "terminal": false,
       "method": "POST",
@@ -1799,7 +1799,7 @@
         "human+terminal",
         "human",
         "session",
-        "service"
+        "service:setup"
       ],
       "terminal": false,
       "method": "POST",
