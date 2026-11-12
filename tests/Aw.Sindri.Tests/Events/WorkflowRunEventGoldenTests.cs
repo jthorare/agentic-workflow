@@ -33,9 +33,9 @@ public sealed class WorkflowRunEventGoldenTests
 
     private static string Json(SliceHarness h, string type) => type switch
     {
-        EventTypes.WorkflowRunStarted => Of(h, type, new WorkflowRunStartedPayload(_run, WorkflowId.From("WF-00000000000000000000000000000001"), 3, "{\"kind\":\"manual\"}", "human")),
-        EventTypes.WorkflowRunFinished => Of(h, type, new WorkflowRunFinishedPayload(_run, "failed", "node 'fetch' failed: 502", "service:workflow")),
-        EventTypes.WorkflowRunCancelled => Of(h, type, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human")),
+        EventTypes.WorkflowRunStarted => Of(h, type, new WorkflowRunStartedPayload(_run, WorkflowId.From("WF-00000000000000000000000000000001"), 3, "{\"kind\":\"manual\"}", "human", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live)),
+        EventTypes.WorkflowRunFinished => Of(h, type, new WorkflowRunFinishedPayload(_run, "failed", "node 'fetch' failed: 502", "service:workflow", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live)),
+        EventTypes.WorkflowRunCancelled => Of(h, type, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live)),
         EventTypes.WorkflowNodeStarted => Of(h, type, new WorkflowNodeStartedPayload(_run, _fetch, 0, "service:workflow")),
         EventTypes.WorkflowNodeFinished => Of(h, type, new WorkflowNodeFinishedPayload(_run, _fetch, 2, "succeeded", Truncated: true, "service:workflow")),
         EventTypes.WorkflowNodeFailed => Of(h, type, new WorkflowNodeFailedPayload(_run, _notify, 0, "no channel", "service:workflow")),

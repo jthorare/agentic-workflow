@@ -62,6 +62,7 @@ public static class GraphOps
         DisconnectOp => "disconnect",
         RenameOp => "rename",
         SetMetaOp => "set_meta",
+        ReplaceNodeOp => "replace_node",
         _ => "unknown",
     };
 }

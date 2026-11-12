@@ -37,9 +37,9 @@ public sealed class WorkflowEventsStreamTests
     {
         var h = new SliceHarness();
         var grant = await h.HoldLease();
-        await Append(h, grant, EventTypes.WorkflowRunStarted, new WorkflowRunStartedPayload(_run, _wf, 1, "manual: secret trigger", "human:cli"), "run.started");
-        await Append(h, grant, EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "failed", "secret error", "engine"), "run.finished");
-        await Append(h, grant, EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "secret reason", "human:cli"), "run.cancelled");
+        await Append(h, grant, EventTypes.WorkflowRunStarted, new WorkflowRunStartedPayload(_run, _wf, 1, "manual: secret trigger", "human:cli", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live), "run.started");
+        await Append(h, grant, EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "failed", "secret error", "engine", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live), "run.finished");
+        await Append(h, grant, EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "secret reason", "human:cli", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live), "run.cancelled");
         await Append(h, grant, EventTypes.WorkflowNodeStarted, new WorkflowNodeStartedPayload(_run, _node, 2, "engine"), "node.started");
         await Append(h, grant, EventTypes.WorkflowNodeFinished, new WorkflowNodeFinishedPayload(_run, _node, 2, "ok", Truncated: true, "engine"), "node.finished");
         await Append(h, grant, EventTypes.WorkflowNodeFailed, new WorkflowNodeFailedPayload(_run, _node, 2, "secret error", "engine"), "node.failed");

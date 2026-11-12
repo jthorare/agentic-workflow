@@ -23,7 +23,7 @@ public sealed class RunsProjectionTests
 
     private LedgerEvent Event<TPayload>(string type, TPayload payload) => Recorded.Of(_v.Slice.Events, type, payload, ++_sequence);
 
-    private LedgerEvent Started(WorkflowRunId? run = null) => Event(EventTypes.WorkflowRunStarted, new WorkflowRunStartedPayload(run ?? _run, _workflow, 3, "{\"kind\":\"manual\"}", "human"));
+    private LedgerEvent Started(WorkflowRunId? run = null) => Event(EventTypes.WorkflowRunStarted, new WorkflowRunStartedPayload(run ?? _run, _workflow, 3, "{\"kind\":\"manual\"}", "human", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live));
 
     private async Task<WorkflowRunRow?> Row(WorkflowRunId? run = null) => (await _v.Views.Get<WorkflowRunRow>(ViewNames.WorkflowRuns, (run ?? _run).Value, Token)).Value;
 
@@ -46,7 +46,7 @@ public sealed class RunsProjectionTests
     [Fact]
     public async Task The_row_names_the_item_the_started_event_was_recorded_for()
     {
-        await _v.Fold(EventTypes.WorkflowRunStarted, new WorkflowRunStartedPayload(_run, _workflow, 3, "{}", "human"), A.FirstItemId);
+        await _v.Fold(EventTypes.WorkflowRunStarted, new WorkflowRunStartedPayload(_run, _workflow, 3, "{}", "human", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live), A.FirstItemId);
 
         Assert.Equal(A.FirstItemId, (await Row())!.ItemId);
     }
@@ -55,7 +55,7 @@ public sealed class RunsProjectionTests
     public async Task A_run_that_finished_is_succeeded_and_ended_when_the_event_was_recorded()
     {
         var started = Started();
-        var finished = Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "succeeded", Error: null, "service:workflow"));
+        var finished = Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "succeeded", Error: null, "service:workflow", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live));
         await _v.Apply([started, finished]);
 
         var row = (await Row())!;
@@ -67,7 +67,7 @@ public sealed class RunsProjectionTests
     [Fact]
     public async Task A_run_that_failed_is_failed_with_the_error_the_event_gave()
     {
-        await _v.Apply([Started(), Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "failed", "node 'fetch' failed: 502", "service:workflow"))]);
+        await _v.Apply([Started(), Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "failed", "node 'fetch' failed: 502", "service:workflow", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live))]);
 
         var row = (await Row())!;
 
@@ -79,7 +79,7 @@ public sealed class RunsProjectionTests
     public async Task A_cancelled_run_is_cancelled_with_its_reason_and_an_end_time()
     {
         var started = Started();
-        var cancelled = Event(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human"));
+        var cancelled = Event(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live));
         await _v.Apply([started, cancelled]);
 
         var row = (await Row())!;
@@ -108,7 +108,7 @@ public sealed class RunsProjectionTests
     [Fact]
     public async Task Another_runs_events_leave_the_row_alone()
     {
-        await _v.Apply([Started(), Started(_other), Event(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_other, Reason: null, "human"))]);
+        await _v.Apply([Started(), Started(_other), Event(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_other, Reason: null, "human", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live))]);
 
         Expect.Equal(("running", "cancelled"), ((await Row())!.Status, (await Row(_other))!.Status));
     }
@@ -128,7 +128,7 @@ public sealed class RunsProjectionTests
         [
             Started(),
             Event(EventTypes.WorkflowNodeStarted, new WorkflowNodeStartedPayload(_run, _fetch, 0, "service:workflow")),
-            Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "failed", "boom", "service:workflow")),
+            Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "failed", "boom", "service:workflow", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live)),
         ];
         await _v.Apply(page);
         var first = await Row();
@@ -142,7 +142,7 @@ public sealed class RunsProjectionTests
     public async Task A_replayed_started_event_does_not_reopen_a_finished_run()
     {
         var started = Started();
-        await _v.Apply([started, Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "succeeded", Error: null, "service:workflow"))]);
+        await _v.Apply([started, Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "succeeded", Error: null, "service:workflow", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live))]);
 
         await _v.Apply([started]);
 

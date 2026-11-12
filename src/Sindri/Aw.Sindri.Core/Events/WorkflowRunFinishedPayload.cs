@@ -7,4 +7,5 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Status">'succeeded' or 'failed'.</param>
 /// <param name="Error">Why it failed, or null.</param>
 /// <param name="By">Who recorded it.</param>
-public sealed record WorkflowRunFinishedPayload(WorkflowRunId RunId, string Status, string? Error, string By);
+/// <param name="Mode">'live' or 'test' (<see cref="Aw.Sindri.Core.Graph.Runs.WorkflowRunMode"/>). Events written before the field existed read as null, which means live.</param>
+public sealed record WorkflowRunFinishedPayload(WorkflowRunId RunId, string Status, string? Error, string By, string Mode);

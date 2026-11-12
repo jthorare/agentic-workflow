@@ -61,8 +61,8 @@ public sealed class WorkflowNotifyRowsTests
     public async Task The_row_clears_when_its_run_ends(string how)
     {
         var end = how == "finished"
-            ? Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "succeeded", Error: null, "service:workflow"))
-            : Event(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human"));
+            ? Event(EventTypes.WorkflowRunFinished, new WorkflowRunFinishedPayload(_run, "succeeded", Error: null, "service:workflow", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live))
+            : Event(EventTypes.WorkflowRunCancelled, new WorkflowRunCancelledPayload(_run, "owner stopped it", "human", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live));
         await _v.Apply([Notify(_run), Notify(_other), end]);
 
         var row = Assert.Single(await Rows());
@@ -73,7 +73,7 @@ public sealed class WorkflowNotifyRowsTests
     [Fact]
     public async Task Folding_the_same_events_again_leaves_the_same_rows()
     {
-        var events = new[] { Notify(_run), Event(EventTypes.WorkflowRunStarted, new WorkflowRunStartedPayload(_other, _workflow, 3, "{}", "human")) };
+        var events = new[] { Notify(_run), Event(EventTypes.WorkflowRunStarted, new WorkflowRunStartedPayload(_other, _workflow, 3, "{}", "human", Aw.Sindri.Core.Graph.Runs.WorkflowRunMode.Live)) };
         await _v.Apply(events);
         var first = await Rows();
 
