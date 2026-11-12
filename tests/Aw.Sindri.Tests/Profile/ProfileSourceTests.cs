@@ -82,4 +82,24 @@ public sealed class ProfileSourceTests : IDisposable
         Assert.Contains("sindri profile init", error.Message, StringComparison.Ordinal);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    [System.Runtime.Versioning.SupportedOSPlatform("linux")]
+    public async Task A_profile_the_process_cannot_read_is_unreadable_not_missing()
+    {
+        Assert.SkipWhen(Environment.IsPrivilegedProcess, "root ignores file permissions");
+        _files.Write(Valid);
+        File.SetUnixFileMode(_files.Settings.ProfilePath, UnixFileMode.None);
+        try
+        {
+            var error = (await _files.Source.Load(Token)).Error;
+
+            Assert.Equal(SindriErrors.ProfileUnreadable.Code, error.Code);
+            Assert.Contains("can't be read", error.Message, StringComparison.Ordinal);
+            Assert.Contains("fix:", error.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            File.SetUnixFileMode(_files.Settings.ProfilePath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
+    }
 }

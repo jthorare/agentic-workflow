@@ -20,6 +20,12 @@ public static partial class SindriErrors
     /// <summary>SND-PROFILE-002: the profile doesn't parse or doesn't match the schema.</summary>
     public static readonly ErrorDefinition ProfileInvalid = new("SND-PROFILE-002", ErrorKind.Invalid, "The profile is invalid");
 
+    /// <summary>SND-PROFILE-004: the profile file exists but can't be read (permissions or an I/O error). It is not "no profile yet": nothing may write a fresh one over it.</summary>
+    public static readonly ErrorDefinition ProfileUnreadable = new("SND-PROFILE-004", ErrorKind.Unavailable, "The profile can't be read");
+
+    /// <summary>SND-PROFILE-005: the profile file can't be written (permissions or an I/O error).</summary>
+    public static readonly ErrorDefinition ProfileUnwritable = new("SND-PROFILE-005", ErrorKind.Unavailable, "The profile can't be written");
+
     /// <summary>SND-MODEL-001: a 'workflow.agent' model key names an agent or a state that isn't there, or a default that isn't in its list (model-pick spec §8); the message names the nearest id.</summary>
     public static readonly ErrorDefinition ModelKeyInvalid = new("SND-MODEL-001", ErrorKind.Invalid, "A model key doesn't match anything");
 
@@ -266,7 +272,7 @@ public static partial class SindriErrors
     // A method, not a static initializer: the codes live in several partial files, whose static initializers run in file order.
     private static ErrorDefinition[] Every() =>
     [
-        LeaseHeld, LeaseLost, LeaseStale, ProfileMissing, ProfileInvalid, ModelKeyInvalid, ProfileHashMismatch,
+        LeaseHeld, LeaseLost, LeaseStale, ProfileMissing, ProfileInvalid, ProfileUnreadable, ProfileUnwritable, ModelKeyInvalid, ProfileHashMismatch,
         LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, ApiNoCode, ApiInternal,
         CallerUnknown, OriginRefused, CommandBusy, AuthTokenRequired, AuthRefused, UnknownVerb, StartFailed,
         InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, RequestInvalid, RequestsRateLimited, DecisionNotFound, DecisionInvalid, JobNotFound, JobConflict, JobInterrupted, JobsRateLimited, JobNotWaiting, JobStalled, ServiceNotFound, SecretNotStored, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe, IndexTokenUnresolved, IndexRepoUnreadable, IndexNotInProfile, IndexOnyxLeftover, IndexOnyxInProfile,
