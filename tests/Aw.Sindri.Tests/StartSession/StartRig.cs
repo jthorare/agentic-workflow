@@ -121,6 +121,9 @@ internal sealed class FakeStartChoices : IStartChoices
         Remembered.Add((repo, agent));
         return ValueTask.CompletedTask;
     }
+
+    public ValueTask<StartChoice> Last(CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Remembered.Count == 0 ? new StartChoice(null, null) : new StartChoice(Remembered[^1].Repo, Remembered[^1].Agent));
 }
 
 internal sealed class FakeEnvironment : IEnvironmentReader

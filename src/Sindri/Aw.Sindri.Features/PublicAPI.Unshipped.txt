@@ -5646,3 +5646,26 @@ override Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.GetHashCode() 
 override Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.ToString() -> string!
 static Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.operator !=(Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree? left, Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree? right) -> bool
 static Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree.operator ==(Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree? left, Aw.Sindri.Features.RemoveSessionWorktree.RemovedWorktree? right) -> bool
+Aw.Sindri.Features.GetLastStart.GetLastStartRequest
+Aw.Sindri.Features.GetLastStart.GetLastStartRequest.<Clone>$() -> Aw.Sindri.Features.GetLastStart.GetLastStartRequest!
+Aw.Sindri.Features.GetLastStart.GetLastStartRequest.Equals(Aw.Sindri.Features.GetLastStart.GetLastStartRequest? other) -> bool
+Aw.Sindri.Features.GetLastStart.GetLastStartRequest.GetLastStartRequest() -> void
+override Aw.Sindri.Features.GetLastStart.GetLastStartRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetLastStart.GetLastStartRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetLastStart.GetLastStartRequest.ToString() -> string!
+static Aw.Sindri.Features.GetLastStart.GetLastStartRequest.operator !=(Aw.Sindri.Features.GetLastStart.GetLastStartRequest? left, Aw.Sindri.Features.GetLastStart.GetLastStartRequest? right) -> bool
+static Aw.Sindri.Features.GetLastStart.GetLastStartRequest.operator ==(Aw.Sindri.Features.GetLastStart.GetLastStartRequest? left, Aw.Sindri.Features.GetLastStart.GetLastStartRequest? right) -> bool
+Aw.Sindri.Features.GetLastStart.LastStartView
+Aw.Sindri.Features.GetLastStart.LastStartView.<Clone>$() -> Aw.Sindri.Features.GetLastStart.LastStartView!
+Aw.Sindri.Features.GetLastStart.LastStartView.LastStartView(string? Repo, string? Agent) -> void
+Aw.Sindri.Features.GetLastStart.LastStartView.Deconstruct(out string? Repo, out string? Agent) -> void
+Aw.Sindri.Features.GetLastStart.LastStartView.Equals(Aw.Sindri.Features.GetLastStart.LastStartView? other) -> bool
+Aw.Sindri.Features.GetLastStart.LastStartView.Repo.get -> string?
+Aw.Sindri.Features.GetLastStart.LastStartView.Repo.init -> void
+Aw.Sindri.Features.GetLastStart.LastStartView.Agent.get -> string?
+Aw.Sindri.Features.GetLastStart.LastStartView.Agent.init -> void
+override Aw.Sindri.Features.GetLastStart.LastStartView.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetLastStart.LastStartView.GetHashCode() -> int
+override Aw.Sindri.Features.GetLastStart.LastStartView.ToString() -> string!
+static Aw.Sindri.Features.GetLastStart.LastStartView.operator !=(Aw.Sindri.Features.GetLastStart.LastStartView? left, Aw.Sindri.Features.GetLastStart.LastStartView? right) -> bool
+static Aw.Sindri.Features.GetLastStart.LastStartView.operator ==(Aw.Sindri.Features.GetLastStart.LastStartView? left, Aw.Sindri.Features.GetLastStart.LastStartView? right) -> bool

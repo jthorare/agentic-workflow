@@ -9,4 +9,9 @@ public interface IStartChoices
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>A task that ends when the file is written.</returns>
     public ValueTask Remember(string repo, string agent, CancellationToken cancellationToken);
+
+    /// <summary>The choice the last 2xx start recorded.</summary>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The choice; both members null when nothing was recorded or the file can't be read.</returns>
+    public ValueTask<StartChoice> Last(CancellationToken cancellationToken);
 }

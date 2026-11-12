@@ -13,7 +13,7 @@ internal static class AgentStartScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("sessions-start", "bad-act-id"), ("sessions-start", "empty-act-id"), ("sessions-start", "prompt-too-long"), ("sessions-start", "session-refused"), ("sessions-worktree", "unrecorded"),
+        ("sessions-start", "bad-act-id"), ("sessions-start", "empty-act-id"), ("sessions-start", "prompt-too-long"), ("sessions-start", "session-refused"), ("sessions-worktree", "unrecorded"), ("sessions-last-start", "present"), ("sessions-last-start", "absent"),
     ];
 
     /// <summary>Whether this class owns the scenario.</summary>
@@ -45,6 +45,11 @@ internal static class AgentStartScenarios
                     return await Ask(host, Post(Start, Json("k3j9x0a1", "hi"), Human(host.Token.Value)));
                 }
 
+            case ("sessions-last-start", "present"):
+                await File.WriteAllTextAsync(Path.Combine(host.Home, "last-start.json"), """{"repo":"demo","agent":"codex"}""");
+                return await Ask(host, Get("/sindri/sessions/last-start", owner));
+            case ("sessions-last-start", "absent"):
+                return await Ask(host, Get("/sindri/sessions/last-start", owner));
             case ("sessions-worktree", "unrecorded"):
                 return await Ask(host, Delete("/sindri/sessions/never0000/worktree", owner));
             default:

@@ -40,4 +40,35 @@ internal sealed class StartChoicesFile(ISindriHome home) : IStartChoices
 
         return ValueTask.CompletedTask;
     }
+
+    public async ValueTask<StartChoice> Last(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var path = Path.Combine(home.Path, FileName);
+            if (!File.Exists(path))
+            {
+                return new StartChoice(null, null);
+            }
+
+            using var document = JsonDocument.Parse(await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false));
+            var root = document.RootElement;
+            return root.ValueKind == JsonValueKind.Object ? new StartChoice(Text(root, "repo"), Text(root, "agent")) : new StartChoice(null, null);
+        }
+        catch (JsonException)
+        {
+            return new StartChoice(null, null);   // a half-written or hand-edited file is the same as none
+        }
+        catch (IOException)
+        {
+            return new StartChoice(null, null);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return new StartChoice(null, null);
+        }
+    }
+
+    private static string? Text(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: > 0 } text ? text : null;
 }

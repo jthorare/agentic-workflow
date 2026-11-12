@@ -23373,3 +23373,18 @@ static Aw.Sindri.Core.Ids.ActId.TryFrom(string? value, out Aw.Sindri.Core.Ids.Ac
 static Aw.Sindri.Core.Ids.ActId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.ActId result) -> bool
 static Aw.Sindri.Core.Ids.ActId.operator !=(Aw.Sindri.Core.Ids.ActId left, Aw.Sindri.Core.Ids.ActId right) -> bool
 static Aw.Sindri.Core.Ids.ActId.operator ==(Aw.Sindri.Core.Ids.ActId left, Aw.Sindri.Core.Ids.ActId right) -> bool
+Aw.Sindri.Core.Launch.StartChoice
+Aw.Sindri.Core.Launch.StartChoice.<Clone>$() -> Aw.Sindri.Core.Launch.StartChoice!
+Aw.Sindri.Core.Launch.StartChoice.StartChoice(string? Repo, string? Agent) -> void
+Aw.Sindri.Core.Launch.StartChoice.Deconstruct(out string? Repo, out string? Agent) -> void
+Aw.Sindri.Core.Launch.StartChoice.Equals(Aw.Sindri.Core.Launch.StartChoice? other) -> bool
+Aw.Sindri.Core.Launch.StartChoice.Repo.get -> string?
+Aw.Sindri.Core.Launch.StartChoice.Repo.init -> void
+Aw.Sindri.Core.Launch.StartChoice.Agent.get -> string?
+Aw.Sindri.Core.Launch.StartChoice.Agent.init -> void
+override Aw.Sindri.Core.Launch.StartChoice.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Launch.StartChoice.GetHashCode() -> int
+override Aw.Sindri.Core.Launch.StartChoice.ToString() -> string!
+static Aw.Sindri.Core.Launch.StartChoice.operator !=(Aw.Sindri.Core.Launch.StartChoice? left, Aw.Sindri.Core.Launch.StartChoice? right) -> bool
+static Aw.Sindri.Core.Launch.StartChoice.operator ==(Aw.Sindri.Core.Launch.StartChoice? left, Aw.Sindri.Core.Launch.StartChoice? right) -> bool
+Aw.Sindri.Core.Launch.IStartChoices.Last(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Sindri.Core.Launch.StartChoice!>

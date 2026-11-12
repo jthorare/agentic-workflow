@@ -1,5 +1,6 @@
 using Aw.Kernel.Services;
 using Aw.Sindri.Features.Commands;
+using Aw.Sindri.Features.GetLastStart;
 using Aw.Sindri.Features.RemoveSessionWorktree;
 using Aw.Sindri.Features.StartSession;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,7 @@ internal static class StartSessionServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddSingleton<StartedSessions>()
+            .AddScoped<IValidator<GetLastStartRequest>, AcceptAllValidator<GetLastStartRequest>>().AddQuery<GetLastStartRequest, LastStartView, GetLastStartService>()
             .AddScoped<IValidator<StartSessionRequest>, AcceptAllValidator<StartSessionRequest>>().AddUngatedCommand<StartSessionRequest, StartedSession, StartSessionService>()
             .AddScoped<IValidator<RemoveSessionWorktreeRequest>, AcceptAllValidator<RemoveSessionWorktreeRequest>>().AddCommand<RemoveSessionWorktreeRequest, RemovedWorktree, RemoveSessionWorktreeService>();
     }
