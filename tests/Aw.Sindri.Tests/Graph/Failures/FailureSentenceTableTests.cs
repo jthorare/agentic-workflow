@@ -204,6 +204,65 @@ public sealed class FailureSentenceTableTests
     }
 
     [Fact]
+    public void SND_CODE_001_says_the_step_does_not_compile_and_shows_the_errors()
+    {
+        var row = Row("SND-CODE-001");
+
+        Assert.Equal("Check doesn't compile: (3,5): error CS1002: ; expected.", FailureSentences.Say(row.Code, With(("step", "Check"), ("message", "(3,5): error CS1002: ; expected"))));
+        Assert.Equal("Open {step}", row.FixLabel);
+    }
+
+    [Fact]
+    public void SND_CODE_002_says_the_step_ran_past_its_time_limit()
+    {
+        var row = Row("SND-CODE-002");
+
+        Assert.Equal("Check ran past its time limit.", FailureSentences.Say(row.Code, With(("step", "Check"))));
+        Assert.Equal("Open {step}", row.FixLabel);
+    }
+
+    [Fact]
+    public void SND_CODE_003_says_the_step_used_more_memory_than_its_limit()
+    {
+        var row = Row("SND-CODE-003");
+
+        Assert.Equal("Check used more memory than its limit.", FailureSentences.Say(row.Code, With(("step", "Check"))));
+        Assert.Equal("Open {step}", row.FixLabel);
+    }
+
+    [Fact]
+    public void SND_CODE_004_says_the_step_stopped_with_the_exception_message()
+    {
+        var row = Row("SND-CODE-004");
+
+        Assert.Equal("Check stopped: Index was outside the bounds of the array.", FailureSentences.Say(row.Code, With(("step", "Check"), ("message", "Index was outside the bounds of the array"))));
+        Assert.Equal("Open {step}", row.FixLabel);
+    }
+
+    [Fact]
+    public void SND_CODE_005_says_the_runner_is_not_installed_and_offers_the_install_command()
+    {
+        var row = Row("SND-CODE-005");
+
+        Assert.Equal("Sindri can't run code steps: sindri-code-runner isn't installed.", FailureSentences.Say(row.Code, With()));
+        Assert.Equal("Install the runner", row.FixLabel);
+        Assert.Contains("install-cs.sh", row.FixCommand, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("SND-CODE-001")]
+    [InlineData("SND-CODE-002")]
+    [InlineData("SND-CODE-003")]
+    [InlineData("SND-CODE-004")]
+    public void An_SND_CODE_sentence_names_the_step_by_its_title_never_a_node_id(string code)
+    {
+        var said = FailureSentences.Say(code, With(("step", "Nightly check"), ("message", "boom")));
+
+        Assert.StartsWith("Nightly check ", said, StringComparison.Ordinal);
+        Assert.DoesNotContain("node '", said, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_placeholder_with_no_value_fails_instead_of_leaving_braces_in_the_sentence()
         => Assert.Throws<InvalidOperationException>(() => FailureSentences.Say("GRAPH-CONFIG-001", With()));
 
