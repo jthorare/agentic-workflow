@@ -71,7 +71,14 @@ internal sealed partial class CodeIndexCardViewModel(ISindriApi api, TimeProvide
             return Labels.CodeIndexNeedsLook;
         }
 
-        return rest.Count < views.Count ? Labels.CodeIndexBuilding : Labels.CodeIndexOk;
+        return rest.Count < views.Count ? Building(views) : Labels.CodeIndexOk;
+    }
+
+    // Sindri serves one progress figure for a build: the health row's embeddings percent. The word shows the lowest one among the building repos, and plain "building" when none is served.
+    private static string Building(List<(CodeIndexRepoView Repo, CodeIndexHealthView? Health)> views)
+    {
+        var percents = views.Where(static v => Is(StateOf(v.Repo, v.Health), "building")).Select(static v => v.Health?.EmbeddingsPercent).OfType<int>().ToList();
+        return percents.Count == 0 ? Labels.CodeIndexBuilding : Labels.CodeIndexBuilding + " · " + Labels.CodeIndexEmbeddings(percents.Min());
     }
 
     private static bool Is(string state, string word) => string.Equals(state, word, StringComparison.Ordinal);

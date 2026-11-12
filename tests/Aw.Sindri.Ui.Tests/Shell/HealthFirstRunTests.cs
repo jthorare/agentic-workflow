@@ -15,6 +15,9 @@ public sealed class HealthFirstRunTests
     private const string Building = """{"repos":[{"repo":"repo","state":"building","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[]}""";
     private const string BuildingBehindMain = """{"repos":[{"repo":"a","state":"building","commit":null,"builtAt":null,"layers":[],"counts":null},{"repo":"b","state":"stale","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[]}""";
 
+    private const string BuildingWithProgress = """{"repos":[{"repo":"repo","state":"building","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[{"repo":"repo","state":"building","embeddingsPercent":42,"waiting":null}]}""";
+    private const string Missing = """{"repos":[{"repo":"repo","state":"missing","commit":null,"builtAt":null,"layers":[],"counts":null}],"health":[]}""";
+
     private static readonly Uri _api = new("http://127.0.0.1:7410/");
 
     private readonly FakeSindriApi _server = new();
@@ -35,6 +38,28 @@ public sealed class HealthFirstRunTests
 
         Assert.Equal("building", card.Word, StringComparer.Ordinal);
         Assert.Equal("repo: building", Assert.Single(card.Lines).Text);
+    }
+
+    [Fact]
+    public async Task A_building_repo_shows_the_progress_the_server_serves()
+    {
+        _server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, BuildingWithProgress);
+        var card = new CodeIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal("building · embeddings 42%", card.Word, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_missing_index_stays_a_look_because_the_server_cannot_tell_it_from_a_queued_build()
+    {
+        _server.CodeIndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, Missing);
+        var card = new CodeIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
     }
 
     [Fact]
