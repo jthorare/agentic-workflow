@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -53,5 +55,25 @@ public sealed class WorkflowsEditModeFramesTests : FrameHost
         Click(Named<Button>(window, "WorkflowEditDone"));
         await Until(window, () => !Visible(window, "RunsEdit"), "Done never hid the edit bar");
         Assert.True(Visible(window, "WorkflowEdit"), "Edit never came back after Done (#2807)");
+    });
+
+    [Fact]
+    public Task Enter_on_Edit_moves_focus_to_Done_not_the_breadcrumb() => OnUi(async () =>
+    {
+        Server.WorkflowAnswers[Slug] = RouteAnswer.Api("workflows-slug", "found");
+        Server.WorkflowRunsAnswers[Slug] = RouteAnswer.Api("workflows-slug-runs", "list-three");
+        Server.WorkflowBlocksAnswer = RouteAnswer.Api("workflows-blocks", "listed");
+        var (window, shell) = await Connected(width: 1280, height: 1000);
+        shell.GoTo(PageId.Workflows);
+        await Until(window, () => shell.Workflows.Rows.Count > 0, "the Workflows page never read the list");
+        await shell.Workflows.OpenWorkflow(Slug, CancellationToken.None);
+        await Until(window, () => shell.Workflows.Runs.Graph is not null, "the graph never showed");
+
+        var edit = Named<Button>(window, "WorkflowEdit");
+        Assert.True(edit.Focus(NavigationMethod.Tab));
+        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+
+        await Until(window, () => Visible(window, "WorkflowEditDone"), "Enter on Edit never turned edit mode on");
+        await Until(window, () => Named<Button>(window, "WorkflowEditDone").IsFocused, "focus never reached Done after Enter on Edit (it dropped to the breadcrumb)");
     });
 }
