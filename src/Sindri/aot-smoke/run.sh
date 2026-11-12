@@ -311,7 +311,7 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   # index exists, silently; the poll below covers the job's finish (cap 120 s). human_run_service retries past SND-JOB-409, which the scheduler
   # returns when its own context-map-refresh tick is in flight.
   human_run_service context-map-refresh >/dev/null 2>&1 || true
-  local map_deadline=$((SECONDS + 120))
+  map_deadline=$((SECONDS + 120))
   until jq -e '[.jobs[] | select(.kind == "RefreshContextMap")] | length > 0' <<<"$(bounded "$bin" jobs --state succeeded --json </dev/null 2>/dev/null)" >/dev/null 2>&1; do
     if ((SECONDS >= map_deadline)); then echo "## map wait: no RefreshContextMap job had succeeded after 120 s"; break; fi
     sleep 1
