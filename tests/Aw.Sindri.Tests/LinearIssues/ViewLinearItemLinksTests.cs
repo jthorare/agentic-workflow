@@ -90,6 +90,8 @@ public sealed class ViewLinearItemLinksTests
         public ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
             where TRow : class => throw new NotSupportedException();
 
+        public ValueTask<Result<string>> Mark(string view, CancellationToken cancellationToken) => throw new NotSupportedException();
+
         public ValueTask<Result<ProjectorState?>> State(CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

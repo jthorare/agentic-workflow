@@ -1,0 +1,8 @@
+# Structure rule: active voice (config/voice/reply.md). A warning: an 80% rule.
+extends: existence
+message: "'%s' is passive. Name who does it: 'the hook writes X', not 'X is written'."
+level: warning
+ignorecase: true
+raw:
+  - \b(?:am|are|were|being|is|been|was|be)\s+
+  - (?:\w+ed|built|done|found|given|gotten|held|kept|known|made|meant|put|read|run|seen|sent|set|shown|taken|told|written|thrown)\b

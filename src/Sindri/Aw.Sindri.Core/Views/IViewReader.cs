@@ -43,6 +43,12 @@ public interface IViewReader
     public ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
         where TRow : class;
 
+    /// <summary>A mark of <paramref name="view"/>'s rows, read without reading them: two equal marks mean the rows are the same (a write or a removal moves it). It lets a reader tag an answer without reading the rows (#2852).</summary>
+    /// <param name="view">A <see cref="ViewNames"/> name.</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>The mark; an empty view, or a views store that doesn't exist yet, has a mark too.</returns>
+    public ValueTask<Result<string>> Mark(string view, CancellationToken cancellationToken);
+
     /// <summary>The projector_state row, or null when the views store doesn't exist (doctor reads it while stopped).</summary>
     /// <param name="cancellationToken">Cancels the operation.</param>
     /// <returns>The state, if any.</returns>

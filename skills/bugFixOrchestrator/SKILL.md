@@ -1,7 +1,7 @@
 ---
 name: bugFixOrchestrator
 description: Drive a bug ticket (Linear ID/URL or pasted text) to a proven resolution — investigate with /rootCause, have implementer subagents fix it, and call it resolved only when the same check that failed before the fix passes after it AND judge resolution-check agrees the reported problem is solved.
-argument-hint: "<linear-issue-id-or-url | pasted ticket text>"
+argument-hint: "<linear-issue-id-or-url | pasted ticket text> [--no-champion]"
 allowed-tools: Bash(git *), Bash(bugfix-state:*), Bash(ui-evidence:*), Bash(bash *), Bash(source *), Bash(locked *), Bash(command *), Bash(SHARED_DIR=*), Bash(TK=*), Bash(REPO=*), Bash(STATE=*), Bash(echo *), Bash(mkdir *), Bash(cat *), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__claude_ai_Linear__get_issue, mcp__claude_ai_Linear__save_comment
 ---
 
@@ -145,7 +145,7 @@ The check is committed here; that commit is the **baseline**, and every candidat
 **Anything else:**
 
 1. **Spawn a subagent** of type `lean-coder` to write **only** a regression test for the expected
-   behaviour — no fix — and commit it on `bugfix/<ticket-slug>`. If the repo has a dedicated test
+   behaviour (no fix) and commit it on `bugfix/<ticket-slug>`. If the repo has a dedicated test
    directory (`tests/`, `__tests__/`, `spec/`), put the test there: the helper protects the check's
    whole directory, so a test colocated with product code would make every fix in that directory
    need the user's approval. (`Goal:` a failing regression test
@@ -155,7 +155,7 @@ The check is committed here; that commit is the **baseline**, and every candidat
    `locked bugfix-state run-test --state "$STATE" --check <test-file> --cwd "$REPO" -- <test runner command with the test file as its own argument>`
    Evidence = the printed `evidence` path. Use this **exact** command for every later run of the check.
    The helper refuses inline-code wrappers (`sh -c`, `node -e`, …) and non-runners (`grep`, `cat`, …):
-   the command must actually execute the test.
+   the command must execute the test.
 
 Then: `bugfix-state advance reproduce --state "$STATE" --evidence <evidence> --check <script-or-test-file> --cwd "$REPO"`
 
@@ -298,12 +298,7 @@ Outcome:
    not use it. Then `git -C "$REPO" checkout bugfix/<ticket-slug>`. In a meta lane (`AW_META_TEAM` and
    `AW_META_LANE` set) don't remove it: ship from that worktree, where the branch is checked out; the tree
    goes away through meta's merge and close triggers or a sweep meta runs.
-5. **Ship (default).** A resolved fix ships unless the person said not to (an explicit "do not open a PR" or "stop at the branch" wins over everything here). The chain:
-   1. `/shipRelease` for the winning branch (outside a meta lane; in one, from the worktree that holds the branch).
-   2. The review loop the repo uses today (for example `/review`, then `/addressReview` until no blocking finding is left). Skip it when the PR kind is in `skipReviewLoop` (`skills/_shared/repo-config.sh get repo skipReviewLoop --json`; for example a revert). Without the config the loop runs.
-   3. Stop before merge. Merging stays the person's call.
-
-   Note: the shared PR champion loop (#2913) will replace steps 2 and 3 of this chain. Until it exists, use the lines above.
+5. **Ship (default).** A resolved fix ships unless the person said not to (an explicit "do not open a PR" or "stop at the branch" wins over everything here). The chain is `/shipRelease` for the winning branch (outside a meta lane; in one, from the worktree that holds the branch). It opens the PR and runs the PR champion loop (`$SHARED_DIR/pr-champion.md`); `--no-champion` passes on to it. Merging stays the person's call.
 6. **After the merge and deploy** (when the person comes back with "deployed", or `/landAndDeploy` finished): re-check the reported URL or entity with the same check or a fresh look and say what you saw. Then, with the person's OK (**Ask the user**), close the tracker issue and file each follow-up row of the sweep to `tickets.followUpTeam` in state `tickets.followUpState` (`skills/_shared/repo-config.sh get repo tickets --json`; no config: file them where the ticket lives and say where).
 
 Report to the user:
@@ -338,7 +333,7 @@ Only when the Result block's gate printed `AW_RESULT_SKILL=bugFixOrchestrator`; 
 
 - **Prefix.** `PREFIX="${AW_SINDRI_BRANCH%/work}"`. Name the working branch `$PREFIX/fix`, each candidate `$PREFIX/a<attempt>` (mode B: `$PREFIX/a<attempt>-h<hypothesis#>`). Never `bugfix/<ticket-slug>`.
 - **One implementer at a time, in this worktree.** No `git worktree add`: create each candidate with `git checkout -b $PREFIX/a<attempt> <baseline-commit>` and run the implementers one after the other (mode B's two implementers run in sequence, each from the baseline commit). Skip the worktree removals; the Step's worktree goes with the run.
-- **Push.** After Phase 6, with `status` `resolved`: `git push origin <winning branch>:refs/heads/$AW_SINDRI_BRANCH`, open it as a **draft** PR (`gh pr create --draft`, body from `resolution.md`), and put its URL in `pr`. Any other status: push and open nothing, leave `pr` out. Then `git checkout --detach` so the next Step (addressReview) can check the branch out in its own worktree.
+- **Push.** After Phase 6, with `status` `resolved`: `git push origin <winning branch>:refs/heads/$AW_SINDRI_BRANCH`, open it as a **draft** PR (`gh pr create --draft`, body from `resolution.md`), and put its URL in `pr`. Any other status: push and open nothing, leave `pr` out. A Sindri Step never runs the PR champion loop: Sindri's workflow owns the review, address and ready Steps on this PR. Then `git checkout --detach` so the next Step (addressReview) can check the branch out in its own worktree.
 - **No Linear offer.** Skip Phase 6 step 3 and say in `summary` that nothing was posted to Linear.
 - **Questions become `waiting`.** The three asks (no clear expected behaviour in Phase 1, the check passed so the bug is not reproduced in Phase 3, the check script is broken after one repair) go in `waiting` as the output contract describes, in place of AskUserQuestion. The dirty-tree preflight in Phase 3 is not an ask here: the Step's tree is clean, and if it is not, stop as `unresolved` and say why in `summary`.
 - **No ship chain**: the push and PR above are the ship step; skip Phase 6 step 5's chain and step 6.

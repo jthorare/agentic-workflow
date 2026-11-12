@@ -39,7 +39,7 @@ Read `$SHARED_DIR/design-artifact-paths.md` for the screens.json (CD4) schema an
 If a requested screen has no entry and no baseline, or none exist at all, stop:
 > "No iOS mockup baseline for `<screen>`. Run `/design-mockup-ios <screen>` first."
 
-**Staleness check** — warn (do not stop) if the screen's `baseline_stale` in screens.json is non-null: "baselines predate a design-token update (design-evolve) — re-run /design-mockup-ios".
+**Staleness check** — warn (do not stop) if the screen's `baseline_stale` in screens.json is non-null: "baselines predate a design-token update (design-evolve); re-run /design-mockup-ios".
 
 ## Step 2: Acquire Simulator Lock
 
@@ -159,9 +159,9 @@ LOCK_NAME=ios-sim source "$SHARED_DIR/skill-lock.sh"; release_lock
 
 Gate on `overall.verdict` — a FAIL run **blocks** the `/shipRelease` suggestion:
 
-- **PASS** — `/shipRelease` — diff is clean, ship the release
-- **WARN** — `/design-refine` — address minor discrepancies or enable the missing simulator workflows, then `/design-verify-ios` again
-- **FAIL** — `/design-refine` or `/design-implement-ios` — significant deviation; re-verify before any ship step
+- **PASS** — `/shipRelease`: diff is clean, ship the release
+- **WARN** — `/design-refine`: address minor discrepancies or enable the missing simulator workflows, then `/design-verify-ios` again
+- **FAIL** — `/design-refine` or `/design-implement-ios`: significant deviation; re-verify before any ship step
 
 ## Result block
 

@@ -21,17 +21,17 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 
 ### Card: Claude Code
 - Reply to a Claude lane with **Message a running agent** (SendMessage), to the name the inbox shows. The Stop and outbox hooks record the send.
-- Watch for mail: run `aw-meta watch --until-event` with the Bash tool's `run_in_background`. It prints nothing and costs no turn until a real line (PR change, `INBOX`, `DISK LOW`, `CONTEXT HIGH`, an error) makes it print and exit. Handle the lines, then start it again, except after `WATCH superseded by pid N`: a newer watch already runs, so don't start another. Don't use Monitor for it.
+- Watch for mail: run `aw-meta watch --until-event` with the Bash tool's `run_in_background`. It prints nothing and costs no turn until a real line (PR change, `INBOX`, `DISK LOW`, `CONTEXT HIGH`, an error) makes it print and exit. Act on each line, then start it again, except after `WATCH superseded by pid N`: a newer watch already runs, so don't start another. Don't use Monitor for it.
   - It shows only the team's PRs (`--all-prs`: all; which: the reference). Don't look up the others.
 - A non-Claude lane gets `aw-meta lane-send --lane <lane> --text "..."`, never the message tool.
 
 ### Card: Codex
 - You have no cross-session message tool. Reply to every lane with `aw-meta lane-send --lane <lane> --text "..."` (or `--file <f>`).
-- Watch for mail in the **foreground**: `aw-meta watch --until-mail --for 29m`. It exits when mail waits (`INBOX <n> open message(s)`). Run `aw-meta inbox`, handle it, run the watch again. Background output is only shown when polled, so a background watch does not work.
+- Watch for mail in the **foreground**: `aw-meta watch --until-mail --for 29m`. It exits when mail waits (`INBOX <n> open message(s)`). Run `aw-meta inbox`, answer it, run the watch again. Background output is only shown when polled, so a background watch does not work.
 - Trust the hooks with `/hooks` once.
 
 ### Card: Cursor
-- Same as Codex: reply with `aw-meta lane-send`, watch in the foreground with `aw-meta watch --until-mail --for 29m`, handle `aw-meta inbox`, run it again.
+- Same as Codex: reply with `aw-meta lane-send`, watch in the foreground with `aw-meta watch --until-mail --for 29m`, answer `aw-meta inbox`, run it again.
 - The hooks inject mail on session start and after tool calls; an empty `aw-meta inbox` is the settled case.
 
 ### Every harness

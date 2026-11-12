@@ -16,7 +16,7 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 
 ## Overview
 
-Dispatches five subagents in parallel — product, architecture, design, devex, security — each writing its own review file directly into the feature dir. After all return, consolidates: dedupes findings into one normalized severity table, surfaces cross-lens tensions (e.g., "product wants X but security blocks Y"), derives an overall verdict, recommends top 3 next actions. One command for full plan vetting.
+Dispatches five subagents in parallel (product, architecture, design, devex, security), each writing its own review file directly into the feature dir. After all return, consolidates: dedupes findings into one normalized severity table, surfaces cross-lens tensions (e.g., "product wants X but security blocks Y"), derives an overall verdict, recommends top 3 next actions. One command for full plan vetting.
 
 ## Inputs
 
@@ -120,7 +120,7 @@ All under `$AW_DIR/plans/<feature>/`: `product-review.md` · `arch-review.md` ·
 
 ## Next steps
 
-- If the overall verdict is **not BLOCKED** — `/specToProvenPR <feature-dir>/plan.md` — hand the vetted plan to staged implementation; the consolidated review and lens files ride along in the feature dir
+- If the overall verdict is **not BLOCKED**: `/specToProvenPR <feature-dir>/plan.md` — hand the vetted plan to staged implementation; the consolidated review and lens files ride along in the feature dir
 - If **BLOCKED** — address the CRITICAL findings (edit the plan or re-run `/officeHours`), then re-run `/autoplan`
 - `/design-shotgun` — if visual exploration is recommended by the design lens
 

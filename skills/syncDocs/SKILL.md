@@ -110,7 +110,7 @@ An agent may not return `NO_CHANGES` unconditionally — verify it. From the Ste
 
 ## Step 4: Commit
 
-After all agents complete, check if any files were actually modified:
+After all agents complete, check if any files were modified:
 
 ```bash
 git status --porcelain README.md CHANGELOG.md AGENTS.md CLAUDE.md {resolved ARCHITECTURE path}
