@@ -1,7 +1,9 @@
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Expressions;
 using Aw.Sindri.Core.Graph.Schedule;
 using Aw.Sindri.Core.Graph.Validation;
+using Aw.Sindri.Core.Memory;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Resources;
 using Aw.Sindri.Core.Sandbox.Plan;
@@ -12,8 +14,16 @@ namespace Aw.Sindri.Host;
 /// <param name="profile">The approved profile.</param>
 /// <param name="blocks">The graph block catalog.</param>
 /// <param name="codeCheck">Compiles a 'code' node's body, or null to skip the check.</param>
-internal sealed class ProfileWorkflowChecker(IApprovedProfile profile, IGraphBlockCatalog blocks, ICodeCheck? codeCheck = null) : IWorkflowChecker
+/// <param name="connections">The connection store the trigger names are checked against, or null (not read yet).</param>
+/// <param name="memories">The memory store the memory block names are checked against, or null (not read yet).</param>
+internal sealed class ProfileWorkflowChecker(IApprovedProfile profile, IGraphBlockCatalog blocks, ICodeCheck? codeCheck = null, IConnectionStore? connections = null, IMemoryStore? memories = null) : IWorkflowChecker
 {
+    /// <summary>The connection store the names are checked against; kept for the fix, not read yet.</summary>
+    internal IConnectionStore? Connections { get; } = connections;
+
+    /// <summary>The memory store the names are checked against; kept for the fix, not read yet.</summary>
+    internal IMemoryStore? Memories { get; } = memories;
+
     public async ValueTask<GraphValidator> Validator(CancellationToken cancellationToken)
     {
         var world = await ProfileGraphWorld.Load(profile, cancellationToken).ConfigureAwait(false);
