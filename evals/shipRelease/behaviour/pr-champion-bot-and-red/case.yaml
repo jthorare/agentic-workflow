@@ -1,0 +1,31 @@
+schema_version: '1.1'
+name: pr-champion-bot-and-red
+tags:
+- tier-b
+- behaviour
+execution:
+  max_turns: 40
+  timeout_seconds: 600
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  - TodoWrite
+  - AskUserQuestion
+  - Bash
+  - Write
+  - Edit
+  disallowed_tools:
+  - SendMessage
+  - Monitor
+  - Agent
+context:
+  scaffold_script: fixture.sh
+# AW_GIT_MODE=readonly cannot be lifted for a case (the harness sets it): git commit/push and gh pr ready/comment/merge and every
+# `gh api` with -f fields are refused by the stubs. So the case grades the edits made in the working tree (Edit/Write in the trace),
+# and the writes the agent attempts or lists under `Would run:` (also in the trace). Reads of the threads work through
+# `gh api graphql -X GET -f query=...` or the REST comment path; both are canned.
+# Canned world (.aw-eval/gh.json): PR 7 on feat/x in acme/slugger, head sha bc93f84356387b3f7fdffa08d247c1d6c658d2a3 (the fixture
+# commits with fixed dates, so the sha is stable; if fixture.sh changes, re-run it and update graders/head-sha-named.md),
+# check `test` red with a log naming the failing test, one open thread from acme-lint[bot] on src/slug.js.
