@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 
@@ -44,6 +45,25 @@ internal sealed partial class RowList
 
         _sticky.RenderTransform = new TranslateTransform(0, StickyHeader.PushOut(next, offset, HeightOf("Row.GroupHeader", 28)));
         _sticky.IsVisible = true;
+    }
+
+    /// <inheritdoc />
+    public void RevealRow(int index)
+    {
+        ScrollIntoView(index);
+        UpdateLayout();
+        if (_scroll is not { } scroll || ContainerFromIndex(index) is not { } container || scroll.Offset.Y <= 0)
+        {
+            return;
+        }
+
+        // ScrollIntoView puts a row above the view flush with the top edge, which is under the opaque sticky header: move it down by the header's height.
+        var inset = HeightOf("Row.GroupHeader", 28);
+        if (container.TranslatePoint(default, scroll)?.Y is { } top && top < inset)
+        {
+            scroll.Offset = new Vector(0, Math.Max(0, scroll.Offset.Y - (inset - top)));
+            UpdateLayout();
+        }
     }
 
     private double HeightOf(string key, double fallback) => this.TryFindResource(key, ActualThemeVariant, out var v) && v is double d ? d : fallback;

@@ -69,7 +69,7 @@
   </Style>
   <Style Selector="rows|Row /template/ TextBlock.row-sub">
     <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.InkTertiary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
   <Style Selector="rows|Row /template/ TextBlock.row-age">
@@ -96,7 +96,7 @@
           <ScrollViewer Name="PART_ScrollViewer" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
             <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
           </ScrollViewer>
-          <rows:RowGroupHeader Name="PART_Sticky" VerticalAlignment="Top" IsVisible="False" Background="{DynamicResource Brush.Canvas}" />
+          <rows:RowGroupHeader Name="PART_Sticky" VerticalAlignment="Top" IsVisible="False" AutomationProperties.AccessibilityView="Raw" Background="{DynamicResource Brush.Canvas}" />
         </Panel>
       </ControlTemplate>
     </Setter>
@@ -105,7 +105,7 @@
     <Setter Property="Height" Value="{DynamicResource Row.GroupHeader}" />
     <Setter Property="Padding" Value="{DynamicResource Row.Inset.Thickness}" />
   </Style>
-  <!-- PeekPane: 440 px, Surface1, a left hairline. Header 48; fields in 2 columns of 28 px rows (label InkTertiary, value InkMuted); body scrolls; actions at the bottom. -->
+  <!-- PeekPane: 440 px, Surface1, a left hairline. Header 48; fields in 2 columns of 28 px rows (label InkSubtle, value InkMuted); body scrolls; actions at the bottom. -->
   <Style Selector="rows|PeekPane">
     <Setter Property="Width" Value="{DynamicResource Peek.Width}" />
     <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
@@ -116,8 +116,8 @@
             <Grid DockPanel.Dock="Top" Height="{StaticResource Peek.Header}" Margin="24,0,12,0" ColumnDefinitions="Auto,Auto,*,Auto,Auto">
               <TextBlock Name="PART_Title" Text="{TemplateBinding Title}" Classes="peek-title" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" VerticalAlignment="Center" />
               <TextBlock Name="PART_Id" Grid.Column="1" Text="{TemplateBinding ItemId}" Classes="peek-id" Margin="8,0,0,0" VerticalAlignment="Center" />
-              <Button Name="PART_OpenFull" Grid.Column="3" Content="⤢" Command="{TemplateBinding OpenFullCommand}" Classes="peek-icon" ToolTip.Tip="Open full" />
-              <Button Name="PART_Close" Grid.Column="4" Content="×" Command="{TemplateBinding CloseCommand}" Classes="peek-icon" ToolTip.Tip="Close" />
+              <Button Name="PART_OpenFull" Grid.Column="3" Content="⤢" Command="{TemplateBinding OpenFullCommand}" Classes="peek-icon" ToolTip.Tip="Open full" AutomationProperties.Name="Open full" />
+              <Button Name="PART_Close" Grid.Column="4" Content="×" Command="{TemplateBinding CloseCommand}" Classes="peek-icon" ToolTip.Tip="Close" AutomationProperties.Name="Close" />
             </Grid>
             <ContentPresenter Name="PART_Actions" DockPanel.Dock="Bottom" Content="{TemplateBinding Actions}" Margin="24,12,24,16" />
             <ItemsControl Name="PART_Fields" DockPanel.Dock="Top" ItemsSource="{TemplateBinding Fields}" Margin="24,0">
@@ -154,7 +154,7 @@
   </Style>
   <Style Selector="rows|PeekPane /template/ TextBlock.peek-label">
     <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.InkTertiary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
   </Style>
   <Style Selector="rows|PeekPane /template/ TextBlock.peek-value">
     <Setter Property="FontSize" Value="{DynamicResource Type.Caption.Size}" />

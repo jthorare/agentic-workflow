@@ -1,9 +1,11 @@
 using System.Collections;
-using System.Diagnostics.CodeAnalysis;
 using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Rows;
@@ -44,6 +46,7 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
 
     static RowList()
     {
+        FocusableProperty.OverrideDefaultValue<RowList>(defaultValue: true);   // so Esc and Space reach the page when no row has the cursor (an empty list)
         _ = ItemsSourceProperty.Changed.AddClassHandler<RowList>((list, _) => list.Rebuild());
         _ = ColumnsProperty.Changed.AddClassHandler<RowList>((list, _) => list.ForEachRow(list.Prepare));
         _ = PeekColumnsProperty.Changed.AddClassHandler<RowList>((list, _) => list.ForEachRow(list.Prepare));
@@ -54,10 +57,14 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
     public RowList()
     {
         RowKeys.SetEnabled(this, value: true);
+        KeyboardNavigation.SetTabNavigation(this, KeyboardNavigationMode.Once);   // the list is one tab stop; j/k and the arrows walk the rows
         AddHandler(RowKeys.PeekRequestedEvent, (_, e) => RaisePeek(new RowRequestEventArgs { Item = ItemAt(e.Index), Hold = e.Hold, Released = e.Released }));
         AddHandler(RowKeys.OpenRequestedEvent, (_, e) => RaiseOpen(new RowRequestEventArgs { Item = ItemAt(e.Index) }));
         AddHandler(RowKeys.BackRequestedEvent, (_, e) => RaiseBack(new RowRequestEventArgs { Item = ItemAt(e.Index) }));
         AddHandler(GotFocusEvent, (_, e) => OnRowFocused(e.Source));
+        AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel);
+        AddHandler(TappedEvent, OnTapped);
+        AddHandler(DoubleTappedEvent, OnDoubleTapped);
     }
 
     /// <summary>The groups, each an <see cref="IRowGroup"/>.</summary>

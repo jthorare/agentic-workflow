@@ -7,4 +7,8 @@ internal interface IRowKeyTarget
     /// <param name="index">The index in the list's items.</param>
     /// <returns>True for a row, false for a header.</returns>
     public bool IsRowIndex(int index);
+
+    /// <summary>Scrolls the row at <paramref name="index"/> into view, clear of any sticky header the list draws over its top edge.</summary>
+    /// <param name="index">The index in the list's items.</param>
+    public void RevealRow(int index);
 }

@@ -14,7 +14,7 @@ namespace Aw.Sindri.Ui.Views.Controls;
 /// has already moved focus and recycled the row the key came from. A list that is an <see cref="IRowKeyTarget"/> (the RowList, #2978) also takes j and k (Down and Up),
 /// Space (a tap toggles the peek, a hold shows it until the key comes up), Enter (open) and Esc (back, unless a sheet is open), and skips the entries that are not rows.
 /// </summary>
-internal static class RowKeys
+internal static partial class RowKeys
 {
     private static readonly TimeSpan _holdAfter = TimeSpan.FromMilliseconds(250);
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ItemsControl, SpaceState> _space = [];
@@ -39,11 +39,13 @@ internal static class RowKeys
             {
                 list.AddHandler(InputElement.KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
                 list.AddHandler(InputElement.KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel);
+                list.AddHandler(InputElement.LostFocusEvent, OnLostFocus);
             }
             else
             {
                 list.RemoveHandler(InputElement.KeyDownEvent, OnKeyDown);
                 list.RemoveHandler(InputElement.KeyUpEvent, OnKeyUp);
+                list.RemoveHandler(InputElement.LostFocusEvent, OnLostFocus);
             }
         });
     }
@@ -83,8 +85,16 @@ internal static class RowKeys
             return;
         }
 
-        list.ScrollIntoView(index);
-        list.UpdateLayout();
+        if (list is IRowKeyTarget target)
+        {
+            target.RevealRow(index);
+        }
+        else
+        {
+            list.ScrollIntoView(index);
+            list.UpdateLayout();
+        }
+
         var row = list.ContainerFromIndex(index)?.GetSelfAndVisualDescendants().OfType<InputElement>().FirstOrDefault(c => c.Focusable && c.IsEffectivelyVisible);
         if (row is not null)
         {
@@ -106,7 +116,8 @@ internal static class RowKeys
         var current = CurrentIndex(list, e.Source as Visual);
         if (current < 0 || list.ItemCount == 0)
         {
-            return;   // the key came from something in the list that is not a row, such as a button in a footer
+            OffRowKey(list, e);   // the key came from the list itself, or from something in it that is not a row, such as a button in a footer
+            return;
         }
 
         if (IsMoveKey(e.Key, list))
@@ -181,41 +192,6 @@ internal static class RowKeys
             Raise(list, BackRequestedEvent, current);
         }
 
-        e.Handled = true;
-    }
-
-    // The first Space down starts the clock; a repeat after the hold time shows the peek, and the key up ends it. A repeat inside the tap time is not a second tap.
-    private static void SpaceDown(ItemsControl list, int current)
-    {
-        var state = _space.GetOrCreateValue(list);
-        if (state.Start is not { } start)
-        {
-            state.Start = Clock.GetTimestamp();
-            state.Index = current;
-            state.HoldRaised = false;
-        }
-        else if (!state.HoldRaised && Clock.GetElapsedTime(start) >= _holdAfter)
-        {
-            state.HoldRaised = true;
-            Raise(list, PeekRequestedEvent, state.Index, hold: true, released: false);
-        }
-    }
-
-    private static void OnKeyUp(object? sender, KeyEventArgs e)
-    {
-        if (sender is not ItemsControl list || e.Key != Key.Space || !_space.TryGetValue(list, out var state) || state.Start is not { } start)
-        {
-            return;
-        }
-
-        var held = state.HoldRaised || Clock.GetElapsedTime(start) >= _holdAfter;
-        if (held && !state.HoldRaised)
-        {
-            Raise(list, PeekRequestedEvent, state.Index, hold: true, released: false);
-        }
-
-        Raise(list, PeekRequestedEvent, state.Index, hold: held, released: held);
-        state.Start = null;
         e.Handled = true;
     }
 

@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
@@ -87,6 +88,9 @@ internal sealed class Row : TemplatedControl
         }
 
         p.Glyph.Glyph = RowGlyphs.For(item.Kind, item.StateClass, item.StateKey);
+        var state = StateWord(item);
+        AutomationProperties.SetName(p.Glyph, state);
+        AutomationProperties.SetName(this, SpokenName(item, state));
         p.Id.Text = item.Id;
         p.Title.Text = item.Title;
         p.Title.FontWeight = item.Unread ? FontWeight.Medium : FontWeight.Normal;
@@ -97,6 +101,26 @@ internal sealed class Row : TemplatedControl
         FillWaitsOn(p.Wait, item.WaitsOn);
         FillFacts(p.Facts, item);
         FillActions(p.Actions, item);
+    }
+
+    // "<state>, <title>, <facts>, waits on <who>, <age>": what a screen reader says for the row.
+    private static string StateWord(IRowItem item) => (item.StateKey ?? item.StateClass.ToString()).Replace('-', ' ').ToLowerInvariant();
+
+    private static string SpokenName(IRowItem item, string state)
+    {
+        var parts = new List<string> { state, item.Title };
+        parts.AddRange(item.Facts.Values.Select(f => f.Text).Where(t => !string.IsNullOrEmpty(t)));
+        if (item.WaitsOn is { } waits && waits.Who != RowWho.Nobody)
+        {
+            parts.Add("waits on " + (waits.Who == RowWho.Me ? "you" : waits.Name));
+        }
+
+        if (!string.IsNullOrEmpty(item.Age))
+        {
+            parts.Add(item.Age);
+        }
+
+        return string.Join(", ", parts);
     }
 
     private void FillWaitsOn(TextBlock cell, RowWaitsOn? waits)

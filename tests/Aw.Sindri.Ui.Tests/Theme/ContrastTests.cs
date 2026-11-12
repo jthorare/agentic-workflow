@@ -28,6 +28,8 @@ public sealed partial class ContrastTests
         ("InkSubtle", "Canvas", 6.1, TextAa),
         ("InkSubtle", "Surface1", 5.6, TextAa),
         ("InkSubtle", "Surface2", 5.2, TextAa),
+        ("InkSubtle", "PrimarySoft", 4.6, TextAa),   // a row's sub-line and id, and a peek label, on the selected row (#2978)
+        ("InkMuted", "PrimarySoft", 10.3, TextAa),   // the title and facts on the selected row
         ("InkTertiary", "Canvas", 4.5, 0),
         ("InkTertiary", "Surface1", 4.1, 0),
         ("PrimaryHover", "Canvas", 7.0, TextAa),
