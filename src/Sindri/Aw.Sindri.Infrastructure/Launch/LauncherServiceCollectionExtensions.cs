@@ -48,6 +48,7 @@ internal static class LauncherServiceCollectionExtensions
                 BuiltinHash = BuiltinHash,
                 Approved = Approved(sp),
                 Models = sp.GetRequiredService<IModelCatalog>(),
+                Timer = sp.GetService<Aw.Sindri.Core.Doctor.IPartTimer>(),
             }));
     }
 

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using Aw.Kernel;
 using Aw.Kernel.Json;
@@ -52,18 +53,26 @@ internal sealed class LauncherInit(LauncherInitParts parts) : ILaunchSetup
             return KernelErrors.NotFound.With($"{only.Value.Value} is not in the catalog (fix: sindri launch show lists the entries)");
         }
 
+        var timer = Stopwatch.StartNew();
         var approved = await parts.Approved(cancellationToken).ConfigureAwait(false);
+        parts.Timer?.Took("Launcher.approved", timer.ElapsedMilliseconds);
         var entries = new List<LaunchShowEntry>();
         foreach (var entry in chosen)
         {
+            timer.Restart();
             var resolved = await parts.ResolveBin(entry.Bin, cancellationToken).ConfigureAwait(false);
+            parts.Timer?.Took("Launcher.resolve:" + entry.Id.Value, timer.ElapsedMilliseconds);
             var check = StepApproval.Check(entry, parts.BuiltinHash(entry.Id), approved?.StepArgvHashes(entry.Id) ?? []);
             var park = check.IsSuccess ? null : $"Steps on `{entry.Id.Value}` will park: approve `agents.{entry.Id.Value}.stepArgvHash: {entry.ArgvHash}`";
+            timer.Restart();
             var models = parts.Models is { } catalog && resolved is not null ? ModelBands.Rank(await catalog.ModelsOf(entry.Id, cancellationToken).ConfigureAwait(false)) : null;
+            parts.Timer?.Took("Launcher.models:" + entry.Id.Value, timer.ElapsedMilliseconds);
             entries.Add(new LaunchShowEntry(entry.Id, entry.Source, entry.Bin, resolved, entry.ArgvHash, check.IsSuccess, park) { Models = models });
         }
 
+        timer.Restart();
         var (terminal, source) = await Terminal(config, cancellationToken).ConfigureAwait(false);
+        parts.Timer?.Took("Launcher.terminal", timer.ElapsedMilliseconds);
         return new LaunchShowReport(terminal, source, parts.Catalog.Path, entries, Problems(config, parts.Catalog.Path));
     }
 
