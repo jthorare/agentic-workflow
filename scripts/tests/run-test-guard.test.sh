@@ -55,6 +55,12 @@ check "the check's EXIT trap ran" "$([ -e "$WORK/trap-ran" ] && echo yes || echo
 check "nothing tagged is left after a timeout" "$(with_token | wc -l | tr -d ' ')" "0"
 check "the timeout is said on stderr" "$(grep -c 'timed out after 2s' "$WORK/b.err")" "1"
 
+# --- (b2) a timeout exits 124 even when the watchdog is slow to exit (#3219) ---
+# Under gate load the check died of the watchdog's TERM and the guard read "watchdog still alive" as "no timeout",
+# so it passed the check's own 143 through. The seam holds the watchdog alive after its TERM, as a loaded box does.
+AW_GUARD_TEST_WATCHDOG_HOLD=3 bash "$GUARD" --timeout 2 --grace 3 -- bash -c "trap 'exit 143' TERM; sleep 120" 2>/dev/null
+check "a timeout exits 124 when the watchdog is slow to exit" "$?" "124"
+
 # --- (c) usage errors exit 2 ---
 bash "$GUARD" >/dev/null 2>&1;                          check "no arguments exit 2" "$?" "2"
 bash "$GUARD" --timeout 5 >/dev/null 2>&1;              check "no command exits 2" "$?" "2"

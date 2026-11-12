@@ -40,6 +40,11 @@ public static class GraphOps
         var working = new GraphEditSession(spec);
         for (var i = 0; i < ops.Count; i++)
         {
+            if (ops[i] is ReplaceNodeOp)
+            {
+                return SindriErrors.GraphNotBuilt.With($"op {(i + 1).ToString(CultureInfo.InvariantCulture)} (replace_node): replace_node is not built yet");   // why: P0 contract stub (Workflows page spec E3); the engine lane builds it
+            }
+
             if (working.Apply(ops[i]) is { } problem)
             {
                 return SindriErrors.GraphOpInvalid.With($"op {(i + 1).ToString(CultureInfo.InvariantCulture)} ({Kind(ops[i])}): {problem}");

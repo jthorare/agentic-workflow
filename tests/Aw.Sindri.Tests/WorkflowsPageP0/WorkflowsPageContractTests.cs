@@ -76,8 +76,8 @@ public sealed class WorkflowsPageContractTests
         var result = GraphOps.Apply(spec, 1, 1, [new ReplaceNodeOp(NodeId.From("daily"), "manual")], Validator());
 
         Assert.True(result.IsError);
-        Assert.Equal("SND-GRAPH-012", result.Error.Code);
-        Assert.Contains("SND-GRAPH-113", result.Error.Message, StringComparison.Ordinal);
+        Assert.Equal("SND-GRAPH-119", result.Error.Code);
+        Assert.Contains("op 1", result.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -111,7 +111,7 @@ public sealed class WorkflowsPageContractTests
     {
         var result = await new TestWorkflowService().Handle(new TestWorkflowRequest(Slug, Revision: null, Trigger: null, TriggerEvent: null, Pins: null, WithModel: false, WithAgents: false, "owner"), Token);
 
-        Assert.Equal("SND-GRAPH-113", result.Error.Code);
+        Assert.Equal("SND-GRAPH-119", result.Error.Code);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public sealed class WorkflowsPageContractTests
     {
         var result = await new PinWorkflowOutputService().Handle(new PinWorkflowOutputRequest(Slug, Revision: null, "fetch", Run: null, Output: "{}", "owner"), Token);
 
-        Assert.Equal("SND-GRAPH-113", result.Error.Code);
+        Assert.Equal("SND-GRAPH-119", result.Error.Code);
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public sealed class WorkflowsPageContractTests
     {
         var result = await new ListTriggerEventsService().Handle(new ListTriggerEventsRequest("github.pr.opened", Connection: null), Token);
 
-        Assert.Equal("SND-GRAPH-113", result.Error.Code);
+        Assert.Equal("SND-GRAPH-119", result.Error.Code);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public sealed class WorkflowsPageContractTests
     {
         var result = await new ListWorkflowTemplatesService().Handle(new ListWorkflowTemplatesRequest(), Token);
 
-        Assert.Equal("SND-GRAPH-113", result.Error.Code);
+        Assert.Equal("SND-GRAPH-119", result.Error.Code);
     }
 
     [Fact]

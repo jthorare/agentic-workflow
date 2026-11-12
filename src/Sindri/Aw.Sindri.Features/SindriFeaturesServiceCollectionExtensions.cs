@@ -173,7 +173,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IValidator<DeleteWorkflowRequest>, AcceptAllValidator<DeleteWorkflowRequest>>().AddCommand<DeleteWorkflowRequest, DeleteWorkflowResponse, DeleteWorkflowService>()
             .AddScoped<IValidator<ListWorkflowBlocksRequest>, AcceptAllValidator<ListWorkflowBlocksRequest>>().AddQuery<ListWorkflowBlocksRequest, ListWorkflowBlocksResponse, ListWorkflowBlocksService>()   // 'wf blocks' and 'wf docs'
             .AddScoped<IValidator<SearchWorkflowDocsRequest>, AcceptAllValidator<SearchWorkflowDocsRequest>>().AddQuery<SearchWorkflowDocsRequest, SearchWorkflowDocsResponse, SearchWorkflowDocsService>()
-            .AddScoped<IValidator<TestWorkflowRequest>, AcceptAllValidator<TestWorkflowRequest>>().AddCommand<TestWorkflowRequest, TestWorkflowResponse, TestWorkflowService>()   // the Workflows page P0 contract stubs (#3191): each refuses with SND-GRAPH-113 until its phase builds it
+            .AddScoped<IValidator<TestWorkflowRequest>, AcceptAllValidator<TestWorkflowRequest>>().AddCommand<TestWorkflowRequest, TestWorkflowResponse, TestWorkflowService>()   // the Workflows page P0 contract stubs (#3191): each refuses with SND-GRAPH-119 until its phase builds it
             .AddScoped<IValidator<PinWorkflowOutputRequest>, AcceptAllValidator<PinWorkflowOutputRequest>>().AddCommand<PinWorkflowOutputRequest, PinWorkflowOutputResponse, PinWorkflowOutputService>()
             .AddScoped<IValidator<ListTriggerEventsRequest>, AcceptAllValidator<ListTriggerEventsRequest>>().AddQuery<ListTriggerEventsRequest, ListTriggerEventsResponse, ListTriggerEventsService>()
             .AddScoped<IValidator<ListWorkflowTemplatesRequest>, AcceptAllValidator<ListWorkflowTemplatesRequest>>().AddQuery<ListWorkflowTemplatesRequest, ListWorkflowTemplatesResponse, ListWorkflowTemplatesService>();
@@ -218,7 +218,7 @@ public static class SindriFeaturesServiceCollectionExtensions
     {
         // ---- queries (one line per slice) ----
         _ = services.AddScoped<IValidator<GetEventCatalogRequest>, AcceptAllValidator<GetEventCatalogRequest>>().AddQuery<GetEventCatalogRequest, EventCatalogView, GetEventCatalogService>();
-        _ = services.AddScoped<IValidator<GetNeedsYouRequest>, AcceptAllValidator<GetNeedsYouRequest>>().AddQuery<GetNeedsYouRequest, GetNeedsYouResponse, GetNeedsYouService>().AddScoped<NeedsYouLiveRows>();
+        _ = services.AddScoped<IValidator<GetNeedsYouRequest>, AcceptAllValidator<GetNeedsYouRequest>>().AddQuery<GetNeedsYouRequest, GetNeedsYouResponse, GetNeedsYouService>().AddScoped<NeedsYouLiveRows>().AddSingleton<TurnOnMcpSighting>();
         _ = services.AddScoped<IValidator<ListDecisionsRequest>, AcceptAllValidator<ListDecisionsRequest>>().AddQuery<ListDecisionsRequest, ListDecisionsResponse, ListDecisionsService>();
         _ = services.AddScoped<IValidator<ListRequestsRequest>, AcceptAllValidator<ListRequestsRequest>>().AddQuery<ListRequestsRequest, ListRequestsResponse, ListRequestsService>();
         _ = services.AddScoped<IValidator<GetJobRequest>, AcceptAllValidator<GetJobRequest>>().AddQuery<GetJobRequest, JobView, GetJobService>();
