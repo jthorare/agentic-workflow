@@ -226,7 +226,7 @@ public sealed class ProjectsGridKeysTests : FrameHost
     });
 
     [Fact]
-    public Task An_open_fold_has_its_own_grid_stop_after_its_button_and_arrows_stay_inside_it() => OnUi(async () =>
+    public Task An_open_fold_has_its_own_grid_stop_after_its_button_and_Left_and_Right_stay_inside_it() => OnUi(async () =>
     {
         var (window, _) = await OnProjects(finishedOpen: true);
         var inFold = Frames(window).First(f => ((ProjectCardViewModel)f.DataContext!).Name == "G");
@@ -238,7 +238,6 @@ public sealed class ProjectsGridKeysTests : FrameHost
         Assert.True(inFold.Focus(NavigationMethod.Tab));
         Press(window, PhysicalKey.ArrowRight);
         Press(window, PhysicalKey.ArrowDown);
-        Press(window, PhysicalKey.ArrowUp);
         Assert.Equal("G", Focused(window));
 
         var button = Named<Expander>(window, "ProjectsFinished").GetVisualDescendants().OfType<ToggleButton>().First();

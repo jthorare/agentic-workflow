@@ -9,7 +9,9 @@ namespace Aw.Sindri.Ui.Views.Projects;
 #pragma warning disable MA0182 // why: ProjectsPage.axaml sets it, which the analyzer cannot see
 /// <summary>
 /// Keyboard use of a Projects card grid (projects page spec §3.3): the cards under the control are one tab stop (the one last focused, the first until then)
-/// and the arrow keys move by card in reading order; Up and Down keep the column of the row as drawn, or take the last card of a shorter row. A key typed
+/// and the arrow keys move by card in reading order; Up and Down keep the column of the row as drawn, or take the last card of a shorter row, and from the
+/// last (first) row go on to the first (last) card of the next (previous) open fold. J and K step to the next and previous card across the page's grids,
+/// Home and End go to its first and last card, PageUp and PageDown move a screen of rows within the grid. A key typed
 /// into a text box, or with a modifier, is left alone, and so is Enter.
 /// </summary>
 internal static class CardGrid
@@ -80,15 +82,15 @@ internal static class CardGrid
 
     private static void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (sender is not Control grid || e.KeyModifiers != KeyModifiers.None || e.Key is not (Key.Left or Key.Right or Key.Up or Key.Down)
+        if (sender is not Control grid || e.KeyModifiers != KeyModifiers.None
+            || e.Key is not (Key.Left or Key.Right or Key.Up or Key.Down or Key.J or Key.K or Key.Home or Key.End or Key.PageUp or Key.PageDown)
             || e.Source is not Visual source || source is TextBox || source.FindAncestorOfType<TextBox>() is not null
             || CardOf(source) is not { } from)
         {
             return;
         }
 
-        var cards = Cards(grid);
-        var target = Target(grid, cards, from, e.Key);
+        var target = Target(grid, from, e.Key);
         if (target is not null && !ReferenceEquals(target, from))
         {
             _ = target.Focus(NavigationMethod.Directional);
@@ -97,8 +99,29 @@ internal static class CardGrid
         e.Handled = true;
     }
 
-    private static Border? Target(Control grid, List<Border> cards, Border from, Key key)
+    // The grids of the page that show cards, top to bottom: the main grid, then an open fold's.
+    private static List<Control> PageGrids(Control grid)
     {
+        if (TopLevel.GetTopLevel(grid) is not Visual top)
+        {
+            return [grid];
+        }
+
+        var grids = top.GetVisualDescendants().OfType<Control>().Where(c => GetIsGrid(c) && c.IsEffectivelyVisible && Cards(c).Count > 0)
+            .OrderBy(c => c.TranslatePoint(default, top)?.Y ?? 0).ToList();
+        return grids.Contains(grid) ? grids : [grid];
+    }
+
+    // Rows as drawn: cards that share a top edge, each row in left-to-right order.
+    private static List<List<Border>> Rows(Control grid, List<Border> cards) =>
+        [.. cards.Select(c => (Card: c, Pos: c.TranslatePoint(default, grid) ?? default))
+            .GroupBy(p => Math.Round(p.Pos.Y, MidpointRounding.AwayFromZero))
+            .OrderBy(g => g.Key)
+            .Select(g => g.OrderBy(p => p.Pos.X).Select(p => p.Card).ToList())];
+
+    private static Border? Target(Control grid, Border from, Key key)
+    {
+        var cards = Cards(grid);
         var at = cards.IndexOf(from);
         if (at < 0)
         {
@@ -110,20 +133,69 @@ internal static class CardGrid
             return cards[Math.Clamp(at + (key == Key.Right ? 1 : -1), 0, cards.Count - 1)];
         }
 
-        // Rows as drawn: cards that share a top edge, each row in left-to-right order.
-        var rows = cards.Select(c => (Card: c, Pos: c.TranslatePoint(default, grid) ?? default))
-            .GroupBy(p => Math.Round(p.Pos.Y, MidpointRounding.AwayFromZero))
-            .OrderBy(g => g.Key)
-            .Select(g => g.OrderBy(p => p.Pos.X).Select(p => p.Card).ToList())
-            .ToList();
+        return key is Key.J or Key.K or Key.Home or Key.End ? AcrossGrids(grid, from, key) : Vertical(grid, cards, from, key);
+    }
+
+    // J, K, Home and End walk the cards of every open grid on the page in reading order.
+    private static Border AcrossGrids(Control grid, Border from, Key key)
+    {
+        var all = PageGrids(grid).SelectMany(Cards).ToList();
+        if (key == Key.Home)
+        {
+            return all[0];
+        }
+
+        return key == Key.End ? all[^1] : all[Math.Clamp(all.IndexOf(from) + (key == Key.J ? 1 : -1), 0, all.Count - 1)];
+    }
+
+    private static Border Vertical(Control grid, List<Border> cards, Border from, Key key)
+    {
+        var rows = Rows(grid, cards);
         var row = rows.FindIndex(r => r.Contains(from));
-        var next = row + (key == Key.Down ? 1 : -1);
-        if (row < 0 || next < 0 || next >= rows.Count)
+        if (row < 0)
         {
             return from;
         }
 
+        var paging = key is Key.PageDown or Key.PageUp;
+        var step = paging ? PageRows(grid, rows) : 1;
+        var next = row + (key is Key.Down or Key.PageDown ? step : -step);
+        if (paging)
+        {
+            next = Math.Clamp(next, 0, rows.Count - 1);
+        }
+        else if (next < 0 || next >= rows.Count)
+        {
+            return Neighbour(grid, key == Key.Down) ?? from;
+        }
+
         return rows[next][Math.Min(rows[row].IndexOf(from), rows[next].Count - 1)];
+    }
+
+    // The first card of the next grid down, or the last card of the previous grid up; null at the page's ends.
+    private static Border? Neighbour(Control grid, bool down)
+    {
+        var grids = PageGrids(grid);
+        var at = grids.IndexOf(grid);
+        var other = at + (down ? 1 : -1);
+        if (at < 0 || other < 0 || other >= grids.Count)
+        {
+            return null;
+        }
+
+        var cards = Cards(grids[other]);
+        return down ? cards[0] : cards[^1];
+    }
+
+    // One screen of rows: the scroll viewer's height over the distance between two rows, at least one.
+    private static int PageRows(Control grid, List<List<Border>> rows)
+    {
+        var viewport = grid.FindAncestorOfType<ScrollViewer>()?.Viewport.Height ?? grid.Bounds.Height;
+        var first = rows[0][0];
+        var pitch = rows.Count > 1
+            ? (rows[1][0].TranslatePoint(default, grid)?.Y ?? 0) - (first.TranslatePoint(default, grid)?.Y ?? 0)
+            : first.Bounds.Height;
+        return pitch > 0 ? Math.Max(1, (int)(viewport / pitch)) : 1;
     }
 }
 #pragma warning restore MA0182
