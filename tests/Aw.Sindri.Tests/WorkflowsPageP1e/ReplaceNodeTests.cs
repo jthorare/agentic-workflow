@@ -24,7 +24,7 @@ public sealed class ReplaceNodeTests
         [
             new GraphNode(NodeId.From("pr"), "connection_event", "PR opened", new JsonObject { ["connection"] = "github:work", ["event"] = "github.pr.opened" }),
             Agent("review", "acme/api", "Review {{trigger.title}}"),
-            Notify("tell", "{{review.summary}}"),
+            Notify("tell", "{{review.status}}"),
         ],
         [Edge("pr", "review"), Edge("review", "tell")]);
 
