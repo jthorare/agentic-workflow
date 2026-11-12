@@ -32,6 +32,9 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
     /// <summary>How many asks, from the first, answer "waiting on a permission prompt for Bash"; the ones after answer nothing (#3151).</summary>
     public int Asks { get; init; }
 
+    /// <summary>How many times the workflow asked about the permission prompt (#3151).</summary>
+    public int AskCalls => Volatile.Read(ref _asked);
+
     /// <summary>Why the launch fails, or null for a launch that starts.</summary>
     public AgentLaunchFailure? Failure { get; init; }
 

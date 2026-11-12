@@ -141,4 +141,17 @@ public sealed class NodeAgentEventsTests
         Assert.Equal("permission prompt", Text(asking, "waitingOn"));
         Assert.Equal("Bash", Text(asking, "lastTool"));
     }
+
+    // why: every ask is a timer, an activity and workflow tasks in the run's history, which Temporal caps at 51,200 events; a long node must ask in a few long calls, not one per few seconds
+    [Fact]
+    public async Task A_node_that_never_asks_makes_only_a_few_ask_calls_over_its_whole_timeout()
+    {
+        var runtime = new FakeAgentNodeRuntime { Timeout = TimeSpan.FromSeconds(6), AskEvery = TimeSpan.FromMilliseconds(200) };
+        await using var rig = await GraphRig.StartAsync(runtime);
+        var run = await AgentNodeRig.Start(rig);
+
+        _ = await rig.Final(run);
+
+        Assert.InRange(runtime.AskCalls, 1, 3);
+    }
 }
