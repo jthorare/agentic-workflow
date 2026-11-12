@@ -61,7 +61,7 @@ public sealed class AgentsColumnsTests
     {
         var page = await _f.Shown(Token);
         page.Resize(500);
-        page.FilterProvider(RowOf(page, "cursor/").Provider);   // the cursor session has no repository, the others do
+        page.FilterText = "p:cursor";   // the cursor session has no repository, the others do
 
         page.Resize(1280);
 

@@ -30,11 +30,11 @@ public sealed class AgentsPageStatesTests : FrameHost
         await Until(window, () => Visible(window, "AgentsSkeleton"));
         Assert.Equal(5, Named<StackPanel>(window, "AgentsSkeleton").Children.OfType<Grid>().Count());
         Assert.Equal(Labels.ReadingSessions, Named<Border>(window, "AgentsReadingName").GetVisualDescendants().OfType<TextBlock>().First().Text);
-        Assert.False(Named<ComboBox>(window, "ProviderFilter").IsEnabled);
+        Assert.False(Named<TextBox>(window, "AgentsFilter").IsEnabled);
 
         Server.SessionsGate.SetResult();
         await Until(window, () => !Visible(window, "AgentsSkeleton") && shell.Agents.Groups.Count > 0);
-        Assert.True(Named<ComboBox>(window, "ProviderFilter").IsEnabled);
+        Assert.True(Named<TextBox>(window, "AgentsFilter").IsEnabled);
     });
 
     [Fact]
@@ -56,8 +56,7 @@ public sealed class AgentsPageStatesTests : FrameHost
         var (window, shell) = await Open();
         await Until(window, () => shell.Agents.Groups.Count > 0);
 
-        shell.Agents.FilterState("running");
-        shell.Agents.FilterRepo("web");
+        shell.Agents.FilterText = "s:running r:web";
         await Until(window, () => shell.Agents.IsEmpty);
 
         Assert.Equal(Labels.NoSessionsMatch, Named<TextBlock>(window, "AgentsEmpty").Text);

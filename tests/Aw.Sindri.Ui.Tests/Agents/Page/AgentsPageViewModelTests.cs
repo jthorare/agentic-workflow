@@ -35,11 +35,11 @@ public sealed class AgentsPageViewModelTests
         var expected = Labels.AgentsHead(live, (int)counts["asking"]!);
 
         Assert.Equal(expected, page.Head);
-        page.FilterProvider("Codex");
+        page.FilterText = "p:codex";
         var shown = page.Groups.SelectMany(g => g.Rows).Count();
         Assert.StartsWith(string.Create(CultureInfo.InvariantCulture, $"{shown} of {live} "), page.Head, StringComparison.Ordinal);
         Assert.Contains(page.Head, page.HeadName, StringComparison.Ordinal);
-        page.FilterProvider(Labels.AllProviders);
+        page.FilterText = string.Empty;
         Assert.Equal(expected, page.Head);
     }
 
@@ -48,17 +48,6 @@ public sealed class AgentsPageViewModelTests
     {
         Assert.Equal("2 of 7 agents · 1 asking you", Labels.AgentsFilteredHead(2, 7, 1));
         Assert.Equal("0 of 1 agent · 0 asking you", Labels.AgentsFilteredHead(0, 1, 0));
-    }
-
-    [Fact]
-    public async Task The_state_choices_use_the_chip_words_in_the_rows_order_and_filter_on_the_served_state()
-    {
-        var page = await _f.Shown(Token);
-
-        Assert.Equal([Labels.AllStates, "Working", "Waiting on you", "Idle", "Unknown"], page.StateChoices.Take(5), StringComparer.Ordinal);
-        page.FilterState("Working");
-        Assert.Equal("running", page.StateFilter);
-        Assert.Equal([Claude], Providers(page.Groups.SelectMany(g => g.Rows)), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -226,8 +215,7 @@ public sealed class AgentsPageViewModelTests
     {
         var page = await _f.Shown(Token);
 
-        page.FilterProvider("Codex");
-        page.FilterState("idle");
+        page.FilterText = "p:codex s:idle";
 
         Assert.True(page.IsEmpty);
         Assert.Equal(Labels.NoSessionsMatch, page.EmptyText);
@@ -240,16 +228,13 @@ public sealed class AgentsPageViewModelTests
         var page = await _f.Shown(Token);
         var reads = _f.Server.SessionsCalls;
 
-        page.FilterProvider("Codex");
+        page.FilterText = "p:codex";
         Assert.Equal([Codex], Providers(page.Groups.SelectMany(g => g.Rows)), StringComparer.Ordinal);
-        page.FilterProvider(Labels.AllProviders);
-        page.FilterState("running");
+        page.FilterText = "s:running";
         Assert.Equal([Claude], Providers(page.Groups.SelectMany(g => g.Rows)), StringComparer.Ordinal);
-        page.FilterState(choice: null);
-        page.FilterRepo("web");
+        page.FilterText = "r:web";
         Assert.Equal([Codex], Providers(page.Groups.SelectMany(g => g.Rows)), StringComparer.Ordinal);
         Assert.Equal(reads, _f.Server.SessionsCalls);
-        Assert.Contains("api", page.RepoChoices, StringComparer.Ordinal);
     }
 
     [Fact]
