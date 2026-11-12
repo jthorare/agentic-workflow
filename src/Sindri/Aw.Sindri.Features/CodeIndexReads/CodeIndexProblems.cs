@@ -7,7 +7,7 @@ namespace Aw.Sindri.Features.CodeIndexReads;
 
 /// <summary>
 /// The health row a repo's code index makes, if any (the Health card's words, code index spec §7.3): damaged, a build retrying after failures, a failed code graph, or an index behind main.
-/// Missing, building, waiting for a build slot and pending embeddings are not problems. At most one row a repo: damaged, then retrying, then unavailable, then stale.
+/// Missing, queued, building and pending embeddings are not problems. At most one row a repo: damaged, then retrying, then unavailable, then stale.
 /// </summary>
 internal static class CodeIndexProblems
 {
