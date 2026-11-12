@@ -201,7 +201,7 @@ The bad case this stops: a lane's row jumps to the top as the owner presses Ente
 
 ### 4.3 The walk, rerun: meta 205k, ideas 210k, #3067 and #3078 ready
 
-The numbers for meta, ideas, #3067, #3078 and qa idle for 9 min come from the ux walk on #3018. Every other number is made up for this spec. On this box `context.recycleAt` must be 200,000 or lower for 205k to be "at the mark". The default is 300,000 (`ContextConfig.cs:5`), so the box's team config sets it. I did not read that config.
+The numbers for meta, ideas, #3067, #3078 and qa idle for 9 min come from the ux walk on #3018. Every other number is made up for this spec. On the owner's box the team config sets `context.recycleAt` to 200,000, and each lane row from `aw-meta lanes-context --json` carries `threshold: 200000` (checked by the lead on 2026-11-12). So 205k and 210k are past the mark. The 300,000 in `ContextConfig.cs:5` is only the code default.
 
 Box at 09:10. Eleven lanes: context, design, ideas, ux, meta, ui, qa, engine, tools, perf, api.
 
@@ -487,7 +487,7 @@ Requirements by area:
 
 - **Reasons (api, Core).** `AgentReasons` is a pure function in `Aw.Sindri.Core.Sessions`: a session's state, the lane's context verdict, usage state, queue entries, obligations, health text, heavy waiters and the thresholds in; the ordered reasons out. The §4.3 example and one fixture per reason are its golden tests.
 - **Session rows (api).** Build `AgentRow` on top of `SessionDiscovery`, not a second collector. Add the builder-to-lead parent, the PR or issue, the context k, and the last activity from the transcript write.
-- **Lanes collector (api, engine).** One service reads `aw-meta` (events first, `lanes-context`/`status`/`usage` as the fallback) for both Home and Agents. It never calls `merge-run`, `gate-run` or `lane-recycle`. The steer route does that. `lanes-context` and `usage` exit 1 when something needs attention and still print valid JSON, so the reader parses stdout; a missing binary, exit 2 or bad JSON raises `lanes-unavailable` (Home §8).
+- **Lanes collector (api, engine).** One service reads `aw-meta` (events first, `lanes-context`/`status`/`usage` as the fallback) for both Home and Agents. It never calls `merge-run`, `gate-run` or `lane-recycle`. The steer route does that. `lanes-context` and `usage` exit 1 when something needs attention and still print valid JSON, so the reader parses stdout; a missing binary, exit 2 or bad JSON raises `lanes-unavailable` (Home §8). The verdict is PascalCase in the JSON (`"verdict":"Ok"`), so the reader matches `Recycle` exactly.
 - **Steer adapters (api).** One per op in §5. Each takes the `actId`, checks whether the op already landed (a stop checks the pid is gone; a recycle checks the lane's session id changed), and returns the target's reason on refusal. `aw-meta` and other CLIs are called with an argument list, never a shell string.
 - **Stop (api).** Read `agentPid` and `agentStartTicks` from the same collector pass as the row, send SIGTERM, refuse when the ticks changed (SND-AGENT-004). No process-group kill and no pattern match.
 - **Events (api).** `session.changed` (§7.2), and the `failed` kind on `fleet.changed` for #3026. Both join `EventCatalog.cs`. `EventCatalogTests` and the API goldens (Lane=integration) go in the gate.
@@ -569,7 +569,7 @@ From a read of `origin/main` 7c81646696 and the issues (no build, no app run):
 | The collector pass runs every `PollSeconds` (1 to 30 s), so the snapshot lags before the page does | `SessionCollectorHost.cs:28` | perf's 5 s figure leaves this out | §7.1 |
 | `aw-meta heavy`, `locks/heavy-wait/` and `aw-meta jobs` do not exist | `git grep` on main | slot-wait has no source | §3.2 |
 | `Obligation` has no timestamp and is the meta's own list | `Obligation.cs:8`, `ObligationKind.cs` | "work owed" to other lanes has no source except the gate verdict | §3.2 |
-| The recycle mark defaults to 300,000; the walk's 205k is at the mark only if the box sets it lower | `ContextConfig.cs:5` | the worked example depends on the box's config | §4.3 |
+| The code default recycle mark is 300,000; the owner's box sets 200,000 (checked with `aw-meta lanes-context --json`) | `ContextConfig.cs:5` | the worked example uses the box value | §4.3 |
 | `SessionRow` has no parent, context, PR, last activity or slot | `SessionRow.cs:27-29` | builders can't nest and a lead can't steer "its own" | §3.1 |
 | No `/sindri/rows/{id}/ops` route exists | `git grep '/ops'` | the steer has no route yet | §5 |
 | `SessionFocus` is "not-built" for every row | `SessionFocus.cs`, #3023 | Jump copies a command until CO-4a | §6.5 |
