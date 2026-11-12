@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Infrastructure.Launch;
@@ -80,5 +81,55 @@ public sealed class UsageSpendTests
         _ = await spend.Today(_claude, Token);
 
         Expect.Equal(1, reader.Reads);
+    }
+
+    /// <summary>Pins #2777: a stale day answers from the last read and starts one refresh in the background, so a caller never waits on the transcripts.</summary>
+    [Fact]
+    public async Task A_stale_day_answers_from_the_last_read_and_never_waits_on_the_next()
+    {
+        var gate = new TaskCompletionSource<IReadOnlyList<ModelTokens>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var reader = new GatedUsageReader([new ModelTokens("claude-sonnet-4-5", 1_000_000, 0, 0, 0)], gate.Task);
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 17, 20, 0, 0, TimeSpan.Zero));
+        clock.SetLocalTimeZone(TimeZoneInfo.CreateCustomTimeZone("test", _utcMinusSeven, "test", "test"));
+        var spend = new UsageSpend(new AgentCatalog([AgentEntries.ClaudeCode]), new Dictionary<string, IUsageReader>(StringComparer.Ordinal) { ["claude-code"] = reader }, clock);
+        var first = new AgentSpend(3m, 1_000_000, SpendBasis.PriceTable);
+        var second = new AgentSpend(6m, 2_000_000, SpendBasis.PriceTable);
+
+        Expect.Equal(first, (await spend.Today(_claude, Token)).Value);
+        clock.Advance(TimeSpan.FromSeconds(16));
+
+        var one = await spend.Today(_claude, Token).AsTask().WaitAsync(TimeSpan.FromSeconds(2), TimeProvider.System, Token);
+        var two = await spend.Today(_claude, Token).AsTask().WaitAsync(TimeSpan.FromSeconds(2), TimeProvider.System, Token);
+
+        Expect.Equal(first, one.Value);
+        Expect.Equal(first, two.Value);
+        Expect.Equal(2, reader.Reads);   // the first read and one shared refresh, not one per caller
+
+        gate.SetResult([new ModelTokens("claude-sonnet-4-5", 2_000_000, 0, 0, 0)]);
+        var answer = (await spend.Today(_claude, Token)).Value;
+        for (var waited = 0; waited < 200 && answer != second; waited++)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(10), TimeProvider.System, Token);
+            answer = (await spend.Today(_claude, Token)).Value;
+        }
+
+        Expect.Equal(second, answer);
+    }
+
+    /// <summary>A reader that answers its first read at once and every later one only when the gate opens.</summary>
+    private sealed class GatedUsageReader(IReadOnlyList<ModelTokens> firstRead, Task<IReadOnlyList<ModelTokens>> later) : IUsageReader
+    {
+        private int _reads;
+
+        public int Reads => Volatile.Read(ref _reads);
+
+        public string Name => "claude-code";
+
+        public bool Verified => true;
+
+        public async ValueTask<IReadOnlyList<ModelTokens>> Between(DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken) =>
+            Interlocked.Increment(ref _reads) == 1 ? firstRead : await later.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        public ValueTask<IReadOnlyList<ModelTokens>> OfSession(SessionId session, CancellationToken cancellationToken) => ValueTask.FromResult(firstRead);
     }
 }

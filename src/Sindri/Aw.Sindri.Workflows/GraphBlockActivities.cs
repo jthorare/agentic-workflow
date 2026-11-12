@@ -84,7 +84,7 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
 
         if (result.IsError)
         {
-            return Failed(config, result.Error);
+            return Failed(config, result.Error, context.FailureOutput);
         }
 
         return Succeeded(config, result.Value);   // why: Commit waits for the run's end (CommitRunAsync): a later node can still fail the run
@@ -176,8 +176,8 @@ internal sealed class GraphBlockActivities(GraphBlockRegistry blocks, IWorkflowR
         ? Failed(config, SindriErrors.GraphOutputTruncated.With($"the output of '{cut}' was cut at 64 KB; refer to a smaller field"))
         : null;
 
-    private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error) =>
-        new(NodeRunStatus.Failed, Fit(input?.ToJsonString()), Output: null, [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _));
+    private static GraphBlockOutcome Failed(JsonObject? input, Kernel.Error error, JsonObject? output = null) =>
+        new(NodeRunStatus.Failed, Fit(input?.ToJsonString()), Fit(output?.ToJsonString()), [], NodeRunLimits.Cap($"{error.Code}: {error.Message}", out _));
 
     private static GraphBlockOutcome Succeeded(JsonObject input, BlockResult result)
     {
