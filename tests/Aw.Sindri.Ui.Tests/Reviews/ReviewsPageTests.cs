@@ -1,7 +1,5 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Api.Reviews;
 using Aw.Sindri.Ui.ViewModels;
-using Aw.Sindri.Ui.ViewModels.Reviews;
 using static Aw.Sindri.Ui.Tests.Reviews.ReviewsFixture;
 
 namespace Aw.Sindri.Ui.Tests.Reviews;
@@ -65,22 +63,7 @@ public sealed class ReviewsPageTests
         var yours = page.Groups[1].Sections;
         Assert.Equal(("you", "running", StateGlyph.Stale, "1 open", null), (yours[0].Rows[0].Author, yours[0].Rows[0].Ci, yours[0].Rows[0].CiGlyph, yours[0].Rows[0].Required, yours[0].Rows[0].WaitingChip));
         var draft = yours[1].Rows[0];
-        Assert.Equal((true, "no CI", "none open", "no doc named"), (draft.IsDraft, draft.Ci, draft.Required, draft.Doc));
-    }
-
-    [Fact]
-    public void A_waiting_row_the_server_sent_with_no_required_checks_reads_none_open_like_a_row_with_zero_open()
-    {
-        var now = new DateTimeOffset(2026, 11, 12, 9, 0, 0, TimeSpan.Zero);
-        ReviewRowView Row(int? open, string? text) =>
-            new("acme/api", 2071, "Sign legacy webhook deliveries", "lee-park", Draft: false, now.AddDays(-1), now, "requested", "review requested", NewCommits: null, "none", open, text, ClaimsDoc: false, "/reviews/acme/api/2071");
-
-        var unknown = new ReviewRowViewModel(Row(open: null, text: null), "joi-example", now);
-        var zero = new ReviewRowViewModel(Row(open: 0, text: "none open"), "joi-example", now);
-
-        Assert.Equal(zero.Required, unknown.Required);
-        Assert.Equal("none open", unknown.Required);
-        Assert.Contains("required checks none open", unknown.AutomationName, StringComparison.Ordinal);
+        Assert.Equal((true, "no CI", string.Empty, "no doc named"), (draft.IsDraft, draft.Ci, draft.Required, draft.Doc));
     }
 
     [Fact]

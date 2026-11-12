@@ -39,9 +39,6 @@ internal static partial class Labels
     /// <summary>The PR names a design doc.</summary>
     internal const string ReviewsClaimsDoc = "claims a doc";
 
-    /// <summary>The Required cell when no check is open, or the project names none.</summary>
-    internal const string ReviewsRequiredNone = "none open";
-
     /// <summary>The PR names no design doc.</summary>
     internal const string ReviewsNoDoc = "no doc named";
 
