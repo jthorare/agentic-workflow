@@ -43,29 +43,34 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         var reference = new AgentNodeRef(_run, node.Id, itemIndex);
         var address = NodeRunAddress.Of(_run, node.Id, itemIndex);
         var launch = address.Launch().Value;
+        var events = new NodeAgentRecorder(_run, node.Id, itemIndex, Workflow.Patched("node-agent-events-1")) { Asks = Workflow.Patched("node-agent-ask-1") };
+        events.Launched(address.Launch(), address.WorkBranch);
         try
         {
             AgentNodeLaunched started;
             try
             {
-                started = await Launch(reference).ConfigureAwait(true);
+                started = await Launch(reference, events).ConfigureAwait(true);
             }
             catch (ActivityFailureException e) when (!TemporalException.IsCanceledException(e))
             {
+                await events.Record(NodeAgentStates.EndedFailed).ConfigureAwait(true);
                 return Failed(input: null, e.InnerException?.Message ?? e.Message);   // why: the last attempt's error, as a node whose block threw ends (RunBlock); the node's on_failure then applies as for any failed node (#2578)
             }
 
             if (started.Launched.Failure is { } failure)
             {
+                await events.Record(NodeAgentStates.EndedFailed).ConfigureAwait(true);
                 return Failed(started.Input, failure.Text);
             }
 
-            return await Supervise(new AgentWait(node.Id, itemIndex, launch), started, address, reference).ConfigureAwait(true);
+            return await Supervise(new AgentWait(node.Id, itemIndex, launch), started, address, reference, events).ConfigureAwait(true);
         }
         catch (Exception e) when (TemporalException.IsCanceledException(e))
         {
             // why: a cancel stops the session, and the stop is written detached so the cancel does not cancel it; there is nothing to measure
             _ = await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.CloseAsync(new AgentCloseRun(launch, Worktree: null, StartHead: null, Measure: false)), _detached).ConfigureAwait(true);
+            await events.RecordCancelled().ConfigureAwait(true);   // why: the series would end on 'working' otherwise; written detached like the close
             throw;
         }
         finally
@@ -143,19 +148,23 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         }
     }
 
-    private async Task<GraphBlockOutcome> Supervise(AgentWait wait, AgentNodeLaunched started, NodeRunAddress address, AgentNodeRef reference)
+    private async Task<GraphBlockOutcome> Supervise(AgentWait wait, AgentNodeLaunched started, NodeRunAddress address, AgentNodeRef reference, NodeAgentRecorder events)
     {
         await Announce(wait).ConfigureAwait(true);
-        var launched = started.Launched;
+        events.DeadlineAt(new DateTimeOffset(Workflow.UtcNow) + started.Timeout);
+        await events.Record(NodeAgentStates.Working).ConfigureAwait(true);
         using var stop = new CancellationTokenSource();
         var watch = Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.WatchAsync(wait.Launch), WatchOptions(stop.Token));
         AgentNodeEnding ending;
+        var poll = events.Asks ? new AgentAskPoll(events, started.AskEvery ?? _defaultAskEvery, started.AskCap ?? _defaultAskCap) : null;
         try
         {
-            ending = await WaitForAgent(wait, watch, started.Timeout, reference, launched).ConfigureAwait(true);
+            ending = await WaitForAgent(wait, watch, started.Timeout, new Session(reference, started.Launched, events, poll)).ConfigureAwait(true);
         }
         finally
         {
+            await (poll?.Stop() ?? Task.CompletedTask).ConfigureAwait(true);
+
             // why: the watch has done its job (or the workflow was cancelled); this stops its heartbeats, and TryCancel does not wait for the activity.
             // Cancel, not CancelAsync: CancelAsync runs the callbacks on the thread pool, outside the workflow's scheduler, so a workflow cancel never reached the watch (Temporal .NET docs)
 #pragma warning disable MA0042
@@ -170,7 +179,8 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
             await Hold(wait, held: false).ConfigureAwait(true);   // the human's report ended the node while it was held
         }
 
-        var closed = await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.CloseAsync(new AgentCloseRun(wait.Launch, launched.Worktree, launched.StartHead, Measure: true)), _agentRead).ConfigureAwait(true);
+        var closed = await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.CloseAsync(new AgentCloseRun(wait.Launch, started.Launched.Worktree, started.Launched.StartHead, Measure: true)), _agentRead).ConfigureAwait(true);
+        await events.Record(NodeAgentRecorder.EndState(ending.Failure)).ConfigureAwait(true);
         if (ending.Failure is { } reason)
         {
             return Failed(started.Input, reason);
@@ -195,7 +205,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
 
     // Waits for the report, the end of the session or the timeout, whichever comes first. The timeout runs only while nobody holds the node: a takeover stops its clock and a handback
     // starts it again with what was left.
-    private static async Task<AgentNodeEnding> WaitForAgent(AgentWait wait, Task<AgentSessionState> watch, TimeSpan timeout, AgentNodeRef reference, AgentLaunched launched)
+    private static async Task<AgentNodeEnding> WaitForAgent(AgentWait wait, Task<AgentSessionState> watch, TimeSpan timeout, Session session)
     {
         var remaining = timeout;
         while (true)
@@ -206,8 +216,10 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
                 return TimedOut(timeout);
             }
 
+            await (session.Poll?.Sync(wait, held) ?? Task.CompletedTask).ConfigureAwait(true);   // why: a permission prompt shows only in the fleet state file, so while the clock runs one long call watches it (#3151)
+
             var began = Workflow.UtcNow;
-            var met = await Round(wait, watch, held, remaining).ConfigureAwait(true);
+            var met = await Round(wait, watch, held, remaining, session.Poll).ConfigureAwait(true);
             if (!held)
             {
                 remaining -= Workflow.UtcNow - began;
@@ -220,7 +232,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
 
             if (watch.IsCompleted)
             {
-                return await Ended(watch, reference, launched).ConfigureAwait(true);
+                return await Ended(watch, session.Reference, session.Launched).ConfigureAwait(true);
             }
 
             if (!met)
@@ -228,14 +240,14 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
                 return TimedOut(timeout);
             }
 
-            await Hold(wait, wait.TakenOver).ConfigureAwait(true);   // the node was taken over or handed back: the idle sweep is told, and the next round runs the clock or stops it
+            await Settle(wait, held, remaining, session).ConfigureAwait(true);
         }
     }
 
-    // One round of the wait: until a report, the session's end or a change of who holds the node; with the clock running (nobody holds it) also until the time left is up. False when the time ran out.
-    private static async Task<bool> Round(AgentWait wait, Task<AgentSessionState> watch, bool held, TimeSpan remaining)
+    // One round of the wait: until a report, the session's end a change of the permission prompt or of who holds the node; with the clock running (nobody holds it) also until the time left is up. False when the time ran out.
+    private static async Task<bool> Round(AgentWait wait, Task<AgentSessionState> watch, bool held, TimeSpan remaining, AgentAskPoll? poll)
     {
-        bool Ready() => wait.Report is not null || watch.IsCompleted || wait.TakenOver != held;
+        bool Ready() => wait.Report is not null || watch.IsCompleted || wait.TakenOver != held || poll?.Done == true;
         if (held)
         {
             await Workflow.WaitConditionAsync(Ready).ConfigureAwait(true);

@@ -116,6 +116,73 @@ public sealed class UsageSpendTests
         Expect.Equal(second, answer);
     }
 
+    /// <summary>#3213: a caller that asks while the day's first read runs shares that read; nothing starts a second one.</summary>
+    [Fact]
+    public async Task A_read_asked_while_the_first_read_of_the_day_runs_waits_for_that_read()
+    {
+        var gate = new TaskCompletionSource<IReadOnlyList<ModelTokens>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var reader = new FirstReadGatedReader(gate.Task);
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 17, 20, 0, 0, TimeSpan.Zero));
+        clock.SetLocalTimeZone(TimeZoneInfo.CreateCustomTimeZone("test", _utcMinusSeven, "test", "test"));
+        var spend = new UsageSpend(new AgentCatalog([AgentEntries.ClaudeCode]), new Dictionary<string, IUsageReader>(StringComparer.Ordinal) { ["claude-code"] = reader }, clock);
+
+        var one = spend.Today(_claude, Token).AsTask();
+        var two = spend.Today(_claude, Token).AsTask();
+        _ = await reader.Started.Task.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+        Expect.Equal(1, reader.Reads);
+        Assert.False(one.IsCompleted || two.IsCompleted);
+
+        gate.SetResult([new ModelTokens("claude-sonnet-4-5", 1_000_000, 0, 0, 0)]);
+        var both = await Task.WhenAll(one, two).WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+
+        var expected = new AgentSpend(3m, 1_000_000, SpendBasis.PriceTable);
+        Expect.Equal(expected, both[0].Value);
+        Expect.Equal(expected, both[1].Value);
+        Expect.Equal(1, reader.Reads);
+    }
+
+    /// <summary>#3213: the cached read belongs to one local day; after midnight the next call reads the new day's window.</summary>
+    [Fact]
+    public async Task A_new_local_day_reads_again()
+    {
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 17, 20, 0, 0, TimeSpan.Zero));
+        clock.SetLocalTimeZone(TimeZoneInfo.CreateCustomTimeZone("test", _utcMinusSeven, "test", "test"));
+        var reader = new FakeUsageReader("claude-code", verified: true) { Used = [new ModelTokens("claude-sonnet-4-5", 1_000_000, 0, 0, 0)] };
+        var spend = new UsageSpend(new AgentCatalog([AgentEntries.ClaudeCode]), new Dictionary<string, IUsageReader>(StringComparer.Ordinal) { ["claude-code"] = reader }, clock);
+        Expect.Equal(new AgentSpend(3m, 1_000_000, SpendBasis.PriceTable), (await spend.Today(_claude, Token)).Value);
+
+        clock.Advance(TimeSpan.FromHours(12));   // 01:00 on 18 October in UTC-7
+        reader.Used = [new ModelTokens("claude-sonnet-4-5", 2_000_000, 0, 0, 0)];
+        var today = (await spend.Today(_claude, Token)).Value;
+
+        Expect.Equal(new AgentSpend(6m, 2_000_000, SpendBasis.PriceTable), today);
+        Expect.Equal(2, reader.Reads);
+        Expect.Equal((new DateTimeOffset(2026, 10, 18, 7, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 10, 19, 7, 0, 0, TimeSpan.Zero)), reader.Asked);
+    }
+
+    /// <summary>A reader whose every read waits on the gate, and says when the first one began.</summary>
+    private sealed class FirstReadGatedReader(Task<IReadOnlyList<ModelTokens>> gate) : IUsageReader
+    {
+        private int _reads;
+
+        public int Reads => Volatile.Read(ref _reads);
+
+        public TaskCompletionSource<bool> Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public string Name => "claude-code";
+
+        public bool Verified => true;
+
+        public async ValueTask<IReadOnlyList<ModelTokens>> Between(DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
+        {
+            _ = Interlocked.Increment(ref _reads);
+            _ = Started.TrySetResult(true);
+            return await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        public ValueTask<IReadOnlyList<ModelTokens>> OfSession(SessionId session, CancellationToken cancellationToken) => ValueTask.FromResult<IReadOnlyList<ModelTokens>>([]);
+    }
+
     /// <summary>A reader that answers its first read at once and every later one only when the gate opens.</summary>
     private sealed class GatedUsageReader(IReadOnlyList<ModelTokens> firstRead, Task<IReadOnlyList<ModelTokens>> later) : IUsageReader
     {

@@ -191,3 +191,4 @@ These codes went with Onyx (#1598). They are never given to a new error, so an o
 | `SND-GRAPH-123` | An `http` node's request got no acceptable answer: status outside `expect`, a redirect loop, an answer over 1 MB, or a network failure |
 | `SND-GRAPH-124` | A `workflow_result` node found no result: the run is not that workflow's, is not finished, or the workflow has no succeeded run |
 | `SND-GRAPH-130` | No question waits at that node |
+| `SND-GRAPH-131` | A reference reads a node that failed and continued |
