@@ -15787,7 +15787,7 @@ Aw.Sindri.Core.Reviews.ReviewRow.Ci.init -> void
 Aw.Sindri.Core.Reviews.ReviewRow.ClaimsDoc.get -> bool
 Aw.Sindri.Core.Reviews.ReviewRow.ClaimsDoc.init -> void
 Aw.Sindri.Core.Reviews.ReviewRow.<Clone>$() -> Aw.Sindri.Core.Reviews.ReviewRow!
-Aw.Sindri.Core.Reviews.ReviewRow.Deconstruct(out string! Repo, out int Number, out string! Title, out string! Author, out bool Draft, out System.DateTimeOffset OpenedAt, out System.DateTimeOffset LastActivity, out Aw.Sindri.Core.Reviews.ReviewWaitingKind? Waiting, out string? WaitingText, out int? NewCommits, out Aw.Sindri.Core.Reviews.ReviewCi Ci, out int? RequiredOpen, out string? RequiredText, out bool ClaimsDoc, out string! Href) -> void
+Aw.Sindri.Core.Reviews.ReviewRow.Deconstruct(out string! Repo, out int Number, out string! Title, out string! Author, out bool Draft, out System.DateTimeOffset OpenedAt, out System.DateTimeOffset LastActivity, out Aw.Sindri.Core.Reviews.ReviewWaitingKind? Waiting, out string? WaitingText, out int? NewCommits, out Aw.Sindri.Core.Reviews.ReviewCi Ci, out int? RequiredOpen, out string! RequiredState, out string? RequiredText, out bool ClaimsDoc, out string! Href) -> void
 Aw.Sindri.Core.Reviews.ReviewRow.Draft.get -> bool
 Aw.Sindri.Core.Reviews.ReviewRow.Draft.init -> void
 Aw.Sindri.Core.Reviews.ReviewRow.Equals(Aw.Sindri.Core.Reviews.ReviewRow? other) -> bool
@@ -15805,9 +15805,11 @@ Aw.Sindri.Core.Reviews.ReviewRow.Repo.get -> string!
 Aw.Sindri.Core.Reviews.ReviewRow.Repo.init -> void
 Aw.Sindri.Core.Reviews.ReviewRow.RequiredOpen.get -> int?
 Aw.Sindri.Core.Reviews.ReviewRow.RequiredOpen.init -> void
+Aw.Sindri.Core.Reviews.ReviewRow.RequiredState.get -> string!
+Aw.Sindri.Core.Reviews.ReviewRow.RequiredState.init -> void
 Aw.Sindri.Core.Reviews.ReviewRow.RequiredText.get -> string?
 Aw.Sindri.Core.Reviews.ReviewRow.RequiredText.init -> void
-Aw.Sindri.Core.Reviews.ReviewRow.ReviewRow(string! Repo, int Number, string! Title, string! Author, bool Draft, System.DateTimeOffset OpenedAt, System.DateTimeOffset LastActivity, Aw.Sindri.Core.Reviews.ReviewWaitingKind? Waiting, string? WaitingText, int? NewCommits, Aw.Sindri.Core.Reviews.ReviewCi Ci, int? RequiredOpen, string? RequiredText, bool ClaimsDoc, string! Href) -> void
+Aw.Sindri.Core.Reviews.ReviewRow.ReviewRow(string! Repo, int Number, string! Title, string! Author, bool Draft, System.DateTimeOffset OpenedAt, System.DateTimeOffset LastActivity, Aw.Sindri.Core.Reviews.ReviewWaitingKind? Waiting, string? WaitingText, int? NewCommits, Aw.Sindri.Core.Reviews.ReviewCi Ci, int? RequiredOpen, string! RequiredState, string? RequiredText, bool ClaimsDoc, string! Href) -> void
 Aw.Sindri.Core.Reviews.ReviewRow.Title.get -> string!
 Aw.Sindri.Core.Reviews.ReviewRow.Title.init -> void
 Aw.Sindri.Core.Reviews.ReviewRow.Waiting.get -> Aw.Sindri.Core.Reviews.ReviewWaitingKind?
@@ -23214,3 +23216,7 @@ static Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.operator ==(Aw.Sindri.Core
 Aw.Sindri.Core.NeedsYou.NeedsYouDecisions
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.From(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouDecision!>!
 static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.Question(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> string!
+Aw.Sindri.Core.Reviews.ReviewRequiredState
+const Aw.Sindri.Core.Reviews.ReviewRequiredState.Counted = "counted" -> string!
+const Aw.Sindri.Core.Reviews.ReviewRequiredState.NoneNamed = "noneNamed" -> string!
+const Aw.Sindri.Core.Reviews.ReviewRequiredState.NotRead = "notRead" -> string!
