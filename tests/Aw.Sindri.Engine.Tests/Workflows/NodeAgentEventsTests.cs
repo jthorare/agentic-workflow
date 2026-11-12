@@ -101,4 +101,24 @@ public sealed class NodeAgentEventsTests
 
         Assert.Equal(NodeAgentStates.EndedFailed, Text(events[^1], "state"));
     }
+
+    [Fact]
+    public async Task A_session_waiting_on_a_permission_prompt_shows_waiting_on_you_with_the_tool_then_working_again()
+    {
+        var runtime = new FakeAgentNodeRuntime { Asks = 2 };
+        await using var rig = await GraphRig.StartAsync(runtime);
+        var run = await AgentNodeRig.Start(rig);
+        await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
+
+        var back = await EventsUntil(rig, static e => e.Where(x => Text(x, "state") == NodeAgentStates.Working).Skip(1).Any());
+        _ = await rig.Control.Report(run, new AgentNodeReport(AgentNodeRig.Agent, ItemIndex: 0, "{}", Human: false), Token);
+        _ = await rig.Final(run);
+        var events = await EventsUntil(rig, static e => e.Count > 0 && Text(e[^1], "state").StartsWith("ended-", StringComparison.Ordinal));
+
+        Assert.NotEmpty(back);
+        Assert.Equal([NodeAgentStates.Launching, NodeAgentStates.Working, NodeAgentStates.WaitingOnYou, NodeAgentStates.Working, NodeAgentStates.EndedSucceeded], States(events));
+        var asking = events[2];
+        Assert.Equal("permission prompt", Text(asking, "waitingOn"));
+        Assert.Equal("Bash", Text(asking, "lastTool"));
+    }
 }

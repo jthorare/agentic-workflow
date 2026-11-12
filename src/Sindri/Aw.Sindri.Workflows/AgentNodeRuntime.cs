@@ -20,6 +20,8 @@ internal sealed class AgentNodeRuntime(AgentNodeLaunching launching, AgentSessio
 
     public Task<AgentNodeClosed> Close(AgentCloseRun run, CancellationToken cancellationToken) => closing.Close(run, cancellationToken);
 
+    public ValueTask<NodeSessionAsk?> Asking(LaunchId launch, CancellationToken cancellationToken) => throw new NotSupportedException("red: #3151 reads the fleet state file here");
+
     public Task Hold(AgentNodeHeld held, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(held);

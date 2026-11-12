@@ -36,4 +36,10 @@ internal interface IAgentNodeRuntime
     /// <param name="cancellationToken">Cancels the write.</param>
     /// <returns>Done.</returns>
     public Task Hold(AgentNodeHeld held, CancellationToken cancellationToken);
+
+    /// <summary>Reads, once, whether the launch's session waits on a permission prompt (#3151): its fleet state file says asking for an approval.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The tool it asks to use and when; null when the session is not asking for an approval or its state is unknown.</returns>
+    public ValueTask<NodeSessionAsk?> Asking(LaunchId launch, CancellationToken cancellationToken);
 }

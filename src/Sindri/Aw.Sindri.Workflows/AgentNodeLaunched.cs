@@ -4,4 +4,5 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="Launched">The session is up (its worktree and start commit), or why it is not, or that the session cap made it wait.</param>
 /// <param name="Input">The interpolated config as JSON, or null when it was not read.</param>
 /// <param name="Timeout">The node's timeout; taken-over time does not count against it.</param>
-internal sealed record AgentNodeLaunched(AgentLaunched Launched, string? Input, TimeSpan Timeout);
+/// <param name="AskEvery">How often the workflow asks whether the session waits on a permission prompt (#3151); null for the default of 15 s.</param>
+internal sealed record AgentNodeLaunched(AgentLaunched Launched, string? Input, TimeSpan Timeout, TimeSpan? AskEvery = null);

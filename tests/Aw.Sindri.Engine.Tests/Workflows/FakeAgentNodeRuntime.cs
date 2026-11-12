@@ -18,12 +18,19 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
     private readonly ConcurrentQueue<bool> _holds = new();
     private readonly TaskCompletionSource _launching = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly ConcurrentQueue<string> _order = new();
+    private int _asked;
 
     /// <summary>The timeout the launch reports; the real one comes from the node's config, whose smallest value is a minute.</summary>
     public TimeSpan Timeout { get; init; } = TimeSpan.FromMinutes(10);
 
     /// <summary>How many launch calls answer "the session cap is full, ask again" before one starts (#3151).</summary>
     public int SlotWaits { get; init; }
+
+    /// <summary>How often the workflow asks whether the session waits on a permission prompt; short, so a test does not wait 15 s (#3151).</summary>
+    public TimeSpan AskEvery { get; init; } = TimeSpan.FromMilliseconds(200);
+
+    /// <summary>How many asks, from the first, answer "waiting on a permission prompt for Bash"; the ones after answer nothing (#3151).</summary>
+    public int Asks { get; init; }
 
     /// <summary>Why the launch fails, or null for a launch that starts.</summary>
     public AgentLaunchFailure? Failure { get; init; }
@@ -82,7 +89,7 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
         var launched = Failure is { } failure
             ? new AgentLaunched(Worktree: null, StartHead: null, failure)
             : new AgentLaunched("/work/web/.claude/worktrees/wf-test", "0123abc", Failure: null, Agent: "claude-code", RunDirectory: "/home/nodes/run");
-        return new AgentNodeLaunched(launched, """{"repo":"web"}""", Timeout);
+        return new AgentNodeLaunched(launched, """{"repo":"web"}""", Timeout, AskEvery);
     }
 
     public async Task<AgentSessionState> Watch(LaunchId launch, Action heartbeat, CancellationToken cancellationToken)
@@ -107,6 +114,9 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
         _order.Enqueue("close");
         return Task.FromResult(new AgentNodeClosed(Tokens: 100, EmptyDiff: false, Commit: "def4567", AgentSession: "agent-session-1"));
     }
+
+    public ValueTask<NodeSessionAsk?> Asking(LaunchId launch, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<NodeSessionAsk?>(Interlocked.Increment(ref _asked) <= Asks ? new NodeSessionAsk("Bash", new DateTimeOffset(2026, 11, 12, 10, 0, 0, TimeSpan.Zero)) : null);
 
     public Task Hold(AgentNodeHeld held, CancellationToken cancellationToken)
     {
