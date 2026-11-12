@@ -5,7 +5,7 @@ namespace Aw.Sindri.Ui.Terminal;
 internal interface ITerminalPane
 {
     /// <summary>Raised when the drawing area changes the number of columns or rows it fits.</summary>
-    public event EventHandler<TerminalSizeEventArgs>? SizeChanged;
+    public event EventHandler<TerminalSizeEventArgs>? FitChanged;
 
     /// <summary>Draws a frame.</summary>
     /// <param name="grid">The frame.</param>
