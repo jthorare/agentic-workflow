@@ -33,6 +33,8 @@ internal static partial class Labels
     /// <param name="node">The node's id.</param>
     /// <returns>The words.</returns>
     internal static string WfEditorNode(string node) => $"Settings of {node}";
+    internal static string WfEditorNewStep(string kind) => $"New step: {kind}";
+    internal const string WfEditorNewStepNoFields = "This step has no settings. Save adds it.";
 
     /// <summary>A form field's name; a required one says so in words, not only by a mark.</summary>
     /// <param name="name">The config key.</param>

@@ -38,6 +38,14 @@ public sealed class GraphEditTests
         return page;
     }
 
+    // Add step on the run_agent block, then fill its required prompt and Save: the one add_node goes out here.
+    private static async Task AddAndSave(WorkflowsPageViewModel page)
+    {
+        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        page.Editor.Fields[0].Text = "Check";
+        await page.Save(Token);
+    }
+
     private void AssertSent(int index, string ops)
     {
         var sent = _f.Server.AppliedWorkflowOps[index];
@@ -54,10 +62,10 @@ public sealed class GraphEditTests
         Assert.Equal(["Triggers", "AI"], page.GraphEdit.Groups.Select(g => g.Group), StringComparer.Ordinal);
         var runs = _f.Server.WorkflowRunsCalls;
 
-        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        await AddAndSave(page);
 
         _ = Assert.Single(_f.Server.AppliedWorkflowOps);
-        AssertSent(0, """[{"op":"add_node","id":"run_agent_1","type":"run_agent"},{"op":"connect","from":"start","to":"run_agent_1"}]""");
+        AssertSent(0, """[{"op":"add_node","id":"run_agent_1","type":"run_agent","config":{"prompt":"Check"}},{"op":"connect","from":"start","to":"run_agent_1"}]""");
         Assert.Equal(runs + 1, _f.Server.WorkflowRunsCalls);
         Assert.False(page.GraphEdit.IsAdding);
     }
@@ -69,7 +77,10 @@ public sealed class GraphEditTests
         await page.GraphEdit.BeginAdd(Token);
 
         await page.GraphEdit.AddStep(page.GraphEdit.Groups[0].Blocks[0], Token);   // manual: the spec has "start" (manual) but not "manual_1"
+        await page.Save(Token);
+        await page.GraphEdit.BeginAdd(Token);
         await page.GraphEdit.AddStep(page.GraphEdit.Groups[0].Blocks[0], Token);
+        await page.Save(Token);
 
         AssertSent(0, """[{"op":"add_node","id":"manual_1","type":"manual"}]""");
         Assert.Equal(2, _f.Server.AppliedWorkflowOps.Count);
@@ -192,7 +203,8 @@ public sealed class GraphEditTests
         await page.GraphEdit.BeginAdd(Token);
         _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem("workflows-slug-ops", "ops-stale");
 
-        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        await AddAndSave(page);
+        page.CloseEditor();   // the stale answer holds the sheet open; cancel it so the graph's own reload can run
 
         Assert.StartsWith("This workflow changed elsewhere", page.GraphEdit.ReloadPromptText, StringComparison.Ordinal);
         Assert.Equal((false, false, false), (page.GraphEdit.CanAdd, page.GraphEdit.CanRemove, page.GraphEdit.CanConnect));
@@ -208,7 +220,8 @@ public sealed class GraphEditTests
         var page = await Open("start");
         await page.GraphEdit.BeginAdd(Token);
         _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem("workflows-slug-ops", "ops-stale");
-        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        await AddAndSave(page);
+        page.CloseEditor();
         var newer = Golden("workflows-slug", "found");
         newer["revision"] = 3;
         newer["latestRevision"] = 3;
@@ -217,7 +230,7 @@ public sealed class GraphEditTests
         _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Api("workflows-slug-ops", "ops-applied");
         Assert.True(page.Runs.Graph!.SelectNode("start"));
 
-        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        await AddAndSave(page);
 
         Assert.Equal(3, _f.Server.AppliedWorkflowOps[^1].BaseRevision);
     }
@@ -272,7 +285,7 @@ public sealed class GraphEditTests
         _f.Server.WorkflowAnswers[Slug] = new RouteAnswer(HttpStatusCode.OK, newer.ToJsonString());   // saved elsewhere after the picker opened
         _f.Server.ApplyWorkflowOpsAnswer = RouteAnswer.Problem("workflows-slug-ops", "ops-stale");   // Sindri refuses a stale base
 
-        await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        await AddAndSave(page);
 
         Assert.Equal(2, _f.Server.AppliedWorkflowOps.Single().BaseRevision);   // never retried on another base
         Assert.True(page.Editor.NeedsReload);

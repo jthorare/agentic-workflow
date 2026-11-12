@@ -247,6 +247,8 @@ public sealed class WorkflowsEditorSheetTests
 
         await page.GraphEdit.BeginAdd(Token);
         await page.GraphEdit.AddStep(page.GraphEdit.Groups[1].Blocks[0], Token);
+        page.Editor.Fields[0].Text = "Check";
+        await page.Save(Token);
 
         Assert.Equal(2, _f.Server.AppliedWorkflowOps.Count);
         Assert.Equal(3, _f.Server.AppliedWorkflowOps[1].BaseRevision);
