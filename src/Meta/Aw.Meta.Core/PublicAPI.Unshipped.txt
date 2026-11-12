@@ -2755,3 +2755,6 @@ static readonly Aw.Meta.Core.Events.MetaEvent.Retention -> System.TimeSpan
 Aw.Meta.Core.Events.MetaEvent.Id.get -> long
 static readonly Aw.Meta.Core.MetaErrors.EventInvalid -> Aw.Kernel.ErrorDefinition!
 Aw.Meta.Core.Events.MetaEvent.Lane.init -> void
+Aw.Meta.Core.Events.MetaEventRules
+static Aw.Meta.Core.Events.MetaEventRules.Check(Aw.Meta.Core.Events.MetaEvent! metaEvent) -> Aw.Kernel.Result<Aw.Meta.Core.Events.MetaEvent!>!
+static Aw.Meta.Core.Events.MetaEventRules.IsKind(string? kind) -> bool

@@ -26,6 +26,7 @@ using Aw.Meta.Features.OwnerAnswer;
 using Aw.Meta.Features.OwnerAsk;
 using Aw.Meta.Features.QueueDrop;
 using Aw.Meta.Features.QueueGate;
+using Aw.Meta.Features.ReadEvents;
 using Aw.Meta.Features.ReportDefect;
 using Aw.Meta.Features.Roles;
 using Aw.Meta.Features.Routing;
@@ -58,6 +59,7 @@ namespace Aw.Meta.Host;
 [JsonSerializable(typeof(AnswerOwnerResponse))]
 [JsonSerializable(typeof(AskOwnerResponse))]
 [JsonSerializable(typeof(AppendLogResponse))]
+[JsonSerializable(typeof(ReadEventsResponse))]
 [JsonSerializable(typeof(ReportDefectResponse))]
 [JsonSerializable(typeof(QueueDropResponse))]
 [JsonSerializable(typeof(StatusResponse))]
