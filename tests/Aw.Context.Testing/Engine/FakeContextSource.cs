@@ -28,7 +28,7 @@ public sealed class FakeContextSource(SourceDescriptor descriptor, IReadOnlyList
     /// <summary>True: Fetch waits until its token is cancelled (a fetch that misses the deadline).</summary>
     public bool FetchHangs { get; set; }
 
-    /// <summary>When set, Fetch (only) fails with this error.</summary>
+    /// <summary>When set, Fetch (only) fails with this error; FetchMany returns it as every entry's result, not as a failed call.</summary>
     public Error? FetchFailure { get; set; }
 
     /// <summary>True: Fetch reports the record as already withheld by a whole-document scrub (SourceRecord.Blocked).</summary>
@@ -139,13 +139,16 @@ public sealed class FakeContextSource(SourceDescriptor descriptor, IReadOnlyList
             await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
         }
 
-        if ((FetchFailure ?? Failure) is { } failure)
+        if (Failure is { } failure)
         {
-            return failure;
+            return failure;   // the whole source is down: the call fails
         }
 
         BatchedReads += references.Count;
-        return references.Select(Read).ToList();
+        List<Result<SourceRecord>> answers = FetchFailure is { } each
+            ? [.. references.Select(_ => (Result<SourceRecord>)each)]   // a record-level failure (gone) is each entry's, as with Fetch
+            : [.. references.Select(Read)];
+        return answers;
     }
 
     private Result<SourceRecord> Read(SourceRef reference)
