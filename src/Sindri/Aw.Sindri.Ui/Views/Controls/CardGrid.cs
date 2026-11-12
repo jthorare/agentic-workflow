@@ -22,6 +22,10 @@ internal sealed class CardGrid : Panel
     /// <summary>Set on a child to give it a row of its own at the full width.</summary>
     public static readonly AttachedProperty<bool> FullRowProperty = AvaloniaProperty.RegisterAttached<CardGrid, Control, bool>("FullRow");
 
+    private double? _arrangedWidth;   // the width the last arrange got when its stacked height differed from the measured one (#3355)
+    private double _settledFor = double.NaN;   // the arrange width already re-measured for: the guard that lets the loop settle
+    private double _lastAvailable = double.NaN;   // the width the parent last offered; a different one drops the two above
+
     static CardGrid()
     {
         AffectsMeasure<CardGrid>(MinColumnWidthProperty, SpacingProperty);
@@ -70,7 +74,17 @@ internal sealed class CardGrid : Panel
     /// <inheritdoc />
     protected override Size MeasureOverride(Size availableSize)
     {
-        var (columns, column, width) = Layout(availableSize.Width);
+        if (availableSize.Width != _lastAvailable)
+        {
+            _lastAvailable = availableSize.Width;
+            _arrangedWidth = null;
+            _settledFor = double.NaN;
+        }
+
+        // The parent offers one width and arranges at another: measure at the width we are drawn at, but answer with the width offered.
+        var (_, _, offered) = Layout(availableSize.Width);
+        var measureWidth = _arrangedWidth is { } arranged && arranged < availableSize.Width ? arranged : availableSize.Width;
+        var (columns, column, width) = Layout(measureWidth);
         var height = 0.0;
         var count = 0;
         foreach (var row in Rows(columns))
@@ -85,7 +99,7 @@ internal sealed class CardGrid : Panel
             height += tallest + (count++ == 0 ? 0 : Spacing);
         }
 
-        return new Size(count == 0 ? 0 : width, height);
+        return new Size(count == 0 ? 0 : offered, height);
     }
 
     /// <inheritdoc />
@@ -93,8 +107,10 @@ internal sealed class CardGrid : Panel
     {
         var (columns, column, width) = Layout(finalSize.Width);
         var y = 0.0;
+        var rows = 0;
         foreach (var row in Rows(columns))
         {
+            rows++;
             var tallest = 0.0;
             for (var i = 0; i < row.Count; i++)
             {
@@ -109,6 +125,15 @@ internal sealed class CardGrid : Panel
             }
 
             y += tallest + Spacing;
+        }
+
+        // The cards took more or less room at this width than at the measured one: measure again at it, once per width (#3355).
+        var stacked = rows == 0 ? 0 : y - Spacing;
+        if (Math.Abs(stacked - DesiredSize.Height) > 0.5 && finalSize.Width != _settledFor)
+        {
+            _arrangedWidth = finalSize.Width;
+            _settledFor = finalSize.Width;
+            InvalidateMeasure();
         }
 
         return finalSize;

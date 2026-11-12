@@ -23262,6 +23262,8 @@ static Aw.Sindri.Core.Graph.Ops.ReplaceNodeOp.operator ==(Aw.Sindri.Core.Graph.O
 static readonly Aw.Sindri.Core.SindriErrors.GraphNotBuilt -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Profile.WorkflowSettings.Editor.get -> string?
 Aw.Sindri.Core.Profile.WorkflowSettings.Editor.init -> void
+Aw.Sindri.Core.Graph.GraphContinueRule
+static Aw.Sindri.Core.Graph.GraphContinueRule.LeavesNowhere(Aw.Sindri.Core.Graph.GraphSpec! spec, Aw.Sindri.Core.Graph.GraphNode! node) -> bool
 Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload
 Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.RunId.get -> Aw.Sindri.Core.Graph.Ids.WorkflowRunId
 Aw.Sindri.Core.Events.WorkflowNodeAgentChangedPayload.RunId.init -> void
