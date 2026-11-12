@@ -11,7 +11,8 @@ namespace Aw.Sindri.Features.SetupSources;
 /// </summary>
 /// <param name="live">The live profile file.</param>
 /// <param name="git">The repos' git facts, kept 30 seconds, so reading the list runs no git per request.</param>
-internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git)
+/// <param name="profileFile">Says whether the profile file is on disk, to tell a new home from a file it can't read; null counts it absent.</param>
+internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git, IProfileFile? profileFile = null)
 {
     internal async ValueTask<Result<RepoFact>> Repos(CancellationToken cancellationToken)
     {
@@ -43,6 +44,7 @@ internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git)
 
     internal async ValueTask<Result<ProfileFact>> Presence(CancellationToken cancellationToken)
     {
+        _ = profileFile;   // red stub: the fix reads it
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
         if (loaded.IsError)
         {
