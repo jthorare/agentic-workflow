@@ -96,4 +96,16 @@ public sealed class ContextOpenForItemErrorWordsTests
         Assert.Equal(Labels.ContextItemFailed(Item, Labels.ContextItemUnreachable), page.ItemNote);
         Assert.True(page.IsItemFailed);
     }
+
+    [Fact]
+    public async Task An_answer_this_build_cannot_parse_says_sindri_could_not_read_it_with_retry()
+    {
+        var api = new FakeSindriApi();
+        api.Items[Item] = new RouteAnswer(HttpStatusCode.OK, "{ not json");   // a newer serve's shape an older app can't read: SND-UI-003, Kind Invalid
+        var page = Page(api);
+
+        await page.OpenForItem(Item, Token);
+
+        AssertPlainFailure(page);
+    }
 }

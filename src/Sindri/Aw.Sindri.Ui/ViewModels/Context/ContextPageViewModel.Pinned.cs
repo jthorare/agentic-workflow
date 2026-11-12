@@ -53,7 +53,9 @@ internal sealed partial class ContextPageViewModel
         NoteItem(Labels.ContextItemUnscoped(itemId, repo));
     }
 
-    // Only an error the client made because no answer came says "not reachable"; a refused or unknown id reads as unknown; any other answered error says Sindri couldn't read it.
+    // Only an error the client made because no answer came says "not reachable"; an id Sindri refused or doesn't know reads as unknown; any other answered error says Sindri couldn't read it.
+    private const string ClientCodePrefix = "SND-UI-";
+
     private static (string Note, bool Failed) ItemReadFailureNote(string itemId, Error error)
     {
         if (string.Equals(error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal))
@@ -61,7 +63,9 @@ internal sealed partial class ContextPageViewModel
             return (Labels.ContextItemFailed(itemId, Labels.ContextItemUnreachable), true);
         }
 
-        if (error.Kind is ErrorKind.NotFound or ErrorKind.Invalid || error.IsNotFound() || error.IsBadRequest())
+        // why: the client's own SND-UI-003 for a body this build can't parse is Kind Invalid too, and it is not Sindri refusing the id
+        var answeredInvalid = (error.Kind is ErrorKind.NotFound or ErrorKind.Invalid) && !error.Code.StartsWith(ClientCodePrefix, StringComparison.Ordinal);
+        if (answeredInvalid || error.IsNotFound() || error.IsBadRequest())
         {
             return (Labels.ContextItemUnknown(itemId), false);
         }
