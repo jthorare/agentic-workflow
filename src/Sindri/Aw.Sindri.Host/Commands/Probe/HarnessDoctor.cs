@@ -24,6 +24,7 @@ internal static class HarnessDoctor
         ArgumentNullException.ThrowIfNull(pinned);
         ArgumentNullException.ThrowIfNull(live);
         ArgumentNullException.ThrowIfNull(versions);
+        _ = dev; // The --dev split lands in the fix commit (Part of #3184).
         var checks = new List<DoctorCheck>();
         foreach (var harness in pinned.Where(h => !h.Human || h.Pending))
         {
