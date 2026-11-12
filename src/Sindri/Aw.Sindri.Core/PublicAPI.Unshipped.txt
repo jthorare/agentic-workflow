@@ -23320,3 +23320,12 @@ Aw.Sindri.Core.Launch.ITerminalPaneStream.SendKey(string! key, System.Threading.
 Aw.Sindri.Core.Launch.ITerminalPaneStream.SendText(string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Launch.TerminalKeys
 static Aw.Sindri.Core.Launch.TerminalKeys.Check(string! key) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Launch.TerminalTarget
+Aw.Sindri.Core.Launch.TerminalTarget.Foreign.get -> bool
+Aw.Sindri.Core.Launch.TerminalTarget.Pane.get -> string!
+Aw.Sindri.Core.Launch.TerminalTarget.Session.get -> string!
+Aw.Sindri.Core.Launch.TerminalTarget.Socket.get -> string!
+Aw.Sindri.Core.Launch.TerminalTarget.SocketIsPath.get -> bool
+Aw.Sindri.Core.Launch.TerminalTarget.TerminalTarget(string! Socket, bool SocketIsPath, string! Session, string! Pane, bool Foreign) -> void
+Aw.Sindri.Core.Launch.ITerminalPaneLocator
+Aw.Sindri.Core.Launch.ITerminalPaneLocator.Find(string! provider, string! id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Launch.TerminalTarget!>!>
