@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Kernel;
+using Aw.Kernel.Dates;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Projects.Vocabulary;
 
@@ -8,7 +9,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <summary>Reads the arguments of the project write verbs ('project add', 'edit', 'remove', 'hide', 'unhide'; projects page spec §5.3) into one <see cref="Parsed"/>, or the usage error.</summary>
 internal static class ProjectVerbArguments
 {
-    internal const string Usage = "project add [--linear KEY] [--name T] [--link URL]... [--state S] [--notes T] [--target YYYY-MM-DD] [--json] [--no-start] | project show <project> [--json] | projects [--all] [--json] | project edit <project> [--version N] [--name T] [--link URL]... [--state S | --clear-state] [--notes T | --clear-notes] [--target D | --clear-target] [--json] [--no-start] | project remove <project> [--version N] [--json] [--no-start] | project hide|unhide <project> [--version N] [--json] [--no-start]";
+    internal const string Usage = "project add [--linear KEY] [--name T] [--link URL]... [--state S] [--notes T] [--target D] [--json] [--no-start] | project show <project> [--json] | projects [--all] [--json] | project edit <project> [--version N] [--name T] [--link URL]... [--state S | --clear-state] [--notes T | --clear-notes] [--target D | --clear-target] [--json] [--no-start] | project remove <project> [--version N] [--json] [--no-start] | project hide|unhide <project> [--version N] [--json] [--no-start]";
 
     internal static Result<Parsed> Parse(string[] args, DateOnly today)
     {
@@ -136,12 +137,13 @@ internal static class ProjectVerbArguments
                 parsed.State = state;
                 return null;
             case "--target":
-                if (!DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var target))
+                var target = DueWords.Resolve(value, today);
+                if (target.IsError)
                 {
-                    return SindriErrors.ProjectInvalid.With($"target: '{value}' isn't a date (YYYY-MM-DD)");
+                    return SindriErrors.ProjectInvalid.With($"target: {target.Error.Message}");
                 }
 
-                parsed.Target = target;
+                parsed.Target = target.Value;
                 return null;
             default:
                 if (!long.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var version))
