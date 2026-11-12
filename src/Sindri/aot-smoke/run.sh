@@ -170,6 +170,11 @@ git -C "$work/repo" init -q -b main
 GIT_AUTHOR_DATE='2026-01-01T00:00:00Z' GIT_COMMITTER_DATE='2026-01-01T00:00:00Z' \
   git -C "$work/repo" -c core.hooksPath=/dev/null -c user.name=smoke -c user.email=smoke@localhost -c commit.gpgsign=false commit -q --allow-empty -m smoke
 printf 'schemaVersion: 1\nuser: smoke\nrepos:\n  - { name: smoke, path: %s }\nservices:\n  heartbeat: { every: 5s }\n' "$work/repo" >"$AW_SINDRI_HOME/profile/profile.yaml"
+# Red hook for #3405 (test only): AW_SMOKE_MAP_EVERY=90s names context-map-refresh in the profile with that cadence, so the first tick (before the
+# code index exists, so quiet) is followed by the next one 90 s later, the way a loaded box lags. Unset, the profile is unchanged.
+if [ -n "${AW_SMOKE_MAP_EVERY:-}" ]; then
+  printf '  context-map-refresh: { every: %s }\n' "$AW_SMOKE_MAP_EVERY" >>"$AW_SINDRI_HOME/profile/profile.yaml"
+fi
 
 run() { # the human, no terminal
   echo "## sindri $*"
