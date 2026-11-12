@@ -19,7 +19,7 @@ internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAc
 {
     /// <summary>The scope of the call running now.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The scope, or SND-PROFILE-001 when the profile file is missing or unreadable.</returns>
+    /// <returns>The scope, or SND-PROFILE-001 when the profile file is missing, or SND-PROFILE-004 when it can't be read.</returns>
     internal async ValueTask<Result<ContextScope>> Current(CancellationToken cancellationToken)
     {
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);

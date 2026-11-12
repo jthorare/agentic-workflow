@@ -21,7 +21,7 @@ internal sealed class CodeIndexJobScopes(IApprovedProfile approvals, IProfileSou
 {
     /// <summary>The scope of the call running now.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
-    /// <returns>The scope, or SND-PROFILE-001 when the profile file is missing or unreadable, or SND-CODEIDX-001 for a repo whose settings are invalid.</returns>
+    /// <returns>The scope, or SND-PROFILE-001 when the profile file is missing, SND-PROFILE-004 when it can't be read, or SND-CODEIDX-001 for a repo whose settings are invalid.</returns>
     internal async ValueTask<Result<CodeIndexScope>> Current(CancellationToken cancellationToken)
     {
         var approved = await approvals.Latest(cancellationToken).ConfigureAwait(false);

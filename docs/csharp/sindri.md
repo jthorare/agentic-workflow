@@ -831,7 +831,7 @@ together with `SindriErrors`. Retired codes stay reserved in `WorkflowErrors.Ret
 | `SND-WF-018` | conflict | A Step input, re-run on a cache miss, differs from what the run recorded; the Step does not run on different data (re-run the Step) |
 | `SND-WF-019` | invalid | A Step input filled an invalid plan: a bad section name, a section over 256 KiB, a typed result over 256 KiB, or a plan over 1 MiB; the Step fails |
 | `SND-WF-020` | unavailable | A Step input's fill timed out: it ran past 30 minutes, or sent no heartbeat for 2 minutes; the Step fails with the code and the seconds |
-| `SND-WF-021` | not found | A Step input's `{ profile: key }` argument names a key no input can read; the fill fails and the Step with it (an unset key is the open window; no profile is `SND-PROFILE-005`, an unavailable section) |
+| `SND-WF-021` | not found | A Step input's `{ profile: key }` argument names a key no input can read; the fill fails and the Step with it (an unset key is the open window; no profile is `SND-PROFILE-001`, an unavailable section) |
 
 ## Sandbox contract (sandbox spec; SB-0)
 

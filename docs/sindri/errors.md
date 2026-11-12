@@ -43,11 +43,11 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-LEDGER-001` | The ledger was written by a newer sindri. | Upgrade sindri (`git pull` then `scripts/install-cs.sh`), then rerun. |
 | `SND-LOCK-001` | Another sindri run holds the lock. | wait a moment and rerun; `sindri doctor` shows the holder |
 | `SND-LOCK-003` | This run's fencing epoch is stale; another run took over. | Nothing to do; the newer run continues. Check `sindri doctor` if this repeats. |
-| `SND-PROFILE-001` | The profile is invalid. | Run `sindri profile validate` and fix each listed key. |
-| `SND-PROFILE-002` | No profile was found. | Run `sindri profile init`, pass --profile &lt;dir&gt;, or set AW_PROFILE_DIR. |
-| `SND-PROFILE-003` | No such profile key. | See docs/sindri/profile.md for the keys. |
-| `SND-PROFILE-004` | No such repo in the profile. | Use a name listed under repos in profile.yaml. |
-| `SND-PROFILE-005` | The profile was written for a newer sindri. | Upgrade sindri (`git pull` then `scripts/install-cs.sh`). |
+| `SND-PROFILE-001` | No profile was found. | Run `sindri profile init`, then `sindri repo add <path>`. |
+| `SND-PROFILE-002` | The profile is invalid (doesn't parse, doesn't match the schema, or has a layout Sindri won't edit). | Run `sindri profile validate` and fix each listed key. |
+| `SND-PROFILE-003` | The `--if-hash` you passed isn't the live profile's: the file changed since you read it. | Read the profile again and retry with the new hash. |
+| `SND-PROFILE-004` | The profile file exists but can't be read (permissions or an I/O error). Nothing is written over it. | Check the file's permissions, e.g. `chmod 600 <path>`, then retry. |
+| `SND-PROFILE-005` | The profile file can't be written (permissions or an I/O error). | Check the file's permissions, e.g. `chmod 600 <path>`, then retry. |
 | `SND-PROFILE-006` | The hash doesn't match the current profile. | Run `sindri profile validate` for the current hash and retry with it. |
 | `SND-PROFILE-007` | A profile already exists there. | Edit it, or pass --force to overwrite it. |
 | `SND-PROFILE-008` | This repo has no plan files for --ring0. | Run --ring0 from a repo with docs/superpowers/plans, or run `sindri profile init` without it. |

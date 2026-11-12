@@ -166,7 +166,7 @@ learns why. Refusals are tool errors
 | `SND-CONTEXT-037` | A name matches several nodes the caller may see; the message lists them. Only the HTTP problem carries `candidates` (an array of at most 100 keys); over MCP the error is only `{code, message}` |
 | `SND-CONTEXT-006` | The question is invalid (no words, two shapes, depth out of range) |
 | `SND-CONTEXT-021` | The call has no `X-Sindri-Repo` (use a registration from `sindri mcp register`) |
-| `SND-PROFILE-005` | No profile yet, so no repo is mapped (`sindri profile init`, then `sindri repo add <path>`) |
+| `SND-PROFILE-001` | No profile yet, so no repo is mapped (`sindri profile init`, then `sindri repo add <path>`) |
 | `SND-CONTEXT-022` | An argument of the wrong type, or one the tool doesn't have |
 | `SND-CONTEXT-023` | A tool Sindri doesn't have |
 
