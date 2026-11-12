@@ -6,7 +6,8 @@ namespace Aw.Sindri.Core.Resources;
 /// <param name="name">The resource's name (the file name without '.db', or the folder name).</param>
 /// <param name="sizeBytes">The bytes it holds now.</param>
 /// <param name="path">The absolute path.</param>
-public sealed class ResourceEntry(ResourceOwner owner, ResourceKind kind, string name, long sizeBytes, string path)
+/// <param name="unmeasured">True when the size could not be measured (a disk with too many files, SND-RES-007); <paramref name="sizeBytes"/> is then 0.</param>
+public sealed class ResourceEntry(ResourceOwner owner, ResourceKind kind, string name, long sizeBytes, string path, bool unmeasured = false)
 {
     /// <summary>Gets the owner.</summary>
     public ResourceOwner Owner { get; } = owner;
@@ -22,4 +23,7 @@ public sealed class ResourceEntry(ResourceOwner owner, ResourceKind kind, string
 
     /// <summary>Gets the absolute path.</summary>
     public string Path { get; } = path;
+
+    /// <summary>Gets a value indicating whether the size could not be measured.</summary>
+    public bool Unmeasured { get; } = unmeasured;
 }
