@@ -41,9 +41,14 @@ public sealed class ContextMapRefreshServiceTests
 
     private static RepoHead Head(string repo, string sha, bool onDefault = true) => new(ContextRepoName.From(repo), sha, onDefault);
 
-    private async Task<ContextMapRefreshService> Service(bool context = true)
+    private async Task<ContextMapRefreshService> Service(bool context = true, bool indexed = true)
     {
         _h.Clock.SetUtcNow(_now);
+        if (indexed)
+        {
+            IndexJob("a", JobState.Succeeded);   // the first map waits for a mapped repo's first code index (#3126); most tests start past it
+        }
+
         var loaded = SliceHarness.Profile("5s");
         loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse("""{"docs":{"globs":["docs/**/*.md"]}}""").RootElement.Clone() : null } };
         _ = await _h.Profiles.Save(loaded, Ct);
@@ -73,6 +78,15 @@ public sealed class ContextMapRefreshServiceTests
         _jobs.Put(new JobRow(JobId.New(_h.Ids), JobKind.From("PublishContextMap"), JobKey.From("map-publish:r"), Item: null, Repo: null, Service: null, state,
             "service:context-map-refresh", _now - endedAgo - TimeSpan.FromSeconds(5), state == JobState.Running ? null : _now - endedAgo, [], Rounds: 0, summary,
             code ?? (state == JobState.Failed ? "SND-CONTEXT-046" : null), Result: null, CancelledBy: null, Sequence: _next));
+    }
+
+    // A code index build of one repo (the first map waits for one to succeed, #3126).
+    private void IndexJob(string repo, JobState state)
+    {
+        _next++;
+        _jobs.Put(new JobRow(JobId.New(_h.Ids), JobKind.From("BuildCodeIndex"), JobKey.From("code-index:" + repo), Item: null, RepoName.From(repo), Service: null, state,
+            "service:code-index", _now - TimeSpan.FromMinutes(20), state == JobState.Running ? null : _now - TimeSpan.FromMinutes(2), [], Rounds: 0, Summary: null,
+            state == JobState.Failed ? "SND-CODEIDX-001" : null, Result: null, CancelledBy: null, Sequence: _next));
     }
 
     private void Held(int version, TimeSpan since, int? latestDraft = null, int? current = 1, bool builtWithIndex = true, params (string Repo, string Sha)[] heads)
@@ -246,15 +260,45 @@ public sealed class ContextMapRefreshServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task No_context_section_no_approved_profile_and_no_repo_on_trunk_are_quiet()
+    public async Task No_approved_profile_and_no_repo_on_trunk_are_quiet()
     {
-        _engine.Heads = [Head("a", "1")];
-        Assert.True((await Run(await Service(context: false))).Value.Idle);
         _engine.Heads = [Head("a", "1", onDefault: false)];
         Assert.True((await Run(await Service())).Value.Idle);
         var unapproved = new ContextMapRefreshService(new ContextScopes(new SliceHarness().Profiles, _h.Callers), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish, new RelinkStarter(_h)), _h.Clock, new CapturingLogger());
         Assert.True((await Run(unapproved)).Value.Idle);
         Assert.Empty(_start.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_default_profile_with_no_context_section_builds_the_first_map_once_the_first_code_index_succeeded()
+    {
+        // #3126: 'sindri profile init' writes no 'context:' section; the engine reads that as the default settings, and so does the service
+        _engine.Heads = [Head("a", "1")];
+
+        var result = await Run(await Service(context: false));
+
+        Assert.False(result.Value.Idle);
+        _ = Assert.Single(_start.Requests);
+        Assert.Equal("service:context-map-refresh", _start.Actors.Single());
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task No_first_map_starts_while_no_code_index_of_a_mapped_repo_has_succeeded()
+    {
+        // a map built before its code index is built again once the index is in (#1704): the first build waits for it instead
+        _engine.Heads = [Head("a", "1")];
+        var service = await Service(context: false, indexed: false);
+        IndexJob("a", JobState.Running);
+        IndexJob("b", JobState.Succeeded);
+
+        Assert.True((await Run(service)).Value.Idle);
+        IndexJob("a", JobState.Failed);
+        Assert.True((await Run(service)).Value.Idle);
+        Assert.Empty(_start.Requests);
+
+        IndexJob("a", JobState.Succeeded);
+        Assert.False((await Run(service)).Value.Idle);
+        _ = Assert.Single(_start.Requests);
     }
 
     [Fact, Trait("Lane", "unit")]
