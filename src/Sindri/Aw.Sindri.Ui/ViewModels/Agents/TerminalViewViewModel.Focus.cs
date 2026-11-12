@@ -1,0 +1,122 @@
+#pragma warning disable MA0182 // see TerminalViewViewModel.cs
+namespace Aw.Sindri.Ui.ViewModels.Agents;
+
+/// <summary>The terminal view (continued): focus rules, key routing, footers and borders (agents spec §15.3 "Focus", "Where keys go").</summary>
+internal sealed partial class TerminalViewViewModel
+{
+    private bool _modalOpen;
+
+    /// <summary>The side that has keyboard focus.</summary>
+    public TerminalSide Side { get; private set; } = TerminalSide.List;
+
+    public bool IsPaneAccented => Side == TerminalSide.Pane;
+
+    public bool IsListAccented => Side == TerminalSide.List;
+
+    /// <summary>True while the pane lacks focus: its cursor is a hollow block.</summary>
+    public bool IsCursorHollow => Side != TerminalSide.Pane;
+
+    /// <summary>False while the pane has focus: page and shell keys, the G chord included, are off.</summary>
+    public bool ShellKeysEnabled => Side == TerminalSide.List;
+
+    /// <summary>False while the pane has focus: Ctrl+K goes to the agent.</summary>
+    public bool PaletteEnabled => Side == TerminalSide.List;
+
+    /// <summary>The footer for the focused side.</summary>
+    public string FooterText => Side == TerminalSide.Pane
+        ? Labels.TerminalFooterPane(HeaderName, IsMac)
+        : State is TerminalState.CantAttach or TerminalState.Ended or TerminalState.Gone
+            ? Labels.TerminalFooterListOnly
+            : Labels.TerminalFooterList(HeaderName, IsMac);
+
+    /// <summary>Opens the view on a session.</summary>
+    /// <param name="target">The session.</param>
+    /// <param name="intent">Look (Enter) or Type (r, Ctrl+Enter on a permission or login row).</param>
+    public void Open(TerminalTarget target, TerminalOpenIntent intent)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        Begin(target);
+        Side = target.CanAttach && (intent == TerminalOpenIntent.Type || target.Kind == TerminalKind.OneOff) ? TerminalSide.Pane : TerminalSide.List;
+        Refresh();
+    }
+
+    /// <summary>Enter on the row the pane already shows.</summary>
+    public void PressEnterOnShownRow() => FocusPane();
+
+    /// <summary>A click in the pane.</summary>
+    public void ClickPane() => FocusPane();
+
+    /// <summary>A click on the list: it always takes focus.</summary>
+    public void ClickList()
+    {
+        Side = TerminalSide.List;
+        Refresh();
+    }
+
+    /// <summary>Routes one key: "F6", "Shift+F6", the second chord, "Esc", or any other key name.</summary>
+    /// <param name="key">The key.</param>
+    /// <returns>Who gets the key.</returns>
+    public TerminalKeyRoute Route(string key)
+    {
+        if (_modalOpen)
+        {
+            return TerminalKeyRoute.Page;
+        }
+
+        if (IsChord(key))
+        {
+            SwapSide();
+            return TerminalKeyRoute.Handled;
+        }
+
+        if (Side == TerminalSide.Pane)
+        {
+            return TerminalKeyRoute.Pane;
+        }
+
+        if (string.Equals(key, "Esc", StringComparison.Ordinal))
+        {
+            Raise(CloseRequested);
+            return TerminalKeyRoute.Handled;
+        }
+
+        return TerminalKeyRoute.Page;
+    }
+
+    /// <summary>A modal (the `.` menu, the stop confirm) opened over the view: it takes the keys.</summary>
+    public void OpenModal() => _modalOpen = true;
+
+    /// <summary>The modal closed: focus is where it was.</summary>
+    public void CloseModal() => _modalOpen = false;
+
+    /// <summary>Close in the header: the session keeps running.</summary>
+    public void Close() => Raise(CloseRequested);
+
+    private bool IsChord(string key) =>
+        string.Equals(key, "F6", StringComparison.Ordinal)
+        || string.Equals(key, "Shift+F6", StringComparison.Ordinal)
+        || string.Equals(key, IsMac ? "Cmd+Shift+L" : "Ctrl+Shift+L", StringComparison.Ordinal);
+
+    private void SwapSide()
+    {
+        if (Side == TerminalSide.Pane)
+        {
+            Side = TerminalSide.List;
+            Refresh();
+            return;
+        }
+
+        FocusPane();
+    }
+
+    private void FocusPane()
+    {
+        if (!CanTakeFocus)
+        {
+            return;
+        }
+
+        Side = TerminalSide.Pane;
+        Refresh();
+    }
+}

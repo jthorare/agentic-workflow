@@ -37,7 +37,8 @@ public sealed class TerminalEndedTests
         Assert.Equal((true, true), (f.View.CanRemoveWorktree, f.View.CanDiscardSession));
         f.View.RemoveWorktree();
         f.View.DiscardSession();
-        Assert.Equal((["abcd1234"], ["abcd1234"]), (f.RemovedWorktrees, f.Discarded));
+        Assert.Equal(["abcd1234"], f.RemovedWorktrees);
+        Assert.Equal(["abcd1234"], f.Discarded);
     }
 
     [Fact]
