@@ -39,8 +39,11 @@ internal sealed class SqliteMetaEventStore(MetaDatabase database) : IMetaEventSt
             cancellationToken);
     }
 
-    public ValueTask<Result<IReadOnlyList<MetaEvent>>> Read(long after, string? kind, string? lane, int max, CancellationToken cancellationToken) =>
-        database.Query(MetaEventSql.Read(after, kind, lane, max), MetaEventSql.ReadEvent, cancellationToken);
+    public async ValueTask<Result<MetaEventPage>> Read(long after, string? kind, string? lane, int max, CancellationToken cancellationToken)
+    {
+        var read = await database.Query(MetaEventSql.Read(after, kind, lane, max), MetaEventSql.ReadEvent, cancellationToken).ConfigureAwait(false);
+        return read.IsError ? read.Error : new MetaEventPage(read.Value, 0, 0);   // red stub: bounds come with the implementation
+    }
 
     public ValueTask<Result<int>> Prune(DateTimeOffset olderThan, CancellationToken cancellationToken) =>
         database.Write(async work => await SqliteQueries.Execute(work, MetaEventSql.Prune(olderThan), cancellationToken).ConfigureAwait(false), cancellationToken);
