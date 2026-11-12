@@ -233,11 +233,8 @@ internal sealed partial class JobSheetViewModel(ISindriApi api) : ObservableObje
 
     private void Draw(JobView job)
     {
-        var running = string.Equals(job.State, "running", StringComparison.Ordinal) || string.Equals(job.State, "waiting", StringComparison.Ordinal);
-        var (glyph, word) = Labels.JobChip(job.State);
-        var age = _clock.GetUtcNow() - (running ? job.StartedAt : job.EndedAt ?? job.StartedAt);
         Heading = Labels.JobKind(job.Kind);
-        StateLine = string.Join(" · ", glyph + " " + word, Labels.JobWhen(running, age), "by " + Labels.JobStartedBy(job.StartedBy));
+        StateLine = StateOf(job);
         SummaryText = job.Summary ?? string.Empty;
         IsFailedJob = string.Equals(job.State, "failed", StringComparison.Ordinal);
         CodeText = IsFailedJob ? job.Code ?? string.Empty : string.Empty;

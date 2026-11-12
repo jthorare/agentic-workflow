@@ -124,6 +124,20 @@ internal sealed partial class JobsPageViewModel : ObservableObject, IDisposable
         return IsActive ? Read(url, cancellationToken) : Task.CompletedTask;
     }
 
+    /// <summary>Words every row's "N ago" again from the clock now, while the page is shown (the shell's one-second beat calls it).</summary>
+    internal void Age()
+    {
+        if (!IsActive)
+        {
+            return;
+        }
+
+        foreach (var row in _rows.Values)
+        {
+            row.Age();
+        }
+    }
+
     /// <summary>The page was shown or hidden (the shell's page changed). Becoming the page shown reads at once.</summary>
     /// <param name="shown">True while the Jobs page is the page.</param>
     internal void SetShown(bool shown)

@@ -29,6 +29,7 @@ internal sealed partial class ShellViewModel
         Connections = new ConnectionsPageViewModel(_api, launcher, _clock);
         ConnectionSheet = new ConnectionSheetViewModel(_api, launcher, _clock);
         Health.Follow(Connections.Refresh);
+        Health.OnTick(Connections.Age);
         Health.Follow((url, token) => IsConnectionSheet && IsSheetOpen ? ConnectionSheet.Refresh(url, token) : Task.CompletedTask);
         PropertyChanged += (_, e) =>
         {

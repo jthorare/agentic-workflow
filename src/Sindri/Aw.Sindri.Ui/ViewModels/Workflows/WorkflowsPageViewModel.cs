@@ -111,6 +111,14 @@ internal sealed partial class WorkflowsPageViewModel : ObservableObject
     /// <summary>Words the shown runs' "N ago" again from the clock now (the shell's one-second beat calls it).</summary>
     internal void Age()
     {
+        if (_level == Level.List)
+        {
+            foreach (var row in Rows)
+            {
+                row.Age();
+            }
+        }
+
         Runs.Age();
         Run.Age();
     }

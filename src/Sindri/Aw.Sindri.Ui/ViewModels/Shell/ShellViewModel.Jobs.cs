@@ -29,6 +29,14 @@ internal sealed partial class ShellViewModel
         JobSheet = new JobSheetViewModel(_api);
         JobSheet.Wire(Health.Catalog, _clock);
         Health.Follow(Jobs.Refresh);
+        Health.OnTick(Jobs.Age);
+        Health.OnTick(() =>
+        {
+            if (IsJobSheet && IsSheetOpen)
+            {
+                JobSheet.Age();
+            }
+        });
         Health.Follow((url, token) => IsJobSheet && IsSheetOpen ? JobSheet.Refresh(url, token) : Task.CompletedTask);
         PropertyChanged += (_, e) =>
         {

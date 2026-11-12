@@ -7,6 +7,7 @@ internal sealed partial class ShellViewModel
     partial void InitAgentsPage()
     {
         Health.Follow(Agents.Refresh);
+        Health.OnTick(Agents.Tick);
         PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(IsAgents), StringComparison.Ordinal))

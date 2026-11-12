@@ -68,6 +68,15 @@ internal sealed partial class AgentsPageViewModel
         }
     }
 
+    /// <summary>Words every row's "for" again from the clock now, while the page is active (the shell's one-second beat calls it).</summary>
+    internal void Tick()
+    {
+        if (IsActive)
+        {
+            Age();
+        }
+    }
+
     // Time passes between reads: the ages are re-worded with the clock.
     private void Age()
     {

@@ -5,8 +5,13 @@ namespace Aw.Sindri.Ui.ViewModels.Workflows;
 /// <summary>One workflow on the list: its name, whether it is on (a glyph and a word), which revision, and who changed it last. It maps served fields to words and decides nothing.</summary>
 internal sealed class WorkflowRowViewModel : ObservableObject
 {
+    private readonly WorkflowRowView _row;
+    private readonly TimeProvider _clock;
+    private readonly string _word;
+
     internal WorkflowRowViewModel(WorkflowRowView row, TimeProvider clock)
     {
+        (_row, _clock) = (row, clock);
         Slug = row.Slug;
         NameText = row.Name;
         IdText = string.Equals(row.Slug, row.Name, StringComparison.Ordinal) ? string.Empty : row.Slug;
@@ -15,9 +20,21 @@ internal sealed class WorkflowRowViewModel : ObservableObject
         var (glyph, word) = Labels.WfState(IsActive);
         StateText = glyph + " " + word;
         RevisionText = Labels.WfRevision(row.ActiveRevision, row.LatestRevision);
-        ChangedText = Labels.WfChangedBy(row.ChangedBy, clock.GetUtcNow() - row.ChangedAt);
-        Name = Labels.WfRowName(NameText, word.ToLowerInvariant(), RevisionText.ToLowerInvariant(), ChangedText.ToLowerInvariant());
+        _word = word.ToLowerInvariant();
+        ChangedText = Changed();
+        Name = RowName();
     }
+
+    /// <summary>Words "Changed by you, 5m ago" again from the clock now (the shell's one-second beat calls it).</summary>
+    internal void Age()
+    {
+        ChangedText = Changed();
+        Name = RowName();
+    }
+
+    private string Changed() => Labels.WfChangedBy(_row.ChangedBy, _clock.GetUtcNow() - _row.ChangedAt);
+
+    private string RowName() => Labels.WfRowName(NameText, _word, RevisionText.ToLowerInvariant(), ChangedText.ToLowerInvariant());
 
     /// <summary>The name commands use.</summary>
     public string Slug { get; }
@@ -41,10 +58,10 @@ internal sealed class WorkflowRowViewModel : ObservableObject
     public string RevisionText { get; }
 
     /// <summary>"Changed by you, 5m ago" for the person's own actor, "Changed by owner, 5m ago" or "session:abc" as served.</summary>
-    public string ChangedText { get; }
+    public string ChangedText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>The row's accessible name.</summary>
-    public string Name { get; }
+    public string Name { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when triggers run a revision.</summary>
     public bool IsActive { get; }
