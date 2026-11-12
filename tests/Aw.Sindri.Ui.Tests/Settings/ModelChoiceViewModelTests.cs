@@ -28,8 +28,8 @@ public sealed class ModelChoiceViewModelTests
         Assert.Equal("Model choice: off. Steps use the agent's default model; nothing picks one per step.", Line("off").Line);
 
     [Fact]
-    public void The_sentence_says_what_jev_reads_where_to_change_it_and_that_retention_is_the_providers() =>
-        Assert.Equal("Jev reads each step's brief and files to pick the cheapest model that works. Change it in the profile; it takes effect when you save. Retention is the provider's.", Line("on").Sentence);
+    public void The_sentence_says_what_the_model_reads_where_to_change_it_and_that_retention_is_the_providers() =>
+        Assert.Equal("A model reads each step's brief and files to pick the cheapest model that works. Change it in the profile; it takes effect when you save. Retention is the provider's.", Line("on").Sentence);
 
     [Fact]
     public async Task Copy_puts_the_profile_path_and_the_command_on_the_clipboard()

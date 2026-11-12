@@ -241,7 +241,7 @@ public sealed class JobModelCallsTests
     }
 
     [Fact]
-    public async Task A_Jev_pick_row_reads_as_a_sentence()
+    public async Task A_name_pick_row_reads_as_a_sentence()
     {
         var sheet = await SheetWith(2, calls:
         [
@@ -249,8 +249,8 @@ public sealed class JobModelCallsTests
             Call("c2", "2026-01-01T00:03:00Z", "labeling", 0, 0, answered: null, [Try("jev", "jev-1.13.0", "not-asked", "no-key", 0)]),
         ]);
 
-        Assert.Equal(["Jev: picked 94 of 100, 5 took the model's first, 1 took the file name", "Jev: not asked (no key)"], sheet.ModelCalls.Select(static r => r.Who), StringComparer.Ordinal);
-        Assert.Equal("00:02:50, Jev: picked 94 of 100, 5 took the model's first, 1 took the file name", sheet.ModelCalls[0].Name);
+        Assert.Equal(["Names: picked 94 of 100, 5 took the model's first, 1 took the file name", "Names: not asked (no key)"], sheet.ModelCalls.Select(static r => r.Who), StringComparer.Ordinal);
+        Assert.Equal("00:02:50, Names: picked 94 of 100, 5 took the model's first, 1 took the file name", sheet.ModelCalls[0].Name);
     }
 
     [Fact]
@@ -263,7 +263,7 @@ public sealed class JobModelCallsTests
             Call("c2", "2026-01-01T00:03:00Z", "productSurfaces", 0, 0, answered: null, [Try("jev", "jev-1.13.0", "not-asked", "off", 0)]),
         ]);
 
-        Assert.Equal(["Jev product surfaces: 80 groups, 12 merged, 6 rejected, 58 kept (4 undecided)", "Jev product surfaces: not asked (off)"], sheet.ModelCalls.Select(static r => r.Who), StringComparer.Ordinal);
+        Assert.Equal(["Product surfaces: 80 groups, 12 merged, 6 rejected, 58 kept (4 undecided)", "Product surfaces: not asked (off)"], sheet.ModelCalls.Select(static r => r.Who), StringComparer.Ordinal);
     }
 
     [Fact]

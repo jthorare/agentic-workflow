@@ -100,11 +100,11 @@ internal static class ModelLines
         _ => string.Empty,
     };
 
-    // A Jev pick is one sentence: what it settled, or why it was not asked.
+    // A name or product-surface pick is one sentence: what it settled, or why it was not asked.
     private static JobModelRowViewModel Jev(string time, JobModelCallView call, JobModelTryView attempt)
     {
         var surfaces = call.How is { Merged: not null } or { Kept: not null } || string.Equals(call.Kind, "productSurfaces", StringComparison.Ordinal);
-        var head = surfaces ? "Jev product surfaces: " : "Jev: ";
+        var head = surfaces ? "Product surfaces: " : "Names: ";
         var said = string.Equals(attempt.Outcome, "not-asked", StringComparison.Ordinal) ? "not asked (" + NotAsked(attempt.Reason) + ")"
             : call.How is { } how ? surfaces ? SurfacePick(call, how) : LabelPick(call, how) : attempt.Outcome;
         return new JobModelRowViewModel(time, string.Empty, head + said, string.Empty, string.Empty);
