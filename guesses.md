@@ -58,3 +58,8 @@ Round 1 guess numbers no longer apply. Items below are invented in these frames 
 40. List groups are Pinned (1), Today (3), This week (5), Older (205).
 41. One shared "Capture hotkey" row under Settings > Shortcuts, same label and caption in Notes and Projects; Notes Settings only points to it. settings-no-folder says the window makes issues only. settings-folder-error draws SND-NOTE-025.
 42. The legend frame has a reviewer caption with the order rule and shows open and draft pulls with red CI as "CI red".
+
+## Round 7 (ideas round 6 verdict)
+43. today-ghost says "Not created yet" next to the path (no "Saved"). today-ghost-down matches today-down: "Read-only" marker, right pane "not live · as of 14:02". The read-only down page draws no edit caret.
+44. One text for eng/retry-policy-for-exports.md in the list peek, the backlinks frame and the history diffs (lines "Per part: ...", "Per upload ...", "See [[acme/api#3112]] ...", the ticked "Ask Mira" line). One version list: Yesterday 10:30 is "you · tick" everywhere.
+45. The shared hotkey row is drawn once: notes-settings-hotkey and notes-settings-hotkey-refused are generated from the Projects frame (pr-settings-hotkey-refused), so the row, the error placement inside the card, the single Ctrl+Alt+I keycap, the curly quotes and the tray menu are the same. The two refused frames are pixel-identical.
