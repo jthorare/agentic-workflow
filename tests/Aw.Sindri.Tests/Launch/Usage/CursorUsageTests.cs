@@ -81,4 +81,27 @@ public sealed class CursorUsageTests : IDisposable
         Assert.Equal<ModelTokens>(await new CursorUsage(_files.Root).Between(_from, _from.AddDays(1), Token), again);
         Expect.Equal(new ModelTokens("m", 1, 0, 0, 2), Assert.Single(again));
     }
+
+    [Fact]
+    public async Task A_second_read_after_an_append_equals_a_fresh_full_read()
+    {
+        var relative = "proj/agent-transcripts/t1/t1.jsonl";
+        var path = Path.Combine(_files.Root, relative);
+        _files.Write(relative, """{"role":"assistant","timestamp":"2026-10-17T08:00:00.000Z","model":"auto","usage":{"input_tokens":10,"output_tokens":5}}""");
+        var reader = new CursorUsage(_files.Root);
+        var first = await reader.Between(_from, _from.AddDays(1), Token);
+
+        await File.AppendAllLinesAsync(path,
+            [
+                """{"role":"assistant","timestamp":"2026-10-17T09:00:00.000Z","model":"auto","usage":{"input_tokens":30,"output_tokens":6}}""",
+                """{"role":"assistant","timestamp":"2026-10-17T10:00:00.000Z","model":"other","usage":{"input_tokens":1,"output_tokens":2}}""",
+            ],
+            Token);
+
+        var again = await reader.Between(_from, _from.AddDays(1), Token);
+
+        Assert.NotEqual<ModelTokens>(first, again);
+        Assert.Equal<ModelTokens>(await new CursorUsage(_files.Root).Between(_from, _from.AddDays(1), Token), again);
+        Assert.Equal<string>(["auto", "other"], again.Select(static m => m.Model).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+    }
 }

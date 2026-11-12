@@ -102,6 +102,32 @@ public sealed class CodexUsageTests : IDisposable
     }
 
     [Fact]
+    public async Task A_second_read_after_an_append_equals_a_fresh_full_read()
+    {
+        var relative = $"2026/10/17/rollout-2026-10-17T08-00-00-{Id}.jsonl";
+        var path = Path.Combine(_files.Root, relative);
+        _files.Write(relative,
+            UsageFixture.CodexModel("2026-10-17T08:00:00.000Z", "gpt-5"),
+            UsageFixture.CodexTokens("2026-10-17T08:00:01.000Z", total: 110, input: 100, cached: 40, output: 10));
+        var reader = new CodexUsage(_files.Root);
+        var first = await reader.Between(_from, _to, Token);
+
+        await File.AppendAllLinesAsync(path,
+            [
+                UsageFixture.CodexTokens("2026-10-17T08:05:00.000Z", total: 200, input: 80, cached: 0, output: 10),
+                UsageFixture.CodexModel("2026-10-17T09:00:00.000Z", "gpt-5-mini"),
+                UsageFixture.CodexTokens("2026-10-17T09:00:01.000Z", total: 260, input: 50, cached: 10, output: 10),
+            ],
+            Token);
+
+        var again = await reader.Between(_from, _to, Token);
+
+        Assert.NotEqual<ModelTokens>(first, again);
+        Assert.Equal<ModelTokens>(await new CodexUsage(_files.Root).Between(_from, _to, Token), again);
+        Assert.Equal<string>(["gpt-5", "gpt-5-mini"], again.Select(static m => m.Model).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+    }
+
+    [Fact]
     public async Task A_session_is_read_whole_by_its_id()
     {
         _files.Write($"2026/01/01/rollout-2026-01-01T08-00-00-{Id}.jsonl",
