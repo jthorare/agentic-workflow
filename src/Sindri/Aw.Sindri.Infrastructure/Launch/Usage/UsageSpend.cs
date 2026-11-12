@@ -26,6 +26,9 @@ internal sealed class UsageSpend(IAgentCatalog catalog, IReadOnlyDictionary<stri
         catalog.Resolve(target)?.Usage is { } name && readers.TryGetValue(name, out var reader) ? await reader.OfSession(session, cancellationToken).ConfigureAwait(false) : null;
 
     /// <inheritdoc/>
+    public SpendPeek Peek(AgentId target) => throw new NotSupportedException("#3418: not built yet");
+
+    /// <inheritdoc/>
     public async ValueTask<Result<AgentSpend?>> Today(AgentId target, CancellationToken cancellationToken)
     {
         if (catalog.Resolve(target)?.Usage is not { } name || !readers.TryGetValue(name, out var reader))

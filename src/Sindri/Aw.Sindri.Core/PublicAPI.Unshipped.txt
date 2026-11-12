@@ -23263,3 +23263,19 @@ Aw.Sindri.Core.Reviews.ReviewRequiredState
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.Counted = "counted" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NoneNamed = "noneNamed" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NotRead = "notRead" -> string!
+Aw.Sindri.Core.Launches.LaunchBudgetState.Counting = 5 -> Aw.Sindri.Core.Launches.LaunchBudgetState
+Aw.Sindri.Core.Launches.ILaunchSpend.Peek(Aw.Sindri.Core.Launch.AgentId target) -> Aw.Sindri.Core.Launches.SpendPeek
+Aw.Sindri.Core.Launches.SpendPeek
+Aw.Sindri.Core.Launches.SpendPeek.SpendPeek() -> void
+Aw.Sindri.Core.Launches.SpendPeek.SpendPeek(bool Landed, Aw.Sindri.Core.Launches.AgentSpend? Spend) -> void
+Aw.Sindri.Core.Launches.SpendPeek.Landed.get -> bool
+Aw.Sindri.Core.Launches.SpendPeek.Landed.init -> void
+Aw.Sindri.Core.Launches.SpendPeek.Spend.get -> Aw.Sindri.Core.Launches.AgentSpend?
+Aw.Sindri.Core.Launches.SpendPeek.Spend.init -> void
+Aw.Sindri.Core.Launches.SpendPeek.Deconstruct(out bool Landed, out Aw.Sindri.Core.Launches.AgentSpend? Spend) -> void
+Aw.Sindri.Core.Launches.SpendPeek.Equals(Aw.Sindri.Core.Launches.SpendPeek other) -> bool
+~override Aw.Sindri.Core.Launches.SpendPeek.Equals(object obj) -> bool
+override Aw.Sindri.Core.Launches.SpendPeek.GetHashCode() -> int
+~override Aw.Sindri.Core.Launches.SpendPeek.ToString() -> string
+static Aw.Sindri.Core.Launches.SpendPeek.operator !=(Aw.Sindri.Core.Launches.SpendPeek left, Aw.Sindri.Core.Launches.SpendPeek right) -> bool
+static Aw.Sindri.Core.Launches.SpendPeek.operator ==(Aw.Sindri.Core.Launches.SpendPeek left, Aw.Sindri.Core.Launches.SpendPeek right) -> bool

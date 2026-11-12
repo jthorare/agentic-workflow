@@ -94,12 +94,15 @@ public sealed class GetLaunchTargetsTests
         private readonly Lock _lock = new();
         private readonly Dictionary<AgentId, TaskCompletionSource<bool>> _gates = targets.ToDictionary(static t => t, static _ => new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously));
         private readonly HashSet<AgentId> _called = [];
-
+        private int _released;
 
         public TaskCompletionSource<bool> AllCalled { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        public SpendPeek Peek(AgentId target) => new(Volatile.Read(ref _released) == 1, Spend: null);
+
         public void Release()
         {
+            _ = Interlocked.Exchange(ref _released, 1);
             foreach (var gate in _gates.Values)
             {
                 _ = gate.TrySetResult(true);
@@ -140,6 +143,28 @@ public sealed class GetLaunchTargetsTests
         {
             gated.Release();
             _ = await read.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
+        }
+    }
+
+    [Fact]
+    public async Task Targets_answer_counting_while_a_first_spend_read_is_in_flight()
+    {
+        var gated = new GatedSpend(_claude);
+        await Probed(Target(_claude));
+        await Approve(10m);
+        var reader = new LaunchTargetsReader(_v.Slice.Store, _v.Slice.Events, _v.Slice.Profiles, gated, _v.Progress);
+
+        var read = reader.Read(Token).AsTask();
+        try
+        {
+            // red today: Read awaits Today, which never completes, so the list never answers
+            var view = (await read.WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token)).Value;
+
+            Expect.Equal(LaunchBudgetState.Counting, view.Targets[0].Budget.State);
+        }
+        finally
+        {
+            gated.Release();
         }
     }
 }

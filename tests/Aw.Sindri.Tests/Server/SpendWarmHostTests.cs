@@ -37,6 +37,8 @@ public sealed class SpendWarmHostTests
 
         public TaskCompletionSource<bool> Two { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        public SpendPeek Peek(AgentId target) => new(Landed: true, Spend: null);
+
         public ValueTask<Result<AgentSpend?>> Today(AgentId target, CancellationToken cancellationToken)
         {
             lock (_gate)
