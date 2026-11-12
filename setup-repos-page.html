@@ -1,0 +1,73 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Sindri · Repos page</title><link rel="stylesheet" href="../grammar-2978/grammar.css">
+<style>
+body{height:auto;overflow:visible}
+.sheet-head{padding:16px var(--inset) 12px;border-bottom:1px solid var(--hair)}
+.sheet-head h1{font:600 15px/22px var(--font);margin:0}
+.sheet-head p{margin:2px 0 0;color:var(--ink-3);font-size:11px;line-height:16px}
+.panel{width:1440px;border-bottom:1px solid var(--hair-strong);display:flex;flex-direction:column;overflow:hidden}
+.plabel{height:28px;display:flex;align-items:center;gap:var(--sp3);padding:0 var(--inset);background:var(--s1);border-bottom:1px solid var(--hair);font-size:12px;color:var(--ink-muted)}
+.plabel b{font-weight:600;color:var(--ink)} .plabel span{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.pbody{position:relative;overflow:hidden}
+.list{padding:var(--sp2) 0}
+.pbody .topbar{height:40px}
+.pbody .keys{height:28px}
+.pbody .header{height:48px}
+/* button states: hover lifts the fill, pressed sinks it (darker + inset + 1px down), focus is a 2px ring with a gap */
+.btn.hover{background:var(--s4);border-color:var(--hair-3);color:var(--ink)}
+.btn.primary.hover{background:var(--primary-hi);border-color:var(--primary-hi);color:#fff}
+.btn.pressed{background:var(--s1);border-color:var(--hair-strong);color:var(--ink-subtle);box-shadow:inset 0 2px 3px rgba(0,0,0,.55);transform:translateY(1px)}
+.btn.primary.pressed{background:#454fb0;border-color:#454fb0;color:#dfe2ff;box-shadow:inset 0 2px 3px rgba(0,0,0,.55)}
+.btn.focus{outline:2px solid var(--primary-hi);outline-offset:2px}
+.btn.primary.focus{outline-color:#fff}
+.field.focus{box-shadow:0 0 0 2px var(--primary-soft)}
+.lnk{cursor:pointer;color:var(--primary-hi);text-decoration:underline;text-underline-offset:2px}
+.code{font:600 15px/22px var(--mono);letter-spacing:.08em;color:var(--ink);background:var(--s3);border:1px solid var(--hair-strong);border-radius:var(--r2);padding:0 8px}
+.err-t{color:var(--err)}
+.guide .step .say b{color:var(--ink);font-weight:500}
+.guide .btns2,.actionbar .btns2{display:flex;gap:8px;align-items:center}
+.guide{margin-right:var(--inset)}
+.det-open{margin:0 var(--inset) var(--sp3) calc(var(--inset) + var(--col-glyph) + var(--sp3));font:400 12px/18px var(--font);color:var(--ink-3)}
+.det-open code{display:block;margin-top:4px;font:400 12px/18px var(--mono);color:var(--ink-subtle)}
+.pbody .row.fix{--col-act:300px}
+.toast{position:absolute;right:24px;bottom:16px;background:var(--s3);border:1px solid var(--hair-strong);border-radius:var(--r3);padding:8px 14px;color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.45);display:flex;gap:8px;align-items:center}
+.ctx{margin:0;padding:6px var(--inset);font-size:12px;color:var(--ink-3);background:var(--canvas);border-bottom:1px solid var(--hair)}
+.ctx b{color:var(--ink-subtle);font-weight:500}
+.dpanel{padding:8px 24px;background:var(--s1);border-bottom:1px solid var(--hair);font:400 12px/18px var(--font);color:var(--ink-3)}
+.dpanel code{display:block;margin-top:4px;font:400 12px/18px var(--mono);color:var(--ink-subtle)}
+.state-line .what .lnk{margin:0}
+
+.sheet{display:flex;flex-wrap:wrap;width:1440px}
+.panel.w1440{width:1440px} .panel.w800{width:800px} .panel.w720{width:720px;border-right:1px solid var(--hair-strong)}
+.panel .pbody{flex:1}
+.fcol{width:640px;margin:0 auto;padding:36px 0 24px}
+.fcol .eyebrow2{font:500 12px/16px var(--font);color:var(--ink-subtle);margin:0 0 6px}
+.fcol h1{font:600 24px/32px var(--font);margin:0 0 6px;color:var(--ink)}
+.fcol .lede{font:400 14px/22px var(--font);color:var(--ink-subtle);margin:0 0 20px}
+.fcol .ghline{display:flex;align-items:center;gap:8px;font:400 13px/20px var(--font);color:var(--ink-subtle);margin:0 0 6px}
+.fcol .ghline .lnk{margin:0}
+.fcol .btn{height:32px;padding:0 14px;font-size:13px;line-height:30px}
+.fcol .btn kbd{line-height:16px}
+.crow{display:grid;grid-template-columns:20px 1fr auto;column-gap:12px;align-items:center;padding:10px 16px;background:var(--s1);border:1px solid var(--hair);border-radius:var(--r3);margin-bottom:8px;min-height:56px}
+.crow.cursor{box-shadow:0 0 0 1px var(--primary-hi);border-color:var(--primary-hi)}
+.crow.dim{opacity:.55}
+.ct{font:500 14px/20px var(--font);color:var(--ink)}
+.cs{font:400 13px/20px var(--font);color:var(--ink-subtle)}
+.cs.mono{font-family:var(--mono);font-size:12px}
+.cs .err-t{color:var(--err)}
+.cbtn{display:flex;gap:8px;align-items:center}
+.cchips{display:flex;gap:6px;align-items:center;color:var(--ink-subtle);font-size:12px}
+.fcol .guide{margin:-4px 0 8px 32px;padding:8px 14px}
+.fcol .guide .step{grid-template-columns:20px 1fr;row-gap:6px;padding:6px 0}
+.fcol .guide .step .btns2{grid-column:2}
+.fcol .state-line{height:40px;padding:0 14px;border:1px solid var(--hair);border-radius:var(--r3);margin-bottom:12px}
+.fcol .state-line .sub{color:var(--ink-subtle)}
+.cfoot{display:flex;align-items:center;gap:8px;margin-top:16px;color:var(--ink-subtle);font-size:13px}
+.cfoot .spacer{flex:1}
+.mask{letter-spacing:.12em}
+.drop{outline:1px dashed var(--primary-hi);outline-offset:2px}
+</style></head><body>
+<div class="sheet-head"><h1>The Repos page: adding repos after first run</h1><p>Opened from the Add repos button on the Setup page. No "Question 2 of 2"; repos already added are hidden; Done goes back to Setup.</p></div>
+<div class="sheet"><section class="panel w720"><div class="plabel"><b>Repos page, nothing ticked: Done is the primary</b><span>decision 32</span></div><div class="pbody"><div class="topbar"><div class="wordmark">Sindri</div><nav class="nav"><a href="#">Home<span class=n>9</span></a><a href="#">Reviews<span class=n>4</span></a><a href="#">Items<span class=n>31</span></a><a href="#">Workflows</a><a href="#">Agents<span class=n>3</span></a><a href="#">Projects</a><a href="#">Docs</a><a class=on href="#">Setup<span class=n>6/8</span></a></nav><div class="spacer"></div><div class="cmdk">Search or run a command<kbd>Ctrl+K</kbd></div><div class="status-pill">Connected</div></div><div class="fcol"><div class="eyebrow2">Setup › Add repos</div><h1>Repos</h1><p class="lede">Tick the repos you want Sindri to watch. Repos Sindri already watches are hidden.</p><div class="state-line "><span class="g done"></span><span class="what">4 repos under ~ that Sindri does not watch yet<span class="sub"></span></span><span class="btns"></span></div><div class="crow "><span class="g box"></span><div><div class="ct">~/work/ledgerly-core</div><div class="cs mono">ledgerly-app/core</div></div><div class="cchips"></div></div><div class="crow "><span class="g box"></span><div><div class="ct">~/repos/dotfiles</div><div class="cs mono">ada/dotfiles</div></div><div class="cchips"></div></div><div class="crow "><span class="g box"></span><div><div class="ct">~/repos/prism-mcp-fork</div><div class="cs mono">ada/prism-mcp</div></div><div class="cchips"><span class="chip">worktrees: 1</span></div></div><div class="crow "><span class="g box"></span><div><div class="ct">~/src/old-site</div><div class="cs mono">no remote</div></div><div class="cchips"></div></div><div class="cfoot"><span>0 of 4 ticked</span><span class="spacer"></span><span class="btn">Look in another folder…</span><span class="btn primary focus">Done <kbd>Esc</kbd></span></div></div><div class="keys"><span><kbd>j/k</kbd>move</span><span><kbd>x</kbd>tick</span><span><kbd>a</kbd>tick all</span><span><kbd>Ctrl+Enter</kbd>add</span><span><kbd>Esc</kbd>Done</span></div></div></section>
+<section class="panel w720"><div class="plabel"><b>Repos page, one ticked: Add 1 repo is the primary, Done is secondary</b><span>decision 32</span></div><div class="pbody"><div class="topbar"><div class="wordmark">Sindri</div><nav class="nav"><a href="#">Home<span class=n>9</span></a><a href="#">Reviews<span class=n>4</span></a><a href="#">Items<span class=n>31</span></a><a href="#">Workflows</a><a href="#">Agents<span class=n>3</span></a><a href="#">Projects</a><a href="#">Docs</a><a class=on href="#">Setup<span class=n>6/8</span></a></nav><div class="spacer"></div><div class="cmdk">Search or run a command<kbd>Ctrl+K</kbd></div><div class="status-pill">Connected</div></div><div class="fcol"><div class="eyebrow2">Setup › Add repos</div><h1>Repos</h1><p class="lede">Tick the repos you want Sindri to watch. Repos Sindri already watches are hidden.</p><div class="state-line "><span class="g done"></span><span class="what">4 repos under ~ that Sindri does not watch yet<span class="sub"></span></span><span class="btns"></span></div><div class="crow cursor"><span class="g box on"></span><div><div class="ct">~/work/ledgerly-core</div><div class="cs mono">ledgerly-app/core</div></div><div class="cchips"></div></div><div class="crow "><span class="g box"></span><div><div class="ct">~/repos/dotfiles</div><div class="cs mono">ada/dotfiles</div></div><div class="cchips"></div></div><div class="crow "><span class="g box"></span><div><div class="ct">~/repos/prism-mcp-fork</div><div class="cs mono">ada/prism-mcp</div></div><div class="cchips"><span class="chip">worktrees: 1</span></div></div><div class="crow "><span class="g box"></span><div><div class="ct">~/src/old-site</div><div class="cs mono">no remote</div></div><div class="cchips"></div></div><div class="cfoot"><span>1 of 4 ticked</span><span class="spacer"></span><span class="btn">Look in another folder…</span><span class="btn">Done <kbd>Esc</kbd></span><span class="btn primary">Add 1 repo <kbd>Ctrl+Enter</kbd></span></div></div><div class="keys"><span><kbd>j/k</kbd>move</span><span><kbd>x</kbd>tick</span><span><kbd>a</kbd>tick all</span><span><kbd>Ctrl+Enter</kbd>add</span><span><kbd>Esc</kbd>Done</span></div></div></section>
+</div>
+</body></html>
