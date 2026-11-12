@@ -34,6 +34,9 @@ internal sealed partial class TerminalViewViewModel
         _ => string.Empty,
     };
 
+    /// <summary>The footer split into parts and key names, drawn with keycaps (DG2).</summary>
+    public IReadOnlyList<TerminalFooterPart> FooterParts => TerminalFooterPart.Parse(FooterText);
+
     /// <summary>Opens the view on a session.</summary>
     /// <param name="target">The session.</param>
     /// <param name="intent">Look (Enter) or Type (r, Ctrl+Enter on a permission or login row).</param>

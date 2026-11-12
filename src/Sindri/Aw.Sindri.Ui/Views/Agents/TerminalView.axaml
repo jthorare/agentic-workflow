@@ -11,6 +11,22 @@
         <Button Classes="card-button" Content="{Binding Label}" Click="OnCardButton" />
       </Border>
     </DataTemplate>
+    <DataTemplate x:Key="FooterRunTemplate" x:DataType="ag:TerminalFooterRun">
+      <Panel>
+        <Border IsVisible="{Binding IsKey}" Classes="kbd" VerticalAlignment="Center">
+          <TextBlock Classes="kbd" Text="{Binding Text}" />
+        </Border>
+        <TextBlock IsVisible="{Binding !IsKey}" Classes="caption" Text="{Binding Text}" VerticalAlignment="Center" />
+      </Panel>
+    </DataTemplate>
+    <DataTemplate x:Key="FooterPartTemplate" x:DataType="ag:TerminalFooterPart">
+      <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,0,12,0">
+        <ItemsControl ItemsSource="{Binding Runs}" ItemTemplate="{StaticResource FooterRunTemplate}" Classes="footer-runs" Classes.first="{Binding IsFirst}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        </ItemsControl>
+        <Border Width="1" Height="12" Background="{StaticResource Brush.Hairline}" IsVisible="{Binding !IsLast}" />
+      </StackPanel>
+    </DataTemplate>
   </UserControl.Resources>
   <UserControl.Styles>
     <Style Selector="Border.frame">
@@ -52,6 +68,8 @@
     <Style Selector="Border.button-ring.focused">
       <Setter Property="BorderBrush" Value="{StaticResource Brush.PrimaryHover}" />
     </Style>
+    <Style Selector="ItemsControl.footer-runs TextBlock.caption"><Setter Property="Foreground" Value="{StaticResource Brush.InkSubtle}" /></Style>
+    <Style Selector="ItemsControl.footer-runs.first TextBlock.caption"><Setter Property="Foreground" Value="{StaticResource Brush.InkMuted}" /></Style>
     <Style Selector="Ellipse.state-dot">
       <Setter Property="Width" Value="6" />
       <Setter Property="Height" Value="6" />
@@ -119,7 +137,9 @@
       </Border>
     </Grid>
     <Border Grid.Row="2" BorderBrush="{StaticResource Brush.Hairline}" BorderThickness="0,1,0,0" Padding="16,0">
-      <TextBlock x:Name="Footer" Classes="caption subtle" Text="{Binding FooterText}" VerticalAlignment="Center" />
+      <ItemsControl x:Name="Footer" ItemsSource="{Binding FooterParts}" ItemTemplate="{StaticResource FooterPartTemplate}" AutomationProperties.Name="{Binding FooterText}" VerticalAlignment="Center">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+      </ItemsControl>
     </Border>
   </Grid>
 </UserControl>
