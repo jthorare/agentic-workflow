@@ -51,10 +51,9 @@ public sealed class NeedsYouFailedLayoutTests : FrameHost
         Assert.Equal(HorizontalAlignment.Left, retry.HorizontalAlignment);
 
         // The caption starts on the card's text column, the 24 the count line, banner and empty line use (qa on #2950).
-        var card = Assert.IsAssignableFrom<Visual>(failed.GetVisualParent());
-        var left = line.TranslatePoint(default, card);
-        Assert.NotNull(left);
-        Assert.Equal(24, left.Value.X, precision: 1);
+        var card = Assert.IsType<Visual>(failed.GetVisualParent(), exactMatch: false);
+        var left = Assert.NotNull(line.TranslatePoint(default, card));
+        Assert.Equal(24, left.X, precision: 1);
         FrameFile.Save(window, string.Create(CultureInfo.InvariantCulture, $"h2921-needs-you-failed-{width}"));
         window.Close();
     });
