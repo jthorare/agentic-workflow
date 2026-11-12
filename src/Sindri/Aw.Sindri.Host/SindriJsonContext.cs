@@ -166,7 +166,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ListJobsRequest)), JsonSerializable(typeof(JobList)), JsonSerializable(typeof(JobSummary)), JsonSerializable(typeof(ScheduledResult))]
 [JsonSerializable(typeof(AsOf)), JsonSerializable(typeof(ViewsStatus)), JsonSerializable(typeof(ServiceRow)), JsonSerializable(typeof(ProfileRow))]
 [JsonSerializable(typeof(ItemRow)), JsonSerializable(typeof(ItemLinkRow)), JsonSerializable(typeof(AliasRow)), JsonSerializable(typeof(RequestRow)), JsonSerializable(typeof(HumanDecisionRow))]
-[JsonSerializable(typeof(NeedsYouRowRecord)), JsonSerializable(typeof(NestedPark)), JsonSerializable(typeof(NeedsYouRow)), JsonSerializable(typeof(NeedsYouStop)), JsonSerializable(typeof(NeedsYouSubject)), JsonSerializable(typeof(TimelineRow))]
+[JsonSerializable(typeof(NeedsYouRowRecord)), JsonSerializable(typeof(NestedPark)), JsonSerializable(typeof(NeedsYouRow)), JsonSerializable(typeof(NeedsYouDecision)), JsonSerializable(typeof(NeedsYouDecisionOption)), JsonSerializable(typeof(NeedsYouStop)), JsonSerializable(typeof(NeedsYouSubject)), JsonSerializable(typeof(TimelineRow))]
 [JsonSerializable(typeof(HealthReport)), JsonSerializable(typeof(CommandAccepted)), JsonSerializable(typeof(GetStatusResponse)), JsonSerializable(typeof(StopProcessResponse))]
 [JsonSerializable(typeof(ValidateProfileResponse)), JsonSerializable(typeof(InitProfileResponse)), JsonSerializable(typeof(SetProfileKeyResponse)), JsonSerializable(typeof(ScrubResponse)), JsonSerializable(typeof(RunDoctorResponse))]
 [JsonSerializable(typeof(PublicEvent)), JsonSerializable(typeof(LedgerPage)), JsonSerializable(typeof(EventCatalogView)), JsonSerializable(typeof(EventTypeView))]

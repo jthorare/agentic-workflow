@@ -112,6 +112,10 @@ expect "the binaries.lock script runs dotnet (where CI fetches with it) and bash
   "$(printf 'scripts/binaries-lock.sh\n')" \
   "$(printf 'bash=true\ndotnet=true\ntla=false')"
 
+expect "the Vale config and style run the bash tests (check-prose.test.sh runs them)" \
+  "$(printf '.vale.ini\n.vale/styles/Aw/Slop.yml\n')" \
+  "$(printf 'bash=true\ndotnet=false\ntla=false')"
+
 expect "spike projects never run dotnet" \
   "$(printf 'spikes/aot/Spike.csproj\nspikes/aot/Program.cs\nspikes/Directory.Build.props\n')" \
   "$(printf 'bash=false\ndotnet=false\ntla=false')"

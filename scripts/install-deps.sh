@@ -11,9 +11,10 @@
 #                  with the lock's --exclude-newer date (context/code-index.lock, scripts/code-index-lock.sh); the build checks that binary
 #     ollama model the lock's embedding model: `ollama pull <name>` when `ollama list` doesn't show the pinned digest (the build never pulls).
 #                  Ollama itself is not installed here: without it, or without a running server, this step warns and skips (embeddings are optional)
-#     temporal, temporal-test-server   scripts/binaries-lock.sh fetch <name> (sha256-verified, idempotent) into
-#                  ${AW_STATE_DIR:-~/.agentic-workflow}/cache/bin/<name>-<pin>/, where sindri serve and the tests look;
-#                  `temporal --version` is run afterwards and a failed fetch or a binary that won't run fails the script
+#     temporal, temporal-test-server, vale   scripts/binaries-lock.sh fetch <name> (sha256-verified, idempotent) into
+#                  ${AW_STATE_DIR:-~/.agentic-workflow}/cache/bin/<name>-<pin>/, where sindri serve, the tests and
+#                  scripts/check-prose.sh look; `temporal --version` and `vale --version` are run afterwards and a failed
+#                  fetch or a binary that won't run fails the script
 #     tlc.sh doctor  the model check's tools (skills/formal-verify/scripts/tlc.sh; TLC_SH replaces the path, tests): its `java:` and
 #                  `tla2tools:` lines are read (exit 3 when either is missing). A missing or older-than-11 java installs the `java`
 #                  package (JDK 21, config/lib/sys-pkg.sh; Homebrew's keg-only openjdk@21 is then linked onto PATH); a missing
@@ -40,7 +41,7 @@ FAILED=0
 
 case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac
 
-echo "=== External tools (uv, graphify, Temporal, system packages) ==="
+echo "=== External tools (uv, graphify, Temporal, vale, system packages) ==="
 
 # --- system packages: check, then install what is missing (config/lib/sys-pkg.sh: sudo on Linux, Homebrew on macOS) ---
 # shellcheck source=config/lib/sys-pkg.sh
@@ -208,13 +209,13 @@ else
   fi
 fi
 
-# --- Temporal CLI + time-skipping test server (binaries.lock) ---
-for _bin in temporal temporal-test-server; do
+# --- Temporal CLI + time-skipping test server, and vale (scripts/check-prose.sh) (binaries.lock) ---
+for _bin in temporal temporal-test-server vale; do
   if dry; then
     echo "  [dry-run] would run: scripts/binaries-lock.sh fetch $_bin"
   elif _path="$(bash "$ROOT/scripts/binaries-lock.sh" fetch "$_bin")"; then
     # sindri serve and the tests look for the CLI at <AW_STATE_DIR>/cache/bin/temporal-<pin>/temporal (the path fetch printed)
-    if [ "$_bin" = "temporal" ]; then
+    if [ "$_bin" = "temporal" ] || [ "$_bin" = "vale" ]; then
       if _v="$("$_path" --version 2>&1)"; then echo "  $_bin: $_path ($_v)"; else
         echo "  WARN: $_path does not run: $_v"; FAILED=1
       fi

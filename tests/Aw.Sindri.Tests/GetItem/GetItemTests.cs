@@ -135,6 +135,8 @@ public sealed class GetItemTests
         public ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
             where TRow : class => view == ViewNames.ItemLinks ? ValueTask.FromResult(Fail<IReadOnlyList<TRow>>()) : inner.Where<TRow>(view, column, value, cancellationToken);
 
+        public ValueTask<Result<string>> Mark(string view, CancellationToken cancellationToken) => inner.Mark(view, cancellationToken);
+
         public ValueTask<Result<ProjectorState?>> State(CancellationToken cancellationToken) => inner.State(cancellationToken);
     }
 

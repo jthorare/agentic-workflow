@@ -41,6 +41,12 @@ internal static partial class Labels
     internal static string ProjectNotesCounter(int length) =>
         string.Create(CultureInfo.InvariantCulture, $"{length:N0} / {ProjectNotesMax:N0}");
 
+    /// <summary>A notes button's accessible name: its visible label, then the project it acts on.</summary>
+    /// <param name="label">The button's visible words.</param>
+    /// <param name="name">The project's name.</param>
+    /// <returns>"Edit notes for Hiring loop".</returns>
+    internal static string ProjectNotesFor(string label, string name) => label + " for " + name;
+
     /// <summary>What a screen reader hears once the notes are saved.</summary>
     /// <param name="name">The project's name.</param>
     /// <returns>The words.</returns>

@@ -87,8 +87,8 @@ For each FAIL, describe the mismatching regions (region-level only, `desktop-evi
 
 Gate on `overall.verdict` — a FAIL run **blocks** the `/shipRelease` suggestion:
 
-- **PASS** — `/shipRelease` — the screens match their mockups, ship the release
-- **FAIL** — `/design-refine` or `/design-implement` — fix the listed mismatches; re-verify before any ship step
+- **PASS** — `/shipRelease`: the screens match their mockups, ship the release
+- **FAIL** — `/design-refine` or `/design-implement`: fix the listed mismatches; re-verify before any ship step
 
 ## Result block
 

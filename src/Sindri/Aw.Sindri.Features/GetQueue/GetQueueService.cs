@@ -14,7 +14,7 @@ namespace Aw.Sindri.Features.GetQueue;
 /// <summary>
 /// The queue (API spec §3.6): the items, open ones only, in one entry per group of <see cref="QueueGroups.Order"/> (an empty
 /// group keeps its entry and its sentence, E-18; stale views replace every sentence, the groups' too, and keep the rows), the oldest 'since' first in each. The top-level sentence is the stale-views one, else the queue's.
-/// It reads the open states only, one lookup each, pages a group by a (since, id) cursor and tags the answer so an unchanged queue answers 304 (#2788).
+/// It reads the open states only, one lookup each, pages a group by a (since, id) cursor and tags the answer so an unchanged queue answers 304 (#2788) before any row is read (#2852).
 /// </summary>
 /// <param name="views">The 'items' view.</param>
 /// <param name="status">How fresh the views are.</param>
@@ -38,18 +38,22 @@ internal sealed class GetQueueService(IViewReader views, IProjectorStatus status
             return page.Error;
         }
 
-        var rows = await ReadOpen(cancellationToken).ConfigureAwait(false);
-        if (rows.IsError)
+        var current = status.Current;
+        var mark = await views.Mark(ViewNames.Items, cancellationToken).ConfigureAwait(false);
+        if (mark.IsError)
         {
-            return rows.Error;
+            return mark.Error;
         }
 
-        var current = status.Current;
-        var open = ItemSummaries.Visible(rows.Value, static _ => true);
-        var tag = TagOf(open, rows.Value, current, request);
-        return request.IfNoneMatch is not null && string.Equals(request.IfNoneMatch, tag, StringComparison.Ordinal)
-            ? new QueueResponse([], Empty: null, current.AsOf, Tag: tag, NotModified: true)
-            : Answer(open, page.Value, request.Limit, current, tag);
+        var tag = TagOf(mark.Value, current, request);
+        if (request.IfNoneMatch is not null && string.Equals(request.IfNoneMatch, tag, StringComparison.Ordinal))
+        {
+            return new QueueResponse([], Empty: null, current.AsOf, Tag: tag, NotModified: true);
+        }
+
+        // why: the mark is read before the rows, so a write between the two gives a body newer than its tag: the next poll misses once, never a stale 304
+        var rows = await ReadOpen(cancellationToken).ConfigureAwait(false);
+        return rows.IsError ? rows.Error : Answer(ItemSummaries.Visible(rows.Value, static _ => true), page.Value, request.Limit, current, tag);
     }
 
     private static QueueResponse Answer(IReadOnlyList<ItemSummary> open, Page page, int? limit, ViewsStatus current, string tag)
@@ -167,19 +171,16 @@ internal sealed class GetQueueService(IViewReader views, IProjectorStatus status
         }
     }
 
-    /// <summary>A hash of what the answer shows: the open rows' ids and sequences, the projector's state word, whether the views are behind, and the paging request; never the cursor or the as-of time.</summary>
-    private static string TagOf(IReadOnlyList<ItemSummary> open, List<ItemRow> rows, ViewsStatus current, GetQueueRequest request)
+    /// <summary>
+    /// A hash of what the answer shows, built without reading a row (#2852): the items view's mark (a write or a removal of any item row
+    /// moves it, a close too), the projector's state word, whether the views are behind, and the paging request; never the cursor or the as-of time.
+    /// </summary>
+    private static string TagOf(string itemsMark, ViewsStatus current, GetQueueRequest request)
     {
-        var sequences = rows.ToDictionary(static r => r.Id.Value, static r => r.Sequence, StringComparer.Ordinal);
-        var text = new StringBuilder();
-        foreach (var item in open.OrderBy(static i => i.Id.Value, StringComparer.Ordinal))
-        {
-            _ = text.Append(item.Id.Value).Append(':').Append(sequences[item.Id.Value].ToString(CultureInfo.InvariantCulture)).Append(';');
-        }
-
         var state = current.Stalled ? "stalled" : current.Rebuilding ? "rebuilding" : "ok";
         var behind = current.Cursor < current.LedgerHead;
-        _ = text.Append('|').Append(state).Append('|').Append(behind ? "behind" : "current")
+        var text = new StringBuilder(itemsMark)
+            .Append('|').Append(state).Append('|').Append(behind ? "behind" : "current")
             .Append('|').Append(request.Limit?.ToString(CultureInfo.InvariantCulture)).Append('|').Append(request.Group).Append('|').Append(request.After);
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString()));
         return Convert.ToHexStringLower(hash.AsSpan(0, 16));

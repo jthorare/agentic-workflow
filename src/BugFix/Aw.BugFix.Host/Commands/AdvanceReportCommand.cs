@@ -9,7 +9,7 @@ internal static class AdvanceReportCommand
 {
     internal const string Name = "advance report";
 
-    internal static readonly CommandSpec Spec = new("advance report --state <dir> (--candidate <id> | --unresolved)", ["state"], ["candidate"], ["unresolved"]);
+    internal static readonly CommandSpec Spec = new("advance report --state <dir> (--candidate <id> --sweep <sweep.md> | --unresolved)", ["state"], ["candidate", "sweep"], ["unresolved"]);
 
     internal static async Task<int> Run(CommandLine line, IServiceProvider services, JsonSerializerOptions json)
     {
@@ -24,6 +24,6 @@ internal static class AdvanceReportCommand
             candidate = parsed;
         }
 
-        return await CommandOutput.Call<AdvanceReportRequest, AdvanceReportResponse>(services, json, new AdvanceReportRequest(line.StateDirectory, candidate, line.Flags.Contains("unresolved"))).ConfigureAwait(false);
+        return await CommandOutput.Call<AdvanceReportRequest, AdvanceReportResponse>(services, json, new AdvanceReportRequest(line.StateDirectory, candidate, line.Flags.Contains("unresolved"), line["sweep"] is { } sweep ? Path.GetFullPath(sweep) : null)).ConfigureAwait(false);
     }
 }

@@ -137,6 +137,10 @@ scripts/tlc-check.sh [--root DIR] [--timeout SECONDS] [--witnesses] [<spec-dir>.
 
 scripts/images-lock.sh check             # Shape of deploy/images.lock (every deployment image by index and per-platform digest; unresolved ones are `todo` rows) and that the Dockerfile names only pinned images; exit 0 ok, 1 a check failed
 
+# Scoping benchmark (context scope spec §7, epic #2959): tests/fixtures/scoping/<repo>/questions.yaml, a question with its touch / read / decoy files
+node scripts/scoping-bench.mjs --questions tests/fixtures/scoping/<repo>/questions.yaml [--k 25] [--field plain|question] [--only ids] [--out DIR] [--json]   # asks each question of the Sindri AW_SINDRI_HOME / AW_SINDRI_PORT name (`sindri context query --json`), prints touch recall, recall and P@K of the files in the top K, decoys hit, p50 / p95 seconds; exit 0 all answered, 1 a query failed, 2 usage
+node scripts/scoping-bench.mjs --questions <file> --check [--root DIR]   # no query: every key path exists under DIR (default this repo; a clone at the key's commit for another repo) and none is listed twice; exit 1 on findings
+
 # Old Onyx leftovers (#1598: Sindri no longer runs Onyx)
 sindri onyx down --purge                # Once, on a box that ran the old `onyx up`: lists its labelled containers and volumes, the recorded keychain entry and onyx/, asks, then removes them; the human's verb (a session is refused, SND-AUTH-002); exit 0 done or nothing left, 1 a step failed, 2 refused
 
@@ -153,6 +157,7 @@ node scripts/check-rules.mjs [--json]   # Every §4b rule has a record; every ac
 # Environment and dev container
 scripts/check-env-example.sh            # Every env var the code reads is in .env.example (ENV-EXAMPLE-001..004); exit 1 on drift
 scripts/check-skills-toolkit.sh           # skills/, bootstrap/ and config/voice/ name the toolkit as ${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit} and the per-repo output dir as $AW_DIR (SKILLS-TOOLKIT-001, -002); exit 1 on drift, file:line per hit
+scripts/check-prose.sh [--base REF] [--strict] [--counts] [path...]   # Vale (pinned in binaries.lock) with our own style (.vale.ini, .vale/styles/Aw: the reply voice's Structure rules and a slop list) on tracked Markdown in docs/, planning/, skills/, bootstrap/, config/voice/, AGENTS.md and README.md (issue 2919); `file:line:col: error|warning Rule: message` per hit; errors are vague verbs, hedges, slop, wordy forms, filler, dash runs and unparseable front matter, warnings the 80% rules (sentence and paragraph length, passive, noun stacks; --strict fails on them); --base keeps hits on lines added since REF (CI's gate job, so new slop can't land); --counts prints hits per directory; exit 0 no errors, 1 hits, 2 usage or vale missing
 scripts/check-cs-control-bytes.sh       # tracked .cs files hold no control byte but tab, LF and CR (#2203: a raw 0x08 in a verbatim regex built clean and never matched); exit 1 with file:line and the byte in hex, 2 usage
 scripts/check-skills-git-mode.sh        # every skill that makes a worktree, branch, commit, PR or PR comment reads AW_GIT_MODE and refuses the write under `readonly` (skill-revamp spec §2.3); exit 1 on drift, file:line per hit
 scripts/check-skills-worktree-path.sh   # every skill that runs `git worktree add` takes the path from skills/_shared/worktree-path.sh, the one worktree root per repo (#2765); exit 1 on drift, file:line per hit, 2 usage
@@ -177,6 +182,7 @@ bash scripts/tests/check-rules.test.sh
 bash scripts/tests/check-launcher.test.sh   # launcher.json schema, fixtures, built-ins and argvHash goldens (node scripts/check-launcher.mjs; Ajv is a dev dependency of scripts/)
 bash scripts/tests/check-handoff-schema.test.sh   # schemas/handoff/inbox.openapi.yaml (the handoff inbox contract, docs/sindri/handoff.md): it parses, its operations and status codes are all there, its examples and every file in tests/fixtures/handoff/fake-inbox/ get their verdicts (node scripts/check-handoff-schema.mjs; Ajv and yaml as the other checkers)
 bash scripts/tests/check-fleet.test.sh      # fleet state schema, its valid and invalid fixtures, and the /proc-shaped sessions tree (node scripts/check-fleet.mjs; Ajv as above)
+bash scripts/tests/scoping-bench.test.sh   # scripts/scoping-bench.mjs: this repo's answer keys pass --check, a missing or repeated key path is a finding, usage errors exit 2, a stub sindri's answers scored (node, path steps, cite keys and refs; map and record keys skipped; touch recall apart from recall; a failed query exit 1) (yaml as the other checkers)
 bash scripts/tests/check-library-schemas.test.sh # schemas/library/design-doc.schema.json (the parsed design doc, docs/conventions/design-docs.md): it compiles, its examples get their verdicts, each invalid one fails at its own path (node scripts/check-library-schemas.mjs; Ajv as above)
 bash scripts/tests/check-library-fixtures.test.sh # tests/fixtures/library/ (made-up design docs) against its expected.json, the contract the C# parser's tests share: every .md listed, every SND-LIB-010..019 has a fixture, good front matter passes $defs/frontMatter, broken fails, generated shas match (node scripts/check-library-fixtures.mjs; Ajv as above)
 bash scripts/tests/check-profile-doc.test.sh # docs/csharp/sindri-profile.md names every SindriProfile key (node scripts/check-profile-doc.mjs)
@@ -218,6 +224,7 @@ bash scripts/tests/ui-before-after-stack-parallel.test.sh   # #2596: two copies 
 bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/weeklyretro-shortlog.test.sh   # #1898: /weeklyRetro's `git shortlog` names a revision, so it lists authors with no terminal on stdin
 bash scripts/tests/canary-baseline-keys.test.sh   # #1896: every `baseline.<key>` /canary reads is a key /landAndDeploy writes to baseline.json
+bash scripts/tests/check-prose.test.sh   # scripts/check-prose.sh with the real pinned vale (fetched; the vale cases SKIP offline) on scripts/tests/fixtures/check-prose/: a clean file, one per rule family (vague verbs, hedges, slop/wordy/filler, dash runs, the 80% rules as warnings, unparseable front matter), --strict, --counts, sorted output, --base on a scratch repo (added lines and new files only), usage, vale missing exit 2
 bash scripts/tests/check-cs-control-bytes.test.sh   # scripts/check-cs-control-bytes.sh: the real tree passes, a planted 0x08, 0x00, 0x0B or 0x1F in a tracked .cs fails naming file:line and the byte (never printed raw), tab/CR/LF pass, untracked and non-.cs files are skipped, usage exit 2
 bash scripts/tests/check-skills-git-mode.test.sh   # scripts/check-skills-git-mode.sh: every skill with a git/gh write command has a "## Git mode" section with ${AW_GIT_MODE:-full}; a planted skill without it fails naming file:line
 bash scripts/tests/check-skills-worktree-path.test.sh   # scripts/check-skills-worktree-path.sh: the real tree passes; a planted fenced, inline or .sh `git worktree add` without worktree-path.sh fails naming file:line, the helper in the same file fixes it, prose "no `git worktree add`" and .sh comments pass, bootstrap/ is scanned, usage exit 2
@@ -270,6 +277,7 @@ bash scripts/tests/meta-start-lock-guard.test.sh   # scripts/meta-start-lock.sh'
 bash scripts/tests/launcher-probe.test.sh   # launcher_cli_has_flag: finds a flag, answers no without it, ends a hanging CLI, leaves none of its children running (#2329)
 bash scripts/tests/meta-version.test.sh     # the installed aw-meta's version and the launcher's staleness warning (Linux and macOS)
 bash scripts/tests/install-meta.test.sh
+bash scripts/tests/oom-policy.test.sh   # install-meta.sh writes the DefaultOOMPolicy=continue drop-in only when the user manager says stop (idempotent, dry run, other drop-ins untouched, never runs daemon-reload), aw-meta-launch warns once when it isn't continue; no line without systemctl or on macOS (#2931)
 bash scripts/tests/meta-gate-reserve.test.sh   # scripts/meta-gate-reserve.sh (the meta gate's heavy-slot reserve, linked to $AW_STATE_DIR/bin-r1b/meta-gate-reserve by install-cs.sh) on a temp state dir: depth tiers, the heavy-slots-cap clamp, --show, --clear, usage exit 2, the file holds just the number
 bash scripts/tests/heavy.test.sh              # scripts/heavy.sh (the heavy-job wrapper, linked to $AW_STATE_DIR/bin-r1b/heavy by install-cs.sh) on a temp state dir and a stub dotnet: usage, exit codes (75, 124, 130), lock files and owner line, heavy-slots-cap, the meta reserve, the memory guard, nested runs, --light/--expensive classification (~25 s)
 bash scripts/tests/meta-teams.test.sh

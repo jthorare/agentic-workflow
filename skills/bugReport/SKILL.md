@@ -76,7 +76,7 @@ Fold the resulting evidence pack (`skills/_shared/evidence-pack.md`) into the au
 
 Compute health scores on a 0-100 scale — **for detected dimensions only**.
 
-**Unknown-dimension rule:** a dimension whose toolchain is not configured ("n/a" from Step 2) reports `—` in the dashboard — never a substitute number like 50 — and its weight is redistributed proportionally across the detected dimensions. Example: no typecheck configured ⇒ weights renormalize to test 40/70 ≈ 57%, lint 30/70 ≈ 43%.
+**Unknown-dimension rule:** a dimension whose toolchain is not configured ("n/a" from Step 2) reports `—` in the dashboard (never a substitute number like 50) and its weight is redistributed proportionally across the detected dimensions. Example: no typecheck configured ⇒ weights renormalize to test 40/70 ≈ 57%, lint 30/70 ≈ 43%.
 
 ### Test Health (base weight: 40%)
 ```
@@ -205,7 +205,7 @@ Fix a specific bug with full context: /bugHunt --from-report <report-path> --ite
 ## Next steps
 
 - `/bugHunt --from-report <report-path> --item N` — auto-fix a numbered bug from this report with verification
-- `/rootCause` — deep-dive a specific bug from the report
+- `/rootCause` — investigate one bug in detail from the report
 
 ## Result block
 

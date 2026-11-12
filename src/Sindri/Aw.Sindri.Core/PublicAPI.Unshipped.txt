@@ -2057,6 +2057,7 @@ Aw.Sindri.Core.Views.IProjectorStatus.WaitFor(long sequence, System.TimeSpan lim
 Aw.Sindri.Core.Views.IViewReader
 Aw.Sindri.Core.Views.IViewReader.Get<TRow>(string! view, string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<TRow?>!>
 Aw.Sindri.Core.Views.IViewReader.List<TRow>(string! view, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<TRow!>!>!>
+Aw.Sindri.Core.Views.IViewReader.Mark(string! view, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Sindri.Core.Views.IViewReader.Range<TRow>(string! view, string! afterKey, string? beforeKey, int max, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<TRow!>!>!>
 Aw.Sindri.Core.Views.IViewReader.State(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState?>!>
 Aw.Sindri.Core.Views.IViewReader.Where<TRow>(string! view, Aw.Sindri.Core.Views.ViewColumn column, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<TRow!>!>!>
@@ -13977,7 +13978,6 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 35 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -22301,6 +22301,7 @@ static Aw.Sindri.Core.Resources.SandboxResource.operator ==(Aw.Sindri.Core.Resou
 static readonly Aw.Sindri.Core.SindriErrors.ResourceDiskOverSize -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ResourceInvalid -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ResourceDiskUnmeasured -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.ResourcePurgeFailed -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ResourceNameClash -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ResourcePathEscapes -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.ResourcePurgeRefused -> Aw.Kernel.ErrorDefinition!
@@ -22693,13 +22694,19 @@ static Aw.Sindri.Core.Toolkits.ToolkitCallEntry.operator ==(Aw.Sindri.Core.Toolk
 Aw.Sindri.Core.Resources.IResourceFiles
 Aw.Sindri.Core.Resources.IResourceFiles.List(Aw.Sindri.Core.Resources.ResourceOwner? owner) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Resources.ResourceEntry!>!>!
 Aw.Sindri.Core.Resources.IResourceFiles.Purge(Aw.Sindri.Core.Resources.ResourceOwner! owner) -> Aw.Kernel.Result<int>!
+Aw.Sindri.Core.Resources.IResourceFiles.Stage(Aw.Sindri.Core.Resources.ResourceOwner! owner) -> Aw.Kernel.Result<Aw.Sindri.Core.Resources.IStagedPurge!>!
+Aw.Sindri.Core.Resources.IStagedPurge
+Aw.Sindri.Core.Resources.IStagedPurge.Count.get -> int
+Aw.Sindri.Core.Resources.IStagedPurge.Delete() -> Aw.Kernel.Result<int>!
+Aw.Sindri.Core.Resources.IStagedPurge.Restore() -> Aw.Kernel.Result<int>!
 Aw.Sindri.Core.Resources.ResourceEntry
 Aw.Sindri.Core.Resources.ResourceEntry.Kind.get -> Aw.Sindri.Core.Resources.ResourceKind
 Aw.Sindri.Core.Resources.ResourceEntry.Name.get -> string!
 Aw.Sindri.Core.Resources.ResourceEntry.Owner.get -> Aw.Sindri.Core.Resources.ResourceOwner!
 Aw.Sindri.Core.Resources.ResourceEntry.Path.get -> string!
-Aw.Sindri.Core.Resources.ResourceEntry.ResourceEntry(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceKind kind, string! name, long sizeBytes, string! path) -> void
+Aw.Sindri.Core.Resources.ResourceEntry.ResourceEntry(Aw.Sindri.Core.Resources.ResourceOwner! owner, Aw.Sindri.Core.Resources.ResourceKind kind, string! name, long sizeBytes, string! path, bool unmeasured = false) -> void
 Aw.Sindri.Core.Resources.ResourceEntry.SizeBytes.get -> long
+Aw.Sindri.Core.Resources.ResourceEntry.Unmeasured.get -> bool
 Aw.Sindri.Core.Graph.Blocks.CallToolBlock.Group.get -> Aw.Sindri.Core.Graph.Blocks.BlockGroup
 Aw.Sindri.Core.Graph.Blocks.CallToolBlock.Title.get -> string!
 Aw.Sindri.Core.Graph.Runs.WorkflowLoopRule
@@ -23144,3 +23151,47 @@ static Aw.Sindri.Core.Events.WorkflowNodePublic.operator !=(Aw.Sindri.Core.Event
 static Aw.Sindri.Core.Events.WorkflowNodePublic.operator ==(Aw.Sindri.Core.Events.WorkflowNodePublic? left, Aw.Sindri.Core.Events.WorkflowNodePublic? right) -> bool
 static Aw.Sindri.Core.Events.WorkflowRunPublic.operator !=(Aw.Sindri.Core.Events.WorkflowRunPublic? left, Aw.Sindri.Core.Events.WorkflowRunPublic? right) -> bool
 static Aw.Sindri.Core.Events.WorkflowRunPublic.operator ==(Aw.Sindri.Core.Events.WorkflowRunPublic? left, Aw.Sindri.Core.Events.WorkflowRunPublic? right) -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.<Clone>$() -> Aw.Sindri.Core.NeedsYou.NeedsYouDecision!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Deconstruct(out Aw.Sindri.Core.Ids.DecisionId Id, out string! Question, out string! FiledBy, out Aw.Sindri.Core.Ids.DecisionOption Recommended, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption!>! Options) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Equals(Aw.Sindri.Core.NeedsYou.NeedsYouDecision? other) -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.FiledBy.get -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.FiledBy.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Id.get -> Aw.Sindri.Core.Ids.DecisionId
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Id.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.NeedsYouDecision(Aw.Sindri.Core.Ids.DecisionId Id, string! Question, string! FiledBy, Aw.Sindri.Core.Ids.DecisionOption Recommended, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption!>! Options) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Options.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption!>!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Options.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Question.get -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Question.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Recommended.get -> Aw.Sindri.Core.Ids.DecisionOption
+Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Recommended.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.<Clone>$() -> Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Cli.get -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Cli.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Deconstruct(out Aw.Sindri.Core.Ids.DecisionOption Id, out string! Label, out string! Cli, out bool RejectLike) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Equals(Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption? other) -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Id.get -> Aw.Sindri.Core.Ids.DecisionOption
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Id.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Label.get -> string!
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Label.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.NeedsYouDecisionOption(Aw.Sindri.Core.Ids.DecisionOption Id, string! Label, string! Cli, bool RejectLike) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.get -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.RejectLike.init -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.get -> Aw.Sindri.Core.NeedsYou.NeedsYouDecision?
+Aw.Sindri.Core.NeedsYou.NeedsYouRow.Decision.init -> void
+const Aw.Sindri.Core.Views.ViewSchema.Version = 36 -> int
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.Equals(object? obj) -> bool
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.GetHashCode() -> int
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecision.ToString() -> string!
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.Equals(object? obj) -> bool
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.GetHashCode() -> int
+override Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.ToString() -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecision.operator !=(Aw.Sindri.Core.NeedsYou.NeedsYouDecision? left, Aw.Sindri.Core.NeedsYou.NeedsYouDecision? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecision.operator ==(Aw.Sindri.Core.NeedsYou.NeedsYouDecision? left, Aw.Sindri.Core.NeedsYou.NeedsYouDecision? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.operator !=(Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption? left, Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption? right) -> bool
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption.operator ==(Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption? left, Aw.Sindri.Core.NeedsYou.NeedsYouDecisionOption? right) -> bool
+Aw.Sindri.Core.NeedsYou.NeedsYouDecisions
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.From(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> Aw.Kernel.Result<Aw.Sindri.Core.NeedsYou.NeedsYouDecision!>!
+static Aw.Sindri.Core.NeedsYou.NeedsYouDecisions.Question(Aw.Sindri.Core.Views.HumanDecisionRow! row) -> string!

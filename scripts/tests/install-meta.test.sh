@@ -19,13 +19,14 @@ check() {
 cp_tree_scripts() {
   mkdir -p "$1/scripts" "$1/schemas" "$1/config/launcher"
   cp "$DIR/install-meta.sh" "$DIR/meta-launch.sh" "$DIR/meta-lane.sh" "$DIR/launcher-lib.sh" "$DIR/meta-team-lib.sh" "$DIR/meta-version-lib.sh" \
-    "$DIR/meta-start-lock.sh" "$DIR/meta-build-paths.txt" "$1/scripts/"
+    "$DIR/meta-oom-lib.sh" "$DIR/meta-start-lock.sh" "$DIR/meta-build-paths.txt" "$1/scripts/"
   cp "$DIR/../schemas/launcher.schema.json" "$1/schemas/"; cp "$DIR/../config/launcher/"*.json "$1/config/launcher/"
 }
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 for v in $(compgen -e | grep '^AW_META_'); do unset "$v"; done   # the caller may be a meta session: its team config, bin and claude must not reach the stubs
 export HOME="$WORK/home" AW_STATE_DIR="$WORK/state" AW_SKIP_BUILD=1
+export AW_META_NO_OOM_CHECK=1   # a runner whose systemd policy is stop would write a drop-in and add output (oom-policy.test.sh covers it)
 unset CLAUDE_DIR CLAUDE_LOCAL_BIN AW_DRY_RUN AW_HOOKS_DIR CODEX_HOOKS_FILE CODEX_HOME CURSOR_HOOKS_FILE CLAUDE_SETTINGS_FILE CLAUDE_HOOKS_DIR AW_HOOK_ADAPTER_FLAGS SETTINGS_FILE TOOLKIT_DIR
 # the installer behaves the same on Linux and macOS: stub uname to Linux so the suite is one thing everywhere (the Darwin and other-OS cases below override it)
 mkdir -p "$WORK/linuxbin"
@@ -249,7 +250,7 @@ check "a team repo set, run from a second plain clone: refused too" "$RC:$(link)
 OUT="$(bash "$WORK/wt/scripts/install-meta.sh" --provider claude --allow-worktree 2>&1)"; RC=$?
 check "a team repo set, --allow-worktree: installs from this tree and links the copy at its commit" "$RC:$(link)" "0:$AW_STATE_DIR/bin/meta-launch/$WTHEAD/scripts/meta-launch.sh"
 rm -f "$CLAUDE_LOCAL_BIN/aw-meta-launch"
-cp "$WORK/tree/scripts/install-meta.sh" "$WORK/tree/scripts/meta-team-lib.sh" "$WORK/tree/scripts/meta-version-lib.sh" "$WORK/tree/scripts/meta-build-paths.txt" "$WORK/canon2/scripts/"
+cp "$WORK/tree/scripts/install-meta.sh" "$WORK/tree/scripts/meta-team-lib.sh" "$WORK/tree/scripts/meta-version-lib.sh" "$WORK/tree/scripts/meta-oom-lib.sh" "$WORK/tree/scripts/meta-build-paths.txt" "$WORK/canon2/scripts/"
 cp -r "$WORK/tree/config" "$WORK/tree/global.json" "$WORK/canon2/"
 OUT="$(bash "$WORK/canon2/scripts/install-meta.sh" --provider claude 2>&1)"; RC=$?
 check "a team repo set, run from it: linked into it, no flag needed" "$RC:$(link)" "0:$WORK/canon2/scripts/meta-launch.sh"

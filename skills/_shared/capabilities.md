@@ -15,6 +15,7 @@ Referenced via: SHARED_DIR pattern (CD2).
 | **Message a running agent** | `SendMessage` | `send_message` | `Task` resume / follow-up |
 | **List agents** (other live sessions and their names) | `ListAgents` | — (no cross-session messaging) | — |
 | **Watch in the background** (a long-running command whose output lines arrive as events) | `Monitor` | run it in a background shell and poll its output | run it in a background shell and poll its output |
+| **Wait, then run again** (come back to a task after N minutes; default 5 min, cap 8 h, then a stop report) | `ScheduleWakeup` (a delay and the prompt to resume) or `Monitor` on a polling command | a bounded `sleep` loop in the shell: `sleep 300`, re-check, stop at the cap | a bounded `sleep` loop in the shell: `sleep 300`, re-check, stop at the cap |
 | **Invoke another skill** | `Skill` tool (`skill: <name>`) | Mention `$<name>` or read `$TOOLKIT/skills/<name>/SKILL.md` and follow it | `/<name>` or read `$TOOLKIT/skills/<name>/SKILL.md` and follow it |
 | **Run shell** | `Bash` | `exec` / shell | `Shell` |
 | **Read / search files** | `Read`, `Grep`, `Glob` | shell (`rg`, `sed -n`) | `Read`, `Grep`, `Glob` |

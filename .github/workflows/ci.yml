@@ -107,6 +107,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # the prose step diffs from the base's merge-base, which needs the history
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -127,6 +129,17 @@ jobs:
           fi
       - name: Rule records name real checks
         run: node scripts/check-rules.mjs
+      - name: Prose on the changed Markdown (Vale, scripts/check-prose.sh)
+        # Only hits on added lines fail, so a PR never inherits an old file's slop (issue 2919). The base is the PR's
+        # base, the merge group's base, or the pushed range's start; a run with no base (a dispatch, a new branch)
+        # checks nothing. The whole tree joins once the cleanup PRs land.
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+        run: |
+          if [ -z "${BASE:-}" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            echo "no-op: no base commit to diff against"; exit 0
+          fi
+          AW_VALE_BIN="$(scripts/binaries-lock.sh fetch vale)" scripts/check-prose.sh --base "$BASE"
 
   dotnet:
     name: .NET build and test

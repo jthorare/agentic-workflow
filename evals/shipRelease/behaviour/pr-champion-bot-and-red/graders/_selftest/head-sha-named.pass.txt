@@ -1,0 +1,5 @@
+PR 7 is merge-ready at bc93f84356387b3f7fdffa08d247c1d6c658d2a3. Fixed the string check the bot asked for and the space-run bug behind the red test check.
+
+Would run:
+- `git push origin feat/x`
+- `gh pr ready 7`

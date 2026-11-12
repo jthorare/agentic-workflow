@@ -14,13 +14,13 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 
 ## Overview
 
-Dynamically discovers project documentation, reads what's relevant to the user's prompt, and rewrites the request with full context — constraints, conventions, domain rules, and known patterns — before any work begins.
+Dynamically discovers project documentation, reads what's relevant to the user's prompt, and rewrites the request with full context (constraints, conventions, domain rules, and known patterns) before any work begins.
 
 ## Steps
 
 ### 1. Discover documentation
 
-Scan the working directory for what actually exists (don't assume): root-level guides (`AGENTS.md`, `CLAUDE.md` — often a symlink to `AGENTS.md` or an `@AGENTS.md` import stub — `GEMINI.md`, `README.md`, `CONTRIBUTING.md`); domain rules `.agents/rules/*.md` (canonical; also `.claude/rules/*.md` or `.cursor/rules/*.mdc` in repos not yet migrated — this skill's core input); `planning/*.md`; docs folders (`docs/`, `wiki/`, `.docs/`, `documentation/`); any `*.md` at root or one level deep.
+Scan the working directory for what exists (don't assume): root-level guides (`AGENTS.md`, `CLAUDE.md` (often a symlink to `AGENTS.md` or an `@AGENTS.md` import stub), `GEMINI.md`, `README.md`, `CONTRIBUTING.md`); domain rules `.agents/rules/*.md` (canonical; also `.claude/rules/*.md` or `.cursor/rules/*.mdc` in repos not yet migrated — this skill's core input); `planning/*.md`; docs folders (`docs/`, `wiki/`, `.docs/`, `documentation/`); any `*.md` at root or one level deep.
 
 List what you find. If nothing exists, say so and offer to enhance from conversation context alone.
 
@@ -28,7 +28,7 @@ List what you find. If nothing exists, say so and offer to enhance from conversa
 
 Read files whose names or paths suggest relevance to the user's prompt topic. Always read any root-level instruction file (`AGENTS.md`, `CLAUDE.md`, `README.md`) first since they establish overall context, then the `.agents/rules/*.md` files whose globs cover the prompt's domain, then topic-specific `planning/*.md` files.
 
-Use judgment — a prompt about pricing doesn't need the testing strategy doc — but the judgment must be visible: every discovered doc appears in the Step 4 output as **read** or **skipped (why)**. Reading only the README does not satisfy this step when rules or planning docs exist.
+Use judgment (a prompt about pricing doesn't need the testing strategy doc), but the judgment must be visible: every discovered doc appears in the Step 4 output as **read** or **skipped (why)**. Reading only the README does not satisfy this step when rules or planning docs exist.
 
 ### 3. Evaluate peer-agent dialogue value
 

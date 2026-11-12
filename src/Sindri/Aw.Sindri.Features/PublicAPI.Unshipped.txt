@@ -544,16 +544,13 @@ Aw.Sindri.Features.GetLaunch.LaunchView.Step.init -> void
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest.<Clone>$() -> Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest!
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest.Equals(Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest? other) -> bool
-Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest.GetNeedsYouRequest() -> void
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.<Clone>$() -> Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse!
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.AsOf.init -> void
-Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>! Rows, out string? Empty, out Aw.Sindri.Core.Views.AsOf! AsOf) -> void
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Empty.get -> string?
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Empty.init -> void
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Equals(Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse? other) -> bool
-Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.GetNeedsYouResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>! Rows, string? Empty, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Rows.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>!
 Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Rows.init -> void
 Aw.Sindri.Features.GetProfile.GetProfileRequest
@@ -5559,3 +5556,13 @@ override Aw.Sindri.Features.GetQueue.QueueGroupCounts.GetHashCode() -> int
 override Aw.Sindri.Features.GetQueue.QueueGroupCounts.ToString() -> string!
 static Aw.Sindri.Features.GetQueue.QueueGroupCounts.operator !=(Aw.Sindri.Features.GetQueue.QueueGroupCounts? left, Aw.Sindri.Features.GetQueue.QueueGroupCounts? right) -> bool
 static Aw.Sindri.Features.GetQueue.QueueGroupCounts.operator ==(Aw.Sindri.Features.GetQueue.QueueGroupCounts? left, Aw.Sindri.Features.GetQueue.QueueGroupCounts? right) -> bool
+Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest.Deconstruct(out string? IfNoneMatch) -> void
+Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest.GetNeedsYouRequest(string? IfNoneMatch = null) -> void
+Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest.IfNoneMatch.get -> string?
+Aw.Sindri.Features.GetNeedsYou.GetNeedsYouRequest.IfNoneMatch.init -> void
+Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>! Rows, out string? Empty, out Aw.Sindri.Core.Views.AsOf! AsOf, out string? Tag, out bool NotModified) -> void
+Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.GetNeedsYouResponse(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.NeedsYou.NeedsYouRow!>! Rows, string? Empty, Aw.Sindri.Core.Views.AsOf! AsOf, string? Tag = null, bool NotModified = false) -> void
+Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.NotModified.get -> bool
+Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.NotModified.init -> void
+Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Tag.get -> string?
+Aw.Sindri.Features.GetNeedsYou.GetNeedsYouResponse.Tag.init -> void
