@@ -311,7 +311,7 @@ A chip is a view. The file keeps `[[acme/api#3104]]` or the URL; nothing about s
 | Cursor line | raw text, no chip |
 | Not live | decision 13 |
 
-Not live means Sindri is down, or the row's `readAt` is older than the source's stale limit (Home's stale-source rule, Home §5.5 and §7.3). The page header says "Not live: Sindri isn't running. States as of 14:02." and the top bar says "Not connected".
+Not live means Sindri is down, or the row's `readAt` is older than the source's stale limit (Home's stale-source rule, Home §5.5 and §7.3). The page header says "Not live: Sindri isn't running. States as of 14:02." and the top bar says "Not connected". On a page drawn read-only because Sindri is down (`notes-today-down.png`, `notes-today-ghost-down.png`), the banner already says Sindri isn't running, so the day-links note says only "Not live: states as of 14:02." and "Read-only" sits in the "Saved" slot beside the path, on one line.
 
 ### 4.8 Make issue (v1.1)
 
