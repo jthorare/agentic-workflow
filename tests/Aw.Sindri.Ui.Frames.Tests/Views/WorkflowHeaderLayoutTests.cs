@@ -40,7 +40,8 @@ public sealed class WorkflowHeaderLayoutTests : FrameHost
             Assert.True(title.TranslatePoint(new Point(title.Bounds.Width, 0), window)!.Value.X <= window.Bounds.Width, "the title runs past the window");
             var shown = back.Bounds.Width;
             back.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            Assert.True(shown >= back.DesiredSize.Width - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the crumb shrank from {back.DesiredSize.Width} to {shown}"));
+            var natural = back.DesiredSize.Width - back.Margin.Left - back.Margin.Right;
+            Assert.True(shown >= natural - 0.5, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the crumb shrank from {natural} to {shown}"));
             Settle(window);
             Assert.False(Visible(window, "WorkflowsHead"), "the list's counts show on a workflow's page");
             Assert.True(Visible(window, "WorkflowsState"), "the workflow's own state does not show");
