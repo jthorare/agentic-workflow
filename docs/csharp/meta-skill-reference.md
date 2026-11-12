@@ -175,6 +175,10 @@ A Claude usage limit stops every lane and your own subagents at once ("You've hi
 Merges, owner decisions, lane maps and kills are logged by the CLI. For anything else worth keeping:
 `aw-meta log-append --kind incident|note --text "…"`.
 
+## CI gate mode
+
+When `gate.mode` is `ci` in the team config, step 2 changes: `aw-meta gate-run N` runs nothing on this box. It reads the pull request's required checks, review decision and merge state from GitHub and records the answer against the head sha. It passes only when every required check is green, the review is `APPROVED` and the merge state is `CLEAN`; a pending check is a fail (`pending`), so run it again once CI finishes. **Skip every `meta-gate-reserve` step**: no gate tree is built and no heavy slot is taken. Skip step 3 (there are no local test reds to rerun; a red required check goes back to the lane). Then `aw-meta merge-check N` and `aw-meta merge-run N` as before: `merge-check` needs a passing CI record at the head the pull request has now, so a push after `gate-run` means run it again. If `gate-run` refuses with `AW-META-024` (`no required checks on <base>`), the base has no branch protection: ask the owner, never merge on it. `queue-gate` (the train) is a local gate and does not apply.
+
 ## Gating several ready pull requests as a train
 
 **With several ready pull requests, gate them as a train** instead of one `gate-run` at a time:
