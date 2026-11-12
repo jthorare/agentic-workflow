@@ -16,7 +16,7 @@ public sealed class HealthTests
     private readonly MetaWorld _world = new();
 
     private HealthService Service() => new(
-        new HostProbe(_world.Processes, _world.Resources, new OomPolicyCheck(_world.Runner)),
+        new HostProbe(_world.Processes, _world.Resources, new OomPolicyCheck(_world.Runner, _world.Paths)),
         new LaneCheck(_world.Config, new MissingLanes(_world.Sessions, _world.Messages, _world.Lanes), _world.LaneHealth, _world.Context),
         new OrphanKiller(_world.Processes, _world.Log, _world.Clock),
         _world.Values,

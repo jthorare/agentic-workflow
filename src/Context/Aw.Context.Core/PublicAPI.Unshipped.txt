@@ -4451,6 +4451,7 @@ Aw.Context.Core.Sources.ISourceNotes
 Aw.Context.Core.Sources.ISourceNotes.TakeNotes() -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Sources.IContextSource.Describe() -> Aw.Context.Core.Sources.SourceDescriptor!
 Aw.Context.Core.Sources.IContextSource.Fetch(Aw.Context.Core.Sources.SourceRef! reference, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Sources.SourceRecord!>!>
+Aw.Context.Core.Sources.IContextSource.FetchMany(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.SourceRef!>! references, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Kernel.Result<Aw.Context.Core.Sources.SourceRecord!>!>!>!>
 Aw.Context.Core.Sources.IContextSource.Probe(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Sources.SourceHealth!>
 Aw.Context.Core.Sources.IContextSource.Search(Aw.Context.Core.Sources.SourceQuery! query, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.SourceHit!>!>!>
 Aw.Context.Core.Sources.IContextSource.Versions(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.SourceRef!>! refs, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.SourceVersion?>!>!>
@@ -12462,3 +12463,24 @@ Aw.Context.Core.Engine.ModelKind.WorkflowPrompt = 7 -> Aw.Context.Core.Engine.Mo
 Aw.Context.Core.Models.ModelPurpose.WorkflowPrompt = 9 -> Aw.Context.Core.Models.ModelPurpose
 Aw.Context.Core.Linear.ILinearReadCredential
 Aw.Context.Core.Linear.ILinearReadCredential.TokenFor(string? profilePointer) -> string?
+Aw.Context.Core.Engine.AnchorChoice
+Aw.Context.Core.Engine.AnchorChoice.<Clone>$() -> Aw.Context.Core.Engine.AnchorChoice!
+Aw.Context.Core.Engine.AnchorChoice.AnchorChoice(string! Key, string! Label, string! Kind) -> void
+Aw.Context.Core.Engine.AnchorChoice.Deconstruct(out string! Key, out string! Label, out string! Kind) -> void
+Aw.Context.Core.Engine.AnchorChoice.Equals(Aw.Context.Core.Engine.AnchorChoice? other) -> bool
+Aw.Context.Core.Engine.AnchorChoice.Key.get -> string!
+Aw.Context.Core.Engine.AnchorChoice.Key.init -> void
+Aw.Context.Core.Engine.AnchorChoice.Kind.get -> string!
+Aw.Context.Core.Engine.AnchorChoice.Kind.init -> void
+Aw.Context.Core.Engine.AnchorChoice.Label.get -> string!
+Aw.Context.Core.Engine.AnchorChoice.Label.init -> void
+override Aw.Context.Core.Engine.AnchorChoice.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.AnchorChoice.GetHashCode() -> int
+override Aw.Context.Core.Engine.AnchorChoice.ToString() -> string!
+static Aw.Context.Core.Engine.AnchorChoice.operator !=(Aw.Context.Core.Engine.AnchorChoice? left, Aw.Context.Core.Engine.AnchorChoice? right) -> bool
+static Aw.Context.Core.Engine.AnchorChoice.operator ==(Aw.Context.Core.Engine.AnchorChoice? left, Aw.Context.Core.Engine.AnchorChoice? right) -> bool
+Aw.Context.Core.Results.ContextResult.Suggestions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.AnchorChoice!>?
+Aw.Context.Core.Results.ContextResult.Suggestions.init -> void
+static Aw.Context.Core.Graph.AnchorMatch.Choices(System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.GraphNode!>! nodes) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.AnchorChoice!>!
+static Aw.Context.Core.ContextErrors.IsMissedDeadline(Aw.Kernel.Error! error) -> bool
+static Aw.Context.Core.ContextErrors.MissedDeadline(Aw.Context.Core.Sources.SourceId source) -> Aw.Kernel.Error!

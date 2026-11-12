@@ -110,6 +110,74 @@ public sealed class ContextPageWindowTests
         }, Token);
     }
 
+    [Fact]
+    public async Task A_long_choice_title_trims_inside_the_window_and_keeps_its_kind_tag_whole()
+    {
+        const string Long = "action:tab-manager.restore-layout-after-a-crash-with-every-pinned-group-and-window";
+        var title = string.Join(' ', Enumerable.Repeat("Restore the tab layout after a crash with every pinned group", 4));
+        var unknown = new RouteAnswer(System.Net.HttpStatusCode.NotFound,
+            $$"""{"type":"about:blank","title":"SND-CONTEXT-003","status":404,"detail":"no node is named 'x'","traceId":"<trace>","suggestedAnchors":["{{Long}}"],"choices":[{"key":"{{Long}}","label":"{{title}}","kind":"action"}]}""");
+        using var stop = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(ContextPageWindowTests).Assembly).Dispatch(async () =>
+        {
+            var records = new InMemoryEndpointRecords();
+            records.Write(A.Record());
+            var shell = new ShellViewModel(records, new FakeSindriApi { WholeMapAnswer = _ => new RouteAnswer(System.Net.HttpStatusCode.InternalServerError, "{}"), LensesAnswer = _ => unknown }, new FakeTimeProvider(A.Noon), new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
+            await shell.Restore(Token);
+            var window = new ShellWindow { DataContext = shell, Width = 1000, Height = 800 };
+            try
+            {
+                await OpenContext(shell, window, stop.Token);
+                shell.Context.AnchorText = "feature:tabs.nope";
+                await shell.Context.Submit(Token);
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+                AssertChoiceFits(window);
+            }
+            finally
+            {
+                await stop.CancelAsync();
+                window.Close();
+                Dispatcher.UIThread.RunJobs();
+            }
+
+            return true;
+        }, Token);
+    }
+
+    private static async Task OpenContext(ShellViewModel shell, ShellWindow window, CancellationToken stop)
+    {
+        window.Show();
+        _ = shell.Run(stop);
+        for (var i = 0; i < 200 && shell.State != ShellState.Normal; i++)
+        {
+            await Task.Delay(10, Token);
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        shell.GoTo(PageId.Context);
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    // The row ends inside the window (s3: it was 1232 px wide at 1000), the title is cut short, and the kind tag is drawn whole.
+    private static void AssertChoiceFits(ShellWindow window)
+    {
+        var choices = window.GetVisualDescendants().OfType<Control>().Single(c => c.Name == "ContextChoices");
+        var button = Assert.Single(choices.GetVisualDescendants().OfType<Button>());
+        var left = Avalonia.VisualExtensions.TranslatePoint(button, default, window)!.Value.X;
+        Assert.InRange(left + button.Bounds.Width, left, window.Bounds.Width);
+
+        var title = button.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "ChoiceTitle");
+        var shown = title.Bounds.Width;
+        title.Measure(Avalonia.Size.Infinity);
+        Assert.True(shown < title.DesiredSize.Width);
+
+        var kind = button.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "ChoiceKind");
+        var kindLeft = Avalonia.VisualExtensions.TranslatePoint(kind, default, window)!.Value.X;
+        Assert.True(kind.IsEffectivelyVisible);
+        Assert.InRange(kindLeft + kind.Bounds.Width, kindLeft + 1, window.Bounds.Width);
+    }
+
     // Each stage's host is its seam view, bound to that stage's view model (a Panel, or a lost binding, fails here).
     private static void AssertSeams(ShellViewModel shell, Control page)
     {

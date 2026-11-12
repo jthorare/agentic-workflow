@@ -389,3 +389,61 @@ Registered in `docs/csharp/sindri.md`'s error table.
 2. On the owner's box, per ship: open the page; each led project's open issue count equals Linear's project view filtered to open issues. Close one issue in Linear: the count drops within one tick (5 minutes). Set a project to Paused in Linear: the card moves within one tick.
 3. Network off: the page opens with the last counts and "as of".
 4. An agent session runs `sindri project add --name x`: refused with `SND-AUTH-002`. It runs `sindri projects --json`: Linear names come back fenced.
+
+## 14. Projects v3 (2026-11-12)
+
+The build reference for the Projects page is now design's sheet, round 2. It lives on branch `pr-assets/projects-2961` at commit `2465f82f06`. Read a file with `git show 2465f82f06:<file>`.
+
+The files are `projects-list`, `projects-peek`, `projects-picker`, `projects-picker-assign`, `projects-assign-confirm`, `projects-triage` and `projects-states` (each `.html`), plus `gen.py` and `projects.css`. The direction issue is #2961. This section replaces nothing above it. Where the sheet and §3 to §7 disagree, the sheet wins. §4 to §6 (data, owner state, read path) still stand.
+
+| Spec section | What the sheet changes |
+|---|---|
+| §1 P10, §7 tab | The tab row is Home, Reviews, Items, Workflows, Agents, Projects, Context. Projects holds four views: Needs me, My work, Projects, Triage |
+| §3 card, §3.3, §7 grid | The page is a list of rows grouped by health, not a card grid. Keys are j/k, Space, Enter, Esc, `/`, `c`, `.`, `x` and Ctrl+K |
+| §3 Health, Order | Sindri derives health from each project's PRs, CI and reviews and shows the reason on the row. The hand-set value shows beside it and flags a mismatch. Groups are At risk, On track and No links |
+| §3.2 sheet | Space opens a peek pane: state, derived health, lead, target, progress, open and done work, latest update. Enter opens the full project |
+| §3.1 states 4 to 6 | Three frames replace the page sentences: Triage empty, Linear connection expired (with Reconnect Linear), and no projects (Create project, Connect Linear) |
+| §2 non-goals | The peek lists issues and PRs. Writes go to Linear, per #2961 point 3 |
+
+### Routed issues
+
+| Issue | What it covers | Sheet frame |
+|---|---|---|
+| #2971 | A project opens (peek and full view); the issue and PR counts link to their lists; one done/total progress line | `projects-peek` |
+| #2996 | Single keys on a row: S status, A assign, I self-assign, P priority; estimate, due date, parent, milestone | `projects-picker`, `projects-picker-assign` |
+| #2997 | Delegate a Linear issue to an agent; the run's state shows on the row | `projects-list` (agent glyph) |
+| #3002 | Triage: accept, decline, mark duplicate, snooze | `projects-triage`, `projects-assign-confirm` |
+| #3092 | The Reviews page stays drawn over every other page after you leave Reviews | none |
+
+#3092 is a page-host bug, not a Projects feature. `IsReviewPageShown` is not raised on a page change, so the review layer stays visible over Projects and Work. The Projects page does not cause it. The walk found it on the Projects page, so meta routed it here. The sheet's tab row needs working page switches.
+
+### What the prior-art ledger adds that the sheet lacks
+
+The ledger is `docs/sindri/prior-art/projects.md`. Issues that already exist (#2964, #2965, #2992, #2993, #2995, #3004, #3006, #3017) cover the rest of its "take" lines. These five have no frame and no issue.
+
+| # | Behaviour | Ledger source | Why it matters | Issue |
+|---|---|---|---|---|
+| 1 | Peek shows a burn-up (done over total, by day) and PR throughput, and lists the fixed health rules | §8, Linear cycle graph and GitBiased | The peek shows progress as `6/9` only. A reader cannot see whether "at risk" came from slow merges or growing scope | #3168 |
+| 2 | Triage applies an action to a multi-selection, then moves to the next row | §4, Plane Intake | `projects-triage` acts on one row. Thirteen new items take thirteen actions without `x` select | #3169 |
+| 3 | A global hotkey from the tray opens the one-line create window with the main window closed | §5, Raycast and Linear | A desktop app can capture an issue in under 10 seconds from anywhere. The web tools cannot. The shared window creates on Ctrl+Enter; Enter never creates (Notes spec decision 5). The Notes spec (`2026-11-12-sindri-notes-page-design.md`, §4.1) owns that window. The hotkey is one "Capture hotkey" row under Settings › Shortcuts, shared with Notes. | #3170 |
+| 4 | The `.` menu on a row offers open PR, re-run CI, Scope this and Ask an agent to fix | §6 and §10, take 6 | The footer shows `. actions` and no frame draws the menu. #2997 covers delegation only | #3171 |
+| 5 | "Draft update" fills a project update from derived health and merged PRs; the reminder lands as a Home row | §9, Linear reminders | The peek has "Post update…" with an empty box. #3006 posts an update and does not draft or remind | #3172 |
+
+### Health rules (#3168)
+
+Sindri works out a project's health from its linked PRs, CI and reviews. It uses Linear's own words, so the derived value and the hand-set one compare 1:1. The first rule that matches wins. The row shows that rule's reason, with counts.
+
+| Health | Rule (any one) | Reason shown |
+|---|---|---|
+| Off track | The target date has passed with open work | "Off track: target was Nov 14, 3 open" |
+| | A linked repo's main branch CI has been red for 2 days or more | "Off track: main red 2d (web)" |
+| At risk | A linked PR's CI has been red for 2 days or more | "At risk: 3 of 9 PRs red > 2 days" |
+| | A review request or a changes-requested review has waited 3 days or more | "At risk: 2 reviews waiting > 3 days" |
+| | Under half the work is done with 14 days or less to the target | "At risk: 4 of 9 done, 10 days left" |
+| On track | The project has links and no rule above matches | "On track" |
+| No links | No PR or repo is linked | None. The row offers "Link a repo" |
+
+- The thresholds are fixed: 2 days, 3 days, half, 14 days. The peek lists them under "How health is worked out" and marks the rule that matched. There are no settings and no scripting (ledger §8).
+- The groups on the list are Off track, At risk, On track and No links. The frames' "Blocked" becomes Off track. "Waits on the lead" is dropped, because nothing in the data says what a lead owes.
+- The hand-set Linear value shows beside the derived one. When they differ, the row spells out both, for example "At risk · Linear says on track". A glyph or colour alone never carries the difference.
+- Sindri recomputes health from the local store on each event. No report job runs.
