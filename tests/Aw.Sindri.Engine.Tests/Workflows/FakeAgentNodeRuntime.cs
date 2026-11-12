@@ -19,6 +19,7 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
     private readonly TaskCompletionSource _launching = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly ConcurrentQueue<string> _order = new();
     private int _asked;
+    private volatile NodeSessionAsk? _ask;
 
     /// <summary>The timeout the launch reports; the real one comes from the node's config, whose smallest value is a minute.</summary>
     public TimeSpan Timeout { get; init; } = TimeSpan.FromMinutes(10);
@@ -26,11 +27,15 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
     /// <summary>How many launch calls answer "the session cap is full, ask again" before one starts (#3151).</summary>
     public int SlotWaits { get; init; }
 
-    /// <summary>How often the workflow asks whether the session waits on a permission prompt; short, so a test does not wait 15 s (#3151).</summary>
+    /// <summary>How often an ask call reads the ask; short, so a test does not wait 2 s (#3151).</summary>
     public TimeSpan AskEvery { get; init; } = TimeSpan.FromMilliseconds(200);
 
-    /// <summary>How many asks, from the first, answer "waiting on a permission prompt for Bash"; the ones after answer nothing (#3151).</summary>
-    public int Asks { get; init; }
+    /// <summary>How long one ask call runs with nothing new before it hands back (#3151); the real default is 10 minutes.</summary>
+    public TimeSpan AskCap { get; init; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>Makes the session wait on a permission prompt for <paramref name="tool"/>, or stop waiting (null) (#3151).</summary>
+    /// <param name="tool">The tool, or null for no ask.</param>
+    public void SetAsk(string? tool) => _ask = tool is null ? null : new NodeSessionAsk(tool, new DateTimeOffset(2026, 11, 12, 10, 0, 0, TimeSpan.Zero));
 
     /// <summary>How many times the workflow asked about the permission prompt (#3151).</summary>
     public int AskCalls => Volatile.Read(ref _asked);
@@ -92,7 +97,7 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
         var launched = Failure is { } failure
             ? new AgentLaunched(Worktree: null, StartHead: null, failure)
             : new AgentLaunched("/work/web/.claude/worktrees/wf-test", "0123abc", Failure: null, Agent: "claude-code", RunDirectory: "/home/nodes/run");
-        return new AgentNodeLaunched(launched, """{"repo":"web"}""", Timeout, AskEvery);
+        return new AgentNodeLaunched(launched, """{"repo":"web"}""", Timeout, AskEvery, AskCap);
     }
 
     public async Task<AgentSessionState> Watch(LaunchId launch, Action heartbeat, CancellationToken cancellationToken)
@@ -118,8 +123,22 @@ internal sealed class FakeAgentNodeRuntime : IAgentNodeRuntime
         return Task.FromResult(new AgentNodeClosed(Tokens: 100, EmptyDiff: false, Commit: "def4567", AgentSession: "agent-session-1"));
     }
 
-    public ValueTask<NodeSessionAsk?> Asking(LaunchId launch, CancellationToken cancellationToken) =>
-        ValueTask.FromResult(Interlocked.Increment(ref _asked) <= Asks ? new NodeSessionAsk("Bash", new DateTimeOffset(2026, 11, 12, 10, 0, 0, TimeSpan.Zero)) : null);
+    public async Task<NodeSessionAsk?> WatchAsking(AgentNodeAskWatch watch, Action heartbeat, CancellationToken cancellationToken)
+    {
+        _ = Interlocked.Increment(ref _asked);
+        for (var waited = TimeSpan.Zero; waited < watch.Cap; waited += watch.ReadEvery)
+        {
+            heartbeat();
+            if (!Equals(_ask, watch.Seen))
+            {
+                return _ask;
+            }
+
+            await Task.Delay(watch.ReadEvery, cancellationToken).ConfigureAwait(false);
+        }
+
+        return watch.Seen;
+    }
 
     public Task Hold(AgentNodeHeld held, CancellationToken cancellationToken)
     {

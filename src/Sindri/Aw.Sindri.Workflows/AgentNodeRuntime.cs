@@ -21,7 +21,7 @@ internal sealed class AgentNodeRuntime(AgentNodeLaunching launching, AgentSessio
 
     public Task<AgentNodeClosed> Close(AgentCloseRun run, CancellationToken cancellationToken) => closing.Close(run, cancellationToken);
 
-    public ValueTask<NodeSessionAsk?> Asking(LaunchId launch, CancellationToken cancellationToken) => asking.Asking(launch, cancellationToken);
+    public Task<NodeSessionAsk?> WatchAsking(AgentNodeAskWatch watch, Action heartbeat, CancellationToken cancellationToken) => asking.Watch(watch, heartbeat, cancellationToken);
 
     public Task Hold(AgentNodeHeld held, CancellationToken cancellationToken)
     {

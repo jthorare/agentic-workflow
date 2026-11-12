@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Temporalio.Exceptions;
@@ -46,44 +45,29 @@ internal sealed partial class GraphAgentLoop
 
     private static GraphBlockOutcome Failed(string? input, string error) => new(NodeRunStatus.Failed, input, Output: null, [], error);
 
-    private static readonly TimeSpan _defaultAskEvery = TimeSpan.FromSeconds(15);
+    // The ask activity reads the state file this often and hands back after the cap with nothing new (#3151). Each call is one activity in the run's history, so the cap keeps a long node to a few calls.
+    private static readonly TimeSpan _defaultAskEvery = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan _defaultAskCap = TimeSpan.FromMinutes(10);
 
-    private static readonly ActivityOptions _ask = new() { StartToCloseTimeout = TimeSpan.FromMinutes(1), RetryPolicy = new Temporalio.Common.RetryPolicy { MaximumAttempts = 1 } };
-
-    private sealed record Session(AgentNodeRef Reference, AgentLaunched Launched, AskPoll? Poll);
-
-    // Reads whether the session waits on a permission prompt and records the change (#3151). A read that fails is no ask: the node goes on as working.
-    private sealed class AskPoll(NodeAgentRecorder events, TimeSpan every)
+    // After a round of the wait: records an ask that finished, then tells the idle sweep about a takeover or a handback. A handback moves the deadline by the time the node was held.
+    private static async Task Settle(AgentWait wait, bool held, TimeSpan remaining, Session session)
     {
-        public TimeSpan Every { get; } = every;
-
-        public static TimeSpan Slice(AskPoll? poll, TimeSpan remaining) => poll is not null && poll.Every < remaining ? poll.Every : remaining;
-
-        // False when no time is left (the node timed out); otherwise reads the ask and the wait goes on. 'remaining' already has the slice just waited taken off.
-        public static async Task<bool> Next(AskPoll? poll, AgentWait wait, TimeSpan remaining)
+        if (session.Poll is { Done: true } finished)
         {
-            if (poll is null || remaining <= TimeSpan.Zero)
-            {
-                return false;
-            }
-
-            await poll.Read(wait).ConfigureAwait(true);
-            return true;
+            await finished.Complete().ConfigureAwait(true);
         }
 
-        public async Task Read(AgentWait wait)
+        if (wait.TakenOver == held)
         {
-            NodeSessionAsk? ask;
-            try
-            {
-                ask = await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.AskingAsync(wait.Launch), _ask).ConfigureAwait(true);
-            }
-            catch (ActivityFailureException e) when (!TemporalException.IsCanceledException(e))
-            {
-                ask = null;
-            }
+            return;
+        }
 
-            await (ask is null ? events.Record(NodeAgentStates.Working) : events.Record(NodeAgentStates.WaitingOnYou, "permission prompt", ask)).ConfigureAwait(true);
+        await Hold(wait, wait.TakenOver).ConfigureAwait(true);   // the idle sweep is told, and the next round runs the clock or stops it
+        if (held)
+        {
+            await session.Events.MoveDeadline(new DateTimeOffset(Workflow.UtcNow) + remaining).ConfigureAwait(true);   // why: the clock stood still while a person held the node, so the deadline moves by that time
         }
     }
+
+    private sealed record Session(AgentNodeRef Reference, AgentLaunched Launched, NodeAgentRecorder Events, AgentAskPoll? Poll);
 }

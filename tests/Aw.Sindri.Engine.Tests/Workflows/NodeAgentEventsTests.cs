@@ -125,11 +125,14 @@ public sealed class NodeAgentEventsTests
     [Fact]
     public async Task A_session_waiting_on_a_permission_prompt_shows_waiting_on_you_with_the_tool_then_working_again()
     {
-        var runtime = new FakeAgentNodeRuntime { Asks = 2 };
+        var runtime = new FakeAgentNodeRuntime();
         await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
         await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
 
+        runtime.SetAsk("Bash");
+        _ = await EventsUntil(rig, static e => e.Any(x => Text(x, "state") == NodeAgentStates.WaitingOnYou));
+        runtime.SetAsk(tool: null);
         var back = await EventsUntil(rig, static e => e.Where(x => Text(x, "state") == NodeAgentStates.Working).Skip(1).Any());
         _ = await rig.Control.Report(run, new AgentNodeReport(AgentNodeRig.Agent, ItemIndex: 0, "{}", Human: false), Token);
         _ = await rig.Final(run);
@@ -146,12 +149,50 @@ public sealed class NodeAgentEventsTests
     [Fact]
     public async Task A_node_that_never_asks_makes_only_a_few_ask_calls_over_its_whole_timeout()
     {
-        var runtime = new FakeAgentNodeRuntime { Timeout = TimeSpan.FromSeconds(6), AskEvery = TimeSpan.FromMilliseconds(200) };
+        var runtime = new FakeAgentNodeRuntime { Timeout = TimeSpan.FromSeconds(6), AskEvery = TimeSpan.FromMilliseconds(200), AskCap = TimeSpan.FromSeconds(4) };
         await using var rig = await GraphRig.StartAsync(runtime);
         var run = await AgentNodeRig.Start(rig);
 
         _ = await rig.Final(run);
 
         Assert.InRange(runtime.AskCalls, 1, 3);
+    }
+
+    [Fact]
+    public async Task A_cancelled_run_ends_the_series_with_ended_failed()
+    {
+        var runtime = new FakeAgentNodeRuntime();
+        await using var rig = await GraphRig.StartAsync(runtime);
+        var run = await AgentNodeRig.Start(rig);
+        await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
+        _ = await EventsUntil(rig, static e => e.Any(x => Text(x, "state") == NodeAgentStates.Working));
+
+        _ = await rig.Cancel(run, whenParked: false);
+        var events = await EventsUntil(rig, static e => e.Count > 0 && Text(e[^1], "state").StartsWith("ended-", StringComparison.Ordinal));
+
+        Assert.Equal(NodeAgentStates.EndedFailed, Text(events[^1], "state"));
+    }
+
+    // why: the clock stands still while a person holds the node, so the deadline the Agents page shows has to move by the time it was held
+    [Fact]
+    public async Task A_handback_moves_the_deadline_by_the_time_the_node_was_held()
+    {
+        var runtime = new FakeAgentNodeRuntime { Timeout = TimeSpan.FromSeconds(6) };
+        await using var rig = await GraphRig.StartAsync(runtime);
+        var run = await AgentNodeRig.Start(rig);
+        await runtime.Watching.WaitAsync(TimeSpan.FromSeconds(30), Token);
+        var first = await EventsUntil(rig, static e => e.Any(x => Text(x, "state") == NodeAgentStates.Working));
+        var before = DateTimeOffset.Parse(Text(first.Last(static e => Text(e, "state") == NodeAgentStates.Working), "deadline"), System.Globalization.CultureInfo.InvariantCulture);
+
+        await Task.Delay(TimeSpan.FromSeconds(1), Token);
+        _ = await rig.Control.Takeover(run, AgentNodeRig.Agent, itemIndex: 0, Token);
+        await Task.Delay(TimeSpan.FromSeconds(2), Token);
+        _ = await rig.Control.Handback(run, AgentNodeRig.Agent, itemIndex: 0, Token);
+        var events = await EventsUntil(rig, static e => e.Where(x => Text(x, "state") == NodeAgentStates.Working).Skip(1).Any());
+        var after = DateTimeOffset.Parse(Text(events.Last(static e => Text(e, "state") == NodeAgentStates.Working), "deadline"), System.Globalization.CultureInfo.InvariantCulture);
+        _ = await rig.Control.Report(run, new AgentNodeReport(AgentNodeRig.Agent, ItemIndex: 0, "{}", Human: false), Token);
+        _ = await rig.Final(run);
+
+        Assert.InRange(after - before, TimeSpan.FromSeconds(1.5), TimeSpan.FromSeconds(3.5));   // held about 2 s
     }
 }

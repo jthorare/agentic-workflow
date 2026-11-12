@@ -88,7 +88,7 @@ internal sealed class GraphRunActivities(IWorkflowRunStore runs, IWorkflowStore 
         var p = record.Payload;
         var item = GraphFailures.Value(await runs.Get(p.RunId, cancel).ConfigureAwait(false)).ItemId?.Value;
         var key = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{EventTypes.WorkflowNodeAgentChanged}:{p.RunId.Value}:{p.NodeId.Value}:{p.ItemIndex}:{record.Sequence}");
-        await mirror.Append(EventTypes.WorkflowNodeAgentChanged, p with { WaitingOn = mirror.Clean(p.WaitingOn) }, key, item, cancel).ConfigureAwait(false);
+        await mirror.Append(EventTypes.WorkflowNodeAgentChanged, p with { WaitingOn = mirror.Clean(p.WaitingOn), LastTool = mirror.Clean(p.LastTool) }, key, item, cancel).ConfigureAwait(false);
     }
 
     /// <summary>
