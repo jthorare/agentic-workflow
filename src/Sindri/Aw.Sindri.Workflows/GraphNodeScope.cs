@@ -18,11 +18,10 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
     public JsonNode? Lookup(string reference)
     {
         var parts = reference.Split('.');
-        var current = Root(parts[0]);
-        if (_failedRead is { } failed)
+        var (current, failed) = Root(parts[0]);
+        if (failed is not null)
         {
             ContinuedFailure ??= (failed, reference);   // why: a failed row exists only for a node whose onFailure is 'continue' (any other failure ends the walk), so reading it is reading a continued failure
-            _failedRead = null;
         }
 
         foreach (var part in parts.Skip(1))
@@ -33,43 +32,34 @@ internal sealed class GraphNodeScope(WorkflowRun run, GraphSpec spec, IReadOnlyL
         return current?.DeepClone();
     }
 
-    private JsonNode? Root(string name) => name switch
+    /// <summary>The value of a reference's first segment, and the node it read when that node failed and continued (null otherwise).</summary>
+    private (JsonNode? Value, string? FailedNode) Root(string name) => name switch
     {
-        "trigger" => _trigger,
+        "trigger" => (_trigger, null),
         // why: GraphValidator._workflowFields lists these four names; change both together
-        "workflow" => new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision, ["id"] = run.WorkflowId.Value },
-        "item" => loop?.Item,
-        "itemIndex" => loop is null ? null : JsonValue.Create(loop.ItemIndex),
+        "workflow" => (new JsonObject { ["name"] = spec.Name, ["runId"] = run.Id.Value, ["revision"] = run.Revision, ["id"] = run.WorkflowId.Value }, null),
+        "item" => (loop?.Item, null),
+        "itemIndex" => (loop is null ? null : JsonValue.Create(loop.ItemIndex), null),
         _ => Output(name),
     };
 
-    private string? _failedRead;
-
-    private void NoteFailedRead(string node, int index)
-    {
-        if (nodeRuns.Any(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == index && n.Status == NodeRunStatus.Failed))
-        {
-            _failedRead = node;
-        }
-    }
-
-    private JsonNode? Output(string node)
+    private (JsonNode? Value, string? FailedNode) Output(string node)
     {
         // why: a node of the loop's body has one row per item and is read at this item's; every other node has its one row at index 0
         var index = loop is not null && loop.Shape.Body.Any(b => string.Equals(b.Id.Value, node, StringComparison.Ordinal)) ? loop.ItemIndex : 0;
         var found = nodeRuns.FirstOrDefault(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == index && n.Status == NodeRunStatus.Succeeded);
         if (found is null)
         {
-            NoteFailedRead(node, index);
-            return null;
+            var failed = nodeRuns.Any(n => string.Equals(n.NodeId.Value, node, StringComparison.Ordinal) && n.ItemIndex == index && n.Status == NodeRunStatus.Failed);
+            return (null, failed ? node : null);
         }
 
         if (found.Truncated)
         {
             Cut ??= node;
-            return null;
+            return (null, null);
         }
 
-        return found.Output is null ? null : JsonNode.Parse(found.Output);
+        return (found.Output is null ? null : JsonNode.Parse(found.Output), null);
     }
 }
