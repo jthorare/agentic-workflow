@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Graph.Ids;
+using Aw.Sindri.Core.Graph.Runs;
 
 namespace Aw.Sindri.Core.Events;
 
@@ -6,5 +7,5 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="RunId">The run's id.</param>
 /// <param name="Reason">Why, or null.</param>
 /// <param name="By">Who cancelled it.</param>
-/// <param name="Mode">'live' or 'test' (<see cref="Aw.Sindri.Core.Graph.Runs.WorkflowRunMode"/>). Events written before the field existed read as null, which means live.</param>
+/// <param name="Mode">'live' or 'test' (<see cref="WorkflowRunMode"/>). Events written before the field existed read as null, which means live.</param>
 public sealed record WorkflowRunCancelledPayload(WorkflowRunId RunId, string? Reason, string By, string Mode);
