@@ -28,7 +28,11 @@ internal sealed class StubDriver : IAsyncDisposable
             probe.Start();
             port = ((IPEndPoint)probe.LocalEndpoint).Port;
             probe.Stop();
-            afterPortChosen?.Invoke(port);
+            if (attempt == 1)
+            {
+                afterPortChosen?.Invoke(port);
+            }
+
             _listener = new HttpListener();
             _listener.Prefixes.Add(string.Create(CultureInfo.InvariantCulture, $"http://127.0.0.1:{port}/"));
             try
