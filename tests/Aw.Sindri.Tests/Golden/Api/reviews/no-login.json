@@ -11,7 +11,7 @@
     "code": "SND-REVIEW-007",
     "text": "Set your GitHub login",
     "suggested": "joi-example",
-    "connection": null,
+    "connection": "github:work",
     "reason": "none"
   },
   "notice": null,
