@@ -71,7 +71,7 @@ public sealed class GitHubConnectionAccountTests : IDisposable
     public async Task Current_is_connected_without_a_login_when_user_fails_and_does_not_ask_again_within_a_minute()
     {
         await Add("work", ConnectionStatus.Connected);
-        _handler.Answer = new HttpResponseMessage(HttpStatusCode.Forbidden);
+        _handler.Answer = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
         var account = Account();
 
         var first = (await account.Current(CancellationToken.None)).Value;
@@ -96,7 +96,6 @@ public sealed class GitHubConnectionAccountTests : IDisposable
     [Theory, Trait("Lane", "unit")]
     [InlineData(HttpStatusCode.Unauthorized, GitHubLoginMiss.SignIn)]
     [InlineData(HttpStatusCode.ServiceUnavailable, GitHubLoginMiss.Unreachable)]
-    [InlineData(HttpStatusCode.Forbidden, GitHubLoginMiss.Unreachable)]
     [InlineData(HttpStatusCode.TooManyRequests, GitHubLoginMiss.Unreachable)]
     public async Task Current_names_why_user_gave_no_login(HttpStatusCode status, GitHubLoginMiss miss)
     {
@@ -108,6 +107,94 @@ public sealed class GitHubConnectionAccountTests : IDisposable
         Assert.Null(account.Login);
         Assert.Equal(miss, account.Miss);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_says_sign_in_for_a_403_about_a_missing_scope()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        _handler.Answer = Forbidden("""{"message":"Resource not accessible by personal access token"}""");
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Null(account.Login);
+        Assert.Equal(GitHubLoginMiss.SignIn, account.Miss);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_says_sign_in_for_a_403_with_no_body()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        _handler.Answer = new HttpResponseMessage(HttpStatusCode.Forbidden);
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Equal(GitHubLoginMiss.SignIn, account.Miss);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_says_unreachable_for_a_403_with_no_requests_left()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        var answer = Forbidden("""{"message":"Forbidden"}""");
+        answer.Headers.TryAddWithoutValidation("x-ratelimit-remaining", "0");
+        _handler.Answer = answer;
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Equal(GitHubLoginMiss.Unreachable, account.Miss);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_says_sign_in_for_a_403_that_still_has_requests_left()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        var answer = Forbidden("""{"message":"Resource not accessible"}""");
+        answer.Headers.TryAddWithoutValidation("x-ratelimit-remaining", "4999");
+        _handler.Answer = answer;
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Equal(GitHubLoginMiss.SignIn, account.Miss);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_says_unreachable_for_a_403_with_retry_after()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        var answer = Forbidden("""{"message":"Forbidden"}""");
+        answer.Headers.TryAddWithoutValidation("retry-after", "60");
+        _handler.Answer = answer;
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Equal(GitHubLoginMiss.Unreachable, account.Miss);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("""{"message":"API rate limit exceeded for user ID 1."}""")]
+    [InlineData("""{"message":"You have exceeded a secondary rate limit. Please wait a few minutes."}""")]
+    public async Task Current_says_unreachable_for_a_403_that_names_a_rate_limit(string body)
+    {
+        await Add("work", ConnectionStatus.Connected);
+        _handler.Answer = Forbidden(body);
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.Equal(GitHubLoginMiss.Unreachable, account.Miss);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Current_keeps_the_token_out_of_a_403_miss()
+    {
+        await Add("work", ConnectionStatus.Connected);
+        _handler.Answer = Forbidden("""{"message":"Bad credentials gho_secret"}""");
+
+        var account = (await Account().Current(CancellationToken.None)).Value;
+
+        Assert.DoesNotContain("gho_secret", account.ToString(), StringComparison.Ordinal);
+    }
+
+    private static HttpResponseMessage Forbidden(string body) => new(HttpStatusCode.Forbidden) { Content = new StringContent(body) };
 
     [Fact, Trait("Lane", "unit")]
     public async Task Current_keeps_the_miss_with_the_cached_null_login()
