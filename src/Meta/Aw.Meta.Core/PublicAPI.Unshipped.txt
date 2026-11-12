@@ -872,7 +872,7 @@ Aw.Meta.Core.Messages.TranscriptRecordParser
 Aw.Meta.Core.MetaErrors
 Aw.Meta.Core.MetaPaths
 Aw.Meta.Core.MetaPaths.<Clone>$() -> Aw.Meta.Core.MetaPaths!
-Aw.Meta.Core.MetaPaths.Deconstruct(out string! StateDirectory, out string! GatesDirectory, out string? Heavy, out string! Gh, out string! Home) -> void
+Aw.Meta.Core.MetaPaths.Deconstruct(out string! StateDirectory, out string! GatesDirectory, out string? Heavy, out string! Gh, out string! Home, out string! UserConfig) -> void
 Aw.Meta.Core.MetaPaths.Equals(Aw.Meta.Core.MetaPaths? other) -> bool
 Aw.Meta.Core.MetaPaths.GateDirectory(int pr) -> string!
 Aw.Meta.Core.MetaPaths.GatesDirectory.get -> string!
@@ -883,8 +883,10 @@ Aw.Meta.Core.MetaPaths.Heavy.get -> string?
 Aw.Meta.Core.MetaPaths.Heavy.init -> void
 Aw.Meta.Core.MetaPaths.Home.get -> string!
 Aw.Meta.Core.MetaPaths.Home.init -> void
-Aw.Meta.Core.MetaPaths.MetaPaths(string! StateDirectory, string! GatesDirectory, string? Heavy, string! Gh, string! Home = "") -> void
+Aw.Meta.Core.MetaPaths.MetaPaths(string! StateDirectory, string! GatesDirectory, string? Heavy, string! Gh, string! Home = "", string! UserConfig = "") -> void
 Aw.Meta.Core.MetaPaths.StateDirectory.get -> string!
+Aw.Meta.Core.MetaPaths.UserConfig.get -> string!
+Aw.Meta.Core.MetaPaths.UserConfig.init -> void
 Aw.Meta.Core.MetaPaths.StateDirectory.init -> void
 Aw.Meta.Core.Obligations.MergeRecord
 Aw.Meta.Core.Obligations.MergeRecord.<Clone>$() -> Aw.Meta.Core.Obligations.MergeRecord!
@@ -2741,7 +2743,7 @@ Aw.Meta.Core.Events.MetaEvent.Deconstruct(out long Id, out System.DateTimeOffset
 override Aw.Meta.Core.Events.MetaEvent.Equals(object? obj) -> bool
 Aw.Meta.Core.Events.MetaEvent.Lane.get -> string?
 override Aw.Meta.Core.Events.MetaEvent.GetHashCode() -> int
-Aw.Meta.Core.Ports.IMetaEventStore.Read(long after, string? kind, string? lane, int max, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>!>!>
+Aw.Meta.Core.Ports.IMetaEventStore.Read(long after, string? kind, string? lane, int max, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Events.MetaEventPage!>!>
 Aw.Meta.Core.Ports.IMetaEventStore.Prune(System.DateTimeOffset olderThan, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Meta.Core.Events.MetaEvent.At.get -> System.DateTimeOffset
 Aw.Meta.Core.Events.MetaEvent
@@ -2758,3 +2760,19 @@ Aw.Meta.Core.Events.MetaEvent.Lane.init -> void
 Aw.Meta.Core.Events.MetaEventRules
 static Aw.Meta.Core.Events.MetaEventRules.Check(Aw.Meta.Core.Events.MetaEvent! metaEvent) -> Aw.Kernel.Result<Aw.Meta.Core.Events.MetaEvent!>!
 static Aw.Meta.Core.Events.MetaEventRules.IsKind(string? kind) -> bool
+Aw.Meta.Core.Events.MetaEventPage
+Aw.Meta.Core.Events.MetaEventPage.MetaEventPage(System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>! Events, long Oldest, long Latest) -> void
+Aw.Meta.Core.Events.MetaEventPage.Events.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>!
+Aw.Meta.Core.Events.MetaEventPage.Events.init -> void
+Aw.Meta.Core.Events.MetaEventPage.Oldest.get -> long
+Aw.Meta.Core.Events.MetaEventPage.Oldest.init -> void
+Aw.Meta.Core.Events.MetaEventPage.Latest.get -> long
+Aw.Meta.Core.Events.MetaEventPage.Latest.init -> void
+Aw.Meta.Core.Events.MetaEventPage.Equals(Aw.Meta.Core.Events.MetaEventPage? other) -> bool
+override Aw.Meta.Core.Events.MetaEventPage.Equals(object? obj) -> bool
+override Aw.Meta.Core.Events.MetaEventPage.GetHashCode() -> int
+override Aw.Meta.Core.Events.MetaEventPage.ToString() -> string!
+Aw.Meta.Core.Events.MetaEventPage.<Clone>$() -> Aw.Meta.Core.Events.MetaEventPage!
+Aw.Meta.Core.Events.MetaEventPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>! Events, out long Oldest, out long Latest) -> void
+static Aw.Meta.Core.Events.MetaEventPage.operator ==(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
+static Aw.Meta.Core.Events.MetaEventPage.operator !=(Aw.Meta.Core.Events.MetaEventPage? left, Aw.Meta.Core.Events.MetaEventPage? right) -> bool
