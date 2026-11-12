@@ -268,6 +268,18 @@ public sealed class ProjectSheetTests
     }
 
     [Fact]
+    public async Task A_refresh_with_the_same_saved_state_keeps_the_picked_state()
+    {
+        var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
+        sheet.SelectedState = sheet.StateChoices.Single(s => string.Equals(s.Value, "inProgress", StringComparison.Ordinal));
+
+        await sheet.Refresh(ProjectsFixture.Url, Token);
+        await sheet.SetState(Token);
+
+        Assert.Equal(("inProgress", "inProgress"), (sheet.SelectedState?.Value, Assert.IsType<ProjectChange>(Assert.Single(_f.Server.ProjectWrites).Body).State));
+    }
+
+    [Fact]
     public async Task Use_Linears_state_clears_the_owners()
     {
         var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
