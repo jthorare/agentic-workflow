@@ -124,14 +124,21 @@
             <TextBlock Classes="body" Text="{Binding Problem}" TextWrapping="Wrap" />
           </StackPanel>
         </Border>
-        <StackPanel x:Name="ContextChoices" IsVisible="{Binding HasChoices}">
+        <!-- Bound to the page's width: the page scrolls, so a long title would otherwise widen the row past the window and push the kind tag off it. -->
+        <StackPanel x:Name="ContextChoices" IsVisible="{Binding HasChoices}" MaxWidth="{Binding $parent[UserControl].Bounds.Width}" HorizontalAlignment="Left">
           <Border AutomationProperties.Name="{Binding ChoicesName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
             <TextBlock Classes="caption subtle" Text="{Binding ChoicesName}" />
           </Border>
-          <ItemsControl ItemsSource="{Binding Choices}">
+          <ItemsControl ItemsSource="{Binding ChoiceRows}">
             <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="x:String">
-                <Button Content="{Binding}" Click="OnPick" AutomationProperties.Name="{Binding}" />
+              <DataTemplate x:DataType="ctx:ContextChoice">
+                <Button Tag="{Binding Key}" Click="OnPick" AutomationProperties.Name="{Binding Name}" ToolTip.Tip="{Binding Key}">
+                  <!-- The title trims; the kind tag keeps its width, so it stays drawn whole. -->
+                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBlock x:Name="ChoiceTitle" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="ChoiceKind" Grid.Column="1" Classes="caption subtle" Text="{Binding Kind}" IsVisible="{Binding HasKind}" VerticalAlignment="Center" />
+                  </Grid>
+                </Button>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>

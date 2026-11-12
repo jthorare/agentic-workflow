@@ -872,7 +872,7 @@ Aw.Meta.Core.Messages.TranscriptRecordParser
 Aw.Meta.Core.MetaErrors
 Aw.Meta.Core.MetaPaths
 Aw.Meta.Core.MetaPaths.<Clone>$() -> Aw.Meta.Core.MetaPaths!
-Aw.Meta.Core.MetaPaths.Deconstruct(out string! StateDirectory, out string! GatesDirectory, out string? Heavy, out string! Gh, out string! Home) -> void
+Aw.Meta.Core.MetaPaths.Deconstruct(out string! StateDirectory, out string! GatesDirectory, out string? Heavy, out string! Gh, out string! Home, out string! UserConfig) -> void
 Aw.Meta.Core.MetaPaths.Equals(Aw.Meta.Core.MetaPaths? other) -> bool
 Aw.Meta.Core.MetaPaths.GateDirectory(int pr) -> string!
 Aw.Meta.Core.MetaPaths.GatesDirectory.get -> string!
@@ -883,8 +883,10 @@ Aw.Meta.Core.MetaPaths.Heavy.get -> string?
 Aw.Meta.Core.MetaPaths.Heavy.init -> void
 Aw.Meta.Core.MetaPaths.Home.get -> string!
 Aw.Meta.Core.MetaPaths.Home.init -> void
-Aw.Meta.Core.MetaPaths.MetaPaths(string! StateDirectory, string! GatesDirectory, string? Heavy, string! Gh, string! Home = "") -> void
+Aw.Meta.Core.MetaPaths.MetaPaths(string! StateDirectory, string! GatesDirectory, string? Heavy, string! Gh, string! Home = "", string! UserConfig = "") -> void
 Aw.Meta.Core.MetaPaths.StateDirectory.get -> string!
+Aw.Meta.Core.MetaPaths.UserConfig.get -> string!
+Aw.Meta.Core.MetaPaths.UserConfig.init -> void
 Aw.Meta.Core.MetaPaths.StateDirectory.init -> void
 Aw.Meta.Core.Obligations.MergeRecord
 Aw.Meta.Core.Obligations.MergeRecord.<Clone>$() -> Aw.Meta.Core.Obligations.MergeRecord!
@@ -2729,3 +2731,32 @@ Aw.Meta.Core.Coordination.MissingLanes
 Aw.Meta.Core.Coordination.MissingLanes.Find(Aw.Meta.Core.Config.TeamConfig! team, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
 Aw.Meta.Core.Coordination.MissingLanes.MissingLanes(Aw.Meta.Core.Ports.ISessionDirectory! sessions, Aw.Meta.Core.Ports.IMessageStore! messages, Aw.Meta.Core.Ports.ILaneStore! lanes) -> void
 static Aw.Meta.Core.Coordination.MissingLanes.Wanted(Aw.Meta.Core.Config.TeamConfig! team) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Meta.Core.Events.MetaEvent.operator ==(Aw.Meta.Core.Events.MetaEvent? left, Aw.Meta.Core.Events.MetaEvent? right) -> bool
+override Aw.Meta.Core.Events.MetaEvent.ToString() -> string!
+Aw.Meta.Core.Events.MetaEvent.<Clone>$() -> Aw.Meta.Core.Events.MetaEvent!
+Aw.Meta.Core.Events.MetaEvent.Id.init -> void
+Aw.Meta.Core.Events.MetaEvent.Fields.get -> string!
+Aw.Meta.Core.Events.MetaEvent.MetaEvent(long Id, System.DateTimeOffset At, string! Kind, string? Lane, string! Fields) -> void
+static Aw.Meta.Core.Events.MetaEvent.operator !=(Aw.Meta.Core.Events.MetaEvent? left, Aw.Meta.Core.Events.MetaEvent? right) -> bool
+Aw.Meta.Core.Events.MetaEvent.Kind.init -> void
+Aw.Meta.Core.Events.MetaEvent.Deconstruct(out long Id, out System.DateTimeOffset At, out string! Kind, out string? Lane, out string! Fields) -> void
+override Aw.Meta.Core.Events.MetaEvent.Equals(object? obj) -> bool
+Aw.Meta.Core.Events.MetaEvent.Lane.get -> string?
+override Aw.Meta.Core.Events.MetaEvent.GetHashCode() -> int
+Aw.Meta.Core.Ports.IMetaEventStore.Read(long after, string? kind, string? lane, int max, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Events.MetaEvent!>!>!>
+Aw.Meta.Core.Ports.IMetaEventStore.Prune(System.DateTimeOffset olderThan, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Meta.Core.Events.MetaEvent.At.get -> System.DateTimeOffset
+Aw.Meta.Core.Events.MetaEvent
+Aw.Meta.Core.Events.MetaEvent.Kind.get -> string!
+Aw.Meta.Core.Ports.IMetaEventStore
+Aw.Meta.Core.Events.MetaEvent.At.init -> void
+Aw.Meta.Core.Events.MetaEvent.Fields.init -> void
+Aw.Meta.Core.Events.MetaEvent.Equals(Aw.Meta.Core.Events.MetaEvent? other) -> bool
+Aw.Meta.Core.Ports.IMetaEventStore.Append(Aw.Meta.Core.Events.MetaEvent! metaEvent, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
+static readonly Aw.Meta.Core.Events.MetaEvent.Retention -> System.TimeSpan
+Aw.Meta.Core.Events.MetaEvent.Id.get -> long
+static readonly Aw.Meta.Core.MetaErrors.EventInvalid -> Aw.Kernel.ErrorDefinition!
+Aw.Meta.Core.Events.MetaEvent.Lane.init -> void
+Aw.Meta.Core.Events.MetaEventRules
+static Aw.Meta.Core.Events.MetaEventRules.Check(Aw.Meta.Core.Events.MetaEvent! metaEvent) -> Aw.Kernel.Result<Aw.Meta.Core.Events.MetaEvent!>!
+static Aw.Meta.Core.Events.MetaEventRules.IsKind(string? kind) -> bool

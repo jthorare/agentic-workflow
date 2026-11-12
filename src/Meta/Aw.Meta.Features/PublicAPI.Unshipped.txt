@@ -78,6 +78,8 @@ Aw.Meta.Features.Health.HealthResponse.Builders.get -> Aw.Meta.Core.Health.Build
 Aw.Meta.Features.Health.HealthResponse.Builders.init -> void
 Aw.Meta.Features.Health.HealthResponse.Consumer.get -> string?
 Aw.Meta.Features.Health.HealthResponse.Consumer.init -> void
+Aw.Meta.Features.Health.HealthResponse.OomPolicy.get -> string?
+Aw.Meta.Features.Health.HealthResponse.OomPolicy.init -> void
 Aw.Meta.Features.Health.HealthResponse.Duplicates.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Health.DuplicateServer!>!
 Aw.Meta.Features.Health.HealthResponse.Duplicates.init -> void
 Aw.Meta.Features.Health.HealthResponse.Equals(Aw.Meta.Features.Health.HealthResponse? other) -> bool
@@ -1231,3 +1233,55 @@ Aw.Meta.Features.MergeRun.MergeRunResponse.Queued.get -> bool
 Aw.Meta.Features.MergeRun.MergeRunResponse.Queued.init -> void
 Aw.Meta.Features.Watch.WatchRequest.AllPrs.get -> bool
 Aw.Meta.Features.Watch.WatchRequest.AllPrs.init -> void
+Aw.Meta.Features.ReadEvents.EventLine.Lane.get -> string?
+Aw.Meta.Features.ReadEvents.EventLine.Kind.get -> string!
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.Kind.init -> void
+override Aw.Meta.Features.ReadEvents.EventLine.GetHashCode() -> int
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.ReadEventsRequest(long After, string? Kind, string? Lane, int Max) -> void
+Aw.Meta.Features.ReadEvents.EventLine.At.init -> void
+static Aw.Meta.Features.ReadEvents.ReadEventsRequest.operator !=(Aw.Meta.Features.ReadEvents.ReadEventsRequest? left, Aw.Meta.Features.ReadEvents.ReadEventsRequest? right) -> bool
+Aw.Meta.Features.ReadEvents.ReadEventsRequest
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Events.get -> System.Collections.Generic.IReadOnlyList<Aw.Meta.Features.ReadEvents.EventLine!>!
+Aw.Meta.Features.ReadEvents.EventLine.Fields.init -> void
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.After.init -> void
+Aw.Meta.Features.ReadEvents.EventLine.Fields.get -> System.Text.Json.JsonElement
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.Kind.get -> string?
+Aw.Meta.Features.ReadEvents.EventLine.Deconstruct(out long Id, out System.DateTimeOffset At, out string! Kind, out string? Lane, out System.Text.Json.JsonElement Fields) -> void
+Aw.Meta.Features.ReadEvents.EventLine.At.get -> System.DateTimeOffset
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.Max.get -> int
+override Aw.Meta.Features.ReadEvents.ReadEventsRequest.ToString() -> string!
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.Equals(Aw.Meta.Features.ReadEvents.ReadEventsRequest? other) -> bool
+Aw.Meta.Features.ReadEvents.EventLine.<Clone>$() -> Aw.Meta.Features.ReadEvents.EventLine!
+static Aw.Meta.Features.ReadEvents.EventLine.operator !=(Aw.Meta.Features.ReadEvents.EventLine? left, Aw.Meta.Features.ReadEvents.EventLine? right) -> bool
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.Lane.get -> string?
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Next.get -> long
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.ReadEventsResponse(System.Collections.Generic.IReadOnlyList<Aw.Meta.Features.ReadEvents.EventLine!>! Events, long Next) -> void
+Aw.Meta.Features.ReadEvents.EventLine
+Aw.Meta.Features.ReadEvents.EventLine.Kind.init -> void
+Aw.Meta.Features.ReadEvents.EventLine.Id.init -> void
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.Lane.init -> void
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.<Clone>$() -> Aw.Meta.Features.ReadEvents.ReadEventsRequest!
+override Aw.Meta.Features.ReadEvents.EventLine.ToString() -> string!
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.After.get -> long
+override Aw.Meta.Features.ReadEvents.ReadEventsRequest.Equals(object? obj) -> bool
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.<Clone>$() -> Aw.Meta.Features.ReadEvents.ReadEventsResponse!
+Aw.Meta.Features.ReadEvents.EventLine.Id.get -> long
+Aw.Meta.Features.ReadEvents.EventLine.Lane.init -> void
+Aw.Meta.Features.ReadEvents.EventLine.Equals(Aw.Meta.Features.ReadEvents.EventLine? other) -> bool
+override Aw.Meta.Features.ReadEvents.ReadEventsRequest.GetHashCode() -> int
+static Aw.Meta.Features.ReadEvents.EventLine.operator ==(Aw.Meta.Features.ReadEvents.EventLine? left, Aw.Meta.Features.ReadEvents.EventLine? right) -> bool
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Next.init -> void
+static Aw.Meta.Features.ReadEvents.ReadEventsResponse.operator !=(Aw.Meta.Features.ReadEvents.ReadEventsResponse? left, Aw.Meta.Features.ReadEvents.ReadEventsResponse? right) -> bool
+Aw.Meta.Features.ReadEvents.ReadEventsResponse
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.Deconstruct(out long After, out string? Kind, out string? Lane, out int Max) -> void
+static Aw.Meta.Features.ReadEvents.ReadEventsResponse.operator ==(Aw.Meta.Features.ReadEvents.ReadEventsResponse? left, Aw.Meta.Features.ReadEvents.ReadEventsResponse? right) -> bool
+override Aw.Meta.Features.ReadEvents.ReadEventsResponse.Equals(object? obj) -> bool
+override Aw.Meta.Features.ReadEvents.ReadEventsResponse.ToString() -> string!
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Equals(Aw.Meta.Features.ReadEvents.ReadEventsResponse? other) -> bool
+Aw.Meta.Features.ReadEvents.EventLine.EventLine(long Id, System.DateTimeOffset At, string! Kind, string? Lane, System.Text.Json.JsonElement Fields) -> void
+static Aw.Meta.Features.ReadEvents.ReadEventsRequest.operator ==(Aw.Meta.Features.ReadEvents.ReadEventsRequest? left, Aw.Meta.Features.ReadEvents.ReadEventsRequest? right) -> bool
+override Aw.Meta.Features.ReadEvents.ReadEventsResponse.GetHashCode() -> int
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Events.init -> void
+Aw.Meta.Features.ReadEvents.ReadEventsResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Meta.Features.ReadEvents.EventLine!>! Events, out long Next) -> void
+Aw.Meta.Features.ReadEvents.ReadEventsRequest.Max.init -> void
+override Aw.Meta.Features.ReadEvents.EventLine.Equals(object? obj) -> bool
