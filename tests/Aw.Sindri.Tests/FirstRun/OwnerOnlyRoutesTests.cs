@@ -67,8 +67,8 @@ public sealed class OwnerOnlyRoutesTests
         var restart = await Record.ExceptionAsync(async () => await new RestartProcessService(_slice.Callers).Handle(new RestartProcessRequest(), Token));
         var connect = await Record.ExceptionAsync(async () => await new ConnectAccountService(_slice.Callers).Handle(new ConnectAccountRequest("github"), Token));
 
-        Assert.IsType<NotSupportedException>(restart);   // past the check, the stub is unbuilt
-        Assert.IsType<NotSupportedException>(connect);
+        _ = Assert.IsType<NotSupportedException>(restart);   // past the check, the stub is unbuilt
+        _ = Assert.IsType<NotSupportedException>(connect);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -79,6 +79,6 @@ public sealed class OwnerOnlyRoutesTests
 
         Assert.Equal((Core.Commands.CallerClass.Human, null), (owner.Value.Class, owner.Value.Launch));   // an agent the owner started, with the token: not refused
         Assert.Equal(Core.Commands.CallerClass.Session, launched.Value.Class);
-        Assert.NotNull(launched.Value.Launch);
+        _ = Assert.NotNull(launched.Value.Launch);
     }
 }
