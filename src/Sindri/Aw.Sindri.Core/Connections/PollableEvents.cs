@@ -9,7 +9,7 @@ public static class PollableEvents
     private static readonly string[] _github =
         [
             "github.pr.opened", "github.pr.updated", "github.pr.ready_for_review", "github.pr.closed", "github.pr.merged", "github.pr.review_requested", "github.pr.review_submitted",
-            "github.pr.comment", "github.pr.thread", "github.pr.checks", "github.pr.conflict", "github.issue.opened", "github.issue.labeled", "github.push",
+            "github.pr.comment", "github.pr.checks", "github.pr.conflict", "github.issue.opened", "github.issue.labeled", "github.push",
         ];
 
     private static readonly string[] _linear =

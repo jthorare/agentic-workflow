@@ -31,9 +31,6 @@ public readonly record struct EventKind(string Key)
     /// <summary>Gets 'github.pr.comment'.</summary>
     public static EventKind GitHubPrComment { get; } = new("github.pr.comment");
 
-    /// <summary>Gets 'github.pr.thread'.</summary>
-    public static EventKind GitHubPrThread { get; } = new("github.pr.thread");
-
     /// <summary>Gets 'github.pr.checks'.</summary>
     public static EventKind GitHubPrChecks { get; } = new("github.pr.checks");
 

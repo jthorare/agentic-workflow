@@ -23230,7 +23230,6 @@ static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrComment.get -> Aw.Si
 static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrConflict.get -> Aw.Sindri.Core.Connections.Polling.EventKind
 static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrReadyForReview.get -> Aw.Sindri.Core.Connections.Polling.EventKind
 static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrReviewSubmitted.get -> Aw.Sindri.Core.Connections.Polling.EventKind
-static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrThread.get -> Aw.Sindri.Core.Connections.Polling.EventKind
 static Aw.Sindri.Core.Connections.Polling.EventKind.GitHubPrUpdated.get -> Aw.Sindri.Core.Connections.Polling.EventKind
 static Aw.Sindri.Core.Connections.Polling.EventKindSchema.operator !=(Aw.Sindri.Core.Connections.Polling.EventKindSchema? left, Aw.Sindri.Core.Connections.Polling.EventKindSchema? right) -> bool
 static Aw.Sindri.Core.Connections.Polling.EventKindSchema.operator ==(Aw.Sindri.Core.Connections.Polling.EventKindSchema? left, Aw.Sindri.Core.Connections.Polling.EventKindSchema? right) -> bool

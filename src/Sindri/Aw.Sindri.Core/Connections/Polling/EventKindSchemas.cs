@@ -42,8 +42,6 @@ public static class EventKindSchemas
         ["commenter"] = static () => "hubot",
         ["body"] = static () => "Can we cap the retries at 3?",
         ["threadId"] = static () => "PRRT_kwDOAbCdEf4Aa1",
-        ["path"] = static () => "src/Export/Retry.cs",
-        ["line"] = static () => 42,
         ["conclusion"] = static () => "red",
         ["failing"] = static () => new JsonArray("build", "unit-tests"),
         ["label"] = static () => "bug",
@@ -61,7 +59,6 @@ public static class EventKindSchemas
         Pr("github.pr.review_requested", [("reviewer", Str)]),
         Pr("github.pr.review_submitted", [("reviewer", Str), ("state", Str)]),
         Pr("github.pr.comment", [("commenter", Str), ("body", Str), ("threadId", Str)]),
-        Pr("github.pr.thread", [("threadId", Str), ("commenter", Str), ("path", Str), ("line", Num)]),   // may be dropped: one entry to delete
         Pr("github.pr.checks", [("conclusion", Str), ("failing", Arr)]),
         Pr("github.pr.conflict", []),
         Build("github.issue.opened", _issueBase),
