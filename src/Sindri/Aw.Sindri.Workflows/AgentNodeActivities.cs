@@ -45,4 +45,10 @@ internal sealed class AgentNodeActivities(IAgentNodeRuntime runtime)
     /// <returns>Done.</returns>
     [Activity("HoldAgentNode")]
     public Task HoldAsync(AgentNodeHeld held) => runtime.Hold(held, ActivityExecutionContext.Current.CancellationToken);
+
+    /// <summary>Reads once whether the launch's session waits on a permission prompt (#3151).</summary>
+    /// <param name="launch">The launch ('LCH-…').</param>
+    /// <returns>The tool and when; null when it does not.</returns>
+    [Activity("AskingAgentNode")]
+    public async Task<NodeSessionAsk?> AskingAsync(string launch) => await runtime.Asking(LaunchId.From(launch), ActivityExecutionContext.Current.CancellationToken).ConfigureAwait(false);
 }

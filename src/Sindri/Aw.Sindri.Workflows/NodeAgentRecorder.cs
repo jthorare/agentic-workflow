@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Ids;
@@ -18,11 +19,16 @@ internal sealed class NodeAgentRecorder(WorkflowRunId run, NodeId node, int item
 {
     private static readonly ActivityOptions _write = new() { StartToCloseTimeout = TimeSpan.FromMinutes(5), RetryPolicy = GraphActivityOptions.Unbounded };
 
+    /// <summary>How often the workflow reads the session's permission prompt; null when the history predates it.</summary>
+    public TimeSpan? AskEvery { get; set; }
+
     private int _sequence;
     private string? _last;
     private LaunchId? _launch;
     private string? _branch;
     private DateTimeOffset? _deadline;
+    private string? _tool;
+    private DateTimeOffset? _toolAt;
 
     /// <summary>Remembers the launch and its branch, which every event from here on carries.</summary>
     /// <param name="launch">The launch.</param>
@@ -40,10 +46,17 @@ internal sealed class NodeAgentRecorder(WorkflowRunId run, NodeId node, int item
     /// <summary>Records the node's state, unless it and its waiting-on text are what the last event said.</summary>
     /// <param name="state">One of <see cref="NodeAgentStates"/>.</param>
     /// <param name="waitingOn">What the node waits on, or null.</param>
+    /// <param name="ask">The permission prompt the session waits on; its tool and time are kept for the events after it.</param>
     /// <returns>Completes when the event is written.</returns>
-    public async Task Record(string state, string? waitingOn = null)
+    public async Task Record(string state, string? waitingOn = null, NodeSessionAsk? ask = null)
     {
-        var shape = string.Concat(state, "|", waitingOn);
+        if (ask is not null)
+        {
+            _tool = ask.Tool;
+            _toolAt = ask.At;
+        }
+
+        var shape = string.Concat(state, "|", waitingOn, "|", _tool, "|", _toolAt?.ToString("O", CultureInfo.InvariantCulture));
         if (!enabled || string.Equals(shape, _last, StringComparison.Ordinal))
         {
             return;
@@ -51,7 +64,7 @@ internal sealed class NodeAgentRecorder(WorkflowRunId run, NodeId node, int item
 
         _last = shape;
         _sequence++;
-        var payload = new WorkflowNodeAgentChangedPayload(run, node, itemIndex, state, waitingOn, LastTool: null, LastToolAt: null, _launch, _branch, _deadline, GraphMirror.By);
+        var payload = new WorkflowNodeAgentChangedPayload(run, node, itemIndex, state, waitingOn, _tool, _toolAt, _launch, _branch, _deadline, GraphMirror.By);
         var record = new GraphNodeAgent(payload, _sequence);
         await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAgentAsync(record), _write).ConfigureAwait(true);
     }

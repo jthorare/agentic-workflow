@@ -43,7 +43,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         var reference = new AgentNodeRef(_run, node.Id, itemIndex);
         var address = NodeRunAddress.Of(_run, node.Id, itemIndex);
         var launch = address.Launch().Value;
-        var events = new NodeAgentRecorder(_run, node.Id, itemIndex, Workflow.Patched("node-agent-events-1"));
+        var events = new NodeAgentRecorder(_run, node.Id, itemIndex, Workflow.Patched("node-agent-events-1")) { AskEvery = Workflow.Patched("node-agent-ask-1") ? _defaultAskEvery : null };
         events.Launched(address.Launch(), address.WorkBranch);
         try
         {
@@ -158,7 +158,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
         AgentNodeEnding ending;
         try
         {
-            ending = await WaitForAgent(wait, watch, started.Timeout, reference, launched).ConfigureAwait(true);
+            ending = await WaitForAgent(wait, watch, started.Timeout, new Session(reference, launched, events.AskEvery is { } every ? new AskPoll(events, started.AskEvery ?? every) : null)).ConfigureAwait(true);
         }
         finally
         {
@@ -202,7 +202,7 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
 
     // Waits for the report, the end of the session or the timeout, whichever comes first. The timeout runs only while nobody holds the node: a takeover stops its clock and a handback
     // starts it again with what was left.
-    private static async Task<AgentNodeEnding> WaitForAgent(AgentWait wait, Task<AgentSessionState> watch, TimeSpan timeout, AgentNodeRef reference, AgentLaunched launched)
+    private static async Task<AgentNodeEnding> WaitForAgent(AgentWait wait, Task<AgentSessionState> watch, TimeSpan timeout, Session session)
     {
         var remaining = timeout;
         while (true)
@@ -214,7 +214,8 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
             }
 
             var began = Workflow.UtcNow;
-            var met = await Round(wait, watch, held, remaining).ConfigureAwait(true);
+            var slice = AskPoll.Slice(session.Poll, remaining);   // why: a permission prompt shows only in the fleet state file, so while the clock runs the wait is cut into slices and the file is read between them (#3151)
+            var met = await Round(wait, watch, held, slice).ConfigureAwait(true);
             if (!held)
             {
                 remaining -= Workflow.UtcNow - began;
@@ -227,12 +228,17 @@ internal sealed partial class GraphAgentLoop(WorkflowRunId run, int launchAttemp
 
             if (watch.IsCompleted)
             {
-                return await Ended(watch, reference, launched).ConfigureAwait(true);
+                return await Ended(watch, session.Reference, session.Launched).ConfigureAwait(true);
             }
 
             if (!met)
             {
-                return TimedOut(timeout);
+                if (!await AskPoll.Next(session.Poll, wait, slice, remaining).ConfigureAwait(true))
+                {
+                    return TimedOut(timeout);
+                }
+
+                continue;
             }
 
             await Hold(wait, wait.TakenOver).ConfigureAwait(true);   // the node was taken over or handed back: the idle sweep is told, and the next round runs the clock or stops it

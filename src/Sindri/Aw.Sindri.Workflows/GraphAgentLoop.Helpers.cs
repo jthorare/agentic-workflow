@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Sindri.Core.Graph;
 using Aw.Sindri.Core.Graph.Runs;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Temporalio.Exceptions;
@@ -44,4 +45,45 @@ internal sealed partial class GraphAgentLoop
     };
 
     private static GraphBlockOutcome Failed(string? input, string error) => new(NodeRunStatus.Failed, input, Output: null, [], error);
+
+    private static readonly TimeSpan _defaultAskEvery = TimeSpan.FromSeconds(15);
+
+    private static readonly ActivityOptions _ask = new() { StartToCloseTimeout = TimeSpan.FromMinutes(1), RetryPolicy = new Temporalio.Common.RetryPolicy { MaximumAttempts = 1 } };
+
+    private sealed record Session(AgentNodeRef Reference, AgentLaunched Launched, AskPoll? Poll);
+
+    // Reads whether the session waits on a permission prompt and records the change (#3151). A read that fails is no ask: the node goes on as working.
+    private sealed class AskPoll(NodeAgentRecorder events, TimeSpan every)
+    {
+        public TimeSpan Every { get; } = every;
+
+        public static TimeSpan Slice(AskPoll? poll, TimeSpan remaining) => poll is not null && poll.Every < remaining ? poll.Every : remaining;
+
+        // False when the slice was all that was left (the node timed out); otherwise reads the ask and the wait goes on.
+        public static async Task<bool> Next(AskPoll? poll, AgentWait wait, TimeSpan slice, TimeSpan remaining)
+        {
+            if (poll is null || slice >= remaining)
+            {
+                return false;
+            }
+
+            await poll.Read(wait).ConfigureAwait(true);
+            return true;
+        }
+
+        public async Task Read(AgentWait wait)
+        {
+            NodeSessionAsk? ask;
+            try
+            {
+                ask = await Workflow.ExecuteActivityAsync((AgentNodeActivities a) => a.AskingAsync(wait.Launch), _ask).ConfigureAwait(true);
+            }
+            catch (ActivityFailureException e) when (!TemporalException.IsCanceledException(e))
+            {
+                ask = null;
+            }
+
+            await (ask is null ? events.Record(NodeAgentStates.Working) : events.Record(NodeAgentStates.WaitingOnYou, "permission prompt", ask)).ConfigureAwait(true);
+        }
+    }
 }

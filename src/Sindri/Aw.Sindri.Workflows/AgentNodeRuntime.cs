@@ -9,8 +9,9 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// <param name="watching">Watches.</param>
 /// <param name="recovering">Reads the output folder.</param>
 /// <param name="closing">Closes.</param>
+/// <param name="asking">Reads whether the session waits on a permission prompt.</param>
 /// <param name="files">The per-launch files; the held marker lives there.</param>
-internal sealed class AgentNodeRuntime(AgentNodeLaunching launching, AgentSessionWatch watching, AgentNodeRecovering recovering, AgentNodeClosing closing, ILaunchFiles files) : IAgentNodeRuntime
+internal sealed class AgentNodeRuntime(AgentNodeLaunching launching, AgentSessionWatch watching, AgentNodeRecovering recovering, AgentNodeClosing closing, AgentNodeAsking asking, ILaunchFiles files) : IAgentNodeRuntime
 {
     public Task<AgentNodeLaunched> Launch(AgentNodeRef node, CancellationToken cancellationToken) => launching.Launch(node, cancellationToken);
 
@@ -20,7 +21,7 @@ internal sealed class AgentNodeRuntime(AgentNodeLaunching launching, AgentSessio
 
     public Task<AgentNodeClosed> Close(AgentCloseRun run, CancellationToken cancellationToken) => closing.Close(run, cancellationToken);
 
-    public ValueTask<NodeSessionAsk?> Asking(LaunchId launch, CancellationToken cancellationToken) => throw new NotSupportedException("red: #3151 reads the fleet state file here");
+    public ValueTask<NodeSessionAsk?> Asking(LaunchId launch, CancellationToken cancellationToken) => asking.Asking(launch, cancellationToken);
 
     public Task Hold(AgentNodeHeld held, CancellationToken cancellationToken)
     {
