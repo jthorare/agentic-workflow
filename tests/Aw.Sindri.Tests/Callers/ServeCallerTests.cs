@@ -60,7 +60,7 @@ public sealed class ServeCallerTests : IDisposable
         Assert.Equal(1, second);
         Assert.Equal(token, afterRefusal);
         Assert.True(status.Status == HttpStatusCode.OK && stop.Status == HttpStatusCode.OK,
-            $"status {status.Status}: {status.Body}\nstop {stop.Status}: {stop.Body}\nserve said: {_said}\nserve logged:\n{string.Join('\n', _logs.Logger.Lines)}\n{string.Join('\n', _logs.Logger.Exceptions)}");
+            $"status {status.Status}: {status.Body}\nstop {stop.Status}: {stop.Body}\nlogged exceptions: {Thrown()}\nserve said: {_said}\nserve logged:\n{string.Join('\n', _logs.Logger.Lines)}");
         Assert.Equal(0, code);
         Assert.Null((await new FileHumanToken(Settings).Read(ct)).Value);   // removed with control.json
     }
@@ -117,6 +117,11 @@ public sealed class ServeCallerTests : IDisposable
         Assert.True((await stores.Lease.Read(ct)).Value!.Released);   // why: serve took the lease, so a row exists
         Assert.False(File.Exists(Settings.TokenPath));
     }
+
+    // why: #2881: lane-budgets.mjs shows only 15 lines of a failed test, and serve's 9 hosting lines used them all, so the exception below them was cut off. The cause goes first, on one line.
+    private string Thrown() => string.Join(" || ", _logs.Logger.Exceptions.Select(static e =>
+        string.Join(' ', (e is Microsoft.Data.Sqlite.SqliteException sqlite ? $"{e.GetType().Name} code {sqlite.SqliteErrorCode.ToString(System.Globalization.CultureInfo.InvariantCulture)}/{sqlite.SqliteExtendedErrorCode.ToString(System.Globalization.CultureInfo.InvariantCulture)}: {e.Message} at {e.StackTrace}" : $"{e.GetType().Name}: {e.Message} at {e.StackTrace}")
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Take(6))));
 
     /// <summary>The endpoint serve recorded once it listens.</summary>
     private async Task<Uri> Endpoint(CancellationToken ct, int limitMs = 10_000)

@@ -28,8 +28,15 @@ internal static class LoopbackBinding
         }
 
         // The environment is pinned too: an inherited ASPNETCORE_ENVIRONMENT/DOTNET_ENVIRONMENT=Development would make
-        // the request binding throw instead of answering 400, turning bad input into a 500.
-        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions { Args = [], EnvironmentName = Environments.Production });
+        // the request binding throw instead of answering 400, turning bad input into a 500. The content root is the build
+        // folder, never the working directory: the builder's appsettings reload watcher walks and watches every folder
+        // under its root, so serve started in ~ never got to control.json (#2930). The host reads no file from it.
+        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions
+        {
+            Args = [],
+            EnvironmentName = Environments.Production,
+            ContentRootPath = AppContext.BaseDirectory,
+        });
         builder.Configuration.Sources.Clear();   // drops the ASPNETCORE_/DOTNET_ environment and command-line sources
         _ = builder.Configuration.AddInMemoryCollection();   // the host still writes its own settings somewhere
         _ = builder.WebHost.PreferHostingUrls(preferHostingUrls: false);
