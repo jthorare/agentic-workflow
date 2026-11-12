@@ -14,7 +14,7 @@ internal sealed partial class SetupViewModel
             return null;
         }
 
-        var inApp = _opensInApp(action) || OpensHere(action);
+        var inApp = _opensInApp(action);
         if (kept is not null && kept.Matches(action, step, inApp))
         {
             return kept;
@@ -36,16 +36,13 @@ internal sealed partial class SetupViewModel
 
     private bool Ready(string action) => _catalog.IsReady(action);
 
-    // The refresh and the agents' registration are the app's own button when the catalog lists them as ready.
-    private bool OpensHere(string action) => (string.Equals(action, MapRefresh, StringComparison.Ordinal) || string.Equals(action, RegisterAction, StringComparison.Ordinal)) && Ready(action);
-
     private void Open(string action)
     {
         if (string.Equals(action, MapRefresh, StringComparison.Ordinal))
         {
             _ = RefreshMap(CancellationToken.None);
         }
-        else if (string.Equals(action, RegisterAction, StringComparison.Ordinal) && OpensHere(action))
+        else if (string.Equals(action, RegisterAction, StringComparison.Ordinal) && Ready(action))
         {
             _ = RegisterMcp(CancellationToken.None);
         }

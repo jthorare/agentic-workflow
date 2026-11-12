@@ -17,10 +17,8 @@ internal sealed partial class ShellViewModel
     /// <summary>The setup checklist behind Settings' first section and Home's line.</summary>
     public SetupViewModel Setup { get; }
 
-    private static bool OpensInApp(string action) => action switch
-    {
-        _ => false,
-    };
+    // An action has a button in the app when the catalog lists it as ready, i.e. it has a route the app can send (first-run spec §4.6, #3325); otherwise the row shows the command.
+    private bool OpensInApp(string action) => Health.Catalog.IsReady(action);
 
     private void InitSetup()
     {
