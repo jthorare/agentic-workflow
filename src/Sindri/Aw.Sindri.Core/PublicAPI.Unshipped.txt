@@ -11444,6 +11444,12 @@ override Aw.Sindri.Core.Setup.HookLocation.GetHashCode() -> int
 override Aw.Sindri.Core.Setup.HookLocation.ToString() -> string!
 static Aw.Sindri.Core.Setup.HookLocation.operator !=(Aw.Sindri.Core.Setup.HookLocation? left, Aw.Sindri.Core.Setup.HookLocation? right) -> bool
 static Aw.Sindri.Core.Setup.HookLocation.operator ==(Aw.Sindri.Core.Setup.HookLocation? left, Aw.Sindri.Core.Setup.HookLocation? right) -> bool
+Aw.Sindri.Core.Setup.IRepoCheckouts
+Aw.Sindri.Core.Setup.IRepoCheckouts.Of(string! path) -> Aw.Sindri.Core.Setup.RepoCheckout
+Aw.Sindri.Core.Setup.RepoCheckout
+Aw.Sindri.Core.Setup.RepoCheckout.Checkout = 0 -> Aw.Sindri.Core.Setup.RepoCheckout
+Aw.Sindri.Core.Setup.RepoCheckout.Missing = 2 -> Aw.Sindri.Core.Setup.RepoCheckout
+Aw.Sindri.Core.Setup.RepoCheckout.PlainFolder = 1 -> Aw.Sindri.Core.Setup.RepoCheckout
 Aw.Sindri.Core.Setup.IRepoHookStates
 Aw.Sindri.Core.Setup.IRepoHookStates.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.RepoHookState!>!>
 Aw.Sindri.Core.Setup.RepoHookState

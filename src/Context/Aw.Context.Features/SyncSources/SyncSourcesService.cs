@@ -29,7 +29,7 @@ internal sealed class SyncSourcesService(
     {
         var settings = SettingsReader.Read(request.Scope.Settings);
         var scrubbers = settings.Bind(s => scrubberFactory.For(s.ExtraPatterns));
-        var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, request.Scope.Repos, request.Scope.Caller));
+        var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, request.Scope.Repos, request.Scope.Caller, request.Scope.LeftOut));
         var wanted = repos.Bind(r => Wanted(request.Source, feeds.For(settings.Value, r, scrubbers.Value)));
         if (wanted.IsError)
         {
