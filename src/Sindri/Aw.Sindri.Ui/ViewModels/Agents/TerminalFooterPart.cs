@@ -2,11 +2,6 @@ using System.Text.RegularExpressions;
 
 namespace Aw.Sindri.Ui.ViewModels.Agents;
 
-/// <summary>One word run of the footer; a key name is drawn as a keycap.</summary>
-/// <param name="Text">The words or the key name.</param>
-/// <param name="IsKey">True for a key name.</param>
-internal sealed record TerminalFooterRun(string Text, bool IsKey);
-
 /// <summary>One part of the footer, between two " · " separators (DG2 draws a hairline between parts). The first part reads in the muted ink.</summary>
 /// <param name="Runs">The runs in order.</param>
 /// <param name="IsFirst">True for the first part.</param>
@@ -23,28 +18,28 @@ internal sealed partial record TerminalFooterPart(IReadOnlyList<TerminalFooterRu
         {
             var runs = new List<TerminalFooterRun>();
             var at = 0;
-            foreach (Match m in KeyName().Matches(piece))
+            foreach (Match m in KeyName.Matches(piece))
             {
                 if (m.Index > at)
                 {
-                    runs.Add(new TerminalFooterRun(piece[at..m.Index], false));
+                    runs.Add(new TerminalFooterRun(Text: piece[at..m.Index], IsKey: false));
                 }
 
-                runs.Add(new TerminalFooterRun(m.Value, true));
+                runs.Add(new TerminalFooterRun(Text: m.Value, IsKey: true));
                 at = m.Index + m.Length;
             }
 
             if (at < piece.Length)
             {
-                runs.Add(new TerminalFooterRun(piece[at..], false));
+                runs.Add(new TerminalFooterRun(Text: piece[at..], IsKey: false));
             }
 
-            parts.Add(new TerminalFooterPart(runs, parts.Count == 0, false));
+            parts.Add(new TerminalFooterPart(Runs: runs, IsFirst: parts.Count == 0, IsLast: false));
         }
 
         return parts.Count == 0 ? parts : [.. parts[..^1], parts[^1] with { IsLast = true }];
     }
 
     [GeneratedRegex(@"(?<![\w+])(F6|Esc|n|Ctrl\+Shift\+L|Cmd\+Shift\+L|Shift\+PgUp|Enter(?= to ))(?![\w+])", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex KeyName();
+    private static partial Regex KeyName { get; }
 }
