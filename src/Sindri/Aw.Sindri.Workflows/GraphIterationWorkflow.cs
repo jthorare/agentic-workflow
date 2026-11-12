@@ -65,15 +65,25 @@ internal sealed partial class GraphIterationWorkflow
         }
         catch (Exception e) when (TemporalException.IsCanceledException(e))
         {
-            // why: the workflow's token is already cancelled, so every write here is detached, or it would never run and the rows would stay 'running'
-            if (_current is { } running)
-            {
-                await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(Row(running, _item, NodeRunStatus.Cancelled)), _detached).ConfigureAwait(true);
-            }
-
-            await SkipUnfinished().ConfigureAwait(true);
+            await Cancelled().ConfigureAwait(true);
             throw;
         }
+        catch (Exception e) when (e is not TemporalException && GraphFaults.Ends(e))
+        {
+            // why: an exception in workflow code is a workflow-task failure that Temporal retries without end; failing the batch lets the parent end the run (issue 2999). A write out of retries already fails the batch.
+            throw new ApplicationFailureException(GraphFaults.Reason(e), e);
+        }
+    }
+
+    private async Task Cancelled()
+    {
+        // why: the workflow's token is already cancelled, so every write here is detached, or it would never run and the rows would stay 'running'
+        if (_current is { } running)
+        {
+            await Workflow.ExecuteActivityAsync((GraphRunActivities a) => a.RecordNodeAsync(Row(running, _item, NodeRunStatus.Cancelled)), _detached).ConfigureAwait(true);
+        }
+
+        await SkipUnfinished().ConfigureAwait(true);
     }
 
     private async Task<string?> Walk(GraphSpec spec, LoopShape shape, int item)
