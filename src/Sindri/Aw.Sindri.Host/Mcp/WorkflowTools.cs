@@ -123,7 +123,7 @@ internal static partial class WorkflowTools
     private static Tool DeleteTool { get; } = new()
     {
         Name = Delete,
-        Description = "Archive a workflow: it leaves the list and turns off for good. Its revisions and runs stay readable.",
+        Description = "Archive a workflow that is off and has no run in flight (an active one is SND-GRAPH-114, a running one SND-GRAPH-115): it leaves the list for good. Its revisions and runs stay readable and its resources are deleted; the answer says how many runs stayed and how many bytes were freed.",
         InputSchema = ContextTools.Schema(new JsonObject { ["slug"] = ContextTools.Property("string", SlugText) }, required: ["slug"]),
         Annotations = Write(destructive: true),
     };
@@ -136,6 +136,7 @@ internal static partial class WorkflowTools
         {
             ["slug"] = ContextTools.Property("string", SlugText),
             ["payload"] = ContextTools.Property("object", "What the manual trigger hands on, a JSON object"),
+            ["revision"] = ContextTools.Property("integer", "The revision you expect to be active; another active revision is refused with SND-GRAPH-007. Runs whatever is active when left out", minimum: 1),
         }, required: ["slug"]),
         Annotations = Write(),
     };

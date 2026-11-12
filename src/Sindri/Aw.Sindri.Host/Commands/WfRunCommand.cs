@@ -6,18 +6,18 @@ using Aw.Sindri.Host.Endpoints;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri wf run &lt;slug&gt; [--payload JSON] [--json]' and 'sindri wf cancel &lt;run&gt; [--json]': clients of POST /sindri/workflows/{slug}/runs and
+/// 'sindri wf run &lt;slug&gt; [--payload JSON] [--revision N] [--json]' and 'sindri wf cancel &lt;run&gt; [--json]': clients of POST /sindri/workflows/{slug}/runs and
 /// POST /sindri/workflow-runs/{run}/cancel. Both start the control plane first, like the other workflow writes. Exit 0 ok, 1 not running, 2 refused or error.
 /// </summary>
 internal static class WfRunCommand
 {
-    private const string RunUsage = "usage: sindri wf run <slug> [--payload JSON] [--json]";
+    private const string RunUsage = "usage: sindri wf run <slug> [--payload JSON] [--revision N] [--json]";
     private const string CancelUsage = "usage: sindri wf cancel <run> [--json]";
 
     internal static async Task<int> Run(string[] args, RecipeDesk desk, Output output, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(args);
-        var (slug, payload, json, bad) = Parse(args);
+        var (slug, payload, json, revision, bad) = Parse(args);
         if (slug is null || bad is not null)
         {
             return await output.Error(SindriErrors.InvalidInput.With((bad ?? "wf run needs a workflow slug") + $" ({RunUsage})")).ConfigureAwait(false);
@@ -28,7 +28,7 @@ internal static class WfRunCommand
             return await output.Error(down).ConfigureAwait(false);
         }
 
-        var started = await desk.Client.Post<RunWorkflowBody, RunWorkflowResponse>("/sindri/workflows/" + Uri.EscapeDataString(slug) + "/runs", new RunWorkflowBody(payload), ct).ConfigureAwait(false);
+        var started = await desk.Client.Post<RunWorkflowBody, RunWorkflowResponse>("/sindri/workflows/" + Uri.EscapeDataString(slug) + "/runs", new RunWorkflowBody(payload, revision), ct).ConfigureAwait(false);
         if (started.IsError)
         {
             return await output.Error(started.Error).ConfigureAwait(false);
@@ -69,11 +69,12 @@ internal static class WfRunCommand
             : await output.Text($"{cancelled.Value.Value.Run.Value} cancel requested\n", 0).ConfigureAwait(false);
     }
 
-    private static (string? Slug, string? Payload, bool Json, string? Bad) Parse(string[] args)
+    private static (string? Slug, string? Payload, bool Json, int? Revision, string? Bad) Parse(string[] args)
     {
         string? slug = null;
         string? payload = null;
         var json = false;
+        int? revision = null;
         for (var i = 0; i < args.Length; i++)
         {
             switch (args[i])
@@ -81,17 +82,20 @@ internal static class WfRunCommand
                 case "--json":
                     json = true;
                     break;
-                case "--payload" when i + 1 < args.Length:
-                    payload = args[++i];
+                case "--payload" or "--revision":
+                    var problem = Option(args[i], i + 1 < args.Length ? args[++i] : null, ref payload, ref revision);
+                    if (problem is not null)
+                    {
+                        return (slug, payload, json, revision, problem);
+                    }
+
                     break;
-                case "--payload":
-                    return (slug, payload, json, "'--payload' needs a JSON object");
                 case var flag when flag.StartsWith('-'):
-                    return (slug, payload, json, $"'{flag}' isn't an option");
+                    return (slug, payload, json, revision, $"'{flag}' isn't an option");
                 default:
                     if (slug is not null)
                     {
-                        return (slug, payload, json, $"'{args[i]}' is one argument too many");
+                        return (slug, payload, json, revision, $"'{args[i]}' is one argument too many");
                     }
 
                     slug = args[i];
@@ -99,6 +103,21 @@ internal static class WfRunCommand
             }
         }
 
-        return (slug, payload, json, null);
+        return (slug, payload, json, revision, null);
     }
+
+    private static string? Option(string name, string? value, ref string? payload, ref int? revision)
+    {
+        if (name == "--payload")
+        {
+            payload = value;
+            return value is null ? "'--payload' needs a JSON object" : null;
+        }
+
+        revision = value is null ? null : RevisionNumber(value);
+        return revision is null ? "'--revision' needs a number of 1 or more" : null;
+    }
+
+    private static int? RevisionNumber(string text) =>
+        int.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var number) && number >= 1 ? number : null;
 }

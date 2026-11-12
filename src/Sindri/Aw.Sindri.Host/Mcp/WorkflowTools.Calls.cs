@@ -164,20 +164,21 @@ internal static partial class WorkflowTools
         }
 
         var answer = await services.GetRequiredService<IService<DeleteWorkflowRequest, DeleteWorkflowResponse>>().Handle(new DeleteWorkflowRequest(slug.Value, By(services)), ct).ConfigureAwait(false);
-        return McpResults.From(services, answer, static gone => gone.Slug.Value + " is archived");
+        return McpResults.From(services, answer, static gone => string.Create(CultureInfo.InvariantCulture, $"Deleted {gone.Slug.Value}. {gone.RunsKept} runs kept, {gone.BytesFreed} bytes freed{(gone.ResourcesStayed.Count == 0 ? string.Empty : "; these resources stayed: " + string.Join(", ", gone.ResourcesStayed))}"));
     }
 
     private static async ValueTask<CallToolResult> CallRun(IServiceProvider services, IDictionary<string, JsonElement>? arguments, CancellationToken ct)
     {
-        var slug = McpArguments.Only(Run, arguments, ["slug", "payload"]) is { } refused ? refused : Slug(Run, arguments);
+        var slug = McpArguments.Only(Run, arguments, ["slug", "payload", "revision"]) is { } refused ? refused : Slug(Run, arguments);
         var payload = Json(Run, arguments, "payload", JsonValueKind.Object);
-        if (slug.IsError || payload.IsError)
+        var revision = McpArguments.OptionalLong(Run, arguments, "revision", min: 1, max: int.MaxValue);
+        if (slug.IsError || payload.IsError || revision.IsError)
         {
-            return McpResults.Failure(services, slug.IsError ? slug.Error : payload.Error);
+            return McpResults.Failure(services, slug.IsError ? slug.Error : payload.IsError ? payload.Error : revision.Error);
         }
 
         var caller = services.GetRequiredService<ICallerContextAccessor>().Current;
-        var answer = await services.GetRequiredService<IService<RunWorkflowRequest, RunWorkflowResponse>>().Handle(new RunWorkflowRequest(slug.Value, payload.Value, caller?.Actor ?? "owner"), ct).ConfigureAwait(false);
+        var answer = await services.GetRequiredService<IService<RunWorkflowRequest, RunWorkflowResponse>>().Handle(new RunWorkflowRequest(slug.Value, payload.Value, caller?.Actor ?? "owner", (int?)revision.Value), ct).ConfigureAwait(false);
         return McpResults.From(services, answer, static started => $"{started.Status} {started.Run.Value}{(started.Reason is null ? string.Empty : ": " + started.Reason)}");
     }
 

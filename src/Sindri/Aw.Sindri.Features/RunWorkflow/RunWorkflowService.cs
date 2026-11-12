@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Kernel;
@@ -37,21 +38,16 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
             return loop;
         }
 
-        var listed = await workflows.List(includeArchived: false, cancellationToken).ConfigureAwait(false);
-        if (listed.IsError)
+        var found = await FindActive(request.Slug, cancellationToken).ConfigureAwait(false);
+        if (found.IsError)
         {
-            return listed.Error;
+            return found.Error;
         }
 
-        var record = listed.Value.FirstOrDefault(r => r.Slug == request.Slug);
-        if (record is null)
+        var (record, active) = found.Value;
+        if (Stale(request, active) is { } stale)
         {
-            return SindriErrors.GraphNotFound.With($"no workflow '{request.Slug.Value}'; list the workflows to see what exists");
-        }
-
-        if (record.ActiveRevision is not { } active)
-        {
-            return SindriErrors.GraphNotActive.With($"'{request.Slug.Value}' has no active revision; activate one first");
+            return stale;
         }
 
         var revision = await workflows.GetRevision(record.Id, active, cancellationToken).ConfigureAwait(false);
@@ -63,6 +59,30 @@ internal sealed class RunWorkflowService(IWorkflowStore workflows, IWorkflowRunS
         var trigger = new JsonObject { ["kind"] = TriggerKind, ["payload"] = payload.Value, ["by"] = request.By }.ToJsonString();
         return await Start(new Trigger(record, revision.Value, trigger), cancellationToken).ConfigureAwait(false);
     }
+
+    private async ValueTask<Result<(WorkflowRecord Record, int Active)>> FindActive(WorkflowSlug slug, CancellationToken cancellationToken)
+    {
+        var listed = await workflows.List(includeArchived: false, cancellationToken).ConfigureAwait(false);
+        if (listed.IsError)
+        {
+            return listed.Error;
+        }
+
+        var record = listed.Value.FirstOrDefault(r => r.Slug == slug);
+        if (record is null)
+        {
+            return SindriErrors.GraphNotFound.With($"no workflow '{slug.Value}'; list the workflows to see what exists");
+        }
+
+        return record.ActiveRevision is { } active
+            ? (record, active)
+            : SindriErrors.GraphNotActive.With($"'{slug.Value}' has no active revision; activate one first");
+    }
+
+    private static Error? Stale(RunWorkflowRequest request, int active) =>
+        request.ExpectRevision is { } expected && expected != active
+            ? SindriErrors.GraphStaleRevision.With(string.Create(CultureInfo.InvariantCulture, $"'{request.Slug.Value}' runs revision {active}, not {expected}; read it again and retry"))
+            : null;
 
     private async ValueTask<Error?> LoopRefusal(WorkflowSlug slug, CancellationToken cancellationToken)
     {

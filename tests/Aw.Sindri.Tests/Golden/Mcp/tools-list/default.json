@@ -1365,7 +1365,7 @@
   },
   {
     "name": "workflow_delete",
-    "description": "Archive a workflow: it leaves the list and turns off for good. Its revisions and runs stay readable.",
+    "description": "Archive a workflow that is off and has no run in flight (an active one is SND-GRAPH-114, a running one SND-GRAPH-115): it leaves the list for good. Its revisions and runs stay readable and its resources are deleted; the answer says how many runs stayed and how many bytes were freed.",
     "inputSchema": {
       "type": "object",
       "additionalProperties": false,
@@ -1400,6 +1400,11 @@
         "payload": {
           "type": "object",
           "description": "What the manual trigger hands on, a JSON object"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The revision you expect to be active; another active revision is refused with SND-GRAPH-007. Runs whatever is active when left out"
         }
       },
       "required": [
