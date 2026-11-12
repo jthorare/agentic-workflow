@@ -31,18 +31,23 @@ internal sealed partial class SettingsView : UserControl
         _setup?.RevealRequested += OnRevealRequested;
         if (Content is StackPanel page)
         {
-            if (_checklist is not null)
-            {
-                _ = page.Children.Remove(_checklist);
-                _checklist = null;
-            }
+            ReplaceChecklist(page);
+        }
+    }
 
-            if (_setup is not null)
-            {
-                _checklist = new SetupChecklist { Name = "SetupChecklist", DataContext = _setup };   // a host without setup draws no checklist, and none of its controls
-                page.Children.Insert(3, _checklist);   // after the title, the filter box and its no-match line
-                _checklist.IsVisible = (DataContext as SettingsViewModel)?.ShowsSetup ?? true;
-            }
+    // A host without setup draws no checklist, and none of its controls.
+    private void ReplaceChecklist(StackPanel page)
+    {
+        if (_checklist is not null)
+        {
+            _ = page.Children.Remove(_checklist);
+            _checklist = null;
+        }
+
+        if (_setup is not null)
+        {
+            _checklist = new SetupChecklist { Name = "SetupChecklist", DataContext = _setup, IsVisible = _settings?.ShowsSetup ?? true };
+            page.Children.Insert(3, _checklist);   // after the title, the filter box and its no-match line
         }
     }
 

@@ -262,14 +262,6 @@ internal static partial class Labels
         ? string.Create(CultureInfo.InvariantCulture, $"recorded pid {pid} · epoch {epoch}, answering epoch {answeringEpoch}")
         : string.Create(CultureInfo.InvariantCulture, $"recorded pid {pid} · epoch {epoch}, answering pid {answeringPid} · epoch {answeringEpoch}");
 
-    /// <summary>The Settings filter box's placeholder.</summary>
-    internal const string SettingsFilterPlaceholder = "Filter settings";
-
-    /// <summary>The line under the Settings filter box when no setting matches.</summary>
-    /// <param name="filter">What was typed.</param>
-    /// <returns>The words.</returns>
-    internal static string SettingsNoMatch(string filter) => "No settings match “" + filter + "”.";
-
     /// <summary>The version-mismatch panel's label for this app's version (states.html).</summary>
     internal const string ThisApp = "This app";
 

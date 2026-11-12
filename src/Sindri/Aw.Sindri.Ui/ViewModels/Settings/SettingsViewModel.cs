@@ -13,7 +13,7 @@ namespace Aw.Sindri.Ui.ViewModels.Settings;
 /// the theme through the apply callback (no Avalonia types here). Built on the UI thread: an OS change raised elsewhere is
 /// posted back to it.
 /// </summary>
-internal sealed class SettingsViewModel : ObservableObject, IDisposable
+internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private readonly Preferences _preferences;
     private readonly IMotionPreference _motion;
@@ -97,77 +97,6 @@ internal sealed class SettingsViewModel : ObservableObject, IDisposable
 
     /// <summary>True when the page has the setup checklist.</summary>
     public bool HasSetup => Setup is not null;
-
-    /// <summary>What the filter box holds; empty shows every section (#3362).</summary>
-    public string Filter
-    {
-        get;
-        set
-        {
-            if (string.Equals(field, value, StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            field = value;
-            OnChanged(nameof(Filter));
-            OnChanged(nameof(ShowsSetup));
-            OnChanged(nameof(ShowsModelChoice));
-            OnChanged(nameof(ShowsLabelChoice));
-            OnChanged(nameof(ShowsSurfaceChoice));
-            OnChanged(nameof(ShowsSandbox));
-            OnChanged(nameof(ShowsLibrary));
-            OnChanged(nameof(ShowsConnections));
-            OnChanged(nameof(ShowsThisApp));
-            OnChanged(nameof(HasNoMatch));
-            OnChanged(nameof(NoMatchText));
-        }
-    } = string.Empty;
-
-    /// <summary>True when the page has the setup checklist and the filter keeps it.</summary>
-    public bool ShowsSetup => Shows(SettingsSection.Setup);
-
-    /// <summary>True when the page has the model-choice line and the filter keeps the choices.</summary>
-    public bool ShowsModelChoice => HasModelChoice && SettingsFilter.Matches(SettingsSection.Choices, Filter);
-
-    /// <summary>True when the page has the label-choice line and the filter keeps the choices.</summary>
-    public bool ShowsLabelChoice => HasLabelChoice && SettingsFilter.Matches(SettingsSection.Choices, Filter);
-
-    /// <summary>True when the page has the product-surface-choice line and the filter keeps the choices.</summary>
-    public bool ShowsSurfaceChoice => HasSurfaceChoice && SettingsFilter.Matches(SettingsSection.Choices, Filter);
-
-    /// <summary>True when the page has the Sandbox section and the filter keeps it.</summary>
-    public bool ShowsSandbox => Shows(SettingsSection.Sandbox);
-
-    /// <summary>True when the page has the Library card and the filter keeps it.</summary>
-    public bool ShowsLibrary => Shows(SettingsSection.Library);
-
-    /// <summary>True when the page has a Connections card and the filter keeps the group.</summary>
-    public bool ShowsConnections => Shows(SettingsSection.Connections);
-
-    /// <summary>The filter box's placeholder.</summary>
-    public string FilterPlaceholder { get; } = Labels.SettingsFilterPlaceholder;
-
-    /// <summary>The line shown when no section matches the filter.</summary>
-    public string NoMatchText => Labels.SettingsNoMatch(Filter.Trim());
-
-    /// <summary>True when the "This app" section (Reduce motion, Text size) stays under the filter.</summary>
-    public bool ShowsThisApp => Shows(SettingsSection.ThisApp);
-
-    /// <summary>True when a filter is typed and no section on this page matches it.</summary>
-    public bool HasNoMatch => Filter.Trim().Length > 0 && !Enum.GetValues<SettingsSection>().Any(Shows);
-
-    // A section is shown when this page has it and the filter keeps it.
-    private bool Shows(SettingsSection section) => section switch
-    {
-        SettingsSection.Setup => HasSetup,
-        SettingsSection.Choices => HasModelChoice || HasLabelChoice || HasSurfaceChoice,
-        SettingsSection.Sandbox => HasSandbox,
-        SettingsSection.Library => HasLibrary,
-        SettingsSection.Connections => HasConnections,
-        SettingsSection.ThisApp => true,
-        _ => false,
-    } && SettingsFilter.Matches(section, Filter);
 
     /// <summary>The heading over the app's own preferences, below the checklist.</summary>
     public string ThisAppLabel { get; } = Labels.ThisApp;
