@@ -1,8 +1,13 @@
 using System.Text.Json;
+using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Graph.Blocks;
 using Aw.Sindri.Core.Graph.Docs;
 using Aw.Sindri.Features.ListWorkflowBlocks;
+using Aw.Sindri.Tests.Graph.Blocks;
+using Aw.Sindri.Tests.Toolkits;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.ListWorkflowBlocks;
 
@@ -46,7 +51,43 @@ public sealed class BlockFieldCaptionsTests
 
         Assert.False(json.ContainsKey("choices"));
         Assert.False(json.ContainsKey("presets"));
-        Assert.Equal("duration", json["caption"]!.GetValue<string>());   // no caption set: the name stands in
+        Assert.Equal("Wait for", json["caption"]!.GetValue<string>());
+    }
+
+    // why: a caption equal to the key (`prompt`, `waitSeconds`) is the fallback in ListWorkflowBlocksService, so it means nobody wrote plain words (#2925)
+    private static readonly string[] _keysThatAreAlreadyPlainWords = [];
+
+    [Fact]
+    public async Task Every_block_field_has_a_plain_words_caption()
+    {
+        var registry = GraphBlockRegistry.Standard(
+            new BlockFakes.RecordingNotifyPort(),
+            new BlockFakes.ScriptedModelPort("{}"),
+            more: [.. GraphBlockRegistry.FlowBlocks(new FlowFakes.MemorySeenStore(), new FlowFakes.RecordingItemPort(), new FlowFakes.ScriptedCallPort(), new FlowFakes.ScriptedHttpPort()),
+                .. GraphBlockRegistry.ParkingBlocks(new BlockFakes.RecordingQuestionPort(), new FakeTimeProvider()),
+                .. GraphBlockRegistry.ResultBlocks(new FlowFakes.ScriptedResultPort()),
+                .. GraphBlockRegistry.MemoryBlocks(new BlockFakes.RecordingMemoryPort()),
+                new CallToolBlock(new FakeRunningToolkits([]), new NoConnections()),
+                .. GraphBlockRegistry.CodeBlocks(new FlowFakes.ScriptedCodePort())]);
+        var listed = await new ListWorkflowBlocksService(registry, new Docs()).Handle(new ListWorkflowBlocksRequest(), Token);
+        Assert.True(listed.IsSuccess);
+
+        var bare = listed.Value.Groups.SelectMany(static g => g.Blocks)
+            .SelectMany(static b => b.Config.Select(f => (Block: b.Type, Field: f)))
+            .Where(x => string.Equals(x.Field.Caption, x.Field.Name, StringComparison.Ordinal) && !_keysThatAreAlreadyPlainWords.Contains(x.Field.Name))
+            .Select(static x => $"{x.Block}.{x.Field.Name}")
+            .ToList();
+
+        Assert.True(bare.Count == 0, "fields still captioned with their key: " + string.Join(", ", bare));
+    }
+
+    private sealed class NoConnections : IConnectionToolPort
+    {
+        public ValueTask<Result<IReadOnlyList<ConnectionTool>>> ListTools(string connection, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(Results.Failure<IReadOnlyList<ConnectionTool>>(SindriErrors.ConnectionNotFound.With($"no connection '{connection}'")));
+
+        public ValueTask<Result<string>> Call(string connection, string tool, string argumentsJson, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(Results.Failure<string>(SindriErrors.ConnectionNotFound.With($"no connection '{connection}'")));
     }
 
     private static async Task<BlockFieldView> Field(string type, string name)

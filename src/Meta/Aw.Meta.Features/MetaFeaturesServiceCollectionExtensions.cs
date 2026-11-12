@@ -172,6 +172,7 @@ public static class MetaFeaturesServiceCollectionExtensions
         .AddScoped<HostProbe>()
         .AddScoped<LaneCheck>()
         .AddScoped<OrphanKiller>()
+        .AddScoped<OomPolicyCheck>()
         .AddScoped<HealthService>()
         .Plain<HealthService, HealthRequest, HealthResponse>()
         .AddScoped<UsageService>()

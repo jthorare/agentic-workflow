@@ -24,7 +24,7 @@ public sealed class CollectBlock : IGraphBlock
     public bool IsTrigger => false;
 
     /// <inheritdoc />
-    public BlockSchema Config { get; } = new([new("value", BlockFieldType.Text)]);
+    public BlockSchema Config { get; } = new([new("value", BlockFieldType.Text, Caption: "Value to collect")]);
 
     /// <inheritdoc />
     public string Example => """{"value":"{{summarize.text}}"}""";

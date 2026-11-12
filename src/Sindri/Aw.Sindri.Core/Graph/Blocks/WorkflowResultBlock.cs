@@ -35,8 +35,8 @@ public sealed class WorkflowResultBlock(IGraphResultPort results) : IGraphBlock
 
     /// <inheritdoc />
     public BlockSchema Config { get; } = new([
-        new("workflow", BlockFieldType.Text),
-        new("run", BlockFieldType.Text, Required: false),
+        new("workflow", BlockFieldType.Text, Caption: "Workflow"),
+        new("run", BlockFieldType.Text, Required: false, Caption: "Run"),
     ]);
 
     /// <inheritdoc />
