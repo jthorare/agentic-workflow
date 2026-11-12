@@ -82,4 +82,26 @@
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
+  <!-- RowList: one scroll viewer over a virtualizing panel of header and row entries; the sticky header is an overlay that the scroll moves. -->
+  <Style Selector="rows|RowList">
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <VirtualizingStackPanel />
+      </ItemsPanelTemplate>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel ClipToBounds="True">
+          <ScrollViewer Name="PART_ScrollViewer" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+          </ScrollViewer>
+          <rows:RowGroupHeader Name="PART_Sticky" VerticalAlignment="Top" IsVisible="False" Background="{DynamicResource Brush.Canvas}" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="rows|RowGroupHeader">
+    <Setter Property="Height" Value="{DynamicResource Row.GroupHeader}" />
+    <Setter Property="Padding" Value="{DynamicResource Row.Inset.Thickness}" />
+  </Style>
 </Styles>

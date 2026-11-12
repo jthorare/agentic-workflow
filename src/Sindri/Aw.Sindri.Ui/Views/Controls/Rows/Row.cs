@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -12,7 +11,6 @@ namespace Aw.Sindri.Ui.Views.Controls.Rows;
 /// One row of a <see cref="RowList"/> (#2978): glyph, id and title, one cell per list column, age and who it waits on. Its data context is an
 /// IRowItem. Classes: cursor (keyboard focus within), sel (the row being peeked or open). The template is in RowStyles.axaml; the cells are filled here from the item.
 /// </summary>
-[SuppressMessage("Design", "MA0182", Justification = "RowList (the next commit) builds it.")]
 internal sealed class Row : TemplatedControl
 {
     /// <summary>The fact columns of the list, in order.</summary>
