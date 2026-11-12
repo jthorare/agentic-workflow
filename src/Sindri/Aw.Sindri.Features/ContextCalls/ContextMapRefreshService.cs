@@ -18,7 +18,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// index's outlooks and asks <see cref="MapPublishDecision"/>; a publish or drop starts 'PublishContextMap' as 'service:context-map-refresh' when none runs and its backoff (5, 10, 20, 40, then 60 minutes over the newest
 /// publish failures) isn't holding; (3) the move check: when a mapped repo's checkout moved along its default branch past the heads in <see cref="MappedHeads"/> (the held draft's, else the current version's) it starts a
 /// 'RefreshContextMap', never while either kind runs, with the refresh backoff over refresh jobs only; (4) the alarm, the one step that merges the kinds: the newest 8 ended jobs of both give the failure count, and three
-/// in a row fail the run (needs-you 'failure:service:context-map-refresh'). A repo on a feature branch is left out and named in the quiet run's summary. No step ends the tick for the later ones. (5) Only when steps 2 to 4 left nothing to do, <see cref="PinRelinkDecision"/> may start 'RelinkPinAliases' (concept pins spec 3.7): the approved pins' aliases or the current map version differ from the last succeeded relink.
+/// in a row fail the run (needs-you 'failure:service:context-map-refresh'). With no map yet, the first build waits for a succeeded code index of a mapped repo (#3126), and a profile without a 'context:' section maps under the default settings. A repo on a feature branch is left out and named in the quiet run's summary. No step ends the tick for the later ones. (5) Only when steps 2 to 4 left nothing to do, <see cref="PinRelinkDecision"/> may start 'RelinkPinAliases' (concept pins spec 3.7): the approved pins' aliases or the current map version differ from the last succeeded relink.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
 /// <param name="engine">The context engine: the mapped repos' heads and the stored publish state.</param>
@@ -43,6 +43,9 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
 
     internal static JobKind PublishKind { get; } = JobKind.From("PublishContextMap");
 
+    // The code index's build job (its slice owns the kind; AW1003 keeps slices off each other's types).
+    private static JobKind IndexBuildKind { get; } = JobKind.From("BuildCodeIndex");
+
     internal static ServiceName ServiceId { get; } = ServiceName.From("context-map-refresh");
 
     /// <summary>What the service does, as GET /sindri/services says it.</summary>
@@ -57,10 +60,14 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
     {
         ArgumentNullException.ThrowIfNull(run);
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
-        if (scope.IsError || scope.Value.Settings is null)
+        if (ContextScopes.NoProfile(scope))
         {
-            // no profile is nothing to refresh, not a failed run (a failed run would land in needs-you every tick)
-            return scope.IsError && scope.Error.Code != SindriErrors.ProfileMissing.Code ? scope.Error : ScheduledResult.Quiet;
+            return ScheduledResult.Quiet;   // no profile is nothing to refresh, not a failed run (a failed run would land in needs-you every tick)
+        }
+
+        if (scope.IsError)
+        {
+            return scope.Error;
         }
 
         var tick = await Read(scope.Value, cancellationToken).ConfigureAwait(false);
@@ -83,7 +90,36 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
             return refreshes.IsError ? refreshes.Error : publishes.Error;
         }
 
-        return new Tick(heads.Value, state.Value, refreshes.Value, publishes.Value, [.. heads.Value.Where(static h => !h.OnDefault).Select(static h => h.Repo.Value).Order(StringComparer.Ordinal)]) { Ruleset = RunningRuleset ?? (RulesFromScope ? RulesOf(scope) : null) };
+        var indexed = await FirstMapWaits(heads.Value, state.Value, cancellationToken).ConfigureAwait(false);
+        if (indexed.IsError)
+        {
+            return indexed.Error;
+        }
+
+        return new Tick(heads.Value, state.Value, refreshes.Value, publishes.Value, [.. heads.Value.Where(static h => !h.OnDefault).Select(static h => h.Repo.Value).Order(StringComparer.Ordinal)])
+        {
+            Ruleset = RunningRuleset ?? (RulesFromScope ? RulesOf(scope) : null),
+            IndexWait = indexed.Value,
+        };
+    }
+
+    // #3126: with no map yet (no current version, no held draft), the first build waits until a code index of a mapped repo has succeeded; a map built before its index is built again anyway (#1704).
+    // The jobs view is read only then. Returns true while the first map waits.
+    private async ValueTask<Result<bool>> FirstMapWaits(IReadOnlyList<RepoHead> heads, MapPublishState state, CancellationToken cancellationToken)
+    {
+        if (state.Current is not null || state.Hold is not null)
+        {
+            return false;
+        }
+
+        var builds = await jobs.List(JobState.Succeeded, IndexBuildKind, cancellationToken).ConfigureAwait(false);
+        if (builds.IsError)
+        {
+            return builds.Error;
+        }
+
+        var mapped = heads.Select(static h => h.Repo.Value).ToHashSet(StringComparer.Ordinal);
+        return !builds.Value.Any(j => j.State == JobState.Succeeded && j.Repo is { } repo && mapped.Contains(repo.Value));
     }
 
     private async ValueTask<Result<ScheduledResult>> RunTick(ContextScope scope, Tick tick, CancellationToken cancellationToken)
@@ -197,6 +233,11 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
         var refreshed = Finished(tick.Refreshes).ToArray();
         var running = publishStarted || tick.Refreshes.Concat(tick.Publishes).Any(static j => j.State == JobState.Running);
         var action = MainMoveDecision.Decide(new MainMoveInput(onDefault, MapGate.Mapped(tick.State), RulesChanged(tick)), running, Attempts(refreshed), clock.GetUtcNow());
+        if (action == MainMoveAction.Start && tick.IndexWait)
+        {
+            return new ScheduledResult(Idle: true, string.Join("; ", new[] { "the first map waits for a code index of " + string.Join(", ", onDefault.Keys.Order(StringComparer.Ordinal)), Left(tick.Elsewhere) }.OfType<string>()));
+        }
+
         var both = Finished([.. tick.Refreshes, .. tick.Publishes]).ToArray();
         var failures = MainMoveDecision.FailedInARow(Attempts(both));
         var pending = action != MainMoveAction.Nothing || tick.State.Hold is not null;   // a failing publish keeps the alarm up while its draft is still held
@@ -273,6 +314,9 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
     private sealed record Tick(IReadOnlyList<RepoHead> Heads, MapPublishState State, IReadOnlyList<JobRow> Refreshes, IReadOnlyList<JobRow> Publishes, string[] Elsewhere)
     {
         public string? Ruleset { get; init; }
+
+        /// <summary>True while no map exists and no code index of a mapped repo has succeeded (#3126).</summary>
+        public bool IndexWait { get; init; }
     }
 
     private readonly record struct PublishOutcome(bool Started, string? Note, Error? Error);
