@@ -26,6 +26,11 @@ public static class FailureSentences
         Row("SND-GRAPH-107", "This run already ended."),
         Row("SND-GRAPH-108", "The output of {step} was cut at 64 KB, so a later step can't read it.", "Open the step"),
         Row("SND-GRAPH-109", "A run of this workflow can't start the workflow again.", "Open the step that does"),
+        Row("SND-CODE-001", "{step} doesn't compile: {message}.", "Open {step}"),
+        Row("SND-CODE-002", "{step} ran past its time limit.", "Open {step}"),
+        Row("SND-CODE-003", "{step} used more memory than its limit.", "Open {step}"),
+        Row("SND-CODE-004", "{step} stopped: {message}.", "Open {step}"),
+        Row("SND-CODE-005", "Sindri can't run code steps: sindri-code-runner isn't installed.", "Install the runner", "scripts/install-cs.sh --publish"),
         Row("SND-GRAPH-007", "Changed elsewhere.", "Reload", "sindri wf show <slug>"),
         Row("SND-API-001", "Sindri is not running.", "Start Sindri", "sindri serve"),
     }.ToDictionary(static r => r.Code, StringComparer.Ordinal);
