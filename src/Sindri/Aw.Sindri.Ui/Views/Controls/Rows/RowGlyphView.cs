@@ -26,6 +26,7 @@ internal sealed class RowGlyphView : Control
     private static readonly Lazy<StreamGeometry> _bubble = new(() => BuildPolygon(filled: false, [new Point(3, 4), new Point(13, 4), new Point(13, 10), new Point(8, 10), new Point(5, 13), new Point(5, 10), new Point(3, 10)]));
     private static readonly ConditionalWeakTable<IBrush, Pens> _pens = [];
     private Palette? _palette;
+    private Avalonia.Styling.ThemeVariant? _variant;
 
     private const double Radius = 6.25;   // ring centre line; with the 1.5 stroke the glyph is 14 outside to outside (grammar .g)
     private const double Outer = Radius + (Stroke / 2);   // a filled glyph (done, merged) is the full 14
@@ -64,6 +65,12 @@ internal sealed class RowGlyphView : Control
     {
         ActualThemeVariantChanged += (_, _) =>
         {
+            if (TopLevel.GetTopLevel(this) is null || Equals(_variant, ActualThemeVariant))
+            {
+                return;   // detached, or a recycled glyph re-entering the tree under the theme its palette was built for
+            }
+
+            _variant = ActualThemeVariant;
             _palette = null;
             InvalidateVisual();
         };

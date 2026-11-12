@@ -33,6 +33,7 @@ internal sealed class Row : TemplatedControl
     private IBrush? _inkMuted;
     private double[] _widths = [];
     private object? _builtFor;
+    private Avalonia.Styling.ThemeVariant? _variant;
 
     static Row()
     {
@@ -61,6 +62,12 @@ internal sealed class Row : TemplatedControl
     {
         ActualThemeVariantChanged += (_, _) =>
         {
+            if (TopLevel.GetTopLevel(this) is null || Equals(_variant, ActualThemeVariant))
+            {
+                return;   // detached, or a recycled row re-entering the tree under the theme it already drew with
+            }
+
+            _variant = ActualThemeVariant;
             _ink = _inkMuted = null;
             Refresh();
         };

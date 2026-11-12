@@ -136,8 +136,8 @@
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:PeekField">
                     <Grid Height="{StaticResource Peek.FieldRow}" ColumnDefinitions="96,*">
-                      <TextBlock Text="{Binding Label}" Classes="peek-label" VerticalAlignment="Center" />
-                      <TextBlock Grid.Column="1" Text="{Binding Value}" Classes="peek-value" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding Label}" Classes="peek-label" Foreground="{DynamicResource Brush.InkSubtle}" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="1" Text="{Binding Value}" Classes="peek-value" Foreground="{DynamicResource Brush.InkMuted}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                     </Grid>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>

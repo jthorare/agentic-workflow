@@ -18,6 +18,26 @@ internal static class RefFit
     {
         ArgumentNullException.ThrowIfNull(block);
         ArgumentNullException.ThrowIfNull(text);
+        var key = (text, width);
+        if (_cache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var fitted = Compute(block, text, width, fallbackCharWidth);
+        if (_cache.Count > 4096)
+        {
+            _cache.Clear();
+        }
+
+        _cache[key] = fitted;
+        return fitted;
+    }
+
+    private static readonly Dictionary<(string Text, double Width), string> _cache = [];
+
+    private static string Compute(Control block, string text, double width, double fallbackCharWidth)
+    {
         if (Measure(block, text) is not { } full)
         {
             return RefText.ShortenMiddle(text, Math.Max(4, (int)(width / fallbackCharWidth)));

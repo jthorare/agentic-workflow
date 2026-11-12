@@ -7,6 +7,7 @@ using Avalonia.Automation;
 using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Aw.Sindri.Ui.ViewModels;
@@ -34,6 +35,7 @@ internal sealed class RowGroupHeader : Border
     public RowGroupHeader()
     {
         Classes.Add("group-header");
+        AddHandler(PointerPressedEvent, OnHeaderPressed, RoutingStrategies.Bubble, handledEventsToo: true);
         Focusable = true;   // the cursor can stand on a header: Left folds, Right unfolds
         _chevron.HorizontalAlignment = HorizontalAlignment.Center;
         _chevronBox = new Border { Name = "PART_Chevron", Width = ChevronBox, Height = ChevronBox, Background = Brushes.Transparent, Cursor = new Cursor(StandardCursorType.Hand), Child = _chevron };
@@ -98,11 +100,8 @@ internal sealed class RowGroupHeader : Border
         }
     }
 
-    /// <inheritdoc />
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    private void OnHeaderPressed(object? sender, PointerPressedEventArgs e)
     {
-        base.OnPointerPressed(e);
-        ArgumentNullException.ThrowIfNull(e);
         if (Group is IRowGroupHeading heading && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
             heading.IsCollapsed = !heading.IsCollapsed;

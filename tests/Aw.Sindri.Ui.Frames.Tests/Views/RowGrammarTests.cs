@@ -114,7 +114,7 @@ public sealed class RowGrammarTests
     [Fact]
     public async Task Groups_sit_8_px_apart_and_the_list_pads_8_px_top_and_bottom() => await OnUi(() =>
     {
-        var (window, list) = Show(RowGallery.Three());
+        var (window, list) = Show(RowGallery.Three(), height: 1400);   // tall enough to realize all three headers
         var headers = Headers(list);
 
         Assert.Equal(8, Top(headers[0], list), 0.5);   // the list's own padding, no group margin on the first group

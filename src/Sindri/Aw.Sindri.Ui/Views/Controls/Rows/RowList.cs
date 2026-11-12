@@ -185,6 +185,7 @@ internal sealed partial class RowList : ItemsControl, IRowKeyTarget
 
         _scroll = e.NameScope.Find<ScrollViewer>("PART_ScrollViewer");
         _sticky = e.NameScope.Find<RowGroupHeader>("PART_Sticky");
+        _sticky?.Focusable = false;   // the copy is a picture of the real header: never a tab stop or a click target for focus
         _scroll?.ScrollChanged += OnScrollChanged;
     }
 
