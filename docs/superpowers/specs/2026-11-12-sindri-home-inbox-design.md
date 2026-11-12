@@ -670,4 +670,4 @@ The lead decided design's 22 frame guesses. Where the spec and the #2978 grammar
 18. A row back from snooze says "back" in the age cell; the reason goes in the sub-line.
 19. Tab counts are computed from row kinds; All = New + Needs you.
 20. In a PR peek, `Ctrl+Enter` opens the submit menu with Merge preselected; `Enter` is Open.
-21. 22. No spec change; the grammar adds Down and Stale glyph aliases (`.g.fail`, `.g.parked`).
+21. Guesses 21 and 22 need no spec change: the grammar adds Down and Stale glyph aliases (`.g.fail`, `.g.parked`).
