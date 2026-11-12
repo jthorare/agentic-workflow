@@ -126,7 +126,7 @@ internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, C
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                failed[group.Key] = ContextErrors.MissedDeadline(RepoDocs.Id);
+                failed[group.Key] = ContextErrors.MissedDeadline(RepoDocs.Id.Value);
                 continue;
             }
 
@@ -138,7 +138,7 @@ internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, C
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                failed[group.Key] = ContextErrors.MissedDeadline(RepoDocs.Id);
+                failed[group.Key] = ContextErrors.MissedDeadline(RepoDocs.Id.Value);
                 continue;
             }
 
