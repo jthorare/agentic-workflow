@@ -40,8 +40,19 @@ internal sealed partial class SpendWarmHost(IAgentCatalog catalog, ILaunchSpend 
             {
                 await (first && _firstWait is { } pending ? pending : Task.Delay(_every, clock, stoppingToken)).ConfigureAwait(false);
                 first = false;
-                var reads = catalog.All.Where(static e => e.Usage is { Length: > 0 } name && !string.Equals(name, "none", StringComparison.Ordinal)).Select(e => Warm(e.Id, stoppingToken));
-                await Task.WhenAll(reads).ConfigureAwait(false);
+                try
+                {
+                    var agents = catalog.All.Where(static e => e.Usage is { Length: > 0 } name && !string.Equals(name, "none", StringComparison.Ordinal)).ToList();
+                    var started = clock.GetTimestamp();
+                    LogStarted(log, agents.Count);
+                    await Task.WhenAll(agents.Select(e => Warm(e.Id, stoppingToken))).ConfigureAwait(false);
+                    var elapsedMs = (long)clock.GetElapsedTime(started).TotalMilliseconds;
+                    LogEnded(log, agents.Count, elapsedMs);
+                }
+                catch (Exception e) when (e is not OperationCanceledException || !stoppingToken.IsCancellationRequested)   // boundary: a pass that throws (a catalog read) must not stop serve; the next pass tries again
+                {
+                    LogPassFailed(log, e.GetType().Name, e.Message);
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -65,6 +76,15 @@ internal sealed partial class SpendWarmHost(IAgentCatalog catalog, ILaunchSpend 
             LogFailed(log, id.Value, e.GetType().Name, e.Message);
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Spend warm pass started for {Agents} agents")]
+    private static partial void LogStarted(ILogger logger, int agents);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Spend warm pass ended for {Agents} agents in {ElapsedMs} ms")]
+    private static partial void LogEnded(ILogger logger, int agents, long elapsedMs);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The spend warm pass threw {Type}: {Detail}; trying on the next pass")]
+    private static partial void LogPassFailed(ILogger logger, string type, string detail);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The spend warm read for {Agent} threw {Type}: {Detail}; trying again")]
     private static partial void LogFailed(ILogger logger, string agent, string type, string detail);
