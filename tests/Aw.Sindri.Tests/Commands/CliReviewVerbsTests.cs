@@ -37,7 +37,7 @@ public sealed class CliReviewVerbsTests : IDisposable
     }
 
     private static ReviewRow Row(string repo, int number, string title, ReviewWaitingKind? waiting = null, string? waitingText = null) =>
-        new(repo, number, title, "ana", Draft: false, _at, _at, waiting, waitingText, NewCommits: null, ReviewCi.Pass, RequiredOpen: null, RequiredText: null, ClaimsDoc: false, string.Create(CultureInfo.InvariantCulture, $"/sindri/reviews/{repo}/{number}"));
+        new(repo, number, title, "ana", Draft: false, _at, _at, waiting, waitingText, NewCommits: null, ReviewCi.Pass, RequiredOpen: null, ReviewRequiredState.NotRead, RequiredText: null, ClaimsDoc: false, Href: string.Create(CultureInfo.InvariantCulture, $"/sindri/reviews/{repo}/{number}"));
 
     private static ListReviewsResponse List(params ReviewListGroup[] groups) =>
         new(_fine, Login: "jo", LoginPrompt: null, Notice: null, [], Stale: null, new ReviewLibrary("ok", 3, 0, 0, "Library: 3 docs, 0 with errors"), WaitingCount: 1, groups, Empty: null, Connect: null);
