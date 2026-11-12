@@ -120,6 +120,21 @@ public sealed class SetupViewModelTests
         Assert.Equal("Skipped", Step(await ReadWith("first-run", "map", "skipped"), "map").ChipWord);
     }
 
+    // first-run spec §3.1: a Sindri newer than the app serves serve, agent and first-workflow; the app reads Id as text, so it draws them by their served title with no button and no parse error.
+    [Fact]
+    public async Task A_step_id_this_build_has_no_words_for_shows_by_its_served_title_with_no_button()
+    {
+        var list = WithExtraStep(Golden("all-done"), "serve", "Sindri is current", "todo", why: "A newer Sindri is installed.");
+        list = WithExtraStep(list, "first-workflow", "Run hello-sindri", "done");
+        _f.Serve(list);
+
+        var setup = await _f.Read(Token);
+
+        var serve = Step(setup, "serve");
+        Assert.Equal(("Sindri is current", "To do", false), (serve.Title, serve.ChipWord, serve.HasAction));
+        Assert.Equal(("Run hello-sindri", "Done"), (Step(setup, "first-workflow").Title, Step(setup, "first-workflow").ChipWord));
+    }
+
     private async Task<SetupViewModel> ReadWith(string scenario)
     {
         _f.Serve(scenario);

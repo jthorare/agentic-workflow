@@ -23220,3 +23220,17 @@ Aw.Sindri.Core.Reviews.ReviewRequiredState
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.Counted = "counted" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NoneNamed = "noneNamed" -> string!
 const Aw.Sindri.Core.Reviews.ReviewRequiredState.NotRead = "notRead" -> string!
+static readonly Aw.Sindri.Core.SindriErrors.SetupScanRootInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SetupRestartRunsOpen -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SetupNoRepoToAdd -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SetupInstallUnfinished -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SetupServeDidNotStart -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SetupOauthBlocked -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SetupNoClientId -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SetupPassTimedOut -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SetupPassFailed -> Aw.Kernel.ErrorDefinition!
+Aw.Sindri.Core.Setup.SetupStepId.Serve = 5 -> Aw.Sindri.Core.Setup.SetupStepId
+Aw.Sindri.Core.Setup.SetupStepId.Agent = 6 -> Aw.Sindri.Core.Setup.SetupStepId
+Aw.Sindri.Core.Setup.SetupStepId.FirstWorkflow = 7 -> Aw.Sindri.Core.Setup.SetupStepId
+Aw.Sindri.Core.Setup.SetupStep.Cli.get -> string?
+Aw.Sindri.Core.Setup.SetupStep.Cli.init -> void

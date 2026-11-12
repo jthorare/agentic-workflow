@@ -34,6 +34,17 @@ public sealed class GetSetupTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Setup_lists_eight_steps_in_order()
+    {
+        var result = await Service(InMemorySetupFacts.AllDone()).Handle(A.GetSetupRequest().Build(), Token);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(
+            [SetupStepId.Serve, SetupStepId.Sources, SetupStepId.Repo, SetupStepId.Profile, SetupStepId.Agent, SetupStepId.Mcp, SetupStepId.Map, SetupStepId.FirstWorkflow],
+            result.Value.Steps.Select(static s => s.Id));   // first-run spec §3.1, whatever state each is in
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Titles_are_the_fixed_words_and_the_steps_that_count_repos_carry_a_line_each()
     {
         var steps = (await Service(InMemorySetupFacts.AllDone()).Handle(A.GetSetupRequest().Build(), Token)).Value.Steps;

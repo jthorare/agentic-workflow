@@ -16,6 +16,12 @@ public sealed record SetupStep(SetupStepId Id, string Title, SetupState State, s
     /// <summary>One line per repo with its own state, for a step that counts repos; empty otherwise.</summary>
     public IReadOnlyList<SetupItem> Items { get; init; } = [];
 
+    /// <summary>
+    /// The exact command an agent runs for <see cref="Action"/>, from the catalog row's form (first-run spec §3.1); null for an owner-only action, a step that runs on its own and a step with no action.
+    /// The app shows it only under Details.
+    /// </summary>
+    public string? Cli { get; init; }
+
     /// <summary>What the profile allows in plain words (the profile step only); null, and left out of the JSON, for every other step and when there is no profile to read.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<SetupPreviewLine>? Preview { get; init; }

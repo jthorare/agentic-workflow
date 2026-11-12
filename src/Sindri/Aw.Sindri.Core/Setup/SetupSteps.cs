@@ -13,6 +13,9 @@ public static class SetupSteps
     private const string McpTitle = "Connect your agents";
     private const string MapTitle = "Build the map";
     private const string SourcesTitle = "Connect your sources";
+    private const string ServeTitle = "Sindri is current";
+    private const string AgentTitle = "Agent for workflows";
+    private const string FirstWorkflowTitle = "Run hello-sindri";
 
     /// <summary>The repo step: the owner's until the profile names a repo.</summary>
     /// <param name="fact">The repos.</param>
@@ -127,6 +130,9 @@ public static class SetupSteps
             SetupStepId.Mcp => (McpTitle, "Sindri couldn't check whether your agent knows where it is."),
             SetupStepId.Map => (MapTitle, "Sindri couldn't read the state of the map."),
             SetupStepId.Sources => (SourcesTitle, "Sindri couldn't read which sources your profile names."),
+            SetupStepId.Serve => (ServeTitle, "Sindri couldn't tell which build is running."),
+            SetupStepId.Agent => (AgentTitle, "Sindri couldn't read which agent your workflows use."),
+            SetupStepId.FirstWorkflow => (FirstWorkflowTitle, "Sindri couldn't read whether hello-sindri has run."),
             _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not a setup step"),
         };
         return Failed(id, title, new SetupError(code, sentence));

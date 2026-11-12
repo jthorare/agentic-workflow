@@ -75,6 +75,30 @@ public sealed class CliSetupTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Setup_exits_3_when_every_open_step_waits_on_the_person_at_the_keyboard()
+    {
+        var api = new Api(HttpStatusCode.OK, Body(
+            SetupSteps.Repo(new RepoFact(1)),
+            new SetupStep(SetupStepId.Sources, "Connect your accounts", SetupState.NeedsYou, "Sign in to GitHub in your browser.", Detail: null, Error: null, "ConnectAccount", Progress: null)));   // Cli is null: the action is the owner's
+
+        var code = await Verbs(_up, api).Run([], Token);
+
+        Assert.Equal(3, code);   // first-run spec decision 9: an agent stops here and tells the owner
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Setup_exits_1_when_an_open_step_has_a_command_an_agent_can_run()
+    {
+        var api = new Api(HttpStatusCode.OK, Body(
+            new SetupStep(SetupStepId.Sources, "Connect your accounts", SetupState.NeedsYou, "Sign in to GitHub in your browser.", Detail: null, Error: null, "ConnectAccount", Progress: null),
+            new SetupStep(SetupStepId.Mcp, "Agents can use Sindri's tools", SetupState.Todo, "Sindri is not registered in every repo yet.", Detail: null, Error: null, "RegisterMcp", Progress: null) { Cli = "sindri mcp register --apply" }));
+
+        var code = await Verbs(_up, api).Run([], Token);
+
+        Assert.Equal(1, code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Setup_exits_0_when_every_step_is_done()
     {
         var api = new Api(HttpStatusCode.OK, Body(SetupSteps.Repo(new RepoFact(1)), SetupSteps.Profile(new ProfileFact(ProfilePresence.Present), new RepoFact(1))));
