@@ -60,22 +60,24 @@ Round 1 guess numbers no longer apply. Items below are invented in these frames 
 42. The legend frame has a reviewer caption with the order rule and shows open and draft pulls with red CI as "CI red".
 
 ## Round 7 (ideas round 6 verdict)
-43. today-ghost says "Not created yet" next to the path (no "Saved"). today-ghost-down matches today-down: "Read-only" marker, right pane "not live · as of 14:02". The read-only down page draws no edit caret.
-44. One text for eng/retry-policy-for-exports.md in the list peek, the backlinks frame and the history diffs (lines "Per part: ...", "Per upload ...", "See [[acme/api#3112]] ...", the ticked "Ask Mira" line). One version list: Yesterday 10:30 is "you · tick" everywhere.
-45. The shared hotkey row is drawn once: notes-settings-hotkey and notes-settings-hotkey-refused are generated from the Projects frame (pr-settings-hotkey-refused), so the row, the error placement inside the card, the single Ctrl+Alt+I keycap, the curly quotes and the tray menu are the same. The two refused frames are pixel-identical.
+46. today-ghost says "Not created yet" next to the path (no "Saved"). today-ghost-down matches today-down: "Read-only" marker, right pane "not live · as of 14:02". The read-only down page draws no edit caret.
+47. One text for eng/retry-policy-for-exports.md in the list peek, the backlinks frame and the history diffs (lines "Per part: ...", "Per upload ...", "See [[acme/api#3112]] ...", the ticked "Ask Mira" line). One version list: Yesterday 10:30 is "you · tick" everywhere.
+48. The shared hotkey row is drawn once: notes-settings-hotkey and notes-settings-hotkey-refused are generated from the Projects frame (pr-settings-hotkey-refused), so the row, the error placement inside the card, the single Ctrl+Alt+I keycap, the curly quotes and the tray menu are the same. The two refused frames are pixel-identical.
 
 ## Round 7 (meta's UX pass, redraw list design-redraw.md)
-43. OS folder dialog (`notes-folder-dialog.png`): drawn in a neutral GNOME-like look, with a fixture tree (Desktop, Documents, Downloads, notes, repos) and `notes` selected. The real dialog is the OS's own and differs per OS.
-44. First-run card sits on the "not created yet" ghost page (a fresh folder has no file for today). The card's three rows follow §4.11 word for word.
-45. Settings login row: Off shows "Turn on" (the spec names only "Turn off" and the card's "Start Sindri at login"). The row has a glyph (hollow circle Off, green check On) and the word. The heading "Start Sindri at login" is the only place that phrase appears.
-46. Capture-hotkey row in Notes Settings: the label, the current key and a link "Change in Settings › Shortcuts →". Section heading "Shortcuts" is a guess.
-47. Restored-draft frames keep the footer to `Enter save · Esc discard`, as the list says (no Ctrl+Tab).
-48. `.` menu: 270 px wide popup under the selected row, "Open" highlighted first, no separator, Delete last and neutral.
-49. Projects row in the `[[` popup: fixture "Audit log retention", state word "Off track" (from the Projects fixture), id column reads "project", glyph is an empty box. Written form: a made-up Linear URL.
-50. Read-only footers (today-down, ghost-down): `Esc back`, no `Ctrl+S save` and no `[[ link`. Only `[[ link` is named in the spec; `Ctrl+S` goes too because nothing can be saved.
-51. Conflict footer: `Tab move between the two buttons`.
-52. Ctrl+Shift+L target: first unlinked row gets a left edge, a primary "Link it" with the chord and a one-line hint; the second row's button has no chord. Footer: "link the focused mention, or the first one".
-53. 1000 px frames: the collapsed right pane is a 36 px rail with a chevron and "Linked objects 4 · Backlinks 2" set vertically. The spec says the pane collapses but not how it comes back. At 1000 px the top bar search reads "Search or run" and the list drops the first-line preview and folder while a peek is open.
-54. Folded fold: `Alt+N` shown as a keycap in the closed header and as `Alt+N fold` in the footer of today frames.
-55. History: the proposal row, band and Accept / Decline stay drawn (the frame's subject); the "v1.1 reference" pill and "13 + 1 proposed" left the app chrome for the italic caption. The versions header reads "Versions 13".
-56. Projects peek "Notes 2": two note titles ("Exports v2: retry cap per part or per upload", "Thu 12 Nov") with ages, a made-up pair.
+46. OS folder dialog (`notes-folder-dialog.png`): drawn in a neutral GNOME-like look, with a fixture tree (Desktop, Documents, Downloads, notes, repos) and `notes` selected. The real dialog is the OS's own and differs per OS.
+47. First-run card sits on the "not created yet" ghost page (a fresh folder has no file for today). The card's three rows follow §4.11 word for word.
+48. Settings login row: Off shows "Turn on" (the spec names only "Turn off" and the card's "Start Sindri at login"). The row has a glyph (hollow circle Off, green check On) and the word. The heading "Start Sindri at login" is the only place that phrase appears.
+49. Capture-hotkey row in Notes Settings: the label, the current key and a link "Change in Settings › Shortcuts →". Section heading "Shortcuts" is a guess.
+50. Restored-draft frames keep the footer to `Enter save · Esc discard`, as the list says (no Ctrl+Tab).
+51. `.` menu: 270 px wide popup under the selected row, "Open" highlighted first, no separator, Delete last and neutral.
+52. Projects row in the `[[` popup: fixture "Audit log retention", state word "Off track" (from the Projects fixture), id column reads "project", glyph is an empty box. Written form: a made-up Linear URL.
+53. Read-only footers (today-down, ghost-down): `Esc back`, no `Ctrl+S save` and no `[[ link`. Only `[[ link` is named in the spec; `Ctrl+S` goes too because nothing can be saved.
+54. Conflict footer: `Tab move between the two buttons`.
+55. Ctrl+Shift+L target: first unlinked row gets a left edge, a primary "Link it" with the chord and a one-line hint; the second row's button has no chord. Footer: "link the focused mention, or the first one".
+56. 1000 px frames: the collapsed right pane is a 36 px rail with a chevron and "Linked objects 4 · Backlinks 2" set vertically. The spec says the pane collapses but not how it comes back. At 1000 px the top bar search reads "Search or run" and the list drops the first-line preview and folder while a peek is open.
+57. Folded fold: `Alt+N` shown as a keycap in the closed header and as `Alt+N fold` in the footer of today frames.
+58. History: the proposal row, band and Accept / Decline stay drawn (the frame's subject); the "v1.1 reference" pill and "13 + 1 proposed" left the app chrome for the italic caption. The versions header reads "Versions 13".
+59. Projects peek "Notes 2": two note titles ("Exports v2: retry cap per part or per upload", "Thu 12 Nov") with ages, a made-up pair.
+
+60. Read-only ghost page: the Read-only word sits in the Saved slot beside the path, and the day-links row says "Not live: states as of 14:02." (the banner already names Sindri). The ghost hint reads "The page is made from your daily template once Sindri is back."
