@@ -2,6 +2,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Linear;
 using Aw.Kernel;
+using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Linear;
 using Aw.Sindri.Core.Profile;
 
@@ -17,7 +18,8 @@ namespace Aw.Sindri.Features.LinearConnection;
 /// <param name="engine">Checks the context settings.</param>
 /// <param name="side">The stored teams.</param>
 /// <param name="log">The last save-time check of each key.</param>
-internal sealed class ContextLinearConnectionFacts(IProfileSource live, IContextEngine engine, ILinearSideFacts side, ILinearCheckStore log)
+/// <param name="connections">The Connections page's rows, where the one Linear connection lives (#3364).</param>
+internal sealed class ContextLinearConnectionFacts(IProfileSource live, IContextEngine engine, ILinearSideFacts side, ILinearCheckStore log, IConnectionStore connections)
     : ILinearConnectionFacts
 {
     private const string Unchecked = "unchecked";

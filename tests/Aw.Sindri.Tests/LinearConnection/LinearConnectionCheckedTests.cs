@@ -42,7 +42,7 @@ public sealed class LinearConnectionCheckedTests
         return new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
     }
 
-    private ContextLinearConnectionFacts Facts() => new(_profiles, FakeContextEngine.Instance, new FakeLinearSideFacts(), _log);
+    private ContextLinearConnectionFacts Facts() => new(_profiles, FakeContextEngine.Instance, new FakeLinearSideFacts(), _log, new Aw.Sindri.Testing.Connections.InMemoryConnectionStore());
 
     private SaveLinearConnectionService Save() => new(new FakeLinearKeyChecks().Reading(new LinearConnectionTeamView("e1", "ENG", "Engineering")), _store, _slice.Callers, _log, _clock, _profiles);
 
