@@ -10,7 +10,7 @@
   <UserControl.Styles>
     <Style Selector="Border.dimmed"><Setter Property="Opacity" Value="0.5" /></Style>
   </UserControl.Styles>
-  <Border x:Name="SandboxPanel" Classes="panel" Width="440" Margin="0,0,12,12" Classes.dimmed="{Binding IsDimmed}">
+  <Border x:Name="SandboxPanel" Classes="panel" Classes.dimmed="{Binding IsDimmed}">
     <Border Classes="section last">
       <StackPanel Spacing="{StaticResource Space.XS}">
         <Grid ColumnDefinitions="*,Auto">

@@ -135,7 +135,7 @@ Rows marked "probe" are confirmed by the spike (SB-S1 item 9) before SB-2 merges
 | Command | In a Step | If it fails |
 |---|---|---|
 | `git status`, `diff`, `log`, `show`, `add`, `commit` in the worktree | works; unsigned, identity from the sandbox's git settings | |
-| `git checkout -b <other>`, `tag`, `stash`, `update-ref` on another ref | fails (`cannot lock ref`): only `refs/heads/sindri/<instance>/<run>/` is writable | commit on the run branch |
+| `git checkout -b <other>`, `tag`, `stash`, `update-ref` on another ref | fails (`cannot lock ref`): only `refs/heads/sindri/<instance>/<run>/` (a graph node: `refs/heads/wf/<workflow>/<short run>/`) is writable | commit on the run branch |
 | `git branch -D`, any ref delete or rename | fails (`packed-refs.lock` is read-only) | Sindri removes the run's refs from outside |
 | `git fetch`, `pull`, `push`, `gc`, `worktree add`, `config` | fails | Sindri sends the push and PR as effects |
 | `dotnet build -warnaserror`, `dotnet test` (unit lane) | works (probe), through the shim and `heavy` | a new package needs the `packages` group |
@@ -188,7 +188,7 @@ as the default, and Linux and macOS replace it;
 
 **Fix round 1 (#355 run 1).** The builder refuses, with `-015 worktree-outside-repo` (the closest closed reason; the detail says which), a ReadOnly or Plan Step that names a writable path, and
 any path that is not absolute and normalized (no `..`, no `.`, no `//`, no trailing slash, not empty): the repo, the worktree (strictly inside the repo), the git directory, the run directory and
-run area (inside the Sindri home), the home, the state directory, the Sindri home and the socket directory; the run namespace must be `sindri/<instance>/<run>`. A credential source may set
+run area (inside the Sindri home), the home, the state directory, the Sindri home and the socket directory; the run namespace must be `sindri/<instance>/<run>` or, for a graph node, `wf/<workflow>/<short run>`. A credential source may set
 only `CLAUDE_CONFIG_DIR`, `CODEX_HOME` and the model key (`-016 env` otherwise), and a Codex home under `/tmp` is `-016 login`. A read-write bind inside the owner's `~/.claude` or `~/.codex` must be
 in `AgentHomeWriteSet` (Claude: projects, sessions, session-env, shell-snapshots, file-history, todos, history.jsonl, backups, cache, state; Codex: sessions, log, memories, shell_snapshots, cache, tmp).
 The credential masks follow what is bound: the owner's `.credentials.json` and `auth.json` are masked whenever the owner's real home covers them (a `homeAllow` entry included), and not when a

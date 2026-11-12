@@ -69,6 +69,7 @@ it, and is not the main worktree, the shared checkout or locked. It never forces
 kept worktree with every reason.
 
 - `aw-meta worktree-list`: every worktree with its verdict and reasons (read-only; `--no-fetch` skips the git fetch).
+- `aw-meta events [--after N] [--kind K] [--lane L] [--max N]`: the event log after a cursor, oldest first (read-only; `--json` gives `next` to pass back as `--after`).
 - `aw-meta worktree-sweep [--dry-run] [--pr N]`: remove the removable ones. `--dry-run` first when unsure.
 - `aw-meta worktree-sweep --path <dir> --done`: you are finished with a detached leftover tree (kept otherwise as "detached, not a gate tree"). It goes when its HEAD is in origin/main or on a pushed branch, it is clean and idle, and a sweep ran since it last changed; otherwise the output says why it stayed. Never forced.
 - A lane that finds its worktree kept for a reason it can clear (stop the process, commit and push) can ask you for a sweep.
