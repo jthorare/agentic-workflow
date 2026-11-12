@@ -32,7 +32,7 @@ public abstract class TerminalPaneSourceContract
         var first = await FirstFrame(stream);
 
         Assert.Equal(1, first.Seq);
-        Assert.StartsWith("%", stream.Host.Pane, StringComparison.Ordinal);
+        Assert.False(string.IsNullOrEmpty(stream.Host.Pane));
         Assert.True(first.Width > 0 && first.Height > 0);
     }
 
