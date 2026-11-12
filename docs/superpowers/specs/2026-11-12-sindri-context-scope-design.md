@@ -151,31 +151,58 @@ Budget: full build of 10M lines < 30 min and < 4 GB peak; a 20-file commit < 30 
 
 ### 6.1 Layout
 
+Design's pick on #2959 (comment 6817891316) is direction 3, **map-led bands**, with two pieces taken from the other directions. qa agreed
+and measured it (comment 6818215657). The reference frame, drawn on the real `Tokens.axaml` values at 1440x900:
+
+![direction 3, map-led bands](https://github.com/jthorare/agentic-workflow/blob/9a2989fc7042f8eb373d3ce14be826f493deb809/map-variant-3.png?raw=true)
+
 ```
-┌ Context ─────────────────────────────────────────────────────────────── repo ▾ ┐
-│ [ Ask what you want to change… e.g. add a refund reason to orders          ] ⏎ │
-│ Saved: refund reason · 12 files  ·  retry policy · 31 files  ·  …       All ▸   │
-├──────────────────────────────────────────────┬──────────────────────────────────┤
-│ add a refund reason to orders   23 files  2.1 s  [Touch 6] [Read 12] [Test 5]   │
-│ ▾ Orders (domain)        why: defines Order, OrderSchema                         │
-│   ● touch  orders/Order.ts           defines OrderSchema       provides Orders   │ peek: the file's
-│   ● touch  orders/OrderRepo.ts       writes table orders       needs SqlClient   │ outline, the
-│   ○ read   orders/index.ts→Order.ts  barrel, collapsed                           │ matched lines,
-│ ▾ Refunds                ...                                                     │ its edges in and
-│   ● touch  refunds/RefundService.ts  uses Orders (yield*)                        │ out, why it is
-│   ◆ test   refunds/Refund.test.ts    tests RefundService                         │ here
-│ ▸ Payments  4 files                                                              │
-├──────────────────────────────────────────────┴──────────────────────────────────┤
-│ p pin · x drop · t/r touch↔read · m more like this · c what calls this · n neighbourhood · s save │
-└──────────────────────────────────────────────────────────────────────────────────┘
+┌ Context ──────────────────────────────────────────────── 48,112 files · answered in 2.1 s ┐
+│ [ Add per-workspace rate limits to the export API                          Ask again ⏎ ] │
+│ Rate limits on exports  scope_7f3k2  14 files · 5 tests · 2 decisions (1 conflicts)  [Hand to agent] │
+├ Scope, ranked ─────┬ Entry points ──────┬ Core ───────────────┬ Data and effects ────────┤
+│ [filter      /]    │ ▾ Export API 3     │ ▾ Rate limiting 2   │ ▾ Quota storage 2        │
+│ ▾ Export API     3 │  ExportRoutes.cs   │ ┃RateLimiter.cs ┃───┼─reads IQuotaStore.get──▶ │
+│  ExportHandler.cs  ├─calls RateLimiter.check─▶              │  QuotaStore.cs           │
+│ ▾ Rate limiting  2 │  ExportJobRunner   │  WorkspaceQuota…    │  table workspace_quotas  │
+│ ┃RateLimiter.cs   ┃│ ▾ Request pipeline │ ▾ Export request 2  │ ▾ Effects 1              │
+│ ┃ Touches · Why · ┃│  RateLimitMiddle…──┼─provides RateLimiter layer─▶  event quota.exceeded │
+│ ┃ actions         ┃│                    │ ▸ Billing plans 4   │ ▸ Tests 5                │
+│ ...                │                    │                     │                          │
+│ Suggested, not in scope yet: PlanLimits.cs [Add] · ...         │ Whole repo  3 of 31 lit  │
+└────────────────────┴────────────────────┴─────────────────────┴──────────────────────────┘
 ```
 
-- The question box is the full width of the page and has focus when the page opens. Its placeholder is whole at 1000 px.
-- Below it: the saved scopes as one line of chips, newest first; All opens the list.
-- The scope header: the question, the file count, the answer time, and the role filters as toggles with counts.
-- Rows (#2978 grammar, 32 px): role glyph, path (the file name in ink, the folder muted, cut from the left so the name stays whole), why
-  (one line), services (Effect: provides / needs), pinned mark. Groups fold.
+- **The question box** is the full width of the page and has focus when the page opens. Its placeholder is whole at 1000 px.
+- **The scope header**: the scope's name and id, its counts (files, tests, decisions, conflicts), and Hand to agent. Saved scopes are a
+  menu on the name, newest first.
+- **The ranked rail** (left, 280 px) is the scope as a list: groups that fold, one file per row with its score and why. This is aider's
+  repo map (ledger problem 2 of `docs/sindri/prior-art/context-map.md`): rank by graph, then one line of reason.
+- **The bands** (centre and right) draw the same files as cards in three columns: Entry points -> Core -> Data and effects. Groups fold
+  to one card ("Billing plans · 4 files"). Every edge carries its verb ("calls RateLimiter.check", "reads IQuotaStore.get").
+- **The in-place open** (taken from direction 1): the selected rail row grows in place to show *Touches*, *Why here* and its actions.
+  It replaces direction 3's bottom strip, which pulled the eye away from the row you are on.
+- **The Suggested tray** (taken from direction 2): "Suggested, not in scope yet", up to 4 files with Add. A scope grows without a new
+  question.
+- **Whole repo** (bottom right, 200 px): the treemap of §6.4, with the scope's areas lit. Orientation only.
 - The key bar lists only the keys that work on the selected row.
+
+**What the redraw must fix** (qa, each measured on the frame above):
+1. **Every drawn edge has a verb, or it isn't drawn.** Two grey curves have none today: ExportHandler -> ExportRequest.cs (under the
+   `calls RateLimiter.check` pill) and WorkspaceQuotaPolicy.cs -> `table workspace_quotas`. A grey line with no label is exactly what
+   fails on today's map (#2959, "what fails" frame 3).
+2. **Edges are routed orthogonally, one row gap each.** The `provides RateLimiter layer` edge crosses ExportHandler -> ExportRequest at
+   x ~640. Temporal's and n8n's canvases route this way.
+3. **Group counts use ink-subtle** (138,143,152: 5.62:1 on the rail, 6.13:1 on the canvas), not ink-3 (4.12:1).
+4. **The selected row's second line stays at or above 4.5:1 on the selected fill** (it is 4.64:1 today), held by a check in the Frames
+   suite, not by eye.
+5. **Rail rows are 32 px and one line** (the #2978 grammar), not 38 px and two. The why moves into a fixed column after the name, with
+   the full text on Space. The same 14 files plus 6 headers then fit in about 430 px instead of 560 px.
+
+**One cursor, owned by the rail.** The 14 files show twice: in the rail and as band cards. There is one selection. The rail owns it:
+`j`/`k` move it, and a click on a band card moves the rail cursor to that file's row (folded groups open). The band card of the selected
+row is the one accent, with its edges. Space peeks from either place, and both show the same file. The bad case this stops: a band card
+highlighted while the rail shows another row, so Enter opens a file the person didn't mean.
 
 ### 6.2 Peek (Space) and full (Enter)
 
@@ -186,8 +213,8 @@ Budget: full build of 10M lines < 30 min and < 4 GB peak; a 20-file commit < 30 
 
 ### 6.3 Neighbourhood (n)
 
-A node-link view of one row and what touches it, one hop out, two on request: at most 40 nodes, every label whole, laid out in the three
-bands entry points -> core -> data / effects. Services are nodes; edges are drawn in ink with their kind on hover. One accent marks the
+A full view opened from a row (the #2978 grammar: row, peek, full; meta's call). It is a node-link view of one file and what touches it, one hop out, two on request: at most 40 nodes, every label whole, laid out in the three
+bands entry points -> core -> data / effects. Services are nodes; every edge carries its verb and is routed orthogonally, as in the bands (§6.1, fixes 1 and 2). One accent marks the
 seed and the rows already in the scope. Arrows walk edges; Enter adds the focused node to the scope; Esc goes back to the list with the same
 row selected.
 
@@ -210,13 +237,13 @@ saved scopes plus the question box.
 
 ### 6.6 Keyboard
 
-`/` focuses the question. `j`/`k` or arrows move rows, `h`/`l` fold groups, Space peeks, Enter opens, Esc goes back keeping the selection,
-`p` pin, `x` drop, `t` / `r` set touch / read, `m` more like this, `c` what calls this, `n` neighbourhood, `s` save (asks for a name, default
-the question), Ctrl+K has every action by name. Every action has a menu item for mouse use.
+`/` focuses the question. `j`/`k` or arrows move rows, `h`/`l` fold groups, Space peeks, Enter opens, Esc goes back keeping the
+selection. `.` opens the row's menu: pin, drop and set touch / read live there (the #2978 key rule). `m` more like this, `c` what calls
+this, `n` neighbourhood, `s` save (asks for a name, default the question). Ctrl+K has every action by name. Every action has a menu item for mouse use.
 
 ### 6.7 Visual bar
 
-One accent (selection, the seed, lit treemap cells). Ink for structure. No band or concept colours (#2813). Labels never cut (#2809). Type
+One accent (the selected file and its edges, lit treemap cells). Counts and second lines meet 4.5:1 (§6.1 fixes 3 and 4). Ink for structure. No band or concept colours (#2813). Labels never cut (#2809). Type
 scale and spacing from the tokens. Inspora is the reference (#2959 point 6).
 
 ## 7. The benchmark (context lane, already planned on #2959)
@@ -250,7 +277,7 @@ tools (pins, pages) beyond keeping them reachable from a menu.
 | Today | After |
 |---|---|
 | concept card grid landing | gone; the treemap + saved scopes + question box |
-| concept map (three bands) | the neighbourhood view (§6.3), opened from a row |
+| concept map (three bands of concept cards) | the scope's bands of files (§6.1) on the page; one file's neighbourhood (§6.3) opened from a row |
 | Files tab | the scope's rows, or all files in the treemap's selected folder when no question is open |
 | Pages / pins / review panels | a menu on the page header (Map tools), unchanged |
 
@@ -273,6 +300,8 @@ issue, `Part of #2959`:
 
 - The benchmark numbers before and after each phase, on #2959.
 - Screenshots of every §6.5 state at 1280 and 1440 wide, plus the neighbourhood with 40 nodes, every label whole.
+- A side-by-side with design's direction 3 frame (§6.1) at 1440x900: no unlabelled edge, no crossing, rail rows 32 px, and a click on a band card
+  moving the rail cursor.
 - A person (ux) and an agent each scope the 5 Effect questions and get the touch files without a follow-up.
 
 ## 14. Phases and parallel plan (for /specToProvenPR)
@@ -284,8 +313,8 @@ issue, `Part of #2959`:
 | P2 | one extract per commit, incremental, SQLite (#2984) | context | with P1 (second builder) | — |
 | P3 | the scope: events, view, `context_query` returns it, `context_scope` MCP + CLI | api (+ context for the query) | now, against a stub ranker | the §3 fields |
 | P4 | ranking + touch/read/test split | context | after P1 | P0, P1 |
-| D1 | design: the §6 layout, rows, peek, neighbourhood, treemap as mockups, contact sheet vs Inspora | design | now | #2978 row tokens |
-| U1 | the page: question box, scope rows, peek, keys, states (§6.1, §6.2, §6.5, §6.6) on a fake scope | ui | after D1's row shot | the P3 wire shape |
+| D1 | design: the contact sheet is done (direction 3 picked, #2959). Left: the redraw with qa's 5 fixes (§6.1), then peek, neighbourhood and the §6.5 states | design | now | #2978 row tokens |
+| U1 | the page: question box, ranked rail with in-place open, bands, Suggested tray, one cursor, peek, keys, states (§6.1, §6.2, §6.5, §6.6) on a fake scope; the Frames contrast check of fix 4 | ui | after D1's redraw | the P3 wire shape |
 | U2 | neighbourhood + treemap (§6.3, §6.4) | ui | after U1 | P1 edges for real data |
 | F1 | perf: the §4.3 budgets on the 10M copy, one issue per broken budget | perf | after P2 + U1 | — |
 | Q1 | ux + qa walk the 5 questions, person and agent | ux, qa | after P4 + U2 | — |
