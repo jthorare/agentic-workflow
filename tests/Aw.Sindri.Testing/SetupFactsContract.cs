@@ -24,6 +24,9 @@ public abstract class SetupFactsContract
         Same(await facts.Mcp(Token), await facts.Mcp(Token));
         Same(await facts.Map(Token), await facts.Map(Token));
         Same(await facts.Sources(Token), await facts.Sources(Token));
+        Same(await facts.Serve(Token), await facts.Serve(Token));
+        Same(await facts.Agent(Token), await facts.Agent(Token));
+        Same(await facts.FirstWorkflow(Token), await facts.FirstWorkflow(Token));
     }
 
     /// <summary>A box with nothing set up has no repo and no registration, and its map is not built.</summary>
@@ -40,6 +43,20 @@ public abstract class SetupFactsContract
         Expect.True(repos.IsSuccess && repos.Value.Count == 0);
         Expect.True(mcp.IsSuccess && mcp.Value.Registered == 0);
         Expect.True(map.IsSuccess && map.Value.Phase != MapPhase.Built);
+    }
+
+    /// <summary>A box with nothing set up has no agent, has not run hello-sindri and has not dismissed it (first-run spec §3.1).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task An_empty_box_has_no_agent_and_no_first_workflow_run()
+    {
+        var facts = Create();
+
+        var agent = await facts.Agent(Token);
+        var first = await facts.FirstWorkflow(Token);
+
+        Expect.True(agent.IsSuccess && agent.Value.Target is null);
+        Expect.True(first.IsSuccess && first.Value is { Succeeded: false, Dismissed: false });
     }
 
     /// <summary>Creates the implementation under test, over an empty box.</summary>

@@ -128,17 +128,60 @@ public sealed class CliSetupTests : IDisposable
         Assert.Equal((2, 0), (code, api.Calls));
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("accounts", "sources")]
+    [InlineData("first-workflow", "first-workflow")]
+    public async Task Setup_skip_posts_the_step_and_says_the_undo(string word, string id)
+    {
+        var api = new Api(HttpStatusCode.OK, $$"""{"step":"{{id}}","skipped":true,"changed":true}""");
+
+        var code = await Verbs(_up, api).Run(["skip", word], Token);
+
+        Assert.Equal((0, "POST", "/sindri/setup/skip"), (code, api.Method, api.Path));
+        Assert.Contains($$"""{"step":"{{id}}","skipped":true}""", api.Sent, StringComparison.Ordinal);
+        Assert.Contains($"sindri setup skip {word} --undo", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Setup_skip_with_undo_posts_skipped_false()
+    {
+        var api = new Api(HttpStatusCode.OK, """{"step":"sources","skipped":false,"changed":true}""");
+
+        var code = await Verbs(_up, api).Run(["skip", "accounts", "--undo"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("\"skipped\":false", api.Sent, StringComparison.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("repo")]
+    [InlineData("")]
+    public async Task Setup_skip_of_a_step_that_may_not_be_skipped_is_a_usage_error_and_calls_nothing(string word)
+    {
+        var api = new Api(HttpStatusCode.OK, "{}");
+
+        var code = await Verbs(_up, api).Run(word.Length == 0 ? ["skip"] : ["skip", word], Token);
+
+        Assert.Equal((2, 0), (code, api.Calls));
+    }
+
     private sealed class Api(HttpStatusCode status, string body) : HttpMessageHandler
     {
         public int Calls { get; private set; }
 
         public string? Path { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        public string? Method { get; private set; }
+
+        public string? Sent { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Calls++;
             Path = request.RequestUri?.AbsolutePath;
-            return Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
+            Method = request.Method.Method;
+            Sent = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
         }
     }
 }

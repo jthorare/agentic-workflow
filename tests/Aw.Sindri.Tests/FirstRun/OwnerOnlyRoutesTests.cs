@@ -17,7 +17,7 @@ public sealed class OwnerOnlyRoutesTests
     {
         using var entered = _slice.Callers.Enter(A.Caller().Launched().Build());
 
-        var result = await new RestartProcessService().Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(_slice.Callers).Handle(new RestartProcessRequest(), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -28,7 +28,7 @@ public sealed class OwnerOnlyRoutesTests
     {
         using var entered = _slice.Callers.Enter(A.Caller().Session().Build());
 
-        var result = await new RestartProcessService().Handle(new RestartProcessRequest(), Token);
+        var result = await new RestartProcessService(_slice.Callers).Handle(new RestartProcessRequest(), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -42,7 +42,7 @@ public sealed class OwnerOnlyRoutesTests
     {
         using var entered = _slice.Callers.Enter(A.Caller().Launched().Build());
 
-        var result = await new ConnectAccountService().Handle(new ConnectAccountRequest(provider), Token);
+        var result = await new ConnectAccountService(_slice.Callers).Handle(new ConnectAccountRequest(provider), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
@@ -53,9 +53,21 @@ public sealed class OwnerOnlyRoutesTests
     {
         using var entered = _slice.Callers.Enter(A.Caller().Session().Build());
 
-        var result = await new ConnectAccountService().Handle(new ConnectAccountRequest("github"), Token);
+        var result = await new ConnectAccountService(_slice.Callers).Handle(new ConnectAccountRequest("github"), Token);
 
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.AuthRefused.Code, result.Error.Code);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_owner_with_the_human_token_is_not_refused()
+    {
+        using var entered = _slice.Callers.Enter(A.Caller().Human().Build());
+
+        var restart = await Record.ExceptionAsync(async () => await new RestartProcessService(_slice.Callers).Handle(new RestartProcessRequest(), Token));
+        var connect = await Record.ExceptionAsync(async () => await new ConnectAccountService(_slice.Callers).Handle(new ConnectAccountRequest("github"), Token));
+
+        Assert.IsType<NotSupportedException>(restart);   // past the check, the stub is unbuilt
+        Assert.IsType<NotSupportedException>(connect);
     }
 }

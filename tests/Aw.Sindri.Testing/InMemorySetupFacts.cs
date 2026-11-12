@@ -21,10 +21,19 @@ public sealed class InMemorySetupFacts : ISetupFacts
     /// <summary>Gets or sets the index sources' answer.</summary>
     public Result<SourcesFact> SourcesAnswer { get; set; } = new SourcesFact(0);
 
+    /// <summary>Gets or sets the serve step's answer (the running Sindri is the installed build).</summary>
+    public Result<ServeFact> ServeAnswer { get; set; } = new ServeFact(Current: true);
+
+    /// <summary>Gets or sets the agent step's answer (none set).</summary>
+    public Result<AgentFact> AgentAnswer { get; set; } = new AgentFact(Target: null);
+
+    /// <summary>Gets or sets the hello-sindri step's answer (not run, not dismissed).</summary>
+    public Result<FirstWorkflowFact> FirstWorkflowAnswer { get; set; } = new FirstWorkflowFact(Succeeded: false, Dismissed: false);
+
     /// <summary>The profile names one repo, demo.</summary>
     public static RepoFact OneRepo { get; } = new(1) { Items = new SetupItems([new SetupItem("demo", SetupState.Done, Detail: null)]) };
 
-    /// <summary>Everything done: a repo, an approved profile, the registration made, the map built and every named source connected.</summary>
+    /// <summary>Everything done: serve current, a repo, an approved profile, an agent set, the registration made, the map built, every named source connected and hello-sindri run once.</summary>
     /// <returns>The fake.</returns>
     public static InMemorySetupFacts AllDone() => new()
     {
@@ -33,6 +42,8 @@ public sealed class InMemorySetupFacts : ISetupFacts
         McpAnswer = new McpFact(1, 1, "Claude Code") { Items = new SetupItems([new SetupItem("demo", SetupState.Done, "Claude Code") { Providers = [new McpProviderState("claude", McpConnection.Connected)] }]) },
         MapAnswer = new MapFact(MapPhase.Built) { Items = new SetupItems([new SetupItem("demo", SetupState.Done, Detail: null)]) },
         SourcesAnswer = NamedSources(("github", true), ("slack", true)),
+        AgentAnswer = new AgentFact("claude-code"),
+        FirstWorkflowAnswer = new FirstWorkflowFact(Succeeded: true, Dismissed: false),
     };
 
     /// <summary>The sources fact for the named sources, each connected or not.</summary>
@@ -50,7 +61,6 @@ public sealed class InMemorySetupFacts : ISetupFacts
     public ValueTask<Result<ProfileFact>> Profile(CancellationToken cancellationToken) => ValueTask.FromResult(ProfileAnswer);
 
     /// <inheritdoc/>
-    /// <inheritdoc/>
     public ValueTask<Result<McpFact>> Mcp(CancellationToken cancellationToken) => ValueTask.FromResult(McpAnswer);
 
     /// <inheritdoc/>
@@ -58,4 +68,13 @@ public sealed class InMemorySetupFacts : ISetupFacts
 
     /// <inheritdoc/>
     public ValueTask<Result<SourcesFact>> Sources(CancellationToken cancellationToken) => ValueTask.FromResult(SourcesAnswer);
+
+    /// <inheritdoc/>
+    public ValueTask<Result<ServeFact>> Serve(CancellationToken cancellationToken) => ValueTask.FromResult(ServeAnswer);
+
+    /// <inheritdoc/>
+    public ValueTask<Result<AgentFact>> Agent(CancellationToken cancellationToken) => ValueTask.FromResult(AgentAnswer);
+
+    /// <inheritdoc/>
+    public ValueTask<Result<FirstWorkflowFact>> FirstWorkflow(CancellationToken cancellationToken) => ValueTask.FromResult(FirstWorkflowAnswer);
 }

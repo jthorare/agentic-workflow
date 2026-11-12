@@ -52,4 +52,28 @@ internal sealed class ProfileSetupReader(IProfileSource live, RepoGitCache git)
 
         return new ProfileFact(ProfilePresence.Present) { Preview = ProfilePreview.Lines(loaded.Value.Profile) };
     }
+
+    // The agent the profile's workflows run on (first-run spec §3.1, step 5): 'workflow.agent.target', or none while it is unset or there is no profile.
+    internal async ValueTask<Result<AgentFact>> Agent(CancellationToken cancellationToken)
+    {
+        var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
+        if (loaded.IsError)
+        {
+            return loaded.Error.Code != SindriErrors.ProfileMissing.Code ? loaded.Error : new AgentFact(Target: null);
+        }
+
+        return new AgentFact(loaded.Value.Profile.Workflow?.Agent?.Target?.Value);
+    }
+
+    // The hello-sindri step (step 8): the dismissal is in the profile ('setup.skipFirstWorkflow'); a succeeded run is the engine lane's read, so it is false until that lands.
+    internal async ValueTask<Result<FirstWorkflowFact>> FirstWorkflow(CancellationToken cancellationToken)
+    {
+        var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
+        if (loaded.IsError)
+        {
+            return loaded.Error.Code != SindriErrors.ProfileMissing.Code ? loaded.Error : new FirstWorkflowFact(Succeeded: false, Dismissed: false);
+        }
+
+        return new FirstWorkflowFact(Succeeded: false, Dismissed: loaded.Value.Profile.Setup?.SkipFirstWorkflow == true);
+    }
 }
