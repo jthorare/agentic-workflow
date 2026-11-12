@@ -176,27 +176,28 @@ public sealed class AgentsPageTests : FrameHost
     });
 
     [Fact]
-    public Task The_provider_and_state_filters_keep_showing_their_choice_after_the_list_fills_them() => OnUi(async () =>
+    public Task The_filter_box_shows_the_text_the_page_holds_and_has_a_name() => OnUi(async () =>
     {
         var (window, shell) = await OnAgents();
+        var box = Named<TextBox>(window, "AgentsFilter");
 
-        Assert.Equal(Labels.AllProviders, Named<ComboBox>(window, "ProviderFilter").SelectedItem);
-        Assert.Equal(Labels.AllStates, Named<ComboBox>(window, "StateFilter").SelectedItem);
-        Assert.Equal(Labels.AllRepos, Named<ComboBox>(window, "RepoFilter").SelectedItem);
-        Assert.Null(shell.Agents.ProviderFilter);
+        Assert.True(string.IsNullOrEmpty(box.Text));
+        shell.Agents.FilterText = "p:codex";
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal("p:codex", box.Text);
+        Assert.False(string.IsNullOrWhiteSpace(Heard.Name(box)));
     });
 
-    // WCAG 2.5.3: a combo shows its choice, so its name starts with it.
     [Fact]
-    public Task The_filter_names_start_with_the_choice_they_show() => OnUi(async () =>
+    public Task Typing_in_the_filter_box_narrows_the_list() => OnUi(async () =>
     {
         var (window, shell) = await OnAgents();
+        var box = Named<TextBox>(window, "AgentsFilter");
 
-        Assert.StartsWith(Labels.AllProviders, Heard.Name(Named<ComboBox>(window, "ProviderFilter")), StringComparison.Ordinal);
-        Assert.StartsWith(Labels.AllStates, Heard.Name(Named<ComboBox>(window, "StateFilter")), StringComparison.Ordinal);
-        Assert.StartsWith(Labels.AllRepos, Heard.Name(Named<ComboBox>(window, "RepoFilter")), StringComparison.Ordinal);
-        shell.Agents.FilterState("Working");
+        box.Text = "p:codex";
         Dispatcher.UIThread.RunJobs();
-        Assert.StartsWith("Working", Heard.Name(Named<ComboBox>(window, "StateFilter")), StringComparison.Ordinal);
+
+        Assert.Equal("p:codex", shell.Agents.FilterText);
+        _ = Assert.Single(shell.Agents.Groups.SelectMany(g => g.Rows));
     });
 }
