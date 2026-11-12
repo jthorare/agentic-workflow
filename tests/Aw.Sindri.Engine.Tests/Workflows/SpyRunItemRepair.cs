@@ -28,6 +28,28 @@ internal sealed class SpyRunItemRepair : IRunItemRepair
         }
     }
 
+    /// <summary>Waits until at least <paramref name="count"/> calls have landed; fails with the calls seen so far at the deadline.</summary>
+    /// <param name="count">How many calls to wait for.</param>
+    /// <param name="patience">How long to wait.</param>
+    /// <param name="cancellationToken">Cancels the wait.</param>
+    /// <returns>When the calls have landed.</returns>
+    public async Task WaitForRuns(int count, TimeSpan patience, CancellationToken cancellationToken)
+    {
+        using var deadline = new CancellationTokenSource(patience);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(deadline.Token, cancellationToken);
+        while (Runs.Count < count)
+        {
+            try
+            {
+                await Task.Delay(20, linked.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException timedOut) when (deadline.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                throw new TimeoutException(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the repair was asked {Runs.Count} times within {patience.TotalSeconds} s; wanted {count}"), timedOut);
+            }
+        }
+    }
+
     public ValueTask<Result<int>> RepairAll(CancellationToken cancellationToken) => throw new NotSupportedException();
 
     public async ValueTask<Result<int>> RepairRun(WorkflowRunId run, CancellationToken cancellationToken)

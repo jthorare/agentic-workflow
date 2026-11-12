@@ -18,6 +18,7 @@ public sealed class GraphRunItemRepairWiringTests
         var run = await rig.Final((await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited)).RunId);
 
         Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
+        await rig.ItemRepair.WaitForRuns(1, TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
         Assert.Equal([run.Id.Value], rig.ItemRepair.Runs);
     }
 
@@ -32,6 +33,8 @@ public sealed class GraphRunItemRepairWiringTests
         var run = await rig.Final((await rig.Trigger(workflow, occurrence: 1, GraphConcurrency.Unlimited)).RunId);
 
         Assert.Equal(WorkflowRunStatus.Succeeded, run.Status);
+        await rig.ItemRepair.WaitForRuns(1, TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await Task.Delay(TimeSpan.FromMilliseconds(200), TestContext.Current.CancellationToken);   // a retried finish would land a second call in this time
         _ = Assert.Single(rig.ItemRepair.Runs);   // asked once: the finish was not retried
     }
 }
