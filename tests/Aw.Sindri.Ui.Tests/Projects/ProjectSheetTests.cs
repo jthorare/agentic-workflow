@@ -280,6 +280,18 @@ public sealed class ProjectSheetTests
     }
 
     [Fact]
+    public async Task A_refresh_after_the_state_changed_elsewhere_shows_the_new_saved_state()
+    {
+        var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
+        sheet.SelectedState = sheet.StateChoices.Single(s => string.Equals(s.Value, "inProgress", StringComparison.Ordinal));
+        _f.Serve(ProjectSheetFixture.Attached, c => (c["version"], c["state"]) = (2, "backlog"));
+
+        await sheet.Refresh(ProjectsFixture.Url, Token);
+
+        Assert.Equal("backlog", sheet.SelectedState?.Value);
+    }
+
+    [Fact]
     public async Task Use_Linears_state_clears_the_owners()
     {
         var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
