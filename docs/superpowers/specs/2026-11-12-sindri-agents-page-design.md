@@ -167,7 +167,7 @@ An idle lane that owes nothing stays in Idle. A lane that is idle for 9 minutes 
 
 **PR ready: the join.** `QueuedPr.From` is the sender of the latest `ready #N` message for that PR: the sender's session name, or the raw peer id when the name is empty (`MergeQueueReader.cs:108`). A lane's session name is `<team>-<lane>` (`scripts/meta-lane.sh:202`; `LaneMap.cs` maps it back with `OrdinalIgnoreCase`). So `From` is `joi-ideas`, not `ideas`. The page joins through `status --json` `lanes` (`LaneAssignment.SessionName` to `Lane`, ignoring case, as `LaneMap.cs` does), never by comparing to the bare lane name. If no lane matches (a builder, an unnamed peer, a raw peer id), the entry adds to the head's PR count, makes no row and no reason, and adds a `degraded[]` entry `unmatched-sender` with the PR number. If another lane sends a newer `ready #N` for the same PR, the reason moves to that lane at the next read. Fixtures use team-prefixed names (`joi-ideas`) and one raw peer id.
 
-**Primary action per reason.** Every Needs-you and Waiting row has one primary action. `Enter` always opens the full session sheet (§6.3). `Ctrl+Enter` has one meaning on every page (§6.6): it runs the primary action of the focused thing. On a row that is the row's primary, the first button in the peek. Inside the composer the primary is Send. A primary that writes (a message, a stop, a recycle, an answer) never fires straight from a row: on a row it opens its composer, confirm or picker, and the write waits for Send, Enter in the confirm, or Go. Every primary below writes nothing or opens one of those. `x` (Stop) works only on a row with a recorded `agentPid`; on a row with none (`lane:` rows, workflow nodes) it is disabled and the peek says "no process to stop".
+**Primary action per reason.** Every Needs-you and Waiting row has one primary action. `Enter` always opens the row's full view: the live pane for a session that runs in tmux (§15.1), and the session sheet (§6.3) for every other host. `Ctrl+Enter` has one meaning on every page (§6.6): it runs the primary action of the focused thing. On a row that is the row's primary, the first button in the peek. Inside the composer the primary is Send. A primary that writes (a message, a stop, a recycle, an answer) never fires straight from a row: on a row it opens its composer, confirm or picker, and the write waits for Send, Enter in the confirm, or Go. Every primary below writes nothing or opens one of those. `x` (Stop) works only on a row with a recorded `agentPid`; on a row with none (`lane:` rows, workflow nodes) it is disabled and the peek says "no process to stop".
 
 | Reason | Primary action (`Ctrl+Enter`) | Steers? |
 |---|---|---|
@@ -378,7 +378,7 @@ Body:
 - **Always:** "What it did", the last 20 tool calls, each folded to one line (`Edit src/X.cs · Bash dotnet build · Read Y`) with its age, and "Files changed" with +/- counts. This is api A4, scrubbed by `Aw.Redaction`.
 - **For a reason that has words:** all the reasons, one per line, with their entered time.
 
-**Full** (`Enter`) opens the session sheet (`SessionSheetView`) with the transcript and its search. `Esc` returns with the cursor on the same row.
+**Full** (`Enter`) opens the session sheet (`SessionSheetView`) with the transcript and its search, for a session that does not run in tmux. A tmux session opens the live pane instead (§15.1), and its transcript sheet is the pane header's **Transcript** button. `Esc` returns with the cursor on the same row.
 
 ```
 ┌ peek 440 ─────────────────────────────┐
@@ -720,7 +720,7 @@ This section changes these earlier rules. Decision 6 now says that no *op* types
 
 ### 15.2 Who types into a pane
 
-- Only the human, in the live pane, with the per-start human token. The `ops` route (§5) still never types into a pane, and neither does an agent or an MCP tool. The terminal routes refuse every session caller (SND-AUTH-002), including a session Sindri started (decision 29 of the first-run spec: a launched session is a session caller).
+- Only the human, in the live pane, with the per-start human token. The `ops` route (§5) still never types into a pane, and neither does an agent or an MCP tool. The terminal routes refuse every session caller (SND-AUTH-002), including a session Sindri started. This rule is stricter than the first-run setup gates. Those gates refuse only a session Sindri launched, and let an agent the owner started act for the owner (first-run spec, decision 29). The terminal and start routes take the human token alone, so no agent session passes.
 - This covers lane sessions too. Lanes live on the owner's default tmux socket (`HostRules.SocketKind`), so the pane reads and types there. Typing into a lane mid-turn is his call, the same as in his own terminal. Decision 7 therefore gets a third way out: he can type a message into a Claude lane's pane himself. Open question 2's mail path still matters for the composer and for agents.
 - Sindri runs tmux commands from two allowlists. Each list covers only the commands Sindri sends. It does not limit what he types once he is attached: tmux's own prefix keys (`Ctrl+B [`, `Ctrl+B x`) are his. That is why Sindri never runs `attach` in v1: it reads with `capture-pane` and types with `send-keys` (§15.7).
 - **Foreign list**, for a socket Sindri did not create:
