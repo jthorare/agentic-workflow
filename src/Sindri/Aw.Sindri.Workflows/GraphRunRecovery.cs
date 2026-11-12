@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
-/// Issue 2367: at serve start, ends every 'running' run that Temporal has no workflow for (serve died between the store moving the run to running and the launch) as failed
+/// Issue 2367 (and the live sweep, issue 2999): ends every 'running' run that Temporal has no workflow for (serve died between the store moving the run to running and the launch) as failed
 /// ('lost at restart'), appends its 'workflow.run.started' and 'workflow.run.finished', then starts the next queued run of each affected workflow. A run Temporal knows is left alone, and a
 /// second pass finds nothing. When Temporal cannot be asked the pass returns the error and the host tries again.
 /// </summary>
@@ -33,16 +33,26 @@ internal sealed partial class GraphRunRecovery(IWorkflowRunStore runs, IGraphRun
     /// <summary>Ends every running run Temporal has no workflow for.</summary>
     /// <param name="cancellationToken">Cancels the pass.</param>
     /// <returns>How many runs it ended, or the reason it could not finish.</returns>
-    public ValueTask<Result<int>> Run(CancellationToken cancellationToken) => Run(DateTimeOffset.MaxValue, cancellationToken);
+    public async ValueTask<Result<int>> Run(CancellationToken cancellationToken)
+    {
+        // why: a run this process admitted or promoted may still be launching, so it is never an orphan of the last process; the starter lists only runs from before this process
+        var running = await _queue.RunningBeforeThisProcess(cancellationToken).ConfigureAwait(false);
+        return await Pass(running, DateTimeOffset.MaxValue, cancellationToken).ConfigureAwait(false);
+    }
 
-    /// <summary>Ends every running run that started before <paramref name="startedBefore"/> and Temporal has no workflow for; a later one may be a launch still in flight.</summary>
+    /// <summary>Ends every running run that started before <paramref name="startedBefore"/> and Temporal has no workflow for, runs of this process included unless their launch is still in flight; a later one may be a launch just begun.</summary>
     /// <param name="startedBefore">The cutoff: runs that started at or after it are left alone.</param>
     /// <param name="cancellationToken">Cancels the pass.</param>
     /// <returns>How many runs it ended, or the reason it could not finish.</returns>
     public async ValueTask<Result<int>> Run(DateTimeOffset startedBefore, CancellationToken cancellationToken)
     {
-        // why: a run this process admitted or promoted may still be launching, so it is never an orphan; the starter lists only runs from before this process
-        var running = await _queue.RunningBeforeThisProcess(cancellationToken).ConfigureAwait(false);
+        // why: the live sweep (issue 2999) also ends runs this process started whose workflow is gone; only a launch still in flight is spared, and the cutoff keeps young runs out
+        var running = await _queue.RunningNotLaunching(cancellationToken).ConfigureAwait(false);
+        return await Pass(running, startedBefore, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<int>> Pass(Result<IReadOnlyList<WorkflowRun>> running, DateTimeOffset startedBefore, CancellationToken cancellationToken)
+    {
         if (running.IsError)
         {
             return running.Error;
