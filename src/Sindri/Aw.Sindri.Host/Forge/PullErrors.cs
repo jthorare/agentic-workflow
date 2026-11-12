@@ -18,6 +18,12 @@ internal static class PullErrors
             return SindriErrors.ForgeNotFound.With(message);
         }
 
+        // why: a 403 for one repo is not a dead credential; its own code lets a caller skip the repo and keep reading the others
+        if (error.Code == ForgeErrors.Refused.Code)
+        {
+            return SindriErrors.ForgeRepoRefused.With(message);
+        }
+
         return error.Code == ForgeErrors.Invalid.Code || error.Code == ForgeErrors.HostNotAllowed.Code
             || error.Code == ForgeErrors.Unauthorized.Code || error.Code == ForgeErrors.Rejected.Code
             ? SindriErrors.ForgeRefused.With(message)

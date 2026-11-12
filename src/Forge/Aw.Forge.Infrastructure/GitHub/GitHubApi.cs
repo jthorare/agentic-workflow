@@ -116,7 +116,7 @@ internal sealed class GitHubApi(HttpClient http, ICredentialSource credentials, 
         return reply.Status switch
         {
             404 => ForgeErrors.NotFound.With(message),
-            403 => ForgeErrors.Unauthorized.With(message),
+            403 => ForgeErrors.Refused.With(message),
             _ => ForgeErrors.Rejected.With(Inv.S($"{reply.Status}: {message}")),
         };
     }
