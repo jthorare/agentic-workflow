@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Connections;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
@@ -32,9 +33,10 @@ namespace Aw.Sindri.Features.StartSession;
 /// <param name="ledger">Appends the event.</param>
 /// <param name="held">The lease this process holds.</param>
 /// <param name="events">Builds the entry.</param>
+/// <param name="gate">The command gate: the start runs outside it (a start takes up to 64 s) and takes it for the ledger write only.</param>
 internal sealed partial class StartSessionService(
     IApprovedProfile approvals, IAgentCatalog catalog, IStartChecks checks, IOneOffWorktrees worktrees, ISessionHost host, ISessionPanes panes, IEnvironmentReader environment,
-    IStartChoices choices, StartedSessions book, TimeProvider clock, ILedgerStore ledger, HeldLease held, EventFactory events)
+    IStartChoices choices, StartedSessions book, TimeProvider clock, ILedgerStore ledger, HeldLease held, EventFactory events, ICommandGate gate)
     : IService<StartSessionRequest, StartedSession>
 {
     internal const int MaxPrompt = 8000;
@@ -198,6 +200,12 @@ internal sealed partial class StartSessionService(
     {
         var body = $"{request.Repo.Value}|{request.Agent.Value}|{request.Prompt}|{request.Worktree}";
         var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(body)));
+        using var hold = await gate.Enter(CancellationToken.None).ConfigureAwait(false);
+        if (hold is null)
+        {
+            return;   // another command held the gate for 5 s: the answer stays in memory, and the worktree route still finds it
+        }
+
         var entry = events.Entry(EventTypes.AgentOp, new AgentOpRecorded("sindri-" + actId, "start", hash, pane, worktree), StartedSessions.Key(actId));
         _ = await ledger.Append(entry, grant, CancellationToken.None).ConfigureAwait(false);   // the session is running: a ledger that is down loses the durable copy, not the start
     }

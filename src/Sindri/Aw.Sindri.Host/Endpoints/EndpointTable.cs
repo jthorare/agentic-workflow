@@ -130,6 +130,7 @@ internal static class EndpointTable
         _ = commands.MapSetReviewLogin().MapSendReviewFix().MapLinearConnectionWrites();
         _ = commands.MapResumeService();
         _ = commands.MapRunService();
+        _ = commands.MapSessionStarts();
         _ = commands.MapContextJobs();
         _ = commands.MapLaunchTargetJob();
         _ = commands.MapCreateItem().MapHandoff();

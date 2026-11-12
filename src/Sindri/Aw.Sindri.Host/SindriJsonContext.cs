@@ -119,6 +119,8 @@ using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.RecordLimitHit;
 using Aw.Sindri.Features.RegisterMcp;
 using Aw.Sindri.Features.RemoveConnection;
+using Aw.Sindri.Features.RemoveSessionWorktree;
+using Aw.Sindri.Features.StartSession;
 using Aw.Sindri.Features.RenameConnection;
 using Aw.Sindri.Features.ReplaceWorkflow;
 using Aw.Sindri.Features.ResumeJob;
@@ -156,6 +158,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ItemHandoff)), JsonSerializable(typeof(Features.CreateHandoffItem.CreateHandoffItemRequest)), JsonSerializable(typeof(Features.CreateHandoffItem.HandoffItemCreatedResponse))]
 [JsonSerializable(typeof(ItemStateChanged)), JsonSerializable(typeof(ItemLinked)), JsonSerializable(typeof(RequestFiled)), JsonSerializable(typeof(RequestFiledPublic))]
 [JsonSerializable(typeof(DecisionRecorded)), JsonSerializable(typeof(DecisionRecordedPublic)), JsonSerializable(typeof(JobStarted))]
+[JsonSerializable(typeof(StartSessionRequest)), JsonSerializable(typeof(StartedSession)), JsonSerializable(typeof(StartedHost)), JsonSerializable(typeof(RemoveSessionWorktreeRequest)), JsonSerializable(typeof(RemovedWorktree)), JsonSerializable(typeof(AgentOpRecorded))]   // agents spec §15.8 (A7)
 [JsonSerializable(typeof(JobProgress)), JsonSerializable(typeof(JobFinished)), JsonSerializable(typeof(JobFinishedPublic)), JsonSerializable(typeof(JobCancelled)), JsonSerializable(typeof(JobWaiting)), JsonSerializable(typeof(JobResumed))]
 [JsonSerializable(typeof(ServicePaused)), JsonSerializable(typeof(ServiceResumed)), JsonSerializable(typeof(JobRow)), JsonSerializable(typeof(JobLine))]
 [JsonSerializable(typeof(ContextModelCalled)), JsonSerializable(typeof(ModelCallTry)), JsonSerializable(typeof(ModelCallAnswerer)), JsonSerializable(typeof(ModelCallHow)), JsonSerializable(typeof(ModelTotals)), JsonSerializable(typeof(ModelAnsweredCount))]

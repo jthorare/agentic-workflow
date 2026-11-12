@@ -41,7 +41,7 @@ internal sealed class StartRig
     public StartedSessions Book => field ??= new(Base.Store, Base.Events);
 
     public StartSessionService Service() =>
-        new(Base.Profiles, Catalog, Checks, Worktrees, Host, Host, Environment, Choices, Book, Base.Clock, Base.Store, Base.Held, Base.Events);
+        new(Base.Profiles, Catalog, Checks, Worktrees, Host, Host, Environment, Choices, Book, Base.Clock, Base.Store, Base.Held, Base.Events, new OpenGate());
 
     public Aw.Sindri.Features.RemoveSessionWorktree.RemoveSessionWorktreeService RemoveService() => new(Book, Worktrees);
 }
@@ -123,4 +123,16 @@ internal sealed class FakeEnvironment : IEnvironmentReader
     };
 
     public string? Get(string name) => Values.GetValueOrDefault(name);
+}
+
+internal sealed class OpenGate : Aw.Sindri.Core.Commands.ICommandGate
+{
+    public ValueTask<IDisposable?> Enter(CancellationToken cancellationToken) => ValueTask.FromResult<IDisposable?>(new Hold());
+
+    private sealed class Hold : IDisposable
+    {
+        public void Dispose()
+        {
+        }
+    }
 }
