@@ -51,7 +51,7 @@ Done-checks. Each is a test or a measured run in the real app (aw-ui-driver) on 
 | D5 | **Within 1 s.** A change to a session's state file shows on the page within 1 s, by push, with 50 sessions. | perf's loop (§7.3): p95 under 1 s at 50 and at 200 sessions. The baseline to beat is today's p50 2.5 s and p95 5 s (perf's estimate on #3018). |
 | D6 | **Home agrees.** Every reason that Home also lists opens the same Home row. Agents never repeats a Home action with other behavior. | A test enumerates the reasons: each Home-backed reason links to a Home row id, and the Agents `.` menu names the Home action id (`home.merge`, `home.digest`) instead of its own. |
 | D7 | **First paint.** The tab paints under 100 ms from the local store with 50 rows. | Tab press to first row painted, p95 over 20 runs, serve not answering. |
-| D8 | **11 lanes without scrolling.** All 11 lanes of the walk are visible at 1440x900, compact, peek closed. | Frames test count of drawn rows; §6.1 gives the arithmetic (18 rows). |
+| D8 | **11 lanes without scrolling.** All 11 lanes of the walk are visible at 1440x900, compact, peek closed. | Frames test count of drawn rows; §6.1 gives the arithmetic (17 rows). |
 | D9 | **Honest states.** No bare "Unknown". A stale or unreadable source says so and says what is missing. | Every §6.4 state has a Frames test. A test greps the Labels for the word "Unknown" alone. |
 | D10 | **Who may steer.** In v1 only the app and the terminal (the human token) steer. Every session caller is refused with SND-AUTH-002. `sindri agents steer` is the owner's CLI: it also refuses, with one line ("Steer from the app or your own terminal, not from an agent session"), when the fleet file of its parent process's agent pid exists, so a lane shell that can read the token does not steer by mistake. Lead-steers-own-builders is cut (lead, 2026-11-12) and returns later (§5). Stop never matches by pattern. | An authorization matrix test (caller class x op, with the header absent, naming another session, and a session not live). A test refuses Stop when the start ticks differ. The matrix has a row for a CLI run from a lane shell that can read the token (refused by the fleet-file guard). A grep test finds no `pkill`, `pgrep -f` or `killall` in the route's code. |
 | D11 | **One badge.** The tray count and alert for a session that asks are Home's single count, not a second badge. Nothing repeats while the state holds. | Over 50 injected events: one alert per episode, the tray count equals Home's notifying rows (Home D10). |
@@ -92,7 +92,7 @@ An Agents row is one live session, one waiting job, or one lane with no session.
 | `stateSource` | `hook`, `record`, `transcript` or `aw-meta`, with `readAt`. Today's `StateSource` plus `aw-meta`. |
 | `estimated` | true when the state is a guess from the transcript's age (`SessionStateRules.cs:50-52`) |
 | `title` | the work in words: lane name, then the PR or issue title, then `repo · branch`, then the provider and start time. A pid only in Details. |
-| `facts` | lane or parent, `repo · branch`, PR or issue ref, context k with the mark, last activity age, heavy slot |
+| `facts` | lane (the lead, for a builder), `repo · branch`, PR or issue ref, context k with the mark, last activity age, heavy slot |
 | `reasons[]` | the §3.2 reasons that hold now, each `{class, word, since, source}`; the first is primary |
 | `parent` | the lead's id, for a builder; null otherwise |
 | `since` | when the state began (today's `Since`) |
@@ -103,15 +103,16 @@ An Agents row is one live session, one waiting job, or one lane with no session.
 
 Note on last activity. The hook does not record it. `config/hooks/fleet-state.sh:10-11` says a PostToolUse (every tool call) exits before `jq` unless the file says asking, and `fleet-state.sh:52-57` shows it only changes asking back to running. So `at` in the state file is when the state began, not the last tool. The age of the last activity therefore comes from the transcript's last write, as the lane list already does (`LaneContext.LastActivity`, `Aw.Meta.Core/Lanes/LaneContext.cs:11,20`) and as the state merge does for a session with no hook (`SessionStateRules.cs:50-52`). The row has no last tool name, except the tool an approval asks for (`schemas/fleet-state.schema.json:30-35`).
 
-**States.** Six glyphs from #3018, with one change.
+**States.** Five glyphs from #3018 plus "no glyph", with one change. Shapes are design's DG1 frames (comment 6821370647 on #3107).
 
 | State | Glyph (shape, not colour alone) | Comes from |
 |---|---|---|
 | `working` | arc | `SessionState.Running` (hook `UserPromptSubmit`, or record `busy`) |
 | `waiting-on-you` | diamond | `SessionState.Asking`: approval, input or auth (`SessionAsking.cs:7`); a workflow node `waiting on you` (engine) |
 | `idle` | ring | `SessionState.Idle`, not estimated |
-| `limited` | half ring | `aw-meta usage` subject `Limited` (`Aw.Meta.Core/Usage/UsageState.cs:9`); a Sindri run paused on a model limit |
-| `down` | x | a lane in the team map with no live session (`aw-meta health`: "lanes with no live session", `HealthCommand.cs:29`); a session whose process left without a `SessionEnd` |
+| `limited` | left half disc, outline, attention colour (the arc is already a top-right half ring, so the shapes differ) | `aw-meta usage` subject `Limited` (`Aw.Meta.Core/Usage/UsageState.cs:9`); a Sindri run paused on a model limit |
+| `down` | bare x, error colour (failed is an x on a disc) | a lane in the team map with no live session (`aw-meta health`: "lanes with no live session", `HealthCommand.cs:29`); a session whose process left without a `SessionEnd` |
+| ended (Recently ended) | dashed ring | the session's `SessionEnd`, kept 30 min |
 | (no glyph) | | an estimated or unreadable state shows "No recent activity" or "Can't see this terminal", muted, never "Unknown" (ledger 11) |
 
 **The glyph is always the session's own state, never the reason it is listed.** A row in Needs you for a session that is working shows the arc, and for an idle one the ring. Only a session in state `asking` shows the diamond.
@@ -301,27 +302,27 @@ At 1440x900, compact, peek closed. Frame, group header and row numbers are Home'
 ```
 ┌ top bar 40 ───────────────────────────────────────────────────────────────────────────────────────────────┐
 │ Agents   11 agents · 3 need you · 2 PRs ready to merge        / p: r: s: n: o:      3.1M tokens today     │ page header 48
-│ box  mem 14.2 GB free · disk 212 GB free · heavy 2 of 3 (api, ui) · reserve 1 · 1 job                      │ box strip 32
+│ box  mem 14.2 GB free · disk 212 GB free · heavy 2 of 3 (design, ui) · reserve 1 · 1 job                   │ box strip 32
 ├ Needs you 3 ──────────────────────────────────────────────────────────────────────────────────────────────┤ group header 28
-│ ◔ ideas: at 210k, recycle from a digest +1  recycle   PR #3078  ideas   sindri · main   210k ▲  4m   -  20m │ row 32
-│ ◔ meta: at 205k, recycle from a digest      recycle   -         meta    aw · main       205k ▲  1m   -  15m │
-│ ○ qa: PR #3067 ready in the merge queue     PR ready  PR #3067  qa      sindri · qa-x    88k    9m   -  12m │
+│ ◔ #3078 ideas: at 210k, recycle from a digest +1  recycle   lane ideas  sindri · main  210k ▲  4m      20m │ row 32
+│ ◔ meta: at 205k, recycle from a digest            recycle   lane meta   aw · main      205k ▲  1m      15m │
+│ ○ #3067 qa: PR ready in the merge queue           PR ready  lane qa     sindri · qa-x   88k    9m      12m │
 ├ Working 7 ────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ◔ design: building RowList                  working   PR #3101  design  sindri · ds-1   121k    6s   h1  3h │
-│   ▸ 2 builders                                                                                            │
-│ ◔ ui: Agents rows                           working   #3018     ui      sindri · ui-3   150k   14s   -   1h │
-│ ...                                                                                                       │
+│ ◔ GH-2959 context: mapping the 10M-line index     working   lane context sindri · ctx-2  96k   3s       2h │
+│ ◔ #3101 design: building RowList                  working   lane design sindri · ds-1  121k    6s  h1   3h │
+│   ▸ 2 builders                                                                                            │ fold line 28
+│ ...  (engine, perf, tools, ui, ux: A to Z by lane, §4.1)                                                  │
 ├ Idle 1 ───────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ○ api: idle 31 min                          idle      -         api     sindri · api-2   61k   31m   -  31m │
+│ ○ api: idle 31 min                                idle      lane api    sindri · api-2  61k   31m      31m │
 ├ Other 1 ▸ ────────────────────────────────────────────────────────────────────────────────────────────────┤
 ├ Recently ended 4 ▸ ───────────────────────────────────────────────────────────────────────────────────────┤
 ├ j/k move · Space peek · Enter open · r reply · o jump · x stop · . actions · / filter · ? ────────────────┤ footer 28
 └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Row (32 px compact, 40 comfortable):** `[glyph 16] [title, flex, min 200] [why chip 120] [object 88] [lane or parent 112] [repo · branch 160] [context 64] [last activity 48] [heavy slot 40] [age in state 44, right-aligned]`, 12 px gap. The why chip carries the primary reason word or the state word. The object is the mono ref (`PR #3078`, `#3018`). The context cell shows k tokens, and "▲" when the session is at or over the recycle mark. Title is the only 13 px ink text. "Waits on you" rows weigh 500. "-" marks a fact the source does not give; it never shows a guess.
-- **Width check:** the fixed part is 692 px of columns plus 108 px of gaps plus 48 px of side inset: 848 px. The title gets `list width - 848`: 592 px at 1440 with the peek closed. With the peek open the list is 1000 px, and the title would get 152 px, under its 200 px minimum. So the columns drop in this order as the list narrows: repo · branch (below 1048 px), heavy slot (below 876), last activity (below 824), lane or parent (below 764). At 1000 px the repo · branch column is gone and the title gets 324 px. The title minimum never shrinks. Facts end in an ellipsis, never a mid-word clip.
-- **Rows per screen (D8):** body 784 minus 8 padding, minus the box strip (32), minus 5 group headers (140) leaves 604 px: 18 rows at 32 px, 15 at 40 (rounded down). The 11 lanes of the walk fit with 7 rows to spare. Builders folded under their lead take no row until opened.
+- **Row (32 px compact, 40 comfortable):** `[glyph 16] [id + title, flex, min 200] [why chip 144] [object 88] [repo · branch 160] [context 64] [last activity 48] [heavy slot 40] [age in state 44, right-aligned]`, 12 px gap. The id sits left of the title in mono, as the row grammar says: `#3078` is a PR (`#` means a PR only), `GH-3018` an issue; a row with no PR or issue has no id. The why chip carries the primary reason word or the state word, and is 144 px so "Can't see this terminal" shows whole. The object is the mono lane, `lane ideas`; a builder's says `lead design`. There is no separate lane or parent column (design's DG1 call 4: it was blank on every lane row). The context cell shows k tokens, and "▲" when the session is at or over the recycle mark. Title is the only 13 px ink text. Needs-you rows weigh 500. A fact the source does not give is a blank cell, never "-" and never a guess (the grammar's rule).
+- **Width check:** the fixed part is 604 px of columns plus 96 px of gaps (8) plus 48 px of side inset: 748 px. The title gets `list width - 748`: 692 px at 1440 with the peek closed. With the peek open the list is 1000 px and repo · branch is hidden (the peek's Details has it), so the title gets 424 px: design's peek frame with the columns kept (DG1 call 2, the `-alt` frame). The page keeps context in the peek-open row on purpose: it is the number a recycle row is about, so the grammar's "3 facts when narrow" rule does not apply here. When the window itself is narrower, columns drop in this order: repo · branch (list below 948 px), heavy slot (below 776), last activity (below 724), object (below 664). The title minimum never shrinks. Facts end in an ellipsis, never a mid-word clip.
+- **Rows per screen (D8):** body 784 minus 16 list padding (8 + 8), minus the box strip (32), minus 5 group headers (140) and the 8 px gap above each after the first (32) leaves 564 px: 17 rows at 32 px, 14 at 40 (rounded down; design's DG1 count). The 11 lanes of the walk fit with 6 rows to spare. A folded lead shows one 28 px "▸ 2 builders" line; the builders take no row until opened, and the walk still fits (600 of 784 px drawn).
 - **Head:** the count text is "N agents · M need you · P PRs ready to merge". M counts rows in Needs you, not sessions asking. P counts merge-queue entries with no GitHub queue state. The tab's nav count uses M. `Labels.Agents.cs:45` ("N asking you") is replaced.
 - **Filter box:** the `p:` `r:` `s:` `n:` `o:` tokens of #3024 (Claude's view uses the same tokens; ledger 7). `s:` takes `needs`, `working`, `idle`, `limited`, `down`. `Esc` clears. The token parser is a plain function that moves to the new page unchanged.
 - **Builders:** a lead with builders shows "▸ 2 builders" under its row. Right opens it, Left closes it. A folded group still counts in the head.
@@ -330,7 +331,9 @@ At 1440x900, compact, peek closed. Frame, group header and row numbers are Home'
 
 One line under the header. It is on the page, not a separate sheet (#3018 done 5).
 
-`box  mem 14.2 GB free · disk 212 GB free · heavy 2 of 3 (api, ui) · reserve 1 · 1 job`
+`box  mem 14.2 GB free · disk 212 GB free · heavy 2 of 3 (design, ui) · reserve 1 · 1 job`
+
+The holders match the rows: `h1` on design, `h2` on ui.
 
 - **mem** is `MemAvailableKb`, the same number the 8 GB memory floor uses. **disk** is `DiskFreeBytes` (`HostSnapshot.cs:8`).
 - **heavy** is slots held of the cap (`HeavySlots.Cap`, `HeavySlots.cs:11`) with the holders' lanes (from `HeavyLock.Holder`, `HeavyLock.cs:8`). **reserve** is the meta gate reserve (`HeavySlots.Reserve`).
@@ -339,7 +342,7 @@ One line under the header. It is on the page, not a separate sheet (#3018 done 5
 
 ### 6.3 Peek (Space) and full (Enter)
 
-Peek is a 440 px pane on the right, as on Home. `j/k` moves it with the cursor. It paints within 50 ms from the local store, with no spinner. Header 48 (title, ref, open-full, close), fields in two columns of 28 px rows, a body, 2 to 3 actions at the bottom. It shows the first 3 facts when narrow (the forced rule).
+Peek is a 440 px pane on the right, as on Home. `j/k` moves it with the cursor. It paints within 50 ms from the local store, with no spinner. Header 48 (title, ref, open-full, close), fields in two columns of 28 px rows, a body, 2 to 3 actions at the bottom. The peek head is the row's title with `lane ideas` in the id slot; the reason words go in the Reasons field.
 
 Fields on every row: State and since, Context (210k of the 200k mark), Lane items (the PRs and issues it owns), Heavy slot (held or waited, with age), Last activity, Parent or builders, Links (Home row, PR, workflow run).
 
@@ -382,15 +385,15 @@ Every error row has a button that fixes it.
 | loading from a slow serve | the cached first page paints first (D7); a quiet header line "Updating…" is a polite live region |
 | serve not running | the cached rows paint; the header says "Sindri isn't running · showing 09:02" with **Start Sindri**; steers are disabled with the same reason |
 | live updates down (the event stream dropped) | the header says "Live updates paused · checking every 5 s" with **Reconnect**; the 5 s poll (today's) runs as the fallback |
-| no sessions | "No agent sessions on this box." under the head; the nav count is 0 |
+| no sessions | "No agent sessions on this box." under the head; the nav count is 0. The footer shows only the keys that work on an empty page: `/ filter`, `Ctrl+K palette`, `? all keys` (UX pass on DG1) |
 | Needs you empty | the group is not drawn; the head reads "11 agents · 0 need you". Nothing says "You're done": that is Home's word |
-| `aw-meta` has no team here | no lane facts; one quiet line "No aw-meta team on this box: context, queue and heavy slots are not shown", no button |
-| `aw-meta` unreadable (binary missing, exit 2, bad JSON) | the lane facts show "-"; the header says "aw-meta unreadable: lane context and queue are stale since 09:02" with **Retry** and the log path (`lanes-unavailable`) |
-| a source is stale (not read in 60 s) | the rows from it carry the muted age; the header names it |
+| `aw-meta` has no team here | no lane facts, and the object cell is blank (not "session"); one quiet line "No aw-meta team on this box: context, queue and heavy slots are not shown", no button |
+| `aw-meta` unreadable (binary missing, exit 2, bad JSON) | the lane fact cells are blank; the header says "aw-meta unreadable: lane context and queue are stale since 09:02" with **Retry** and the log path (`lanes-unavailable`) |
+| a source is stale (not read in 60 s) | the rows from it carry the muted age; the header names it, with **Refresh** (reads the source now) |
 | heavy waits not readable | the box strip says "heavy: holders only, waits not readable yet" until tools ships `aw-meta heavy` |
 | a session's state is a guess (`estimated`) | the chip reads "No recent activity" with the age; Details names the source in words ("from the transcript's age") |
 | the terminal can't be seen | the chip reads "Can't see this terminal" and the Jump action reads "Copy attach command" |
-| a steer is sending | "sending" in the waits-on cell; after 2 s "still sending" |
+| a steer is sending | "sending" replaces the why chip text; after 2 s "still sending" |
 | a steer failed | "failed: <reason>" with **Retry** and **Discard**; for a refused op the reason is the op's sentence (§5 table) |
 | a row's version changed under an edit (SND-AGENT-002) | the edit is not applied; the row shows "Changed while you were editing" and **Reload** |
 | a lane is recycling | "recycling" until the lane reports a new session; no steer is offered |
@@ -493,7 +496,7 @@ Time budget (a plan, not a measurement; perf measures it):
 
 Facts that come from `aw-meta` (context, usage, queue, heavy) arrive by `aw-meta events --after N`. Those producers write on their own cadence, so they carry no 1 s promise. The service reads the cursor every 2 s (agent default). One `events` call is cheap by construction (PR #3103, merged, read not run): it starts one process, needs no team config (`NeedsConfig: false`), and runs one indexed `SELECT ... WHERE id > $after ... LIMIT 500` on `meta.db`; it prunes only on append. **Events are edges (`context.high` then `context.ok`), not state, so the cursor is only ever set after a snapshot.** At start, on a restart of serve, when `gap` is true, or when the cursor is above the log's newest id (a recreated `meta.db`): (1) read to the end of the log and keep the last id as the cursor, dropping those facts; (2) take the snapshot from `status --json`, `lanes-context --json`, `usage --json` and the other readers; (3) apply only events after that cursor. The New band stays quiet during the rebuild. `next` on a gap response is the 500th retained event, not the newest, so the service loops until `next` stops moving instead of resuming from it; the clean fix is a `latest` field in #3110, which this spec asks for. The cursor lives in serve's memory, because a restart takes the snapshot path anyway. A queue entry or a context mark shows within 2 s plus the producer's write. The fallback is not cheap: `lanes-context`, `usage` (which reads panes and transcripts, `UsagePane.cs`) and `status` are three process starts that each load the team config. So until the emitters ship, the fallback ticks every 15 s (agent default). When `events --json` reports `gap` true (cursor older than the 7-day retention, #3110), the service re-snapshots from `status --json` and the other readers, then resumes from `next`, and the head says "lane facts from 09:02" when older than 30 s. D5's 1 s promise covers session state only (§7.2 steps 1 to 4).
 
-The 1 s push needs the opt-in fleet hook (`./setup.sh --with-fleet` or `scripts/install-fleet.sh`). Without it the page runs on the 5 s poll, `sindri doctor` shows a `fleet hook` row as warn, and the page head says "live updates off: fleet hook not installed".
+The 1 s push needs the opt-in fleet hook (`./setup.sh --with-fleet` or `scripts/install-fleet.sh`). Without it the page runs on the 5 s poll, `sindri doctor` shows a `fleet hook` row as warn, and the page head says "Live updates off: the fleet hook isn't installed" with **Turn on live updates**. That one click runs `scripts/install-fleet.sh` for each installed provider as a Sindri setup job, the way `service:setup` registers MCP, and `sindri setup` lists it as a `fleet hook` step. Nobody types a command to get the 1 s page (UX pass on DG1: setup stays one click).
 
 ### 7.3 How perf measures it
 
@@ -619,7 +622,7 @@ From a read of `origin/main` 7c81646696 and the issues (no build, no app run):
 
 | Phase | What | Lane | Starts | Needs |
 |---|---|---|---|---|
-| DG1 | frames of every §6.4 state: the six glyphs (half ring and x are new), the New band, the box strip, the stop confirm, the recycle picker, the peek; check the §6.1 width numbers | design | now | none (uses Home's P0 tokens) |
+| DG1 | done 2026-11-12 (24 frames, comment 6821370647 on #3107): frames of every §6.4 state: the glyphs (half disc and bare x are new), the New band, the box strip, the stop confirm, the recycle picker, the peek; check the §6.1 width numbers | design | now | none (uses Home's P0 tokens) |
 | T1 | aw-meta event store and `events` (PR #3103, merged; `oldest`/`gap` in #3110, plus `latest` asked for in Round 3) | tools | now | none |
 | T2 | emitters: `context.high`/`ok`, `lane.down`/`up`, `usage.limited`/`ok`, `obligation.*`, `merge.recorded` | tools | after T1 | T1 |
 | T3 | `scripts/heavy.sh` writes `locks/heavy-wait/<pid>`; `aw-meta heavy --json`; `heavy.wait.long`; `box.health` | tools | the script change now; the command after T1 | T1 |
@@ -745,3 +748,5 @@ SHOULD and nits:
 - Round 3: `agents steer` flags (`--text`, optional `--version`), `--needs-you` exit code, `inputs` in `reasons[]`, `fix:` lines, doctor rows, A0 split, listing order. Not applied here: A0 and A1 detail; A0 is split when the phase is taken.
 - Round 3: macOS pid check, meta lane `--detach` bound, `session.changed` key shape, 2 s poll with no page open. Not applied: A1 and A2 detail, no decision changes.
 - Round 3: redact heavy-waiter argv and log paths, one shared field mapper for the new routes, shell-quote copied commands, bound peek reads, ledger records op and row id never the body. Not applied here: A0 to A4 detail; the field mapper and quoting are already D12 and §8 text.
+- DG1 frames (design, comment 6821370647): lead's calls. 1 - the lane or parent column is dropped; the object cell names the lane (`lead X` on a builder) and the why chip widens to 144. 2 - the peek keeps the columns (the `-alt` frame), repo · branch hidden. 3 - heavy holders (design, ui), matching h1/h2. 4 - half disc (limited), bare x (down) and dashed ring (ended) are the glyphs. Also applied: rows per screen 17 and 14, blank cells not "-", ids left of the title, A to Z working order, Refresh on a stale source, the 28 px builders line.
+- UX pass on the DG1 frames (meta's check: setup dead simple, matches the frames): 1 - the fleet hook gets a one-click **Turn on live updates** (§7). 2 - the empty page's footer drops the row keys. 3 - a session with no lane leaves the object cell blank, not "session".
