@@ -69,7 +69,7 @@ internal sealed class ReviewSummaryReader(IReviewSummaries cache, IPullRequests 
         var view = await forge.Get(link, cancellationToken).ConfigureAwait(false);
         if (view.IsError)
         {
-            return pass.Failed(view.Error, reference.Repo);
+            return pass.Failed(view.Error, pull.Repo);
         }
 
         // why: the stored record's head can lag the forge's; the summary is saved under the forge's head, so look there before reading the files
@@ -81,7 +81,7 @@ internal sealed class ReviewSummaryReader(IReviewSummaries cache, IPullRequests 
         var files = await forge.Files(link, cancellationToken).ConfigureAwait(false);
         if (files.IsError)
         {
-            return pass.Failed(files.Error, reference.Repo);
+            return pass.Failed(files.Error, pull.Repo);
         }
 
         var summary = Decide(pull, view.Value, files.Value, pass.Review);
