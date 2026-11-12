@@ -62,6 +62,29 @@ public sealed class NodePanelLaunchTests
     }
 
     [Fact]
+    public async Task Retry_after_a_failed_node_read_reads_again_and_shows_the_node()
+    {
+        var api = new FakeSindriApi { NodeAnswer = RouteAnswer.Problem(HttpStatusCode.InternalServerError, "SND-API-500", "it broke") };
+        var clipboard = new FakeClipboard();
+        var clock = new FakeTimeProvider(A.Noon);
+        var catalog = new CatalogViewModel(clipboard, clock);
+        var url = new Uri("http://127.0.0.1:1/");
+        catalog.Show(url, api, (await api.Commands(url, Token)).Value);
+        var page = new ContextPageViewModel(new ContextPorts(api, () => url, clipboard, clock, catalog, _ => { }, new FakeLauncher()));
+        await page.Opened(Token);
+        var rect = page.Whole.Geometry!.Nodes.First(n => n.Key == Node).Rect;
+        page.Whole.PointerClicked(rect.CenterX, rect.CenterY);
+        await page.Whole.Panel.Reading;
+        Assert.True(page.Whole.Panel.IsFailed);
+
+        api.NodeAnswer = new RouteAnswer(HttpStatusCode.OK, _served);
+        await page.Whole.Panel.Retry(Token);
+        await page.Whole.Panel.Reading;
+
+        Assert.Equal((false, "Tab manager"), (page.Whole.Panel.IsFailed, page.Whole.Panel.Title));
+    }
+
+    [Fact]
     public async Task A_launch_that_works_after_a_refused_one_clears_the_line()
     {
         var (page, launcher) = await Open();
