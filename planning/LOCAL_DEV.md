@@ -51,7 +51,7 @@ bash scripts/ci/bash-tests.sh
 
 ```bash
 dotnet build -warnaserror               # whole solution, zero warnings
-scripts/install-cs.sh --publish         # publish the C# binaries into $AW_STATE_DIR/bin/cs/<stamp>/
+scripts/install-cs.sh --publish         # publish the C# binaries into $AW_STATE_DIR/bin/cs/<stamp>/ (only the binaries whose inputs changed; --rebuild publishes all)
 scripts/install-cs.sh --link            # point bin/cs/current at the newest build and write the ~/.local/bin wrappers
 ```
 

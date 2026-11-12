@@ -13,7 +13,15 @@
 #   Output lines start `install-cs:`, no colour. Bash 3.2 compatible (macOS /bin/bash).
 #
 # Builds live in $AW_STATE_DIR/bin/cs/<stamp>/ (the stamp hashes the SDK pin, the platform, the commit, and every tracked and
-# untracked source file the publishes read), `bin/cs/current` is the symlink --link switches (atomically). The newest two
+# untracked source file the publishes read), `bin/cs/current` is the symlink --link switches (atomically).
+# Only the binaries whose inputs changed are published (#3041). Each binary has its own input set: the project dirs of its project and
+# of every project it references (the ProjectReference closure), the root build files, and the few files outside src/ that the
+# projects embed (scripts/lib/sindri-build-inputs.sh). A build keeps the hash of each binary's inputs (inputs/<name>.sha256), the
+# top-level files its publish made (inputs/<name>.files) and the commit it was made at (inputs/<name>.rev). A publish compares each
+# hash with the one in the build `current` names; a binary that matches is copied from that build (`install-cs: reusing judge from
+# <stamp>`) in the same order as a publish, so the first file of a name still wins (sindri-ui's libSkiaSharp.so). The stamp still
+# covers everything, so a change to scripts/heavy.sh alone makes a new build dir whose binaries are all copies. --rebuild, a first
+# build, and a `current` build made before this (no inputs/ folder) publish all eight. Each publish still takes its own heavy slot. The newest two
 # builds are kept, plus the one `current` names, and any build a running control plane executes (the pid in control.json,
 # alive, its command line naming the build dir): that one is neither pruned nor rebuilt (it says to run `sindri stop`).
 # A publish while a control plane runs first checks for open agent runs (scripts/lib/sindri-open-runs.sh, #1000): it lists
@@ -179,6 +187,53 @@ rename_over() { # rename_over <tmp> <final>: an atomic replace (rename(2)), also
   perl -e 'rename($ARGV[0], $ARGV[1]) or die "rename: $!\n"' "$1" "$2"
 }
 
+# --- per-binary inputs (#3041) ---------------------------------------------------------------------------------------
+normpath() { # normpath a/b/../c -> a/c (a path made of / segments; no symlinks looked at)
+  local out="" part oldifs="$IFS"
+  IFS=/; set -f
+  for part in $1; do
+    case "$part" in
+      '' | .) ;;
+      ..) case "$out" in */*) out="${out%/*}" ;; *) out="" ;; esac ;;
+      *) out="${out:+$out/}$part" ;;
+    esac
+  done
+  set +f; IFS="$oldifs"
+  printf '%s' "$out"
+}
+project_dirs() { # project_dirs <csproj, relative to the checkout>: the project dir of it and of every project it references, transitively
+  local todo="$1" seen="" p d r dirs=""
+  while [ -n "$todo" ]; do
+    # shellcheck disable=SC2086  # paths here hold no space or glob character
+    set -- $todo; p="$1"; shift; todo="$*"
+    case " $seen " in *" $p "*) continue ;; esac
+    seen="$seen $p"
+    d="$(dirname "$p")"
+    case " $dirs " in *" $d "*) ;; *) dirs="$dirs $d" ;; esac
+    [ -f "$root/$p" ] || continue
+    # Include paths are relative to the csproj and may use backslashes
+    for r in $(sed -n 's/.*<ProjectReference[^>]*Include="\([^"]*\)".*/\1/p' "$root/$p" | tr '\\' '/' | tr -d '\r'); do
+      todo="$todo $(normpath "$d/$r")"
+    done
+  done
+  printf '%s\n' $dirs
+}
+input_hash() { # input_hash <csproj>: the hash of one binary's inputs, made as the stamp is: SDK, platform, the files and their git hashes
+  local list d specs=("${ROOT_BUILD_INPUTS[@]}")
+  list="$(mktemp "${TMPDIR:-/tmp}/install-cs-bin.XXXXXX")"
+  for d in $(project_dirs "$1"); do
+    specs+=("$d")
+    case "$d" in
+      src/Sindri | src/Sindri/*) specs+=("${SINDRI_EXTRA_INPUTS[@]}") ;;
+      src/Judge | src/Judge/*) specs+=("${JUDGE_EXTRA_INPUTS[@]}") ;;
+    esac
+  done
+  git -C "$root" ls-files -z --cached --others --exclude-standard -- "${specs[@]}" \
+    | while IFS= read -r -d '' f; do if [ -f "$root/$f" ]; then printf '%s\n' "$f"; fi; done | LC_ALL=C sort -u > "$list"
+  { printf '%s\n' "$sdk" "$platform"; cat "$list"; (cd "$root" && git hash-object --stdin-paths < "$list"); } | sha256 | cut -c1-16
+  rm -f "$list"
+}
+
 # --- publish ---------------------------------------------------------------------------------------------------------
 publish() {
   # 1. The pinned SDK and temporal.
@@ -254,17 +309,51 @@ publish() {
   if [ -n "$dirty" ]; then say "the working tree has uncommitted changes under the build paths; the build is stamped $revision"; fi
 
   local stampargs=(-p:SourceRevisionId="$revision" -p:AwBuildTime="$when")
-  # pub <name> <project> <extra dotnet args>...: publish into $stage.<name>, then copy what the stage lacks into $stage
+  # The build `current` names: a binary whose inputs hash equals the one recorded there is copied from it, not published (#3041).
+  # No inputs/ folder (a build made before this) or --rebuild: everything is published.
+  local from="" cur
+  cur="$(current_stamp)"
+  if [ "$rebuild" = 0 ] && [ -n "$cur" ] && [ "$cur" != "$stamp" ] && built "$cur" && [ -d "$base/$cur/inputs" ]; then from="$base/$cur"; fi
+  mkdir -p "$stage/inputs"
+  # pub <name> <project> <extra dotnet args>...: publish into $stage.<name>, then copy what the stage lacks into $stage;
+  # or, when the hash of its inputs is the one in the current build, copy its files from there (the same order, the same rule)
   pub() {
-    local name="$1" proj="$2" out f; shift 2
+    local name="$1" proj="$2" out f want have; shift 2
+    want="$(input_hash "$proj")"
+    if [ -n "$from" ]; then
+      have="$(cat "$from/inputs/$name.sha256" 2> /dev/null || true)"
+      if [ "$have" = "$want" ] && [ -f "$from/inputs/$name.files" ] && reuse "$name" "$from"; then
+        say "reusing $name from $cur"
+        return 0
+      fi
+    fi
     out="$stage.$name"; rm -rf "$out"
     say "publishing $name"
     (cd "$tree" && ${pre[@]+"${pre[@]}"} dotnet publish "$proj" -c Release "${stampargs[@]}" "$@" -o "$out") < /dev/null >> "$log" 2>&1 \
       || { tail -20 "$log" >&2; die "publishing $name failed (log: $log)"; }
     [ -e "$out/$name" ] || die "the publish left no $name in $out (log: $log)"
     # Dot entries too: ui-evidence's Playwright driver is .playwright/, and without it every browser call fails.
-    for f in "$out"/* "$out"/.[!.]*; do [ -e "$f" ] || continue; [ -e "$stage/$(basename "$f")" ] || cp -R "$f" "$stage/"; done
+    # The file list holds every top-level entry of the output (also those the stage already had), so a later copy can walk it.
+    : > "$stage/inputs/$name.files"
+    for f in "$out"/* "$out"/.[!.]*; do
+      [ -e "$f" ] || continue
+      basename "$f" >> "$stage/inputs/$name.files"
+      [ -e "$stage/$(basename "$f")" ] || cp -R "$f" "$stage/"
+    done
+    printf '%s\n' "$want" > "$stage/inputs/$name.sha256"
+    printf '%s\n' "$revision" > "$stage/inputs/$name.rev"
     rm -rf "$out"
+  }
+  # reuse <name> <build dir>: pub()'s merge, from the files the earlier publish of <name> left in <build dir> (never moved: the
+  # build stays whole). False, with nothing staged for <name>, when one of them is gone.
+  reuse() {
+    local name="$1" src="$2" f
+    while IFS= read -r f; do [ -e "$src/$f" ] || return 1; done < "$src/inputs/$name.files"
+    while IFS= read -r f; do
+      [ -e "$stage/$f" ] || cp -R "$src/$f" "$stage/" || return 1
+    done < "$src/inputs/$name.files"
+    cp "$src/inputs/$name.sha256" "$src/inputs/$name.files" "$stage/inputs/"
+    if [ -f "$src/inputs/$name.rev" ]; then cp "$src/inputs/$name.rev" "$stage/inputs/"; fi
   }
   local aot=(-r "$platform" -p:RestoreLockedMode=false)
   pub sindri src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj --no-self-contained
@@ -329,6 +418,8 @@ verify() { # verify <dir> <revision> <heavy source> <meta-gate-reserve source>
   [ "$rc" = 0 ] || { rm -rf "$scratch"; die "install didn't take: sindri help exited $rc"; }
   rc=0; out="$(run "$d/judge" health)" || rc=$?
   [ "$rc" = 0 ] || { rm -rf "$scratch"; die "install didn't take: judge health exited $rc: $out"; }
+  # a ui-evidence copied from an earlier build names the commit that build was made at (inputs/ui-evidence.rev)
+  if [ -s "$d/inputs/ui-evidence.rev" ]; then rev="$(cat "$d/inputs/ui-evidence.rev")"; fi
   rc=0; out="$(run "$d/ui-evidence" version)" || rc=$?
   { [ "$rc" = 0 ] && printf '%s' "$out" | grep -qF "${rev:0:7}"; } \
     || { rm -rf "$scratch"; die "install didn't take: ui-evidence version (exit $rc) does not name commit ${rev:0:7}: $out"; }

@@ -13,6 +13,12 @@ internal static class SindriErrorReading
     internal static bool IsNotFound(this Error error) =>
         string.Equals(error.Code, SindriUiErrors.BadStatus.Code, StringComparison.Ordinal) && error.Message.EndsWith(AnsweredSuffix(HttpStatusCode.NotFound), StringComparison.Ordinal);
 
+    /// <summary>True when the client read a bare 400 (a 400 with no Sindri problem body), such as a refused malformed id. Read the same way as <see cref="IsNotFound"/>, so the status text stays in this class.</summary>
+    /// <param name="error">The failed call's error.</param>
+    /// <returns>True for a bare 400.</returns>
+    internal static bool IsBadRequest(this Error error) =>
+        string.Equals(error.Code, SindriUiErrors.BadStatus.Code, StringComparison.Ordinal) && error.Message.EndsWith(AnsweredSuffix(HttpStatusCode.BadRequest), StringComparison.Ordinal);
+
     /// <summary>The message of the client's BadStatus error: the path and the status it answered. The only place this text is built.</summary>
     /// <param name="path">The route asked.</param>
     /// <param name="code">The status answered.</param>
