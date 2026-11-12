@@ -19,7 +19,7 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
     private static readonly string[] _listProperties =
     [
         nameof(Rows), nameof(Count), nameof(HasOverflow), nameof(OverflowText), nameof(IsExpanded), nameof(IsEmpty), nameof(EmptyText), nameof(IsLoading), nameof(EmptyLine),
-        nameof(HasBanner), nameof(Banner), nameof(HeldCount), nameof(HeldText), nameof(HasHeld), nameof(SheetRow),
+        nameof(HasBanner), nameof(Banner), nameof(IsStalled), nameof(HeldCount), nameof(HeldText), nameof(HasHeld), nameof(SheetRow),
     ];
 
     private NeedsYouFeed _feed = new([], "");
@@ -95,7 +95,7 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
     internal string EmptyLine => !_loaded || !IsEmpty ? "" : _feed.Sentence.Length > 0 ? FirstSentence(_feed.Sentence) : Labels.HomeNothingNeedsYou;
 
     /// <summary>True while the views are stalled (the rows are the last read), so the banner offers Retry.</summary>
-    internal bool IsStalled { get; private set; }
+    internal bool IsStalled => _feed.Stalled;
 
     /// <summary>True while a stalled or rebuilding banner shows.</summary>
     internal bool HasBanner => _feed.Stalled || _feed.Rebuilding;

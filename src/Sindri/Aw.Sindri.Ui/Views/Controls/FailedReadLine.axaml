@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             xmlns:vmc="using:Aw.Sindri.Ui.ViewModels.Controls"
+             x:Class="Aw.Sindri.Ui.Views.Controls.FailedReadLine"
+             x:DataType="vmc:FailedRead">
+  <!-- The shared failed or stale read (#3056, audit #3019): plain words, Retry, and a fix button only when a fix exists. A raw code never
+       shows as text: it is the tooltip and the help text. Every page puts its failed and stale reads here. -->
+  <WrapPanel x:Name="FailedReadRoot" Orientation="Horizontal" ToolTip.Tip="{Binding Help}" AutomationProperties.Name="{Binding Words}" AutomationProperties.HelpText="{Binding Help}">
+    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,12,0" VerticalAlignment="Center">
+      <icons:StateIcon Glyph="Down" Classes="error" VerticalAlignment="Center" />
+      <TextBlock x:Name="FailedReadWords" Classes="caption" Text="{Binding Words}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+    </StackPanel>
+    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+      <Button x:Name="FailedReadRetry" Classes="copy" Click="OnRetry" AutomationProperties.Name="{Binding RetryText}">
+        <TextBlock Classes="caption" Text="{Binding RetryText}" AutomationProperties.AccessibilityView="Raw" />
+      </Button>
+      <Button x:Name="FailedReadFix" Classes="copy" Click="OnFix" IsVisible="{Binding HasFix}" AutomationProperties.Name="{Binding FixLabel}">
+        <TextBlock Classes="caption" Text="{Binding FixLabel}" AutomationProperties.AccessibilityView="Raw" />
+      </Button>
+    </StackPanel>
+  </WrapPanel>
+</UserControl>
