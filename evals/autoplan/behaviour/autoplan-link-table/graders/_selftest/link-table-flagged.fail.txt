@@ -1,0 +1,1 @@
+ARCH-1 LOW: add an index on orders.customer_id.
