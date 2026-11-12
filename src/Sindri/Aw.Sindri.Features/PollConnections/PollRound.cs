@@ -48,6 +48,11 @@ internal sealed class PollRound(IGraphRunStarter starter, IPollCursors cursors, 
             return await SaveRateLimit(cursor, poll, now, cancellationToken).ConfigureAwait(false);
         }
 
+        foreach (var polled in poll.Events)
+        {
+            recent.Record(group.Connection, polled);   // why: seen is seen, whether or not a trigger's filter takes it or its start fails (the trigger step lists it)
+        }
+
         var fanned = await FanOut(group, poll, grant, cancellationToken).ConfigureAwait(false);
         return fanned.IsError
             ? await Failed(cursor, fanned.Error, now, cancellationToken).ConfigureAwait(false)

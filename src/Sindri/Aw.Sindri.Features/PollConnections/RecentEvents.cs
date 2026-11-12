@@ -9,20 +9,54 @@ namespace Aw.Sindri.Features.PollConnections;
 /// </summary>
 internal sealed class RecentEvents
 {
+    private readonly Lock _gate = new();
+    private readonly Dictionary<(ConnectionName Connection, string Kind), List<PolledEvent>> _byGroup = new();
+
     /// <summary>How many events one (connection, kind) keeps.</summary>
     internal const int PerKind = 20;
 
     /// <summary>Keeps one event; a delivery id already kept is replaced, and past <see cref="PerKind"/> the oldest is dropped.</summary>
     /// <param name="connection">The connection it came from.</param>
     /// <param name="polled">The event.</param>
-    internal void Record(ConnectionName connection, PolledEvent polled) => throw new NotSupportedException("red: #3201");
+    internal void Record(ConnectionName connection, PolledEvent polled)
+    {
+        ArgumentNullException.ThrowIfNull(polled);
+        lock (_gate)
+        {
+            var key = (connection, polled.Kind.Key);
+            if (!_byGroup.TryGetValue(key, out var kept))
+            {
+                kept = [];
+                _byGroup[key] = kept;
+            }
+
+            _ = kept.RemoveAll(e => string.Equals(e.DeliveryKey, polled.DeliveryKey, StringComparison.Ordinal));
+            kept.Add(polled);
+            kept.Sort(static (a, b) => b.OccurredAt.CompareTo(a.OccurredAt));   // newest first; the oldest is last, so the cut drops it
+            if (kept.Count > PerKind)
+            {
+                kept.RemoveRange(PerKind, kept.Count - PerKind);
+            }
+        }
+    }
 
     /// <summary>The newest events of a kind.</summary>
     /// <param name="kind">The kind.</param>
     /// <param name="connection">One connection, or null for every one.</param>
     /// <param name="max">The most to return.</param>
     /// <returns>Newest first.</returns>
-    internal IReadOnlyList<RecentEvent> Newest(EventKind kind, ConnectionName? connection, int max) => throw new NotSupportedException("red: #3201");
+    internal IReadOnlyList<RecentEvent> Newest(EventKind kind, ConnectionName? connection, int max)
+    {
+        lock (_gate)
+        {
+            return [.. _byGroup
+                .Where(g => string.Equals(g.Key.Kind, kind.Key, StringComparison.Ordinal) && (connection is null || g.Key.Connection == connection.Value))
+                .SelectMany(static g => g.Value.Select(e => new RecentEvent(g.Key.Connection, e)))
+                .OrderByDescending(static r => r.Event.OccurredAt)
+                .ThenBy(static r => r.Event.DeliveryKey, StringComparer.Ordinal)
+                .Take(Math.Max(max, 0))];
+        }
+    }
 }
 
 /// <summary>One kept event and the connection it came from.</summary>

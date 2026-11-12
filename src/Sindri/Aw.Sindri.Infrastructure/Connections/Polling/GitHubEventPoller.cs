@@ -28,13 +28,14 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
     private const int MaxEnriched = 20;   // GET /pulls/{n} calls per poll
 
     private readonly PollerClient _client = new(http, secrets, Host, clock);
+    private readonly GitHubPullStates _states = new(new PollerClient(http, secrets, Host, clock));
 
     public string Preset => "github";
 
     public async ValueTask<Result<PollResult>> Poll(Connection connection, EventKind kind, string? cursor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(connection);
-        if (!PollCatalog.For(Preset).Contains(kind))
+        if (!PollCatalog.For(Preset).Contains(kind) && !GitHubEventMapper.Knows(kind))   // why: the mapper's kinds wait on engine's catalog PR (#3201); validate still refuses a kind the catalog lacks
         {
             return SindriErrors.ConnectionProviderChanged.With($"{kind} is not a GitHub event");
         }
@@ -43,6 +44,11 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
         if (parts.Length != 2 || parts.Any(static p => p.Length == 0))
         {
             return SindriErrors.ConnectionProviderChanged.With($"{connection.Name} has no 'repo' setting like owner/name");
+        }
+
+        if (GitHubEventMapper.FromPullState(kind))
+        {
+            return await _states.Poll(connection, parts, kind, cursor, cancellationToken).ConfigureAwait(false);
         }
 
         var first = $"https://{Host}/repos/{Uri.EscapeDataString(parts[0])}/{Uri.EscapeDataString(parts[1])}/events?per_page=100";
@@ -94,10 +100,10 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
         return new PollResult(events, newest.Text ?? PollCursorText.Now(clock.GetUtcNow()), RateLimited: false, RetryAfter: null, gap);
     }
 
-    // The trimmed pull request in the feed holds no title or author: one GET /pulls/{n} fills them. A failed or odd answer leaves the event as the feed had it.
+    // The trimmed pull request in the feed holds no title, author or draft flag: one GET /pulls/{n} fills them. A failed or odd answer leaves the event as the feed had it.
     private async ValueTask<PolledEvent> Enrich(Connection connection, string[] parts, PolledEvent polled, CancellationToken cancellationToken)
     {
-        if (!polled.Kind.Key.StartsWith("github.pr.", StringComparison.Ordinal) || polled.Fields.ContainsKey("title") || !polled.Fields.TryGetValue("number", out var number))
+        if (!GitHubEventMapper.NeedsDetail(polled) || !polled.Fields.TryGetValue("number", out var number) || number.Length == 0)
         {
             return polled;
         }
@@ -112,16 +118,7 @@ internal sealed class GitHubEventPoller(HttpClient http, IConnectionSecrets secr
         try
         {
             using var document = JsonDocument.Parse(body);
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
-            {
-                return polled;
-            }
-
-            var fields = new Dictionary<string, string>(polled.Fields, StringComparer.Ordinal);
-            PollJson.Put(fields, "title", PollJson.Text(PollJson.Member(document.RootElement, "title")));
-            PollJson.Put(fields, "author", PollJson.Text(PollJson.Path(document.RootElement, "user", "login")));
-            PollJson.Put(fields, "url", PollJson.Text(PollJson.Member(document.RootElement, "html_url")));
-            return polled with { Fields = fields };
+            return document.RootElement.ValueKind == JsonValueKind.Object ? GitHubEventMapper.Enriched(polled, document.RootElement) : polled;
         }
         catch (JsonException)
         {
