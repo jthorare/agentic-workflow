@@ -6,6 +6,7 @@ internal sealed class GraphStructure
     private readonly Dictionary<string, List<string>> _next = new(StringComparer.Ordinal);
     private readonly Dictionary<string, List<string>> _previous = new(StringComparer.Ordinal);
     private readonly Dictionary<string, GraphNode> _nodes = new(StringComparer.Ordinal);
+    private Dictionary<string, HashSet<string>>? _dominators;
 
     public GraphStructure(GraphSpec spec)
     {
@@ -44,6 +45,45 @@ internal sealed class GraphStructure
 
     /// <summary>The nodes with a path to <paramref name="id"/>, not counting <paramref name="id"/> itself unless it is on a cycle.</summary>
     public HashSet<string> Upstream(string id) => Walk(_previous[id], _previous);
+
+    /// <summary>
+    /// The nodes that lie on every path from a start node (one with no incoming edge) to <paramref name="id"/>, <paramref name="id"/> included:
+    /// dom(n) = {n} + the intersection of dom(p) over the nodes p that feed n. Computed once per graph; settles on a cycle too.
+    /// </summary>
+    public HashSet<string> Dominators(string id)
+    {
+        _dominators ??= ComputeDominators();
+        return _dominators.TryGetValue(id, out var found) ? found : [id];
+    }
+
+    private Dictionary<string, HashSet<string>> ComputeDominators()
+    {
+        var ids = Order.Distinct(StringComparer.Ordinal).ToList();
+        var all = new HashSet<string>(ids, StringComparer.Ordinal);
+        var dom = ids.ToDictionary(static i => i, i => _previous[i].Count == 0 ? new HashSet<string>([i], StringComparer.Ordinal) : new HashSet<string>(all, StringComparer.Ordinal), StringComparer.Ordinal);
+        var changed = true;
+        while (changed)
+        {
+            changed = false;
+            foreach (var id in ids.Where(i => _previous[i].Count > 0))
+            {
+                var next = new HashSet<string>(dom[_previous[id][0]], StringComparer.Ordinal);
+                foreach (var before in _previous[id].Skip(1))
+                {
+                    next.IntersectWith(dom[before]);
+                }
+
+                _ = next.Add(id);
+                if (next.Count != dom[id].Count)
+                {
+                    dom[id] = next;
+                    changed = true;
+                }
+            }
+        }
+
+        return dom;
+    }
 
     /// <summary>Every cycle, each as its nodes in spec order of the first one, found by walking nodes and edges in spec order.</summary>
     public IReadOnlyList<IReadOnlyList<string>> Cycles()
