@@ -1,3 +1,4 @@
+using Avalonia.Headless;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Views.Controls;
 
@@ -14,10 +15,15 @@ public sealed class TickBarTests
     [InlineData(9111, 4556, 40, 20)]
     [InlineData(60, 30, 40, 20)]
     [InlineData(0, 0, 0, 0)]
-    public void Ticks_and_lit_ticks_follow_total_and_value(int total, int value, int ticks, int lit)
+    public async Task Ticks_and_lit_ticks_follow_total_and_value(int total, int value, int ticks, int lit)
     {
-        var bar = new TickBar { Total = total, Value = value };
+        // why: a TickBar is an Avalonia object; setting its properties on a plain xunit thread takes the UI thread from the headless session (#2948)
+        var counts = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(TickBarTests).Assembly).Dispatch(() =>
+        {
+            var bar = new TickBar { Total = total, Value = value };
+            return (bar.Ticks, bar.Lit);
+        }, TestContext.Current.CancellationToken);
 
-        Assert.Equal((ticks, lit), (bar.Ticks, bar.Lit));
+        Assert.Equal((ticks, lit), counts);
     }
 }
