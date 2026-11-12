@@ -14,8 +14,8 @@
     <Border Classes="section last">
       <StackPanel Spacing="{StaticResource Space.XS}">
         <Grid ColumnDefinitions="*,Auto">
-          <TextBlock x:Name="SandboxEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
-          <TextBlock x:Name="SandboxWord" Grid.Column="1" Classes="body-strong" Text="{Binding StateWord}" AutomationProperties.Name="{Binding StateWord}" />
+          <TextBlock x:Name="SandboxEyebrow" Classes="section-title head-title" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
+          <TextBlock x:Name="SandboxWord" Grid.Column="1" Classes="body-strong head-word" Text="{Binding StateWord}" AutomationProperties.Name="{Binding StateWord}" />
         </Grid>
         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" AutomationProperties.Name="{Binding RowText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
           <icons:StateIcon x:Name="SandboxGlyph" Glyph="{Binding Glyph}" VerticalAlignment="Top" Margin="0,2,0,0" />

@@ -111,9 +111,6 @@
 /home/owner/.agentic-workflow/sindri-app/launches
 /home/owner/.agentic-workflow/sindri-app/launches
 --ro-bind
-/home/owner/.agentic-workflow/sindri-app/approved
-/home/owner/.agentic-workflow/sindri-app/approved
---ro-bind
 /home/owner/.agentic-workflow/sindri-app-sessions/LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 /home/owner/.agentic-workflow/sindri-app-sessions/LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --ro-bind

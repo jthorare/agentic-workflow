@@ -16,7 +16,6 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(QueueView))]
 [JsonSerializable(typeof(ItemListView))]
 [JsonSerializable(typeof(ItemView))]
-[JsonSerializable(typeof(Context.ItemScopeView))]
 [JsonSerializable(typeof(ItemLaunchView))]
 [JsonSerializable(typeof(TimelineView))]
 [JsonSerializable(typeof(CreateItemRequest))]
@@ -28,8 +27,6 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(DecideRequest))]
 [JsonSerializable(typeof(FileRequestRequest))]
 [JsonSerializable(typeof(RequestFiledView))]
-[JsonSerializable(typeof(ApplyCommandBody))]
-[JsonSerializable(typeof(ApplyCommandAccepted))]
 // LANE ANCHOR U3': one [JsonSerializable] per Needs you record. Insert immediately above this marker, never between the markers.
 // LANE ANCHOR U8: one [JsonSerializable] per command send body and reply. Insert immediately below this marker, never between the markers.
 [JsonSerializable(typeof(LaunchPicksView))]   // model-pick spec §6.1: GET /sindri/launch/picks

@@ -206,6 +206,49 @@ public abstract class ViewStoreContract
         Expect.Equal(1, (await reader.Where<HumanDecisionRow>(ViewNames.Decisions, ViewColumn.Item, A.FirstItemId.Value, Token)).Value.Count);
     }
 
+    /// <summary>
+    /// An event that writes, filters (so its own row must be in the store mid-page) and then fails is undone alone: the filter saw its
+    /// row, the earlier event's row stays and its own is gone (#2890: the page's rows are written before the event's savepoint opens).
+    /// </summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task An_event_that_filters_its_own_write_and_then_fails_is_undone_alone()
+    {
+        var (store, reader) = Create();
+        _ = await store.Open(ViewSchema.Version, Token);
+        var second = DecisionId.From("DEC-00000000000000000000000000000002");
+        var rows = new Dictionary<string, HumanDecisionRow>(StringComparer.Ordinal)
+        {
+            ["d1"] = A.Decision().About(A.FirstItemId, 1, repo: null).Build(),
+            ["d2"] = A.Decision().WithIds(second, A.FirstRequestId).About(A.FirstItemId, 2, repo: null).Build(),
+        };
+        var seen = new List<int>();
+
+        var applied = (await store.Apply([Event(1, "fixture.decision", "d1"), Event(2, "fixture.put-count-fail", "d2")],
+            [new PutDecisions(rows), new PutCountFail(rows, seen)], Clock.GetUtcNow(), Token)).Value;
+
+        Expect.Equal(2L, applied.Stall?.Sequence);
+        Expect.Sequence([2], seen);
+        Expect.Sequence([A.FirstDecisionId.Value], (await reader.Where<HumanDecisionRow>(ViewNames.Decisions, ViewColumn.Item, A.FirstItemId.Value, Token))
+            .Value.Select(r => r.Id.Value));
+    }
+
+    /// <summary>A row written or deleted earlier in the page reads back as the page left it, inside one event and across events (#2890).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_row_reads_back_as_the_page_left_it()
+    {
+        var (store, reader) = Create();
+        _ = await store.Open(ViewSchema.Version, Token);
+        var seen = new List<string>();
+
+        _ = await store.Apply([Event(1, "fixture.toggle", "a"), Event(2, "fixture.toggle", "a"), Event(3, "fixture.toggle", "a"), Event(4, "fixture.toggle", "b")],
+            [new Toggle(seen)], Clock.GetUtcNow(), Token);
+
+        Expect.Sequence(["a:absent:put", "a:present:delete", "a:absent:put", "b:absent:put"], seen);
+        Expect.Sequence(["a", "b"], (await reader.List<ServiceRow>(ViewNames.Services, Token)).Value.Select(r => r.Name.Value));
+    }
+
     /// <summary>Every (view, column) pair, for the filter theory.</summary>
     /// <returns>The pairs.</returns>
     public static TheoryData<string, ViewColumn> EveryViewAndColumn()
@@ -336,6 +379,44 @@ public abstract class ViewStoreContract
         {
             var found = await target.Where<HumanDecisionRow>(ViewNames.Decisions, ViewColumn.Item, A.FirstItemId.Value, cancellationToken).ConfigureAwait(false);
             seen.Add(found.Value.Count);
+            return Kernel.Unit.Value;
+        }
+    }
+
+    /// <summary>Puts the event's decision, counts the item's decisions (so the put must be in the store), then fails.</summary>
+    private sealed class PutCountFail(Dictionary<string, HumanDecisionRow> rows, List<int> seen) : IProjection
+    {
+        public IReadOnlyList<string> Views => [ViewNames.Decisions];
+
+        public bool Handles(string eventType) => string.Equals(eventType, "fixture.put-count-fail", StringComparison.Ordinal);
+
+        public async ValueTask<Kernel.Result<Kernel.Unit>> Apply(LedgerEvent recorded, IViewRows target, CancellationToken cancellationToken)
+        {
+            var row = rows[recorded.IdempotencyKey];
+            _ = (await target.Put(ViewNames.Decisions, row.Id.Value, row, cancellationToken).ConfigureAwait(false)).Value;
+            var found = await target.Where<HumanDecisionRow>(ViewNames.Decisions, ViewColumn.Item, A.FirstItemId.Value, cancellationToken).ConfigureAwait(false);
+            seen.Add(found.Value.Count);
+            return FixtureProjection.Failure;
+        }
+    }
+
+    /// <summary>Reads the event's service row, deletes it when present and puts it when absent, twice inside the event to read its own write.</summary>
+    private sealed class Toggle(List<string> seen) : IProjection
+    {
+        public IReadOnlyList<string> Views => [ViewNames.Services];
+
+        public bool Handles(string eventType) => string.Equals(eventType, "fixture.toggle", StringComparison.Ordinal);
+
+        public async ValueTask<Kernel.Result<Kernel.Unit>> Apply(LedgerEvent recorded, IViewRows target, CancellationToken cancellationToken)
+        {
+            var key = recorded.IdempotencyKey;
+            var before = (await target.Get<ServiceRow>(ViewNames.Services, key, cancellationToken).ConfigureAwait(false)).Value;
+            var done = before is null
+                ? await target.Put(ViewNames.Services, key, FixtureProjection.RowFor(recorded), cancellationToken).ConfigureAwait(false)
+                : await target.Delete(ViewNames.Services, key, cancellationToken).ConfigureAwait(false);
+            var after = (await target.Get<ServiceRow>(ViewNames.Services, key, cancellationToken).ConfigureAwait(false)).Value;
+            Expect.True(done.IsSuccess && (after is null) == (before is not null));
+            seen.Add($"{key}:{(before is null ? "absent" : "present")}:{(before is null ? "put" : "delete")}");
             return Kernel.Unit.Value;
         }
     }

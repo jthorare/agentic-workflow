@@ -150,7 +150,7 @@ public sealed class TopBarTests : IDisposable
         Settle(window);
 
         var problems = Named<TextBlock>(window, "PillProblems");
-        using var layout = new TextLayout(problems.Text, new Typeface(problems.FontFamily, problems.FontStyle, problems.FontWeight), problems.FontSize, foreground: null);
+        using var layout = new TextLayout(problems.Text, new Typeface(problems.FontFamily, problems.FontStyle, problems.FontWeight), problems.FontSize, foreground: null, letterSpacing: problems.LetterSpacing);
         Assert.True(problems.IsEffectivelyVisible);
         Assert.True(
             problems.Bounds.Width >= layout.Width - 0.5,
@@ -162,7 +162,7 @@ public sealed class TopBarTests : IDisposable
 
     private static double Natural(TextBlock text)
     {
-        using var layout = new TextLayout(text.Text, new Typeface(text.FontFamily, text.FontStyle, text.FontWeight), text.FontSize, foreground: null);
+        using var layout = new TextLayout(text.Text, new Typeface(text.FontFamily, text.FontStyle, text.FontWeight), text.FontSize, foreground: null, letterSpacing: text.LetterSpacing);
         return layout.Width;
     }
 

@@ -24,7 +24,7 @@ public sealed class WatchSupersededTests : IDisposable
         _world.Values,
         _world.Delay,
         _world.Clock,
-        _world.Monitor,
+        new LaneReport(_world.Monitor, _world.Values),
         _world.Board);
 
     private WatchRequest Request(int owner, bool untilEvent) =>

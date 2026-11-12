@@ -34,7 +34,7 @@
       <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
     </UniformGrid>
 
-    <Border x:Name="ProjectsBanner" Classes="card" Background="{DynamicResource Brush.ErrorSoft}" BorderBrush="{DynamicResource Brush.Error}" IsVisible="{Binding IsBanner}">
+    <Border x:Name="ProjectsBanner" Classes="card" Background="{DynamicResource Brush.ErrorSoft}" BorderBrush="{DynamicResource Brush.Error}" BorderThickness="1" IsVisible="{Binding IsBanner}">
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
         <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Error}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
         <Border x:Name="ProjectsBannerName" VerticalAlignment="Center" AutomationProperties.Name="{Binding Sentence}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">

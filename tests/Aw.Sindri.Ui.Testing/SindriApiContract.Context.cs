@@ -186,39 +186,6 @@ public abstract partial class SindriApiContract
     private static string[] Names(JsonNode map) => [.. map["entries"]!.AsArray().Select(e => (string)e!["name"]!)];
 
     [Fact]
-    public async Task ItemScope_answers_a_frozen_scope_with_its_anchors_and_map_version()
-    {
-        var api = Reach(new FakeSindriApi { ItemScopeAnswer = _ => RouteAnswer.Api("items-id-scope", "scope-found") });
-        var golden = GoldenFiles.Node("items-id-scope", "scope-found");
-
-        var view = (await api.ItemScope(_api, (string)golden["item"]!, Token)).Value;
-
-        var scope = view.Scope!;   // why: the scope-found golden has one
-        Expect.Equal(((string)golden["item"]!, (string)golden["scope"]!["mapVersion"]!, (string)golden["scope"]!["packetHash"]!), (view.Item, scope.MapVersion!, scope.PacketHash));
-        Expect.Sequence(golden["scope"]!["anchors"]!.AsArray().Select(a => ((string)a!["key"]!, (string)a["mapVersion"]!)), scope.Anchors.Select(a => (a.Key, a.MapVersion)));
-    }
-
-    [Fact]
-    public async Task ItemScope_answers_no_scope_as_null_and_mixed_versions_as_a_null_map_version()
-    {
-        var none = (await Reach(new FakeSindriApi()).ItemScope(_api, "ITM-0000000000000000000000000000000f", Token)).Value;
-        var mixed = (await Reach(new FakeSindriApi { ItemScopeAnswer = _ => RouteAnswer.Api("items-id-scope", "scope-mixed-versions") }).ItemScope(_api, "ITM-0000000000000000000000000000000f", Token)).Value;
-
-        Expect.True(none.Scope is null);
-        Expect.Equal((true, 3), (mixed.Scope!.MapVersion is null, mixed.Scope.Anchors.Count));   // why: the mixed golden has a scope
-    }
-
-    [Fact]
-    public async Task ItemScope_refuses_an_unknown_item_with_the_apis_code()
-    {
-        var api = Reach(new FakeSindriApi { ItemScopeAnswer = _ => RouteAnswer.Problem("items-id-scope", "not-found") });
-
-        var result = await api.ItemScope(_api, "ITM-000000000000000000000000000000ff", Token);
-
-        Expect.Equal("SND-ITEM-404", result.Error.Code);
-    }
-
-    [Fact]
     public async Task WholeMap_answers_the_golden_with_its_counts_areas_nodes_and_edges()
     {
         var api = Reach(new FakeSindriApi());

@@ -124,6 +124,23 @@ public sealed class ReviewMergeTests
         Assert.False((await Check()).Ready);
     }
 
+    // #2894: under merge-direct a team with a reviewer lane needs no gate, so a failing review check is reported alone,
+    // never with a "gate" FAIL that sends meta to gate-run.
+    [Fact, Trait("Lane", "unit")]
+    public async Task With_a_review_lane_a_failing_review_check_adds_no_gate_check()
+    {
+        await Team();
+        await Inbox("t1-ideas", $"OK #190 at {Head}");
+        await Inbox("t1-api", ReadyBody(counts: "1333 passed, 0 skipped, 3 failed"));
+        Script();
+
+        var response = await Check();
+
+        Assert.False(response.Ready);
+        Assert.Equal(["counts"], Failed(response));
+        Assert.DoesNotContain(response.Checks, c => c.Name == "gate");
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Without_a_review_lane_a_never_gated_pr_is_refused_as_today()
     {

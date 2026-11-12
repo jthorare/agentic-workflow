@@ -230,7 +230,9 @@ reason="$(mktemp "${TMPDIR:-/tmp}/heavy-reason.XXXXXX")"
     fi
     sleep 5
   done
-) &
+# The watchdog has no message of its own (its reason goes to the reason file), so its stderr goes nowhere: killed right after
+# the fork it can make bash print a run_pending_traps warning, and `seq` a broken-pipe error, into the job's output (#2884).
+) 2>/dev/null &
 dog=$!
 wait "$job"; rc=$?
 kill "$dog" 2>/dev/null; wait "$dog" 2>/dev/null

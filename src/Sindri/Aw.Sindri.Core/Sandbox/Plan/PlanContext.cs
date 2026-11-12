@@ -21,6 +21,18 @@ internal sealed record PlanContext(
 
     internal string StateDir => Request.Host.StateDir;
 
+    /// <summary>The folder of the live profile to bind, or null when there is no profile path or binding it would undo the home, state or Sindri-home masks (the folder is one of them or holds one).</summary>
+    internal string? ProfileFolder
+    {
+        get
+        {
+            var host = Request.Host;
+            var folder = host.ProfilePath is { Length: > 0 } path && path[0] == '/' ? path[..path.LastIndexOf('/')] : null;
+            string[] masked = [host.Home, host.StateDir, host.SindriHome];
+            return folder is { Length: > 0 } && !masked.Any(p => p.StartsWith(folder + "/", StringComparison.Ordinal) || string.Equals(p, folder, StringComparison.Ordinal)) ? folder : null;
+        }
+    }
+
     internal string SessionHome => SessionHomePaths.For(Request.Host.SindriHome, Request.Launch);
 
     internal string RunArea => Request.Paths.RunArea;
