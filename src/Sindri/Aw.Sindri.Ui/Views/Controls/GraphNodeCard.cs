@@ -1,17 +1,27 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
+using Avalonia.Automation;
+using Avalonia.Collections;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
+using Avalonia.Input;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.VisualTree;
+using Aw.Sindri.Ui.ViewModels.Workflows;
+using Aw.Sindri.Ui.Views.Workflows;
 
 namespace Aw.Sindri.Ui.Views.Controls;
 
 /// <summary>
 /// One workflow step as a card (#3234): the title, the block type, and the run's status as a <see cref="StateChipView"/> (glyph, word, tone), 200 by 64. Its look in every state
-/// comes from <c>GraphTilePens</c>: hover, a focus ring outside the selected ring, disabled (dashed), error. A screen reader reads "title, type, status".
-/// Stub: the layout and the states come with the green commit.
+/// comes from <see cref="GraphTilePens"/>: hover, a focus ring outside the selected ring (keyboard focus only), disabled (dashed), error. A screen reader reads "title, type, status".
 /// </summary>
 [SuppressMessage("Design", "MA0182", Justification = "The editor canvas adopts it in its own PR (#3234).")]
 internal sealed class GraphNodeCard : UserControl
 {
+    private const double Radius = 8;
+
     /// <summary>The step's title.</summary>
     public static readonly StyledProperty<string?> TitleProperty = AvaloniaProperty.Register<GraphNodeCard, string?>(nameof(Title));
 
@@ -32,6 +42,56 @@ internal sealed class GraphNodeCard : UserControl
 
     /// <summary>Whether the step failed or is invalid (the error fill and border).</summary>
     public static readonly StyledProperty<bool> IsInvalidProperty = AvaloniaProperty.Register<GraphNodeCard, bool>(nameof(IsInvalid));
+
+    private readonly Panel _rings = new() { IsHitTestVisible = false };
+    private readonly Border _face = new() { Name = "Card", CornerRadius = new CornerRadius(Radius), Padding = new Thickness(12, 8) };
+    private readonly Rectangle _dash = new() { Name = "Dash", RadiusX = Radius, RadiusY = Radius, StrokeThickness = 1, StrokeDashArray = new AvaloniaList<double> { 6, 4 }, IsVisible = false, IsHitTestVisible = false };
+    private readonly TextBlock _title = new() { TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
+    private readonly TextBlock _kind = new() { TextTrimming = TextTrimming.CharacterEllipsis };
+    private readonly StateChipView _chip = new() { Margin = new Thickness(8, 0, 0, 0) };
+    private bool _hover;
+    private bool _focusVisible;
+
+    static GraphNodeCard()
+    {
+        _ = TitleProperty.Changed.AddClassHandler<GraphNodeCard>((c, _) => c.Refresh());
+        _ = KindProperty.Changed.AddClassHandler<GraphNodeCard>((c, _) => c.Refresh());
+        _ = StatusWordProperty.Changed.AddClassHandler<GraphNodeCard>((c, _) => c.Refresh());
+        _ = StatusToneProperty.Changed.AddClassHandler<GraphNodeCard>((c, _) => c.Refresh());
+        _ = StatusGlyphProperty.Changed.AddClassHandler<GraphNodeCard>((c, _) => c.Refresh());
+        _ = IsSelectedProperty.Changed.AddClassHandler<GraphNodeCard>((c, _) => c.Paint());
+        _ = IsInvalidProperty.Changed.AddClassHandler<GraphNodeCard>((c, _) => c.Paint());
+        _ = IsEnabledProperty.Changed.AddClassHandler<GraphNodeCard>((c, _) => c.Paint());
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="GraphNodeCard"/> class, 200 by 64.</summary>
+    public GraphNodeCard()
+    {
+        Width = WorkflowGraphViewModel.CardWidth;
+        Height = WorkflowGraphViewModel.CardHeight;
+        Focusable = true;
+        _title.Classes.Add("body-strong");
+        _kind.Classes.Add("caption");
+        AutomationProperties.SetAccessibilityView(_title, AccessibilityView.Raw);
+        AutomationProperties.SetAccessibilityView(_kind, AccessibilityView.Raw);
+        AutomationProperties.SetAccessibilityView(_chip, AccessibilityView.Raw);
+
+        var body = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), RowDefinitions = new RowDefinitions("Auto,Auto") };
+        body.Children.Add(_title);
+        Grid.SetColumn(_chip, 1);
+        body.Children.Add(_chip);
+        Grid.SetRow(_kind, 1);
+        Grid.SetColumnSpan(_kind, 2);
+        body.Children.Add(_kind);
+        _face.Child = body;
+
+        var layers = new Grid();
+        layers.Children.Add(_rings);
+        layers.Children.Add(_face);
+        layers.Children.Add(_dash);
+        Content = layers;
+        Refresh();
+    }
 
     /// <summary>Gets or sets the title.</summary>
     internal string? Title
@@ -81,4 +141,111 @@ internal sealed class GraphNodeCard : UserControl
         get => GetValue(IsInvalidProperty);
         set => SetValue(IsInvalidProperty, value);
     }
+
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        Paint();
+    }
+
+    /// <inheritdoc />
+    protected override void OnPointerEntered(PointerEventArgs e)
+    {
+        base.OnPointerEntered(e);
+        _hover = true;
+        Paint();
+    }
+
+    /// <inheritdoc />
+    protected override void OnPointerExited(PointerEventArgs e)
+    {
+        base.OnPointerExited(e);
+        _hover = false;
+        Paint();
+    }
+
+    /// <inheritdoc />
+    protected override void OnGotFocus(GotFocusEventArgs e)
+    {
+        base.OnGotFocus(e);
+        _focusVisible = e.NavigationMethod is NavigationMethod.Tab or NavigationMethod.Directional;
+        Paint();
+    }
+
+    /// <inheritdoc />
+    protected override void OnLostFocus(RoutedEventArgs e)
+    {
+        base.OnLostFocus(e);
+        _focusVisible = false;
+        Paint();
+    }
+
+    // The words: the title, the type, the chip, and the one name a screen reader reads.
+    private void Refresh()
+    {
+        _title.Text = Title;
+        _kind.Text = Kind;
+        _chip.Word = StatusWord;
+        _chip.Tone = StatusTone;
+        _chip.Glyph = StatusGlyph;
+        _chip.IsVisible = !string.IsNullOrEmpty(StatusWord);
+        AutomationProperties.SetName(this, string.Join(", ", new[] { Title, Kind, StatusWord }.Where(part => !string.IsNullOrEmpty(part))));
+    }
+
+    // The look: the pens' brush keys for the states it is in, resolved from the theme.
+    private void Paint()
+    {
+        var states = GraphTileStates.None;
+        if (!IsEnabled)
+        {
+            states |= GraphTileStates.Disabled;
+        }
+
+        if (IsInvalid)
+        {
+            states |= GraphTileStates.Error;
+        }
+
+        if (_hover)
+        {
+            states |= GraphTileStates.Hover;
+        }
+
+        if (IsSelected)
+        {
+            states |= GraphTileStates.Selected;
+        }
+
+        if (_focusVisible)
+        {
+            states |= GraphTileStates.Focus;
+        }
+
+        var paint = GraphTilePens.Paint(states);
+        _face.Background = Resolve(paint.Fill);
+        _face.BorderThickness = new Thickness(paint.BorderThickness);
+        _face.BorderBrush = paint.Dashed ? Brushes.Transparent : Resolve(paint.Border);
+        _dash.IsVisible = paint.Dashed;
+        _dash.Stroke = Resolve(paint.Border);
+        _title.Foreground = Resolve(paint.Title);
+        _kind.Foreground = Resolve(paint.Kind);
+
+        _rings.Children.Clear();
+        foreach (var ring in GraphTilePens.Rings(states))
+        {
+            var reach = ring.Gap + ring.Thickness;
+            _rings.Children.Add(new Border
+            {
+                Name = "Ring",
+                BorderBrush = Resolve(ring.Key),
+                BorderThickness = new Thickness(ring.Thickness),
+                CornerRadius = new CornerRadius(Radius + reach),
+                Margin = new Thickness(-reach),
+                IsHitTestVisible = false,
+            });
+        }
+    }
+
+    private IBrush Resolve(string key) => this.TryFindResource(key, ActualThemeVariant, out var value) && value is IBrush brush ? brush : Brushes.Gray;
 }
