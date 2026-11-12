@@ -1,5 +1,6 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -108,6 +109,65 @@ public sealed class ContextPageWindowTests
 
             return true;
         }, Token);
+    }
+
+    [Fact]
+    public async Task A_did_you_mean_chip_draws_its_whole_key_with_every_underscore()
+    {
+        const string key = "feature:agentic-workflow.src.sindri.aw_sindri_host.skills";
+        using var stop = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(ContextPageWindowTests).Assembly).Dispatch(async () =>
+        {
+            var records = new InMemoryEndpointRecords();
+            records.Write(A.Record());
+            var api = NothingFound(key);
+            var shell = new ShellViewModel(records, api, new FakeTimeProvider(A.Noon), new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
+            await shell.Restore(Token);
+            var window = new ShellWindow { DataContext = shell };
+            try
+            {
+                window.Show();
+                _ = shell.Run(stop.Token);
+                for (var i = 0; i < 200 && shell.State != ShellState.Normal; i++)
+                {
+                    await Task.Delay(10, Token);
+                    Dispatcher.UIThread.RunJobs();
+                }
+
+                shell.GoTo(PageId.Context);
+                Dispatcher.UIThread.RunJobs();
+                shell.Context.AnchorText = "zebra crossing";
+                await shell.Context.Submit(Token);
+                Dispatcher.UIThread.RunJobs();
+                window.UpdateLayout();
+
+                AssertChipDrawsKey(window, key);
+            }
+            finally
+            {
+                await stop.CancelAsync();
+                window.Close();
+                Dispatcher.UIThread.RunJobs();
+            }
+
+            return true;
+        }, Token);
+    }
+
+    // No whole map, no anchor for any text, and one suggestion: the page draws the suggestion as a chip.
+    private static FakeSindriApi NothingFound(string suggestion) => new()
+    {
+        WholeMapAnswer = _ => new RouteAnswer(System.Net.HttpStatusCode.InternalServerError, "{}"),
+        QueryAnswer = _ => FakeSindriApi.QueryAnchorsBody([], [suggestion]),
+        LensesAnswer = _ => RouteAnswer.Problem(System.Net.HttpStatusCode.NotFound, "SND-CONTEXT-003", "no node is named that"),
+    };
+
+    private static void AssertChipDrawsKey(Window window, string key)
+    {
+        var chip = window.GetVisualDescendants().OfType<Button>().Single(b => string.Equals(AutomationProperties.GetName(b), key, StringComparison.Ordinal));
+        var drawn = chip.GetVisualDescendants().OfType<TextBlock>().ToList();
+        Assert.DoesNotContain(drawn, t => t is AccessText);   // why: AccessText reads the first "_" as a mnemonic and does not draw it
+        Assert.Contains(drawn, t => string.Equals(t.Text, key, StringComparison.Ordinal));
     }
 
     // Each stage's host is its seam view, bound to that stage's view model (a Panel, or a lost binding, fails here).
