@@ -193,7 +193,7 @@ public sealed class TodoPanelHomeTests : IDisposable
         Assert.True(empty > 0 && empty < skeleton, string.Create(CultureInfo.InvariantCulture, $"empty {empty} vs {skeleton}"));   // #2548: an empty list collapses to one line
     });
 
-    // The collapsed body clips at five rows plus the Show all slot: a row drawn taller than its slot would hide the fifth.
+    // The collapsed body clips at five rows: a row drawn taller than its slot would hide the fifth.
     [Fact]
     public Task The_fifth_row_fits_inside_the_collapsed_body() => OnUi(async () =>
     {
@@ -203,20 +203,20 @@ public sealed class TodoPanelHomeTests : IDisposable
         var body = Named<Grid>(window, "TodoCollapsed");
         var fifth = Rows(window)[4];
         var bottom = fifth.TranslatePoint(new Point(0, fifth.Bounds.Height), body)!.Value.Y;   // why: both are in the same visual tree
-        var slots = body.RowDefinitions[0].ActualHeight;   // the rows' part: the Show all slot below is not theirs
+        var slots = body.Bounds.Height;   // the whole body now
 
         Assert.True(bottom <= slots, string.Create(CultureInfo.InvariantCulture, $"the fifth row ends at {bottom}, the rows' part at {slots}"));
     });
 
-    // #2546: the collapsed body is six Row.Height.Default slots, and a row is drawn exactly that tall (QueueStyles' item-row MinHeight).
+    // #2546: the collapsed body is five Row.Height.Default slots, and a row is drawn exactly that tall (QueueStyles' item-row MinHeight).
     [Fact]
-    public Task The_collapsed_body_is_six_rows_of_the_rows_own_height() => OnUi(async () =>
+    public Task The_collapsed_body_is_five_rows_of_the_rows_own_height() => OnUi(async () =>
     {
         Serve(Eight());
         var (window, _) = await Connected();
 
         var row = Assert.IsType<double>(window.FindResource("Row.Height.Default"));
-        Assert.Equal(row * 6, Named<Control>(window, "TodoCollapsed").Bounds.Height);
+        Assert.Equal(row * 5, Named<Control>(window, "TodoCollapsed").Bounds.Height);
         Assert.All(Rows(window).Take(5), r => Assert.Equal(row, r.Bounds.Height));
     });
 

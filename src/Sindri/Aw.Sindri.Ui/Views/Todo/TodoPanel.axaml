@@ -51,6 +51,8 @@
             <TextBlock x:Name="TodoSyncLive" Classes="caption subtle" Classes.warning="{Binding SyncIsWarning}" AutomationProperties.LiveSetting="Polite" Text="{Binding SyncLive}"
                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SyncLive}"
                        AutomationProperties.Name="{Binding SyncLive}" />
+            <TextBlock x:Name="TodoError" Classes="caption warning" Text="{Binding Error}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Error}"
+                       IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
           </StackPanel>
           <!-- The quick-add hint (Home only): a keycap and its words. The key itself is the quick-add slice's. -->
           <StackPanel x:Name="TodoNewHint" Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" AutomationProperties.Name="{Binding NewName}"
@@ -63,10 +65,10 @@
         </Grid>
       </Border>
 
-      <!-- Collapsed: one body of a fixed height in every state (spec D13, §3.4): five row slots on top, the Show all slot below
-           (Show all on the left, the error line on the right). The rows, the skeleton and the empty sentence draw in the slots;
+      <!-- Collapsed: one body of a fixed height in every state (spec D13, §3.4): five row slots (Show all shares the From elsewhere row below,
+           the read error sits in the header). The rows, the skeleton and the empty sentence draw in the slots;
            none of them changes the height, so Needs you below never moves. TodoPanel.axaml.cs sets the height from Row.Height.Default. -->
-      <Grid x:Name="TodoCollapsed" Grid.Row="1" RowDefinitions="*,Auto" ClipToBounds="True" IsVisible="{Binding !IsExpanded}">
+      <Grid x:Name="TodoCollapsed" Grid.Row="1" ClipToBounds="True" IsVisible="{Binding !IsExpanded}">
         <StackPanel>
           <!-- The attention rows (a conflict or the hold, todo spec §3.1, D13) take the first slots, inside the five. -->
           <tv:AttentionArea x:Name="TodoAttentionCollapsed" />
@@ -106,15 +108,6 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
-        <Grid x:Name="TodoShowAllSlot" Grid.Row="1" ColumnDefinitions="Auto,*" Height="{StaticResource Row.Height.Default}" IsVisible="{Binding HasFootSlot}">
-          <Button x:Name="TodoShowAll" HorizontalAlignment="Left" VerticalAlignment="Center" Classes="copy" Click="OnShowAll" IsVisible="{Binding ShowsShowAll}" Margin="16,0"
-                  AutomationProperties.Name="{Binding ShowAllText}">
-            <TextBlock x:Name="TodoShowAllText" Classes="caption" Text="{Binding ShowAllText}" AutomationProperties.AccessibilityView="Raw" />
-          </Button>
-          <TextBlock x:Name="TodoError" Grid.Column="1" Classes="caption" Text="{Binding Error}" Margin="24,0" HorizontalAlignment="Right" VerticalAlignment="Center"
-                     TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush.Attention}" ToolTip.Tip="{Binding Error}"
-                     IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Error}" />
-        </Grid>
       </Grid>
 
       <!-- Expanded: the groups in their own scroll, then the foot. -->
@@ -193,7 +186,13 @@
            rows, in a slot one row tall in every state (D13), so the collapsed panel's height never follows the line's words. Its view model
            is the shell's, not the panel's. -->
       <Border x:Name="TodoElsewhereSlot" Grid.Row="2" Height="{StaticResource Row.Height.Default}" ClipToBounds="True" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
-        <tv:FromElsewhereLine x:Name="TodoElsewhere" VerticalAlignment="Center" DataContext="{Binding $parent[Window].((shell:ShellViewModel)DataContext).Elsewhere}" />
+        <Grid ColumnDefinitions="Auto,*">
+          <Button x:Name="TodoShowAll" HorizontalAlignment="Left" VerticalAlignment="Center" Classes="copy" Click="OnShowAll" IsVisible="{Binding ShowsShowAll}" Margin="16,0,0,0"
+                  AutomationProperties.Name="{Binding ShowAllText}">
+            <TextBlock x:Name="TodoShowAllText" Classes="caption" Text="{Binding ShowAllText}" AutomationProperties.AccessibilityView="Raw" />
+          </Button>
+          <tv:FromElsewhereLine x:Name="TodoElsewhere" Grid.Column="1" VerticalAlignment="Center" DataContext="{Binding $parent[Window].((shell:ShellViewModel)DataContext).Elsewhere}" />
+        </Grid>
       </Border>
     </Grid>
   </Border>
