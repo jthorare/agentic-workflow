@@ -70,7 +70,7 @@ public sealed class QueueViewModelTests
 
         var row = queue.Groups[3].Rows[3];
         Assert.Equal((A.NewItem, "Try the queue", "agentic-workflow", "New", "5m"), (row.Id, row.Title, row.Repo, row.StateWord, row.Age));
-        Assert.Equal(A.NewItem + " Try the queue, New", row.Name);
+        Assert.Equal("Try the queue, New", row.Name);
         Assert.Equal("Needs decision", queue.Groups[0].Rows[0].StateWord);
     }
 
@@ -283,7 +283,7 @@ public sealed class QueueViewModelTests
         Assert.Same(queued, queue.Groups[3]);
         Assert.False(queued.IsExpanded);
         Assert.Same(row, queue.Groups[3].Rows[3]);
-        Assert.Equal(("Renamed item", A.NewItem + " Renamed item, New"), (row.Title, row.Name));
+        Assert.Equal(("Renamed item", "Renamed item, New"), (row.Title, row.Name));
     }
 
     // L1: the lists the views bind are patched in place, so the controls built for them survive.

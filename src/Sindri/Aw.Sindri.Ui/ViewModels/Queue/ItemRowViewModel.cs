@@ -26,7 +26,7 @@ internal sealed class ItemRowViewModel : ObservableObject
     public string Group { get; private set; }
 
     /// <summary>The title as served (plain text).</summary>
-    public string Title { get; private set => Set(ref field, value); }
+    public string Title { get; private set { Set(ref field, value); OnChanged(nameof(OpenName)); } }
 
     /// <summary>The repo, or empty.</summary>
     public string Repo { get; private set => Set(ref field, value); }
@@ -55,11 +55,11 @@ internal sealed class ItemRowViewModel : ObservableObject
     /// <summary>How long since the item entered its state ("12m").</summary>
     public string Age { get; private set => Set(ref field, value); }
 
-    /// <summary>The row's accessible name: its id, title and state.</summary>
+    /// <summary>The row's accessible name: its title and state (the id is never read out).</summary>
     public string Name { get; private set => Set(ref field, value); }
 
-    /// <summary>The row's title button's accessible name: "Open" and the id.</summary>
-    public string OpenName => "Open " + Id;
+    /// <summary>The row's title button's accessible name: "Open" and the title.</summary>
+    public string OpenName => "Open " + Title;
 
     /// <summary>The API's primaryAction as the catalog's control (pending rows drawn disabled), or null.</summary>
     public ControlViewModel? PrimaryAction { get; private set { Set(ref field, value); OnChanged(nameof(HasPrimaryAction)); } }
@@ -95,6 +95,6 @@ internal sealed class ItemRowViewModel : ObservableObject
     {
         var state = Labels.ItemState(item.State);
         return (group, item.Title, item.Repo ?? string.Empty, state, item.Step ?? string.Empty, Labels.Age(now - item.Since),
-            item.Id + " " + item.Title + ", " + state, primaryAction, item.State == "parked" ? Labels.ParkedBadge : string.Empty);
+            item.Title + ", " + state, primaryAction, item.State == "parked" ? Labels.ParkedBadge : string.Empty);
     }
 }

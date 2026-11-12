@@ -30,7 +30,7 @@ internal sealed partial class ShellViewModel
         {
             if (string.Equals(e.PropertyName, nameof(ItemSheetViewModel.Title), StringComparison.Ordinal))
             {
-                Changed(nameof(EdgeTabText), nameof(SheetName), nameof(EdgeTabName));
+                Changed(nameof(EdgeTabText), nameof(SheetName), nameof(EdgeTabName), nameof(SheetTitle));
             }
         };
     }

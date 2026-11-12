@@ -212,10 +212,31 @@ internal static partial class Labels
     /// <summary>An item event type in words.</summary>
     /// <param name="type">The served type ("item.created").</param>
     /// <returns>The words.</returns>
-    internal static string TimelineType(string type) => type;
+    internal static string TimelineType(string type) => _eventWords.TryGetValue(type, out var words) ? words : Sentence(type[(type.LastIndexOf('.') + 1)..].Replace('-', ' '));
+
+    private static readonly FrozenDictionary<string, string> _eventWords = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["item.created"] = "Created",
+        ["item.linked"] = "Linked",
+        ["item.handoff"] = "Handed off",
+        ["item.open-requested"] = "Opened",
+        ["item.state-changed"] = "State changed",
+    }.ToFrozenDictionary(StringComparer.Ordinal);
+
+    /// <summary>The item sheet's empty Decisions list.</summary>
+    internal const string ItemNoDecisions = "No decisions yet.";
+
+    /// <summary>The item sheet's empty Requests list.</summary>
+    internal const string ItemNoRequests = "No requests yet.";
 
     /// <summary>An actor in words, ready after a verb ("by you").</summary>
     /// <param name="actor">The served actor ("human:cli").</param>
     /// <returns>The words.</returns>
-    internal static string TimelineActor(string actor) => actor;
+    internal static string TimelineActor(string actor) => "by " + actor switch
+    {
+        _ when actor.StartsWith("human:", StringComparison.Ordinal) || string.Equals(actor, "human", StringComparison.Ordinal) => "you",
+        "service:host" => "Sindri",
+        _ when actor.StartsWith("session:", StringComparison.Ordinal) => "an agent session",
+        _ => actor,
+    };
 }

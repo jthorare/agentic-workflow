@@ -100,13 +100,13 @@ internal sealed class ItemNeedsViewModel : ObservableObject
             // The rows are replaced only when one differs, so the buttons (and the focus on one) survive a re-read (§3.3).
             _served = decisions.Value;
             Rebuild();
-            DecisionsEmpty = decisions.Value.Empty ?? "";
+            DecisionsEmpty = decisions.Value.Empty is null ? "" : Labels.ItemNoDecisions;
         }
 
         if (requests.IsSuccess)
         {
             Requests = [.. requests.Value.Requests.Select(r => new ItemRequestRow(r.Id, r.Kind, r.Text, r.Actor, r.State, r.DecisionId))];
-            RequestsEmpty = requests.Value.Empty ?? "";
+            RequestsEmpty = requests.Value.Empty is null ? "" : Labels.ItemNoRequests;
         }
     }
 

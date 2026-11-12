@@ -138,9 +138,12 @@
 
       <!-- The sandbox's Blocked list (SB-6b): what it denied the item's launches, one row per target by kind with its fix. One polite zero-width live region speaks every Allow step; Allow keeps the focus. -->
       <StackPanel x:Name="ItemBlocked" Spacing="8" IsVisible="{Binding Blocked.IsShown}">
-        <TextBlock Classes="eyebrow" Text="{Binding Blocked.Heading}" />
-        <TextBlock x:Name="ItemBlockedAnnouncement" Classes="caption live-region" Classes.live="{Binding Blocked.Voice.IsAnnouncing}" Width="0" Opacity="0" IsHitTestVisible="False"
-                   Text="{Binding Blocked.Voice.Announcement}" />
+        <!-- The live region shares the heading's cell, so its zero-width line adds no empty row under "Blocked" (#3136). -->
+        <Panel>
+          <TextBlock Classes="eyebrow" Text="{Binding Blocked.Heading}" />
+          <TextBlock x:Name="ItemBlockedAnnouncement" Classes="caption live-region" Classes.live="{Binding Blocked.Voice.IsAnnouncing}" Width="0" Opacity="0" IsHitTestVisible="False"
+                     HorizontalAlignment="Left" Text="{Binding Blocked.Voice.Announcement}" />
+        </Panel>
         <Border x:Name="ItemBlockedSummary" IsVisible="{Binding Blocked.Summary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Blocked.Summary}"
                 AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body muted" Text="{Binding Blocked.Summary}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

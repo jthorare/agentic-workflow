@@ -14,7 +14,7 @@ internal sealed partial class ShellViewModel
     public string SheetSubject => SheetLink?.Subject ?? string.Empty;
 
     /// <summary>The sheet's visible title: the subject's name once drawn (an agent's heading), else the subject itself; the ref stays in the tooltip.</summary>
-    public string SheetTitle => NamedSubject;
+    public string SheetTitle => IsItemSheet && Item.Title.Length == 0 ? Labels.EdgeTabItem : NamedSubject;
 
     private void OnDecisionChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -34,7 +34,7 @@ internal sealed partial class ShellViewModel
     public bool IsSheetShown => IsSheetOpen && IsConnected;
 
     /// <summary>The sheet's accessible name: the kind's noun and the subject ("Session X"); an id that names itself stays bare.</summary>
-    public string SheetName => SheetLink is { } link && Labels.KindNoun(link.Kind) is { Length: > 0 } noun ? noun + " " + NamedSubject : SheetLink?.Kind == DeepLinkKind.ProjectAdd ? Labels.ProjectAddHeading : SheetLink?.Kind is DeepLinkKind.PinSheet or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.LibrarySheet ? NamedSubject : SheetSubject;
+    public string SheetName => IsItemSheet && Item.Title.Length == 0 ? Labels.EdgeTabItem : SheetLink is { } link && Labels.KindNoun(link.Kind) is { Length: > 0 } noun ? noun + " " + NamedSubject : SheetLink?.Kind == DeepLinkKind.ProjectAdd ? Labels.ProjectAddHeading : SheetLink?.Kind is DeepLinkKind.PinSheet or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages or DeepLinkKind.LibrarySheet ? NamedSubject : SheetSubject;
 
     /// <summary>The edge tab's accessible name: "Reopen" and the sheet's name, its kind's noun in lower case; an item reads its title, or the bare noun while it loads, never the raw address.</summary>
     public string EdgeTabName => Labels.Reopen + " " + EdgeTabSubject;

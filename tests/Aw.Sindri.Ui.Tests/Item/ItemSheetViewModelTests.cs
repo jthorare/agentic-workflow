@@ -37,9 +37,9 @@ public sealed class ItemSheetViewModelTests
 
         Assert.Equal((A.NewItem, "Try the queue", "agentic-workflow", "New", "1", "5m"), (sheet.ItemId, sheet.Title, sheet.Repo, sheet.StateWord, sheet.VersionText, sheet.Age));
         Assert.Equal(("human:cli", false, false), (sheet.CreatedBy, sheet.HasWaitingOn, sheet.IsNotFound));
-        Assert.Equal(["item.created", "item.linked"], sheet.Timeline.Take(2).Select(e => e.Type), StringComparer.Ordinal);
+        Assert.Equal(["Created", "Linked"], sheet.Timeline.Take(2).Select(e => e.Type), StringComparer.Ordinal);
         Assert.Equal(100, sheet.Timeline.Count);
-        Assert.Equal(("11:55:00", "human:cli", "Created “Try the queue” in agentic-workflow"), (sheet.Timeline[0].Time, sheet.Timeline[0].Actor, sheet.Timeline[0].Line));
+        Assert.Equal(("11:55:00", "by you", "Created “Try the queue” in agentic-workflow"), (sheet.Timeline[0].Time, sheet.Timeline[0].Actor, sheet.Timeline[0].Line));
         Assert.True(sheet.HasMore);
     }
 
@@ -98,9 +98,9 @@ public sealed class ItemSheetViewModelTests
         Assert.Equal((false, false), (sheet.HasBody, sheet.HasLink));
     }
 
-    // README X61 (multiplayer later): createdBy and each entry's actor are opaque strings, shown exactly as served.
+    // README X61 (multiplayer later): createdBy is an opaque string, shown exactly as served; a timeline entry's human actor reads "you" (#3136).
     [Fact]
-    public async Task Actors_are_shown_exactly_as_served()
+    public async Task Created_by_is_shown_as_served_and_a_human_timeline_actor_reads_you()
     {
         _server.Items[A.NewItem] = new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.SpecShaped("items-id", "new").Replace("\"human:cli\"", "\"human:ada\"", StringComparison.Ordinal));
         _server.TimelinePages[0] = new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.SpecShaped("items-id-timeline", "fixture").Replace("\"human:cli\"", "\"human:ada@laptop\"", StringComparison.Ordinal));
@@ -108,7 +108,7 @@ public sealed class ItemSheetViewModelTests
 
         await sheet.Open(_api, A.NewItem, Token);
 
-        Assert.Equal(("human:ada", "human:ada@laptop"), (sheet.CreatedBy, sheet.Timeline[0].Actor));
+        Assert.Equal(("human:ada", "by you"), (sheet.CreatedBy, sheet.Timeline[0].Actor));
     }
 
     // §4.6: the timeline is paged by 'next'; Load more appends the next page and goes once there is none.

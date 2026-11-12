@@ -70,7 +70,7 @@ internal sealed partial class ShellViewModel
             return;
         }
 
-        Item.Show(link.Subject);
+        Item.Show(link.Subject, Queue.Groups.SelectMany(g => g.Rows).FirstOrDefault(r => string.Equals(r.Id, link.Subject, StringComparison.Ordinal)));
         if (Health.ApiUrl() is { } url)
         {
             _ = Item.Open(url, link.Subject, CancellationToken.None);

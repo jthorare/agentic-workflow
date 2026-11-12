@@ -44,8 +44,13 @@ internal sealed partial class ItemSheetViewModel
     /// <param name="row">The queue row the item opened from, or null.</param>
     internal void Show(string itemId, Queue.ItemRowViewModel? row)
     {
-        _ = row;
         Show(itemId);
+        if (row is not null && !HasItem && string.Equals(row.Id, itemId, StringComparison.Ordinal))
+        {
+            (Title, Repo, StateWord, Age) = (row.Title, row.Repo, row.StateWord, row.Age);
+            StatusLine = Labels.StatusFor(StateWord, Age);
+            (HasItem, IsLoading) = (true, false);
+        }
     }
 
     /// <summary>Re-reads the open item and the timeline pages read so far (on every event, §9.2).</summary>
@@ -223,5 +228,5 @@ internal sealed partial class ItemSheetViewModel
     }
 
     private IEnumerable<TimelineRow> Rows(TimelineView page) => page.Entries.Select(e => new TimelineRow(
-        e.Sequence, TimeZoneInfo.ConvertTime(e.Time, clock.LocalTimeZone).ToString("HH:mm:ss", CultureInfo.InvariantCulture), e.Type, e.Actor, e.Line));
+        e.Sequence, TimeZoneInfo.ConvertTime(e.Time, clock.LocalTimeZone).ToString("HH:mm:ss", CultureInfo.InvariantCulture), Labels.TimelineType(e.Type), Labels.TimelineActor(e.Actor), e.Line));
 }

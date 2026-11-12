@@ -287,7 +287,7 @@ public sealed class QueueKeysTests
     {
         var queue = await Queue();
 
-        Assert.Equal("Open " + A.NewItem, queue.Groups[3].Rows[3].OpenName);
+        Assert.Equal("Open Try the queue", queue.Groups[3].Rows[3].OpenName);
     }
 
     // The golden queue with the item removed (the projector cleared it), or its primary action set.
