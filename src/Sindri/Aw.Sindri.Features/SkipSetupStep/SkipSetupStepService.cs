@@ -27,6 +27,7 @@ internal sealed class SkipSetupStepService(IProfileKeyWriter writer, IProfileTex
         {
             SetupStepId.Sources => AccountsKey,
             SetupStepId.FirstWorkflow => FirstWorkflowKey,
+            SetupStepId.Repo or SetupStepId.Profile or SetupStepId.Mcp or SetupStepId.Map or SetupStepId.Serve or SetupStepId.Agent => null,
             _ => null,
         };
         if (key is null)

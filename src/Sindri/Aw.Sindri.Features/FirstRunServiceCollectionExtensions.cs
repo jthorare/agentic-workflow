@@ -4,7 +4,6 @@ using Aw.Sindri.Features.ConnectAccount;
 using Aw.Sindri.Features.GetOpenRuns;
 using Aw.Sindri.Features.RestartProcess;
 using Aw.Sindri.Features.SkipSetupStep;
-using Aw.Sindri.Features.StopProcess;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
@@ -20,7 +19,7 @@ internal static class FirstRunServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         return services
             .AddScoped<IValidator<SkipSetupStepRequest>, AcceptAllValidator<SkipSetupStepRequest>>().AddCommand<SkipSetupStepRequest, SkipSetupStepResponse, SkipSetupStepService>()
-            .AddScoped<IValidator<RestartProcessRequest>, AcceptAllValidator<RestartProcessRequest>>().AddCommand<RestartProcessRequest, StopProcessResponse, RestartProcessService>()
+            .AddScoped<IValidator<RestartProcessRequest>, AcceptAllValidator<RestartProcessRequest>>().AddCommand<RestartProcessRequest, RestartProcessResponse, RestartProcessService>()
             .AddScoped<IValidator<ConnectAccountRequest>, AcceptAllValidator<ConnectAccountRequest>>().AddCommand<ConnectAccountRequest, ConnectAccountResponse, ConnectAccountService>()
             .AddScoped<IValidator<GetOpenRunsRequest>, AcceptAllValidator<GetOpenRunsRequest>>().AddQuery<GetOpenRunsRequest, GetOpenRunsResponse, GetOpenRunsService>();
     }

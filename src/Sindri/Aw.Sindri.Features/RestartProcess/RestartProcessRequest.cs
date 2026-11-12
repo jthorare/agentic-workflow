@@ -1,10 +1,9 @@
 using Aw.Sindri.Core.Commands;
-using Aw.Sindri.Features.StopProcess;
 
 namespace Aw.Sindri.Features.RestartProcess;
 
 /// <summary>
 /// Restart Sindri (first-run spec decision 11, `POST /sindri/restart`): the owner's. It reads the open set (<c>GET /sindri/runs/open</c>), refuses with SND-SETUP-009 when anything is open, and
-/// otherwise stops serve the way `POST /sindri/stop` does and answers 202 with the old serve's <see cref="StopProcessResponse"/>; the caller waits for that pid to exit and starts the installed build.
+/// otherwise stops serve the way `POST /sindri/stop` does and answers 202 with the old serve's <see cref="RestartProcessResponse"/> (the same fields as the stop's); the caller waits for that pid to exit and starts the installed build.
 /// </summary>
-internal sealed record RestartProcessRequest() : ICommand<StopProcessResponse>;
+internal sealed record RestartProcessRequest() : ICommand<RestartProcessResponse>;

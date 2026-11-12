@@ -3,12 +3,11 @@ using Aw.Sindri.Features.ConnectAccount;
 using Aw.Sindri.Features.GetOpenRuns;
 using Aw.Sindri.Features.RestartProcess;
 using Aw.Sindri.Features.SkipSetupStep;
-using Aw.Sindri.Features.StopProcess;
 
 namespace Aw.Sindri.Host.Endpoints;
 
 /// <summary>
-/// The first-run routes (first-run spec §7, A1, A4, A8): POST /sindri/setup/skip, POST /sindri/restart (202 with the old serve's StopProcessResponse), POST /sindri/setup/accounts/{provider}
+/// The first-run routes (first-run spec §7, A1, A4, A8): POST /sindri/setup/skip, POST /sindri/restart (202 with the old serve's RestartProcessResponse), POST /sindri/setup/accounts/{provider}
 /// and GET /sindri/runs/open.
 /// </summary>
 internal static class FirstRunEndpoints
@@ -17,7 +16,7 @@ internal static class FirstRunEndpoints
     {
         _ = group.MapPost("/setup/skip", static async (SkipSetupStepRequest request, IService<SkipSetupStepRequest, SkipSetupStepResponse> service, CancellationToken ct)
             => (await service.Handle(request, ct).ConfigureAwait(false)).ToHttpResult());
-        _ = group.MapPost("/restart", static async (IService<RestartProcessRequest, StopProcessResponse> service, CancellationToken ct) =>
+        _ = group.MapPost("/restart", static async (IService<RestartProcessRequest, RestartProcessResponse> service, CancellationToken ct) =>
         {
             var restarted = await service.Handle(new RestartProcessRequest(), ct).ConfigureAwait(false);
             return restarted.IsSuccess ? TypedResults.Accepted((string?)null, restarted.Value) : HttpResults.Problem(restarted.Error);
