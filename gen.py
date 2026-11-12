@@ -288,7 +288,7 @@ def repos_panels():
            cfoot(FOOT2, LOOK(), ADD2)), 720))
     P.append(panel('A folder dragged onto the window: it joins the list ticked', '§4.3',
         q2(SL('done','6 repos under ~, 3 levels deep · 1 added by you'), six(first_ring=False) + repo('~/work/side-project','ada/side-project','',False,True,'drop'),
-           cfoot('3 of 7 ticked', LOOK(), btn('Add 3 repos','primary','Ctrl+Enter'))), 720))
+           cfoot('3 of 7 ticked', LOOK(), btn('Add 3 repos','primary','Ctrl+Enter','focus'))), 720))
     return P
 
 def repos_page_panels():
@@ -342,14 +342,14 @@ def steps_panels():
     stale = row('parked','Sindri is current','A newer Sindri is installed (7c81646, built today 10:31).','<span class="err-t">stale</span>', btn('Restart Sindri','primary','Ctrl+Shift+R','focus'),'unread cursor')
     P.append(panel('The serve row is stale', '§4.4 · §4.5',
         sbody('Setup','6 of 8 steps done', stale+ACC+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','6/8'))))
-    exp = row('parked','Connect your accounts','Your Linear sign-in expired.','<span class="err-t">expired</span>', btn('Reconnect Linear','primary','Enter','focus'),'unread cursor')
-    P.append(panel('sources: an account expired', '§4.4',
-        sbody('Setup','6 of 8 steps done', CUR+exp+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','6/8'))))
+    exp = row('done','Connect your accounts','Your Linear sign-in expired. GitHub is connected as ada.','<span class="err-t">Linear expired</span>', btn('Reconnect Linear'),'read')
+    P.append(panel('sources: an optional account expired, the step stays done, Reconnect Linear is secondary', '§4.4',
+        sbody('Setup','7 of 8 steps done', CUR+exp+REP+PROF+AG+MCP+MAP2+HELLO_OK(), bar_full('Setup','7/8'))))
     rd = row('fail','Connect your accounts','The last read of jthorare/agentic-workflow failed 2m ago.','<span class="err-t">failed 2m ago</span>', btn('Retry','primary','Enter','focus'),'unread cursor')
     P.append(panel('sources: the first read failed (the primary because it is the first step not done)', '§4.4',
         sbody('Setup','6 of 8 steps done', CUR+rd+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','6/8'))))
     P.append(panel('Loading: the last read from the local home paints at once, one line says it is updating', '§4.4 · F9',
-        sbody('Setup','7 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','7/8'), extra=SL('agent','Updating…'))))
+        sbody('Setup','7 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+MAP2+HELLO_OK(), bar_full('Setup','7/8'), extra=SL('agent','Updating…'))))
     P.append(panel("Steps read failed: Setup can't be read", '§4.4',
         bar_full('Setup','6/8') + '<div class="header"><h1>Setup</h1></div>' + SL('fail',"Setup can't be read right now.",'',btn('Retry','primary','Enter','focus'),'err')
         + keys(('Enter','press the primary'))))
@@ -390,7 +390,7 @@ def not_running_page():
 
 SLACK = lambda b='Paste a Slack token', cls='': row('todo','Slack','messages and mentions · optional','needs a token, 3 steps', btn(b, cls))
 def accounts_page(rows, foot_btn, last, tab='Setup'):
-    return (bar_full(tab)
+    return (bar_full(tab, '7/8')
             + '<div class="header"><h1>Accounts</h1><span class="count">Connect or reconnect the accounts Sindri reads</span></div>'
             + f'<div class="list" style="--facts:200px"><div class="group"><span class="chev">▾</span>Accounts <span class="n">3</span></div>{rows}</div>'
             + f'<div class="actionbar"><span>{last}</span><span class="spacer"></span>{foot_btn}</div>' + keys(('j/k','move'),('Enter','press'),('Ctrl+Enter','primary'),('Esc','Done')))
@@ -410,8 +410,8 @@ def accounts_panels():
                         btn('Done','primary','Esc','focus'), 'Done goes back to Setup.')))
     P.append(panel('Done pressed', 'decision 28',
         accounts_page(GH_OK + LIN_OK + SLACK(), btn('Done','primary','Esc','pressed'), 'Done goes back to Setup.')))
-    nav = bar_full('Setup','6/8')
-    body = (nav + '<div class="header"><h1>Setup</h1><span class="count">6 of 8 steps done</span></div>'
+    nav = bar_full('Setup','7/8')
+    body = (nav + '<div class="header"><h1>Setup</h1><span class="count">7 of 8 steps done</span></div>'
         + '<div class="list" style="--facts:136px;--col-act:200px"><div class="group"><span class="chev">▾</span>Steps <span class="n">8</span></div>'
         + row('done','Connect your accounts','GitHub is connected as ada · Linear is connected as ada · Slack is optional and not connected','', btn('Accounts'), 'read cursor')
         + row('done','Add your repos','jthorare/agentic-workflow and ledgerly-app/exports','2 repos','', 'read')
@@ -489,6 +489,7 @@ def patch_states():
         i = new.index(lab)
         new = new[:i] + new[i:].replace('Setup<span class=n>6/8', 'Setup<span class=n>7/8', 1)
     s = s.replace('</div></body></html>', new + '</div></body></html>')
+    s = s.replace('<span class="btn primary">Rebuild</span>', '<span class="btn">Rebuild</span>')
     s = s.replace('--facts:104px', '--facts:176px')
     # the base sheet's own panels that carry a top bar get the full bar with counts after the first Add: the stale panel
     open(p, 'w').write(s)
