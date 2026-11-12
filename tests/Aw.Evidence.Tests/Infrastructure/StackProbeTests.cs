@@ -50,7 +50,16 @@ public sealed class StackProbeTests : IDisposable
 
         Assert.True((await probe.PortOpenAsync("127.0.0.1", port, TestContext.Current.CancellationToken)).IsSuccess);
         listener.Stop();
-        Assert.Equal(EvidenceErrors.ProbeFailed.Code, (await probe.PortOpenAsync("127.0.0.1", port, TestContext.Current.CancellationToken)).Error.Code);
+        var taker = new TcpListener(IPAddress.Loopback, port); // #3241: another process takes the freed port
+        taker.Start();
+        try
+        {
+            Assert.Equal(EvidenceErrors.ProbeFailed.Code, (await probe.PortOpenAsync("127.0.0.1", port, TestContext.Current.CancellationToken)).Error.Code);
+        }
+        finally
+        {
+            taker.Stop();
+        }
     }
 
     [Fact]
