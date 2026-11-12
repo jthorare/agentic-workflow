@@ -69,6 +69,12 @@ internal sealed partial class QueryPipeline
             var indexes = group.ToList();
             var refs = indexes.ConvertAll(i => items[i].Hits[0].Ref);
             var batch = await SourceCalls.Within(source, (deadline - clock.GetUtcNow(), clock), t => source.FetchMany(refs, t), ct).ConfigureAwait(false);
+            if (batch.IsError && ContextErrors.IsMissedDeadline(batch.Error))
+            {
+                NoteUnread(indexes.Select(i => items[i]), degraded);   // the deadline cut the whole batch off: its hits are unread, the source isn't broken
+                continue;
+            }
+
             if (batch.IsError || batch.Value.Count != refs.Count)
             {
                 if (degraded.TrueForAll(d => d.Source != id))

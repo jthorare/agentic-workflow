@@ -80,12 +80,7 @@ internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, C
     {
         ArgumentNullException.ThrowIfNull(references);
         var parsed = references.Select(r => (Ref: r, At: Parse(r.Id))).ToList();
-        var blobs = await ReadBlobs([.. parsed], cancellationToken).ConfigureAwait(false);
-        if (blobs.IsError)
-        {
-            return blobs.Error;
-        }
-
+        var (blobs, failed) = await ReadBlobs([.. parsed], cancellationToken).ConfigureAwait(false);
         var cleaned = new Dictionary<(string Repo, string Blob), ScrubbedField>();
         var records = new List<Result<SourceRecord>>(parsed.Count);
         foreach (var (reference, at) in parsed)
@@ -96,8 +91,14 @@ internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, C
                 continue;
             }
 
+            if (failed.TryGetValue(where.Repo.Path, out var error))
+            {
+                records.Add(error);   // only this repo's refs carry its failure (or the missed deadline); other repos' docs stay
+                continue;
+            }
+
             var key = (where.Repo.Path, reference.Version.Value);
-            if (blobs.Value.GetValueOrDefault(key) is not { } text)
+            if (blobs.GetValueOrDefault(key) is not { } text)
             {
                 records.Add(ContextErrors.UnknownAnchor.With("the repo has no such blob"));   // what Fetch gives for a missing blob
                 continue;
@@ -115,16 +116,36 @@ internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, C
     }
 
     // One 'cat-file --batch' per repo for the distinct blob ids the refs cite; null text = the repo has no such blob.
-    private async ValueTask<Result<Dictionary<(string Repo, string Blob), string?>>> ReadBlobs(List<(SourceRef Ref, (ContextRepo Repo, string Path, int Start, int End)? At)> parsed, CancellationToken cancellationToken)
+    // One batch read per repo. A repo git can't read fails only its own refs; when the deadline fires, the repos read so far stay and
+    // the rest are marked MissedDeadline, so the pipeline counts them as unread (#3243 review).
+    private async ValueTask<(Dictionary<(string Repo, string Blob), string?> Blobs, Dictionary<string, Error> Failed)> ReadBlobs(List<(SourceRef Ref, (ContextRepo Repo, string Path, int Start, int End)? At)> parsed, CancellationToken cancellationToken)
     {
         var blobs = new Dictionary<(string Repo, string Blob), string?>();
+        var failed = new Dictionary<string, Error>(StringComparer.Ordinal);
         foreach (var group in parsed.Where(p => p.At is not null).GroupBy(p => p.At.GetValueOrDefault().Repo.Path, StringComparer.Ordinal))
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                failed[group.Key] = ContextErrors.MissedDeadline(RepoDocs.Id);
+                continue;
+            }
+
             var ids = group.Select(p => p.Ref.Version.Value).Distinct(StringComparer.Ordinal).ToList();
-            var read = await git.Blobs(group.Key, ids, cancellationToken).ConfigureAwait(false);
+            Result<IReadOnlyDictionary<string, string?>> read;
+            try
+            {
+                read = await git.Blobs(group.Key, ids, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                failed[group.Key] = ContextErrors.MissedDeadline(RepoDocs.Id);
+                continue;
+            }
+
             if (read.IsError)
             {
-                return read.Error;
+                failed[group.Key] = read.Error;
+                continue;
             }
 
             foreach (var (id, text) in read.Value)
@@ -133,7 +154,7 @@ internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, C
             }
         }
 
-        return blobs;
+        return (blobs, failed);
     }
 
     // The whole document is cleaned before the span is cut (line-preserving), the same way it was indexed, so a
