@@ -76,8 +76,8 @@ public sealed class WorkflowsPageContractTests
         var result = GraphOps.Apply(spec, 1, 1, [new ReplaceNodeOp(NodeId.From("daily"), "manual")], Validator());
 
         Assert.True(result.IsError);
-        Assert.Equal("SND-GRAPH-012", result.Error.Code);
-        Assert.Contains("SND-GRAPH-119", result.Error.Message, StringComparison.Ordinal);
+        Assert.Equal("SND-GRAPH-119", result.Error.Code);
+        Assert.Contains("op 1", result.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
