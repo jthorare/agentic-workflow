@@ -127,6 +127,12 @@
               <Grid Classes="skrow" ColumnDefinitions="70,*,40"><Border Classes="skeleton" Width="60" /><Border Grid.Column="1" Classes="skeleton" Width="220" /><Border Grid.Column="2" Classes="skeleton" Width="32" /></Grid>
               <Grid Classes="skrow" ColumnDefinitions="70,*,40"><Border Classes="skeleton" Width="60" /><Border Grid.Column="1" Classes="skeleton" Width="260" /><Border Grid.Column="2" Classes="skeleton" Width="32" /></Grid>
             </StackPanel>
+            <StackPanel x:Name="NeedsYouFailed" Orientation="Horizontal" Margin="16,8" Spacing="8" IsVisible="{Binding NeedsYou.HasReadError}">
+              <TextBlock Classes="caption" Text="{Binding NeedsYou.ReadError}" VerticalAlignment="Center" AutomationProperties.Name="{Binding NeedsYou.ReadError}" />
+              <Button x:Name="NeedsYouRetry" Classes="copy" Click="OnRetryNeedsYou" AutomationProperties.Name="{Binding Text.NeedsYouRetry}">
+                <TextBlock Classes="caption" Text="{Binding Text.NeedsYouRetry}" />
+              </Button>
+            </StackPanel>
             <TextBlock x:Name="NeedsYouEmpty" Classes="caption quiet" Text="{Binding NeedsYou.EmptyLine}" Margin="24,8"
                        IsVisible="{Binding NeedsYou.EmptyLine, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding NeedsYou.EmptyLine}" />
             <Button x:Name="NeedsYouShowAll" HorizontalAlignment="Left" Classes="copy" Click="OnShowAllNeedsYou" IsVisible="{Binding NeedsYou.HasOverflow}"
