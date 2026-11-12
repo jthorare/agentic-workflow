@@ -112,10 +112,11 @@
             <ItemsControl x:Name="ProblemLines" ItemsSource="{Binding ProblemLines}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="shell:HealthProblemLine">
-                  <Grid Classes="row" ColumnDefinitions="Auto,*,Auto" AutomationProperties.Name="{Binding Text}">
+                  <Grid Classes="row" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" AutomationProperties.Name="{Binding Text}">
                     <icons:StateIcon Glyph="{Binding Glyph}" VerticalAlignment="Center" Margin="0,0,8,0" />
                     <TextBlock Grid.Column="1" Classes="body" Text="{Binding Text}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text}" />
-                    <TextBlock Grid.Column="2" Classes="mono subtle" Text="{Binding Code}" Margin="12,0,0,0" AutomationProperties.Name="{Binding Code}" />
+                    <ToggleButton x:Name="ProblemDetailsToggle" Grid.Column="2" Classes="copy" Content="{Binding DetailsText}" BorderThickness="0" Background="Transparent" Margin="12,0,0,0" AutomationProperties.Name="{Binding DetailsText}" />
+                    <TextBlock x:Name="ProblemCode" Grid.Row="1" Grid.Column="1" Classes="caption mono subtle" Text="{Binding Code}" IsVisible="{Binding #ProblemDetailsToggle.IsChecked}" AutomationProperties.Name="{Binding Code}" />
                   </Grid>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
@@ -126,7 +127,10 @@
 
       <!-- Stopped answering: the last answer stays under an amber line. -->
       <Border x:Name="StaleLineBox" Classes="panel headline warn" IsVisible="{Binding ShowStaleLine}">
-        <TextBlock x:Name="StaleLineText" Classes="body" Text="{Binding StaleLine}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StaleLine}" />
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock x:Name="StaleLineText" Classes="body" Text="{Binding StaleLine}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding StaleLine}" />
+          <Button x:Name="StaleLineRetry" Grid.Column="1" Classes="command-control" Margin="12,0,0,0" Click="OnRetryStale" IsEnabled="{Binding CanRefresh}" Content="{Binding StaleRetryText}" AutomationProperties.Name="{Binding StaleRetryText}" />
+        </Grid>
       </Border>
 
       <!-- Not running, different versions, unreadable: one box in place of the cards. -->

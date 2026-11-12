@@ -27,6 +27,11 @@ internal sealed partial class HealthViewModel
     /// <summary>The amber line's words; empty unless stale.</summary>
     public string StaleLine { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The amber line's Retry button: reads the status again (<see cref="Refresh"/>).</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string StaleRetryText => Labels.Retry;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>The Overview's cards show: connected, with an answer to put in them.</summary>
     public bool ShowOverviewCards { get; private set => Set(ref field, value); }
 

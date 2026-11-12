@@ -32,6 +32,8 @@ internal sealed partial class HealthPage : UserControl
         e.Handled = true;
     }
 
+    private void OnRetryStale(object? sender, RoutedEventArgs e) => _ = (DataContext as HealthViewModel)?.Refresh(CancellationToken.None);
+
     private void OnViewJob(object? sender, RoutedEventArgs e)
     {
         if (sender is Control { DataContext: ServiceRowViewModel row })

@@ -8,6 +8,9 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// <param name="Glyph">The warning triangle while the health is degraded, the cross for stalled, not running and the rest.</param>
 internal sealed record HealthProblemLine(string Code, string Text, StateGlyph Glyph)
 {
+    /// <summary>The Details button's label: the code sits behind it, not in the sentence (#3057).</summary>
+    public string DetailsText => Labels.FailedReadDetails;
+
     /// <summary>The line for a served problem under the given health word.</summary>
     /// <param name="problem">The served problem.</param>
     /// <param name="word">The health word ("degraded", "stalled", ...).</param>
