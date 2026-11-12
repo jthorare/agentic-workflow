@@ -68,6 +68,22 @@ public sealed class CommandControlWidthTests
     }
 
     [Fact]
+    public async Task The_wrapped_CLI_text_carries_the_full_command_as_its_tooltip()
+    {
+        var (tip, shown) = await OnUi(() =>
+        {
+            var (window, control) = Show(CopyOnly(LongCli), 320);
+            var text = Part<TextBlock>(control, "CliText");
+            var result = (ToolTip.GetTip(text), text.Text);
+            window.Close();
+            return result;
+        });
+
+        Assert.Equal(LongCli, tip);
+        Assert.Equal(LongCli, shown);
+    }
+
+    [Fact]
     public async Task A_short_cli_keeps_Copy_right_after_the_text_in_a_wide_host()
     {
         var copyLeft = await OnUi(() =>
