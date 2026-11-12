@@ -62,12 +62,13 @@ body { width:1440px; height:900px; overflow:hidden; background:var(--canvas); co
 
 .keys { display:flex; align-items:center; gap:var(--sp4); padding:0 var(--inset); border-top:1px solid var(--hair); color:var(--ink-3); font-size:11px; line-height:16px; }
 .keys span { display:flex; gap:6px; align-items:center; }
+.keys-div { width:1px; height:12px; background:var(--hair-strong); }  /* page keys go after this */
 kbd { font:500 11px/16px var(--mono); color:var(--ink-subtle); background:var(--s2); border:1px solid var(--hair-strong); border-radius:var(--r1); padding:0 4px; min-width:16px; text-align:center; }
 
 /* ---------- Group header (28 px) ---------- */
 .group { height:var(--group-h); display:flex; align-items:center; gap:var(--sp2); padding:0 var(--inset); color:var(--ink-subtle); font-size:12px; font-weight:500; margin-top:var(--sp2); }
 .group:first-child { margin-top:0; }
-.group .n { color:var(--ink-3); font-weight:400; }
+.group .n { color:var(--ink-subtle); font-weight:400; }
 .group .chev { width:10px; color:var(--ink-3); }
 .group .right { margin-left:auto; color:var(--ink-3); font-weight:400; }
 
@@ -84,7 +85,7 @@ kbd { font:500 11px/16px var(--mono); color:var(--ink-subtle); background:var(--
 .row.sel::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2px; background:var(--primary); }
 .row .title { overflow:hidden; text-overflow:ellipsis; color:var(--ink); display:flex; gap:var(--sp2); align-items:baseline; min-width:0; }
 .row .title .t { overflow:hidden; text-overflow:ellipsis; }
-.row .title .id { font:400 12px/18px var(--mono); color:var(--ink-3); flex:none; }
+.row .title .id { font:400 12px/18px var(--mono); color:var(--ink-subtle); flex:none; }
 .row .title .sub { color:var(--ink-3); font-size:12px; overflow:hidden; text-overflow:ellipsis; }
 .row.read .title .t { color:var(--ink-muted); }
 .row.unread .title .t { font-weight:500; }
@@ -92,12 +93,13 @@ kbd { font:500 11px/16px var(--mono); color:var(--ink-subtle); background:var(--
 .fact.mono { font-family:var(--mono); }
 .fact.dim { color:var(--ink-3); }
 .fact.att { color:var(--att); } .fact.err { color:var(--err); } .fact.ok { color:var(--ok); }
-.age { font-size:12px; color:var(--ink-3); text-align:right; }
+.age { font-size:12px; color:var(--ink-subtle); text-align:right; }
 .wait { font-size:12px; color:var(--ink-subtle); display:flex; align-items:center; gap:6px; overflow:hidden; }
 .wait.you { color:var(--ink); font-weight:600; }
 .av { width:16px; height:16px; border-radius:50%; background:var(--s4); color:var(--ink-muted); font:600 9px/16px var(--font); text-align:center; flex:none; }
 .av.agent { border-radius:4px; background:var(--primary-soft); color:var(--primary-hi); }
-.row .actions { position:absolute; right:var(--inset); top:4px; display:none; gap:4px; background:var(--s2); padding-left:8px; }
+.row .actions { position:absolute; right:var(--inset); top:4px; display:none; gap:4px; background:var(--s2); padding-left:8px;
+  min-width:calc(var(--col-age) + var(--col-wait) + var(--sp3)); justify-content:flex-end; } /* covers age + waits on whole */
 .row:hover .actions, .row.cursor .actions { display:flex; }
 
 /* Inline pieces used inside facts */
@@ -109,9 +111,9 @@ kbd { font:500 11px/16px var(--mono); color:var(--ink-subtle); background:var(--
 .bar i { display:block; height:100%; background:var(--ink-subtle); }
 .bar.ok i { background:var(--ok); } .bar.att i { background:var(--att); }
 .diffstat { font:400 11px/16px var(--mono); } .diffstat .a { color:var(--ok); } .diffstat .d { color:var(--err); }
-.btn { height:24px; padding:0 10px; border-radius:var(--r2); border:1px solid var(--hair-strong); background:var(--s2); color:var(--ink-muted); font:500 12px/22px var(--font); display:inline-flex; align-items:center; gap:6px; }
+.btn { height:24px; padding:0 10px; border-radius:var(--r2); border:1px solid var(--hair-strong); background:var(--s2); color:var(--ink-muted); font:500 12px/22px var(--font); display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex:none; }
 .btn.primary { background:var(--primary); border-color:var(--primary); color:#fff; }
-.btn.ghost { background:transparent; border-color:transparent; color:var(--ink-subtle); }
+.btn.ghost { background:transparent; border-color:var(--hair-strong); color:var(--ink-subtle); } /* still a button: keeps its outline (qa 7) */
 
 /* ---------- State glyphs (14 px, drawn; colour = status only) ----------
    todo: open circle · doing: half circle, primary · done: check disc, ok · draft/backlog: dashed circle
@@ -120,9 +122,14 @@ kbd { font:500 11px/16px var(--mono); color:var(--ink-subtle); background:var(--
 .g { width:14px; height:14px; display:inline-block; position:relative; flex:none; }
 .g.todo { border:1.5px solid var(--ink-subtle); border-radius:50%; }
 .g.draft { border:1.5px dashed var(--ink-3); border-radius:50%; }
+/* in review: 3/4 ring, so it differs from doing at a glance (qa 5) */
+.g.review { border:1.5px solid var(--primary-hi); border-radius:50%; background:conic-gradient(var(--primary-hi) 0 75%, transparent 75% 100%); background-clip:content-box; padding:2px; }
 .g.doing { border:1.5px solid var(--primary-hi); border-radius:50%; background:linear-gradient(90deg, var(--primary-hi) 50%, transparent 50%); background-clip:content-box; padding:2px; }
 .g.done { border-radius:50%; background:var(--ok); }
 .g.done::after { content:''; position:absolute; left:4px; top:2px; width:3px; height:6px; border:solid var(--canvas); border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+/* linked: a confirmed link or a saved thing. Neutral on purpose: "confirmed" is not a status, so no green (#2959). */
+.g.linked { border:1.5px solid var(--ink-subtle); border-radius:50%; }
+.g.linked::after { content:''; position:absolute; left:3px; top:3px; width:5px; height:5px; border-radius:50%; background:var(--ink-subtle); }
 .g.you { width:10px; height:10px; margin:2px; background:var(--att); transform:rotate(45deg); border-radius:1px; }
 .g.fail { border-radius:50%; background:var(--err); }
 .g.fail::before, .g.fail::after { content:''; position:absolute; left:6px; top:3px; width:1.5px; height:8px; background:var(--canvas); transform:rotate(45deg); }
@@ -131,7 +138,8 @@ kbd { font:500 11px/16px var(--mono); color:var(--ink-subtle); background:var(--
 .g.parked::before, .g.parked::after { content:''; position:absolute; top:3px; width:1.5px; height:5px; background:var(--att); left:3.5px; }
 .g.parked::after { left:6px; }
 .g.agent { border:1.5px solid var(--s4); border-top-color:var(--primary-hi); border-right-color:var(--primary-hi); border-radius:50%; }
-.g.msg { width:12px; height:10px; margin:2px 1px; border:1.5px solid var(--ink-subtle); border-radius:4px 4px 4px 1px; }
+.g.msg { width:13px; height:10px; margin:1px 0 3px 1px; border:1.5px solid var(--ink-subtle); border-radius:5px; }
+.g.msg::after { content:''; position:absolute; left:1px; bottom:-4px; width:0; height:0; border-left:2px solid transparent; border-right:3px solid transparent; border-top:4px solid var(--ink-subtle); transform:skewX(-20deg); } /* a bubble with a tail, never a box (qa 6) */
 .g.mention { width:8px; height:8px; margin:3px; border-radius:50%; background:var(--primary-hi); }
 .g.pr { border:1.5px solid var(--ok); border-radius:50%; }
 .g.pr::after { content:''; position:absolute; left:3.5px; top:3.5px; width:4px; height:4px; border-radius:50%; background:var(--ok); }
@@ -165,9 +173,22 @@ kbd { font:500 11px/16px var(--mono); color:var(--ink-subtle); background:var(--
 
 /* Peek open: a row keeps its first 3 facts. Facts are written most important first; a fact past the third carries .drop-peek
    (or set --facts-peek on the row when the first fact is wide). Padding and gaps never shrink. */
-.body.peeking .row { grid-template-columns: var(--col-glyph) minmax(200px,1fr) var(--facts-peek, repeat(3, var(--col-fact))) var(--col-age) var(--col-wait); }
+.body.peeking .row { grid-template-columns: var(--col-glyph) minmax(200px,1fr) var(--facts-peek, var(--facts, repeat(3, var(--col-fact)))) var(--col-age) var(--col-wait); }
 .body.peeking .row .drop-peek { display:none; }
 .row.hv { background:var(--s2); } .row.hv .actions { display:flex; }  /* static frames: hover */
 /* Facts clip with an ellipsis: text-overflow doesn't apply to flex text, so a fact is a block line and its pieces sit inline. */
 .fact { display:block; } .fact > * { display:inline-block; vertical-align:middle; margin-right:6px; } .fact > *:last-child { margin-right:0; }
 .fact > .g { vertical-align:-2px; }
+
+/* progress fact: bar, 8 px, count */
+.fact .bar { display:inline-block; vertical-align:middle; margin-right:var(--sp2); }
+
+/* selected is always drawn with the cursor ring while the list has focus (qa 4): one look on every page */
+.row.sel { box-shadow: inset 0 0 0 1px var(--primary-hi); border-radius:var(--r1); }
+/* peek head: h2, id, then two icon buttons, always in this order (qa 7) */
+.peek-head .id { font:400 12px/18px var(--mono); color:var(--ink-subtle); }
+.peek-head .icon { width:24px; height:24px; display:grid; place-items:center; border-radius:var(--r1); color:var(--ink-subtle); }
+.peek-head .icon:hover { background:var(--s2); }
+/* every peek action is a .btn with its key as a kbd inside; no plain-text actions, no keys in parentheses */
+.btn kbd { margin-left:0; }
+.peek-actions .spacer { flex:1; }

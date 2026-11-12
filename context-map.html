@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Context</title>
+<link rel="stylesheet" href="grammar.css">
+<style>
+/* page layout only */
+.body{grid-template-columns:1fr;grid-template-rows:40px 1fr}
+.ask{display:flex;align-items:center;gap:var(--sp3);padding:0 var(--inset);border-bottom:1px solid var(--hair)}
+.ask .q{color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ask .again{color:var(--ink-subtle);font-size:12px;display:flex;gap:var(--sp2);align-items:center}
+.work{display:grid;min-height:0;grid-template-columns:400px 1fr}
+.work.peeking{grid-template-columns:400px 1fr 440px}
+.rail{border-right:1px solid var(--hair)}
+/* facts override: this list has one fact (score), no age, no waits-on */
+.rail .row{--facts:40px;grid-template-columns:var(--col-glyph) minmax(0,1fr) var(--facts)}
+.rail .row .title .t{flex:none}
+.rail .row .fact.mono{text-align:right}
+.scope{font-size:13px;color:var(--ink-subtle)}
+.budget{margin-left:auto;color:var(--ink-3);font-size:12px}
+.divider{width:1px;height:12px;background:var(--hair-strong)}
+.hdr-chip{font-family:var(--mono)}
+/* map */
+.map{position:relative;overflow:hidden;min-width:0}
+.map svg{position:absolute;left:0;top:0}
+.map .eyebrow{position:absolute;margin:0;top:8px;white-space:nowrap}
+.map .eyebrow b{font-weight:500;color:var(--ink-subtle)}
+.map .group{position:absolute;width:240px;padding:0;margin:0}
+.map .group.coll{border:1px dashed var(--hair-strong);border-radius:var(--r2);padding:0 10px;height:28px}
+.card{position:absolute;width:240px;height:52px;padding:6px 10px;background:var(--s1);border:1px solid var(--hair-strong);border-radius:var(--r2);
+  display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:20px 18px;column-gap:8px}
+.card .nm{grid-column:1/-1;font:400 13px/20px var(--mono);color:var(--ink);overflow:hidden;white-space:nowrap}
+.card .pa{font:400 12px/18px var(--mono);color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .sc{font:400 12px/18px var(--mono);color:var(--ink-subtle)}
+.card.sel{background:var(--primary-soft);border-color:var(--primary-hi)}
+.card.draft{border-style:dashed}
+.card.node{height:32px;display:flex;align-items:center;gap:var(--sp2);padding:0 10px}
+.card.node .sc{margin-left:auto}
+.card.node .nm{font:400 13px/20px var(--mono)}
+.pill{position:absolute;transform:translate(-50%,-50%);background:var(--canvas);border:1px solid var(--wire);border-radius:var(--r1);
+  padding:1px 4px;font:400 11px/14px var(--mono);color:var(--ink-subtle);text-align:center;white-space:nowrap}
+.pill.hi{border-color:var(--primary-hi);color:var(--ink-muted)}
+.tray{position:absolute;left:24px;top:700px;color:var(--ink-subtle);font-size:12px;line-height:18px;white-space:nowrap;display:flex;gap:var(--sp2);align-items:center}
+.minimap{position:absolute;left:816px;top:608px;width:200px;height:120px;border:1px solid var(--hair-strong);background:var(--canvas)}
+.minimap i{position:absolute;background:var(--s1);box-shadow:inset 0 0 0 1px var(--hair)}
+.minimap i.soft{background:var(--primary-soft)}
+.minimap i.lit{background:var(--primary)}
+.mcap{position:absolute;left:816px;top:586px;width:200px;text-align:right;font-size:12px;line-height:18px;color:var(--ink-3)}
+.cap{position:absolute;left:24px;top:12px;font-size:12px;line-height:18px;color:var(--ink-3);white-space:nowrap}
+/* peek content */
+.peek-head .who{flex:1;min-width:0}
+.peek-head .who h2{display:block}
+.peek-head .who .fact{display:block}
+.rec{display:grid;grid-template-columns:56px minmax(0,1fr) auto;column-gap:var(--sp2);align-items:center;height:28px;font-size:13px;color:var(--ink-muted);white-space:nowrap}
+.rec .id{font:400 12px/18px var(--mono);color:var(--ink-3)}
+.rec .t{overflow:hidden;text-overflow:ellipsis}
+.sug{display:grid;grid-template-columns:16px minmax(0,1fr) auto;column-gap:var(--sp3);align-items:center;height:32px;white-space:nowrap}
+.sug .title{display:flex;gap:var(--sp2);align-items:baseline;min-width:0;color:var(--ink)}
+.sug .title .t{flex:none}
+.sug .title .sub{color:var(--ink-3);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head><body>
+<div class="app">
+<div class="topbar"><div class="wordmark">Sindri</div>
+<div class="nav"><a>Home</a><a>Items</a><a>Reviews</a><a>Workflows</a><a>Agents</a><a>Projects</a><a class="on">Context</a></div>
+<div class="spacer"></div><div class="cmdk">Search or jump<kbd>Ctrl+K</kbd></div><div class="status-pill">Connected</div></div>
+<div class="header"><h1>Context</h1><span class="scope">Rate limits on exports</span><span class="chip hdr-chip">scope_7f3k2</span>
+<div class="tabs"><a class="on">Scope</a><a>Recent<span class="n">6</span></a><a>Suggested<span class="n">4</span></a></div>
+<span class="budget">48,112 files · 2.1 s</span></div>
+<div class="body">
+<div class="ask"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#74787f" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="4.2"/><path d="M9.2 9.2 12.5 12.5"/></svg>
+<span class="q">Add per-workspace rate limits to the export API</span><span class="again">Ask again <kbd>Enter</kbd></span></div>
+<div class="work">
+<div class="list rail">
+<div class="group"><span class="chev">▾</span>Export API <span class="n">3</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">ExportHandler.cs</span><span class="sub">defines ExportHandler.handle</span></span><span class="fact mono">0.96</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">ExportRoutes.cs</span><span class="sub">route POST /exports</span></span><span class="fact mono">0.93</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">ExportJobRunner.cs</span><span class="sub">runs job export.run</span></span><span class="fact mono">0.84</span></div>
+<div class="group"><span class="chev">▾</span>Rate limiting <span class="n">2</span></div>
+<div class="row sel cursor"><span class="g linked"></span><span class="title"><span class="t">RateLimiter.cs</span><span class="sub">ExportHandler calls RateLimiter.check</span></span><span class="fact mono">0.94</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">WorkspaceQuotaPolicy.cs</span><span class="sub">resolves the limit per workspace id</span></span><span class="fact mono">0.92</span></div>
+<div class="group"><span class="chev">▾</span>Request pipeline <span class="n">1</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">RateLimitMiddleware.cs</span><span class="sub">provides RateLimiter layer</span></span><span class="fact mono">0.90</span></div>
+<div class="group"><span class="chev">▾</span>Quota storage <span class="n">2</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">QuotaStore.cs</span><span class="sub">reads table workspace_quotas</span></span><span class="fact mono">0.89</span></div>
+<div class="row"><span class="g draft"></span><span class="title"><span class="t">0042_workspace_quotas.sql</span><span class="sub">creates table workspace_quotas</span></span><span class="fact mono">0.71</span></div>
+<div class="group"><span class="chev">▾</span>Export request <span class="n">2</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">ExportRequest.cs</span><span class="sub">binds the POST /exports body</span></span><span class="fact mono">0.78</span></div>
+<div class="row"><span class="g draft"></span><span class="title"><span class="t">ExportOptions.cs</span><span class="sub">export limits config, AI guess</span></span><span class="fact mono">0.62</span></div>
+<div class="group"><span class="chev">▸</span>Billing plans <span class="n">4</span></div>
+<div class="group"><span class="chev">▾</span>Tests <span class="n">5</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">RateLimiterTests.cs</span><span class="sub">test of RateLimiter</span></span><span class="fact mono">0.91</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">ExportHandlerTests.cs</span><span class="sub">test of ExportHandler</span></span><span class="fact mono">0.85</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">QuotaStoreTests.cs</span><span class="sub">test of QuotaStore</span></span><span class="fact mono">0.74</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">MiddlewareTests.cs</span><span class="sub">test of RateLimitMiddleware</span></span><span class="fact mono">0.66</span></div>
+<div class="row"><span class="g draft"></span><span class="title"><span class="t">ExportOptionsTests.cs</span><span class="sub">test of ExportOptions, AI guess</span></span><span class="fact mono">0.58</span></div>
+</div>
+<div class="map">
+<svg width="1040" height="744" viewBox="0 0 1040 744" fill="none">
+<path d="M264 206 C332 206 332 302 400 302" stroke="#4a4a52" stroke-width="1.5"/><circle cx="264" cy="206" r="2.5" fill="#4a4a52"/><circle cx="400" cy="302" r="2.5" fill="#4a4a52"/>
+<path d="M264 146 C332 146 332 86 400 86" stroke="#828fff" stroke-width="1.5"/><circle cx="264" cy="146" r="2.5" fill="#828fff"/><circle cx="400" cy="86" r="2.5" fill="#828fff"/>
+<path d="M264 302 C332 302 332 86 400 86" stroke="#828fff" stroke-width="1.5"/><circle cx="264" cy="302" r="2.5" fill="#828fff"/><circle cx="400" cy="86" r="2.5" fill="#828fff"/>
+<path d="M640 86 L776 86" stroke="#828fff" stroke-width="1.5"/><circle cx="640" cy="86" r="2.5" fill="#828fff"/><circle cx="776" cy="86" r="2.5" fill="#828fff"/>
+<path d="M640 98 C708 98 708 232 776 232" stroke="#828fff" stroke-width="1.5"/><circle cx="640" cy="98" r="2.5" fill="#828fff"/><circle cx="776" cy="232" r="2.5" fill="#828fff"/>
+</svg>
+<div class="eyebrow" style="left:24px"><b>Entry points</b> routes, jobs, middleware</div><div class="eyebrow" style="left:400px"><b>Core</b> services and domain logic</div><div class="eyebrow" style="left:776px"><b>Data and effects</b> tables, events</div>
+<div class="group" style="left:24px;top:32px">Export API <span class="n">3</span></div>
+<div class="card" style="left:24px;top:60px"><span class="nm">ExportRoutes.cs</span><span class="pa">services/export/src/routes</span><span class="sc">0.93</span></div>
+<div class="card" style="left:24px;top:120px"><span class="nm">ExportHandler.cs</span><span class="pa">services/export/src/handlers</span><span class="sc">0.96</span></div>
+<div class="card" style="left:24px;top:180px"><span class="nm">ExportJobRunner.cs</span><span class="pa">services/export/src/jobs</span><span class="sc">0.84</span></div>
+<div class="group" style="left:24px;top:248px">Request pipeline <span class="n">1</span></div>
+<div class="card" style="left:24px;top:276px"><span class="nm">RateLimitMiddleware.cs</span><span class="pa">platform/ratelimit/src/middleware</span><span class="sc">0.90</span></div>
+<div class="group" style="left:400px;top:32px">Rate limiting <span class="n">2</span></div>
+<div class="card sel" style="left:400px;top:60px"><span class="nm">RateLimiter.cs</span><span class="pa">platform/ratelimit/src</span><span class="sc">0.94</span></div>
+<div class="card" style="left:400px;top:120px"><span class="nm">WorkspaceQuotaPolicy.cs</span><span class="pa">platform/ratelimit/src/policy</span><span class="sc">0.92</span></div>
+<div class="group" style="left:400px;top:188px">Export request <span class="n">2</span></div>
+<div class="card" style="left:400px;top:216px"><span class="nm">ExportRequest.cs</span><span class="pa">services/export/src/models</span><span class="sc">0.78</span></div>
+<div class="card draft" style="left:400px;top:276px"><span class="nm">ExportOptions.cs</span><span class="pa">services/export/src/config</span><span class="sc">0.62</span></div>
+<div class="group coll" style="left:400px;top:344px"><span class="chev">▸</span>Billing plans <span class="n">4</span></div>
+<div class="group" style="left:776px;top:32px">Quota storage <span class="n">2</span></div>
+<div class="card" style="left:776px;top:60px"><span class="nm">QuotaStore.cs</span><span class="pa">platform/ratelimit/src/store</span><span class="sc">0.89</span></div>
+<div class="card draft" style="left:776px;top:120px"><span class="nm">0042_workspace_quotas.sql</span><span class="pa">platform/ratelimit/migrations</span><span class="sc">0.71</span></div>
+<div class="group" style="left:776px;top:188px">Effects <span class="n">1</span></div>
+<div class="card node" style="left:776px;top:216px"><span class="chip">event</span><span class="nm">quota.exceeded</span></div>
+<div class="group" style="left:776px;top:264px">Tests <span class="n">5</span></div>
+<div class="card node" style="left:776px;top:292px"><span class="nm">RateLimiterTests.cs</span><span class="sc">0.91</span></div>
+<div class="card node" style="left:776px;top:330px"><span class="nm">ExportHandlerTests.cs</span><span class="sc">0.85</span></div>
+<div class="card node" style="left:776px;top:368px"><span class="nm">QuotaStoreTests.cs</span><span class="sc">0.74</span></div>
+<div class="card node" style="left:776px;top:406px"><span class="nm">MiddlewareTests.cs</span><span class="sc">0.66</span></div>
+<div class="card node draft" style="left:776px;top:444px"><span class="nm">ExportOptionsTests.cs</span><span class="sc">0.58</span></div>
+<div class="pill hi" style="left:332px;top:116px">calls<br>RateLimiter.check</div>
+<div class="pill hi" style="left:332px;top:194px">provides<br>RateLimiter layer</div>
+<div class="pill" style="left:332px;top:254px">reads<br>ExportOptions</div>
+<div class="pill hi" style="left:708px;top:86px">reads<br>IQuotaStore.get</div>
+<div class="pill hi" style="left:708px;top:165px">publishes<br>quota.exceeded</div>
+<div class="tray"><span class="g draft"></span>4 suggested · PlanLimits.cs, QuotaBanner.tsx +2 · Space to look</div>
+<div class="mcap">Whole repo · 3 of 31 areas</div><div class="minimap"><i class="tm lit" style="left:0.0px;top:0.0px;width:66.1px;height:73.6px"></i><i class="tm" style="left:66.1px;top:0.0px;width:35.3px;height:73.6px"></i><i class="tm" style="left:0.0px;top:73.6px;width:41.9px;height:46.4px"></i><i class="tm" style="left:41.9px;top:73.6px;width:31.5px;height:46.4px"></i><i class="tm" style="left:73.4px;top:73.6px;width:28.0px;height:46.4px"></i><i class="tm" style="left:101.4px;top:0.0px;width:27.3px;height:41.6px"></i><i class="tm" style="left:128.6px;top:0.0px;width:23.4px;height:41.6px"></i><i class="tm" style="left:101.4px;top:41.6px;width:50.7px;height:19.2px"></i><i class="tm" style="left:152.0px;top:0.0px;width:24.0px;height:33.8px"></i><i class="tm soft" style="left:176.0px;top:0.0px;width:24.0px;height:33.8px"></i><i class="tm" style="left:152.0px;top:33.8px;width:24.0px;height:27.0px"></i><i class="tm" style="left:176.0px;top:33.8px;width:24.0px;height:27.0px"></i><i class="tm" style="left:101.4px;top:60.8px;width:19.7px;height:32.9px"></i><i class="tm" style="left:121.1px;top:60.8px;width:14.8px;height:32.9px"></i><i class="tm" style="left:135.9px;top:60.8px;width:14.8px;height:32.9px"></i><i class="tm" style="left:101.4px;top:93.7px;width:18.5px;height:26.3px"></i><i class="tm" style="left:119.8px;top:93.7px;width:18.5px;height:26.3px"></i><i class="tm soft" style="left:138.3px;top:93.7px;width:12.3px;height:26.3px"></i><i class="tm" style="left:150.7px;top:60.8px;width:14.8px;height:21.9px"></i><i class="tm" style="left:165.5px;top:60.8px;width:14.8px;height:21.9px"></i><i class="tm" style="left:150.7px;top:82.7px;width:29.6px;height:11.0px"></i><i class="tm" style="left:180.3px;top:60.8px;width:19.7px;height:16.4px"></i><i class="tm" style="left:180.3px;top:77.3px;width:19.7px;height:16.4px"></i><i class="tm" style="left:150.7px;top:93.7px;width:12.3px;height:13.2px"></i><i class="tm" style="left:163.0px;top:93.7px;width:12.3px;height:13.2px"></i><i class="tm" style="left:150.7px;top:106.8px;width:12.3px;height:13.2px"></i><i class="tm" style="left:163.0px;top:106.8px;width:12.3px;height:13.2px"></i><i class="tm" style="left:175.3px;top:93.7px;width:12.3px;height:13.2px"></i><i class="tm" style="left:187.7px;top:93.7px;width:12.3px;height:13.2px"></i><i class="tm" style="left:175.3px;top:106.8px;width:12.3px;height:13.2px"></i><i class="tm" style="left:187.7px;top:106.8px;width:12.3px;height:13.2px"></i></div>
+</div>
+</div>
+</div>
+<div class="keys"><span><kbd>j/k</kbd>move</span><span><kbd>Space</kbd>peek</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>back</span><span><kbd>/</kbd>filter</span><span><kbd>c</kbd>create</span><span><kbd>.</kbd>actions</span><span><kbd>x</kbd>select</span><span><kbd>Ctrl+K</kbd>palette</span><span class="keys-div"></span><span><kbd>←/→</kbd>walk edges</span><span><kbd>g</kbd>toggle group</span></div>
+</div></body></html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Context</title>
+<link rel="stylesheet" href="grammar.css">
+<style>
+/* page layout only */
+.row{--facts:var(--col-fact) var(--col-fact) 480px}
+.budget{margin-left:auto;font-size:12px;line-height:18px;color:var(--ink-3)}
+.ask{margin:var(--sp4) var(--inset) 0;height:56px;background:var(--s1);border:1px solid var(--hair-strong);border-radius:var(--r3);
+  display:flex;align-items:center;gap:var(--sp3);padding:0 var(--sp4);box-shadow:0 0 0 1px var(--primary-hi)}
+.ask .ph{flex:1;font-size:15px;line-height:22px;color:var(--ink-3)}
+.ask .caret{width:1px;height:18px;background:var(--primary-hi);margin-right:-8px}
+.glass{width:14px;height:14px;border:1.5px solid var(--ink-subtle);border-radius:50%;position:relative;flex:none}
+.glass::after{content:'';position:absolute;left:9px;top:10px;width:6px;height:1.5px;background:var(--ink-subtle);transform:rotate(45deg);transform-origin:0 0}
+.chips{height:28px;margin:var(--sp2) var(--inset) var(--sp2);display:flex;align-items:center;gap:var(--sp2)}
+.chips .lead{font-size:12px;color:var(--ink-3);margin-right:4px}
+.chips .btn.ghost{border-color:var(--hair-strong);height:24px;color:var(--ink-subtle)}
+</style>
+</head><body>
+<div class="app">
+<div class="topbar"><div class="wordmark">Sindri</div>
+<div class="nav"><a>Home</a><a>Items</a><a>Reviews<span class="n">5</span></a><a>Workflows</a><a>Agents</a><a>Projects</a><a class="on">Context</a></div>
+<div class="spacer"></div><div class="cmdk">Search or jump<kbd>Ctrl+K</kbd></div><div class="status-pill">Connected</div></div>
+<div class="header"><h1>Context</h1><span class="count">15 scopes</span>
+<div class="tabs"><a class="on">Recent</a><a>Pinned<span class="n">2</span></a><a>Shared with agents<span class="n">3</span></a></div>
+<span class="budget">48,112 files · 31 areas · indexed 4m ago</span></div>
+<div class="body">
+<div class="list">
+<div class="ask"><span class="glass"></span><span class="ph">Ask about a change: what do I touch to ...</span><span class="caret"></span><kbd>Enter</kbd></div>
+<div class="chips"><span class="lead">Try</span>
+<span class="btn ghost">Add per-workspace rate limits to the export API</span>
+<span class="btn ghost">Where do webhook retries give up?</span>
+<span class="btn ghost">Who reads the seat count on invite?</span></div>
+<div class="group"><span class="chev">▾</span>Today <span class="n">3</span></div>
+<div class="row read cursor"><span class="g linked"></span>
+<span class="title"><span class="id">scope_7f3k2</span><span class="t">Rate limits on exports</span></span>
+<span class="fact">14 files</span><span class="fact mono">3 areas</span><span class="fact dim drop-peek">Add per-workspace rate limits to the export API</span>
+<span class="age">4m</span><span class="wait you">you</span></div>
+<div class="row read"><span class="g agent"></span>
+<span class="title"><span class="id">scope_2m9qd</span><span class="t">SSO for workspace admins</span></span>
+<span class="fact">22 files</span><span class="fact mono">4 areas</span><span class="fact dim drop-peek">Which files enforce SSO-only login for workspace admins, and where is the break-glass path for owners</span>
+<span class="age">1h</span><span class="wait"><span class="av agent">A</span>agent</span></div>
+<div class="row read"><span class="g linked"></span>
+<span class="title"><span class="id">scope_c81xw</span><span class="t">Invoice PDF redesign</span></span>
+<span class="fact">9 files</span><span class="fact mono">2 areas</span><span class="fact dim drop-peek">What renders the invoice footer and the tax lines?</span>
+<span class="age">3h</span><span class="wait"><span class="av">I</span>Ines</span></div>
+<div class="group"><span class="chev">▾</span>This week <span class="n">3</span></div>
+<div class="row read"><span class="g agent"></span>
+<span class="title"><span class="id">scope_p4n6t</span><span class="t">Webhook retries</span></span>
+<span class="fact">11 files</span><span class="fact mono">2 areas</span><span class="fact dim drop-peek">Where is the backoff set for failed webhook deliveries, and who reads the dead-letter table</span>
+<span class="age">1d</span><span class="wait"><span class="av agent">A</span>agent</span></div>
+<div class="row read"><span class="g linked"></span>
+<span class="title"><span class="id">scope_h5v0e</span><span class="t">Audit log retention</span></span>
+<span class="fact">17 files</span><span class="fact mono">3 areas</span><span class="fact dim drop-peek">What do I touch to keep audit events 400 days on the enterprise plan</span>
+<span class="age">2d</span><span class="wait you">you</span></div>
+<div class="row read"><span class="g linked"></span>
+<span class="title"><span class="id">scope_k9d3s</span><span class="t">Seat limits</span></span>
+<span class="fact">12 files</span><span class="fact mono">3 areas</span><span class="fact dim drop-peek">Block inviting past the seat limit on team plans</span>
+<span class="age">4d</span><span class="wait"><span class="av">M</span>Mira</span></div>
+<div class="group"><span class="chev">▾</span>Older <span class="n">9</span><span class="right">oldest 5w</span></div>
+<div class="row read"><span class="g linked"></span>
+<span class="title"><span class="id">scope_b3x7a</span><span class="t">Notification digest emails</span></span>
+<span class="fact">13 files</span><span class="fact mono">3 areas</span><span class="fact dim drop-peek">Where is the daily digest built and which preference decides who gets it</span>
+<span class="age">1w</span><span class="wait you">you</span></div>
+<div class="row read"><span class="g linked"></span>
+<span class="title"><span class="id">scope_e6r2m</span><span class="t">Workspace transfer between owners</span></span>
+<span class="fact">19 files</span><span class="fact mono">4 areas</span><span class="fact dim drop-peek">What breaks when ownership of a workspace moves to another admin</span>
+<span class="age">1w</span><span class="wait"><span class="av">D</span>Dara</span></div>
+<div class="row read"><span class="g agent"></span>
+<span class="title"><span class="id">scope_t0q8y</span><span class="t">Usage-based pricing preview</span></span>
+<span class="fact">24 files</span><span class="fact mono">3 areas</span><span class="fact dim drop-peek">Which code reads plan limits and would need metered usage instead</span>
+<span class="age">2w</span><span class="wait"><span class="av agent">A</span>agent</span></div>
+<div class="row read"><span class="g linked"></span>
+<span class="title"><span class="id">scope_w5n1c</span><span class="t">Two-factor reset flow</span></span>
+<span class="fact">10 files</span><span class="fact mono">2 areas</span><span class="fact dim drop-peek">How does an admin reset another member's two-factor device</span>
+<span class="age">2w</span><span class="wait you">you</span></div>
+<div class="row read"><span class="g linked"></span>
+<span class="title"><span class="id">scope_j8h4u</span><span class="t">Bulk member import from CSV</span></span>
+<span class="fact">15 files</span><span class="fact mono">3 areas</span><span class="fact dim drop-peek">Add a CSV import for members with role mapping and a dry run</span>
+<span class="age">3w</span><span class="wait"><span class="av">T</span>Teo</span></div>
+<div class="row read"><span class="g linked"></span>
+<span class="title"><span class="id">scope_z2l9v</span><span class="t">Public API pagination cursors</span></span>
+<span class="fact">8 files</span><span class="fact mono">2 areas</span><span class="fact dim drop-peek">Why do list endpoints return duplicate rows across pages</span>
+<span class="age">3w</span><span class="wait you">you</span></div>
+<div class="row read"><span class="g linked"></span>
+<span class="title"><span class="id">scope_f7d5k</span><span class="t">Trial banner and countdown</span></span>
+<span class="fact">7 files</span><span class="fact mono">2 areas</span><span class="fact dim drop-peek">Where is the trial end date computed for the web banner</span>
+<span class="age">4w</span><span class="wait"><span class="av">M</span>Mira</span></div>
+<div class="row read"><span class="g agent"></span>
+<span class="title"><span class="id">scope_q1s6g</span><span class="t">Queue worker upgrade</span></span>
+<span class="fact">21 files</span><span class="fact mono">4 areas</span><span class="fact dim drop-peek">What touches the job queue client and its retry settings</span>
+<span class="age">4w</span><span class="wait"><span class="av agent">A</span>agent</span></div>
+<div class="row read"><span class="g linked"></span>
+<span class="title"><span class="id">scope_n4c0p</span><span class="t">Dark mode tokens for charts</span></span>
+<span class="fact">16 files</span><span class="fact mono">2 areas</span><span class="fact dim drop-peek">Which chart components hardcode colours instead of tokens</span>
+<span class="age">5w</span><span class="wait"><span class="av">I</span>Ines</span></div>
+</div></div>
+<div class="keys"><span><kbd>j/k</kbd>move</span><span><kbd>Space</kbd>peek</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>back</span><span><kbd>/</kbd>filter</span><span><kbd>c</kbd>create</span><span><kbd>.</kbd>actions</span><span><kbd>x</kbd>select</span><span><kbd>Ctrl+K</kbd>palette</span></div>
+</div></body></html>

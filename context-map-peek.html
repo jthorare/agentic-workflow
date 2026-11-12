@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Context</title>
+<link rel="stylesheet" href="grammar.css">
+<style>
+/* page layout only */
+.body{grid-template-columns:1fr;grid-template-rows:40px 1fr}
+.ask{display:flex;align-items:center;gap:var(--sp3);padding:0 var(--inset);border-bottom:1px solid var(--hair)}
+.ask .q{color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ask .again{color:var(--ink-subtle);font-size:12px;display:flex;gap:var(--sp2);align-items:center}
+.work{display:grid;min-height:0;grid-template-columns:400px 1fr}
+.work.peeking{grid-template-columns:400px 1fr 440px}
+.rail{border-right:1px solid var(--hair)}
+/* facts override: this list has one fact (score), no age, no waits-on */
+.rail .row{--facts:40px;grid-template-columns:var(--col-glyph) minmax(0,1fr) var(--facts)}
+.rail .row .title .t{flex:none}
+.rail .row .fact.mono{text-align:right}
+.scope{font-size:13px;color:var(--ink-subtle)}
+.budget{margin-left:auto;color:var(--ink-3);font-size:12px}
+.divider{width:1px;height:12px;background:var(--hair-strong)}
+.hdr-chip{font-family:var(--mono)}
+/* map */
+.map{position:relative;overflow:hidden;min-width:0}
+.map svg{position:absolute;left:0;top:0}
+.map .eyebrow{position:absolute;margin:0;top:8px;white-space:nowrap}
+.map .eyebrow b{font-weight:500;color:var(--ink-subtle)}
+.map .group{position:absolute;width:240px;padding:0;margin:0}
+.map .group.coll{border:1px dashed var(--hair-strong);border-radius:var(--r2);padding:0 10px;height:28px}
+.card{position:absolute;width:240px;height:52px;padding:6px 10px;background:var(--s1);border:1px solid var(--hair-strong);border-radius:var(--r2);
+  display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:20px 18px;column-gap:8px}
+.card .nm{grid-column:1/-1;font:400 13px/20px var(--mono);color:var(--ink);overflow:hidden;white-space:nowrap}
+.card .pa{font:400 12px/18px var(--mono);color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .sc{font:400 12px/18px var(--mono);color:var(--ink-subtle)}
+.card.sel{background:var(--primary-soft);border-color:var(--primary-hi)}
+.card.draft{border-style:dashed}
+.card.node{height:32px;display:flex;align-items:center;gap:var(--sp2);padding:0 10px}
+.card.node .nm{font:400 13px/20px var(--mono)}
+.pill{position:absolute;transform:translate(-50%,-50%);background:var(--canvas);border:1px solid var(--wire);border-radius:var(--r1);
+  padding:1px 4px;font:400 11px/14px var(--mono);color:var(--ink-subtle);text-align:center;white-space:nowrap}
+.pill.hi{border-color:var(--primary-hi);color:var(--ink-muted)}
+.tray{position:absolute;left:24px;top:700px;color:var(--ink-subtle);font-size:12px;line-height:18px;white-space:nowrap;display:flex;gap:var(--sp2);align-items:center}
+.minimap{position:absolute;left:816px;top:608px;width:200px;height:120px;border:1px solid var(--hair-strong);background:var(--canvas)}
+.minimap i{position:absolute;background:var(--s1);box-shadow:inset 0 0 0 1px var(--hair)}
+.minimap i.soft{background:var(--primary-soft)}
+.minimap i.lit{background:var(--primary)}
+.mcap{position:absolute;left:816px;top:586px;width:200px;text-align:right;font-size:12px;line-height:18px;color:var(--ink-3)}
+.cap{position:absolute;left:24px;top:12px;font-size:12px;line-height:18px;color:var(--ink-3);white-space:nowrap}
+/* peek content */
+.peek-head .who{flex:1;min-width:0}
+.peek-head .who h2{display:block}
+.peek-head .who .fact{display:block}
+.rec{display:grid;grid-template-columns:56px minmax(0,1fr) auto;column-gap:var(--sp2);align-items:center;height:28px;font-size:13px;color:var(--ink-muted);white-space:nowrap}
+.rec .id{font:400 12px/18px var(--mono);color:var(--ink-3)}
+.rec .t{overflow:hidden;text-overflow:ellipsis}
+.sug{display:grid;grid-template-columns:16px minmax(0,1fr) auto;column-gap:var(--sp3);align-items:center;height:32px;white-space:nowrap}
+.sug .title{display:flex;gap:var(--sp2);align-items:baseline;min-width:0;color:var(--ink)}
+.sug .title .t{flex:none}
+.sug .title .sub{color:var(--ink-3);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head><body>
+<div class="app">
+<div class="topbar"><div class="wordmark">Sindri</div>
+<div class="nav"><a>Home</a><a>Items</a><a>Reviews</a><a>Workflows</a><a>Agents</a><a>Projects</a><a class="on">Context</a></div>
+<div class="spacer"></div><div class="cmdk">Search or jump<kbd>Ctrl+K</kbd></div><div class="status-pill">Connected</div></div>
+<div class="header"><h1>Context</h1><span class="scope">Rate limits on exports</span><span class="chip hdr-chip">scope_7f3k2</span>
+<div class="tabs"><a class="on">Scope</a><a>Recent<span class="n">6</span></a><a>Suggested<span class="n">4</span></a></div>
+<span class="budget">48,112 files · 2.1 s</span></div>
+<div class="body">
+<div class="ask"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#74787f" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="4.2"/><path d="M9.2 9.2 12.5 12.5"/></svg>
+<span class="q">Add per-workspace rate limits to the export API</span><span class="again">Ask again <kbd>Enter</kbd></span></div>
+<div class="work peeking">
+<div class="list rail">
+<div class="group"><span class="chev">▾</span>Export API <span class="n">3</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">ExportHandler.cs</span><span class="sub">defines ExportHandler.handle</span></span><span class="fact mono">0.96</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">ExportRoutes.cs</span><span class="sub">route POST /exports</span></span><span class="fact mono">0.93</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">ExportJobRunner.cs</span><span class="sub">runs job export.run</span></span><span class="fact mono">0.84</span></div>
+<div class="group"><span class="chev">▾</span>Rate limiting <span class="n">2</span></div>
+<div class="row sel cursor"><span class="g linked"></span><span class="title"><span class="t">RateLimiter.cs</span><span class="sub">ExportHandler calls RateLimiter.check</span></span><span class="fact mono">0.94</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">WorkspaceQuotaPolicy.cs</span><span class="sub">resolves the limit per workspace id</span></span><span class="fact mono">0.92</span></div>
+<div class="group"><span class="chev">▾</span>Request pipeline <span class="n">1</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">RateLimitMiddleware.cs</span><span class="sub">provides RateLimiter layer</span></span><span class="fact mono">0.90</span></div>
+<div class="group"><span class="chev">▾</span>Quota storage <span class="n">2</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">QuotaStore.cs</span><span class="sub">reads table workspace_quotas</span></span><span class="fact mono">0.89</span></div>
+<div class="row"><span class="g draft"></span><span class="title"><span class="t">0042_workspace_quotas.sql</span><span class="sub">creates table workspace_quotas</span></span><span class="fact mono">0.71</span></div>
+<div class="group"><span class="chev">▾</span>Export request <span class="n">2</span></div>
+<div class="row"><span class="g linked"></span><span class="title"><span class="t">ExportRequest.cs</span><span class="sub">binds the POST /exports body</span></span><span class="fact mono">0.78</span></div>
+<div class="row"><span class="g draft"></span><span class="title"><span class="t">ExportOptions.cs</span><span class="sub">export limits config, AI guess</span></span><span class="fact mono">0.62</span></div>
+<div class="group"><span class="chev">▸</span>Billing plans <span class="n">4</span></div>
+<div class="group"><span class="chev">▸</span>Tests <span class="n">5</span></div>
+</div>
+<div class="map">
+<svg width="600" height="744" viewBox="0 0 600 744" fill="none">
+<path d="M144 140 C144 214 240 214 240 288" stroke="#828fff" stroke-width="1.5"/><circle cx="144" cy="140" r="2.5" fill="#828fff"/><circle cx="240" cy="288" r="2.5" fill="#828fff"/>
+<path d="M456 140 C456 214 360 214 360 288" stroke="#828fff" stroke-width="1.5"/><circle cx="456" cy="140" r="2.5" fill="#828fff"/><circle cx="360" cy="288" r="2.5" fill="#828fff"/>
+<path d="M240 340 C240 414 144 414 144 488" stroke="#828fff" stroke-width="1.5"/><circle cx="240" cy="340" r="2.5" fill="#828fff"/><circle cx="144" cy="488" r="2.5" fill="#828fff"/>
+<path d="M360 340 C360 414 456 414 456 488" stroke="#828fff" stroke-width="1.5"/><circle cx="360" cy="340" r="2.5" fill="#828fff"/><circle cx="456" cy="488" r="2.5" fill="#828fff"/>
+</svg>
+<div class="cap">1 hop from RateLimiter.cs · Esc for the whole scope</div>
+<div class="eyebrow" style="left:24px;top:64px">Called by</div>
+<div class="card" style="left:24px;top:88px"><span class="nm">ExportHandler.cs</span><span class="pa">services/export/src/handlers</span><span class="sc">0.96</span></div>
+<div class="card" style="left:336px;top:88px"><span class="nm">RateLimitMiddleware.cs</span><span class="pa">platform/ratelimit/src/middleware</span><span class="sc">0.90</span></div>
+<div class="card sel" style="left:180px;top:288px"><span class="nm">RateLimiter.cs</span><span class="pa">platform/ratelimit/src</span><span class="sc">0.94</span></div>
+<div class="eyebrow" style="left:24px;top:464px">Calls and publishes</div>
+<div class="card" style="left:24px;top:488px"><span class="nm">QuotaStore.cs</span><span class="pa">platform/ratelimit/src/store</span><span class="sc">0.89</span></div>
+<div class="card node" style="left:336px;top:488px"><span class="chip">event</span><span class="nm">quota.exceeded</span></div>
+<div class="pill hi" style="left:192px;top:214px">calls<br>RateLimiter.check</div>
+<div class="pill hi" style="left:408px;top:214px">provides<br>RateLimiter layer</div>
+<div class="pill hi" style="left:192px;top:414px">reads<br>IQuotaStore.get</div>
+<div class="pill hi" style="left:408px;top:414px">publishes<br>quota.exceeded</div>
+<div class="group coll" style="left:24px;top:620px"><span class="chev">▸</span>Tests <span class="n">2</span></div>
+</div>
+<aside class="peek">
+<div class="peek-head"><h2>RateLimiter.cs</h2><span class="id">platform/ratelimit</span><span class="icon">⤢</span><span class="icon">×</span></div>
+<dl class="peek-fields">
+<dt>Concept</dt><dd>Rate limiting</dd>
+<dt>Band</dt><dd>Core</dd>
+<dt>Link</dt><dd><span class="chip ok">Confirmed</span></dd>
+<dt>Score</dt><dd style="font-family:var(--mono)">0.94</dd>
+<dt>Symbols</dt><dd style="font-family:var(--mono)">check(key, cost), IQuotaStore</dd>
+<dt>Tests</dt><dd>2</dd>
+</dl>
+<div class="peek-body">
+<div class="eyebrow" style="margin-top:0">Why it is in the scope</div>
+<p>ExportHandler calls RateLimiter.check on every export (ExportHandler.cs:48). The limit key is the user id today, so per-workspace limits start here. RateLimitMiddleware provides the same check as a layer for the other routes.</p>
+<div class="eyebrow">Linked records</div>
+<div class="rec"><span class="id">D-41</span><span class="t">Cap exports per workspace</span><span class="chip">supports</span></div>
+<div class="rec"><span class="id">D-37</span><span class="t">Per-user limits</span><span class="chip att">conflicts with D-41</span></div>
+<div class="rec"><span class="id">EXP-212</span><span class="t">Per-workspace export limits</span><span class="chip">open</span></div>
+<div class="eyebrow">Suggested near it</div>
+<div class="sug"><span class="g draft"></span><span class="title"><span class="t">PlanLimits.cs</span><span class="sub">defines the per-plan caps</span></span><span class="btn ghost">Add</span></div>
+<div class="sug"><span class="g draft"></span><span class="title"><span class="t">QuotaBanner.tsx</span><span class="sub">shows quota used in the app</span></span><span class="btn ghost">Add</span></div>
+<div class="sug"><span class="g draft"></span><span class="title"><span class="t">UsageMeter.cs</span><span class="sub">counts exports per workspace</span></span><span class="btn ghost">Add</span></div>
+<div class="sug"><span class="g draft"></span><span class="title"><span class="t">ExportQuotaTests.cs</span><span class="sub">tests the cap on exports</span></span><span class="btn ghost">Add</span></div>
+</div>
+<div class="peek-actions"><span class="btn primary">Open file <kbd>Enter</kbd></span><span class="btn ghost">Actions <kbd>.</kbd></span></div>
+</aside>
+</div>
+</div>
+<div class="keys"><span><kbd>j/k</kbd>move</span><span><kbd>Space</kbd>peek</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>back</span><span><kbd>/</kbd>filter</span><span><kbd>c</kbd>create</span><span><kbd>.</kbd>actions</span><span><kbd>x</kbd>select</span><span><kbd>Ctrl+K</kbd>palette</span><span class="keys-div"></span><span><kbd>←/→</kbd>walk edges</span><span><kbd>g</kbd>toggle group</span></div>
+</div></body></html>
