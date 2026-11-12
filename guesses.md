@@ -1,27 +1,28 @@
-# Guesses, Notes round 1 (Part of #2981)
+# Notes round 2: guesses (Part of #2981)
 
-Fixture text (note titles, people, numbers #3104 / #3109 / #3112, run 8841, counts like 214 notes) is invented and not listed one by one.
+Round 1 guess numbers no longer apply. Items below are invented in these frames and need a real answer in the spec or the build.
 
-1. Tabs on the Notes page: All, Daily, Linked to work. No issue names tabs; these map to the three kinds of note the ledger talks about.
-2. A drawn page glyph for a note (blue outline for daily notes). The grammar has no note glyph; it is the only new glyph.
-3. Row columns: links count, folder (mono), age, and a waits-on cell showing "agent edit" when an agent edit is unreviewed. The issue names title, first line, link count, age only; folder and the agent flag are added.
-4. Peek fields: Edited, Links "4 out . 3 in", Work (states of linked PR/issue), File. Peek actions: Open, Copy path, Copy link (key y).
-5. Hotkey Ctrl+Alt+N (given by lead; Projects uses Ctrl+Alt+I).
-6. A leading "[ ]" draws a ticked box in the bar and a line "starts with [ ]: saved as a task".
-7. Saved task format `- [ ] 14:32 text` (checkbox before the time). The issue says `- 14:32 <text>` for a plain line and does not give the task shape.
-8. The saved notification has "Open note" (primary) and "Undo". The issue names no undo for capture.
-9. The bar shows a preview line of the exact text that will be appended, and the "Adds to 2026-11-12 . ## Captured" chip.
-10. Daily note title is the long date "Thursday 12 Nov 2026"; the file is `daily/2026-11-12.md`. The prior-art says `YYYY-MM-DD.md` in a folder the owner sets; `daily/` is invented.
-11. Section names "Carried from earlier days", "Today", "Captured". "Captured" is from the issue; the other two are invented. Carried tasks show where they came from ("from 11-10").
-12. Previous-day link points at the previous existing day (Foam rule), shown as "Wed 11 Nov". "next day: none yet" is drawn as plain text, not a link. In the editor, a bare letter types, so the editor footer has its own chords: Alt+Left previous day, Alt+Right next day, Ctrl+Shift+H History (all invented). The bare `g p` / `g d` of the prior-art note work only from the list (the list footer shows `g d`).
-13. Popup groups in this order: Notes, Issues, Pull requests, Threads, Runs, Scopes, Files, one row each. The issue lists no "Notes" group; notes are added because `[[` is a note link first. Order of the six work groups follows the lead's brief.
-14. Row ids in the popup: `note`, `#eng` for a thread, `run`, `scope`, `file`. Real ids are unknown.
-15. Unlinked mention row shows the paragraph with the title in bold, and a "Link it" button with the chord Ctrl+Shift+L (a bare `l` would type in the editor).
-16. Backlinks also list a PR body that links to the note ("#3104 (pull request)"); the prior-art note says object backlinks share the list. Filter chord Ctrl+Shift+F.
-17. Palette: scope chip "Notes" next to the typed `note:`, a "Best match, then newest" header, and a "Create note" row with "in eng/". Ctrl+Enter creates; "Down for previous note when empty" is from the prior-art note.
-18. Chip anatomy: glyph, id, short title, state word. States merged (violet glyph), CI red (red x glyph), closed (green check glyph), In Progress (half glyph). Chip text is shortened from the PR/issue title.
-19. "Make it an issue [Ctrl+Shift+I]" (selection; the issue says `m`, which can't be a bare key in an editor) bar under the selected line, with a target picker "in Linear . EXP" and the note "replaces the line with its chip". Which tracker is the default is a guess.
-20. History is a full view with a left version list (340 px). Each version shows who and the plus/minus line counts. Ctrl+Shift+H opens it from the editor, Esc returns. History keeps the bare-letter footer (j/k, a accept, d decline, r restore).
-21. An agent edit is a proposal and is not in the file yet (meta on #2981: writes arrive as a diff the owner accepts). The version row reads "proposed edit, not in the file yet"; the band reads "Proposed by claude-code, session 7f3a ... the file stays at the 14:05 version until you accept". Accept (primary, `a`) writes it, Decline (`d`) drops it. No Undo and no owner rule text. Accepted versions are normal rows. The list shows "proposed edit" in the waits-on cell and the peek a "Proposal" field. Agent shown as "claude-code, session 7f3a".
-22. Editor footer on today, link-complete, backlinks and live-chips: Esc leave editor, Ctrl+K palette, then the page's chords: Ctrl+Shift+I make it an issue (selection), Ctrl+Enter open chip, `[[` link, Ctrl+Shift+L link mention, Ctrl+Shift+F filter backlinks. All invented; Esc then moves focus to the list keys.
-23. The capture bar draws an empty task box (not ticked) when the line starts with "[ ]".
+## Placeholders
+1. Link ids written into the file: `[[#3112]]` (issue and PR), `[[thread:eng/1731]]`, `[[run:8841]]`, `[[scope:export/upload]]`, `[[code:ctx_9c41e2|Uploader.cs:88]]`. The context lane picks the real ones.
+2. Error codes: `NOTES-WRITE-001 · EACCES` (capture, today page), `NOTES-HISTORY-001 · ENOENT` (history), `LINEAR-CREATE-502` (make an issue).
+
+## Behaviour
+3. Capture: the Issue / Note switch shows only when a notes folder is set (lead call). The "No notes folder yet" error frame is reachable only if the folder was removed while the window was open.
+4. Capture: Enter on an empty line saves nothing, the window stays open and says "Nothing to save." Undo on the saved toast lasts 8 s and is off once the note changed.
+5. Today's page: the fold shows up to 5 rows per group, stays closed once you scroll past it, opens again the next day. Needs you rows: CI red PR, review asked, a decision.
+6. Open tasks from earlier days are drawn from the other days' files. A tick edits the original line. The block is not in today's file.
+7. File changed on disk: two versions side by side, "Keep mine" primary, "Keep the file's"; the other version goes to History.
+8. Chips: a chip is raw text only on the cursor's line. "Not live" dims the chip and shows "as of 14:02". An unknown chip (repo not in the profile) says "unknown" and offers "Add the repo in Settings".
+9. Chip glyphs: closed-not-merged PR has its own slashed circle (new glyph). Issue "closed" keeps the green check.
+10. Make it an issue: default target is GitHub in the repo of the note's only linked PR, else the profile tracker (Linear EXP). Undo lasts 8 s (Ctrl+Z).
+11. Palette: "Create note" path is the folder of the note you are in, else the notes folder root. The row is hidden when a note with exactly that title exists.
+12. Link popup with no match: Enter creates the note and inserts the link.
+13. Settings: agent write rule is a per-folder choice, two values drawn ("Agents propose, you accept", "Agents can't edit"). Folder rows listed are eng/, daily/, people/, design/ and "Other folders".
+14. History: restoring a version writes it as a new version and compares against the file now. The current version has no Restore button. Stale proposal: Accept off, Decline primary.
+15. Hotkey refused: the Settings row says "The OS refused this hotkey" and offers "Pick another key" (same row as #3170).
+
+## Keys (all invented)
+16. Alt+Left / Alt+Right previous / next day, Ctrl+Shift+H history, Ctrl+Shift+I make an issue, Ctrl+Shift+L link a mention, Ctrl+Shift+F filter backlinks, Ctrl+Enter open chip or create a note from the palette, Ctrl+Z undo a made issue, Ctrl+Tab Issue / Note.
+
+## Fixture
+17. One clock (14:32, Thu 12 Nov 2026) and one daily file in every frame. Counts: list 214 = 3 + 3 + 3 + 205. The history list says "13 + 1 proposed".
