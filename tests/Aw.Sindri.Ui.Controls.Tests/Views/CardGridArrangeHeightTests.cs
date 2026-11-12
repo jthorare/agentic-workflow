@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -35,7 +36,7 @@ public sealed class CardGridArrangeHeightTests
         });
 
         Assert.Equal(200, cardHeight);   // setup check: the card did take the taller height at the arrange width
-        Assert.True(gridHeight >= cardBottom, FormattableString.Invariant($"the grid reported {gridHeight} but its card ends at {cardBottom}"));
+        Assert.True(gridHeight >= cardBottom, string.Create(CultureInfo.InvariantCulture, $"the grid reported {gridHeight} but its card ends at {cardBottom}"));
     }
 
     // A card whose height depends on its width the way wrapped text does: 100 tall at 440 px or wider, 200 tall below that.
