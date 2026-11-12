@@ -203,6 +203,8 @@ the other:
 - The reservation assumes every gate runs through `aw-meta gate-run`. A gate run by hand carries no priority and would wait behind
   the reservation it is meant to share; nothing running is ever pre-empted.
 
+**Wait files.** `heavy` writes one file, `$AW_STATE_DIR/locks/heavy-wait/<pid>` (the wrapper's own pid), for each job that has to wait for a slot. The file is one JSON line with `pid`, `session`, `lock` (`session` or `box-wide`), `since` (UTC, when the first wait began), `argv` (raw) and `cwd`. `heavy` removes the file when the job takes its slot, on the lock timeout and when a signal ends it. A job that gets its slots at once writes none. SIGKILL leaves a file behind, so `aw-meta heavy --json` (#3142), the reader, skips a dead pid and redacts `argv`.
+
 **Builders per lane.** `health` (and `status`, one line) advises how many builder subagents each lane should run now, from
 `builders.maxPerLane` (none by default: nothing caps it but the host): it is reduced while free disk is under `resources.diskFloorGb + lanes x builders x builders.worktreeGb`
 (lanes are the configured lanes but the meta lane), and is 1 while memory is low (the watch's `MEMORY LOW` rule: under `resources.memFloorGb` available; swap alone does not cut it); it is never
