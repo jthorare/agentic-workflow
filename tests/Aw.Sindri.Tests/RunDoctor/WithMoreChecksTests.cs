@@ -44,6 +44,40 @@ public sealed class WithMoreChecksTests
         Assert.False(more.Ran);
     }
 
+    [Fact]
+    public async Task A_check_past_its_cap_becomes_one_warn_row_and_the_others_still_report()
+    {
+        var doctor = new WithMoreChecks(new Core([_ok], exitCode: 0), [new Slow(), new More(new DoctorCheck("fast", CheckState.Ok, "ok", Fix: null))]);
+
+        var report = (await doctor.Handle(new RunDoctorRequest { Cap = TimeSpan.FromMilliseconds(100) }, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Equal(["lease", "Slow", "fast"], report.Checks.Select(c => c.Name), StringComparer.Ordinal);   // why: response order is registration order
+        Assert.Equal(CheckState.Warn, report.Checks[1].State);
+        Assert.StartsWith("took over", report.Checks[1].Detail, StringComparison.Ordinal);
+        Assert.EndsWith("(skipped)", report.Checks[1].Detail, StringComparison.Ordinal);
+        Assert.Equal(1, report.ExitCode);
+    }
+
+    [Fact]
+    public async Task Rows_reach_OnRow_as_each_check_finishes_not_at_the_end()
+    {
+        var seen = new List<string>();
+        var doctor = new WithMoreChecks(new Core([_ok], exitCode: 0), [new More(new DoctorCheck("fast", CheckState.Ok, "ok", Fix: null)), new Slow()]);
+
+        await doctor.Handle(new RunDoctorRequest { Cap = TimeSpan.FromMilliseconds(200), OnRow = row => { lock (seen) { seen.Add(row.Name); } } }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["lease", "fast", "Slow"], seen, StringComparer.Ordinal);   // why: the order is stable, and the capped check no longer holds back the row before it
+    }
+
+    private sealed class Slow : IDoctorChecks
+    {
+        public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
+        {
+            await Task.Delay(TimeSpan.FromMinutes(5), cancellationToken).ConfigureAwait(false);
+            return [];
+        }
+    }
+
     private sealed class Core : IService<RunDoctorRequest, RunDoctorResponse>
     {
         private readonly Result<RunDoctorResponse> _answer;
