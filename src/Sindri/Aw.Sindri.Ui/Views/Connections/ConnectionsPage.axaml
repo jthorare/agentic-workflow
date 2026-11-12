@@ -21,7 +21,7 @@
           <TextBlock x:Name="ConnectionsHead" Classes="caption subtle" Text="{Binding Head}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
       </StackPanel>
-      <Button x:Name="ConnectionsAdd" Grid.Column="2" Classes="link" Content="{Binding Text.Add}" Click="OnAdd" AutomationProperties.Name="{Binding Text.Add}" />
+      <Button x:Name="ConnectionsAdd" Grid.Column="2" Content="{Binding Text.Add}" Click="OnAdd" AutomationProperties.Name="{Binding Text.Add}" />
     </Grid>
     <Border x:Name="ConnectionsPurposeName" AutomationProperties.Name="{Binding Text.Purpose}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
       <TextBlock Classes="body muted" Text="{Binding Text.Purpose}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />

@@ -35,7 +35,7 @@
           <DataTemplate x:DataType="cb:ConnectionRowViewModel">
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock Classes="caption" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-              <Button Grid.Column="1" Classes="link" Content="{Binding Text.Rename}" AutomationProperties.Name="{Binding RenameName}" AutomationProperties.AutomationId="{Binding RenameId}" Click="OnRenameRow" />
+              <Button Grid.Column="1" Content="{Binding Text.Rename}" AutomationProperties.Name="{Binding RenameName}" AutomationProperties.AutomationId="{Binding RenameId}" Click="OnRenameRow" />
             </Grid>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
@@ -45,7 +45,7 @@
         <TextBlock x:Name="ServiceTileRenameError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding RenameReason}" IsVisible="{Binding HasRenameReason}" TextWrapping="Wrap" />
         <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
           <Button x:Name="ServiceTileRenameSave" Classes="command-control primary" Content="{Binding Text.RenameSave}" IsEnabled="{Binding CanSaveRename}" Click="OnRenameSave" />
-          <Button x:Name="ServiceTileRenameCancel" Classes="link" Content="{Binding Text.Cancel}" Click="OnRenameCancel" />
+          <Button x:Name="ServiceTileRenameCancel" Content="{Binding Text.Cancel}" Click="OnRenameCancel" />
         </StackPanel>
       </StackPanel>
       <TextBlock x:Name="ServiceTileLastUsed" Classes="caption subtle" Text="{Binding LastUsedText}" IsVisible="{Binding IsConnected}" AutomationProperties.AccessibilityView="Raw" />
@@ -56,7 +56,7 @@
         <TextBox x:Name="ServiceTileClientSecret" PasswordChar="●" Text="{Binding ClientSecret.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileSecretLabel}" IsVisible="{Binding NeedsSecret}" AutomationProperties.Name="{Binding Text.TileSecretLabel}" />
         <TextBox x:Name="ServiceTileToken" PasswordChar="●" Text="{Binding Token.Text, Mode=TwoWay}" PlaceholderText="{Binding Text.TileTokenLabel}" IsVisible="{Binding TakesToken}" AutomationProperties.Name="{Binding Text.TileTokenLabel}" />
         <TextBlock x:Name="ServiceTileHelp" Classes="caption subtle" Text="{Binding HelpText}" TextWrapping="Wrap" />
-        <Button x:Name="ServiceTileHelpLink" Classes="link" Content="{Binding HelpLinkText}" IsVisible="{Binding HasHelpLink}" Click="OnHelp" HorizontalAlignment="Left" />
+        <Button x:Name="ServiceTileHelpLink" Content="{Binding HelpLinkText}" IsVisible="{Binding HasHelpLink}" Click="OnHelp" HorizontalAlignment="Left" />
         <TextBlock x:Name="ServiceTileReason" Classes="caption subtle" Text="{Binding BlockedReason}" IsVisible="{Binding HasBlockedReason}" TextWrapping="Wrap" />
       </StackPanel>
 
@@ -65,7 +65,7 @@
 
       <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
         <Button x:Name="ServiceTilePrimary" Classes="command-control primary" Content="{Binding PrimaryText}" IsVisible="{Binding HasPrimary}" IsEnabled="{Binding CanPress}" Click="OnPrimary" ToolTip.Tip="{Binding BlockedReason}" />
-        <Button x:Name="ServiceTileCancel" Classes="link" Content="{Binding Text.Cancel}" IsVisible="{Binding IsAsking}" Click="OnCancel" />
+        <Button x:Name="ServiceTileCancel" Content="{Binding Text.Cancel}" IsVisible="{Binding IsAsking}" Click="OnCancel" />
       </StackPanel>
     </StackPanel>
   </Border>
