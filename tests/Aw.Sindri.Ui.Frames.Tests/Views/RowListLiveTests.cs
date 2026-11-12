@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Automation;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -286,6 +287,49 @@ public sealed class RowListLiveTests
         needs.IsCollapsed = false;
         Settle(window);
         Assert.Equal("Fold Needs you", AutomationProperties.GetName(chevron));
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task The_list_is_a_list_that_counts_every_row_and_not_just_the_ones_built() => await OnUi(() =>
+    {
+        var moving = new LiveGroup("Moving", Enumerable.Range(0, 10_000).Select(i => LiveRow.At(i)));
+        var (window, list) = Show(new[] { moving });
+        var peer = ControlAutomationPeer.CreatePeerForElement(list);
+
+        Assert.Equal(AutomationControlType.List, peer.GetAutomationControlType());
+        Assert.Equal("10000 rows", peer.GetName());
+
+        AutomationProperties.SetName(list, "Inbox");
+        Assert.Equal("Inbox, 10000 rows", peer.GetName());
+
+        moving.IsCollapsed = true;
+        Settle(window);
+        Assert.Equal("Inbox, 0 rows", peer.GetName());
+        window.Close();
+        return true;
+    });
+
+    [Fact]
+    public async Task One_row_is_1_row_in_the_list_name_and_the_header_name_and_the_header_says_if_it_is_folded() => await OnUi(() =>
+    {
+        var moving = Group("Moving", 1);
+        var needs = Group("Needs you", 8, first: 100);
+        var (window, list) = Show(new[] { moving, needs });
+        var peer = ControlAutomationPeer.CreatePeerForElement(list);
+        Assert.Equal("9 rows", peer.GetName());
+        Assert.Equal("Moving, 1 row, expanded", AutomationProperties.GetName(Headers(list)[0]));
+        Assert.Equal("Needs you, 8 rows, expanded", AutomationProperties.GetName(Headers(list)[1]));
+
+        Click(window, Headers(list)[0], 60, 14);
+
+        Assert.Equal("Moving, 1 row, collapsed", AutomationProperties.GetName(Headers(list)[0]));
+        Assert.Equal("8 rows", peer.GetName());
+        moving.Rows.Clear();
+        moving.IsCollapsed = false;
+        Settle(window);
+        Assert.Equal("Moving, 0 rows, expanded", AutomationProperties.GetName(Headers(list)[0]));
         window.Close();
         return true;
     });

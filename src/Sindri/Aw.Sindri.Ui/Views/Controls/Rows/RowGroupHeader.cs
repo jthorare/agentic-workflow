@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
+using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
@@ -145,11 +146,19 @@ internal sealed class RowGroupHeader : Border
         _chevron.Text = collapsed ? "▸" : "▾";
         _chevronBox.IsVisible = heading is not null;
         NameChevron(heading, collapsed);
+        NameHeader(group, heading, collapsed);
         Classes.Set("collapsed", collapsed);
     }
 
     private void NameChevron(IRowGroupHeading? heading, bool collapsed) =>
         AutomationProperties.SetName(_chevronBox, heading is null ? string.Empty : (collapsed ? "Unfold " : "Fold ") + heading.Heading);
+
+    // "Needs you, 8 rows, expanded": what the screen reader hears on the header (Home spec 7).
+    private void NameHeader(IRowGroup? group, IRowGroupHeading? heading, bool collapsed)
+    {
+        AutomationProperties.SetControlTypeOverride(this, AutomationControlType.Group);
+        AutomationProperties.SetName(this, group is null ? string.Empty : (heading?.Heading ?? group.ToString()) + ", " + RowSpeech.Rows(Count(group.Items)) + (heading is null ? string.Empty : collapsed ? ", collapsed" : ", expanded"));
+    }
 
     private static int Count(IEnumerable items) => items is ICollection collection ? collection.Count : items.Cast<object>().Count();
 
