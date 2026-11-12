@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
@@ -41,7 +42,7 @@ public sealed class FirstRunSetupTests : IDisposable
             Repos: [.. repos.Select(static r => new RepoEntry(r, "/work/" + r))],
             Workflow: target is null ? null : new WorkflowSettings(Agent: new WorkflowAgentSettings(AgentId.From(target))),
             Setup: setup)).Value;
-        _rig.Harness.Profiles.Live = new LoadedProfile(profile, ProfileHashing.Of(Aw.Kernel.Json.AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
+        _rig.Harness.Profiles.Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
     }
 
     private FirstRunSetup Setup(InMemoryWorkflowStore? workflows = null)
