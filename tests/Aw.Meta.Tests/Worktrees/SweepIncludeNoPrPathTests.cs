@@ -82,6 +82,23 @@ public sealed class SweepIncludeNoPrPathTests
         Assert.Contains(second.Value.Removed, r => string.Equals(r.Path, Loose, StringComparison.Ordinal));
     }
 
+    /// <summary>#3350: the baseline key uses the normalized path, so a trailing slash on the first run does not hide it from the second.</summary>
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_path_sweep_finds_its_baseline_when_the_path_is_spelled_with_a_trailing_slash()
+    {
+        Script();
+        _world.WorktreeFiles.Touch(Loose, A.At(10));
+        await _world.Ready();
+        var service = new SweepWorktreesService(_world.Config, _world.Sweeper);
+
+        var first = await service.Handle(new SweepWorktreesRequest(DryRun: false, Pr: null, IncludeNoPr: true, Path: Loose + "/"), CancellationToken.None);
+        Assert.True(first.IsSuccess);
+        var second = await service.Handle(new SweepWorktreesRequest(DryRun: false, Pr: null, IncludeNoPr: true, Path: Loose), CancellationToken.None);
+
+        Assert.True(second.IsSuccess);
+        Assert.Contains(second.Value.Removed, r => string.Equals(r.Path, Loose, StringComparison.Ordinal));
+    }
+
     /// <summary>#3350: the per-tree marker never replaces the global one; a full sweep after a --path sweep still compares with the global marker.</summary>
     [Fact, Trait("Lane", "unit")]
     public async Task A_full_sweep_after_a_path_sweep_still_uses_the_global_marker()
