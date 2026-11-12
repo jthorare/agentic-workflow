@@ -109,7 +109,7 @@ internal sealed class DeleteWorkflowService(IWorkflowStore workflows, IWorkflowR
 
         var freed = 0L;
         var stayed = new List<string>();
-        var mine = listed.Value.Where(e => string.Equals(e.Owner.Key, slug, StringComparison.Ordinal) || e.Owner.Key.StartsWith(slug + "/", StringComparison.Ordinal)).ToList();
+        var mine = listed.Value.Where(e => Belongs(e.Owner, slug)).ToList();
         foreach (var owner in mine.Select(static e => e.Owner).Distinct())
         {
             if (!TryPurge(owner))
@@ -123,6 +123,13 @@ internal sealed class DeleteWorkflowService(IWorkflowStore workflows, IWorkflowR
 
         return (freed, stayed);
     }
+
+    private static bool Belongs(ResourceOwner owner, string slug) => owner.Kind switch
+    {
+        ResourceOwnerKind.Workflow => string.Equals(owner.Key, slug, StringComparison.Ordinal),
+        ResourceOwnerKind.Node => owner.Key.StartsWith(slug + "/", StringComparison.Ordinal),
+        _ => false,
+    };
 
     private bool TryPurge(ResourceOwner owner)
     {

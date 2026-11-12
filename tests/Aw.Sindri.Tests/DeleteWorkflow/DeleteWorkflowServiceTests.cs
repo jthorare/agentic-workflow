@@ -115,6 +115,21 @@ public sealed class DeleteWorkflowServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task A_toolkit_with_the_same_name_keeps_its_resources_and_is_not_counted()
+    {
+        await _rig.Seed();
+        var expected = Provision("workflow:drift-check");
+        var toolkit = Provision("toolkit:drift-check");
+        Assert.True(toolkit > 0);
+
+        var result = await _service.Handle(new DeleteWorkflowRequest(Slug, "owner"), Token);
+
+        Assert.Equal(expected, result.Value.BytesFreed);
+        Assert.Empty(result.Value.ResourcesStayed);
+        Assert.True(Directory.Exists(Path.Combine(Root, "toolkit", "drift-check")));
+    }
+
+    [Fact]
     public async Task A_workflow_with_no_resources_and_no_runs_reports_zero()
     {
         await _rig.Seed();

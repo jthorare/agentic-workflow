@@ -101,7 +101,7 @@ public sealed class CliWorkflowWritesTests : IDisposable
         Assert.Contains("\"revision\":2", activate.Sent, StringComparison.Ordinal);
         Assert.Equal(("POST", "/sindri/workflows/drift-check/pause"), (pause.Method, pause.Path));
         Assert.Equal(("DELETE", "/sindri/workflows/drift-check"), (delete.Method, delete.Path));
-        Assert.Equal("drift-check is on at revision 2\ndrift-check is off\nDeleted drift-check. 0 runs kept, 0.0 MB freed\n", _out.ToString().ReplaceLineEndings("\n"));
+        Assert.Equal("drift-check is on at revision 2\ndrift-check is off\nDeleted drift-check. 0 runs kept, 0.0 MiB freed\n", _out.ToString().ReplaceLineEndings("\n"));
     }
 
     [Fact, Trait("Lane", "unit")]

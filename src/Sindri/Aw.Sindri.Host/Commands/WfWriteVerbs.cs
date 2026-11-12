@@ -138,7 +138,7 @@ internal sealed class WfWriteVerbs(RecipeDesk desk, Output output)
 
     private static string Deleted(DeleteWorkflowResponse r)
     {
-        var line = string.Create(CultureInfo.InvariantCulture, $"Deleted {r.Slug.Value}. {r.RunsKept} runs kept, {r.BytesFreed / 1048576.0:0.0} MB freed");
+        var line = string.Create(CultureInfo.InvariantCulture, $"Deleted {r.Slug.Value}. {r.RunsKept} runs kept, {r.BytesFreed / 1048576.0:0.0} MiB freed");
         return (r.ResourcesStayed.Count == 0 ? line : line + "; these resources stayed: " + string.Join(", ", r.ResourcesStayed)) + "\n";
     }
 
