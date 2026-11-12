@@ -21,14 +21,10 @@ public sealed class SessionChipsStartingTests
     }
 
     [Fact]
-    public void Answer_in_the_pane_fits_the_18_character_chip()
-    {
+    public void Answer_in_the_pane_fits_the_18_character_chip() =>
         Assert.Equal(18, SessionChips.Starting(TimeSpan.FromSeconds(5), trustDialogLikely: true).Word.Length);
-    }
 
     [Fact]
-    public void The_starting_state_has_the_no_state_glyph_and_its_word()
-    {
+    public void The_starting_state_has_the_no_state_glyph_and_its_word() =>
         Assert.Equal(("○", "Starting"), (SessionChips.For("starting").Glyph, SessionChips.For("starting").Word));
-    }
 }

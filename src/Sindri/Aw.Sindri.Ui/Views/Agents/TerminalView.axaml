@@ -43,7 +43,7 @@
     </Border>
     <Grid Grid.Row="1" x:Name="Body">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition x:Name="ListColumn" Width="360" />
+        <ColumnDefinition Width="360" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
       <Border x:Name="ListFrame" Classes="frame" Classes.accent="{Binding IsListAccented}" Margin="2,2,0,2" Padding="0,8">

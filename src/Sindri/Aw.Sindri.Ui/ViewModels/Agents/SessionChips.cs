@@ -21,7 +21,7 @@ internal static class SessionChips
     /// <summary>How long after the 2xx the Starting chip changes (agents spec §15.4).</summary>
     internal static readonly TimeSpan StartingChipAfter = TimeSpan.FromSeconds(4);
 
-    /// <summary>The chip of a one-off that is still in <c>starting</c> (agents spec §15.4): "Starting" for 4 s, then "Answer in the pane" when Claude Code shows its trust dialog (a new worktree, or a folder Sindri has not started in), else "No recent activity". The row stays in <c>starting</c>.</summary>
+    /// <summary>The chip of a one-off that is still in starting (agents spec §15.4): "Starting" for 4 s, then "Answer in the pane" when Claude Code shows its trust dialog (a new worktree, or a folder Sindri has not started in), else "No recent activity". The row stays in starting.</summary>
     /// <param name="sinceStart">Time since the start's 2xx.</param>
     /// <param name="trustDialogLikely">True when the start made a new worktree or used a folder Sindri has not started in before.</param>
     /// <returns>The glyph and the word.</returns>

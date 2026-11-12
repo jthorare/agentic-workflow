@@ -1,4 +1,4 @@
-using Avalonia;
+#pragma warning disable MA0182 // the Agents page hosts the view in the U1 page PR
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -47,7 +47,7 @@ internal sealed partial class TerminalView : UserControl
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
-        ListColumn.Width = new GridLength(e.NewSize.Width < NarrowBelow ? 56 : 360);
+        Body.ColumnDefinitions[0].Width = new GridLength(e.NewSize.Width < NarrowBelow ? 56 : 360);
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)

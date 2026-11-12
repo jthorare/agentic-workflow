@@ -40,10 +40,8 @@ public sealed class TerminalCardTests
     }
 
     [Fact]
-    public void The_list_footer_of_a_card_state_names_the_first_button()
-    {
+    public void The_list_footer_of_a_card_state_names_the_first_button() =>
         Assert.Equal("F6 to Retry now · Esc close · n new", CantReach().View.FooterText);
-    }
 
     [Fact]
     public void Tab_and_Shift_Tab_move_between_the_ended_banner_buttons_and_wrap()

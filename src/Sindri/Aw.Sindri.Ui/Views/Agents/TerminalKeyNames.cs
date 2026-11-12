@@ -2,7 +2,7 @@ using Avalonia.Input;
 
 namespace Aw.Sindri.Ui.Views.Agents;
 
-/// <summary>Names a key the way <c>TerminalViewViewModel.Route</c> reads it: "F6", "Shift+F6", "Ctrl+Shift+L", "Cmd+Shift+L", "Esc", "Tab", "Shift+Tab", "Enter", else the key's own name.</summary>
+/// <summary>Names a key the way TerminalViewViewModel.Route reads it: "F6", "Shift+F6", "Ctrl+Shift+L", "Cmd+Shift+L", "Esc", "Tab", "Shift+Tab", "Enter", else the key's own name.</summary>
 internal static class TerminalKeyNames
 {
     /// <summary>Names one key press.</summary>
@@ -16,11 +16,11 @@ internal static class TerminalKeyNames
             + (modifiers.HasFlag(KeyModifiers.Meta) ? "Cmd+" : string.Empty)
             + (modifiers.HasFlag(KeyModifiers.Alt) ? "Alt+" : string.Empty)
             + (shift ? "Shift+" : string.Empty);
-        return key switch
+        if (key == Key.Escape)
         {
-            Key.Escape => prefix == string.Empty ? "Esc" : prefix + "Esc",
-            Key.Return => prefix == string.Empty ? "Enter" : prefix + "Enter",
-            _ => prefix + key,
-        };
+            return prefix.Length == 0 ? "Esc" : prefix + "Esc";
+        }
+
+        return key == Key.Return ? (prefix.Length == 0 ? "Enter" : prefix + "Enter") : prefix + key;
     }
 }
