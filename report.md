@@ -55,3 +55,30 @@ The old sub-line colour `#74787f` on Canvas is 4.49:1, below 4.5:1. All three ro
 - The older panels of `states` that predate the first Add (Shell not responding, Stale serve under the top bar and the page-state panels) keep their compact bars. Only the hello-sindri and map panels got the full bar, and those panels are drawn 1440 wide because the full bar does not fit in 720.
 - Ring rule: on the "hello-sindri running by itself" panel no row holds a primary, so the ring sits on the first row not done (the running map row). That follows the spec's fallback in spirit; the done rows' Accounts and Add repos buttons are secondary. Meta to confirm.
 - With a primary elsewhere on the Setup page the ring sits on that row. With none, the ring sits on the hello-sindri Open item row (it holds the page's one primary), never on the running map row.
+
+## Fixture check against spec §5.0 (#3329)
+
+Spec at origin/main 13744d9 or later. Checked by reading each frame's HTML text and every panel's primary buttons (one script counts `btn primary` per panel, ignoring a busy one).
+
+| §5.0 row | Frames that show it | Result |
+|---|---|---|
+| Accounts: gh login `ada`, Linear and Slack optional and not connected | setup-connect (After Change, connected rows), setup-accounts, setup-repos (header line), setup-steps (accounts row) | matches; "After Change" primary says "Use the gh login (ada)" (#3315) |
+| Scan: `~`, depth 3, "41 folders · 6 repos so far", done "6 repos" | setup-repos Scanning, Done | matches. **Changed:** "Stop scan pressed" said "4 repos found"; it now says "41 folders · 6 repos found" and lists the six |
+| Repos found: six repos, paths, owners, worktrees, known | setup-repos (every panel with the list), setup-repos-page (the four not yet added) | matches (`jthorare/agentic-workflow` 104, `ledgerly-app/exports` 3, `ledgerly-app/core`, `ada/dotfiles`, `ada/prism-mcp` 1, `~/src/old-site` no remote) |
+| Ticked: 2 of 6, "Add 2 repos" | setup-repos Scanning, Done, Adding, Stop scan pressed | matches; other counts derive from it (drag: 3 of 7, one failed: 1 of 2 added, nothing pre-ticked: 0 of 6) |
+| Repo size: 15,223 files, 82,825 symbols | setup-steps (map rows say 15,223 files). **Changed:** the done map row now reads "a current map of agentic-workflow (15,223 files, 82,825 symbols) and exports" | matches |
+| Index progress: "Indexing files: 7,000 of 15,223" | setup-steps Map phase 1 | matches |
+| Map progress: "Building the map: 4,720 of 15,223 files", chip 31% | setup-steps phases 2 and the panels below, states "Map building", Home succeeded line | matches |
+| Builds: running `80f69df` built 2026-11-11 22:10Z, installed `7c81646` built 2026-11-12 10:31Z | stale-line (Stale, Details open, Restarted toast), states Stale panel. **Changed:** setup-steps "The serve row is stale" now says "A newer Sindri is installed (7c81646, built today 10:31). Running 80f69df, built yesterday 22:10." The other setup-steps panels keep "running 7c81646, the installed one" because no update is waiting there | matches; no build numbers anywhere |
+| Open set of 3 | stale-line Runs open, Waiting | matches |
+| hello-sindri: four steps | "step 2 of 4" on Home and Setup; failure names step 2, Make a greeting | matches (the frames never list the steps, the spec's example needs only step 2 of 4) |
+| hello-sindri failure line | setup-steps failed panel, states Home failed | matches word for word |
+| hello-sindri success line | setup-steps, states Home succeeded. **Changed:** the Home row lacked the final period | matches |
+| Map failure line | setup-steps "Map failed for one repo" (full sentence); states Home map-failed (short form with Details, as §4.6) | matches |
+| Still stopping: pid 48213, serve.log path | not-running panel 5, stale-line Still stopping | matches |
+| Didn't come back: port 7410 | stale-line Didn't come back; not-running "Didn't start" | matches |
+| Setup page: 6 of 8, "Setup 6/8" | setup-steps (stale, expired, first-read-failed, no-agent, running-by-itself panels), setup-accounts, setup-repos-page, stale-line, states panels that do not show hello-sindri's result | **Changed:** setup-accounts and the older states panels said 7/8; they say 6/8 now. Panels that show hello-sindri's result keep 7 of 8 (map phases, map failed or stopped, Loading, expired account, Home succeeded, map-failed and own-rows) |
+| Services: 16 | **Added:** states "Home: health strip with the services count (#3127)" reads "Sindri running · 16 services · profile saved" | now shown |
+| Today's times | not-running Starting says "about 10 seconds" (serve up 9.9 s); the other times appear in no frame | the 3 s, 81 s and 18 min figures are not drawn |
+
+One primary per state (decision 22): every panel has exactly one primary, or none where the spec says none (a running or waiting state, Adding, the Repos page with a busy Add, All done, own rows present). No panel has two. The Button states legend shows one primary per column by design.

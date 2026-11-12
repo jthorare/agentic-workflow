@@ -285,8 +285,7 @@ def repos_panels():
     P.append(panel('Couldn\'t read your GitHub repos: Retry, the scan still works', 'gap 7',
         q2(SL('fail',"Couldn't read your GitHub repos.",'Known repos aren\'t marked.',btn('Retry','primary','Enter','focus'),'err') ,six(on=False,first_ring=False), cfoot('0 of 6 ticked', LOOK(), btn('Add 0 repos','','Ctrl+Enter','busy'))), 720))
     P.append(panel('Stop scan pressed: the rows found stay', '§4.3',
-        q2(SL('todo','Scan stopped · 41 folders · 4 repos found','',btn('Scan again')),
-           repo('~/repos/agentic-workflow','jthorare/agentic-workflow','104',True,True,'cursor')+repo('~/repos/exports','ledgerly-app/exports','3',True,True)+repo('~/work/ledgerly-core','ledgerly-app/core')+repo('~/repos/dotfiles','ada/dotfiles'),
+        q2(SL('todo','Scan stopped · 41 folders · 6 repos found','',btn('Scan again')), six(),
            cfoot(FOOT2, LOOK(), ADD2)), 720))
     P.append(panel('A folder dragged onto the window: it joins the list ticked', '§4.3',
         q2(SL('done','6 repos under ~, 3 levels deep · 1 added by you'), six(first_ring=False) + repo('~/work/side-project','ada/side-project','',False,True,'drop'),
@@ -316,7 +315,7 @@ MCP = sd("Agents can use Sindri's tools",'registered in agentic-workflow and exp
 KEEP = ' You can keep working; it finishes in the background.'
 MAP1 = row('agent','Build the map','Indexing files: 7,000 of 15,223 in agentic-workflow.'+KEEP,'<span class="bar"><i style="width:46%"></i></span>46%','','unread')
 MAP2 = row('agent','Build the map','Building the map: 4,720 of 15,223 files in agentic-workflow.'+KEEP,'<span class="bar"><i style="width:31%"></i></span>31%','','unread')
-MAPD = sd('Build the map','a current map of agentic-workflow and exports')
+MAPD = sd('Build the map','a current map of agentic-workflow (15,223 files, 82,825 symbols) and exports')
 HELLO_OK = lambda ring=True: row('done','Run hello-sindri',"hello-sindri ran: made 'Hello from Sindri' in agentic-workflow.",'', btn('Open item','primary' if ring else '','Enter','focus' if ring else '')+btn('Run again'), 'read cursor' if ring else 'read')
 HELLO_RUN = row('agent','Run hello-sindri','hello-sindri is running: step 2 of 4.','','','unread')
 HELLO_FAIL = row('fail','Run hello-sindri','hello-sindri failed at Make a greeting: the step ran out of time after 60 s.','<span class="err-t">failed 1m ago</span>', btn('Open the run','primary','Enter','focus')+btn('Run again'),'unread cursor')
@@ -341,7 +340,7 @@ def steps_panels():
     mapstop = row('fail','Build the map','The map build stopped at 4,720 of 15,223 files 10 minutes ago.','<span class="err-t">Stopped</span>', btn('Retry','primary','Enter','focus'),'unread cursor')
     P.append(panel('Map build stopped with no progress', '§4.4 · must 4',
         sbody('Setup','7 of 8 steps done', CUR+ACC+REP+PROF+AG+MCP+mapstop+HELLO_OK(False), bar_full('Setup','7/8'))))
-    stale = row('parked','Sindri is current','A newer Sindri is installed (7c81646, built today 10:31).','<span class="err-t">stale</span>', btn('Restart Sindri','primary','Ctrl+Shift+R','focus'),'unread cursor')
+    stale = row('parked','Sindri is current','A newer Sindri is installed (7c81646, built today 10:31). Running 80f69df, built yesterday 22:10.','<span class="err-t">stale</span>', btn('Restart Sindri','primary','Ctrl+Shift+R','focus'),'unread cursor')
     P.append(panel('The serve row is stale', '§4.4 · §4.5',
         sbody('Setup','6 of 8 steps done', stale+ACC+REP+PROF+AG+MCP+MAP2+HELLO_OK(False), bar_full('Setup','6/8'))))
     exp = row('done','Connect your accounts','Your Linear sign-in expired. GitHub is connected as ada.','<span class="err-t">Linear expired</span>', btn('Reconnect Linear'),'read')
@@ -392,7 +391,7 @@ def not_running_page():
 
 SLACK = lambda b='Paste a Slack token', cls='': row('todo','Slack','messages and mentions · optional','needs a token, 3 steps', btn(b, cls))
 def accounts_page(rows, foot_btn, last, tab='Setup'):
-    return (bar_full(tab, '7/8')
+    return (bar_full(tab, '6/8')
             + '<div class="header"><h1>Accounts</h1><span class="count">Connect or reconnect the accounts Sindri reads</span></div>'
             + f'<div class="list" style="--facts:200px"><div class="group"><span class="chev">▾</span>Accounts <span class="n">3</span></div>{rows}</div>'
             + f'<div class="actionbar"><span>{last}</span><span class="spacer"></span>{foot_btn}</div>' + keys(('j/k','move'),('Enter','press'),('Ctrl+Enter','primary'),('Esc','Done')))
@@ -412,8 +411,8 @@ def accounts_panels():
                         btn('Done','primary','Esc','focus'), 'Done goes back to Setup.')))
     P.append(panel('Done pressed', 'decision 28',
         accounts_page(GH_OK + LIN_OK + SLACK(), btn('Done','primary','Esc','pressed'), 'Done goes back to Setup.')))
-    nav = bar_full('Setup','7/8')
-    body = (nav + '<div class="header"><h1>Setup</h1><span class="count">7 of 8 steps done</span></div>'
+    nav = bar_full('Setup','6/8')
+    body = (nav + '<div class="header"><h1>Setup</h1><span class="count">6 of 8 steps done</span></div>'
         + '<div class="list" style="--facts:136px;--col-act:200px"><div class="group"><span class="chev">▾</span>Steps <span class="n">8</span></div>'
         + row('done','Connect your accounts','GitHub is connected as ada · Linear is connected as ada · Slack is optional and not connected','', btn('Accounts'), 'read cursor')
         + row('done','Add your repos','jthorare/agentic-workflow and ledgerly-app/exports','2 repos','', 'read')
@@ -470,7 +469,7 @@ def fullify(s):
             return head
         head = re.sub(r'<div class="topbar"[^>]*>.*?<div class="status-pill[^"]*">[^<]*</div></div>', '', head, count=1, flags=re.S)
         pill, off = ('Not responding', True) if lab.startswith('Shell') else ('Sindri running', False)
-        bar = bar_full(tab_of(lab), '7/8', pill, off).replace('class="topbar"', 'class="topbar" style="height:40px"')
+        bar = bar_full(tab_of(lab), '6/8', pill, off).replace('class="topbar"', 'class="topbar" style="height:40px"')
         head = head.replace('<section class="panel">', '<section class="panel" style="grid-column:1/-1;width:1440px">', 1)
         return head.replace('<div class="pbody">', '<div class="pbody">' + bar, 1)
     return re.sub(r'<section class="panel"><div class="plabel"><b>(.*?)</b>.*?</section>\n?', conv, s, flags=re.S)
@@ -498,9 +497,12 @@ def patch_states():
     new += wide('Home: hello-sindri running by itself', '#3019 · decision 19', hn(emp('agent','hello-sindri is running: step 2 of 4.','It makes an item in agentic-workflow when it finishes.','')))
     new += wide('Home: hello-sindri succeeded, the map is still building', '#3019 · must 3 · §4.6', hn(
         '<div class="list" style="--facts:176px;--col-act:168px;padding:0">'
-        '<div class="row fix cursor"><span class="g done"></span><div class="title"><span class="t">hello-sindri ran: made \'Hello from Sindri\' in agentic-workflow</span></div><div class="fact mono">wf/hello-sindri</div><div class="fixbtn"><span class="btn primary">Open item <kbd>Enter</kbd></span></div></div></div>'
+        '<div class="row fix cursor"><span class="g done"></span><div class="title"><span class="t">hello-sindri ran: made \'Hello from Sindri\' in agentic-workflow.</span></div><div class="fact mono">wf/hello-sindri</div><div class="fixbtn"><span class="btn primary">Open item <kbd>Enter</kbd></span></div></div></div>'
         '<div class="state-line" style="height:auto;min-height:32px;padding:6px 24px"><span class="g agent"></span><span class="what" style="white-space:normal;overflow:visible">Building the map of agentic-workflow: 31%. The map is still building, you can keep working.</span><span class="btns"><a class="btn" href="#">Open Setup</a></span></div>'))
     new += wide('Home: hello-sindri failed', '#3019 · pick c', hn(emp('fail','hello-sindri failed at Make a greeting: the step ran out of time after 60 s.','Open the run to see its steps, or run it again.','<span class="btn primary">Open the run <kbd>Enter</kbd></span><span class="btn">Run again</span>')))
+    new += wide('Home: health strip with the services count (#3127)', '#3127 · §4.6', hn(
+        '<div class="state-line"><span class="g done"></span><span class="what">Sindri running · 16 services · profile saved</span><span class="btns"><a class="btn" href="#">Open Health</a></span></div>'
+        '<div class="list" style="--facts:176px;padding:0"><div class="row unread"><span class="g pr"></span><div class="title"><span class="id">#4182</span><span class="t">Paginate workspace audit export</span></div><div class="fact mono">ledgerly…/exports</div><div class="age">38m</div><div class="wait">review</div></div></div>'))
     new += wide('Home: a map build failed', '#3019 · must 4 · §4.6', hn(
         '<div class="state-line err"><span class="g fail"></span><span class="what">The map of ledgerly-app/exports failed. agentic-workflow is done.</span><span class="btns"><span class="det">Details ▸</span><span class="btn primary">Retry <kbd>Enter</kbd></span></span></div>'))
     new += wide('Home: own rows present, hello-sindri as a secondary line', '#3019 · decision 22', hn(
