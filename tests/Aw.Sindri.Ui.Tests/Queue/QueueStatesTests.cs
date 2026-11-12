@@ -38,6 +38,20 @@ public sealed class QueueStatesTests
     }
 
     [Fact]
+    public async Task Failed_queue_read_never_shows_nothing_running()
+    {
+        _server.QueueView = RouteAnswer.Problem(HttpStatusCode.ServiceUnavailable, "SND-API-011", "The views didn't catch up within 2 s (fix: retry)");
+        var catalog = new CatalogViewModel(new FakeClipboard(), _clock);
+        catalog.Show(_api, _server, (await _server.Commands(_api, Token)).Value);
+        var queue = new QueueViewModel(_server, catalog, _clock);
+
+        await queue.Refresh(_api, Token);
+
+        Assert.False(queue.ShowsNothing);
+        Assert.Equal((Labels.PageReadFailed("Queue"), Labels.Retry, "SND-API-011"), (queue.ReadFailure?.Words, queue.ReadFailure?.PrimaryLabel, queue.ReadFailure?.Code));
+    }
+
+    [Fact]
     public async Task A_filter_that_matches_nothing_shows_no_items_match_and_clear_filter_empties_it()
     {
         var queue = await Queue([Item("ITM-1", "Try the queue")]);

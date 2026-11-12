@@ -23,4 +23,9 @@ internal static partial class Labels
 
     /// <summary>The disclosure at the end of a failed-read line that opens the code.</summary>
     internal const string FailedReadDetails = "Details ▸";
+
+    /// <summary>The words of a page whose read failed: "Queue can't be read right now." (first-run spec §4.6).</summary>
+    /// <param name="page">The page's name.</param>
+    /// <returns>The sentence.</returns>
+    internal static string PageReadFailed(string page) => throw new NotSupportedException();   // red stub (#3325)
 }
