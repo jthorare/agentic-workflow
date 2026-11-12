@@ -111,7 +111,7 @@ The owner pastes each client id into the build's defaults once (P5 names the fil
 25. **The first-run agent path is the CLI.** The `sindri` MCP server is registered only after the profile names a repo, so a session on a fresh box has no MCP tools yet. The only new MCP tool is `setup_get`, for sessions after setup. *agent default (lead, 2026-11-12)*; round 1 devex 6.
 26. **Proof only on scratch homes.** Nobody touches the owner's home or the owner's serve (#3019, "Rule").
 27. **One profile writer gate.** First run writes the profile from several places within seconds: the account route, `AddRepo`, the skip route and the setup service. Every in-process write goes through one shared gate (one `SemaphoreSlim` in a `ProfileWriteGate` singleton, replacing each writer's own `lock`). Each writer also keeps main's re-read check (`SND-PROFILE-002` when the file "changed twice while writing") and retries once, which covers `profile set` from the CLI process. An older serve reads the new `setup` keys as an unreadable profile (`SetupSettings` disallows unknown members); that is a stale serve, and the app's stale line with Restart Sindri is its fix. *agent default (lead, 2026-11-12)*; round 2 arch M5.
-28. **Question 1 outside first run is the Accounts page.** Opened from the Setup page, a Reconnect or a Needs you row, the same screen shows as "Accounts" with no "Question 1 of 2", the sub-line "Connect or reconnect the accounts Sindri reads", and a footer button **Done** that returns to the page it came from and never opens question 2. The primary depends on the entry: from a Reconnect or a Needs you row, that row's button is the primary and takes focus, and once it connects, Done becomes the primary and takes focus; from the Setup page, the first row not connected holds the primary and Done is secondary until no row is left to do. Esc presses Done. Question 2 shows only in first run, while the profile names no repo. *agent default (lead, 2026-11-12)*; round 2 design 3, round 3 design 1.
+28. **Question 1 outside first run is the Accounts page.** Opened from the Setup page, a Reconnect or a Needs you row, the same screen shows as "Accounts" with no "Question 1 of 2", the sub-line "Connect or reconnect the accounts Sindri reads", and a footer button **Done** that returns to the page it came from and never opens question 2. The primary depends on the entry: from a Reconnect or a Needs you row, that row's button is the primary and takes focus, and once it connects, Done becomes the primary and takes focus; from the Setup page, the first row not connected holds the primary and Done is secondary until no required row is left to do: once GitHub is connected, Done is the primary, because Linear and Slack are optional (decision 15). Esc presses Done. Question 2 shows only in first run, while the profile names no repo. *agent default (lead, 2026-11-12)*; round 2 design 3, round 3 design 1.
 29. **An agent the owner started acts for the owner.** No new caller class: the setup gates refuse only a session Sindri launched, as main does. They guard against honest mistakes, not a hostile agent, and refusing owner-started agents would break "set it up for me". *owner via lead (2026-11-12)*.
 
 ### 2.1 Every number, with its source
@@ -230,7 +230,7 @@ The footer holds one of two buttons. Before GitHub connects: **Skip** (secondary
 | State | What shows |
 |---|---|
 | Not connected | a todo ring, the button |
-| Device code shown (GitHub) | "Enter ABCD-1234 at github.com/login/device"; "Waiting for GitHub…" with Cancel. Polling follows GitHub's `interval` and `slow_down`, and stops at `expires_in` or Cancel |
+| Device code shown (GitHub) | "Enter ABCD-1234 at github.com/login/device"; "Waiting for GitHub… the code works for 14:32 more." with Cancel; the time left counts down from GitHub's `expires_in`. Polling follows GitHub's `interval` and `slow_down`, and stops at `expires_in` or Cancel |
 | Device code expired | "The code expired before GitHub saw it.", announced once by the live region; **Get a new code** is the primary and takes focus, and Cancel stays. The click replaces the code in place, restarts polling, and moves focus to Copy code and open GitHub |
 | Token refused (GitHub or Linear paste) | the field is cleared and focused; "GitHub refused this token: <reason>. Paste a new one." |
 | Signing in | "Waiting for your browser…" with Cancel; the other rows still work |
@@ -383,6 +383,10 @@ Every frame and example uses these. A frame with other numbers is wrong.
 | Map progress | "Building the map: 4,720 of 15,223 files", chip `31%` |
 | Builds | running `80f69df`, built 2026-11-11 22:10Z; installed `7c81646`, built 2026-11-12 10:31Z |
 | Open set | 3: Nightly gate (run 14, an agent step), Review loop on #3120 (run 3, waiting on your approval), Code index of agentic-workflow (a job) |
+| hello-sindri | 4 steps: Start (manual), Make a greeting (code, its `timeout` set to 60 s, the longest `CodeBlock` allows, `CodeBlock.cs:13`; the default is 5 s), Tell me (notify), Add an item (`create_item` in agentic-workflow) |
+| hello-sindri failure | "hello-sindri failed at Make a greeting: the step ran out of time after 60 s." |
+| Still stopping | the old serve's pid 48213; log `~/.agentic-workflow/sindri-app/logs/serve.log` |
+| Didn't come back | "Sindri stopped but didn't start again: port 7410 is already in use." |
 | Setup page | 8 steps, 6 done (GitHub connected counts `sources` done); nav tab "Setup 6/8" |
 | Services | 16 built-in services (#3127) |
 | Today's times | serve up 9.9 s, app ready +3 s, repo added t+81 s, first code index about 18 min (ux walk) |
@@ -726,3 +730,5 @@ Suggestions, resolved in writing:
 - security 2, audit entries for restart and connect: applied (A4; connect records the provider and account, never a token, decision 17).
 
 Round 3 security addendum (lead's ask, 2026-11-12): does the fine-grained set match what the setup screen and the `SND-SETUP-014` fallback ask for? It did not. The screen and gap 9 asked for Pull requests read and write, Contents read, Issues read and Metadata read, but the Reviews spec §8 also needs Contents write (merge, update branch) and Checks read (the CI panel), and `-013` and `-014` named no set. Fixed: decision 15a defines the fine-grained set once (Pull requests: read and write, Contents: read and write, Checks: read, Issues: read, Metadata: read), one Core constant feeds the copy and both errors, and gap 9 points at it. 1 MUST, applied.
+
+Frames check (2026-11-12, frames at `pr-assets/first-run-3019` 7931c3baa3; `$AW_DIR/plans/first-run-r3/frames-check.md`): 3 spec-side fixes applied. Decision 28's Done turns primary once GitHub connects (the frame was right). §5.0 gains hello-sindri's steps with the 60 s code timeout, its failure line, the Still stopping pid and log path, and the Didn't come back reason. §4.2's device code row shows the time left. The 7 frame-side fixes went to design.
