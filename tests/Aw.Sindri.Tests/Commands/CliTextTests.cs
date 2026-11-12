@@ -25,6 +25,7 @@ public sealed class CliTextTests
         Assert.Equal(string.Join('\n',
             "  profile   /home/profile.yaml (hash 3f1c2a)",
             "  services  heartbeat every 5s (last 00:00:00Z)",
+            "  jobs      none running",
             "  api       127.0.0.1:7410",
             "  ui        opened (sindri-ui, pid 77)",
             "  lease     held by pid 42, epoch 3",
