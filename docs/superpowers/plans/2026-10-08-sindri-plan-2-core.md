@@ -116,10 +116,10 @@ These are the smallest changes that make the spec buildable as written. Each one
 **Interfaces:**
 - Produces:
   - `ERRORS` (a `const` record `code → { summary, fix }`; each task registers the codes it uses, because the registry test fails on a registered-but-unused code), `type ErrorCode = keyof typeof ERRORS`, `class SindriError(code: ErrorCode, message: string, more?: { fix?: string; details?: string[] })`.
-  - `type ExitCode = 0 | 1 | 2`; `interface CommandResult { exitCode: ExitCode; stdout: string; stderr: string }`; `success(text, data, json, exitCode?)`; `failure(code, message, json, more?: { fix?: string; details?: string[]; exitCode?: ExitCode })` — **the only error renderer**: `CODE message`, one indented line per detail, then `  fix: …` (a command where one exists); JSON `{ ok: false, error: { code, message, fix, details } }`; `fromError(e, json)` (renders a `SindriError`, rethrows anything else).
+  - `type ExitCode = 0 | 1 | 2`; `interface CommandResult { exitCode: ExitCode; stdout: string; stderr: string }`; `success(text, data, json, exitCode?)`; `failure(code, message, json, more?: { fix?: string; details?: string[]; exitCode?: ExitCode })`, **the only error renderer**: `CODE message`, one indented line per detail, then `  fix: …` (a command where one exists); JSON `{ ok: false, error: { code, message, fix, details } }`; `fromError(e, json)` (renders a `SindriError`, rethrows anything else).
   - `interface Deps { env; cwd; home; now(): Date }` (later tasks add fields); `awStateDir(deps): string` (`$AW_STATE_DIR`); `stateDir(deps): string` (`$AW_STATE_DIR/sindri`).
-  - `ulid(now?: Date): string` — 26 lowercase Crockford base32 characters.
-  - `type Command = (args: string[], deps: Deps) => Promise<CommandResult>`; `interface CommandDef { summary: string; usage: string; run: Command }`; `COMMANDS: Record<string, CommandDef>`; `runCli(argv: string[], deps: Deps): Promise<CommandResult>` — handles `help`, `--version`, `<command> --help`, and catches any unexpected error as `SND-CLI-900` (exit 2; `SINDRI_DEBUG=1` adds the stack).
+  - `ulid(now?: Date): string`: 26 lowercase Crockford base32 characters.
+  - `type Command = (args: string[], deps: Deps) => Promise<CommandResult>`; `interface CommandDef { summary: string; usage: string; run: Command }`; `COMMANDS: Record<string, CommandDef>`; `runCli(argv: string[], deps: Deps): Promise<CommandResult>`: answers `help`, `--version`, `<command> --help`, and catches any unexpected error as `SND-CLI-900` (exit 2; `SINDRI_DEBUG=1` adds the stack).
   - `renderErrorsDoc(): string`.
   - Test helper `makeDeps(overrides?: Partial<Deps>): Deps` in `tests/helpers.ts`, with a fresh temp `AW_STATE_DIR`.
 
@@ -708,7 +708,7 @@ The scrubber (spec §8.4) runs on every fetched record, every ledger free-text f
   - `interface ScrubHit { kind: string; start: number; end: number }`.
   - `interface Scrubber { find(text: string): ScrubHit[]; scrub(text: string): { text: string; hits: ScrubHit[] }; scrubDeep<T>(value: T): T }`.
   - `makeScrubber(extra?: readonly ScrubPattern[]): Scrubber`.
-  - `compileExtraPatterns(specs: readonly { kind: string; regex: string }[]): ScrubPattern[]` — throws `SindriError("SND-SCRUB-001")` naming the index of a pattern that doesn't compile.
+  - `compileExtraPatterns(specs: readonly { kind: string; regex: string }[]): ScrubPattern[]`: throws `SindriError("SND-SCRUB-001")` naming the index of a pattern that doesn't compile.
 
 - [x] **Step 1: Write the failing tests**
 
@@ -1005,8 +1005,8 @@ git commit -m "feat: sindri scrubber for secrets and identifier shapes"
 - Produces (`ledger/items.ts`):
   - `interface ObservedItem { id: string; source: string; title: string; state: "open" | "done"; size: string | null; sizedBy: string | null; ambiguity: string | null; stepsDone: number; stepsTotal: number; contentHash: string }`.
   - `interface WriteCtx { epoch: number; tickId: string; now: Date; scrubber: Scrubber }`.
-  - `upsertItem(db, ctx, item): "new" | "changed" | "same"` — call inside `withEpoch`.
-  - `markMissing(db, ctx, source, seen: ReadonlySet<string>): number` — closes items of `source` absent from a full scan as state `removed`, with a `removed` event.
+  - `upsertItem(db, ctx, item): "new" | "changed" | "same"`: call inside `withEpoch`.
+  - `markMissing(db, ctx, source, seen: ReadonlySet<string>): number`: closes items of `source` absent from a full scan as state `removed`, with a `removed` event.
   - `listItems(db, filter?: { state?: "open" | "done" }): ItemRow[]`; `listEvents(db, filter: { itemId?: string; since?: Date; limit?: number }): EventRow[]`.
   - `getCursor(db, source): string | null`; `setCursor(db, source, cursor, now: Date): void`.
   - `interface ItemRow` and `interface EventRow` (snake_case column rows returned by `listItems` / `listEvents`).
@@ -1492,7 +1492,7 @@ git commit -m "feat: sindri ledger with versioned migrations and fencing epoch"
 
 ### Task 4: Singleton tick lock with stale takeover (spec §9.1)
 
-> Amendment (build): S6 — spec §9.1 (M2) requires the taker to re-read the renamed owner file and confirm it is still the dead owner, putting the lock back on a mismatch. The plan's `takeOver` only checked before the rename (under a mutex that is force-cleared after 60 s), so a taker paused past that could move a new live owner's lock away. `takeOver` now re-reads `readOwner(stale)` after a successful rename, renames it back and returns `changed` on a mismatch (new test pins it). Also: test assertions inside `if (x.ok)` are preceded by `expect(x.ok)` (m10), and the real.test.ts comment says Task 6 (m3).
+> Amendment (build): S6: spec §9.1 (M2) requires the taker to re-read the renamed owner file and confirm it is still the dead owner, putting the lock back on a mismatch. The plan's `takeOver` only checked before the rename (under a mutex that is force-cleared after 60 s), so a taker paused past that could move a new live owner's lock away. `takeOver` now re-reads `readOwner(stale)` after a successful rename, renames it back and returns `changed` on a mismatch (new test pins it). Also: test assertions inside `if (x.ok)` are preceded by `expect(x.ok)` (m10), and the real.test.ts comment says Task 6 (m3).
 
 **Files:**
 - Create: `sindri/src/system.ts`, `sindri/src/system-real.ts`, `sindri/src/lock/lock.ts`
@@ -1508,7 +1508,7 @@ git commit -m "feat: sindri ledger with versioned migrations and fencing epoch"
 - Produces (`lock/lock.ts`):
   - `interface LockOwner { pid: number; pidStartTime: string | null; host: string; bootId: string | null; startedAt: string; epoch: number }`.
   - `type LockResult = { ok: true; owner: LockOwner; release: () => void } | { ok: false; heldBy: LockOwner | null; detail: string }`.
-  - `acquireTickLock(o: { dir: string; db: Ledger; sys: SystemProbe; now: () => Date }): LockResult` — on success the epoch has been bumped and is in `owner.epoch`.
+  - `acquireTickLock(o: { dir: string; db: Ledger; sys: SystemProbe; now: () => Date }): LockResult`: on success the epoch has been bumped and is in `owner.epoch`.
   - `inspectLock(dir, sys, now): { state: "free" | "held" | "stale"; owner: LockOwner | null; leftovers: string[] }` (for `doctor`).
 - Produces (`tests/helpers.ts`): `fakeSystem(over?: Partial<SystemProbe>): SystemProbe` (host `test-host`, boot `boot-1`, pid 4242, every pid alive with start time `start-<pid>`, local disk).
 
@@ -2173,7 +2173,7 @@ git commit -m "feat: sindri singleton tick lock with stale takeover and fencing"
   - `ProfileSchema`, `type Profile`; `RepoSchema`, `type RepoConfig`; `PROFILE_SCHEMA_VERSION = 1`.
 - Produces (`load.ts`):
   - `interface ProfileIssue { file: string; keyPath: string; message: string; hint?: string }`.
-  - `interface LoadedProfile { root: string; profile: Profile; repos: Record<string, RepoConfig>; raw: { profile: unknown; repos: Record<string, unknown> }; files: string[]; bytes: Record<string, Buffer>; hash: string }` — `bytes` are the exact bytes validated; `hash` is computed from them.
+  - `interface LoadedProfile { root: string; profile: Profile; repos: Record<string, RepoConfig>; raw: { profile: unknown; repos: Record<string, unknown> }; files: string[]; bytes: Record<string, Buffer>; hash: string }`: `bytes` are the exact bytes validated; `hash` is computed from them.
   - `loadProfile(root: string): { ok: true; value: LoadedProfile } | { ok: false; issues: ProfileIssue[] }`.
   - `resolveProfileRoot(deps: Deps, flag?: string): string | null` (`--profile` > `$AW_PROFILE_DIR` > `$AW_STATE_DIR/profile` when it exists).
   - `profileHash(root: string, files: string[]): string` (sha256 hex over `path NUL bytes NUL` per file, in order).
@@ -2823,7 +2823,7 @@ git commit -m "feat: sindri profile schema, loader, explain and generated refere
 - Produces:
   - `git.ts`: `type GitResult = { ok: true; stdout: string } | { ok: false; stderr: string }`; `interface GitRunner { run(args: string[], cwd: string): Promise<GitResult> }`.
   - `git-real.ts`: `realGitRunner(): GitRunner` (`execFile("git", …)`, 64 MB buffer).
-  - `args.ts`: `parseFlags(args, options)` — `node:util` `parseArgs` in strict mode, throwing `SindriError("SND-CLI-002")` on a bad flag.
+  - `args.ts`: `parseFlags(args, options)`: `node:util` `parseArgs` in strict mode, throwing `SindriError("SND-CLI-002")` on a bad flag.
   - `approve.ts`: `isApproved(db, hash): boolean`; `lastApproved(db): { hash: string; approved_at: string } | null`; `lineDiff(a: string[], b: string[]): string[]`; `profileDiff(deps, db, loaded): string[]`; `approveProfile(deps, db, loaded): void` (snapshot from `loaded.bytes`, verified, `approved_by` = OS user; call inside `withEpoch`); `approvedProfile(deps, db): LoadedProfile | null` (the last approved snapshot, what runtime commands use); `snapshotDir(deps, hash): string`.
   - `commands.ts`: `profileCommand: Command`; `requireProfile(deps, flag?: string): LoadedProfile` (throws `SND-PROFILE-002` when no profile is found, `SND-PROFILE-001` when it's invalid); `sanitizeName(s: string): string`.
   - `tests/helpers.ts`: `fakeGit(answers: Record<string, GitResult>): GitRunner` (keyed by `args.join(" ")`; an unknown call returns `{ ok: false, stderr: "unexpected git call: …" }`).
@@ -3558,7 +3558,7 @@ git commit -m "feat: sindri profile init, validate, explain, migrate and approve
 
 > Amendment (build): the `*-plan-b` include-case test now also asserts the scan result is `[]` (m10b); removed a duplicated comment above `wildcard`. `trackerContractTests` lives in `sindri/tests/contract/` (spec amendment 7).
 >
-> Amendment (build): fix round 1 added `~~~`, mixed-character, longer-closer and shorter-inner fence tests, and a separate `include: ["*"]` test that really reaches the `isFile()` guard (verified it fails with the guard removed).
+> Amendment (build): fix round 1 added `~~~`, mixed-character, longer-closer and shorter-inner fence tests, and a separate `include: ["*"]` test that reaches the `isFile()` guard (verified it fails with the guard removed).
 
 **Files:**
 - Create: `sindri/src/adapters/types.ts`, `sindri/tests/contract/tracker-contract.ts`, `sindri/src/adapters/fake-tracker.ts`, `sindri/src/adapters/plan-file/parse.ts`, `sindri/src/adapters/plan-file/tracker.ts`, `sindri/src/adapters/registry.ts`
@@ -3587,7 +3587,7 @@ git commit -m "feat: sindri profile init, validate, explain, migrate and approve
   ```
   (`comment` takes a plain `string` for now; §11.2's `TemplatedBody` arrives with the first adapter that writes, in the step-3a plan.)
 - Produces (`tests/contract/tracker-contract.ts`): `interface TrackerFixture { tracker: Tracker; touch(id: string): Promise<void> }`; `trackerContractTests(name: string, make: () => Promise<TrackerFixture>): void` (the fixture must hold at least one open item). It lives under `tests/` (spec amendment 7): it is test code, and inside `src/` its guard branches could never be covered.
-- Produces (`adapters/types.ts`): `unwrap<T>(r: Result<T>): T` — returns the value or throws `SindriError(error.code, error.message)`, so callers have no error branch of their own.
+- Produces (`adapters/types.ts`): `unwrap<T>(r: Result<T>): T`: returns the value or throws `SindriError(error.code, error.message)`, so callers have no error branch of their own.
 - Produces (`fake-tracker.ts`): `makeFakeTracker(seed: WorkItem[]): Tracker & { touch(id: string): void; writes: string[] }`.
 - Produces (`plan-file/parse.ts`): `interface PlanTask { number: number; title: string; body: string; stepsDone: number; stepsTotal: number; files: string[]; codeLines: number; hasFilesBlock: boolean }`; `parsePlan(md: string): { title: string; tasks: PlanTask[] }`.
 - Produces (`plan-file/tracker.ts`): `makePlanFileTracker(o: { repoPath: string; glob: string; include: string[]; git: GitRunner }): Tracker`; `planItemId(file: string, task: number): string` → `<plan basename without .md>.t<N>`; `parseGitHistory(out: string): Map<string, { authors: string[]; date: string }>`; `wildcard(pattern: string): RegExp`. `meta` keys: `plan`, `task`, `order`, `stepsDone`, `stepsTotal`, `files`, `codeLines`, `hasFilesBlock` (0/1), `contentHash` (sha256 of the task's title and body). Plan files are parsed once per tracker instance (memoized by name, size and mtime), and authors and dates come from one `git log` over the plan directory, not two per file.
@@ -4297,11 +4297,11 @@ git commit -m "feat: sindri tracker contract, fake tracker and plan-file tracker
 **Interfaces:**
 - Consumes: `Tracker`, `WorkItem` (Task 7); `makeTracker` (Task 7); `requireProfile`, `ring0Files` (Task 6); `approvedProfile` (Task 6); `markMissing` (Task 3); `acquireTickLock` (Task 4); `openLedger`, `withEpoch`, `upsertItem`, `listEvents`, `setCursor` (Task 3); `makeScrubber`, `compileExtraPatterns` (Task 2); `sizeRank`, `Size`, `Profile` (Task 5); `ulid` (Task 1).
 - Produces (`size.ts`):
-  - `sizeByRules(files: number, codeLines: number): Size` — XS ≤ 1 file and ≤ 40 code lines; S ≤ 3 and ≤ 200; M ≤ 6 and ≤ 500; L ≤ 10 and ≤ 1000; else XL.
+  - `sizeByRules(files: number, codeLines: number): Size`: XS ≤ 1 file and ≤ 40 code lines; S ≤ 3 and ≤ 200; M ≤ 6 and ≤ 500; L ≤ 10 and ≤ 1000; else XL.
   - `interface Assessment { size: Size | null; sizedBy: "rules"; ambiguity: "none" | "unknown"; trusted: boolean }` (`null` = unsized: no Files block and no code).
-  - `assess(item: WorkItem, profile: Profile): Assessment` — ambiguity is `none` only when the task has a Files block, code and steps.
-  - `nextPerPlan(items: WorkItem[]): Set<string>` — the first open item (by `meta.order`) of each `meta.plan`.
-  - `startBlocker(item, a: Assessment, isNext: boolean, limit: Size): string | null` — the WOULD-START reason (`done`, `waits on earlier task`, `unsized`, `size > XS`, `unclear`, `untrusted author`), `null` when auto-small would start it.
+  - `assess(item: WorkItem, profile: Profile): Assessment`: ambiguity is `none` only when the task has a Files block, code and steps.
+  - `nextPerPlan(items: WorkItem[]): Set<string>`: the first open item (by `meta.order`) of each `meta.plan`.
+  - `startBlocker(item, a: Assessment, isNext: boolean, limit: Size): string | null`: the WOULD-START reason (`done`, `waits on earlier task`, `unsized`, `size > XS`, `unclear`, `untrusted author`), `null` when auto-small would start it.
 - Produces (`observe.ts`): `observeCommand: Command`, `ledgerCommand: Command`; `interface ObserveRow { id; title (scrubbed); state; size ("?" when unsized); ambiguity; trusted; next; steps: string; wouldStart; blocker }`; `parseSince(s: string, now: Date): Date` (`<N>d` or `<N>h`).
 - Behavior (spec amendment 6): with no profile, `observe` reads the current repo through a throwaway ring-0 profile and records nothing. With a profile, it uses the **last approved snapshot** (spec §8.7), takes the tick lock **before** reading, records under the epoch, closes removed tasks, and exits `1` when it could not record for a reason the human can fix (unapproved profile, unapproved live edits, not the active host). The source key is `<tracker type>:<repo>`.
 
@@ -4877,9 +4877,9 @@ git commit -m "feat: sindri observe and ledger commands"
 **Interfaces:**
 - Consumes: `makeScrubber`, `compileExtraPatterns` (Task 2); `GitRunner` (Task 6); `resolveProfileRoot`, `loadProfile` (Task 5).
 - Produces:
-  - `PRE_COMMIT_MARKER = "# sindri-scrub-pre-commit v1"`; `preCommitHook(bin: string): string` (calls `bin` — `$SINDRI_BIN`, which the installed wrapper exports, else `sindri` — and fails closed when it's missing); `hookBinary(hookText): string | null`.
-  - `preCommitPath(git: GitRunner, repoPath: string): Promise<string | null>` — honors `core.hooksPath`, else `git rev-parse --git-path hooks/pre-commit`; `null` outside a git repo.
-  - `interface AddedFile { file: string; lines: { line: number; text: string }[] }`; `parseAddedLines(diff: string): AddedFile[]` — hunk-counted, so added text starting with `++ ` is still scanned; `hitsIn(f: AddedFile, scrubber): { file; line; kind }[]` — scans a file's additions as one text (multi-line keys) and maps hits to lines.
+  - `PRE_COMMIT_MARKER = "# sindri-scrub-pre-commit v1"`; `preCommitHook(bin: string): string` (calls `bin`: `$SINDRI_BIN`, which the installed wrapper exports, else `sindri`: and fails closed when it's missing); `hookBinary(hookText): string | null`.
+  - `preCommitPath(git: GitRunner, repoPath: string): Promise<string | null>`: honors `core.hooksPath`, else `git rev-parse --git-path hooks/pre-commit`; `null` outside a git repo.
+  - `interface AddedFile { file: string; lines: { line: number; text: string }[] }`; `parseAddedLines(diff: string): AddedFile[]`: hunk-counted, so added text starting with `++ ` is still scanned; `hitsIn(f: AddedFile, scrubber): { file; line; kind }[]` — scans a file's additions as one text (multi-line keys) and maps hits to lines.
   - `scrubCommand: Command`: `sindri scrub` (stdin → scrubbed stdout), `sindri scrub --staged` (exit 1 with `path:line kind` per hit, never the value), `sindri scrub --install-pre-commit [--repo PATH]`.
 
 - [x] **Step 1: Write the failing tests**

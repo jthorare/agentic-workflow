@@ -102,6 +102,8 @@ public sealed class StalledLaunchesTests
         public ValueTask<Kernel.Result<IReadOnlyList<TRow>>> Range<TRow>(string view, string afterKey, string? beforeKey, int max, CancellationToken cancellationToken)
             where TRow : class => throw new NotSupportedException();
 
+        public ValueTask<Kernel.Result<string>> Mark(string view, CancellationToken cancellationToken) => throw new NotSupportedException();
+
         public ValueTask<Kernel.Result<Core.Views.ProjectorState?>> State(CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

@@ -40,7 +40,7 @@ Sits BEFORE `/design-mockup` in the design pipeline. Spawns N parallel subagents
    Use the echoed **absolute** `shotgun-dir` everywhere below — never `~` or an unexpanded `$AW_DIR` in subagent prompts or Playwright calls.
 2. **Prerequisite gate** — this skill has no design preamble, so check explicitly: `design-tokens.json` AND `.impeccable.md` must exist at the project root. If either is missing, stop:
    > "Design language not established — run `/design-language [url1 url2...]` first, then re-run `/design-shotgun`. Generating variants without tokens produces token-free mockups that can't seed the pipeline."
-3. Resolve feature name (arg, or `ls -t "$AW_DIR"/plans/*/plan.md | head -1` — re-source repo-slug.sh in the same invocation — and use its dirname).
+3. Resolve feature name (arg, or `ls -t "$AW_DIR"/plans/*/plan.md | head -1`, re-sourcing repo-slug.sh in the same invocation, and use its dirname).
 4. Resolve N (`--variants` flag or 4). Clamp to [2, 6]. If N < 4, print a one-line note "generating fewer than 4 variants reduces aesthetic diversity — consider --variants 4+" but proceed.
 5. Read `design-tokens.json` and `.impeccable.md`. Read the plan doc for context.
 6. **Pick N aesthetic directions** from this seed list, choosing the N that most diverge from each other given the brand personality in `.impeccable.md`:

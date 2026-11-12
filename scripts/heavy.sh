@@ -11,6 +11,7 @@
 #   A job is expensive when it builds or tests the whole solution, publishes or smoke-tests a NativeAOT/framework
 #   binary, or opens a browser (Playwright, ui-evidence, Aw.Evidence); `heavy --expensive <cmd>` forces it,
 #   `heavy --light <cmd>` forces the per-session slot only.
+#   The job runs in its own systemd user scope (OOMPolicy=continue) when systemd-run works, so an OOM kill ends the job only.
 set -u
 # The cap and reserve readers live next to locks.sh; this script may run through a link (~/.agentic-workflow/bin-r1b/heavy).
 # In a build folder it sits beside this script; in the repo it is ../config/lib.
@@ -89,9 +90,26 @@ claude_found=""; [ -n "$session" ] && claude_found=1
 if [ -n "${AW_HEAVY_SESSION_PID:-}" ]; then session="$AW_HEAVY_SESSION_PID"; claude_found=1; fi
 [ -n "$session" ] || session="$PPID"
 
-mkdir -p "$LOCKS/heavy-session" "$(dirname "$LOCK")"
+mkdir -p "$LOCKS/heavy-session" "$LOCKS/heavy-wait" "$(dirname "$LOCK")"
+# <locks>/heavy-wait/<pid>: one file per job that is waiting for a slot (pid = this wrapper's $$), one JSON line:
+# {"pid","session" (number),"lock":"session"|"box-wide","since" (UTC, when the first wait began),"argv":[...] (raw),"cwd"}.
+# The reader is `aw-meta heavy --json` (#3142); it redacts argv and skips a file whose pid is dead (a SIGKILLed wrapper
+# leaves one; the dead-holder reclaim below does not touch these). Written atomically on the first pass without a slot,
+# rewritten when the wait moves from the session lock to the box-wide one, removed once a slot is taken, on the lock
+# timeout and in both traps. A job that gets its slots at once writes none. A write failure never delays the job.
+WAITFILE="$LOCKS/heavy-wait/$$"; WAIT_SINCE=""
+json_str() { local s="$1"; s="${s//\\/\\\\}"; s="${s//\"/\\\"}"; s="${s//$'\n'/\\n}"; s="${s//$'\r'/\\r}"; s="${s//$'\t'/\\t}"; printf '"%s"' "$s"; }
+rm_wait() { rm -f "$WAITFILE" 2>/dev/null; return 0; }
+# write_wait <label> <argv...>
+write_wait() {
+  local label="$1" a first=1 argv=""; shift
+  [ -n "$WAIT_SINCE" ] || WAIT_SINCE="$(date -u +%FT%TZ)"
+  for a in "$@"; do if [ "$first" = 1 ]; then first=0; else argv="$argv,"; fi; argv="$argv$(json_str "$a")"; done
+  { printf '{"pid":%s,"session":%s,"lock":"%s","since":"%s","argv":[%s],"cwd":%s}\n' \
+      "$$" "$session" "$label" "$WAIT_SINCE" "$argv" "$(json_str "$PWD")" > "$WAITFILE.tmp.$$" && mv -f "$WAITFILE.tmp.$$" "$WAITFILE"; } 2>/dev/null || true
+}
 HELD=()
-release() { local d; for d in "${HELD[@]+"${HELD[@]}"}"; do unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null || true; done; }
+release() { rm_wait; rm -f "$WAITFILE.tmp.$$" 2>/dev/null; local d; for d in "${HELD[@]+"${HELD[@]}"}"; do unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null || true; done; }
 trap release EXIT
 job=""; dog=""
 # signal_job <SIG>: the job's process group, or its pid while the group doesn't exist yet (setsid or perl hasn't made it, #2799).
@@ -174,11 +192,12 @@ acquire() {
       fi
     done
     [ -n "$got" ] && break
-    [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; }
-    [ "$waited" -ge "$TIMEOUT" ] && { echo "heavy: $label lock timeout ($base)" >&2; exit 75; }
+    [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; write_wait "$label" "${@:4}"; }
+    [ "$waited" -ge "$TIMEOUT" ] && { echo "heavy: $label lock timeout ($base)" >&2; rm_wait; exit 75; }
     # A pass that skipped a free reserved slot was blocked only by the reservation and doesn't count; any other pass does.
     sleep 1; [ "$reserve_blocked" = 1 ] || waited=$((waited + 1))
   done
+  rm_wait
   echo "$$ $(date -u +%FT%TZ) session=$session $*" > "$got/owner" 2>/dev/null || true
   HELD+=("$got")
 }
@@ -205,10 +224,32 @@ if [ -n "$is_dotnet_test" ] && [ "$run_max" -gt 0 ]; then
     *) if [ "$run_max" -gt 5 ]; then set -- "$@" --timeout "$((run_max - 5))m"; else set -- "$@" --timeout "${run_max}m"; fi ;;
   esac
 fi
+# Own systemd scope (#2931, #2856): setsid changes the session and process group but not the cgroup, so the job would stay in the
+# caller's pane scope (tmux-spawn-*.scope). With the default OOMPolicy=stop, one OOM kill of a job process then stops that whole
+# scope and takes the agent session with it. `systemd-run --user --scope -p OOMPolicy=continue` puts the job in its own unit, so
+# an OOM kill ends that job only. --scope execs in place (no fork), so $! below is still the job's pid and its group id.
+# The job also binds to the caller's pane scope (BindsTo+After): without it the job outlives its pane (OOM kill of the agent,
+# tmux kill-session), and the lock's dead-holder reclaim frees its slot while it still eats memory, so a 4th job could start.
+# BindsTo is one-way, so an OOM kill inside the job leaves the pane alone. Only scopes of the user manager are bound: a login
+# session-N.scope belongs to the system manager, and `systemd-run --user` fails on it.
+# Fallback, today's path: no systemd-run (macOS), no user bus, or the probe below fails.
+scope=()
+if command -v systemd-run >/dev/null 2>&1; then
+  unit="$(awk -F: '$1=="0" && $2=="" {print $3; exit}' "${AW_HEAVY_TEST_CGROUP:-/proc/self/cgroup}" 2>/dev/null)"
+  bind=()
+  case "$unit" in
+    */user@[0-9]*.service/*.scope) unit="${unit##*/}"; bind=(-p "BindsTo=$unit" -p "After=$unit") ;;
+  esac
+  cand=(systemd-run --user --scope --quiet --collect -p OOMPolicy=continue "${bind[@]+"${bind[@]}"}" --)
+  # A wedged user bus under memory pressure would hang every heavy call while it holds a slot, so the probe gets a timeout.
+  probe=()
+  if command -v timeout >/dev/null 2>&1; then probe=(timeout 10); fi
+  if "${probe[@]+"${probe[@]}"}" "${cand[@]}" true >/dev/null 2>&1; then scope=("${cand[@]}"); fi
+fi
 # This relies on job control being off (non-interactive bash): the background child is not a group leader, so setsid
 # execs in place, $! is the job's pid and its group id. Under job control setsid would fork and $! would exit at once.
 # macOS has no setsid: perl does the same. Its `--` stops perl from reading a command word that starts with - as a perl switch.
-if command -v setsid >/dev/null 2>&1; then setsid "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' -- "$@" & fi
+if command -v setsid >/dev/null 2>&1; then setsid "${scope[@]+"${scope[@]}"}" "$@" & else perl -e 'setpgrp(0, 0); exec @ARGV or exit 127' -- "${scope[@]+"${scope[@]}"}" "$@" & fi
 job=$!
 reason="$(mktemp "${TMPDIR:-/tmp}/heavy-reason.XXXXXX")"
 (

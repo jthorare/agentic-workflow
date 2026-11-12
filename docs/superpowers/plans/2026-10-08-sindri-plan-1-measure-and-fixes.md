@@ -268,7 +268,7 @@ git commit -m "fix: done-gate detects completion claims, not bare claim words (q
 - Modify: `judge/src/chain.ts` (add `restrictChain`)
 - Create: `judge/src/providers-flag.ts`
 - Modify: `judge/src/config.ts:15` (`function isProviderName` → `export function isProviderName`)
-- Modify: `judge/src/cli.ts:86` (`const chain = buildChain(...)`) and argv handling at `:95`
+- Modify: `judge/src/cli.ts:86` (`const chain = buildChain(...)`) and argv parsing at `:95`
 - Test: `judge/tests/chain.test.ts`, `judge/tests/providers-flag.test.ts`
 
 **Interfaces:**
@@ -1289,7 +1289,7 @@ In `scorer/src/args.ts`:
 - Add fields `auditOut: string; itemPattern: string; itemsFile: string | null; maxSize: Size;`.
 - Default them in `options` to `auditOut: path.join(home, ".agentic-workflow", "audit")`, `itemPattern: "[A-Z][A-Z0-9]{1,9}-\\d+"`, `itemsFile: null`, `maxSize: "XS"`.
 - Add `if (arg === "audit") { options.command = "audit"; continue; }` next to the `live` branch.
-- Add `"--out"`, `"--item-pattern"`, `"--items"` and `"--max-size"` to `VALUE_FLAGS`, and handle them:
+- Add `"--out"`, `"--item-pattern"`, `"--items"` and `"--max-size"` to `VALUE_FLAGS`, and parse them:
 
 ```ts
 if (arg === "--out") options.auditOut = value;
@@ -2832,7 +2832,7 @@ Modify `scorer/src/args.ts`:
 - `CliOptions` gains `label: number; labelRepeat: number; labelModel: string; help: boolean;`.
 - Defaults: `label: 0, labelRepeat: 50, labelModel: "sonnet", help: false`.
 - Next to `--json`: `if (arg === "--help" || arg === "-h") { options.help = true; continue; }`
-- Add `"--label"`, `"--label-repeat"`, `"--label-model"` to `VALUE_FLAGS` and handle them:
+- Add `"--label"`, `"--label-repeat"`, `"--label-model"` to `VALUE_FLAGS` and parse them:
 
 ```ts
 if (arg === "--label" || arg === "--label-repeat") {
@@ -2862,7 +2862,7 @@ const USAGE = [
 ].join("\n");
 ```
 
-Print it with `console.error(USAGE)` on a parse error, and handle help right after parsing succeeds: `if (parsed.options.help) { console.log(USAGE); process.exit(0); }`. Replace the `audit` branch with:
+Print it with `console.error(USAGE)` on a parse error, and check for help right after parsing succeeds: `if (parsed.options.help) { console.log(USAGE); process.exit(0); }`. Replace the `audit` branch with:
 
 ```ts
 } else if (parsed.options.command === "audit") {

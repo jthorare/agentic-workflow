@@ -24,4 +24,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-RES-007: a disk holds too many files and folders to measure.</summary>
     public static readonly ErrorDefinition ResourceDiskUnmeasured = new("SND-RES-007", ErrorKind.Conflict, "A disk holds too many files to measure");
+
+    /// <summary>SND-RES-008: a purge could not move or delete an owner's folder.</summary>
+    public static readonly ErrorDefinition ResourcePurgeFailed = new("SND-RES-008", ErrorKind.Conflict, "An owner's resource folder could not be purged");
 }

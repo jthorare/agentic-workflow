@@ -193,7 +193,7 @@ page's chip when it appears behind a sheet (the stage goes in the tag, never in 
 | `ORPHANED` | `chip attn` | `--attn` | a map link lost its node | Context map review |
 | `DEGRADED` | `chip attn` | `--attn` | a source or service runs behind | Context sources, System |
 | `FAILED` | `chip fail` | `--error` | a service, job or check failed; also a workflow instance that ended with outcome `failed` | needs-you row, System, sources, Workflows, children |
-| `RUNNING` | `chip ok` | `--success` | an agent or tool is working now (whether or not a terminal exists; Attach shows that) | Home, Work, Workflows, Agents, children, inspector, engine table |
+| `RUNNING` | `chip ok` | `--success` | an agent or tool is working now (regardless of whether a terminal exists; Attach shows that) | Home, Work, Workflows, Agents, children, inspector, engine table |
 | `ASKING` | `chip` | ink (not `--attn`, until owner Q3) | a live session is waiting on the human; glyph `◐`; the word reads `ASKING · approval · Bash` when the kind is served (Agents sessions only) | Agents, session sheet |
 | `IDLE` | `chip` | neutral | a live session that is not working and not asking; glyph `○` (Agents sessions only) | Agents, session sheet |
 | `UNKNOWN` | `chip` | `--ink-subtle` | a live session whose state can't be read; glyph `○`; `estimated` follows the chip when the state is a guess (Agents sessions only) | Agents, session sheet |

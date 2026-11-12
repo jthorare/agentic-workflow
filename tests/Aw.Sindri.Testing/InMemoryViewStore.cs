@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core;
@@ -120,6 +122,31 @@ public sealed class InMemoryViewStore(JsonSerializerOptions options) : IViewStor
         lock (_gate)
         {
             return ValueTask.FromResult(new InMemoryViewRows(_tables, options).Matching<TRow>(view, column, value));
+        }
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>The rows keep no sequence here, so the mark is the row count and a hash of every key and row text: equal only when the rows are.</remarks>
+    public ValueTask<Result<string>> Mark(string view, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            if (!_tables.TryGetValue(view, out var table))
+            {
+                return ValueTask.FromResult<Result<string>>(SindriErrors.InvalidInput.With($"'{view}' isn't a view"));
+            }
+
+            using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            foreach (var (key, text) in table)
+            {
+                hash.AppendData(Encoding.UTF8.GetBytes(key));
+                hash.AppendData([0]);
+                hash.AppendData(Encoding.UTF8.GetBytes(text));
+                hash.AppendData([0]);
+            }
+
+            var mark = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{table.Count}:{Convert.ToHexStringLower(hash.GetHashAndReset())}");
+            return ValueTask.FromResult<Result<string>>(mark);
         }
     }
 

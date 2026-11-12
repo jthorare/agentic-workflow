@@ -79,6 +79,18 @@ internal sealed partial class ProjectCardViewModel
 
     /// <summary>The box's accessible name.</summary>
     public string BoxName => Labels.ProjectNotesBoxName;
+
+    /// <summary>The Edit notes button's accessible name: "Edit notes for Hiring loop", so five cards don't read the same.</summary>
+    public string EditName => Labels.ProjectNotesFor(Labels.ProjectNotesEdit, Name);
+
+    /// <summary>The Save button's accessible name.</summary>
+    public string SaveName => Labels.ProjectNotesFor(Labels.ProjectNotesSave, Name);
+
+    /// <summary>The Cancel button's accessible name.</summary>
+    public string CancelName => Labels.ProjectNotesFor(Labels.ProjectNotesCancel, Name);
+
+    /// <summary>The Reload button's accessible name.</summary>
+    public string ReloadName => Labels.ProjectNotesFor(Labels.ProjectNotesReload, Name);
 #pragma warning restore CA1822, MA0041
 
     /// <summary>Opens the box on the notes shown, at the version shown.</summary>

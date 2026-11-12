@@ -62,7 +62,7 @@ This spec changes none of it.
   `settings set` while serve runs would wait for serve's watcher. So the cache is keyed on the sha256 of the bytes
   read: every read reads the file (a few KB), hashes it, and parses only when the hash differs from the cached one.
   No mtime and no length are used, so any process's save or edit is live for serve's next read, with no
-  `Invalidate()`: `IProfileCache` and its calls in the six writers are deleted. `ISettingsSource` parses the very
+  `Invalidate()`: `IProfileCache` and its calls in the six writers are deleted. `ISettingsSource` parses the exact
   bytes `LiveSettings` hashed, never a second read, so hash and parse can't describe two different files. Reads open
   the file with `FileShare.ReadWrite | FileShare.Delete`, so a Windows rename never fails under a reader. Serve's watcher (below) no longer
   keeps the cache fresh; it only feeds the audit.
@@ -93,7 +93,7 @@ different items both land" would fail. The lock is held for milliseconds, becaus
 file is a few KB. All six writers go through that one lock. One rule keeps the lock from waiting on itself: code that a writer's
 callback reaches never takes `SettingsFileLock` or `Run`'s wait path. An architecture test checks it.
 
-Every write takes an exclusive lock on `.lock` beside the settings file (`settings/.lock` by default). Each write opens its own handle (in-process writers never
+Every write takes an exclusive lock on `.lock` beside the settings file (`settings/.lock` by default). Each write opens its own file handle (in-process writers never
 share one), and tries the lock without blocking every 50 ms for up to 5 s, so a waiting HTTP request never holds a
 thread asleep. Linux and macOS use `flock`; Windows opens `.lock` with `FileShare.None`. In order, while it holds
 the lock:
@@ -101,7 +101,7 @@ the lock:
 1. Run the migration's inner step, `SettingsMigration.RunLocked`, which assumes the lock is held (§5). It does
    nothing once the migration is done and the file exists; on a home with no file it writes the defaults. It
    returns one of `created`, `migrated` or `existed`, so `settings init` can tell a fresh home from a file that was
-   already there (below). (Taking the lock again here would wait on itself: two handles on one file conflict under
+   already there (below). (Taking the lock again here would wait on itself: two file handles on one file conflict under
    `flock`.)
 2. Read `settings.yaml`. Take the file's sha256 and compare it with the last parseable audit line's sha256 (never
    with older lines, so a hand revert to an older text is still caught). The writer finds that line by reading the

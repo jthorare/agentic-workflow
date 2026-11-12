@@ -1,0 +1,15 @@
+# The slop list, filler: intensifiers and softeners that add no fact. Delete the word, or swap in the number.
+extends: existence
+message: "Cut '%s': it adds no fact. If it stands for a size or a speed, write the number."
+level: error
+ignorecase: true
+tokens:
+  - "very"
+  - "really"
+  - "basically"
+  - "essentially"
+  - "actually"
+  - "simply"
+  - "quite"
+  - "obviously"
+  - "of course"

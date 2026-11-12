@@ -1,0 +1,1 @@
+ARCH-1 LOW: order_note_link(order_id FK -> orders, note_id FK -> notes) looks fine; both foreign keys are indexed.

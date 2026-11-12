@@ -55,7 +55,8 @@ public static class AnchorMatch
         {
             return ContextErrors.AmbiguousAnchor
                 .With($"'{Shown(trimmed)}' is the name of {byLabel.Count} nodes: {string.Join(", ", byLabel.Select(n => n.Key.Value))} (fix: ask by key)")
-                .WithExtension("candidates", [.. byLabel.Select(n => n.Key.Value).Where(Listable)], SettingsJsonContext.Default.ListString);
+                .WithExtension("candidates", [.. byLabel.Select(n => n.Key.Value).Where(Listable)], SettingsJsonContext.Default.ListString)
+                .WithExtension("choices", [.. Choices(byLabel)], SettingsJsonContext.Default.ListAnchorChoice);
         }
 
         if (ByAlias(graph, trimmed, pins) is { } aliased)
@@ -68,12 +69,18 @@ public static class AnchorMatch
             return near;
         }
 
-        var suggested = Suggest(graph, Words(trimmed), except: [], repos ?? []);
+        return Unknown(graph, trimmed, Suggest(graph, Words(trimmed), except: [], repos ?? []));
+    }
+
+    // SND-CONTEXT-003: the detail names the keys to try; the extensions list them bare and as choices with label and kind (#2809).
+    private static Error Unknown(GraphSnapshot graph, string trimmed, IReadOnlyList<NodeKey> suggested)
+    {
         var hint = suggested.Count == 0 ? "sindri context map status" : "try " + string.Join(", ", suggested.Select(k => k.Value));
         var unknown = ContextErrors.UnknownAnchor.With($"no node is named '{Shown(trimmed)}' (fix: {hint})");
         return suggested.Count == 0
             ? unknown
-            : unknown.WithExtension("suggestedAnchors", [.. suggested.Select(k => k.Value).Where(Listable)], SettingsJsonContext.Default.ListString);
+            : unknown.WithExtension("suggestedAnchors", [.. suggested.Select(k => k.Value).Where(Listable)], SettingsJsonContext.Default.ListString)
+                .WithExtension("choices", [.. Choices(suggested.Select(graph.Resolve).OfType<GraphNode>())], SettingsJsonContext.Default.ListAnchorChoice);
     }
 
     /// <summary>The nodes a question names by their whole label, and others it comes close to.</summary>
@@ -186,4 +193,19 @@ public static class AnchorMatch
     private static string Shown(string text) => text.Length <= 80 && !text.Any(char.IsControl) ? text : "(a long or unusual name)";
 
     private static bool Listable(string key) => key.Length <= MaxListedKey;
+
+    /// <summary>The nodes as a person picks them (#2809): the key a pick reads, the label shown (one line, cut like a key) and the key's scheme as the kind.</summary>
+    /// <param name="nodes">The nodes, in the order of the bare key list beside them.</param>
+    /// <returns>One choice per listable node.</returns>
+    public static IReadOnlyList<AnchorChoice> Choices(IEnumerable<GraphNode> nodes)
+    {
+        ArgumentNullException.ThrowIfNull(nodes);
+        return [.. nodes.Where(n => Listable(n.Key.Value)).Select(n => new AnchorChoice(n.Key.Value, ChoiceLabel(n), n.Key.Value[..n.Key.Value.IndexOf(':', StringComparison.Ordinal)]))];
+    }
+
+    private static string ChoiceLabel(GraphNode node)
+    {
+        var line = string.Join(' ', node.Label.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        return line.Length == 0 || line.Any(char.IsControl) ? node.Key.Value : line.Length <= MaxListedKey ? line : line[..MaxListedKey];
+    }
 }

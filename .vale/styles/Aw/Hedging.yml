@@ -1,0 +1,18 @@
+# Voice rule "no hedging ('it seems that perhaps')" (config/voice/reply.md). Label a guess and say what would prove it.
+extends: existence
+message: "'%s' hedges. State the claim, or label it a guess and say what would prove it."
+level: error
+ignorecase: true
+tokens:
+  - "it seems(?: that)?"
+  - "seems to be"
+  - "it appears that"
+  - "appears to be"
+  - "perhaps"
+  - "arguably"
+  - "(?:could|might|may) potentially"
+  - "possibly"
+  - "somewhat"
+  - "to some extent"
+  - "more or less"
+  - "in a sense"

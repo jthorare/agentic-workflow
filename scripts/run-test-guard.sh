@@ -31,6 +31,11 @@ done
 case "$timeout_s$grace" in *[!0-9]*|"") echo "run-test-guard: --timeout and --grace are whole seconds ($usage)" >&2; exit 2 ;; esac
 
 token="rtg-$$-$(date +%s%N)"
+# The watchdog writes this file BEFORE it TERMs the check, so the guard reads the timeout from a record, not from whether
+# the watchdog has exited yet: on a loaded box the watchdog can still be alive when the check is already dead (#3219).
+mark_dir="$(mktemp -d)" || { echo "run-test-guard: mktemp -d failed" >&2; exit 2; }
+fired="$mark_dir/fired"
+unmark() { rm -f -- "$fired"; rmdir -- "$mark_dir" 2>/dev/null; return 0; }
 
 tagged() {  # every PID of this user (but us) whose environment holds the token
   local p
@@ -55,18 +60,41 @@ sweep() {
   return 0
 }
 
-AW_RUN_GUARD="$token" setsid "$@" &
+# Own systemd scope (#2982, as scripts/heavy.sh does since #2931): setsid changes the session and process group but not the
+# cgroup, so the check would stay in the caller's pane scope (tmux-spawn-*.scope). With the default OOMPolicy=stop, one OOM
+# kill inside a UI check (Xvfb, the app, a browser) then stops the whole pane and the agent session in it.
+# `systemd-run --user --scope -p OOMPolicy=continue` puts the check in its own unit; --scope execs in place, so $! below is
+# still the check's pid and its group id, and the token sweep still finds every process by AW_RUN_GUARD.
+# Bound to the caller's scope (BindsTo+After, one-way) only when that scope belongs to the user manager: a login session-N.scope
+# belongs to the system manager and `systemd-run --user` fails on it. Fallback: plain setsid (macOS, no user bus, a failed probe).
+scope=()
+if command -v systemd-run >/dev/null 2>&1; then
+  unit="$(awk -F: '$1=="0" && $2=="" {print $3; exit}' "${AW_GUARD_TEST_CGROUP:-/proc/self/cgroup}" 2>/dev/null)"
+  bind=()
+  case "$unit" in
+    */user@[0-9]*.service/*.scope) unit="${unit##*/}"; bind=(-p "BindsTo=$unit" -p "After=$unit") ;;
+  esac
+  cand=(systemd-run --user --scope --quiet --collect -p OOMPolicy=continue "${bind[@]+"${bind[@]}"}" --)
+  # A wedged user bus under memory pressure must not hang the check, so the probe gets a timeout.
+  probe=()
+  if command -v timeout >/dev/null 2>&1; then probe=(timeout 10); fi
+  if "${probe[@]+"${probe[@]}"}" "${cand[@]}" true >/dev/null 2>&1; then scope=("${cand[@]}"); fi
+fi
+
+AW_RUN_GUARD="$token" setsid "${scope[@]+"${scope[@]}"}" "$@" &
 pgid=$!
-trap 'sweep; exit 143' TERM INT HUP
+trap 'sweep; unmark; exit 143' TERM INT HUP
 
 ( trap 'kill "$s" 2>/dev/null; exit 0' TERM; sleep "$timeout_s" & s=$!; wait "$s"
-  kill -0 "$pgid" 2>/dev/null && { echo "run-test-guard: timed out after ${timeout_s}s; stopping the check" >&2; kill -TERM -- "-$pgid" 2>/dev/null; } ) &
+  kill -0 "$pgid" 2>/dev/null && { : > "$fired"; echo "run-test-guard: timed out after ${timeout_s}s; stopping the check" >&2; kill -TERM -- "-$pgid" 2>/dev/null
+    # Test seam: the watchdog lingers this many seconds after its TERM, the way a loaded box delays its exit (#3219).
+    [ -n "${AW_GUARD_TEST_WATCHDOG_HOLD:-}" ] && sleep "$AW_GUARD_TEST_WATCHDOG_HOLD"; } ) &
 watchdog=$!
 
 wait "$pgid"; rc=$?
-timed_out=0
-if ! kill -0 "$watchdog" 2>/dev/null; then timed_out=1; fi
 kill "$watchdog" 2>/dev/null; wait "$watchdog" 2>/dev/null
+timed_out=0; [ -e "$fired" ] && timed_out=1
 sweep
+unmark
 [ "$timed_out" = 1 ] && [ "$rc" -ne 0 ] && rc=124
 exit "$rc"

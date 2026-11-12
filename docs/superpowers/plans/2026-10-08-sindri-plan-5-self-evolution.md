@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Close rollout step 1 (spec §13). This plan:
-- registers the whole toolkit repo as managed artifacts, each with an eval suite where one exists (spec §7.7);
+- registers the whole toolkit repo as registered artifacts, each with an eval suite where one exists (spec §7.7);
 - measures hook false positives with an adjudicator;
 - ports pstack's `eval` blinding rules, `reflect` and `correct` (MIT) as native, provider-neutral pieces (§16);
 - runs an **offline blinded comparison on a sealed holdout** for the scoping draft prompt (§7.4).
@@ -25,7 +25,7 @@ Every model call goes through Plan 4's `ModelRunner` (provider allowlist, egress
 
 **Tech Stack:** TypeScript 5.7 strict, ESM, Node >= 20.11, Vitest 2 (v8, 100%), Zod 3, better-sqlite3 13; the Claude CLI through Plan 4's runner; `gh` (read-only: `pr view`, `pr diff`, `pr list`, `api user`).
 
-**Spec:** `docs/superpowers/specs/2026-10-07-sindri-design.md` §7.4 (managed artifacts, proposal sources, evaluation, guardrails), §7.6 (dogfooding), §7.7 (the toolkit repo as a managed artifact), §10.3 (CLI), §16 (pstack ports and blinding rules), and §13 step 1's last two bullets. It is §13.3 row 9.
+**Spec:** `docs/superpowers/specs/2026-10-07-sindri-design.md` §7.4 (registered artifacts, proposal sources, evaluation, guardrails), §7.6 (dogfooding), §7.7 (the toolkit repo as a registered artifact), §10.3 (CLI), §16 (pstack ports and blinding rules), and §13 step 1's last two bullets. It is §13.3 row 9.
 
 **Depends on:** Plans 2–4 merged and switched on. Uses Plan 2's `Deps`, ledger, lock, `failure`/`SindriError`, scrubber, `lineDiff` and plan-file tracker conventions. Uses Plan 3's `withHeavyLock`, `heavyLockState`, `ProcessRunner`, `deps.log` and `deps.sleep`. Uses Plan 4's `ModelRunner`/`Budget`, `ScopeIo`, `RefTable`, `gather`, `draftPrompt`, `runScoping`, `checkMap`, `keywordsOf`, the `scope_runs` ledger table, and the Plan 4 test fixtures `approvedScopeDeps` and `scriptedIo` (used only by the Plan 4 test edits in Task 5). Plan 4's revision adds the `model_calls` table in ledger v3 and an env allowlist for the model child; neither is touched here.
 
@@ -2863,7 +2863,7 @@ Trace for `excerptFor` in the test: line 1 is an assistant entry with a text blo
 
 Trace for the copied-line test: `aaaa0001` keeps all 5 lines (nothing earlier). In `bbbb0002`, lines 1 and 3 (the human turn and the hook fire) repeat an earlier file's key and are skipped; line 2 is an assistant line (never deduped); line 4 has no timestamp and line 5 has only whitespace, so neither has a key; line 6 has the same text as line 1 after whitespace normalization but a different timestamp, so it stays, as does line 7 (same text, third timestamp). The one-file case shows a file never dedupes against itself.
 
-Trace for `readRepoSessions` cwd handling in the first test: line 1 sets cwd `/other` (skipped); line 2 sets `/repo/sub` (kept); line 3 has no cwd, so it inherits `/repo/sub` (kept); line 4 sets `/repository`, which is not under `/repo/` (skipped); `{broken` and `null` are skipped (`null` parses to a non-object); line 7 sets `/repo` (kept) and carries `gitBranch` and top-level `content`, whose `ts` is `""`. In the cap test, the old file is skipped by mtime (counted in `skipped`), three recent files are cut to the newest two by mtime (`aaaaaaaa`, `bbbbbbbb` and `cccccccc` have near-identical mtimes; any two satisfy the assertions), so `files` is 2 and `skipped` is 2 (the old file and the cut one); the `.txt` file is never listed.
+Trace for `readRepoSessions` cwd filtering in the first test: line 1 sets cwd `/other` (skipped); line 2 sets `/repo/sub` (kept); line 3 has no cwd, so it inherits `/repo/sub` (kept); line 4 sets `/repository`, which is not under `/repo/` (skipped); `{broken` and `null` are skipped (`null` parses to a non-object); line 7 sets `/repo` (kept) and carries `gitBranch` and top-level `content`, whose `ts` is `""`. In the cap test, the old file is skipped by mtime (counted in `skipped`), three recent files are cut to the newest two by mtime (`aaaaaaaa`, `bbbbbbbb` and `cccccccc` have near-identical mtimes; any two satisfy the assertions), so `files` is 2 and `skipped` is 2 (the old file and the cut one); the `.txt` file is never listed.
 
 `sindri/src/evolve/telemetry.ts`:
 

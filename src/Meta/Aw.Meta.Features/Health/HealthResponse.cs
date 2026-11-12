@@ -38,4 +38,8 @@ public sealed record HealthResponse(
     /// <summary>Whether a beating watch consumes the meta's mail; null when not computed.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Consumer { get; init; }
+
+    /// <summary>The warning when systemd's DefaultOOMPolicy is known and is not continue (issue #2931); null otherwise. Never raises attention.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? OomPolicy { get; init; }
 }

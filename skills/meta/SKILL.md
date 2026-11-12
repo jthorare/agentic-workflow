@@ -21,17 +21,17 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 
 ### Card: Claude Code
 - Reply to a Claude lane with **Message a running agent** (SendMessage), to the name the inbox shows. The Stop and outbox hooks record the send.
-- Watch for mail: run `aw-meta watch --until-event` with the Bash tool's `run_in_background`. It prints nothing and costs no turn until a real line (PR change, `INBOX`, `DISK LOW`, `CONTEXT HIGH`, an error) makes it print and exit. Handle the lines, then start it again, except after `WATCH superseded by pid N`: a newer watch already runs, so don't start another. Don't use Monitor for it.
+- Watch for mail: run `aw-meta watch --until-event` with the Bash tool's `run_in_background`. It prints nothing and costs no turn until a real line (PR change, `INBOX`, `DISK LOW`, `CONTEXT HIGH`, an error) makes it print and exit. Act on each line, then start it again, except after `WATCH superseded by pid N`: a newer watch already runs, so don't start another. Don't use Monitor for it.
   - It shows only the team's PRs (`--all-prs`: all; which: the reference). Don't look up the others.
 - A non-Claude lane gets `aw-meta lane-send --lane <lane> --text "..."`, never the message tool.
 
 ### Card: Codex
 - You have no cross-session message tool. Reply to every lane with `aw-meta lane-send --lane <lane> --text "..."` (or `--file <f>`).
-- Watch for mail in the **foreground**: `aw-meta watch --until-mail --for 29m`. It exits when mail waits (`INBOX <n> open message(s)`). Run `aw-meta inbox`, handle it, run the watch again. Background output is only shown when polled, so a background watch does not work.
+- Watch for mail in the **foreground**: `aw-meta watch --until-mail --for 29m`. It exits when mail waits (`INBOX <n> open message(s)`). Run `aw-meta inbox`, answer it, run the watch again. Background output is only shown when polled, so a background watch does not work.
 - Trust the hooks with `/hooks` once.
 
 ### Card: Cursor
-- Same as Codex: reply with `aw-meta lane-send`, watch in the foreground with `aw-meta watch --until-mail --for 29m`, handle `aw-meta inbox`, run it again.
+- Same as Codex: reply with `aw-meta lane-send`, watch in the foreground with `aw-meta watch --until-mail --for 29m`, answer `aw-meta inbox`, run it again.
 - The hooks inject mail on session start and after tool calls; an empty `aw-meta inbox` is the settled case.
 
 ### Every harness
@@ -78,7 +78,7 @@ A lane queues a pull request with exactly `ready #N <sha>` on the **first line**
 
 **GitHub merge queue.** When the base branch has one, `merge-run` prints `QUEUED #N in GitHub's merge queue (position P)` instead of `MERGED`. That is not a merge yet: don't announce, and don't re-gate the other pull requests. The watch prints `MERGED #N from GitHub's merge queue: main is now <sha>` when it lands; announce as usual then. A `QUEUE OUT #N: <reason>; send the lane NOT OK` line means GitHub dropped it (or it was closed): send the lane `NOT OK #N` with that reason.
 
-**CI gate (`gate.mode` is `ci` in the team config).** Step 2 changes: `aw-meta gate-run N` runs nothing on this box. It reads the pull request's required checks, review decision and merge state from GitHub and records the answer against the head sha. It passes only when every required check is green, the review is `APPROVED` and the merge state is `CLEAN`; a pending check is a fail (`pending`), so run it again once CI finishes. **Skip every `meta-gate-reserve` step**: no gate tree is built and no heavy slot is taken. Skip step 3 (there are no local test reds to rerun; a red required check goes back to the lane). Then `aw-meta merge-check N` and `aw-meta merge-run N` as before: `merge-check` needs a passing CI record at the head the pull request has now, so a push after `gate-run` means run it again. If `gate-run` refuses with `AW-META-024` (`no required checks on <base>`), the base has no branch protection: ask the owner, never merge on it. `queue-gate` (the train) is a local gate and does not apply.
+**CI gate (`gate.mode` is `ci` in the team config).** `gate-run N` runs nothing here: it records GitHub's required checks, review and merge state at the head sha (a pending check fails; run it again). Skip every `meta-gate-reserve` step and step 3, then `merge-check` and `merge-run` as before. `AW-META-024`: ask the owner, never merge. Detail: `docs/csharp/meta-skill-reference.md` "CI gate mode".
 
 With several ready pull requests use `aw-meta queue-gate` (a train); the steps are in the reference.
 

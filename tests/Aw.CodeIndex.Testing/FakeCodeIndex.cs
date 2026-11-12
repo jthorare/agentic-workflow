@@ -68,11 +68,13 @@ public sealed class FakeCodeIndex : ICodeIndex
     /// <param name="repo">The repo; it needs a readable index.</param>
     /// <param name="state">The layer's state now.</param>
     /// <param name="afterEmbed">The state an embed run leaves it in.</param>
+    /// <param name="code">The layer's code now (an unavailable layer's cause), or null.</param>
     /// <returns>This fake.</returns>
-    public FakeCodeIndex WithEmbeddings(RepoName repo, LayerState state, LayerState afterEmbed = LayerState.Ok)
+    public FakeCodeIndex WithEmbeddings(RepoName repo, LayerState state, LayerState afterEmbed = LayerState.Ok, string? code = null)
     {
         _repos[repo].Embeddings = state;
         _repos[repo].AfterEmbed = afterEmbed;
+        _repos[repo].EmbeddingsCode = code;
         return this;
     }
 
@@ -119,6 +121,7 @@ public sealed class FakeCodeIndex : ICodeIndex
         }
 
         index.Embeddings = index.AfterEmbed;
+        index.EmbeddingsCode = null;
         return Ok(new EmbedReport(repo, Embedded: 1, Embeddable: 1, Carried: 0, Made: 1, index.Embeddings ?? LayerState.Ok));
     }
 
@@ -246,7 +249,7 @@ public sealed class FakeCodeIndex : ICodeIndex
 
         if (repo.Embeddings is { } state)
         {
-            layers.Add(new LayerStatus(LayerName.Embeddings, state, Code: null, state.ToString().ToLowerInvariant()));
+            layers.Add(new LayerStatus(LayerName.Embeddings, state, repo.EmbeddingsCode, state.ToString().ToLowerInvariant()));
         }
 
         return layers;
@@ -290,6 +293,8 @@ public sealed class FakeCodeIndex : ICodeIndex
         internal LayerState? Embeddings { get; set; }
 
         internal LayerState AfterEmbed { get; set; } = LayerState.Ok;
+
+        internal string? EmbeddingsCode { get; set; }
 
         internal Dictionary<(SymbolRef, CallDirection), (int Unresolved, List<CallEdge> Edges)> Edges { get; } = [];
 

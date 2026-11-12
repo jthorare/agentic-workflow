@@ -91,7 +91,7 @@ rtk --version || { echo "FATAL: rtk not found after installation."; exit 1; }
 - Copy `config/hooks/rtk-rewrite.sh` → `~/.claude/hooks/rtk-rewrite.sh`
 - Extend the idempotent Bash hook jq command to include `rtk-rewrite.sh` as 4th entry in the hook array
 
-The existing jq replace pattern in setup.sh handles this cleanly — replace the entire Bash matcher entry with the updated 4-hook version.
+The existing jq replace pattern in setup.sh covers this cleanly — replace the entire Bash matcher entry with the updated 4-hook version.
 
 ## Component 2: headroom
 
@@ -160,7 +160,7 @@ Fires at session start. Silently no-ops if the bridge isn't running — the brid
 [Topic] Design system tokens
 ```
 
-**Error handling:**
+**Errors:**
 - Bridge unreachable → silent exit 0 (no output)
 - Bridge returns empty context → silent exit 0
 - Malformed response → silent exit 0 (never block session start)
@@ -195,7 +195,7 @@ Add two rows to the hooks table:
 | `rtk-rewrite.sh` | PreToolUse | `Bash` |
 | `bridge-context.sh` | SessionStart | — |
 
-Add a note that `rtk-rewrite.sh` runs 4th in the Bash chain — after all safety hooks — so safety checks always see the original command.
+Add a note that `rtk-rewrite.sh` runs 4th in the Bash chain (after all safety hooks), so safety checks always see the original command.
 
 ### `CLAUDE.md`
 
@@ -221,6 +221,6 @@ Update tagline (line 3) to reflect the new tooling.
 ## Non-Goals
 
 - No MemStack integration (redundant with agentic-bridge)
-- No per-prompt UserPromptSubmit hook for bridge retrieval (latency cost not worth it; MCP tools handle on-demand retrieval)
+- No per-prompt UserPromptSubmit hook for bridge retrieval (latency cost not worth it; MCP tools serve on-demand retrieval)
 - No `rtk init -g` delegation (would clobber our hook setup; we own the hook script directly)
 - No headroom proxy-mode wrapping of `start.sh` (MCP tool mode is sufficient)
