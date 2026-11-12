@@ -29,6 +29,9 @@ public sealed class TokenTests
         ("PrimaryHoverFill", "#535fc6"),
         ("PrimaryPressed", "#4c57be"),
         ("OnPrimary", "#ffffff"),
+        ("ErrorFill", "#c93c3c"),   // the danger primary button's fill (white 5.0:1); Error itself reads 3.5:1 under white
+        ("ErrorFillHover", "#b83232"),
+        ("ErrorFillPressed", "#a82c2c"),
         ("Success", "#2eb75b"),
         ("Overlay", "#000000"),
         ("Attention", "#f2994a"),
