@@ -1,1 +1,1 @@
-Open questions: the page lists at most 50 rows. That cap is an agent default; the owner has not decided it.
+50 bookings (agent default), listed under open questions.

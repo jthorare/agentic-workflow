@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '(?:link|join)[- ]table[\s\S]{0,300}(?:foreign[- ]key|\bFK\b|column on|column)|(?:foreign[- ]key|\bFK\b|column)[\s\S]{0,300}(?:link|join)[- ]table|order_note_link[\s\S]{0,300}column'
+pattern: 'order_note_link[\s\S]{0,400}(?:note_id|foreign[- ]key|\bFK\b)|(?:note_id|foreign[- ]key|\bFK\b)[\s\S]{0,400}order_note_link'
 flags: i
 ---
 
-Planted: the review flags the order_note_link table as replaceable by a foreign-key column on an existing table.
+Planted: the review names the order_note_link table and proposes a foreign-key column (orders.note_id) instead.

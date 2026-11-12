@@ -1,1 +1,1 @@
-ARCH-1 HIGH: order_note_link is a link table for a one-note-per-order rule; a foreign key column orders.note_id would do. No reason given.
+ARCH-1 HIGH: order_note_link is a link table for a one-note-per-order rule; add orders.note_id as a foreign key instead.

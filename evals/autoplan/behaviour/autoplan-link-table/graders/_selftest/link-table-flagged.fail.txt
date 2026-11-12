@@ -1,1 +1,1 @@
-ARCH-1 LOW: add an index on orders.customer_id.
+ARCH-1 MED: order_note_link adds a join and a new column in notes; consider indexing it.
